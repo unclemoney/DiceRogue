@@ -59,12 +59,10 @@ func _input_event(_viewport, event, _shape_idx):
 		emit_signal("clicked")
 
 func _on_mouse_entered():
-	print("Mouse entered dice")
 	var tween := get_tree().create_tween()
 
 	tween.parallel().tween_method(
 		func(strength):
-			print("Setting glow_strength to", strength)
 			dice_material.set_shader_parameter("glow_strength", strength),
 		0.0, 0.5, 0.2
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
@@ -74,12 +72,10 @@ func _on_mouse_entered():
 	).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 func _on_mouse_exited():
-	print("Mouse entered dice")
 	var tween := get_tree().create_tween()
 
 	tween.parallel().tween_method(
 		func(strength):
-			print("Setting glow_strength to", strength)
 			dice_material.set_shader_parameter("glow_strength", strength),
 		0.5, 0.0, 0.2
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)

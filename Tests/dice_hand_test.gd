@@ -5,16 +5,37 @@ var locked := false
 var DiceScene := preload("res://Scenes/Dice/Dice.tscn")
 var die: Dice
 
-func _on_roll_button_pressed():
-	dice_hand.roll_all()
-	
+@onready var roll_button: Button = $RollButton
+@onready var dice_container := $DiceContainer  # Optional Node2D to hold dice
+
+
+var dice_list: Array = []
+
+const DICE_COUNT := 5
+const START_X := 100
+const START_Y := 200
+const SPACING := 80
+
 func _ready():
-	die = DiceScene.instantiate()
-	add_child(die)  # ✅ This ensures get_tree() is valid
-	die.position = Vector2(100, 100)  # Optional: place it somewhere visible
+	spawn_dice()
+
+func spawn_dice():
+	for i in DICE_COUNT:
+		var die: Dice = DiceScene.instantiate()
+		dice_container.add_child(die)
+
+		var target_pos = Vector2(START_X + i * SPACING, START_Y)
+		die.home_position = target_pos
+
+		var start_pos = Vector2(-200, target_pos.y)
+		die.animate_entry(start_pos)
+
+		dice_list.append(die)
+
 
 func _on_button_pressed() -> void:
-	die.roll()
+	for die in dice_list:
+		die.roll()
 
 func toggle_lock():
 	locked = !locked
