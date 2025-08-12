@@ -8,7 +8,6 @@ var die: Dice
 @onready var roll_button: Button = $RollButton
 @onready var dice_container := $DiceContainer  # Optional Node2D to hold dice
 
-
 var dice_list: Array = []
 
 const DICE_COUNT := 5
@@ -17,26 +16,15 @@ const START_Y := 200
 const SPACING := 80
 
 func _ready():
-	spawn_dice()
-
-func spawn_dice():
-	for i in DICE_COUNT:
-		var die: Dice = DiceScene.instantiate()
-		dice_container.add_child(die)
-
-		var target_pos = Vector2(START_X + i * SPACING, START_Y)
-		die.home_position = target_pos
-
-		var start_pos = Vector2(-200, target_pos.y)
-		die.animate_entry(start_pos)
-
-		dice_list.append(die)
-
+	pass
 
 func _on_button_pressed() -> void:
-	for die in dice_list:
-		die.roll()
+	dice_hand.roll_all()
+	DiceResults.update_from_dice(dice_hand.dice_list)
+	print("Score:", DiceResults.get_score())
+	dice_hand.on_dice_roll_complete()
 
 func toggle_lock():
 	locked = !locked
 	# Optional: update visual state
+	

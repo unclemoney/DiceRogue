@@ -1,0 +1,48 @@
+extends Node
+class_name ScoreEvaluator
+
+static func evaluate(dice_values: Array[int]) -> Dictionary:
+	return {
+		"pairs": get_pairs(dice_values),
+		"three_of_a_kind": get_n_of_a_kind(dice_values, 3),
+		"four_of_a_kind": get_n_of_a_kind(dice_values, 4),
+		"full_house": is_full_house(dice_values),
+		"straight": is_straight(dice_values),
+		"sum": get_sum(dice_values)
+	}
+
+static func get_sum(values: Array[int]) -> int:
+	var total := 0
+	for v in values:
+		total += v
+	return total
+
+static func get_pairs(values: Array[int]) -> int:
+	var counts = {}
+	for v in values:
+		counts[v] = counts.get(v, 0) + 1
+	var pairs = 0
+	for count in counts.values():
+		if count >= 2:
+			pairs += 1
+	return pairs
+
+static func get_n_of_a_kind(values: Array[int], n: int) -> bool:
+	var counts = {}
+	for v in values:
+		counts[v] = counts.get(v, 0) + 1
+	return n in counts.values()
+
+static func is_full_house(values: Array[int]) -> bool:
+	var counts = {}
+	for v in values:
+		counts[v] = counts.get(v, 0) + 1
+	return 3 in counts.values() and 2 in counts.values()
+
+static func is_straight(values: Array[int]) -> bool:
+	var sorted = values.duplicate()
+	sorted.sort()
+	for i in range(1, sorted.size()):
+		if sorted[i] != sorted[i - 1] + 1:
+			return false
+	return true
