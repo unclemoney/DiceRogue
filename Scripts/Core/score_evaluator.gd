@@ -46,3 +46,35 @@ static func is_straight(values: Array[int]) -> bool:
 		if sorted[i] != sorted[i - 1] + 1:
 			return false
 	return true
+
+static func is_small_straight(values: Array[int]) -> bool:
+	var sorted = values.duplicate()
+	sorted.sort()
+	for i in range(1, sorted.size()):
+		if sorted[i] != sorted[i - 2] + 1:
+			return false
+	return true
+
+static func calculate_score_for_category(category: String, values: Array[int]) -> Variant:
+	match category:
+		"ones": return values.count(1) * 1
+		"twos": return values.count(2) * 2
+		"threes": return values.count(3) * 3
+		"fours": return values.count(4) * 4
+		"fives": return values.count(5) * 5
+		"sixes": return values.count(6) * 6
+		"three_of_a_kind":
+			return get_sum(values) if get_n_of_a_kind(values, 3) else null
+		"four_of_a_kind":
+			return get_sum(values) if get_n_of_a_kind(values, 4) else null
+		"full_house":
+			return 25 if is_full_house(values) else null
+		"small_straight":
+			return 30 if is_small_straight(values) else null
+		"large_straight":
+			return 40 if is_straight(values) else null
+		"yahtzee":
+			return 50 if get_n_of_a_kind(values, 5) else null
+		"chance":
+			return get_sum(values)
+		_: return null

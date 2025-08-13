@@ -40,3 +40,8 @@ func get_total_score() -> int:
 		if score != null:
 			total += score
 	return total
+
+func on_category_selected(section: Section, category: String):
+	var values = DiceResults.values
+	var score = ScoreEvaluatorSingleton.calculate_score_for_category(category, values)
+	set_score(section, category, score)
