@@ -23,6 +23,7 @@ var lower_scores := {
 }
 
 func set_score(section: Section, category: String, value: int) -> void:
+	print("Setting score:", category, "→", value)
 	match section:
 		Section.UPPER:
 			if upper_scores.has(category):

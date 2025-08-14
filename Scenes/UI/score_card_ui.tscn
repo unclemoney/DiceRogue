@@ -134,74 +134,74 @@ text = "Three of a kind:"
 [node name="ThreeofakindLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Threeofakind"]
 layout_mode = 2
 
-[node name="FourofakindContainer" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+[node name="Fourofakind" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
 layout_mode = 2
 
-[node name="FourofakindButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/FourofakindContainer"]
+[node name="FourofakindButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fourofakind"]
 layout_mode = 2
 text = "Fourofakind:"
 
-[node name="FourofakindLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/FourofakindContainer"]
+[node name="FourofakindLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fourofakind"]
 layout_mode = 2
 
-[node name="FullhouseContainer" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+[node name="Fullhouse" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
 layout_mode = 2
 
-[node name="FullhouseButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/FullhouseContainer"]
+[node name="FullhouseButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fullhouse"]
 layout_mode = 2
 text = "Fullhouse:"
 
-[node name="FullhouseLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/FullhouseContainer"]
+[node name="FullhouseLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fullhouse"]
 layout_mode = 2
 
-[node name="SmallstraightContainer" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+[node name="Smallstraight" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
 layout_mode = 2
 
-[node name="SmallstraightButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/SmallstraightContainer"]
+[node name="SmallstraightButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Smallstraight"]
 layout_mode = 2
 text = "Smallstraight:"
 
-[node name="SmallstraightLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/SmallstraightContainer"]
+[node name="SmallstraightLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Smallstraight"]
 layout_mode = 2
 
-[node name="LargestraightContainer" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+[node name="Largestraight" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
 layout_mode = 2
 
-[node name="LargestraightButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/LargestraightContainer"]
+[node name="LargestraightButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight"]
 layout_mode = 2
 text = "Large straight:"
 
-[node name="LargestraightLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/LargestraightContainer"]
+[node name="LargestraightLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight"]
 layout_mode = 2
 
-[node name="ChanceContainer" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+[node name="Chance" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
 layout_mode = 2
 
-[node name="ChanceButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/ChanceContainer"]
+[node name="ChanceButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Chance"]
 layout_mode = 2
 text = "Chance:"
 
-[node name="ChanceLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/ChanceContainer"]
+[node name="ChanceLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Chance"]
 layout_mode = 2
 
-[node name="YahtzeeContainer" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+[node name="Yahtzee" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
 layout_mode = 2
 
-[node name="YahtzeeButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeContainer"]
+[node name="YahtzeeButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Yahtzee"]
 layout_mode = 2
 text = "Yahtzee:"
 
-[node name="YahtzeeLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeContainer"]
+[node name="YahtzeeLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Yahtzee"]
 layout_mode = 2
 
-[node name="YahtzeeBonusContainer" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+[node name="YahtzeeBonus" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
 layout_mode = 2
 
-[node name="YahtzeeBonusLabel" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonusContainer"]
+[node name="YahtzeeBonusLabel" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
 layout_mode = 2
 text = "Yhatzee Bonus:"
 
-[node name="YahtzeeBonusButton" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonusContainer"]
+[node name="YahtzeeBonusButton" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
 layout_mode = 2
 
 [node name="LowerTotal" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
