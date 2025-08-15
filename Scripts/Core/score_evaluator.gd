@@ -72,7 +72,7 @@ static func calculate_score_for_category(category: String, values: Array[int]) -
 		"full_house":
 			return 25 if is_full_house(values) else 0
 		"small_straight":
-			return 30 if is_small_straight(values) else 0
+			return 30 if is_small_straight_test(values) else 0
 		"large_straight":
 			return 40 if is_straight(values) else 0
 		"yahtzee":
@@ -80,3 +80,17 @@ static func calculate_score_for_category(category: String, values: Array[int]) -
 		"chance":
 			return get_sum(values)
 		_: return null
+
+static func get_unique(values: Array) -> Array:
+	var seen := {}
+	var unique := []
+	for val in values:
+		if not seen.has(val):
+			seen[val] = true
+			unique.append(val)
+	return unique
+
+static func is_small_straight_test(values: Array) -> bool:
+	var unique := get_unique(values)
+	unique.sort()
+	return [1,2,3,4].all(unique.has) or [2,3,4,5].all(unique.has) or [3,4,5,6].all(unique.has)

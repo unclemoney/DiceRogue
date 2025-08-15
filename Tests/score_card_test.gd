@@ -24,7 +24,7 @@ func _ready():
 func _on_button_pressed() -> void:
 	dice_hand.roll_all()
 	DiceResults.update_from_dice(dice_hand.dice_list)
-	print("Score:", DiceResults.get_score())
+	score_card_ui.turn_scored = false  # 🔄 Reset turn lock
 	dice_hand.on_dice_roll_complete()
 
 func toggle_lock():

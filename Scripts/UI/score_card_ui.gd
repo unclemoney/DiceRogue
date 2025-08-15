@@ -3,6 +3,9 @@ extends Control
 var scorecard: Scorecard
 var category_buttons := {}
 var category_labels := {}
+var turn_scored := false
+var upper_section_buttons := {}
+var lower_section_buttons := {}
 
 const LOWER_CATEGORY_NODE_NAMES := {
 	"three_of_a_kind": "Threeofakind",
@@ -13,7 +16,6 @@ const LOWER_CATEGORY_NODE_NAMES := {
 	"yahtzee": "Yahtzee",
 	"chance": "Chance"
 }
-
 
 func _ready():
 	for key in LOWER_CATEGORY_NODE_NAMES.keys():
@@ -63,7 +65,8 @@ func connect_buttons():
 		var button = get_node_or_null(button_path)
 		if button:
 			button.pressed.connect(func(): on_category_selected(Scorecard.Section.UPPER, category))
-			print("Connected upper button for:", category)
+			print("Connected upper button for:", button)
+			upper_section_buttons[category] = button
 
 	# Lower section
 	for category in scorecard.lower_scores.keys():
@@ -72,20 +75,44 @@ func connect_buttons():
 		var button = get_node_or_null(button_path)
 		if button:
 			button.pressed.connect(func(): on_category_selected(Scorecard.Section.LOWER, category))
-			print("Connected lower button for:", category)
+			print("Connected lower button for:", button)
+			lower_section_buttons[category] = button
 		else:
 			print("❌ Lower button not found for:", category, "→", button_path)
 
 func on_category_selected(section: Scorecard.Section, category: String):
+	if turn_scored:
+		print("⚠️ Score already assigned this turn.")
+		return
+
 	var values = DiceResults.values
 	var score = ScoreEvaluatorSingleton.calculate_score_for_category(category, values)
-	
-	scorecard.on_category_selected(section, category)
-	if score == -1:
+	print("Category selected:", section, category, "→", score)
+
+	if score == null:
 		show_invalid_score_feedback(category)
 		return
+
 	scorecard.set_score(section, category, score)
 	update_all()
+	turn_scored = true
+	disable_all_score_buttons()
+
+func disable_all_score_buttons():
+	for button in upper_section_buttons.values():
+		button.disabled = true
+	for button in lower_section_buttons.values():
+		button.disabled = true
+
+func enable_all_score_buttons():
+	for button in upper_section_buttons.values():
+		button.disabled = false
+	for button in lower_section_buttons.values():
+		button.disabled = false
+
+func allow_extra_score():
+	turn_scored = false
+	print("🔓 Extra score allowed this turn.")
 
 func show_invalid_score_feedback(category: String):
 	print("Invalid score: Dice do not match category '%s'" % category)
