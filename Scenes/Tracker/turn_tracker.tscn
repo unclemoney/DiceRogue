@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b8limy63m2tlo"]
+
+[ext_resource type="Script" uid="uid://cuianjuhi7i1a" path="res://Scripts/Core/turn_tracker.gd" id="1_1beh8"]
+
+[node name="TurnTracker" type="Node"]
+script = ExtResource("1_1beh8")
