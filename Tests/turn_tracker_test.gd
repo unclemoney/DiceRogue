@@ -42,7 +42,23 @@ func toggle_lock():
 	
 
 func end_turn():
+	# Advance turn tracker
 	turn_tracker.start_new_turn()
+
+	# Unlock all dice
+	for die in dice_hand.dice_list:
+		die.unlock()
+
+	# Reset roll button
+	roll_button.disabled = false
+
+	# Reset score lock
+	score_card_ui.turn_scored = false
+
+	# Re-enable score buttons
+	score_card_ui.enable_all_score_buttons()
+
+	print("🔄 Turn advanced. Dice unlocked, buttons reset.")
 
 func _on_rolls_exhausted():
 	roll_button.disabled = true

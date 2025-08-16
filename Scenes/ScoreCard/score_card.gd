@@ -3,6 +3,8 @@ class_name Scorecard
 
 enum Section { UPPER, LOWER }
 
+signal score_auto_assigned(section: Section, category: String, score: int)
+
 var upper_scores := {
 	"ones": null,
 	"twos": null,
@@ -46,3 +48,36 @@ func on_category_selected(section: Section, category: String):
 	var values = DiceResults.values
 	var score = ScoreEvaluatorSingleton.calculate_score_for_category(category, values)
 	set_score(section, category, score)
+
+func auto_score_best(values: Array[int]) -> void:
+	var best_score := -1
+	var best_section
+	var best_category := ""
+
+	# scan upper section
+	for category in upper_scores.keys():
+		if upper_scores[category] == null:
+			print("Using evaluator:", ScoreEvaluatorSingleton)  
+			print("Script path:", ScoreEvaluatorSingleton.get_script().resource_path)  
+			var s: int = ScoreEvaluatorSingleton.calculate_score_for_category(category, values)  
+			print("  -> s =", s, " type:", typeof(s))  
+			if s > best_score:
+				best_score = s
+				best_section = Section.UPPER
+				best_category = category
+
+	# scan lower section
+	for category in lower_scores.keys():
+		if lower_scores[category] == null:
+			print("Using evaluator:", ScoreEvaluatorSingleton)  
+			print("Script path:", ScoreEvaluatorSingleton.get_script().resource_path)  
+			var s: int = ScoreEvaluatorSingleton.calculate_score_for_category(category, values)  
+			print("  -> s =", s, " type:", typeof(s))  
+			if s > best_score:
+				best_score = s
+				best_section = Section.LOWER
+				best_category = category
+
+	if best_category != "":
+		set_score(best_section, best_category, best_score)
+		emit_signal("score_auto_assigned", best_section, best_category, best_score)

@@ -19,7 +19,8 @@ func bind_tracker(t: TurnTracker):
 	_on_rolls_updated(tracker.rolls_left)
 
 func _on_turn_updated(turn: int):
-	turn_label.text = "Turn: %d" % turn
+	var max_t = tracker.max_turns
+	turn_label.text = "Turn: %d / %d" % [turn, max_t]
 
 func _on_rolls_updated(rolls: int):
 	rolls_label.text = "Rolls Left: %d" % rolls

@@ -94,3 +94,7 @@ func animate_entry(from_position: Vector2, duration := 0.4):
 	tween.tween_property(self, "position", home_position, duration)\
 		.set_trans(Tween.TRANS_BOUNCE)\
 		.set_ease(Tween.EASE_OUT)
+
+func unlock():
+	is_locked = false
+	update_visual()

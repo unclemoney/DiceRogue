@@ -1,69 +1,47 @@
 extends Node2D
 class_name DiceHand
 
-@export var dice_scene: PackedScene
-@export var dice_count := 5
-@export var spacing := 80
-@export var start_position := Vector2(100, 200)
+signal roll_complete
 
-var dice_list: Array = []
+@export var dice_scene:      PackedScene
+@export var dice_count:      int     = 5
+@export var spacing:         float   = 80.0
+@export var start_position:  Vector2 = Vector2(100, 200)
 
-func _ready():
-	if dice_scene:
-		spawn_dice()
+var dice_list: Array[Dice] = []
 
-func spawn_dice():
+func spawn_dice() -> void:
 	clear_dice()
-	for i in dice_count:
-		var die: Dice = dice_scene.instantiate()
+	for i in range(dice_count):
+		var die = dice_scene.instantiate() as Dice
 		add_child(die)
-
-		var target_pos = start_position + Vector2(i * spacing, 0)
-		die.home_position = target_pos
-
-		var start_pos = Vector2(-200, target_pos.y)
-		die.animate_entry(start_pos)
-
+		die.home_position = start_position + Vector2(i * spacing, 0)
+		die.position      = Vector2(-200, die.home_position.y)
+		die.animate_entry(die.position)
 		dice_list.append(die)
 
-func roll_all():
+
+
+func roll_all() -> void:
+	if dice_list.size() == 0:
+		return
 	for die in dice_list:
 		die.roll()
-	update_result()
+	_update_results()
+	emit_signal("roll_complete")
 
-func update_result():
-	var result_node = get_node_or_null("/Scripts/Core/DiceResults")  # if autoloaded
-	if result_node:
-		result_node.update_from_dice(dice_list)
+func _update_results() -> void:
+	# Direct call to the autoloaded singleton
+	DiceResults.update_from_dice(dice_list)
 
-func clear_dice():
+func clear_dice() -> void:
 	for die in dice_list:
 		die.queue_free()
 	dice_list.clear()
 
 # DiceHand.gd
-func process_roll():
-	var values := get_current_dice_values()
-	DiceResults.set_values(values)
-	
 func get_current_dice_values() -> Array[int]:
-	var values: Array[int] = []
+	var arr: Array[int] = []
 	for die in dice_list:
-		values.append(die.value)
-	return values
-	
-# DiceHand or UI
-func show_score():
-	var score = DiceResults.score
-	print(score)
-
-func show_score_feedback(score: Dictionary):
-	print("Score breakdown:")
-	for key in score.keys():
-		print("%s: %s" % [key, score[key]])
-
-func on_dice_roll_complete():
-	print("Dice Roll Complete")
-	var values = get_current_dice_values()
-	var score = DiceResults.set_values(values)
-	show_score_feedback(score)
+		arr.append(die.value)
+	return arr

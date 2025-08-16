@@ -65,7 +65,7 @@ func connect_buttons():
 		var button = get_node_or_null(button_path)
 		if button:
 			button.pressed.connect(func(): on_category_selected(Scorecard.Section.UPPER, category))
-			print("Connected upper button for:", button)
+			#print("Connected upper button for:", button)
 			upper_section_buttons[category] = button
 
 	# Lower section
@@ -75,7 +75,7 @@ func connect_buttons():
 		var button = get_node_or_null(button_path)
 		if button:
 			button.pressed.connect(func(): on_category_selected(Scorecard.Section.LOWER, category))
-			print("Connected lower button for:", button)
+			#print("Connected lower button for:", button)
 			lower_section_buttons[category] = button
 		else:
 			print("❌ Lower button not found for:", category, "→", button_path)

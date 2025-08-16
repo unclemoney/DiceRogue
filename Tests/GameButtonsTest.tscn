@@ -1,0 +1,62 @@
+[gd_scene load_steps=11 format=3 uid="uid://v5vu2bohiivr"]
+
+[ext_resource type="Script" uid="uid://dnemhhaoo882x" path="res://Tests/game_buttons_test.gd" id="1_gvam4"]
+[ext_resource type="Texture2D" uid="uid://c5j8lclc52j7" path="res://Resources/Art/Background/test.png" id="2_0vdv3"]
+[ext_resource type="PackedScene" uid="uid://dugpl3du3i6xo" path="res://Scenes/Dice/dice_hand.tscn" id="2_048jk"]
+[ext_resource type="PackedScene" uid="uid://c6k045mexxkyd" path="res://Scenes/Dice/dice.tscn" id="3_0vdv3"]
+[ext_resource type="PackedScene" uid="uid://bsukvul4wop20" path="res://Scenes/ScoreCard/score_card.tscn" id="4_0j1a1"]
+[ext_resource type="PackedScene" uid="uid://sliaarrkymdo" path="res://Scenes/UI/score_card_ui.tscn" id="5_uqnvn"]
+[ext_resource type="PackedScene" uid="uid://df1otdcd66xb5" path="res://Scenes/UI/turn_tracker_ui.tscn" id="6_aws03"]
+[ext_resource type="PackedScene" uid="uid://lc4xqvsxdnpy" path="res://Scenes/UI/game_button_ui.tscn" id="7_048jk"]
+[ext_resource type="PackedScene" uid="uid://b8limy63m2tlo" path="res://Scenes/Tracker/turn_tracker.tscn" id="7_55353"]
+[ext_resource type="PackedScene" uid="uid://q27dsqs2pyd8" path="res://Scenes/UI/crt_overlay.tscn" id="10_0j1a1"]
+
+[node name="Node2D" type="Node2D"]
+script = ExtResource("1_gvam4")
+
+[node name="CRTOverlay" parent="." instance=ExtResource("10_0j1a1")]
+
+[node name="Background" type="Sprite2D" parent="."]
+position = Vector2(644, 358.25)
+scale = Vector2(2.05, 2.12117)
+texture = ExtResource("2_0vdv3")
+
+[node name="DiceHand" parent="." instance=ExtResource("2_048jk")]
+dice_scene = ExtResource("3_0vdv3")
+
+[node name="DiceContainer" type="Node2D" parent="."]
+
+[node name="ScoreCard" parent="." instance=ExtResource("4_0j1a1")]
+
+[node name="TurnTracker" parent="." instance=ExtResource("7_55353")]
+
+[node name="TurnTrackerUI" parent="." instance=ExtResource("6_aws03")]
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 7.0
+offset_top = 382.0
+offset_right = 71.0
+offset_bottom = 382.0
+grow_horizontal = 1
+grow_vertical = 1
+
+[node name="ScoreCardUI" parent="." instance=ExtResource("5_uqnvn")]
+offset_left = 883.0
+offset_top = 16.0
+offset_right = 883.0
+offset_bottom = 56.0
+
+[node name="GameButtonUI" parent="." instance=ExtResource("7_048jk")]
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 10.0
+offset_top = 319.0
+offset_right = 10.0
+offset_bottom = 359.0
+grow_horizontal = 1
+grow_vertical = 1
+dice_hand_path = NodePath("../DiceHand")
+score_card_ui_path = NodePath("../ScoreCardUI")
+turn_tracker_path = NodePath("../TurnTracker")

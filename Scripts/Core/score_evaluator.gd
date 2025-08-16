@@ -55,31 +55,42 @@ static func is_small_straight(values: Array[int]) -> bool:
 			return false
 	return true
 
-static func calculate_score_for_category(category: String, values: Array[int]) -> Variant:
-	print("Category to Match: ", category)
+static func calculate_score_for_category(category: String, values: Array[int]) -> int:
+	print("=== using NEW calculate_score_for_category v2 ===")
+	var score: int = 0
 	match category:
-		"ones": return values.count(1) * 1
-		"twos": return values.count(2) * 2
-		"threes": return values.count(3) * 3
-		"fours": return values.count(4) * 4
-		"fives": return values.count(5) * 5
-		"sixes": return values.count(6) * 6
+		"ones":         score = values.count(1) * 1
+		"twos":         score = values.count(2) * 2
+		"threes":       score = values.count(3) * 3
+		"fours":        score = values.count(4) * 4
+		"fives":        score = values.count(5) * 5
+		"sixes":        score = values.count(6) * 6
 		"three_of_a_kind":
-			print("Values: ", values)
-			return 10 if get_n_of_a_kind(values, 3)  else 0
+			if get_n_of_a_kind(values, 3):
+				score = get_sum(values)  # or 10, depending on your rule
+			else:
+				score = 0
 		"four_of_a_kind":
-			return 15 if get_n_of_a_kind(values, 4)  else 0
+			if get_n_of_a_kind(values, 4):
+				score = get_sum(values)  # or 15
 		"full_house":
-			return 25 if is_full_house(values) else 0
+			if is_full_house(values):
+				score = 25
 		"small_straight":
-			return 30 if is_small_straight_test(values) else 0
+			if is_small_straight_test(values):
+				score = 30
 		"large_straight":
-			return 40 if is_straight(values) else 0
+			if is_straight(values):
+				score = 40
 		"yahtzee":
-			return 50 if get_n_of_a_kind(values, 5) else 0
+			if get_n_of_a_kind(values, 5):
+				score = 50
 		"chance":
-			return get_sum(values)
-		_: return null
+			score = get_sum(values)
+		_:  # default to zero so you never return null
+			score = 0
+	print("→ returning:", score, " type:", typeof(score))
+	return score
 
 static func get_unique(values: Array) -> Array:
 	var seen := {}
