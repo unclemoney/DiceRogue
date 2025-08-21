@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bqsvpv8edgdlv"]
+
+[ext_resource type="Script" uid="uid://cof4m0flc2yj3" path="res://Scripts/PowerUps/extra_dice_power_up.gd" id="1_v5tl0"]
+
+[node name="ExtraDicePowerUp" type="Node2D"]
+script = ExtResource("1_v5tl0")

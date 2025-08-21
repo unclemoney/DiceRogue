@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://b0h68l2hpjf3o"]
+
+[ext_resource type="Script" uid="uid://cpw74djq06db4" path="res://Scripts/Managers/PowerUpManager.gd" id="1_y7fah"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="2_gova6"]
+
+[node name="PowerUpManager" type="Node2D"]
+script = ExtResource("1_y7fah")
+power_up_defs = Array[ExtResource("2_gova6")]([null])

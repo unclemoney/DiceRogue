@@ -1,0 +1,26 @@
+# Copilot Instructions
+Dearest Copilot,
+
+This project is game made with the Godot Engine, and it uses GitHub Copilot to assist with coding. Below are the instructions and guidelines for using Copilot effectively in this project.
+
+We are making a pixel-art, rouge-lite dice roller game based off of the vanilla rules of Yahtzee.  Vanilla rules will be modified with Power Ups, and Consumeables which will be locked behind a progression system.  The game will be played in a single player mode, with the player rolling dice to complete objectives and complete challenges.
+
+Testing will be done by creating simple test scenes that can be run in the editor.  These test scenes will be used to verify that the game logic is working as expected, and to ensure that the game is fun to play.
+
+This game takes its inspiration from the following games: Balatro, Dicey Dungeons, and Yahtzee.  
+
+## Coding Standards
+- Always target Godot 4.4 GDScript syntax.
+- Use tabs for indentation—never spaces.
+- Prefix every script with its extends and class_name.
+- Follow snake_case for methods/vars, PascalCase for classes/nodes.
+- Wrap exported properties in @export var and onready lookups in @onready var.
+- Never emit inline parsing hacks—break declarations into separate var + assignment.
+
+## Scene & Node Organization
+- Single responsibility: each scene owns exactly one domain (UI, gameplay logic, effects).
+- If at all possible, you should design scenes to have no dependencies.
+- Reusable scenes should be self-contained and not rely on external nodes.
+- Root Logic Node: keep your GameController at the scene root.
+- Typed Paths: export NodePaths for everything you need from another scene, assign them in the inspector, and guard with get_node_or_null() in _ready().
+- Avoid Global State when possible and use node trees and signals.

@@ -1,0 +1,215 @@
+[gd_scene load_steps=2 format=3 uid="uid://sliaarrkymdo"]
+
+[ext_resource type="Script" uid="uid://6yelginq6gfe" path="res://Scripts/UI/score_card_ui.gd" id="1_3x83p"]
+
+[node name="ScoreCardUI" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_3x83p")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 0
+offset_right = 319.0
+offset_bottom = 338.0
+
+[node name="UpperVBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+
+[node name="UpperSectionLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer"]
+layout_mode = 2
+text = "Upper Section                  "
+
+[node name="UpperGridContainer" type="GridContainer" parent="HBoxContainer/UpperVBoxContainer"]
+layout_mode = 2
+
+[node name="OnesContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+layout_mode = 2
+
+[node name="OnesButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/OnesContainer"]
+layout_mode = 2
+text = "Ones:"
+
+[node name="OnesLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/OnesContainer"]
+layout_mode = 2
+
+[node name="TwosContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+layout_mode = 2
+
+[node name="TwosButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/TwosContainer"]
+layout_mode = 2
+text = "Twos:"
+
+[node name="TwosLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/TwosContainer"]
+layout_mode = 2
+
+[node name="ThreesContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+layout_mode = 2
+
+[node name="ThreesButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/ThreesContainer"]
+layout_mode = 2
+text = "Threes:"
+
+[node name="ThreesLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/ThreesContainer"]
+layout_mode = 2
+
+[node name="FoursContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+layout_mode = 2
+
+[node name="FoursButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/FoursContainer"]
+layout_mode = 2
+text = "Fours:"
+
+[node name="FoursLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/FoursContainer"]
+layout_mode = 2
+
+[node name="FivesContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+layout_mode = 2
+
+[node name="FivesButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/FivesContainer"]
+layout_mode = 2
+text = "Fives:"
+
+[node name="FivesLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/FivesContainer"]
+layout_mode = 2
+
+[node name="SixesContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+layout_mode = 2
+
+[node name="SixesButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/SixesContainer"]
+layout_mode = 2
+text = "Sixes:"
+
+[node name="SixesLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/SixesContainer"]
+layout_mode = 2
+
+[node name="UpperSubTotal" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+layout_mode = 2
+
+[node name="UppersubLabel" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal"]
+layout_mode = 2
+text = "Upper Total"
+
+[node name="UppersubButton" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal"]
+layout_mode = 2
+
+[node name="UpperBonus" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+layout_mode = 2
+
+[node name="UpperBonus" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus"]
+layout_mode = 2
+text = "Upper Bonus:"
+
+[node name="UpperBonusLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus"]
+layout_mode = 2
+
+[node name="UpperTotal" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+layout_mode = 2
+
+[node name="UpperTotalButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperTotal"]
+layout_mode = 2
+text = "Upper Total:"
+
+[node name="UpperTotalLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperTotal"]
+layout_mode = 2
+
+[node name="LowerVBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+
+[node name="LowerSecionLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer"]
+layout_mode = 2
+text = "Lower Section"
+
+[node name="LowerGridContainer" type="GridContainer" parent="HBoxContainer/LowerVBoxContainer"]
+layout_mode = 2
+
+[node name="Threeofakind" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+layout_mode = 2
+
+[node name="ThreeofakindButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Threeofakind"]
+layout_mode = 2
+text = "Three of a kind:"
+
+[node name="ThreeofakindLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Threeofakind"]
+layout_mode = 2
+
+[node name="Fourofakind" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+layout_mode = 2
+
+[node name="FourofakindButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fourofakind"]
+layout_mode = 2
+text = "Fourofakind:"
+
+[node name="FourofakindLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fourofakind"]
+layout_mode = 2
+
+[node name="Fullhouse" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+layout_mode = 2
+
+[node name="FullhouseButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fullhouse"]
+layout_mode = 2
+text = "Fullhouse:"
+
+[node name="FullhouseLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fullhouse"]
+layout_mode = 2
+
+[node name="Smallstraight" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+layout_mode = 2
+
+[node name="SmallstraightButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Smallstraight"]
+layout_mode = 2
+text = "Smallstraight:"
+
+[node name="SmallstraightLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Smallstraight"]
+layout_mode = 2
+
+[node name="Largestraight" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+layout_mode = 2
+
+[node name="LargestraightButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight"]
+layout_mode = 2
+text = "Large straight:"
+
+[node name="LargestraightLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight"]
+layout_mode = 2
+
+[node name="Chance" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+layout_mode = 2
+
+[node name="ChanceButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Chance"]
+layout_mode = 2
+text = "Chance:"
+
+[node name="ChanceLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Chance"]
+layout_mode = 2
+
+[node name="Yahtzee" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+layout_mode = 2
+
+[node name="YahtzeeButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Yahtzee"]
+layout_mode = 2
+text = "Yahtzee:"
+
+[node name="YahtzeeLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Yahtzee"]
+layout_mode = 2
+
+[node name="YahtzeeBonus" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+layout_mode = 2
+
+[node name="YahtzeeBonusLabel" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
+layout_mode = 2
+text = "Yhatzee Bonus:"
+
+[node name="YahtzeeBonusButton" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
+layout_mode = 2
+
+[node name="LowerTotal" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+layout_mode = 2
+
+[node name="LowerTotalButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/LowerTotal"]
+layout_mode = 2
+text = "Lower  Total:"
+
+[node name="LowerTotalLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/LowerTotal"]
+layout_mode = 2

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dugpl3du3i6xo"]
+
+[ext_resource type="Script" uid="uid://bh04dmrpcpla8" path="res://Scripts/Core/dice_hand.gd" id="1_s8qyq"]
+
+[node name="DiceHand" type="Node2D"]
+script = ExtResource("1_s8qyq")

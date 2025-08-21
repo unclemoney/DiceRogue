@@ -1,0 +1,30 @@
+[gd_scene load_steps=5 format=3 uid="uid://surdk66a0453"]
+
+[ext_resource type="PackedScene" uid="uid://lc4xqvsxdnpy" path="res://Scenes/UI/game_button_ui.tscn" id="1_ht33c"]
+[ext_resource type="PackedScene" uid="uid://sliaarrkymdo" path="res://Scenes/UI/score_card_ui.tscn" id="2_u8tly"]
+[ext_resource type="PackedScene" uid="uid://df1otdcd66xb5" path="res://Scenes/UI/turn_tracker_ui.tscn" id="3_fivem"]
+[ext_resource type="PackedScene" uid="uid://bhv7dyrckqhk6" path="res://Scenes/UI/power_up_ui.tscn" id="4_u8tly"]
+
+[node name="UICanvasLayer" type="CanvasLayer"]
+
+[node name="GameButtonUI" parent="." instance=ExtResource("1_ht33c")]
+offset_left = 1.0
+offset_top = 309.0
+offset_right = -1102.0
+offset_bottom = -353.0
+
+[node name="ScoreCardUI" parent="." instance=ExtResource("2_u8tly")]
+offset_left = 937.0
+offset_top = 9.0
+offset_right = 977.0
+offset_bottom = 49.0
+
+[node name="TurnTrackerUI" parent="." instance=ExtResource("3_fivem")]
+offset_left = -2.0
+offset_top = 399.0
+offset_right = -1128.0
+offset_bottom = -243.0
+
+[node name="PowerUpUI" parent="." instance=ExtResource("4_u8tly")]
+offset_left = 7.0
+offset_top = 484.0

@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://cttyyy56pjat3"]
+
+[ext_resource type="Script" uid="uid://dr3aqglog1nu" path="res://Scripts/Core/game_controller.gd" id="1_paydd"]
+
+[node name="GameController" type="Node"]
+script = ExtResource("1_paydd")
+
+[node name="PowerUpContainer" type="Node2D" parent="."]

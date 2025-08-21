@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://bxwr5njrkwahy"]
+
+[ext_resource type="Script" uid="uid://bdul24ub8htns" path="res://Scripts/UI/power_up_icon.gd" id="1_8w4xw"]
+
+[node name="PowerUpIcon" type="TextureButton"]
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_8w4xw")

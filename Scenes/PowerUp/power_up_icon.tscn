@@ -1,0 +1,25 @@
+[gd_scene load_steps=4 format=3 uid="uid://b8tx280mggkew"]
+
+[ext_resource type="Script" uid="uid://bdul24ub8htns" path="res://Scripts/UI/power_up_icon.gd" id="1_aef0c"]
+[ext_resource type="Shader" uid="uid://b0mmnawse84b1" path="res://Scripts/Shaders/power_up_ui_highlight.gdshader" id="1_u0s6b"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hso7t"]
+shader = ExtResource("1_u0s6b")
+shader_parameter/glow_intensity = 0.0
+shader_parameter/glow_color = Color(0.111848, 0.115973, 1.20327e-08, 0.470588)
+
+[node name="PowerUpIcon" type="TextureButton"]
+material = SubResource("ShaderMaterial_hso7t")
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_aef0c")
+
+[node name="LabelBg" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="HoverLabel" type="Label" parent="LabelBg"]
+layout_mode = 2
+
+[connection signal="pressed" from="." to="." method="_on_pressed"]

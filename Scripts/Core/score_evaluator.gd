@@ -1,0 +1,111 @@
+extends Node
+class_name ScoreEvaluator
+
+static func evaluate(dice_values: Array[int]) -> Dictionary:
+	return {
+		"pairs": get_pairs(dice_values),
+		"three_of_a_kind": get_n_of_a_kind(dice_values, 3),
+		"four_of_a_kind": get_n_of_a_kind(dice_values, 4),
+		"full_house": is_full_house(dice_values),
+		"straight": is_straight(dice_values),
+		"sum": get_sum(dice_values)
+	}
+
+static func get_sum(values: Array[int]) -> int:
+	var total := 0
+	for v in values:
+		total += v
+	return total
+
+static func get_pairs(values: Array[int]) -> int:
+	var counts = {}
+	for v in values:
+		counts[v] = counts.get(v, 0) + 1
+	var pairs = 0
+	for count in counts.values():
+		if count >= 2:
+			pairs += 1
+	return pairs
+
+static func get_n_of_a_kind(values: Array[int], n: int) -> bool:
+	var counts = {}
+	for v in values:
+		counts[v] = counts.get(v, 0) + 1
+	for count in counts.values():
+		if count >= n:
+			return true
+	return false
+
+
+static func is_full_house(values: Array[int]) -> bool:
+	var counts = {}
+	for v in values:
+		counts[v] = counts.get(v, 0) + 1
+	return 3 in counts.values() and 2 in counts.values()
+
+static func is_straight(values: Array[int]) -> bool:
+	var sorted = values.duplicate()
+	sorted.sort()
+	for i in range(1, sorted.size()):
+		if sorted[i] != sorted[i - 1] + 1:
+			return false
+	return true
+
+static func is_small_straight(values: Array[int]) -> bool:
+	var sorted = values.duplicate()
+	sorted.sort()
+	for i in range(1, sorted.size()):
+		if sorted[i] != sorted[i - 2] + 1:
+			return false
+	return true
+
+static func calculate_score_for_category(category: String, values: Array[int]) -> int:
+	print("=== using NEW calculate_score_for_category v2 ===")
+	var score: int = 0
+	match category:
+		"ones":         score = values.count(1) * 1
+		"twos":         score = values.count(2) * 2
+		"threes":       score = values.count(3) * 3
+		"fours":        score = values.count(4) * 4
+		"fives":        score = values.count(5) * 5
+		"sixes":        score = values.count(6) * 6
+		"three_of_a_kind":
+			if get_n_of_a_kind(values, 3):
+				score = get_sum(values)  # or 10, depending on your rule
+			else:
+				score = 0
+		"four_of_a_kind":
+			if get_n_of_a_kind(values, 4):
+				score = get_sum(values)  # or 15
+		"full_house":
+			if is_full_house(values):
+				score = 25
+		"small_straight":
+			if is_small_straight_test(values):
+				score = 30
+		"large_straight":
+			if is_straight(values):
+				score = 40
+		"yahtzee":
+			if get_n_of_a_kind(values, 5):
+				score = 50
+		"chance":
+			score = get_sum(values)
+		_:  # default to zero so you never return null
+			score = 0
+	print("→ returning:", score, " type:", typeof(score))
+	return score
+
+static func get_unique(values: Array) -> Array:
+	var seen := {}
+	var unique := []
+	for val in values:
+		if not seen.has(val):
+			seen[val] = true
+			unique.append(val)
+	return unique
+
+static func is_small_straight_test(values: Array) -> bool:
+	var unique := get_unique(values)
+	unique.sort()
+	return [1,2,3,4].all(unique.has) or [2,3,4,5].all(unique.has) or [3,4,5,6].all(unique.has)
