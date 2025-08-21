@@ -10,6 +10,7 @@ var turn_tracker
 var scorecard: Scorecard
 
 func _ready():
+	print("ScoreCardUI ready: ", score_card_ui_path)
 	dice_hand      = get_node(dice_hand_path)
 	score_card_ui  = get_node(score_card_ui_path)
 	turn_tracker   = get_node(turn_tracker_path)
@@ -32,6 +33,7 @@ func _ready():
 	score_card_ui.connect("hand_scored", Callable(self, "_hand_scored_disable"))
 
 
+
 func _on_roll_button_pressed() -> void:
 	if dice_hand.dice_list.is_empty():
 		dice_hand.spawn_dice()
@@ -40,6 +42,12 @@ func _on_roll_button_pressed() -> void:
 		dice_hand.update_dice_count()
 	dice_hand.roll_all()
 	print("▶ Roll pressed — using dice_count =", dice_hand.dice_count)
+	
+	# Use the score_card_ui reference we already have
+	if score_card_ui:
+		score_card_ui.update_best_hand_preview(DiceResults.values)
+	else:
+		push_error("GameButtonUI: score_card_ui reference is null")
 
 
 func _on_dice_roll_complete() -> void:

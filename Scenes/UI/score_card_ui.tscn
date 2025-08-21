@@ -213,3 +213,12 @@ text = "Lower  Total:"
 
 [node name="LowerTotalLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/LowerTotal"]
 layout_mode = 2
+
+[node name="BestHandScore" type="RichTextLabel" parent="."]
+clip_contents = false
+layout_mode = 0
+offset_top = 374.0
+offset_right = 359.0
+offset_bottom = 506.0
+bbcode_enabled = true
+fit_content = true
