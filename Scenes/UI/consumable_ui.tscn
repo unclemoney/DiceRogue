@@ -1,8 +1,8 @@
 [gd_scene load_steps=2 format=3 uid="uid://dv0gypvmv4bb"]
 
-[ext_resource type="Script" uid="uid://ci1p8hb3o3ol4" path="res://Scripts/UI/power_up_ui.gd" id="1_1bwr7"]
+[ext_resource type="Script" uid="uid://cjxupagn6l5ew" path="res://Scripts/UI/consumable_ui.gd" id="1_ske02"]
 
-[node name="ConsumeableUI" type="Control"]
+[node name="ConsumableUI" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -10,7 +10,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-script = ExtResource("1_1bwr7")
+script = ExtResource("1_ske02")
 
 [node name="Label" type="Label" parent="."]
 layout_mode = 0

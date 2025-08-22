@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://bepbb823xut5d"]
+[gd_scene load_steps=22 format=3 uid="uid://bepbb823xut5d"]
 
 [ext_resource type="Script" uid="uid://lff2c6sjl5pl" path="res://Tests/power_up_test.gd" id="1_kq0ch"]
 [ext_resource type="PackedScene" uid="uid://q27dsqs2pyd8" path="res://Scenes/UI/crt_overlay.tscn" id="2_6y38h"]
@@ -11,13 +11,16 @@
 [ext_resource type="PackedScene" uid="uid://df1otdcd66xb5" path="res://Scenes/UI/turn_tracker_ui.tscn" id="8_10srq"]
 [ext_resource type="PackedScene" uid="uid://sliaarrkymdo" path="res://Scenes/UI/score_card_ui.tscn" id="9_c4a2y"]
 [ext_resource type="PackedScene" uid="uid://lc4xqvsxdnpy" path="res://Scenes/UI/game_button_ui.tscn" id="10_dd2ak"]
+[ext_resource type="PackedScene" uid="uid://dv0gypvmv4bb" path="res://Scenes/UI/consumable_ui.tscn" id="11_03inb"]
 [ext_resource type="PackedScene" uid="uid://bhv7dyrckqhk6" path="res://Scenes/UI/power_up_ui.tscn" id="11_b7ne7"]
-[ext_resource type="PackedScene" uid="uid://dv0gypvmv4bb" path="res://Scenes/UI/consumeable_ui.tscn" id="12_10srq"]
-[ext_resource type="Script" uid="uid://cjxupagn6l5ew" path="res://Scripts/UI/consumeable_ui.gd" id="13_c4a2y"]
 [ext_resource type="PackedScene" uid="uid://b0h68l2hpjf3o" path="res://Scenes/PowerUp/power_up_manager.tscn" id="13_lu5kq"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="13_lulgc"]
 [ext_resource type="Resource" uid="uid://b1kspojq1dh26" path="res://Scripts/PowerUps/ExtraDice.tres" id="14_lybb4"]
+[ext_resource type="PackedScene" uid="uid://b4xf8p7m3ggtb" path="res://Scenes/Consumable/ConsumableIcon.tscn" id="14_sh2dr"]
 [ext_resource type="Resource" uid="uid://cgeradia34lyw" path="res://Scripts/PowerUps/ExtraRolls.tres" id="15_10srq"]
+[ext_resource type="PackedScene" uid="uid://c2brbu8nl4tvq" path="res://Scenes/Managers/consumable_manager.tscn" id="17_dd2ak"]
+[ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="20_sh2dr"]
+[ext_resource type="Resource" uid="uid://bdbldxuf65trw" path="res://Scripts/Consumable/ScoreReroll.tres" id="21_4hepw"]
 
 [node name="Node2D" type="Node2D"]
 script = ExtResource("1_kq0ch")
@@ -69,20 +72,23 @@ offset_top = 16.0
 offset_right = 883.0
 offset_bottom = 56.0
 
+[node name="ConsumableUI" parent="." instance=ExtResource("11_03inb")]
+offset_left = 684.0
+offset_top = 517.0
+offset_right = 1260.0
+offset_bottom = 716.0
+consumable_icon_scene = ExtResource("14_sh2dr")
+
 [node name="PowerUpUI" parent="." instance=ExtResource("11_b7ne7")]
 offset_left = 19.0
 offset_top = 515.0
 offset_right = 612.0
 offset_bottom = 720.0
 
-[node name="ConsumeableUI" parent="." instance=ExtResource("12_10srq")]
-offset_left = 638.0
-offset_top = 515.0
-offset_right = 1273.0
-offset_bottom = 718.0
-script = ExtResource("13_c4a2y")
-
 [node name="GameController" parent="." instance=ExtResource("2_b7ne7")]
 
 [node name="PowerUpManager" parent="." instance=ExtResource("13_lu5kq")]
 power_up_defs = Array[ExtResource("13_lulgc")]([ExtResource("14_lybb4"), ExtResource("15_10srq")])
+
+[node name="ConsumableManager" parent="." instance=ExtResource("17_dd2ak")]
+consumable_defs = Array[ExtResource("20_sh2dr")]([ExtResource("21_4hepw")])

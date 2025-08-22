@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dbm515dh3082i"]
+
+[ext_resource type="Script" uid="uid://buo605tguvnyq" path="res://Scripts/Consumable/score_reroll_consumable.gd" id="1_0vvvl"]
+
+[node name="ScoreRerollConsumable" type="Node"]
+script = ExtResource("1_0vvvl")

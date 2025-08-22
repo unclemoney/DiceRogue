@@ -3,22 +3,32 @@ extends Node
 
 signal power_up_granted(id: String, power_up: PowerUp)
 signal power_up_revoked(id: String)
+signal consumable_used(id: String, consumable: Consumable)
 
-# Single active instance per id; if you need multiples later, switch to Array mapping.
+# Active power-ups and consumables in the game dictionaries
 var active_power_ups: Dictionary = {}  # id -> PowerUp
+var active_consumables: Dictionary = {}  # id -> Consumable
 
 # Centralized, explicit NodePaths (tweak in Inspector if scene changes)
-@export var dice_hand_path: NodePath         = ^"../DiceHand"
-@export var turn_tracker_path: NodePath      = ^"../TurnTracker"
-@export var power_up_manager_path: NodePath  = ^"../PowerUpManager"
-@export var power_up_ui_path: NodePath       = ^"../PowerUpUI"
+@export var dice_hand_path: NodePath          = ^"../DiceHand"
+@export var turn_tracker_path: NodePath       = ^"../TurnTracker"
+@export var power_up_manager_path: NodePath   = ^"../PowerUpManager"
+@export var power_up_ui_path: NodePath        = ^"../PowerUpUI"
 @export var power_up_container_path: NodePath = ^"PowerUpContainer"
+@export var consumable_manager_path: NodePath = ^"../ConsumableManager"
+@export var consumable_ui_path: NodePath      = ^"../ConsumableUI"
+@export var consumable_container_path: NodePath = ^"ConsumableContainer"
+@export var score_card_ui_path: NodePath = ^"../ScoreCardUI"
 
+@onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
+@onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
+@onready var consumable_container: Node  = get_node(consumable_container_path)
 @onready var dice_hand: DiceHand         = get_node(dice_hand_path) as DiceHand
 @onready var turn_tracker: TurnTracker   = get_node(turn_tracker_path) as TurnTracker
 @onready var pu_manager: PowerUpManager  = get_node(power_up_manager_path) as PowerUpManager
 @onready var powerup_ui: PowerUpUI       = get_node(power_up_ui_path) as PowerUpUI
 @onready var power_up_container: Node    = get_node(power_up_container_path)
+@onready var score_card_ui = get_node(score_card_ui_path)
 
 const STARTING_POWER_UP_IDS := ["extra_dice", "extra_rolls"]
 
@@ -44,6 +54,7 @@ func spawn_starting_powerups() -> void:
 
 func _on_game_start() -> void:
 	spawn_starting_powerups()
+	grant_consumable("score_reroll")
 
 func grant_power_up(id: String) -> void:
 	# 1) Spawn logic via scene manager
@@ -99,3 +110,49 @@ func _on_power_up_deselected(power_up_id: String) -> void:
 			pu.remove(turn_tracker)
 		_:
 			push_error("Unknown target for power-up: %s" % power_up_id)
+
+func grant_consumable(id: String) -> void:
+	print("Granting consumable:", id)
+	
+	var consumable := consumable_manager.spawn_consumable(id, consumable_container) as Consumable
+	if consumable == null:
+		push_error("Failed to spawn Consumable '%s'" % id)
+		return
+
+	active_consumables[id] = consumable
+	
+	# Add to UI with null checks
+	var def: ConsumableData = consumable_manager.get_def(id)
+	if not def:
+		push_error("No ConsumableData found for '%s'" % id)
+		return
+		
+	var icon = consumable_ui.add_consumable(def)
+	if not icon:
+		push_error("Failed to create UI icon for consumable '%s'" % id)
+		return
+		
+	# Connect signal only if we have a valid icon
+	icon.consumable_used.connect(_on_consumable_used)
+
+
+# Modify the consumable used handler
+func _on_consumable_used(consumable_id: String) -> void:
+	var consumable = active_consumables.get(consumable_id)
+	if not consumable:
+		push_error("No Consumable found for id: %s" % consumable_id)
+		return
+		
+	match consumable_id:
+		"score_reroll":
+			if score_card_ui:
+				consumable.apply(self)
+			else:
+				push_error("GameController: score_card_ui not found!")
+		_:
+			push_error("Unknown consumable type: %s" % consumable_id)
+	
+	# Remove the consumable after use
+	consumable.consume()
+	active_consumables.erase(consumable_id)
+	emit_signal("consumable_used", consumable_id, consumable)

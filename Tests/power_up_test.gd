@@ -10,6 +10,9 @@ extends Node2D
 @onready var game_controller: Node     = $GameController
 @onready var pu_manager: PowerUpManager = $"../PowerUpManager"
 @onready var pu_ui: PowerUpUI = $"../PowerUpUI"
+@onready var consumable_ui: ConsumableUI = $ConsumableUI
+@onready var consumable_manager: ConsumableManager = $ConsumableManager
+
 
 func _ready():
 	score_card_ui.bind_scorecard(score_card)
