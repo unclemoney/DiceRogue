@@ -121,6 +121,9 @@ func _on_reroll_completed() -> void:
 func play_destruction_effect() -> void:
 	print("play_destruction_effect called")
 	if explosion_effect_scene:
+		var screen_shake = get_tree().root.find_child("ScreenShake", true, false)
+		if screen_shake:
+			screen_shake.shake(0.4, 0.3)  # Moderate shake for 0.3 seconds
 		print("Creating explosion instance from:", explosion_effect_scene.resource_path)
 		_explosion_instance = explosion_effect_scene.instantiate()
 		if _explosion_instance:
