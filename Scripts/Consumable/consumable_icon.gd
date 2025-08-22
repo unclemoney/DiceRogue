@@ -3,6 +3,8 @@ class_name ConsumableIcon
 
 @export var data: ConsumableData
 @export var glow_intensity: float = 0.5
+@export var explosion_effect_scene: PackedScene
+var _explosion_instance: GPUParticles2D
 
 @onready var hover_label: Label = $LabelBg/HoverLabel
 @onready var label_bg: PanelContainer = $LabelBg
@@ -13,6 +15,7 @@ var is_active := false
 signal consumable_used(consumable_id: String)
 
 func _ready() -> void:
+	print("ConsumableIcon: _ready() called")
 	if not has_node("LabelBg/HoverLabel"):
 		push_error("Missing HoverLabel")
 		return
@@ -33,6 +36,18 @@ func _ready() -> void:
 	_shader_material.shader = preload("res://Scripts/Shaders/power_up_ui_highlight.gdshader")
 	_shader_material.set_shader_parameter("glow_intensity", 0.0)
 	material = _shader_material
+	# Preload explosion effect
+	# Check explosion effect scene
+	print("Checking explosion effect scene...")
+	if explosion_effect_scene:
+		print("Explosion effect scene assigned in inspector:", explosion_effect_scene.resource_path)
+	else:
+		print("No explosion effect scene assigned, attempting to preload...")
+		explosion_effect_scene = preload("res://Scenes/Effects/ConsumableExplosion.tscn")
+		if explosion_effect_scene:
+			print("Successfully preloaded explosion effect:", explosion_effect_scene.resource_path)
+		else:
+			push_error("Failed to preload ConsumableExplosion scene!")
 
 func set_data(new_data: ConsumableData) -> void:
 	data = new_data
@@ -95,4 +110,41 @@ func _on_reroll_completed() -> void:
 	is_active = false
 	_shader_material.set_shader_parameter("glow_intensity", 0.0)
 	modulate = Color.WHITE
-	queue_free()  # Remove the icon
+	
+	# Play explosion effect before removing
+	play_destruction_effect()
+	
+	# Add a small delay for effect
+	await get_tree().create_timer(0.2).timeout
+	queue_free()
+
+func play_destruction_effect() -> void:
+	print("play_destruction_effect called")
+	if explosion_effect_scene:
+		print("Creating explosion instance from:", explosion_effect_scene.resource_path)
+		_explosion_instance = explosion_effect_scene.instantiate()
+		if _explosion_instance:
+			# Get the root viewport instead of parent for UI visibility
+			var viewport = get_tree().root
+			viewport.add_child(_explosion_instance)
+			
+			# Position at center of icon in global coordinates
+			var center_pos = get_global_transform_with_canvas().origin + (size / 2)
+			_explosion_instance.global_position = center_pos
+			print("Positioned explosion at:", center_pos)
+			
+			# Ensure visibility and start emitting
+			_explosion_instance.show()
+			_explosion_instance.emitting = true
+			print("Explosion effect started, emitting:", _explosion_instance.emitting)
+			
+			# Wait for entire lifetime plus a small buffer
+			var total_time = _explosion_instance.lifetime * (1.0 + _explosion_instance.explosiveness)
+			print("Waiting for total time:", total_time)
+			await get_tree().create_timer(total_time).timeout
+			
+			print("Explosion effect cleanup started")
+			_explosion_instance.queue_free()
+			print("Explosion effect cleanup complete")
+	else:
+		push_error("No explosion effect scene available!")

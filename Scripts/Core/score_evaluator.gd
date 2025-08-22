@@ -84,13 +84,12 @@ static func get_unique(values: Array) -> Array:
 			unique.append(val)
 	return unique
 
-static func is_small_straight(values: Array[int]) -> bool:
-	var sorted = values.duplicate()
-	sorted.sort()
-	for i in range(1, sorted.size()):
-		if sorted[i] != sorted[i - 2] + 1:
-			return false
-	return true
+static func is_small_straight(values: Array) -> bool:
+	var unique := get_unique(values)
+	unique.sort()
+	return [1,2,3,4].all(unique.has) or \
+		   [2,3,4,5].all(unique.has) or \
+		   [3,4,5,6].all(unique.has)
 
 static func calculate_score_for_category(category: String, values: Array[int]) -> int:
 	print("=== using NEW calculate_score_for_category v2 ===")
@@ -128,4 +127,3 @@ static func calculate_score_for_category(category: String, values: Array[int]) -
 			score = 0
 	print("→ returning:", score, " type:", typeof(score))
 	return score
-

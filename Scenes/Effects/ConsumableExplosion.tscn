@@ -1,0 +1,43 @@
+[gd_scene load_steps=6 format=3 uid="uid://bfditmacevklt"]
+
+[ext_resource type="Shader" path="res://Scripts/Shaders/consumable_explosion.gdshader" id="1_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ui3er"]
+shader = ExtResource("1_shader")
+shader_parameter/color = Color(1, 0.8, 0, 1)
+shader_parameter/spread = 0.5
+shader_parameter/fade_speed = 1.0
+
+[sub_resource type="Gradient" id="Gradient_1"]
+offsets = PackedFloat32Array(0, 0.3, 1)
+colors = PackedColorArray(1, 0.8, 0, 1, 1, 0.4, 0, 1, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_1"]
+gradient = SubResource("Gradient_1")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_1"]
+emission_shape = 1
+emission_sphere_radius = 10.0
+particle_flag_disable_z = true
+direction = Vector3(0, -1, 0)
+spread = 180.0
+gravity = Vector3(0, 200, 0)
+initial_velocity_min = 100.0
+initial_velocity_max = 200.0
+orbit_velocity_min = 0.0
+orbit_velocity_max = 0.0
+scale_min = 4.0
+scale_max = 8.0
+color = Color(1, 0.8, 0, 1)
+color_ramp = SubResource("GradientTexture1D_1")
+
+[node name="ConsumableExplosion" type="GPUParticles2D"]
+z_index = 100  # Ensure particles appear above other UI elements
+material = SubResource("ShaderMaterial_ui3er")
+emitting = false
+amount = 32
+process_material = SubResource("ParticleProcessMaterial_1")
+lifetime = 1.0
+one_shot = true
+explosiveness = 0.95
+visibility_rect = Rect2(-100, -100, 200, 200)

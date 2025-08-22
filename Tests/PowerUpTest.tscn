@@ -26,6 +26,7 @@
 script = ExtResource("1_kq0ch")
 
 [node name="CRTOverlay" parent="." instance=ExtResource("2_6y38h")]
+visible = false
 
 [node name="Background" type="Sprite2D" parent="."]
 position = Vector2(644, 358.25)
@@ -73,8 +74,8 @@ offset_right = 883.0
 offset_bottom = 56.0
 
 [node name="ConsumableUI" parent="." instance=ExtResource("11_03inb")]
-offset_left = 684.0
-offset_top = 517.0
+offset_left = 654.0
+offset_top = 514.0
 offset_right = 1260.0
 offset_bottom = 716.0
 consumable_icon_scene = ExtResource("14_sh2dr")
