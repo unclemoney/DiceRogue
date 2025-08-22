@@ -8,6 +8,7 @@ class_name ConsumableIcon
 @onready var label_bg: PanelContainer = $LabelBg
 
 var _shader_material: ShaderMaterial
+var is_active := false
 
 signal consumable_used(consumable_id: String)
 
@@ -17,8 +18,7 @@ func _ready() -> void:
 		return
 
 	label_bg.visible = false
-
-	# Only call _apply_data if we have data
+	
 	if data:
 		_apply_data()
 	else:
@@ -79,5 +79,20 @@ func _on_mouse_exited() -> void:
 	t.parallel().tween_property(_shader_material, "shader_parameter/glow_intensity", 0.0, 0.1)
 
 func _on_pressed() -> void:
-	emit_signal("consumable_used", data.id)
-	queue_free()  # Remove the icon when used
+	if not is_active:
+		emit_signal("consumable_used", data.id)
+		# Don't queue_free here - wait for reroll_completed signal
+		disabled = true  # Prevent multiple activations while waiting for score selection
+	else:
+		push_warning("Consumable already active")
+
+func _on_reroll_activated() -> void:
+	is_active = true
+	_shader_material.set_shader_parameter("glow_intensity", glow_intensity)
+	modulate = Color(1.5, 1.5, 1.5)  # Brighten the icon
+
+func _on_reroll_completed() -> void:
+	is_active = false
+	_shader_material.set_shader_parameter("glow_intensity", 0.0)
+	modulate = Color.WHITE
+	queue_free()  # Remove the icon

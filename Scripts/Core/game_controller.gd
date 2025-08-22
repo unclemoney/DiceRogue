@@ -127,16 +127,13 @@ func grant_consumable(id: String) -> void:
 		push_error("No ConsumableData found for '%s'" % id)
 		return
 		
-	var icon = consumable_ui.add_consumable(def)
+	var icon = consumable_ui.add_consumable(def, consumable)  # Pass the consumable instance
 	if not icon:
 		push_error("Failed to create UI icon for consumable '%s'" % id)
 		return
-		
-	# Connect signal only if we have a valid icon
+
 	icon.consumable_used.connect(_on_consumable_used)
 
-
-# Modify the consumable used handler
 func _on_consumable_used(consumable_id: String) -> void:
 	var consumable = active_consumables.get(consumable_id)
 	if not consumable:
@@ -146,13 +143,24 @@ func _on_consumable_used(consumable_id: String) -> void:
 	match consumable_id:
 		"score_reroll":
 			if score_card_ui:
+				# Activate reroll mode
 				consumable.apply(self)
+				score_card_ui.activate_score_reroll()
+				# Connect to score_rerolled signal for cleanup
+				if not score_card_ui.is_connected("score_rerolled", _on_score_rerolled):
+					score_card_ui.connect("score_rerolled", _on_score_rerolled)
 			else:
 				push_error("GameController: score_card_ui not found!")
 		_:
 			push_error("Unknown consumable type: %s" % consumable_id)
-	
-	# Remove the consumable after use
-	consumable.consume()
-	active_consumables.erase(consumable_id)
-	emit_signal("consumable_used", consumable_id, consumable)
+
+func _on_score_rerolled(_section, _category, _score) -> void:
+	print("GameController: Score rerolled, cleaning up consumable")
+	var consumable = active_consumables.get("score_reroll")
+	if consumable:
+		consumable.complete_reroll()
+		consumable.consume()
+		active_consumables.erase("score_reroll")
+		emit_signal("consumable_used", "score_reroll", consumable)
+	else:
+		push_error("No active score_reroll consumable found!")

@@ -4,10 +4,12 @@ var scorecard: Scorecard
 var category_buttons := {}
 var category_labels := {}
 var turn_scored := false
+var reroll_active := false
 var upper_section_buttons := {}
 var lower_section_buttons := {}
 
 signal hand_scored
+signal score_rerolled(section: Scorecard.Section, category: String, score: int)
 @onready var best_hand_label: RichTextLabel = $BestHandScore
 
 const LOWER_CATEGORY_NODE_NAMES := {
@@ -89,6 +91,13 @@ func connect_buttons():
 			print("❌ Lower button not found for:", category, "→", button_path)
 
 func on_category_selected(section: Scorecard.Section, category: String):
+	if reroll_active:
+		handle_score_reroll(section, category)
+		return
+		
+	if turn_scored:
+		print("⚠️ Score already assigned this turn.")
+		return
 	if turn_scored:
 		print("⚠️ Score already assigned this turn.")
 		return
@@ -165,7 +174,7 @@ func update_best_hand_preview(dice_values: Array):
 		best_hand_label.text = "[center][tornado freq=1.9 sat=0.8 val=1.9]Best: %s (%d)[/tornado][/center]" % [display_category, best_score]
 		animate_best_hand_label()
 	else:
-		best_hand_label.text = "[center][tornado freq=0.2 sat=0.8 val=0.9]No available moves[/tornado][/center]"
+		best_hand_label.text = "[center][tornado freq=1.9 sat=0.8 val=1.9]No available moves[/tornado][/center]"
 
 func animate_best_hand_label():
 	var tween = create_tween()
@@ -178,3 +187,31 @@ func animate_best_hand_label():
 		original_position.y - 10, 0.2).set_trans(Tween.TRANS_SINE)
 	tween.tween_property(best_hand_label, "position:y", 
 		original_position.y, 0.2).set_trans(Tween.TRANS_SINE)
+
+func activate_score_reroll() -> void:
+	reroll_active = true
+	# Enable only buttons that have scores
+	for category in upper_section_buttons.keys():
+		var button = upper_section_buttons[category]
+		button.disabled = scorecard.upper_scores[category] == null
+	for category in lower_section_buttons.keys():
+		var button = lower_section_buttons[category]
+		button.disabled = scorecard.lower_scores[category] == null
+		
+func handle_score_reroll(section: Scorecard.Section, category: String) -> void:
+	var values = DiceResults.values
+	var score = ScoreEvaluatorSingleton.calculate_score_for_category(category, values)
+	
+	if score == null:
+		show_invalid_score_feedback(category)
+		return
+		
+	# Replace the old score
+	scorecard.set_score(section, category, score)
+	update_all()
+	
+	# Reset reroll state
+	reroll_active = false
+	disable_all_score_buttons()
+	emit_signal("hand_scored")
+	emit_signal("score_rerolled", section, category, score)

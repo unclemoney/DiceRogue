@@ -32,24 +32,57 @@ static func get_n_of_a_kind(values: Array[int], n: int) -> bool:
 	for v in values:
 		counts[v] = counts.get(v, 0) + 1
 	for count in counts.values():
-		if count >= n:
+		if count >= n:  # This is correct - already handles extra dice
 			return true
 	return false
 
 
+# 3. Fix full house
 static func is_full_house(values: Array[int]) -> bool:
 	var counts = {}
 	for v in values:
 		counts[v] = counts.get(v, 0) + 1
-	return 3 in counts.values() and 2 in counts.values()
+	
+	# Look for any valid full house combination
+	var has_three = false
+	var has_pair = false
+	
+	for count in counts.values():
+		if count >= 3:
+			has_three = true
+		elif count >= 2:
+			has_pair = true
+		# If we find a count of 5 or more, it can form both parts
+		if count >= 5:
+			return true
+	
+	return has_three and has_pair
 
 static func is_straight(values: Array[int]) -> bool:
-	var sorted = values.duplicate()
-	sorted.sort()
-	for i in range(1, sorted.size()):
-		if sorted[i] != sorted[i - 1] + 1:
-			return false
-	return true
+	var unique := get_unique(values)
+	unique.sort()
+	
+	# Look for any valid 5-dice straight in the sorted unique values
+	if unique.size() < 5:
+		return false
+		
+	# Check for consecutive sequences of 5
+	for i in range(unique.size() - 4):
+		var sequence = unique.slice(i, i + 5)
+		if sequence[4] == sequence[0] + 4:
+			return true
+	
+	return false
+
+# Helper function already exists but shown for context
+static func get_unique(values: Array) -> Array:
+	var seen := {}
+	var unique := []
+	for val in values:
+		if not seen.has(val):
+			seen[val] = true
+			unique.append(val)
+	return unique
 
 static func is_small_straight(values: Array[int]) -> bool:
 	var sorted = values.duplicate()
@@ -81,7 +114,7 @@ static func calculate_score_for_category(category: String, values: Array[int]) -
 			if is_full_house(values):
 				score = 25
 		"small_straight":
-			if is_small_straight_test(values):
+			if is_small_straight(values):
 				score = 30
 		"large_straight":
 			if is_straight(values):
@@ -96,16 +129,3 @@ static func calculate_score_for_category(category: String, values: Array[int]) -
 	print("→ returning:", score, " type:", typeof(score))
 	return score
 
-static func get_unique(values: Array) -> Array:
-	var seen := {}
-	var unique := []
-	for val in values:
-		if not seen.has(val):
-			seen[val] = true
-			unique.append(val)
-	return unique
-
-static func is_small_straight_test(values: Array) -> bool:
-	var unique := get_unique(values)
-	unique.sort()
-	return [1,2,3,4].all(unique.has) or [2,3,4,5].all(unique.has) or [3,4,5,6].all(unique.has)
