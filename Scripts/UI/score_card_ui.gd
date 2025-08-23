@@ -173,8 +173,18 @@ func update_best_hand_preview(dice_values: Array):
 		best_hand_label.add_theme_font_size_override("normal_font_size", 32)
 		best_hand_label.text = "[center][tornado freq=1.9 sat=0.8 val=1.9]Best: %s (%d)[/tornado][/center]" % [display_category, best_score]
 		animate_best_hand_label()
+		var screen_shake = get_tree().root.find_child("ScreenShake", true, false)
+		var num = remap(best_score, 0, 50, 0.1, 1.0)
+		print("Shake: ", num)
+		if screen_shake:
+			screen_shake.shake(num, num / 2)  # Moderate shake for 0.3 seconds
 	else:
 		best_hand_label.text = "[center][tornado freq=1.9 sat=0.8 val=1.9]No available moves[/tornado][/center]"
+
+func remap(value, from_min, from_max, to_min, to_max):
+	var t = inverse_lerp(from_min, from_max, value)
+	return lerp(to_min, to_max, t)
+
 
 func animate_best_hand_label():
 	var tween = create_tween()
