@@ -16,6 +16,7 @@ This game takes its inspiration from the following games: Balatro, Dicey Dungeon
 - Follow snake_case for methods/vars, PascalCase for classes/nodes.
 - Wrap exported properties in @export var and onready lookups in @onready var.
 - Never emit inline parsing hacks—break declarations into separate var + assignment.
+- Provide detailed steps for setting up complex scenes or systems in the Godot editor, when applicable.
 
 ## Scene & Node Organization
 - Single responsibility: each scene owns exactly one domain (UI, gameplay logic, effects).

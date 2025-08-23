@@ -92,7 +92,7 @@ static func is_small_straight(values: Array) -> bool:
 		   [3,4,5,6].all(unique.has)
 
 static func calculate_score_for_category(category: String, values: Array[int]) -> int:
-	print("=== using NEW calculate_score_for_category v2 ===")
+	#print("=== using NEW calculate_score_for_category v2 ===")
 	var score: int = 0
 	match category:
 		"ones":         score = values.count(1) * 1
@@ -125,5 +125,5 @@ static func calculate_score_for_category(category: String, values: Array[int]) -
 			score = get_sum(values)
 		_:  # default to zero so you never return null
 			score = 0
-	print("→ returning:", score, " type:", typeof(score))
+	#print("→ returning:", score, " type:", typeof(score))
 	return score

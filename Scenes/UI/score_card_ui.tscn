@@ -197,11 +197,11 @@ layout_mode = 2
 [node name="YahtzeeBonus" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
 layout_mode = 2
 
-[node name="YahtzeeBonusLabel" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
+[node name="YahtzeeBonusButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
 layout_mode = 2
 text = "Yhatzee Bonus:"
 
-[node name="YahtzeeBonusButton" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
+[node name="YahtzeeBonusLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
 layout_mode = 2
 
 [node name="LowerTotal" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
@@ -222,3 +222,12 @@ offset_right = 359.0
 offset_bottom = 506.0
 bbcode_enabled = true
 fit_content = true
+
+[node name="RichTextTotalScore" type="RichTextLabel" parent="."]
+layout_mode = 0
+offset_left = 18.0
+offset_top = 492.0
+offset_right = 318.0
+offset_bottom = 708.0
+theme_override_font_sizes/normal_font_size = 45
+bbcode_enabled = true
