@@ -225,9 +225,9 @@ fit_content = true
 
 [node name="RichTextTotalScore" type="RichTextLabel" parent="."]
 layout_mode = 0
-offset_left = 18.0
-offset_top = 492.0
-offset_right = 318.0
-offset_bottom = 708.0
+offset_left = 17.0
+offset_top = 453.0
+offset_right = 317.0
+offset_bottom = 656.0
 theme_override_font_sizes/normal_font_size = 45
 bbcode_enabled = true

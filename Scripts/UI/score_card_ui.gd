@@ -1,4 +1,5 @@
 extends Control
+class_name ScoreCardUI
 
 var scorecard: Scorecard
 var category_buttons := {}

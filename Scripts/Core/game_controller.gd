@@ -1,5 +1,6 @@
 # GameController.gd
 extends Node
+class_name GameController
 
 signal power_up_granted(id: String, power_up: PowerUp)
 signal power_up_revoked(id: String)
@@ -8,17 +9,25 @@ signal consumable_used(id: String, consumable: Consumable)
 # Active power-ups and consumables in the game dictionaries
 var active_power_ups: Dictionary = {}  # id -> PowerUp
 var active_consumables: Dictionary = {}  # id -> Consumable
+var active_debuffs: Dictionary = {}  # id -> Debuff
+
+const ScoreCardUI := preload("res://Scripts/UI/score_card_ui.gd")
+const DebuffManager := preload("res://Scripts/Managers/DebuffManager.gd")
+const DebuffUI := preload("res://Scripts/UI/debuff_ui.gd")
 
 # Centralized, explicit NodePaths (tweak in Inspector if scene changes)
-@export var dice_hand_path: NodePath          = ^"../DiceHand"
-@export var turn_tracker_path: NodePath       = ^"../TurnTracker"
-@export var power_up_manager_path: NodePath   = ^"../PowerUpManager"
-@export var power_up_ui_path: NodePath        = ^"../PowerUpUI"
-@export var power_up_container_path: NodePath = ^"PowerUpContainer"
-@export var consumable_manager_path: NodePath = ^"../ConsumableManager"
-@export var consumable_ui_path: NodePath      = ^"../ConsumableUI"
+@export var dice_hand_path: NodePath            = ^"../DiceHand"
+@export var turn_tracker_path: NodePath         = ^"../TurnTracker"
+@export var power_up_manager_path: NodePath     = ^"../PowerUpManager"
+@export var power_up_ui_path: NodePath          = ^"../PowerUpUI"
+@export var power_up_container_path: NodePath   = ^"PowerUpContainer"
+@export var consumable_manager_path: NodePath   = ^"../ConsumableManager"
+@export var consumable_ui_path: NodePath        = ^"../ConsumableUI"
 @export var consumable_container_path: NodePath = ^"ConsumableContainer"
-@export var score_card_ui_path: NodePath = ^"../ScoreCardUI"
+@export var score_card_ui_path: NodePath        = ^"../ScoreCardUI"
+@export var debuff_ui_path: NodePath            = ^"../DebuffUI"
+@export var debuff_container_path: NodePath     = ^"DebuffContainer"
+@export var debuff_manager_path: NodePath       = ^"../DebuffManager"
 
 @onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
 @onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
@@ -28,12 +37,17 @@ var active_consumables: Dictionary = {}  # id -> Consumable
 @onready var pu_manager: PowerUpManager  = get_node(power_up_manager_path) as PowerUpManager
 @onready var powerup_ui: PowerUpUI       = get_node(power_up_ui_path) as PowerUpUI
 @onready var power_up_container: Node    = get_node(power_up_container_path)
-@onready var score_card_ui = get_node(score_card_ui_path)
+@onready var score_card_ui: ScoreCardUI  = get_node(score_card_ui_path) as ScoreCardUI
+@onready var debuff_ui: DebuffUI         = get_node(debuff_ui_path) as DebuffUI
+@onready var debuff_container: Node      = get_node(debuff_container_path)
+@onready var debuff_manager: DebuffManager = get_node(debuff_manager_path) as DebuffManager
 
 const STARTING_POWER_UP_IDS := ["extra_dice", "extra_rolls"]
 
 func _ready() -> void:
 	print("▶ GameController._ready()")
+	if dice_hand:
+		dice_hand.roll_complete.connect(_on_roll_completed)  # Changed to match original signal name
 	call_deferred("_on_game_start")
 
 func spawn_starting_powerups() -> void:
@@ -55,6 +69,7 @@ func spawn_starting_powerups() -> void:
 func _on_game_start() -> void:
 	spawn_starting_powerups()
 	grant_consumable("score_reroll")
+	apply_debuff("lock_dice")
 
 func grant_power_up(id: String) -> void:
 	# 1) Spawn logic via scene manager
@@ -164,3 +179,42 @@ func _on_score_rerolled(_section, _category, _score) -> void:
 		emit_signal("consumable_used", "score_reroll", consumable)
 	else:
 		push_error("No active score_reroll consumable found!")
+
+func apply_debuff(id: String) -> void:
+	print("Applying debuff:", id)
+	
+	var debuff := debuff_manager.spawn_debuff(id, debuff_container) as Debuff
+	if debuff == null:
+		push_error("Failed to spawn Debuff '%s'" % id)
+		return
+
+	active_debuffs[id] = debuff
+	
+	# Add to UI with null checks
+	var def: DebuffData = debuff_manager.get_def(id)
+	if not def:
+		push_error("No DebuffData found for '%s'" % id)
+		return
+		
+	var icon = debuff_ui.add_debuff(def, debuff)
+	if not icon:
+		push_error("Failed to create UI icon for debuff '%s'" % id)
+		return
+
+	# Apply the debuff effect
+	match id:
+		"lock_dice":
+			debuff.target = dice_hand
+			debuff.start()
+		_:
+			push_error("Unknown debuff type: %s" % id)
+
+func is_debuff_active(id: String) -> bool:
+	return active_debuffs.has(id) and active_debuffs[id] != null
+
+func _on_roll_completed() -> void:
+	if is_debuff_active("lock_dice"):
+		print("Roll completed - reapplying lock_dice debuff")
+		var debuff = active_debuffs["lock_dice"]
+		if debuff and dice_hand:
+			debuff.apply(dice_hand)

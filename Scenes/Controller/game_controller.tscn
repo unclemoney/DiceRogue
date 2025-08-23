@@ -8,3 +8,5 @@ script = ExtResource("1_paydd")
 [node name="PowerUpContainer" type="Node2D" parent="."]
 
 [node name="ConsumableContainer" type="Node2D" parent="."]
+
+[node name="DebuffContainer" type="Node2D" parent="."]

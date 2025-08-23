@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://byhrvmffbj4iu"]
+
+[ext_resource type="Script" uid="uid://gjo86mldv2it" path="res://Scripts/Debuff/lock_dice_debuff.gd" id="1_ci4f1"]
+
+[node name="LockDiceDebuff" type="Node"]
+script = ExtResource("1_ci4f1")

@@ -3,13 +3,10 @@ class_name DiceHand
 
 signal roll_complete
 
+@export var roll_delay: float = 0.1
+@export var roll_duration: float = 0.5
 @export var dice_scene:      PackedScene
 @export var dice_count:      int     = 5
-#	set(value):
-#		dice_count = value
-		# Only update dice if they're already spawned
-		#if not dice_list.is_empty():
-		#	update_dice_count()
 @export var spacing:         float   = 80.0
 @export var start_position:  Vector2 = Vector2(100, 200)
 
@@ -18,7 +15,10 @@ var dice_list: Array[Dice] = []
 func spawn_dice() -> void:
 	clear_dice()
 	update_dice_count()
-
+	# Set initial state of all dice based on any active debuffs
+	if get_tree().get_first_node_in_group("debuffs") as LockDiceDebuff:
+		print("[DiceHand] Found active lock debuff - disabling all dice input")
+		disable_all_dice()
 
 
 func roll_all() -> void:
@@ -27,6 +27,7 @@ func roll_all() -> void:
 	for die in dice_list:
 		die.roll()
 	_update_results()
+	#await get_tree().create_timer(roll_duration).timeout
 	emit_signal("roll_complete")
 
 func _update_results() -> void:
@@ -65,3 +66,46 @@ func update_dice_count() -> void:
 		for i in range(dice_count, current_count):
 			var die = dice_list.pop_back()
 			die.queue_free()
+
+func enable_all_dice() -> void:
+	print("[DiceHand] Enabling all dice")
+	for die in get_children():
+		if die is Dice:
+			die.set_process_input(true)
+			if die.has_method("set_lock_shader_enabled"):
+				die.set_lock_shader_enabled(true)
+
+func disable_all_dice() -> void:
+	print("[DiceHand] Disabling all dice")
+	for die in get_children():
+		if die is Dice:
+			die.unlock()  # Force unlock
+			die.set_dice_input_enabled(false)
+			if die.has_method("set_lock_shader_enabled"):
+				die.set_lock_shader_enabled(false)
+
+func roll_unlocked_dice() -> void:
+	var unlocked = get_unlocked_dice()
+	if unlocked.is_empty():
+		print("No unlocked dice to roll")
+		return
+		
+	print("Rolling", unlocked.size(), "unlocked dice")
+	
+	for die in unlocked:
+		die.roll()
+		await get_tree().create_timer(roll_delay).timeout
+	
+	# After all dice have finished rolling
+	await get_tree().create_timer(roll_duration).timeout
+	emit_signal("roll_complete")  # Changed to match original signal name
+
+
+
+# Add this function
+func get_unlocked_dice() -> Array[Dice]:
+	var unlocked: Array[Dice] = []
+	for die in dice_list:
+		if die is Dice and not die.is_locked:
+			unlocked.append(die)
+	return unlocked

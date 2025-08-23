@@ -1,0 +1,113 @@
+[gd_scene load_steps=28 format=3 uid="uid://b46sathbx2q60"]
+
+[ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
+[ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
+[ext_resource type="PackedScene" uid="uid://q27dsqs2pyd8" path="res://Scenes/UI/crt_overlay.tscn" id="3_f4xs4"]
+[ext_resource type="Texture2D" uid="uid://c5j8lclc52j7" path="res://Resources/Art/Background/test.png" id="4_4tiye"]
+[ext_resource type="PackedScene" uid="uid://dugpl3du3i6xo" path="res://Scenes/Dice/dice_hand.tscn" id="5_gxabo"]
+[ext_resource type="PackedScene" uid="uid://c6k045mexxkyd" path="res://Scenes/Dice/dice.tscn" id="6_o8wpr"]
+[ext_resource type="PackedScene" uid="uid://bsukvul4wop20" path="res://Scenes/ScoreCard/score_card.tscn" id="7_w6663"]
+[ext_resource type="PackedScene" uid="uid://b8limy63m2tlo" path="res://Scenes/Tracker/turn_tracker.tscn" id="8_8eqdw"]
+[ext_resource type="PackedScene" uid="uid://lc4xqvsxdnpy" path="res://Scenes/UI/game_button_ui.tscn" id="9_wtptv"]
+[ext_resource type="PackedScene" uid="uid://df1otdcd66xb5" path="res://Scenes/UI/turn_tracker_ui.tscn" id="10_bv0jw"]
+[ext_resource type="PackedScene" uid="uid://sliaarrkymdo" path="res://Scenes/UI/score_card_ui.tscn" id="11_oy5od"]
+[ext_resource type="PackedScene" uid="uid://dv0gypvmv4bb" path="res://Scenes/UI/consumable_ui.tscn" id="12_pdckl"]
+[ext_resource type="PackedScene" uid="uid://b4xf8p7m3ggtb" path="res://Scenes/Consumable/ConsumableIcon.tscn" id="13_d3q3t"]
+[ext_resource type="PackedScene" uid="uid://bhv7dyrckqhk6" path="res://Scenes/UI/power_up_ui.tscn" id="14_gtvla"]
+[ext_resource type="PackedScene" uid="uid://bmnx7dfjhn2d" path="res://Scenes/UI/debuff_ui.tscn" id="14_oxb5w"]
+[ext_resource type="PackedScene" uid="uid://cttyyy56pjat3" path="res://Scenes/Controller/game_controller.tscn" id="15_aeiu6"]
+[ext_resource type="PackedScene" uid="uid://cellovyprro7" path="res://Scenes/Debuff/DebuffIcon.tscn" id="15_oxb5w"]
+[ext_resource type="PackedScene" uid="uid://b0h68l2hpjf3o" path="res://Scenes/PowerUp/power_up_manager.tscn" id="16_07va6"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="17_2uvn1"]
+[ext_resource type="Resource" uid="uid://b1kspojq1dh26" path="res://Scripts/PowerUps/ExtraDice.tres" id="18_3vaha"]
+[ext_resource type="Resource" uid="uid://cgeradia34lyw" path="res://Scripts/PowerUps/ExtraRolls.tres" id="19_si81o"]
+[ext_resource type="PackedScene" uid="uid://c2brbu8nl4tvq" path="res://Scenes/Managers/consumable_manager.tscn" id="20_1jk2k"]
+[ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="23_o8wpr"]
+[ext_resource type="Script" uid="uid://uiuqwtxbh7m0" path="res://Scripts/Debuff/DebuffData.gd" id="24_4tiye"]
+[ext_resource type="PackedScene" uid="uid://873jsmje6n6w" path="res://Scenes/Managers/debuff_manager.tscn" id="24_f4xs4"]
+[ext_resource type="Resource" uid="uid://bdbldxuf65trw" path="res://Scripts/Consumable/ScoreReroll.tres" id="24_w6663"]
+[ext_resource type="Resource" uid="uid://cs5xh10qdphbi" path="res://Scripts/Debuff/LockDice.tres" id="25_gxabo"]
+
+[node name="Node2D" type="Node2D"]
+script = ExtResource("1_d3q3t")
+
+[node name="ScreenShake" type="Node" parent="."]
+script = ExtResource("2_oxb5w")
+
+[node name="CRTOverlay" parent="." instance=ExtResource("3_f4xs4")]
+
+[node name="Background" type="Sprite2D" parent="."]
+position = Vector2(644, 358.25)
+scale = Vector2(2.05, 2.12117)
+texture = ExtResource("4_4tiye")
+
+[node name="DiceHand" parent="." instance=ExtResource("5_gxabo")]
+dice_scene = ExtResource("6_o8wpr")
+
+[node name="DiceContainer" type="Node2D" parent="."]
+
+[node name="ScoreCard" parent="." instance=ExtResource("7_w6663")]
+
+[node name="TurnTracker" parent="." instance=ExtResource("8_8eqdw")]
+
+[node name="GameButtonUI" parent="." instance=ExtResource("9_wtptv")]
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 10.0
+offset_top = 319.0
+offset_right = 10.0
+offset_bottom = 359.0
+grow_horizontal = 1
+grow_vertical = 1
+dice_hand_path = NodePath("../DiceHand")
+score_card_ui_path = NodePath("../ScoreCardUI")
+turn_tracker_path = NodePath("../TurnTracker")
+
+[node name="TurnTrackerUI" parent="." instance=ExtResource("10_bv0jw")]
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 7.0
+offset_top = 382.0
+offset_right = 71.0
+offset_bottom = 382.0
+grow_horizontal = 1
+grow_vertical = 1
+
+[node name="ScoreCardUI" parent="." instance=ExtResource("11_oy5od")]
+offset_left = 883.0
+offset_top = 16.0
+offset_right = 883.0
+offset_bottom = 56.0
+
+[node name="ConsumableUI" parent="." instance=ExtResource("12_pdckl")]
+offset_left = 467.0
+offset_top = 572.0
+offset_right = 846.0
+offset_bottom = 716.0
+consumable_icon_scene = ExtResource("13_d3q3t")
+
+[node name="DebuffUI" parent="." instance=ExtResource("14_oxb5w")]
+offset_left = 867.0
+offset_top = 572.0
+offset_right = 1277.0
+offset_bottom = 716.0
+debuff_icon_scene = ExtResource("15_oxb5w")
+
+[node name="PowerUpUI" parent="." instance=ExtResource("14_gtvla")]
+offset_left = 19.0
+offset_top = 572.0
+offset_right = 465.0
+offset_bottom = 720.0
+
+[node name="GameController" parent="." instance=ExtResource("15_aeiu6")]
+
+[node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
+power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o")])
+
+[node name="ConsumableManager" parent="." instance=ExtResource("20_1jk2k")]
+consumable_defs = Array[ExtResource("23_o8wpr")]([ExtResource("24_w6663")])
+
+[node name="DebuffManager" parent="." instance=ExtResource("24_f4xs4")]
+debuff_defs = Array[ExtResource("24_4tiye")]([ExtResource("25_gxabo")])
