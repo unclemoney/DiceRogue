@@ -6,6 +6,7 @@ signal selected(dice: Dice)
 signal clicked
 
 static var dice_textures := {}
+var active_mods: Dictionary = {}  # id -> Mod
 var home_position: Vector2 = Vector2.ZERO
 var _can_process_input := true
 var _lock_shader_enabled := true
@@ -20,6 +21,9 @@ var _lock_shader_enabled := true
 
 @onready var glow_shader := load("res://Scripts/Shaders/glow_overlay.gdshader")
 @onready var dice_material := ShaderMaterial.new()
+
+@onready var mod_container: Control = $ModContainer
+const ModIconScene := preload("res://Scenes/Mods/ModIcon.tscn")
 
 
 func _ready():
@@ -159,3 +163,56 @@ func shake_denied() -> void:
 	
 	# Ensure we end up at home position
 	tween.tween_property(self, "position", home_position, 0.1)
+
+func add_mod(mod_data: ModData) -> void:
+	if active_mods.has(mod_data.id):
+		print("[Dice] Mod already active:", mod_data.id)
+		return
+		
+	var mod_scene = mod_data.scene
+	if not mod_scene:
+		push_error("[Dice] No scene found for mod:", mod_data.id)
+		return
+		
+	var mod = mod_scene.instantiate()
+	if not mod:
+		push_error("[Dice] Failed to instantiate mod:", mod_data.id)
+		return
+		
+	active_mods[mod_data.id] = mod
+	add_child(mod)
+	mod.apply(self)
+	
+	# Create and add mod icon from scene
+	var icon = ModIconScene.instantiate() as ModIcon
+	if not icon:
+		push_error("[Dice] Failed to instantiate ModIcon")
+		return
+		
+	icon.data = mod_data
+	mod_container.add_child(icon)
+	
+	# Position icon in bottom right
+	icon.position = Vector2(
+		mod_container.size.x - icon.size.x - 2,
+		mod_container.size.y - icon.size.y - 2
+	)
+
+func remove_mod(id: String) -> void:
+	if active_mods.has(id):
+		var mod = active_mods[id]
+		mod.remove()
+		mod.queue_free()
+		active_mods.erase(id)
+		
+		# Remove associated icon
+		for icon in mod_container.get_children():
+			if icon is ModIcon and icon.data.id == id:
+				icon.queue_free()
+				break
+
+func has_mod(id: String) -> bool:
+	return active_mods.has(id)
+
+func get_mod(id: String) -> Mod:
+	return active_mods.get(id)

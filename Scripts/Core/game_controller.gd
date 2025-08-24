@@ -30,6 +30,7 @@ const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 @export var debuff_container_path: NodePath     = ^"DebuffContainer"
 @export var debuff_manager_path: NodePath       = ^"../DebuffManager"
 @export var score_card_path: NodePath           = ^"../ScoreCard"
+@export var mod_manager_path: NodePath = ^"../ModManager"
 
 @onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
 @onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
@@ -44,6 +45,7 @@ const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 @onready var debuff_container: Node      = get_node(debuff_container_path)
 @onready var debuff_manager: DebuffManager = get_node(debuff_manager_path) as DebuffManager
 @onready var scorecard: ScoreCard 		   = get_node(score_card_path) as ScoreCard
+@onready var mod_manager: ModManager = get_node(mod_manager_path) as ModManager
 
 const STARTING_POWER_UP_IDS := ["extra_dice", "extra_rolls"]
 
@@ -51,9 +53,15 @@ func _ready() -> void:
 	print("▶ GameController._ready()")
 	if dice_hand:
 		dice_hand.roll_complete.connect(_on_roll_completed)
+		dice_hand.dice_spawned.connect(_on_dice_spawned)
 	if scorecard:
 		scorecard.score_auto_assigned.connect(_on_score_assigned)
 	call_deferred("_on_game_start")
+
+func _on_game_start() -> void:
+	spawn_starting_powerups()
+	grant_consumable("score_reroll")
+	#apply_debuff("lock_dice")
 
 func _process(delta):
 	if Input.is_action_just_pressed("quit_game"):
@@ -76,10 +84,6 @@ func spawn_starting_powerups() -> void:
 			else:
 				push_error("No PowerUpData for '%s'" % id)
 
-func _on_game_start() -> void:
-	spawn_starting_powerups()
-	grant_consumable("score_reroll")
-	#apply_debuff("lock_dice")
 
 func grant_power_up(id: String) -> void:
 	# 1) Spawn logic via scene manager
@@ -289,3 +293,19 @@ func _on_roll_completed() -> void:
 		print("No lock dice debuff active - dice can be locked")
 		if dice_hand:
 			dice_hand.enable_all_dice()
+
+func _on_dice_spawned() -> void:
+	print("Dice spawned, attempting to add wildcard mod")
+	if dice_hand and dice_hand.dice_list.size() > 0:
+		var first_die = dice_hand.dice_list[0]
+		if first_die and mod_manager:
+			print("Adding wildcard mod to first die")
+			var mod = mod_manager.spawn_mod("wildcard", first_die)
+			if mod:
+				first_die.add_mod(mod_manager.get_def("wildcard"))
+				print("Wildcard mod spawned successfully")
+			else:
+				print("Wildcard mod spawned failed")
+				push_error("Failed to spawn wildcard mod")
+		else:
+			push_error("Failed to add wildcard mod - missing die or mod manager")

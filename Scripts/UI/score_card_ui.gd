@@ -53,6 +53,12 @@ func _ready():
 			category_labels[key] = label
 		else:
 			print("❌ Label not found for:", key, "→", label_path)
+	
+	if scorecard:
+		DiceResults.set_scorecard(scorecard)
+		print("[ScoreCardUI] Set scorecard reference in DiceResults")
+	else:
+		push_error("[ScoreCardUI] No scorecard reference to set in DiceResults")
 
 func bind_scorecard(sc: Scorecard):
 	scorecard = sc
@@ -221,6 +227,9 @@ func connect_buttons():
 			print("❌ Lower button not found for:", category, "→", button_path)
 
 func on_category_selected(section: Scorecard.Section, category: String):
+	print("\n=== Category Selected ===")
+	print("Section:", section, "Category:", category)
+	
 	# Check if this category already has a score
 	var existing_score = null
 	match section:
@@ -243,17 +252,23 @@ func on_category_selected(section: Scorecard.Section, category: String):
 		return
 
 	var values = DiceResults.values
+	print("Evaluating dice values:", values)
 	var score = ScoreEvaluatorSingleton.calculate_score_for_category(category, values)
+	
 	print("Category selected:", section, category, "→", score)
 
 	if score == null:
 		show_invalid_score_feedback(category)
 		return
 
-	# Check for bonus yahtzee before setting score
+	print("\n=== Checking for Yahtzee Bonus ===")
+	print("Current dice values:", values)
+	
+	# Remove the variable assignment since check_bonus_yahtzee is void
 	scorecard.check_bonus_yahtzee(values)
 	
 	# Set the selected category's score
+	print("Setting score for", category, "to", score)
 	scorecard.set_score(section, category, score)
 	update_all()
 	turn_scored = true
@@ -289,7 +304,11 @@ func show_invalid_score_feedback(category: String):
 func update_best_hand_preview(dice_values: Array) -> void:
 	if not best_hand_label:
 		return
-		
+	print("\n=== Updating Best Hand Preview ===")
+	# Get all possible scores with wildcards
+	var all_scores = ScoreEvaluatorSingleton.evaluate_with_wildcards(dice_values)
+	print("All possible scores:", all_scores)
+
 	var best_score := -1
 	var best_section
 	var best_category := ""
@@ -308,7 +327,7 @@ func update_best_hand_preview(dice_values: Array) -> void:
 	# Check upper section
 	for category in scorecard.upper_scores.keys():
 		if scorecard.upper_scores[category] == null:
-			var score = ScoreEvaluatorSingleton.calculate_score_for_category(category, dice_values)
+			var score = all_scores.get(category, 0)
 			if score > best_score:
 				best_score = score
 				best_section = Scorecard.Section.UPPER
@@ -317,17 +336,27 @@ func update_best_hand_preview(dice_values: Array) -> void:
 	# Check lower section in specific order
 	for category in lower_evaluation_order:
 		if scorecard.lower_scores[category] == null:
-			var score = ScoreEvaluatorSingleton.calculate_score_for_category(category, dice_values)
+			var score = all_scores.get(category, 0)
 			# Add bonus consideration for Yahtzee
-			if category == "yahtzee" and score == 50:
-				# If we already have a Yahtzee scored, this could be a bonus yahtzee
-				if scorecard.lower_scores["yahtzee"] != null and scorecard.lower_scores["yahtzee"] > 0:
-					score += 100  # Account for potential bonus
+			if category == "yahtzee":
+				print("\n=== Checking Yahtzee Preview ===")
+				print("Base Yahtzee score:", score)
+				if score >= 50:
+					print("Checking for potential bonus - current Yahtzee score:", 
+						scorecard.lower_scores["yahtzee"])
+					if scorecard.lower_scores["yahtzee"] != null and scorecard.lower_scores["yahtzee"] == 50:
+						score = 100
+						print("→ This would be a bonus Yahtzee! (100 points)")
+					else:
+						print("→ This would be the first Yahtzee (50 points)")
 			
 			if score > best_score:
 				best_score = score
 				best_section = Scorecard.Section.LOWER
 				best_category = category
+				print("New best score:", best_score, "in category:", best_category)
+	
+	print("Best category found:", best_category, "with score:", best_score)
 	
 	if best_category != "":
 		var display_category = best_category.capitalize().replace("_", " ")

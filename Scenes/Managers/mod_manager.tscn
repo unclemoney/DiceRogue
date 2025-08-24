@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://bgwcfpn53s26s"]
+
+[ext_resource type="Script" uid="uid://demjgrnbj0ybq" path="res://Scripts/Managers/ModManager.gd" id="1_m3tkl"]
+
+[node name="ModManager" type="Node"]
+script = ExtResource("1_m3tkl")
+metadata/_custom_type_script = "uid://demjgrnbj0ybq"

@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://ba0n3b0d3ha12"]
+
+[ext_resource type="Script" uid="uid://b1kt4w6im26v7" path="res://Scripts/Mods/wild_card_mod.gd" id="1_ppydj"]
+
+[node name="WildCardMod" type="Node"]
+script = ExtResource("1_ppydj")
+metadata/_custom_type_script = "uid://btawtw00q56o2"

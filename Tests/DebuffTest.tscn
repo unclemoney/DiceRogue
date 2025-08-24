@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=34 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -21,10 +21,13 @@
 [ext_resource type="PackedScene" uid="uid://b0h68l2hpjf3o" path="res://Scenes/PowerUp/power_up_manager.tscn" id="16_07va6"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="17_2uvn1"]
 [ext_resource type="Resource" uid="uid://b1kspojq1dh26" path="res://Scripts/PowerUps/ExtraDice.tres" id="18_3vaha"]
+[ext_resource type="Resource" uid="uid://b2lkvln1mutte" path="res://Scripts/Mods/WildCardMod.tres" id="19_8eqdw"]
 [ext_resource type="Resource" uid="uid://cgeradia34lyw" path="res://Scripts/PowerUps/ExtraRolls.tres" id="19_si81o"]
 [ext_resource type="PackedScene" uid="uid://c2brbu8nl4tvq" path="res://Scenes/Managers/consumable_manager.tscn" id="20_1jk2k"]
+[ext_resource type="PackedScene" uid="uid://bgwcfpn53s26s" path="res://Scenes/Managers/mod_manager.tscn" id="23_8eqdw"]
 [ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="23_o8wpr"]
 [ext_resource type="Script" uid="uid://uiuqwtxbh7m0" path="res://Scripts/Debuff/DebuffData.gd" id="24_4tiye"]
+[ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="24_bv0jw"]
 [ext_resource type="PackedScene" uid="uid://873jsmje6n6w" path="res://Scenes/Managers/debuff_manager.tscn" id="24_f4xs4"]
 [ext_resource type="Resource" uid="uid://bdbldxuf65trw" path="res://Scripts/Consumable/ScoreReroll.tres" id="24_w6663"]
 [ext_resource type="Resource" uid="uid://cs5xh10qdphbi" path="res://Scripts/Debuff/LockDice.tres" id="25_gxabo"]
@@ -38,8 +41,8 @@ shader_parameter/polar_repeat = 1.0
 shader_parameter/spin_rotation = 0.0
 shader_parameter/spin_speed = 0.695
 shader_parameter/offset = Vector2(0, 0)
-shader_parameter/colour_1 = Color(0, 0.000556777, 0.317822, 1)
-shader_parameter/colour_2 = Color(2.88785e-07, 0.207908, 0.539239, 1)
+shader_parameter/colour_1 = Color(0.625897, 0.749299, 0.999966, 1)
+shader_parameter/colour_2 = Color(0, 0.141422, 0.388962, 1)
 shader_parameter/colour_3 = Color(0.505455, 0.00273614, 0.816471, 1)
 shader_parameter/contrast = 1.415
 shader_parameter/lighting = 0.605
@@ -148,6 +151,9 @@ offset_bottom = 720.0
 
 [node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
 power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o")])
+
+[node name="ModManager" parent="." instance=ExtResource("23_8eqdw")]
+mod_defs = Array[ExtResource("24_bv0jw")]([ExtResource("19_8eqdw")])
 
 [node name="ConsumableManager" parent="." instance=ExtResource("20_1jk2k")]
 consumable_defs = Array[ExtResource("23_o8wpr")]([ExtResource("24_w6663")])

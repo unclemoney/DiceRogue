@@ -20,5 +20,9 @@ script = ExtResource("1_nyboh")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_n24en")
 
+[node name="ModContainer" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+
 [connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]

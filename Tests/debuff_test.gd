@@ -12,7 +12,7 @@ extends Node2D
 @onready var pu_ui: PowerUpUI = $"../PowerUpUI"
 @onready var consumable_ui: ConsumableUI = $ConsumableUI
 @onready var consumable_manager: ConsumableManager = $ConsumableManager
-
+@onready var mod_manager: ModManager = $ModManager
 
 func _ready():
 	score_card_ui.bind_scorecard(score_card)

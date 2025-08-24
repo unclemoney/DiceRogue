@@ -1,0 +1,30 @@
+[gd_scene load_steps=3 format=3 uid="uid://cn23jc2f30b7q"]
+
+[ext_resource type="Script" uid="uid://b2ncvkrk2usxe" path="res://Scripts/Mods/mod_icon.gd" id="1_1ncyp"]
+[ext_resource type="Texture2D" uid="uid://dhu773gp3lwd4" path="res://Resources/Art/Dice/BlueSquare.png" id="2_4yhde"]
+
+[node name="ModIcon" type="TextureRect"]
+custom_minimum_size = Vector2(30, 30)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("1_1ncyp")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+visible = false
+position = Vector2(39, 39)
+scale = Vector2(0.075, 0.075)
+texture = ExtResource("2_4yhde")
+
+[node name="TooltipBg" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Tooltip" type="Label" parent="TooltipBg"]
+visible = false
+layout_mode = 2
+text = "Tips"

@@ -17,7 +17,7 @@ layout_mode = 0
 offset_top = -28.0
 offset_right = 92.0
 offset_bottom = -5.0
-text = "CONSUMEABLES"
+text = "CONSUMABLES"
 
 [node name="Container" type="HBoxContainer" parent="."]
 layout_mode = 0

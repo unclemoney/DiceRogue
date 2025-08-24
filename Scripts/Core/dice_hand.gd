@@ -2,6 +2,7 @@ extends Node2D
 class_name DiceHand
 
 signal roll_complete
+signal dice_spawned
 
 @export var roll_delay: float = 0.1
 @export var roll_duration: float = 0.5
@@ -15,6 +16,7 @@ var dice_list: Array[Dice] = []
 func spawn_dice() -> void:
 	clear_dice()
 	update_dice_count()
+	emit_signal("dice_spawned")
 	
 	# Only disable dice if lock debuff is active
 	var lock_debuff = get_tree().get_first_node_in_group("debuffs") as LockDiceDebuff
