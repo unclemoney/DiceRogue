@@ -1,7 +1,7 @@
 extends Debuff
 class_name LockDiceDebuff
 
-var is_active := false
+#var is_active := false Moved to parent class
 
 func _ready() -> void:
 	add_to_group("debuffs")
@@ -12,23 +12,10 @@ func apply(target) -> void:
 	var dice_hand = target as DiceHand
 	if dice_hand:
 		is_active = true
-		var dice_count = dice_hand.get_child_count()
-		print("[LockDiceDebuff] Found", dice_count, "dice in hand")
-		
-		if dice_count == 0:
-			print("[LockDiceDebuff] No dice to disable - will need to apply after roll")
-			return
-			
-		for die in dice_hand.get_children():
-			if die is Dice:
-				print("[LockDiceDebuff] - Disabling die:", die.name)
-				die.unlock()  # Force unlock any locked dice
-				die.set_dice_input_enabled(false)
-				die.set_lock_shader_enabled(false)
-				
-		# Connect to dice_hand signals to catch new dice
-		if not dice_hand.is_connected("child_entered_tree", _on_dice_added):
-			dice_hand.child_entered_tree.connect(_on_dice_added)
+		print("[LockDiceDebuff] Disabling dice locking")
+		dice_hand.disable_all_dice()
+	else:
+		push_error("[LockDiceDebuff] Invalid target passed to apply()")
 
 func _on_dice_added(node: Node) -> void:
 	if node is Dice:
@@ -43,13 +30,4 @@ func remove() -> void:
 	if dice_hand:
 		is_active = false
 		print("[LockDiceDebuff] Re-enabling dice locking")
-		
-		# Disconnect from dice_hand signals
-		if dice_hand.is_connected("child_entered_tree", _on_dice_added):
-			dice_hand.child_entered_tree.disconnect(_on_dice_added)
-			
-		for die in dice_hand.get_children():
-			if die is Dice:
-				print("[LockDiceDebuff] - Re-enabling die:", die.name)
-				die.set_dice_input_enabled(true)
-				die.set_lock_shader_enabled(true)
+		dice_hand.enable_all_dice()

@@ -50,6 +50,11 @@ func _ready() -> void:
 		dice_hand.roll_complete.connect(_on_roll_completed)  # Changed to match original signal name
 	call_deferred("_on_game_start")
 
+func _process(delta):
+	if Input.is_action_just_pressed("quit_game"):
+		get_tree().quit()
+
+
 func spawn_starting_powerups() -> void:
 	for id in ["extra_dice", "extra_rolls"]:
 		var def: PowerUpData = pu_manager.get_def(id)
@@ -69,7 +74,7 @@ func spawn_starting_powerups() -> void:
 func _on_game_start() -> void:
 	spawn_starting_powerups()
 	grant_consumable("score_reroll")
-	apply_debuff("lock_dice")
+	#apply_debuff("lock_dice")
 
 func grant_power_up(id: String) -> void:
 	# 1) Spawn logic via scene manager
@@ -107,6 +112,7 @@ func _on_power_up_selected(power_up_id: String) -> void:
 	match power_up_id:
 		"extra_dice":
 			pu.apply(dice_hand)
+			enable_debuff("lock_dice")
 		"extra_rolls":
 			pu.apply(turn_tracker)
 		_:
@@ -121,6 +127,7 @@ func _on_power_up_deselected(power_up_id: String) -> void:
 	match power_up_id:
 		"extra_dice":
 			pu.remove(dice_hand)
+			disable_debuff("lock_dice")
 		"extra_rolls":
 			pu.remove(turn_tracker)
 		_:
@@ -209,12 +216,40 @@ func apply_debuff(id: String) -> void:
 		_:
 			push_error("Unknown debuff type: %s" % id)
 
+func enable_debuff(id: String) -> void:
+	print("Enabling debuff:", id)
+	if not is_debuff_active(id):
+		apply_debuff(id)
+	else:
+		var debuff = active_debuffs[id]
+		if debuff and debuff.target:
+			debuff.start()
+
+func disable_debuff(id: String) -> void:
+	print("Disabling debuff:", id)
+	if is_debuff_active(id):
+		var debuff = active_debuffs[id]
+		if debuff:
+			debuff.end()
+			active_debuffs.erase(id)
+			# Remove the icon from UI
+			if debuff_ui:
+				debuff_ui.remove_debuff(id)
+			else:
+				push_error("No debuff_ui found when trying to remove debuff icon")
+
+
 func is_debuff_active(id: String) -> bool:
 	return active_debuffs.has(id) and active_debuffs[id] != null
 
 func _on_roll_completed() -> void:
+	print("Roll completed")
 	if is_debuff_active("lock_dice"):
-		print("Roll completed - reapplying lock_dice debuff")
+		print("Lock dice debuff active - reapplying")
 		var debuff = active_debuffs["lock_dice"]
 		if debuff and dice_hand:
 			debuff.apply(dice_hand)
+	else:
+		print("No lock dice debuff active - dice can be locked")
+		if dice_hand:
+			dice_hand.enable_all_dice()

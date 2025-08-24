@@ -23,6 +23,21 @@ func add_debuff(data: DebuffData, debuff_instance: Debuff = null) -> DebuffIcon:
 	add_child(icon)
 	icon.set_data(data)
 	
+	if debuff_instance:
+		debuff_instance.debuff_started.connect(
+			func(): icon.set_active(true))
+		debuff_instance.debuff_ended.connect(
+			func(): icon.set_active(false))
+
 	# Set default position if needed
 	icon.position = Vector2(40, 40)
 	return icon
+
+func remove_debuff(id: String) -> void:
+	print("Removing debuff icon for:", id)
+	for child in get_children():
+		if child is DebuffIcon and child.data and child.data.id == id:
+			print("Found and removing debuff icon:", id)
+			child.queue_free()
+			return
+	print("No debuff icon found for:", id)

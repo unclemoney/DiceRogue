@@ -37,6 +37,8 @@ func _ready():
 	update_visual()
 	connect("mouse_entered", Callable(self, "_on_mouse_entered"))
 	connect("mouse_exited", Callable(self, "_on_mouse_exited"))
+	set_dice_input_enabled(true)
+	set_lock_shader_enabled(true)
 
 func roll():
 	if is_locked:
@@ -52,9 +54,10 @@ func set_dice_input_enabled(enabled: bool) -> void:
 
 func set_lock_shader_enabled(enabled: bool) -> void:
 	_lock_shader_enabled = enabled
-	# Update shader visibility if die is locked
-	if is_locked and has_node("Sprite2D"):
-		$Sprite2D.material.set_shader_parameter("enabled", enabled)
+	# Update shader visibility based on both lock state and enabled state
+	if has_node("Sprite2D"):
+		dice_material.set_shader_parameter("lock_overlay_strength", 
+			0.6 if (is_locked && enabled) else 0.0)
 
 func animate_roll():
 	var tween := get_tree().create_tween()
@@ -63,7 +66,9 @@ func animate_roll():
 
 func update_visual():
 	sprite.texture = dice_textures.get(value, null)
-	dice_material.set_shader_parameter("lock_overlay_strength", 0.6 if is_locked else 0.0)
+	# Use both lock state and shader enabled state
+	dice_material.set_shader_parameter("lock_overlay_strength", 
+		0.6 if (is_locked && _lock_shader_enabled) else 0.0)
 
 
 func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
@@ -83,7 +88,7 @@ func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 			
 func _on_mouse_entered():
 	if not _can_process_input:
-		#shake_denied()
+		shake_denied()
 		return  # Don't show hover effects if input is disabled
 	var tween := get_tree().create_tween()
 
@@ -133,14 +138,11 @@ func lock() -> void:
 		return
 		
 	is_locked = true
-	if has_node("Sprite2D") and _lock_shader_enabled:
-		$Sprite2D.material.set_shader_parameter("enabled", true)
+	update_visual()  # Use update_visual to handle shader state
 
 func unlock() -> void:
 	is_locked = false
-	if has_node("Sprite2D"):
-		$Sprite2D.material.set_shader_parameter("enabled", false)
-	update_visual()
+	update_visual()  # Use update_visual to handle shader state
 
 func shake_denied() -> void:
 	var tween := get_tree().create_tween()

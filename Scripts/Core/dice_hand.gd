@@ -15,10 +15,15 @@ var dice_list: Array[Dice] = []
 func spawn_dice() -> void:
 	clear_dice()
 	update_dice_count()
-	# Set initial state of all dice based on any active debuffs
-	if get_tree().get_first_node_in_group("debuffs") as LockDiceDebuff:
+	
+	# Only disable dice if lock debuff is active
+	var lock_debuff = get_tree().get_first_node_in_group("debuffs") as LockDiceDebuff
+	if lock_debuff and lock_debuff.is_active:
 		print("[DiceHand] Found active lock debuff - disabling all dice input")
 		disable_all_dice()
+	else:
+		print("[DiceHand] No active lock debuff - enabling all dice input")
+		enable_all_dice()
 
 
 func roll_all() -> void:
@@ -71,9 +76,9 @@ func enable_all_dice() -> void:
 	print("[DiceHand] Enabling all dice")
 	for die in get_children():
 		if die is Dice:
-			die.set_process_input(true)
-			if die.has_method("set_lock_shader_enabled"):
-				die.set_lock_shader_enabled(true)
+			die.set_dice_input_enabled(true)
+			die.set_lock_shader_enabled(true)
+			print("[DiceHand] Enabled die:", die.name)
 
 func disable_all_dice() -> void:
 	print("[DiceHand] Disabling all dice")

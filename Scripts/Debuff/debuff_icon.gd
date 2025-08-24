@@ -36,6 +36,20 @@ func _apply_data() -> void:
 		if hover_label:
 			hover_label.text = data.display_name
 
+func set_active(active: bool) -> void:
+	is_active = active
+	# Visual feedback for active state
+	modulate = Color.RED if active else Color.WHITE
+	_shader_material.set_shader_parameter("glow_intensity", 0.5 if active else 0.0)
+	
+	# Optional tween for smooth transition
+	var tween = create_tween()
+	if active:
+		tween.tween_property(self, "modulate", Color(1.2, 0.3, 0.3), 0.3)
+	else:
+		tween.tween_property(self, "modulate", Color.WHITE, 0.3)
+
+
 func _on_mouse_entered() -> void:
 	label_bg.visible = true
 	label_bg.modulate.a = 0.0
