@@ -145,11 +145,17 @@ func unlock() -> void:
 	update_visual()  # Use update_visual to handle shader state
 
 func shake_denied() -> void:
+	var original_x = position.x  # Store current x position
 	var tween := get_tree().create_tween()
-	# Quick left-right shake
-	tween.tween_property(self, "position:x", position.x - 5, 0.05)
-	tween.tween_property(self, "position:x", position.x + 5, 0.05)
-	tween.tween_property(self, "position:x", position.x, 0.05)
-	# Optional: Add subtle color flash
+	
+	# Quick left-right shake around current position
+	tween.tween_property(self, "position:x", original_x - 5, 0.05)
+	tween.tween_property(self, "position:x", original_x + 5, 0.05)
+	tween.tween_property(self, "position:x", original_x, 0.05)
+	
+	# Color flash in parallel
 	tween.parallel().tween_property(sprite, "modulate", Color(1.5, 0.3, 0.3), 0.05)
 	tween.parallel().tween_property(sprite, "modulate", Color.WHITE, 0.1)
+	
+	# Ensure we end up at home position
+	tween.tween_property(self, "position", home_position, 0.1)

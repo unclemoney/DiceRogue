@@ -14,6 +14,7 @@ var active_debuffs: Dictionary = {}  # id -> Debuff
 const ScoreCardUI := preload("res://Scripts/UI/score_card_ui.gd")
 const DebuffManager := preload("res://Scripts/Managers/DebuffManager.gd")
 const DebuffUI := preload("res://Scripts/UI/debuff_ui.gd")
+const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 
 # Centralized, explicit NodePaths (tweak in Inspector if scene changes)
 @export var dice_hand_path: NodePath            = ^"../DiceHand"
@@ -28,6 +29,7 @@ const DebuffUI := preload("res://Scripts/UI/debuff_ui.gd")
 @export var debuff_ui_path: NodePath            = ^"../DebuffUI"
 @export var debuff_container_path: NodePath     = ^"DebuffContainer"
 @export var debuff_manager_path: NodePath       = ^"../DebuffManager"
+@export var score_card_path: NodePath           = ^"../ScoreCard"
 
 @onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
 @onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
@@ -41,13 +43,16 @@ const DebuffUI := preload("res://Scripts/UI/debuff_ui.gd")
 @onready var debuff_ui: DebuffUI         = get_node(debuff_ui_path) as DebuffUI
 @onready var debuff_container: Node      = get_node(debuff_container_path)
 @onready var debuff_manager: DebuffManager = get_node(debuff_manager_path) as DebuffManager
+@onready var scorecard: ScoreCard 		   = get_node(score_card_path) as ScoreCard
 
 const STARTING_POWER_UP_IDS := ["extra_dice", "extra_rolls"]
 
 func _ready() -> void:
 	print("▶ GameController._ready()")
 	if dice_hand:
-		dice_hand.roll_complete.connect(_on_roll_completed)  # Changed to match original signal name
+		dice_hand.roll_complete.connect(_on_roll_completed)
+	if scorecard:
+		scorecard.score_auto_assigned.connect(_on_score_assigned)
 	call_deferred("_on_game_start")
 
 func _process(delta):
@@ -176,16 +181,27 @@ func _on_consumable_used(consumable_id: String) -> void:
 		_:
 			push_error("Unknown consumable type: %s" % consumable_id)
 
-func _on_score_rerolled(_section, _category, _score) -> void:
-	print("GameController: Score rerolled, cleaning up consumable")
-	var consumable = active_consumables.get("score_reroll")
-	if consumable:
-		consumable.complete_reroll()
-		consumable.consume()
-		active_consumables.erase("score_reroll")
-		emit_signal("consumable_used", "score_reroll", consumable)
+func _on_score_rerolled(_section: Scorecard.Section, _category: String, _score: int) -> void:
+	var reroll = get_active_consumable("score_reroll") as ScoreRerollConsumable
+	if reroll:
+		reroll.complete_reroll()
+		remove_consumable("score_reroll")
+
+func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
+	print("Score assigned, checking if reroll should be enabled")
+	if not scorecard:
+		push_error("No scorecard reference found")
+		return
+		
+	if scorecard.has_any_scores():
+		print("First score detected, enabling reroll consumable")
+		var reroll_icon = consumable_ui.get_consumable_icon("score_reroll")
+		if reroll_icon:
+			reroll_icon.set_useable(true)
+		else:
+			print("No reroll icon found")
 	else:
-		push_error("No active score_reroll consumable found!")
+		print("No scores yet, reroll remains disabled")
 
 func apply_debuff(id: String) -> void:
 	print("Applying debuff:", id)
@@ -241,6 +257,26 @@ func disable_debuff(id: String) -> void:
 
 func is_debuff_active(id: String) -> bool:
 	return active_debuffs.has(id) and active_debuffs[id] != null
+
+# Add this function after other consumable-related functions
+
+func get_active_consumable(id: String) -> Consumable:
+	if active_consumables.has(id):
+		return active_consumables[id]
+	return null
+
+func remove_consumable(id: String) -> void:
+	if active_consumables.has(id):
+		var consumable = active_consumables[id]
+		if consumable:
+			consumable.queue_free()
+		active_consumables.erase(id)
+		
+		# Remove from UI if it exists
+		if consumable_ui:
+			consumable_ui.remove_consumable(id)
+		else:
+			push_error("No consumable_ui found when trying to remove consumable icon")
 
 func _on_roll_completed() -> void:
 	print("Roll completed")

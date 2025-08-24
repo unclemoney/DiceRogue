@@ -7,8 +7,9 @@ class_name PowerUpIcon
 @onready var label_bg: PanelContainer = $LabelBg
 var _shader_material: ShaderMaterial
 var _is_selected: bool = false
+var _is_hovering := false
+var _current_tween: Tween
 
-# Add signals at the top
 signal power_up_selected(power_up_id: String)
 signal power_up_deselected(power_up_id: String)
 
@@ -41,6 +42,7 @@ func _ready() -> void:
 	material = _shader_material
 	# Add pressed connection
 	connect("pressed", Callable(self, "_on_pressed"))
+	_reset_visual_state()
 
 func set_data(new_data: PowerUpData) -> void:
 	data = new_data
@@ -58,43 +60,71 @@ func _apply_data() -> void:
 
 
 func _on_mouse_entered() -> void:
+	_is_hovering = true
+	
 	# Only show hover effects if not selected
 	if _is_selected:
 		return
-	# 1. Prep the label
-	label_bg.visible    = true
+		
+	# Cancel any existing tween
+	if _current_tween and _current_tween.is_valid():
+		_current_tween.kill()
+	
+	# 1. Show label immediately
+	label_bg.visible = true
 	label_bg.modulate.a = 0.0
-	label_bg.scale      = Vector2(0.8, 0.8)
+	label_bg.scale = Vector2(0.8, 0.8)
 
-	# 2. Create a SceneTreeTween
-	var t = get_tree().create_tween()
+	# 2. Create new tween
+	_current_tween = get_tree().create_tween()
 
-	# 3. Fade in
-	t.tween_property(
-		label_bg, "modulate:a", 1.0, 0.15
+	# 3. Fade in (faster)
+	_current_tween.tween_property(
+		label_bg, "modulate:a", 1.0, 0.1
 	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
-	# 4. Bounce scale up (overshoot)
-	t.tween_property(
-		label_bg, "scale", Vector2(1.2, 1.2), 0.2
+	# 4. Bounce scale (faster)
+	_current_tween.tween_property(
+		label_bg, "scale", Vector2(1.1, 1.1), 0.1
 	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
-	# 5. Settle scale back to 1.0
-	t.tween_property(label_bg, "scale", Vector2(1, 1), 0.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		# 6. Animate shader highlight
-	t.parallel().tween_property(_shader_material, "shader_parameter/glow_intensity", 0.5, 0.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# 5. Settle scale (faster)
+	_current_tween.tween_property(
+		label_bg, "scale", Vector2.ONE, 0.05
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	
+	# 6. Shader highlight (immediate)
+	_shader_material.set_shader_parameter("glow_intensity", 0.5)
 
 func _on_mouse_exited() -> void:
-	# Only show hover effects if not selected
+	_is_hovering = false
+	
+	# Only handle hover effects if not selected
 	if _is_selected:
 		return
 
-	var t = get_tree().create_tween()
-	# Fade alpha back out
-	t.tween_property(label_bg, "modulate:a", 0.0, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		# Fade out shader highlight
-	t.parallel().tween_property(_shader_material, "shader_parameter/glow_intensity",0.0, 0.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	# Cancel any existing tween
+	if _current_tween and _current_tween.is_valid():
+		_current_tween.kill()
 
+	_current_tween = get_tree().create_tween()
+	
+	# Faster fade out
+	_current_tween.tween_property(
+		label_bg, "modulate:a", 0.0, 0.1
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	
+	# Immediate shader reset
+	_shader_material.set_shader_parameter("glow_intensity", 0.0)
+
+# Add visibility change handler
+func _notification(what: int) -> void:
+	match what:
+		NOTIFICATION_VISIBILITY_CHANGED:
+			if not is_visible_in_tree():
+				_is_hovering = false
+				_reset_visual_state()
+				
 func _on_pressed() -> void:
 	#test the selection
 	_is_selected = !_is_selected
@@ -116,3 +146,19 @@ func _on_pressed() -> void:
 			0.1
 		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		emit_signal("power_up_deselected", data.id)
+
+func _reset_visual_state() -> void:
+	# Cancel any running tweens
+	if _current_tween and _current_tween.is_valid():
+		_current_tween.kill()
+	
+	# Reset shader
+	if _shader_material:
+		_shader_material.set_shader_parameter("glow_intensity", 
+			glow_intensity if _is_selected else 0.0)
+	
+	# Reset label
+	if label_bg:
+		label_bg.visible = _is_hovering or _is_selected
+		label_bg.modulate.a = 1.0 if (_is_hovering or _is_selected) else 0.0
+		label_bg.scale = Vector2.ONE

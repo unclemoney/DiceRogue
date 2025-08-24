@@ -145,6 +145,9 @@ offset_right = 465.0
 offset_bottom = 720.0
 
 [node name="GameController" parent="." instance=ExtResource("15_aeiu6")]
+power_up_container_path = NodePath(".")
+consumable_container_path = NodePath(".")
+debuff_container_path = NodePath(".")
 
 [node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
 power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o")])

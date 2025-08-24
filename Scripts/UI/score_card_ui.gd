@@ -221,6 +221,19 @@ func connect_buttons():
 			print("❌ Lower button not found for:", category, "→", button_path)
 
 func on_category_selected(section: Scorecard.Section, category: String):
+	# Check if this category already has a score
+	var existing_score = null
+	match section:
+		Scorecard.Section.UPPER:
+			existing_score = scorecard.upper_scores.get(category)
+		Scorecard.Section.LOWER:
+			existing_score = scorecard.lower_scores.get(category)
+			
+	if existing_score != null and not reroll_active:
+		print("⚠️ Cannot replace existing score without score reroll consumable")
+		show_invalid_score_feedback(category)
+		return
+		
 	if reroll_active:
 		handle_score_reroll(section, category)
 		return
@@ -371,6 +384,19 @@ func activate_score_reroll() -> void:
 func handle_score_reroll(section: Scorecard.Section, category: String) -> void:
 	var values = DiceResults.values
 	var score = ScoreEvaluatorSingleton.calculate_score_for_category(category, values)
+	
+	# Verify the category has an existing score to reroll
+	var has_existing_score = false
+	match section:
+		Scorecard.Section.UPPER:
+			has_existing_score = scorecard.upper_scores[category] != null
+		Scorecard.Section.LOWER:
+			has_existing_score = scorecard.lower_scores[category] != null
+			
+	if not has_existing_score:
+		print("⚠️ Cannot reroll empty score category")
+		show_invalid_score_feedback(category)
+		return
 	
 	if score == null:
 		show_invalid_score_feedback(category)

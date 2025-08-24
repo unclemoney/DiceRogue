@@ -29,7 +29,23 @@ func add_consumable(data: ConsumableData, consumable_instance: Consumable = null
 			print("ConsumableUI: Connecting ScoreRerollConsumable signals")
 			reroll_consumable.reroll_activated.connect(icon._on_reroll_activated)
 			reroll_consumable.reroll_completed.connect(icon._on_reroll_completed)
+			reroll_consumable.reroll_denied.connect(icon._on_reroll_denied)
 	
 	# Set default position if needed
 	icon.position = Vector2(40, 40)
 	return icon
+
+func get_consumable_icon(id: String) -> ConsumableIcon:
+	for child in get_children():
+		if child is ConsumableIcon and child.data and child.data.id == id:
+			return child
+	return null
+
+func remove_consumable(id: String) -> void:
+	print("Removing consumable icon for:", id)
+	for child in get_children():
+		if child is ConsumableIcon and child.data and child.data.id == id:
+			print("Found and removing consumable icon:", id)
+			child.queue_free()
+			return
+	print("No consumable icon found for:", id)

@@ -47,6 +47,19 @@ func set_score(section: Section, category: String, value: int) -> void:
 				lower_scores[category] = value
 				check_lower_section()
 
+func has_any_scores() -> bool:
+	# Check upper section
+	for score in upper_scores.values():
+		if score != null:
+			return true
+			
+	# Check lower section
+	for score in lower_scores.values():
+		if score != null:
+			return true
+			
+	return false
+
 func get_total_score() -> int:
 	var total := get_upper_section_final_total() + get_lower_section_total()
 	return total + yahtzee_bonus_points
