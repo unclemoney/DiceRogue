@@ -4,7 +4,7 @@ class_name DiceResult
 var values: Array[int] = []
 var locked: Array[bool] = []
 var score: Dictionary = {}
-var dice_refs: Array[Dice] = []  # Add this to store dice references
+var dice_refs: Array[Dice] = []  
 var scorecard: Scorecard = null
 
 func set_values(values: Array[int]) -> Dictionary:

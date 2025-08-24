@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_h72km")
 id = "wildcard"
-display_name = "Wild Card"
+display_name = "Wild Dice"
 description = "Allows the Dice to Count as Any Number"
 icon = ExtResource("1_m1i2y")
 scene = ExtResource("2_be2vc")

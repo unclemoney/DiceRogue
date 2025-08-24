@@ -2,7 +2,7 @@ extends TextureRect
 class_name ModIcon
 
 @export var data: ModData
-@export var tooltip_offset := Vector2(20, 20)
+@export var tooltip_offset := Vector2(-50, -50)
 
 @onready var tooltip: Label = $TooltipBg/Tooltip
 @onready var tooltip_bg: PanelContainer = $TooltipBg
@@ -13,7 +13,7 @@ func _ready() -> void:
 		return
 		
 	if data:
-		texture = data.icon
+		#texture = data.icon
 		tooltip.text = data.display_name
 		tooltip_bg.visible = false
 	else:

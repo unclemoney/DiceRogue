@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://cn23jc2f30b7q"]
 
 [ext_resource type="Script" uid="uid://b2ncvkrk2usxe" path="res://Scripts/Mods/mod_icon.gd" id="1_1ncyp"]
-[ext_resource type="Texture2D" uid="uid://dhu773gp3lwd4" path="res://Resources/Art/Dice/BlueSquare.png" id="2_4yhde"]
+[ext_resource type="Texture2D" uid="uid://bw04snvvsy6q5" path="res://Resources/Art/Dice/dieWhite_borderWild.png" id="2_4yhde"]
 
 [node name="ModIcon" type="TextureRect"]
 custom_minimum_size = Vector2(30, 30)
@@ -14,9 +14,8 @@ mouse_filter = 0
 script = ExtResource("1_1ncyp")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-visible = false
-position = Vector2(39, 39)
-scale = Vector2(0.075, 0.075)
+position = Vector2(11, 11)
+scale = Vector2(0.331618, 0.331618)
 texture = ExtResource("2_4yhde")
 
 [node name="TooltipBg" type="PanelContainer" parent="."]
@@ -25,6 +24,8 @@ offset_right = 40.0
 offset_bottom = 40.0
 
 [node name="Tooltip" type="Label" parent="TooltipBg"]
-visible = false
 layout_mode = 2
 text = "Tips"
+
+[connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]

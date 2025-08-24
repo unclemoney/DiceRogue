@@ -309,3 +309,27 @@ func _on_dice_spawned() -> void:
 				push_error("Failed to spawn wildcard mod")
 		else:
 			push_error("Failed to add wildcard mod - missing die or mod manager")
+		var second_die = dice_hand.dice_list[1]
+		if second_die and mod_manager:
+			print("Adding wildcard mod to second die")
+			var mod = mod_manager.spawn_mod("wildcard", second_die)
+			if mod:
+				second_die.add_mod(mod_manager.get_def("wildcard"))
+				print("Wildcard mod spawned successfully")
+			else:
+				print("Wildcard mod spawned failed")
+				push_error("Failed to spawn wildcard mod")
+		else:
+			push_error("Failed to add wildcard mod - missing die or mod manager")
+		var third_die = dice_hand.dice_list[2]
+		if third_die and mod_manager:
+			print("Adding wildcard mod to third die")
+			var mod = mod_manager.spawn_mod("wildcard", third_die)
+			if mod:
+				third_die.add_mod(mod_manager.get_def("wildcard"))
+				print("Wildcard mod spawned successfully")
+			else:
+				print("Wildcard mod spawned failed")
+				push_error("Failed to spawn wildcard mod")
+		else:
+			push_error("Failed to add wildcard mod - missing die or mod manager")

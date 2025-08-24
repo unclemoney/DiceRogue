@@ -442,8 +442,6 @@ func handle_score_reroll(section: Scorecard.Section, category: String) -> void:
 	emit_signal("score_rerolled", section, category, score)
 
 func _on_yahtzee_bonus_achieved(points: int) -> void:
-	# ... existing animation code ...
-	
 	# Extra visual feedback for bonus yahtzee
 	if total_score_label:
 		# Bigger text animation
@@ -454,10 +452,12 @@ func _on_yahtzee_bonus_achieved(points: int) -> void:
 		tween.tween_property(total_score_label, "theme_override_font_sizes/normal_font_size", 
 			base_size, 0.2)
 		
-		# Update with new total including bonus
-		update_all()
+
 		
 		# Optional: Add celebratory particle effect
 		var screen_shake = get_tree().root.find_child("ScreenShake", true, false)
 		if screen_shake:
 			screen_shake.shake(0.8, 0.5)  # Big shake for bonus yahtzee!
+		
+		# Update with new total including bonus
+		update_all()

@@ -6,7 +6,7 @@ class_name ExtraRollsPowerUp
 func apply(target) -> void:
 	var tracker: TurnTracker = target as TurnTracker
 	if tracker:
-		tracker.MAX_ROLLS = 4
+		tracker.MAX_ROLLS = 10
 		emit_signal("max_rolls_changed", 4)
 	else:
 		push_error("[ExtraRolls] Invalid target passed to apply()")
