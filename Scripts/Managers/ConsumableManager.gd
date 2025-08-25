@@ -3,6 +3,7 @@ class_name ConsumableManager
 
 @export var consumable_defs: Array[ConsumableData] = []
 var _defs_by_id := {}
+signal definitions_loaded
 
 func _ready() -> void:
 	print("ConsumableManager: defs count =", consumable_defs.size())
@@ -13,6 +14,19 @@ func _ready() -> void:
 		else:
 			print("  slot %d → %s (id='%s')" % [i, d, d.id])
 			_defs_by_id[d.id] = d
+	emit_signal("definitions_loaded")
+
+
+func get_available_consumables() -> Array[String]:
+	print("[ConsumableManager] Getting available consumables")
+	var available: Array[String] = []
+	
+	for id in _defs_by_id.keys():
+		print("Found consumable:", id)
+		available.append(id)
+		
+	print("Available consumables:", available)
+	return available
 
 func spawn_consumable(id: String, parent: Node) -> Consumable:
 	print("ConsumableManager.spawn_consumable(): id='%s', parent='%s'" % [id, parent.name])

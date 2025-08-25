@@ -6,3 +6,4 @@ class_name PowerUpData
 @export var description: String
 @export var icon: Texture2D
 @export var scene: PackedScene  # your logic scene, e.g. ExtraDicePowerUp.tscn
+@export var price: int = 100

@@ -6,3 +6,4 @@ class_name ConsumableData
 @export var description: String
 @export var icon: Texture2D
 @export var scene: PackedScene
+@export var price: int = 100

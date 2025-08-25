@@ -1,4 +1,4 @@
-[gd_scene load_steps=34 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=35 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -31,6 +31,7 @@
 [ext_resource type="PackedScene" uid="uid://873jsmje6n6w" path="res://Scenes/Managers/debuff_manager.tscn" id="24_f4xs4"]
 [ext_resource type="Resource" uid="uid://bdbldxuf65trw" path="res://Scripts/Consumable/ScoreReroll.tres" id="24_w6663"]
 [ext_resource type="Resource" uid="uid://cs5xh10qdphbi" path="res://Scripts/Debuff/LockDice.tres" id="25_gxabo"]
+[ext_resource type="PackedScene" uid="uid://dbqwnxq8iy66l" path="res://Scenes/UI/shop_ui.tscn" id="32_oy5od"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_w6663"]
 shader = ExtResource("3_w6663")
@@ -97,6 +98,7 @@ dice_scene = ExtResource("6_o8wpr")
 [node name="TurnTracker" parent="." instance=ExtResource("8_8eqdw")]
 
 [node name="GameButtonUI" parent="." instance=ExtResource("9_wtptv")]
+visible = false
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
@@ -111,6 +113,7 @@ score_card_ui_path = NodePath("../ScoreCardUI")
 turn_tracker_path = NodePath("../TurnTracker")
 
 [node name="TurnTrackerUI" parent="." instance=ExtResource("10_bv0jw")]
+visible = false
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
@@ -122,12 +125,14 @@ grow_horizontal = 1
 grow_vertical = 1
 
 [node name="ScoreCardUI" parent="." instance=ExtResource("11_oy5od")]
+visible = false
 offset_left = 883.0
 offset_top = 16.0
 offset_right = 883.0
 offset_bottom = 56.0
 
 [node name="ConsumableUI" parent="." instance=ExtResource("12_pdckl")]
+visible = false
 offset_left = 467.0
 offset_top = 572.0
 offset_right = 846.0
@@ -135,13 +140,24 @@ offset_bottom = 716.0
 consumable_icon_scene = ExtResource("13_d3q3t")
 
 [node name="DebuffUI" parent="." instance=ExtResource("14_oxb5w")]
+visible = false
 offset_left = 867.0
 offset_top = 572.0
 offset_right = 1277.0
 offset_bottom = 716.0
 debuff_icon_scene = ExtResource("15_oxb5w")
 
+[node name="ShopUI" parent="." instance=ExtResource("32_oy5od")]
+offset_left = 6.0
+offset_top = -17.0
+offset_right = 6.0
+offset_bottom = -17.0
+power_up_manager_path = NodePath("../PowerUpManager")
+consumable_manager_path = NodePath("../ConsumableManager")
+mod_manager_path = NodePath("../ModManager")
+
 [node name="PowerUpUI" parent="." instance=ExtResource("14_gtvla")]
+visible = false
 offset_left = 19.0
 offset_top = 572.0
 offset_right = 465.0

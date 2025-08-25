@@ -158,13 +158,9 @@ func check_upper_bonus() -> void:
 
 func check_bonus_yahtzee(values: Array[int], is_new_yahtzee: bool = false) -> void:
 	# Only check if we already have a yahtzee scored as 50
-
 	if is_new_yahtzee:
-		print("→ This is the first Yahtzee being scored, skipping bonus check")
 		return
-
 	if lower_scores["yahtzee"] != 50:
-		print("→ No previous Yahtzee scored as 50, cannot award bonus")
 		return
 		
 	# Use ScoreEvaluator to check for Yahtzee with wildcards

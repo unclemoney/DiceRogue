@@ -1,12 +1,14 @@
 extends Control
 
 var tracker: TurnTracker
-
+@onready var money_label: Label = $MoneyLabel
 @onready var turn_label := $VBoxContainer/TurnLabel
 @onready var rolls_label := $VBoxContainer/RollsLabel
 
 func _ready():
 	call_deferred("bind_tracker", get_node("TurnTracker"))
+	PlayerEconomy.money_changed.connect(_on_money_changed)
+	_update_money_display()
 
 func bind_tracker(t: TurnTracker):
 	if t == null:
@@ -32,3 +34,10 @@ func _on_rolls_updated(rolls: int):
 		rolls_label.add_theme_color_override("font_color", Color(0.2, 1.0, 0.2))  # Green
 	else:
 		rolls_label.remove_theme_color_override("font_color")
+
+func _update_money_display() -> void:
+	if money_label:
+		money_label.text = "$%d" % PlayerEconomy.money
+
+func _on_money_changed(new_amount: int) -> void:
+	_update_money_display()

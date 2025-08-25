@@ -1,0 +1,57 @@
+[gd_scene load_steps=2 format=3 uid="uid://dbqwnxq8iy66l"]
+
+[ext_resource type="Script" uid="uid://do82iklsw8hmg" path="res://Scripts/UI/shop_ui.gd" id="1_ksn61"]
+
+[node name="ShopUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ksn61")
+
+[node name="TabContainer" type="TabContainer" parent="."]
+layout_mode = 0
+offset_top = 92.0
+offset_right = 1273.0
+offset_bottom = 715.0
+current_tab = 0
+
+[node name="PowerUps" type="TabBar" parent="TabContainer"]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="GridContainer" type="GridContainer" parent="TabContainer/PowerUps"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Consumables" type="TabBar" parent="TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="GridContainer" type="GridContainer" parent="TabContainer/Consumables"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Mods" type="TabBar" parent="TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
+
+[node name="GridContainer" type="GridContainer" parent="TabContainer/Mods"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="ShopLabel" type="RichTextLabel" parent="."]
+layout_mode = 0
+offset_left = 628.0
+offset_top = 55.0
+offset_right = 672.0
+offset_bottom = 78.0
+bbcode_enabled = true
+text = "SHOP"

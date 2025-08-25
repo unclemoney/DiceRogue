@@ -23,3 +23,11 @@ text = "Turn: 1"
 [node name="RollsLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
 text = "Rolls Left: 3"
+
+[node name="MoneyLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 3.0
+offset_top = 58.0
+offset_right = 43.0
+offset_bottom = 81.0
+text = "$$$:"

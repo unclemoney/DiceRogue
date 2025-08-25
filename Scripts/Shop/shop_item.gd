@@ -1,0 +1,85 @@
+extends PanelContainer
+class_name ShopItem
+
+signal purchased(item_id: String, item_type: String)
+
+@onready var icon: TextureRect = $MarginContainer/VBoxContainer/Icon
+@onready var name_label: Label = $MarginContainer/VBoxContainer/NameLabel
+@onready var price_label: Label = $MarginContainer/VBoxContainer/PriceLabel
+@onready var buy_button: Button = $MarginContainer/VBoxContainer/BuyButton
+@onready var shop_label: Label = $MarginContainer/ShopLabel
+
+var item_id: String
+var item_type: String
+var price: int
+var _time: float = 0.0
+const RAINBOW_SPEED := 0.5
+const RAINBOW_COLORS := [
+	Color(1, 0, 0),    # Red
+	Color(1, 0.5, 0),  # Orange
+	Color(1, 1, 0),    # Yellow
+	Color(0, 1, 0),    # Green
+	Color(0, 0, 1),    # Blue
+	Color(0.5, 0, 1),  # Purple
+]
+
+func _ready() -> void:
+	if not icon or not name_label or not price_label or not buy_button or not shop_label:
+		push_error("[ShopItem] Required nodes not found!")
+		return
+	
+	# Set up shop label
+	shop_label.text = "[center]SHOP[/center]"
+	shop_label.custom_minimum_size = Vector2(0, 24)
+	
+	buy_button.pressed.connect(_on_buy_button_pressed)
+
+func _process(delta: float) -> void:
+	if not shop_label:
+		return
+		
+	_time += delta * RAINBOW_SPEED
+	
+	# Calculate two color indices for interpolation
+	var color_count: int = RAINBOW_COLORS.size()
+	var index1: int = int(_time) % color_count
+	var index2: int = (index1 + 1) % color_count
+	var t: float = fmod(_time, 1.0)  # Interpolation factor
+	
+	# Interpolate between colors
+	var current_color: Color = RAINBOW_COLORS[index1].lerp(RAINBOW_COLORS[index2], t)
+	
+	# Format BBCode with hex color
+	var hex_color: String = current_color.to_html(false)
+	shop_label.text = "[center][color=#%s][wave amp=50 freq=2]SHOP[/wave][/color][/center]" % hex_color
+
+
+func setup(data: Resource, type: String) -> void:
+	print("[ShopItem] Setting up item:", data.id)
+	item_id = data.id
+	item_type = type
+	price = data.price
+	
+	if not icon or not name_label or not price_label:
+		push_error("[ShopItem] One or more required nodes not found!")
+		return
+	
+	# Explicitly set icon size and expansion
+	icon.custom_minimum_size = Vector2(48, 48)
+	icon.texture = data.icon
+	icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	
+	name_label.text = data.display_name
+	price_label.text = "$%d" % price
+	
+	_update_button_state()
+	PlayerEconomy.money_changed.connect(_update_button_state)
+	print("[ShopItem] Setup complete for:", data.id)
+
+func _update_button_state() -> void:
+	if buy_button:
+		buy_button.disabled = not PlayerEconomy.can_afford(price)
+
+func _on_buy_button_pressed() -> void:
+	if PlayerEconomy.remove_money(price):
+		emit_signal("purchased", item_id, item_type)
