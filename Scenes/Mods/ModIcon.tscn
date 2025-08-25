@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://cn23jc2f30b7q"]
 
 [ext_resource type="Script" uid="uid://b2ncvkrk2usxe" path="res://Scripts/Mods/mod_icon.gd" id="1_1ncyp"]
-[ext_resource type="Texture2D" uid="uid://bw04snvvsy6q5" path="res://Resources/Art/Dice/dieWhite_borderWild.png" id="2_4yhde"]
+[ext_resource type="Texture2D" uid="uid://bjng3fi0yurj2" path="res://icon.svg" id="2_4yhde"]
 
 [node name="ModIcon" type="TextureRect"]
 custom_minimum_size = Vector2(30, 30)

@@ -1,9 +1,22 @@
 extends Node
 class_name ScoreEvaluator
 
+var _evaluation_count := 0  # Add at top of class
+
+func reset_evaluation_count() -> void:
+	_evaluation_count = 0
+
 func evaluate_with_wildcards(dice_values: Array[int]) -> Dictionary:
-	print("\n=== Score Evaluation Start ===")
-	print("Input dice values:", dice_values)
+	_evaluation_count += 1
+	if _evaluation_count > 100:
+		push_error("[ScoreEvaluator] Too many evaluations! Possible infinite loop.")
+		return {}
+	
+	# Check for Yahtzee bonus potential first
+	var has_bonus_potential = false
+	if DiceResults.scorecard and DiceResults.scorecard.lower_scores.get("yahtzee") == 50:
+		if is_yahtzee(dice_values):
+			has_bonus_potential = true
 	
 	var wildcard_indices = []
 	var regular_values = []
@@ -12,45 +25,63 @@ func evaluate_with_wildcards(dice_values: Array[int]) -> Dictionary:
 	for i in range(dice_values.size()):
 		var die = DiceResults.dice_refs[i]
 		if die.has_mod("wildcard"):
-			print("Found wildcard at index", i, "with value", dice_values[i])
 			wildcard_indices.append(i)
 		else:
-			print("Regular die at index", i, "with value", dice_values[i])
 			regular_values.append(dice_values[i])
 	
-	# If no wildcards, evaluate normally
-	if wildcard_indices.is_empty():
-		print("No wildcards found - evaluating normally")
-		return evaluate_normal(dice_values)
-	
-	print("Testing wildcard combinations...")
 	var best_scores = {}
-	
-	# Generate all possible combinations
+	var is_yahtzee = false
+	# If this is a potential bonus Yahtzee, add 100 to all available categories
+	if has_bonus_potential:
+		for category in DiceResults.scorecard.upper_scores:
+			if DiceResults.scorecard.upper_scores[category] == null:
+				best_scores[category] = 100
+				
+		for category in DiceResults.scorecard.lower_scores:
+			if category != "yahtzee" and DiceResults.scorecard.lower_scores[category] == null:
+				best_scores[category] = 100	
+
+	# Only generate combinations once
 	var combinations = generate_wildcard_combinations(wildcard_indices.size(), 6)
+	print("Generated", combinations.size(), "possible combinations")
+	
+	# Check if this could be a bonus Yahtzee first
+	if DiceResults.scorecard and DiceResults.scorecard.lower_scores.get("yahtzee") == 50:
+		if is_yahtzee(dice_values):
+			is_yahtzee = true
+	
+	# Limit combinations if too many
+	if combinations.size() > 100:
+		push_warning("[ScoreEvaluator] Too many combinations (", combinations.size(), "), limiting to first 100")
+		combinations = combinations.slice(0, 100)
+	
 	for combo in combinations:
-		# Convert untyped array to Array[int] before evaluation
 		var test_values: Array[int] = []
-		test_values.assign(regular_values) # Use assign instead of duplicate
+		test_values.assign(regular_values)
 		
 		for i in range(wildcard_indices.size()):
 			test_values.insert(wildcard_indices[i], combo[i])
-		print("Testing combination:", test_values)
 		
 		var scores = evaluate_normal(test_values)
+		
+		# If this is a bonus Yahtzee, add 100 points to each possible category
+		if is_yahtzee:
+			for category in scores.keys():
+				if category != "yahtzee":  # Don't modify yahtzee category
+					scores[category] += 100
 		
 		# Update best scores for each category
 		for category in scores:
 			var current_best = best_scores.get(category, 0)
 			if scores[category] > current_best:
 				best_scores[category] = scores[category]
-				print("New best score for", category + ":", scores[category])
-	
-	print("=== Score Evaluation Complete ===\n")
 	return best_scores
 
 
 func evaluate_normal(values: Array[int]) -> Dictionary:
+	# Cache yahtzee check to avoid multiple calls
+	var yahtzee_score = calculate_yahtzee_score(values)
+	
 	return {
 		"ones": calculate_number_score(values, 1),
 		"twos": calculate_number_score(values, 2),
@@ -63,10 +94,9 @@ func evaluate_normal(values: Array[int]) -> Dictionary:
 		"full_house": calculate_full_house_score(values),
 		"small_straight": calculate_small_straight_score(values),
 		"large_straight": calculate_large_straight_score(values),
-		"yahtzee": calculate_yahtzee_score(values),
+		"yahtzee": yahtzee_score,  # Use cached value
 		"chance": calculate_chance_score(values)
 	}
-
 
 # Update calculate_of_a_kind_score to use the value
 func calculate_of_a_kind_score(values: Array[int], required: int) -> int:
@@ -90,59 +120,89 @@ func calculate_large_straight_score(values: Array[int]) -> int:
 	return 40 if is_straight(values) else 0
 
 func calculate_yahtzee_score(values: Array[int]) -> int:
-	print("\n=== Calculating Yahtzee Score ===")
-	print("Input values:", values)
-	
 	if is_yahtzee(values):
-		print("✓ Yahtzee detected!")
-		# Use DiceResults.scorecard instead of trying to find it through dice_refs
 		var scorecard = DiceResults.scorecard
 		if scorecard:
-			print("Current Yahtzee score in scorecard:", scorecard.lower_scores.get("yahtzee"))
-			if scorecard.lower_scores.get("yahtzee", 0) == 50:
-				print("→ This is a bonus Yahtzee! (100 points)")
-				return 100
+			var current_score = scorecard.lower_scores.get("yahtzee")
+
+			# Check if this is a valid Yahtzee situation for bonus
+			if current_score == 50:
+				# Check if any category has already been scored
+				var any_category_scored = false
+				
+				# Check upper section
+				for category in scorecard.upper_scores:
+					if scorecard.upper_scores[category] != null:
+						any_category_scored = true
+						break
+				
+				# Check lower section if needed
+				if not any_category_scored:
+					for category in scorecard.lower_scores:
+						if category != "yahtzee" and scorecard.lower_scores[category] != null:
+							any_category_scored = true
+							break
+				
+				if any_category_scored:
+					return 100
+				else:
+					return 50
+			elif current_score == null:
+				return 50
+			elif current_score == 0:
+				return 0
 			else:
-				print("→ This is the first Yahtzee (50 points)")
+				return 0
 		else:
 			push_error("[ScoreEvaluator] No scorecard reference found in DiceResults")
-		return 50
-	print("✗ Not a Yahtzee")
+			return 50
 	return 0
 	
 func calculate_chance_score(values: Array[int]) -> int:
 	return get_sum(values)
 
 func calculate_score_for_category(category: String, values: Array[int]) -> int:
-	print("\n=== calculate_score_for_category ===")
-	print("Category:", category)
-	print("Values:", values)
-
 	# First evaluate with wildcards to get all possible scores
 	var all_scores = evaluate_with_wildcards(values)
-	
-	# Return the score for the requested category
 	var score = all_scores.get(category, 0)
-	print("Calculated score:", score)
-	print("=== End calculate_score_for_category ===\n")
 	return score
 
 func generate_wildcard_combinations(wildcard_count: int, sides: int) -> Array:
 	var combinations := []
 	
+	# Base case
 	if wildcard_count == 0:
 		combinations.append([])
 		return combinations
 	
+	# For each wildcard, we only need to consider values that could make useful combinations
+	# Get the values of non-wildcard dice to inform our choices
+	var regular_values = []
+	for i in range(DiceResults.dice_refs.size()):
+		if not DiceResults.dice_refs[i].has_mod("wildcard"):
+			regular_values.append(DiceResults.values[i])
+
+	# If we have regular values, prioritize those and adjacent numbers
+	var priority_values = {}
+	if not regular_values.is_empty():
+		for v in regular_values:
+			priority_values[v] = true  # Same value for matching
+			priority_values[max(1, v - 1)] = true  # One less for straights
+			priority_values[min(6, v + 1)] = true  # One more for straights
+	else:
+		# If no regular values, use all sides
+		for i in range(1, sides + 1):
+			priority_values[i] = true
+	# Generate combinations using only priority values
 	var sub_combinations = generate_wildcard_combinations(wildcard_count - 1, sides)
 	for sub_combo in sub_combinations:
-		for value in range(1, sides + 1):
-			# Create a new array and copy values
+		for value in priority_values:
 			var new_combo := []
 			new_combo.assign(sub_combo)
 			new_combo.append(value)
 			combinations.append(new_combo)
 	
+	print("Generated combinations:", combinations.size())
 	return combinations
 	
 
@@ -215,44 +275,34 @@ func is_small_straight(values: Array[int]) -> bool:
 
 
 func is_yahtzee(values: Array[int]) -> bool:
-	print("\n=== Checking for Yahtzee ===")
-	print("Values:", values)
-	
 	if values.is_empty():
-		print("✗ Empty values array")
 		return false
 		
-	# For regular dice
-	var first_value = values[0]
-	if values.all(func(v): return v == first_value):
-		print("✓ Regular Yahtzee detected - all values are", first_value)
-		return true
-		
-	# For wildcard combinations
-	print("Checking wildcard combination...")
 	var wildcard_count = 0
-	var regular_value = null
+	var regular_values = []
+	var regular_indices = []
 	
+	# First pass - count wildcards and collect regular values
 	for i in range(values.size()):
-		if DiceResults.dice_refs[i].has_mod("wildcard"):
+		var die = DiceResults.dice_refs[i]
+		if die.has_mod("wildcard"):
 			wildcard_count += 1
-			print("Found wildcard at index", i)
 		else:
-			if regular_value == null:
-				regular_value = values[i]
-				print("First regular value:", regular_value)
-			elif values[i] != regular_value:
-				print("✗ Mismatch - found", values[i], "expected", regular_value)
+			regular_values.append(values[i])
+			regular_indices.append(i)
+	
+	# If all dice are wildcards, it's automatically a Yahtzee
+	if wildcard_count == values.size():
+		print("✓ All wildcards - automatic Yahtzee!")
+		return true
+	
+	# If we have regular values, they all must match
+	if not regular_values.is_empty():
+		var target_value = regular_values[0]
+		
+		# Check that all regular dice match
+		for value in regular_values:
+			if value != target_value:
 				return false
-	
-	print("Wildcard count:", wildcard_count)
-	print("Regular value:", regular_value)
-	
-	# If all dice are wildcards, it's a Yahtzee
-	# Or if all non-wildcard dice show the same value
-	var is_valid = wildcard_count == values.size() or (regular_value != null)
-	print("Yahtzee valid?", is_valid, 
-		"(", "all wildcards" if wildcard_count == values.size() 
-		else "matching regular values" if regular_value != null 
-		else "invalid combination", ")")
-	return is_valid
+		return true
+	return false

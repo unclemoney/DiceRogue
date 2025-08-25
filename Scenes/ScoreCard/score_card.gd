@@ -36,7 +36,6 @@ var lower_scores := {
 }
 
 func set_score(section: Section, category: String, value: int) -> void:
-	print("Setting score:", category, "→", value)
 	match section:
 		Section.UPPER:
 			if upper_scores.has(category):
@@ -84,37 +83,42 @@ func on_category_selected(section: Section, category: String):
 	set_score(section, category, score)
 
 func auto_score_best(values: Array[int]) -> void:
+	# Reset evaluation counter
+	ScoreEvaluatorSingleton.reset_evaluation_count()
+	
 	var best_score := -1
 	var best_section
 	var best_category := ""
-
-	# scan upper section
+	
+	# Get all possible scores at once to include bonus Yahtzee
+	var all_scores = ScoreEvaluatorSingleton.evaluate_with_wildcards(values)
+	
+	# Check upper section
 	for category in upper_scores.keys():
 		if upper_scores[category] == null:
-			#print("Using evaluator:", ScoreEvaluatorSingleton)  
-			#print("Script path:", ScoreEvaluatorSingleton.get_script().resource_path)  
-			var s: int = ScoreEvaluatorSingleton.calculate_score_for_category(category, values)  
-			#print("  -> s =", s, " type:", typeof(s))  
-			if s > best_score:
-				best_score = s
+			var score = all_scores.get(category, 0)
+			if score > best_score:
+				best_score = score
 				best_section = Section.UPPER
 				best_category = category
-
-	# scan lower section
+	
+	# Check lower section
 	for category in lower_scores.keys():
 		if lower_scores[category] == null:
-			#print("Using evaluator:", ScoreEvaluatorSingleton)  
-			#print("Script path:", ScoreEvaluatorSingleton.get_script().resource_path)  
-			var s: int = ScoreEvaluatorSingleton.calculate_score_for_category(category, values)  
-			#print("  -> s =", s, " type:", typeof(s))  
-			if s > best_score:
-				best_score = s
+			var score = all_scores.get(category, 0)
+			if score > best_score:
+				best_score = score
 				best_section = Section.LOWER
 				best_category = category
-
+	
 	if best_category != "":
+		var is_new_yahtzee = (best_category == "yahtzee" and best_score == 50)
 		set_score(best_section, best_category, best_score)
+		# This will trigger the bonus Yahtzee check if applicable
+		check_bonus_yahtzee(values, is_new_yahtzee)
 		emit_signal("score_auto_assigned", best_section, best_category, best_score)
+	else:
+		print("No valid scoring categories found!")
 
 func get_upper_section_final_total() -> int:
 	var subtotal = get_upper_section_total()
@@ -125,56 +129,48 @@ func get_upper_section_final_total() -> int:
 func is_upper_section_complete() -> bool:
 	for score in upper_scores.values():
 		if score == null:
-			print("Upper section incomplete.")
 			return false
-	print("Upper section is complete.")
 	return true
 
 func is_lower_section_complete() -> bool:
 	for score in lower_scores.values():
 		if score == null:
-			print("Lower section incomplete")
 			return false
-	print("Lower section is complete")
 	return true
 
 func check_lower_section() -> void:
 	if is_lower_section_complete():
-		print("Lower section completed, emitting signal")
 		emit_signal("lower_section_completed")
 
 func check_upper_bonus() -> void:
-	print("Checking upper bonus...")
 	if not is_upper_section_complete():
-		print("Upper section not complete yet")
 		return
 	
-	print("Upper section complete, calculating total")    
 	var total = get_upper_section_total()
-	print("Upper total:", total, " (need ", UPPER_BONUS_THRESHOLD, " for bonus)")
 	
 	if total >= UPPER_BONUS_THRESHOLD:
-		print("Bonus achieved! Emitting signal...")
 		upper_bonus = UPPER_BONUS_AMOUNT  # Store the bonus
 		emit_signal("upper_bonus_achieved", UPPER_BONUS_AMOUNT)
 	else:
 		upper_bonus = 0
-		print("No bonus yet")
 	
 	emit_signal("upper_section_completed")
 
-func check_bonus_yahtzee(values: Array[int]) -> void:
-	# Only check if we already have a yahtzee scored
-	if lower_scores["yahtzee"] != null and lower_scores["yahtzee"] > 0:
-		# Check if current roll is a yahtzee
-		var counts = {}
-		for v in values:
-			counts[v] = counts.get(v, 0) + 1
+func check_bonus_yahtzee(values: Array[int], is_new_yahtzee: bool = false) -> void:
+	# Only check if we already have a yahtzee scored as 50
+
+	if is_new_yahtzee:
+		print("→ This is the first Yahtzee being scored, skipping bonus check")
+		return
+
+	if lower_scores["yahtzee"] != 50:
+		print("→ No previous Yahtzee scored as 50, cannot award bonus")
+		return
 		
-		for count in counts.values():
-			if count >= 5:
-				yahtzee_bonuses += 1
-				yahtzee_bonus_points += 100
-				print("Bonus Yahtzee achieved! Total bonuses:", yahtzee_bonuses)
-				emit_signal("yahtzee_bonus_achieved", 100)
-				return
+	# Use ScoreEvaluator to check for Yahtzee with wildcards
+	if ScoreEvaluatorSingleton.is_yahtzee(values):
+		yahtzee_bonuses += 1
+		yahtzee_bonus_points += 100
+		emit_signal("yahtzee_bonus_achieved", 100)
+	else:
+		print("✗ Not a Yahtzee - no bonus awarded")

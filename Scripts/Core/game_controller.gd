@@ -143,8 +143,6 @@ func _on_power_up_deselected(power_up_id: String) -> void:
 			push_error("Unknown target for power-up: %s" % power_up_id)
 
 func grant_consumable(id: String) -> void:
-	print("Granting consumable:", id)
-	
 	var consumable := consumable_manager.spawn_consumable(id, consumable_container) as Consumable
 	if consumable == null:
 		push_error("Failed to spawn Consumable '%s'" % id)
@@ -192,13 +190,11 @@ func _on_score_rerolled(_section: Scorecard.Section, _category: String, _score: 
 		remove_consumable("score_reroll")
 
 func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
-	print("Score assigned, checking if reroll should be enabled")
 	if not scorecard:
 		push_error("No scorecard reference found")
 		return
 		
 	if scorecard.has_any_scores():
-		print("First score detected, enabling reroll consumable")
 		var reroll_icon = consumable_ui.get_consumable_icon("score_reroll")
 		if reroll_icon:
 			reroll_icon.set_useable(true)
@@ -208,8 +204,6 @@ func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 		print("No scores yet, reroll remains disabled")
 
 func apply_debuff(id: String) -> void:
-	print("Applying debuff:", id)
-	
 	var debuff := debuff_manager.spawn_debuff(id, debuff_container) as Debuff
 	if debuff == null:
 		push_error("Failed to spawn Debuff '%s'" % id)
@@ -237,7 +231,6 @@ func apply_debuff(id: String) -> void:
 			push_error("Unknown debuff type: %s" % id)
 
 func enable_debuff(id: String) -> void:
-	print("Enabling debuff:", id)
 	if not is_debuff_active(id):
 		apply_debuff(id)
 	else:
@@ -246,7 +239,6 @@ func enable_debuff(id: String) -> void:
 			debuff.start()
 
 func disable_debuff(id: String) -> void:
-	print("Disabling debuff:", id)
 	if is_debuff_active(id):
 		var debuff = active_debuffs[id]
 		if debuff:
@@ -263,7 +255,6 @@ func is_debuff_active(id: String) -> bool:
 	return active_debuffs.has(id) and active_debuffs[id] != null
 
 # Add this function after other consumable-related functions
-
 func get_active_consumable(id: String) -> Consumable:
 	if active_consumables.has(id):
 		return active_consumables[id]
@@ -283,53 +274,22 @@ func remove_consumable(id: String) -> void:
 			push_error("No consumable_ui found when trying to remove consumable icon")
 
 func _on_roll_completed() -> void:
-	print("Roll completed")
 	if is_debuff_active("lock_dice"):
-		print("Lock dice debuff active - reapplying")
 		var debuff = active_debuffs["lock_dice"]
 		if debuff and dice_hand:
 			debuff.apply(dice_hand)
 	else:
-		print("No lock dice debuff active - dice can be locked")
 		if dice_hand:
 			dice_hand.enable_all_dice()
 
 func _on_dice_spawned() -> void:
-	print("Dice spawned, attempting to add wildcard mod")
 	if dice_hand and dice_hand.dice_list.size() > 0:
 		var first_die = dice_hand.dice_list[0]
 		if first_die and mod_manager:
-			print("Adding wildcard mod to first die")
 			var mod = mod_manager.spawn_mod("wildcard", first_die)
 			if mod:
 				first_die.add_mod(mod_manager.get_def("wildcard"))
-				print("Wildcard mod spawned successfully")
 			else:
-				print("Wildcard mod spawned failed")
-				push_error("Failed to spawn wildcard mod")
-		else:
-			push_error("Failed to add wildcard mod - missing die or mod manager")
-		var second_die = dice_hand.dice_list[1]
-		if second_die and mod_manager:
-			print("Adding wildcard mod to second die")
-			var mod = mod_manager.spawn_mod("wildcard", second_die)
-			if mod:
-				second_die.add_mod(mod_manager.get_def("wildcard"))
-				print("Wildcard mod spawned successfully")
-			else:
-				print("Wildcard mod spawned failed")
-				push_error("Failed to spawn wildcard mod")
-		else:
-			push_error("Failed to add wildcard mod - missing die or mod manager")
-		var third_die = dice_hand.dice_list[2]
-		if third_die and mod_manager:
-			print("Adding wildcard mod to third die")
-			var mod = mod_manager.spawn_mod("wildcard", third_die)
-			if mod:
-				third_die.add_mod(mod_manager.get_def("wildcard"))
-				print("Wildcard mod spawned successfully")
-			else:
-				print("Wildcard mod spawned failed")
 				push_error("Failed to spawn wildcard mod")
 		else:
 			push_error("Failed to add wildcard mod - missing die or mod manager")

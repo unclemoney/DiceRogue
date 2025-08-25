@@ -46,7 +46,7 @@ shader_parameter/colour_2 = Color(0, 0.141422, 0.388962, 1)
 shader_parameter/colour_3 = Color(0.505455, 0.00273614, 0.816471, 1)
 shader_parameter/contrast = 1.415
 shader_parameter/lighting = 0.605
-shader_parameter/spin_amount = 0.155
+shader_parameter/spin_amount = 0.255
 shader_parameter/pixel_filter = 700.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wtptv"]
