@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b3mbbo0xton8l"]
+
+[ext_resource type="Script" uid="uid://dgkxvga0ou7ux" path="res://Scripts/Mods/odd_only_mod.gd" id="1_m5bep"]
+
+[node name="OddOnlyMod" type="Node"]
+script = ExtResource("1_m5bep")

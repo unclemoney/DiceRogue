@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ModData" load_steps=4 format=3 uid="uid://7bkbk2c47ds8"]
+
+[ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="1_5pbsu"]
+[ext_resource type="Texture2D" uid="uid://co61s6eae3sg8" path="res://Resources/Art/Dice/dieWhite_borderOddonly.png" id="1_lrw8v"]
+[ext_resource type="PackedScene" uid="uid://b3mbbo0xton8l" path="res://Scenes/Mods/OddOnlyMod.tscn" id="2_depgn"]
+
+[resource]
+script = ExtResource("1_5pbsu")
+id = "odd_only"
+display_name = "Odd Only"
+description = "Only allows Odd Number dice to be rolled"
+icon = ExtResource("1_lrw8v")
+scene = ExtResource("2_depgn")
+price = 100
+metadata/_custom_type_script = "uid://47gl3by4wwht"
