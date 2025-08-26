@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cebtid7oyds8a"]
+
+[ext_resource type="Script" uid="uid://dl0seed3m4jbw" path="res://Scripts/Mods/gold_six_mod.gd" id="1_gj60q"]
+
+[node name="Node" type="Node"]
+script = ExtResource("1_gj60q")
