@@ -15,4 +15,5 @@ display_name = "Extra Rolls"
 description = "Grants additional Rolls each turn"
 icon = SubResource("AtlasTexture_jvwcb")
 scene = ExtResource("2_jvwcb")
+price = 100
 metadata/_custom_type_script = "uid://b4upm4dbvhukm"

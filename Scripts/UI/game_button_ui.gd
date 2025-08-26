@@ -4,10 +4,16 @@ extends Control
 @export var score_card_ui_path:  NodePath
 @export var turn_tracker_path:   NodePath
 
+@onready var shop_button: Button = $ShopButton
+
+signal shop_button_pressed
+
 var dice_hand
 var score_card_ui
 var turn_tracker
 var scorecard: Scorecard
+var is_shop_open: bool = false
+
 
 func _ready():
 	print("ScoreCardUI ready: ", score_card_ui_path)
@@ -31,7 +37,8 @@ func _ready():
 
 	# Godot 4 style: signal name + target Callable
 	score_card_ui.connect("hand_scored", Callable(self, "_hand_scored_disable"))
-
+	if shop_button:
+		shop_button.pressed.connect(_on_shop_button_pressed)
 
 
 func _on_roll_button_pressed() -> void:
@@ -84,3 +91,9 @@ func _on_game_over() -> void:
 func _hand_scored_disable() -> void:
 	print("🏁 Hand scored—disabling Roll button")
 	$HBoxContainer/RollButton.disabled = true
+
+func _on_shop_button_pressed() -> void:
+	print("[GameButtonUI] Shop button pressed")
+	is_shop_open = !is_shop_open  # Toggle shop state
+	emit_signal("shop_button_pressed")
+	print("[GameButtonUI] Signal emitted")

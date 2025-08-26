@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://c8e502cveltmu"]
 
-[ext_resource type="Script" path="res://Scripts/Shop/shop_item.gd" id="1_xxxx"]
+[ext_resource type="Script" uid="uid://tcwgkjbbqnub" path="res://Scripts/Shop/shop_item.gd" id="1_xxxx"]
 
 [node name="ShopItem" type="PanelContainer"]
 custom_minimum_size = Vector2(120, 150)

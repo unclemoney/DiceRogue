@@ -15,4 +15,5 @@ display_name = "Score Reroll"
 description = "Change up a score already used"
 icon = SubResource("AtlasTexture_5xbvx")
 scene = ExtResource("2_bbh3k")
+price = 100
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

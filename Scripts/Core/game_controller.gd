@@ -10,6 +10,7 @@ signal consumable_used(id: String, consumable: Consumable)
 var active_power_ups: Dictionary = {}  # id -> PowerUp
 var active_consumables: Dictionary = {}  # id -> Consumable
 var active_debuffs: Dictionary = {}  # id -> Debuff
+var active_mods: Dictionary = {}  # id -> Mod
 
 const ScoreCardUI := preload("res://Scripts/UI/score_card_ui.gd")
 const DebuffManager := preload("res://Scripts/Managers/DebuffManager.gd")
@@ -31,6 +32,8 @@ const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 @export var debuff_manager_path: NodePath       = ^"../DebuffManager"
 @export var score_card_path: NodePath           = ^"../ScoreCard"
 @export var mod_manager_path: NodePath = ^"../ModManager"
+@export var shop_ui_path: NodePath = ^"../ShopUI"
+@export var game_button_ui_path: NodePath = ^"../GameButtonUI"
 
 @onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
 @onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
@@ -46,8 +49,12 @@ const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 @onready var debuff_manager: DebuffManager = get_node(debuff_manager_path) as DebuffManager
 @onready var scorecard: ScoreCard 		   = get_node(score_card_path) as ScoreCard
 @onready var mod_manager: ModManager = get_node(mod_manager_path) as ModManager
+@onready var shop_ui: ShopUI = get_node(shop_ui_path) as ShopUI
+@onready var game_button_ui: Control = get_node(game_button_ui_path)
 
 const STARTING_POWER_UP_IDS := ["extra_dice", "extra_rolls"]
+
+var _last_modded_die_index: int = -1  # Track which die received the last mod
 
 func _ready() -> void:
 	print("▶ GameController._ready()")
@@ -56,12 +63,19 @@ func _ready() -> void:
 		dice_hand.dice_spawned.connect(_on_dice_spawned)
 	if scorecard:
 		scorecard.score_auto_assigned.connect(_on_score_assigned)
+	if game_button_ui:
+		game_button_ui.connect("shop_button_pressed", _on_shop_button_pressed)	
+	if shop_ui:
+		print("[GameController] Setting up shop UI")
+		shop_ui.hide()
+		shop_ui.connect("item_purchased", _on_shop_item_purchased)
 	call_deferred("_on_game_start")
 
 func _on_game_start() -> void:
-	spawn_starting_powerups()
-	grant_consumable("score_reroll")
+	#spawn_starting_powerups()
+	#grant_consumable("score_reroll")
 	#apply_debuff("lock_dice")
+	pass
 
 func _process(delta):
 	if Input.is_action_just_pressed("quit_game"):
@@ -89,17 +103,25 @@ func grant_power_up(id: String) -> void:
 	# 1) Spawn logic via scene manager
 	var pu := pu_manager.spawn_power_up(id, power_up_container) as PowerUp
 	if pu == null:
-		push_error("Failed to spawn PowerUp '%s'" % id)
+		push_error("[GameController] Failed to spawn PowerUp '%s'" % id)
 		return
 
-	pu.apply(self)
-	active_power_ups[id] = pu
-	emit_signal("power_up_granted", id, pu)
-
-	# 2) Show in UI
+	# Create and connect UI first
 	var def: PowerUpData = pu_manager.get_def(id)
 	if def:
-		powerup_ui.add_power_up(def)
+		var icon = powerup_ui.add_power_up(def)
+		if icon:
+			print("[GameController] Connecting power-up signals for:", id)
+			# Connect the signals from the icon
+			icon.power_up_selected.connect(_on_power_up_selected)
+			icon.power_up_deselected.connect(_on_power_up_deselected)
+		else:
+			push_error("[GameController] Failed to create UI icon for power-up:", id)
+			
+	# Store the power-up reference
+	active_power_ups[id] = pu
+	emit_signal("power_up_granted", id, pu)
+	print("[GameController] Power-up granted and ready:", id)
 
 func revoke_power_up(power_up_id: String) -> void:
 	if not active_power_ups.has(power_up_id):
@@ -145,7 +167,7 @@ func _on_power_up_deselected(power_up_id: String) -> void:
 func grant_consumable(id: String) -> void:
 	var consumable := consumable_manager.spawn_consumable(id, consumable_container) as Consumable
 	if consumable == null:
-		push_error("Failed to spawn Consumable '%s'" % id)
+		push_error("[GameController] Failed to spawn Consumable '%s'" % id)
 		return
 
 	active_consumables[id] = consumable
@@ -153,15 +175,28 @@ func grant_consumable(id: String) -> void:
 	# Add to UI with null checks
 	var def: ConsumableData = consumable_manager.get_def(id)
 	if not def:
-		push_error("No ConsumableData found for '%s'" % id)
+		push_error("[GameController] No ConsumableData found for '%s'" % id)
 		return
 		
-	var icon = consumable_ui.add_consumable(def, consumable)  # Pass the consumable instance
+	var icon = consumable_ui.add_consumable(def, consumable)
 	if not icon:
-		push_error("Failed to create UI icon for consumable '%s'" % id)
+		push_error("[GameController] Failed to create UI icon for consumable '%s'" % id)
 		return
 
+	# Connect signals and set initial state
 	icon.consumable_used.connect(_on_consumable_used)
+	
+	# Set initial usability state
+	match id:
+		"score_reroll":
+			# Score reroll is only useable if we have scores
+			var can_use = scorecard and scorecard.has_any_scores()
+			icon.set_useable(can_use)
+			print("[GameController] Score reroll consumable added, useable:", can_use)
+		_:
+			# Other consumables are useable by default
+			icon.set_useable(true)
+			print("[GameController] Consumable granted and ready:", id)
 
 func _on_consumable_used(consumable_id: String) -> void:
 	var consumable = active_consumables.get(consumable_id)
@@ -273,6 +308,37 @@ func remove_consumable(id: String) -> void:
 		else:
 			push_error("No consumable_ui found when trying to remove consumable icon")
 
+func grant_mod(id: String) -> void:
+	print("[GameController] Attempting to grant mod:", id)
+	
+	# Get the mod definition
+	var def: ModData = mod_manager.get_def(id)
+	if not def:
+		push_error("[GameController] No ModData found for:", id)
+		return
+		
+	# Store reference for later use
+	active_mods[id] = def
+	
+	if dice_hand and dice_hand.dice_list.size() > 0:
+		var applied = false
+		# Try to find a die without this mod type
+		for i in range(dice_hand.dice_list.size()):
+			var die = dice_hand.dice_list[i]
+			if not die.has_mod(id):
+				var mod = mod_manager.spawn_mod(id, die)
+				if mod:
+					die.add_mod(def)
+					_last_modded_die_index = i
+					applied = true
+					print("[GameController] Mod", id, "applied to die:", die.name)
+					break
+		
+		if not applied:
+			print("[GameController] All current dice have mod", id, "- will apply to next spawned die")
+	else:
+		print("[GameController] No dice available - mod will be applied to next die")
+
 func _on_roll_completed() -> void:
 	if is_debuff_active("lock_dice"):
 		var debuff = active_debuffs["lock_dice"]
@@ -283,13 +349,45 @@ func _on_roll_completed() -> void:
 			dice_hand.enable_all_dice()
 
 func _on_dice_spawned() -> void:
-	if dice_hand and dice_hand.dice_list.size() > 0:
-		var first_die = dice_hand.dice_list[0]
-		if first_die and mod_manager:
-			var mod = mod_manager.spawn_mod("wildcard", first_die)
-			if mod:
-				first_die.add_mod(mod_manager.get_def("wildcard"))
-			else:
-				push_error("Failed to spawn wildcard mod")
+	if not dice_hand:
+		return
+		
+	print("[GameController] New dice spawned, checking for mods to apply")
+	
+	# Get the newly spawned die (should be the last one in the list)
+	if dice_hand.dice_list.size() > 0:
+		var new_die = dice_hand.dice_list[-1]
+		
+		# Apply any active mods that aren't already on other dice
+		for mod_id in active_mods:
+			var def = active_mods[mod_id]
+			# Check if this mod type is already on this die
+			if def and not new_die.has_mod(mod_id):
+				var mod = mod_manager.spawn_mod(mod_id, new_die)
+				if mod:
+					new_die.add_mod(def)
+					print("[GameController] Applied mod", mod_id, "to new die:", new_die.name)
+				else:
+					push_error("[GameController] Failed to spawn mod", mod_id, "for new die")
+
+func _on_shop_button_pressed() -> void:
+	if shop_ui:
+		if not shop_ui.visible:
+			shop_ui.show()
 		else:
-			push_error("Failed to add wildcard mod - missing die or mod manager")
+			shop_ui.hide()
+
+func _on_shop_item_purchased(item_id: String, item_type: String) -> void:
+	print("[GameController] Processing purchase:", item_id, "type:", item_type)
+	match item_type:
+		"power_up":
+			print("[GameController] Granting power-up:", item_id)
+			grant_power_up(item_id)
+		"consumable":
+			print("[GameController] Granting consumable:", item_id)
+			grant_consumable(item_id)
+		"mod":
+			print("[GameController] Granting mod:", item_id)
+			grant_mod(item_id)
+		_:
+			push_error("[GameController] Unknown item type purchased:", item_type)

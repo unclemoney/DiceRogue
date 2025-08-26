@@ -98,7 +98,6 @@ dice_scene = ExtResource("6_o8wpr")
 [node name="TurnTracker" parent="." instance=ExtResource("8_8eqdw")]
 
 [node name="GameButtonUI" parent="." instance=ExtResource("9_wtptv")]
-visible = false
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
@@ -113,26 +112,23 @@ score_card_ui_path = NodePath("../ScoreCardUI")
 turn_tracker_path = NodePath("../TurnTracker")
 
 [node name="TurnTrackerUI" parent="." instance=ExtResource("10_bv0jw")]
-visible = false
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
 offset_left = 7.0
 offset_top = 382.0
 offset_right = 71.0
-offset_bottom = 382.0
+offset_bottom = 406.0
 grow_horizontal = 1
 grow_vertical = 1
 
 [node name="ScoreCardUI" parent="." instance=ExtResource("11_oy5od")]
-visible = false
 offset_left = 883.0
 offset_top = 16.0
 offset_right = 883.0
 offset_bottom = 56.0
 
 [node name="ConsumableUI" parent="." instance=ExtResource("12_pdckl")]
-visible = false
 offset_left = 467.0
 offset_top = 572.0
 offset_right = 846.0
@@ -140,12 +136,17 @@ offset_bottom = 716.0
 consumable_icon_scene = ExtResource("13_d3q3t")
 
 [node name="DebuffUI" parent="." instance=ExtResource("14_oxb5w")]
-visible = false
 offset_left = 867.0
 offset_top = 572.0
 offset_right = 1277.0
 offset_bottom = 716.0
 debuff_icon_scene = ExtResource("15_oxb5w")
+
+[node name="PowerUpUI" parent="." instance=ExtResource("14_gtvla")]
+offset_left = 19.0
+offset_top = 572.0
+offset_right = 465.0
+offset_bottom = 720.0
 
 [node name="ShopUI" parent="." instance=ExtResource("32_oy5od")]
 offset_left = 6.0
@@ -155,13 +156,6 @@ offset_bottom = -17.0
 power_up_manager_path = NodePath("../PowerUpManager")
 consumable_manager_path = NodePath("../ConsumableManager")
 mod_manager_path = NodePath("../ModManager")
-
-[node name="PowerUpUI" parent="." instance=ExtResource("14_gtvla")]
-visible = false
-offset_left = 19.0
-offset_top = 572.0
-offset_right = 465.0
-offset_bottom = 720.0
 
 [node name="GameController" parent="." instance=ExtResource("15_aeiu6")]
 

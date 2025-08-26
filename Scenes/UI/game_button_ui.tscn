@@ -23,3 +23,13 @@ text = "NEXT TURN"
 [node name="RollButton" type="Button" parent="HBoxContainer"]
 layout_mode = 2
 text = "ROLL"
+
+[node name="ShopButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 5.0
+offset_top = 48.0
+offset_right = 150.0
+offset_bottom = 86.0
+text = "SHOP"
+
+[connection signal="pressed" from="ShopButton" to="." method="_on_shop_button_pressed"]

@@ -2,6 +2,7 @@ extends Control
 class_name ShopUI
 
 signal item_purchased(item_id: String, item_type: String)
+signal shop_button_opened
 
 @export var power_up_manager_path: NodePath
 @export var consumable_manager_path: NodePath
@@ -57,7 +58,7 @@ func _ready() -> void:
 	power_up_manager.definitions_loaded.connect(_on_manager_ready)
 	consumable_manager.definitions_loaded.connect(_on_manager_ready)
 	mod_manager.definitions_loaded.connect(_on_manager_ready)
-	
+	hide()
 	#buy_button.pressed.connect(_on_buy_button_pressed)
 
 func _process(delta: float) -> void:
@@ -77,6 +78,7 @@ func _process(delta: float) -> void:
 	
 	# Format BBCode with hex color
 	var hex_color: String = current_color.to_html(false)
+	shop_label.add_theme_font_size_override("normal_font_size", 45)
 	shop_label.text = "[center][color=#%s][wave amp=50 freq=2]SHOP[/wave][/color][/center]" % hex_color
 	
 func _on_manager_ready() -> void:
@@ -92,9 +94,9 @@ func _populate_shop_items() -> void:
 	
 	# Populate PowerUps
 	var power_ups = power_up_manager.get_available_power_ups()
-	print("[ShopUI] Power-ups found:", power_ups)
+	#print("[ShopUI] Power-ups found:", power_ups)
 	for id in power_ups:
-		print("[ShopUI] Adding power-up:", id)
+		#print("[ShopUI] Adding power-up:", id)
 		var data = power_up_manager.get_def(id)
 		if data:
 			_add_shop_item(data, "power_up")
@@ -103,9 +105,9 @@ func _populate_shop_items() -> void:
 	
 	# Populate Consumables
 	var consumables = consumable_manager._defs_by_id.keys()
-	print("[ShopUI] Consumables found:", consumables)
+	#print("[ShopUI] Consumables found:", consumables)
 	for id in consumables:
-		print("[ShopUI] Adding consumable:", id)
+		#print("[ShopUI] Adding consumable:", id)
 		var data = consumable_manager.get_def(id)
 		if data:
 			_add_shop_item(data, "consumable")
@@ -114,9 +116,9 @@ func _populate_shop_items() -> void:
 			
 	# Populate Mods
 	var mods = mod_manager._defs_by_id.keys()
-	print("[ShopUI] Mods found:", mods)
+	#print("[ShopUI] Mods found:", mods)
 	for id in mods:
-		print("[ShopUI] Adding mod:", id)
+		#print("[ShopUI] Adding mod:", id)
 		var data = mod_manager.get_def(id)
 		if data:
 			_add_shop_item(data, "mod")
@@ -126,19 +128,41 @@ func _populate_shop_items() -> void:
 func _add_shop_item(data: Resource, type: String) -> void:
 	var container = _get_container_for_type(type)
 	if not container:
+		push_error("[ShopUI] No container found for type:", type)
 		return
 		
 	var item = ShopItemScene.instantiate()
 	container.add_child(item)
+	print("[ShopUI] Created shop item instance for:", data.id)
+	
+	# Connect the signal before setup
+	item.purchased.connect(
+		func(id: String, itype: String):
+			print("[ShopUI] Purchase signal received from item:", id)
+			_on_item_purchased(id, itype)
+	)
+	
 	item.setup(data, type)
-	item.purchased.connect(_on_item_purchased)
+	print("[ShopUI] Added and connected item:", data.id, "type:", type)
+
+func _on_item_purchased(item_id: String, item_type: String) -> void:
+	print("[ShopUI] Processing purchase:", item_id, "type:", item_type)
+	emit_signal("item_purchased", item_id, item_type)
+
+func _on_close_button_pressed() -> void:
+	hide()
 
 func _get_container_for_type(type: String) -> Node:
 	match type:
-		"power_up": return power_up_container
-		"consumable": return consumable_container
-		"mod": return mod_container
-		_: return null
-
-func _on_item_purchased(item_id: String, item_type: String) -> void:
-	emit_signal("item_purchased", item_id, item_type)
+		"power_up": 
+			print("[ShopUI] Getting power-up container")
+			return power_up_container
+		"consumable": 
+			print("[ShopUI] Getting consumable container")
+			return consumable_container
+		"mod": 
+			print("[ShopUI] Getting mod container")
+			return mod_container
+		_:
+			push_error("[ShopUI] Unknown item type:", type)
+			return null

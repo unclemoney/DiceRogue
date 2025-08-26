@@ -24,15 +24,18 @@ const RAINBOW_COLORS := [
 ]
 
 func _ready() -> void:
-	if not icon or not name_label or not price_label or not buy_button or not shop_label:
+	print("[ShopItem] Initializing:", name)
+	
+	if not icon or not name_label or not price_label or not buy_button:
 		push_error("[ShopItem] Required nodes not found!")
+		for child in get_children():
+			print("[ShopItem] Found child:", child.name)
 		return
 	
-	# Set up shop label
-	shop_label.text = "[center]SHOP[/center]"
-	shop_label.custom_minimum_size = Vector2(0, 24)
-	
-	buy_button.pressed.connect(_on_buy_button_pressed)
+	# Explicitly connect the button signal
+	if buy_button:
+		buy_button.pressed.connect(_on_buy_button_pressed)
+		print("[ShopItem] Connected buy button signal")
 
 func _process(delta: float) -> void:
 	if not shop_label:
@@ -81,5 +84,13 @@ func _update_button_state() -> void:
 		buy_button.disabled = not PlayerEconomy.can_afford(price)
 
 func _on_buy_button_pressed() -> void:
-	if PlayerEconomy.remove_money(price):
-		emit_signal("purchased", item_id, item_type)
+	print("[ShopItem] Buy button pressed for", item_id)
+	if PlayerEconomy.can_afford(price):
+		if PlayerEconomy.remove_money(price):
+			print("[ShopItem] Successfully purchased", item_id, "for", price)
+			emit_signal("purchased", item_id, item_type)
+			print("[ShopItem] Purchase signal emitted")
+		else:
+			print("[ShopItem] Failed to remove money for purchase")
+	else:
+		print("[ShopItem] Cannot afford", item_id, "(cost:", price, ", money:", PlayerEconomy.money, ")")
