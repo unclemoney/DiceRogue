@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=37 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -32,6 +32,7 @@
 [ext_resource type="Resource" uid="uid://bdbldxuf65trw" path="res://Scripts/Consumable/ScoreReroll.tres" id="24_w6663"]
 [ext_resource type="Resource" uid="uid://cs5xh10qdphbi" path="res://Scripts/Debuff/LockDice.tres" id="25_gxabo"]
 [ext_resource type="Resource" uid="uid://cpcfivvcimiy0" path="res://Scripts/Mods/GoldSixMod.tres" id="27_pdckl"]
+[ext_resource type="Resource" uid="uid://mxumjrqrlefp" path="res://Scripts/Mods/EvenOnlyMod.tres" id="28_u6hej"]
 [ext_resource type="PackedScene" uid="uid://dbqwnxq8iy66l" path="res://Scenes/UI/shop_ui.tscn" id="32_oy5od"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_w6663"]
@@ -164,7 +165,7 @@ mod_manager_path = NodePath("../ModManager")
 power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o")])
 
 [node name="ModManager" parent="." instance=ExtResource("23_8eqdw")]
-mod_defs = Array[ExtResource("24_bv0jw")]([ExtResource("19_8eqdw"), ExtResource("27_pdckl")])
+mod_defs = Array[ExtResource("24_bv0jw")]([ExtResource("19_8eqdw"), ExtResource("27_pdckl"), ExtResource("28_u6hej")])
 
 [node name="ConsumableManager" parent="." instance=ExtResource("20_1jk2k")]
 consumable_defs = Array[ExtResource("23_o8wpr")]([ExtResource("24_w6663")])

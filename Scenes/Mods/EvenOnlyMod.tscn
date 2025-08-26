@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://nib8i23xgrid"]
+
+[ext_resource type="Script" uid="uid://cc8tx6tdp5aqf" path="res://Scripts/Mods/even_only_mod.gd" id="1_uy1f2"]
+
+[node name="EvenOnlyMod" type="Node"]
+script = ExtResource("1_uy1f2")

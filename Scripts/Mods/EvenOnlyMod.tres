@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ModData" load_steps=4 format=3 uid="uid://mxumjrqrlefp"]
+
+[ext_resource type="Texture2D" uid="uid://bic2rsu60jvfi" path="res://Resources/Art/Dice/dieWhite_borderEvenonly.png" id="1_2c6pi"]
+[ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="1_vxb2u"]
+[ext_resource type="PackedScene" uid="uid://nib8i23xgrid" path="res://Scenes/Mods/EvenOnlyMod.tscn" id="2_tq8fe"]
+
+[resource]
+script = ExtResource("1_vxb2u")
+id = "even_only"
+display_name = "Evens Only"
+description = "Only Roll Even Number Dice"
+icon = ExtResource("1_2c6pi")
+scene = ExtResource("2_tq8fe")
+price = 100
+metadata/_custom_type_script = "uid://47gl3by4wwht"

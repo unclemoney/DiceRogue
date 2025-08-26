@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ModData" load_steps=4 format=3 uid="uid://cpcfivvcimiy0"]
 
 [ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="1_fqv68"]
-[ext_resource type="Texture2D" uid="uid://bjng3fi0yurj2" path="res://icon.svg" id="1_irg0f"]
+[ext_resource type="Texture2D" uid="uid://cs3hn5vt7hgo0" path="res://Resources/Art/Dice/dieWhite_borderGoldsix.png" id="1_irg0f"]
 [ext_resource type="PackedScene" uid="uid://cebtid7oyds8a" path="res://Scenes/Mods/GoldSixMod.tscn" id="2_7dipm"]
 
 [resource]
