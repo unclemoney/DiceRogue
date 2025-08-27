@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="DiceData" load_steps=6 format=3 uid="uid://cyhek3ri4ljv7"]
+
+[ext_resource type="Script" uid="uid://cfvqx1x72koke" path="res://Scripts/Dice/DiceData.gd" id="1_pfkc1"]
+[ext_resource type="Texture2D" uid="uid://5dlc611eol58" path="res://Resources/Art/Dice/dieWhite_border1.png" id="2_q8d1g"]
+[ext_resource type="Texture2D" uid="uid://y765st2hpl6j" path="res://Resources/Art/Dice/dieWhite_border2.png" id="3_kmlsq"]
+[ext_resource type="Texture2D" uid="uid://ctklyagmynj62" path="res://Resources/Art/Dice/dieWhite_border3.png" id="4_35jsc"]
+[ext_resource type="Texture2D" uid="uid://dt3dyl5p5vphk" path="res://Resources/Art/Dice/dieWhite_border4.png" id="5_7fhj7"]
+
+[resource]
+script = ExtResource("1_pfkc1")
+id = "d4"
+display_name = "D4"
+sides = 4
+textures = Array[Texture2D]([ExtResource("2_q8d1g"), ExtResource("3_kmlsq"), ExtResource("4_35jsc"), ExtResource("5_7fhj7")])
+metadata/_custom_type_script = "uid://cfvqx1x72koke"

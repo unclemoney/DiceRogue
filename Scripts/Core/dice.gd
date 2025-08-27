@@ -5,15 +5,14 @@ signal rolled(value: int)
 signal selected(dice: Dice)
 signal clicked
 
-static var dice_textures := {}
 var active_mods: Dictionary = {}  # id -> Mod
 var home_position: Vector2 = Vector2.ZERO
 var _can_process_input := true
 var _lock_shader_enabled := true
-
-@export var sides: int = 6
 @export var is_locked: bool = false
-@export var value: int = 1
+
+@export var dice_data: DiceData
+var value: int = 1
 
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var lock_shader := load("res://Scripts/Shaders/lock_overlay.gdshader")
@@ -28,15 +27,17 @@ const ModIconScene := preload("res://Scenes/Mods/ModIcon.tscn")
 
 func _ready():
 	add_to_group("dice")
+	
+	if not dice_data:
+		push_error("[Dice] No DiceData resource assigned!")
+		return
+		
+	# Set up shaders
 	lock_shader_material.shader = lock_shader
 	dice_material.shader = glow_shader
 	sprite.material = dice_material
 	dice_material.set_shader_parameter("glow_strength", 0.0)
 	dice_material.set_shader_parameter("lock_overlay_strength", 0.6 if is_locked else 0.0)
-
-	if dice_textures.is_empty():
-		for i in range(1, 7):
-			dice_textures[i] = load("res://Resources/Art/Dice/dieWhite_border%d.png" % i)
 
 	update_visual()
 	connect("mouse_entered", Callable(self, "_on_mouse_entered"))
@@ -44,10 +45,18 @@ func _ready():
 	set_dice_input_enabled(true)
 	set_lock_shader_enabled(true)
 
-func roll():
+func roll() -> void:
 	if is_locked:
 		return
-	value = randi() % sides + 1
+		
+	if not dice_data:
+		push_error("[Dice] Cannot roll - no DiceData assigned!")
+		return
+		
+	# Generate value between 1 and number of sides
+	value = (randi() % dice_data.sides) + 1
+	print("[Dice] Rolling", dice_data.display_name, "- got:", value)
+	
 	emit_signal("rolled", value)
 	animate_roll()
 	update_visual()
@@ -69,8 +78,15 @@ func animate_roll():
 	tween.tween_property(self, "scale", Vector2(1, 1), 0.1).set_delay(0.1)
 
 func update_visual():
-	sprite.texture = dice_textures.get(value, null)
-	# Use both lock state and shader enabled state
+	if not dice_data:
+		push_error("[Dice] Cannot update visual - no DiceData assigned!")
+		return
+		
+	if value <= dice_data.textures.size():
+		sprite.texture = dice_data.textures[value - 1]
+	else:
+		push_error("[Dice] Invalid value for current dice:", value)
+	
 	dice_material.set_shader_parameter("lock_overlay_strength", 
 		0.6 if (is_locked && _lock_shader_enabled) else 0.0)
 

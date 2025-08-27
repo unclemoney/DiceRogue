@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://c6k045mexxkyd"]
+[gd_scene load_steps=6 format=3 uid="uid://c6k045mexxkyd"]
 
 [ext_resource type="Shader" uid="uid://nnas25gstgd5" path="res://Scripts/Shaders/lock_overlay.gdshader" id="1_n24en"]
 [ext_resource type="Script" uid="uid://f3p5lcmx2oq5" path="res://Scripts/Core/dice.gd" id="1_nyboh"]
+[ext_resource type="Resource" uid="uid://cyhek3ri4ljv7" path="res://Scripts/Dice/d4_dice.tres" id="3_n24en"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_duqd2"]
 shader = ExtResource("1_n24en")
@@ -14,6 +15,7 @@ size = Vector2(64, 64)
 [node name="Dice" type="Area2D" groups=["dice"]]
 material = SubResource("ShaderMaterial_duqd2")
 script = ExtResource("1_nyboh")
+dice_data = ExtResource("3_n24en")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 

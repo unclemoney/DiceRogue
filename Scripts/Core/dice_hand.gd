@@ -11,11 +11,58 @@ signal dice_spawned
 @export var spacing:         float   = 80.0
 @export var start_position:  Vector2 = Vector2(100, 200)
 
+@export var default_dice_data: DiceData
+@export var d6_dice_data: DiceData = preload("res://Scripts/Dice/d6_dice.tres")
+@export var d4_dice_data: DiceData = preload("res://Scripts/Dice/d4_dice.tres")
+
+# Add debug state tracking
+var current_dice_type: String = "d6"
+
 var dice_list: Array[Dice] = []
 
+func _ready() -> void:
+	print("\n=== DiceHand Initializing ===")
+	
+	if not d6_dice_data:
+		push_error("[DiceHand] D6 dice data not assigned!")
+		return
+		
+	if not d4_dice_data:
+		push_error("[DiceHand] D4 dice data not assigned!")
+		return
+		
+	if d6_dice_data.sides != 6:
+		push_error("[DiceHand] D6 data has incorrect number of sides:", d6_dice_data.sides)
+		return
+		
+	if d4_dice_data.sides != 4:
+		push_error("[DiceHand] D4 data has incorrect number of sides:", d4_dice_data.sides)
+		return
+	
+	# Start with D6 dice by default
+	switch_dice_type("d4")
+
 func spawn_dice() -> void:
+	if not default_dice_data:
+		push_error("[DiceHand] Cannot spawn dice - no default DiceData assigned!")
+		return
+		
+	# Clear existing dice first
 	clear_dice()
-	update_dice_count()
+	
+	print("[DiceHand] Spawning", dice_count, "dice of type:", current_dice_type)
+	
+	for i in range(dice_count):
+		var die = dice_scene.instantiate() as Dice
+		if die:
+			die.dice_data = default_dice_data
+			add_child(die)
+			die.home_position = start_position + Vector2(i * spacing, 0)
+			die.position = Vector2(-200, die.home_position.y)
+			die.animate_entry(die.position)
+			dice_list.append(die)
+			print("[DiceHand] Spawned die", i + 1, "with", default_dice_data.sides, "sides")
+	
 	emit_signal("dice_spawned")
 	
 	# Only disable dice if lock debuff is active
@@ -31,10 +78,17 @@ func spawn_dice() -> void:
 func roll_all() -> void:
 	if dice_list.size() == 0:
 		return
-	for die in dice_list:
+		
+	print("\n=== Rolling All Dice ===")
+	print("[DiceHand] Current dice type:", current_dice_type.to_upper())
+	print("[DiceHand] Number of dice:", dice_list.size())
+	
+	for i in range(dice_list.size()):
+		var die = dice_list[i]
 		die.roll()
+		print("[DiceHand] Die", i + 1, "rolled:", die.value)
+	
 	_update_results()
-	#await get_tree().create_timer(roll_duration).timeout
 	emit_signal("roll_complete")
 
 func _update_results() -> void:
@@ -94,20 +148,21 @@ func disable_all_dice() -> void:
 func roll_unlocked_dice() -> void:
 	var unlocked = get_unlocked_dice()
 	if unlocked.is_empty():
-		print("No unlocked dice to roll")
+		print("[DiceHand] No unlocked dice to roll")
 		return
 		
-	print("Rolling", unlocked.size(), "unlocked dice")
+	print("\n=== Rolling Unlocked Dice ===")
+	print("[DiceHand] Current dice type:", current_dice_type.to_upper())
+	print("[DiceHand] Unlocked dice count:", unlocked.size())
 	
-	for die in unlocked:
+	for i in range(unlocked.size()):
+		var die = unlocked[i]
 		die.roll()
+		print("[DiceHand] Unlocked die", i + 1, "rolled:", die.value)
 		await get_tree().create_timer(roll_delay).timeout
 	
-	# After all dice have finished rolling
 	await get_tree().create_timer(roll_duration).timeout
-	emit_signal("roll_complete")  # Changed to match original signal name
-
-
+	emit_signal("roll_complete")
 
 # Add this function
 func get_unlocked_dice() -> Array[Dice]:
@@ -116,3 +171,36 @@ func get_unlocked_dice() -> Array[Dice]:
 		if die is Dice and not die.is_locked:
 			unlocked.append(die)
 	return unlocked
+
+# Replace both switch_to_d4() and switch_to_d6() with this single function
+func switch_dice_type(type: String) -> void:
+	print("\n=== Switching to", type.to_upper(), "Dice ===")
+	
+	# Get the appropriate dice data based on type
+	var new_dice_data: DiceData
+	match type.to_lower():
+		"d4":
+			if not d4_dice_data:
+				push_error("[DiceHand] D4 dice data not assigned!")
+				return
+			new_dice_data = d4_dice_data
+		"d6":
+			if not d6_dice_data:
+				push_error("[DiceHand] D6 dice data not assigned!")
+				return
+			new_dice_data = d6_dice_data
+		_:
+			push_error("[DiceHand] Unknown dice type:", type)
+			return
+	
+	default_dice_data = new_dice_data
+	current_dice_type = type.to_lower()
+	
+	for i in range(dice_list.size()):
+		var die = dice_list[i]
+		die.dice_data = new_dice_data
+		die.value = 1  # Reset to first face
+		die.update_visual()
+		print("[DiceHand] Updated die", i + 1, "to", type.to_upper())
+	
+	print("[DiceHand] Successfully switched to", type.to_upper(), "dice")

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DiceData" load_steps=8 format=3 uid="uid://yfo1kg8l65ae"]
+
+[ext_resource type="Script" uid="uid://cfvqx1x72koke" path="res://Scripts/Dice/DiceData.gd" id="1_s5d5a"]
+[ext_resource type="Texture2D" uid="uid://5dlc611eol58" path="res://Resources/Art/Dice/dieWhite_border1.png" id="2_tex1"]
+[ext_resource type="Texture2D" uid="uid://y765st2hpl6j" path="res://Resources/Art/Dice/dieWhite_border2.png" id="3_tex2"]
+[ext_resource type="Texture2D" uid="uid://ctklyagmynj62" path="res://Resources/Art/Dice/dieWhite_border3.png" id="4_tex3"]
+[ext_resource type="Texture2D" uid="uid://dt3dyl5p5vphk" path="res://Resources/Art/Dice/dieWhite_border4.png" id="5_tex4"]
+[ext_resource type="Texture2D" uid="uid://dq803jv8m63h6" path="res://Resources/Art/Dice/dieWhite_border5.png" id="6_tex5"]
+[ext_resource type="Texture2D" uid="uid://bcu4n1tepxash" path="res://Resources/Art/Dice/dieWhite_border6.png" id="7_tex6"]
+
+[resource]
+script = ExtResource("1_s5d5a")
+id = "d6"
+display_name = "D6"
+sides = 6
+textures = Array[Texture2D]([ExtResource("2_tex1"), ExtResource("3_tex2"), ExtResource("4_tex3"), ExtResource("5_tex4"), ExtResource("6_tex5"), ExtResource("7_tex6")])
+metadata/_custom_type_script = "uid://cfvqx1x72koke"
