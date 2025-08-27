@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cnsq73d7e5iew"]
+
+[ext_resource type="Script" uid="uid://dwrnwxr1w0mhc" path="res://Scripts/PowerUps/foursome_power_up.gd" id="1_plsym"]
+
+[node name="FoursomePowerUp" type="Node2D"]
+script = ExtResource("1_plsym")

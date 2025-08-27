@@ -245,15 +245,24 @@ func on_category_selected(section: Scorecard.Section, category: String):
 		return
 
 	var values = DiceResults.values
-	var score = ScoreEvaluatorSingleton.calculate_score_for_category(category, values)
+	print("\n=== Processing Score Selection ===")
+	print("[ScoreCardUI] Category:", category)
+	print("[ScoreCardUI] Dice values:", values)
+	
+	# Get the score through scorecard's evaluate_category to apply multipliers
+	var score = scorecard.evaluate_category(category, values)
+	print("[ScoreCardUI] Final calculated score:", score)
+	
 	if score == null:
+		print("[ScoreCardUI] Invalid score calculation")
 		show_invalid_score_feedback(category)
 		return
 
-	# Remove the variable assignment since check_bonus_yahtzee is void
+	# Check for Yahtzee bonus
 	scorecard.check_bonus_yahtzee(values)
 	
 	# Set the selected category's score
+	print("[ScoreCardUI] Setting score for", category, "to:", score)
 	scorecard.set_score(section, category, score)
 	update_all()
 	turn_scored = true
@@ -286,51 +295,37 @@ func show_invalid_score_feedback(category: String):
 func update_best_hand_preview(dice_values: Array) -> void:
 	if not best_hand_label:
 		return
-	# Get all possible scores with wildcards
-	var all_scores = ScoreEvaluatorSingleton.evaluate_with_wildcards(dice_values)
 
 	var best_score := -1
 	var best_section
 	var best_category := ""
 	
-	# Define evaluation order for lower section (higher value categories first)
-	var lower_evaluation_order := [
-		"yahtzee",           # Check Yahtzee first
-		"large_straight",    # Then large straight
-		"small_straight",    # Then small straight
-		"full_house",        # Then full house
-		"four_of_a_kind",   # Then four of a kind
-		"three_of_a_kind",   # Then three of a kind
-		"chance"            # Finally chance
-	]
-	
 	# Check upper section
 	for category in scorecard.upper_scores.keys():
 		if scorecard.upper_scores[category] == null:
-			var score = all_scores.get(category, 0)
+			var score = scorecard.evaluate_category(category, dice_values)
 			if score > best_score:
 				best_score = score
 				best_section = Scorecard.Section.UPPER
 				best_category = category
 	
+	# Define evaluation order for lower section
+	var lower_evaluation_order := [
+		"yahtzee", "large_straight", "small_straight", 
+		"full_house", "four_of_a_kind", "three_of_a_kind", "chance"
+	]
+	
 	# Check lower section in specific order
 	for category in lower_evaluation_order:
 		if scorecard.lower_scores[category] == null:
-			var score = all_scores.get(category, 0)
-			# Add bonus consideration for Yahtzee
-			if category == "yahtzee":
-				if score >= 50:
-					if scorecard.lower_scores["yahtzee"] != null and scorecard.lower_scores["yahtzee"] == 50:
-						score = 100
-					else:
-						print("→ This would be the first Yahtzee (50 points)")
-			
+			var score = scorecard.evaluate_category(category, dice_values)
 			if score > best_score:
 				best_score = score
 				best_section = Scorecard.Section.LOWER
 				best_category = category
 	
-	
+	# ...rest of existing display code...
+
 	if best_category != "":
 		var display_category = best_category.capitalize().replace("_", " ")
 		
@@ -385,7 +380,9 @@ func activate_score_reroll() -> void:
 		
 func handle_score_reroll(section: Scorecard.Section, category: String) -> void:
 	var values = DiceResults.values
-	var score = ScoreEvaluatorSingleton.calculate_score_for_category(category, values)
+	# Use scorecard.evaluate_category instead of direct ScoreEvaluator call
+	var score = scorecard.evaluate_category(category, values)
+	print("[ScoreCardUI] Reroll score calculated:", score)
 	
 	# Verify the category has an existing score to reroll
 	var has_existing_score = false
@@ -396,14 +393,17 @@ func handle_score_reroll(section: Scorecard.Section, category: String) -> void:
 			has_existing_score = scorecard.lower_scores[category] != null
 			
 	if not has_existing_score:
+		print("[ScoreCardUI] No existing score to reroll")
 		show_invalid_score_feedback(category)
 		return
 	
 	if score == null:
+		print("[ScoreCardUI] Invalid score calculation")
 		show_invalid_score_feedback(category)
 		return
 		
-	# Replace the old score
+	# Replace the old score with the multiplied value
+	print("[ScoreCardUI] Setting rerolled score for", category, "to:", score)
 	scorecard.set_score(section, category, score)
 	update_all()
 	

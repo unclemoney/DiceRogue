@@ -135,9 +135,12 @@ func revoke_power_up(power_up_id: String) -> void:
 	emit_signal("power_up_revoked", power_up_id)
 
 func _on_power_up_selected(power_up_id: String) -> void:
+	print("\n=== Power-up Selected ===")
+	print("[GameController] Activating power-up:", power_up_id)
+	
 	var pu = active_power_ups.get(power_up_id)
 	if not pu:
-		push_error("No PowerUp found for id: %s" % power_up_id)
+		push_error("[GameController] No PowerUp found for id:", power_up_id)
 		return
 		
 	match power_up_id:
@@ -146,8 +149,11 @@ func _on_power_up_selected(power_up_id: String) -> void:
 			enable_debuff("lock_dice")
 		"extra_rolls":
 			pu.apply(turn_tracker)
+		"foursome":
+			print("[GameController] Applying Foursome to scorecard:", scorecard)
+			pu.apply(scorecard)
 		_:
-			push_error("Unknown target for power-up: %s" % power_up_id)
+			push_error("[GameController] Unknown power-up type:", power_up_id)
 
 func _on_power_up_deselected(power_up_id: String) -> void:
 	var pu = active_power_ups.get(power_up_id)
@@ -161,6 +167,8 @@ func _on_power_up_deselected(power_up_id: String) -> void:
 			disable_debuff("lock_dice")
 		"extra_rolls":
 			pu.remove(turn_tracker)
+		"foursome":
+			pu.remove(scorecard)
 		_:
 			push_error("Unknown target for power-up: %s" % power_up_id)
 

@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=39 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -27,6 +27,7 @@
 [ext_resource type="PackedScene" uid="uid://bgwcfpn53s26s" path="res://Scenes/Managers/mod_manager.tscn" id="23_8eqdw"]
 [ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="23_o8wpr"]
 [ext_resource type="Script" uid="uid://uiuqwtxbh7m0" path="res://Scripts/Debuff/DebuffData.gd" id="24_4tiye"]
+[ext_resource type="Resource" uid="uid://cus1yqqfy3tmd" path="res://Scripts/PowerUps/FoursomePowerUp.tres" id="24_aeiu6"]
 [ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="24_bv0jw"]
 [ext_resource type="PackedScene" uid="uid://873jsmje6n6w" path="res://Scenes/Managers/debuff_manager.tscn" id="24_f4xs4"]
 [ext_resource type="Resource" uid="uid://bdbldxuf65trw" path="res://Scripts/Consumable/ScoreReroll.tres" id="24_w6663"]
@@ -163,7 +164,7 @@ mod_manager_path = NodePath("../ModManager")
 [node name="GameController" parent="." instance=ExtResource("15_aeiu6")]
 
 [node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
-power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o")])
+power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6")])
 
 [node name="ModManager" parent="." instance=ExtResource("23_8eqdw")]
 mod_defs = Array[ExtResource("24_bv0jw")]([ExtResource("19_8eqdw"), ExtResource("27_pdckl"), ExtResource("28_u6hej"), ExtResource("29_gtvla")])

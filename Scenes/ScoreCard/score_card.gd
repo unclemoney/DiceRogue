@@ -35,6 +35,8 @@ var lower_scores := {
 	"chance": null
 }
 
+var _score_multiplier_func: Callable  # Add this near other vars
+
 func set_score(section: Section, category: String, value: int) -> void:
 	match section:
 		Section.UPPER:
@@ -83,6 +85,7 @@ func on_category_selected(section: Section, category: String):
 	set_score(section, category, score)
 
 func auto_score_best(values: Array[int]) -> void:
+	print("\n=== Auto-Scoring Best Hand ===")
 	# Reset evaluation counter
 	ScoreEvaluatorSingleton.reset_evaluation_count()
 	
@@ -90,35 +93,37 @@ func auto_score_best(values: Array[int]) -> void:
 	var best_section
 	var best_category := ""
 	
-	# Get all possible scores at once to include bonus Yahtzee
-	var all_scores = ScoreEvaluatorSingleton.evaluate_with_wildcards(values)
-	
-	# Check upper section
+	# Check upper section first
 	for category in upper_scores.keys():
 		if upper_scores[category] == null:
-			var score = all_scores.get(category, 0)
+			# Use evaluate_category instead of direct ScoreEvaluator call
+			var score = evaluate_category(category, values)
+			print("[Scorecard] Evaluating upper category:", category, "score:", score)
 			if score > best_score:
 				best_score = score
 				best_section = Section.UPPER
 				best_category = category
 	
-	# Check lower section
+	# Check lower section next
 	for category in lower_scores.keys():
 		if lower_scores[category] == null:
-			var score = all_scores.get(category, 0)
+			# Use evaluate_category instead of direct ScoreEvaluator call
+			var score = evaluate_category(category, values)
+			print("[Scorecard] Evaluating lower category:", category, "score:", score)
 			if score > best_score:
 				best_score = score
 				best_section = Section.LOWER
 				best_category = category
 	
 	if best_category != "":
+		print("[Scorecard] Auto-scoring category:", best_category, "with score:", best_score)
 		var is_new_yahtzee = (best_category == "yahtzee" and best_score == 50)
 		set_score(best_section, best_category, best_score)
 		# This will trigger the bonus Yahtzee check if applicable
 		check_bonus_yahtzee(values, is_new_yahtzee)
 		emit_signal("score_auto_assigned", best_section, best_category, best_score)
 	else:
-		print("No valid scoring categories found!")
+		print("[Scorecard] No valid scoring categories found!")
 
 func get_upper_section_final_total() -> int:
 	var subtotal = get_upper_section_total()
@@ -170,3 +175,30 @@ func check_bonus_yahtzee(values: Array[int], is_new_yahtzee: bool = false) -> vo
 		emit_signal("yahtzee_bonus_achieved", 100)
 	else:
 		print("✗ Not a Yahtzee - no bonus awarded")
+
+func evaluate_category(category: String, values: Array[int]) -> int:
+	print("\n=== Scorecard Category Evaluation ===")
+	print("[Scorecard] Evaluating category:", category)
+	print("[Scorecard] Values:", values)
+	
+	# Reset evaluation counter
+	ScoreEvaluatorSingleton.reset_evaluation_count()
+	var scores = ScoreEvaluatorSingleton.evaluate_with_wildcards(values)
+	var score = scores.get(category, 0)
+	print("[Scorecard] Base score before multiplier:", score)
+	
+	# Apply multiplier if one is set
+	if _score_multiplier_func.is_valid():
+		print("[Scorecard] Multiplier function is valid, applying...")
+		var multiplied_score = _score_multiplier_func.call(category, score, values)
+		print("[Scorecard] Score after multiplier:", multiplied_score)
+		return multiplied_score
+	else:
+		print("[Scorecard] No multiplier function set")
+		return score
+
+func set_score_multiplier(multiplier_func: Callable) -> void:
+	_score_multiplier_func = multiplier_func
+
+func clear_score_multiplier() -> void:
+	_score_multiplier_func = Callable()
