@@ -11,6 +11,7 @@ var active_power_ups: Dictionary = {}  # id -> PowerUp
 var active_consumables: Dictionary = {}  # id -> Consumable
 var active_debuffs: Dictionary = {}  # id -> Debuff
 var active_mods: Dictionary = {}  # id -> Mod
+var active_challenges: Dictionary = {}  # id -> Challenge
 
 const ScoreCardUI := preload("res://Scripts/UI/score_card_ui.gd")
 const DebuffManager := preload("res://Scripts/Managers/DebuffManager.gd")
@@ -34,6 +35,9 @@ const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 @export var mod_manager_path: NodePath = ^"../ModManager"
 @export var shop_ui_path: NodePath = ^"../ShopUI"
 @export var game_button_ui_path: NodePath = ^"../GameButtonUI"
+@export var challenge_manager_path: NodePath = ^"../ChallengeManager"
+@export var challenge_ui_path: NodePath = ^"../ChallengeUI"
+@export var challenge_container_path: NodePath = ^"ChallengeContainer"
 
 @onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
 @onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
@@ -51,6 +55,9 @@ const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 @onready var mod_manager: ModManager = get_node(mod_manager_path) as ModManager
 @onready var shop_ui: ShopUI = get_node(shop_ui_path) as ShopUI
 @onready var game_button_ui: Control = get_node(game_button_ui_path)
+@onready var challenge_manager: ChallengeManager = get_node(challenge_manager_path) as ChallengeManager
+@onready var challenge_ui: ChallengeUI = get_node(challenge_ui_path) as ChallengeUI
+@onready var challenge_container: Node = get_node(challenge_container_path)
 
 const STARTING_POWER_UP_IDS := ["extra_dice", "extra_rolls"]
 
@@ -69,13 +76,18 @@ func _ready() -> void:
 		print("[GameController] Setting up shop UI")
 		shop_ui.hide()
 		shop_ui.connect("item_purchased", _on_shop_item_purchased)
+	if challenge_manager:
+		challenge_manager.challenge_completed.connect(_on_challenge_completed)
+		challenge_manager.challenge_failed.connect(_on_challenge_failed)
 	call_deferred("_on_game_start")
 
 func _on_game_start() -> void:
 	#spawn_starting_powerups()
 	#grant_consumable("score_reroll")
 	#apply_debuff("lock_dice")
-	pass
+	activate_challenge("pts100_lock_dice")
+
+
 
 func _process(delta):
 	if Input.is_action_just_pressed("quit_game"):
@@ -399,3 +411,54 @@ func _on_shop_item_purchased(item_id: String, item_type: String) -> void:
 			grant_mod(item_id)
 		_:
 			push_error("[GameController] Unknown item type purchased:", item_type)
+
+func activate_challenge(id: String) -> void:
+	print("[GameController] Activating challenge:", id)
+	
+	if active_challenges.has(id):
+		print("[GameController] Challenge already active:", id)
+		return
+		
+	var challenge = challenge_manager.spawn_challenge(id, challenge_container) as Challenge
+	if challenge == null:
+		push_error("[GameController] Failed to spawn challenge:", id)
+		return
+		
+	active_challenges[id] = challenge
+	
+	# Apply to game controller to access all needed systems
+	challenge.target = self
+	challenge.start()
+	
+	# Add to UI
+	var def = challenge_manager.get_def(id)
+	if def and challenge_ui:
+		challenge_ui.add_challenge(def, challenge)
+	else:
+		push_error("[GameController] Failed to add challenge to UI")
+
+func _on_challenge_completed(id: String) -> void:
+	print("[GameController] Challenge completed:", id)
+	
+	# Grant reward if specified
+	var def = challenge_manager.get_def(id)
+	if def and def.reward_money > 0:
+		print("[GameController] Granting reward:", def.reward_money)
+		PlayerEconomy.add_money(def.reward_money)
+	
+	# Clean up challenge
+	if active_challenges.has(id):
+		var challenge = active_challenges[id]
+		if challenge:
+			challenge.queue_free()
+		active_challenges.erase(id)
+
+func _on_challenge_failed(id: String) -> void:
+	print("[GameController] Challenge failed:", id)
+	
+	# Clean up challenge
+	if active_challenges.has(id):
+		var challenge = active_challenges[id]
+		if challenge:
+			challenge.queue_free()
+		active_challenges.erase(id)

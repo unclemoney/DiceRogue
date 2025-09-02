@@ -13,8 +13,11 @@ extends Node2D
 @onready var consumable_ui: ConsumableUI = $ConsumableUI
 @onready var consumable_manager: ConsumableManager = $ConsumableManager
 @onready var mod_manager: ModManager = $ModManager
+@onready var debuff_manager: DebuffManager = $DebuffManager
+@onready var challenge_manager: ChallengeManager = $ChallengeManager
+@onready var ChallengeUI: Control = $ChallengeUI
 
 func _ready():
 	score_card_ui.bind_scorecard(score_card)
 	turn_tracker_ui.bind_tracker(turn_tracker)
-	#game_controller._on_game_start()
+

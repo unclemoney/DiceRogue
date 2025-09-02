@@ -13,10 +13,10 @@ script = ExtResource("1_w347l")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 0
-offset_left = 8.0
-offset_top = 17.0
-offset_right = 109.0
-offset_bottom = 156.0
+offset_left = 4.0
+offset_top = 48.0
+offset_right = 93.0
+offset_bottom = 98.0
 
 [node name="TurnLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
@@ -28,8 +28,11 @@ text = "Rolls Left: 3"
 
 [node name="MoneyLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 11.0
-offset_top = 81.0
-offset_right = 51.0
-offset_bottom = 104.0
+offset_left = 7.0
+offset_top = 106.0
+offset_right = 47.0
+offset_bottom = 129.0
 text = "$$$:"
+
+[connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]

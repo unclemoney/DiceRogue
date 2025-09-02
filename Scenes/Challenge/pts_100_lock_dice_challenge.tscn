@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://cvgn2r4ktrloq"]
+
+[ext_resource type="Script" uid="uid://cl6w3k2q3uqid" path="res://Scripts/Challenge/pts100_lock_dice_challenge.gd" id="1_14r2h"]
+
+[node name="Pts100LockDiceChallenge" type="Node"]
+script = ExtResource("1_14r2h")
+metadata/_custom_type_script = "uid://dhe288ips86u"

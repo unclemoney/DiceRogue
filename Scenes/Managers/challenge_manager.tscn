@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://wmw4qu7qqjfk"]
+
+[ext_resource type="Script" uid="uid://dthue5gqsmia0" path="res://Scripts/Managers/ChallengeManager.gd" id="1_323e2"]
+
+[node name="ChallengeManager" type="Node2D"]
+script = ExtResource("1_323e2")

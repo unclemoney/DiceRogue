@@ -3,7 +3,7 @@ Dearest Copilot,
 
 This project is game made with the Godot Engine, and it uses GitHub Copilot to assist with coding. Below are the instructions and guidelines for using Copilot effectively in this project.
 
-We are making a pixel-art, rouge-lite dice roller game based off of the vanilla rules of Yahtzee.  Vanilla rules will be modified with Power Ups, and Consumeables which will be locked behind a progression system.  The game will be played in a single player mode, with the player rolling dice to complete objectives and complete challenges.
+We are making a pixel-art, rouge-lite dice roller game based off of the vanilla rules of Yahtzee.  Vanilla rules will be modified with Power Ups, and Consumables which will be locked behind a progression system.  The game will be played in a single player mode, with the player rolling dice to complete objectives and complete Challenges.
 
 Testing will be done by creating simple test scenes that can be run in the editor.  These test scenes will be used to verify that the game logic is working as expected, and to ensure that the game is fun to play.
 
