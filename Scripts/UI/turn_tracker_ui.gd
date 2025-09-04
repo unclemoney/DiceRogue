@@ -1,12 +1,12 @@
 extends Control
 
-var tracker: TurnTracker
+var tracker: TurnTracker 
 @onready var money_label: Label = $MoneyLabel
 @onready var turn_label := $VBoxContainer/TurnLabel
 @onready var rolls_label := $VBoxContainer/RollsLabel
 
 func _ready():
-	call_deferred("bind_tracker", get_node("TurnTracker"))
+	#call_deferred("bind_tracker", get_node("TurnTracker"))
 	PlayerEconomy.money_changed.connect(_on_money_changed)
 	_update_money_display()
 

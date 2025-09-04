@@ -11,6 +11,8 @@ signal upper_section_completed
 signal lower_section_completed
 signal score_auto_assigned(section: Section, category: String, score: int)
 signal yahtzee_bonus_achieved(points: int)
+signal score_changed(total_score: int)  # Add this signal
+signal game_completed(final_score: int) # Add this signal
 
 var upper_bonus := 0  # Add this to track the bonus
 var yahtzee_bonuses := 0  # Track number of bonus yahtzees
@@ -37,16 +39,41 @@ var lower_scores := {
 
 var _score_multiplier_func: Callable  # Add this near other vars
 
+func _ready() -> void:
+	add_to_group("scorecard")
+	print("[Scorecard] Ready - Added to 'scorecard' group")
+
+
 func set_score(section: Section, category: String, value: int) -> void:
+	print("\n=== Setting Score ===")
+	print("[Scorecard] Setting", category, "to", value)
+	print("[Scorecard] Current total before change:", get_total_score())
+	
 	match section:
 		Section.UPPER:
 			if upper_scores.has(category):
+				var old_value = upper_scores[category]
 				upper_scores[category] = value
+				print("[Scorecard] Updated upper score:", category, "from", old_value, "to", value)
 				check_upper_bonus()
 		Section.LOWER:
 			if lower_scores.has(category):
+				var old_value = lower_scores[category]
 				lower_scores[category] = value
+				print("[Scorecard] Updated lower score:", category, "from", old_value, "to", value)
 				check_lower_section()
+				
+	var new_total = get_total_score()
+	print("[Scorecard] New total after change:", new_total)
+	
+	# Emit signal for score changes
+	print("[Scorecard] Emitting score_changed signal with total:", new_total)
+	emit_signal("score_changed", new_total)
+	
+	# Check if game is complete
+	if is_upper_section_complete() and is_lower_section_complete():
+		print("[Scorecard] Game is complete, emitting game_completed signal")
+		emit_signal("game_completed", new_total)
 
 func has_any_scores() -> bool:
 	# Check upper section
@@ -173,6 +200,7 @@ func check_bonus_yahtzee(values: Array[int], is_new_yahtzee: bool = false) -> vo
 		yahtzee_bonuses += 1
 		yahtzee_bonus_points += 100
 		emit_signal("yahtzee_bonus_achieved", 100)
+		emit_signal("score_changed", get_total_score())  # Add this line
 	else:
 		print("✗ Not a Yahtzee - no bonus awarded")
 
@@ -202,3 +230,6 @@ func set_score_multiplier(multiplier_func: Callable) -> void:
 
 func clear_score_multiplier() -> void:
 	_score_multiplier_func = Callable()
+
+func is_game_complete() -> bool:
+	return is_upper_section_complete() and is_lower_section_complete()

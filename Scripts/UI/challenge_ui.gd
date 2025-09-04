@@ -5,6 +5,8 @@ signal challenge_selected(id: String)
 
 @export var challenge_icon_scene: PackedScene = preload("res://Scenes/Challenge/ChallengeIcon.tscn")
 
+#current issue is that the score is not connected to the scorecard, so scores isn't registering
+
 var _challenges: Dictionary = {}  # id -> ChallengeIcon
 
 func _ready() -> void:

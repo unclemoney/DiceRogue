@@ -40,3 +40,19 @@ func reset_game():
 func add_rolls(amount: int) -> void:
 	MAX_ROLLS += amount
 	print("🎲 MAX_ROLLS increased to", MAX_ROLLS)
+
+func _on_turn_completed() -> void:
+	print("[TurnTracker] Turn completed")
+	
+	if current_turn >= max_turns:
+		print("[TurnTracker] Max turns reached, game over!")
+		
+		# If we have a scorecard reference, check for game completion
+		var scorecard = get_tree().get_first_node_in_group("scorecard")
+		if scorecard and scorecard is Scorecard:
+			print("[TurnTracker] Scorecard found, checking game completion")
+			if not scorecard.is_game_complete():
+				print("[TurnTracker] Game not yet marked as complete, emitting game_completed")
+				scorecard.emit_signal("game_completed", scorecard.get_total_score())
+		
+		emit_signal("game_over")
