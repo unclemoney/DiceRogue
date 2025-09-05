@@ -11,11 +11,12 @@ script = ExtResource("1_3x83p")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 0
-offset_right = 319.0
+offset_right = 388.0
 offset_bottom = 338.0
 
 [node name="UpperVBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="UpperSectionLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer"]
 layout_mode = 2
@@ -29,6 +30,7 @@ layout_mode = 2
 
 [node name="OnesButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/OnesContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Ones:"
 
 [node name="OnesLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/OnesContainer"]
@@ -39,6 +41,7 @@ layout_mode = 2
 
 [node name="TwosButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/TwosContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Twos:"
 
 [node name="TwosLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/TwosContainer"]
@@ -49,6 +52,7 @@ layout_mode = 2
 
 [node name="ThreesButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/ThreesContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Threes:"
 
 [node name="ThreesLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/ThreesContainer"]
@@ -59,6 +63,7 @@ layout_mode = 2
 
 [node name="FoursButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/FoursContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Fours:"
 
 [node name="FoursLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/FoursContainer"]
@@ -69,6 +74,7 @@ layout_mode = 2
 
 [node name="FivesButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/FivesContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Fives:"
 
 [node name="FivesLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/FivesContainer"]
@@ -79,6 +85,7 @@ layout_mode = 2
 
 [node name="SixesButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/SixesContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Sixes:"
 
 [node name="SixesLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/SixesContainer"]
@@ -89,7 +96,8 @@ layout_mode = 2
 
 [node name="UppersubLabel" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal"]
 layout_mode = 2
-text = "Upper Total"
+size_flags_horizontal = 3
+text = "Upper Total:"
 
 [node name="UppersubButton" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal"]
 layout_mode = 2
@@ -99,6 +107,7 @@ layout_mode = 2
 
 [node name="UpperBonus" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Upper Bonus:"
 
 [node name="UpperBonusLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus"]
@@ -109,6 +118,7 @@ layout_mode = 2
 
 [node name="UpperTotalButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperTotal"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Upper Total:"
 
 [node name="UpperTotalLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperTotal"]
@@ -116,6 +126,7 @@ layout_mode = 2
 
 [node name="LowerVBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="LowerSecionLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer"]
 layout_mode = 2
@@ -129,6 +140,7 @@ layout_mode = 2
 
 [node name="ThreeofakindButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Threeofakind"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Three of a kind:"
 
 [node name="ThreeofakindLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Threeofakind"]
@@ -139,6 +151,7 @@ layout_mode = 2
 
 [node name="FourofakindButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fourofakind"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Fourofakind:"
 
 [node name="FourofakindLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fourofakind"]
@@ -149,7 +162,8 @@ layout_mode = 2
 
 [node name="FullhouseButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fullhouse"]
 layout_mode = 2
-text = "Fullhouse:"
+size_flags_horizontal = 3
+text = "Full House:"
 
 [node name="FullhouseLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fullhouse"]
 layout_mode = 2
@@ -159,7 +173,8 @@ layout_mode = 2
 
 [node name="SmallstraightButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Smallstraight"]
 layout_mode = 2
-text = "Smallstraight:"
+size_flags_horizontal = 3
+text = "Small Straight:"
 
 [node name="SmallstraightLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Smallstraight"]
 layout_mode = 2
@@ -169,7 +184,8 @@ layout_mode = 2
 
 [node name="LargestraightButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight"]
 layout_mode = 2
-text = "Large straight:"
+size_flags_horizontal = 3
+text = "Large Straight:"
 
 [node name="LargestraightLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight"]
 layout_mode = 2
@@ -179,6 +195,7 @@ layout_mode = 2
 
 [node name="ChanceButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Chance"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Chance:"
 
 [node name="ChanceLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Chance"]
@@ -189,6 +206,7 @@ layout_mode = 2
 
 [node name="YahtzeeButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Yahtzee"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Yahtzee:"
 
 [node name="YahtzeeLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Yahtzee"]
@@ -199,6 +217,7 @@ layout_mode = 2
 
 [node name="YahtzeeBonusButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Yhatzee Bonus:"
 
 [node name="YahtzeeBonusLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
@@ -209,6 +228,7 @@ layout_mode = 2
 
 [node name="LowerTotalButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/LowerTotal"]
 layout_mode = 2
+size_flags_horizontal = 3
 text = "Lower  Total:"
 
 [node name="LowerTotalLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/LowerTotal"]
@@ -217,17 +237,18 @@ layout_mode = 2
 [node name="BestHandScore" type="RichTextLabel" parent="."]
 clip_contents = false
 layout_mode = 0
-offset_top = 374.0
-offset_right = 359.0
-offset_bottom = 506.0
+offset_left = -500.0
+offset_top = 275.0
+offset_right = -100.0
+offset_bottom = 430.0
 bbcode_enabled = true
 fit_content = true
 
 [node name="RichTextTotalScore" type="RichTextLabel" parent="."]
 layout_mode = 0
-offset_left = 17.0
-offset_top = 453.0
-offset_right = 317.0
-offset_bottom = 656.0
+offset_left = -500.0
+offset_top = 417.0
+offset_right = -100.0
+offset_bottom = 572.0
 theme_override_font_sizes/normal_font_size = 45
 bbcode_enabled = true

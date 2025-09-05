@@ -16,7 +16,7 @@ layout_mode = 0
 offset_left = 1.0
 offset_top = -23.0
 offset_right = 78.0
-text = "Challenge"
+text = "CHALLENGE"
 
 [node name="Container" type="HBoxContainer" parent="."]
 layout_mode = 0

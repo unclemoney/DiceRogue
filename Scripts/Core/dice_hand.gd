@@ -40,7 +40,7 @@ func _ready() -> void:
 		return
 	
 	# Start with D6 dice by default
-	switch_dice_type("d4")
+	switch_dice_type("d6")
 
 func spawn_dice() -> void:
 	if not default_dice_data:

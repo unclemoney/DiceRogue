@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ChallengeData" load_steps=2 format=3 uid="uid://7uwjjpth4uv6"]
+
+[ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="1_78vc1"]
+
+[resource]
+script = ExtResource("1_78vc1")
+id = ""
+display_name = ""
+description = ""
+debuff_ids = Array[String]([])
+target_score = 0
+reward_money = 0
+metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

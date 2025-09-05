@@ -26,7 +26,6 @@ text = "ROLL"
 
 [node name="ShopButton" type="Button" parent="."]
 layout_mode = 0
-offset_left = 5.0
 offset_top = 48.0
 offset_right = 150.0
 offset_bottom = 86.0
