@@ -14,11 +14,14 @@ signal dice_spawned
 @export var default_dice_data: DiceData
 @export var d6_dice_data: DiceData = preload("res://Scripts/Dice/d6_dice.tres")
 @export var d4_dice_data: DiceData = preload("res://Scripts/Dice/d4_dice.tres")
+@export var roll_sound: AudioStreamWAV
 
 # Add debug state tracking
 var current_dice_type: String = "d6"
 
 var dice_list: Array[Dice] = []
+
+@onready var roll_audio_player: AudioStreamPlayer = AudioStreamPlayer.new()
 
 func _ready() -> void:
 	print("\n=== DiceHand Initializing ===")
@@ -38,6 +41,11 @@ func _ready() -> void:
 	if d4_dice_data.sides != 4:
 		push_error("[DiceHand] D4 data has incorrect number of sides:", d4_dice_data.sides)
 		return
+	
+	# Add AudioStreamPlayer as a child if not already present
+	if not has_node("RollAudioPlayer"):
+		roll_audio_player.name = "RollAudioPlayer"
+		add_child(roll_audio_player)
 	
 	# Start with D6 dice by default
 	switch_dice_type("d6")
@@ -78,7 +86,12 @@ func spawn_dice() -> void:
 func roll_all() -> void:
 	if dice_list.size() == 0:
 		return
-		
+
+	# Play roll sound effect
+	if roll_sound:
+		roll_audio_player.stream = roll_sound
+		roll_audio_player.play()
+	
 	print("\n=== Rolling All Dice ===")
 	print("[DiceHand] Current dice type:", current_dice_type.to_upper())
 	print("[DiceHand] Number of dice:", dice_list.size())
