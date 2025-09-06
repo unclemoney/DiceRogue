@@ -9,6 +9,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 script = ExtResource("1_u360r")
 
 [node name="Label" type="Label" parent="."]
@@ -24,3 +25,4 @@ offset_left = 1.0
 offset_top = 29.0
 offset_right = 420.0
 offset_bottom = 290.0
+mouse_filter = 2

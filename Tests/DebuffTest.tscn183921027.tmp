@@ -1,4 +1,4 @@
-[gd_scene load_steps=48 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=45 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -42,9 +42,6 @@
 [ext_resource type="Resource" uid="uid://7bkbk2c47ds8" path="res://Scripts/Mods/OddOnlyMod.tres" id="33_8y1rk"]
 [ext_resource type="Resource" uid="uid://b2lkvln1mutte" path="res://Scripts/Mods/WildCardMod.tres" id="34_vv3hq"]
 [ext_resource type="PackedScene" uid="uid://bi8x6vmpd88l6" path="res://Scenes/Managers/RoundManager.tscn" id="42_o2qgl"]
-[ext_resource type="Script" uid="uid://b41v75rm14duq" path="res://Scripts/Round/round_challenge_config.gd" id="43_2fp2s"]
-[ext_resource type="Resource" uid="uid://bvlm6v2nrey7x" path="res://Scripts/Round/300pts_no_debuff.tres" id="44_2lvko"]
-[ext_resource type="Resource" uid="uid://bojb26srdkd81" path="res://Scripts/Round/pts100_lock_dice.tres" id="45_o0xxd"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_w6663"]
 shader = ExtResource("3_w6663")
@@ -223,8 +220,3 @@ consumable_defs = Array[ExtResource("31_gtvla")]([ExtResource("32_aeiu6")])
 debuff_defs = Array[ExtResource("24_4tiye")]([ExtResource("25_gxabo")])
 
 [node name="RoundManager" parent="." instance=ExtResource("42_o2qgl")]
-challenge_configs = Array[ExtResource("43_2fp2s")]([ExtResource("44_2lvko"), ExtResource("45_o0xxd"), ExtResource("44_2lvko"), ExtResource("44_2lvko"), ExtResource("44_2lvko"), ExtResource("45_o0xxd")])
-turn_tracker_path = NodePath("../TurnTracker")
-challenge_manager_path = NodePath("../ChallengeManager")
-dice_hand_path = NodePath("../DiceHand")
-scorecard_path = NodePath("../ScoreCard")

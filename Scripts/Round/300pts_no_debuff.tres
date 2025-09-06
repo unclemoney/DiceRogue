@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RoundChallengeConfig" load_steps=2 format=3 uid="uid://bvlm6v2nrey7x"]
+
+[ext_resource type="Script" uid="uid://b41v75rm14duq" path="res://Scripts/Round/round_challenge_config.gd" id="1_ugn55"]
+
+[resource]
+script = ExtResource("1_ugn55")
+challenge_id = "300pts_no_debuff"
+description = "Score 300 Points No Debuffs"
+metadata/_custom_type_script = "uid://b41v75rm14duq"

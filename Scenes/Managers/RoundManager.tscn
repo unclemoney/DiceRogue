@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bi8x6vmpd88l6"]
+
+[ext_resource type="Script" uid="uid://rjqplyyobmvo" path="res://Scripts/Managers/round_manager.gd" id="1_jrqyb"]
+
+[node name="RoundManager" type="Node"]
+script = ExtResource("1_jrqyb")

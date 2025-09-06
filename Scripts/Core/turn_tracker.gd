@@ -56,3 +56,11 @@ func _on_turn_completed() -> void:
 				scorecard.emit_signal("game_completed", scorecard.get_total_score())
 		
 		emit_signal("game_over")
+
+func reset() -> void:
+	print("[TurnTracker] Resetting turn tracker")
+	current_turn = 1
+	rolls_left = MAX_ROLLS
+	emit_signal("turn_updated", current_turn)
+	emit_signal("rolls_updated", rolls_left)
+	emit_signal("turn_started")

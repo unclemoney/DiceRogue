@@ -4,11 +4,19 @@ var tracker: TurnTracker
 @onready var money_label: Label = $MoneyLabel
 @onready var turn_label := $VBoxContainer/TurnLabel
 @onready var rolls_label := $VBoxContainer/RollsLabel
+@export var round_manager_path: NodePath
+@onready var round_manager: RoundManager = get_node_or_null(round_manager_path)
+@onready var round_label: Label = $RoundLabel  # Add this label to the scene
 
 func _ready():
 	#call_deferred("bind_tracker", get_node("TurnTracker"))
 	PlayerEconomy.money_changed.connect(_on_money_changed)
 	_update_money_display()
+
+	if round_manager:
+		round_manager.round_started.connect(_update_round_display)
+	
+	_update_round_display(1)  # Default to round 1
 
 func bind_tracker(t: TurnTracker):
 	if t == null:
@@ -41,3 +49,7 @@ func _update_money_display() -> void:
 
 func _on_money_changed(new_amount: int) -> void:
 	_update_money_display()
+
+func _update_round_display(round_number: int) -> void:
+	if round_label:
+		round_label.text = "Round: " + str(round_number)

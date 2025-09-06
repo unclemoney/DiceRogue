@@ -38,6 +38,7 @@ const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 @export var challenge_manager_path: NodePath = ^"../ChallengeManager"
 @export var challenge_ui_path: NodePath = ^"../ChallengeUI"
 @export var challenge_container_path: NodePath = ^"ChallengeContainer"
+@export var round_manager_path: NodePath = ^"../RoundManager"
 
 @onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
 @onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
@@ -58,6 +59,7 @@ const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 @onready var challenge_manager: ChallengeManager = get_node(challenge_manager_path) as ChallengeManager
 @onready var challenge_ui: ChallengeUI = get_node(challenge_ui_path) as ChallengeUI
 @onready var challenge_container: Node = get_node(challenge_container_path)
+@onready var round_manager: RoundManager = get_node_or_null(round_manager_path)
 
 const STARTING_POWER_UP_IDS := ["extra_dice", "extra_rolls"]
 
@@ -79,13 +81,20 @@ func _ready() -> void:
 	if challenge_manager:
 		challenge_manager.challenge_completed.connect(_on_challenge_completed)
 		challenge_manager.challenge_failed.connect(_on_challenge_failed)
+	if round_manager:
+		round_manager.round_started.connect(_on_round_started)
+		round_manager.round_completed.connect(_on_round_completed)
+		round_manager.round_failed.connect(_on_round_failed)
+		round_manager.all_rounds_completed.connect(_on_all_rounds_completed)
 	call_deferred("_on_game_start")
 
 func _on_game_start() -> void:
 	#spawn_starting_powerups()
 	#grant_consumable("score_reroll")
 	#apply_debuff("lock_dice")
-	activate_challenge("pts100_lock_dice")
+	activate_challenge("300pts_no_debuff")
+	if round_manager:
+		round_manager.start_game()
 
 
 
@@ -462,3 +471,23 @@ func _on_challenge_failed(id: String) -> void:
 		if challenge:
 			challenge.queue_free()
 		active_challenges.erase(id)
+
+func _on_round_started(round_number: int) -> void:
+	print("[GameController] Round", round_number, "started")
+	
+	# Activate this round's challenge
+	if round_manager:
+		var round_data = round_manager.get_current_round_data()
+		if not round_data.challenge_id.is_empty():
+			activate_challenge(round_data.challenge_id)
+
+func _on_round_completed(round_number: int) -> void:
+	print("[GameController] Round", round_number, "completed")
+
+func _on_round_failed(round_number: int) -> void:
+	print("[GameController] Round", round_number, "failed")
+	# Game over logic here
+
+func _on_all_rounds_completed() -> void:
+	print("[GameController] All rounds completed!")
+	# Victory logic here

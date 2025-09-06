@@ -61,7 +61,8 @@ func _apply_data() -> void:
 
 func _on_mouse_entered() -> void:
 	_is_hovering = true
-	
+
+	print("  → is_selected?", _is_selected)
 	# Only show hover effects if not selected
 	if _is_selected:
 		return

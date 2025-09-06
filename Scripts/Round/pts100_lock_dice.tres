@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RoundChallengeConfig" load_steps=2 format=3 uid="uid://bojb26srdkd81"]
+
+[ext_resource type="Script" uid="uid://b41v75rm14duq" path="res://Scripts/Round/round_challenge_config.gd" id="1_5mrxp"]
+
+[resource]
+script = ExtResource("1_5mrxp")
+challenge_id = "pts100_lock_dice"
+description = "Score 100 points with Dice Locking Disabled"
+metadata/_custom_type_script = "uid://b41v75rm14duq"

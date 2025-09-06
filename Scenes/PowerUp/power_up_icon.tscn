@@ -10,8 +10,14 @@ shader_parameter/glow_color = Color(0.111848, 0.115973, 1.20327e-08, 0.470588)
 
 [node name="PowerUpIcon" type="TextureButton"]
 material = SubResource("ShaderMaterial_hso7t")
-offset_right = 40.0
-offset_bottom = 40.0
+custom_minimum_size = Vector2(30, 30)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -1237.0
+offset_bottom = -677.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_aef0c")
 
 [node name="LabelBg" type="PanelContainer" parent="."]
@@ -22,4 +28,6 @@ offset_bottom = 40.0
 [node name="HoverLabel" type="Label" parent="LabelBg"]
 layout_mode = 2
 
+[connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]
 [connection signal="pressed" from="." to="." method="_on_pressed"]

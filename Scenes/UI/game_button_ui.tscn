@@ -10,6 +10,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_v70y2")
+dice_hand_path = null
+score_card_ui_path = null
+turn_tracker_path = null
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 0
@@ -31,4 +34,13 @@ offset_right = 150.0
 offset_bottom = 86.0
 text = "SHOP"
 
+[node name="NextRoundButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 154.0
+offset_right = 231.0
+offset_bottom = 86.0
+text = "NEXT
+ROUND"
+
 [connection signal="pressed" from="ShopButton" to="." method="_on_shop_button_pressed"]
+[connection signal="pressed" from="NextRoundButton" to="." method="_on_next_round_button_pressed"]

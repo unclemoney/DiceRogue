@@ -233,3 +233,28 @@ func clear_score_multiplier() -> void:
 
 func is_game_complete() -> bool:
 	return is_upper_section_complete() and is_lower_section_complete()
+
+
+func reset_scores() -> void:
+	print("[Scorecard] Resetting all scores")
+	
+	# Reset upper section scores
+	for category in upper_scores.keys():
+		upper_scores[category] = null
+	
+	# Reset lower section scores
+	for category in lower_scores.keys():
+		lower_scores[category] = null
+	
+	# Reset bonus tracking
+	upper_bonus = 0
+	yahtzee_bonuses = 0
+	yahtzee_bonus_points = 0
+	
+	# Clear any multiplier function
+	clear_score_multiplier()
+	
+	print("[Scorecard] All scores reset")
+	
+	# Emit signal with 0 score since we've reset everything
+	emit_signal("score_changed", 0)
