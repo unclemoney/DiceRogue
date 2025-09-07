@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ChallengeData" load_steps=5 format=3 uid="uid://cr8w2ud13fb6d"]
+
+[ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="1_abavh"]
+[ext_resource type="Texture2D" uid="uid://cdusovknauh8j" path="res://Resources/Art/Powerups/ExtraRolls.png" id="1_dbith"]
+[ext_resource type="PackedScene" uid="uid://cluhbwoqkkxnd" path="res://Scenes/Challenge/pts_100_no_debuff_challenge.tscn" id="2_tblbe"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mfvmw"]
+atlas = ExtResource("1_dbith")
+region = Rect2(72, 95, 59, 93)
+
+[resource]
+script = ExtResource("1_abavh")
+id = "pts_100_no_debuff"
+display_name = "100 Points"
+description = "Score 100 Vanilla Points"
+icon = SubResource("AtlasTexture_mfvmw")
+scene = ExtResource("2_tblbe")
+debuff_ids = Array[String]([])
+target_score = 100
+reward_money = 100
+metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

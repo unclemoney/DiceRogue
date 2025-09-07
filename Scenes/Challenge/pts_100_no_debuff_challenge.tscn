@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cluhbwoqkkxnd"]
+
+[ext_resource type="Script" uid="uid://c2gomlibc2ww2" path="res://Scripts/Challenge/pts_100_no_debuff_challenge.gd" id="1_swnow"]
+
+[node name="Pts100NoDebuff" type="Node"]
+script = ExtResource("1_swnow")

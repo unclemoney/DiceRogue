@@ -18,7 +18,8 @@ var score_card_ui
 var turn_tracker
 var round_manager: RoundManager
 var scorecard: Scorecard
-var is_shop_open: bool = false
+var is_shop_open: bool = true
+var first_roll_done: bool = false
 
 
 func _ready():
@@ -48,22 +49,35 @@ func _ready():
 	score_card_ui.connect("hand_scored", Callable(self, "_hand_scored_disable"))
 	if shop_button:
 		shop_button.pressed.connect(_on_shop_button_pressed)
+		shop_button.disabled = false  # Enabled at the very beginning
+		print("Shop button status: ", shop_button.disabled)
 	
 	if next_round_button:
 		next_round_button.pressed.connect(_on_next_round_button_pressed)
-		next_round_button.disabled = true
+		# Start with Next Round button enabled to begin the game
+		next_round_button.disabled = false
 	
 	# Make sure both round_manager and challenge_manager exist before connecting signals
 	if round_manager:
 		round_manager.round_started.connect(_on_round_started)
+		round_manager.round_completed.connect(_on_round_completed)
 	
 	if challenge_manager:
 		challenge_manager.challenge_completed.connect(_on_challenge_completed)
+		print("[GameButtonUI] Connected to challenge_completed signal")
 	else:
 		push_error("GameButtonUI: challenge_manager reference is null")
 
+	# Disable gameplay buttons initially
+	$HBoxContainer/RollButton.disabled = true
+	$HBoxContainer/NextTurnButton.disabled = true
+
 
 func _on_roll_button_pressed() -> void:
+	if not first_roll_done:
+		first_roll_done = true
+		if shop_button:
+			shop_button.disabled = true  # Disable shop after first roll
 	if dice_hand.dice_list.is_empty():
 		dice_hand.spawn_dice()
 	else:
@@ -109,6 +123,8 @@ func _on_game_over() -> void:
 	# Disable all controls
 	$HBoxContainer/RollButton.disabled = true
 	$HBoxContainer/NextTurnButton.disabled = true
+	if shop_button:
+		shop_button.disabled = true
 
 func _hand_scored_disable() -> void:
 	print("🏁 Hand scored—disabling Roll button")
@@ -121,19 +137,61 @@ func _on_shop_button_pressed() -> void:
 	print("[GameButtonUI] Signal emitted")
 
 func _on_round_started(_round_number: int) -> void:
+	print("[GameButtonUI] Round", _round_number, "started")
+	
 	if next_round_button:
 		next_round_button.disabled = true
+	
+	if shop_button:
+		print("[GameButtonUI] Round started - disabling shop button")
+		shop_button.disabled = true  # Disable shop at the start of each round
+	
+	# Enable gameplay buttons when round starts
+	$HBoxContainer/RollButton.disabled = false
+	$HBoxContainer/NextTurnButton.disabled = false
+	
+	# Trigger the first roll automatically when round starts
+	if _round_number > 0:  # Skip if it's the initial game state (round 0)
+		_on_roll_button_pressed()
 
-func _on_challenge_completed(challenge_id: String) -> void:
-	if round_manager and round_manager.current_challenge_id == challenge_id:
+func _on_round_completed(_round_number: int) -> void:
+	if shop_button:
+		shop_button.disabled = false  # Enable shop after round is completed
+	
+	if _round_number == 0:  # Initial game state - don't enable next round button yet
 		if next_round_button:
 			next_round_button.disabled = false
 
+func _on_challenge_completed(challenge_id: String) -> void:
+	print("[GameButtonUI] Challenge completed:", challenge_id)
+	print("[GameButtonUI] round_manager:", round_manager)
+	print("[GameButtonUI] round_manager.current_challenge_id:", round_manager.current_challenge_id)
+	
+	if round_manager and challenge_id != "":
+		if round_manager.current_challenge_id == challenge_id or round_manager.current_challenge_id == "":
+			print("[GameButtonUI] Enabling Next Round button")
+			if next_round_button:
+				next_round_button.disabled = false
+			if shop_button:
+				shop_button.disabled = false  # Enable shop when challenge is completed
+		else:
+			print("[GameButtonUI] Challenge ID mismatch:", challenge_id, "vs", round_manager.current_challenge_id)
+
 func _on_next_round_button_pressed() -> void:
+	print("[GameButtonUI] Next Round button pressed")
+	
 	if round_manager:
 		var current_round = round_manager.get_current_round_number()
-		round_manager.complete_round()
-		round_manager.start_round(current_round + 1)
+		
+		# If this is the initial state (no round started yet)
+		if current_round == 1 and not first_roll_done:
+			print("[GameButtonUI] Starting first round")
+			round_manager.start_round(1)
+		else:
+			# Normal round advancement
+			round_manager.complete_round()
+			round_manager.start_round(current_round + 1)
+		
 		emit_signal("next_round_pressed")
 
 	# Clear dice instead of respawning/rolling

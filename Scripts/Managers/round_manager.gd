@@ -8,7 +8,7 @@ signal round_failed(round_number: int)
 
 @export var max_rounds: int = 6
 @export var challenge_configs: Array[RoundChallengeConfig] = []
-@export var dice_configs: Array[String] = ["d6", "d4", "d6", "d4", "d6", "d4"]
+@export var dice_configs: Array[String] = ["d6", "d6", "d6", "d4", "d6", "d6"]
 @export var turn_tracker_path: NodePath
 @export var challenge_manager_path: NodePath
 @export var dice_hand_path: NodePath
@@ -23,6 +23,7 @@ var current_round: int = 0
 var current_challenge_id: String = ""
 var is_challenge_completed: bool = false
 var rounds_data: Array[Dictionary] = []
+var game_started: bool = false
 
 func _ready() -> void:
 	print("[RoundManager] Initializing")
@@ -44,6 +45,14 @@ func _ready() -> void:
 		push_error("[RoundManager] Missing scorecard reference")
 		return
 	
+	print("[RoundManager] Listing challenge config names:")
+	for i in range(challenge_configs.size()):
+		var config = challenge_configs[i]
+		if config:
+			print("Challenge", i, ":", config.challenge_id)
+		else:
+			print("Challenge", i, ": <null>")
+
 	# Connect to challenge signals
 	if challenge_manager:
 		challenge_manager.challenge_completed.connect(_on_challenge_completed)
@@ -51,6 +60,7 @@ func _ready() -> void:
 	
 	# Initialize rounds data
 	_initialize_rounds_data()
+	# Do NOT start the first round automatically
 
 func _initialize_rounds_data() -> void:
 	rounds_data.clear()
@@ -84,9 +94,18 @@ func _initialize_rounds_data() -> void:
 	print("[RoundManager] Initialized", rounds_data.size(), "rounds")
 
 func start_game() -> void:
-	print("[RoundManager] Starting game")
+	print("[RoundManager] Game is ready. Waiting for player to start the first round.")
 	current_round = 0
-	start_round(1)
+	is_challenge_completed = false
+	game_started = true
+	
+	# Enable first round's Next Round button immediately
+	emit_signal("round_completed", 0)  # Send signal as round 0 completed
+	
+	# Pre-load the challenge ID for the first round
+	if rounds_data.size() > 0:
+		current_challenge_id = rounds_data[0].challenge_id
+		print("[RoundManager] Prepared first round challenge ID:", current_challenge_id)
 
 func start_round(round_number: int) -> void:
 	if round_number < 1 or round_number > max_rounds:

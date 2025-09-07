@@ -92,7 +92,7 @@ func _on_game_start() -> void:
 	#spawn_starting_powerups()
 	#grant_consumable("score_reroll")
 	#apply_debuff("lock_dice")
-	activate_challenge("300pts_no_debuff")
+	#activate_challenge("300pts_no_debuff")
 	if round_manager:
 		round_manager.start_game()
 
@@ -480,6 +480,7 @@ func _on_round_started(round_number: int) -> void:
 		var round_data = round_manager.get_current_round_data()
 		if not round_data.challenge_id.is_empty():
 			activate_challenge(round_data.challenge_id)
+			print("[GameController] Activated challenge:", round_data.challenge_id)
 
 func _on_round_completed(round_number: int) -> void:
 	print("[GameController] Round", round_number, "completed")

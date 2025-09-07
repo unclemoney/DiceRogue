@@ -4,14 +4,33 @@ class_name ChallengeUI
 signal challenge_selected(id: String)
 
 @export var challenge_icon_scene: PackedScene = preload("res://Scenes/Challenge/ChallengeIcon.tscn")
+@export var round_manager_path: NodePath
 
-#current issue is that the score is not connected to the scorecard, so scores isn't registering
+@onready var dice_label: Label = $DiceLabel
+@onready var round_manager: RoundManager = get_node_or_null(round_manager_path)
 
 var _challenges: Dictionary = {}  # id -> ChallengeIcon
 
 func _ready() -> void:
 	if not challenge_icon_scene:
 		push_error("[ChallengeUI] No challenge_icon_scene set!")
+	
+	# Connect to round_manager to update dice label each round
+	if round_manager:
+		round_manager.round_started.connect(_on_round_started)
+		_update_dice_label(round_manager.get_current_round_data())
+	else:
+		push_error("[ChallengeUI] round_manager_path not set or node missing")
+
+func _on_round_started(round_number: int) -> void:
+	if round_manager:
+		var round_data = round_manager.get_current_round_data()
+		_update_dice_label(round_data)
+
+func _update_dice_label(round_data: Dictionary) -> void:
+	if dice_label and round_data.has("dice_type"):
+		print("Updating dice label to:", round_data["dice_type"])
+		dice_label.text = "%s" % round_data["dice_type"]
 
 func add_challenge(data: ChallengeData, challenge: Challenge) -> ChallengeIcon:
 	if not challenge_icon_scene:
@@ -66,6 +85,7 @@ func _on_challenge_completed(id: String) -> void:
 		var tween = create_tween()
 		tween.tween_property(icon, "modulate", Color(0.2, 1.0, 0.2), 0.5)
 		tween.tween_property(icon, "modulate", Color.WHITE, 0.5)
+
 
 func _on_challenge_failed(id: String) -> void:
 	if _challenges.has(id):
