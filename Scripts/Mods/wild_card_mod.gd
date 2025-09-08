@@ -9,20 +9,22 @@ func _ready() -> void:
 
 func apply(target) -> void:
 	var dice = target as Dice
-	if dice:
+	if dice and dice.dice_data:
 		print("[WildcardMod] Applied to die:", dice.name)
 		# Store original value
 		var original_value = dice.value
 		# Create typed array and populate it
 		possible_values.clear()
-		for i in range(1, dice.sides + 1):
+		
+		# Access sides through dice_data instead of directly
+		for i in range(1, dice.dice_data.sides + 1):
 			if i != original_value:
 				possible_values.append(i)
 		
 		print("[WildcardMod] Possible values:", possible_values)
 		emit_signal("mod_applied")
 	else:
-		push_error("[WildcardMod] Invalid target passed to apply()")
+		push_error("[WildcardMod] Invalid target or missing dice_data")
 
 func get_possible_values() -> Array[int]:
 	return possible_values

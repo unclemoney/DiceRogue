@@ -150,8 +150,16 @@ func _on_round_started(_round_number: int) -> void:
 	$HBoxContainer/RollButton.disabled = false
 	$HBoxContainer/NextTurnButton.disabled = false
 	
-	# Trigger the first roll automatically when round starts
-	if _round_number > 0:  # Skip if it's the initial game state (round 0)
+	# Always spawn dice when a round starts
+	if dice_hand:
+		# Since we've just cleared the dice, dice_list should be empty
+		print("[GameButtonUI] Spawning dice for round", _round_number)
+		dice_hand.spawn_dice()
+		
+		# Wait a short moment for dice to appear and animate in
+		await get_tree().create_timer(0.3).timeout
+		
+		# Now trigger the roll
 		_on_roll_button_pressed()
 
 func _on_round_completed(_round_number: int) -> void:
@@ -180,6 +188,16 @@ func _on_challenge_completed(challenge_id: String) -> void:
 func _on_next_round_button_pressed() -> void:
 	print("[GameButtonUI] Next Round button pressed")
 	
+	# Clear dice first
+	if dice_hand:
+		dice_hand.clear_dice()
+	
+	# Reset all scores on the scorecard and update UI
+	if score_card_ui and score_card_ui.scorecard:
+		score_card_ui.scorecard.reset_scores()
+		score_card_ui.update_all()
+	
+	# After clearing dice, proceed with round management
 	if round_manager:
 		var current_round = round_manager.get_current_round_number()
 		
@@ -193,12 +211,3 @@ func _on_next_round_button_pressed() -> void:
 			round_manager.start_round(current_round + 1)
 		
 		emit_signal("next_round_pressed")
-
-	# Clear dice instead of respawning/rolling
-	if dice_hand:
-		dice_hand.clear_dice()
-
-	# Reset all scores on the scorecard and update UI
-	if score_card_ui and score_card_ui.scorecard:
-		score_card_ui.scorecard.reset_scores()
-		score_card_ui.update_all()
