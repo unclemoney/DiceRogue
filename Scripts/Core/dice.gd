@@ -15,10 +15,7 @@ var _lock_shader_enabled := true
 var value: int = 1
 
 @onready var sprite: Sprite2D = $Sprite2D
-@onready var lock_shader := load("res://Scripts/Shaders/lock_overlay.gdshader")
-@onready var lock_shader_material := ShaderMaterial.new()
-
-@onready var glow_shader := load("res://Scripts/Shaders/glow_overlay.gdshader")
+@onready var dice_combined_shader := load("res://Scripts/Shaders/dice_combined_effects.gdshader")
 @onready var dice_material := ShaderMaterial.new()
 
 @onready var mod_container: Control = $ModContainer
@@ -32,18 +29,24 @@ func _ready():
 		push_error("[Dice] No DiceData resource assigned!")
 		return
 		
-	# Set up shaders
-	lock_shader_material.shader = lock_shader
-	dice_material.shader = glow_shader
+	# Set up combined shader
+	dice_material.shader = dice_combined_shader
 	sprite.material = dice_material
 	dice_material.set_shader_parameter("glow_strength", 0.0)
 	dice_material.set_shader_parameter("lock_overlay_strength", 0.6 if is_locked else 0.0)
+	dice_material.set_shader_parameter("disabled", false)
 
 	update_visual()
 	connect("mouse_entered", Callable(self, "_on_mouse_entered"))
 	connect("mouse_exited", Callable(self, "_on_mouse_exited"))
 	set_dice_input_enabled(true)
 	set_lock_shader_enabled(true)
+
+	# Create shader material if it doesn't exist
+	if not material:
+		material = ShaderMaterial.new()
+		material.shader = preload("res://Scripts/Shaders/disabled_dice.gdshader")
+		material.set_shader_parameter("disabled", false)
 
 func roll() -> void:
 	if is_locked:

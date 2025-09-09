@@ -78,24 +78,87 @@ func evaluate_with_wildcards(dice_values: Array[int]) -> Dictionary:
 	return best_scores
 
 
+func filter_disabled_values(values: Array[int]) -> Array[int]:
+	var filtered: Array[int] = []
+	
+	# More robust way to find game controller
+	var game_controller = get_tree().get_first_node_in_group("game_controller") as GameController
+	
+	# Fallback to try getting game controller through DiceResults
+	if game_controller == null and DiceResults.dice_refs.size() > 0:
+		var first_die = DiceResults.dice_refs[0]
+		if first_die and first_die.get_parent():
+			# Try finding GameController through ancestry
+			var parent = first_die.get_parent()
+			while parent != null:
+				if parent is GameController:
+					game_controller = parent
+					break
+				parent = parent.get_parent()
+	
+	print("[ScoreEvaluator] Game controller reference:", game_controller)
+	
+	# Check if the disabled_twos debuff is active
+	var disabled_twos_active = false
+	if game_controller != null:
+		disabled_twos_active = game_controller.is_debuff_active("disabled_twos")
+		print("[ScoreEvaluator] Disabled twos active:", disabled_twos_active)
+	
+	# If we can't find game_controller, check if DiceResults has any dice showing 2s with a red shader
+	if game_controller == null:
+		print("[ScoreEvaluator] No game controller found, checking for visual indicators")
+		for i in range(min(values.size(), DiceResults.dice_refs.size())):
+			var die = DiceResults.dice_refs[i]
+			if die and die.dice_material and die.dice_material.get_shader_parameter("disabled"):
+				if values[i] == 2:
+					disabled_twos_active = true
+					print("[ScoreEvaluator] Found visually disabled die with value 2")
+					break
+	
+	for i in range(values.size()):
+		var value = values[i]
+		
+		# Skip value 2 if debuff is active
+		if disabled_twos_active and value == 2:
+			var die = DiceResults.dice_refs[i] if i < DiceResults.dice_refs.size() else null
+			# Only include value 2 if it comes from a die with wildcard mod
+			if die and die.has_mod("wildcard"):
+				filtered.append(value)
+				print("[ScoreEvaluator] Including wildcard value 2")
+			else:
+				print("[ScoreEvaluator] Filtering out value 2")
+				# Don't add this value
+				continue
+		else:
+			filtered.append(value)
+	
+	if disabled_twos_active:
+		print("[ScoreEvaluator] Original values:", values)
+		print("[ScoreEvaluator] Filtered values:", filtered)
+	
+	return filtered
+
 func evaluate_normal(values: Array[int]) -> Dictionary:
+	# Filter out disabled values first
+	var filtered_values = filter_disabled_values(values)
+	
 	# Cache yahtzee check to avoid multiple calls
-	var yahtzee_score = calculate_yahtzee_score(values)
+	var yahtzee_score = calculate_yahtzee_score(filtered_values)
 	
 	return {
-		"ones": calculate_number_score(values, 1),
-		"twos": calculate_number_score(values, 2),
-		"threes": calculate_number_score(values, 3),
-		"fours": calculate_number_score(values, 4),
-		"fives": calculate_number_score(values, 5),
-		"sixes": calculate_number_score(values, 6),
-		"three_of_a_kind": calculate_of_a_kind_score(values, 3),
-		"four_of_a_kind": calculate_of_a_kind_score(values, 4),
-		"full_house": calculate_full_house_score(values),
-		"small_straight": calculate_small_straight_score(values),
-		"large_straight": calculate_large_straight_score(values),
-		"yahtzee": yahtzee_score,  # Use cached value
-		"chance": calculate_chance_score(values)
+		"ones": calculate_number_score(filtered_values, 1),
+		"twos": calculate_number_score(filtered_values, 2),
+		"threes": calculate_number_score(filtered_values, 3),
+		"fours": calculate_number_score(filtered_values, 4),
+		"fives": calculate_number_score(filtered_values, 5),
+		"sixes": calculate_number_score(filtered_values, 6),
+		"three_of_a_kind": calculate_of_a_kind_score(filtered_values, 3),
+		"four_of_a_kind": calculate_of_a_kind_score(filtered_values, 4),
+		"full_house": calculate_full_house_score(filtered_values),
+		"small_straight": calculate_small_straight_score(filtered_values),
+		"large_straight": calculate_large_straight_score(filtered_values),
+		"yahtzee": yahtzee_score,
+		"chance": calculate_chance_score(filtered_values)
 	}
 
 # Update calculate_of_a_kind_score to use the value

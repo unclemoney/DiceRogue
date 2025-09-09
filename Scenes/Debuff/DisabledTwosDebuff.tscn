@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://ccnctsp5p288n"]
+
+[ext_resource type="Script" uid="uid://bkx3p3m0j7au8" path="res://Scripts/Debuff/disabled_twos_debuff.gd" id="1_wou7e"]
+
+[node name="DisabledTwosDebuff" type="Node"]
+script = ExtResource("1_wou7e")

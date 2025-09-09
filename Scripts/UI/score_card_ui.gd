@@ -8,9 +8,11 @@ var turn_scored := false
 var reroll_active := false
 var upper_section_buttons := {}
 var lower_section_buttons := {}
+var section_buttons := {} # Add this line to declare the section_buttons dictionary
 
 signal hand_scored
 signal score_rerolled(section: Scorecard.Section, category: String, score: int)
+signal score_doubled(section: Scorecard.Section, category: String, new_score: int)
 
 @onready var best_hand_label: RichTextLabel = $BestHandScore
 @onready var upper_total_label: Label = $HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal/UppersubButton
@@ -29,6 +31,8 @@ const LOWER_CATEGORY_NODE_NAMES := {
 	"yahtzee": "Yahtzee",
 	"chance": "Chance"
 }
+
+var is_double_mode := false
 
 func _ready():
 	# Add to existing _ready function
@@ -203,14 +207,20 @@ func _on_lower_section_completed() -> void:
 			screen_shake.shake(0.3, 0.2)
 
 func connect_buttons():
+	# Initialize section_buttons dictionary
+	section_buttons = {
+		Scorecard.Section.UPPER: {},
+		Scorecard.Section.LOWER: {}
+	}
+
 	# Upper section
 	for category in scorecard.upper_scores.keys():
 		var button_path = "HBoxContainer/UpperVBoxContainer/UpperGridContainer/" + category.capitalize() + "Container/" + category.capitalize() + "Button"
 		var button = get_node_or_null(button_path)
 		if button:
 			button.pressed.connect(func(): on_category_selected(Scorecard.Section.UPPER, category))
-			#print("Connected upper button for:", button)
 			upper_section_buttons[category] = button
+			section_buttons[Scorecard.Section.UPPER][category] = button
 
 	# Lower section
 	for category in scorecard.lower_scores.keys():
@@ -219,12 +229,20 @@ func connect_buttons():
 		var button = get_node_or_null(button_path)
 		if button:
 			button.pressed.connect(func(): on_category_selected(Scorecard.Section.LOWER, category))
-			#print("Connected lower button for:", button)
 			lower_section_buttons[category] = button
+			section_buttons[Scorecard.Section.LOWER][category] = button
 		else:
 			print("❌ Lower button not found for:", category, "→", button_path)
 
-func on_category_selected(section: Scorecard.Section, category: String):
+func on_category_selected(section: Scorecard.Section, category: String) -> void:
+	print("[ScoreCardUI] Category selected:", category)
+	print("[ScoreCardUI] Double mode active:", is_double_mode)
+	
+	# Check if we're in double mode
+	if is_double_mode:
+		_handle_double_score(section, category)
+		return
+	
 	# Check if this category already has a score
 	var existing_score = null
 	match section:
@@ -431,3 +449,63 @@ func _on_yahtzee_bonus_achieved(points: int) -> void:
 		
 		# Update with new total including bonus
 		update_all()
+
+func activate_score_double() -> void:
+	print("[ScoreCardUI] Activating double score mode")
+	is_double_mode = true
+	
+	# Enable only score buttons for categories that already have scores
+	for section in [Scorecard.Section.UPPER, Scorecard.Section.LOWER]:
+		var buttons = section_buttons[section]
+		for category in buttons:
+			var score = null
+			if section == Scorecard.Section.UPPER:
+				score = scorecard.upper_scores[category]
+			else:
+				score = scorecard.lower_scores[category]
+				
+			buttons[category].disabled = (score == null)
+			
+	# Highlight available categories
+	for section in [Scorecard.Section.UPPER, Scorecard.Section.LOWER]:
+		var buttons = section_buttons[section]
+		for category in buttons:
+			if not buttons[category].disabled:
+				buttons[category].modulate = Color(1.2, 1.2, 0.8)  # Yellow highlight
+
+func _on_score_button_pressed(section: Scorecard.Section, category: String) -> void:
+	if is_double_mode:
+		_handle_double_score(section, category)
+		return
+		
+	# Existing score button handling...
+	
+func _handle_double_score(section: Scorecard.Section, category: String) -> void:
+	print("[ScoreCardUI] Handling double score for", category)
+	var current_score = null
+	if section == Scorecard.Section.UPPER:
+		current_score = scorecard.upper_scores[category]
+	else:
+		current_score = scorecard.lower_scores[category]
+		
+	if current_score != null:
+		var doubled_score = current_score * 2
+		print("[ScoreCardUI] Doubling score for", category, "from", current_score, "to", doubled_score)
+		
+		# Update the score
+		scorecard.set_score(section, category, doubled_score)
+		
+		# Update the UI
+		update_all()
+		
+		# Reset double mode
+		is_double_mode = false
+		
+		# Reset button modulate
+		for s in [Scorecard.Section.UPPER, Scorecard.Section.LOWER]:
+			var buttons = section_buttons[s]
+			for cat in buttons:
+				buttons[cat].modulate = Color(1, 1, 1)
+		
+		# Emit signal
+		emit_signal("score_doubled", section, category, doubled_score)

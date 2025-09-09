@@ -8,7 +8,7 @@ signal round_failed(round_number: int)
 
 @export var max_rounds: int = 6
 @export var challenge_configs: Array[RoundChallengeConfig] = []
-@export var dice_configs: Array[String] = ["d6", "d6", "d6", "d4", "d6", "d6"]
+@export var dice_configs: Array[String] = ["d6", "d6", "d6", "d4", "d6", "d6"]  # Keep as fallback
 @export var turn_tracker_path: NodePath
 @export var challenge_manager_path: NodePath
 @export var dice_hand_path: NodePath
@@ -75,10 +75,21 @@ func _initialize_rounds_data() -> void:
 		
 		# Set challenge if available in configs
 		if round_index < challenge_configs.size():
-			challenge_id = challenge_configs[round_index].challenge_id
-		
-		# Set dice type if available
-		if round_index < dice_configs.size():
+			var config = challenge_configs[round_index]
+			if config:
+				challenge_id = config.challenge_id
+				
+				# Get dice type from ChallengeData if available
+				var challenge_data = challenge_manager.get_def(challenge_id) if challenge_manager else null
+				if challenge_data and not challenge_data.dice_type.is_empty():
+					dice_type = challenge_data.dice_type
+					print("[RoundManager] Round", round_number, "using dice type from challenge:", dice_type)
+				elif round_index < dice_configs.size():
+					# Fall back to dice_configs if no challenge-specific dice type
+					dice_type = dice_configs[round_index]
+					print("[RoundManager] Round", round_number, "using fallback dice type:", dice_type)
+		elif round_index < dice_configs.size():
+			# If no challenge config but we have a dice config, use that
 			dice_type = dice_configs[round_index]
 			
 		var round_data = {

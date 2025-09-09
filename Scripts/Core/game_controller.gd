@@ -66,6 +66,7 @@ const STARTING_POWER_UP_IDS := ["extra_dice", "extra_rolls"]
 var _last_modded_die_index: int = -1  # Track which die received the last mod
 
 func _ready() -> void:
+	add_to_group("game_controller")
 	print("▶ GameController._ready()")
 	if dice_hand:
 		dice_hand.roll_complete.connect(_on_roll_completed)
@@ -244,6 +245,15 @@ func _on_consumable_used(consumable_id: String) -> void:
 					score_card_ui.connect("score_rerolled", _on_score_rerolled)
 			else:
 				push_error("GameController: score_card_ui not found!")
+		"double_existing":
+			if score_card_ui:
+				# Activate double mode
+				consumable.apply(self)
+				# Connect to score_doubled signal for cleanup
+				if not score_card_ui.is_connected("score_doubled", _on_score_doubled):
+					score_card_ui.connect("score_doubled", _on_score_doubled)
+			else:
+				push_error("GameController: score_card_ui not found!")
 		_:
 			push_error("Unknown consumable type: %s" % consumable_id)
 
@@ -252,6 +262,12 @@ func _on_score_rerolled(_section: Scorecard.Section, _category: String, _score: 
 	if reroll:
 		reroll.complete_reroll()
 		remove_consumable("score_reroll")
+
+func _on_score_doubled(_section: Scorecard.Section, _category: String, _new_score: int) -> void:
+	var double_consumable = get_active_consumable("double_existing") as DoubleExistingConsumable
+	if double_consumable:
+		double_consumable.complete_double()
+		remove_consumable("double_existing")
 
 func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 	if not scorecard:
@@ -289,6 +305,9 @@ func apply_debuff(id: String) -> void:
 	# Apply the debuff effect
 	match id:
 		"lock_dice":
+			debuff.target = dice_hand
+			debuff.start()
+		"disabled_twos":  # Add this case
 			debuff.target = dice_hand
 			debuff.start()
 		_:

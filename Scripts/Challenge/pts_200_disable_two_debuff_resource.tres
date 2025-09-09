@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ChallengeData" load_steps=5 format=3 uid="uid://bvcw4aokgvpol"]
+
+[ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="1_b4oy4"]
+[ext_resource type="Texture2D" uid="uid://cdusovknauh8j" path="res://Resources/Art/Powerups/ExtraRolls.png" id="1_oac04"]
+[ext_resource type="PackedScene" uid="uid://cletwcgpwyb0c" path="res://Scenes/Challenge/pts_200_disable_two_debuff.tscn" id="2_mwpbc"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d7r1j"]
+atlas = ExtResource("1_oac04")
+region = Rect2(72, 95, 59, 93)
+
+[resource]
+script = ExtResource("1_b4oy4")
+id = "pts_200_disabled_twos"
+display_name = "200 Points Disabled Twos"
+description = "Score 200 Points with Two's Disabled"
+icon = SubResource("AtlasTexture_d7r1j")
+scene = ExtResource("2_mwpbc")
+debuff_ids = Array[String](["disabled_twos"])
+target_score = 200
+reward_money = 200
+dice_type = "d6"
+metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

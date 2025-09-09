@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://cv824ebb6gv2w"]
+
+[ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_c1h5y"]
+[ext_resource type="Texture2D" uid="uid://cdusovknauh8j" path="res://Resources/Art/Powerups/ExtraRolls.png" id="1_klwiu"]
+[ext_resource type="PackedScene" uid="uid://bbu8hya25iqyw" path="res://Scenes/Consumable/DoubleExistingConsumable.tscn" id="2_qabd6"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_evdns"]
+atlas = ExtResource("1_klwiu")
+region = Rect2(143, 1, 59, 92)
+
+[resource]
+script = ExtResource("1_c1h5y")
+id = "double_existing"
+display_name = "Double Score"
+description = "Double and existing score"
+icon = SubResource("AtlasTexture_evdns")
+scene = ExtResource("2_qabd6")
+price = 100
+metadata/_custom_type_script = "uid://wx2i3vixf1m5"

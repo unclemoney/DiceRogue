@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cletwcgpwyb0c"]
+
+[ext_resource type="Script" uid="uid://dv5u83jsbkurd" path="res://Scripts/Challenge/pts_200_disable_two_debuff.gd" id="1_eym1i"]
+
+[node name="Pts200DisableTwoDebuff" type="Node"]
+script = ExtResource("1_eym1i")

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bbu8hya25iqyw"]
+
+[ext_resource type="Script" uid="uid://cawg767amjfie" path="res://Scripts/Consumable/double_existing_consumable.gd" id="1_r0hpy"]
+
+[node name="DoubleExistingConsumable" type="Node"]
+script = ExtResource("1_r0hpy")

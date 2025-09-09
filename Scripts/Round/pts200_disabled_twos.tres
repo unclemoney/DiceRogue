@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RoundChallengeConfig" load_steps=2 format=3 uid="uid://bak3w77f47saj"]
+
+[ext_resource type="Script" uid="uid://b41v75rm14duq" path="res://Scripts/Round/round_challenge_config.gd" id="1_1rcxt"]
+
+[resource]
+script = ExtResource("1_1rcxt")
+challenge_id = "pts_200_disabled_twos"
+description = "200 Points Disabled Twos"
+metadata/_custom_type_script = "uid://b41v75rm14duq"

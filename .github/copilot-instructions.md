@@ -17,6 +17,7 @@ This game takes its inspiration from the following games: Balatro, Dicey Dungeon
 - Wrap exported properties in @export var and onready lookups in @onready var.
 - Never emit inline parsing hacks—break declarations into separate var + assignment.
 - Provide detailed steps for setting up complex scenes or systems in the Godot editor, when applicable.
+- Godot does not support ternary operator syntax with the question mark ?: use if/else statements instead.
 
 ## Scene & Node Organization
 - Single responsibility: each scene owns exactly one domain (UI, gameplay logic, effects).
