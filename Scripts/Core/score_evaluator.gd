@@ -340,22 +340,36 @@ func is_small_straight(values: Array[int]) -> bool:
 func is_yahtzee(values: Array[int]) -> bool:
 	if values.is_empty():
 		return false
+	
+	# Filter out disabled values (like twos with disabled_twos debuff)
+	var filtered_values = filter_disabled_values(values)
+	
+	# If filtering removed too many dice, it can't be a yahtzee
+	if filtered_values.size() < 5:
+		print("[ScoreEvaluator] Not enough valid dice for yahtzee after filtering")
+		return false
 		
 	var wildcard_count = 0
 	var regular_values = []
 	var regular_indices = []
 	
 	# First pass - count wildcards and collect regular values
-	for i in range(values.size()):
-		var die = DiceResults.dice_refs[i]
-		if die.has_mod("wildcard"):
-			wildcard_count += 1
+	for i in range(filtered_values.size()):
+		var die_index = i
+		if i < DiceResults.dice_refs.size():
+			var die = DiceResults.dice_refs[i]
+			if die.has_mod("wildcard"):
+				wildcard_count += 1
+			else:
+				regular_values.append(filtered_values[i])
+				regular_indices.append(i)
 		else:
-			regular_values.append(values[i])
+			# This shouldn't happen if our filtering is working correctly
+			regular_values.append(filtered_values[i])
 			regular_indices.append(i)
 	
 	# If all dice are wildcards, it's automatically a Yahtzee
-	if wildcard_count == values.size():
+	if wildcard_count == filtered_values.size():
 		print("✓ All wildcards - automatic Yahtzee!")
 		return true
 	
@@ -367,5 +381,11 @@ func is_yahtzee(values: Array[int]) -> bool:
 		for value in regular_values:
 			if value != target_value:
 				return false
-		return true
+		
+		# Make sure we have enough matching dice (including wildcards) for a yahtzee
+		if regular_values.size() + wildcard_count >= 5:
+			print("[ScoreEvaluator] Valid yahtzee: ", regular_values.size(), " matching dice + ", 
+				  wildcard_count, " wildcards")
+			return true
+	
 	return false

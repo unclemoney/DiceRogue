@@ -32,13 +32,13 @@ const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 @export var debuff_container_path: NodePath     = ^"DebuffContainer"
 @export var debuff_manager_path: NodePath       = ^"../DebuffManager"
 @export var score_card_path: NodePath           = ^"../ScoreCard"
-@export var mod_manager_path: NodePath = ^"../ModManager"
-@export var shop_ui_path: NodePath = ^"../ShopUI"
-@export var game_button_ui_path: NodePath = ^"../GameButtonUI"
-@export var challenge_manager_path: NodePath = ^"../ChallengeManager"
-@export var challenge_ui_path: NodePath = ^"../ChallengeUI"
-@export var challenge_container_path: NodePath = ^"ChallengeContainer"
-@export var round_manager_path: NodePath = ^"../RoundManager"
+@export var mod_manager_path: NodePath          = ^"../ModManager"
+@export var shop_ui_path: NodePath              = ^"../ShopUI"
+@export var game_button_ui_path: NodePath       = ^"../GameButtonUI"
+@export var challenge_manager_path: NodePath    = ^"../ChallengeManager"
+@export var challenge_ui_path: NodePath         = ^"../ChallengeUI"
+@export var challenge_container_path: NodePath  = ^"ChallengeContainer"
+@export var round_manager_path: NodePath        = ^"../RoundManager"
 
 @onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
 @onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
@@ -52,18 +52,21 @@ const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 @onready var debuff_ui: DebuffUI         = get_node(debuff_ui_path) as DebuffUI
 @onready var debuff_container: Node      = get_node(debuff_container_path)
 @onready var debuff_manager: DebuffManager = get_node(debuff_manager_path) as DebuffManager
-@onready var scorecard: ScoreCard 		   = get_node(score_card_path) as ScoreCard
-@onready var mod_manager: ModManager = get_node(mod_manager_path) as ModManager
-@onready var shop_ui: ShopUI = get_node(shop_ui_path) as ShopUI
-@onready var game_button_ui: Control = get_node(game_button_ui_path)
+@onready var scorecard: ScoreCard          = get_node(score_card_path) as ScoreCard
+@onready var mod_manager: ModManager       = get_node(mod_manager_path) as ModManager
+@onready var shop_ui: ShopUI               = get_node(shop_ui_path) as ShopUI
+@onready var game_button_ui: Control       = get_node(game_button_ui_path)
 @onready var challenge_manager: ChallengeManager = get_node(challenge_manager_path) as ChallengeManager
-@onready var challenge_ui: ChallengeUI = get_node(challenge_ui_path) as ChallengeUI
-@onready var challenge_container: Node = get_node(challenge_container_path)
-@onready var round_manager: RoundManager = get_node_or_null(round_manager_path)
+@onready var challenge_ui: ChallengeUI     = get_node(challenge_ui_path) as ChallengeUI
+@onready var challenge_container: Node     = get_node(challenge_container_path)
+@onready var round_manager: RoundManager   = get_node_or_null(round_manager_path)
 
 const STARTING_POWER_UP_IDS := ["extra_dice", "extra_rolls"]
 
 var _last_modded_die_index: int = -1  # Track which die received the last mod
+
+var pending_mods: Array[String] = []
+var mod_persistence_map: Dictionary = {}  # mod_id -> int tracking how many instances of each mod should persist
 
 func _ready() -> void:
 	add_to_group("game_controller")
@@ -368,24 +371,52 @@ func grant_mod(id: String) -> void:
 	# Store reference for later use
 	active_mods[id] = def
 	
-	if dice_hand and dice_hand.dice_list.size() > 0:
-		var applied = false
-		# Try to find a die without this mod type
-		for i in range(dice_hand.dice_list.size()):
-			var die = dice_hand.dice_list[i]
-			if not die.has_mod(id):
-				var mod = mod_manager.spawn_mod(id, die)
-				if mod:
-					die.add_mod(def)
-					_last_modded_die_index = i
-					applied = true
-					print("[GameController] Mod", id, "applied to die:", die.name)
-					break
-		
-		if not applied:
-			print("[GameController] All current dice have mod", id, "- will apply to next spawned die")
+	# Track this mod for persistence between rounds (increment count)
+	if mod_persistence_map.has(id):
+		mod_persistence_map[id] += 1
 	else:
-		print("[GameController] No dice available - mod will be applied to next die")
+		mod_persistence_map[id] = 1
+	
+	print("[GameController] Mod persistence map updated:", mod_persistence_map)
+	
+	if dice_hand and dice_hand.dice_list.size() > 0:
+		if _apply_mod_to_available_die(id):
+			print("[GameController] Mod", id, "applied successfully")
+		else:
+			# Couldn't find a suitable die, add to pending
+			print("[GameController] No suitable die found, adding to pending mods")
+			if not pending_mods.has(id):
+				pending_mods.append(id)
+	else:
+		# No dice available, add to pending
+		print("[GameController] No dice available - adding to pending mods")
+		if not pending_mods.has(id):
+			pending_mods.append(id)
+
+# Helper function to find and apply a mod to an available die
+func _apply_mod_to_available_die(mod_id: String) -> bool:
+	# Try to find a die WITHOUT ANY mod
+	for i in range(dice_hand.dice_list.size()):
+		var die = dice_hand.dice_list[i]
+		if die.active_mods.size() == 0:
+			var mod = mod_manager.spawn_mod(mod_id, die)
+			if mod:
+				die.add_mod(active_mods[mod_id])
+				print("[GameController] Applied mod", mod_id, "to empty die at index", i)
+				return true
+	
+	# If no empty die found, try to find one without this specific mod
+	for i in range(dice_hand.dice_list.size()):
+		var die = dice_hand.dice_list[i]
+		if not die.has_mod(mod_id):
+			var mod = mod_manager.spawn_mod(mod_id, die)
+			if mod:
+				die.add_mod(active_mods[mod_id])
+				print("[GameController] Applied mod", mod_id, "to die at index", i)
+				return true
+	
+	# No suitable die found
+	return false
 
 func _on_roll_completed() -> void:
 	if is_debuff_active("lock_dice"):
@@ -397,26 +428,74 @@ func _on_roll_completed() -> void:
 			dice_hand.enable_all_dice()
 
 func _on_dice_spawned() -> void:
+	print("[GameController] mod_persistence_map:", mod_persistence_map)
 	if not dice_hand:
 		return
 		
 	print("[GameController] New dice spawned, checking for mods to apply")
+	print("[GameController] Mod persistence map:", mod_persistence_map)
 	
-	# Get the newly spawned die (should be the last one in the list)
-	if dice_hand.dice_list.size() > 0:
-		var new_die = dice_hand.dice_list[-1]
+	# Track already applied mod types to prevent duplicates on a single die
+	var applied_mod_counts = {}
+	
+	# First apply any pending mods (these are more recent)
+	var mods_to_process = pending_mods.duplicate()
+	pending_mods.clear()
+	
+	# Then add all persistent mods that should be reapplied
+	for mod_id in mod_persistence_map:
+		# Add each mod type the correct number of times
+		var count = mod_persistence_map[mod_id]
+		for i in range(count):
+			mods_to_process.append(mod_id)
+	
+	print("[GameController] Total mods to process:", mods_to_process.size())
+	print("[GameController] Mods to process:", mods_to_process)
+	
+	# Loop through all dice in order
+	for die_index in range(dice_hand.dice_list.size()):
+		var die = dice_hand.dice_list[die_index]
 		
-		# Apply any active mods that aren't already on other dice
-		for mod_id in active_mods:
+		# Skip dice that already have mods
+		if die.active_mods.size() >= 1:
+			print("[GameController] Dice at index", die_index, "already has mods, skipping")
+			continue
+			
+		# Try to apply any available mod that hasn't been applied yet
+		for i in range(mods_to_process.size()):
+			var mod_id = mods_to_process[i]
+			
+			# Check if we've already applied the maximum number for this type
+			if not applied_mod_counts.has(mod_id):
+				applied_mod_counts[mod_id] = 0
+				
+			# Skip if we've already applied the maximum for this type
+			if applied_mod_counts[mod_id] >= mod_persistence_map.get(mod_id, 1):
+				continue
+				
 			var def = active_mods[mod_id]
-			# Check if this mod type is already on this die
-			if def and not new_die.has_mod(mod_id):
-				var mod = mod_manager.spawn_mod(mod_id, new_die)
+			if def and not die.has_mod(mod_id):
+				var mod = mod_manager.spawn_mod(mod_id, die)
 				if mod:
-					new_die.add_mod(def)
-					print("[GameController] Applied mod", mod_id, "to new die:", new_die.name)
-				else:
-					push_error("[GameController] Failed to spawn mod", mod_id, "for new die")
+					die.add_mod(def)
+					# Record that we've applied an instance of this mod
+					applied_mod_counts[mod_id] += 1
+					print("[GameController] Applied mod", mod_id, "to die at index", die_index, 
+						  "- count", applied_mod_counts[mod_id], "of", mod_persistence_map.get(mod_id, 1))
+					
+					# Remove this mod from the processing list
+					mods_to_process.remove_at(i)
+					break
+		
+		# If we've applied all available mods, we can stop
+		if mods_to_process.is_empty():
+			break
+	
+	# Add any mods that couldn't be applied back to pending_mods
+	for mod_id in mods_to_process:
+		print("[GameController] Couldn't apply mod", mod_id, ", adding to pending_mods")
+		if not pending_mods.has(mod_id):
+			pending_mods.append(mod_id)
 
 func _on_shop_button_pressed() -> void:
 	if shop_ui:

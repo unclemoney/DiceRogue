@@ -2,7 +2,7 @@ extends Node
 
 signal money_changed(new_amount: int)
 
-var money: int = 100:
+var money: int = 200:
 	set(value):
 		money = value
 		emit_signal("money_changed", money)
