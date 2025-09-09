@@ -594,3 +594,21 @@ func _on_round_failed(round_number: int) -> void:
 func _on_all_rounds_completed() -> void:
 	print("[GameController] All rounds completed!")
 	# Victory logic here
+
+func remove_debuff(id: String) -> void:
+	print("[GameController] Removing debuff:", id)
+	if is_debuff_active(id):
+		var debuff = active_debuffs[id]
+		if debuff:
+			# Call remove on the debuff itself
+			debuff.remove()
+			debuff.queue_free()
+			active_debuffs.erase(id)
+			
+		# Remove the icon from UI
+		if debuff_ui:
+			debuff_ui.remove_debuff(id)
+		else:
+			push_error("[GameController] No debuff_ui found when trying to remove debuff icon")
+	else:
+		print("[GameController] Debuff not active:", id)
