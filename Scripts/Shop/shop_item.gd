@@ -54,7 +54,7 @@ func _process(delta: float) -> void:
 	
 	# Format BBCode with hex color
 	var hex_color: String = current_color.to_html(false)
-	shop_label.text = "[center][color=#%s][wave amp=50 freq=2]SHOP[/wave][/color][/center]" % hex_color
+	#shop_label.text = "[center][color=#%s][wave amp=50 freq=2]SHOP[/wave][/color][/center]" % hex_color
 
 
 func setup(data: Resource, type: String) -> void:

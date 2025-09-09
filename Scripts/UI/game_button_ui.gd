@@ -48,7 +48,8 @@ func _ready():
 	# Godot 4 style: signal name + target Callable
 	score_card_ui.connect("hand_scored", Callable(self, "_hand_scored_disable"))
 	if shop_button:
-		shop_button.pressed.connect(_on_shop_button_pressed)
+		if not shop_button.is_connected("pressed", _on_shop_button_pressed):
+			shop_button.pressed.connect(_on_shop_button_pressed)
 		shop_button.disabled = false  # Enabled at the very beginning
 		print("Shop button status: ", shop_button.disabled)
 	

@@ -37,8 +37,14 @@ func _ready():
 	dice_material.set_shader_parameter("disabled", false)
 
 	update_visual()
-	connect("mouse_entered", Callable(self, "_on_mouse_entered"))
-	connect("mouse_exited", Callable(self, "_on_mouse_exited"))
+	
+	# Only connect signals if they aren't already connected
+	if not is_connected("mouse_entered", _on_mouse_entered):
+		connect("mouse_entered", Callable(self, "_on_mouse_entered"))
+		
+	if not is_connected("mouse_exited", _on_mouse_exited):
+		connect("mouse_exited", Callable(self, "_on_mouse_exited"))
+		
 	set_dice_input_enabled(true)
 	set_lock_shader_enabled(true)
 
@@ -95,7 +101,8 @@ func update_visual():
 
 
 func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
-	if event.is_action_pressed("select_die") or (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
+	# Replace check for non-existent "select_die" action with direct mouse button check
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if not _can_process_input:
 			print("[Dice] Ignoring input - processing disabled")
 			shake_denied()  # Add shake effect when trying to interact while disabled
@@ -108,7 +115,7 @@ func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 			lock()
 		else:
 			unlock()
-			
+
 func _on_mouse_entered():
 	if not _can_process_input:
 		shake_denied()

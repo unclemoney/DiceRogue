@@ -58,10 +58,11 @@ func _ready():
 		else:
 			print("❌ Label not found for:", key, "→", label_path)
 	
-	if scorecard:
-		DiceResults.set_scorecard(scorecard)
-	else:
-		push_error("[ScoreCardUI] No scorecard reference to set in DiceResults")
+	# Remove or comment out from _ready():
+	# if scorecard:
+	#     DiceResults.set_scorecard(scorecard)
+	# else:
+	#     push_error("[ScoreCardUI] No scorecard reference to set in DiceResults")
 
 func bind_scorecard(sc: Scorecard):
 	scorecard = sc
@@ -73,6 +74,9 @@ func bind_scorecard(sc: Scorecard):
 	scorecard.lower_section_completed.connect(_on_lower_section_completed)
 	scorecard.yahtzee_bonus_achieved.connect(_on_yahtzee_bonus_achieved)
 	
+	# Set scorecard in DiceResults
+	DiceResults.set_scorecard(scorecard)
+
 func update_all():
 	for category in scorecard.upper_scores.keys():
 		var label_path = "HBoxContainer/UpperVBoxContainer/UpperGridContainer/" + category.capitalize() + "Container/" + category.capitalize() + "Label"
