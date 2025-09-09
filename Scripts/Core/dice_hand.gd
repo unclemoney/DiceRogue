@@ -1,6 +1,8 @@
 extends Node2D
 class_name DiceHand
 
+# Add the missing signal
+signal roll_started
 signal roll_complete
 signal dice_spawned
 
@@ -217,3 +219,11 @@ func switch_dice_type(type: String) -> void:
 		print("[DiceHand] Updated die", i + 1, "to", type.to_upper())
 	
 	print("[DiceHand] Successfully switched to", type.to_upper(), "dice")
+
+func roll_dice() -> void:
+	print("▶ Rolling dice...")
+	
+	# Emit signal that roll is starting (add this line)
+	emit_signal("roll_started")
+	
+	# Rest of your existing roll_dice function...

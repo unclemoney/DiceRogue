@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RoundChallengeConfig" load_steps=2 format=3 uid="uid://cok1qslsfb3r3"]
+
+[ext_resource type="Script" uid="uid://b41v75rm14duq" path="res://Scripts/Round/round_challenge_config.gd" id="1_kixjj"]
+
+[resource]
+script = ExtResource("1_kixjj")
+challenge_id = "pts_150_roll_score_minus_one"
+description = "Score 150 Points As your score drops by one each roll"
+metadata/_custom_type_script = "uid://b41v75rm14duq"

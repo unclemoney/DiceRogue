@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c6063tapskqu0"]
+
+[ext_resource type="Script" uid="uid://yitsyqp7ek7o" path="res://Scripts/Debuff/roll_score_minus_one_debuff.gd" id="1_hws6a"]
+
+[node name="RollScoreMinusOneDebuff" type="Node"]
+script = ExtResource("1_hws6a")

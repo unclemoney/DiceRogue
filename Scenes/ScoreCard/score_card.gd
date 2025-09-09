@@ -38,29 +38,53 @@ var lower_scores := {
 }
 
 var _score_multiplier_func: Callable  # Add this near other vars
+var score_modifiers: Array = [] # Array to hold score modifier objects
 
 func _ready() -> void:
 	add_to_group("scorecard")
 	print("[Scorecard] Ready - Added to 'scorecard' group")
 
 
-func set_score(section: Section, category: String, value: int) -> void:
+func register_score_modifier(modifier: Object) -> void:
+	if not score_modifiers.has(modifier):
+		score_modifiers.append(modifier)
+		print("[Scorecard] Registered score modifier:", modifier.name)
+
+func unregister_score_modifier(modifier: Object) -> void:
+	if score_modifiers.has(modifier):
+		score_modifiers.erase(modifier)
+		print("[Scorecard] Unregistered score modifier:", modifier.name)
+
+func set_score(section: int, category: String, score: int) -> void:
 	print("\n=== Setting Score ===")
-	print("[Scorecard] Setting", category, "to", value)
+	print("[Scorecard] Setting", category, "to", score)
 	print("[Scorecard] Current total before change:", get_total_score())
+	
+	# Apply score modifiers
+	var modified_score = score
+	for modifier in score_modifiers:
+		if modifier.has_method("modify_score"):
+			var result = modifier.modify_score(section, category, modified_score)
+			if result != null:
+				modified_score = result
+				print("[Scorecard] Score modified by", modifier.name, "to:", modified_score)
+	
+	if modified_score != score:
+		score = modified_score
+		print("[Scorecard] Final modified score:", score)
 	
 	match section:
 		Section.UPPER:
 			if upper_scores.has(category):
 				var old_value = upper_scores[category]
-				upper_scores[category] = value
-				print("[Scorecard] Updated upper score:", category, "from", old_value, "to", value)
+				upper_scores[category] = score
+				print("[Scorecard] Updated upper score:", category, "from", old_value, "to", score)
 				check_upper_bonus()
 		Section.LOWER:
 			if lower_scores.has(category):
 				var old_value = lower_scores[category]
-				lower_scores[category] = value
-				print("[Scorecard] Updated lower score:", category, "from", old_value, "to", value)
+				lower_scores[category] = score
+				print("[Scorecard] Updated lower score:", category, "from", old_value, "to", score)
 				check_lower_section()
 				
 	var new_total = get_total_score()

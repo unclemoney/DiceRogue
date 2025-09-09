@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bwiuo44g3sjea"]
+
+[ext_resource type="Script" uid="uid://ce44gbx3fnig" path="res://Scripts/Challenge/pts_150_roll_score_minus_one.gd" id="1_iogp0"]
+
+[node name="Pts150RollScoreMinusOne" type="Node"]
+script = ExtResource("1_iogp0")

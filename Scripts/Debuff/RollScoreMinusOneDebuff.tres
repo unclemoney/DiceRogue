@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DebuffData" load_steps=5 format=3 uid="uid://d1ii1htx1it71"]
+
+[ext_resource type="Script" uid="uid://uiuqwtxbh7m0" path="res://Scripts/Debuff/DebuffData.gd" id="1_r86yv"]
+[ext_resource type="Texture2D" uid="uid://dkqq5ebpxfhxm" path="res://Resources/Art/Powerups/ExtraDice.png" id="1_vjvdg"]
+[ext_resource type="PackedScene" uid="uid://c6063tapskqu0" path="res://Scenes/Debuff/RollScoreMinusOneDebuff.tscn" id="2_l6qh4"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ullos"]
+atlas = ExtResource("1_vjvdg")
+
+[resource]
+script = ExtResource("1_r86yv")
+id = "roll_score_minus_one"
+display_name = "Rolling Penalty"
+description = "Scores are reduced by the total number of rolls this round"
+icon = SubResource("AtlasTexture_ullos")
+scene = ExtResource("2_l6qh4")
+metadata/_custom_type_script = "uid://uiuqwtxbh7m0"

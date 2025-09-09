@@ -5,7 +5,15 @@ class_name DebuffManager
 var _defs_by_id := {}
 
 func _ready() -> void:
+	print("[DebuffManager] Loading definitions...")
+	_load_definitions()
+	# Print registered debuffs
+	for id in _defs_by_id:
+		print("[DebuffManager] Registered debuff:", id)
+
+func _load_definitions() -> void:
 	print("DebuffManager: defs count =", debuff_defs.size())
+	print("DebuffManager: loading definitions...", debuff_defs)
 	for i in range(debuff_defs.size()):
 		var d = debuff_defs[i]
 		if d == null:

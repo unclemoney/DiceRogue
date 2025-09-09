@@ -20,7 +20,7 @@ extends Node2D
 func _ready():
 	score_card_ui.bind_scorecard(score_card)
 	turn_tracker_ui.bind_tracker(turn_tracker)
-	
+
 	# Log missing optional components without errors
 	if not pu_manager:
 		print("Note: PowerUpManager not found - optional component")

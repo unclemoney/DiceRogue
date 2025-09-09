@@ -287,9 +287,10 @@ func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 		print("No scores yet, reroll remains disabled")
 
 func apply_debuff(id: String) -> void:
+	print("[GameController] Attempting to apply debuff:", id)
 	var debuff := debuff_manager.spawn_debuff(id, debuff_container) as Debuff
 	if debuff == null:
-		push_error("Failed to spawn Debuff '%s'" % id)
+		push_error("[GameController] Failed to spawn Debuff '%s'" % id)
 		return
 
 	active_debuffs[id] = debuff
@@ -310,8 +311,11 @@ func apply_debuff(id: String) -> void:
 		"lock_dice":
 			debuff.target = dice_hand
 			debuff.start()
-		"disabled_twos":  # Add this case
+		"disabled_twos":
 			debuff.target = dice_hand
+			debuff.start()
+		"roll_score_minus_one":
+			debuff.target = self  # Target game controller to access multiple components
 			debuff.start()
 		_:
 			push_error("Unknown debuff type: %s" % id)
