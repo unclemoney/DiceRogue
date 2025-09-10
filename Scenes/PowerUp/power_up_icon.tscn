@@ -28,6 +28,15 @@ offset_bottom = 40.0
 [node name="HoverLabel" type="Label" parent="LabelBg"]
 layout_mode = 2
 
+[node name="SellButton" type="Button" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 40.0
+offset_top = -31.0
+offset_right = 84.0
+text = "SELL"
+
 [connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]
 [connection signal="pressed" from="." to="." method="_on_pressed"]
+[connection signal="pressed" from="SellButton" to="." method="_on_sell_button_pressed"]

@@ -18,4 +18,5 @@ scene = ExtResource("2_aejb6")
 debuff_ids = Array[String](["lock_dice"])
 target_score = 300
 reward_money = 100
+dice_type = "d6"
 metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

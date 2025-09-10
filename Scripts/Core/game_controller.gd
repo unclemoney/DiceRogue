@@ -137,9 +137,9 @@ func grant_power_up(id: String) -> void:
 		var icon = powerup_ui.add_power_up(def)
 		if icon:
 			print("[GameController] Connecting power-up signals for:", id)
-			# Connect the signals from the icon
-			icon.power_up_selected.connect(_on_power_up_selected)
-			icon.power_up_deselected.connect(_on_power_up_deselected)
+			# Connect the sell signal
+			if not powerup_ui.is_connected("power_up_sold", _on_power_up_sold):
+				powerup_ui.connect("power_up_sold", _on_power_up_sold)
 		else:
 			push_error("[GameController] Failed to create UI icon for power-up:", id)
 			
@@ -147,14 +147,100 @@ func grant_power_up(id: String) -> void:
 	active_power_ups[id] = pu
 	emit_signal("power_up_granted", id, pu)
 	print("[GameController] Power-up granted and ready:", id)
+	
+	# Automatically activate the power-up
+	_activate_power_up(id)
 
+# Add this function to handle power-up activation
+func _activate_power_up(power_up_id: String) -> void:
+	print("\n=== Power-up Auto-Activated ===")
+	print("[GameController] Activating power-up:", power_up_id)
+	
+	var pu = active_power_ups.get(power_up_id)
+	if not pu:
+		push_error("[GameController] No PowerUp found for id:", power_up_id)
+		return
+	
+	# Special handling for Foursome power-up
+	if power_up_id == "foursome":
+		print("[GameController] Applying Foursome to scorecard:", scorecard)
+		if scorecard:
+			pu.apply(scorecard)
+			# Verify multiplier function is set
+			scorecard.debug_multiplier_function()
+		else:
+			push_error("[GameController] No scorecard available for Foursome power-up")
+	# Regular power-ups
+	else:
+		match power_up_id:
+			"extra_dice":
+				pu.apply(dice_hand)
+				enable_debuff("lock_dice")
+			"extra_rolls":
+				pu.apply(turn_tracker)
+			_:
+				push_error("[GameController] Unknown power-up type:", power_up_id)
+
+# Add this function to handle power-up selling
+func _on_power_up_sold(power_up_id: String) -> void:
+	print("[GameController] Selling power-up:", power_up_id)
+	
+	var pu = active_power_ups.get(power_up_id)
+	if not pu:
+		push_error("[GameController] No PowerUp found for id:", power_up_id)
+		return
+		
+	# Get the refund amount (half of purchase price)
+	var def = pu_manager.get_def(power_up_id)
+	if def:
+		var refund = def.price / 2
+		print("[GameController] Refunding", refund, "coins for power-up:", power_up_id)
+		PlayerEconomy.add_money(refund)
+	
+	# Deactivate and remove the power-up
+	_deactivate_power_up(power_up_id)
+	
+	# Remove the power-up
+	revoke_power_up(power_up_id)
+	
+	# Remove the UI icon
+	powerup_ui.remove_power_up(power_up_id)
+
+# Add this function to handle power-up deactivation
+func _deactivate_power_up(power_up_id: String) -> void:
+	var pu = active_power_ups.get(power_up_id)
+	if not pu:
+		push_error("[GameController] No PowerUp found for id:", power_up_id)
+		return
+		
+	match power_up_id:
+		"extra_dice":
+			pu.remove(dice_hand)
+			disable_debuff("lock_dice")
+		"extra_rolls":
+			pu.remove(turn_tracker)
+		"foursome":
+			pu.remove(scorecard)
+		_:
+			push_error("[GameController] Unknown power-up type:", power_up_id)
 func revoke_power_up(power_up_id: String) -> void:
 	if not active_power_ups.has(power_up_id):
 		return
 
 	var pu := active_power_ups[power_up_id] as PowerUp
 	if pu:
-		pu.remove(self)
+		# Pass the correct target based on power-up type
+		match power_up_id:
+			"extra_dice":
+				pu.remove(dice_hand)
+			"extra_rolls":
+				pu.remove(turn_tracker)
+			"foursome":
+				pu.remove(scorecard)
+			_:
+				# For unknown types, use the stored reference in the PowerUp itself
+				pu.remove(pu)
+		
 		pu.queue_free()
 	active_power_ups.erase(power_up_id)
 	emit_signal("power_up_revoked", power_up_id)
