@@ -55,7 +55,19 @@ func _process(delta: float) -> void:
 	# Format BBCode with hex color
 	var hex_color: String = current_color.to_html(false)
 	#shop_label.text = "[center][color=#%s][wave amp=50 freq=2]SHOP[/wave][/color][/center]" % hex_color
-
+	# Check if this is a power-up item and if there's a maximum reached
+	if item_type == "power_up":
+		# Find the PowerUpUI node to check if maximum reached
+		var power_up_ui = _find_power_up_ui()
+		if power_up_ui and power_up_ui.has_max_power_ups():
+			# Disable the buy button and show "MAX REACHED" text
+			buy_button.disabled = true
+			buy_button.text = "MAX REACHED"
+		else:
+			# Re-enable the button if previously disabled
+			if buy_button.disabled and buy_button.text == "MAX REACHED":
+				buy_button.disabled = false
+				buy_button.text = "BUY"
 
 func setup(data: Resource, type: String) -> void:
 	print("[ShopItem] Setting up item:", data.id)
@@ -94,3 +106,19 @@ func _on_buy_button_pressed() -> void:
 			print("[ShopItem] Failed to remove money for purchase")
 	else:
 		print("[ShopItem] Cannot afford", item_id, "(cost:", price, ", money:", PlayerEconomy.money, ")")
+
+
+# Helper function to find the PowerUpUI node
+func _find_power_up_ui() -> PowerUpUI:
+	# Try to find it in the scene tree
+	var candidates = get_tree().get_nodes_in_group("power_up_ui")
+	if candidates.size() > 0:
+		return candidates[0]
+		
+	# Or navigate up to GameController and then down
+	var root = get_tree().get_root()
+	var game_controller = root.find_child("GameController", true, false)
+	if game_controller:
+		return game_controller.get_node_or_null("PowerUpUI") as PowerUpUI
+	
+	return null

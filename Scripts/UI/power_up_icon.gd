@@ -2,7 +2,7 @@ extends TextureButton
 class_name PowerUpIcon
 
 @export var data: PowerUpData
-@export var glow_intensity: float = 0.5
+@export var glow_intensity: float = 0.1
 @onready var hover_label: Label = $LabelBg/HoverLabel
 @onready var label_bg: PanelContainer = $LabelBg
 @onready var sell_button: Button = $SellButton
@@ -19,13 +19,30 @@ signal power_up_sell_requested(power_up_id: String)
 func _ready() -> void:
 	print("[PowerUpIcon] Initializing...")
 	
+	# Fix: Setup correct size and display properties
+	custom_minimum_size = Vector2(64, 64)
+	#expand = true
+	stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	
+	# Fix: Make sure icon is properly visible
+	modulate.a = 1.0
+	visible = true
+	
+	# Fix: Size flags for proper positioning in container
+	size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	
+	# Handle missing nodes
 	if not has_node("LabelBg"):
 		push_error("Missing LabelBg")
 		# Create a minimal version if missing
 		var panel = PanelContainer.new()
 		panel.name = "LabelBg"
+		panel.position = Vector2(0, 64)  # Position below the icon
+		panel.size = Vector2(64, 20)
 		var label = Label.new()
 		label.name = "HoverLabel"
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		panel.add_child(label)
 		add_child(panel)
 	
@@ -35,7 +52,7 @@ func _ready() -> void:
 		var button = Button.new()
 		button.name = "SellButton"
 		button.text = "Sell"
-		button.position = Vector2(size.x - 40, 0)
+		button.position = Vector2(64, 0)  # Position to the right of the icon
 		button.size = Vector2(40, 20)
 		add_child(button)
 
@@ -75,22 +92,34 @@ func _ready() -> void:
 	# Start as selected (activated) by default
 	_is_selected = true
 	
-	print("[PowerUpIcon] Initialization complete for:", data.id if data else "unknown")
+	# Ensure proper sizing and margins
+	size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	
+	# Debug info
+	print("[PowerUpIcon] Initialization complete")
+	print("[PowerUpIcon] Icon visible:", visible)
+	print("[PowerUpIcon] Icon size:", size)
+	print("[PowerUpIcon] Icon custom minimum size:", custom_minimum_size)
+	print("[PowerUpIcon] Icon global position:", global_position)
 
 func set_data(new_data: PowerUpData) -> void:
 	data = new_data
 	if data.icon != null:
 		texture_normal = data.icon
+		hover_label.text = data.display_name
 	else:
-		push_warning("PowerUpIcon: icon is null, using fallback")
+		push_warning("PowerUpIcon: setdata icon is null, using fallback")
 		texture_normal = preload("res://icon.svg")
 
 func _apply_data() -> void:
 	texture_normal = data.icon
 	hover_label.text = data.display_name
+	print("[PowerUpIcon] Applied data:", data.id, data.display_name)
 
 func _on_mouse_entered() -> void:
 	print("[PowerUpIcon] Mouse entered:", data.id)
+	print("Hover label text:", hover_label.text)
 	_is_hovering = true
 	
 	# Show label for all hover cases

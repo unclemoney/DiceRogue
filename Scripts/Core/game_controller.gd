@@ -91,6 +91,11 @@ func _ready() -> void:
 		round_manager.round_failed.connect(_on_round_failed)
 		round_manager.all_rounds_completed.connect(_on_all_rounds_completed)
 	call_deferred("_on_game_start")
+	
+	if powerup_ui:
+		# Connect to existing signals...
+		if not powerup_ui.is_connected("max_power_ups_reached", _on_max_power_ups_reached):
+			powerup_ui.connect("max_power_ups_reached", _on_max_power_ups_reached)
 
 func _on_game_start() -> void:
 	#spawn_starting_powerups()
@@ -125,6 +130,13 @@ func spawn_starting_powerups() -> void:
 
 
 func grant_power_up(id: String) -> void:
+	print("\n=== Granting Power-Up: ", id, " ===")
+	
+	# Check if we've reached the maximum number of power-ups
+	if powerup_ui and powerup_ui.has_max_power_ups():
+		print("[GameController] Maximum number of power-ups reached. Cannot add more.")
+		return
+	
 	# 1) Spawn logic via scene manager
 	var pu := pu_manager.spawn_power_up(id, power_up_container) as PowerUp
 	if pu == null:
@@ -698,3 +710,8 @@ func remove_debuff(id: String) -> void:
 			push_error("[GameController] No debuff_ui found when trying to remove debuff icon")
 	else:
 		print("[GameController] Debuff not active:", id)
+
+func _on_max_power_ups_reached() -> void:
+	print("[GameController] Maximum power-ups reached!")
+	# Show notification to player
+	#NotificationSystem.show_notification("Maximum power-ups (2) reached! Sell one to buy another.")

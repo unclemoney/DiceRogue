@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://ci1p8hb3o3ol4" path="res://Scripts/UI/power_up_ui.gd" id="1_0e0bw"]
 
-[node name="PowerUpUI" type="Control"]
+[node name="PowerUpUI" type="Control" groups=["power_up_ui"]]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -19,9 +19,21 @@ offset_right = 92.0
 offset_bottom = -5.0
 text = "POWER UPS"
 
-[node name="Container" type="HBoxContainer" parent="."]
+[node name="Container" type="HBoxContainer" parent="." groups=["power_up_ui"]]
 layout_mode = 0
 offset_left = 2.0
 offset_right = 1275.0
 offset_bottom = 723.0
-mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="TextureRect" type="TextureRect" parent="Container"]
+layout_mode = 2
+stretch_mode = 5
+
+[node name="SlotsLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 111.0
+offset_top = -28.0
+offset_right = 151.0
+offset_bottom = -5.0
+text = "0/2"

@@ -147,7 +147,30 @@ func _add_shop_item(data: Resource, type: String) -> void:
 
 func _on_item_purchased(item_id: String, item_type: String) -> void:
 	print("[ShopUI] Processing purchase:", item_id, "type:", item_type)
+	
+	# Check if it's a power-up and if we're already at max
+	if item_type == "power_up":
+		# Find PowerUpUI to check max status
+		var power_up_ui = _find_power_up_ui()
+		if power_up_ui and power_up_ui.has_max_power_ups():
+			print("[ShopUI] Maximum power-ups reached, purchase blocked")
+			# Could show a notification here
+			return
+	
+	# If we got here, proceed with purchase
 	emit_signal("item_purchased", item_id, item_type)
+
+# Helper function to find PowerUpUI
+func _find_power_up_ui() -> PowerUpUI:
+	# Try direct path first
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller:
+		var power_up_ui = game_controller.get_node_or_null("../PowerUpUI")
+		if power_up_ui:
+			return power_up_ui
+	
+	# Fall back to searching the tree
+	return get_tree().get_first_node_in_group("power_up_ui")
 
 func _on_close_button_pressed() -> void:
 	hide()
