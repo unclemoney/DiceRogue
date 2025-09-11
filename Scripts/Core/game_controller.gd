@@ -90,12 +90,13 @@ func _ready() -> void:
 		round_manager.round_completed.connect(_on_round_completed)
 		round_manager.round_failed.connect(_on_round_failed)
 		round_manager.all_rounds_completed.connect(_on_all_rounds_completed)
-	call_deferred("_on_game_start")
-	
+	if consumable_ui:
+		if not consumable_ui.is_connected("consumable_sold", _on_consumable_sold):
+			consumable_ui.connect("consumable_sold", _on_consumable_sold)
 	if powerup_ui:
-		# Connect to existing signals...
 		if not powerup_ui.is_connected("max_power_ups_reached", _on_max_power_ups_reached):
 			powerup_ui.connect("max_power_ups_reached", _on_max_power_ups_reached)
+	call_deferred("_on_game_start")
 
 func _on_game_start() -> void:
 	#spawn_starting_powerups()
@@ -309,7 +310,7 @@ func grant_consumable(id: String) -> void:
 		push_error("[GameController] No ConsumableData found for '%s'" % id)
 		return
 		
-	var icon = consumable_ui.add_consumable(def, consumable)
+	var icon = consumable_ui.add_consumable(def) #, consumable
 	if not icon:
 		push_error("[GameController] Failed to create UI icon for consumable '%s'" % id)
 		return
@@ -715,3 +716,35 @@ func _on_max_power_ups_reached() -> void:
 	print("[GameController] Maximum power-ups reached!")
 	# Show notification to player
 	#NotificationSystem.show_notification("Maximum power-ups (2) reached! Sell one to buy another.")
+
+# Add this function to handle consumable selling
+func _on_consumable_sold(consumable_id: String) -> void:
+	print("[GameController] Selling consumable:", consumable_id)
+	
+	var consumable = active_consumables.get(consumable_id)
+	if not consumable:
+		push_error("[GameController] No Consumable found for id:", consumable_id)
+		return
+		
+	# Get the refund amount (half of purchase price)
+	var def = consumable_manager.get_def(consumable_id)
+	if def:
+		var refund = def.price / 2
+		print("[GameController] Refunding", refund, "coins for consumable:", consumable_id)
+		PlayerEconomy.add_money(refund)
+	
+	# Remove the consumable
+	revoke_consumable(consumable_id)
+	
+	# Remove the UI icon
+	consumable_ui.remove_consumable(consumable_id)
+
+func revoke_consumable(consumable_id: String) -> void:
+	if not active_consumables.has(consumable_id):
+		return
+
+	var consumable := active_consumables[consumable_id] as Consumable
+	if consumable:
+		consumable.queue_free()
+	active_consumables.erase(consumable_id)
+	

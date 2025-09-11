@@ -19,14 +19,17 @@ offset_right = 92.0
 offset_bottom = -5.0
 text = "POWER UPS"
 
-[node name="Container" type="HBoxContainer" parent="." groups=["power_up_ui"]]
-layout_mode = 0
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 2
 offset_left = 2.0
-offset_right = 1275.0
+offset_right = 2.0
 offset_bottom = 723.0
+
+[node name="Container" type="HBoxContainer" parent="VBoxContainer" groups=["power_up_ui"]]
+layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="TextureRect" type="TextureRect" parent="Container"]
+[node name="TextureRect" type="TextureRect" parent="VBoxContainer"]
 layout_mode = 2
 stretch_mode = 5
 

@@ -156,6 +156,13 @@ func _on_item_purchased(item_id: String, item_type: String) -> void:
 			print("[ShopUI] Maximum power-ups reached, purchase blocked")
 			# Could show a notification here
 			return
+	# Check if it's a consumable and if we're already at max
+	elif item_type == "consumable":
+		# Find ConsumableUI to check max status
+		var consumable_ui = _find_consumable_ui()
+		if consumable_ui and consumable_ui.has_max_consumables():
+			print("[ShopUI] Maximum consumables reached, purchase blocked")
+			return
 	
 	# If we got here, proceed with purchase
 	emit_signal("item_purchased", item_id, item_type)
@@ -171,6 +178,18 @@ func _find_power_up_ui() -> PowerUpUI:
 	
 	# Fall back to searching the tree
 	return get_tree().get_first_node_in_group("power_up_ui")
+
+# Add helper function to find ConsumableUI
+func _find_consumable_ui() -> ConsumableUI:
+	# Try direct path first
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller:
+		var consumable_ui = game_controller.get_node_or_null("../ConsumableUI") as ConsumableUI
+		if consumable_ui:
+			return consumable_ui
+	
+	# Fall back to searching the tree
+	return get_tree().get_first_node_in_group("consumable_ui") as ConsumableUI
 
 func _on_close_button_pressed() -> void:
 	hide()

@@ -68,6 +68,20 @@ func _process(delta: float) -> void:
 			if buy_button.disabled and buy_button.text == "MAX REACHED":
 				buy_button.disabled = false
 				buy_button.text = "BUY"
+	
+	# Check if this is a consumable item and if there's a maximum reached
+	elif item_type == "consumable":
+		# Find the ConsumableUI node to check if maximum reached
+		var consumable_ui = _find_consumable_ui()
+		if consumable_ui and consumable_ui.has_max_consumables():
+			# Disable the buy button and show "MAX REACHED" text
+			buy_button.disabled = true
+			buy_button.text = "MAX REACHED"
+		else:
+			# Re-enable the button if previously disabled
+			if buy_button.disabled and buy_button.text == "MAX REACHED":
+				buy_button.disabled = false
+				buy_button.text = "BUY"
 
 func setup(data: Resource, type: String) -> void:
 	print("[ShopItem] Setting up item:", data.id)
@@ -120,5 +134,20 @@ func _find_power_up_ui() -> PowerUpUI:
 	var game_controller = root.find_child("GameController", true, false)
 	if game_controller:
 		return game_controller.get_node_or_null("PowerUpUI") as PowerUpUI
+	
+	return null
+
+# Helper function to find the ConsumableUI node
+func _find_consumable_ui() -> ConsumableUI:
+	# Try to find it in the scene tree
+	var candidates = get_tree().get_nodes_in_group("consumable_ui")
+	if candidates.size() > 0:
+		return candidates[0]
+		
+	# Or navigate up to GameController and then down
+	var root = get_tree().get_root()
+	var game_controller = root.find_child("GameController", true, false)
+	if game_controller:
+		return game_controller.get_node_or_null("ConsumableUI") as ConsumableUI
 	
 	return null

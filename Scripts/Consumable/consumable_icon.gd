@@ -8,6 +8,7 @@ var _explosion_instance: GPUParticles2D
 
 @onready var hover_label: Label = $LabelBg/HoverLabel
 @onready var label_bg: PanelContainer = $LabelBg
+@onready var sell_button: Button = $SellButton
 
 var _shader_material: ShaderMaterial
 var _is_hovering := false
@@ -15,16 +16,56 @@ var _current_tween: Tween
 var is_useable := false  # Can the consumable be activated at all?
 var is_active := false   # Has the player clicked to activate it?
 var is_used := false     # Has the consumable been consumed?
+var _sell_button_visible := false
 
 signal consumable_used(consumable_id: String)
+signal consumable_sell_requested(consumable_id: String)
 
 func _ready() -> void:
 	print("ConsumableIcon: _ready() called")
-	if not has_node("LabelBg/HoverLabel"):
-		push_error("Missing HoverLabel")
-		return
+	
+	# Setup correct size and display properties
+	custom_minimum_size = Vector2(64, 64)
+	stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	
+	# Make sure icon is properly visible
+	modulate.a = 1.0
+	visible = true
+	
+	# Size flags for proper positioning in container
+	size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	
+	# Check for required nodes and create if missing
+	if not has_node("LabelBg"):
+		push_error("Missing LabelBg")
+		var panel = PanelContainer.new()
+		panel.name = "LabelBg"
+		panel.position = Vector2(0, 64)  # Position below the icon
+		var label = Label.new()
+		label.name = "HoverLabel"
+		panel.add_child(label)
+		add_child(panel)
+		
+	if not has_node("SellButton"):
+		push_error("Missing SellButton")
+		var button = Button.new()
+		button.name = "SellButton"
+		button.text = "Sell"
+		button.position = Vector2(64, 0)
+		button.size = Vector2(40, 20)
+		add_child(button)
+
+	label_bg = $LabelBg
+	hover_label = $LabelBg/HoverLabel
+	sell_button = $SellButton
 
 	label_bg.visible = false
+	sell_button.visible = false
+	sell_button.text = "Sell"
+	
+	# Connect sell button
+	sell_button.pressed.connect(_on_sell_button_pressed)
 	
 	if data:
 		_apply_data()
@@ -34,28 +75,23 @@ func _ready() -> void:
 	connect("mouse_entered", Callable(self, "_on_mouse_entered"))
 	connect("mouse_exited", Callable(self, "_on_mouse_exited"))
 	connect("pressed", Callable(self, "_on_pressed"))
-	if data and data.id == "score_reroll":
-		connect("pressed", Callable(self, "_on_reroll_pressed"))
 
 	# Setup shader material
 	_shader_material = ShaderMaterial.new()
 	_shader_material.shader = preload("res://Scripts/Shaders/power_up_ui_highlight.gdshader")
 	_shader_material.set_shader_parameter("glow_intensity", 0.0)
 	material = _shader_material
+	
 	# Preload explosion effect
-	# Check explosion effect scene
-	print("Checking explosion effect scene...")
-	if explosion_effect_scene:
-		print("Explosion effect scene assigned in inspector:", explosion_effect_scene.resource_path)
-	else:
-		print("No explosion effect scene assigned, attempting to preload...")
+	if not explosion_effect_scene:
 		explosion_effect_scene = preload("res://Scenes/Effects/ConsumableExplosion.tscn")
-		if explosion_effect_scene:
-			print("Successfully preloaded explosion effect:", explosion_effect_scene.resource_path)
-		else:
-			push_error("Failed to preload ConsumableExplosion scene!")
 	
 	_reset_visual_state()
+	
+	print("[ConsumableIcon] Initialization complete")
+	print("[ConsumableIcon] Icon visible:", visible)
+	print("[ConsumableIcon] Icon size:", size)
+	print("[ConsumableIcon] Icon custom minimum size:", custom_minimum_size)
 
 func _reset_visual_state() -> void:
 	# Cancel any running tweens
@@ -72,6 +108,10 @@ func _reset_visual_state() -> void:
 		label_bg.visible = _is_hovering or is_active
 		label_bg.modulate.a = 1.0 if (_is_hovering or is_active) else 0.0
 		label_bg.scale = Vector2.ONE
+		
+	# Reset sell button
+	if sell_button:
+		sell_button.visible = _sell_button_visible
 
 func set_data(new_data: ConsumableData) -> void:
 	data = new_data
@@ -173,6 +213,11 @@ func _on_pressed() -> void:
 	print("  is_active:", is_active)
 	print("  is_used:", is_used)
 	
+	# Toggle sell button visibility
+	_sell_button_visible = !_sell_button_visible
+	sell_button.visible = _sell_button_visible
+	
+	# Also handle original consumable functionality
 	if is_used:
 		print("Consumable already used")
 		return
@@ -182,16 +227,20 @@ func _on_pressed() -> void:
 		_on_reroll_denied()
 		return
 		
-	if not is_active:
+	if not is_active and not _sell_button_visible:
 		# First click - activate the consumable
 		print("Activating consumable")
 		emit_signal("consumable_used", data.id)
 		is_active = true
 		_shader_material.set_shader_parameter("glow_intensity", glow_intensity)
 		modulate = Color(1.5, 1.5, 1.5)
-	else:
-		# Already active - shouldn't get here as ScoreCardUI handles the actual usage
-		print("Consumable already active")
+
+func _on_sell_button_pressed() -> void:
+	print("[ConsumableIcon] Sell requested for:", data.id)
+	emit_signal("consumable_sell_requested", data.id)
+	# Hide the sell button
+	_sell_button_visible = false
+	sell_button.visible = false
 
 func set_useable(useable: bool) -> void:
 	is_useable = useable
