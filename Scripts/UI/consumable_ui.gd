@@ -141,7 +141,8 @@ func has_max_consumables() -> bool:
 	return _icons.size() >= max_consumables
 
 func get_consumable_icon(id: String) -> ConsumableIcon:
-	for child in get_children():
-		if child is ConsumableIcon and child.data and child.data.id == id:
-			return child
+	if container:
+		for child in container.get_children():
+			if child is ConsumableIcon and child.data and child.data.id == id:
+				return child
 	return null

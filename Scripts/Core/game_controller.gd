@@ -208,21 +208,25 @@ func _on_power_up_sold(power_up_id: String) -> void:
 		push_error("[GameController] No PowerUp found for id:", power_up_id)
 		return
 		
-	# Get the refund amount (half of purchase price)
 	var def = pu_manager.get_def(power_up_id)
 	if def:
 		var refund = def.price / 2
 		print("[GameController] Refunding", refund, "coins for power-up:", power_up_id)
 		PlayerEconomy.add_money(refund)
 	
-	# Deactivate and remove the power-up
-	_deactivate_power_up(power_up_id)
-	
-	# Remove the power-up
-	revoke_power_up(power_up_id)
-	
-	# Remove the UI icon
-	powerup_ui.remove_power_up(power_up_id)
+	# Animate the icon if it exists, then remove
+	if powerup_ui:
+		powerup_ui.animate_power_up_removal(power_up_id, func():
+			_deactivate_power_up(power_up_id)
+			revoke_power_up(power_up_id)
+			powerup_ui.remove_power_up(power_up_id)
+			print("[GameController] Power-up removed from UI:", power_up_id)
+		)
+	else:
+		_deactivate_power_up(power_up_id)
+		revoke_power_up(power_up_id)
+		if powerup_ui:
+			powerup_ui.remove_power_up(power_up_id)
 
 # Add this function to handle power-up deactivation
 func _deactivate_power_up(power_up_id: String) -> void:
@@ -780,21 +784,48 @@ func _on_consumable_sold(consumable_id: String) -> void:
 	
 	var consumable = active_consumables.get(consumable_id)
 	if not consumable:
-		push_error("[GameController] No Consumable found for id:", consumable_id)
+		push_error("[GameController] No Consumable found for id: %s" % consumable_id)
 		return
-		
+
+	# Get the UI icon for the consumable
+	var icon = null
+	if consumable_ui:
+		icon = consumable_ui.get_consumable_icon(consumable_id)
+		print("[GameController] Found consumable icon:", icon)
+	
 	# Get the refund amount (half of purchase price)
 	var def = consumable_manager.get_def(consumable_id)
 	if def:
 		var refund = def.price / 2
 		print("[GameController] Refunding", refund, "coins for consumable:", consumable_id)
 		PlayerEconomy.add_money(refund)
-	
-	# Remove the consumable
-	revoke_consumable(consumable_id)
-	
-	# Remove the UI icon
-	consumable_ui.remove_consumable(consumable_id)
+
+	# Animate the icon if it exists
+	if icon:
+		print("[GameController] Animating consumable icon for removal:", consumable_id)
+		var tween := create_tween()
+		# 1. Squish down
+		tween.tween_property(icon, "scale", Vector2(1.2, 0.2), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		# 2. Stretch up
+		tween.tween_property(icon, "scale", Vector2(0.8, 1.6), 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		# 3. Move up and fade out
+		var start_pos = icon.position
+		var end_pos = start_pos + Vector2(0, -icon.size.y * 8)
+		tween.tween_property(icon, "position", end_pos, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		tween.tween_property(icon, "modulate:a", 0.0, 0.35).set_trans(Tween.TRANS_LINEAR)
+		# 4. When finished, remove and revoke
+		tween.finished.connect(func():
+			revoke_consumable(consumable_id)
+			if consumable_ui:
+				consumable_ui.remove_consumable(consumable_id)
+				print("[GameController] Consumable removed from UI:", consumable_id)
+		)
+	else:
+		print("[GameController] No icon found for consumable, removing immediately:", consumable_id)
+		# If no icon, just remove immediately
+		revoke_consumable(consumable_id)
+		if consumable_ui:
+			consumable_ui.remove_consumable(consumable_id)
 
 func revoke_consumable(consumable_id: String) -> void:
 	if not active_consumables.has(consumable_id):

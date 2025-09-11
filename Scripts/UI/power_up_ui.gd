@@ -144,3 +144,30 @@ func update_slots_label() -> void:
 
 func has_max_power_ups() -> bool:
 	return _icons.size() >= max_power_ups
+
+func get_power_up_icon(id: String) -> PowerUpIcon:
+	if container:
+		for child in container.get_children():
+			if child is PowerUpIcon and child.data and child.data.id == id:
+				return child
+	return null
+
+func animate_power_up_removal(power_up_id: String, on_finished: Callable) -> void:
+	var icon = get_power_up_icon(power_up_id)
+	if icon:
+		print("[PowerUpUI] Animating power-up icon for removal:", power_up_id)
+		var tween := create_tween()
+		# 1. Squish down
+		tween.tween_property(icon, "scale", Vector2(1.2, 0.2), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		# 2. Stretch up
+		tween.tween_property(icon, "scale", Vector2(0.8, 1.6), 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		# 3. Move up and fade out
+		var start_pos = icon.position
+		var end_pos = start_pos + Vector2(0, -icon.size.y * 8)
+		tween.tween_property(icon, "position", end_pos, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		tween.tween_property(icon, "modulate:a", 0.0, 0.35).set_trans(Tween.TRANS_LINEAR)
+		# 4. When finished, call the provided callback
+		tween.finished.connect(on_finished)
+	else:
+		print("[PowerUpUI] No icon found for power-up, skipping animation:", power_up_id)
+		on_finished.call()
