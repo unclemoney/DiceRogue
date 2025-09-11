@@ -513,3 +513,4 @@ func _handle_double_score(section: Scorecard.Section, category: String) -> void:
 		
 		# Emit signal
 		emit_signal("score_doubled", section, category, doubled_score)
+		enable_all_score_buttons()

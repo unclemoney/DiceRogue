@@ -37,11 +37,6 @@ func apply(target) -> void:
 
 # This function will be called by the scorecard when calculating scores
 func _foursome_multiplier_func(category: String, base_score: int, dice_values: Array) -> int:
-	print("[FoursomePowerUp] *** MULTIPLIER FUNCTION CALLED ***")
-	print("[FoursomePowerUp] Checking for Fours in dice:", dice_values)
-	print("[FoursomePowerUp] DEBUGFUNC - Received category:", category)
-	print("[FoursomePowerUp] DEBUGFUNC - Received base score:", base_score)
-	print("[FoursomePowerUp] DEBUGFUNC - Received dice values:", dice_values)
 	# Safety check for empty arrays
 	if dice_values.size() == 0:
 		print("[FoursomePowerUp] Empty dice values array, returning base score:", base_score)
@@ -53,15 +48,36 @@ func _foursome_multiplier_func(category: String, base_score: int, dice_values: A
 		if value == 4:
 			has_four = true
 			break
-	
+
+	var final_score: int
+	match category:
+		"fours":
+			final_score = base_score * 4
+			print("[FoursomePowerUp] Fours category - multiplying by 4:", final_score)
+		"three_of_a_kind", "four_of_a_kind", "full_house", "small_straight", "large_straight", "chance":
+			final_score = base_score * 4
+			print("[FoursomePowerUp] Lower section category - multiplying by 4:", final_score)
+		"yahtzee":
+			if dice_values.count(4) >= 5:
+				final_score = base_score * 4
+				print("[FoursomePowerUp] Yahtzee of fours - multiplying by 4:", final_score)
+			else:
+				final_score = base_score
+				print("[FoursomePowerUp] Non-four yahtzee - keeping base score")
+		_:
+			final_score = base_score
+			print("[FoursomePowerUp] Unhandled category - keeping base score")
+
 	# Apply 4x multiplier only if a Four is present
 	if has_four:
 		var multiplied_score = base_score * 4
 		print("[FoursomePowerUp] Four found! Applying 4x multiplier to", base_score, "=", multiplied_score)
-		return multiplied_score
+		#return multiplied_score
+		return final_score
 	else:
 		print("[FoursomePowerUp] No Four found, keeping original score:", base_score)
 		return base_score
+	return base_score  # Fallback, should not reach here
 
 # This function will be called when the node is about to be destroyed
 func _on_tree_exiting() -> void:
