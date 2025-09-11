@@ -67,6 +67,8 @@ var _last_modded_die_index: int = -1  # Track which die received the last mod
 
 var pending_mods: Array[String] = []
 var mod_persistence_map: Dictionary = {}  # mod_id -> int tracking how many instances of each mod should persist
+var _shop_tween: Tween
+
 
 func _ready() -> void:
 	add_to_group("game_controller")
@@ -603,8 +605,52 @@ func _on_dice_spawned() -> void:
 func _on_shop_button_pressed() -> void:
 	if shop_ui:
 		if not shop_ui.visible:
+			# Cancel any existing tween
+			if _shop_tween and _shop_tween.is_valid():
+				_shop_tween.kill()
+			
+			# 1. Show label immediately
 			shop_ui.show()
+			shop_ui.visible = true
+			shop_ui.modulate.a = 0.0
+			shop_ui.scale = Vector2(0.1, 0.1)
+
+			# 2. Create new tween
+			_shop_tween = get_tree().create_tween()
+
+			# 3. Fade in (faster)
+			_shop_tween.tween_property(
+				shop_ui, "modulate:a", 1.0, 0.1
+			).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+			# 4. Bounce scale (faster)
+			_shop_tween.tween_property(
+				shop_ui, "scale", Vector2(1.0, 1.0), 0.85
+			).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+			# 5. Settle scale (faster)
+			_shop_tween.tween_property(
+				shop_ui, "scale", Vector2.ONE, 0.05
+			).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		else:
+			shop_ui.scale = Vector2(1.0, 1.0)
+			# Cancel any existing tween
+			if _shop_tween and _shop_tween.is_valid():
+				_shop_tween.kill()
+						# 2. Create new tween
+			_shop_tween = get_tree().create_tween()
+
+			# 3. Fade in (faster)
+			_shop_tween.tween_property(
+				shop_ui, "modulate:a", 1.0, 0.1
+			).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+			# 4. Bounce scale (faster)
+			_shop_tween.tween_property(
+				shop_ui, "scale", Vector2(0.001, 0.001), 0.55
+			).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+			await _shop_tween.finished
 			shop_ui.hide()
 
 func _on_shop_item_purchased(item_id: String, item_type: String) -> void:
