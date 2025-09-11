@@ -31,12 +31,22 @@ const RAINBOW_COLORS := [
 
 const ShopItemScene := preload("res://Scenes/Shop/shop_item.tscn")
 
+var items_per_section := 2  # Number of items to display per section
+var purchased_items := {}  # Track purchased items by type: {"power_up": [], "consumable": [], "mod": []}
+
 func _ready() -> void:
 	print("[ShopUI] Initializing...")
 	print("PowerUpManager path:", power_up_manager_path)
 	print("ConsumableManager path:", consumable_manager_path)
 	print("ModManager path:", mod_manager_path)
 
+	# Initialize purchased items tracking
+	purchased_items = {
+		"power_up": [],
+		"consumable": [],
+		"mod": []
+	}
+	
 	if not shop_label:
 		push_error("[ShopUI] ShopLabel not found!")
 		return
@@ -92,11 +102,15 @@ func _on_manager_ready() -> void:
 func _populate_shop_items() -> void:
 	print("\n=== Populating Shop Items ===")
 	
+	# Clear existing containers
+	_clear_shop_containers()
+	
 	# Populate PowerUps
 	var power_ups = power_up_manager.get_available_power_ups()
-	#print("[ShopUI] Power-ups found:", power_ups)
-	for id in power_ups:
-		#print("[ShopUI] Adding power-up:", id)
+	var filtered_power_ups = _filter_out_purchased_items(power_ups, "power_up")
+	var selected_power_ups = _select_random_items(filtered_power_ups, items_per_section)
+	
+	for id in selected_power_ups:
 		var data = power_up_manager.get_def(id)
 		if data:
 			_add_shop_item(data, "power_up")
@@ -105,9 +119,10 @@ func _populate_shop_items() -> void:
 	
 	# Populate Consumables
 	var consumables = consumable_manager._defs_by_id.keys()
-	#print("[ShopUI] Consumables found:", consumables)
-	for id in consumables:
-		#print("[ShopUI] Adding consumable:", id)
+	var filtered_consumables = _filter_out_purchased_items(consumables, "consumable")
+	var selected_consumables = _select_random_items(filtered_consumables, items_per_section)
+	
+	for id in selected_consumables:
 		var data = consumable_manager.get_def(id)
 		if data:
 			_add_shop_item(data, "consumable")
@@ -116,14 +131,62 @@ func _populate_shop_items() -> void:
 			
 	# Populate Mods
 	var mods = mod_manager._defs_by_id.keys()
-	#print("[ShopUI] Mods found:", mods)
-	for id in mods:
-		#print("[ShopUI] Adding mod:", id)
+	var filtered_mods = _filter_out_purchased_items(mods, "mod")
+	var selected_mods = _select_random_items(filtered_mods, items_per_section)
+	
+	for id in selected_mods:
 		var data = mod_manager.get_def(id)
 		if data:
 			_add_shop_item(data, "mod")
 		else:
 			push_error("[ShopUI] Failed to get ModData for:", id)
+
+# Helper function to filter out already purchased items
+func _filter_out_purchased_items(items: Array, type: String) -> Array:
+	var result = []
+	for item in items:
+		if not purchased_items[type].has(item):
+			result.append(item)
+	return result
+
+# Helper function to select random items from an array
+func _select_random_items(items: Array, count: int) -> Array:
+	var result = []
+	var available = items.duplicate()
+	
+	# Randomize the array
+	available.shuffle()
+	
+	# Take up to 'count' items or as many as available
+	var items_to_take = min(count, available.size())
+	for i in range(items_to_take):
+		result.append(available[i])
+	
+	return result
+
+# Helper function to clear all shop containers
+func _clear_shop_containers() -> void:
+	if power_up_container:
+		for child in power_up_container.get_children():
+			child.queue_free()
+	
+	if consumable_container:
+		for child in consumable_container.get_children():
+			child.queue_free()
+	
+	if mod_container:
+		for child in mod_container.get_children():
+			child.queue_free()
+
+# Add this function to reset purchased items for a new round
+func reset_for_new_round() -> void:
+	print("[ShopUI] Resetting shop for new round")
+	purchased_items = {
+		"power_up": [],
+		"consumable": [],
+		"mod": []
+	}
+	_populate_shop_items()
 
 func _add_shop_item(data: Resource, type: String) -> void:
 	var container = _get_container_for_type(type)
@@ -164,8 +227,29 @@ func _on_item_purchased(item_id: String, item_type: String) -> void:
 			print("[ShopUI] Maximum consumables reached, purchase blocked")
 			return
 	
+	# Record that this item was purchased
+	if not purchased_items[item_type].has(item_id):
+		purchased_items[item_type].append(item_id)
+	
+	# Remove the item from the shop
+	_remove_shop_item(item_id, item_type)
+	
 	# If we got here, proceed with purchase
 	emit_signal("item_purchased", item_id, item_type)
+
+# Add function to remove a shop item after purchase
+func _remove_shop_item(item_id: String, item_type: String) -> void:
+	var container = _get_container_for_type(item_type)
+	if not container:
+		push_error("[ShopUI] No container found for type:", item_type)
+		return
+		
+	# Find and remove the shop item with matching ID
+	for child in container.get_children():
+		if child is ShopItem and child.item_id == item_id:
+			child.queue_free()
+			print("[ShopUI] Removed shop item:", item_id, "from shop")
+			break
 
 # Helper function to find PowerUpUI
 func _find_power_up_ui() -> PowerUpUI:

@@ -728,6 +728,11 @@ func _on_round_started(round_number: int) -> void:
 		if not round_data.challenge_id.is_empty():
 			activate_challenge(round_data.challenge_id)
 			print("[GameController] Activated challenge:", round_data.challenge_id)
+	
+	# Reset shop for new round
+	if shop_ui:
+		shop_ui.reset_for_new_round()
+		print("[GameController] Shop reset for new round")
 
 func _on_round_completed(round_number: int) -> void:
 	print("[GameController] Round", round_number, "completed")
@@ -793,4 +798,8 @@ func revoke_consumable(consumable_id: String) -> void:
 	if consumable:
 		consumable.queue_free()
 	active_consumables.erase(consumable_id)
-	
+
+func refresh_shop() -> void:
+	if shop_ui:
+		shop_ui.reset_for_new_round()
+		print("[GameController] Shop refreshed with new items")
