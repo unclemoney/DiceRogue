@@ -12,6 +12,7 @@ extends Control
 
 signal shop_button_pressed
 signal next_round_pressed
+signal dice_rolled(dice_values: Array) 
 
 var dice_hand
 var score_card_ui
@@ -86,7 +87,10 @@ func _on_roll_button_pressed() -> void:
 		dice_hand.update_dice_count()
 	dice_hand.roll_all()
 	print("▶ Roll pressed — using dice_count =", dice_hand.dice_count)
-	
+	if dice_hand:
+		var dice_values = dice_hand.roll_dice()
+		# Emit the signal with the current dice values
+		emit_signal("dice_rolled", dice_values)	
 	# Use the score_card_ui reference we already have
 	if score_card_ui:
 		score_card_ui.update_best_hand_preview(DiceResults.values)
@@ -99,6 +103,10 @@ func _on_dice_roll_complete() -> void:
 	# lock UI state for scoring
 	score_card_ui.turn_scored = false
 	turn_tracker.use_roll()
+	
+	# Now that dice have settled, get their values and emit signal
+	var dice_values = dice_hand.get_current_dice_values()
+	emit_signal("dice_rolled", dice_values)
 
 func _on_next_turn_button_pressed() -> void:
 	# 1) Auto-score if needed

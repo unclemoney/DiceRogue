@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://ckcpn1pruxkqx"]
+
+[ext_resource type="Script" uid="uid://dy72x7unyc7ad" path="res://Scripts/Debuff/costly_roll_debuff.gd" id="1_bequk"]
+
+[node name="CostlyRollDebuff" type="Node"]
+script = ExtResource("1_bequk")

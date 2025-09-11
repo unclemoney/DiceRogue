@@ -5,6 +5,7 @@ class_name GameController
 signal power_up_granted(id: String, power_up: PowerUp)
 signal power_up_revoked(id: String)
 signal consumable_used(id: String, consumable: Consumable)
+signal dice_rolled(dice_values: Array)
 
 # Active power-ups and consumables in the game dictionaries
 var active_power_ups: Dictionary = {}  # id -> PowerUp
@@ -80,6 +81,8 @@ func _ready() -> void:
 		scorecard.score_auto_assigned.connect(_on_score_assigned)
 	if game_button_ui:
 		game_button_ui.connect("shop_button_pressed", _on_shop_button_pressed)	
+		if not game_button_ui.is_connected("dice_rolled", _on_game_button_dice_rolled):
+			game_button_ui.dice_rolled.connect(_on_game_button_dice_rolled)
 	if shop_ui:
 		print("[GameController] Setting up shop UI")
 		shop_ui.hide()
@@ -417,6 +420,9 @@ func apply_debuff(id: String) -> void:
 			debuff.start()
 		"roll_score_minus_one":
 			debuff.target = self  # Target game controller to access multiple components
+			debuff.start()
+		"costly_roll":  # Add this case for the new debuff
+			debuff.target = self  # The GameController is the target
 			debuff.start()
 		_:
 			push_error("Unknown debuff type: %s" % id)
@@ -803,3 +809,14 @@ func refresh_shop() -> void:
 	if shop_ui:
 		shop_ui.reset_for_new_round()
 		print("[GameController] Shop refreshed with new items")
+
+# Add to the function that handles dice rolling or receiving roll events
+func _on_roll_button_pressed() -> void:
+	# If this function already exists, add this line to it
+	if dice_hand:
+		var dice_values = dice_hand.get_current_dice_values()
+		emit_signal("dice_rolled", dice_values)
+
+func _on_game_button_dice_rolled(dice_values: Array) -> void:
+	# Re-emit the signal so our debuffs can connect to it
+	emit_signal("dice_rolled", dice_values)

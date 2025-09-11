@@ -1,4 +1,4 @@
-[gd_scene load_steps=58 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=60 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -43,6 +43,7 @@
 [ext_resource type="Resource" uid="uid://cpcfivvcimiy0" path="res://Scripts/Mods/GoldSixMod.tres" id="32_o2qgl"]
 [ext_resource type="PackedScene" uid="uid://dbqwnxq8iy66l" path="res://Scenes/UI/shop_ui.tscn" id="32_oy5od"]
 [ext_resource type="Resource" uid="uid://bf58ehj5n7vpd" path="res://Scripts/Challenge/pts_150_roll_score_minus_one.tres" id="32_ytf57"]
+[ext_resource type="Resource" uid="uid://bl6odyworrk7e" path="res://Scripts/Challenge/costly_roll_challenge.tres" id="33_3ia8s"]
 [ext_resource type="Resource" uid="uid://7bkbk2c47ds8" path="res://Scripts/Mods/OddOnlyMod.tres" id="33_8y1rk"]
 [ext_resource type="Resource" uid="uid://b2lkvln1mutte" path="res://Scripts/Mods/WildCardMod.tres" id="34_vv3hq"]
 [ext_resource type="Resource" uid="uid://cv824ebb6gv2w" path="res://Scripts/Consumable/DoubleExistingConsumable.tres" id="41_5k370"]
@@ -50,11 +51,12 @@
 [ext_resource type="Script" uid="uid://b41v75rm14duq" path="res://Scripts/Round/round_challenge_config.gd" id="43_2fp2s"]
 [ext_resource type="Resource" uid="uid://cc8puewgbdape" path="res://Scripts/Debuff/DisabledTwosDebuff.tres" id="43_4tv4b"]
 [ext_resource type="Resource" uid="uid://bvlm6v2nrey7x" path="res://Scripts/Round/300pts_no_debuff.tres" id="44_2lvko"]
-[ext_resource type="Resource" uid="uid://3ctxmrk81fwo" path="res://Scripts/Round/pts_100_no_debuff_challenge.tres" id="44_o0xxd"]
 [ext_resource type="Resource" uid="uid://bojb26srdkd81" path="res://Scripts/Round/pts100_lock_dice.tres" id="45_o0xxd"]
 [ext_resource type="Resource" uid="uid://d1ii1htx1it71" path="res://Scripts/Debuff/RollScoreMinusOneDebuff.tres" id="46_0fq3x"]
 [ext_resource type="Resource" uid="uid://bak3w77f47saj" path="res://Scripts/Round/pts200_disabled_twos.tres" id="47_ja7vv"]
+[ext_resource type="Resource" uid="uid://c7xwey38elhic" path="res://Scripts/Debuff/CostlyRollDebuff.tres" id="49_ghgbc"]
 [ext_resource type="Resource" uid="uid://cok1qslsfb3r3" path="res://Scripts/Round/pts150_roll_minus_one.tres" id="50_ytf57"]
+[ext_resource type="Resource" uid="uid://b8pdl6weyahle" path="res://Scripts/Round/costly_roll_challenge.tres" id="52_3ia8s"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_w6663"]
 shader = ExtResource("3_w6663")
@@ -227,7 +229,7 @@ challenge_container_path = NodePath("../ChallengeContainer")
 power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6")])
 
 [node name="ChallengeManager" parent="." instance=ExtResource("25_3vaha")]
-challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtResource("29_1jk2k"), ExtResource("30_o0xxd"), ExtResource("31_ja7vv"), ExtResource("32_ytf57")])
+challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtResource("29_1jk2k"), ExtResource("30_o0xxd"), ExtResource("31_ja7vv"), ExtResource("32_ytf57"), ExtResource("33_3ia8s")])
 
 [node name="ModManager" parent="." instance=ExtResource("23_8eqdw")]
 mod_defs = Array[ExtResource("30_si81o")]([ExtResource("31_1jk2k"), ExtResource("32_o2qgl"), ExtResource("33_8y1rk"), ExtResource("34_vv3hq")])
@@ -236,10 +238,10 @@ mod_defs = Array[ExtResource("30_si81o")]([ExtResource("31_1jk2k"), ExtResource(
 consumable_defs = Array[ExtResource("31_gtvla")]([ExtResource("32_aeiu6"), ExtResource("41_5k370")])
 
 [node name="DebuffManager" parent="." instance=ExtResource("24_f4xs4")]
-debuff_defs = Array[ExtResource("24_4tiye")]([ExtResource("25_gxabo"), ExtResource("43_4tv4b"), ExtResource("46_0fq3x")])
+debuff_defs = Array[ExtResource("24_4tiye")]([ExtResource("25_gxabo"), ExtResource("43_4tv4b"), ExtResource("46_0fq3x"), ExtResource("49_ghgbc")])
 
 [node name="RoundManager" parent="." instance=ExtResource("42_o2qgl")]
-challenge_configs = Array[ExtResource("43_2fp2s")]([ExtResource("44_o0xxd"), ExtResource("44_2lvko"), ExtResource("45_o0xxd"), ExtResource("47_ja7vv"), ExtResource("50_ytf57"), ExtResource("45_o0xxd")])
+challenge_configs = Array[ExtResource("43_2fp2s")]([ExtResource("52_3ia8s"), ExtResource("44_2lvko"), ExtResource("45_o0xxd"), ExtResource("47_ja7vv"), ExtResource("50_ytf57"), ExtResource("45_o0xxd")])
 turn_tracker_path = NodePath("../TurnTracker")
 challenge_manager_path = NodePath("../ChallengeManager")
 dice_hand_path = NodePath("../DiceHand")
