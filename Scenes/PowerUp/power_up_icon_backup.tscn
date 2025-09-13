@@ -1,0 +1,43 @@
+[gd_scene load_steps=4 format=3 uid="uid://qu88btq47oc2"]
+
+[ext_resource type="Shader" uid="uid://b0mmnawse84b1" path="res://Scripts/Shaders/power_up_ui_highlight.gdshader" id="1_e7h07"]
+[ext_resource type="Script" uid="uid://bdul24ub8htns" path="res://Scripts/UI/power_up_icon.gd" id="2_bpxoq"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hso7t"]
+shader = ExtResource("1_e7h07")
+shader_parameter/glow_intensity = 0.0
+shader_parameter/glow_color = Color(0.113725, 0.117647, 0, 0.054902)
+
+[node name="PowerUpIcon" type="TextureButton"]
+material = SubResource("ShaderMaterial_hso7t")
+custom_minimum_size = Vector2(64, 64)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -1237.0
+offset_bottom = -677.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+script = ExtResource("2_bpxoq")
+
+[node name="LabelBg" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="HoverLabel" type="Label" parent="LabelBg"]
+layout_mode = 2
+
+[node name="SellButton" type="Button" parent="."]
+layout_mode = 0
+offset_left = 44.5
+offset_top = 2.5
+offset_right = 88.5
+offset_bottom = 33.5
+text = "SELL"
+
+[connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]
+[connection signal="pressed" from="." to="." method="_on_pressed"]
+[connection signal="pressed" from="SellButton" to="." method="_on_sell_button_pressed"]

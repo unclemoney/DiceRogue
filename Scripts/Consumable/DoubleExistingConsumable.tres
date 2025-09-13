@@ -4,16 +4,16 @@
 [ext_resource type="Texture2D" uid="uid://cdusovknauh8j" path="res://Resources/Art/Powerups/ExtraRolls.png" id="1_klwiu"]
 [ext_resource type="PackedScene" uid="uid://bbu8hya25iqyw" path="res://Scenes/Consumable/DoubleExistingConsumable.tscn" id="2_qabd6"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_evdns"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_klwiu"]
 atlas = ExtResource("1_klwiu")
-region = Rect2(143, 1, 59, 92)
+region = Rect2(143, 0, 59, 93)
 
 [resource]
 script = ExtResource("1_c1h5y")
 id = "double_existing"
 display_name = "Double Score"
 description = "Double and existing score"
-icon = SubResource("AtlasTexture_evdns")
+icon = SubResource("AtlasTexture_klwiu")
 scene = ExtResource("2_qabd6")
 price = 100
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

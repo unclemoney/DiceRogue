@@ -4,3 +4,4 @@
 
 [node name="ExtraDicePowerUp" type="Node2D"]
 script = ExtResource("1_v5tl0")
+id = "extra_dice"
