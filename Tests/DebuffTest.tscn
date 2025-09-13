@@ -1,4 +1,4 @@
-[gd_scene load_steps=60 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=61 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://c6k045mexxkyd" path="res://Scenes/Dice/dice.tscn" id="6_o8wpr"]
 [ext_resource type="PackedScene" uid="uid://bsukvul4wop20" path="res://Scenes/ScoreCard/score_card.tscn" id="7_w6663"]
 [ext_resource type="PackedScene" uid="uid://b8limy63m2tlo" path="res://Scenes/Tracker/turn_tracker.tscn" id="8_8eqdw"]
+[ext_resource type="AudioStream" uid="uid://1wbw8pkmnjas" path="res://Resources/Audio/DiceRoll_Basic.wav" id="8_46o63"]
 [ext_resource type="PackedScene" uid="uid://lc4xqvsxdnpy" path="res://Scenes/UI/game_button_ui.tscn" id="9_wtptv"]
 [ext_resource type="PackedScene" uid="uid://df1otdcd66xb5" path="res://Scenes/UI/turn_tracker_ui.tscn" id="10_bv0jw"]
 [ext_resource type="PackedScene" uid="uid://sliaarrkymdo" path="res://Scenes/UI/score_card_ui.tscn" id="11_oy5od"]
@@ -17,7 +18,6 @@
 [ext_resource type="PackedScene" uid="uid://bhv7dyrckqhk6" path="res://Scenes/UI/power_up_ui.tscn" id="14_gtvla"]
 [ext_resource type="PackedScene" uid="uid://bmnx7dfjhn2d" path="res://Scenes/UI/debuff_ui.tscn" id="14_oxb5w"]
 [ext_resource type="PackedScene" uid="uid://cttyyy56pjat3" path="res://Scenes/Controller/game_controller.tscn" id="15_aeiu6"]
-[ext_resource type="PackedScene" uid="uid://cellovyprro7" path="res://Scenes/Debuff/DebuffIcon.tscn" id="15_oxb5w"]
 [ext_resource type="PackedScene" uid="uid://b0h68l2hpjf3o" path="res://Scenes/PowerUp/power_up_manager.tscn" id="16_07va6"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="17_2uvn1"]
 [ext_resource type="Resource" uid="uid://b1kspojq1dh26" path="res://Scripts/PowerUps/ExtraDice.tres" id="18_3vaha"]
@@ -57,6 +57,7 @@
 [ext_resource type="Resource" uid="uid://c7xwey38elhic" path="res://Scripts/Debuff/CostlyRollDebuff.tres" id="49_ghgbc"]
 [ext_resource type="Resource" uid="uid://cok1qslsfb3r3" path="res://Scripts/Round/pts150_roll_minus_one.tres" id="50_ytf57"]
 [ext_resource type="Resource" uid="uid://b8pdl6weyahle" path="res://Scripts/Round/costly_roll_challenge.tres" id="52_3ia8s"]
+[ext_resource type="Resource" uid="uid://3ctxmrk81fwo" path="res://Scripts/Round/pts_100_no_debuff_challenge.tres" id="52_ghgbc"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_w6663"]
 shader = ExtResource("3_w6663")
@@ -115,6 +116,7 @@ texture = ExtResource("4_8eqdw")
 
 [node name="DiceHand" parent="." instance=ExtResource("5_gxabo")]
 dice_scene = ExtResource("6_o8wpr")
+roll_sound = ExtResource("8_46o63")
 
 [node name="DiceContainer" type="Node2D" parent="."]
 
@@ -190,18 +192,17 @@ round_manager_path = NodePath("../RoundManager")
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
-offset_left = 900.0
-offset_top = 560.0
+offset_left = 788.0
+offset_top = 565.0
 offset_right = 1200.0
 offset_bottom = 710.0
 grow_horizontal = 1
 grow_vertical = 1
-debuff_icon_scene = ExtResource("15_oxb5w")
 
 [node name="ConsumableUI" parent="." instance=ExtResource("12_pdckl")]
 offset_left = 577.0
 offset_top = 560.0
-offset_right = 837.0
+offset_right = 777.0
 offset_bottom = 701.0
 consumable_icon_scene = ExtResource("19_ghgbc")
 
@@ -234,7 +235,7 @@ consumable_defs = Array[ExtResource("31_gtvla")]([ExtResource("32_aeiu6"), ExtRe
 debuff_defs = Array[ExtResource("24_4tiye")]([ExtResource("25_gxabo"), ExtResource("43_4tv4b"), ExtResource("46_0fq3x"), ExtResource("49_ghgbc")])
 
 [node name="RoundManager" parent="." instance=ExtResource("42_o2qgl")]
-challenge_configs = Array[ExtResource("43_2fp2s")]([ExtResource("52_3ia8s"), ExtResource("44_2lvko"), ExtResource("45_o0xxd"), ExtResource("47_ja7vv"), ExtResource("50_ytf57"), ExtResource("45_o0xxd")])
+challenge_configs = Array[ExtResource("43_2fp2s")]([ExtResource("52_ghgbc"), ExtResource("44_2lvko"), ExtResource("50_ytf57"), ExtResource("47_ja7vv"), ExtResource("52_3ia8s"), ExtResource("45_o0xxd")])
 turn_tracker_path = NodePath("../TurnTracker")
 challenge_manager_path = NodePath("../ChallengeManager")
 dice_hand_path = NodePath("../DiceHand")

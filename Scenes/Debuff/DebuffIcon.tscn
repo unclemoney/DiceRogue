@@ -1,41 +1,94 @@
-[gd_scene load_steps=4 format=3 uid="uid://cellovyprro7"]
+[gd_scene load_steps=4 format=3 uid="uid://bxirylb1ylujp"]
 
-[ext_resource type="Shader" uid="uid://dsw7hdvildblk" path="res://Scripts/Shaders/debuff_ui_highlight.gdshader" id="1_so752"]
+[ext_resource type="Shader" uid="uid://b8j4hitdd17i1" path="res://Scripts/Shaders/card_perspective.gdshader" id="1_w8shn"]
 [ext_resource type="Script" uid="uid://cx5ckrdsliksj" path="res://Scripts/Debuff/debuff_icon.gd" id="2_so752"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_q7kf0"]
-shader = ExtResource("1_so752")
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_so752"]
+shader = ExtResource("1_w8shn")
+shader_parameter/tilt = 0.0
 shader_parameter/glow_intensity = 0.0
-shader_parameter/glow_color = Color(1, 1, 0, 1)
+shader_parameter/glow_color = Color(1, 1, 0.4, 1)
+shader_parameter/x_rot = 0.0
+shader_parameter/y_rot = 0.0
 
-[node name="DebuffIcon" type="TextureButton"]
-material = SubResource("ShaderMaterial_q7kf0")
+[node name="DebuffIcon" type="Control"]
+material = SubResource("ShaderMaterial_so752")
+use_parent_material = true
+custom_minimum_size = Vector2(80, 120)
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_right = -1239.0
-offset_bottom = -677.0
+offset_right = -1200.0
+offset_bottom = -600.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_so752")
 
-[node name="LabelBg" type="PanelContainer" parent="."]
+[node name="Shadow" type="TextureRect" parent="."]
+modulate = Color(0, 0, 0, 0.313726)
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -20.0
-offset_top = -20.0
-offset_right = 20.0
-offset_bottom = 20.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="CardArt" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch_mode = 3
+
+[node name="CardFrame" type="TextureRect" parent="."]
+z_index = 1
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="HoverLabel" type="Label" parent="LabelBg"]
+[node name="CardInfo" type="VBoxContainer" parent="."]
+z_index = 2
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -10.0
+offset_bottom = 13.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Title" type="Label" parent="CardInfo"]
 layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+
+[node name="LabelBg" type="PanelContainer" parent="."]
+z_index = 3
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = -20.0
+offset_top = -60.0
+offset_right = 20.0
+offset_bottom = -37.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="HoverLabel" type="Label" parent="LabelBg"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
 
 [connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]
-[connection signal="pressed" from="." to="." method="_on_pressed"]

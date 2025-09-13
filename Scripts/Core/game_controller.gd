@@ -104,6 +104,9 @@ func _ready() -> void:
 	if challenge_ui:
 		if not challenge_ui.is_connected("challenge_selected", _on_challenge_selected):
 			challenge_ui.challenge_selected.connect(_on_challenge_selected)
+	if debuff_ui:
+		if not debuff_ui.is_connected("debuff_selected", _on_debuff_selected):
+			debuff_ui.debuff_selected.connect(_on_debuff_selected)
 	call_deferred("_on_game_start")
 
 func _on_game_start() -> void:
@@ -399,6 +402,12 @@ func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 
 func apply_debuff(id: String) -> void:
 	print("[GameController] Attempting to apply debuff:", id)
+	
+	# Check if this debuff is already active
+	if active_debuffs.has(id) and active_debuffs[id] != null:
+		print("[GameController] Debuff already active:", id)
+		return
+	
 	var debuff := debuff_manager.spawn_debuff(id, debuff_container) as Debuff
 	if debuff == null:
 		push_error("[GameController] Failed to spawn Debuff '%s'" % id)
@@ -409,13 +418,16 @@ func apply_debuff(id: String) -> void:
 	# Add to UI with null checks
 	var def: DebuffData = debuff_manager.get_def(id)
 	if not def:
-		push_error("No DebuffData found for '%s'" % id)
+		push_error("[GameController] No DebuffData found for '%s'" % id)
 		return
 		
+	# Add the debuff icon to the UI with proper signal connections
 	var icon = debuff_ui.add_debuff(def, debuff)
 	if not icon:
-		push_error("Failed to create UI icon for debuff '%s'" % id)
+		push_error("[GameController] Failed to create UI icon for debuff '%s'" % id)
 		return
+	
+	print("[GameController] Debuff icon added to UI:", id)
 
 	# Apply the debuff effect
 	match id:
@@ -428,11 +440,11 @@ func apply_debuff(id: String) -> void:
 		"roll_score_minus_one":
 			debuff.target = self  # Target game controller to access multiple components
 			debuff.start()
-		"costly_roll":  # Add this case for the new debuff
+		"costly_roll":  
 			debuff.target = self  # The GameController is the target
 			debuff.start()
 		_:
-			push_error("Unknown debuff type: %s" % id)
+			push_error("[GameController] Unknown debuff type: %s" % id)
 
 func enable_debuff(id: String) -> void:
 	if not is_debuff_active(id):
@@ -447,12 +459,21 @@ func disable_debuff(id: String) -> void:
 		var debuff = active_debuffs[id]
 		if debuff:
 			debuff.end()
-			active_debuffs.erase(id)
-			# Remove the icon from UI
+			
+			# Animate the debuff removal
 			if debuff_ui:
-				debuff_ui.remove_debuff(id)
+				debuff_ui.animate_debuff_removal(id, func():
+					# Remove after animation completes
+					active_debuffs.erase(id)
+					debuff_ui.remove_debuff(id)
+					print("[GameController] Debuff removed after animation:", id)
+				)
 			else:
-				push_error("No debuff_ui found when trying to remove debuff icon")
+				# If no UI, remove immediately
+				active_debuffs.erase(id)
+				print("[GameController] Debuff removed immediately (no UI):", id)
+	else:
+		print("[GameController] No active debuff to disable with ID:", id)
 
 
 func is_debuff_active(id: String) -> bool:
@@ -891,3 +912,27 @@ func _on_round_started(round_number: int) -> void:
 	if shop_ui:
 		shop_ui.reset_for_new_round()
 		print("[GameController] Shop reset for new round")
+
+func _on_debuff_selected(id: String) -> void:
+	print("[GameController] Debuff selected:", id)
+	
+	var debuff = active_debuffs.get(id)
+	if debuff:
+		# Provide visual feedback about the debuff
+		var icon = debuff_ui.get_debuff_icon(id)
+		if icon:
+			# Highlight the debuff icon temporarily
+			icon.set_active(true)
+			
+			# Show a brief description or effect of the debuff
+			var def = debuff_manager.get_def(id)
+			if def:
+				print("[GameController] Debuff effect:", def.description)
+				
+			# Reset after a short delay
+			await get_tree().create_timer(0.5).timeout
+			# Only reset if still active (might have been removed)
+			if is_debuff_active(id):
+				icon.set_active(false)
+	else:
+		push_error("[GameController] Debuff not found:", id)
