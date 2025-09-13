@@ -184,7 +184,6 @@ offset_right = 295.0
 offset_bottom = 710.0
 grow_horizontal = 1
 grow_vertical = 1
-challenge_icon_scene = ExtResource("19_ghgbc")
 round_manager_path = NodePath("../RoundManager")
 
 [node name="DebuffUI" parent="." instance=ExtResource("14_oxb5w")]

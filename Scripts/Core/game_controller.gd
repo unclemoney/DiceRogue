@@ -101,6 +101,9 @@ func _ready() -> void:
 	if powerup_ui:
 		if not powerup_ui.is_connected("max_power_ups_reached", _on_max_power_ups_reached):
 			powerup_ui.connect("max_power_ups_reached", _on_max_power_ups_reached)
+	if challenge_ui:
+		if not challenge_ui.is_connected("challenge_selected", _on_challenge_selected):
+			challenge_ui.challenge_selected.connect(_on_challenge_selected)
 	call_deferred("_on_game_start")
 
 func _on_game_start() -> void:
@@ -692,16 +695,26 @@ func activate_challenge(id: String) -> void:
 		
 	active_challenges[id] = challenge
 	
+	# Get challenge data
+	var def = challenge_manager.get_def(id)
+	if not def:
+		push_error("[GameController] No challenge data for:", id)
+		return
+		
 	# Apply to game controller to access all needed systems
 	challenge.target = self
 	challenge.start()
 	
-	# Add to UI
-	var def = challenge_manager.get_def(id)
-	if def and challenge_ui:
-		challenge_ui.add_challenge(def, challenge)
+	# Add to UI with properly connected signals
+	if challenge_ui:
+		var icon = challenge_ui.add_challenge(def, challenge)
+		if icon:
+			# Set up any additional properties if needed
+			print("[GameController] Challenge UI created for:", id)
+		else:
+			push_error("[GameController] Failed to create UI for challenge:", id)
 	else:
-		push_error("[GameController] Failed to add challenge to UI")
+		push_error("[GameController] No challenge_ui reference")
 
 func _on_challenge_completed(id: String) -> void:
 	print("[GameController] Challenge completed:", id)
@@ -712,22 +725,157 @@ func _on_challenge_completed(id: String) -> void:
 		print("[GameController] Granting reward:", def.reward_money)
 		PlayerEconomy.add_money(def.reward_money)
 	
-	# Clean up challenge
-	if active_challenges.has(id):
-		var challenge = active_challenges[id]
-		if challenge:
-			challenge.queue_free()
-		active_challenges.erase(id)
+	# Animate challenge completion before removing
+	if challenge_ui:
+		challenge_ui.animate_challenge_removal(id, func():
+			# Clean up challenge after animation
+			if active_challenges.has(id):
+				var challenge = active_challenges[id]
+				if challenge:
+					challenge.queue_free()
+				active_challenges.erase(id)
+				challenge_ui.remove_challenge(id)
+		)
+	else:
+		# Clean up challenge immediately if no UI
+		if active_challenges.has(id):
+			var challenge = active_challenges[id]
+			if challenge:
+				challenge.queue_free()
+			active_challenges.erase(id)
+	
+	# Show notification
+	# NotificationSystem.show_notification("Challenge Completed: " + def.display_name)
 
 func _on_challenge_failed(id: String) -> void:
 	print("[GameController] Challenge failed:", id)
 	
-	# Clean up challenge
-	if active_challenges.has(id):
-		var challenge = active_challenges[id]
-		if challenge:
-			challenge.queue_free()
-		active_challenges.erase(id)
+	# Get challenge data for notification
+	var def = challenge_manager.get_def(id)
+	var display_name = def.display_name if def else id
+	
+	# Animate challenge failure before removing
+	if challenge_ui:
+		challenge_ui.animate_challenge_removal(id, func():
+			# Clean up challenge after animation
+			if active_challenges.has(id):
+				var challenge = active_challenges[id]
+				if challenge:
+					challenge.queue_free()
+				active_challenges.erase(id)
+				challenge_ui.remove_challenge(id)
+		)
+	else:
+		# Clean up challenge immediately if no UI
+		if active_challenges.has(id):
+			var challenge = active_challenges[id]
+			if challenge:
+				challenge.queue_free()
+			active_challenges.erase(id)
+	
+	# Show notification
+	# NotificationSystem.show_notification("Challenge Failed: " + display_name)
+
+
+func _on_challenge_selected(id: String) -> void:
+	print("[GameController] Challenge selected:", id)
+	
+	# Handle challenge selection - could show details, focus the challenge, etc.
+	var challenge = active_challenges.get(id)
+	if challenge:
+		# You could potentially focus on this challenge or show details
+		print("[GameController] Found challenge:", id)
+		
+		# Example: Highlight the challenge icon
+		var icon = challenge_ui.get_challenge_icon(id) as ChallengeIcon
+		if icon:
+			icon.set_active(true)
+			
+			# Reset after a short delay
+			await get_tree().create_timer(0.5).timeout
+			icon.set_active(false)
+	else:
+		push_error("[GameController] Challenge not found:", id)
+
+# Add this method to handle the dice_rolled signal from GameButtonUI
+func _on_game_button_dice_rolled() -> void:
+	print("[GameController] Dice roll button pressed")
+	
+	# Check if we can afford to roll (for costly_roll debuff)
+	if is_debuff_active("costly_roll"):
+		var cost = active_debuffs["costly_roll"].roll_cost
+		if PlayerEconomy.get_money() < cost:
+			print("[GameController] Not enough money to roll dice. Need:", cost)
+			return
+		
+		# Deduct the cost
+		PlayerEconomy.remove_money(cost)
+		print("[GameController] Paid", cost, "coins to roll dice")
+	
+	# Proceed with the dice roll
+	if dice_hand:
+		dice_hand.roll()
+		
+		# Emit signal with current dice values for any listeners
+		if dice_hand.dice_list.size() > 0:
+			var values = []
+			for die in dice_hand.dice_list:
+				values.append(die.value)
+			emit_signal("dice_rolled", values)
+	else:
+		push_error("[GameController] No dice_hand reference when trying to roll dice")
+
+# Add these methods to handle the missing signal connections
+
+func _on_round_completed(round_number: int) -> void:
+	print("[GameController] Round", round_number, "completed successfully")
+	
+	# Award round completion bonus
+	if round_manager:
+		var round_data = round_manager.get_current_round_data()
+		if round_data and round_data.has("reward_money") and round_data.reward_money > 0:
+			PlayerEconomy.add_money(round_data.reward_money)
+			print("[GameController] Awarded", round_data.reward_money, "coins for completing round", round_number)
+
+func _on_round_failed(round_number: int) -> void:
+	print("[GameController] Round", round_number, "failed")
+	
+	# Handle round failure - maybe apply a penalty or give a smaller consolation reward
+	# You could also add UI feedback for the player here
+
+func _on_all_rounds_completed() -> void:
+	print("[GameController] All rounds completed! Game win condition reached.")
+	
+	# Handle game completion
+	# This could trigger an end game screen, final rewards, etc.
+
+func _on_consumable_sold(consumable_id: String) -> void:
+	print("[GameController] Selling consumable:", consumable_id)
+	
+	var consumable = active_consumables.get(consumable_id)
+	if not consumable:
+		push_error("[GameController] No Consumable found for id:", consumable_id)
+		return
+		
+	var def = consumable_manager.get_def(consumable_id)
+	if def:
+		var refund = def.price / 2
+		print("[GameController] Refunding", refund, "coins for consumable:", consumable_id)
+		PlayerEconomy.add_money(refund)
+	
+	# Animate the icon if it exists, then remove
+	if consumable_ui:
+		consumable_ui.animate_consumable_removal(consumable_id, func():
+			remove_consumable(consumable_id)
+		)
+	else:
+		remove_consumable(consumable_id)
+
+func _on_max_power_ups_reached() -> void:
+	print("[GameController] Maximum number of power-ups reached")
+	
+	# Show feedback to the player that they can't add more power-ups
+	# For example, you could show a notification or play a sound
 
 func _on_round_started(round_number: int) -> void:
 	print("[GameController] Round", round_number, "started")
@@ -743,111 +891,3 @@ func _on_round_started(round_number: int) -> void:
 	if shop_ui:
 		shop_ui.reset_for_new_round()
 		print("[GameController] Shop reset for new round")
-
-func _on_round_completed(round_number: int) -> void:
-	print("[GameController] Round", round_number, "completed")
-
-func _on_round_failed(round_number: int) -> void:
-	print("[GameController] Round", round_number, "failed")
-	# Game over logic here
-
-func _on_all_rounds_completed() -> void:
-	print("[GameController] All rounds completed!")
-	# Victory logic here
-
-func remove_debuff(id: String) -> void:
-	print("[GameController] Removing debuff:", id)
-	if is_debuff_active(id):
-		var debuff = active_debuffs[id]
-		if debuff:
-			# Call remove on the debuff itself
-			debuff.remove()
-			debuff.queue_free()
-			active_debuffs.erase(id)
-			
-		# Remove the icon from UI
-		if debuff_ui:
-			debuff_ui.remove_debuff(id)
-		else:
-			push_error("[GameController] No debuff_ui found when trying to remove debuff icon")
-	else:
-		print("[GameController] Debuff not active:", id)
-
-func _on_max_power_ups_reached() -> void:
-	print("[GameController] Maximum power-ups reached!")
-	# Show notification to player
-	#NotificationSystem.show_notification("Maximum power-ups (2) reached! Sell one to buy another.")
-
-# Add this function to handle consumable selling
-func _on_consumable_sold(consumable_id: String) -> void:
-	print("[GameController] Selling consumable:", consumable_id)
-	
-	var consumable = active_consumables.get(consumable_id)
-	if not consumable:
-		push_error("[GameController] No Consumable found for id: %s" % consumable_id)
-		return
-
-	# Get the UI icon for the consumable
-	var icon = null
-	if consumable_ui:
-		icon = consumable_ui.get_consumable_icon(consumable_id)
-		print("[GameController] Found consumable icon:", icon)
-	
-	# Get the refund amount (half of purchase price)
-	var def = consumable_manager.get_def(consumable_id)
-	if def:
-		var refund = def.price / 2
-		print("[GameController] Refunding", refund, "coins for consumable:", consumable_id)
-		PlayerEconomy.add_money(refund)
-
-	# Animate the icon if it exists
-	if icon:
-		print("[GameController] Animating consumable icon for removal:", consumable_id)
-		var tween := create_tween()
-		# 1. Squish down
-		tween.tween_property(icon, "scale", Vector2(1.2, 0.2), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		# 2. Stretch up
-		tween.tween_property(icon, "scale", Vector2(0.8, 1.6), 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		# 3. Move up and fade out
-		var start_pos = icon.position
-		var end_pos = start_pos + Vector2(0, -icon.size.y * 8)
-		tween.tween_property(icon, "position", end_pos, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-		tween.tween_property(icon, "modulate:a", 0.0, 0.35).set_trans(Tween.TRANS_LINEAR)
-		# 4. When finished, remove and revoke
-		tween.finished.connect(func():
-			revoke_consumable(consumable_id)
-			if consumable_ui:
-				consumable_ui.remove_consumable(consumable_id)
-				print("[GameController] Consumable removed from UI:", consumable_id)
-		)
-	else:
-		print("[GameController] No icon found for consumable, removing immediately:", consumable_id)
-		# If no icon, just remove immediately
-		revoke_consumable(consumable_id)
-		if consumable_ui:
-			consumable_ui.remove_consumable(consumable_id)
-
-func revoke_consumable(consumable_id: String) -> void:
-	if not active_consumables.has(consumable_id):
-		return
-
-	var consumable := active_consumables[consumable_id] as Consumable
-	if consumable:
-		consumable.queue_free()
-	active_consumables.erase(consumable_id)
-
-func refresh_shop() -> void:
-	if shop_ui:
-		shop_ui.reset_for_new_round()
-		print("[GameController] Shop refreshed with new items")
-
-# Add to the function that handles dice rolling or receiving roll events
-func _on_roll_button_pressed() -> void:
-	# If this function already exists, add this line to it
-	if dice_hand:
-		var dice_values = dice_hand.get_current_dice_values()
-		emit_signal("dice_rolled", dice_values)
-
-func _on_game_button_dice_rolled(dice_values: Array) -> void:
-	# Re-emit the signal so our debuffs can connect to it
-	emit_signal("dice_rolled", dice_values)
