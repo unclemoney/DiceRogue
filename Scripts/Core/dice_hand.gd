@@ -115,7 +115,6 @@ func clear_dice() -> void:
 		die.queue_free()
 	dice_list.clear()
 
-# DiceHand.gd
 func get_current_dice_values() -> Array[int]:
 	var arr: Array[int] = []
 	for die in dice_list:
@@ -222,8 +221,6 @@ func switch_dice_type(type: String) -> void:
 
 func roll_dice() -> void:
 	print("▶ Rolling dice...")
-	
-	# Emit signal that roll is starting (add this line)
 	emit_signal("roll_started")
 	
 	# Rest of your existing roll_dice function...

@@ -68,6 +68,7 @@ func _ready() -> void:
 	power_up_manager.definitions_loaded.connect(_on_manager_ready)
 	consumable_manager.definitions_loaded.connect(_on_manager_ready)
 	mod_manager.definitions_loaded.connect(_on_manager_ready)
+	PlayerEconomy.money_changed.connect(_on_money_changed)
 	hide()
 	#buy_button.pressed.connect(_on_buy_button_pressed)
 
@@ -292,3 +293,11 @@ func _get_container_for_type(type: String) -> Node:
 		_:
 			push_error("[ShopUI] Unknown item type:", type)
 			return null
+
+func _on_money_changed(new_amount: int) -> void:
+	# Update all shop item buttons in all containers
+	for container in [power_up_container, consumable_container, mod_container]:
+		if container:
+			for child in container.get_children():
+				if child is ShopItem:
+					child._update_button_state()

@@ -29,4 +29,4 @@ func remove() -> void:
 func _on_die_roll_completed(value: int) -> void:
 	if value == 6:
 		print("[GoldSixMod] Rolled a 6! Adding money")
-		PlayerEconomy.add_money(60)
+		PlayerEconomy.add_money(6)

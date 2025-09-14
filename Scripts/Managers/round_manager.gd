@@ -72,6 +72,7 @@ func _initialize_rounds_data() -> void:
 		
 		var challenge_id = ""
 		var dice_type = "d6"  # Default
+		var target_score = 0
 		
 		# Set challenge if available in configs
 		if round_index < challenge_configs.size():
@@ -79,11 +80,14 @@ func _initialize_rounds_data() -> void:
 			if config:
 				challenge_id = config.challenge_id
 				
-				# Get dice type from ChallengeData if available
+				# Get dice type and target_score from ChallengeData if available
 				var challenge_data = challenge_manager.get_def(challenge_id) if challenge_manager else null
-				if challenge_data and not challenge_data.dice_type.is_empty():
-					dice_type = challenge_data.dice_type
-					print("[RoundManager] Round", round_number, "using dice type from challenge:", dice_type)
+				if challenge_data:
+					if not challenge_data.dice_type.is_empty():
+						dice_type = challenge_data.dice_type
+						print("[RoundManager] Round", round_number, "using dice type from challenge:", dice_type)
+					target_score = challenge_data.target_score * round_number
+					print("[RoundManager] Round", round_number, "target score set to:", target_score)
 				elif round_index < dice_configs.size():
 					# Fall back to dice_configs if no challenge-specific dice type
 					dice_type = dice_configs[round_index]
@@ -96,6 +100,7 @@ func _initialize_rounds_data() -> void:
 			"round_number": round_number,
 			"challenge_id": challenge_id,
 			"dice_type": dice_type,
+			"target_score": target_score,
 			"completed": false,
 			"failed": false
 		}

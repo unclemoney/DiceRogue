@@ -83,15 +83,13 @@ func _on_roll_button_pressed() -> void:
 	if dice_hand.dice_list.is_empty():
 		dice_hand.spawn_dice()
 	else:
-		# Ensure dice count is current before rolling
 		dice_hand.update_dice_count()
 	dice_hand.roll_all()
 	print("▶ Roll pressed — using dice_count =", dice_hand.dice_count)
 	if dice_hand:
-		var dice_values = dice_hand.roll_dice()
-		# Emit the signal with the current dice values
-		emit_signal("dice_rolled", dice_values)	
-	# Use the score_card_ui reference we already have
+		var dice_values = dice_hand.get_current_dice_values() # dice_hand.roll_dice() returns the values immediately
+		#emit_signal("dice_rolled", dice_values)
+		print("[GameButtonUI] Dice rolled with values:", dice_values)
 	if score_card_ui:
 		score_card_ui.update_best_hand_preview(DiceResults.values)
 	else:

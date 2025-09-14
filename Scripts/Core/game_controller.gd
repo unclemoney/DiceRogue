@@ -5,7 +5,7 @@ class_name GameController
 signal power_up_granted(id: String, power_up: PowerUp)
 signal power_up_revoked(id: String)
 signal consumable_used(id: String, consumable: Consumable)
-signal dice_rolled(dice_values: Array)
+#signal dice_rolled(dice_values: Array)
 
 # Active power-ups and consumables in the game dictionaries
 var active_power_ups: Dictionary = {}  # id -> PowerUp
@@ -83,6 +83,7 @@ func _ready() -> void:
 		game_button_ui.connect("shop_button_pressed", _on_shop_button_pressed)	
 		if not game_button_ui.is_connected("dice_rolled", _on_game_button_dice_rolled):
 			game_button_ui.dice_rolled.connect(_on_game_button_dice_rolled)
+			print("[GameController] Connected to dice_rolled signal from GameButtonUI")
 	if shop_ui:
 		print("[GameController] Setting up shop UI")
 		shop_ui.hide()
@@ -108,6 +109,7 @@ func _ready() -> void:
 		if not debuff_ui.is_connected("debuff_selected", _on_debuff_selected):
 			debuff_ui.debuff_selected.connect(_on_debuff_selected)
 	call_deferred("_on_game_start")
+	print("[GameController] Handler expects args:", _on_game_button_dice_rolled.get_argument_count())
 
 func _on_game_start() -> void:
 	#spawn_starting_powerups()
@@ -438,10 +440,10 @@ func apply_debuff(id: String) -> void:
 			debuff.target = dice_hand
 			debuff.start()
 		"roll_score_minus_one":
-			debuff.target = self  # Target game controller to access multiple components
+			debuff.target = self  
 			debuff.start()
 		"costly_roll":  
-			debuff.target = self  # The GameController is the target
+			debuff.target = self  
 			debuff.start()
 		_:
 			push_error("[GameController] Unknown debuff type: %s" % id)
@@ -819,30 +821,15 @@ func _on_challenge_selected(id: String) -> void:
 		push_error("[GameController] Challenge not found:", id)
 
 # Add this method to handle the dice_rolled signal from GameButtonUI
-func _on_game_button_dice_rolled() -> void:
-	print("[GameController] Dice roll button pressed")
+func _on_game_button_dice_rolled(dice_values: Array) -> void:
+	print("[GameController] Dice roll button pressed, values:", dice_values)
 	
 	# Check if we can afford to roll (for costly_roll debuff)
 	if is_debuff_active("costly_roll"):
 		var cost = active_debuffs["costly_roll"].roll_cost
-		if PlayerEconomy.get_money() < cost:
-			print("[GameController] Not enough money to roll dice. Need:", cost)
-			return
-		
-		# Deduct the cost
 		PlayerEconomy.remove_money(cost)
 		print("[GameController] Paid", cost, "coins to roll dice")
-	
-	# Proceed with the dice roll
-	if dice_hand:
-		dice_hand.roll()
 		
-		# Emit signal with current dice values for any listeners
-		if dice_hand.dice_list.size() > 0:
-			var values = []
-			for die in dice_hand.dice_list:
-				values.append(die.value)
-			emit_signal("dice_rolled", values)
 	else:
 		push_error("[GameController] No dice_hand reference when trying to roll dice")
 

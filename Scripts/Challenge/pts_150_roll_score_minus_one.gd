@@ -56,7 +56,7 @@ func remove() -> void:
 	if _game_controller:
 		# Remove the lock_dice debuff
 		if _game_controller.is_debuff_active(_debuff_id):
-			_game_controller.remove_debuff(_debuff_id)
+			_game_controller.disable_debuff(_debuff_id)
 			print("[Pts150RollScoreMinusOne] Roll score minus one debuff disabled")
 		
 		# Disconnect signals

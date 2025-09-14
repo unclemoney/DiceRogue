@@ -31,7 +31,6 @@ func _ready() -> void:
 		for child in get_children():
 			print("[ShopItem] Found child:", child.name)
 		return
-	
 	# Explicitly connect the button signal
 	if buy_button:
 		buy_button.pressed.connect(_on_buy_button_pressed)
@@ -40,7 +39,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not shop_label:
 		return
-		
+	
 	_time += delta * RAINBOW_SPEED
 	
 	# Calculate two color indices for interpolation
@@ -102,12 +101,17 @@ func setup(data: Resource, type: String) -> void:
 	price_label.text = "$%d" % price
 	
 	_update_button_state()
-	PlayerEconomy.money_changed.connect(_update_button_state)
+	if not PlayerEconomy.is_connected("money_changed", _update_button_state):
+		PlayerEconomy.money_changed.connect(_update_button_state)
+	print("[ShopItem] Connected to PlayerEconomy.money_changed, Instance ID:", PlayerEconomy.get_instance_id())
 	print("[ShopItem] Setup complete for:", data.id)
 
 func _update_button_state() -> void:
+	print("[ShopItem] _update_button_state called")
+	print("[ShopItem] Updating button state for", item_id, "- Player money:", PlayerEconomy.money, ", Price:", price)
 	if buy_button:
 		buy_button.disabled = not PlayerEconomy.can_afford(price)
+		print("[ShopItem] Buy button state updated - disabled:", buy_button.disabled)
 
 func _on_buy_button_pressed() -> void:
 	print("[ShopItem] Buy button pressed for", item_id)
@@ -116,10 +120,12 @@ func _on_buy_button_pressed() -> void:
 			print("[ShopItem] Successfully purchased", item_id, "for", price)
 			emit_signal("purchased", item_id, item_type)
 			print("[ShopItem] Purchase signal emitted")
+			_update_button_state() # <-- Add this line to update button after purchase
 		else:
 			print("[ShopItem] Failed to remove money for purchase")
 	else:
 		print("[ShopItem] Cannot afford", item_id, "(cost:", price, ", money:", PlayerEconomy.money, ")")
+	_update_button_state()
 
 
 # Helper function to find the PowerUpUI node
