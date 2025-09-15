@@ -39,6 +39,4 @@ offset_bottom = 86.0
 text = "NEXT
 ROUND"
 
-[connection signal="pressed" from="HBoxContainer/RollButton" to="." method="_on_roll_button_pressed"]
 [connection signal="pressed" from="ShopButton" to="." method="_on_shop_button_pressed"]
-[connection signal="pressed" from="NextRoundButton" to="." method="_on_next_round_button_pressed"]

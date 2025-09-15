@@ -4,7 +4,7 @@ class_name Pts150RollScoreMinusOne
 var _scorecard: Scorecard = null
 var _game_controller: GameController = null
 var _debuff_id: String = "roll_score_minus_one"
-var _target_score: int = 150
+#var _target_score: int = 150
 
 func _ready() -> void:
 	add_to_group("challenges")
@@ -97,3 +97,8 @@ func _on_game_completed() -> void:
 		print("[Pts150RollScoreMinusOne] Game completed but target score not reached.")
 		emit_signal("challenge_failed")
 	end()
+
+func set_target_score_from_resource(resource: ChallengeData, round_number: int) -> void:
+	if resource:
+		_target_score = resource.target_score * round_number
+		print("[Pts150RollScoreMinusOne] Target score set from resource:", _target_score)

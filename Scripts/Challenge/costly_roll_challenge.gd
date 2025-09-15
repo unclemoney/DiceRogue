@@ -4,7 +4,7 @@ class_name CostlyRollChallenge
 var _scorecard: Scorecard = null
 var _game_controller: GameController = null
 var _debuff_id: String = "costly_roll"
-var _target_score: int = 400
+#var _target_score: int = 400
 
 func _ready() -> void:
 	add_to_group("challenges")
@@ -67,3 +67,8 @@ func _on_score_changed(total_score: int) -> void:
 		print("[CostlyRollChallenge] Target score reached! Challenge completed.")
 		emit_signal("challenge_completed")
 		end()
+
+func set_target_score_from_resource(resource: ChallengeData, round_number: int) -> void:
+	if resource:
+		_target_score = resource.target_score * round_number 
+		print("[CostlyRollChallenge] Target score set from resource:", _target_score)

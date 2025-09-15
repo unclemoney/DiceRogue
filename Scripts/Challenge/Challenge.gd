@@ -4,6 +4,7 @@ class_name Challenge
 @export var id: String
 var target: Node
 var is_active := false
+var _target_score: int = 0
 
 signal challenge_started
 signal challenge_ended
@@ -35,3 +36,9 @@ func get_progress() -> float:
 
 func update_progress(progress: float) -> void:
 	emit_signal("challenge_updated", progress)
+
+func set_target_score_from_resource(resource: ChallengeData, round_number: int) -> void:
+	return
+
+func get_target_score() -> int:
+	return _target_score

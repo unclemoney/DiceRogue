@@ -724,6 +724,12 @@ func activate_challenge(id: String) -> void:
 		push_error("[GameController] No challenge data for:", id)
 		return
 		
+	var round_data = round_manager.get_current_round_data()
+	var round_number = round_data.get("round_number", 1)
+
+	if challenge and def and challenge.has_method("set_target_score_from_resource"):
+		challenge.set_target_score_from_resource(def, round_number)
+
 	# Apply to game controller to access all needed systems
 	challenge.target = self
 	challenge.start()
@@ -830,8 +836,8 @@ func _on_game_button_dice_rolled(dice_values: Array) -> void:
 		PlayerEconomy.remove_money(cost)
 		print("[GameController] Paid", cost, "coins to roll dice")
 		
-	else:
-		push_error("[GameController] No dice_hand reference when trying to roll dice")
+	#else:
+	#	push_error("[GameController] No dice_hand reference when trying to roll dice")
 
 # Add these methods to handle the missing signal connections
 

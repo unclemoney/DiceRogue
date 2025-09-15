@@ -4,7 +4,7 @@ class_name Pts100LockDiceChallenge
 var _scorecard: Scorecard = null
 var _game_controller: GameController = null
 var _debuff_id: String = "lock_dice"
-var _target_score: int = 100
+#var _target_score: int = 100
 
 func _ready() -> void:
 	add_to_group("challenges")
@@ -96,3 +96,8 @@ func _on_game_completed() -> void:
 		print("[Pts100LockDiceChallenge] Game completed but target score not reached.")
 		emit_signal("challenge_failed")
 	end()
+
+func set_target_score_from_resource(resource: ChallengeData, round_number: int) -> void:
+	if resource:
+		_target_score = resource.target_score * round_number
+		print("[Pts100LockDiceChallenge] Target score set from resource:", _target_score)

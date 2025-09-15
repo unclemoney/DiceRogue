@@ -317,7 +317,11 @@ func _apply_data_to_ui() -> void:
 	
 	# Set text fields
 	if card_title:
-		card_title.text = data.display_name
+		var goal = 0
+		if data and data.target_score != null:
+			goal = data.target_score
+		#card_title.text = "%s\nGoal: %d pts" % [data.display_name, goal] # With original name
+		card_title.text = "Goal: %d pts" % [goal]
 		card_title.add_theme_color_override("font_shadow_color", Color.BLACK)
 		card_title.add_theme_constant_override("shadow_offset_x", 1)
 		card_title.add_theme_constant_override("shadow_offset_y", 1)
@@ -553,3 +557,9 @@ func _on_mouse_exited() -> void:
 	_current_tween.parallel().tween_method(
 		_set_shader_glow, glow_intensity, 0.0, transition_speed
 	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+func set_data_with_target_score(new_data: ChallengeData, target_score: int) -> void:
+	data = new_data
+	# Store the actual target score for UI
+	data.target_score = target_score
+	_apply_data_to_ui()

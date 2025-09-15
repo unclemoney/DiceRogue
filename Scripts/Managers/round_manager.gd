@@ -86,7 +86,7 @@ func _initialize_rounds_data() -> void:
 					if not challenge_data.dice_type.is_empty():
 						dice_type = challenge_data.dice_type
 						print("[RoundManager] Round", round_number, "using dice type from challenge:", dice_type)
-					target_score = challenge_data.target_score * round_number
+					target_score = challenge_data.target_score * round_number 
 					print("[RoundManager] Round", round_number, "target score set to:", target_score)
 				elif round_index < dice_configs.size():
 					# Fall back to dice_configs if no challenge-specific dice type

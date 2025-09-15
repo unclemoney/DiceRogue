@@ -107,7 +107,9 @@ func add_challenge(data: ChallengeData, challenge: Challenge) -> ChallengeIcon:
 	if not icon:
 		push_error("[ChallengeUI] Failed to instantiate challenge icon!")
 		return null
-		
+	
+	var actual_target_score = challenge.get_target_score() if challenge and challenge.has_method("get_target_score") else data.target_score	
+	
 	# Add icon to container instead of directly to the UI
 	container.add_child(icon)
 	
@@ -117,6 +119,7 @@ func add_challenge(data: ChallengeData, challenge: Challenge) -> ChallengeIcon:
 		print("[ChallengeUI] Child node:", child.name)
 	
 	# Set data after adding to tree
+	icon.set_data_with_target_score(data, actual_target_score)
 	icon.set_data(data)
 	icon.set_meta("last_pos", icon.position)
 	
