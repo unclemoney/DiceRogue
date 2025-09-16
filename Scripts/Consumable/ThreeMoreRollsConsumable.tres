@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://dnob3dg2ahgr1"]
+
+[ext_resource type="Texture2D" uid="uid://cdusovknauh8j" path="res://Resources/Art/Powerups/ExtraRolls.png" id="1_s4d2c"]
+[ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_vdnug"]
+[ext_resource type="PackedScene" uid="uid://duk2unicfkopv" path="res://Scenes/Consumable/ThreeMoreRollsConsumable.tscn" id="2_bfh4v"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_605kg"]
+atlas = ExtResource("1_s4d2c")
+region = Rect2(143, 0, 59, 93)
+
+[resource]
+script = ExtResource("1_vdnug")
+id = "three_more_rolls"
+display_name = "Extra Rolls"
+description = "Adds 3 more dice rolls for the current turn only"
+icon = SubResource("AtlasTexture_605kg")
+scene = ExtResource("2_bfh4v")
+price = 75
+metadata/_custom_type_script = "uid://wx2i3vixf1m5"

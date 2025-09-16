@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cjsxxjnfyo1jd"]
+
+[ext_resource type="Script" uid="uid://dmvi3eio8l3b4" path="res://Scripts/Consumable/add_max_power_up_consumable.gd" id="1_7p2bn"]
+
+[node name="AddMaxPowerUpConsumable" type="Node"]
+script = ExtResource("1_7p2bn")

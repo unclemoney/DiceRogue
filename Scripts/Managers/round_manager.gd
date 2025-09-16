@@ -109,11 +109,19 @@ func _initialize_rounds_data() -> void:
 	
 	print("[RoundManager] Initialized", rounds_data.size(), "rounds")
 
+# In round_manager.gd - Update start_game to explicitly set turn_tracker to inactive state
 func start_game() -> void:
 	print("[RoundManager] Game is ready. Waiting for player to start the first round.")
 	current_round = 0
 	is_challenge_completed = false
 	game_started = true
+	
+	# Make sure turn tracker is in inactive state with no rolls
+	if turn_tracker:
+		turn_tracker.current_turn = 0
+		turn_tracker.rolls_left = 0
+		turn_tracker.is_active = false
+		turn_tracker.emit_signal("rolls_updated", 0)
 	
 	# Enable first round's Next Round button immediately
 	emit_signal("round_completed", 0)  # Send signal as round 0 completed

@@ -12,6 +12,14 @@ var current_turn := 1
 var rolls_left := 3
 @export var MAX_ROLLS := 3
 @export var max_turns: int = 13
+var is_active := false
+
+func _ready() -> void:
+	# Initialize with 0 rolls and turn 0 at game start (pre-first round)
+	current_turn = 0
+	rolls_left = 0
+	is_active = false
+	# No need to emit signals here as the game hasn't truly started yet
 
 func start_new_turn():
 	# Are we already at the limit?
@@ -20,6 +28,7 @@ func start_new_turn():
 		return
 	current_turn += 1
 	rolls_left = MAX_ROLLS
+	is_active = true  # Turn is now active
 	emit_signal("turn_updated", current_turn)
 	emit_signal("rolls_updated", rolls_left)
 	emit_signal("turn_started")
@@ -29,6 +38,7 @@ func use_roll():
 		rolls_left -= 1
 		emit_signal("rolls_updated", rolls_left)
 		if rolls_left == 0:
+			#is_active = false  # Turn is no longer active when rolls are exhausted
 			emit_signal("rolls_exhausted")
 
 func reset_game():

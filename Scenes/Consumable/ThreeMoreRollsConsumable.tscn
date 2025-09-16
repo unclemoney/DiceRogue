@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://duk2unicfkopv"]
+
+[ext_resource type="Script" uid="uid://yxc35ri7axji" path="res://Scripts/Consumable/three_more_rolls_consumable.gd" id="1_1pkjv"]
+
+[node name="ThreeMoreRollsConsumable" type="Node"]
+script = ExtResource("1_1pkjv")

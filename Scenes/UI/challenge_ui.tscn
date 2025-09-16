@@ -21,7 +21,7 @@ layout_mode = 0
 offset_left = 1.0
 offset_top = -23.0
 offset_right = 78.0
-text = "CHALLENGE"
+text = "CHALLENGE       DICE"
 
 [node name="Area2D" type="Area2D" parent="."]
 position = Vector2(141, 38)

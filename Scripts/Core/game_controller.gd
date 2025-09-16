@@ -79,6 +79,8 @@ func _ready() -> void:
 		dice_hand.dice_spawned.connect(_on_dice_spawned)
 	if scorecard:
 		scorecard.score_auto_assigned.connect(_on_score_assigned)
+		scorecard.score_auto_assigned.connect(update_double_existing_usability)
+		#scorecard.score_added.connect(update_double_existing_usability)
 	if game_button_ui:
 		game_button_ui.connect("shop_button_pressed", _on_shop_button_pressed)	
 		if not game_button_ui.is_connected("dice_rolled", _on_game_button_dice_rolled):
@@ -108,12 +110,19 @@ func _ready() -> void:
 	if debuff_ui:
 		if not debuff_ui.is_connected("debuff_selected", _on_debuff_selected):
 			debuff_ui.debuff_selected.connect(_on_debuff_selected)
+	if turn_tracker:
+		turn_tracker.rolls_updated.connect(update_three_more_rolls_usability)
+		turn_tracker.turn_started.connect(update_three_more_rolls_usability)
+		turn_tracker.rolls_exhausted.connect(update_three_more_rolls_usability)
+		turn_tracker.turn_started.connect(update_double_existing_usability)
+		turn_tracker.rolls_exhausted.connect(update_double_existing_usability)
+
 	call_deferred("_on_game_start")
 	print("[GameController] Handler expects args:", _on_game_button_dice_rolled.get_argument_count())
 
 func _on_game_start() -> void:
 	#spawn_starting_powerups()
-	#grant_consumable("score_reroll")
+	grant_consumable("three_more_rolls")
 	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
 	if round_manager:
@@ -342,6 +351,18 @@ func grant_consumable(id: String) -> void:
 			var can_use = scorecard and scorecard.has_any_scores()
 			icon.set_useable(can_use)
 			print("[GameController] Score reroll consumable added, useable:", can_use)
+		"three_more_rolls":
+			# Only useable when we have rolls left in the current turn
+			var can_use = turn_tracker and turn_tracker.rolls_left > 0
+			icon.set_useable(can_use)
+			print("[GameController] Three more rolls consumable added, useable:", can_use)
+		"double_existing":
+			# Only useable when we have scores and in an active turn
+			var has_scores = scorecard and scorecard.has_any_scores()
+			var is_active_turn = turn_tracker and turn_tracker.is_active and turn_tracker.current_turn > 0
+			var can_use = has_scores and is_active_turn
+			icon.set_useable(can_use)
+			print("[GameController] Double existing consumable added, useable:", can_use)
 		_:
 			# Other consumables are useable by default
 			icon.set_useable(true)
@@ -356,23 +377,27 @@ func _on_consumable_used(consumable_id: String) -> void:
 	match consumable_id:
 		"score_reroll":
 			if score_card_ui:
-				# Activate reroll mode
 				consumable.apply(self)
 				score_card_ui.activate_score_reroll()
-				# Connect to score_rerolled signal for cleanup
+				active_consumables.erase(consumable_id)
 				if not score_card_ui.is_connected("score_rerolled", _on_score_rerolled):
 					score_card_ui.connect("score_rerolled", _on_score_rerolled)
 			else:
 				push_error("GameController: score_card_ui not found!")
 		"double_existing":
 			if score_card_ui:
-				# Activate double mode
 				consumable.apply(self)
-				# Connect to score_doubled signal for cleanup
+				active_consumables.erase(consumable_id)
 				if not score_card_ui.is_connected("score_doubled", _on_score_doubled):
 					score_card_ui.connect("score_doubled", _on_score_doubled)
 			else:
 				push_error("GameController: score_card_ui not found!")
+		"add_max_power_up":
+			consumable.apply(self)
+			active_consumables.erase(consumable_id)
+		"three_more_rolls":
+			consumable.apply(self)
+			active_consumables.erase(consumable_id)
 		_:
 			push_error("Unknown consumable type: %s" % consumable_id)
 
@@ -893,6 +918,8 @@ func _on_max_power_ups_reached() -> void:
 
 func _on_round_started(round_number: int) -> void:
 	print("[GameController] Round", round_number, "started")
+	update_three_more_rolls_usability()
+	update_double_existing_usability()
 	
 	# Activate this round's challenge
 	if round_manager:
@@ -929,3 +956,35 @@ func _on_debuff_selected(id: String) -> void:
 				icon.set_active(false)
 	else:
 		push_error("[GameController] Debuff not found:", id)
+
+# In game_controller.gd - Update the update_three_more_rolls_usability function
+func update_three_more_rolls_usability() -> void:
+	var consumable_icon = consumable_ui.get_consumable_icon("three_more_rolls")
+	if consumable_icon:
+		# Allow usage when in turn 1+ with rolls remaining
+		# Remove the is_active check since that's causing the problem
+		var is_useable = turn_tracker and turn_tracker.rolls_left > 0 and turn_tracker.current_turn > 0
+		print("[GameController] Three more rolls check - rolls left:", turn_tracker.rolls_left if turn_tracker else "N/A", 
+			  "is active:", turn_tracker.is_active if turn_tracker else "N/A", 
+			  "current turn:", turn_tracker.current_turn if turn_tracker else "N/A", 
+			  "useable:", is_useable)
+		consumable_icon.set_useable(is_useable)
+		
+		if not is_useable and consumable_icon.is_useable != is_useable:
+			print("[GameController] Three more rolls consumable disabled - not in active turn")
+
+# Add this function to game_controller.gd
+func update_double_existing_usability() -> void:
+	var consumable_icon = consumable_ui.get_consumable_icon("double_existing")
+	if consumable_icon:
+		# Only check for scores and valid turn number, not rolls
+		var has_scores = scorecard and scorecard.has_any_scores()
+		var valid_turn = turn_tracker and turn_tracker.current_turn > 0
+		
+		# Turn is considered active if it's started, even if rolls are exhausted
+		var is_useable = has_scores and valid_turn
+		
+		print("[GameController] Double existing check - has scores:", has_scores, 
+			  "valid turn:", valid_turn, "useable:", is_useable)
+		
+		consumable_icon.set_useable(is_useable)

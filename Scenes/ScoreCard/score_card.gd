@@ -104,11 +104,13 @@ func has_any_scores() -> bool:
 	# Check upper section
 	for score in upper_scores.values():
 		if score != null:
+			print("[Scorecard] Found scored category in upper section")
 			return true
 			
 	# Check lower section
 	for score in lower_scores.values():
 		if score != null:
+			print("[Scorecard] Found scored category in lower section")
 			return true
 			
 	return false

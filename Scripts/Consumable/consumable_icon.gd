@@ -613,7 +613,10 @@ func _on_use_button_pressed() -> void:
 	# Emit signal and update state
 	emit_signal("consumable_used", data.id)
 	is_active = true
-	_shader_material.set_shader_parameter("glow_intensity", glow_intensity)
+	is_used = true  # Mark as used immediately
+	
+	if _shader_material:
+		_shader_material.set_shader_parameter("glow_intensity", glow_intensity)
 	modulate = Color(1.5, 1.5, 1.5)
 	
 	# Hide the buttons
@@ -623,6 +626,13 @@ func _on_use_button_pressed() -> void:
 		sell_button.visible = false
 	if use_button:
 		use_button.visible = false
+	
+	# Play destruction effect and remove this icon
+	play_destruction_effect()
+	
+	# Add a small delay for effect before removal
+	await get_tree().create_timer(0.2).timeout
+	queue_free()
 
 func _on_sell_button_pressed() -> void:
 	print("[ConsumableIcon] Sell requested for:", data.id)

@@ -127,6 +127,11 @@ func add_consumable(data: ConsumableData) -> ConsumableIcon:
 	
 func _on_consumable_used(consumable_id: String) -> void:
 	print("[ConsumableUI] Consumable used:", consumable_id)
+	# Remove from tracking dictionary immediately when used
+	_icons.erase(consumable_id)
+	# Update the slots label to show current/max
+	update_slots_label()
+	# Re-emit signal for game controller to handle
 	emit_signal("consumable_used", consumable_id)
 	
 func _on_consumable_sell_requested(consumable_id: String) -> void:
