@@ -210,6 +210,7 @@ func check_upper_bonus() -> void:
 	if total >= UPPER_BONUS_THRESHOLD:
 		upper_bonus = UPPER_BONUS_AMOUNT  # Store the bonus
 		emit_signal("upper_bonus_achieved", UPPER_BONUS_AMOUNT)
+		print("[Scorecard] Upper section bonus achieved!")
 	else:
 		upper_bonus = 0
 	

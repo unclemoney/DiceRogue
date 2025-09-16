@@ -1,4 +1,4 @@
-[gd_scene load_steps=63 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=64 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -33,6 +33,7 @@
 [ext_resource type="Resource" uid="uid://cs5xh10qdphbi" path="res://Scripts/Debuff/LockDice.tres" id="25_gxabo"]
 [ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="26_si81o"]
 [ext_resource type="Resource" uid="uid://cpblep3x5ps6q" path="res://Scripts/Challenge/pts100_lock_dice_resource.tres" id="27_1jk2k"]
+[ext_resource type="Resource" uid="uid://c7wgex0fr0g65" path="res://Scripts/PowerUps/UpperBonusMultPowerUp.tres" id="27_cr2lp"]
 [ext_resource type="Resource" uid="uid://7uwjjpth4uv6" path="res://Scripts/Challenge/pts300_no_debuff_resource.tres" id="29_1jk2k"]
 [ext_resource type="Resource" uid="uid://cr8w2ud13fb6d" path="res://Scripts/Challenge/pts_100_no_debuff_challenge.tres" id="30_o0xxd"]
 [ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="30_si81o"]
@@ -222,7 +223,7 @@ mod_manager_path = NodePath("../ModManager")
 challenge_container_path = NodePath("../ChallengeContainer")
 
 [node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
-power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6")])
+power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp")])
 
 [node name="ChallengeManager" parent="." instance=ExtResource("25_3vaha")]
 challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtResource("29_1jk2k"), ExtResource("30_o0xxd"), ExtResource("31_ja7vv"), ExtResource("32_ytf57"), ExtResource("33_3ia8s")])

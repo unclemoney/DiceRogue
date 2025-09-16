@@ -93,9 +93,9 @@ layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = -20.0
-offset_top = -60.0
+offset_top = -80.0
 offset_right = 20.0
-offset_bottom = -37.0
+offset_bottom = -57.0
 grow_horizontal = 2
 
 [node name="HoverLabel" type="Label" parent="LabelBg"]

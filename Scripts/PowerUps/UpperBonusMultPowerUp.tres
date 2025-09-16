@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://c7wgex0fr0g65"]
+
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_40cld"]
+[ext_resource type="Texture2D" uid="uid://cdusovknauh8j" path="res://Resources/Art/Powerups/ExtraRolls.png" id="1_gl0oq"]
+[ext_resource type="PackedScene" uid="uid://biouf8a6agekd" path="res://Scenes/PowerUp/UpperBonusMultPowerUp.tscn" id="2_awvan"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6eaaa"]
+atlas = ExtResource("1_gl0oq")
+region = Rect2(0, 95, 59, 93)
+
+[resource]
+script = ExtResource("1_40cld")
+id = "upper_bonus_mult"
+display_name = "Upper Bonus Multiplier"
+description = "Increases score multiplier by 1x for each Upper Section Bonus achieved"
+icon = SubResource("AtlasTexture_6eaaa")
+scene = ExtResource("2_awvan")
+price = 150
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

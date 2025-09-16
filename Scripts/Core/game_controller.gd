@@ -122,9 +122,10 @@ func _ready() -> void:
 
 func _on_game_start() -> void:
 	#spawn_starting_powerups()
-	grant_consumable("three_more_rolls")
+	#grant_consumable("three_more_rolls")
 	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
+	grant_power_up("upper_bonus_mult")
 	if round_manager:
 		round_manager.start_game()
 
@@ -186,7 +187,6 @@ func grant_power_up(id: String) -> void:
 	# Automatically activate the power-up
 	_activate_power_up(id)
 
-# Add this function to handle power-up activation
 func _activate_power_up(power_up_id: String) -> void:
 	print("\n=== Power-up Auto-Activated ===")
 	print("[GameController] Activating power-up:", power_up_id)
@@ -196,25 +196,37 @@ func _activate_power_up(power_up_id: String) -> void:
 		push_error("[GameController] No PowerUp found for id:", power_up_id)
 		return
 	
-	# Special handling for Foursome power-up
-	if power_up_id == "foursome":
-		print("[GameController] Applying Foursome to scorecard:", scorecard)
-		if scorecard:
-			pu.apply(scorecard)
-			# Verify multiplier function is set
-			scorecard.debug_multiplier_function()
-		else:
-			push_error("[GameController] No scorecard available for Foursome power-up")
-	# Regular power-ups
-	else:
-		match power_up_id:
-			"extra_dice":
-				pu.apply(dice_hand)
-				enable_debuff("lock_dice")
-			"extra_rolls":
-				pu.apply(turn_tracker)
-			_:
-				push_error("[GameController] Unknown power-up type:", power_up_id)
+	# Connect to description_updated signal if the power-up has one
+	if power_up_id == "upper_bonus_mult":
+		# Disconnect first to avoid duplicates
+		if pu.is_connected("description_updated", _on_power_up_description_updated):
+			pu.description_updated.disconnect(_on_power_up_description_updated)
+		
+		# Then connect
+		pu.description_updated.connect(_on_power_up_description_updated)
+		print("[GameController] Connected to description_updated signal")
+	
+	# Special handling for different power-ups
+	match power_up_id:
+		"foursome":
+			if scorecard:
+				pu.apply(scorecard)
+				scorecard.debug_multiplier_function()
+			else:
+				push_error("[GameController] No scorecard available for Foursome power-up")
+		"upper_bonus_mult":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied UpperBonusMult to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for UpperBonusMult power-up")
+		"extra_dice":
+			pu.apply(dice_hand)
+			enable_debuff("lock_dice")
+		"extra_rolls":
+			pu.apply(turn_tracker)
+		_:
+			push_error("[GameController] Unknown power-up type:", power_up_id)
 
 # Add this function to handle power-up selling
 func _on_power_up_sold(power_up_id: String) -> void:
@@ -245,7 +257,6 @@ func _on_power_up_sold(power_up_id: String) -> void:
 		if powerup_ui:
 			powerup_ui.remove_power_up(power_up_id)
 
-# Add this function to handle power-up deactivation
 func _deactivate_power_up(power_up_id: String) -> void:
 	var pu = active_power_ups.get(power_up_id)
 	if not pu:
@@ -260,8 +271,11 @@ func _deactivate_power_up(power_up_id: String) -> void:
 			pu.remove(turn_tracker)
 		"foursome":
 			pu.remove(scorecard)
+		"upper_bonus_mult":
+			pu.remove(scorecard)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
+
 func revoke_power_up(power_up_id: String) -> void:
 	if not active_power_ups.has(power_up_id):
 		return
@@ -852,7 +866,7 @@ func _on_challenge_selected(id: String) -> void:
 		push_error("[GameController] Challenge not found:", id)
 
 # Add this method to handle the dice_rolled signal from GameButtonUI
-func _on_game_button_dice_rolled(dice_values: Array) -> void:
+func _on_game_button_dice_rolled(dice_values: Array = []) -> void:
 	print("[GameController] Dice roll button pressed, values:", dice_values)
 	
 	# Check if we can afford to roll (for costly_roll debuff)
@@ -988,3 +1002,28 @@ func update_double_existing_usability() -> void:
 			  "valid turn:", valid_turn, "useable:", is_useable)
 		
 		consumable_icon.set_useable(is_useable)
+
+func _on_power_up_description_updated(power_up_id: String, new_description: String) -> void:
+	print("[GameController] Received description update for:", power_up_id)
+	print("[GameController] New description:", new_description)
+	
+	if powerup_ui:
+		var icon = powerup_ui.get_power_up_icon(power_up_id)
+		if icon and icon.hover_label:
+			icon.hover_label.text = new_description
+			print("[GameController] Updated hover label text for power-up icon")
+			
+			# If currently hovering, ensure label is visible
+			if icon._is_hovering and icon.label_bg:
+				icon.label_bg.visible = true
+				print("[GameController] Made label visible since icon is being hovered")
+		else:
+			print("[GameController] Couldn't find icon or hover_label for:", power_up_id)
+	else:
+		print("[GameController] No powerup_ui reference")
+
+# Add this helper method to retrieve active power-ups
+func get_active_power_up(id: String) -> PowerUp:
+	if active_power_ups.has(id):
+		return active_power_ups[id]
+	return null

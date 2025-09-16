@@ -371,6 +371,7 @@ func _stop_mouse_following() -> void:
 
 func _on_mouse_entered() -> void:
 	_is_hovering = true
+	update_hover_description()
 	
 	# Cancel any existing tween
 	if _current_tween and _current_tween.is_valid():
@@ -616,3 +617,34 @@ func check_outside_click(event_position: Vector2) -> bool:
 		return true
 	
 	return false
+
+# Add to power_up_icon.gd
+func update_hover_description() -> void:
+	print("[PowerUpIcon] Updating hover description for:", data.id if data else "unknown")
+	
+	if not data or not hover_label:
+		print("[PowerUpIcon] Missing data or hover_label")
+		return
+		
+	var description = data.description
+	print("[PowerUpIcon] Default description:", description)
+	
+	# Get the current node that might be referenced by this icon
+	var power_up_node = null
+	
+	# Find the GameController directly
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller:
+		power_up_node = game_controller.get_active_power_up(data.id)
+		print("[PowerUpIcon] Found power_up_node via GameController:", power_up_node)
+	
+	# If we found the node, try to get its current description
+	if power_up_node and power_up_node.has_method("get_current_description"):
+		print("[PowerUpIcon] Node has get_current_description method")
+		description = power_up_node.get_current_description()
+		print("[PowerUpIcon] Updated description:", description)
+	else:
+		print("[PowerUpIcon] No method get_current_description found")
+		
+	hover_label.text = description
+	print("[PowerUpIcon] Set hover_label.text to:", hover_label.text)

@@ -18,7 +18,8 @@ func _ready() -> void:
 	print("[PowerUpUI] Initializing...")
 	print("[PowerUpUI] Children:", get_children())
 	print("[PowerUpUI] power_up_icon_scene set:", power_up_icon_scene != null)
-
+	add_to_group("power_up_ui")
+	
 	# Try to find Container under VBoxContainer first
 	if has_node("VBoxContainer/Container"):
 		container = $VBoxContainer/Container
