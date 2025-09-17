@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 DiceResults="*res://Scripts/Core/dice_results.gd"
 ScoreEvaluatorSingleton="*res://Scripts/Core/score_evaluator.gd"
 PlayerEconomy="*res://Scripts/Managers/PlayerEconomy.gd"
+GDAIMCPRuntime="*res://addons/gdai-mcp-plugin-godot/gdai_mcp_runtime.gd"
 
 [display]
 
@@ -26,13 +27,18 @@ window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gdai-mcp-plugin-godot/plugin.cfg")
+
 [file_customization]
 
 folder_colors={
 "res://Resources/": "orange",
 "res://Scenes/": "green",
 "res://Scripts/": "purple",
-"res://Tests/": "blue"
+"res://Tests/": "blue",
+"res://addons/": "gray"
 }
 
 [input]

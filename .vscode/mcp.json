@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "godot-mcp": {
+      "command": "uv",
+      "args": ["run", "C:/Users/danie/Documents/dicerogue/DiceRogue/addons/gdai-mcp-plugin-godot/gdai_mcp_server.py"]
+    }
+  }
+}
