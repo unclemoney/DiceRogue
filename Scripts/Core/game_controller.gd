@@ -122,10 +122,10 @@ func _ready() -> void:
 
 func _on_game_start() -> void:
 	#spawn_starting_powerups()
-	#grant_consumable("three_more_rolls")
+	grant_consumable("power_up_shop_num")
 	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
-	grant_power_up("chance520")
+	#grant_power_up("chance520")
 	if round_manager:
 		round_manager.start_game()
 
@@ -380,6 +380,8 @@ func grant_consumable(id: String) -> void:
 			var can_use = scorecard and scorecard.has_any_scores()
 			icon.set_useable(can_use)
 			print("[GameController] Score reroll consumable added, useable:", can_use)
+		"power_up_shop_num":
+			icon.set_useable(true)
 		"three_more_rolls":
 			# Only useable when we have rolls left in the current turn
 			var can_use = turn_tracker and turn_tracker.rolls_left > 0
@@ -427,6 +429,9 @@ func _on_consumable_used(consumable_id: String) -> void:
 		"three_more_rolls":
 			consumable.apply(self)
 			active_consumables.erase(consumable_id)
+		"power_up_shop_num":
+			consumable.apply(self)
+			active_consumables.erase(consumable_id)	
 		_:
 			push_error("Unknown consumable type: %s" % consumable_id)
 

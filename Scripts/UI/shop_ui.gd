@@ -32,6 +32,10 @@ const RAINBOW_COLORS := [
 const ShopItemScene := preload("res://Scenes/Shop/shop_item.tscn")
 
 var items_per_section := 2  # Number of items to display per section
+var power_up_items := 2     # Specific count for power-ups
+var consumable_items := 2   # Specific count for consumables  
+var mod_items := 2          # Specific count for mods
+
 var purchased_items := {}  # Track purchased items by type: {"power_up": [], "consumable": [], "mod": []}
 
 func _ready() -> void:
@@ -109,7 +113,7 @@ func _populate_shop_items() -> void:
 	# Populate PowerUps
 	var power_ups = power_up_manager.get_available_power_ups()
 	var filtered_power_ups = _filter_out_purchased_items(power_ups, "power_up")
-	var selected_power_ups = _select_random_items(filtered_power_ups, items_per_section)
+	var selected_power_ups = _select_random_items(filtered_power_ups, power_up_items)
 	
 	for id in selected_power_ups:
 		var data = power_up_manager.get_def(id)
@@ -121,7 +125,7 @@ func _populate_shop_items() -> void:
 	# Populate Consumables
 	var consumables = consumable_manager._defs_by_id.keys()
 	var filtered_consumables = _filter_out_purchased_items(consumables, "consumable")
-	var selected_consumables = _select_random_items(filtered_consumables, items_per_section)
+	var selected_consumables = _select_random_items(filtered_consumables, consumable_items)
 	
 	for id in selected_consumables:
 		var data = consumable_manager.get_def(id)
@@ -133,7 +137,7 @@ func _populate_shop_items() -> void:
 	# Populate Mods
 	var mods = mod_manager._defs_by_id.keys()
 	var filtered_mods = _filter_out_purchased_items(mods, "mod")
-	var selected_mods = _select_random_items(filtered_mods, items_per_section)
+	var selected_mods = _select_random_items(filtered_mods, mod_items)
 	
 	for id in selected_mods:
 		var data = mod_manager.get_def(id)
@@ -301,3 +305,31 @@ func _on_money_changed(new_amount: int) -> void:
 			for child in container.get_children():
 				if child is ShopItem:
 					child._update_button_state()
+
+# Add method to increase the number of power-ups displayed in shop
+func increase_power_up_items(amount: int) -> void:
+	power_up_items += amount
+	print("[ShopUI] Increased power-up items by", amount, "- new value:", power_up_items)
+	# Refresh the shop to show the new items
+	_populate_shop_items()
+
+# Add method to increase consumable items (for future use)
+func increase_consumable_items(amount: int) -> void:
+	consumable_items += amount
+	print("[ShopUI] Increased consumable items by", amount, "- new value:", consumable_items)
+	_populate_shop_items()
+
+# Add method to increase mod items (for future use)  
+func increase_mod_items(amount: int) -> void:
+	mod_items += amount
+	print("[ShopUI] Increased mod items by", amount, "- new value:", mod_items)
+	_populate_shop_items()
+
+# Keep old method for backward compatibility but mark as deprecated
+func increase_items_per_section(amount: int) -> void:
+	items_per_section += amount
+	power_up_items = items_per_section
+	consumable_items = items_per_section
+	mod_items = items_per_section
+	print("[ShopUI] [DEPRECATED] Increased all section items by", amount)
+	_populate_shop_items()

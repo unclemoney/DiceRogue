@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://ce8x4tpgr2q7w"]
+
+[ext_resource type="Script" path="res://Scripts/Consumable/power_up_shop_num_consumable.gd" id="1_1pkjv"]
+
+[node name="PowerUpShopNumConsumable" type="Node"]
+script = ExtResource("1_1pkjv")
