@@ -1,4 +1,4 @@
-[gd_scene load_steps=65 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=66 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -36,6 +36,7 @@
 [ext_resource type="Resource" uid="uid://c7wgex0fr0g65" path="res://Scripts/PowerUps/UpperBonusMultPowerUp.tres" id="27_cr2lp"]
 [ext_resource type="Resource" uid="uid://eiv15upj2hij" path="res://Scripts/PowerUps/YahtzeeBonusMultPowerUp.tres" id="28_ybnmt"]
 [ext_resource type="Resource" uid="uid://7uwjjpth4uv6" path="res://Scripts/Challenge/pts300_no_debuff_resource.tres" id="29_1jk2k"]
+[ext_resource type="Resource" uid="uid://b1shilkw1ljul" path="res://Scripts/PowerUps/Chance520PowerUp.tres" id="29_cjjtc"]
 [ext_resource type="Resource" uid="uid://cr8w2ud13fb6d" path="res://Scripts/Challenge/pts_100_no_debuff_challenge.tres" id="30_o0xxd"]
 [ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="30_si81o"]
 [ext_resource type="Resource" uid="uid://mxumjrqrlefp" path="res://Scripts/Mods/EvenOnlyMod.tres" id="31_1jk2k"]
@@ -193,6 +194,7 @@ grow_vertical = 1
 round_manager_path = NodePath("../RoundManager")
 
 [node name="DebuffUI" parent="." instance=ExtResource("14_oxb5w")]
+visible = false
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
@@ -224,7 +226,7 @@ mod_manager_path = NodePath("../ModManager")
 challenge_container_path = NodePath("../ChallengeContainer")
 
 [node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
-power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt")])
+power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc")])
 
 [node name="ChallengeManager" parent="." instance=ExtResource("25_3vaha")]
 challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtResource("29_1jk2k"), ExtResource("30_o0xxd"), ExtResource("31_ja7vv"), ExtResource("32_ytf57"), ExtResource("33_3ia8s")])

@@ -15,8 +15,7 @@ config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
-
-MultiplierManager="*res://Scripts/Managers/MultiplierManager.gd"
+ScoreModifierManager="*res://Scripts/Managers/MultiplierManager.gd"
 DiceResults="*res://Scripts/Core/dice_results.gd"
 ScoreEvaluatorSingleton="*res://Scripts/Core/score_evaluator.gd"
 PlayerEconomy="*res://Scripts/Managers/PlayerEconomy.gd"

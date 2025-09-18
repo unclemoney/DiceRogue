@@ -125,7 +125,7 @@ func _on_game_start() -> void:
 	#grant_consumable("three_more_rolls")
 	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
-	#grant_power_up("foursome")
+	grant_power_up("chance520")
 	if round_manager:
 		round_manager.start_game()
 
@@ -220,6 +220,12 @@ func _activate_power_up(power_up_id: String) -> void:
 				print("[GameController] Applied UpperBonusMult to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for UpperBonusMult power-up")
+		"chance520":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied Chance520 to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for Chance520 power-up")
 		"extra_dice":
 			pu.apply(dice_hand)
 			enable_debuff("lock_dice")

@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" uid="uid://qgct2bbya0uq" path="res://Tests/multiplier_manager_test.gd" id="1_0k3y4"]
 
-[node name="MultiplierManagerTest" type="Node"]
+[node name="ScoreModifierManagerTest" type="Node"]
 script = ExtResource("1_0k3y4")

@@ -10,6 +10,7 @@ signal upper_bonus_achieved(bonus: int)
 signal upper_section_completed
 signal lower_section_completed
 signal score_auto_assigned(section: Section, category: String, score: int)
+signal score_assigned(section: Section, category: String, score: int)  # New signal for all score assignments
 signal yahtzee_bonus_achieved(points: int)
 signal score_changed(total_score: int)  # Add this signal
 signal game_completed(final_score: int) # Add this signal
@@ -37,9 +38,9 @@ var lower_scores := {
 	"chance": null
 }
 
-var _score_multiplier_func: Callable  # DEPRECATED: Use MultiplierManager instead
+var _score_multiplier_func: Callable  # DEPRECATED: Use ScoreModifierManager instead
 var score_modifiers: Array = [] # Array to hold score modifier objects
-var score_multiplier: float = 1.0  # DEPRECATED: Use MultiplierManager instead
+var score_multiplier: float = 1.0  # DEPRECATED: Use ScoreModifierManager instead
 
 func _ready() -> void:
 	add_to_group("scorecard")
@@ -61,7 +62,7 @@ func set_score(section: int, category: String, score: int) -> void:
 	print("[Scorecard] Setting", category, "to", score)
 	print("[Scorecard] Current total before change:", get_total_score())
 	
-	# Apply score modifiers
+	# Apply score modifiers from old system first
 	var modified_score = score
 	for modifier in score_modifiers:
 		if modifier.has_method("modify_score"):
@@ -70,35 +71,77 @@ func set_score(section: int, category: String, score: int) -> void:
 				modified_score = result
 				print("[Scorecard] Score modified by", modifier.name, "to:", modified_score)
 	
+	# Now apply ScoreModifierManager additives and multipliers
+	var modifier_manager = null
+	if Engine.has_singleton("ScoreModifierManager"):
+		modifier_manager = ScoreModifierManager
+	elif get_tree():
+		modifier_manager = get_tree().get_first_node_in_group("score_modifier_manager")
+		if not modifier_manager:
+			modifier_manager = get_tree().get_first_node_in_group("multiplier_manager")
+	
+	if modifier_manager:
+		var total_additive = 0
+		var total_multiplier = 1.0
+		
+		if modifier_manager.has_method("get_total_additive"):
+			total_additive = modifier_manager.get_total_additive()
+		total_multiplier = modifier_manager.get_total_multiplier()
+		
+		# Apply additive bonuses first, then multipliers
+		var score_with_additive = modified_score + total_additive
+		var final_modified_score = int(score_with_additive * total_multiplier)
+		
+		print("[Scorecard] Base score:", modified_score)
+		print("[Scorecard] Total additive bonus:", total_additive)
+		print("[Scorecard] Score after additive:", score_with_additive)
+		print("[Scorecard] Total multiplier:", total_multiplier)
+		print("[Scorecard] Final modified score:", final_modified_score)
+		
+		modified_score = final_modified_score
+	else:
+		print("[Scorecard] Warning: No ScoreModifierManager found, using base score")
+	
 	if modified_score != score:
-		score = modified_score
-		print("[Scorecard] Final modified score:", score)
+		print("[Scorecard] Final modified score:", modified_score, "(was", score, ")")
 	
 	match section:
 		Section.UPPER:
 			if upper_scores.has(category):
 				var old_value = upper_scores[category]
-				upper_scores[category] = score
-				print("[Scorecard] Updated upper score:", category, "from", old_value, "to", score)
-				check_upper_bonus()
+				upper_scores[category] = modified_score
+				print("[Scorecard] Updated upper score:", category, "from", old_value, "to", modified_score)
+			else:
+				push_error("[Scorecard] Invalid upper category: " + category)
+				return
 		Section.LOWER:
 			if lower_scores.has(category):
 				var old_value = lower_scores[category]
-				lower_scores[category] = score
-				print("[Scorecard] Updated lower score:", category, "from", old_value, "to", score)
-				check_lower_section()
-				
-	var new_total = get_total_score()
-	print("[Scorecard] New total after change:", new_total)
+				lower_scores[category] = modified_score
+				print("[Scorecard] Updated lower score:", category, "from", old_value, "to", modified_score)
+			else:
+				push_error("[Scorecard] Invalid lower category: " + category)
+				return
 	
-	# Emit signal for score changes
-	print("[Scorecard] Emitting score_changed signal with total:", new_total)
+	var new_total = get_total_score()
+	print("[Scorecard] New total score:", new_total)
+	
+	# Emit the score_assigned signal for tracking purposes
+	emit_signal("score_assigned", section, category, modified_score)
+	
+	# Check for upper bonus after updating scores
+	check_upper_bonus()
+	
+	# Check for bonus yahtzee if this was a yahtzee category
+	if category == "yahtzee" and modified_score == 50:
+		# This is the initial yahtzee, bonus yahtzees will be handled separately
+		print("[Scorecard] Initial Yahtzee scored!")
+	
+	# Always emit score_changed signal
 	emit_signal("score_changed", new_total)
 	
-	# Check if game is complete
-	if is_upper_section_complete() and is_lower_section_complete():
-		print("[Scorecard] Game is complete, emitting game_completed signal")
-		emit_signal("game_completed", new_total)
+	print("[Scorecard] Score setting complete")
+	print("===============================")
 
 func has_any_scores() -> bool:
 	# Check upper section
@@ -232,10 +275,10 @@ func check_bonus_yahtzee(values: Array[int], is_new_yahtzee: bool = false) -> vo
 	else:
 		print("✗ Not a Yahtzee - no bonus awarded")
 
-# DEPRECATED: Use MultiplierManager.register_multiplier() instead
+# DEPRECATED: Use ScoreModifierManager.register_multiplier() instead
 # Fix the set_score_multiplier function - make sure it properly registers the Callable
 func set_score_multiplier(multiplier_value) -> void:
-	push_warning("[Scorecard] set_score_multiplier is DEPRECATED. Use MultiplierManager.register_multiplier() instead.")
+	push_warning("[Scorecard] set_score_multiplier is DEPRECATED. Use ScoreModifierManager.register_multiplier() instead.")
 	print("[Scorecard] Setting score multiplier with type:", typeof(multiplier_value))
 	
 	if multiplier_value is float or multiplier_value is int:
@@ -256,9 +299,9 @@ func set_score_multiplier(multiplier_value) -> void:
 	else:
 		push_error("[Scorecard] Invalid multiplier type: " + str(typeof(multiplier_value)))
 
-# DEPRECATED: Use MultiplierManager instead
+# DEPRECATED: Use ScoreModifierManager instead
 func clear_score_multiplier() -> void:
-	push_warning("[Scorecard] clear_score_multiplier is DEPRECATED. Use MultiplierManager.unregister_multiplier() instead.")
+	push_warning("[Scorecard] clear_score_multiplier is DEPRECATED. Use ScoreModifierManager.unregister_multiplier() instead.")
 	_score_multiplier_func = Callable()
 
 func is_game_complete() -> bool:
@@ -281,9 +324,9 @@ func reset_scores() -> void:
 	yahtzee_bonuses = 0
 	yahtzee_bonus_points = 0
 	
-	# Note: Multipliers are now handled by MultiplierManager
+	# Note: Multipliers are now handled by ScoreModifierManager
 	# PowerUps should manage their own multiplier lifecycle
-	print("[Scorecard] All scores reset - multipliers handled by MultiplierManager")
+	print("[Scorecard] All scores reset - multipliers handled by ScoreModifierManager")
 	
 	print("[Scorecard] All scores reset")
 	
@@ -294,11 +337,36 @@ func calculate_score(category: String, dice_values: Array) -> int:
 	print("[Scorecard] Calculating score for", category, "with dice:", dice_values)
 	
 	var base_score = _calculate_base_score(category, dice_values)
-	var total_multiplier = MultiplierManager.get_total_multiplier()
-	var final_score = int(base_score * total_multiplier)
 	
-	print("[Scorecard] Base score before multiplier:", base_score)
-	print("[Scorecard] Total multiplier from MultiplierManager:", total_multiplier)
+	# Get modifiers from ScoreModifierManager (fallback for compatibility)
+	var modifier_manager = null
+	if Engine.has_singleton("ScoreModifierManager"):
+		modifier_manager = ScoreModifierManager
+	elif get_tree():
+		modifier_manager = get_tree().get_first_node_in_group("score_modifier_manager")
+		# Fallback to old group name
+		if not modifier_manager:
+			modifier_manager = get_tree().get_first_node_in_group("multiplier_manager")
+	
+	var total_additive = 0
+	var total_multiplier = 1.0
+	
+	if modifier_manager:
+		if modifier_manager.has_method("get_total_additive"):
+			total_additive = modifier_manager.get_total_additive()
+		total_multiplier = modifier_manager.get_total_multiplier()
+	else:
+		# Fallback warning if no manager found
+		push_warning("[Scorecard] No ScoreModifierManager found")
+	
+	# Apply additive bonuses first, then multipliers
+	var score_with_additive = base_score + total_additive
+	var final_score = int(score_with_additive * total_multiplier)
+	
+	print("[Scorecard] Base score:", base_score)
+	print("[Scorecard] Total additive bonus:", total_additive)
+	print("[Scorecard] Score after additive:", score_with_additive)
+	print("[Scorecard] Total multiplier:", total_multiplier)
 	print("[Scorecard] Final score after multiplier:", final_score)
 	
 	return final_score
@@ -325,12 +393,12 @@ func evaluate_category(category: String, values: Array[int]) -> int:
 	var score = scores.get(category, 0)
 	print("[Scorecard] Base score before multiplier:", score)
 	
-	# Get total multiplier from MultiplierManager
-	var total_multiplier = MultiplierManager.get_total_multiplier()
-	print("[Scorecard] Total multiplier from MultiplierManager:", total_multiplier)
+	# Get total multiplier from ScoreModifierManager
+	var total_multiplier = ScoreModifierManager.get_total_multiplier()
+	print("[Scorecard] Total multiplier from ScoreModifierManager:", total_multiplier)
 	
 	# Handle conditional multipliers like FoursomePowerUp
-	if MultiplierManager.has_multiplier("foursome"):
+	if ScoreModifierManager.has_multiplier("foursome"):
 		# Check if current dice have a 4, and update FoursomePowerUp accordingly
 		var foursome_nodes = get_tree().get_nodes_in_group("power_ups")
 		for node in foursome_nodes:
@@ -338,7 +406,7 @@ func evaluate_category(category: String, values: Array[int]) -> int:
 				node.update_multiplier_for_dice(values)
 				break
 		# Recalculate total multiplier after potential update
-		total_multiplier = MultiplierManager.get_total_multiplier()
+		total_multiplier = ScoreModifierManager.get_total_multiplier()
 		print("[Scorecard] Updated total multiplier after foursome check:", total_multiplier)
 	
 	# Apply the final multiplier
@@ -349,7 +417,7 @@ func evaluate_category(category: String, values: Array[int]) -> int:
 
 # DEPRECATED: Debug function for old multiplier system
 func debug_multiplier_function() -> void:
-	push_warning("[Scorecard] debug_multiplier_function is DEPRECATED. Use MultiplierManager.debug_print_state() instead.")
+	push_warning("[Scorecard] debug_multiplier_function is DEPRECATED. Use ScoreModifierManager.debug_print_state() instead.")
 	print("\n=== Testing OLD Scorecard Multiplier Function (DEPRECATED) ===")
 	print("[Scorecard] Has multiplier function:", _score_multiplier_func.is_valid())
 	if _score_multiplier_func.is_valid():
@@ -363,5 +431,5 @@ func debug_multiplier_function() -> void:
 		print("[Scorecard] No valid multiplier function set")
 	
 	# Show the new system
-	print("\n=== NEW MultiplierManager State ===")
-	MultiplierManager.debug_print_state()
+	print("\n=== NEW ScoreModifierManager State ===")
+	ScoreModifierManager.debug_print_state()

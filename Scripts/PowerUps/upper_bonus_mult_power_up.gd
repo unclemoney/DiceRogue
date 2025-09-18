@@ -12,35 +12,52 @@ func _ready() -> void:
 	add_to_group("power_ups")
 	print("[UpperBonusMultPowerUp] Added to 'power_ups' group")
 	
-	# Guard against missing MultiplierManager
-	if not _is_multiplier_manager_available():
-		push_error("[UpperBonusMultPowerUp] MultiplierManager not available")
+	# Guard against missing ScoreModifierManager
+	if not _is_score_modifier_manager_available():
+		push_error("[UpperBonusMultPowerUp] ScoreModifierManager not available")
 		return
 	
-	# Get the correct MultiplierManager reference
-	var manager = null
-	if Engine.has_singleton("MultiplierManager"):
-		manager = MultiplierManager
-	else:
-		manager = get_tree().get_first_node_in_group("multiplier_manager")
+	# Get the correct ScoreModifierManager reference
+	var manager = _get_score_modifier_manager()
 	
-	# Connect to MultiplierManager signals to update UI when total multiplier changes
+	# Connect to ScoreModifierManager signals to update UI when total multiplier changes
 	if manager and not manager.is_connected("multiplier_changed", _on_multiplier_manager_changed):
 		manager.multiplier_changed.connect(_on_multiplier_manager_changed)
-		print("[UpperBonusMultPowerUp] Connected to MultiplierManager signals")
+		print("[UpperBonusMultPowerUp] Connected to ScoreModifierManager signals")
 
-func _is_multiplier_manager_available() -> bool:
-	# Check if MultiplierManager exists as an autoload singleton
-	if Engine.has_singleton("MultiplierManager"):
+func _is_score_modifier_manager_available() -> bool:
+	# Check if ScoreModifierManager exists as an autoload singleton
+	if Engine.has_singleton("ScoreModifierManager"):
 		return true
 	
 	# Fallback: check if it exists in the scene tree as a group member
 	if get_tree():
-		var group_node = get_tree().get_first_node_in_group("multiplier_manager")
+		var group_node = get_tree().get_first_node_in_group("score_modifier_manager")
 		if group_node:
+			return true
+		# Also check old group name for backward compatibility
+		var old_group_node = get_tree().get_first_node_in_group("multiplier_manager")
+		if old_group_node:
 			return true
 	
 	return false
+
+func _get_score_modifier_manager():
+	# Check if ScoreModifierManager exists as an autoload singleton
+	if Engine.has_singleton("ScoreModifierManager"):
+		return ScoreModifierManager
+	
+	# Fallback: check new group name first
+	if get_tree():
+		var group_node = get_tree().get_first_node_in_group("score_modifier_manager")
+		if group_node:
+			return group_node
+		# Then check old group name for backward compatibility
+		var old_group_node = get_tree().get_first_node_in_group("multiplier_manager")
+		if old_group_node:
+			return old_group_node
+	
+	return null
 
 func apply(target) -> void:
 	print("=== Applying UpperBonusMultPowerUp ===")
@@ -67,7 +84,7 @@ func apply(target) -> void:
 	if not is_connected("tree_exiting", _on_tree_exiting):
 		connect("tree_exiting", _on_tree_exiting)
 	
-	# Register with MultiplierManager instead of setting scorecard directly
+	# Register with ScoreModifierManager instead of setting scorecard directly
 	_update_multiplier_manager()
 	print("[UpperBonusMultPowerUp] Initial multiplier registered:", get_current_multiplier())
 
@@ -78,7 +95,7 @@ func _on_upper_bonus_achieved(_bonus_amount: int) -> void:
 	print("[UpperBonusMultPowerUp] New multiplier:", get_current_multiplier())
 	emit_signal("description_updated", id, get_current_description())
 	
-	# Update the MultiplierManager with new multiplier
+	# Update the ScoreModifierManager with new multiplier
 	_update_multiplier_manager()
 	
 	# Only update icons if we're still in the tree
@@ -91,27 +108,21 @@ func get_current_multiplier() -> float:
 	return base_multiplier + bonus_count
 
 func _update_multiplier_manager() -> void:
-	if not _is_multiplier_manager_available():
-		print("[UpperBonusMultPowerUp] MultiplierManager not available, skipping update")
+	if not _is_score_modifier_manager_available():
+		print("[UpperBonusMultPowerUp] ScoreModifierManager not available, skipping update")
 		return
 	
 	var multiplier = get_current_multiplier()
-	
-	# Use the group-based reference if singleton isn't available
-	var manager = null
-	if Engine.has_singleton("MultiplierManager"):
-		manager = MultiplierManager
-	else:
-		manager = get_tree().get_first_node_in_group("multiplier_manager")
+	var manager = _get_score_modifier_manager()
 	
 	if manager:
 		manager.register_multiplier("upper_bonus_mult", multiplier)
-		print("[UpperBonusMultPowerUp] MultiplierManager updated with multiplier:", multiplier)
+		print("[UpperBonusMultPowerUp] ScoreModifierManager updated with multiplier:", multiplier)
 	else:
-		push_error("[UpperBonusMultPowerUp] Could not access MultiplierManager")
+		push_error("[UpperBonusMultPowerUp] Could not access ScoreModifierManager")
 
 func _on_multiplier_manager_changed(total_multiplier: float) -> void:
-	print("[UpperBonusMultPowerUp] MultiplierManager total changed to:", total_multiplier)
+	print("[UpperBonusMultPowerUp] ScoreModifierManager total changed to:", total_multiplier)
 	emit_signal("description_updated", id, get_current_description())
 	
 	# Only update icons if we're still in the tree
@@ -124,10 +135,12 @@ func _on_tree_exiting() -> void:
 		if scorecard_ref.is_connected("upper_bonus_achieved", _on_upper_bonus_achieved):
 			scorecard_ref.upper_bonus_achieved.disconnect(_on_upper_bonus_achieved)
 	
-	# Unregister from MultiplierManager
-	if _is_multiplier_manager_available():
-		MultiplierManager.unregister_multiplier("upper_bonus_mult")
-		print("[UpperBonusMultPowerUp] Multiplier unregistered from MultiplierManager")
+	# Unregister from ScoreModifierManager
+	if _is_score_modifier_manager_available():
+		var manager = _get_score_modifier_manager()
+		if manager:
+			manager.unregister_multiplier("upper_bonus_mult")
+			print("[UpperBonusMultPowerUp] Multiplier unregistered from ScoreModifierManager")
 
 func remove(target) -> void:
 	print("=== Removing UpperBonusMultPowerUp ===")
@@ -143,10 +156,12 @@ func remove(target) -> void:
 		if scorecard.is_connected("upper_bonus_achieved", _on_upper_bonus_achieved):
 			scorecard.upper_bonus_achieved.disconnect(_on_upper_bonus_achieved)
 	
-	# Unregister from MultiplierManager
-	if _is_multiplier_manager_available():
-		MultiplierManager.unregister_multiplier("upper_bonus_mult")
-		print("[UpperBonusMultPowerUp] Multiplier unregistered from MultiplierManager")
+	# Unregister from ScoreModifierManager
+	if _is_score_modifier_manager_available():
+		var manager = _get_score_modifier_manager()
+		if manager:
+			manager.unregister_multiplier("upper_bonus_mult")
+			print("[UpperBonusMultPowerUp] Multiplier unregistered from ScoreModifierManager")
 	
 	scorecard_ref = null
 
@@ -156,23 +171,17 @@ func get_current_description() -> String:
 	if not scorecard_ref:
 		return base_desc
 	
-	if not _is_multiplier_manager_available():
+	if not _is_score_modifier_manager_available():
 		return base_desc
 	
 	var current_mult = get_current_multiplier()
-	var total_mult = MultiplierManager.get_total_multiplier()
+	var manager = _get_score_modifier_manager()
+	var total_mult = 1.0
+	if manager:
+		total_mult = manager.get_total_multiplier()
 	
-	#var desc = "Current : %dx\nTotal mult: %dx\n%s" % [current_mult, total_mult, base_desc]
 	var desc = "\nCurrent : %dx" % [current_mult]
 
-	#var active_sources = MultiplierManager.get_active_sources()
-	#if active_sources.size() > 1:
-	#	desc += "\n\nActive mult:"
-	#	for source in active_sources:
-	#		var multiplier = MultiplierManager.get_multiplier(source)
-	#		var source_name = source.replace("_", " ").capitalize()
-	#		desc += "\n• %s: %dx" % [source_name, multiplier]
-	
 	return base_desc + desc
 
 func _update_power_up_icons() -> void:

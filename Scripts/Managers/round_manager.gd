@@ -161,7 +161,7 @@ func start_round(round_number: int) -> void:
 		scorecard.reset_scores()
 	
 	# Reset all multipliers for new round
-	#MultiplierManager.reset()
+	#ScoreModifierManager.reset()
 	#print("[RoundManager] All multipliers reset for round", round_number)
 	
 	# Activate the challenge

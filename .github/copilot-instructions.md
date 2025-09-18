@@ -20,6 +20,8 @@ This game takes its inspiration from the following games: Balatro, Dicey Dungeon
 - Godot does not support ternary operator syntax with the question mark ?: use if/else statements instead.
 - GDScript doesn't support multi-line boolean expressions with and/or operators split across lines.  Use single line if statements or nested if statements instead.
 - Review the code base to ensure consitency with existing variables, methods, and class names, and to follow proper syntax to ensure we do not introduce any parsing errors.
+- Remember to add activation code for new features in game_controller.gd.
+- Do not add class_name to scripts that are only used as Autoloads.
 
 ## Scene & Node Organization
 - Single responsibility: each scene owns exactly one domain (UI, gameplay logic, effects).

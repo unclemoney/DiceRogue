@@ -23,10 +23,10 @@ func apply(target) -> void:
 		if not is_connected("tree_exiting", _on_tree_exiting):
 			connect("tree_exiting", _on_tree_exiting)
 		
-		# Register with MultiplierManager - we'll conditionally apply the multiplier based on dice
+		# Register with ScoreModifierManager - we'll conditionally apply the multiplier based on dice
 		# For now, register with 1.0 as default, we'll update it when dice contain a 4
-		MultiplierManager.register_multiplier("foursome", 1.0)
-		print("[FoursomePowerUp] Registered with MultiplierManager")
+		ScoreModifierManager.register_multiplier("foursome", 1.0)
+		print("[FoursomePowerUp] Registered with ScoreModifierManager")
 	else:
 		push_error("[FoursomePowerUp] Target is not a Scorecard")
 
@@ -41,22 +41,22 @@ func should_apply_multiplier(dice_values: Array) -> bool:
 # Update the multiplier based on current dice state
 func update_multiplier_for_dice(dice_values: Array) -> void:
 	var multiplier = 4.0 if should_apply_multiplier(dice_values) else 1.0
-	MultiplierManager.register_multiplier("foursome", multiplier)
+	ScoreModifierManager.register_multiplier("foursome", multiplier)
 	print("[FoursomePowerUp] Updated multiplier to:", multiplier, "based on dice:", dice_values)
 
 # This function will be called when the node is about to be destroyed
 func _on_tree_exiting() -> void:
 	print("[FoursomePowerUp] Node is being destroyed, cleaning up")
-	# Unregister from MultiplierManager
-	MultiplierManager.unregister_multiplier("foursome")
+	# Unregister from ScoreModifierManager
+	ScoreModifierManager.unregister_multiplier("foursome")
 
 func remove(target) -> void:
 	print("=== Removing FoursomePowerUp ===")
 	print("[FoursomePowerUp] DEBUG - Remove called from:", get_stack())
 	
-	# Unregister from MultiplierManager regardless of target type
-	MultiplierManager.unregister_multiplier("foursome")
-	print("[FoursomePowerUp] Multiplier unregistered from MultiplierManager")
+	# Unregister from ScoreModifierManager regardless of target type
+	ScoreModifierManager.unregister_multiplier("foursome")
+	print("[FoursomePowerUp] Multiplier unregistered from ScoreModifierManager")
 	
 	# Clear our reference
 	scorecard_ref = null
