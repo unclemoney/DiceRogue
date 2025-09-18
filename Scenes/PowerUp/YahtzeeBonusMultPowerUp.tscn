@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://bw6x4m3p5ql0n"]
+
+[ext_resource type="Script" uid="uid://k78nx5qg1ckr" path="res://Scripts/PowerUps/yahtzee_bonus_mult_power_up.gd" id="1_2np1y"]
+
+[node name="YahtzeeBonusMultPowerUp" type="Node2D"]
+script = ExtResource("1_2np1y")
+id = "yahtzee_bonus_mult"

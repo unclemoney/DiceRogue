@@ -125,8 +125,7 @@ func _on_game_start() -> void:
 	#grant_consumable("three_more_rolls")
 	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
-	grant_power_up("foursome")
-	grant_power_up("upper_bonus_mult")
+	#grant_power_up("foursome")
 	if round_manager:
 		round_manager.start_game()
 
@@ -224,6 +223,12 @@ func _activate_power_up(power_up_id: String) -> void:
 		"extra_dice":
 			pu.apply(dice_hand)
 			enable_debuff("lock_dice")
+		"yahtzee_bonus_mult":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied YahtzeeBonusMult to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for YahtzeeBonusMult power-up")
 		"extra_rolls":
 			pu.apply(turn_tracker)
 		_:

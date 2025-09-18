@@ -12,6 +12,6 @@
 script = ExtResource("1_s5d5a")
 id = "d6"
 display_name = "D6"
-sides = 6
+sides = 1
 textures = Array[Texture2D]([ExtResource("2_tex1"), ExtResource("3_tex2"), ExtResource("4_tex3"), ExtResource("5_tex4"), ExtResource("6_tex5"), ExtResource("7_tex6")])
 metadata/_custom_type_script = "uid://cfvqx1x72koke"
