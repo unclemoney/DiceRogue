@@ -16,4 +16,5 @@ description = "Increases score multiplier by 1x for each Upper Section Bonus ach
 icon = SubResource("AtlasTexture_6eaaa")
 scene = ExtResource("2_awvan")
 price = 150
+rarity = "rare"
 metadata/_custom_type_script = "uid://b4upm4dbvhukm"

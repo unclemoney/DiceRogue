@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://dhu773gp3lwd4" path="res://Resources/Art/Dice/BlueSquare.png" id="2_6hyjo"]
 
 [node name="ShopUI" type="Control"]
+z_index = 4
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

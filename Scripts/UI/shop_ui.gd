@@ -154,19 +154,67 @@ func _filter_out_purchased_items(items: Array, type: String) -> Array:
 			result.append(item)
 	return result
 
-# Helper function to select random items from an array
+# Helper function to select random items from an array with weighted selection for power-ups
 func _select_random_items(items: Array, count: int) -> Array:
 	var result = []
-	var available = items.duplicate()
 	
-	# Randomize the array
-	available.shuffle()
+	# For power-ups, use weighted selection based on rarity
+	if items.size() > 0:
+		var first_item_id = items[0] if items.size() > 0 else ""
+		var first_data = power_up_manager.get_def(first_item_id) if first_item_id else null
+		
+		if first_data and first_data is PowerUpData:
+			result = _select_weighted_power_ups(items, count)
+		else:
+			# For non-power-ups, use original random selection
+			var available = items.duplicate()
+			available.shuffle()
+			var items_to_take = min(count, available.size())
+			for i in range(items_to_take):
+				result.append(available[i])
 	
-	# Take up to 'count' items or as many as available
-	var items_to_take = min(count, available.size())
-	for i in range(items_to_take):
-		result.append(available[i])
+	return result
+
+# Weighted selection for power-ups based on rarity
+func _select_weighted_power_ups(power_up_ids: Array, count: int) -> Array:
+	var result = []
+	var available_items = []
 	
+	# Build weighted array with debugging
+	print("\n[ShopUI] Building weighted power-up selection:")
+	for id in power_up_ids:
+		var data = power_up_manager.get_def(id)
+		if data and data is PowerUpData:
+			var weight = PowerUpData.get_rarity_weight(data.rarity)
+			var rarity_char = PowerUpData.get_rarity_display_char(data.rarity)
+			print("  - %s (%s): %s%% chance" % [data.display_name, rarity_char, str(weight)])
+			
+			# Add this item multiple times based on its weight
+			for i in range(weight):
+				available_items.append(id)
+	
+	# Select random items from weighted array
+	available_items.shuffle()
+	var items_to_take = min(count, power_up_ids.size())  # Don't exceed available unique items
+	var selected_unique = {}
+	
+	print("[ShopUI] Selecting %d power-ups from weighted pool of %d entries" % [items_to_take, available_items.size()])
+	
+	for i in range(available_items.size()):
+		if result.size() >= items_to_take:
+			break
+		
+		var item_id = available_items[i]
+		if not selected_unique.has(item_id):
+			selected_unique[item_id] = true
+			result.append(item_id)
+			
+			var data = power_up_manager.get_def(item_id)
+			if data:
+				var rarity_char = PowerUpData.get_rarity_display_char(data.rarity)
+				print("  ✓ Selected: %s (%s)" % [data.display_name, rarity_char])
+	
+	print("[ShopUI] Final selection: %d power-ups" % result.size())
 	return result
 
 # Helper function to clear all shop containers

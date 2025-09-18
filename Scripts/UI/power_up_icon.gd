@@ -30,6 +30,8 @@ var card_frame: TextureRect
 var card_info: VBoxContainer
 var card_title: Label
 var shadow: TextureRect
+var rarity_icon: TextureRect
+var rarity_label: Label
 
 var _shader_material: ShaderMaterial
 var _is_hovering := false
@@ -63,6 +65,8 @@ func _ready() -> void:
 		card_frame = get_node_or_null("CardFrame")
 		card_info = get_node_or_null("CardInfo")
 		shadow = get_node_or_null("Shadow")
+		rarity_icon = get_node_or_null("RarityIcon")
+		rarity_label = rarity_icon.get_node_or_null("RarityLabel") if rarity_icon else null
 		card_title = card_info.get_node_or_null("Title") if card_info else null
 		hover_label = label_bg.get_node_or_null("HoverLabel") if label_bg else null
 	
@@ -83,6 +87,10 @@ func _ready() -> void:
 		print("[PowerUpIcon] WARNING: HoverLabel node missing")
 	if not shadow:
 		print("[PowerUpIcon] WARNING: Shadow node missing")
+	if not rarity_icon:
+		print("[PowerUpIcon] WARNING: RarityIcon node missing")
+	if not rarity_label:
+		print("[PowerUpIcon] WARNING: RarityLabel node missing")
 	
 	# Setup card visuals
 	custom_minimum_size = Vector2(80, 120)  # Standard card ratio 2:3
@@ -234,6 +242,36 @@ func _create_card_structure() -> void:
 	hover_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	hover_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	label_bg.add_child(hover_label)
+	
+	# Create RarityIcon
+	rarity_icon = TextureRect.new()
+	rarity_icon.name = "RarityIcon"
+	rarity_icon.z_index = 4
+	rarity_icon.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	rarity_icon.size = Vector2(20, 20)
+	rarity_icon.position = Vector2(-20, -20)
+	add_child(rarity_icon)
+	
+	# Create RarityLabel
+	rarity_label = Label.new()
+	rarity_label.name = "RarityLabel"
+	# Set anchors to top-left and offsets to 0 to fill parent
+	rarity_label.anchor_left = 0.0
+	rarity_label.anchor_top = 0.0
+	rarity_label.anchor_right = 1.0
+	rarity_label.anchor_bottom = 1.0
+	rarity_label.offset_left = 0.0
+	rarity_label.offset_top = 0.0
+	rarity_label.offset_right = 0.0
+	rarity_label.offset_bottom = 0.0
+	rarity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rarity_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	rarity_label.add_theme_font_size_override("font_size", 13)
+	rarity_label.add_theme_color_override("font_color", Color.WHITE)
+	rarity_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	rarity_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	rarity_label.text = "C"
+	rarity_icon.add_child(rarity_label)
 
 func _setup_shader() -> void:
 	# Try to load shader
@@ -278,7 +316,35 @@ func _apply_data_to_ui() -> void:
 		card_art.texture = preload("res://icon.svg")
 		if shadow:
 			shadow.texture = preload("res://icon.svg")
-			shadow.visible = true
+	
+	# Set text fields
+	if card_title:
+		card_title.text = data.display_name if data.display_name else "Unknown PowerUp"
+		card_title.add_theme_color_override("font_color", Color.WHITE)
+		card_title.add_theme_color_override("font_shadow_color", Color.BLACK)
+		card_title.add_theme_color_override("font_outline_color", Color.BLACK)
+		card_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	
+	if hover_label:
+		hover_label.text = data.description if data.description else "No description"
+	
+	# Set rarity display
+	if rarity_icon and rarity_label:
+		var rarity_char = PowerUpData.get_rarity_display_char(data.rarity)
+		rarity_label.text = rarity_char
+		
+		# Try to load rarity icon texture
+		var rarity_texture = load("res://Resources/Art/PowerUps/Rarity_Icon.png")
+		if rarity_texture:
+			rarity_icon.texture = rarity_texture
+		else:
+			print("[PowerUpIcon] WARNING: Could not load rarity icon texture")
+		
+		# Set color based on rarity
+		var rarity_color = _get_rarity_color(data.rarity)
+		rarity_label.add_theme_color_override("font_color", rarity_color)
+		print("[PowerUpIcon] Set rarity display: %s (%s)" % [rarity_char, data.rarity])
+		shadow.visible = true
 	
 	# Set text fields
 	if card_title:
@@ -617,6 +683,16 @@ func check_outside_click(event_position: Vector2) -> bool:
 		return true
 	
 	return false
+
+# Helper function to get rarity color
+func _get_rarity_color(rarity_string: String) -> Color:
+	match rarity_string.to_lower():
+		"common": return Color.GRAY
+		"uncommon": return Color.GREEN
+		"rare": return Color.BLUE
+		"epic": return Color.PURPLE
+		"legendary": return Color.ORANGE
+		_: return Color.WHITE
 
 # Add to power_up_icon.gd
 func update_hover_description() -> void:

@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_40cld"]
 [ext_resource type="Texture2D" uid="uid://cdusovknauh8j" path="res://Resources/Art/Powerups/ExtraRolls.png" id="1_gl0oq"]
-[ext_resource type="PackedScene" path="res://Scenes/PowerUp/YahtzeeBonusMultPowerUp.tscn" id="2_awvan"]
+[ext_resource type="PackedScene" uid="uid://bw6x4m3p5ql0n" path="res://Scenes/PowerUp/YahtzeeBonusMultPowerUp.tscn" id="2_awvan"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_6eaaa"]
 atlas = ExtResource("1_gl0oq")
@@ -16,4 +16,5 @@ description = "Increases score multiplier by 1x for each Yahtzee Bonus achieved"
 icon = SubResource("AtlasTexture_6eaaa")
 scene = ExtResource("2_awvan")
 price = 200
+rarity = "legendary"
 metadata/_custom_type_script = "uid://b4upm4dbvhukm"
