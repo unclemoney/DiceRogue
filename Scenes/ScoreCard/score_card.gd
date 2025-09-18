@@ -37,9 +37,9 @@ var lower_scores := {
 	"chance": null
 }
 
-var _score_multiplier_func: Callable  # Add this near other vars
+var _score_multiplier_func: Callable  # DEPRECATED: Use MultiplierManager instead
 var score_modifiers: Array = [] # Array to hold score modifier objects
-var score_multiplier: float = 1.0
+var score_multiplier: float = 1.0  # DEPRECATED: Use MultiplierManager instead
 
 func _ready() -> void:
 	add_to_group("scorecard")
@@ -232,8 +232,10 @@ func check_bonus_yahtzee(values: Array[int], is_new_yahtzee: bool = false) -> vo
 	else:
 		print("✗ Not a Yahtzee - no bonus awarded")
 
+# DEPRECATED: Use MultiplierManager.register_multiplier() instead
 # Fix the set_score_multiplier function - make sure it properly registers the Callable
 func set_score_multiplier(multiplier_value) -> void:
+	push_warning("[Scorecard] set_score_multiplier is DEPRECATED. Use MultiplierManager.register_multiplier() instead.")
 	print("[Scorecard] Setting score multiplier with type:", typeof(multiplier_value))
 	
 	if multiplier_value is float or multiplier_value is int:
@@ -254,7 +256,9 @@ func set_score_multiplier(multiplier_value) -> void:
 	else:
 		push_error("[Scorecard] Invalid multiplier type: " + str(typeof(multiplier_value)))
 
+# DEPRECATED: Use MultiplierManager instead
 func clear_score_multiplier() -> void:
+	push_warning("[Scorecard] clear_score_multiplier is DEPRECATED. Use MultiplierManager.unregister_multiplier() instead.")
 	_score_multiplier_func = Callable()
 
 func is_game_complete() -> bool:
@@ -277,22 +281,9 @@ func reset_scores() -> void:
 	yahtzee_bonuses = 0
 	yahtzee_bonus_points = 0
 	
-	# Preserve the multiplier function during resets
-	# Store the current multiplier state
-	var had_multiplier_func = _score_multiplier_func.is_valid()
-	var temp_multiplier_func = _score_multiplier_func
-	var temp_multiplier_value = score_multiplier
-	
-	# Now we can safely clear it
-	clear_score_multiplier()
-	
-	# And restore it if it was valid
-	if had_multiplier_func:
-		_score_multiplier_func = temp_multiplier_func
-		print("[Scorecard] Preserved multiplier function during reset")
-	elif temp_multiplier_value != 1.0:
-		score_multiplier = temp_multiplier_value
-		print("[Scorecard] Preserved direct multiplier value during reset")
+	# Note: Multipliers are now handled by MultiplierManager
+	# PowerUps should manage their own multiplier lifecycle
+	print("[Scorecard] All scores reset - multipliers handled by MultiplierManager")
 	
 	print("[Scorecard] All scores reset")
 	
@@ -301,12 +292,13 @@ func reset_scores() -> void:
 
 func calculate_score(category: String, dice_values: Array) -> int:
 	print("[Scorecard] Calculating score for", category, "with dice:", dice_values)
-	print("[Scorecard] Current multiplier:", score_multiplier)
 	
 	var base_score = _calculate_base_score(category, dice_values)
-	var final_score = int(base_score * score_multiplier)
+	var total_multiplier = MultiplierManager.get_total_multiplier()
+	var final_score = int(base_score * total_multiplier)
 	
 	print("[Scorecard] Base score before multiplier:", base_score)
+	print("[Scorecard] Total multiplier from MultiplierManager:", total_multiplier)
 	print("[Scorecard] Final score after multiplier:", final_score)
 	
 	return final_score
@@ -327,55 +319,38 @@ func evaluate_category(category: String, values: Array[int]) -> int:
 		print("[Scorecard] Warning: Empty values array!")
 		return 0
 	
-	# Debug the multiplier function state
-	print("[Scorecard] _score_multiplier_func set?", _score_multiplier_func != null)
-	print("[Scorecard] _score_multiplier_func valid?", _score_multiplier_func.is_valid())
-	if _score_multiplier_func.is_valid():
-		print("[Scorecard] _score_multiplier_func target:", _score_multiplier_func.get_object())
-		print("[Scorecard] _score_multiplier_func method:", _score_multiplier_func.get_method())
-	
 	# Reset evaluation counter
 	ScoreEvaluatorSingleton.reset_evaluation_count()
 	var scores = ScoreEvaluatorSingleton.evaluate_with_wildcards(values)
 	var score = scores.get(category, 0)
 	print("[Scorecard] Base score before multiplier:", score)
 	
-	# Try to recover the multiplier function if it's broken but we have a FoursomePowerUp active
-	var has_valid_multiplier = false
+	# Get total multiplier from MultiplierManager
+	var total_multiplier = MultiplierManager.get_total_multiplier()
+	print("[Scorecard] Total multiplier from MultiplierManager:", total_multiplier)
 	
-	if _score_multiplier_func.is_valid():
-		var multiplier_target = _score_multiplier_func.get_object()
-		has_valid_multiplier = multiplier_target != null
-		print("[Scorecard] Multiplier function validity:", has_valid_multiplier)
-	else:
-		# Try to find FoursomePowerUp nodes that might need to reconnect
+	# Handle conditional multipliers like FoursomePowerUp
+	if MultiplierManager.has_multiplier("foursome"):
+		# Check if current dice have a 4, and update FoursomePowerUp accordingly
 		var foursome_nodes = get_tree().get_nodes_in_group("power_ups")
 		for node in foursome_nodes:
-			if node is FoursomePowerUp and node.scorecard_ref == self:
-				print("[Scorecard] Found FoursomePowerUp, reconnecting multiplier function")
-				var multiplier_func = Callable(node, "_foursome_multiplier_func")
-				_score_multiplier_func = multiplier_func
-				has_valid_multiplier = true
+			if node is FoursomePowerUp:
+				node.update_multiplier_for_dice(values)
 				break
+		# Recalculate total multiplier after potential update
+		total_multiplier = MultiplierManager.get_total_multiplier()
+		print("[Scorecard] Updated total multiplier after foursome check:", total_multiplier)
 	
-	# Apply multiplier if one is set
-	if has_valid_multiplier:
-		print("[Scorecard] Calling multiplier function...")
-		# We've confirmed the function is valid, so call it
-		var multiplied_score = _score_multiplier_func.call(category, score, values)
-		print("[Scorecard] Score after multiplier function:", multiplied_score)
-		return multiplied_score
-	# Or if we have a direct multiplier value
-	elif score_multiplier != 1.0:
-		print("[Scorecard] Applying direct multiplier:", score_multiplier)
-		return int(score * score_multiplier)
-	else:
-		print("[Scorecard] No multiplier applied")
-		return score
+	# Apply the final multiplier
+	var final_score = int(score * total_multiplier)
+	print("[Scorecard] Final score after multiplier:", final_score)
+	
+	return final_score
 
-# Add this debug function near the evaluate_category function
+# DEPRECATED: Debug function for old multiplier system
 func debug_multiplier_function() -> void:
-	print("\n=== Testing Scorecard Multiplier Function ===")
+	push_warning("[Scorecard] debug_multiplier_function is DEPRECATED. Use MultiplierManager.debug_print_state() instead.")
+	print("\n=== Testing OLD Scorecard Multiplier Function (DEPRECATED) ===")
 	print("[Scorecard] Has multiplier function:", _score_multiplier_func.is_valid())
 	if _score_multiplier_func.is_valid():
 		print("[Scorecard] Multiplier function object:", _score_multiplier_func.get_object())
@@ -386,3 +361,7 @@ func debug_multiplier_function() -> void:
 		print("[Scorecard] Test call result:", test_result)
 	else:
 		print("[Scorecard] No valid multiplier function set")
+	
+	# Show the new system
+	print("\n=== NEW MultiplierManager State ===")
+	MultiplierManager.debug_print_state()

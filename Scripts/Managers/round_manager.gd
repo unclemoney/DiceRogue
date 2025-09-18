@@ -116,6 +116,7 @@ func start_game() -> void:
 	is_challenge_completed = false
 	game_started = true
 	
+	
 	# Make sure turn tracker is in inactive state with no rolls
 	if turn_tracker:
 		turn_tracker.current_turn = 0
@@ -158,6 +159,10 @@ func start_round(round_number: int) -> void:
 	# Reset the scorecard
 	if scorecard:
 		scorecard.reset_scores()
+	
+	# Reset all multipliers for new round
+	#MultiplierManager.reset()
+	#print("[RoundManager] All multipliers reset for round", round_number)
 	
 	# Activate the challenge
 	if challenge_manager and not current_challenge_id.is_empty():

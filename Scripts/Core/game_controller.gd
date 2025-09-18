@@ -125,6 +125,7 @@ func _on_game_start() -> void:
 	#grant_consumable("three_more_rolls")
 	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
+	grant_power_up("foursome")
 	grant_power_up("upper_bonus_mult")
 	if round_manager:
 		round_manager.start_game()
@@ -258,6 +259,7 @@ func _on_power_up_sold(power_up_id: String) -> void:
 			powerup_ui.remove_power_up(power_up_id)
 
 func _deactivate_power_up(power_up_id: String) -> void:
+	print("[GameController] DEACTIVATING PowerUp:", power_up_id)
 	var pu = active_power_ups.get(power_up_id)
 	if not pu:
 		push_error("[GameController] No PowerUp found for id:", power_up_id)
@@ -270,8 +272,10 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"extra_rolls":
 			pu.remove(turn_tracker)
 		"foursome":
+			print("[GameController] Removing foursome PowerUp")
 			pu.remove(scorecard)
 		"upper_bonus_mult":
+			print("[GameController] Removing upper_bonus_mult PowerUp")
 			pu.remove(scorecard)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
@@ -866,7 +870,7 @@ func _on_challenge_selected(id: String) -> void:
 		push_error("[GameController] Challenge not found:", id)
 
 # Add this method to handle the dice_rolled signal from GameButtonUI
-func _on_game_button_dice_rolled(dice_values: Array = []) -> void:
+func _on_game_button_dice_rolled(dice_values: Array) -> void:
 	print("[GameController] Dice roll button pressed, values:", dice_values)
 	
 	# Check if we can afford to roll (for costly_roll debuff)
@@ -874,9 +878,22 @@ func _on_game_button_dice_rolled(dice_values: Array = []) -> void:
 		var cost = active_debuffs["costly_roll"].roll_cost
 		PlayerEconomy.remove_money(cost)
 		print("[GameController] Paid", cost, "coins to roll dice")
-		
-	#else:
-	#	push_error("[GameController] No dice_hand reference when trying to roll dice")
+	
+	# Update PowerUps that depend on dice values
+	_update_power_ups_for_dice(dice_values)
+
+# Add this new method to game_controller.gd
+func _update_power_ups_for_dice(dice_values: Array) -> void:
+	print("[GameController] Updating PowerUps for dice values:", dice_values)
+	
+	# Update FoursomePowerUp if active
+	if active_power_ups.has("foursome"):
+		var foursome_pu = active_power_ups["foursome"] as FoursomePowerUp
+		if foursome_pu and foursome_pu.has_method("update_multiplier_for_dice"):
+			foursome_pu.update_multiplier_for_dice(dice_values)
+	
+	# Add other dice-dependent PowerUps here as needed
+	
 
 # Add these methods to handle the missing signal connections
 
@@ -972,7 +989,7 @@ func _on_debuff_selected(id: String) -> void:
 		push_error("[GameController] Debuff not found:", id)
 
 # In game_controller.gd - Update the update_three_more_rolls_usability function
-func update_three_more_rolls_usability() -> void:
+func update_three_more_rolls_usability(rolls_left: int = 0) -> void:
 	var consumable_icon = consumable_ui.get_consumable_icon("three_more_rolls")
 	if consumable_icon:
 		# Allow usage when in turn 1+ with rolls remaining
@@ -988,7 +1005,7 @@ func update_three_more_rolls_usability() -> void:
 			print("[GameController] Three more rolls consumable disabled - not in active turn")
 
 # Add this function to game_controller.gd
-func update_double_existing_usability() -> void:
+func update_double_existing_usability(section: int = 0, category: String = "", score: int = 0) -> void:
 	var consumable_icon = consumable_ui.get_consumable_icon("double_existing")
 	if consumable_icon:
 		# Only check for scores and valid turn number, not rolls

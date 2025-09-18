@@ -11,7 +11,7 @@ region = Rect2(0, 95, 59, 93)
 [resource]
 script = ExtResource("1_40cld")
 id = "upper_bonus_mult"
-display_name = "Upper Bonus Multiplier"
+display_name = "Bonus Mult"
 description = "Increases score multiplier by 1x for each Upper Section Bonus achieved"
 icon = SubResource("AtlasTexture_6eaaa")
 scene = ExtResource("2_awvan")
