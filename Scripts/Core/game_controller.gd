@@ -101,6 +101,8 @@ func _ready() -> void:
 	if consumable_ui:
 		if not consumable_ui.is_connected("consumable_sold", _on_consumable_sold):
 			consumable_ui.connect("consumable_sold", _on_consumable_sold)
+		if not consumable_ui.is_connected("consumable_used", _on_consumable_ui_used):
+			consumable_ui.connect("consumable_used", _on_consumable_ui_used)
 	if powerup_ui:
 		if not powerup_ui.is_connected("max_power_ups_reached", _on_max_power_ups_reached):
 			powerup_ui.connect("max_power_ups_reached", _on_max_power_ups_reached)
@@ -125,7 +127,7 @@ func _on_game_start() -> void:
 	grant_consumable("power_up_shop_num")
 	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
-	#grant_power_up("chance520")
+	grant_power_up("consumable_cash")
 	if round_manager:
 		round_manager.start_game()
 
@@ -197,7 +199,7 @@ func _activate_power_up(power_up_id: String) -> void:
 		return
 	
 	# Connect to description_updated signal if the power-up has one
-	if power_up_id == "upper_bonus_mult":
+	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash":
 		# Disconnect first to avoid duplicates
 		if pu.is_connected("description_updated", _on_power_up_description_updated):
 			pu.description_updated.disconnect(_on_power_up_description_updated)
@@ -237,6 +239,9 @@ func _activate_power_up(power_up_id: String) -> void:
 				push_error("[GameController] No scorecard available for YahtzeeBonusMult power-up")
 		"extra_rolls":
 			pu.apply(turn_tracker)
+		"consumable_cash":
+			pu.apply(self)
+			print("[GameController] Applied ConsumableCash power-up")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -288,6 +293,9 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"upper_bonus_mult":
 			print("[GameController] Removing upper_bonus_mult PowerUp")
 			pu.remove(scorecard)
+		"consumable_cash":
+			print("[GameController] Removing consumable_cash PowerUp")
+			pu.remove(self)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -305,6 +313,8 @@ func revoke_power_up(power_up_id: String) -> void:
 				pu.remove(turn_tracker)
 			"foursome":
 				pu.remove(scorecard)
+			"consumable_cash":
+				pu.remove(self)
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself
 				pu.remove(pu)
@@ -401,6 +411,7 @@ func grant_consumable(id: String) -> void:
 
 func _on_consumable_used(consumable_id: String) -> void:
 	var consumable = active_consumables.get(consumable_id)
+	print("\n=== Using Consumable: ", consumable_id, " ===")
 	if not consumable:
 		push_error("No Consumable found for id: %s" % consumable_id)
 		return
@@ -434,6 +445,13 @@ func _on_consumable_used(consumable_id: String) -> void:
 			active_consumables.erase(consumable_id)	
 		_:
 			push_error("Unknown consumable type: %s" % consumable_id)
+
+func _on_consumable_ui_used(consumable_id: String) -> void:
+	# Forward consumable_used signal for PowerUps to listen
+	var consumable = active_consumables.get(consumable_id)
+	emit_signal("consumable_used", consumable_id, consumable)
+	# Optionally call the original handler if needed
+	_on_consumable_used(consumable_id)
 
 func _on_score_rerolled(_section: Scorecard.Section, _category: String, _score: int) -> void:
 	var reroll = get_active_consumable("score_reroll") as ScoreRerollConsumable

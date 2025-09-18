@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dr3aqglog1nu" path="res://Scripts/Core/game_controller.gd" id="1_paydd"]
 
-[node name="GameController" type="Node"]
+[node name="GameController" type="Node" groups=["game_controller"]]
 script = ExtResource("1_paydd")
 
 [node name="PowerUpContainer" type="Node2D" parent="."]

@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" uid="uid://cuianjuhi7i1a" path="res://Scripts/Core/turn_tracker.gd" id="1_1beh8"]
 
-[node name="TurnTracker" type="Node"]
+[node name="TurnTracker" type="Node" groups=["turn_tracker"]]
 script = ExtResource("1_1beh8")

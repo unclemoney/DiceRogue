@@ -16,4 +16,5 @@ description = "Grants one additional die"
 icon = SubResource("AtlasTexture_8vswu")
 scene = ExtResource("2_o2lnj")
 price = 100
+rarity = "common"
 metadata/_custom_type_script = "uid://b4upm4dbvhukm"
