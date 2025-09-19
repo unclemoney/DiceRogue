@@ -1,4 +1,4 @@
-[gd_scene load_steps=69 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=70 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -43,6 +43,7 @@
 [ext_resource type="Resource" uid="uid://mxumjrqrlefp" path="res://Scripts/Mods/EvenOnlyMod.tres" id="31_1jk2k"]
 [ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="31_gtvla"]
 [ext_resource type="Resource" uid="uid://bvcw4aokgvpol" path="res://Scripts/Challenge/pts_200_disable_two_debuff_resource.tres" id="31_ja7vv"]
+[ext_resource type="Resource" uid="uid://c881tuw711775" path="res://Scripts/PowerUps/EvensNoOddsPowerUp.tres" id="31_sqb4o"]
 [ext_resource type="Resource" uid="uid://bdbldxuf65trw" path="res://Scripts/Consumable/ScoreReroll.tres" id="32_aeiu6"]
 [ext_resource type="Resource" uid="uid://cpcfivvcimiy0" path="res://Scripts/Mods/GoldSixMod.tres" id="32_o2qgl"]
 [ext_resource type="PackedScene" uid="uid://dbqwnxq8iy66l" path="res://Scenes/UI/shop_ui.tscn" id="32_oy5od"]
@@ -228,7 +229,7 @@ mod_manager_path = NodePath("../ModManager")
 challenge_container_path = NodePath("../ChallengeContainer")
 
 [node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
-power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc"), ExtResource("30_8nt64"), ExtResource("30_2hxro")])
+power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc"), ExtResource("30_8nt64"), ExtResource("30_2hxro"), ExtResource("31_sqb4o")])
 
 [node name="ChallengeManager" parent="." instance=ExtResource("25_3vaha")]
 challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtResource("29_1jk2k"), ExtResource("30_o0xxd"), ExtResource("31_ja7vv"), ExtResource("32_ytf57"), ExtResource("33_3ia8s")])
