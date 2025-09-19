@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://dwrkuuuo24eif"]
+
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_ih5iy"]
+[ext_resource type="Texture2D" uid="uid://cdusovknauh8j" path="res://Resources/Art/Powerups/ExtraRolls.png" id="1_knce8"]
+[ext_resource type="PackedScene" path="res://Scenes/PowerUp/RandomizerPowerUp.tscn" id="2_nexa7"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_r9mnv"]
+atlas = ExtResource("1_knce8")
+region = Rect2(72, 0, 59, 93)
+
+[resource]
+script = ExtResource("1_ih5iy")
+id = "randomizer"
+display_name = "Chaos Dice"
+description = "Each turn applies a random score modifier: 80% chance for additive bonus (-20 to +50), 20% chance for multiplier (×-1 to ×4)"
+icon = SubResource("AtlasTexture_r9mnv")
+scene = ExtResource("2_nexa7")
+price = 180
+rarity = "uncommon"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

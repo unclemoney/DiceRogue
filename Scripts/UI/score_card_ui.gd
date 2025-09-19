@@ -21,6 +21,7 @@ signal score_doubled(section: Scorecard.Section, category: String, new_score: in
 @onready var lower_total_label: Label = $HBoxContainer/LowerVBoxContainer/LowerGridContainer/LowerTotal/LowerTotalLabel
 @onready var total_score_label: RichTextLabel = $RichTextTotalScore
 @onready var yahtzee_bonus_label: Label = $HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus/YahtzeeBonusLabel
+@onready var extra_info_label: RichTextLabel = get_node_or_null("ExtraInfo")
 
 const LOWER_CATEGORY_NODE_NAMES := {
 	"three_of_a_kind": "Threeofakind",
@@ -289,7 +290,14 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 	update_all()
 	turn_scored = true
 	disable_all_score_buttons()
+	
+	# Emit signal for randomizer effect display
 	emit_signal("hand_scored")
+	
+	# Manually trigger score assignment signal for GameController
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller and game_controller.has_method("_on_score_assigned"):
+		game_controller._on_score_assigned(section, category, score)
 
 func disable_all_score_buttons():
 	for button in upper_section_buttons.values():
@@ -514,3 +522,50 @@ func _handle_double_score(section: Scorecard.Section, category: String) -> void:
 		# Emit signal
 		emit_signal("score_doubled", section, category, doubled_score)
 		enable_all_score_buttons()
+
+var _extra_info_tween: Tween = null
+
+func update_extra_info(info_text: String) -> void:
+	"""Update the ExtraInfo RichTextLabel with randomizer or other power-up effects"""
+	if extra_info_label:
+		# Reset any existing animations
+		if _extra_info_tween:
+			_extra_info_tween.kill()
+			_extra_info_tween = null
+		
+		# Set initial state
+		extra_info_label.text = "[center]%s[/center]" % info_text
+		extra_info_label.modulate = Color(1, 1, 1, 0)
+		extra_info_label.scale = Vector2(0.5, 0.5)
+		extra_info_label.visible = true
+		
+		# Create animation sequence
+		_extra_info_tween = create_tween()
+		
+		# Pop-in effect (scale and fade in)
+		_extra_info_tween.parallel().tween_property(extra_info_label, "modulate:a", 1.0, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_extra_info_tween.parallel().tween_property(extra_info_label, "scale", Vector2(2.0, 2.0), 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		
+		# Settle to normal size
+		_extra_info_tween.tween_property(extra_info_label, "scale", Vector2(1.0, 1.0), 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+		
+		# Wait for 5 seconds
+		_extra_info_tween.tween_interval(5.0)
+		
+		# Fade out
+		_extra_info_tween.tween_property(extra_info_label, "modulate:a", 0.0, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		
+		# Hide when done
+		_extra_info_tween.tween_callback(func(): extra_info_label.visible = false)
+		
+		print("[ScoreCardUI] Updated ExtraInfo with animation:", info_text)
+	else:
+		print("[ScoreCardUI] Warning: ExtraInfo RichTextLabel not found in scene")
+		# Try to find it by searching children if it exists but wasn't connected properly
+		var extra_info = get_node_or_null("ExtraInfo")
+		if not extra_info:
+			extra_info = find_child("ExtraInfo", true, false)
+		if extra_info and extra_info is RichTextLabel:
+			extra_info_label = extra_info
+			# Retry the animation with found label
+			update_extra_info(info_text)

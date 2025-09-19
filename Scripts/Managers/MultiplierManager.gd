@@ -103,13 +103,12 @@ func register_multiplier(source_name: String, multiplier: float) -> void:
 	if _debug_enabled:
 		print("[ScoreModifierManager] Registering multiplier from '", source_name, "': ", multiplier)
 	
-	# Validate multiplier value
-	if multiplier <= 0:
-		push_error("[ScoreModifierManager] Invalid multiplier value: " + str(multiplier) + " from " + source_name)
-		return
+	# Allow negative multipliers but warn about zero
+	if multiplier == 0:
+		push_warning("[ScoreModifierManager] Zero multiplier detected from " + source_name + " - this will zero out scores")
 	
 	# Validation warning for extremely high multipliers
-	if multiplier > 100:
+	if abs(multiplier) > 100:
 		push_warning("[ScoreModifierManager] Very high multiplier detected: " + str(multiplier) + " from " + source_name)
 	
 	var old_total = get_total_multiplier()
@@ -215,9 +214,7 @@ func set_debug_enabled(enabled: bool) -> void:
 func _validate_state() -> bool:
 	var calculated_total = 1.0
 	for multiplier in _active_multipliers.values():
-		if multiplier <= 0:
-			push_error("[ScoreModifierManager] VALIDATION ERROR: Invalid multiplier found: " + str(multiplier))
-			return false
+		# Remove the <= 0 check to allow negative multipliers
 		calculated_total *= multiplier
 	
 	var stored_total = get_total_multiplier()

@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://b8j5k2n7p4qwr"]
+
+[ext_resource type="Script" uid="uid://c9t6k5m3q8rxv" path="res://Scripts/PowerUps/randomizer_power_up.gd" id="1_a2np5"]
+
+[node name="RandomizerPowerUp" type="Node2D"]
+script = ExtResource("1_a2np5")
+id = "randomizer"

@@ -1,4 +1,4 @@
-[gd_scene load_steps=67 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=69 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -36,6 +36,7 @@
 [ext_resource type="Resource" uid="uid://eiv15upj2hij" path="res://Scripts/PowerUps/YahtzeeBonusMultPowerUp.tres" id="28_ybnmt"]
 [ext_resource type="Resource" uid="uid://7uwjjpth4uv6" path="res://Scripts/Challenge/pts300_no_debuff_resource.tres" id="29_1jk2k"]
 [ext_resource type="Resource" uid="uid://b1shilkw1ljul" path="res://Scripts/PowerUps/Chance520PowerUp.tres" id="29_cjjtc"]
+[ext_resource type="Resource" uid="uid://dwrkuuuo24eif" path="res://Scripts/PowerUps/RandomizerPowerUp.tres" id="30_2hxro"]
 [ext_resource type="Resource" uid="uid://b0vwc3j45xp22" path="res://Scripts/PowerUps/ConsumableCashPowerUp.tres" id="30_8nt64"]
 [ext_resource type="Resource" uid="uid://cr8w2ud13fb6d" path="res://Scripts/Challenge/pts_100_no_debuff_challenge.tres" id="30_o0xxd"]
 [ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="30_si81o"]
@@ -62,6 +63,7 @@
 [ext_resource type="Resource" uid="uid://c7xwey38elhic" path="res://Scripts/Debuff/CostlyRollDebuff.tres" id="49_ghgbc"]
 [ext_resource type="Resource" uid="uid://ckwgku73oppl3" path="res://Scripts/Consumable/PowerUpShopNumConsumable.tres" id="50_cs0p4"]
 [ext_resource type="Resource" uid="uid://cok1qslsfb3r3" path="res://Scripts/Round/pts150_roll_minus_one.tres" id="50_ytf57"]
+[ext_resource type="Resource" uid="uid://b8m7k4n2qaqwx" path="res://Scripts/Consumable/QuickCashConsumable.tres" id="51_8nt64"]
 [ext_resource type="Resource" uid="uid://b8pdl6weyahle" path="res://Scripts/Round/costly_roll_challenge.tres" id="52_3ia8s"]
 [ext_resource type="Resource" uid="uid://3ctxmrk81fwo" path="res://Scripts/Round/pts_100_no_debuff_challenge.tres" id="52_ghgbc"]
 
@@ -226,7 +228,7 @@ mod_manager_path = NodePath("../ModManager")
 challenge_container_path = NodePath("../ChallengeContainer")
 
 [node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
-power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc"), ExtResource("30_8nt64")])
+power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc"), ExtResource("30_8nt64"), ExtResource("30_2hxro")])
 
 [node name="ChallengeManager" parent="." instance=ExtResource("25_3vaha")]
 challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtResource("29_1jk2k"), ExtResource("30_o0xxd"), ExtResource("31_ja7vv"), ExtResource("32_ytf57"), ExtResource("33_3ia8s")])
@@ -235,7 +237,7 @@ challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtRes
 mod_defs = Array[ExtResource("30_si81o")]([ExtResource("31_1jk2k"), ExtResource("32_o2qgl"), ExtResource("33_8y1rk"), ExtResource("34_vv3hq")])
 
 [node name="ConsumableManager" parent="." instance=ExtResource("20_1jk2k")]
-consumable_defs = Array[ExtResource("31_gtvla")]([ExtResource("32_aeiu6"), ExtResource("41_5k370"), ExtResource("45_i7xol"), ExtResource("46_nkw3w"), ExtResource("50_cs0p4")])
+consumable_defs = Array[ExtResource("31_gtvla")]([ExtResource("32_aeiu6"), ExtResource("41_5k370"), ExtResource("45_i7xol"), ExtResource("46_nkw3w"), ExtResource("50_cs0p4"), ExtResource("51_8nt64")])
 
 [node name="DebuffManager" parent="." instance=ExtResource("24_f4xs4")]
 debuff_defs = Array[ExtResource("24_4tiye")]([ExtResource("25_gxabo"), ExtResource("43_4tv4b"), ExtResource("46_0fq3x"), ExtResource("49_ghgbc")])

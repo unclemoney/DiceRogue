@@ -48,18 +48,19 @@ func remove(target) -> void:
 		
 	print("[ConsumableCashPowerUp] Disconnected from all signals")
 
-func _on_consumable_used(consumable_id: String, _consumable) -> void:
-	consumables_used_count += 1
-	print("[ConsumableCashPowerUp] Consumable used count:", consumables_used_count)
-	
-	# Update the power-up description to show current bonus
-	var new_description = "Grants %d dollars per turn (%d base + %d bonus from %d consumables used)" % [
+func get_current_description() -> String:
+	var desc = "Grants %d dollars per turn (%d base + %d bonus from %d consumables used)" % [
 		get_total_income(),
 		base_income_per_turn,
 		consumables_used_count,
 		consumables_used_count
 	]
-	emit_signal("description_updated", id, new_description)
+	return desc
+
+func _on_consumable_used(consumable_id: String, _consumable) -> void:
+	consumables_used_count += 1
+	print("[ConsumableCashPowerUp] Consumable used count:", consumables_used_count)
+	emit_signal("description_updated", id, get_current_description())
 
 func _on_turn_started() -> void:
 	var income = get_total_income()

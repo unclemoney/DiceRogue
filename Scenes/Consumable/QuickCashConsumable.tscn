@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://c5t8j6r1m4kls"]
+
+[ext_resource type="Script" uid="uid://b9x5k7m2q4rwt" path="res://Scripts/Consumable/quick_cash_consumable.gd" id="1_7p2bn"]
+
+[node name="QuickCashConsumable" type="Node"]
+script = ExtResource("1_7p2bn")
+id = "quick_cash"

@@ -124,10 +124,10 @@ func _ready() -> void:
 
 func _on_game_start() -> void:
 	#spawn_starting_powerups()
-	grant_consumable("power_up_shop_num")
+	grant_consumable("quick_cash")
 	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
-	grant_power_up("consumable_cash")
+	grant_power_up("randomizer")
 	if round_manager:
 		round_manager.start_game()
 
@@ -208,6 +208,14 @@ func _activate_power_up(power_up_id: String) -> void:
 		pu.description_updated.connect(_on_power_up_description_updated)
 		print("[GameController] Connected to description_updated signal")
 	
+	# Connect to effect_updated signal for randomizer power-up
+	if power_up_id == "randomizer":
+		if pu.is_connected("effect_updated", _on_randomizer_effect_updated):
+			pu.effect_updated.disconnect(_on_randomizer_effect_updated)
+		
+		pu.effect_updated.connect(_on_randomizer_effect_updated)
+		print("[GameController] Connected to randomizer effect_updated signal")
+	
 	# Special handling for different power-ups
 	match power_up_id:
 		"foursome":
@@ -242,6 +250,9 @@ func _activate_power_up(power_up_id: String) -> void:
 		"consumable_cash":
 			pu.apply(self)
 			print("[GameController] Applied ConsumableCash power-up")
+		"randomizer":
+			pu.apply(self)
+			print("[GameController] Applied Randomizer power-up")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -296,6 +307,9 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"consumable_cash":
 			print("[GameController] Removing consumable_cash PowerUp")
 			pu.remove(self)
+		"randomizer":
+			print("[GameController] Removing randomizer PowerUp")
+			pu.remove(self)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -314,6 +328,8 @@ func revoke_power_up(power_up_id: String) -> void:
 			"foursome":
 				pu.remove(scorecard)
 			"consumable_cash":
+				pu.remove(self)
+			"randomizer":
 				pu.remove(self)
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself
@@ -442,7 +458,10 @@ func _on_consumable_used(consumable_id: String) -> void:
 			active_consumables.erase(consumable_id)
 		"power_up_shop_num":
 			consumable.apply(self)
-			active_consumables.erase(consumable_id)	
+			active_consumables.erase(consumable_id)
+		"quick_cash":
+			consumable.apply(self)
+			active_consumables.erase(consumable_id)
 		_:
 			push_error("Unknown consumable type: %s" % consumable_id)
 
@@ -469,6 +488,12 @@ func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 	if not scorecard:
 		push_error("No scorecard reference found")
 		return
+		
+	# Show randomizer effect after scoring
+	if active_power_ups.has("randomizer"):
+		var randomizer = active_power_ups["randomizer"] as RandomizerPowerUp
+		if randomizer and randomizer.has_method("show_effect_after_scoring"):
+			randomizer.show_effect_after_scoring()
 		
 	if scorecard.has_any_scores():
 		var reroll_icon = consumable_ui.get_consumable_icon("score_reroll")
@@ -1063,15 +1088,19 @@ func _on_power_up_description_updated(power_up_id: String, new_description: Stri
 		if icon and icon.hover_label:
 			icon.hover_label.text = new_description
 			print("[GameController] Updated hover label text for power-up icon")
+
+func _on_randomizer_effect_updated(effect_type: String, value_text: String) -> void:
+	print("[GameController] Randomizer effect updated - Type:", effect_type, "Value:", value_text)
+	
+	# Update the ExtraInfo display in score_card_ui
+	if score_card_ui:
+		var effect_description = "Random Effect: %s %s" % [effect_type.capitalize(), value_text]
+		score_card_ui.update_extra_info(effect_description)
+		print("[GameController] Updated ExtraInfo with randomizer effect")
+	else:
+		push_error("[GameController] score_card_ui not found for randomizer effect update")
 			
 			# If currently hovering, ensure label is visible
-			if icon._is_hovering and icon.label_bg:
-				icon.label_bg.visible = true
-				print("[GameController] Made label visible since icon is being hovered")
-		else:
-			print("[GameController] Couldn't find icon or hover_label for:", power_up_id)
-	else:
-		print("[GameController] No powerup_ui reference")
 
 # Add this helper method to retrieve active power-ups
 func get_active_power_up(id: String) -> PowerUp:

@@ -15,6 +15,6 @@ display_name = "Foursome"
 description = "If a 4 is scored, multiply your score by 4"
 icon = SubResource("AtlasTexture_qij7m")
 scene = ExtResource("2_nexa7")
-price = 100
+price = 250
 rarity = "rare"
 metadata/_custom_type_script = "uid://b4upm4dbvhukm"
