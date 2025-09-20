@@ -16,11 +16,10 @@ offset_bottom = 338.0
 
 [node name="UpperVBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
 layout_mode = 2
-size_flags_horizontal = 3
 
 [node name="UpperSectionLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer"]
 layout_mode = 2
-text = "Upper Section                  "
+text = "Upper Section       "
 
 [node name="UpperGridContainer" type="GridContainer" parent="HBoxContainer/UpperVBoxContainer"]
 layout_mode = 2
@@ -29,6 +28,7 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="OnesButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/OnesContainer"]
+custom_minimum_size = Vector2(110, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Ones:"
@@ -97,7 +97,7 @@ layout_mode = 2
 [node name="UppersubLabel" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Upper Total:"
+text = "Sub Ttl:"
 
 [node name="UppersubButton" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal"]
 layout_mode = 2
@@ -108,7 +108,7 @@ layout_mode = 2
 [node name="UpperBonus" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Upper Bonus:"
+text = "Bonus:"
 
 [node name="UpperBonusLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus"]
 layout_mode = 2
@@ -119,14 +119,13 @@ layout_mode = 2
 [node name="UpperTotalButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperTotal"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Upper Total:"
+text = "Total:"
 
 [node name="UpperTotalLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperTotal"]
 layout_mode = 2
 
 [node name="LowerVBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
 layout_mode = 2
-size_flags_horizontal = 3
 
 [node name="LowerSecionLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer"]
 layout_mode = 2
@@ -139,9 +138,10 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="ThreeofakindButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Threeofakind"]
+custom_minimum_size = Vector2(110, 0)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Three of a kind:"
+text = "3 of a kind:"
 
 [node name="ThreeofakindLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Threeofakind"]
 layout_mode = 2
@@ -152,7 +152,7 @@ layout_mode = 2
 [node name="FourofakindButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fourofakind"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Fourofakind:"
+text = "4 of a kind:"
 
 [node name="FourofakindLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fourofakind"]
 layout_mode = 2
@@ -174,7 +174,7 @@ layout_mode = 2
 [node name="SmallstraightButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Smallstraight"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Small Straight:"
+text = "S Straight:"
 
 [node name="SmallstraightLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Smallstraight"]
 layout_mode = 2
@@ -185,7 +185,7 @@ layout_mode = 2
 [node name="LargestraightButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Large Straight:"
+text = "L Straight:"
 
 [node name="LargestraightLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight"]
 layout_mode = 2
@@ -218,7 +218,7 @@ layout_mode = 2
 [node name="YahtzeeBonusButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Yhatzee Bonus:"
+text = "Bonus:"
 
 [node name="YahtzeeBonusLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
 layout_mode = 2
@@ -237,28 +237,28 @@ layout_mode = 2
 [node name="BestHandScore" type="RichTextLabel" parent="."]
 clip_contents = false
 layout_mode = 0
-offset_left = -500.0
-offset_top = 275.0
-offset_right = -100.0
-offset_bottom = 430.0
+offset_left = -254.0
+offset_top = 214.0
+offset_right = -1.0
+offset_bottom = 368.0
 bbcode_enabled = true
 fit_content = true
 
 [node name="RichTextTotalScore" type="RichTextLabel" parent="."]
 layout_mode = 0
-offset_left = -500.0
-offset_top = 417.0
-offset_right = -100.0
-offset_bottom = 572.0
+offset_left = -251.0
+offset_top = 76.0
+offset_right = -2.0
+offset_bottom = 221.0
 theme_override_font_sizes/normal_font_size = 45
 bbcode_enabled = true
 
 [node name="ExtraInfo" type="RichTextLabel" parent="."]
 clip_contents = false
 layout_mode = 0
-offset_left = -500.0
-offset_top = 46.0
-offset_right = -100.0
-offset_bottom = 120.0
+offset_left = -250.0
+offset_top = 4.0
+offset_right = -5.0
+offset_bottom = 78.0
 bbcode_enabled = true
 fit_content = true

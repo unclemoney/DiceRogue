@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_ih5iy"]
 [ext_resource type="Texture2D" uid="uid://cdusovknauh8j" path="res://Resources/Art/Powerups/ExtraRolls.png" id="1_knce8"]
-[ext_resource type="PackedScene" path="res://Scenes/PowerUp/RandomizerPowerUp.tscn" id="2_nexa7"]
+[ext_resource type="PackedScene" uid="uid://b8j5k2n7p4qwr" path="res://Scenes/PowerUp/RandomizerPowerUp.tscn" id="2_nexa7"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_r9mnv"]
 atlas = ExtResource("1_knce8")

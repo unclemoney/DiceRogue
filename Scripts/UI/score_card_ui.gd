@@ -140,7 +140,7 @@ func update_all():
 		var freq = remap(total_score, 0, 500, 1.0, 10.0)
 		
 		# Format with BBCode, including dynamic frequency and bonus info
-		var text = "[center][tornado freq=%0.1f sat=0.8 val=1.9]Total Score: %d" % [freq, total_score]
+		var text = "[center][tornado freq=%0.1f sat=0.8 val=1.9]Total Score:\n %d" % [freq, total_score]
 		
 		# Add bonus info if there are any Yahtzee bonuses
 		#if scorecard.yahtzee_bonuses > 0:
@@ -153,7 +153,7 @@ func update_all():
 		total_score_label.text = text
 		
 		# Adjust font size based on score
-		var base_size = 32
+		var base_size = 22
 		var size_scale = remap(total_score, 0, 500, 1.0, 1.5)
 		total_score_label.add_theme_font_size_override("normal_font_size", base_size * size_scale)
 
@@ -370,7 +370,7 @@ func update_best_hand_preview(dice_values: Array) -> void:
 		else:
 			format_text = "[center][tornado freq=1.9 sat=0.8 val=1.9]%s[/tornado][/center]" % base_text
 			
-		best_hand_label.add_theme_font_size_override("normal_font_size", 32)
+		best_hand_label.add_theme_font_size_override("normal_font_size", 22)
 		best_hand_label.text = format_text
 		animate_best_hand_label()
 
