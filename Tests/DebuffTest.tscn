@@ -155,15 +155,16 @@ offset_bottom = 175.0
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
-offset_left = 274.0
-offset_top = 281.0
-offset_right = 505.0
-offset_bottom = 432.0
+offset_left = -3.0
+offset_top = 2.0
+offset_right = 1276.0
+offset_bottom = 720.0
 grow_horizontal = 1
 grow_vertical = 1
 size_flags_horizontal = 3
 size_flags_vertical = 3
 power_up_icon_scene = ExtResource("14_geekk")
+power_up_spine_scene = null
 
 [node name="ChallengeUI" parent="." instance=ExtResource("19_1jk2k")]
 anchors_preset = 0
