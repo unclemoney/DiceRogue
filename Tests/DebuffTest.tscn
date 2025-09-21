@@ -137,9 +137,9 @@ start_position = Vector2(640, 530)
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
-offset_left = 377.0
+offset_left = 401.0
 offset_top = 85.0
-offset_right = 556.0
+offset_right = 580.0
 offset_bottom = 206.0
 grow_horizontal = 1
 grow_vertical = 1
@@ -178,14 +178,13 @@ grow_vertical = 1
 round_manager_path = NodePath("../RoundManager")
 
 [node name="DebuffUI" parent="." instance=ExtResource("14_oxb5w")]
-visible = false
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
-offset_left = 221.0
-offset_top = 560.0
-offset_right = 350.0
-offset_bottom = 705.0
+offset_left = 268.0
+offset_top = 77.0
+offset_right = 397.0
+offset_bottom = 222.0
 grow_horizontal = 1
 grow_vertical = 1
 

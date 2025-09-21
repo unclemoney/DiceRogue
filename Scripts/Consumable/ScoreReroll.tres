@@ -1,19 +1,15 @@
-[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://bdbldxuf65trw"]
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3 uid="uid://bdbldxuf65trw"]
 
-[ext_resource type="Texture2D" uid="uid://cdusovknauh8j" path="res://Resources/Art/Powerups/ExtraRolls.png" id="1_70u7p"]
+[ext_resource type="Texture2D" uid="uid://dg031cncjie8e" path="res://Resources/Art/Powerups/consumable_test5.png" id="1_70u7p"]
 [ext_resource type="PackedScene" uid="uid://dbm515dh3082i" path="res://Scenes/Consumable/ScoreRerollConsumable.tscn" id="2_bbh3k"]
 [ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="3_jh1kf"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_5xbvx"]
-atlas = ExtResource("1_70u7p")
-region = Rect2(143, 0, 59, 93)
 
 [resource]
 script = ExtResource("3_jh1kf")
 id = "score_reroll"
 display_name = "Score Reroll"
 description = "Change up a score already used"
-icon = SubResource("AtlasTexture_5xbvx")
+icon = ExtResource("1_70u7p")
 scene = ExtResource("2_bbh3k")
 price = 100
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

@@ -372,7 +372,7 @@ func update_best_hand_preview(dice_values: Array) -> void:
 		var display_category = best_category.capitalize().replace("_", " ")
 		
 		# Add special formatting for exceptional scores
-		var base_text = "Best: %s (%d)" % [display_category, best_score]
+		var base_text = "Best:\n %s (%d)" % [display_category, best_score]
 		var format_text = ""
 		
 		if best_category == "yahtzee" and best_score >= 50:

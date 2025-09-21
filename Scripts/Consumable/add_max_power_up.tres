@@ -1,19 +1,15 @@
-[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://bj6uointddqef"]
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3 uid="uid://bj6uointddqef"]
 
-[ext_resource type="Texture2D" uid="uid://cdusovknauh8j" path="res://Resources/Art/Powerups/ExtraRolls.png" id="1_1dpu7"]
+[ext_resource type="Texture2D" uid="uid://bgaqlpt01x2w" path="res://Resources/Art/Powerups/consumable_test1.png" id="1_1dpu7"]
 [ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_rfq57"]
 [ext_resource type="PackedScene" uid="uid://cjsxxjnfyo1jd" path="res://Scenes/Consumable/AddMaxPowerUpConsumable.tscn" id="2_vans2"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_i6jxv"]
-atlas = ExtResource("1_1dpu7")
-region = Rect2(143, 0, 59, 93)
 
 [resource]
 script = ExtResource("1_rfq57")
 id = "add_max_power_up"
 display_name = "Add Power Up Slot"
 description = "Increases your maximum power-up slots by 1 (up to 4)"
-icon = SubResource("AtlasTexture_i6jxv")
+icon = ExtResource("1_1dpu7")
 scene = ExtResource("2_vans2")
 price = 150
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

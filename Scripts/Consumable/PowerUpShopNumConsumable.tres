@@ -1,19 +1,15 @@
-[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://ckwgku73oppl3"]
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3 uid="uid://ckwgku73oppl3"]
 
-[ext_resource type="Texture2D" uid="uid://cdusovknauh8j" path="res://Resources/Art/Powerups/ExtraRolls.png" id="1_ti2y2"]
+[ext_resource type="Texture2D" uid="uid://5mnk1hfpsv0k" path="res://Resources/Art/Powerups/consumable_test3.png" id="1_ti2y2"]
 [ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_vdnug"]
 [ext_resource type="PackedScene" path="res://Scenes/Consumable/PowerUpShopNumConsumable.tscn" id="2_bfh4v"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_75olm"]
-atlas = ExtResource("1_ti2y2")
-region = Rect2(143, 0, 59, 93)
 
 [resource]
 script = ExtResource("1_vdnug")
 id = "power_up_shop_num"
 display_name = "Shop Expansion"
 description = "Increases the number of Power-Ups shown in the shop by 1"
-icon = SubResource("AtlasTexture_75olm")
+icon = ExtResource("1_ti2y2")
 scene = ExtResource("2_bfh4v")
 price = 125
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

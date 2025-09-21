@@ -1,19 +1,15 @@
-[gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://cgeradia34lyw"]
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://cgeradia34lyw"]
 
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_0fs0u"]
-[ext_resource type="Texture2D" uid="uid://cdusovknauh8j" path="res://Resources/Art/Powerups/ExtraRolls.png" id="1_yb6b2"]
+[ext_resource type="Texture2D" uid="uid://chnl0hqqr66pv" path="res://Resources/Art/Powerups/PowerUp_test6.png" id="1_yb6b2"]
 [ext_resource type="PackedScene" uid="uid://2dxh3rbqbaes" path="res://Scenes/PowerUp/ExtraRollsPowerUp.tscn" id="2_jvwcb"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_jvwcb"]
-atlas = ExtResource("1_yb6b2")
-region = Rect2(72, 0, 59, 93)
 
 [resource]
 script = ExtResource("1_0fs0u")
 id = "extra_rolls"
 display_name = "Extra Rolls"
 description = "Grants additional Rolls each turn"
-icon = SubResource("AtlasTexture_jvwcb")
+icon = ExtResource("1_yb6b2")
 scene = ExtResource("2_jvwcb")
 price = 100
 rarity = "common"

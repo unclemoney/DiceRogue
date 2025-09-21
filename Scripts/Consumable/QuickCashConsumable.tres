@@ -1,18 +1,14 @@
-[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://b8m7k4n2qaqwx"]
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3 uid="uid://b8m7k4n2qaqwx"]
 
-[ext_resource type="Texture2D" uid="uid://cdusovknauh8j" path="res://Resources/Art/Powerups/ExtraRolls.png" id="1_1dpu7"]
+[ext_resource type="Texture2D" uid="uid://vju23ydk568k" path="res://Resources/Art/Powerups/consumable_test4.png" id="1_aoofk"]
 [ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_rfq57"]
 [ext_resource type="PackedScene" uid="uid://c5t8j6r1m4kls" path="res://Scenes/Consumable/QuickCashConsumable.tscn" id="2_vans2"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_q3mnv"]
-atlas = ExtResource("1_1dpu7")
-region = Rect2(0, 95, 59, 93)
 
 [resource]
 script = ExtResource("1_rfq57")
 id = "quick_cash"
 display_name = "Quick Cash"
 description = "Grants 20% of the total purchase price of all owned Power-Ups as cash"
-icon = SubResource("AtlasTexture_q3mnv")
+icon = ExtResource("1_aoofk")
 scene = ExtResource("2_vans2")
 price = 75
