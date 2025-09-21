@@ -36,6 +36,9 @@ const LOWER_CATEGORY_NODE_NAMES := {
 var is_double_mode := false
 
 func _ready():
+	# Load and apply custom theme
+	_apply_custom_theme()
+	
 	# Add to existing _ready function
 	best_hand_label = get_node_or_null("BestHandScore")
 	if not best_hand_label:
@@ -64,6 +67,15 @@ func _ready():
 	#     DiceResults.set_scorecard(scorecard)
 	# else:
 	#     push_error("[ScoreCardUI] No scorecard reference to set in DiceResults")
+
+func _apply_custom_theme():
+	# Load the custom scorecard theme
+	var custom_theme = load("res://Resources/UI/scorecard_theme.tres") as Theme
+	if custom_theme:
+		theme = custom_theme
+		print("[ScoreCardUI] Custom theme applied successfully")
+	else:
+		push_error("[ScoreCardUI] Failed to load custom theme from res://Resources/UI/scorecard_theme.tres")
 
 func bind_scorecard(sc: Scorecard):
 	scorecard = sc
@@ -111,7 +123,7 @@ func update_all():
 				upper_bonus_label.text = "0"
 		else:
 			var remaining = Scorecard.UPPER_BONUS_THRESHOLD - upper_subtotal
-			upper_bonus_label.text = "Need " + str(remaining)
+			upper_bonus_label.text = str(remaining) #need remaining points, remove this later
 	else:
 		push_error("upper_bonus_label not found!")
 	

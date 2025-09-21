@@ -1,13 +1,30 @@
-[gd_scene load_steps=2 format=3 uid="uid://sliaarrkymdo"]
+[gd_scene load_steps=3 format=3 uid="uid://sliaarrkymdo"]
 
 [ext_resource type="Script" uid="uid://6yelginq6gfe" path="res://Scripts/UI/score_card_ui.gd" id="1_3x83p"]
+[ext_resource type="Theme" uid="uid://yij15afv8bdr" path="res://Resources/UI/scorecard_theme.tres" id="1_pm5im"]
 
 [node name="ScoreCardUI" type="Control"]
 layout_mode = 3
 anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
+theme = ExtResource("1_pm5im")
 script = ExtResource("1_3x83p")
+
+[node name="ColorRect2" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = -7.0
+offset_top = -1.0
+offset_right = 312.0
+offset_bottom = 295.0
+color = Color(0, 0, 0, 1)
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = -6.0
+offset_right = 311.0
+offset_bottom = 294.0
+color = Color(1, 1, 0.980392, 1)
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 0
@@ -34,6 +51,7 @@ size_flags_horizontal = 3
 text = "Ones:"
 
 [node name="OnesLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/OnesContainer"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="TwosContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
@@ -45,6 +63,7 @@ size_flags_horizontal = 3
 text = "Twos:"
 
 [node name="TwosLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/TwosContainer"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="ThreesContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
@@ -56,6 +75,7 @@ size_flags_horizontal = 3
 text = "Threes:"
 
 [node name="ThreesLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/ThreesContainer"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="FoursContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
@@ -67,6 +87,7 @@ size_flags_horizontal = 3
 text = "Fours:"
 
 [node name="FoursLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/FoursContainer"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="FivesContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
@@ -78,6 +99,7 @@ size_flags_horizontal = 3
 text = "Fives:"
 
 [node name="FivesLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/FivesContainer"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="SixesContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
@@ -89,6 +111,7 @@ size_flags_horizontal = 3
 text = "Sixes:"
 
 [node name="SixesLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/SixesContainer"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="UpperSubTotal" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
@@ -100,6 +123,7 @@ size_flags_horizontal = 3
 text = "Sub Ttl:"
 
 [node name="UppersubButton" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="UpperBonus" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
@@ -111,6 +135,7 @@ size_flags_horizontal = 3
 text = "Bonus:"
 
 [node name="UpperBonusLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="UpperTotal" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
@@ -122,6 +147,7 @@ size_flags_horizontal = 3
 text = "Total:"
 
 [node name="UpperTotalLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperTotal"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="LowerVBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
@@ -144,6 +170,7 @@ size_flags_horizontal = 3
 text = "3 of a kind:"
 
 [node name="ThreeofakindLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Threeofakind"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="Fourofakind" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
@@ -155,6 +182,7 @@ size_flags_horizontal = 3
 text = "4 of a kind:"
 
 [node name="FourofakindLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fourofakind"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="Fullhouse" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
@@ -166,6 +194,7 @@ size_flags_horizontal = 3
 text = "Full House:"
 
 [node name="FullhouseLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fullhouse"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="Smallstraight" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
@@ -177,6 +206,7 @@ size_flags_horizontal = 3
 text = "S Straight:"
 
 [node name="SmallstraightLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Smallstraight"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="Largestraight" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
@@ -188,6 +218,7 @@ size_flags_horizontal = 3
 text = "L Straight:"
 
 [node name="LargestraightLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="Chance" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
@@ -199,6 +230,7 @@ size_flags_horizontal = 3
 text = "Chance:"
 
 [node name="ChanceLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Chance"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="Yahtzee" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
@@ -210,6 +242,7 @@ size_flags_horizontal = 3
 text = "Yahtzee:"
 
 [node name="YahtzeeLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Yahtzee"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="YahtzeeBonus" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
@@ -221,6 +254,7 @@ size_flags_horizontal = 3
 text = "Bonus:"
 
 [node name="YahtzeeBonusLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="LowerTotal" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
@@ -232,6 +266,7 @@ size_flags_horizontal = 3
 text = "Lower  Total:"
 
 [node name="LowerTotalLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/LowerTotal"]
+custom_minimum_size = Vector2(40, 25)
 layout_mode = 2
 
 [node name="BestHandScore" type="RichTextLabel" parent="."]

@@ -7,8 +7,10 @@ extends Control
 @export var challenge_manager_path: NodePath 
 @onready var challenge_manager: ChallengeManager = get_node_or_null(challenge_manager_path)
 
-@onready var shop_button: Button = $ShopButton
-@onready var next_round_button: Button = $NextRoundButton  
+@onready var shop_button: Button = $HBoxContainer/ShopButton
+@onready var next_round_button: Button = $HBoxContainer/NextRoundButton  
+@onready var roll_button: Button = $HBoxContainer/RollButton
+@onready var next_turn_button: Button = $HBoxContainer/NextTurnButton  
 
 signal shop_button_pressed
 signal next_round_pressed
@@ -35,12 +37,12 @@ func _ready():
 		print("Error")
 		push_error("GameButtonUI: score_card_ui_path not set or node missing")
 
-	$HBoxContainer/RollButton.pressed.connect(_on_roll_button_pressed)
-	$HBoxContainer/NextTurnButton.pressed.connect(_on_next_turn_button_pressed)
+	roll_button.pressed.connect(_on_roll_button_pressed)
+	next_turn_button.pressed.connect(_on_next_turn_button_pressed)
 
 	dice_hand.roll_complete.connect(_on_dice_roll_complete)
-	turn_tracker.rolls_exhausted.connect(func(): $HBoxContainer/RollButton.disabled = true)
-	turn_tracker.turn_started.connect(func(): $HBoxContainer/RollButton.disabled = false)
+	turn_tracker.rolls_exhausted.connect(func(): roll_button.disabled = true)
+	turn_tracker.turn_started.connect(func(): roll_button.disabled = false)
 	turn_tracker.connect(
 		"game_over",
 		Callable(self, "_on_game_over")
@@ -48,9 +50,9 @@ func _ready():
 
 	# Godot 4 style: signal name + target Callable
 	score_card_ui.connect("hand_scored", Callable(self, "_hand_scored_disable"))
+	
+	# Shop button is already connected in the scene file, so just configure it
 	if shop_button:
-		if not shop_button.is_connected("pressed", _on_shop_button_pressed):
-			shop_button.pressed.connect(_on_shop_button_pressed)
 		shop_button.disabled = false  # Enabled at the very beginning
 		print("Shop button status: ", shop_button.disabled)
 	
@@ -71,8 +73,8 @@ func _ready():
 		push_error("GameButtonUI: challenge_manager reference is null")
 
 	# Disable gameplay buttons initially
-	$HBoxContainer/RollButton.disabled = true
-	$HBoxContainer/NextTurnButton.disabled = true
+	roll_button.disabled = true
+	next_turn_button.disabled = true
 
 
 func _on_roll_button_pressed() -> void:
@@ -119,7 +121,7 @@ func _on_next_turn_button_pressed() -> void:
 	score_card_ui.enable_all_score_buttons()
 	for die in dice_hand.dice_list:
 		die.unlock()
-	$HBoxContainer/RollButton.disabled = false
+	roll_button.disabled = false
 	_on_roll_button_pressed()
 
 func _on_auto_score_assigned(section, category, score):
@@ -128,14 +130,14 @@ func _on_auto_score_assigned(section, category, score):
 
 func _on_game_over() -> void:
 	# Disable all controls
-	$HBoxContainer/RollButton.disabled = true
-	$HBoxContainer/NextTurnButton.disabled = true
+	roll_button.disabled = true
+	next_turn_button.disabled = true
 	if shop_button:
 		shop_button.disabled = true
 
 func _hand_scored_disable() -> void:
 	print("🏁 Hand scored—disabling Roll button")
-	$HBoxContainer/RollButton.disabled = true
+	roll_button.disabled = true
 
 func _on_shop_button_pressed() -> void:
 	print("[GameButtonUI] Shop button pressed")
@@ -154,8 +156,8 @@ func _on_round_started(_round_number: int) -> void:
 		shop_button.disabled = true  # Disable shop at the start of each round
 	
 	# Enable gameplay buttons when round starts
-	$HBoxContainer/RollButton.disabled = false
-	$HBoxContainer/NextTurnButton.disabled = false
+	roll_button.disabled = false
+	next_turn_button.disabled = false
 	
 	# Always spawn dice when a round starts
 	if dice_hand:

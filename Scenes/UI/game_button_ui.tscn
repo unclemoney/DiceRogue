@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://lc4xqvsxdnpy"]
+[gd_scene load_steps=4 format=3 uid="uid://lc4xqvsxdnpy"]
 
+[ext_resource type="Theme" uid="uid://yij15afv8bdr" path="res://Resources/UI/scorecard_theme.tres" id="1_6ljww"]
 [ext_resource type="Script" uid="uid://bs540x55u5587" path="res://Scripts/UI/game_button_ui.gd" id="1_v70y2"]
+[ext_resource type="Texture2D" uid="uid://dpb6jg8ux7adi" path="res://Resources/Art/Background/VCR.png" id="3_ah431"]
 
 [node name="GameButtonUI" type="Control"]
 layout_mode = 3
@@ -9,34 +11,44 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_6ljww")
 script = ExtResource("1_v70y2")
+
+[node name="TextureRect" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 360.0
+offset_bottom = 243.0
+texture = ExtResource("3_ah431")
+expand_mode = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+offset_left = 54.0
+offset_top = 176.0
+offset_right = 306.0
+offset_bottom = 214.0
+theme_override_constants/separation = 0
 
-[node name="NextTurnButton" type="Button" parent="HBoxContainer"]
+[node name="NextRoundButton" type="Button" parent="HBoxContainer"]
+custom_minimum_size = Vector2(63, 0)
 layout_mode = 2
-text = "NEXT TURN"
-
-[node name="RollButton" type="Button" parent="HBoxContainer"]
-layout_mode = 2
-text = "ROLL"
-
-[node name="ShopButton" type="Button" parent="."]
-layout_mode = 0
-offset_top = 48.0
-offset_right = 150.0
-offset_bottom = 86.0
-text = "SHOP"
-
-[node name="NextRoundButton" type="Button" parent="."]
-layout_mode = 0
-offset_left = 154.0
-offset_right = 231.0
-offset_bottom = 86.0
 text = "NEXT
 ROUND"
 
-[connection signal="pressed" from="ShopButton" to="." method="_on_shop_button_pressed"]
+[node name="ShopButton" type="Button" parent="HBoxContainer"]
+custom_minimum_size = Vector2(63, 0)
+layout_mode = 2
+text = "SHOP"
+
+[node name="NextTurnButton" type="Button" parent="HBoxContainer"]
+custom_minimum_size = Vector2(63, 0)
+layout_mode = 2
+text = "NEXT 
+TURN"
+
+[node name="RollButton" type="Button" parent="HBoxContainer"]
+custom_minimum_size = Vector2(63, 0)
+layout_mode = 2
+text = "ROLL"
+
+[connection signal="pressed" from="HBoxContainer/ShopButton" to="." method="_on_shop_button_pressed"]

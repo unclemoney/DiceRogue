@@ -133,22 +133,6 @@ start_position = Vector2(640, 530)
 
 [node name="TurnTracker" parent="." instance=ExtResource("8_8eqdw")]
 
-[node name="GameButtonUI" parent="." instance=ExtResource("9_wtptv")]
-anchors_preset = 0
-anchor_right = 0.0
-anchor_bottom = 0.0
-offset_left = 81.0
-offset_top = 331.0
-offset_right = 81.0
-offset_bottom = 331.0
-grow_horizontal = 1
-grow_vertical = 1
-dice_hand_path = NodePath("../DiceHand")
-score_card_ui_path = NodePath("../ScoreCardUI")
-turn_tracker_path = NodePath("../TurnTracker")
-round_manager_path = NodePath("../RoundManager")
-challenge_manager_path = NodePath("../ChallengeManager")
-
 [node name="TurnTrackerUI" parent="." instance=ExtResource("10_bv0jw")]
 anchors_preset = 0
 anchor_right = 0.0
@@ -162,19 +146,19 @@ grow_vertical = 1
 round_manager_path = NodePath("../RoundManager")
 
 [node name="ScoreCardUI" parent="." instance=ExtResource("11_oy5od")]
-offset_left = 860.0
-offset_top = 127.0
-offset_right = 860.0
-offset_bottom = 167.0
+offset_left = 839.0
+offset_top = 135.0
+offset_right = 839.0
+offset_bottom = 175.0
 
 [node name="PowerUpUI" parent="." instance=ExtResource("14_gtvla")]
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
-offset_left = 268.0
-offset_top = 542.0
-offset_right = 499.0
-offset_bottom = 693.0
+offset_left = 274.0
+offset_top = 281.0
+offset_right = 505.0
+offset_bottom = 432.0
 grow_horizontal = 1
 grow_vertical = 1
 size_flags_horizontal = 3
@@ -185,10 +169,10 @@ power_up_icon_scene = ExtResource("14_geekk")
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
-offset_left = 322.0
-offset_top = 288.0
-offset_right = 500.0
-offset_bottom = 438.0
+offset_left = 82.0
+offset_top = 77.0
+offset_right = 260.0
+offset_bottom = 224.0
 grow_horizontal = 1
 grow_vertical = 1
 round_manager_path = NodePath("../RoundManager")
@@ -206,11 +190,27 @@ grow_horizontal = 1
 grow_vertical = 1
 
 [node name="ConsumableUI" parent="." instance=ExtResource("12_pdckl")]
-offset_left = 87.0
-offset_top = 543.0
-offset_right = 250.0
-offset_bottom = 684.0
+offset_left = 78.0
+offset_top = 282.0
+offset_right = 241.0
+offset_bottom = 423.0
 consumable_icon_scene = ExtResource("19_ghgbc")
+
+[node name="GameButtonUI" parent="." instance=ExtResource("9_wtptv")]
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 114.0
+offset_top = 463.0
+offset_right = 114.0
+offset_bottom = 463.0
+grow_horizontal = 1
+grow_vertical = 1
+dice_hand_path = NodePath("../DiceHand")
+score_card_ui_path = NodePath("../ScoreCardUI")
+turn_tracker_path = NodePath("../TurnTracker")
+round_manager_path = NodePath("../RoundManager")
+challenge_manager_path = NodePath("../ChallengeManager")
 
 [node name="ShopUI" parent="." instance=ExtResource("32_oy5od")]
 visible = false
