@@ -126,10 +126,10 @@ func _ready() -> void:
 
 func _on_game_start() -> void:
 	#spawn_starting_powerups()
-	grant_consumable("quick_cash")
+	#grant_consumable("quick_cash")
 	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
-	grant_power_up("evens_no_odds")
+	#grant_power_up("extra_dice")
 	if round_manager:
 		round_manager.start_game()
 

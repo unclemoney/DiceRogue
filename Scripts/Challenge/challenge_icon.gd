@@ -6,7 +6,7 @@ signal challenge_selected(id: String)
 @export var data: ChallengeData
 @export var glow_intensity: float = 0.25
 @export var hover_tilt: float = 0.05
-@export var hover_scale: float = 1.05
+@export var hover_scale: float = 1.0
 @export var transition_speed: float = 0.05
 @export var max_offset_shadow: float = 20.0
 
@@ -95,7 +95,7 @@ func _ready() -> void:
 		progress_bar.value = 0
 	if shadow:
 		shadow.modulate = Color(0.0, 0.0, 0.0, 0.5)
-		shadow.position = Vector2(5, 5)
+		shadow.position = Vector2(1, 1)
 		
 	# Connect input signals if not already connected
 	if not is_connected("mouse_entered", _on_mouse_entered):
@@ -113,6 +113,7 @@ func _ready() -> void:
 	_apply_data_to_ui()
 	
 	_reset_visual_state()
+	_on_mouse_exited()  # Ensure initial state is non-hovered
 	print("[ChallengeIcon] Initialization complete for:", data.id if data else "unknown")
 
 func _process(delta: float) -> void:
@@ -384,7 +385,7 @@ func _reset_visual_state() -> void:
 		_current_tween.kill()
 	
 	# Reset transform
-	scale = Vector2.ONE
+	scale = Vector2.ONE 
 	rotation = 0
 	
 	# Reset shader
@@ -486,7 +487,7 @@ func _on_mouse_entered() -> void:
 	# Animate shadow to be slightly larger
 	if shadow:
 		_current_tween.parallel().tween_property(
-			shadow, "scale", Vector2.ONE * 1.1, 0.5
+			shadow, "scale", Vector2.ONE * hover_scale, 0.5
 		).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	
 	# Animate shader tilt
@@ -540,7 +541,7 @@ func _on_mouse_exited() -> void:
 	
 	# Animate card back to normal with elastic effect
 	_current_tween.parallel().tween_property(
-		self, "scale", Vector2.ONE, 0.55
+		self, "scale", Vector2.ONE * 0.25, 0.55
 	).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	
 	# Animate shadow back to normal

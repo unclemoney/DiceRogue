@@ -1,17 +1,14 @@
-[gd_resource type="Resource" script_class="DebuffData" load_steps=5 format=3 uid="uid://cc8puewgbdape"]
+[gd_resource type="Resource" script_class="DebuffData" load_steps=4 format=3 uid="uid://cc8puewgbdape"]
 
-[ext_resource type="Texture2D" uid="uid://dkqq5ebpxfhxm" path="res://Resources/Art/Powerups/ExtraDice.png" id="1_sdnhx"]
+[ext_resource type="Texture2D" uid="uid://betj5eeni1mpj" path="res://Resources/Art/Powerups/chore_chart.png" id="1_sdnhx"]
 [ext_resource type="Script" uid="uid://uiuqwtxbh7m0" path="res://Scripts/Debuff/DebuffData.gd" id="1_x11sf"]
 [ext_resource type="PackedScene" uid="uid://ccnctsp5p288n" path="res://Scenes/Debuff/DisabledTwosDebuff.tscn" id="2_2wsc2"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_8aq1q"]
-atlas = ExtResource("1_sdnhx")
 
 [resource]
 script = ExtResource("1_x11sf")
 id = "disabled_twos"
 display_name = "Disabled Twos"
 description = "Twos cannot be used in scoring combinations"
-icon = SubResource("AtlasTexture_8aq1q")
+icon = ExtResource("1_sdnhx")
 scene = ExtResource("2_2wsc2")
 metadata/_custom_type_script = "uid://uiuqwtxbh7m0"

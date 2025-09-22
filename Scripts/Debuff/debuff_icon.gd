@@ -6,7 +6,7 @@ signal debuff_selected(id: String)
 @export var data: DebuffData
 @export var glow_intensity: float = 0.25
 @export var hover_tilt: float = 0.05
-@export var hover_scale: float = 1.05
+@export var hover_scale: float = 0.65
 @export var transition_speed: float = 0.05
 @export var max_offset_shadow: float = 20.0
 
@@ -100,6 +100,7 @@ func _ready() -> void:
 	_apply_data_to_ui()
 	
 	_reset_visual_state()
+	_on_mouse_exited()  # Ensure initial state is non-hovered
 	print("[DebuffIcon] Initialization complete for:", data.id if data else "unknown")
 
 func _process(delta: float) -> void:
@@ -497,13 +498,13 @@ func _on_mouse_exited() -> void:
 	
 	# Animate card back to normal with elastic effect
 	_current_tween.parallel().tween_property(
-		self, "scale", Vector2.ONE, 0.55
+		self, "scale", Vector2.ONE * 0.25, 0.55
 	).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	
 	# Animate shadow back to normal
 	if shadow:
 		_current_tween.parallel().tween_property(
-			shadow, "scale", Vector2.ONE, 0.55
+			shadow, "scale", Vector2.ONE * 0.25, 0.55
 		).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	
 	# Animate tilt back to zero

@@ -1,19 +1,15 @@
-[gd_resource type="Resource" script_class="ChallengeData" load_steps=5 format=3 uid="uid://cpblep3x5ps6q"]
+[gd_resource type="Resource" script_class="ChallengeData" load_steps=4 format=3 uid="uid://cpblep3x5ps6q"]
 
-[ext_resource type="Texture2D" uid="uid://cdusovknauh8j" path="res://Resources/Art/Powerups/ExtraRolls.png" id="1_4klcg"]
 [ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="1_6dsf7"]
+[ext_resource type="Texture2D" uid="uid://cw6bry41p6cug" path="res://Resources/Art/Powerups/cassette_tape.png" id="1_mp8je"]
 [ext_resource type="PackedScene" uid="uid://cvgn2r4ktrloq" path="res://Scenes/Challenge/pts_100_lock_dice_challenge.tscn" id="2_ls7bh"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_1i07n"]
-atlas = ExtResource("1_4klcg")
-region = Rect2(72, 95, 59, 93)
 
 [resource]
 script = ExtResource("1_6dsf7")
 id = "pts100_lock_dice"
 display_name = "Lockdown 100"
 description = "Score at least 100 points with dice locking between turns"
-icon = SubResource("AtlasTexture_1i07n")
+icon = ExtResource("1_mp8je")
 scene = ExtResource("2_ls7bh")
 debuff_ids = Array[String](["lock_dice"])
 target_score = 100
