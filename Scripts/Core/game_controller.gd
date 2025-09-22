@@ -98,11 +98,13 @@ func _ready() -> void:
 		round_manager.round_completed.connect(_on_round_completed)
 		round_manager.round_failed.connect(_on_round_failed)
 		round_manager.all_rounds_completed.connect(_on_all_rounds_completed)
-	if consumable_ui:
-		if not consumable_ui.is_connected("consumable_sold", _on_consumable_sold):
-			consumable_ui.connect("consumable_sold", _on_consumable_sold)
-		if not consumable_ui.is_connected("consumable_used", _on_consumable_ui_used):
-			consumable_ui.connect("consumable_used", _on_consumable_ui_used)
+	#if consumable_ui:
+	#	if not consumable_ui.is_connected("consumable_sold", _on_consumable_sold):
+	#		consumable_ui.connect("consumable_sold", _on_consumable_sold)
+	#	if not consumable_ui.is_connected("consumable_used", _on_consumable_ui_used):
+	#		consumable_ui.connect("consumable_used", _on_consumable_ui_used)
+	#if consumable_ui.has_consumable(consumable_id):
+	#	consumable_ui.update_consumable_usability()
 	if powerup_ui:
 		if not powerup_ui.is_connected("max_power_ups_reached", _on_max_power_ups_reached):
 			powerup_ui.connect("max_power_ups_reached", _on_max_power_ups_reached)
@@ -391,45 +393,40 @@ func grant_consumable(id: String) -> void:
 
 	active_consumables[id] = consumable
 	
-	# Add to UI with null checks
+	# Add to UI with null checks - now returns spine instead of icon
 	var def: ConsumableData = consumable_manager.get_def(id)
 	if not def:
 		push_error("[GameController] No ConsumableData found for '%s'" % id)
 		return
 		
-	var icon = consumable_ui.add_consumable(def) #, consumable
-	if not icon:
-		push_error("[GameController] Failed to create UI icon for consumable '%s'" % id)
+	var spine = consumable_ui.add_consumable(def)  # Returns ConsumableSpine now
+	if not spine:
+		push_error("[GameController] Failed to create UI spine for consumable '%s'" % id)
 		return
 
-	# Connect signals and set initial state
-	icon.consumable_used.connect(_on_consumable_used)
+	# NOTE: No longer connect signals to spine or set usability on spine
+	# Spines only handle clicking/hovering for fan display
+	# Usability is handled when icons are fanned out via update_consumable_usability()
 	
-	# Set initial usability state
-	match id:
-		"score_reroll":
-			# Score reroll is only useable if we have scores
-			var can_use = scorecard and scorecard.has_any_scores()
+	print("[GameController] Consumable granted with spine:", id)
+
+# New method to update consumable usability for fanned icons
+func update_consumable_usability() -> void:
+	if not consumable_ui:
+		return
+	
+	# This replaces the individual set_useable calls in grant_consumable
+	# It will be called when consumables are fanned out
+	consumable_ui.update_consumable_usability()
+
+# Update individual usability for specific consumable types  
+func set_consumable_usability(consumable_id: String, can_use: bool) -> void:
+	# This method can be called to update specific consumable usability
+	# Only works when consumables are in fanned state
+	if consumable_ui and consumable_ui._current_state == ConsumableUI.State.FANNED:
+		var icon = consumable_ui.get_fanned_icon(consumable_id)
+		if icon and icon.has_method("set_useable"):
 			icon.set_useable(can_use)
-			print("[GameController] Score reroll consumable added, useable:", can_use)
-		"power_up_shop_num":
-			icon.set_useable(true)
-		"three_more_rolls":
-			# Only useable when we have rolls left in the current turn
-			var can_use = turn_tracker and turn_tracker.rolls_left > 0
-			icon.set_useable(can_use)
-			print("[GameController] Three more rolls consumable added, useable:", can_use)
-		"double_existing":
-			# Only useable when we have scores and in an active turn
-			var has_scores = scorecard and scorecard.has_any_scores()
-			var is_active_turn = turn_tracker and turn_tracker.is_active and turn_tracker.current_turn > 0
-			var can_use = has_scores and is_active_turn
-			icon.set_useable(can_use)
-			print("[GameController] Double existing consumable added, useable:", can_use)
-		_:
-			# Other consumables are useable by default
-			icon.set_useable(true)
-			print("[GameController] Consumable granted and ready:", id)
 
 func _on_consumable_used(consumable_id: String) -> void:
 	var consumable = active_consumables.get(consumable_id)
@@ -502,13 +499,14 @@ func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 			randomizer.show_effect_after_scoring()
 		
 	if scorecard.has_any_scores():
-		var reroll_icon = consumable_ui.get_consumable_icon("score_reroll")
-		if reroll_icon:
-			reroll_icon.set_useable(true)
+		# Update score reroll usability through the new system
+		if consumable_ui and consumable_ui.has_consumable("score_reroll"):
+			consumable_ui.update_consumable_usability()
+			print("[GameController] Score reroll usability updated")
 		else:
-			print("No reroll icon found")
+			print("[GameController] No score reroll consumable found")
 	else:
-		print("No scores yet, reroll remains disabled")
+		print("[GameController] No scores yet, reroll remains disabled")
 
 func apply_debuff(id: String) -> void:
 	print("[GameController] Attempting to apply debuff:", id)
@@ -1055,35 +1053,19 @@ func _on_debuff_selected(id: String) -> void:
 
 # In game_controller.gd - Update the update_three_more_rolls_usability function
 func update_three_more_rolls_usability(rolls_left: int = 0) -> void:
-	var consumable_icon = consumable_ui.get_consumable_icon("three_more_rolls")
-	if consumable_icon:
-		# Allow usage when in turn 1+ with rolls remaining
-		# Remove the is_active check since that's causing the problem
-		var is_useable = turn_tracker and turn_tracker.rolls_left > 0 and turn_tracker.current_turn > 0
-		print("[GameController] Three more rolls check - rolls left:", turn_tracker.rolls_left if turn_tracker else "N/A", 
-			  "is active:", turn_tracker.is_active if turn_tracker else "N/A", 
-			  "current turn:", turn_tracker.current_turn if turn_tracker else "N/A", 
-			  "useable:", is_useable)
-		consumable_icon.set_useable(is_useable)
-		
-		if not is_useable and consumable_icon.is_useable != is_useable:
-			print("[GameController] Three more rolls consumable disabled - not in active turn")
+	if consumable_ui and consumable_ui.has_consumable("three_more_rolls"):
+		consumable_ui.update_consumable_usability()
+		print("[GameController] Three more rolls usability updated")
+	else:
+		print("[GameController] No three more rolls consumable found")
 
 # Add this function to game_controller.gd
 func update_double_existing_usability(section: int = 0, category: String = "", score: int = 0) -> void:
-	var consumable_icon = consumable_ui.get_consumable_icon("double_existing")
-	if consumable_icon:
-		# Only check for scores and valid turn number, not rolls
-		var has_scores = scorecard and scorecard.has_any_scores()
-		var valid_turn = turn_tracker and turn_tracker.current_turn > 0
-		
-		# Turn is considered active if it's started, even if rolls are exhausted
-		var is_useable = has_scores and valid_turn
-		
-		print("[GameController] Double existing check - has scores:", has_scores, 
-			  "valid turn:", valid_turn, "useable:", is_useable)
-		
-		consumable_icon.set_useable(is_useable)
+	if consumable_ui and consumable_ui.has_consumable("double_existing"):
+		consumable_ui.update_consumable_usability()
+		print("[GameController] Double existing usability updated")
+	else:
+		print("[GameController] No double existing consumable found")
 
 func _on_power_up_description_updated(power_up_id: String, new_description: String) -> void:
 	print("[GameController] Received description update for:", power_up_id)

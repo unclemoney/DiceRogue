@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://dv0gypvmv4bb"]
+[gd_scene load_steps=4 format=3 uid="uid://dv0gypvmv4bb"]
 
 [ext_resource type="Script" uid="uid://cjxupagn6l5ew" path="res://Scripts/UI/consumable_ui.gd" id="1_ske02"]
+[ext_resource type="PackedScene" uid="uid://dwa71k4xfaupc" path="res://Scenes/Consumable/consumable_icon.tscn" id="2_icon"]
+[ext_resource type="PackedScene" uid="uid://cvicvqokxv4rj" path="res://Scenes/UI/consumable_spine.tscn" id="3_spine"]
 
 [node name="ConsumableUI" type="Control" groups=["consumable_ui"]]
 layout_mode = 3
@@ -11,13 +13,17 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 0
 size_flags_vertical = 0
-mouse_filter = 2
+mouse_filter = 1
 script = ExtResource("1_ske02")
+consumable_icon_scene = ExtResource("2_icon")
+consumable_spine_scene = ExtResource("3_spine")
 
 [node name="Label" type="Label" parent="."]
 layout_mode = 0
-offset_top = -23.0
-offset_right = 119.0
+offset_left = 87.0
+offset_top = 260.0
+offset_right = 206.0
+offset_bottom = 283.0
 text = "CONSUMABLES"
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
@@ -30,7 +36,8 @@ theme_override_constants/separation = 10
 
 [node name="SlotsLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 135.0
-offset_top = -23.0
-offset_right = 175.0
+offset_left = 222.0
+offset_top = 260.0
+offset_right = 262.0
+offset_bottom = 283.0
 text = "0/2"

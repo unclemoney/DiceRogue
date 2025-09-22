@@ -1,4 +1,4 @@
-[gd_scene load_steps=71 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=70 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -22,7 +22,6 @@
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="17_2uvn1"]
 [ext_resource type="Resource" uid="uid://b1kspojq1dh26" path="res://Scripts/PowerUps/ExtraDice.tres" id="18_3vaha"]
 [ext_resource type="PackedScene" uid="uid://ihwow3yfegbm" path="res://Scenes/UI/challenge_ui.tscn" id="19_1jk2k"]
-[ext_resource type="PackedScene" uid="uid://dwa71k4xfaupc" path="res://Scenes/Consumable/consumable_icon.tscn" id="19_ghgbc"]
 [ext_resource type="Resource" uid="uid://cgeradia34lyw" path="res://Scripts/PowerUps/ExtraRolls.tres" id="19_si81o"]
 [ext_resource type="PackedScene" uid="uid://c2brbu8nl4tvq" path="res://Scenes/Managers/consumable_manager.tscn" id="20_1jk2k"]
 [ext_resource type="PackedScene" uid="uid://bgwcfpn53s26s" path="res://Scenes/Managers/mod_manager.tscn" id="23_8eqdw"]
@@ -164,7 +163,17 @@ grow_vertical = 1
 size_flags_horizontal = 3
 size_flags_vertical = 3
 power_up_icon_scene = ExtResource("14_geekk")
-power_up_spine_scene = null
+
+[node name="ConsumableUI" parent="." instance=ExtResource("12_pdckl")]
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_right = 1280.0
+offset_bottom = 720.0
+grow_horizontal = 1
+grow_vertical = 1
+size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="ChallengeUI" parent="." instance=ExtResource("19_1jk2k")]
 anchors_preset = 0
@@ -188,13 +197,6 @@ offset_right = 397.0
 offset_bottom = 222.0
 grow_horizontal = 1
 grow_vertical = 1
-
-[node name="ConsumableUI" parent="." instance=ExtResource("12_pdckl")]
-offset_left = 78.0
-offset_top = 282.0
-offset_right = 241.0
-offset_bottom = 423.0
-consumable_icon_scene = ExtResource("19_ghgbc")
 
 [node name="GameButtonUI" parent="." instance=ExtResource("9_wtptv")]
 anchors_preset = 0

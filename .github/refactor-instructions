@@ -1,0 +1,120 @@
+Refactor
+Key Differences Between PowerUp and Consumable Systems
+PowerUp System:
+
+Permanent: Once granted, they stay active until sold/removed
+No usage state: PowerUps don't get "consumed" - they're always active
+Simple lifecycle: Add → Active → Remove (via selling)
+No usability checks: Always functional once added
+Consumable System:
+
+Temporary: Designed to be used once and removed
+Usage state: Has is_useable state that changes based on game conditions
+Complex lifecycle: Add → Check usability → Use → Remove automatically
+Dynamic usability: Can become useable/unusable based on game state
+Root Problems We Encountered
+Incorrect Pattern Application: Applied PowerUp spine logic to Consumables without accounting for usage states
+Freed Instance Access: Tried to access ConsumableIcon objects after they were freed during usage
+State Management: No proper handling of 0-consumable states in the new spine system
+Signal Connection Errors: Trying to connect to signals that don't exist on spine objects
+Race Conditions: Between consumable usage, removal, and UI state updates
+Comprehensive Refactor Todo List
+Phase 1: Analysis and Planning
+ Create ConsumableSpine class - Simple spine display (like PowerUpSpine)
+ Map ConsumableIcon features - Document what features need to be preserved:
+ set_useable() method for dynamic usability
+ Usage state management (is_useable, is_active, is_used)
+ Use button functionality
+ Sell button functionality
+ Visual feedback for usability states
+ Document signal requirements - What signals ConsumableUI needs to emit/receive
+ Plan state management - How to handle 0-consumable state safely
+Phase 2: Create ConsumableSpine (Minimal)
+ Create ConsumableSpine scene and script
+ Use coupon_spine.png texture (92x16)
+ Display abbreviated consumable name
+ Emit spine_clicked, spine_hovered, spine_unhovered signals only
+ NO usage state - spines are always clickable to fan out
+ Test ConsumableSpine in isolation - Make sure it works before integration
+Phase 3: Modify ConsumableUI Structure (Keep Icons)
+ Add spine system alongside existing container system
+ Keep existing HBoxContainer and ConsumableIcon system working
+ Add spine shelf display above the container
+ Add state enum: CONTAINER_VIEW and FANNED_VIEW
+ Create spine-to-icon fan system
+ Clicking spine hides spines, shows container with fan animation
+ Clicking away from fanned icons hides container, shows spines
+ Preserve all ConsumableIcon functionality
+ Keep set_useable() method
+ Keep usage state management
+ Keep all existing signals
+Phase 4: Safe State Management
+ Create robust 0-consumable handling
+ Add _has_consumables() check before any icon operations
+ Create _cleanup_empty_state() method for when last consumable is used
+ Add early returns in all functions that iterate over consumables
+ Add consumable count tracking
+ _active_consumable_count variable
+ Update count in add_consumable() and remove_consumable()
+ Use count checks instead of dictionary iteration where possible
+Phase 5: Prevent Freed Instance Access
+ Never store ConsumableIcon references long-term
+ Only access icons during fanned state
+ Clear icon references immediately when folding back
+ Use is_instance_valid() checks before any icon access
+ Create defensive animation system
+ Check is_instance_valid() before every tween operation
+ Use call_deferred() for cleanup operations
+ Add null checks in all animation callbacks
+Phase 6: Fix GameController Integration
+ Update GameController grant_consumable()
+ Should return spine object, not icon
+ Remove set_useable() calls on returned object
+ Move usability logic to ConsumableUI
+ Create update_consumable_usability() method in ConsumableUI
+ Call this method instead of individual set_useable() calls
+ Apply usability only to fanned icons, not spines
+ Fix signal connections
+ Connect to ConsumableUI signals, not individual icon signals
+ Remove connections to non-existent signals
+Phase 7: Error Prevention Strategies
+ Implement count-based checks everywhere
+
+# Instead of:for icon in _fanned_icons.values():    icon.do_something()# Use:if _active_consumable_count > 0:    for icon in _fanned_icons.values():        if is_instance_valid(icon):            icon.do_something()
+ Add comprehensive validation methods
+ _validate_consumable_state() - checks count vs dictionary size
+ _safe_icon_access() - wrapper for icon operations
+ _emergency_cleanup() - handles corrupted states
+ Create consistent cleanup pattern
+ Always update count first
+ Then clean dictionaries
+ Finally update UI state
+ Use this pattern in remove_consumable(), _on_consumable_used(), etc.
+Phase 8: Testing Strategy
+ Create test scenarios
+ Add 1 consumable, use it, verify clean state
+ Add multiple consumables, use them one by one
+ Test rapid use of multiple consumables
+ Test clicking away during various states
+ Add debug logging
+ Log count changes
+ Log state transitions
+ Log icon creation/destruction
+ Test edge cases
+ Using last consumable while fanned
+ Clicking away with 0 consumables
+ Rapid clicking during animations
+Key Success Criteria
+No "previously freed instance" errors - Ever
+Clean 0-consumable state - No visual artifacts when empty
+Preserved functionality - All existing consumable features work
+Smooth animations - No jerky or broken animations
+Proper usability feedback - Icons show correct useable/unusable states
+What NOT to Do (Lessons Learned)
+❌ Don't try to access dictionary values without is_instance_valid() checks
+❌ Don't copy PowerUp logic directly - account for usage states
+❌ Don't create tweens for potentially freed objects
+❌ Don't use infinite loop tweens (causes Godot errors)
+❌ Don't connect to signals that don't exist on the target object
+❌ Don't rely on dictionary iteration when objects might be freed
+❌ Don't forget that ConsumableSpine ≠ ConsumableIcon in terms of functionality
