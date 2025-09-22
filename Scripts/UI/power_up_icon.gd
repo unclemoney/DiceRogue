@@ -230,7 +230,7 @@ func _create_card_structure() -> void:
 	label_bg.z_index = 3
 	label_bg.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	label_bg.position.y = -60
-	label_bg.position.x = -20
+	label_bg.position.x = -60
 	add_child(label_bg)
 	
 	# Create HoverLabel
@@ -238,7 +238,7 @@ func _create_card_structure() -> void:
 	hover_label.name = "HoverLabel"
 	hover_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hover_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hover_label.custom_minimum_size = Vector2(120, 0)
+	hover_label.custom_minimum_size = Vector2(220, 0)
 	hover_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	hover_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	label_bg.add_child(hover_label)
@@ -444,7 +444,7 @@ func _on_mouse_entered() -> void:
 		_current_tween.kill()
 	
 	_current_tween = create_tween()
-	
+	card_info.visible = true  # Ensure card info is visible
 	# Show hover label
 	if label_bg:
 		label_bg.visible = true
@@ -495,6 +495,7 @@ func _on_mouse_exited() -> void:
 		_shader_material.set_shader_parameter("x_rot", 0.0)
 		_shader_material.set_shader_parameter("y_rot", 0.0)
 	
+	card_info.visible = false  # Ensure card info is visible
 	# Immediately hide the label regardless of state
 	if label_bg:
 		label_bg.visible = false

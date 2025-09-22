@@ -456,8 +456,8 @@ func _on_spine_hovered(consumable_id: String, mouse_pos: Vector2) -> void:
 			tooltip_text += "\n"
 		tooltip_text += consumable_data.display_name
 	
-	_spine_tooltip.text = tooltip_text
-	_spine_tooltip.position = mouse_pos + Vector2(10, -_spine_tooltip.size.y / 2)
+	_spine_tooltip.text = "Coupons:\n" + tooltip_text
+	_spine_tooltip.position = mouse_pos + Vector2(-50, -_spine_tooltip.size.y * 2)
 	_spine_tooltip.visible = true
 
 func _on_spine_unhovered(consumable_id: String) -> void:

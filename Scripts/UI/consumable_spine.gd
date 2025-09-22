@@ -30,7 +30,7 @@ func _ready() -> void:
 
 func _set_spine_size() -> void:
 	custom_minimum_size = Vector2(92, 16)
-	size = Vector2(92, 16)
+	size = Vector2(16, 92)
 
 func _create_spine_structure() -> void:
 	# Create spine texture display
@@ -44,7 +44,7 @@ func _create_spine_structure() -> void:
 	# Create title label (visible on spine)
 	title_label = Label.new()
 	title_label.name = "TitleLabel"
-	title_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	title_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title_label.add_theme_font_size_override("font_size", 8)

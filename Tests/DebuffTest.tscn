@@ -162,7 +162,9 @@ grow_horizontal = 1
 grow_vertical = 1
 size_flags_horizontal = 3
 size_flags_vertical = 3
+mouse_filter = 2
 power_up_icon_scene = ExtResource("14_geekk")
+max_power_ups = 5
 
 [node name="ConsumableUI" parent="." instance=ExtResource("12_pdckl")]
 anchors_preset = 0
@@ -174,6 +176,8 @@ grow_horizontal = 1
 grow_vertical = 1
 size_flags_horizontal = 3
 size_flags_vertical = 3
+mouse_filter = 2
+max_consumables = 3
 
 [node name="ChallengeUI" parent="." instance=ExtResource("19_1jk2k")]
 anchors_preset = 0

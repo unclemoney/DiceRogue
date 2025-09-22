@@ -423,10 +423,10 @@ func _on_spine_hovered(power_up_id: String, mouse_pos: Vector2) -> void:
 			power_up_names.append(data.display_name)
 	
 	if power_up_names.size() > 0:
-		_spine_tooltip.text = "Power-ups:\n" + "\n".join(power_up_names)
+		_spine_tooltip.text = "Videos:\n" + "\n".join(power_up_names)
 		# Adjust position: move up 50 pixels on x-axis (left) and center vertically on tooltip height
 		await get_tree().process_frame  # Wait for tooltip to calculate its size
-		_spine_tooltip.position = mouse_pos + Vector2(-50, -_spine_tooltip.size.y / 2)
+		_spine_tooltip.position = mouse_pos + Vector2(-50, -_spine_tooltip.size.y * 2)
 		_spine_tooltip.visible = true
 
 func _on_spine_unhovered(power_up_id: String) -> void:

@@ -5,7 +5,7 @@
 [ext_resource type="Theme" uid="uid://yij15afv8bdr" path="res://Resources/UI/scorecard_theme.tres" id="3_theme"]
 
 [node name="ConsumableSpine" type="Control"]
-custom_minimum_size = Vector2(92, 16)
+custom_minimum_size = Vector2(16, 92)
 layout_mode = 3
 anchor_top = -0.053
 anchor_right = 0.023

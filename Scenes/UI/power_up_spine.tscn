@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://bb8xhf4j3fkbf"]
 
-[ext_resource type="Script" uid="uid://cvxioiytlhkhc" path="res://Scripts/UI/power_up_spine.gd" id="1_spine"]
+[ext_resource type="Script" path="res://Scripts/UI/power_up_spine.gd" id="1_spine"]
 [ext_resource type="Texture2D" uid="uid://bda0jgw1sbmsv" path="res://Resources/Art/Powerups/powerup_spine.png" id="2_spine_tex"]
 [ext_resource type="Theme" uid="uid://yij15afv8bdr" path="res://Resources/UI/scorecard_theme.tres" id="3_8wavh"]
 

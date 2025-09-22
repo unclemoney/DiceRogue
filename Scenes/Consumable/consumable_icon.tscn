@@ -115,7 +115,7 @@ offset_bottom = -37.0
 grow_horizontal = 2
 
 [node name="HoverLabel" type="Label" parent="LabelBg"]
-custom_minimum_size = Vector2(80, 0)
+custom_minimum_size = Vector2(220, 0)
 layout_mode = 2
 horizontal_alignment = 1
 autowrap_mode = 3

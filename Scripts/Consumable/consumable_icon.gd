@@ -258,6 +258,8 @@ func _create_card_structure() -> void:
 	card_info.name = "CardInfo"
 	card_info.z_index = 2
 	card_info.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	card_info.position = Vector2(-186, 100)
+	card_info.visible = true
 	add_child(card_info)
 	
 	# Create Title
@@ -265,7 +267,9 @@ func _create_card_structure() -> void:
 	card_title.name = "Title"
 	card_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	card_title.add_theme_font_size_override("font_size", 16)
+	card_title.visible = true
 	card_info.add_child(card_title)
+	print("[DEBUG] card_info children: ", card_info.get_children())
 	
 	# Create SellButton
 	sell_button = Button.new()
@@ -300,7 +304,7 @@ func _create_card_structure() -> void:
 	label_bg.z_index = 3
 	label_bg.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	label_bg.position.y = -60
-	label_bg.position.x = -20
+	label_bg.position.x = -60
 	add_child(label_bg)
 	
 	# Create HoverLabel
@@ -308,7 +312,7 @@ func _create_card_structure() -> void:
 	hover_label.name = "HoverLabel"
 	hover_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hover_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hover_label.custom_minimum_size = Vector2(120, 0)
+	hover_label.custom_minimum_size = Vector2(220, 0)
 	hover_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	hover_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	label_bg.add_child(hover_label)
@@ -661,7 +665,7 @@ func _on_mouse_entered() -> void:
 		_current_tween.kill()
 	
 	_current_tween = create_tween()
-	
+	card_info.visible = true
 	# Show hover label
 	if label_bg:
 		label_bg.visible = true
@@ -701,11 +705,12 @@ func _on_mouse_entered() -> void:
 		_current_tween.parallel().tween_method(
 			_set_shader_glow, 0.0, glow_intensity, transition_speed
 		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	
 
 func _on_mouse_exited() -> void:
 	print("[ConsumableIcon] Mouse exited:", data.id if data else "unknown")
 	_is_hovering = false
-	
+	card_info.visible = false
 	# Reset shader rotation parameters immediately
 	if _shader_material:
 		print("[ConsumableIcon] Resetting shader rotation parameters")
