@@ -5,7 +5,7 @@ extends Node2D
 @onready var score_card: Scorecard     = $ScoreCard
 @onready var score_card_ui: Control    = $ScoreCardUI
 @onready var turn_tracker: TurnTracker = $TurnTracker 
-@onready var turn_tracker_ui: Control  = $TurnTrackerUI
+#@onready var turn_tracker_ui: Control  = $TurnTrackerUI
 @onready var game_button_ui: Control   = $GameButtonUI
 @onready var game_controller: Node     = $GameController
 @onready var pu_manager = get_node_or_null("../PowerUpManager")
@@ -16,10 +16,12 @@ extends Node2D
 @onready var debuff_manager: DebuffManager = $DebuffManager
 @onready var challenge_manager: ChallengeManager = $ChallengeManager
 @onready var ChallengeUI: Control = $ChallengeUI
+@onready var vcr_ui: VCRTurnTrackerUI = $VCRTurnTrackerUI
 
 func _ready():
 	score_card_ui.bind_scorecard(score_card)
-	turn_tracker_ui.bind_tracker(turn_tracker)
+	if vcr_ui and turn_tracker:
+		vcr_ui.bind_tracker(turn_tracker)
 
 	# Log missing optional components without errors
 	if not pu_manager:

@@ -1,0 +1,70 @@
+[gd_scene load_steps=3 format=3 uid="uid://dw7dok1tye5gg"]
+
+[ext_resource type="Script" uid="uid://dj4tbffxvlrbb" path="res://Scripts/UI/vcr_turn_tracker_ui.gd" id="1_vcr_ui"]
+[ext_resource type="Theme" uid="uid://yij15afv8bdr" path="res://Resources/UI/scorecard_theme.tres" id="2_1lhlw"]
+
+[node name="VCRTurnTrackerUI" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 400.0
+offset_bottom = 200.0
+script = ExtResource("1_vcr_ui")
+
+[node name="VCRDisplay" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MoneyLabel" type="Label" parent="VCRDisplay"]
+layout_mode = 1
+offset_top = 20.0
+offset_right = 100.0
+offset_bottom = 45.0
+theme = ExtResource("2_1lhlw")
+theme_override_colors/font_color = Color(0, 1, 0, 1)
+theme_override_font_sizes/font_size = 24
+text = "$0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TurnLabel" type="Label" parent="VCRDisplay"]
+layout_mode = 1
+offset_left = 98.0
+offset_top = 20.0
+offset_right = 178.0
+offset_bottom = 45.0
+theme = ExtResource("2_1lhlw")
+theme_override_colors/font_color = Color(0, 1, 0, 1)
+theme_override_font_sizes/font_size = 16
+text = "T:1/10"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RollsLabel" type="Label" parent="VCRDisplay"]
+layout_mode = 1
+offset_left = 177.0
+offset_top = 20.0
+offset_right = 257.0
+offset_bottom = 45.0
+theme = ExtResource("2_1lhlw")
+theme_override_colors/font_color = Color(0, 1, 0, 1)
+theme_override_font_sizes/font_size = 16
+text = "R:3/3"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RoundLabel" type="Label" parent="VCRDisplay"]
+layout_mode = 1
+offset_left = 268.0
+offset_top = 20.0
+offset_right = 328.0
+offset_bottom = 45.0
+theme = ExtResource("2_1lhlw")
+theme_override_colors/font_color = Color(0, 1, 0, 1)
+theme_override_font_sizes/font_size = 16
+text = "RND:1"
+horizontal_alignment = 1
+vertical_alignment = 1
