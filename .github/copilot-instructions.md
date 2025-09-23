@@ -30,3 +30,11 @@ This game takes its inspiration from the following games: Balatro, Dicey Dungeon
 - Root Logic Node: keep your GameController at the scene root.
 - Typed Paths: export NodePaths for everything you need from another scene, assign them in the inspector, and guard with get_node_or_null() in _ready().
 - Avoid Global State when possible and use node trees and signals.
+
+## Command Examples
+- When suggesting search commands on Windows, do not use `grep`. 
+Instead, use PowerShell's `Select-String` cmdlet. 
+For example:
+  grep "pattern" file.txt
+should become:
+  Select-String -Path file.txt -Pattern "pattern"

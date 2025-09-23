@@ -40,6 +40,7 @@ const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 @export var challenge_ui_path: NodePath         = ^"../ChallengeUI"
 @export var challenge_container_path: NodePath  = ^"ChallengeContainer"
 @export var round_manager_path: NodePath        = ^"../RoundManager"
+@export var crt_manager_path: NodePath          = ^"../CRTManager"
 
 @onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
 @onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
@@ -61,6 +62,7 @@ const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 @onready var challenge_ui: ChallengeUI     = get_node(challenge_ui_path) as ChallengeUI
 @onready var challenge_container: Node     = get_node(challenge_container_path)
 @onready var round_manager: RoundManager   = get_node_or_null(round_manager_path)
+@onready var crt_manager: CRTManager       = get_node_or_null(crt_manager_path)
 
 const STARTING_POWER_UP_IDS := ["extra_dice", "extra_rolls"]
 
@@ -747,6 +749,10 @@ func _on_dice_spawned() -> void:
 func _on_shop_button_pressed() -> void:
 	if shop_ui:
 		if not shop_ui.visible:
+			# Disable CRT when opening shop
+			if crt_manager:
+				crt_manager.disable_crt()
+			
 			# Cancel any existing tween
 			if _shop_tween and _shop_tween.is_valid():
 				_shop_tween.kill()
@@ -794,6 +800,10 @@ func _on_shop_button_pressed() -> void:
 
 			await _shop_tween.finished
 			shop_ui.hide()
+			
+			# Re-enable CRT when closing shop
+			if crt_manager:
+				crt_manager.enable_crt()
 
 func _on_shop_item_purchased(item_id: String, item_type: String) -> void:
 	print("[GameController] Processing purchase:", item_id, "type:", item_type)
@@ -1012,6 +1022,11 @@ func _on_max_power_ups_reached() -> void:
 
 func _on_round_started(round_number: int) -> void:
 	print("[GameController] Round", round_number, "started")
+	
+	# Enable CRT for active gameplay
+	if crt_manager:
+		crt_manager.enable_crt()
+	
 	update_three_more_rolls_usability()
 	update_double_existing_usability()
 	

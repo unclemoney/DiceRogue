@@ -1,0 +1,21 @@
+[gd_scene load_steps=2 format=3 uid="uid://dqgkm7s8toq66"]
+
+[ext_resource type="Script" uid="uid://c657y2beuf0t3" path="res://Scripts/Effects/CRTManager.gd" id="1_t5y2k"]
+
+[node name="CRTManager" type="Node"]
+script = ExtResource("1_t5y2k")
+crt_overlay_path = NodePath("../CRTOverlay")
+tv_off_overlay_path = NodePath("TVOffOverlay")
+
+[node name="TVOffOverlay" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 556.0
+offset_top = 99.0
+offset_right = -103.0
+offset_bottom = -118.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)

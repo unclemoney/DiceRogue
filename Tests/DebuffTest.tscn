@@ -1,9 +1,10 @@
-[gd_scene load_steps=70 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=71 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
 [ext_resource type="PackedScene" uid="uid://q27dsqs2pyd8" path="res://Scenes/UI/crt_overlay.tscn" id="3_f4xs4"]
 [ext_resource type="Shader" uid="uid://buwv6htlmlig8" path="res://Scripts/Shaders/backgground_swirl.gdshader" id="3_w6663"]
+[ext_resource type="PackedScene" uid="uid://dqgkm7s8toq66" path="res://Scenes/Effects/CRTManager.tscn" id="5_6hkbr"]
 [ext_resource type="PackedScene" uid="uid://dugpl3du3i6xo" path="res://Scenes/Dice/dice_hand.tscn" id="5_gxabo"]
 [ext_resource type="Texture2D" uid="uid://cq6eysum1qfw8" path="res://Resources/Art/Background/Hutch.png" id="5_sqb4o"]
 [ext_resource type="Texture2D" uid="uid://kekn41dhsb0l" path="res://Resources/Art/Background/TV.png" id="5_w4iq5"]
@@ -106,12 +107,15 @@ offset_right = 518.0
 offset_bottom = 237.0
 mouse_filter = 2
 
+[node name="CRTManager" parent="Background" instance=ExtResource("5_6hkbr")]
+
 [node name="CRTOverlay" parent="Background" instance=ExtResource("3_f4xs4")]
 offset = Vector2(580, 120)
 scale = Vector2(0.45, 0.65)
 transform = Transform2D(0.45, 0, 0, 0.65, 580, 120)
 
 [node name="TextureRect" type="TextureRect" parent="Background"]
+z_index = 1
 offset_left = -115.0
 offset_top = -329.0
 offset_right = 583.0
@@ -230,6 +234,7 @@ mod_manager_path = NodePath("../ModManager")
 
 [node name="GameController" parent="." instance=ExtResource("15_aeiu6")]
 challenge_container_path = NodePath("../ChallengeContainer")
+crt_manager_path = NodePath("../Background/CRTManager")
 
 [node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
 power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc"), ExtResource("30_8nt64"), ExtResource("30_2hxro"), ExtResource("31_sqb4o")])
