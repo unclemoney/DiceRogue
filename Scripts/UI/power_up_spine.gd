@@ -25,9 +25,11 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(16, 92)
 	size = Vector2(28, 170)
 
-	# Connect mouse signals
-	mouse_entered.connect(_on_mouse_entered)
-	mouse_exited.connect(_on_mouse_exited)
+	# Connect mouse signals (only if not already connected)
+	if not mouse_entered.is_connected(_on_mouse_entered):
+		mouse_entered.connect(_on_mouse_entered)
+	if not mouse_exited.is_connected(_on_mouse_exited):
+		mouse_exited.connect(_on_mouse_exited)
 
 func _create_spine_structure() -> void:
 	# Create spine texture display

@@ -380,10 +380,11 @@ func _on_background_clicked(event: InputEvent) -> void:
 
 func _start_idle_animations() -> void:
 	_stop_idle_animations()
-	_idle_tween = create_tween().set_loops()
 	
 	if _current_state != State.FANNED:
 		return
+	
+	_idle_tween = create_tween().set_loops(0)  # 0 = infinite, but properly set
 	
 	# Get the calculated fan positions (not the current positions)
 	var power_up_ids: Array = _power_up_data.keys()
@@ -403,7 +404,7 @@ func _start_idle_animations() -> void:
 		
 		print("[PowerUpUI] Idle animation - Card ", i, " (", power_up_id, ") - Base pos: ", base_pos, ", Final idle pos: ", base_pos + wave_offset)
 		
-		var icon_tween: Tween = create_tween().set_loops()
+		var icon_tween: Tween = create_tween().set_loops(0)  # 0 = infinite, but properly set
 		icon_tween.tween_property(icon, "position", base_pos + wave_offset, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		icon_tween.tween_property(icon, "position", base_pos - wave_offset, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
