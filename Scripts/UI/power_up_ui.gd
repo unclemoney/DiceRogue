@@ -31,7 +31,7 @@ var _selected_spine_id: String = ""
 
 # Animation and background
 var _background: ColorRect
-var _idle_tween: Tween
+var _idle_tweens: Array[Tween] = []  # Track individual idle animation tweens
 var _spine_tooltip: Label
 
 func _ready() -> void:
@@ -382,20 +382,33 @@ func _start_idle_animations() -> void:
 	_stop_idle_animations()
 	
 	if _current_state != State.FANNED:
+		print("[PowerUpUI] Skipping idle animations - not in FANNED state (current: ", _current_state, ")")
 		return
-	
-	_idle_tween = create_tween().set_loops(0)  # 0 = infinite, but properly set
 	
 	# Get the calculated fan positions (not the current positions)
 	var power_up_ids: Array = _power_up_data.keys()
 	var count: int = power_up_ids.size()
+	
+	if count == 0:
+		print("[PowerUpUI] No power-ups to animate")
+		return
+		
 	var fan_positions: Array[Vector2] = _calculate_fan_positions(count)
 	
+	print("[PowerUpUI] Starting idle animations for ", count, " power-ups")
+	
 	# Create gentle wave motion for fanned cards using their proper fan positions
+	var created_tweens := 0
 	for i in range(count):
 		var power_up_id: String = power_up_ids[i]
 		var icon: PowerUpIcon = _fanned_icons.get(power_up_id)
 		if not icon or i >= fan_positions.size():
+			print("[PowerUpUI] Skipping animation for ", power_up_id, " - no icon or invalid position")
+			continue
+		
+		# Verify icon is still valid and in tree
+		if not is_instance_valid(icon) or not icon.is_inside_tree():
+			print("[PowerUpUI] Skipping animation for ", power_up_id, " - icon not valid or not in tree")
 			continue
 			
 		var base_pos: Vector2 = fan_positions[i]  # Use calculated fan position, not current position
@@ -404,13 +417,22 @@ func _start_idle_animations() -> void:
 		
 		print("[PowerUpUI] Idle animation - Card ", i, " (", power_up_id, ") - Base pos: ", base_pos, ", Final idle pos: ", base_pos + wave_offset)
 		
-		var icon_tween: Tween = create_tween().set_loops(0)  # 0 = infinite, but properly set
+		var icon_tween: Tween = create_tween()
+		icon_tween.set_loops(0)  # Infinite loops
 		icon_tween.tween_property(icon, "position", base_pos + wave_offset, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		icon_tween.tween_property(icon, "position", base_pos - wave_offset, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		
+		# Track this tween for proper cleanup
+		_idle_tweens.append(icon_tween)
+		created_tweens += 1
+	
+	print("[PowerUpUI] Created ", created_tweens, " idle animation tweens")
 
 func _stop_idle_animations() -> void:
-	if _idle_tween and _idle_tween.is_valid():
-		_idle_tween.kill()
+	for tween in _idle_tweens:
+		if tween and tween.is_valid():
+			tween.kill()
+	_idle_tweens.clear()
 
 func _on_spine_hovered(power_up_id: String, mouse_pos: Vector2) -> void:
 	if _current_state != State.SPINES:
