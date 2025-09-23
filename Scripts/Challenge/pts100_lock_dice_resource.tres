@@ -7,8 +7,8 @@
 [resource]
 script = ExtResource("1_6dsf7")
 id = "pts100_lock_dice"
-display_name = "Lockdown 100"
-description = "Score at least 100 points with dice locking between turns"
+display_name = "Lockdown"
+description = "Dice are frozen between rolls, No Locking"
 icon = ExtResource("1_mp8je")
 scene = ExtResource("2_ls7bh")
 debuff_ids = Array[String](["lock_dice"])

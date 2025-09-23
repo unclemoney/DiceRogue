@@ -8,6 +8,7 @@ func _ready() -> void:
 	print("[ThreeMoreRollsConsumable] Ready")
 
 func apply(target) -> void:
+	print("🔥 [DEBUG] QuickCashConsumable.apply() called with target:", target)
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[ThreeMoreRollsConsumable] Invalid target passed to apply()")

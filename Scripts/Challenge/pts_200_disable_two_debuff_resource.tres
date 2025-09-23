@@ -7,8 +7,8 @@
 [resource]
 script = ExtResource("1_b4oy4")
 id = "pts_200_disabled_twos"
-display_name = "200 Points Disabled Twos"
-description = "Score 200 Points with Two's Disabled"
+display_name = "Disabled Dog"
+description = "Two's Disabled and will not score"
 icon = ExtResource("1_oac04")
 scene = ExtResource("2_mwpbc")
 debuff_ids = Array[String](["disabled_twos"])

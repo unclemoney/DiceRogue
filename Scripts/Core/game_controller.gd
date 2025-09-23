@@ -100,13 +100,10 @@ func _ready() -> void:
 		round_manager.round_completed.connect(_on_round_completed)
 		round_manager.round_failed.connect(_on_round_failed)
 		round_manager.all_rounds_completed.connect(_on_all_rounds_completed)
-	#if consumable_ui:
-	#	if not consumable_ui.is_connected("consumable_sold", _on_consumable_sold):
-	#		consumable_ui.connect("consumable_sold", _on_consumable_sold)
-	#	if not consumable_ui.is_connected("consumable_used", _on_consumable_ui_used):
-	#		consumable_ui.connect("consumable_used", _on_consumable_ui_used)
-	#if consumable_ui.has_consumable(consumable_id):
-	#	consumable_ui.update_consumable_usability()
+	if consumable_ui:
+		if not consumable_ui.is_connected("consumable_used", _on_consumable_used):
+			consumable_ui.consumable_used.connect(_on_consumable_used)
+			print("[GameController] Connected to consumable_used signal from ConsumableUI")
 	if powerup_ui:
 		if not powerup_ui.is_connected("max_power_ups_reached", _on_max_power_ups_reached):
 			powerup_ui.connect("max_power_ups_reached", _on_max_power_ups_reached)
@@ -128,10 +125,10 @@ func _ready() -> void:
 
 func _on_game_start() -> void:
 	#spawn_starting_powerups()
-	#grant_consumable("quick_cash")
+	grant_consumable("three_more_rolls")
 	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
-	#grant_power_up("extra_dice")
+	grant_power_up("extra_dice")
 	if round_manager:
 		round_manager.start_game()
 

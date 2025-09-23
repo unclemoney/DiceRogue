@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_fod7w")
 id = "costly_roll"
-display_name = "Costly Roll"
+display_name = "Pretty Penny"
 description = "Lose $10 Every Roll"
 icon = ExtResource("1_o2btw")
 scene = ExtResource("2_5l5e5")

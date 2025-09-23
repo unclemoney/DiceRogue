@@ -7,8 +7,8 @@
 [resource]
 script = ExtResource("1_abavh")
 id = "pts_100_no_debuff"
-display_name = "100 Points"
-description = "Score 100 Vanilla Points"
+display_name = "Kiddy Ride"
+description = "Easy Vanilla"
 icon = ExtResource("1_dbith")
 scene = ExtResource("2_tblbe")
 debuff_ids = Array[String]([])

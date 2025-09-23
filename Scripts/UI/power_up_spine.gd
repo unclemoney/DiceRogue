@@ -23,7 +23,7 @@ func _ready() -> void:
 	
 	# Set spine size
 	custom_minimum_size = Vector2(16, 92)
-	size = Vector2(16, 92)
+	size = Vector2(28, 170)
 
 	# Connect mouse signals
 	mouse_entered.connect(_on_mouse_entered)

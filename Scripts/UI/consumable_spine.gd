@@ -30,7 +30,7 @@ func _ready() -> void:
 
 func _set_spine_size() -> void:
 	custom_minimum_size = Vector2(92, 16)
-	size = Vector2(16, 92)
+	size = Vector2(28, 170)
 
 func _create_spine_structure() -> void:
 	# Create spine texture display

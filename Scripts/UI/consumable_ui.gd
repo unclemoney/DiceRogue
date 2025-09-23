@@ -22,7 +22,7 @@ var _current_state: State = State.SPINES
 var _is_animating: bool = false
 
 # Layout properties
-var _spine_shelf_y: float = 340.0  # Y position of spine shelf
+var _spine_shelf_y: float = 263.0  # Y position of spine shelf
 var _spine_spacing: float = 30.0  # Horizontal spacing between spines
 var _fan_center: Vector2  # Center point for fanned cards
 var _fan_radius: float = 400.0  # How spread out the fan is

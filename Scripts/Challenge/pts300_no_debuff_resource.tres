@@ -7,8 +7,8 @@
 [resource]
 script = ExtResource("3_axabn")
 id = "300pts_no_debuff"
-display_name = "300 Points"
-description = "Score 300 vanilla points"
+display_name = "Basic Bitch"
+description = "Vanilla Rules"
 icon = ExtResource("1_0pi0e")
 scene = ExtResource("2_aejb6")
 debuff_ids = Array[String](["lock_dice"])

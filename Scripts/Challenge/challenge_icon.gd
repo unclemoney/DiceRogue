@@ -28,6 +28,10 @@ var card_info: VBoxContainer
 var card_title: Label
 var shadow: TextureRect
 
+# Shadow override (prevents _update_shadow from clobbering manual changes)
+var _shadow_override: bool = false
+var _shadow_override_pos: Vector2 = Vector2.ZERO
+
 var _shader_material: ShaderMaterial
 var _is_hovering := false
 var _is_selected := false
@@ -130,6 +134,11 @@ func _update_default_position() -> void:
 func _update_shadow(delta: float) -> void:
 	if not shadow:
 		return
+
+	# If an override is active, honor it and don't compute a dynamic offset
+	if _shadow_override:
+		shadow.position = _shadow_override_pos
+		return
 	
 	# Update shadow position based on card position and rotation
 	var center = get_viewport_rect().size / 2.0
@@ -137,8 +146,8 @@ func _update_shadow(delta: float) -> void:
 	
 	# Set shadow position with offset based on rotation and distance from center
 	var shadow_offset = Vector2(
-		lerp(5.0, -sign(distance) * max_offset_shadow, abs(distance/(center.x))), 
-		5.0 + abs(_displacement * 10.0)
+		lerp(5.0, -sign(distance) * max_offset_shadow, abs(distance/(center.x)))-50, 
+		5.0 + abs(_displacement * 10.0)-50
 	)
 	
 	shadow.position = shadow_offset
@@ -206,7 +215,7 @@ func _create_card_structure() -> void:
 	shadow.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shadow.modulate = Color(0.0, 0.0, 0.0, 0.5)
 	shadow.z_index = -1
-	shadow.position = Vector2(5, 5)
+	shadow.position = Vector2(1, 1)
 	add_child(shadow)
 	
 	# Create CardArt
@@ -271,6 +280,20 @@ func _create_card_structure() -> void:
 	hover_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	hover_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	label_bg.add_child(hover_label)
+
+## Shadow override helpers
+func _set_shadow_override(pos: Vector2) -> void:
+	# Enable manual override of the shadow position. This prevents _update_shadow
+	# from recalculating the position each frame until _clear_shadow_override() is called.
+	_shadow_override = true
+	_shadow_override_pos = pos
+	if shadow:
+		shadow.position = pos
+
+func _clear_shadow_override() -> void:
+	# Disable manual override so runtime calculations resume
+	_shadow_override = false
+
 
 func _setup_shader() -> void:
 	# Try to load shader
@@ -489,6 +512,9 @@ func _on_mouse_entered() -> void:
 		_current_tween.parallel().tween_property(
 			shadow, "scale", Vector2.ONE * hover_scale, 0.5
 		).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+		# Set a small manual shadow offset while hovering so it feels responsive
+		_set_shadow_override(Vector2(8, 8))
 	
 	# Animate shader tilt
 	if _shader_material:
@@ -558,6 +584,15 @@ func _on_mouse_exited() -> void:
 	_current_tween.parallel().tween_method(
 		_set_shader_glow, glow_intensity, 0.0, transition_speed
 	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+	# Set an exaggerated shadow position for debugging, using override so it isn't clobbered
+	_set_shadow_override(Vector2(0, 0))
+
+	# Clear the override shortly after to restore dynamic shadow behaviour
+	# Use a timer to clear after one frame so you can visually verify position
+	var _clear_timer = get_tree().create_timer(0.1)
+	_clear_timer.timeout.connect(func(): _clear_shadow_override())
+
 
 func set_data_with_target_score(new_data: ChallengeData, target_score: int) -> void:
 	data = new_data

@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_x5hgd")
 id = "pts_150_roll_score_minus_one"
-display_name = "150 Points With Roll Minus One"
+display_name = "Precious Points"
 description = "Score One Less Each Roll"
 icon = ExtResource("1_m5cbj")
 scene = ExtResource("2_m5cbj")

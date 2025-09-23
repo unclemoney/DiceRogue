@@ -172,6 +172,7 @@ mouse_filter = 2
 max_consumables = 3
 
 [node name="ChallengeUI" parent="." instance=ExtResource("19_1jk2k")]
+z_index = 2
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
@@ -184,12 +185,13 @@ grow_vertical = 1
 round_manager_path = NodePath("../RoundManager")
 
 [node name="DebuffUI" parent="." instance=ExtResource("14_oxb5w")]
+z_index = 2
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
-offset_left = 291.0
-offset_top = 181.0
-offset_right = 397.0
+offset_left = 301.0
+offset_top = 133.0
+offset_right = 407.0
 offset_bottom = 222.0
 grow_horizontal = 1
 grow_vertical = 1
