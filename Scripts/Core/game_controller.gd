@@ -125,7 +125,8 @@ func _ready() -> void:
 
 func _on_game_start() -> void:
 	#spawn_starting_powerups()
-	grant_consumable("three_more_rolls")
+	grant_consumable("add_max_power_up")
+	grant_consumable("power_up_shop_num")
 	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
 	grant_power_up("extra_dice")

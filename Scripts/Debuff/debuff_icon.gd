@@ -213,7 +213,7 @@ func _create_card_structure() -> void:
 	# Create CardInfo
 	card_info = VBoxContainer.new()
 	card_info.name = "CardInfo"
-	card_info.z_index = 2
+	card_info.z_index = 1
 	card_info.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	card_info.offset_top = -40  # Position for title
 	add_child(card_info)
@@ -221,6 +221,8 @@ func _create_card_structure() -> void:
 	# Create Title
 	card_title = Label.new()
 	card_title.name = "Title"
+	card_title.z_index = 1
+	card_title.visible = false
 	card_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	card_title.add_theme_font_size_override("font_size", 16)
 	card_info.add_child(card_title)
@@ -229,7 +231,7 @@ func _create_card_structure() -> void:
 	label_bg = PanelContainer.new()
 	label_bg.name = "LabelBg"
 	label_bg.visible = false
-	label_bg.z_index = 3
+	label_bg.z_index = 2
 	label_bg.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	label_bg.position.y = -60
 	label_bg.position.x = -20
@@ -494,6 +496,7 @@ func _on_mouse_exited() -> void:
 		var hide_label = func():
 			if label_bg:
 				label_bg.visible = false
+				card_info.visible = false
 		_current_tween.tween_callback(hide_label)
 	
 	# Animate card back to normal with elastic effect
