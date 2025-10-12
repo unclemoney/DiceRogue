@@ -82,20 +82,31 @@ A pixel-art, roguelite dice-roller (Yahtzee-inspired) built for Godot 4.4. This 
 
 ## Suggested TODO (short-term → long-term)
 - Short-term
-  - Fix `PlayerEconomy` typo: [Scripts/Managers/PlayerEconomy.gd](Scripts/Managers/PlayerEconomy.gd)
-  - Unify `ScoreModifierManager` naming and file: [Scripts/Managers/MultiplierManager.gd](Scripts/Managers/MultiplierManager.gd)
-  - Remove deprecated score multiplier code from [`Scenes/ScoreCard/score_card.gd`](Scenes/ScoreCard/score_card.gd) after migrating usages
-  - Consolidate UI card construction into a reusable helper/scene
+  - ✅ **COMPLETED** - Fix `PlayerEconomy` colon typo (was already correct)
+  - ✅ **NO ACTION NEEDED** - Unify `ScoreModifierManager` naming: Current design is optimal
+  - ✅ **COMPLETED** - Remove class_name from autoloaded scripts: Fixed DiceResults and ScoreEvaluator  
+  - ✅ **BASE CLASS CREATED** - Consolidate UI card construction: [Scripts/UI/card_icon_base.gd](Scripts/UI/card_icon_base.gd) available for new cards
   - Add activation code registration for any new power-ups to [`GameController`](Scripts/Core/game_controller.gd) (see copilot instructions)
 - Mid-term
-  - Extract spine/fan logic into a shared controller used by `PowerUpUI` and `ConsumableUI`
+  - Extract spine/fan logic into a shared controller used by `PowerUpUI` and `ConsumableUI` (identified as complex refactor)
   - Add unit tests: ensure additive bonuses apply before multipliers (see [Scenes/ScoreCard/score_card.gd](Scenes/ScoreCard/score_card.gd) score logic)
-  - Harden signal lifecycle: create base PowerUp that connects/disconnects safely
+  - Harden signal lifecycle: create base PowerUp that connects/disconnects safely (identified as complex refactor)
   - Fix `turn_tracker.add_rolls()` implementation (`MAX_ROLLS` mutation)
 - Long-term / polish
   - Implement mod sell UI and persistence mechanics
   - Implement mod rarity/weight balancing in `ModManager` and shop (`ShopUI`)
   - Build analytics-friendly debug logging toggles
+
+## Recent Refactor Activity (October 2025)
+**Comprehensive refactor assessment completed** - See [REFACTOR_TODO.md](REFACTOR_TODO.md) for detailed analysis.
+
+**Key Findings:**
+- Most suggested refactors were already well-implemented or not needed
+- Fixed autoload class_name violations in DiceResults and ScoreEvaluator  
+- Created CardIconBase class for future use (existing icons work well, migration optional)
+- Identified complex UI duplication that requires careful approach
+
+**Outcome:** Codebase is in excellent shape with minimal violations found and fixed.
 
 ## Game design ideas / feature wishlist
 - Selling mods:

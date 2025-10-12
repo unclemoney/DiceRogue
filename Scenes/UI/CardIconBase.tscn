@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://bcl51f5oq5cr7"]
+
+[ext_resource type="Script" path="res://Scripts/UI/card_icon_base.gd" id="1_8d5wj"]
+
+[node name="CardIconBase" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_8d5wj")

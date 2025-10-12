@@ -367,6 +367,9 @@ func _fold_back_cards() -> void:
 	_is_animating = false
 
 func _clear_fanned_icons() -> void:
+	# Stop idle animations before freeing icons to prevent warnings
+	_stop_idle_animations()
+	
 	for power_up_id in _fanned_icons.keys():
 		var icon: PowerUpIcon = _fanned_icons[power_up_id]
 		if icon:
@@ -418,7 +421,7 @@ func _start_idle_animations() -> void:
 		print("[PowerUpUI] Idle animation - Card ", i, " (", power_up_id, ") - Base pos: ", base_pos, ", Final idle pos: ", base_pos + wave_offset)
 		
 		var icon_tween: Tween = create_tween()
-		icon_tween.set_loops(0)  # Infinite loops
+		icon_tween.set_loops()  # Default infinite loops (no argument)
 		icon_tween.tween_property(icon, "position", base_pos + wave_offset, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		icon_tween.tween_property(icon, "position", base_pos - wave_offset, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		

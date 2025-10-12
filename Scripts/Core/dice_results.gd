@@ -1,5 +1,5 @@
 extends Node
-class_name DiceResult
+#class_name DiceResult
 
 var values: Array[int] = []
 var locked: Array[bool] = []

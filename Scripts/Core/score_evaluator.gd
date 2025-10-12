@@ -1,5 +1,5 @@
 extends Node
-class_name ScoreEvaluator
+#class_name ScoreEvaluator
 
 var _evaluation_count := 0  # Add at top of class
 

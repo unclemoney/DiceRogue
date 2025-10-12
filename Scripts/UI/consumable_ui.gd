@@ -30,7 +30,7 @@ var _selected_spine_id: String = ""
 
 # Animation and background
 var _background: ColorRect
-var _idle_tween: Tween
+var _idle_tweens: Array[Tween] = []  # Track individual idle animation tweens
 var _spine_tooltip: Label
 
 # Safe consumable tracking
@@ -389,6 +389,9 @@ func _fold_back_cards() -> void:
 	_is_animating = false
 
 func _clear_fanned_icons() -> void:
+	# Stop idle animations before freeing icons to prevent warnings
+	_stop_idle_animations()
+	
 	for consumable_id in _fanned_icons.keys():
 		var icon: ConsumableIcon = _fanned_icons[consumable_id]
 		if icon and is_instance_valid(icon):
@@ -423,9 +426,13 @@ func _start_idle_animations() -> void:
 		var wave_offset: Vector2 = Vector2(randf_range(-5, 5), randf_range(-8, 8))
 		var duration: float = randf_range(2.0, 4.0)
 		
-		var icon_tween: Tween = create_tween().set_loops(-1)  # Fixed: specify loop count
+		var icon_tween: Tween = create_tween()
+		icon_tween.set_loops()  # Default infinite loops (no argument)
 		icon_tween.tween_property(icon, "position", base_pos + wave_offset, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		icon_tween.tween_property(icon, "position", base_pos - wave_offset, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		
+		# Track this tween for proper cleanup
+		_idle_tweens.append(icon_tween)
 
 func _on_consumable_used(consumable_id: String) -> void:
 	print("[ConsumableUI] Consumable used:", consumable_id)
@@ -501,9 +508,10 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 	return true
 
 func _stop_idle_animations() -> void:
-	if _idle_tween and _idle_tween.is_valid():
-		_idle_tween.kill()
-		_idle_tween = null
+	for tween in _idle_tweens:
+		if tween and tween.is_valid():
+			tween.kill()
+	_idle_tweens.clear()
 
 func _has_consumables() -> bool:
 	return _active_consumable_count > 0
@@ -605,6 +613,37 @@ func get_all_consumable_ids() -> Array[String]:
 	for id in _consumable_data.keys():
 		ids.append(id)
 	return ids
+
+func animate_consumable_removal(consumable_id: String, on_finished: Callable) -> void:
+	# Check if we have a spine to animate
+	if _spines.has(consumable_id):
+		var spine: ConsumableSpine = _spines[consumable_id]
+		if spine and is_instance_valid(spine):
+			print("[ConsumableUI] Animating spine removal for:", consumable_id)
+			var tween: Tween = create_tween()
+			tween.tween_property(spine, "scale", Vector2(1.2, 0.2), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			tween.tween_property(spine, "scale", Vector2(0.8, 1.6), 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			tween.tween_property(spine, "position", spine.position + Vector2(0, -100), 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+			tween.parallel().tween_property(spine, "modulate:a", 0.0, 0.35).set_trans(Tween.TRANS_LINEAR)
+			tween.finished.connect(on_finished)
+			return
+	
+	# Check if we have a fanned icon to animate
+	if _fanned_icons.has(consumable_id):
+		var icon: ConsumableIcon = _fanned_icons[consumable_id]
+		if icon and is_instance_valid(icon):
+			print("[ConsumableUI] Animating fanned icon removal for:", consumable_id)
+			var tween: Tween = create_tween()
+			tween.tween_property(icon, "scale", Vector2(1.2, 0.2), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			tween.tween_property(icon, "scale", Vector2(0.8, 1.6), 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			tween.tween_property(icon, "position", icon.position + Vector2(0, -200), 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+			tween.parallel().tween_property(icon, "modulate:a", 0.0, 0.35).set_trans(Tween.TRANS_LINEAR)
+			tween.finished.connect(on_finished)
+			return
+	
+	# No animation needed, call callback immediately
+	print("[ConsumableUI] No visual element found for consumable, skipping animation:", consumable_id)
+	on_finished.call()
 
 # Deprecated method for backward compatibility - logs warning and returns null
 func get_consumable_icon(consumable_id: String):
