@@ -35,15 +35,19 @@ const LOWER_CATEGORY_NODE_NAMES := {
 
 var is_double_mode := false
 
+
+## _ready()
+##
+## Initialize ScoreCard UI: apply theme, locate labels/buttons and prepare category mappings.
 func _ready():
 	# Load and apply custom theme
 	_apply_custom_theme()
-	
+
 	# Add to existing _ready function
 	best_hand_label = get_node_or_null("BestHandScore")
 	if not best_hand_label:
 		push_error("BestHandScore RichTextLabel not found!")
-		
+
 	for key in LOWER_CATEGORY_NODE_NAMES.keys():
 		var node_name = LOWER_CATEGORY_NODE_NAMES[key]
 		var button_path = "HBoxContainer/LowerVBoxContainer/LowerGridContainer/%s/%sButton" % [node_name, node_name]
@@ -68,6 +72,10 @@ func _ready():
 	# else:
 	#     push_error("[ScoreCardUI] No scorecard reference to set in DiceResults")
 
+
+## _apply_custom_theme()
+##
+## Loads and applies a custom UI theme for the scorecard if present.
 func _apply_custom_theme():
 	# Load the custom scorecard theme
 	var custom_theme = load("res://Resources/UI/scorecard_theme.tres") as Theme
@@ -77,6 +85,10 @@ func _apply_custom_theme():
 	else:
 		push_error("[ScoreCardUI] Failed to load custom theme from res://Resources/UI/scorecard_theme.tres")
 
+
+## bind_scorecard(sc)
+##
+## Attaches a `Scorecard` model to the UI, refreshes displays and connects relevant signals.
 func bind_scorecard(sc: Scorecard):
 	scorecard = sc
 	update_all()
@@ -86,10 +98,14 @@ func bind_scorecard(sc: Scorecard):
 	scorecard.upper_section_completed.connect(_on_upper_section_completed)
 	scorecard.lower_section_completed.connect(_on_lower_section_completed)
 	scorecard.yahtzee_bonus_achieved.connect(_on_yahtzee_bonus_achieved)
-	
+
 	# Set scorecard in DiceResults
 	DiceResults.set_scorecard(scorecard)
 
+
+## update_all()
+##
+## Refreshes the UI labels and totals from the bound `scorecard` model.
 func update_all():
 	for category in scorecard.upper_scores.keys():
 		var label_path = "HBoxContainer/UpperVBoxContainer/UpperGridContainer/" + category.capitalize() + "Container/" + category.capitalize() + "Label"
@@ -176,25 +192,29 @@ func update_all():
 		else:
 			yahtzee_bonus_label.text = "-"
 
-func _on_upper_bonus_achieved(bonus: int) -> void:
+
+## _on_upper_bonus_achieved(bonus)
+##
+## UI feedback for when the upper section bonus is achieved. Animates labels and optionally triggers screen shake.
+func _on_upper_bonus_achieved(_bonus: int) -> void:
 	# Animate the bonus achievement and update totals
 	if upper_bonus_label:
 		var tween = create_tween()
 		tween.tween_property(upper_bonus_label, "modulate", Color.YELLOW, 0.3)
 		tween.tween_property(upper_bonus_label, "modulate", Color.WHITE, 0.3)
-		
+
 		# Update the final total label with animation
 		if upper_final_total_label:
 			var final_total = scorecard.get_upper_section_final_total()
 			tween.tween_property(upper_final_total_label, "modulate", Color.YELLOW, 0.3)
 			upper_final_total_label.text = str(final_total)
 			tween.tween_property(upper_final_total_label, "modulate", Color.WHITE, 0.3)
-		
+
 		# Optional: Add screen shake
 		var screen_shake = get_tree().root.find_child("ScreenShake", true, false)
 		if screen_shake:
 			screen_shake.shake(0.4, 0.3)
-		
+
 			# Animate total score
 	if total_score_label:
 		var tween = create_tween()
@@ -223,6 +243,10 @@ func _on_lower_section_completed() -> void:
 		if screen_shake:
 			screen_shake.shake(0.3, 0.2)
 
+
+## connect_buttons()
+##
+## Wire up UI buttons for each score category so the player can select categories to score.
 func connect_buttons():
 	# Initialize section_buttons dictionary
 	section_buttons = {
@@ -339,7 +363,7 @@ func update_best_hand_preview(dice_values: Array) -> void:
 		return
 
 	var best_score := -1
-	var best_section
+	var _best_section
 	var best_category := ""
 	
 	# Check upper section
@@ -348,7 +372,7 @@ func update_best_hand_preview(dice_values: Array) -> void:
 			var score = scorecard.evaluate_category(category, dice_values)
 			if score > best_score:
 				best_score = score
-				best_section = Scorecard.Section.UPPER
+				_best_section = Scorecard.Section.UPPER
 				best_category = category
 	
 	# Define evaluation order for lower section
@@ -363,7 +387,7 @@ func update_best_hand_preview(dice_values: Array) -> void:
 			var score = scorecard.evaluate_category(category, dice_values)
 			if score > best_score:
 				best_score = score
-				best_section = Scorecard.Section.LOWER
+				_best_section = Scorecard.Section.LOWER
 				best_category = category
 	
 	# ...rest of existing display code...
@@ -455,7 +479,7 @@ func handle_score_reroll(section: Scorecard.Section, category: String) -> void:
 	emit_signal("hand_scored")
 	emit_signal("score_rerolled", section, category, score)
 
-func _on_yahtzee_bonus_achieved(points: int) -> void:
+func _on_yahtzee_bonus_achieved(_points: int) -> void:
 	# Extra visual feedback for bonus yahtzee
 	if total_score_label:
 		# Bigger text animation

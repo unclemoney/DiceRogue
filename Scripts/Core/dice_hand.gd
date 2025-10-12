@@ -25,43 +25,51 @@ var dice_list: Array[Dice] = []
 
 @onready var roll_audio_player: AudioStreamPlayer = AudioStreamPlayer.new()
 
+## _ready()
+##
+## Initialize the DiceHand scene, validate DiceData assets, and prepare audio player.
 func _ready() -> void:
 	print("\n=== DiceHand Initializing ===")
-	
+
 	if not d6_dice_data:
 		push_error("[DiceHand] D6 dice data not assigned!")
 		return
-		
+
 	if not d4_dice_data:
 		push_error("[DiceHand] D4 dice data not assigned!")
 		return
-		
+
 	if d6_dice_data.sides != 6:
 		push_error("[DiceHand] D6 data has incorrect number of sides:", d6_dice_data.sides)
 		return
-		
+
 	if d4_dice_data.sides != 4:
 		push_error("[DiceHand] D4 data has incorrect number of sides:", d4_dice_data.sides)
 		return
-	
-	# Add AudioStreamPlayer as a child if not already present
+
+	## Add AudioStreamPlayer as a child if not already present
 	if not has_node("RollAudioPlayer"):
 		roll_audio_player.name = "RollAudioPlayer"
 		add_child(roll_audio_player)
-	
+
 	# Start with D6 dice by default
 	switch_dice_type("d6")
 
+
+## spawn_dice()
+##
+## Spawns the configured number of dice, initializes their data, and emits `dice_spawned`.
+## Honors any active lock debuff by disabling input after spawn.
 func spawn_dice() -> void:
 	if not default_dice_data:
 		push_error("[DiceHand] Cannot spawn dice - no default DiceData assigned!")
 		return
-		
+
 	# Clear existing dice first
 	clear_dice()
-	
+
 	print("[DiceHand] Spawning", dice_count, "dice of type:", current_dice_type)
-	
+
 	for i in range(dice_count):
 		var die = dice_scene.instantiate() as Dice
 		if die:
@@ -72,9 +80,9 @@ func spawn_dice() -> void:
 			die.animate_entry(die.position)
 			dice_list.append(die)
 			print("[DiceHand] Spawned die", i + 1, "with", default_dice_data.sides, "sides")
-	
+
 	emit_signal("dice_spawned")
-	
+
 	# Only disable dice if lock debuff is active
 	var lock_debuff = get_tree().get_first_node_in_group("debuffs") as LockDiceDebuff
 	if lock_debuff and lock_debuff.is_active:
@@ -85,6 +93,10 @@ func spawn_dice() -> void:
 		enable_all_dice()
 
 
+
+## roll_all()
+##
+## Rolls every die in `dice_list`. Plays roll sound and emits `roll_complete` when finished.
 func roll_all() -> void:
 	if dice_list.size() == 0:
 		return
@@ -93,40 +105,56 @@ func roll_all() -> void:
 	if roll_sound:
 		roll_audio_player.stream = roll_sound
 		roll_audio_player.play()
-	
+
 	print("\n=== Rolling All Dice ===")
 	print("[DiceHand] Current dice type:", current_dice_type.to_upper())
 	print("[DiceHand] Number of dice:", dice_list.size())
-	
+
 	for i in range(dice_list.size()):
 		var die = dice_list[i]
 		die.roll()
 		print("[DiceHand] Die", i + 1, "rolled:", die.value)
-	
+
 	_update_results()
 	emit_signal("roll_complete")
 
+
+## _update_results()
+##
+## Updates the global DiceResults singleton using the current dice_list.
 func _update_results() -> void:
 	# Direct call to the autoloaded singleton
 	DiceResults.update_from_dice(dice_list)
 
+
+## clear_dice()
+##
+## Frees all child dice nodes and clears the internal dice_list.
 func clear_dice() -> void:
 	for die in dice_list:
 		die.queue_free()
 	dice_list.clear()
 
+
+## get_current_dice_values() -> Array[int]
+##
+## Returns an array of current face values for each die in `dice_list`.
 func get_current_dice_values() -> Array[int]:
 	var arr: Array[int] = []
 	for die in dice_list:
 		arr.append(die.value)
 	return arr
 
+
+## update_dice_count()
+##
+## Ensures that the number of active dice in the scene matches the exported `dice_count`.
 func update_dice_count() -> void:
 	var current_count = dice_list.size()
-	
+
 	if current_count == dice_count:
 		return
-	
+
 	if current_count < dice_count:
 		# Add more dice
 		for i in range(current_count, dice_count):

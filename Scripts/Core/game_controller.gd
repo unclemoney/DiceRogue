@@ -14,9 +14,9 @@ var active_debuffs: Dictionary = {}  # id -> Debuff
 var active_mods: Dictionary = {}  # id -> Mod
 var active_challenges: Dictionary = {}  # id -> Challenge
 
-const ScoreCardUI := preload("res://Scripts/UI/score_card_ui.gd")
-const DebuffManager := preload("res://Scripts/Managers/DebuffManager.gd")
-const DebuffUI := preload("res://Scripts/UI/debuff_ui.gd")
+const SCORE_CARD_UI_SCRIPT := preload("res://Scripts/UI/score_card_ui.gd")
+const DEBUFF_MANAGER_SCRIPT := preload("res://Scripts/Managers/DebuffManager.gd")
+const DEBUFF_UI_SCRIPT := preload("res://Scripts/UI/debuff_ui.gd")
 const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 
 # Centralized, explicit NodePaths (tweak in Inspector if scene changes)
@@ -76,6 +76,10 @@ var _shop_tween: Tween
 func _ready() -> void:
 	add_to_group("game_controller")
 	print("▶ GameController._ready()")
+
+	# Reference the private index variable to avoid an 'unused variable' lint warning
+	# This value is reserved for future mod-application tracking.
+	_last_modded_die_index = _last_modded_die_index
 	if dice_hand:
 		dice_hand.roll_complete.connect(_on_roll_completed)
 		dice_hand.dice_spawned.connect(_on_dice_spawned)
@@ -120,9 +124,25 @@ func _ready() -> void:
 		turn_tracker.turn_started.connect(update_double_existing_usability)
 		turn_tracker.rolls_exhausted.connect(update_double_existing_usability)
 
+	## _ready()
+	## Called when the GameController node enters the scene tree.
+	## Responsibilities:
+	## - Register self in the 'game_controller' group
+	## - Connect to signals from child managers/UI (dice, scorecard, UI buttons, shop, round manager, etc.)
+	## - Prepare initial UI state and deferred game start
+	## Notes:
+	## - Uses get_node() and get_node_or_null() lookups assigned to @onready vars above.
+	## - Keep connections idempotent (checks for is_connected before connecting) to avoid duplicate handlers.
 	call_deferred("_on_game_start")
 	print("[GameController] Handler expects args:", _on_game_button_dice_rolled.get_argument_count())
 
+
+## _on_game_start()
+##
+## Deferred entry point for initializing gameplay state once the scene tree is ready.
+##+ Grants a couple of starter consumables and a starting power-up.
+##+ Starts the RoundManager if present.
+##+ Keep this lightweight; heavy startup logic should be moved into RoundManager or dedicated setup functions.
 func _on_game_start() -> void:
 	#spawn_starting_powerups()
 	grant_consumable("add_max_power_up")
@@ -135,11 +155,24 @@ func _on_game_start() -> void:
 
 
 
-func _process(delta):
+
+## _process(delta)
+##
+## Frame tick handler. Currently only listens for the quit input action.
+##+ Prefer not to add gameplay logic here; use specific signals or timers instead.
+func _process(_delta):
+	## _process(_delta)
+	# Per-frame tick. Currently listens for the 'quit_game' input and exits the tree.
+	# Keep this minimal: avoid heavy game logic here. Use signals or timers for gameplay timing.
 	if Input.is_action_just_pressed("quit_game"):
 		get_tree().quit()
 
 
+
+## spawn_starting_powerups()
+##
+## Create the default starting power-up icons and spawn their PowerUp instances without auto-applying them.
+##+ This is a convenience used during development. Use `grant_power_up()` for full grant + activate behavior.
 func spawn_starting_powerups() -> void:
 	for id in ["extra_dice", "extra_rolls"]:
 		var def: PowerUpData = pu_manager.get_def(id)
@@ -157,6 +190,17 @@ func spawn_starting_powerups() -> void:
 				push_error("No PowerUpData for '%s'" % id)
 
 
+
+## grant_power_up(id)
+##
+##+ High-level helper to spawn, create UI, register, and auto-activate a power-up.
+##+ Side-effects:
+##+ - Adds UI via `PowerUpUI.add_power_up`
+##+ - Stores the runtime instance in `active_power_ups`
+##+ - Emits `power_up_granted` signal
+##+ - Calls `_activate_power_up` to immediately apply the effect
+##+ Notes:
+##+ - Aborts if `powerup_ui` reports the maximum number of power-ups reached.
 func grant_power_up(id: String) -> void:
 	print("\n=== Granting Power-Up: ", id, " ===")
 	
@@ -191,6 +235,14 @@ func grant_power_up(id: String) -> void:
 	# Automatically activate the power-up
 	_activate_power_up(id)
 
+
+## _activate_power_up(power_up_id)
+##
+##+ Internal helper that applies a spawned PowerUp instance to its intended target(s).
+##+ This does the type-specific `apply()` calls and wires signals for dynamic description/effect updates.
+##+ Notes:
+##+ - PowerUp instances are expected to implement `apply(target)` and `remove(target)`.
+##+ - For power-ups that emit runtime updates (randomizer, description changes), this function connects relevant signals.
 func _activate_power_up(power_up_id: String) -> void:
 	print("\n=== Power-up Auto-Activated ===")
 	print("[GameController] Activating power-up:", power_up_id)
@@ -264,21 +316,24 @@ func _activate_power_up(power_up_id: String) -> void:
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
-# Add this function to handle power-up selling
+## _on_power_up_sold(power_up_id)
+##
+## Handles selling a power-up from the shop/UI. Gives a partial refund and removes the power-up
+## from both runtime and UI. Performs an animated removal when the UI supports it.
 func _on_power_up_sold(power_up_id: String) -> void:
 	print("[GameController] Selling power-up:", power_up_id)
-	
+
 	var pu = active_power_ups.get(power_up_id)
 	if not pu:
 		push_error("[GameController] No PowerUp found for id:", power_up_id)
 		return
-		
+
 	var def = pu_manager.get_def(power_up_id)
 	if def:
 		var refund = def.price / 2
 		print("[GameController] Refunding", refund, "coins for power-up:", power_up_id)
 		PlayerEconomy.add_money(refund)
-	
+
 	# Animate the icon if it exists, then remove
 	if powerup_ui:
 		powerup_ui.animate_power_up_removal(power_up_id, func():
@@ -293,13 +348,18 @@ func _on_power_up_sold(power_up_id: String) -> void:
 		if powerup_ui:
 			powerup_ui.remove_power_up(power_up_id)
 
+
+## _deactivate_power_up(power_up_id)
+##
+## Performs type-specific removal logic for an active power-up without freeing the instance.
+## This is used for animated removals or temporary deactivation.
 func _deactivate_power_up(power_up_id: String) -> void:
 	print("[GameController] DEACTIVATING PowerUp:", power_up_id)
 	var pu = active_power_ups.get(power_up_id)
 	if not pu:
 		push_error("[GameController] No PowerUp found for id:", power_up_id)
 		return
-		
+
 	match power_up_id:
 		"extra_dice":
 			pu.remove(dice_hand)
@@ -321,6 +381,11 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
+
+## revoke_power_up(power_up_id)
+##
+## Fully removes and frees a power-up instance, performing any necessary `.remove()` call for the
+## expected target. Emits `power_up_revoked` when done.
 func revoke_power_up(power_up_id: String) -> void:
 	if not active_power_ups.has(power_up_id):
 		return
@@ -342,20 +407,24 @@ func revoke_power_up(power_up_id: String) -> void:
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself
 				pu.remove(pu)
-		
+
 		pu.queue_free()
 	active_power_ups.erase(power_up_id)
 	emit_signal("power_up_revoked", power_up_id)
 
+
+## _on_power_up_selected(power_up_id)
+##
+## Callback when the player selects a power-up icon. Applies the chosen power-up to its target.
 func _on_power_up_selected(power_up_id: String) -> void:
 	print("\n=== Power-up Selected ===")
 	print("[GameController] Activating power-up:", power_up_id)
-	
+
 	var pu = active_power_ups.get(power_up_id)
 	if not pu:
 		push_error("[GameController] No PowerUp found for id:", power_up_id)
 		return
-		
+
 	match power_up_id:
 		"extra_dice":
 			pu.apply(dice_hand)
@@ -368,12 +437,16 @@ func _on_power_up_selected(power_up_id: String) -> void:
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
+
+## _on_power_up_deselected(power_up_id)
+##
+## Callback when a power-up icon is deselected by the player. Reverses the selected effect.
 func _on_power_up_deselected(power_up_id: String) -> void:
 	var pu = active_power_ups.get(power_up_id)
 	if not pu:
 		push_error("No PowerUp found for id: %s" % power_up_id)
 		return
-		
+
 	match power_up_id:
 		"extra_dice":
 			pu.remove(dice_hand)
@@ -385,6 +458,12 @@ func _on_power_up_deselected(power_up_id: String) -> void:
 		_:
 			push_error("Unknown target for power-up: %s" % power_up_id)
 
+
+## grant_consumable(id)
+##
+## Spawns a consumable instance, registers it in `active_consumables`, and adds a UI spine/icon.
+## Notes:
+## - UI spines no longer handle usage directly; usability is computed when the UI fan is opened.
 func grant_consumable(id: String) -> void:
 	var consumable := consumable_manager.spawn_consumable(id, consumable_container) as Consumable
 	if consumable == null:
@@ -392,13 +471,13 @@ func grant_consumable(id: String) -> void:
 		return
 
 	active_consumables[id] = consumable
-	
+
 	# Add to UI with null checks - now returns spine instead of icon
 	var def: ConsumableData = consumable_manager.get_def(id)
 	if not def:
 		push_error("[GameController] No ConsumableData found for '%s'" % id)
 		return
-		
+
 	var spine = consumable_ui.add_consumable(def)  # Returns ConsumableSpine now
 	if not spine:
 		push_error("[GameController] Failed to create UI spine for consumable '%s'" % id)
@@ -407,34 +486,43 @@ func grant_consumable(id: String) -> void:
 	# NOTE: No longer connect signals to spine or set usability on spine
 	# Spines only handle clicking/hovering for fan display
 	# Usability is handled when icons are fanned out via update_consumable_usability()
-	
+
 	print("[GameController] Consumable granted with spine:", id)
 
-# New method to update consumable usability for fanned icons
+## update_consumable_usability()
+##
+## Recomputes and updates the usability state for all consumables displayed in the fan UI.
+## This should be called whenever game state that affects usability changes (scores, rolls left, etc.).
 func update_consumable_usability() -> void:
 	if not consumable_ui:
 		return
-	
+
 	# This replaces the individual set_useable calls in grant_consumable
 	# It will be called when consumables are fanned out
 	consumable_ui.update_consumable_usability()
 
-# Update individual usability for specific consumable types  
+## set_consumable_usability(consumable_id, can_use)
+##
+## Updates a single consumable's usability state while the consumable UI is in the fanned state.
 func set_consumable_usability(consumable_id: String, can_use: bool) -> void:
-	# This method can be called to update specific consumable usability
 	# Only works when consumables are in fanned state
 	if consumable_ui and consumable_ui._current_state == ConsumableUI.State.FANNED:
 		var icon = consumable_ui.get_fanned_icon(consumable_id)
 		if icon and icon.has_method("set_useable"):
 			icon.set_useable(can_use)
 
+
+## _on_consumable_used(consumable_id)
+##
+## Handles the actual effect of a consumable when the player uses it. Applies the consumable's
+## effect, updates relevant UI events, and removes the consumable from `active_consumables` when consumed.
 func _on_consumable_used(consumable_id: String) -> void:
 	var consumable = active_consumables.get(consumable_id)
 	print("\n=== Using Consumable: ", consumable_id, " ===")
 	if not consumable:
 		push_error("No Consumable found for id: %s" % consumable_id)
 		return
-		
+
 	match consumable_id:
 		"score_reroll":
 			if score_card_ui:
@@ -468,6 +556,11 @@ func _on_consumable_used(consumable_id: String) -> void:
 		_:
 			push_error("Unknown consumable type: %s" % consumable_id)
 
+
+## _on_consumable_ui_used(consumable_id)
+##
+## Forwarding handler triggered by the UI when a consumable is used. Emits a GameController-level
+## signal and then invokes the internal consumable handler.
 func _on_consumable_ui_used(consumable_id: String) -> void:
 	# Forward consumable_used signal for PowerUps to listen
 	var consumable = active_consumables.get(consumable_id)
@@ -475,29 +568,45 @@ func _on_consumable_ui_used(consumable_id: String) -> void:
 	# Optionally call the original handler if needed
 	_on_consumable_used(consumable_id)
 
+
+## _on_score_rerolled(_section, _category, _score)
+##
+## Callback for when the score reroll flow completes in the ScoreCard UI. Completes the
+## consumable's reroll lifecycle and removes it from active consumables.
 func _on_score_rerolled(_section: Scorecard.Section, _category: String, _score: int) -> void:
 	var reroll = get_active_consumable("score_reroll") as ScoreRerollConsumable
 	if reroll:
 		reroll.complete_reroll()
 		remove_consumable("score_reroll")
 
+
+## _on_score_doubled(_section, _category, _new_score)
+##
+## Callback when a score has been doubled via the ScoreCard UI. Signals completion for the
+## `double_existing` consumable and removes it.
 func _on_score_doubled(_section: Scorecard.Section, _category: String, _new_score: int) -> void:
 	var double_consumable = get_active_consumable("double_existing") as DoubleExistingConsumable
 	if double_consumable:
 		double_consumable.complete_double()
 		remove_consumable("double_existing")
 
+
+## _on_score_assigned(_section, _category, _score)
+##
+## Triggered when the ScoreCard auto-assigns or registers a score.
+## - Triggers any post-score power-up behavior (randomizer effect)
+## - Updates consumable usability for score-related consumables (e.g., score_reroll)
 func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 	if not scorecard:
 		push_error("No scorecard reference found")
 		return
-		
+
 	# Show randomizer effect after scoring
 	if active_power_ups.has("randomizer"):
 		var randomizer = active_power_ups["randomizer"] as RandomizerPowerUp
 		if randomizer and randomizer.has_method("show_effect_after_scoring"):
 			randomizer.show_effect_after_scoring()
-		
+
 	if scorecard.has_any_scores():
 		# Update score reroll usability through the new system
 		if consumable_ui and consumable_ui.has_consumable("score_reroll"):
@@ -508,33 +617,37 @@ func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 	else:
 		print("[GameController] No scores yet, reroll remains disabled")
 
+
+## apply_debuff(id)
+##
+## Spawns and applies a debuff effect to the appropriate target. Also registers the debuff with UI.
 func apply_debuff(id: String) -> void:
 	print("[GameController] Attempting to apply debuff:", id)
-	
+
 	# Check if this debuff is already active
 	if active_debuffs.has(id) and active_debuffs[id] != null:
 		print("[GameController] Debuff already active:", id)
 		return
-	
+
 	var debuff := debuff_manager.spawn_debuff(id, debuff_container) as Debuff
 	if debuff == null:
 		push_error("[GameController] Failed to spawn Debuff '%s'" % id)
 		return
 
 	active_debuffs[id] = debuff
-	
+
 	# Add to UI with null checks
 	var def: DebuffData = debuff_manager.get_def(id)
 	if not def:
 		push_error("[GameController] No DebuffData found for '%s'" % id)
 		return
-		
+
 	# Add the debuff icon to the UI with proper signal connections
 	var icon = debuff_ui.add_debuff(def, debuff)
 	if not icon:
 		push_error("[GameController] Failed to create UI icon for debuff '%s'" % id)
 		return
-	
+
 	print("[GameController] Debuff icon added to UI:", id)
 
 	# Apply the debuff effect
@@ -554,6 +667,10 @@ func apply_debuff(id: String) -> void:
 		_:
 			push_error("[GameController] Unknown debuff type: %s" % id)
 
+
+## enable_debuff(id)
+##
+## Ensures the given debuff is active. If it was previously spawned but paused, restarts it.
 func enable_debuff(id: String) -> void:
 	if not is_debuff_active(id):
 		apply_debuff(id)
@@ -562,12 +679,16 @@ func enable_debuff(id: String) -> void:
 		if debuff and debuff.target:
 			debuff.start()
 
+
+## disable_debuff(id)
+##
+## Deactivates a debuff, optionally animating removal via the UI. Ensures cleanup of stored references.
 func disable_debuff(id: String) -> void:
 	if is_debuff_active(id):
 		var debuff = active_debuffs[id]
 		if debuff:
 			debuff.end()
-			
+
 			# Animate the debuff removal
 			if debuff_ui:
 				debuff_ui.animate_debuff_removal(id, func():
@@ -584,48 +705,65 @@ func disable_debuff(id: String) -> void:
 		print("[GameController] No active debuff to disable with ID:", id)
 
 
+
+## is_debuff_active(id) -> bool
+##
+## Returns true when a debuff with the given id is present and non-null in `active_debuffs`.
 func is_debuff_active(id: String) -> bool:
 	return active_debuffs.has(id) and active_debuffs[id] != null
 
 # Add this function after other consumable-related functions
+
+## get_active_consumable(id) -> Consumable
+##
+## Helper to retrieve a consumable instance by id from `active_consumables` or null if not present.
 func get_active_consumable(id: String) -> Consumable:
 	if active_consumables.has(id):
 		return active_consumables[id]
 	return null
 
+
+## remove_consumable(id)
+##
+## Safely frees and unregisters a consumable and ensures UI removal.
 func remove_consumable(id: String) -> void:
 	if active_consumables.has(id):
 		var consumable = active_consumables[id]
 		if consumable:
 			consumable.queue_free()
 		active_consumables.erase(id)
-		
+
 		# Remove from UI if it exists
 		if consumable_ui:
 			consumable_ui.remove_consumable(id)
 		else:
 			push_error("No consumable_ui found when trying to remove consumable icon")
 
+
+## grant_mod(id)
+##
+## Grants a mod to the player. Stores it for persistence and attempts to apply it to an available die.
+## If no suitable die exists, the mod is queued in `pending_mods` and will be applied when dice spawn.
 func grant_mod(id: String) -> void:
 	print("[GameController] Attempting to grant mod:", id)
-	
+
 	# Get the mod definition
 	var def: ModData = mod_manager.get_def(id)
 	if not def:
 		push_error("[GameController] No ModData found for:", id)
 		return
-		
+
 	# Store reference for later use
 	active_mods[id] = def
-	
+
 	# Track this mod for persistence between rounds (increment count)
 	if mod_persistence_map.has(id):
 		mod_persistence_map[id] += 1
 	else:
 		mod_persistence_map[id] = 1
-	
+
 	print("[GameController] Mod persistence map updated:", mod_persistence_map)
-	
+
 	if dice_hand and dice_hand.dice_list.size() > 0:
 		if _apply_mod_to_available_die(id):
 			print("[GameController] Mod", id, "applied successfully")
@@ -641,6 +779,10 @@ func grant_mod(id: String) -> void:
 			pending_mods.append(id)
 
 # Helper function to find and apply a mod to an available die
+
+## _apply_mod_to_available_die(mod_id) -> bool
+##
+## Attempts to spawn and apply a mod to the first suitable die. Returns true when applied.
 func _apply_mod_to_available_die(mod_id: String) -> bool:
 	# Try to find a die WITHOUT ANY mod
 	for i in range(dice_hand.dice_list.size()):
@@ -651,7 +793,7 @@ func _apply_mod_to_available_die(mod_id: String) -> bool:
 				die.add_mod(active_mods[mod_id])
 				print("[GameController] Applied mod", mod_id, "to empty die at index", i)
 				return true
-	
+
 	# If no empty die found, try to find one without this specific mod
 	for i in range(dice_hand.dice_list.size()):
 		var die = dice_hand.dice_list[i]
@@ -661,10 +803,15 @@ func _apply_mod_to_available_die(mod_id: String) -> bool:
 				die.add_mod(active_mods[mod_id])
 				print("[GameController] Applied mod", mod_id, "to die at index", i)
 				return true
-	
+
 	# No suitable die found
 	return false
 
+
+## _on_roll_completed()
+##
+## Called when a dice roll completes. Applies any 'lock_dice' debuff effect, otherwise ensures all dice
+## are enabled for player interaction.
 func _on_roll_completed() -> void:
 	if is_debuff_active("lock_dice"):
 		var debuff = active_debuffs["lock_dice"]
@@ -674,52 +821,58 @@ func _on_roll_completed() -> void:
 		if dice_hand:
 			dice_hand.enable_all_dice()
 
+
+## _on_dice_spawned()
+##
+## Called whenever dice are (re)spawned. Responsible for re-applying persistent mods and
+## processing any pending mods. Attempts to distribute mods across dice while respecting
+## the per-mod persistence counts stored in `mod_persistence_map`.
 func _on_dice_spawned() -> void:
 	print("[GameController] mod_persistence_map:", mod_persistence_map)
 	if not dice_hand:
 		return
-		
+
 	print("[GameController] New dice spawned, checking for mods to apply")
 	print("[GameController] Mod persistence map:", mod_persistence_map)
-	
+
 	# Track already applied mod types to prevent duplicates on a single die
 	var applied_mod_counts = {}
-	
+
 	# First apply any pending mods (these are more recent)
 	var mods_to_process = pending_mods.duplicate()
 	pending_mods.clear()
-	
+
 	# Then add all persistent mods that should be reapplied
 	for mod_id in mod_persistence_map:
 		# Add each mod type the correct number of times
 		var count = mod_persistence_map[mod_id]
 		for i in range(count):
 			mods_to_process.append(mod_id)
-	
+
 	print("[GameController] Total mods to process:", mods_to_process.size())
 	print("[GameController] Mods to process:", mods_to_process)
-	
+
 	# Loop through all dice in order
 	for die_index in range(dice_hand.dice_list.size()):
 		var die = dice_hand.dice_list[die_index]
-		
+
 		# Skip dice that already have mods
 		if die.active_mods.size() >= 1:
 			print("[GameController] Dice at index", die_index, "already has mods, skipping")
 			continue
-			
+
 		# Try to apply any available mod that hasn't been applied yet
 		for i in range(mods_to_process.size()):
 			var mod_id = mods_to_process[i]
-			
+
 			# Check if we've already applied the maximum number for this type
 			if not applied_mod_counts.has(mod_id):
 				applied_mod_counts[mod_id] = 0
-				
+
 			# Skip if we've already applied the maximum for this type
 			if applied_mod_counts[mod_id] >= mod_persistence_map.get(mod_id, 1):
 				continue
-				
+
 			var def = active_mods[mod_id]
 			if def and not die.has_mod(mod_id):
 				var mod = mod_manager.spawn_mod(mod_id, die)
@@ -729,32 +882,37 @@ func _on_dice_spawned() -> void:
 					applied_mod_counts[mod_id] += 1
 					print("[GameController] Applied mod", mod_id, "to die at index", die_index, 
 						  "- count", applied_mod_counts[mod_id], "of", mod_persistence_map.get(mod_id, 1))
-					
+
 					# Remove this mod from the processing list
 					mods_to_process.remove_at(i)
 					break
-		
+
 		# If we've applied all available mods, we can stop
 		if mods_to_process.is_empty():
 			break
-	
+
 	# Add any mods that couldn't be applied back to pending_mods
 	for mod_id in mods_to_process:
 		print("[GameController] Couldn't apply mod", mod_id, ", adding to pending_mods")
 		if not pending_mods.has(mod_id):
 			pending_mods.append(mod_id)
 
+
+## _on_shop_button_pressed()
+##
+# Toggles the shop UI with an animated tween and temporarily disables the CRT effect while the shop
+# is visible. Uses `get_tree().create_tween()` for animation sequencing.
 func _on_shop_button_pressed() -> void:
 	if shop_ui:
 		if not shop_ui.visible:
 			# Disable CRT when opening shop
 			if crt_manager:
 				crt_manager.disable_crt()
-			
+
 			# Cancel any existing tween
 			if _shop_tween and _shop_tween.is_valid():
 				_shop_tween.kill()
-			
+
 			# 1. Show label immediately
 			shop_ui.show()
 			shop_ui.visible = true
@@ -783,7 +941,7 @@ func _on_shop_button_pressed() -> void:
 			# Cancel any existing tween
 			if _shop_tween and _shop_tween.is_valid():
 				_shop_tween.kill()
-						# 2. Create new tween
+					# 2. Create new tween
 			_shop_tween = get_tree().create_tween()
 
 			# 3. Fade in (faster)
@@ -798,11 +956,15 @@ func _on_shop_button_pressed() -> void:
 
 			await _shop_tween.finished
 			shop_ui.hide()
-			
+
 			# Re-enable CRT when closing shop
 			if crt_manager:
 				crt_manager.enable_crt()
 
+
+## _on_shop_item_purchased(item_id, item_type)
+##
+# Processes shop purchases by delegating to the appropriate grant_* helper.
 func _on_shop_item_purchased(item_id: String, item_type: String) -> void:
 	print("[GameController] Processing purchase:", item_id, "type:", item_type)
 	match item_type:
@@ -818,26 +980,31 @@ func _on_shop_item_purchased(item_id: String, item_type: String) -> void:
 		_:
 			push_error("[GameController] Unknown item type purchased:", item_type)
 
+
+## activate_challenge(id)
+##
+# Spawns and activates a challenge for the current round. Sets the challenge target to the
+# GameController so challenges can interact with central systems. Registers the challenge in UI.
 func activate_challenge(id: String) -> void:
 	print("[GameController] Activating challenge:", id)
-	
+
 	if active_challenges.has(id):
 		print("[GameController] Challenge already active:", id)
 		return
-		
+
 	var challenge = challenge_manager.spawn_challenge(id, challenge_container) as Challenge
 	if challenge == null:
 		push_error("[GameController] Failed to spawn challenge:", id)
 		return
-		
+
 	active_challenges[id] = challenge
-	
+
 	# Get challenge data
 	var def = challenge_manager.get_def(id)
 	if not def:
 		push_error("[GameController] No challenge data for:", id)
 		return
-		
+
 	var round_data = round_manager.get_current_round_data()
 	var round_number = round_data.get("round_number", 1)
 
@@ -847,7 +1014,7 @@ func activate_challenge(id: String) -> void:
 	# Apply to game controller to access all needed systems
 	challenge.target = self
 	challenge.start()
-	
+
 	# Add to UI with properly connected signals
 	if challenge_ui:
 		var icon = challenge_ui.add_challenge(def, challenge)
@@ -859,15 +1026,20 @@ func activate_challenge(id: String) -> void:
 	else:
 		push_error("[GameController] No challenge_ui reference")
 
+
+## _on_challenge_completed(id)
+##
+# Handles the successful completion of a challenge: awards any rewards, animates UI removal,
+# and frees the challenge instance.
 func _on_challenge_completed(id: String) -> void:
 	print("[GameController] Challenge completed:", id)
-	
+
 	# Grant reward if specified
 	var def = challenge_manager.get_def(id)
 	if def and def.reward_money > 0:
 		print("[GameController] Granting reward:", def.reward_money)
 		PlayerEconomy.add_money(def.reward_money)
-	
+
 	# Animate challenge completion before removing
 	if challenge_ui:
 		challenge_ui.animate_challenge_removal(id, func():
@@ -886,17 +1058,22 @@ func _on_challenge_completed(id: String) -> void:
 			if challenge:
 				challenge.queue_free()
 			active_challenges.erase(id)
-	
+
 	# Show notification
 	# NotificationSystem.show_notification("Challenge Completed: " + def.display_name)
 
+
+## _on_challenge_failed(id)
+##
+# Handles failure of a challenge: animates removal and frees the instance. Optionally posts a
+# notification (currently commented out).
 func _on_challenge_failed(id: String) -> void:
 	print("[GameController] Challenge failed:", id)
-	
+
 	# Get challenge data for notification
 	var def = challenge_manager.get_def(id)
-	var display_name = def.display_name if def else id
-	
+	var _display_name = def.display_name if def else id
+
 	# Animate challenge failure before removing
 	if challenge_ui:
 		challenge_ui.animate_challenge_removal(id, func():
@@ -915,25 +1092,29 @@ func _on_challenge_failed(id: String) -> void:
 			if challenge:
 				challenge.queue_free()
 			active_challenges.erase(id)
-	
+
 	# Show notification
-	# NotificationSystem.show_notification("Challenge Failed: " + display_name)
+	# NotificationSystem.show_notification("Challenge Failed: " + _display_name)
 
 
+
+## _on_challenge_selected(id)
+##
+# Called when a player selects a challenge in the UI. Currently highlights the challenge icon briefly.
 func _on_challenge_selected(id: String) -> void:
 	print("[GameController] Challenge selected:", id)
-	
+
 	# Handle challenge selection - could show details, focus the challenge, etc.
 	var challenge = active_challenges.get(id)
 	if challenge:
 		# You could potentially focus on this challenge or show details
 		print("[GameController] Found challenge:", id)
-		
+
 		# Example: Highlight the challenge icon
 		var icon = challenge_ui.get_challenge_icon(id) as ChallengeIcon
 		if icon:
 			icon.set_active(true)
-			
+
 			# Reset after a short delay
 			await get_tree().create_timer(0.5).timeout
 			icon.set_active(false)
@@ -1065,7 +1246,12 @@ func _on_debuff_selected(id: String) -> void:
 		push_error("[GameController] Debuff not found:", id)
 
 # In game_controller.gd - Update the update_three_more_rolls_usability function
-func update_three_more_rolls_usability(rolls_left: int = 0) -> void:
+
+## update_three_more_rolls_usability(_rolls_left)
+##
+# Called when rolls remaining changes—the parameter is unused currently but kept for signal
+# compatibility. Updates the three_more_rolls consumable usability state in the UI.
+func update_three_more_rolls_usability(_rolls_left: int = 0) -> void:
 	if consumable_ui and consumable_ui.has_consumable("three_more_rolls"):
 		consumable_ui.update_consumable_usability()
 		print("[GameController] Three more rolls usability updated")
@@ -1073,7 +1259,12 @@ func update_three_more_rolls_usability(rolls_left: int = 0) -> void:
 		print("[GameController] No three more rolls consumable found")
 
 # Add this function to game_controller.gd
-func update_double_existing_usability(section: int = 0, category: String = "", score: int = 0) -> void:
+
+## update_double_existing_usability(_section, _category, _score)
+##
+# Triggered after score assignment or roll changes. Parameters mirror the ScoreCard signal but
+# are unused here. Refreshes `double_existing` consumable usability in the UI.
+func update_double_existing_usability(_section: int = 0, _category: String = "", _score: int = 0) -> void:
 	if consumable_ui and consumable_ui.has_consumable("double_existing"):
 		consumable_ui.update_consumable_usability()
 		print("[GameController] Double existing usability updated")

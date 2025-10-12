@@ -1,6 +1,12 @@
 extends Node
 class_name RoundManager
 
+## RoundManager
+##
+## Manages the game's round lifecycle: preparing round data, starting rounds,
+## signaling when rounds start/complete/fail, and coordinating with the
+## TurnTracker, ChallengeManager, DiceHand and Scorecard.
+##
 signal round_started(round_number: int)
 signal round_completed(round_number: int)
 signal all_rounds_completed
@@ -24,6 +30,11 @@ var current_challenge_id: String = ""
 var is_challenge_completed: bool = false
 var rounds_data: Array[Dictionary] = []
 var game_started: bool = false
+
+## _ready()
+##
+## Lifecycle method: verifies required node references, connects challenge signals,
+## and initializes internal rounds data. Does not auto-start the first round.
 
 func _ready() -> void:
 	print("[RoundManager] Initializing")
@@ -62,24 +73,29 @@ func _ready() -> void:
 	_initialize_rounds_data()
 	# Do NOT start the first round automatically
 
+## _initialize_rounds_data()
+##
+## Prepares the `rounds_data` array based on `max_rounds`, optional `challenge_configs`,
+## and fallback `dice_configs`. Each entry contains round_number, challenge_id, dice_type,
+## target_score, and status flags.
 func _initialize_rounds_data() -> void:
 	rounds_data.clear()
-	
+
 	# Create data for each round
 	for i in range(max_rounds):
 		var round_index = i
 		var round_number = i + 1
-		
+
 		var challenge_id = ""
 		var dice_type = "d6"  # Default
 		var target_score = 0
-		
+
 		# Set challenge if available in configs
 		if round_index < challenge_configs.size():
 			var config = challenge_configs[round_index]
 			if config:
 				challenge_id = config.challenge_id
-				
+
 				# Get dice type and target_score from ChallengeData if available
 				var challenge_data = challenge_manager.get_def(challenge_id) if challenge_manager else null
 				if challenge_data:
@@ -95,7 +111,7 @@ func _initialize_rounds_data() -> void:
 		elif round_index < dice_configs.size():
 			# If no challenge config but we have a dice config, use that
 			dice_type = dice_configs[round_index]
-			
+
 		var round_data = {
 			"round_number": round_number,
 			"challenge_id": challenge_id,
@@ -104,66 +120,75 @@ func _initialize_rounds_data() -> void:
 			"completed": false,
 			"failed": false
 		}
-		
+
 		rounds_data.append(round_data)
-	
+
 	print("[RoundManager] Initialized", rounds_data.size(), "rounds")
 
 # In round_manager.gd - Update start_game to explicitly set turn_tracker to inactive state
+## start_game()
+##
+## Prepares the manager for gameplay start: resets counters, ensures the turn tracker
+## is inactive, and emits a `round_completed` with 0 to enable UI transition for the
+## first round. Does not automatically start the round — it signals readiness.
 func start_game() -> void:
 	print("[RoundManager] Game is ready. Waiting for player to start the first round.")
 	current_round = 0
 	is_challenge_completed = false
 	game_started = true
-	
-	
+
 	# Make sure turn tracker is in inactive state with no rolls
 	if turn_tracker:
 		turn_tracker.current_turn = 0
 		turn_tracker.rolls_left = 0
 		turn_tracker.is_active = false
 		turn_tracker.emit_signal("rolls_updated", 0)
-	
+
 	# Enable first round's Next Round button immediately
 	emit_signal("round_completed", 0)  # Send signal as round 0 completed
-	
+
 	# Pre-load the challenge ID for the first round
 	if rounds_data.size() > 0:
 		current_challenge_id = rounds_data[0].challenge_id
 		print("[RoundManager] Prepared first round challenge ID:", current_challenge_id)
 
+## start_round(round_number)
+##
+## Begins the specified round number (1-based). Validates the number, resets
+## trackers, configures dice and scorecard, and emits `round_started` so the
+## rest of the system can activate the challenge.
 func start_round(round_number: int) -> void:
 	if round_number < 1 or round_number > max_rounds:
 		push_error("[RoundManager] Invalid round number:", round_number)
 		return
-	
+
 	current_round = round_number - 1  # Convert to 0-based index
 	is_challenge_completed = false
-	
+
 	# Reset turn tracker
 	if turn_tracker:
 		turn_tracker.reset()
-	
+
 	# Get data for this round
 	var round_data = rounds_data[current_round]
 	current_challenge_id = round_data.challenge_id
-	
+
 	print("[RoundManager] Starting Round", round_number)
 	print("[RoundManager] Setting dice type to", round_data.dice_type)
 	print("[RoundManager] Challenge ID:", current_challenge_id)
-	
+
 	# Set the dice type
 	if dice_hand:
 		dice_hand.switch_dice_type(round_data.dice_type)
-	
+
 	# Reset the scorecard
 	if scorecard:
 		scorecard.reset_scores()
-	
+
 	# Reset all multipliers for new round
 	#ScoreModifierManager.reset()
 	#print("[RoundManager] All multipliers reset for round", round_number)
-	
+
 	# Activate the challenge
 	if challenge_manager and not current_challenge_id.is_empty():
 		# Let the game controller handle challenge activation
@@ -172,16 +197,20 @@ func start_round(round_number: int) -> void:
 		push_error("[RoundManager] No challenge configured for round", round_number)
 		emit_signal("round_started", round_number)
 
+## complete_round()
+##
+## Marks the current round as completed, emits `round_completed`, and emits
+## `all_rounds_completed` if it was the final round.
 func complete_round() -> void:
 	var round_number = current_round + 1  # Convert to 1-based
 	print("[RoundManager] Completing Round", round_number)
-	
+
 	# Mark current round as completed
 	if current_round < rounds_data.size():
 		rounds_data[current_round].completed = true
-	
+
 	emit_signal("round_completed", round_number)
-	
+
 	# Check if this was the last round
 	if round_number >= max_rounds:
 		print("[RoundManager] All rounds completed!")
@@ -190,27 +219,43 @@ func complete_round() -> void:
 		# Ready for next round
 		print("[RoundManager] Ready for next round")
 
+## fail_round()
+##
+## Marks the current round as failed and emits `round_failed`.
 func fail_round() -> void:
 	var round_number = current_round + 1  # Convert to 1-based
 	print("[RoundManager] Failed Round", round_number)
-	
+
 	# Mark current round as failed
 	if current_round < rounds_data.size():
 		rounds_data[current_round].failed = true
-	
+
 	emit_signal("round_failed", round_number)
 
+## get_current_round_number()
+##
+## Returns the current round number (1-based). Useful for UI and external systems.
 func get_current_round_number() -> int:
 	return current_round + 1  # Convert to 1-based
 
+## get_current_round_data()
+##
+## Returns the current round's data dictionary or an empty dictionary when none.
 func get_current_round_data() -> Dictionary:
 	if current_round >= 0 and current_round < rounds_data.size():
 		return rounds_data[current_round]
 	return {}
 
+## can_proceed_to_next_round()
+##
+## Returns true when the current challenge is completed and there remains another round.
 func can_proceed_to_next_round() -> bool:
 	return is_challenge_completed and current_round < max_rounds - 1
 
+## _on_challenge_completed(challenge_id)
+##
+## Signal handler: marks the round as challenge-completed if the ID matches the
+## current challenge. Sets `is_challenge_completed` to true so the UI can progress.
 func _on_challenge_completed(challenge_id: String) -> void:
 	if challenge_id == current_challenge_id:
 		print("[RoundManager] Current challenge completed:", challenge_id)
@@ -218,6 +263,9 @@ func _on_challenge_completed(challenge_id: String) -> void:
 	else:
 		print("[RoundManager] Different challenge completed:", challenge_id)
 
+## _on_challenge_failed(challenge_id)
+##
+## Signal handler: if the currently-active challenge fails, marks the round as failed.
 func _on_challenge_failed(challenge_id: String) -> void:
 	if challenge_id == current_challenge_id:
 		print("[RoundManager] Current challenge failed:", challenge_id)
