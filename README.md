@@ -1,160 +1,235 @@
-# DiceRogue — Project Overview
+# DiceRogue
 
-A pixel-art, roguelite dice-roller (Yahtzee-inspired) built for Godot 4.4. This README summarizes the repository layout, key systems, known issues, refactor targets, feature ideas, and deprecated/redundant code to consider removing.
+A pixel-art roguelite dice game inspired by Yahtzee, built in Godot 4.4. Roll dice, collect power-ups, and beat challenges in this strategic dice-based adventure.
 
-## Repo layout (important files & nodes)
-- Scenes
-  - [Scenes/ScoreCard/score_card.gd](Scenes/ScoreCard/score_card.gd) — score handling (`Scorecard`)
-  - Scorecard scene(s) live under `Scenes/ScoreCard/`
-- Core systems
-  - [Scripts/Core/game_controller.gd](Scripts/Core/game_controller.gd) — central game flow (`GameController`)
-  - [Scripts/Core/dice.gd](Scripts/Core/dice.gd) — die logic (`Dice`)
-  - [Scripts/Core/dice_hand.gd](Scripts/Core/dice_hand.gd) — dice collection (`DiceHand`)
-  - [Scripts/Core/turn_tracker.gd](Scripts/Core/turn_tracker.gd) — turn/roll tracking (`TurnTracker`)
-  - [Scripts/Managers/MultiplierManager.gd](Scripts/Managers/MultiplierManager.gd) — score modifiers manager (referred to as `ScoreModifierManager` in code)
-  - [Scripts/Managers/PlayerEconomy.gd](Scripts/Managers/PlayerEconomy.gd) — player money & events (`PlayerEconomy`)
-  - [Scripts/Managers/ModManager.gd](Scripts/Managers/ModManager.gd) — mod definitions & spawn
-  - [Scripts/Managers/ConsumableManager.gd](Scripts/Managers/ConsumableManager.gd) — consumable definitions & spawn
-  - [Scripts/Managers/round_manager.gd](Scripts/Managers/round_manager.gd) — round/level flow (`RoundManager`)
-- UI
-  - [Scripts/UI/power_up_ui.gd](Scripts/UI/power_up_ui.gd) — power-up spine/fanned UI (`PowerUpUI`)
-  - [Scripts/UI/consumable_ui.gd](Scripts/UI/consumable_ui.gd) — consumable spine/fanned UI (`ConsumableUI`)
-  - [Scripts/UI/power_up_icon.gd](Scripts/UI/power_up_icon.gd) — card/fanned icon visuals
-  - [Scripts/Consumable/consumable_icon.gd](Scripts/Consumable/consumable_icon.gd) — consumable card visuals
-  - [Scripts/Mods/mod_icon.gd](Scripts/Mods/mod_icon.gd) — mod icon visuals (`ModIcon`)
-  - [Scripts/UI/shop_ui.gd](Scripts/UI/shop_ui.gd) — in-game shop
-- PowerUps (examples)
-  - [Scripts/PowerUps/chance520_power_up.gd](Scripts/PowerUps/chance520_power_up.gd) — Chance ≥20 additive stacking
-  - [Scripts/PowerUps/evens_no_odds_power_up.gd](Scripts/PowerUps/evens_no_odds_power_up.gd)
-  - [Scripts/PowerUps/yahtzee_bonus_mult_power_up.gd](Scripts/PowerUps/yahtzee_bonus_mult_power_up.gd)
-  - [Scripts/PowerUps/randomizer_power_up.gd](Scripts/PowerUps/randomizer_power_up.gd)
-  - [Scripts/PowerUps/consumable_cash_power_up.gd](Scripts/PowerUps/consumable_cash_power_up.gd)
-- Consumables (examples)
-  - [Scripts/Consumable/score_reroll_consumable.gd](Scripts/Consumable/score_reroll_consumable.gd)
-  - [Scripts/Consumable/double_existing_consumable.gd](Scripts/Consumable/double_existing_consumable.gd)
-  - [Scripts/Consumable/three_more_rolls_consumable.gd](Scripts/Consumable/three_more_rolls_consumable.gd)
-  - [Scripts/Consumable/quick_cash_consumable.gd](Scripts/Consumable/quick_cash_consumable.gd)
-  - [Scripts/Consumable/add_max_power_up_consumable.gd](Scripts/Consumable/add_max_power_up_consumable.gd)
-  - [Scripts/Consumable/power_up_shop_num_consumable.gd](Scripts/Consumable/power_up_shop_num_consumable.gd)
-- Mods (examples)
-  - [Scripts/Mods/wild_card_mod.gd](Scripts/Mods/wild_card_mod.gd)
-  - [Scripts/Mods/gold_six_mod.gd](Scripts/Mods/gold_six_mod.gd)
-- Tests
-  - [Tests/multiplier_manager_test.gd](Tests/multiplier_manager_test.gd)
-  - [Tests/power_up_test.gd](Tests/power_up_test.gd)
-  - [Tests/dice_test.gd](Tests/dice_test.gd)
-  - [Tests/game_buttons_test.gd](Tests/game_buttons_test.gd)
+## Game Concept
 
-## High-level responsibilities
-- `GameController` ([Scripts/Core/game_controller.gd](Scripts/Core/game_controller.gd)) coordinates granting/revoking power-ups/consumables, hooking UI, and round flow (`RoundManager`).
-- `Scorecard` ([Scenes/ScoreCard/score_card.gd](Scenes/ScoreCard/score_card.gd)) handles raw scoring. Score modifiers are applied via the manager ([Scripts/Managers/MultiplierManager.gd](Scripts/Managers/MultiplierManager.gd)).
-- `ScoreModifierManager` (file: [Scripts/Managers/MultiplierManager.gd](Scripts/Managers/MultiplierManager.gd)) centralizes additive and multiplier modifiers and emits change signals consumed by PowerUps (e.g., `Chance520PowerUp`, `EvensNoOddsPowerUp`, `YahtzeeBonusMultPowerUp`).
-- UI spines/fanned system: `PowerUpUI` and `ConsumableUI` manage spine and fanned-card interaction patterns.
+Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill scorecard categories while collecting:
+- **Power-ups**: Permanent modifiers that enhance scoring
+- **Consumables**: Single-use items for strategic advantages
+- **Mods**: Dice modifiers that change how individual dice behave
+- **Challenges**: Goals that unlock rewards and progression
 
-## Immediate issues spotted (from code excerpts)
-- Naming inconsistency: the manager file is [Scripts/Managers/MultiplierManager.gd](Scripts/Managers/MultiplierManager.gd) but the project uses `ScoreModifierManager` in many places. Recommend unifying to a single filename/class: [`ScoreModifierManager`](Scripts/Managers/MultiplierManager.gd).
-- Typo / syntax bug: [Scripts/Managers/PlayerEconomy.gd](Scripts/Managers/PlayerEconomy.gd) shows `var money: int = 500:` (trailing colon). Fix to `var money: int = 500`.
-- Mutating constants: [Scripts/Core/turn_tracker.gd](Scripts/Core/turn_tracker.gd) `add_rolls()` mutates `MAX_ROLLS` (looks like a constant). Consider using a mutable property (e.g., `max_rolls`) or separate `rolls_left` logic.
-- Duplicate "create card structure" code exists across many icon scripts: `ConsumableIcon`, `PowerUpIcon`, `ChallengeIcon`, `ConsumableSpine`, `PowerUpSpine`. These can be consolidated into shared helper or scene templates.
-- Some files keep legacy methods / deprecation comments:
-  - [`Scenes/ScoreCard/score_card.gd`](Scenes/ScoreCard/score_card.gd): `clear_score_multiplier()` marked DEPRECATED — remove or migrate callers.
-  - Multiple files refer to old groups/names for backward compatibility (e.g., adding `multiplier_manager` group). Consolidate group naming.
+## Quick Start
 
-## Deprecated / candidates for removal
-- `Scorecard.clear_score_multiplier()` — marked DEPRECATED. Replace callers with [`ScoreModifierManager.unregister_multiplier`](Scripts/Managers/MultiplierManager.gd).
-- `_score_multiplier_func` and `score_multiplier` in [Scenes/ScoreCard/score_card.gd](Scenes/ScoreCard/score_card.gd) — legacy approach superseded by the manager.
-- Any "get_consumable_icon" wrappers that only exist for backward compatibility; prefer `get_consumable_spine()` / `get_fanned_icon()` in [Scripts/UI/consumable_ui.gd](Scripts/UI/consumable_ui.gd).
-- Redundant score modifier registration in power-ups that both manage internal state and call the global manager in overlapping ways — consolidate to single source-of-truth behavior per power-up.
+1. **Main Scene**: `Scenes/Controller/game_controller.tscn`
+2. **Run in Editor**: Open project in Godot 4.4+, press F5
+3. **Testing**: Use scenes in `Tests/` folder for isolated component testing
 
-## Areas to refactor
-- Unify the score modifier manager naming & API:
-  - File: [Scripts/Managers/MultiplierManager.gd](Scripts/Managers/MultiplierManager.gd) → consider renaming to `ScoreModifierManager.gd` and expose class_name `ScoreModifierManager`.
-  - Ensure all power-ups call `ScoreModifierManager.register_additive` / `unregister_additive` consistently (see `Chance520PowerUp`, `EvensNoOddsPowerUp`, `YahtzeeBonusMultPowerUp`).
-- Extract UI card construction:
-  - Move repeated UI creation into shared scenes or factories used by `ConsumableIcon`, `PowerUpIcon`, `ChallengeIcon`, etc.
-- Spine/fanned UI duplication:
-  - `PowerUpUI` and `ConsumableUI` share a spine/fan system. Consider abstracting common spine/fan controller.
-- Signal connect/disconnect patterns:
-  - Many power-ups call `is_connected` before `connect` and perform cleanup on `tree_exiting`. Make a small helper mixin or base class `PowerUp` utilities to centralize connect/disconnect lifecycle.
-- Improve autoloads vs class_name usage:
-  - Per project instruction: autoload scripts should not have `class_name`. Review autoloaded singletons and remove `class_name` where appropriate.
-- Tests: expand unit tests for modifier manager, score application order (additive → multiplier), and consumable usability logic.
+## Core Architecture
 
-## Suggested TODO (short-term → long-term)
-- Short-term
-  - ✅ **COMPLETED** - Fix `PlayerEconomy` colon typo (was already correct)
-  - ✅ **NO ACTION NEEDED** - Unify `ScoreModifierManager` naming: Current design is optimal
-  - ✅ **COMPLETED** - Remove class_name from autoloaded scripts: Fixed DiceResults and ScoreEvaluator  
-  - ✅ **BASE CLASS CREATED** - Consolidate UI card construction: [Scripts/UI/card_icon_base.gd](Scripts/UI/card_icon_base.gd) available for new cards
-  - Add activation code registration for any new power-ups to [`GameController`](Scripts/Core/game_controller.gd) (see copilot instructions)
-- Mid-term
-  - Extract spine/fan logic into a shared controller used by `PowerUpUI` and `ConsumableUI` (identified as complex refactor)
-  - Add unit tests: ensure additive bonuses apply before multipliers (see [Scenes/ScoreCard/score_card.gd](Scenes/ScoreCard/score_card.gd) score logic)
-  - Harden signal lifecycle: create base PowerUp that connects/disconnects safely (identified as complex refactor)
-  - Fix `turn_tracker.add_rolls()` implementation (`MAX_ROLLS` mutation)
-- Long-term / polish
-  - Implement mod sell UI and persistence mechanics
-  - Implement mod rarity/weight balancing in `ModManager` and shop (`ShopUI`)
-  - Build analytics-friendly debug logging toggles
+### Game Flow
+- **GameController** (`Scripts/Core/game_controller.gd`) - Central coordination
+- **RoundManager** (`Scripts/Managers/round_manager.gd`) - Round progression  
+- **TurnTracker** (`Scripts/Core/turn_tracker.gd`) - Roll counting and turn logic
 
-## Recent Refactor Activity (October 2025)
-**Comprehensive refactor assessment completed** - See [REFACTOR_TODO.md](REFACTOR_TODO.md) for detailed analysis.
+### Dice System
+- **Dice** (`Scripts/Core/dice.gd`) - Individual die behavior
+- **DiceHand** (`Scripts/Core/dice_hand.gd`) - Collection of 5 dice
+- **DiceResults** (autoload) - Result data structure
 
-**Key Findings:**
-- Most suggested refactors were already well-implemented or not needed
-- Fixed autoload class_name violations in DiceResults and ScoreEvaluator  
-- Created CardIconBase class for future use (existing icons work well, migration optional)
-- Identified complex UI duplication that requires careful approach
+### Scoring
+- **Scorecard** (`Scenes/ScoreCard/score_card.gd`) - Yahtzee-style scoring
+- **ScoreEvaluator** (autoload) - Score calculation logic
+- **ScoreModifierManager** (autoload, file: `Scripts/Managers/MultiplierManager.gd`) - Handles all score bonuses and multipliers
 
-**Outcome:** Codebase is in excellent shape with minimal violations found and fixed.
+### Economy & Items
+- **PlayerEconomy** (autoload) - Money and shop transactions
+- **PowerUps** (`Scripts/PowerUps/`) - Permanent scoring bonuses
+- **Consumables** (`Scripts/Consumable/`) - Single-use strategic items
+- **Mods** (`Scripts/Mods/`) - Dice behavior modifiers
 
-## Game design ideas / feature wishlist
-- Selling mods:
-  - Allow players to sell mods for partial refund. Add `sell_mod(mod_id)` plumbing in `GameController` and UI through `ShopUI`.
-- Additional mods
-  - Persistent passive mods applied to dice at spawn (e.g., `ExplosiveSixMod`, `LockedHighMod`, `LuckyEvenMod`).
-  - One-shot mods (consumable-like) that can be applied to a single die and then removed.
-- New power-ups
-  - Score category-specific modifiers (e.g., double `large_straight`): implement via `ScoreModifierManager.register_multiplier("id", factor)` and add UI descriptions.
-  - Round-based passives (e.g., +X chance to reroll a die per turn)
-- Consumable ideas
-  - "Sell a mod" coupon: consumes to remove a mod and grant coins
-  - "Force reroll all dice once" (affects `DiceHand`)
-  - "Instant shop refresh" consumable for better shop RNG
-- UI/UX
-  - Visual indicator on `Scorecard` showing active additives (from `ScoreModifierManager`) and total multiplier
-  - Contextual tooltips from `PowerUpUI` and `ConsumableUI` showing applied totals
-- Challenges & progression
-  - Unlock power-ups/consumables through challenge completion (`ChallengeManager` / `RoundManager` integration)
-  - Balance reward economy (see `PlayerEconomy` usages)
+## Key Systems
 
-## Important behavioral notes / recommendations
-- Score calculation order is additive → multiplier. Confirm via tests: see `Tests/multiplier_manager_test.gd` and score application in [Scenes/ScoreCard/score_card.gd](Scenes/ScoreCard/score_card.gd).
-- Consumable UI now returns `ConsumableSpine` on add (`GameController._grant_consumable`), and usability is applied only when cards are fanned via `ConsumableUI.update_consumable_usability()`; follow that flow when adding new consumables.
-- When adding new features that affect scoring, update `GameController` activation points (see copilot instructions) and hook into `ScoreModifierManager` signals.
+### Score Modifier System
+The `ScoreModifierManager` handles all score modifications:
+- **Additives**: Flat bonuses applied before multipliers
+- **Multipliers**: Percentage modifiers applied after additives
+- **Order**: `(base_score + additives) × multipliers`
 
-## Deprecated / redundant code to audit
-- [`Scenes/ScoreCard/score_card.gd` → clear_score_multiplier(), _score_multiplier_func, score_multiplier] — legacy, remove after migration
-  - File: [Scenes/ScoreCard/score_card.gd](Scenes/ScoreCard/score_card.gd)
-- Old UI-helper wrappers:
-  - `get_consumable_icon` in [Scripts/UI/consumable_ui.gd](Scripts/UI/consumable_ui.gd) — logs DEPRECATED, prefer spines/fanned icons
-- Any ad-hoc additive/multiplier bookkeeping inside power-ups that both update their own state and call manager in inconsistent ways (examples: [Scripts/PowerUps/chance520_power_up.gd](Scripts/PowerUps/chance520_power_up.gd), [Scripts/PowerUps/evens_no_odds_power_up.gd](Scripts/PowerUps/evens_no_odds_power_up.gd), [Scripts/PowerUps/yahtzee_bonus_mult_power_up.gd](Scripts/PowerUps/yahtzee_bonus_mult_power_up.gd)). Standardize responsibility: power-up computes its contribution and registers it with the manager; the manager owns totals.
-- Duplicate "create_card_structure()" implementations in:
-  - [Scripts/Consumable/consumable_icon.gd](Scripts/Consumable/consumable_icon.gd)
-  - [Scripts/UI/power_up_icon.gd](Scripts/UI/power_up_icon.gd)
-  - [Scripts/Challenge/challenge_icon.gd](Scripts/Challenge/challenge_icon.gd)
+Power-ups register their bonuses with this manager, which emits signals when totals change.
 
-## Tests & validation
-- Existing tests:
-  - [Tests/multiplier_manager_test.gd](Tests/multiplier_manager_test.gd) — validates modifier manager basics
-  - Add tests covering:
-    - Score ordering (additive then multiplier)
-    - Consumable usability rules via `ConsumableUI.update_consumable_usability()` ([Scripts/UI/consumable_ui.gd](Scripts/UI/consumable_ui.gd))
-    - Mod persistence across rounds (`GameController` mod persistence logic)
+### UI Architecture
+- **Spine/Fan System**: Cards can be displayed as compact spines or fanned out for interaction
+- **PowerUpUI** (`Scripts/UI/power_up_ui.gd`) - Manages power-up display
+- **ConsumableUI** (`Scripts/UI/consumable_ui.gd`) - Manages consumable display
+- **ShopUI** (`Scripts/UI/shop_ui.gd`) - In-game purchasing
 
-## Quick fixes to prioritize
-1. Fix `PlayerEconomy` colon typo: [Scripts/Managers/PlayerEconomy.gd](Scripts/Managers/PlayerEconomy.gd)
-2. Unify `ScoreModifierManager` naming: [Scripts/Managers/MultiplierManager.gd](Scripts/Managers/MultiplierManager.gd) and everywhere it's referenced.
-3. Remove or migrate DEPRECATED API usage in [Scenes/ScoreCard/score_card.gd](Scenes/ScoreCard/score_card.gd).
-4. Consolidate repeated UI construction code into reusable scenes/helpers.
+### Testing Framework
+Test scenes in `Tests/` folder allow isolated testing of components:
+- `DiceTest.tscn` - Dice rolling and behavior
+- `ScoreCardTest.tscn` - Scoring logic
+- `PowerUpTest.tscn` - Power-up functionality
+- `MultiplierManagerTest.tscn` - Score modifier system
+
+## Development Guidelines
+
+### Adding New Power-ups
+1. Create script in `Scripts/PowerUps/` extending `PowerUp`
+2. Register score effects with `ScoreModifierManager`
+3. Add activation code to `GameController`
+4. Create data entry in `PowerUpManager`
+
+### Adding New Consumables  
+1. Create script in `Scripts/Consumable/` extending base consumable
+2. Implement `can_use()` and `use()` methods
+3. Add data entry in `ConsumableManager`
+4. Test usability logic in isolation
+
+### Coding Standards
+- Use GDScript 4.4 syntax
+- Tabs for indentation (never spaces)
+- `snake_case` for variables/methods, `PascalCase` for classes
+- Document functions with `##` comment blocks
+- Never use `class_name` in autoload scripts
+
+## Debug System
+
+For rapid testing and verification of new features, DiceRogue includes a comprehensive debug system:
+
+### Debug Panel Features
+- **Toggle**: Press `F12` to open/close debug panel
+- **Location**: `Scenes/UI/DebugPanel.tscn`
+- **Solid black background** for easy reading
+- **Live system info**: FPS, process ID, node count
+- **Timestamped output** with auto-scroll
+- **Quick Actions**: 18+ debug commands organized by category
+
+### Available Debug Commands
+- **Items**: Grant random PowerUps/Consumables/Mods, show all active items, clear all
+- **Economy**: Add money ($100/$1000), reset to default  
+- **Dice Control**: Force specific values (all 6s, 1s, Yahtzee)
+- **Game Flow**: Add extra rolls, force end turn, skip to shop
+- **System Testing**: Test score calculations, trigger signals, show states
+- **Debug State**: Save/load debug scenarios for quick testing
+- **Utilities**: Clear output, reset entire game state
+
+### Panel Controls
+- **Clear Output**: Remove all debug messages
+- **Close Button**: Properly hides panel (doesn't remove it)
+- **F12 Toggle**: Works both to open and close
+
+### Adding Debug Commands
+To add new debug functionality:
+
+1. **In DebugPanel**: Add button to `_create_debug_buttons()` array
+2. **Implement Method**: Create `_debug_your_feature()` method
+3. **Test Quickly**: Use F12 panel for immediate testing
+
+**⚠️ IMPORTANT: When adding new game features, remember to add corresponding debug commands to test them quickly!**
+
+### Available Debug Commands
+- **Items**: Grant random PowerUps/Consumables/Mods, show all active items, clear all
+- **Economy**: Add money ($100/$1000), reset to default
+- **Dice Control**: Force specific values (all 6s, 1s, Yahtzee)
+- **Game Flow**: Add extra rolls, force end turn, skip to shop
+- **System Testing**: Test score calculations, trigger signals, show states
+- **Utilities**: Clear output, reset entire game state
+
+### Debug Logging
+Enable debug output in any system:
+```gdscript
+var debug_enabled: bool = true
+
+func your_function():
+    if debug_enabled:
+        print("[SystemName] Debug info here")
+```
+
+### Test Scene Pattern
+For isolated testing:
+1. Create scene in `Tests/` folder
+2. Add minimal UI with test buttons
+3. Print expected vs actual results
+4. Use debug panel for setup
+
+Example test structure:
+```gdscript
+extends Control
+
+func _ready():
+    var test_button = Button.new()
+    test_button.text = "Test Feature"
+    test_button.pressed.connect(_test_your_feature)
+    add_child(test_button)
+
+func _test_your_feature():
+    print("=== Testing Your Feature ===")
+    # Set up test conditions
+    # Execute feature
+    # Verify results
+    print("Expected: X, Got: Y")
+```
+
+This debug system allows for rapid iteration and verification without rebuilding or complex setups.
+
+## 🔧 Development Reminders
+
+### When Adding New Features
+**Always add debug commands for new features!** This includes:
+- New power-ups → Add grant/test commands
+- New game mechanics → Add state inspection and trigger commands  
+- New UI systems → Add show/hide and state commands
+- New scoring rules → Add test calculation commands
+- New managers/systems → Add debug state display
+
+### Debug Menu Maintenance
+1. **Add buttons** to `_create_debug_buttons()` array in `debug_panel.gd`
+2. **Implement methods** following `_debug_feature_name()` pattern
+3. **Use `log_debug()`** for consistent output formatting
+4. **Test thoroughly** - debug commands should be reliable
+
+This prevents the need for complex manual testing setups and keeps development velocity high.
+
+## Feature Ideas
+
+### Short-term
+- Mod selling mechanics
+- Additional power-up variety
+- Challenge progression system
+- Balance pass on economy
+
+### Long-term
+- Visual effects for dice interactions
+- Sound design and music
+- Save/load progression
+- Analytics and balancing data
+
+## Project Structure
+
+```
+Scripts/
+├── Core/              # Game mechanics
+├── Managers/          # System coordinators  
+├── PowerUps/          # Permanent bonuses
+├── Consumable/        # Single-use items
+├── Mods/              # Dice modifiers
+├── UI/                # Interface components
+└── Effects/           # Visual/audio effects
+
+Scenes/
+├── Controller/        # Main game scene
+├── ScoreCard/         # Scoring interface
+├── PowerUp/           # Power-up visuals
+├── Consumable/        # Consumable visuals
+├── Shop/              # Shopping interface
+└── UI/                # Reusable UI components
+
+Tests/                 # Isolated test scenes
+Resources/             # Art, audio, data
+```
+
+## Known Issues & Cleanup
+
+### Deprecated Methods
+These methods exist for compatibility but should not be used in new code:
+- `Scorecard.clear_score_multiplier()` - Use `ScoreModifierManager` instead
+- `ConsumableUI.get_consumable_icon()` - Use spine/fan methods instead
+
+### Technical Debt
+- UI card construction has some duplication (base class available at `Scripts/UI/card_icon_base.gd`)
+- Spine/fan UI systems could share more common code
+- Some power-ups have duplicated signal lifecycle patterns
+
+These issues are documented and tracked but don't impact functionality.
 

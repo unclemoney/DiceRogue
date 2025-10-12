@@ -76,7 +76,8 @@ var _shop_tween: Tween
 func _ready() -> void:
 	add_to_group("game_controller")
 	print("▶ GameController._ready()")
-
+	var debug_panel = preload("res://Scenes/UI/DebugPanel.tscn").instantiate()
+	add_child(debug_panel)
 	# Reference the private index variable to avoid an 'unused variable' lint warning
 	# This value is reserved for future mod-application tracking.
 	_last_modded_die_index = _last_modded_die_index

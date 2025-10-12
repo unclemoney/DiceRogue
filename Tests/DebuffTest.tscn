@@ -1,4 +1,4 @@
-[gd_scene load_steps=71 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=72 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -68,6 +68,7 @@
 [ext_resource type="Resource" uid="uid://b8m7k4n2qaqwx" path="res://Scripts/Consumable/QuickCashConsumable.tres" id="51_8nt64"]
 [ext_resource type="Resource" uid="uid://b8pdl6weyahle" path="res://Scripts/Round/costly_roll_challenge.tres" id="52_3ia8s"]
 [ext_resource type="Resource" uid="uid://3ctxmrk81fwo" path="res://Scripts/Round/pts_100_no_debuff_challenge.tres" id="52_ghgbc"]
+[ext_resource type="PackedScene" uid="uid://s7ortdkxgdxp" path="res://Scenes/UI/DebugPanel.tscn" id="69_6hkbr"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wtptv"]
 
@@ -253,3 +254,7 @@ turn_tracker_path = NodePath("../TurnTracker")
 challenge_manager_path = NodePath("../ChallengeManager")
 dice_hand_path = NodePath("../DiceHand")
 scorecard_path = NodePath("../ScoreCard")
+
+[node name="DebugPanel" parent="." instance=ExtResource("69_6hkbr")]
+z_index = 10
+z_as_relative = false
