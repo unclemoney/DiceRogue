@@ -4,17 +4,14 @@
 [ext_resource type="Texture2D" uid="uid://bjng3fi0yurj2" path="res://icon.svg" id="2_4yhde"]
 
 [node name="ModIcon" type="TextureRect"]
-custom_minimum_size = Vector2(30, 30)
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+custom_minimum_size = Vector2(50, 60)
+offset_right = 50.0
+offset_bottom = 60.0
 mouse_filter = 0
 script = ExtResource("1_1ncyp")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(11, 11)
+position = Vector2(25, 45)
 scale = Vector2(0.331618, 0.331618)
 texture = ExtResource("2_4yhde")
 
@@ -27,5 +24,6 @@ offset_bottom = 40.0
 layout_mode = 2
 text = "Tips"
 
+[connection signal="gui_input" from="." to="." method="_on_gui_input"]
 [connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]

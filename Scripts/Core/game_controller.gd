@@ -833,6 +833,11 @@ func _on_dice_spawned() -> void:
 	if not dice_hand:
 		return
 
+	# Connect mod sell signals for each die
+	for die in dice_hand.dice_list:
+		if not die.is_connected("mod_sell_requested", _on_mod_sold):
+			die.mod_sell_requested.connect(_on_mod_sold)
+
 	print("[GameController] New dice spawned, checking for mods to apply")
 	print("[GameController] Mod persistence map:", mod_persistence_map)
 
@@ -1193,6 +1198,41 @@ func _on_consumable_sold(consumable_id: String) -> void:
 		)
 	else:
 		remove_consumable(consumable_id)
+
+## _on_mod_sold(mod_id, dice)
+##
+## Handles selling a mod. Gives a partial refund (half price) and removes the mod
+## from the dice, active_mods dictionary, and mod_persistence_map.
+func _on_mod_sold(mod_id: String, dice: Dice) -> void:
+	print("[GameController] MOD SELLING INITIATED:", mod_id, "from dice:", dice.name)
+	
+	# Get the mod definition for price calculation
+	var def: ModData = mod_manager.get_def(mod_id)
+	if def:
+		var refund = int(def.price / 2)  # Half price as integer
+		print("[GameController] Refunding", refund, "coins for mod:", mod_id)
+		PlayerEconomy.add_money(refund)
+	
+	# Remove the mod from the dice
+	dice.remove_mod(mod_id)
+	
+	# Remove from active mods
+	if active_mods.has(mod_id):
+		active_mods.erase(mod_id)
+	
+	# Decrease the persistence count or remove completely
+	if mod_persistence_map.has(mod_id):
+		mod_persistence_map[mod_id] -= 1
+		if mod_persistence_map[mod_id] <= 0:
+			mod_persistence_map.erase(mod_id)
+		print("[GameController] Updated mod persistence map:", mod_persistence_map)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		# Check for outside clicks to hide mod sell buttons
+		if dice_hand:
+			for die in dice_hand.dice_list:
+				die.check_mod_outside_clicks(event.global_position)
 
 func _on_max_power_ups_reached() -> void:
 	print("[GameController] Maximum number of power-ups reached")

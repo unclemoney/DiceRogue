@@ -48,3 +48,9 @@ func spawn_mod(id: String, target: Node) -> Mod:
 
 func get_def(id: String) -> ModData:
 	return _defs_by_id.get(id)
+
+func get_random_mod_id() -> String:
+	var available_ids = _defs_by_id.keys()
+	if available_ids.is_empty():
+		return ""
+	return available_ids[randi() % available_ids.size()]

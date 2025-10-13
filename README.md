@@ -55,6 +55,14 @@ Power-ups register their bonuses with this manager, which emits signals when tot
 - **ConsumableUI** (`Scripts/UI/consumable_ui.gd`) - Manages consumable display
 - **ShopUI** (`Scripts/UI/shop_ui.gd`) - In-game purchasing
 
+### Item Selling System
+All game items (PowerUps, Consumables, and Mods) support selling mechanics:
+- **Click to Sell**: Click any item icon to show a "SELL" button above it
+- **Half-Price Refund**: Items sell for 50% of their original purchase price
+- **Mod Selling**: Mods attached to dice can be sold by clicking their small icons on dice
+- **Outside Click**: Click outside an item to hide the sell button
+- **Signal Chain**: Item icons → UI managers → GameController → PlayerEconomy
+
 ### Testing Framework
 Test scenes in `Tests/` folder allow isolated testing of components:
 - `DiceTest.tscn` - Dice rolling and behavior
@@ -75,6 +83,12 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 2. Implement `can_use()` and `use()` methods
 3. Add data entry in `ConsumableManager`
 4. Test usability logic in isolation
+
+### Adding New Mods
+1. Create script in `Scripts/Mods/` extending `Mod`
+2. Implement `apply(target)` and `remove()` methods
+3. Add data entry in `ModManager`
+4. Selling mechanics are automatically handled by `ModIcon`
 
 ### Coding Standards
 - Use GDScript 4.4 syntax
@@ -184,7 +198,7 @@ This prevents the need for complex manual testing setups and keeps development v
 ## Feature Ideas
 
 ### Short-term
-- Mod selling mechanics
+- ✅ Mod selling mechanics (implemented)
 - Additional power-up variety
 - Challenge progression system
 - Balance pass on economy

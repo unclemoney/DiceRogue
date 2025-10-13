@@ -4,6 +4,7 @@ extends Area2D
 signal rolled(value: int)
 signal selected(dice: Dice)
 signal clicked
+signal mod_sell_requested(mod_id: String, dice: Dice)
 
 var active_mods: Dictionary = {}  # id -> Mod
 var home_position: Vector2 = Vector2.ZERO
@@ -216,6 +217,11 @@ func add_mod(mod_data: ModData) -> void:
 		return
 		
 	icon.data = mod_data
+	
+	# Connect the sell signal
+	if not icon.is_connected("mod_sell_requested", _on_mod_sell_requested):
+		icon.mod_sell_requested.connect(_on_mod_sell_requested)
+	
 	mod_container.add_child(icon)
 	
 	# Position icon in bottom right
@@ -242,3 +248,14 @@ func has_mod(id: String) -> bool:
 
 func get_mod(id: String) -> Mod:
 	return active_mods.get(id)
+
+func _on_mod_sell_requested(mod_id: String) -> void:
+	print("[Dice] MOD SELL REQUESTED:", mod_id)
+	print("[Dice] Emitting mod_sell_requested signal to GameController")
+	emit_signal("mod_sell_requested", mod_id, self)
+
+func check_mod_outside_clicks(event_position: Vector2) -> void:
+	# Check all mod icons for outside clicks
+	for icon in mod_container.get_children():
+		if icon is ModIcon:
+			icon.check_outside_click(event_position)

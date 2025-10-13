@@ -101,14 +101,16 @@ func _create_debug_ui() -> void:
 	# Solid black panel background for readability
 	var panel_background = ColorRect.new()
 	panel_background.color = Color(0, 0, 0, 1.0)  # Solid black
-	panel_background.set_anchors_preset(Control.PRESET_CENTER)
+	panel_background.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	panel_background.position = Vector2(10, 10)  # Small offset from top-left corner
 	panel_background.custom_minimum_size = Vector2(620, 420)
 	panel_background.z_index = 1001  # Above the transparent background
 	add_child(panel_background)
 	
 	# Main container
 	main_container = VBoxContainer.new()
-	main_container.set_anchors_preset(Control.PRESET_CENTER)
+	main_container.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	main_container.position = Vector2(20, 20)  # Small offset from top-left corner
 	main_container.custom_minimum_size = Vector2(600, 400)
 	main_container.add_theme_constant_override("separation", 8)
 	main_container.z_index = 1002  # Above the panel background
@@ -380,7 +382,7 @@ func _debug_grant_mod() -> void:
 	if mod_manager and mod_manager.has_method("get_random_mod_id"):
 		var random_id = mod_manager.get_random_mod_id()
 		if random_id:
-			game_controller._grant_mod(random_id)
+			game_controller.grant_mod(random_id)
 			log_debug("Granted Mod: " + random_id)
 		else:
 			log_debug("No Mods available to grant")
