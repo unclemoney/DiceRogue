@@ -193,6 +193,7 @@ func _create_debug_buttons() -> void:
 		# Game State
 		{"text": "Show Score State", "method": "_debug_show_scores"},
 		{"text": "Show All Items", "method": "_debug_show_items"},
+		{"text": "Show Roll Stats", "method": "_debug_show_roll_stats"},
 		{"text": "Clear All Items", "method": "_debug_clear_items"},
 		
 		# Game Flow
@@ -262,11 +263,13 @@ func _update_system_info() -> void:
 	
 	var fps = Engine.get_frames_per_second()
 	var process_id = OS.get_process_id()
+	var brief_stats = RollStats.get_brief_stats() if RollStats else "Stats: N/A"
 	
-	system_info_label.text = "FPS: %d | Process: %d | Nodes: %d" % [
+	system_info_label.text = "FPS: %d | Process: %d | Nodes: %d\n%s" % [
 		fps, 
 		process_id,
-		get_tree().get_node_count()
+		get_tree().get_node_count(),
+		brief_stats
 	]
 
 func log_debug(message: String) -> void:
@@ -408,6 +411,9 @@ func _debug_show_scores() -> void:
 	
 	var full_state = "\n".join(state_info)
 	log_debug("GAME STATE:\n" + full_state)
+
+func _debug_show_roll_stats() -> void:
+	log_debug("ROLL STATISTICS:\n" + RollStats.get_stats_summary())
 
 func _debug_clear_items() -> void:
 	if not game_controller:

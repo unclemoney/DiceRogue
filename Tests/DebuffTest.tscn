@@ -1,4 +1,4 @@
-[gd_scene load_steps=75 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=77 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -38,6 +38,7 @@
 [ext_resource type="Resource" uid="uid://7uwjjpth4uv6" path="res://Scripts/Challenge/pts300_no_debuff_resource.tres" id="29_1jk2k"]
 [ext_resource type="Resource" uid="uid://bd58nakq7j3n2" path="res://Scripts/PowerUps/BonusMoneyPowerUp.tres" id="29_bonus_money"]
 [ext_resource type="Resource" uid="uid://b1shilkw1ljul" path="res://Scripts/PowerUps/Chance520PowerUp.tres" id="29_cjjtc"]
+[ext_resource type="Resource" uid="uid://cw8n3d5laa2j1" path="res://Scripts/PowerUps/MoneyMultiplierPowerUp.tres" id="29_money_multiplier"]
 [ext_resource type="Resource" uid="uid://dwrkuuuo24eif" path="res://Scripts/PowerUps/RandomizerPowerUp.tres" id="30_2hxro"]
 [ext_resource type="Resource" uid="uid://b0vwc3j45xp22" path="res://Scripts/PowerUps/ConsumableCashPowerUp.tres" id="30_8nt64"]
 [ext_resource type="Resource" uid="uid://cr8w2ud13fb6d" path="res://Scripts/Challenge/pts_100_no_debuff_challenge.tres" id="30_o0xxd"]
@@ -47,6 +48,7 @@
 [ext_resource type="Resource" uid="uid://bvcw4aokgvpol" path="res://Scripts/Challenge/pts_200_disable_two_debuff_resource.tres" id="31_ja7vv"]
 [ext_resource type="Resource" uid="uid://c881tuw711775" path="res://Scripts/PowerUps/EvensNoOddsPowerUp.tres" id="31_sqb4o"]
 [ext_resource type="Resource" uid="uid://bdbldxuf65trw" path="res://Scripts/Consumable/ScoreReroll.tres" id="32_aeiu6"]
+[ext_resource type="Resource" uid="uid://bo2j7mhd8x4n1" path="res://Scripts/PowerUps/FullHousePowerUp.tres" id="32_fullhouse"]
 [ext_resource type="Resource" uid="uid://cpcfivvcimiy0" path="res://Scripts/Mods/GoldSixMod.tres" id="32_o2qgl"]
 [ext_resource type="PackedScene" uid="uid://dbqwnxq8iy66l" path="res://Scenes/UI/shop_ui.tscn" id="32_oy5od"]
 [ext_resource type="Resource" uid="uid://bf58ehj5n7vpd" path="res://Scripts/Challenge/pts_150_roll_score_minus_one.tres" id="32_ytf57"]
@@ -237,7 +239,7 @@ challenge_container_path = NodePath("../ChallengeContainer")
 crt_manager_path = NodePath("../Background/CRTManager")
 
 [node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
-power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc"), ExtResource("29_bonus_money"), ExtResource("30_8nt64"), ExtResource("30_2hxro"), ExtResource("31_sqb4o"), ExtResource("29_bonus_money")])
+power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc"), ExtResource("29_bonus_money"), ExtResource("29_money_multiplier"), ExtResource("30_8nt64"), ExtResource("30_2hxro"), ExtResource("31_sqb4o"), ExtResource("32_fullhouse")])
 
 [node name="ChallengeManager" parent="." instance=ExtResource("25_3vaha")]
 challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtResource("29_1jk2k"), ExtResource("30_o0xxd"), ExtResource("31_ja7vv"), ExtResource("32_ytf57"), ExtResource("33_3ia8s")])

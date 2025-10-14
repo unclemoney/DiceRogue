@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://bqj0dlmhf2gqk"]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/money_multiplier_power_up.gd" id="1_5xkct"]
+
+[node name="MoneyMultiplierPowerUp" type="Node2D"]
+script = ExtResource("1_5xkct")
+id = "money_multiplier"

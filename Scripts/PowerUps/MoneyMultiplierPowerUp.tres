@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://cw8n3d5laa2j1"]
+
+[ext_resource type="Texture2D" uid="uid://cibi06ah5yg8q" path="res://Resources/Art/Powerups/PowerUp_test4.png" id="1_money_multiplier_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" uid="uid://bqj0dlmhf2gqk" path="res://Scenes/PowerUp/MoneyMultiplierPowerUp.tscn" id="2_money_multiplier_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "money_multiplier"
+display_name = "Money Multiplier"
+description = "+0.1x money multiplier per Yahtzee rolled"
+icon = ExtResource("1_money_multiplier_icon")
+scene = ExtResource("2_money_multiplier_scene")
+price = 300
+rarity = "rare"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

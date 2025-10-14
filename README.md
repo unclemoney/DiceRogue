@@ -38,8 +38,16 @@ Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill s
 ### Economy & Items
 - **PlayerEconomy** (autoload) - Money and shop transactions
 - **PowerUps** (`Scripts/PowerUps/`) - Permanent scoring bonuses
+  - **FullHousePowerUp**: Grants $7 × (total full houses rolled) for each new full house
 - **Consumables** (`Scripts/Consumable/`) - Single-use strategic items
 - **Mods** (`Scripts/Mods/`) - Dice behavior modifiers
+
+### Statistics & Analytics
+- **RollStats** (autoload) - Tracks game statistics like yahtzees, bonuses, and combinations
+  - **Location**: `Scripts/Core/roll_stats.gd`
+  - **Features**: Real-time tracking of yahtzees, straights, bonuses, and roll counts
+  - **Debug Integration**: View stats via debug panel "Show Roll Stats" button
+  - **Reset Support**: Statistics reset automatically between games
 
 ## Key Systems
 
@@ -91,6 +99,45 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 2. Implement `apply(target)` and `remove()` methods
 3. Add data entry in `ModManager`
 4. Selling mechanics are automatically handled by `ModIcon`
+
+## Available PowerUps
+
+### Score Modifiers
+- **FoursomePowerUp**: +2x multiplier when dice contain a 4
+- **UpperBonusMultPowerUp**: Multiplies upper section scores by bonus count
+- **YahtzeeBonusMultPowerUp**: Multiplies lower section scores by Yahtzee bonus count
+- **Chance520PowerUp**: +520 points when scoring Chance category
+
+### Economy PowerUps
+- **BonusMoneyPowerUp**: +$50 for each bonus achieved (Upper Section or Yahtzee bonuses)
+- **ConsumableCashPowerUp**: +$25 for each consumable used
+- **MoneyMultiplierPowerUp**: +0.1x money multiplier per Yahtzee rolled (NEW)
+
+### Dice Modifiers  
+- **ExtraDicePowerUp**: Adds 6th die to hand (enables lock dice debuff)
+- **ExtraRollsPowerUp**: +2 extra rolls per turn
+- **EvensNoOddsPowerUp**: Rerolls odd dice automatically
+- **RandomizerPowerUp**: Randomly applies effects each turn
+
+### Usage Notes
+- PowerUps stack and interact with the scoring system
+- Economy PowerUps provide strategic money management
+- Dice modifiers change fundamental gameplay mechanics
+- All PowerUps support selling for 50% refund
+
+## Available Consumables
+
+### Scoring Aids
+- **AnyScore**: Score current dice in any open category, ignoring normal requirements
+- **ScoreReroll**: Reroll all dice, then auto-score best category
+
+### PowerUp Acquisition
+- **Random Uncommon Power-Up**: Grants a random uncommon rarity power-up
+
+### Usage Notes
+- Consumables are single-use items
+- AnyScore is particularly useful for filling difficult categories
+- Random PowerUps provide strategic risk/reward decisions
 
 ### Coding Standards
 - Use GDScript 4.4 syntax

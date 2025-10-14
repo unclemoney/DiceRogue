@@ -156,7 +156,7 @@ func _on_game_start() -> void:
 	#grant_consumable("power_up_shop_num")
 	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
-	grant_power_up("bonus_money")
+	grant_power_up("full_house_bonus")
 	if round_manager:
 		round_manager.start_game()
 
@@ -265,7 +265,7 @@ func _activate_power_up(power_up_id: String) -> void:
 		return
 	
 	# Connect to description_updated signal if the power-up has one
-	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money":
+	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus":
 		# Disconnect first to avoid duplicates
 		if pu.is_connected("description_updated", _on_power_up_description_updated):
 			pu.description_updated.disconnect(_on_power_up_description_updated)
@@ -331,6 +331,15 @@ func _activate_power_up(power_up_id: String) -> void:
 		"randomizer":
 			pu.apply(self)
 			print("[GameController] Applied Randomizer power-up")
+		"money_multiplier":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied MoneyMultiplierPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for MoneyMultiplierPowerUp")
+		"full_house_bonus":
+			pu.apply(self)
+			print("[GameController] Applied FullHousePowerUp")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -399,6 +408,12 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"randomizer":
 			print("[GameController] Removing randomizer PowerUp")
 			pu.remove(self)
+		"money_multiplier":
+			print("[GameController] Removing money_multiplier PowerUp")
+			pu.remove(scorecard)
+		"full_house_bonus":
+			print("[GameController] Removing full_house_bonus PowerUp")
+			pu.remove(self)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -426,6 +441,10 @@ func revoke_power_up(power_up_id: String) -> void:
 			"consumable_cash":
 				pu.remove(self)
 			"randomizer":
+				pu.remove(self)
+			"money_multiplier":
+				pu.remove(scorecard)
+			"full_house_bonus":
 				pu.remove(self)
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself
@@ -1193,6 +1212,9 @@ func _on_challenge_selected(id: String) -> void:
 # Add this method to handle the dice_rolled signal from GameButtonUI
 func _on_game_button_dice_rolled(dice_values: Array) -> void:
 	print("[GameController] Dice roll button pressed, values:", dice_values)
+	
+	# Track roll statistics
+	RollStats.track_roll()
 	
 	# Check if we can afford to roll (for costly_roll debuff)
 	if is_debuff_active("costly_roll"):

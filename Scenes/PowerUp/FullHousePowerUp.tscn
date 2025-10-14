@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://c52j7nqd5n8bw"]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/full_house_power_up.gd" id="1_k3v2h"]
+
+[node name="FullHousePowerUp" type="Node2D"]
+script = ExtResource("1_k3v2h")
+id = "full_house_bonus"

@@ -130,6 +130,9 @@ func set_score(section: int, category: String, score: int) -> void:
 	# Emit the score_assigned signal for tracking purposes
 	emit_signal("score_assigned", section, category, modified_score)
 	
+	# Track statistics with RollStats singleton
+	_track_combination_stats(category, modified_score)
+	
 	# Check for upper bonus after updating scores
 	check_upper_bonus()
 	
@@ -137,6 +140,7 @@ func set_score(section: int, category: String, score: int) -> void:
 	if category == "yahtzee" and modified_score == 50:
 		# This is the initial yahtzee, bonus yahtzees will be handled separately
 		print("[Scorecard] Initial Yahtzee scored!")
+		RollStats.track_yahtzee_rolled()
 	
 	# Always emit score_changed signal
 	emit_signal("score_changed", new_total)
@@ -255,6 +259,7 @@ func check_upper_bonus() -> void:
 		upper_bonus = UPPER_BONUS_AMOUNT  # Store the bonus
 		upper_bonus_awarded = true  # Mark as awarded
 		emit_signal("upper_bonus_achieved", UPPER_BONUS_AMOUNT)
+		RollStats.track_upper_bonus()
 	elif total < UPPER_BONUS_THRESHOLD:
 		upper_bonus = 0
 		upper_bonus_awarded = false  # Reset if somehow total drops below threshold
@@ -274,6 +279,7 @@ func check_bonus_yahtzee(values: Array[int], is_new_yahtzee: bool = false) -> vo
 		yahtzee_bonus_points += 100
 		emit_signal("yahtzee_bonus_achieved", 100)
 		emit_signal("score_changed", get_total_score())  # Add this line
+		RollStats.track_yahtzee_bonus()
 	else:
 		print("✗ Not a Yahtzee - no bonus awarded")
 
@@ -431,6 +437,28 @@ func debug_multiplier_function() -> void:
 		print("[Scorecard] Test call result:", test_result)
 	else:
 		print("[Scorecard] No valid multiplier function set")
+
+## Track combination statistics based on category and score
+func _track_combination_stats(category: String, score: int) -> void:
+	# Only track if a valid score was achieved (> 0)
+	if score <= 0:
+		return
+	
+	match category:
+		"three_of_a_kind":
+			RollStats.track_three_of_a_kind()
+		"four_of_a_kind":
+			RollStats.track_four_of_a_kind()
+		"full_house":
+			if score == 25:  # Standard full house score
+				RollStats.track_full_house()
+		"small_straight":
+			if score == 30:  # Standard small straight score
+				RollStats.track_small_straight()
+		"large_straight":
+			if score == 40:  # Standard large straight score
+				RollStats.track_large_straight()
+		# Note: Yahtzee tracking is handled separately in set_score function
 	
 	# Show the new system
 	print("\n=== NEW ScoreModifierManager State ===")

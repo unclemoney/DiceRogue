@@ -21,6 +21,7 @@ ScoreModifierManager="*res://Scripts/Managers/MultiplierManager.gd"
 DiceResults="*res://Scripts/Core/dice_results.gd"
 ScoreEvaluatorSingleton="*res://Scripts/Core/score_evaluator.gd"
 PlayerEconomy="*res://Scripts/Managers/PlayerEconomy.gd"
+RollStats="*res://Scripts/Core/roll_stats.gd"
 GDAIMCPRuntime="*res://addons/gdai-mcp-plugin-godot/gdai_mcp_runtime.gd"
 
 [display]
