@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cjpq8rw5k3moa"]
+
+[ext_resource type="Script" uid="uid://bcsj8t3v4hrjq" path="res://Scripts/Consumable/any_score_consumable.gd" id="1_v8k2l"]
+
+[node name="AnyScoreConsumable" type="Node"]
+script = ExtResource("1_v8k2l")

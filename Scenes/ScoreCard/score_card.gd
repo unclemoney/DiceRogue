@@ -16,6 +16,7 @@ signal score_changed(total_score: int)  # Add this signal
 signal game_completed(final_score: int) # Add this signal
 
 var upper_bonus := 0  # Add this to track the bonus
+var upper_bonus_awarded := false  # Track if bonus has been awarded
 var yahtzee_bonuses := 0  # Track number of bonus yahtzees
 var yahtzee_bonus_points := 0  # Track total bonus points
 
@@ -250,12 +251,13 @@ func check_upper_bonus() -> void:
 	
 	var total = get_upper_section_total()
 	
-	if total >= UPPER_BONUS_THRESHOLD:
+	if total >= UPPER_BONUS_THRESHOLD and not upper_bonus_awarded:
 		upper_bonus = UPPER_BONUS_AMOUNT  # Store the bonus
+		upper_bonus_awarded = true  # Mark as awarded
 		emit_signal("upper_bonus_achieved", UPPER_BONUS_AMOUNT)
-		print("[Scorecard] Upper section bonus achieved!")
-	else:
+	elif total < UPPER_BONUS_THRESHOLD:
 		upper_bonus = 0
+		upper_bonus_awarded = false  # Reset if somehow total drops below threshold
 	
 	emit_signal("upper_section_completed")
 

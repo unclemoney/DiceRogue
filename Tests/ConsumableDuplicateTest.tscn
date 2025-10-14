@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c4v5w6x7y81ab"]
+
+[ext_resource type="Script" path="res://Tests/consumable_duplicate_test.gd" id="1_script"]
+
+[node name="ConsumableDuplicateTest" type="Node"]
+script = ExtResource("1_script")

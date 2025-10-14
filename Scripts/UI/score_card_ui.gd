@@ -6,6 +6,7 @@ var category_buttons := {}
 var category_labels := {}
 var turn_scored := false
 var reroll_active := false
+var any_score_active := false
 var upper_section_buttons := {}
 var lower_section_buttons := {}
 var section_buttons := {} # Add this line to declare the section_buttons dictionary
@@ -278,6 +279,7 @@ func connect_buttons():
 func on_category_selected(section: Scorecard.Section, category: String) -> void:
 	print("[ScoreCardUI] Category selected:", category)
 	print("[ScoreCardUI] Double mode active:", is_double_mode)
+	print("[ScoreCardUI] Any score mode active:", any_score_active)
 	
 	# Check if we're in double mode
 	if is_double_mode:
@@ -292,12 +294,16 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 		Scorecard.Section.LOWER:
 			existing_score = scorecard.lower_scores.get(category)
 			
-	if existing_score != null and not reroll_active:
+	if existing_score != null and not reroll_active and not any_score_active:
 		show_invalid_score_feedback(category)
 		return
 		
 	if reroll_active:
 		handle_score_reroll(section, category)
+		return
+		
+	if any_score_active:
+		handle_any_score(section, category)
 		return
 		
 	if turn_scored:
@@ -605,3 +611,89 @@ func update_extra_info(info_text: String) -> void:
 			extra_info_label = extra_info
 			# Retry the animation with found label
 			update_extra_info(info_text)
+
+## activate_any_score_mode()
+##
+## Activates the AnyScore consumable mode, allowing scoring in any open category
+## regardless of dice requirements
+func activate_any_score_mode() -> void:
+	any_score_active = true
+	print("[ScoreCardUI] AnyScore mode activated")
+	
+	# Enable only buttons that don't have scores (open categories)
+	for category in upper_section_buttons.keys():
+		var button = upper_section_buttons[category]
+		button.disabled = scorecard.upper_scores[category] != null
+		# Highlight available categories with special color for any-score mode
+		if not button.disabled:
+			button.modulate = Color(0.8, 1.2, 0.8)  # Green highlight for any-score
+			
+	for category in lower_section_buttons.keys():
+		var button = lower_section_buttons[category]
+		button.disabled = scorecard.lower_scores[category] != null
+		# Highlight available categories with special color for any-score mode
+		if not button.disabled:
+			button.modulate = Color(0.8, 1.2, 0.8)  # Green highlight for any-score
+
+## handle_any_score(section, category)
+##
+## Handles scoring when AnyScore mode is active - uses the sum of dice values
+## instead of category-specific scoring rules
+func handle_any_score(section: Scorecard.Section, category: String) -> void:
+	var dice_values = DiceResults.values
+	print("[ScoreCardUI] AnyScore mode - scoring", category, "with dice:", dice_values)
+	
+	# Verify the category is open (hasn't been scored yet)
+	var has_existing_score = false
+	match section:
+		Scorecard.Section.UPPER:
+			has_existing_score = scorecard.upper_scores[category] != null
+		Scorecard.Section.LOWER:
+			has_existing_score = scorecard.lower_scores[category] != null
+			
+	if has_existing_score:
+		print("[ScoreCardUI] Cannot use AnyScore on already scored category")
+		show_invalid_score_feedback(category)
+		return
+	
+	# Calculate the score using the highest-scoring interpretation of current dice
+	# This allows the player to score their dice in the most advantageous way
+	var score = _calculate_best_score_for_dice(dice_values)
+	
+	print("[ScoreCardUI] AnyScore calculated best score:", score, "for category:", category)
+	
+	if score == null or score < 0:
+		print("[ScoreCardUI] Invalid AnyScore calculation")
+		show_invalid_score_feedback(category)
+		return
+		
+	# Set the selected category's score to the best possible score
+	print("[ScoreCardUI] Setting AnyScore for", category, "to:", score)
+	scorecard.set_score(section, category, score)
+	update_all()
+	
+	# Reset any score mode
+	any_score_active = false
+	disable_all_score_buttons()
+	emit_signal("hand_scored")
+	
+	print("[ScoreCardUI] AnyScore completed for", category)
+
+## _calculate_best_score_for_dice(dice_values)
+##
+## Calculates the highest possible score for the current dice across all categories
+func _calculate_best_score_for_dice(dice_values: Array[int]) -> int:
+	var best_score = 0
+	
+	# Check all possible categories and find the highest score
+	var all_categories = []
+	all_categories.append_array(scorecard.upper_scores.keys())
+	all_categories.append_array(scorecard.lower_scores.keys())
+	
+	for category in all_categories:
+		var category_score = scorecard.evaluate_category(category, dice_values)
+		if category_score > best_score:
+			best_score = category_score
+			
+	print("[ScoreCardUI] Best possible score for dice", dice_values, "is:", best_score)
+	return best_score

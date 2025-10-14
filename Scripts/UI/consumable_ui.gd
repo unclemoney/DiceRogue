@@ -13,7 +13,7 @@ signal max_consumables_reached
 
 # Data storage
 var _consumable_data := {}  # consumable_id -> ConsumableData
-var _spines := {}  # consumable_id -> ConsumableSpine
+var _consumable_spines := {}  # spine_id -> ConsumableSpine  
 var _fanned_icons := {}  # consumable_id -> ConsumableIcon
 
 # State management
@@ -164,6 +164,9 @@ func add_consumable(data: ConsumableData) -> Node:
 	add_child(spine)
 	spine.set_data(data)
 	
+	# Store spine reference
+	_consumable_spines[data.id] = spine
+	
 	# Connect spine signals
 	if not spine.is_connected("spine_clicked", _on_spine_clicked):
 		spine.spine_clicked.connect(_on_spine_clicked)
@@ -173,7 +176,7 @@ func add_consumable(data: ConsumableData) -> Node:
 		spine.spine_unhovered.connect(_on_spine_unhovered)
 	
 	# Store spine reference
-	_spines[data.id] = spine
+	_consumable_spines[data.id] = spine
 	
 	# Position spine on shelf
 	_position_spines()
@@ -185,7 +188,7 @@ func add_consumable(data: ConsumableData) -> Node:
 	return spine
 
 func _position_spines() -> void:
-	var spine_ids: Array = _spines.keys()
+	var spine_ids: Array = _consumable_spines.keys()
 	var spine_count: int = spine_ids.size()
 	
 	if spine_count == 0:
@@ -197,7 +200,7 @@ func _position_spines() -> void:
 	# Position each spine
 	for i in range(spine_count):
 		var spine_id: String = spine_ids[i]
-		var spine: ConsumableSpine = _spines[spine_id]
+		var spine: ConsumableSpine = _consumable_spines[spine_id]
 		if spine:
 			var pos: Vector2 = Vector2(start_x + i * _spine_spacing, _spine_shelf_y)
 			spine.set_base_position(pos)
@@ -233,8 +236,8 @@ func _fan_out_cards() -> void:
 	bg_tween.tween_property(_background, "modulate:a", 1.0, 0.3)
 	
 	# Hide all spines first
-	for spine_id in _spines.keys():
-		var spine: ConsumableSpine = _spines[spine_id]
+	for spine_id in _consumable_spines.keys():
+		var spine: ConsumableSpine = _consumable_spines[spine_id]
 		if spine:
 			var tween: Tween = create_tween()
 			tween.tween_property(spine, "modulate:a", 0.0, 0.2)
@@ -379,8 +382,8 @@ func _fold_back_cards() -> void:
 	_clear_fanned_icons()
 	
 	# Show spines again
-	for spine_id in _spines.keys():
-		var spine: ConsumableSpine = _spines[spine_id]
+	for spine_id in _consumable_spines.keys():
+		var spine: ConsumableSpine = _consumable_spines[spine_id]
 		if spine and is_instance_valid(spine):
 			var tween: Tween = create_tween()
 			tween.tween_property(spine, "modulate:a", 1.0, 0.2)
@@ -503,9 +506,45 @@ func update_consumable_usability() -> void:
 			icon.set_useable(is_useable)
 
 func _can_use_consumable(data: ConsumableData) -> bool:
-	# Default implementation - can be overridden with specific game logic
-	# For now, assume all consumables are useable when fanned
-	return true
+	# Check specific consumable requirements
+	match data.id:
+		"any_score":
+			# AnyScore requires dice values and at least one open category
+			var dice_values = DiceResults.values
+			if dice_values.is_empty():
+				return false
+			
+			# Check for open categories via game controller
+			var game_controller = get_tree().get_first_node_in_group("game_controller")
+			if game_controller and game_controller.scorecard:
+				var scorecard = game_controller.scorecard
+				
+				# Check upper section for open categories
+				for category in scorecard.upper_scores.keys():
+					if scorecard.upper_scores[category] == null:
+						return true
+				
+				# Check lower section for open categories
+				for category in scorecard.lower_scores.keys():
+					if scorecard.lower_scores[category] == null:
+						return true
+				
+				# No open categories found
+				return false
+			else:
+				# No scorecard available
+				return false
+		"random_power_up_uncommon":
+			# Random PowerUp consumable requires available PowerUp slots
+			var game_controller = get_tree().get_first_node_in_group("game_controller")
+			if game_controller and game_controller.powerup_ui:
+				return not game_controller.powerup_ui.has_max_power_ups()
+			else:
+				# No PowerUpUI available, assume unusable
+				return false
+		_:
+			# Default: all other consumables are useable when fanned
+			return true
 
 func _stop_idle_animations() -> void:
 	for tween in _idle_tweens:
@@ -530,11 +569,11 @@ func remove_consumable(consumable_id: String) -> void:
 	_consumable_data.erase(consumable_id)
 	
 	# Remove spine if it exists
-	if _spines.has(consumable_id):
-		var spine: ConsumableSpine = _spines[consumable_id]
+	if _consumable_spines.has(consumable_id):
+		var spine: ConsumableSpine = _consumable_spines[consumable_id]
 		if spine and is_instance_valid(spine):
 			spine.queue_free()
-		_spines.erase(consumable_id)
+		_consumable_spines.erase(consumable_id)
 	
 	# Remove fanned icon if it exists
 	if _fanned_icons.has(consumable_id):
@@ -561,7 +600,7 @@ func _cleanup_empty_state() -> void:
 		_fold_back_cards()
 	
 	# Clear all references
-	_spines.clear()
+	_consumable_spines.clear()
 	_fanned_icons.clear()
 	_consumable_data.clear()
 	_active_consumable_count = 0
@@ -585,8 +624,8 @@ func has_max_consumables() -> bool:
 # Legacy compatibility methods - replace old icon access patterns
 func get_consumable_spine(consumable_id: String) -> ConsumableSpine:
 	"""Get the spine for a specific consumable (new spine system)"""
-	if _spines.has(consumable_id):
-		var spine: ConsumableSpine = _spines[consumable_id]
+	if _consumable_spines.has(consumable_id):
+		var spine: ConsumableSpine = _consumable_spines[consumable_id]
 		if spine and is_instance_valid(spine):
 			return spine
 	return null
@@ -616,8 +655,8 @@ func get_all_consumable_ids() -> Array[String]:
 
 func animate_consumable_removal(consumable_id: String, on_finished: Callable) -> void:
 	# Check if we have a spine to animate
-	if _spines.has(consumable_id):
-		var spine: ConsumableSpine = _spines[consumable_id]
+	if _consumable_spines.has(consumable_id):
+		var spine: ConsumableSpine = _consumable_spines[consumable_id]
 		if spine and is_instance_valid(spine):
 			print("[ConsumableUI] Animating spine removal for:", consumable_id)
 			var tween: Tween = create_tween()
@@ -657,3 +696,21 @@ func get_consumable_icon(consumable_id: String):
 		return get_fanned_icon(consumable_id)
 	
 	return null
+
+## update_consumable_count(consumable_id, count)
+##
+## Updates the display count for a consumable type. This allows showing multiple instances
+## of the same consumable without creating separate spines.
+func update_consumable_count(consumable_id: String, count: int) -> void:
+	print("[ConsumableUI] Updating consumable count for '%s' to %d" % [consumable_id, count])
+	
+	if _consumable_spines.has(consumable_id):
+		var spine: ConsumableSpine = _consumable_spines[consumable_id]
+		if spine and spine.has_method("set_count"):
+			spine.set_count(count)
+	
+	# Also update fanned icons if they exist
+	if _fanned_icons.has(consumable_id):
+		var icon: ConsumableIcon = _fanned_icons[consumable_id]
+		if icon and icon.has_method("set_count"):
+			icon.set_count(count)

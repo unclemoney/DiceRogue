@@ -56,22 +56,25 @@ func _process(delta: float) -> void:
 	#shop_label.text = "[center][color=#%s][wave amp=50 freq=2]SHOP[/wave][/color][/center]" % hex_color
 	# Check if this is a power-up item and if there's a maximum reached
 	if item_type == "power_up":
-		# Find the PowerUpUI node to check if maximum reached
-		var power_up_ui = _find_power_up_ui()
-		if power_up_ui:
+		# Find the GameController to check ownership directly
+		var game_controller = get_tree().get_first_node_in_group("game_controller")
+		if game_controller:
 			# Check if we already own this power-up
-			if power_up_ui.has_power_up(item_id):
+			if game_controller.active_power_ups.has(item_id):
 				buy_button.disabled = true
 				buy_button.text = "OWNED"
-			# Check if maximum reached
-			elif power_up_ui.has_max_power_ups():
-				buy_button.disabled = true
-				buy_button.text = "MAX REACHED"
-			else:
-				# Re-enable the button if previously disabled
-				if buy_button.disabled and (buy_button.text == "MAX REACHED" or buy_button.text == "OWNED"):
-					buy_button.disabled = false
-					buy_button.text = "BUY"
+				return
+			
+		# Check if maximum reached via PowerUpUI
+		var power_up_ui = _find_power_up_ui()
+		if power_up_ui and power_up_ui.has_max_power_ups():
+			buy_button.disabled = true
+			buy_button.text = "MAX REACHED"
+		else:
+			# Re-enable the button if previously disabled
+			if buy_button.disabled and (buy_button.text == "MAX REACHED" or buy_button.text == "OWNED"):
+				buy_button.disabled = false
+				buy_button.text = "BUY"
 	
 	# Check if this is a consumable item and if there's a maximum reached
 	elif item_type == "consumable":

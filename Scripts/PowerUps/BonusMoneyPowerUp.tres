@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://bd58nakq7j3n2"]
+
+[ext_resource type="Texture2D" uid="uid://c5euhoo3jpa3j" path="res://Resources/Art/Powerups/PowerUp_test3.png" id="1_money_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" uid="uid://bvfhn8kq4j4n8" path="res://Scenes/PowerUp/BonusMoneyPowerUp.tscn" id="2_bonus_money_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "bonus_money"
+display_name = "Bonus Money"
+description = "+$50 for each bonus achieved (Upper Section Bonus or Yahtzee Bonus)"
+icon = ExtResource("1_money_icon")
+scene = ExtResource("2_bonus_money_scene")
+price = 150
+rarity = "uncommon"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

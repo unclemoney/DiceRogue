@@ -1,9 +1,12 @@
-[gd_scene load_steps=5 format=3 uid="uid://surdk66a0453"]
+[gd_scene load_steps=8 format=3 uid="uid://surdk66a0453"]
 
 [ext_resource type="PackedScene" uid="uid://lc4xqvsxdnpy" path="res://Scenes/UI/game_button_ui.tscn" id="1_ht33c"]
 [ext_resource type="PackedScene" uid="uid://sliaarrkymdo" path="res://Scenes/UI/score_card_ui.tscn" id="2_u8tly"]
 [ext_resource type="PackedScene" uid="uid://df1otdcd66xb5" path="res://Scenes/UI/turn_tracker_ui.tscn" id="3_fivem"]
 [ext_resource type="PackedScene" uid="uid://bhv7dyrckqhk6" path="res://Scenes/UI/power_up_ui.tscn" id="4_u8tly"]
+[ext_resource type="PackedScene" uid="uid://dv0gypvmv4bb" path="res://Scenes/UI/consumable_ui.tscn" id="5_cons"]
+[ext_resource type="PackedScene" uid="uid://bcl8ftyj1jx6k" path="res://Scenes/UI/challenge_ui.tscn" id="6_chall"]
+[ext_resource type="PackedScene" uid="uid://cxavqklxkdjmp" path="res://Scenes/UI/debuff_ui.tscn" id="7_debuff"]
 
 [node name="UICanvasLayer" type="CanvasLayer"]
 
@@ -28,3 +31,15 @@ offset_bottom = -243.0
 [node name="PowerUpUI" parent="." instance=ExtResource("4_u8tly")]
 offset_left = 7.0
 offset_top = 484.0
+
+[node name="ConsumableUI" parent="." instance=ExtResource("5_cons")]
+offset_left = 87.0
+offset_top = 196.0
+
+[node name="ChallengeUI" parent="." instance=ExtResource("6_chall")]
+offset_left = 111.0
+offset_top = 187.0
+
+[node name="DebuffUI" parent="." instance=ExtResource("7_debuff")]
+offset_left = 550.0
+offset_top = 200.0

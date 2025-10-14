@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://bvfhn8kq4j4n8"]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/bonus_money_power_up.gd" id="1_bonus_money"]
+
+[node name="BonusMoneyPowerUp" type="Node2D"]
+script = ExtResource("1_bonus_money")
+id = "bonus_money"

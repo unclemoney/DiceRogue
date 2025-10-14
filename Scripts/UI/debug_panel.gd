@@ -175,6 +175,9 @@ func _create_debug_buttons() -> void:
 		# Power-ups and Items
 		{"text": "Grant Random PowerUp", "method": "_debug_grant_powerup"},
 		{"text": "Grant Random Consumable", "method": "_debug_grant_consumable"},
+		{"text": "Grant AnyScore", "method": "_debug_grant_any_score"},
+		{"text": "Grant Random Uncommon PowerUp", "method": "_debug_grant_random_uncommon_powerup"},
+		{"text": "Register AnyScore", "method": "_debug_register_any_score"},
 		{"text": "Grant Random Mod", "method": "_debug_grant_mod"},
 		
 		# Economy
@@ -285,14 +288,18 @@ func _debug_grant_powerup() -> void:
 		return
 	
 	# Try to grant a random power-up
-	var pu_manager = game_controller.get("pu_manager")
-	if pu_manager and pu_manager.has_method("get_random_power_up_id"):
-		var random_id = pu_manager.get_random_power_up_id()
-		if random_id:
-			game_controller._grant_power_up(random_id)
+	var pu_manager = game_controller.pu_manager
+	if pu_manager and pu_manager.has_method("get_available_power_ups"):
+		var available_ids = pu_manager.get_available_power_ups()
+		# Filter out already owned PowerUps
+		var unowned_ids = available_ids.filter(func(id): return not game_controller.active_power_ups.has(id))
+		
+		if unowned_ids.size() > 0:
+			var random_id = unowned_ids[randi() % unowned_ids.size()]
+			game_controller.grant_power_up(random_id)
 			log_debug("Granted PowerUp: " + random_id)
 		else:
-			log_debug("No PowerUps available to grant")
+			log_debug("No unowned PowerUps available to grant")
 	else:
 		log_debug("PowerUpManager not found or method missing")
 
@@ -301,16 +308,60 @@ func _debug_grant_consumable() -> void:
 		log_debug("ERROR: GameController not available")
 		return
 	
-	var consumable_manager = game_controller.get("consumable_manager")
-	if consumable_manager and consumable_manager.has_method("get_random_consumable_id"):
-		var random_id = consumable_manager.get_random_consumable_id()
-		if random_id:
-			game_controller._grant_consumable(random_id)
+	var consumable_manager = game_controller.consumable_manager
+	if consumable_manager and consumable_manager.has_method("get_available_consumables"):
+		var available_ids = consumable_manager.get_available_consumables()
+		if available_ids.size() > 0:
+			var random_id = available_ids[randi() % available_ids.size()]
+			game_controller.grant_consumable(random_id)
 			log_debug("Granted Consumable: " + random_id)
 		else:
 			log_debug("No Consumables available to grant")
 	else:
 		log_debug("ConsumableManager not found or method missing")
+
+func _debug_grant_any_score() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("any_score")
+		log_debug("Granted AnyScore consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_register_any_score() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	var consumable_manager = game_controller.consumable_manager
+	if not consumable_manager:
+		log_debug("ERROR: ConsumableManager not available")
+		return
+	
+	# Load the AnyScore data resource
+	var any_score_data = load("res://Scripts/Consumable/AnyScoreConsumable.tres") as ConsumableData
+	if any_score_data:
+		if consumable_manager.has_method("register_consumable_def"):
+			consumable_manager.register_consumable_def(any_score_data)
+			log_debug("Registered AnyScore consumable for testing")
+		else:
+			log_debug("ConsumableManager missing register_consumable_def method")
+	else:
+		log_debug("ERROR: Failed to load AnyScore data resource")
+
+func _debug_grant_random_uncommon_powerup() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("random_power_up_uncommon")
+		log_debug("Granted Random Uncommon PowerUp consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
 
 func _debug_add_money() -> void:
 	if PlayerEconomy:
@@ -325,12 +376,15 @@ func _debug_force_dice() -> void:
 		log_debug("ERROR: GameController not available")
 		return
 	
-	var dice_hand = game_controller.get("dice_hand")
-	if dice_hand and dice_hand.has_method("debug_set_all_values"):
-		dice_hand.debug_set_all_values(6)
+	var dice_hand = game_controller.dice_hand
+	if dice_hand and dice_hand.dice_list.size() > 0:
+		for die in dice_hand.dice_list:
+			die.value = 6
+			die.update_visual()  # Update visual to match new value
+		dice_hand._update_results()  # Update DiceResults singleton
 		log_debug("Set all dice to 6")
 	else:
-		log_debug("DiceHand not found or debug method missing")
+		log_debug("DiceHand not found or no dice available")
 
 func _debug_show_scores() -> void:
 	var state_info = []
@@ -363,7 +417,7 @@ func _debug_clear_items() -> void:
 	# Clear active items
 	var cleared_count = 0
 	for id in game_controller.active_power_ups.keys():
-		game_controller._revoke_power_up(id)
+		game_controller.revoke_power_up(id)
 		cleared_count += 1
 	
 	for id in game_controller.active_consumables.keys():
@@ -378,10 +432,11 @@ func _debug_grant_mod() -> void:
 		log_debug("ERROR: GameController not available")
 		return
 	
-	var mod_manager = game_controller.get("mod_manager")
-	if mod_manager and mod_manager.has_method("get_random_mod_id"):
-		var random_id = mod_manager.get_random_mod_id()
-		if random_id:
+	var mod_manager = game_controller.mod_manager
+	if mod_manager and mod_manager.has_method("get_available_mods"):
+		var available_ids = mod_manager.get_available_mods()
+		if available_ids.size() > 0:
+			var random_id = available_ids[randi() % available_ids.size()]
 			game_controller.grant_mod(random_id)
 			log_debug("Granted Mod: " + random_id)
 		else:
@@ -410,24 +465,30 @@ func _debug_force_ones() -> void:
 		log_debug("ERROR: GameController not available")
 		return
 	
-	var dice_hand = game_controller.get("dice_hand")
-	if dice_hand and dice_hand.has_method("debug_set_all_values"):
-		dice_hand.debug_set_all_values(1)
+	var dice_hand = game_controller.dice_hand
+	if dice_hand and dice_hand.dice_list.size() > 0:
+		for die in dice_hand.dice_list:
+			die.value = 1
+			die.update_visual()  # Update visual to match new value
+		dice_hand._update_results()  # Update DiceResults singleton
 		log_debug("Set all dice to 1")
 	else:
-		log_debug("DiceHand not found or debug method missing")
+		log_debug("DiceHand not found or no dice available")
 
 func _debug_force_yahtzee() -> void:
 	if not game_controller:
 		log_debug("ERROR: GameController not available")
 		return
 	
-	var dice_hand = game_controller.get("dice_hand")
-	if dice_hand and dice_hand.has_method("debug_set_all_values"):
-		dice_hand.debug_set_all_values(5)  # All 5s for Yahtzee
+	var dice_hand = game_controller.dice_hand
+	if dice_hand and dice_hand.dice_list.size() > 0:
+		for die in dice_hand.dice_list:
+			die.value = 5
+			die.update_visual()  # Update visual to match new value
+		dice_hand._update_results()  # Update DiceResults singleton
 		log_debug("Set all dice to 5 (Yahtzee)")
 	else:
-		log_debug("DiceHand not found or debug method missing")
+		log_debug("DiceHand not found or no dice available")
 
 func _debug_show_items() -> void:
 	if not game_controller:
@@ -467,7 +528,7 @@ func _debug_add_rolls() -> void:
 		log_debug("ERROR: GameController not available")
 		return
 	
-	var turn_tracker = game_controller.get("turn_tracker")
+	var turn_tracker = game_controller.turn_tracker
 	if turn_tracker and turn_tracker.has_method("add_rolls"):
 		var old_rolls = turn_tracker.rolls_left
 		turn_tracker.add_rolls(3)
@@ -480,7 +541,7 @@ func _debug_end_turn() -> void:
 		log_debug("ERROR: GameController not available")
 		return
 	
-	var turn_tracker = game_controller.get("turn_tracker")
+	var turn_tracker = game_controller.turn_tracker
 	if turn_tracker and turn_tracker.has_method("end_turn"):
 		turn_tracker.end_turn()
 		log_debug("Force ended current turn")
@@ -502,10 +563,10 @@ func _debug_test_scoring() -> void:
 	
 	# Test dice evaluation
 	if game_controller:
-		var dice_hand = game_controller.get("dice_hand")
+		var dice_hand = game_controller.dice_hand
 		if dice_hand and ScoreEvaluatorSingleton:
 			test_results.append("=== DICE EVALUATION TEST ===")
-			var dice_values = dice_hand.get_values() if dice_hand.has_method("get_values") else [1,2,3,4,5]
+			var dice_values = dice_hand.get_current_dice_values() if dice_hand.has_method("get_current_dice_values") else [1,2,3,4,5]
 			test_results.append("Current dice: %s" % str(dice_values))
 			# Add more scoring tests here if methods are available
 	
@@ -544,7 +605,7 @@ func _debug_skip_shop() -> void:
 		log_debug("ERROR: GameController not available")
 		return
 	
-	var round_manager = game_controller.get("round_manager")
+	var round_manager = game_controller.round_manager
 	if round_manager and round_manager.has_method("skip_to_shop"):
 		round_manager.skip_to_shop()
 		log_debug("Skipped to shop phase")
@@ -563,7 +624,7 @@ func _debug_reset_game() -> void:
 	_debug_reset_money()
 	
 	# Reset turn tracker if possible
-	var turn_tracker = game_controller.get("turn_tracker")
+	var turn_tracker = game_controller.turn_tracker
 	if turn_tracker and turn_tracker.has_method("reset"):
 		turn_tracker.reset()
 		log_debug("Turn tracker reset")
@@ -596,9 +657,9 @@ func _debug_save_state() -> void:
 		debug_state_data["mod_count"] = game_controller.active_mods.size()
 	
 	# Save turn state
-	var turn_tracker = game_controller.get("turn_tracker") if game_controller else null
-	if turn_tracker and turn_tracker.has_method("get_rolls_left"):
-		debug_state_data["rolls_left"] = turn_tracker.get_rolls_left()
+	var turn_tracker = game_controller.turn_tracker if game_controller else null
+	if turn_tracker:
+		debug_state_data["rolls_left"] = turn_tracker.rolls_left
 	
 	log_debug("Debug state saved: Money=%s, Items=%d/%d/%d" % [
 		debug_state_data.get("money", "?"),

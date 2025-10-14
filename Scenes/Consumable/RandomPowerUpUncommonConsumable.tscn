@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Consumable/random_power_up_uncommon_consumable.gd" id="1_script"]
+
+[node name="RandomPowerUpUncommonConsumable" type="Node"]
+script = ExtResource("1_script")

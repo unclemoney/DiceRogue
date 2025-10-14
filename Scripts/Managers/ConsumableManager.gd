@@ -16,6 +16,22 @@ func _ready() -> void:
 			_defs_by_id[d.id] = d
 	emit_signal("definitions_loaded")
 
+## register_consumable_def(data)
+##
+## Programmatically register a consumable definition. Useful for testing or dynamic content.
+func register_consumable_def(data: ConsumableData) -> void:
+	if not data:
+		push_error("[ConsumableManager] Cannot register null ConsumableData")
+		return
+		
+	if data.id.is_empty():
+		push_error("[ConsumableManager] Cannot register ConsumableData with empty ID")
+		return
+		
+	print("[ConsumableManager] Programmatically registering consumable:", data.id)
+	_defs_by_id[data.id] = data
+	print("[ConsumableManager] Total registered consumables:", _defs_by_id.size())
+
 
 func get_available_consumables() -> Array[String]:
 	print("[ConsumableManager] Getting available consumables")

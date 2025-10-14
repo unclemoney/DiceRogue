@@ -7,6 +7,8 @@ A pixel-art roguelite dice game inspired by Yahtzee, built in Godot 4.4. Roll di
 Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill scorecard categories while collecting:
 - **Power-ups**: Permanent modifiers that enhance scoring
 - **Consumables**: Single-use items for strategic advantages
+  - **AnyScore**: Score current dice in any open category, ignoring normal scoring requirements
+  - **Random Uncommon Power-Up**: Grants a random uncommon rarity power-up
 - **Mods**: Dice modifiers that change how individual dice behave
 - **Challenges**: Goals that unlock rewards and progression
 
@@ -199,6 +201,7 @@ This prevents the need for complex manual testing setups and keeps development v
 
 ### Short-term
 - ✅ Mod selling mechanics (implemented)
+- ✅ AnyScore consumable - Score dice in any category ignoring requirements (implemented)
 - Additional power-up variety
 - Challenge progression system
 - Balance pass on economy

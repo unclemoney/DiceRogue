@@ -114,10 +114,9 @@ func _populate_shop_items() -> void:
 	var power_ups = power_up_manager.get_available_power_ups()
 	var filtered_power_ups = _filter_out_purchased_items(power_ups, "power_up")
 	# Also filter out already owned power-ups
-	var power_up_ui = _find_power_up_ui()
-	if power_up_ui:
-		var owned_ids = power_up_ui.get_owned_power_up_ids()
-		filtered_power_ups = filtered_power_ups.filter(func(id): return not owned_ids.has(id))
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller:
+		filtered_power_ups = filtered_power_ups.filter(func(id): return not game_controller.active_power_ups.has(id))
 	var selected_power_ups = _select_random_items(filtered_power_ups, power_up_items)
 	
 	for id in selected_power_ups:

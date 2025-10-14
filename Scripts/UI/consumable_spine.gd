@@ -11,6 +11,10 @@ signal spine_unhovered(consumable_id: String)
 
 @onready var spine_rect: TextureRect
 @onready var title_label: Label
+@onready var count_label: Label
+
+# Count tracking
+var _count: int = 1
 
 # Animation properties
 var _base_position: Vector2
@@ -52,6 +56,21 @@ func _create_spine_structure() -> void:
 	title_label.add_theme_color_override("font_shadow_color", Color.BLACK)
 	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(title_label)
+	
+	# Create count label (shows multiple instances)
+	count_label = Label.new()
+	count_label.name = "CountLabel"
+	count_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	count_label.position = Vector2(-15, 5)  # Top right corner
+	count_label.size = Vector2(20, 20)
+	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	count_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	count_label.add_theme_font_size_override("font_size", 10)
+	count_label.add_theme_color_override("font_color", Color.YELLOW)
+	count_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	count_label.visible = false  # Hidden by default (only shown when count > 1)
+	add_child(count_label)
 
 func _apply_data_to_ui() -> void:
 	if not data:
@@ -125,3 +144,15 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		if data:
 			emit_signal("spine_clicked", data.id)
+
+## set_count(count)
+##
+## Updates the count display for this consumable spine. Shows a count label when count > 1.
+func set_count(count: int) -> void:
+	_count = count
+	if count_label:
+		if count > 1:
+			count_label.text = str(count)
+			count_label.visible = true
+		else:
+			count_label.visible = false

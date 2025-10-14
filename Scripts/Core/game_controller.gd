@@ -10,6 +10,7 @@ signal consumable_used(id: String, consumable: Consumable)
 # Active power-ups and consumables in the game dictionaries
 var active_power_ups: Dictionary = {}  # id -> PowerUp
 var active_consumables: Dictionary = {}  # id -> Consumable
+var consumable_counts: Dictionary = {}  # id -> int (count of instances)
 var active_debuffs: Dictionary = {}  # id -> Debuff
 var active_mods: Dictionary = {}  # id -> Mod
 var active_challenges: Dictionary = {}  # id -> Challenge
@@ -18,6 +19,7 @@ const SCORE_CARD_UI_SCRIPT := preload("res://Scripts/UI/score_card_ui.gd")
 const DEBUFF_MANAGER_SCRIPT := preload("res://Scripts/Managers/DebuffManager.gd")
 const DEBUFF_UI_SCRIPT := preload("res://Scripts/UI/debuff_ui.gd")
 const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
+const RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF := preload("res://Scripts/Consumable/RandomPowerUpUncommonConsumable.tres")
 
 # Centralized, explicit NodePaths (tweak in Inspector if scene changes)
 @export var dice_hand_path: NodePath            = ^"../DiceHand"
@@ -125,6 +127,10 @@ func _ready() -> void:
 		turn_tracker.turn_started.connect(update_double_existing_usability)
 		turn_tracker.rolls_exhausted.connect(update_double_existing_usability)
 
+	# Register new consumables programmatically
+	if consumable_manager:
+		consumable_manager.register_consumable_def(RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF)
+
 	## _ready()
 	## Called when the GameController node enters the scene tree.
 	## Responsibilities:
@@ -146,11 +152,11 @@ func _ready() -> void:
 ##+ Keep this lightweight; heavy startup logic should be moved into RoundManager or dedicated setup functions.
 func _on_game_start() -> void:
 	#spawn_starting_powerups()
-	grant_consumable("add_max_power_up")
-	grant_consumable("power_up_shop_num")
+	grant_consumable("random_power_up_uncommon")
+	#grant_consumable("power_up_shop_num")
 	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
-	grant_power_up("extra_dice")
+	grant_power_up("bonus_money")
 	if round_manager:
 		round_manager.start_game()
 
@@ -205,6 +211,11 @@ func spawn_starting_powerups() -> void:
 func grant_power_up(id: String) -> void:
 	print("\n=== Granting Power-Up: ", id, " ===")
 	
+	# Check if we already own this power-up
+	if active_power_ups.has(id):
+		print("[GameController] PowerUp '", id, "' is already owned. Cannot grant duplicate.")
+		return
+	
 	# Check if we've reached the maximum number of power-ups
 	if powerup_ui and powerup_ui.has_max_power_ups():
 		print("[GameController] Maximum number of power-ups reached. Cannot add more.")
@@ -254,7 +265,7 @@ func _activate_power_up(power_up_id: String) -> void:
 		return
 	
 	# Connect to description_updated signal if the power-up has one
-	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds":
+	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money":
 		# Disconnect first to avoid duplicates
 		if pu.is_connected("description_updated", _on_power_up_description_updated):
 			pu.description_updated.disconnect(_on_power_up_description_updated)
@@ -311,6 +322,12 @@ func _activate_power_up(power_up_id: String) -> void:
 		"consumable_cash":
 			pu.apply(self)
 			print("[GameController] Applied ConsumableCash power-up")
+		"bonus_money":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied BonusMoneyPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for BonusMoneyPowerUp")
 		"randomizer":
 			pu.apply(self)
 			print("[GameController] Applied Randomizer power-up")
@@ -373,6 +390,9 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"upper_bonus_mult":
 			print("[GameController] Removing upper_bonus_mult PowerUp")
 			pu.remove(scorecard)
+		"bonus_money":
+			print("[GameController] Removing bonus_money PowerUp")
+			pu.remove(scorecard)
 		"consumable_cash":
 			print("[GameController] Removing consumable_cash PowerUp")
 			pu.remove(self)
@@ -400,6 +420,8 @@ func revoke_power_up(power_up_id: String) -> void:
 			"extra_rolls":
 				pu.remove(turn_tracker)
 			"foursome":
+				pu.remove(scorecard)
+			"bonus_money":
 				pu.remove(scorecard)
 			"consumable_cash":
 				pu.remove(self)
@@ -465,13 +487,26 @@ func _on_power_up_deselected(power_up_id: String) -> void:
 ## Spawns a consumable instance, registers it in `active_consumables`, and adds a UI spine/icon.
 ## Notes:
 ## - UI spines no longer handle usage directly; usability is computed when the UI fan is opened.
+## - Now supports multiple instances of the same consumable type using a count system.
 func grant_consumable(id: String) -> void:
+	# Check if we already have this consumable type
+	if active_consumables.has(id):
+		# Increment the count instead of creating a new instance
+		consumable_counts[id] = consumable_counts.get(id, 1) + 1
+		print("[GameController] Incremented consumable count for '%s' to %d" % [id, consumable_counts[id]])
+		
+		# Update the UI to show the new count
+		if consumable_ui:
+			consumable_ui.update_consumable_count(id, consumable_counts[id])
+		return
+	
 	var consumable := consumable_manager.spawn_consumable(id, consumable_container) as Consumable
 	if consumable == null:
 		push_error("[GameController] Failed to spawn Consumable '%s'" % id)
 		return
 
 	active_consumables[id] = consumable
+	consumable_counts[id] = 1  # Initialize count
 
 	# Add to UI with null checks - now returns spine instead of icon
 	var def: ConsumableData = consumable_manager.get_def(id)
@@ -516,20 +551,37 @@ func set_consumable_usability(consumable_id: String, can_use: bool) -> void:
 ## _on_consumable_used(consumable_id)
 ##
 ## Handles the actual effect of a consumable when the player uses it. Applies the consumable's
-## effect, updates relevant UI events, and removes the consumable from `active_consumables` when consumed.
+## effect, updates relevant UI events, and decrements/removes the consumable when consumed.
 func _on_consumable_used(consumable_id: String) -> void:
 	var consumable = active_consumables.get(consumable_id)
 	print("\n=== Using Consumable: ", consumable_id, " ===")
 	if not consumable:
 		push_error("No Consumable found for id: %s" % consumable_id)
 		return
+		
+	# Helper function to handle consumable removal with count system
+	var remove_consumable_instance = func():
+		var current_count = consumable_counts.get(consumable_id, 1)
+		if current_count > 1:
+			# Decrement count
+			consumable_counts[consumable_id] = current_count - 1
+			if consumable_ui:
+				consumable_ui.update_consumable_count(consumable_id, consumable_counts[consumable_id])
+			print("[GameController] Decremented %s count to %d" % [consumable_id, consumable_counts[consumable_id]])
+		else:
+			# Remove entirely
+			active_consumables.erase(consumable_id)
+			consumable_counts.erase(consumable_id)
+			if consumable_ui:
+				consumable_ui.remove_consumable(consumable_id)
+			print("[GameController] Completely removed %s" % consumable_id)
 
 	match consumable_id:
 		"score_reroll":
 			if score_card_ui:
 				consumable.apply(self)
 				score_card_ui.activate_score_reroll()
-				active_consumables.erase(consumable_id)
+				remove_consumable_instance.call()
 				if not score_card_ui.is_connected("score_rerolled", _on_score_rerolled):
 					score_card_ui.connect("score_rerolled", _on_score_rerolled)
 			else:
@@ -537,22 +589,33 @@ func _on_consumable_used(consumable_id: String) -> void:
 		"double_existing":
 			if score_card_ui:
 				consumable.apply(self)
-				active_consumables.erase(consumable_id)
+				remove_consumable_instance.call()
 				if not score_card_ui.is_connected("score_doubled", _on_score_doubled):
 					score_card_ui.connect("score_doubled", _on_score_doubled)
 			else:
 				push_error("GameController: score_card_ui not found!")
 		"add_max_power_up":
 			consumable.apply(self)
-			active_consumables.erase(consumable_id)
+			remove_consumable_instance.call()
 		"three_more_rolls":
 			consumable.apply(self)
-			active_consumables.erase(consumable_id)
+			remove_consumable_instance.call()
 		"power_up_shop_num":
 			consumable.apply(self)
-			active_consumables.erase(consumable_id)
+			remove_consumable_instance.call()
 		"quick_cash":
 			consumable.apply(self)
+			remove_consumable_instance.call()
+		"any_score":
+			if score_card_ui:
+				consumable.apply(self)
+				# Note: AnyScore consumable handles its own completion via hand_scored signal
+				remove_consumable_instance.call()
+			else:
+				push_error("GameController: score_card_ui not found!")
+		"random_power_up_uncommon":
+			consumable.apply(self)
+			remove_consumable_instance.call()
 			active_consumables.erase(consumable_id)
 		_:
 			push_error("Unknown consumable type: %s" % consumable_id)
