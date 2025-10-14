@@ -113,7 +113,7 @@ func update_all():
 		var label = get_node_or_null(label_path)
 		if label:
 			var value = scorecard.upper_scores[category]
-			label.text = str(value if value != null else "-")
+			label.text = str(int(value)) if value != null else "-"
 
 	for category in scorecard.lower_scores.keys():
 		var node_name = LOWER_CATEGORY_NODE_NAMES.get(category, category.capitalize())
@@ -121,13 +121,13 @@ func update_all():
 		var label = get_node_or_null(label_path)
 		if label:
 			var value = scorecard.lower_scores[category]
-			label.text = str(value if value != null else "-")
+			label.text = str(int(value)) if value != null else "-"
 
 	# Update upper section totals with debug prints
 	var upper_subtotal = scorecard.get_upper_section_total()
 	
 	if upper_total_label:
-		upper_total_label.text = str(upper_subtotal)
+		upper_total_label.text = str(int(upper_subtotal))
 	else:
 		push_error("upper_total_label not found!")
 		
@@ -135,19 +135,19 @@ func update_all():
 	if upper_bonus_label:
 		if scorecard.is_upper_section_complete():
 			if upper_subtotal >= Scorecard.UPPER_BONUS_THRESHOLD:
-				upper_bonus_label.text = str(Scorecard.UPPER_BONUS_AMOUNT)
+				upper_bonus_label.text = str(int(Scorecard.UPPER_BONUS_AMOUNT))
 			else:
 				upper_bonus_label.text = "0"
 		else:
 			var remaining = Scorecard.UPPER_BONUS_THRESHOLD - upper_subtotal
-			upper_bonus_label.text = str(remaining) #need remaining points, remove this later
+			upper_bonus_label.text = str(int(remaining)) #need remaining points, remove this later
 	else:
 		push_error("upper_bonus_label not found!")
 	
 	# Update final upper total (subtotal + bonus)
 	if upper_final_total_label:
 		var final_total = scorecard.get_upper_section_final_total()
-		upper_final_total_label.text = str(final_total)
+		upper_final_total_label.text = str(int(final_total))
 	else:
 		push_error("upper_final_total_label not found!")
 
@@ -156,7 +156,7 @@ func update_all():
 	lower_total += scorecard.yahtzee_bonus_points  # Add Yahtzee bonus to lower total
 	
 	if lower_total_label:
-		lower_total_label.text = str(lower_total)
+		lower_total_label.text = str(int(lower_total))
 	else:
 		push_error("lower_total_label not found!")
 	
@@ -166,10 +166,10 @@ func update_all():
 		var total_score = upper_total + lower_total  # lower_total already includes Yahtzee bonus
 		
 		# Remap the score (0-500) to frequency range (1-10)
-		var freq = remap(total_score, 0, 500, 1.0, 10.0)
+		var freq = remap(total_score, 0, 500, 1, 10)
 		
 		# Format with BBCode, including dynamic frequency and bonus info
-		var text = "[center][tornado freq=%0.1f sat=0.8 val=1.9]Total Score:\n %d" % [freq, total_score]
+		var text = "[center][tornado freq=%d sat=0.8 val=1.9]Total Score:\n %d" % [int(freq), total_score]
 		
 		# Add bonus info if there are any Yahtzee bonuses
 		#if scorecard.yahtzee_bonuses > 0:
@@ -189,7 +189,7 @@ func update_all():
 	# Update Yahtzee bonus display
 	if yahtzee_bonus_label:
 		if scorecard.yahtzee_bonuses > 0:
-			yahtzee_bonus_label.text = str(scorecard.yahtzee_bonus_points)
+			yahtzee_bonus_label.text = str(int(scorecard.yahtzee_bonus_points))
 		else:
 			yahtzee_bonus_label.text = "-"
 
@@ -208,7 +208,7 @@ func _on_upper_bonus_achieved(_bonus: int) -> void:
 		if upper_final_total_label:
 			var final_total = scorecard.get_upper_section_final_total()
 			tween.tween_property(upper_final_total_label, "modulate", Color.YELLOW, 0.3)
-			upper_final_total_label.text = str(final_total)
+			upper_final_total_label.text = str(int(final_total))
 			tween.tween_property(upper_final_total_label, "modulate", Color.WHITE, 0.3)
 
 		# Optional: Add screen shake

@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://cqr2p3rrw8ixe"]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/perfect_strangers_power_up.gd" id="1_u8l7c"]
+
+[node name="PerfectStrangers" type="Node2D"]
+script = ExtResource("1_u8l7c")
+id = "perfect_strangers"

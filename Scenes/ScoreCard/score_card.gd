@@ -91,13 +91,14 @@ func set_score(section: int, category: String, score: int) -> void:
 		
 		# Apply additive bonuses first, then multipliers
 		var score_with_additive = modified_score + total_additive
-		var final_modified_score = int(score_with_additive * total_multiplier)
+		var final_modified_score = int(ceil(score_with_additive * total_multiplier))
 		
 		print("[Scorecard] Base score:", modified_score)
 		print("[Scorecard] Total additive bonus:", total_additive)
 		print("[Scorecard] Score after additive:", score_with_additive)
 		print("[Scorecard] Total multiplier:", total_multiplier)
-		print("[Scorecard] Final modified score:", final_modified_score)
+		print("[Scorecard] Score before rounding:", int(score_with_additive * total_multiplier))
+		print("[Scorecard] Final modified score (rounded up):", final_modified_score)
 		
 		modified_score = final_modified_score
 	else:

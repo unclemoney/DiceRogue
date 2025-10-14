@@ -189,6 +189,8 @@ func _create_debug_buttons() -> void:
 		{"text": "Roll All 6s", "method": "_debug_force_dice"},
 		{"text": "Roll All 1s", "method": "_debug_force_ones"},
 		{"text": "Roll Yahtzee", "method": "_debug_force_yahtzee"},
+		{"text": "Roll Large Straight", "method": "_debug_force_large_straight"},
+		{"text": "Activate Perfect Strangers", "method": "_debug_activate_perfect_strangers"},
 		
 		# Game State
 		{"text": "Show Score State", "method": "_debug_show_scores"},
@@ -203,6 +205,7 @@ func _create_debug_buttons() -> void:
 		
 		# System Testing
 		{"text": "Test Score Calculation", "method": "_debug_test_scoring"},
+		{"text": "Debug Multiplier System", "method": "_debug_multiplier_system"},
 		{"text": "Trigger All Signals", "method": "_debug_test_signals"},
 		{"text": "Save Debug State", "method": "_debug_save_state"},
 		
@@ -396,7 +399,7 @@ func _debug_show_scores() -> void:
 	if ScoreModifierManager:
 		var total_additive = ScoreModifierManager.get_total_additive()
 		var total_multiplier = ScoreModifierManager.get_total_multiplier()
-		state_info.append("Score Modifiers: +%d additive, %.2fx multiplier" % [total_additive, total_multiplier])
+		state_info.append("Score Modifiers: +" + str(total_additive) + " additive, " + str(total_multiplier) + "x multiplier")
 	
 	# PlayerEconomy state
 	if PlayerEconomy:
@@ -496,6 +499,23 @@ func _debug_force_yahtzee() -> void:
 	else:
 		log_debug("DiceHand not found or no dice available")
 
+func _debug_force_large_straight() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	var dice_hand = game_controller.dice_hand
+	if dice_hand and dice_hand.dice_list.size() > 0:
+		# Set dice to 1,2,3,4,5 for a large straight
+		var large_straight_values = [1, 2, 3, 4, 5]
+		for i in range(min(dice_hand.dice_list.size(), large_straight_values.size())):
+			dice_hand.dice_list[i].value = large_straight_values[i]
+			dice_hand.dice_list[i].update_visual()  # Update visual to match new value
+		dice_hand._update_results()  # Update DiceResults singleton
+		log_debug("Set dice to 1,2,3,4,5 (Large Straight) - perfect for Perfect Strangers PowerUp test!")
+	else:
+		log_debug("DiceHand not found or no dice available")
+
 func _debug_show_items() -> void:
 	if not game_controller:
 		log_debug("ERROR: GameController not available")
@@ -565,7 +585,7 @@ func _debug_test_scoring() -> void:
 		var multiplier = ScoreModifierManager.get_total_multiplier()
 		var final_score = (base_score + additive) * multiplier
 		test_results.append("Base: %d + Additive: %d = %d" % [base_score, additive, base_score + additive])
-		test_results.append("Then × %.2f = %.0f final" % [multiplier, final_score])
+		test_results.append("Then × " + str(multiplier) + " = " + str(final_score) + " final")
 	
 	# Test dice evaluation
 	if game_controller:
@@ -690,3 +710,84 @@ func _debug_load_state() -> void:
 	
 	log_debug("Saved state data:\n" + "\n".join(loaded_info))
 	log_debug("(Full state restoration not implemented - this shows what was saved)")
+
+func _debug_activate_perfect_strangers() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	# Find the Perfect Strangers PowerUp in active power-ups
+	var perfect_strangers_pu = game_controller.active_power_ups.get("perfect_strangers")
+	if not perfect_strangers_pu:
+		log_debug("ERROR: Perfect Strangers PowerUp not found - make sure to grant it first!")
+		return
+	
+	# Manually activate the multiplier
+	if perfect_strangers_pu.has_method("_activate_multiplier"):
+		perfect_strangers_pu._activate_multiplier()
+		perfect_strangers_pu.emit_signal("description_updated", "perfect_strangers", perfect_strangers_pu.get_current_description())
+		log_debug("Perfect Strangers multiplier manually activated! Next scores should be 1.5x")
+	else:
+		log_debug("ERROR: Perfect Strangers PowerUp doesn't have _activate_multiplier method")
+	
+	# Show current multiplier state
+	if ScoreModifierManager:
+		var total_multiplier = ScoreModifierManager.get_total_multiplier()
+		log_debug("Current total multiplier: " + str(total_multiplier) + "x")
+
+func _debug_multiplier_system() -> void:
+	log_debug("\n=== MULTIPLIER SYSTEM DEBUG ===")
+	
+	if not ScoreModifierManager:
+		log_debug("✗ ScoreModifierManager NOT FOUND!")
+		return
+	
+	log_debug("✓ ScoreModifierManager found")
+	
+	# Check current state
+	var total_multiplier = ScoreModifierManager.get_total_multiplier()
+	var total_additive = ScoreModifierManager.get_total_additive()
+	var active_multipliers = ScoreModifierManager._active_multipliers
+	var active_additives = ScoreModifierManager._active_additives
+	
+	log_debug("Current total multiplier: " + str(total_multiplier))
+	log_debug("Current total additive: " + str(total_additive))
+	log_debug("Active multipliers: " + str(active_multipliers))
+	log_debug("Active additives: " + str(active_additives))
+	
+	# Check Perfect Strangers PowerUp state
+	if game_controller and game_controller.active_power_ups.has("perfect_strangers"):
+		var ps_powerup = game_controller.active_power_ups["perfect_strangers"]
+		log_debug("✓ Perfect Strangers PowerUp found")
+		log_debug("  - Multiplier activated: " + str(ps_powerup.multiplier_activated))
+		log_debug("  - Current multiplier: " + str(ps_powerup.current_multiplier))
+	else:
+		log_debug("✗ Perfect Strangers PowerUp NOT found or not active")
+	
+	# Check dice state
+	if game_controller and game_controller.dice_hand:
+		var dice_values = game_controller.dice_hand.get_current_dice_values()
+		log_debug("Current dice values: " + str(dice_values))
+		
+		# Check if Perfect Strangers condition would be met
+		var unique_values = {}
+		var all_different = true
+		for value in dice_values:
+			if value in unique_values:
+				all_different = false
+				break
+			unique_values[value] = true
+		
+		log_debug("Dice count: " + str(dice_values.size()) + " (need 5+)")
+		log_debug("All different: " + str(all_different))
+		log_debug("Perfect Strangers condition met: " + str(dice_values.size() >= 5 and all_different))
+	else:
+		log_debug("✗ Cannot access dice values")
+	
+	# Test calculation
+	var test_score = 15
+	var calculated_score = (test_score + total_additive) * total_multiplier
+	var final_score = ceil(calculated_score)
+	log_debug("\nTest calculation (score=15):")
+	log_debug("  (15 + " + str(total_additive) + ") × " + str(total_multiplier) + " = " + str(calculated_score))
+	log_debug("  Rounded up: " + str(final_score))

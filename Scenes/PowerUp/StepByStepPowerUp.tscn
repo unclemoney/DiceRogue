@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://bd5h2wotx7m7j"]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/step_by_step_power_up.gd" id="1_v7sx8"]
+
+[node name="StepByStepPowerUp" type="Node2D"]
+script = ExtResource("1_v7sx8")
+id = "step_by_step"

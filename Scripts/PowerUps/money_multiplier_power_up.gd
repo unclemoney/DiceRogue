@@ -91,7 +91,7 @@ func _process_yahtzee_multiplier() -> void:
 	var additional_money = int(current_money * multiplier_increase)
 	
 	print("[MoneyMultiplierPowerUp] Yahtzee #%d detected!" % yahtzees_tracked)
-	print("[MoneyMultiplierPowerUp] Multiplier: %.1f -> %.1f" % [old_multiplier, money_multiplier])
+	print("[MoneyMultiplierPowerUp] Multiplier: %dx -> %dx" % [int(old_multiplier), int(money_multiplier)])
 	print("[MoneyMultiplierPowerUp] Current money: $%d" % current_money)
 	print("[MoneyMultiplierPowerUp] Additional money from multiplier: $%d" % additional_money)
 	
@@ -111,7 +111,7 @@ func get_current_description() -> String:
 	var base_desc = "+0.1x money multiplier per Yahtzee"
 	
 	if yahtzees_tracked > 0:
-		var progress_desc = "\nYahtzees: %d (%.1fx multiplier)" % [yahtzees_tracked, money_multiplier]
+		var progress_desc = "\nYahtzees: %d (%dx multiplier)" % [yahtzees_tracked, int(money_multiplier)]
 		return base_desc + progress_desc
 	
 	return base_desc

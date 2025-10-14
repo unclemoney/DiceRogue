@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://c7p2gvbh8r3kn"]
+
+[ext_resource type="Texture2D" uid="uid://cibi06ah5yg8q" path="res://Resources/Art/Powerups/PowerUp_test4.png" id="1_perfect_strangers_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" uid="uid://cqr2p3rrw8ixe" path="res://Scenes/PowerUp/PerfectStrangers.tscn" id="2_perfect_strangers_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "perfect_strangers"
+display_name = "Perfect Strangers"
+description = "When all 5+ dice show different values, gain 1.5x score multiplier for all future scores"
+icon = ExtResource("1_perfect_strangers_icon")
+scene = ExtResource("2_perfect_strangers_scene")
+price = 300
+rarity = "rare"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

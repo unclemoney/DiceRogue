@@ -156,7 +156,7 @@ func _on_game_start() -> void:
 	#grant_consumable("power_up_shop_num")
 	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
-	grant_power_up("full_house_bonus")
+	grant_power_up("perfect_strangers")
 	if round_manager:
 		round_manager.start_game()
 
@@ -265,7 +265,7 @@ func _activate_power_up(power_up_id: String) -> void:
 		return
 	
 	# Connect to description_updated signal if the power-up has one
-	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus":
+	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus" or power_up_id == "step_by_step" or power_up_id == "perfect_strangers":
 		# Disconnect first to avoid duplicates
 		if pu.is_connected("description_updated", _on_power_up_description_updated):
 			pu.description_updated.disconnect(_on_power_up_description_updated)
@@ -340,6 +340,18 @@ func _activate_power_up(power_up_id: String) -> void:
 		"full_house_bonus":
 			pu.apply(self)
 			print("[GameController] Applied FullHousePowerUp")
+		"step_by_step":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied StepByStepPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for StepByStepPowerUp")
+		"perfect_strangers":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied PerfectStrangersPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for PerfectStrangersPowerUp")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -357,7 +369,7 @@ func _on_power_up_sold(power_up_id: String) -> void:
 
 	var def = pu_manager.get_def(power_up_id)
 	if def:
-		var refund = def.price / 2
+		var refund = int(def.price / 2)  # Half price as integer
 		print("[GameController] Refunding", refund, "coins for power-up:", power_up_id)
 		PlayerEconomy.add_money(refund)
 
@@ -414,6 +426,12 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"full_house_bonus":
 			print("[GameController] Removing full_house_bonus PowerUp")
 			pu.remove(self)
+		"step_by_step":
+			print("[GameController] Removing step_by_step PowerUp")
+			pu.remove(scorecard)
+		"perfect_strangers":
+			print("[GameController] Removing perfect_strangers PowerUp")
+			pu.remove(scorecard)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -446,6 +464,10 @@ func revoke_power_up(power_up_id: String) -> void:
 				pu.remove(scorecard)
 			"full_house_bonus":
 				pu.remove(self)
+			"step_by_step":
+				pu.remove(scorecard)
+			"perfect_strangers":
+				pu.remove(scorecard)
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself
 				pu.remove(pu)
@@ -1272,7 +1294,7 @@ func _on_consumable_sold(consumable_id: String) -> void:
 		
 	var def = consumable_manager.get_def(consumable_id)
 	if def:
-		var refund = def.price / 2
+		var refund = int(def.price / 2)  # Half price as integer
 		print("[GameController] Refunding", refund, "coins for consumable:", consumable_id)
 		PlayerEconomy.add_money(refund)
 	

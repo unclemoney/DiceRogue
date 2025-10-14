@@ -89,7 +89,6 @@ func _apply_multiplier_effect() -> void:
 	# Register with ScoreModifierManager
 	ScoreModifierManager.register_multiplier("randomizer", current_multiplier_value)
 	
-	var value_text = "×%.1f" % current_multiplier_value
 	print("[RandomizerPowerUp] Applied multiplier effect:", current_multiplier_value)
 	# Don't emit signal here anymore
 
@@ -99,7 +98,7 @@ func show_effect_after_scoring() -> void:
 	if current_effect_type == "additive":
 		value_text = "+%d" % current_effect_value if current_effect_value >= 0 else str(current_effect_value)
 	elif current_effect_type == "multiplier":
-		value_text = "×%.1f" % current_multiplier_value
+		value_text = "×%d" % int(current_multiplier_value)
 	
 	if value_text != "":
 		emit_signal("effect_updated", current_effect_type, value_text)
@@ -120,6 +119,6 @@ func get_current_effect_description() -> String:
 		var value_text = "+%d" % current_effect_value if current_effect_value >= 0 else str(current_effect_value)
 		return "Random Score Bonus: %s" % value_text
 	elif current_effect_type == "multiplier":
-		return "Random Score Multiplier: ×%.1f" % current_multiplier_value
+		return "Random Score Multiplier: ×%d" % int(current_multiplier_value)
 	else:
 		return "Random Effect: Not yet determined"
