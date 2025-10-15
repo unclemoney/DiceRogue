@@ -542,6 +542,10 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 			else:
 				# No PowerUpUI available, assume unusable
 				return false
+		"green_envy":
+			# Green Envy requires dice to be rolled (to have values for scoring)
+			var dice_values = DiceResults.values
+			return not dice_values.is_empty()
 		_:
 			# Default: all other consumables are useable when fanned
 			return true

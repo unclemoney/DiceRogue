@@ -9,6 +9,7 @@ Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill s
 - **Consumables**: Single-use items for strategic advantages
   - **AnyScore**: Score current dice in any open category, ignoring normal scoring requirements
   - **Random Uncommon Power-Up**: Grants a random uncommon rarity power-up
+  - **Green Envy**: 10x multiplier for all green dice money scored this turn
 - **Mods**: Dice modifiers that change how individual dice behave
 - **Challenges**: Goals that unlock rewards and progression
 
@@ -163,12 +164,16 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 - **AnyScore**: Score current dice in any open category, ignoring normal requirements
 - **ScoreReroll**: Reroll all dice, then auto-score best category
 
+### Economy
+- **Green Envy**: 10x multiplier for all green dice money scored this turn (Price: $50)
+
 ### PowerUp Acquisition
 - **Random Uncommon Power-Up**: Grants a random uncommon rarity power-up
 
 ### Usage Notes
 - Consumables are single-use items
 - AnyScore is particularly useful for filling difficult categories
+- Green Envy is most effective when you have multiple green dice
 - Random PowerUps provide strategic risk/reward decisions
 
 ### Coding Standards
@@ -282,6 +287,7 @@ This prevents the need for complex manual testing setups and keeps development v
 ### Short-term
 - ✅ Mod selling mechanics (implemented)
 - ✅ AnyScore consumable - Score dice in any category ignoring requirements (implemented)
+- ✅ Green Envy consumable - 10x multiplier for green dice money (implemented)
 - Additional power-up variety
 - Challenge progression system
 - Balance pass on economy
