@@ -133,7 +133,7 @@ func _create_debug_ui() -> void:
 	
 	# Button grid for quick actions
 	button_grid = GridContainer.new()
-	button_grid.columns = 3
+	button_grid.columns = 4  # Increase to 4 columns for better organization
 	button_grid.add_theme_constant_override("h_separation", 10)
 	button_grid.add_theme_constant_override("v_separation", 5)
 	main_container.add_child(button_grid)
@@ -191,6 +191,16 @@ func _create_debug_buttons() -> void:
 		{"text": "Roll Yahtzee", "method": "_debug_force_yahtzee"},
 		{"text": "Roll Large Straight", "method": "_debug_force_large_straight"},
 		{"text": "Activate Perfect Strangers", "method": "_debug_activate_perfect_strangers"},
+		
+		# Dice Color System
+		{"text": "Toggle Dice Colors", "method": "_debug_toggle_dice_colors"},
+		{"text": "Force All Green", "method": "_debug_force_all_green"},
+		{"text": "Force All Red", "method": "_debug_force_all_red"},
+		{"text": "Force All Purple", "method": "_debug_force_all_purple"},
+		{"text": "Clear All Colors", "method": "_debug_clear_all_colors"},
+		{"text": "Show Color Effects", "method": "_debug_show_color_effects"},
+		{"text": "Test Color Scoring", "method": "_debug_test_color_scoring"},
+		{"text": "Reset Call Counter", "method": "_debug_reset_call_counter"},
 		
 		# Debuff Testing
 		{"text": "Apply The Division Debuff", "method": "_debug_apply_division_debuff"},
@@ -1160,3 +1170,145 @@ func _debug_show_active_challenges() -> void:
 			log_debug("  Current Score: " + str(current_score))
 		
 		log_debug("  Status: " + ("Completed" if progress >= 100.0 else "In Progress"))
+
+## Debug functions for dice color system
+func _debug_toggle_dice_colors() -> void:
+	if not _get_dice_color_manager():
+		return
+	var current_state = _get_dice_color_manager().are_colors_enabled()
+	_get_dice_color_manager().set_colors_enabled(not current_state)
+	log_debug("Dice colors " + ("ENABLED" if not current_state else "DISABLED"))
+
+func _debug_force_all_green() -> void:
+	var dice_hand = _get_dice_hand()
+	if not dice_hand:
+		return
+		
+	dice_hand.debug_force_all_colors(preload("res://Scripts/Core/dice_color.gd").Type.GREEN)
+	log_debug("Forced all dice to GREEN color")
+
+func _debug_force_all_red() -> void:
+	var dice_hand = _get_dice_hand()
+	if not dice_hand:
+		return
+		
+	dice_hand.debug_force_all_colors(preload("res://Scripts/Core/dice_color.gd").Type.RED)
+	log_debug("Forced all dice to RED color")
+
+func _debug_force_all_purple() -> void:
+	var dice_hand = _get_dice_hand()
+	if not dice_hand:
+		return
+		
+	dice_hand.debug_force_all_colors(preload("res://Scripts/Core/dice_color.gd").Type.PURPLE)
+	log_debug("Forced all dice to PURPLE color")
+
+func _debug_clear_all_colors() -> void:
+	var dice_hand = _get_dice_hand()
+	if not dice_hand:
+		return
+		
+	dice_hand.debug_clear_all_colors()
+	log_debug("Cleared all dice colors")
+
+func _debug_show_color_effects() -> void:
+	var dice_hand = _get_dice_hand()
+	if not dice_hand:
+		return
+		
+	var effects = dice_hand.get_color_effects()
+	var counts = dice_hand.get_color_counts()
+	
+	log_debug("=== DICE COLOR EFFECTS ===")
+	var dice_color_manager = _get_dice_color_manager()
+	if dice_color_manager:
+		log_debug("Colors enabled: " + str(dice_color_manager.are_colors_enabled()))
+	else:
+		log_debug("Colors enabled: N/A (manager not found)")
+	log_debug("Color counts:")
+	log_debug("  Green: " + str(counts.green))
+	log_debug("  Red: " + str(counts.red))
+	log_debug("  Purple: " + str(counts.purple))
+	log_debug("  None: " + str(counts.none))
+	
+	log_debug("Color effects:")
+	log_debug("  Green money bonus: $" + str(effects.green_money))
+	log_debug("  Red additive bonus: +" + str(effects.red_additive))
+	log_debug("  Purple multiplier: x" + str(effects.purple_multiplier))
+	log_debug("  Same color bonus (5+): " + str(effects.same_color_bonus))
+
+func _get_dice_hand():
+	var dice_hand = get_tree().get_first_node_in_group("dice_hand")
+	if not dice_hand:
+		log_debug("ERROR: Could not find dice hand")
+		return null
+	return dice_hand
+
+func _get_dice_color_manager():
+	# Try to get the DiceColorManager autoload via tree search
+	if get_tree():
+		var manager = get_tree().get_first_node_in_group("dice_color_manager")
+		if manager:
+			return manager
+		
+		# Try to find it by name in autoloads (backup method)
+		var main_scene = get_tree().current_scene
+		if main_scene:
+			var autoload_node = main_scene.get_node_or_null("/root/DiceColorManager")
+			if autoload_node:
+				return autoload_node
+	
+	log_debug("ERROR: Could not find DiceColorManager")
+	return null
+
+## Test comprehensive dice color scoring pipeline
+func _debug_test_color_scoring():
+	log_debug("=== TESTING DICE COLOR SCORING ===")
+	
+	var dice_hand = get_tree().get_first_node_in_group("dice_hand")
+	if not dice_hand:
+		log_debug("ERROR: No dice hand found!")
+		return
+	
+	var dice_list = dice_hand.get_dice()
+	if dice_list.size() < 5:
+		log_debug("ERROR: Need at least 5 dice for test")
+		return
+	
+	# Force specific values for predictable testing
+	for i in range(dice_list.size()):
+		dice_list[i].value = i + 2  # Values: 2, 3, 4, 5, 6
+	
+	# Set test colors: 2 green (money), 2 red (additive), 1 purple (multiplier)
+	var DiceColorType = preload("res://Scripts/Core/dice_color.gd").Type
+	dice_list[0].force_color(DiceColorType.GREEN)   # Die value 2 = $2
+	dice_list[1].force_color(DiceColorType.GREEN)   # Die value 3 = $3 (total $5)
+	dice_list[2].force_color(DiceColorType.RED)     # Die value 4 = +4 additive
+	dice_list[3].force_color(DiceColorType.RED)     # Die value 5 = +5 additive (total +9)
+	dice_list[4].force_color(DiceColorType.PURPLE)  # Die value 6 = x6 multiplier
+	
+	log_debug("Set test colors: 2 Green ($5), 2 Red (+9), 1 Purple (x6)")
+	
+	# Test the color effects calculation
+	var color_effects = dice_hand.get_color_effects()
+	log_debug("Color effects result: " + str(color_effects))
+	
+	# Test a scoring calculation
+	var scorecard = get_tree().get_first_node_in_group("scorecard")
+	if scorecard:
+		var test_score = scorecard.calculate_score("chance", [2, 3, 4, 5, 6])
+		log_debug("Test 'chance' score with effects: " + str(test_score))
+		log_debug("Expected: Base 20 + 9 additive = 29, then x6 = 174, plus $5 to economy")
+	else:
+		log_debug("ERROR: No scorecard found!")
+	
+	log_debug("=== TEST COMPLETE ===")
+
+## Reset scorecard call counter for debugging
+func _debug_reset_call_counter():
+	var scorecard = get_tree().get_first_node_in_group("scorecard")
+	if scorecard and scorecard.has_method("reset_call_counter"):
+		scorecard.reset_call_counter()
+		log_debug("Reset scorecard call counter")
+	else:
+		log_debug("ERROR: Could not find scorecard or reset method")

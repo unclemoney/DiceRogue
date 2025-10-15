@@ -200,5 +200,5 @@ func _has_reached_mod_limit(game_controller: GameController) -> bool:
 	# Use expected dice count instead of current dice list size to handle pre-spawn scenario
 	var expected_dice_count = game_controller._get_expected_dice_count()
 	
-	print("[ShopItem] Mod limit check - Current mods:", current_mod_count, "Expected dice count:", expected_dice_count)
+	#print("[ShopItem] Mod limit check - Current mods:", current_mod_count, "Expected dice count:", expected_dice_count)
 	return current_mod_count >= expected_dice_count

@@ -1,6 +1,8 @@
 extends Node2D
 class_name DiceHand
 
+const DiceColor = preload("res://Scripts/Core/dice_color.gd")
+
 # Add the missing signal
 signal roll_started
 signal roll_complete
@@ -30,6 +32,10 @@ var dice_list: Array[Dice] = []
 ## Initialize the DiceHand scene, validate DiceData assets, and prepare audio player.
 func _ready() -> void:
 	print("\n=== DiceHand Initializing ===")
+	
+	# Add to group for easy finding
+	add_to_group("dice_hand")
+	print("[DiceHand] Added to 'dice_hand' group")
 
 	if not d6_dice_data:
 		push_error("[DiceHand] D6 dice data not assigned!")
@@ -252,3 +258,113 @@ func roll_dice() -> void:
 	emit_signal("roll_started")
 	
 	# Rest of your existing roll_dice function...
+
+## Get all dice with a specific color
+## @param color_type: DiceColor.Type to filter by
+## @return Array[Dice] of dice with the specified color
+func get_dice_by_color(color_type: DiceColor.Type) -> Array[Dice]:
+	var colored_dice: Array[Dice] = []
+	for die in dice_list:
+		if die is Dice and die.get_color() == color_type:
+			colored_dice.append(die)
+	return colored_dice
+
+## Get count of dice for each color type
+## @return Dictionary with color counts
+func get_color_counts() -> Dictionary:
+	var counts = {
+		"green": 0,
+		"red": 0,
+		"purple": 0,
+		"none": 0
+	}
+	
+	for die in dice_list:
+		if not die is Dice:
+			continue
+			
+		match die.get_color():
+			DiceColor.Type.GREEN:
+				counts["green"] += 1
+			DiceColor.Type.RED:
+				counts["red"] += 1
+			DiceColor.Type.PURPLE:
+				counts["purple"] += 1
+			DiceColor.Type.NONE:
+				counts["none"] += 1
+	
+	return counts
+
+## Check if hand has 5 or more dice of the same color (for bonus)
+## @return bool true if 5+ same color bonus should apply
+func has_same_color_bonus() -> bool:
+	var counts = get_color_counts()
+	return counts["green"] >= 5 or counts["red"] >= 5 or counts["purple"] >= 5
+
+## Get dice color effects for scoring
+## @return Dictionary with color effects from DiceColorManager
+func get_color_effects() -> Dictionary:
+	print("\n=== [DiceHand] GET_COLOR_EFFECTS ===")
+	print("[DiceHand] Dice count:", dice_list.size())
+	
+	var color_manager = _get_dice_color_manager()
+	if color_manager:
+		print("[DiceHand] DiceColorManager found, calculating effects...")
+		var effects = color_manager.calculate_color_effects(dice_list)
+		print("[DiceHand] Effects returned:", effects)
+		return effects
+	else:
+		print("[DiceHand] ERROR: DiceColorManager not found!")
+		# Return empty effects if manager not found
+		var empty_effects = {
+			"green_money": 0,
+			"red_additive": 0,
+			"purple_multiplier": 1.0,
+			"same_color_bonus": false,
+			"green_count": 0,
+			"red_count": 0,
+			"purple_count": 0
+		}
+		print("[DiceHand] Returning empty effects:", empty_effects)
+		return empty_effects
+
+## Get DiceColorManager safely
+## @return DiceColorManager node or null if not found
+func _get_dice_color_manager():
+	print("[DiceHand] Looking for DiceColorManager...")
+	
+	if get_tree():
+		var manager = get_tree().get_first_node_in_group("dice_color_manager")
+		if manager:
+			print("[DiceHand] Found DiceColorManager via group:", manager)
+			return manager
+		else:
+			print("[DiceHand] No DiceColorManager found in group 'dice_color_manager'")
+		
+		# Fallback: try to find autoload directly
+		var autoload_node = get_node_or_null("/root/DiceColorManager")
+		if autoload_node:
+			print("[DiceHand] Found DiceColorManager via autoload path:", autoload_node)
+			return autoload_node
+		else:
+			print("[DiceHand] No DiceColorManager found at autoload path")
+	else:
+		print("[DiceHand] No scene tree available")
+	
+	print("[DiceHand] ERROR: DiceColorManager not found anywhere!")
+	return null
+
+## Force all dice to specific color (debug function)
+## @param color_type: DiceColor.Type to set all dice to
+func debug_force_all_colors(color_type: DiceColor.Type) -> void:
+	for die in dice_list:
+		if die is Dice:
+			die.force_color(color_type)
+	print("[DiceHand] DEBUG: Set all dice to ", DiceColor.get_color_name(color_type))
+
+## Clear all dice colors (debug function)
+func debug_clear_all_colors() -> void:
+	for die in dice_list:
+		if die is Dice:
+			die.clear_color()
+	print("[DiceHand] DEBUG: Cleared all dice colors")

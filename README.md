@@ -29,6 +29,31 @@ Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill s
 - **Dice** (`Scripts/Core/dice.gd`) - Individual die behavior
 - **DiceHand** (`Scripts/Core/dice_hand.gd`) - Collection of 5 dice
 - **DiceResults** (autoload) - Result data structure
+- **DiceColor** (`Scripts/Core/dice_color.gd`) - Color system for dice enhancement
+
+#### Dice Color System
+The **Dice Color System** adds strategic depth through randomly colored dice that provide different bonuses:
+
+**Color Types:**
+- **Green Dice**: Award money bonuses equal to dice value when scored
+- **Red Dice**: Add bonus points equal to dice value to final score  
+- **Purple Dice**: Multiply final score by dice value
+
+**Color Assignment:**
+- **Green**: 1 in 10 chance per roll (10%)
+- **Red**: 1 in 15 chance per roll (~6.7%)
+- **Purple**: 1 in 50 chance per roll (2%)
+
+**Bonus Mechanics:**
+- **5+ Same Color Bonus**: When 5 or more dice of the same color are scored, all bonuses of that color are doubled
+- **Calculation Order**: Money awarded first, then additives applied, then multipliers
+- **Toggle System**: Colors can be disabled globally (useful for challenges/debuffs)
+
+**Examples:**
+- Full House (3×2s, 2×5s) with one green 5: Base score 25 + $5 money
+- Full House with one red 5: Base score becomes (25 + 5) = 30 points  
+- Full House with one purple 5: Base score becomes 25 × 5 = 125 points
+- Five green dice (values 2,2,2,3,3): Money bonus = (2+2+2+3+3) × 2 = $24 (doubled)
 
 ### Scoring
 - **Scorecard** (`Scenes/ScoreCard/score_card.gd`) - Yahtzee-style scoring
@@ -48,6 +73,13 @@ Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill s
   - **Features**: Real-time tracking of yahtzees, straights, bonuses, and roll counts
   - **Debug Integration**: View stats via debug panel "Show Roll Stats" button
   - **Reset Support**: Statistics reset automatically between games
+
+### Dice Color Management
+- **DiceColorManager** (autoload) - Global dice color system coordination
+  - **Location**: `Scripts/Managers/dice_color_manager.gd`
+  - **Features**: Enable/disable colors, calculate effects, bonus determination
+  - **Integration**: Works with scoring system and debug tools
+  - **Effects**: Manages money, additive, and multiplier calculations
 
 ## Key Systems
 
@@ -185,6 +217,7 @@ To add new debug functionality:
 - **Items**: Grant random PowerUps/Consumables/Mods, show all active items, clear all
 - **Economy**: Add money ($100/$1000), reset to default
 - **Dice Control**: Force specific values (all 6s, 1s, Yahtzee)
+- **Dice Colors**: Toggle color system, force all dice to specific colors, show effects
 - **Game Flow**: Add extra rolls, force end turn, skip to shop
 - **System Testing**: Test score calculations, trigger signals, show states
 - **Utilities**: Clear output, reset entire game state

@@ -67,6 +67,7 @@
 [ext_resource type="Resource" uid="uid://cok1qslsfb3r3" path="res://Scripts/Round/pts150_roll_minus_one.tres" id="50_ytf57"]
 [ext_resource type="Resource" uid="uid://b8m7k4n2qaqwx" path="res://Scripts/Consumable/QuickCashConsumable.tres" id="51_8nt64"]
 [ext_resource type="Resource" uid="uid://b8pdl6weyahle" path="res://Scripts/Round/costly_roll_challenge.tres" id="52_3ia8s"]
+[ext_resource type="Resource" uid="uid://3ctxmrk81fwo" path="res://Scripts/Round/pts_100_no_debuff_challenge.tres" id="52_ghgbc"]
 [ext_resource type="Resource" uid="uid://bqk5w8x2m7maf" path="res://Scripts/Consumable/AnyScoreConsumable.tres" id="55_7m4k5"]
 [ext_resource type="Resource" path="res://Scripts/Consumable/RandomPowerUpUncommonConsumable.tres" id="56_qv1fg"]
 [ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="60_moddata"]
@@ -78,7 +79,6 @@
 [ext_resource type="Resource" uid="uid://b2lkvln1mutte" path="res://Scripts/Mods/WildCardMod.tres" id="66_wildcard"]
 [ext_resource type="PackedScene" uid="uid://s7ortdkxgdxp" path="res://Scenes/UI/DebugPanel.tscn" id="69_6hkbr"]
 [ext_resource type="Resource" uid="uid://c7p2gvbh8r3kn" path="res://Scripts/PowerUps/PerfectStrangers.tres" id="70_perfect_strangers"]
-[ext_resource type="Resource" path="res://Scripts/Round/the_crossing_challenge.tres" id="74_qm47p"]
 [ext_resource type="Resource" uid="uid://c2dv7lqytpbu" path="res://Scripts/Debuff/TheDivisionDebuff.tres" id="82_division"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wtptv"]
@@ -260,7 +260,7 @@ consumable_defs = Array[ExtResource("31_gtvla")]([ExtResource("32_aeiu6"), ExtRe
 debuff_defs = Array[ExtResource("24_4tiye")]([ExtResource("25_gxabo"), ExtResource("43_4tv4b"), ExtResource("46_0fq3x"), ExtResource("49_ghgbc"), ExtResource("82_division")])
 
 [node name="RoundManager" parent="." instance=ExtResource("42_o2qgl")]
-challenge_configs = Array[ExtResource("43_2fp2s")]([ExtResource("74_qm47p"), ExtResource("44_2lvko"), ExtResource("50_ytf57"), ExtResource("47_ja7vv"), ExtResource("52_3ia8s"), ExtResource("45_o0xxd")])
+challenge_configs = Array[ExtResource("43_2fp2s")]([ExtResource("52_ghgbc"), ExtResource("44_2lvko"), ExtResource("50_ytf57"), ExtResource("47_ja7vv"), ExtResource("52_3ia8s"), ExtResource("45_o0xxd")])
 turn_tracker_path = NodePath("../TurnTracker")
 challenge_manager_path = NodePath("../ChallengeManager")
 dice_hand_path = NodePath("../DiceHand")

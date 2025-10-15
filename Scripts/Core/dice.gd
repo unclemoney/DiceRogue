@@ -1,10 +1,13 @@
-class_name Dice
 extends Area2D
+class_name Dice
+
+const DiceColor = preload("res://Scripts/Core/dice_color.gd")
 
 signal rolled(value: int)
 signal selected(dice: Dice)
 signal clicked
 signal mod_sell_requested(mod_id: String, dice: Dice)
+signal color_changed(dice: Dice, new_color: DiceColor.Type)
 
 var active_mods: Dictionary = {}  # id -> Mod
 var home_position: Vector2 = Vector2.ZERO
@@ -14,6 +17,7 @@ var _lock_shader_enabled := true
 
 @export var dice_data: DiceData
 var value: int = 1
+var color: DiceColor.Type = DiceColor.Type.NONE
 
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var dice_combined_shader := load("res://Scripts/Shaders/dice_combined_effects.gdshader")
@@ -65,7 +69,11 @@ func roll() -> void:
 		
 	# Generate value between 1 and number of sides
 	value = (randi() % dice_data.sides) + 1
-	print("[Dice] Rolling", dice_data.display_name, "- got:", value)
+	
+	# Assign color based on random chance (if colors are enabled)
+	_assign_random_color()
+	
+	print("[Dice] Rolling", dice_data.display_name, "- got:", value, "color:", DiceColor.get_color_name(color))
 	
 	emit_signal("rolled", value)
 	animate_roll()
@@ -259,3 +267,121 @@ func check_mod_outside_clicks(event_position: Vector2) -> void:
 	for icon in mod_container.get_children():
 		if icon is ModIcon:
 			icon.check_outside_click(event_position)
+
+## Assign random color to dice based on chance rates
+## Called when dice is rolled
+func _assign_random_color() -> void:
+	print("[Dice] Assigning random color...")
+	
+	# Check if color system is enabled
+	var color_manager = _get_dice_color_manager()
+	if not color_manager:
+		print("[Dice] No DiceColorManager found - setting to NONE")
+		_set_color(DiceColor.Type.NONE)
+		return
+	
+	if not color_manager.colors_enabled:
+		print("[Dice] Colors disabled - setting to NONE")
+		_set_color(DiceColor.Type.NONE)
+		return
+		
+	var old_color = color
+	var new_color = DiceColor.Type.NONE
+	
+	print("[Dice] Colors enabled, checking random assignment...")
+	
+	# Check each color type for random assignment
+	for color_type in DiceColor.get_all_colors():
+		var chance = DiceColor.get_color_chance(color_type)
+		if chance > 0:
+			var color_roll = randi() % chance
+			print("[Dice] Color", DiceColor.get_color_name(color_type), "chance 1/", chance, "rolled:", color_roll)
+			if color_roll == 0:
+				new_color = color_type
+				print("[Dice] SUCCESS! Assigned color:", DiceColor.get_color_name(new_color))
+				break  # First color that hits wins
+	
+	if new_color == DiceColor.Type.NONE:
+		print("[Dice] No color assigned, staying NONE")
+	
+	_set_color(new_color)
+	
+	# Emit signal if color changed
+	if old_color != color:
+		print("[Dice] Color changed from", DiceColor.get_color_name(old_color), "to", DiceColor.get_color_name(color))
+		emit_signal("color_changed", self, color)
+	else:
+		print("[Dice] Color unchanged:", DiceColor.get_color_name(color))
+
+## Get DiceColorManager safely
+## @return DiceColorManager node or null if not found
+func _get_dice_color_manager():
+	if get_tree():
+		var manager = get_tree().get_first_node_in_group("dice_color_manager")
+		if manager:
+			return manager
+		
+		# Fallback: try to find autoload directly
+		var autoload_node = get_tree().get_first_node_in_group("dice_color_manager")
+		if not autoload_node:
+			autoload_node = get_node_or_null("/root/DiceColorManager")
+		return autoload_node
+	return null
+
+## Set dice color and update visual effects
+## @param new_color: DiceColor.Type to set
+func _set_color(new_color: DiceColor.Type) -> void:
+	color = new_color
+	_update_color_shader()
+
+## Update shader parameters based on current color
+func _update_color_shader() -> void:
+	if not dice_material:
+		print("[Dice] ERROR: No dice_material for color shader update")
+		return
+	
+	print("[Dice] Updating shader for color:", DiceColor.get_color_name(color))
+		
+	# Reset all color shader parameters
+	dice_material.set_shader_parameter("green_color_strength", 0.0)
+	dice_material.set_shader_parameter("red_color_strength", 0.0)
+	dice_material.set_shader_parameter("purple_color_strength", 0.0)
+	
+	# Set appropriate color strength
+	match color:
+		DiceColor.Type.GREEN:
+			dice_material.set_shader_parameter("green_color_strength", 0.8)
+			print("[Dice] Set GREEN shader strength to 0.8")
+		DiceColor.Type.RED:
+			dice_material.set_shader_parameter("red_color_strength", 0.8)
+			print("[Dice] Set RED shader strength to 0.8")
+		DiceColor.Type.PURPLE:
+			dice_material.set_shader_parameter("purple_color_strength", 0.8)
+			print("[Dice] Set PURPLE shader strength to 0.8")
+		DiceColor.Type.NONE:
+			print("[Dice] All color strengths set to 0.0 (NONE)")
+		_:
+			print("[Dice] WARNING: Unknown color type:", color)
+
+## Get current dice color
+## @return DiceColor.Type current color of this die
+func get_color() -> DiceColor.Type:
+	return color
+
+## Force set dice color (for debug/testing)
+## @param new_color: DiceColor.Type to force set
+func force_color(new_color: DiceColor.Type) -> void:
+	var old_color = color
+	print("[Dice] FORCE_COLOR: Changing from", DiceColor.get_color_name(old_color), "to", DiceColor.get_color_name(new_color))
+	_set_color(new_color)
+	
+	# Emit signal if color changed
+	if old_color != color:
+		print("[Dice] Color changed successfully - emitting signal")
+		emit_signal("color_changed", self, color)
+	else:
+		print("[Dice] Color unchanged")
+
+## Clear dice color back to none
+func clear_color() -> void:
+	force_color(DiceColor.Type.NONE)
