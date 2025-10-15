@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c7uu7t3hnfp1u"]
+
+[ext_resource type="Script" path="res://Scripts/Mods/three_but_three_mod.gd" id="1_abc123"]
+
+[node name="ThreeButThreeMod" type="Node"]
+script = ExtResource("1_abc123")

@@ -283,15 +283,29 @@ func _on_item_purchased(item_id: String, item_type: String) -> void:
 		if consumable_ui and consumable_ui.has_max_consumables():
 			print("[ShopUI] Maximum consumables reached, purchase blocked")
 			return
+	# Check if it's a mod and if we're already at dice limit
+	elif item_type == "mod":
+		# Find GameController to check mod vs dice count limit
+		var game_controller = _find_game_controller()
+		if game_controller and _has_reached_mod_limit(game_controller):
+			print("[ShopUI] Mod limit reached (all dice have mods), purchase blocked")
+			return
+		else:
+			print("[ShopUI] Mod purchase allowed - limit not reached")
+	
+	print("[ShopUI] Purchase validation passed, proceeding with purchase")
 	
 	# Record that this item was purchased
 	if not purchased_items[item_type].has(item_id):
 		purchased_items[item_type].append(item_id)
+		print("[ShopUI] Added", item_id, "to purchased items list")
 	
 	# Remove the item from the shop
+	print("[ShopUI] Calling _remove_shop_item for:", item_id, "type:", item_type)
 	_remove_shop_item(item_id, item_type)
 	
 	# If we got here, proceed with purchase
+	print("[ShopUI] Emitting item_purchased signal for:", item_id, "type:", item_type)
 	emit_signal("item_purchased", item_id, item_type)
 
 # Add function to remove a shop item after purchase
@@ -304,6 +318,11 @@ func _remove_shop_item(item_id: String, item_type: String) -> void:
 	# Find and remove the shop item with matching ID
 	for child in container.get_children():
 		if child is ShopItem and child.item_id == item_id:
+			# Hide immediately and disable the button to prevent multiple purchases
+			child.visible = false
+			if child.buy_button:
+				child.buy_button.disabled = true
+			# Then queue for deletion
 			child.queue_free()
 			print("[ShopUI] Removed shop item:", item_id, "from shop")
 			break
@@ -332,6 +351,21 @@ func _find_consumable_ui() -> ConsumableUI:
 	# Fall back to searching the tree
 	return get_tree().get_first_node_in_group("consumable_ui") as ConsumableUI
 
+# Helper function to find GameController
+func _find_game_controller() -> GameController:
+	return get_tree().get_first_node_in_group("game_controller") as GameController
+
+# Helper function to check if mod limit has been reached
+func _has_reached_mod_limit(game_controller: GameController) -> bool:
+	if not game_controller:
+		return false
+	
+	var current_mod_count = game_controller._get_total_active_mod_count()
+	# Use expected dice count instead of current dice list size to handle pre-spawn scenario
+	var expected_dice_count = game_controller._get_expected_dice_count()
+	
+	return current_mod_count >= expected_dice_count
+
 func _on_close_button_pressed() -> void:
 	hide()
 
@@ -350,7 +384,7 @@ func _get_container_for_type(type: String) -> Node:
 			push_error("[ShopUI] Unknown item type:", type)
 			return null
 
-func _on_money_changed(new_amount: int) -> void:
+func _on_money_changed(_new_amount: int) -> void:
 	# Update all shop item buttons in all containers
 	for container in [power_up_container, consumable_container, mod_container]:
 		if container:

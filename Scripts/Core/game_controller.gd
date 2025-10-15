@@ -151,10 +151,9 @@ func _ready() -> void:
 ##+ Starts the RoundManager if present.
 ##+ Keep this lightweight; heavy startup logic should be moved into RoundManager or dedicated setup functions.
 func _on_game_start() -> void:
-	#spawn_starting_powerups()
-	grant_consumable("random_power_up_uncommon")
+	#grant_consumable("random_power_up_uncommon")
 	#grant_consumable("power_up_shop_num")
-	#apply_debuff("lock_dice")
+	#apply_debuff("the_division")
 	#activate_challenge("300pts_no_debuff")
 	grant_power_up("perfect_strangers")
 	if round_manager:
@@ -369,7 +368,7 @@ func _on_power_up_sold(power_up_id: String) -> void:
 
 	var def = pu_manager.get_def(power_up_id)
 	if def:
-		var refund = int(def.price / 2)  # Half price as integer
+		var refund = def.price / 2.0  # Half price
 		print("[GameController] Refunding", refund, "coins for power-up:", power_up_id)
 		PlayerEconomy.add_money(refund)
 
@@ -769,6 +768,9 @@ func apply_debuff(id: String) -> void:
 		"costly_roll":  
 			debuff.target = self  
 			debuff.start()
+		"the_division":
+			debuff.target = self  
+			debuff.start()
 		_:
 			push_error("[GameController] Unknown debuff type: %s" % id)
 
@@ -849,8 +851,18 @@ func remove_consumable(id: String) -> void:
 ##
 ## Grants a mod to the player. Stores it for persistence and attempts to apply it to an available die.
 ## If no suitable die exists, the mod is queued in `pending_mods` and will be applied when dice spawn.
+## Prevents granting more mods than available dice (5 dice = 5 mods max, 6 dice = 6 mods max).
 func grant_mod(id: String) -> void:
 	print("[GameController] Attempting to grant mod:", id)
+
+	# Check if we have reached the dice count limit for mods
+	if dice_hand and dice_hand.dice_list.size() > 0:
+		var current_mod_count = _get_total_active_mod_count()
+		var dice_count = dice_hand.dice_list.size()
+		
+		if current_mod_count >= dice_count:
+			print("[GameController] Cannot grant mod - limit reached! (%d mods applied to %d dice)" % [current_mod_count, dice_count])
+			return
 
 	# Get the mod definition
 	var def: ModData = mod_manager.get_def(id)
@@ -911,6 +923,32 @@ func _apply_mod_to_available_die(mod_id: String) -> bool:
 
 	# No suitable die found
 	return false
+
+
+## _get_total_active_mod_count() -> int
+##
+## Counts the total number of mods currently applied to all dice. Used for dice count limit validation.
+func _get_total_active_mod_count() -> int:
+	if not dice_hand or dice_hand.dice_list.size() == 0:
+		return 0
+	
+	var total_count = 0
+	for die in dice_hand.dice_list:
+		total_count += die.active_mods.size()
+	
+	return total_count
+
+
+## _get_expected_dice_count() -> int
+##
+## Gets the expected number of dice considering the base dice count and any active power-ups that modify dice count.
+## This is used for mod limit validation before dice are actually spawned.
+func _get_expected_dice_count() -> int:
+	if not dice_hand:
+		return 5  # Default fallback
+	
+	# Start with the current dice count setting (which may have been modified by power-ups)
+	return dice_hand.dice_count
 
 
 ## _on_roll_completed()
@@ -1294,7 +1332,7 @@ func _on_consumable_sold(consumable_id: String) -> void:
 		
 	var def = consumable_manager.get_def(consumable_id)
 	if def:
-		var refund = int(def.price / 2)  # Half price as integer
+		var refund = def.price / 2.0  # Half price
 		print("[GameController] Refunding", refund, "coins for consumable:", consumable_id)
 		PlayerEconomy.add_money(refund)
 	
@@ -1316,7 +1354,7 @@ func _on_mod_sold(mod_id: String, dice: Dice) -> void:
 	# Get the mod definition for price calculation
 	var def: ModData = mod_manager.get_def(mod_id)
 	if def:
-		var refund = int(def.price / 2)  # Half price as integer
+		var refund = def.price / 2.0  # Half price
 		print("[GameController] Refunding", refund, "coins for mod:", mod_id)
 		PlayerEconomy.add_money(refund)
 	

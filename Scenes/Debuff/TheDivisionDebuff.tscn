@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c4fjt7pgl82bs"]
+
+[ext_resource type="Script" uid="uid://clcw3sgo2yqty" path="res://Scripts/Debuff/the_division_debuff.gd" id="1_bequk"]
+
+[node name="TheDivisionDebuff" type="Node"]
+script = ExtResource("1_bequk")

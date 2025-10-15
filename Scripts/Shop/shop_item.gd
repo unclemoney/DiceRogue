@@ -89,6 +89,20 @@ func _process(delta: float) -> void:
 			if buy_button.disabled and buy_button.text == "MAX REACHED":
 				buy_button.disabled = false
 				buy_button.text = "BUY"
+	
+	# Check if this is a mod item and if there's a mod limit reached
+	elif item_type == "mod":
+		# Find the GameController to check mod vs dice count limit
+		var game_controller = get_tree().get_first_node_in_group("game_controller")
+		if game_controller and _has_reached_mod_limit(game_controller):
+			# Disable the buy button and show "LIMIT REACHED" text
+			buy_button.disabled = true
+			buy_button.text = "LIMIT REACHED"
+		else:
+			# Re-enable the button if previously disabled
+			if buy_button.disabled and buy_button.text == "LIMIT REACHED":
+				buy_button.disabled = false
+				buy_button.text = "BUY"
 
 func setup(data: Resource, type: String) -> void:
 	print("[ShopItem] Setting up item:", data.id)
@@ -122,10 +136,21 @@ func _update_button_state(_new_amount := 0) -> void:
 		print("[ShopItem] Buy button state updated - disabled:", buy_button.disabled)
 
 func _on_buy_button_pressed() -> void:
-	print("[ShopItem] Buy button pressed for", item_id)
+	print("[ShopItem] Buy button pressed for", item_id, "type:", item_type)
+	
+	# Pre-purchase validation for mods - check if mod limit is reached
+	if item_type == "mod":
+		var game_controller = get_tree().get_first_node_in_group("game_controller")
+		if game_controller and _has_reached_mod_limit(game_controller):
+			print("[ShopItem] Mod purchase blocked - limit reached (all dice have mods)")
+			buy_button.disabled = true
+			buy_button.text = "LIMIT REACHED"
+			return
+	
 	if PlayerEconomy.can_afford(price):
 		if PlayerEconomy.remove_money(price):
 			print("[ShopItem] Successfully purchased", item_id, "for", price)
+			print("[ShopItem] Emitting purchase signal for:", item_id, "type:", item_type)
 			emit_signal("purchased", item_id, item_type)
 			print("[ShopItem] Purchase signal emitted")
 			_update_button_state() # <-- Add this line to update button after purchase
@@ -165,3 +190,15 @@ func _find_consumable_ui() -> ConsumableUI:
 		return game_controller.get_node_or_null("ConsumableUI") as ConsumableUI
 	
 	return null
+
+# Helper function to check if mod limit has been reached
+func _has_reached_mod_limit(game_controller: GameController) -> bool:
+	if not game_controller:
+		return false
+	
+	var current_mod_count = game_controller._get_total_active_mod_count()
+	# Use expected dice count instead of current dice list size to handle pre-spawn scenario
+	var expected_dice_count = game_controller._get_expected_dice_count()
+	
+	print("[ShopItem] Mod limit check - Current mods:", current_mod_count, "Expected dice count:", expected_dice_count)
+	return current_mod_count >= expected_dice_count

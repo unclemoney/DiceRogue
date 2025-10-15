@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ModData" load_steps=4 format=3 uid="uid://d3k8mv7xnpqr1"]
+
+[ext_resource type="Texture2D" uid="uid://dq803jv8m63h6" path="res://Resources/Art/Dice/dieWhite_border5.png" id="1_border5"]
+[ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="1_moddata"]
+[ext_resource type="PackedScene" uid="uid://c2jv0dvlrm8rf" path="res://Scenes/Mods/FiveByOneMod.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_moddata")
+id = "five_by_one"
+display_name = "Five By One"
+description = "Always Roll 5, Earn +1 Bonus Per Roll"
+icon = ExtResource("1_border5")
+scene = ExtResource("2_scene")
+price = 150
+metadata/_custom_type_script = "uid://47gl3by4wwht"

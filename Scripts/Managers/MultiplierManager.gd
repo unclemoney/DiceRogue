@@ -21,6 +21,9 @@ var _active_additives: Dictionary = {}
 ## Enable verbose debug logging for development
 var _debug_enabled: bool = true
 
+## Division mode flag - when true, multipliers become dividers
+var _division_mode: bool = false
+
 ## _ready()
 ##
 ## Lifecycle: add this node to helpful groups and print initialization when debugging.
@@ -178,13 +181,19 @@ func unregister_multiplier(source_name: String) -> void:
 ## get_total_multiplier()
 ##
 ## Returns the product of all active multipliers. Returns 1.0 when none are active.
+## When division mode is active, converts multipliers to dividers (reciprocals).
 func get_total_multiplier() -> float:
 	if _active_multipliers.is_empty():
 		return 1.0
 
 	var total: float = 1.0
 	for multiplier in _active_multipliers.values():
-		total *= multiplier
+		if _division_mode and multiplier > 0:
+			# Convert multiplier to divider (reciprocal)
+			total *= (1.0 / multiplier)
+		else:
+			# Normal multiplication
+			total *= multiplier
 
 	return total
 
@@ -246,6 +255,31 @@ func set_debug_enabled(enabled: bool) -> void:
 		print("[ScoreModifierManager] Debug logging enabled")
 	else:
 		print("[ScoreModifierManager] Debug logging disabled")
+
+## set_division_mode(enabled)
+##
+## Enables or disables division mode. When enabled, all multipliers become dividers.
+## Used by TheDivisionDebuff to convert multiplier power-ups into penalties.
+func set_division_mode(enabled: bool) -> void:
+	var old_mode = _division_mode
+	_division_mode = enabled
+	
+	if _debug_enabled:
+		if enabled:
+			print("[ScoreModifierManager] Division mode ENABLED - multipliers now divide scores")
+		else:
+			print("[ScoreModifierManager] Division mode DISABLED - multipliers work normally")
+	
+	# Emit signal if the mode actually changed
+	if old_mode != enabled:
+		var new_total = get_total_multiplier()
+		emit_signal("multiplier_changed", new_total)
+
+## is_division_mode() -> bool
+##
+## Returns true if division mode is currently active.
+func is_division_mode() -> bool:
+	return _division_mode
 
 ## _validate_state()
 ##

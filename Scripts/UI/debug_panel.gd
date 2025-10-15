@@ -192,6 +192,22 @@ func _create_debug_buttons() -> void:
 		{"text": "Roll Large Straight", "method": "_debug_force_large_straight"},
 		{"text": "Activate Perfect Strangers", "method": "_debug_activate_perfect_strangers"},
 		
+		# Debuff Testing
+		{"text": "Apply The Division Debuff", "method": "_debug_apply_division_debuff"},
+		{"text": "Remove The Division Debuff", "method": "_debug_remove_division_debuff"},
+		{"text": "Test Division vs Perfect Strangers", "method": "_debug_test_division_perfect_strangers"},
+		
+		# Challenge Testing  
+		{"text": "Activate The Crossing Challenge", "method": "_debug_activate_crossing_challenge"},
+		{"text": "Activate 150pts Roll Minus One", "method": "_debug_activate_pts150_challenge"},
+		{"text": "Show Active Challenges", "method": "_debug_show_active_challenges"},
+		
+		# Mod Limit Testing
+		{"text": "Show Mod/Dice Count", "method": "_debug_show_mod_dice_count"},
+		{"text": "Fill All Dice w/ Mods", "method": "_debug_fill_dice_with_mods"},
+		{"text": "Test Mod Limit Block", "method": "_debug_test_mod_limit_block"},
+		{"text": "Test Shop Mod Purchase", "method": "_debug_test_shop_mod_purchase"},
+		
 		# Game State
 		{"text": "Show Score State", "method": "_debug_show_scores"},
 		{"text": "Show All Items", "method": "_debug_show_items"},
@@ -735,6 +751,81 @@ func _debug_activate_perfect_strangers() -> void:
 		var total_multiplier = ScoreModifierManager.get_total_multiplier()
 		log_debug("Current total multiplier: " + str(total_multiplier) + "x")
 
+func _debug_apply_division_debuff() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	if game_controller.is_debuff_active("the_division"):
+		log_debug("The Division debuff is already active")
+		return
+	
+	game_controller.apply_debuff("the_division")
+	log_debug("Applied The Division debuff - all multipliers now divide instead!")
+	
+	# Show current state
+	if ScoreModifierManager:
+		var total_modifier = ScoreModifierManager.get_total_multiplier()
+		log_debug("Current total modifier after applying The Division: " + str(total_modifier) + "x")
+
+func _debug_remove_division_debuff() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	if not game_controller.is_debuff_active("the_division"):
+		log_debug("The Division debuff is not currently active")
+		return
+	
+	game_controller.disable_debuff("the_division")
+	log_debug("Removed The Division debuff - multipliers restored to normal")
+	
+	# Show current state
+	if ScoreModifierManager:
+		var total_modifier = ScoreModifierManager.get_total_multiplier()
+		log_debug("Current total modifier after removing The Division: " + str(total_modifier) + "x")
+
+func _debug_test_division_perfect_strangers() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	log_debug("=== TESTING THE DIVISION + PERFECT STRANGERS ===")
+	
+	# 1. Ensure Perfect Strangers is active
+	if not game_controller.active_power_ups.has("perfect_strangers"):
+		game_controller.grant_power_up("perfect_strangers")
+		log_debug("Granted Perfect Strangers PowerUp")
+	
+	# 2. Set up a large straight for Perfect Strangers activation
+	_debug_force_large_straight()
+	
+	# 3. Show normal multiplier
+	log_debug("--- BEFORE DIVISION DEBUFF ---")
+	if ScoreModifierManager:
+		var normal_multiplier = ScoreModifierManager.get_total_multiplier()
+		log_debug("Normal total multiplier: " + str(normal_multiplier) + "x")
+		var test_score = 40  # Large straight score
+		var normal_result = test_score * normal_multiplier
+		log_debug("Example: 40pt Large Straight × " + str(normal_multiplier) + " = " + str(normal_result) + " points")
+	
+	# 4. Apply The Division debuff
+	if not game_controller.is_debuff_active("the_division"):
+		game_controller.apply_debuff("the_division")
+		log_debug("Applied The Division debuff")
+	
+	# 5. Show division effect
+	log_debug("--- AFTER DIVISION DEBUFF ---")
+	if ScoreModifierManager:
+		var division_modifier = ScoreModifierManager.get_total_multiplier()
+		log_debug("Division total modifier: " + str(division_modifier) + "x")
+		var test_score = 40  # Large straight score
+		var division_result = test_score * division_modifier
+		log_debug("Example: 40pt Large Straight × " + str(division_modifier) + " = " + str(division_result) + " points")
+		log_debug("EFFECT: Score is now DIVIDED by the original multiplier instead of multiplied!")
+	
+	log_debug("Test complete! Use 'Remove The Division Debuff' to restore normal behavior.")
+
 func _debug_multiplier_system() -> void:
 	log_debug("\n=== MULTIPLIER SYSTEM DEBUG ===")
 	
@@ -791,3 +882,281 @@ func _debug_multiplier_system() -> void:
 	log_debug("\nTest calculation (score=15):")
 	log_debug("  (15 + " + str(total_additive) + ") × " + str(total_multiplier) + " = " + str(calculated_score))
 	log_debug("  Rounded up: " + str(final_score))
+
+# New debug methods for mod limit testing
+
+func _debug_show_mod_dice_count() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	var dice_hand = game_controller.dice_hand
+	if not dice_hand:
+		log_debug("ERROR: DiceHand not found")
+		return
+	
+	var current_dice_count = dice_hand.dice_list.size()
+	var expected_dice_count = game_controller._get_expected_dice_count()
+	var mod_count = game_controller._get_total_active_mod_count()
+	
+	log_debug("=== MOD/DICE COUNT STATUS ===")
+	log_debug("Current dice spawned: " + str(current_dice_count))
+	log_debug("Expected dice count: " + str(expected_dice_count))
+	log_debug("Total mods applied: " + str(mod_count))
+	log_debug("Mod limit reached (vs expected): " + str(mod_count >= expected_dice_count))
+	log_debug("Mod limit reached (vs current): " + str(mod_count >= current_dice_count))
+	log_debug("Remaining mod slots (expected): " + str(max(0, expected_dice_count - mod_count)))
+	log_debug("Remaining mod slots (current): " + str(max(0, current_dice_count - mod_count)))
+	
+	# Show breakdown per die (only if dice are spawned)
+	if current_dice_count > 0:
+		var dice_breakdown = []
+		for i in range(dice_hand.dice_list.size()):
+			var die = dice_hand.dice_list[i]
+			var die_mod_count = die.active_mods.size()
+			dice_breakdown.append("Die %d: %d mods" % [i + 1, die_mod_count])
+		
+		log_debug("Dice breakdown: " + ", ".join(dice_breakdown))
+	else:
+		log_debug("No dice currently spawned")
+
+func _debug_fill_dice_with_mods() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	var dice_hand = game_controller.dice_hand
+	if not dice_hand:
+		log_debug("ERROR: DiceHand not found")
+		return
+	
+	var mod_manager = game_controller.mod_manager
+	if not mod_manager:
+		log_debug("ERROR: ModManager not found")
+		return
+	
+	log_debug("=== FILLING ALL DICE WITH MODS ===")
+	
+	# Get available mod types
+	var available_mods = mod_manager.get_available_mods()
+	if available_mods.is_empty():
+		log_debug("No mods available to grant")
+		return
+	
+	var mods_granted = 0
+	var dice_count = dice_hand.dice_list.size()
+	
+	# Try to grant one mod to each die
+	for i in range(dice_count):
+		var die = dice_hand.dice_list[i]
+		if die.active_mods.size() == 0:  # Only add to empty dice
+			var mod_id = available_mods[i % available_mods.size()]  # Cycle through available mods
+			game_controller.grant_mod(mod_id)
+			mods_granted += 1
+			log_debug("Granted mod '" + mod_id + "' to die " + str(i + 1))
+	
+	log_debug("Total mods granted: " + str(mods_granted))
+	_debug_show_mod_dice_count()  # Show final status
+
+func _debug_test_mod_limit_block() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	log_debug("=== TESTING MOD LIMIT BLOCKING ===")
+	
+	# First show current status
+	_debug_show_mod_dice_count()
+	
+	# Try to grant one more mod than should be allowed
+	var mod_manager = game_controller.mod_manager
+	if not mod_manager:
+		log_debug("ERROR: ModManager not found")
+		return
+	
+	var available_mods = mod_manager.get_available_mods()
+	if available_mods.is_empty():
+		log_debug("No mods available to test with")
+		return
+	
+	var test_mod_id = available_mods[0]
+	log_debug("Attempting to grant mod '" + test_mod_id + "' (should be blocked if limit reached)")
+	
+	var mod_count_before = game_controller._get_total_active_mod_count()
+	game_controller.grant_mod(test_mod_id)
+	var mod_count_after = game_controller._get_total_active_mod_count()
+	
+	if mod_count_after == mod_count_before:
+		log_debug("✓ MOD LIMIT WORKING: Grant was blocked as expected")
+	else:
+		log_debug("✗ MOD LIMIT FAILED: Grant was allowed when it shouldn't be")
+	
+	_debug_show_mod_dice_count()  # Show final status
+
+func _debug_test_shop_mod_purchase() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	log_debug("=== TESTING SHOP MOD PURCHASE & REMOVAL ===")
+	
+	var shop_ui = game_controller.shop_ui
+	if not shop_ui:
+		log_debug("ERROR: ShopUI not found")
+		return
+	
+	# Show the shop if it's hidden
+	if not shop_ui.visible:
+		shop_ui.show()
+		log_debug("Shop UI opened for testing")
+	
+	# Get the mod container and list current items
+	var mod_container = shop_ui.mod_container
+	if not mod_container:
+		log_debug("ERROR: Mod container not found in shop")
+		return
+	
+	var mod_items_before = mod_container.get_child_count()
+	log_debug("Mod items in shop before purchase: " + str(mod_items_before))
+	
+	# List all mod items in shop
+	for i in range(mod_container.get_child_count()):
+		var child = mod_container.get_child(i)
+		if child is ShopItem:
+			log_debug("  Mod " + str(i + 1) + ": " + child.item_id + " (price: $" + str(child.price) + ")")
+	
+	# Try to find and purchase the first affordable mod
+	var purchased_mod = null
+	for child in mod_container.get_children():
+		if child is ShopItem:
+			if PlayerEconomy.can_afford(child.price):
+				log_debug("Attempting to purchase mod: " + child.item_id + " for $" + str(child.price))
+				purchased_mod = child
+				break
+	
+	if not purchased_mod:
+		log_debug("No affordable mods found in shop to test with")
+		return
+	
+	# Store the mod info before purchase
+	var _mod_id = purchased_mod.item_id
+	var mod_price = purchased_mod.price
+	var money_before = PlayerEconomy.money
+	
+	# Check if mod limit validation is working
+	log_debug("Checking mod limit validation...")
+	var current_mod_count = game_controller._get_total_active_mod_count()
+	var expected_dice_count = game_controller._get_expected_dice_count()
+	var current_dice_count = game_controller.dice_hand.dice_list.size() if game_controller.dice_hand else 0
+	log_debug("Current mods: " + str(current_mod_count) + ", Expected dice: " + str(expected_dice_count) + ", Current dice: " + str(current_dice_count))
+	
+	if current_mod_count >= expected_dice_count:
+		log_debug("Mod limit reached (vs expected dice count) - testing that purchase is blocked...")
+		# Try to purchase and it should be blocked
+		purchased_mod._on_buy_button_pressed()
+		var money_after_blocked = PlayerEconomy.money
+		if money_after_blocked == money_before:
+			log_debug("✓ Purchase correctly blocked when mod limit reached")
+		else:
+			log_debug("✗ Purchase NOT blocked when mod limit reached!")
+		return
+	
+	# Simulate the purchase by calling the button press
+	log_debug("Proceeding with purchase test (limit not reached)...")
+	purchased_mod._on_buy_button_pressed()
+	
+	# Check results after purchase
+	await get_tree().process_frame  # Wait one frame for queue_free to process
+	
+	var money_after = PlayerEconomy.money
+	var mod_items_after = mod_container.get_child_count()
+	
+	log_debug("=== PURCHASE RESULTS ===")
+	log_debug("Money: $" + str(money_before) + " -> $" + str(money_after) + " (spent: $" + str(money_before - money_after) + ")")
+	log_debug("Shop mod items: " + str(mod_items_before) + " -> " + str(mod_items_after) + " (removed: " + str(mod_items_before - mod_items_after) + ")")
+	
+	if money_after == money_before - mod_price:
+		log_debug("✓ Money deducted correctly")
+	else:
+		log_debug("✗ Money deduction incorrect (expected: -$" + str(mod_price) + ")")
+	
+	if mod_items_after == mod_items_before - 1:
+		log_debug("✓ Mod item removed from shop correctly")
+	else:
+		log_debug("✗ Mod item NOT removed from shop (expected -1 item)")
+	
+	# Check if the mod was applied to a die
+	_debug_show_mod_dice_count()
+
+## _debug_activate_crossing_challenge()
+##
+## Activates The Crossing Challenge for testing
+func _debug_activate_crossing_challenge() -> void:
+	log_debug("=== ACTIVATING THE CROSSING CHALLENGE ===")
+	
+	if not game_controller:
+		log_debug("✗ GameController not found!")
+		return
+	
+	var challenge_id = "the_crossing_challenge"
+	
+	if game_controller.active_challenges.has(challenge_id):
+		log_debug("The Crossing Challenge is already active")
+		return
+	
+	game_controller.activate_challenge(challenge_id)
+	log_debug("✓ The Crossing Challenge activated!")
+	log_debug("Target: 150 points with The Division debuff active")
+
+## _debug_activate_pts150_challenge()
+##
+## Activates the 150pts Roll Minus One Challenge for comparison testing
+func _debug_activate_pts150_challenge() -> void:
+	log_debug("=== ACTIVATING 150PTS ROLL MINUS ONE CHALLENGE ===")
+	
+	if not game_controller:
+		log_debug("✗ GameController not found!")
+		return
+	
+	var challenge_id = "pts_150_roll_score_minus_one"
+	
+	if game_controller.active_challenges.has(challenge_id):
+		log_debug("150pts Roll Minus One Challenge is already active")
+		return
+	
+	game_controller.activate_challenge(challenge_id)
+	log_debug("✓ 150pts Roll Minus One Challenge activated!")
+	log_debug("Target: 150 points with Roll Score Minus One debuff active")
+
+## _debug_show_active_challenges()
+##
+## Shows all currently active challenges and their status
+func _debug_show_active_challenges() -> void:
+	log_debug("=== ACTIVE CHALLENGES STATUS ===")
+	
+	if not game_controller:
+		log_debug("✗ GameController not found!")
+		return
+	
+	var active_challenges = game_controller.active_challenges
+	
+	if active_challenges.is_empty():
+		log_debug("No challenges currently active")
+		return
+	
+	log_debug("Active challenges (" + str(active_challenges.size()) + "):")
+	
+	for challenge_id in active_challenges.keys():
+		var challenge = active_challenges[challenge_id]
+		var progress = challenge.get_progress() * 100.0
+		var target_score = challenge.get_target_score()
+		
+		log_debug("• " + challenge_id)
+		log_debug("  Target Score: " + str(target_score))
+		log_debug("  Progress: " + str(progress).pad_decimals(1) + "%")
+		
+		if game_controller.scorecard:
+			var current_score = game_controller.scorecard.get_total_score()
+			log_debug("  Current Score: " + str(current_score))
+		
+		log_debug("  Status: " + ("Completed" if progress >= 100.0 else "In Progress"))

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ChallengeData" load_steps=4 format=3 uid="uid://bf58ehj5n7vpf"]
+
+[ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="1_crossing_data"]
+[ext_resource type="Texture2D" uid="uid://cw6bry41p6cug" path="res://Resources/Art/Powerups/cassette_tape.png" id="1_crossing_icon"]
+[ext_resource type="PackedScene" uid="uid://c6ljwvf8m2x5q" path="res://Scenes/Challenge/TheCrossingChallenge.tscn" id="2_crossing_scene"]
+
+[resource]
+script = ExtResource("1_crossing_data")
+id = "the_crossing_challenge"
+display_name = "The Crossing"
+description = "Score 150 Points Under Division"
+icon = ExtResource("1_crossing_icon")
+scene = ExtResource("2_crossing_scene")
+debuff_ids = Array[String](["the_division"])
+target_score = 150
+reward_money = 125
+dice_type = "d6"
+metadata/_custom_type_script = "uid://f8jnl4x2x0gr"
