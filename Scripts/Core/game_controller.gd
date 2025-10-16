@@ -716,6 +716,14 @@ func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 		if randomizer and randomizer.has_method("show_effect_after_scoring"):
 			randomizer.show_effect_after_scoring()
 
+	# Show dice color effects after scoring
+	if DiceColorManager and DiceColorManager.are_colors_enabled() and dice_hand:
+		var dice_array = dice_hand.get_all_dice()
+		var color_description = DiceColorManager.get_current_effects_description(dice_array)
+		if score_card_ui and score_card_ui.has_method("update_extra_info"):
+			score_card_ui.update_extra_info(color_description)
+			print("[GameController] Displayed dice color effects:", color_description)
+
 	if scorecard.has_any_scores():
 		# Update score reroll usability through the new system
 		if consumable_ui and consumable_ui.has_consumable("score_reroll"):

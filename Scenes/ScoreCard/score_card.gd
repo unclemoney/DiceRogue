@@ -449,7 +449,7 @@ func evaluate_category(category: String, values: Array[int]) -> int:
 		print("[Scorecard] Warning: Empty values array!")
 		return 0
 	
-	# Use our color-aware calculate_score method but DON'T apply money effects during evaluation
+	# Use our color-aware calculate_score method but DON'T apply money effects during evaluation (for previews)
 	return calculate_score_internal(category, values, false)
 
 # DEPRECATED: Debug function for old multiplier system

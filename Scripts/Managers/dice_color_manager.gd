@@ -3,7 +3,8 @@ extends Node
 ## DiceColorManager - Autoload for managing dice color system
 ## Handles global color settings, effect calculations, and integration with scoring
 
-const DiceColor = preload("res://Scripts/Core/dice_color.gd")
+# Import DiceColor class to avoid shadowing warning
+const DiceColorClass = preload("res://Scripts/Core/dice_color.gd")
 
 signal colors_enabled_changed(enabled: bool)
 signal color_effects_calculated(green_money: int, red_additive: int, purple_multiplier: float, same_color_bonus: bool)
@@ -43,22 +44,22 @@ func calculate_color_effects(dice_array: Array) -> Dictionary:
 		
 		var dice_color = dice.get_color()
 		var dice_value = dice.value
-		print("[DiceColorManager] Dice", i, "- Value:", dice_value, "Color:", DiceColor.get_color_name(dice_color))
+		print("[DiceColorManager] Dice", i, "- Value:", dice_value, "Color:", DiceColorClass.get_color_name(dice_color))
 		
 		match dice_color:
-			DiceColor.Type.GREEN:
+			DiceColorClass.Type.GREEN:
 				green_count += 1
 				green_money += dice_value
 				print("[DiceColorManager]   GREEN: +$", dice_value, " (total: $", green_money, ")")
-			DiceColor.Type.RED:
+			DiceColorClass.Type.RED:
 				red_count += 1
 				red_additive += dice_value
 				print("[DiceColorManager]   RED: +", dice_value, " additive (total: +", red_additive, ")")
-			DiceColor.Type.PURPLE:
+			DiceColorClass.Type.PURPLE:
 				purple_count += 1
 				purple_multiplier *= dice_value
 				print("[DiceColorManager]   PURPLE: x", dice_value, " multiplier (total: x", purple_multiplier, ")")
-			DiceColor.Type.NONE:
+			DiceColorClass.Type.NONE:
 				print("[DiceColorManager]   NONE: No effect")
 	
 	print("[DiceColorManager] Color counts - Green:", green_count, "Red:", red_count, "Purple:", purple_count)
@@ -142,12 +143,12 @@ func apply_color_effects_to_score(base_score: int, dice_array: Array) -> Diction
 
 ## Debug function to force all dice to specific color
 ## @param dice_array: Array[Dice] dice to color
-## @param color_type: DiceColor.Type color to apply
-func debug_force_all_colors(dice_array: Array, color_type: DiceColor.Type) -> void:
+## @param color_type: DiceColorClass.Type color to apply
+func debug_force_all_colors(dice_array: Array, color_type: DiceColorClass.Type) -> void:
 	for dice in dice_array:
 		if dice is Dice:
 			dice.force_color(color_type)
-	print("[DiceColorManager] DEBUG: Set all dice to ", DiceColor.get_color_name(color_type))
+	print("[DiceColorManager] DEBUG: Set all dice to ", DiceColorClass.get_color_name(color_type))
 
 ## Debug function to clear all dice colors
 ## @param dice_array: Array[Dice] dice to clear
@@ -156,3 +157,41 @@ func debug_clear_all_colors(dice_array: Array) -> void:
 		if dice is Dice:
 			dice.clear_color()
 	print("[DiceColorManager] DEBUG: Cleared all dice colors")
+
+## Get current dice color effects description similar to RandomizerPowerUp
+## @param dice_array: Array[Dice] dice to analyze for description
+## @return String description of current color effects
+func get_current_effects_description(dice_array: Array) -> String:
+	if not colors_enabled:
+		return "Dice Colors: Disabled"
+	
+	var effects = calculate_color_effects(dice_array)
+	var descriptions := []
+	
+	# Add green money effect
+	if effects.green_money > 0:
+		descriptions.append("Green Dice Money: +$%d" % effects.green_money)
+	
+	# Add red additive effect  
+	if effects.red_additive > 0:
+		descriptions.append("Red Dice Bonus: +%d" % effects.red_additive)
+	elif effects.red_additive < 0:
+		descriptions.append("Red Dice Penalty: %d" % effects.red_additive)
+	
+	# Add purple multiplier effect
+	if effects.purple_multiplier > 1.0:
+		descriptions.append("Purple Dice Multiplier: ×%.1f" % effects.purple_multiplier)
+	elif effects.purple_multiplier < 1.0 and effects.purple_multiplier > 0.0:
+		descriptions.append("Purple Dice Multiplier: ×%.1f" % effects.purple_multiplier)
+	elif effects.purple_multiplier <= 0.0:
+		descriptions.append("Purple Dice Multiplier: ×%.1f" % effects.purple_multiplier)
+	
+	# Add same color bonus info
+	if effects.same_color_bonus:
+		descriptions.append("Same Color Bonus: 2x (5+ dice)")
+	
+	# Return combined description
+	if descriptions.size() == 0:
+		return "Dice Colors: No Effects"
+	else:
+		return "Color Effects: " + " | ".join(descriptions)

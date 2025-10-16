@@ -1,7 +1,7 @@
 extends Node2D
 class_name DiceHand
 
-const DiceColor = preload("res://Scripts/Core/dice_color.gd")
+const DiceColorClass = preload("res://Scripts/Core/dice_color.gd")
 
 # Add the missing signal
 signal roll_started
@@ -260,9 +260,9 @@ func roll_dice() -> void:
 	# Rest of your existing roll_dice function...
 
 ## Get all dice with a specific color
-## @param color_type: DiceColor.Type to filter by
+## @param color_type: DiceColorClass.Type to filter by
 ## @return Array[Dice] of dice with the specified color
-func get_dice_by_color(color_type: DiceColor.Type) -> Array[Dice]:
+func get_dice_by_color(color_type: DiceColorClass.Type) -> Array[Dice]:
 	var colored_dice: Array[Dice] = []
 	for die in dice_list:
 		if die is Dice and die.get_color() == color_type:
@@ -284,13 +284,13 @@ func get_color_counts() -> Dictionary:
 			continue
 			
 		match die.get_color():
-			DiceColor.Type.GREEN:
+			DiceColorClass.Type.GREEN:
 				counts["green"] += 1
-			DiceColor.Type.RED:
+			DiceColorClass.Type.RED:
 				counts["red"] += 1
-			DiceColor.Type.PURPLE:
+			DiceColorClass.Type.PURPLE:
 				counts["purple"] += 1
-			DiceColor.Type.NONE:
+			DiceColorClass.Type.NONE:
 				counts["none"] += 1
 	
 	return counts
@@ -355,12 +355,12 @@ func _get_dice_color_manager():
 	return null
 
 ## Force all dice to specific color (debug function)
-## @param color_type: DiceColor.Type to set all dice to
-func debug_force_all_colors(color_type: DiceColor.Type) -> void:
+## @param color_type: DiceColorClass.Type to set all dice to
+func debug_force_all_colors(color_type: DiceColorClass.Type) -> void:
 	for die in dice_list:
 		if die is Dice:
 			die.force_color(color_type)
-	print("[DiceHand] DEBUG: Set all dice to ", DiceColor.get_color_name(color_type))
+	print("[DiceHand] DEBUG: Set all dice to ", DiceColorClass.get_color_name(color_type))
 
 ## Clear all dice colors (debug function)
 func debug_clear_all_colors() -> void:
@@ -368,3 +368,8 @@ func debug_clear_all_colors() -> void:
 		if die is Dice:
 			die.clear_color()
 	print("[DiceHand] DEBUG: Cleared all dice colors")
+
+## Get all dice in the hand
+## @return Array[Dice] all dice currently in the hand
+func get_all_dice() -> Array[Dice]:
+	return dice_list

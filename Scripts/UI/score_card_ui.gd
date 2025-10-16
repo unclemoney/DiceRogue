@@ -314,9 +314,17 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 	print("[ScoreCardUI] Category:", category)
 	print("[ScoreCardUI] Dice values:", values)
 	
-	# Get the score through scorecard's evaluate_category to apply multipliers
-	var score = scorecard.evaluate_category(category, values)
-	print("[ScoreCardUI] Final calculated score:", score)
+	# Use scorecard's on_category_selected to properly apply money effects for actual scoring
+	scorecard.on_category_selected(section, category)
+	
+	# Get the score for display (this is now already set by on_category_selected)
+	var score = null
+	if section == Scorecard.Section.UPPER:
+		score = scorecard.upper_scores[category]
+	else:
+		score = scorecard.lower_scores[category]
+	
+	print("[ScoreCardUI] Final score set:", score)
 	
 	if score == null:
 		print("[ScoreCardUI] Invalid score calculation")
@@ -326,9 +334,8 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 	# Check for Yahtzee bonus
 	scorecard.check_bonus_yahtzee(values)
 	
-	# Set the selected category's score
-	print("[ScoreCardUI] Setting score for", category, "to:", score)
-	scorecard.set_score(section, category, score)
+	# Score is already set by on_category_selected, just update UI
+	print("[ScoreCardUI] Score already set by scorecard, updating UI")
 	update_all()
 	turn_scored = true
 	disable_all_score_buttons()
@@ -531,8 +538,68 @@ func _on_score_button_pressed(section: Scorecard.Section, category: String) -> v
 	if is_double_mode:
 		_handle_double_score(section, category)
 		return
+	
+	# Check if category already has a score
+	var existing_score = null
+	match section:
+		Scorecard.Section.UPPER:
+			existing_score = scorecard.upper_scores.get(category)
+		Scorecard.Section.LOWER:
+			existing_score = scorecard.lower_scores.get(category)
+			
+	if existing_score != null and not reroll_active and not any_score_active:
+		show_invalid_score_feedback(category)
+		return
 		
-	# Existing score button handling...
+	if reroll_active:
+		handle_score_reroll(section, category)
+		return
+		
+	if any_score_active:
+		handle_any_score(section, category)
+		return
+		
+	if turn_scored:
+		return
+
+	var values = DiceResults.values
+	print("\n=== Processing Score Selection ===")
+	print("[ScoreCardUI] Category:", category)
+	print("[ScoreCardUI] Dice values:", values)
+	
+	# Use scorecard's on_category_selected to properly apply money effects for actual scoring
+	scorecard.on_category_selected(section, category)
+	
+	# Get the score for display (this is now already set by on_category_selected)
+	var score = null
+	if section == Scorecard.Section.UPPER:
+		score = scorecard.upper_scores[category]
+	else:
+		score = scorecard.lower_scores[category]
+	
+	print("[ScoreCardUI] Final score set:", score)
+	
+	if score == null:
+		print("[ScoreCardUI] Invalid score calculation")
+		show_invalid_score_feedback(category)
+		return
+
+	# Check for Yahtzee bonus
+	scorecard.check_bonus_yahtzee(values)
+	
+	# Score is already set by on_category_selected, just update UI
+	print("[ScoreCardUI] Score already set by scorecard, updating UI")
+	update_all()
+	turn_scored = true
+	disable_all_score_buttons()
+	
+	# Emit signal for randomizer effect display
+	emit_signal("hand_scored")
+	
+	# Manually trigger score assignment signal for GameController
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller and game_controller.has_method("_on_score_assigned"):
+		game_controller._on_score_assigned(section, category, score)
 	
 func _handle_double_score(section: Scorecard.Section, category: String) -> void:
 	print("[ScoreCardUI] Handling double score for", category)
