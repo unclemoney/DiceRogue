@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://co40c6fchktrd"]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/green_monster_power_up.gd" id="1_j8vxl"]
+
+[node name="GreenMonster" type="Node2D"]
+script = ExtResource("1_j8vxl")
+id = "green_monster"

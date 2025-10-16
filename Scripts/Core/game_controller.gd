@@ -266,7 +266,7 @@ func _activate_power_up(power_up_id: String) -> void:
 		return
 	
 	# Connect to description_updated signal if the power-up has one
-	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus" or power_up_id == "step_by_step" or power_up_id == "perfect_strangers":
+	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus" or power_up_id == "step_by_step" or power_up_id == "perfect_strangers" or power_up_id == "green_monster":
 		# Disconnect first to avoid duplicates
 		if pu.is_connected("description_updated", _on_power_up_description_updated):
 			pu.description_updated.disconnect(_on_power_up_description_updated)
@@ -353,6 +353,9 @@ func _activate_power_up(power_up_id: String) -> void:
 				print("[GameController] Applied PerfectStrangersPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for PerfectStrangersPowerUp")
+		"green_monster":
+			pu.apply(self)
+			print("[GameController] Applied GreenMonsterPU")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -433,6 +436,9 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"perfect_strangers":
 			print("[GameController] Removing perfect_strangers PowerUp")
 			pu.remove(scorecard)
+		"green_monster":
+			print("[GameController] Removing green_monster PowerUp")
+			pu.remove(self)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -469,6 +475,8 @@ func revoke_power_up(power_up_id: String) -> void:
 				pu.remove(scorecard)
 			"perfect_strangers":
 				pu.remove(scorecard)
+			"green_monster":
+				pu.remove(self)
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself
 				pu.remove(pu)

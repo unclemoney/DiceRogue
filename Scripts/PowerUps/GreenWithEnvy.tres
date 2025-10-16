@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://dk8q4n7m1vbfs"]
+
+[ext_resource type="Texture2D" uid="uid://bgsc1aos08ilx" path="res://Resources/Art/Powerups/PowerUp_test5.png" id="1_green_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" uid="uid://co40c6fchktrd" path="res://Scenes/PowerUp/GreenWithEnvy.tscn" id="2_green_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "green_with_envy"
+id = "green_monster"
+display_name = "Green Monster"
+description = "+0.05x green money multiplier per green dice scored. Stacks throughout the game!"
+icon = ExtResource("1_green_icon")
+scene = ExtResource("2_green_scene")
+price = 200
+rarity = "rare"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"
