@@ -17,7 +17,7 @@ static var instance: DebugPanel = null
 @onready var title_label: Label
 @onready var system_info_label: Label
 @onready var output_text: TextEdit
-@onready var button_grid: GridContainer
+@onready var tab_container: TabContainer
 @onready var close_button: Button
 
 var game_controller: GameController
@@ -111,7 +111,7 @@ func _create_debug_ui() -> void:
 	main_container = VBoxContainer.new()
 	main_container.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	main_container.position = Vector2(20, 20)  # Small offset from top-left corner
-	main_container.custom_minimum_size = Vector2(600, 400)
+	main_container.custom_minimum_size = Vector2(1200, 600)
 	main_container.add_theme_constant_override("separation", 8)
 	main_container.z_index = 1002  # Above the panel background
 	add_child(main_container)
@@ -131,14 +131,13 @@ func _create_debug_ui() -> void:
 	system_info_label.add_theme_font_size_override("font_size", 12)
 	main_container.add_child(system_info_label)
 	
-	# Button grid for quick actions
-	button_grid = GridContainer.new()
-	button_grid.columns = 4  # Increase to 4 columns for better organization
-	button_grid.add_theme_constant_override("h_separation", 10)
-	button_grid.add_theme_constant_override("v_separation", 5)
-	main_container.add_child(button_grid)
+	# Tab container for organized debug sections
+	tab_container = TabContainer.new()
+	tab_container.custom_minimum_size = Vector2(1100, 400)
+	tab_container.add_theme_color_override("font_color", Color.WHITE)
+	main_container.add_child(tab_container)
 	
-	_create_debug_buttons()
+	_create_debug_tabs()
 	
 	# Output text area
 	var output_label = Label.new()
@@ -170,88 +169,99 @@ func _create_debug_ui() -> void:
 	
 	main_container.add_child(button_row)
 
-func _create_debug_buttons() -> void:
-	var buttons = [
-		# Power-ups and Items
-		{"text": "Grant Random PowerUp", "method": "_debug_grant_powerup"},
-		{"text": "Grant Random Consumable", "method": "_debug_grant_consumable"},
-		{"text": "Grant AnyScore", "method": "_debug_grant_any_score"},
-		{"text": "Grant Green Envy", "method": "_debug_grant_green_envy"},
-		{"text": "Grant Random Uncommon PowerUp", "method": "_debug_grant_random_uncommon_powerup"},
-		{"text": "Register AnyScore", "method": "_debug_register_any_score"},
-		{"text": "Grant Random Mod", "method": "_debug_grant_mod"},
-		
-		# Economy
-		{"text": "Add $100", "method": "_debug_add_money"},
-		{"text": "Add $1000", "method": "_debug_add_big_money"},
-		{"text": "Reset Money", "method": "_debug_reset_money"},
-		
-		# Dice Control
-		{"text": "Roll All 6s", "method": "_debug_force_dice"},
-		{"text": "Roll All 1s", "method": "_debug_force_ones"},
-		{"text": "Roll Yahtzee", "method": "_debug_force_yahtzee"},
-		{"text": "Roll Large Straight", "method": "_debug_force_large_straight"},
-		{"text": "Activate Perfect Strangers", "method": "_debug_activate_perfect_strangers"},
-		
-		# Dice Color System
-		{"text": "Toggle Dice Colors", "method": "_debug_toggle_dice_colors"},
-		{"text": "Force All Green", "method": "_debug_force_all_green"},
-		{"text": "Force All Red", "method": "_debug_force_all_red"},
-		{"text": "Force All Purple", "method": "_debug_force_all_purple"},
-		{"text": "Clear All Colors", "method": "_debug_clear_all_colors"},
-		{"text": "Show Color Effects", "method": "_debug_show_color_effects"},
-		{"text": "Test Color Scoring", "method": "_debug_test_color_scoring"},
-		{"text": "Reset Call Counter", "method": "_debug_reset_call_counter"},
-		
-		# Debuff Testing
-		{"text": "Apply The Division Debuff", "method": "_debug_apply_division_debuff"},
-		{"text": "Remove The Division Debuff", "method": "_debug_remove_division_debuff"},
-		{"text": "Test Division vs Perfect Strangers", "method": "_debug_test_division_perfect_strangers"},
-		
-		# Challenge Testing  
-		{"text": "Activate The Crossing Challenge", "method": "_debug_activate_crossing_challenge"},
-		{"text": "Activate 150pts Roll Minus One", "method": "_debug_activate_pts150_challenge"},
-		{"text": "Show Active Challenges", "method": "_debug_show_active_challenges"},
-		
-		# Mod Limit Testing
-		{"text": "Show Mod/Dice Count", "method": "_debug_show_mod_dice_count"},
-		{"text": "Fill All Dice w/ Mods", "method": "_debug_fill_dice_with_mods"},
-		{"text": "Test Mod Limit Block", "method": "_debug_test_mod_limit_block"},
-		{"text": "Test Shop Mod Purchase", "method": "_debug_test_shop_mod_purchase"},
-		
-		# Game State
-		{"text": "Show Score State", "method": "_debug_show_scores"},
-		{"text": "Show All Items", "method": "_debug_show_items"},
-		{"text": "Show Roll Stats", "method": "_debug_show_roll_stats"},
-		{"text": "Clear All Items", "method": "_debug_clear_items"},
-		
-		# Game Flow
-		{"text": "Add Extra Rolls", "method": "_debug_add_rolls"},
-		{"text": "Force End Turn", "method": "_debug_end_turn"},
-		{"text": "Skip to Shop", "method": "_debug_skip_shop"},
-		
-		# System Testing
-		{"text": "Test Score Calculation", "method": "_debug_test_scoring"},
-		{"text": "Debug Multiplier System", "method": "_debug_multiplier_system"},
-		{"text": "Trigger All Signals", "method": "_debug_test_signals"},
-		{"text": "Save Debug State", "method": "_debug_save_state"},
-		
-		# Utilities
-		{"text": "Load Debug State", "method": "_debug_load_state"},
-		{"text": "Reset Game", "method": "_debug_reset_game"},
-		{"text": "Clear Output", "method": "_on_clear_output_pressed"},
-	]
+func _create_debug_tabs() -> void:
+	# Define button categories for tabs
+	var tab_definitions = {
+		"Economy": [
+			{"text": "Add $100", "method": "_debug_add_money"},
+			{"text": "Add $1000", "method": "_debug_add_big_money"},
+			{"text": "Reset Money", "method": "_debug_reset_money"},
+		],
+		"Items": [
+			{"text": "Grant Random PowerUp", "method": "_debug_grant_powerup"},
+			{"text": "Grant Random Consumable", "method": "_debug_grant_consumable"},
+			{"text": "Grant AnyScore", "method": "_debug_grant_any_score"},
+			{"text": "Grant Green Envy", "method": "_debug_grant_green_envy"},
+			{"text": "Grant Random Uncommon PowerUp", "method": "_debug_grant_random_uncommon_powerup"},
+			{"text": "Register AnyScore", "method": "_debug_register_any_score"},
+			{"text": "Grant Random Mod", "method": "_debug_grant_mod"},
+			{"text": "Show All Items", "method": "_debug_show_items"},
+			{"text": "Clear All Items", "method": "_debug_clear_items"},
+		],
+		"Dice Control": [
+			{"text": "Roll All 6s", "method": "_debug_force_dice"},
+			{"text": "Roll All 1s", "method": "_debug_force_ones"},
+			{"text": "Roll Yahtzee", "method": "_debug_force_yahtzee"},
+			{"text": "Roll Large Straight", "method": "_debug_force_large_straight"},
+			{"text": "Activate Perfect Strangers", "method": "_debug_activate_perfect_strangers"},
+		],
+		"Dice Colors": [
+			{"text": "Toggle Dice Colors", "method": "_debug_toggle_dice_colors"},
+			{"text": "Force All Green", "method": "_debug_force_all_green"},
+			{"text": "Force All Red", "method": "_debug_force_all_red"},
+			{"text": "Force All Purple", "method": "_debug_force_all_purple"},
+			{"text": "Clear All Colors", "method": "_debug_clear_all_colors"},
+			{"text": "Show Color Effects", "method": "_debug_show_color_effects"},
+			{"text": "Test Color Scoring", "method": "_debug_test_color_scoring"},
+			{"text": "Reset Call Counter", "method": "_debug_reset_call_counter"},
+		],
+		"Testing": [
+			{"text": "Apply The Division Debuff", "method": "_debug_apply_division_debuff"},
+			{"text": "Remove The Division Debuff", "method": "_debug_remove_division_debuff"},
+			{"text": "Test Division vs Perfect Strangers", "method": "_debug_test_division_perfect_strangers"},
+			{"text": "Activate The Crossing Challenge", "method": "_debug_activate_crossing_challenge"},
+			{"text": "Activate 150pts Roll Minus One", "method": "_debug_activate_pts150_challenge"},
+			{"text": "Show Active Challenges", "method": "_debug_show_active_challenges"},
+			{"text": "Show Mod/Dice Count", "method": "_debug_show_mod_dice_count"},
+			{"text": "Fill All Dice w/ Mods", "method": "_debug_fill_dice_with_mods"},
+			{"text": "Test Mod Limit Block", "method": "_debug_test_mod_limit_block"},
+			{"text": "Test Shop Mod Purchase", "method": "_debug_test_shop_mod_purchase"},
+		],
+		"Game State": [
+			{"text": "Show Score State", "method": "_debug_show_scores"},
+			{"text": "Show Roll Stats", "method": "_debug_show_roll_stats"},
+			{"text": "Add Extra Rolls", "method": "_debug_add_rolls"},
+			{"text": "Force End Turn", "method": "_debug_end_turn"},
+			{"text": "Skip to Shop", "method": "_debug_skip_shop"},
+			{"text": "Test Score Calculation", "method": "_debug_test_scoring"},
+			{"text": "Debug Multiplier System", "method": "_debug_multiplier_system"},
+			{"text": "Trigger All Signals", "method": "_debug_test_signals"},
+		],
+		"Utilities": [
+			{"text": "Save Debug State", "method": "_debug_save_state"},
+			{"text": "Load Debug State", "method": "_debug_load_state"},
+			{"text": "Reset Game", "method": "_debug_reset_game"},
+			{"text": "Clear Output", "method": "_on_clear_output_pressed"},
+		]
+	}
 	
-	for button_data in buttons:
-		var button = Button.new()
-		button.text = button_data["text"]
-		button.custom_minimum_size = Vector2(180, 30)
+	# Create tabs
+	for tab_name in tab_definitions.keys():
+		var scroll_container = ScrollContainer.new()
+		scroll_container.name = tab_name
+		tab_container.add_child(scroll_container)
 		
-		# Connect using Callable
-		var method_name = button_data["method"]
-		button.pressed.connect(Callable(self, method_name))
+		var vbox = VBoxContainer.new()
+		vbox.add_theme_constant_override("separation", 5)
+		scroll_container.add_child(vbox)
 		
-		button_grid.add_child(button)
+		var button_grid = GridContainer.new()
+		button_grid.columns = 3  # 3 columns for better fit in tabs
+		button_grid.add_theme_constant_override("h_separation", 8)
+		button_grid.add_theme_constant_override("v_separation", 4)
+		vbox.add_child(button_grid)
+		
+		# Add buttons for this tab
+		for button_data in tab_definitions[tab_name]:
+			var button = Button.new()
+			button.text = button_data["text"]
+			button.custom_minimum_size = Vector2(160, 30)
+			button.add_theme_font_size_override("font_size", 10)
+			
+			# Connect using Callable
+			var method_name = button_data["method"]
+			button.pressed.connect(Callable(self, method_name))
+			button_grid.add_child(button)
 
 func toggle_debug_panel() -> void:
 	print("[DebugPanel] Toggle called - current state: ", is_visible_debug)

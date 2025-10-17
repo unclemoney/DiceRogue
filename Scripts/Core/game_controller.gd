@@ -157,7 +157,7 @@ func _on_game_start() -> void:
 	#grant_consumable("power_up_shop_num")
 	#apply_debuff("the_division")
 	#activate_challenge("300pts_no_debuff")
-	grant_power_up("perfect_strangers")
+	grant_power_up("green_monster")
 	if round_manager:
 		round_manager.start_game()
 
