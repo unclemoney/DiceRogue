@@ -182,6 +182,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Grant Random Consumable", "method": "_debug_grant_consumable"},
 			{"text": "Grant AnyScore", "method": "_debug_grant_any_score"},
 			{"text": "Grant Green Envy", "method": "_debug_grant_green_envy"},
+			{"text": "Grant Poor House", "method": "_debug_grant_poor_house"},
 			{"text": "Grant Random Uncommon PowerUp", "method": "_debug_grant_random_uncommon_powerup"},
 			{"text": "Register AnyScore", "method": "_debug_register_any_score"},
 			{"text": "Grant Random Mod", "method": "_debug_grant_mod"},
@@ -414,6 +415,17 @@ func _debug_grant_green_envy() -> void:
 	if game_controller.has_method("grant_consumable"):
 		game_controller.grant_consumable("green_envy")
 		log_debug("Granted Green Envy consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_poor_house() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("poor_house")
+		log_debug("Granted Poor House consumable")
 	else:
 		log_debug("GameController missing grant_consumable method")
 

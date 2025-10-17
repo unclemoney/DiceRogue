@@ -10,6 +10,7 @@ Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill s
   - **AnyScore**: Score current dice in any open category, ignoring normal scoring requirements
   - **Random Uncommon Power-Up**: Grants a random uncommon rarity power-up
   - **Green Envy**: 10x multiplier for all green dice money scored this turn
+  - **Poor House**: Transfer all your money to add bonus points to the next scored hand
 - **Mods**: Dice modifiers that change how individual dice behave
 - **Challenges**: Goals that unlock rewards and progression
 
@@ -191,6 +192,7 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 
 ### Economy
 - **Green Envy**: 10x multiplier for all green dice money scored this turn (Price: $50)
+- **Poor House**: Transfer all your money to add bonus points to the next scored hand (Price: $100)
 
 ### PowerUp Acquisition
 - **Random Uncommon Power-Up**: Grants a random uncommon rarity power-up
@@ -313,6 +315,7 @@ This prevents the need for complex manual testing setups and keeps development v
 - ✅ Mod selling mechanics (implemented)
 - ✅ AnyScore consumable - Score dice in any category ignoring requirements (implemented)
 - ✅ Green Envy consumable - 10x multiplier for green dice money (implemented)
+- ✅ Poor House consumable - Transfer money to next scored hand bonus (implemented)
 - Additional power-up variety
 - Challenge progression system
 - Balance pass on economy

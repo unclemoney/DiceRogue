@@ -21,6 +21,7 @@ const DEBUFF_UI_SCRIPT := preload("res://Scripts/UI/debuff_ui.gd")
 const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 const RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF := preload("res://Scripts/Consumable/RandomPowerUpUncommonConsumable.tres")
 const GREEN_ENVY_CONSUMABLE_DEF := preload("res://Scripts/Consumable/GreenEnvyConsumable.tres")
+const POOR_HOUSE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/PoorHouseConsumable.tres")
 
 # Centralized, explicit NodePaths (tweak in Inspector if scene changes)
 @export var dice_hand_path: NodePath            = ^"../DiceHand"
@@ -134,6 +135,7 @@ func _ready() -> void:
 	if consumable_manager:
 		consumable_manager.register_consumable_def(RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(GREEN_ENVY_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(POOR_HOUSE_CONSUMABLE_DEF)
 
 	## _ready()
 	## Called when the GameController node enters the scene tree.
@@ -156,7 +158,7 @@ func _ready() -> void:
 ##+ Keep this lightweight; heavy startup logic should be moved into RoundManager or dedicated setup functions.
 func _on_game_start() -> void:
 	#grant_consumable("random_power_up_uncommon")
-	#grant_consumable("power_up_shop_num")
+	grant_consumable("poor_house")
 	#apply_debuff("the_division")
 	#activate_challenge("300pts_no_debuff")
 	grant_power_up("wild_dots")
@@ -688,6 +690,9 @@ func _on_consumable_used(consumable_id: String) -> void:
 			remove_consumable_instance.call()
 			active_consumables.erase(consumable_id)
 		"green_envy":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"poor_house":
 			consumable.apply(self)
 			remove_consumable_instance.call()
 		_:
