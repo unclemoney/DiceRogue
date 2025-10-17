@@ -14,6 +14,7 @@ var section_buttons := {} # Add this line to declare the section_buttons diction
 signal hand_scored
 signal score_rerolled(section: Scorecard.Section, category: String, score: int)
 signal score_doubled(section: Scorecard.Section, category: String, new_score: int)
+signal about_to_score(section: Scorecard.Section, category: String, dice_values: Array[int])
 
 @onready var best_hand_label: RichTextLabel = $BestHandScore
 @onready var upper_total_label: Label = $HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal/UppersubButton
@@ -314,6 +315,11 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 	print("[ScoreCardUI] Category:", category)
 	print("[ScoreCardUI] Dice values:", values)
 	
+	# Emit signal before scoring to allow PowerUps to prepare
+	print("[ScoreCardUI] Emitting about_to_score signal...")
+	about_to_score.emit(section, category, values)
+	print("[ScoreCardUI] about_to_score signal emitted")
+	
 	# Use scorecard's on_category_selected to properly apply money effects for actual scoring
 	scorecard.on_category_selected(section, category)
 	
@@ -566,6 +572,11 @@ func _on_score_button_pressed(section: Scorecard.Section, category: String) -> v
 	print("\n=== Processing Score Selection ===")
 	print("[ScoreCardUI] Category:", category)
 	print("[ScoreCardUI] Dice values:", values)
+	
+	# Emit signal before scoring to allow PowerUps to prepare
+	print("[ScoreCardUI] Emitting about_to_score signal...")
+	about_to_score.emit(section, category, values)
+	print("[ScoreCardUI] about_to_score signal emitted")
 	
 	# Use scorecard's on_category_selected to properly apply money effects for actual scoring
 	scorecard.on_category_selected(section, category)

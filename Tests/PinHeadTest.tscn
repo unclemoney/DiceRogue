@@ -1,0 +1,23 @@
+[gd_scene load_steps=8 format=3 uid="uid://bp1kl0gdglcdh"]
+
+[ext_resource type="Script" path="res://Tests/pin_head_test.gd" id="1_rr2l5"]
+[ext_resource type="PackedScene" path="res://Scenes/Dice/dice_hand.tscn" id="2_5n0wh"]
+[ext_resource type="PackedScene" path="res://Scenes/ScoreCard/score_card.tscn" id="3_5n0wh"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/score_card_ui.tscn" id="4_5n0wh"]
+[ext_resource type="PackedScene" path="res://Scenes/Controller/game_controller.tscn" id="5_5n0wh"]
+[ext_resource type="PackedScene" path="res://Scenes/PowerUp/PinHeadPowerUp.tscn" id="6_5n0wh"]
+[ext_resource type="Theme" path="res://Resources/UI/scorecard_theme.tres" id="7_5n0wh"]
+
+[node name="PinHeadTest" type="Node"]
+script = ExtResource("1_rr2l5")
+
+[node name="DiceHand" parent="." instance=ExtResource("2_5n0wh")]
+
+[node name="ScoreCard" parent="." instance=ExtResource("3_5n0wh")]
+
+[node name="ScoreCardUI" parent="." instance=ExtResource("4_5n0wh")]
+theme = ExtResource("7_5n0wh")
+
+[node name="GameController" parent="." instance=ExtResource("5_5n0wh")]
+
+[node name="PinHeadPowerUp" parent="." instance=ExtResource("6_5n0wh")]

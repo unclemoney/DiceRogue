@@ -35,7 +35,7 @@ func apply(target) -> void:
 	# Store a reference to the scorecard
 	scorecard_ref = scorecard
 	
-	# Get references to dice hand and game controller through the tree
+	# Get references to dice hand, game controller, and scorecard UI through the tree
 	if get_tree():
 		dice_hand_ref = get_tree().get_first_node_in_group("dice_hand")
 		game_controller_ref = get_tree().get_first_node_in_group("game_controller")
@@ -48,12 +48,22 @@ func apply(target) -> void:
 		push_error("[PinHeadPowerUp] Could not find GameController in scene tree")
 		return
 	
-	print("[PinHeadPowerUp] Found DiceHand and GameController references")
+	# Connect to the ScoreCardUI's about_to_score signal (fires BEFORE scoring)
+	var scorecard_ui = game_controller_ref.score_card_ui if game_controller_ref else null
+	if scorecard_ui:
+		if not scorecard_ui.is_connected("about_to_score", _on_about_to_score):
+			scorecard_ui.about_to_score.connect(_on_about_to_score)
+			print("[PinHeadPowerUp] Connected to about_to_score signal")
+	else:
+		push_error("[PinHeadPowerUp] Could not find ScoreCardUI in GameController")
+		return
 	
-	# Connect to the score_assigned signal 
+	# Also connect to score_assigned signal for statistics tracking (fires AFTER scoring)
 	if not scorecard.is_connected("score_assigned", _on_score_assigned):
 		scorecard.score_assigned.connect(_on_score_assigned)
-		print("[PinHeadPowerUp] Connected to score_assigned signal")
+		print("[PinHeadPowerUp] Connected to score_assigned signal for stats")
+	
+	print("[PinHeadPowerUp] Found DiceHand, GameController, and ScoreCardUI references")
 	
 	# Connect cleanup signal
 	if not is_connected("tree_exiting", _on_tree_exiting):
@@ -74,6 +84,13 @@ func remove(target) -> void:
 			scorecard.score_assigned.disconnect(_on_score_assigned)
 			print("[PinHeadPowerUp] Disconnected from score_assigned signal")
 	
+	# Disconnect from ScoreCardUI signal
+	var scorecard_ui = game_controller_ref.score_card_ui if game_controller_ref else null
+	if scorecard_ui:
+		if scorecard_ui.is_connected("about_to_score", _on_about_to_score):
+			scorecard_ui.about_to_score.disconnect(_on_about_to_score)
+			print("[PinHeadPowerUp] Disconnected from about_to_score signal")
+	
 	# Unregister any active multiplier from ScoreModifierManager
 	if _is_score_modifier_manager_available():
 		var manager = _get_score_modifier_manager()
@@ -85,35 +102,23 @@ func remove(target) -> void:
 	dice_hand_ref = null
 	game_controller_ref = null
 
-func _on_score_assigned(section: Scorecard.Section, category: String, score: int) -> void:
-	print("\n=== PinHeadPowerUp Score Assigned ===")
-	print("[PinHeadPowerUp] Score assigned - Section:", section, "Category:", category, "Score:", score)
+func _on_about_to_score(section: Scorecard.Section, category: String, dice_values: Array[int]) -> void:
+	print("\n=== PinHeadPowerUp About To Score ===")
+	print("[PinHeadPowerUp] About to score - Section:", section, "Category:", category, "Dice:", dice_values)
 	
-	# Only apply the multiplier if we have a valid score and dice hand
-	if score <= 0:
-		print("[PinHeadPowerUp] Score is 0 or negative, skipping multiplier")
+	# Only apply the multiplier if we have valid dice
+	if dice_values.is_empty():
+		print("[PinHeadPowerUp] No dice values, skipping multiplier")
 		return
 	
-	if not dice_hand_ref:
-		push_error("[PinHeadPowerUp] No dice hand reference available")
-		return
-	
-	# Get all dice from the hand
-	var dice_array = dice_hand_ref.get_all_dice()
-	if dice_array.is_empty():
-		print("[PinHeadPowerUp] No dice in hand, skipping multiplier")
-		return
-	
-	# Pick a random dice and get its value as the multiplier
-	var random_dice = dice_array[randi() % dice_array.size()]
-	var multiplier = random_dice.value
+	# Pick a random dice value as the multiplier
+	var multiplier = dice_values[randi() % dice_values.size()]
 	last_multiplier = multiplier
 	
-	print("[PinHeadPowerUp] Randomly selected dice with value:", multiplier)
-	print("[PinHeadPowerUp] Original score:", score, "-> New score will be:", score * multiplier)
+	print("[PinHeadPowerUp] Randomly selected dice value:", multiplier)
+	print("[PinHeadPowerUp] This multiplier will be applied to the score calculation")
 	
-	# Register the multiplier with ScoreModifierManager
-	# This will be applied to the current scoring operation
+	# Register the multiplier with ScoreModifierManager BEFORE scoring happens
 	if _is_score_modifier_manager_available():
 		var manager = _get_score_modifier_manager()
 		if manager:
@@ -122,27 +127,43 @@ func _on_score_assigned(section: Scorecard.Section, category: String, score: int
 			manager.register_multiplier("pin_head", multiplier)
 			print("[PinHeadPowerUp] Registered multiplier of", multiplier, "with ScoreModifierManager")
 			
-			# Update statistics
-			total_multiplications += 1
-			var bonus_points = score * (multiplier - 1)  # Additional points gained
-			total_bonus_points += bonus_points
-			
 			# Update description
 			emit_signal("description_updated", id, get_current_description())
 			
 			# Update UI
 			if is_inside_tree():
 				_update_power_up_icons()
-			
-			# Clear the multiplier after a short delay to avoid affecting other scores
-			# Use a one-shot timer to remove the multiplier
-			await get_tree().create_timer(0.1).timeout
-			manager.unregister_multiplier("pin_head")
-			print("[PinHeadPowerUp] Cleared multiplier after scoring")
 		else:
 			push_error("[PinHeadPowerUp] Could not access ScoreModifierManager")
 	else:
 		push_error("[PinHeadPowerUp] ScoreModifierManager not available")
+
+func _on_score_assigned(section: Scorecard.Section, category: String, score: int) -> void:
+	print("\n=== PinHeadPowerUp Score Assigned (Stats Update) ===")
+	print("[PinHeadPowerUp] Score assigned - Section:", section, "Category:", category, "Score:", score)
+	
+	# Update statistics if we had applied a multiplier
+	if last_multiplier > 0:
+		total_multiplications += 1
+		var base_score = float(score) / float(last_multiplier) if last_multiplier > 0 else float(score)
+		var bonus_points = score - base_score
+		total_bonus_points += int(bonus_points)
+		
+		print("[PinHeadPowerUp] Estimated base score:", base_score, "Final score:", score, "Bonus:", bonus_points)
+		
+		# Update description
+		emit_signal("description_updated", id, get_current_description())
+		
+		# Update UI
+		if is_inside_tree():
+			_update_power_up_icons()
+	
+	# Clear the multiplier after scoring is complete
+	if _is_score_modifier_manager_available():
+		var manager = _get_score_modifier_manager()
+		if manager:
+			manager.unregister_multiplier("pin_head")
+			print("[PinHeadPowerUp] Cleared multiplier after scoring")
 
 func get_current_description() -> String:
 	var base_desc = "When scoring, picks a random dice value as multiplier"
@@ -205,6 +226,13 @@ func _on_tree_exiting() -> void:
 	if scorecard_ref:
 		if scorecard_ref.is_connected("score_assigned", _on_score_assigned):
 			scorecard_ref.score_assigned.disconnect(_on_score_assigned)
+	
+	# Disconnect from ScoreCardUI signal
+	var scorecard_ui = get_tree().get_first_node_in_group("game_controller")
+	if scorecard_ui:
+		scorecard_ui = scorecard_ui.score_card_ui
+		if scorecard_ui and scorecard_ui.is_connected("about_to_score", _on_about_to_score):
+			scorecard_ui.about_to_score.disconnect(_on_about_to_score)
 	
 	# Unregister from ScoreModifierManager
 	if _is_score_modifier_manager_available():

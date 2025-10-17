@@ -83,7 +83,7 @@
 [ext_resource type="Resource" uid="uid://c2dv7lqytpbu" path="res://Scripts/Debuff/TheDivisionDebuff.tres" id="82_division"]
 [ext_resource type="Resource" uid="uid://dk8q4n7m1vbfs" path="res://Scripts/PowerUps/GreenWithEnvy.tres" id="83_green_monster"]
 [ext_resource type="Resource" path="res://Scripts/PowerUps/WildDotsPowerUp.tres" id="99_wild_dots"]
-[ext_resource type="Resource" path="res://Scripts/PowerUps/PinHeadPowerUp.tres" id="100_pin_head"]
+[ext_resource type="Resource" uid="uid://c2kn4gf8x7lwm" path="res://Scripts/PowerUps/PinHeadPowerUp.tres" id="100_pin_head"]
 [ext_resource type="PackedScene" uid="uid://ccn3jkgrhqwqe" path="res://Scenes/UI/StatisticsPanel.tscn" id="999_stats"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wtptv"]
