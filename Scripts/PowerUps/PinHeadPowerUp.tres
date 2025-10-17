@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://c2kn4gf8x7lwm"]
+
+[ext_resource type="Texture2D" uid="uid://chnl0hqqr66pv" path="res://Resources/Art/Powerups/PowerUp_test6.png" id="1_pin_head_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" uid="uid://bg8hq7kv0lfs" path="res://Scenes/PowerUp/PinHeadPowerUp.tscn" id="2_pin_head_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "pin_head"
+display_name = "Pin Head"
+description = "When scoring, picks a random dice value as multiplier"
+icon = ExtResource("1_pin_head_icon")
+scene = ExtResource("2_pin_head_scene")
+price = 275
+rarity = "rare"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

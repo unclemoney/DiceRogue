@@ -54,3 +54,4 @@ For example:
 should become:
   Select-String -Path file.txt -Pattern "pattern"
 - Headless mode pwsh command: "C:\Users\danie\OneDrive\Documents\GODOT\Godot_v4.4.1-stable_win64.exe" --path . --headless --editor-pid 1 --quit
+- & "C:\Users\danie\OneDrive\Documents\GODOT\Godot_v4.4.1-stable_win64.exe" --path "c:\Users\danie\Documents\dicerogue\DiceRogue" --headless --editor-pid 1 --quit

@@ -161,7 +161,7 @@ func _on_game_start() -> void:
 	grant_consumable("poor_house")
 	#apply_debuff("the_division")
 	#activate_challenge("300pts_no_debuff")
-	grant_power_up("wild_dots")
+	grant_power_up("pin_head")
 	if round_manager:
 		round_manager.start_game()
 
@@ -270,7 +270,7 @@ func _activate_power_up(power_up_id: String) -> void:
 		return
 	
 	# Connect to description_updated signal if the power-up has one
-	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus" or power_up_id == "step_by_step" or power_up_id == "perfect_strangers" or power_up_id == "green_monster" or power_up_id == "red_power_ranger" or power_up_id == "wild_dots":
+	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus" or power_up_id == "step_by_step" or power_up_id == "perfect_strangers" or power_up_id == "green_monster" or power_up_id == "red_power_ranger" or power_up_id == "wild_dots" or power_up_id == "pin_head":
 		# Disconnect first to avoid duplicates
 		if pu.is_connected("description_updated", _on_power_up_description_updated):
 			pu.description_updated.disconnect(_on_power_up_description_updated)
@@ -368,6 +368,12 @@ func _activate_power_up(power_up_id: String) -> void:
 				print("[GameController] Applied RedPowerRangerPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for RedPowerRangerPowerUp")
+		"pin_head":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied PinHeadPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for PinHeadPowerUp")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -459,6 +465,9 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"red_power_ranger":
 			print("[GameController] Removing red_power_ranger PowerUp")
 			pu.remove(scorecard)
+		"pin_head":
+			print("[GameController] Removing pin_head PowerUp")
+			pu.remove(scorecard)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -498,6 +507,8 @@ func revoke_power_up(power_up_id: String) -> void:
 			"green_monster":
 				pu.remove(self)
 			"red_power_ranger":
+				pu.remove(scorecard)
+			"pin_head":
 				pu.remove(scorecard)
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself
