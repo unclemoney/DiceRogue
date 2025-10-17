@@ -23,6 +23,7 @@ ScoreEvaluatorSingleton="*res://Scripts/Core/score_evaluator.gd"
 PlayerEconomy="*res://Scripts/Managers/PlayerEconomy.gd"
 RollStats="*res://Scripts/Core/roll_stats.gd"
 DiceColorManager="*res://Scripts/Managers/dice_color_manager.gd"
+Statistics="*res://Scripts/Managers/statistics_manager.gd"
 GDAIMCPRuntime="*res://addons/gdai-mcp-plugin-godot/gdai_mcp_runtime.gd"
 
 [display]

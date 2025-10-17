@@ -23,6 +23,7 @@ func _ready() -> void:
 func add_money(amount: int) -> void:
 	print("[PlayerEconomy] Adding money:", amount)
 	money += amount
+	_update_statistics()
 	print("[PlayerEconomy] Emitting money_changed:", money)
 	print("[PlayerEconomy] Instance ID:", self.get_instance_id())
 	emit_signal("money_changed", money)
@@ -34,6 +35,7 @@ func add_money(amount: int) -> void:
 func remove_money(amount: int) -> bool:
 	print("[PlayerEconomy] Removing money:", amount)
 	money -= amount
+	_update_statistics()
 	print("[PlayerEconomy] Emitting money_changed:", money)
 	print("[PlayerEconomy] Instance ID:", self.get_instance_id())
 	emit_signal("money_changed", money)
@@ -51,3 +53,11 @@ func can_afford(amount: int) -> bool:
 ## Returns the current money balance.
 func get_money() -> int:
 	return money
+
+## _update_statistics()
+##
+## Update the statistics manager with current money amount.
+func _update_statistics():
+	var stats = get_node_or_null("/root/Statistics")
+	if stats:
+		stats.current_money = money

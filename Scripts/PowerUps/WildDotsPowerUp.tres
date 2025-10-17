@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://wild_dots_tres"]
+
+[ext_resource type="Texture2D" uid="uid://icon" path="res://Resources/Art/Powerups/PowerUp_test2.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://powerupdata" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" uid="uid://scene" path="res://Scenes/PowerUp/WildDotsPowerUp.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "wild_dots"
+display_name = "Wild Dots"
+description = "Each locked die showing the max face increases the chance of rolling that face on remaining dice for the rest of the turn."
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 250
+rarity = "rare"
+metadata/_custom_type_script = "uid://powerupdata"

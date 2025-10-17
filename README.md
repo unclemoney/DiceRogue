@@ -84,6 +84,30 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
 
 ## Key Systems
 
+### Statistics System
+The **Statistics Manager** tracks comprehensive game metrics and player behavior:
+
+**Features:**
+- **Real-time Tracking**: Monitors all player actions including dice rolls, scoring, purchases, and item usage
+- **Categorized Metrics**: Core game stats, economic data, dice behavior, hand completions, and session metrics  
+- **Visual Dashboard**: Press **F10** to toggle statistics panel with tabbed interface
+- **Milestone Detection**: Automatic recognition and celebration of achievement thresholds
+- **Future Integration**: Designed for statistic-based power-ups, achievements, and dynamic difficulty
+
+**Key Statistics Tracked:**
+- **Game Metrics**: Total turns, rolls, rerolls, hands completed/failed, scoring percentage
+- **Economics**: Money earned/spent by category, efficiency ratios, current balance
+- **Dice Data**: Rolls by color, highest values, snake eyes count, lock behavior
+- **Hand Types**: Frequency of each Yahtzee category scored (ones through yahtzee)
+- **Items**: Purchases and usage counts for power-ups, consumables, and mods
+- **Session**: Play time, highest scores, scoring streaks, performance trends
+
+**Implementation:**
+- **Autoload Singleton**: `Statistics` - globally accessible for real-time tracking
+- **UI Panel**: `StatisticsPanel.tscn` - organized tabbed display with auto-refresh
+- **Integration Points**: Connected to dice rolling, scoring, shop purchases, and item usage
+- **API Design**: Simple increment/track methods with computed analytics
+
 ### Score Modifier System
 The `ScoreModifierManager` handles all score modifications:
 - **Additives**: Flat bonuses applied before multipliers
@@ -140,6 +164,7 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 - **UpperBonusMultPowerUp**: Multiplies upper section scores by bonus count
 - **YahtzeeBonusMultPowerUp**: Multiplies lower section scores by Yahtzee bonus count
 - **Chance520PowerUp**: +520 points when scoring Chance category
+- **RedPowerRangerPowerUp**: Gain +additive score for each red dice scored (cumulative across all hands)
 
 ### Economy PowerUps
 - **BonusMoneyPowerUp**: +$50 for each bonus achieved (Upper Section or Yahtzee bonuses)

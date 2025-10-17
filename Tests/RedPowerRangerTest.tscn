@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dvo5qhv8bj2ko"]
+
+[ext_resource type="Script" path="res://Tests/red_power_ranger_test.gd" id="1_test"]
+
+[node name="RedPowerRangerTest" type="Node"]
+script = ExtResource("1_test")

@@ -5,8 +5,8 @@ signal max_rolls_changed(new_max: int)
 
 @export var id: String
 
-func apply(target) -> void:
-	push_error("PowerUp.apply() must be overridden")
+func apply(_target) -> void:
+	pass
 
-func remove(target) -> void:
+func remove(_target) -> void:
 	pass

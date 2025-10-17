@@ -1,7 +1,7 @@
 extends Area2D
 class_name Dice
 
-const DiceColor = preload("res://Scripts/Core/dice_color.gd")
+const DiceColorClass = preload("res://Scripts/Core/dice_color.gd")
 
 signal rolled(value: int)
 signal selected(dice: Dice)
@@ -16,8 +16,12 @@ var _lock_shader_enabled := true
 @export var is_locked: bool = false
 
 @export var dice_data: DiceData
+
 var value: int = 1
-var color: DiceColor.Type = DiceColor.Type.NONE
+var color: DiceColorClass.Type = DiceColorClass.Type.NONE
+
+# Signal for when this die is locked
+signal die_locked(die: Dice)
 
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var dice_combined_shader := load("res://Scripts/Shaders/dice_combined_effects.gdshader")
@@ -59,25 +63,43 @@ func _ready():
 		material.shader = preload("res://Scripts/Shaders/disabled_dice.gdshader")
 		material.set_shader_parameter("disabled", false)
 
+
 func roll() -> void:
 	if is_locked:
 		return
-		
 	if not dice_data:
 		push_error("[Dice] Cannot roll - no DiceData assigned!")
 		return
-		
-	# Generate value between 1 and number of sides
-	value = (randi() % dice_data.sides) + 1
-	
+
+	# Check for WildDots bias meta (probability 0.0 - 1.0 to force the highest face)
+	var bias: float = 0.0
+	if has_meta("wild_dots_bias"):
+		bias = float(get_meta("wild_dots_bias"))
+		remove_meta("wild_dots_bias")
+
+	# If bias triggers, force the highest face (e.g., 6 on d6)
+	if bias > 0.0 and randf() < bias:
+		value = dice_data.sides
+	else:
+		# Generate value between 1 and number of sides
+		value = (randi() % dice_data.sides) + 1
+
 	# Assign color based on random chance (if colors are enabled)
 	_assign_random_color()
-	
-	print("[Dice] Rolling", dice_data.display_name, "- got:", value, "color:", DiceColor.get_color_name(color))
-	
+	print("[Dice] Rolling", dice_data.display_name, "- got:", value, "color:", DiceColorClass.get_color_name(color))
 	emit_signal("rolled", value)
 	animate_roll()
 	update_visual()
+
+## Lock this die and emit die_locked signal
+func lock() -> void:
+	if not _can_process_input:
+		print("[Dice] Cannot lock - input disabled")
+		return
+
+	is_locked = true
+	update_visual()  # Use update_visual to handle shader state
+	emit_signal("die_locked", self)
 
 func set_dice_input_enabled(enabled: bool) -> void:
 	_can_process_input = enabled
@@ -171,13 +193,7 @@ func animate_entry(from_position: Vector2, duration := 0.4):
 		.set_trans(Tween.TRANS_BOUNCE)\
 		.set_ease(Tween.EASE_OUT)
 
-func lock() -> void:
-	if not _can_process_input:
-		print("[Dice] Cannot lock - input disabled")
-		return
-		
-	is_locked = true
-	update_visual()  # Use update_visual to handle shader state
+
 
 func unlock() -> void:
 	is_locked = false

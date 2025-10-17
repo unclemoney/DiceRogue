@@ -7,6 +7,8 @@ const DiceColorClass = preload("res://Scripts/Core/dice_color.gd")
 signal roll_started
 signal roll_complete
 signal dice_spawned
+# Signal for when a die is locked
+signal die_locked(die)
 
 @export var roll_delay: float = 0.1
 @export var roll_duration: float = 0.5
@@ -81,6 +83,9 @@ func spawn_dice() -> void:
 		if die:
 			die.dice_data = default_dice_data
 			add_child(die)
+			# Connect die's lock signal to re-emit at DiceHand level
+			if not die.is_connected("die_locked", Callable(self, "_on_child_die_locked")):
+				die.die_locked.connect(Callable(self, "_on_child_die_locked"))
 			die.home_position = start_position + Vector2(i * spacing, 0)
 			die.position = Vector2(-200, die.home_position.y)
 			die.animate_entry(die.position)
@@ -88,6 +93,9 @@ func spawn_dice() -> void:
 			print("[DiceHand] Spawned die", i + 1, "with", default_dice_data.sides, "sides")
 
 	emit_signal("dice_spawned")
+
+	# Re-emit child's die_locked as DiceHand-level die_locked signal
+	# (some power-ups listen on DiceHand for lock events)
 
 	# Only disable dice if lock debuff is active
 	var lock_debuff = get_tree().get_first_node_in_group("debuffs") as LockDiceDebuff
@@ -123,6 +131,9 @@ func roll_all() -> void:
 
 	_update_results()
 	emit_signal("roll_complete")
+
+func _on_child_die_locked(die: Dice) -> void:
+	emit_signal("die_locked", die)
 
 
 ## _update_results()
@@ -166,6 +177,9 @@ func update_dice_count() -> void:
 		for i in range(current_count, dice_count):
 			var die = dice_scene.instantiate() as Dice
 			add_child(die)
+			# Connect die lock signal
+			if not die.is_connected("die_locked", Callable(self, "_on_child_die_locked")):
+				die.die_locked.connect(Callable(self, "_on_child_die_locked"))
 			die.home_position = start_position + Vector2(i * spacing, 0)
 			die.position = Vector2(-200, die.home_position.y)
 			die.animate_entry(die.position)
@@ -184,6 +198,7 @@ func enable_all_dice() -> void:
 			die.set_lock_shader_enabled(true)
 			print("[DiceHand] Enabled die:", die.name)
 
+
 func disable_all_dice() -> void:
 	print("[DiceHand] Disabling all dice")
 	for die in get_children():
@@ -192,6 +207,12 @@ func disable_all_dice() -> void:
 			die.set_dice_input_enabled(false)
 			if die.has_method("set_lock_shader_enabled"):
 				die.set_lock_shader_enabled(false)
+
+## Lock a specific die and emit die_locked signal
+func lock_die(die: Dice) -> void:
+	if die is Dice and not die.is_locked:
+		die.lock()
+		emit_signal("die_locked", die)
 
 func roll_unlocked_dice() -> void:
 	var unlocked = get_unlocked_dice()

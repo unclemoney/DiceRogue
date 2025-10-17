@@ -44,6 +44,7 @@ const GREEN_ENVY_CONSUMABLE_DEF := preload("res://Scripts/Consumable/GreenEnvyCo
 @export var challenge_container_path: NodePath  = ^"ChallengeContainer"
 @export var round_manager_path: NodePath        = ^"../RoundManager"
 @export var crt_manager_path: NodePath          = ^"../CRTManager"
+@export var statistics_panel_path: NodePath     = ^"../StatisticsPanel"
 
 @onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
 @onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
@@ -66,6 +67,7 @@ const GREEN_ENVY_CONSUMABLE_DEF := preload("res://Scripts/Consumable/GreenEnvyCo
 @onready var challenge_container: Node     = get_node(challenge_container_path)
 @onready var round_manager: RoundManager   = get_node_or_null(round_manager_path)
 @onready var crt_manager: CRTManager       = get_node_or_null(crt_manager_path)
+@onready var statistics_panel: Control = get_node_or_null(statistics_panel_path)
 
 const STARTING_POWER_UP_IDS := ["extra_dice", "extra_rolls"]
 
@@ -157,7 +159,7 @@ func _on_game_start() -> void:
 	#grant_consumable("power_up_shop_num")
 	#apply_debuff("the_division")
 	#activate_challenge("300pts_no_debuff")
-	grant_power_up("green_monster")
+	grant_power_up("wild_dots")
 	if round_manager:
 		round_manager.start_game()
 
@@ -266,7 +268,7 @@ func _activate_power_up(power_up_id: String) -> void:
 		return
 	
 	# Connect to description_updated signal if the power-up has one
-	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus" or power_up_id == "step_by_step" or power_up_id == "perfect_strangers" or power_up_id == "green_monster":
+	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus" or power_up_id == "step_by_step" or power_up_id == "perfect_strangers" or power_up_id == "green_monster" or power_up_id == "red_power_ranger" or power_up_id == "wild_dots":
 		# Disconnect first to avoid duplicates
 		if pu.is_connected("description_updated", _on_power_up_description_updated):
 			pu.description_updated.disconnect(_on_power_up_description_updated)
@@ -312,6 +314,8 @@ func _activate_power_up(power_up_id: String) -> void:
 		"extra_dice":
 			pu.apply(dice_hand)
 			enable_debuff("lock_dice")
+		"wild_dots":
+			pu.apply(dice_hand)
 		"yahtzee_bonus_mult":
 			if scorecard:
 				pu.apply(scorecard)
@@ -356,6 +360,12 @@ func _activate_power_up(power_up_id: String) -> void:
 		"green_monster":
 			pu.apply(self)
 			print("[GameController] Applied GreenMonsterPU")
+		"red_power_ranger":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied RedPowerRangerPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for RedPowerRangerPowerUp")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -409,6 +419,9 @@ func _deactivate_power_up(power_up_id: String) -> void:
 			disable_debuff("lock_dice")
 		"extra_rolls":
 			pu.remove(turn_tracker)
+		"wild_dots":
+			print("[GameController] Removing wild_dots PowerUp")
+			pu.remove(dice_hand)
 		"foursome":
 			print("[GameController] Removing foursome PowerUp")
 			pu.remove(scorecard)
@@ -427,6 +440,8 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"money_multiplier":
 			print("[GameController] Removing money_multiplier PowerUp")
 			pu.remove(scorecard)
+		"wild_dots":
+			pu.remove(dice_hand)
 		"full_house_bonus":
 			print("[GameController] Removing full_house_bonus PowerUp")
 			pu.remove(self)
@@ -439,6 +454,9 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"green_monster":
 			print("[GameController] Removing green_monster PowerUp")
 			pu.remove(self)
+		"red_power_ranger":
+			print("[GameController] Removing red_power_ranger PowerUp")
+			pu.remove(scorecard)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -477,6 +495,8 @@ func revoke_power_up(power_up_id: String) -> void:
 				pu.remove(scorecard)
 			"green_monster":
 				pu.remove(self)
+			"red_power_ranger":
+				pu.remove(scorecard)
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself
 				pu.remove(pu)
@@ -717,6 +737,17 @@ func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 	if not scorecard:
 		push_error("No scorecard reference found")
 		return
+	
+	# Track statistics for scoring
+	var stats = get_node_or_null("/root/Statistics")
+	if stats:
+		stats.increment_turns()
+		if _score > 0:
+			stats.record_hand_scored(_category, _score)
+			stats.add_money_earned(_score)
+			stats.update_highest_score(_score)
+		else:
+			stats.record_failed_hand()
 
 	# Show randomizer effect after scoring
 	if active_power_ups.has("randomizer"):
@@ -1296,11 +1327,31 @@ func _on_game_button_dice_rolled(dice_values: Array) -> void:
 	
 	# Track roll statistics
 	RollStats.track_roll()
+	var stats = get_node_or_null("/root/Statistics")
+	if stats:
+		stats.increment_rolls()
+	
+	# Track individual dice values and colors if available
+	if dice_hand and stats:
+		for i in range(dice_values.size()):
+			if i < dice_hand.dice_list.size():
+				var die = dice_hand.dice_list[i]
+				var color = "white"  # Default color
+				if die.has_method("get_color"):
+					var color_type = die.get_color()
+					color = DiceColor.get_color_name(color_type)
+				stats.track_dice_roll(color, dice_values[i])
+	
+	# Check for snake eyes (all ones)
+	if stats:
+		stats.check_snake_eyes(dice_values)
 	
 	# Check if we can afford to roll (for costly_roll debuff)
 	if is_debuff_active("costly_roll"):
 		var cost = active_debuffs["costly_roll"].roll_cost
 		PlayerEconomy.remove_money(cost)
+		if stats:
+			stats.spend_money(cost, "debuff")
 		print("[GameController] Paid", cost, "coins to roll dice")
 	
 	# Update PowerUps that depend on dice values
@@ -1394,11 +1445,32 @@ func _on_mod_sold(mod_id: String, dice: Dice) -> void:
 		print("[GameController] Updated mod persistence map:", mod_persistence_map)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_F10:
+			_toggle_statistics_panel()
+	
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		# Check for outside clicks to hide mod sell buttons
 		if dice_hand:
 			for die in dice_hand.dice_list:
 				die.check_mod_outside_clicks(event.global_position)
+
+## _toggle_statistics_panel()
+## 
+## Toggle the visibility of the statistics panel.
+func _toggle_statistics_panel():
+	if statistics_panel:
+		statistics_panel.toggle_visibility()
+	else:
+		print("[GameController] ERROR: No StatisticsPanel reference found!")
+		# Try to find it manually
+		var manual_panel = get_node_or_null("../StatisticsPanel")
+		if manual_panel:
+			print("[GameController] Found StatisticsPanel manually at ../StatisticsPanel")
+			statistics_panel = manual_panel
+			statistics_panel.toggle_visibility()
+		else:
+			print("[GameController] Could not find StatisticsPanel anywhere")
 
 func _on_max_power_ups_reached() -> void:
 	print("[GameController] Maximum number of power-ups reached")

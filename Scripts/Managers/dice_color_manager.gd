@@ -57,7 +57,7 @@ func calculate_color_effects(dice_array: Array) -> Dictionary:
 				print("[DiceColorManager]   RED: +", dice_value, " additive (total: +", red_additive, ")")
 			DiceColorClass.Type.PURPLE:
 				purple_count += 1
-				purple_multiplier *= dice_value
+				purple_multiplier += dice_value # CHANGED FROM *= to +=
 				print("[DiceColorManager]   PURPLE: x", dice_value, " multiplier (total: x", purple_multiplier, ")")
 			DiceColorClass.Type.NONE:
 				print("[DiceColorManager]   NONE: No effect")
