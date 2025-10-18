@@ -114,3 +114,22 @@ metadata/_tab_index = 5
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+
+[node name="Details" type="ScrollContainer" parent="Panel/VBox/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_name = "Details"
+metadata/_tab_index = 6
+
+[node name="VBox" type="VBoxContainer" parent="Panel/VBox/TabContainer/Details"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="LogbookLabel" type="RichTextLabel" parent="Panel/VBox/TabContainer/Details/VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+fit_content = true
+scroll_following = true

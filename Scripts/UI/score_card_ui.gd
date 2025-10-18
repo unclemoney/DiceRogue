@@ -103,6 +103,7 @@ func bind_scorecard(sc: Scorecard):
 	
 	# Connect to score assignment signals for autoscoring
 	scorecard.score_assigned.connect(_on_score_assigned_from_scorecard)
+	scorecard.score_auto_assigned.connect(_on_score_auto_assigned)
 	scorecard.score_changed.connect(_on_score_changed_from_scorecard)
 
 	# Set scorecard in DiceResults
@@ -355,8 +356,14 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 	turn_scored = true
 	disable_all_score_buttons()
 	
+	# Create logbook entry before emitting hand_scored signal
+	_create_logbook_entry(section, category, values, score)
+	
 	# Emit signal for randomizer effect display
 	emit_signal("hand_scored")
+	
+	# Update ExtraInfo with recent logbook entries
+	update_extra_info_with_logbook()
 	
 	# Manually trigger score assignment signal for GameController
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
@@ -510,8 +517,15 @@ func handle_score_reroll(section: Scorecard.Section, category: String) -> void:
 	# Reset reroll state
 	reroll_active = false
 	disable_all_score_buttons()
+	
+	# Create logbook entry for reroll
+	_create_logbook_entry(section, category, values, score)
+	
 	emit_signal("hand_scored")
 	emit_signal("score_rerolled", section, category, score)
+	
+	# Update ExtraInfo with recent logbook entries
+	update_extra_info_with_logbook()
 
 func _on_yahtzee_bonus_achieved(_points: int) -> void:
 	# Extra visual feedback for bonus yahtzee
@@ -619,8 +633,14 @@ func _on_score_button_pressed(section: Scorecard.Section, category: String) -> v
 	turn_scored = true
 	disable_all_score_buttons()
 	
+	# Create logbook entry before emitting hand_scored signal
+	_create_logbook_entry(section, category, values, score)
+	
 	# Emit signal for randomizer effect display
 	emit_signal("hand_scored")
+	
+	# Update ExtraInfo with recent logbook entries
+	update_extra_info_with_logbook()
 	
 	# Manually trigger score assignment signal for GameController
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
@@ -705,6 +725,167 @@ func update_extra_info(info_text: String) -> void:
 			# Retry the animation with found label
 			update_extra_info(info_text)
 
+## update_extra_info_with_logbook()
+##
+## Update ExtraInfo with recent logbook entries from Statistics Manager
+func update_extra_info_with_logbook(entry_count: int = 3) -> void:
+	if not Statistics:
+		print("[ScoreCardUI] Warning: Statistics Manager not available")
+		return
+	
+	var recent_logs = Statistics.get_formatted_recent_logs(entry_count)
+	
+	if recent_logs.is_empty():
+		recent_logs = "[color=gray][i]No scoring history yet[/i][/color]"
+	else:
+		# Add formatting for better readability
+		var formatted_lines = recent_logs.split("\n")
+		var bbcode_lines: Array[String] = []
+		
+		for i in range(formatted_lines.size()):
+			var line = formatted_lines[i]
+			if line.strip_edges().is_empty():
+				continue
+			
+			# Add color coding based on recency (most recent = brightest)
+			var alpha = 1.0 - (i * 0.2)  # Fade older entries
+			alpha = max(alpha, 0.4)  # Don't go too faded
+			
+			# Color based on score effectiveness
+			var color = "white"
+			if "→" in line:
+				# Try to extract score info for color coding
+				if "=" in line:
+					var score_part = line.split("=")[-1].strip_edges()
+					var score_str = score_part.replace("pts", "").strip_edges()
+					var score = score_str.to_int()
+					if score >= 20:
+						color = "green"
+					elif score >= 10:
+						color = "yellow"
+					else:
+						color = "orange"
+			
+			bbcode_lines.append("[color=%s][alpha=%0.1f]%s[/alpha][/color]" % [color, alpha, line])
+		
+		recent_logs = "\n".join(bbcode_lines)
+	
+	if extra_info_label:
+		# Use existing animation system but with different formatting
+		_update_extra_info_no_center(recent_logs)
+	else:
+		print("[ScoreCardUI] Warning: ExtraInfo label not found for logbook update")
+		# Try to find it again
+		extra_info_label = get_node_or_null("ExtraInfo")
+		if extra_info_label:
+			_update_extra_info_no_center(recent_logs)
+
+## _update_extra_info_no_center()
+##
+## Internal method to update ExtraInfo without center alignment (for logbook entries)
+func _update_extra_info_no_center(info_text: String) -> void:
+	if extra_info_label:
+		# Reset any existing animations
+		if _extra_info_tween:
+			_extra_info_tween.kill()
+			_extra_info_tween = null
+		
+		# Set text without center alignment for better log readability
+		extra_info_label.text = info_text
+		extra_info_label.modulate = Color(1, 1, 1, 0)
+		extra_info_label.scale = Vector2(0.8, 0.8)  # Slightly smaller for logs
+		extra_info_label.visible = true
+		
+		# Gentler animation for logs
+		_extra_info_tween = create_tween()
+		
+		# Fade in and scale up
+		_extra_info_tween.parallel().tween_property(extra_info_label, "modulate:a", 1.0, 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		_extra_info_tween.parallel().tween_property(extra_info_label, "scale", Vector2(1.0, 1.0), 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		
+		# Stay visible longer for logs (8 seconds instead of 5)
+		_extra_info_tween.tween_interval(8.0)
+		
+		# Fade out
+		_extra_info_tween.tween_property(extra_info_label, "modulate:a", 0.0, 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		
+		# Hide when done
+		_extra_info_tween.tween_callback(func(): extra_info_label.visible = false)
+		
+		print("[ScoreCardUI] Updated ExtraInfo with logbook entries")
+
+## _create_logbook_entry()
+##
+## Create and log a detailed entry for the hand that was just scored
+func _create_logbook_entry(section: Scorecard.Section, category: String, dice_values: Array[int], final_score: int) -> void:
+	if not Statistics:
+		print("[ScoreCardUI] Warning: Statistics Manager not available for logbook")
+		return
+	
+	# Extract dice information from DiceResults
+	var dice_colors: Array[String] = []
+	var dice_mods: Array[String] = []
+	
+	if DiceResults and DiceResults.dice_refs and DiceResults.dice_refs.size() > 0:
+		for dice in DiceResults.dice_refs:
+			if dice and dice is Dice:
+				# Get color name
+				var color_name = DiceColor.get_color_name(dice.color).to_lower()
+				dice_colors.append(color_name)
+				
+				# Get active mods (if any)
+				var dice_mod_names: Array[String] = []
+				if dice.active_mods and dice.active_mods.size() > 0:
+					for mod_id in dice.active_mods.keys():
+						var mod = dice.active_mods[mod_id]
+						if mod and mod.has_method("get_name"):
+							dice_mod_names.append(mod.get_name())
+						else:
+							dice_mod_names.append(mod_id)
+				
+				if dice_mod_names.size() > 0:
+					dice_mods.append(",".join(dice_mod_names))
+				else:
+					dice_mods.append("")
+	else:
+		# Fallback - no dice references available
+		for i in range(dice_values.size()):
+			dice_colors.append("none")
+			dice_mods.append("")
+	
+	# Get active consumables and powerups from game state
+	var active_consumables: Array[String] = []
+	var active_powerups: Array[String] = []
+	
+	# TODO: Add proper integration with PowerUp and Consumable managers
+	# For now, we'll leave these empty but the structure is in place
+	
+	# Calculate base score (score before modifiers)
+	# For now, assume final_score is the base score - this will be enhanced
+	# when we add proper modifier tracking
+	var base_score = final_score
+	var modifier_effects: Array[Dictionary] = []
+	
+	# TODO: Track modifier effects as they are applied
+	# This will be expanded when PowerUps, Consumables, and Mods are integrated
+	
+	# Convert section enum to string
+	var section_string = "upper" if section == Scorecard.Section.UPPER else "lower"
+	
+	# Create the logbook entry
+	Statistics.log_hand_scored(
+		dice_values,
+		dice_colors,
+		dice_mods,
+		category,
+		section_string,
+		active_consumables,
+		active_powerups,
+		base_score,
+		modifier_effects,
+		final_score
+	)
+
 ## activate_any_score_mode()
 ##
 ## Activates the AnyScore consumable mode, allowing scoring in any open category
@@ -773,7 +954,14 @@ func handle_any_score(section: Scorecard.Section, category: String) -> void:
 	# Reset any score mode
 	any_score_active = false
 	disable_all_score_buttons()
+	
+	# Create logbook entry for AnyScore usage
+	_create_logbook_entry(section, category, dice_values, score)
+	
 	emit_signal("hand_scored")
+	
+	# Update ExtraInfo with recent logbook entries
+	update_extra_info_with_logbook()
 	
 	print("[ScoreCardUI] AnyScore completed for", category)
 
@@ -808,6 +996,23 @@ func _on_score_assigned_from_scorecard(section: Scorecard.Section, category: Str
 	# NOTE: Do NOT emit hand_scored signal here for autoscoring
 	# GameButtonUI handles roll button state directly in _on_next_turn_button_pressed()
 	# Emitting hand_scored would disable the roll button prematurely
+
+## _on_score_auto_assigned(section, category, score)
+##
+## Called when the Scorecard emits score_auto_assigned signal (specifically for autoscoring)
+## Creates logbook entries for automatically scored hands
+func _on_score_auto_assigned(section: Scorecard.Section, category: String, score: int) -> void:
+	# Get current dice values for the logbook entry
+	var dice_values: Array[int] = []
+	if DiceResults and DiceResults.values:
+		dice_values = DiceResults.values.duplicate()
+	
+	# Create logbook entry for the auto-scored hand
+	if dice_values.size() > 0:
+		_create_logbook_entry(section, category, dice_values, score)
+	
+	# Update ExtraInfo with recent logbook entries
+	update_extra_info_with_logbook()
 	
 	# Notify GameController just like manual scoring does
 	var game_controller = get_tree().get_first_node_in_group("game_controller")

@@ -5,8 +5,11 @@ extends Node
 ## Singleton that tracks all game statistics and metrics.
 ## Accessible globally as "Statistics" autoload.
 
+const LogEntry = preload("res://Scripts/Core/LogEntry.gd")
+
 signal milestone_reached(milestone_name: String, value: int)
 signal new_record_set(statistic_name: String, new_value)
+signal logbook_entry_added(entry: LogEntry)
 
 # Core Game Metrics
 var total_turns: int = 0
@@ -61,6 +64,14 @@ var current_streak: int = 0
 
 # Internal tracking
 var _last_update_time: float = 0.0
+
+# Logbook System
+var logbook: Array[LogEntry] = []
+var max_logbook_entries: int = 1000
+var show_detailed_logs: bool = true
+var auto_clear_extrainfo: bool = true
+var extrainfo_display_count: int = 3
+var save_logs_to_file: bool = false
 
 ## _ready()
 ## 
@@ -388,7 +399,217 @@ func reset_statistics():
 	current_streak = 0
 	
 	_initialize_dice_color_tracking()
+	logbook.clear()
 	print("Statistics reset")
+
+## log_hand_scored()
+## 
+## Create a detailed log entry for a scored hand with all relevant information.
+func log_hand_scored(
+	dice_values: Array[int],
+	dice_colors: Array[String] = [],
+	dice_mods: Array[String] = [],
+	category: String = "",
+	section: String = "",
+	consumables: Array[String] = [],
+	powerups: Array[String] = [],
+	base_score: int = 0,
+	effects: Array[Dictionary] = [],
+	final_score: int = 0
+) -> void:
+	var entry = LogEntry.new(
+		dice_values,
+		dice_colors,
+		dice_mods,
+		category,
+		section,
+		consumables,
+		powerups,
+		base_score,
+		effects,
+		final_score,
+		total_turns
+	)
+	
+	logbook.append(entry)
+	logbook_entry_added.emit(entry)
+	
+	# Manage logbook size
+	if logbook.size() > max_logbook_entries:
+		logbook.pop_front()
+	
+	if save_logs_to_file:
+		_save_log_entry_to_file(entry)
+
+## get_recent_log_entries()
+## 
+## Get the most recent log entries for UI display.
+func get_recent_log_entries(count: int = -1) -> Array[LogEntry]:
+	if count == -1:
+		count = extrainfo_display_count
+	
+	var recent_count = min(count, logbook.size())
+	var result: Array[LogEntry] = []
+	
+	for i in range(recent_count):
+		var index = logbook.size() - 1 - i
+		result.append(logbook[index])
+	
+	return result
+
+## get_logbook_entries()
+## 
+## Get logbook entries with optional filtering.
+func get_logbook_entries(filter_dict: Dictionary = {}) -> Array[LogEntry]:
+	if filter_dict.is_empty():
+		return logbook.duplicate()
+	
+	var filtered: Array[LogEntry] = []
+	for entry in logbook:
+		if entry.matches_filter(filter_dict):
+			filtered.append(entry)
+	
+	return filtered
+
+## get_logbook_summary()
+## 
+## Get a summary of logbook statistics for the statistics panel.
+func get_logbook_summary() -> Dictionary:
+	var summary = {
+		"total_entries": logbook.size(),
+		"entries_with_modifiers": 0,
+		"average_score": 0.0,
+		"highest_score_entry": null,
+		"most_common_category": "",
+		"category_counts": {},
+		"modifier_usage": {
+			"powerups": 0,
+			"consumables": 0,
+			"mods": 0
+		}
+	}
+	
+	if logbook.is_empty():
+		return summary
+	
+	var total_score = 0
+	var session_highest_score = 0
+	var highest_entry = null
+	
+	for entry in logbook:
+		total_score += entry.final_score
+		
+		if entry.final_score > session_highest_score:
+			session_highest_score = entry.final_score
+			highest_entry = entry
+		
+		if entry.has_modifiers():
+			summary.entries_with_modifiers += 1
+		
+		# Count category usage
+		var category = entry.scorecard_category
+		if not summary.category_counts.has(category):
+			summary.category_counts[category] = 0
+		summary.category_counts[category] += 1
+		
+		# Count modifier types
+		if entry.powerups_applied.size() > 0:
+			summary.modifier_usage.powerups += 1
+		if entry.consumables_applied.size() > 0:
+			summary.modifier_usage.consumables += 1
+		if entry.dice_mods.size() > 0:
+			summary.modifier_usage.mods += 1
+	
+	summary.average_score = total_score / float(logbook.size())
+	summary.highest_score_entry = highest_entry
+	
+	# Find most common category
+	var max_count = 0
+	for category in summary.category_counts:
+		if summary.category_counts[category] > max_count:
+			max_count = summary.category_counts[category]
+			summary.most_common_category = category
+	
+	return summary
+
+## get_formatted_recent_logs()
+## 
+## Get formatted strings of recent log entries for ExtraInfo display.
+func get_formatted_recent_logs(count: int = -1) -> String:
+	var entries = get_recent_log_entries(count)
+	var lines: Array[String] = []
+	
+	for entry in entries:
+		lines.append(entry.formatted_log_line)
+	
+	return "\n".join(lines)
+
+## clear_logbook()
+## 
+## Clear all logbook entries (useful for testing or reset).
+func clear_logbook() -> void:
+	logbook.clear()
+	print("Logbook cleared")
+
+## export_logbook_to_file()
+## 
+## Export the entire logbook to a JSON file in user://logs/
+func export_logbook_to_file(filename: String = "") -> String:
+	if filename.is_empty():
+		var datetime = Time.get_datetime_dict_from_system()
+		filename = "logbook_%04d%02d%02d_%02d%02d%02d.json" % [
+			datetime.year, datetime.month, datetime.day,
+			datetime.hour, datetime.minute, datetime.second
+		]
+	
+	var export_data = {
+		"metadata": {
+			"export_timestamp": Time.get_unix_time_from_system(),
+			"game_version": "1.0", # TODO: Get from project settings
+			"total_entries": logbook.size(),
+			"session_stats": get_all_statistics()
+		},
+		"entries": []
+	}
+	
+	for entry in logbook:
+		export_data.entries.append(entry.to_dictionary())
+	
+	var dir_path = "user://logs/"
+	if not DirAccess.dir_exists_absolute(dir_path):
+		DirAccess.open("user://").make_dir("logs")
+	
+	var file_path = dir_path + filename
+	var file = FileAccess.open(file_path, FileAccess.WRITE)
+	if file:
+		file.store_string(JSON.stringify(export_data, "\t"))
+		file.close()
+		print("Logbook exported to: ", file_path)
+		return file_path
+	else:
+		print("Failed to export logbook to: ", file_path)
+		return ""
+
+## _save_log_entry_to_file()
+## 
+## Internal method to save individual log entries if file saving is enabled.
+func _save_log_entry_to_file(entry: LogEntry) -> void:
+	if not save_logs_to_file:
+		return
+	
+	var dir_path = "user://logs/"
+	if not DirAccess.dir_exists_absolute(dir_path):
+		DirAccess.open("user://").make_dir("logs")
+	
+	var datetime = Time.get_datetime_dict_from_system()
+	var filename = "session_%04d%02d%02d.log" % [datetime.year, datetime.month, datetime.day]
+	var file_path = dir_path + filename
+	
+	var file = FileAccess.open(file_path, FileAccess.WRITE)
+	if file:
+		file.seek_end()
+		file.store_line("[%s] %s" % [entry.get_timestamp_string(), entry.formatted_log_line])
+		file.close()
 
 ## _check_milestone(stat_name: String, value: int)
 ## 

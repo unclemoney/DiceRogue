@@ -13,6 +13,8 @@ class_name StatisticsPanel
 @onready var hands_tab: VBoxContainer = $Panel/VBox/TabContainer/Hands/VBox
 @onready var items_tab: VBoxContainer = $Panel/VBox/TabContainer/Items/VBox
 @onready var session_tab: VBoxContainer = $Panel/VBox/TabContainer/Session/VBox
+@onready var details_tab: VBoxContainer = $Panel/VBox/TabContainer/Details/VBox
+@onready var logbook_label: RichTextLabel = $Panel/VBox/TabContainer/Details/VBox/LogbookLabel
 
 var refresh_timer: Timer
 var stats_node: Node
@@ -83,7 +85,7 @@ func _populate_statistics_tabs():
 		print("[StatisticsPanel] ERROR: TabContainer not found!")
 		return
 	
-	if not core_tab or not economic_tab or not dice_tab or not hands_tab or not items_tab or not session_tab:
+	if not core_tab or not economic_tab or not dice_tab or not hands_tab or not items_tab or not session_tab or not details_tab:
 		print("[StatisticsPanel] ERROR: Missing tab containers!")
 		return
 	
@@ -93,6 +95,7 @@ func _populate_statistics_tabs():
 	_create_hands_tab()
 	_create_items_tab()
 	_create_session_tab()
+	_create_details_tab()
 
 ## _is_statistics_available() -> bool
 ## 
@@ -327,6 +330,7 @@ func _refresh_statistics():
 	if visible:
 		stats_node = get_node_or_null("/root/Statistics")  # Re-check availability
 		_populate_statistics_tabs()
+		_refresh_logbook_display()  # Also refresh the logbook
 
 ## _add_stat_label(parent: Node, label_text: String, value_text: String)
 ## 
@@ -370,3 +374,73 @@ func _clear_tab(tab: Node):
 	
 	for child in tab.get_children():
 		child.queue_free()
+
+## _create_details_tab()
+## 
+## Create the Details/Logbook tab content.
+func _create_details_tab():
+	# The logbook content is managed by the RichTextLabel directly
+	# We just need to populate it when the tab is visible
+	_refresh_logbook_display()
+
+## _refresh_logbook_display()
+## 
+## Update the logbook display with current entries.
+func _refresh_logbook_display():
+	if not logbook_label:
+		print("[StatisticsPanel] Warning: Logbook label not found")
+		return
+	
+	if not _is_statistics_available():
+		logbook_label.text = "[color=gray][i]Statistics Manager not available[/i][/color]"
+		return
+	
+	var logbook_entries = stats_node.get_logbook_entries()
+	
+	if logbook_entries.is_empty():
+		logbook_label.text = "[color=gray][i]No logbook entries yet. Start playing to see detailed scoring history![/i][/color]"
+		return
+	
+	# Create formatted display of all logbook entries
+	var content_lines: Array[String] = []
+	content_lines.append("[b][color=yellow]Complete Scoring History[/color][/b]")
+	content_lines.append("")
+	
+	# Reverse order to show most recent first
+	for i in range(logbook_entries.size() - 1, -1, -1):
+		var entry = logbook_entries[i]
+		
+		# Entry header with timestamp
+		var timestamp_str = entry.get_timestamp_string()
+		content_lines.append("[b][color=cyan]%s - %s[/color][/b]" % [timestamp_str, entry.formatted_log_line])
+		
+		# Detailed breakdown if modifiers exist
+		if entry.has_modifiers():
+			content_lines.append("  [color=lightblue]Details:[/color]")
+			content_lines.append("    Dice: %s" % str(entry.dice_values))
+			if entry.dice_colors.size() > 0:
+				content_lines.append("    Colors: %s" % str(entry.dice_colors))
+			if entry.dice_mods.size() > 0:
+				content_lines.append("    Mods: %s" % str(entry.dice_mods))
+			if entry.powerups_applied.size() > 0:
+				content_lines.append("    PowerUps: %s" % str(entry.powerups_applied))
+			if entry.consumables_applied.size() > 0:
+				content_lines.append("    Consumables: %s" % str(entry.consumables_applied))
+			if entry.calculation_summary != "":
+				content_lines.append("    [color=yellow]%s[/color]" % entry.calculation_summary)
+		
+		content_lines.append("")  # Blank line between entries
+	
+	# Add summary statistics at the bottom
+	var summary = stats_node.get_logbook_summary()
+	content_lines.append("[hr]")
+	content_lines.append("[b][color=yellow]Logbook Summary[/color][/b]")
+	content_lines.append("Total Entries: %d" % summary.total_entries)
+	content_lines.append("Entries with Modifiers: %d" % summary.entries_with_modifiers)
+	content_lines.append("Average Score: %.1f pts" % summary.average_score)
+	content_lines.append("Most Common Category: %s" % summary.most_common_category)
+	
+	logbook_label.text = "\n".join(content_lines)
+	
+	# Scroll to top to show most recent entries
+	logbook_label.scroll_to_line(0)

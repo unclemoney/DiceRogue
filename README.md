@@ -109,6 +109,48 @@ The **Statistics Manager** tracks comprehensive game metrics and player behavior
 - **Integration Points**: Connected to dice rolling, scoring, shop purchases, and item usage
 - **API Design**: Simple increment/track methods with computed analytics
 
+### Logbook System
+The **Logbook System** provides detailed tracking and debugging of all hand scoring events:
+
+**Features:**
+- **Comprehensive Logging**: Records every hand scored with complete context including dice values, colors, mods, consumables, and powerups
+- **Calculation Tracking**: Captures base scores, modifier effects, and final results with step-by-step breakdowns
+- **Real-time Display**: Shows recent scoring history in the ExtraInfo area of the ScoreCard UI
+- **Debug Support**: Enables detailed analysis of complex scoring interactions for development and balancing
+- **Export Capability**: Save complete session logs to JSON files for external analysis
+
+**Log Entry Contents:**
+- **Dice Information**: Values, colors, and active mods for each die
+- **Scoring Context**: Category selected, section (upper/lower), and base calculation
+- **Modifiers Applied**: PowerUps, Consumables, and their specific effects on the score
+- **Calculation Chain**: Step-by-step breakdown of how final score was calculated
+- **Formatted Display**: Human-readable one-line summaries for UI presentation
+
+**Usage Examples:**
+```gdscript
+# Basic logging (automatically called during scoring)
+Statistics.log_hand_scored(dice_values, dice_colors, dice_mods, 
+    "three_of_a_kind", "lower", consumables, powerups, 
+    base_score, effects, final_score)
+
+# Retrieve recent entries for display
+var recent_logs = Statistics.get_recent_log_entries(3)
+
+# Get formatted text for ExtraInfo display  
+var display_text = Statistics.get_formatted_recent_logs()
+
+# Export session logs for analysis
+Statistics.export_logbook_to_file("session_analysis.json")
+```
+
+**Integration Points:**
+- **ScoreCard UI**: Automatically displays recent log entries in ExtraInfo RichTextLabel
+- **Statistics Panel**: Full logbook browser with filtering and search (future)
+- **PowerUp/Consumable Systems**: Records modifier effects as they are applied
+- **Debug Tools**: Enables real-time scoring verification and edge case identification
+
+**File Location**: See `LOGBOOK.md` for detailed implementation specifications and future extension plans.
+
 ### Score Modifier System
 The `ScoreModifierManager` handles all score modifications:
 - **Additives**: Flat bonuses applied before multipliers
@@ -357,6 +399,7 @@ Resources/             # Art, audio, data
 These methods exist for compatibility but should not be used in new code:
 - `Scorecard.clear_score_multiplier()` - Use `ScoreModifierManager` instead
 - `ConsumableUI.get_consumable_icon()` - Use spine/fan methods instead
+- Do not run a taskkill command: taskkill /F /IM Godot_v4.4.1-stable_win64.exe
 
 ### Technical Debt
 - UI card construction has some duplication (base class available at `Scripts/UI/card_icon_base.gd`)
