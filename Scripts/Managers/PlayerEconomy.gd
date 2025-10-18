@@ -21,11 +21,11 @@ func _ready() -> void:
 ##
 ## Adds `amount` to the player's balance and emits `money_changed`.
 func add_money(amount: int) -> void:
-	print("[PlayerEconomy] Adding money:", amount)
+	#print("[PlayerEconomy] Adding money:", amount)
 	money += amount
 	_update_statistics()
-	print("[PlayerEconomy] Emitting money_changed:", money)
-	print("[PlayerEconomy] Instance ID:", self.get_instance_id())
+	#print("[PlayerEconomy] Emitting money_changed:", money)
+	#print("[PlayerEconomy] Instance ID:", self.get_instance_id())
 	emit_signal("money_changed", money)
 
 ## remove_money(amount) -> bool
@@ -45,7 +45,7 @@ func remove_money(amount: int) -> bool:
 ##
 ## Returns true if the player has at least `amount` money.
 func can_afford(amount: int) -> bool:
-	print("[PlayerEconomy] Checking affordability for:", amount)
+	#print("[PlayerEconomy] Checking affordability for:", amount)
 	return money >= amount
 
 ## get_money() -> int

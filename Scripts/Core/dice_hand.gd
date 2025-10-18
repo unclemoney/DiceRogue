@@ -325,19 +325,12 @@ func has_same_color_bonus() -> bool:
 ## Get dice color effects for scoring
 ## @return Dictionary with color effects from DiceColorManager
 func get_color_effects() -> Dictionary:
-	print("\n=== [DiceHand] GET_COLOR_EFFECTS ===")
-	print("[DiceHand] Dice count:", dice_list.size())
-	
 	var color_manager = _get_dice_color_manager()
 	if color_manager:
-		print("[DiceHand] DiceColorManager found, calculating effects...")
-		var effects = color_manager.calculate_color_effects(dice_list)
-		print("[DiceHand] Effects returned:", effects)
-		return effects
+		return color_manager.calculate_color_effects(dice_list)
 	else:
-		print("[DiceHand] ERROR: DiceColorManager not found!")
 		# Return empty effects if manager not found
-		var empty_effects = {
+		return {
 			"green_money": 0,
 			"red_additive": 0,
 			"purple_multiplier": 1.0,
@@ -346,33 +339,20 @@ func get_color_effects() -> Dictionary:
 			"red_count": 0,
 			"purple_count": 0
 		}
-		print("[DiceHand] Returning empty effects:", empty_effects)
-		return empty_effects
 
 ## Get DiceColorManager safely
 ## @return DiceColorManager node or null if not found
 func _get_dice_color_manager():
-	print("[DiceHand] Looking for DiceColorManager...")
-	
 	if get_tree():
 		var manager = get_tree().get_first_node_in_group("dice_color_manager")
 		if manager:
-			print("[DiceHand] Found DiceColorManager via group:", manager)
 			return manager
-		else:
-			print("[DiceHand] No DiceColorManager found in group 'dice_color_manager'")
 		
 		# Fallback: try to find autoload directly
 		var autoload_node = get_node_or_null("/root/DiceColorManager")
 		if autoload_node:
-			print("[DiceHand] Found DiceColorManager via autoload path:", autoload_node)
 			return autoload_node
-		else:
-			print("[DiceHand] No DiceColorManager found at autoload path")
-	else:
-		print("[DiceHand] No scene tree available")
 	
-	print("[DiceHand] ERROR: DiceColorManager not found anywhere!")
 	return null
 
 ## Force all dice to specific color (debug function)

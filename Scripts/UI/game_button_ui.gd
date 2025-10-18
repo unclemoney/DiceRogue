@@ -111,9 +111,12 @@ func _on_dice_roll_complete() -> void:
 func _on_next_turn_button_pressed() -> void:
 	# 1) Auto-score if needed
 	if not score_card_ui.turn_scored:
+		print("[GameButtonUI] About to trigger autoscoring...")
 		score_card_ui.scorecard.auto_score_best(dice_hand.get_current_dice_values())
 		score_card_ui.turn_scored = true
+		print("[GameButtonUI] Autoscoring completed, calling update_all()...")
 		score_card_ui.update_all()
+		print("[GameButtonUI] Manual update_all() completed")
 
 	# 2) Proceed with turn advancement
 	turn_tracker.start_new_turn()

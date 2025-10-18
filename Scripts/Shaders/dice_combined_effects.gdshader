@@ -24,21 +24,21 @@ void fragment() {
         // Calculate distance from edge
         float edge_dist = min(min(UV.x, 1.0 - UV.x), min(UV.y, 1.0 - UV.y));
         float edge_effect = 1.0 - smoothstep(0.0, 0.3, edge_dist);
-        
+
         // Apply green color effect
         if (green_color_strength > 0.0) {
             vec4 green_color = vec4(0.0, 1.0, 0.0, 1.0);
             float green_pulse = 0.8 + 0.2 * sin(TIME * 4.0);
             result = mix(result, green_color, green_color_strength * edge_effect * green_pulse * 0.6);
         }
-        
+
         // Apply red color effect
         if (red_color_strength > 0.0) {
             vec4 red_color = vec4(1.0, 0.0, 0.0, 1.0);
             float red_pulse = 0.8 + 0.2 * sin(TIME * 5.0);
             result = mix(result, red_color, red_color_strength * edge_effect * red_pulse * 0.6);
         }
-        
+
         // Apply purple color effect
         if (purple_color_strength > 0.0) {
             vec4 purple_color = vec4(0.8, 0.0, 1.0, 1.0);

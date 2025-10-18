@@ -125,34 +125,34 @@ func setup(data: Resource, type: String) -> void:
 	_update_button_state()
 	if not PlayerEconomy.is_connected("money_changed", _update_button_state):
 		PlayerEconomy.money_changed.connect(_update_button_state)
-	print("[ShopItem] Connected to PlayerEconomy.money_changed, Instance ID:", PlayerEconomy.get_instance_id())
-	print("[ShopItem] Setup complete for:", data.id)
+	#print("[ShopItem] Connected to PlayerEconomy.money_changed, Instance ID:", PlayerEconomy.get_instance_id())
+	#print("[ShopItem] Setup complete for:", data.id)
 
 func _update_button_state(_new_amount := 0) -> void:
-	print("[ShopItem] _update_button_state called")
-	print("[ShopItem] Updating button state for", item_id, "- Player money:", PlayerEconomy.money, ", Price:", price)
+	#print("[ShopItem] _update_button_state called")
+	#print("[ShopItem] Updating button state for", item_id, "- Player money:", PlayerEconomy.money, ", Price:", price)
 	if buy_button:
 		buy_button.disabled = not PlayerEconomy.can_afford(price)
-		print("[ShopItem] Buy button state updated - disabled:", buy_button.disabled)
+		#print("[ShopItem] Buy button state updated - disabled:", buy_button.disabled)
 
 func _on_buy_button_pressed() -> void:
-	print("[ShopItem] Buy button pressed for", item_id, "type:", item_type)
+	#print("[ShopItem] Buy button pressed for", item_id, "type:", item_type)
 	
 	# Pre-purchase validation for mods - check if mod limit is reached
 	if item_type == "mod":
 		var game_controller = get_tree().get_first_node_in_group("game_controller")
 		if game_controller and _has_reached_mod_limit(game_controller):
-			print("[ShopItem] Mod purchase blocked - limit reached (all dice have mods)")
+			#print("[ShopItem] Mod purchase blocked - limit reached (all dice have mods)")
 			buy_button.disabled = true
 			buy_button.text = "LIMIT REACHED"
 			return
 	
 	if PlayerEconomy.can_afford(price):
 		if PlayerEconomy.remove_money(price):
-			print("[ShopItem] Successfully purchased", item_id, "for", price)
-			print("[ShopItem] Emitting purchase signal for:", item_id, "type:", item_type)
+			#print("[ShopItem] Successfully purchased", item_id, "for", price)
+			#print("[ShopItem] Emitting purchase signal for:", item_id, "type:", item_type)
 			emit_signal("purchased", item_id, item_type)
-			print("[ShopItem] Purchase signal emitted")
+			#print("[ShopItem] Purchase signal emitted")
 			_update_button_state() # <-- Add this line to update button after purchase
 		else:
 			print("[ShopItem] Failed to remove money for purchase")

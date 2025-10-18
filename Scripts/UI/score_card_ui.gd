@@ -100,6 +100,10 @@ func bind_scorecard(sc: Scorecard):
 	scorecard.upper_section_completed.connect(_on_upper_section_completed)
 	scorecard.lower_section_completed.connect(_on_lower_section_completed)
 	scorecard.yahtzee_bonus_achieved.connect(_on_yahtzee_bonus_achieved)
+	
+	# Connect to score assignment signals for autoscoring
+	scorecard.score_assigned.connect(_on_score_assigned_from_scorecard)
+	scorecard.score_changed.connect(_on_score_changed_from_scorecard)
 
 	# Set scorecard in DiceResults
 	DiceResults.set_scorecard(scorecard)
@@ -278,9 +282,14 @@ func connect_buttons():
 			print("❌ Lower button not found for:", category, "→", button_path)
 
 func on_category_selected(section: Scorecard.Section, category: String) -> void:
+	print("\n=== SCORECARD UI CATEGORY SELECTED ===")
+	print("[ScoreCardUI] *** FUNCTION CALLED *** on_category_selected")
 	print("[ScoreCardUI] Category selected:", category)
+	print("[ScoreCardUI] Section:", section)
 	print("[ScoreCardUI] Double mode active:", is_double_mode)
 	print("[ScoreCardUI] Any score mode active:", any_score_active)
+	print("[ScoreCardUI] Reroll active:", reroll_active)
+	print("[ScoreCardUI] Turn scored:", turn_scored)
 	
 	# Check if we're in double mode
 	if is_double_mode:
@@ -465,6 +474,12 @@ func activate_score_reroll() -> void:
 		
 func handle_score_reroll(section: Scorecard.Section, category: String) -> void:
 	var values = DiceResults.values
+	
+	# Emit signal before scoring to allow PowerUps to prepare
+	print("[ScoreCardUI] Emitting about_to_score signal for reroll...")
+	about_to_score.emit(section, category, values)
+	print("[ScoreCardUI] about_to_score signal emitted for reroll")
+	
 	# Use scorecard.evaluate_category instead of direct ScoreEvaluator call
 	var score = scorecard.evaluate_category(category, values)
 	print("[ScoreCardUI] Reroll score calculated:", score)
@@ -721,6 +736,11 @@ func handle_any_score(section: Scorecard.Section, category: String) -> void:
 	var dice_values = DiceResults.values
 	print("[ScoreCardUI] AnyScore mode - scoring", category, "with dice:", dice_values)
 	
+	# Emit signal before scoring to allow PowerUps to prepare
+	print("[ScoreCardUI] Emitting about_to_score signal for AnyScore...")
+	about_to_score.emit(section, category, dice_values)
+	print("[ScoreCardUI] about_to_score signal emitted for AnyScore")
+	
 	# Verify the category is open (hasn't been scored yet)
 	var has_existing_score = false
 	match section:
@@ -775,3 +795,29 @@ func _calculate_best_score_for_dice(dice_values: Array[int]) -> int:
 			
 	print("[ScoreCardUI] Best possible score for dice", dice_values, "is:", best_score)
 	return best_score
+
+## _on_score_assigned_from_scorecard(section, category, score)
+##
+## Called when the Scorecard emits score_assigned signal (for autoscoring)
+func _on_score_assigned_from_scorecard(section: Scorecard.Section, category: String, score: int) -> void:
+	print("[ScoreCardUI] Score assigned from scorecard:", section, category, score)
+	
+	# Update UI to reflect the new score
+	update_all()
+	
+	# NOTE: Do NOT emit hand_scored signal here for autoscoring
+	# GameButtonUI handles roll button state directly in _on_next_turn_button_pressed()
+	# Emitting hand_scored would disable the roll button prematurely
+	
+	# Notify GameController just like manual scoring does
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller and game_controller.has_method("_on_score_assigned"):
+		game_controller._on_score_assigned(section, category, score)
+
+## _on_score_changed_from_scorecard(total_score)
+##
+## Called when the Scorecard emits score_changed signal
+func _on_score_changed_from_scorecard(total_score: int) -> void:
+	print("[ScoreCardUI] Score changed from scorecard. New total:", total_score)
+	# Update UI to reflect the new total
+	update_all()

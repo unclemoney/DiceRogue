@@ -66,64 +66,34 @@ func set_score(section: int, category: String, score: int) -> void:
 	print("[Scorecard] Setting", category, "to", score)
 	print("[Scorecard] Current total before change:", get_total_score())
 	
-	# Apply score modifiers from old system first
-	var modified_score = score
+	# Apply legacy score modifiers if any exist (for backward compatibility)
+	var final_score = score
 	for modifier in score_modifiers:
 		if modifier.has_method("modify_score"):
-			var result = modifier.modify_score(section, category, modified_score)
+			var result = modifier.modify_score(section, category, final_score)
 			if result != null:
-				modified_score = result
-				print("[Scorecard] Score modified by", modifier.name, "to:", modified_score)
+				final_score = result
+				print("[Scorecard] Score modified by legacy modifier", modifier.name, "to:", final_score)
 	
-	# Now apply ScoreModifierManager additives and multipliers
-	var modifier_manager = null
-	if Engine.has_singleton("ScoreModifierManager"):
-		modifier_manager = ScoreModifierManager
-	elif get_tree():
-		modifier_manager = get_tree().get_first_node_in_group("score_modifier_manager")
-		if not modifier_manager:
-			modifier_manager = get_tree().get_first_node_in_group("multiplier_manager")
+	# Note: Modern multipliers and additives are already applied in calculate_score_internal()
+	# set_score() just stores the final calculated score - no further modifications needed
 	
-	if modifier_manager:
-		var total_additive = 0
-		var total_multiplier = 1.0
-		
-		if modifier_manager.has_method("get_total_additive"):
-			total_additive = modifier_manager.get_total_additive()
-		total_multiplier = modifier_manager.get_total_multiplier()
-		
-		# Apply additive bonuses first, then multipliers
-		var score_with_additive = modified_score + total_additive
-		var final_modified_score = int(ceil(score_with_additive * total_multiplier))
-		
-		print("[Scorecard] Base score:", modified_score)
-		print("[Scorecard] Total additive bonus:", total_additive)
-		print("[Scorecard] Score after additive:", score_with_additive)
-		print("[Scorecard] Total multiplier:", total_multiplier)
-		print("[Scorecard] Score before rounding:", int(score_with_additive * total_multiplier))
-		print("[Scorecard] Final modified score (rounded up):", final_modified_score)
-		
-		modified_score = final_modified_score
-	else:
-		print("[Scorecard] Warning: No ScoreModifierManager found, using base score")
-	
-	if modified_score != score:
-		print("[Scorecard] Final modified score:", modified_score, "(was", score, ")")
+	print("[Scorecard] Storing final score:", final_score, "for category:", category)
 	
 	match section:
 		Section.UPPER:
 			if upper_scores.has(category):
 				var old_value = upper_scores[category]
-				upper_scores[category] = modified_score
-				print("[Scorecard] Updated upper score:", category, "from", old_value, "to", modified_score)
+				upper_scores[category] = final_score
+				print("[Scorecard] Updated upper score:", category, "from", old_value, "to", final_score)
 			else:
 				push_error("[Scorecard] Invalid upper category: " + category)
 				return
 		Section.LOWER:
 			if lower_scores.has(category):
 				var old_value = lower_scores[category]
-				lower_scores[category] = modified_score
-				print("[Scorecard] Updated lower score:", category, "from", old_value, "to", modified_score)
+				lower_scores[category] = final_score
+				print("[Scorecard] Updated lower score:", category, "from", old_value, "to", final_score)
 			else:
 				push_error("[Scorecard] Invalid lower category: " + category)
 				return
@@ -132,16 +102,16 @@ func set_score(section: int, category: String, score: int) -> void:
 	print("[Scorecard] New total score:", new_total)
 	
 	# Emit the score_assigned signal for tracking purposes
-	emit_signal("score_assigned", section, category, modified_score)
+	emit_signal("score_assigned", section, category, final_score)
 	
 	# Track statistics with RollStats singleton
-	_track_combination_stats(category, modified_score)
+	_track_combination_stats(category, final_score)
 	
 	# Check for upper bonus after updating scores
 	check_upper_bonus()
 	
 	# Check for bonus yahtzee if this was a yahtzee category
-	if category == "yahtzee" and modified_score == 50:
+	if category == "yahtzee" and final_score == 50:
 		# This is the initial yahtzee, bonus yahtzees will be handled separately
 		print("[Scorecard] Initial Yahtzee scored!")
 		RollStats.track_yahtzee_rolled()
@@ -186,7 +156,16 @@ func get_lower_section_total() -> int:
 	return total
 
 func on_category_selected(section: Section, category: String):
+	print("\n=== SCORECARD CATEGORY SELECTED ===")
+	print("[Scorecard] *** DIRECT SCORECARD CALL *** on_category_selected")
+	print("[Scorecard] Section:", section, "Category:", category)
+	
 	var values = DiceResults.values
+	print("[Scorecard] Dice values:", values)
+	
+	# Note: about_to_score signal should have been emitted by ScoreCardUI already
+	# Do NOT emit it again here to avoid double signal processing
+	
 	var score = calculate_score_internal(category, values, true)  # Apply money effects when actually scoring
 	set_score(section, category, score)
 
@@ -223,18 +202,31 @@ func auto_score_best(values: Array[int]) -> void:
 	
 	if best_category != "":
 		print("[Scorecard] Auto-scoring category:", best_category, "with score:", best_score)
-		var is_new_yahtzee = (best_category == "yahtzee" and best_score == 50)
 		
-		# Recalculate score with money effects when actually committing
-		var final_score_with_money = calculate_score_internal(best_category, values, true)
-		print("[Scorecard] Final score with money effects:", final_score_with_money)
+		# Emit about_to_score signal for PowerUps BEFORE calculating final score
+		var game_controller = get_tree().get_first_node_in_group("game_controller")
+		if game_controller and game_controller.score_card_ui:
+			print("[Scorecard] Emitting about_to_score signal for autoscoring:", best_category)
+			game_controller.score_card_ui.about_to_score.emit(best_section, best_category, values)
 		
-		set_score(best_section, best_category, final_score_with_money)
-		# This will trigger the bonus Yahtzee check if applicable
-		check_bonus_yahtzee(values, is_new_yahtzee)
-		emit_signal("score_auto_assigned", best_section, best_category, final_score_with_money)
+		# Defer the actual scoring to the next frame to allow PowerUps to register multipliers
+		call_deferred("_complete_auto_scoring", best_section, best_category, best_score, values)
 	else:
 		print("[Scorecard] No valid scoring categories found!")
+
+func _complete_auto_scoring(section: Section, category: String, original_score: int, values: Array[int]) -> void:
+	print("[Scorecard] Completing auto-scoring for:", category, "with original score:", original_score)
+	
+	var is_new_yahtzee = (category == "yahtzee" and original_score == 50)
+	
+	# Recalculate score with money effects and multipliers when actually committing
+	var final_score_with_money = calculate_score_internal(category, values, true)
+	print("[Scorecard] Final score with money effects and multipliers:", final_score_with_money)
+	
+	set_score(section, category, final_score_with_money)
+	# This will trigger the bonus Yahtzee check if applicable
+	check_bonus_yahtzee(values, is_new_yahtzee)
+	emit_signal("score_auto_assigned", section, category, final_score_with_money)
 
 func get_upper_section_final_total() -> int:
 	var subtotal = get_upper_section_total()
@@ -363,9 +355,6 @@ func calculate_score(category: String, dice_values: Array) -> int:
 ## @return int calculated score
 func calculate_score_internal(category: String, dice_values: Array, apply_money_effects: bool = false) -> int:
 	calculate_score_call_count += 1
-	print("\n=== [Scorecard] CALCULATE_SCORE_INTERNAL CALL #", calculate_score_call_count, " ===")
-	print("[Scorecard] Category:", category, "Apply Money:", apply_money_effects)
-	print("[Scorecard] Dice values:", dice_values)
 	
 	var base_score = _calculate_base_score(category, dice_values)
 	
@@ -374,7 +363,6 @@ func calculate_score_internal(category: String, dice_values: Array, apply_money_
 	var color_effects = {}
 	if dice_hand and dice_hand.has_method("get_color_effects"):
 		color_effects = dice_hand.get_color_effects()
-		print("[Scorecard] Dice color effects:", color_effects)
 	
 	# Get modifiers from ScoreModifierManager (fallback for compatibility)
 	var modifier_manager = null
@@ -408,28 +396,18 @@ func calculate_score_internal(category: String, dice_values: Array, apply_money_
 	var score_with_additive = base_score + total_additive_bonus
 	var final_score = int(score_with_additive * total_multiplier_bonus)
 	
-	print("[Scorecard] Base score:", base_score)
-	print("[Scorecard] Regular additive bonus:", total_additive)
-	print("[Scorecard] Dice color additive (red):", dice_color_additive)
-	print("[Scorecard] Total additive bonus:", total_additive_bonus)
-	print("[Scorecard] Score after additive:", score_with_additive)
-	print("[Scorecard] Regular multiplier:", total_multiplier)
-	print("[Scorecard] Dice color multiplier (purple):", dice_color_multiplier)
-	print("[Scorecard] Total multiplier:", total_multiplier_bonus)
-	print("[Scorecard] Final score after multiplier:", final_score)
-	print("[Scorecard] Dice color money bonus (green):", dice_color_money)
+	# Only print detailed calculation if there are modifiers applied
+	if apply_money_effects and (total_additive_bonus > 0 or total_multiplier_bonus != 1.0 or dice_color_money > 0):
+		print("[Scorecard] Scoring calculation for", category, ": Base:", base_score, "→ Final:", final_score)
+		if total_additive_bonus > 0:
+			print("  Additives: +", total_additive_bonus, " (Regular:", total_additive, " + Red:", dice_color_additive, ")")
+		if total_multiplier_bonus != 1.0:
+			print("  Multipliers: x", total_multiplier_bonus, " (Regular:", total_multiplier, " × Purple:", dice_color_multiplier, ")")
 	
 	# Apply money bonus from green dice ONLY if requested
 	if apply_money_effects and dice_color_money > 0:
-		var current_money = PlayerEconomy.get_money()
 		PlayerEconomy.add_money(dice_color_money)
-		var new_money = PlayerEconomy.get_money()
-		print("[Scorecard] APPLIED green money: $", dice_color_money)
-		print("[Scorecard] Money before: $", current_money, " after: $", new_money, " difference: $", new_money - current_money)
-	elif dice_color_money > 0:
-		print("[Scorecard] GREEN MONEY NOT APPLIED (apply_money_effects=false): $", dice_color_money)
-	else:
-		print("[Scorecard] No green money to add")
+		print("[Scorecard] Applied green money bonus: +$", dice_color_money)
 	
 	return final_score
 
@@ -439,11 +417,6 @@ func _calculate_base_score(category: String, dice_values: Array) -> int:
 	return ScoreEvaluatorSingleton.calculate_score_for_category(category, dice_values)
 
 func evaluate_category(category: String, values: Array[int]) -> int:
-	print("\n=== Scorecard Category Evaluation ===")
-	print("[Scorecard] Evaluating category:", category)
-	print("[Scorecard] Values array size:", values.size())
-	print("[Scorecard] Values:", values)
-	
 	# Additional safety check
 	if values.size() == 0:
 		print("[Scorecard] Warning: Empty values array!")

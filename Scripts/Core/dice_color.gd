@@ -13,9 +13,9 @@ enum Type {
 
 ## Color chance probabilities (1 in X chance)
 const COLOR_CHANCES = {
-	Type.GREEN: 10,   # 1 in 10 chance
-	Type.RED: 15,     # 1 in 15 chance  
-	Type.PURPLE: 50   # 1 in 50 chance
+	Type.GREEN: 25,   # 1 in 10 chance
+	Type.RED: 50,     # 1 in 15 chance  
+	Type.PURPLE: 88   # 1 in 50 chance
 }
 
 ## Color names for display

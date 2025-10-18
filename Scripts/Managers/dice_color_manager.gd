@@ -19,12 +19,7 @@ func _ready() -> void:
 ## @param dice_array: Array[Dice] dice to analyze for color effects
 ## @return Dictionary with money, additive, multiplier, and bonus information
 func calculate_color_effects(dice_array: Array) -> Dictionary:
-	print("\n=== [DiceColorManager] CALCULATING COLOR EFFECTS ===")
-	print("[DiceColorManager] Colors enabled:", colors_enabled)
-	print("[DiceColorManager] Dice array size:", dice_array.size())
-	
 	if not colors_enabled:
-		print("[DiceColorManager] Colors disabled - returning empty effects")
 		return _get_empty_effects()
 	
 	var green_count := 0
@@ -35,55 +30,39 @@ func calculate_color_effects(dice_array: Array) -> Dictionary:
 	var purple_multiplier := 1.0
 	
 	# Count colored dice and calculate base effects
-	print("[DiceColorManager] Analyzing dice colors...")
 	for i in range(dice_array.size()):
 		var dice = dice_array[i]
 		if not dice is Dice:
-			print("[DiceColorManager] Dice", i, "is not a Dice object:", dice)
 			continue
 		
 		var dice_color = dice.get_color()
 		var dice_value = dice.value
-		print("[DiceColorManager] Dice", i, "- Value:", dice_value, "Color:", DiceColorClass.get_color_name(dice_color))
 		
 		match dice_color:
 			DiceColorClass.Type.GREEN:
 				green_count += 1
 				green_money += dice_value
-				print("[DiceColorManager]   GREEN: +$", dice_value, " (total: $", green_money, ")")
 			DiceColorClass.Type.RED:
 				red_count += 1
 				red_additive += dice_value
-				print("[DiceColorManager]   RED: +", dice_value, " additive (total: +", red_additive, ")")
 			DiceColorClass.Type.PURPLE:
 				purple_count += 1
 				purple_multiplier += dice_value # CHANGED FROM *= to +=
-				print("[DiceColorManager]   PURPLE: x", dice_value, " multiplier (total: x", purple_multiplier, ")")
 			DiceColorClass.Type.NONE:
-				print("[DiceColorManager]   NONE: No effect")
-	
-	print("[DiceColorManager] Color counts - Green:", green_count, "Red:", red_count, "Purple:", purple_count)
+				pass  # No effect
 	
 	# Check for same color bonus (5+ of any color gets 2x)
 	var same_color_bonus := false
 	if green_count >= 5 or red_count >= 5 or purple_count >= 5:
 		same_color_bonus = true
-		print("[DiceColorManager] SAME COLOR BONUS TRIGGERED! (5+ of same color)")
 		
 		# Only apply bonus to the colors that actually exist
 		if green_count >= 5:
 			green_money *= 2
-			print("[DiceColorManager] Green bonus applied: $", green_money)
 		if red_count >= 5:
 			red_additive *= 2
-			print("[DiceColorManager] Red bonus applied: +", red_additive)
 		if purple_count >= 5:
 			purple_multiplier *= 2
-			print("[DiceColorManager] Purple bonus applied: x", purple_multiplier)
-		
-		print("[DiceColorManager] After bonus - Green: $", green_money, " Red: +", red_additive, " Purple: x", purple_multiplier)
-	else:
-		print("[DiceColorManager] No same color bonus (need 5+ of same color)")
 	
 	var effects = {
 		"green_money": green_money,
@@ -95,7 +74,12 @@ func calculate_color_effects(dice_array: Array) -> Dictionary:
 		"purple_count": purple_count
 	}
 	
-	print("[DiceColorManager] FINAL EFFECTS:", effects)
+	# Only print summary if there are actual effects
+	if green_count > 0 or red_count > 0 or purple_count > 0:
+		print("[DiceColorManager] Effects: Green(", green_count, "):$", green_money, " Red(", red_count, "):+", red_additive, " Purple(", purple_count, "):x", purple_multiplier)
+		if same_color_bonus:
+			print("[DiceColorManager] Same color bonus applied!")
+	
 	emit_signal("color_effects_calculated", green_money, red_additive, purple_multiplier, same_color_bonus)
 	return effects
 

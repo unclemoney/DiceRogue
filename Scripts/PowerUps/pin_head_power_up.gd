@@ -18,6 +18,7 @@ var game_controller_ref: GameController = null
 var total_multiplications: int = 0
 var total_bonus_points: int = 0
 var last_multiplier: int = 0
+var _processing_about_to_score: bool = false  # Prevent double processing
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -51,9 +52,33 @@ func apply(target) -> void:
 	# Connect to the ScoreCardUI's about_to_score signal (fires BEFORE scoring)
 	var scorecard_ui = game_controller_ref.score_card_ui if game_controller_ref else null
 	if scorecard_ui:
+		print("[PinHeadPowerUp] Found ScoreCardUI:", scorecard_ui)
+		print("[PinHeadPowerUp] ScoreCardUI type:", scorecard_ui.get_class())
+		
+		# Check if the signal exists
+		var signal_list = scorecard_ui.get_signal_list()
+		var has_about_to_score = false
+		for sig in signal_list:
+			if sig.name == "about_to_score":
+				has_about_to_score = true
+				print("[PinHeadPowerUp] Found about_to_score signal:", sig)
+				break
+		
+		if not has_about_to_score:
+			push_error("[PinHeadPowerUp] about_to_score signal does not exist on ScoreCardUI!")
+			return
+		
 		if not scorecard_ui.is_connected("about_to_score", _on_about_to_score):
 			scorecard_ui.about_to_score.connect(_on_about_to_score)
 			print("[PinHeadPowerUp] Connected to about_to_score signal")
+			
+			# Verify the connection was successful
+			if scorecard_ui.is_connected("about_to_score", _on_about_to_score):
+				print("[PinHeadPowerUp] Signal connection verified!")
+			else:
+				push_error("[PinHeadPowerUp] Signal connection failed!")
+		else:
+			print("[PinHeadPowerUp] Already connected to about_to_score signal")
 	else:
 		push_error("[PinHeadPowerUp] Could not find ScoreCardUI in GameController")
 		return
@@ -104,18 +129,35 @@ func remove(target) -> void:
 
 func _on_about_to_score(section: Scorecard.Section, category: String, dice_values: Array[int]) -> void:
 	print("\n=== PinHeadPowerUp About To Score ===")
+	print("[PinHeadPowerUp] *** SIGNAL RECEIVED *** about_to_score triggered!")
 	print("[PinHeadPowerUp] About to score - Section:", section, "Category:", category, "Dice:", dice_values)
+	print("[PinHeadPowerUp] PowerUp is in tree:", is_inside_tree())
+	print("[PinHeadPowerUp] PowerUp tree ready:", is_inside_tree() and get_tree() != null)
+	
+	# Prevent double processing of the same scoring event
+	if _processing_about_to_score:
+		print("[PinHeadPowerUp] Already processing about_to_score, skipping duplicate signal")
+		return
+	
+	_processing_about_to_score = true
 	
 	# Only apply the multiplier if we have valid dice
 	if dice_values.is_empty():
 		print("[PinHeadPowerUp] No dice values, skipping multiplier")
+		_processing_about_to_score = false
 		return
 	
 	# Pick a random dice value as the multiplier
 	var multiplier = dice_values[randi() % dice_values.size()]
+	
+	# Validate multiplier is within expected bounds (1-6 for standard dice)
+	if multiplier < 1 or multiplier > 6:
+		push_warning("[PinHeadPowerUp] Invalid dice value: " + str(multiplier) + " - using default of 2")
+		multiplier = 2
+	
 	last_multiplier = multiplier
 	
-	print("[PinHeadPowerUp] Randomly selected dice value:", multiplier)
+	print("[PinHeadPowerUp] Randomly selected dice value:", multiplier, "from dice:", dice_values)
 	print("[PinHeadPowerUp] This multiplier will be applied to the score calculation")
 	
 	# Register the multiplier with ScoreModifierManager BEFORE scoring happens
@@ -125,7 +167,7 @@ func _on_about_to_score(section: Scorecard.Section, category: String, dice_value
 			# First unregister any existing multiplier, then register the new one
 			manager.unregister_multiplier("pin_head")
 			manager.register_multiplier("pin_head", multiplier)
-			print("[PinHeadPowerUp] Registered multiplier of", multiplier, "with ScoreModifierManager")
+			print("[PinHeadPowerUp] *** MULTIPLIER REGISTERED *** Multiplier of", multiplier, "with ScoreModifierManager")
 			
 			# Update description
 			emit_signal("description_updated", id, get_current_description())
@@ -137,6 +179,13 @@ func _on_about_to_score(section: Scorecard.Section, category: String, dice_value
 			push_error("[PinHeadPowerUp] Could not access ScoreModifierManager")
 	else:
 		push_error("[PinHeadPowerUp] ScoreModifierManager not available")
+	
+	# Reset the processing flag after a short delay to allow for scoring
+	call_deferred("_reset_processing_flag")
+
+func _reset_processing_flag() -> void:
+	_processing_about_to_score = false
+	print("[PinHeadPowerUp] Reset processing flag, ready for next scoring event")
 
 func _on_score_assigned(section: Scorecard.Section, category: String, score: int) -> void:
 	print("\n=== PinHeadPowerUp Score Assigned (Stats Update) ===")
@@ -164,6 +213,10 @@ func _on_score_assigned(section: Scorecard.Section, category: String, score: int
 		if manager:
 			manager.unregister_multiplier("pin_head")
 			print("[PinHeadPowerUp] Cleared multiplier after scoring")
+	
+	# Ensure the processing flag is reset
+	_processing_about_to_score = false
+	print("[PinHeadPowerUp] Reset processing flag after score assigned")
 
 func get_current_description() -> String:
 	var base_desc = "When scoring, picks a random dice value as multiplier"
