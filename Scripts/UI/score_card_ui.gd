@@ -397,6 +397,9 @@ func update_best_hand_preview(dice_values: Array) -> void:
 	if not best_hand_label:
 		return
 
+	# Reset evaluation counter for preview calculations
+	ScoreEvaluatorSingleton.reset_evaluation_count()
+
 	var best_score := -1
 	var _best_section
 	var best_category := ""
@@ -853,26 +856,70 @@ func _create_logbook_entry(section: Scorecard.Section, category: String, dice_va
 			dice_colors.append("none")
 			dice_mods.append("")
 	
-	# Get active consumables and powerups from game state
-	var active_consumables: Array[String] = []
-	var active_powerups: Array[String] = []
+	# Get detailed scoring breakdown from scorecard
+	var scoring_breakdown = scorecard.calculate_score_with_breakdown(category, dice_values, false)
+	var base_score = scoring_breakdown.get("base_score", final_score)
+	var breakdown_info = scoring_breakdown.get("breakdown_info", {})
 	
-	# TODO: Add proper integration with PowerUp and Consumable managers
-	# For now, we'll leave these empty but the structure is in place
+	# Extract active PowerUps and Consumables from breakdown
+	var active_powerups = breakdown_info.get("active_powerups", [])
+	var active_consumables = breakdown_info.get("active_consumables", [])
 	
-	# Calculate base score (score before modifiers)
-	# For now, assume final_score is the base score - this will be enhanced
-	# when we add proper modifier tracking
-	var base_score = final_score
+	# Create modifier effects array for legacy compatibility
 	var modifier_effects: Array[Dictionary] = []
-	
-	# TODO: Track modifier effects as they are applied
-	# This will be expanded when PowerUps, Consumables, and Mods are integrated
+	if breakdown_info.get("has_modifiers", false):
+		# Add additive effects
+		var total_additive = breakdown_info.get("total_additive", 0)
+		if total_additive > 0:
+			var regular_additive = breakdown_info.get("regular_additive", 0)
+			var red_additive = breakdown_info.get("dice_color_additive", 0)
+			
+			if regular_additive > 0:
+				modifier_effects.append({
+					"type": "additive",
+					"value": regular_additive,
+					"source": "powerups/consumables",
+					"description": "+%d from modifiers" % regular_additive,
+					"short_description": "+%d" % regular_additive
+				})
+			
+			if red_additive > 0:
+				modifier_effects.append({
+					"type": "additive", 
+					"value": red_additive,
+					"source": "red_dice",
+					"description": "+%d from red dice" % red_additive,
+					"short_description": "red+%d" % red_additive
+				})
+		
+		# Add multiplier effects
+		var total_multiplier = breakdown_info.get("total_multiplier", 1.0)
+		if total_multiplier != 1.0:
+			var regular_multiplier = breakdown_info.get("regular_multiplier", 1.0)
+			var purple_multiplier = breakdown_info.get("dice_color_multiplier", 1.0)
+			
+			if regular_multiplier != 1.0:
+				modifier_effects.append({
+					"type": "multiplier",
+					"value": regular_multiplier,
+					"source": "powerups/consumables", 
+					"description": "×%.1f from modifiers" % regular_multiplier,
+					"short_description": "×%.1f" % regular_multiplier
+				})
+			
+			if purple_multiplier != 1.0:
+				modifier_effects.append({
+					"type": "multiplier",
+					"value": purple_multiplier,
+					"source": "purple_dice",
+					"description": "×%.1f from purple dice" % purple_multiplier,
+					"short_description": "purple×%.1f" % purple_multiplier
+				})
 	
 	# Convert section enum to string
 	var section_string = "upper" if section == Scorecard.Section.UPPER else "lower"
 	
-	# Create the logbook entry
+	# Create the enhanced logbook entry
 	Statistics.log_hand_scored(
 		dice_values,
 		dice_colors,
@@ -883,7 +930,8 @@ func _create_logbook_entry(section: Scorecard.Section, category: String, dice_va
 		active_powerups,
 		base_score,
 		modifier_effects,
-		final_score
+		final_score,
+		breakdown_info
 	)
 
 ## activate_any_score_mode()

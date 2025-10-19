@@ -41,7 +41,7 @@ func _ready():
 	# Test money tracking
 	stats_manager.add_money_earned(100)
 	stats_manager.spend_money(25, "powerup")
-	print("Current money:", stats_manager.current_money)
+	print("Current money:", stats_manager.get_current_money())
 	print("Total earned:", stats_manager.total_money_earned)
 	print("Spent on powerups:", stats_manager.money_spent_on_powerups)
 	

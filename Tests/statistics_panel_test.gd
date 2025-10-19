@@ -65,5 +65,5 @@ func _generate_test_statistics():
 	print("Current statistics - Rolls: %d, Turns: %d, Money: %d" % [
 		stats_manager.total_rolls,
 		stats_manager.total_turns, 
-		stats_manager.current_money
+		stats_manager.get_current_money()
 	])

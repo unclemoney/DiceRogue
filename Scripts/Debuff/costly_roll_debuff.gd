@@ -51,4 +51,4 @@ func _on_dice_rolled(_dice_values: Array) -> void:
 		notification.show_notification("-$%d Roll Fee" % roll_cost)
 	
 	# Apply the cost
-	PlayerEconomy.remove_money(roll_cost)
+	PlayerEconomy.remove_money(roll_cost, "debuff")

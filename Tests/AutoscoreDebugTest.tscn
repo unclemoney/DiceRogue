@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://ctes4wi5a2klj"]
+
+[ext_resource type="Script" path="res://Tests/autoscore_debug_test.gd" id="1"]
+
+[node name="AutoscoreDebugTest" type="Node"]
+script = ExtResource("1")

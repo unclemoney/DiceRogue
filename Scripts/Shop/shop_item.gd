@@ -148,7 +148,7 @@ func _on_buy_button_pressed() -> void:
 			return
 	
 	if PlayerEconomy.can_afford(price):
-		if PlayerEconomy.remove_money(price):
+		if PlayerEconomy.remove_money(price, item_type):
 			#print("[ShopItem] Successfully purchased", item_id, "for", price)
 			#print("[ShopItem] Emitting purchase signal for:", item_id, "type:", item_type)
 			emit_signal("purchased", item_id, item_type)

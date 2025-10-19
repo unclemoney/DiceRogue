@@ -28,7 +28,7 @@ func _run_comprehensive_test():
 	print("  Turns: %d, Rolls: %d, Money: %d" % [
 		stats_manager.total_turns,
 		stats_manager.total_rolls, 
-		stats_manager.current_money
+		stats_manager.get_current_money()
 	])
 	
 	# Test incrementing methods
@@ -69,7 +69,7 @@ func _run_comprehensive_test():
 	stats_manager.spend_money(15, "consumable")
 	print("Money tracking:")
 	print("  Current: %d, Earned: %d, Spent: %d" % [
-		stats_manager.current_money,
+		stats_manager.get_current_money(),
 		stats_manager.total_money_earned,
 		stats_manager.total_money_spent
 	])
@@ -180,5 +180,5 @@ func _generate_test_data():
 	print("  Rolls: %d, Turns: %d, Money: %d" % [
 		stats_manager.total_rolls,
 		stats_manager.total_turns,
-		stats_manager.current_money
+		stats_manager.get_current_money()
 	])

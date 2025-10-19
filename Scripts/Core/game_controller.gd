@@ -760,7 +760,6 @@ func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 		stats.increment_turns()
 		if _score > 0:
 			stats.record_hand_scored(_category, _score)
-			stats.add_money_earned(_score)
 			stats.update_highest_score(_score)
 		else:
 			stats.record_failed_hand()
@@ -1365,9 +1364,7 @@ func _on_game_button_dice_rolled(dice_values: Array) -> void:
 	# Check if we can afford to roll (for costly_roll debuff)
 	if is_debuff_active("costly_roll"):
 		var cost = active_debuffs["costly_roll"].roll_cost
-		PlayerEconomy.remove_money(cost)
-		if stats:
-			stats.spend_money(cost, "debuff")
+		PlayerEconomy.remove_money(cost, "debuff")
 		print("[GameController] Paid", cost, "coins to roll dice")
 	
 	# Update PowerUps that depend on dice values

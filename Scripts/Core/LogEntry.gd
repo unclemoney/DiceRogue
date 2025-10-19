@@ -21,6 +21,7 @@ class_name LogEntry
 @export var final_score: int
 @export var calculation_summary: String
 @export var formatted_log_line: String
+@export var breakdown_info: Dictionary = {}
 
 ## _init()
 ##
@@ -36,7 +37,8 @@ func _init(
 	p_base_score: int = 0,
 	p_effects: Array[Dictionary] = [],
 	p_final_score: int = 0,
-	p_turn: int = 0
+	p_turn: int = 0,
+	p_breakdown_info: Dictionary = {}
 ):
 	timestamp = Time.get_unix_time_from_system()
 	turn_number = p_turn
@@ -50,6 +52,7 @@ func _init(
 	base_score = p_base_score
 	modifier_effects = p_effects.duplicate()
 	final_score = p_final_score
+	breakdown_info = p_breakdown_info.duplicate()
 	calculation_summary = _generate_calculation_summary()
 	formatted_log_line = _generate_formatted_log_line()
 
@@ -57,6 +60,11 @@ func _init(
 ##
 ## Creates a detailed breakdown of the calculation steps.
 func _generate_calculation_summary() -> String:
+	# If we have detailed breakdown info, use it for rich formatting
+	if breakdown_info.has("base_score") and breakdown_info.has("has_modifiers"):
+		return _generate_detailed_calculation_summary()
+	
+	# Fallback to basic summary for legacy entries
 	var summary = "Base Score: %d" % base_score
 	
 	if modifier_effects.size() > 0:
@@ -69,6 +77,123 @@ func _generate_calculation_summary() -> String:
 	
 	summary += " = %d pts" % final_score
 	return summary
+
+## _generate_detailed_calculation_summary()
+##
+## Creates a rich breakdown using detailed scoring information.
+func _generate_detailed_calculation_summary() -> String:
+	if not breakdown_info.has("base_score"):
+		return _format_category_name(scorecard_category) + ": " + str(final_score) + " pts"
+	
+	var category_display = breakdown_info.get("category_display", _format_category_name(scorecard_category))
+	var base = breakdown_info.get("base_score", base_score)
+	var final = breakdown_info.get("final_score", final_score)
+	
+	# If no modifiers were applied, show simple format
+	if not breakdown_info.get("has_modifiers", false):
+		return "%s: %d pts" % [category_display, final]
+	
+	# Build detailed breakdown with modifiers
+	var calculation_parts = []
+	var current_value = base
+	
+	# Start with base score
+	calculation_parts.append(str(base))
+	
+	# Add additives section if any
+	var total_additive = breakdown_info.get("total_additive", 0)
+	if total_additive > 0:
+		var additive_details = []
+		
+		# Regular additives from PowerUps/Consumables
+		var regular_additive = breakdown_info.get("regular_additive", 0)
+		if regular_additive > 0:
+			var powerups = breakdown_info.get("active_powerups", [])
+			var consumables = breakdown_info.get("active_consumables", [])
+			
+			if powerups.size() > 0:
+				var powerup_names = []
+				for powerup in powerups:
+					powerup_names.append(_format_modifier_name(powerup))
+				additive_details.append("%d %s" % [regular_additive, ", ".join(powerup_names)])
+			elif consumables.size() > 0:
+				var consumable_names = []
+				for consumable in consumables:
+					consumable_names.append(_format_modifier_name(consumable))
+				additive_details.append("%d %s" % [regular_additive, ", ".join(consumable_names)])
+			else:
+				additive_details.append("%d bonus" % regular_additive)
+		
+		# Red dice additives
+		var red_additive = breakdown_info.get("dice_color_additive", 0)
+		if red_additive > 0:
+			additive_details.append("%d red dice" % red_additive)
+		
+		if additive_details.size() > 0:
+			calculation_parts.append("+" + "+".join(additive_details))
+		
+		current_value = breakdown_info.get("score_after_additives", current_value)
+	
+	# Add multipliers section if any
+	var total_multiplier = breakdown_info.get("total_multiplier", 1.0)
+	if total_multiplier != 1.0:
+		var multiplier_details = []
+		
+		# Regular multipliers from PowerUps/Consumables
+		var regular_multiplier = breakdown_info.get("regular_multiplier", 1.0)
+		if regular_multiplier != 1.0:
+			var powerups = breakdown_info.get("active_powerups", [])
+			var consumables = breakdown_info.get("active_consumables", [])
+			
+			if powerups.size() > 0:
+				var powerup_names = []
+				for powerup in powerups:
+					powerup_names.append(_format_modifier_name(powerup))
+				multiplier_details.append("×%.1f %s" % [regular_multiplier, ", ".join(powerup_names)])
+			elif consumables.size() > 0:
+				var consumable_names = []
+				for consumable in consumables:
+					consumable_names.append(_format_modifier_name(consumable))
+				multiplier_details.append("×%.1f %s" % [regular_multiplier, ", ".join(consumable_names)])
+			else:
+				multiplier_details.append("×%.1f" % regular_multiplier)
+		
+		# Purple dice multipliers
+		var purple_multiplier = breakdown_info.get("dice_color_multiplier", 1.0)
+		if purple_multiplier != 1.0:
+			multiplier_details.append("×%.1f purple dice" % purple_multiplier)
+		
+		if multiplier_details.size() > 0:
+			# If we have both additives and multipliers, wrap the additive part in parentheses
+			if total_additive > 0:
+				var base_and_additive = "(" + " ".join(calculation_parts) + ")"
+				calculation_parts = [base_and_additive]
+			
+			calculation_parts.append_array(multiplier_details)
+	
+	# Format the final calculation
+	var calculation_str = " ".join(calculation_parts)
+	return "%s: %s = %d pts" % [category_display, calculation_str, final]
+
+## _format_modifier_name()
+##
+## Format modifier source names for display (remove prefixes, make readable).
+func _format_modifier_name(source_name: String) -> String:
+	var formatted = source_name
+	
+	# Remove common prefixes
+	formatted = formatted.replace("powerup_", "").replace("consumable_", "").replace("mod_", "")
+	
+	# Handle specific known modifiers
+	match formatted.to_lower():
+		"pinhead", "pin_head": return "PinHead"
+		"hot_streak": return "Hot Streak"
+		"lucky_seven": return "Lucky Seven"
+		"double_down": return "Double Down"
+		"score_reroll": return "Score Reroll"
+		"any_score": return "Any Score"
+		"duplicate": return "Duplicate"
+		_: return formatted.capitalize().replace("_", " ")
 
 ## _generate_formatted_log_line()
 ##

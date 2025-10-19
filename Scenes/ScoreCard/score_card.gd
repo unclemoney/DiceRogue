@@ -171,7 +171,7 @@ func on_category_selected(section: Section, category: String):
 
 func auto_score_best(values: Array[int]) -> void:
 	print("\n=== Auto-Scoring Best Hand ===")
-	# Reset evaluation counter
+	# Reset evaluation counter at the start of each auto-scoring cycle
 	ScoreEvaluatorSingleton.reset_evaluation_count()
 	
 	var best_score := -1
@@ -203,30 +203,49 @@ func auto_score_best(values: Array[int]) -> void:
 	if best_category != "":
 		print("[Scorecard] Auto-scoring category:", best_category, "with score:", best_score)
 		
+		# Calculate color effects NOW before dice state changes
+		var dice_hand = get_tree().get_first_node_in_group("dice_hand")
+		var color_effects = {}
+		if dice_hand and dice_hand.has_method("get_color_effects"):
+			color_effects = dice_hand.get_color_effects()
+		
 		# Emit about_to_score signal for PowerUps BEFORE calculating final score
 		var game_controller = get_tree().get_first_node_in_group("game_controller")
 		if game_controller and game_controller.score_card_ui:
 			print("[Scorecard] Emitting about_to_score signal for autoscoring:", best_category)
 			game_controller.score_card_ui.about_to_score.emit(best_section, best_category, values)
 		
-		# Defer the actual scoring to the next frame to allow PowerUps to register multipliers
-		call_deferred("_complete_auto_scoring", best_section, best_category, best_score, values)
+		# IMMEDIATELY update scorecard to prevent display issues
+		# Calculate final score with money effects and multipliers using preserved dice state
+		var final_score_with_money = _calculate_score_with_preserved_effects(best_category, values, true, color_effects)
+		print("[Scorecard] Final score with money effects and multipliers:", final_score_with_money)
+		
+		# Set score immediately so other systems see the category as filled
+		set_score(best_section, best_category, final_score_with_money)
+		
+		# Defer only the bonus checks and signal emission to avoid timing issues
+		call_deferred("_complete_auto_scoring_finalization", best_section, best_category, final_score_with_money, values, best_score == 50)
 	else:
 		print("[Scorecard] No valid scoring categories found!")
 
-func _complete_auto_scoring(section: Section, category: String, original_score: int, values: Array[int]) -> void:
-	print("[Scorecard] Completing auto-scoring for:", category, "with original score:", original_score)
+## _complete_auto_scoring_finalization(section, category, final_score, values, was_yahtzee_50)
+##
+## Deferred finalization of auto-scoring: handles bonus checks and signal emission.
+## The actual score setting now happens immediately in auto_score_best() to prevent display timing issues.
+func _complete_auto_scoring_finalization(section: Section, category: String, final_score: int, values: Array[int], was_yahtzee_50: bool) -> void:
+	print("[Scorecard] Finalizing auto-scoring for:", category, "with final score:", final_score)
 	
-	var is_new_yahtzee = (category == "yahtzee" and original_score == 50)
+	# Handle bonus Yahtzee check if applicable
+	if category == "yahtzee" and was_yahtzee_50:
+		check_bonus_yahtzee(values, true)
 	
-	# Recalculate score with money effects and multipliers when actually committing
-	var final_score_with_money = calculate_score_internal(category, values, true)
-	print("[Scorecard] Final score with money effects and multipliers:", final_score_with_money)
-	
-	set_score(section, category, final_score_with_money)
-	# This will trigger the bonus Yahtzee check if applicable
-	check_bonus_yahtzee(values, is_new_yahtzee)
-	emit_signal("score_auto_assigned", section, category, final_score_with_money)
+	# Emit signal to notify other systems
+	emit_signal("score_auto_assigned", section, category, final_score)
+
+# DEPRECATED: Old method kept for reference but should not be called
+func _complete_auto_scoring(_section: Section, category: String, _original_score: int, _values: Array[int], _preserved_color_effects: Dictionary = {}) -> void:
+	push_warning("[Scorecard] _complete_auto_scoring is deprecated - auto-scoring now happens immediately in auto_score_best()")
+	print("[Scorecard] WARNING: Deprecated _complete_auto_scoring called for:", category)
 
 func get_upper_section_final_total() -> int:
 	var subtotal = get_upper_section_total()
@@ -354,6 +373,15 @@ func calculate_score(category: String, dice_values: Array) -> int:
 ## @param apply_money_effects: bool whether to actually add money to economy
 ## @return int calculated score
 func calculate_score_internal(category: String, dice_values: Array, apply_money_effects: bool = false) -> int:
+	var breakdown = calculate_score_with_breakdown(category, dice_values, apply_money_effects)
+	return breakdown.final_score
+
+## Calculate score with detailed breakdown information
+## @param category: String scoring category 
+## @param dice_values: Array dice values to score
+## @param apply_money_effects: bool whether to actually add money to economy
+## @return Dictionary with detailed breakdown {final_score, base_score, breakdown_info}
+func calculate_score_with_breakdown(category: String, dice_values: Array, apply_money_effects: bool = false) -> Dictionary:
 	calculate_score_call_count += 1
 	
 	var base_score = _calculate_base_score(category, dice_values)
@@ -376,11 +404,56 @@ func calculate_score_internal(category: String, dice_values: Array, apply_money_
 	
 	var total_additive = 0
 	var total_multiplier = 1.0
+	var active_powerup_sources: Array[String] = []
+	var active_consumable_sources: Array[String] = []
 	
 	if modifier_manager:
 		if modifier_manager.has_method("get_total_additive"):
 			total_additive = modifier_manager.get_total_additive()
 		total_multiplier = modifier_manager.get_total_multiplier()
+		
+		# Get detailed source information for breakdown
+		var all_modifier_sources = {}
+		
+		# Get multiplier sources and their values
+		if modifier_manager.has_method("get_active_sources"):
+			var multiplier_sources = modifier_manager.get_active_sources()
+			for source in multiplier_sources:
+				var multiplier_value = modifier_manager.get_multiplier(source) if modifier_manager.has_method("get_multiplier") else 1.0
+				all_modifier_sources[source] = {
+					"type": "multiplier",
+					"value": multiplier_value,
+					"category": _categorize_modifier_source(source)
+				}
+				
+				# Add to appropriate category lists
+				if all_modifier_sources[source].category == "powerup":
+					active_powerup_sources.append(source)
+				elif all_modifier_sources[source].category == "consumable":
+					active_consumable_sources.append(source)
+		
+		# Get additive sources and their values
+		if modifier_manager.has_method("get_active_additive_sources"):
+			var additive_sources = modifier_manager.get_active_additive_sources()
+			for source in additive_sources:
+				var additive_value = modifier_manager.get_additive(source) if modifier_manager.has_method("get_additive") else 0
+				
+				# If source already exists (has both additive and multiplier), combine info
+				if source in all_modifier_sources:
+					all_modifier_sources[source]["additive_value"] = additive_value
+				else:
+					all_modifier_sources[source] = {
+						"type": "additive",
+						"value": additive_value,
+						"category": _categorize_modifier_source(source)
+					}
+				
+				# Add to appropriate category lists if not already there
+				var source_category = all_modifier_sources[source].category
+				if source_category == "powerup" and source not in active_powerup_sources:
+					active_powerup_sources.append(source)
+				elif source_category == "consumable" and source not in active_consumable_sources:
+					active_consumable_sources.append(source)
 	else:
 		# Fallback warning if no manager found
 		push_warning("[Scorecard] No ScoreModifierManager found")
@@ -396,8 +469,26 @@ func calculate_score_internal(category: String, dice_values: Array, apply_money_
 	var score_with_additive = base_score + total_additive_bonus
 	var final_score = int(score_with_additive * total_multiplier_bonus)
 	
+	# Create detailed breakdown information
+	var breakdown_info = {
+		"base_score": base_score,
+		"regular_additive": total_additive,
+		"dice_color_additive": dice_color_additive,
+		"total_additive": total_additive_bonus,
+		"regular_multiplier": total_multiplier,
+		"dice_color_multiplier": dice_color_multiplier,
+		"total_multiplier": total_multiplier_bonus,
+		"score_after_additives": score_with_additive,
+		"final_score": final_score,
+		"category_display": _format_category_display_name(category),
+		"active_powerups": active_powerup_sources.duplicate(),
+		"active_consumables": active_consumable_sources.duplicate(),
+		"dice_color_money": dice_color_money,
+		"has_modifiers": (total_additive_bonus > 0 or total_multiplier_bonus != 1.0 or dice_color_money > 0)
+	}
+	
 	# Only print detailed calculation if there are modifiers applied
-	if apply_money_effects and (total_additive_bonus > 0 or total_multiplier_bonus != 1.0 or dice_color_money > 0):
+	if apply_money_effects and breakdown_info.has_modifiers:
 		print("[Scorecard] Scoring calculation for", category, ": Base:", base_score, "→ Final:", final_score)
 		if total_additive_bonus > 0:
 			print("  Additives: +", total_additive_bonus, " (Regular:", total_additive, " + Red:", dice_color_additive, ")")
@@ -408,6 +499,98 @@ func calculate_score_internal(category: String, dice_values: Array, apply_money_
 	if apply_money_effects and dice_color_money > 0:
 		PlayerEconomy.add_money(dice_color_money)
 		print("[Scorecard] Applied green money bonus: +$", dice_color_money)
+	
+	return {
+		"final_score": final_score,
+		"base_score": base_score,
+		"breakdown_info": breakdown_info
+	}
+
+## Format category name for display in breakdown
+func _format_category_display_name(category: String) -> String:
+	match category.to_lower():
+		"ones": return "Ones"
+		"twos": return "Twos"
+		"threes": return "Threes"
+		"fours": return "Fours"
+		"fives": return "Fives"
+		"sixes": return "Sixes"
+		"three_of_a_kind": return "Three of a Kind"
+		"four_of_a_kind": return "Four of a Kind"
+		"full_house": return "Full House"
+		"small_straight": return "Small Straight"
+		"large_straight": return "Large Straight"
+		"yahtzee": return "Yahtzee"
+		"chance": return "Chance"
+		_: return category.capitalize()
+
+## _categorize_modifier_source()
+##
+## Categorize a modifier source name as powerup, consumable, or other
+func _categorize_modifier_source(source_name: String) -> String:
+	var lower_name = source_name.to_lower()
+	if lower_name.contains("powerup") or lower_name.contains("power_up"):
+		return "powerup"
+	elif lower_name.contains("consumable"):
+		return "consumable"
+	elif lower_name.contains("mod"):
+		return "mod"
+	else:
+		return "other"
+
+## _calculate_score_with_preserved_effects()
+##
+## Calculate score using preserved color effects instead of current dice state
+## This prevents autoscoring bugs when dice roll between signal and deferred call
+func _calculate_score_with_preserved_effects(category: String, dice_values: Array, apply_money_effects: bool, preserved_color_effects: Dictionary) -> int:
+	var base_score = _calculate_base_score(category, dice_values)
+	
+	# Use preserved color effects instead of querying current dice state
+	var color_effects = preserved_color_effects
+	
+	# Get modifiers from ScoreModifierManager
+	var modifier_manager = null
+	if Engine.has_singleton("ScoreModifierManager"):
+		modifier_manager = ScoreModifierManager
+	elif get_tree():
+		modifier_manager = get_tree().get_first_node_in_group("score_modifier_manager")
+		if not modifier_manager:
+			modifier_manager = get_tree().get_first_node_in_group("multiplier_manager")
+	
+	var total_additive = 0
+	var total_multiplier = 1.0
+	
+	if modifier_manager:
+		if modifier_manager.has_method("get_total_additive"):
+			total_additive = modifier_manager.get_total_additive()
+		total_multiplier = modifier_manager.get_total_multiplier()
+	else:
+		push_warning("[Scorecard] No ScoreModifierManager found")
+	
+	# Add dice color effects (preserved from when autoscoring was triggered)
+	var dice_color_additive = color_effects.get("red_additive", 0)
+	var dice_color_multiplier = color_effects.get("purple_multiplier", 1.0)
+	var dice_color_money = color_effects.get("green_money", 0)
+	
+	# Apply calculation order: base + additives * multipliers
+	var total_additive_bonus = total_additive + dice_color_additive
+	var total_multiplier_bonus = total_multiplier * dice_color_multiplier
+	var score_with_additive = base_score + total_additive_bonus
+	var final_score = int(score_with_additive * total_multiplier_bonus)
+	
+	# Print debug info for autoscoring
+	print("[Scorecard] Preserved effects calculation:")
+	print("  Base score: ", base_score)
+	print("  Regular additive: ", total_additive)
+	print("  Dice color additive: ", dice_color_additive, " (preserved)")
+	print("  Regular multiplier: ", total_multiplier)
+	print("  Dice color multiplier: ", dice_color_multiplier, " (preserved)")
+	print("  Final score: ", final_score)
+	
+	# Apply money bonus from green dice (preserved)
+	if apply_money_effects and dice_color_money > 0:
+		PlayerEconomy.add_money(dice_color_money)
+		print("[Scorecard] Applied preserved green money bonus: +$", dice_color_money)
 	
 	return final_score
 

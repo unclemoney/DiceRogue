@@ -94,7 +94,7 @@ func roll() -> void:
 ## Lock this die and emit die_locked signal
 func lock() -> void:
 	if not _can_process_input:
-		print("[Dice] Cannot lock - input disabled")
+		#print("[Dice] Cannot lock - input disabled")
 		return
 
 	is_locked = true
@@ -103,7 +103,7 @@ func lock() -> void:
 
 func set_dice_input_enabled(enabled: bool) -> void:
 	_can_process_input = enabled
-	print("[Dice] Input processing ", "enabled" if enabled else "disabled", " for ", name)
+	#print("[Dice] Input processing ", "enabled" if enabled else "disabled", " for ", name)
 
 func set_lock_shader_enabled(enabled: bool) -> void:
 	_lock_shader_enabled = enabled
@@ -274,8 +274,8 @@ func get_mod(id: String) -> Mod:
 	return active_mods.get(id)
 
 func _on_mod_sell_requested(mod_id: String) -> void:
-	print("[Dice] MOD SELL REQUESTED:", mod_id)
-	print("[Dice] Emitting mod_sell_requested signal to GameController")
+	#print("[Dice] MOD SELL REQUESTED:", mod_id)
+	#print("[Dice] Emitting mod_sell_requested signal to GameController")
 	emit_signal("mod_sell_requested", mod_id, self)
 
 func check_mod_outside_clicks(event_position: Vector2) -> void:
@@ -287,7 +287,7 @@ func check_mod_outside_clicks(event_position: Vector2) -> void:
 ## Assign random color to dice based on chance rates
 ## Called when dice is rolled
 func _assign_random_color() -> void:
-	print("[Dice] Assigning random color...")
+	#print("[Dice] Assigning random color...")
 	
 	# Check if color system is enabled
 	var color_manager = _get_dice_color_manager()
@@ -304,17 +304,17 @@ func _assign_random_color() -> void:
 	var old_color = color
 	var new_color = DiceColor.Type.NONE
 	
-	print("[Dice] Colors enabled, checking random assignment...")
+	#print("[Dice] Colors enabled, checking random assignment...")
 	
 	# Check each color type for random assignment
 	for color_type in DiceColor.get_all_colors():
 		var chance = DiceColor.get_color_chance(color_type)
 		if chance > 0:
 			var color_roll = randi() % chance
-			print("[Dice] Color", DiceColor.get_color_name(color_type), "chance 1/", chance, "rolled:", color_roll)
+			#print("[Dice] Color", DiceColor.get_color_name(color_type), "chance 1/", chance, "rolled:", color_roll)
 			if color_roll == 0:
 				new_color = color_type
-				print("[Dice] SUCCESS! Assigned color:", DiceColor.get_color_name(new_color))
+				#print("[Dice] SUCCESS! Assigned color:", DiceColor.get_color_name(new_color))
 				break  # First color that hits wins
 	
 	if new_color == DiceColor.Type.NONE:
@@ -324,7 +324,7 @@ func _assign_random_color() -> void:
 	
 	# Emit signal if color changed
 	if old_color != color:
-		print("[Dice] Color changed from", DiceColor.get_color_name(old_color), "to", DiceColor.get_color_name(color))
+		#print("[Dice] Color changed from", DiceColor.get_color_name(old_color), "to", DiceColor.get_color_name(color))
 		emit_signal("color_changed", self, color)
 	else:
 		print("[Dice] Color unchanged:", DiceColor.get_color_name(color))
@@ -388,12 +388,12 @@ func get_color() -> DiceColor.Type:
 ## @param new_color: DiceColor.Type to force set
 func force_color(new_color: DiceColor.Type) -> void:
 	var old_color = color
-	print("[Dice] FORCE_COLOR: Changing from", DiceColor.get_color_name(old_color), "to", DiceColor.get_color_name(new_color))
+	#print("[Dice] FORCE_COLOR: Changing from", DiceColor.get_color_name(old_color), "to", DiceColor.get_color_name(new_color))
 	_set_color(new_color)
 	
 	# Emit signal if color changed
 	if old_color != color:
-		print("[Dice] Color changed successfully - emitting signal")
+		#print("[Dice] Color changed successfully - emitting signal")
 		emit_signal("color_changed", self, color)
 	else:
 		print("[Dice] Color unchanged")

@@ -152,7 +152,7 @@ func _create_economic_tab():
 		_add_stat_label(economic_tab, "Status", "Autoload not ready")
 		return
 	
-	_add_stat_label(economic_tab, "Current Money", str(stats_node.current_money))
+	_add_stat_label(economic_tab, "Current Money", str(stats_node.get_current_money()))
 	_add_stat_label(economic_tab, "Total Money Earned", str(stats_node.total_money_earned))
 	_add_stat_label(economic_tab, "Total Money Spent", str(stats_node.total_money_spent))
 	_add_stat_label(economic_tab, "Spent on Power-ups", str(stats_node.money_spent_on_powerups))

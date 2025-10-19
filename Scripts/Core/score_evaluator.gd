@@ -7,10 +7,8 @@ func reset_evaluation_count() -> void:
 	_evaluation_count = 0
 
 func evaluate_with_wildcards(dice_values: Array[int]) -> Dictionary:
-	_evaluation_count += 1
-	if _evaluation_count > 100:
-		push_error("[ScoreEvaluator] Too many evaluations! Possible infinite loop.")
-		return {}
+	# Don't increment here - let the caller manage the count
+	# This method can be called multiple times legitimately during category evaluation
 	
 	# Check for Yahtzee bonus potential first
 	var has_bonus_potential = false
@@ -30,7 +28,7 @@ func evaluate_with_wildcards(dice_values: Array[int]) -> Dictionary:
 			regular_values.append(dice_values[i])
 	
 	var best_scores = {}
-	var is_yahtzee = false
+	var has_yahtzee = false
 	# If this is a potential bonus Yahtzee, add 100 to all available categories
 	if has_bonus_potential:
 		for category in DiceResults.scorecard.upper_scores:
@@ -48,7 +46,7 @@ func evaluate_with_wildcards(dice_values: Array[int]) -> Dictionary:
 	# Check if this could be a bonus Yahtzee first
 	if DiceResults.scorecard and DiceResults.scorecard.lower_scores.get("yahtzee") == 50:
 		if is_yahtzee(dice_values):
-			is_yahtzee = true
+			has_yahtzee = true
 	
 	# Limit combinations if too many
 	if combinations.size() > 100:
@@ -65,7 +63,7 @@ func evaluate_with_wildcards(dice_values: Array[int]) -> Dictionary:
 		var scores = evaluate_normal(test_values)
 		
 		# If this is a bonus Yahtzee, add 100 points to each possible category
-		if is_yahtzee:
+		if has_yahtzee:
 			for category in scores.keys():
 				if category != "yahtzee":  # Don't modify yahtzee category
 					scores[category] += 100
@@ -96,13 +94,13 @@ func filter_disabled_values(values: Array[int]) -> Array[int]:
 					break
 				parent = parent.get_parent()
 	
-	print("[ScoreEvaluator] Game controller reference:", game_controller)
+	#print("[ScoreEvaluator] Game controller reference:", game_controller)
 	
 	# Check if the disabled_twos debuff is active
 	var disabled_twos_active = false
 	if game_controller != null:
 		disabled_twos_active = game_controller.is_debuff_active("disabled_twos")
-		print("[ScoreEvaluator] Disabled twos active:", disabled_twos_active)
+		#print("[ScoreEvaluator] Disabled twos active:", disabled_twos_active)
 	
 	# If we can't find game_controller, check if DiceResults has any dice showing 2s with a red shader
 	if game_controller == null:
@@ -225,6 +223,12 @@ func calculate_chance_score(values: Array[int]) -> int:
 	return get_sum(values)
 
 func calculate_score_for_category(category: String, values: Array[int]) -> int:
+	# Increment and check for runaway evaluations
+	_evaluation_count += 1
+	if _evaluation_count > 1000:  # Much higher threshold - 1000 evaluations
+		push_error("[ScoreEvaluator] Excessive evaluations (", _evaluation_count, ") - possible infinite loop in category: ", category)
+		return 0
+	
 	# First evaluate with wildcards to get all possible scores
 	var all_scores = evaluate_with_wildcards(values)
 	var score = all_scores.get(category, 0)
@@ -355,7 +359,6 @@ func is_yahtzee(values: Array[int]) -> bool:
 	
 	# First pass - count wildcards and collect regular values
 	for i in range(filtered_values.size()):
-		var die_index = i
 		if i < DiceResults.dice_refs.size():
 			var die = DiceResults.dice_refs[i]
 			if die.has_mod("wildcard"):

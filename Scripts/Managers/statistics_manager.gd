@@ -24,7 +24,7 @@ var total_money_spent: int = 0
 var money_spent_on_powerups: int = 0
 var money_spent_on_consumables: int = 0
 var money_spent_on_mods: int = 0
-var current_money: int = 0
+# Note: current_money is now retrieved from PlayerEconomy, not stored here
 
 # Dice Metrics
 var dice_rolled_by_color: Dictionary = {}
@@ -176,17 +176,15 @@ func record_failed_hand():
 
 ## add_money_earned(amount: int)
 ## 
-## Add to the total money earned.
+## Add to the total money earned (tracking only, money is managed by PlayerEconomy).
 func add_money_earned(amount: int):
 	total_money_earned += amount
-	current_money += amount
 
 ## spend_money(amount: int, category: String = "")
 ## 
-## Record money spent, optionally by category.
+## Record money spent, optionally by category (tracking only, money is managed by PlayerEconomy).
 func spend_money(amount: int, category: String = ""):
 	total_money_spent += amount
-	current_money -= amount
 	
 	match category.to_lower():
 		"powerup":
@@ -239,6 +237,15 @@ func check_snake_eyes(dice_values: Array):
 	if all_ones and dice_values.size() > 0:
 		snake_eyes_count += 1
 		milestone_reached.emit("snake_eyes", snake_eyes_count)
+
+## get_current_money() -> int
+## 
+## Get current player money from PlayerEconomy.
+func get_current_money() -> int:
+	var economy = get_node_or_null("/root/PlayerEconomy")
+	if economy:
+		return economy.money
+	return 0
 
 ## get_total_play_time()
 ## 
@@ -304,7 +311,7 @@ func get_all_statistics() -> Dictionary:
 			"money_spent_on_powerups": money_spent_on_powerups,
 			"money_spent_on_consumables": money_spent_on_consumables,
 			"money_spent_on_mods": money_spent_on_mods,
-			"current_money": current_money
+			"current_money": get_current_money()
 		},
 		"dice_metrics": {
 			"dice_rolled_by_color": dice_rolled_by_color,
@@ -365,7 +372,7 @@ func reset_statistics():
 	money_spent_on_powerups = 0
 	money_spent_on_consumables = 0
 	money_spent_on_mods = 0
-	current_money = 0
+	# Note: current_money is retrieved from PlayerEconomy, not reset here
 	
 	dice_locked_count = 0
 	highest_single_roll = 0
@@ -415,7 +422,8 @@ func log_hand_scored(
 	powerups: Array[String] = [],
 	base_score: int = 0,
 	effects: Array[Dictionary] = [],
-	final_score: int = 0
+	final_score: int = 0,
+	breakdown_info: Dictionary = {}
 ) -> void:
 	var entry = LogEntry.new(
 		dice_values,
@@ -428,7 +436,8 @@ func log_hand_scored(
 		base_score,
 		effects,
 		final_score,
-		total_turns
+		total_turns,
+		breakdown_info
 	)
 	
 	logbook.append(entry)
