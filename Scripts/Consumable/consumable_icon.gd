@@ -419,8 +419,9 @@ func _on_pressed() -> void:
 		sell_button.visible = _sell_button_visible
 	
 	if use_button:
-		# Only show use button if consumable is useable
-		use_button.visible = _use_button_visible && is_useable
+		# Always show use button when activated, but disable if not useable
+		use_button.visible = _use_button_visible
+		use_button.disabled = !is_useable
 		if _use_button_visible && !is_useable:
 			# Show message if not useable
 			_on_reroll_denied()
@@ -486,9 +487,9 @@ func set_useable(useable: bool) -> void:
 	else:
 		modulate = Color(0.5, 0.5, 0.5, 0.7)
 	
-	# Update use button visibility
+	# Update use button state - keep visible but disable if not useable
 	if use_button and _use_button_visible:
-		use_button.visible = is_useable
+		use_button.disabled = !is_useable
 
 func play_destruction_effect() -> void:
 	print("[ConsumableIcon] play_destruction_effect called")

@@ -55,6 +55,12 @@ var mods_purchased: int = 0
 var powerups_used: int = 0
 var consumables_used: int = 0
 
+# Slot Tracking
+var available_powerup_slots: int = 0
+var available_consumable_slots: int = 0
+var max_powerup_slots: int = 0
+var max_consumable_slots: int = 0
+
 # Session Metrics
 var session_start_time: float = 0.0
 var total_play_time: float = 0.0
@@ -215,6 +221,50 @@ func record_item_usage(item_type: String):
 			powerups_used += 1
 		"consumable":
 			consumables_used += 1
+
+## update_slot_tracking()
+## 
+## Update the current slot availability tracking.
+func update_slot_tracking():
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if not game_controller:
+		return
+	
+	# Update PowerUp slot tracking
+	if game_controller.powerup_ui:
+		var powerup_ui = game_controller.powerup_ui
+		max_powerup_slots = powerup_ui.max_power_ups
+		var current_powerups = powerup_ui._power_up_data.size()
+		available_powerup_slots = max_powerup_slots - current_powerups
+	
+	# Update Consumable slot tracking
+	if game_controller.consumable_ui:
+		var consumable_ui = game_controller.consumable_ui
+		max_consumable_slots = consumable_ui.max_consumables
+		var current_consumables = consumable_ui._active_consumable_count
+		available_consumable_slots = max_consumable_slots - current_consumables
+
+## get_powerup_slot_info() -> Dictionary
+## 
+## Get detailed powerup slot information.
+func get_powerup_slot_info() -> Dictionary:
+	update_slot_tracking()
+	return {
+		"current": max_powerup_slots - available_powerup_slots,
+		"max": max_powerup_slots,
+		"available": available_powerup_slots
+	}
+
+## get_consumable_slot_info() -> Dictionary
+## 
+## Get detailed consumable slot information.
+func get_consumable_slot_info() -> Dictionary:
+	update_slot_tracking()
+	return {
+		"current": max_consumable_slots - available_consumable_slots,
+		"max": max_consumable_slots,
+		"available": available_consumable_slots
+	}
 
 ## update_highest_score(score: int)
 ## 

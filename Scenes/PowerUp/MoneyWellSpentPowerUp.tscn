@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://bh8mndaygr15f"]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/money_well_spent_power_up.gd" id="1_moneyspent"]
+
+[node name="MoneyWellSpentPowerUp" type="Node2D"]
+script = ExtResource("1_moneyspent")
+id = "money_well_spent"

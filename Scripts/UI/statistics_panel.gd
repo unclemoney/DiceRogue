@@ -289,6 +289,20 @@ func _create_items_tab():
 	
 	_add_stat_label(items_tab, "  Power-ups Used", str(stats_node.powerups_used))
 	_add_stat_label(items_tab, "  Consumables Used", str(stats_node.consumables_used))
+	
+	_add_separator(items_tab)
+	
+	# Slot Availability
+	var slots_title = Label.new()
+	slots_title.text = "Current Slots:"
+	slots_title.add_theme_font_size_override("font_size", 14)
+	items_tab.add_child(slots_title)
+	
+	var powerup_info = stats_node.get_powerup_slot_info()
+	var consumable_info = stats_node.get_consumable_slot_info()
+	
+	_add_stat_label(items_tab, "  PowerUp Slots", "%d/%d (%d free)" % [powerup_info.current, powerup_info.max, powerup_info.available])
+	_add_stat_label(items_tab, "  Consumable Slots", "%d/%d (%d free)" % [consumable_info.current, consumable_info.max, consumable_info.available])
 
 ## _create_session_tab()
 ## 

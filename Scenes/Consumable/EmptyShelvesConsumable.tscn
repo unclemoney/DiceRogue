@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cmjxlqxcemuu7"]
+
+[ext_resource type="Script" path="res://Scripts/Consumable/empty_shelves_consumable.gd" id="1_mwx7c"]
+
+[node name="EmptyShelvesConsumable" type="Node" node_paths=PackedStringArray()]
+script = ExtResource("1_mwx7c")

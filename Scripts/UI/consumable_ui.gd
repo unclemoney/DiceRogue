@@ -546,6 +546,10 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 			# Green Envy requires dice to be rolled (to have values for scoring)
 			var dice_values = DiceResults.values
 			return not dice_values.is_empty()
+		"empty_shelves":
+			# Empty Shelves requires dice to be rolled (to have values for scoring)
+			var dice_values = DiceResults.values
+			return not dice_values.is_empty()
 		_:
 			# Default: all other consumables are useable when fanned
 			return true

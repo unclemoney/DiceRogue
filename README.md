@@ -11,6 +11,7 @@ Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill s
   - **Random Uncommon Power-Up**: Grants a random uncommon rarity power-up
   - **Green Envy**: 10x multiplier for all green dice money scored this turn
   - **Poor House**: Transfer all your money to add bonus points to the next scored hand
+  - **Empty Shelves**: Multiply next score by the number of empty PowerUp slots (only during active rounds)
 - **Mods**: Dice modifiers that change how individual dice behave
 - **Challenges**: Goals that unlock rewards and progression
 
@@ -101,6 +102,7 @@ The **Statistics Manager** tracks comprehensive game metrics and player behavior
 - **Dice Data**: Rolls by color, highest values, snake eyes count, lock behavior
 - **Hand Types**: Frequency of each Yahtzee category scored (ones through yahtzee)
 - **Items**: Purchases and usage counts for power-ups, consumables, and mods
+- **Slot Tracking**: Available PowerUp and Consumable slots with real-time updates
 - **Session**: Play time, highest scores, scoring streaks, performance trends
 
 **Implementation:**
@@ -236,6 +238,12 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 ### Economy
 - **Green Envy**: 10x multiplier for all green dice money scored this turn (Price: $50)
 - **Poor House**: Transfer all your money to add bonus points to the next scored hand (Price: $100)
+
+### Strategic Multipliers
+- **Empty Shelves**: Multiply next score by the number of empty PowerUp slots (Price: $150)
+  - Can only be used when dice are rolled and ready to be scored
+  - Example: With 4 empty PowerUp slots, a Full House worth 25 points becomes 100 points
+  - Synergizes well with minimal PowerUp builds for maximum multiplier effect
 
 ### PowerUp Acquisition
 - **Random Uncommon Power-Up**: Grants a random uncommon rarity power-up

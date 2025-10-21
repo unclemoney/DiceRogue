@@ -22,6 +22,7 @@ const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 const RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF := preload("res://Scripts/Consumable/RandomPowerUpUncommonConsumable.tres")
 const GREEN_ENVY_CONSUMABLE_DEF := preload("res://Scripts/Consumable/GreenEnvyConsumable.tres")
 const POOR_HOUSE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/PoorHouseConsumable.tres")
+const EMPTY_SHELVES_CONSUMABLE_DEF := preload("res://Scripts/Consumable/EmptyShelvesConsumable.tres")
 
 # Centralized, explicit NodePaths (tweak in Inspector if scene changes)
 @export var dice_hand_path: NodePath            = ^"../DiceHand"
@@ -136,6 +137,7 @@ func _ready() -> void:
 		consumable_manager.register_consumable_def(RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(GREEN_ENVY_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(POOR_HOUSE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(EMPTY_SHELVES_CONSUMABLE_DEF)
 
 	## _ready()
 	## Called when the GameController node enters the scene tree.
@@ -161,7 +163,7 @@ func _on_game_start() -> void:
 	grant_consumable("poor_house")
 	#apply_debuff("the_division")
 	#activate_challenge("300pts_no_debuff")
-	grant_power_up("pin_head")
+	grant_power_up("money_well_spent")
 	if round_manager:
 		round_manager.start_game()
 
@@ -270,7 +272,7 @@ func _activate_power_up(power_up_id: String) -> void:
 		return
 	
 	# Connect to description_updated signal if the power-up has one
-	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus" or power_up_id == "step_by_step" or power_up_id == "perfect_strangers" or power_up_id == "green_monster" or power_up_id == "red_power_ranger" or power_up_id == "wild_dots" or power_up_id == "pin_head":
+	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus" or power_up_id == "step_by_step" or power_up_id == "perfect_strangers" or power_up_id == "green_monster" or power_up_id == "red_power_ranger" or power_up_id == "wild_dots" or power_up_id == "pin_head" or power_up_id == "money_well_spent":
 		# Disconnect first to avoid duplicates
 		if pu.is_connected("description_updated", _on_power_up_description_updated):
 			pu.description_updated.disconnect(_on_power_up_description_updated)
@@ -374,6 +376,9 @@ func _activate_power_up(power_up_id: String) -> void:
 				print("[GameController] Applied PinHeadPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for PinHeadPowerUp")
+		"money_well_spent":
+			pu.apply(self)
+			print("[GameController] Applied MoneyWellSpentPowerUp")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -468,6 +473,9 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"pin_head":
 			print("[GameController] Removing pin_head PowerUp")
 			pu.remove(scorecard)
+		"money_well_spent":
+			print("[GameController] Removing money_well_spent PowerUp")
+			pu.remove(self)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -510,6 +518,8 @@ func revoke_power_up(power_up_id: String) -> void:
 				pu.remove(scorecard)
 			"pin_head":
 				pu.remove(scorecard)
+			"money_well_spent":
+				pu.remove(self)
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself
 				pu.remove(pu)
@@ -704,6 +714,9 @@ func _on_consumable_used(consumable_id: String) -> void:
 			consumable.apply(self)
 			remove_consumable_instance.call()
 		"poor_house":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"empty_shelves":
 			consumable.apply(self)
 			remove_consumable_instance.call()
 		_:
