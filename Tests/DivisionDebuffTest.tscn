@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://d1n5t6e8s2raw"]
-
-[ext_resource type="Script" path="res://Tests/division_debuff_test.gd" id="1_test_script"]
-
-[node name="DivisionDebuffTest" type="Node"]
-script = ExtResource("1_test_script")

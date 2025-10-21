@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://b8x1m3vq7n2k7"]
-
-[ext_resource type="Script" path="res://Tests/green_monster_test.gd" id="1_envy"]
-
-[node name="GreenMonsterTest" type="Node"]
-script = ExtResource("1_envy")

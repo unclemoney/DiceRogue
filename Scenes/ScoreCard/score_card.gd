@@ -9,7 +9,7 @@ const UPPER_BONUS_AMOUNT := 35
 signal upper_bonus_achieved(bonus: int)
 signal upper_section_completed
 signal lower_section_completed
-signal score_auto_assigned(section: Section, category: String, score: int)
+signal score_auto_assigned(section: Section, category: String, score: int, breakdown_info: Dictionary)
 signal score_assigned(section: Section, category: String, score: int)  # New signal for all score assignments
 signal yahtzee_bonus_achieved(points: int)
 signal score_changed(total_score: int)  # Add this signal
@@ -220,27 +220,34 @@ func auto_score_best(values: Array[int]) -> void:
 		var final_score_with_money = _calculate_score_with_preserved_effects(best_category, values, true, color_effects)
 		print("[Scorecard] Final score with money effects and multipliers:", final_score_with_money)
 		
+		# CAPTURE BREAKDOWN INFO NOW while PowerUps are still active
+		var scoring_breakdown = calculate_score_with_breakdown(best_category, values, false)
+		var captured_breakdown_info = scoring_breakdown.get("breakdown_info", {})
+		
 		# Set score immediately so other systems see the category as filled
 		set_score(best_section, best_category, final_score_with_money)
 		
 		# Defer only the bonus checks and signal emission to avoid timing issues
-		call_deferred("_complete_auto_scoring_finalization", best_section, best_category, final_score_with_money, values, best_score == 50)
+		call_deferred("_complete_auto_scoring_finalization", best_section, best_category, final_score_with_money, values, best_score == 50, captured_breakdown_info)
 	else:
 		print("[Scorecard] No valid scoring categories found!")
 
-## _complete_auto_scoring_finalization(section, category, final_score, values, was_yahtzee_50)
+## _complete_auto_scoring_finalization(section, category, final_score, values, was_yahtzee_50, breakdown_info)
 ##
 ## Deferred finalization of auto-scoring: handles bonus checks and signal emission.
 ## The actual score setting now happens immediately in auto_score_best() to prevent display timing issues.
-func _complete_auto_scoring_finalization(section: Section, category: String, final_score: int, values: Array[int], was_yahtzee_50: bool) -> void:
+func _complete_auto_scoring_finalization(section: Section, category: String, final_score: int, values: Array[int], was_yahtzee_50: bool, breakdown_info: Dictionary = {}) -> void:
 	print("[Scorecard] Finalizing auto-scoring for:", category, "with final score:", final_score)
 	
 	# Handle bonus Yahtzee check if applicable
 	if category == "yahtzee" and was_yahtzee_50:
 		check_bonus_yahtzee(values, true)
 	
-	# Emit signal to notify other systems
-	emit_signal("score_auto_assigned", section, category, final_score)
+	print("[Scorecard] Auto-scoring breakdown - PowerUps:", breakdown_info.get("active_powerups", []))
+	print("[Scorecard] Auto-scoring breakdown - Consumables:", breakdown_info.get("active_consumables", []))
+	
+	# Emit signal to notify other systems with the captured breakdown info
+	emit_signal("score_auto_assigned", section, category, final_score, breakdown_info)
 
 # DEPRECATED: Old method kept for reference but should not be called
 func _complete_auto_scoring(_section: Section, category: String, _original_score: int, _values: Array[int], _preserved_color_effects: Dictionary = {}) -> void:
@@ -420,10 +427,11 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 			var multiplier_sources = modifier_manager.get_active_sources()
 			for source in multiplier_sources:
 				var multiplier_value = modifier_manager.get_multiplier(source) if modifier_manager.has_method("get_multiplier") else 1.0
+				var source_category = _categorize_modifier_source(source)
 				all_modifier_sources[source] = {
 					"type": "multiplier",
 					"value": multiplier_value,
-					"category": _categorize_modifier_source(source)
+					"category": source_category
 				}
 				
 				# Add to appropriate category lists
@@ -487,6 +495,8 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 		"has_modifiers": (total_additive_bonus > 0 or total_multiplier_bonus != 1.0 or dice_color_money > 0)
 	}
 	
+
+	
 	# Only print detailed calculation if there are modifiers applied
 	if apply_money_effects and breakdown_info.has_modifiers:
 		print("[Scorecard] Scoring calculation for", category, ": Base:", base_score, "→ Final:", final_score)
@@ -529,6 +539,7 @@ func _format_category_display_name(category: String) -> String:
 ## Categorize a modifier source name as powerup, consumable, or other
 func _categorize_modifier_source(source_name: String) -> String:
 	var lower_name = source_name.to_lower()
+	
 	if lower_name.contains("powerup") or lower_name.contains("power_up"):
 		return "powerup"
 	elif lower_name.contains("consumable"):
@@ -536,7 +547,14 @@ func _categorize_modifier_source(source_name: String) -> String:
 	elif lower_name.contains("mod"):
 		return "mod"
 	else:
-		return "other"
+		# Check for known PowerUp source names that don't contain "powerup"
+		if lower_name in ["pin_head", "hot_streak", "lucky_seven", "double_down"]:
+			return "powerup"
+		# Check for known Consumable source names that don't contain "consumable"
+		elif lower_name in ["score_reroll", "any_score", "duplicate"]:
+			return "consumable"
+		else:
+			return "other"
 
 ## _calculate_score_with_preserved_effects()
 ##

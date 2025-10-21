@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://bs2fkxf8wbp72"]
-
-[ext_resource type="Script" path="res://Tests/simple_money_debug.gd" id="1_8v3j1"]
-
-[node name="SimpleMoneyDebug" type="Node"]
-script = ExtResource("1_8v3j1")

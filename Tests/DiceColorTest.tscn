@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://bktdnh8h3gpoy"]
-
-[ext_resource type="Script" path="res://Tests/dice_color_test.gd" id="1_d8rje"]
-
-[node name="DiceColorTest" type="Control"]
-script = ExtResource("1_d8rje")

@@ -821,9 +821,13 @@ func _update_extra_info_no_center(info_text: String) -> void:
 ##
 ## Create and log a detailed entry for the hand that was just scored
 func _create_logbook_entry(section: Scorecard.Section, category: String, dice_values: Array[int], final_score: int) -> void:
+	print("[ScoreCardUI] DEBUG: _create_logbook_entry called for", category, "with score", final_score)
+	
 	if not Statistics:
 		print("[ScoreCardUI] Warning: Statistics Manager not available for logbook")
 		return
+	
+	print("[ScoreCardUI] DEBUG: Statistics manager available, proceeding with logbook entry creation")
 	
 	# Extract dice information from DiceResults
 	var dice_colors: Array[String] = []
@@ -920,6 +924,129 @@ func _create_logbook_entry(section: Scorecard.Section, category: String, dice_va
 	var section_string = "upper" if section == Scorecard.Section.UPPER else "lower"
 	
 	# Create the enhanced logbook entry
+	Statistics.log_hand_scored(
+		dice_values,
+		dice_colors,
+		dice_mods,
+		category,
+		section_string,
+		active_consumables,
+		active_powerups,
+		base_score,
+		modifier_effects,
+		final_score,
+		breakdown_info
+	)
+
+## _create_logbook_entry_with_breakdown()
+##
+## Create a logbook entry using pre-calculated breakdown info (for auto-scoring)
+## This prevents the timing issue where PowerUps are cleared before logbook entry creation
+func _create_logbook_entry_with_breakdown(section: Scorecard.Section, category: String, dice_values: Array[int], final_score: int, breakdown_info: Dictionary) -> void:
+	print("[ScoreCardUI] DEBUG: _create_logbook_entry_with_breakdown called for", category, "with score", final_score)
+	
+	if not Statistics:
+		print("[ScoreCardUI] Warning: Statistics Manager not available for logbook")
+		return
+	
+	print("[ScoreCardUI] DEBUG: Statistics manager available, proceeding with logbook entry creation")
+	
+	# Extract dice information from DiceResults
+	var dice_colors: Array[String] = []
+	var dice_mods: Array[String] = []
+	
+	if DiceResults and DiceResults.dice_refs and DiceResults.dice_refs.size() > 0:
+		for dice in DiceResults.dice_refs:
+			if dice and dice is Dice:
+				# Get color name
+				var color_name = DiceColor.get_color_name(dice.color).to_lower()
+				dice_colors.append(color_name)
+				
+				# Get active mods (if any)
+				var dice_mod_names: Array[String] = []
+				if dice.active_mods and dice.active_mods.size() > 0:
+					for mod_id in dice.active_mods.keys():
+						var mod = dice.active_mods[mod_id]
+						if mod and mod.has_method("get_name"):
+							dice_mod_names.append(mod.get_name())
+						else:
+							dice_mod_names.append(mod_id)
+				
+				if dice_mod_names.size() > 0:
+					dice_mods.append(",".join(dice_mod_names))
+				else:
+					dice_mods.append("")
+	else:
+		# Fallback - no dice references available
+		for i in range(dice_values.size()):
+			dice_colors.append("none")
+			dice_mods.append("")
+	
+	# Use the pre-calculated breakdown info instead of recalculating
+	var base_score = breakdown_info.get("base_score", final_score)
+	
+	# Extract active PowerUps and Consumables from the passed breakdown
+	var active_powerups = breakdown_info.get("active_powerups", [])
+	var active_consumables = breakdown_info.get("active_consumables", [])
+	
+	print("[ScoreCardUI] DEBUG: Using breakdown PowerUps:", active_powerups)
+	print("[ScoreCardUI] DEBUG: Using breakdown Consumables:", active_consumables)
+	
+	# Create modifier effects array for legacy compatibility
+	var modifier_effects: Array[Dictionary] = []
+	if breakdown_info.get("has_modifiers", false):
+		# Add additive effects
+		var total_additive = breakdown_info.get("total_additive", 0)
+		if total_additive > 0:
+			var regular_additive = breakdown_info.get("regular_additive", 0)
+			var red_additive = breakdown_info.get("dice_color_additive", 0)
+			
+			if regular_additive > 0:
+				modifier_effects.append({
+					"type": "additive",
+					"value": regular_additive,
+					"source": "powerups/consumables",
+					"description": "+%d from modifiers" % regular_additive,
+					"short_description": "+%d" % regular_additive
+				})
+			
+			if red_additive > 0:
+				modifier_effects.append({
+					"type": "additive", 
+					"value": red_additive,
+					"source": "red_dice",
+					"description": "+%d from red dice" % red_additive,
+					"short_description": "red+%d" % red_additive
+				})
+		
+		# Add multiplier effects
+		var total_multiplier = breakdown_info.get("total_multiplier", 1.0)
+		if total_multiplier != 1.0:
+			var regular_multiplier = breakdown_info.get("regular_multiplier", 1.0)
+			var purple_multiplier = breakdown_info.get("dice_color_multiplier", 1.0)
+			
+			if regular_multiplier != 1.0:
+				modifier_effects.append({
+					"type": "multiplier",
+					"value": regular_multiplier,
+					"source": "powerups/consumables", 
+					"description": "×%.1f from modifiers" % regular_multiplier,
+					"short_description": "×%.1f" % regular_multiplier
+				})
+			
+			if purple_multiplier != 1.0:
+				modifier_effects.append({
+					"type": "multiplier",
+					"value": purple_multiplier,
+					"source": "purple_dice",
+					"description": "×%.1f from purple dice" % purple_multiplier,
+					"short_description": "purple×%.1f" % purple_multiplier
+				})
+	
+	# Convert section enum to string
+	var section_string = "upper" if section == Scorecard.Section.UPPER else "lower"
+	
+	# Create the enhanced logbook entry with the correct PowerUps/Consumables
 	Statistics.log_hand_scored(
 		dice_values,
 		dice_colors,
@@ -1045,19 +1172,29 @@ func _on_score_assigned_from_scorecard(section: Scorecard.Section, category: Str
 	# GameButtonUI handles roll button state directly in _on_next_turn_button_pressed()
 	# Emitting hand_scored would disable the roll button prematurely
 
-## _on_score_auto_assigned(section, category, score)
+## _on_score_auto_assigned(section, category, score, breakdown_info)
 ##
 ## Called when the Scorecard emits score_auto_assigned signal (specifically for autoscoring)
 ## Creates logbook entries for automatically scored hands
-func _on_score_auto_assigned(section: Scorecard.Section, category: String, score: int) -> void:
+func _on_score_auto_assigned(section: Scorecard.Section, category: String, score: int, breakdown_info: Dictionary) -> void:
+	print("[ScoreCardUI] DEBUG: _on_score_auto_assigned called for", category, "with score", score)
+	print("[ScoreCardUI] DEBUG: Breakdown PowerUps:", breakdown_info.get("active_powerups", []))
+	print("[ScoreCardUI] DEBUG: Breakdown Consumables:", breakdown_info.get("active_consumables", []))
+	
 	# Get current dice values for the logbook entry
 	var dice_values: Array[int] = []
 	if DiceResults and DiceResults.values:
 		dice_values = DiceResults.values.duplicate()
+		print("[ScoreCardUI] DEBUG: Got dice values from DiceResults:", dice_values)
+	else:
+		print("[ScoreCardUI] DEBUG: No dice values available from DiceResults")
 	
-	# Create logbook entry for the auto-scored hand
+	# Create logbook entry for the auto-scored hand using the passed breakdown info
 	if dice_values.size() > 0:
-		_create_logbook_entry(section, category, dice_values, score)
+		print("[ScoreCardUI] DEBUG: Creating logbook entry for auto-scored hand")
+		_create_logbook_entry_with_breakdown(section, category, dice_values, score, breakdown_info)
+	else:
+		print("[ScoreCardUI] DEBUG: Skipping logbook entry - no dice values")
 	
 	# Update ExtraInfo with recent logbook entries
 	update_extra_info_with_logbook()

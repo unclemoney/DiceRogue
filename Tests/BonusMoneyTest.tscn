@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://b8wm5kq7j4n8"]
-
-[ext_resource type="Script" path="res://Tests/bonus_money_test.gd" id="1_bonus_test"]
-
-[node name="BonusMoneyTest" type="Node"]
-script = ExtResource("1_bonus_test")

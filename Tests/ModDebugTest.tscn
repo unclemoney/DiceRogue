@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://bi7k8yal0mcdn"]
-
-[ext_resource type="Script" path="res://Tests/mod_debug_test.gd" id="1_3m7fn"]
-
-[node name="ModDebugTest" type="Node2D"]
-script = ExtResource("1_3m7fn")

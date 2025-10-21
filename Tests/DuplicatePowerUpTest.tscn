@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://d3v4w5x6y708a"]
-
-[ext_resource type="Script" path="res://Tests/duplicate_powerup_test.gd" id="1_script"]
-
-[node name="DuplicatePowerUpTest" type="Node"]
-script = ExtResource("1_script")

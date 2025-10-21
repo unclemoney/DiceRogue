@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://bsxq8vj3tyl5x"]
-
-[ext_resource type="Script" path="res://Tests/dice_color_validator.gd" id="1_4xh8l"]
-
-[node name="DiceColorValidator" type="Node"]
-script = ExtResource("1_4xh8l")

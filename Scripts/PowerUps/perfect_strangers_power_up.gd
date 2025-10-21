@@ -59,7 +59,7 @@ func remove(target) -> void:
 	
 	scorecard_ref = null
 
-func _on_score_assigned(section: Scorecard.Section, category: String, score: int) -> void:
+func _on_score_assigned(section: Scorecard.Section, category: String, score: int, _breakdown_info: Dictionary = {}) -> void:
 	print("\n=== PERFECT STRANGERS DEBUG ===")
 	print("[PerfectStrangersPowerUp] Section:", section, " Category:", category, " Score:", score)
 	

@@ -744,12 +744,12 @@ func _on_score_doubled(_section: Scorecard.Section, _category: String, _new_scor
 		remove_consumable("double_existing")
 
 
-## _on_score_assigned(_section, _category, _score)
+## _on_score_assigned(_section, _category, _score, _breakdown_info)
 ##
 ## Triggered when the ScoreCard auto-assigns or registers a score.
 ## - Triggers any post-score power-up behavior (randomizer effect)
 ## - Updates consumable usability for score-related consumables (e.g., score_reroll)
-func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
+func _on_score_assigned(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
 	if not scorecard:
 		push_error("No scorecard reference found")
 		return
@@ -1552,11 +1552,11 @@ func update_three_more_rolls_usability(_rolls_left: int = 0) -> void:
 
 # Add this function to game_controller.gd
 
-## update_double_existing_usability(_section, _category, _score)
+## update_double_existing_usability(_section, _category, _score, _breakdown_info)
 ##
 # Triggered after score assignment or roll changes. Parameters mirror the ScoreCard signal but
 # are unused here. Refreshes `double_existing` consumable usability in the UI.
-func update_double_existing_usability(_section: int = 0, _category: String = "", _score: int = 0) -> void:
+func update_double_existing_usability(_section: int = 0, _category: String = "", _score: int = 0, _breakdown_info: Dictionary = {}) -> void:
 	if consumable_ui and consumable_ui.has_consumable("double_existing"):
 		consumable_ui.update_consumable_usability()
 		print("[GameController] Double existing usability updated")

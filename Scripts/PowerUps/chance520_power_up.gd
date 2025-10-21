@@ -87,7 +87,7 @@ func apply(target) -> void:
 	_update_additive_manager()
 	print("[Chance520PowerUp] Initial additive registered:", get_current_additive())
 
-func _on_score_assigned(section: Scorecard.Section, category: String, score: int) -> void:
+func _on_score_assigned(section: Scorecard.Section, category: String, score: int, _breakdown_info: Dictionary = {}) -> void:
 	print("\n=== Score Assigned ===")
 	print("[Chance520PowerUp] Section:", section, " Category:", category, " Score:", score)
 	

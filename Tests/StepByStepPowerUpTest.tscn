@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://b1ah3w8x7v6n5"]
-
-[ext_resource type="Script" path="res://Tests/step_by_step_power_up_test.gd" id="1_test_script"]
-
-[node name="StepByStepPowerUpTest" type="Node"]
-script = ExtResource("1_test_script")

@@ -54,7 +54,7 @@ func apply(target) -> void:
 	
 	print("[PoorHouseConsumable] Transferred $%d from player to next scored hand" % current_money)
 
-func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
+func _on_score_assigned(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
 	# Only process once
 	if bonus_applied:
 		return

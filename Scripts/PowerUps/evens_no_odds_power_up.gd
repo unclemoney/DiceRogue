@@ -78,7 +78,7 @@ func apply(target) -> void:
 	_update_additive_manager()
 	print("[EvensNoOddsPowerUp] Initial additive registered:", additive_total)
 
-func _on_score_assigned(section: Scorecard.Section, category: String, score: int) -> void:
+func _on_score_assigned(section: Scorecard.Section, category: String, score: int, _breakdown_info: Dictionary = {}) -> void:
 	print("\n=== Score Assigned ===")
 	print("[EvensNoOddsPowerUp] Section:", section, " Category:", category, " Score:", score)
 	

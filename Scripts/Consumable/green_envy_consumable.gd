@@ -33,7 +33,7 @@ func apply(target) -> void:
 ##
 ## Called when a score is assigned. Checks for green dice in current dice hand
 ## and applies 10x multiplier to green dice money earned this turn.
-func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
+func _on_score_assigned(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
 	print("[GreenEnvyConsumable] Score assigned - checking for green dice effects")
 	
 	var game_controller = get_node_or_null("/root/GameController")

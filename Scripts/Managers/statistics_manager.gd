@@ -425,6 +425,12 @@ func log_hand_scored(
 	final_score: int = 0,
 	breakdown_info: Dictionary = {}
 ) -> void:
+	# Debug logging for logbook entry creation
+	print("[Statistics] Creating logbook entry:")
+	print("  PowerUps:", powerups)
+	print("  Consumables:", consumables)
+	print("  Category:", category, " | Score:", base_score, "→", final_score)
+	
 	var entry = LogEntry.new(
 		dice_values,
 		dice_colors,
@@ -439,6 +445,9 @@ func log_hand_scored(
 		total_turns,
 		breakdown_info
 	)
+	
+	print("[Statistics] Entry created - PowerUps Applied:", entry.powerups_applied.size(), entry.powerups_applied)
+	print("[Statistics] Entry created - Has Modifiers:", entry.has_modifiers())
 	
 	logbook.append(entry)
 	logbook_entry_added.emit(entry)
@@ -619,6 +628,29 @@ func _save_log_entry_to_file(entry: LogEntry) -> void:
 		file.seek_end()
 		file.store_line("[%s] %s" % [entry.get_timestamp_string(), entry.formatted_log_line])
 		file.close()
+
+## print_debug_logbook()
+## 
+## Debug function to print current logbook state to console.
+func print_debug_logbook():
+	print("\n=== LOGBOOK DEBUG ===")
+	print("Total entries:", logbook.size())
+	
+	if logbook.is_empty():
+		print("No logbook entries found")
+		return
+	
+	for i in range(logbook.size()):
+		var entry = logbook[i]
+		print("\nEntry", i + 1, ":")
+		print("  Category:", entry.scorecard_category)
+		print("  Base Score:", entry.base_score, "→ Final Score:", entry.final_score)
+		print("  PowerUps Applied:", entry.powerups_applied)
+		print("  Consumables Applied:", entry.consumables_applied)
+		print("  Has Modifiers:", entry.has_modifiers())
+		print("  Formatted Line:", entry.formatted_log_line)
+	
+	print("=== END LOGBOOK DEBUG ===\n")
 
 ## _check_milestone(stat_name: String, value: int)
 ## 
