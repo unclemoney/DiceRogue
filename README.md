@@ -212,6 +212,7 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 - **Chance520PowerUp**: +520 points when scoring Chance category
 - **RedPowerRangerPowerUp**: Gain +additive score for each red dice scored (cumulative across all hands)
 - **PinHeadPowerUp**: When scoring, picks a random dice value as multiplier (e.g., score 30 with random dice 3 = 90 points)
+- **HighlightedScorePowerUp**: Highlights one random unscored category with golden border; highlighted category gets 1.5x multiplier when scored (Rare, $300)
 
 ### Economy PowerUps
 - **BonusMoneyPowerUp**: +$50 for each bonus achieved (Upper Section or Yahtzee bonuses)

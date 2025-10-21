@@ -1,4 +1,4 @@
-[gd_scene load_steps=90 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=91 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -86,6 +86,7 @@
 [ext_resource type="Resource" path="res://Scripts/PowerUps/WildDotsPowerUp.tres" id="99_wild_dots"]
 [ext_resource type="Resource" uid="uid://c2kn4gf8x7lwm" path="res://Scripts/PowerUps/PinHeadPowerUp.tres" id="100_pin_head"]
 [ext_resource type="Resource" uid="uid://d3hc8h0p7bj6w" path="res://Scripts/PowerUps/MoneyWellSpentPowerUp.tres" id="101_money_well_spent"]
+[ext_resource type="Resource" uid="uid://chwmgd8qo3h4k" path="res://Scripts/PowerUps/HighlightedScorePowerUp.tres" id="102_highlighted_score"]
 [ext_resource type="PackedScene" uid="uid://ccn3jkgrhqwqe" path="res://Scenes/UI/StatisticsPanel.tscn" id="999_stats"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wtptv"]
@@ -252,7 +253,7 @@ challenge_container_path = NodePath("../ChallengeContainer")
 crt_manager_path = NodePath("../Background/CRTManager")
 
 [node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
-power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc"), ExtResource("29_bonus_money"), ExtResource("29_money_multiplier"), ExtResource("30_8nt64"), ExtResource("30_2hxro"), ExtResource("31_sqb4o"), ExtResource("32_fullhouse"), ExtResource("33_stepbystep"), ExtResource("70_perfect_strangers"), ExtResource("83_green_monster"), ExtResource("39_hm8bq"), ExtResource("99_wild_dots"), ExtResource("100_pin_head"), ExtResource("101_money_well_spent")])
+power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc"), ExtResource("29_bonus_money"), ExtResource("29_money_multiplier"), ExtResource("30_8nt64"), ExtResource("30_2hxro"), ExtResource("31_sqb4o"), ExtResource("32_fullhouse"), ExtResource("33_stepbystep"), ExtResource("70_perfect_strangers"), ExtResource("83_green_monster"), ExtResource("39_hm8bq"), ExtResource("99_wild_dots"), ExtResource("100_pin_head"), ExtResource("101_money_well_spent"), ExtResource("102_highlighted_score")])
 
 [node name="ChallengeManager" parent="." instance=ExtResource("25_3vaha")]
 challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtResource("29_1jk2k"), ExtResource("30_o0xxd"), ExtResource("31_ja7vv"), ExtResource("32_ytf57"), ExtResource("33_3ia8s"), ExtResource("34_crossing")])

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://chwmgd8qo3h4k"]
+
+[ext_resource type="Texture2D" uid="uid://c37jvwhbnvmer" path="res://Resources/Art/Powerups/PowerUp_test7.png" id="1_highlight_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" uid="uid://cs8nhxh2vqriq" path="res://Scenes/PowerUp/HighlightedScorePowerUp.tscn" id="2_highlighted_score_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "highlighted_score"
+display_name = "Highlighted Score"
+description = "Highlights a random unscored category for 1.5x score"
+icon = ExtResource("1_highlight_icon")
+scene = ExtResource("2_highlighted_score_scene")
+price = 300
+rarity = "rare"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

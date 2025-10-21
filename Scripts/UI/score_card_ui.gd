@@ -42,6 +42,9 @@ var is_double_mode := false
 ##
 ## Initialize ScoreCard UI: apply theme, locate labels/buttons and prepare category mappings.
 func _ready():
+	# Add to scorecard_ui group for PowerUps to find
+	add_to_group("scorecard_ui")
+	
 	# Load and apply custom theme
 	_apply_custom_theme()
 
