@@ -402,7 +402,7 @@ func _clear_fanned_icons() -> void:
 	_fanned_icons.clear()
 
 func _on_background_clicked(event: InputEvent) -> void:
-	print("[DEBUG] Background clicked: ", event)
+	#print("[DEBUG] Background clicked: ", event)
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		if _current_state == State.FANNED and not _is_animating:
 			_fold_back_cards()
@@ -550,6 +550,17 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 			# Empty Shelves requires dice to be rolled (to have values for scoring)
 			var dice_values = DiceResults.values
 			return not dice_values.is_empty()
+		"double_or_nothing":
+			# Double or Nothing MUST be used at the beginning of the turn (after Next Turn auto-roll, before manual rolls)
+			var game_controller = get_tree().get_first_node_in_group("game_controller")
+			if game_controller and game_controller.turn_tracker:
+				var turn_tracker = game_controller.turn_tracker
+				# Can be used when rolls_left >= MAX_ROLLS - 1 (after auto-roll but before manual rolls)
+				# and turn is active
+				return turn_tracker.is_active and turn_tracker.rolls_left >= turn_tracker.MAX_ROLLS - 1
+			else:
+				# No turn tracker available, assume unusable
+				return false
 		_:
 			# Default: all other consumables are useable when fanned
 			return true

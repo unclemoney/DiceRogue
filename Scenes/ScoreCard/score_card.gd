@@ -110,11 +110,8 @@ func set_score(section: int, category: String, score: int) -> void:
 	# Check for upper bonus after updating scores
 	check_upper_bonus()
 	
-	# Check for bonus yahtzee if this was a yahtzee category
-	if category == "yahtzee" and final_score == 50:
-		# This is the initial yahtzee, bonus yahtzees will be handled separately
-		print("[Scorecard] Initial Yahtzee scored!")
-		RollStats.track_yahtzee_rolled()
+	# Note: Yahtzee tracking is now handled BEFORE scoring in score_category()
+	# to allow consumables to react to the yahtzee_rolled signal before score calculation
 	
 	# Always emit score_changed signal
 	emit_signal("score_changed", new_total)
@@ -162,6 +159,11 @@ func on_category_selected(section: Section, category: String):
 	
 	var values = DiceResults.values
 	print("[Scorecard] Dice values:", values)
+	
+	# Check for yahtzee BEFORE calculating score so consumables can react
+	if category == "yahtzee" and ScoreEvaluatorSingleton.is_yahtzee(values):
+		print("[Scorecard] Yahtzee detected BEFORE scoring - triggering signal")
+		RollStats.track_yahtzee_rolled()
 	
 	# Note: about_to_score signal should have been emitted by ScoreCardUI already
 	# Do NOT emit it again here to avoid double signal processing

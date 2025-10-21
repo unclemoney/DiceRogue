@@ -131,6 +131,9 @@ func _ready() -> void:
 		turn_tracker.rolls_exhausted.connect(update_three_more_rolls_usability)
 		turn_tracker.turn_started.connect(update_double_existing_usability)
 		turn_tracker.rolls_exhausted.connect(update_double_existing_usability)
+		# Connect double_or_nothing usability to track when rolls are used
+		turn_tracker.rolls_updated.connect(update_double_or_nothing_usability)
+		turn_tracker.turn_started.connect(update_double_or_nothing_usability)
 
 	# Register new consumables programmatically
 	if consumable_manager:
@@ -160,7 +163,7 @@ func _ready() -> void:
 ##+ Keep this lightweight; heavy startup logic should be moved into RoundManager or dedicated setup functions.
 func _on_game_start() -> void:
 	#grant_consumable("random_power_up_uncommon")
-	grant_consumable("poor_house")
+	grant_consumable("double_or_nothing")
 	#apply_debuff("the_division")
 	#activate_challenge("300pts_no_debuff")
 	grant_power_up("money_well_spent")
@@ -717,6 +720,9 @@ func _on_consumable_used(consumable_id: String) -> void:
 			consumable.apply(self)
 			remove_consumable_instance.call()
 		"empty_shelves":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"double_or_nothing":
 			consumable.apply(self)
 			remove_consumable_instance.call()
 		_:
@@ -1575,6 +1581,17 @@ func update_double_existing_usability(_section: int = 0, _category: String = "",
 		print("[GameController] Double existing usability updated")
 	else:
 		print("[GameController] No double existing consumable found")
+
+## update_double_or_nothing_usability(_rolls_left)
+##
+# Called when rolls remaining changes. Updates the double_or_nothing consumable usability 
+# state in the UI. Can be used after the turn starts (auto-roll) but before manual rolls (when rolls_left >= MAX_ROLLS - 1).
+func update_double_or_nothing_usability(_rolls_left: int = 0) -> void:
+	if consumable_ui and consumable_ui.has_consumable("double_or_nothing"):
+		consumable_ui.update_consumable_usability()
+		print("[GameController] Double or nothing usability updated")
+	else:
+		print("[GameController] No double or nothing consumable found")
 
 func _on_power_up_description_updated(power_up_id: String, new_description: String) -> void:
 	print("[GameController] Received description update for:", power_up_id)

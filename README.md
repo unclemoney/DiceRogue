@@ -12,6 +12,7 @@ Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill s
   - **Green Envy**: 10x multiplier for all green dice money scored this turn
   - **Poor House**: Transfer all your money to add bonus points to the next scored hand
   - **Empty Shelves**: Multiply next score by the number of empty PowerUp slots (only during active rounds)
+  - **Double or Nothing**: Use after Next Turn, before manual roll. Yahtzee = 2x score, No Yahtzee = next score becomes 0
 - **Mods**: Dice modifiers that change how individual dice behave
 - **Challenges**: Goals that unlock rewards and progression
 
@@ -244,6 +245,11 @@ Test scenes in `Tests/` folder allow isolated testing of components:
   - Can only be used when dice are rolled and ready to be scored
   - Example: With 4 empty PowerUp slots, a Full House worth 25 points becomes 100 points
   - Synergizes well with minimal PowerUp builds for maximum multiplier effect
+- **Double or Nothing**: High-risk, high-reward consumable (Price: $150)
+  - Use after pressing Next Turn (after auto-roll) but before manual rolling
+  - If a Yahtzee is rolled during that turn, the Yahtzee score is doubled (50 → 100 points)
+  - If no Yahtzee is rolled, the next score placed becomes 0
+  - Strategic timing is crucial - use only when confident in rolling a Yahtzee
 
 ### PowerUp Acquisition
 - **Random Uncommon Power-Up**: Grants a random uncommon rarity power-up
