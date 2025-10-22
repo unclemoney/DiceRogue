@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://dqv2g2gqaehq3"]
+
+[ext_resource type="PackedScene" uid="uid://c2ssu2p0kep2e" path="res://Scenes/Controller/game_controller.tscn" id="1_2kwhr"]
+[ext_resource type="Script" path="res://Scripts/Editor/test_consumer_powerup.gd" id="2_m8hg0"]
+
+[node name="TestConsumerPowerUp" type="Node"]
+script = ExtResource("2_m8hg0")
+
+[node name="GameController" parent="." instance=ExtResource("1_2kwhr")]

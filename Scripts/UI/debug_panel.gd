@@ -190,6 +190,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Grant Random Uncommon PowerUp", "method": "_debug_grant_random_uncommon_powerup"},
 			{"text": "Register AnyScore", "method": "_debug_register_any_score"},
 			{"text": "Grant Random Mod", "method": "_debug_grant_mod"},
+			{"text": "Test Consumer PowerUp", "method": "_debug_test_consumer_powerup"},
 			{"text": "Show All Items", "method": "_debug_show_items"},
 			{"text": "Clear All Items", "method": "_debug_clear_items"},
 		],
@@ -1394,3 +1395,63 @@ func _debug_reset_call_counter():
 		log_debug("Reset scorecard call counter")
 	else:
 		log_debug("ERROR: Could not find scorecard or reset method")
+
+## Test TheConsumerIsAlwaysRight PowerUp by granting it and simulating consumable usage
+func _debug_test_consumer_powerup():
+	if not game_controller:
+		log_debug("ERROR: No GameController found")
+		return
+	
+	log_debug("=== Testing TheConsumerIsAlwaysRight PowerUp ===")
+	
+	# Get initial state
+	var initial_consumables = Statistics.consumables_used
+	var initial_multiplier = ScoreModifierManager.get_total_multiplier()
+	log_debug("Initial state: %d consumables used, %.2fx multiplier" % [initial_consumables, initial_multiplier])
+	
+	# Grant the PowerUp
+	game_controller.grant_power_up("the_consumer_is_always_right")
+	await get_tree().process_frame
+	
+	var after_grant_multiplier = ScoreModifierManager.get_total_multiplier()
+	log_debug("After granting PowerUp: %.2fx multiplier" % after_grant_multiplier)
+	
+	# Simulate using consumables by calling the method that tracks statistics
+	log_debug("Simulating consumable usage...")
+	game_controller._on_consumable_used("poor_house")
+	await get_tree().process_frame
+	
+	var after_first_use = Statistics.consumables_used
+	var after_first_multiplier = ScoreModifierManager.get_total_multiplier()
+	log_debug("After 1st consumable: %d total used, %.2fx multiplier" % [after_first_use, after_first_multiplier])
+	
+	# Grant another consumable and use it
+	game_controller.grant_consumable("any_score")
+	await get_tree().process_frame
+	game_controller._on_consumable_used("any_score")
+	await get_tree().process_frame
+	
+	var after_second_use = Statistics.consumables_used
+	var after_second_multiplier = ScoreModifierManager.get_total_multiplier()
+	log_debug("After 2nd consumable: %d total used, %.2fx multiplier" % [after_second_use, after_second_multiplier])
+	
+	# Test score calculation
+	var scorecard = get_tree().get_first_node_in_group("scorecard")
+	if scorecard:
+		var test_dice = [3, 3, 3, 4, 5]  # Three 3s = 9 points base
+		var result = scorecard.calculate_score_with_breakdown("three_of_a_kind", test_dice)
+		log_debug("Score test - Base: %d, Final: %d, Multiplier: %.2fx" % [
+			result.breakdown_info.base_score,
+			result.breakdown_info.final_score,
+			result.breakdown_info.total_multiplier
+		])
+		log_debug("ScoreModifierManager raw multiplier: %.2fx" % ScoreModifierManager.get_total_multiplier())
+		log_debug("Expected calculation: %d + 0 = %d, %d * %.2f = %d" % [
+			result.breakdown_info.base_score,
+			result.breakdown_info.base_score,
+			result.breakdown_info.base_score,
+			result.breakdown_info.total_multiplier,
+			int(result.breakdown_info.base_score * result.breakdown_info.total_multiplier)
+		])
+	
+	log_debug("=== Test Complete ===")

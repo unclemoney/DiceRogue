@@ -376,8 +376,10 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 func disable_all_score_buttons():
 	for button in upper_section_buttons.values():
 		button.disabled = true
+		button.modulate = Color.WHITE  # Reset any special highlighting
 	for button in lower_section_buttons.values():
 		button.disabled = true
+		button.modulate = Color.WHITE  # Reset any special highlighting
 
 func enable_all_score_buttons():
 	for button in upper_section_buttons.values():
@@ -1087,6 +1089,21 @@ func activate_any_score_mode() -> void:
 		if not button.disabled:
 			button.modulate = Color(0.8, 1.2, 0.8)  # Green highlight for any-score
 
+## deactivate_any_score_mode()
+##
+## Deactivates the AnyScore mode and clears all highlighting
+func deactivate_any_score_mode() -> void:
+	any_score_active = false
+	print("[ScoreCardUI] AnyScore mode deactivated")
+	
+	# Clear all special highlighting and disable buttons
+	for button in upper_section_buttons.values():
+		button.modulate = Color.WHITE
+		button.disabled = true
+	for button in lower_section_buttons.values():
+		button.modulate = Color.WHITE
+		button.disabled = true
+
 ## handle_any_score(section, category)
 ##
 ## Handles scoring when AnyScore mode is active - uses the sum of dice values
@@ -1129,9 +1146,8 @@ func handle_any_score(section: Scorecard.Section, category: String) -> void:
 	scorecard.set_score(section, category, score)
 	update_all()
 	
-	# Reset any score mode
-	any_score_active = false
-	disable_all_score_buttons()
+	# Reset any score mode and clear highlighting
+	deactivate_any_score_mode()
 	
 	# Create logbook entry for AnyScore usage
 	_create_logbook_entry(section, category, dice_values, score)

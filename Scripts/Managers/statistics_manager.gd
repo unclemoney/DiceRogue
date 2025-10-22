@@ -216,11 +216,15 @@ func record_purchase(item_type: String):
 ## 
 ## Record the usage of an item.
 func record_item_usage(item_type: String):
+	print("[Statistics] record_item_usage called with type: %s" % item_type)
 	match item_type.to_lower():
 		"powerup":
 			powerups_used += 1
+			print("[Statistics] powerups_used incremented to: %d" % powerups_used)
 		"consumable":
+			print("[Statistics] BEFORE: consumables_used = %d" % consumables_used)
 			consumables_used += 1
+			print("[Statistics] AFTER: consumables_used = %d" % consumables_used)
 
 ## update_slot_tracking()
 ## 

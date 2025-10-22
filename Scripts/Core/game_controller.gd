@@ -115,9 +115,9 @@ func _ready() -> void:
 		round_manager.round_failed.connect(_on_round_failed)
 		round_manager.all_rounds_completed.connect(_on_all_rounds_completed)
 	if consumable_ui:
-		if not consumable_ui.is_connected("consumable_used", _on_consumable_used):
-			consumable_ui.consumable_used.connect(_on_consumable_used)
-			print("[GameController] Connected to consumable_used signal from ConsumableUI")
+		if not consumable_ui.is_connected("consumable_used", _on_consumable_ui_used):
+			consumable_ui.consumable_used.connect(_on_consumable_ui_used)
+			print("[GameController] Connected to consumable_used signal from ConsumableUI via forwarding handler")
 	if powerup_ui:
 		if not powerup_ui.is_connected("max_power_ups_reached", _on_max_power_ups_reached):
 			powerup_ui.connect("max_power_ups_reached", _on_max_power_ups_reached)
@@ -173,10 +173,10 @@ func _ready() -> void:
 ##+ Keep this lightweight; heavy startup logic should be moved into RoundManager or dedicated setup functions.
 func _on_game_start() -> void:
 	#grant_consumable("random_power_up_uncommon")
-	grant_consumable("double_or_nothing")
+	grant_consumable("poor_house")
 	#apply_debuff("the_division")
 	#activate_challenge("300pts_no_debuff")
-	grant_power_up("highlighted_score")
+	grant_power_up("the_consumer_is_always_right")
 	if round_manager:
 		round_manager.start_game()
 
@@ -285,7 +285,7 @@ func _activate_power_up(power_up_id: String) -> void:
 		return
 	
 	# Connect to description_updated signal if the power-up has one
-	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus" or power_up_id == "step_by_step" or power_up_id == "perfect_strangers" or power_up_id == "green_monster" or power_up_id == "red_power_ranger" or power_up_id == "wild_dots" or power_up_id == "pin_head" or power_up_id == "money_well_spent" or power_up_id == "highlighted_score":
+	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus" or power_up_id == "step_by_step" or power_up_id == "perfect_strangers" or power_up_id == "green_monster" or power_up_id == "red_power_ranger" or power_up_id == "wild_dots" or power_up_id == "pin_head" or power_up_id == "money_well_spent" or power_up_id == "highlighted_score" or power_up_id == "the_consumer_is_always_right":
 		# Disconnect first to avoid duplicates
 		if pu.is_connected("description_updated", _on_power_up_description_updated):
 			pu.description_updated.disconnect(_on_power_up_description_updated)
@@ -398,6 +398,9 @@ func _activate_power_up(power_up_id: String) -> void:
 				print("[GameController] Applied HighlightedScorePowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for HighlightedScorePowerUp")
+		"the_consumer_is_always_right":
+			pu.apply(self)
+			print("[GameController] Applied TheConsumerIsAlwaysRightPowerUp")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -508,6 +511,9 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"highlighted_score":
 			print("[GameController] Removing highlighted_score PowerUp")
 			pu.remove(scorecard)
+		"the_consumer_is_always_right":
+			print("[GameController] Removing the_consumer_is_always_right PowerUp")
+			pu.remove(self)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -554,6 +560,8 @@ func revoke_power_up(power_up_id: String) -> void:
 				pu.remove(self)
 			"highlighted_score":
 				pu.remove(scorecard)
+			"the_consumer_is_always_right":
+				pu.remove(self)
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself
 				pu.remove(pu)
@@ -685,7 +693,13 @@ func _on_consumable_used(consumable_id: String) -> void:
 	if not consumable:
 		push_error("No Consumable found for id: %s" % consumable_id)
 		return
-		
+	
+	# Track consumable usage in statistics
+	var stats = get_node_or_null("/root/Statistics")
+	if stats:
+		stats.record_item_usage("consumable")
+		print("[GameController] Tracked consumable usage in statistics")
+	
 	# Helper function to handle consumable removal with count system
 	var remove_consumable_instance = func():
 		var current_count = consumable_counts.get(consumable_id, 1)
@@ -768,14 +782,21 @@ func _on_consumable_used(consumable_id: String) -> void:
 
 ## _on_consumable_ui_used(consumable_id)
 ##
-## Forwarding handler triggered by the UI when a consumable is used. Emits a GameController-level
-## signal and then invokes the internal consumable handler.
+## Forwarding handler triggered by the UI when a consumable is used. Updates statistics first,
+## then emits a GameController-level signal for PowerUps to listen, then invokes the internal consumable handler.
 func _on_consumable_ui_used(consumable_id: String) -> void:
-	# Forward consumable_used signal for PowerUps to listen
-	var consumable = active_consumables.get(consumable_id)
-	emit_signal("consumable_used", consumable_id, consumable)
-	# Optionally call the original handler if needed
+	print("[GameController] _on_consumable_ui_used called for:", consumable_id)
+	
+	# FIRST: Update statistics so PowerUps see the updated count
+	print("[GameController] About to call _on_consumable_used (which updates stats)")
 	_on_consumable_used(consumable_id)
+	print("[GameController] _on_consumable_used completed")
+	
+	# THEN: Forward consumable_used signal for PowerUps to listen (now with updated stats)
+	var consumable = active_consumables.get(consumable_id)
+	print("[GameController] About to emit consumable_used signal AFTER stats update")
+	emit_signal("consumable_used", consumable_id, consumable)
+	print("[GameController] consumable_used signal emitted")
 
 
 ## _on_score_rerolled(_section, _category, _score)

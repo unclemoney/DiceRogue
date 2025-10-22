@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://dcr42m4nt8p8p"]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/the_consumer_is_always_right_power_up.gd" id="1_x4k9r"]
+
+[node name="TheConsumerIsAlwaysRight" type="Node2D"]
+script = ExtResource("1_x4k9r")
+id = "the_consumer_is_always_right"

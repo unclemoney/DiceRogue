@@ -95,4 +95,29 @@ func complete_any_score() -> void:
 	print("[AnyScoreConsumable] Completing AnyScore")
 	is_active = false
 	has_been_used = true
+	
+	# Ensure the UI mode is properly deactivated
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller:
+		var score_card_ui = game_controller.score_card_ui
+		if score_card_ui and score_card_ui.has_method("deactivate_any_score_mode"):
+			score_card_ui.deactivate_any_score_mode()
+	
 	emit_signal("any_score_completed")
+
+## cancel_any_score()
+##
+## Cancels the any_score mode without using the consumable
+func cancel_any_score() -> void:
+	print("[AnyScoreConsumable] Cancelling AnyScore")
+	is_active = false
+	# Don't mark as used since it was cancelled
+	
+	# Ensure the UI mode is properly deactivated
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller:
+		var score_card_ui = game_controller.score_card_ui
+		if score_card_ui and score_card_ui.has_method("deactivate_any_score_mode"):
+			score_card_ui.deactivate_any_score_mode()
+	
+	emit_signal("any_score_denied")

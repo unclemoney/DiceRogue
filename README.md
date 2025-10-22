@@ -218,6 +218,10 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 - **BonusMoneyPowerUp**: +$50 for each bonus achieved (Upper Section or Yahtzee bonuses)
 - **ConsumableCashPowerUp**: +$25 for each consumable used
 - **MoneyMultiplierPowerUp**: +0.1x money multiplier per Yahtzee rolled (NEW)
+- **TheConsumerIsAlwaysRightPowerUp**: +0.25x score multiplier per consumable used (Epic, $400)
+  - Multiplier persists even if PowerUp is sold, based on permanent usage statistics
+  - Example: After using 3 consumables, all scores are multiplied by 1.75x
+  - Synergizes excellently with consumable-heavy strategies
 
 ### Dice Modifiers  
 - **ExtraDicePowerUp**: Adds 6th die to hand (enables lock dice debuff)
