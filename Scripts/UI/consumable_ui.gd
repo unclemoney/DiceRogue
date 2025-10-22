@@ -561,6 +561,14 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 			else:
 				# No turn tracker available, assume unusable
 				return false
+		"the_pawn_shop":
+			# The Pawn Shop requires at least one PowerUp to sell
+			var game_controller = get_tree().get_first_node_in_group("game_controller")
+			if game_controller:
+				return not game_controller.active_power_ups.is_empty()
+			else:
+				# No game controller available, assume unusable
+				return false
 		_:
 			# Default: all other consumables are useable when fanned
 			return true

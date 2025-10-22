@@ -255,6 +255,24 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 ### PowerUp Acquisition
 - **Random Uncommon Power-Up**: Grants a random uncommon rarity power-up
 
+### PowerUp Economy
+- **The Rarities**: Pays cash based on owned PowerUps by rarity (Price: $100)
+  - Common: $20 each
+  - Uncommon: $25 each  
+  - Rare: $50 each
+  - Epic: $75 each
+  - Legendary: $150 each
+  - Can be used at any time to convert PowerUp collection into immediate cash
+  - Useful for funding expensive purchases or when needing quick money
+
+- **The Pawn Shop**: Sells ALL owned PowerUps for 1.25x their purchase price (Price: $150)
+  - **WARNING**: This permanently removes ALL PowerUps from your collection
+  - Example: A $300 PowerUp becomes $375 cash
+  - Only usable when you own at least one PowerUp
+  - High-risk, high-reward strategy for major cash influx
+  - Use when you need significant money for expensive purchases
+  - Consider carefully as this resets your entire PowerUp collection
+
 ### Usage Notes
 - Consumables are single-use items
 - AnyScore is particularly useful for filling difficult categories

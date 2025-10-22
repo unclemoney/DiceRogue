@@ -23,6 +23,8 @@ const RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF := preload("res://Scripts/Consumab
 const GREEN_ENVY_CONSUMABLE_DEF := preload("res://Scripts/Consumable/GreenEnvyConsumable.tres")
 const POOR_HOUSE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/PoorHouseConsumable.tres")
 const EMPTY_SHELVES_CONSUMABLE_DEF := preload("res://Scripts/Consumable/EmptyShelvesConsumable.tres")
+const THE_RARITIES_CONSUMABLE_DEF := preload("res://Scripts/Consumable/TheRaritiesConsumable.tres")
+const THE_PAWN_SHOP_CONSUMABLE_DEF := preload("res://Scripts/Consumable/ThePawnShopConsumable.tres")
 
 # Centralized, explicit NodePaths (tweak in Inspector if scene changes)
 @export var dice_hand_path: NodePath            = ^"../DiceHand"
@@ -119,6 +121,12 @@ func _ready() -> void:
 	if powerup_ui:
 		if not powerup_ui.is_connected("max_power_ups_reached", _on_max_power_ups_reached):
 			powerup_ui.connect("max_power_ups_reached", _on_max_power_ups_reached)
+	
+	# Connect to our own power_up_revoked signal to update UI
+	if not is_connected("power_up_revoked", _on_power_up_revoked):
+		power_up_revoked.connect(_on_power_up_revoked)
+		print("[GameController] Connected power_up_revoked signal to UI handler")
+	
 	if challenge_ui:
 		if not challenge_ui.is_connected("challenge_selected", _on_challenge_selected):
 			challenge_ui.challenge_selected.connect(_on_challenge_selected)
@@ -141,6 +149,8 @@ func _ready() -> void:
 		consumable_manager.register_consumable_def(GREEN_ENVY_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(POOR_HOUSE_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(EMPTY_SHELVES_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(THE_RARITIES_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(THE_PAWN_SHOP_CONSUMABLE_DEF)
 
 	## _ready()
 	## Called when the GameController node enters the scene tree.
@@ -422,6 +432,16 @@ func _on_power_up_sold(power_up_id: String) -> void:
 		revoke_power_up(power_up_id)
 		if powerup_ui:
 			powerup_ui.remove_power_up(power_up_id)
+
+
+## _on_power_up_revoked(power_up_id)
+##
+## Handler for power_up_revoked signal - removes PowerUp from UI when revoked programmatically.
+func _on_power_up_revoked(power_up_id: String) -> void:
+	print("[GameController] PowerUp revoked, removing from UI:", power_up_id)
+	if powerup_ui:
+		powerup_ui.remove_power_up(power_up_id)
+		print("[GameController] PowerUp removed from UI:", power_up_id)
 
 
 ## _deactivate_power_up(power_up_id)
@@ -734,6 +754,12 @@ func _on_consumable_used(consumable_id: String) -> void:
 			consumable.apply(self)
 			remove_consumable_instance.call()
 		"double_or_nothing":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"the_rarities":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"the_pawn_shop":
 			consumable.apply(self)
 			remove_consumable_instance.call()
 		_:

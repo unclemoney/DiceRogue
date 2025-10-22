@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://co8lam7r3n5p1"]
+
+[ext_resource type="Script" path="res://Scripts/Consumable/the_pawn_shop_consumable.gd" id="1_script"]
+
+[node name="ThePawnShopConsumable" type="Node"]
+script = ExtResource("1_script")
+id = "the_pawn_shop"
