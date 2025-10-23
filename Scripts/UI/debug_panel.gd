@@ -187,6 +187,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Grant Double Or Nothing", "method": "_debug_grant_double_or_nothing"},
 			{"text": "Grant The Rarities", "method": "_debug_grant_the_rarities"},
 			{"text": "Grant The Pawn Shop", "method": "_debug_grant_the_pawn_shop"},
+			{"text": "Grant One Extra Dice", "method": "_debug_grant_one_extra_dice"},
 			{"text": "Grant Random Uncommon PowerUp", "method": "_debug_grant_random_uncommon_powerup"},
 			{"text": "Register AnyScore", "method": "_debug_register_any_score"},
 			{"text": "Grant Random Mod", "method": "_debug_grant_mod"},
@@ -475,6 +476,17 @@ func _debug_grant_the_pawn_shop() -> void:
 	if game_controller.has_method("grant_consumable"):
 		game_controller.grant_consumable("the_pawn_shop")
 		log_debug("Granted The Pawn Shop consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_one_extra_dice() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("one_extra_dice")
+		log_debug("Granted One Extra Dice consumable")
 	else:
 		log_debug("GameController missing grant_consumable method")
 

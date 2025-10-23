@@ -25,6 +25,7 @@ const POOR_HOUSE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/PoorHouseCo
 const EMPTY_SHELVES_CONSUMABLE_DEF := preload("res://Scripts/Consumable/EmptyShelvesConsumable.tres")
 const THE_RARITIES_CONSUMABLE_DEF := preload("res://Scripts/Consumable/TheRaritiesConsumable.tres")
 const THE_PAWN_SHOP_CONSUMABLE_DEF := preload("res://Scripts/Consumable/ThePawnShopConsumable.tres")
+const ONE_EXTRA_DICE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/OneExtraDiceConsumable.tres")
 
 # Centralized, explicit NodePaths (tweak in Inspector if scene changes)
 @export var dice_hand_path: NodePath            = ^"../DiceHand"
@@ -151,6 +152,7 @@ func _ready() -> void:
 		consumable_manager.register_consumable_def(EMPTY_SHELVES_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(THE_RARITIES_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(THE_PAWN_SHOP_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(ONE_EXTRA_DICE_CONSUMABLE_DEF)
 
 	## _ready()
 	## Called when the GameController node enters the scene tree.
@@ -774,6 +776,9 @@ func _on_consumable_used(consumable_id: String) -> void:
 			consumable.apply(self)
 			remove_consumable_instance.call()
 		"the_pawn_shop":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"one_extra_dice":
 			consumable.apply(self)
 			remove_consumable_instance.call()
 		_:

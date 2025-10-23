@@ -240,6 +240,11 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 ### Scoring Aids
 - **AnyScore**: Score current dice in any open category, ignoring normal requirements
 - **ScoreReroll**: Reroll all dice, then auto-score best category
+- **One Extra Dice**: Add +1 dice to the next hand only, removed after scoring (Price: $50)
+  - Temporarily increases dice count from 5 to 6 for the next turn
+  - Extra dice is automatically removed when any score is assigned (manual or auto)
+  - Similar to Extra Dice PowerUp but temporary and single-use
+  - Useful for difficult hands that need one more dice for a good score
 
 ### Economy
 - **Green Envy**: 10x multiplier for all green dice money scored this turn (Price: $50)

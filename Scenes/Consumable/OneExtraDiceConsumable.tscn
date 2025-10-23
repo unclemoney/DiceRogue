@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b2nq8rw7k4pla"]
+
+[ext_resource type="Script" path="res://Scripts/Consumable/one_extra_dice_consumable.gd" id="1_script"]
+
+[node name="OneExtraDiceConsumable" type="Node"]
+script = ExtResource("1_script")

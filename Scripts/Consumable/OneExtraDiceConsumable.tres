@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3 uid="uid://c3nrarw8k5qma"]
+
+[ext_resource type="Texture2D" path="res://Resources/Art/Powerups/ExtraDice.png" id="1_icon"]
+[ext_resource type="PackedScene" path="res://Scenes/Consumable/OneExtraDiceConsumable.tscn" id="2_scene"]
+[ext_resource type="Script" path="res://Scripts/Consumable/ConsumableData.gd" id="3_script"]
+
+[resource]
+script = ExtResource("3_script")
+id = "one_extra_dice"
+display_name = "One Extra Dice"
+description = "Add +1 dice to next hand, removed after scoring"
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 50
