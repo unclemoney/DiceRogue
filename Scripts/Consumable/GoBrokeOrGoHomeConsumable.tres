@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3 uid="uid://c5nrarx8m7tla"]
+
+[ext_resource type="Texture2D" uid="uid://da40sugvm8tf8" path="res://Resources/Art/Powerups/consumable_test7.png" id="1_icon"]
+[ext_resource type="PackedScene" uid="uid://d4nraryal6sna" path="res://Scenes/Consumable/GoBrokeOrGoHomeConsumable.tscn" id="2_scene"]
+[ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="3_script"]
+
+[resource]
+script = ExtResource("3_script")
+id = "go_broke_or_go_home"
+display_name = "Go Broke or Go Home"
+description = "Choose lower section category. Score > 0: double money. Score = 0: lose all money"
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 200

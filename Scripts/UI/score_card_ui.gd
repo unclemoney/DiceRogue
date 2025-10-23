@@ -36,6 +36,7 @@ const LOWER_CATEGORY_NODE_NAMES := {
 }
 
 var is_double_mode := false
+var go_broke_mode := false
 
 
 ## _ready()
@@ -292,12 +293,24 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 	print("[ScoreCardUI] Section:", section)
 	print("[ScoreCardUI] Double mode active:", is_double_mode)
 	print("[ScoreCardUI] Any score mode active:", any_score_active)
+	print("[ScoreCardUI] Go broke mode active:", go_broke_mode)
 	print("[ScoreCardUI] Reroll active:", reroll_active)
 	print("[ScoreCardUI] Turn scored:", turn_scored)
 	
 	# Check if we're in double mode
 	if is_double_mode:
 		_handle_double_score(section, category)
+		return
+	
+	# Check if we're in go broke mode - only allow lower section
+	if go_broke_mode:
+		if section != Scorecard.Section.LOWER:
+			print("[ScoreCardUI] Go Broke mode: only lower section allowed")
+			show_invalid_score_feedback(category)
+			return
+		# For go broke mode, allow scoring even if already scored (for reroll scenarios)
+		# The consumable will handle the logic
+		handle_go_broke_score(section, category)
 		return
 	
 	# Check if this category already has a score
@@ -1104,6 +1117,13 @@ func deactivate_any_score_mode() -> void:
 		button.modulate = Color.WHITE
 		button.disabled = true
 
+## set_go_broke_mode(active)
+##
+## Sets the Go Broke or Go Home mode state
+func set_go_broke_mode(active: bool) -> void:
+	go_broke_mode = active
+	print("[ScoreCardUI] Go Broke mode set to:", active)
+
 ## handle_any_score(section, category)
 ##
 ## Handles scoring when AnyScore mode is active - uses the sum of dice values
@@ -1158,6 +1178,57 @@ func handle_any_score(section: Scorecard.Section, category: String) -> void:
 	update_extra_info_with_logbook()
 	
 	print("[ScoreCardUI] AnyScore completed for", category)
+
+## handle_go_broke_score(section, category)
+##
+## Handles scoring when Go Broke or Go Home mode is active - uses normal scoring rules
+## but is restricted to lower section only
+func handle_go_broke_score(section: Scorecard.Section, category: String) -> void:
+	var dice_values = DiceResults.values
+	print("[ScoreCardUI] Go Broke mode - scoring", category, "with dice:", dice_values)
+	
+	# Emit signal before scoring to allow PowerUps to prepare
+	print("[ScoreCardUI] Emitting about_to_score signal for Go Broke...")
+	about_to_score.emit(section, category, dice_values)
+	print("[ScoreCardUI] about_to_score signal emitted for Go Broke")
+	
+	# Verify the category is open (hasn't been scored yet)
+	var has_existing_score = scorecard.lower_scores[category] != null
+	if has_existing_score:
+		print("[ScoreCardUI] Cannot use Go Broke on already scored category")
+		show_invalid_score_feedback(category)
+		return
+	
+	# Use scorecard's on_category_selected to properly apply normal scoring rules
+	scorecard.on_category_selected(section, category)
+	
+	# Get the score for display (this is now already set by on_category_selected)
+	var score = scorecard.lower_scores[category]
+	
+	print("[ScoreCardUI] Go Broke final score set:", score)
+	
+	if score == null:
+		print("[ScoreCardUI] Invalid Go Broke score calculation")
+		show_invalid_score_feedback(category)
+		return
+
+	# Check for Yahtzee bonus
+	scorecard.check_bonus_yahtzee(dice_values)
+	
+	# Update UI
+	update_all()
+	turn_scored = true
+	disable_all_score_buttons()
+	
+	# Create logbook entry for Go Broke usage
+	_create_logbook_entry(section, category, dice_values, score)
+	
+	emit_signal("hand_scored")
+	
+	# Update ExtraInfo with recent logbook entries
+	update_extra_info_with_logbook()
+	
+	print("[ScoreCardUI] Go Broke completed for", category, "with score:", score)
 
 ## _calculate_best_score_for_dice(dice_values)
 ##

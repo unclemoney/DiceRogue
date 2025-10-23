@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://d4nraryal6sna"]
+
+[ext_resource type="Script" path="res://Scripts/Consumable/go_broke_or_go_home_consumable.gd" id="1_script"]
+
+[node name="GoBrokeOrGoHomeConsumable" type="Node"]
+script = ExtResource("1_script")

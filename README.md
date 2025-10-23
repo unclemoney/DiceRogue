@@ -260,6 +260,12 @@ Test scenes in `Tests/` folder allow isolated testing of components:
   - If a Yahtzee is rolled during that turn, the Yahtzee score is doubled (50 → 100 points)
   - If no Yahtzee is rolled, the next score placed becomes 0
   - Strategic timing is crucial - use only when confident in rolling a Yahtzee
+- **Go Broke or Go Home**: Ultimate high-risk economic gamble (Price: $200)
+  - Use after pressing Next Turn, then manually select a lower section category only
+  - If you score greater than 0, your money is doubled
+  - If you score 0, you lose all your money
+  - Only lower section categories can be selected (Three of a Kind, Four of a Kind, Full House, Small Straight, Large Straight, Yahtzee, Chance)
+  - Most dangerous consumable - can lead to massive wealth or total bankruptcy
 
 ### PowerUp Acquisition
 - **Random Uncommon Power-Up**: Grants a random uncommon rarity power-up

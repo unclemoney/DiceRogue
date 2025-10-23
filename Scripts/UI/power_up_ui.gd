@@ -421,7 +421,7 @@ func _start_idle_animations() -> void:
 		print("[PowerUpUI] Idle animation - Card ", i, " (", power_up_id, ") - Base pos: ", base_pos, ", Final idle pos: ", base_pos + wave_offset)
 		
 		var icon_tween: Tween = create_tween()
-		icon_tween.set_loops()  # Default infinite loops (no argument)
+		icon_tween.set_loops(1000)  # Large finite number instead of infinite
 		icon_tween.tween_property(icon, "position", base_pos + wave_offset, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		icon_tween.tween_property(icon, "position", base_pos - wave_offset, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		

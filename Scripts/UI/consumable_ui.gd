@@ -430,7 +430,7 @@ func _start_idle_animations() -> void:
 		var duration: float = randf_range(2.0, 4.0)
 		
 		var icon_tween: Tween = create_tween()
-		icon_tween.set_loops()  # Default infinite loops (no argument)
+		icon_tween.set_loops(1000)  # Large finite number instead of infinite
 		icon_tween.tween_property(icon, "position", base_pos + wave_offset, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		icon_tween.tween_property(icon, "position", base_pos - wave_offset, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		

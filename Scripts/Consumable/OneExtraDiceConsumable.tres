@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3 uid="uid://c3nrarw8k5qma"]
 
-[ext_resource type="Texture2D" path="res://Resources/Art/Powerups/ExtraDice.png" id="1_icon"]
-[ext_resource type="PackedScene" path="res://Scenes/Consumable/OneExtraDiceConsumable.tscn" id="2_scene"]
-[ext_resource type="Script" path="res://Scripts/Consumable/ConsumableData.gd" id="3_script"]
+[ext_resource type="Texture2D" uid="uid://dkqq5ebpxfhxm" path="res://Resources/Art/Powerups/ExtraDice.png" id="1_icon"]
+[ext_resource type="PackedScene" uid="uid://b2nq8rw7k4pla" path="res://Scenes/Consumable/OneExtraDiceConsumable.tscn" id="2_scene"]
+[ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="3_script"]
 
 [resource]
 script = ExtResource("3_script")
