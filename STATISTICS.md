@@ -76,28 +76,31 @@ The Statistics system tracks all player actions and game metrics throughout thei
 - Real-time updates while panel is visible
 - Clean, readable formatting with proper labels
 
+## Current Implementation Status
+
+### ✅ Completed Features
+- **StatisticsManager autoload singleton** - Fully implemented and active
+- **Basic statistic storage and retrieval** - All core metrics tracked
+- **Increment/decrement methods** - Complete API for all statistics
+- **Session timing functionality** - Tracks play time and session data
+- **Dice rolling system integration** - Connected to dice roll events
+- **Scoring system integration** - Tracks hand completions and scores
+- **Shop system integration** - Tracks purchases and spending
+- **Power-up and consumable usage tracking** - Full item usage statistics
+- **Money management integration** - Comprehensive economic tracking
+- **StatisticsPanel UI** - F10 toggle with tabbed interface
+- **Real-time updates** - Live refreshing while panel is visible
+- **Dice lock tracking** - Connected to dice_hand.die_locked signal
+- **Detailed logbook system** - Complete hand scoring history with modifiers
+
+### 🔧 Recent Bug Fixes
+- **Dice Color Tracking**: Fixed case sensitivity issues in color normalization
+- **Duplicate Hand Scoring**: Eliminated double counting in score button handling  
+- **Poor House Autoscoring**: Fixed bonus persistence after manual scoring
+- **Logbook Source Attribution**: Enhanced calculation summaries with specific source details
+- **Dice Lock Statistics**: Connected die_locked signal to statistics tracking
+
 ## Implementation TODO List
-
-### Phase 1: Core Infrastructure
-- [ ] Create StatisticsManager autoload singleton
-- [ ] Implement basic statistic storage and retrieval
-- [ ] Add increment/decrement methods for counters
-- [ ] Implement session timing functionality
-- [ ] Add debug logging for statistic changes
-
-### Phase 2: Game Integration
-- [ ] Integrate with dice rolling system
-- [ ] Hook into scoring system for hand completions
-- [ ] Connect to shop system for purchase tracking
-- [ ] Add power-up and consumable usage tracking
-- [ ] Integrate with money management system
-
-### Phase 3: UI Implementation
-- [ ] Create StatisticsPanel scene with tabbed layout
-- [ ] Implement F10 toggle functionality in GameController
-- [ ] Add formatted display for all statistics
-- [ ] Create refresh mechanism for real-time updates
-- [ ] Style panel to match game's pixel art theme
 
 ### Phase 4: Advanced Features
 - [ ] Add milestone detection and celebration

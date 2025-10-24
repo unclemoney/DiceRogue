@@ -63,6 +63,7 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
 - **Scorecard** (`Scenes/ScoreCard/score_card.gd`) - Yahtzee-style scoring
 - **ScoreEvaluator** (autoload) - Score calculation logic
 - **ScoreModifierManager** (autoload, file: `Scripts/Managers/MultiplierManager.gd`) - Handles all score bonuses and multipliers
+- **Autoscoring Priority**: When "Next Turn" button auto-selects scoring category, uses priority system to prefer more specific categories when scores are tied (e.g., Four of a Kind over Three of a Kind)
 
 ### Economy & Items
 - **PlayerEconomy** (autoload) - Money and shop transactions
@@ -109,6 +110,7 @@ The **Statistics Manager** tracks comprehensive game metrics and player behavior
 **Implementation:**
 - **Autoload Singleton**: `Statistics` - globally accessible for real-time tracking
 - **Detailed Logbook**: Enhanced calculation summaries with specific source attribution for additive/multiplier effects
+- **Dice Lock Tracking**: Connected to dice_hand.die_locked signal for accurate dice lock counting
 - **UI Panel**: `StatisticsPanel.tscn` - organized tabbed display with auto-refresh
 - **Integration Points**: Connected to dice rolling, scoring, shop purchases, and item usage
 - **API Design**: Simple increment/track methods with computed analytics

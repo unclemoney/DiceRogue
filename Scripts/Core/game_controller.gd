@@ -95,6 +95,7 @@ func _ready() -> void:
 	if dice_hand:
 		dice_hand.roll_complete.connect(_on_roll_completed)
 		dice_hand.dice_spawned.connect(_on_dice_spawned)
+		dice_hand.die_locked.connect(_on_die_locked)
 	if scorecard:
 		scorecard.score_auto_assigned.connect(_on_score_assigned)
 		scorecard.score_auto_assigned.connect(update_double_existing_usability)
@@ -1199,6 +1200,12 @@ func _on_dice_spawned() -> void:
 		if not pending_mods.has(mod_id):
 			pending_mods.append(mod_id)
 
+## _on_die_locked(die)
+##
+## Called when a die is locked. Tracks dice locking statistics.
+func _on_die_locked(die) -> void:
+	print("[GameController] Die locked:", die.value)
+	Statistics.track_dice_lock()
 
 ## _on_shop_button_pressed()
 ##

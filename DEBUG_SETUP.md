@@ -26,6 +26,33 @@ if not DebugPanel.instance:
 DebugPanel.toggle_debug()  # Creates panel if it doesn't exist
 ```
 
+## Debugging Game Issues
+
+### Testing Individual Components
+Use the `Tests/` folder for isolated component testing:
+- **Create test scenes** for specific features (e.g., `Tests/ComponentTest.tscn`)
+- **Test scoring logic** without full game dependencies
+- **Validate calculations** with known inputs
+
+### Common Test Patterns
+```gdscript
+extends Control
+
+func _ready() -> void:
+    print("=== Test Name ===")
+    _test_specific_feature()
+    print("=== Test Complete ===")
+
+func _test_specific_feature() -> void:
+    # Test implementation
+    assert(condition, "Error message")
+    print("✓ Test passed")
+```
+
+### Manual Testing Commands
+- **Run specific test**: `& "path/to/godot.exe" --path "project/path" Tests/TestScene.tscn`
+- **Run main game**: `& "path/to/godot.exe" --path "project/path" Scenes/Controller/game_controller.tscn`
+
 ## Troubleshooting Duplicate Panels
 
 If you see duplicate panels:

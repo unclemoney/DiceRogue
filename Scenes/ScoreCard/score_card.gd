@@ -179,6 +179,7 @@ func auto_score_best(values: Array[int]) -> void:
 	var best_score := -1
 	var best_section
 	var best_category := ""
+	var best_priority := -1
 	
 	# Check upper section first
 	for category in upper_scores.keys():
@@ -190,6 +191,7 @@ func auto_score_best(values: Array[int]) -> void:
 				best_score = score
 				best_section = Section.UPPER
 				best_category = category
+				best_priority = _get_category_priority(category)
 	
 	# Check lower section next
 	for category in lower_scores.keys():
@@ -197,10 +199,16 @@ func auto_score_best(values: Array[int]) -> void:
 			# Pass the actual dice values to evaluate_category
 			var score = evaluate_category(category, values)
 			print("[Scorecard] Evaluating lower category:", category, "score:", score)
-			if score > best_score:
+			var priority = _get_category_priority(category)
+			
+			# Choose this category if:
+			# 1. Score is higher, OR
+			# 2. Score is equal but priority is higher (more specific category)
+			if score > best_score or (score == best_score and priority > best_priority):
 				best_score = score
 				best_section = Section.LOWER
 				best_category = category
+				best_priority = priority
 	
 	if best_category != "":
 		print("[Scorecard] Auto-scoring category:", best_category, "with score:", best_score)
@@ -681,6 +689,23 @@ func evaluate_category(category: String, values: Array[int]) -> int:
 	
 	# Use our color-aware calculate_score method but DON'T apply money effects during evaluation (for previews)
 	return calculate_score_internal(category, values, false)
+
+## _get_category_priority(category)
+##
+## Returns priority value for autoscoring when scores are tied.
+## Higher priority = more specific/valuable category.
+func _get_category_priority(category: String) -> int:
+	# Priority order for lower section (higher number = higher priority)
+	# Yahtzee should always be preferred, then more specific combinations
+	match category:
+		"yahtzee": return 100  # Always prefer Yahtzee
+		"large_straight": return 90  # 40 points fixed
+		"small_straight": return 85  # 30 points fixed  
+		"full_house": return 80  # 25 points fixed
+		"four_of_a_kind": return 70  # More specific than three of a kind
+		"three_of_a_kind": return 60  # Less specific than four of a kind
+		"chance": return 10  # Fallback category
+		_: return 50  # Default for upper section and unknown categories
 
 # DEPRECATED: Debug function for old multiplier system
 func debug_multiplier_function() -> void:
