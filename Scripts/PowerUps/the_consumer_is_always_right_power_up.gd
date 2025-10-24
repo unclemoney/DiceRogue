@@ -120,8 +120,9 @@ func remove(_target) -> void:
 	print("[TheConsumerIsAlwaysRightPowerUp] PowerUp removed but multiplier effect persists")
 
 func get_current_multiplier() -> float:
-	# Use the Statistics singleton directly instead of a cached reference
-	var consumables_used = Statistics.consumables_used
+	# Use statistics_ref if available (for testing), otherwise use singleton
+	var stats = statistics_ref if statistics_ref else Statistics
+	var consumables_used = stats.consumables_used
 	var calculated_multiplier = base_multiplier + (consumables_used * multiplier_per_consumable)
 	print("[TheConsumerIsAlwaysRightPowerUp] DETAILED DEBUG:")
 	print("  base_multiplier: %.2f" % base_multiplier)
@@ -131,8 +132,9 @@ func get_current_multiplier() -> float:
 	return calculated_multiplier
 
 func get_current_description() -> String:
-	# Use Statistics singleton directly
-	var consumables_used = Statistics.consumables_used
+	# Use statistics_ref if available (for testing), otherwise use singleton
+	var stats = statistics_ref if statistics_ref else Statistics
+	var consumables_used = stats.consumables_used
 	var current_mult = get_current_multiplier()
 	
 	if consumables_used == 0:

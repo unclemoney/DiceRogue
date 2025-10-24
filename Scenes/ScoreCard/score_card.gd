@@ -459,6 +459,7 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 			var additive_sources = modifier_manager.get_active_additive_sources()
 			for source in additive_sources:
 				var additive_value = modifier_manager.get_additive(source) if modifier_manager.has_method("get_additive") else 0
+				var source_category = _categorize_modifier_source(source)
 				
 				# If source already exists (has both additive and multiplier), combine info
 				if source in all_modifier_sources:
@@ -467,11 +468,10 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 					all_modifier_sources[source] = {
 						"type": "additive",
 						"value": additive_value,
-						"category": _categorize_modifier_source(source)
+						"category": source_category
 					}
 				
 				# Add to appropriate category lists if not already there
-				var source_category = all_modifier_sources[source].category
 				if source_category == "powerup" and source not in active_powerup_sources:
 					active_powerup_sources.append(source)
 				elif source_category == "consumable" and source not in active_consumable_sources:
@@ -506,8 +506,35 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 		"active_powerups": active_powerup_sources.duplicate(),
 		"active_consumables": active_consumable_sources.duplicate(),
 		"dice_color_money": dice_color_money,
-		"has_modifiers": (total_additive_bonus > 0 or total_multiplier_bonus != 1.0 or dice_color_money > 0)
+		"has_modifiers": (total_additive_bonus > 0 or total_multiplier_bonus != 1.0 or dice_color_money > 0),
+		# Add specific source tracking for additives and multipliers
+		"additive_sources": [],
+		"multiplier_sources": []
 	}
+	
+	# Populate specific source information for accurate calculation summaries
+	if modifier_manager:
+		# Get additive sources
+		if modifier_manager.has_method("get_active_additive_sources"):
+			var additive_sources = modifier_manager.get_active_additive_sources()
+			for source in additive_sources:
+				var source_category = _categorize_modifier_source(source)
+				breakdown_info.additive_sources.append({
+					"name": source,
+					"category": source_category,
+					"value": modifier_manager.get_additive(source) if modifier_manager.has_method("get_additive") else 0
+				})
+		
+		# Get multiplier sources
+		if modifier_manager.has_method("get_active_sources"):
+			var multiplier_sources = modifier_manager.get_active_sources()
+			for source in multiplier_sources:
+				var source_category = _categorize_modifier_source(source)
+				breakdown_info.multiplier_sources.append({
+					"name": source,
+					"category": source_category,
+					"value": modifier_manager.get_multiplier(source) if modifier_manager.has_method("get_multiplier") else 1.0
+				})
 	
 
 	
@@ -562,13 +589,28 @@ func _categorize_modifier_source(source_name: String) -> String:
 		return "mod"
 	else:
 		# Check for known PowerUp source names that don't contain "powerup"
-		if lower_name in ["pin_head", "hot_streak", "lucky_seven", "double_down"]:
+		var powerup_sources = [
+			"pin_head", "hot_streak", "lucky_seven", "double_down",
+			"perfect_strangers", "money_well_spent", "chance520",
+			"the_consumer_is_always_right", "yahtzee_bonus_mult",
+			"upper_bonus_mult", "red_power_ranger", "randomizer",
+			"foursome", "highlighted_score"
+		]
+		
+		if lower_name in powerup_sources:
 			return "powerup"
+		
 		# Check for known Consumable source names that don't contain "consumable"
-		elif lower_name in ["score_reroll", "any_score", "duplicate"]:
+		var consumable_sources = [
+			"score_reroll", "any_score", "duplicate",
+			"poor_house_bonus", "double_or_nothing_zero", 
+			"double_or_nothing_yahtzee"
+		]
+		
+		if lower_name in consumable_sources:
 			return "consumable"
-		else:
-			return "other"
+		
+		return "other"
 
 ## _calculate_score_with_preserved_effects()
 ##

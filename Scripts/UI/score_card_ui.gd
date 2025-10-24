@@ -381,10 +381,7 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 	# Update ExtraInfo with recent logbook entries
 	update_extra_info_with_logbook()
 	
-	# Manually trigger score assignment signal for GameController
-	var game_controller = get_tree().get_first_node_in_group("game_controller")
-	if game_controller and game_controller.has_method("_on_score_assigned"):
-		game_controller._on_score_assigned(section, category, score)
+	# Note: GameController will be notified via scorecard.score_assigned signal connection
 
 func disable_all_score_buttons():
 	for button in upper_section_buttons.values():
@@ -663,10 +660,7 @@ func _on_score_button_pressed(section: Scorecard.Section, category: String) -> v
 	# Update ExtraInfo with recent logbook entries
 	update_extra_info_with_logbook()
 	
-	# Manually trigger score assignment signal for GameController
-	var game_controller = get_tree().get_first_node_in_group("game_controller")
-	if game_controller and game_controller.has_method("_on_score_assigned"):
-		game_controller._on_score_assigned(section, category, score)
+	# Note: GameController will be notified via scorecard.score_assigned signal connection
 	
 func _handle_double_score(section: Scorecard.Section, category: String) -> void:
 	print("[ScoreCardUI] Handling double score for", category)
@@ -1289,10 +1283,7 @@ func _on_score_auto_assigned(section: Scorecard.Section, category: String, score
 	# Update ExtraInfo with recent logbook entries
 	update_extra_info_with_logbook()
 	
-	# Notify GameController just like manual scoring does
-	var game_controller = get_tree().get_first_node_in_group("game_controller")
-	if game_controller and game_controller.has_method("_on_score_assigned"):
-		game_controller._on_score_assigned(section, category, score)
+	# Note: GameController will be notified via scorecard.score_assigned signal connection
 
 ## _on_score_changed_from_scorecard(total_score)
 ##

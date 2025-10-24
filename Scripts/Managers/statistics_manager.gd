@@ -92,7 +92,8 @@ func _ready():
 ## 
 ## Set up the dice color tracking dictionary.
 func _initialize_dice_color_tracking():
-	var dice_colors = ["red", "blue", "green", "yellow", "purple", "white"]
+	# Initialize with actual dice colors from DiceColor system (case-insensitive)
+	var dice_colors = ["none", "green", "red", "purple"]
 	for color in dice_colors:
 		dice_rolled_by_color[color] = 0
 
@@ -120,8 +121,10 @@ func increment_rerolls():
 ## 
 ## Track a dice roll by color and value.
 func track_dice_roll(color: String, value: int):
-	if dice_rolled_by_color.has(color):
-		dice_rolled_by_color[color] += 1
+	var normalized_color = color.to_lower()
+	
+	if dice_rolled_by_color.has(normalized_color):
+		dice_rolled_by_color[normalized_color] += 1
 	
 	if value > highest_single_roll:
 		highest_single_roll = value
@@ -479,11 +482,9 @@ func log_hand_scored(
 	final_score: int = 0,
 	breakdown_info: Dictionary = {}
 ) -> void:
-	# Debug logging for logbook entry creation
-	print("[Statistics] Creating logbook entry:")
-	print("  PowerUps:", powerups)
-	print("  Consumables:", consumables)
-	print("  Category:", category, " | Score:", base_score, "→", final_score)
+	# Log entry creation for debugging
+	if powerups.size() > 0 or consumables.size() > 0:
+		print("[Statistics] Logbook entry: %s (%d→%d pts) PowerUps:%s Consumables:%s" % [category, base_score, final_score, powerups, consumables])
 	
 	var entry = LogEntry.new(
 		dice_values,

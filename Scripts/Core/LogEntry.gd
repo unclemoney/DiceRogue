@@ -105,24 +105,30 @@ func _generate_detailed_calculation_summary() -> String:
 	if total_additive > 0:
 		var additive_details = []
 		
-		# Regular additives from PowerUps/Consumables
-		var regular_additive = breakdown_info.get("regular_additive", 0)
-		if regular_additive > 0:
-			var powerups = breakdown_info.get("active_powerups", [])
-			var consumables = breakdown_info.get("active_consumables", [])
-			
-			if powerups.size() > 0:
-				var powerup_names = []
-				for powerup in powerups:
-					powerup_names.append(_format_modifier_name(powerup))
-				additive_details.append("%d %s" % [regular_additive, ", ".join(powerup_names)])
-			elif consumables.size() > 0:
-				var consumable_names = []
-				for consumable in consumables:
-					consumable_names.append(_format_modifier_name(consumable))
-				additive_details.append("%d %s" % [regular_additive, ", ".join(consumable_names)])
-			else:
-				additive_details.append("%d bonus" % regular_additive)
+		# Use specific additive sources if available
+		if breakdown_info.has("additive_sources") and breakdown_info.additive_sources.size() > 0:
+			for source_info in breakdown_info.additive_sources:
+				var source_name = _format_modifier_name(source_info.name)
+				additive_details.append("%d %s" % [source_info.value, source_name])
+		else:
+			# Fallback to old logic if specific sources not available
+			var regular_additive = breakdown_info.get("regular_additive", 0)
+			if regular_additive > 0:
+				var powerups = breakdown_info.get("active_powerups", [])
+				var consumables = breakdown_info.get("active_consumables", [])
+				
+				if powerups.size() > 0:
+					var powerup_names = []
+					for powerup in powerups:
+						powerup_names.append(_format_modifier_name(powerup))
+					additive_details.append("%d %s" % [regular_additive, ", ".join(powerup_names)])
+				elif consumables.size() > 0:
+					var consumable_names = []
+					for consumable in consumables:
+						consumable_names.append(_format_modifier_name(consumable))
+					additive_details.append("%d %s" % [regular_additive, ", ".join(consumable_names)])
+				else:
+					additive_details.append("%d bonus" % regular_additive)
 		
 		# Red dice additives
 		var red_additive = breakdown_info.get("dice_color_additive", 0)
@@ -139,24 +145,30 @@ func _generate_detailed_calculation_summary() -> String:
 	if total_multiplier != 1.0:
 		var multiplier_details = []
 		
-		# Regular multipliers from PowerUps/Consumables
-		var regular_multiplier = breakdown_info.get("regular_multiplier", 1.0)
-		if regular_multiplier != 1.0:
-			var powerups = breakdown_info.get("active_powerups", [])
-			var consumables = breakdown_info.get("active_consumables", [])
-			
-			if powerups.size() > 0:
-				var powerup_names = []
-				for powerup in powerups:
-					powerup_names.append(_format_modifier_name(powerup))
-				multiplier_details.append("×%.1f %s" % [regular_multiplier, ", ".join(powerup_names)])
-			elif consumables.size() > 0:
-				var consumable_names = []
-				for consumable in consumables:
-					consumable_names.append(_format_modifier_name(consumable))
-				multiplier_details.append("×%.1f %s" % [regular_multiplier, ", ".join(consumable_names)])
-			else:
-				multiplier_details.append("×%.1f" % regular_multiplier)
+		# Use specific multiplier sources if available
+		if breakdown_info.has("multiplier_sources") and breakdown_info.multiplier_sources.size() > 0:
+			for source_info in breakdown_info.multiplier_sources:
+				var source_name = _format_modifier_name(source_info.name)
+				multiplier_details.append("×%.1f %s" % [source_info.value, source_name])
+		else:
+			# Fallback to old logic if specific sources not available
+			var regular_multiplier = breakdown_info.get("regular_multiplier", 1.0)
+			if regular_multiplier != 1.0:
+				var powerups = breakdown_info.get("active_powerups", [])
+				var consumables = breakdown_info.get("active_consumables", [])
+				
+				if powerups.size() > 0:
+					var powerup_names = []
+					for powerup in powerups:
+						powerup_names.append(_format_modifier_name(powerup))
+					multiplier_details.append("×%.1f %s" % [regular_multiplier, ", ".join(powerup_names)])
+				elif consumables.size() > 0:
+					var consumable_names = []
+					for consumable in consumables:
+						consumable_names.append(_format_modifier_name(consumable))
+					multiplier_details.append("×%.1f %s" % [regular_multiplier, ", ".join(consumable_names)])
+				else:
+					multiplier_details.append("×%.1f" % regular_multiplier)
 		
 		# Purple dice multipliers
 		var purple_multiplier = breakdown_info.get("dice_color_multiplier", 1.0)
@@ -193,6 +205,8 @@ func _format_modifier_name(source_name: String) -> String:
 		"score_reroll": return "Score Reroll"
 		"any_score": return "Any Score"
 		"duplicate": return "Duplicate"
+		"poor_house_bonus": return "Poor House"
+		"the_consumer_is_always_right": return "The Consumer is Always Right"
 		_: return formatted.capitalize().replace("_", " ")
 
 ## _generate_formatted_log_line()

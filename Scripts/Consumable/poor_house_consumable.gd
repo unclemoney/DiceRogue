@@ -46,15 +46,15 @@ func apply(target) -> void:
 	
 	# Connect to the scorecard to remove the bonus after first score
 	if game_controller.scorecard:
-		if not game_controller.scorecard.is_connected("score_auto_assigned", _on_score_assigned):
-			game_controller.scorecard.score_auto_assigned.connect(_on_score_assigned)
+		if not game_controller.scorecard.is_connected("score_assigned", _on_score_assigned):
+			game_controller.scorecard.score_assigned.connect(_on_score_assigned)
 	
 	# Emit our custom signal
 	emit_signal("money_transferred_to_score", current_money)
 	
 	print("[PoorHouseConsumable] Transferred $%d from player to next scored hand" % current_money)
 
-func _on_score_assigned(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
+func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 	# Only process once
 	if bonus_applied:
 		return
@@ -69,5 +69,5 @@ func _on_score_assigned(_section: int, _category: String, _score: int, _breakdow
 	
 	# Disconnect from the scorecard signal
 	if game_controller_ref and game_controller_ref.scorecard:
-		if game_controller_ref.scorecard.is_connected("score_auto_assigned", _on_score_assigned):
-			game_controller_ref.scorecard.score_auto_assigned.disconnect(_on_score_assigned)
+		if game_controller_ref.scorecard.is_connected("score_assigned", _on_score_assigned):
+			game_controller_ref.scorecard.score_assigned.disconnect(_on_score_assigned)

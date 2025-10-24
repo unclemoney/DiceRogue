@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://hqk5ag7l43cg"]
+
+[ext_resource type="Script" path="res://Tests/poor_house_autoscore_test.gd" id="1_script"]
+
+[node name="PoorHouseAutoscoreTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_script")

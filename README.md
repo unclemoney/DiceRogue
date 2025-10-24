@@ -108,6 +108,7 @@ The **Statistics Manager** tracks comprehensive game metrics and player behavior
 
 **Implementation:**
 - **Autoload Singleton**: `Statistics` - globally accessible for real-time tracking
+- **Detailed Logbook**: Enhanced calculation summaries with specific source attribution for additive/multiplier effects
 - **UI Panel**: `StatisticsPanel.tscn` - organized tabbed display with auto-refresh
 - **Integration Points**: Connected to dice rolling, scoring, shop purchases, and item usage
 - **API Design**: Simple increment/track methods with computed analytics
