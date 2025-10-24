@@ -201,6 +201,19 @@ func _create_dice_tab():
 	else:
 		for color in stats_node.dice_rolled_by_color.keys():
 			_add_stat_label(dice_tab, "  " + color.capitalize(), str(stats_node.dice_rolled_by_color[color]))
+	
+	_add_separator(dice_tab)
+	
+	var scored_title = Label.new()
+	scored_title.text = "Scored by Color:"
+	scored_title.add_theme_font_size_override("font_size", 14)
+	dice_tab.add_child(scored_title)
+	
+	if stats_node.dice_scored_by_color.is_empty():
+		_add_stat_label(dice_tab, "  No colored dice", "scored yet")
+	else:
+		for color in stats_node.dice_scored_by_color.keys():
+			_add_stat_label(dice_tab, "  " + color.capitalize(), str(stats_node.dice_scored_by_color[color]))
 
 ## _create_hands_tab()
 ## 

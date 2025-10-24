@@ -28,6 +28,7 @@ var money_spent_on_mods: int = 0
 
 # Dice Metrics
 var dice_rolled_by_color: Dictionary = {}
+var dice_scored_by_color: Dictionary = {}
 var dice_locked_count: int = 0
 var highest_single_roll: int = 0
 var snake_eyes_count: int = 0
@@ -96,6 +97,7 @@ func _initialize_dice_color_tracking():
 	var dice_colors = ["none", "green", "red", "purple"]
 	for color in dice_colors:
 		dice_rolled_by_color[color] = 0
+		dice_scored_by_color[color] = 0
 
 ## increment_turns()
 ## 
@@ -135,6 +137,34 @@ func track_dice_roll(color: String, value: int):
 ## Increment the dice locked counter.
 func track_dice_lock():
 	dice_locked_count += 1
+
+## track_dice_scored(color: String, value: int)
+## 
+## Track a dice that was scored by color and value.
+func track_dice_scored(color: String, value: int):
+	var normalized_color = color.to_lower()
+	
+	# Initialize the color if it doesn't exist
+	if not dice_scored_by_color.has(normalized_color):
+		dice_scored_by_color[normalized_color] = 0
+	
+	dice_scored_by_color[normalized_color] += 1
+	print("[Statistics] Tracked %s dice scored (value: %d). Total %s scored: %d" % [normalized_color, value, normalized_color, dice_scored_by_color[normalized_color]])
+
+## track_dice_array_scored(dice_array: Array)
+## 
+## Track multiple dice that were scored at once (helper method).
+func track_dice_array_scored(dice_array: Array):
+	for die in dice_array:
+		if die and die is Dice:
+			# Dice objects have color (DiceColor.Type enum) and value (int) properties
+			var color_name = DiceColor.get_color_name(die.color)
+			track_dice_scored(color_name, die.value)
+		elif die and typeof(die) == TYPE_DICTIONARY and die.has("color") and die.has("value"):
+			# Handle dictionary-based dice (for testing)
+			track_dice_scored(die.color, die.value)
+		else:
+			print("[Statistics] Warning: Could not track dice scored - invalid dice object: ", die)
 
 ## record_hand_scored(hand_type: String, _score: int)
 ## 
@@ -372,6 +402,7 @@ func get_all_statistics() -> Dictionary:
 		},
 		"dice_metrics": {
 			"dice_rolled_by_color": dice_rolled_by_color,
+			"dice_scored_by_color": dice_scored_by_color,
 			"dice_locked_count": dice_locked_count,
 			"highest_single_roll": highest_single_roll,
 			"snake_eyes_count": snake_eyes_count,

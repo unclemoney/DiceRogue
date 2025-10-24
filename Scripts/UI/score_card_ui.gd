@@ -846,10 +846,13 @@ func _create_logbook_entry(section: Scorecard.Section, category: String, dice_va
 	var dice_mods: Array[String] = []
 	
 	if DiceResults and DiceResults.dice_refs and DiceResults.dice_refs.size() > 0:
-		for dice in DiceResults.dice_refs:
+		print("[ScoreCardUI] DEBUG: Processing %d dice for logbook (first instance)" % DiceResults.dice_refs.size())
+		for i in range(DiceResults.dice_refs.size()):
+			var dice = DiceResults.dice_refs[i]
 			if dice and dice is Dice:
 				# Get color name
 				var color_name = DiceColor.get_color_name(dice.color).to_lower()
+				print("[ScoreCardUI] DEBUG: Die %d - value: %d, color enum: %s, color_name: %s" % [i, dice.value, dice.color, color_name])
 				dice_colors.append(color_name)
 				
 				# Get active mods (if any)
@@ -866,6 +869,7 @@ func _create_logbook_entry(section: Scorecard.Section, category: String, dice_va
 					dice_mods.append(",".join(dice_mod_names))
 				else:
 					dice_mods.append("")
+		print("[ScoreCardUI] DEBUG: Final dice_colors array (first): %s" % [dice_colors])
 	else:
 		# Fallback - no dice references available
 		for i in range(dice_values.size()):
@@ -968,10 +972,13 @@ func _create_logbook_entry_with_breakdown(section: Scorecard.Section, category: 
 	var dice_mods: Array[String] = []
 	
 	if DiceResults and DiceResults.dice_refs and DiceResults.dice_refs.size() > 0:
-		for dice in DiceResults.dice_refs:
+		print("[ScoreCardUI] DEBUG: Processing %d dice for logbook (second instance)" % DiceResults.dice_refs.size())
+		for i in range(DiceResults.dice_refs.size()):
+			var dice = DiceResults.dice_refs[i]
 			if dice and dice is Dice:
 				# Get color name
 				var color_name = DiceColor.get_color_name(dice.color).to_lower()
+				print("[ScoreCardUI] DEBUG: Die %d - value: %d, color enum: %s, color_name: %s" % [i, dice.value, dice.color, color_name])
 				dice_colors.append(color_name)
 				
 				# Get active mods (if any)
@@ -988,6 +995,7 @@ func _create_logbook_entry_with_breakdown(section: Scorecard.Section, category: 
 					dice_mods.append(",".join(dice_mod_names))
 				else:
 					dice_mods.append("")
+		print("[ScoreCardUI] DEBUG: Final dice_colors array (second): %s" % [dice_colors])
 	else:
 		# Fallback - no dice references available
 		for i in range(dice_values.size()):

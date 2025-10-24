@@ -602,7 +602,7 @@ func _categorize_modifier_source(source_name: String) -> String:
 			"perfect_strangers", "money_well_spent", "chance520",
 			"the_consumer_is_always_right", "yahtzee_bonus_mult",
 			"upper_bonus_mult", "red_power_ranger", "randomizer",
-			"foursome", "highlighted_score"
+			"foursome", "highlighted_score", "green_monster"
 		]
 		
 		if lower_name in powerup_sources:

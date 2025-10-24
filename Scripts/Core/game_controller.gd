@@ -181,7 +181,7 @@ func _on_game_start() -> void:
 	grant_consumable("poor_house")
 	#apply_debuff("the_division")
 	#activate_challenge("300pts_no_debuff")
-	grant_power_up("the_consumer_is_always_right")
+	grant_power_up("green_monster")
 	if round_manager:
 		round_manager.start_game()
 
@@ -849,6 +849,16 @@ func _on_score_assigned(_section: int, _category: String, _score: int, _breakdow
 		if _score > 0:
 			stats.record_hand_scored(_category, _score)
 			stats.update_highest_score(_score)
+			# Track which colored dice were scored
+			if dice_hand:
+				var dice_array = dice_hand.get_all_dice()
+				print("[GameController] DEBUG: Tracking dice scored - count: %d" % dice_array.size())
+				for i in range(dice_array.size()):
+					var die = dice_array[i]
+					if die:
+						var color_name = DiceColor.get_color_name(die.color) if die.color != null else "null"
+						print("[GameController] DEBUG: Die %d - value: %d, color: %s (type: %s)" % [i, die.value, color_name, typeof(die.color)])
+				stats.track_dice_array_scored(dice_array)
 		else:
 			stats.record_failed_hand()
 
