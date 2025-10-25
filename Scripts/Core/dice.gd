@@ -86,7 +86,7 @@ func roll() -> void:
 
 	# Assign color based on random chance (if colors are enabled)
 	_assign_random_color()
-	print("[Dice] Rolling", dice_data.display_name, "- got:", value, "color:", DiceColorClass.get_color_name(color))
+	#print("[Dice] Rolling", dice_data.display_name, "- got:", value, "color:", DiceColorClass.get_color_name(color))
 	emit_signal("rolled", value)
 	animate_roll()
 	update_visual()
@@ -138,7 +138,7 @@ func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 			print("[Dice] Ignoring input - processing disabled")
 			shake_denied()  # Add shake effect when trying to interact while disabled
 			return
-		print("[Dice] Die selected:", name)
+		#print("[Dice] Die selected:", name)
 		emit_signal("selected", self)
 		emit_signal("clicked")
 		

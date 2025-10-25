@@ -446,16 +446,16 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 		total_multiplier = modifier_manager.get_total_multiplier()
 		
 		# DEBUG: Print the current state during score calculation
-		print("[SCORECARD DEBUG] ScoreModifierManager state during calculation:")
-		print("[SCORECARD DEBUG] total_additive:", total_additive)
-		print("[SCORECARD DEBUG] total_multiplier:", total_multiplier)
+		#print("[SCORECARD DEBUG] ScoreModifierManager state during calculation:")
+		#print("[SCORECARD DEBUG] total_additive:", total_additive)
+		#print("[SCORECARD DEBUG] total_multiplier:", total_multiplier)
 		if modifier_manager.has_method("get_active_sources"):
 			var sources = modifier_manager.get_active_sources()
-			print("[SCORECARD DEBUG] active sources:", sources)
+			#print("[SCORECARD DEBUG] active sources:", sources)
 			for source in sources:
 				if modifier_manager.has_method("get_multiplier"):
 					var mult = modifier_manager.get_multiplier(source)
-					print("[SCORECARD DEBUG] source '", source, "' multiplier:", mult)
+					#print("[SCORECARD DEBUG] source '", source, "' multiplier:", mult)
 		
 		# Get detailed source information for breakdown
 		var all_modifier_sources = {}

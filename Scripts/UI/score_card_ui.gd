@@ -54,6 +54,13 @@ func _ready():
 	if not best_hand_label:
 		push_error("BestHandScore RichTextLabel not found!")
 
+	# Ensure ExtraInfo label is properly configured
+	if extra_info_label and extra_info_label is RichTextLabel:
+		extra_info_label.bbcode_enabled = true
+		print("[ScoreCardUI] ExtraInfo RichTextLabel found and BBCode enabled")
+	else:
+		print("[ScoreCardUI] Warning: ExtraInfo RichTextLabel not found or not properly configured")
+
 	for key in LOWER_CATEGORY_NODE_NAMES.keys():
 		var node_name = LOWER_CATEGORY_NODE_NAMES[key]
 		var button_path = "HBoxContainer/LowerVBoxContainer/LowerGridContainer/%s/%sButton" % [node_name, node_name]
@@ -766,8 +773,8 @@ func update_extra_info_with_logbook(entry_count: int = 3) -> void:
 			var alpha = 1.0 - (i * 0.2)  # Fade older entries
 			alpha = max(alpha, 0.4)  # Don't go too faded
 			
-			# Color based on score effectiveness
-			var color = "white"
+			# Color based on score effectiveness with fading
+			var base_color = Color.WHITE
 			if "→" in line:
 				# Try to extract score info for color coding
 				if "=" in line:
@@ -775,13 +782,19 @@ func update_extra_info_with_logbook(entry_count: int = 3) -> void:
 					var score_str = score_part.replace("pts", "").strip_edges()
 					var score = score_str.to_int()
 					if score >= 20:
-						color = "green"
+						base_color = Color.GREEN
 					elif score >= 10:
-						color = "yellow"
+						base_color = Color.YELLOW
 					else:
-						color = "orange"
+						base_color = Color.ORANGE
 			
-			bbcode_lines.append("[color=%s][alpha=%0.1f]%s[/alpha][/color]" % [color, alpha, line])
+			# Apply alpha to the base color
+			var faded_color = Color(base_color.r, base_color.g, base_color.b, alpha)
+			
+			# Convert to hex for BBCode
+			var hex_color = "#%02x%02x%02x%02x" % [int(faded_color.r * 255), int(faded_color.g * 255), int(faded_color.b * 255), int(faded_color.a * 255)]
+			
+			bbcode_lines.append("[color=%s]%s[/color]" % [hex_color, line])
 		
 		recent_logs = "\n".join(bbcode_lines)
 	
@@ -790,10 +803,16 @@ func update_extra_info_with_logbook(entry_count: int = 3) -> void:
 		_update_extra_info_no_center(recent_logs)
 	else:
 		print("[ScoreCardUI] Warning: ExtraInfo label not found for logbook update")
-		# Try to find it again
+		# Try to find it again and ensure it's properly configured
 		extra_info_label = get_node_or_null("ExtraInfo")
-		if extra_info_label:
+		if not extra_info_label:
+			extra_info_label = find_child("ExtraInfo", true, false)
+		if extra_info_label and extra_info_label is RichTextLabel:
+			# Ensure BBCode is enabled
+			extra_info_label.bbcode_enabled = true
 			_update_extra_info_no_center(recent_logs)
+		else:
+			print("[ScoreCardUI] Error: ExtraInfo node not found or not a RichTextLabel")
 
 ## _update_extra_info_no_center()
 ##
