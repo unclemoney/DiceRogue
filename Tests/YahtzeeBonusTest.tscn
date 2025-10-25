@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://djh8m7qx4mggx"]
+
+[ext_resource type="Script" path="res://Tests/yahtzee_bonus_test.gd" id="1_k4q2c"]
+
+[node name="YahtzeeBonusTest" type="Node"]
+script = ExtResource("1_k4q2c")

@@ -1,0 +1,36 @@
+[gd_scene load_steps=3 format=3 uid="uid://bfnq8kqp66wqr"]
+
+[ext_resource type="PackedScene" uid="uid://c40ajsryfhq8c" path="res://Scenes/ScoreCard/score_card.tscn" id="1_n5dx4"]
+[ext_resource type="Script" path="res://Tests/bonus_double_counting_test.gd" id="2_1rtov"]
+
+[node name="BonusDoubleCountingTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("2_1rtov")
+
+[node name="Scorecard" parent="." instance=ExtResource("1_n5dx4")]
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -200.0
+offset_right = 300.0
+offset_bottom = 200.0
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Bonus Double-Counting Fix Test"
+horizontal_alignment = 1
+
+[node name="ResultsLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 2

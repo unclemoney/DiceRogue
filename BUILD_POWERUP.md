@@ -318,6 +318,123 @@ The BonusMoneyPowerUp demonstrates a complete implementation:
 - Ensure debug panel references use proper property access (e.g., `game_controller.dice_hand` not `game_controller.get("dice_hand")`)
 - Verify all manager references are updated to use @onready variables
 
+## ScoreModifierManager Integration & Logbook Visibility
+
+**CRITICAL:** PowerUps that modify scores MUST use ScoreModifierManager to appear in the logbook's statistics panel.
+
+### When to Use ScoreModifierManager
+
+PowerUps should register with ScoreModifierManager if they:
+- **Add points to scores** (additive modifiers)
+- **Multiply score values** (multiplier modifiers)
+- **Need to appear in logbook's "powerups_applied" list**
+
+PowerUps that DON'T need ScoreModifierManager:
+- Give money or resources (e.g., bonus_money, full_house)
+- Modify dice behavior (e.g., extra_dice)
+- Change game mechanics without affecting score values
+
+### Global vs Conditional Registration
+
+#### Global Registration (Most PowerUps)
+Register once during apply(), stays active until removed:
+
+```gdscript
+func apply(target) -> void:
+	# ... other setup code ...
+	
+	# Register with ScoreModifierManager
+	ScoreModifierManager.register_additive("powerup_source_name", bonus_amount)
+	# OR
+	ScoreModifierManager.register_multiplier("powerup_source_name", multiplier_value)
+
+func remove(target) -> void:
+	# ... cleanup code ...
+	
+	# Unregister from ScoreModifierManager
+	ScoreModifierManager.unregister_additive("powerup_source_name")
+	# OR
+	ScoreModifierManager.unregister_multiplier("powerup_source_name")
+```
+
+#### Conditional Registration (Advanced)
+For PowerUps that only affect specific score categories (like StepByStep affecting only upper section):
+
+```gdscript
+# PowerUp applies only to upper section scores
+func apply(target) -> void:
+	var scorecard = target as Scorecard
+	scorecard_ref = scorecard
+	
+	# Connect to about_to_score signal for conditional registration
+	var score_card_ui = scorecard.get_tree().get_first_node_in_group("score_card_ui")
+	if score_card_ui:
+		score_card_ui.about_to_score.connect(_on_about_to_score)
+	
+	# Connect to score_assigned for cleanup
+	scorecard.score_assigned.connect(_on_score_assigned)
+
+func _on_about_to_score(section: Scorecard.Section, category: String, _dice_values: Array[int]) -> void:
+	# Only register for upper section categories
+	if section == Scorecard.Section.UPPER:
+		ScoreModifierManager.register_additive("powerup_source_name", bonus_amount)
+		print("[PowerUp] Registered additive for upper section category: ", category)
+
+func _on_score_assigned(section: Scorecard.Section, category: String, _score: int) -> void:
+	# Clean up after scoring completes
+	if section == Scorecard.Section.UPPER:
+		if ScoreModifierManager.has_additive("powerup_source_name"):
+			ScoreModifierManager.unregister_additive("powerup_source_name")
+			print("[PowerUp] Cleaned up additive after upper section scoring")
+```
+
+### Source Name Guidelines
+
+Use consistent, descriptive source names:
+- Use snake_case: `"step_by_step"`, `"green_monster"`, `"evens_no_odds"`
+- Match PowerUp class name pattern: Remove "PowerUp" suffix and convert to snake_case
+- Add to scorecard categorization list (see below)
+
+### Logbook Integration Checklist
+
+1. **✅ Use ScoreModifierManager:** Register additive/multiplier
+2. **✅ Use proper source name:** Consistent naming convention
+3. **✅ Update scorecard categorization:** Add source name to `_categorize_modifier_source()`
+4. **✅ Test visibility:** Verify PowerUp appears in logbook statistics
+
+### Adding to Scorecard Categorization
+
+Edit `Scripts/ScoreCard/score_card.gd` and add your PowerUp source name:
+
+```gdscript
+func _categorize_modifier_source(source: String) -> String:
+	var powerup_sources = [
+		"green_monster", "evens_no_odds", "chance520", "foursome", 
+		"highlighted_score", "step_by_step", "your_new_powerup"  # Add here
+	]
+	
+	if source in powerup_sources:
+		return "powerup"
+	# ... rest of function
+```
+
+### Common Issues & Solutions
+
+#### PowerUp Not Appearing in Logbook
+1. **Check ScoreModifierManager registration:** Use `register_additive()` or `register_multiplier()`
+2. **Verify source name:** Must be added to scorecard's powerup_sources list
+3. **Test with debug:** Check `ScoreModifierManager.get_active_additive_sources()`
+
+#### Conditional PowerUp Always/Never Registering
+1. **Check signal connections:** Verify about_to_score and score_assigned signals
+2. **Debug conditional logic:** Add print statements to verify section/category filtering
+3. **Test cleanup:** Ensure modifiers are unregistered after scoring
+
+#### Multiplier/Additive Value Wrong
+1. **Check calculation logic:** Verify bonus amounts and multiplier values
+2. **Test incremental updates:** For growing bonuses, ensure proper tracking
+3. **Debug ScoreModifierManager:** Use debug panel to view active modifiers
+
 ## Best Practices
 
 1. **Always test PowerUp cleanup** - Use remove() and verify no memory leaks

@@ -11,10 +11,10 @@ func evaluate_with_wildcards(dice_values: Array[int]) -> Dictionary:
 	# This method can be called multiple times legitimately during category evaluation
 	
 	# Check for Yahtzee bonus potential first
-	var has_bonus_potential = false
+	var _has_bonus_potential = false
 	if DiceResults.scorecard and DiceResults.scorecard.lower_scores.get("yahtzee") == 50:
 		if is_yahtzee(dice_values):
-			has_bonus_potential = true
+			_has_bonus_potential = true
 	
 	var wildcard_indices = []
 	var regular_values = []
@@ -29,15 +29,8 @@ func evaluate_with_wildcards(dice_values: Array[int]) -> Dictionary:
 	
 	var best_scores = {}
 	var has_yahtzee = false
-	# If this is a potential bonus Yahtzee, add 100 to all available categories
-	if has_bonus_potential:
-		for category in DiceResults.scorecard.upper_scores:
-			if DiceResults.scorecard.upper_scores[category] == null:
-				best_scores[category] = 100
-				
-		for category in DiceResults.scorecard.lower_scores:
-			if category != "yahtzee" and DiceResults.scorecard.lower_scores[category] == null:
-				best_scores[category] = 100	
+	# NOTE: Bonus Yahtzee handling is done in the scorecard, not here
+	# ScoreEvaluator only calculates base scores for categories
 
 	# Only generate combinations once
 	var combinations = generate_wildcard_combinations(wildcard_indices.size(), 6)
@@ -62,11 +55,11 @@ func evaluate_with_wildcards(dice_values: Array[int]) -> Dictionary:
 		
 		var scores = evaluate_normal(test_values)
 		
-		# If this is a bonus Yahtzee, add 100 points to each possible category
+		# If this is a bonus Yahtzee, we still only calculate base scores
+		# Bonus points are handled separately in the scorecard
 		if has_yahtzee:
-			for category in scores.keys():
-				if category != "yahtzee":  # Don't modify yahtzee category
-					scores[category] += 100
+			# has_yahtzee is tracked but no score modification needed here
+			pass
 		
 		# Update best scores for each category
 		for category in scores:

@@ -49,6 +49,10 @@ var large_straight_scored: int = 0
 var yahtzee_scored: int = 0
 var chance_scored: int = 0
 
+# Bonus Statistics
+var yahtzee_bonuses_earned: int = 0
+var upper_bonuses_earned: int = 0
+
 # Power-Up & Item Usage
 var powerups_purchased: int = 0
 var consumables_purchased: int = 0
@@ -212,6 +216,22 @@ func record_hand_scored(hand_type: String, _score: int):
 func record_failed_hand():
 	failed_hands += 1
 	current_streak = 0
+
+## track_yahtzee_bonus()
+## 
+## Track when a Yahtzee bonus is earned (additional Yahtzees after the first).
+func track_yahtzee_bonus():
+	yahtzee_bonuses_earned += 1
+	print("[Statistics] Yahtzee bonus earned! Total: %d" % yahtzee_bonuses_earned)
+	_check_milestone("yahtzee_bonuses", yahtzee_bonuses_earned)
+
+## track_upper_bonus()
+## 
+## Track when an upper section bonus is earned (when upper total >= 63).
+func track_upper_bonus():
+	upper_bonuses_earned += 1
+	print("[Statistics] Upper section bonus earned! Total: %d" % upper_bonuses_earned)
+	_check_milestone("upper_bonuses", upper_bonuses_earned)
 
 ## add_money_earned(amount: int)
 ## 
@@ -423,6 +443,10 @@ func get_all_statistics() -> Dictionary:
 			"yahtzee_scored": yahtzee_scored,
 			"chance_scored": chance_scored
 		},
+		"bonus_statistics": {
+			"yahtzee_bonuses_earned": yahtzee_bonuses_earned,
+			"upper_bonuses_earned": upper_bonuses_earned
+		},
 		"item_usage": {
 			"powerups_purchased": powerups_purchased,
 			"consumables_purchased": consumables_purchased,
@@ -480,6 +504,9 @@ func reset_statistics():
 	large_straight_scored = 0
 	yahtzee_scored = 0
 	chance_scored = 0
+	
+	yahtzee_bonuses_earned = 0
+	upper_bonuses_earned = 0
 	
 	powerups_purchased = 0
 	consumables_purchased = 0

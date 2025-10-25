@@ -262,6 +262,18 @@ func _create_hands_tab():
 	_add_stat_label(hands_tab, "  Large Straight", str(stats_node.large_straight_scored))
 	_add_stat_label(hands_tab, "  Yahtzee", str(stats_node.yahtzee_scored))
 	_add_stat_label(hands_tab, "  Chance", str(stats_node.chance_scored))
+	
+	_add_separator(hands_tab)
+	
+	# Bonus achievements
+	var bonus_title = Label.new()
+	bonus_title.text = "Bonus Achievements:"
+	bonus_title.add_theme_font_size_override("font_size", 14)
+	bonus_title.add_theme_color_override("font_color", Color.GOLD)
+	hands_tab.add_child(bonus_title)
+	
+	_add_stat_label(hands_tab, "  Yahtzee Bonuses", str(stats_node.yahtzee_bonuses_earned))
+	_add_stat_label(hands_tab, "  Upper Section Bonuses", str(stats_node.upper_bonuses_earned))
 
 ## _create_items_tab()
 ## 

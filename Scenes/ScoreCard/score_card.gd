@@ -238,20 +238,21 @@ func auto_score_best(values: Array[int]) -> void:
 		set_score(best_section, best_category, final_score_with_money)
 		
 		# Defer only the bonus checks and signal emission to avoid timing issues
-		call_deferred("_complete_auto_scoring_finalization", best_section, best_category, final_score_with_money, values, best_score == 50, captured_breakdown_info)
+		call_deferred("_complete_auto_scoring_finalization", best_section, best_category, final_score_with_money, values, captured_breakdown_info)
 	else:
 		print("[Scorecard] No valid scoring categories found!")
 
-## _complete_auto_scoring_finalization(section, category, final_score, values, was_yahtzee_50, breakdown_info)
+## _complete_auto_scoring_finalization(section, category, final_score, values, breakdown_info)
 ##
 ## Deferred finalization of auto-scoring: handles bonus checks and signal emission.
 ## The actual score setting now happens immediately in auto_score_best() to prevent display timing issues.
-func _complete_auto_scoring_finalization(section: Section, category: String, final_score: int, values: Array[int], was_yahtzee_50: bool, breakdown_info: Dictionary = {}) -> void:
+func _complete_auto_scoring_finalization(section: Section, category: String, final_score: int, values: Array[int], breakdown_info: Dictionary = {}) -> void:
 	print("[Scorecard] Finalizing auto-scoring for:", category, "with final score:", final_score)
 	
-	# Handle bonus Yahtzee check if applicable
-	if category == "yahtzee" and was_yahtzee_50:
-		check_bonus_yahtzee(values, true)
+	# Check for bonus Yahtzee if we have a Yahtzee rolled (regardless of category)
+	if ScoreEvaluatorSingleton.is_yahtzee(values):
+		print("[Scorecard] Yahtzee detected in auto-scoring - checking for bonus")
+		check_bonus_yahtzee(values, category)
 	
 	print("[Scorecard] Auto-scoring breakdown - PowerUps:", breakdown_info.get("active_powerups", []))
 	print("[Scorecard] Auto-scoring breakdown - Consumables:", breakdown_info.get("active_consumables", []))
@@ -297,28 +298,43 @@ func check_upper_bonus() -> void:
 		upper_bonus_awarded = true  # Mark as awarded
 		emit_signal("upper_bonus_achieved", UPPER_BONUS_AMOUNT)
 		RollStats.track_upper_bonus()
+		
+		# Track in Statistics as well
+		if Statistics:
+			Statistics.track_upper_bonus()
 	elif total < UPPER_BONUS_THRESHOLD:
 		upper_bonus = 0
 		upper_bonus_awarded = false  # Reset if somehow total drops below threshold
 	
 	emit_signal("upper_section_completed")
 
-func check_bonus_yahtzee(values: Array[int], is_new_yahtzee: bool = false) -> void:
+func check_bonus_yahtzee(values: Array[int], current_category: String = "") -> void:
+	# Don't award bonus if we're currently scoring the yahtzee category
+	if current_category == "yahtzee":
+		print("[Scorecard] check_bonus_yahtzee: Skipping bonus check - currently scoring yahtzee category")
+		return
+	
 	# Only check if we already have a yahtzee scored as 50
-	if is_new_yahtzee:
-		return
 	if lower_scores["yahtzee"] != 50:
+		print("[Scorecard] check_bonus_yahtzee: No initial Yahtzee scored (score: %s)" % str(lower_scores["yahtzee"]))
 		return
-		
+	
 	# Use ScoreEvaluator to check for Yahtzee with wildcards
 	if ScoreEvaluatorSingleton.is_yahtzee(values):
+		print("[Scorecard] ✓ Bonus Yahtzee detected! Adding 100 points.")
 		yahtzee_bonuses += 1
 		yahtzee_bonus_points += 100
 		emit_signal("yahtzee_bonus_achieved", 100)
-		emit_signal("score_changed", get_total_score())  # Add this line
+		emit_signal("score_changed", get_total_score())
 		RollStats.track_yahtzee_bonus()
+		
+		# Track in Statistics as well
+		if Statistics:
+			Statistics.track_yahtzee_bonus()
+		
+		print("[Scorecard] Yahtzee bonuses: %d, Total bonus points: %d" % [yahtzee_bonuses, yahtzee_bonus_points])
 	else:
-		print("✗ Not a Yahtzee - no bonus awarded")
+		print("[Scorecard] ✗ Not a Yahtzee - no bonus awarded")
 
 # DEPRECATED: Use ScoreModifierManager.register_multiplier() instead
 # Fix the set_score_multiplier function - make sure it properly registers the Callable
@@ -602,7 +618,8 @@ func _categorize_modifier_source(source_name: String) -> String:
 			"perfect_strangers", "money_well_spent", "chance520",
 			"the_consumer_is_always_right", "yahtzee_bonus_mult",
 			"upper_bonus_mult", "red_power_ranger", "randomizer",
-			"foursome", "highlighted_score", "green_monster"
+			"foursome", "highlighted_score", "green_monster",
+			"step_by_step", "evens_no_odds"
 		]
 		
 		if lower_name in powerup_sources:

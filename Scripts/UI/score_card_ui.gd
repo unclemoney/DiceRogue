@@ -364,7 +364,7 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 		return
 
 	# Check for Yahtzee bonus
-	scorecard.check_bonus_yahtzee(values)
+	scorecard.check_bonus_yahtzee(values, category)
 	
 	# Score is already set by on_category_selected, just update UI
 	print("[ScoreCardUI] Score already set by scorecard, updating UI")
@@ -643,7 +643,7 @@ func _on_score_button_pressed(section: Scorecard.Section, category: String) -> v
 		return
 
 	# Check for Yahtzee bonus
-	scorecard.check_bonus_yahtzee(values)
+	scorecard.check_bonus_yahtzee(values, category)
 	
 	# Score is already set by on_category_selected, just update UI
 	print("[ScoreCardUI] Score already set by scorecard, updating UI")
