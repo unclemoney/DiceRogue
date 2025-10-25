@@ -422,8 +422,31 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 	# Get dice hand to calculate color effects
 	var dice_hand = get_tree().get_first_node_in_group("dice_hand")
 	var color_effects = {}
-	if dice_hand and dice_hand.has_method("get_color_effects"):
+	
+	if dice_hand and DiceColorManager:
+		# Calculate color effects directly with DiceColorManager to handle Blue dice properly
+		# For Blue dice, we need to know which dice are actually used in the scoring category
+		var dice_list = dice_hand.dice_list if dice_hand.has_method("dice_list") else []
+		
+		# Determine which dice are used for this category
+		var used_dice_indices = _get_used_dice_for_category(category, dice_values, dice_list)
+		print("[Scorecard] DEBUG: Category:", category, "Used dice indices:", used_dice_indices)
+		
+		# Calculate color effects with used dice information for Blue dice
+		color_effects = DiceColorManager.calculate_color_effects(dice_list, used_dice_indices)
+		print("[Scorecard] DEBUG: Got color effects from DiceColorManager:", color_effects)
+	elif dice_hand and dice_hand.has_method("get_color_effects"):
+		# Fallback to dice_hand method (won't handle Blue dice correctly)
 		color_effects = dice_hand.get_color_effects()
+		print("[Scorecard] DEBUG: Got color effects from dice_hand (fallback):", color_effects)
+	else:
+		print("[Scorecard] DEBUG: No dice_hand found or no DiceColorManager")
+		color_effects = {
+			"green_money": 0,
+			"red_additive": 0,
+			"purple_multiplier": 1.0,
+			"blue_score_multiplier": 1.0
+		}
 	
 	# Get modifiers from ScoreModifierManager (fallback for compatibility)
 	var modifier_manager = null
@@ -454,8 +477,8 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 			#print("[SCORECARD DEBUG] active sources:", sources)
 			for source in sources:
 				if modifier_manager.has_method("get_multiplier"):
-					var mult = modifier_manager.get_multiplier(source)
-					#print("[SCORECARD DEBUG] source '", source, "' multiplier:", mult)
+					var _mult = modifier_manager.get_multiplier(source)
+					#print("[SCORECARD DEBUG] source '", source, "' multiplier:", _mult)
 		
 		# Get detailed source information for breakdown
 		var all_modifier_sources = {}
@@ -508,12 +531,16 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 	var dice_color_additive = color_effects.get("red_additive", 0)
 	var dice_color_multiplier = color_effects.get("purple_multiplier", 1.0)
 	var dice_color_money = color_effects.get("green_money", 0)
+	var blue_score_multiplier = color_effects.get("blue_score_multiplier", 1.0)
 	
-	# Apply calculation order: base + additives (regular + red dice) * multipliers (regular + purple dice)
+	# Apply calculation order: ((base + additives (regular + red dice)) * multipliers (regular + purple dice)) * blue multiplier
 	var total_additive_bonus = total_additive + dice_color_additive
 	var total_multiplier_bonus = total_multiplier * dice_color_multiplier
 	var score_with_additive = base_score + total_additive_bonus
-	var final_score = int(score_with_additive * total_multiplier_bonus)
+	var score_with_colors = int(score_with_additive * total_multiplier_bonus)
+	var final_score = int(score_with_colors * blue_score_multiplier)
+	
+	print("[Scorecard] DEBUG: Blue dice calculation - base:", base_score, "→ with_colors:", score_with_colors, "→ final:", final_score, "(blue_mult:", blue_score_multiplier, ")")
 	
 	# Create detailed breakdown information
 	var breakdown_info = {
@@ -523,14 +550,16 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 		"total_additive": total_additive_bonus,
 		"regular_multiplier": total_multiplier,
 		"dice_color_multiplier": dice_color_multiplier,
+		"blue_score_multiplier": blue_score_multiplier,
 		"total_multiplier": total_multiplier_bonus,
 		"score_after_additives": score_with_additive,
+		"score_after_colors": score_with_colors,
 		"final_score": final_score,
 		"category_display": _format_category_display_name(category),
 		"active_powerups": active_powerup_sources.duplicate(),
 		"active_consumables": active_consumable_sources.duplicate(),
 		"dice_color_money": dice_color_money,
-		"has_modifiers": (total_additive_bonus > 0 or total_multiplier_bonus != 1.0 or dice_color_money > 0),
+		"has_modifiers": (total_additive_bonus > 0 or total_multiplier_bonus != 1.0 or blue_score_multiplier != 1.0 or dice_color_money > 0),
 		# Add specific source tracking for additives and multipliers
 		"additive_sources": [],
 		"multiplier_sources": []
@@ -580,6 +609,70 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 		"base_score": base_score,
 		"breakdown_info": breakdown_info
 	}
+
+## _get_used_dice_for_category(category, dice_values, dice_list)
+##
+## Determines which dice indices are actually used for scoring a specific category.
+## This is needed for Blue dice calculations which depend on usage.
+## @param category: String scoring category  
+## @param dice_values: Array[int] dice values being scored
+## @param dice_list: Array[Dice] actual dice objects
+## @return Array[int] indices of dice that are used in this category
+func _get_used_dice_for_category(category: String, dice_values: Array, _dice_list: Array) -> Array[int]:
+	var used_indices: Array[int] = []
+	
+	# For most categories, all dice contribute to the score
+	# Special cases where only some dice are used:
+	match category.to_lower():
+		"ones":
+			# Only dice with value 1 are used
+			for i in range(dice_values.size()):
+				if dice_values[i] == 1:
+					used_indices.append(i)
+		"twos":
+			# Only dice with value 2 are used
+			for i in range(dice_values.size()):
+				if dice_values[i] == 2:
+					used_indices.append(i)
+		"threes":
+			# Only dice with value 3 are used
+			for i in range(dice_values.size()):
+				if dice_values[i] == 3:
+					used_indices.append(i)
+		"fours":
+			# Only dice with value 4 are used
+			for i in range(dice_values.size()):
+				if dice_values[i] == 4:
+					used_indices.append(i)
+		"fives":
+			# Only dice with value 5 are used
+			for i in range(dice_values.size()):
+				if dice_values[i] == 5:
+					used_indices.append(i)
+		"sixes":
+			# Only dice with value 6 are used
+			for i in range(dice_values.size()):
+				if dice_values[i] == 6:
+					used_indices.append(i)
+		"three_of_a_kind", "four_of_a_kind":
+			# All dice are used (sum of all dice)
+			for i in range(dice_values.size()):
+				used_indices.append(i)
+		"full_house", "small_straight", "large_straight", "yahtzee":
+			# Pattern-based: all dice must be considered but none are "scored" individually
+			# For now, consider all dice as used
+			for i in range(dice_values.size()):
+				used_indices.append(i)
+		"chance":
+			# All dice are used (sum of all dice)
+			for i in range(dice_values.size()):
+				used_indices.append(i)
+		_:
+			# Default: all dice are used
+			for i in range(dice_values.size()):
+				used_indices.append(i)
+	
+	return used_indices
 
 ## Format category name for display in breakdown
 func _format_category_display_name(category: String) -> String:

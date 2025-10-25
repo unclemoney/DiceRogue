@@ -98,7 +98,7 @@ func _ready():
 ## Set up the dice color tracking dictionary.
 func _initialize_dice_color_tracking():
 	# Initialize with actual dice colors from DiceColor system (case-insensitive)
-	var dice_colors = ["none", "green", "red", "purple"]
+	var dice_colors = ["none", "green", "red", "purple", "blue"]
 	for color in dice_colors:
 		dice_rolled_by_color[color] = 0
 		dice_scored_by_color[color] = 0

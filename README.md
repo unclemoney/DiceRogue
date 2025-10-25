@@ -42,15 +42,24 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
 - **Green Dice**: Award money bonuses equal to dice value when scored
 - **Red Dice**: Add bonus points equal to dice value to final score  
 - **Purple Dice**: Multiply final score by dice value
+- **Blue Dice**: Conditional multiplier/divisor - multiply score by dice value if used in scoring, divide if not used (very rare)
 
 **Color Assignment:**
-- **Green**: 1 in 10 chance per roll (10%)
-- **Red**: 1 in 15 chance per roll (~6.7%)
-- **Purple**: 1 in 50 chance per roll (2%)
+- **Green**: 1 in 25 chance per roll (4%)
+- **Red**: 1 in 50 chance per roll (2%)
+- **Purple**: 1 in 88 chance per roll (~1.1%)
+- **Blue**: 1 in 100 chance per roll (1%) - Very rare
+
+**Blue Dice Special Mechanics:**
+- **Used in Scoring**: If the blue die contributes to the category score, multiply final score by the die value
+- **Not Used in Scoring**: If the blue die doesn't contribute to the category score, divide final score by the die value
+- **Examples**: 
+  - Roll 4,4,4,4,5(blue) → Score in Fours → Blue 5 not used → 16÷5=3 points
+  - Roll 1,2,3,4,5(blue) → Score Large Straight → Blue die used → 40×(blue value)=120+ points
 
 **Bonus Mechanics:**
 - **5+ Same Color Bonus**: When 5 or more dice of the same color are scored, all bonuses of that color are doubled
-- **Calculation Order**: Money awarded first, then additives applied, then multipliers
+- **Calculation Order**: Money awarded first, then additives applied, then multipliers, then blue dice effects
 - **Toggle System**: Colors can be disabled globally (useful for challenges/debuffs)
 
 **Examples:**
@@ -370,7 +379,7 @@ To add new debug functionality:
 - **Items**: Grant random PowerUps/Consumables/Mods, show all active items, clear all
 - **Economy**: Add money ($100/$1000), reset to default
 - **Dice Control**: Force specific values (all 6s, 1s, Yahtzee)
-- **Dice Colors**: Toggle color system, force all dice to specific colors, show effects
+- **Dice Colors**: Toggle color system, force all dice to specific colors (Green/Red/Purple/Blue), show effects
 - **Game Flow**: Add extra rolls, force end turn, skip to shop
 - **System Testing**: Test score calculations, trigger signals, show states
 - **Utilities**: Clear output, reset entire game state

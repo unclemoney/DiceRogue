@@ -185,6 +185,11 @@ func start_round(round_number: int) -> void:
 	if scorecard:
 		scorecard.reset_scores()
 
+	# Clear dice color effects for new round (but preserve PowerUp/Consumable effects)
+	if DiceColorManager:
+		DiceColorManager.clear_color_effects()
+		print("[RoundManager] Dice color effects cleared for round", round_number)
+
 	# Reset all multipliers for new round
 	#ScoreModifierManager.reset()
 	#print("[RoundManager] All multipliers reset for round", round_number)

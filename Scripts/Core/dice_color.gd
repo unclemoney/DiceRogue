@@ -8,14 +8,16 @@ enum Type {
 	NONE,
 	GREEN,
 	RED,
-	PURPLE
+	PURPLE,
+	BLUE
 }
 
 ## Color chance probabilities (1 in X chance)
 const COLOR_CHANCES = {
-	Type.GREEN: 25,   # 1 in 10 chance
-	Type.RED: 50,     # 1 in 15 chance  
-	Type.PURPLE: 88   # 1 in 50 chance
+	Type.GREEN: 25,   # 1 in 25 chance
+	Type.RED: 50,     # 1 in 50 chance  
+	Type.PURPLE: 88,  # 1 in 88 chance
+	Type.BLUE: 100    # 1 in 100 chance (very rare)
 }
 
 ## Color names for display
@@ -23,7 +25,8 @@ const COLOR_NAMES = {
 	Type.NONE: "None",
 	Type.GREEN: "Green",
 	Type.RED: "Red", 
-	Type.PURPLE: "Purple"
+	Type.PURPLE: "Purple",
+	Type.BLUE: "Blue"
 }
 
 ## Get readable name for a color type
@@ -47,7 +50,7 @@ static func is_colored(color_type: Type) -> bool:
 ## Get all available color types (excluding NONE)
 ## @return Array[Type] of all available colors
 static func get_all_colors() -> Array[Type]:
-	return [Type.GREEN, Type.RED, Type.PURPLE]
+	return [Type.GREEN, Type.RED, Type.PURPLE, Type.BLUE]
 
 ## Convert color type to Color for UI display
 ## @param color_type: DiceColor.Type to convert
@@ -60,5 +63,7 @@ static func get_display_color(color_type: Type) -> Color:
 			return Color.RED
 		Type.PURPLE:
 			return Color.PURPLE
+		Type.BLUE:
+			return Color.BLUE
 		_:
 			return Color.WHITE

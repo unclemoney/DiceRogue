@@ -933,7 +933,8 @@ func _create_logbook_entry(section: Scorecard.Section, category: String, dice_va
 		
 		# Add multiplier effects
 		var total_multiplier = breakdown_info.get("total_multiplier", 1.0)
-		if total_multiplier != 1.0:
+		var blue_multiplier = breakdown_info.get("blue_score_multiplier", 1.0)
+		if total_multiplier != 1.0 or blue_multiplier != 1.0:
 			var regular_multiplier = breakdown_info.get("regular_multiplier", 1.0)
 			var purple_multiplier = breakdown_info.get("dice_color_multiplier", 1.0)
 			
@@ -953,6 +954,15 @@ func _create_logbook_entry(section: Scorecard.Section, category: String, dice_va
 					"source": "purple_dice",
 					"description": "×%.1f from purple dice" % purple_multiplier,
 					"short_description": "purple×%.1f" % purple_multiplier
+				})
+			
+			if blue_multiplier != 1.0:
+				modifier_effects.append({
+					"type": "multiplier",
+					"value": blue_multiplier,
+					"source": "blue_dice",
+					"description": "×%.1f from blue dice" % blue_multiplier,
+					"short_description": "blue×%.1f" % blue_multiplier
 				})
 	
 	# Convert section enum to string
@@ -1060,7 +1070,8 @@ func _create_logbook_entry_with_breakdown(section: Scorecard.Section, category: 
 		
 		# Add multiplier effects
 		var total_multiplier = breakdown_info.get("total_multiplier", 1.0)
-		if total_multiplier != 1.0:
+		var blue_multiplier = breakdown_info.get("blue_score_multiplier", 1.0)
+		if total_multiplier != 1.0 or blue_multiplier != 1.0:
 			var regular_multiplier = breakdown_info.get("regular_multiplier", 1.0)
 			var purple_multiplier = breakdown_info.get("dice_color_multiplier", 1.0)
 			
@@ -1080,6 +1091,15 @@ func _create_logbook_entry_with_breakdown(section: Scorecard.Section, category: 
 					"source": "purple_dice",
 					"description": "×%.1f from purple dice" % purple_multiplier,
 					"short_description": "purple×%.1f" % purple_multiplier
+				})
+			
+			if blue_multiplier != 1.0:
+				modifier_effects.append({
+					"type": "multiplier",
+					"value": blue_multiplier,
+					"source": "blue_dice",
+					"description": "×%.1f from blue dice" % blue_multiplier,
+					"short_description": "blue×%.1f" % blue_multiplier
 				})
 	
 	# Convert section enum to string

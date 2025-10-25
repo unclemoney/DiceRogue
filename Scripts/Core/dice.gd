@@ -362,6 +362,7 @@ func _update_color_shader() -> void:
 	dice_material.set_shader_parameter("green_color_strength", 0.0)
 	dice_material.set_shader_parameter("red_color_strength", 0.0)
 	dice_material.set_shader_parameter("purple_color_strength", 0.0)
+	dice_material.set_shader_parameter("blue_color_strength", 0.0)
 	
 	# Set appropriate color strength
 	match color:
@@ -374,6 +375,9 @@ func _update_color_shader() -> void:
 		DiceColor.Type.PURPLE:
 			dice_material.set_shader_parameter("purple_color_strength", 0.8)
 			print("[Dice] Set PURPLE shader strength to 0.8")
+		DiceColor.Type.BLUE:
+			dice_material.set_shader_parameter("blue_color_strength", 0.8)
+			print("[Dice] Set BLUE shader strength to 0.8")
 		DiceColor.Type.NONE:
 			print("[Dice] All color strengths set to 0.0 (NONE)")
 		_:

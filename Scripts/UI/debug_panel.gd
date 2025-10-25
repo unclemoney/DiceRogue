@@ -208,6 +208,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Force All Green", "method": "_debug_force_all_green"},
 			{"text": "Force All Red", "method": "_debug_force_all_red"},
 			{"text": "Force All Purple", "method": "_debug_force_all_purple"},
+			{"text": "Force All Blue", "method": "_debug_force_all_blue"},
 			{"text": "Clear All Colors", "method": "_debug_clear_all_colors"},
 			{"text": "Show Color Effects", "method": "_debug_show_color_effects"},
 			{"text": "Test Color Scoring", "method": "_debug_test_color_scoring"},
@@ -1309,6 +1310,14 @@ func _debug_force_all_purple() -> void:
 		
 	dice_hand.debug_force_all_colors(preload("res://Scripts/Core/dice_color.gd").Type.PURPLE)
 	log_debug("Forced all dice to PURPLE color")
+
+func _debug_force_all_blue() -> void:
+	var dice_hand = _get_dice_hand()
+	if not dice_hand:
+		return
+		
+	dice_hand.debug_force_all_colors(preload("res://Scripts/Core/dice_color.gd").Type.BLUE)
+	log_debug("Forced all dice to BLUE color")
 
 func _debug_clear_all_colors() -> void:
 	var dice_hand = _get_dice_hand()

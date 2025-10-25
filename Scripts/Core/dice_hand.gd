@@ -334,10 +334,12 @@ func get_color_effects() -> Dictionary:
 			"green_money": 0,
 			"red_additive": 0,
 			"purple_multiplier": 1.0,
+			"blue_score_multiplier": 1.0,
 			"same_color_bonus": false,
 			"green_count": 0,
 			"red_count": 0,
-			"purple_count": 0
+			"purple_count": 0,
+			"blue_count": 0
 		}
 
 ## Get DiceColorManager safely
