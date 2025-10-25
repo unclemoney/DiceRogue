@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bwf8xk8hl3bdk"]
+
+[ext_resource type="Script" path="res://Scripts/Mods/high_roller_mod.gd" id="1_script"]
+
+[node name="HighRoller" type="Node"]
+script = ExtResource("1_script")

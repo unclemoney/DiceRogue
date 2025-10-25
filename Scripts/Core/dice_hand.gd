@@ -196,7 +196,7 @@ func enable_all_dice() -> void:
 		if die is Dice:
 			die.set_dice_input_enabled(true)
 			die.set_lock_shader_enabled(true)
-			print("[DiceHand] Enabled die:", die.name)
+			#print("[DiceHand] Enabled die:", die.name)
 
 
 func disable_all_dice() -> void:

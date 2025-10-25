@@ -1,4 +1,4 @@
-[gd_scene load_steps=92 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=93 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -79,6 +79,7 @@
 [ext_resource type="Resource" uid="uid://7bkbk2c47ds8" path="res://Scripts/Mods/OddOnlyMod.tres" id="64_oddonly"]
 [ext_resource type="Resource" uid="uid://bkgq1y80xpvwc" path="res://Scripts/Mods/ThreeButThreeMod.tres" id="65_threethree"]
 [ext_resource type="Resource" uid="uid://b2lkvln1mutte" path="res://Scripts/Mods/WildCardMod.tres" id="66_wildcard"]
+[ext_resource type="Resource" uid="uid://c4l8fhahk2wyp" path="res://Scripts/Mods/HighRollerMod.tres" id="67_highroller"]
 [ext_resource type="PackedScene" uid="uid://s7ortdkxgdxp" path="res://Scenes/UI/DebugPanel.tscn" id="69_6hkbr"]
 [ext_resource type="Resource" uid="uid://c7p2gvbh8r3kn" path="res://Scripts/PowerUps/PerfectStrangers.tres" id="70_perfect_strangers"]
 [ext_resource type="Resource" uid="uid://c2dv7lqytpbu" path="res://Scripts/Debuff/TheDivisionDebuff.tres" id="82_division"]
@@ -260,7 +261,7 @@ power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtReso
 challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtResource("29_1jk2k"), ExtResource("30_o0xxd"), ExtResource("31_ja7vv"), ExtResource("32_ytf57"), ExtResource("33_3ia8s"), ExtResource("34_crossing")])
 
 [node name="ModManager" parent="." instance=ExtResource("23_8eqdw")]
-mod_defs = Array[ExtResource("60_moddata")]([ExtResource("61_evenonly"), ExtResource("62_fiveone"), ExtResource("63_goldsix"), ExtResource("64_oddonly"), ExtResource("65_threethree"), ExtResource("66_wildcard")])
+mod_defs = Array[ExtResource("60_moddata")]([ExtResource("61_evenonly"), ExtResource("62_fiveone"), ExtResource("63_goldsix"), ExtResource("64_oddonly"), ExtResource("65_threethree"), ExtResource("66_wildcard"), ExtResource("67_highroller")])
 
 [node name="ConsumableManager" parent="." instance=ExtResource("20_1jk2k")]
 consumable_defs = Array[ExtResource("31_gtvla")]([ExtResource("32_aeiu6"), ExtResource("41_5k370"), ExtResource("45_i7xol"), ExtResource("46_nkw3w"), ExtResource("50_cs0p4"), ExtResource("51_8nt64"), ExtResource("55_7m4k5"), ExtResource("56_qv1fg"), ExtResource("57_double_or_nothing")])

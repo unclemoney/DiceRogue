@@ -12,5 +12,5 @@ description = "If a 4 is scored, multiply your score by 4"
 icon = ExtResource("1_knce8")
 scene = ExtResource("2_nexa7")
 price = 250
-rarity = "rare"
+rarity = "epic"
 metadata/_custom_type_script = "uid://b4upm4dbvhukm"

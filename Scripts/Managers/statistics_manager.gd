@@ -153,7 +153,7 @@ func track_dice_scored(color: String, value: int):
 		dice_scored_by_color[normalized_color] = 0
 	
 	dice_scored_by_color[normalized_color] += 1
-	print("[Statistics] Tracked %s dice scored (value: %d). Total %s scored: %d" % [normalized_color, value, normalized_color, dice_scored_by_color[normalized_color]])
+	#print("[Statistics] Tracked %s dice scored (value: %d). Total %s scored: %d" % [normalized_color, value, normalized_color, dice_scored_by_color[normalized_color]])
 
 ## track_dice_array_scored(dice_array: Array)
 ## 

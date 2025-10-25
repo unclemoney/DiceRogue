@@ -297,6 +297,33 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 - Green Envy is most effective when you have multiple green dice
 - Random PowerUps provide strategic risk/reward decisions
 
+## Available Mods
+
+Mods are special attachments that can be applied to individual dice to change their behavior. Each die can have one mod at a time, and mods persist until sold or the game ends.
+
+### Dice Value Modifiers
+- **EvenOnlyMod**: Forces die to only roll even numbers (2, 4, 6)
+- **OddOnlyMod**: Forces die to only roll odd numbers (1, 3, 5)
+- **ThreeButThreeMod**: Always rolls 3 and grants $3 per roll
+- **FiveByOneMod**: Always rolls 1 but grants $5 per roll
+
+### Special Behaviors
+- **GoldSixMod**: When rolling a 6, grants additional money based on game state
+- **WildCardMod**: Provides random special effects on each roll
+- **HighRollerMod**: Cannot be locked; click to reroll for increasing Fibonacci costs (0,1,1,2,3,5,8...)
+  - Prevents the die from being locked/unlocked
+  - Click the die to perform a manual reroll
+  - Each reroll (manual or from normal roll button) increases cost following Fibonacci sequence
+  - Only manual clicks deduct money; normal rolls increment cost but don't charge
+  - Strategic high-risk mod for players who want more control over individual dice
+
+### Usage Notes
+- Each die can only have one mod attached at a time
+- Mods can be purchased from the shop and applied to any die
+- Click a mod's icon on a die to sell it for 50% refund
+- Mods affect dice behavior immediately when applied
+- Some mods provide economic benefits while others focus on dice control
+
 ### Coding Standards
 - Use GDScript 4.4 syntax
 - Tabs for indentation (never spaces)

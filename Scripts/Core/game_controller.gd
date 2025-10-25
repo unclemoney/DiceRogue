@@ -852,12 +852,12 @@ func _on_score_assigned(_section: int, _category: String, _score: int, _breakdow
 			# Track which colored dice were scored
 			if dice_hand:
 				var dice_array = dice_hand.get_all_dice()
-				print("[GameController] DEBUG: Tracking dice scored - count: %d" % dice_array.size())
+				#print("[GameController] DEBUG: Tracking dice scored - count: %d" % dice_array.size())
 				for i in range(dice_array.size()):
 					var die = dice_array[i]
 					if die:
 						var color_name = DiceColor.get_color_name(die.color) if die.color != null else "null"
-						print("[GameController] DEBUG: Die %d - value: %d, color: %s (type: %s)" % [i, die.value, color_name, typeof(die.color)])
+						#print("[GameController] DEBUG: Die %d - value: %d, color: %s (type: %s)" % [i, die.value, color_name, typeof(die.color)])
 				stats.track_dice_array_scored(dice_array)
 		else:
 			stats.record_failed_hand()

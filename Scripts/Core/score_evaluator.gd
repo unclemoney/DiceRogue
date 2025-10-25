@@ -34,7 +34,7 @@ func evaluate_with_wildcards(dice_values: Array[int]) -> Dictionary:
 
 	# Only generate combinations once
 	var combinations = generate_wildcard_combinations(wildcard_indices.size(), 6)
-	print("Generated", combinations.size(), "possible combinations")
+	#print("Generated", combinations.size(), "possible combinations")
 	
 	# Check if this could be a bonus Yahtzee first
 	if DiceResults.scorecard and DiceResults.scorecard.lower_scores.get("yahtzee") == 50:
