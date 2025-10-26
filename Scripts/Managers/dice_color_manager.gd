@@ -54,7 +54,7 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = []) -> 
 			DiceColorClass.Type.BLUE:
 				blue_count += 1
 				# Blue dice effect depends on whether it's used in scoring
-				var is_used = used_dice_array.size() == 0 or dice in used_dice_array
+				var is_used = used_dice_array.size() == 0 or i in used_dice_array
 				if is_used:
 					# Used: multiply score
 					blue_score_multiplier *= dice_value
@@ -254,3 +254,13 @@ func get_current_effects_description(dice_array: Array, used_dice_array: Array =
 		return "Dice Colors: No Effects"
 	else:
 		return "Color Effects: " + " | ".join(descriptions)
+
+## Debug function to force all dice to green (for testing money system)
+func force_all_green() -> void:
+	print("[DiceColorManager] Debug: Forcing all dice to green")
+	var dice_hand = get_tree().get_first_node_in_group("dice_hand")
+	if dice_hand and dice_hand.has_method("debug_force_all_colors"):
+		dice_hand.debug_force_all_colors(DiceColorClass.Type.GREEN)
+		print("[DiceColorManager] Successfully forced all dice to green")
+	else:
+		print("[DiceColorManager] Warning: Could not access dice_hand or debug method")

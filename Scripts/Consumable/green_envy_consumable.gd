@@ -16,10 +16,10 @@ func apply(target) -> void:
 	
 	print("[GreenEnvyConsumable] Applying green dice 10x multiplier for this turn")
 	
-	# Access the MultiplierManager (ScoreModifierManager) to register a temporary multiplier
-	var multiplier_manager = get_node("/root/MultiplierManager")
+	# Access the ScoreModifierManager autoload to register a temporary multiplier
+	var multiplier_manager = ScoreModifierManager
 	if not multiplier_manager:
-		push_error("[GreenEnvyConsumable] MultiplierManager not found as autoload")
+		push_error("[GreenEnvyConsumable] ScoreModifierManager not found as autoload")
 		return
 	
 	# Connect to scoring events to apply the green dice bonus
@@ -46,7 +46,7 @@ func _on_score_assigned(_section: int, _category: String, _score: int, _breakdow
 		return
 	
 	# Get the dice color manager to check current dice
-	var dice_color_manager = get_node("/root/DiceColorManager")
+	var dice_color_manager = DiceColorManager
 	if not dice_color_manager:
 		push_error("[GreenEnvyConsumable] DiceColorManager not found as autoload")
 		return

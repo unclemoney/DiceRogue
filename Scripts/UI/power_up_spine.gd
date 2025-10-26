@@ -23,13 +23,19 @@ func _ready() -> void:
 	
 	# Set spine size
 	custom_minimum_size = Vector2(16, 92)
-	size = Vector2(28, 170)
+	set_deferred("size", Vector2(28, 170))
 
 	# Connect mouse signals (only if not already connected)
 	if not mouse_entered.is_connected(_on_mouse_entered):
 		mouse_entered.connect(_on_mouse_entered)
 	if not mouse_exited.is_connected(_on_mouse_exited):
 		mouse_exited.connect(_on_mouse_exited)
+
+func _exit_tree() -> void:
+	# Clean up any active tweens to prevent warnings
+	if _current_tween and _current_tween.is_valid():
+		_current_tween.kill()
+		_current_tween = null
 
 func _create_spine_structure() -> void:
 	# Create spine texture display
@@ -98,10 +104,24 @@ func _on_spine_clicked() -> void:
 		emit_signal("spine_clicked", data.id)
 
 func _on_mouse_entered() -> void:
+	print("[PowerUpSpine] Mouse entered - data:", data.id if data else "null", " base_pos:", _base_position, " is_inside_tree:", is_inside_tree())
+	
+	# Safety check - don't create tweens on invalid nodes
+	if not is_inside_tree():
+		print("[PowerUpSpine] Not in tree, aborting mouse enter")
+		return
+		
+	# Safety check - ensure we have a valid base position
+	if _base_position == Vector2.ZERO:
+		print("[PowerUpSpine] Warning: _base_position is Vector2.ZERO, skipping hover animation")
+		return
+		
 	# Small hover animation - lift spine slightly
 	if _current_tween and _current_tween.is_valid():
+		print("[PowerUpSpine] Killing existing tween")
 		_current_tween.kill()
 	
+	print("[PowerUpSpine] Creating hover tween to:", _base_position + _hover_offset)
 	_current_tween = create_tween()
 	_current_tween.tween_property(self, "position", _base_position + _hover_offset, 0.1)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -111,10 +131,24 @@ func _on_mouse_entered() -> void:
 		emit_signal("spine_hovered", data.id, get_global_mouse_position())
 
 func _on_mouse_exited() -> void:
+	print("[PowerUpSpine] Mouse exited - data:", data.id if data else "null", " base_pos:", _base_position, " is_inside_tree:", is_inside_tree())
+	
+	# Safety check - don't create tweens on invalid nodes
+	if not is_inside_tree():
+		print("[PowerUpSpine] Not in tree, aborting mouse exit")
+		return
+		
+	# Safety check - ensure we have a valid base position
+	if _base_position == Vector2.ZERO:
+		print("[PowerUpSpine] Warning: _base_position is Vector2.ZERO, skipping exit animation")
+		return
+		
 	# Return to base position
 	if _current_tween and _current_tween.is_valid():
+		print("[PowerUpSpine] Killing existing tween")
 		_current_tween.kill()
 	
+	print("[PowerUpSpine] Creating exit tween to:", _base_position)
 	_current_tween = create_tween()
 	_current_tween.tween_property(self, "position", _base_position, 0.1)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -128,6 +162,7 @@ func set_data(new_data: PowerUpData) -> void:
 	_apply_data_to_ui()
 
 func set_base_position(pos: Vector2) -> void:
+	print("[PowerUpSpine] Setting base position to:", pos, " for data:", data.id if data else "null")
 	_base_position = pos
 	position = pos
 

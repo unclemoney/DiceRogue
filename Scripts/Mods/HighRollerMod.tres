@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="ModData" load_steps=4 format=3 uid="uid://c4l8fhahk2wyp"]
 
-[ext_resource type="Texture2D" uid="uid://p3vg4n46o5d4" path="res://Resources/Art/Dice/dieWhite_borderWild.png" id="1_wild"]
 [ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="1_moddata"]
+[ext_resource type="Texture2D" uid="uid://bw04snvvsy6q5" path="res://Resources/Art/Dice/dieWhite_borderWild.png" id="1_wild"]
 [ext_resource type="PackedScene" uid="uid://bwf8xk8hl3bdk" path="res://Scenes/Mods/HighRoller.tscn" id="2_scene"]
 
 [resource]

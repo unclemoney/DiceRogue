@@ -85,6 +85,12 @@ func _ready():
 	# else:
 	#     push_error("[ScoreCardUI] No scorecard reference to set in DiceResults")
 
+func _exit_tree() -> void:
+	# Clean up stored tween to prevent warnings
+	if _extra_info_tween and _extra_info_tween.is_valid():
+		_extra_info_tween.kill()
+		_extra_info_tween = null
+
 
 ## _apply_custom_theme()
 ##
@@ -705,6 +711,10 @@ var _extra_info_tween: Tween = null
 func update_extra_info(info_text: String) -> void:
 	"""Update the ExtraInfo RichTextLabel with randomizer or other power-up effects"""
 	if extra_info_label:
+		# Safety check - don't create tweens on invalid nodes
+		if not is_inside_tree():
+			return
+			
 		# Reset any existing animations
 		if _extra_info_tween:
 			_extra_info_tween.kill()

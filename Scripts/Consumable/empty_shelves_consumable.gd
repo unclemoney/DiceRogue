@@ -27,7 +27,7 @@ func apply(target) -> void:
 		return
 	
 	# Get ScoreModifierManager to register a one-time multiplier
-	var score_modifier_manager = get_node("/root/ScoreModifierManager")
+	var score_modifier_manager = ScoreModifierManager
 	if not score_modifier_manager:
 		# Fallback to group search
 		score_modifier_manager = get_tree().get_first_node_in_group("score_modifier_manager")
@@ -67,7 +67,7 @@ func _on_score_assigned(_section: int, _category: String, _score: int, _breakdow
 	print("[EmptyShelvesConsumable] Score assigned - removing one-time multiplier")
 	
 	# Get ScoreModifierManager and remove our multiplier
-	var score_modifier_manager = get_node("/root/ScoreModifierManager")
+	var score_modifier_manager = ScoreModifierManager
 	if not score_modifier_manager:
 		score_modifier_manager = get_tree().get_first_node_in_group("score_modifier_manager")
 	

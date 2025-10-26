@@ -32,7 +32,7 @@ func apply(target) -> void:
 		return
 	
 	# Transfer all money to the ScoreModifierManager as an additive bonus
-	var score_modifier_manager = get_node("/root/ScoreModifierManager")
+	var score_modifier_manager = ScoreModifierManager
 	if not score_modifier_manager:
 		push_error("[PoorHouseConsumable] ScoreModifierManager autoload not found")
 		return
@@ -62,7 +62,7 @@ func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 	bonus_applied = true
 	
 	# Remove the poor house bonus from ScoreModifierManager
-	var score_modifier_manager = get_node("/root/ScoreModifierManager")
+	var score_modifier_manager = ScoreModifierManager
 	if score_modifier_manager:
 		score_modifier_manager.unregister_additive("poor_house_bonus")
 		print("[PoorHouseConsumable] Removed poor house bonus after score was applied")

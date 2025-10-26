@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://b8kfm2yanw7eb"]
 
-[ext_resource type="Texture2D" uid="uid://dx1qjhq8hqfsr" path="res://Resources/Art/Powerups/PowerUp_test7.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://c37jvwhbnvmer" path="res://Resources/Art/Powerups/PowerUp_test7.png" id="1_icon"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" uid="uid://bex4k0xhe3xgn" path="res://Scenes/PowerUp/RedPowerRanger.tscn" id="2_scene"]
 

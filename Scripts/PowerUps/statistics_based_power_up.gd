@@ -17,7 +17,7 @@ func _ready() -> void:
 ## Apply the power-up effect. This example shows how to access statistics.
 func apply(_target) -> void:
 	print("[StatisticsBasedPowerUp] Applied - Current stats:")
-	var stats = get_node_or_null("/root/Statistics")
+	var stats = Statistics
 	if stats:
 		print("  Total rolls: ", stats.total_rolls)
 		print("  Total turns: ", stats.total_turns)
@@ -32,7 +32,7 @@ func apply(_target) -> void:
 ## 
 ## Example method showing how to calculate bonuses from statistics.
 func get_bonus_based_on_rolls() -> int:
-	var stats = get_node_or_null("/root/Statistics")
+	var stats = Statistics
 	if stats:
 		# Example: 1 bonus point per 10 rolls
 		return stats.total_rolls / 10
@@ -42,7 +42,7 @@ func get_bonus_based_on_rolls() -> int:
 ## 
 ## Example method for checking if player has reached certain milestones.
 func is_milestone_reached(stat_name: String, threshold: int) -> bool:
-	var stats = get_node_or_null("/root/Statistics")
+	var stats = Statistics
 	if not stats:
 		return false
 		

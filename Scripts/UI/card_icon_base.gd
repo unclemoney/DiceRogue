@@ -39,6 +39,12 @@ func _ready() -> void:
 	_create_card_structure()
 	_setup_card_interactions()
 
+func _exit_tree() -> void:
+	# Clean up stored tween to prevent warnings
+	if _hover_card_tween and _hover_card_tween.is_valid():
+		_hover_card_tween.kill()
+		_hover_card_tween = null
+
 ## _should_auto_create_structure()
 ##
 ## Override this in subclasses if you need custom structure creation timing.

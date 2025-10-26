@@ -72,6 +72,13 @@ func _ready() -> void:
 	
 	print("[PowerUpUI] New spine-based system initialized")
 
+func _exit_tree() -> void:
+	# Clean up all tracked tweens to prevent warnings
+	for tween in _idle_tweens:
+		if tween and tween.is_valid():
+			tween.kill()
+	_idle_tweens.clear()
+
 func _create_background() -> void:
 	# Create semi-transparent background for when cards are fanned
 	_background = ColorRect.new()
@@ -140,8 +147,10 @@ func add_power_up(data: PowerUpData) -> Node:
 		push_error("[PowerUpUI] Failed to instantiate power up spine")
 		return null
 	
+	print("[PowerUpUI] Created spine, about to add_child")
 	# Add spine to UI
 	add_child(spine)
+	print("[PowerUpUI] Added spine to tree, setting data")
 	spine.set_data(data)
 	
 	# Connect spine signals
@@ -155,8 +164,10 @@ func add_power_up(data: PowerUpData) -> Node:
 	# Store spine reference
 	_spines[data.id] = spine
 	
+	print("[PowerUpUI] About to position spines")
 	# Position spine on shelf
 	_position_spines()
+	print("[PowerUpUI] Positioned spines")
 	
 	# Update slots label
 	update_slots_label()
@@ -205,6 +216,10 @@ func _fan_out_cards() -> void:
 	print("[PowerUpUI] Fanning out cards")
 	_is_animating = true
 	_current_state = State.FANNED
+	
+	# Safety check - don't create tweens on invalid nodes
+	if not is_inside_tree():
+		return
 	
 	# Show background
 	_background.visible = true
@@ -335,6 +350,10 @@ func _fold_back_cards() -> void:
 	_is_animating = true
 	_current_state = State.SPINES
 	
+	# Safety check - don't create tweens on invalid nodes
+	if not is_inside_tree():
+		return
+	
 	# Stop idle animations
 	_stop_idle_animations()
 	
@@ -437,7 +456,7 @@ func _stop_idle_animations() -> void:
 			tween.kill()
 	_idle_tweens.clear()
 
-func _on_spine_hovered(power_up_id: String, mouse_pos: Vector2) -> void:
+func _on_spine_hovered(_power_up_id: String, mouse_pos: Vector2) -> void:
 	if _current_state != State.SPINES:
 		return
 	
@@ -455,7 +474,7 @@ func _on_spine_hovered(power_up_id: String, mouse_pos: Vector2) -> void:
 		_spine_tooltip.position = mouse_pos + Vector2(-50, -_spine_tooltip.size.y * 2)
 		_spine_tooltip.visible = true
 
-func _on_spine_unhovered(power_up_id: String) -> void:
+func _on_spine_unhovered(_power_up_id: String) -> void:
 	_spine_tooltip.visible = false
 	
 func _on_power_up_sell_requested(power_up_id: String) -> void:

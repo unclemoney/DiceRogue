@@ -426,14 +426,13 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 	if dice_hand and DiceColorManager:
 		# Calculate color effects directly with DiceColorManager to handle Blue dice properly
 		# For Blue dice, we need to know which dice are actually used in the scoring category
-		var dice_list = dice_hand.dice_list if dice_hand.has_method("dice_list") else []
 		
 		# Determine which dice are used for this category
-		var used_dice_indices = _get_used_dice_for_category(category, dice_values, dice_list)
+		var used_dice_indices = _get_used_dice_for_category(category, dice_values, dice_hand.get_all_dice())
 		print("[Scorecard] DEBUG: Category:", category, "Used dice indices:", used_dice_indices)
 		
 		# Calculate color effects with used dice information for Blue dice
-		color_effects = DiceColorManager.calculate_color_effects(dice_list, used_dice_indices)
+		color_effects = DiceColorManager.calculate_color_effects(dice_hand.get_all_dice(), used_dice_indices)
 		print("[Scorecard] DEBUG: Got color effects from DiceColorManager:", color_effects)
 	elif dice_hand and dice_hand.has_method("get_color_effects"):
 		# Fallback to dice_hand method (won't handle Blue dice correctly)
@@ -532,6 +531,8 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 	var dice_color_multiplier = color_effects.get("purple_multiplier", 1.0)
 	var dice_color_money = color_effects.get("green_money", 0)
 	var blue_score_multiplier = color_effects.get("blue_score_multiplier", 1.0)
+	
+	print("[Scorecard] DEBUG: Extracted color effects - Green money:", dice_color_money, "Red additive:", dice_color_additive, "Purple mult:", dice_color_multiplier, "Blue mult:", blue_score_multiplier)
 	
 	# Apply calculation order: ((base + additives (regular + red dice)) * multipliers (regular + purple dice)) * blue multiplier
 	var total_additive_bonus = total_additive + dice_color_additive

@@ -139,6 +139,15 @@ func _ready() -> void:
 	_reset_visual_state()
 	print("[ConsumableIcon] Initialization complete for:", data.id if data else "unknown")
 
+func _exit_tree() -> void:
+	# Clean up stored tweens to prevent warnings
+	if _current_tween and _current_tween.is_valid():
+		_current_tween.kill()
+		_current_tween = null
+	if _hover_card_tween and _hover_card_tween.is_valid():
+		_hover_card_tween.kill()
+		_hover_card_tween = null
+
 func _process(delta: float) -> void:
 	_update_shadow(delta)
 	_handle_mouse_following(delta)
@@ -493,38 +502,51 @@ func set_useable(useable: bool) -> void:
 
 func play_destruction_effect() -> void:
 	print("[ConsumableIcon] play_destruction_effect called")
+	
+	# More lenient safety check - allow effect if we can still access the tree
+	var tree = null
+	if is_instance_valid(self):
+		tree = get_tree()
+	
+	if not tree:
+		print("[ConsumableIcon] No tree reference, skipping destruction effect")
+		return
+	
 	if explosion_effect_scene:
-		var screen_shake = get_tree().root.find_child("ScreenShake", true, false)
-		if screen_shake:
-			screen_shake.shake(0.4, 0.3)  # Moderate shake for 0.3 seconds
+		# Additional safety check for root access
+		if tree.root:
+			var screen_shake = tree.root.find_child("ScreenShake", true, false)
+			if screen_shake:
+				screen_shake.shake(0.4, 0.3)  # Moderate shake for 0.3 seconds
+				print("[ConsumableIcon] Screen shake triggered")
 		
 		print("[ConsumableIcon] Creating explosion instance from:", explosion_effect_scene.resource_path)
 		_explosion_instance = explosion_effect_scene.instantiate()
-		if _explosion_instance:
+		if _explosion_instance and tree.root:
 			# Get the root viewport instead of parent for UI visibility
-			var viewport = get_tree().root
-			viewport.add_child(_explosion_instance)
-			
-			# Position at center of icon in global coordinates
-			var center_pos = get_global_transform_with_canvas().origin + (size / 2)
-			_explosion_instance.global_position = center_pos
-			print("[ConsumableIcon] Positioned explosion at:", center_pos)
-			
-			# Ensure visibility and start emitting
-			_explosion_instance.show()
-			_explosion_instance.emitting = true
-			print("[ConsumableIcon] Explosion effect started, emitting:", _explosion_instance.emitting)
-			
-			# Wait for entire lifetime plus a small buffer
-			var total_time = _explosion_instance.lifetime * (1.0 + _explosion_instance.explosiveness)
-			print("[ConsumableIcon] Waiting for total time:", total_time)
-			await get_tree().create_timer(total_time).timeout
-			
-			print("[ConsumableIcon] Explosion effect cleanup started")
-			_explosion_instance.queue_free()
-			print("[ConsumableIcon] Explosion effect cleanup complete")
+			var viewport = tree.root
+			if viewport:
+				viewport.add_child(_explosion_instance)
+				
+				# Position at center of icon in global coordinates
+				var center_pos = get_global_transform_with_canvas().origin + (size / 2)
+				_explosion_instance.global_position = center_pos
+				print("[ConsumableIcon] Positioned explosion at:", center_pos)
+				
+				# Trigger the explosion effect
+				if _explosion_instance.has_method("restart"):
+					_explosion_instance.restart()
+					print("[ConsumableIcon] Explosion effect restarted")
+				elif _explosion_instance.has_method("emitting"):
+					_explosion_instance.emitting = true
+					print("[ConsumableIcon] Explosion effect emission enabled")
+		else:
+			if not _explosion_instance:
+				print("[ConsumableIcon] Failed to instantiate explosion effect")
+			if not tree.root:
+				print("[ConsumableIcon] No tree root available")
 	else:
-		push_error("[ConsumableIcon] No explosion effect scene available!")
+		print("[ConsumableIcon] No explosion_effect_scene configured")
 
 func check_outside_click(event_position: Vector2) -> bool:
 	if not _sell_button_visible and not _use_button_visible:
@@ -571,8 +593,13 @@ func _on_reroll_completed() -> void:
 	# Play explosion effect before removing
 	play_destruction_effect()
 	
-	# Add a small delay for effect
-	await get_tree().create_timer(0.2).timeout
+	# Add a small delay for effect with safety check
+	if is_inside_tree() and is_instance_valid(self):
+		var tree = get_tree()
+		if tree:
+			var timer = tree.create_timer(0.2)
+			if timer:
+				await timer.timeout
 	queue_free()
 
 func _on_reroll_denied() -> void:
@@ -635,8 +662,13 @@ func _on_use_button_pressed() -> void:
 	# Play destruction effect and remove this icon
 	play_destruction_effect()
 	
-	# Add a small delay for effect before removal
-	await get_tree().create_timer(0.2).timeout
+	# Add a small delay for effect before removal with safety check
+	if is_inside_tree() and is_instance_valid(self):
+		var tree = get_tree()
+		if tree:
+			var timer = tree.create_timer(0.2)
+			if timer:
+				await timer.timeout
 	queue_free()
 
 func _on_sell_button_pressed() -> void:
@@ -653,6 +685,12 @@ func _on_sell_button_pressed() -> void:
 
 func _on_mouse_entered() -> void:
 	print("[ConsumableIcon] Mouse entered:", data.id if data else "unknown")
+	
+	# Safety check - don't create tweens on invalid nodes
+	if not is_inside_tree():
+		print("[ConsumableIcon] Not in tree, aborting mouse enter")
+		return
+	
 	_is_hovering = true
 	
 	# Reset shader rotation parameters immediately
@@ -665,15 +703,25 @@ func _on_mouse_entered() -> void:
 	if _current_tween and _current_tween.is_valid():
 		_current_tween.kill()
 	
+	# Additional safety checks for target nodes
+	if not label_bg or not label_bg.is_inside_tree():
+		print("[ConsumableIcon] label_bg not available, skipping hover animation")
+		return
+	
+	# Double-check this node is still valid before creating tween
+	if not is_inside_tree() or not is_instance_valid(self):
+		print("[ConsumableIcon] Self not valid for tween creation")
+		return
+	
 	_current_tween = create_tween()
 	card_info.visible = true
 	# Show hover label
-	if label_bg:
+	if label_bg and is_instance_valid(label_bg) and label_bg.is_inside_tree():
 		label_bg.visible = true
 		label_bg.modulate.a = 0.0
 		label_bg.scale = Vector2(0.8, 0.8)
 		
-		# Animate label appearance
+		# Animate label appearance with additional safety checks
 		_current_tween.tween_property(
 			label_bg, "modulate:a", 1.0, transition_speed * 0.5
 		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -710,6 +758,12 @@ func _on_mouse_entered() -> void:
 
 func _on_mouse_exited() -> void:
 	print("[ConsumableIcon] Mouse exited:", data.id if data else "unknown")
+	
+	# Safety check - don't create tweens on invalid nodes
+	if not is_inside_tree():
+		print("[ConsumableIcon] Not in tree, aborting mouse exit")
+		return
+	
 	_is_hovering = false
 	card_info.visible = false
 	# Reset shader rotation parameters immediately
@@ -729,6 +783,11 @@ func _on_mouse_exited() -> void:
 	# Don't animate out if we're selected
 	if _is_selected:
 		return
+	
+	# Additional safety checks for target nodes
+	if not is_inside_tree() or not is_instance_valid(self):
+		print("[ConsumableIcon] Node tree changed, skipping exit animation")
+		return
 		
 	# Cancel any existing tween
 	if _current_tween and _current_tween.is_valid():
@@ -736,8 +795,8 @@ func _on_mouse_exited() -> void:
 	
 	_current_tween = create_tween()
 	
-	# Hide hover label with animation
-	if label_bg:
+	# Hide hover label with animation - only if target is still valid
+	if label_bg and is_instance_valid(label_bg) and label_bg.is_inside_tree():
 		_current_tween.tween_property(
 			label_bg, "modulate:a", 0.0, transition_speed
 		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)

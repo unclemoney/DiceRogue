@@ -8,7 +8,7 @@
 script = ExtResource("1_ih5iy")
 id = "foursome"
 display_name = "Foursome"
-description = "If a 4 is scored, multiply your score by 4"
+description = "If a 4 is scored, there is a 1:4 chance to multiply your score by 4"
 icon = ExtResource("1_knce8")
 scene = ExtResource("2_nexa7")
 price = 250

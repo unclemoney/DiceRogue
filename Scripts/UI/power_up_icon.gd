@@ -121,6 +121,15 @@ func _ready() -> void:
 	
 	print("[PowerUpIcon] Initialization complete for:", data.id if data else "unknown")
 
+func _exit_tree() -> void:
+	# Clean up stored tweens to prevent warnings
+	if _current_tween and _current_tween.is_valid():
+		_current_tween.kill()
+		_current_tween = null
+	if _hover_card_tween and _hover_card_tween.is_valid():
+		_hover_card_tween.kill()
+		_hover_card_tween = null
+
 # Add this new function to update the default position after layout
 func _update_default_position() -> void:
 	# Wait for one frame to ensure layout is complete

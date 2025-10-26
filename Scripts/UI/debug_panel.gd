@@ -1294,6 +1294,9 @@ func _debug_force_all_green() -> void:
 		
 	dice_hand.debug_force_all_colors(preload("res://Scripts/Core/dice_color.gd").Type.GREEN)
 	log_debug("Forced all dice to GREEN color")
+	
+	# Use DiceColorManager debug function for comprehensive testing
+	DiceColorManager.force_all_green()
 
 func _debug_force_all_red() -> void:
 	var dice_hand = _get_dice_hand()

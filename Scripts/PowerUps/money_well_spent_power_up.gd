@@ -67,7 +67,7 @@ func apply(_target) -> void:
 	print("=== Applying MoneyWellSpentPowerUp ===")
 	
 	# Get reference to Statistics manager
-	statistics_ref = get_node_or_null("/root/Statistics")
+	statistics_ref = Statistics
 	if not statistics_ref:
 		push_error("[MoneyWellSpentPowerUp] Statistics manager not found")
 		return

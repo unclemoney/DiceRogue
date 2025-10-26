@@ -16,7 +16,7 @@ func _ready() -> void:
 	print("[TheConsumerIsAlwaysRightPowerUp] Added to 'power_ups' group")
 	
 	# Get reference to Statistics manager
-	statistics_ref = get_node_or_null("/root/Statistics")
+	statistics_ref = Statistics
 	if not statistics_ref:
 		push_error("[TheConsumerIsAlwaysRightPowerUp] Statistics manager not found")
 		return

@@ -599,6 +599,19 @@ func remove_consumable(consumable_id: String) -> void:
 	if _consumable_spines.has(consumable_id):
 		var spine: ConsumableSpine = _consumable_spines[consumable_id]
 		if spine and is_instance_valid(spine):
+			# Disconnect signals to prevent events during destruction
+			if spine.is_connected("spine_clicked", _on_spine_clicked):
+				spine.spine_clicked.disconnect(_on_spine_clicked)
+			if spine.is_connected("spine_hovered", _on_spine_hovered):
+				spine.spine_hovered.disconnect(_on_spine_hovered)
+			if spine.is_connected("spine_unhovered", _on_spine_unhovered):
+				spine.spine_unhovered.disconnect(_on_spine_unhovered)
+			
+			# Remove from parent immediately to prevent mouse events
+			if spine.get_parent():
+				spine.get_parent().remove_child(spine)
+			
+			# Then queue for deletion
 			spine.queue_free()
 		_consumable_spines.erase(consumable_id)
 	
@@ -606,7 +619,15 @@ func remove_consumable(consumable_id: String) -> void:
 	if _fanned_icons.has(consumable_id):
 		var icon: ConsumableIcon = _fanned_icons[consumable_id]
 		if icon and is_instance_valid(icon):
-			icon.queue_free()
+			# Disconnect signals to prevent events during destruction
+			if icon.is_connected("consumable_used", _on_consumable_used):
+				icon.consumable_used.disconnect(_on_consumable_used)
+			if icon.is_connected("consumable_sell_requested", _on_consumable_sell_requested):
+				icon.consumable_sell_requested.disconnect(_on_consumable_sell_requested)
+			
+			# Don't remove from parent immediately - let the icon handle its own destruction effect
+			# The icon will call queue_free() on itself after playing the effect
+			print("[ConsumableUI] Letting icon handle its own destruction effect for:", consumable_id)
 		_fanned_icons.erase(consumable_id)
 	
 	# Reposition remaining spines

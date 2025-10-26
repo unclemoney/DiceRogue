@@ -66,7 +66,7 @@ func _on_turn_started() -> void:
 	var income = get_total_income()
 	
 	# Grant money through PlayerEconomy
-	var player_economy = get_node("/root/PlayerEconomy")
+	var player_economy = PlayerEconomy
 	if player_economy:
 		player_economy.add_money(income)
 		print("[ConsumableCashPowerUp] Granted %d dollars for turn (base: %d + bonus: %d)" % [

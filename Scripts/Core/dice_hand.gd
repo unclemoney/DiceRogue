@@ -327,7 +327,7 @@ func has_same_color_bonus() -> bool:
 func get_color_effects() -> Dictionary:
 	var color_manager = _get_dice_color_manager()
 	if color_manager:
-		return color_manager.calculate_color_effects(dice_list)
+		return color_manager.calculate_color_effects(get_all_dice())
 	else:
 		# Return empty effects if manager not found
 		return {

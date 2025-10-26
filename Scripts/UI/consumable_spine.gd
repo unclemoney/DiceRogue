@@ -32,9 +32,15 @@ func _ready() -> void:
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
 
+func _exit_tree() -> void:
+	# Clean up any active tweens to prevent warnings
+	if _current_tween and _current_tween.is_valid():
+		_current_tween.kill()
+		_current_tween = null
+
 func _set_spine_size() -> void:
 	custom_minimum_size = Vector2(92, 16)
-	size = Vector2(28, 170)
+	set_deferred("size", Vector2(28, 170))
 
 func _create_spine_structure() -> void:
 	# Create spine texture display
@@ -120,6 +126,14 @@ func _on_mouse_entered() -> void:
 	if data:
 		emit_signal("spine_hovered", data.id, global_position)
 	
+	# Safety check - don't create tweens on invalid nodes
+	if not is_inside_tree() or not is_instance_valid(self):
+		return
+	
+	# Additional check - don't animate if we don't have a proper parent
+	if not get_parent():
+		return
+	
 	# Animate hover effect
 	if _current_tween and _current_tween.is_valid():
 		_current_tween.kill()
@@ -131,6 +145,14 @@ func _on_mouse_entered() -> void:
 func _on_mouse_exited() -> void:
 	if data:
 		emit_signal("spine_unhovered", data.id)
+	
+	# Safety check - don't create tweens on invalid nodes
+	if not is_inside_tree() or not is_instance_valid(self):
+		return
+	
+	# Additional check - don't animate if we don't have a proper parent
+	if not get_parent():
+		return
 	
 	# Animate back to base position
 	if _current_tween and _current_tween.is_valid():
