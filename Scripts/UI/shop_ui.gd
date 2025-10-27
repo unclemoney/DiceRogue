@@ -8,9 +8,10 @@ signal shop_button_opened
 @export var consumable_manager_path: NodePath
 @export var mod_manager_path: NodePath
 
-@onready var power_up_container: GridContainer = $TabContainer/PowerUps/GridContainer
-@onready var consumable_container: GridContainer = $TabContainer/Consumables/GridContainer
-@onready var mod_container: GridContainer = $TabContainer/Mods/GridContainer
+@onready var tab_container: TabContainer = $TabContainer
+@onready var power_up_container: Container = $TabContainer/PowerUps/GridContainer
+@onready var consumable_container: Container = $TabContainer/Consumables/GridContainer
+@onready var mod_container: Container = $TabContainer/Mods/GridContainer
 @onready var power_up_manager: PowerUpManager = get_node_or_null(power_up_manager_path)
 @onready var consumable_manager: ConsumableManager = get_node_or_null(consumable_manager_path)
 @onready var mod_manager: ModManager = get_node_or_null(mod_manager_path)
@@ -55,6 +56,12 @@ func _ready() -> void:
 		push_error("[ShopUI] ShopLabel not found!")
 		return
 
+	# Set up and style shop label
+	_style_shop_title()
+	
+	# Fix mouse input for background elements (do this early, before manager checks)
+	_configure_mouse_input()
+
 	if not power_up_manager:
 		push_error("[ShopUI] PowerUpManager not found at path:", power_up_manager_path)
 	if not consumable_manager:
@@ -63,10 +70,8 @@ func _ready() -> void:
 		push_error("[ShopUI] ModManager not found at path:", mod_manager_path)
 		return
 		
-	# Set up shop label
-	shop_label.bbcode_enabled = true
-	shop_label.fit_content = true
-	shop_label.custom_minimum_size = Vector2(0, 24)
+	# Style the tab container with VCR font and larger tabs
+	_style_tab_container()
 		
 	# Connect to manager ready signals
 	power_up_manager.definitions_loaded.connect(_on_manager_ready)
@@ -419,3 +424,256 @@ func increase_items_per_section(amount: int) -> void:
 	mod_items = items_per_section
 	print("[ShopUI] [DEPRECATED] Increased all section items by", amount)
 	_populate_shop_items()
+
+## _style_tab_container()
+## Applies VCR font and larger styling to the shop tabs
+func _style_tab_container() -> void:
+	if not tab_container:
+		print("[ShopUI] TabContainer not found, skipping styling")
+		return
+	
+	print("[ShopUI] Applying VCR font and styling to shop tabs")
+	
+	# Load VCR font
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	if vcr_font:
+		tab_container.add_theme_font_override("font", vcr_font)
+		tab_container.add_theme_font_size_override("font_size", 20)  # Larger font size
+		tab_container.add_theme_color_override("font_selected_color", Color(1, 0.8, 0.2, 1))  # Golden selected
+		tab_container.add_theme_color_override("font_unselected_color", Color(0.9, 0.9, 0.9, 1))  # Light gray unselected
+		tab_container.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		tab_container.add_theme_constant_override("font_outline_size", 1)
+	
+	# Make tabs taller
+	tab_container.add_theme_constant_override("tab_height", 40)
+	
+	# Style the grid containers for better centering and spacing
+	_style_grid_containers()
+	
+	# Apply better background styling
+	_style_shop_background()
+	
+	print("[ShopUI] Tab container styling applied")
+
+## _style_grid_containers()
+## Improves the layout and centering of shop item grids
+func _style_grid_containers() -> void:
+	print("[ShopUI] Styling containers for better centered layout")
+	
+	# First try programmatic approach - replace grid containers with centered layout
+	_replace_grid_with_centered_layout()
+	
+	# Apply styling to any remaining grid containers
+	var containers = [power_up_container, consumable_container, mod_container]
+	
+	for container in containers:
+		if container:
+			# Set columns to create more centered layout (only for GridContainer)
+			if container is GridContainer:
+				container.columns = 2
+			
+			# Center the container content
+			container.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			container.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			
+			# Add spacing between items
+			container.add_theme_constant_override("h_separation", 30)
+			container.add_theme_constant_override("v_separation", 25)
+			
+			print("[ShopUI] Styled grid container:", container.name)
+
+## _replace_grid_with_centered_layout()
+## Replaces GridContainers with centered VBox/HBox layout for better positioning
+func _replace_grid_with_centered_layout() -> void:
+	print("[ShopUI] Attempting to improve container layout for centering")
+	
+	var tab_nodes = [
+		tab_container.get_node_or_null("PowerUps"),
+		tab_container.get_node_or_null("Consumables"), 
+		tab_container.get_node_or_null("Mods")
+	]
+	
+	for i in range(tab_nodes.size()):
+		var tab_node = tab_nodes[i]
+		if not tab_node:
+			continue
+			
+		var grid = tab_node.get_node_or_null("GridContainer")
+		if not grid:
+			continue
+		
+		print("[ShopUI] Creating centered layout for tab:", tab_node.name)
+		
+		# Create a centered VBox container
+		var main_vbox = VBoxContainer.new()
+		main_vbox.name = "CenteredContainer"
+		main_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		main_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		main_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		
+		# Create margin container for padding from edges
+		var margin_container = MarginContainer.new()
+		margin_container.name = "MarginContainer"
+		margin_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		margin_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		margin_container.add_theme_constant_override("margin_left", 50)
+		margin_container.add_theme_constant_override("margin_right", 50)
+		margin_container.add_theme_constant_override("margin_top", 30)
+		margin_container.add_theme_constant_override("margin_bottom", 30)
+		
+		# Create inner HBox for horizontal centering
+		var hbox = HBoxContainer.new()
+		hbox.name = "ItemContainer"
+		hbox.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		hbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		hbox.add_theme_constant_override("separation", 40)
+		
+		# Move children from grid to hbox
+		var children_to_move = []
+		for child in grid.get_children():
+			children_to_move.append(child)
+		
+		for child in children_to_move:
+			grid.remove_child(child)
+			hbox.add_child(child)
+		
+		# Build the hierarchy: tab -> margin -> main_vbox -> hbox -> items
+		margin_container.add_child(main_vbox)
+		main_vbox.add_child(hbox)
+		tab_node.add_child(margin_container)
+		
+		# Hide the old grid (keep it for fallback)
+		grid.visible = false
+		
+		# Update container references
+		if tab_node.name == "PowerUps":
+			power_up_container = hbox
+		elif tab_node.name == "Consumables":
+			consumable_container = hbox
+		elif tab_node.name == "Mods":
+			mod_container = hbox
+		
+		print("[ShopUI] Created centered layout for:", tab_node.name)
+
+## _style_shop_background()
+## Applies an improved background to the shop UI
+func _style_shop_background() -> void:
+	print("[ShopUI] Applying improved shop background styling")
+	
+	# Apply background styling to the main shop control
+	var style_box = StyleBoxFlat.new()
+	
+	# Create a dark gradient background instead of solid blue
+	style_box.bg_color = Color(0.08, 0.05, 0.15, 0.98)  # Dark purple base
+	
+	# Add a subtle border
+	style_box.border_color = Color(1, 0.8, 0.2, 0.6)    # Semi-transparent golden border
+	style_box.set_border_width_all(2)
+	
+	# Rounded corners for modern look
+	style_box.corner_radius_top_left = 12
+	style_box.corner_radius_top_right = 12
+	style_box.corner_radius_bottom_right = 12
+	style_box.corner_radius_bottom_left = 12
+	
+	# Add shadow for depth
+	style_box.shadow_color = Color(0, 0, 0, 0.5)
+	style_box.shadow_size = 4
+	style_box.shadow_offset = Vector2(2, 2)
+	
+	# Create a background panel if one doesn't exist
+	var bg_panel = get_node_or_null("BackgroundPanel")
+	if not bg_panel:
+		bg_panel = Panel.new()
+		bg_panel.name = "BackgroundPanel" 
+		bg_panel.z_index = -10  # Behind everything else
+		bg_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(bg_panel)
+		move_child(bg_panel, 0)  # Move to back
+	
+	# Apply the background style to the panel
+	bg_panel.add_theme_stylebox_override("panel", style_box)
+	
+	# Also style the tab container background
+	if tab_container:
+		var tab_style = StyleBoxFlat.new()
+		tab_style.bg_color = Color(0.12, 0.08, 0.18, 0.95)  # Slightly lighter for tabs
+		tab_style.corner_radius_top_left = 8
+		tab_style.corner_radius_top_right = 8
+		tab_style.corner_radius_bottom_right = 8
+		tab_style.corner_radius_bottom_left = 8
+		tab_container.add_theme_stylebox_override("panel", tab_style)
+	
+	print("[ShopUI] Shop background styling applied")
+
+## _style_shop_title()
+## Styles the shop title with better positioning and fonts
+func _style_shop_title() -> void:
+	if not shop_label:
+		print("[ShopUI] Shop label not found, skipping title styling")
+		return
+	
+	print("[ShopUI] Styling shop title")
+	
+	# Configure basic properties
+	shop_label.bbcode_enabled = true
+	shop_label.fit_content = true
+	shop_label.custom_minimum_size = Vector2(0, 40)  # Taller for better presence
+	
+	# Apply VCR font and styling
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	if vcr_font:
+		shop_label.add_theme_font_override("normal_font", vcr_font)
+		shop_label.add_theme_font_size_override("normal_font_size", 28)  # Large title font
+		shop_label.add_theme_color_override("default_color", Color(1, 0.8, 0.2, 1))  # Golden color
+	
+	# Center alignment
+	shop_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	shop_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	
+	# Add background to the title
+	var title_style = StyleBoxFlat.new()
+	title_style.bg_color = Color(0.1, 0.08, 0.15, 0.8)  # Semi-transparent dark background
+	title_style.border_color = Color(1, 0.8, 0.2, 0.4)  # Subtle golden border
+	title_style.set_border_width_all(1)
+	title_style.corner_radius_top_left = 8
+	title_style.corner_radius_top_right = 8
+	title_style.corner_radius_bottom_right = 8  
+	title_style.corner_radius_bottom_left = 8
+	title_style.content_margin_left = 20.0
+	title_style.content_margin_top = 10.0
+	title_style.content_margin_right = 20.0
+	title_style.content_margin_bottom = 10.0
+	
+	shop_label.add_theme_stylebox_override("normal", title_style)
+	
+	# Set the shop title text with BBCode formatting
+	shop_label.text = "[center][color=gold]✦ MERCHANT'S SHOP ✦[/color][/center]"
+	
+	print("[ShopUI] Shop title styling applied")
+
+## _configure_mouse_input()
+## Configures mouse input filters to prevent background elements from blocking shop items
+func _configure_mouse_input() -> void:
+	print("[ShopUI] Configuring mouse input for background elements...")
+	
+	# Find and configure the background PanelContainer and TextureRect
+	var panel_container = get_node_or_null("PanelContainer")
+	if panel_container:
+		panel_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		print("[ShopUI] Set PanelContainer mouse filter to IGNORE")
+		
+		# Also set the TextureRect inside to ignore mouse
+		var texture_rect = panel_container.get_node_or_null("TextureRect")
+		if texture_rect:
+			texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			print("[ShopUI] Set TextureRect mouse filter to IGNORE")
+	
+	# Ensure TabContainer allows mouse passthrough to children
+	var tab_cont = get_node_or_null("TabContainer")
+	if tab_cont:
+		tab_cont.mouse_filter = Control.MOUSE_FILTER_PASS
+		print("[ShopUI] Set TabContainer mouse filter to PASS")
+	
+	print("[ShopUI] Mouse input configuration complete")

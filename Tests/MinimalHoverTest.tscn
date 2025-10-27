@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://b0c7gbnhf2rrr"]
+
+[ext_resource type="Script" path="res://Tests/minimal_hover_test.gd" id="1_r8l1h"]
+
+[node name="MinimalHoverTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_r8l1h")

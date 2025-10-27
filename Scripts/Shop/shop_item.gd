@@ -127,6 +127,12 @@ func setup(data: Resource, type: String) -> void:
 	name_label.text = data.display_name
 	price_label.text = "$%d" % price
 	
+	# Apply shop item styling with border
+	_apply_shop_item_styling()
+	
+	# Apply VCR font to labels and button
+	_apply_shop_item_fonts()
+	
 	_setup_hover_tooltip()
 	
 	_update_button_state()
@@ -219,7 +225,7 @@ func _setup_hover_tooltip() -> void:
 	# Create hover tooltip container
 	hover_tooltip = PanelContainer.new()
 	hover_tooltip.visible = false
-	hover_tooltip.z_index = 1000
+	hover_tooltip.z_index = 4000  # High z_index within valid range
 	
 	# Create custom StyleBoxFlat for the tooltip
 	var style_box = StyleBoxFlat.new()
@@ -259,7 +265,15 @@ func _setup_hover_tooltip() -> void:
 		hover_tooltip_label.add_theme_constant_override("outline_size", 1)
 	
 	hover_tooltip.add_child(hover_tooltip_label)
-	get_parent().add_child(hover_tooltip)
+	
+	# Add tooltip to scene root to avoid grid constraints (deferred to avoid busy parent)
+	var scene_root = get_tree().current_scene
+	if scene_root:
+		scene_root.add_child.call_deferred(hover_tooltip)
+		print("[ShopItem] Added tooltip to scene root (deferred)")
+	else:
+		get_parent().add_child.call_deferred(hover_tooltip)
+		print("[ShopItem] Added tooltip to direct parent (deferred)")
 	
 	# Connect hover signals
 	mouse_entered.connect(_on_mouse_entered)
@@ -312,3 +326,119 @@ func _update_tooltip_position() -> void:
 		tooltip_pos.y = viewport_size.y - tooltip_size.y - 10
 	
 	hover_tooltip.global_position = tooltip_pos
+
+## _apply_shop_item_styling()
+## Applies border and background styling to the shop item panel
+func _apply_shop_item_styling() -> void:
+	print("[ShopItem] Applying shop item border styling")
+	
+	# Create shop item style with border
+	var style_box = StyleBoxFlat.new()
+	style_box.bg_color = Color(0.15, 0.15, 0.2, 0.95)  # Dark background
+	style_box.border_color = Color(1, 0.8, 0.2, 1)     # Golden border
+	style_box.set_border_width_all(3)                  # 3px border
+	style_box.corner_radius_top_left = 8
+	style_box.corner_radius_top_right = 8
+	style_box.corner_radius_bottom_right = 8
+	style_box.corner_radius_bottom_left = 8
+	style_box.content_margin_left = 12.0
+	style_box.content_margin_top = 12.0
+	style_box.content_margin_right = 12.0
+	style_box.content_margin_bottom = 12.0
+	style_box.shadow_color = Color(0, 0, 0, 0.4)
+	style_box.shadow_size = 3
+	
+	# Apply the style to this PanelContainer
+	add_theme_stylebox_override("panel", style_box)
+
+## _apply_shop_item_fonts()
+## Applies VCR font to shop item labels and button
+func _apply_shop_item_fonts() -> void:
+	print("[ShopItem] Applying VCR font to shop item elements")
+	
+	# Load VCR font
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	if not vcr_font:
+		print("[ShopItem] WARNING: VCR font not found")
+		return
+	
+	# Apply font to name label
+	if name_label:
+		name_label.add_theme_font_override("font", vcr_font)
+		name_label.add_theme_font_size_override("font_size", 16)
+		name_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+		name_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		name_label.add_theme_constant_override("outline_size", 1)
+	
+	# Apply font to price label
+	if price_label:
+		price_label.add_theme_font_override("font", vcr_font)
+		price_label.add_theme_font_size_override("font_size", 14)
+		price_label.add_theme_color_override("font_color", Color(0.2, 1, 0.2, 1))  # Green for money
+		price_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		price_label.add_theme_constant_override("outline_size", 1)
+	
+	# Apply styled button
+	if buy_button:
+		_apply_shop_button_styling(buy_button)
+
+## _apply_shop_button_styling(button)
+## Applies themed styling to shop buttons
+func _apply_shop_button_styling(button: Button) -> void:
+	print("[ShopItem] Applying shop button styling")
+	
+	# Load VCR font
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	if vcr_font:
+		button.add_theme_font_override("font", vcr_font)
+		button.add_theme_font_size_override("font_size", 16)
+	
+	# Normal state style
+	var style_normal = StyleBoxFlat.new()
+	style_normal.bg_color = Color(0.2, 0.18, 0.25, 0.95)
+	style_normal.border_color = Color(1, 0.8, 0.2, 1)
+	style_normal.set_border_width_all(2)
+	style_normal.corner_radius_top_left = 6
+	style_normal.corner_radius_top_right = 6  
+	style_normal.corner_radius_bottom_right = 6
+	style_normal.corner_radius_bottom_left = 6
+	style_normal.content_margin_left = 12.0
+	style_normal.content_margin_top = 8.0
+	style_normal.content_margin_right = 12.0
+	style_normal.content_margin_bottom = 8.0
+	
+	# Hover state style
+	var style_hover = StyleBoxFlat.new()
+	style_hover.bg_color = Color(0.25, 0.22, 0.3, 0.98)
+	style_hover.border_color = Color(1, 0.9, 0.3, 1)
+	style_hover.set_border_width_all(3)
+	style_hover.corner_radius_top_left = 6
+	style_hover.corner_radius_top_right = 6
+	style_hover.corner_radius_bottom_right = 6
+	style_hover.corner_radius_bottom_left = 6
+	style_hover.content_margin_left = 12.0
+	style_hover.content_margin_top = 8.0
+	style_hover.content_margin_right = 12.0
+	style_hover.content_margin_bottom = 8.0
+	
+	# Pressed state style
+	var style_pressed = StyleBoxFlat.new()
+	style_pressed.bg_color = Color(0.3, 0.27, 0.35, 1)
+	style_pressed.border_color = Color(1, 1, 0.4, 1)
+	style_pressed.set_border_width_all(2)
+	style_pressed.corner_radius_top_left = 6
+	style_pressed.corner_radius_top_right = 6
+	style_pressed.corner_radius_bottom_right = 6
+	style_pressed.corner_radius_bottom_left = 6
+	style_pressed.content_margin_left = 10.0
+	style_pressed.content_margin_top = 6.0
+	style_pressed.content_margin_right = 10.0
+	style_pressed.content_margin_bottom = 6.0
+	
+	# Apply styles to button
+	button.add_theme_stylebox_override("normal", style_normal)
+	button.add_theme_stylebox_override("hover", style_hover)
+	button.add_theme_stylebox_override("pressed", style_pressed)
+	button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+	button.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	button.add_theme_constant_override("outline_size", 1)

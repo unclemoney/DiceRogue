@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://c4h5g21jh8gsi"]
+
+[ext_resource type="Script" path="res://Tests/shop_hover_real_test.gd" id="1_m8d4r"]
+
+[node name="ShopHoverRealTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_m8d4r")
