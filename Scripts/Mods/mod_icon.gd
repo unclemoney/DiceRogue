@@ -4,7 +4,7 @@ class_name ModIcon
 signal mod_sell_requested(mod_id: String)
 
 @export var data: ModData
-@export var tooltip_offset := Vector2(-50, -50)
+@export var tooltip_offset := Vector2(-50, -80)
 @export var icon_size := Vector2(50, 60)  # Add size control (expanded for sell button)
 
 @onready var tooltip: Label = $TooltipBg/Tooltip
@@ -29,8 +29,8 @@ func _ready() -> void:
 	sell_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	sell_button.clip_contents = false
 	
-	# Add button styling to make it more visible
-	sell_button.modulate = Color.RED
+	# Apply button styling directly
+	_apply_action_button_style(sell_button)
 	
 	# Connect the signal with debugging
 	if not sell_button.pressed.is_connected(_on_sell_button_pressed):
@@ -61,6 +61,10 @@ func _ready() -> void:
 		# Set up tooltip
 		tooltip.text = data.display_name
 		tooltip_bg.visible = false
+		
+		# Apply direct styling to tooltip
+		_apply_hover_tooltip_style(tooltip_bg)
+		_apply_hover_label_style(tooltip)
 		
 		# Set control size to match icon
 		custom_minimum_size = icon_size
@@ -97,7 +101,7 @@ func _on_gui_input(event: InputEvent) -> void:
 			if _sell_button_visible:
 				# Position button above the mod icon using global coordinates
 				var my_global_rect = get_global_rect()
-				sell_button.position = Vector2(my_global_rect.position.x + 3, my_global_rect.position.y - 25)
+				sell_button.position = Vector2(my_global_rect.position.x + 3, my_global_rect.position.y - 10)
 				print("[ModIcon] Button positioned at global:", sell_button.position)
 				print("[ModIcon] ModIcon global rect:", my_global_rect)
 				print("[ModIcon] Button global rect:", sell_button.get_global_rect())
@@ -186,3 +190,97 @@ func check_outside_click(event_position: Vector2) -> bool:
 		return true
 	
 	return false
+
+## _apply_action_button_style(button)
+## Applies the action button styling directly to a button
+func _apply_action_button_style(button: Button) -> void:
+	# Load VCR font
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as FontFile
+	if vcr_font:
+		button.add_theme_font_override("font", vcr_font)
+		button.add_theme_font_size_override("font_size", 12)
+		button.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))
+		button.add_theme_color_override("font_hover_color", Color(1, 1, 0.95, 1))
+		button.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
+		button.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		button.add_theme_constant_override("outline_size", 1)
+	
+	# Create style boxes for different states
+	var style_normal = StyleBoxFlat.new()
+	style_normal.bg_color = Color(0.15, 0.12, 0.2, 0.95)
+	style_normal.border_width_left = 3
+	style_normal.border_width_top = 3
+	style_normal.border_width_right = 3
+	style_normal.border_width_bottom = 3
+	style_normal.border_color = Color(1, 0.8, 0.2, 1)
+	style_normal.corner_radius_top_left = 4
+	style_normal.corner_radius_top_right = 4
+	style_normal.corner_radius_bottom_right = 4
+	style_normal.corner_radius_bottom_left = 4
+	style_normal.content_margin_left = 8.0
+	style_normal.content_margin_top = 6.0
+	style_normal.content_margin_right = 8.0
+	style_normal.content_margin_bottom = 6.0
+	
+	var style_hover = StyleBoxFlat.new()
+	style_hover.bg_color = Color(0.2, 0.18, 0.25, 0.98)
+	style_hover.border_width_left = 3
+	style_hover.border_width_top = 3
+	style_hover.border_width_right = 3
+	style_hover.border_width_bottom = 3
+	style_hover.border_color = Color(1, 0.9, 0.3, 1)
+	style_hover.corner_radius_top_left = 4
+	style_hover.corner_radius_top_right = 4
+	style_hover.corner_radius_bottom_right = 4
+	style_hover.corner_radius_bottom_left = 4
+	style_hover.content_margin_left = 8.0
+	style_hover.content_margin_top = 6.0
+	style_hover.content_margin_right = 8.0
+	style_hover.content_margin_bottom = 6.0
+	
+	var style_pressed = StyleBoxFlat.new()
+	style_pressed.bg_color = Color(0.25, 0.22, 0.3, 1)
+	style_pressed.border_width_left = 3
+	style_pressed.border_width_top = 3
+	style_pressed.border_width_right = 3
+	style_pressed.border_width_bottom = 3
+	style_pressed.border_color = Color(1, 1, 0.4, 1)
+	style_pressed.corner_radius_top_left = 4
+	style_pressed.corner_radius_top_right = 4
+	style_pressed.corner_radius_bottom_right = 4
+	style_pressed.corner_radius_bottom_left = 4
+	style_pressed.content_margin_left = 8.0
+	style_pressed.content_margin_top = 6.0
+	style_pressed.content_margin_right = 8.0
+	style_pressed.content_margin_bottom = 6.0
+	
+	# Apply styles to button
+	button.add_theme_stylebox_override("normal", style_normal)
+	button.add_theme_stylebox_override("hover", style_hover)
+	button.add_theme_stylebox_override("pressed", style_pressed)
+	
+	print("[ModIcon] Direct button styling applied")
+
+## Helper functions for consistent styling
+func _apply_hover_tooltip_style(panel: PanelContainer) -> void:
+	print("[ModIcon] Applying direct hover tooltip style")
+	var style_box = StyleBoxFlat.new()
+	style_box.bg_color = Color(0.1, 0.1, 0.1, 0.95)  # Dark background
+	style_box.border_color = Color(1, 0.8, 0.2, 1)   # Golden border
+	style_box.set_border_width_all(4)                # 4px border
+	style_box.content_margin_left = 16
+	style_box.content_margin_right = 16
+	style_box.content_margin_top = 16
+	style_box.content_margin_bottom = 16
+	style_box.shadow_color = Color(0, 0, 0, 0.5)
+	style_box.shadow_size = 2
+	panel.add_theme_stylebox_override("panel", style_box)
+
+func _apply_hover_label_style(label: Label) -> void:
+	print("[ModIcon] Applying direct hover label style")
+	# Load and apply VCR font
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	if vcr_font:
+		label.add_theme_font_override("font", vcr_font)
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", Color(1, 1, 1, 1))  # White text

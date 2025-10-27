@@ -235,6 +235,9 @@ func _create_card_structure() -> void:
 	label_bg.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	label_bg.position.y = -60
 	label_bg.position.x = -20
+	
+	# Apply hover styling directly
+	_apply_hover_tooltip_style(label_bg)
 	add_child(label_bg)
 	
 	# Create HoverLabel
@@ -245,6 +248,9 @@ func _create_card_structure() -> void:
 	hover_label.custom_minimum_size = Vector2(120, 0)
 	hover_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	hover_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	
+	# Apply label styling
+	_apply_hover_label_style(hover_label)
 	label_bg.add_child(hover_label)
 
 func _setup_shader() -> void:
@@ -525,4 +531,40 @@ func _notification(what: int) -> void:
 		NOTIFICATION_VISIBILITY_CHANGED:
 			if not is_visible_in_tree():
 				_is_hovering = false
-				_reset_visual_state()
+
+## _apply_hover_tooltip_style(panel)
+## Applies the hover tooltip styling directly to a PanelContainer
+func _apply_hover_tooltip_style(panel: PanelContainer) -> void:
+	var style_box = StyleBoxFlat.new()
+	style_box.bg_color = Color(0.08, 0.06, 0.12, 0.98)
+	style_box.border_width_left = 4
+	style_box.border_width_top = 4
+	style_box.border_width_right = 4
+	style_box.border_width_bottom = 4
+	style_box.border_color = Color(1, 0.8, 0.2, 1)
+	style_box.corner_radius_top_left = 6
+	style_box.corner_radius_top_right = 6
+	style_box.corner_radius_bottom_right = 6
+	style_box.corner_radius_bottom_left = 6
+	style_box.content_margin_left = 16.0
+	style_box.content_margin_top = 12.0
+	style_box.content_margin_right = 16.0
+	style_box.content_margin_bottom = 12.0
+	style_box.shadow_color = Color(0, 0, 0, 0.5)
+	style_box.shadow_size = 2
+	
+	panel.add_theme_stylebox_override("panel", style_box)
+	print("[DebuffIcon] Hover tooltip styling applied")
+
+## _apply_hover_label_style(label)
+## _apply_hover_label_style(label)
+## Applies the hover label font styling directly to a Label
+func _apply_hover_label_style(label: Label) -> void:
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as FontFile
+	if vcr_font:
+		label.add_theme_font_override("font", vcr_font)
+		label.add_theme_font_size_override("font_size", 14)
+		label.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))
+		label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		label.add_theme_constant_override("outline_size", 1)
+	print("[DebuffIcon] Hover label styling applied")

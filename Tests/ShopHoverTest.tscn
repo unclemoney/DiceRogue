@@ -1,0 +1,20 @@
+[gd_scene load_steps=2 format=3 uid="uid://bj8k6v5dn8hne"]
+
+[ext_resource type="Script" path="res://Tests/shop_hover_test.gd" id="1_jcpis"]
+
+[node name="ShopHoverTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_jcpis")
+
+[node name="TestLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 620.0
+offset_bottom = 60.0
+text = "Testing Shop Hover Tooltips..."
+horizontal_alignment = 1
+vertical_alignment = 1

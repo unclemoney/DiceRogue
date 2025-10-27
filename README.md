@@ -180,6 +180,32 @@ Power-ups register their bonuses with this manager, which emits signals when tot
 - **ConsumableUI** (`Scripts/UI/consumable_ui.gd`) - Manages consumable display
 - **ShopUI** (`Scripts/UI/shop_ui.gd`) - In-game purchasing
 
+### Hover Tooltip System
+All interactive game items feature consistent, themed hover tooltips:
+- **Enhanced Styling**: Direct StyleBoxFlat application with 4px golden borders and 16px/12px padding
+- **Thick Visible Borders**: 4px golden border (Color: 1, 0.8, 0.2, 1) with shadow effects for visibility
+- **Generous Padding**: 16px horizontal, 12px vertical padding for comfortable text spacing
+- **VCR Font Integration**: Retro gaming font with outline for better readability
+- **Item Icons**: PowerUps, Consumables, Debuffs, Challenges, and Mods show descriptions on hover
+- **Colored Dice**: Display effect descriptions (Green=$money, Red=+points, Purple/Blue=×multiplier)
+- **Shop Items**: Show detailed descriptions when hovering over purchasable items with custom styling
+- **Spine Tooltips**: Hover over spine UI elements to see complete item lists
+- **Programmatic Implementation**: Direct StyleBoxFlat application ensures reliable theming
+
+### Action Button Theme System
+SELL and USE buttons throughout the game feature consistent themed styling:
+- **Direct Style Application**: Custom StyleBoxFlat creation for reliable programmatic theming
+- **Thick Golden Borders**: 3px borders with distinct colors for each state (normal/hover/pressed)
+- **VCR Font Consistency**: Retro gaming font with outline effects
+- **Multiple Visual States**: 
+  - Normal: Dark background with golden border (1, 0.8, 0.2, 1)
+  - Hover: Lighter background with brighter border (1, 0.9, 0.3, 1)
+  - Pressed: Brightest background with yellow border (1, 1, 0.4, 1)
+- **PowerUp SELL Buttons**: Themed sell buttons with debug output for verification
+- **Consumable USE Buttons**: Themed use buttons with identical styling
+- **Mod SELL Buttons**: High z-index themed buttons for proper UI layering
+- **Reliable Implementation**: Direct theme override application ensures consistent appearance
+
 ### Item Selling System
 All game items (PowerUps, Consumables, and Mods) support selling mechanics:
 - **Click to Sell**: Click any item icon to show a "SELL" button above it

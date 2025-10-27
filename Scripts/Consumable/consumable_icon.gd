@@ -116,6 +116,20 @@ func _ready() -> void:
 	if shadow:
 		shadow.modulate = Color(0.0, 0.0, 0.0, 0.5)
 		shadow.position = Vector2(5, 5)
+	
+	# Apply direct styling to scene-based nodes if they exist
+	if label_bg and hover_label:
+		print("[ConsumableIcon] Applying direct styling to scene-based tooltip")
+		_apply_hover_tooltip_style(label_bg)
+		_apply_hover_label_style(hover_label)
+	
+	# Apply direct styling to scene-based buttons if they exist
+	if sell_button:
+		print("[ConsumableIcon] Applying direct styling to scene-based SELL button")
+		_apply_action_button_style(sell_button)
+	if use_button:
+		print("[ConsumableIcon] Applying direct styling to scene-based USE button")
+		_apply_action_button_style(use_button)
 		
 	# Connect input signals if not already connected
 	if not is_connected("mouse_entered", _on_mouse_entered):
@@ -303,6 +317,10 @@ func _create_card_structure() -> void:
 	use_button.size = Vector2(44, 31)
 	use_button.position = Vector2(36, 41)  # Position at top left
 	use_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	
+	# Apply button styling directly
+	_apply_action_button_style(use_button)
+	
 	use_button.pressed.connect(_on_use_button_pressed)
 	add_child(use_button)
 	
@@ -314,6 +332,9 @@ func _create_card_structure() -> void:
 	label_bg.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	label_bg.position.y = -60
 	label_bg.position.x = -60
+	
+	# Apply hover styling directly
+	_apply_hover_tooltip_style(label_bg)
 	add_child(label_bg)
 	
 	# Create HoverLabel
@@ -324,6 +345,9 @@ func _create_card_structure() -> void:
 	hover_label.custom_minimum_size = Vector2(220, 0)
 	hover_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	hover_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	
+	# Apply label styling
+	_apply_hover_label_style(hover_label)
 	label_bg.add_child(hover_label)
 
 func _setup_shader() -> void:
@@ -822,3 +846,109 @@ func _on_mouse_exited() -> void:
 	_current_tween.parallel().tween_method(
 		_set_shader_glow, glow_intensity, 0.0, transition_speed
 	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+## _apply_action_button_style(button)
+## Applies the action button styling directly to a button
+func _apply_action_button_style(button: Button) -> void:
+	# Load VCR font
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as FontFile
+	if vcr_font:
+		button.add_theme_font_override("font", vcr_font)
+		button.add_theme_font_size_override("font_size", 12)
+		button.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))
+		button.add_theme_color_override("font_hover_color", Color(1, 1, 0.95, 1))
+		button.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
+		button.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		button.add_theme_constant_override("outline_size", 1)
+	
+	# Create style boxes for different states
+	var style_normal = StyleBoxFlat.new()
+	style_normal.bg_color = Color(0.15, 0.12, 0.2, 0.95)
+	style_normal.border_width_left = 3
+	style_normal.border_width_top = 3
+	style_normal.border_width_right = 3
+	style_normal.border_width_bottom = 3
+	style_normal.border_color = Color(1, 0.8, 0.2, 1)
+	style_normal.corner_radius_top_left = 4
+	style_normal.corner_radius_top_right = 4
+	style_normal.corner_radius_bottom_right = 4
+	style_normal.corner_radius_bottom_left = 4
+	style_normal.content_margin_left = 8.0
+	style_normal.content_margin_top = 6.0
+	style_normal.content_margin_right = 8.0
+	style_normal.content_margin_bottom = 6.0
+	
+	var style_hover = StyleBoxFlat.new()
+	style_hover.bg_color = Color(0.2, 0.18, 0.25, 0.98)
+	style_hover.border_width_left = 3
+	style_hover.border_width_top = 3
+	style_hover.border_width_right = 3
+	style_hover.border_width_bottom = 3
+	style_hover.border_color = Color(1, 0.9, 0.3, 1)
+	style_hover.corner_radius_top_left = 4
+	style_hover.corner_radius_top_right = 4
+	style_hover.corner_radius_bottom_right = 4
+	style_hover.corner_radius_bottom_left = 4
+	style_hover.content_margin_left = 8.0
+	style_hover.content_margin_top = 6.0
+	style_hover.content_margin_right = 8.0
+	style_hover.content_margin_bottom = 6.0
+	
+	var style_pressed = StyleBoxFlat.new()
+	style_pressed.bg_color = Color(0.25, 0.22, 0.3, 1)
+	style_pressed.border_width_left = 3
+	style_pressed.border_width_top = 3
+	style_pressed.border_width_right = 3
+	style_pressed.border_width_bottom = 3
+	style_pressed.border_color = Color(1, 1, 0.4, 1)
+	style_pressed.corner_radius_top_left = 4
+	style_pressed.corner_radius_top_right = 4
+	style_pressed.corner_radius_bottom_right = 4
+	style_pressed.corner_radius_bottom_left = 4
+	style_pressed.content_margin_left = 8.0
+	style_pressed.content_margin_top = 6.0
+	style_pressed.content_margin_right = 8.0
+	style_pressed.content_margin_bottom = 6.0
+	
+	# Apply styles to button
+	button.add_theme_stylebox_override("normal", style_normal)
+	button.add_theme_stylebox_override("hover", style_hover)
+	button.add_theme_stylebox_override("pressed", style_pressed)
+	
+	print("[ConsumableIcon] Direct button styling applied")
+
+## _apply_hover_tooltip_style(panel)
+## Applies the hover tooltip styling directly to a PanelContainer
+func _apply_hover_tooltip_style(panel: PanelContainer) -> void:
+	var style_box = StyleBoxFlat.new()
+	style_box.bg_color = Color(0.08, 0.06, 0.12, 0.98)
+	style_box.border_width_left = 4
+	style_box.border_width_top = 4
+	style_box.border_width_right = 4
+	style_box.border_width_bottom = 4
+	style_box.border_color = Color(1, 0.8, 0.2, 1)
+	style_box.corner_radius_top_left = 6
+	style_box.corner_radius_top_right = 6
+	style_box.corner_radius_bottom_right = 6
+	style_box.corner_radius_bottom_left = 6
+	style_box.content_margin_left = 16.0
+	style_box.content_margin_top = 12.0
+	style_box.content_margin_right = 16.0
+	style_box.content_margin_bottom = 12.0
+	style_box.shadow_color = Color(0, 0, 0, 0.5)
+	style_box.shadow_size = 2
+	
+	panel.add_theme_stylebox_override("panel", style_box)
+	print("[ConsumableIcon] Hover tooltip styling applied")
+
+## _apply_hover_label_style(label)
+## Applies the hover label font styling directly to a Label
+func _apply_hover_label_style(label: Label) -> void:
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as FontFile
+	if vcr_font:
+		label.add_theme_font_override("font", vcr_font)
+		label.add_theme_font_size_override("font_size", 14)
+		label.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))
+		label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		label.add_theme_constant_override("outline_size", 1)
+	print("[ConsumableIcon] Hover label styling applied")

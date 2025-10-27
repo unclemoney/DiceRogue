@@ -50,4 +50,4 @@ This game takes its inspiration from the following games: Balatro, Dicey Dungeon
 - When suggesting search commands on Windows, do not use `grep`. 
 Instead, use PowerShell's `Select-String` cmdlet. 
 - Run a manual test: & "C:\Users\danie\OneDrive\Documents\GODOT\Godot_v4.4.1-stable_win64.exe" --path "c:\Users\danie\Documents\dicerogue\DiceRogue" Tests/DebuffTest.tscn
-- After manual test do not run: taskkill /F /IM Godot_v4.4.1-stable_win64.exe
+- NEVER run taskkill commands to close Godot.  This can corrupt the project files.

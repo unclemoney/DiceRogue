@@ -28,7 +28,11 @@ signal die_locked(die: Dice)
 @onready var dice_material := ShaderMaterial.new()
 
 @onready var mod_container: Control = $ModContainer
+@onready var color_label_bg: PanelContainer = $ColorLabelBg
+@onready var color_hover_label: Label = $ColorLabelBg/ColorHoverLabel
 const ModIconScene := preload("res://Scenes/Mods/ModIcon.tscn")
+
+var _is_hovering := false
 
 
 func _ready():
@@ -47,12 +51,17 @@ func _ready():
 
 	update_visual()
 	
-	# Only connect signals if they aren't already connected
+	# Connect hover signals for colored dice tooltips
 	if not is_connected("mouse_entered", _on_mouse_entered):
-		connect("mouse_entered", Callable(self, "_on_mouse_entered"))
+		mouse_entered.connect(_on_mouse_entered)
 		
 	if not is_connected("mouse_exited", _on_mouse_exited):
-		connect("mouse_exited", Callable(self, "_on_mouse_exited"))
+		mouse_exited.connect(_on_mouse_exited)
+	
+	# Apply direct styling to color tooltip if it exists
+	if color_label_bg and color_hover_label:
+		_apply_hover_tooltip_style(color_label_bg)
+		_apply_hover_label_style(color_hover_label)
 		
 	set_dice_input_enabled(true)
 	set_lock_shader_enabled(true)
@@ -148,9 +157,12 @@ func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 			unlock()
 
 func _on_mouse_entered():
+	_is_hovering = true
+	
 	if not _can_process_input:
 		shake_denied()
 		return  # Don't show hover effects if input is disabled
+	
 	var tween := get_tree().create_tween()
 
 	tween.parallel().tween_method(
@@ -162,10 +174,22 @@ func _on_mouse_entered():
 	tween.parallel().tween_property(
 		self, "scale", Vector2(1.2, 1.2), 0.2
 	).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	
+	# Show color tooltip for colored dice
+	if color != DiceColor.Type.NONE and color_hover_label and color_label_bg:
+		_update_color_tooltip()
+		color_label_bg.visible = true
+		color_label_bg.modulate.a = 0.0
+		
+		# Animate tooltip appearance
+		tween.parallel().tween_property(color_label_bg, "modulate:a", 1.0, 0.2)
 
 func _on_mouse_exited():
+	_is_hovering = false
+	
 	if not _can_process_input:
 		return
+	
 	var tween := get_tree().create_tween()
 
 	tween.parallel().tween_method(
@@ -177,6 +201,10 @@ func _on_mouse_exited():
 	tween.parallel().tween_property(
 		self, "scale", Vector2(1.0, 1.0), 0.2
 	).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	
+	# Hide color tooltip
+	if color_label_bg:
+		color_label_bg.visible = false
 
 func toggle_lock():
 	if not _can_process_input:
@@ -405,3 +433,49 @@ func force_color(new_color: DiceColor.Type) -> void:
 ## Clear dice color back to none
 func clear_color() -> void:
 	force_color(DiceColor.Type.NONE)
+
+## Update the color tooltip text based on dice color and value
+func _update_color_tooltip() -> void:
+	if not color_hover_label:
+		return
+		
+	var tooltip_text = ""
+	var color_name = DiceColor.get_color_name(color)
+	
+	match color:
+		DiceColor.Type.GREEN:
+			tooltip_text = "%s Die\nGrants $%d money" % [color_name, value]
+		DiceColor.Type.RED:
+			tooltip_text = "%s Die\nAdds +%d points" % [color_name, value]
+		DiceColor.Type.PURPLE:
+			tooltip_text = "%s Die\nMultiplies score ×%d" % [color_name, value]
+		DiceColor.Type.BLUE:
+			tooltip_text = "%s Die\nScore multiplier ×%d" % [color_name, value]
+		_:
+			tooltip_text = "%s Die" % color_name
+	
+	color_hover_label.text = tooltip_text
+
+## Helper functions for consistent styling
+func _apply_hover_tooltip_style(panel: PanelContainer) -> void:
+	print("[Dice] Applying direct hover tooltip style")
+	var style_box = StyleBoxFlat.new()
+	style_box.bg_color = Color(0.1, 0.1, 0.1, 0.95)  # Dark background
+	style_box.border_color = Color(1, 0.8, 0.2, 1)   # Golden border
+	style_box.set_border_width_all(4)                # 4px border
+	style_box.content_margin_left = 16
+	style_box.content_margin_right = 16
+	style_box.content_margin_top = 16
+	style_box.content_margin_bottom = 16
+	style_box.shadow_color = Color(0, 0, 0, 0.5)
+	style_box.shadow_size = 2
+	panel.add_theme_stylebox_override("panel", style_box)
+
+func _apply_hover_label_style(label: Label) -> void:
+	print("[Dice] Applying direct hover label style")
+	# Load and apply VCR font
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	if vcr_font:
+		label.add_theme_font_override("font", vcr_font)
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", Color(1, 1, 1, 1))  # White text

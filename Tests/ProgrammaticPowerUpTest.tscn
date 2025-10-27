@@ -1,0 +1,25 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Tests/programmatic_powerup_test.gd" id="1_test_script"]
+
+[node name="ProgrammaticPowerUpTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_test_script")
+
+[node name="Instructions" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = 150.0
+offset_right = 250.0
+offset_bottom = 200.0
+text = "Testing programmatically created PowerUpIcon.
+Label should appear with themed styling (VCR font, warm color, bordered background)."
+horizontal_alignment = 1

@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3 uid="uid://c5f8j2laqt8yh"]
+
+[ext_resource type="Script" uid="uid://d5e4k9l2mt7rf" path="res://Tests/theme_test.gd" id="1_theme_test"]
+
+[node name="ThemeTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_theme_test")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 0
+offset_right = 400.0
+offset_bottom = 30.0
+text = "Theme Test - Check console for results"

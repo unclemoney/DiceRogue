@@ -31,7 +31,8 @@ var _selected_spine_id: String = ""
 # Animation and background
 var _background: ColorRect
 var _idle_tweens: Array[Tween] = []  # Track individual idle animation tweens
-var _spine_tooltip: Label
+var _spine_tooltip: PanelContainer
+var _spine_tooltip_label: Label
 
 # Safe consumable tracking
 var _active_consumable_count: int = 0
@@ -107,30 +108,25 @@ func _create_background() -> void:
 
 func _create_spine_tooltip() -> void:
 	# Create tooltip for spine hover
-	_spine_tooltip = Label.new()
+	_spine_tooltip = PanelContainer.new()
 	_spine_tooltip.name = "SpineTooltip"
 	_spine_tooltip.visible = false
 	_spine_tooltip.z_index = 20
-	_spine_tooltip.add_theme_color_override("font_color", Color.WHITE)
-	_spine_tooltip.add_theme_color_override("font_shadow_color", Color.BLACK)
-	_spine_tooltip.add_theme_font_size_override("font_size", 14)
-	_spine_tooltip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_spine_tooltip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_spine_tooltip.custom_minimum_size = Vector2(200, 0)
 	
-	# Add semi-transparent background
-	var tooltip_background: StyleBoxFlat = StyleBoxFlat.new()
-	tooltip_background.bg_color = Color(0.2, 0.2, 0.2, 0.8)  # Semi-transparent grey
-	tooltip_background.corner_radius_top_left = 4
-	tooltip_background.corner_radius_top_right = 4
-	tooltip_background.corner_radius_bottom_left = 4
-	tooltip_background.corner_radius_bottom_right = 4
-	tooltip_background.content_margin_left = 8
-	tooltip_background.content_margin_right = 8
-	tooltip_background.content_margin_top = 4
-	tooltip_background.content_margin_bottom = 4
-	_spine_tooltip.add_theme_stylebox_override("normal", tooltip_background)
+	# Apply direct styling instead of theme file for reliability
+	_apply_hover_tooltip_style(_spine_tooltip)
 	
+	# Create the label inside the panel
+	_spine_tooltip_label = Label.new()
+	_spine_tooltip_label.name = "SpineTooltipLabel"
+	_spine_tooltip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_spine_tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_spine_tooltip_label.custom_minimum_size = Vector2(200, 0)
+	
+	# Apply direct label styling
+	_apply_hover_label_style(_spine_tooltip_label)
+	
+	_spine_tooltip.add_child(_spine_tooltip_label)
 	add_child(_spine_tooltip)
 
 func add_consumable(data: ConsumableData) -> Node:
@@ -456,17 +452,15 @@ func _on_spine_hovered(consumable_id: String, mouse_pos: Vector2) -> void:
 	if not _spine_tooltip or not _consumable_data.has(consumable_id):
 		return
 	
-	var data: ConsumableData = _consumable_data[consumable_id]
-	
 	# Create tooltip text showing all consumable names
-	var tooltip_text: String = ""
+	var coupon_text: String = ""
 	for id in _consumable_data.keys():
 		var consumable_data: ConsumableData = _consumable_data[id]
-		if tooltip_text != "":
-			tooltip_text += "\n"
-		tooltip_text += consumable_data.display_name
+		if coupon_text != "":
+			coupon_text += "\n"
+		coupon_text += consumable_data.display_name
 	
-	_spine_tooltip.text = "Coupons:\n" + tooltip_text
+	_spine_tooltip_label.text = "Coupons:\n" + coupon_text
 	_spine_tooltip.position = mouse_pos + Vector2(-50, -_spine_tooltip.size.y * 2)
 	_spine_tooltip.visible = true
 
@@ -762,3 +756,27 @@ func update_consumable_count(consumable_id: String, count: int) -> void:
 		var icon: ConsumableIcon = _fanned_icons[consumable_id]
 		if icon and icon.has_method("set_count"):
 			icon.set_count(count)
+
+## Helper functions for consistent styling
+func _apply_hover_tooltip_style(tooltip: PanelContainer) -> void:
+	print("[ConsumableUI] Applying direct hover tooltip style")
+	var style_box = StyleBoxFlat.new()
+	style_box.bg_color = Color(0.1, 0.1, 0.1, 0.95)  # Dark background
+	style_box.border_color = Color(1, 0.8, 0.2, 1)   # Golden border
+	style_box.set_border_width_all(4)                # 4px border
+	style_box.content_margin_left = 16
+	style_box.content_margin_right = 16
+	style_box.content_margin_top = 16
+	style_box.content_margin_bottom = 16
+	style_box.shadow_color = Color(0, 0, 0, 0.5)
+	style_box.shadow_size = 2
+	tooltip.add_theme_stylebox_override("panel", style_box)
+
+func _apply_hover_label_style(label: Label) -> void:
+	print("[ConsumableUI] Applying direct hover label style")
+	# Load and apply VCR font
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	if vcr_font:
+		label.add_theme_font_override("font", vcr_font)
+	label.add_theme_font_size_override("font_size", 18)
+	label.add_theme_color_override("font_color", Color(1, 1, 1, 1))  # White text

@@ -229,6 +229,10 @@ func _create_card_structure() -> void:
 	sell_button.z_index = 3
 	sell_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	sell_button.size = Vector2(44, 31)
+	
+	# Apply button styling directly
+	_apply_action_button_style(sell_button)
+	
 	sell_button.pressed.connect(_on_sell_button_pressed)
 	add_child(sell_button)
 	
@@ -240,6 +244,9 @@ func _create_card_structure() -> void:
 	label_bg.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	label_bg.position.y = -60
 	label_bg.position.x = -60
+	
+	# Apply hover styling directly
+	_apply_hover_tooltip_style(label_bg)
 	add_child(label_bg)
 	
 	# Create HoverLabel
@@ -250,6 +257,9 @@ func _create_card_structure() -> void:
 	hover_label.custom_minimum_size = Vector2(220, 0)
 	hover_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	hover_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	
+	# Apply label styling
+	_apply_hover_label_style(hover_label)
 	label_bg.add_child(hover_label)
 	
 	# Create RarityIcon
@@ -734,3 +744,109 @@ func update_hover_description() -> void:
 		
 	hover_label.text = description
 	print("[PowerUpIcon] Set hover_label.text to:", hover_label.text)
+
+## _apply_action_button_style(button)
+## Applies the action button styling directly to a button
+func _apply_action_button_style(button: Button) -> void:
+	# Load VCR font
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as FontFile
+	if vcr_font:
+		button.add_theme_font_override("font", vcr_font)
+		button.add_theme_font_size_override("font_size", 12)
+		button.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))
+		button.add_theme_color_override("font_hover_color", Color(1, 1, 0.95, 1))
+		button.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
+		button.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		button.add_theme_constant_override("outline_size", 1)
+	
+	# Create style boxes for different states
+	var style_normal = StyleBoxFlat.new()
+	style_normal.bg_color = Color(0.15, 0.12, 0.2, 0.95)
+	style_normal.border_width_left = 3
+	style_normal.border_width_top = 3
+	style_normal.border_width_right = 3
+	style_normal.border_width_bottom = 3
+	style_normal.border_color = Color(1, 0.8, 0.2, 1)
+	style_normal.corner_radius_top_left = 4
+	style_normal.corner_radius_top_right = 4
+	style_normal.corner_radius_bottom_right = 4
+	style_normal.corner_radius_bottom_left = 4
+	style_normal.content_margin_left = 8.0
+	style_normal.content_margin_top = 6.0
+	style_normal.content_margin_right = 8.0
+	style_normal.content_margin_bottom = 6.0
+	
+	var style_hover = StyleBoxFlat.new()
+	style_hover.bg_color = Color(0.2, 0.18, 0.25, 0.98)
+	style_hover.border_width_left = 3
+	style_hover.border_width_top = 3
+	style_hover.border_width_right = 3
+	style_hover.border_width_bottom = 3
+	style_hover.border_color = Color(1, 0.9, 0.3, 1)
+	style_hover.corner_radius_top_left = 4
+	style_hover.corner_radius_top_right = 4
+	style_hover.corner_radius_bottom_right = 4
+	style_hover.corner_radius_bottom_left = 4
+	style_hover.content_margin_left = 8.0
+	style_hover.content_margin_top = 6.0
+	style_hover.content_margin_right = 8.0
+	style_hover.content_margin_bottom = 6.0
+	
+	var style_pressed = StyleBoxFlat.new()
+	style_pressed.bg_color = Color(0.25, 0.22, 0.3, 1)
+	style_pressed.border_width_left = 3
+	style_pressed.border_width_top = 3
+	style_pressed.border_width_right = 3
+	style_pressed.border_width_bottom = 3
+	style_pressed.border_color = Color(1, 1, 0.4, 1)
+	style_pressed.corner_radius_top_left = 4
+	style_pressed.corner_radius_top_right = 4
+	style_pressed.corner_radius_bottom_right = 4
+	style_pressed.corner_radius_bottom_left = 4
+	style_pressed.content_margin_left = 8.0
+	style_pressed.content_margin_top = 6.0
+	style_pressed.content_margin_right = 8.0
+	style_pressed.content_margin_bottom = 6.0
+	
+	# Apply styles to button
+	button.add_theme_stylebox_override("normal", style_normal)
+	button.add_theme_stylebox_override("hover", style_hover)
+	button.add_theme_stylebox_override("pressed", style_pressed)
+	
+	print("[PowerUpIcon] Direct button styling applied")
+
+## _apply_hover_tooltip_style(panel)
+## Applies the hover tooltip styling directly to a PanelContainer
+func _apply_hover_tooltip_style(panel: PanelContainer) -> void:
+	var style_box = StyleBoxFlat.new()
+	style_box.bg_color = Color(0.08, 0.06, 0.12, 0.98)
+	style_box.border_width_left = 4
+	style_box.border_width_top = 4
+	style_box.border_width_right = 4
+	style_box.border_width_bottom = 4
+	style_box.border_color = Color(1, 0.8, 0.2, 1)
+	style_box.corner_radius_top_left = 6
+	style_box.corner_radius_top_right = 6
+	style_box.corner_radius_bottom_right = 6
+	style_box.corner_radius_bottom_left = 6
+	style_box.content_margin_left = 16.0
+	style_box.content_margin_top = 12.0
+	style_box.content_margin_right = 16.0
+	style_box.content_margin_bottom = 12.0
+	style_box.shadow_color = Color(0, 0, 0, 0.5)
+	style_box.shadow_size = 2
+	
+	panel.add_theme_stylebox_override("panel", style_box)
+	print("[PowerUpIcon] Hover tooltip styling applied")
+
+## _apply_hover_label_style(label)
+## Applies the hover label font styling directly to a Label
+func _apply_hover_label_style(label: Label) -> void:
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as FontFile
+	if vcr_font:
+		label.add_theme_font_override("font", vcr_font)
+		label.add_theme_font_size_override("font_size", 14)
+		label.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))
+		label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		label.add_theme_constant_override("outline_size", 1)
+	print("[PowerUpIcon] Hover label styling applied")

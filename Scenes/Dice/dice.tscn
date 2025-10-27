@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://c6k045mexxkyd"]
+[gd_scene load_steps=7 format=3 uid="uid://c6k045mexxkyd"]
 
 [ext_resource type="Shader" uid="uid://ec4berwr4wwc" path="res://Scripts/Shaders/dice_combined_effects.gdshader" id="1_n24en"]
 [ext_resource type="Script" uid="uid://f3p5lcmx2oq5" path="res://Scripts/Core/dice.gd" id="1_nyboh"]
 [ext_resource type="Resource" uid="uid://cyhek3ri4ljv7" path="res://Scripts/Dice/d4_dice.tres" id="3_n24en"]
+[ext_resource type="Theme" uid="uid://busf5kj4jt6yf" path="res://Resources/UI/powerup_hover_theme.tres" id="4_hover_theme"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_duqd2"]
 shader = ExtResource("1_n24en")
@@ -27,6 +28,23 @@ shape = SubResource("RectangleShape2D_n24en")
 [node name="ModContainer" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
+
+[node name="ColorLabelBg" type="PanelContainer" parent="."]
+visible = false
+z_index = 5
+layout_mode = 3
+anchors_preset = 0
+offset_left = -80.0
+offset_top = -100.0
+offset_right = 80.0
+offset_bottom = -77.0
+theme = ExtResource("4_hover_theme")
+
+[node name="ColorHoverLabel" type="Label" parent="ColorLabelBg"]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
 
 [connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]

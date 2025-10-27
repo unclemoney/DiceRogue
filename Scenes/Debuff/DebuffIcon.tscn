@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://bxirylb1ylujp"]
+[gd_scene load_steps=5 format=3 uid="uid://bxirylb1ylujp"]
 
 [ext_resource type="Shader" uid="uid://b8j4hitdd17i1" path="res://Scripts/Shaders/card_perspective.gdshader" id="1_w8shn"]
 [ext_resource type="Script" uid="uid://cx5ckrdsliksj" path="res://Scripts/Debuff/debuff_icon.gd" id="2_so752"]
+[ext_resource type="Theme" uid="uid://busf5kj4jt6yf" path="res://Resources/UI/powerup_hover_theme.tres" id="3_hover_theme"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_so752"]
 shader = ExtResource("1_w8shn")
@@ -73,6 +74,7 @@ theme_override_font_sizes/font_size = 16
 horizontal_alignment = 1
 
 [node name="LabelBg" type="PanelContainer" parent="."]
+visible = false
 z_index = 3
 layout_mode = 1
 anchors_preset = 10
@@ -82,6 +84,7 @@ offset_top = -80.0
 offset_right = 70.0
 offset_bottom = -57.0
 grow_horizontal = 2
+theme = ExtResource("3_hover_theme")
 mouse_filter = 2
 
 [node name="HoverLabel" type="Label" parent="LabelBg"]

@@ -12,6 +12,12 @@ signal purchased(item_id: String, item_type: String)
 var item_id: String
 var item_type: String
 var price: int
+var item_data: Resource  # Store the data resource for tooltip access
+
+# Hover tooltip variables
+var hover_tooltip: PanelContainer
+var hover_tooltip_label: Label
+var is_hovered: bool = false
 var _time: float = 0.0
 const RAINBOW_SPEED := 0.5
 const RAINBOW_COLORS := [
@@ -48,12 +54,10 @@ func _process(delta: float) -> void:
 	var index2: int = (index1 + 1) % color_count
 	var t: float = fmod(_time, 1.0)  # Interpolation factor
 	
-	# Interpolate between colors
-	var current_color: Color = RAINBOW_COLORS[index1].lerp(RAINBOW_COLORS[index2], t)
+	# Interpolate between colors (for potential future rainbow effects)
+	var _current_color: Color = RAINBOW_COLORS[index1].lerp(RAINBOW_COLORS[index2], t)
 	
-	# Format BBCode with hex color
-	var hex_color: String = current_color.to_html(false)
-	#shop_label.text = "[center][color=#%s][wave amp=50 freq=2]SHOP[/wave][/color][/center]" % hex_color
+	# Rainbow effect could be applied to shop_label if needed in the future
 	# Check if this is a power-up item and if there's a maximum reached
 	if item_type == "power_up":
 		# Find the GameController to check ownership directly
@@ -109,6 +113,7 @@ func setup(data: Resource, type: String) -> void:
 	item_id = data.id
 	item_type = type
 	price = data.price
+	item_data = data  # Store the data for tooltip access
 	
 	if not icon or not name_label or not price_label:
 		push_error("[ShopItem] One or more required nodes not found!")
@@ -121,6 +126,8 @@ func setup(data: Resource, type: String) -> void:
 	
 	name_label.text = data.display_name
 	price_label.text = "$%d" % price
+	
+	_setup_hover_tooltip()
 	
 	_update_button_state()
 	if not PlayerEconomy.is_connected("money_changed", _update_button_state):
@@ -202,3 +209,106 @@ func _has_reached_mod_limit(game_controller: GameController) -> bool:
 	
 	#print("[ShopItem] Mod limit check - Current mods:", current_mod_count, "Expected dice count:", expected_dice_count)
 	return current_mod_count >= expected_dice_count
+
+## _setup_hover_tooltip()
+## Creates and configures the hover tooltip for shop items
+func _setup_hover_tooltip() -> void:
+	if not item_data:
+		return
+		
+	# Create hover tooltip container
+	hover_tooltip = PanelContainer.new()
+	hover_tooltip.visible = false
+	hover_tooltip.z_index = 1000
+	
+	# Create custom StyleBoxFlat for the tooltip
+	var style_box = StyleBoxFlat.new()
+	style_box.bg_color = Color(0.08, 0.06, 0.12, 0.98)
+	style_box.border_width_left = 4
+	style_box.border_width_top = 4
+	style_box.border_width_right = 4
+	style_box.border_width_bottom = 4
+	style_box.border_color = Color(1, 0.8, 0.2, 1)
+	style_box.corner_radius_top_left = 6
+	style_box.corner_radius_top_right = 6
+	style_box.corner_radius_bottom_right = 6
+	style_box.corner_radius_bottom_left = 6
+	style_box.content_margin_left = 16.0
+	style_box.content_margin_top = 12.0
+	style_box.content_margin_right = 16.0
+	style_box.content_margin_bottom = 12.0
+	style_box.shadow_color = Color(0, 0, 0, 0.5)
+	style_box.shadow_size = 2
+	
+	# Apply the style directly
+	hover_tooltip.add_theme_stylebox_override("panel", style_box)
+	
+	# Create tooltip label
+	hover_tooltip_label = Label.new()
+	hover_tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hover_tooltip_label.custom_minimum_size = Vector2(200, 0)
+	hover_tooltip_label.text = item_data.description
+	
+	# Apply font styling to label
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as FontFile
+	if vcr_font:
+		hover_tooltip_label.add_theme_font_override("font", vcr_font)
+		hover_tooltip_label.add_theme_font_size_override("font_size", 14)
+		hover_tooltip_label.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))
+		hover_tooltip_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		hover_tooltip_label.add_theme_constant_override("outline_size", 1)
+	
+	hover_tooltip.add_child(hover_tooltip_label)
+	get_parent().add_child(hover_tooltip)
+	
+	# Connect hover signals
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
+	
+	print("[ShopItem] Tooltip created with direct styling")
+
+## _on_mouse_entered()
+## Shows the hover tooltip when mouse enters the shop item
+func _on_mouse_entered() -> void:
+	if not hover_tooltip or not item_data:
+		return
+		
+	is_hovered = true
+	hover_tooltip.visible = true
+	_update_tooltip_position()
+
+## _on_mouse_exited()
+## Hides the hover tooltip when mouse exits the shop item
+func _on_mouse_exited() -> void:
+	if not hover_tooltip:
+		return
+		
+	is_hovered = false
+	hover_tooltip.visible = false
+
+## _update_tooltip_position()
+## Positions the tooltip relative to the shop item
+func _update_tooltip_position() -> void:
+	if not hover_tooltip or not hover_tooltip.visible:
+		return
+		
+	# Position tooltip to the right of the shop item
+	var shop_item_rect = get_global_rect()
+	var tooltip_pos = Vector2(
+		shop_item_rect.position.x + shop_item_rect.size.x + 10,
+		shop_item_rect.position.y
+	)
+	
+	# Ensure tooltip stays within screen bounds
+	var viewport_size = get_viewport().get_visible_rect().size
+	var tooltip_size = hover_tooltip.get_minimum_size()
+	
+	if tooltip_pos.x + tooltip_size.x > viewport_size.x:
+		# Position to the left instead
+		tooltip_pos.x = shop_item_rect.position.x - tooltip_size.x - 10
+	
+	if tooltip_pos.y + tooltip_size.y > viewport_size.y:
+		# Adjust vertical position
+		tooltip_pos.y = viewport_size.y - tooltip_size.y - 10
+	
+	hover_tooltip.global_position = tooltip_pos
