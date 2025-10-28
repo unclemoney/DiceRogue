@@ -28,7 +28,7 @@ var hover_label: Label
 var sell_button: Button
 var use_button: Button
 var card_frame: TextureRect
-var card_info: VBoxContainer
+var card_info: Control  # Can be VBoxContainer initially, then PanelContainer after styling
 var card_title: Label
 var shadow: TextureRect
 
@@ -130,6 +130,11 @@ func _ready() -> void:
 	if use_button:
 		print("[ConsumableIcon] Applying direct styling to scene-based USE button")
 		_apply_action_button_style(use_button)
+		
+	# Apply direct styling to CardInfo and Title
+	if card_info and card_title:
+		print("[ConsumableIcon] Applying direct styling to CardInfo and Title")
+		_apply_card_info_style()
 		
 	# Connect input signals if not already connected
 	if not is_connected("mouse_entered", _on_mouse_entered):
@@ -282,7 +287,7 @@ func _create_card_structure() -> void:
 	card_info.z_index = 2
 	card_info.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	card_info.position = Vector2(-186, 100)
-	card_info.visible = true
+	card_info.visible = false  # Start hidden, show on mouse enter
 	add_child(card_info)
 	
 	# Create Title
@@ -330,7 +335,7 @@ func _create_card_structure() -> void:
 	label_bg.visible = false
 	label_bg.z_index = 3
 	label_bg.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	label_bg.position.y = -60
+	label_bg.position.y = -55  # Raise by 5 pixels (was -60, now -55)
 	label_bg.position.x = -60
 	
 	# Apply hover styling directly
@@ -948,7 +953,97 @@ func _apply_hover_label_style(label: Label) -> void:
 	if vcr_font:
 		label.add_theme_font_override("font", vcr_font)
 		label.add_theme_font_size_override("font_size", 14)
-		label.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))
+		label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 		label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 		label.add_theme_constant_override("outline_size", 1)
 	print("[ConsumableIcon] Hover label styling applied")
+
+## _apply_card_info_style()
+## Applies enhanced styling to CardInfo and Title elements
+func _apply_card_info_style() -> void:
+	# Load VCR font
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as FontFile
+	
+	# Style the CardInfo container
+	if card_info:
+		# Remove any presets and use manual positioning for true centering
+		card_info.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		card_info.z_index = 2
+		
+		# Set width 10 pixels wider as requested (was 70, now 80)
+		var title_width = 80
+		var title_height = 25
+		card_info.custom_minimum_size = Vector2(title_width, title_height)
+		
+		# Calculate center position mathematically
+		# Get the card icon's size (typically the parent container size)
+		var card_center_x = size.x / 2.0
+		
+		# Position title so its CENTER aligns horizontally with card center
+		# and appears 5 pixels below the bottom of the card art
+		var title_center_x = card_center_x - (title_width / 2.0)
+		var title_center_y = size.y + 5  # 5 pixels below the bottom of the card
+		
+		card_info.position = Vector2(title_center_x, title_center_y)
+		
+		# Add background styling to CardInfo
+		var info_style_box = StyleBoxFlat.new()
+		info_style_box.bg_color = Color(0.1, 0.08, 0.15, 0.85)  # Dark semi-transparent
+		info_style_box.border_width_left = 2
+		info_style_box.border_width_top = 2
+		info_style_box.border_width_right = 2
+		info_style_box.border_width_bottom = 2
+		info_style_box.border_color = Color(1, 0.8, 0.2, 0.8)  # Golden border
+		info_style_box.corner_radius_top_left = 6
+		info_style_box.corner_radius_top_right = 6
+		info_style_box.corner_radius_bottom_right = 6
+		info_style_box.corner_radius_bottom_left = 6
+		info_style_box.content_margin_left = 8.0
+		info_style_box.content_margin_top = 4.0
+		info_style_box.content_margin_right = 8.0
+		info_style_box.content_margin_bottom = 4.0
+		
+		# Convert VBoxContainer to PanelContainer to apply background styling
+		# Create new PanelContainer to replace VBoxContainer
+		var new_card_info = PanelContainer.new()
+		new_card_info.name = "CardInfo"
+		new_card_info.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		new_card_info.z_index = 2
+		new_card_info.visible = false  # Start hidden, show on mouse enter
+		
+		# Use same mathematical centering as applied above (reuse existing variables)
+		new_card_info.custom_minimum_size = Vector2(title_width, title_height)
+		new_card_info.position = Vector2(title_center_x, title_center_y)
+		
+		new_card_info.add_theme_stylebox_override("panel", info_style_box)
+		
+		# Move title to new container
+		if card_title and card_title.get_parent() == card_info:
+			card_info.remove_child(card_title)
+			new_card_info.add_child(card_title)
+		
+		# Replace old with new
+		remove_child(card_info)
+		card_info.queue_free()
+		card_info = new_card_info
+		add_child(card_info)
+	
+	# Style the Title label
+	if card_title and vcr_font:
+		card_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		card_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		card_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		
+		# Apply VCR font with larger size
+		card_title.add_theme_font_override("font", vcr_font)
+		card_title.add_theme_font_size_override("font_size", 18)  # Bigger than before (was 16)
+		
+		# Enhanced text styling
+		card_title.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))  # Warm white
+		card_title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+		card_title.add_theme_constant_override("shadow_offset_x", 2)
+		card_title.add_theme_constant_override("shadow_offset_y", 2)
+		card_title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		card_title.add_theme_constant_override("outline_size", 1)
+	
+	print("[ConsumableIcon] CardInfo and Title styling applied")

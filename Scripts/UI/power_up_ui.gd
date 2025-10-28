@@ -265,7 +265,7 @@ func _create_fanned_icons() -> void:
 		icon.z_index = 10 + i  # Ensure cards are above background
 		
 		# Hide CardInfo/Title for cleaner fanned view
-		var card_info: VBoxContainer = icon.get_node_or_null("CardInfo")
+		var card_info: Control = icon.get_node_or_null("CardInfo")
 		if card_info:
 			card_info.visible = false
 		

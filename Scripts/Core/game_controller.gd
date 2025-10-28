@@ -121,6 +121,9 @@ func _ready() -> void:
 		if not consumable_ui.is_connected("consumable_used", _on_consumable_ui_used):
 			consumable_ui.consumable_used.connect(_on_consumable_ui_used)
 			print("[GameController] Connected to consumable_used signal from ConsumableUI via forwarding handler")
+		if not consumable_ui.is_connected("consumable_sold", _on_consumable_sold):
+			consumable_ui.consumable_sold.connect(_on_consumable_sold)
+			print("[GameController] Connected to consumable_sold signal from ConsumableUI")
 	if powerup_ui:
 		if not powerup_ui.is_connected("max_power_ups_reached", _on_max_power_ups_reached):
 			powerup_ui.connect("max_power_ups_reached", _on_max_power_ups_reached)
@@ -1071,20 +1074,24 @@ func _apply_mod_to_available_die(mod_id: String) -> bool:
 		var die = dice_hand.dice_list[i]
 		if die.active_mods.size() == 0:
 			var mod = mod_manager.spawn_mod(mod_id, die)
-			if mod:
+			if mod and active_mods.has(mod_id):
 				die.add_mod(active_mods[mod_id])
 				print("[GameController] Applied mod", mod_id, "to empty die at index", i)
 				return true
+			elif mod:
+				push_error("[GameController] Spawned mod but no ModData found in active_mods for: " + mod_id)
 
 	# If no empty die found, try to find one without this specific mod
 	for i in range(dice_hand.dice_list.size()):
 		var die = dice_hand.dice_list[i]
 		if not die.has_mod(mod_id):
 			var mod = mod_manager.spawn_mod(mod_id, die)
-			if mod:
+			if mod and active_mods.has(mod_id):
 				die.add_mod(active_mods[mod_id])
 				print("[GameController] Applied mod", mod_id, "to die at index", i)
 				return true
+			elif mod:
+				push_error("[GameController] Spawned mod but no ModData found in active_mods for: " + mod_id)
 
 	# No suitable die found
 	return false
@@ -1525,13 +1532,13 @@ func _on_consumable_sold(consumable_id: String) -> void:
 		print("[GameController] Refunding", refund, "coins for consumable:", consumable_id)
 		PlayerEconomy.add_money(refund)
 	
-	# Animate the icon if it exists, then remove
-	if consumable_ui:
-		consumable_ui.animate_consumable_removal(consumable_id, func():
-			remove_consumable(consumable_id)
-		)
-	else:
-		remove_consumable(consumable_id)
+	# Remove from game data only (UI already handled removal)
+	if active_consumables.has(consumable_id):
+		var consumable_to_remove = active_consumables[consumable_id]
+		if consumable_to_remove:
+			consumable_to_remove.queue_free()
+		active_consumables.erase(consumable_id)
+		print("[GameController] Removed consumable from game data:", consumable_id)
 
 ## _on_mod_sold(mod_id, dice)
 ##

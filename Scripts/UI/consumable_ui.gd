@@ -273,7 +273,7 @@ func _create_fanned_icons() -> void:
 		icon.z_index = 10 + i  # Ensure cards are above background
 		
 		# Hide CardInfo/Title for cleaner fanned view
-		var card_info: VBoxContainer = icon.get_node_or_null("CardInfo")
+		var card_info: Control = icon.get_node_or_null("CardInfo")
 		if card_info:
 			card_info.visible = false
 		
@@ -619,9 +619,28 @@ func remove_consumable(consumable_id: String) -> void:
 			if icon.is_connected("consumable_sell_requested", _on_consumable_sell_requested):
 				icon.consumable_sell_requested.disconnect(_on_consumable_sell_requested)
 			
-			# Don't remove from parent immediately - let the icon handle its own destruction effect
-			# The icon will call queue_free() on itself after playing the effect
-			print("[ConsumableUI] Letting icon handle its own destruction effect for:", consumable_id)
+			# Stop any ongoing tweens to prevent warnings
+			if icon._current_tween and icon._current_tween.is_valid():
+				icon._current_tween.kill()
+			if icon._hover_card_tween and icon._hover_card_tween.is_valid():
+				icon._hover_card_tween.kill()
+			
+			# Tell the icon to destroy itself with effect
+			print("[ConsumableUI] Triggering destruction effect for sold icon:", consumable_id)
+			icon.play_destruction_effect()
+			
+			# Add delay for effect before cleanup
+			if icon.is_inside_tree():
+				var tree = icon.get_tree()
+				if tree:
+					var timer = tree.create_timer(0.2)
+					if timer:
+						await timer.timeout
+			
+			# Now safely remove from parent and queue free
+			if icon.get_parent():
+				icon.get_parent().remove_child(icon)
+			icon.queue_free()
 		_fanned_icons.erase(consumable_id)
 	
 	# Reposition remaining spines
