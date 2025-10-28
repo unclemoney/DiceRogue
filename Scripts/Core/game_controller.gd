@@ -19,6 +19,7 @@ const SCORE_CARD_UI_SCRIPT := preload("res://Scripts/UI/score_card_ui.gd")
 const DEBUFF_MANAGER_SCRIPT := preload("res://Scripts/Managers/DebuffManager.gd")
 const DEBUFF_UI_SCRIPT := preload("res://Scripts/UI/debuff_ui.gd")
 const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
+const ScoringAnimationController := preload("res://Scripts/Effects/scoring_animation_controller.gd")
 const RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF := preload("res://Scripts/Consumable/RandomPowerUpUncommonConsumable.tres")
 const GREEN_ENVY_CONSUMABLE_DEF := preload("res://Scripts/Consumable/GreenEnvyConsumable.tres")
 const POOR_HOUSE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/PoorHouseConsumable.tres")
@@ -51,6 +52,7 @@ const GO_BROKE_OR_GO_HOME_CONSUMABLE_DEF := preload("res://Scripts/Consumable/Go
 @export var round_manager_path: NodePath        = ^"../RoundManager"
 @export var crt_manager_path: NodePath          = ^"../CRTManager"
 @export var statistics_panel_path: NodePath     = ^"../StatisticsPanel"
+@export var scoring_animation_controller_path: NodePath = ^"../ScoringAnimationController"
 
 @onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
 @onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
@@ -74,6 +76,7 @@ const GO_BROKE_OR_GO_HOME_CONSUMABLE_DEF := preload("res://Scripts/Consumable/Go
 @onready var round_manager: RoundManager   = get_node_or_null(round_manager_path)
 @onready var crt_manager: CRTManager       = get_node_or_null(crt_manager_path)
 @onready var statistics_panel: Control = get_node_or_null(statistics_panel_path)
+@onready var scoring_animation_controller: ScoringAnimationController = get_node_or_null(scoring_animation_controller_path)
 
 const STARTING_POWER_UP_IDS := ["extra_dice", "extra_rolls"]
 
@@ -97,7 +100,8 @@ func _ready() -> void:
 		dice_hand.dice_spawned.connect(_on_dice_spawned)
 		dice_hand.die_locked.connect(_on_die_locked)
 	if scorecard:
-		scorecard.score_auto_assigned.connect(_on_score_assigned)
+		scorecard.score_auto_assigned.connect(_on_score_auto_assigned)
+		scorecard.score_assigned.connect(_on_score_manual_assigned)
 		scorecard.score_auto_assigned.connect(update_double_existing_usability)
 		#scorecard.score_added.connect(update_double_existing_usability)
 	if game_button_ui:
@@ -835,16 +839,44 @@ func _on_score_doubled(_section: Scorecard.Section, _category: String, _new_scor
 		remove_consumable("double_existing")
 
 
-## _on_score_assigned(_section, _category, _score, _breakdown_info)
+## _on_score_auto_assigned(_section, _category, _score, _breakdown_info)
 ##
-## Triggered when the ScoreCard auto-assigns or registers a score.
-## - Triggers any post-score power-up behavior (randomizer effect)
-## - Updates consumable usability for score-related consumables (e.g., score_reroll)
-func _on_score_assigned(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
+## Triggered when the ScoreCard auto-assigns a score.
+## Auto-scoring provides complete breakdown info, so we use it directly.
+func _on_score_auto_assigned(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
 	if not scorecard:
 		push_error("No scorecard reference found")
 		return
 	
+	# Trigger scoring animations if controller is available - auto-scoring provides breakdown
+	if scoring_animation_controller and _score > 0:
+		scoring_animation_controller.start_scoring_animation(_score, _category, _breakdown_info)
+	
+	_handle_post_scoring_effects(_section, _category, _score, _breakdown_info)
+
+## _on_score_manual_assigned(_section, _category, _score, _breakdown_info)
+##
+## Triggered when the ScoreCard registers a manual score.
+## Manual scoring lacks breakdown info, so we create it ourselves.
+func _on_score_manual_assigned(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
+	if not scorecard:
+		push_error("No scorecard reference found")
+		return
+	
+	# Only trigger animations if this is not an auto-scoring call
+	# (Auto-scoring internally calls manual scoring, but we only want animation from auto path)
+	# Check if breakdown_info is empty - that indicates a true manual scoring action
+	if scoring_animation_controller and _score > 0 and _breakdown_info.is_empty():
+		var enhanced_breakdown_info = _create_manual_breakdown_info()
+		print("[GameController] Created manual breakdown info: " + str(enhanced_breakdown_info))
+		scoring_animation_controller.start_scoring_animation(_score, _category, enhanced_breakdown_info)
+	
+	_handle_post_scoring_effects(_section, _category, _score, _breakdown_info)
+
+## _handle_post_scoring_effects(_section, _category, _score, _breakdown_info)
+##
+## Common post-scoring logic shared between auto and manual scoring.
+func _handle_post_scoring_effects(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
 	# Track statistics for scoring
 	var stats = get_node_or_null("/root/Statistics")
 	if stats:
@@ -859,7 +891,7 @@ func _on_score_assigned(_section: int, _category: String, _score: int, _breakdow
 				for i in range(dice_array.size()):
 					var die = dice_array[i]
 					if die:
-						var color_name = DiceColor.get_color_name(die.color) if die.color != null else "null"
+						var _color_name = DiceColor.get_color_name(die.color) if die.color != null else "null"
 						#print("[GameController] DEBUG: Die %d - value: %d, color: %s (type: %s)" % [i, die.value, color_name, typeof(die.color)])
 				stats.track_dice_array_scored(dice_array)
 		else:
@@ -888,6 +920,29 @@ func _on_score_assigned(_section: int, _category: String, _score: int, _breakdow
 			print("[GameController] No score reroll consumable found")
 	else:
 		print("[GameController] No scores yet, reroll remains disabled")
+
+## _create_manual_breakdown_info()
+##
+## Create breakdown info for manual scoring with active powerups and consumables.
+func _create_manual_breakdown_info() -> Dictionary:
+	var breakdown_info = {}
+	
+	# Get active powerups from GameController's active_power_ups dictionary
+	var active_powerups_list = []
+	for powerup_id in active_power_ups.keys():
+		active_powerups_list.append(powerup_id)
+	breakdown_info["active_powerups"] = active_powerups_list
+	
+	# Get active consumables from GameController's active_consumables dictionary 
+	var active_consumables_list = []
+	for consumable_id in active_consumables.keys():
+		active_consumables_list.append(consumable_id)
+	breakdown_info["active_consumables"] = active_consumables_list
+	
+	# Note: For manual scoring, we don't have detailed additive/multiplier breakdowns
+	# The animation system will work with just the active powerups/consumables lists
+	
+	return breakdown_info
 
 
 ## apply_debuff(id)

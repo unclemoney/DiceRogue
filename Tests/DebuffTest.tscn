@@ -1,4 +1,4 @@
-[gd_scene load_steps=93 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=96 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" uid="uid://bsukvul4wop20" path="res://Scenes/ScoreCard/score_card.tscn" id="7_w6663"]
 [ext_resource type="PackedScene" uid="uid://b8limy63m2tlo" path="res://Scenes/Tracker/turn_tracker.tscn" id="8_8eqdw"]
 [ext_resource type="PackedScene" uid="uid://lc4xqvsxdnpy" path="res://Scenes/UI/game_button_ui.tscn" id="9_wtptv"]
+[ext_resource type="AudioStream" uid="uid://1wbw8pkmnjas" path="res://Resources/Audio/DiceRoll_Basic.wav" id="10_hyqam"]
 [ext_resource type="PackedScene" uid="uid://sliaarrkymdo" path="res://Scenes/UI/score_card_ui.tscn" id="11_oy5od"]
 [ext_resource type="PackedScene" uid="uid://dv0gypvmv4bb" path="res://Scenes/UI/consumable_ui.tscn" id="12_pdckl"]
 [ext_resource type="PackedScene" uid="uid://bxwr5njrkwahy" path="res://Scenes/UI/PowerUpIcon.tscn" id="14_geekk"]
@@ -84,6 +85,8 @@
 [ext_resource type="Resource" uid="uid://c7p2gvbh8r3kn" path="res://Scripts/PowerUps/PerfectStrangers.tres" id="70_perfect_strangers"]
 [ext_resource type="Resource" uid="uid://c2dv7lqytpbu" path="res://Scripts/Debuff/TheDivisionDebuff.tres" id="82_division"]
 [ext_resource type="Resource" uid="uid://dk8q4n7m1vbfs" path="res://Scripts/PowerUps/GreenWithEnvy.tres" id="83_green_monster"]
+[ext_resource type="Script" uid="uid://njvt03rpt35v" path="res://Scripts/Effects/scoring_animation_controller.gd" id="91_fjxkw"]
+[ext_resource type="AudioStream" uid="uid://dalcdeu3qtx20" path="res://Resources/Audio/bongo.wav" id="92_3fxld"]
 [ext_resource type="Resource" uid="uid://wvpnvey8q20j" path="res://Scripts/PowerUps/WildDotsPowerUp.tres" id="99_wild_dots"]
 [ext_resource type="Resource" uid="uid://c2kn4gf8x7lwm" path="res://Scripts/PowerUps/PinHeadPowerUp.tres" id="100_pin_head"]
 [ext_resource type="Resource" uid="uid://d3hc8h0p7bj6w" path="res://Scripts/PowerUps/MoneyWellSpentPowerUp.tres" id="101_money_well_spent"]
@@ -147,6 +150,7 @@ texture = ExtResource("5_w4iq5")
 [node name="DiceHand" parent="." instance=ExtResource("5_gxabo")]
 dice_scene = ExtResource("6_o8wpr")
 start_position = Vector2(640, 530)
+roll_sound = ExtResource("10_hyqam")
 
 [node name="DiceContainer" type="Node2D" parent="."]
 
@@ -282,3 +286,7 @@ z_as_relative = false
 
 [node name="StatisticsPanel" parent="." instance=ExtResource("999_stats")]
 visible = false
+
+[node name="ScoringAnimationController" type="Node2D" parent="."]
+script = ExtResource("91_fjxkw")
+scoring_sound = ExtResource("92_3fxld")

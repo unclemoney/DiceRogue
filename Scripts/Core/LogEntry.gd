@@ -227,7 +227,7 @@ func _generate_formatted_log_line() -> String:
 				"yellow": color_abbrev.append("Y")
 				"purple": color_abbrev.append("P")
 				"white": color_abbrev.append("W")
-				_: color_abbrev.append("?")
+				_: color_abbrev.append("")
 		colors_str = " (" + ",".join(color_abbrev) + ")"
 	
 	var category_display = _format_category_name(scorecard_category)

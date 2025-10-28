@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://ccm6ak2ku4xqv"]
+
+[ext_resource type="Script" path="res://Tests/simple_scoring_animation_test.gd" id="1"]
+
+[node name="SimpleScoringAnimationTest" type="Node"]
+script = ExtResource("1")
