@@ -1,4 +1,4 @@
-[gd_scene load_steps=96 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=95 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -12,7 +12,6 @@
 [ext_resource type="PackedScene" uid="uid://bsukvul4wop20" path="res://Scenes/ScoreCard/score_card.tscn" id="7_w6663"]
 [ext_resource type="PackedScene" uid="uid://b8limy63m2tlo" path="res://Scenes/Tracker/turn_tracker.tscn" id="8_8eqdw"]
 [ext_resource type="PackedScene" uid="uid://lc4xqvsxdnpy" path="res://Scenes/UI/game_button_ui.tscn" id="9_wtptv"]
-[ext_resource type="AudioStream" uid="uid://1wbw8pkmnjas" path="res://Resources/Audio/DiceRoll_Basic.wav" id="10_hyqam"]
 [ext_resource type="PackedScene" uid="uid://sliaarrkymdo" path="res://Scenes/UI/score_card_ui.tscn" id="11_oy5od"]
 [ext_resource type="PackedScene" uid="uid://dv0gypvmv4bb" path="res://Scenes/UI/consumable_ui.tscn" id="12_pdckl"]
 [ext_resource type="PackedScene" uid="uid://bxwr5njrkwahy" path="res://Scenes/UI/PowerUpIcon.tscn" id="14_geekk"]
@@ -140,7 +139,6 @@ scale = Vector2(0.45, 0.65)
 transform = Transform2D(0.45, 0, 0, 0.65, 580, 120)
 
 [node name="TextureRect" type="TextureRect" parent="Background"]
-z_index = 1
 offset_left = -115.0
 offset_top = -329.0
 offset_right = 583.0
@@ -150,7 +148,6 @@ texture = ExtResource("5_w4iq5")
 [node name="DiceHand" parent="." instance=ExtResource("5_gxabo")]
 dice_scene = ExtResource("6_o8wpr")
 start_position = Vector2(640, 530)
-roll_sound = ExtResource("10_hyqam")
 
 [node name="DiceContainer" type="Node2D" parent="."]
 
@@ -281,6 +278,7 @@ dice_hand_path = NodePath("../DiceHand")
 scorecard_path = NodePath("../ScoreCard")
 
 [node name="DebugPanel" parent="." instance=ExtResource("69_6hkbr")]
+visible = false
 z_index = 10
 z_as_relative = false
 
@@ -288,5 +286,7 @@ z_as_relative = false
 visible = false
 
 [node name="ScoringAnimationController" type="Node2D" parent="."]
+z_index = 11
+z_as_relative = false
 script = ExtResource("91_fjxkw")
 scoring_sound = ExtResource("92_3fxld")

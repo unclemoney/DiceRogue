@@ -14,7 +14,7 @@ extends Control
 
 signal shop_button_pressed
 signal next_round_pressed
-signal dice_rolled(dice_values: Array) 
+signal dice_rolled(dice_values: Array)
 
 var dice_hand
 var score_card_ui
@@ -39,17 +39,12 @@ func _ready():
 
 	roll_button.pressed.connect(_on_roll_button_pressed)
 	next_turn_button.pressed.connect(_on_next_turn_button_pressed)
-
 	dice_hand.roll_complete.connect(_on_dice_roll_complete)
 	turn_tracker.rolls_exhausted.connect(func(): roll_button.disabled = true)
 	turn_tracker.turn_started.connect(func(): roll_button.disabled = false)
-	turn_tracker.connect(
-		"game_over",
-		Callable(self, "_on_game_over")
-	)
-
-	# Godot 4 style: signal name + target Callable
+	turn_tracker.connect("game_over",Callable(self, "_on_game_over"))
 	score_card_ui.connect("hand_scored", Callable(self, "_hand_scored_disable"))
+	score_card_ui.connect("manual_score", Callable(self, "_scored_hand_setup_next_round"))
 	
 	# Shop button is already connected in the scene file, so just configure it
 	if shop_button:
@@ -78,6 +73,7 @@ func _ready():
 
 
 func _on_roll_button_pressed() -> void:
+	next_turn_button.disabled = false
 	if not first_roll_done:
 		first_roll_done = true
 		if shop_button:
@@ -117,6 +113,11 @@ func _on_next_turn_button_pressed() -> void:
 		print("[GameButtonUI] Autoscoring completed, calling update_all()...")
 		score_card_ui.update_all()
 		print("[GameButtonUI] Manual update_all() completed")
+		_scored_hand_setup_next_round()
+
+	elif score_card_ui.turn_scored:
+		roll_button.disabled = false
+		_on_roll_button_pressed() #Auto-roll for next turn disabled for now
 
 	# 2) Proceed with turn advancement
 	turn_tracker.start_new_turn()
@@ -124,8 +125,11 @@ func _on_next_turn_button_pressed() -> void:
 	score_card_ui.enable_all_score_buttons()
 	for die in dice_hand.dice_list:
 		die.unlock()
-	roll_button.disabled = false
-	_on_roll_button_pressed()
+	next_turn_button.disabled = true	
+
+func _scored_hand_setup_next_round() -> void:
+	for die in dice_hand.dice_list:
+		die.set_dice_input_enabled(false)  # Disable input on dice after scoring
 
 func _on_auto_score_assigned(section, category, score):
 	print("Auto-assigned", category, "in", section, "for", score, "points")
@@ -147,6 +151,8 @@ func _on_shop_button_pressed() -> void:
 	is_shop_open = !is_shop_open  # Toggle shop state
 	emit_signal("shop_button_pressed")
 	print("[GameButtonUI] Signal emitted")
+	next_turn_button.disabled = true  # Disable next turn while in shop
+	roll_button.disabled = true  # Disable roll while in shop
 
 func _on_round_started(_round_number: int) -> void:
 	print("[GameButtonUI] Round", _round_number, "started")

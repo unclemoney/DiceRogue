@@ -37,6 +37,7 @@ layout_mode = 2
 mouse_filter = 2
 
 [node name="TextureRect" type="TextureRect" parent="."]
+z_as_relative = false
 layout_mode = 0
 offset_left = 116.0
 offset_top = -21.0
@@ -48,6 +49,7 @@ texture = ExtResource("2_4b1mh")
 position = Vector2(165, 66)
 
 [node name="Sprite2D" type="Sprite2D" parent="Area2D"]
+z_as_relative = false
 texture = ExtResource("2_ym18e")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]

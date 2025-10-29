@@ -242,6 +242,7 @@ func auto_score_best(values: Array[int]) -> void:
 	else:
 		print("[Scorecard] No valid scoring categories found!")
 
+
 ## _complete_auto_scoring_finalization(section, category, final_score, values, breakdown_info)
 ##
 ## Deferred finalization of auto-scoring: handles bonus checks and signal emission.

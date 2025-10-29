@@ -112,7 +112,7 @@ func lock() -> void:
 
 func set_dice_input_enabled(enabled: bool) -> void:
 	_can_process_input = enabled
-	#print("[Dice] Input processing ", "enabled" if enabled else "disabled", " for ", name)
+
 
 func set_lock_shader_enabled(enabled: bool) -> void:
 	_lock_shader_enabled = enabled

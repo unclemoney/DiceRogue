@@ -15,6 +15,7 @@ signal hand_scored
 signal score_rerolled(section: Scorecard.Section, category: String, score: int)
 signal score_doubled(section: Scorecard.Section, category: String, new_score: int)
 signal about_to_score(section: Scorecard.Section, category: String, dice_values: Array[int])
+signal manual_score
 
 @onready var best_hand_label: RichTextLabel = $BestHandScore
 @onready var upper_total_label: Label = $HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal/UppersubButton
@@ -78,12 +79,9 @@ func _ready():
 			category_labels[key] = label
 		else:
 			print("❌ Label not found for:", key, "→", label_path)
+
 	
-	# Remove or comment out from _ready():
-	# if scorecard:
-	#     DiceResults.set_scorecard(scorecard)
-	# else:
-	#     push_error("[ScoreCardUI] No scorecard reference to set in DiceResults")
+
 
 func _exit_tree() -> void:
 	# Clean up stored tween to prevent warnings
@@ -381,6 +379,7 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 	
 	# Score is already set by on_category_selected, just update UI
 	print("[ScoreCardUI] Score already set by scorecard, updating UI")
+	_screen_shaker(score*5, 100)
 	update_all()
 	turn_scored = true
 	disable_all_score_buttons()
@@ -455,8 +454,6 @@ func update_best_hand_preview(dice_values: Array) -> void:
 				best_score = score
 				_best_section = Scorecard.Section.LOWER
 				best_category = category
-	
-	# ...rest of existing display code...
 
 	if best_category != "":
 		var display_category = best_category.capitalize().replace("_", " ")
@@ -476,13 +473,18 @@ func update_best_hand_preview(dice_values: Array) -> void:
 		best_hand_label.text = format_text
 		animate_best_hand_label()
 
-				# Scale shake intensity with score value
-		var screen_shake = get_tree().root.find_child("ScreenShake", true, false)
-		var shake_intensity = remap(best_score, 0, 100, 0.1, 1.0)
-		print("Shake intensity:", shake_intensity, " for score:", best_score)
-		if screen_shake:
-			screen_shake.shake(shake_intensity, shake_intensity / 2)
+	_screen_shaker(best_score, 50)
+
 		
+func _screen_shaker(best_score: int, max_clamp: int) -> void:
+	if best_score >= 100:
+		best_score = max_clamp
+	var screen_shake = get_tree().root.find_child("ScreenShake", true, false)
+	var shake_intensity = remap(best_score, 0, max_clamp, 0.1, 1.0)
+	print("[Shake intensity]:", shake_intensity, " for score:", best_score)
+	if screen_shake:
+		screen_shake.shake(shake_intensity, shake_intensity / 2)
+
 func remap(value, from_min, from_max, to_min, to_max):
 	var t = inverse_lerp(from_min, from_max, value)
 	return lerp(to_min, to_max, t)
@@ -660,6 +662,7 @@ func _on_score_button_pressed(section: Scorecard.Section, category: String) -> v
 	
 	# Score is already set by on_category_selected, just update UI
 	print("[ScoreCardUI] Score already set by scorecard, updating UI")
+
 	update_all()
 	turn_scored = true
 	disable_all_score_buttons()
@@ -1305,10 +1308,11 @@ func _calculate_best_score_for_dice(dice_values: Array[int]) -> int:
 ## Called when the Scorecard emits score_assigned signal (for autoscoring)
 func _on_score_assigned_from_scorecard(section: Scorecard.Section, category: String, score: int) -> void:
 	print("[ScoreCardUI] Score assigned from scorecard:", section, category, score)
-	
+	manual_score.emit() # Create a new signal to update the game_button_ui so we can disable the dice locking
 	# Update UI to reflect the new score
 	update_all()
 	
+
 	# NOTE: Do NOT emit hand_scored signal here for autoscoring
 	# GameButtonUI handles roll button state directly in _on_next_turn_button_pressed()
 	# Emitting hand_scored would disable the roll button prematurely
@@ -1322,6 +1326,8 @@ func _on_score_auto_assigned(section: Scorecard.Section, category: String, score
 	print("[ScoreCardUI] DEBUG: Breakdown PowerUps:", breakdown_info.get("active_powerups", []))
 	print("[ScoreCardUI] DEBUG: Breakdown Consumables:", breakdown_info.get("active_consumables", []))
 	
+	_screen_shaker(score, 100)
+
 	# Get current dice values for the logbook entry
 	var dice_values: Array[int] = []
 	if DiceResults and DiceResults.values:

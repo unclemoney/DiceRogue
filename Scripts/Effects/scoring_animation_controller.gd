@@ -137,9 +137,9 @@ func _calculate_intensity_scale(score: int) -> float:
 	if score < SMALL_SCORE_THRESHOLD:
 		return 1.0
 	elif score < MEDIUM_SCORE_THRESHOLD:
-		return 1.3
+		return 2.3
 	elif score < LARGE_SCORE_THRESHOLD:
-		return 1.6
+		return 4.6
 	else:
 		return 2.0
 
@@ -165,10 +165,10 @@ func _execute_animation_sequence(score: int, _category: String, breakdown_info: 
 	await _animate_dice_bounce_with_scores(intensity_scale, speed_scale)
 	
 	# Phase 2: Play scoring sound with dynamic pitch
-	_play_scoring_audio(score)
+	#_play_scoring_audio(score)
 	
 	# Phase 3: Wait a bit, then animate contributing consumables
-	var consumable_delay = 0.15 / speed_scale  # Reduced from 0.3
+	var consumable_delay = 0.05 / speed_scale  # Reduced from 0.3
 	print("[ScoringAnimationController] Waiting %f seconds before consumables..." % consumable_delay)
 	await get_tree().create_timer(consumable_delay).timeout
 	if breakdown_info.has("active_consumables") and breakdown_info.active_consumables.size() > 0:
@@ -178,7 +178,7 @@ func _execute_animation_sequence(score: int, _category: String, breakdown_info: 
 		print("[ScoringAnimationController] No consumables to animate")
 	
 	# Phase 4: Wait a bit, then animate contributing powerups
-	var powerup_delay = 0.25 / speed_scale  # Reduced from 0.5
+	var powerup_delay = 0.05 / speed_scale  # Reduced from 0.5
 	print("[ScoringAnimationController] Waiting %f seconds before powerups..." % powerup_delay)
 	await get_tree().create_timer(powerup_delay).timeout
 	if breakdown_info.has("active_powerups") and breakdown_info.active_powerups.size() > 0:
@@ -188,7 +188,7 @@ func _execute_animation_sequence(score: int, _category: String, breakdown_info: 
 		print("[ScoringAnimationController] No powerups to animate")
 	
 	# Phase 5: Show final score floating number
-	var final_delay = 0.5 / speed_scale
+	var final_delay = 0.05 / speed_scale
 	await get_tree().create_timer(final_delay).timeout
 	_show_final_score_number(score, intensity_scale)
 	
@@ -204,7 +204,7 @@ func _animate_dice_bounce_with_scores(intensity_scale: float, speed_scale: float
 		return
 	
 	var dice_array = dice_hand.get_all_dice()
-	print("[ScoringAnimationController] Animating %d dice" % dice_array.size())
+	#print("[ScoringAnimationController] Animating %d dice" % dice_array.size())
 	
 	var stagger_delay = 0.15 / speed_scale  # Faster stagger for high scores
 	var base_delay = 0.1 / speed_scale      # Small base delay to ensure setup is complete
@@ -218,7 +218,7 @@ func _animate_dice_bounce_with_scores(intensity_scale: float, speed_scale: float
 		
 		# Schedule dice animation
 		get_tree().create_timer(delay).timeout.connect(func(): _animate_single_die(die, intensity_scale, speed_scale))
-	
+
 	# Return after all dice have been scheduled (wait for the last one to start)
 	var total_duration = base_delay + (dice_array.size() * stagger_delay) + (0.6 / speed_scale)
 	await get_tree().create_timer(total_duration).timeout
@@ -230,7 +230,7 @@ func _animate_single_die(die: Dice, intensity_scale: float, speed_scale: float =
 	if not die:
 		return
 	
-	print("[ScoringAnimationController] Animating die with value: %d" % die.value)
+	#print("[ScoringAnimationController] Animating die with value: %d" % die.value)
 	
 	# Calculate bounce height
 	var bounce_height = DICE_BOUNCE_HEIGHT * intensity_scale
@@ -245,7 +245,7 @@ func _animate_single_die(die: Dice, intensity_scale: float, speed_scale: float =
 	if die.sprite and die.sprite.texture:
 		var texture_size = die.sprite.texture.get_size()
 		die_size = texture_size * die.sprite.scale
-	var die_center = die.global_position + Vector2(die_size.x / 2, 0)  # Above and center
+	var die_center = die.global_position + Vector2(die_size.x -60, 0)  # Above and center
 	
 	# Ensure the die is valid before creating animations
 	if not die or not is_instance_valid(die):

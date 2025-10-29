@@ -9,15 +9,15 @@ class_name FloatingNumber
 signal animation_complete
 
 # Animation configuration
-@export var float_speed: float = 50.0
-@export var float_duration: float = 1.5
+@export var float_speed: float = 750.0
+@export var float_duration: float = 1.25
 @export var base_font_size: int = 24
 @export var fade_delay: float = 0.3
 
 # Visual configuration
 @export var default_color: Color = Color.YELLOW
 @export var outline_color: Color = Color.BLACK
-@export var outline_size: int = 2
+@export var outline_size: int = 4
 
 # VCR Font resource
 const VCR_FONT = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
