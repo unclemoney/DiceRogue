@@ -84,10 +84,31 @@ func _update_power_up_icons() -> void:
 				icon.label_bg.visible = true
 
 func _on_about_to_score(section: Scorecard.Section, category: String, _dice_values: Array[int]) -> void:
-	# Only register additive for upper section scores
+	# Register additive for upper section scores only
 	if section == Scorecard.Section.UPPER:
 		_register_additive()
 		print("[StepByStepPowerUp] Registered additive for upper section category: %s" % category)
+	else:
+		# Ensure no additive for lower sections
+		_unregister_additive()
+		print("[StepByStepPowerUp] Unregistered additive for lower section category: %s" % category)
+
+## should_apply_to_category(category, section)
+##
+## Check if this powerup should apply to a specific category/section
+func should_apply_to_category(_category: String, section: Scorecard.Section) -> bool:
+	return section == Scorecard.Section.UPPER
+
+## ensure_additive_for_context(category, section)
+##
+## Ensure additive is registered if this powerup applies to the given context
+func ensure_additive_for_context(category: String, section: Scorecard.Section) -> void:
+	if should_apply_to_category(category, section):
+		_register_additive()
+		print("[StepByStepPowerUp] Ensured additive for context: %s, section: %d" % [category, section])
+	else:
+		_unregister_additive()
+		print("[StepByStepPowerUp] Ensured no additive for context: %s, section: %d" % [category, section])
 
 func _register_additive() -> void:
 	if not _is_score_modifier_manager_available():
@@ -166,10 +187,10 @@ func _on_score_assigned(section: Scorecard.Section, category: String, _score: in
 		upper_scores_applied += 1
 		emit_signal("description_updated", id, get_current_description())
 		print("[StepByStepPowerUp] Upper section score tracked: %s (total applied: %d)" % [category, upper_scores_applied])
-		
-		# Clean up the additive after upper section scoring
-		_unregister_additive()
-		print("[StepByStepPowerUp] Cleaned up additive after upper section scoring")
+	
+	# Clean up additive after any scoring to reset state
+	_unregister_additive()
+	print("[StepByStepPowerUp] Cleaned up additive after scoring")
 
 func get_current_description() -> String:
 	if upper_scores_applied > 0:

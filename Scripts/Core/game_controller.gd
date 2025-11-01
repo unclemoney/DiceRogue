@@ -188,7 +188,7 @@ func _on_game_start() -> void:
 	grant_consumable("poor_house")
 	#apply_debuff("the_division")
 	#activate_challenge("300pts_no_debuff")
-	#grant_power_up("green_monster")
+	grant_power_up("step_by_step")
 	if round_manager:
 		round_manager.start_game()
 
@@ -867,7 +867,7 @@ func _on_score_manual_assigned(_section: int, _category: String, _score: int, _b
 	# (Auto-scoring internally calls manual scoring, but we only want animation from auto path)
 	# Check if breakdown_info is empty - that indicates a true manual scoring action
 	if scoring_animation_controller and _score > 0 and _breakdown_info.is_empty():
-		var enhanced_breakdown_info = _create_manual_breakdown_info()
+		var enhanced_breakdown_info = _create_manual_breakdown_info(_category)
 		print("[GameController] Created manual breakdown info: " + str(enhanced_breakdown_info))
 		scoring_animation_controller.start_scoring_animation(_score, _category, enhanced_breakdown_info)
 	
@@ -921,10 +921,10 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 	else:
 		print("[GameController] No scores yet, reroll remains disabled")
 
-## _create_manual_breakdown_info()
+## _create_manual_breakdown_info(category)
 ##
 ## Create breakdown info for manual scoring with active powerups and consumables.
-func _create_manual_breakdown_info() -> Dictionary:
+func _create_manual_breakdown_info(category: String = "") -> Dictionary:
 	var breakdown_info = {}
 	
 	# Get active powerups from GameController's active_power_ups dictionary
@@ -939,10 +939,126 @@ func _create_manual_breakdown_info() -> Dictionary:
 		active_consumables_list.append(consumable_id)
 	breakdown_info["active_consumables"] = active_consumables_list
 	
-	# Note: For manual scoring, we don't have detailed additive/multiplier breakdowns
-	# The animation system will work with just the active powerups/consumables lists
+	# Add dice information if we have dice hand
+	if dice_hand and category != "":
+		var dice_values = dice_hand.get_current_dice_values()
+		var dice_array = dice_hand.get_all_dice()
+		
+		# Calculate which dice are used for this category (import the method from scorecard)
+		var used_dice_indices = _get_used_dice_for_category_manual(category, dice_values, dice_array)
+		
+		breakdown_info["dice_values"] = dice_values.duplicate()
+		breakdown_info["used_dice_indices"] = used_dice_indices.duplicate()
+	else:
+		breakdown_info["dice_values"] = []
+		breakdown_info["used_dice_indices"] = []
+	
+	# Determine section for this category to help powerups register appropriately
+	var section = _get_section_for_category(category)
+	
+	# Ask all active powerups to ensure their modifiers are registered for this context
+	for powerup_id in active_power_ups.keys():
+		var powerup_node = active_power_ups[powerup_id]
+		if powerup_node and powerup_node.has_method("ensure_additive_for_context"):
+			powerup_node.ensure_additive_for_context(category, section)
+	
+	# Get detailed breakdown from ScoreModifierManager for animation system
+	var score_modifier = get_node_or_null("/root/ScoreModifierManager")
+	if score_modifier:
+		# Create additive sources array
+		var additive_sources = []
+		var active_additive_names = score_modifier.get_active_additive_sources()
+		for source_name in active_additive_names:
+			var additive_value = score_modifier.get_additive(source_name)
+			additive_sources.append({
+				"name": source_name,
+				"value": additive_value,
+				"category": "powerup"  # Assume powerup for now
+			})
+		breakdown_info["additive_sources"] = additive_sources
+		
+		# Create multiplier sources array
+		var multiplier_sources = []
+		var active_multiplier_names = score_modifier.get_active_sources()
+		for source_name in active_multiplier_names:
+			var multiplier_value = score_modifier.get_multiplier(source_name)
+			multiplier_sources.append({
+				"name": source_name,
+				"value": multiplier_value,
+				"category": "powerup"  # Assume powerup for now
+			})
+		breakdown_info["multiplier_sources"] = multiplier_sources
 	
 	return breakdown_info
+
+## _get_section_for_category(category)
+##
+## Determine which section a category belongs to
+func _get_section_for_category(category: String) -> Scorecard.Section:
+	var upper_categories = ["ones", "twos", "threes", "fours", "fives", "sixes"]
+	if category in upper_categories:
+		return Scorecard.Section.UPPER
+	else:
+		return Scorecard.Section.LOWER
+
+## _get_used_dice_for_category_manual(category, dice_values, dice_list)
+##
+## Manual implementation of the scorecard method for determining which dice contribute to score
+func _get_used_dice_for_category_manual(category: String, dice_values: Array, _dice_list: Array) -> Array[int]:
+	var used_indices: Array[int] = []
+	
+	# For most categories, all dice contribute to the score
+	# Special cases where only some dice are used:
+	match category.to_lower():
+		"ones":
+			# Only dice with value 1 are used
+			for i in range(dice_values.size()):
+				if dice_values[i] == 1:
+					used_indices.append(i)
+		"twos":
+			# Only dice with value 2 are used
+			for i in range(dice_values.size()):
+				if dice_values[i] == 2:
+					used_indices.append(i)
+		"threes":
+			# Only dice with value 3 are used
+			for i in range(dice_values.size()):
+				if dice_values[i] == 3:
+					used_indices.append(i)
+		"fours":
+			# Only dice with value 4 are used
+			for i in range(dice_values.size()):
+				if dice_values[i] == 4:
+					used_indices.append(i)
+		"fives":
+			# Only dice with value 5 are used
+			for i in range(dice_values.size()):
+				if dice_values[i] == 5:
+					used_indices.append(i)
+		"sixes":
+			# Only dice with value 6 are used
+			for i in range(dice_values.size()):
+				if dice_values[i] == 6:
+					used_indices.append(i)
+		"three_of_a_kind", "four_of_a_kind":
+			# All dice are used (sum of all dice)
+			for i in range(dice_values.size()):
+				used_indices.append(i)
+		"full_house", "small_straight", "large_straight", "yahtzee":
+			# Pattern-based: all dice must be considered but none are "scored" individually
+			# For now, consider all dice as used
+			for i in range(dice_values.size()):
+				used_indices.append(i)
+		"chance":
+			# All dice are used (sum of all dice)
+			for i in range(dice_values.size()):
+				used_indices.append(i)
+		_:
+			# Default: all dice are used
+			for i in range(dice_values.size()):
+				used_indices.append(i)
+	
+	return used_indices
 
 
 ## apply_debuff(id)

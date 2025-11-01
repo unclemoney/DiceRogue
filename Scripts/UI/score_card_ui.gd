@@ -345,6 +345,7 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 		return
 		
 	if turn_scored:
+		print("[ScoreCardUI] Turn already scored, cannot score again this turn")
 		return
 
 	var values = DiceResults.values
@@ -385,7 +386,7 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 	disable_all_score_buttons()
 	
 	# Create logbook entry before emitting hand_scored signal
-	_create_logbook_entry(section, category, values, score)
+	create_logbook_entry(section, category, values, score)
 	
 	# Emit signal for randomizer effect display
 	emit_signal("hand_scored")
@@ -503,6 +504,7 @@ func animate_best_hand_label():
 		original_position.y, 0.2).set_trans(Tween.TRANS_SINE)
 
 func activate_score_reroll() -> void:
+	print("[ScoreCardUI] DEBUG: activate_score_reroll() called - SPECIAL MODE USAGE TRACKING")
 	reroll_active = true
 	# Enable only buttons that have scores
 	for category in upper_section_buttons.keys():
@@ -552,7 +554,7 @@ func handle_score_reroll(section: Scorecard.Section, category: String) -> void:
 	disable_all_score_buttons()
 	
 	# Create logbook entry for reroll
-	_create_logbook_entry(section, category, values, score)
+	create_logbook_entry(section, category, values, score)
 	
 	emit_signal("hand_scored")
 	emit_signal("score_rerolled", section, category, score)
@@ -580,6 +582,7 @@ func _on_yahtzee_bonus_achieved(_points: int) -> void:
 		update_all()
 
 func activate_score_double() -> void:
+	print("[ScoreCardUI] DEBUG: activate_score_double() called - SPECIAL MODE USAGE TRACKING")
 	print("[ScoreCardUI] Activating double score mode")
 	is_double_mode = true
 	
@@ -602,82 +605,6 @@ func activate_score_double() -> void:
 			if not buttons[category].disabled:
 				buttons[category].modulate = Color(1.2, 1.2, 0.8)  # Yellow highlight
 
-func _on_score_button_pressed(section: Scorecard.Section, category: String) -> void:
-	if is_double_mode:
-		_handle_double_score(section, category)
-		return
-	
-	# Check if category already has a score
-	var existing_score = null
-	match section:
-		Scorecard.Section.UPPER:
-			existing_score = scorecard.upper_scores.get(category)
-		Scorecard.Section.LOWER:
-			existing_score = scorecard.lower_scores.get(category)
-			
-	if existing_score != null and not reroll_active and not any_score_active:
-		show_invalid_score_feedback(category)
-		return
-		
-	if reroll_active:
-		handle_score_reroll(section, category)
-		return
-		
-	if any_score_active:
-		handle_any_score(section, category)
-		return
-		
-	if turn_scored:
-		return
-
-	var values = DiceResults.values
-	print("\n=== Processing Score Selection ===")
-	print("[ScoreCardUI] Category:", category)
-	print("[ScoreCardUI] Dice values:", values)
-	
-	# Emit signal before scoring to allow PowerUps to prepare
-	print("[ScoreCardUI] Emitting about_to_score signal...")
-	about_to_score.emit(section, category, values)
-	print("[ScoreCardUI] about_to_score signal emitted")
-	
-	# Use scorecard's on_category_selected to properly apply money effects for actual scoring
-	scorecard.on_category_selected(section, category)
-	
-	# Get the score for display (this is now already set by on_category_selected)
-	var score = null
-	if section == Scorecard.Section.UPPER:
-		score = scorecard.upper_scores[category]
-	else:
-		score = scorecard.lower_scores[category]
-	
-	print("[ScoreCardUI] Final score set:", score)
-	
-	if score == null:
-		print("[ScoreCardUI] Invalid score calculation")
-		show_invalid_score_feedback(category)
-		return
-
-	# Check for Yahtzee bonus
-	scorecard.check_bonus_yahtzee(values, category)
-	
-	# Score is already set by on_category_selected, just update UI
-	print("[ScoreCardUI] Score already set by scorecard, updating UI")
-
-	update_all()
-	turn_scored = true
-	disable_all_score_buttons()
-	
-	# Create logbook entry before emitting hand_scored signal
-	_create_logbook_entry(section, category, values, score)
-	
-	# Emit signal for randomizer effect display
-	emit_signal("hand_scored")
-	
-	# Update ExtraInfo with recent logbook entries
-	update_extra_info_with_logbook()
-	
-	# Note: GameController will be notified via scorecard.score_assigned signal connection
-	
 func _handle_double_score(section: Scorecard.Section, category: String) -> void:
 	print("[ScoreCardUI] Handling double score for", category)
 	var current_score = null
@@ -813,7 +740,7 @@ func update_extra_info_with_logbook(entry_count: int = 3) -> void:
 	
 	if extra_info_label:
 		# Use existing animation system but with different formatting
-		_update_extra_info_no_center(recent_logs)
+		_update_extra_info_for_logbook(recent_logs)
 	else:
 		print("[ScoreCardUI] Warning: ExtraInfo label not found for logbook update")
 		# Try to find it again and ensure it's properly configured
@@ -823,14 +750,14 @@ func update_extra_info_with_logbook(entry_count: int = 3) -> void:
 		if extra_info_label and extra_info_label is RichTextLabel:
 			# Ensure BBCode is enabled
 			extra_info_label.bbcode_enabled = true
-			_update_extra_info_no_center(recent_logs)
+			_update_extra_info_for_logbook(recent_logs)
 		else:
 			print("[ScoreCardUI] Error: ExtraInfo node not found or not a RichTextLabel")
 
-## _update_extra_info_no_center()
+## _update_extra_info_for_logbook()
 ##
 ## Internal method to update ExtraInfo without center alignment (for logbook entries)
-func _update_extra_info_no_center(info_text: String) -> void:
+func _update_extra_info_for_logbook(info_text: String) -> void:
 	if extra_info_label:
 		# Reset any existing animations
 		if _extra_info_tween:
@@ -861,140 +788,19 @@ func _update_extra_info_no_center(info_text: String) -> void:
 		
 		print("[ScoreCardUI] Updated ExtraInfo with logbook entries")
 
-## _create_logbook_entry()
+## create_logbook_entry()
 ##
 ## Create and log a detailed entry for the hand that was just scored
-func _create_logbook_entry(section: Scorecard.Section, category: String, dice_values: Array[int], final_score: int) -> void:
-	print("[ScoreCardUI] DEBUG: _create_logbook_entry called for", category, "with score", final_score)
+## This function gets the current breakdown info and calls the comprehensive version
+func create_logbook_entry(section: Scorecard.Section, category: String, dice_values: Array[int], final_score: int) -> void:
+	print("[ScoreCardUI] DEBUG: create_logbook_entry called for", category, "with score", final_score)
 	
-	if not Statistics:
-		print("[ScoreCardUI] Warning: Statistics Manager not available for logbook")
-		return
-	
-	print("[ScoreCardUI] DEBUG: Statistics manager available, proceeding with logbook entry creation")
-	
-	# Extract dice information from DiceResults
-	var dice_colors: Array[String] = []
-	var dice_mods: Array[String] = []
-	
-	if DiceResults and DiceResults.dice_refs and DiceResults.dice_refs.size() > 0:
-		print("[ScoreCardUI] DEBUG: Processing %d dice for logbook (first instance)" % DiceResults.dice_refs.size())
-		for i in range(DiceResults.dice_refs.size()):
-			var dice = DiceResults.dice_refs[i]
-			if dice and dice is Dice:
-				# Get color name
-				var color_name = DiceColor.get_color_name(dice.color).to_lower()
-				print("[ScoreCardUI] DEBUG: Die %d - value: %d, color enum: %s, color_name: %s" % [i, dice.value, dice.color, color_name])
-				dice_colors.append(color_name)
-				
-				# Get active mods (if any)
-				var dice_mod_names: Array[String] = []
-				if dice.active_mods and dice.active_mods.size() > 0:
-					for mod_id in dice.active_mods.keys():
-						var mod = dice.active_mods[mod_id]
-						if mod and mod.has_method("get_name"):
-							dice_mod_names.append(mod.get_name())
-						else:
-							dice_mod_names.append(mod_id)
-				
-				if dice_mod_names.size() > 0:
-					dice_mods.append(",".join(dice_mod_names))
-				else:
-					dice_mods.append("")
-		print("[ScoreCardUI] DEBUG: Final dice_colors array (first): %s" % [dice_colors])
-	else:
-		# Fallback - no dice references available
-		for i in range(dice_values.size()):
-			dice_colors.append("none")
-			dice_mods.append("")
-	
-	# Get detailed scoring breakdown from scorecard
+	# Get current breakdown info from scorecard
 	var scoring_breakdown = scorecard.calculate_score_with_breakdown(category, dice_values, false)
-	var base_score = scoring_breakdown.get("base_score", final_score)
 	var breakdown_info = scoring_breakdown.get("breakdown_info", {})
 	
-	# Extract active PowerUps and Consumables from breakdown
-	var active_powerups = breakdown_info.get("active_powerups", [])
-	var active_consumables = breakdown_info.get("active_consumables", [])
-	
-	# Create modifier effects array for legacy compatibility
-	var modifier_effects: Array[Dictionary] = []
-	if breakdown_info.get("has_modifiers", false):
-		# Add additive effects
-		var total_additive = breakdown_info.get("total_additive", 0)
-		if total_additive > 0:
-			var regular_additive = breakdown_info.get("regular_additive", 0)
-			var red_additive = breakdown_info.get("dice_color_additive", 0)
-			
-			if regular_additive > 0:
-				modifier_effects.append({
-					"type": "additive",
-					"value": regular_additive,
-					"source": "powerups/consumables",
-					"description": "+%d from modifiers" % regular_additive,
-					"short_description": "+%d" % regular_additive
-				})
-			
-			if red_additive > 0:
-				modifier_effects.append({
-					"type": "additive", 
-					"value": red_additive,
-					"source": "red_dice",
-					"description": "+%d from red dice" % red_additive,
-					"short_description": "red+%d" % red_additive
-				})
-		
-		# Add multiplier effects
-		var total_multiplier = breakdown_info.get("total_multiplier", 1.0)
-		var blue_multiplier = breakdown_info.get("blue_score_multiplier", 1.0)
-		if total_multiplier != 1.0 or blue_multiplier != 1.0:
-			var regular_multiplier = breakdown_info.get("regular_multiplier", 1.0)
-			var purple_multiplier = breakdown_info.get("dice_color_multiplier", 1.0)
-			
-			if regular_multiplier != 1.0:
-				modifier_effects.append({
-					"type": "multiplier",
-					"value": regular_multiplier,
-					"source": "powerups/consumables", 
-					"description": "×%.1f from modifiers" % regular_multiplier,
-					"short_description": "×%.1f" % regular_multiplier
-				})
-			
-			if purple_multiplier != 1.0:
-				modifier_effects.append({
-					"type": "multiplier",
-					"value": purple_multiplier,
-					"source": "purple_dice",
-					"description": "×%.1f from purple dice" % purple_multiplier,
-					"short_description": "purple×%.1f" % purple_multiplier
-				})
-			
-			if blue_multiplier != 1.0:
-				modifier_effects.append({
-					"type": "multiplier",
-					"value": blue_multiplier,
-					"source": "blue_dice",
-					"description": "×%.1f from blue dice" % blue_multiplier,
-					"short_description": "blue×%.1f" % blue_multiplier
-				})
-	
-	# Convert section enum to string
-	var section_string = "upper" if section == Scorecard.Section.UPPER else "lower"
-	
-	# Create the enhanced logbook entry
-	Statistics.log_hand_scored(
-		dice_values,
-		dice_colors,
-		dice_mods,
-		category,
-		section_string,
-		active_consumables,
-		active_powerups,
-		base_score,
-		modifier_effects,
-		final_score,
-		breakdown_info
-	)
+	# Call the comprehensive version with breakdown info
+	_create_logbook_entry_with_breakdown(section, category, dice_values, final_score, breakdown_info)
 
 ## _create_logbook_entry_with_breakdown()
 ##
@@ -1138,6 +944,7 @@ func _create_logbook_entry_with_breakdown(section: Scorecard.Section, category: 
 ## Activates the AnyScore consumable mode, allowing scoring in any open category
 ## regardless of dice requirements
 func activate_any_score_mode() -> void:
+	print("[ScoreCardUI] DEBUG: activate_any_score_mode() called - SPECIAL MODE USAGE TRACKING")
 	any_score_active = true
 	print("[ScoreCardUI] AnyScore mode activated")
 	
@@ -1175,6 +982,7 @@ func deactivate_any_score_mode() -> void:
 ##
 ## Sets the Go Broke or Go Home mode state
 func set_go_broke_mode(active: bool) -> void:
+	print("[ScoreCardUI] DEBUG: set_go_broke_mode(%s) called - SPECIAL MODE USAGE TRACKING" % [active])
 	go_broke_mode = active
 	print("[ScoreCardUI] Go Broke mode set to:", active)
 
@@ -1224,7 +1032,7 @@ func handle_any_score(section: Scorecard.Section, category: String) -> void:
 	deactivate_any_score_mode()
 	
 	# Create logbook entry for AnyScore usage
-	_create_logbook_entry(section, category, dice_values, score)
+	create_logbook_entry(section, category, dice_values, score)
 	
 	emit_signal("hand_scored")
 	
@@ -1275,7 +1083,7 @@ func handle_go_broke_score(section: Scorecard.Section, category: String) -> void
 	disable_all_score_buttons()
 	
 	# Create logbook entry for Go Broke usage
-	_create_logbook_entry(section, category, dice_values, score)
+	create_logbook_entry(section, category, dice_values, score)
 	
 	emit_signal("hand_scored")
 	
@@ -1288,6 +1096,7 @@ func handle_go_broke_score(section: Scorecard.Section, category: String) -> void
 ##
 ## Calculates the highest possible score for the current dice across all categories
 func _calculate_best_score_for_dice(dice_values: Array[int]) -> int:
+	print("[ScoreCardUI] DEBUG: _calculate_best_score_for_dice() called - SPECIAL MODE USAGE TRACKING")
 	var best_score = 0
 	
 	# Check all possible categories and find the highest score

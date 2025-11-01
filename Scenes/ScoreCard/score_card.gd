@@ -168,6 +168,14 @@ func on_category_selected(section: Section, category: String):
 	# Note: about_to_score signal should have been emitted by ScoreCardUI already
 	# Do NOT emit it again here to avoid double signal processing
 	
+	# CRITICAL FIX: Trigger powerup registration BEFORE score calculation
+	# This ensures additives like step_by_step are available during calculate_score_internal
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller and game_controller.has_method("_create_manual_breakdown_info"):
+		print("[Scorecard] Pre-triggering powerup registration for category:", category)
+		var _temp_breakdown = game_controller._create_manual_breakdown_info(category)
+		print("[Scorecard] Powerup registration completed, proceeding with score calculation")
+	
 	var score = calculate_score_internal(category, values, true)  # Apply money effects when actually scoring
 	set_score(section, category, score)
 
@@ -423,13 +431,14 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 	# Get dice hand to calculate color effects
 	var dice_hand = get_tree().get_first_node_in_group("dice_hand")
 	var color_effects = {}
+	var used_dice_indices: Array[int] = []
 	
 	if dice_hand and DiceColorManager:
 		# Calculate color effects directly with DiceColorManager to handle Blue dice properly
 		# For Blue dice, we need to know which dice are actually used in the scoring category
 		
 		# Determine which dice are used for this category
-		var used_dice_indices = _get_used_dice_for_category(category, dice_values, dice_hand.get_all_dice())
+		used_dice_indices = _get_used_dice_for_category(category, dice_values, dice_hand.get_all_dice())
 		print("[Scorecard] DEBUG: Category:", category, "Used dice indices:", used_dice_indices)
 		
 		# Calculate color effects with used dice information for Blue dice
@@ -437,10 +446,16 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 		print("[Scorecard] DEBUG: Got color effects from DiceColorManager:", color_effects)
 	elif dice_hand and dice_hand.has_method("get_color_effects"):
 		# Fallback to dice_hand method (won't handle Blue dice correctly)
+		# For fallback, assume all dice are used
+		for i in range(dice_values.size()):
+			used_dice_indices.append(i)
 		color_effects = dice_hand.get_color_effects()
 		print("[Scorecard] DEBUG: Got color effects from dice_hand (fallback):", color_effects)
 	else:
 		print("[Scorecard] DEBUG: No dice_hand found or no DiceColorManager")
+		# For no dice hand, assume all dice are used
+		for i in range(dice_values.size()):
+			used_dice_indices.append(i)
 		color_effects = {
 			"green_money": 0,
 			"red_additive": 0,
@@ -467,11 +482,6 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 		if modifier_manager.has_method("get_total_additive"):
 			total_additive = modifier_manager.get_total_additive()
 		total_multiplier = modifier_manager.get_total_multiplier()
-		
-		# DEBUG: Print the current state during score calculation
-		#print("[SCORECARD DEBUG] ScoreModifierManager state during calculation:")
-		#print("[SCORECARD DEBUG] total_additive:", total_additive)
-		#print("[SCORECARD DEBUG] total_multiplier:", total_multiplier)
 		if modifier_manager.has_method("get_active_sources"):
 			var sources = modifier_manager.get_active_sources()
 			#print("[SCORECARD DEBUG] active sources:", sources)
@@ -562,6 +572,9 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 		"active_consumables": active_consumable_sources.duplicate(),
 		"dice_color_money": dice_color_money,
 		"has_modifiers": (total_additive_bonus > 0 or total_multiplier_bonus != 1.0 or blue_score_multiplier != 1.0 or dice_color_money > 0),
+		# Add dice information for animation system
+		"used_dice_indices": used_dice_indices.duplicate(),
+		"dice_values": dice_values.duplicate(),
 		# Add specific source tracking for additives and multipliers
 		"additive_sources": [],
 		"multiplier_sources": []

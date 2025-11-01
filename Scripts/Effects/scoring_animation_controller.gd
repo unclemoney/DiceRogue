@@ -44,6 +44,7 @@ var audio_player: AudioStreamPlayer
 # Animation state
 var current_animation_sequence: Tween
 var animation_in_progress: bool = false
+var current_breakdown_info: Dictionary = {}
 
 ## _ready()
 ##
@@ -109,6 +110,7 @@ func start_scoring_animation(score: int, category: String, breakdown_info: Dicti
 		return
 	
 	animation_in_progress = true
+	current_breakdown_info = breakdown_info  # Store for use in animation functions
 	print("[ScoringAnimationController] Starting scoring animation for score: %d, category: %s" % [score, category])
 	print("[ScoringAnimationController] Breakdown info: %s" % str(breakdown_info))
 	
@@ -217,20 +219,28 @@ func _animate_dice_bounce_with_scores(intensity_scale: float, speed_scale: float
 		var delay = base_delay + (i * stagger_delay)  # Add base delay to all dice
 		
 		# Schedule dice animation
-		get_tree().create_timer(delay).timeout.connect(func(): _animate_single_die(die, intensity_scale, speed_scale))
+		get_tree().create_timer(delay).timeout.connect(func(): _animate_single_die(die, i, intensity_scale, speed_scale))
 
 	# Return after all dice have been scheduled (wait for the last one to start)
 	var total_duration = base_delay + (dice_array.size() * stagger_delay) + (0.6 / speed_scale)
 	await get_tree().create_timer(total_duration).timeout
 
-## _animate_single_die(die, intensity_scale, speed_scale)
+## _animate_single_die(die, die_index, intensity_scale, speed_scale)
 ##
-## Animate a single die with bounce and floating value.
-func _animate_single_die(die: Dice, intensity_scale: float, speed_scale: float = 1.0) -> void:
+## Animate a single die with bounce and floating value, only if it contributes to the score.
+func _animate_single_die(die: Dice, die_index: int, intensity_scale: float, speed_scale: float = 1.0) -> void:
 	if not die:
 		return
 	
-	#print("[ScoringAnimationController] Animating die with value: %d" % die.value)
+	# Check if this die contributes to the score
+	var used_dice_indices = current_breakdown_info.get("used_dice_indices", [])
+	
+	# Only animate dice that actually contribute to the score
+	if not die_index in used_dice_indices:
+		print("[ScoringAnimationController] Skipping die %d - not used in scoring" % die_index)
+		return
+	
+	print("[ScoringAnimationController] Animating die with value: %d" % die.value)
 	
 	# Calculate bounce height
 	var bounce_height = DICE_BOUNCE_HEIGHT * intensity_scale
@@ -266,28 +276,19 @@ func _animate_single_die(die: Dice, intensity_scale: float, speed_scale: float =
 		
 		bounce_tween.tween_method(bounce_callback, 0.0, 1.0, bounce_duration)
 	
-	# Show floating dice value with appropriate color
+	# Show floating dice value (always white now)
 	var dice_color = Color.WHITE
-	if die.color != DiceColor.Type.NONE:
-		# Use different colors for different dice colors
-		match die.color:
-			DiceColor.Type.GREEN:
-				dice_color = Color.GREEN
-			DiceColor.Type.RED:
-				dice_color = Color.RED
-			DiceColor.Type.PURPLE:
-				dice_color = Color.MAGENTA
-			DiceColor.Type.BLUE:
-				dice_color = Color.CYAN
-			_:
-				dice_color = Color.WHITE
 	
 	# Create floating number with speed-adjusted duration and speed
 	var floating_number = FloatingNumber.create_floating_number(get_tree().current_scene, die_center, 
-		str(die.value), 1.0, dice_color)
+		"+" +str(die.value), 1.0, dice_color)
 	if floating_number:
 		floating_number.float_duration = floating_number.float_duration / speed_scale
 		floating_number.float_speed = FLOAT_NUMBER_SPEED * speed_scale  # Make it faster for higher scores
+	
+	# Add separate floating number for colored dice effects
+	if die.color != DiceColor.Type.NONE:
+		_show_colored_dice_effect(die, die_center, speed_scale)
 
 ## _bounce_die(die, original_position, bounce_height, progress)
 ##
@@ -421,13 +422,18 @@ func _animate_contributing_powerups(breakdown_info: Dictionary, intensity_scale:
 	
 	# Fallback: If no powerups were animated from sources but we have active powerups,
 	# animate them with a generic bounce effect (for manual scoring)
+	# BUT only if they should actually be active for this scoring context
 	if not animated_any_powerups and active_powerups.size() > 0:
-		print("[ScoringAnimationController] No source breakdown, animating active powerups generically")
+		print("[ScoringAnimationController] No source breakdown, checking active powerups for context-specific animation")
 		for powerup_id in active_powerups:
-			get_tree().create_timer(delay).timeout.connect(
-				func(): _animate_powerup_generic(powerup_id, intensity_scale, speed_scale)
-			)
-			delay += stagger_delay
+			# Check if this powerup should be animated for this scoring context
+			if _should_animate_powerup_for_context(powerup_id, breakdown_info):
+				get_tree().create_timer(delay).timeout.connect(
+					func(): _animate_powerup_generic(powerup_id, intensity_scale, speed_scale)
+				)
+				delay += stagger_delay
+			else:
+				print("[ScoringAnimationController] Skipping powerup %s - not applicable for this scoring context" % powerup_id)
 
 ## _animate_consumable_contribution(consumable_id, contribution, intensity_scale, speed_scale)
 ##
@@ -691,3 +697,71 @@ func create_floating_number(position: Vector2, value: String, scale_factor: floa
 	
 	# Remove after animation
 	float_tween.tween_callback(label.queue_free).set_delay(FLOAT_NUMBER_DURATION)
+
+## _show_colored_dice_effect(die, die_center, speed_scale)
+##
+## Show additional floating effect for colored dice based on their color type.
+func _show_colored_dice_effect(die: Dice, die_center: Vector2, speed_scale: float) -> void:
+	var effect_text = ""
+	var effect_color = Color.WHITE
+	
+	# Determine effect text and color based on die color
+	match die.color:
+		DiceColor.Type.GREEN:
+			effect_text = "$" + str(die.value)  # Green dice give money
+			effect_color = Color.GREEN
+		DiceColor.Type.RED:
+			effect_text = "+" + str(die.value)  # Red dice give additive bonus
+			effect_color = Color.RED
+		DiceColor.Type.PURPLE:
+			effect_text = "x" + str(die.value)  # Purple dice give multiplier
+			effect_color = Color.MAGENTA
+		DiceColor.Type.BLUE:
+			effect_text = "x" + str(die.value)  # Blue dice give multiplier (could also be "/" for division)
+			effect_color = Color.CYAN
+		_:
+			return  # No effect for NONE color
+	
+	# Create floating number offset slightly to the right of the main number
+	var offset_position = die_center + Vector2(30, 0)
+	var floating_number = FloatingNumber.create_floating_number(get_tree().current_scene, offset_position, 
+		effect_text, 0.8, effect_color)  # Slightly smaller scale
+	if floating_number:
+		floating_number.float_duration = floating_number.float_duration / speed_scale
+		floating_number.float_speed = FLOAT_NUMBER_SPEED * speed_scale
+
+## _should_animate_powerup_for_context(powerup_id, breakdown_info)
+##
+## Check if a powerup should be animated based on the scoring context.
+## Some powerups only apply to certain sections (upper vs lower).
+func _should_animate_powerup_for_context(powerup_id: String, breakdown_info: Dictionary) -> bool:
+	# For step_by_step powerup, it only applies to upper section scores
+	if powerup_id == "step_by_step":
+		# Check if any of the used dice indices correspond to upper section scoring
+		# For now, we'll use a simple heuristic: if the dice values include low numbers (1-6),
+		# it's likely an upper section score. This could be made more sophisticated.
+		var dice_values = breakdown_info.get("dice_values", [])
+		var used_dice_indices = breakdown_info.get("used_dice_indices", [])
+		
+		# If we have dice information, check if it looks like upper section scoring
+		if dice_values.size() > 0 and used_dice_indices.size() > 0:
+			# Check if the used dice are all the same value (typical for upper section)
+			var first_used_value = dice_values[used_dice_indices[0]]
+			var all_same = true
+			for index in used_dice_indices:
+				if dice_values[index] != first_used_value:
+					all_same = false
+					break
+			
+			# If all used dice have the same value and it's 1-6, it's likely upper section
+			if all_same and first_used_value >= 1 and first_used_value <= 6:
+				return true
+			else:
+				return false
+		else:
+			# If no dice info, assume it should be animated (fallback)
+			return true
+	
+	# For other powerups, always animate for now
+	# TODO: Add specific logic for other powerups as needed
+	return true

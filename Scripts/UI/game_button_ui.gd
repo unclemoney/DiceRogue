@@ -115,16 +115,18 @@ func _on_next_turn_button_pressed() -> void:
 		print("[GameButtonUI] Manual update_all() completed")
 		_scored_hand_setup_next_round()
 
-	elif score_card_ui.turn_scored:
-		roll_button.disabled = false
-		_on_roll_button_pressed() #Auto-roll for next turn disabled for now
-
-	# 2) Proceed with turn advancement
+	# 2) Proceed with turn advancement (after scoring is complete)
+	print("[GameButtonUI] Starting new turn - enabling roll button and unlocking dice")
 	turn_tracker.start_new_turn()
 	score_card_ui.turn_scored = false
 	score_card_ui.enable_all_score_buttons()
+	
+	# Unlock dice and enable roll button for new turn
 	for die in dice_hand.dice_list:
 		die.unlock()
+		die.set_dice_input_enabled(true)  # Re-enable dice input for new turn
+	
+	roll_button.disabled = false
 	next_turn_button.disabled = true	
 
 func _scored_hand_setup_next_round() -> void:
