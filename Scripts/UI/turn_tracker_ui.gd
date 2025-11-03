@@ -49,7 +49,7 @@ func _update_money_display() -> void:
 	if money_label:
 		money_label.text = "$%d" % PlayerEconomy.money
 
-func _on_money_changed(_new_amount: int) -> void:
+func _on_money_changed(_new_amount: int, _change: int = 0) -> void:
 	_update_money_display()
 
 func _update_round_display(round_number: int) -> void:

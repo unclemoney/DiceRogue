@@ -82,6 +82,11 @@ func _on_roll_button_pressed() -> void:
 		dice_hand.spawn_dice()
 	else:
 		dice_hand.update_dice_count()
+	
+	# Prepare dice for rolling - set ROLLED dice to ROLLABLE, preserve LOCKED dice
+	dice_hand.prepare_dice_for_roll()
+	print("[GameButtonUI] Rolling dice (preserving locks)")
+	
 	dice_hand.roll_all()
 	print("▶ Roll pressed — using dice_count =", dice_hand.dice_count)
 	if dice_hand:
@@ -116,22 +121,23 @@ func _on_next_turn_button_pressed() -> void:
 		_scored_hand_setup_next_round()
 
 	# 2) Proceed with turn advancement (after scoring is complete)
-	print("[GameButtonUI] Starting new turn - enabling roll button and unlocking dice")
+	print("[GameButtonUI] Starting new turn - enabling roll button and setting dice to ROLLABLE")
 	turn_tracker.start_new_turn()
 	score_card_ui.turn_scored = false
 	score_card_ui.enable_all_score_buttons()
 	
-	# Unlock dice and enable roll button for new turn
-	for die in dice_hand.dice_list:
-		die.unlock()
-		die.set_dice_input_enabled(true)  # Re-enable dice input for new turn
+	# Set all dice to ROLLABLE state for new turn
+	dice_hand.set_all_dice_rollable()
 	
 	roll_button.disabled = false
 	next_turn_button.disabled = true	
 
-func _scored_hand_setup_next_round() -> void:
-	for die in dice_hand.dice_list:
-		die.set_dice_input_enabled(false)  # Disable input on dice after scoring
+func _scored_hand_setup_next_round():
+	print("[GameButtonUI] Scored hand, setting up next round")
+	
+	# Disable dice input after scoring
+	dice_hand.set_all_dice_disabled()
+	print("[GameButtonUI] Set all dice to DISABLED state after scoring")
 
 func _on_auto_score_assigned(section, category, score):
 	print("Auto-assigned", category, "in", section, "for", score, "points")

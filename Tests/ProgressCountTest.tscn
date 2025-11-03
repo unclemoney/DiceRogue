@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b46sathbx2q61"]
+
+[ext_resource type="Script" path="res://Tests/progress_count_test.gd" id="1_test"]
+
+[node name="ProgressCountTest" type="Node"]
+script = ExtResource("1_test")

@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://bgwcfpn53s26s"]
+[gd_scene load_steps=10 format=3 uid="uid://b01esyql1fycq"]
 
 [ext_resource type="Script" uid="uid://demjgrnbj0ybq" path="res://Scripts/Managers/ModManager.gd" id="1_m3tkl"]
 [ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="2_mod_data"]

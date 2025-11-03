@@ -82,7 +82,7 @@ func bind_tracker(t: TurnTracker) -> void:
 	_on_turn_updated(tracker.current_turn)
 	_on_rolls_updated(tracker.rolls_left)
 
-func _on_money_changed(new_amount: int) -> void:
+func _on_money_changed(new_amount: int, _change: int = 0) -> void:
 	var money_gained := new_amount - previous_money
 	previous_money = new_amount
 	

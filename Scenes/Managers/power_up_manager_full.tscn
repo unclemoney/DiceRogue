@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://rar1olhvvd4b"]
+[gd_scene load_steps=24 format=3 uid="uid://c1du0dd6op7mn"]
 
 [ext_resource type="Script" uid="uid://cpw74djq06db4" path="res://Scripts/Managers/PowerUpManager.gd" id="1_j06d4"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="2_powerup_data"]

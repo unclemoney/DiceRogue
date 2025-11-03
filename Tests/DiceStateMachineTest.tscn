@@ -1,0 +1,22 @@
+[gd_scene load_steps=2 format=3 uid="uid://c5vxpxu5jd2fe"]
+
+[ext_resource type="Script" path="res://Tests/dice_state_machine_test.gd" id="1_4evpb"]
+
+[node name="DiceStateMachineTest" type="Node2D"]
+script = ExtResource("1_4evpb")
+
+[node name="Label" type="Label" parent="."]
+offset_left = 50.0
+offset_top = 50.0
+offset_right = 800.0
+offset_bottom = 600.0
+text = "Dice State Machine Test
+Press keys to trigger state changes:
+1 - Test ROLLABLE to ROLLED transition
+2 - Test ROLLED to LOCKED transition  
+3 - Test LOCKED to ROLLED transition
+4 - Test any state to DISABLED transition
+5 - Test DISABLED to ROLLABLE transition
+6 - Run full game flow simulation
+R - Reset all dice to ROLLABLE
+ESC - Exit test"

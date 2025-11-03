@@ -92,6 +92,17 @@ func _ready() -> void:
 	print("▶ GameController._ready()")
 	var debug_panel = preload("res://Scenes/UI/DebugPanel.tscn").instantiate()
 	add_child(debug_panel)
+	
+	# Add unlock notification UI
+	var unlock_notification_ui = preload("res://Scenes/UI/UnlockNotificationUI.tscn").instantiate()
+	add_child(unlock_notification_ui)
+	
+	# Connect to ProgressManager unlock signals
+	var progress_manager = get_node("/root/ProgressManager")
+	if progress_manager:
+		progress_manager.items_unlocked_batch.connect(_on_items_unlocked)
+		print("[GameController] Connected to ProgressManager unlock signals")
+	
 	# Reference the private index variable to avoid an 'unused variable' lint warning
 	# This value is reserved for future mod-application tracking.
 	_last_modded_die_index = _last_modded_die_index
@@ -152,6 +163,10 @@ func _ready() -> void:
 		# Connect double_or_nothing usability to track when rolls are used
 		turn_tracker.rolls_updated.connect(update_double_or_nothing_usability)
 		turn_tracker.turn_started.connect(update_double_or_nothing_usability)
+		# Reset dice states to rollable at start of new turn
+		turn_tracker.turn_started.connect(_on_turn_started)
+		# Handle end of game (Turn 13 reached)
+		turn_tracker.game_over.connect(_on_game_over)
 
 	# Register new consumables programmatically
 	if consumable_manager:
@@ -188,7 +203,7 @@ func _on_game_start() -> void:
 	grant_consumable("poor_house")
 	#apply_debuff("the_division")
 	#activate_challenge("300pts_no_debuff")
-	grant_power_up("step_by_step")
+	grant_power_up("wild_dots")
 	if round_manager:
 		round_manager.start_game()
 
@@ -876,7 +891,13 @@ func _on_score_manual_assigned(_section: int, _category: String, _score: int, _b
 ## _handle_post_scoring_effects(_section, _category, _score, _breakdown_info)
 ##
 ## Common post-scoring logic shared between auto and manual scoring.
+## Sets all dice to DISABLED state to prevent further interaction until next turn.
 func _handle_post_scoring_effects(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
+	# Disable all dice after scoring
+	if dice_hand:
+		dice_hand.set_all_dice_disabled()
+		print("[GameController] Disabled all dice after scoring")
+	
 	# Track statistics for scoring
 	var stats = get_node_or_null("/root/Statistics")
 	if stats:
@@ -1296,17 +1317,50 @@ func _get_expected_dice_count() -> int:
 
 ## _on_roll_completed()
 ##
-## Called when a dice roll completes. Applies any 'lock_dice' debuff effect, otherwise ensures all dice
-## are enabled for player interaction.
+## Called when a dice roll completes. All dice should now be in ROLLED state and ready for
+## player interaction (locking or scoring). Applies any 'lock_dice' debuff effect if active.
 func _on_roll_completed() -> void:
+	print("[GameController] Roll completed - dice are now in ROLLED state")
+	
 	if is_debuff_active("lock_dice"):
 		var debuff = active_debuffs["lock_dice"]
 		if debuff and dice_hand:
 			debuff.apply(dice_hand)
-	else:
-		if dice_hand:
-			dice_hand.enable_all_dice()
+	# Note: Removed enable_all_dice() call here since state machine handles input control
+	
+	# Print dice states for debugging
+	if dice_hand:
+		dice_hand.print_dice_states()
 
+## _on_turn_started()
+##
+## Called when a new turn begins. Resets all dice to ROLLABLE state.
+func _on_turn_started() -> void:
+	print("[GameController] New turn started - resetting dice to ROLLABLE state")
+	if dice_hand:
+		dice_hand.set_all_dice_rollable()
+
+## _on_game_over()
+##
+## Called when max turns (13) is reached. If challenge was completed, save progress and auto-open shop.
+func _on_game_over() -> void:
+	print("[GameController] Game over - max turns reached")
+	
+	# Check if challenge was completed
+	if round_manager and round_manager.is_challenge_completed:
+		print("[GameController] Challenge completed at game end - saving progress")
+		var progress_manager = get_node("/root/ProgressManager")
+		if progress_manager:
+			# End current game tracking with success
+			var current_score = scorecard.get_total_score() if scorecard else 0
+			progress_manager.end_game_tracking(current_score, true)
+			print("[GameController] Progress saved with score: %d" % current_score)
+		
+		# Auto-open shop since challenge was completed
+		print("[GameController] Auto-opening shop since challenge was completed")
+		_on_shop_button_pressed()
+	else:
+		print("[GameController] Challenge not completed - no auto-shop or progress save")
 
 ## _on_dice_spawned()
 ##
@@ -1400,6 +1454,16 @@ func _on_die_locked(die) -> void:
 # Toggles the shop UI with an animated tween and temporarily disables the CRT effect while the shop
 # is visible. Uses `get_tree().create_tween()` for animation sequencing.
 func _on_shop_button_pressed() -> void:
+	# Check if challenge was completed and save progress
+	if round_manager and round_manager.is_challenge_completed:
+		print("[GameController] Challenge completed - saving progress before opening shop")
+		var progress_manager = get_node("/root/ProgressManager")
+		if progress_manager:
+			# End current game tracking with success
+			var current_score = scorecard.get_total_score() if scorecard else 0
+			progress_manager.end_game_tracking(current_score, true)
+			print("[GameController] Progress saved with score: %d" % current_score)
+	
 	if shop_ui:
 		if not shop_ui.visible:
 			# Disable CRT when opening shop
@@ -1874,10 +1938,20 @@ func _on_randomizer_effect_updated(effect_type: String, value_text: String) -> v
 		var effect_description = "Random Effect: %s %s" % [effect_type.capitalize(), value_text]
 		score_card_ui.update_extra_info(effect_description)
 		print("[GameController] Updated ExtraInfo with randomizer effect")
+
+## _on_items_unlocked(item_ids)
+##
+## Signal handler for when items are unlocked by the ProgressManager.
+## Shows unlock notifications to the player.
+func _on_items_unlocked(item_ids: Array[String]) -> void:
+	print("[GameController] Items unlocked: %v" % [item_ids])
+	
+	# Find the unlock notification UI
+	var unlock_ui = get_tree().get_first_node_in_group("unlock_notification_ui")
+	if unlock_ui and unlock_ui.has_method("show_unlock_notifications"):
+		unlock_ui.show_unlock_notifications(item_ids)
 	else:
-		push_error("[GameController] score_card_ui not found for randomizer effect update")
-			
-			# If currently hovering, ensure label is visible
+		print("[GameController] UnlockNotificationUI not found or missing method")
 
 # Add this helper method to retrieve active power-ups
 func get_active_power_up(id: String) -> PowerUp:

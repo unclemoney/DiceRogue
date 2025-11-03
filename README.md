@@ -166,6 +166,92 @@ Statistics.export_logbook_to_file("session_analysis.json")
 
 **File Location**: See `LOGBOOK.md` for detailed implementation specifications and future extension plans.
 
+### Progress Tracking System
+The **Progress Tracking System** enables persistent player progression across multiple game sessions, unlocking new content based on gameplay achievements:
+
+**Features:**
+- **Persistent Progression**: Player progress saves across game sessions using JSON file storage
+- **Unlock Conditions**: 12 different achievement types trigger item unlocks (score points, roll yahtzees, use consumables, etc.)
+- **Item Locking**: PowerUps, Consumables, and Colored Dice can be locked behind progression requirements
+- **LOCKED Shop Tab**: New shop interface shows locked items with their unlock requirements
+- **Unlock Notifications**: Animated card-based notifications when items are unlocked
+- **Debug Controls**: Full testing suite for unlock/lock functionality
+
+**Core Components:**
+- **UnlockCondition** (`Scripts/Core/unlock_condition.gd`) - Defines achievement requirements
+- **UnlockableItem** (`Scripts/Core/unlockable_item.gd`) - Represents items that can be unlocked
+- **ProgressManager** (autoload) - Central progression tracking and persistence system
+- **Shop UI Integration** - LOCKED tab with filtered item display
+- **Unlock Notifications** - Animated UI for celebrating new unlocks
+
+**Unlock Condition Types:**
+1. **SCORE_POINTS** - Accumulate total score across all games
+2. **ROLL_YAHTZEE** - Roll Yahtzees (5 of a kind)
+3. **USE_CONSUMABLES** - Use any consumable items
+4. **PURCHASE_POWERUPS** - Buy PowerUp items from shop
+5. **COMPLETE_UPPER_BONUS** - Achieve upper section bonus (63+ points)
+6. **ROLL_STRAIGHTS** - Roll small or large straights
+7. **SPEND_MONEY** - Spend money in the shop
+8. **ROLL_FULL_HOUSE** - Roll full house combinations
+9. **LOCK_DICE** - Lock dice during gameplay
+10. **GAMES_PLAYED** - Complete game sessions
+11. **EARN_MONEY** - Accumulate money through gameplay
+12. **SCORE_CATEGORY** - Score specific Yahtzee categories
+
+**Implementation:**
+```gdscript
+# Example unlock condition for a PowerUp
+var condition = UnlockCondition.new()
+condition.condition_type = UnlockCondition.ConditionType.ROLL_YAHTZEE
+condition.target_value = 5
+condition.description = "Roll 5 Yahtzees"
+
+# Check if player has met the condition
+if condition.is_satisfied():
+    item.unlock_item()
+```
+
+**Shop Integration:**
+- **All Items Tab**: Shows only unlocked items (existing behavior)
+- **LOCKED Tab**: Displays locked items with unlock requirements
+- **Real-time Updates**: Shop refreshes when new items are unlocked
+- **Requirement Display**: Clear descriptions of what players need to achieve
+
+**Progress Persistence:**
+- **JSON Storage**: Progress data saved to `user://progress_data.json`
+- **Automatic Saving**: Progress updates saved immediately when conditions are met
+- **Game Integration**: Seamless tracking of all player actions and achievements
+
+**Debug Support:**
+- **Progress Tab**: Full debug panel with 12 test functions
+- **Unlock/Lock Controls**: Toggle any item's unlock status for testing
+- **Progress Simulation**: Simulate achieving any unlock condition
+- **Reset Functions**: Clear progress for testing scenarios
+
+**Usage Examples:**
+```gdscript
+# Track player achieving an unlock condition
+ProgressManager.track_yahtzees_rolled(1)
+
+# Check if item should be unlocked
+ProgressManager.check_unlock_conditions()
+
+# Show notification for newly unlocked items
+ProgressManager.show_unlock_notifications()
+```
+
+**Integration Points:**
+- **GameController**: Integrated with game flow for progress tracking
+- **Shop System**: Enhanced with locked item display and filtering
+- **Notification System**: Celebrates achievements with animated UI
+- **Statistics System**: Connected to Statistics for achievement data
+
+**File Locations:**
+- Core System: `Scripts/Core/unlock_condition.gd`, `Scripts/Core/unlockable_item.gd`
+- Manager: `Scripts/Managers/progress_manager.gd` (autoload)
+- UI Components: Modified `Scripts/UI/shop_ui.gd`, new `Scripts/UI/unlock_notification_ui.gd`
+- Test Scene: `Tests/ProgressSystemTest.tscn` for comprehensive system validation
+
 ### Score Modifier System
 The `ScoreModifierManager` handles all score modifications:
 - **Additives**: Flat bonuses applied before multipliers
@@ -472,6 +558,7 @@ This prevents the need for complex manual testing setups and keeps development v
 - ✅ AnyScore consumable - Score dice in any category ignoring requirements (implemented)
 - ✅ Green Envy consumable - 10x multiplier for green dice money (implemented)
 - ✅ Poor House consumable - Transfer money to next scored hand bonus (implemented)
+- ✅ Progress tracking system - Persistent player progression with unlock conditions (implemented)
 - Additional power-up variety
 - Challenge progression system
 - Balance pass on economy

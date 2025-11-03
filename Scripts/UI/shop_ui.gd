@@ -12,6 +12,7 @@ signal shop_button_opened
 @onready var power_up_container: Container = $TabContainer/PowerUps/GridContainer
 @onready var consumable_container: Container = $TabContainer/Consumables/GridContainer
 @onready var mod_container: Container = $TabContainer/Mods/GridContainer
+@onready var locked_container: Container = $TabContainer/Locked/ScrollContainer/GridContainer
 @onready var power_up_manager: PowerUpManager = get_node_or_null(power_up_manager_path)
 @onready var consumable_manager: ConsumableManager = get_node_or_null(consumable_manager_path)
 @onready var mod_manager: ModManager = get_node_or_null(mod_manager_path)
@@ -78,6 +79,16 @@ func _ready() -> void:
 	consumable_manager.definitions_loaded.connect(_on_manager_ready)
 	mod_manager.definitions_loaded.connect(_on_manager_ready)
 	PlayerEconomy.money_changed.connect(_on_money_changed)
+	
+	# Connect to ProgressManager to refresh shop when items are unlocked/locked
+	var progress_manager = get_node("/root/ProgressManager")
+	if progress_manager:
+		if progress_manager.has_signal("item_unlocked"):
+			progress_manager.item_unlocked.connect(func(_item_id: String, _item_type: String): _on_progress_changed())
+		if progress_manager.has_signal("item_locked"):
+			progress_manager.item_locked.connect(func(_item_id: String, _item_type: String): _on_progress_changed())
+		if progress_manager.has_signal("progress_saved"):
+			progress_manager.progress_saved.connect(_on_progress_changed)
 	hide()
 	#buy_button.pressed.connect(_on_buy_button_pressed)
 
@@ -108,6 +119,16 @@ func _on_manager_ready() -> void:
 	if _managers_ready == REQUIRED_MANAGERS:
 		print("[ShopUI] All managers ready - populating shop")
 		_populate_shop_items()
+		populate_locked_items()  # Add locked items population
+
+## _on_progress_changed()
+##
+## Called when progress is updated (items unlocked/locked) to refresh shop display
+func _on_progress_changed() -> void:
+	print("[ShopUI] Progress changed - refreshing shop")
+	if _managers_ready == REQUIRED_MANAGERS:
+		_populate_shop_items()
+		populate_locked_items()
 
 func _populate_shop_items() -> void:
 	print("\n=== Populating Shop Items ===")
@@ -118,6 +139,8 @@ func _populate_shop_items() -> void:
 	# Populate PowerUps
 	var power_ups = power_up_manager.get_available_power_ups()
 	var filtered_power_ups = _filter_out_purchased_items(power_ups, "power_up")
+	# Filter out locked items
+	filtered_power_ups = _filter_unlocked_items(filtered_power_ups, "power_up")
 	# Also filter out already owned power-ups
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	if game_controller:
@@ -134,6 +157,8 @@ func _populate_shop_items() -> void:
 	# Populate Consumables
 	var consumables = consumable_manager._defs_by_id.keys()
 	var filtered_consumables = _filter_out_purchased_items(consumables, "consumable")
+	# Filter out locked items
+	filtered_consumables = _filter_unlocked_items(filtered_consumables, "consumable")
 	var selected_consumables = _select_random_items(filtered_consumables, consumable_items)
 	
 	for id in selected_consumables:
@@ -146,6 +171,8 @@ func _populate_shop_items() -> void:
 	# Populate Mods
 	var mods = mod_manager._defs_by_id.keys()
 	var filtered_mods = _filter_out_purchased_items(mods, "mod")
+	# Filter out locked items
+	filtered_mods = _filter_unlocked_items(filtered_mods, "mod")
 	var selected_mods = _select_random_items(filtered_mods, mod_items)
 	
 	for id in selected_mods:
@@ -389,7 +416,7 @@ func _get_container_for_type(type: String) -> Node:
 			push_error("[ShopUI] Unknown item type:", type)
 			return null
 
-func _on_money_changed(_new_amount: int) -> void:
+func _on_money_changed(_new_amount: int, _change: int = 0) -> void:
 	# Update all shop item buttons in all containers
 	for container in [power_up_container, consumable_container, mod_container]:
 		if container:
@@ -677,3 +704,136 @@ func _configure_mouse_input() -> void:
 		print("[ShopUI] Set TabContainer mouse filter to PASS")
 	
 	print("[ShopUI] Mouse input configuration complete")
+
+## populate_locked_items()
+## 
+## Populates the LOCKED tab with items that haven't been unlocked yet
+func populate_locked_items() -> void:
+	if not locked_container:
+		print("[ShopUI] No locked container found")
+		return
+	
+	# Clear existing locked items
+	for child in locked_container.get_children():
+		child.queue_free()
+	
+	# Get the ProgressManager autoload
+	var progress_manager = get_node("/root/ProgressManager")
+	if not progress_manager:
+		print("[ShopUI] ProgressManager not available")
+		return
+	
+	print("[ShopUI] Populating locked items...")
+	
+	# Load the UnlockableItem class to access ItemType enum
+	const UnlockableItemClass = preload("res://Scripts/Core/unlockable_item.gd")
+	
+	# Get locked PowerUps
+	var locked_power_ups = progress_manager.get_locked_items(UnlockableItemClass.ItemType.POWER_UP)
+	for item in locked_power_ups:
+		_create_locked_item_display(item)
+	
+	# Get locked Consumables
+	var locked_consumables = progress_manager.get_locked_items(UnlockableItemClass.ItemType.CONSUMABLE)
+	for item in locked_consumables:
+		_create_locked_item_display(item)
+	
+	# Get locked Mods
+	var locked_mods = progress_manager.get_locked_items(UnlockableItemClass.ItemType.MOD)
+	for item in locked_mods:
+		_create_locked_item_display(item)
+	
+	# Get locked Colored Dice features
+	var locked_dice_features = progress_manager.get_locked_items(UnlockableItemClass.ItemType.COLORED_DICE_FEATURE)
+	for item in locked_dice_features:
+		_create_locked_item_display(item)
+	
+	print("[ShopUI] Locked items populated")
+
+## _create_locked_item_display(item)
+##
+## Creates a display for a locked item showing what it is and unlock requirements
+func _create_locked_item_display(item) -> void:
+	if not item or not locked_container:
+		return
+	
+	# Create a panel for the locked item
+	var locked_panel = PanelContainer.new()
+	locked_panel.custom_minimum_size = Vector2(200, 150)
+	
+	# Add a background style
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.2, 0.2, 0.2, 0.8)
+	style.border_width_left = 2
+	style.border_width_right = 2
+	style.border_width_top = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.8, 0.4, 0.4, 1.0)  # Red border for locked items
+	style.corner_radius_top_left = 5
+	style.corner_radius_top_right = 5
+	style.corner_radius_bottom_left = 5
+	style.corner_radius_bottom_right = 5
+	locked_panel.add_theme_stylebox_override("panel", style)
+	
+	# Create content container
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 3)
+	locked_panel.add_child(vbox)
+	
+	# Add item name with lock icon
+	var name_label = RichTextLabel.new()
+	name_label.custom_minimum_size = Vector2(180, 30)
+	name_label.fit_content = true
+	name_label.scroll_active = false
+	name_label.bbcode_enabled = true  # Enable BBCode
+	name_label.text = "[center]🔒 %s[/center]" % item.display_name
+	name_label.add_theme_font_size_override("normal_font_size", 11)
+	vbox.add_child(name_label)
+	
+	# Add item type
+	var type_label = Label.new()
+	type_label.text = "Type: %s" % item.get_type_string()
+	type_label.add_theme_font_size_override("font_size", 10)
+	type_label.modulate = Color(0.8, 0.8, 0.8, 1.0)
+	type_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(type_label)
+	
+	# Add description
+	var desc_label = RichTextLabel.new()
+	desc_label.custom_minimum_size = Vector2(180, 40)
+	desc_label.fit_content = true
+	desc_label.scroll_active = false
+	desc_label.bbcode_enabled = true  # Enable BBCode
+	desc_label.add_theme_font_size_override("normal_font_size", 9)
+	desc_label.text = "[center]%s[/center]" % item.description
+	vbox.add_child(desc_label)
+	
+	# Add unlock requirement
+	var unlock_label = RichTextLabel.new()
+	unlock_label.custom_minimum_size = Vector2(180, 35)
+	unlock_label.fit_content = true
+	unlock_label.scroll_active = false
+	unlock_label.bbcode_enabled = true  # Enable BBCode
+	unlock_label.add_theme_font_size_override("normal_font_size", 9)
+	unlock_label.text = "[center][color=yellow]Unlock: %s[/color][/center]" % item.get_unlock_description()
+	vbox.add_child(unlock_label)
+	
+	locked_container.add_child(locked_panel)
+
+func _filter_unlocked_items(items: Array, item_type: String) -> Array:
+	# Get the ProgressManager autoload
+	var progress_manager = get_node("/root/ProgressManager")
+	if not progress_manager:
+		print("[ShopUI] ProgressManager not available for filtering")
+		return items
+	
+	var filtered_items: Array = []
+	
+	for item_id in items:
+		# Check if this item is tracked by the progress system
+		if progress_manager.is_item_unlocked(item_id):
+			filtered_items.append(item_id)
+		else:
+			print("[ShopUI] Filtering out locked %s: %s" % [item_type, item_id])
+	
+	return filtered_items

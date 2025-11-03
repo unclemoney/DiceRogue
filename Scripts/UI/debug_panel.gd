@@ -241,6 +241,21 @@ func _create_debug_tabs() -> void:
 			{"text": "Load Debug State", "method": "_debug_load_state"},
 			{"text": "Reset Game", "method": "_debug_reset_game"},
 			{"text": "Clear Output", "method": "_on_clear_output_pressed"},
+		],
+		"Progress": [
+			{"text": "Show Progress Stats", "method": "_debug_show_progress_stats"},
+			{"text": "Print All Item Status", "method": "_debug_print_all_item_status"},
+			{"text": "Unlock All Items", "method": "_debug_unlock_all_items"},
+			{"text": "Lock All Items", "method": "_debug_lock_all_items"},
+			{"text": "Unlock PowerUp: Step By Step", "method": "_debug_unlock_step_by_step"},
+			{"text": "Lock PowerUp: Step By Step", "method": "_debug_lock_step_by_step"},
+			{"text": "Unlock Consumable: Quick Cash", "method": "_debug_unlock_quick_cash"},
+			{"text": "Lock Consumable: Quick Cash", "method": "_debug_lock_quick_cash"},
+			{"text": "Force Complete Game", "method": "_debug_force_complete_game"},
+			{"text": "Simulate Yahtzee Roll", "method": "_debug_simulate_yahtzee"},
+			{"text": "Simulate High Score", "method": "_debug_simulate_high_score"},
+			{"text": "Reset Progress Data", "method": "_debug_reset_progress"},
+			{"text": "Save Progress", "method": "_debug_save_progress"},
 		]
 	}
 	
@@ -1478,16 +1493,237 @@ func _debug_test_consumer_powerup():
 		var result = scorecard.calculate_score_with_breakdown("three_of_a_kind", test_dice)
 		log_debug("Score test - Base: %d, Final: %d, Multiplier: %.2fx" % [
 			result.breakdown_info.base_score,
-			result.breakdown_info.final_score,
-			result.breakdown_info.total_multiplier
+			result.final_score,
+			result.breakdown_info.multiplier
 		])
-		log_debug("ScoreModifierManager raw multiplier: %.2fx" % ScoreModifierManager.get_total_multiplier())
-		log_debug("Expected calculation: %d + 0 = %d, %d * %.2f = %d" % [
-			result.breakdown_info.base_score,
-			result.breakdown_info.base_score,
-			result.breakdown_info.base_score,
-			result.breakdown_info.total_multiplier,
-			int(result.breakdown_info.base_score * result.breakdown_info.total_multiplier)
-		])
+
+# ========================================
+# PROGRESS SYSTEM DEBUG FUNCTIONS
+# ========================================
+
+func _debug_show_progress_stats() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if not progress_manager:
+		log_debug("ERROR: ProgressManager not found")
+		return
 	
-	log_debug("=== Test Complete ===")
+	log_debug("=== PROGRESS SYSTEM STATUS ===")
+	log_debug("Game tracking active: %s" % progress_manager.is_tracking_game)
+	log_debug("Games completed: %d" % progress_manager.cumulative_stats.get("games_completed", 0))
+	log_debug("Total score: %d" % progress_manager.cumulative_stats.get("total_score", 0))
+	log_debug("Total yahtzees: %d" % progress_manager.cumulative_stats.get("total_yahtzees", 0))
+
+func _debug_print_all_item_status() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if not progress_manager:
+		log_debug("ERROR: ProgressManager not found")
+		return
+	
+	log_debug("=== ALL ITEM STATUS ===")
+	
+	# Try to find managers through GameController
+	var gc = get_tree().get_first_node_in_group("game_controller")
+	var power_up_manager = null
+	var consumable_manager = null
+	var mod_manager = null
+	
+	if gc:
+		# Use GameController's node paths to find managers
+		power_up_manager = gc.get_node_or_null(gc.power_up_manager_path)
+		consumable_manager = gc.get_node_or_null(gc.consumable_manager_path) 
+		mod_manager = gc.get_node_or_null(gc.mod_manager_path)
+	
+	# Fallback: try to find managers by common paths
+	if not power_up_manager:
+		power_up_manager = get_tree().get_first_node_in_group("power_up_manager")
+	if not consumable_manager:
+		consumable_manager = get_tree().get_first_node_in_group("consumable_manager")
+	if not mod_manager:
+		mod_manager = get_tree().get_first_node_in_group("mod_manager")
+	
+	# Check PowerUps
+	if power_up_manager and power_up_manager.has_method("get_available_power_ups"):
+		log_debug("\n--- POWERUPS ---")
+		var power_ups = power_up_manager.get_available_power_ups()
+		for power_up_id in power_ups:
+			var is_unlocked = progress_manager.is_item_unlocked(power_up_id)
+			var status = "UNLOCKED" if is_unlocked else "LOCKED"
+			log_debug("  %s: %s" % [power_up_id, status])
+	else:
+		log_debug("\n--- POWERUPS ---")
+		log_debug("PowerUpManager not found. Checked paths:")
+		if gc:
+			log_debug("  GameController path: %s" % gc.power_up_manager_path)
+		log_debug("  Group search: power_up_manager")
+	
+	# Check Consumables 
+	if consumable_manager:
+		log_debug("\n--- CONSUMABLES ---")
+		var consumables = []
+		if consumable_manager.has_method("get_all_consumable_ids"):
+			consumables = consumable_manager.get_all_consumable_ids()
+		elif "_defs_by_id" in consumable_manager:
+			consumables = consumable_manager._defs_by_id.keys()
+		
+		for consumable_id in consumables:
+			var is_unlocked = progress_manager.is_item_unlocked(consumable_id)
+			var status = "UNLOCKED" if is_unlocked else "LOCKED"
+			log_debug("  %s: %s" % [consumable_id, status])
+	else:
+		log_debug("\n--- CONSUMABLES ---")
+		log_debug("ConsumableManager not found. Checked paths:")
+		if gc:
+			log_debug("  GameController path: %s" % gc.consumable_manager_path)
+		log_debug("  Group search: consumable_manager")
+	
+	# Check Mods
+	if mod_manager:
+		log_debug("\n--- MODS ---")
+		var mods = []
+		if "_defs_by_id" in mod_manager:
+			mods = mod_manager._defs_by_id.keys()
+		
+		for mod_id in mods:
+			var is_unlocked = progress_manager.is_item_unlocked(mod_id)
+			var status = "UNLOCKED" if is_unlocked else "LOCKED"
+			log_debug("  %s: %s" % [mod_id, status])
+	else:
+		log_debug("\n--- MODS ---")
+		log_debug("ModManager not found. Checked paths:")
+		if gc:
+			log_debug("  GameController path: %s" % gc.mod_manager_path)
+		log_debug("  Group search: mod_manager")
+	
+	# Check Unlockable Items in ProgressManager
+	log_debug("\n--- PROGRESS MANAGER ITEMS ---")
+	if "unlockable_items" in progress_manager:
+		for item_id in progress_manager.unlockable_items:
+			var item = progress_manager.unlockable_items[item_id]
+			var status = "UNLOCKED" if item.is_unlocked else "LOCKED"
+			var type_str = item.get_type_string() if item.has_method("get_type_string") else "Unknown"
+			log_debug("  %s (%s): %s" % [item_id, type_str, status])
+	
+	log_debug("\n=== STATUS REPORT COMPLETE ===\n")
+	
+	# Show current game stats if tracking
+	if progress_manager.is_tracking_game:
+		log_debug("--- Current Game Stats ---")
+		for key in progress_manager.current_game_stats:
+			var value = progress_manager.current_game_stats[key]
+			log_debug("%s: %s" % [key, str(value)])
+	
+	# Count locked vs unlocked items
+	var total_items = progress_manager.unlockable_items.size()
+	var unlocked_count = 0
+	for item_id in progress_manager.unlockable_items:
+		var item = progress_manager.unlockable_items[item_id]
+		if item.is_unlocked:
+			unlocked_count += 1
+	
+	log_debug("Items: %d/%d unlocked" % [unlocked_count, total_items])
+
+func _debug_unlock_all_items() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if not progress_manager:
+		log_debug("ERROR: ProgressManager not found")
+		return
+	
+	var count = 0
+	log_debug("Unlocking all items...")
+	for item_id in progress_manager.unlockable_items:
+		progress_manager.debug_unlock_item(item_id)
+		count += 1
+	
+	log_debug("Unlocked %d items - shop should refresh automatically" % count)
+
+func _debug_lock_all_items() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if not progress_manager:
+		log_debug("ERROR: ProgressManager not found")
+		return
+	
+	var count = 0
+	log_debug("Locking all items...")
+	for item_id in progress_manager.unlockable_items:
+		progress_manager.debug_lock_item(item_id)
+		count += 1
+	
+	log_debug("Locked %d items - shop should refresh automatically" % count)
+
+func _debug_unlock_step_by_step() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if progress_manager:
+		progress_manager.debug_unlock_item("step_by_step")
+		log_debug("Unlocked Step By Step PowerUp")
+
+func _debug_lock_step_by_step() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if progress_manager:
+		progress_manager.debug_lock_item("step_by_step")
+		log_debug("Locked Step By Step PowerUp")
+
+func _debug_unlock_quick_cash() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if progress_manager:
+		progress_manager.debug_unlock_item("quick_cash")
+		log_debug("Unlocked Quick Cash Consumable")
+
+func _debug_lock_quick_cash() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if progress_manager:
+		progress_manager.debug_lock_item("quick_cash")
+		log_debug("Locked Quick Cash Consumable")
+
+func _debug_force_complete_game() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if not progress_manager:
+		log_debug("ERROR: ProgressManager not found")
+		return
+	
+	# Force end game tracking with a test score
+	if not progress_manager.is_tracking_game:
+		progress_manager.start_game_tracking()
+	
+	progress_manager.end_game_tracking(250, true)  # 250 points, won game
+	log_debug("Forced game completion with 250 points")
+
+func _debug_simulate_yahtzee() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if progress_manager:
+		progress_manager.track_yahtzee_rolled()
+		log_debug("Simulated yahtzee roll")
+
+func _debug_simulate_high_score() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if progress_manager:
+		progress_manager.track_score_assigned("yahtzee", 350)  # High score
+		log_debug("Simulated high score of 350 points")
+
+func _debug_reset_progress() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if not progress_manager:
+		log_debug("ERROR: ProgressManager not found")
+		return
+	
+	# Reset cumulative stats
+	progress_manager.cumulative_stats = {
+		"games_completed": 0,
+		"games_won": 0,
+		"total_score": 0,
+		"total_money_earned": 0,
+		"total_consumables_used": 0,
+		"total_yahtzees": 0,
+		"total_straights": 0,
+		"total_color_bonuses": 0
+	}
+	
+	# Lock all items
+	_debug_lock_all_items()
+	
+	log_debug("Reset all progress data")
+
+func _debug_save_progress() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if progress_manager:
+		progress_manager.save_progress()
+		log_debug("Progress saved manually")

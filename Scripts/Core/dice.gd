@@ -3,17 +3,30 @@ class_name Dice
 
 const DiceColorClass = preload("res://Scripts/Core/dice_color.gd")
 
+## Dice state machine enum
+enum DiceState {
+	ROLLABLE,   # Ready to be rolled at start of turn
+	ROLLED,     # Has been rolled, can be locked or scored
+	LOCKED,     # Locked by player, will not roll but can be scored
+	DISABLED    # After scoring, cannot interact
+}
+
 signal rolled(value: int)
 signal selected(dice: Dice)
 signal clicked
 signal mod_sell_requested(mod_id: String, dice: Dice)
 signal color_changed(dice: Dice, new_color: DiceColor.Type)
+signal state_changed(dice: Dice, old_state: DiceState, new_state: DiceState)
 
 var active_mods: Dictionary = {}  # id -> Mod
 var home_position: Vector2 = Vector2.ZERO
 var _can_process_input := true
 var _lock_shader_enabled := true
 @export var is_locked: bool = false
+
+# State machine properties
+var current_state: DiceState = DiceState.ROLLABLE
+var _previous_state: DiceState = DiceState.ROLLABLE
 
 @export var dice_data: DiceData
 
@@ -72,9 +85,92 @@ func _ready():
 		material.shader = preload("res://Scripts/Shaders/disabled_dice.gdshader")
 		material.set_shader_parameter("disabled", false)
 
+## State Machine Methods
+
+## set_state(new_state: DiceState)
+##
+## Changes the dice state and handles all necessary transitions and validations.
+## Emits state_changed signal and updates visual representations accordingly.
+func set_state(new_state: DiceState) -> void:
+	if new_state == current_state:
+		return
+		
+	var old_state = current_state
+	_previous_state = current_state
+	current_state = new_state
+	
+	# Handle state-specific logic first
+	match new_state:
+		DiceState.ROLLABLE:
+			_can_process_input = true
+			is_locked = false
+		DiceState.ROLLED:
+			_can_process_input = true
+			is_locked = false
+		DiceState.LOCKED:
+			_can_process_input = true
+			is_locked = true
+		DiceState.DISABLED:
+			_can_process_input = false
+			is_locked = false
+	
+	# Update visual representation based on new state (after is_locked is set)
+	_update_state_visual()
+	
+	emit_signal("state_changed", self, old_state, new_state)
+	print("[Dice] State changed from ", DiceState.keys()[old_state], " to ", DiceState.keys()[new_state])
+
+## can_roll() -> bool
+##
+## Returns true if the dice can be rolled in its current state.
+func can_roll() -> bool:
+	return current_state == DiceState.ROLLABLE
+
+## can_lock() -> bool  
+##
+## Returns true if the dice can be locked in its current state.
+func can_lock() -> bool:
+	return current_state == DiceState.ROLLED and _can_process_input
+
+## can_score() -> bool
+##
+## Returns true if the dice can be used for scoring in its current state.
+func can_score() -> bool:
+	return current_state in [DiceState.ROLLED, DiceState.LOCKED]
+
+## _update_state_visual()
+##
+## Updates visual elements based on current state.
+func _update_state_visual() -> void:
+	match current_state:
+		DiceState.ROLLABLE:
+			# Reset to default appearance
+			if dice_material:
+				dice_material.set_shader_parameter("lock_overlay_strength", 0.0)
+				dice_material.set_shader_parameter("disabled", false)
+		DiceState.ROLLED:
+			# Available for interaction, no special visual
+			if dice_material:
+				dice_material.set_shader_parameter("lock_overlay_strength", 0.0)
+				dice_material.set_shader_parameter("disabled", false)
+		DiceState.LOCKED:
+			# Show lock overlay
+			if dice_material and _lock_shader_enabled:
+				dice_material.set_shader_parameter("lock_overlay_strength", 0.6)
+				dice_material.set_shader_parameter("disabled", false)
+				print("[Dice] Applied lock overlay visual feedback")
+		DiceState.DISABLED:
+			# Show disabled/grayed out appearance
+			if dice_material:
+				dice_material.set_shader_parameter("disabled", true)
+				dice_material.set_shader_parameter("lock_overlay_strength", 0.0)
+	
+	# Update existing visual elements
+	update_visual()
 
 func roll() -> void:
-	if is_locked:
+	if not can_roll():
+		#print("[Dice] Cannot roll - state:", DiceState.keys()[current_state], "locked:", is_locked)
 		return
 	if not dice_data:
 		push_error("[Dice] Cannot roll - no DiceData assigned!")
@@ -96,18 +192,21 @@ func roll() -> void:
 	# Assign color based on random chance (if colors are enabled)
 	_assign_random_color()
 	#print("[Dice] Rolling", dice_data.display_name, "- got:", value, "color:", DiceColorClass.get_color_name(color))
+	
+	# Transition to ROLLED state
+	set_state(DiceState.ROLLED)
+	
 	emit_signal("rolled", value)
 	animate_roll()
 	update_visual()
 
 ## Lock this die and emit die_locked signal
 func lock() -> void:
-	if not _can_process_input:
-		#print("[Dice] Cannot lock - input disabled")
+	if not can_lock():
+		#print("[Dice] Cannot lock - state:", DiceState.keys()[current_state])
 		return
 
-	is_locked = true
-	update_visual()  # Use update_visual to handle shader state
+	set_state(DiceState.LOCKED)
 	emit_signal("die_locked", self)
 
 func set_dice_input_enabled(enabled: bool) -> void:
@@ -143,25 +242,31 @@ func update_visual():
 func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	# Replace check for non-existent "select_die" action with direct mouse button check
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if not _can_process_input:
-			print("[Dice] Ignoring input - processing disabled")
+		# Use state machine to determine if input should be processed
+		if current_state == DiceState.DISABLED:
+			print("[Dice] Ignoring input - dice is DISABLED")
 			shake_denied()  # Add shake effect when trying to interact while disabled
 			return
-		#print("[Dice] Die selected:", name)
+		
+		print("[Dice] Click detected on dice in state:", get_state_name())
 		emit_signal("selected", self)
 		emit_signal("clicked")
 		
-		if not is_locked:
+		if current_state == DiceState.ROLLED:
+			print("[Dice] Attempting to lock dice")
 			lock()
-		else:
+		elif current_state == DiceState.LOCKED:
+			print("[Dice] Attempting to unlock dice")
 			unlock()
+		else:
+			print("[Dice] Cannot lock/unlock from state:", get_state_name())
 
 func _on_mouse_entered():
 	_is_hovering = true
 	
-	if not _can_process_input:
+	if current_state == DiceState.DISABLED:
 		shake_denied()
-		return  # Don't show hover effects if input is disabled
+		return  # Don't show hover effects if disabled
 	
 	var tween := get_tree().create_tween()
 
@@ -187,7 +292,7 @@ func _on_mouse_entered():
 func _on_mouse_exited():
 	_is_hovering = false
 	
-	if not _can_process_input:
+	if current_state == DiceState.DISABLED:
 		return
 	
 	var tween := get_tree().create_tween()
@@ -207,12 +312,12 @@ func _on_mouse_exited():
 		color_label_bg.visible = false
 
 func toggle_lock():
-	if not _can_process_input:
-		print("[Dice] Cannot toggle lock - input disabled")
-		return
-		
-	is_locked = !is_locked
-	update_visual()
+	if current_state == DiceState.ROLLED:
+		lock()
+	elif current_state == DiceState.LOCKED:
+		unlock()
+	else:
+		print("[Dice] Cannot toggle lock - current state:", DiceState.keys()[current_state])
 
 func animate_entry(from_position: Vector2, duration := 0.4):
 	position = from_position
@@ -224,8 +329,10 @@ func animate_entry(from_position: Vector2, duration := 0.4):
 
 
 func unlock() -> void:
-	is_locked = false
-	update_visual()  # Use update_visual to handle shader state
+	if current_state == DiceState.LOCKED:
+		set_state(DiceState.ROLLED)
+	else:
+		print("[Dice] Cannot unlock - current state:", DiceState.keys()[current_state])
 
 func shake_denied() -> void:
 	var original_x = position.x  # Store current x position
@@ -312,7 +419,7 @@ func check_mod_outside_clicks(event_position: Vector2) -> void:
 		if icon is ModIcon:
 			icon.check_outside_click(event_position)
 
-## Assign random color to dice based on chance rates
+## Assign random color to dice based on chance rates and unlocked status
 ## Called when dice is rolled
 func _assign_random_color() -> void:
 	#print("[Dice] Assigning random color...")
@@ -329,13 +436,33 @@ func _assign_random_color() -> void:
 		_set_color(DiceColor.Type.NONE)
 		return
 		
+	# Check what colored dice features are unlocked
+	var progress_manager = get_node_or_null("/root/ProgressManager")
+	var unlocked_colors = []
+	
+	if progress_manager:
+		# Check each colored dice feature unlock status
+		if progress_manager.is_item_unlocked("green_dice"):
+			unlocked_colors.append(DiceColor.Type.GREEN)
+		if progress_manager.is_item_unlocked("red_dice"):
+			unlocked_colors.append(DiceColor.Type.RED)
+		if progress_manager.is_item_unlocked("purple_dice"):
+			unlocked_colors.append(DiceColor.Type.PURPLE)
+		if progress_manager.is_item_unlocked("blue_dice"):
+			unlocked_colors.append(DiceColor.Type.BLUE)
+	
+	if unlocked_colors.size() == 0:
+		#print("[Dice] No colored dice features unlocked - setting to NONE")
+		_set_color(DiceColor.Type.NONE)
+		return
+		
 	var old_color = color
 	var new_color = DiceColor.Type.NONE
 	
-	#print("[Dice] Colors enabled, checking random assignment...")
+	#print("[Dice] Colors enabled, checking random assignment from unlocked colors:", unlocked_colors)
 	
-	# Check each color type for random assignment
-	for color_type in DiceColor.get_all_colors():
+	# Check each unlocked color type for random assignment
+	for color_type in unlocked_colors:
 		var chance = DiceColor.get_color_chance(color_type)
 		if chance > 0:
 			var color_roll = randi() % chance
@@ -346,7 +473,8 @@ func _assign_random_color() -> void:
 				break  # First color that hits wins
 	
 	if new_color == DiceColor.Type.NONE:
-		print("[Dice] No color assigned, staying NONE")
+		#print("[Dice] No color assigned, staying NONE")
+		pass
 	
 	_set_color(new_color)
 	
@@ -355,7 +483,8 @@ func _assign_random_color() -> void:
 		#print("[Dice] Color changed from", DiceColor.get_color_name(old_color), "to", DiceColor.get_color_name(color))
 		emit_signal("color_changed", self, color)
 	else:
-		print("[Dice] Color unchanged:", DiceColor.get_color_name(color))
+		pass
+		#print("[Dice] Color unchanged:", DiceColor.get_color_name(color))
 
 ## Get DiceColorManager safely
 ## @return DiceColorManager node or null if not found
@@ -479,3 +608,40 @@ func _apply_hover_label_style(label: Label) -> void:
 		label.add_theme_font_override("font", vcr_font)
 	label.add_theme_font_size_override("font_size", 18)
 	label.add_theme_color_override("font_color", Color(1, 1, 1, 1))  # White text
+
+## Public State Control Methods
+
+## make_rollable()
+##
+## Sets dice to ROLLABLE state for start of turn. This forces the change regardless of current state.
+func make_rollable() -> void:
+	set_state(DiceState.ROLLABLE)
+
+## make_rollable_if_allowed()
+##
+## Sets dice to ROLLABLE state only if it's in a valid transition state (ROLLED).
+## Does not affect LOCKED or DISABLED dice.
+func make_rollable_if_allowed() -> void:
+	if current_state == DiceState.ROLLED:
+		set_state(DiceState.ROLLABLE)
+		print("[Dice] Made rollable from ROLLED state")
+	else:
+		print("[Dice] Preserving state", get_state_name(), "- not making rollable")
+
+## make_disabled()
+##
+## Sets dice to DISABLED state after scoring.
+func make_disabled() -> void:
+	set_state(DiceState.DISABLED)
+
+## get_state() -> DiceState
+##
+## Returns the current state of the dice.
+func get_state() -> DiceState:
+	return current_state
+
+## get_state_name() -> String
+##
+## Returns the current state name as a string for debugging.
+func get_state_name() -> String:
+	return DiceState.keys()[current_state]

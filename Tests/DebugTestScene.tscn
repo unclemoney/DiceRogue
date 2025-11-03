@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cvd4vr8u42x1o"]
+
+[ext_resource type="Script" path="res://Tests/debug_test_scene.gd" id="1_npgtw"]
+
+[node name="DebugTestScene" type="Node"]
+script = ExtResource("1_npgtw")

@@ -181,6 +181,13 @@ func on_category_selected(section: Section, category: String):
 
 func auto_score_best(values: Array[int]) -> void:
 	print("\n=== Auto-Scoring Best Hand ===")
+	
+	# Validate dice states before auto-scoring
+	var dice_hand_ref = get_node_or_null("../DiceHand") as DiceHand
+	if dice_hand_ref and not dice_hand_ref.can_any_dice_score():
+		print("[Scorecard] Cannot auto-score - no dice are in ROLLED or LOCKED state")
+		return
+	
 	# Reset evaluation counter at the start of each auto-scoring cycle
 	ScoreEvaluatorSingleton.reset_evaluation_count()
 	

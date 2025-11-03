@@ -94,6 +94,9 @@ func spawn_dice() -> void:
 
 	emit_signal("dice_spawned")
 
+	# Set all dice to ROLLABLE state initially
+	set_all_dice_rollable()
+
 	# Re-emit child's die_locked as DiceHand-level die_locked signal
 	# (some power-ups listen on DiceHand for lock events)
 
@@ -110,7 +113,8 @@ func spawn_dice() -> void:
 
 ## roll_all()
 ##
-## Rolls every die in `dice_list`. Plays roll sound and emits `roll_complete` when finished.
+## Rolls every die in `dice_list` that can be rolled (not locked). 
+## Plays roll sound and emits `roll_complete` when finished.
 func roll_all() -> void:
 	if dice_list.size() == 0:
 		return
@@ -124,11 +128,17 @@ func roll_all() -> void:
 	print("[DiceHand] Current dice type:", current_dice_type.to_upper())
 	print("[DiceHand] Number of dice:", dice_list.size())
 
+	var rolled_count = 0
 	for i in range(dice_list.size()):
 		var die = dice_list[i]
-		die.roll()
-		print("[DiceHand] Die", i + 1, "rolled:", die.value)
+		if die.can_roll():
+			die.roll()
+			rolled_count += 1
+			print("[DiceHand] Die", i + 1, "rolled:", die.value, "- now in state:", die.get_state_name())
+		else:
+			print("[DiceHand] Die", i + 1, "skipped (state:", die.get_state_name(), ")")
 
+	print("[DiceHand] Rolled", rolled_count, "out of", dice_list.size(), "dice")
 	_update_results()
 	emit_signal("roll_complete")
 
@@ -191,22 +201,101 @@ func update_dice_count() -> void:
 			die.queue_free()
 
 func enable_all_dice() -> void:
-	print("[DiceHand] Enabling all dice")
+	print("[DiceHand] Enabling all dice (legacy method - state machine should handle this)")
+	# Note: With state machine, dice input is controlled by their state
+	# This function is kept for compatibility with debuffs, but should not override state machine
 	for die in get_children():
 		if die is Dice:
-			die.set_dice_input_enabled(true)
+			# Only enable input if the dice is not in DISABLED state
+			if die.get_state() != Dice.DiceState.DISABLED:
+				die.set_dice_input_enabled(true)
 			die.set_lock_shader_enabled(true)
-			#print("[DiceHand] Enabled die:", die.name)
 
 
 func disable_all_dice() -> void:
-	print("[DiceHand] Disabling all dice")
+	print("[DiceHand] Disabling all dice (legacy method)")
+	# Note: With state machine, this should call set_all_dice_disabled() instead
 	for die in get_children():
 		if die is Dice:
-			die.unlock()  # Force unlock
-			die.set_dice_input_enabled(false)
-			if die.has_method("set_lock_shader_enabled"):
-				die.set_lock_shader_enabled(false)
+			# Transition to DISABLED state instead of manual input disabling
+			die.make_disabled()
+
+## State Machine Management Methods
+
+## set_all_dice_rollable()
+##
+## Sets all dice to ROLLABLE state for the start of a new turn.
+func set_all_dice_rollable() -> void:
+	print("[DiceHand] Setting all dice to ROLLABLE state")
+	for die in dice_list:
+		if die is Dice:
+			die.make_rollable()
+
+## set_all_dice_disabled()
+##
+## Sets all dice to DISABLED state after scoring.
+func set_all_dice_disabled() -> void:
+	print("[DiceHand] Setting all dice to DISABLED state")
+	for die in dice_list:
+		if die is Dice:
+			die.make_disabled()
+
+## prepare_dice_for_roll()
+##
+## Sets ROLLED and DISABLED dice back to ROLLABLE for subsequent rolls, preserving LOCKED dice.
+## Use this before each roll within a turn (not set_all_dice_rollable).
+func prepare_dice_for_roll() -> void:
+	print("[DiceHand] Preparing dice for roll - preserving locks")
+	for die in dice_list:
+		if die is Dice:
+			if die.current_state == Dice.DiceState.ROLLED:
+				die.make_rollable()
+				print("[DiceHand] Set die to rollable (was ROLLED)")
+			elif die.current_state == Dice.DiceState.DISABLED:
+				die.make_rollable()
+				print("[DiceHand] Set die to rollable (was DISABLED)")
+			elif die.current_state == Dice.DiceState.LOCKED:
+				print("[DiceHand] Preserving locked die")
+			else:
+				print("[DiceHand] Die already in state:", die.get_state_name())
+
+## can_any_dice_roll() -> bool
+##
+## Returns true if any dice can be rolled (are in ROLLABLE state).
+func can_any_dice_roll() -> bool:
+	for die in dice_list:
+		if die is Dice and die.can_roll():
+			return true
+	return false
+
+## can_any_dice_score() -> bool
+##
+## Returns true if any dice can be used for scoring (ROLLED or LOCKED states).
+func can_any_dice_score() -> bool:
+	for die in dice_list:
+		if die is Dice and die.can_score():
+			return true
+	return false
+
+## get_dice_in_state(state: Dice.DiceState) -> Array[Dice]
+##
+## Returns all dice currently in the specified state.
+func get_dice_in_state(state: Dice.DiceState) -> Array[Dice]:
+	var result: Array[Dice] = []
+	for die in dice_list:
+		if die is Dice and die.get_state() == state:
+			result.append(die)
+	return result
+
+## print_dice_states()
+##
+## Debug function to print the current state of all dice.
+func print_dice_states() -> void:
+	print("[DiceHand] Current dice states:")
+	for i in range(dice_list.size()):
+		var die = dice_list[i]
+		if die is Dice:
+			print("  Die ", i, ": ", die.get_state_name(), " (value: ", die.value, ")")
 
 ## Lock a specific die and emit die_locked signal
 func lock_die(die: Dice) -> void:

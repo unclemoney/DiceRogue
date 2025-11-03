@@ -6,7 +6,7 @@ extends Node
 ## `money_changed(new_amount)` whenever the balance is modified. Public API
 ## includes `add_money`, `remove_money`, `can_afford`, and `get_money`.
 
-signal money_changed(new_amount: int)
+signal money_changed(new_amount: int, change: int)
 
 ## Current money balance (int). Mutated by add_money/remove_money.
 var money: int = 500
@@ -32,7 +32,7 @@ func add_money(amount: int) -> void:
 	
 	#print("[PlayerEconomy] Emitting money_changed:", money)
 	#print("[PlayerEconomy] Instance ID:", self.get_instance_id())
-	emit_signal("money_changed", money)
+	emit_signal("money_changed", money, amount)
 
 ## remove_money(amount, category) -> bool
 ##
@@ -50,7 +50,7 @@ func remove_money(amount: int, category: String = "") -> bool:
 	
 	print("[PlayerEconomy] Emitting money_changed:", money)
 	print("[PlayerEconomy] Instance ID:", self.get_instance_id())
-	emit_signal("money_changed", money)
+	emit_signal("money_changed", money, -amount)
 	return true
 
 ## can_afford(amount) -> bool

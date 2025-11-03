@@ -141,7 +141,7 @@ func setup(data: Resource, type: String) -> void:
 	#print("[ShopItem] Connected to PlayerEconomy.money_changed, Instance ID:", PlayerEconomy.get_instance_id())
 	#print("[ShopItem] Setup complete for:", data.id)
 
-func _update_button_state(_new_amount := 0) -> void:
+func _update_button_state(_new_amount := 0, _change := 0) -> void:
 	#print("[ShopItem] _update_button_state called")
 	#print("[ShopItem] Updating button state for", item_id, "- Player money:", PlayerEconomy.money, ", Price:", price)
 	if buy_button:
