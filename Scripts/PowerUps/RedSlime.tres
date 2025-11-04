@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://ddvs52v6c3mxi"]
+
+[ext_resource type="Texture2D" uid="uid://rf2mfiai7qyi" path="res://Resources/Art/Powerups/PowerUp_test2.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" uid="uid://dxt4x58kv5kl1" path="res://Scenes/PowerUp/RedSlime.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "red_slime"
+display_name = "Red Slime"
+description = "Doubles the chance of rolling red dice"
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 150
+rarity = "uncommon"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

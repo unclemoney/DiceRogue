@@ -463,7 +463,7 @@ func _assign_random_color() -> void:
 	
 	# Check each available color type for random assignment
 	for color_type in available_colors:
-		var chance = DiceColor.get_color_chance(color_type)
+		var chance = color_manager.get_modified_color_chance(color_type)
 		if chance > 0:
 			var color_roll = randi() % chance
 			#print("[Dice] Color", DiceColor.get_color_name(color_type), "chance 1/", chance, "rolled:", color_roll)

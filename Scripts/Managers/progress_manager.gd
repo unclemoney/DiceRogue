@@ -438,6 +438,16 @@ func _create_default_unlockable_items() -> void:
 	_add_default_power_up("red_power_ranger", "Red Power Ranger", "Red dice bonuses", 
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 300)
 	
+	# Slime PowerUps - Colored dice probability enhancers
+	_add_default_power_up("green_slime", "Green Slime", "Doubles green dice probability", 
+		UnlockConditionClass.ConditionType.EARN_MONEY, 50)  # Common: unlock with basic money earning
+	_add_default_power_up("red_slime", "Red Slime", "Doubles red dice probability", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 100)  # Uncommon: need more score points
+	_add_default_power_up("purple_slime", "Purple Slime", "Doubles purple dice probability", 
+		UnlockConditionClass.ConditionType.ROLL_YAHTZEE, 1)  # Rare: need to roll a Yahtzee
+	_add_default_power_up("blue_slime", "Blue Slime", "Doubles blue dice probability", 
+		UnlockConditionClass.ConditionType.ROLL_YAHTZEE, 3)  # Legendary: need multiple Yahtzees
+	
 	# ==========================================================================
 	# ALL CONSUMABLES (16 total) - From Scripts/Consumable/*.tres files  
 	# ==========================================================================

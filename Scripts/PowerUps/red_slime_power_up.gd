@@ -1,0 +1,55 @@
+extends PowerUp
+class_name RedSlimePowerUp
+
+## RedSlime PowerUp
+## Halves the chance denominator for red dice (1 in 50 to 1 in 25)
+## This doubles the probability of rolling red dice
+
+# PowerUp-specific variables
+var color_modifier: float = 0.5  # Half the chance denominator = double the probability
+
+# Reference to DiceColorManager
+var dice_color_manager_ref = null
+
+func _ready() -> void:
+	add_to_group("power_ups")
+	print("[RedSlimePowerUp] Added to 'power_ups' group")
+
+func apply(_target) -> void:
+	print("=== Applying RedSlimePowerUp ===")
+	
+	# Get DiceColorManager reference
+	dice_color_manager_ref = get_tree().get_first_node_in_group("dice_color_manager")
+	if not dice_color_manager_ref:
+		dice_color_manager_ref = get_node_or_null("/root/DiceColorManager")
+	
+	if not dice_color_manager_ref:
+		push_error("[RedSlimePowerUp] No DiceColorManager found")
+		return
+	
+	# Register color chance modifier for red dice
+	dice_color_manager_ref.register_color_chance_modifier(DiceColor.Type.RED, color_modifier)
+	print("[RedSlimePowerUp] Registered red dice chance modifier: ×%.2f" % color_modifier)
+	
+	# Connect cleanup signal
+	if not is_connected("tree_exiting", _on_tree_exiting):
+		connect("tree_exiting", _on_tree_exiting)
+
+func remove(_target) -> void:
+	print("=== Removing RedSlimePowerUp ===")
+	
+	if dice_color_manager_ref:
+		dice_color_manager_ref.unregister_color_chance_modifier(DiceColor.Type.RED)
+		print("[RedSlimePowerUp] Unregistered red dice chance modifier")
+	
+	dice_color_manager_ref = null
+
+func get_current_description() -> String:
+	var base_chance = DiceColor.get_color_chance(DiceColor.Type.RED)
+	var modified_chance = int(base_chance * color_modifier)
+	return "Doubles red dice probability (1 in %d → 1 in %d)" % [base_chance, modified_chance]
+
+func _on_tree_exiting() -> void:
+	# Cleanup when PowerUp is destroyed
+	if dice_color_manager_ref:
+		dice_color_manager_ref.unregister_color_chance_modifier(DiceColor.Type.RED)

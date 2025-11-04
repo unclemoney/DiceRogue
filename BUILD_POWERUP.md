@@ -211,6 +211,51 @@ if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or powe
 power_up_defs = Array[ExtResource("17_2uvn1")]([..., ExtResource("[id]_[reference]"), ...])
 ```
 
+#### 4.3 Register with ProgressManager (For Unlock System)
+
+**File:** `Scripts/Managers/progress_manager.gd`
+
+**Required for PowerUp unlock progression:**
+
+1. **Add to _create_default_unlockable_items() function:**
+```gdscript
+# Add in appropriate rarity section (Starter, Basic, Advanced, Color-themed, etc.)
+_add_default_power_up("[powerup_id]", "[Display Name]", "[Description]", 
+	UnlockConditionClass.ConditionType.[CONDITION_TYPE], [target_value])
+```
+
+**Unlock Condition Types:**
+- `COMPLETE_GAME`: Unlock after completing X games
+- `SCORE_POINTS`: Unlock after reaching X total score points
+- `EARN_MONEY`: Unlock after earning $X total money
+- `ROLL_YAHTZEE`: Unlock after rolling X Yahtzees
+- `ROLL_STRAIGHT`: Unlock after rolling X straights
+- `USE_CONSUMABLES`: Unlock after using X consumables
+
+**Rarity Guidelines for Unlock Conditions:**
+- **Common**: Low requirements (COMPLETE_GAME: 1-2, SCORE_POINTS: 10-100, EARN_MONEY: 25-75)
+- **Uncommon**: Medium requirements (SCORE_POINTS: 100-200, EARN_MONEY: 75-150, ROLL_YAHTZEE: 1)
+- **Rare**: High requirements (SCORE_POINTS: 200-350, ROLL_YAHTZEE: 1-2, ROLL_STRAIGHT: 2-4)
+- **Epic**: Very high requirements (SCORE_POINTS: 350-500, ROLL_YAHTZEE: 2-4, USE_CONSUMABLES: 5-10)
+- **Legendary**: Extreme requirements (SCORE_POINTS: 500+, ROLL_YAHTZEE: 3+, USE_CONSUMABLES: 10+)
+
+**Example Implementation:**
+```gdscript
+# Green Slime - Common PowerUp
+_add_default_power_up("green_slime", "Green Slime", "Doubles green dice probability", 
+	UnlockConditionClass.ConditionType.EARN_MONEY, 50)
+
+# Blue Slime - Legendary PowerUp  
+_add_default_power_up("blue_slime", "Blue Slime", "Doubles blue dice probability", 
+	UnlockConditionClass.ConditionType.ROLL_YAHTZEE, 3)
+```
+
+**Notes:**
+- PowerUps are locked by default and must be explicitly unlocked through gameplay progression
+- The ProgressManager automatically tracks player statistics and unlocks items when conditions are met
+- Unlock conditions should match the PowerUp's rarity and power level
+- Use thematic unlock conditions when possible (e.g., color-dice PowerUps unlock with money/scoring achievements)
+
 ### 5. Testing
 
 #### 5.1 Debug Console Testing

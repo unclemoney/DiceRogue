@@ -200,10 +200,10 @@ func _ready() -> void:
 ##+ Keep this lightweight; heavy startup logic should be moved into RoundManager or dedicated setup functions.
 func _on_game_start() -> void:
 	#grant_consumable("random_power_up_uncommon")
-	grant_consumable("poor_house")
+	#grant_consumable("poor_house")
 	#apply_debuff("the_division")
 	#activate_challenge("300pts_no_debuff")
-	grant_power_up("wild_dots")
+	#grant_power_up("red_slime")
 	if round_manager:
 		round_manager.start_game()
 
@@ -428,6 +428,18 @@ func _activate_power_up(power_up_id: String) -> void:
 		"the_consumer_is_always_right":
 			pu.apply(self)
 			print("[GameController] Applied TheConsumerIsAlwaysRightPowerUp")
+		"green_slime":
+			pu.apply(self)
+			print("[GameController] Applied GreenSlimePowerUp")
+		"red_slime":
+			pu.apply(self)
+			print("[GameController] Applied RedSlimePowerUp")
+		"purple_slime":
+			pu.apply(self)
+			print("[GameController] Applied PurpleSlimePowerUp")
+		"blue_slime":
+			pu.apply(self)
+			print("[GameController] Applied BlueSlimePowerUp")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -541,6 +553,18 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"the_consumer_is_always_right":
 			print("[GameController] Removing the_consumer_is_always_right PowerUp")
 			pu.remove(self)
+		"green_slime":
+			print("[GameController] Removing green_slime PowerUp")
+			pu.remove(self)
+		"red_slime":
+			print("[GameController] Removing red_slime PowerUp")
+			pu.remove(self)
+		"purple_slime":
+			print("[GameController] Removing purple_slime PowerUp")
+			pu.remove(self)
+		"blue_slime":
+			print("[GameController] Removing blue_slime PowerUp")
+			pu.remove(self)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -588,6 +612,14 @@ func revoke_power_up(power_up_id: String) -> void:
 			"highlighted_score":
 				pu.remove(scorecard)
 			"the_consumer_is_always_right":
+				pu.remove(self)
+			"green_slime":
+				pu.remove(self)
+			"red_slime":
+				pu.remove(self)
+			"purple_slime":
+				pu.remove(self)
+			"blue_slime":
 				pu.remove(self)
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself

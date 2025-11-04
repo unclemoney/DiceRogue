@@ -9,7 +9,7 @@ extends Node
 signal money_changed(new_amount: int, change: int)
 
 ## Current money balance (int). Mutated by add_money/remove_money.
-var money: int = 500
+var money: int = 100
 
 ## _ready()
 ##

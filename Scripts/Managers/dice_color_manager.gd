@@ -16,6 +16,9 @@ var colors_enabled: bool = true
 var purchased_colors: Dictionary = {}  # DiceColor.Type -> bool
 var colored_dice_data: Dictionary = {}  # color_id -> ColoredDiceData
 
+# Color probability modifiers (multipliers applied to base chance denominators)
+var color_chance_modifiers: Dictionary = {}  # DiceColor.Type -> float
+
 func _ready() -> void:
 	add_to_group("dice_color_manager")
 	_load_colored_dice_data()
@@ -354,3 +357,39 @@ func get_purchased_color_types() -> Array:
 func clear_purchased_colors() -> void:
 	_reset_purchased_colors()
 	print("[DiceColorManager] Cleared all purchased colors")
+
+## Register a color chance modifier (PowerUp system)
+## @param color_type: DiceColor.Type to modify
+## @param modifier: float multiplier for the chance denominator (0.5 = half denominator = double chance)
+func register_color_chance_modifier(color_type: DiceColorClass.Type, modifier: float) -> void:
+	color_chance_modifiers[color_type] = modifier
+	print("[DiceColorManager] Registered color chance modifier: %s chance ×%.2f" % [DiceColorClass.get_color_name(color_type), modifier])
+
+## Unregister a color chance modifier
+## @param color_type: DiceColor.Type to remove modifier from
+func unregister_color_chance_modifier(color_type: DiceColorClass.Type) -> void:
+	if color_chance_modifiers.has(color_type):
+		color_chance_modifiers.erase(color_type)
+		print("[DiceColorManager] Unregistered color chance modifier for: %s" % DiceColorClass.get_color_name(color_type))
+
+## Get modified color chance for a specific color type
+## Takes into account PowerUp modifiers that improve probability
+## @param color_type: DiceColor.Type to get chance for
+## @return int modified chance denominator (1 in X chance)
+func get_modified_color_chance(color_type: DiceColorClass.Type) -> int:
+	var base_chance = DiceColorClass.get_color_chance(color_type)
+	if base_chance <= 0:
+		return 0
+	
+	# Apply modifier if present
+	if color_chance_modifiers.has(color_type):
+		var modifier = color_chance_modifiers[color_type]
+		var modified_chance = int(base_chance * modifier)
+		return max(1, modified_chance)  # Ensure at least 1 in 1 chance
+	
+	return base_chance
+
+## Clear all color chance modifiers (when PowerUps are removed)
+func clear_all_color_chance_modifiers() -> void:
+	color_chance_modifiers.clear()
+	print("[DiceColorManager] Cleared all color chance modifiers")

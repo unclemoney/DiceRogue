@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://bf8lj8krlq4hi"]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/purple_slime_power_up.gd" id="1_purple_slime"]
+
+[node name="PurpleSlime" type="Node2D"]
+script = ExtResource("1_purple_slime")
+id = "purple_slime"
