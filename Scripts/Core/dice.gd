@@ -436,33 +436,33 @@ func _assign_random_color() -> void:
 		_set_color(DiceColor.Type.NONE)
 		return
 		
-	# Check what colored dice features are unlocked
+	# Check what colored dice features are unlocked AND purchased
 	var progress_manager = get_node_or_null("/root/ProgressManager")
-	var unlocked_colors = []
+	var available_colors = []
 	
 	if progress_manager:
-		# Check each colored dice feature unlock status
-		if progress_manager.is_item_unlocked("green_dice"):
-			unlocked_colors.append(DiceColor.Type.GREEN)
-		if progress_manager.is_item_unlocked("red_dice"):
-			unlocked_colors.append(DiceColor.Type.RED)
-		if progress_manager.is_item_unlocked("purple_dice"):
-			unlocked_colors.append(DiceColor.Type.PURPLE)
-		if progress_manager.is_item_unlocked("blue_dice"):
-			unlocked_colors.append(DiceColor.Type.BLUE)
+		# Check each colored dice feature unlock status AND purchase status
+		if progress_manager.is_item_unlocked("green_dice") and color_manager.is_color_purchased(DiceColor.Type.GREEN):
+			available_colors.append(DiceColor.Type.GREEN)
+		if progress_manager.is_item_unlocked("red_dice") and color_manager.is_color_purchased(DiceColor.Type.RED):
+			available_colors.append(DiceColor.Type.RED)
+		if progress_manager.is_item_unlocked("purple_dice") and color_manager.is_color_purchased(DiceColor.Type.PURPLE):
+			available_colors.append(DiceColor.Type.PURPLE)
+		if progress_manager.is_item_unlocked("blue_dice") and color_manager.is_color_purchased(DiceColor.Type.BLUE):
+			available_colors.append(DiceColor.Type.BLUE)
 	
-	if unlocked_colors.size() == 0:
-		#print("[Dice] No colored dice features unlocked - setting to NONE")
+	if available_colors.size() == 0:
+		#print("[Dice] No colored dice purchased for this session - setting to NONE")
 		_set_color(DiceColor.Type.NONE)
 		return
 		
 	var old_color = color
 	var new_color = DiceColor.Type.NONE
 	
-	#print("[Dice] Colors enabled, checking random assignment from unlocked colors:", unlocked_colors)
+	#print("[Dice] Colors enabled, checking random assignment from purchased colors:", available_colors)
 	
-	# Check each unlocked color type for random assignment
-	for color_type in unlocked_colors:
+	# Check each available color type for random assignment
+	for color_type in available_colors:
 		var chance = DiceColor.get_color_chance(color_type)
 		if chance > 0:
 			var color_roll = randi() % chance

@@ -5,14 +5,21 @@ extends Node
 
 # Import DiceColor class to avoid shadowing warning
 const DiceColorClass = preload("res://Scripts/Core/dice_color.gd")
+const ColoredDiceDataClass = preload("res://Scripts/Core/colored_dice_data.gd")
 
 signal colors_enabled_changed(enabled: bool)
 signal color_effects_calculated(green_money: int, red_additive: int, purple_multiplier: float, same_color_bonus: bool)
 
 var colors_enabled: bool = true
 
+# Purchased colored dice tracking (only for current game session)
+var purchased_colors: Dictionary = {}  # DiceColor.Type -> bool
+var colored_dice_data: Dictionary = {}  # color_id -> ColoredDiceData
+
 func _ready() -> void:
 	add_to_group("dice_color_manager")
+	_load_colored_dice_data()
+	_reset_purchased_colors()
 	print("[DiceColorManager] Initialized and added to dice_color_manager group")
 
 ## Calculate dice color effects for scoring
@@ -264,3 +271,86 @@ func force_all_green() -> void:
 		print("[DiceColorManager] Successfully forced all dice to green")
 	else:
 		print("[DiceColorManager] Warning: Could not access dice_hand or debug method")
+
+## Load colored dice data resources
+func _load_colored_dice_data() -> void:
+	print("[DiceColorManager] Loading colored dice data...")
+	
+	# Load all colored dice data files
+	var data_files = [
+		"res://Resources/Data/ColoredDice/GreenDice.tres",
+		"res://Resources/Data/ColoredDice/RedDice.tres", 
+		"res://Resources/Data/ColoredDice/PurpleDice.tres",
+		"res://Resources/Data/ColoredDice/BlueDice.tres"
+	]
+	
+	for file_path in data_files:
+		var data = load(file_path)
+		if data and data.has_method("is_valid") and data.is_valid():
+			colored_dice_data[data.id] = data
+			print("[DiceColorManager] Loaded colored dice data: %s" % data.display_name)
+		else:
+			push_error("[DiceColorManager] Failed to load colored dice data: %s" % file_path)
+	
+	print("[DiceColorManager] Loaded %d colored dice types" % colored_dice_data.size())
+
+## Reset purchased colors for new game session
+func _reset_purchased_colors() -> void:
+	purchased_colors.clear()
+	for color_type in [DiceColorClass.Type.GREEN, DiceColorClass.Type.RED, DiceColorClass.Type.PURPLE, DiceColorClass.Type.BLUE]:
+		purchased_colors[color_type] = false
+	print("[DiceColorManager] Reset purchased colors for new game session")
+
+## Purchase a colored dice type for this game session
+## @param color_id: String ID of the colored dice to purchase
+## @return bool: True if purchase was successful
+func purchase_colored_dice(color_id: String) -> bool:
+	var data = colored_dice_data.get(color_id)
+	if not data:
+		push_error("[DiceColorManager] Invalid colored dice ID: %s" % color_id)
+		return false
+	
+	# Check if already purchased
+	if is_color_purchased(data.color_type):
+		print("[DiceColorManager] %s already purchased" % data.display_name)
+		return false
+	
+	# Mark as purchased for this session
+	purchased_colors[data.color_type] = true
+	print("[DiceColorManager] Purchased %s for this game session" % data.display_name)
+	return true
+
+## Check if a colored dice type has been purchased this session
+## @param color_type: DiceColor.Type to check
+## @return bool: True if purchased this session
+func is_color_purchased(color_type: DiceColorClass.Type) -> bool:
+	return purchased_colors.get(color_type, false)
+
+## Get available colored dice data (for shop display)
+## @return Array: Array of available colored dice data
+func get_available_colored_dice() -> Array:
+	var available = []
+	for data in colored_dice_data.values():
+		if data and data.has_method("is_valid"):
+			available.append(data)
+	return available
+
+## Get colored dice data by ID
+## @param color_id: String ID of the colored dice
+## @return Resource: The data resource, or null if not found
+func get_colored_dice_data(color_id: String):
+	return colored_dice_data.get(color_id)
+
+## Get all purchased colored dice types for this session
+## @return Array[DiceColor.Type]: Array of purchased color types
+func get_purchased_color_types() -> Array:
+	var purchased = []
+	for color_type in purchased_colors.keys():
+		if purchased_colors[color_type]:
+			purchased.append(color_type)
+	return purchased
+
+## Clear all purchased colors (call when game ends)
+func clear_purchased_colors() -> void:
+	_reset_purchased_colors()
+	print("[DiceColorManager] Cleared all purchased colors")

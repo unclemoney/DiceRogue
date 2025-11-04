@@ -247,6 +247,8 @@ func _create_debug_tabs() -> void:
 			{"text": "Print All Item Status", "method": "_debug_print_all_item_status"},
 			{"text": "Unlock All Items", "method": "_debug_unlock_all_items"},
 			{"text": "Lock All Items", "method": "_debug_lock_all_items"},
+			{"text": "Unlock All Colored Dice", "method": "_debug_unlock_all_colored_dice"},
+			{"text": "Lock All Colored Dice", "method": "_debug_lock_all_colored_dice"},
 			{"text": "Unlock PowerUp: Step By Step", "method": "_debug_unlock_step_by_step"},
 			{"text": "Lock PowerUp: Step By Step", "method": "_debug_lock_step_by_step"},
 			{"text": "Unlock Consumable: Quick Cash", "method": "_debug_unlock_quick_cash"},
@@ -1727,3 +1729,51 @@ func _debug_save_progress() -> void:
 	if progress_manager:
 		progress_manager.save_progress()
 		log_debug("Progress saved manually")
+	else:
+		log_debug("ProgressManager not found")
+
+## _debug_unlock_all_colored_dice()
+##
+## Unlocks all colored dice features for testing colored dice shop functionality
+func _debug_unlock_all_colored_dice() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if not progress_manager:
+		log_debug("ProgressManager not found")
+		return
+	
+	var colored_dice_items = ["green_dice", "red_dice", "purple_dice", "blue_dice"]
+	var unlocked_count = 0
+	
+	for item_id in colored_dice_items:
+		if progress_manager.has_method("debug_unlock_item"):
+			progress_manager.debug_unlock_item(item_id)
+			unlocked_count += 1
+			log_debug("Unlocked colored dice: %s" % item_id)
+		else:
+			log_debug("ProgressManager missing debug_unlock_item method")
+			break
+	
+	log_debug("Unlocked %d colored dice features" % unlocked_count)
+
+## _debug_lock_all_colored_dice()
+##
+## Locks all colored dice features for testing progression
+func _debug_lock_all_colored_dice() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if not progress_manager:
+		log_debug("ProgressManager not found")
+		return
+	
+	var colored_dice_items = ["green_dice", "red_dice", "purple_dice", "blue_dice"]
+	var locked_count = 0
+	
+	for item_id in colored_dice_items:
+		if progress_manager.has_method("debug_lock_item"):
+			progress_manager.debug_lock_item(item_id)
+			locked_count += 1
+			log_debug("Locked colored dice: %s" % item_id)
+		else:
+			log_debug("ProgressManager missing debug_lock_item method")
+			break
+	
+	log_debug("Locked %d colored dice features" % locked_count)

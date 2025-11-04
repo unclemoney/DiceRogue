@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ColoredDiceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/colored_dice_data.gd" id="1_1a2b3c"]
+
+[resource]
+script = ExtResource("1_1a2b3c")
+id = "green_dice"
+display_name = "Green Dice"
+description = "Eco-friendly dice that generate money based on their face value."
+price = 75
+color_type = 1
+effect_description = "Each Green die adds its face value in money when scored"
+rarity_description = "1 in 25 chance to appear on rolled dice"

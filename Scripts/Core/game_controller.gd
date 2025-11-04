@@ -1314,6 +1314,45 @@ func _get_expected_dice_count() -> int:
 	# Start with the current dice count setting (which may have been modified by power-ups)
 	return dice_hand.dice_count
 
+## grant_colored_dice(id)
+##
+## Processes the purchase of a colored dice type, making it available for the current game session.
+func grant_colored_dice(id: String) -> void:
+	print("[GameController] Attempting to grant colored dice:", id)
+	
+	# Get the colored dice data
+	var colored_dice_data = DiceColorManager.get_colored_dice_data(id)
+	if not colored_dice_data:
+		push_error("[GameController] No ColoredDiceData found for:", id)
+		return
+	
+	# Check if player can afford it
+	if PlayerEconomy.money < colored_dice_data.price:
+		print("[GameController] Insufficient money for colored dice:", id, "Cost:", colored_dice_data.price, "Have:", PlayerEconomy.money)
+		return
+	
+	# Deduct the cost
+	PlayerEconomy.remove_money(colored_dice_data.price, "colored_dice")
+	print("[GameController] Spent $%d on %s" % [colored_dice_data.price, colored_dice_data.display_name])
+	
+	# Purchase the colored dice type through DiceColorManager
+	if DiceColorManager.purchase_colored_dice(id):
+		print("[GameController] Successfully purchased %s for this game session" % colored_dice_data.display_name)
+		
+		# Optional: Show a notification or effect
+		_show_colored_dice_purchase_notification(colored_dice_data)
+	else:
+		# Refund if purchase failed
+		PlayerEconomy.add_money(colored_dice_data.price)
+		push_error("[GameController] Failed to purchase colored dice:", id)
+
+## _show_colored_dice_purchase_notification(data)
+##
+## Shows a notification when a colored dice type is purchased
+func _show_colored_dice_purchase_notification(data) -> void:
+	# This could be expanded to show visual effects or notifications
+	print("[GameController] 🎲 %s purchased! New dice will have a chance to be %s." % [data.display_name, data.get_color_name()])
+
 
 ## _on_roll_completed()
 ##
@@ -1538,6 +1577,9 @@ func _on_shop_item_purchased(item_id: String, item_type: String) -> void:
 		"mod":
 			print("[GameController] Granting mod:", item_id)
 			grant_mod(item_id)
+		"colored_dice":
+			print("[GameController] Granting colored dice:", item_id)
+			grant_colored_dice(item_id)
 		_:
 			push_error("[GameController] Unknown item type purchased:", item_type)
 

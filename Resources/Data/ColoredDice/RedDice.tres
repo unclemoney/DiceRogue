@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ColoredDiceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/colored_dice_data.gd" id="1_1a2b3c"]
+
+[resource]
+script = ExtResource("1_1a2b3c")
+id = "red_dice"
+display_name = "Red Dice"
+description = "Fiery dice that add bonus points to your score."
+price = 100
+color_type = 2
+effect_description = "Each Red die adds its face value as bonus points to the final score"
+rarity_description = "1 in 50 chance to appear on rolled dice"

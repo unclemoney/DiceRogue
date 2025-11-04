@@ -137,6 +137,11 @@ func start_game() -> void:
 	is_challenge_completed = false
 	game_started = true
 
+	# Reset colored dice purchases for new game session
+	if DiceColorManager:
+		DiceColorManager.clear_purchased_colors()
+		print("[RoundManager] Cleared colored dice purchases for new game")
+
 	# Make sure turn tracker is in inactive state with no rolls
 	if turn_tracker:
 		turn_tracker.current_turn = 0

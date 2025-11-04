@@ -12,6 +12,7 @@ signal shop_button_opened
 @onready var power_up_container: Container = $TabContainer/PowerUps/GridContainer
 @onready var consumable_container: Container = $TabContainer/Consumables/GridContainer
 @onready var mod_container: Container = $TabContainer/Mods/GridContainer
+@onready var colored_dice_container: Container = get_node_or_null("TabContainer/Colors/GridContainer")
 @onready var locked_container: Container = $TabContainer/Locked/ScrollContainer/GridContainer
 @onready var power_up_manager: PowerUpManager = get_node_or_null(power_up_manager_path)
 @onready var consumable_manager: ConsumableManager = get_node_or_null(consumable_manager_path)
@@ -37,8 +38,9 @@ var items_per_section := 2  # Number of items to display per section
 var power_up_items := 2     # Specific count for power-ups
 var consumable_items := 2   # Specific count for consumables  
 var mod_items := 2          # Specific count for mods
+var colored_dice_items := 2 # Specific count for colored dice
 
-var purchased_items := {}  # Track purchased items by type: {"power_up": [], "consumable": [], "mod": []}
+var purchased_items := {}  # Track purchased items by type: {"power_up": [], "consumable": [], "mod": [], "colored_dice": []}
 
 func _ready() -> void:
 	print("[ShopUI] Initializing...")
@@ -50,7 +52,8 @@ func _ready() -> void:
 	purchased_items = {
 		"power_up": [],
 		"consumable": [],
-		"mod": []
+		"mod": [],
+		"colored_dice": []
 	}
 	
 	if not shop_label:
@@ -63,6 +66,9 @@ func _ready() -> void:
 	# Fix mouse input for background elements (do this early, before manager checks)
 	_configure_mouse_input()
 
+	if not colored_dice_container:
+		print("[ShopUI] ColoredDiceContainer not found - creating programmatically")
+		_create_colors_tab()
 	if not power_up_manager:
 		push_error("[ShopUI] PowerUpManager not found at path:", power_up_manager_path)
 	if not consumable_manager:
@@ -181,6 +187,23 @@ func _populate_shop_items() -> void:
 			_add_shop_item(data, "mod")
 		else:
 			push_error("[ShopUI] Failed to get ModData for:", id)
+	
+	# Populate Colored Dice
+	var colored_dice = DiceColorManager.get_available_colored_dice()
+	var colored_dice_ids = []
+	for data in colored_dice:
+		colored_dice_ids.append(data.id)
+	var filtered_colored_dice = _filter_out_purchased_items(colored_dice_ids, "colored_dice")
+	# Filter out locked items
+	filtered_colored_dice = _filter_unlocked_items(filtered_colored_dice, "colored_dice")
+	var selected_colored_dice = _select_random_items(filtered_colored_dice, colored_dice_items)
+	
+	for id in selected_colored_dice:
+		var data = DiceColorManager.get_colored_dice_data(id)
+		if data:
+			_add_shop_item(data, "colored_dice")
+		else:
+			push_error("[ShopUI] Failed to get ColoredDiceData for:", id)
 
 # Helper function to filter out already purchased items
 func _filter_out_purchased_items(items: Array, type: String) -> Array:
@@ -266,14 +289,19 @@ func _clear_shop_containers() -> void:
 	if mod_container:
 		for child in mod_container.get_children():
 			child.queue_free()
+	
+	if colored_dice_container:
+		for child in colored_dice_container.get_children():
+			child.queue_free()
 
 # Add this function to reset purchased items for a new round
 func reset_for_new_round() -> void:
 	print("[ShopUI] Resetting shop for new round")
 	purchased_items = {
 		"power_up": [],
-		"consumable": [],
-		"mod": []
+		"consumable": [], 
+		"mod": [],
+		"colored_dice": []
 	}
 	_populate_shop_items()
 
@@ -324,6 +352,20 @@ func _on_item_purchased(item_id: String, item_type: String) -> void:
 			return
 		else:
 			print("[ShopUI] Mod purchase allowed - limit not reached")
+	# Check if it's a colored dice purchase
+	elif item_type == "colored_dice":
+		# Get the colored dice data to determine color type
+		var colored_dice_data = DiceColorManager.get_colored_dice_data(item_id)
+		if not colored_dice_data:
+			print("[ShopUI] Invalid colored dice ID:", item_id)
+			return
+		
+		# Check if this color type is already purchased
+		if DiceColorManager.is_color_purchased(colored_dice_data.color_type):
+			print("[ShopUI] Color type already purchased:", colored_dice_data.get_color_name())
+			return
+		
+		print("[ShopUI] Colored dice purchase validation passed for:", colored_dice_data.get_color_name())
 	
 	print("[ShopUI] Purchase validation passed, proceeding with purchase")
 	
@@ -412,13 +454,16 @@ func _get_container_for_type(type: String) -> Node:
 		"mod": 
 			print("[ShopUI] Getting mod container")
 			return mod_container
+		"colored_dice":
+			print("[ShopUI] Getting colored dice container")
+			return colored_dice_container
 		_:
 			push_error("[ShopUI] Unknown item type:", type)
 			return null
 
 func _on_money_changed(_new_amount: int, _change: int = 0) -> void:
 	# Update all shop item buttons in all containers
-	for container in [power_up_container, consumable_container, mod_container]:
+	for container in [power_up_container, consumable_container, mod_container, colored_dice_container]:
 		if container:
 			for child in container.get_children():
 				if child is ShopItem:
@@ -443,12 +488,19 @@ func increase_mod_items(amount: int) -> void:
 	print("[ShopUI] Increased mod items by", amount, "- new value:", mod_items)
 	_populate_shop_items()
 
+# Add method to increase colored dice items
+func increase_colored_dice_items(amount: int) -> void:
+	colored_dice_items += amount
+	print("[ShopUI] Increased colored dice items by", amount, "- new value:", colored_dice_items)
+	_populate_shop_items()
+
 # Keep old method for backward compatibility but mark as deprecated
 func increase_items_per_section(amount: int) -> void:
 	items_per_section += amount
 	power_up_items = items_per_section
 	consumable_items = items_per_section
 	mod_items = items_per_section
+	colored_dice_items = items_per_section
 	print("[ShopUI] [DEPRECATED] Increased all section items by", amount)
 	_populate_shop_items()
 
@@ -679,6 +731,31 @@ func _style_shop_title() -> void:
 	shop_label.text = "[center][color=gold]✦ MERCHANT'S SHOP ✦[/color][/center]"
 	
 	print("[ShopUI] Shop title styling applied")
+
+## _create_colors_tab()
+## Creates the COLORS tab programmatically if it doesn't exist in the scene
+func _create_colors_tab() -> void:
+	print("[ShopUI] Creating COLORS tab programmatically")
+	
+	if not tab_container:
+		push_error("[ShopUI] TabContainer not found - cannot create COLORS tab")
+		return
+	
+	# Create the Colors tab
+	var colors_tab = Control.new()
+	colors_tab.name = "Colors"
+	tab_container.add_child(colors_tab)
+	
+	# Create GridContainer for the colored dice items
+	var grid_container = GridContainer.new()
+	grid_container.name = "GridContainer"
+	grid_container.columns = 2  # Match other tabs
+	colors_tab.add_child(grid_container)
+	
+	# Set up the container reference
+	colored_dice_container = grid_container
+	
+	print("[ShopUI] COLORS tab created successfully")
 
 ## _configure_mouse_input()
 ## Configures mouse input filters to prevent background elements from blocking shop items
