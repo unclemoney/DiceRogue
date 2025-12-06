@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://Resources/Art/Powerups/consumable_test3.png" id="1_icon"]
+[ext_resource type="PackedScene" path="res://Scenes/Consumable/ChanceUpgradeConsumable.tscn" id="2_scene"]
+[ext_resource type="Script" path="res://Scripts/Consumable/ConsumableData.gd" id="3_script"]
+
+[resource]
+script = ExtResource("3_script")
+id = "chance_upgrade"
+display_name = "Upgrade Chance"
+description = "Upgrade Chance by 1 level. Scored values multiply by level."
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 200

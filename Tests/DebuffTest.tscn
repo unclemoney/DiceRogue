@@ -128,10 +128,10 @@ texture = ExtResource("5_sqb4o")
 
 [node name="BackgroundSwirl" type="ColorRect" parent="Background"]
 material = SubResource("ShaderMaterial_w6663")
-offset_left = -69.0
-offset_top = -244.0
-offset_right = 518.0
-offset_bottom = 237.0
+offset_left = -126.0
+offset_top = -262.0
+offset_right = 533.0
+offset_bottom = 275.0
 mouse_filter = 2
 
 [node name="CRTManager" parent="Background" instance=ExtResource("5_6hkbr")]
@@ -142,10 +142,11 @@ scale = Vector2(0.45, 0.65)
 transform = Transform2D(0.45, 0, 0, 0.65, 580, 120)
 
 [node name="TextureRect" type="TextureRect" parent="Background"]
-offset_left = -115.0
-offset_top = -329.0
-offset_right = 583.0
-offset_bottom = 406.0
+offset_left = -160.0
+offset_top = -300.0
+offset_right = 480.0
+offset_bottom = 340.0
+scale = Vector2(1.15, 1)
 texture = ExtResource("5_w4iq5")
 
 [node name="DiceHand" parent="." instance=ExtResource("5_gxabo")]
@@ -163,9 +164,9 @@ start_position = Vector2(640, 530)
 [node name="TurnTracker" parent="." instance=ExtResource("8_8eqdw")]
 
 [node name="ScoreCardUI" parent="." instance=ExtResource("11_oy5od")]
-offset_left = 839.0
+offset_left = 810.0
 offset_top = 135.0
-offset_right = 839.0
+offset_right = 810.0
 offset_bottom = 175.0
 
 [node name="PowerUpUI" parent="." instance=ExtResource("14_gtvla")]
@@ -188,8 +189,10 @@ max_power_ups = 5
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
-offset_right = 1280.0
-offset_bottom = 720.0
+offset_left = -22.0
+offset_top = 3.0
+offset_right = 1258.0
+offset_bottom = 723.0
 grow_horizontal = 1
 grow_vertical = 1
 size_flags_horizontal = 3
@@ -202,9 +205,9 @@ z_index = 3
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
-offset_left = 82.0
+offset_left = 56.0
 offset_top = 77.0
-offset_right = 260.0
+offset_right = 234.0
 offset_bottom = 224.0
 grow_horizontal = 1
 grow_vertical = 1
@@ -215,9 +218,9 @@ z_index = 3
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
-offset_left = 385.0
+offset_left = 323.0
 offset_top = 135.0
-offset_right = 491.0
+offset_right = 429.0
 offset_bottom = 224.0
 grow_horizontal = 1
 grow_vertical = 1
@@ -226,9 +229,9 @@ grow_vertical = 1
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
-offset_left = 114.0
+offset_left = 63.0
 offset_top = 463.0
-offset_right = 114.0
+offset_right = 63.0
 offset_bottom = 463.0
 grow_horizontal = 1
 grow_vertical = 1
@@ -239,10 +242,10 @@ round_manager_path = NodePath("../RoundManager")
 challenge_manager_path = NodePath("../ChallengeManager")
 
 [node name="VCRTurnTrackerUI" parent="." instance=ExtResource("19_w4iq5")]
-offset_left = 116.0
-offset_top = 579.0
-offset_right = 468.0
-offset_bottom = 634.0
+offset_left = 62.0
+offset_top = 578.0
+offset_right = 414.0
+offset_bottom = 633.0
 
 [node name="ShopUI" parent="." instance=ExtResource("32_oy5od")]
 visible = false
@@ -259,7 +262,6 @@ challenge_container_path = NodePath("../ChallengeContainer")
 crt_manager_path = NodePath("../Background/CRTManager")
 
 [node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
-visible = false
 power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc"), ExtResource("29_bonus_money"), ExtResource("29_money_multiplier"), ExtResource("30_8nt64"), ExtResource("30_2hxro"), ExtResource("31_sqb4o"), ExtResource("32_fullhouse"), ExtResource("33_stepbystep"), ExtResource("70_perfect_strangers"), ExtResource("83_green_monster"), ExtResource("39_hm8bq"), ExtResource("99_wild_dots"), ExtResource("100_pin_head"), ExtResource("101_money_well_spent"), ExtResource("102_highlighted_score"), ExtResource("103_the_consumer_is_always_right"), ExtResource("104_green_slime"), ExtResource("105_red_slime"), ExtResource("106_purple_slime"), ExtResource("107_blue_slime")])
 
 [node name="ChallengeManager" parent="." instance=ExtResource("25_3vaha")]
@@ -282,7 +284,6 @@ dice_hand_path = NodePath("../DiceHand")
 scorecard_path = NodePath("../ScoreCard")
 
 [node name="DebugPanel" parent="." instance=ExtResource("69_6hkbr")]
-visible = false
 z_index = 10
 z_as_relative = false
 

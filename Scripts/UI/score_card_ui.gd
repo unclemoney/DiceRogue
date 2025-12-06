@@ -4,6 +4,7 @@ class_name ScoreCardUI
 var scorecard: Scorecard
 var category_buttons := {}
 var category_labels := {}
+var category_level_labels := {}  # Level labels for score card upgrades
 var turn_scored := false
 var reroll_active := false
 var any_score_active := false
@@ -120,6 +121,12 @@ func bind_scorecard(sc: Scorecard):
 	scorecard.score_assigned.connect(_on_score_assigned_from_scorecard)
 	scorecard.score_auto_assigned.connect(_on_score_auto_assigned)
 	scorecard.score_changed.connect(_on_score_changed_from_scorecard)
+	
+	# Connect to category upgrade signal for level label updates
+	scorecard.category_upgraded.connect(_on_category_upgraded)
+	
+	# Create level labels for all categories
+	_create_level_labels()
 
 	# Set scorecard in DiceResults
 	DiceResults.set_scorecard(scorecard)
@@ -213,6 +220,83 @@ func update_all():
 			yahtzee_bonus_label.text = str(int(scorecard.yahtzee_bonus_points))
 		else:
 			yahtzee_bonus_label.text = "-"
+
+
+## _create_level_labels()
+##
+## References level indicator labels from the scene for all scoring categories.
+## Labels show "Lv.1" by default and update to "Lv.X" when upgraded.
+func _create_level_labels() -> void:
+	print("[ScoreCardUI] Referencing category level labels from scene")
+	
+	# Load VCR font for level labels
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	
+	# Reference labels for upper section categories
+	var upper_categories = ["ones", "twos", "threes", "fours", "fives", "sixes"]
+	for category in upper_categories:
+		var category_name = category.capitalize()
+		var label_path = "HBoxContainer/UpperVBoxContainer/UpperGridContainer/" + category_name + "Container/" + category_name + "LevelLabel"
+		var level_label = get_node_or_null(label_path)
+		
+		if level_label:
+			# Apply styling
+			if vcr_font:
+				level_label.add_theme_font_override("font", vcr_font)
+			level_label.add_theme_color_override("font_color", Color(1, 0.84, 0, 1))  # Gold color
+			level_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+			level_label.add_theme_constant_override("outline_size", 1)
+			
+			category_level_labels[category] = level_label
+			print("[ScoreCardUI] Found level label for upper:", category)
+		else:
+			print("[ScoreCardUI] Warning: Level label not found for upper category:", category)
+	
+	# Reference labels for lower section categories (including chance)
+	var lower_categories_to_upgrade = ["three_of_a_kind", "four_of_a_kind", "full_house", "small_straight", "large_straight", "yahtzee", "chance"]
+	for category in lower_categories_to_upgrade:
+		var node_name = LOWER_CATEGORY_NODE_NAMES.get(category, category.capitalize())
+		var label_path = "HBoxContainer/LowerVBoxContainer/LowerGridContainer/" + node_name + "/" + node_name + "LevelLabel"
+		var level_label = get_node_or_null(label_path)
+		
+		if level_label:
+			# Apply styling
+			if vcr_font:
+				level_label.add_theme_font_override("font", vcr_font)
+			level_label.add_theme_color_override("font_color", Color(1, 0.84, 0, 1))  # Gold color
+			level_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+			level_label.add_theme_constant_override("outline_size", 1)
+			
+			category_level_labels[category] = level_label
+			print("[ScoreCardUI] Found level label for lower:", category)
+		else:
+			print("[ScoreCardUI] Warning: Level label not found for lower category:", category)
+	
+	print("[ScoreCardUI] Referenced", category_level_labels.size(), "level labels total")
+
+
+## _on_category_upgraded(section, category, new_level)
+##
+## Updates the level label when a category is upgraded.
+## Shows "Lv.X" text for all levels (including level 1).
+func _on_category_upgraded(_section: Scorecard.Section, category: String, new_level: int) -> void:
+	print("[ScoreCardUI] Category upgraded:", category, "to level", new_level)
+	
+	var level_label = category_level_labels.get(category)
+	if level_label:
+		level_label.text = "Lv.%d" % new_level
+		
+		# Add a brief highlight animation when upgraded above level 1
+		if new_level > 1:
+			var tween = create_tween()
+			level_label.modulate = Color(1, 1, 0.5, 1)  # Bright yellow flash
+			tween.tween_property(level_label, "modulate", Color(1, 1, 1, 1), 0.4)
+			
+			# Scale bounce effect
+			level_label.scale = Vector2(1.3, 1.3)
+			tween.parallel().tween_property(level_label, "scale", Vector2(1, 1), 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	else:
+		print("[ScoreCardUI] Warning: No level label found for category:", category)
 
 
 ## _on_upper_bonus_achieved(bonus)

@@ -186,9 +186,9 @@ func start_round(round_number: int) -> void:
 	if dice_hand:
 		dice_hand.switch_dice_type(round_data.dice_type)
 
-	# Reset the scorecard
+	# Reset the scorecard scores but preserve category levels (upgrades persist across rounds)
 	if scorecard:
-		scorecard.reset_scores()
+		scorecard.reset_scores_preserve_levels()
 
 	# Clear dice color effects for new round (but preserve PowerUp/Consumable effects)
 	if DiceColorManager:

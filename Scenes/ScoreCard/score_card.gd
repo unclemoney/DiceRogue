@@ -14,6 +14,7 @@ signal score_assigned(section: Section, category: String, score: int)  # New sig
 signal yahtzee_bonus_achieved(points: int)
 signal score_changed(total_score: int)  # Add this signal
 signal game_completed(final_score: int) # Add this signal
+signal category_upgraded(section: Section, category: String, new_level: int)  # For score card upgrades
 
 var upper_bonus := 0  # Add this to track the bonus
 var upper_bonus_awarded := false  # Track if bonus has been awarded
@@ -42,6 +43,27 @@ var lower_scores := {
 	"chance": null
 }
 
+# Category level tracking for score card upgrades
+# Level multiplies base score before other modifiers apply
+var upper_levels := {
+	"ones": 1,
+	"twos": 1,
+	"threes": 1,
+	"fours": 1,
+	"fives": 1,
+	"sixes": 1
+}
+
+var lower_levels := {
+	"three_of_a_kind": 1,
+	"four_of_a_kind": 1,
+	"full_house": 1,
+	"small_straight": 1,
+	"large_straight": 1,
+	"yahtzee": 1,
+	"chance": 1
+}
+
 var _score_multiplier_func: Callable  # DEPRECATED: Use ScoreModifierManager instead
 var score_modifiers: Array = [] # Array to hold score modifier objects
 var score_multiplier: float = 1.0  # DEPRECATED: Use ScoreModifierManager instead
@@ -60,6 +82,71 @@ func unregister_score_modifier(modifier: Object) -> void:
 	if score_modifiers.has(modifier):
 		score_modifiers.erase(modifier)
 		print("[Scorecard] Unregistered score modifier:", modifier.name)
+
+
+## upgrade_category(section, category)
+##
+## Upgrades a scoring category by one level.
+## Level multiplies base score before other modifiers apply.
+## @param section: Section enum (UPPER or LOWER)
+## @param category: String category name (e.g., "ones", "yahtzee")
+func upgrade_category(section: Section, category: String) -> void:
+	var current_level := 1
+	var new_level := 1
+	
+	match section:
+		Section.UPPER:
+			if upper_levels.has(category):
+				current_level = upper_levels[category]
+				new_level = current_level + 1
+				upper_levels[category] = new_level
+				print("[Scorecard] Upgraded upper category '%s' from level %d to level %d" % [category, current_level, new_level])
+			else:
+				push_error("[Scorecard] Invalid upper category for upgrade: " + category)
+				return
+		Section.LOWER:
+			if lower_levels.has(category):
+				current_level = lower_levels[category]
+				new_level = current_level + 1
+				lower_levels[category] = new_level
+				print("[Scorecard] Upgraded lower category '%s' from level %d to level %d" % [category, current_level, new_level])
+			else:
+				push_error("[Scorecard] Invalid lower category for upgrade: " + category)
+				return
+	
+	emit_signal("category_upgraded", section, category, new_level)
+
+
+## get_category_level(section, category)
+##
+## Returns the current level for a scoring category.
+## @param section: Section enum (UPPER or LOWER)
+## @param category: String category name
+## @return int current level (default 1)
+func get_category_level(section: Section, category: String) -> int:
+	match section:
+		Section.UPPER:
+			if upper_levels.has(category):
+				return upper_levels[category]
+		Section.LOWER:
+			if lower_levels.has(category):
+				return lower_levels[category]
+	return 1  # Default level
+
+
+## get_category_level_by_name(category)
+##
+## Returns the current level for a scoring category by name only.
+## Automatically determines if it's an upper or lower section category.
+## @param category: String category name
+## @return int current level (default 1)
+func get_category_level_by_name(category: String) -> int:
+	if upper_levels.has(category):
+		return upper_levels[category]
+	elif lower_levels.has(category):
+		return lower_levels[category]
+	return 1  # Default level
+
 
 func set_score(section: int, category: String, score: int) -> void:
 	print("\n=== Setting Score ===")
@@ -399,19 +486,57 @@ func reset_scores() -> void:
 	for category in lower_scores.keys():
 		lower_scores[category] = null
 	
+	# Reset category levels
+	for category in upper_levels.keys():
+		upper_levels[category] = 1
+	for category in lower_levels.keys():
+		lower_levels[category] = 1
+	
 	# Reset bonus tracking
 	upper_bonus = 0
 	yahtzee_bonuses = 0
 	yahtzee_bonus_points = 0
+	upper_bonus_awarded = false
 	
 	# Note: Multipliers are now handled by ScoreModifierManager
 	# PowerUps should manage their own multiplier lifecycle
-	print("[Scorecard] All scores reset - multipliers handled by ScoreModifierManager")
-	
-	print("[Scorecard] All scores reset")
+	print("[Scorecard] All scores and levels reset - multipliers handled by ScoreModifierManager")
 	
 	# Emit signal with 0 score since we've reset everything
 	emit_signal("score_changed", 0)
+
+
+## reset_scores_preserve_levels()
+##
+## Resets all category scores to null but PRESERVES category levels.
+## Use this for round transitions where upgrades should persist.
+func reset_scores_preserve_levels() -> void:
+	print("[Scorecard] Resetting scores (preserving levels)")
+	
+	# Reset debug counter
+	calculate_score_call_count = 0
+	
+	# Reset upper section scores (but not levels)
+	for category in upper_scores.keys():
+		upper_scores[category] = null
+	
+	# Reset lower section scores (but not levels)
+	for category in lower_scores.keys():
+		lower_scores[category] = null
+	
+	# Reset bonus tracking
+	upper_bonus = 0
+	yahtzee_bonuses = 0
+	yahtzee_bonus_points = 0
+	upper_bonus_awarded = false
+	
+	# Log current levels for debugging
+	print("[Scorecard] Preserved upper levels:", upper_levels)
+	print("[Scorecard] Preserved lower levels:", lower_levels)
+	
+	# Emit signal with 0 score since we've reset everything
+	emit_signal("score_changed", 0)
+
 
 func calculate_score(category: String, dice_values: Array) -> int:
 	return calculate_score_internal(category, dice_values, false)
@@ -552,18 +677,27 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 	
 	print("[Scorecard] DEBUG: Extracted color effects - Green money:", dice_color_money, "Red additive:", dice_color_additive, "Purple mult:", dice_color_multiplier, "Blue mult:", blue_score_multiplier)
 	
-	# Apply calculation order: ((base + additives (regular + red dice)) * multipliers (regular + purple dice)) * blue multiplier
+	# Get category level for level multiplier (applied FIRST before other modifiers)
+	var category_level = get_category_level_by_name(category)
+	var score_after_level = base_score * category_level
+	
+	if category_level > 1:
+		print("[Scorecard] DEBUG: Category level multiplier - base:", base_score, "× level:", category_level, "=", score_after_level)
+	
+	# Apply calculation order: ((base * level + additives (regular + red dice)) * multipliers (regular + purple dice)) * blue multiplier
 	var total_additive_bonus = total_additive + dice_color_additive
 	var total_multiplier_bonus = total_multiplier * dice_color_multiplier
-	var score_with_additive = base_score + total_additive_bonus
+	var score_with_additive = score_after_level + total_additive_bonus
 	var score_with_colors = int(score_with_additive * total_multiplier_bonus)
 	var final_score = int(score_with_colors * blue_score_multiplier)
 	
-	print("[Scorecard] DEBUG: Blue dice calculation - base:", base_score, "→ with_colors:", score_with_colors, "→ final:", final_score, "(blue_mult:", blue_score_multiplier, ")")
+	print("[Scorecard] DEBUG: Blue dice calculation - base:", base_score, "→ after_level:", score_after_level, "→ with_colors:", score_with_colors, "→ final:", final_score, "(blue_mult:", blue_score_multiplier, ")")
 	
 	# Create detailed breakdown information
 	var breakdown_info = {
 		"base_score": base_score,
+		"category_level": category_level,
+		"score_after_level": score_after_level,
 		"regular_additive": total_additive,
 		"dice_color_additive": dice_color_additive,
 		"total_additive": total_additive_bonus,
@@ -578,7 +712,7 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 		"active_powerups": active_powerup_sources.duplicate(),
 		"active_consumables": active_consumable_sources.duplicate(),
 		"dice_color_money": dice_color_money,
-		"has_modifiers": (total_additive_bonus > 0 or total_multiplier_bonus != 1.0 or blue_score_multiplier != 1.0 or dice_color_money > 0),
+		"has_modifiers": (category_level > 1 or total_additive_bonus > 0 or total_multiplier_bonus != 1.0 or blue_score_multiplier != 1.0 or dice_color_money > 0),
 		# Add dice information for animation system
 		"used_dice_indices": used_dice_indices.duplicate(),
 		"dice_values": dice_values.duplicate(),
@@ -616,6 +750,8 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 	# Only print detailed calculation if there are modifiers applied
 	if apply_money_effects and breakdown_info.has_modifiers:
 		print("[Scorecard] Scoring calculation for", category, ": Base:", base_score, "→ Final:", final_score)
+		if category_level > 1:
+			print("  Category Level: ×", category_level, " (", base_score, "→", score_after_level, ")")
 		if total_additive_bonus > 0:
 			print("  Additives: +", total_additive_bonus, " (Regular:", total_additive, " + Red:", dice_color_additive, ")")
 		if total_multiplier_bonus != 1.0:
@@ -786,15 +922,21 @@ func _calculate_score_with_preserved_effects(category: String, dice_values: Arra
 	var dice_color_multiplier = color_effects.get("purple_multiplier", 1.0)
 	var dice_color_money = color_effects.get("green_money", 0)
 	
-	# Apply calculation order: base + additives * multipliers
+	# Get category level for level multiplier (applied FIRST before other modifiers)
+	var category_level = get_category_level_by_name(category)
+	var score_after_level = base_score * category_level
+	
+	# Apply calculation order: ((base * level) + additives) * multipliers
 	var total_additive_bonus = total_additive + dice_color_additive
 	var total_multiplier_bonus = total_multiplier * dice_color_multiplier
-	var score_with_additive = base_score + total_additive_bonus
+	var score_with_additive = score_after_level + total_additive_bonus
 	var final_score = int(score_with_additive * total_multiplier_bonus)
 	
 	# Print debug info for autoscoring
 	print("[Scorecard] Preserved effects calculation:")
 	print("  Base score: ", base_score)
+	if category_level > 1:
+		print("  Category level: ×", category_level, " (", base_score, " → ", score_after_level, ")")
 	print("  Regular additive: ", total_additive)
 	print("  Dice color additive: ", dice_color_additive, " (preserved)")
 	print("  Regular multiplier: ", total_multiplier)

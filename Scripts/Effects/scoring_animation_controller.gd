@@ -166,6 +166,13 @@ func _execute_animation_sequence(score: int, _category: String, breakdown_info: 
 	# Phase 1: Dice bounce animation with individual scores
 	await _animate_dice_bounce_with_scores(intensity_scale, speed_scale)
 	
+	# Phase 1.5: Show category level multiplier if > 1
+	var category_level = breakdown_info.get("category_level", 1)
+	if category_level > 1:
+		var level_delay = 0.05 / speed_scale
+		await get_tree().create_timer(level_delay).timeout
+		_animate_category_level_multiplier(breakdown_info, intensity_scale, speed_scale)
+	
 	# Phase 2: Play scoring sound with dynamic pitch
 	#_play_scoring_audio(score)
 	
@@ -665,6 +672,38 @@ func _show_final_score_number(score: int, _intensity_scale: float) -> void:
 		str(score), 2.0 * _intensity_scale, Color.GOLD)
 	
 	print("[ScoringAnimationController] Showing final score: %d" % score)
+
+## _animate_category_level_multiplier(breakdown_info, intensity_scale, speed_scale)
+##
+## Animate the category level multiplier as a floating "×N" text.
+## Shows above the dice area after dice animations complete.
+func _animate_category_level_multiplier(breakdown_info: Dictionary, intensity_scale: float, speed_scale: float) -> void:
+	var category_level = breakdown_info.get("category_level", 1)
+	if category_level <= 1:
+		return  # No animation needed for level 1
+	
+	var base_score = breakdown_info.get("base_score", 0)
+	var score_after_level = breakdown_info.get("score_after_level", base_score)
+	
+	print("[ScoringAnimationController] Animating category level multiplier: ×%d (base %d → %d)" % [category_level, base_score, score_after_level])
+	
+	# Position above the dice area - centered horizontally
+	var screen_size = get_viewport().get_visible_rect().size
+	var level_position = Vector2(screen_size.x / 2, screen_size.y * 0.35)  # Upper third of screen
+	
+	# Create the level multiplier text with gold color
+	var level_text = "×%d" % category_level
+	var floating_number = FloatingNumber.create_floating_number(
+		get_tree().current_scene,
+		level_position,
+		level_text,
+		1.8 * intensity_scale,
+		Color(1.0, 0.84, 0.0)  # Gold color
+	)
+	
+	if floating_number:
+		floating_number.float_duration = floating_number.float_duration / speed_scale
+		floating_number.float_speed = FLOAT_NUMBER_SPEED * speed_scale * 0.8  # Slightly slower float
 
 ## create_floating_number(position, value, scale_factor)
 ##

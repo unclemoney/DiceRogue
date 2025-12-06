@@ -493,6 +493,44 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.EARN_MONEY, 250)
 	
 	# ==========================================================================
+	# SCORE CARD UPGRADE CONSUMABLES (13 total)
+	# ==========================================================================
+	
+	# Upper Section Upgrades (unlock with category scoring achievements)
+	_add_default_consumable("ones_upgrade", "Ones Upgrade", "Upgrade Ones category level", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 50)
+	_add_default_consumable("twos_upgrade", "Twos Upgrade", "Upgrade Twos category level", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 75)
+	_add_default_consumable("threes_upgrade", "Threes Upgrade", "Upgrade Threes category level", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 100)
+	_add_default_consumable("fours_upgrade", "Fours Upgrade", "Upgrade Fours category level", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 125)
+	_add_default_consumable("fives_upgrade", "Fives Upgrade", "Upgrade Fives category level", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 150)
+	_add_default_consumable("sixes_upgrade", "Sixes Upgrade", "Upgrade Sixes category level", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 175)
+	
+	# Lower Section Upgrades (unlock with more challenging achievements)
+	_add_default_consumable("three_of_a_kind_upgrade", "Three of a Kind Upgrade", "Upgrade Three of a Kind category level", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 200)
+	_add_default_consumable("four_of_a_kind_upgrade", "Four of a Kind Upgrade", "Upgrade Four of a Kind category level", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 250)
+	_add_default_consumable("full_house_upgrade", "Full House Upgrade", "Upgrade Full House category level", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 300)
+	_add_default_consumable("small_straight_upgrade", "Small Straight Upgrade", "Upgrade Small Straight category level", 
+		UnlockConditionClass.ConditionType.ROLL_STRAIGHT, 3)
+	_add_default_consumable("large_straight_upgrade", "Large Straight Upgrade", "Upgrade Large Straight category level", 
+		UnlockConditionClass.ConditionType.ROLL_STRAIGHT, 5)
+	_add_default_consumable("yahtzee_upgrade", "Yahtzee Upgrade", "Upgrade Yahtzee category level", 
+		UnlockConditionClass.ConditionType.ROLL_YAHTZEE, 3)
+	_add_default_consumable("chance_upgrade", "Chance Upgrade", "Upgrade Chance category level", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 350)
+	
+	# Master Upgrade (unlock with advanced achievement)
+	_add_default_consumable("all_categories_upgrade", "Master Upgrade", "Upgrade ALL categories by one level", 
+		UnlockConditionClass.ConditionType.ROLL_YAHTZEE, 5)
+	
+	# ==========================================================================
 	# ALL MODS (7 total) - From Scripts/Mods/*.tres files
 	# ==========================================================================
 	

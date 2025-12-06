@@ -361,6 +361,45 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 
 ## Available Consumables
 
+### Score Card Upgrade Consumables
+Score Card Upgrade consumables permanently increase the level of specific scoring categories. When a category is upgraded, its base score is multiplied by the level before other modifiers are applied.
+
+**Calculation Order:** `(base_score × category_level) + additives × multipliers`
+
+**Upper Section Upgrades** (Price: $150 each)
+- **Ones Upgrade**: Upgrade the Ones category (+1 level)
+- **Twos Upgrade**: Upgrade the Twos category (+1 level)
+- **Threes Upgrade**: Upgrade the Threes category (+1 level)
+- **Fours Upgrade**: Upgrade the Fours category (+1 level)
+- **Fives Upgrade**: Upgrade the Fives category (+1 level)
+- **Sixes Upgrade**: Upgrade the Sixes category (+1 level)
+
+**Lower Section Upgrades** (Price: $200 each)
+- **Three of a Kind Upgrade**: Upgrade the Three of a Kind category (+1 level)
+- **Four of a Kind Upgrade**: Upgrade the Four of a Kind category (+1 level)
+- **Full House Upgrade**: Upgrade the Full House category (+1 level)
+- **Small Straight Upgrade**: Upgrade the Small Straight category (+1 level)
+- **Large Straight Upgrade**: Upgrade the Large Straight category (+1 level)
+- **Yahtzee Upgrade**: Upgrade the Yahtzee category (+1 level)
+
+**Master Upgrade** (Price: $500)
+- **All Categories Upgrade**: Upgrades ALL 12 scoring categories by one level at once
+
+**Example:**
+- Ones at Level 3: Roll three 1s → Base 3 × Level 3 = 9 points (before additives/multipliers)
+- Yahtzee at Level 2: Roll five 6s → Base 50 × Level 2 = 100 points
+
+**Visual Feedback:**
+- Score card displays "Lv.N" next to each upgraded category (gold text)
+- Scoring animations show the level multiplier "×N" floating above dice
+- Labels only appear for categories at Level 2 or higher
+
+**Notes:**
+- There is no maximum level cap - categories can be upgraded indefinitely
+- Levels reset when a new game starts
+- Level multiplier is applied FIRST, before additives and other multipliers
+- Stacks well with other score modifiers for massive scoring potential
+
 ### Scoring Aids
 - **AnyScore**: Score current dice in any open category, ignoring normal requirements
 - **ScoreReroll**: Reroll all dice, then auto-score best category

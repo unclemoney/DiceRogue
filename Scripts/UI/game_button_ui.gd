@@ -218,9 +218,9 @@ func _on_next_round_button_pressed() -> void:
 	if dice_hand:
 		dice_hand.clear_dice()
 	
-	# Reset all scores on the scorecard and update UI
+	# Reset all scores on the scorecard but preserve levels (upgrades persist) and update UI
 	if score_card_ui and score_card_ui.scorecard:
-		score_card_ui.scorecard.reset_scores()
+		score_card_ui.scorecard.reset_scores_preserve_levels()
 		score_card_ui.update_all()
 	
 	# After clearing dice, proceed with round management

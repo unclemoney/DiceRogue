@@ -28,6 +28,21 @@ const THE_RARITIES_CONSUMABLE_DEF := preload("res://Scripts/Consumable/TheRariti
 const THE_PAWN_SHOP_CONSUMABLE_DEF := preload("res://Scripts/Consumable/ThePawnShopConsumable.tres")
 const ONE_EXTRA_DICE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/OneExtraDiceConsumable.tres")
 const GO_BROKE_OR_GO_HOME_CONSUMABLE_DEF := preload("res://Scripts/Consumable/GoBrokeOrGoHomeConsumable.tres")
+# Score card upgrade consumables
+const ONES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/OnesUpgradeConsumable.tres")
+const TWOS_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/TwosUpgradeConsumable.tres")
+const THREES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/ThreesUpgradeConsumable.tres")
+const FOURS_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/FoursUpgradeConsumable.tres")
+const FIVES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/FivesUpgradeConsumable.tres")
+const SIXES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/SixesUpgradeConsumable.tres")
+const THREE_OF_A_KIND_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/ThreeOfAKindUpgradeConsumable.tres")
+const FOUR_OF_A_KIND_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/FourOfAKindUpgradeConsumable.tres")
+const FULL_HOUSE_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/FullHouseUpgradeConsumable.tres")
+const SMALL_STRAIGHT_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/SmallStraightUpgradeConsumable.tres")
+const LARGE_STRAIGHT_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/LargeStraightUpgradeConsumable.tres")
+const YAHTZEE_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/YahtzeeUpgradeConsumable.tres")
+const CHANCE_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/ChanceUpgradeConsumable.tres")
+const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/AllCategoriesUpgradeConsumable.tres")
 
 # Centralized, explicit NodePaths (tweak in Inspector if scene changes)
 @export var dice_hand_path: NodePath            = ^"../DiceHand"
@@ -178,6 +193,21 @@ func _ready() -> void:
 		consumable_manager.register_consumable_def(THE_PAWN_SHOP_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(ONE_EXTRA_DICE_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(GO_BROKE_OR_GO_HOME_CONSUMABLE_DEF)
+		# Score card upgrade consumables
+		consumable_manager.register_consumable_def(ONES_UPGRADE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(TWOS_UPGRADE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(THREES_UPGRADE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(FOURS_UPGRADE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(FIVES_UPGRADE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(SIXES_UPGRADE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(THREE_OF_A_KIND_UPGRADE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(FOUR_OF_A_KIND_UPGRADE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(FULL_HOUSE_UPGRADE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(SMALL_STRAIGHT_UPGRADE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(LARGE_STRAIGHT_UPGRADE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(YAHTZEE_UPGRADE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(CHANCE_UPGRADE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF)
 
 	## _ready()
 	## Called when the GameController node enters the scene tree.
@@ -841,6 +871,13 @@ func _on_consumable_used(consumable_id: String) -> void:
 		"go_broke_or_go_home":
 			consumable.apply(self)
 			remove_consumable_instance.call()
+		# Score card upgrade consumables
+		"ones_upgrade", "twos_upgrade", "threes_upgrade", "fours_upgrade", "fives_upgrade", "sixes_upgrade", \
+		"three_of_a_kind_upgrade", "four_of_a_kind_upgrade", "full_house_upgrade", \
+		"small_straight_upgrade", "large_straight_upgrade", "yahtzee_upgrade", "chance_upgrade", \
+		"all_categories_upgrade":
+			consumable.apply(self)
+			remove_consumable_instance.call()
 		_:
 			push_error("Unknown consumable type: %s" % consumable_id)
 
@@ -991,6 +1028,15 @@ func _create_manual_breakdown_info(category: String = "") -> Dictionary:
 	for consumable_id in active_consumables.keys():
 		active_consumables_list.append(consumable_id)
 	breakdown_info["active_consumables"] = active_consumables_list
+	
+	# Add category level from scorecard for upgrade system
+	if scorecard and category != "":
+		var category_level = scorecard.get_category_level_by_name(category)
+		breakdown_info["category_level"] = category_level
+		if category_level > 1:
+			print("[GameController] Manual breakdown: category '%s' at level %d" % [category, category_level])
+	else:
+		breakdown_info["category_level"] = 1
 	
 	# Add dice information if we have dice hand
 	if dice_hand and category != "":

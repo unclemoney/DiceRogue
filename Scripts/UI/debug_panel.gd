@@ -196,6 +196,15 @@ func _create_debug_tabs() -> void:
 			{"text": "Show All Items", "method": "_debug_show_items"},
 			{"text": "Clear All Items", "method": "_debug_clear_items"},
 		],
+		"Score Card Upgrades": [
+			{"text": "Grant Master Upgrade", "method": "_debug_grant_master_upgrade"},
+			{"text": "Grant Ones Upgrade", "method": "_debug_grant_ones_upgrade"},
+			{"text": "Grant Yahtzee Upgrade", "method": "_debug_grant_yahtzee_upgrade"},
+			{"text": "Upgrade All Categories (Direct)", "method": "_debug_upgrade_all_categories"},
+			{"text": "Show Category Levels", "method": "_debug_show_category_levels"},
+			{"text": "Unlock All Upgrade Consumables", "method": "_debug_unlock_all_upgrade_consumables"},
+			{"text": "Lock All Upgrade Consumables", "method": "_debug_lock_all_upgrade_consumables"},
+		],
 		"Dice Control": [
 			{"text": "Roll All 6s", "method": "_debug_force_dice"},
 			{"text": "Roll All 1s", "method": "_debug_force_ones"},
@@ -1777,3 +1786,171 @@ func _debug_lock_all_colored_dice() -> void:
 			break
 	
 	log_debug("Locked %d colored dice features" % locked_count)
+
+# ============================================================================
+# Score Card Upgrade Debug Functions
+# ============================================================================
+
+## _debug_grant_master_upgrade()
+##
+## Grants the Master Upgrade consumable that upgrades all categories.
+func _debug_grant_master_upgrade() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("all_categories_upgrade")
+		log_debug("Granted Master Upgrade (All Categories) consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+## _debug_grant_ones_upgrade()
+##
+## Grants the Ones Upgrade consumable for testing.
+func _debug_grant_ones_upgrade() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("ones_upgrade")
+		log_debug("Granted Ones Upgrade consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+## _debug_grant_yahtzee_upgrade()
+##
+## Grants the Yahtzee Upgrade consumable for testing.
+func _debug_grant_yahtzee_upgrade() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("yahtzee_upgrade")
+		log_debug("Granted Yahtzee Upgrade consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+## _debug_upgrade_all_categories()
+##
+## Directly upgrades all score card categories by one level (bypasses consumable).
+func _debug_upgrade_all_categories() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	var scorecard = game_controller.scorecard
+	if not scorecard:
+		log_debug("ERROR: Scorecard not available")
+		return
+	
+	if not scorecard.has_method("upgrade_category"):
+		log_debug("ERROR: Scorecard missing upgrade_category method")
+		return
+	
+	# Upgrade all upper section categories
+	var upper_categories = ["ones", "twos", "threes", "fours", "fives", "sixes"]
+	for cat in upper_categories:
+		scorecard.upgrade_category(Scorecard.Section.UPPER, cat)
+	
+	# Upgrade all lower section categories
+	var lower_categories = ["three_of_a_kind", "four_of_a_kind", "full_house", "small_straight", "large_straight", "yahtzee"]
+	for cat in lower_categories:
+		scorecard.upgrade_category(Scorecard.Section.LOWER, cat)
+	
+	log_debug("Upgraded all 12 score card categories by 1 level")
+
+## _debug_show_category_levels()
+##
+## Displays current level of all score card categories.
+func _debug_show_category_levels() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	var scorecard = game_controller.scorecard
+	if not scorecard:
+		log_debug("ERROR: Scorecard not available")
+		return
+	
+	log_debug("=== Score Card Category Levels ===")
+	
+	# Show upper section levels
+	log_debug("--- Upper Section ---")
+	if scorecard.get("upper_levels"):
+		for cat_name in scorecard.upper_levels:
+			var level = scorecard.upper_levels[cat_name]
+			log_debug("  %s: Level %d" % [cat_name, level])
+	else:
+		log_debug("  upper_levels not found")
+	
+	# Show lower section levels
+	log_debug("--- Lower Section ---")
+	if scorecard.get("lower_levels"):
+		for cat_name in scorecard.lower_levels:
+			var level = scorecard.lower_levels[cat_name]
+			log_debug("  %s: Level %d" % [cat_name, level])
+	else:
+		log_debug("  lower_levels not found")
+
+## _debug_unlock_all_upgrade_consumables()
+##
+## Unlocks all 13 score card upgrade consumables in ProgressManager.
+func _debug_unlock_all_upgrade_consumables() -> void:
+	var progress_manager = get_node_or_null("/root/ProgressManager")
+	if not progress_manager:
+		log_debug("ProgressManager not found")
+		return
+	
+	var upgrade_consumable_ids = [
+		"ones_upgrade", "twos_upgrade", "threes_upgrade", 
+		"fours_upgrade", "fives_upgrade", "sixes_upgrade",
+		"three_of_a_kind_upgrade", "four_of_a_kind_upgrade", 
+		"full_house_upgrade", "small_straight_upgrade", 
+		"large_straight_upgrade", "yahtzee_upgrade", "chance_upgrade",
+		"all_categories_upgrade"
+	]
+	
+	var unlocked_count = 0
+	for item_id in upgrade_consumable_ids:
+		if progress_manager.has_method("debug_unlock_item"):
+			progress_manager.debug_unlock_item(item_id)
+			unlocked_count += 1
+			log_debug("Unlocked: %s" % item_id)
+		else:
+			log_debug("ProgressManager missing debug_unlock_item method")
+			break
+	
+	log_debug("Unlocked %d upgrade consumables" % unlocked_count)
+
+## _debug_lock_all_upgrade_consumables()
+##
+## Locks all 13 score card upgrade consumables in ProgressManager.
+func _debug_lock_all_upgrade_consumables() -> void:
+	var progress_manager = get_node_or_null("/root/ProgressManager")
+	if not progress_manager:
+		log_debug("ProgressManager not found")
+		return
+	
+	var upgrade_consumable_ids = [
+		"ones_upgrade", "twos_upgrade", "threes_upgrade", 
+		"fours_upgrade", "fives_upgrade", "sixes_upgrade",
+		"three_of_a_kind_upgrade", "four_of_a_kind_upgrade", 
+		"full_house_upgrade", "small_straight_upgrade", 
+		"large_straight_upgrade", "yahtzee_upgrade", "chance_upgrade",
+		"all_categories_upgrade"
+	]
+	
+	var locked_count = 0
+	for item_id in upgrade_consumable_ids:
+		if progress_manager.has_method("debug_lock_item"):
+			progress_manager.debug_lock_item(item_id)
+			locked_count += 1
+			log_debug("Locked: %s" % item_id)
+		else:
+			log_debug("ProgressManager missing debug_lock_item method")
+			break
+	
+	log_debug("Locked %d upgrade consumables" % locked_count)
