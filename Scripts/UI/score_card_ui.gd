@@ -18,14 +18,20 @@ signal score_doubled(section: Scorecard.Section, category: String, new_score: in
 signal about_to_score(section: Scorecard.Section, category: String, dice_values: Array[int])
 signal manual_score
 
-@onready var best_hand_label: RichTextLabel = $BestHandScore
+@onready var best_hand_label: RichTextLabel = $BestHandPanel/MarginContainer/VBoxContainer/BestHandScore
 @onready var upper_total_label: Label = $HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal/UppersubButton
 @onready var upper_bonus_label: Label = $HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus/UpperBonusLabel
 @onready var upper_final_total_label: Label = $HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperTotal/UpperTotalLabel
 @onready var lower_total_label: Label = $HBoxContainer/LowerVBoxContainer/LowerGridContainer/LowerTotal/LowerTotalLabel
-@onready var total_score_label: RichTextLabel = $RichTextTotalScore
+@onready var total_score_label: RichTextLabel = $TotalScorePanel/MarginContainer/RichTextTotalScore
 @onready var yahtzee_bonus_label: Label = $HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus/YahtzeeBonusLabel
-@onready var extra_info_label: RichTextLabel = get_node_or_null("ExtraInfo")
+@onready var extra_info_label: RichTextLabel = get_node_or_null("LogbookPanel/MarginContainer/ExtraInfo")
+
+# Score breakdown panel labels
+@onready var additive_score_label: Label = $BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer/AdditiveScoreLabel
+@onready var multiplier_score_label: Label = $BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer/MultiplierScoreLabel
+@onready var total_score_panel: PanelContainer = $TotalScorePanel
+@onready var best_hand_panel: PanelContainer = $BestHandPanel
 
 const LOWER_CATEGORY_NODE_NAMES := {
 	"three_of_a_kind": "Threeofakind",
@@ -52,16 +58,20 @@ func _ready():
 	_apply_custom_theme()
 
 	# Add to existing _ready function
-	best_hand_label = get_node_or_null("BestHandScore")
+	best_hand_label = get_node_or_null("BestHandPanel/MarginContainer/VBoxContainer/BestHandScore")
 	if not best_hand_label:
 		push_error("BestHandScore RichTextLabel not found!")
 
 	# Ensure ExtraInfo label is properly configured
+	extra_info_label = get_node_or_null("LogbookPanel/MarginContainer/ExtraInfo")
 	if extra_info_label and extra_info_label is RichTextLabel:
 		extra_info_label.bbcode_enabled = true
 		print("[ScoreCardUI] ExtraInfo RichTextLabel found and BBCode enabled")
 	else:
 		print("[ScoreCardUI] Warning: ExtraInfo RichTextLabel not found or not properly configured")
+	
+	# Initialize score breakdown labels
+	_reset_score_breakdown_labels()
 
 	for key in LOWER_CATEGORY_NODE_NAMES.keys():
 		var node_name = LOWER_CATEGORY_NODE_NAMES[key]
@@ -188,31 +198,19 @@ func update_all():
 	else:
 		push_error("lower_total_label not found!")
 	
-	# Update total score with dynamic effect
+	# Update total score with dynamic effect (tornado disabled)
 	if total_score_label:
 		var upper_total = scorecard.get_upper_section_final_total()
 		var total_score = upper_total + lower_total  # lower_total already includes Yahtzee bonus
 		
-		# Remap the score (0-500) to frequency range (1-10)
-		var freq = remap(total_score, 0, 500, 1, 10)
-		
-		# Format with BBCode, including dynamic frequency and bonus info
-		var text = "[center][tornado freq=%d sat=0.8 val=1.9]Total Score:\n %d" % [int(freq), total_score]
-		
-		# Add bonus info if there are any Yahtzee bonuses
-		#if scorecard.yahtzee_bonuses > 0:
-		#	text += "\n(includes %d Yahtzee bonus%s)" % [
-		#		scorecard.yahtzee_bonus_points,
-		#		"es" if scorecard.yahtzee_bonuses > 1 else ""
-		#	]
-		
-		text += "[/tornado][/center]"
+		# Format with BBCode - tornado disabled for now
+		var text = "[center]Total Score:\n%d[/center]" % total_score
 		total_score_label.text = text
 		
 		# Adjust font size based on score
-		var base_size = 22
-		var size_scale = remap(total_score, 0, 500, 1.0, 1.5)
-		total_score_label.add_theme_font_size_override("normal_font_size", base_size * size_scale)
+		var base_size = 32
+		var size_scale = remap(total_score, 0, 500, 1.0, 1.3)
+		total_score_label.add_theme_font_size_override("normal_font_size", int(base_size * size_scale))
 
 	# Update Yahtzee bonus display
 	if yahtzee_bonus_label:
@@ -550,18 +548,10 @@ func update_best_hand_preview(dice_values: Array) -> void:
 	if best_category != "":
 		var display_category = best_category.capitalize().replace("_", " ")
 		
-		# Add special formatting for exceptional scores
-		var base_text = "Best:\n %s (%d)" % [display_category, best_score]
-		var format_text = ""
+		# Simple formatting - show only category name (tornado disabled for now)
+		var format_text = "[center][b]Best Hand:[/b]\n%s[/center]" % display_category
 		
-		if best_category == "yahtzee" and best_score >= 50:
-			format_text = "[center][rainbow freq=1.2 sat=0.8 val=2.0]%s[/rainbow][/center]" % base_text
-		elif best_score > 30:  # For high-scoring hands
-			format_text = "[center][tornado freq=2.5 sat=0.9 val=2.0]%s[/tornado][/center]" % base_text
-		else:
-			format_text = "[center][tornado freq=1.9 sat=0.8 val=1.9]%s[/tornado][/center]" % base_text
-			
-		best_hand_label.add_theme_font_size_override("normal_font_size", 22)
+		best_hand_label.add_theme_font_size_override("normal_font_size", 18)
 		best_hand_label.text = format_text
 		animate_best_hand_label()
 
@@ -1255,3 +1245,129 @@ func _on_score_changed_from_scorecard(total_score: int) -> void:
 	print("[ScoreCardUI] Score changed from scorecard. New total:", total_score)
 	# Update UI to reflect the new total
 	update_all()
+
+
+# ============================================================================
+# SCORE BREAKDOWN PANEL METHODS
+# ============================================================================
+
+## _reset_score_breakdown_labels()
+##
+## Reset additive and multiplier labels to default values
+func _reset_score_breakdown_labels() -> void:
+	if additive_score_label:
+		additive_score_label.text = "+0"
+		additive_score_label.modulate = Color.WHITE
+	if multiplier_score_label:
+		multiplier_score_label.text = "x1.0"
+		multiplier_score_label.modulate = Color.WHITE
+
+
+## update_additive_score_panel(additive_value, animate)
+##
+## Update the additive score panel label with optional bounce animation.
+## Called by ScoringAnimationController during animation sequence.
+func update_additive_score_panel(additive_value: int, animate: bool = true) -> void:
+	if not additive_score_label:
+		return
+	
+	print("[ScoreCardUI] Updating additive panel: %d (animate=%s)" % [additive_value, animate])
+	additive_score_label.text = "+%d" % additive_value
+	
+	if animate:
+		# Use yellow for positive values, white for zero (always bounce to show calculation step)
+		var flash_color = Color.YELLOW if additive_value > 0 else Color.WHITE
+		_bounce_label(additive_score_label, flash_color)
+
+
+## update_multiplier_score_panel(multiplier_value, animate)
+##
+## Update the multiplier score panel label with optional bounce animation.
+## Called by ScoringAnimationController during animation sequence.
+func update_multiplier_score_panel(multiplier_value: float, animate: bool = true) -> void:
+	if not multiplier_score_label:
+		return
+	
+	print("[ScoreCardUI] Updating multiplier panel: %.1f (animate=%s)" % [multiplier_value, animate])
+	multiplier_score_label.text = "x%.1f" % multiplier_value
+	
+	if animate:
+		# Use cyan for values > 1.0, white for 1.0 (always bounce to show multiplication step)
+		var flash_color = Color.CYAN if multiplier_value > 1.0 else Color.WHITE
+		_bounce_label(multiplier_score_label, flash_color)
+
+
+## _bounce_label(label, flash_color)
+##
+## Apply a bouncy animation to a label with color flash
+func _bounce_label(label: Label, flash_color: Color) -> void:
+	if not label:
+		return
+	
+	var tween = create_tween()
+	var original_scale = label.scale
+	
+	# Flash color
+	label.modulate = flash_color
+	
+	# Scale up then down (bounce effect)
+	tween.tween_property(label, "scale", original_scale * 1.3, 0.15).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(label, "scale", original_scale, 0.2).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_ELASTIC)
+	
+	# Fade color back to white
+	tween.parallel().tween_property(label, "modulate", Color.WHITE, 0.4)
+
+
+## animate_total_score_bounce(new_score)
+##
+## Animate the total score label with a bounce effect when score changes.
+## Called after all scoring animations complete.
+func animate_total_score_bounce(new_score: int) -> void:
+	if not total_score_label:
+		return
+	
+	print("[ScoreCardUI] Animating total score bounce for:", new_score)
+	
+	var tween = create_tween()
+	var original_scale = total_score_label.scale
+	
+	# Flash gold color
+	total_score_label.modulate = Color(1.0, 0.84, 0.0)  # Gold
+	
+	# Scale up and down with bounce
+	tween.tween_property(total_score_label, "scale", original_scale * 1.2, 0.2).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(total_score_label, "scale", original_scale, 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_ELASTIC)
+	
+	# Fade back to white
+	tween.parallel().tween_property(total_score_label, "modulate", Color.WHITE, 0.5)
+
+
+## animate_total_score_panel_bounce()
+##
+## Animate the entire total score panel with a bounce effect
+func animate_total_score_panel_bounce() -> void:
+	if not total_score_panel:
+		return
+	
+	var tween = create_tween()
+	var original_scale = total_score_panel.scale
+	
+	# Subtle bounce on the panel
+	tween.tween_property(total_score_panel, "scale", original_scale * 1.05, 0.15).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(total_score_panel, "scale", original_scale, 0.2).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BOUNCE)
+
+
+## get_score_panel_position()
+##
+## Return the global position of the total score panel for floating number placement
+func get_score_panel_position() -> Vector2:
+	if total_score_panel:
+		return total_score_panel.global_position + (total_score_panel.size / 2)
+	return Vector2.ZERO
+
+
+## prepare_for_scoring_animation()
+##
+## Reset breakdown labels before a scoring animation begins
+func prepare_for_scoring_animation() -> void:
+	_reset_score_breakdown_labels()

@@ -166,6 +166,33 @@ Statistics.export_logbook_to_file("session_analysis.json")
 
 **File Location**: See `LOGBOOK.md` for detailed implementation specifications and future extension plans.
 
+### Score Breakdown UI Panels
+The **Score Breakdown UI** provides visual feedback during scoring animations, showing how bonuses and multipliers contribute to the final score:
+
+**Panel Structure:**
+- **LogbookPanel**: Shows recent scoring history (moved from ExtraInfo to dedicated panel)
+- **BestHandPanel**: Contains best hand name and score breakdown labels
+  - **BestHandScore**: Shows the highest-scoring category for current dice (simplified to category name only)
+  - **AdditiveScoreLabel**: Displays cumulative additive bonuses ("+X")
+  - **MultiplierScoreLabel**: Displays combined multiplier effects ("×Y")
+- **TotalScorePanel**: Contains the total score display with animated updates
+
+**Animation Integration:**
+The panels update in real-time during the `ScoringAnimationController` sequence:
+1. Dice bounce animation starts
+2. Additive panel updates after consumable animations (yellow bounce on value > 0)
+3. Multiplier panel updates after powerup animations (cyan bounce on value > 1.0)
+4. Final score floating number appears
+5. Total score panel animates with bounce effect
+
+**Key Methods:**
+- `prepare_for_scoring_animation()`: Resets breakdown labels before animation starts
+- `update_additive_score_panel(value, animate)`: Updates additive display with optional bounce
+- `update_multiplier_score_panel(value, animate)`: Updates multiplier display with optional bounce
+- `animate_total_score_bounce(new_score)`: Applies gold flash and bounce to total score
+
+**Note**: BBCode tornado/rainbow effects are currently disabled for cleaner presentation.
+
 ### Progress Tracking System
 The **Progress Tracking System** enables persistent player progression across multiple game sessions, unlocking new content based on gameplay achievements:
 

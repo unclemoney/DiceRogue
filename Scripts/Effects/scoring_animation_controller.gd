@@ -40,6 +40,7 @@ var game_controller: GameController
 var consumable_ui: ConsumableUI
 var power_up_ui: PowerUpUI
 var audio_player: AudioStreamPlayer
+var score_card_ui: ScoreCardUI
 
 # Animation state
 var current_animation_sequence: Tween
@@ -99,6 +100,14 @@ func _find_required_nodes() -> void:
 		print("[ScoringAnimationController] Found PowerUpUI")
 	else:
 		print("[ScoringAnimationController] PowerUpUI not found")
+	
+	# Find ScoreCardUI
+	var scorecard_ui_nodes = get_tree().get_nodes_in_group("scorecard_ui")
+	if scorecard_ui_nodes.size() > 0:
+		score_card_ui = scorecard_ui_nodes[0] as ScoreCardUI
+		print("[ScoringAnimationController] Found ScoreCardUI")
+	else:
+		print("[ScoringAnimationController] ScoreCardUI not found")
 
 ## start_scoring_animation(score, category, breakdown_info)
 ##
@@ -113,6 +122,10 @@ func start_scoring_animation(score: int, category: String, breakdown_info: Dicti
 	current_breakdown_info = breakdown_info  # Store for use in animation functions
 	print("[ScoringAnimationController] Starting scoring animation for score: %d, category: %s" % [score, category])
 	print("[ScoringAnimationController] Breakdown info: %s" % str(breakdown_info))
+	
+	# Prepare ScoreCardUI for animation - reset breakdown panels
+	if score_card_ui:
+		score_card_ui.prepare_for_scoring_animation()
 	
 	# Stop any existing animation
 	if current_animation_sequence and current_animation_sequence.is_valid():
@@ -176,30 +189,40 @@ func _execute_animation_sequence(score: int, _category: String, breakdown_info: 
 	# Phase 2: Play scoring sound with dynamic pitch
 	#_play_scoring_audio(score)
 	
-	# Phase 3: Wait a bit, then animate contributing consumables
+	# Phase 3: Wait a bit, then animate contributing consumables and update additive panel
 	var consumable_delay = 0.05 / speed_scale  # Reduced from 0.3
 	print("[ScoringAnimationController] Waiting %f seconds before consumables..." % consumable_delay)
 	await get_tree().create_timer(consumable_delay).timeout
 	if breakdown_info.has("active_consumables") and breakdown_info.active_consumables.size() > 0:
 		print("[ScoringAnimationController] Starting consumable animations...")
-		_animate_contributing_consumables(breakdown_info, intensity_scale, speed_scale)
+		await _animate_contributing_consumables(breakdown_info, intensity_scale, speed_scale)
 	else:
 		print("[ScoringAnimationController] No consumables to animate")
+		# Still update the panel to show 0 if no consumables (with animation)
+		if score_card_ui:
+			score_card_ui.update_additive_score_panel(0, true)
 	
-	# Phase 4: Wait a bit, then animate contributing powerups
+	# Phase 4: Wait a bit, then animate contributing powerups and update multiplier panel
 	var powerup_delay = 0.05 / speed_scale  # Reduced from 0.5
 	print("[ScoringAnimationController] Waiting %f seconds before powerups..." % powerup_delay)
 	await get_tree().create_timer(powerup_delay).timeout
 	if breakdown_info.has("active_powerups") and breakdown_info.active_powerups.size() > 0:
 		print("[ScoringAnimationController] Starting powerup animations...")
-		_animate_contributing_powerups(breakdown_info, intensity_scale, speed_scale)
+		await _animate_contributing_powerups(breakdown_info, intensity_scale, speed_scale)
 	else:
 		print("[ScoringAnimationController] No powerups to animate")
+		# Still update the panel to show 1.0 if no powerups (with animation to show multiplication step)
+		if score_card_ui:
+			score_card_ui.update_multiplier_score_panel(1.0, true)
 	
 	# Phase 5: Show final score floating number
 	var final_delay = 0.05 / speed_scale
 	await get_tree().create_timer(final_delay).timeout
 	_show_final_score_number(score, intensity_scale)
+	
+	# Phase 6: Animate total score bounce
+	if score_card_ui:
+		score_card_ui.animate_total_score_bounce(score)
 	
 	# Wait for all animations to complete
 	await get_tree().create_timer(1.0 / speed_scale).timeout
@@ -356,6 +379,7 @@ func _play_scoring_audio(score: int) -> void:
 ## _animate_contributing_consumables(breakdown_info, intensity_scale, speed_scale)
 ##
 ## Animate only consumables that actually contributed to the score.
+## Updates the additive panel incrementally as each consumable animates.
 func _animate_contributing_consumables(breakdown_info: Dictionary, intensity_scale: float, speed_scale: float) -> void:
 	if not consumable_ui:
 		print("[ScoringAnimationController] No ConsumableUI found")
@@ -366,8 +390,8 @@ func _animate_contributing_consumables(breakdown_info: Dictionary, intensity_sca
 	
 	# Check additive sources for consumable contributions
 	var additive_sources = breakdown_info.get("additive_sources", [])
-	var stagger_delay = 0.15 / speed_scale  # Reduced to match other delays
-	var delay = 0.0
+	var stagger_delay = 0.15 / speed_scale
+	var running_additive = 0
 	
 	for source_info in additive_sources:
 		var source_name = source_info.get("name", "")
@@ -375,14 +399,21 @@ func _animate_contributing_consumables(breakdown_info: Dictionary, intensity_sca
 		
 		# Check if this is a consumable source
 		if source_info.get("category", "") == "consumable" or source_name in active_consumables:
-			get_tree().create_timer(delay).timeout.connect(
-				func(): _animate_consumable_contribution(source_name, source_value, intensity_scale, speed_scale)
-			)
-			delay += stagger_delay
+			# Animate the consumable
+			_animate_consumable_contribution(source_name, source_value, intensity_scale, speed_scale)
+			
+			# Update running total and panel
+			running_additive += source_value
+			if score_card_ui:
+				score_card_ui.update_additive_score_panel(running_additive, true)
+			
+			# Wait for stagger delay
+			await get_tree().create_timer(stagger_delay).timeout
 
 ## _animate_contributing_powerups(breakdown_info, intensity_scale, speed_scale)
 ##
 ## Animate only powerups that actually contributed to the score.
+## Updates the multiplier panel incrementally as each powerup animates.
 func _animate_contributing_powerups(breakdown_info: Dictionary, intensity_scale: float, speed_scale: float) -> void:
 	if not power_up_ui:
 		print("[ScoringAnimationController] No PowerUpUI found")
@@ -399,9 +430,10 @@ func _animate_contributing_powerups(breakdown_info: Dictionary, intensity_scale:
 	var multiplier_sources = breakdown_info.get("multiplier_sources", [])
 	print("[ScoringAnimationController] Additive sources: " + str(additive_sources))
 	print("[ScoringAnimationController] Multiplier sources: " + str(multiplier_sources))
-	var stagger_delay = 0.15 / speed_scale  # Reduced to match other delays
-	var delay = 0.0
+	var stagger_delay = 0.15 / speed_scale
 	var animated_any_powerups = false
+	var running_additive = breakdown_info.get("regular_additive", 0) - breakdown_info.get("dice_color_additive", 0)
+	var running_multiplier = 1.0
 	
 	# Animate additive powerups
 	for source_info in additive_sources:
@@ -409,10 +441,17 @@ func _animate_contributing_powerups(breakdown_info: Dictionary, intensity_scale:
 		var source_value = source_info.get("value", 0)
 		
 		if source_info.get("category", "") == "powerup" or source_name in active_powerups:
-			get_tree().create_timer(delay).timeout.connect(
-				func(): _animate_powerup_additive(source_name, source_value, intensity_scale, speed_scale)
-			)
-			delay += stagger_delay
+			# Animate the powerup
+			_animate_powerup_additive(source_name, source_value, intensity_scale, speed_scale)
+			
+			# Update running additive (already includes consumables from previous phase)
+			running_additive += source_value
+			if score_card_ui:
+				# Get the total from consumables and add powerup contribution
+				var total_with_consumables = breakdown_info.get("total_additive", 0) - breakdown_info.get("regular_additive", 0)
+				score_card_ui.update_additive_score_panel(total_with_consumables + running_additive, true)
+			
+			await get_tree().create_timer(stagger_delay).timeout
 			animated_any_powerups = true
 	
 	# Animate multiplier powerups
@@ -421,10 +460,17 @@ func _animate_contributing_powerups(breakdown_info: Dictionary, intensity_scale:
 		var source_value = source_info.get("value", 1.0)
 		
 		if source_info.get("category", "") == "powerup" or source_name in active_powerups:
-			get_tree().create_timer(delay).timeout.connect(
-				func(): _animate_powerup_multiplier(source_name, source_value, intensity_scale, speed_scale)
-			)
-			delay += stagger_delay
+			# Animate the powerup
+			_animate_powerup_multiplier(source_name, source_value, intensity_scale, speed_scale)
+			
+			# Update running multiplier
+			running_multiplier *= source_value
+			var blue_multiplier = breakdown_info.get("blue_score_multiplier", 1.0)
+			var combined = running_multiplier * blue_multiplier
+			if score_card_ui:
+				score_card_ui.update_multiplier_score_panel(combined, true)
+			
+			await get_tree().create_timer(stagger_delay).timeout
 			animated_any_powerups = true
 	
 	# Fallback: If no powerups were animated from sources but we have active powerups,
@@ -435,10 +481,8 @@ func _animate_contributing_powerups(breakdown_info: Dictionary, intensity_scale:
 		for powerup_id in active_powerups:
 			# Check if this powerup should be animated for this scoring context
 			if _should_animate_powerup_for_context(powerup_id, breakdown_info):
-				get_tree().create_timer(delay).timeout.connect(
-					func(): _animate_powerup_generic(powerup_id, intensity_scale, speed_scale)
-				)
-				delay += stagger_delay
+				_animate_powerup_generic(powerup_id, intensity_scale, speed_scale)
+				await get_tree().create_timer(stagger_delay).timeout
 			else:
 				print("[ScoringAnimationController] Skipping powerup %s - not applicable for this scoring context" % powerup_id)
 
