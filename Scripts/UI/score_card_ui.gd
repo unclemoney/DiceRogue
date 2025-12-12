@@ -45,6 +45,9 @@ const LOWER_CATEGORY_NODE_NAMES := {
 
 var is_double_mode := false
 var go_broke_mode := false
+var current_best_hand_category := ""
+var current_best_hand_section
+var current_base_additive_score := 0
 
 
 ## _ready()
@@ -72,6 +75,9 @@ func _ready():
 	
 	# Initialize score breakdown labels
 	_reset_score_breakdown_labels()
+	
+	# Apply custom theme to score breakdown labels
+	_apply_score_breakdown_theme()
 
 	for key in LOWER_CATEGORY_NODE_NAMES.keys():
 		var node_name = LOWER_CATEGORY_NODE_NAMES[key]
@@ -208,7 +214,7 @@ func update_all():
 		total_score_label.text = text
 		
 		# Adjust font size based on score
-		var base_size = 32
+		var base_size = 24
 		var size_scale = remap(total_score, 0, 500, 1.0, 1.3)
 		total_score_label.add_theme_font_size_override("normal_font_size", int(base_size * size_scale))
 
@@ -554,6 +560,25 @@ func update_best_hand_preview(dice_values: Array) -> void:
 		best_hand_label.add_theme_font_size_override("normal_font_size", 18)
 		best_hand_label.text = format_text
 		animate_best_hand_label()
+		
+		# Calculate RAW base score (without any powerups/modifiers) × category level
+		# Use ScoreEvaluatorSingleton directly to get unmodified base score
+		var raw_scores = ScoreEvaluatorSingleton.evaluate_normal(dice_values)
+		var raw_base_score = raw_scores.get(best_category, 0)
+		var category_level = scorecard.get_category_level_by_name(best_category)
+		var base_additive = raw_base_score * category_level
+		
+		# Store current best hand info
+		current_best_hand_category = best_category
+		current_best_hand_section = _best_section
+		current_base_additive_score = base_additive
+		
+		# Update the additive panel with base score (no animation for preview)
+		if additive_score_label:
+			additive_score_label.text = "+%d" % base_additive
+			additive_score_label.modulate = Color(0.7, 0.7, 0.0) if base_additive > 0 else Color.WHITE
+		
+		print("[ScoreCardUI] Best hand: %s (Lv.%d) RAW base: %d × %d = +%d base additive (no powerups)" % [best_category, category_level, raw_base_score, category_level, base_additive])
 
 	_screen_shaker(best_score, 50)
 
@@ -1251,6 +1276,22 @@ func _on_score_changed_from_scorecard(total_score: int) -> void:
 # SCORE BREAKDOWN PANEL METHODS
 # ============================================================================
 
+## _apply_score_breakdown_theme()
+##
+## Apply custom theme with UI_BACKGROUND texture to score breakdown labels
+func _apply_score_breakdown_theme() -> void:
+	var custom_theme = load("res://Resources/UI/score_breakdown_theme.tres") as Theme
+	if custom_theme:
+		if additive_score_label:
+			additive_score_label.theme = custom_theme
+			print("[ScoreCardUI] Applied custom theme to additive label")
+		if multiplier_score_label:
+			multiplier_score_label.theme = custom_theme
+			print("[ScoreCardUI] Applied custom theme to multiplier label")
+	else:
+		push_error("[ScoreCardUI] Failed to load score_breakdown_theme.tres")
+
+
 ## _reset_score_breakdown_labels()
 ##
 ## Reset additive and multiplier labels to default values
@@ -1300,19 +1341,21 @@ func update_multiplier_score_panel(multiplier_value: float, animate: bool = true
 ## _bounce_label(label, flash_color)
 ##
 ## Apply a bouncy animation to a label with color flash
+## Always returns label to Vector2(1,1) scale to respect minimum size constraints
 func _bounce_label(label: Label, flash_color: Color) -> void:
 	if not label:
 		return
 	
 	var tween = create_tween()
-	var original_scale = label.scale
+	# Always use Vector2(1,1) as base scale to avoid compounding and respect minimum size
+	var base_scale = Vector2(1.0, 1.0)
 	
 	# Flash color
 	label.modulate = flash_color
 	
-	# Scale up then down (bounce effect)
-	tween.tween_property(label, "scale", original_scale * 1.3, 0.15).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-	tween.tween_property(label, "scale", original_scale, 0.2).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_ELASTIC)
+	# Scale up then down (bounce effect) - always return to 1,1
+	tween.tween_property(label, "scale", base_scale * 1.3, 0.15).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(label, "scale", base_scale, 0.2).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_ELASTIC)
 	
 	# Fade color back to white
 	tween.parallel().tween_property(label, "modulate", Color.WHITE, 0.4)

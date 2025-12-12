@@ -491,10 +491,12 @@ text = "ADDITIVE"
 horizontal_alignment = 1
 
 [node name="AdditiveScoreLabel" type="Label" parent="BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer"]
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "+0"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="MultiplierContainer" type="VBoxContainer" parent="BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer"]
 layout_mode = 2
@@ -507,10 +509,12 @@ text = "MULTIPLIER"
 horizontal_alignment = 1
 
 [node name="MultiplierScoreLabel" type="Label" parent="BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer"]
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "x1.0"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="TotalScorePanel" type="PanelContainer" parent="."]
 layout_mode = 0

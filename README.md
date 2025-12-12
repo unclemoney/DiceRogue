@@ -173,15 +173,28 @@ The **Score Breakdown UI** provides visual feedback during scoring animations, s
 - **LogbookPanel**: Shows recent scoring history (moved from ExtraInfo to dedicated panel)
 - **BestHandPanel**: Contains best hand name and score breakdown labels
   - **BestHandScore**: Shows the highest-scoring category for current dice (simplified to category name only)
-  - **AdditiveScoreLabel**: Displays cumulative additive bonuses ("+X")
-  - **MultiplierScoreLabel**: Displays combined multiplier effects ("×Y")
+  - **AdditiveScoreLabel**: Displays cumulative additive bonuses ("+X") with themed background
+  - **MultiplierScoreLabel**: Displays combined multiplier effects ("×Y") with themed background
 - **TotalScorePanel**: Contains the total score display with animated updates
+
+**Base Additive Score Calculation:**
+The additive score starts with a **base value** calculated from the best hand:
+- Formula: `Base Additive = Best Hand Score × Category Level`
+- Example: Small Straight (30 points) at Level 2 = 30 × 2 = **+60 base additive**
+- Updates dynamically as dice values change and new best hands are identified
+- Additional bonuses from consumables/powerups add to this base during scoring
+
+**Themed Labels:**
+Both additive and multiplier labels use a custom theme with `UI_BACKGROUND.png` texture:
+- 1-pixel texture margin on all sides for subtle border effect
+- Semi-transparent dark background (Color: 0.3, 0.3, 0.4, 0.8)
+- Applied via `score_breakdown_theme.tres`
 
 **Animation Integration:**
 The panels update in real-time during the `ScoringAnimationController` sequence:
 1. Dice bounce animation starts
-2. Additive panel updates after consumable animations (yellow bounce on value > 0)
-3. Multiplier panel updates after powerup animations (cyan bounce on value > 1.0)
+2. Additive panel shows base score (yellow dim) during preview, then updates with consumable animations (yellow bounce)
+3. Multiplier panel updates after powerup animations (cyan bounce on value > 1.0, white bounce on 1.0)
 4. Final score floating number appears
 5. Total score panel animates with bounce effect
 
@@ -190,6 +203,7 @@ The panels update in real-time during the `ScoringAnimationController` sequence:
 - `update_additive_score_panel(value, animate)`: Updates additive display with optional bounce
 - `update_multiplier_score_panel(value, animate)`: Updates multiplier display with optional bounce
 - `animate_total_score_bounce(new_score)`: Applies gold flash and bounce to total score
+- `_apply_score_breakdown_theme()`: Loads and applies themed background to score labels
 
 **Note**: BBCode tornado/rainbow effects are currently disabled for cleaner presentation.
 
