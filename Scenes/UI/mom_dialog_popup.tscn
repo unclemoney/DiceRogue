@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3 uid="uid://dpy8v6m2rh4k5"]
+
+[ext_resource type="Script" uid="uid://cp6xgqfr8qxvn" path="res://Scripts/UI/mom_character.gd" id="1_mom_character"]
+
+[node name="MomDialogPopup" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mom_character")

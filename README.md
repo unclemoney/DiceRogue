@@ -301,6 +301,75 @@ The `ScoreModifierManager` handles all score modifications:
 
 Power-ups register their bonuses with this manager, which emits signals when totals change.
 
+### Chores & Mom System
+The **Chores System** adds a strategic tension mechanic where neglecting household duties brings parental consequences:
+
+**Core Mechanics:**
+- **Progress Bar**: Vertical progress bar (0-100) displayed in top-left corner
+- **Progress Increase**: +1 per dice roll (automatic)
+- **Progress Decrease**: -20 when completing a chore task
+- **Mom Trigger**: At 100 progress, Mom appears to check your PowerUps
+
+**Chore Tasks:**
+Tasks are randomly selected from a pool of 40+ options across different categories:
+- **Upper Section Tasks**: Score specific upper categories (Ones, Twos, etc.)
+- **Lower Section Tasks**: Score specific lower categories (Full House, Straight, etc.)
+- **Specific Tasks**: Score with particular dice combinations
+- **Utility Tasks**: Lock dice, use consumables, scratch categories
+- **Challenge Tasks**: Roll Yahtzees or specific high-value combinations
+
+**Task Completion:**
+- Hover over ChoreUI to see current task requirements
+- Complete the task requirement during normal gameplay
+- Progress reduces by 20 when task is completed
+- New task is automatically selected
+
+**PowerUp Rating System:**
+All PowerUps now have movie-style content ratings that affect Mom's reaction:
+- **G** (General): Safe for all audiences - Mom approves
+- **PG** (Parental Guidance): Mild content - Mom approves
+- **PG-13** (Parents Strongly Cautioned): Some mature content - Mom approves
+- **R** (Restricted): Adult content - Mom removes the PowerUp
+- **NC-17** (Adults Only): Explicit content - Mom removes PowerUp AND applies stacking debuff
+
+**Mom Consequences:**
+When Mom appears (progress reaches 100):
+1. Mom checks all active PowerUps for restricted ratings
+2. **R-rated PowerUps**: Confiscated (removed from inventory)
+3. **NC-17 PowerUps**: Confiscated + "Grounded" debuff applied per item
+4. **Grounded Debuff**: Stacks for each NC-17 item found, persists until round end
+5. **No Restricted Items**: Mom is happy and leaves without consequence
+
+**Mom Character:**
+- **Three Expressions**: Neutral (checking), Upset (found restricted items), Happy (clean slate)
+- **Tween Animations**: Smooth entrance/exit with bounce effects
+- **BBCode Dialog**: Colored text with personality-driven messages
+- **Pixel Art Sprites**: 48px character in top-down view style
+
+**ChoreUI Display:**
+- **Vertical Progress Bar**: Shows current progress (0-100) with color gradient
+- **Hover Details Panel**: Shows current task name, description, and progress
+- **Position**: Top-left corner, non-intrusive during gameplay
+
+**Debug Commands (Chores Tab):**
+- Add Progress +10/+50: Quickly advance progress for testing
+- Complete Current Task: Force task completion
+- Trigger Mom Immediately: Bypass progress threshold
+- Select New Task: Force new random task selection
+- Reset Progress: Set progress to 0
+- Show Chore State: Display current system status
+- Show PowerUp Ratings: List all active PowerUp ratings
+- Test Mom Dialog: Preview Mom's expressions and dialog
+
+**Implementation Files:**
+- **ChoreData**: `Scripts/Managers/ChoreData.gd` - Task resource class
+- **ChoreTasksLibrary**: `Scripts/Managers/chore_tasks_library.gd` - Task pool
+- **ChoresManager**: `Scripts/Managers/ChoresManager.gd` - Progress tracking
+- **MomLogicHandler**: `Scripts/Core/mom_logic_handler.gd` - Consequence logic
+- **ChoreUI**: `Scripts/UI/chore_ui.gd` - Progress bar display
+- **MomCharacter**: `Scripts/UI/mom_character.gd` - Dialog popup
+- **Mom Sprites**: `Resources/Art/Characters/Mom/` - Character art
+
 ### UI Architecture
 - **Spine/Fan System**: Cards can be displayed as compact spines or fanned out for interaction
 - **PowerUpUI** (`Scripts/UI/power_up_ui.gd`) - Manages power-up display
@@ -387,6 +456,14 @@ Test scenes in `Tests/` folder allow isolated testing of components:
   - Multiplier persists even if PowerUp is sold, based on permanent usage statistics
   - Example: After using 3 consumables, all scores are multiplied by 1.75x
   - Synergizes excellently with consumable-heavy strategies
+
+### PowerUp Ratings
+All PowerUps have content ratings that interact with the Mom system:
+- **G/PG/PG-13**: Safe ratings - no penalty from Mom
+- **R**: Restricted - Mom confiscates the PowerUp when progress reaches 100
+- **NC-17**: Adults only - Mom confiscates AND applies "Grounded" debuff
+- Ratings are displayed in PowerUp hover tooltips (e.g., "[R] PowerUp Name")
+- See "Chores & Mom System" section for full details
 
 ### Dice Modifiers  
 - **ExtraDicePowerUp**: Adds 6th die to hand (enables lock dice debuff)
@@ -573,6 +650,7 @@ To add new debug functionality:
 - **Dice Control**: Force specific values (all 6s, 1s, Yahtzee)
 - **Dice Colors**: Toggle color system, force all dice to specific colors (Green/Red/Purple/Blue), show effects
 - **Game Flow**: Add extra rolls, force end turn, skip to shop
+- **Chores**: Add progress, complete tasks, trigger Mom, test dialog expressions
 - **System Testing**: Test score calculations, trigger signals, show states
 - **Utilities**: Clear output, reset entire game state
 
@@ -639,6 +717,7 @@ This prevents the need for complex manual testing setups and keeps development v
 - ✅ Green Envy consumable - 10x multiplier for green dice money (implemented)
 - ✅ Poor House consumable - Transfer money to next scored hand bonus (implemented)
 - ✅ Progress tracking system - Persistent player progression with unlock conditions (implemented)
+- ✅ Chores & Mom system - Strategic tension mechanic with parental consequences (implemented)
 - Additional power-up variety
 - Challenge progression system
 - Balance pass on economy

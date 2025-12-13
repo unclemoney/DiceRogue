@@ -15,7 +15,7 @@ extends Node2D
 @onready var mod_manager: ModManager = $ModManager
 @onready var debuff_manager: DebuffManager = $DebuffManager
 @onready var challenge_manager: ChallengeManager = $ChallengeManager
-@onready var ChallengeUI: Control = $ChallengeUI
+@onready var challenge_ui_node: Control = $ChallengeUI
 @onready var vcr_ui: VCRTurnTrackerUI = $VCRTurnTrackerUI
 
 func _ready():

@@ -1,0 +1,153 @@
+[gd_scene load_steps=6 format=3 uid="uid://bemhyeya1rd5c"]
+
+[ext_resource type="Script" uid="uid://daxr04aofidgi" path="res://Tests/chores_manager_test.gd" id="1_test"]
+[ext_resource type="Script" uid="uid://du88ajtcwgupi" path="res://Scripts/Managers/ChoresManager.gd" id="2_chores_manager"]
+[ext_resource type="Script" uid="uid://8dxuy401oevs" path="res://Scripts/UI/chore_ui.gd" id="3_chore_ui"]
+[ext_resource type="Script" uid="uid://cgiysl3kol05g" path="res://Scripts/UI/mom_character.gd" id="4_mom_character"]
+[ext_resource type="Texture2D" uid="uid://g6jluccxn0nl" path="res://Resources/Art/Characters/Mom/mom_neutral.png" id="5_mom_neutral"]
+
+[node name="ChoresManagerTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_test")
+
+[node name="ChoresManager" type="Node" parent="."]
+script = ExtResource("2_chores_manager")
+
+[node name="ChoreUI" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 90.0
+offset_bottom = 150.0
+script = ExtResource("3_chore_ui")
+
+[node name="MomDialogPopup" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("4_mom_character")
+neutral_texture = ExtResource("5_mom_neutral")
+
+[node name="ControlPanel" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -220.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 400.0
+grow_horizontal = 0
+
+[node name="TitleLabel" type="Label" parent="ControlPanel"]
+layout_mode = 2
+text = "Chores Manager Test"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="ControlPanel"]
+layout_mode = 2
+
+[node name="IncrementButton" type="Button" parent="ControlPanel"]
+layout_mode = 2
+text = "Increment Progress (+1)"
+
+[node name="Increment10Button" type="Button" parent="ControlPanel"]
+layout_mode = 2
+text = "Increment Progress (+10)"
+
+[node name="CompleteTaskButton" type="Button" parent="ControlPanel"]
+layout_mode = 2
+text = "Complete Current Task"
+
+[node name="TriggerMomButton" type="Button" parent="ControlPanel"]
+layout_mode = 2
+text = "Trigger Mom (Set 100)"
+
+[node name="ResetButton" type="Button" parent="ControlPanel"]
+layout_mode = 2
+text = "Reset Progress"
+
+[node name="HSeparator2" type="HSeparator" parent="ControlPanel"]
+layout_mode = 2
+
+[node name="ProgressLabel" type="Label" parent="ControlPanel"]
+layout_mode = 2
+text = "Set Progress:"
+
+[node name="ProgressSpinBox" type="SpinBox" parent="ControlPanel"]
+layout_mode = 2
+
+[node name="SetProgressButton" type="Button" parent="ControlPanel"]
+layout_mode = 2
+text = "Set Progress"
+
+[node name="HSeparator3" type="HSeparator" parent="ControlPanel"]
+layout_mode = 2
+
+[node name="TaskLabel" type="Label" parent="ControlPanel"]
+layout_mode = 2
+text = "Select Task:"
+
+[node name="TaskOption" type="OptionButton" parent="ControlPanel"]
+layout_mode = 2
+
+[node name="SelectTaskButton" type="Button" parent="ControlPanel"]
+layout_mode = 2
+text = "Select Task"
+
+[node name="HSeparator4" type="HSeparator" parent="ControlPanel"]
+layout_mode = 2
+
+[node name="MomTestLabel" type="Label" parent="ControlPanel"]
+layout_mode = 2
+text = "Test Mom Expressions:"
+
+[node name="TestNeutralButton" type="Button" parent="ControlPanel"]
+layout_mode = 2
+text = "Test Mom (Neutral)"
+
+[node name="TestUpsetButton" type="Button" parent="ControlPanel"]
+layout_mode = 2
+text = "Test Mom (Upset)"
+
+[node name="TestFuriousButton" type="Button" parent="ControlPanel"]
+layout_mode = 2
+text = "Test Mom (Furious)"
+
+[node name="TestHappyButton" type="Button" parent="ControlPanel"]
+layout_mode = 2
+text = "Test Mom (Happy)"
+
+[node name="OutputLabel" type="RichTextLabel" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 120.0
+offset_top = 10.0
+offset_right = -230.0
+offset_bottom = 300.0
+grow_horizontal = 2
+bbcode_enabled = true
+text = "Test output will appear here..."
+
+[connection signal="pressed" from="ControlPanel/IncrementButton" to="." method="_on_increment_pressed"]
+[connection signal="pressed" from="ControlPanel/Increment10Button" to="." method="_on_increment_10_pressed"]
+[connection signal="pressed" from="ControlPanel/CompleteTaskButton" to="." method="_on_complete_task_pressed"]
+[connection signal="pressed" from="ControlPanel/TriggerMomButton" to="." method="_on_trigger_mom_pressed"]
+[connection signal="pressed" from="ControlPanel/ResetButton" to="." method="_on_reset_pressed"]
+[connection signal="pressed" from="ControlPanel/SetProgressButton" to="." method="_on_set_progress_pressed"]
+[connection signal="pressed" from="ControlPanel/SelectTaskButton" to="." method="_on_select_task_pressed"]
+[connection signal="pressed" from="ControlPanel/TestNeutralButton" to="." method="_on_test_mom_neutral_pressed"]
+[connection signal="pressed" from="ControlPanel/TestUpsetButton" to="." method="_on_test_mom_upset_pressed"]
+[connection signal="pressed" from="ControlPanel/TestFuriousButton" to="." method="_on_test_mom_furious_pressed"]
+[connection signal="pressed" from="ControlPanel/TestHappyButton" to="." method="_on_test_mom_happy_pressed"]

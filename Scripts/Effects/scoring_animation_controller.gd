@@ -32,7 +32,7 @@ const PITCH_SCALE_FACTOR: float = 0.02
 @export var scoring_sound: AudioStream
 
 # Import the FloatingNumber class
-const FloatingNumber = preload("res://Scripts/Effects/floating_number.gd")
+const FloatingNumberScript = preload("res://Scripts/Effects/floating_number.gd")
 
 # Node references
 var dice_hand: DiceHand
@@ -310,7 +310,7 @@ func _animate_single_die(die: Dice, die_index: int, intensity_scale: float, spee
 	var dice_color = Color.WHITE
 	
 	# Create floating number with speed-adjusted duration and speed
-	var floating_number = FloatingNumber.create_floating_number(get_tree().current_scene, die_center, 
+	var floating_number = FloatingNumberScript.create_floating_number(get_tree().current_scene, die_center, 
 		"+" +str(die.value), 1.0, dice_color)
 	if floating_number:
 		floating_number.float_duration = floating_number.float_duration / speed_scale
@@ -516,7 +516,7 @@ func _animate_consumable_contribution(consumable_id: String, contribution: int, 
 	# Show floating contribution number above and center of the spine
 	var spine_bounds = spine.get_rect()
 	var spine_center = spine.global_position + Vector2(spine_bounds.size.x / 2, 0)
-	var floating_number = FloatingNumber.create_floating_number(get_tree().current_scene, spine_center, 
+	var floating_number = FloatingNumberScript.create_floating_number(get_tree().current_scene, spine_center, 
 		"+" + str(contribution), 1.2, Color.GREEN)
 	if floating_number:
 		floating_number.float_duration = floating_number.float_duration / speed_scale
@@ -551,7 +551,7 @@ func _animate_powerup_additive(powerup_id: String, additive_value: int, intensit
 	# Show floating additive value above and center of the spine
 	var spine_bounds = spine.get_rect()
 	var spine_center = spine.global_position + Vector2(spine_bounds.size.x / 2, 0)
-	var floating_number = FloatingNumber.create_floating_number(get_tree().current_scene, spine_center, 
+	var floating_number = FloatingNumberScript.create_floating_number(get_tree().current_scene, spine_center, 
 		"+" + str(additive_value), 1.5, Color.YELLOW)
 	if floating_number:
 		floating_number.float_duration = floating_number.float_duration / speed_scale
@@ -587,7 +587,7 @@ func _animate_powerup_multiplier(powerup_id: String, multiplier_value: float, in
 	var spine_bounds = spine.get_rect()
 	var spine_center = spine.global_position + Vector2(spine_bounds.size.x / 2, 0)
 	var multiplier_text = "x%.1f" % multiplier_value
-	var floating_number = FloatingNumber.create_floating_number(get_tree().current_scene, spine_center, 
+	var floating_number = FloatingNumberScript.create_floating_number(get_tree().current_scene, spine_center, 
 		multiplier_text, 1.5, Color.CYAN)
 	if floating_number:
 		floating_number.float_duration = floating_number.float_duration / speed_scale
@@ -624,7 +624,7 @@ func _animate_powerup_generic(powerup_id: String, intensity_scale: float, speed_
 	# Show a generic "Active!" floating text
 	var spine_bounds = spine.get_rect()
 	var spine_center = spine.global_position + Vector2(spine_bounds.size.x / 2, 0)
-	var floating_number = FloatingNumber.create_floating_number(get_tree().current_scene, spine_center, 
+	var floating_number = FloatingNumberScript.create_floating_number(get_tree().current_scene, spine_center, 
 		"ACTIVE!", 1.0, Color.WHITE)
 	if floating_number:
 		floating_number.float_duration = floating_number.float_duration / speed_scale
@@ -689,7 +689,7 @@ func _animate_single_powerup(powerup_id: String, multiplier: float, intensity_sc
 	# Show floating multiplier number
 	var spine_center = spine.global_position + (spine.size / 2)
 	var multiplier_text = "x%.1f" % multiplier
-	FloatingNumber.create_floating_number(get_tree().current_scene, spine_center, 
+	FloatingNumberScript.create_floating_number(get_tree().current_scene, spine_center, 
 		multiplier_text, 1.5, Color.CYAN)
 	
 	print("[ScoringAnimationController] Animated powerup %s with multiplier %.1fx" % [powerup_id, multiplier])
@@ -712,7 +712,7 @@ func _show_final_score_number(score: int, _intensity_scale: float) -> void:
 	var screen_center = get_viewport().get_visible_rect().size / 2
 	
 	# Create large, prominent score number
-	FloatingNumber.create_floating_number(get_tree().current_scene, screen_center, 
+	FloatingNumberScript.create_floating_number(get_tree().current_scene, screen_center, 
 		str(score), 2.0 * _intensity_scale, Color.GOLD)
 	
 	print("[ScoringAnimationController] Showing final score: %d" % score)
@@ -737,7 +737,7 @@ func _animate_category_level_multiplier(breakdown_info: Dictionary, intensity_sc
 	
 	# Create the level multiplier text with gold color
 	var level_text = "×%d" % category_level
-	var floating_number = FloatingNumber.create_floating_number(
+	var floating_number = FloatingNumberScript.create_floating_number(
 		get_tree().current_scene,
 		level_position,
 		level_text,
@@ -807,7 +807,7 @@ func _show_colored_dice_effect(die: Dice, die_center: Vector2, speed_scale: floa
 	
 	# Create floating number offset slightly to the right of the main number
 	var offset_position = die_center + Vector2(30, 0)
-	var floating_number = FloatingNumber.create_floating_number(get_tree().current_scene, offset_position, 
+	var floating_number = FloatingNumberScript.create_floating_number(get_tree().current_scene, offset_position, 
 		effect_text, 0.8, effect_color)  # Slightly smaller scale
 	if floating_number:
 		floating_number.float_duration = floating_number.float_duration / speed_scale

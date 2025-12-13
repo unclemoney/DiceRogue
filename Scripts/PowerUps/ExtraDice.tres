@@ -13,4 +13,5 @@ icon = ExtResource("1_o2lnj")
 scene = ExtResource("2_o2lnj")
 price = 100
 rarity = "common"
+rating = "NC-17"
 metadata/_custom_type_script = "uid://b4upm4dbvhukm"

@@ -1,0 +1,149 @@
+extends RefCounted
+class_name MomLogicHandler
+
+## MomLogicHandler
+##
+## Handles the logic for Mom's appearance when chore progress reaches 100.
+## Checks for R and NC-17 rated PowerUps and applies appropriate consequences.
+## R-rated PowerUps are removed.
+## NC-17 rated PowerUps are removed and a random debuff is stacked.
+
+## Result of Mom's check
+class MomCheckResult:
+	var removed_power_ups: Array[String] = []
+	var applied_debuffs: Array[String] = []
+	var mom_is_upset: bool = false
+	var mom_is_furious: bool = false  # NC-17 found
+	var dialog_text: String = ""
+	var expression: String = "neutral"
+
+## trigger_mom_check()
+##
+## Performs the Mom check on the player's active power-ups.
+## Returns a MomCheckResult with all consequences.
+##
+## Parameters:
+##   game_controller: Node - the GameController instance
+##
+## Returns: MomCheckResult
+static func trigger_mom_check(game_controller: Node) -> MomCheckResult:
+	var result = MomCheckResult.new()
+	var power_up_manager = game_controller.get("pu_manager")
+	var active_power_ups: Dictionary = game_controller.get("active_power_ups")
+	
+	if active_power_ups == null:
+		result.dialog_text = "Just checking in on you, sweetie! Everything looks fine."
+		result.expression = "happy"
+		return result
+	
+	var r_rated_ids: Array[String] = []
+	var nc17_rated_ids: Array[String] = []
+	
+	# Scan all active power-ups for restricted ratings
+	for power_up_id in active_power_ups.keys():
+		var def = _get_power_up_def(power_up_manager, power_up_id)
+		if def == null:
+			continue
+		
+		var rating = def.get("rating") if def else "G"
+		if rating == null:
+			rating = "G"
+		
+		if PowerUpData.is_rating_nc17(rating):
+			nc17_rated_ids.append(power_up_id)
+		elif PowerUpData.is_rating_restricted(rating):
+			r_rated_ids.append(power_up_id)
+	
+	# Process NC-17 first (worse consequences)
+	if nc17_rated_ids.size() > 0:
+		result.mom_is_furious = true
+		result.mom_is_upset = true
+		result.expression = "upset"
+		
+		for id in nc17_rated_ids:
+			result.removed_power_ups.append(id)
+		
+		# Apply stacking debuffs for each NC-17 power-up
+		var debuff_ids = ["lock_dice", "costly_roll", "disabled_twos", "roll_score_minus_one"]
+		for i in range(nc17_rated_ids.size()):
+			var random_debuff = debuff_ids[randi() % debuff_ids.size()]
+			result.applied_debuffs.append(random_debuff)
+		
+		result.dialog_text = _get_nc17_dialog(nc17_rated_ids.size())
+	
+	# Process R-rated (just removal)
+	if r_rated_ids.size() > 0:
+		result.mom_is_upset = true
+		if not result.mom_is_furious:
+			result.expression = "upset"
+		
+		for id in r_rated_ids:
+			result.removed_power_ups.append(id)
+		
+		if result.dialog_text == "":
+			result.dialog_text = _get_r_rated_dialog(r_rated_ids.size())
+		else:
+			result.dialog_text += "\n\n" + _get_r_rated_dialog(r_rated_ids.size())
+	
+	# No restricted content found
+	if not result.mom_is_upset:
+		result.expression = "happy"
+		result.dialog_text = _get_happy_dialog()
+	
+	return result
+
+## apply_consequences()
+##
+## Applies the consequences from a MomCheckResult to the game state.
+## Removes power-ups and applies debuffs.
+##
+## Parameters:
+##   game_controller: Node - the GameController instance
+##   result: MomCheckResult - the result from trigger_mom_check()
+static func apply_consequences(game_controller: Node, result: MomCheckResult) -> void:
+	# Remove power-ups
+	for power_up_id in result.removed_power_ups:
+		if game_controller.has_method("revoke_power_up"):
+			game_controller.revoke_power_up(power_up_id)
+		print("[MomLogicHandler] Removed power-up: %s" % power_up_id)
+	
+	# Apply debuffs (stacking for NC-17)
+	for debuff_id in result.applied_debuffs:
+		if game_controller.has_method("enable_debuff"):
+			game_controller.enable_debuff(debuff_id)
+		print("[MomLogicHandler] Applied debuff: %s" % debuff_id)
+	
+	# Mark debuffs as "grounded" so they persist until next round
+	# This requires modification to debuff system or tracking in ChoresManager
+
+static func _get_power_up_def(power_up_manager: Node, id: String) -> PowerUpData:
+	if power_up_manager == null:
+		return null
+	if power_up_manager.has_method("get_def"):
+		return power_up_manager.get_def(id)
+	return null
+
+static func _get_nc17_dialog(_count: int) -> String:
+	var dialogs = [
+		"[wave amp=50 freq=3][color=red]WHAT IS THIS?![/color][/wave] You are [shake rate=20 level=10]GROUNDED[/shake] young one! I'm confiscating this... this... [i]filth[/i]!",
+		"[wave amp=30 freq=5][color=red]I can't believe what I'm seeing![/color][/wave] You're in [shake rate=15 level=8]BIG TROUBLE[/shake]! Hand it over!",
+		"[color=red][shake rate=25 level=12]ABSOLUTELY NOT![/shake][/color] Where did you even GET this?! You're grounded until further notice!"
+	]
+	return dialogs[randi() % dialogs.size()]
+
+static func _get_r_rated_dialog(_count: int) -> String:
+	var dialogs = [
+		"[color=orange]Hmm...[/color] What's this? You know you're not old enough for this kind of thing. I'm taking it away.",
+		"[color=orange]Excuse me?[/color] This is [i]not[/i] appropriate for someone your age. Hand it over.",
+		"[color=orange]*sigh*[/color] We've talked about this. You're not ready for this yet. Consider it confiscated."
+	]
+	return dialogs[randi() % dialogs.size()]
+
+static func _get_happy_dialog() -> String:
+	var dialogs = [
+		"[color=green]Just checking in![/color] Everything looks good here. Keep up the good work, sweetie!",
+		"[color=green]How's it going?[/color] I see you're being responsible. I'll leave you to it!",
+		"[color=green]Doing your chores?[/color] That's my good kid! Let me know if you need anything.",
+		"[color=green]Don't forget to take breaks![/color] You're doing great!"
+	]
+	return dialogs[randi() % dialogs.size()]

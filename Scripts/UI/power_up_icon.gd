@@ -149,7 +149,7 @@ func _process(delta: float) -> void:
 	_handle_mouse_following(delta)
 	_update_rotation(delta)
 
-func _update_shadow(delta: float) -> void:
+func _update_shadow(_delta: float) -> void:
 	if not shadow:
 		return
 	
@@ -382,7 +382,21 @@ func _apply_data_to_ui() -> void:
 		card_title.add_theme_constant_override("shadow_as_outline", 0)
 	
 	if hover_label:
-		hover_label.text = data.description
+		# Include rating in hover label on a new line at the bottom
+		var description_text = data.description if data.description else "No description"
+		
+		# Get rating - default to "G" if not set or empty
+		var rating_value = data.rating if data.rating and data.rating != "" else "G"
+		print("[PowerUpIcon] PowerUp '%s' raw rating from data: '%s'" % [data.id, data.rating])
+		print("[PowerUpIcon] PowerUp '%s' processed rating_value: '%s'" % [data.id, rating_value])
+		
+		var rating_char = PowerUpData.get_rating_display_char(rating_value)
+		print("[PowerUpIcon] get_rating_display_char returned: '%s' (length: %d)" % [rating_char, len(rating_char)])
+		
+		var rating_suffix = "\nRated: %s" % rating_char
+		print("[PowerUpIcon] Final rating suffix: '%s'" % rating_suffix)
+		
+		hover_label.text = description_text + rating_suffix
 
 func _gui_input(event: InputEvent) -> void:
 	# Prevent card interaction if sell button was directly pressed
@@ -721,6 +735,16 @@ func _get_rarity_color(rarity_string: String) -> Color:
 		"legendary": return Color.ORANGE
 		_: return Color.WHITE
 
+# Helper function to get rating color
+func _get_rating_color(rating_string: String) -> Color:
+	match rating_string.to_upper():
+		"G": return Color.GREEN
+		"PG": return Color.CYAN
+		"PG-13": return Color.YELLOW
+		"R": return Color.ORANGE
+		"NC-17": return Color.RED
+		_: return Color.WHITE
+
 # Add to power_up_icon.gd
 func update_hover_description() -> void:
 	print("[PowerUpIcon] Updating hover description for:", data.id if data else "unknown")
@@ -748,8 +772,13 @@ func update_hover_description() -> void:
 		print("[PowerUpIcon] Updated description:", description)
 	else:
 		print("[PowerUpIcon] No method get_current_description found")
-		
-	hover_label.text = description
+	
+	# Add rating suffix to description
+	var rating_value = data.rating if data.rating and data.rating != "" else "G"
+	var rating_char = PowerUpData.get_rating_display_char(rating_value)
+	var rating_suffix = "\nRated: %s" % rating_char
+	
+	hover_label.text = description + rating_suffix
 	print("[PowerUpIcon] Set hover_label.text to:", hover_label.text)
 
 ## _apply_action_button_style(button)

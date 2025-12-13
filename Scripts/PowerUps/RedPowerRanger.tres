@@ -13,4 +13,5 @@ icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
 price = 175
 rarity = "uncommon"
+rating = "PG-13"
 metadata/_custom_type_script = "uid://b4upm4dbvhukm"

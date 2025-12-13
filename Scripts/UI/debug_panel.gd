@@ -267,6 +267,19 @@ func _create_debug_tabs() -> void:
 			{"text": "Simulate High Score", "method": "_debug_simulate_high_score"},
 			{"text": "Reset Progress Data", "method": "_debug_reset_progress"},
 			{"text": "Save Progress", "method": "_debug_save_progress"},
+		],
+		"Chores": [
+			{"text": "Add Progress +10", "method": "_debug_chores_add_progress"},
+			{"text": "Add Progress +50", "method": "_debug_chores_add_big_progress"},
+			{"text": "Complete Current Task", "method": "_debug_chores_complete_task"},
+			{"text": "Trigger Mom Immediately", "method": "_debug_chores_trigger_mom"},
+			{"text": "Select New Task", "method": "_debug_chores_new_task"},
+			{"text": "Reset Progress", "method": "_debug_chores_reset"},
+			{"text": "Show Chore State", "method": "_debug_chores_show_state"},
+			{"text": "Show PowerUp Ratings", "method": "_debug_chores_show_ratings"},
+			{"text": "Test Mom Dialog (Neutral)", "method": "_debug_chores_mom_neutral"},
+			{"text": "Test Mom Dialog (Upset)", "method": "_debug_chores_mom_upset"},
+			{"text": "Test Mom Dialog (Happy)", "method": "_debug_chores_mom_happy"},
 		]
 	}
 	
@@ -1954,3 +1967,208 @@ func _debug_lock_all_upgrade_consumables() -> void:
 			break
 	
 	log_debug("Locked %d upgrade consumables" % locked_count)
+
+# =============================================================================
+# CHORES / MOM SYSTEM DEBUG FUNCTIONS
+# =============================================================================
+
+## _debug_chores_add_progress()
+##
+## Adds +10 to chore progress for testing progress bar and thresholds.
+func _debug_chores_add_progress() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	var chores_manager = game_controller.get("chores_manager")
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not found on GameController")
+		return
+	
+	for i in range(10):
+		chores_manager.increment_progress()
+	log_debug("Added +10 to chore progress. Current: %d" % chores_manager.current_progress)
+
+## _debug_chores_add_big_progress()
+##
+## Adds +50 to chore progress for quickly testing Mom trigger.
+func _debug_chores_add_big_progress() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	var chores_manager = game_controller.get("chores_manager")
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not found on GameController")
+		return
+	
+	for i in range(50):
+		chores_manager.increment_progress()
+	log_debug("Added +50 to chore progress. Current: %d" % chores_manager.current_progress)
+
+## _debug_chores_complete_task()
+##
+## Completes the current chore task (reduces progress by 20).
+func _debug_chores_complete_task() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	var chores_manager = game_controller.get("chores_manager")
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not found on GameController")
+		return
+	
+	var prev_progress = chores_manager.current_progress
+	chores_manager.complete_current_task()
+	log_debug("Completed task! Progress: %d -> %d" % [prev_progress, chores_manager.current_progress])
+
+## _debug_chores_trigger_mom()
+##
+## Immediately triggers the Mom check (bypasses progress threshold).
+func _debug_chores_trigger_mom() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	var chores_manager = game_controller.get("chores_manager")
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not found on GameController")
+		return
+	
+	log_debug("Manually triggering Mom check...")
+	chores_manager.mom_triggered.emit()
+
+## _debug_chores_new_task()
+##
+## Forces selection of a new random task.
+func _debug_chores_new_task() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	var chores_manager = game_controller.get("chores_manager")
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not found on GameController")
+		return
+	
+	chores_manager.select_new_task()
+	if chores_manager.current_task:
+		log_debug("New task: %s" % chores_manager.current_task.task_name)
+	else:
+		log_debug("No task selected")
+
+## _debug_chores_reset()
+##
+## Resets chore progress to 0 and selects a new task.
+func _debug_chores_reset() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	var chores_manager = game_controller.get("chores_manager")
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not found on GameController")
+		return
+	
+	chores_manager.reset_progress()
+	log_debug("Chore progress reset to 0, new task selected")
+
+## _debug_chores_show_state()
+##
+## Displays current state of the ChoresManager.
+func _debug_chores_show_state() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	var chores_manager = game_controller.get("chores_manager")
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not found on GameController")
+		return
+	
+	log_debug("=== CHORES STATE ===")
+	log_debug("Progress: %d / %d" % [chores_manager.current_progress, chores_manager.MAX_PROGRESS])
+	log_debug("Tasks Completed: %d" % chores_manager.tasks_completed)
+	
+	if chores_manager.current_task:
+		var task = chores_manager.current_task
+		log_debug("Current Task: %s" % task.task_name)
+		log_debug("  Description: %s" % task.description)
+		log_debug("  Type: %d" % task.task_type)
+		log_debug("  Difficulty: %d" % task.difficulty)
+	else:
+		log_debug("Current Task: None")
+
+## _debug_chores_show_ratings()
+##
+## Shows rating for all active PowerUps.
+func _debug_chores_show_ratings() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	log_debug("=== POWERUP RATINGS ===")
+	
+	if game_controller.active_power_ups.is_empty():
+		log_debug("No active PowerUps")
+		return
+	
+	var pu_manager = game_controller.pu_manager
+	if not pu_manager:
+		log_debug("ERROR: PowerUpManager not found")
+		return
+	
+	for pu_id in game_controller.active_power_ups:
+		var data = pu_manager.get_power_up_data(pu_id)
+		if data:
+			var rating_display = data.get_rating_display_char() if data.has_method("get_rating_display_char") else data.rating
+			var restricted = data.is_rating_restricted() if data.has_method("is_rating_restricted") else false
+			var nc17 = data.is_rating_nc17() if data.has_method("is_rating_nc17") else false
+			log_debug("  %s: %s%s%s" % [
+				pu_id,
+				rating_display,
+				" [RESTRICTED]" if restricted else "",
+				" [NC-17]" if nc17 else ""
+			])
+		else:
+			log_debug("  %s: (data not found)" % pu_id)
+
+## _debug_chores_mom_neutral()
+##
+## Tests the Mom dialog with neutral expression.
+func _debug_chores_mom_neutral() -> void:
+	_test_mom_dialog("neutral", "Hi sweetie! Just checking in on you. Don't forget to do your chores!")
+
+## _debug_chores_mom_upset()
+##
+## Tests the Mom dialog with upset expression.
+func _debug_chores_mom_upset() -> void:
+	_test_mom_dialog("upset", "[color=red]What is THIS?![/color] I told you not to play with those kinds of things! I'm taking this away!")
+
+## _debug_chores_mom_happy()
+##
+## Tests the Mom dialog with happy expression.
+func _debug_chores_mom_happy() -> void:
+	_test_mom_dialog("happy", "[color=lime]Good job keeping your room clean![/color] I'm so proud of you, sweetie!")
+
+## _test_mom_dialog()
+##
+## Helper to test mom dialog popup with specific expression.
+func _test_mom_dialog(expression: String, message: String) -> void:
+	# Try to find existing MomDialogPopup in the scene
+	var mom_popup = get_tree().get_first_node_in_group("mom_dialog")
+	
+	if mom_popup and mom_popup.has_method("show_dialog"):
+		mom_popup.show_dialog(expression, message)
+		log_debug("Showed Mom dialog with '%s' expression" % expression)
+	else:
+		# Try to create one temporarily
+		var mom_scene = load("res://Scenes/UI/mom_dialog_popup.tscn")
+		if mom_scene:
+			var popup = mom_scene.instantiate()
+			get_tree().current_scene.add_child(popup)
+			popup.show_dialog(expression, message)
+			log_debug("Created temporary Mom dialog with '%s' expression" % expression)
+		else:
+			log_debug("ERROR: Could not find or create MomDialogPopup")

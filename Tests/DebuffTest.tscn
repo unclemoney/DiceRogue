@@ -1,4 +1,4 @@
-[gd_scene load_steps=98 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=100 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -95,6 +95,8 @@
 [ext_resource type="Resource" uid="uid://bxfqy7snkp8gf" path="res://Scripts/PowerUps/PurpleSlime.tres" id="106_purple_slime"]
 [ext_resource type="Resource" uid="uid://cs8hhns55xdvv" path="res://Scripts/PowerUps/BlueSlime.tres" id="107_blue_slime"]
 [ext_resource type="PackedScene" uid="uid://ccn3jkgrhqwqe" path="res://Scenes/UI/StatisticsPanel.tscn" id="999_stats"]
+[ext_resource type="Script" uid="uid://du88ajtcwgupi" path="res://Scripts/Managers/ChoresManager.gd" id="1000_chores_mgr"]
+[ext_resource type="PackedScene" uid="uid://bbafg0xpunx5e" path="res://Scenes/UI/chore_ui.tscn" id="1001_chore_ui"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wtptv"]
 
@@ -294,3 +296,13 @@ visible = false
 z_index = 11
 z_as_relative = false
 script = ExtResource("91_fjxkw")
+
+[node name="ChoresManager" type="Node" parent="."]
+script = ExtResource("1000_chores_mgr")
+
+[node name="ChoreUI" parent="." instance=ExtResource("1001_chore_ui")]
+offset_left = 365.0
+offset_top = 36.0
+offset_right = 445.0
+offset_bottom = 236.0
+chores_manager_path = NodePath("../ChoresManager")

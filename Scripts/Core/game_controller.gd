@@ -19,7 +19,11 @@ const SCORE_CARD_UI_SCRIPT := preload("res://Scripts/UI/score_card_ui.gd")
 const DEBUFF_MANAGER_SCRIPT := preload("res://Scripts/Managers/DebuffManager.gd")
 const DEBUFF_UI_SCRIPT := preload("res://Scripts/UI/debuff_ui.gd")
 const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
-const ScoringAnimationController := preload("res://Scripts/Effects/scoring_animation_controller.gd")
+const ScoringAnimationControllerScript := preload("res://Scripts/Effects/scoring_animation_controller.gd")
+const ChoresManagerScript := preload("res://Scripts/Managers/ChoresManager.gd")
+const ChoreUIScript := preload("res://Scripts/UI/chore_ui.gd")
+const MomCharacterScript := preload("res://Scripts/UI/mom_character.gd")
+const MomLogicHandlerScript := preload("res://Scripts/Core/mom_logic_handler.gd")
 const RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF := preload("res://Scripts/Consumable/RandomPowerUpUncommonConsumable.tres")
 const GREEN_ENVY_CONSUMABLE_DEF := preload("res://Scripts/Consumable/GreenEnvyConsumable.tres")
 const POOR_HOUSE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/PoorHouseConsumable.tres")
@@ -68,6 +72,8 @@ const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable
 @export var crt_manager_path: NodePath          = ^"../CRTManager"
 @export var statistics_panel_path: NodePath     = ^"../StatisticsPanel"
 @export var scoring_animation_controller_path: NodePath = ^"../ScoringAnimationController"
+@export var chores_manager_path: NodePath       = ^"../ChoresManager"
+@export var chore_ui_path: NodePath             = ^"../ChoreUI"
 
 @onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
 @onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
@@ -91,7 +97,13 @@ const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable
 @onready var round_manager: RoundManager   = get_node_or_null(round_manager_path)
 @onready var crt_manager: CRTManager       = get_node_or_null(crt_manager_path)
 @onready var statistics_panel: Control = get_node_or_null(statistics_panel_path)
-@onready var scoring_animation_controller: ScoringAnimationController = get_node_or_null(scoring_animation_controller_path)
+@onready var scoring_animation_controller = get_node_or_null(scoring_animation_controller_path)
+@onready var chores_manager = get_node_or_null(chores_manager_path)
+@onready var chore_ui = get_node_or_null(chore_ui_path)
+
+# Mom dialog popup (instantiated when needed)
+var _mom_dialog = null
+var _grounded_debuffs: Array[String] = []  # Debuffs from NC-17 that persist until round end
 
 const STARTING_POWER_UP_IDS := ["extra_dice", "extra_rolls"]
 
@@ -182,6 +194,14 @@ func _ready() -> void:
 		turn_tracker.turn_started.connect(_on_turn_started)
 		# Handle end of game (Turn 13 reached)
 		turn_tracker.game_over.connect(_on_game_over)
+	
+	# Initialize ChoresManager and ChoreUI
+	if chores_manager:
+		chores_manager.mom_triggered.connect(_on_mom_triggered)
+		print("[GameController] Connected to ChoresManager.mom_triggered")
+	if chore_ui and chores_manager:
+		chore_ui.set_chores_manager(chores_manager)
+		print("[GameController] Connected ChoreUI to ChoresManager")
 
 	# Register new consumables programmatically
 	if consumable_manager:
@@ -966,6 +986,23 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 	if dice_hand:
 		dice_hand.set_all_dice_disabled()
 		print("[GameController] Disabled all dice after scoring")
+	
+	# Check if chore task was completed
+	if chores_manager:
+		var dice_values = []
+		if dice_hand:
+			dice_values = dice_hand.get_current_dice_values()
+		
+		var context = {
+			"category": _category,
+			"dice_values": dice_values,
+			"score": _score,
+			"was_yahtzee": _category == "yahtzee" and _score > 0,
+			"consumable_used": false,  # TODO: Track from consumable usage
+			"locked_count": _count_locked_dice() if dice_hand else 0,
+			"was_scratch": _score == 0
+		}
+		chores_manager.check_task_completion(context)
 	
 	# Track statistics for scoring
 	var stats = get_node_or_null("/root/Statistics")
@@ -1833,6 +1870,10 @@ func _on_game_button_dice_rolled(dice_values: Array) -> void:
 		PlayerEconomy.remove_money(cost, "debuff")
 		print("[GameController] Paid", cost, "coins to roll dice")
 	
+	# Increment chores progress on each roll
+	if chores_manager:
+		chores_manager.increment_progress(1)
+	
 	# Update PowerUps that depend on dice values
 	_update_power_ups_for_dice(dice_values)
 
@@ -1967,6 +2008,9 @@ func _on_round_started(round_number: int) -> void:
 	update_three_more_rolls_usability()
 	update_double_existing_usability()
 	
+	# Clear grounded debuffs from previous round (NC-17 consequences)
+	_clear_grounded_debuffs()
+	
 	# Activate this round's challenge
 	if round_manager:
 		var round_data = round_manager.get_current_round_data()
@@ -2078,3 +2122,76 @@ func get_active_power_up(id: String) -> PowerUp:
 	if active_power_ups.has(id):
 		return active_power_ups[id]
 	return null
+
+## _on_mom_triggered()
+##
+## Handler for when chores progress reaches 100 and Mom appears.
+## Checks for R and NC-17 rated PowerUps and applies consequences.
+func _on_mom_triggered() -> void:
+	print("[GameController] Mom triggered!")
+	
+	# Perform the Mom check
+	var result = MomLogicHandlerScript.trigger_mom_check(self)
+	
+	# Show Mom dialog
+	_show_mom_dialog(result)
+
+## _show_mom_dialog(result)
+##
+## Shows the Mom dialog popup with appropriate expression and text.
+## Waits for dialog to close before applying consequences.
+func _show_mom_dialog(result) -> void:
+	# Create Mom dialog if needed
+	if _mom_dialog == null:
+		var mom_scene = preload("res://Scenes/UI/mom_dialog_popup.tscn")
+		_mom_dialog = mom_scene.instantiate()
+		add_child(_mom_dialog)
+	
+	# Show dialog with result
+	await _mom_dialog.show_dialog(result.expression, result.dialog_text)
+	
+	# Wait for dialog to close
+	await _mom_dialog.dialog_closed
+	
+	# Apply consequences after dialog closes
+	MomLogicHandlerScript.apply_consequences(self, result)
+	
+	# Track grounded debuffs (NC-17) for removal at round end
+	for debuff_id in result.applied_debuffs:
+		if debuff_id not in _grounded_debuffs:
+			_grounded_debuffs.append(debuff_id)
+	
+	# Reset chores progress
+	if chores_manager:
+		chores_manager.reset_progress()
+
+## check_chore_task_completion(context)
+##
+## Called after scoring to check if the current chore task was completed.
+## The context dictionary should contain scoring information.
+func check_chore_task_completion(context: Dictionary) -> void:
+	if chores_manager:
+		chores_manager.check_task_completion(context)
+
+## _count_locked_dice()
+##
+## Helper to count how many dice are currently locked.
+## Returns: int - number of locked dice
+func _count_locked_dice() -> int:
+	if not dice_hand:
+		return 0
+	var count = 0
+	for die in dice_hand.dice_list:
+		if die is Dice and die.is_locked:
+			count += 1
+	return count
+
+## _clear_grounded_debuffs()
+##
+## Removes all debuffs that were applied by Mom (NC-17 consequences).
+## Called at the start of a new round.
+func _clear_grounded_debuffs() -> void:
+	print("[GameController] Clearing grounded debuffs: %v" % [_grounded_debuffs])
+	for debuff_id in _grounded_debuffs:
+		disable_debuff(debuff_id)
+	_grounded_debuffs.clear()
