@@ -370,6 +370,66 @@ When Mom appears (progress reaches 100):
 - **MomCharacter**: `Scripts/UI/mom_character.gd` - Dialog popup
 - **Mom Sprites**: `Resources/Art/Characters/Mom/` - Character art
 
+### Synergy System
+The **Synergy System** rewards players for collecting PowerUps with matching ratings, creating strategic depth in PowerUp selection:
+
+**Core Mechanics:**
+- **Matching Set Bonus**: Collect 5 PowerUps of the same rating → +50 additive bonus per set
+- **Rainbow Bonus**: Collect one PowerUp of each rating (G, PG, PG-13, R, NC-17) → 5x multiplier
+- **Rating Display**: Each PowerUp spine shows its rating at the bottom (shortened: PG-13→"13", NC-17→"17")
+
+**Rating Tiers:**
+| Rating | Spine Display | Color | Description |
+|--------|---------------|-------|-------------|
+| G | G | Green | General audience - family friendly |
+| PG | PG | Yellow | Parental guidance suggested |
+| PG-13 | 13 | Orange | Parents strongly cautioned |
+| R | R | Red | Restricted - Mom confiscates |
+| NC-17 | 17 | Dark Red | Adults only - Mom confiscates + debuff |
+
+**Synergy Bonuses:**
+- **Set Bonus (Additive)**: For each complete set of 5 same-rated PowerUps, gain +50 additive points
+  - Example: 10 G-rated PowerUps = 2 sets = +100 additive bonus
+- **Rainbow Bonus (Multiplier)**: Having at least one of each rating (G, PG, PG-13, R, NC-17) grants 5x multiplier
+  - Example: G, PG, 13, R, 17 = Rainbow bonus = 5x score multiplier
+- **Stacking**: Set bonuses stack additively, rainbow bonus is either active (5x) or inactive (1x)
+
+**Score Integration:**
+- Synergy bonuses register with `ScoreModifierManager` as named sources
+- Set bonuses appear as: `synergy_G_sets`, `synergy_PG_sets`, etc.
+- Rainbow bonus appears as: `synergy_rainbow`
+- Bonuses automatically recalculate when PowerUps are granted or revoked
+
+**PowerUp Spine Display:**
+- Each spine shows abbreviated title at top and rating at bottom
+- Rating colors match tier (G=green, PG=yellow, 13=orange, R=red, 17=dark red)
+- Helps players visually track their rating collection at a glance
+
+**Debug Commands (Synergies Tab):**
+- **Show Synergy Status**: Print complete status to console
+- **Grant 5 X-Rated**: Grant 5 PowerUps of specific rating for testing
+- **Grant Rainbow Set**: Grant one of each rating
+- **Clear All PowerUps**: Remove all active PowerUps
+- **Show Rating Counts**: Display current counts per rating
+- **Show Active Bonuses**: Display currently active synergy bonuses
+
+**Implementation Files:**
+- **SynergyManager**: `Scripts/Managers/SynergyManager.gd` - Synergy tracking and calculation
+- **SynergyManager Scene**: `Scenes/Managers/synergy_manager.tscn` - Manager node
+- **PowerUpSpine Updates**: `Scripts/UI/power_up_spine.gd` - Rating display on spines
+- **PowerUpData Rating**: `Scripts/PowerUps/PowerUpData.gd` - Rating property on data resources
+- **Test Scene**: `Tests/SynergyTest.tscn` - Synergy system validation
+
+**Usage Example:**
+```gdscript
+# SynergyManager automatically tracks via GameController signals
+# Get current synergy status:
+var counts = synergy_manager.get_rating_counts()
+var bonuses = synergy_manager.get_active_synergies()
+var has_rainbow = synergy_manager.has_rainbow_bonus()
+var total_matching = synergy_manager.get_total_matching_bonus()
+```
+
 ### UI Architecture
 - **Spine/Fan System**: Cards can be displayed as compact spines or fanned out for interaction
 - **PowerUpUI** (`Scripts/UI/power_up_ui.gd`) - Manages power-up display

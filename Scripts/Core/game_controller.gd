@@ -74,6 +74,7 @@ const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable
 @export var scoring_animation_controller_path: NodePath = ^"../ScoringAnimationController"
 @export var chores_manager_path: NodePath       = ^"../ChoresManager"
 @export var chore_ui_path: NodePath             = ^"../ChoreUI"
+@export var synergy_manager_path: NodePath      = ^"../SynergyManager"
 
 @onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
 @onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
@@ -100,6 +101,7 @@ const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable
 @onready var scoring_animation_controller = get_node_or_null(scoring_animation_controller_path)
 @onready var chores_manager = get_node_or_null(chores_manager_path)
 @onready var chore_ui = get_node_or_null(chore_ui_path)
+@onready var synergy_manager = get_node_or_null(synergy_manager_path)
 
 # Mom dialog popup (instantiated when needed)
 var _mom_dialog = null
@@ -202,6 +204,11 @@ func _ready() -> void:
 	if chore_ui and chores_manager:
 		chore_ui.set_chores_manager(chores_manager)
 		print("[GameController] Connected ChoreUI to ChoresManager")
+
+	# Initialize SynergyManager
+	if synergy_manager:
+		synergy_manager.connect_to_game_controller(self)
+		print("[GameController] Connected SynergyManager to GameController")
 
 	# Register new consumables programmatically
 	if consumable_manager:
@@ -407,7 +414,7 @@ func _activate_power_up(power_up_id: String) -> void:
 				push_error("[GameController] No scorecard available for EvensNoOdds power-up")
 		"extra_dice":
 			pu.apply(dice_hand)
-			enable_debuff("lock_dice")
+			#enable_debuff("lock_dice") # Removing this line to allow locking with extra dice
 		"wild_dots":
 			pu.apply(dice_hand)
 		"yahtzee_bonus_mult":

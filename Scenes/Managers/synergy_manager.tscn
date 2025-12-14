@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dsynergy_mgr_01"]
+
+[ext_resource type="Script" uid="uid://synergy_manager_script" path="res://Scripts/Managers/SynergyManager.gd" id="1_synergy"]
+
+[node name="SynergyManager" type="Node" groups=["synergy_manager"]]
+script = ExtResource("1_synergy")

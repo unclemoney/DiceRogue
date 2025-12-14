@@ -11,6 +11,7 @@ signal spine_unhovered(power_up_id: String)
 
 @onready var spine_rect: TextureRect
 @onready var title_label: Label
+@onready var rating_label: Label
 
 # Animation properties
 var _base_position: Vector2
@@ -57,6 +58,18 @@ func _create_spine_structure() -> void:
 	title_label.add_theme_color_override("font_shadow_color", Color.BLACK)
 	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(title_label)
+	
+	# Create rating label (bottom of spine)
+	rating_label = Label.new()
+	rating_label.name = "RatingLabel"
+	rating_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	rating_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rating_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	rating_label.add_theme_font_size_override("font_size", 7)
+	rating_label.add_theme_color_override("font_color", Color.YELLOW)
+	rating_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	rating_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(rating_label)
 
 func _apply_data_to_ui() -> void:
 	if not data:
@@ -78,6 +91,41 @@ func _apply_data_to_ui() -> void:
 	if title_label and data:
 		var abbreviated_name: String = _get_abbreviated_name(data.display_name)
 		title_label.text = abbreviated_name
+	
+	# Set rating label (shortened: PG-13 -> "13", NC-17 -> "17")
+	if rating_label and data:
+		rating_label.text = _get_short_rating(data.rating)
+		rating_label.add_theme_color_override("font_color", _get_rating_color(data.rating))
+
+
+func _get_short_rating(rating: String) -> String:
+	## Returns shortened display version of rating.
+	## PG-13 -> "13", NC-17 -> "17", others unchanged.
+	match rating:
+		"PG-13":
+			return "13"
+		"NC-17":
+			return "17"
+		_:
+			return rating
+
+
+func _get_rating_color(rating: String) -> Color:
+	## Returns a color for each rating tier.
+	match rating:
+		"G":
+			return Color.GREEN
+		"PG":
+			return Color.YELLOW
+		"PG-13":
+			return Color.ORANGE
+		"R":
+			return Color.RED
+		"NC-17":
+			return Color.DARK_RED
+		_:
+			return Color.WHITE
+
 
 func _get_abbreviated_name(full_name: String) -> String:
 	# Create abbreviated name that fits on spine

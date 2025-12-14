@@ -6,6 +6,7 @@ var _defs_by_id := {}
 signal definitions_loaded
 
 func _ready() -> void:
+	add_to_group("power_up_manager")
 	print("PowerUpManager: defs count =", power_up_defs.size())
 	
 	for i in range(power_up_defs.size()):

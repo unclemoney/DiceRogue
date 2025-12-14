@@ -280,6 +280,18 @@ func _create_debug_tabs() -> void:
 			{"text": "Test Mom Dialog (Neutral)", "method": "_debug_chores_mom_neutral"},
 			{"text": "Test Mom Dialog (Upset)", "method": "_debug_chores_mom_upset"},
 			{"text": "Test Mom Dialog (Happy)", "method": "_debug_chores_mom_happy"},
+		],
+		"Synergies": [
+			{"text": "Show Synergy Status", "method": "_debug_synergy_show_status"},
+			{"text": "Grant 5 G-Rated", "method": "_debug_synergy_grant_5_g"},
+			{"text": "Grant 5 PG-Rated", "method": "_debug_synergy_grant_5_pg"},
+			{"text": "Grant 5 PG-13-Rated", "method": "_debug_synergy_grant_5_pg13"},
+			{"text": "Grant 5 R-Rated", "method": "_debug_synergy_grant_5_r"},
+			{"text": "Grant 5 NC-17-Rated", "method": "_debug_synergy_grant_5_nc17"},
+			{"text": "Grant Rainbow Set", "method": "_debug_synergy_grant_rainbow"},
+			{"text": "Clear All PowerUps", "method": "_debug_synergy_clear_all"},
+			{"text": "Show Rating Counts", "method": "_debug_synergy_show_counts"},
+			{"text": "Show Active Bonuses", "method": "_debug_synergy_show_bonuses"},
 		]
 	}
 	
@@ -2172,3 +2184,187 @@ func _test_mom_dialog(expression: String, message: String) -> void:
 			log_debug("Created temporary Mom dialog with '%s' expression" % expression)
 		else:
 			log_debug("ERROR: Could not find or create MomDialogPopup")
+
+
+# ==================== SYNERGY DEBUG METHODS ====================
+
+## _debug_synergy_show_status()
+##
+## Shows complete synergy status including counts and active bonuses.
+func _debug_synergy_show_status() -> void:
+	var synergy_manager = _get_synergy_manager()
+	if not synergy_manager:
+		log_debug("ERROR: SynergyManager not available")
+		return
+	
+	synergy_manager.debug_print_status()
+	log_debug("Synergy status printed to console")
+
+
+## _debug_synergy_grant_5_g()
+##
+## Grants 5 G-rated PowerUps to test set bonus.
+func _debug_synergy_grant_5_g() -> void:
+	_grant_powerups_by_rating("G", 5)
+
+
+## _debug_synergy_grant_5_pg()
+##
+## Grants 5 PG-rated PowerUps to test set bonus.
+func _debug_synergy_grant_5_pg() -> void:
+	_grant_powerups_by_rating("PG", 5)
+
+
+## _debug_synergy_grant_5_pg13()
+##
+## Grants 5 PG-13-rated PowerUps to test set bonus.
+func _debug_synergy_grant_5_pg13() -> void:
+	_grant_powerups_by_rating("PG-13", 5)
+
+
+## _debug_synergy_grant_5_r()
+##
+## Grants 5 R-rated PowerUps to test set bonus.
+func _debug_synergy_grant_5_r() -> void:
+	_grant_powerups_by_rating("R", 5)
+
+
+## _debug_synergy_grant_5_nc17()
+##
+## Grants 5 NC-17-rated PowerUps to test set bonus.
+func _debug_synergy_grant_5_nc17() -> void:
+	_grant_powerups_by_rating("NC-17", 5)
+
+
+## _debug_synergy_grant_rainbow()
+##
+## Grants one PowerUp of each rating to test rainbow bonus.
+func _debug_synergy_grant_rainbow() -> void:
+	log_debug("Attempting to grant rainbow set (one of each rating)...")
+	
+	var ratings := ["G", "PG", "PG-13", "R", "NC-17"]
+	var granted_count := 0
+	
+	for rating in ratings:
+		if _grant_powerups_by_rating(rating, 1):
+			granted_count += 1
+	
+	log_debug("Rainbow grant complete: %d/%d ratings granted" % [granted_count, ratings.size()])
+	_debug_synergy_show_counts()
+
+
+## _debug_synergy_clear_all()
+##
+## Revokes all active PowerUps.
+func _debug_synergy_clear_all() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	var power_up_ids = game_controller.active_power_ups.keys().duplicate()
+	var cleared_count := 0
+	
+	for pu_id in power_up_ids:
+		if game_controller.has_method("revoke_power_up"):
+			game_controller.revoke_power_up(pu_id)
+			cleared_count += 1
+	
+	log_debug("Cleared %d PowerUps" % cleared_count)
+
+
+## _debug_synergy_show_counts()
+##
+## Shows current rating counts.
+func _debug_synergy_show_counts() -> void:
+	var synergy_manager = _get_synergy_manager()
+	if not synergy_manager:
+		log_debug("ERROR: SynergyManager not available")
+		return
+	
+	var counts = synergy_manager.get_rating_counts()
+	log_debug("=== RATING COUNTS ===")
+	for rating in ["G", "PG", "PG-13", "R", "NC-17"]:
+		var count = counts.get(rating, 0)
+		var sets = count / 5
+		var bonus = sets * 50
+		log_debug("  %s: %d (sets: %d, bonus: +%d)" % [rating, count, sets, bonus])
+	
+	log_debug("Total Matching Bonus: +%d" % synergy_manager.get_total_matching_bonus())
+	log_debug("Rainbow Active: %s" % synergy_manager.has_rainbow_bonus())
+
+
+## _debug_synergy_show_bonuses()
+##
+## Shows currently active synergy bonuses.
+func _debug_synergy_show_bonuses() -> void:
+	var synergy_manager = _get_synergy_manager()
+	if not synergy_manager:
+		log_debug("ERROR: SynergyManager not available")
+		return
+	
+	var active = synergy_manager.get_active_synergies()
+	log_debug("=== ACTIVE SYNERGY BONUSES ===")
+	
+	if active.is_empty():
+		log_debug("  No active synergies")
+		return
+	
+	for synergy_id in active:
+		var value = active[synergy_id]
+		if synergy_id == "synergy_rainbow":
+			log_debug("  Rainbow: %.1fx multiplier" % value)
+		else:
+			log_debug("  %s: +%d additive" % [synergy_id, value])
+
+
+## _get_synergy_manager()
+##
+## Helper to find SynergyManager in the scene.
+func _get_synergy_manager():
+	if game_controller and game_controller.synergy_manager:
+		return game_controller.synergy_manager
+	
+	var sm = get_tree().get_first_node_in_group("synergy_manager")
+	if sm:
+		return sm
+	
+	return null
+
+
+## _grant_powerups_by_rating(rating, count)
+##
+## Grants up to `count` PowerUps with the specified rating.
+## Returns true if at least one was granted.
+func _grant_powerups_by_rating(rating: String, count: int) -> bool:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return false
+	
+	var pu_manager = game_controller.pu_manager
+	if not pu_manager:
+		log_debug("ERROR: PowerUpManager not available")
+		return false
+	
+	# Find all PowerUps with matching rating that aren't already owned
+	var available: Array[String] = []
+	for pu_id in pu_manager.get_available_power_ups():
+		if game_controller.active_power_ups.has(pu_id):
+			continue  # Already owned
+		
+		var data = pu_manager.get_def(pu_id)
+		if data and data.rating == rating:
+			available.append(pu_id)
+	
+	if available.is_empty():
+		log_debug("No available %s-rated PowerUps to grant" % rating)
+		return false
+	
+	var granted := 0
+	for i in range(min(count, available.size())):
+		var pu_id = available[i]
+		game_controller.grant_power_up(pu_id)
+		log_debug("Granted %s-rated PowerUp: %s" % [rating, pu_id])
+		granted += 1
+	
+	log_debug("Granted %d/%d %s-rated PowerUps" % [granted, count, rating])
+	return granted > 0
