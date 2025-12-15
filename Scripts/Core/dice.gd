@@ -352,8 +352,16 @@ func animate_exit(to_position: Vector2, duration := 0.3) -> void:
 		.set_trans(Tween.TRANS_QUAD)\
 		.set_ease(Tween.EASE_IN)
 	
-	# Connect to tween finished to emit signal
-	tween.finished.connect(func(): emit_signal("exit_complete", self))
+	# Connect to tween finished using bound callable to avoid freed lambda capture
+	tween.finished.connect(_on_exit_tween_finished)
+
+
+## _on_exit_tween_finished()
+##
+## Called when exit animation tween completes. Emits exit_complete signal.
+func _on_exit_tween_finished() -> void:
+	if is_instance_valid(self):
+		emit_signal("exit_complete", self)
 
 
 ## reset_visual_for_spawn()

@@ -4,8 +4,11 @@ extends Control
 @export var score_card_ui_path:  NodePath
 @export var turn_tracker_path:   NodePath
 @export var round_manager_path:  NodePath
-@export var challenge_manager_path: NodePath 
+@export var challenge_manager_path: NodePath
+@export var scoring_animation_controller_path: NodePath = ^"../ScoringAnimationController"
+
 @onready var challenge_manager: ChallengeManager = get_node_or_null(challenge_manager_path)
+@onready var scoring_animation_controller = get_node_or_null(scoring_animation_controller_path)
 
 @onready var shop_button: Button = $HBoxContainer/ShopButton
 @onready var next_round_button: Button = $HBoxContainer/NextRoundButton  
@@ -319,6 +322,10 @@ func _on_challenge_completed(challenge_id: String) -> void:
 
 func _on_next_round_button_pressed() -> void:
 	print("[GameButtonUI] Next Round button pressed")
+	
+	# Cancel any pending animations before clearing dice
+	if scoring_animation_controller:
+		scoring_animation_controller.cancel_all_animations()
 	
 	# Clear dice first
 	if dice_hand:

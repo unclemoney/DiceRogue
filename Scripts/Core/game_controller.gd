@@ -2198,7 +2198,7 @@ func _count_locked_dice() -> int:
 ## Removes all debuffs that were applied by Mom (NC-17 consequences).
 ## Called at the start of a new round.
 func _clear_grounded_debuffs() -> void:
-	print("[GameController] Clearing grounded debuffs: %v" % [_grounded_debuffs])
+	print("[GameController] Clearing grounded debuffs: %s" % [_grounded_debuffs])
 	for debuff_id in _grounded_debuffs:
 		disable_debuff(debuff_id)
 	_grounded_debuffs.clear()

@@ -46,6 +46,7 @@ var score_card_ui: ScoreCardUI
 var current_animation_sequence: Tween
 var animation_in_progress: bool = false
 var current_breakdown_info: Dictionary = {}
+var animations_cancelled: bool = false
 
 ## _ready()
 ##
@@ -109,16 +110,32 @@ func _find_required_nodes() -> void:
 	else:
 		print("[ScoringAnimationController] ScoreCardUI not found")
 
-## start_scoring_animation(score, category, breakdown_info)
+## cancel_all_animations()
 ##
-## Main entry point for scoring animations. Orchestrates the entire sequence
-## based on score magnitude and involved game elements.
+## Cancel all pending animations by setting a flag that callbacks check.
+## Call this when dice are being cleared to prevent accessing freed objects.
+func cancel_all_animations() -> void:
+	print("[ScoringAnimationController] Cancelling all animations")
+	
+	# Set flag to abort any pending timer callbacks
+	animations_cancelled = true
+	
+	# Stop any existing tween
+	if current_animation_sequence and current_animation_sequence.is_valid():
+		current_animation_sequence.kill()
+		current_animation_sequence = null
+	
+	# Reset animation state
+	animation_in_progress = false
+	current_breakdown_info.clear()
+
 func start_scoring_animation(score: int, category: String, breakdown_info: Dictionary = {}) -> void:
 	if animation_in_progress:
 		print("[ScoringAnimationController] Animation already in progress, skipping")
 		return
 	
 	animation_in_progress = true
+	animations_cancelled = false  # Reset cancellation flag for new animation
 	current_breakdown_info = breakdown_info  # Store for use in animation functions
 	print("[ScoringAnimationController] Starting scoring animation for score: %d, category: %s" % [score, category])
 	print("[ScoringAnimationController] Breakdown info: %s" % str(breakdown_info))
@@ -130,10 +147,7 @@ func start_scoring_animation(score: int, category: String, breakdown_info: Dicti
 	# Stop any existing animation
 	if current_animation_sequence and current_animation_sequence.is_valid():
 		current_animation_sequence.kill()
-	
-	# Create new animation sequence
-	current_animation_sequence = create_tween()
-	current_animation_sequence.set_parallel(true)
+		current_animation_sequence = null
 	
 	# Calculate animation intensity and speed based on score
 	var intensity_scale = _calculate_intensity_scale(score)
@@ -246,10 +260,10 @@ func _animate_dice_bounce_with_scores(intensity_scale: float, speed_scale: float
 		if not die:
 			continue
 		
-		var delay = base_delay + (i * stagger_delay)  # Add base delay to all dice
+		var delay = base_delay + (i * stagger_delay)
 		
 		# Schedule dice animation
-		get_tree().create_timer(delay).timeout.connect(func(): _animate_single_die(die, i, intensity_scale, speed_scale))
+		get_tree().create_timer(delay).timeout.connect(_animate_single_die.bind(die, i, intensity_scale, speed_scale))
 
 	# Return after all dice have been scheduled (wait for the last one to start)
 	var total_duration = base_delay + (dice_array.size() * stagger_delay) + (0.6 / speed_scale)
@@ -258,8 +272,13 @@ func _animate_dice_bounce_with_scores(intensity_scale: float, speed_scale: float
 ## _animate_single_die(die, die_index, intensity_scale, speed_scale)
 ##
 ## Animate a single die with bounce and floating value, only if it contributes to the score.
-func _animate_single_die(die: Dice, die_index: int, intensity_scale: float, speed_scale: float = 1.0) -> void:
-	if not die:
+func _animate_single_die(die, die_index: int, intensity_scale: float, speed_scale: float = 1.0) -> void:
+	# Check if animations were cancelled (e.g., dice cleared for next round)
+	if animations_cancelled:
+		return
+	
+	# Validate die is still valid (may be freed if callback is delayed)
+	if not die or not is_instance_valid(die):
 		return
 	
 	# Check if this die contributes to the score
@@ -300,11 +319,9 @@ func _animate_single_die(die: Dice, die_index: int, intensity_scale: float, spee
 	# Create bounce animation with speed scaling and validation
 	if is_instance_valid(die):
 		var bounce_tween = create_tween()
-		# Create a simple callback that doesn't need complex validation
-		var bounce_callback = func(progress: float):
-			_bounce_die_local(die, original_local_position, bounce_height, progress)
-		
-		bounce_tween.tween_method(bounce_callback, 0.0, 1.0, bounce_duration)
+		# Use bind() instead of lambda to avoid freed capture issues
+		# The method will validate the die before using it
+		bounce_tween.tween_method(_bounce_die_local.bind(die, original_local_position, bounce_height), 0.0, 1.0, bounce_duration)
 	
 	# Show floating dice value (always white now)
 	var dice_color = Color.WHITE
@@ -336,11 +353,12 @@ func _bounce_die(die: Node2D, original_position: Vector2, bounce_height: float, 
 	var bounce_offset = sin(progress * PI) * bounce_height
 	die.global_position = original_position + Vector2(0, -bounce_offset)
 
-## _bounce_die_local(die, original_local_position, bounce_height, progress)
+## _bounce_die_local(progress, die, original_local_position, bounce_height)
 ##
 ## Animate individual die bounce using local position to avoid screen shake interference.
 ## Uses local position which is unaffected by camera shake.
-func _bounce_die_local(die: Node2D, original_local_position: Vector2, bounce_height: float, progress: float) -> void:
+## Note: progress comes first because tween_method passes it, then bound args follow.
+func _bounce_die_local(progress: float, die, original_local_position: Vector2, bounce_height: float) -> void:
 	# Validate die exists and is still valid
 	if not die or not is_instance_valid(die):
 		return
@@ -651,9 +669,9 @@ func _animate_powerups_sequence(powerup_multipliers: Dictionary, intensity_scale
 	for powerup_id in powerup_multipliers:
 		var multiplier = powerup_multipliers[powerup_id]
 		
-		# Schedule this powerup animation using timer
+		# Schedule this powerup animation using Callable.bind to avoid freed capture issues
 		get_tree().create_timer(delay).timeout.connect(
-			func(): _animate_single_powerup(powerup_id, multiplier, intensity_scale)
+			_animate_single_powerup.bind(powerup_id, multiplier, intensity_scale)
 		)
 		
 		delay += POWERUP_SEQUENCE_DELAY
