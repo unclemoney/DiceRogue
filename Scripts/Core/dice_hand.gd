@@ -2,20 +2,34 @@ extends Node2D
 class_name DiceHand
 
 const DiceColorClass = preload("res://Scripts/Core/dice_color.gd")
+const DiceAreaContainerClass = preload("res://Scripts/UI/dice_area_container.gd")
 
-# Add the missing signal
 signal roll_started
 signal roll_complete
 signal dice_spawned
-# Signal for when a die is locked
 signal die_locked(die)
+signal all_dice_exited
 
 @export var roll_delay: float = 0.1
 @export var roll_duration: float = 0.5
 @export var dice_scene:      PackedScene
 @export var dice_count:      int     = 5
 @export var spacing:         float   = 80.0
+@export var row_spacing:     float   = 90.0
+@export var max_dice_per_row: int    = 8
+
+## Area configuration - dice will be centered in this area
+@export var dice_area_center: Vector2 = Vector2(640, 200)
+@export var dice_area_size:   Vector2 = Vector2(680, 200)
+
+## Legacy start_position - still used as fallback
 @export var start_position:  Vector2 = Vector2(100, 200)
+
+## Animation configuration
+@export var entry_duration:  float = 0.4
+@export var exit_duration:   float = 0.3
+@export var animation_stagger: float = 0.05
+@export var exit_distance:   float = 500.0
 
 @export var default_dice_data: DiceData
 @export var d6_dice_data: DiceData = preload("res://Scripts/Dice/d6_dice.tres")
@@ -26,6 +40,7 @@ signal die_locked(die)
 var current_dice_type: String = "d6"
 
 var dice_list: Array[Dice] = []
+var _pending_exit_count: int = 0
 
 @onready var roll_audio_player: AudioStreamPlayer = AudioStreamPlayer.new()
 
@@ -34,6 +49,9 @@ var dice_list: Array[Dice] = []
 ## Initialize the DiceHand scene, validate DiceData assets, and prepare audio player.
 func _ready() -> void:
 	print("\n=== DiceHand Initializing ===")
+	print("[DiceHand] dice_area_center:", dice_area_center)
+	print("[DiceHand] dice_area_size:", dice_area_size)
+	print("[DiceHand] start_position (legacy):", start_position)
 	
 	# Add to group for easy finding
 	add_to_group("dice_hand")
@@ -60,13 +78,16 @@ func _ready() -> void:
 		roll_audio_player.name = "RollAudioPlayer"
 		add_child(roll_audio_player)
 
+	# Update visual reference rectangle to match dice_area settings
+	_update_dice_area_visual()
+
 	# Start with D6 dice by default
 	switch_dice_type("d6")
 
 
 ## spawn_dice()
 ##
-## Spawns the configured number of dice, initializes their data, and emits `dice_spawned`.
+## Spawns the configured number of dice with centered positioning and varied entry animations.
 ## Honors any active lock debuff by disabling input after spawn.
 func spawn_dice() -> void:
 	if not default_dice_data:
@@ -74,9 +95,20 @@ func spawn_dice() -> void:
 		return
 
 	# Clear existing dice first
+	print("[DiceHand] Clearing existing dice before spawn. Current count:", dice_list.size())
 	clear_dice()
+	await get_tree().process_frame  # Wait for dice to be fully removed
 
 	print("[DiceHand] Spawning", dice_count, "dice of type:", current_dice_type)
+	print("[DiceHand] max_dice_per_row:", max_dice_per_row)
+	print("[DiceHand] dice_area_center:", dice_area_center)
+	print("[DiceHand] dice_area_size:", dice_area_size)
+
+	# Calculate centered positions for all dice
+	var positions = _calculate_centered_positions(dice_count)
+	print("[DiceHand] Calculated", positions.size(), "positions for", dice_count, "dice")
+	if positions.size() > 0:
+		print("[DiceHand] First position:", positions[0], "Last position:", positions[positions.size()-1])
 
 	for i in range(dice_count):
 		var die = dice_scene.instantiate() as Dice
@@ -86,12 +118,25 @@ func spawn_dice() -> void:
 			# Connect die's lock signal to re-emit at DiceHand level
 			if not die.is_connected("die_locked", Callable(self, "_on_child_die_locked")):
 				die.die_locked.connect(Callable(self, "_on_child_die_locked"))
-			die.home_position = start_position + Vector2(i * spacing, 0)
-			die.position = Vector2(-200, die.home_position.y)
-			die.animate_entry(die.position)
+			
+			# Use centered position from calculated array
+			die.home_position = positions[i]
+			
+			# Get varied entry animation starting position
+			var entry_offset = _get_entry_offset(i, dice_count)
+			var start_pos = die.home_position + entry_offset
+			
+			die.position = start_pos
+			die.reset_visual_for_spawn()
+			
+			# Stagger the animations
+			var stagger_delay = i * animation_stagger
+			_animate_die_entry_delayed(die, start_pos, stagger_delay)
+			
 			dice_list.append(die)
-			print("[DiceHand] Spawned die", i + 1, "with", default_dice_data.sides, "sides")
+			print("[DiceHand] Spawned die", i + 1, "- home_position:", die.home_position, "start_pos:", start_pos, "current position:", die.position)
 
+	print("[DiceHand] Spawn complete. Total dice in scene:", get_child_count(), "Total dice in dice_list:", dice_list.size())
 	emit_signal("dice_spawned")
 
 	# Set all dice to ROLLABLE state initially
@@ -108,6 +153,189 @@ func spawn_dice() -> void:
 	else:
 		print("[DiceHand] No active lock debuff - enabling all dice input")
 		enable_all_dice()
+
+
+## _update_dice_area_visual()
+##
+## Updates the DiceAreaVisual ReferenceRect to match dice_area_center and dice_area_size.
+## This provides visual feedback for positioning adjustments.
+func _update_dice_area_visual() -> void:
+	var visual = get_node_or_null("DiceAreaVisual")
+	if visual and visual is ReferenceRect:
+		var half_width = dice_area_size.x / 2.0
+		var half_height = dice_area_size.y / 2.0
+		
+		visual.offset_left = dice_area_center.x - half_width
+		visual.offset_top = dice_area_center.y - half_height
+		visual.offset_right = dice_area_center.x + half_width
+		visual.offset_bottom = dice_area_center.y + half_height
+		
+		print("[DiceHand] Updated DiceAreaVisual to bounds: (", visual.offset_left, ",", visual.offset_top, ") to (", visual.offset_right, ",", visual.offset_bottom, ")")
+
+
+## _animate_die_entry_delayed(die: Dice, from_pos: Vector2, delay: float)
+##
+## Animates die entry with a staggered delay.
+func _animate_die_entry_delayed(die: Dice, from_pos: Vector2, delay: float) -> void:
+	if delay > 0:
+		await get_tree().create_timer(delay).timeout
+	die.animate_entry(from_pos, entry_duration)
+
+
+## _calculate_centered_positions(count: int) -> Array[Vector2]
+##
+## Calculates centered positions for dice based on count.
+## Supports up to 16 dice in 2 rows, with balanced distribution (9 → 5 top, 4 bottom).
+func _calculate_centered_positions(count: int) -> Array[Vector2]:
+	var positions: Array[Vector2] = []
+	
+	if count <= 0:
+		return positions
+	
+	var clamped_count = mini(count, max_dice_per_row * 2)
+	
+	# Calculate row distribution (balanced: 9 dice → 5 top, 4 bottom)
+	var top_row_count: int = 0
+	var bottom_row_count: int = 0
+	
+	if clamped_count <= max_dice_per_row:
+		top_row_count = clamped_count
+		bottom_row_count = 0
+		print("[DiceHand] Single row layout:", top_row_count, "dice")
+	else:
+		# Balanced distribution: larger half on top
+		top_row_count = ceili(clamped_count / 2.0)
+		bottom_row_count = clamped_count - top_row_count
+		print("[DiceHand] Multi-row layout:", top_row_count, "top,", bottom_row_count, "bottom")
+	
+	var center_x = dice_area_center.x
+	var center_y = dice_area_center.y
+	
+	# Calculate vertical offset for multi-row
+	var total_height = row_spacing if bottom_row_count > 0 else 0.0
+	var start_y = center_y - (total_height / 2.0)
+	
+	# Generate top row positions (centered)
+	var top_row_width = (top_row_count - 1) * spacing
+	var top_start_x = center_x - (top_row_width / 2.0)
+	
+	for i in range(top_row_count):
+		var pos = Vector2(top_start_x + i * spacing, start_y)
+		positions.append(pos)
+	
+	# Generate bottom row positions (centered)
+	if bottom_row_count > 0:
+		var bottom_row_width = (bottom_row_count - 1) * spacing
+		var bottom_start_x = center_x - (bottom_row_width / 2.0)
+		
+		for i in range(bottom_row_count):
+			var pos = Vector2(bottom_start_x + i * spacing, start_y + row_spacing)
+			positions.append(pos)
+	
+	return positions
+
+
+## _get_entry_offset(index: int, total_count: int) -> Vector2
+##
+## Returns a varied entry offset for the die at the given index.
+## Creates visual variety with dice entering from different directions.
+func _get_entry_offset(index: int, total_count: int) -> Vector2:
+	var distance = 400.0
+	
+	# For small counts, use simpler patterns
+	if total_count <= 4:
+		match index % 4:
+			0: return Vector2(-distance * 0.707, -distance * 0.707)  # Top-left
+			1: return Vector2(distance * 0.707, -distance * 0.707)   # Top-right
+			2: return Vector2(-distance * 0.707, distance * 0.707)   # Bottom-left
+			3: return Vector2(distance * 0.707, distance * 0.707)    # Bottom-right
+	elif total_count <= 8:
+		# Single row: alternate directions
+		match index % 4:
+			0: return Vector2(-distance, 0)      # Left
+			1: return Vector2(distance, 0)       # Right
+			2: return Vector2(0, -distance)      # Top
+			3: return Vector2(0, distance)       # Bottom
+	else:
+		# Two rows: top row from top, bottom row from bottom
+		var top_row_count = ceili(total_count / 2.0)
+		if index < top_row_count:
+			# Top row dice - come from top
+			if index % 2 == 0:
+				return Vector2(-distance * 0.707, -distance * 0.707)  # Top-left
+			else:
+				return Vector2(distance * 0.707, -distance * 0.707)   # Top-right
+		else:
+			# Bottom row dice - come from bottom
+			if index % 2 == 0:
+				return Vector2(-distance * 0.707, distance * 0.707)   # Bottom-left
+			else:
+				return Vector2(distance * 0.707, distance * 0.707)    # Bottom-right
+	
+	return Vector2(-distance, 0)
+
+
+## _get_exit_offset(index: int, total_count: int) -> Vector2
+##
+## Returns exit offset (opposite of entry direction).
+func _get_exit_offset(index: int, total_count: int) -> Vector2:
+	# Exit in opposite direction of entry
+	var entry = _get_entry_offset(index, total_count)
+	return -entry * (exit_distance / 400.0)
+
+
+## animate_all_dice_exit()
+##
+## Animates all dice exiting the screen with varied directions.
+## Emits all_dice_exited when complete.
+func animate_all_dice_exit() -> void:
+	if dice_list.is_empty():
+		emit_signal("all_dice_exited")
+		return
+	
+	_pending_exit_count = dice_list.size()
+	print("[DiceHand] Starting exit animation for", _pending_exit_count, "dice")
+	
+	for i in range(dice_list.size()):
+		var die = dice_list[i]
+		var exit_offset = _get_exit_offset(i, dice_list.size())
+		var exit_pos = die.position + exit_offset
+		
+		# Connect to exit complete signal
+		if not die.is_connected("exit_complete", _on_die_exit_complete):
+			die.exit_complete.connect(_on_die_exit_complete)
+		
+		# Stagger exit animations
+		var stagger_delay = i * animation_stagger
+		_animate_die_exit_delayed(die, exit_pos, stagger_delay)
+
+
+## _animate_die_exit_delayed(die: Dice, to_pos: Vector2, delay: float)
+##
+## Animates die exit with a staggered delay.
+func _animate_die_exit_delayed(die: Dice, to_pos: Vector2, delay: float) -> void:
+	if delay > 0:
+		await get_tree().create_timer(delay).timeout
+	
+	# Check if die still exists before animating
+	if is_instance_valid(die) and not die.is_queued_for_deletion():
+		die.animate_exit(to_pos, exit_duration)
+	else:
+		print("[DiceHand] Skipping exit animation for freed die")
+		_pending_exit_count -= 1
+
+
+## _on_die_exit_complete(_die: Dice)
+##
+## Called when a die finishes its exit animation.
+func _on_die_exit_complete(_die: Dice) -> void:
+	_pending_exit_count -= 1
+	if _pending_exit_count <= 0:
+		print("[DiceHand] All dice exit animations complete")
+		# Clear the dice after exit animation so they can be respawned
+		clear_dice()
+		print("[DiceHand] Cleared dice after exit animation")
+		emit_signal("all_dice_exited")
 
 
 
@@ -176,13 +404,26 @@ func get_current_dice_values() -> Array[int]:
 ## update_dice_count()
 ##
 ## Ensures that the number of active dice in the scene matches the exported `dice_count`.
+## Uses centered positioning for any new dice added.
 func update_dice_count() -> void:
 	var current_count = dice_list.size()
 
 	if current_count == dice_count:
 		return
 
+	# Recalculate all positions for the new count
+	var new_positions = _calculate_centered_positions(dice_count)
+
 	if current_count < dice_count:
+		# Update positions for existing dice first
+		for i in range(current_count):
+			dice_list[i].home_position = new_positions[i]
+			# Animate to new position
+			var tween = get_tree().create_tween()
+			tween.tween_property(dice_list[i], "position", new_positions[i], 0.3)\
+				.set_trans(Tween.TRANS_SINE)\
+				.set_ease(Tween.EASE_OUT)
+		
 		# Add more dice
 		for i in range(current_count, dice_count):
 			var die = dice_scene.instantiate() as Dice
@@ -190,15 +431,33 @@ func update_dice_count() -> void:
 			# Connect die lock signal
 			if not die.is_connected("die_locked", Callable(self, "_on_child_die_locked")):
 				die.die_locked.connect(Callable(self, "_on_child_die_locked"))
-			die.home_position = start_position + Vector2(i * spacing, 0)
-			die.position = Vector2(-200, die.home_position.y)
-			die.animate_entry(die.position)
+			die.home_position = new_positions[i]
+			
+			# Get varied entry position
+			var entry_offset = _get_entry_offset(i, dice_count)
+			var start_pos = die.home_position + entry_offset
+			
+			die.position = start_pos
+			die.reset_visual_for_spawn()
+			
+			# Stagger animation
+			var stagger_delay = (i - current_count) * animation_stagger
+			_animate_die_entry_delayed(die, start_pos, stagger_delay)
+			
 			dice_list.append(die)
 	else:
 		# Remove excess dice
 		for i in range(dice_count, current_count):
 			var die = dice_list.pop_back()
 			die.queue_free()
+		
+		# Update positions for remaining dice
+		for i in range(dice_count):
+			dice_list[i].home_position = new_positions[i]
+			var tween = get_tree().create_tween()
+			tween.tween_property(dice_list[i], "position", new_positions[i], 0.3)\
+				.set_trans(Tween.TRANS_SINE)\
+				.set_ease(Tween.EASE_OUT)
 
 func enable_all_dice() -> void:
 	print("[DiceHand] Enabling all dice (legacy method - state machine should handle this)")
@@ -322,7 +581,7 @@ func roll_unlocked_dice() -> void:
 	await get_tree().create_timer(roll_duration).timeout
 	emit_signal("roll_complete")
 
-# Add this function
+# Get all unlocked dice and return as an array
 func get_unlocked_dice() -> Array[Dice]:
 	var unlocked: Array[Dice] = []
 	for die in dice_list:
@@ -367,7 +626,6 @@ func roll_dice() -> void:
 	print("▶ Rolling dice...")
 	emit_signal("roll_started")
 	
-	# Rest of your existing roll_dice function...
 
 ## Get all dice with a specific color
 ## @param color_type: DiceColorClass.Type to filter by

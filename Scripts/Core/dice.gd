@@ -319,13 +319,49 @@ func toggle_lock():
 	else:
 		print("[Dice] Cannot toggle lock - current state:", DiceState.keys()[current_state])
 
-func animate_entry(from_position: Vector2, duration := 0.4):
+## animate_entry(from_position: Vector2, duration: float)
+##
+## Animates the die entering from a starting position to its home position.
+## Uses bounce easing for a playful feel.
+func animate_entry(from_position: Vector2, duration := 0.4) -> void:
 	position = from_position
 	var tween := get_tree().create_tween()
 	tween.tween_property(self, "position", home_position, duration)\
 		.set_trans(Tween.TRANS_BOUNCE)\
 		.set_ease(Tween.EASE_OUT)
 
+
+signal exit_complete(die: Dice)
+
+## animate_exit(to_position: Vector2, duration: float)
+##
+## Animates the die exiting from its current position to a target position.
+## Uses back easing for a smooth departure and emits exit_complete when done.
+func animate_exit(to_position: Vector2, duration := 0.3) -> void:
+	var tween := get_tree().create_tween()
+	
+	# Scale down and move out
+	tween.set_parallel(true)
+	tween.tween_property(self, "position", to_position, duration)\
+		.set_trans(Tween.TRANS_BACK)\
+		.set_ease(Tween.EASE_IN)
+	tween.tween_property(self, "scale", Vector2(0.3, 0.3), duration)\
+		.set_trans(Tween.TRANS_QUAD)\
+		.set_ease(Tween.EASE_IN)
+	tween.tween_property(self, "modulate:a", 0.0, duration * 0.8)\
+		.set_trans(Tween.TRANS_QUAD)\
+		.set_ease(Tween.EASE_IN)
+	
+	# Connect to tween finished to emit signal
+	tween.finished.connect(func(): emit_signal("exit_complete", self))
+
+
+## reset_visual_for_spawn()
+##
+## Resets visual properties to default for next spawn (scale, modulate, etc.)
+func reset_visual_for_spawn() -> void:
+	scale = Vector2.ONE
+	modulate = Color.WHITE
 
 
 func unlock() -> void:

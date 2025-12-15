@@ -470,9 +470,54 @@ All game items (PowerUps, Consumables, and Mods) support selling mechanics:
 - **Outside Click**: Click outside an item to hide the sell button
 - **Signal Chain**: Item icons → UI managers → GameController → PlayerEconomy
 
+### Dice Display System
+The dice display system provides dynamic positioning and animations for dice:
+
+**Centered Positioning:**
+- Dice are automatically centered horizontally regardless of count
+- Supports 1-16 dice with single or multi-row layouts
+- Balanced distribution: 9 dice → 5 top row, 4 bottom row
+
+**Multi-Row Support:**
+- Up to 8 dice per row (configurable via `max_dice_per_row`)
+- Maximum 2 rows for 16 dice total
+- Each row is independently centered
+
+**Configuration (dice_hand.gd):**
+- `dice_area_center`: Center point for dice display (default: 640, 200)
+- `dice_area_size`: Bounding area for dice (default: 680x200)
+- `spacing`: Horizontal spacing between dice (default: 80px)
+- `row_spacing`: Vertical spacing between rows (default: 90px)
+
+**Entry Animations:**
+- Dice enter from varied directions (top, bottom, left, right, diagonals)
+- Direction pattern varies based on dice count and position
+- Staggered animation timing for visual appeal
+- Bounce easing for playful feel
+
+**Exit Animations:**
+- Triggered after scoring a hand
+- Dice exit in opposite direction from entry
+- Scale down and fade out effect
+- Staggered timing synchronized with entry
+
+**Roll Button Pulse:**
+- Roll button pulses with golden glow when waiting for first roll
+- Subtle scale animation (1.0 → 1.05)
+- Automatically stops when roll button pressed
+- Helps draw attention to next action
+
+**Test Scene:** `Tests/DiceDisplayTest.tscn`
+- Press 1-8 for single row tests
+- Press 9 for 9 dice (5+4 multi-row)
+- Press 0 for 16 dice (8+8 max)
+- Press E for exit animation test
+- Press R to respawn dice
+
 ### Testing Framework
 Test scenes in `Tests/` folder allow isolated testing of components:
 - `DiceTest.tscn` - Dice rolling and behavior
+- `DiceDisplayTest.tscn` - Dice positioning and animations
 - `ScoreCardTest.tscn` - Scoring logic
 - `PowerUpTest.tscn` - Power-up functionality
 - `MultiplierManagerTest.tscn` - Score modifier system

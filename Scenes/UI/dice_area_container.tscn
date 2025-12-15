@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://b5k8qn3v6h4xm"]
+
+[ext_resource type="Script" uid="uid://dv2r0yw6xvkx8" path="res://Scripts/UI/dice_area_container.gd" id="1_dice_area"]
+
+[node name="DiceAreaContainer" type="Control"]
+custom_minimum_size = Vector2(680, 200)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 680.0
+offset_bottom = 200.0
+script = ExtResource("1_dice_area")

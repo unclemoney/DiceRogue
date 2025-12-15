@@ -24,6 +24,11 @@ var scorecard: Scorecard
 var is_shop_open: bool = true
 var first_roll_done: bool = false
 
+## Pulse animation state
+var _roll_button_pulse_tween: Tween = null
+var _is_pulsing: bool = false
+var _original_roll_button_modulate: Color = Color.WHITE
+
 
 func _ready():
 	print("ScoreCardUI ready: ", score_card_ui_path)
@@ -40,11 +45,15 @@ func _ready():
 	roll_button.pressed.connect(_on_roll_button_pressed)
 	next_turn_button.pressed.connect(_on_next_turn_button_pressed)
 	dice_hand.roll_complete.connect(_on_dice_roll_complete)
-	turn_tracker.rolls_exhausted.connect(func(): roll_button.disabled = true)
-	turn_tracker.turn_started.connect(func(): roll_button.disabled = false)
+	turn_tracker.rolls_exhausted.connect(func(): roll_button.disabled = true; _stop_roll_button_pulse())
+	turn_tracker.turn_started.connect(func(): roll_button.disabled = false; _start_roll_button_pulse())
 	turn_tracker.connect("game_over",Callable(self, "_on_game_over"))
 	score_card_ui.connect("hand_scored", Callable(self, "_hand_scored_disable"))
 	score_card_ui.connect("manual_score", Callable(self, "_scored_hand_setup_next_round"))
+	
+	# Store original roll button modulate for pulse effect
+	if roll_button:
+		_original_roll_button_modulate = roll_button.modulate
 	
 	# Shop button is already connected in the scene file, so just configure it
 	if shop_button:
@@ -72,15 +81,101 @@ func _ready():
 	next_turn_button.disabled = true
 
 
+## _start_roll_button_pulse()
+##
+## Starts the pulsing glow animation on the Roll button.
+## Used when waiting for the first roll of a turn.
+func _start_roll_button_pulse() -> void:
+	if _is_pulsing or not roll_button:
+		return
+	
+	if roll_button.disabled:
+		return
+	
+	_is_pulsing = true
+	print("[GameButtonUI] Starting Roll button pulse animation")
+	_animate_roll_button_pulse()
+
+
+## _stop_roll_button_pulse()
+##
+## Stops the pulsing animation and resets the Roll button to normal.
+func _stop_roll_button_pulse() -> void:
+	if not _is_pulsing:
+		return
+	
+	_is_pulsing = false
+	
+	if _roll_button_pulse_tween:
+		_roll_button_pulse_tween.kill()
+		_roll_button_pulse_tween = null
+	
+	# Reset to original state
+	if roll_button:
+		roll_button.modulate = _original_roll_button_modulate
+		roll_button.scale = Vector2.ONE
+	
+	print("[GameButtonUI] Stopped Roll button pulse animation")
+
+
+## _animate_roll_button_pulse()
+##
+## Creates and runs the looping pulse animation on the Roll button.
+func _animate_roll_button_pulse() -> void:
+	if not _is_pulsing or not roll_button:
+		return
+	
+	if _roll_button_pulse_tween:
+		_roll_button_pulse_tween.kill()
+	
+	_roll_button_pulse_tween = create_tween()
+	_roll_button_pulse_tween.set_loops()
+	
+	# Pulse color: subtle golden glow
+	var pulse_color = Color(1.3, 1.2, 0.9, 1.0)
+	var normal_color = _original_roll_button_modulate
+	
+	# Pulse scale
+	var pulse_scale = Vector2(1.05, 1.05)
+	var normal_scale = Vector2.ONE
+	
+	# Set pivot to center for scaling
+	roll_button.pivot_offset = roll_button.size / 2.0
+	
+	# Glow up
+	_roll_button_pulse_tween.tween_property(roll_button, "modulate", pulse_color, 0.5)\
+		.set_trans(Tween.TRANS_SINE)\
+		.set_ease(Tween.EASE_IN_OUT)
+	_roll_button_pulse_tween.parallel().tween_property(roll_button, "scale", pulse_scale, 0.5)\
+		.set_trans(Tween.TRANS_SINE)\
+		.set_ease(Tween.EASE_IN_OUT)
+	
+	# Glow down
+	_roll_button_pulse_tween.tween_property(roll_button, "modulate", normal_color, 0.5)\
+		.set_trans(Tween.TRANS_SINE)\
+		.set_ease(Tween.EASE_IN_OUT)
+	_roll_button_pulse_tween.parallel().tween_property(roll_button, "scale", normal_scale, 0.5)\
+		.set_trans(Tween.TRANS_SINE)\
+		.set_ease(Tween.EASE_IN_OUT)
+
+
 func _on_roll_button_pressed() -> void:
+	# Stop the pulse animation when roll button is pressed
+	_stop_roll_button_pulse()
+	
+	print("[GameButtonUI] Roll button pressed. Dice list size:", dice_hand.dice_list.size())
+	
 	next_turn_button.disabled = false
 	if not first_roll_done:
 		first_roll_done = true
 		if shop_button:
 			shop_button.disabled = true  # Disable shop after first roll
 	if dice_hand.dice_list.is_empty():
-		dice_hand.spawn_dice()
+		print("[GameButtonUI] Dice list empty - spawning new dice")
+		await dice_hand.spawn_dice()
+		print("[GameButtonUI] Spawn complete, proceeding to roll")
 	else:
+		print("[GameButtonUI] Dice list not empty - updating dice count")
 		dice_hand.update_dice_count()
 	
 	# Prepare dice for rolling - set ROLLED dice to ROLLABLE, preserve LOCKED dice
@@ -135,6 +230,11 @@ func _on_next_turn_button_pressed() -> void:
 func _scored_hand_setup_next_round():
 	print("[GameButtonUI] Scored hand, setting up next round")
 	
+	# Animate dice exiting the screen
+	if dice_hand:
+		dice_hand.animate_all_dice_exit()
+		print("[GameButtonUI] Triggered dice exit animation")
+	
 	# Disable dice input after scoring
 	dice_hand.set_all_dice_disabled()
 	print("[GameButtonUI] Set all dice to DISABLED state after scoring")
@@ -149,6 +249,9 @@ func _on_game_over() -> void:
 	next_turn_button.disabled = true
 	if shop_button:
 		shop_button.disabled = true
+	
+	# Stop any pulse animation
+	_stop_roll_button_pulse()
 
 func _hand_scored_disable() -> void:
 	print("🏁 Hand scored—disabling Roll button")
@@ -175,6 +278,9 @@ func _on_round_started(_round_number: int) -> void:
 	# Enable gameplay buttons when round starts
 	roll_button.disabled = false
 	next_turn_button.disabled = false
+	
+	# Start Roll button pulse to draw attention
+	_start_roll_button_pulse()
 	
 	# Always spawn dice when a round starts
 	if dice_hand:

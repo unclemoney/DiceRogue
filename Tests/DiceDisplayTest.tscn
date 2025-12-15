@@ -1,0 +1,122 @@
+[gd_scene load_steps=6 format=3 uid="uid://c7k2m4n5p8q1r"]
+
+[ext_resource type="Script" uid="uid://dxw2y3z4a5b6c" path="res://Tests/dice_display_test.gd" id="1_test"]
+[ext_resource type="PackedScene" uid="uid://b7i1q3shwsyca" path="res://Scenes/Dice/dice_hand.tscn" id="2_dice_hand"]
+[ext_resource type="Theme" uid="uid://yij15afv8bdr" path="res://Resources/UI/scorecard_theme.tres" id="3_theme"]
+[ext_resource type="PackedScene" uid="uid://c6k045mexxkyd" path="res://Scenes/Dice/dice.tscn" id="4_dice"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.1, 0.1, 0.15, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3, 0.3, 0.4, 1)
+
+[node name="DiceDisplayTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("3_theme")
+script = ExtResource("1_test")
+dice_hand_path = NodePath("DiceHand")
+test_output_path = NodePath("TestOutputPanel/TestOutput")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.15, 0.12, 0.18, 1)
+
+[node name="TitleLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 20.0
+offset_right = 200.0
+offset_bottom = 50.0
+grow_horizontal = 2
+text = "DICE DISPLAY TEST"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DiceAreaBorder" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 300.0
+offset_top = 100.0
+offset_right = 980.0
+offset_bottom = 300.0
+
+[node name="DiceAreaBg" type="ColorRect" parent="DiceAreaBorder"]
+layout_mode = 0
+offset_right = 680.0
+offset_bottom = 200.0
+color = Color(0.2, 0.2, 0.25, 0.3)
+
+[node name="DiceAreaLabel" type="Label" parent="DiceAreaBorder"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 5.0
+offset_right = 200.0
+offset_bottom = 25.0
+text = "Dice Area (680x200)"
+
+[node name="DiceHand" parent="." instance=ExtResource("2_dice_hand")]
+position = Vector2(0, 0)
+dice_scene = ExtResource("4_dice")
+dice_count = 5
+spacing = 80.0
+row_spacing = 90.0
+max_dice_per_row = 8
+dice_area_center = Vector2(640, 200)
+dice_area_size = Vector2(680, 200)
+
+[node name="TestOutputPanel" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 350.0
+offset_right = 600.0
+offset_bottom = 700.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="TestOutput" type="RichTextLabel" parent="TestOutputPanel"]
+layout_mode = 2
+text = "Loading test..."
+scroll_following = true
+
+[node name="ControlsPanel" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 650.0
+offset_top = 350.0
+offset_right = 1230.0
+offset_bottom = 700.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="ControlsLabel" type="RichTextLabel" parent="ControlsPanel"]
+layout_mode = 2
+text = "[b]CONTROLS[/b]
+
+[color=yellow]Number Keys 1-8:[/color] Spawn 1-8 dice (single row)
+[color=yellow]Key 9:[/color] Spawn 9 dice (multi-row: 5+4)
+[color=yellow]Key 0:[/color] Spawn 16 dice (max: 8+8)
+
+[color=cyan]E:[/color] Trigger exit animations
+[color=cyan]R:[/color] Respawn dice
+[color=cyan]P:[/color] Pulse info (run full game to test)
+
+[b]FEATURES TESTED:[/b]
+• Centered dice positioning
+• Multi-row support (up to 16 dice)
+• Balanced distribution (9→5 top, 4 bottom)
+• Varied entry animations
+• Exit animations after scoring
+• Roll button pulse (in full game)"
+bbcode_enabled = true

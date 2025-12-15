@@ -22,7 +22,7 @@ func evaluate_with_wildcards(dice_values: Array[int]) -> Dictionary:
 	# Separate wildcards from regular dice
 	for i in range(dice_values.size()):
 		var die = DiceResults.dice_refs[i]
-		if die.has_mod("wildcard"):
+		if is_instance_valid(die) and die.has_mod("wildcard"):
 			wildcard_indices.append(i)
 		else:
 			regular_values.append(dice_values[i])
@@ -113,7 +113,7 @@ func filter_disabled_values(values: Array[int]) -> Array[int]:
 		if disabled_twos_active and value == 2:
 			var die = DiceResults.dice_refs[i] if i < DiceResults.dice_refs.size() else null
 			# Only include value 2 if it comes from a die with wildcard mod
-			if die and die.has_mod("wildcard"):
+			if is_instance_valid(die) and die.has_mod("wildcard"):
 				filtered.append(value)
 				print("[ScoreEvaluator] Including wildcard value 2")
 			else:
@@ -239,7 +239,8 @@ func generate_wildcard_combinations(wildcard_count: int, sides: int) -> Array:
 	# Get the values of non-wildcard dice to inform our choices
 	var regular_values = []
 	for i in range(DiceResults.dice_refs.size()):
-		if not DiceResults.dice_refs[i].has_mod("wildcard"):
+		var die = DiceResults.dice_refs[i]
+		if is_instance_valid(die) and not die.has_mod("wildcard"):
 			regular_values.append(DiceResults.values[i])
 
 	# If we have regular values, prioritize those and adjacent numbers
@@ -354,7 +355,7 @@ func is_yahtzee(values: Array[int]) -> bool:
 	for i in range(filtered_values.size()):
 		if i < DiceResults.dice_refs.size():
 			var die = DiceResults.dice_refs[i]
-			if die.has_mod("wildcard"):
+			if is_instance_valid(die) and die.has_mod("wildcard"):
 				wildcard_count += 1
 			else:
 				regular_values.append(filtered_values[i])

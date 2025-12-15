@@ -1,4 +1,4 @@
-[gd_scene load_steps=101 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=100 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -8,7 +8,6 @@
 [ext_resource type="PackedScene" uid="uid://dugpl3du3i6xo" path="res://Scenes/Dice/dice_hand.tscn" id="5_gxabo"]
 [ext_resource type="Texture2D" uid="uid://cq6eysum1qfw8" path="res://Resources/Art/Background/Hutch.png" id="5_sqb4o"]
 [ext_resource type="Texture2D" uid="uid://kekn41dhsb0l" path="res://Resources/Art/Background/TV.png" id="5_w4iq5"]
-[ext_resource type="PackedScene" uid="uid://c6k045mexxkyd" path="res://Scenes/Dice/dice.tscn" id="6_o8wpr"]
 [ext_resource type="PackedScene" uid="uid://bsukvul4wop20" path="res://Scenes/ScoreCard/score_card.tscn" id="7_w6663"]
 [ext_resource type="PackedScene" uid="uid://b8limy63m2tlo" path="res://Scenes/Tracker/turn_tracker.tscn" id="8_8eqdw"]
 [ext_resource type="PackedScene" uid="uid://lc4xqvsxdnpy" path="res://Scenes/UI/game_button_ui.tscn" id="9_wtptv"]
@@ -153,8 +152,20 @@ scale = Vector2(1.15, 1)
 texture = ExtResource("5_w4iq5")
 
 [node name="DiceHand" parent="." instance=ExtResource("5_gxabo")]
-dice_scene = ExtResource("6_o8wpr")
-start_position = Vector2(640, 530)
+max_dice_per_row = 9
+dice_area_center = Vector2(850, 525)
+dice_area_size = Vector2(300, 250)
+
+[node name="DiceAreaVisual" type="ReferenceRect" parent="DiceHand"]
+visible = false
+offset_left = 500.0
+offset_top = 200.0
+offset_right = 1100.0
+offset_bottom = 800.0
+mouse_filter = 2
+border_color = Color(1, 0, 0, 0.5)
+border_width = 2.0
+editor_only = false
 
 [node name="DiceContainer" type="Node2D" parent="."]
 
