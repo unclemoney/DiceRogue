@@ -332,11 +332,12 @@ func _apply_data_to_ui() -> void:
 		print("No data assigned!")
 		return
 	
-	# Set card art texture
+	# Set card art texture - use POST_IT_NOTE for all challenge icons
 	if card_art:
-		if data.icon:
-			card_art.texture = data.icon
-			card_art.custom_minimum_size = Vector2(59, 93) # match atlas region size
+		var post_it_texture = load("res://Resources/Art/Background/POST_IT_NOTE.png")
+		if post_it_texture:
+			card_art.texture = post_it_texture
+			card_art.custom_minimum_size = Vector2(80, 120)
 			card_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		else:
 			card_art.texture = preload("res://icon.svg")

@@ -17,9 +17,10 @@ signal spine_unhovered(consumable_id: String)
 var _count: int = 1
 
 # Animation properties
-var _base_position: Vector2
+var _base_position: Vector2 = Vector2.ZERO
 var _hover_offset: Vector2 = Vector2(0, -3)
 var _current_tween: Tween
+var _is_initialized: bool = false
 
 func _ready() -> void:
 	_create_spine_structure()
@@ -27,10 +28,19 @@ func _ready() -> void:
 	
 	# Set spine size for coupon (horizontal layout) - use call_deferred to avoid anchor warning
 	call_deferred("_set_spine_size")
+	call_deferred("_initialize_base_position")
 
 	# Connect mouse signals
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
+
+
+func _initialize_base_position() -> void:
+	# Initialize base position from current position if not already set by set_base_position
+	if not _is_initialized:
+		if _base_position == Vector2.ZERO:
+			_base_position = position
+		_is_initialized = true
 
 func _exit_tree() -> void:
 	# Clean up any active tweens to prevent warnings
@@ -39,8 +49,11 @@ func _exit_tree() -> void:
 		_current_tween = null
 
 func _set_spine_size() -> void:
-	custom_minimum_size = Vector2(92, 16)
-	set_deferred("size", Vector2(28, 170))
+	# Larger size for COUPON_NOTE texture (corkboard style)
+	custom_minimum_size = Vector2(80, 100)
+	set_deferred("size", Vector2(80, 100))
+	# Ensure we can receive mouse clicks
+	mouse_filter = Control.MOUSE_FILTER_STOP
 
 func _create_spine_structure() -> void:
 	# Create spine texture display
@@ -82,14 +95,13 @@ func _apply_data_to_ui() -> void:
 	if not data:
 		return
 	
-	# Set spine texture (coupon spine)
+	# Set spine texture (COUPON_NOTE for corkboard style)
 	if not spine_texture:
-		spine_texture = load("res://Resources/Art/Powerups/coupon_spine.png")
+		spine_texture = load("res://Resources/Art/Background/COUPON_NOTE.png")
 		if not spine_texture:
-			push_error("[ConsumableSpine] Failed to load coupon spine texture")
+			push_error("[ConsumableSpine] Failed to load COUPON_NOTE texture")
 			# Use a fallback colored rectangle
 			spine_rect.texture = null
-			spine_rect.color = Color(0.3, 0.4, 0.2, 1.0)  # Green fallback
 	
 	if spine_rect and spine_texture:
 		spine_rect.texture = spine_texture
@@ -121,10 +133,15 @@ func set_data(new_data: ConsumableData) -> void:
 func set_base_position(pos: Vector2) -> void:
 	_base_position = pos
 	position = pos
+	_is_initialized = true  # Mark as initialized when base position is explicitly set
 
 func _on_mouse_entered() -> void:
 	if data:
 		emit_signal("spine_hovered", data.id, global_position)
+	
+	# Safety check - don't animate until properly initialized
+	if not _is_initialized:
+		return
 	
 	# Safety check - don't create tweens on invalid nodes
 	if not is_inside_tree() or not is_instance_valid(self):
@@ -145,6 +162,10 @@ func _on_mouse_entered() -> void:
 func _on_mouse_exited() -> void:
 	if data:
 		emit_signal("spine_unhovered", data.id)
+	
+	# Safety check - don't animate until properly initialized
+	if not _is_initialized:
+		return
 	
 	# Safety check - don't create tweens on invalid nodes
 	if not is_inside_tree() or not is_instance_valid(self):

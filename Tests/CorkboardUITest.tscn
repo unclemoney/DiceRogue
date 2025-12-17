@@ -1,0 +1,44 @@
+[gd_scene load_steps=3 format=3 uid="uid://bca8cegvem4em"]
+
+[ext_resource type="Script" path="res://Tests/corkboard_ui_test.gd" id="1_test"]
+[ext_resource type="PackedScene" uid="uid://crkb0ardui001" path="res://Scenes/UI/CorkboardUI.tscn" id="2_corkboard"]
+
+[node name="CorkboardUITest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_test")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.15, 0.15, 0.2, 1)
+
+[node name="CorkboardUI" parent="." instance=ExtResource("2_corkboard")]
+layout_mode = 1
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 410.0
+offset_bottom = 290.0
+
+[node name="InfoLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -50.0
+offset_right = 200.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "CorkboardUI Test - Click on notes to fan out"
+horizontal_alignment = 1

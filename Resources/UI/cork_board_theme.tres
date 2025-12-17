@@ -1,0 +1,18 @@
+[gd_resource type="Theme" load_steps=3 format=3 uid="uid://d3mvbcxwrjyk2"]
+
+[ext_resource type="Texture2D" uid="uid://d0d4wpo3luee0" path="res://Resources/Art/Background/CORK_BOARD.png" id="1_gr6pq"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_1tqor"]
+texture = ExtResource("1_gr6pq")
+texture_margin_left = 6.0
+texture_margin_top = 7.0
+texture_margin_right = 7.0
+texture_margin_bottom = 6.0
+expand_margin_left = 5.0
+expand_margin_top = 5.0
+expand_margin_right = 5.0
+expand_margin_bottom = 5.0
+region_rect = Rect2(5, 5, 54, 54)
+
+[resource]
+Panel/styles/panel = SubResource("StyleBoxTexture_1tqor")

@@ -1,4 +1,4 @@
-[gd_scene load_steps=100 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=101 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -84,6 +84,7 @@
 [ext_resource type="Resource" uid="uid://c2dv7lqytpbu" path="res://Scripts/Debuff/TheDivisionDebuff.tres" id="82_division"]
 [ext_resource type="Resource" uid="uid://dk8q4n7m1vbfs" path="res://Scripts/PowerUps/GreenWithEnvy.tres" id="83_green_monster"]
 [ext_resource type="Script" uid="uid://njvt03rpt35v" path="res://Scripts/Effects/scoring_animation_controller.gd" id="91_fjxkw"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/CorkboardUI.tscn" id="98_ocuqv"]
 [ext_resource type="PackedScene" path="res://Scenes/Managers/synergy_manager.tscn" id="98_vch7i"]
 [ext_resource type="Resource" uid="uid://wvpnvey8q20j" path="res://Scripts/PowerUps/WildDotsPowerUp.tres" id="99_wild_dots"]
 [ext_resource type="Resource" uid="uid://c2kn4gf8x7lwm" path="res://Scripts/PowerUps/PinHeadPowerUp.tres" id="100_pin_head"]
@@ -183,6 +184,14 @@ offset_top = 145.0
 offset_right = 810.0
 offset_bottom = 185.0
 
+[node name="CorkboardUI" parent="." instance=ExtResource("98_ocuqv")]
+offset_left = 30.0
+offset_top = 41.0
+offset_right = 430.0
+offset_bottom = 321.0
+round_manager_path = NodePath("../RoundManager")
+max_consumables = 3
+
 [node name="PowerUpUI" parent="." instance=ExtResource("14_gtvla")]
 anchors_preset = 0
 anchor_right = 0.0
@@ -200,6 +209,7 @@ power_up_icon_scene = ExtResource("14_geekk")
 max_power_ups = 5
 
 [node name="ConsumableUI" parent="." instance=ExtResource("12_pdckl")]
+visible = false
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
@@ -215,6 +225,7 @@ mouse_filter = 2
 max_consumables = 3
 
 [node name="ChallengeUI" parent="." instance=ExtResource("19_1jk2k")]
+visible = false
 z_index = 3
 anchors_preset = 0
 anchor_right = 0.0
@@ -228,6 +239,7 @@ grow_vertical = 1
 round_manager_path = NodePath("../RoundManager")
 
 [node name="DebuffUI" parent="." instance=ExtResource("14_oxb5w")]
+visible = false
 z_index = 3
 anchors_preset = 0
 anchor_right = 0.0

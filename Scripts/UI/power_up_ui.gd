@@ -22,9 +22,13 @@ enum State { SPINES, FANNED }
 var _current_state: State = State.SPINES
 var _is_animating: bool = false
 
-# Layout properties
-var _spine_shelf_y: float = 263.0  # Y position of spine shelf (275 + small margin)
-var _spine_spacing: float = 30.0  # Horizontal spacing between spines
+# Layout properties for vertical 3x3 grid (fills bottom-to-top, left-to-right)
+var _spine_start_x: float = 210.0  # X position for spine grid
+var _spine_start_y: float = 340.0  # Y position for top of grid
+var _spine_spacing_x: float = 170.0  # Horizontal spacing between columns (wide enough for rotated spines)
+var _spine_spacing_y: float = 30.0  # Vertical spacing between rows
+var _spines_per_column: int = 3  # Number of spines per column
+var _max_rows: int = 3  # Maximum rows in grid
 var _fan_center: Vector2  # Center point for fanned cards
 var _fan_radius: float = 400.0  # How spread out the fan is (increased for more space)
 var _selected_spine_id: String = ""
@@ -178,16 +182,26 @@ func _position_spines() -> void:
 	if spine_count == 0:
 		return
 	
-	# Start at fixed position (275) and space out to the right
-	var start_x: float = 275.0
-	
-	# Position each spine
+	# Position spines in a 3x3 grid (rotated 90 degrees)
+	# Fill order: bottom-to-top in each column, then left-to-right
+	# Column 1 Row 3, Column 1 Row 2, Column 1 Row 1, Column 2 Row 3, etc.
 	for i in range(spine_count):
 		var spine_id: String = spine_ids[i]
 		var spine: PowerUpSpine = _spines[spine_id]
 		if spine:
-			var pos: Vector2 = Vector2(start_x + i * _spine_spacing, _spine_shelf_y)
+			# Calculate column and row for bottom-to-top, left-to-right fill
+			var col: int = int(i / _spines_per_column)  # Column increases after filling 3 rows
+			var row_from_bottom: int = i % _spines_per_column  # 0, 1, 2 from bottom
+			var row: int = (_max_rows - 1) - row_from_bottom  # Convert to top-down row index (2, 1, 0)
+			
+			var pos: Vector2 = Vector2(
+				_spine_start_x + col * _spine_spacing_x,
+				_spine_start_y + row * _spine_spacing_y
+			)
 			spine.set_base_position(pos)
+			
+			# Rotate spine 90 degrees for vertical layout
+			spine.rotation_degrees = 90
 
 func _on_spine_clicked(power_up_id: String) -> void:
 	print("[PowerUpUI] Spine clicked:", power_up_id)

@@ -75,6 +75,7 @@ const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable
 @export var chores_manager_path: NodePath       = ^"../ChoresManager"
 @export var chore_ui_path: NodePath             = ^"../ChoreUI"
 @export var synergy_manager_path: NodePath      = ^"../SynergyManager"
+@export var corkboard_ui_path: NodePath         = ^"../CorkboardUI"
 
 @onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
 @onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
@@ -98,6 +99,7 @@ const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable
 @onready var round_manager: RoundManager   = get_node_or_null(round_manager_path)
 @onready var crt_manager: CRTManager       = get_node_or_null(crt_manager_path)
 @onready var statistics_panel: Control = get_node_or_null(statistics_panel_path)
+@onready var corkboard_ui = get_node_or_null(corkboard_ui_path)
 @onready var scoring_animation_controller = get_node_or_null(scoring_animation_controller_path)
 @onready var chores_manager = get_node_or_null(chores_manager_path)
 @onready var chore_ui = get_node_or_null(chore_ui_path)
@@ -183,6 +185,22 @@ func _ready() -> void:
 	if debuff_ui:
 		if not debuff_ui.is_connected("debuff_selected", _on_debuff_selected):
 			debuff_ui.debuff_selected.connect(_on_debuff_selected)
+	
+	# Connect CorkboardUI signals (new unified UI)
+	if corkboard_ui:
+		if not corkboard_ui.is_connected("challenge_selected", _on_challenge_selected):
+			corkboard_ui.challenge_selected.connect(_on_challenge_selected)
+			print("[GameController] Connected to challenge_selected signal from CorkboardUI")
+		if not corkboard_ui.is_connected("debuff_selected", _on_debuff_selected):
+			corkboard_ui.debuff_selected.connect(_on_debuff_selected)
+			print("[GameController] Connected to debuff_selected signal from CorkboardUI")
+		if not corkboard_ui.is_connected("consumable_used", _on_consumable_ui_used):
+			corkboard_ui.consumable_used.connect(_on_consumable_ui_used)
+			print("[GameController] Connected to consumable_used signal from CorkboardUI")
+		if not corkboard_ui.is_connected("consumable_sold", _on_consumable_sold):
+			corkboard_ui.consumable_sold.connect(_on_consumable_sold)
+			print("[GameController] Connected to consumable_sold signal from CorkboardUI")
+	
 	if turn_tracker:
 		turn_tracker.rolls_updated.connect(update_three_more_rolls_usability)
 		turn_tracker.turn_started.connect(update_three_more_rolls_usability)
@@ -747,7 +765,10 @@ func grant_consumable(id: String) -> void:
 		print("[GameController] Incremented consumable count for '%s' to %d" % [id, consumable_counts[id]])
 		
 		# Update the UI to show the new count
-		if consumable_ui:
+		# Try CorkboardUI first, fall back to old ConsumableUI
+		if corkboard_ui:
+			corkboard_ui.update_consumable_count(id, consumable_counts[id])
+		elif consumable_ui:
 			consumable_ui.update_consumable_count(id, consumable_counts[id])
 		return
 	
@@ -765,7 +786,13 @@ func grant_consumable(id: String) -> void:
 		push_error("[GameController] No ConsumableData found for '%s'" % id)
 		return
 
-	var spine = consumable_ui.add_consumable(def)  # Returns ConsumableSpine now
+	# Try CorkboardUI first, fall back to old ConsumableUI
+	var spine = null
+	if corkboard_ui:
+		spine = corkboard_ui.add_consumable(def)
+	elif consumable_ui:
+		spine = consumable_ui.add_consumable(def)  # Returns ConsumableSpine now
+	
 	if not spine:
 		push_error("[GameController] Failed to create UI spine for consumable '%s'" % id)
 		return
@@ -781,12 +808,11 @@ func grant_consumable(id: String) -> void:
 ## Recomputes and updates the usability state for all consumables displayed in the fan UI.
 ## This should be called whenever game state that affects usability changes (scores, rolls left, etc.).
 func update_consumable_usability() -> void:
-	if not consumable_ui:
-		return
-
-	# This replaces the individual set_useable calls in grant_consumable
-	# It will be called when consumables are fanned out
-	consumable_ui.update_consumable_usability()
+	# Try CorkboardUI first, fall back to old ConsumableUI
+	if corkboard_ui:
+		corkboard_ui.update_consumable_usability()
+	elif consumable_ui:
+		consumable_ui.update_consumable_usability()
 
 ## set_consumable_usability(consumable_id, can_use)
 ##
@@ -822,14 +848,20 @@ func _on_consumable_used(consumable_id: String) -> void:
 		if current_count > 1:
 			# Decrement count
 			consumable_counts[consumable_id] = current_count - 1
-			if consumable_ui:
+			# Try CorkboardUI first, fall back to old ConsumableUI
+			if corkboard_ui:
+				corkboard_ui.update_consumable_count(consumable_id, consumable_counts[consumable_id])
+			elif consumable_ui:
 				consumable_ui.update_consumable_count(consumable_id, consumable_counts[consumable_id])
 			print("[GameController] Decremented %s count to %d" % [consumable_id, consumable_counts[consumable_id]])
 		else:
 			# Remove entirely
 			active_consumables.erase(consumable_id)
 			consumable_counts.erase(consumable_id)
-			if consumable_ui:
+			# Try CorkboardUI first, fall back to old ConsumableUI
+			if corkboard_ui:
+				corkboard_ui.remove_consumable(consumable_id)
+			elif consumable_ui:
 				consumable_ui.remove_consumable(consumable_id)
 			print("[GameController] Completely removed %s" % consumable_id)
 
@@ -1229,7 +1261,13 @@ func apply_debuff(id: String) -> void:
 		return
 
 	# Add the debuff icon to the UI with proper signal connections
-	var icon = debuff_ui.add_debuff(def, debuff)
+	# Try CorkboardUI first, fall back to old DebuffUI
+	var icon = null
+	if corkboard_ui:
+		icon = corkboard_ui.add_debuff(def, debuff)
+	elif debuff_ui:
+		icon = debuff_ui.add_debuff(def, debuff)
+	
 	if not icon:
 		push_error("[GameController] Failed to create UI icon for debuff '%s'" % id)
 		return
@@ -1279,7 +1317,14 @@ func disable_debuff(id: String) -> void:
 			debuff.end()
 
 			# Animate the debuff removal
-			if debuff_ui:
+			# Try CorkboardUI first, fall back to old DebuffUI
+			if corkboard_ui:
+				corkboard_ui.animate_debuff_removal(id, func():
+					# Remove after animation completes
+					active_debuffs.erase(id)
+					print("[GameController] Debuff removed after animation:", id)
+				)
+			elif debuff_ui:
 				debuff_ui.animate_debuff_removal(id, func():
 					# Remove after animation completes
 					active_debuffs.erase(id)
@@ -1741,7 +1786,14 @@ func activate_challenge(id: String) -> void:
 	challenge.start()
 
 	# Add to UI with properly connected signals
-	if challenge_ui:
+	# Try CorkboardUI first (new unified UI), fall back to old ChallengeUI
+	if corkboard_ui:
+		var icon = corkboard_ui.add_challenge(def, challenge)
+		if icon:
+			print("[GameController] Challenge added to CorkboardUI:", id)
+		else:
+			push_error("[GameController] Failed to add challenge to CorkboardUI:", id)
+	elif challenge_ui:
 		var icon = challenge_ui.add_challenge(def, challenge)
 		if icon:
 			# Set up any additional properties if needed
@@ -1749,7 +1801,7 @@ func activate_challenge(id: String) -> void:
 		else:
 			push_error("[GameController] Failed to create UI for challenge:", id)
 	else:
-		push_error("[GameController] No challenge_ui reference")
+		push_error("[GameController] No challenge_ui or corkboard_ui reference")
 
 
 ## _on_challenge_completed(id)
@@ -1766,7 +1818,17 @@ func _on_challenge_completed(id: String) -> void:
 		PlayerEconomy.add_money(def.reward_money)
 
 	# Animate challenge completion before removing
-	if challenge_ui:
+	# Try CorkboardUI first, fall back to old ChallengeUI
+	if corkboard_ui:
+		corkboard_ui.animate_challenge_removal(id, func():
+			# Clean up challenge after animation
+			if active_challenges.has(id):
+				var challenge = active_challenges[id]
+				if challenge:
+					challenge.queue_free()
+				active_challenges.erase(id)
+		)
+	elif challenge_ui:
 		challenge_ui.animate_challenge_removal(id, func():
 			# Clean up challenge after animation
 			if active_challenges.has(id):
@@ -1800,7 +1862,17 @@ func _on_challenge_failed(id: String) -> void:
 	var _display_name = def.display_name if def else id
 
 	# Animate challenge failure before removing
-	if challenge_ui:
+	# Try CorkboardUI first, fall back to old ChallengeUI
+	if corkboard_ui:
+		corkboard_ui.animate_challenge_removal(id, func():
+			# Clean up challenge after animation
+			if active_challenges.has(id):
+				var challenge = active_challenges[id]
+				if challenge:
+					challenge.queue_free()
+				active_challenges.erase(id)
+		)
+	elif challenge_ui:
 		challenge_ui.animate_challenge_removal(id, func():
 			# Clean up challenge after animation
 			if active_challenges.has(id):
@@ -1935,7 +2007,13 @@ func _on_consumable_sold(consumable_id: String) -> void:
 		print("[GameController] Refunding", refund, "coins for consumable:", consumable_id)
 		PlayerEconomy.add_money(refund)
 	
-	# Remove from game data only (UI already handled removal)
+	# Remove from UI
+	if corkboard_ui:
+		corkboard_ui.remove_consumable(consumable_id)
+	elif consumable_ui:
+		consumable_ui.remove_consumable(consumable_id)
+	
+	# Remove from game data
 	if active_consumables.has(consumable_id):
 		var consumable_to_remove = active_consumables[consumable_id]
 		if consumable_to_remove:

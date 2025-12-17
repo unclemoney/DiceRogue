@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://surdk66a0453"]
+[gd_scene load_steps=9 format=3 uid="uid://surdk66a0453"]
 
 [ext_resource type="PackedScene" uid="uid://lc4xqvsxdnpy" path="res://Scenes/UI/game_button_ui.tscn" id="1_ht33c"]
 [ext_resource type="PackedScene" uid="uid://sliaarrkymdo" path="res://Scenes/UI/score_card_ui.tscn" id="2_u8tly"]
@@ -7,8 +7,15 @@
 [ext_resource type="PackedScene" uid="uid://dv0gypvmv4bb" path="res://Scenes/UI/consumable_ui.tscn" id="5_cons"]
 [ext_resource type="PackedScene" uid="uid://bcl8ftyj1jx6k" path="res://Scenes/UI/challenge_ui.tscn" id="6_chall"]
 [ext_resource type="PackedScene" uid="uid://cxavqklxkdjmp" path="res://Scenes/UI/debuff_ui.tscn" id="7_debuff"]
+[ext_resource type="PackedScene" uid="uid://crkb0ardui001" path="res://Scenes/UI/CorkboardUI.tscn" id="8_corkboard"]
 
 [node name="UICanvasLayer" type="CanvasLayer"]
+
+[node name="CorkboardUI" parent="." instance=ExtResource("8_corkboard")]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 410.0
+offset_bottom = 290.0
 
 [node name="GameButtonUI" parent="." instance=ExtResource("1_ht33c")]
 offset_left = 1.0
@@ -29,17 +36,20 @@ offset_right = -1128.0
 offset_bottom = -243.0
 
 [node name="PowerUpUI" parent="." instance=ExtResource("4_u8tly")]
-offset_left = 7.0
-offset_top = 484.0
+offset_left = 420.0
+offset_top = 10.0
 
 [node name="ConsumableUI" parent="." instance=ExtResource("5_cons")]
+visible = false
 offset_left = 87.0
 offset_top = 196.0
 
 [node name="ChallengeUI" parent="." instance=ExtResource("6_chall")]
+visible = false
 offset_left = 111.0
 offset_top = 187.0
 
 [node name="DebuffUI" parent="." instance=ExtResource("7_debuff")]
+visible = false
 offset_left = 550.0
 offset_top = 200.0

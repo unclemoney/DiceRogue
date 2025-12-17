@@ -1,5 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://bbafg0xpunx5e"]
+[gd_scene load_steps=3 format=3 uid="uid://bbafg0xpunx5e"]
 
+[ext_resource type="Theme" uid="uid://d3mvbcxwrjyk2" path="res://Resources/UI/cork_board_theme.tres" id="1_5y3n3"]
 [ext_resource type="Script" uid="uid://8dxuy401oevs" path="res://Scripts/UI/chore_ui.gd" id="1_chore_ui"]
 
 [node name="ChoreUI" type="Control"]
@@ -8,4 +9,5 @@ layout_mode = 3
 anchors_preset = 0
 offset_right = 80.0
 offset_bottom = 140.0
+theme = ExtResource("1_5y3n3")
 script = ExtResource("1_chore_ui")
