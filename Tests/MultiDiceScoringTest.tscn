@@ -1,0 +1,48 @@
+[gd_scene load_steps=2 format=3 uid="uid://dbgyg2mgy8c2e"]
+
+[ext_resource type="Script" uid="uid://c2em58dsk7fck" path="res://Tests/multi_dice_scoring_test.gd" id="1_test"]
+
+[node name="MultiDiceScoringTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_test")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TitleLabel" type="Label" parent="Panel/VBoxContainer"]
+layout_mode = 2
+text = "Multi-Dice Scoring Test (5-16 dice)"
+horizontal_alignment = 1
+
+[node name="RunButton" type="Button" parent="Panel/VBoxContainer"]
+layout_mode = 2
+text = "Run Tests"
+
+[node name="OutputLabel" type="RichTextLabel" parent="Panel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "Click 'Run Tests' to begin..."
+scroll_following = true

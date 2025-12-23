@@ -344,6 +344,7 @@ func _on_game_over() -> void:
 func _hand_scored_disable() -> void:
 	print("🏁 Hand scored—disabling Roll button")
 	roll_button.disabled = true
+	_stop_roll_button_pulse()
 
 func _on_shop_button_pressed() -> void:
 	print("[GameButtonUI] Shop button pressed")
@@ -354,6 +355,7 @@ func _on_shop_button_pressed() -> void:
 	print("[GameButtonUI] Signal emitted")
 	next_turn_button.disabled = true  # Disable next turn while in shop
 	roll_button.disabled = true  # Disable roll while in shop
+	_stop_roll_button_pulse()  # Stop pulse when roll disabled
 
 func _on_round_started(_round_number: int) -> void:
 	print("[GameButtonUI] === ROUND STARTED ===")

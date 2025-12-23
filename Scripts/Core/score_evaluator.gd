@@ -284,23 +284,39 @@ func get_n_of_a_kind(values: Array[int], n: int) -> int:
 			return value  # Return the value that meets the requirement
 	return 0  # Return 0 if no match found
 
+## is_full_house()
+##
+## Checks if values contain a valid Full House pattern (3 of one value + 2 of another).
+## Supports 5-16 dice by checking if ANY value has 3+ occurrences AND a DIFFERENT value has 2+.
+##
+## Parameters:
+##   values: Array[int] - dice values to check
+##
+## Returns: bool - true if Full House pattern exists
 func is_full_house(values: Array[int]) -> bool:
+	if values.size() < 5:
+		return false
+	
 	var counts = {}
 	for v in values:
 		counts[v] = counts.get(v, 0) + 1
 	
-	var has_three = false
-	var has_pair = false
+	# Find a value with 3+ occurrences
+	var three_value := -1
+	for value in counts:
+		if counts[value] >= 3:
+			three_value = value
+			break
 	
-	for count in counts.values():
-		if count >= 3:
-			has_three = true
-		elif count >= 2:
-			has_pair = true
-		if count >= 5:
+	if three_value == -1:
+		return false
+	
+	# Find a DIFFERENT value with 2+ occurrences
+	for value in counts:
+		if value != three_value and counts[value] >= 2:
 			return true
 	
-	return has_three and has_pair
+	return false
 
 func is_straight(values: Array[int]) -> bool:
 	var unique := get_unique(values)
@@ -335,6 +351,15 @@ func is_small_straight(values: Array[int]) -> bool:
 		   check_values3.all(func(x): return unique.has(x))
 
 
+## is_yahtzee()
+##
+## Checks if values contain a valid Yahtzee (5+ dice showing the same value).
+## Supports 5-16 dice by checking if ANY single value appears 5+ times (including wildcards).
+##
+## Parameters:
+##   values: Array[int] - dice values to check
+##
+## Returns: bool - true if Yahtzee pattern exists (5+ of same value)
 func is_yahtzee(values: Array[int]) -> bool:
 	if values.is_empty():
 		return false
@@ -342,47 +367,36 @@ func is_yahtzee(values: Array[int]) -> bool:
 	# Filter out disabled values (like twos with disabled_twos debuff)
 	var filtered_values = filter_disabled_values(values)
 	
-	# If filtering removed too many dice, it can't be a yahtzee
+	# Need at least 5 dice to have a Yahtzee
 	if filtered_values.size() < 5:
-		print("[ScoreEvaluator] Not enough valid dice for yahtzee after filtering")
+		print("[ScoreEvaluator] Not enough valid dice for yahtzee after filtering:", filtered_values.size())
 		return false
-		
-	var wildcard_count = 0
-	var regular_values = []
-	var regular_indices = []
 	
-	# First pass - count wildcards and collect regular values
+	# Count wildcards separately
+	var wildcard_count := 0
+	var value_counts := {}
+	
 	for i in range(filtered_values.size()):
+		var is_wildcard := false
 		if i < DiceResults.dice_refs.size():
 			var die = DiceResults.dice_refs[i]
 			if is_instance_valid(die) and die.has_mod("wildcard"):
 				wildcard_count += 1
-			else:
-				regular_values.append(filtered_values[i])
-				regular_indices.append(i)
-		else:
-			# This shouldn't happen if our filtering is working correctly
-			regular_values.append(filtered_values[i])
-			regular_indices.append(i)
+				is_wildcard = true
+		
+		if not is_wildcard:
+			var val = filtered_values[i]
+			value_counts[val] = value_counts.get(val, 0) + 1
 	
 	# If all dice are wildcards, it's automatically a Yahtzee
-	if wildcard_count == filtered_values.size():
-		print("✓ All wildcards - automatic Yahtzee!")
+	if wildcard_count >= 5:
+		print("[ScoreEvaluator] ✓ All wildcards - automatic Yahtzee!")
 		return true
 	
-	# If we have regular values, they all must match
-	if not regular_values.is_empty():
-		var target_value = regular_values[0]
-		
-		# Check that all regular dice match
-		for value in regular_values:
-			if value != target_value:
-				return false
-		
-		# Make sure we have enough matching dice (including wildcards) for a yahtzee
-		if regular_values.size() + wildcard_count >= 5:
-			print("[ScoreEvaluator] Valid yahtzee: ", regular_values.size(), " matching dice + ", 
-				  wildcard_count, " wildcards")
+	# Check if any value + wildcards reaches 5
+	for value in value_counts:
+		if value_counts[value] + wildcard_count >= 5:
+			print("[ScoreEvaluator] Valid yahtzee: ", value_counts[value], " dice showing ", value, " + ", wildcard_count, " wildcards")
 			return true
 	
 	return false

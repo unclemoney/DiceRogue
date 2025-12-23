@@ -101,10 +101,10 @@ static func trigger_mom_check(game_controller: Node, chores_completed: int = -1,
 		# Try to fine the player $100
 		var player_economy = Engine.get_singleton("PlayerEconomy") if Engine.has_singleton("PlayerEconomy") else null
 		if player_economy == null:
-			# Try autoload path
-			var root = Engine.get_main_loop()
-			if root and root.has_node("/root/PlayerEconomy"):
-				player_economy = root.get_node("/root/PlayerEconomy")
+			# Try autoload path - get_main_loop() returns SceneTree, need .root for Node
+			var scene_tree = Engine.get_main_loop()
+			if scene_tree and scene_tree.root and scene_tree.root.has_node("PlayerEconomy"):
+				player_economy = scene_tree.root.get_node("PlayerEconomy")
 		
 		var can_pay = false
 		if player_economy and player_economy.has_method("can_afford"):
@@ -174,9 +174,10 @@ static func apply_consequences(game_controller: Node, result: MomCheckResult) ->
 	if result.fine_amount > 0:
 		var player_economy = Engine.get_singleton("PlayerEconomy") if Engine.has_singleton("PlayerEconomy") else null
 		if player_economy == null:
-			var root = Engine.get_main_loop()
-			if root and root.has_node("/root/PlayerEconomy"):
-				player_economy = root.get_node("/root/PlayerEconomy")
+			# get_main_loop() returns SceneTree, need .root for Node
+			var scene_tree = Engine.get_main_loop()
+			if scene_tree and scene_tree.root and scene_tree.root.has_node("PlayerEconomy"):
+				player_economy = scene_tree.root.get_node("PlayerEconomy")
 		
 		if player_economy and player_economy.has_method("remove_money"):
 			player_economy.remove_money(result.fine_amount, "mom_fine")
@@ -188,8 +189,14 @@ static func apply_consequences(game_controller: Node, result: MomCheckResult) ->
 			game_controller.enable_debuff(debuff_id)
 		print("[MomLogicHandler] Applied debuff: %s" % debuff_id)
 	
-	# Mark debuffs as "grounded" so they persist until next round
-	# This requires modification to debuff system or tracking in ChoresManager
+	# Shift Mom's mood negative when player is grounded (debuffs applied)
+	if result.applied_debuffs.size() > 0 or result.mom_is_furious:
+		var chores_manager = game_controller.get("chores_manager")
+		if chores_manager and chores_manager.has_method("adjust_mood"):
+			# Furious (NC-17) = +3 anger, regular grounding = +2 anger
+			var mood_shift = 3 if result.mom_is_furious else 2
+			chores_manager.adjust_mood(mood_shift)
+			print("[MomLogicHandler] Mom's mood shifted negative by %d (grounded)" % mood_shift)
 
 static func _get_power_up_def(power_up_manager: Node, id: String) -> PowerUpData:
 	if power_up_manager == null:
