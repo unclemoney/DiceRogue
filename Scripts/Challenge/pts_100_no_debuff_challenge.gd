@@ -75,13 +75,15 @@ func _update_progress() -> void:
 	print("[Pts100NoDebuffChallenge] Progress updated:", progress)
 
 func _on_score_changed(total_score: int) -> void:
-	print("[Pts100NoDebuffChallenge] Score changed event received! New total:", total_score)
+	print("[Pts100NoDebuffChallenge] Score changed event received! New total:", total_score, " target:", _target_score)
 	_update_progress()
 	
 	# Check if we've met the target
 	if total_score >= _target_score:
 		print("[Pts100NoDebuffChallenge] Target score reached! Challenge completed.")
+		print("[Pts100NoDebuffChallenge] Emitting challenge_completed signal...")
 		emit_signal("challenge_completed")
+		print("[Pts100NoDebuffChallenge] Signal emitted, calling end()...")
 		end()
 
 func _on_game_completed(final_score := 0) -> void:
@@ -94,7 +96,7 @@ func _on_game_completed(final_score := 0) -> void:
 		emit_signal("challenge_failed")
 	end()
 
-func set_target_score_from_resource(resource: ChallengeData, round_number: int) -> void:
+func set_target_score_from_resource(resource: ChallengeData, _round_number: int) -> void:
 	if resource:
-		_target_score = resource.target_score * round_number 
+		_target_score = resource.target_score
 		print("[Pts100NoDebuffChallenge] Target score set from resource:", _target_score)

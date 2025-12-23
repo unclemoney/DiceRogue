@@ -31,9 +31,5 @@ func _ready():
 	
 	print("Round Manager Test Scene")
 	
-	# Get references
-	var round_manager = $RoundManager
-	
-	# Manually start the game
-	if round_manager:
-		round_manager.start_game()
+	# Note: start_game() is called from GameController._on_game_start(),
+	# no need to call it manually here.

@@ -370,6 +370,84 @@ When Mom appears (progress reaches 100):
 - **MomCharacter**: `Scripts/UI/mom_character.gd` - Dialog popup
 - **Mom Sprites**: `Resources/Art/Characters/Mom/` - Character art
 
+**Mom's Mood System:**
+Mom's mood tracks player behavior across a game session:
+- **Mood Scale**: 1 (Very Happy) to 10 (Extremely Angry), default 5 (Neutral)
+- **Mood Adjustment**: +2 when finding restricted PowerUps, -1 when player completes chores
+- **Mood Reset**: Resets to neutral (5) at the start of each new game
+- **Very Happy Reward (1)**: Mom grants a reward item when very happy
+- **Extremely Angry Punishment (10)**: Mom applies an enhanced debuff when extremely angry
+- **Mood Display**: Available in the Chores UI fan-out view with emoji indicator
+
+**Chores Fan-Out UI:**
+Clicking the Goof-Off Meter displays a fan-out panel showing:
+- **Mom's Current Mood**: Emoji indicator (😊 to 😡) with mood description
+- **Completed Chores List**: Checkmark list of all chores completed this game
+- **Empty State**: Shows "No chores completed yet" message when starting fresh
+
+### Challenge Celebration System
+When challenges are completed, celebratory GPU particle effects are displayed:
+
+**Firework Effects:**
+- **GPUParticles2D**: Hardware-accelerated particle system for smooth performance
+- **Multiple Bursts**: 4 staggered explosions with 0.15s delay between each
+- **Burst Spread**: Random positions within 60px radius of challenge spine
+- **Particle Count**: 75 particles per burst for full visual impact
+- **Color Gradient**: Gold to white gradient (champagne celebration colors)
+- **Physics**: Upward velocity with gravity for realistic firework arc
+- **Duration**: 1.5 second particle lifetime, bursts auto-cleanup
+
+**Trigger Conditions:**
+- Challenge completion via challenge manager signals
+- Position anchored to challenge spine on corkboard
+- Automatic cleanup of particle nodes after animation
+
+**Implementation Files:**
+- **ChallengeCelebration**: `Scripts/Effects/challenge_celebration.gd` - Celebration manager
+- **Particle Scene**: `Scenes/Effects/ChallengeCelebration.tscn` - GPU particle configuration
+
+### Debuff Animation System
+Negative score contributions now feature dramatic visual feedback:
+
+**Visual Effects:**
+- **Red Floating Numbers**: Negative values float up with red coloring (same style as positive scores)
+- **Camera Shake**: Brief shake effect on significant penalties (scales with penalty size)
+- **Red Vignette Pulse**: Screen edges flash red briefly (intensity scales with penalty)
+- **Source Animation**: Debuff icons shake to indicate their contribution
+
+**Animation Scaling:**
+- Small penalties (< 10 points): Minimal effects
+- Medium penalties (10-50 points): Moderate shake and vignette
+- Large penalties (50+ points): Intense camera shake and prominent vignette
+
+**Integration:**
+- Triggered during Phase 2.5 of scoring animation sequence
+- Works with existing scoring animation controller
+- Respects animation speed settings
+
+### Shop Button Glow
+The shop button now glows when available, matching the roll button behavior:
+
+**Pulse Animation:**
+- **Golden Tint**: Subtle color modulation (1.3, 1.2, 0.9)
+- **Scale Pulse**: Grows to 1.05x scale rhythmically
+- **0.5s Duration**: Smooth loop timing
+- **Auto-Activate**: Starts when shop is available and player has money
+
+### Challenge Hover Tooltip
+Hovering over the Challenge Spine displays detailed challenge information:
+
+**Tooltip Content:**
+- **Challenge Name**: Bold title at top
+- **Target Score**: Points required to complete
+- **Current Progress**: Live progress vs target
+- **Reward**: Money reward for completion (if applicable)
+
+**Hover Behavior:**
+- **0.3s Delay**: Matches other tooltip delays in the game
+- **Smart Positioning**: Adjusts to avoid screen edges
+- **Auto-Hide**: Disappears immediately on mouse exit
+
 ### Synergy System
 The **Synergy System** rewards players for collecting PowerUps with matching ratings, creating strategic depth in PowerUp selection:
 

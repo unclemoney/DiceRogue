@@ -1,0 +1,31 @@
+[gd_scene load_steps=4 format=3 uid="uid://cvcm3a8xk5nji"]
+
+[sub_resource type="Gradient" id="Gradient_firework"]
+offsets = PackedFloat32Array(0, 0.25, 0.6, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 0.9, 0.3, 1, 1, 0.5, 0.1, 1, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_firework"]
+gradient = SubResource("Gradient_firework")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_firework"]
+particle_flag_disable_z = true
+emission_shape = 1
+emission_sphere_radius = 15.0
+direction = Vector3(0, -1, 0)
+spread = 180.0
+initial_velocity_min = 150.0
+initial_velocity_max = 350.0
+gravity = Vector3(0, 250, 0)
+scale_min = 3.0
+scale_max = 7.0
+color = Color(1, 0.9, 0.4, 1)
+color_ramp = SubResource("GradientTexture1D_firework")
+
+[node name="ChallengeCelebration" type="GPUParticles2D"]
+z_index = 100
+emitting = false
+amount = 75
+lifetime = 1.5
+one_shot = true
+explosiveness = 0.95
+process_material = SubResource("ParticleProcessMaterial_firework")

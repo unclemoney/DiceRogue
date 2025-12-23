@@ -1,4 +1,4 @@
-[gd_resource type="Theme" load_steps=3 format=3 uid="uid://d3mvbcxwrjyk2"]
+[gd_resource type="Theme" load_steps=5 format=3 uid="uid://d3mvbcxwrjyk2"]
 
 [ext_resource type="Texture2D" uid="uid://d0d4wpo3luee0" path="res://Resources/Art/Background/CORK_BOARD.png" id="1_gr6pq"]
 
@@ -14,5 +14,26 @@ expand_margin_right = 5.0
 expand_margin_bottom = 5.0
 region_rect = Rect2(5, 5, 54, 54)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_progress_bg"]
+bg_color = Color(0.15, 0.12, 0.1, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.4, 0.3, 0.2, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_progress_fill"]
+bg_color = Color(0.3, 0.6, 0.3, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
 [resource]
 Panel/styles/panel = SubResource("StyleBoxTexture_1tqor")
+ProgressBar/styles/background = SubResource("StyleBoxFlat_progress_bg")
+ProgressBar/styles/fill = SubResource("StyleBoxFlat_progress_fill")

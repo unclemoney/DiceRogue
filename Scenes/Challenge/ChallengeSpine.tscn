@@ -1,6 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://challspine001"]
+[gd_scene load_steps=3 format=3 uid="uid://b3s64c16bhsp1"]
 
-[ext_resource type="Script" path="res://Scripts/Challenge/challenge_spine.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://bk2yi2xhv3x1m" path="res://Scripts/Challenge/challenge_spine.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://dq7mvmshxtrbe" path="res://Resources/Art/Background/POST_IT_NOTE.png" id="2_texture"]
 
 [node name="ChallengeSpine" type="Control"]
@@ -45,6 +45,7 @@ vertical_alignment = 1
 autowrap_mode = 2
 
 [node name="DiceLabel" type="Label" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0

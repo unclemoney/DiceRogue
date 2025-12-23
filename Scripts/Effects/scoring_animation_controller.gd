@@ -203,6 +203,9 @@ func _execute_animation_sequence(score: int, _category: String, breakdown_info: 
 	# Phase 2: Play scoring sound with dynamic pitch
 	#_play_scoring_audio(score)
 	
+	# Phase 2.5: Check for and animate negative contributions (debuffs)
+	await _animate_negative_sources(breakdown_info, intensity_scale, speed_scale)
+	
 	# Phase 3: Wait a bit, then animate contributing consumables and update additive panel
 	var consumable_delay = 0.05 / speed_scale  # Reduced from 0.3
 	print("[ScoringAnimationController] Waiting %f seconds before consumables..." % consumable_delay)
@@ -240,6 +243,36 @@ func _execute_animation_sequence(score: int, _category: String, breakdown_info: 
 	
 	# Wait for all animations to complete
 	await get_tree().create_timer(1.0 / speed_scale).timeout
+
+
+## _animate_negative_sources(breakdown_info, intensity_scale, speed_scale)
+##
+## Checks breakdown_info for negative values and animates them with debuff effects.
+func _animate_negative_sources(breakdown_info: Dictionary, intensity_scale: float, speed_scale: float) -> void:
+	var additive_sources = breakdown_info.get("additive_sources", [])
+	var multiplier_sources = breakdown_info.get("multiplier_sources", [])
+	
+	# Check for negative additive values (debuff penalties)
+	for source_info in additive_sources:
+		var value = source_info.get("value", 0)
+		if value < 0:
+			var source_name = source_info.get("name", "Penalty")
+			print("[ScoringAnimationController] Found negative source: %s with %d" % [source_name, value])
+			animate_debuff_source(source_name, abs(value), intensity_scale, speed_scale)
+			await get_tree().create_timer(0.2 / speed_scale).timeout
+	
+	# Check for divisor multipliers (values less than 1 that reduce score)
+	for source_info in multiplier_sources:
+		var value = source_info.get("value", 1.0)
+		if value < 1.0 and value > 0:
+			var source_name = source_info.get("name", "Division")
+			# This is a divisor, show as negative effect
+			var penalty_display = int((1.0 - value) * 100)  # e.g., 0.5 = 50% reduction
+			print("[ScoringAnimationController] Found divisor: %s with x%.2f (-%d%%)" % [source_name, value, penalty_display])
+			# Use a smaller intensity for divisors
+			animate_negative_contribution(-penalty_display, Vector2(100, 200), source_name)
+			await get_tree().create_timer(0.2 / speed_scale).timeout
+
 
 ## _animate_dice_bounce_with_scores(intensity_scale, speed_scale)
 ##
@@ -866,3 +899,178 @@ func _should_animate_powerup_for_context(powerup_id: String, breakdown_info: Dic
 	# For other powerups, always animate for now
 	# TODO: Add specific logic for other powerups as needed
 	return true
+
+
+#region Negative/Debuff Animations
+
+## animate_negative_contribution(value, source_position, source_name)
+##
+## Animates a negative score contribution from debuffs with dramatic visual effects.
+## Scales intensity based on the penalty magnitude.
+##
+## Parameters:
+##   value: int - the negative value (should be negative)
+##   source_position: Vector2 - position to show floating number
+##   source_name: String - name of the debuff for logging
+func animate_negative_contribution(value: int, source_position: Vector2, source_name: String = "Debuff") -> void:
+	var penalty = abs(value)
+	var intensity = clampf(float(penalty) / 5.0, 0.5, 3.0)
+	
+	print("[ScoringAnimationController] Animating negative contribution: -%d from %s (intensity: %.1f)" % [penalty, source_name, intensity])
+	
+	# Create red floating number with shake effect
+	_create_negative_floating_number(source_position, value, intensity)
+	
+	# Trigger screen effects based on penalty severity
+	if penalty > 10:
+		_trigger_red_vignette_pulse(intensity)
+	if penalty > 20:
+		_trigger_camera_shake(intensity)
+
+
+## _create_negative_floating_number(position, value, intensity)
+##
+## Creates a floating number for negative values with shake animation.
+func _create_negative_floating_number(position: Vector2, value: int, intensity: float) -> void:
+	var text = str(value)  # Value should already be negative
+	var scale_factor = 1.2 + (intensity * 0.3)
+	
+	var floating_number = FloatingNumberScript.create_floating_number(
+		get_tree().current_scene,
+		position,
+		text,
+		scale_factor,
+		Color.RED
+	)
+	
+	if floating_number:
+		floating_number.float_duration = 2.0
+		floating_number.float_speed = FLOAT_NUMBER_SPEED * 0.8
+		
+		# Add shake effect to the floating number
+		_apply_shake_to_node(floating_number, intensity)
+
+
+## _apply_shake_to_node(node, intensity)
+##
+## Applies a horizontal shake effect to a node.
+func _apply_shake_to_node(node: Node, intensity: float) -> void:
+	if not node or not is_instance_valid(node):
+		return
+	
+	var shake_amount = 5.0 * intensity
+	var shake_duration = 0.5
+	var original_x = node.position.x if node is Control else 0.0
+	
+	var tween = create_tween()
+	tween.set_loops(5)
+	
+	tween.tween_property(node, "position:x", original_x + shake_amount, shake_duration / 10.0)
+	tween.tween_property(node, "position:x", original_x - shake_amount, shake_duration / 10.0)
+
+
+## _trigger_red_vignette_pulse(intensity)
+##
+## Creates a brief red vignette flash effect on screen.
+func _trigger_red_vignette_pulse(intensity: float) -> void:
+	var vignette = ColorRect.new()
+	vignette.name = "RedVignette"
+	vignette.color = Color(0.8, 0.1, 0.1, 0.0)
+	vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vignette.z_index = 100
+	
+	# Cover full viewport
+	vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
+	
+	get_tree().current_scene.add_child(vignette)
+	
+	# Calculate alpha based on intensity
+	var max_alpha = clampf(0.15 + (intensity * 0.1), 0.15, 0.4)
+	
+	# Pulse in and out
+	var tween = create_tween()
+	tween.tween_property(vignette, "color:a", max_alpha, 0.1)
+	tween.tween_property(vignette, "color:a", 0.0, 0.3)
+	tween.tween_callback(vignette.queue_free)
+
+
+## _trigger_camera_shake(intensity)
+##
+## Shakes the camera/viewport for dramatic effect.
+func _trigger_camera_shake(intensity: float) -> void:
+	var camera = get_viewport().get_camera_2d()
+	if not camera:
+		# Try to find any Camera2D in the scene
+		var cameras = get_tree().get_nodes_in_group("camera")
+		if cameras.size() > 0:
+			camera = cameras[0]
+	
+	if not camera:
+		# Fallback: shake the root node if no camera
+		_shake_node(get_tree().current_scene, intensity)
+		return
+	
+	var shake_amount = 8.0 * intensity
+	var shake_duration = 0.4
+	var original_offset = camera.offset
+	
+	var tween = create_tween()
+	
+	# Rapid back-and-forth shake
+	for i in range(6):
+		var random_offset = Vector2(
+			randf_range(-shake_amount, shake_amount),
+			randf_range(-shake_amount, shake_amount)
+		)
+		tween.tween_property(camera, "offset", original_offset + random_offset, shake_duration / 12.0)
+	
+	# Return to original
+	tween.tween_property(camera, "offset", original_offset, shake_duration / 6.0)
+
+
+## _shake_node(node, intensity)
+##
+## Shakes a node's position as fallback when no camera is available.
+func _shake_node(node: Node, intensity: float) -> void:
+	if not node is Node2D and not node is Control:
+		return
+	
+	var shake_amount = 5.0 * intensity
+	var shake_duration = 0.3
+	var original_position = node.position
+	
+	var tween = create_tween()
+	
+	for i in range(4):
+		var random_offset = Vector2(
+			randf_range(-shake_amount, shake_amount),
+			randf_range(-shake_amount, shake_amount)
+		)
+		tween.tween_property(node, "position", original_position + random_offset, shake_duration / 8.0)
+	
+	tween.tween_property(node, "position", original_position, shake_duration / 4.0)
+
+
+## animate_debuff_source(debuff_id, penalty_value, intensity_scale, speed_scale)
+##
+## Animate a debuff's contribution to scoring with negative effects.
+## intensity_scale and speed_scale reserved for future fine-tuning of animations.
+func animate_debuff_source(debuff_id: String, penalty_value: int, _intensity_scale: float, _speed_scale: float) -> void:
+	print("[ScoringAnimationController] Animating debuff: %s with penalty: %d" % [debuff_id, penalty_value])
+	
+	# Try to find the debuff in the CorkboardUI or DebuffUI
+	var corkboard_nodes = get_tree().get_nodes_in_group("corkboard_ui")
+	var source_position = Vector2(100, 200)  # Default position
+	
+	if corkboard_nodes.size() > 0:
+		var corkboard = corkboard_nodes[0]
+		# Use debuff spine position if available
+		if corkboard.has_method("get_debuff_spine_position"):
+			source_position = corkboard.get_debuff_spine_position()
+		else:
+			source_position = corkboard.global_position + Vector2(20, 150)
+	
+	# Animate the negative contribution
+	animate_negative_contribution(-penalty_value, source_position, debuff_id)
+
+#endregion

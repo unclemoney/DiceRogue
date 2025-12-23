@@ -24,6 +24,7 @@ const ChoresManagerScript := preload("res://Scripts/Managers/ChoresManager.gd")
 const ChoreUIScript := preload("res://Scripts/UI/chore_ui.gd")
 const MomCharacterScript := preload("res://Scripts/UI/mom_character.gd")
 const MomLogicHandlerScript := preload("res://Scripts/Core/mom_logic_handler.gd")
+const ChallengeCelebrationScript := preload("res://Scripts/Effects/challenge_celebration.gd")
 const RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF := preload("res://Scripts/Consumable/RandomPowerUpUncommonConsumable.tres")
 const GREEN_ENVY_CONSUMABLE_DEF := preload("res://Scripts/Consumable/GreenEnvyConsumable.tres")
 const POOR_HOUSE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/PoorHouseConsumable.tres")
@@ -108,6 +109,9 @@ const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable
 # Mom dialog popup (instantiated when needed)
 var _mom_dialog = null
 var _grounded_debuffs: Array[String] = []  # Debuffs from NC-17 that persist until round end
+
+# Challenge celebration effect manager
+var _challenge_celebration = null
 
 const STARTING_POWER_UP_IDS := ["extra_dice", "extra_rolls"]
 
@@ -215,13 +219,13 @@ func _ready() -> void:
 		# Handle end of game (Turn 13 reached)
 		turn_tracker.game_over.connect(_on_game_over)
 	
-	# Initialize ChoresManager and ChoreUI
+	# Initialize ChoresManager and ChoreUI (now embedded in CorkboardUI)
 	if chores_manager:
 		chores_manager.mom_triggered.connect(_on_mom_triggered)
 		print("[GameController] Connected to ChoresManager.mom_triggered")
-	if chore_ui and chores_manager:
-		chore_ui.set_chores_manager(chores_manager)
-		print("[GameController] Connected ChoreUI to ChoresManager")
+	if corkboard_ui and chores_manager:
+		corkboard_ui.set_chores_manager(chores_manager)
+		print("[GameController] Connected CorkboardUI.ChoreUI to ChoresManager")
 
 	# Initialize SynergyManager
 	if synergy_manager:
@@ -1806,8 +1810,8 @@ func activate_challenge(id: String) -> void:
 
 ## _on_challenge_completed(id)
 ##
-# Handles the successful completion of a challenge: awards any rewards, animates UI removal,
-# and frees the challenge instance.
+## Handles the successful completion of a challenge: awards any rewards,
+## triggers celebration animation, animates UI removal, and frees the challenge instance.
 func _on_challenge_completed(id: String) -> void:
 	print("[GameController] Challenge completed:", id)
 
@@ -1816,6 +1820,9 @@ func _on_challenge_completed(id: String) -> void:
 	if def and def.reward_money > 0:
 		print("[GameController] Granting reward:", def.reward_money)
 		PlayerEconomy.add_money(def.reward_money)
+
+	# Trigger celebration fireworks
+	_trigger_challenge_celebration()
 
 	# Animate challenge completion before removing
 	# Try CorkboardUI first, fall back to old ChallengeUI
@@ -1848,6 +1855,32 @@ func _on_challenge_completed(id: String) -> void:
 
 	# Show notification
 	# NotificationSystem.show_notification("Challenge Completed: " + def.display_name)
+
+
+## _trigger_challenge_celebration()
+##
+## Triggers firework particle effects at the challenge spine location.
+func _trigger_challenge_celebration() -> void:
+	# Create celebration manager if needed
+	if _challenge_celebration == null:
+		_challenge_celebration = ChallengeCelebrationScript.new()
+		add_child(_challenge_celebration)
+	
+	# Get position from CorkboardUI challenge spine
+	var celebration_position := Vector2(150, 100)  # Default fallback position
+	if corkboard_ui and corkboard_ui.has_method("get_challenge_spine_position"):
+		celebration_position = corkboard_ui.get_challenge_spine_position()
+	elif corkboard_ui:
+		# Try to find the challenge spine directly
+		var challenge_spine = corkboard_ui.get_node_or_null("Panel/ChallengeSpine")
+		if challenge_spine:
+			celebration_position = challenge_spine.global_position + Vector2(60, 60)
+		else:
+			# Use CorkboardUI position with offset
+			celebration_position = corkboard_ui.global_position + Vector2(80, 80)
+	
+	print("[GameController] Triggering challenge celebration at: %s" % str(celebration_position))
+	_challenge_celebration.trigger_celebration(celebration_position, get_tree().current_scene)
 
 
 ## _on_challenge_failed(id)
@@ -2097,11 +2130,22 @@ func _on_round_started(round_number: int) -> void:
 	_clear_grounded_debuffs()
 	
 	# Activate this round's challenge
+	print("[GameController] Checking for challenge activation...")
+	print("[GameController] round_manager:", round_manager)
 	if round_manager:
 		var round_data = round_manager.get_current_round_data()
-		if not round_data.challenge_id.is_empty():
+		print("[GameController] round_data:", round_data)
+		print("[GameController] round_data has challenge_id:", round_data.has("challenge_id"))
+		if round_data.has("challenge_id"):
+			print("[GameController] challenge_id value:", round_data.challenge_id)
+			print("[GameController] challenge_id is_empty:", round_data.challenge_id.is_empty())
+		if round_data.has("challenge_id") and not round_data.challenge_id.is_empty():
 			activate_challenge(round_data.challenge_id)
 			print("[GameController] Activated challenge:", round_data.challenge_id)
+		else:
+			push_warning("[GameController] No challenge_id in round_data!")
+	else:
+		push_error("[GameController] round_manager is null!")
 	
 	# Reset shop for new round
 	if shop_ui:
@@ -2212,14 +2256,91 @@ func get_active_power_up(id: String) -> PowerUp:
 ##
 ## Handler for when chores progress reaches 100 and Mom appears.
 ## Checks for R and NC-17 rated PowerUps and applies consequences.
+## Also checks if player completed any chores (0 = $100 fine or debuff).
+## Mom's mood affects rewards (mood 1) or enhanced punishments (mood 10).
 func _on_mom_triggered() -> void:
 	print("[GameController] Mom triggered!")
 	
-	# Perform the Mom check
-	var result = MomLogicHandlerScript.trigger_mom_check(self)
+	# Get chores completed count and Mom's mood from ChoresManager
+	var chores_completed_count = 0
+	var mom_mood = 5  # Default neutral
+	if chores_manager:
+		chores_completed_count = chores_manager.tasks_completed
+		mom_mood = chores_manager.mom_mood
+		print("[GameController] Chores completed this cycle: %d" % chores_completed_count)
+		print("[GameController] Mom's mood: %d/10" % mom_mood)
+	
+	# Check for special mood-based rewards/punishments
+	if mom_mood == 1:
+		# Mom is very happy - grant rewards!
+		print("[GameController] Mom is VERY HAPPY! Granting rewards!")
+		_grant_mom_reward()
+	elif mom_mood >= 10:
+		# Mom is furious - enhanced punishments
+		print("[GameController] Mom is FURIOUS! Enhanced punishments!")
+		_apply_enhanced_mom_punishment()
+	
+	# Perform the standard Mom check with chores info and active debuffs
+	var result = MomLogicHandlerScript.trigger_mom_check(self, chores_completed_count, active_debuffs)
 	
 	# Show Mom dialog
 	_show_mom_dialog(result)
+
+
+## _grant_mom_reward()
+##
+## Grants a random reward when Mom's mood reaches 1 (very happy).
+## Possible rewards: money ($50-150), consumable, or power-up.
+func _grant_mom_reward() -> void:
+	var reward_type = randi() % 3
+	match reward_type:
+		0:
+			# Grant money (allowance)
+			var amount = randi_range(50, 150)
+			PlayerEconomy.add_money(amount)
+			print("[GameController] Mom gave allowance: $%d" % amount)
+		1:
+			# Grant random consumable
+			var consumable_ids = ["random_power_up_uncommon", "green_envy", "the_rarities"]
+			var random_id = consumable_ids[randi() % consumable_ids.size()]
+			grant_consumable(random_id)
+			print("[GameController] Mom gave consumable: %s" % random_id)
+		2:
+			# Grant random power-up (from a safe list)
+			var powerup_ids = ["extra_rolls", "bonus_money", "full_house_bonus"]
+			var random_id = powerup_ids[randi() % powerup_ids.size()]
+			if not active_power_ups.has(random_id):
+				grant_power_up(random_id)
+				print("[GameController] Mom gave power-up: %s" % random_id)
+			else:
+				# Fallback to money if already have the power-up
+				var amount = randi_range(75, 125)
+				PlayerEconomy.add_money(amount)
+				print("[GameController] Mom gave allowance instead: $%d" % amount)
+
+
+## _apply_enhanced_mom_punishment()
+##
+## Applies enhanced punishment when Mom's mood reaches 10 (furious).
+## Multiple debuffs and higher fines.
+func _apply_enhanced_mom_punishment() -> void:
+	# Apply 2-3 random debuffs
+	var debuff_ids = ["lock_dice", "costly_roll", "disabled_twos", "the_division"]
+	var num_debuffs = randi_range(2, 3)
+	var applied_debuffs: Array[String] = []
+	
+	for i in range(num_debuffs):
+		var random_id = debuff_ids[randi() % debuff_ids.size()]
+		if random_id not in applied_debuffs and not active_debuffs.has(random_id):
+			apply_debuff(random_id)
+			applied_debuffs.append(random_id)
+			_grounded_debuffs.append(random_id)
+			print("[GameController] Mom applied debuff: %s" % random_id)
+	
+	# Higher fine ($200-300)
+	var fine = randi_range(200, 300)
+	PlayerEconomy.subtract_money(fine)
+	print("[GameController] Mom imposed fine: $%d" % fine)
 
 ## _show_mom_dialog(result)
 ##

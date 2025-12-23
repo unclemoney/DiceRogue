@@ -27,10 +27,15 @@ var scorecard: Scorecard
 var is_shop_open: bool = true
 var first_roll_done: bool = false
 
-## Pulse animation state
+## Pulse animation state - Roll button
 var _roll_button_pulse_tween: Tween = null
 var _is_pulsing: bool = false
 var _original_roll_button_modulate: Color = Color.WHITE
+
+## Pulse animation state - Shop button
+var _shop_button_pulse_tween: Tween = null
+var _is_shop_pulsing: bool = false
+var _original_shop_button_modulate: Color = Color.WHITE
 
 
 func _ready():
@@ -61,6 +66,7 @@ func _ready():
 	# Shop button is already connected in the scene file, so just configure it
 	if shop_button:
 		shop_button.disabled = false  # Enabled at the very beginning
+		_original_shop_button_modulate = shop_button.modulate
 		print("Shop button status: ", shop_button.disabled)
 	
 	if next_round_button:
@@ -75,9 +81,10 @@ func _ready():
 	
 	if challenge_manager:
 		challenge_manager.challenge_completed.connect(_on_challenge_completed)
-		print("[GameButtonUI] Connected to challenge_completed signal")
+		print("[GameButtonUI] Connected to challenge_manager.challenge_completed signal")
+		print("[GameButtonUI] challenge_manager instance:", challenge_manager)
 	else:
-		push_error("GameButtonUI: challenge_manager reference is null")
+		push_error("[GameButtonUI] challenge_manager reference is null - CANNOT CONNECT SIGNALS")
 
 	# Disable gameplay buttons initially
 	roll_button.disabled = true
@@ -158,6 +165,84 @@ func _animate_roll_button_pulse() -> void:
 		.set_trans(Tween.TRANS_SINE)\
 		.set_ease(Tween.EASE_IN_OUT)
 	_roll_button_pulse_tween.parallel().tween_property(roll_button, "scale", normal_scale, 0.5)\
+		.set_trans(Tween.TRANS_SINE)\
+		.set_ease(Tween.EASE_IN_OUT)
+
+
+## _start_shop_button_pulse()
+##
+## Starts the pulsing glow animation on the Shop button.
+## Used when the shop becomes available between rounds.
+func _start_shop_button_pulse() -> void:
+	if _is_shop_pulsing or not shop_button:
+		return
+	
+	if shop_button.disabled:
+		return
+	
+	_is_shop_pulsing = true
+	print("[GameButtonUI] Starting Shop button pulse animation")
+	_animate_shop_button_pulse()
+
+
+## _stop_shop_button_pulse()
+##
+## Stops the pulsing animation and resets the Shop button to normal.
+func _stop_shop_button_pulse() -> void:
+	if not _is_shop_pulsing:
+		return
+	
+	_is_shop_pulsing = false
+	
+	if _shop_button_pulse_tween:
+		_shop_button_pulse_tween.kill()
+		_shop_button_pulse_tween = null
+	
+	# Reset to original state
+	if shop_button:
+		shop_button.modulate = _original_shop_button_modulate
+		shop_button.scale = Vector2.ONE
+	
+	print("[GameButtonUI] Stopped Shop button pulse animation")
+
+
+## _animate_shop_button_pulse()
+##
+## Creates and runs the looping pulse animation on the Shop button.
+func _animate_shop_button_pulse() -> void:
+	if not _is_shop_pulsing or not shop_button:
+		return
+	
+	if _shop_button_pulse_tween:
+		_shop_button_pulse_tween.kill()
+	
+	_shop_button_pulse_tween = create_tween()
+	_shop_button_pulse_tween.set_loops()
+	
+	# Pulse color: subtle golden glow (same as roll button)
+	var pulse_color = Color(1.3, 1.2, 0.9, 1.0)
+	var normal_color = _original_shop_button_modulate
+	
+	# Pulse scale
+	var pulse_scale = Vector2(1.05, 1.05)
+	var normal_scale = Vector2.ONE
+	
+	# Set pivot to center for scaling
+	shop_button.pivot_offset = shop_button.size / 2.0
+	
+	# Glow up
+	_shop_button_pulse_tween.tween_property(shop_button, "modulate", pulse_color, 0.5)\
+		.set_trans(Tween.TRANS_SINE)\
+		.set_ease(Tween.EASE_IN_OUT)
+	_shop_button_pulse_tween.parallel().tween_property(shop_button, "scale", pulse_scale, 0.5)\
+		.set_trans(Tween.TRANS_SINE)\
+		.set_ease(Tween.EASE_IN_OUT)
+	
+	# Glow down
+	_shop_button_pulse_tween.tween_property(shop_button, "modulate", normal_color, 0.5)\
+		.set_trans(Tween.TRANS_SINE)\
+		.set_ease(Tween.EASE_IN_OUT)
+	_shop_button_pulse_tween.parallel().tween_property(shop_button, "scale", normal_scale, 0.5)\
 		.set_trans(Tween.TRANS_SINE)\
 		.set_ease(Tween.EASE_IN_OUT)
 
@@ -262,6 +347,8 @@ func _hand_scored_disable() -> void:
 
 func _on_shop_button_pressed() -> void:
 	print("[GameButtonUI] Shop button pressed")
+	# Stop the pulse animation when shop button is pressed
+	_stop_shop_button_pulse()
 	is_shop_open = !is_shop_open  # Toggle shop state
 	emit_signal("shop_button_pressed")
 	print("[GameButtonUI] Signal emitted")
@@ -269,13 +356,16 @@ func _on_shop_button_pressed() -> void:
 	roll_button.disabled = true  # Disable roll while in shop
 
 func _on_round_started(_round_number: int) -> void:
+	print("[GameButtonUI] === ROUND STARTED ===")
 	print("[GameButtonUI] Round", _round_number, "started")
 	
 	if next_round_button:
 		next_round_button.disabled = true
+		print("[GameButtonUI] NextRound button DISABLED on round start")
 	
 	if shop_button:
 		print("[GameButtonUI] Round started - disabling shop button")
+		_stop_shop_button_pulse()  # Stop pulse when shop disabled
 		shop_button.disabled = true  # Disable shop at the start of each round
 	
 	# Enable gameplay buttons when round starts
@@ -300,28 +390,35 @@ func _on_round_started(_round_number: int) -> void:
 func _on_round_completed(_round_number: int) -> void:
 	if shop_button:
 		shop_button.disabled = false  # Enable shop after round is completed
+		_start_shop_button_pulse()  # Start pulse to attract attention
 	
 	if _round_number == 0:  # Initial game state - don't enable next round button yet
 		if next_round_button:
 			next_round_button.disabled = false
 
 func _on_challenge_completed(challenge_id: String) -> void:
-	print("[GameButtonUI] Challenge completed:", challenge_id)
+	print("[GameButtonUI] === CHALLENGE COMPLETED ===")
+	print("[GameButtonUI] _on_challenge_completed received:", challenge_id)
 	print("[GameButtonUI] round_manager:", round_manager)
-	print("[GameButtonUI] round_manager.current_challenge_id:", round_manager.current_challenge_id)
+	if round_manager:
+		print("[GameButtonUI] round_manager.current_challenge_id:", round_manager.current_challenge_id)
 	
 	if round_manager and challenge_id != "":
 		if round_manager.current_challenge_id == challenge_id or round_manager.current_challenge_id == "":
-			print("[GameButtonUI] Enabling Next Round button")
+			print("[GameButtonUI] Challenge ID match! Enabling Next Round button")
 			if next_round_button:
 				next_round_button.disabled = false
+				print("[GameButtonUI] Next Round button enabled: disabled=", next_round_button.disabled)
 			if shop_button:
 				shop_button.disabled = false  # Enable shop when challenge is completed
+				_start_shop_button_pulse()  # Start pulse to attract attention
 		else:
 			print("[GameButtonUI] Challenge ID mismatch:", challenge_id, "vs", round_manager.current_challenge_id)
 
 func _on_next_round_button_pressed() -> void:
 	print("[GameButtonUI] Next Round button pressed")
+	if round_manager:
+		print("[GameButtonUI] Current round:", round_manager.get_current_round_number(), "first_roll_done:", first_roll_done)
 	
 	# Cancel any pending animations before clearing dice
 	if scoring_animation_controller:
@@ -346,6 +443,7 @@ func _on_next_round_button_pressed() -> void:
 			round_manager.start_round(1)
 		else:
 			# Normal round advancement
+			print("[GameButtonUI] Advancing from round", current_round, "to round", current_round + 1)
 			round_manager.complete_round()
 			round_manager.start_round(current_round + 1)
 		

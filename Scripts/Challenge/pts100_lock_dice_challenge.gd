@@ -97,7 +97,7 @@ func _on_game_completed() -> void:
 		emit_signal("challenge_failed")
 	end()
 
-func set_target_score_from_resource(resource: ChallengeData, round_number: int) -> void:
+func set_target_score_from_resource(resource: ChallengeData, _round_number: int) -> void:
 	if resource:
-		_target_score = resource.target_score * round_number
+		_target_score = resource.target_score
 		print("[Pts100LockDiceChallenge] Target score set from resource:", _target_score)

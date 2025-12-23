@@ -39,6 +39,7 @@ func get_def(id: String) -> ChallengeData:
 	return _defs_by_id[id]
 
 func spawn_challenge(id: String, parent: Node) -> Challenge:
+	print("[ChallengeManager] spawn_challenge called for id:", id)
 	var def = get_def(id)
 	if def == null or def.scene == null:
 		push_error("ChallengeManager: Invalid challenge def/scene for '%s'" % id)
@@ -54,14 +55,18 @@ func spawn_challenge(id: String, parent: Node) -> Challenge:
 	challenge.id = id
 	
 	# Connect signals for tracking
+	print("[ChallengeManager] Connecting challenge_completed signal for:", id)
 	challenge.connect("challenge_completed", _on_challenge_completed.bind(id))
 	challenge.connect("challenge_failed", _on_challenge_failed.bind(id))
+	print("[ChallengeManager] Signal connections established for:", id)
 	
 	return challenge
 
 func _on_challenge_completed(id: String) -> void:
-	print("ChallengeManager: Challenge completed:", id)
+	print("[ChallengeManager] _on_challenge_completed received for:", id)
+	print("[ChallengeManager] Emitting challenge_completed signal to all listeners...")
 	emit_signal("challenge_completed", id)
+	print("[ChallengeManager] Signal emitted!")
 
 func _on_challenge_failed(id: String) -> void:
 	print("ChallengeManager: Challenge failed:", id)

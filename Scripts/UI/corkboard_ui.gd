@@ -14,6 +14,7 @@ signal max_consumables_reached
 
 # Export paths for manager references
 @export var round_manager_path: NodePath
+@export var chore_ui_path: NodePath = ^"Panel/ChoreUI"
 
 # Scene references
 @export var challenge_spine_scene: PackedScene
@@ -26,6 +27,7 @@ signal max_consumables_reached
 # Node references
 @onready var panel: Panel = $Panel
 @onready var round_manager: RoundManager = get_node_or_null(round_manager_path)
+@onready var chore_ui = get_node_or_null(chore_ui_path)
 
 # Challenge system data
 var _challenge_data := {}  # challenge_id -> ChallengeData
@@ -214,19 +216,36 @@ func _update_challenge_spine_display() -> void:
 	# Get current active challenge goal for display
 	var goal_text := "No Challenges"
 	var points_goal := 0
+	var reward_text := ""
+	var current_progress := 0
 	if _challenge_data.size() > 0:
 		var first_key = _challenge_data.keys()[0]
 		var data: ChallengeData = _challenge_data[first_key]
 		if data:
 			goal_text = data.display_name
 			points_goal = data.target_score
+			if data.reward_money > 0:
+				reward_text = "$%d" % data.reward_money
+			# Get current progress from challenge instance
+			if _challenge_instances.has(first_key):
+				var challenge_instance = _challenge_instances[first_key]
+				if challenge_instance and challenge_instance.has_method("get_current_score"):
+					current_progress = challenge_instance.get_current_score()
 	
 	if _challenge_spine.has_method("set_goal_text"):
-		_challenge_spine.set_goal_text(goal_text)
+		_challenge_spine.set_goal_text(goal_text) #
 	
 	# Update points goal display
 	if _challenge_spine.has_method("set_points_goal"):
 		_challenge_spine.set_points_goal(points_goal)
+	
+	# Update reward text for tooltip
+	if _challenge_spine.has_method("set_reward_text"):
+		_challenge_spine.set_reward_text(reward_text)
+	
+	# Update current progress for tooltip
+	if _challenge_spine.has_method("set_current_progress"):
+		_challenge_spine.set_current_progress(current_progress)
 
 
 func add_challenge(data: ChallengeData, challenge: Challenge) -> Node:
@@ -264,6 +283,19 @@ func remove_challenge(id: String) -> void:
 	
 	_update_challenge_spine_display()
 	print("[CorkboardUI] Removed challenge:", id)
+
+
+## get_challenge_spine_position()
+##
+## Returns the global center position of the challenge spine for celebration effects.
+##
+## Returns: Vector2 - the center position of the challenge spine
+func get_challenge_spine_position() -> Vector2:
+	if _challenge_spine and is_instance_valid(_challenge_spine):
+		var spine_center = _challenge_spine.global_position + (_challenge_spine.size / 2.0)
+		return spine_center
+	# Fallback to default position if spine doesn't exist
+	return global_position + _challenge_spine_pos + Vector2(60, 60)
 
 
 func animate_challenge_removal(id: String, callback: Callable = Callable()) -> void:
@@ -402,7 +434,7 @@ func _create_challenge_post_it(title: String, value: String, challenge_id: Strin
 	var title_label = Label.new()
 	title_label.text = title
 	title_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	title_label.position = Vector2(-50, 15)
+	title_label.position = Vector2(-50, 25)
 	title_label.size = Vector2(100, 20)
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.add_theme_font_size_override("font_size", 12)
@@ -414,7 +446,7 @@ func _create_challenge_post_it(title: String, value: String, challenge_id: Strin
 	var value_label = Label.new()
 	value_label.text = value
 	value_label.set_anchors_preset(Control.PRESET_CENTER)
-	value_label.position = Vector2(-55, 5)
+	value_label.position = Vector2(-55, -15)
 	value_label.size = Vector2(110, 60)
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -1108,4 +1140,25 @@ func get_challenge_count() -> int:
 
 func get_debuff_count() -> int:
 	return _debuff_data.size()
+
+
+## set_chores_manager()
+##
+## Passes the ChoresManager to the embedded ChoreUI.
+##
+## Parameters:
+##   manager: ChoresManager - the ChoresManager instance
+func set_chores_manager(manager) -> void:
+	if chore_ui and chore_ui.has_method("set_chores_manager"):
+		chore_ui.set_chores_manager(manager)
+		print("[CorkboardUI] Connected ChoreUI to ChoresManager")
+
+
+## get_chore_ui()
+##
+## Returns the embedded ChoreUI for external access.
+##
+## Returns: ChoreUI or null
+func get_chore_ui():
+	return chore_ui
 #endregion

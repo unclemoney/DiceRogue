@@ -68,7 +68,7 @@ func _on_score_changed(total_score: int) -> void:
 		emit_signal("challenge_completed")
 		end()
 
-func set_target_score_from_resource(resource: ChallengeData, round_number: int) -> void:
+func set_target_score_from_resource(resource: ChallengeData, _round_number: int) -> void:
 	if resource:
-		_target_score = resource.target_score * round_number 
+		_target_score = resource.target_score
 		print("[CostlyRollChallenge] Target score set from resource:", _target_score)

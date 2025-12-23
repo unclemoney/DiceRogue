@@ -102,7 +102,7 @@ func _initialize_rounds_data() -> void:
 					if not challenge_data.dice_type.is_empty():
 						dice_type = challenge_data.dice_type
 						print("[RoundManager] Round", round_number, "using dice type from challenge:", dice_type)
-					target_score = challenge_data.target_score * round_number 
+					target_score = challenge_data.target_score
 					print("[RoundManager] Round", round_number, "target score set to:", target_score)
 				elif round_index < dice_configs.size():
 					# Fall back to dice_configs if no challenge-specific dice type
@@ -163,6 +163,7 @@ func start_game() -> void:
 ## trackers, configures dice and scorecard, and emits `round_started` so the
 ## rest of the system can activate the challenge.
 func start_round(round_number: int) -> void:
+	print("[RoundManager] Starting round", round_number)
 	if round_number < 1 or round_number > max_rounds:
 		push_error("[RoundManager] Invalid round number:", round_number)
 		return
@@ -213,7 +214,7 @@ func start_round(round_number: int) -> void:
 ## `all_rounds_completed` if it was the final round.
 func complete_round() -> void:
 	var round_number = current_round + 1  # Convert to 1-based
-	print("[RoundManager] Completing Round", round_number)
+	print("[RoundManager] Completing Round", round_number, "(current_round index:", current_round, ")")
 
 	# Mark current round as completed
 	if current_round < rounds_data.size():
@@ -254,6 +255,7 @@ func get_current_round_number() -> int:
 func get_current_round_data() -> Dictionary:
 	if current_round >= 0 and current_round < rounds_data.size():
 		return rounds_data[current_round]
+	push_warning("[RoundManager] current_round out of bounds, returning empty dict")
 	return {}
 
 ## can_proceed_to_next_round()
@@ -267,11 +269,13 @@ func can_proceed_to_next_round() -> bool:
 ## Signal handler: marks the round as challenge-completed if the ID matches the
 ## current challenge. Sets `is_challenge_completed` to true so the UI can progress.
 func _on_challenge_completed(challenge_id: String) -> void:
+	print("[RoundManager] _on_challenge_completed received:", challenge_id)
+	print("[RoundManager] current_challenge_id is:", current_challenge_id)
 	if challenge_id == current_challenge_id:
-		print("[RoundManager] Current challenge completed:", challenge_id)
+		print("[RoundManager] ✓ Current challenge completed - setting is_challenge_completed = true")
 		is_challenge_completed = true
 	else:
-		print("[RoundManager] Different challenge completed:", challenge_id)
+		print("[RoundManager] ✗ Challenge ID mismatch - expected:", current_challenge_id, "got:", challenge_id)
 
 ## _on_challenge_failed(challenge_id)
 ##

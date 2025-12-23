@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://crkb0ardui001"]
+[gd_scene load_steps=4 format=3 uid="uid://crkb0ardui001"]
 
 [ext_resource type="Script" path="res://Scripts/UI/corkboard_ui.gd" id="1_script"]
 [ext_resource type="Theme" uid="uid://d3mvbcxwrjyk2" path="res://Resources/UI/cork_board_theme.tres" id="2_theme"]
+[ext_resource type="PackedScene" uid="uid://bbafg0xpunx5e" path="res://Scenes/UI/chore_ui.tscn" id="3_chore_ui"]
 
 [node name="CorkboardUI" type="Control"]
 layout_mode = 3
@@ -20,3 +21,10 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 theme = ExtResource("2_theme")
+
+[node name="ChoreUI" parent="Panel" instance=ExtResource("3_chore_ui")]
+layout_mode = 1
+offset_left = 260.0
+offset_top = 170.0
+offset_right = 400.0
+offset_bottom = 270.0
