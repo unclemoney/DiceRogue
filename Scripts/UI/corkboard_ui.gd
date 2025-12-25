@@ -24,6 +24,9 @@ signal max_consumables_reached
 @export var consumable_spine_scene: PackedScene
 @export var consumable_icon_scene: PackedScene
 
+# Node references for labels
+@onready var spine_label: Label
+
 # Node references
 @onready var panel: Panel = $Panel
 @onready var round_manager: RoundManager = get_node_or_null(round_manager_path)
@@ -96,6 +99,7 @@ func _ready() -> void:
 	# Create the spines on the cork board
 	_create_challenge_spine()
 	_create_debuff_spine()
+	_create_consumable_label()
 	
 	# Connect to round manager for dice label updates
 	if round_manager:
@@ -232,8 +236,12 @@ func _update_challenge_spine_display() -> void:
 				if challenge_instance and challenge_instance.has_method("get_current_score"):
 					current_progress = challenge_instance.get_current_score()
 	
+	# Update reward text at the top of the spine (title-style label)
+	if _challenge_spine.has_method("set_reward_label"):
+		_challenge_spine.set_reward_label(reward_text)
+	
 	if _challenge_spine.has_method("set_goal_text"):
-		_challenge_spine.set_goal_text(goal_text) #
+		_challenge_spine.set_goal_text(goal_text)
 	
 	# Update points goal display
 	if _challenge_spine.has_method("set_points_goal"):
@@ -917,6 +925,23 @@ func update_consumable_count(consumable_id: String, count: int) -> void:
 		var spine = _consumable_spines[consumable_id]
 		if is_instance_valid(spine) and spine.has_method("set_count"):
 			spine.set_count(count)
+
+func _create_consumable_label() -> void:
+	# Create title label
+	spine_label = Label.new()
+	spine_label.name = "SpineLabel"
+	spine_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	spine_label.position = Vector2(70, 5)
+	spine_label.size = Vector2(80, 20)
+	spine_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	spine_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	spine_label.add_theme_font_size_override("font_size", 18)
+	spine_label.add_theme_color_override("font_color", Color(0.0, 0.0, 0.0, 1))
+	spine_label.add_theme_font_override("font", load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf"))
+	spine_label.text = "COUPONS"
+	spine_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	spine_label.visible = true
+	add_child(spine_label)
 #endregion
 
 

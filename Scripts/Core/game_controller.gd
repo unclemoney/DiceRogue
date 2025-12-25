@@ -2286,6 +2286,15 @@ func _on_max_power_ups_reached() -> void:
 func _on_round_started(round_number: int) -> void:
 	print("[GameController] Round", round_number, "started")
 	
+	# Update round-based scaling for scorecard and chores manager
+	if scorecard:
+		scorecard.update_round(round_number)
+		print("[GameController] Scorecard round updated to", round_number)
+	
+	if chores_manager:
+		chores_manager.update_round(round_number)
+		print("[GameController] Chores manager round updated to", round_number)
+	
 	# Enable CRT for active gameplay
 	if crt_manager:
 		crt_manager.enable_crt()
@@ -2294,6 +2303,8 @@ func _on_round_started(round_number: int) -> void:
 	if score_card_ui:
 		score_card_ui.turn_scored = false
 		score_card_ui.enable_all_score_buttons()
+		# Refresh UI to show updated scaling values
+		score_card_ui.update_all()
 		print("[GameController] Scorecard unlocked for new round")
 	
 	update_three_more_rolls_usability()

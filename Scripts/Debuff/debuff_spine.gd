@@ -63,13 +63,13 @@ func _create_spine_structure() -> void:
 	title_label = Label.new()
 	title_label.name = "TitleLabel"
 	title_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	title_label.position = Vector2(-40, 15)
+	title_label.position = Vector2(-40, 0)
 	title_label.size = Vector2(80, 20)
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	title_label.add_theme_font_size_override("font_size", 10)
-	title_label.add_theme_color_override("font_color", Color(0.2, 0.2, 0.2, 1))
-	title_label.text = "DEBUFFS"
+	title_label.add_theme_font_size_override("font_size", 18)
+	title_label.add_theme_color_override("font_color", Color(0.0, 0.0, 0.0, 1))
+	title_label.text = "GROUNDED"
 	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(title_label)
 	
@@ -82,7 +82,7 @@ func _create_spine_structure() -> void:
 	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	count_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	count_label.add_theme_font_size_override("font_size", 24)
-	count_label.add_theme_color_override("font_color", Color(0.6, 0.2, 0.2, 1))
+	count_label.add_theme_color_override("font_color", Color(0.0, 0.0, 0.0, 1))
 	count_label.text = "0"
 	count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(count_label)

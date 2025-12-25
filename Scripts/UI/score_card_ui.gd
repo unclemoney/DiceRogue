@@ -21,6 +21,7 @@ signal manual_score
 @onready var best_hand_label: RichTextLabel = $BestHandPanel/MarginContainer/VBoxContainer/BestHandScore
 @onready var upper_total_label: Label = $HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal/UppersubButton
 @onready var upper_bonus_label: Label = $HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus/UpperBonusLabel
+@onready var upper_bonus_button: Button = $HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus/UpperBonus
 @onready var upper_final_total_label: Label = $HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperTotal/UpperTotalLabel
 @onready var lower_total_label: Label = $HBoxContainer/LowerVBoxContainer/LowerGridContainer/LowerTotal/LowerTotalLabel
 @onready var total_score_label: RichTextLabel = $TotalScorePanel/MarginContainer/RichTextTotalScore
@@ -175,16 +176,26 @@ func update_all():
 	else:
 		push_error("upper_total_label not found!")
 		
-	# Show progress towards bonus
+	# Show progress towards bonus using scaled threshold
 	if upper_bonus_label:
-		if scorecard.is_upper_section_complete():
-			if upper_subtotal >= Scorecard.UPPER_BONUS_THRESHOLD:
-				upper_bonus_label.text = str(int(Scorecard.UPPER_BONUS_AMOUNT))
-			else:
-				upper_bonus_label.text = "0"
+		var scaled_threshold = scorecard.get_scaled_upper_bonus_threshold()
+		var scaled_amount = scorecard.get_scaled_upper_bonus_amount()
+		
+		# Update the bonus button text to show threshold
+		if upper_bonus_button:
+			upper_bonus_button.text = "Bonus" #"Bonus(%d):" % scaled_threshold
+		
+		if scorecard.upper_bonus_awarded:
+			# Bonus already earned - show the bonus amount
+			upper_bonus_label.text = "+%d" % int(scaled_amount)
+		elif upper_subtotal >= scaled_threshold:
+			# Threshold met but bonus not yet processed - show bonus amount
+			upper_bonus_label.text = "+%d" % int(scaled_amount)
 		else:
-			var remaining = Scorecard.UPPER_BONUS_THRESHOLD - upper_subtotal
-			upper_bonus_label.text = str(int(remaining)) #need remaining points, remove this later
+			# Show remaining points needed to reach threshold
+			var remaining = scaled_threshold - upper_subtotal
+			upper_bonus_label.text = str(int(remaining))
+
 	else:
 		push_error("upper_bonus_label not found!")
 	

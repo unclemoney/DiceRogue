@@ -21,6 +21,10 @@ var upper_bonus_awarded := false  # Track if bonus has been awarded
 var yahtzee_bonuses := 0  # Track number of bonus yahtzees
 var yahtzee_bonus_points := 0  # Track total bonus points
 
+# Round-based scaling for upper section bonus
+# Round 1 uses base values, each subsequent round scales by 10%
+var current_round_number: int = 1
+
 # Debug counter for calculate_score calls
 var calculate_score_call_count := 0
 
@@ -370,8 +374,9 @@ func _complete_auto_scoring(_section: Section, category: String, _original_score
 
 func get_upper_section_final_total() -> int:
 	var subtotal = get_upper_section_total()
-	if is_upper_section_complete() and subtotal >= UPPER_BONUS_THRESHOLD:
-		return subtotal + UPPER_BONUS_AMOUNT
+	# Use scaled threshold and amount based on current round
+	if subtotal >= get_scaled_upper_bonus_threshold():
+		return subtotal + get_scaled_upper_bonus_amount()
 	return subtotal
 
 func is_upper_section_complete() -> bool:
@@ -390,26 +395,69 @@ func check_lower_section() -> void:
 	if is_lower_section_complete():
 		emit_signal("lower_section_completed")
 
+
+## get_scaled_upper_bonus_threshold()
+##
+## Returns the upper bonus threshold scaled by round number.
+## Round 1 uses base value (63), each subsequent round scales by 10%.
+## Uses ceil() to ensure whole numbers and slightly harder progression.
+##
+## Returns: int - scaled threshold
+func get_scaled_upper_bonus_threshold() -> int:
+	# Round 1 = base value, Round 2+ = 10% increase per round
+	var scale_factor = pow(1.1, max(0, current_round_number - 1))
+	return int(ceil(UPPER_BONUS_THRESHOLD * scale_factor))
+
+
+## get_scaled_upper_bonus_amount()
+##
+## Returns the upper bonus amount scaled by round number.
+## Round 1 uses base value (35), each subsequent round scales by 10%.
+## Uses ceil() to ensure whole numbers.
+##
+## Returns: int - scaled bonus amount
+func get_scaled_upper_bonus_amount() -> int:
+	# Round 1 = base value, Round 2+ = 10% increase per round
+	var scale_factor = pow(1.1, max(0, current_round_number - 1))
+	return int(ceil(UPPER_BONUS_AMOUNT * scale_factor))
+
+
+## update_round(round_number)
+##
+## Updates the current round number for scaling calculations.
+## Called by GameController when a new round starts.
+##
+## Parameters:
+##   round_number: int - the current round number (1-based)
+func update_round(round_number: int) -> void:
+	current_round_number = round_number
+	print("[Scorecard] Round updated to %d - Bonus threshold: %d, Bonus amount: %d" % [
+		current_round_number,
+		get_scaled_upper_bonus_threshold(),
+		get_scaled_upper_bonus_amount()
+	])
+
+
 func check_upper_bonus() -> void:
-	if not is_upper_section_complete():
-		return
-	
+	# Check for upper bonus - triggers when threshold is met (not requiring completion)
 	var total = get_upper_section_total()
+	var scaled_threshold = get_scaled_upper_bonus_threshold()
+	var scaled_amount = get_scaled_upper_bonus_amount()
 	
-	if total >= UPPER_BONUS_THRESHOLD and not upper_bonus_awarded:
-		upper_bonus = UPPER_BONUS_AMOUNT  # Store the bonus
+	if total >= scaled_threshold and not upper_bonus_awarded:
+		upper_bonus = scaled_amount  # Store the scaled bonus
 		upper_bonus_awarded = true  # Mark as awarded
-		emit_signal("upper_bonus_achieved", UPPER_BONUS_AMOUNT)
+		emit_signal("upper_bonus_achieved", scaled_amount)
 		RollStats.track_upper_bonus()
 		
 		# Track in Statistics as well
 		if Statistics:
 			Statistics.track_upper_bonus()
-	elif total < UPPER_BONUS_THRESHOLD:
-		upper_bonus = 0
-		upper_bonus_awarded = false  # Reset if somehow total drops below threshold
+		print("[Scorecard] Upper bonus achieved! Threshold: %d, Amount: %d (Round %d)" % [scaled_threshold, scaled_amount, current_round_number])
 	
-	emit_signal("upper_section_completed")
+	# Check if upper section is complete
+	if is_upper_section_complete():
+		emit_signal("upper_section_completed")
 
 func check_bonus_yahtzee(values: Array[int], current_category: String = "") -> void:
 	# Don't award bonus if we're currently scoring the yahtzee category
@@ -497,6 +545,9 @@ func reset_scores() -> void:
 	yahtzee_bonuses = 0
 	yahtzee_bonus_points = 0
 	upper_bonus_awarded = false
+	
+	# Reset round scaling
+	current_round_number = 1
 	
 	# Note: Multipliers are now handled by ScoreModifierManager
 	# PowerUps should manage their own multiplier lifecycle

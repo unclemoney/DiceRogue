@@ -15,6 +15,8 @@ signal spine_unhovered()
 @onready var spine_rect: TextureRect
 @onready var goal_label: Label
 @onready var points_label: Label
+@onready var title_label: Label
+@onready var reward_label: Label
 
 # Text to display
 var _goal_text: String = "No Goal"
@@ -101,6 +103,33 @@ func _create_spine_structure() -> void:
 	points_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(points_label)
 
+	# Create title label
+	title_label = Label.new()
+	title_label.name = "TitleLabel"
+	title_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	title_label.position = Vector2(-40, -15)
+	title_label.size = Vector2(80, 20)
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title_label.add_theme_font_size_override("font_size", 18)
+	title_label.add_theme_color_override("font_color", Color(0.0, 0.0, 0.0, 1))
+	title_label.text = "CHALLENGE"
+	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(title_label)
+	
+	# Create reward label (shows reward at top of post-it, title-style)
+	reward_label = Label.new()
+	reward_label.name = "RewardLabel"
+	reward_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	reward_label.position = Vector2(-50, 60)
+	reward_label.size = Vector2(100, 25)
+	reward_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	reward_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	reward_label.add_theme_font_size_override("font_size", 16)
+	reward_label.add_theme_color_override("font_color", Color(0.1, 0.5, 0.1, 1))  # Green for money
+	reward_label.text = ""
+	reward_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(reward_label)
 
 func _apply_data_to_ui() -> void:
 	# Load POST_IT_NOTE texture
@@ -201,6 +230,15 @@ func set_current_progress(progress: int) -> void:
 ## Sets the reward text for tooltip display.
 func set_reward_text(text: String) -> void:
 	_reward_text = text
+
+
+## set_reward_label(text)
+##
+## Updates the reward label displayed at the bottom of the post-it note.
+func set_reward_label(text: String) -> void:
+	_reward_text = text
+	if reward_label:
+		reward_label.text = text
 
 
 func set_base_position(pos: Vector2) -> void:

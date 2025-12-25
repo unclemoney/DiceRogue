@@ -91,6 +91,8 @@ func _create_spine_structure() -> void:
 	count_label.visible = false  # Hidden by default (only shown when count > 1)
 	add_child(count_label)
 
+
+
 func _apply_data_to_ui() -> void:
 	if not data:
 		return

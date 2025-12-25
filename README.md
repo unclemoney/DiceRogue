@@ -299,6 +299,39 @@ The `ScoreModifierManager` handles all score modifications:
 - **Multipliers**: Percentage modifiers applied after additives
 - **Order**: `(base_score + additives) × multipliers`
 
+### Scaling Difficulty System
+The game features round-based difficulty scaling that increases challenge as players progress:
+
+**Upper Section Bonus Scaling:**
+- **Base Values**: Threshold 63 points, Bonus 35 points
+- **Scaling**: Both threshold and bonus scale up 10% each round (starting round 2)
+- **Trigger**: Bonus now triggers as soon as upper section score meets threshold (no longer requires all categories to be filled)
+- **Example**: Round 1 = 63/35, Round 2 = 70/39, Round 5 = 93/52, Round 10 = 150/84
+
+**Goof-Off Meter Scaling:**
+- **Base Value**: Max progress 100 rolls before Mom triggers
+- **Scaling**: Threshold decreases by 5% each round (starting round 2)
+- **Clamping**: When round changes, if current progress exceeds new threshold, it's clamped to threshold - 1
+- **Example**: Round 1 = 100, Round 2 = 95, Round 5 = 82, Round 10 = 64
+
+**Challenge Reward Display:**
+- Challenge UI now displays reward amount on the post-it note
+- Reward shown in green text at bottom of challenge spine
+
+**UI Updates:**
+- ScoreCard bonus label shows current scaled threshold: "Bonus(70):" instead of static "Bonus:"
+- Chore UI hover tooltip shows progress as "X / Y" with scaled max value
+- Progress bar max_value updates to reflect scaled threshold
+
+**Implementation:**
+- `Scorecard.update_round(n)`: Updates round and recalculates thresholds
+- `Scorecard.get_scaled_upper_bonus_threshold()`: Returns ceil(63 * 1.1^(round-1))
+- `Scorecard.get_scaled_upper_bonus_amount()`: Returns ceil(35 * 1.1^(round-1))
+- `ChoresManager.update_round(n)`: Updates round with progress clamping
+- `ChoresManager.get_scaled_max_progress()`: Returns ceil(100 * 0.95^(round-1))
+
+**Test Scene**: `Tests/ScalingTest.tscn` - Verify scaling calculations and threshold triggers
+
 Power-ups register their bonuses with this manager, which emits signals when totals change.
 
 ### Chores & Mom System

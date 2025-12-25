@@ -35,6 +35,10 @@ var total_rolls_tracked: int = 0  # Track total rolls for chore rotation
 var is_mom_active: bool = false
 var _task_history: Array[String] = []  # Track recent tasks to avoid repetition
 
+# Round-based scaling for goof-off meter
+# Round 1 uses base value (100), each subsequent round scales down by 5%
+var current_round_number: int = 1
+
 # Mom's mood tracking
 var mom_mood: int = DEFAULT_MOOD
 var completed_chores: Array = []  # List of completed ChoreData for display
@@ -56,9 +60,10 @@ func increment_progress(amount: int = PROGRESS_PER_ROLL) -> void:
 	if is_mom_active:
 		return
 	
-	current_progress = mini(current_progress + amount, MAX_PROGRESS)
+	var scaled_max = get_scaled_max_progress()
+	current_progress = mini(current_progress + amount, scaled_max)
 	progress_changed.emit(current_progress)
-	print("[ChoresManager] Progress: %d/%d" % [current_progress, MAX_PROGRESS])
+	print("[ChoresManager] Progress: %d/%d" % [current_progress, scaled_max])
 	
 	# Track total rolls for chore rotation
 	total_rolls_tracked += amount
@@ -66,7 +71,7 @@ func increment_progress(amount: int = PROGRESS_PER_ROLL) -> void:
 		total_rolls_tracked = 0
 		_rotate_current_task()
 	
-	if current_progress >= MAX_PROGRESS:
+	if current_progress >= scaled_max:
 		_trigger_mom()
 
 ## _rotate_current_task()
@@ -174,10 +179,11 @@ func reset_for_new_game() -> void:
 	total_rolls_tracked = 0
 	is_mom_active = false
 	_task_history.clear()
+	current_round_number = 1  # Reset round scaling
 	progress_changed.emit(current_progress)
 	mom_mood_changed.emit(mom_mood)
 	select_new_task()
-	print("[ChoresManager] Reset for new game - mood: %d" % mom_mood)
+	print("[ChoresManager] Reset for new game - mood: %d, round: %d" % [mom_mood, current_round_number])
 
 
 ## check_task_completion()
@@ -236,25 +242,63 @@ func reset_progress() -> void:
 	progress_changed.emit(current_progress)
 	print("[ChoresManager] Progress reset to 0, tasks_completed reset")
 
+
+## get_scaled_max_progress()
+##
+## Returns the max progress threshold scaled by round number.
+## Round 1 uses base value (100), each subsequent round scales down by 5%.
+## Uses ceil() to ensure whole numbers.
+##
+## Returns: int - scaled max progress threshold
+func get_scaled_max_progress() -> int:
+	# Round 1 = base value, Round 2+ = 5% decrease per round
+	var scale_factor = pow(0.95, max(0, current_round_number - 1))
+	return int(ceil(MAX_PROGRESS * scale_factor))
+
+
+## update_round(round_number)
+##
+## Updates the current round number for scaling calculations.
+## Called by GameController when a new round starts.
+## Clamps current_progress if it exceeds or equals the new threshold.
+##
+## Parameters:
+##   round_number: int - the current round number (1-based)
+func update_round(round_number: int) -> void:
+	current_round_number = round_number
+	var new_threshold = get_scaled_max_progress()
+	
+	# Clamp progress if it exceeds or equals the new threshold
+	if current_progress >= new_threshold:
+		current_progress = max(0, new_threshold - 1)
+		progress_changed.emit(current_progress)
+		print("[ChoresManager] Progress clamped to %d (below new threshold %d)" % [current_progress, new_threshold])
+	
+	print("[ChoresManager] Round updated to %d - Max progress threshold: %d" % [current_round_number, new_threshold])
+
+
 ## get_progress_percent()
 ##
 ## Returns the current progress as a percentage (0.0 to 1.0).
+## Uses scaled max progress based on current round.
 ##
 ## Returns: float
 func get_progress_percent() -> float:
-	return float(current_progress) / float(MAX_PROGRESS)
+	return float(current_progress) / float(get_scaled_max_progress())
 
 ## set_progress()
 ##
 ## Sets the progress to a specific value (for debugging).
+## Uses scaled max progress based on current round.
 ##
 ## Parameters:
-##   value: int - the new progress value (clamped to 0-100)
+##   value: int - the new progress value (clamped to 0-scaled_max)
 func set_progress(value: int) -> void:
-	current_progress = clampi(value, 0, MAX_PROGRESS)
+	var scaled_max = get_scaled_max_progress()
+	current_progress = clampi(value, 0, scaled_max)
 	progress_changed.emit(current_progress)
 	
-	if current_progress >= MAX_PROGRESS and not is_mom_active:
+	if current_progress >= scaled_max and not is_mom_active:
 		_trigger_mom()
 
 ## _trigger_mom()

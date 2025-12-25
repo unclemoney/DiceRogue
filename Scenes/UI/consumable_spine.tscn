@@ -6,6 +6,8 @@
 
 [node name="ConsumableSpine" type="Control"]
 custom_minimum_size = Vector2(80, 100)
+layout_mode = 3
+anchors_preset = 0
 mouse_filter = 1
 theme = ExtResource("3_theme")
 script = ExtResource("1_spine")

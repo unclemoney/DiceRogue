@@ -29,7 +29,7 @@ var _fan_center: Vector2
 
 # Visual settings
 const BAR_WIDTH: float = 100.0
-const BAR_HEIGHT: float = 20.0
+const BAR_HEIGHT: float = 40.0
 const DANGER_THRESHOLD: float = 80.0
 const WARNING_THRESHOLD: float = 60.0
 
@@ -106,8 +106,8 @@ func _create_ui_structure() -> void:
 	title_label.name = "TitleLabel"
 	title_label.text = "GOOF-OFF"
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_label.add_theme_font_size_override("font_size", 10)
-	title_label.add_theme_color_override("font_color", Color.WHITE)
+	title_label.add_theme_font_size_override("font_size", 18)
+	title_label.add_theme_color_override("font_color", Color.BLACK)
 	main_container.add_child(title_label)
 	
 	# Subtitle
@@ -115,8 +115,8 @@ func _create_ui_structure() -> void:
 	subtitle_label.name = "SubtitleLabel"
 	subtitle_label.text = "METER"
 	subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle_label.add_theme_font_size_override("font_size", 10)
-	subtitle_label.add_theme_color_override("font_color", Color.WHITE)
+	subtitle_label.add_theme_font_size_override("font_size", 18)
+	subtitle_label.add_theme_color_override("font_color", Color.BLACK)
 	main_container.add_child(subtitle_label)
 	
 	# Spacer
@@ -211,8 +211,12 @@ func _setup_signals() -> void:
 
 func _on_progress_changed(new_value: int) -> void:
 	if progress_bar:
+		# Update max value based on scaled threshold
+		if _chores_manager and _chores_manager.has_method("get_scaled_max_progress"):
+			progress_bar.max_value = _chores_manager.get_scaled_max_progress()
 		progress_bar.value = new_value
 		_update_progress_color(new_value)
+		_update_details_with_progress()
 	print("[ChoreUI] Progress updated: %d" % new_value)
 
 func _on_task_selected(task) -> void:  # ChoreData - duck typed
@@ -226,17 +230,41 @@ func _on_task_selected(task) -> void:  # ChoreData - duck typed
 	if task_label:
 		task_label.text = task.display_name
 	
-	if details_label:
-		details_label.text = "[b]%s[/b]\n%s\n[color=green][/color]" % [
-			task.display_name,
-			task.description
-		]
+	_update_details_with_progress()
 	
 	print("[ChoreUI] Task selected: %s" % task.display_name)
 
 func _on_task_completed(_task) -> void:  # ChoreData - duck typed, unused
 	# Flash effect when task completes
 	_play_completion_flash()
+
+
+## _update_details_with_progress()
+##
+## Updates the details tooltip with current task info and progress.
+## Shows scaled max progress threshold in the tooltip.
+func _update_details_with_progress() -> void:
+	if not details_label or not _chores_manager:
+		return
+	
+	var task = _chores_manager.current_task
+	var current_progress_val = _chores_manager.current_progress
+	var max_progress = 100  # Default
+	
+	# Get scaled max progress if available
+	if _chores_manager.has_method("get_scaled_max_progress"):
+		max_progress = _chores_manager.get_scaled_max_progress()
+	
+	if task:
+		details_label.text = "[b]%s[/b]\n%s\n[color=#888888]Progress:[/color] %d / %d" % [
+			task.display_name,
+			task.description,
+			current_progress_val,
+			max_progress
+		]
+	else:
+		details_label.text = "[color=#888888]Progress:[/color] %d / %d" % [current_progress_val, max_progress]
+
 
 func _update_progress_color(value: int) -> void:
 	var fill_style = progress_bar.get_theme_stylebox("fill") as StyleBoxFlat

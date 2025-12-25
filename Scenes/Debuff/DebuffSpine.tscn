@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://bxtwiavpexeke"]
+[gd_scene load_steps=4 format=3 uid="uid://u27yvn5ryq72"]
 
-[ext_resource type="Script" path="res://Scripts/Debuff/debuff_spine.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://jregw1v4rjv6" path="res://Scripts/Debuff/debuff_spine.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://bl6k27whdfde6" path="res://Resources/Art/Background/LIST_NOTE.png" id="2_texture"]
+[ext_resource type="FontFile" uid="uid://d30iuqvbxs6im" path="res://Resources/Font/VCR_OSD_MONO_1.001.ttf" id="3_no30s"]
 
 [node name="DebuffSpine" type="Control"]
 custom_minimum_size = Vector2(100, 130)
@@ -25,6 +26,7 @@ texture = ExtResource("2_texture")
 stretch_mode = 5
 
 [node name="TitleLabel" type="Label" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -53,7 +55,8 @@ offset_right = 20.0
 offset_bottom = 15.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0.4, 0.4, 0.4, 1)
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("3_no30s")
 theme_override_font_sizes/font_size = 24
 text = "0"
 horizontal_alignment = 1
