@@ -471,6 +471,32 @@ func enable_all_dice() -> void:
 			die.set_lock_shader_enabled(true)
 
 
+## disable_locking_only()
+##
+## Disables lock/unlock input without changing dice states.
+## Dice remain scoreable in ROLLED/LOCKED states. Used by Lock Dice Debuff.
+func disable_locking_only() -> void:
+	print("[DiceHand] Disabling locking only (dice remain scoreable)")
+	for die in dice_list:
+		if die is Dice:
+			die.set_lock_shader_enabled(false)
+			die.set_dice_input_enabled(false)
+
+
+## restore_locking()
+##
+## Restores lock/unlock input after debuff expires.
+## Re-enables input and lock shader for dice that are still scoreable.
+func restore_locking() -> void:
+	print("[DiceHand] Restoring locking ability")
+	for die in dice_list:
+		if die is Dice:
+			# Only restore input for dice that aren't disabled
+			if die.get_state() != Dice.DiceState.DISABLED:
+				die.set_dice_input_enabled(true)
+			die.set_lock_shader_enabled(true)
+
+
 func disable_all_dice() -> void:
 	print("[DiceHand] Disabling all dice (legacy method)")
 	# Note: With state machine, this should call set_all_dice_disabled() instead

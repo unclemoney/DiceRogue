@@ -12,8 +12,8 @@ func apply(target) -> void:
 	var dice_hand = target as DiceHand
 	if dice_hand:
 		is_active = true
-		print("[LockDiceDebuff] Disabling dice locking")
-		dice_hand.disable_all_dice()
+		print("[LockDiceDebuff] Disabling dice locking (dice remain scoreable)")
+		dice_hand.disable_locking_only()
 	else:
 		push_error("[LockDiceDebuff] Invalid target passed to apply()")
 
@@ -29,5 +29,5 @@ func remove() -> void:
 	var dice_hand = target as DiceHand
 	if dice_hand:
 		is_active = false
-		print("[LockDiceDebuff] Re-enabling dice locking")
-		dice_hand.enable_all_dice()
+		print("[LockDiceDebuff] Restoring dice locking ability")
+		dice_hand.restore_locking()

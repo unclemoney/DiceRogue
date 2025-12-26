@@ -242,6 +242,12 @@ func update_visual():
 func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 	# Replace check for non-existent "select_die" action with direct mouse button check
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		# Check if input is disabled (e.g., Lock Dice Debuff active)
+		if not _can_process_input:
+			print("[Dice] Ignoring input - input disabled (Lock Dice Debuff?)")
+			shake_denied()  # Show shake feedback when locked by debuff
+			return
+		
 		# Use state machine to determine if input should be processed
 		if current_state == DiceState.DISABLED:
 			print("[Dice] Ignoring input - dice is DISABLED")
@@ -263,6 +269,11 @@ func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 
 func _on_mouse_entered():
 	_is_hovering = true
+	
+	# Check if input is disabled first (Lock Dice Debuff)
+	if not _can_process_input:
+		shake_denied()
+		return  # Don't show hover effects if input disabled
 	
 	if current_state == DiceState.DISABLED:
 		shake_denied()

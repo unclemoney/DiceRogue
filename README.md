@@ -314,6 +314,36 @@ The game features round-based difficulty scaling that increases challenge as pla
 - **Clamping**: When round changes, if current progress exceeds new threshold, it's clamped to threshold - 1
 - **Example**: Round 1 = 100, Round 2 = 95, Round 5 = 82, Round 10 = 64
 
+### End of Round Statistics & Bonuses
+After completing a challenge and clicking the Shop button, an End of Round Statistics Panel is displayed:
+
+**Panel Features:**
+- Shows round number, challenge target score, and final score
+- Displays animated bonus calculations
+- "Head to Shop" button to proceed after viewing stats
+
+**End of Round Bonuses:**
+- **Empty Category Bonus**: $25 for each unscored category on the scorecard
+  - Rewards efficient play and early challenge completion
+  - Max possible: 13 categories × $25 = $325 (if completed without scoring anything)
+- **Points Above Target Bonus**: $1 for each point above the challenge target score
+  - Rewards exceeding the challenge requirements
+  - Example: Challenge target 100, final score 130 = $30 bonus
+
+**Bonus Calculation Example:**
+- Round 1, Challenge target: 100 points
+- Player finishes with score: 130 points
+- Empty categories: 3 (didn't need to fill them)
+- Empty category bonus: 3 × $25 = $75
+- Points above target bonus: 30 × $1 = $30
+- **Total round bonus: $105**
+
+**Implementation:**
+- `EndOfRoundStatsPanel` (`Scripts/UI/end_of_round_stats_panel.gd`) - Panel UI and animation
+- `RoundManager.calculate_empty_category_bonus()` - Counts null categories × $25
+- `RoundManager.calculate_score_above_target_bonus()` - (score - target) × $1
+- Bonuses awarded via `PlayerEconomy.add_money()` when "Head to Shop" is clicked
+
 **Challenge Reward Display:**
 - Challenge UI now displays reward amount on the post-it note
 - Reward shown in green text at bottom of challenge spine

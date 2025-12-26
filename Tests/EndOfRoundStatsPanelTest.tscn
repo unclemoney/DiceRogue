@@ -1,0 +1,41 @@
+[gd_scene load_steps=3 format=3 uid="uid://bxmf3qvkw2pxy"]
+
+[ext_resource type="Script" path="res://Tests/end_of_round_stats_panel_test.gd" id="1_test"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/EndOfRoundStatsPanel.tscn" id="2_panel"]
+
+[node name="EndOfRoundStatsPanelTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_test")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.15, 0.15, 0.2, 1)
+
+[node name="OutputLabel" type="RichTextLabel" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.3
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+bbcode_enabled = true
+text = "Test Output:
+"
+scroll_following = true
+
+[node name="EndOfRoundStatsPanel" parent="." instance=ExtResource("2_panel")]
+layout_mode = 1

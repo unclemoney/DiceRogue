@@ -1,13 +1,15 @@
 [gd_scene load_steps=3 format=3 uid="uid://b1kd7x6g4ql7q"]
 
-[ext_resource type="PackedScene" uid="uid://c40ajsryfhq8c" path="res://Scenes/ScoreCard/score_card.tscn" id="1_xr5h7"]
-[ext_resource type="Script" path="res://Tests/comprehensive_yahtzee_bonus_test.gd" id="2_7rq2v"]
+[ext_resource type="PackedScene" uid="uid://bsukvul4wop20" path="res://Scenes/ScoreCard/score_card.tscn" id="1_xr5h7"]
+[ext_resource type="Script" uid="uid://cies2yxeu4bqa" path="res://Tests/comprehensive_yahtzee_bonus_test.gd" id="2_7rq2v"]
 
 [node name="ComprehensiveYahtzeeBonusTest" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("2_7rq2v")
 
 [node name="Scorecard" parent="." instance=ExtResource("1_xr5h7")]
@@ -23,6 +25,8 @@ offset_left = -300.0
 offset_top = -200.0
 offset_right = 300.0
 offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="TitleLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
@@ -31,6 +35,5 @@ horizontal_alignment = 1
 
 [node name="ResultsLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
-text = ""
 horizontal_alignment = 1
 autowrap_mode = 2

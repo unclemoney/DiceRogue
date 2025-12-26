@@ -286,3 +286,56 @@ func _on_challenge_failed(challenge_id: String) -> void:
 		fail_round()
 	else:
 		print("[RoundManager] Different challenge failed:", challenge_id)
+
+
+## calculate_empty_category_bonus(scorecard_ref: Scorecard) -> int
+##
+## Calculates the bonus for unscored categories on the scorecard.
+## Awards $25 per empty (null) category in both upper and lower sections.
+## @param scorecard_ref: Reference to the Scorecard node
+## @return: Total bonus amount for empty categories
+func calculate_empty_category_bonus(scorecard_ref) -> int:
+	const EMPTY_CATEGORY_BONUS: int = 25
+	var empty_count: int = 0
+	
+	# Count upper section empty categories
+	if scorecard_ref and scorecard_ref.upper_scores:
+		for category in scorecard_ref.upper_scores.keys():
+			if scorecard_ref.upper_scores[category] == null:
+				empty_count += 1
+				print("[RoundManager] Empty upper category:", category)
+	
+	# Count lower section empty categories
+	if scorecard_ref and scorecard_ref.lower_scores:
+		for category in scorecard_ref.lower_scores.keys():
+			if scorecard_ref.lower_scores[category] == null:
+				empty_count += 1
+				print("[RoundManager] Empty lower category:", category)
+	
+	var bonus = empty_count * EMPTY_CATEGORY_BONUS
+	print("[RoundManager] Empty category count:", empty_count, "Bonus:", bonus)
+	return bonus
+
+
+## calculate_score_above_target_bonus(final_score: int, target_score: int) -> int
+##
+## Calculates the bonus for scoring above the challenge target.
+## Awards $1 per point above the target score.
+## @param final_score: The player's final score for the round
+## @param target_score: The challenge's target score to beat
+## @return: Total bonus amount for points above target
+func calculate_score_above_target_bonus(final_score: int, target_score: int) -> int:
+	const POINTS_ABOVE_BONUS: int = 1
+	var points_above = max(0, final_score - target_score)
+	var bonus = points_above * POINTS_ABOVE_BONUS
+	print("[RoundManager] Final score:", final_score, "Target:", target_score, "Points above:", points_above, "Bonus:", bonus)
+	return bonus
+
+
+## get_current_challenge_target_score() -> int
+##
+## Returns the target score for the current round's challenge.
+func get_current_challenge_target_score() -> int:
+	if current_round >= 0 and current_round < rounds_data.size():
+		return rounds_data[current_round].get("target_score", 0)
+	return 0

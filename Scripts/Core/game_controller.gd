@@ -77,6 +77,7 @@ const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable
 @export var chore_ui_path: NodePath             = ^"../ChoreUI"
 @export var synergy_manager_path: NodePath      = ^"../SynergyManager"
 @export var corkboard_ui_path: NodePath         = ^"../CorkboardUI"
+@export var end_of_round_stats_panel_path: NodePath = ^"../EndOfRoundStatsPanel"
 
 @onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
 @onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
@@ -105,6 +106,7 @@ const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable
 @onready var chores_manager = get_node_or_null(chores_manager_path)
 @onready var chore_ui = get_node_or_null(chore_ui_path)
 @onready var synergy_manager = get_node_or_null(synergy_manager_path)
+@onready var end_of_round_stats_panel = get_node_or_null(end_of_round_stats_panel_path)
 
 # Mom dialog popup (instantiated when needed)
 var _mom_dialog = null
@@ -123,6 +125,7 @@ var _last_modded_die_index: int = -1  # Track which die received the last mod
 var pending_mods: Array[String] = []
 var mod_persistence_map: Dictionary = {}  # mod_id -> int tracking how many instances of each mod should persist
 var _shop_tween: Tween
+var _end_of_round_stats_shown: bool = false  # Track if stats panel was shown this round
 
 
 func _ready() -> void:
@@ -283,7 +286,7 @@ func _ready() -> void:
 func _on_game_start() -> void:
 	#grant_consumable("random_power_up_uncommon")
 	#grant_consumable("poor_house")
-	#apply_debuff("the_division")
+	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
 	#grant_power_up("red_slime")
 	if round_manager:
@@ -1828,76 +1831,152 @@ func _on_die_locked(die) -> void:
 
 ## _on_shop_button_pressed()
 ##
-# Toggles the shop UI with an animated tween and temporarily disables the CRT effect while the shop
-# is visible. Uses `get_tree().create_tween()` for animation sequencing.
+## Handles the shop button press. If challenge was completed, shows the End of Round
+## Statistics Panel first with bonus calculations, then opens the shop after player
+## clicks "Head to Shop". Otherwise toggles the shop directly.
 func _on_shop_button_pressed() -> void:
-	# Check if challenge was completed and save progress
-	if round_manager and round_manager.is_challenge_completed:
-		print("[GameController] Challenge completed - saving progress before opening shop")
+	# Check if challenge was completed - show stats panel first (only once)
+	if round_manager and round_manager.is_challenge_completed and not _end_of_round_stats_shown:
+		print("[GameController] Challenge completed - showing end of round stats panel")
+		
+		# Save progress
 		var progress_manager = get_node("/root/ProgressManager")
 		if progress_manager:
-			# End current game tracking with success
 			var current_score = scorecard.get_total_score() if scorecard else 0
 			progress_manager.end_game_tracking(current_score, true)
 			print("[GameController] Progress saved with score: %d" % current_score)
-	
-	if shop_ui:
-		if not shop_ui.visible:
-			# Disable CRT when opening shop
-			if crt_manager:
-				crt_manager.disable_crt()
-
-			# Cancel any existing tween
-			if _shop_tween and _shop_tween.is_valid():
-				_shop_tween.kill()
-
-			# 1. Show label immediately
-			shop_ui.show()
-			shop_ui.visible = true
-			shop_ui.modulate.a = 0.0
-			shop_ui.scale = Vector2(0.1, 0.1)
-
-			# 2. Create new tween
-			_shop_tween = get_tree().create_tween()
-
-			# 3. Fade in (faster)
-			_shop_tween.tween_property(
-				shop_ui, "modulate:a", 1.0, 0.1
-			).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-
-			# 4. Bounce scale (faster)
-			_shop_tween.tween_property(
-				shop_ui, "scale", Vector2(1.0, 1.0), 0.85
-			).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-
-			# 5. Settle scale (faster)
-			_shop_tween.tween_property(
-				shop_ui, "scale", Vector2.ONE, 0.05
-			).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		
+		# Show stats panel if available
+		if end_of_round_stats_panel:
+			_end_of_round_stats_shown = true  # Mark as shown
+			_show_end_of_round_stats()
+			return
 		else:
-			shop_ui.scale = Vector2(1.0, 1.0)
-			# Cancel any existing tween
-			if _shop_tween and _shop_tween.is_valid():
-				_shop_tween.kill()
-					# 2. Create new tween
-			_shop_tween = get_tree().create_tween()
+			print("[GameController] No stats panel found - opening shop directly")
+	
+	# If no stats panel or challenge not completed or already shown, open shop directly
+	_open_shop_ui()
 
-			# 3. Fade in (faster)
-			_shop_tween.tween_property(
-				shop_ui, "modulate:a", 1.0, 0.1
-			).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
-			# 4. Bounce scale (faster)
-			_shop_tween.tween_property(
-				shop_ui, "scale", Vector2(0.001, 0.001), 0.55
-			).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+## _show_end_of_round_stats()
+##
+## Shows the end of round statistics panel with bonus calculations.
+## Calculates and awards bonuses, then connects to panel signal to open shop after.
+func _show_end_of_round_stats() -> void:
+	print("[GameController] Showing end of round stats panel")
+	
+	# Get current round data
+	var current_round_num = round_manager.get_current_round_number() if round_manager else 1
+	var target_score = round_manager.get_current_challenge_target_score() if round_manager else 0
+	var final_score = scorecard.get_total_score() if scorecard else 0
+	
+	# Prepare data for the stats panel
+	var stats_data = {
+		"round_number": current_round_num,
+		"challenge_target": target_score,
+		"final_score": final_score,
+		"scorecard": scorecard
+	}
+	
+	# Connect to panel's continue signal (one-shot)
+	if not end_of_round_stats_panel.is_connected("continue_to_shop_pressed", _on_stats_panel_continue):
+		end_of_round_stats_panel.continue_to_shop_pressed.connect(_on_stats_panel_continue, CONNECT_ONE_SHOT)
+	
+	# Show the panel - it will calculate bonuses internally
+	end_of_round_stats_panel.show_stats(stats_data)
 
-			await _shop_tween.finished
-			shop_ui.hide()
 
-			# Re-enable CRT when closing shop
-			if crt_manager:
-				crt_manager.enable_crt()
+## _on_stats_panel_continue()
+##
+## Called when player clicks "Head to Shop" on the stats panel.
+## Awards the calculated bonuses and opens the shop.
+func _on_stats_panel_continue() -> void:
+	print("[GameController] Stats panel continue pressed - awarding bonuses and opening shop")
+	
+	# Award bonuses via PlayerEconomy
+	if end_of_round_stats_panel:
+		var total_bonus = end_of_round_stats_panel.get_total_bonus()
+		var empty_bonus = end_of_round_stats_panel.get_empty_categories_bonus()
+		var score_bonus = end_of_round_stats_panel.get_score_above_bonus()
+		
+		if total_bonus > 0:
+			PlayerEconomy.add_money(total_bonus)
+			print("[GameController] Awarded end of round bonuses: $%d (empty: $%d, score: $%d)" % [total_bonus, empty_bonus, score_bonus])
+			
+			# Track in statistics
+			Statistics.total_money_earned += total_bonus
+	
+	# Complete the round
+	if round_manager:
+		round_manager.complete_round()
+	
+	# Open the shop
+	_open_shop_ui()
+
+
+## _open_shop_ui()
+##
+## Opens the shop UI with animated tween. Disables CRT effect while shop is visible.
+func _open_shop_ui() -> void:
+	if not shop_ui:
+		return
+	
+	if not shop_ui.visible:
+		# Disable CRT when opening shop
+		if crt_manager:
+			crt_manager.disable_crt()
+
+		# Cancel any existing tween
+		if _shop_tween and _shop_tween.is_valid():
+			_shop_tween.kill()
+
+		# 1. Show label immediately
+		shop_ui.show()
+		shop_ui.visible = true
+		shop_ui.modulate.a = 0.0
+		shop_ui.scale = Vector2(0.1, 0.1)
+
+		# 2. Create new tween
+		_shop_tween = get_tree().create_tween()
+
+		# 3. Fade in (faster)
+		_shop_tween.tween_property(
+			shop_ui, "modulate:a", 1.0, 0.1
+		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+		# 4. Bounce scale (faster)
+		_shop_tween.tween_property(
+			shop_ui, "scale", Vector2(1.0, 1.0), 0.85
+		).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+		# 5. Settle scale (faster)
+		_shop_tween.tween_property(
+			shop_ui, "scale", Vector2.ONE, 0.05
+		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	else:
+		shop_ui.scale = Vector2(1.0, 1.0)
+		# Cancel any existing tween
+		if _shop_tween and _shop_tween.is_valid():
+			_shop_tween.kill()
+		# 2. Create new tween
+		_shop_tween = get_tree().create_tween()
+
+		# 3. Fade in (faster)
+		_shop_tween.tween_property(
+			shop_ui, "modulate:a", 1.0, 0.1
+		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+		# 4. Bounce scale (faster)
+		_shop_tween.tween_property(
+			shop_ui, "scale", Vector2(0.001, 0.001), 0.55
+		).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+		await _shop_tween.finished
+		shop_ui.hide()
+
+		# Re-enable CRT when closing shop
+		if crt_manager:
+			crt_manager.enable_crt()
 
 
 ## _on_shop_item_purchased(item_id, item_type)
@@ -2285,6 +2364,9 @@ func _on_max_power_ups_reached() -> void:
 
 func _on_round_started(round_number: int) -> void:
 	print("[GameController] Round", round_number, "started")
+	
+	# Reset end of round stats flag for new round
+	_end_of_round_stats_shown = false
 	
 	# Update round-based scaling for scorecard and chores manager
 	if scorecard:

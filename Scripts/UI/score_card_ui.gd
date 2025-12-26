@@ -1143,6 +1143,10 @@ func handle_any_score(section: Scorecard.Section, category: String) -> void:
 	# Set the selected category's score to the best possible score
 	print("[ScoreCardUI] Setting AnyScore for", category, "to:", score)
 	scorecard.set_score(section, category, score)
+	
+	# Check for bonus Yahtzee (must be after scoring, before UI update)
+	scorecard.check_bonus_yahtzee(dice_values, category)
+	
 	update_all()
 	
 	# Reset any score mode and clear highlighting

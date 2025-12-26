@@ -73,6 +73,14 @@ var highest_score: int = 0
 var longest_streak: int = 0
 var current_streak: int = 0
 
+# Round-specific tracking (resets each round)
+var current_round_points: int = 0
+var current_round_money_earned: int = 0
+var current_round_bonus_money: int = 0
+var current_round_empty_category_bonus: int = 0
+var current_round_score_above_bonus: int = 0
+var rounds_completed: int = 0
+
 # Internal tracking
 var _last_update_time: float = 0.0
 
@@ -232,6 +240,53 @@ func track_upper_bonus():
 	upper_bonuses_earned += 1
 	print("[Statistics] Upper section bonus earned! Total: %d" % upper_bonuses_earned)
 	_check_milestone("upper_bonuses", upper_bonuses_earned)
+
+
+## start_new_round()
+##
+## Reset round-specific statistics for a new round.
+func start_new_round():
+	current_round_points = 0
+	current_round_money_earned = 0
+	current_round_bonus_money = 0
+	current_round_empty_category_bonus = 0
+	current_round_score_above_bonus = 0
+	print("[Statistics] Round statistics reset for new round")
+
+
+## complete_round(final_score: int, empty_bonus: int, score_bonus: int)
+##
+## Record end-of-round statistics and bonuses.
+func complete_round(final_score: int, empty_bonus: int, score_bonus: int):
+	current_round_points = final_score
+	current_round_empty_category_bonus = empty_bonus
+	current_round_score_above_bonus = score_bonus
+	current_round_bonus_money = empty_bonus + score_bonus
+	rounds_completed += 1
+	print("[Statistics] Round %d complete - Points: %d, Empty bonus: $%d, Score bonus: $%d" % [rounds_completed, final_score, empty_bonus, score_bonus])
+
+
+## add_round_money_earned(amount: int)
+##
+## Add to round-specific money earned tracking.
+func add_round_money_earned(amount: int):
+	current_round_money_earned += amount
+	total_money_earned += amount
+
+
+## get_current_round_stats() -> Dictionary
+##
+## Returns current round statistics for display.
+func get_current_round_stats() -> Dictionary:
+	return {
+		"points": current_round_points,
+		"money_earned": current_round_money_earned,
+		"bonus_money": current_round_bonus_money,
+		"empty_category_bonus": current_round_empty_category_bonus,
+		"score_above_bonus": current_round_score_above_bonus,
+		"rounds_completed": rounds_completed
+	}
+
 
 ## add_money_earned(amount: int)
 ## 
