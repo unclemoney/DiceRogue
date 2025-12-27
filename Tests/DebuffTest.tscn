@@ -1,4 +1,4 @@
-[gd_scene load_steps=101 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=104 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -87,9 +87,12 @@
 [ext_resource type="PackedScene" uid="uid://banpa5fhdg13n" path="res://Scenes/UI/EndOfRoundStatsPanel.tscn" id="98_23y3a"]
 [ext_resource type="PackedScene" uid="uid://crkb0ardui001" path="res://Scenes/UI/CorkboardUI.tscn" id="98_ocuqv"]
 [ext_resource type="PackedScene" path="res://Scenes/Managers/synergy_manager.tscn" id="98_vch7i"]
+[ext_resource type="PackedScene" uid="uid://b8qm3rvhj4dnr" path="res://Scenes/Managers/ChannelManagerUI.tscn" id="99_ocuqv"]
 [ext_resource type="Resource" uid="uid://wvpnvey8q20j" path="res://Scripts/PowerUps/WildDotsPowerUp.tres" id="99_wild_dots"]
 [ext_resource type="Resource" uid="uid://c2kn4gf8x7lwm" path="res://Scripts/PowerUps/PinHeadPowerUp.tres" id="100_pin_head"]
+[ext_resource type="PackedScene" uid="uid://cfnq7mvpk2r8d" path="res://Scenes/UI/RoundWinnerPanel.tscn" id="100_sxl8b"]
 [ext_resource type="Resource" uid="uid://d3hc8h0p7bj6w" path="res://Scripts/PowerUps/MoneyWellSpentPowerUp.tres" id="101_money_well_spent"]
+[ext_resource type="Script" uid="uid://dmmvbv3kvg4kp" path="res://Scripts/Managers/channel_manager.gd" id="101_wcrst"]
 [ext_resource type="Resource" uid="uid://chwmgd8qo3h4k" path="res://Scripts/PowerUps/HighlightedScorePowerUp.tres" id="102_highlighted_score"]
 [ext_resource type="Resource" uid="uid://dxm8t4n7p2q5s" path="res://Scripts/PowerUps/TheConsumerIsAlwaysRight.tres" id="103_the_consumer_is_always_right"]
 [ext_resource type="Resource" uid="uid://bw8qn4u5hjt7k" path="res://Scripts/PowerUps/GreenSlime.tres" id="104_green_slime"]
@@ -329,3 +332,10 @@ script = ExtResource("1000_chores_mgr")
 [node name="EndOfRoundStatsPanel" parent="." instance=ExtResource("98_23y3a")]
 size_flags_horizontal = 3
 size_flags_vertical = 3
+
+[node name="ChannelManagerUI" parent="." instance=ExtResource("99_ocuqv")]
+
+[node name="RoundWinnerPanel" parent="." instance=ExtResource("100_sxl8b")]
+
+[node name="ChannelManager" type="Node" parent="."]
+script = ExtResource("101_wcrst")

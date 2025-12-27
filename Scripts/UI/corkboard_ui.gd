@@ -227,7 +227,15 @@ func _update_challenge_spine_display() -> void:
 		var data: ChallengeData = _challenge_data[first_key]
 		if data:
 			goal_text = data.display_name
-			points_goal = data.target_score
+			# Use challenge instance's scaled target score if available, otherwise fall back to data
+			if _challenge_instances.has(first_key):
+				var challenge_instance = _challenge_instances[first_key]
+				if challenge_instance and challenge_instance.has_method("get_target_score"):
+					points_goal = challenge_instance.get_target_score()
+				else:
+					points_goal = data.target_score
+			else:
+				points_goal = data.target_score
 			if data.reward_money > 0:
 				reward_text = "$%d" % data.reward_money
 			# Get current progress from challenge instance
@@ -384,17 +392,24 @@ func _fan_out_challenges() -> void:
 		var data: ChallengeData = _challenge_data[challenge_id]
 		var challenge_instance = _challenge_instances.get(challenge_id)
 		
+		# Get target score from challenge instance (with channel scaling) if available
+		var target_score := 0
+		if challenge_instance and challenge_instance.has_method("get_target_score"):
+			target_score = challenge_instance.get_target_score()
+		else:
+			target_score = data.target_score
+		
 		# Create the 4 POST_IT_NOTE cards for this challenge
 		var name_note = _create_challenge_post_it("CHALLENGE", data.display_name, challenge_id)
-		var points_note = _create_challenge_post_it("GOAL", str(data.target_score) + " pts", challenge_id)
+		var points_note = _create_challenge_post_it("GOAL", str(target_score) + " pts", challenge_id)
 		var dice_note = _create_challenge_post_it("DICE", data.dice_type if data.dice_type else _current_dice_type, challenge_id)
 		
 		# Calculate progress percentage
 		var progress_pct := 0
 		if challenge_instance and challenge_instance.has_method("get_current_score"):
 			var current_score = challenge_instance.get_current_score()
-			if data.target_score > 0:
-				progress_pct = int((float(current_score) / float(data.target_score)) * 100)
+			if target_score > 0:
+				progress_pct = int((float(current_score) / float(target_score)) * 100)
 		var progress_note = _create_challenge_post_it("PROGRESS", str(progress_pct) + "%", challenge_id)
 		
 		all_notes.append(name_note)

@@ -95,6 +95,35 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - **Integration**: Works with scoring system and debug tools
   - **Effects**: Manages money, additive, and multiplier calculations
 
+### Channel System (Difficulty Scaling)
+The **Channel Manager** provides an infinite difficulty progression system (Channels 1-99):
+
+**Features:**
+- **TV Remote UI**: Select starting channel at game start with Up/Down buttons
+- **Quadratic Scaling**: Difficulty increases smoothly using formula: `1.0 + ((channel - 1) / 98)² × 99`
+- **Target Score Scaling**: Challenge goals multiply by channel difficulty (100 pts at Ch1 → 10,000 pts at Ch99)
+- **Infinite Loop**: After completing Round 6, RoundWinnerPanel offers "Next Channel" to advance and restart
+
+**Difficulty Curve:**
+- **Channel 1**: 1.0x (100 points base → 100 points)
+- **Channel 2**: ~1.01x (100 points base → 101 points) - Very mild bump
+- **Channel 10**: ~1.08x (100 points base → 108 points)
+- **Channel 50**: ~25.5x (100 points base → 2,550 points)
+- **Channel 99**: 100x (100 points base → 10,000 points)
+
+**Implementation:**
+- **ChannelManager** (`Scripts/Managers/channel_manager.gd`) - Core difficulty logic
+- **ChannelManagerUI** (`Scripts/Managers/channel_manager_ui.gd`) - TV remote selector UI
+- **RoundWinnerPanel** (`Scripts/UI/round_winner_panel.gd`) - Victory screen with stats
+- **Integration**: GameController coordinates showing/hiding UI and scaling targets
+
+**Game Flow:**
+1. Game starts → Channel selector appears
+2. Player selects channel (1-99) and presses Start
+3. Game progresses through 6 rounds with scaled target scores
+4. After Round 6 completion → RoundWinnerPanel shows stats
+5. "Next Channel" advances to next channel and resets to Round 1
+
 ## Key Systems
 
 ### Statistics System

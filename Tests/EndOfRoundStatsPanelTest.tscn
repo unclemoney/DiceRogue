@@ -1,7 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://bxmf3qvkw2pxy"]
+[gd_scene load_steps=3 format=3 uid="uid://bno27n6fes57f"]
 
-[ext_resource type="Script" path="res://Tests/end_of_round_stats_panel_test.gd" id="1_test"]
-[ext_resource type="PackedScene" path="res://Scenes/UI/EndOfRoundStatsPanel.tscn" id="2_panel"]
+[ext_resource type="Script" uid="uid://c4dv2wjj1vg4n" path="res://Tests/end_of_round_stats_panel_test.gd" id="1_test"]
+[ext_resource type="PackedScene" uid="uid://banpa5fhdg13n" path="res://Scenes/UI/EndOfRoundStatsPanel.tscn" id="2_panel"]
 
 [node name="EndOfRoundStatsPanelTest" type="Control"]
 layout_mode = 3

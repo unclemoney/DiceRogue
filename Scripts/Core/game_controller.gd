@@ -78,6 +78,9 @@ const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable
 @export var synergy_manager_path: NodePath      = ^"../SynergyManager"
 @export var corkboard_ui_path: NodePath         = ^"../CorkboardUI"
 @export var end_of_round_stats_panel_path: NodePath = ^"../EndOfRoundStatsPanel"
+@export var channel_manager_path: NodePath      = ^"../ChannelManager"
+@export var channel_manager_ui_path: NodePath   = ^"../ChannelManagerUI"
+@export var round_winner_panel_path: NodePath   = ^"../RoundWinnerPanel"
 
 @onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
 @onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
@@ -107,6 +110,9 @@ const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable
 @onready var chore_ui = get_node_or_null(chore_ui_path)
 @onready var synergy_manager = get_node_or_null(synergy_manager_path)
 @onready var end_of_round_stats_panel = get_node_or_null(end_of_round_stats_panel_path)
+@onready var channel_manager = get_node_or_null(channel_manager_path)
+@onready var channel_manager_ui = get_node_or_null(channel_manager_ui_path)
+@onready var round_winner_panel = get_node_or_null(round_winner_panel_path)
 
 # Mom dialog popup (instantiated when needed)
 var _mom_dialog = null
@@ -238,6 +244,19 @@ func _ready() -> void:
 		synergy_manager.connect_to_game_controller(self)
 		print("[GameController] Connected SynergyManager to GameController")
 
+	# Initialize ChannelManager and related UI
+	if channel_manager:
+		channel_manager.channel_selected.connect(_on_channel_selected)
+		print("[GameController] Connected to ChannelManager.channel_selected")
+	if channel_manager_ui:
+		channel_manager_ui.set_channel_manager(channel_manager)
+		channel_manager_ui.start_pressed.connect(_on_channel_start_pressed)
+		print("[GameController] ChannelManagerUI connected to ChannelManager")
+	if round_winner_panel:
+		round_winner_panel.set_channel_manager(channel_manager)
+		round_winner_panel.next_channel_pressed.connect(_on_next_channel_pressed)
+		print("[GameController] RoundWinnerPanel connected")
+
 	# Register new consumables programmatically
 	if consumable_manager:
 		consumable_manager.register_consumable_def(RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF)
@@ -289,8 +308,92 @@ func _on_game_start() -> void:
 	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
 	#grant_power_up("red_slime")
+	
+	# Show channel selector UI at game start
+	if channel_manager_ui and channel_manager:
+		channel_manager.reset()  # Reset to Channel 1 on new game
+		channel_manager_ui.show_channel_selector()
+		print("[GameController] Showing channel selector - waiting for player to start")
+	elif round_manager:
+		# Fallback: start game immediately if no channel system
+		round_manager.start_game()
+
+
+## _on_channel_selected(channel: int) -> void
+##
+## Called when player confirms their channel selection. Starts the game.
+func _on_channel_selected(channel: int) -> void:
+	print("[GameController] Channel", channel, "selected, starting game...")
 	if round_manager:
 		round_manager.start_game()
+
+
+## _on_channel_start_pressed(channel: int) -> void
+##
+## Called when player presses Start on channel selector UI.
+func _on_channel_start_pressed(channel: int) -> void:
+	print("[GameController] Channel start pressed for channel:", channel)
+	# channel_selected signal will be emitted by ChannelManager.select_channel()
+
+
+## _on_next_channel_pressed() -> void
+##
+## Called when player presses "Next Channel" on the RoundWinnerPanel.
+## Advances to next channel and restarts the game loop.
+func _on_next_channel_pressed() -> void:
+	print("[GameController] Next channel requested")
+	
+	if channel_manager:
+		channel_manager.advance_to_next_channel()
+		print("[GameController] Advanced to Channel", channel_manager.current_channel)
+	
+	# Restart the game loop at Round 1
+	_restart_game_for_new_channel()
+
+
+## _restart_game_for_new_channel() -> void
+##
+## Resets game state and starts Round 1 for the new channel.
+## Does NOT reset the channel number (keeps current channel).
+func _restart_game_for_new_channel() -> void:
+	print("[GameController] Restarting game for new channel...")
+	
+	# Clear active challenges, debuffs, etc.
+	_clear_active_challenges()
+	_clear_active_debuffs()
+	
+	# Reset end of round stats shown flag
+	_end_of_round_stats_shown = false
+	
+	# Start new game session
+	if round_manager:
+		round_manager.start_game()
+		print("[GameController] Game restarted for new channel")
+
+
+## _clear_active_challenges() -> void
+##
+## Removes all active challenges for new channel start.
+func _clear_active_challenges() -> void:
+	for id in active_challenges.keys():
+		var challenge = active_challenges[id]
+		if challenge:
+			challenge.queue_free()
+	active_challenges.clear()
+	print("[GameController] Cleared all active challenges")
+
+
+## _clear_active_debuffs() -> void
+##
+## Removes all active debuffs for new channel start.
+func _clear_active_debuffs() -> void:
+	for id in active_debuffs.keys():
+		var debuff = active_debuffs[id]
+		if debuff:
+			debuff.queue_free()
+	active_debuffs.clear()
+	_grounded_debuffs.clear()
+	print("[GameController] Cleared all active debuffs")
 
 
 
@@ -2030,6 +2133,16 @@ func activate_challenge(id: String) -> void:
 
 	if challenge and def and challenge.has_method("set_target_score_from_resource"):
 		challenge.set_target_score_from_resource(def, round_number)
+		
+		# Apply channel difficulty multiplier to target score
+		if channel_manager:
+			var base_target = challenge.get_target_score()
+			var scaled_target = channel_manager.get_scaled_target_score(base_target)
+			challenge._target_score = scaled_target
+			# Also update rounds_data to keep in sync
+			if round_manager:
+				round_manager.set_current_challenge_target_score(scaled_target)
+			print("[GameController] Channel", channel_manager.current_channel, "scaled target:", base_target, "->", scaled_target, "(%.2fx)" % channel_manager.get_difficulty_multiplier())
 
 	# Apply to game controller to access all needed systems
 	challenge.target = self
@@ -2269,8 +2382,35 @@ func _on_round_failed(round_number: int) -> void:
 func _on_all_rounds_completed() -> void:
 	print("[GameController] All rounds completed! Game win condition reached.")
 	
-	# Handle game completion
-	# This could trigger an end game screen, final rewards, etc.
+	# Show the RoundWinnerPanel with stats
+	if round_winner_panel and round_manager:
+		var current_channel = 1
+		if channel_manager:
+			current_channel = channel_manager.current_channel
+		
+		var final_score = 0
+		var target_score = 0
+		if scorecard:
+			final_score = scorecard.get_total_score()
+		if round_manager:
+			target_score = round_manager.get_current_challenge_target_score()
+		
+		var turns_used = 0
+		if turn_tracker:
+			turns_used = turn_tracker.current_turn
+		
+		var winner_data = {
+			"final_score": final_score,
+			"target_score": target_score,
+			"turns_used": turns_used,
+			"current_channel": current_channel,
+			"rounds_completed": 6
+		}
+		
+		round_winner_panel.show_winner_panel(winner_data)
+		print("[GameController] Showing RoundWinnerPanel for Channel", current_channel)
+	else:
+		print("[GameController] No RoundWinnerPanel - game complete!")
 
 func _on_consumable_sold(consumable_id: String) -> void:
 	print("[GameController] Selling consumable:", consumable_id)
