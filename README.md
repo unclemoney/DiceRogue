@@ -103,6 +103,8 @@ The **Channel Manager** provides an infinite difficulty progression system (Chan
 - **Quadratic Scaling**: Difficulty increases smoothly using formula: `1.0 + ((channel - 1) / 98)² × 99`
 - **Target Score Scaling**: Challenge goals multiply by channel difficulty (100 pts at Ch1 → 10,000 pts at Ch99)
 - **Infinite Loop**: After completing Round 6, RoundWinnerPanel offers "Next Channel" to advance and restart
+- **Persistent Completion**: Completed channels are saved and display a checkmark when browsing
+- **Achievement Tracking**: `highest_channel_completed` stat tracks player's best channel achievement
 
 **Difficulty Curve:**
 - **Channel 1**: 1.0x (100 points base → 100 points)
@@ -113,16 +115,17 @@ The **Channel Manager** provides an infinite difficulty progression system (Chan
 
 **Implementation:**
 - **ChannelManager** (`Scripts/Managers/channel_manager.gd`) - Core difficulty logic
-- **ChannelManagerUI** (`Scripts/Managers/channel_manager_ui.gd`) - TV remote selector UI
+- **ChannelManagerUI** (`Scripts/Managers/channel_manager_ui.gd`) - TV remote selector UI with completion indicator
 - **RoundWinnerPanel** (`Scripts/UI/round_winner_panel.gd`) - Victory screen with stats
+- **ProgressManager** - Persists `completed_channels` array and `highest_channel_completed` stat
 - **Integration**: GameController coordinates showing/hiding UI and scaling targets
 
 **Game Flow:**
-1. Game starts → Channel selector appears
+1. Game starts → Channel selector appears (completed channels show checkmark)
 2. Player selects channel (1-99) and presses Start
 3. Game progresses through 6 rounds with scaled target scores
 4. After Round 6 completion → RoundWinnerPanel shows stats
-5. "Next Channel" advances to next channel and resets to Round 1
+5. "Next Channel" marks channel complete, saves progress, advances to next channel, resets to Round 1
 
 ## Key Systems
 

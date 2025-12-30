@@ -91,6 +91,28 @@ func _ready():
 	next_turn_button.disabled = true
 
 
+## reset_for_new_channel() -> void
+##
+## Resets button state for a new channel. Called after winning a channel.
+func reset_for_new_channel() -> void:
+	print("[GameButtonUI] Resetting for new channel")
+	first_roll_done = false
+	
+	# Reset button states
+	roll_button.disabled = true
+	next_turn_button.disabled = true
+	if next_round_button:
+		next_round_button.disabled = false
+	if shop_button:
+		shop_button.disabled = false
+	
+	# Stop any pulse animations
+	_stop_roll_button_pulse()
+	_stop_shop_button_pulse()
+	
+	print("[GameButtonUI] Reset complete - first_roll_done:", first_roll_done)
+
+
 ## _start_roll_button_pulse()
 ##
 ## Starts the pulsing glow animation on the Roll button.

@@ -19,6 +19,7 @@ const SAVE_FILE_PATH := "user://progress.save"
 
 # Core progress data
 var unlockable_items: Dictionary = {}  # item_id -> UnlockableItem
+var completed_channels: Array[int] = []  # Tracks which channels have been won
 var cumulative_stats: Dictionary = {
 	"games_completed": 0,
 	"games_won": 0,
@@ -27,7 +28,8 @@ var cumulative_stats: Dictionary = {
 	"total_consumables_used": 0,
 	"total_yahtzees": 0,
 	"total_straights": 0,
-	"total_color_bonuses": 0
+	"total_color_bonuses": 0,
+	"highest_channel_completed": 0
 }
 
 # Current game tracking
@@ -72,6 +74,16 @@ func load_progress() -> void:
 	# Load cumulative stats
 	if save_data.has("cumulative_stats"):
 		cumulative_stats = save_data["cumulative_stats"]
+		# Ensure highest_channel_completed exists (for older saves)
+		if not cumulative_stats.has("highest_channel_completed"):
+			cumulative_stats["highest_channel_completed"] = 0
+	
+	# Load completed channels
+	if save_data.has("completed_channels"):
+		completed_channels.clear()
+		for channel_num in save_data["completed_channels"]:
+			completed_channels.append(int(channel_num))
+		print("[ProgressManager] Loaded %d completed channels" % completed_channels.size())
 	
 	# Load unlockable items
 	if save_data.has("unlocked_items"):
@@ -95,6 +107,7 @@ func load_progress() -> void:
 func save_progress() -> void:
 	var save_data = {
 		"cumulative_stats": cumulative_stats,
+		"completed_channels": completed_channels,
 		"unlocked_items": []
 	}
 	
@@ -227,6 +240,33 @@ func track_upper_bonus_achieved() -> void:
 	if not is_tracking_game:
 		return
 	current_game_stats["upper_bonus_achieved"] = true
+
+## mark_channel_completed(channel_num: int) -> void
+##
+## Marks a channel as completed and updates the highest channel stat.
+## Called when player wins a channel. Persists to save file immediately.
+## @param channel_num: The channel number that was completed (1-99)
+func mark_channel_completed(channel_num: int) -> void:
+	# Add to completed channels if not already there
+	if channel_num not in completed_channels:
+		completed_channels.append(channel_num)
+		print("[ProgressManager] Channel %d marked as completed" % channel_num)
+	
+	# Update highest channel completed stat
+	if channel_num > cumulative_stats["highest_channel_completed"]:
+		cumulative_stats["highest_channel_completed"] = channel_num
+		print("[ProgressManager] New highest channel completed: %d" % channel_num)
+	
+	# Save progress immediately
+	save_progress()
+
+## is_channel_completed(channel_num: int) -> bool
+##
+## Checks if a specific channel has been completed.
+## @param channel_num: The channel number to check
+## @return bool: True if the channel has been completed
+func is_channel_completed(channel_num: int) -> bool:
+	return channel_num in completed_channels
 
 ## Check if a specific item is unlocked
 ## @param item_id: String ID of the item to check

@@ -344,6 +344,11 @@ func _on_next_channel_pressed() -> void:
 	print("[GameController] Next channel requested")
 	
 	if channel_manager:
+		# Mark current channel as completed before advancing
+		var progress_manager = get_node_or_null("/root/ProgressManager")
+		if progress_manager:
+			progress_manager.mark_channel_completed(channel_manager.current_channel)
+		
 		channel_manager.advance_to_next_channel()
 		print("[GameController] Advanced to Channel", channel_manager.current_channel)
 	
@@ -355,15 +360,47 @@ func _on_next_channel_pressed() -> void:
 ##
 ## Resets game state and starts Round 1 for the new channel.
 ## Does NOT reset the channel number (keeps current channel).
+## Resets: money, power-ups, consumables, debuffs, goof-off meter.
 func _restart_game_for_new_channel() -> void:
 	print("[GameController] Restarting game for new channel...")
 	
-	# Clear active challenges, debuffs, etc.
+	# Reset player money to starting amount
+	if PlayerEconomy:
+		PlayerEconomy.reset_to_starting_money()
+		print("[GameController] Money reset to starting amount")
+	
+	# Clear all power-ups (instances and UI)
+	_clear_all_power_ups()
+	
+	# Clear all consumables (instances and UI)
+	_clear_all_consumables()
+	
+	# Clear active challenges and debuffs
 	_clear_active_challenges()
 	_clear_active_debuffs()
 	
+	# Reset the goof-off meter (ChoresManager)
+	if chores_manager:
+		chores_manager.reset_for_new_game()
+		print("[GameController] Goof-off meter reset")
+	
+	# Reset ScoreModifierManager
+	if ScoreModifierManager:
+		ScoreModifierManager.reset()
+		print("[GameController] ScoreModifierManager reset")
+	
+	# Reset game button UI state (first_roll_done flag, etc.)
+	if game_button_ui and game_button_ui.has_method("reset_for_new_channel"):
+		game_button_ui.reset_for_new_channel()
+		print("[GameController] GameButtonUI reset")
+	
 	# Reset end of round stats shown flag
 	_end_of_round_stats_shown = false
+	
+	# Reset current round to 0 so we start at round 1
+	if round_manager:
+		round_manager.current_round = 0
+		print("[GameController] Round reset to 0 (will start at round 1)")
 	
 	# Start new game session
 	if round_manager:
@@ -374,18 +411,25 @@ func _restart_game_for_new_channel() -> void:
 ## _clear_active_challenges() -> void
 ##
 ## Removes all active challenges for new channel start.
+## Clears both runtime instances and UI.
 func _clear_active_challenges() -> void:
 	for id in active_challenges.keys():
 		var challenge = active_challenges[id]
 		if challenge:
 			challenge.queue_free()
 	active_challenges.clear()
+	
+	# Clear UI in corkboard
+	if corkboard_ui and corkboard_ui.has_method("clear_all_challenges"):
+		corkboard_ui.clear_all_challenges()
+	
 	print("[GameController] Cleared all active challenges")
 
 
 ## _clear_active_debuffs() -> void
 ##
 ## Removes all active debuffs for new channel start.
+## Clears both runtime instances and UI.
 func _clear_active_debuffs() -> void:
 	for id in active_debuffs.keys():
 		var debuff = active_debuffs[id]
@@ -393,9 +437,55 @@ func _clear_active_debuffs() -> void:
 			debuff.queue_free()
 	active_debuffs.clear()
 	_grounded_debuffs.clear()
+	
+	# Clear UI in corkboard
+	if corkboard_ui and corkboard_ui.has_method("clear_all_debuffs"):
+		corkboard_ui.clear_all_debuffs()
+	
 	print("[GameController] Cleared all active debuffs")
 
 
+## _clear_all_power_ups() -> void
+##
+## Removes all active power-ups for new channel start.
+## Clears both runtime instances and UI.
+func _clear_all_power_ups() -> void:
+	# Free all power-up instances
+	for id in active_power_ups.keys():
+		var pu = active_power_ups[id]
+		if pu:
+			pu.queue_free()
+	active_power_ups.clear()
+	
+	# Clear UI if available
+	if powerup_ui and powerup_ui.has_method("clear_all"):
+		powerup_ui.clear_all()
+	elif powerup_ui:
+		# Fallback: remove each power-up from UI individually
+		for id in active_power_ups.keys():
+			if powerup_ui.has_method("remove_power_up"):
+				powerup_ui.remove_power_up(id)
+	
+	print("[GameController] Cleared all power-ups")
+
+
+## _clear_all_consumables() -> void
+##
+## Removes all active consumables for new channel start.
+## Clears both runtime instances and UI.
+func _clear_all_consumables() -> void:
+	# Free all consumable instances
+	for id in active_consumables.keys():
+		var consumable = active_consumables[id]
+		if consumable:
+			consumable.queue_free()
+	active_consumables.clear()
+	
+	# Clear UI in corkboard
+	if corkboard_ui and corkboard_ui.has_method("clear_all_consumables"):
+		corkboard_ui.clear_all_consumables()
+	
+	print("[GameController] Cleared all consumables")
 
 
 ## _process(delta)

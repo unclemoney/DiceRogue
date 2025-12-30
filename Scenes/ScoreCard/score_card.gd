@@ -20,6 +20,7 @@ var upper_bonus := 0  # Add this to track the bonus
 var upper_bonus_awarded := false  # Track if bonus has been awarded
 var yahtzee_bonuses := 0  # Track number of bonus yahtzees
 var yahtzee_bonus_points := 0  # Track total bonus points
+var yahtzee_scored := false  # Tracks if initial yahtzee has been scored (not scratched)
 
 # Round-based scaling for upper section bonus
 # Round 1 uses base values, each subsequent round scales by 10%
@@ -194,6 +195,11 @@ func set_score(section: int, category: String, score: int) -> void:
 	
 	# Emit the score_assigned signal for tracking purposes
 	emit_signal("score_assigned", section, category, final_score)
+	
+	# Set yahtzee_scored flag when yahtzee category is scored with a valid hand (score > 0)
+	if section == Section.LOWER and category == "yahtzee" and final_score > 0:
+		yahtzee_scored = true
+		print("[Scorecard] Initial Yahtzee scored - flag set to true (score: %d)" % final_score)
 	
 	# Track statistics with RollStats singleton
 	_track_combination_stats(category, final_score)
@@ -460,17 +466,21 @@ func check_upper_bonus() -> void:
 		emit_signal("upper_section_completed")
 
 func check_bonus_yahtzee(values: Array[int], current_category: String = "") -> void:
+	print("[Scorecard] check_bonus_yahtzee called - values:", values, " category:", current_category)
+	print("[Scorecard] yahtzee_scored flag:", yahtzee_scored)
+	
 	# Don't award bonus if we're currently scoring the yahtzee category
 	if current_category == "yahtzee":
 		print("[Scorecard] check_bonus_yahtzee: Skipping bonus check - currently scoring yahtzee category")
 		return
 	
-	# Only check if we already have a yahtzee scored as 50
-	if lower_scores["yahtzee"] != 50:
-		print("[Scorecard] check_bonus_yahtzee: No initial Yahtzee scored (score: %s)" % str(lower_scores["yahtzee"]))
+	# Only check if we already have a yahtzee scored (flag set when yahtzee rolled and scored)
+	if not yahtzee_scored:
+		print("[Scorecard] check_bonus_yahtzee: No initial Yahtzee scored yet (yahtzee_scored: %s)" % str(yahtzee_scored))
 		return
 	
 	# Use ScoreEvaluator to check for Yahtzee with wildcards
+	print("[Scorecard] Checking if dice show yahtzee pattern...")
 	if ScoreEvaluatorSingleton.is_yahtzee(values):
 		print("[Scorecard] ✓ Bonus Yahtzee detected! Adding 100 points.")
 		yahtzee_bonuses += 1
@@ -525,6 +535,12 @@ func reset_scores() -> void:
 	
 	# Reset debug counter
 	calculate_score_call_count = 0
+	
+	# Reset yahtzee tracking
+	yahtzee_scored = false
+	yahtzee_bonuses = 0
+	yahtzee_bonus_points = 0
+	print("[Scorecard] Reset yahtzee_scored flag and bonus tracking")
 	
 	# Reset upper section scores
 	for category in upper_scores.keys():

@@ -548,6 +548,41 @@ func get_owned_power_up_ids() -> Array[String]:
 		result.append(id)
 	return result
 
+
+## clear_all() -> void
+##
+## Removes all power-ups from the UI. Called on new channel start.
+func clear_all() -> void:
+	print("[PowerUpUI] Clearing all power-ups")
+	
+	# Get all IDs to clear
+	var ids_to_clear = _power_up_data.keys().duplicate()
+	
+	# Clear spines
+	for id in _spines.keys():
+		var spine = _spines[id]
+		if spine:
+			spine.queue_free()
+	_spines.clear()
+	
+	# Clear fanned icons
+	for id in _fanned_icons.keys():
+		var icon = _fanned_icons[id]
+		if icon:
+			icon.queue_free()
+	_fanned_icons.clear()
+	
+	# Clear data
+	_power_up_data.clear()
+	
+	# Reset to spines state
+	_current_state = State.SPINES
+	
+	# Update label
+	update_slots_label()
+	
+	print("[PowerUpUI] Cleared", ids_to_clear.size(), "power-ups")
+
 func get_power_up_icon(id: String) -> PowerUpIcon:
 	# Return fanned icon if it exists and we're in fanned state
 	if _current_state == State.FANNED and _fanned_icons.has(id):

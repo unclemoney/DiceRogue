@@ -361,11 +361,13 @@ func is_small_straight(values: Array[int]) -> bool:
 ##
 ## Returns: bool - true if Yahtzee pattern exists (5+ of same value)
 func is_yahtzee(values: Array[int]) -> bool:
+	print("[ScoreEvaluator] is_yahtzee check - input values:", values)
 	if values.is_empty():
 		return false
 	
 	# Filter out disabled values (like twos with disabled_twos debuff)
 	var filtered_values = filter_disabled_values(values)
+	print("[ScoreEvaluator] is_yahtzee - filtered values:", filtered_values)
 	
 	# Need at least 5 dice to have a Yahtzee
 	if filtered_values.size() < 5:
@@ -388,6 +390,8 @@ func is_yahtzee(values: Array[int]) -> bool:
 			var val = filtered_values[i]
 			value_counts[val] = value_counts.get(val, 0) + 1
 	
+	print("[ScoreEvaluator] is_yahtzee - value_counts:", value_counts, " wildcard_count:", wildcard_count)
+	
 	# If all dice are wildcards, it's automatically a Yahtzee
 	if wildcard_count >= 5:
 		print("[ScoreEvaluator] ✓ All wildcards - automatic Yahtzee!")
@@ -399,4 +403,5 @@ func is_yahtzee(values: Array[int]) -> bool:
 			print("[ScoreEvaluator] Valid yahtzee: ", value_counts[value], " dice showing ", value, " + ", wildcard_count, " wildcards")
 			return true
 	
+	print("[ScoreEvaluator] No yahtzee pattern found")
 	return false

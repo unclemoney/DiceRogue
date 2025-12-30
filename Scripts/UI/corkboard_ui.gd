@@ -301,6 +301,29 @@ func remove_challenge(id: String) -> void:
 	print("[CorkboardUI] Removed challenge:", id)
 
 
+## clear_all_challenges() -> void
+##
+## Removes all challenges from the UI. Called on new channel start.
+func clear_all_challenges() -> void:
+	print("[CorkboardUI] Clearing all challenges")
+	
+	# Clear fanned icons
+	for id in _challenge_fanned_icons.keys():
+		var icon = _challenge_fanned_icons[id]
+		if is_instance_valid(icon):
+			icon.queue_free()
+	_challenge_fanned_icons.clear()
+	
+	# Clear data
+	_challenge_data.clear()
+	_challenge_instances.clear()
+	
+	# Update display
+	_update_challenge_spine_display()
+	
+	print("[CorkboardUI] Cleared all challenges")
+
+
 ## get_challenge_spine_position()
 ##
 ## Returns the global center position of the challenge spine for celebration effects.
@@ -596,6 +619,29 @@ func remove_debuff(id: String) -> void:
 	print("[CorkboardUI] Removed debuff:", id)
 
 
+## clear_all_debuffs() -> void
+##
+## Removes all debuffs from the UI. Called on new channel start.
+func clear_all_debuffs() -> void:
+	print("[CorkboardUI] Clearing all debuffs")
+	
+	# Clear fanned icons
+	for id in _debuff_fanned_icons.keys():
+		var icon = _debuff_fanned_icons[id]
+		if is_instance_valid(icon):
+			icon.queue_free()
+	_debuff_fanned_icons.clear()
+	
+	# Clear data
+	_debuff_data.clear()
+	_debuff_instances.clear()
+	
+	# Update display
+	_update_debuff_spine_display()
+	
+	print("[CorkboardUI] Cleared all debuffs")
+
+
 func animate_debuff_removal(id: String, callback: Callable = Callable()) -> void:
 	if not _debuff_data.has(id):
 		if callback.is_valid():
@@ -755,6 +801,33 @@ func remove_consumable(id: String) -> void:
 	_active_consumable_count = max(0, _active_consumable_count - 1)
 	_reposition_consumable_spines()
 	print("[CorkboardUI] Removed consumable:", id)
+
+
+## clear_all_consumables() -> void
+##
+## Removes all consumables from the UI. Called on new channel start.
+func clear_all_consumables() -> void:
+	print("[CorkboardUI] Clearing all consumables")
+	
+	# Clear spines
+	for id in _consumable_spines.keys():
+		var spine = _consumable_spines[id]
+		if is_instance_valid(spine):
+			spine.queue_free()
+	_consumable_spines.clear()
+	
+	# Clear fanned icons
+	for id in _consumable_fanned_icons.keys():
+		var icon = _consumable_fanned_icons[id]
+		if is_instance_valid(icon):
+			icon.queue_free()
+	_consumable_fanned_icons.clear()
+	
+	# Clear data
+	_consumable_data.clear()
+	_active_consumable_count = 0
+	
+	print("[CorkboardUI] Cleared all consumables")
 
 
 func _reposition_consumable_spines() -> void:

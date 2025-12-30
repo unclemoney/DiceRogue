@@ -65,3 +65,14 @@ func can_afford(amount: int) -> bool:
 ## Returns the current money balance.
 func get_money() -> int:
 	return money
+
+
+## reset_to_starting_money() -> void
+##
+## Resets money to the starting amount (100). Called on new channel start.
+func reset_to_starting_money() -> void:
+	var starting_money := 100
+	var change := starting_money - money
+	money = starting_money
+	print("[PlayerEconomy] Reset to starting money:", money)
+	emit_signal("money_changed", money, change)

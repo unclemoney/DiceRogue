@@ -16,6 +16,8 @@ var channel_manager = null
 var overlay: ColorRect
 var panel_container: PanelContainer
 var channel_label: Label
+var checkmark_icon: Label
+var completion_label: Label
 var multiplier_label: Label
 var difficulty_label: Label
 var up_button: Button
@@ -158,6 +160,26 @@ func _build_ui() -> void:
 	display_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	display_panel.add_child(display_vbox)
 	
+	# HBox container for checkmark + channel number
+	var channel_hbox = HBoxContainer.new()
+	channel_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	channel_hbox.add_theme_constant_override("separation", 8)
+	display_vbox.add_child(channel_hbox)
+	
+	# Checkmark icon (hidden by default, animated when shown)
+	checkmark_icon = Label.new()
+	checkmark_icon.name = "CheckmarkIcon"
+	checkmark_icon.text = "✓"
+	checkmark_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	checkmark_icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	checkmark_icon.add_theme_font_override("font", vcr_font)
+	checkmark_icon.add_theme_font_size_override("font_size", 36)
+	checkmark_icon.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3))
+	checkmark_icon.visible = false
+	checkmark_icon.scale = Vector2.ZERO
+	checkmark_icon.pivot_offset = Vector2(18, 18)  # Center pivot for scaling
+	channel_hbox.add_child(checkmark_icon)
+	
 	channel_label = Label.new()
 	channel_label.name = "ChannelLabel"
 	channel_label.text = "01"
@@ -165,7 +187,7 @@ func _build_ui() -> void:
 	channel_label.add_theme_font_override("font", vcr_font)
 	channel_label.add_theme_font_size_override("font_size", 48)
 	channel_label.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3))
-	display_vbox.add_child(channel_label)
+	channel_hbox.add_child(channel_label)
 	
 	# Multiplier display
 	multiplier_label = Label.new()
@@ -186,6 +208,16 @@ func _build_ui() -> void:
 	difficulty_label.add_theme_font_size_override("font_size", 18)
 	difficulty_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.6))
 	content_vbox.add_child(difficulty_label)
+	
+	# Completion status label
+	completion_label = Label.new()
+	completion_label.name = "CompletionLabel"
+	completion_label.text = "Not Completed"
+	completion_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	completion_label.add_theme_font_override("font", vcr_font)
+	completion_label.add_theme_font_size_override("font_size", 14)
+	completion_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	content_vbox.add_child(completion_label)
 	
 	# Spacer
 	var spacer1 = Control.new()
@@ -303,6 +335,43 @@ func _update_display() -> void:
 		difficulty_label.add_theme_color_override("font_color", Color(1.0, 0.2, 0.2))
 	else:
 		difficulty_label.add_theme_color_override("font_color", Color(0.8, 0.1, 0.5))
+	
+	# Update completion status display
+	_update_completion_status()
+
+
+## _update_completion_status() -> void
+##
+## Updates the checkmark icon and completion label based on channel completion.
+## Animates checkmark with scale tween when channel is completed.
+func _update_completion_status() -> void:
+	if not checkmark_icon or not completion_label or not channel_manager:
+		return
+	
+	var progress_manager = get_node_or_null("/root/ProgressManager")
+	if not progress_manager:
+		return
+	
+	var current_channel = channel_manager.current_channel
+	var is_completed = progress_manager.is_channel_completed(current_channel)
+	
+	if is_completed:
+		# Show checkmark with animation
+		checkmark_icon.visible = true
+		var tween = create_tween()
+		tween.tween_property(checkmark_icon, "scale", Vector2.ONE, 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+		
+		# Update completion label
+		completion_label.text = "Cleared"
+		completion_label.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3))
+	else:
+		# Hide checkmark (no animation needed)
+		checkmark_icon.visible = false
+		checkmark_icon.scale = Vector2.ZERO
+		
+		# Update completion label
+		completion_label.text = "Not Completed"
+		completion_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 
 
 ## _on_up_pressed() -> void
