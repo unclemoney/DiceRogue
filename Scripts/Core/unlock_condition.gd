@@ -8,7 +8,7 @@ class_name UnlockCondition
 
 enum ConditionType {
 	SCORE_POINTS,           # Score X points in a single category
-	ROLL_YAHTZEE,          # Roll a yahtzee (5 of a kind)
+	ROLL_YAHTZEE,          # Roll a yahtzee (5 of a kind) in a single game
 	COMPLETE_GAME,         # Complete a full game
 	SCORE_CATEGORY,        # Score in a specific category (e.g., "full_house")
 	ROLL_STRAIGHT,         # Roll a large or small straight
@@ -18,7 +18,10 @@ enum ConditionType {
 	SCORE_UPPER_BONUS,     # Achieve upper section bonus (63+ points)
 	WIN_GAMES,             # Win X number of games
 	CUMULATIVE_SCORE,      # Achieve total score across all games
-	DICE_COMBINATIONS      # Roll specific dice combinations
+	DICE_COMBINATIONS,     # Roll specific dice combinations
+	CUMULATIVE_YAHTZEES,   # Roll X yahtzees across all games (cumulative)
+	COMPLETE_CHANNEL,      # Complete channel X (reach highest_channel_completed >= target)
+	REACH_CHANNEL          # Alias for COMPLETE_CHANNEL - reach a specific channel
 }
 
 @export var id: String = ""
@@ -84,6 +87,18 @@ func is_satisfied(game_stats: Dictionary, progress_data: Dictionary) -> bool:
 			var combinations = game_stats.get("combinations_rolled", {})
 			return combinations.get(combination_type, 0) >= target_value
 			
+		ConditionType.CUMULATIVE_YAHTZEES:
+			var total_yahtzees = progress_data.get("total_yahtzees", 0)
+			return total_yahtzees >= target_value
+			
+		ConditionType.COMPLETE_CHANNEL:
+			var highest_channel = progress_data.get("highest_channel_completed", 0)
+			return highest_channel >= target_value
+			
+		ConditionType.REACH_CHANNEL:
+			var highest_channel_reached = progress_data.get("highest_channel_completed", 0)
+			return highest_channel_reached >= target_value
+			
 		_:
 			push_error("[UnlockCondition] Unknown condition type: %s" % condition_type)
 			return false
@@ -136,5 +151,14 @@ func get_formatted_description() -> String:
 		ConditionType.DICE_COMBINATIONS:
 			var combination = additional_params.get("combination", "unknown")
 			return "Roll %s" % combination.replace("_", " ").capitalize()
+		ConditionType.CUMULATIVE_YAHTZEES:
+			if target_value == 1:
+				return "Roll a Yahtzee (total across all games)"
+			else:
+				return "Roll %d Yahtzees (total across all games)" % target_value
+		ConditionType.COMPLETE_CHANNEL:
+			return "Complete Channel %d" % target_value
+		ConditionType.REACH_CHANNEL:
+			return "Reach Channel %d" % target_value
 		_:
 			return description if description else "Unknown condition"

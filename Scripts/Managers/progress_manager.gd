@@ -197,7 +197,7 @@ func check_all_unlock_conditions() -> void:
 			item_unlocked.emit(item_id, item.get_type_string())
 	
 	if newly_unlocked.size() > 0:
-		print("[ProgressManager] Newly unlocked items: %s" % newly_unlocked)
+		print("[ProgressManager] Newly unlocked items: %s" % [str(newly_unlocked)])
 		items_unlocked_batch.emit(newly_unlocked)  # Emit batch signal for UI
 
 ## Track game events
@@ -303,6 +303,79 @@ func get_locked_items(item_type: int) -> Array:
 			locked.append(item)
 	
 	return locked
+
+
+## get_condition_progress(item_id: String) -> Dictionary
+##
+## Gets the current progress toward unlocking an item.
+## Returns dictionary with "current", "target", and "percentage" keys.
+## @param item_id: The ID of the item to check progress for
+## @return Dictionary: {current: int, target: int, percentage: float}
+func get_condition_progress(item_id: String) -> Dictionary:
+	var result = {"current": 0, "target": 0, "percentage": 0.0}
+	
+	if not unlockable_items.has(item_id):
+		return result
+	
+	var item = unlockable_items[item_id]
+	if item.is_unlocked:
+		return {"current": 1, "target": 1, "percentage": 100.0}
+	
+	var condition = item.unlock_condition
+	if not condition:
+		return result
+	
+	result["target"] = condition.target_value
+	
+	# Get current progress based on condition type
+	match condition.condition_type:
+		UnlockConditionClass.ConditionType.SCORE_POINTS:
+			# This is per-game, so we can't track cumulative progress
+			result["current"] = 0  # Would need to track max ever achieved
+		
+		UnlockConditionClass.ConditionType.ROLL_YAHTZEE:
+			# Per-game yahtzees - can't track cumulative progress for this specific type
+			result["current"] = 0
+		
+		UnlockConditionClass.ConditionType.COMPLETE_GAME:
+			result["current"] = cumulative_stats.get("games_completed", 0)
+		
+		UnlockConditionClass.ConditionType.ROLL_STRAIGHT:
+			# Per-game straights
+			result["current"] = 0
+		
+		UnlockConditionClass.ConditionType.USE_CONSUMABLES:
+			# Per-game consumables used
+			result["current"] = 0
+		
+		UnlockConditionClass.ConditionType.EARN_MONEY:
+			# Per-game money earned
+			result["current"] = 0
+		
+		UnlockConditionClass.ConditionType.WIN_GAMES:
+			result["current"] = cumulative_stats.get("games_won", 0)
+		
+		UnlockConditionClass.ConditionType.CUMULATIVE_SCORE:
+			result["current"] = cumulative_stats.get("total_score", 0)
+		
+		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES:
+			result["current"] = cumulative_stats.get("total_yahtzees", 0)
+		
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL:
+			result["current"] = cumulative_stats.get("highest_channel_completed", 0)
+		
+		UnlockConditionClass.ConditionType.REACH_CHANNEL:
+			result["current"] = cumulative_stats.get("highest_channel_completed", 0)
+		
+		_:
+			result["current"] = 0
+	
+	# Calculate percentage (capped at 100)
+	if result["target"] > 0:
+		result["percentage"] = min(100.0, (float(result["current"]) / float(result["target"])) * 100.0)
+	
+	return result
+
 
 ## Debug functions for manual unlock/lock
 func debug_unlock_item(item_id: String) -> void:
@@ -468,7 +541,7 @@ func _create_default_unlockable_items() -> void:
 	_add_default_power_up("randomizer", "Randomizer", "Random bonus effects", 
 		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 5)
 	_add_default_power_up("wild_dots", "Wild Dots", "Special die face effects", 
-		UnlockConditionClass.ConditionType.ROLL_YAHTZEE, 3)
+		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 5)
 	_add_default_power_up("the_consumer_is_always_right", "The Consumer Is Always Right", "Consumable synergies", 
 		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 10)
 	
@@ -486,7 +559,7 @@ func _create_default_unlockable_items() -> void:
 	_add_default_power_up("purple_slime", "Purple Slime", "Doubles purple dice probability", 
 		UnlockConditionClass.ConditionType.ROLL_YAHTZEE, 1)  # Rare: need to roll a Yahtzee
 	_add_default_power_up("blue_slime", "Blue Slime", "Doubles blue dice probability", 
-		UnlockConditionClass.ConditionType.ROLL_YAHTZEE, 3)  # Legendary: need multiple Yahtzees
+		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 10)  # Legendary: need 10 yahtzees total
 	
 	# ==========================================================================
 	# ALL CONSUMABLES (16 total) - From Scripts/Consumable/*.tres files  
@@ -562,13 +635,13 @@ func _create_default_unlockable_items() -> void:
 	_add_default_consumable("large_straight_upgrade", "Large Straight Upgrade", "Upgrade Large Straight category level", 
 		UnlockConditionClass.ConditionType.ROLL_STRAIGHT, 5)
 	_add_default_consumable("yahtzee_upgrade", "Yahtzee Upgrade", "Upgrade Yahtzee category level", 
-		UnlockConditionClass.ConditionType.ROLL_YAHTZEE, 3)
+		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 8)
 	_add_default_consumable("chance_upgrade", "Chance Upgrade", "Upgrade Chance category level", 
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 350)
 	
-	# Master Upgrade (unlock with advanced achievement)
+	# Master Upgrade (unlock with channel progression)
 	_add_default_consumable("all_categories_upgrade", "Master Upgrade", "Upgrade ALL categories by one level", 
-		UnlockConditionClass.ConditionType.ROLL_YAHTZEE, 5)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 10)
 	
 	# ==========================================================================
 	# ALL MODS (7 total) - From Scripts/Mods/*.tres files
@@ -581,7 +654,7 @@ func _create_default_unlockable_items() -> void:
 	_add_default_mod("gold_six", "Gold Six", "Sixes count as wilds", 
 		UnlockConditionClass.ConditionType.ROLL_YAHTZEE, 2)
 	_add_default_mod("five_by_one", "Five by One", "All dice show 1 or 5", 
-		UnlockConditionClass.ConditionType.ROLL_YAHTZEE, 3)
+		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 12)
 	_add_default_mod("three_but_three", "Three But Three", "Dice avoid rolling 3s", 
 		UnlockConditionClass.ConditionType.ROLL_STRAIGHT, 4)
 	_add_default_mod("wild_card", "Wild Card", "Random special effects on each roll", 
@@ -601,6 +674,46 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 200)
 	_add_default_colored_dice("blue_dice", "Blue Dice", "Unlocks blue colored dice (complex effects)", 
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 250)
+	
+	# ==========================================================================
+	# CHANNEL-BASED UNLOCKS - Reward progression through channels
+	# ==========================================================================
+	
+	# Channel 3 - Basic utility unlocks (early game rewards)
+	_add_default_power_up("lucky_streak", "Lucky Streak", "Increased chance of rolling pairs", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3)
+	_add_default_consumable("channel_bonus", "Channel Bonus", "Gain $50 per completed channel", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3)
+	
+	# Channel 5 - Uncommon unlocks (mid-early game rewards)
+	_add_default_power_up("steady_progress", "Steady Progress", "+5 points to all lower section scores", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5)
+	_add_default_consumable("reroll_master", "Reroll Master", "Gain 2 extra rerolls this round", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5)
+	_add_default_mod("channel_veteran", "Channel Veteran", "Start with +$25 per channel completed", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5)
+	
+	# Channel 8 - Rare unlocks (mid game rewards)
+	_add_default_power_up("combo_king", "Combo King", "Bonus multiplier for consecutive scoring", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 8)
+	_add_default_consumable("lucky_seven", "Lucky Seven", "All dice become 1-7 range this round", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 8)
+	
+	# Channel 12 - Advanced unlocks (late-mid game rewards)
+	_add_default_power_up("channel_champion", "Channel Champion", "Double points in favorite category", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 12)
+	_add_default_mod("precision_roller", "Precision Roller", "First roll each turn is always 4+", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 12)
+	
+	# Channel 15 - Legendary unlocks (end game rewards)
+	_add_default_power_up("grand_master", "Grand Master", "All scoring categories get +10%", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 15)
+	_add_default_consumable("ultimate_reroll", "Ultimate Reroll", "Reroll all dice up to 5 times", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 15)
+	
+	# Channel 20 - Ultimate unlocks (prestige rewards)
+	_add_default_power_up("dice_lord", "Dice Lord", "Start each round with one guaranteed Yahtzee", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 20)
 	
 	print("[ProgressManager] Created %d total unlockable items across all categories" % unlockable_items.size())
 

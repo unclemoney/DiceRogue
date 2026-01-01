@@ -259,9 +259,61 @@ Before considering a consumable complete:
 - [ ] Added to GameController logic
 - [ ] Debug command created (optional)
 - [ ] Usability logic implemented (if needed)
+- [ ] Unlock condition configured (see below)
 - [ ] Tested via debug panel
 - [ ] Tested in full game
 - [ ] Documentation updated
+
+## Unlock Conditions
+
+All consumables in DiceRogue are locked by default and must be unlocked through gameplay achievements. Configure unlock conditions in `Scripts/Managers/progress_manager.gd`.
+
+### Adding Unlock Condition
+
+In `_create_default_unlockable_items()`, add your consumable using `_add_default_consumable()`:
+
+```gdscript
+_add_default_consumable("your_consumable_id", "Display Name", "Description text", 
+    UnlockConditionClass.ConditionType.CONDITION_TYPE, target_value)
+```
+
+### Available Condition Types
+
+| Condition Type | Description | Target Value |
+|---------------|-------------|--------------|
+| `SCORE_POINTS` | Score X points in a single category | Points (e.g., 100) |
+| `COMPLETE_GAME` | Complete X number of games | Games (e.g., 5) |
+| `USE_CONSUMABLES` | Use X consumables in one game | Count (e.g., 3) |
+| `EARN_MONEY` | Earn X dollars in a single game | Dollars (e.g., 200) |
+| `WIN_GAMES` | Win X games (cumulative) | Wins (e.g., 10) |
+| `CUMULATIVE_YAHTZEES` | Roll X yahtzees across all games | Yahtzees (e.g., 10) |
+| `COMPLETE_CHANNEL` | Complete channel X | Channel (e.g., 5) |
+| `REACH_CHANNEL` | Reach channel X | Channel (e.g., 10) |
+
+### Example Unlock Configurations
+
+```gdscript
+# Basic consumable - unlock with score achievement
+_add_default_consumable("quick_cash", "Quick Cash", "Gain instant money", 
+    UnlockConditionClass.ConditionType.EARN_MONEY, 25)
+
+# Mid-tier - unlock with multiple consumable uses
+_add_default_consumable("reroll_master", "Reroll Master", "Gain 2 extra rerolls", 
+    UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5)
+
+# Advanced - unlock with channel progression
+_add_default_consumable("ultimate_reroll", "Ultimate Reroll", "Reroll all dice up to 5 times", 
+    UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 15)
+```
+
+### Difficulty Curve Guidelines
+
+| Tier | Condition Examples | Typical Requirements |
+|------|-------------------|---------------------|
+| Basic | SCORE_POINTS, EARN_MONEY | 25-100 points/dollars |
+| Uncommon | COMPLETE_GAME, USE_CONSUMABLES | 2-5 games/consumables |
+| Rare | COMPLETE_CHANNEL | Channel 5-8 |
+| Legendary | COMPLETE_CHANNEL, CUMULATIVE_YAHTZEES | Channel 12-20, 10+ yahtzees |
 
 ## Architecture Notes
 

@@ -5,8 +5,8 @@ class_name EndOfRoundStatsPanel
 ##
 ## Displays end-of-round statistics with animated bonus reveals.
 ## Shows after clicking Shop button but before the Shop opens.
-## Awards bonuses for empty scorecard categories ($25 each) and
-## points above challenge target ($1 per point).
+## Awards bonuses for challenge completion, chores completed,
+## empty scorecard categories ($25 each), and points above challenge target ($1 per point).
 
 signal continue_to_shop_pressed
 signal panel_closed
@@ -27,6 +27,10 @@ var title_label: Label
 var round_label: Label
 var challenge_score_label: Label
 var final_score_label: Label
+var challenge_reward_label: Label
+var challenge_reward_value_label: Label
+var chore_reward_label: Label
+var chore_reward_value_label: Label
 var empty_categories_label: Label
 var empty_categories_bonus_label: Label
 var score_above_label: Label
@@ -40,6 +44,11 @@ var challenge_target_score: int = 0
 var final_score: int = 0
 var empty_category_count: int = 0
 var points_above_target: int = 0
+
+# Challenge and chore rewards
+var challenge_reward_amount: int = 0
+var chores_completed_count: int = 0
+var chore_reward_amount: int = 0
 
 # Calculated bonuses
 var empty_categories_bonus: int = 0
@@ -59,8 +68,8 @@ func _ready() -> void:
 	if not overlay:
 		_build_ui()
 	
-	# Connect button
-	if continue_button:
+	# Connect button (check if not already connected)
+	if continue_button and not continue_button.pressed.is_connected(_on_continue_button_pressed):
 		continue_button.pressed.connect(_on_continue_button_pressed)
 
 
@@ -190,6 +199,46 @@ func _build_ui() -> void:
 	bonus_title.add_theme_font_size_override("font_size", 20)
 	content_vbox.add_child(bonus_title)
 	
+	# Challenge reward row
+	var challenge_hbox = HBoxContainer.new()
+	challenge_hbox.add_theme_constant_override("separation", 10)
+	content_vbox.add_child(challenge_hbox)
+	
+	challenge_reward_label = Label.new()
+	challenge_reward_label.name = "ChallengeRewardLabel"
+	challenge_reward_label.text = "Challenge Reward:"
+	challenge_reward_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	challenge_reward_label.add_theme_font_size_override("font_size", 18)
+	challenge_hbox.add_child(challenge_reward_label)
+	
+	challenge_reward_value_label = Label.new()
+	challenge_reward_value_label.name = "ChallengeRewardValueLabel"
+	challenge_reward_value_label.text = "$0"
+	challenge_reward_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	challenge_reward_value_label.add_theme_font_size_override("font_size", 18)
+	challenge_reward_value_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
+	challenge_hbox.add_child(challenge_reward_value_label)
+	
+	# Chore reward row
+	var chore_hbox = HBoxContainer.new()
+	chore_hbox.add_theme_constant_override("separation", 10)
+	content_vbox.add_child(chore_hbox)
+	
+	chore_reward_label = Label.new()
+	chore_reward_label.name = "ChoreRewardLabel"
+	chore_reward_label.text = "Chores Completed (0 × $50):"
+	chore_reward_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chore_reward_label.add_theme_font_size_override("font_size", 18)
+	chore_hbox.add_child(chore_reward_label)
+	
+	chore_reward_value_label = Label.new()
+	chore_reward_value_label.name = "ChoreRewardValueLabel"
+	chore_reward_value_label.text = "$0"
+	chore_reward_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	chore_reward_value_label.add_theme_font_size_override("font_size", 18)
+	chore_reward_value_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
+	chore_hbox.add_child(chore_reward_value_label)
+	
 	# Empty categories bonus row
 	var empty_hbox = HBoxContainer.new()
 	empty_hbox.add_theme_constant_override("separation", 10)
@@ -280,6 +329,8 @@ func _build_ui() -> void:
 ##   - final_score: int
 ##   - empty_categories: int
 ##   - scorecard: Scorecard reference (for calculating empty categories)
+##   - challenge_reward: int (reward from completing the challenge)
+##   - chores_completed: int (number of chores completed this round)
 func show_stats(data: Dictionary) -> void:
 	print("[EndOfRoundStatsPanel] Showing stats with data:", data)
 	
@@ -287,6 +338,11 @@ func show_stats(data: Dictionary) -> void:
 	round_number = data.get("round_number", 1)
 	challenge_target_score = data.get("challenge_target", 0)
 	final_score = data.get("final_score", 0)
+	
+	# Get challenge reward and chores completed
+	challenge_reward_amount = data.get("challenge_reward", 0)
+	chores_completed_count = data.get("chores_completed", 0)
+	chore_reward_amount = chores_completed_count * ChoresManager.CHORE_REWARD_MONEY
 	
 	# Calculate empty categories if scorecard provided
 	if data.has("scorecard"):
@@ -298,8 +354,12 @@ func show_stats(data: Dictionary) -> void:
 	empty_categories_bonus = empty_category_count * EMPTY_CATEGORY_BONUS
 	points_above_target = max(0, final_score - challenge_target_score)
 	score_above_bonus = points_above_target * POINTS_ABOVE_TARGET_BONUS
-	total_bonus = empty_categories_bonus + score_above_bonus
 	
+	# Total includes challenge reward, chore reward, empty categories, and score above target
+	total_bonus = challenge_reward_amount + chore_reward_amount + empty_categories_bonus + score_above_bonus
+	
+	print("[EndOfRoundStatsPanel] Challenge reward:", challenge_reward_amount)
+	print("[EndOfRoundStatsPanel] Chores completed:", chores_completed_count, "Reward:", chore_reward_amount)
 	print("[EndOfRoundStatsPanel] Empty categories:", empty_category_count, "Bonus:", empty_categories_bonus)
 	print("[EndOfRoundStatsPanel] Points above target:", points_above_target, "Bonus:", score_above_bonus)
 	print("[EndOfRoundStatsPanel] Total bonus:", total_bonus)
@@ -308,10 +368,14 @@ func show_stats(data: Dictionary) -> void:
 	round_label.text = "Round %d" % round_number
 	challenge_score_label.text = str(challenge_target_score)
 	final_score_label.text = str(final_score)
+	challenge_reward_label.text = "Challenge Reward:"
+	chore_reward_label.text = "Chores Completed (%d × $%d):" % [chores_completed_count, ChoresManager.CHORE_REWARD_MONEY]
 	empty_categories_label.text = "Empty Categories (%d × $%d):" % [empty_category_count, EMPTY_CATEGORY_BONUS]
 	score_above_label.text = "Points Above Target (%d × $%d):" % [points_above_target, POINTS_ABOVE_TARGET_BONUS]
 	
 	# Reset bonus labels for animation
+	challenge_reward_value_label.text = "$0"
+	chore_reward_value_label.text = "$0"
 	empty_categories_bonus_label.text = "$0"
 	score_above_bonus_label.text = "$0"
 	total_bonus_label.text = "$0"
@@ -389,15 +453,24 @@ func _animate_entrance() -> void:
 ## _animate_bonuses()
 ##
 ## Animates the bonus counters incrementing from 0 to final values.
+## Order: Challenge reward -> Chore reward -> Empty categories -> Score above -> Total
 func _animate_bonuses() -> void:
 	_is_animating = true
 	
-	# Animate empty categories bonus
-	await _animate_counter(empty_categories_bonus_label, empty_categories_bonus, COUNTER_ANIMATION_DURATION * 0.6)
+	# Animate challenge reward (with zero-value handling)
+	await _animate_counter_with_zero_effect(challenge_reward_value_label, challenge_reward_amount, COUNTER_ANIMATION_DURATION * 0.6)
 	await get_tree().create_timer(REVEAL_DELAY).timeout
 	
-	# Animate score above bonus
-	await _animate_counter(score_above_bonus_label, score_above_bonus, COUNTER_ANIMATION_DURATION * 0.6)
+	# Animate chore reward (with zero-value handling)
+	await _animate_counter_with_zero_effect(chore_reward_value_label, chore_reward_amount, COUNTER_ANIMATION_DURATION * 0.6)
+	await get_tree().create_timer(REVEAL_DELAY).timeout
+	
+	# Animate empty categories bonus (with zero-value handling)
+	await _animate_counter_with_zero_effect(empty_categories_bonus_label, empty_categories_bonus, COUNTER_ANIMATION_DURATION * 0.6)
+	await get_tree().create_timer(REVEAL_DELAY).timeout
+	
+	# Animate score above bonus (with zero-value handling)
+	await _animate_counter_with_zero_effect(score_above_bonus_label, score_above_bonus, COUNTER_ANIMATION_DURATION * 0.6)
 	await get_tree().create_timer(REVEAL_DELAY).timeout
 	
 	# Animate total with longer duration and celebration
@@ -453,6 +526,45 @@ func _animate_counter(label: Label, target_value: int, duration: float) -> void:
 	label.add_theme_color_override("font_color", original_color)
 	
 	await settle_tween.finished
+
+
+## _animate_counter_with_zero_effect(label: Label, target_value: int, duration: float)
+##
+## Animates a label counting up from 0 to the target value.
+## If target is 0, shows red "$0" with a bounce/shake animation.
+func _animate_counter_with_zero_effect(label: Label, target_value: int, duration: float) -> void:
+	if target_value == 0:
+		# Set text red and play bounce animation for zero values
+		label.text = "$0"
+		label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))  # Red color
+		
+		# Bounce/shake animation for zero
+		label.pivot_offset = label.size / 2.0
+		var shake_tween = create_tween()
+		
+		# Quick shake left-right
+		shake_tween.tween_property(label, "position:x", label.position.x - 5, 0.05)
+		shake_tween.tween_property(label, "position:x", label.position.x + 5, 0.05)
+		shake_tween.tween_property(label, "position:x", label.position.x - 3, 0.05)
+		shake_tween.tween_property(label, "position:x", label.position.x + 3, 0.05)
+		shake_tween.tween_property(label, "position:x", label.position.x, 0.05)
+		
+		# Scale bounce
+		shake_tween.parallel().tween_property(label, "scale", Vector2(1.3, 0.8), 0.1)\
+			.set_trans(Tween.TRANS_QUAD)\
+			.set_ease(Tween.EASE_OUT)
+		shake_tween.tween_property(label, "scale", Vector2(0.9, 1.2), 0.1)\
+			.set_trans(Tween.TRANS_QUAD)\
+			.set_ease(Tween.EASE_OUT)
+		shake_tween.tween_property(label, "scale", Vector2(1.0, 1.0), 0.1)\
+			.set_trans(Tween.TRANS_BOUNCE)\
+			.set_ease(Tween.EASE_OUT)
+		
+		await shake_tween.finished
+		return
+	
+	# For non-zero values, use normal animation
+	await _animate_counter(label, target_value, duration)
 
 
 ## _play_celebration_effect()
@@ -513,8 +625,23 @@ func _hide_panel() -> void:
 ## get_total_bonus() -> int
 ##
 ## Returns the calculated total bonus for this round.
+## Includes challenge reward, chore reward, empty categories bonus, and score above target bonus.
 func get_total_bonus() -> int:
 	return total_bonus
+
+
+## get_challenge_reward() -> int
+##
+## Returns the challenge reward amount.
+func get_challenge_reward() -> int:
+	return challenge_reward_amount
+
+
+## get_chore_reward() -> int
+##
+## Returns the chore reward amount.
+func get_chore_reward() -> int:
+	return chore_reward_amount
 
 
 ## get_empty_categories_bonus() -> int

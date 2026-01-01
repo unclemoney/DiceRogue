@@ -1,4 +1,4 @@
-[gd_scene load_steps=104 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=105 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -101,6 +101,7 @@
 [ext_resource type="Resource" uid="uid://cs8hhns55xdvv" path="res://Scripts/PowerUps/BlueSlime.tres" id="107_blue_slime"]
 [ext_resource type="PackedScene" uid="uid://ccn3jkgrhqwqe" path="res://Scenes/UI/StatisticsPanel.tscn" id="999_stats"]
 [ext_resource type="Script" uid="uid://du88ajtcwgupi" path="res://Scripts/Managers/ChoresManager.gd" id="1000_chores_mgr"]
+[ext_resource type="PackedScene" uid="uid://crlykvmh3v2xq" path="res://Scenes/UI/UnlockedItemPanel.tscn" id="1001_unlocked_panel"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wtptv"]
 
@@ -336,6 +337,8 @@ size_flags_vertical = 3
 [node name="ChannelManagerUI" parent="." instance=ExtResource("99_ocuqv")]
 
 [node name="RoundWinnerPanel" parent="." instance=ExtResource("100_sxl8b")]
+
+[node name="UnlockedItemPanel" parent="." instance=ExtResource("1001_unlocked_panel")]
 
 [node name="ChannelManager" type="Node" parent="."]
 script = ExtResource("101_wcrst")

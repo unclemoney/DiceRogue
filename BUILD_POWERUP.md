@@ -480,6 +480,64 @@ func _categorize_modifier_source(source: String) -> String:
 2. **Test incremental updates:** For growing bonuses, ensure proper tracking
 3. **Debug ScoreModifierManager:** Use debug panel to view active modifiers
 
+## Unlock Conditions
+
+All PowerUps in DiceRogue are locked by default and must be unlocked through gameplay achievements. Configure unlock conditions in `Scripts/Managers/progress_manager.gd`.
+
+### Adding Unlock Condition
+
+In `_create_default_unlockable_items()`, add your PowerUp using `_add_default_power_up()`:
+
+```gdscript
+_add_default_power_up("your_powerup_id", "Display Name", "Description text", 
+    UnlockConditionClass.ConditionType.CONDITION_TYPE, target_value)
+```
+
+### Available Condition Types
+
+| Condition Type | Description | Target Value |
+|---------------|-------------|--------------|
+| `SCORE_POINTS` | Score X points in a single category | Points (e.g., 100) |
+| `ROLL_YAHTZEE` | Roll X yahtzees in a single game | Count (e.g., 1) |
+| `COMPLETE_GAME` | Complete X number of games | Games (e.g., 5) |
+| `ROLL_STRAIGHT` | Roll X straights in a single game | Count (e.g., 2) |
+| `USE_CONSUMABLES` | Use X consumables in one game | Count (e.g., 5) |
+| `EARN_MONEY` | Earn X dollars in a single game | Dollars (e.g., 200) |
+| `WIN_GAMES` | Win X games (cumulative) | Wins (e.g., 10) |
+| `CUMULATIVE_YAHTZEES` | Roll X yahtzees across all games | Yahtzees (e.g., 10) |
+| `COMPLETE_CHANNEL` | Complete channel X | Channel (e.g., 5) |
+| `REACH_CHANNEL` | Reach channel X | Channel (e.g., 10) |
+
+### Example Unlock Configurations
+
+```gdscript
+# Starter PowerUp - unlock by completing a game
+_add_default_power_up("extra_dice", "Extra Dice", "Start with an extra die", 
+    UnlockConditionClass.ConditionType.COMPLETE_GAME, 1)
+
+# Common PowerUp - unlock with score achievement
+_add_default_power_up("evens_no_odds", "Evens No Odds", "Additive bonus for even dice", 
+    UnlockConditionClass.ConditionType.SCORE_POINTS, 50)
+
+# Rare PowerUp - unlock with cumulative yahtzees
+_add_default_power_up("wild_dots", "Wild Dots", "Special die face effects", 
+    UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 5)
+
+# Legendary PowerUp - unlock with channel progression
+_add_default_power_up("grand_master", "Grand Master", "All scoring categories get +10%", 
+    UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 15)
+```
+
+### Difficulty Curve Guidelines
+
+| Tier | Condition Examples | Typical Requirements |
+|------|-------------------|---------------------|
+| Starter | COMPLETE_GAME | 1 game |
+| Common | SCORE_POINTS, EARN_MONEY | 50-100 points/dollars |
+| Uncommon | SCORE_POINTS, ROLL_YAHTZEE | 100-200 points, 1-2 yahtzees |
+| Rare | ROLL_STRAIGHT, USE_CONSUMABLES | 2-3 straights, 5-7 consumables |
+| Legendary | COMPLETE_CHANNEL, CUMULATIVE_YAHTZEES | Channel 10-20, 10+ yahtzees |
+
 ## Best Practices
 
 1. **Always test PowerUp cleanup** - Use remove() and verify no memory leaks

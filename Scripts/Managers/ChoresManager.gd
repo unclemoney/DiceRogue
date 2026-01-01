@@ -22,6 +22,7 @@ const MAX_PROGRESS: int = 100
 const PROGRESS_PER_ROLL: int = 1
 const PROGRESS_REDUCTION: int = 20
 const ROLLS_PER_ROTATION: int = 20  # Chores rotate every 20 rolls
+const CHORE_REWARD_MONEY: int = 50  # Reward per chore completed
 
 # Mom's mood system: 1 = very happy, 5 = neutral, 10 = extremely angry
 const MIN_MOOD: int = 1
@@ -29,6 +30,7 @@ const MAX_MOOD: int = 10
 const DEFAULT_MOOD: int = 5
 
 var current_progress: int = 0
+var chores_completed_this_round: int = 0  # Track chores completed in current round
 var current_task = null  # ChoreData instance
 var tasks_completed: int = 0
 var total_rolls_tracked: int = 0  # Track total rolls for chore rotation
@@ -96,6 +98,9 @@ func complete_current_task() -> void:
 	
 	# Track completed chore for display
 	completed_chores.append(current_task)
+	
+	# Track chores completed this round for end-of-round rewards
+	chores_completed_this_round += 1
 	
 	task_completed.emit(current_task)
 	tasks_completed += 1
@@ -180,10 +185,29 @@ func reset_for_new_game() -> void:
 	is_mom_active = false
 	_task_history.clear()
 	current_round_number = 1  # Reset round scaling
+	reset_round_tracking()  # Reset round-specific tracking
 	progress_changed.emit(current_progress)
 	mom_mood_changed.emit(mom_mood)
 	select_new_task()
 	print("[ChoresManager] Reset for new game - mood: %d, round: %d" % [mom_mood, current_round_number])
+
+
+## reset_round_tracking()
+##
+## Resets round-specific tracking variables.
+## Called at the start of each new round.
+func reset_round_tracking() -> void:
+	chores_completed_this_round = 0
+	print("[ChoresManager] Round tracking reset - chores_completed_this_round: 0")
+
+
+## get_chores_completed_this_round() -> int
+##
+## Returns the number of chores completed in the current round.
+##
+## Returns: int - number of chores completed this round
+func get_chores_completed_this_round() -> int:
+	return chores_completed_this_round
 
 
 ## check_task_completion()

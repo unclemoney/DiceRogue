@@ -322,6 +322,46 @@ price = 150
 - Test with different dice to ensure compatibility
 - Verify money changes in the debug panel's game state display
 
+## Unlock Conditions
+
+All Mods in DiceRogue are locked by default and must be unlocked through gameplay achievements. Configure unlock conditions in `Scripts/Managers/progress_manager.gd`.
+
+### Adding Unlock Condition
+
+In `_create_default_unlockable_items()`, add your Mod using `_add_default_mod()`:
+
+```gdscript
+_add_default_mod("your_mod_id", "Display Name", "Description text", 
+    UnlockConditionClass.ConditionType.CONDITION_TYPE, target_value)
+```
+
+### Available Condition Types
+
+| Condition Type | Description | Target Value |
+|---------------|-------------|--------------|
+| `SCORE_POINTS` | Score X points in a single category | Points (e.g., 200) |
+| `ROLL_YAHTZEE` | Roll X yahtzees in a single game | Count (e.g., 2) |
+| `ROLL_STRAIGHT` | Roll X straights in a single game | Count (e.g., 4) |
+| `USE_CONSUMABLES` | Use X consumables in one game | Count (e.g., 10) |
+| `CUMULATIVE_YAHTZEES` | Roll X yahtzees across all games | Yahtzees (e.g., 12) |
+| `COMPLETE_CHANNEL` | Complete channel X | Channel (e.g., 5) |
+
+### Example Unlock Configurations
+
+```gdscript
+# Basic mod - unlock with score achievement
+_add_default_mod("even_only", "Even Only", "Forces die to only roll even numbers", 
+    UnlockConditionClass.ConditionType.SCORE_POINTS, 200)
+
+# Advanced mod - unlock with cumulative yahtzees
+_add_default_mod("five_by_one", "Five by One", "All dice show 1 or 5", 
+    UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 12)
+
+# Channel-based mod - unlock by completing channel 5
+_add_default_mod("channel_veteran", "Channel Veteran", "Start with +$25 per channel completed", 
+    UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5)
+```
+
 ## File Structure Summary
 
 After creating a mod, your file structure should include:

@@ -244,86 +244,95 @@ The **Progress Tracking System** enables persistent player progression across mu
 
 **Features:**
 - **Persistent Progression**: Player progress saves across game sessions using JSON file storage
-- **Unlock Conditions**: 12 different achievement types trigger item unlocks (score points, roll yahtzees, use consumables, etc.)
-- **Item Locking**: PowerUps, Consumables, and Colored Dice can be locked behind progression requirements
-- **LOCKED Shop Tab**: New shop interface shows locked items with their unlock requirements
-- **Unlock Notifications**: Animated card-based notifications when items are unlocked
+- **Unlock Conditions**: 15 different achievement types trigger item unlocks (score points, roll yahtzees, complete channels, etc.)
+- **Item Locking**: PowerUps, Consumables, Mods, and Colored Dice can be locked behind progression requirements
+- **LOCKED Shop Tab**: Shop interface shows locked items with unlock requirements and progress bars
+- **Unlock Panel**: Sequential card-flip animations display newly unlocked items at end of round
+- **Progress Tracking**: Visual progress bars show how close you are to unlocking items
 - **Debug Controls**: Full testing suite for unlock/lock functionality
 
 **Core Components:**
 - **UnlockCondition** (`Scripts/Core/unlock_condition.gd`) - Defines achievement requirements
 - **UnlockableItem** (`Scripts/Core/unlockable_item.gd`) - Represents items that can be unlocked
 - **ProgressManager** (autoload) - Central progression tracking and persistence system
-- **Shop UI Integration** - LOCKED tab with filtered item display
-- **Unlock Notifications** - Animated UI for celebrating new unlocks
+- **UnlockedItemPanel** (`Scripts/UI/unlocked_item_panel.gd`) - End-of-round unlock display
+- **Shop UI Integration** - LOCKED tab with filtered item display and progress bars
 
 **Unlock Condition Types:**
-1. **SCORE_POINTS** - Accumulate total score across all games
-2. **ROLL_YAHTZEE** - Roll Yahtzees (5 of a kind)
-3. **USE_CONSUMABLES** - Use any consumable items
-4. **PURCHASE_POWERUPS** - Buy PowerUp items from shop
-5. **COMPLETE_UPPER_BONUS** - Achieve upper section bonus (63+ points)
-6. **ROLL_STRAIGHTS** - Roll small or large straights
-7. **SPEND_MONEY** - Spend money in the shop
-8. **ROLL_FULL_HOUSE** - Roll full house combinations
-9. **LOCK_DICE** - Lock dice during gameplay
-10. **GAMES_PLAYED** - Complete game sessions
-11. **EARN_MONEY** - Accumulate money through gameplay
-12. **SCORE_CATEGORY** - Score specific Yahtzee categories
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `SCORE_POINTS` | Score X points in a single category | Score 100+ in one category |
+| `ROLL_YAHTZEE` | Roll X yahtzees in a single game | Roll 2 yahtzees in one game |
+| `COMPLETE_GAME` | Complete X number of games | Complete 5 games |
+| `SCORE_CATEGORY` | Score in a specific category | Score in Full House |
+| `ROLL_STRAIGHT` | Roll X straights in a single game | Roll 3 straights |
+| `USE_CONSUMABLES` | Use X consumables in one game | Use 5 consumables |
+| `EARN_MONEY` | Earn X dollars in a single game | Earn $200 in one game |
+| `COLORED_DICE_BONUS` | Trigger X same color bonuses | Trigger 3 color bonuses |
+| `SCORE_UPPER_BONUS` | Achieve upper section bonus | Get 63+ upper points |
+| `WIN_GAMES` | Win X games (cumulative) | Win 10 total games |
+| `CUMULATIVE_SCORE` | Achieve total score across all games | Score 5000 total |
+| `DICE_COMBINATIONS` | Roll specific dice combinations | Roll specific patterns |
+| `CUMULATIVE_YAHTZEES` | Roll X yahtzees across all games | Roll 10 total yahtzees |
+| `COMPLETE_CHANNEL` | Complete channel X | Complete Channel 5 |
+| `REACH_CHANNEL` | Reach channel X | Reach Channel 10 |
+
+**End of Round Unlock Display:**
+When items are unlocked at the end of a round, they're displayed sequentially in modal panels with:
+- Card flip animation revealing the item
+- Item icon, name, and description
+- Type indicator (PowerUp, Consumable, Mod, etc.)
+- Achievement that triggered the unlock
+- OK button to acknowledge and continue
+
+The unlock panel appears between game end and the End of Round Stats Panel, ensuring players see their achievements before viewing bonuses.
+
+**Progress Tracking in LOCKED Tab:**
+- Progress bars show cumulative progress toward unlock conditions
+- Items ≥80% complete are highlighted with gold borders
+- Star icon (⭐) replaces lock icon for items close to unlocking
+- Progress displays "X/Y" format for trackable conditions
 
 **Implementation:**
 ```gdscript
 # Example unlock condition for a PowerUp
 var condition = UnlockCondition.new()
-condition.condition_type = UnlockCondition.ConditionType.ROLL_YAHTZEE
-condition.target_value = 5
-condition.description = "Roll 5 Yahtzees"
+condition.condition_type = UnlockCondition.ConditionType.CUMULATIVE_YAHTZEES
+condition.target_value = 10
+condition.description = "Roll 10 Yahtzees (total)"
 
-# Check if player has met the condition
-if condition.is_satisfied():
-    item.unlock_item()
+# Check player's progress toward a condition
+var progress = ProgressManager.get_condition_progress("item_id")
+# Returns: {current: 5, target: 10, percentage: 50.0}
 ```
 
-**Shop Integration:**
-- **All Items Tab**: Shows only unlocked items (existing behavior)
-- **LOCKED Tab**: Displays locked items with unlock requirements
-- **Real-time Updates**: Shop refreshes when new items are unlocked
-- **Requirement Display**: Clear descriptions of what players need to achieve
+**Channel-Based Unlocks:**
+New items can be unlocked by completing channels, providing progression rewards:
+- **Channel 3**: Basic utility items (Lucky Streak, Channel Bonus)
+- **Channel 5**: Uncommon items (Steady Progress, Reroll Master)
+- **Channel 8**: Rare items (Combo King, Lucky Seven)
+- **Channel 12**: Advanced items (Channel Champion, Precision Roller)
+- **Channel 15**: Legendary items (Grand Master, Ultimate Reroll)
+- **Channel 20**: Ultimate items (Dice Lord)
 
 **Progress Persistence:**
-- **JSON Storage**: Progress data saved to `user://progress_data.json`
+- **JSON Storage**: Progress data saved to `user://progress.save`
 - **Automatic Saving**: Progress updates saved immediately when conditions are met
 - **Game Integration**: Seamless tracking of all player actions and achievements
 
 **Debug Support:**
-- **Progress Tab**: Full debug panel with 12 test functions
+- **Progress Tab**: Full debug panel with test functions
 - **Unlock/Lock Controls**: Toggle any item's unlock status for testing
 - **Progress Simulation**: Simulate achieving any unlock condition
 - **Reset Functions**: Clear progress for testing scenarios
 
-**Usage Examples:**
-```gdscript
-# Track player achieving an unlock condition
-ProgressManager.track_yahtzees_rolled(1)
-
-# Check if item should be unlocked
-ProgressManager.check_unlock_conditions()
-
-# Show notification for newly unlocked items
-ProgressManager.show_unlock_notifications()
-```
-
-**Integration Points:**
-- **GameController**: Integrated with game flow for progress tracking
-- **Shop System**: Enhanced with locked item display and filtering
-- **Notification System**: Celebrates achievements with animated UI
-- **Statistics System**: Connected to Statistics for achievement data
-
 **File Locations:**
 - Core System: `Scripts/Core/unlock_condition.gd`, `Scripts/Core/unlockable_item.gd`
 - Manager: `Scripts/Managers/progress_manager.gd` (autoload)
-- UI Components: Modified `Scripts/UI/shop_ui.gd`, new `Scripts/UI/unlock_notification_ui.gd`
-- Test Scene: `Tests/ProgressSystemTest.tscn` for comprehensive system validation
+- UI Components: `Scripts/UI/shop_ui.gd`, `Scripts/UI/unlocked_item_panel.gd`
+- Scenes: `Scenes/UI/UnlockedItemPanel.tscn`
+- Build Guides: `BUILD_POWERUP.md`, `BUILD_CONSUMABLE.md`, `BUILD_MOD.md`
 
 ### Score Modifier System
 The `ScoreModifierManager` handles all score modifications:

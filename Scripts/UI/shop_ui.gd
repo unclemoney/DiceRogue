@@ -543,7 +543,7 @@ func _style_grid_containers() -> void:
 	_replace_grid_with_centered_layout()
 	
 	# Apply styling to any remaining grid containers
-	var containers = [power_up_container, consumable_container, mod_container]
+	var containers = [power_up_container, consumable_container, mod_container, colored_dice_container]
 	
 	for container in containers:
 		if container:
@@ -569,7 +569,8 @@ func _replace_grid_with_centered_layout() -> void:
 	var tab_nodes = [
 		tab_container.get_node_or_null("PowerUps"),
 		tab_container.get_node_or_null("Consumables"), 
-		tab_container.get_node_or_null("Mods")
+		tab_container.get_node_or_null("Mods"),
+		tab_container.get_node_or_null("Colors")
 	]
 	
 	for i in range(tab_nodes.size()):
@@ -632,6 +633,8 @@ func _replace_grid_with_centered_layout() -> void:
 			consumable_container = hbox
 		elif tab_node.name == "Mods":
 			mod_container = hbox
+		elif tab_node.name == "Colors":
+			colored_dice_container = hbox
 		
 		print("[ShopUI] Created centered layout for:", tab_node.name)
 
@@ -829,14 +832,24 @@ func populate_locked_items() -> void:
 
 ## _create_locked_item_display(item)
 ##
-## Creates a display for a locked item showing what it is and unlock requirements
+## Creates a display for a locked item showing what it is, unlock requirements,
+## and current progress toward unlocking (for cumulative conditions).
 func _create_locked_item_display(item) -> void:
 	if not item or not locked_container:
 		return
 	
+	# Get progress data from ProgressManager
+	var progress_manager = get_node("/root/ProgressManager")
+	var progress_data = {"current": 0, "target": 0, "percentage": 0.0}
+	if progress_manager and progress_manager.has_method("get_condition_progress"):
+		progress_data = progress_manager.get_condition_progress(item.id)
+	
+	# Determine if item is close to unlocking (>=80%)
+	var is_close_to_unlock = progress_data["percentage"] >= 80.0
+	
 	# Create a panel for the locked item
 	var locked_panel = PanelContainer.new()
-	locked_panel.custom_minimum_size = Vector2(200, 150)
+	locked_panel.custom_minimum_size = Vector2(200, 170)  # Slightly taller to fit progress
 	
 	# Add a background style
 	var style = StyleBoxFlat.new()
@@ -845,7 +858,13 @@ func _create_locked_item_display(item) -> void:
 	style.border_width_right = 2
 	style.border_width_top = 2
 	style.border_width_bottom = 2
-	style.border_color = Color(0.8, 0.4, 0.4, 1.0)  # Red border for locked items
+	
+	# Gold border for items close to unlocking, red for others
+	if is_close_to_unlock:
+		style.border_color = Color(1.0, 0.85, 0.0, 1.0)  # Gold border
+	else:
+		style.border_color = Color(0.8, 0.4, 0.4, 1.0)  # Red border for locked items
+	
 	style.corner_radius_top_left = 5
 	style.corner_radius_top_right = 5
 	style.corner_radius_bottom_left = 5
@@ -857,13 +876,16 @@ func _create_locked_item_display(item) -> void:
 	vbox.add_theme_constant_override("separation", 3)
 	locked_panel.add_child(vbox)
 	
-	# Add item name with lock icon
+	# Add item name with lock icon (or star for close to unlock)
 	var name_label = RichTextLabel.new()
 	name_label.custom_minimum_size = Vector2(180, 30)
 	name_label.fit_content = true
 	name_label.scroll_active = false
 	name_label.bbcode_enabled = true  # Enable BBCode
-	name_label.text = "[center]🔒 %s[/center]" % item.display_name
+	if is_close_to_unlock:
+		name_label.text = "[center]⭐ %s[/center]" % item.display_name
+	else:
+		name_label.text = "[center]🔒 %s[/center]" % item.display_name
 	name_label.add_theme_font_size_override("normal_font_size", 11)
 	vbox.add_child(name_label)
 	
@@ -894,6 +916,48 @@ func _create_locked_item_display(item) -> void:
 	unlock_label.add_theme_font_size_override("normal_font_size", 9)
 	unlock_label.text = "[center][color=yellow]Unlock: %s[/color][/center]" % item.get_unlock_description()
 	vbox.add_child(unlock_label)
+	
+	# Add progress display for trackable conditions
+	if progress_data["target"] > 0 and progress_data["current"] > 0:
+		var progress_container = HBoxContainer.new()
+		progress_container.alignment = BoxContainer.ALIGNMENT_CENTER
+		vbox.add_child(progress_container)
+		
+		# Progress bar
+		var progress_bar = ProgressBar.new()
+		progress_bar.custom_minimum_size = Vector2(120, 12)
+		progress_bar.max_value = 100.0
+		progress_bar.value = progress_data["percentage"]
+		progress_bar.show_percentage = false
+		
+		# Style the progress bar
+		var bar_style = StyleBoxFlat.new()
+		bar_style.bg_color = Color(0.3, 0.3, 0.3, 1.0)
+		bar_style.corner_radius_top_left = 3
+		bar_style.corner_radius_top_right = 3
+		bar_style.corner_radius_bottom_left = 3
+		bar_style.corner_radius_bottom_right = 3
+		progress_bar.add_theme_stylebox_override("background", bar_style)
+		
+		var fill_style = StyleBoxFlat.new()
+		if is_close_to_unlock:
+			fill_style.bg_color = Color(1.0, 0.85, 0.0, 1.0)  # Gold when close
+		else:
+			fill_style.bg_color = Color(0.3, 0.7, 0.3, 1.0)  # Green normally
+		fill_style.corner_radius_top_left = 3
+		fill_style.corner_radius_top_right = 3
+		fill_style.corner_radius_bottom_left = 3
+		fill_style.corner_radius_bottom_right = 3
+		progress_bar.add_theme_stylebox_override("fill", fill_style)
+		
+		progress_container.add_child(progress_bar)
+		
+		# Progress text
+		var progress_text = Label.new()
+		progress_text.text = " %d/%d" % [progress_data["current"], progress_data["target"]]
+		progress_text.add_theme_font_size_override("font_size", 9)
+		progress_text.modulate = Color(0.8, 0.8, 0.8, 1.0)
+		progress_container.add_child(progress_text)
 	
 	locked_container.add_child(locked_panel)
 

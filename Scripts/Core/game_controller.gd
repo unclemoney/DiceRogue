@@ -78,6 +78,7 @@ const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable
 @export var synergy_manager_path: NodePath      = ^"../SynergyManager"
 @export var corkboard_ui_path: NodePath         = ^"../CorkboardUI"
 @export var end_of_round_stats_panel_path: NodePath = ^"../EndOfRoundStatsPanel"
+@export var unlocked_item_panel_path: NodePath = ^"../UnlockedItemPanel"
 @export var channel_manager_path: NodePath      = ^"../ChannelManager"
 @export var channel_manager_ui_path: NodePath   = ^"../ChannelManagerUI"
 @export var round_winner_panel_path: NodePath   = ^"../RoundWinnerPanel"
@@ -110,6 +111,7 @@ const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable
 @onready var chore_ui = get_node_or_null(chore_ui_path)
 @onready var synergy_manager = get_node_or_null(synergy_manager_path)
 @onready var end_of_round_stats_panel = get_node_or_null(end_of_round_stats_panel_path)
+@onready var unlocked_item_panel = get_node_or_null(unlocked_item_panel_path)
 @onready var channel_manager = get_node_or_null(channel_manager_path)
 @onready var channel_manager_ui = get_node_or_null(channel_manager_ui_path)
 @onready var round_winner_panel = get_node_or_null(round_winner_panel_path)
@@ -124,6 +126,9 @@ var _game_over_popup: Control = null
 # Challenge celebration effect manager
 var _challenge_celebration = null
 
+# Pending unlocked items to display before stats panel
+var _pending_unlocked_items: Array = []
+
 const STARTING_POWER_UP_IDS := ["extra_dice", "extra_rolls"]
 
 var _last_modded_die_index: int = -1  # Track which die received the last mod
@@ -132,6 +137,9 @@ var pending_mods: Array[String] = []
 var mod_persistence_map: Dictionary = {}  # mod_id -> int tracking how many instances of each mod should persist
 var _shop_tween: Tween
 var _end_of_round_stats_shown: bool = false  # Track if stats panel was shown this round
+var _challenge_reward_this_round: int = 0  # Track challenge reward for end-of-round stats
+var _challenge_reward_granted: bool = false  # Prevent double-granting challenge reward
+var _chores_reward_granted: bool = false  # Prevent double-granting chores reward
 
 
 func _ready() -> void:
@@ -339,28 +347,35 @@ func _on_channel_start_pressed(channel: int) -> void:
 ## _on_next_channel_pressed() -> void
 ##
 ## Called when player presses "Next Channel" on the RoundWinnerPanel.
-## Advances to next channel and restarts the game loop.
+## If items were unlocked, shows unlock panel first, then advances to next channel.
 func _on_next_channel_pressed() -> void:
 	print("[GameController] Next channel requested")
 	
+	# Mark current channel as completed and save progress (this may trigger unlocks)
 	if channel_manager:
-		# Mark current channel as completed before advancing
 		var progress_manager = get_node_or_null("/root/ProgressManager")
 		if progress_manager:
 			progress_manager.mark_channel_completed(channel_manager.current_channel)
-		
-		channel_manager.advance_to_next_channel()
-		print("[GameController] Advanced to Channel", channel_manager.current_channel)
+			# Also end game tracking with win condition
+			var final_score = scorecard.get_total_score() if scorecard else 0
+			progress_manager.end_game_tracking(final_score, true)
+			print("[GameController] Channel %d completed and progress saved" % channel_manager.current_channel)
 	
-	# Restart the game loop at Round 1
-	_restart_game_for_new_channel()
+	# Check if we have pending unlocked items to show first
+	if _pending_unlocked_items.size() > 0 and unlocked_item_panel:
+		print("[GameController] Showing unlock panels after channel win for %d items" % _pending_unlocked_items.size())
+		_show_unlocked_items_before_next_channel()
+		return
+	
+	# No pending unlocks - proceed directly to next channel
+	_proceed_to_next_channel()
 
 
 ## _restart_game_for_new_channel() -> void
 ##
 ## Resets game state and starts Round 1 for the new channel.
 ## Does NOT reset the channel number (keeps current channel).
-## Resets: money, power-ups, consumables, debuffs, goof-off meter.
+## Resets: money, power-ups, consumables, debuffs, goof-off meter, scorecard levels.
 func _restart_game_for_new_channel() -> void:
 	print("[GameController] Restarting game for new channel...")
 	
@@ -388,6 +403,11 @@ func _restart_game_for_new_channel() -> void:
 	if ScoreModifierManager:
 		ScoreModifierManager.reset()
 		print("[GameController] ScoreModifierManager reset")
+	
+	# Reset scorecard completely (including levels back to 1) for new channel
+	if scorecard:
+		scorecard.reset_scores()
+		print("[GameController] Scorecard scores and levels reset for new channel")
 	
 	# Reset game button UI state (first_roll_done flag, etc.)
 	if game_button_ui and game_button_ui.has_method("reset_for_new_channel"):
@@ -1752,6 +1772,7 @@ func _on_turn_started() -> void:
 ## _on_game_over()
 ##
 ## Called when max turns (13) is reached. Shows Game Over popup with results.
+## If items were unlocked, shows unlock panel before the game over popup.
 func _on_game_over() -> void:
 	print("[GameController] Game over - max turns reached")
 	
@@ -1764,15 +1785,27 @@ func _on_game_over() -> void:
 		if round_data and round_data.has("target_score"):
 			target_score = round_data["target_score"]
 	
-	# Save progress if challenge was completed
-	if challenge_completed:
-		print("[GameController] Challenge completed at game end - saving progress")
-		var progress_manager = get_node("/root/ProgressManager")
-		if progress_manager:
-			progress_manager.end_game_tracking(final_score, true)
-			print("[GameController] Progress saved with score: %d" % final_score)
+	# Save progress - this may trigger unlocks
+	var progress_manager = get_node("/root/ProgressManager")
+	if progress_manager:
+		# Pass whether challenge was completed as the win condition
+		progress_manager.end_game_tracking(final_score, challenge_completed)
+		print("[GameController] Progress saved with score: %d, win: %s" % [final_score, challenge_completed])
 	
-	# Show Game Over popup
+	# Store game over data for later use
+	var game_over_data = {
+		"final_score": final_score,
+		"target_score": target_score,
+		"challenge_completed": challenge_completed
+	}
+	
+	# Check if we have pending unlocked items to show first
+	if _pending_unlocked_items.size() > 0 and unlocked_item_panel:
+		print("[GameController] Showing unlock panels before game over for %d items" % _pending_unlocked_items.size())
+		_show_unlocked_items_before_game_over(game_over_data)
+		return
+	
+	# No pending unlocks - show Game Over popup directly
 	_show_game_over_popup(final_score, target_score, challenge_completed)
 
 
@@ -2024,24 +2057,32 @@ func _on_die_locked(die) -> void:
 
 ## _on_shop_button_pressed()
 ##
-## Handles the shop button press. If challenge was completed, shows the End of Round
-## Statistics Panel first with bonus calculations, then opens the shop after player
-## clicks "Head to Shop". Otherwise toggles the shop directly.
+## Handles the shop button press. If challenge was completed, shows unlock panels
+## (if any items were unlocked), then shows End of Round Statistics Panel with 
+## bonus calculations, then opens the shop after player clicks "Head to Shop".
+## Otherwise toggles the shop directly.
 func _on_shop_button_pressed() -> void:
 	# Check if challenge was completed - show stats panel first (only once)
 	if round_manager and round_manager.is_challenge_completed and not _end_of_round_stats_shown:
-		print("[GameController] Challenge completed - showing end of round stats panel")
+		print("[GameController] Challenge completed - processing end of round sequence")
 		
-		# Save progress
+		# Save progress (this triggers unlock checks)
 		var progress_manager = get_node("/root/ProgressManager")
 		if progress_manager:
 			var current_score = scorecard.get_total_score() if scorecard else 0
 			progress_manager.end_game_tracking(current_score, true)
 			print("[GameController] Progress saved with score: %d" % current_score)
 		
-		# Show stats panel if available
+		_end_of_round_stats_shown = true  # Mark as shown
+		
+		# Check if we have pending unlocked items to show first
+		if _pending_unlocked_items.size() > 0 and unlocked_item_panel:
+			print("[GameController] Showing unlock panels for %d items" % _pending_unlocked_items.size())
+			_show_unlocked_items_panel()
+			return
+		
+		# No pending unlocks - show stats panel directly if available
 		if end_of_round_stats_panel:
-			_end_of_round_stats_shown = true  # Mark as shown
 			_show_end_of_round_stats()
 			return
 		else:
@@ -2063,12 +2104,19 @@ func _show_end_of_round_stats() -> void:
 	var target_score = round_manager.get_current_challenge_target_score() if round_manager else 0
 	var final_score = scorecard.get_total_score() if scorecard else 0
 	
+	# Get chores completed this round
+	var chores_completed = 0
+	if chores_manager:
+		chores_completed = chores_manager.get_chores_completed_this_round()
+	
 	# Prepare data for the stats panel
 	var stats_data = {
 		"round_number": current_round_num,
 		"challenge_target": target_score,
 		"final_score": final_score,
-		"scorecard": scorecard
+		"scorecard": scorecard,
+		"challenge_reward": _challenge_reward_this_round,
+		"chores_completed": chores_completed
 	}
 	
 	# Connect to panel's continue signal (one-shot)
@@ -2259,16 +2307,19 @@ func activate_challenge(id: String) -> void:
 
 ## _on_challenge_completed(id)
 ##
-## Handles the successful completion of a challenge: awards any rewards,
+## Handles the successful completion of a challenge: stores reward for end-of-round stats,
 ## triggers celebration animation, animates UI removal, and frees the challenge instance.
+## Note: Reward money is no longer granted immediately - it's shown and granted in the
+## end-of-round stats panel to provide better feedback to the player.
 func _on_challenge_completed(id: String) -> void:
 	print("[GameController] Challenge completed:", id)
 
-	# Grant reward if specified
+	# Store reward for end-of-round stats (don't grant immediately)
 	var def = challenge_manager.get_def(id)
-	if def and def.reward_money > 0:
-		print("[GameController] Granting reward:", def.reward_money)
-		PlayerEconomy.add_money(def.reward_money)
+	if def and def.reward_money > 0 and not _challenge_reward_granted:
+		print("[GameController] Storing challenge reward for end-of-round: $%d" % def.reward_money)
+		_challenge_reward_this_round = def.reward_money
+		_challenge_reward_granted = true  # Prevent double-granting
 
 	# Trigger celebration fireworks
 	_trigger_challenge_celebration()
@@ -2598,6 +2649,11 @@ func _on_round_started(round_number: int) -> void:
 	# Reset end of round stats flag for new round
 	_end_of_round_stats_shown = false
 	
+	# Reset challenge and chores reward tracking for new round
+	_challenge_reward_this_round = 0
+	_challenge_reward_granted = false
+	_chores_reward_granted = false
+	
 	# Update round-based scaling for scorecard and chores manager
 	if scorecard:
 		scorecard.update_round(round_number)
@@ -2605,6 +2661,7 @@ func _on_round_started(round_number: int) -> void:
 	
 	if chores_manager:
 		chores_manager.update_round(round_number)
+		chores_manager.reset_round_tracking()  # Reset chores completed this round
 		print("[GameController] Chores manager round updated to", round_number)
 	
 	# Enable CRT for active gameplay
@@ -2731,16 +2788,130 @@ func _on_randomizer_effect_updated(effect_type: String, value_text: String) -> v
 ## _on_items_unlocked(item_ids)
 ##
 ## Signal handler for when items are unlocked by the ProgressManager.
-## Shows unlock notifications to the player.
+## Stores unlocked items for display in the unlock panel sequence.
+## The actual display happens when the shop button is pressed (end of round).
 func _on_items_unlocked(item_ids: Array[String]) -> void:
-	print("[GameController] Items unlocked: %v" % [item_ids])
+	print("[GameController] Items unlocked: %s" % [str(item_ids)])
 	
-	# Find the unlock notification UI
-	var unlock_ui = get_tree().get_first_node_in_group("unlock_notification_ui")
-	if unlock_ui and unlock_ui.has_method("show_unlock_notifications"):
-		unlock_ui.show_unlock_notifications(item_ids)
+	# Store for display later (when shop button is pressed)
+	for item_id in item_ids:
+		if item_id not in _pending_unlocked_items:
+			_pending_unlocked_items.append(item_id)
+	
+	print("[GameController] Pending unlocked items to display: %d" % _pending_unlocked_items.size())
+
+
+## _show_unlocked_items_panel()
+##
+## Shows the UnlockedItemPanel to display newly unlocked items sequentially.
+## After all items are acknowledged, proceeds to stats panel or shop.
+func _show_unlocked_items_panel() -> void:
+	if not unlocked_item_panel:
+		print("[GameController] UnlockedItemPanel not available - skipping to stats panel")
+		_pending_unlocked_items.clear()
+		if end_of_round_stats_panel:
+			_show_end_of_round_stats()
+		else:
+			_open_shop_ui()
+		return
+	
+	# Connect to the all_items_acknowledged signal (one-shot)
+	if not unlocked_item_panel.is_connected("all_items_acknowledged", _on_all_unlocks_acknowledged):
+		unlocked_item_panel.all_items_acknowledged.connect(_on_all_unlocks_acknowledged, CONNECT_ONE_SHOT)
+	
+	# Queue the items and show the panel
+	unlocked_item_panel.queue_items(_pending_unlocked_items)
+	_pending_unlocked_items.clear()
+
+
+## _on_all_unlocks_acknowledged()
+##
+## Called when player has acknowledged all unlocked items.
+## Proceeds to show the end of round stats panel or opens shop.
+func _on_all_unlocks_acknowledged() -> void:
+	print("[GameController] All unlocked items acknowledged - continuing to stats panel")
+	
+	if end_of_round_stats_panel:
+		_show_end_of_round_stats()
 	else:
-		print("[GameController] UnlockNotificationUI not found or missing method")
+		_open_shop_ui()
+
+
+# Stored game over data for use after unlock panel closes
+var _pending_game_over_data: Dictionary = {}
+
+
+## _show_unlocked_items_before_game_over(game_over_data)
+##
+## Shows the unlock panel before displaying the game over popup.
+## Stores game over data to use after player acknowledges all unlocks.
+func _show_unlocked_items_before_game_over(game_over_data: Dictionary) -> void:
+	_pending_game_over_data = game_over_data
+	
+	if not unlocked_item_panel:
+		print("[GameController] UnlockedItemPanel not available - showing game over directly")
+		_pending_unlocked_items.clear()
+		_show_game_over_popup(game_over_data["final_score"], game_over_data["target_score"], game_over_data["challenge_completed"])
+		return
+	
+	# Connect to the all_items_acknowledged signal (one-shot)
+	if not unlocked_item_panel.is_connected("all_items_acknowledged", _on_unlocks_acknowledged_then_game_over):
+		unlocked_item_panel.all_items_acknowledged.connect(_on_unlocks_acknowledged_then_game_over, CONNECT_ONE_SHOT)
+	
+	# Queue the items and show the panel
+	unlocked_item_panel.queue_items(_pending_unlocked_items)
+	_pending_unlocked_items.clear()
+
+
+## _on_unlocks_acknowledged_then_game_over()
+##
+## Called when player has acknowledged all unlocked items before game over.
+## Now shows the game over popup.
+func _on_unlocks_acknowledged_then_game_over() -> void:
+	print("[GameController] All unlocked items acknowledged - showing game over")
+	_show_game_over_popup(_pending_game_over_data["final_score"], _pending_game_over_data["target_score"], _pending_game_over_data["challenge_completed"])
+	_pending_game_over_data = {}
+
+
+## _show_unlocked_items_before_next_channel()
+##
+## Shows the unlock panel after channel win, before advancing to next channel.
+func _show_unlocked_items_before_next_channel() -> void:
+	if not unlocked_item_panel:
+		print("[GameController] UnlockedItemPanel not available - proceeding to next channel")
+		_pending_unlocked_items.clear()
+		_proceed_to_next_channel()
+		return
+	
+	# Connect to the all_items_acknowledged signal (one-shot)
+	if not unlocked_item_panel.is_connected("all_items_acknowledged", _on_unlocks_acknowledged_then_next_channel):
+		unlocked_item_panel.all_items_acknowledged.connect(_on_unlocks_acknowledged_then_next_channel, CONNECT_ONE_SHOT)
+	
+	# Queue the items and show the panel
+	unlocked_item_panel.queue_items(_pending_unlocked_items)
+	_pending_unlocked_items.clear()
+
+
+## _on_unlocks_acknowledged_then_next_channel()
+##
+## Called when player has acknowledged all unlocked items after channel win.
+## Now proceeds to next channel.
+func _on_unlocks_acknowledged_then_next_channel() -> void:
+	print("[GameController] All unlocked items acknowledged - proceeding to next channel")
+	_proceed_to_next_channel()
+
+
+## _proceed_to_next_channel()
+##
+## Advances to the next channel and restarts the game loop.
+func _proceed_to_next_channel() -> void:
+	if channel_manager:
+		channel_manager.advance_to_next_channel()
+		print("[GameController] Advanced to Channel", channel_manager.current_channel)
+	
+	# Restart the game loop at Round 1
+	_restart_game_for_new_channel()
+
 
 # Add this helper method to retrieve active power-ups
 func get_active_power_up(id: String) -> PowerUp:

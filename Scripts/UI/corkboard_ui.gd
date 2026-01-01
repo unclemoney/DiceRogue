@@ -407,7 +407,7 @@ func _fan_out_challenges() -> void:
 	if _challenge_spine:
 		_challenge_spine.modulate.a = 0
 	
-	# For each challenge, create 4 POST_IT_NOTEs: Name, Points, Dice, Progress
+	# For each challenge, create 5 POST_IT_NOTEs: Name, Points, Dice, Progress, Reward
 	# Calculate positions for all notes
 	var all_notes: Array = []
 	
@@ -422,7 +422,7 @@ func _fan_out_challenges() -> void:
 		else:
 			target_score = data.target_score
 		
-		# Create the 4 POST_IT_NOTE cards for this challenge
+		# Create the 5 POST_IT_NOTE cards for this challenge
 		var name_note = _create_challenge_post_it("CHALLENGE", data.display_name, challenge_id)
 		var points_note = _create_challenge_post_it("GOAL", str(target_score) + " pts", challenge_id)
 		var dice_note = _create_challenge_post_it("DICE", data.dice_type if data.dice_type else _current_dice_type, challenge_id)
@@ -435,10 +435,15 @@ func _fan_out_challenges() -> void:
 				progress_pct = int((float(current_score) / float(target_score)) * 100)
 		var progress_note = _create_challenge_post_it("PROGRESS", str(progress_pct) + "%", challenge_id)
 		
+		# Create reward note with special styling
+		var reward_text = "$%d" % data.reward_money
+		var reward_note = _create_challenge_post_it("REWARD", reward_text, challenge_id, true)
+		
 		all_notes.append(name_note)
 		all_notes.append(points_note)
 		all_notes.append(dice_note)
 		all_notes.append(progress_note)
+		all_notes.append(reward_note)
 	
 	# Calculate fan positions for all notes
 	var positions = _calculate_fan_positions(all_notes.size())
@@ -457,7 +462,8 @@ func _fan_out_challenges() -> void:
 
 
 ## Creates a uniform POST_IT_NOTE card for challenge display
-func _create_challenge_post_it(title: String, value: String, challenge_id: String) -> Control:
+## is_reward_card: bool - if true, applies special green money styling
+func _create_challenge_post_it(title: String, value: String, challenge_id: String, is_reward_card: bool = false) -> Control:
 	var note = Control.new()
 	note.name = "ChallengeNote_" + title + "_" + challenge_id
 	note.custom_minimum_size = Vector2(120, 120)
@@ -484,7 +490,11 @@ func _create_challenge_post_it(title: String, value: String, challenge_id: Strin
 	title_label.size = Vector2(100, 20)
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.add_theme_font_size_override("font_size", 12)
-	title_label.add_theme_color_override("font_color", Color(0.4, 0.4, 0.4, 1))
+	# Reward card has green title
+	if is_reward_card:
+		title_label.add_theme_color_override("font_color", Color(0.1, 0.5, 0.1, 1))
+	else:
+		title_label.add_theme_color_override("font_color", Color(0.4, 0.4, 0.4, 1))
 	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	note.add_child(title_label)
 	
@@ -497,8 +507,13 @@ func _create_challenge_post_it(title: String, value: String, challenge_id: Strin
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	value_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	value_label.add_theme_font_size_override("font_size", 16)
-	value_label.add_theme_color_override("font_color", Color(0.2, 0.2, 0.2, 1))
+	# Reward card has larger green money text
+	if is_reward_card:
+		value_label.add_theme_font_size_override("font_size", 22)
+		value_label.add_theme_color_override("font_color", Color(0.1, 0.6, 0.1, 1))
+	else:
+		value_label.add_theme_font_size_override("font_size", 16)
+		value_label.add_theme_color_override("font_color", Color(0.2, 0.2, 0.2, 1))
 	value_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	note.add_child(value_label)
 	
