@@ -313,7 +313,7 @@ func _ready() -> void:
 func _on_game_start() -> void:
 	#grant_consumable("random_power_up_uncommon")
 	#grant_consumable("poor_house")
-	#apply_debuff("lock_dice")
+	apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
 	#grant_power_up("red_slime")
 	

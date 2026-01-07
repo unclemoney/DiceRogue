@@ -24,6 +24,7 @@ offset_right = -1200.0
 offset_bottom = -600.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("3_hover_theme")
 script = ExtResource("2_so752")
 
 [node name="Shadow" type="TextureRect" parent="."]
@@ -84,8 +85,8 @@ offset_top = -80.0
 offset_right = 70.0
 offset_bottom = -57.0
 grow_horizontal = 2
-theme = ExtResource("3_hover_theme")
 mouse_filter = 2
+theme = ExtResource("3_hover_theme")
 
 [node name="HoverLabel" type="Label" parent="LabelBg"]
 custom_minimum_size = Vector2(220, 0)

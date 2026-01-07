@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://sliaarrkymdo"]
+[gd_scene load_steps=4 format=3 uid="uid://sliaarrkymdo"]
 
 [ext_resource type="Script" uid="uid://6yelginq6gfe" path="res://Scripts/UI/score_card_ui.gd" id="1_3x83p"]
 [ext_resource type="Theme" uid="uid://yij15afv8bdr" path="res://Resources/UI/scorecard_theme.tres" id="1_pm5im"]
+[ext_resource type="FontFile" uid="uid://dl7ws7oxo8mno" path="res://Resources/Font/BRICK_SANS.ttf" id="3_r7ft4"]
 
 [node name="ScoreCardUI" type="Control"]
 layout_mode = 3
@@ -41,9 +42,10 @@ layout_mode = 0
 offset_top = 5.0
 offset_right = 355.0
 offset_bottom = 50.0
+theme_override_fonts/normal_font = ExtResource("3_r7ft4")
 theme_override_font_sizes/normal_font_size = 28
 bbcode_enabled = true
-text = "ヤッツィー"
+text = "Guhtzee!"
 horizontal_alignment = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
