@@ -313,7 +313,7 @@ func _ready() -> void:
 func _on_game_start() -> void:
 	#grant_consumable("random_power_up_uncommon")
 	#grant_consumable("poor_house")
-	apply_debuff("lock_dice")
+	#apply_debuff("lock_dice")
 	#activate_challenge("300pts_no_debuff")
 	#grant_power_up("red_slime")
 	
@@ -1243,11 +1243,13 @@ func _on_score_manual_assigned(_section: int, _category: String, _score: int, _b
 ##
 ## Common post-scoring logic shared between auto and manual scoring.
 ## Sets all dice to DISABLED state to prevent further interaction until next turn.
+## Resets roll count for audio pitch progression.
 func _handle_post_scoring_effects(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
 	# Disable all dice after scoring
 	if dice_hand:
 		dice_hand.set_all_dice_disabled()
-		print("[GameController] Disabled all dice after scoring")
+		dice_hand.reset_roll_count()
+		print("[GameController] Disabled all dice and reset roll count after scoring")
 	
 	# Check if chore task was completed
 	if chores_manager:

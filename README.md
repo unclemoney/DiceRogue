@@ -95,6 +95,96 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - **Integration**: Works with scoring system and debug tools
   - **Effects**: Manages money, additive, and multiplier calculations
 
+### Audio System
+- **AudioManager** (autoload) - Centralized audio playback with dynamic pitch variation
+  - **Location**: `Scripts/Managers/audio_manager.gd`
+  - **Dice Roll Sounds**: 5 randomized .wav files (`DICE_ROLL_1-5.wav`) with per-die playback
+    - Base pitch randomized (0.9-1.1) plus linear progression (+0.05 per roll number)
+    - Sound staggered by roll delay for natural feel
+    - Pitch progression resets after scoring
+  - **Scoring Sound**: `SCORE_1.wav` with progressive pitch during scoring sequence
+    - Pitch starts at 0.8 and increases by 0.08 per scoring step (max 1.5)
+    - Plays for each die scored, each additive/multiplier contribution, and final score
+    - Pitch resets at start of each scoring animation sequence
+  - **Money Sound**: `CASH_1.wav` played per non-zero bonus item with amount-based pitch scaling
+  - **Button Click Sound**: `BUTTON_CLICK_1.wav` with slight random pitch variation (0.95-1.05)
+    - Automatically connected to ALL buttons in the game via scene tree monitoring
+  - **Firework Sound**: `FIREWORK_1.wav` for celebratory effects
+    - Plays on challenge completion (first burst only)
+    - Plays on consumable use (destruction effect)
+  - **Master Volume**: Shared `@export var master_volume_db` across all players
+  - **Audio Resources**: Located in `res://Resources/Audio/DICE/`, `SCORING/`, `MONEY/`, `UI/`
+
+### Music System
+- **MusicManager** (autoload) - Layered dynamic music that responds to gameplay intensity
+  - **Location**: `Scripts/Managers/music_manager.gd`
+  - **Layered Architecture**: Base layer + 6 optional layers that fade in/out based on intensity
+    - **BOTTOM_LAYER.wav**: Continuously looping base layer (always plays)
+    - **LAYER_N_X.wav**: Variant layers where N=1-6 (layer number), X=A-Z (variant ID)
+    - All layers must have exactly the same duration as BOTTOM_LAYER.wav
+  - **Intensity System**: Levels 0-6 control how many layers play simultaneously
+    - Level 0: Base layer only (minimal music)
+    - Level 3: Base + 3 random layers (moderate)
+    - Level 6: Base + all 6 layers (maximum intensity)
+  - **Smart Variant Selection**: Avoids recently-played variants using configurable memory depth
+    - `@export var variant_memory_depth: int = 3` - How many recent variants to avoid
+    - Prevents repetitive music by cycling through available variants
+  - **Loop-Boundary Synchronization**: Intensity changes only apply at loop boundaries
+    - Music transitions feel seamless and never cut mid-phrase
+    - Pending intensity changes are queued and applied when base layer finishes
+  - **Volume Transitions**: Smooth fade-in/fade-out using tweens
+    - Default transition duration: 0.8 seconds
+    - Old tweens are killed before starting new ones
+
+**Intensity Presets (Game Event Mappings):**
+| Event | Intensity | Description |
+|-------|-----------|-------------|
+| Game Start | 0 | Minimal music during setup |
+| Shop Opened | 1 | Light background during shopping |
+| Round Started | 3 | Moderate energy for active gameplay |
+| Challenge Complete | 6 | Full intensity celebration |
+| Round Complete | 2 | Calming down after success |
+| Game Over | 0 | Return to minimal music |
+
+**File Naming Convention:**
+- Base layer: `BOTTOM_LAYER.wav`
+- Layer variants: `LAYER_1_A.wav`, `LAYER_1_B.wav`, `LAYER_2_A.wav`, etc.
+- All files must be in `res://Resources/Audio/MUSIC/`
+- Duration validation: All layers must exactly match base layer duration (0.0s tolerance)
+
+**Debug Mode:**
+- `@export var debug_mode: bool = false` - Enable verbose logging
+- Logs layer loading, variant selection, intensity changes, and timing
+
+**Configuration:**
+```gdscript
+# Volume control
+@export_range(-40, 0) var music_volume_db: float = -10.0
+
+# Variant selection memory (avoid last N variants per layer)
+@export_range(0, 10) var variant_memory_depth: int = 3
+
+# Enable debug logging
+@export var debug_mode: bool = false
+
+# Intensity presets for game events
+@export var intensity_shop: int = 1
+@export var intensity_round_start: int = 3
+@export var intensity_challenge_complete: int = 6
+@export var intensity_round_complete: int = 2
+@export var intensity_game_over: int = 0
+```
+
+**Public API:**
+```gdscript
+# Set intensity (0-6), change applies at next loop boundary
+MusicManager.set_intensity(3, 0.8)  # Level 3, 0.8s transition
+
+# Start/stop music playback
+MusicManager.start_music()
+MusicManager.stop_music()
+```
+
 ### Channel System (Difficulty Scaling)
 The **Channel Manager** provides an infinite difficulty progression system (Channels 1-99):
 

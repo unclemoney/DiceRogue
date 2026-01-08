@@ -486,10 +486,16 @@ func _animate_bonuses() -> void:
 ## _animate_counter(label: Label, target_value: int, duration: float)
 ##
 ## Animates a label counting up from 0 to the target value.
+## Plays money sound via AudioManager for non-zero values.
 func _animate_counter(label: Label, target_value: int, duration: float) -> void:
 	if target_value == 0:
 		label.text = "$0"
 		return
+	
+	# Play money sound for non-zero values via AudioManager
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_money_sound(target_value)
 	
 	var tween = create_tween()
 	var current_value = {"value": 0}
@@ -532,7 +538,14 @@ func _animate_counter(label: Label, target_value: int, duration: float) -> void:
 ##
 ## Animates a label counting up from 0 to the target value.
 ## If target is 0, shows red "$0" with a bounce/shake animation.
+## Plays money sound via AudioManager for non-zero values.
 func _animate_counter_with_zero_effect(label: Label, target_value: int, duration: float) -> void:
+	# Play money sound for non-zero values via AudioManager
+	if target_value > 0:
+		var audio_mgr = get_node_or_null("/root/AudioManager")
+		if audio_mgr:
+			audio_mgr.play_money_sound(target_value)
+	
 	if target_value == 0:
 		# Set text red and play bounce animation for zero values
 		label.text = "$0"

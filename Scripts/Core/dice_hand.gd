@@ -42,6 +42,9 @@ var current_dice_type: String = "d6"
 var dice_list: Array[Dice] = []
 var _pending_exit_count: int = 0
 
+# Roll tracking for audio pitch progression (resets after scoring)
+var current_roll_number: int = 0
+
 @onready var roll_audio_player: AudioStreamPlayer = AudioStreamPlayer.new()
 
 ## _ready()
@@ -342,17 +345,16 @@ func _on_die_exit_complete(_die: Dice) -> void:
 ## roll_all()
 ##
 ## Rolls every die in `dice_list` that can be rolled (not locked). 
-## Plays roll sound and emits `roll_complete` when finished.
+## Plays per-die roll sounds via AudioManager with pitch progression.
+## Emits `roll_complete` when finished.
 func roll_all() -> void:
 	if dice_list.size() == 0:
 		return
 
-	# Play roll sound effect
-	if roll_sound:
-		roll_audio_player.stream = roll_sound
-		roll_audio_player.play()
+	# Increment roll number for audio pitch progression
+	current_roll_number += 1
 
-	print("\n=== Rolling All Dice ===")
+	print("\n=== Rolling All Dice (Roll #%d) ===" % current_roll_number)
 	print("[DiceHand] Current dice type:", current_dice_type.to_upper())
 	print("[DiceHand] Number of dice:", dice_list.size())
 
@@ -360,6 +362,18 @@ func roll_all() -> void:
 	for i in range(dice_list.size()):
 		var die = dice_list[i]
 		if die.can_roll():
+			# Play per-die roll sound via AudioManager with slight stagger
+			if Engine.has_singleton("AudioManager") or has_node("/root/AudioManager"):
+				var audio_mgr = get_node_or_null("/root/AudioManager")
+				if audio_mgr:
+					# Stagger sound by roll_delay * die index for natural feel
+					var delay = rolled_count * roll_delay * 0.3
+					if delay > 0:
+						get_tree().create_timer(delay).timeout.connect(
+							func(): audio_mgr.play_dice_roll(i, current_roll_number)
+						)
+					else:
+						audio_mgr.play_dice_roll(i, current_roll_number)
 			die.roll()
 			rolled_count += 1
 			print("[DiceHand] Die", i + 1, "rolled:", die.value, "- now in state:", die.get_state_name())
@@ -515,6 +529,16 @@ func set_all_dice_rollable() -> void:
 	for die in dice_list:
 		if die is Dice:
 			die.make_rollable()
+
+
+## reset_roll_count()
+##
+## Resets the roll counter after scoring. Called when a category is scored
+## to ensure pitch progression restarts for the next turn.
+func reset_roll_count() -> void:
+	current_roll_number = 0
+	print("[DiceHand] Roll count reset to 0")
+
 
 ## set_all_dice_disabled()
 ##

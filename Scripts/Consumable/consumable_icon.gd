@@ -537,6 +537,12 @@ func play_destruction_effect() -> void:
 	if is_instance_valid(self):
 		tree = get_tree()
 	
+	# Play firework sound for consumable use (need tree access)
+	if tree:
+		var audio_mgr = tree.root.get_node_or_null("AudioManager")
+		if audio_mgr:
+			audio_mgr.play_firework_sound()
+	
 	if not tree:
 		print("[ConsumableIcon] No tree reference, skipping destruction effect")
 		return

@@ -35,12 +35,19 @@ func trigger_celebration(target_position: Vector2, viewport: Node) -> void:
 ## _spawn_burst_delayed(center, viewport, delay, burst_index)
 ##
 ## Spawns a single particle burst after a delay.
+## Plays firework sound on first burst only.
 func _spawn_burst_delayed(center: Vector2, viewport: Node, delay: float, burst_index: int) -> void:
 	if delay > 0:
 		await viewport.get_tree().create_timer(delay).timeout
 	
 	if not is_instance_valid(viewport):
 		return
+	
+	# Play firework sound on first burst only
+	if burst_index == 0:
+		var audio_mgr = viewport.get_tree().root.get_node_or_null("AudioManager")
+		if audio_mgr:
+			audio_mgr.play_firework_sound()
 	
 	# Calculate offset position for this burst
 	var angle = (burst_index * TAU / NUM_BURSTS) + randf_range(-0.3, 0.3)

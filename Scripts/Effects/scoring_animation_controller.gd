@@ -189,8 +189,14 @@ func _calculate_speed_scale(score: int) -> float:
 ## _execute_animation_sequence(score, _category, breakdown_info, intensity_scale, speed_scale)
 ##
 ## Execute the complete animation sequence in proper order with dynamic speed.
+## Plays progressive scoring sounds at each step (dice, consumables, powerups, final).
 func _execute_animation_sequence(score: int, _category: String, breakdown_info: Dictionary, intensity_scale: float, speed_scale: float) -> void:
-	# Phase 1: Dice bounce animation with individual scores
+	# Reset scoring sequence for progressive pitch
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.reset_scoring_sequence()
+	
+	# Phase 1: Dice bounce animation with individual scores (plays sound per die)
 	await _animate_dice_bounce_with_scores(intensity_scale, speed_scale)
 	
 	# Phase 1.5: Show category level multiplier if > 1
@@ -199,9 +205,6 @@ func _execute_animation_sequence(score: int, _category: String, breakdown_info: 
 		var level_delay = 0.05 / speed_scale
 		await get_tree().create_timer(level_delay).timeout
 		_animate_category_level_multiplier(breakdown_info, intensity_scale, speed_scale)
-	
-	# Phase 2: Play scoring sound with dynamic pitch
-	#_play_scoring_audio(score)
 	
 	# Phase 2.5: Check for and animate negative contributions (debuffs)
 	await _animate_negative_sources(breakdown_info, intensity_scale, speed_scale)
@@ -232,9 +235,10 @@ func _execute_animation_sequence(score: int, _category: String, breakdown_info: 
 		if score_card_ui:
 			score_card_ui.update_multiplier_score_panel(1.0, true)
 	
-	# Phase 5: Show final score floating number
+	# Phase 5: Show final score floating number with sound
 	var final_delay = 0.05 / speed_scale
 	await get_tree().create_timer(final_delay).timeout
+	_play_scoring_audio(score)  # Final score sound
 	_show_final_score_number(score, intensity_scale)
 	
 	# Phase 6: Animate total score bounce
@@ -305,6 +309,7 @@ func _animate_dice_bounce_with_scores(intensity_scale: float, speed_scale: float
 ## _animate_single_die(die, die_index, intensity_scale, speed_scale)
 ##
 ## Animate a single die with bounce and floating value, only if it contributes to the score.
+## Plays progressive scoring sound for each die.
 func _animate_single_die(die, die_index: int, intensity_scale: float, speed_scale: float = 1.0) -> void:
 	# Check if animations were cancelled (e.g., dice cleared for next round)
 	if animations_cancelled:
@@ -323,6 +328,9 @@ func _animate_single_die(die, die_index: int, intensity_scale: float, speed_scal
 		return
 	
 	print("[ScoringAnimationController] Animating die with value: %d" % die.value)
+	
+	# Play scoring sound for this die (progressive pitch)
+	_play_scoring_audio(die.value)
 	
 	# Calculate bounce height
 	var bounce_height = DICE_BOUNCE_HEIGHT * intensity_scale
@@ -407,25 +415,26 @@ func _bounce_die_local(progress: float, die, original_local_position: Vector2, b
 
 ## _play_scoring_audio(score)
 ##
-## Play scoring sound effect with pitch scaled by score magnitude.
+## Play scoring sound effect with pitch scaled by score magnitude via AudioManager.
 func _play_scoring_audio(score: int) -> void:
-	if not audio_player:
-		return
-	
-	# Only play if we have a sound effect assigned
-	if scoring_sound:
-		audio_player.stream = scoring_sound
-		
-		# Calculate pitch based on score
-		var pitch = BASE_PITCH + (score * PITCH_SCALE_FACTOR)
-		pitch = min(pitch, MAX_PITCH)  # Cap at maximum pitch
-		
-		audio_player.pitch_scale = pitch
-		audio_player.play()
-		
-		print("[ScoringAnimationController] Playing audio with pitch: %.2f" % pitch)
+	# Use AudioManager for centralized audio playback
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_scoring_sound(score)
 	else:
-		print("[ScoringAnimationController] No scoring sound effect assigned")
+		# Fallback to local player if AudioManager not available
+		if not audio_player:
+			return
+		
+		if scoring_sound:
+			audio_player.stream = scoring_sound
+			var pitch = BASE_PITCH + (score * PITCH_SCALE_FACTOR)
+			pitch = min(pitch, MAX_PITCH)
+			audio_player.pitch_scale = pitch
+			audio_player.play()
+			print("[ScoringAnimationController] Playing audio with pitch: %.2f (fallback)" % pitch)
+		else:
+			print("[ScoringAnimationController] No scoring sound effect assigned")
 
 ## _animate_contributing_consumables(breakdown_info, intensity_scale, speed_scale)
 ##
@@ -540,9 +549,13 @@ func _animate_contributing_powerups(breakdown_info: Dictionary, intensity_scale:
 ## _animate_consumable_contribution(consumable_id, contribution, intensity_scale, speed_scale)
 ##
 ## Animate a single consumable's contribution to the score.
+## Plays progressive scoring sound.
 func _animate_consumable_contribution(consumable_id: String, contribution: int, intensity_scale: float, speed_scale: float) -> void:
 	if not consumable_ui:
 		return
+	
+	# Play scoring sound for this contribution (progressive pitch)
+	_play_scoring_audio(contribution)
 	
 	# Find the consumable spine in the UI
 	var spine_dict = consumable_ui.get("_consumable_spines")
@@ -576,9 +589,13 @@ func _animate_consumable_contribution(consumable_id: String, contribution: int, 
 ## _animate_powerup_additive(powerup_id, additive_value, intensity_scale, speed_scale)
 ##
 ## Animate a powerup's additive contribution.
+## Plays progressive scoring sound.
 func _animate_powerup_additive(powerup_id: String, additive_value: int, intensity_scale: float, speed_scale: float) -> void:
 	if not power_up_ui:
 		return
+	
+	# Play scoring sound for this contribution (progressive pitch)
+	_play_scoring_audio(additive_value)
 	
 	var spine_dict = power_up_ui.get("_spines")
 	if not spine_dict or not spine_dict.has(powerup_id):
@@ -611,9 +628,13 @@ func _animate_powerup_additive(powerup_id: String, additive_value: int, intensit
 ## _animate_powerup_multiplier(powerup_id, multiplier_value, intensity_scale, speed_scale)
 ##
 ## Animate a powerup's multiplier contribution.
+## Plays progressive scoring sound.
 func _animate_powerup_multiplier(powerup_id: String, multiplier_value: float, intensity_scale: float, speed_scale: float) -> void:
 	if not power_up_ui:
 		return
+	
+	# Play scoring sound for multiplier (progressive pitch)
+	_play_scoring_audio(int(multiplier_value * 10))  # Scale multiplier for meaningful pitch
 	
 	var spine_dict = power_up_ui.get("_spines")
 	if not spine_dict or not spine_dict.has(powerup_id):
