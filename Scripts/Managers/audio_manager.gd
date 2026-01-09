@@ -38,12 +38,17 @@ const BUTTON_PITCH_MAX: float = 1.05
 const FIREWORK_PITCH_MIN: float = 0.9
 const FIREWORK_PITCH_MAX: float = 1.1
 
+# Dice lock/click audio configuration
+const DICE_LOCK_PITCH_MIN: float = 0.95
+const DICE_LOCK_PITCH_MAX: float = 1.05
+
 # Audio resources
 var dice_sounds: Array[AudioStream] = []
 var scoring_sound: AudioStream
 var money_sound: AudioStream
 var button_click_sound: AudioStream
 var firework_sound: AudioStream
+var dice_click_sound: AudioStream
 
 # Audio players - pooled for dice (one per die), single for others
 var dice_players: Array[AudioStreamPlayer] = []
@@ -51,6 +56,7 @@ var scoring_player: AudioStreamPlayer
 var money_player: AudioStreamPlayer
 var button_player: AudioStreamPlayer
 var firework_player: AudioStreamPlayer
+var dice_click_player: AudioStreamPlayer
 
 # Roll tracking - reset after scoring
 var current_roll_number: int = 0
@@ -166,6 +172,13 @@ func _load_audio_resources() -> void:
 		print("[AudioManager] Loaded firework sound")
 	else:
 		push_warning("[AudioManager] Failed to load firework sound")
+	
+	# Load dice click/lock sound
+	dice_click_sound = load("res://Resources/Audio/UI/DICE_CLICK.wav")
+	if dice_click_sound:
+		print("[AudioManager] Loaded dice click sound")
+	else:
+		push_warning("[AudioManager] Failed to load dice click sound")
 
 
 ## _create_audio_players()
@@ -203,6 +216,12 @@ func _create_audio_players() -> void:
 	firework_player.name = "FireworkPlayer"
 	firework_player.volume_db = master_volume_db
 	add_child(firework_player)
+	
+	# Create dice click player
+	dice_click_player = AudioStreamPlayer.new()
+	dice_click_player.name = "DiceClickPlayer"
+	dice_click_player.volume_db = master_volume_db
+	add_child(dice_click_player)
 
 
 ## play_dice_roll(die_index: int, roll_number: int)
@@ -339,6 +358,9 @@ func set_master_volume(volume_db: float) -> void:
 	if firework_player:
 		firework_player.volume_db = volume_db
 	
+	if dice_click_player:
+		dice_click_player.volume_db = volume_db
+	
 	print("[AudioManager] Master volume set to: %.1f dB" % volume_db)
 
 
@@ -379,3 +401,22 @@ func play_firework_sound() -> void:
 	
 	firework_player.play()
 	print("[AudioManager] Firework sound played")
+
+
+## play_dice_lock()
+##
+## Play dice lock/unlock click sound with slight random pitch variation.
+## Pitch ranges from 0.95 to 1.05 for natural feel.
+func play_dice_lock() -> void:
+	if not dice_click_sound:
+		return
+	
+	dice_click_player.stream = dice_click_sound
+	
+	# Slight random pitch variation
+	dice_click_player.pitch_scale = randf_range(DICE_LOCK_PITCH_MIN, DICE_LOCK_PITCH_MAX)
+	
+	# Apply master volume
+	dice_click_player.volume_db = master_volume_db
+	
+	dice_click_player.play()

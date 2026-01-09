@@ -112,6 +112,9 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - **Firework Sound**: `FIREWORK_1.wav` for celebratory effects
     - Plays on challenge completion (first burst only)
     - Plays on consumable use (destruction effect)
+  - **Dice Lock Sound**: `DICE_CLICK.wav` for dice selection feedback
+    - Plays when dice are locked or unlocked
+    - Slight random pitch variation (0.95-1.05) for natural feel
   - **Master Volume**: Shared `@export var master_volume_db` across all players
   - **Audio Resources**: Located in `res://Resources/Audio/DICE/`, `SCORING/`, `MONEY/`, `UI/`
 

@@ -208,6 +208,11 @@ func lock() -> void:
 
 	set_state(DiceState.LOCKED)
 	emit_signal("die_locked", self)
+	
+	# Play lock sound
+	var audio_manager = get_node_or_null("/root/AudioManager")
+	if audio_manager:
+		audio_manager.play_dice_lock()
 
 func set_dice_input_enabled(enabled: bool) -> void:
 	_can_process_input = enabled
@@ -386,6 +391,11 @@ func reset_visual_for_spawn() -> void:
 func unlock() -> void:
 	if current_state == DiceState.LOCKED:
 		set_state(DiceState.ROLLED)
+		
+		# Play unlock sound
+		var audio_manager = get_node_or_null("/root/AudioManager")
+		if audio_manager:
+			audio_manager.play_dice_lock()
 	else:
 		print("[Dice] Cannot unlock - current state:", DiceState.keys()[current_state])
 
