@@ -123,6 +123,10 @@ var _grounded_debuffs: Array[String] = []  # Debuffs from NC-17 that persist unt
 # Game Over popup
 var _game_over_popup: Control = null
 
+# Pause menu (instantiated on demand)
+var _pause_menu: Control = null
+const PAUSE_MENU_SCENE := preload("res://Scenes/UI/PauseMenu.tscn")
+
 # Challenge celebration effect manager
 var _challenge_celebration = null
 
@@ -2615,12 +2619,29 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_F10:
 			_toggle_statistics_panel()
+		elif event.keycode == KEY_ESCAPE:
+			_toggle_pause_menu()
 	
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		# Check for outside clicks to hide mod sell buttons
 		if dice_hand:
 			for die in dice_hand.dice_list:
 				die.check_mod_outside_clicks(event.global_position)
+
+
+## _toggle_pause_menu()
+##
+## Toggle the pause menu visibility.
+func _toggle_pause_menu() -> void:
+	if not _pause_menu:
+		_pause_menu = PAUSE_MENU_SCENE.instantiate()
+		# Add to root so it's on top of everything
+		get_tree().root.add_child(_pause_menu)
+	
+	if _pause_menu.visible:
+		_pause_menu.hide_menu()
+	else:
+		_pause_menu.show_menu()
 
 ## _toggle_statistics_panel()
 ## 

@@ -174,17 +174,27 @@ func _calculate_intensity_scale(score: int) -> float:
 
 ## _calculate_speed_scale(score)
 ##
-## Calculate animation speed multiplier based on score magnitude.
+## Calculate animation speed multiplier based on score magnitude and user settings.
 ## Higher scores = faster animations for more excitement.
+## User setting from GameSettings.scoring_animation_speed further scales the result.
 func _calculate_speed_scale(score: int) -> float:
+	var base_speed: float
 	if score < SMALL_SCORE_THRESHOLD:
-		return 1.0  # Normal speed
+		base_speed = 1.0  # Normal speed
 	elif score < MEDIUM_SCORE_THRESHOLD:
-		return 1.2  # 20% faster
+		base_speed = 1.2  # 20% faster
 	elif score < LARGE_SCORE_THRESHOLD:
-		return 1.4  # 40% faster
+		base_speed = 1.4  # 40% faster
 	else:
-		return 1.6  # 60% faster
+		base_speed = 1.6  # 60% faster
+	
+	# Apply user's animation speed setting from GameSettings
+	# scoring_animation_speed: 0.5 = slower, 1.0 = normal, 2.0 = faster
+	var user_speed_scale = 1.0
+	if GameSettings:
+		user_speed_scale = GameSettings.scoring_animation_speed
+	
+	return base_speed * user_speed_scale
 
 ## _execute_animation_sequence(score, _category, breakdown_info, intensity_scale, speed_scale)
 ##

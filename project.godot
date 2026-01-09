@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="DiceRogue"
-run/main_scene="uid://b46sathbx2q60"
+run/main_scene="res://Scenes/UI/MainMenu.tscn"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 
@@ -24,6 +24,7 @@ PlayerEconomy="*res://Scripts/Managers/PlayerEconomy.gd"
 RollStats="*res://Scripts/Core/roll_stats.gd"
 DiceColorManager="*res://Scripts/Managers/dice_color_manager.gd"
 Statistics="*res://Scripts/Managers/statistics_manager.gd"
+GameSettings="*res://Scripts/Managers/game_settings.gd"
 ProgressManager="*res://Scripts/Managers/progress_manager.gd"
 AudioManager="*res://Scripts/Managers/audio_manager.gd"
 MusicManager="*res://Scripts/Managers/music_manager.gd"

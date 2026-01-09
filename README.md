@@ -18,9 +18,44 @@ Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill s
 
 ## Quick Start
 
-1. **Main Scene**: `Scenes/Controller/game_controller.tscn`
-2. **Run in Editor**: Open project in Godot 4.4+, press F5
-3. **Testing**: Use scenes in `Tests/` folder for isolated component testing
+1. **Main Scene**: `Scenes/UI/MainMenu.tscn` (launches Main Menu)
+2. **Game Scene**: `Tests/DebuffTest.tscn` (full game with all components)
+3. **Run in Editor**: Open project in Godot 4.4+, press F5
+4. **Testing**: Use scenes in `Tests/` folder for isolated component testing
+
+## Main Menu & Settings
+
+### Main Menu
+- **Location**: `Scenes/UI/MainMenu.tscn`, `Scripts/UI/main_menu.gd`
+- **Features**:
+  - Animated floating "GHUTZEE" title using BRICK_SANS font
+  - 3 profile slots (P1/P2/P3) - click to select, right-click to rename
+  - "Playing as: [ProfileName]" label showing active profile
+  - New Game / Settings / Quit navigation buttons
+  - Profile data includes games completed and highest channel reached
+
+### Profile System
+- **ProgressManager** handles 3 save slots (`user://profile_1.save` to `profile_3.save`)
+- Legacy save migration: Old `user://save.json` auto-migrates to slot 1
+- Profile names limited to 30 characters
+- Statistics tracked per-profile: games completed, games won, highest channel, etc.
+
+### Settings System
+- **GameSettings** (autoload) - Centralized settings management
+  - **Location**: `Scripts/Managers/game_settings.gd`
+  - **Config File**: `user://settings.cfg` (ConfigFile format)
+  - **Settings Categories**:
+    - **Audio**: SFX Volume (0-100%), Music Volume (0-100%) - immediate preview
+    - **Video**: Resolution selection, Fullscreen toggle - requires Apply button
+    - **Gameplay**: Scoring Animation Speed (0.5x-2.0x)
+    - **Keyboard**: Rebindable keys for Roll, Confirm, Menu, Lock Dice 1-5
+    - **Controller**: Rebindable gamepad buttons for same actions
+
+### Pause Menu
+- **Location**: `Scenes/UI/PauseMenu.tscn`, `Scripts/UI/pause_menu.gd`
+- **Activation**: Press Escape during gameplay
+- **Features**: Resume, Settings, Return to Main Menu options
+- **Note**: Pauses game tree when shown
 
 ## Core Architecture
 

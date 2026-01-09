@@ -91,6 +91,81 @@ func _ready():
 	next_turn_button.disabled = true
 
 
+## _unhandled_input(event)
+##
+## Handles keyboard/controller shortcuts for game actions.
+## Uses InputMap actions configured in GameSettings.
+func _unhandled_input(event: InputEvent) -> void:
+	# Only handle pressed events (not released)
+	if not event.is_pressed():
+		return
+	
+	# Roll action
+	if event.is_action_pressed("roll"):
+		if roll_button and not roll_button.disabled and roll_button.visible:
+			_on_roll_button_pressed()
+			get_viewport().set_input_as_handled()
+			return
+	
+	# Next Turn action
+	if event.is_action_pressed("next_turn"):
+		if next_turn_button and not next_turn_button.disabled and next_turn_button.visible:
+			_on_next_turn_button_pressed()
+			get_viewport().set_input_as_handled()
+			return
+	
+	# Shop action
+	if event.is_action_pressed("shop"):
+		if shop_button and not shop_button.disabled and shop_button.visible:
+			_on_shop_button_pressed()
+			get_viewport().set_input_as_handled()
+			return
+	
+	# Next Round action
+	if event.is_action_pressed("next_round"):
+		if next_round_button and not next_round_button.disabled and next_round_button.visible:
+			_on_next_round_button_pressed()
+			get_viewport().set_input_as_handled()
+			return
+	
+	# Dice lock actions (1-16)
+	_handle_dice_lock_input(event)
+
+
+## _handle_dice_lock_input(event)
+##
+## Handles dice lock keybindings (lock_dice_1 through lock_dice_16).
+## Toggles lock state on the corresponding die in the dice hand.
+func _handle_dice_lock_input(event: InputEvent) -> void:
+	if not dice_hand:
+		return
+	
+	# Check each lock action (1-16)
+	for i in range(1, 17):
+		var action_name = "lock_dice_%d" % i
+		if InputMap.has_action(action_name) and event.is_action_pressed(action_name):
+			_toggle_die_lock(i - 1)  # Convert to 0-based index
+			get_viewport().set_input_as_handled()
+			return
+
+
+## _toggle_die_lock(index)
+##
+## Toggles the lock state of the die at the given index (0-based).
+func _toggle_die_lock(index: int) -> void:
+	if not dice_hand:
+		return
+	
+	var dice_list = dice_hand.dice_list
+	if index < 0 or index >= dice_list.size():
+		return
+	
+	var die = dice_list[index]
+	if die and die.has_method("toggle_lock"):
+		die.toggle_lock()
+		print("[GameButtonUI] Toggled lock on die %d" % (index + 1))
+
+
 ## reset_for_new_channel() -> void
 ##
 ## Resets button state for a new channel. Called after winning a channel.

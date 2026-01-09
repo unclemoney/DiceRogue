@@ -14,8 +14,31 @@ signal item_locked(item_id: String, item_type: String)  # For when items are loc
 signal items_unlocked_batch(item_ids: Array[String])  # For showing notifications
 signal progress_loaded
 signal progress_saved
+signal profile_loaded(slot: int)
+signal profile_renamed(slot: int, new_name: String)
 
-const SAVE_FILE_PATH := "user://progress.save"
+# Legacy save path (for auto-migration)
+const LEGACY_SAVE_FILE_PATH := "user://progress.save"
+
+# Profile save paths
+const PROFILE_SAVE_PATHS := {
+	1: "user://profile_1.save",
+	2: "user://profile_2.save",
+	3: "user://profile_3.save",
+}
+
+# Default profile names
+const DEFAULT_PROFILE_NAMES := {
+	1: "Player 1",
+	2: "Player 2",
+	3: "Player 3",
+}
+
+const PROFILE_NAME_MAX_LENGTH := 30
+
+# Current active profile slot (1-3)
+var current_profile_slot: int = 1
+var current_profile_name: String = "Player 1"
 
 # Core progress data
 var unlockable_items: Dictionary = {}  # item_id -> UnlockableItem
@@ -43,21 +66,47 @@ func _ready() -> void:
 	# Initialize default unlockable items FIRST (so they exist for loading)
 	_create_default_unlockable_items()
 	
-	# Load existing progress (now that items exist to be unlocked)
-	load_progress()
+	# Check for legacy save file and auto-migrate if needed
+	_check_and_migrate_legacy_save()
+	
+	# Ensure all profile slots have save files
+	_ensure_all_profiles_exist()
+	
+	# Get active profile slot from GameSettings if available
+	var game_settings = get_node_or_null("/root/GameSettings")
+	if game_settings:
+		current_profile_slot = game_settings.active_profile_slot
+	
+	# Load the active profile
+	load_profile(current_profile_slot)
 	
 	# Connect to game events
 	_connect_to_game_systems()
 
-## Load progress from save file
-func load_progress() -> void:
-	if not FileAccess.file_exists(SAVE_FILE_PATH):
-		print("[ProgressManager] No save file found, starting fresh")
+## _check_and_migrate_legacy_save()
+##
+## Check for old progress.save file and migrate to profile_1.save if needed.
+func _check_and_migrate_legacy_save() -> void:
+	if not FileAccess.file_exists(LEGACY_SAVE_FILE_PATH):
 		return
 	
-	var file = FileAccess.open(SAVE_FILE_PATH, FileAccess.READ)
+	# Check if any profile already exists
+	var any_profile_exists := false
+	for slot in PROFILE_SAVE_PATHS.keys():
+		if FileAccess.file_exists(PROFILE_SAVE_PATHS[slot]):
+			any_profile_exists = true
+			break
+	
+	if any_profile_exists:
+		print("[ProgressManager] Profile files already exist, skipping migration")
+		return
+	
+	print("[ProgressManager] Found legacy save file, migrating to profile slot 1...")
+	
+	# Read legacy save
+	var file = FileAccess.open(LEGACY_SAVE_FILE_PATH, FileAccess.READ)
 	if not file:
-		push_error("[ProgressManager] Failed to open save file")
+		push_error("[ProgressManager] Failed to open legacy save file for migration")
 		return
 	
 	var json_string = file.get_as_text()
@@ -66,15 +115,112 @@ func load_progress() -> void:
 	var json = JSON.new()
 	var parse_result = json.parse(json_string)
 	if parse_result != OK:
-		push_error("[ProgressManager] Failed to parse save file JSON")
+		push_error("[ProgressManager] Failed to parse legacy save file JSON")
 		return
 	
 	var save_data = json.get_data()
 	
+	# Add profile name and last_played to migrated data
+	save_data["profile_name"] = "Player 1"
+	save_data["last_played"] = Time.get_datetime_string_from_system()
+	
+	# Write to profile 1 slot
+	var new_json_string = JSON.stringify(save_data, "\t")
+	var new_file = FileAccess.open(PROFILE_SAVE_PATHS[1], FileAccess.WRITE)
+	if new_file:
+		new_file.store_string(new_json_string)
+		new_file.close()
+		print("[ProgressManager] Successfully migrated to profile_1.save")
+		
+		# Delete legacy file after successful migration
+		DirAccess.remove_absolute(LEGACY_SAVE_FILE_PATH)
+		print("[ProgressManager] Deleted legacy progress.save file")
+	else:
+		push_error("[ProgressManager] Failed to create profile_1.save during migration")
+
+
+## _ensure_all_profiles_exist()
+##
+## Create default profile files for any slots that don't have save files.
+func _ensure_all_profiles_exist() -> void:
+	for slot in PROFILE_SAVE_PATHS.keys():
+		if not FileAccess.file_exists(PROFILE_SAVE_PATHS[slot]):
+			_create_default_profile(slot)
+
+
+## _create_default_profile(slot)
+##
+## Create a new default profile save file for the given slot.
+func _create_default_profile(slot: int) -> void:
+	var default_data = {
+		"profile_name": DEFAULT_PROFILE_NAMES[slot],
+		"last_played": "",
+		"cumulative_stats": {
+			"games_completed": 0,
+			"games_won": 0,
+			"total_score": 0,
+			"total_money_earned": 0,
+			"total_consumables_used": 0,
+			"total_yahtzees": 0,
+			"total_straights": 0,
+			"total_color_bonuses": 0,
+			"highest_channel_completed": 0
+		},
+		"completed_channels": [],
+		"unlocked_items": []
+	}
+	
+	var json_string = JSON.stringify(default_data, "\t")
+	var file = FileAccess.open(PROFILE_SAVE_PATHS[slot], FileAccess.WRITE)
+	if file:
+		file.store_string(json_string)
+		file.close()
+		print("[ProgressManager] Created default profile for slot %d: %s" % [slot, DEFAULT_PROFILE_NAMES[slot]])
+	else:
+		push_error("[ProgressManager] Failed to create default profile for slot %d" % slot)
+
+
+## load_profile(slot)
+##
+## Load a specific profile slot and update current progress data.
+## @param slot: Profile slot number (1-3)
+## @return bool: True if successful
+func load_profile(slot: int) -> bool:
+	if slot < 1 or slot > 3:
+		push_error("[ProgressManager] Invalid profile slot: %d" % slot)
+		return false
+	
+	var save_path = PROFILE_SAVE_PATHS[slot]
+	if not FileAccess.file_exists(save_path):
+		print("[ProgressManager] Profile slot %d not found, creating default" % slot)
+		_create_default_profile(slot)
+	
+	# Reset unlockable items to locked state before loading
+	_reset_all_unlocks()
+	
+	var file = FileAccess.open(save_path, FileAccess.READ)
+	if not file:
+		push_error("[ProgressManager] Failed to open profile %d save file" % slot)
+		return false
+	
+	var json_string = file.get_as_text()
+	file.close()
+	
+	var json = JSON.new()
+	var parse_result = json.parse(json_string)
+	if parse_result != OK:
+		push_error("[ProgressManager] Failed to parse profile %d JSON" % slot)
+		return false
+	
+	var save_data = json.get_data()
+	
+	# Update current profile info
+	current_profile_slot = slot
+	current_profile_name = save_data.get("profile_name", DEFAULT_PROFILE_NAMES[slot])
+	
 	# Load cumulative stats
 	if save_data.has("cumulative_stats"):
 		cumulative_stats = save_data["cumulative_stats"]
-		# Ensure highest_channel_completed exists (for older saves)
 		if not cumulative_stats.has("highest_channel_completed"):
 			cumulative_stats["highest_channel_completed"] = 0
 	
@@ -83,29 +229,41 @@ func load_progress() -> void:
 		completed_channels.clear()
 		for channel_num in save_data["completed_channels"]:
 			completed_channels.append(int(channel_num))
-		print("[ProgressManager] Loaded %d completed channels" % completed_channels.size())
 	
-	# Load unlockable items
+	# Load unlocked items
 	if save_data.has("unlocked_items"):
 		var unlocked_item_ids = save_data["unlocked_items"]
-		print("[ProgressManager] Loading %d unlocked items from save file" % unlocked_item_ids.size())
 		for item_id in unlocked_item_ids:
 			if unlockable_items.has(item_id):
 				var item = unlockable_items[item_id]
 				if item.has_method("unlock_item"):
 					item.unlock_item()
-					print("[ProgressManager] Successfully unlocked %s from save file" % item_id)
-				else:
-					print("[ProgressManager] WARNING: Item %s has no unlock_item method" % item_id)
-			else:
-				print("[ProgressManager] WARNING: Item %s from save file not found in unlockable_items" % item_id)
 	
-	print("[ProgressManager] Progress loaded successfully")
+	print("[ProgressManager] Loaded profile %d: %s" % [slot, current_profile_name])
+	profile_loaded.emit(slot)
 	progress_loaded.emit()
+	return true
 
-## Save progress to file
-func save_progress() -> void:
+
+## _reset_all_unlocks()
+##
+## Reset all unlockable items to locked state (used before loading a new profile).
+func _reset_all_unlocks() -> void:
+	for item_id in unlockable_items:
+		var item = unlockable_items[item_id]
+		item.is_unlocked = false
+		item.unlock_timestamp = 0
+
+
+## save_current_profile()
+##
+## Save the current profile's progress to its save file.
+func save_current_profile() -> void:
+	var save_path = PROFILE_SAVE_PATHS[current_profile_slot]
+	
 	var save_data = {
+		"profile_name": current_profile_name,
+		"last_played": Time.get_datetime_string_from_system(),
 		"cumulative_stats": cumulative_stats,
 		"completed_channels": completed_channels,
 		"unlocked_items": []
@@ -117,18 +275,148 @@ func save_progress() -> void:
 		if item.is_unlocked:
 			save_data["unlocked_items"].append(item_id)
 	
-	var json_string = JSON.stringify(save_data, "\t")  # Use tab indentation for readability
-	
-	var file = FileAccess.open(SAVE_FILE_PATH, FileAccess.WRITE)
+	var json_string = JSON.stringify(save_data, "\t")
+	var file = FileAccess.open(save_path, FileAccess.WRITE)
 	if not file:
-		push_error("[ProgressManager] Failed to create save file")
+		push_error("[ProgressManager] Failed to save profile %d" % current_profile_slot)
 		return
 	
 	file.store_string(json_string)
 	file.close()
 	
-	print("[ProgressManager] Progress saved successfully")
+	print("[ProgressManager] Profile %d saved: %s" % [current_profile_slot, current_profile_name])
 	progress_saved.emit()
+
+
+## rename_profile(slot, new_name)
+##
+## Rename a profile slot.
+## @param slot: Profile slot number (1-3)
+## @param new_name: New profile name (max 30 chars)
+## @return bool: True if successful
+func rename_profile(slot: int, new_name: String) -> bool:
+	if slot < 1 or slot > 3:
+		push_error("[ProgressManager] Invalid profile slot: %d" % slot)
+		return false
+	
+	# Enforce max length
+	new_name = new_name.substr(0, PROFILE_NAME_MAX_LENGTH).strip_edges()
+	if new_name.is_empty():
+		new_name = DEFAULT_PROFILE_NAMES[slot]
+	
+	var save_path = PROFILE_SAVE_PATHS[slot]
+	if not FileAccess.file_exists(save_path):
+		push_error("[ProgressManager] Profile slot %d does not exist" % slot)
+		return false
+	
+	# Load existing profile data
+	var file = FileAccess.open(save_path, FileAccess.READ)
+	if not file:
+		return false
+	
+	var json_string = file.get_as_text()
+	file.close()
+	
+	var json = JSON.new()
+	if json.parse(json_string) != OK:
+		return false
+	
+	var save_data = json.get_data()
+	save_data["profile_name"] = new_name
+	
+	# Save updated data
+	var new_json_string = JSON.stringify(save_data, "\t")
+	var write_file = FileAccess.open(save_path, FileAccess.WRITE)
+	if write_file:
+		write_file.store_string(new_json_string)
+		write_file.close()
+		
+		# Update current profile name if this is the active profile
+		if slot == current_profile_slot:
+			current_profile_name = new_name
+		
+		print("[ProgressManager] Profile %d renamed to: %s" % [slot, new_name])
+		profile_renamed.emit(slot, new_name)
+		return true
+	
+	return false
+
+
+## get_profile_info(slot)
+##
+## Get info about a specific profile slot.
+## @param slot: Profile slot number (1-3)
+## @return Dictionary: Profile info including name, stats, last_played
+func get_profile_info(slot: int) -> Dictionary:
+	var default_info = {
+		"slot": slot,
+		"name": DEFAULT_PROFILE_NAMES.get(slot, "Player"),
+		"games_completed": 0,
+		"games_won": 0,
+		"total_score": 0,
+		"highest_channel": 0,
+		"last_played": ""
+	}
+	
+	if slot < 1 or slot > 3:
+		return default_info
+	
+	var save_path = PROFILE_SAVE_PATHS[slot]
+	if not FileAccess.file_exists(save_path):
+		return default_info
+	
+	var file = FileAccess.open(save_path, FileAccess.READ)
+	if not file:
+		return default_info
+	
+	var json_string = file.get_as_text()
+	file.close()
+	
+	var json = JSON.new()
+	if json.parse(json_string) != OK:
+		return default_info
+	
+	var save_data = json.get_data()
+	var stats = save_data.get("cumulative_stats", {})
+	
+	return {
+		"slot": slot,
+		"name": save_data.get("profile_name", DEFAULT_PROFILE_NAMES[slot]),
+		"games_completed": stats.get("games_completed", 0),
+		"games_won": stats.get("games_won", 0),
+		"total_score": stats.get("total_score", 0),
+		"highest_channel": stats.get("highest_channel_completed", 0),
+		"last_played": save_data.get("last_played", "")
+	}
+
+
+## get_current_profile_name()
+##
+## Get the name of the currently active profile.
+## @return String: Current profile name
+func get_current_profile_name() -> String:
+	return current_profile_name
+
+
+## list_profiles()
+##
+## Get info about all profile slots.
+## @return Array[Dictionary]: Array of profile info dictionaries
+func list_profiles() -> Array[Dictionary]:
+	var profiles: Array[Dictionary] = []
+	for slot in [1, 2, 3]:
+		profiles.append(get_profile_info(slot))
+	return profiles
+
+
+## Legacy compatibility - redirects to load_profile
+func load_progress() -> void:
+	load_profile(current_profile_slot)
+
+
+## Legacy compatibility - redirects to save_current_profile
+func save_progress() -> void:
+	save_current_profile()
 
 ## Start tracking a new game
 func start_game_tracking() -> void:
