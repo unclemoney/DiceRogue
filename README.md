@@ -34,6 +34,39 @@ Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill s
   - New Game / Settings / Quit navigation buttons
   - Profile data includes games completed and highest channel reached
 
+### Arcade Background Shaders
+Three custom shaders capture the late 80's/early 90's arcade/mall aesthetic with purple/teal neon themes:
+
+#### Available Shaders
+1. **Neon Grid** (`neon_grid.gdshader`) - Tron-inspired perspective grid with glowing lines
+2. **VHS Static Wave** (`vhs_wave.gdshader`) - Analog TV interference with chromatic aberration
+3. **Arcade Starfield** (`arcade_starfield.gdshader`) - Multi-layer parallax stars with color cycling
+
+#### Features
+- Consistent three-color uniform system (colour_1, colour_2, colour_3)
+- Tunable pixel_filter parameter (200-1000) for retro pixelation
+- Distinct speed controls (grid_speed, wave_speed, star_speed)
+- Purple/teal default color schemes matching game palette
+- Optimized for 60 FPS performance
+
+#### Switching Shaders
+Edit `Scripts/UI/main_menu.gd` in the `_build_ui()` method. Uncomment your desired shader option:
+```gdscript
+# Current: Balatro swirl (default)
+var shader = load("res://Scripts/Shaders/backgground_swirl.gdshader")
+
+# Option 1: Neon Grid
+#var shader = load("res://Scripts/Shaders/neon_grid.gdshader")
+
+# Option 2: VHS Wave
+#var shader = load("res://Scripts/Shaders/vhs_wave.gdshader")
+
+# Option 3: Starfield
+#var shader = load("res://Scripts/Shaders/arcade_starfield.gdshader")
+```
+
+Full documentation with parameters and examples: See `ARCADE_SHADERS.md`
+
 ### Profile System
 - **ProgressManager** handles 3 save slots (`user://profile_1.save` to `profile_3.save`)
 - Legacy save migration: Old `user://save.json` auto-migrates to slot 1

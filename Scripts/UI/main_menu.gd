@@ -72,31 +72,83 @@ func _build_ui() -> void:
 	# Set this control to fill the viewport
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	
-	# Background with swirl shader - uses ColorRect like the game does
+	# Background with shader - uses ColorRect like the game does
 	var background = ColorRect.new()
 	background.name = "Background"
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	background.color = Color.WHITE  # Base color for shader
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Don't block clicks
 	
-	# Apply swirl shader
-	var shader = load("res://Scripts/Shaders/backgground_swirl.gdshader")
+	# === SHADER SELECTION ===
+	# Uncomment one shader option below to change the main menu background
+	
+	# CURRENT: Original Balatro-style swirl shader
+	#var shader = load("res://Scripts/Shaders/backgground_swirl.gdshader")
+	#var shader_params = {
+	#	"colour_1": Color(0.15, 0.08, 0.25, 1.0),  # Dark purple
+	#	"colour_2": Color(0.25, 0.12, 0.35, 1.0),  # Medium purple
+	#	"colour_3": Color(0.08, 0.04, 0.15, 1.0),  # Very dark
+	#	"spin_speed": 0.5,
+	#	"contrast": 1.5,
+	#	"spin_amount": 0.3,
+	#	"lighting": 0.5,
+	#	"pixel_filter": 500.0
+	#}
+	
+	#OPTION 1: Neon Grid (Tron-style perspective grid)
+	#var shader = load("res://Scripts/Shaders/neon_grid.gdshader")
+	#var shader_params = {
+	#	"colour_1": Color(0.15, 0.08, 0.25, 1.0),  # Dark purple base
+	#	"colour_2": Color(0.0, 0.8, 0.8, 1.0),     # Teal/cyan neon
+	#	"colour_3": Color(0.8, 0.0, 1.0, 1.0),     # Purple/magenta neon
+	#	"grid_speed": 0.3,
+	#	"pixel_filter": 500.0,
+	#	"grid_density": 20.0,
+	#	"perspective_strength": 1.0,
+	#	"glow_intensity": 1.2,
+	#	"scanline_strength": 0.3
+	#}
+	
+	# OPTION 2: VHS Static Wave (Analog TV interference)
+	var shader = load("res://Scripts/Shaders/vhs_wave.gdshader")
+	var shader_params = {
+		"colour_1": Color(0.08, 0.04, 0.15, 1.0),  # Very dark purple
+		"colour_2": Color(0.25, 0.12, 0.35, 1.0),  # Medium purple
+		"colour_3": Color(0.0, 0.6, 0.7, 1.0),     # Teal accent
+		"wave_speed": 0.5,
+		"pixel_filter": 500.0,
+		"wave_density": 8.0,
+		"wave_amplitude": 0.05,
+		"chromatic_drift": 0.02,
+		"noise_strength": 0.15,
+		"scanline_intensity": 0.4
+	}
+	
+	# OPTION 3: Arcade Starfield (80's space arcade)
+	#var shader = load("res://Scripts/Shaders/arcade_starfield.gdshader")
+	#var shader_params = {
+	#	"colour_1": Color(0.08, 0.04, 0.15, 1.0),  # Dark purple space
+	#	"colour_2": Color(0.8, 0.0, 1.0, 1.0),     # Purple/magenta stars
+	#	"colour_3": Color(0.0, 0.8, 0.8, 1.0),     # Teal/cyan stars
+	#	"star_speed": 0.2,
+	#	"pixel_filter": 500.0,
+	#	"star_density": 200.0,
+	#	"twinkle_speed": 2.0,
+	#	"comet_trails": 0.3,
+	#	"color_cycle_speed": 1.0
+	#}
+	
+	# Apply selected shader
 	if shader:
 		var shader_mat = ShaderMaterial.new()
 		shader_mat.shader = shader
-		# Set shader parameters for a nice dark menu look
-		shader_mat.set_shader_parameter("colour_1", Color(0.15, 0.08, 0.25, 1.0))  # Dark purple
-		shader_mat.set_shader_parameter("colour_2", Color(0.25, 0.12, 0.35, 1.0))  # Medium purple
-		shader_mat.set_shader_parameter("colour_3", Color(0.08, 0.04, 0.15, 1.0))  # Very dark
-		shader_mat.set_shader_parameter("spin_speed", 0.5)
-		shader_mat.set_shader_parameter("contrast", 1.5)
-		shader_mat.set_shader_parameter("spin_amount", 0.3)
-		shader_mat.set_shader_parameter("lighting", 0.5)
-		shader_mat.set_shader_parameter("pixel_filter", 500.0)
+		# Set all parameters from the selected shader_params dictionary
+		for param_name in shader_params:
+			shader_mat.set_shader_parameter(param_name, shader_params[param_name])
 		background.material = shader_mat
-		print("[MainMenu] Swirl shader applied to background")
+		print("[MainMenu] Shader applied to background: ", shader.resource_path)
 	else:
-		print("[MainMenu] WARNING: Could not load swirl shader!")
+		print("[MainMenu] WARNING: Could not load shader!")
 		background.color = Color(0.1, 0.05, 0.15, 1.0)  # Fallback solid color
 	add_child(background)
 	
