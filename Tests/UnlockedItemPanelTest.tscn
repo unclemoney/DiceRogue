@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://dqkvh8jy5xt2p"]
 
-[ext_resource type="Script" path="res://Tests/unlocked_item_panel_test.gd" id="1_test"]
+[ext_resource type="Script" uid="uid://cnbu4ofsh284v" path="res://Tests/unlocked_item_panel_test.gd" id="1_test"]
 
 [node name="UnlockedItemPanelTest" type="Control"]
 layout_mode = 3

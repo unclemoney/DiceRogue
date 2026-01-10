@@ -13,11 +13,20 @@ signal color_effects_calculated(green_money: int, red_additive: int, purple_mult
 var colors_enabled: bool = true
 
 # Purchased colored dice tracking (only for current game session)
-var purchased_colors: Dictionary = {}  # DiceColor.Type -> bool
+# Now tracks purchase COUNT instead of just bool - allows repeat purchases
+var purchased_colors: Dictionary = {}  # DiceColor.Type -> int (purchase count)
 var colored_dice_data: Dictionary = {}  # color_id -> ColoredDiceData
 
 # Color probability modifiers (multipliers applied to base chance denominators)
 var color_chance_modifiers: Dictionary = {}  # DiceColor.Type -> float
+
+# Base costs per rarity tier (exponential scaling: cost = base * 2^purchase_count)
+const BASE_COSTS: Dictionary = {
+	DiceColorClass.Type.GREEN: 50,   # Common: $50 base
+	DiceColorClass.Type.RED: 75,     # Uncommon: $75 base
+	DiceColorClass.Type.PURPLE: 100, # Rare: $100 base
+	DiceColorClass.Type.BLUE: 125    # Very Rare: $125 base
+}
 
 func _ready() -> void:
 	add_to_group("dice_color_manager")
@@ -301,10 +310,11 @@ func _load_colored_dice_data() -> void:
 func _reset_purchased_colors() -> void:
 	purchased_colors.clear()
 	for color_type in [DiceColorClass.Type.GREEN, DiceColorClass.Type.RED, DiceColorClass.Type.PURPLE, DiceColorClass.Type.BLUE]:
-		purchased_colors[color_type] = false
+		purchased_colors[color_type] = 0  # Changed from false to 0 (purchase count)
 	print("[DiceColorManager] Reset purchased colors for new game session")
 
 ## Purchase a colored dice type for this game session
+## Each purchase halves the probability denominator (increases odds)
 ## @param color_id: String ID of the colored dice to purchase
 ## @return bool: True if purchase was successful
 func purchase_colored_dice(color_id: String) -> bool:
@@ -313,21 +323,93 @@ func purchase_colored_dice(color_id: String) -> bool:
 		push_error("[DiceColorManager] Invalid colored dice ID: %s" % color_id)
 		return false
 	
-	# Check if already purchased
-	if is_color_purchased(data.color_type):
-		print("[DiceColorManager] %s already purchased" % data.display_name)
+	var color_type = data.color_type
+	var current_count = purchased_colors.get(color_type, 0)
+	
+	# Check if already at max odds (1:1)
+	if is_color_at_max_odds(color_type):
+		print("[DiceColorManager] %s already at MAX odds (1:1)" % data.display_name)
 		return false
 	
-	# Mark as purchased for this session
-	purchased_colors[data.color_type] = true
-	print("[DiceColorManager] Purchased %s for this game session" % data.display_name)
+	# Increment purchase count
+	purchased_colors[color_type] = current_count + 1
+	print("[DiceColorManager] Purchased %s (x%d) - New odds: 1 in %d" % [
+		data.display_name, 
+		purchased_colors[color_type],
+		get_current_color_chance(color_type)
+	])
 	return true
 
-## Check if a colored dice type has been purchased this session
+## Check if a colored dice type has been purchased this session (at least once)
 ## @param color_type: DiceColor.Type to check
-## @return bool: True if purchased this session
+## @return bool: True if purchased at least once this session
 func is_color_purchased(color_type: DiceColorClass.Type) -> bool:
-	return purchased_colors.get(color_type, false)
+	return purchased_colors.get(color_type, 0) > 0
+
+## Get the purchase count for a color type this session
+## @param color_type: DiceColor.Type to check
+## @return int: Number of times purchased
+func get_color_purchase_count(color_type: DiceColorClass.Type) -> int:
+	return purchased_colors.get(color_type, 0)
+
+## Get the current cost for purchasing a colored dice (exponential scaling)
+## Formula: base_cost * 2^purchase_count
+## @param color_type: DiceColor.Type to get cost for
+## @return int: Current cost in dollars
+func get_current_color_cost(color_type: DiceColorClass.Type) -> int:
+	var base_cost = BASE_COSTS.get(color_type, 50)
+	var purchase_count = purchased_colors.get(color_type, 0)
+	return base_cost * int(pow(2, purchase_count))
+
+## Get the current probability chance for a color (after purchase modifications)
+## Each purchase halves the denominator (doubles the odds)
+## @param color_type: DiceColor.Type to get chance for
+## @return int: Current chance denominator (1 in X), minimum 1
+func get_current_color_chance(color_type: DiceColorClass.Type) -> int:
+	var base_chance = DiceColorClass.get_color_chance(color_type)
+	if base_chance <= 0:
+		return 0
+	
+	var purchase_count = purchased_colors.get(color_type, 0)
+	
+	# Each purchase halves the denominator
+	var modified_chance = base_chance
+	for i in range(purchase_count):
+		modified_chance = int(ceil(modified_chance / 2.0))
+	
+	# Also apply PowerUp modifiers
+	if color_chance_modifiers.has(color_type):
+		var modifier = color_chance_modifiers[color_type]
+		modified_chance = int(modified_chance * modifier)
+	
+	return max(1, modified_chance)  # Minimum 1:1 odds
+
+## Check if a color is at maximum odds (1:1)
+## @param color_type: DiceColor.Type to check
+## @return bool: True if at 1:1 odds
+func is_color_at_max_odds(color_type: DiceColorClass.Type) -> bool:
+	return get_current_color_chance(color_type) <= 1
+
+## Get tooltip info for shop display showing purchase status and odds
+## @param color_type: DiceColor.Type to get info for
+## @return String: Formatted tooltip text
+func get_color_shop_tooltip(color_type: DiceColorClass.Type) -> String:
+	var count = get_color_purchase_count(color_type)
+	var current_odds = get_current_color_chance(color_type)
+	var current_cost = get_current_color_cost(color_type)
+	
+	var tooltip = ""
+	tooltip += "Owned: %d\n" % count
+	
+	if is_color_at_max_odds(color_type):
+		tooltip += "Odds: 1/1 (MAX)\n"
+		tooltip += "Cannot purchase more"
+	else:
+		tooltip += "Current Odds: 1/%d\n" % current_odds
+		var next_odds = max(1, int(ceil(current_odds / 2.0)))
+		tooltip += "Next: $%d (1/%d odds)" % [current_cost, next_odds]
+	
+	return tooltip
 
 ## Get available colored dice data (for shop display)
 ## @return Array: Array of available colored dice data
@@ -373,21 +455,12 @@ func unregister_color_chance_modifier(color_type: DiceColorClass.Type) -> void:
 		print("[DiceColorManager] Unregistered color chance modifier for: %s" % DiceColorClass.get_color_name(color_type))
 
 ## Get modified color chance for a specific color type
-## Takes into account PowerUp modifiers that improve probability
+## Takes into account purchase count and PowerUp modifiers that improve probability
 ## @param color_type: DiceColor.Type to get chance for
 ## @return int modified chance denominator (1 in X chance)
 func get_modified_color_chance(color_type: DiceColorClass.Type) -> int:
-	var base_chance = DiceColorClass.get_color_chance(color_type)
-	if base_chance <= 0:
-		return 0
-	
-	# Apply modifier if present
-	if color_chance_modifiers.has(color_type):
-		var modifier = color_chance_modifiers[color_type]
-		var modified_chance = int(base_chance * modifier)
-		return max(1, modified_chance)  # Ensure at least 1 in 1 chance
-	
-	return base_chance
+	# Use the new unified method that accounts for purchases AND PowerUp modifiers
+	return get_current_color_chance(color_type)
 
 ## Clear all color chance modifiers (when PowerUps are removed)
 func clear_all_color_chance_modifiers() -> void:

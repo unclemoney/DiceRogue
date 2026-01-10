@@ -288,6 +288,20 @@ The **Channel Manager** provides an infinite difficulty progression system (Chan
 4. After Round 6 completion → RoundWinnerPanel shows stats
 5. "Next Channel" marks channel complete, saves progress, advances to next channel, resets to Round 1
 
+**Channel Progression Reset Behavior:**
+When advancing to the next channel, the following intentional resets occur:
+- **Scorecard Levels**: All scorecard category levels reset to Level 1. This is by design to:
+  - Maintain game balance as difficulty scales with each channel
+  - Prevent runaway scoring from accumulated level bonuses
+  - Create a fresh strategic challenge each channel
+  - Encourage players to rebuild their scoring strategy
+- **Round Counter**: Resets to Round 1
+- **Scorecard**: All categories become available again for scoring
+- **Player Inventory**: PowerUps, Consumables, and Mods are RETAINED across channels
+- **Economy**: Player money is RETAINED across channels
+
+> **Design Note**: The level reset is intentional game design, not a bug. Players keep their items and money but must rebuild scorecard levels each channel, creating a balanced progression where higher channels require strategic item management rather than relying on accumulated level bonuses.
+
 ## Key Systems
 
 ### Statistics System

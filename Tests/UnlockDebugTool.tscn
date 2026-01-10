@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3 uid="uid://c53g7kjiiw5xq"]
+
+[ext_resource type="Script" uid="uid://3b4u325qp4nv" path="res://Tests/unlock_debug_tool.gd" id="1_debug"]
+
+[node name="UnlockDebugTool" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_debug")

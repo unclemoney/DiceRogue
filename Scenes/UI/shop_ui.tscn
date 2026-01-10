@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://dbqwnxq8iy66l"]
+[gd_scene load_steps=4 format=3 uid="uid://dbqwnxq8iy66l"]
 
 [ext_resource type="Script" uid="uid://do82iklsw8hmg" path="res://Scripts/UI/shop_ui.gd" id="1_ksn61"]
+[ext_resource type="Theme" uid="uid://busf5kj4jt6yf" path="res://Resources/UI/powerup_hover_theme.tres" id="1_xwb05"]
 [ext_resource type="Texture2D" uid="uid://dhu773gp3lwd4" path="res://Resources/Art/Dice/BlueSquare.png" id="2_6hyjo"]
 
 [node name="ShopUI" type="Control"]
@@ -17,6 +18,7 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+theme = ExtResource("1_xwb05")
 script = ExtResource("1_ksn61")
 
 [node name="PanelContainer" type="PanelContainer" parent="."]

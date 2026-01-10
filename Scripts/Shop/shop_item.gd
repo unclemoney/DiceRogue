@@ -9,10 +9,15 @@ signal purchased(item_id: String, item_type: String)
 @onready var buy_button: Button = $MarginContainer/VBoxContainer/BuyButton
 @onready var shop_label: Label = $MarginContainer/ShopLabel
 
+# Dice texture and shader for colored dice shop cards
+const DICE_TEXTURE_PATH := "res://Resources/Art/Dice/dieWhite1.png"
+const DICE_SHADER_PATH := "res://Scripts/Shaders/dice_combined_effects.gdshader"
+
 var item_id: String
 var item_type: String
 var price: int
 var item_data: Resource  # Store the data resource for tooltip access
+var color_type: DiceColor.Type = DiceColor.Type.NONE  # Track color type for colored dice
 
 # Hover tooltip variables
 var hover_tooltip: PanelContainer
@@ -107,6 +112,10 @@ func _process(delta: float) -> void:
 			if buy_button.disabled and buy_button.text == "LIMIT REACHED":
 				buy_button.disabled = false
 				buy_button.text = "BUY"
+	
+	# Check if this is a colored dice item - update price and status dynamically
+	elif item_type == "colored_dice":
+		_update_colored_dice_display()
 
 func setup(data: Resource, type: String) -> void:
 	print("[ShopItem] Setting up item:", data.id)
@@ -121,8 +130,14 @@ func setup(data: Resource, type: String) -> void:
 	
 	# Explicitly set icon size and expansion
 	icon.custom_minimum_size = Vector2(48, 48)
-	icon.texture = data.icon
 	icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	
+	# Handle colored dice icons specially - use dice texture with color shader
+	if type == "colored_dice" and data is ColoredDiceData:
+		color_type = data.color_type
+		_setup_colored_dice_icon(data.color_type)
+	else:
+		icon.texture = data.icon
 	
 	name_label.text = data.display_name
 	price_label.text = "$%d" % price
@@ -286,6 +301,13 @@ func _setup_hover_tooltip() -> void:
 func _on_mouse_entered() -> void:
 	if not hover_tooltip or not item_data:
 		return
+	
+	# Update tooltip text - use enhanced version for colored dice
+	if hover_tooltip_label:
+		if item_type == "colored_dice":
+			hover_tooltip_label.text = _get_colored_dice_tooltip_text()
+		else:
+			hover_tooltip_label.text = item_data.description
 		
 	is_hovered = true
 	hover_tooltip.visible = true
@@ -442,3 +464,125 @@ func _apply_shop_button_styling(button: Button) -> void:
 	button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 	button.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 	button.add_theme_constant_override("outline_size", 1)
+
+
+## _setup_colored_dice_icon()
+##
+## Sets up the icon for a colored dice shop item.
+## Loads the dice texture and applies the color shader to display
+## the dice with its characteristic color glow effect.
+##
+## @param dice_color_type: DiceColor.Type to display
+func _setup_colored_dice_icon(dice_color_type: DiceColor.Type) -> void:
+	if not icon:
+		return
+	
+	# Load the dice texture
+	var dice_texture = load(DICE_TEXTURE_PATH)
+	if not dice_texture:
+		push_error("[ShopItem] Failed to load dice texture from: " + DICE_TEXTURE_PATH)
+		return
+	
+	icon.texture = dice_texture
+	
+	# Load and apply the shader
+	var shader = load(DICE_SHADER_PATH)
+	if not shader:
+		push_error("[ShopItem] Failed to load dice shader from: " + DICE_SHADER_PATH)
+		return
+	
+	# Create shader material and apply to icon
+	var shader_material = ShaderMaterial.new()
+	shader_material.shader = shader
+	
+	# Reset all color strengths
+	shader_material.set_shader_parameter("green_color_strength", 0.0)
+	shader_material.set_shader_parameter("red_color_strength", 0.0)
+	shader_material.set_shader_parameter("purple_color_strength", 0.0)
+	shader_material.set_shader_parameter("blue_color_strength", 0.0)
+	shader_material.set_shader_parameter("glow_strength", 0.0)
+	shader_material.set_shader_parameter("lock_overlay_strength", 0.0)
+	shader_material.set_shader_parameter("disabled", false)
+	
+	# Set the appropriate color strength based on dice color type
+	match dice_color_type:
+		DiceColor.Type.GREEN:
+			shader_material.set_shader_parameter("green_color_strength", 0.8)
+		DiceColor.Type.RED:
+			shader_material.set_shader_parameter("red_color_strength", 0.8)
+		DiceColor.Type.PURPLE:
+			shader_material.set_shader_parameter("purple_color_strength", 0.8)
+		DiceColor.Type.BLUE:
+			shader_material.set_shader_parameter("blue_color_strength", 0.8)
+	
+	icon.material = shader_material
+	print("[ShopItem] Set up colored dice icon with shader for:", DiceColor.get_color_name(dice_color_type))
+
+
+## _update_colored_dice_display()
+## Updates price, button status, and tooltip for colored dice items dynamically
+func _update_colored_dice_display() -> void:
+	if item_type != "colored_dice" or not item_data:
+		return
+	
+	# Get color type from the data (use local var to avoid shadowing class var)
+	var dice_color = item_data.color_type
+	
+	# Get current dynamic price from DiceColorManager
+	var current_cost = DiceColorManager.get_current_color_cost(dice_color)
+	var purchase_count = DiceColorManager.get_color_purchase_count(dice_color)
+	var at_max = DiceColorManager.is_color_at_max_odds(dice_color)
+	
+	# Update price display
+	if price_label:
+		if at_max:
+			price_label.text = "MAX"
+			price_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.5, 1))  # Red
+		else:
+			price_label.text = "$%d" % current_cost
+			price_label.add_theme_color_override("font_color", Color(0.2, 1, 0.2, 1))  # Green
+	
+	# Update internal price for purchase validation
+	price = current_cost
+	
+	# Update button status
+	if buy_button:
+		if at_max:
+			buy_button.disabled = true
+			buy_button.text = "MAX ODDS"
+		elif not PlayerEconomy.can_afford(current_cost):
+			buy_button.disabled = true
+			buy_button.text = "BUY"
+		else:
+			buy_button.disabled = false
+			buy_button.text = "BUY"
+	
+	# Update name label to show ownership count
+	if name_label and purchase_count > 0:
+		var base_name = item_data.display_name
+		name_label.text = "%s (x%d)" % [base_name, purchase_count]
+
+
+## _get_colored_dice_tooltip_text()
+## Builds enhanced tooltip text for colored dice showing purchase info
+func _get_colored_dice_tooltip_text() -> String:
+	if item_type != "colored_dice" or not item_data:
+		return item_data.description if item_data else ""
+	
+	var dice_color = item_data.color_type
+	var tooltip_lines = []
+	
+	# Base description
+	tooltip_lines.append(item_data.description)
+	tooltip_lines.append("")
+	
+	# Effect description
+	if item_data.effect_description and item_data.effect_description != "":
+		tooltip_lines.append("Effect: " + item_data.effect_description)
+	
+	tooltip_lines.append("")
+	
+	# Purchase info from DiceColorManager
+	tooltip_lines.append(DiceColorManager.get_color_shop_tooltip(dice_color))
+	
+	return "\n".join(tooltip_lines)

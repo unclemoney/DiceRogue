@@ -189,11 +189,13 @@ func _populate_shop_items() -> void:
 			push_error("[ShopUI] Failed to get ModData for:", id)
 	
 	# Populate Colored Dice
+	# Note: Colored dice can be purchased multiple times until they reach MAX odds
+	# We don't filter by purchased_items for colored dice - instead filter by MAX odds
 	var colored_dice = DiceColorManager.get_available_colored_dice()
 	var colored_dice_ids = []
 	for data in colored_dice:
 		colored_dice_ids.append(data.id)
-	var filtered_colored_dice = _filter_out_purchased_items(colored_dice_ids, "colored_dice")
+	var filtered_colored_dice = _filter_out_max_odds_colored_dice(colored_dice_ids)
 	# Filter out locked items
 	filtered_colored_dice = _filter_unlocked_items(filtered_colored_dice, "colored_dice")
 	var selected_colored_dice = _select_random_items(filtered_colored_dice, colored_dice_items)
@@ -211,6 +213,19 @@ func _filter_out_purchased_items(items: Array, type: String) -> Array:
 	for item in items:
 		if not purchased_items[type].has(item):
 			result.append(item)
+	return result
+
+## _filter_out_max_odds_colored_dice()
+##
+## Filters out colored dice that have reached their maximum odds (1:1).
+## Unlike other item types, colored dice can be purchased multiple times
+## until they reach MAX odds.
+func _filter_out_max_odds_colored_dice(dice_ids: Array) -> Array:
+	var result = []
+	for id in dice_ids:
+		var data = DiceColorManager.get_colored_dice_data(id)
+		if data and not DiceColorManager.is_color_at_max_odds(data.color_type):
+			result.append(id)
 	return result
 
 # Helper function to select random items from an array with weighted selection for power-ups
@@ -360,21 +375,22 @@ func _on_item_purchased(item_id: String, item_type: String) -> void:
 			print("[ShopUI] Invalid colored dice ID:", item_id)
 			return
 		
-		# Check if this color type is already purchased
-		if DiceColorManager.is_color_purchased(colored_dice_data.color_type):
-			print("[ShopUI] Color type already purchased:", colored_dice_data.get_color_name())
+		# Check if this color type is at max odds (1:1) - no more purchases allowed
+		if DiceColorManager.is_color_at_max_odds(colored_dice_data.color_type):
+			print("[ShopUI] Color type at MAX odds, cannot purchase more:", colored_dice_data.get_color_name())
 			return
 		
 		print("[ShopUI] Colored dice purchase validation passed for:", colored_dice_data.get_color_name())
 	
 	print("[ShopUI] Purchase validation passed, proceeding with purchase")
 	
-	# Record that this item was purchased
+	# Record that this item was purchased (for statistics)
 	if not purchased_items[item_type].has(item_id):
 		purchased_items[item_type].append(item_id)
 		print("[ShopUI] Added", item_id, "to purchased items list")
 	
-	# Remove the item from the shop
+	# Remove the item from the shop after purchase
+	# For colored dice: removed this turn, but available again next turn (not tracked in purchased_items for filtering)
 	print("[ShopUI] Calling _remove_shop_item for:", item_id, "type:", item_type)
 	_remove_shop_item(item_id, item_type)
 	
@@ -849,6 +865,11 @@ func _create_locked_item_display(item) -> void:
 	
 	# Create a panel for the locked item
 	var locked_panel = PanelContainer.new()
+	# Load and apply theme
+	var theme_path = "res://Resources/UI/powerup_hover_theme.tres"
+	var panel_theme = load(theme_path) as Theme
+	if panel_theme:
+		locked_panel.theme = panel_theme
 	locked_panel.custom_minimum_size = Vector2(200, 170)  # Slightly taller to fit progress
 	
 	# Add a background style

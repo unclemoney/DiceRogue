@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
 [ext_resource type="PackedScene" uid="uid://q27dsqs2pyd8" path="res://Scenes/UI/crt_overlay.tscn" id="3_f4xs4"]
-[ext_resource type="Shader" uid="uid://buwv6htlmlig8" path="res://Scripts/Shaders/backgground_swirl.gdshader" id="3_w6663"]
+[ext_resource type="Shader" uid="uid://b6aohmne8q6q5" path="res://Scripts/Shaders/vhs_wave.gdshader" id="4_wcrst"]
 [ext_resource type="PackedScene" uid="uid://dqgkm7s8toq66" path="res://Scenes/Effects/CRTManager.tscn" id="5_6hkbr"]
 [ext_resource type="PackedScene" uid="uid://dugpl3du3i6xo" path="res://Scenes/Dice/dice_hand.tscn" id="5_gxabo"]
 [ext_resource type="Texture2D" uid="uid://cq6eysum1qfw8" path="res://Resources/Art/Background/Hutch.png" id="5_sqb4o"]
@@ -106,21 +106,17 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wtptv"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_w6663"]
-shader = ExtResource("3_w6663")
-shader_parameter/polar_coordinates = false
-shader_parameter/polar_center = Vector2(0.5, 0.5)
-shader_parameter/polar_zoom = 1.0
-shader_parameter/polar_repeat = 1.0
-shader_parameter/spin_rotation = 0.0
-shader_parameter/spin_speed = 0.695
-shader_parameter/offset = Vector2(0, 0)
+shader = ExtResource("4_wcrst")
 shader_parameter/colour_1 = Color(0.625897, 0.749299, 0.999966, 1)
 shader_parameter/colour_2 = Color(0, 0.141422, 0.388962, 1)
 shader_parameter/colour_3 = Color(0.505455, 0.00273614, 0.816471, 1)
-shader_parameter/contrast = 1.415
-shader_parameter/lighting = 0.605
-shader_parameter/spin_amount = 0.255
-shader_parameter/pixel_filter = 700.0
+shader_parameter/wave_speed = 0.5
+shader_parameter/pixel_filter = 500.0
+shader_parameter/wave_density = 8.0
+shader_parameter/wave_amplitude = 0.05
+shader_parameter/chromatic_drift = 0.02
+shader_parameter/noise_strength = 0.15
+shader_parameter/scanline_intensity = 0.4
 
 [node name="Node2D" type="Node2D"]
 script = ExtResource("1_d3q3t")
