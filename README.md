@@ -879,6 +879,39 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 - `PowerUpTest.tscn` - Power-up functionality
 - `MultiplierManagerTest.tscn` - Score modifier system
 
+## Editor Tools
+
+### Resource Viewer Plugin
+A read-only editor tool for viewing all game resources in one centralized interface.
+
+**Location**: `addons/resource_viewer/`
+
+**Features**:
+- **Tabbed Interface**: View PowerUps, Consumables, Mods, and Colored Dice in separate tabs
+- **Item Counts**: Tab labels show total count for each category (e.g., "PowerUps (25)")
+- **Sorting**: Sort resources by Name, Price, Rarity, or Rating (ascending/descending)
+- **Property Display**: Click any resource to view its full properties
+- **Auto-Discovery**: Automatically scans resource folders on load and refresh
+
+**Enabling the Plugin**:
+1. Open Godot Editor
+2. Go to **Project → Project Settings → Plugins**
+3. Find "Resource Viewer" and set Status to **Active**
+4. The plugin appears as a bottom panel dock
+
+**Resource Locations Scanned**:
+- `Scripts/PowerUps/*.tres` - PowerUp definitions
+- `Scripts/Consumable/*.tres` - Consumable definitions
+- `Scripts/Mods/*.tres` - Mod definitions
+- `Resources/Data/ColoredDice/*.tres` - Colored Dice definitions
+
+**Usage**:
+- Click the "Resource Viewer" tab at the bottom of the editor
+- Select a category tab (PowerUps, Consumables, Mods, Colors)
+- Use the Sort dropdown and direction button to sort the list
+- Click any item in the list to view its properties
+- Click "Refresh" to rescan folders after adding new resources
+
 ## Development Guidelines
 
 ### Adding New Power-ups

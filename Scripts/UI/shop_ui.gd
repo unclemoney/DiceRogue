@@ -865,7 +865,6 @@ func _create_locked_item_display(item) -> void:
 	
 	# Create a panel for the locked item
 	var locked_panel = PanelContainer.new()
-	# Load and apply theme
 	var theme_path = "res://Resources/UI/powerup_hover_theme.tres"
 	var panel_theme = load(theme_path) as Theme
 	if panel_theme:
