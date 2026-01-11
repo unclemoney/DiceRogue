@@ -11,4 +11,4 @@ display_name = "The Rarities"
 description = "Pays $20-$150 for each owned Power-Up based on rarity: Common ($20), Uncommon ($25), Rare ($50), Epic ($75), Legendary ($150)"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
-price = 100
+price = 50

@@ -11,5 +11,5 @@ display_name = "Five By One"
 description = "Always Roll 5, Earn +1 Bonus Per Roll"
 icon = ExtResource("1_border5")
 scene = ExtResource("2_scene")
-price = 150
+price = 50
 metadata/_custom_type_script = "uid://47gl3by4wwht"

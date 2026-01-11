@@ -11,5 +11,5 @@ display_name = "Double Score"
 description = "Double and existing score"
 icon = ExtResource("1_klwiu")
 scene = ExtResource("2_qabd6")
-price = 100
+price = 25
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

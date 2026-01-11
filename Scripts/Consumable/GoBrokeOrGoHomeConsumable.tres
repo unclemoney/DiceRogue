@@ -11,4 +11,4 @@ display_name = "Go Broke or Go Home"
 description = "Choose lower section category. Score > 0: double money. Score = 0: lose all money"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
-price = 200
+price = 50

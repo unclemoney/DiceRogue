@@ -586,8 +586,12 @@ func update_best_hand_preview(dice_values: Array) -> void:
 		
 		# Update the additive panel with base score (no animation for preview)
 		if additive_score_label:
-			additive_score_label.text = "+%d" % base_additive
-			additive_score_label.modulate = Color(0.7, 0.7, 0.0) if base_additive > 0 else Color.WHITE
+			if base_additive >= 0:
+				additive_score_label.text = "+%d" % base_additive
+				additive_score_label.modulate = Color(0.7, 0.7, 0.0) if base_additive > 0 else Color.WHITE
+			else:
+				additive_score_label.text = "%d" % base_additive
+				additive_score_label.modulate = Color(0.8, 0.2, 0.2)  # Red for negative
 		
 		print("[ScoreCardUI] Best hand: %s (Lv.%d) RAW base: %d × %d = +%d base additive (no powerups)" % [best_category, category_level, raw_base_score, category_level, base_additive])
 
@@ -1328,11 +1332,20 @@ func update_additive_score_panel(additive_value: int, animate: bool = true) -> v
 		return
 	
 	print("[ScoreCardUI] Updating additive panel: %d (animate=%s)" % [additive_value, animate])
-	additive_score_label.text = "+%d" % additive_value
+	
+	# Format with proper sign: negative values show as -XX, positive as +XX
+	if additive_value >= 0:
+		additive_score_label.text = "+%d" % additive_value
+	else:
+		additive_score_label.text = "%d" % additive_value  # Negative already has - sign
 	
 	if animate:
-		# Use yellow for positive values, white for zero (always bounce to show calculation step)
-		var flash_color = Color.YELLOW if additive_value > 0 else Color.WHITE
+		# Use yellow for positive, red for negative, white for zero
+		var flash_color = Color.WHITE
+		if additive_value > 0:
+			flash_color = Color.YELLOW
+		elif additive_value < 0:
+			flash_color = Color(0.9, 0.3, 0.3)  # Red for negative
 		_bounce_label(additive_score_label, flash_color)
 
 

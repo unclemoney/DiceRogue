@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ModData" load_steps=4 format=3 uid="uid://bkgq1y80xpvwc"]
 
-[ext_resource type="Texture2D" uid="uid://bfm6lxojtyqwh" path="res://Resources/Art/Dice/dieWhite_border3.png" id="1_border3"]
+[ext_resource type="Texture2D" uid="uid://ctklyagmynj62" path="res://Resources/Art/Dice/dieWhite_border3.png" id="1_border3"]
 [ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="1_moddata"]
 [ext_resource type="PackedScene" uid="uid://c7uu7t3hnfp1u" path="res://Scenes/Mods/ThreeButThreeMod.tscn" id="2_scene"]
 
@@ -11,5 +11,5 @@ display_name = "Three But Three"
 description = "Always Roll 3, Earn $3 Per Roll"
 icon = ExtResource("1_border3")
 scene = ExtResource("2_scene")
-price = 150
+price = 50
 metadata/_custom_type_script = "uid://47gl3by4wwht"

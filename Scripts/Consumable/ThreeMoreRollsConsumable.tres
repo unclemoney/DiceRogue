@@ -11,5 +11,5 @@ display_name = "Extra Rolls"
 description = "Adds 3 more dice rolls for the current turn only"
 icon = ExtResource("1_s4d2c")
 scene = ExtResource("2_bfh4v")
-price = 75
+price = 25
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

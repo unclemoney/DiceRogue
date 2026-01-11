@@ -11,5 +11,5 @@ display_name = "Gold Six"
 description = "Grants $6 for every 6 rolled"
 icon = ExtResource("1_irg0f")
 scene = ExtResource("2_7dipm")
-price = 100
+price = 75
 metadata/_custom_type_script = "uid://47gl3by4wwht"

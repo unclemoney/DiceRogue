@@ -260,14 +260,28 @@ func _populate_tab(type: String, resources: Array) -> void:
 ## Gets the display text for a resource in the ItemList
 func _get_display_text(resource: Resource, type: String) -> String:
 	var name_str = resource.display_name if resource.get("display_name") else resource.id
-	var price_str = "$%d" % resource.price if resource.get("price") != null else ""
+	
+	# Get price/money string based on type
+	var price_str = ""
+	if type in ["power_up", "consumable", "mod", "colored_dice"]:
+		if "price" in resource:
+			price_str = "$%d" % resource.price
+	elif type == "challenge":
+		if "reward_money" in resource:
+			price_str = "$%d" % resource.reward_money
 	
 	# Add rarity for power-ups
 	if type == "power_up" and resource.get("rarity"):
 		var rarity_char = _get_rarity_char(resource.rarity)
 		return "%s [%s] %s" % [name_str, rarity_char, price_str]
 	
-	return "%s %s" % [name_str, price_str]
+	# For challenges, also show target score
+	if type == "challenge" and "target_score" in resource:
+		return "%s (%d pts) %s" % [name_str, resource.target_score, price_str]
+	
+	if price_str != "":
+		return "%s %s" % [name_str, price_str]
+	return name_str
 
 
 ## _get_rarity_char(rarity)
@@ -325,8 +339,8 @@ func _sort_resources(resources: Array, type: String) -> Array:
 			)
 		"price":
 			resources.sort_custom(func(a, b):
-				var price_a = a.price if a.get("price") != null else 0
-				var price_b = b.price if b.get("price") != null else 0
+				var price_a = _get_sortable_price(a, type)
+				var price_b = _get_sortable_price(b, type)
 				if sort_ascending:
 					return price_a < price_b
 				else:
@@ -352,6 +366,16 @@ func _sort_resources(resources: Array, type: String) -> Array:
 			)
 	
 	return resources
+
+
+## _get_sortable_price(resource, type)
+##
+## Returns the price/money value for sorting based on resource type
+func _get_sortable_price(resource: Resource, type: String) -> int:
+	if type == "challenge":
+		return resource.reward_money if "reward_money" in resource else 0
+	else:
+		return resource.price if "price" in resource else 0
 
 
 ## _display_resource_properties(resource, type)
@@ -380,8 +404,10 @@ func _display_resource_properties(resource: Resource, type: String) -> void:
 	# Editable: Description (multi-line)
 	_add_editable_text_row(grid, "Description", str(resource.description) if resource.get("description") else "", "description")
 	
-	# Editable: Price
-	_add_editable_number_row(grid, "Price", resource.price if resource.get("price") != null else 0, "price")
+	# Editable: Price (only for types that have a price property)
+	if type in ["power_up", "consumable", "mod", "colored_dice"]:
+		var price_value: int = resource.price if "price" in resource else 0
+		_add_editable_number_row(grid, "Price", price_value, "price")
 	
 	# Type-specific properties
 	match type:
@@ -409,9 +435,11 @@ func _display_resource_properties(resource: Resource, type: String) -> void:
 			_add_editable_text_row(grid, "Rarity Info", str(resource.rarity_description) if resource.get("rarity_description") else "", "rarity_description")
 		"challenge":
 			# Editable: Target score
-			_add_editable_score_row(grid, "Target Score", resource.target_score if resource.get("target_score") != null else 0, "target_score")
+			var target_score_value: int = resource.target_score if "target_score" in resource else 0
+			_add_editable_score_row(grid, "Target Score", target_score_value, "target_score")
 			# Editable: Reward money
-			_add_editable_number_row(grid, "Reward $", resource.reward_money if resource.get("reward_money") != null else 0, "reward_money")
+			var reward_money_value: int = resource.reward_money if "reward_money" in resource else 0
+			_add_editable_number_row(grid, "Reward $", reward_money_value, "reward_money")
 			# Editable: Dice type
 			_add_editable_line_row(grid, "Dice Type", str(resource.dice_type) if resource.get("dice_type") else "", "dice_type")
 			# Read-only: Debuff IDs (comma-separated list)
@@ -524,9 +552,10 @@ func _add_editable_number_row(grid: GridContainer, label_text: String, current_v
 	
 	# Create editable SpinBox
 	var spin_box = SpinBox.new()
-	spin_box.value = current_value
+	# IMPORTANT: Set min/max BEFORE value to prevent clamping
 	spin_box.min_value = 0
-	spin_box.max_value = 9999
+	spin_box.max_value = 99999
+	spin_box.value = current_value
 	spin_box.step = 1
 	spin_box.prefix = "$"
 	spin_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -550,9 +579,10 @@ func _add_editable_score_row(grid: GridContainer, label_text: String, current_va
 	
 	# Create editable SpinBox
 	var spin_box = SpinBox.new()
-	spin_box.value = current_value
+	# IMPORTANT: Set min/max BEFORE value to prevent clamping
 	spin_box.min_value = 0
 	spin_box.max_value = 99999
+	spin_box.value = current_value
 	spin_box.step = 1
 	spin_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	spin_box.custom_minimum_size.x = 100

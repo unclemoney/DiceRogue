@@ -11,4 +11,4 @@ display_name = "One Extra Dice"
 description = "Add +1 dice to next hand, removed after scoring"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
-price = 50
+price = 25

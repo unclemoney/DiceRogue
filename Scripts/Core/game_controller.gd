@@ -317,10 +317,10 @@ func _ready() -> void:
 func _on_game_start() -> void:
 	#grant_consumable("random_power_up_uncommon")
 	#grant_consumable("poor_house")
-	apply_debuff("the_division")
+	#apply_debuff("the_division")
 	#activate_challenge("300pts_no_debuff")
-	grant_power_up("pin_head")
-	grant_power_up("perfect_strangers")
+	#grant_power_up("pin_head")
+	#grant_power_up("perfect_strangers")
 	
 	# Show channel selector UI at game start
 	if channel_manager_ui and channel_manager:
@@ -1767,6 +1767,10 @@ func _on_roll_completed() -> void:
 	# Print dice states for debugging
 	if dice_hand:
 		dice_hand.print_dice_states()
+	
+	# Check lock dice chore completion after rolling
+	# The chore requires locking dice THEN rolling, so we check here
+	_check_lock_dice_chore()
 
 ## _on_turn_started()
 ##
@@ -3082,6 +3086,25 @@ func _count_locked_dice() -> int:
 		if die is Dice and die.is_locked:
 			count += 1
 	return count
+
+
+## _check_lock_dice_chore()
+##
+## Checks if a lock dice chore should be completed after rolling.
+## This is called after roll completion because the chore requires:
+## 1. Lock dice THEN 2. Roll - so we check after the roll happens.
+func _check_lock_dice_chore() -> void:
+	if not chores_manager:
+		return
+	
+	var locked_count = _count_locked_dice()
+	if locked_count > 0:
+		print("[GameController] Checking lock dice chore: %d dice locked" % locked_count)
+		var context = {
+			"locked_count": locked_count
+		}
+		chores_manager.check_task_completion(context)
+
 
 ## _clear_grounded_debuffs()
 ##

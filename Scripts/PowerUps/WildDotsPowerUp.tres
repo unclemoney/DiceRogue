@@ -8,10 +8,10 @@
 script = ExtResource("1_powerup_data")
 id = "wild_dots"
 display_name = "Wild Dots"
-description = "Each locked die showing the max face increases the chance of rolling that face on remaining dice for the rest of the turn."
+description = "For each locked dice of the same number, additional rolled dice have an increased odds of rolling the same number."
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
 price = 250
 rarity = "rare"
-rating = "G"
+rating = "NC-17"
 metadata/_custom_type_script = "uid://powerupdata"

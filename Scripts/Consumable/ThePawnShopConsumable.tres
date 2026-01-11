@@ -11,4 +11,4 @@ display_name = "The Pawn Shop"
 description = "Sells ALL owned Power-Ups for 1.25x their purchase price. WARNING: This removes all Power-Ups permanently!"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
-price = 150
+price = 25

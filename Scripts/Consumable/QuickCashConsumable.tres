@@ -11,4 +11,4 @@ display_name = "Quick Cash"
 description = "Grants 20% of the total purchase price of all owned Power-Ups as cash"
 icon = ExtResource("1_aoofk")
 scene = ExtResource("2_vans2")
-price = 75
+price = 25

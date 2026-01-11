@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3 uid="uid://bnlx2e316ym75"]
 
-[ext_resource type="Texture2D" path="res://Resources/Art/Powerups/PowerUp_test2.png" id="1_icon"]
-[ext_resource type="Script" path="res://Scripts/Consumable/ConsumableData.gd" id="1_script"]
-[ext_resource type="PackedScene" path="res://Scenes/Consumable/EmptyShelvesConsumable.tscn" id="2_scene"]
+[ext_resource type="Texture2D" uid="uid://rf2mfiai7qyi" path="res://Resources/Art/Powerups/PowerUp_test2.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://cmjxlqxcemuu7" path="res://Scenes/Consumable/EmptyShelvesConsumable.tscn" id="2_scene"]
 
 [resource]
 script = ExtResource("1_script")
@@ -11,4 +11,4 @@ display_name = "Empty Shelves"
 description = "Multiply next score by the number of empty PowerUp slots. Only usable during active rounds."
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
-price = 150
+price = 50

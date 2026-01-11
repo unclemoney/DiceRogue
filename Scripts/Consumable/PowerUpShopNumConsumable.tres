@@ -11,5 +11,5 @@ display_name = "Shop Expansion"
 description = "Increases the number of Power-Ups shown in the shop by 1"
 icon = ExtResource("1_ti2y2")
 scene = ExtResource("2_bfh4v")
-price = 125
+price = 25
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

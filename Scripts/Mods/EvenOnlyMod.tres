@@ -11,5 +11,5 @@ display_name = "Evens Only"
 description = "Only Roll Even Number Dice"
 icon = ExtResource("1_2c6pi")
 scene = ExtResource("2_tq8fe")
-price = 100
+price = 50
 metadata/_custom_type_script = "uid://47gl3by4wwht"

@@ -11,5 +11,5 @@ display_name = "Odd Only"
 description = "Only allows Odd Number dice to be rolled"
 icon = ExtResource("1_lrw8v")
 scene = ExtResource("2_depgn")
-price = 100
+price = 50
 metadata/_custom_type_script = "uid://47gl3by4wwht"
