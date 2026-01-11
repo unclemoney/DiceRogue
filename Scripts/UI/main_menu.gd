@@ -492,18 +492,33 @@ func _update_playing_as_label() -> void:
 ## _on_profile_button_pressed(slot)
 ##
 ## Handler for when a profile button is clicked.
-## Left-click opens rename dialog for the profile.
+## Left-click selects the profile.
 func _on_profile_button_pressed(slot: int) -> void:
-	print("[MainMenu] Profile %d clicked - showing rename dialog" % slot)
-	_show_rename_dialog(slot)
+	print("[MainMenu] Profile %d selected" % slot)
+	
+	# Update active profile in settings
+	if _game_settings:
+		_game_settings.active_profile_slot = slot
+		_game_settings.save_settings()
+	
+	# Load the profile
+	if ProgressManager:
+		ProgressManager.load_profile(slot)
+	
+	# Update UI
+	_update_profile_buttons()
+	_update_playing_as_label()
+	profile_selected.emit(slot)
 
 
 ## _on_profile_button_gui_input(event, slot)
 ##
-## Handler for profile button input (right-click = rename).
+## Handler for profile button input.
+## Right-click opens the rename dialog.
 func _on_profile_button_gui_input(event: InputEvent, slot: int) -> void:
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+			print("[MainMenu] Profile %d right-clicked - showing rename dialog" % slot)
 			_show_rename_dialog(slot)
 
 

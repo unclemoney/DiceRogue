@@ -21,16 +21,12 @@ signal shop_button_opened
 
 var _managers_ready := 0
 const REQUIRED_MANAGERS := 3
-var _time: float = 0.0
-const RAINBOW_SPEED := 0.9
-const RAINBOW_COLORS := [
-	Color(1, 0, 0),    # Red
-	Color(1, 0.5, 0),  # Orange
-	Color(1, 1, 0),    # Yellow
-	Color(0, 1, 0),    # Green
-	Color(0, 0, 1),    # Blue
-	Color(0.5, 0, 1),  # Purple
-]
+
+# Title animation
+var title_tween: Tween
+var title_base_position: Vector2
+const TITLE_FLOAT_AMOUNT := 8.0
+const TITLE_FLOAT_DURATION := 2.5
 
 const ShopItemScene := preload("res://Scenes/Shop/shop_item.tscn")
 
@@ -60,8 +56,11 @@ func _ready() -> void:
 		push_error("[ShopUI] ShopLabel not found!")
 		return
 
-	# Set up and style shop label
+	# Set up and style shop label with BRICK_SANS font
 	_style_shop_title()
+	
+	# Start floating animation
+	_start_title_animation()
 	
 	# Fix mouse input for background elements (do this early, before manager checks)
 	_configure_mouse_input()
@@ -98,25 +97,38 @@ func _ready() -> void:
 	hide()
 	#buy_button.pressed.connect(_on_buy_button_pressed)
 
-func _process(delta: float) -> void:
+func _exit_tree() -> void:
+	if title_tween and title_tween.is_valid():
+		title_tween.kill()
+
+## _start_title_animation()
+##
+## Starts the floating animation for the shop title.
+func _start_title_animation() -> void:
 	if not shop_label:
 		return
-		
-	_time += delta * RAINBOW_SPEED
 	
-	# Calculate two color indices for interpolation
-	var color_count: int = RAINBOW_COLORS.size()
-	var index1: int = int(_time) % color_count
-	var index2: int = (index1 + 1) % color_count
-	var t: float = fmod(_time, 1.0)  # Interpolation factor
+	title_base_position = shop_label.position
+	_animate_title_float()
+
+## _animate_title_float()
+##
+## Creates a looping float animation for the title.
+func _animate_title_float() -> void:
+	if title_tween and title_tween.is_valid():
+		title_tween.kill()
 	
-	# Interpolate between colors
-	var current_color: Color = RAINBOW_COLORS[index1].lerp(RAINBOW_COLORS[index2], t)
+	title_tween = create_tween()
+	title_tween.set_loops()
+	title_tween.set_trans(Tween.TRANS_SINE)
+	title_tween.set_ease(Tween.EASE_IN_OUT)
 	
-	# Format BBCode with hex color
-	var hex_color: String = current_color.to_html(false)
-	shop_label.add_theme_font_size_override("normal_font_size", 45)
-	shop_label.text = "[center][color=#%s][wave amp=50 freq=2]SHOP[/wave][/color][/center]" % hex_color
+	# Float up
+	title_tween.tween_property(shop_label, "position:y", 
+		title_base_position.y - TITLE_FLOAT_AMOUNT, TITLE_FLOAT_DURATION)
+	# Float down
+	title_tween.tween_property(shop_label, "position:y",
+		title_base_position.y + TITLE_FLOAT_AMOUNT, TITLE_FLOAT_DURATION)
 	
 func _on_manager_ready() -> void:
 	_managers_ready += 1
@@ -706,7 +718,7 @@ func _style_shop_background() -> void:
 	print("[ShopUI] Shop background styling applied")
 
 ## _style_shop_title()
-## Styles the shop title with better positioning and fonts
+## Styles the shop title with BRICK_SANS font (no BBCode or rainbow colors)
 func _style_shop_title() -> void:
 	if not shop_label:
 		print("[ShopUI] Shop label not found, skipping title styling")
@@ -715,39 +727,27 @@ func _style_shop_title() -> void:
 	print("[ShopUI] Styling shop title")
 	
 	# Configure basic properties
-	shop_label.bbcode_enabled = true
+	shop_label.bbcode_enabled = false  # No BBCode needed
 	shop_label.fit_content = true
-	shop_label.custom_minimum_size = Vector2(0, 40)  # Taller for better presence
+	shop_label.custom_minimum_size = Vector2(0, 60)  # Taller for BRICK_SANS
 	
-	# Apply VCR font and styling
-	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
-	if vcr_font:
-		shop_label.add_theme_font_override("normal_font", vcr_font)
-		shop_label.add_theme_font_size_override("normal_font_size", 28)  # Large title font
-		shop_label.add_theme_color_override("default_color", Color(1, 0.8, 0.2, 1))  # Golden color
+	# Apply BRICK_SANS font with golden yellow color
+	var brick_font = load("res://Resources/Font/BRICK_SANS.ttf")
+	if brick_font:
+		shop_label.add_theme_font_override("normal_font", brick_font)
+		shop_label.add_theme_font_size_override("normal_font_size", 40)  # Large title
+		shop_label.add_theme_color_override("default_color", Color(1.0, 0.85, 0.3, 1.0))  # Golden yellow
+		# Add shadow for depth
+		shop_label.add_theme_color_override("font_shadow_color", Color(0.6, 0.3, 0.0, 0.8))
+		shop_label.add_theme_constant_override("shadow_offset_x", 4)
+		shop_label.add_theme_constant_override("shadow_offset_y", 4)
 	
 	# Center alignment
 	shop_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	shop_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	
-	# Add background to the title
-	var title_style = StyleBoxFlat.new()
-	title_style.bg_color = Color(0.1, 0.08, 0.15, 0.8)  # Semi-transparent dark background
-	title_style.border_color = Color(1, 0.8, 0.2, 0.4)  # Subtle golden border
-	title_style.set_border_width_all(1)
-	title_style.corner_radius_top_left = 8
-	title_style.corner_radius_top_right = 8
-	title_style.corner_radius_bottom_right = 8  
-	title_style.corner_radius_bottom_left = 8
-	title_style.content_margin_left = 20.0
-	title_style.content_margin_top = 10.0
-	title_style.content_margin_right = 20.0
-	title_style.content_margin_bottom = 10.0
-	
-	shop_label.add_theme_stylebox_override("normal", title_style)
-	
-	# Set the shop title text with BBCode formatting
-	shop_label.text = "[center][color=gold]✦ MERCHANT'S SHOP ✦[/color][/center]"
+	# Set simple text (no BBCode)
+	shop_label.text = "SHOP"
 	
 	print("[ShopUI] Shop title styling applied")
 
@@ -854,6 +854,10 @@ func _create_locked_item_display(item) -> void:
 	if not item or not locked_container:
 		return
 	
+	# Load fonts
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	var brick_font = load("res://Resources/Font/BRICK_SANS.ttf")
+	
 	# Get progress data from ProgressManager
 	var progress_manager = get_node("/root/ProgressManager")
 	var progress_data = {"current": 0, "target": 0, "percentage": 0.0}
@@ -863,7 +867,7 @@ func _create_locked_item_display(item) -> void:
 	# Determine if item is close to unlocking (>=80%)
 	var is_close_to_unlock = progress_data["percentage"] >= 80.0
 	
-	# Create a panel for the locked item
+	# Create a panel for the locked item with shader background
 	var locked_panel = PanelContainer.new()
 	var theme_path = "res://Resources/UI/powerup_hover_theme.tres"
 	var panel_theme = load(theme_path) as Theme
@@ -871,9 +875,33 @@ func _create_locked_item_display(item) -> void:
 		locked_panel.theme = panel_theme
 	locked_panel.custom_minimum_size = Vector2(200, 170)  # Slightly taller to fit progress
 	
-	# Add a background style
+	# Create ColorRect for shader background
+	var shader_bg = ColorRect.new()
+	shader_bg.color = Color.WHITE
+	shader_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	
+	# Load and apply the retro dither shader
+	var shader = load("res://Scripts/Shaders/retro_dither.gdshader")
+	if shader:
+		var shader_mat = ShaderMaterial.new()
+		shader_mat.shader = shader
+		# Configure shader parameters for locked items
+		shader_mat.set_shader_parameter("step_posterize", 8)
+		shader_mat.set_shader_parameter("step_pixelated", 400)
+		shader_mat.set_shader_parameter("dithering_bayer", true)
+		shader_mat.set_shader_parameter("animated_dithering", true)
+		shader_mat.set_shader_parameter("smooth_animate", false)
+		shader_mat.set_shader_parameter("interval", 0.3)
+		
+		# Default colors: black and grey
+		shader_mat.set_shader_parameter("color_A", Vector3(0.0, 0.0, 0.0))  # Black
+		shader_mat.set_shader_parameter("color_B", Vector3(0.4, 0.4, 0.4))  # Grey
+		
+		shader_bg.material = shader_mat
+	
+	# Add a background style with border
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.2, 0.2, 0.2, 0.8)
+	style.bg_color = Color(0.2, 0.2, 0.2, 0.0)  # Transparent, shader handles color
 	style.border_width_left = 2
 	style.border_width_right = 2
 	style.border_width_top = 2
@@ -891,17 +919,27 @@ func _create_locked_item_display(item) -> void:
 	style.corner_radius_bottom_right = 5
 	locked_panel.add_theme_stylebox_override("panel", style)
 	
+	# Add shader background as first child (behind content)
+	locked_panel.add_child(shader_bg)
+	# Make it fill the panel
+	shader_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	
+	# Connect mouse signals for hover effects
+	locked_panel.mouse_entered.connect(_on_locked_item_mouse_entered.bind(shader_bg))
+	locked_panel.mouse_exited.connect(_on_locked_item_mouse_exited.bind(shader_bg))
+	
 	# Create content container
 	var vbox = VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 3)
 	locked_panel.add_child(vbox)
 	
-	# Add item name with lock icon (or star for close to unlock)
+	# Add item name with lock icon (or star for close to unlock) - Use BRICK_SANS font for title
 	var name_label = RichTextLabel.new()
 	name_label.custom_minimum_size = Vector2(180, 30)
 	name_label.fit_content = true
 	name_label.scroll_active = false
 	name_label.bbcode_enabled = true  # Enable BBCode
+	name_label.add_theme_font_override("normal_font", brick_font)  # Use brick font for title
 	if is_close_to_unlock:
 		name_label.text = "[center]⭐ %s[/center]" % item.display_name
 	else:
@@ -909,30 +947,33 @@ func _create_locked_item_display(item) -> void:
 	name_label.add_theme_font_size_override("normal_font_size", 11)
 	vbox.add_child(name_label)
 	
-	# Add item type
+	# Add item type - Use VCR font
 	var type_label = Label.new()
 	type_label.text = "Type: %s" % item.get_type_string()
+	type_label.add_theme_font_override("font", vcr_font)  # Use VCR font
 	type_label.add_theme_font_size_override("font_size", 10)
 	type_label.modulate = Color(0.8, 0.8, 0.8, 1.0)
 	type_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(type_label)
 	
-	# Add description
+	# Add description - Use VCR font
 	var desc_label = RichTextLabel.new()
 	desc_label.custom_minimum_size = Vector2(180, 40)
 	desc_label.fit_content = true
 	desc_label.scroll_active = false
 	desc_label.bbcode_enabled = true  # Enable BBCode
+	desc_label.add_theme_font_override("normal_font", vcr_font)  # Use VCR font
 	desc_label.add_theme_font_size_override("normal_font_size", 9)
 	desc_label.text = "[center]%s[/center]" % item.description
 	vbox.add_child(desc_label)
 	
-	# Add unlock requirement
+	# Add unlock requirement - Use VCR font
 	var unlock_label = RichTextLabel.new()
 	unlock_label.custom_minimum_size = Vector2(180, 35)
 	unlock_label.fit_content = true
 	unlock_label.scroll_active = false
 	unlock_label.bbcode_enabled = true  # Enable BBCode
+	unlock_label.add_theme_font_override("normal_font", vcr_font)  # Use VCR font
 	unlock_label.add_theme_font_size_override("normal_font_size", 9)
 	unlock_label.text = "[center][color=yellow]Unlock: %s[/color][/center]" % item.get_unlock_description()
 	vbox.add_child(unlock_label)
@@ -972,9 +1013,10 @@ func _create_locked_item_display(item) -> void:
 		
 		progress_container.add_child(progress_bar)
 		
-		# Progress text
+		# Progress text - Use VCR font
 		var progress_text = Label.new()
 		progress_text.text = " %d/%d" % [progress_data["current"], progress_data["target"]]
+		progress_text.add_theme_font_override("font", vcr_font)  # Use VCR font
 		progress_text.add_theme_font_size_override("font_size", 9)
 		progress_text.modulate = Color(0.8, 0.8, 0.8, 1.0)
 		progress_container.add_child(progress_text)
@@ -998,3 +1040,27 @@ func _filter_unlocked_items(items: Array, item_type: String) -> Array:
 			print("[ShopUI] Filtering out locked %s: %s" % [item_type, item_id])
 	
 	return filtered_items
+
+## _on_locked_item_mouse_entered(shader_bg)
+##
+## Called when mouse enters a locked item - changes shader colors to teal and purple
+func _on_locked_item_mouse_entered(shader_bg: ColorRect) -> void:
+	if not shader_bg or not shader_bg.material:
+		return
+	
+	var shader_mat = shader_bg.material as ShaderMaterial
+	if shader_mat:
+		shader_mat.set_shader_parameter("color_A", Vector3(0.0, 0.8, 0.8))  # Teal
+		shader_mat.set_shader_parameter("color_B", Vector3(0.5, 0.0, 0.5))  # Purple
+
+## _on_locked_item_mouse_exited(shader_bg)
+##
+## Called when mouse exits a locked item - returns shader colors to black and grey
+func _on_locked_item_mouse_exited(shader_bg: ColorRect) -> void:
+	if not shader_bg or not shader_bg.material:
+		return
+	
+	var shader_mat = shader_bg.material as ShaderMaterial
+	if shader_mat:
+		shader_mat.set_shader_parameter("color_A", Vector3(0.0, 0.0, 0.0))  # Black
+		shader_mat.set_shader_parameter("color_B", Vector3(0.4, 0.4, 0.4))  # Grey

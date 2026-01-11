@@ -24,16 +24,17 @@ PlayerEconomy="*res://Scripts/Managers/PlayerEconomy.gd"
 RollStats="*res://Scripts/Core/roll_stats.gd"
 DiceColorManager="*res://Scripts/Managers/dice_color_manager.gd"
 Statistics="*res://Scripts/Managers/statistics_manager.gd"
+GameSettings="*res://Scripts/Managers/game_settings.gd"
 ProgressManager="*res://Scripts/Managers/progress_manager.gd"
 GDAIMCPRuntime="*res://addons/gdai-mcp-plugin-godot/gdai_mcp_runtime.gd"
 AudioManager="*res://Scripts/Managers/audio_manager.gd"
 MusicManager="*res://Scripts/Managers/music_manager.gd"
-GameSettings="*res://Scripts/Managers/game_settings.gd"
 
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
+window/size/mode=3
 window/stretch/mode="canvas_items"
 
 [editor_plugins]

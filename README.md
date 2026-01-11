@@ -72,6 +72,9 @@ Full documentation with parameters and examples: See `ARCADE_SHADERS.md`
 - Legacy save migration: Old `user://save.json` auto-migrates to slot 1
 - Profile names limited to 30 characters
 - Statistics tracked per-profile: games completed, games won, highest channel, etc.
+- **IMPORTANT**: GameSettings must be loaded BEFORE ProgressManager in autoload order
+  - ProgressManager reads `active_profile_slot` from GameSettings on startup
+  - If order is wrong, profile 2/3 unlocks won't work correctly
 
 ### Settings System
 - **GameSettings** (autoload) - Centralized settings management

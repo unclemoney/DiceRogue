@@ -191,8 +191,9 @@ func _calculate_speed_scale(score: int) -> float:
 	# Apply user's animation speed setting from GameSettings
 	# scoring_animation_speed: 0.5 = slower, 1.0 = normal, 2.0 = faster
 	var user_speed_scale = 1.0
-	if GameSettings:
-		user_speed_scale = GameSettings.scoring_animation_speed
+	var game_settings = get_node_or_null("/root/GameSettings")
+	if game_settings:
+		user_speed_scale = game_settings.scoring_animation_speed
 	
 	return base_speed * user_speed_scale
 

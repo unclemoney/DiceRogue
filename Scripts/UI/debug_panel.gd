@@ -1726,8 +1726,12 @@ func _debug_force_complete_game() -> void:
 func _debug_simulate_yahtzee() -> void:
 	var progress_manager = get_node("/root/ProgressManager")
 	if progress_manager:
+		# Ensure game tracking is started before tracking yahtzee
+		if not progress_manager.is_tracking_game:
+			progress_manager.start_game_tracking()
+			log_debug("Started game tracking for yahtzee simulation")
 		progress_manager.track_yahtzee_rolled()
-		log_debug("Simulated yahtzee roll")
+		log_debug("Simulated yahtzee roll - current game yahtzees: %d" % progress_manager.current_game_stats.get("yahtzees_rolled", 0))
 
 func _debug_simulate_high_score() -> void:
 	var progress_manager = get_node("/root/ProgressManager")

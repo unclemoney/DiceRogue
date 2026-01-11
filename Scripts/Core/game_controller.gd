@@ -156,10 +156,12 @@ func _ready() -> void:
 	var unlock_notification_ui = preload("res://Scenes/UI/UnlockNotificationUI.tscn").instantiate()
 	add_child(unlock_notification_ui)
 	
-	# Connect to ProgressManager unlock signals
+	# Connect to ProgressManager unlock signals and tell it to connect to game scene
 	var progress_manager = get_node("/root/ProgressManager")
 	if progress_manager:
 		progress_manager.items_unlocked_batch.connect(_on_items_unlocked)
+		# Tell ProgressManager to connect to game scene signals (scorecard, turn tracker, etc.)
+		progress_manager.connect_to_game_scene()
 		print("[GameController] Connected to ProgressManager unlock signals")
 	
 	# Reference the private index variable to avoid an 'unused variable' lint warning

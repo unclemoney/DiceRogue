@@ -223,14 +223,21 @@ func load_profile(slot: int) -> bool:
 		cumulative_stats = save_data["cumulative_stats"]
 		if not cumulative_stats.has("highest_channel_completed"):
 			cumulative_stats["highest_channel_completed"] = 0
+	else:
+		# IMPORTANT: Reset to defaults if not in save file
+		cumulative_stats = _get_default_cumulative_stats()
+		print("[ProgressManager] WARNING: No cumulative_stats in save, using defaults")
 	
 	# Load completed channels
 	if save_data.has("completed_channels"):
 		completed_channels.clear()
 		for channel_num in save_data["completed_channels"]:
 			completed_channels.append(int(channel_num))
+	else:
+		completed_channels.clear()
 	
 	# Load unlocked items
+	var unlocked_count = 0
 	if save_data.has("unlocked_items"):
 		var unlocked_item_ids = save_data["unlocked_items"]
 		for item_id in unlocked_item_ids:
@@ -238,11 +245,29 @@ func load_profile(slot: int) -> bool:
 				var item = unlockable_items[item_id]
 				if item.has_method("unlock_item"):
 					item.unlock_item()
+					unlocked_count += 1
 	
-	print("[ProgressManager] Loaded profile %d: %s" % [slot, current_profile_name])
+	print("[ProgressManager] Loaded profile %d: %s (%d unlocked items)" % [slot, current_profile_name, unlocked_count])
 	profile_loaded.emit(slot)
 	progress_loaded.emit()
 	return true
+
+
+## _get_default_cumulative_stats()
+##
+## Returns a fresh default cumulative stats dictionary.
+func _get_default_cumulative_stats() -> Dictionary:
+	return {
+		"games_completed": 0,
+		"games_won": 0,
+		"total_score": 0,
+		"total_money_earned": 0,
+		"total_consumables_used": 0,
+		"total_yahtzees": 0,
+		"total_straights": 0,
+		"total_color_bonuses": 0,
+		"highest_channel_completed": 0
+	}
 
 
 ## _reset_all_unlocks()
@@ -259,6 +284,14 @@ func _reset_all_unlocks() -> void:
 ##
 ## Save the current profile's progress to its save file.
 func save_current_profile() -> void:
+	# Ensure we're using the correct profile slot from GameSettings
+	var game_settings = get_node_or_null("/root/GameSettings")
+	if game_settings and game_settings.active_profile_slot != current_profile_slot:
+		print("[ProgressManager] Warning: Profile mismatch detected!")
+		print("  ProgressManager slot: %d, GameSettings slot: %d" % [current_profile_slot, game_settings.active_profile_slot])
+		print("  Syncing to GameSettings slot: %d" % game_settings.active_profile_slot)
+		current_profile_slot = game_settings.active_profile_slot
+	
 	var save_path = PROFILE_SAVE_PATHS[current_profile_slot]
 	
 	var save_data = {
@@ -474,11 +507,21 @@ func end_game_tracking(final_score: int, did_win: bool = false) -> void:
 
 ## Check all unlock conditions and unlock eligible items
 func check_all_unlock_conditions() -> void:
+	print("[ProgressManager] Checking unlock conditions for profile %d (%s)" % [current_profile_slot, current_profile_name])
+	
 	var newly_unlocked: Array[String] = []
 	
 	for item_id in unlockable_items:
 		var item = unlockable_items[item_id]
-		if item.has_method("check_unlock") and item.check_unlock(current_game_stats, cumulative_stats):
+		if item.is_unlocked:
+			continue  # Skip already unlocked items
+		
+		var should_unlock = false
+		if item.has_method("check_unlock"):
+			should_unlock = item.check_unlock(current_game_stats, cumulative_stats)
+		
+		if should_unlock:
+			print("[ProgressManager] Unlocking item: %s" % item_id)
 			if item.has_method("unlock_item"):
 				item.unlock_item()
 			newly_unlocked.append(item_id)
@@ -487,20 +530,27 @@ func check_all_unlock_conditions() -> void:
 	if newly_unlocked.size() > 0:
 		print("[ProgressManager] Newly unlocked items: %s" % [str(newly_unlocked)])
 		items_unlocked_batch.emit(newly_unlocked)  # Emit batch signal for UI
+	else:
+		print("[ProgressManager] No new items unlocked")
 
 ## Track game events
 func track_score_assigned(category: String, score: int) -> void:
 	if not is_tracking_game:
+		print("[ProgressManager] WARNING: track_score_assigned called but game tracking not started! Category: %s, Score: %d" % [category, score])
 		return
 	
+	var old_max = current_game_stats["max_category_score"]
 	current_game_stats["max_category_score"] = max(current_game_stats["max_category_score"], score)
 	if category not in current_game_stats["categories_scored"]:
 		current_game_stats["categories_scored"].append(category)
+	print("[ProgressManager] Score tracked: %s = %d pts (max score: %d -> %d)" % [category, score, old_max, current_game_stats["max_category_score"]])
 
 func track_yahtzee_rolled() -> void:
 	if not is_tracking_game:
+		print("[ProgressManager] WARNING: track_yahtzee_rolled called but game tracking not started!")
 		return
 	current_game_stats["yahtzees_rolled"] += 1
+	print("[ProgressManager] Yahtzee rolled! Game yahtzees: %d" % current_game_stats["yahtzees_rolled"])
 
 func track_straight_rolled(straight_type: String) -> void:
 	if not is_tracking_game:
@@ -516,8 +566,10 @@ func track_consumable_used() -> void:
 
 func track_money_earned(amount: int) -> void:
 	if not is_tracking_game:
+		print("[ProgressManager] WARNING: track_money_earned called but game tracking not started! Amount: $%d" % amount)
 		return
 	current_game_stats["money_earned"] += amount
+	print("[ProgressManager] Money earned: $%d (total this game: $%d)" % [amount, current_game_stats["money_earned"]])
 
 func track_color_bonus() -> void:
 	if not is_tracking_game:
@@ -694,57 +746,85 @@ func debug_lock_item(item_id: String) -> void:
 	item_locked.emit(item_id, item.get_type_string())
 	save_progress()
 
+## connect_to_game_scene()
+##
+## Public method to (re)connect to game scene signals. Called by GameController
+## when a game scene loads to ensure ProgressManager can track game events.
+func connect_to_game_scene() -> void:
+	print("[ProgressManager] Connecting to game scene signals...")
+	_connect_game_signals()
+
 ## Connect to game systems for automatic tracking
 func _connect_to_game_systems() -> void:
 	# Wait for the tree to be ready
 	call_deferred("_connect_game_signals")
 
 func _connect_game_signals() -> void:
+	var connections_made = 0
+	
 	# Connect to scorecard signals
 	var scorecard = get_tree().get_first_node_in_group("scorecard")
 	if scorecard:
 		if not scorecard.is_connected("score_assigned", _on_score_assigned):
 			scorecard.score_assigned.connect(_on_score_assigned)
+			connections_made += 1
 		if not scorecard.is_connected("game_completed", _on_game_completed):
 			scorecard.game_completed.connect(_on_game_completed)
+			connections_made += 1
 		if not scorecard.is_connected("upper_bonus_achieved", _on_upper_bonus_achieved):
 			scorecard.upper_bonus_achieved.connect(_on_upper_bonus_achieved)
+			connections_made += 1
 		print("[ProgressManager] Connected to scorecard signals")
+	else:
+		print("[ProgressManager] WARNING: Scorecard not found - score tracking unavailable")
 	
 	# Connect to game controller signals
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	if game_controller:
 		if not game_controller.is_connected("consumable_used", _on_consumable_used):
 			game_controller.consumable_used.connect(_on_consumable_used)
+			connections_made += 1
 		print("[ProgressManager] Connected to game controller signals")
+	else:
+		print("[ProgressManager] WARNING: GameController not found - consumable tracking unavailable")
 	
 	# Connect to turn tracker for new game detection
 	var turn_tracker = get_tree().get_first_node_in_group("turn_tracker")
 	if turn_tracker:
 		if not turn_tracker.is_connected("turn_started", _on_turn_started):
 			turn_tracker.turn_started.connect(_on_turn_started)
+			connections_made += 1
 		print("[ProgressManager] Connected to turn tracker signals")
+	else:
+		print("[ProgressManager] WARNING: TurnTracker not found - game start detection unavailable")
 	
 	# Connect to player economy for money tracking
 	if PlayerEconomy and not PlayerEconomy.is_connected("money_changed", _on_money_changed):
 		PlayerEconomy.money_changed.connect(_on_money_changed)
+		connections_made += 1
 		print("[ProgressManager] Connected to player economy signals")
 	
 	# Connect to DiceColorManager for color bonus tracking
 	if DiceColorManager and not DiceColorManager.is_connected("color_effects_calculated", _on_color_effects_calculated):
 		DiceColorManager.color_effects_calculated.connect(_on_color_effects_calculated)
+		connections_made += 1
 		print("[ProgressManager] Connected to dice color manager signals")
 	
 	# Connect to RollStats for yahtzee and straight tracking  
 	if RollStats:
 		if not RollStats.is_connected("yahtzee_rolled", _on_yahtzee_rolled):
 			RollStats.yahtzee_rolled.connect(_on_yahtzee_rolled)
+			connections_made += 1
 		if not RollStats.is_connected("combination_achieved", _on_combination_achieved):
 			RollStats.combination_achieved.connect(_on_combination_achieved)
+			connections_made += 1
 		print("[ProgressManager] Connected to roll stats signals")
+	
+	print("[ProgressManager] Game signal connections complete (%d new connections)" % connections_made)
 
 ## Signal handlers for game events
 func _on_score_assigned(_section: int, category: String, score: int) -> void:
+	print("[ProgressManager] Score assigned: %s = %d pts" % [category, score])
 	track_score_assigned(category, score)
 
 func _on_game_completed(final_score: int) -> void:
