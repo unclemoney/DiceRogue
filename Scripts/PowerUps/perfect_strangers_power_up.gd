@@ -1,10 +1,22 @@
 extends PowerUp
 class_name PerfectStrangersPowerUp
 
-# Reference to the scorecard to listen for score assignments
+## PerfectStrangersPowerUp
+##
+## When scoring CHANCE category, applies a random multiplier (1.1x to 1.5x) to that score.
+## Connects to ScoreCardUI.about_to_score to register multiplier BEFORE score calculation,
+## then unregisters it after scoring completes (one-time use per CHANCE score).
+
+# Reference to the scorecard to listen for score completion
 var scorecard_ref: Scorecard = null
-var multiplier_activated: bool = false
-var current_multiplier: float = 0.0
+var score_card_ui_ref: Control = null
+
+# Track the last applied random multiplier for display purposes
+var last_applied_multiplier: float = 0.0
+var times_triggered: int = 0
+
+# Possible random multiplier values
+const RANDOM_MULTIPLIERS: Array[float] = [1.1, 1.2, 1.3, 1.4, 1.5]
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -12,6 +24,10 @@ func _ready() -> void:
 	add_to_group("power_ups")
 	print("[PerfectStrangersPowerUp] Added to 'power_ups' group")
 
+## apply(target)
+##
+## Connects to ScoreCardUI.about_to_score signal to intercept CHANCE scoring BEFORE calculation.
+## Also connects to score_assigned to clean up the multiplier AFTER scoring completes.
 func apply(target) -> void:
 	print("=== Applying PerfectStrangersPowerUp ===")
 	var scorecard = target as Scorecard
@@ -23,19 +39,34 @@ func apply(target) -> void:
 	scorecard_ref = scorecard
 	print("[PerfectStrangersPowerUp] Target scorecard:", scorecard)
 	
-	# Connect to score assignment signals
+	# Find ScoreCardUI to connect to about_to_score signal
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller and game_controller.score_card_ui:
+		score_card_ui_ref = game_controller.score_card_ui
+		
+		# Connect to about_to_score - fires BEFORE score calculation
+		if not score_card_ui_ref.is_connected("about_to_score", _on_about_to_score):
+			score_card_ui_ref.about_to_score.connect(_on_about_to_score)
+			print("[PerfectStrangersPowerUp] Connected to ScoreCardUI.about_to_score signal")
+	else:
+		push_error("[PerfectStrangersPowerUp] Cannot find ScoreCardUI")
+	
+	# Connect to score_assigned - fires AFTER score calculation (for cleanup)
 	if not scorecard.is_connected("score_assigned", _on_score_assigned):
 		scorecard.score_assigned.connect(_on_score_assigned)
 		print("[PerfectStrangersPowerUp] Connected to score_assigned signal")
 	
-	if not scorecard.is_connected("score_auto_assigned", _on_score_assigned):
-		scorecard.score_auto_assigned.connect(_on_score_assigned)
+	if not scorecard.is_connected("score_auto_assigned", _on_score_auto_assigned):
+		scorecard.score_auto_assigned.connect(_on_score_auto_assigned)
 		print("[PerfectStrangersPowerUp] Connected to score_auto_assigned signal")
 	
 	# Connect cleanup signal
 	if not is_connected("tree_exiting", _on_tree_exiting):
 		connect("tree_exiting", _on_tree_exiting)
 
+## remove(target)
+##
+## Disconnects all signals and cleans up any active multiplier.
 func remove(target) -> void:
 	print("=== Removing PerfectStrangersPowerUp ===")
 	
@@ -46,124 +77,94 @@ func remove(target) -> void:
 		scorecard = scorecard_ref
 	
 	if scorecard:
-		# Disconnect signals
+		# Disconnect scorecard signals
 		if scorecard.is_connected("score_assigned", _on_score_assigned):
 			scorecard.score_assigned.disconnect(_on_score_assigned)
-		if scorecard.is_connected("score_auto_assigned", _on_score_assigned):
-			scorecard.score_auto_assigned.disconnect(_on_score_assigned)
+		if scorecard.is_connected("score_auto_assigned", _on_score_auto_assigned):
+			scorecard.score_auto_assigned.disconnect(_on_score_auto_assigned)
 		print("[PerfectStrangersPowerUp] Disconnected from scorecard signals")
 	
-	# Remove multiplier if it was activated
-	if multiplier_activated:
-		_remove_multiplier()
+	# Disconnect from ScoreCardUI
+	if score_card_ui_ref:
+		if score_card_ui_ref.is_connected("about_to_score", _on_about_to_score):
+			score_card_ui_ref.about_to_score.disconnect(_on_about_to_score)
+		print("[PerfectStrangersPowerUp] Disconnected from ScoreCardUI signals")
+	
+	# Clean up any lingering multiplier
+	_unregister_multiplier()
 	
 	scorecard_ref = null
+	score_card_ui_ref = null
 
-func _on_score_assigned(section: Scorecard.Section, category: String, score: int, _breakdown_info: Dictionary = {}) -> void:
-	print("\n=== PERFECT STRANGERS DEBUG ===")
-	print("[PerfectStrangersPowerUp] Section:", section, " Category:", category, " Score:", score)
+## _on_about_to_score(section, category, dice_values)
+##
+## Called BEFORE score calculation. If category is CHANCE, registers a random multiplier.
+func _on_about_to_score(section: Scorecard.Section, category: String, _dice_values: Array[int]) -> void:
+	print("\n=== PERFECT STRANGERS: ABOUT TO SCORE ===")
+	print("[PerfectStrangersPowerUp] Section:", section, " Category:", category)
 	
-	# If multiplier is already activated, just log the current state
-	if multiplier_activated:
-		var manager = _get_score_modifier_manager()
-		if manager:
-			print("[PerfectStrangersPowerUp] ✓ MULTIPLIER ALREADY ACTIVE! Current total multiplier:", manager.get_total_multiplier())
-		else:
-			print("[PerfectStrangersPowerUp] ✗ MULTIPLIER ACTIVE BUT NO MANAGER FOUND!")
+	# Only trigger for CHANCE category
+	if category != "chance":
+		print("[PerfectStrangersPowerUp] Not CHANCE category - skipping")
 		return
 	
-	# Check if dice show 1,2,3,4,5 (Perfect Strangers condition)
-	print("[PerfectStrangersPowerUp] Checking for Perfect Strangers condition...")
+	# Pick a random multiplier from our options
+	var random_index = randi() % RANDOM_MULTIPLIERS.size()
+	var random_multiplier = RANDOM_MULTIPLIERS[random_index]
 	
-	# Get current dice values from the game controller
-	var game_controller = get_tree().get_first_node_in_group("game_controller")
-	if not game_controller:
-		print("[PerfectStrangersPowerUp] ✗ CANNOT FIND GAMECONTROLLER")
-		return
+	print("[PerfectStrangersPowerUp] ✓ CHANCE category detected!")
+	print("[PerfectStrangersPowerUp] ✓ Selected random multiplier: %.1fx" % random_multiplier)
 	
-	var dice_hand = game_controller.dice_hand
-	if not dice_hand:
-		print("[PerfectStrangersPowerUp] ✗ CANNOT FIND DICEHAND")
-		return
-	
-	var dice_values = dice_hand.get_current_dice_values()
-	print("[PerfectStrangersPowerUp] Current dice values:", dice_values)
-	
-	# Check if all dice values are different and we have 5+ dice
-	if dice_values.size() >= 5 and _are_all_dice_different(dice_values):
-		print("[PerfectStrangersPowerUp] ✓ PERFECT STRANGERS CONDITION MET!")
-		print("[PerfectStrangersPowerUp] ✓ All dice are different - activating 1.5x multiplier!")
-		_activate_multiplier()
+	# Register the multiplier BEFORE score calculation
+	var manager = _get_score_modifier_manager()
+	if manager:
+		manager.register_multiplier("perfect_strangers", random_multiplier)
+		last_applied_multiplier = random_multiplier
+		times_triggered += 1
+		print("[PerfectStrangersPowerUp] ✓ Registered %.1fx multiplier with ScoreModifierManager" % random_multiplier)
+		print("[PerfectStrangersPowerUp] Total times triggered: %d" % times_triggered)
+		
+		# Update description to show the applied multiplier
 		emit_signal("description_updated", id, get_current_description())
 	else:
-		print("[PerfectStrangersPowerUp] ✗ Perfect Strangers condition NOT met")
-		print("[PerfectStrangersPowerUp]   - Dice count:", dice_values.size(), " (need 5+)")
-		print("[PerfectStrangersPowerUp]   - All different:", _are_all_dice_different(dice_values))
-		
-		# Debug individual dice values
-		var unique_values = {}
-		var duplicates = []
-		for value in dice_values:
-			if value in unique_values:
-				duplicates.append(value)
-			unique_values[value] = true
-		
-		if duplicates.size() > 0:
-			print("[PerfectStrangersPowerUp]   - Duplicate values found:", duplicates)
-		else:
-			print("[PerfectStrangersPowerUp]   - No duplicates found - this should have worked!")
-
-func _are_all_dice_different(dice_values: Array) -> bool:
-	## _are_all_dice_different(dice_values)
-	##
-	## Checks if all dice in the array have different values (no duplicates).
-	## Returns true if all values are unique, false otherwise.
-	var unique_values = {}
-	for value in dice_values:
-		if value in unique_values:
-			return false
-		unique_values[value] = true
-	return true
-
-func _activate_multiplier() -> void:
-	## _activate_multiplier()
-	##
-	## Activates a 1.5x multiplier by registering it with the ScoreModifierManager.
-	print("\n=== ACTIVATING PERFECT STRANGERS MULTIPLIER ===")
-	var manager = _get_score_modifier_manager()
-	if manager:
-		current_multiplier = 1.5
-		print("[PerfectStrangersPowerUp] ✓ Found ScoreModifierManager")
-		print("[PerfectStrangersPowerUp] BEFORE REGISTRATION - Current total multiplier:", manager.get_total_multiplier())
-		print("[PerfectStrangersPowerUp] BEFORE REGISTRATION - Active multipliers:", manager._active_multipliers)
-		
-		manager.register_multiplier("perfect_strangers", current_multiplier)
-		multiplier_activated = true
-		
-		print("[PerfectStrangersPowerUp] ✓ REGISTERED 1.5x MULTIPLIER")
-		print("[PerfectStrangersPowerUp] AFTER REGISTRATION - Current total multiplier:", manager.get_total_multiplier())
-		print("[PerfectStrangersPowerUp] AFTER REGISTRATION - Active multipliers:", manager._active_multipliers)
-		print("[PerfectStrangersPowerUp] ✓ ALL FUTURE SCORES SHOULD NOW BE MULTIPLIED BY:", manager.get_total_multiplier())
-	else:
-		print("[PerfectStrangersPowerUp] ✗ CANNOT FIND ScoreModifierManager - MULTIPLIER NOT ACTIVATED!")
 		push_error("[PerfectStrangersPowerUp] Cannot find ScoreModifierManager")
 
-func _remove_multiplier() -> void:
-	## _remove_multiplier()
-	##
-	## Removes the multiplier from the ScoreModifierManager when PowerUp is removed.
-	var manager = _get_score_modifier_manager()
-	if manager:
-		manager.unregister_multiplier("perfect_strangers")
-		multiplier_activated = false
-		current_multiplier = 0.0
-		print("[PerfectStrangersPowerUp] Unregistered multiplier from ScoreModifierManager")
+## _on_score_assigned(section, category, score)
+##
+## Called AFTER score calculation. If we applied a multiplier for CHANCE, unregister it.
+func _on_score_assigned(_section: Scorecard.Section, category: String, _score: int) -> void:
+	_cleanup_after_scoring(category)
 
+## _on_score_auto_assigned(section, category, score, breakdown_info)
+##
+## Called AFTER auto-score calculation. If we applied a multiplier for CHANCE, unregister it.
+func _on_score_auto_assigned(_section: Scorecard.Section, category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
+	_cleanup_after_scoring(category)
+
+## _cleanup_after_scoring(category)
+##
+## Unregisters the multiplier after CHANCE scoring completes.
+func _cleanup_after_scoring(category: String) -> void:
+	if category != "chance":
+		return
+	
+	print("\n=== PERFECT STRANGERS: CLEANUP AFTER SCORING ===")
+	_unregister_multiplier()
+
+## _unregister_multiplier()
+##
+## Removes the Perfect Strangers multiplier from ScoreModifierManager if registered.
+func _unregister_multiplier() -> void:
+	var manager = _get_score_modifier_manager()
+	if manager and manager.has_multiplier("perfect_strangers"):
+		manager.unregister_multiplier("perfect_strangers")
+		print("[PerfectStrangersPowerUp] ✓ Unregistered multiplier from ScoreModifierManager")
+
+## _get_score_modifier_manager()
+##
+## Gets a reference to the ScoreModifierManager singleton or group node.
+## Returns null if not found.
 func _get_score_modifier_manager():
-	## _get_score_modifier_manager()
-	##
-	## Gets a reference to the ScoreModifierManager singleton or group node.
-	## Returns null if not found.
 	# Check if ScoreModifierManager exists as an autoload singleton
 	if Engine.has_singleton("ScoreModifierManager"):
 		return ScoreModifierManager
@@ -180,24 +181,32 @@ func _get_score_modifier_manager():
 	
 	return null
 
+## get_current_description()
+##
+## Returns the current description of the PowerUp, including trigger count.
 func get_current_description() -> String:
-	## get_current_description()
-	##
-	## Returns the current description of the PowerUp, updating based on activation state.
-	if multiplier_activated:
-		return "Perfect Strangers ACTIVE! All future scores are multiplied by 1.5x"
-	else:
-		return "When all 5+ dice show different values, gain 1.5x score multiplier for all future scores"
+	var base_desc = "When scoring CHANCE, gain a random 1.1x-1.5x multiplier"
+	
+	if times_triggered > 0:
+		var stats_desc = "\nTriggered: %d time(s)" % times_triggered
+		if last_applied_multiplier > 0:
+			stats_desc += " (last: %.1fx)" % last_applied_multiplier
+		return base_desc + stats_desc
+	
+	return base_desc
 
+## _on_tree_exiting()
+##
+## Cleanup when PowerUp is destroyed - unregisters multiplier and disconnects signals.
 func _on_tree_exiting() -> void:
-	## _on_tree_exiting()
-	##
-	## Cleanup when PowerUp is destroyed - removes multiplier and disconnects signals.
 	if scorecard_ref:
 		if scorecard_ref.is_connected("score_assigned", _on_score_assigned):
 			scorecard_ref.score_assigned.disconnect(_on_score_assigned)
-		if scorecard_ref.is_connected("score_auto_assigned", _on_score_assigned):
-			scorecard_ref.score_auto_assigned.disconnect(_on_score_assigned)
+		if scorecard_ref.is_connected("score_auto_assigned", _on_score_auto_assigned):
+			scorecard_ref.score_auto_assigned.disconnect(_on_score_auto_assigned)
 	
-	if multiplier_activated:
-		_remove_multiplier()
+	if score_card_ui_ref:
+		if score_card_ui_ref.is_connected("about_to_score", _on_about_to_score):
+			score_card_ui_ref.about_to_score.disconnect(_on_about_to_score)
+	
+	_unregister_multiplier()

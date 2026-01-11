@@ -111,7 +111,7 @@ func get_current_description() -> String:
 	var base_desc = "+0.1x money multiplier per Yahtzee"
 	
 	if yahtzees_tracked > 0:
-		var progress_desc = "\nYahtzees: %d (%dx multiplier)" % [yahtzees_tracked, int(money_multiplier)]
+		var progress_desc = "\nYahtzees: %d (%.1fx multiplier)" % [yahtzees_tracked, money_multiplier]
 		return base_desc + progress_desc
 	
 	return base_desc

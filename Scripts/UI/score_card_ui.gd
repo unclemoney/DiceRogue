@@ -1340,17 +1340,38 @@ func update_additive_score_panel(additive_value: int, animate: bool = true) -> v
 ##
 ## Update the multiplier score panel label with optional bounce animation.
 ## Called by ScoringAnimationController during animation sequence.
+## Supports division mode from The Division debuff - displays ÷ symbol in RED.
+## 
+## In division mode, the multiplier_value passed is the RAW multiplier (e.g., 6.0),
+## but it will be used as a divisor. So we display it directly as ÷6.0.
 func update_multiplier_score_panel(multiplier_value: float, animate: bool = true) -> void:
 	if not multiplier_score_label:
 		return
 	
-	print("[ScoreCardUI] Updating multiplier panel: %.1f (animate=%s)" % [multiplier_value, animate])
-	multiplier_score_label.text = "x%.1f" % multiplier_value
+	# Check if division mode is active via ScoreModifierManager
+	var is_division_mode := false
+	var score_modifier_manager = get_tree().get_first_node_in_group("score_modifier_manager")
+	if score_modifier_manager and score_modifier_manager.has_method("is_division_mode"):
+		is_division_mode = score_modifier_manager.is_division_mode()
 	
-	if animate:
-		# Use cyan for values > 1.0, white for 1.0 (always bounce to show multiplication step)
-		var flash_color = Color.CYAN if multiplier_value > 1.0 else Color.WHITE
-		_bounce_label(multiplier_score_label, flash_color)
+	if is_division_mode:
+		# Division mode: show ÷ symbol with the multiplier value directly
+		# The multiplier_value is the raw multiplier (e.g., 6.0) which divides the score
+		print("[ScoreCardUI] Updating multiplier panel (DIVISION MODE): ÷%.1f (animate=%s)" % [multiplier_value, animate])
+		multiplier_score_label.text = "÷%.1f" % multiplier_value
+		
+		if animate:
+			# Use RED for division mode to clearly signal score reduction
+			_bounce_label(multiplier_score_label, Color.RED)
+	else:
+		# Normal multiplier mode
+		print("[ScoreCardUI] Updating multiplier panel: %.1f (animate=%s)" % [multiplier_value, animate])
+		multiplier_score_label.text = "x%.1f" % multiplier_value
+		
+		if animate:
+			# Use cyan for values > 1.0, white for 1.0 (always bounce to show multiplication step)
+			var flash_color = Color.CYAN if multiplier_value > 1.0 else Color.WHITE
+			_bounce_label(multiplier_score_label, flash_color)
 
 
 ## _bounce_label(label, flash_color)

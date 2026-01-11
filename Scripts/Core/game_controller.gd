@@ -317,9 +317,10 @@ func _ready() -> void:
 func _on_game_start() -> void:
 	#grant_consumable("random_power_up_uncommon")
 	#grant_consumable("poor_house")
-	#apply_debuff("lock_dice")
+	apply_debuff("the_division")
 	#activate_challenge("300pts_no_debuff")
-	#grant_power_up("red_slime")
+	grant_power_up("pin_head")
+	grant_power_up("perfect_strangers")
 	
 	# Show channel selector UI at game start
 	if channel_manager_ui and channel_manager:

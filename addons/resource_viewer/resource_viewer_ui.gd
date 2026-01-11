@@ -12,6 +12,8 @@ var power_ups: Array = []
 var consumables: Array = []
 var mods: Array = []
 var colored_dice: Array = []
+var challenges: Array = []
+var debuffs: Array = []
 
 # Current sort settings
 var current_sort_field: String = "name"
@@ -37,6 +39,8 @@ const POWER_UP_PATH := "res://Scripts/PowerUps/"
 const CONSUMABLE_PATH := "res://Scripts/Consumable/"
 const MOD_PATH := "res://Scripts/Mods/"
 const COLORED_DICE_PATH := "res://Resources/Data/ColoredDice/"
+const CHALLENGE_PATH := "res://Scripts/Challenge/"
+const DEBUFF_PATH := "res://Scripts/Debuff/"
 
 
 func _ready() -> void:
@@ -106,6 +110,22 @@ func _register_all_tabs() -> void:
 		var prop_grid = colors_tab.get_node_or_null("ScrollContainer/PropertyGrid")
 		if item_list and prop_grid:
 			register_tab_ui("colored_dice", item_list, prop_grid)
+	
+	# Challenges tab
+	var challenges_tab = tab_container.get_node_or_null("Challenges")
+	if challenges_tab:
+		var item_list = challenges_tab.get_node_or_null("ItemList")
+		var prop_grid = challenges_tab.get_node_or_null("ScrollContainer/PropertyGrid")
+		if item_list and prop_grid:
+			register_tab_ui("challenge", item_list, prop_grid)
+	
+	# Debuffs tab
+	var debuffs_tab = tab_container.get_node_or_null("Debuffs")
+	if debuffs_tab:
+		var item_list = debuffs_tab.get_node_or_null("ItemList")
+		var prop_grid = debuffs_tab.get_node_or_null("ScrollContainer/PropertyGrid")
+		if item_list and prop_grid:
+			register_tab_ui("debuff", item_list, prop_grid)
 
 
 ## _setup_sort_options()
@@ -133,16 +153,20 @@ func _scan_all_resources() -> void:
 	consumables = _scan_folder(CONSUMABLE_PATH, "ConsumableData")
 	mods = _scan_folder(MOD_PATH, "ModData")
 	colored_dice = _scan_folder(COLORED_DICE_PATH, "ColoredDiceData")
+	challenges = _scan_folder(CHALLENGE_PATH, "ChallengeData")
+	debuffs = _scan_folder(DEBUFF_PATH, "DebuffData")
 	
 	current_resources = {
 		"power_up": power_ups,
 		"consumable": consumables,
 		"mod": mods,
-		"colored_dice": colored_dice
+		"colored_dice": colored_dice,
+		"challenge": challenges,
+		"debuff": debuffs
 	}
 	
-	print("[ResourceViewer] Found: %d PowerUps, %d Consumables, %d Mods, %d Colored Dice" % [
-		power_ups.size(), consumables.size(), mods.size(), colored_dice.size()
+	print("[ResourceViewer] Found: %d PowerUps, %d Consumables, %d Mods, %d Colored Dice, %d Challenges, %d Debuffs" % [
+		power_ups.size(), consumables.size(), mods.size(), colored_dice.size(), challenges.size(), debuffs.size()
 	])
 	
 	# Populate all tabs
@@ -185,7 +209,7 @@ func _update_tab_titles() -> void:
 	if not tab_container:
 		return
 	
-	# Tab indices: 0=PowerUps, 1=Consumables, 2=Mods, 3=ColoredDice
+	# Tab indices: 0=PowerUps, 1=Consumables, 2=Mods, 3=ColoredDice, 4=Challenges, 5=Debuffs
 	if tab_container.get_tab_count() > 0:
 		tab_container.set_tab_title(0, "PowerUps (%d)" % power_ups.size())
 	if tab_container.get_tab_count() > 1:
@@ -194,6 +218,10 @@ func _update_tab_titles() -> void:
 		tab_container.set_tab_title(2, "Mods (%d)" % mods.size())
 	if tab_container.get_tab_count() > 3:
 		tab_container.set_tab_title(3, "Colors (%d)" % colored_dice.size())
+	if tab_container.get_tab_count() > 4:
+		tab_container.set_tab_title(4, "Challenges (%d)" % challenges.size())
+	if tab_container.get_tab_count() > 5:
+		tab_container.set_tab_title(5, "Debuffs (%d)" % debuffs.size())
 
 
 ## _populate_all_tabs()
@@ -204,6 +232,8 @@ func _populate_all_tabs() -> void:
 	_populate_tab("consumable", consumables)
 	_populate_tab("mod", mods)
 	_populate_tab("colored_dice", colored_dice)
+	_populate_tab("challenge", challenges)
+	_populate_tab("debuff", debuffs)
 
 
 ## _populate_tab(type, resources)
@@ -377,6 +407,22 @@ func _display_resource_properties(resource: Resource, type: String) -> void:
 			_add_editable_text_row(grid, "Effect", str(resource.effect_description) if resource.get("effect_description") else "", "effect_description")
 			# Editable: Rarity description
 			_add_editable_text_row(grid, "Rarity Info", str(resource.rarity_description) if resource.get("rarity_description") else "", "rarity_description")
+		"challenge":
+			# Editable: Target score
+			_add_editable_score_row(grid, "Target Score", resource.target_score if resource.get("target_score") != null else 0, "target_score")
+			# Editable: Reward money
+			_add_editable_number_row(grid, "Reward $", resource.reward_money if resource.get("reward_money") != null else 0, "reward_money")
+			# Editable: Dice type
+			_add_editable_line_row(grid, "Dice Type", str(resource.dice_type) if resource.get("dice_type") else "", "dice_type")
+			# Read-only: Debuff IDs (comma-separated list)
+			if resource.get("debuff_ids") and resource.debuff_ids.size() > 0:
+				_add_property_row(grid, "Debuffs", ", ".join(resource.debuff_ids), false)
+			if resource.get("scene"):
+				_add_property_row(grid, "Scene", resource.scene.resource_path, false)
+		"debuff":
+			# Debuffs are simple - just display_name and description (already handled above)
+			if resource.get("scene"):
+				_add_property_row(grid, "Scene", resource.scene.resource_path, false)
 	
 	# Add save button at the bottom
 	_add_save_button(grid)
@@ -483,6 +529,31 @@ func _add_editable_number_row(grid: GridContainer, label_text: String, current_v
 	spin_box.max_value = 9999
 	spin_box.step = 1
 	spin_box.prefix = "$"
+	spin_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spin_box.custom_minimum_size.x = 100
+	spin_box.set_meta("property_name", property_name)
+	spin_box.value_changed.connect(func(new_value): _on_number_property_changed(new_value, property_name))
+	grid.add_child(spin_box)
+
+
+## _add_editable_score_row(grid, label_text, current_value, property_name)
+##
+## Adds a label with editable SpinBox for score values (no $ prefix)
+func _add_editable_score_row(grid: GridContainer, label_text: String, current_value: int, property_name: String) -> void:
+	# Create label
+	var label = Label.new()
+	label.text = label_text + ":"
+	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.5))  # Yellow tint for editable
+	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	grid.add_child(label)
+	
+	# Create editable SpinBox
+	var spin_box = SpinBox.new()
+	spin_box.value = current_value
+	spin_box.min_value = 0
+	spin_box.max_value = 99999
+	spin_box.step = 1
 	spin_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	spin_box.custom_minimum_size.x = 100
 	spin_box.set_meta("property_name", property_name)

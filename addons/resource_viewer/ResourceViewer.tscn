@@ -227,3 +227,63 @@ size_flags_horizontal = 3
 theme_override_constants/h_separation = 12
 theme_override_constants/v_separation = 8
 columns = 2
+
+[node name="Challenges" type="HSplitContainer" parent="MarginContainer/VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+split_offset = 300
+metadata/_tab_index = 4
+metadata/_tab_name = "Challenges (7)"
+
+[node name="ItemList" type="ItemList" parent="MarginContainer/VBoxContainer/TabContainer/Challenges"]
+layout_mode = 2
+size_flags_horizontal = 3
+allow_reselect = true
+item_count = 7
+item_0/text = "Basic Bitch "
+item_1/text = "Disabled Dog "
+item_2/text = "Kiddy Ride "
+item_3/text = "Lockdown "
+item_4/text = "Precious Points "
+item_5/text = "Pretty Penny "
+item_6/text = "The Crossing "
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/TabContainer/Challenges"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PropertyGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/TabContainer/Challenges/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 8
+columns = 2
+
+[node name="Debuffs" type="HSplitContainer" parent="MarginContainer/VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+split_offset = 300
+metadata/_tab_index = 5
+metadata/_tab_name = "Debuffs (5)"
+
+[node name="ItemList" type="ItemList" parent="MarginContainer/VBoxContainer/TabContainer/Debuffs"]
+layout_mode = 2
+size_flags_horizontal = 3
+allow_reselect = true
+item_count = 5
+item_0/text = "Costly Roll "
+item_1/text = "Disabled Twos "
+item_2/text = "Lock Dice "
+item_3/text = "Rolling Penalty "
+item_4/text = "The Division "
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/TabContainer/Debuffs"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PropertyGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/TabContainer/Debuffs/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 8
+columns = 2

@@ -8,7 +8,7 @@
 script = ExtResource("1_powerup_data")
 id = "perfect_strangers"
 display_name = "Perfect Strangers"
-description = "When all 5+ dice show different values, gain 1.5x score multiplier for all future scores"
+description = "When scoring CHANCE, gain a random 1.1x-1.5x multiplier for that score"
 icon = ExtResource("1_perfect_strangers_icon")
 scene = ExtResource("2_perfect_strangers_scene")
 price = 300

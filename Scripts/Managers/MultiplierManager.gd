@@ -281,6 +281,20 @@ func set_division_mode(enabled: bool) -> void:
 func is_division_mode() -> bool:
 	return _division_mode
 
+## get_raw_multiplier_total() -> float
+##
+## Returns the raw product of all multipliers WITHOUT applying division mode.
+## Used for UI display to show the divisor value (e.g., ÷5.0 instead of x0.2).
+func get_raw_multiplier_total() -> float:
+	if _active_multipliers.is_empty():
+		return 1.0
+	
+	var total: float = 1.0
+	for multiplier in _active_multipliers.values():
+		total *= multiplier
+	
+	return total
+
 ## _validate_state()
 ##
 ## Internal helper to validate that the product of tracked multipliers matches
