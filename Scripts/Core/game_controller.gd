@@ -324,6 +324,15 @@ func _on_game_start() -> void:
 	#grant_power_up("pin_head")
 	#grant_power_up("perfect_strangers")
 	
+	# Check if tutorial should auto-start for first-time players
+	var tutorial_manager = get_node_or_null("/root/TutorialManager")
+	if tutorial_manager and tutorial_manager.should_auto_start():
+		print("[GameController] First-time player detected - starting tutorial")
+		# Delay tutorial start slightly to let UI settle
+		await get_tree().create_timer(0.5).timeout
+		tutorial_manager.start_tutorial()
+		return  # Don't show channel selector during tutorial
+	
 	# Show channel selector UI at game start
 	if channel_manager_ui and channel_manager:
 		channel_manager.reset()  # Reset to Channel 1 on new game
@@ -2067,6 +2076,11 @@ func _on_dice_spawned() -> void:
 func _on_die_locked(die) -> void:
 	print("[GameController] Die locked:", die.value)
 	Statistics.track_dice_lock()
+	
+	# Notify tutorial manager of lock action
+	var tutorial_manager = get_node_or_null("/root/TutorialManager")
+	if tutorial_manager and tutorial_manager.is_tutorial_active():
+		tutorial_manager.action_completed("lock_die")
 
 ## _on_shop_button_pressed()
 ##
@@ -2075,6 +2089,11 @@ func _on_die_locked(die) -> void:
 ## bonus calculations, then opens the shop after player clicks "Head to Shop".
 ## Otherwise toggles the shop directly.
 func _on_shop_button_pressed() -> void:
+	# Notify tutorial manager of shop action
+	var tutorial_manager = get_node_or_null("/root/TutorialManager")
+	if tutorial_manager and tutorial_manager.is_tutorial_active():
+		tutorial_manager.action_completed("click_shop")
+	
 	# Check if challenge was completed - show stats panel first (only once)
 	if round_manager and round_manager.is_challenge_completed and not _end_of_round_stats_shown:
 		print("[GameController] Challenge completed - processing end of round sequence")
@@ -2467,6 +2486,11 @@ func _on_challenge_selected(id: String) -> void:
 # Add this method to handle the dice_rolled signal from GameButtonUI
 func _on_game_button_dice_rolled(dice_values: Array) -> void:
 	print("[GameController] Dice roll button pressed, values:", dice_values)
+	
+	# Notify tutorial manager of roll action
+	var tutorial_manager = get_node_or_null("/root/TutorialManager")
+	if tutorial_manager and tutorial_manager.is_tutorial_active():
+		tutorial_manager.action_completed("click_roll")
 	
 	# Track roll statistics
 	RollStats.track_roll()

@@ -390,6 +390,11 @@ func _on_dice_roll_complete() -> void:
 	emit_signal("dice_rolled", dice_values)
 
 func _on_next_turn_button_pressed() -> void:
+	# Notify tutorial manager of next turn action
+	var tutorial_manager = get_node_or_null("/root/TutorialManager")
+	if tutorial_manager and tutorial_manager.is_tutorial_active():
+		tutorial_manager.action_completed("click_next_turn")
+	
 	# 1) Auto-score if needed
 	if not score_card_ui.turn_scored:
 		print("[GameButtonUI] About to trigger autoscoring...")
@@ -516,6 +521,12 @@ func _on_challenge_completed(challenge_id: String) -> void:
 
 func _on_next_round_button_pressed() -> void:
 	print("[GameButtonUI] Next Round button pressed")
+	
+	# Notify tutorial manager of next round action
+	var tutorial_manager = get_node_or_null("/root/TutorialManager")
+	if tutorial_manager and tutorial_manager.is_tutorial_active():
+		tutorial_manager.action_completed("click_next_round")
+	
 	if round_manager:
 		print("[GameButtonUI] Current round:", round_manager.get_current_round_number(), "first_roll_done:", first_roll_done)
 	

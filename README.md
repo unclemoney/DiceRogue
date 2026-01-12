@@ -667,6 +667,79 @@ Clicking the Goof-Off Meter displays a fan-out panel showing:
 - **Completed Chores List**: Checkmark list of all chores completed this game
 - **Empty State**: Shows "No chores completed yet" message when starting fresh
 
+### Tutorial System
+An interactive, action-gated tutorial system that teaches new players the game mechanics with Mom's friendly guidance.
+
+**Features:**
+- **Auto-Start**: Automatically triggers for first-time players (tutorial_completed = false)
+- **Manual Access**: "Play Tutorial" / "Replay Tutorial" button in main menu
+- **Multi-Part Steps**: Complex topics split into digestible parts (e.g., "Scoring 1/3")
+- **Action Gating**: Tutorial won't proceed until player performs the required action
+- **UI Highlighting**: Golden pulsing border around target UI elements
+- **Mom's Dialog**: Typewriter-animated messages with Skip/Next buttons
+- **Skip Warning**: Confirmation dialog when leaving mid-tutorial
+
+**Tutorial Flow:**
+1. **Introduction**: Welcome message from Mom
+2. **Rolling Dice**: How to roll and what the dice tray shows
+3. **Locking Dice**: Click dice to lock them between rolls
+4. **Scoring System (3 parts)**: Categories, bonuses, and strategy
+5. **Score Card Navigation**: How to scroll and select categories
+6. **Confirming Scores**: Committing dice to a category
+7. **Turn Flow**: Rolls per turn, advancing turns
+8. **Round Flow**: Turns per round, shop access
+9. **Shop**: Buying items between rounds
+10. **Chores System (2 parts)**: Progress bar and Mom's visits
+11. **Power-Ups**: Effects and synergies
+12. **Synergies (2 parts)**: Rating bonuses and combinations
+13. **Completion**: Tutorial finished, flag saved
+
+**Tutorial Step Resources:**
+- **Location**: `Resources/Data/Tutorial/*.tres`
+- **Format**: TutorialStep resources with step ID, parts, messages, actions
+
+**Key Properties (TutorialStep):**
+- `id`: Unique step identifier (e.g., "roll_dice", "scoring_1")
+- `part` / `total_parts`: For multi-part steps
+- `title`: Header text in dialog
+- `message`: Mom's tutorial message (supports BBCode)
+- `mom_expression`: "neutral", "happy", or "upset"
+- `highlight_node_path`: NodePath to UI element to highlight
+- `required_action`: Action player must perform (e.g., "roll_dice", "lock_die")
+- `next_step_id`: ID of next step (empty for final step)
+
+**Action Types:**
+- `roll_dice`: Player rolls the dice
+- `lock_die`: Player locks any die
+- `select_category`: Player selects a score category
+- `confirm_score`: Player confirms a score
+- `next_turn`: Player clicks Next Turn button
+- `next_round`: Player clicks Next Round button
+- `open_shop`: Player opens the shop
+- `continue`: No action required, just click Next
+
+**Implementation Files:**
+- **TutorialStep**: `Scripts/Core/tutorial_step.gd` - Step resource class
+- **TutorialManager**: `Scripts/Game/tutorial_manager.gd` - Autoload orchestrator
+- **TutorialHighlight**: `Scripts/UI/tutorial_highlight.gd` - UI highlighting
+- **TutorialDialog**: `Scripts/UI/tutorial_dialog.gd` - Mom's dialog component
+
+**ProgressManager Integration:**
+- `tutorial_completed`: Boolean saved per profile
+- `tutorial_in_progress`: Boolean for skip warning tracking
+
+**Debug Commands (Tutorial Tab):**
+- Start Tutorial: Begin from first step
+- Skip Tutorial: Exit tutorial mode
+- Next/Previous Step: Navigate steps manually
+- Next Part: Advance multi-part steps
+- Reset Progress: Clear completion flag for re-testing
+- Show State: Display current tutorial status
+- List Steps: Show all loaded tutorial steps
+- Force Complete: Mark as completed without running
+
+**Test Scene**: `Tests/TutorialTest.tscn` - Isolated tutorial testing with mock UI
+
 ### Challenge Celebration System
 When challenges are completed, celebratory GPU particle effects are displayed:
 
@@ -881,6 +954,7 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 - `ScoreCardTest.tscn` - Scoring logic
 - `PowerUpTest.tscn` - Power-up functionality
 - `MultiplierManagerTest.tscn` - Score modifier system
+- `TutorialTest.tscn` - Tutorial system with mock UI elements
 
 ## Editor Tools
 

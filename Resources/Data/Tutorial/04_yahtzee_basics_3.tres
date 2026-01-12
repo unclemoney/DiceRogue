@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "yahtzee_basics_3"
+part = 3
+total_parts = 3
+title = "Yahtzee Basics"
+message = "There are [color=#FFD952]13 scoring categories[/color] on your score card.
+
+Each category can only be used once per round, so choose wisely! You need to fill them all by turn 13."
+mom_expression = "neutral"
+highlight_node_path = ""
+show_click_indicator = false
+required_action = "click_continue"
+completion_signal = ""
+next_step_id = "shop_button"
+pause_game = true
+delay_before = 0.0
+category = "basics"

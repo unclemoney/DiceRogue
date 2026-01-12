@@ -40,6 +40,10 @@ const PROFILE_NAME_MAX_LENGTH := 30
 var current_profile_slot: int = 1
 var current_profile_name: String = "Player 1"
 
+# Tutorial tracking
+var tutorial_completed: bool = false
+var tutorial_in_progress: bool = false
+
 # Core progress data
 var unlockable_items: Dictionary = {}  # item_id -> UnlockableItem
 var completed_channels: Array[int] = []  # Tracks which channels have been won
@@ -155,6 +159,8 @@ func _create_default_profile(slot: int) -> void:
 	var default_data = {
 		"profile_name": DEFAULT_PROFILE_NAMES[slot],
 		"last_played": "",
+		"tutorial_completed": false,
+		"tutorial_in_progress": false,
 		"cumulative_stats": {
 			"games_completed": 0,
 			"games_won": 0,
@@ -217,6 +223,10 @@ func load_profile(slot: int) -> bool:
 	# Update current profile info
 	current_profile_slot = slot
 	current_profile_name = save_data.get("profile_name", DEFAULT_PROFILE_NAMES[slot])
+	
+	# Load tutorial flags
+	tutorial_completed = save_data.get("tutorial_completed", false)
+	tutorial_in_progress = save_data.get("tutorial_in_progress", false)
 	
 	# Load cumulative stats
 	if save_data.has("cumulative_stats"):
@@ -297,6 +307,8 @@ func save_current_profile() -> void:
 	var save_data = {
 		"profile_name": current_profile_name,
 		"last_played": Time.get_datetime_string_from_system(),
+		"tutorial_completed": tutorial_completed,
+		"tutorial_in_progress": tutorial_in_progress,
 		"cumulative_stats": cumulative_stats,
 		"completed_channels": completed_channels,
 		"unlocked_items": []

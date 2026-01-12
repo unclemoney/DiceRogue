@@ -292,6 +292,18 @@ func _create_debug_tabs() -> void:
 			{"text": "Clear All PowerUps", "method": "_debug_synergy_clear_all"},
 			{"text": "Show Rating Counts", "method": "_debug_synergy_show_counts"},
 			{"text": "Show Active Bonuses", "method": "_debug_synergy_show_bonuses"},
+		],
+		"Tutorial": [
+			{"text": "Start Tutorial", "method": "_debug_tutorial_start"},
+			{"text": "Skip Tutorial", "method": "_debug_tutorial_skip"},
+			{"text": "Next Step", "method": "_debug_tutorial_next_step"},
+			{"text": "Previous Step", "method": "_debug_tutorial_prev_step"},
+			{"text": "Next Part", "method": "_debug_tutorial_next_part"},
+			{"text": "Reset Tutorial Progress", "method": "_debug_tutorial_reset"},
+			{"text": "Show Tutorial State", "method": "_debug_tutorial_show_state"},
+			{"text": "Show All Steps", "method": "_debug_tutorial_list_steps"},
+			{"text": "Jump to Step (Console)", "method": "_debug_tutorial_jump_prompt"},
+			{"text": "Force Complete Tutorial", "method": "_debug_tutorial_force_complete"},
 		]
 	}
 	
@@ -2372,3 +2384,213 @@ func _grant_powerups_by_rating(rating: String, count: int) -> bool:
 	
 	log_debug("Granted %d/%d %s-rated PowerUps" % [granted, count, rating])
 	return granted > 0
+
+
+#region Tutorial Debug Methods
+
+## _get_tutorial_manager()
+##
+## Helper to get TutorialManager autoload.
+func _get_tutorial_manager():
+	return get_node_or_null("/root/TutorialManager")
+
+## _get_progress_manager()
+##
+## Helper to get ProgressManager autoload for tutorial methods.
+func _get_progress_manager_tutorial():
+	return get_node_or_null("/root/ProgressManager")
+
+## _debug_tutorial_start()
+##
+## Starts the tutorial from the beginning.
+func _debug_tutorial_start() -> void:
+	var tutorial_mgr = _get_tutorial_manager()
+	if not tutorial_mgr:
+		log_debug("ERROR: TutorialManager autoload not available")
+		return
+	
+	if tutorial_mgr.is_tutorial_active():
+		log_debug("Tutorial already active - skipping first to restart")
+		tutorial_mgr.skip_tutorial()
+		await get_tree().create_timer(0.1).timeout
+	
+	tutorial_mgr.start_tutorial()
+	log_debug("Tutorial started from step: %s" % tutorial_mgr.current_step_id)
+
+## _debug_tutorial_skip()
+##
+## Skips the current tutorial.
+func _debug_tutorial_skip() -> void:
+	var tutorial_mgr = _get_tutorial_manager()
+	if not tutorial_mgr:
+		log_debug("ERROR: TutorialManager autoload not available")
+		return
+	
+	if not tutorial_mgr.is_tutorial_active():
+		log_debug("No tutorial currently active")
+		return
+	
+	tutorial_mgr.skip_tutorial()
+	log_debug("Tutorial skipped")
+
+## _debug_tutorial_next_step()
+##
+## Advances to the next tutorial step.
+func _debug_tutorial_next_step() -> void:
+	var tutorial_mgr = _get_tutorial_manager()
+	if not tutorial_mgr:
+		log_debug("ERROR: TutorialManager autoload not available")
+		return
+	
+	if not tutorial_mgr.is_tutorial_active():
+		log_debug("No tutorial currently active")
+		return
+	
+	var current = tutorial_mgr.current_step_id
+	tutorial_mgr.complete_step()
+	log_debug("Advanced from %s to %s" % [current, tutorial_mgr.current_step_id])
+
+## _debug_tutorial_prev_step()
+##
+## Goes back to the previous tutorial step.
+func _debug_tutorial_prev_step() -> void:
+	var tutorial_mgr = _get_tutorial_manager()
+	if not tutorial_mgr:
+		log_debug("ERROR: TutorialManager autoload not available")
+		return
+	
+	if not tutorial_mgr.is_tutorial_active():
+		log_debug("No tutorial currently active")
+		return
+	
+	# Get list of step IDs and find current index
+	var step_ids = tutorial_mgr.get_all_step_ids()
+	var current_idx = step_ids.find(tutorial_mgr.current_step_id)
+	
+	if current_idx <= 0:
+		log_debug("Already at first step")
+		return
+	
+	var prev_step = step_ids[current_idx - 1]
+	tutorial_mgr.progress_to_step(prev_step)
+	log_debug("Moved back to step: %s" % prev_step)
+
+## _debug_tutorial_next_part()
+##
+## Advances to the next part of a multi-part step.
+func _debug_tutorial_next_part() -> void:
+	var tutorial_mgr = _get_tutorial_manager()
+	if not tutorial_mgr:
+		log_debug("ERROR: TutorialManager autoload not available")
+		return
+	
+	if not tutorial_mgr.is_tutorial_active():
+		log_debug("No tutorial currently active")
+		return
+	
+	var step = tutorial_mgr.get_current_step()
+	if step and step.total_parts > 1:
+		tutorial_mgr.advance_part()
+		log_debug("Advanced to part %d/%d" % [tutorial_mgr.current_part, step.total_parts])
+	else:
+		log_debug("Current step is not multi-part")
+
+## _debug_tutorial_reset()
+##
+## Resets tutorial progress (marks as not completed).
+func _debug_tutorial_reset() -> void:
+	var tutorial_mgr = _get_tutorial_manager()
+	var progress_mgr = _get_progress_manager_tutorial()
+	
+	if tutorial_mgr and tutorial_mgr.is_tutorial_active():
+		tutorial_mgr.skip_tutorial()
+	
+	if progress_mgr:
+		progress_mgr.tutorial_completed = false
+		progress_mgr.tutorial_in_progress = false
+		progress_mgr.save_current_profile()
+	log_debug("Tutorial progress reset - will auto-start on next game")
+
+## _debug_tutorial_show_state()
+##
+## Displays current tutorial state.
+func _debug_tutorial_show_state() -> void:
+	var tutorial_mgr = _get_tutorial_manager()
+	var progress_mgr = _get_progress_manager_tutorial()
+	
+	log_debug("=== TUTORIAL STATE ===")
+	if progress_mgr:
+		log_debug("  Completed: %s" % progress_mgr.tutorial_completed)
+		log_debug("  In Progress: %s" % progress_mgr.tutorial_in_progress)
+	
+	if not tutorial_mgr:
+		log_debug("  TutorialManager: NOT AVAILABLE")
+		return
+	
+	log_debug("  Active: %s" % tutorial_mgr.is_tutorial_active())
+	
+	if tutorial_mgr.is_tutorial_active():
+		log_debug("  Current Step: %s" % tutorial_mgr.current_step_id)
+		log_debug("  Current Part: %d" % tutorial_mgr.current_part)
+		var step = tutorial_mgr.get_current_step()
+		if step:
+			log_debug("  Step Title: %s" % step.title)
+			log_debug("  Total Parts: %d" % step.total_parts)
+			log_debug("  Required Action: %s" % step.required_action)
+	
+	log_debug("  Total Steps Loaded: %d" % tutorial_mgr.get_all_step_ids().size())
+
+## _debug_tutorial_list_steps()
+##
+## Lists all available tutorial steps.
+func _debug_tutorial_list_steps() -> void:
+	var tutorial_mgr = _get_tutorial_manager()
+	if not tutorial_mgr:
+		log_debug("ERROR: TutorialManager autoload not available")
+		return
+	
+	var step_ids = tutorial_mgr.get_all_step_ids()
+	log_debug("=== TUTORIAL STEPS (%d total) ===" % step_ids.size())
+	
+	for step_id in step_ids:
+		var step = tutorial_mgr.get_step(step_id)
+		if step:
+			var current_marker = ""
+			if tutorial_mgr.is_tutorial_active() and tutorial_mgr.current_step_id == step_id:
+				current_marker = " <-- CURRENT"
+			log_debug("  %s: %s (parts: %d)%s" % [step_id, step.title, step.total_parts, current_marker])
+
+## _debug_tutorial_jump_prompt()
+##
+## Shows instructions for jumping to a specific step.
+func _debug_tutorial_jump_prompt() -> void:
+	var tutorial_mgr = _get_tutorial_manager()
+	if not tutorial_mgr:
+		log_debug("ERROR: TutorialManager autoload not available")
+		return
+	
+	var step_ids = tutorial_mgr.get_all_step_ids()
+	log_debug("=== JUMP TO STEP ===")
+	log_debug("Available step IDs:")
+	for step_id in step_ids:
+		log_debug("  - %s" % step_id)
+	log_debug("")
+	log_debug("To jump, use console:")
+	log_debug("  TutorialManager.progress_to_step(\"step_id\")")
+
+## _debug_tutorial_force_complete()
+##
+## Marks the tutorial as completed without running through it.
+func _debug_tutorial_force_complete() -> void:
+	var tutorial_mgr = _get_tutorial_manager()
+	var progress_mgr = _get_progress_manager_tutorial()
+	
+	if tutorial_mgr and tutorial_mgr.is_tutorial_active():
+		tutorial_mgr.skip_tutorial()
+	
+	if progress_mgr:
+		progress_mgr.tutorial_completed = true
+		progress_mgr.tutorial_in_progress = false
+		progress_mgr.save_current_profile()
+	log_debug("Tutorial marked as completed")
+#endregion

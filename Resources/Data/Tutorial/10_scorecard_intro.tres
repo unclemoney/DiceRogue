@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "scorecard_intro"
+part = 1
+total_parts = 2
+title = "The Score Card"
+message = "This is your [color=#FFD952]Score Card[/color]! It shows all 13 categories you can score in.
+
+The [color=#4488FF]Upper Section[/color] (Ones through Sixes) adds up matching dice. The [color=#FF8844]Lower Section[/color] has special combinations!"
+mom_expression = "happy"
+highlight_node_path = "ScoreCardUI"
+show_click_indicator = false
+required_action = "click_continue"
+completion_signal = ""
+next_step_id = "scorecard_levels"
+pause_game = true
+delay_before = 0.5
+category = "scoring"

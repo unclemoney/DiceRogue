@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "powerups_ratings"
+part = 2
+total_parts = 2
+title = "Power-Ups"
+message = "Power-Ups have movie ratings: [color=#88FF88]G[/color], [color=#88FFFF]PG[/color], [color=#FFFF88]PG-13[/color], [color=#FF8888]R[/color], and [color=#FF88FF]NC-17[/color].
+
+Higher ratings are more powerful but riskier! NC-17 power-ups might get you [color=#FF6666]GROUNDED[/color] by Mom!"
+mom_expression = "neutral"
+highlight_node_path = ""
+show_click_indicator = false
+required_action = "click_continue"
+completion_signal = ""
+next_step_id = "consumables_intro"
+pause_game = true
+delay_before = 0.0
+category = "powerups"

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "scoring_system_1"
+part = 1
+total_parts = 3
+title = "How Scoring Works"
+message = "Let me explain how scores are calculated! It's not just basic Yahtzee math.
+
+The formula is: [color=#FFD952](Base × Level + Additives) × Multipliers[/color]"
+mom_expression = "neutral"
+highlight_node_path = ""
+show_click_indicator = false
+required_action = "click_continue"
+completion_signal = ""
+next_step_id = "scoring_system_2"
+pause_game = true
+delay_before = 0.0
+category = "scoring"

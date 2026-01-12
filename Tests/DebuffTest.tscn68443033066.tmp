@@ -1,0 +1,340 @@
+[gd_scene load_steps=105 format=3 uid="uid://b46sathbx2q60"]
+
+[ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
+[ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
+[ext_resource type="PackedScene" uid="uid://q27dsqs2pyd8" path="res://Scenes/UI/crt_overlay.tscn" id="3_f4xs4"]
+[ext_resource type="Shader" uid="uid://b6aohmne8q6q5" path="res://Scripts/Shaders/vhs_wave.gdshader" id="4_wcrst"]
+[ext_resource type="PackedScene" uid="uid://dqgkm7s8toq66" path="res://Scenes/Effects/CRTManager.tscn" id="5_6hkbr"]
+[ext_resource type="PackedScene" uid="uid://dugpl3du3i6xo" path="res://Scenes/Dice/dice_hand.tscn" id="5_gxabo"]
+[ext_resource type="Texture2D" uid="uid://cq6eysum1qfw8" path="res://Resources/Art/Background/Hutch.png" id="5_sqb4o"]
+[ext_resource type="Texture2D" uid="uid://kekn41dhsb0l" path="res://Resources/Art/Background/TV.png" id="5_w4iq5"]
+[ext_resource type="PackedScene" uid="uid://bsukvul4wop20" path="res://Scenes/ScoreCard/score_card.tscn" id="7_w6663"]
+[ext_resource type="PackedScene" uid="uid://b8limy63m2tlo" path="res://Scenes/Tracker/turn_tracker.tscn" id="8_8eqdw"]
+[ext_resource type="PackedScene" uid="uid://lc4xqvsxdnpy" path="res://Scenes/UI/game_button_ui.tscn" id="9_wtptv"]
+[ext_resource type="PackedScene" uid="uid://sliaarrkymdo" path="res://Scenes/UI/score_card_ui.tscn" id="11_oy5od"]
+[ext_resource type="PackedScene" uid="uid://dv0gypvmv4bb" path="res://Scenes/UI/consumable_ui.tscn" id="12_pdckl"]
+[ext_resource type="PackedScene" uid="uid://bxwr5njrkwahy" path="res://Scenes/UI/PowerUpIcon.tscn" id="14_geekk"]
+[ext_resource type="PackedScene" uid="uid://bhv7dyrckqhk6" path="res://Scenes/UI/power_up_ui.tscn" id="14_gtvla"]
+[ext_resource type="PackedScene" uid="uid://bmnx7dfjhn2d" path="res://Scenes/UI/debuff_ui.tscn" id="14_oxb5w"]
+[ext_resource type="PackedScene" uid="uid://cttyyy56pjat3" path="res://Scenes/Controller/game_controller.tscn" id="15_aeiu6"]
+[ext_resource type="PackedScene" uid="uid://b0h68l2hpjf3o" path="res://Scenes/PowerUp/power_up_manager.tscn" id="16_07va6"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="17_2uvn1"]
+[ext_resource type="Resource" uid="uid://b1kspojq1dh26" path="res://Scripts/PowerUps/ExtraDice.tres" id="18_3vaha"]
+[ext_resource type="PackedScene" uid="uid://ihwow3yfegbm" path="res://Scenes/UI/challenge_ui.tscn" id="19_1jk2k"]
+[ext_resource type="Resource" uid="uid://cgeradia34lyw" path="res://Scripts/PowerUps/ExtraRolls.tres" id="19_si81o"]
+[ext_resource type="PackedScene" uid="uid://dw7dok1tye5gg" path="res://Scenes/UI/vcr_turn_tracker_ui.tscn" id="19_w4iq5"]
+[ext_resource type="PackedScene" uid="uid://c2brbu8nl4tvq" path="res://Scenes/Managers/consumable_manager.tscn" id="20_1jk2k"]
+[ext_resource type="PackedScene" uid="uid://bgwcfpn53s26s" path="res://Scenes/Managers/mod_manager.tscn" id="23_8eqdw"]
+[ext_resource type="Script" uid="uid://uiuqwtxbh7m0" path="res://Scripts/Debuff/DebuffData.gd" id="24_4tiye"]
+[ext_resource type="Resource" uid="uid://cus1yqqfy3tmd" path="res://Scripts/PowerUps/FoursomePowerUp.tres" id="24_aeiu6"]
+[ext_resource type="PackedScene" uid="uid://873jsmje6n6w" path="res://Scenes/Managers/debuff_manager.tscn" id="24_f4xs4"]
+[ext_resource type="PackedScene" uid="uid://wmw4qu7qqjfk" path="res://Scenes/Managers/challenge_manager.tscn" id="25_3vaha"]
+[ext_resource type="Resource" uid="uid://cs5xh10qdphbi" path="res://Scripts/Debuff/LockDice.tres" id="25_gxabo"]
+[ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="26_si81o"]
+[ext_resource type="Resource" uid="uid://cpblep3x5ps6q" path="res://Scripts/Challenge/pts100_lock_dice_resource.tres" id="27_1jk2k"]
+[ext_resource type="Resource" uid="uid://c7wgex0fr0g65" path="res://Scripts/PowerUps/UpperBonusMultPowerUp.tres" id="27_cr2lp"]
+[ext_resource type="Resource" uid="uid://eiv15upj2hij" path="res://Scripts/PowerUps/YahtzeeBonusMultPowerUp.tres" id="28_ybnmt"]
+[ext_resource type="Resource" uid="uid://7uwjjpth4uv6" path="res://Scripts/Challenge/pts300_no_debuff_resource.tres" id="29_1jk2k"]
+[ext_resource type="Resource" uid="uid://bd58nakq7j3n2" path="res://Scripts/PowerUps/BonusMoneyPowerUp.tres" id="29_bonus_money"]
+[ext_resource type="Resource" uid="uid://b1shilkw1ljul" path="res://Scripts/PowerUps/Chance520PowerUp.tres" id="29_cjjtc"]
+[ext_resource type="Resource" uid="uid://cw8n3d5laa2j1" path="res://Scripts/PowerUps/MoneyMultiplierPowerUp.tres" id="29_money_multiplier"]
+[ext_resource type="Resource" uid="uid://dwrkuuuo24eif" path="res://Scripts/PowerUps/RandomizerPowerUp.tres" id="30_2hxro"]
+[ext_resource type="Resource" uid="uid://b0vwc3j45xp22" path="res://Scripts/PowerUps/ConsumableCashPowerUp.tres" id="30_8nt64"]
+[ext_resource type="Resource" uid="uid://cr8w2ud13fb6d" path="res://Scripts/Challenge/pts_100_no_debuff_challenge.tres" id="30_o0xxd"]
+[ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="31_gtvla"]
+[ext_resource type="Resource" uid="uid://bvcw4aokgvpol" path="res://Scripts/Challenge/pts_200_disable_two_debuff_resource.tres" id="31_ja7vv"]
+[ext_resource type="Resource" uid="uid://c881tuw711775" path="res://Scripts/PowerUps/EvensNoOddsPowerUp.tres" id="31_sqb4o"]
+[ext_resource type="Resource" uid="uid://bdbldxuf65trw" path="res://Scripts/Consumable/ScoreReroll.tres" id="32_aeiu6"]
+[ext_resource type="Resource" uid="uid://bo2j7mhd8x4n1" path="res://Scripts/PowerUps/FullHousePowerUp.tres" id="32_fullhouse"]
+[ext_resource type="PackedScene" uid="uid://dbqwnxq8iy66l" path="res://Scenes/UI/shop_ui.tscn" id="32_oy5od"]
+[ext_resource type="Resource" uid="uid://bf58ehj5n7vpd" path="res://Scripts/Challenge/pts_150_roll_score_minus_one.tres" id="32_ytf57"]
+[ext_resource type="Resource" uid="uid://bl6odyworrk7e" path="res://Scripts/Challenge/costly_roll_challenge.tres" id="33_3ia8s"]
+[ext_resource type="Resource" uid="uid://b8x1m3vq7n2k5" path="res://Scripts/PowerUps/StepByStepPowerUp.tres" id="33_stepbystep"]
+[ext_resource type="Resource" uid="uid://bf58ehj5n7vpf" path="res://Scripts/Challenge/the_crossing_challenge.tres" id="34_crossing"]
+[ext_resource type="Resource" uid="uid://b8kfm2yanw7eb" path="res://Scripts/PowerUps/RedPowerRanger.tres" id="39_hm8bq"]
+[ext_resource type="Resource" uid="uid://cv824ebb6gv2w" path="res://Scripts/Consumable/DoubleExistingConsumable.tres" id="41_5k370"]
+[ext_resource type="PackedScene" uid="uid://bi8x6vmpd88l6" path="res://Scenes/Managers/RoundManager.tscn" id="42_o2qgl"]
+[ext_resource type="Script" uid="uid://b41v75rm14duq" path="res://Scripts/Round/round_challenge_config.gd" id="43_2fp2s"]
+[ext_resource type="Resource" uid="uid://cc8puewgbdape" path="res://Scripts/Debuff/DisabledTwosDebuff.tres" id="43_4tv4b"]
+[ext_resource type="Resource" uid="uid://bvlm6v2nrey7x" path="res://Scripts/Round/300pts_no_debuff.tres" id="44_2lvko"]
+[ext_resource type="Resource" uid="uid://bj6uointddqef" path="res://Scripts/Consumable/add_max_power_up.tres" id="45_i7xol"]
+[ext_resource type="Resource" uid="uid://bojb26srdkd81" path="res://Scripts/Round/pts100_lock_dice.tres" id="45_o0xxd"]
+[ext_resource type="Resource" uid="uid://d1ii1htx1it71" path="res://Scripts/Debuff/RollScoreMinusOneDebuff.tres" id="46_0fq3x"]
+[ext_resource type="Resource" uid="uid://dnob3dg2ahgr1" path="res://Scripts/Consumable/ThreeMoreRollsConsumable.tres" id="46_nkw3w"]
+[ext_resource type="Resource" uid="uid://bak3w77f47saj" path="res://Scripts/Round/pts200_disabled_twos.tres" id="47_ja7vv"]
+[ext_resource type="Resource" uid="uid://c7xwey38elhic" path="res://Scripts/Debuff/CostlyRollDebuff.tres" id="49_ghgbc"]
+[ext_resource type="Resource" uid="uid://ckwgku73oppl3" path="res://Scripts/Consumable/PowerUpShopNumConsumable.tres" id="50_cs0p4"]
+[ext_resource type="Resource" uid="uid://cok1qslsfb3r3" path="res://Scripts/Round/pts150_roll_minus_one.tres" id="50_ytf57"]
+[ext_resource type="Resource" uid="uid://b8m7k4n2qaqwx" path="res://Scripts/Consumable/QuickCashConsumable.tres" id="51_8nt64"]
+[ext_resource type="Resource" uid="uid://b8pdl6weyahle" path="res://Scripts/Round/costly_roll_challenge.tres" id="52_3ia8s"]
+[ext_resource type="Resource" uid="uid://3ctxmrk81fwo" path="res://Scripts/Round/pts_100_no_debuff_challenge.tres" id="52_ghgbc"]
+[ext_resource type="Resource" uid="uid://bqk5w8x2m7maf" path="res://Scripts/Consumable/AnyScoreConsumable.tres" id="55_7m4k5"]
+[ext_resource type="Resource" path="res://Scripts/Consumable/RandomPowerUpUncommonConsumable.tres" id="56_qv1fg"]
+[ext_resource type="Resource" uid="uid://bwp8ng5k6ln7a" path="res://Scripts/Consumable/DoubleOrNothingConsumable.tres" id="57_double_or_nothing"]
+[ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="60_moddata"]
+[ext_resource type="Resource" uid="uid://mxumjrqrlefp" path="res://Scripts/Mods/EvenOnlyMod.tres" id="61_evenonly"]
+[ext_resource type="Resource" uid="uid://d3k8mv7xnpqr1" path="res://Scripts/Mods/FiveByOneMod.tres" id="62_fiveone"]
+[ext_resource type="Resource" uid="uid://cpcfivvcimiy0" path="res://Scripts/Mods/GoldSixMod.tres" id="63_goldsix"]
+[ext_resource type="Resource" uid="uid://7bkbk2c47ds8" path="res://Scripts/Mods/OddOnlyMod.tres" id="64_oddonly"]
+[ext_resource type="Resource" uid="uid://bkgq1y80xpvwc" path="res://Scripts/Mods/ThreeButThreeMod.tres" id="65_threethree"]
+[ext_resource type="Resource" uid="uid://b2lkvln1mutte" path="res://Scripts/Mods/WildCardMod.tres" id="66_wildcard"]
+[ext_resource type="Resource" uid="uid://c4l8fhahk2wyp" path="res://Scripts/Mods/HighRollerMod.tres" id="67_highroller"]
+[ext_resource type="PackedScene" uid="uid://s7ortdkxgdxp" path="res://Scenes/UI/DebugPanel.tscn" id="69_6hkbr"]
+[ext_resource type="Resource" uid="uid://c7p2gvbh8r3kn" path="res://Scripts/PowerUps/PerfectStrangers.tres" id="70_perfect_strangers"]
+[ext_resource type="Resource" uid="uid://c2dv7lqytpbu" path="res://Scripts/Debuff/TheDivisionDebuff.tres" id="82_division"]
+[ext_resource type="Resource" uid="uid://dk8q4n7m1vbfs" path="res://Scripts/PowerUps/GreenWithEnvy.tres" id="83_green_monster"]
+[ext_resource type="Script" uid="uid://njvt03rpt35v" path="res://Scripts/Effects/scoring_animation_controller.gd" id="91_fjxkw"]
+[ext_resource type="PackedScene" uid="uid://banpa5fhdg13n" path="res://Scenes/UI/EndOfRoundStatsPanel.tscn" id="98_23y3a"]
+[ext_resource type="PackedScene" uid="uid://crkb0ardui001" path="res://Scenes/UI/CorkboardUI.tscn" id="98_ocuqv"]
+[ext_resource type="PackedScene" path="res://Scenes/Managers/synergy_manager.tscn" id="98_vch7i"]
+[ext_resource type="PackedScene" uid="uid://b8qm3rvhj4dnr" path="res://Scenes/Managers/ChannelManagerUI.tscn" id="99_ocuqv"]
+[ext_resource type="Resource" uid="uid://wvpnvey8q20j" path="res://Scripts/PowerUps/WildDotsPowerUp.tres" id="99_wild_dots"]
+[ext_resource type="Resource" uid="uid://c2kn4gf8x7lwm" path="res://Scripts/PowerUps/PinHeadPowerUp.tres" id="100_pin_head"]
+[ext_resource type="PackedScene" uid="uid://cfnq7mvpk2r8d" path="res://Scenes/UI/RoundWinnerPanel.tscn" id="100_sxl8b"]
+[ext_resource type="Resource" uid="uid://d3hc8h0p7bj6w" path="res://Scripts/PowerUps/MoneyWellSpentPowerUp.tres" id="101_money_well_spent"]
+[ext_resource type="Script" uid="uid://dmmvbv3kvg4kp" path="res://Scripts/Managers/channel_manager.gd" id="101_wcrst"]
+[ext_resource type="Resource" uid="uid://chwmgd8qo3h4k" path="res://Scripts/PowerUps/HighlightedScorePowerUp.tres" id="102_highlighted_score"]
+[ext_resource type="Resource" uid="uid://dxm8t4n7p2q5s" path="res://Scripts/PowerUps/TheConsumerIsAlwaysRight.tres" id="103_the_consumer_is_always_right"]
+[ext_resource type="Resource" uid="uid://bw8qn4u5hjt7k" path="res://Scripts/PowerUps/GreenSlime.tres" id="104_green_slime"]
+[ext_resource type="Resource" uid="uid://ddvs52v6c3mxi" path="res://Scripts/PowerUps/RedSlime.tres" id="105_red_slime"]
+[ext_resource type="Resource" uid="uid://bxfqy7snkp8gf" path="res://Scripts/PowerUps/PurpleSlime.tres" id="106_purple_slime"]
+[ext_resource type="Resource" uid="uid://cs8hhns55xdvv" path="res://Scripts/PowerUps/BlueSlime.tres" id="107_blue_slime"]
+[ext_resource type="PackedScene" uid="uid://ccn3jkgrhqwqe" path="res://Scenes/UI/StatisticsPanel.tscn" id="999_stats"]
+[ext_resource type="Script" uid="uid://du88ajtcwgupi" path="res://Scripts/Managers/ChoresManager.gd" id="1000_chores_mgr"]
+[ext_resource type="PackedScene" uid="uid://crlykvmh3v2xq" path="res://Scenes/UI/UnlockedItemPanel.tscn" id="1001_unlocked_panel"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_wtptv"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_w6663"]
+shader = ExtResource("4_wcrst")
+shader_parameter/colour_1 = Color(0.625897, 0.749299, 0.999966, 1)
+shader_parameter/colour_2 = Color(0, 0.141422, 0.388962, 1)
+shader_parameter/colour_3 = Color(0.505455, 0.00273614, 0.816471, 1)
+shader_parameter/wave_speed = 0.5
+shader_parameter/pixel_filter = 500.0
+shader_parameter/wave_density = 8.0
+shader_parameter/wave_amplitude = 0.05
+shader_parameter/chromatic_drift = 0.02
+shader_parameter/noise_strength = 0.15
+shader_parameter/scanline_intensity = 0.4
+
+[node name="Node2D" type="Node2D"]
+script = ExtResource("1_d3q3t")
+
+[node name="ScreenShake" type="Node" parent="."]
+script = ExtResource("2_oxb5w")
+
+[node name="Background" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_wtptv")
+position = Vector2(641, 360)
+texture = ExtResource("5_sqb4o")
+
+[node name="BackgroundSwirl" type="ColorRect" parent="Background"]
+material = SubResource("ShaderMaterial_w6663")
+offset_left = -137.0
+offset_top = -274.0
+offset_right = 563.0
+offset_bottom = 275.0
+mouse_filter = 2
+
+[node name="CRTManager" parent="Background" instance=ExtResource("5_6hkbr")]
+
+[node name="CRTOverlay" parent="Background" instance=ExtResource("3_f4xs4")]
+offset = Vector2(580, 120)
+scale = Vector2(0.45, 0.65)
+transform = Transform2D(0.45, 0, 0, 0.65, 580, 120)
+
+[node name="TextureRect" type="TextureRect" parent="Background"]
+offset_left = -173.0
+offset_top = -319.0
+offset_right = 504.0
+offset_bottom = 340.0
+scale = Vector2(1.15, 1)
+texture = ExtResource("5_w4iq5")
+
+[node name="DiceHand" parent="." instance=ExtResource("5_gxabo")]
+max_dice_per_row = 9
+dice_area_center = Vector2(850, 525)
+dice_area_size = Vector2(300, 250)
+
+[node name="DiceAreaVisual" type="ReferenceRect" parent="DiceHand"]
+visible = false
+offset_left = 500.0
+offset_top = 200.0
+offset_right = 1100.0
+offset_bottom = 800.0
+mouse_filter = 2
+border_color = Color(1, 0, 0, 0.5)
+border_width = 2.0
+editor_only = false
+
+[node name="DiceContainer" type="Node2D" parent="."]
+
+[node name="ChallengeContainer" type="Node2D" parent="."]
+
+[node name="PowerUpContainer" type="Node2D" parent="."]
+
+[node name="ScoreCard" parent="." instance=ExtResource("7_w6663")]
+
+[node name="TurnTracker" parent="." instance=ExtResource("8_8eqdw")]
+
+[node name="ScoreCardUI" parent="." instance=ExtResource("11_oy5od")]
+offset_left = 810.0
+offset_top = 145.0
+offset_right = 810.0
+offset_bottom = 185.0
+
+[node name="CorkboardUI" parent="." instance=ExtResource("98_ocuqv")]
+offset_left = 30.0
+offset_top = 41.0
+offset_right = 430.0
+offset_bottom = 321.0
+max_consumables = 3
+
+[node name="PowerUpUI" parent="." instance=ExtResource("14_gtvla")]
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = -3.0
+offset_top = 2.0
+offset_right = 1276.0
+offset_bottom = 720.0
+grow_horizontal = 1
+grow_vertical = 1
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 2
+power_up_icon_scene = ExtResource("14_geekk")
+max_power_ups = 5
+
+[node name="ConsumableUI" parent="." instance=ExtResource("12_pdckl")]
+visible = false
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = -45.0
+offset_top = 3.0
+offset_right = 1235.0
+offset_bottom = 723.0
+grow_horizontal = 1
+grow_vertical = 1
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 2
+max_consumables = 3
+
+[node name="ChallengeUI" parent="." instance=ExtResource("19_1jk2k")]
+visible = false
+z_index = 3
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 38.0
+offset_top = 77.0
+offset_right = 216.0
+offset_bottom = 224.0
+grow_horizontal = 1
+grow_vertical = 1
+round_manager_path = NodePath("../RoundManager")
+
+[node name="DebuffUI" parent="." instance=ExtResource("14_oxb5w")]
+visible = false
+z_index = 3
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 323.0
+offset_top = 135.0
+offset_right = 429.0
+offset_bottom = 224.0
+grow_horizontal = 1
+grow_vertical = 1
+
+[node name="GameButtonUI" parent="." instance=ExtResource("9_wtptv")]
+anchors_preset = 0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 47.0
+offset_top = 463.0
+offset_right = 47.0
+offset_bottom = 463.0
+grow_horizontal = 1
+grow_vertical = 1
+dice_hand_path = NodePath("../DiceHand")
+score_card_ui_path = NodePath("../ScoreCardUI")
+turn_tracker_path = NodePath("../TurnTracker")
+round_manager_path = NodePath("../RoundManager")
+challenge_manager_path = NodePath("../ChallengeManager")
+
+[node name="VCRTurnTrackerUI" parent="." instance=ExtResource("19_w4iq5")]
+offset_left = 46.0
+offset_top = 578.0
+offset_right = 398.0
+offset_bottom = 633.0
+round_manager_path = NodePath("../RoundManager")
+
+[node name="ShopUI" parent="." instance=ExtResource("32_oy5od")]
+visible = false
+offset_left = 213.0
+offset_top = 4.0
+offset_right = 213.0
+offset_bottom = 4.0
+power_up_manager_path = NodePath("../PowerUpManager")
+consumable_manager_path = NodePath("../ConsumableManager")
+mod_manager_path = NodePath("../ModManager")
+
+[node name="GameController" parent="." instance=ExtResource("15_aeiu6")]
+challenge_container_path = NodePath("../ChallengeContainer")
+crt_manager_path = NodePath("../Background/CRTManager")
+
+[node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
+power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc"), ExtResource("29_bonus_money"), ExtResource("29_money_multiplier"), ExtResource("30_8nt64"), ExtResource("30_2hxro"), ExtResource("31_sqb4o"), ExtResource("32_fullhouse"), ExtResource("33_stepbystep"), ExtResource("70_perfect_strangers"), ExtResource("83_green_monster"), ExtResource("39_hm8bq"), ExtResource("99_wild_dots"), ExtResource("100_pin_head"), ExtResource("101_money_well_spent"), ExtResource("102_highlighted_score"), ExtResource("103_the_consumer_is_always_right"), ExtResource("104_green_slime"), ExtResource("105_red_slime"), ExtResource("106_purple_slime"), ExtResource("107_blue_slime")])
+
+[node name="ChallengeManager" parent="." instance=ExtResource("25_3vaha")]
+challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtResource("29_1jk2k"), ExtResource("30_o0xxd"), ExtResource("31_ja7vv"), ExtResource("32_ytf57"), ExtResource("33_3ia8s"), ExtResource("34_crossing")])
+
+[node name="ModManager" parent="." instance=ExtResource("23_8eqdw")]
+mod_defs = Array[ExtResource("60_moddata")]([ExtResource("61_evenonly"), ExtResource("62_fiveone"), ExtResource("63_goldsix"), ExtResource("64_oddonly"), ExtResource("65_threethree"), ExtResource("66_wildcard"), ExtResource("67_highroller")])
+
+[node name="ConsumableManager" parent="." instance=ExtResource("20_1jk2k")]
+consumable_defs = Array[ExtResource("31_gtvla")]([ExtResource("32_aeiu6"), ExtResource("41_5k370"), ExtResource("45_i7xol"), ExtResource("46_nkw3w"), ExtResource("50_cs0p4"), ExtResource("51_8nt64"), ExtResource("55_7m4k5"), ExtResource("56_qv1fg"), ExtResource("57_double_or_nothing")])
+
+[node name="DebuffManager" parent="." instance=ExtResource("24_f4xs4")]
+debuff_defs = Array[ExtResource("24_4tiye")]([ExtResource("25_gxabo"), ExtResource("43_4tv4b"), ExtResource("46_0fq3x"), ExtResource("49_ghgbc"), ExtResource("82_division")])
+
+[node name="RoundManager" parent="." instance=ExtResource("42_o2qgl")]
+challenge_configs = Array[ExtResource("43_2fp2s")]([ExtResource("52_ghgbc"), ExtResource("44_2lvko"), ExtResource("50_ytf57"), ExtResource("47_ja7vv"), ExtResource("52_3ia8s"), ExtResource("45_o0xxd")])
+turn_tracker_path = NodePath("../TurnTracker")
+challenge_manager_path = NodePath("../ChallengeManager")
+dice_hand_path = NodePath("../DiceHand")
+scorecard_path = NodePath("../ScoreCard")
+
+[node name="DebugPanel" parent="." instance=ExtResource("69_6hkbr")]
+z_index = 10
+z_as_relative = false
+
+[node name="StatisticsPanel" parent="." instance=ExtResource("999_stats")]
+visible = false
+
+[node name="ScoringAnimationController" type="Node2D" parent="."]
+z_index = 11
+z_as_relative = false
+script = ExtResource("91_fjxkw")
+
+[node name="ChoresManager" type="Node" parent="."]
+script = ExtResource("1000_chores_mgr")
+
+[node name="SynergyManager" parent="." instance=ExtResource("98_vch7i")]
+
+[node name="EndOfRoundStatsPanel" parent="." instance=ExtResource("98_23y3a")]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ChannelManagerUI" parent="." instance=ExtResource("99_ocuqv")]
+
+[node name="RoundWinnerPanel" parent="." instance=ExtResource("100_sxl8b")]
+
+[node name="UnlockedItemPanel" parent="." instance=ExtResource("1001_unlocked_panel")]
+
+[node name="ChannelManager" type="Node" parent="."]
+script = ExtResource("101_wcrst")

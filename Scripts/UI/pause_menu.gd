@@ -21,6 +21,9 @@ var settings_menu: Control = null
 const MAIN_MENU_SCENE := preload("res://Scenes/UI/MainMenu.tscn")
 const SETTINGS_MENU_SCENE := preload("res://Scenes/UI/SettingsMenu.tscn")
 
+# Tutorial warning dialog
+var tutorial_warning_dialog: ConfirmationDialog = null
+
 
 func _ready() -> void:
 	visible = false
@@ -110,6 +113,9 @@ func _build_ui() -> void:
 	main_menu_button = _create_button("MAIN MENU", Color(0.7, 0.5, 0.4, 1.0))
 	main_menu_button.pressed.connect(_on_main_menu_pressed)
 	btn_container.add_child(main_menu_button)
+	
+	# Build tutorial warning dialog
+	_build_tutorial_warning_dialog()
 
 
 ## _create_button(text, accent_color)
@@ -201,6 +207,49 @@ func _on_settings_closed() -> void:
 ##
 ## Handler for Main Menu button.
 func _on_main_menu_pressed() -> void:
+	# Check if tutorial is in progress and warn player
+	var tutorial_manager = get_node_or_null("/root/TutorialManager")
+	if tutorial_manager and tutorial_manager.is_tutorial_active():
+		_show_tutorial_warning()
+		return
+	
+	_return_to_main_menu()
+
+
+## _show_tutorial_warning()
+##
+## Shows a warning dialog when player tries to quit during tutorial.
+func _show_tutorial_warning() -> void:
+	if tutorial_warning_dialog:
+		tutorial_warning_dialog.popup_centered()
+
+
+## _build_tutorial_warning_dialog()
+##
+## Creates the tutorial warning confirmation dialog.
+func _build_tutorial_warning_dialog() -> void:
+	tutorial_warning_dialog = ConfirmationDialog.new()
+	tutorial_warning_dialog.name = "TutorialWarningDialog"
+	tutorial_warning_dialog.title = "Leave Tutorial?"
+	tutorial_warning_dialog.dialog_text = "You're in the middle of the tutorial!\n\nIf you leave now, the tutorial will be marked as incomplete and will restart next time you play.\n\nAre you sure you want to leave?"
+	tutorial_warning_dialog.ok_button_text = "Leave Anyway"
+	tutorial_warning_dialog.cancel_button_text = "Continue Tutorial"
+	tutorial_warning_dialog.confirmed.connect(_on_tutorial_warning_confirmed)
+	tutorial_warning_dialog.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(tutorial_warning_dialog)
+
+
+## _on_tutorial_warning_confirmed()
+##
+## Called when player confirms leaving during tutorial.
+func _on_tutorial_warning_confirmed() -> void:
+	_return_to_main_menu()
+
+
+## _return_to_main_menu()
+##
+## Actually returns to the main menu.
+func _return_to_main_menu() -> void:
 	print("[PauseMenu] Returning to main menu")
 	main_menu_pressed.emit()
 	

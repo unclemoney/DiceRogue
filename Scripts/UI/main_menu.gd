@@ -32,6 +32,7 @@ var profile_buttons: Array[Button] = []
 var button_container: VBoxContainer
 var new_game_button: Button
 var settings_button: Button
+var tutorial_button: Button
 var quit_button: Button
 var rename_dialog: ConfirmationDialog
 var rename_line_edit: LineEdit  # Store direct reference to LineEdit
@@ -157,15 +158,15 @@ func _build_ui() -> void:
 	main_container.name = "MainContainer"
 	main_container.set_anchors_preset(Control.PRESET_CENTER)
 	main_container.offset_left = -400
-	main_container.offset_top = -300
+	main_container.offset_top = -350
 	main_container.offset_right = 400
-	main_container.offset_bottom = 300
-	main_container.add_theme_constant_override("separation", 20)
+	main_container.offset_bottom = 350
+	main_container.add_theme_constant_override("separation", 15)
 	add_child(main_container)
 	
 	# Spacer at top
 	var top_spacer = Control.new()
-	top_spacer.custom_minimum_size = Vector2(0, 40)
+	top_spacer.custom_minimum_size = Vector2(0, 30)
 	main_container.add_child(top_spacer)
 	
 	# Title section
@@ -173,7 +174,7 @@ func _build_ui() -> void:
 	
 	# Spacer
 	var mid_spacer = Control.new()
-	mid_spacer.custom_minimum_size = Vector2(0, 30)
+	mid_spacer.custom_minimum_size = Vector2(0, 20)
 	main_container.add_child(mid_spacer)
 	
 	# Profile buttons section
@@ -305,7 +306,7 @@ func _build_navigation_section(parent: Control) -> void:
 	
 	button_container = VBoxContainer.new()
 	button_container.name = "ButtonContainer"
-	button_container.add_theme_constant_override("separation", 15)
+	button_container.add_theme_constant_override("separation", 12)
 	nav_center.add_child(button_container)
 	
 	# New Game button
@@ -317,6 +318,14 @@ func _build_navigation_section(parent: Control) -> void:
 	settings_button = _create_nav_button("SETTINGS", Color(0.5, 0.5, 0.7, 1.0))
 	settings_button.pressed.connect(_on_settings_pressed)
 	button_container.add_child(settings_button)
+	
+	# Tutorial button
+	var tutorial_text = "REPLAY TUTORIAL"
+	if ProgressManager and not ProgressManager.tutorial_completed:
+		tutorial_text = "PLAY TUTORIAL"
+	tutorial_button = _create_nav_button(tutorial_text, Color(0.7, 0.6, 0.3, 1.0))
+	tutorial_button.pressed.connect(_on_tutorial_pressed)
+	button_container.add_child(tutorial_button)
 	
 	# Quit button
 	quit_button = _create_nav_button("QUIT", Color(0.7, 0.4, 0.4, 1.0))
@@ -330,9 +339,9 @@ func _build_navigation_section(parent: Control) -> void:
 func _create_nav_button(text: String, accent_color: Color) -> Button:
 	var btn = Button.new()
 	btn.text = text
-	btn.custom_minimum_size = Vector2(280, 55)
+	btn.custom_minimum_size = Vector2(280, 48)
 	btn.add_theme_font_override("font", vcr_font)
-	btn.add_theme_font_size_override("font_size", 28)
+	btn.add_theme_font_size_override("font_size", 26)
 	
 	# Normal style
 	var normal_style = StyleBoxFlat.new()
@@ -615,6 +624,21 @@ func _on_settings_closed() -> void:
 	print("[MainMenu] Settings closed")
 
 
+## _on_tutorial_pressed()
+##
+## Handler for Tutorial button - starts/replays the tutorial.
+func _on_tutorial_pressed() -> void:
+	print("[MainMenu] Tutorial pressed - starting tutorial mode")
+	
+	# Reset tutorial state if replaying
+	var tutorial_manager = get_node_or_null("/root/TutorialManager")
+	if tutorial_manager:
+		tutorial_manager.reset_tutorial()
+	
+	# Change to game scene (tutorial will auto-start)
+	get_tree().change_scene_to_packed(GAME_SCENE)
+
+
 ## _on_quit_pressed()
 ##
 ## Handler for Quit button.
@@ -630,6 +654,7 @@ func _on_quit_pressed() -> void:
 func _on_profile_loaded(_slot: int) -> void:
 	_update_profile_buttons()
 	_update_playing_as_label()
+	_update_tutorial_button()
 
 
 ## _on_profile_renamed(_slot, _new_name)
@@ -638,3 +663,16 @@ func _on_profile_loaded(_slot: int) -> void:
 func _on_profile_renamed(_slot: int, _new_name: String) -> void:
 	_update_profile_buttons()
 	_update_playing_as_label()
+
+
+## _update_tutorial_button()
+##
+## Updates the tutorial button text based on completion status.
+func _update_tutorial_button() -> void:
+	if not tutorial_button:
+		return
+	
+	if ProgressManager and ProgressManager.tutorial_completed:
+		tutorial_button.text = "REPLAY TUTORIAL"
+	else:
+		tutorial_button.text = "PLAY TUTORIAL"

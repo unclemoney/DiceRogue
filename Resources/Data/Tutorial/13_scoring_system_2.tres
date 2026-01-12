@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "scoring_system_2"
+part = 2
+total_parts = 3
+title = "How Scoring Works"
+message = "[color=#88FF88]Additives[/color] add flat bonuses to your score (like +10 or +25).
+
+[color=#FF88FF]Multipliers[/color] multiply your total (like 2x or 3x).
+
+Power-Ups and special dice can give you both!"
+mom_expression = "happy"
+highlight_node_path = ""
+show_click_indicator = false
+required_action = "click_continue"
+completion_signal = ""
+next_step_id = "scoring_system_3"
+pause_game = true
+delay_before = 0.0
+category = "scoring"

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "shop_overview"
+part = 1
+total_parts = 1
+title = "The Shop"
+message = "Welcome to the shop! Here you can browse and buy goodies.
+
+Don't worry about buying anything right now - we'll learn about items soon. Click anywhere to close the shop when you're ready!"
+mom_expression = "happy"
+highlight_node_path = ""
+show_click_indicator = false
+required_action = "click_continue"
+completion_signal = ""
+next_step_id = "start_first_round"
+pause_game = false
+delay_before = 0.5
+category = "shop"

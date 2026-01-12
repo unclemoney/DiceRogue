@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "synergy_rainbow"
+part = 2
+total_parts = 2
+title = "Synergy System"
+message = "But wait, there's more! Get [color=#FF0000]R[/color][color=#FF8800]A[/color][color=#FFFF00]I[/color][color=#00FF00]N[/color][color=#0088FF]B[/color][color=#8800FF]O[/color][color=#FF00FF]W[/color] - one die of each color - for a whopping [color=#FFD952]5x MULTIPLIER[/color]!
+
+Mix and match to find your strategy!"
+mom_expression = "happy"
+highlight_node_path = ""
+show_click_indicator = false
+required_action = "click_continue"
+completion_signal = ""
+next_step_id = "next_round_button"
+pause_game = true
+delay_before = 0.0
+category = "synergy"

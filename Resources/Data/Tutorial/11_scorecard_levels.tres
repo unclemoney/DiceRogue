@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "scorecard_levels"
+part = 2
+total_parts = 2
+title = "The Score Card"
+message = "Each category has a [color=#FFD952]level[/color] shown by stars. Higher levels = bigger multipliers!
+
+You can upgrade categories in the shop. A level 2 category scores [color=#FFD952]2x[/color] the base points!"
+mom_expression = "happy"
+highlight_node_path = "ScoreCardUI"
+show_click_indicator = false
+required_action = "click_continue"
+completion_signal = ""
+next_step_id = "scoring_system_1"
+pause_game = true
+delay_before = 0.0
+category = "scoring"

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3 uid="uid://dct1ce842bulf"]
+
+[ext_resource type="Script" uid="uid://bmgqgbtghhtk1" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "intro"
+part = 1
+total_parts = 1
+title = "Welcome to GHUTZEE!"
+message = "Hey sweetie! [color=#FFD952]Mom here![/color] I'm so excited you're learning to play!
+
+This tutorial will teach you everything you need to know. Let's have some fun!"
+mom_expression = "happy"
+highlight_node_path = ""
+show_click_indicator = false
+required_action = "click_continue"
+completion_signal = ""
+next_step_id = "yahtzee_basics_1"
+pause_game = true
+delay_before = 0.0
+category = "basics"
