@@ -72,6 +72,20 @@ class_name TutorialStep
 ## "auto" tries to position opposite to the highlighted element.
 @export_enum("auto", "top", "bottom", "left", "right", "center") var dialog_position: String = "auto"
 
+## Manual highlight size override (in pixels).
+## Leave at (0, 0) to use automatic size detection.
+## Useful for Node2D elements where auto-detection doesn't work well.
+@export var highlight_size: Vector2 = Vector2.ZERO
+
+## Manual highlight offset (in pixels).
+## Applied to the highlight position for fine-tuning alignment.
+## Useful when the highlight needs to be slightly adjusted from the node's position.
+@export var highlight_offset: Vector2 = Vector2.ZERO
+
+## Whether to show the semi-transparent backdrop that dims the screen.
+## Set to false for steps where you want the full scene visible without dimming.
+@export var show_backdrop: bool = true
+
 
 ## validate_paths(root_node)
 ##

@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3 uid="uid://dn3j1r0oxyo3p"]
 
-[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+[ext_resource type="Script" uid="uid://bmgqgbtghhtk1" path="res://Scripts/Core/tutorial_step.gd" id="1"]
 
 [resource]
 script = ExtResource("1")
@@ -10,7 +10,7 @@ total_parts = 1
 title = "The NEXT TURN Button"
 message = "When you're happy with your dice and ready to score, click [color=#FFD952]NEXT TURN[/color].
 
-This ends your turn and lets the game auto-score your dice (or you can pick a category manually)!"
+This ends your turn and lets the game auto-score your dice (or you can pick a category manually)! BTW, you don't need to lock a dice to score it."
 mom_expression = "neutral"
 highlight_node_path = "GameButtonUI/HBoxContainer/NextTurnButton"
 show_click_indicator = true
@@ -21,3 +21,6 @@ pause_game = false
 delay_before = 0.0
 category = "vhs_buttons"
 dialog_position = "top"
+highlight_size = Vector2(0, 0)
+highlight_offset = Vector2(0, 0)
+show_backdrop = false

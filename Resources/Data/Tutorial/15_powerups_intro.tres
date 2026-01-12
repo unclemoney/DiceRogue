@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3 uid="uid://0whol0bmu0xn"]
 
-[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+[ext_resource type="Script" uid="uid://bmgqgbtghhtk1" path="res://Scripts/Core/tutorial_step.gd" id="1"]
 
 [resource]
 script = ExtResource("1")
@@ -8,7 +8,7 @@ id = "powerups_intro"
 part = 1
 total_parts = 2
 title = "Power-Ups"
-message = "[color=#FFD952]Power-Ups[/color] are permanent bonuses that last the entire run!
+message = "[color=#FFD952]Power-Ups[/color] are bonuses that can last the entire run!
 
 They can give you extra dice, bonus rolls, multipliers, and crazy special effects. Collect them from the shop!"
 mom_expression = "happy"
@@ -17,6 +17,10 @@ show_click_indicator = false
 required_action = "click_continue"
 completion_signal = ""
 next_step_id = "powerups_ratings"
-pause_game = true
+pause_game = false
 delay_before = 0.0
 category = "powerups"
+dialog_position = "auto"
+highlight_size = Vector2(375, 100)
+highlight_offset = Vector2(-425, 25)
+show_backdrop = true

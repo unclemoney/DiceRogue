@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3 uid="uid://bp6hv51cqhif3"]
 
-[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+[ext_resource type="Script" uid="uid://bmgqgbtghhtk1" path="res://Scripts/Core/tutorial_step.gd" id="1"]
 
 [resource]
 script = ExtResource("1")
@@ -17,6 +17,10 @@ show_click_indicator = false
 required_action = "click_continue"
 completion_signal = ""
 next_step_id = "scoring_system_1"
-pause_game = true
+pause_game = false
 delay_before = 0.0
 category = "scoring"
+dialog_position = "auto"
+highlight_size = Vector2(50, 300)
+highlight_offset = Vector2(20, 140)
+show_backdrop = false

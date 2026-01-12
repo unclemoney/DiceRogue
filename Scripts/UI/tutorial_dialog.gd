@@ -14,6 +14,8 @@ signal dialog_dismissed
 const TYPEWRITER_SPEED: float = 0.02  # Seconds per character
 const GOLDEN_COLOR := Color(1.0, 0.85, 0.32, 1.0)
 const DARK_PURPLE_BG := Color(0.08, 0.05, 0.15, 0.95)
+const TRANSITION_DURATION: float = 0.4  # Duration of show/hide animations
+const BOUNCE_OVERSHOOT: float = 1.1  # Overshoot for bounce effect
 
 # Fonts
 var brick_font: Font = preload("res://Resources/Font/BRICK_SANS.ttf")
@@ -37,6 +39,7 @@ var skip_confirm_dialog: ConfirmationDialog
 # State
 var _current_step = null  # TutorialStep
 var _typewriter_tween: Tween
+var _transition_tween: Tween
 var _full_message_text: String = ""
 var _typing_complete: bool = false
 
@@ -276,21 +279,82 @@ func show_step(step) -> void:
 	# Position dialog based on step hint
 	_position_dialog(step)
 	
-	# Show dialog - ensure both the panel and self are visible
-	show()
-	dialog_panel.show()
-	print("[TutorialDialog] Dialog shown, visible: %s, panel visible: %s" % [visible, dialog_panel.visible])
+	# Play intro animation
+	_play_intro_animation()
 
 
 ## hide_dialog()
 ##
-## Hides the tutorial dialog.
+## Hides the tutorial dialog with exit animation.
 func hide_dialog() -> void:
 	if _typewriter_tween and _typewriter_tween.is_valid():
 		_typewriter_tween.kill()
 	
-	if dialog_panel:
-		dialog_panel.hide()
+	_play_exit_animation()
+
+
+## _play_intro_animation()
+##
+## Animates the dialog panel in with a bouncy scale effect.
+func _play_intro_animation() -> void:
+	if not dialog_panel:
+		return
+	
+	# Kill any existing transition tween
+	if _transition_tween and _transition_tween.is_valid():
+		_transition_tween.kill()
+	
+	# Set initial state - scale to 0 and invisible
+	dialog_panel.scale = Vector2.ZERO
+	dialog_panel.modulate.a = 0.0
+	
+	# Show the dialog
+	show()
+	dialog_panel.show()
+	
+	# Create bounce-in animation
+	_transition_tween = create_tween()
+	_transition_tween.set_parallel(true)
+	_transition_tween.set_trans(Tween.TRANS_BACK)
+	_transition_tween.set_ease(Tween.EASE_OUT)
+	
+	# Animate scale from 0 to 1 with overshoot
+	_transition_tween.tween_property(dialog_panel, "scale", Vector2.ONE, TRANSITION_DURATION)
+	# Fade in opacity
+	_transition_tween.tween_property(dialog_panel, "modulate:a", 1.0, TRANSITION_DURATION * 0.5)
+	
+	print("[TutorialDialog] Playing intro animation")
+
+
+## _play_exit_animation()
+##
+## Animates the dialog panel out with a shrink effect.
+func _play_exit_animation() -> void:
+	if not dialog_panel:
+		return
+	
+	# Kill any existing transition tween
+	if _transition_tween and _transition_tween.is_valid():
+		_transition_tween.kill()
+	
+	# Create shrink-out animation
+	_transition_tween = create_tween()
+	_transition_tween.set_parallel(true)
+	_transition_tween.set_trans(Tween.TRANS_BACK)
+	_transition_tween.set_ease(Tween.EASE_IN)
+	
+	# Animate scale from 1 to 0
+	_transition_tween.tween_property(dialog_panel, "scale", Vector2.ZERO, TRANSITION_DURATION)
+	# Fade out opacity
+	_transition_tween.tween_property(dialog_panel, "modulate:a", 0.0, TRANSITION_DURATION * 0.5)
+	
+	# Hide after animation completes
+	_transition_tween.finished.connect(func():
+		if dialog_panel:
+			dialog_panel.hide()
+	)
+	
+	print("[TutorialDialog] Playing exit animation")
 
 
 ## _position_dialog(step)

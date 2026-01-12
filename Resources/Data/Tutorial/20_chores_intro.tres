@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3 uid="uid://crpwlsoicgpsn"]
 
-[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+[ext_resource type="Script" uid="uid://bmgqgbtghhtk1" path="res://Scripts/Core/tutorial_step.gd" id="1"]
 
 [resource]
 script = ExtResource("1")
@@ -20,3 +20,6 @@ next_step_id = "chores_mood"
 pause_game = true
 delay_before = 0.0
 category = "chores"
+dialog_position = "auto"
+highlight_size = Vector2(0, 0)
+highlight_offset = Vector2(0, 0)

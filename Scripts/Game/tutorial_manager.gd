@@ -263,6 +263,11 @@ func complete_tutorial() -> void:
 	
 	_hide_ui()
 	tutorial_completed.emit()
+	
+	# Return to main menu after a short delay
+	await get_tree().create_timer(1.0).timeout
+	var main_menu_scene = preload("res://Scenes/UI/MainMenu.tscn")
+	get_tree().change_scene_to_packed(main_menu_scene)
 
 
 ## advance_step()
@@ -280,6 +285,13 @@ func advance_step() -> void:
 		# This was the final step
 		complete_tutorial()
 	else:
+		# Hide current dialog with exit animation
+		if _tutorial_dialog:
+			_tutorial_dialog.hide_dialog()
+		
+		# Wait for exit animation to complete before showing next step
+		await get_tree().create_timer(0.45).timeout
+		
 		# Move to next step
 		_show_step(completed_step.next_step_id)
 
@@ -435,11 +447,27 @@ func _show_step(step_id: String) -> void:
 		get_tree().paused = true
 		is_paused = true
 	
-	# Show highlight
+	# Get show_backdrop setting (default to true)
+	var show_backdrop := true
+	if "show_backdrop" in current_step:
+		show_backdrop = current_step.show_backdrop
+	
+	# Show highlight (if specified)
 	if current_step.highlight_node_path != "" and game_root:
 		var highlight_target = game_root.get_node_or_null(current_step.highlight_node_path)
 		if highlight_target and _tutorial_highlight:
-			_tutorial_highlight.show_highlight(highlight_target, current_step.show_click_indicator)
+			# Get manual overrides from step (use defaults if properties don't exist)
+			var manual_size := Vector2.ZERO
+			var manual_offset := Vector2.ZERO
+			if "highlight_size" in current_step:
+				manual_size = current_step.highlight_size
+			if "highlight_offset" in current_step:
+				manual_offset = current_step.highlight_offset
+			_tutorial_highlight.show_highlight(highlight_target, current_step.show_click_indicator, manual_size, manual_offset, show_backdrop)
+	else:
+		# No highlight specified, but we still need to control the backdrop
+		if _tutorial_highlight:
+			_tutorial_highlight.set_backdrop_visible(show_backdrop)
 	
 	# Connect to completion signal if specified
 	if current_step.completion_signal != "":
@@ -462,8 +490,14 @@ func _cleanup_current_step() -> void:
 	
 	_disconnect_all_signals()
 	
+	# Hide highlight panel and click indicator, but keep backdrop for next step to control
 	if _tutorial_highlight:
-		_tutorial_highlight.hide_highlight()
+		if _tutorial_highlight.highlight_panel:
+			_tutorial_highlight.highlight_panel.hide()
+		if _tutorial_highlight.click_indicator:
+			_tutorial_highlight.click_indicator.hide()
+		_tutorial_highlight._update_position = false
+		_tutorial_highlight.target_node = null
 
 
 ## _ensure_ui_exists()

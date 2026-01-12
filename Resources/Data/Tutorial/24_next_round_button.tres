@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3 uid="uid://dy0vml07tbbwp"]
 
-[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+[ext_resource type="Script" uid="uid://bmgqgbtghhtk1" path="res://Scripts/Core/tutorial_step.gd" id="1"]
 
 [resource]
 script = ExtResource("1")
@@ -20,3 +20,7 @@ next_step_id = "tutorial_complete"
 pause_game = true
 delay_before = 0.0
 category = "vhs_buttons"
+dialog_position = "auto"
+highlight_size = Vector2(0, 0)
+highlight_offset = Vector2(0, 0)
+show_backdrop = false

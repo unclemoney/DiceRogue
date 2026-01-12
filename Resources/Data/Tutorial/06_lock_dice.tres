@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3 uid="uid://chuu747jobayf"]
 
-[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+[ext_resource type="Script" uid="uid://bmgqgbtghhtk1" path="res://Scripts/Core/tutorial_step.gd" id="1"]
 
 [resource]
 script = ExtResource("1")
@@ -21,3 +21,6 @@ pause_game = false
 delay_before = 0.5
 category = "basics"
 dialog_position = "top"
+highlight_size = Vector2(500, 100)
+highlight_offset = Vector2(850, 525)
+show_backdrop = false

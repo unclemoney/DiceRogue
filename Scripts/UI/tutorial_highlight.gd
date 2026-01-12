@@ -26,6 +26,10 @@ var highlight_panel: Panel
 var click_indicator: Label
 var target_node: CanvasItem = null  # Can be Control or Node2D
 
+# Manual overrides
+var _manual_size: Vector2 = Vector2.ZERO
+var _manual_offset: Vector2 = Vector2.ZERO
+
 # Animation
 var pulse_tween: Tween
 var bounce_tween: Tween
@@ -85,23 +89,31 @@ func _build_ui() -> void:
 	add_child(click_indicator)
 
 
-## show_highlight(target, show_indicator)
+## show_highlight(target, show_indicator, manual_size, manual_offset, show_backdrop)
 ##
 ## Shows the highlight around a target node (Control or Node2D).
 ##
 ## @param target: The CanvasItem node to highlight (Control or Node2D)
 ## @param show_indicator: Whether to show the "CLICK HERE" indicator
-func show_highlight(target: CanvasItem, show_indicator: bool = false) -> void:
+## @param manual_size: Manual size override (Vector2.ZERO for auto)
+## @param manual_offset: Manual position offset
+## @param show_backdrop: Whether to show the dimming backdrop
+func show_highlight(target: CanvasItem, show_indicator: bool = false, manual_size: Vector2 = Vector2.ZERO, manual_offset: Vector2 = Vector2.ZERO, show_backdrop: bool = true) -> void:
 	if not target or not is_instance_valid(target):
 		push_error("[TutorialHighlight] Invalid target node")
 		hide_highlight()
 		return
 	
 	target_node = target
+	_manual_size = manual_size
+	_manual_offset = manual_offset
 	_update_position = true
 	
 	# Show components
-	backdrop.show()
+	if show_backdrop:
+		backdrop.show()
+	else:
+		backdrop.hide()
 	highlight_panel.show()
 	
 	if show_indicator:
@@ -160,6 +172,16 @@ func _update_highlight_position() -> void:
 	else:
 		push_warning("[TutorialHighlight] Unknown target type: %s" % target_node.get_class())
 		return
+	
+	# Apply manual size override if specified
+	if _manual_size != Vector2.ZERO:
+		var center = target_rect.get_center()
+		target_rect.position = center - _manual_size / 2
+		target_rect.size = _manual_size
+	
+	# Apply manual offset
+	if _manual_offset != Vector2.ZERO:
+		target_rect.position += _manual_offset
 	
 	# Add padding around the highlight
 	var padding := 8.0
