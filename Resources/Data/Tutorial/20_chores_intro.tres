@@ -12,14 +12,17 @@ message = "Here's the [color=#FFD952]Goof-Off Meter[/color]! It tracks how much 
 
 When it fills up, Mom catches you and might [color=#FF6666]confiscate[/color] your stuff or give you debuffs!"
 mom_expression = "upset"
-highlight_node_path = "CorkboardUI/ChoreSection"
+highlight_node_path = "CorkboardUI/Panel/ChoreUI"
 show_click_indicator = false
 required_action = "click_continue"
 completion_signal = ""
 next_step_id = "chores_mood"
-pause_game = true
+pause_game = false
 delay_before = 0.0
 category = "chores"
 dialog_position = "auto"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
+show_backdrop = true
+powerup_to_grant = ""
+consumable_to_grant = ""

@@ -324,6 +324,10 @@ func _on_game_start() -> void:
 	#grant_power_up("pin_head")
 	#grant_power_up("perfect_strangers")
 	
+	# Reset shop reroll cost for new game
+	if shop_ui:
+		shop_ui.reset_reroll_cost()
+	
 	# Check if tutorial should auto-start for first-time players
 	var tutorial_manager = get_node_or_null("/root/TutorialManager")
 	if tutorial_manager and tutorial_manager.should_auto_start():

@@ -28,7 +28,7 @@ Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill s
 ### Main Menu
 - **Location**: `Scenes/UI/MainMenu.tscn`, `Scripts/UI/main_menu.gd`
 - **Features**:
-  - Animated floating "GHUTZEE" title using BRICK_SANS font
+  - Animated floating "GUHTZEE" title using BRICK_SANS font
   - 3 profile slots (P1/P2/P3) - click to select, right-click to rename
   - "Playing as: [ProfileName]" label showing active profile
   - New Game / Settings / Quit navigation buttons
@@ -867,7 +867,20 @@ var total_matching = synergy_manager.get_total_matching_bonus()
 - **Spine/Fan System**: Cards can be displayed as compact spines or fanned out for interaction
 - **PowerUpUI** (`Scripts/UI/power_up_ui.gd`) - Manages power-up display
 - **ConsumableUI** (`Scripts/UI/consumable_ui.gd`) - Manages consumable display
-- **ShopUI** (`Scripts/UI/shop_ui.gd`) - In-game purchasing
+- **ShopUI** (`Scripts/UI/shop_ui.gd`) - In-game purchasing with reroll functionality
+
+### Shop UI Features
+- **Tab System**: Five tabs (PowerUps, Consumables, Mods, Colors, Locked)
+- **Reroll System**: Reroll button available on PowerUp and Consumable tabs
+  - Base cost: $25, increases by $5 per reroll
+  - 500ms cooldown between rerolls
+  - Cost resets when starting a new game
+  - Disabled when no items available or cannot afford
+  - Cost label displays with bounce animation on each reroll
+- **Centered Item Layout**: Items automatically center horizontally and vertically regardless of count
+- **Backdrop Click-to-Close**: Clicking outside the shop panel closes it
+- **Improved Hover Tooltips**: Tooltip stays visible when moving from item card to purchase button
+- **Shelf Panel Theme**: Blockbuster-style shelf background (128x128 pixel art texture with edge borders)
 
 ### Hover Tooltip System
 All interactive game items feature consistent, themed hover tooltips:

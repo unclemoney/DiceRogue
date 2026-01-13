@@ -438,6 +438,9 @@ func _show_step(step_id: String) -> void:
 	if game_root:
 		current_step.validate_paths(game_root)
 	
+	# Grant items if specified (PowerUp and/or Consumable)
+	_grant_step_items(current_step)
+	
 	# Handle delay
 	if current_step.delay_before > 0:
 		await get_tree().create_timer(current_step.delay_before).timeout
@@ -648,3 +651,53 @@ func _on_dialog_next() -> void:
 ## Called when Skip is confirmed in the dialog.
 func _on_dialog_skip() -> void:
 	skip_tutorial()
+
+
+## _grant_step_items(step)
+##
+## Grants any PowerUps or Consumables specified in the tutorial step.
+## Called when a step is shown to give the player items they can use during the tutorial.
+##
+## @param step: The TutorialStep resource being shown
+func _grant_step_items(step) -> void:
+	if not step:
+		return
+	
+	var game_controller = _get_game_controller()
+	if not game_controller:
+		print("[TutorialManager] No GameController found - cannot grant items")
+		return
+	
+	# Grant PowerUp if specified
+	var powerup_id := ""
+	if "powerup_to_grant" in step:
+		powerup_id = step.powerup_to_grant
+	
+	if powerup_id != "":
+		if game_controller.has_method("grant_power_up"):
+			print("[TutorialManager] Granting PowerUp: %s" % powerup_id)
+			game_controller.grant_power_up(powerup_id)
+		else:
+			push_error("[TutorialManager] GameController missing grant_power_up method")
+	
+	# Grant Consumable if specified
+	var consumable_id := ""
+	if "consumable_to_grant" in step:
+		consumable_id = step.consumable_to_grant
+	
+	if consumable_id != "":
+		if game_controller.has_method("grant_consumable"):
+			print("[TutorialManager] Granting Consumable: %s" % consumable_id)
+			game_controller.grant_consumable(consumable_id)
+		else:
+			push_error("[TutorialManager] GameController missing grant_consumable method")
+
+
+## _get_game_controller() -> Node
+##
+## Finds and returns the GameController node.
+func _get_game_controller() -> Node:
+	var game_controllers = get_tree().get_nodes_in_group("game_controller")
+	if game_controllers.size() > 0:
+		return game_controllers[0]
+	return null

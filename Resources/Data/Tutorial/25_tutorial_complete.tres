@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3 uid="uid://cjsw7r8dxll5i"]
 
-[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+[ext_resource type="Script" uid="uid://bmgqgbtghhtk1" path="res://Scripts/Core/tutorial_step.gd" id="1"]
 
 [resource]
 script = ExtResource("1")
@@ -10,7 +10,7 @@ total_parts = 1
 title = "You're Ready!"
 message = "That's everything you need to know! 🎉
 
-Now go out there and become the ultimate GHUTZEE champion! Remember, Mom's always watching... 
+Now go out there and become the ultimate GUHTZEE champion! Remember, Mom's always watching... 
 
 [color=#FFD952]Good luck, sweetie![/color]"
 mom_expression = "happy"
@@ -22,3 +22,9 @@ next_step_id = ""
 pause_game = true
 delay_before = 0.0
 category = "basics"
+dialog_position = "auto"
+highlight_size = Vector2(0, 0)
+highlight_offset = Vector2(0, 0)
+show_backdrop = true
+powerup_to_grant = ""
+consumable_to_grant = ""

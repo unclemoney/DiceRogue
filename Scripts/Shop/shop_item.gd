@@ -23,6 +23,8 @@ var color_type: DiceColor.Type = DiceColor.Type.NONE  # Track color type for col
 var hover_tooltip: PanelContainer
 var hover_tooltip_label: Label
 var is_hovered: bool = false
+var is_card_hovered: bool = false
+var is_button_hovered: bool = false
 var _time: float = 0.0
 const RAINBOW_SPEED := 0.5
 const RAINBOW_COLORS := [
@@ -290,14 +292,19 @@ func _setup_hover_tooltip() -> void:
 		get_parent().add_child.call_deferred(hover_tooltip)
 		print("[ShopItem] Added tooltip to direct parent (deferred)")
 	
-	# Connect hover signals
+	# Connect hover signals for the card itself
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
+	
+	# Connect hover signals for the buy button to maintain tooltip visibility
+	if buy_button:
+		buy_button.mouse_entered.connect(_on_button_mouse_entered)
+		buy_button.mouse_exited.connect(_on_button_mouse_exited)
 	
 	print("[ShopItem] Tooltip created with direct styling")
 
 ## _on_mouse_entered()
-## Shows the hover tooltip when mouse enters the shop item
+## Shows the hover tooltip when mouse enters the shop item card
 func _on_mouse_entered() -> void:
 	if not hover_tooltip or not item_data:
 		return
@@ -308,19 +315,42 @@ func _on_mouse_entered() -> void:
 			hover_tooltip_label.text = _get_colored_dice_tooltip_text()
 		else:
 			hover_tooltip_label.text = item_data.description
-		
+	
+	is_card_hovered = true
 	is_hovered = true
 	hover_tooltip.visible = true
 	_update_tooltip_position()
 
 ## _on_mouse_exited()
-## Hides the hover tooltip when mouse exits the shop item
+## Hides the hover tooltip when mouse exits the shop item card
 func _on_mouse_exited() -> void:
 	if not hover_tooltip:
 		return
-		
-	is_hovered = false
-	hover_tooltip.visible = false
+	
+	is_card_hovered = false
+	# Only hide if not hovering over the button either
+	if not is_button_hovered:
+		is_hovered = false
+		hover_tooltip.visible = false
+
+## _on_button_mouse_entered()
+## Called when mouse enters the buy button - keeps tooltip visible
+func _on_button_mouse_entered() -> void:
+	is_button_hovered = true
+	# Show tooltip if it exists
+	if hover_tooltip and item_data:
+		is_hovered = true
+		hover_tooltip.visible = true
+		_update_tooltip_position()
+
+## _on_button_mouse_exited()
+## Called when mouse exits the buy button - hides tooltip if not on card
+func _on_button_mouse_exited() -> void:
+	is_button_hovered = false
+	# Only hide if not hovering over the card either
+	if not is_card_hovered and hover_tooltip:
+		is_hovered = false
+		hover_tooltip.visible = false
 
 ## _update_tooltip_position()
 ## Positions the tooltip relative to the shop item

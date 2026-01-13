@@ -10,17 +10,19 @@ total_parts = 1
 title = "Consumables"
 message = "[color=#FFD952]Consumables[/color] are one-time use items with powerful effects!
 
-Need extra rolls? Want to reroll all dice? Consumables have you covered. Use them wisely - once they're gone, they're gone!"
+I just gave you one! [color=#88FF88]Click the Consumable spine[/color] to fan out your consumables, then click on the item to use it. Once they're gone, they're gone!"
 mom_expression = "happy"
 highlight_node_path = "ConsumableUI"
-show_click_indicator = false
+show_click_indicator = true
 required_action = "click_continue"
 completion_signal = ""
 next_step_id = "challenges_intro"
 pause_game = false
 delay_before = 0.0
 category = "consumables"
-dialog_position = "center"
-highlight_size = Vector2(150, 100)
-highlight_offset = Vector2(-225, -275)
-show_backdrop = true
+dialog_position = "bottom"
+highlight_size = Vector2(250, 100)
+highlight_offset = Vector2(-275, -275)
+show_backdrop = false
+powerup_to_grant = ""
+consumable_to_grant = "ones_upgrade"

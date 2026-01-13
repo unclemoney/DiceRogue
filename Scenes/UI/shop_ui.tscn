@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://dbqwnxq8iy66l"]
+[gd_scene load_steps=5 format=3 uid="uid://dbqwnxq8iy66l"]
 
 [ext_resource type="Script" uid="uid://do82iklsw8hmg" path="res://Scripts/UI/shop_ui.gd" id="1_ksn61"]
 [ext_resource type="Theme" uid="uid://busf5kj4jt6yf" path="res://Resources/UI/powerup_hover_theme.tres" id="1_xwb05"]
 [ext_resource type="Texture2D" uid="uid://dhu773gp3lwd4" path="res://Resources/Art/Dice/BlueSquare.png" id="2_6hyjo"]
+[ext_resource type="Theme" uid="uid://cw123bpjsfi08" path="res://Resources/UI/shelf_panel_theme.tres" id="4_ocftj"]
 
 [node name="ShopUI" type="Control"]
 z_index = 4
@@ -20,6 +21,20 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme = ExtResource("1_xwb05")
 script = ExtResource("1_ksn61")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -196.0
+offset_top = -27.0
+offset_right = 33.0
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.7)
 
 [node name="PanelContainer" type="PanelContainer" parent="."]
 layout_mode = 0
@@ -65,6 +80,15 @@ offset_right = 40.0
 offset_bottom = 40.0
 columns = 6
 
+[node name="Panel" type="Panel" parent="TabContainer/PowerUps"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("4_ocftj")
+
 [node name="Consumables" type="TabBar" parent="TabContainer"]
 visible = false
 layout_mode = 2
@@ -75,6 +99,15 @@ layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
 columns = 6
+
+[node name="Panel2" type="Panel" parent="TabContainer/Consumables"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("4_ocftj")
 
 [node name="Mods" type="TabBar" parent="TabContainer"]
 visible = false
@@ -87,6 +120,16 @@ offset_right = 40.0
 offset_bottom = 40.0
 columns = 6
 
+[node name="Panel3" type="Panel" parent="TabContainer/Mods"]
+layout_mode = 2
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 31.0
+offset_bottom = 31.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("4_ocftj")
+
 [node name="Colors" type="TabBar" parent="TabContainer"]
 visible = false
 layout_mode = 2
@@ -97,6 +140,16 @@ layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
 columns = 6
+
+[node name="Panel4" type="Panel" parent="TabContainer/Colors"]
+layout_mode = 2
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 31.0
+offset_bottom = 31.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("4_ocftj")
 
 [node name="Locked" type="TabBar" parent="TabContainer"]
 visible = false
@@ -120,11 +173,12 @@ size_flags_vertical = 3
 columns = 4
 
 [node name="CloseButton" type="Button" parent="."]
-layout_mode = 2
-offset_left = 878.0
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 0
+offset_left = 898.0
 offset_top = 69.0
 offset_right = 938.0
-offset_bottom = 100.0
+offset_bottom = 109.0
 text = "X"
 
 [connection signal="pressed" from="CloseButton" to="." method="_on_close_button_pressed"]

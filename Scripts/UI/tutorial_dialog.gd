@@ -276,6 +276,13 @@ func show_step(step) -> void:
 	else:
 		next_button.text = "Next →"
 	
+	# Disable Next button when step requires a specific action (not click_continue)
+	# This forces the player to perform the action to proceed
+	var requires_action = step.required_action != "click_continue" and step.required_action != "none"
+	next_button.disabled = requires_action
+	if requires_action:
+		print("[TutorialDialog] Next button disabled - requires action: %s" % step.required_action)
+	
 	# Position dialog based on step hint
 	_position_dialog(step)
 	

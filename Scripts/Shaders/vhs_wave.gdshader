@@ -1,6 +1,6 @@
 shader_type canvas_item;
 // VHS Static Wave - Analog TV interference with chromatic drift
-// Created for DiceRogue (Ghutzee)
+// Created for DiceRogue (Guhtzee)
 
 // Color system - matching game's purple/teal palette
 uniform vec4 colour_1 : source_color = vec4(0.08, 0.04, 0.15, 1.0);  // Very dark purple

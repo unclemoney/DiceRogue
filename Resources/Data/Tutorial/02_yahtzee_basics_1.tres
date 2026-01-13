@@ -8,7 +8,7 @@ id = "yahtzee_basics_1"
 part = 1
 total_parts = 3
 title = "Yahtzee Basics"
-message = "GHUTZEE is based on the classic game [color=#FFD952]Yahtzee[/color]!
+message = "GUHTZEE is based on the classic game [color=#FFD952]Yahtzee[/color]!
 
 You'll roll 5 dice and try to make scoring combinations like [color=#FFD952]Three of a Kind[/color], [color=#FFD952]Full House[/color], or the mighty [color=#FFD952]YAHTZEE[/color] (five of the same)!"
 mom_expression = "happy"

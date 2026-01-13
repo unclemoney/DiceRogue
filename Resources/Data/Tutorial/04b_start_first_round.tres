@@ -10,7 +10,7 @@ total_parts = 1
 title = "Starting the Game"
 message = "Before you can roll, you need to start a new round!
 
-Click the [color=#FFD952]NEXT ROUND[/color] button to begin your first round of GHUTZEE!"
+Click the [color=#FFD952]NEXT ROUND[/color] button to begin your first round of GUHTZEE!"
 mom_expression = "happy"
 highlight_node_path = "GameButtonUI/HBoxContainer/NextRoundButton"
 show_click_indicator = true

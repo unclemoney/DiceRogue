@@ -1,0 +1,25 @@
+[gd_resource type="Theme" load_steps=5 format=3 uid="uid://cw123bpjsfi08"]
+
+[ext_resource type="Texture2D" uid="uid://b384nv2sp73hi" path="res://Resources/Art/UI/panel_border.png" id="1_8ym8f"]
+[ext_resource type="Texture2D" uid="uid://cjetnvvxh5eq7" path="res://Resources/Art/UI/blockbuster_shelf.png" id="1_shelf_texture"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_mg5mo"]
+texture = ExtResource("1_8ym8f")
+texture_margin_left = 14.0
+texture_margin_top = 14.0
+texture_margin_right = 14.0
+texture_margin_bottom = 13.0
+region_rect = Rect2(-7, -7, 44, 43)
+
+[sub_resource type="StyleBoxTexture" id="StyleBox_ShelfPanel"]
+texture = ExtResource("1_shelf_texture")
+texture_margin_left = 16.0
+texture_margin_top = 16.0
+texture_margin_right = 16.0
+texture_margin_bottom = 16.0
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+
+[resource]
+Panel/styles/panel = SubResource("StyleBoxTexture_mg5mo")
+PanelContainer/styles/panel = SubResource("StyleBox_ShelfPanel")

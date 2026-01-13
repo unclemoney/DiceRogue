@@ -10,7 +10,7 @@ total_parts = 2
 title = "Power-Ups"
 message = "Power-Ups have movie ratings: [color=#88FF88]G[/color], [color=#88FFFF]PG[/color], [color=#FFFF88]PG-13[/color], [color=#FF8888]R[/color], and [color=#FF88FF]NC-17[/color].
 
-Higher ratings are more powerful but riskier! NC-17 power-ups might get you [color=#FF6666]GROUNDED[/color] by Mom!"
+Higher ratings are more powerful but riskier! NC-17 power-ups might get you [color=#FF6666]GROUNDED[/color] by Mom! [color=#FFD952]Collecting multiple of the same rating gives synergy bonuses![/color]"
 mom_expression = "neutral"
 highlight_node_path = ""
 show_click_indicator = false
@@ -20,7 +20,9 @@ next_step_id = "consumables_intro"
 pause_game = false
 delay_before = 0.0
 category = "powerups"
-dialog_position = "center"
+dialog_position = "top"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
 show_backdrop = true
+powerup_to_grant = ""
+consumable_to_grant = ""

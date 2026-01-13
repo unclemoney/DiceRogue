@@ -1,6 +1,6 @@
 # Arcade Background Shaders
 
-Three custom background shaders designed for DiceRogue (Ghutzee), capturing the nostalgic aesthetic of late 80's/early 90's arcades and malls with purple/teal neon color schemes.
+Three custom background shaders designed for DiceRogue (Guhtzee), capturing the nostalgic aesthetic of late 80's/early 90's arcades and malls with purple/teal neon color schemes.
 
 ## Overview
 
@@ -204,5 +204,5 @@ var shader = load("res://Scripts/Shaders/neon_grid.gdshader")
 
 ## Credits
 
-Created for **DiceRogue (Ghutzee)** - A late 80's/early 90's arcade-inspired dice game.
+Created for **DiceRogue (Guhtzee)** - A late 80's/early 90's arcade-inspired dice game.
 Designed to replace the Balatro-sourced swirl shader with original visual effects.

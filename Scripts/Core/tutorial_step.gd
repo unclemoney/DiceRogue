@@ -40,10 +40,10 @@ class_name TutorialStep
 ## Required action to complete this step.
 ## Valid values: "none", "click_roll", "click_shop", "click_next_turn", 
 ## "click_next_round", "click_scorecard", "lock_die", "use_consumable",
-## "purchase_item", "click_continue"
+## "purchase_item", "close_shop", "click_continue"
 @export_enum("none", "click_roll", "click_shop", "click_next_turn", 
 	"click_next_round", "click_scorecard", "lock_die", "use_consumable",
-	"purchase_item", "click_continue") var required_action: String = "click_continue"
+	"purchase_item", "close_shop", "click_continue") var required_action: String = "click_continue"
 
 ## Signal to listen for to mark step complete (alternative to required_action).
 ## Format: "object_path:signal_name" e.g., "GameButtonUI:dice_rolled"
@@ -85,6 +85,16 @@ class_name TutorialStep
 ## Whether to show the semi-transparent backdrop that dims the screen.
 ## Set to false for steps where you want the full scene visible without dimming.
 @export var show_backdrop: bool = true
+
+## PowerUp ID to grant when this step is shown.
+## Leave empty if no powerup should be granted.
+## Example: "step_by_step" will grant the Step by Step powerup.
+@export var powerup_to_grant: String = ""
+
+## Consumable ID to grant when this step is shown.
+## Leave empty if no consumable should be granted.
+## Example: "ones_upgrade" will grant the Ones Upgrade consumable.
+@export var consumable_to_grant: String = ""
 
 
 ## validate_paths(root_node)

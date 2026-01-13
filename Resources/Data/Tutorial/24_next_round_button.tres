@@ -8,19 +8,21 @@ id = "next_round_button"
 part = 1
 total_parts = 1
 title = "The NEXT ROUND Button"
-message = "After completing a round's challenge, the [color=#FFD952]NEXT ROUND[/color] button lights up!
+message = "After completing a round's challenge, the [color=#FFD952]NEXT ROUND and SHOP[/color] button lights up!  
 
-Click it to advance to the next round with new challenges and tougher debuffs. The stakes get higher!"
+Click on the Shop and you can spend your hard earned money or click to advance to the next round with new challenges and tougher debuffs. The stakes get higher!"
 mom_expression = "neutral"
 highlight_node_path = "GameButtonUI/HBoxContainer/NextRoundButton"
 show_click_indicator = false
 required_action = "click_continue"
 completion_signal = ""
 next_step_id = "tutorial_complete"
-pause_game = true
+pause_game = false
 delay_before = 0.0
 category = "vhs_buttons"
 dialog_position = "auto"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
 show_backdrop = false
+powerup_to_grant = ""
+consumable_to_grant = ""

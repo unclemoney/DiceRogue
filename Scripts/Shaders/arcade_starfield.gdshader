@@ -1,6 +1,6 @@
 shader_type canvas_item;
 // Arcade Starfield - Multi-layer parallax stars with 80's color cycling
-// Created for DiceRogue (Ghutzee)
+// Created for DiceRogue (Guhtzee)
 
 // Color system - matching game's purple/teal palette  
 uniform vec4 colour_1 : source_color = vec4(0.08, 0.04, 0.15, 1.0);  // Dark purple space

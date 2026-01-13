@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3 uid="uid://b26n3a5wvdjwj"]
 
-[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+[ext_resource type="Script" uid="uid://bmgqgbtghhtk1" path="res://Scripts/Core/tutorial_step.gd" id="1"]
 
 [resource]
 script = ExtResource("1")
@@ -10,13 +10,19 @@ total_parts = 2
 title = "Synergy System"
 message = "Now for the fun part - [color=#FFD952]SYNERGY[/color]!
 
-Collect colored dice from the shop. When you have [color=#FFD952]5 dice of the same color[/color], you get a [color=#88FF88]+50 additive bonus[/color]!"
+Collect colored dice from the shop. When you have [color=#FFD952]5 dice of the same color[/color], you get a [color=#88FF88]+50 additive bonus[/color]! Power-Ups also have synergies based on their movie ratings!"
 mom_expression = "happy"
 highlight_node_path = ""
 show_click_indicator = false
 required_action = "click_continue"
 completion_signal = ""
 next_step_id = "synergy_rainbow"
-pause_game = true
+pause_game = false
 delay_before = 0.0
 category = "synergy"
+dialog_position = "auto"
+highlight_size = Vector2(0, 0)
+highlight_offset = Vector2(0, 0)
+show_backdrop = true
+powerup_to_grant = ""
+consumable_to_grant = ""

@@ -12,7 +12,7 @@ message = "Watch out for [color=#FF6666]Debuffs[/color]! These are penalties tha
 
 Some debuffs lock dice, make rolls cost money, or reduce your scores. They stack up as you progress!"
 mom_expression = "upset"
-highlight_node_path = "CorkboardUI/DebuffSection"
+highlight_node_path = "DebuffUI"
 show_click_indicator = false
 required_action = "click_continue"
 completion_signal = ""
@@ -21,6 +21,8 @@ pause_game = false
 delay_before = 0.0
 category = "debuffs"
 dialog_position = "center"
-highlight_size = Vector2(100, 100)
-highlight_offset = Vector2(100, 300)
+highlight_size = Vector2(150, 150)
+highlight_offset = Vector2(-250, 75)
 show_backdrop = true
+powerup_to_grant = ""
+consumable_to_grant = ""

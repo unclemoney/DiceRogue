@@ -12,7 +12,7 @@ message = "Each round has a [color=#FFD952]Challenge[/color] - a special goal to
 
 Complete challenges to earn bonus money and advance to the next round. Fail them and... well, let's not think about that!"
 mom_expression = "neutral"
-highlight_node_path = "CorkboardUI/ChallengeSection"
+highlight_node_path = "ChallengeUI"
 show_click_indicator = false
 required_action = "click_continue"
 completion_signal = ""
@@ -21,6 +21,8 @@ pause_game = false
 delay_before = 0.0
 category = "challenges"
 dialog_position = "center"
-highlight_size = Vector2(100, 100)
-highlight_offset = Vector2(500, 500)
+highlight_size = Vector2(125, 125)
+highlight_offset = Vector2(-50, -50)
 show_backdrop = true
+powerup_to_grant = ""
+consumable_to_grant = ""

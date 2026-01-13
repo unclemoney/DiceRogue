@@ -1,6 +1,6 @@
 shader_type canvas_item;
 // Neon Grid - 80's/90's Tron-inspired perspective grid background
-// Created for DiceRogue (Ghutzee)
+// Created for DiceRogue (Guhtzee)
 
 // Color system - matching game's purple/teal palette
 uniform vec4 colour_1 : source_color = vec4(0.15, 0.08, 0.25, 1.0);  // Dark purple base

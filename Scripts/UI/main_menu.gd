@@ -2,7 +2,7 @@ extends Control
 
 ## MainMenu
 ##
-## The main menu screen for Ghutzee. Features an animated title,
+## The main menu screen for Guhtzee. Features an animated title,
 ## 3 profile buttons, "Playing as" label, and navigation buttons.
 ## Manages transitions to game and settings.
 
@@ -196,10 +196,10 @@ func _build_title_section(parent: Control) -> void:
 	title_container.add_theme_constant_override("separation", 5)
 	parent.add_child(title_container)
 	
-	# Main title - "GHUTZEE"
+	# Main title - "GUHTZEE"
 	title_label = Label.new()
 	title_label.name = "TitleLabel"
-	title_label.text = "GHUTZEE!"
+	title_label.text = "GUHTZEE!"
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.add_theme_font_override("font", brick_font)
 	title_label.add_theme_font_size_override("font_size", 120)
