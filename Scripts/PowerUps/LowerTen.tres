@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3]
+
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="Texture2D" uid="uid://b34wnnc1crbkd" path="res://Resources/Art/Powerups/PowerUp_test.png" id="1_icon"]
+[ext_resource type="PackedScene" path="res://Scenes/PowerUp/LowerTen.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "lower_ten"
+display_name = "Lower Ten"
+description = "Lower section scores get +10 points"
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 150
+rarity = "uncommon"
+rating = "PG-13"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

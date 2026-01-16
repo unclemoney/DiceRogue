@@ -941,6 +941,30 @@ func _create_default_unlockable_items() -> void:
 	_add_default_power_up("blue_slime", "Blue Slime", "Doubles blue dice probability", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 10)  # Legendary: need 10 yahtzees total
 	
+	# New PowerUps
+	_add_default_power_up("lower_ten", "Lower Ten", "Lower section scores get +10 points", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 150)  # Uncommon
+	_add_default_power_up("different_straights", "Different Straights", "Straights can have one gap of 1", 
+		UnlockConditionClass.ConditionType.ROLL_STRAIGHT, 2)  # Rare
+	_add_default_power_up("plus_thelast", "Plus The Last", "Adds last score to current score", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 250)  # Rare
+	_add_default_power_up("allowance", "Allowance", "Grants $100 when challenge completes", 
+		UnlockConditionClass.ConditionType.COMPLETE_GAME, 1)  # Common
+	_add_default_power_up("ungrounded", "Ungrounded", "Prevents all debuffs", 
+		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 15)  # Legendary
+	
+	# Economy and Shop PowerUps
+	_add_default_power_up("shop_rerolls", "Shop Rerolls", "Shop rerolls always cost $25", 
+		UnlockConditionClass.ConditionType.EARN_MONEY, 75)  # Uncommon
+	_add_default_power_up("tango_and_cash", "Tango & Cash", "+$10 for every odd die scored", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 150)  # Uncommon
+	_add_default_power_up("even_higher", "Even Higher", "+1 additive per even die scored (cumulative)", 
+		UnlockConditionClass.ConditionType.EARN_MONEY, 200)  # Rare
+	_add_default_power_up("money_bags", "Money Bags", "Score multiplier based on current money", 
+		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 3)  # Epic
+	_add_default_power_up("failed_money", "Failed Money", "+$25 for each failed hand at round end", 
+		UnlockConditionClass.ConditionType.COMPLETE_GAME, 2)  # Common
+	
 	# ==========================================================================
 	# ALL CONSUMABLES (16 total) - From Scripts/Consumable/*.tres files  
 	# ==========================================================================

@@ -193,6 +193,11 @@ func _create_debug_tabs() -> void:
 			{"text": "Register AnyScore", "method": "_debug_register_any_score"},
 			{"text": "Grant Random Mod", "method": "_debug_grant_mod"},
 			{"text": "Test Consumer PowerUp", "method": "_debug_test_consumer_powerup"},
+			{"text": "Grant Lower Ten", "method": "_debug_grant_lower_ten"},
+			{"text": "Grant Different Straights", "method": "_debug_grant_different_straights"},
+			{"text": "Grant Plus The Last", "method": "_debug_grant_plus_thelast"},
+			{"text": "Grant Allowance", "method": "_debug_grant_allowance"},
+			{"text": "Grant Ungrounded", "method": "_debug_grant_ungrounded"},
 			{"text": "Show All Items", "method": "_debug_show_items"},
 			{"text": "Clear All Items", "method": "_debug_clear_items"},
 		],
@@ -565,6 +570,66 @@ func _debug_grant_go_broke_or_go_home() -> void:
 		log_debug("Granted Go Broke or Go Home consumable")
 	else:
 		log_debug("GameController missing grant_consumable method")
+
+## Grant the Lower Ten powerup (uncommon) - +10 points for lower section scores
+func _debug_grant_lower_ten() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_power_up"):
+		game_controller.grant_power_up("lower_ten")
+		log_debug("Granted Lower Ten PowerUp")
+	else:
+		log_debug("GameController missing grant_power_up method")
+
+## Grant the Different Straights powerup (rare) - allows straights with one gap
+func _debug_grant_different_straights() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_power_up"):
+		game_controller.grant_power_up("different_straights")
+		log_debug("Granted Different Straights PowerUp")
+	else:
+		log_debug("GameController missing grant_power_up method")
+
+## Grant the Plus The Last powerup (rare) - adds last scored value to current score
+func _debug_grant_plus_thelast() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_power_up"):
+		game_controller.grant_power_up("plus_thelast")
+		log_debug("Granted Plus The Last PowerUp")
+	else:
+		log_debug("GameController missing grant_power_up method")
+
+## Grant the Allowance powerup (common) - $100 on game completion
+func _debug_grant_allowance() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_power_up"):
+		game_controller.grant_power_up("allowance")
+		log_debug("Granted Allowance PowerUp")
+	else:
+		log_debug("GameController missing grant_power_up method")
+
+## Grant the Ungrounded powerup (legendary) - blocks all debuffs
+func _debug_grant_ungrounded() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_power_up"):
+		game_controller.grant_power_up("ungrounded")
+		log_debug("Granted Ungrounded PowerUp")
+	else:
+		log_debug("GameController missing grant_power_up method")
 
 func _debug_add_money() -> void:
 	if PlayerEconomy:

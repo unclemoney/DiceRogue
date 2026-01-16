@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://dcw7vi0wy7xnr"]
+
+[ext_resource type="Texture2D" uid="uid://chnl0hqqr66pv" path="res://Resources/Art/Powerups/PowerUp_test6.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" uid="uid://dcv7vi0wy7xnq" path="res://Scenes/PowerUp/MoneyBagsPowerUp.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "money_bags"
+display_name = "Money Bags"
+description = "Score multiplier = ($Money / 100) + 1"
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 450
+rarity = "epic"
+rating = "R"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

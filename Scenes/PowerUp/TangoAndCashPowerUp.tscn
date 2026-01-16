@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://cs3obe74vtjs7"]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/tango_and_cash_power_up.gd" id="1_tango_and_cash"]
+
+[node name="TangoAndCashPowerUp" type="Node2D"]
+script = ExtResource("1_tango_and_cash")
+id = "tango_and_cash"

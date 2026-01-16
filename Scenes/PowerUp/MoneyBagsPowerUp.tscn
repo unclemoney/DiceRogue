@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://dcv7vi0wy7xnq"]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/money_bags_power_up.gd" id="1_money_bags"]
+
+[node name="MoneyBagsPowerUp" type="Node2D"]
+script = ExtResource("1_money_bags")
+id = "money_bags"

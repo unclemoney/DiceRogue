@@ -73,6 +73,9 @@ var _score_multiplier_func: Callable  # DEPRECATED: Use ScoreModifierManager ins
 var score_modifiers: Array = [] # Array to hold score modifier objects
 var score_multiplier: float = 1.0  # DEPRECATED: Use ScoreModifierManager instead
 
+# DifferentStraights PowerUp: allows straights with one gap of 1
+var allow_gap_straights: bool = false
+
 func _ready() -> void:
 	add_to_group("scorecard")
 	print("[Scorecard] Ready - Added to 'scorecard' group")
@@ -829,6 +832,10 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 		PlayerEconomy.add_money(dice_color_money)
 		print("[Scorecard] Applied green money bonus: +$", dice_color_money)
 	
+	# Track even/odd dice for powerups (only during actual scoring)
+	if apply_money_effects and used_dice_indices.size() > 0:
+		Statistics.track_even_odd_dice(dice_values, used_dice_indices)
+	
 	return {
 		"final_score": final_score,
 		"base_score": base_score,
@@ -937,7 +944,8 @@ func _categorize_modifier_source(source_name: String) -> String:
 			"the_consumer_is_always_right", "yahtzee_bonus_mult",
 			"upper_bonus_mult", "red_power_ranger", "randomizer",
 			"foursome", "highlighted_score", "green_monster",
-			"step_by_step", "evens_no_odds"
+			"step_by_step", "evens_no_odds", "lower_ten", "plus_thelast",
+			"shop_rerolls", "tango_and_cash", "even_higher", "money_bags", "failed_money"
 		]
 		
 		if lower_name in powerup_sources:
@@ -1017,8 +1025,52 @@ func _calculate_score_with_preserved_effects(category: String, dice_values: Arra
 	
 	return final_score
 
+## _is_straight_with_gap(values, length)
+##
+## Checks if dice values form a straight with exactly one gap of 1.
+## Example: [1,2,3,4,6] is valid (gap between 4 and 6, span is 5 for length 5)
+## Example: [2,3,5,6] is valid for length 4 (gap between 3 and 5)
+## Example: [1,3,5,6] is NOT valid (two gaps)
+##
+## Uses span check: normal straight has span = length-1, gap straight has span = length
+func _is_straight_with_gap(values: Array, length: int) -> bool:
+	# Get unique values and sort
+	var seen := {}
+	var unique: Array[int] = []
+	for val in values:
+		if not seen.has(val):
+			seen[val] = true
+			unique.append(val)
+	unique.sort()
+	
+	if unique.size() < length:
+		return false
+	
+	# Check all possible sequences of the required length
+	for i in range(unique.size() - length + 1):
+		var sequence = unique.slice(i, i + length)
+		var span = sequence[length - 1] - sequence[0]
+		
+		# Normal straight: span == length - 1 (e.g., [1,2,3,4,5] has span 4)
+		# Gap straight: span == length (e.g., [1,2,3,4,6] has span 5, one gap of 1)
+		if span == length - 1 or span == length:
+			return true
+	
+	return false
+
 # Helper function to calculate the base score
 func _calculate_base_score(category: String, dice_values: Array) -> int:
+	# Special handling for straights when allow_gap_straights is enabled
+	if allow_gap_straights:
+		if category == "small_straight":
+			if _is_straight_with_gap(dice_values, 4):
+				return 30
+			return 0
+		elif category == "large_straight":
+			if _is_straight_with_gap(dice_values, 5):
+				return 40
+			return 0
+	
 	# Use the ScoreEvaluator to calculate the base score
 	return ScoreEvaluatorSingleton.calculate_score_for_category(category, dice_values)
 

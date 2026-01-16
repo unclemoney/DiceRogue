@@ -30,6 +30,8 @@ The Statistics system tracks all player actions and game metrics throughout thei
 - `highest_single_roll`: Highest value rolled on any die
 - `snake_eyes_count`: Number of times rolled all 1s
 - `yahtzee_count`: Number of Yahtzees achieved
+- `even_dice_scored_this_round`: Count of even-valued dice scored this round (resets each round)
+- `odd_dice_scored_this_round`: Count of odd-valued dice scored this round (resets each round)
 
 ### Hand Type Statistics
 - `ones_scored`: Times scored in Ones category

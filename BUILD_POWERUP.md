@@ -306,6 +306,31 @@ The BonusMoneyPowerUp demonstrates a complete implementation:
 **Target:** `scorecard`
 **Common Signals:** `score_assigned`, `upper_bonus_achieved`, `yahtzee_bonus_achieved`
 
+**Accessing ScoreCardUI:** For PowerUps that need to connect to `about_to_score` signal (emitted by ScoreCardUI), use the **GameController** reference instead of group lookup:
+
+```gdscript
+func apply(target) -> void:
+	var scorecard = target as Scorecard
+	scorecard_ref = scorecard
+	
+	# CORRECT: Get score_card_ui from GameController (most reliable)
+	var game_controller = scorecard.get_tree().get_first_node_in_group("game_controller")
+	if game_controller and game_controller.score_card_ui:
+		score_card_ui_ref = game_controller.score_card_ui
+		if not score_card_ui_ref.is_connected("about_to_score", _on_about_to_score):
+			score_card_ui_ref.about_to_score.connect(_on_about_to_score)
+	else:
+		push_error("[PowerUp] Could not find ScoreCardUI via GameController")
+	
+	# WRONG: Using group lookup with incorrect group name
+	# score_card_ui_ref = scorecard.get_tree().get_first_node_in_group("score_card_ui")  # ❌
+	
+	# Also wrong: Correct group name but less reliable than GameController
+	# score_card_ui_ref = scorecard.get_tree().get_first_node_in_group("scorecard_ui")  # ⚠️
+```
+
+**Note:** The ScoreCardUI group name is `"scorecard_ui"` (no underscore), but accessing via `GameController.score_card_ui` is the recommended approach for reliability.
+
 ### 2. Dice-based PowerUps  
 **Target:** `dice_hand`
 **Common Signals:** `dice_rolled`, `dice_locked`
@@ -348,6 +373,8 @@ The BonusMoneyPowerUp demonstrates a complete implementation:
 - Verify signal connections in apply() method
 - Check signal names match exactly
 - Ensure proper cleanup in remove() method
+- **For about_to_score signal:** Use `GameController.score_card_ui` instead of group lookup
+- **Common mistake:** Using wrong group name `"score_card_ui"` instead of `"scorecard_ui"` (but prefer GameController access)
 
 ### Description Not Updating
 - Implement description_updated signal emission
@@ -412,9 +439,12 @@ func apply(target) -> void:
 	scorecard_ref = scorecard
 	
 	# Connect to about_to_score signal for conditional registration
-	var score_card_ui = scorecard.get_tree().get_first_node_in_group("score_card_ui")
-	if score_card_ui:
-		score_card_ui.about_to_score.connect(_on_about_to_score)
+	# Use GameController to get score_card_ui reliably
+	var game_controller = scorecard.get_tree().get_first_node_in_group("game_controller")
+	if game_controller and game_controller.score_card_ui:
+		score_card_ui_ref = game_controller.score_card_ui
+		if not score_card_ui_ref.is_connected("about_to_score", _on_about_to_score):
+			score_card_ui_ref.about_to_score.connect(_on_about_to_score)
 	
 	# Connect to score_assigned for cleanup
 	scorecard.score_assigned.connect(_on_score_assigned)

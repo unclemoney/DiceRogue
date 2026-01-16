@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://dupqnh13i0nda"]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/failed_money_power_up.gd" id="1_failed_money"]
+
+[node name="FailedMoneyPowerUp" type="Node2D"]
+script = ExtResource("1_failed_money")
+id = "failed_money"

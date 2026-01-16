@@ -81,6 +81,10 @@ var current_round_empty_category_bonus: int = 0
 var current_round_score_above_bonus: int = 0
 var rounds_completed: int = 0
 
+# Even/Odd dice tracking (resets each round)
+var even_dice_scored_this_round: int = 0
+var odd_dice_scored_this_round: int = 0
+
 # Internal tracking
 var _last_update_time: float = 0.0
 
@@ -251,7 +255,25 @@ func start_new_round():
 	current_round_bonus_money = 0
 	current_round_empty_category_bonus = 0
 	current_round_score_above_bonus = 0
+	even_dice_scored_this_round = 0
+	odd_dice_scored_this_round = 0
 	print("[Statistics] Round statistics reset for new round")
+
+
+## track_even_odd_dice(dice_values: Array, used_indices: Array)
+##
+## Track even and odd dice from the dice used in scoring.
+## @param dice_values: Array of all dice values
+## @param used_indices: Array of indices indicating which dice were used for scoring
+func track_even_odd_dice(dice_values: Array, used_indices: Array) -> void:
+	for idx in used_indices:
+		if idx >= 0 and idx < dice_values.size():
+			var value = dice_values[idx]
+			if value % 2 == 0:
+				even_dice_scored_this_round += 1
+			else:
+				odd_dice_scored_this_round += 1
+	print("[Statistics] Even/Odd dice this round - Even: %d, Odd: %d" % [even_dice_scored_this_round, odd_dice_scored_this_round])
 
 
 ## complete_round(final_score: int, empty_bonus: int, score_bonus: int)

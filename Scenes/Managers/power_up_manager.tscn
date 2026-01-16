@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://rar1olhvvd4b"]
+[gd_scene load_steps=29 format=3 uid="uid://rar1olhvvd4b"]
 
 [ext_resource type="Script" uid="uid://cpw74djq06db4" path="res://Scripts/Managers/PowerUpManager.gd" id="1_j06d4"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="2_powerup_data"]
@@ -23,7 +23,12 @@
 [ext_resource type="Resource" uid="uid://c7wgex0fr0g65" path="res://Scripts/PowerUps/UpperBonusMultPowerUp.tres" id="21_upper_bonus_mult"]
 [ext_resource type="Resource" uid="uid://wvpnvey8q20j" path="res://Scripts/PowerUps/WildDotsPowerUp.tres" id="22_wild_dots"]
 [ext_resource type="Resource" uid="uid://eiv15upj2hij" path="res://Scripts/PowerUps/YahtzeeBonusMultPowerUp.tres" id="23_yahtzee_bonus_mult"]
+[ext_resource type="Resource" path="res://Scripts/PowerUps/LowerTen.tres" id="24_lower_ten"]
+[ext_resource type="Resource" path="res://Scripts/PowerUps/DifferentStraights.tres" id="25_different_straights"]
+[ext_resource type="Resource" path="res://Scripts/PowerUps/PlusTheLast.tres" id="26_plus_thelast"]
+[ext_resource type="Resource" path="res://Scripts/PowerUps/Allowance.tres" id="27_allowance"]
+[ext_resource type="Resource" path="res://Scripts/PowerUps/Ungrounded.tres" id="28_ungrounded"]
 
 [node name="PowerUpManager" type="Node"]
 script = ExtResource("1_j06d4")
-power_up_defs = Array[ExtResource("2_powerup_data")]([ExtResource("3_bonus_money"), ExtResource("4_chance520"), ExtResource("5_consumable_cash"), ExtResource("6_evens_no_odds"), ExtResource("7_extra_dice"), ExtResource("8_extra_rolls"), ExtResource("9_foursome"), ExtResource("10_full_house"), ExtResource("11_green_envy"), ExtResource("12_highlighted_score"), ExtResource("13_money_multiplier"), ExtResource("14_money_well_spent"), ExtResource("15_perfect_strangers"), ExtResource("16_pin_head"), ExtResource("17_randomizer"), ExtResource("18_red_power_ranger"), ExtResource("19_step_by_step"), ExtResource("20_consumer_always_right"), ExtResource("21_upper_bonus_mult"), ExtResource("22_wild_dots"), ExtResource("23_yahtzee_bonus_mult")])
+power_up_defs = Array[ExtResource("2_powerup_data")]([ExtResource("3_bonus_money"), ExtResource("4_chance520"), ExtResource("5_consumable_cash"), ExtResource("6_evens_no_odds"), ExtResource("7_extra_dice"), ExtResource("8_extra_rolls"), ExtResource("9_foursome"), ExtResource("10_full_house"), ExtResource("11_green_envy"), ExtResource("12_highlighted_score"), ExtResource("13_money_multiplier"), ExtResource("14_money_well_spent"), ExtResource("15_perfect_strangers"), ExtResource("16_pin_head"), ExtResource("17_randomizer"), ExtResource("18_red_power_ranger"), ExtResource("19_step_by_step"), ExtResource("20_consumer_always_right"), ExtResource("21_upper_bonus_mult"), ExtResource("22_wild_dots"), ExtResource("23_yahtzee_bonus_mult"), ExtResource("24_lower_ten"), ExtResource("25_different_straights"), ExtResource("26_plus_thelast"), ExtResource("27_allowance"), ExtResource("28_ungrounded")])
