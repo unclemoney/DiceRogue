@@ -3,47 +3,48 @@ class_name CostlyRollDebuff
 
 @export var roll_cost: int = 10
 
-var game_controller: GameController
+var dice_hand: DiceHand
 
 func apply(target) -> void:
 	print("[CostlyRollDebuff] Applied - Roll cost:", roll_cost)
 	
 	# Store the target
 	self.target = target
-	_find_game_controller()
+	_find_dice_hand()
 	
-	# If we found the controller, connect to the signal
-	if game_controller:
-		if not game_controller.is_connected("dice_rolled", _on_dice_rolled):
-			game_controller.connect("dice_rolled", _on_dice_rolled)
-		print("[CostlyRollDebuff] Connected to dice_rolled signal")
+	# If we found the dice_hand, connect to roll_complete signal
+	if dice_hand:
+		if not dice_hand.is_connected("roll_complete", _on_roll_complete):
+			dice_hand.connect("roll_complete", _on_roll_complete)
+		print("[CostlyRollDebuff] Connected to dice_hand.roll_complete signal")
 	else:
-		push_error("[CostlyRollDebuff] Failed to find GameController")
+		push_error("[CostlyRollDebuff] Failed to find DiceHand")
 
 func remove() -> void:
 	print("[CostlyRollDebuff] Removed")
 	
 	# Disconnect from signals when removed
-	if game_controller and game_controller.is_connected("dice_rolled", _on_dice_rolled):
-		game_controller.disconnect("dice_rolled", _on_dice_rolled)
-		print("[CostlyRollDebuff] Disconnected from dice_rolled signal")
+	if dice_hand and dice_hand.is_connected("roll_complete", _on_roll_complete):
+		dice_hand.disconnect("roll_complete", _on_roll_complete)
+		print("[CostlyRollDebuff] Disconnected from roll_complete signal")
 
-func _find_game_controller() -> void:
-	# Try to find GameController in various ways
-	if target and target is GameController:
-		game_controller = target
-	else:
-		game_controller = get_tree().get_first_node_in_group("game_controller")
-		if not game_controller:
-			game_controller = get_tree().get_root().find_child("GameController", true, false)
+func _find_dice_hand() -> void:
+	# Try to find DiceHand in various ways
+	dice_hand = get_tree().get_first_node_in_group("dice_hand")
+	if not dice_hand:
+		var game_controller = get_tree().get_first_node_in_group("game_controller")
+		if game_controller and game_controller.has_node("DiceHand"):
+			dice_hand = game_controller.get_node("DiceHand")
+	if not dice_hand:
+		dice_hand = get_tree().get_root().find_child("DiceHand", true, false)
 	
-	if game_controller:
-		print("[CostlyRollDebuff] Found GameController:", game_controller)
+	if dice_hand:
+		print("[CostlyRollDebuff] Found DiceHand:", dice_hand)
 	else:
-		push_error("[CostlyRollDebuff] Could not find GameController")
+		push_error("[CostlyRollDebuff] Could not find DiceHand")
 
-func _on_dice_rolled(_dice_values: Array) -> void:
-	print("[CostlyRollDebuff] Dice rolled, charging", roll_cost, "money")
+func _on_roll_complete() -> void:
+	print("[CostlyRollDebuff] Roll complete, charging", roll_cost, "money")
 	
 	# Display a notification about the cost
 	var notification = get_tree().get_first_node_in_group("notification_system")

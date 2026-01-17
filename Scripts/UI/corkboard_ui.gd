@@ -53,7 +53,7 @@ var _active_consumable_count: int = 0
 # Configuration
 @export var max_challenges: int = 3
 @export var max_debuffs: int = 5
-@export var max_consumables: int = 2
+@export var max_consumables: int = 3
 
 # State management
 enum State { SPINES, FANNED_CHALLENGES, FANNED_DEBUFFS, FANNED_CONSUMABLES }
@@ -445,6 +445,11 @@ func _fan_out_challenges() -> void:
 		all_notes.append(progress_note)
 		all_notes.append(reward_note)
 	
+	# Add "NEXT UP" post-it showing upcoming challenge name if available
+	var next_challenge_note = _create_next_challenge_preview_note()
+	if next_challenge_note:
+		all_notes.append(next_challenge_note)
+	
 	# Calculate fan positions for all notes
 	var positions = _calculate_fan_positions(all_notes.size())
 	
@@ -522,6 +527,118 @@ func _create_challenge_post_it(title: String, value: String, challenge_id: Strin
 	note.mouse_exited.connect(_on_challenge_note_mouse_exited.bind(note))
 	note.gui_input.connect(_on_challenge_note_gui_input.bind(note))
 	
+	return note
+
+
+## _create_next_challenge_preview_note() -> Control
+##
+## Creates a special POST_IT_NOTE showing the next challenge name.
+## Returns null if there is no next challenge (final round).
+func _create_next_challenge_preview_note() -> Control:
+	print("[CorkboardUI] _create_next_challenge_preview_note called")
+	
+	# Try to get round_manager from path first, fallback to game_controller
+	var rm = round_manager
+	if not rm:
+		var game_controller = get_tree().get_first_node_in_group("game_controller")
+		if game_controller:
+			rm = game_controller.round_manager
+			print("[CorkboardUI] Found round_manager via game_controller:", rm)
+	
+	if not rm:
+		print("[CorkboardUI] No round_manager - cannot create next challenge preview")
+		return null
+	
+	print("[CorkboardUI] rm.current_round =", rm.current_round)
+	print("[CorkboardUI] rm.rounds_data.size() =", rm.rounds_data.size())
+	
+	# Get next round index (current_round is 0-based)
+	var next_round_index = rm.current_round + 1
+	
+	# Check if there's a next round available
+	if next_round_index >= rm.rounds_data.size():
+		print("[CorkboardUI] No more rounds after current - no next challenge preview")
+		return null  # No more rounds after this one
+	
+	# Get the next round's challenge data
+	var next_round_data = rm.rounds_data[next_round_index]
+	var next_challenge_id = next_round_data.get("challenge_id", "")
+	print("[CorkboardUI] next_challenge_id =", next_challenge_id)
+	
+	if next_challenge_id.is_empty():
+		print("[CorkboardUI] Next round has no challenge_id")
+		return null
+	
+	# Get the ChallengeData for the next challenge - use rm's direct reference
+	var challenge_mgr = rm.challenge_manager
+	print("[CorkboardUI] challenge_mgr =", challenge_mgr)
+	
+	var next_challenge_data: ChallengeData = null
+	if challenge_mgr and challenge_mgr.has_method("get_def"):
+		next_challenge_data = challenge_mgr.get_def(next_challenge_id)
+		print("[CorkboardUI] next_challenge_data =", next_challenge_data)
+	else:
+		print("[CorkboardUI] Could not find challenge_manager or get_def method")
+	
+	var next_challenge_name = "???"
+	if next_challenge_data:
+		next_challenge_name = next_challenge_data.display_name
+	
+	print("[CorkboardUI] next_challenge_name =", next_challenge_name)
+	
+	# Create the "NEXT UP" post-it note with distinct styling
+	var note = Control.new()
+	note.name = "ChallengeNote_NEXT_UP_" + next_challenge_id
+	note.custom_minimum_size = Vector2(120, 120)
+	note.size = Vector2(120, 120)
+	note.mouse_filter = Control.MOUSE_FILTER_STOP
+	
+	# Store base position for hover animation
+	note.set_meta("base_position", Vector2.ZERO)
+	note.set_meta("challenge_id", next_challenge_id)
+	
+	# Background texture
+	var texture_rect = TextureRect.new()
+	texture_rect.texture = load("res://Resources/Art/Background/POST_IT_NOTE.png")
+	texture_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# Give it a slight blue/purple tint to distinguish from current challenge notes
+	texture_rect.modulate = Color(0.9, 0.9, 1.0, 1.0)
+	note.add_child(texture_rect)
+	
+	# Title label at top - "NEXT UP"
+	var title_label = Label.new()
+	title_label.text = "NEXT UP"
+	title_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	title_label.position = Vector2(-50, 25)
+	title_label.size = Vector2(100, 20)
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.add_theme_font_size_override("font_size", 12)
+	title_label.add_theme_color_override("font_color", Color(0.3, 0.3, 0.6, 1))  # Blue/purple tint
+	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	note.add_child(title_label)
+	
+	# Value label in center - challenge name
+	var value_label = Label.new()
+	value_label.text = next_challenge_name
+	value_label.set_anchors_preset(Control.PRESET_CENTER)
+	value_label.position = Vector2(-55, -15)
+	value_label.size = Vector2(110, 60)
+	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	value_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	value_label.add_theme_font_size_override("font_size", 14)
+	value_label.add_theme_color_override("font_color", Color(0.2, 0.2, 0.4, 1))  # Darker blue text
+	value_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	note.add_child(value_label)
+	
+	# Connect hover signals
+	note.mouse_entered.connect(_on_challenge_note_mouse_entered.bind(note))
+	note.mouse_exited.connect(_on_challenge_note_mouse_exited.bind(note))
+	note.gui_input.connect(_on_challenge_note_gui_input.bind(note))
+	
+	print("[CorkboardUI] Created NEXT UP preview for challenge: %s" % next_challenge_name)
 	return note
 
 
@@ -1255,7 +1372,7 @@ func _update_dice_label(round_data: Dictionary) -> void:
 
 #region Utility Functions for GameController Compatibility
 func has_max_consumables() -> bool:
-	return _consumable_data.size() >= max_consumables
+	return _active_consumable_count >= max_consumables
 
 
 func get_consumable_count() -> int:

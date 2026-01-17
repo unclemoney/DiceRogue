@@ -7,7 +7,7 @@ signal max_consumables_reached
 
 @export var consumable_icon_scene: PackedScene
 @export var consumable_spine_scene: PackedScene
-@export var max_consumables: int = 2
+@export var max_consumables: int = 3
 @onready var container: HBoxContainer
 @onready var slots_label: Label = $SlotsLabel
 

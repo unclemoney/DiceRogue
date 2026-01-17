@@ -80,3 +80,20 @@ func _create_additive_label_if_needed() -> void:
 	additive_label.add_theme_color_override("font_color", Color.RED)
 	additive_label.position = Vector2(10, 90)  # Position below other UI elements
 	add_child(additive_label)
+
+
+## reset_for_new_channel()
+##
+## Resets the turn tracker display to initial state for new channel.
+func reset_for_new_channel() -> void:
+	print("[TurnTrackerUI] Resetting display for new channel")
+	
+	if turn_label:
+		turn_label.text = "Turn: -- / 13"
+	
+	if rolls_label:
+		rolls_label.text = "Rolls: --/3"
+		rolls_label.remove_theme_color_override("font_color")
+	
+	if round_label:
+		round_label.text = "Round: --"

@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://cfnq7mvpk2r8d"]
 
-[ext_resource type="Script" path="res://Scripts/UI/round_winner_panel.gd" id="1_winner_panel"]
+[ext_resource type="Script" uid="uid://dw3foubr4jgy0" path="res://Scripts/UI/round_winner_panel.gd" id="1_winner_panel"]
 
 [node name="RoundWinnerPanel" type="Control"]
 layout_mode = 3

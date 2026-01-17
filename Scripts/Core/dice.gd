@@ -335,6 +335,7 @@ func toggle_lock():
 	else:
 		print("[Dice] Cannot toggle lock - current state:", DiceState.keys()[current_state])
 
+
 ## animate_entry(from_position: Vector2, duration: float)
 ##
 ## Animates the die entering from a starting position to its home position.

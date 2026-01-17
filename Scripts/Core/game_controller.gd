@@ -145,6 +145,7 @@ var _end_of_round_stats_shown: bool = false  # Track if stats panel was shown th
 var _challenge_reward_this_round: int = 0  # Track challenge reward for end-of-round stats
 var _challenge_reward_granted: bool = false  # Prevent double-granting challenge reward
 var _chores_reward_granted: bool = false  # Prevent double-granting chores reward
+var _game_ended: bool = false  # Track if game has ended (won or lost) - blocks shop access
 
 
 func _ready() -> void:
@@ -321,7 +322,7 @@ func _on_game_start() -> void:
 	#grant_consumable("random_power_up_uncommon")
 	#grant_consumable("poor_house")
 	#apply_debuff("disabled_mods")
-	apply_debuff("reduced_levels")
+	#apply_debuff("reduced_levels")
 	#activate_challenge("300pts_no_debuff")
 	#grant_power_up("tango_and_cash")
 	#grant_power_up("shop_rerolls")
@@ -439,8 +440,35 @@ func _restart_game_for_new_channel() -> void:
 		game_button_ui.reset_for_new_channel()
 		print("[GameController] GameButtonUI reset")
 	
+	# Reset VCR turn tracker UI display to show blank/waiting state
+	var vcr_tracker = get_tree().get_first_node_in_group("turn_tracker_ui")
+	if vcr_tracker and vcr_tracker.has_method("reset_for_new_channel"):
+		vcr_tracker.reset_for_new_channel()
+		print("[GameController] VCR turn tracker UI reset")
+	
 	# Reset end of round stats shown flag
 	_end_of_round_stats_shown = false
+	
+	# Reset game ended flag for new game
+	_game_ended = false
+	
+	# Reset MAX_ROLLS back to default (in case Extra Rolls power-up was active)
+	if turn_tracker:
+		turn_tracker.MAX_ROLLS = 3
+		turn_tracker.emit_signal("max_rolls_changed", 3)
+		print("[GameController] MAX_ROLLS reset to 3")
+	
+	# Reset shop reroll cost back to default
+	if shop_ui:
+		shop_ui.reset_reroll_cost()
+		print("[GameController] Shop reroll cost reset")
+	
+	# Re-enable shop button for new game
+	if game_button_ui and game_button_ui.has_node("HBoxContainer/ShopButton"):
+		var shop_btn = game_button_ui.get_node("HBoxContainer/ShopButton")
+		if shop_btn:
+			shop_btn.disabled = false
+			print("[GameController] Shop button re-enabled for new channel")
 	
 	# Reset current round to 0 so we start at round 1
 	if round_manager:
@@ -1940,6 +1968,16 @@ func _on_turn_started() -> void:
 func _on_game_over() -> void:
 	print("[GameController] Game over - max turns reached")
 	
+	# Mark game as ended - blocks shop access
+	_game_ended = true
+	
+	# Disable shop button - game has ended
+	if game_button_ui and game_button_ui.has_node("HBoxContainer/ShopButton"):
+		var shop_btn = game_button_ui.get_node("HBoxContainer/ShopButton")
+		if shop_btn:
+			shop_btn.disabled = true
+			print("[GameController] Shop button disabled - game over")
+	
 	# Get final score and challenge status
 	var final_score = scorecard.get_total_score() if scorecard else 0
 	var challenge_completed = round_manager and round_manager.is_challenge_completed
@@ -2336,6 +2374,11 @@ func _open_shop_ui() -> void:
 	if not shop_ui:
 		return
 	
+	# Block shop if game has ended
+	if _game_ended:
+		print("[GameController] Shop blocked - game has ended")
+		return
+	
 	if not shop_ui.visible:
 		# Disable CRT when opening shop
 		if crt_manager:
@@ -2702,6 +2745,16 @@ func _on_round_failed(round_number: int) -> void:
 func _on_all_rounds_completed() -> void:
 	print("[GameController] All rounds completed! Game win condition reached.")
 	
+	# Mark game as ended - blocks shop access
+	_game_ended = true
+	
+	# Disable shop button - game has ended (won)
+	if game_button_ui and game_button_ui.has_node("HBoxContainer/ShopButton"):
+		var shop_btn = game_button_ui.get_node("HBoxContainer/ShopButton")
+		if shop_btn:
+			shop_btn.disabled = true
+			print("[GameController] Shop button disabled - all rounds completed")
+	
 	# Show the RoundWinnerPanel with stats
 	if round_winner_panel and round_manager:
 		var current_channel = 1
@@ -2795,11 +2848,40 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_ESCAPE:
 			_toggle_pause_menu()
 	
+	# Global right-click to unlock all locked dice
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
+		print("[GameController] Right-click detected in _unhandled_input - unlocking all dice")
+		_unlock_all_locked_dice()
+		get_viewport().set_input_as_handled()
+		return
+	
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		# Check for outside clicks to hide mod sell buttons
 		if dice_hand:
 			for die in dice_hand.dice_list:
 				die.check_mod_outside_clicks(event.global_position)
+
+
+## _unlock_all_locked_dice()
+##
+## Unlocks all locked dice in the dice hand.
+## Called when player right-clicks anywhere on screen.
+func _unlock_all_locked_dice() -> void:
+	print("[GameController] _unlock_all_locked_dice called, dice_hand:", dice_hand)
+	if not dice_hand:
+		print("[GameController] No dice_hand reference!")
+		return
+	
+	print("[GameController] dice_list size:", dice_hand.dice_list.size())
+	var unlocked_count := 0
+	for die in dice_hand.dice_list:
+		if die and die.current_state == Dice.DiceState.LOCKED:
+			print("[GameController] Unlocking die:", die)
+			die.unlock()
+			unlocked_count += 1
+	
+	if unlocked_count > 0:
+		print("[GameController] Unlocked %d dice via global right-click" % unlocked_count)
 
 
 ## _toggle_pause_menu()

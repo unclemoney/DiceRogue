@@ -285,11 +285,35 @@ func _update_progress_color(value: int) -> void:
 	progress_bar.add_theme_stylebox_override("fill", new_style)
 
 func _play_completion_flash() -> void:
+	# Play completion sound effect
+	var audio_manager = get_node_or_null("/root/AudioManager")
+	if audio_manager and audio_manager.has_method("play_sfx"):
+		audio_manager.play_sfx("chore_complete")
+	elif audio_manager and audio_manager.has_method("play_ui_sound"):
+		audio_manager.play_ui_sound()
+	
+	# Enhanced flash animation with scale pulse
 	var tween = create_tween()
-	tween.tween_property(progress_bar, "modulate", Color(0.5, 1.0, 0.5), 0.1)
-	tween.tween_property(progress_bar, "modulate", Color.WHITE, 0.2)
+	tween.set_parallel(true)
+	
+	# Color flash - bright green pulse
+	tween.tween_property(progress_bar, "modulate", Color(0.3, 1.0, 0.3), 0.1)
+	
+	# Scale up for emphasis
+	var original_scale = progress_bar.scale
+	if original_scale == Vector2.ZERO:
+		original_scale = Vector2.ONE
+	tween.tween_property(progress_bar, "scale", original_scale * 1.3, 0.1)
+	
+	# Return to normal
+	tween.chain().set_parallel(true)
+	tween.tween_property(progress_bar, "modulate", Color.WHITE, 0.3)
+	tween.tween_property(progress_bar, "scale", original_scale, 0.3).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	
 	# Also play bounce animation on completion
 	_play_meter_bounce()
+	
+	print("[ChoreUI] Chore completed! Playing enhanced feedback animation")
 
 ## _on_task_rotated()
 ##

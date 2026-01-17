@@ -198,3 +198,21 @@ func _animate_label_change(label: Label, tween_ref: Tween) -> void:
 		original_color,
 		0.15
 	)
+
+
+## reset_for_new_channel()
+##
+## Resets the VCR display to initial state (blank/waiting) for new channel.
+## Called when player advances to a new channel.
+func reset_for_new_channel() -> void:
+	print("[VCRTurnTrackerUI] Resetting display for new channel")
+	
+	if turn_label:
+		turn_label.text = "T:--/13"
+	
+	if rolls_label:
+		rolls_label.text = "R:--/3"
+		rolls_label.add_theme_color_override("font_color", VCR_GREEN)
+	
+	if round_label:
+		round_label.text = "RND:--"
