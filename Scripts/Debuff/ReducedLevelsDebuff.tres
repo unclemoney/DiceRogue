@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="DebuffData" load_steps=4 format=3 uid="uid://depc441yf4w8"]
+
+[ext_resource type="Texture2D" uid="uid://betj5eeni1mpj" path="res://Resources/Art/Powerups/chore_chart.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://uiuqwtxbh7m0" path="res://Scripts/Debuff/DebuffData.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://depc441yf4w7" path="res://Scenes/Debuff/ReducedLevelsDebuff.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_script")
+id = "reduced_levels"
+display_name = "Reduced Levels"
+description = "All scorecard category levels reduced by 1 (permanent)"
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+metadata/_custom_type_script = "uid://uiuqwtxbh7m0"

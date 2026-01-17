@@ -563,6 +563,15 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 			else:
 				# No game controller available, assume unusable
 				return false
+		"one_free_mod":
+			# One Free Mod requires an available dice slot for a mod
+			var game_controller = get_tree().get_first_node_in_group("game_controller")
+			if game_controller:
+				var current_mod_count = game_controller._get_total_active_mod_count()
+				var expected_dice_count = game_controller._get_expected_dice_count()
+				return current_mod_count < expected_dice_count
+			else:
+				return false
 		_:
 			# Default: all other consumables are useable when fanned
 			return true

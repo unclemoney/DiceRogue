@@ -46,6 +46,7 @@ var mom_mood: int = DEFAULT_MOOD
 var completed_chores: Array = []  # List of completed ChoreData for display
 
 func _ready() -> void:
+	add_to_group("chores_manager")
 	print("[ChoresManager] Initialized with Mom mood: %d" % mom_mood)
 	select_new_task()
 

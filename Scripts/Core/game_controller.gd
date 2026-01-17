@@ -320,7 +320,8 @@ func _ready() -> void:
 func _on_game_start() -> void:
 	#grant_consumable("random_power_up_uncommon")
 	#grant_consumable("poor_house")
-	#apply_debuff("the_division")
+	#apply_debuff("disabled_mods")
+	apply_debuff("reduced_levels")
 	#activate_challenge("300pts_no_debuff")
 	#grant_power_up("tango_and_cash")
 	#grant_power_up("shop_rerolls")
@@ -1282,6 +1283,17 @@ func _on_consumable_used(consumable_id: String) -> void:
 		"all_categories_upgrade":
 			consumable.apply(self)
 			remove_consumable_instance.call()
+		# Chore-related consumables
+		"free_chores":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"all_chores":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		# Mod-related consumables
+		"one_free_mod":
+			consumable.apply(self)
+			remove_consumable_instance.call()
 		_:
 			push_error("Unknown consumable type: %s" % consumable_id)
 
@@ -1643,6 +1655,18 @@ func apply_debuff(id: String) -> void:
 			debuff.start()
 		"the_division":
 			debuff.target = self  
+			debuff.start()
+		"faster_chores":
+			debuff.target = self
+			debuff.start()
+		"disabled_mods":
+			debuff.target = dice_hand
+			debuff.start()
+		"disabled_colors":
+			debuff.target = self
+			debuff.start()
+		"reduced_levels":
+			debuff.target = scorecard
 			debuff.start()
 		_:
 			push_error("[GameController] Unknown debuff type: %s" % id)

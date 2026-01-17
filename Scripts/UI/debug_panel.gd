@@ -189,6 +189,9 @@ func _create_debug_tabs() -> void:
 			{"text": "Grant The Pawn Shop", "method": "_debug_grant_the_pawn_shop"},
 			{"text": "Grant One Extra Dice", "method": "_debug_grant_one_extra_dice"},
 			{"text": "Grant Go Broke or Go Home", "method": "_debug_grant_go_broke_or_go_home"},
+			{"text": "Grant Free Chores", "method": "_debug_grant_free_chores"},
+			{"text": "Grant All Chores", "method": "_debug_grant_all_chores"},
+			{"text": "Grant One Free Mod", "method": "_debug_grant_one_free_mod"},
 			{"text": "Grant Random Uncommon PowerUp", "method": "_debug_grant_random_uncommon_powerup"},
 			{"text": "Register AnyScore", "method": "_debug_register_any_score"},
 			{"text": "Grant Random Mod", "method": "_debug_grant_mod"},
@@ -568,6 +571,39 @@ func _debug_grant_go_broke_or_go_home() -> void:
 	if game_controller.has_method("grant_consumable"):
 		game_controller.grant_consumable("go_broke_or_go_home")
 		log_debug("Granted Go Broke or Go Home consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_free_chores() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("free_chores")
+		log_debug("Granted Free Chores consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_all_chores() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("all_chores")
+		log_debug("Granted All Chores consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_one_free_mod() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("one_free_mod")
+		log_debug("Granted One Free Mod consumable")
 	else:
 		log_debug("GameController missing grant_consumable method")
 

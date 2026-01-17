@@ -892,7 +892,7 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 100)
 	_add_default_power_up("chance520", "Chance 520", "Bonus for chance category", 
 		UnlockConditionClass.ConditionType.ROLL_YAHTZEE, 1)
-	_add_default_power_up("full_house", "Full House", "Full house scoring bonus", 
+	_add_default_power_up("full_house_bonus", "Full House Fortune", "Full house scoring bonus", 
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 150)
 	_add_default_power_up("upper_bonus_mult", "Upper Bonus Multiplier", "Multiplies upper bonus", 
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 200)
@@ -926,7 +926,7 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 10)
 	
 	# Color-themed PowerUps
-	_add_default_power_up("green_with_envy", "Green With Envy", "Green dice bonuses", 
+	_add_default_power_up("green_monster", "Green Monster", "Green dice bonuses", 
 		UnlockConditionClass.ConditionType.EARN_MONEY, 300)
 	_add_default_power_up("red_power_ranger", "Red Power Ranger", "Red dice bonuses", 
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 300)
@@ -1008,6 +1008,14 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.EARN_MONEY, 200)
 	_add_default_consumable("poor_house", "Poor House", "Low money benefits", 
 		UnlockConditionClass.ConditionType.EARN_MONEY, 250)
+	
+	# Chores and Mod consumables
+	_add_default_consumable("free_chores", "Free Chores", "Reduces goof-off meter by 30 points", 
+		UnlockConditionClass.ConditionType.COMPLETE_GAME, 1)  # Common: unlock with first game
+	_add_default_consumable("all_chores", "All Chores", "Clears goof-off meter completely", 
+		UnlockConditionClass.ConditionType.COMPLETE_GAME, 3)  # Uncommon: need to complete 3 games
+	_add_default_consumable("one_free_mod", "One Free Mod", "Grants 1 free random dice mod", 
+		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 5)  # Uncommon: need to use 5 consumables
 	
 	# ==========================================================================
 	# SCORE CARD UPGRADE CONSUMABLES (13 total)

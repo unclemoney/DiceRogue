@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://depc441yf4w7"]
+
+[ext_resource type="Script" path="res://Scripts/Debuff/reduced_levels_debuff.gd" id="1_script"]
+
+[node name="ReducedLevelsDebuff" type="Node"]
+script = ExtResource("1_script")

@@ -473,6 +473,44 @@ func has_mod(id: String) -> bool:
 func get_mod(id: String) -> Mod:
 	return active_mods.get(id)
 
+## disable_all_mods()
+##
+## Disables all active mods on this die by calling remove() on each mod.
+## Stores the disabled mods for later re-enabling.
+## Used by DisabledModsDebuff.
+var _disabled_mods: Dictionary = {}  # id -> Mod (stored for re-enabling)
+
+func disable_all_mods() -> void:
+	if active_mods.is_empty():
+		return
+	
+	print("[Dice] Disabling all mods:", active_mods.keys())
+	for mod_id in active_mods.keys():
+		var mod = active_mods[mod_id]
+		if mod:
+			mod.remove()
+			_disabled_mods[mod_id] = mod
+	
+	# Clear active mods but keep them stored
+	active_mods.clear()
+
+## enable_all_mods()
+##
+## Re-enables all previously disabled mods on this die.
+## Calls apply() on each stored mod to restore functionality.
+func enable_all_mods() -> void:
+	if _disabled_mods.is_empty():
+		return
+	
+	print("[Dice] Re-enabling all mods:", _disabled_mods.keys())
+	for mod_id in _disabled_mods.keys():
+		var mod = _disabled_mods[mod_id]
+		if mod and is_instance_valid(mod):
+			active_mods[mod_id] = mod
+			mod.apply(self)
+	
+	_disabled_mods.clear()
+
 func _on_mod_sell_requested(mod_id: String) -> void:
 	#print("[Dice] MOD SELL REQUESTED:", mod_id)
 	#print("[Dice] Emitting mod_sell_requested signal to GameController")

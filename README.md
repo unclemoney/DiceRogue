@@ -1187,6 +1187,37 @@ Mods are special attachments that can be applied to individual dice to change th
 - Mods affect dice behavior immediately when applied
 - Some mods provide economic benefits while others focus on dice control
 
+## Available Debuffs
+
+Debuffs are negative effects that hinder the player's progress and add challenge to the gameplay. They are typically applied as part of challenges or by Mom when caught.
+
+### Dice Control Debuffs
+- **Lock Dice**: Prevents the player from locking any dice during their turn
+- **Disabled Twos**: Dice showing 2 are visually disabled and don't count toward scoring
+
+### Scoring Debuffs
+- **Roll Score Minus One**: Reduces all scores by 1 point per roll made
+- **The Division**: All multiplier powerups now divide scores instead of multiplying
+- **Reduced Levels**: Reduces the scored category's level by 1 before each score (minimum level 1)
+  - Example: Full House at level 4 → scores at level 3 (then level stays at 3)
+  - This is a permanent effect - levels are NOT restored when the debuff is removed
+  - Affects the category being scored, not all categories at once
+
+### Economy Debuffs
+- **Costly Roll**: Charges $10 per dice roll
+
+### System Debuffs
+- **Faster Chores**: Chore meter increases 3 points per roll instead of 1
+  - Causes Mom to appear much faster
+  - Effective strategy: Complete chores more frequently or avoid rolling unnecessarily
+- **Disabled Mods**: Disables all dice mods while active
+  - All existing mod effects are suspended
+  - New dice spawned while active also have mods disabled
+  - Mods are restored when the debuff is removed
+- **Disabled Colors**: Disables all colored dice effects while active
+  - Green, Red, Purple, and Blue dice provide no bonus
+  - Colors are restored when the debuff is removed
+
 ### Coding Standards
 - Use GDScript 4.4 syntax
 - Tabs for indentation (never spaces)

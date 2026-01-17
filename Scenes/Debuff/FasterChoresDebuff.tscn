@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dpg5pg4776aea"]
+
+[ext_resource type="Script" path="res://Scripts/Debuff/faster_chores_debuff.gd" id="1_script"]
+
+[node name="FasterChoresDebuff" type="Node"]
+script = ExtResource("1_script")

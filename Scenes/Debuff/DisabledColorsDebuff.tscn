@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dcvib1xm40sfc"]
+
+[ext_resource type="Script" path="res://Scripts/Debuff/disabled_colors_debuff.gd" id="1_script"]
+
+[node name="DisabledColorsDebuff" type="Node"]
+script = ExtResource("1_script")
