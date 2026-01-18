@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cfast3rch0r3s"]
+
+[ext_resource type="Script" path="res://Scripts/Challenge/faster_chores_challenge.gd" id="1_faster_chores"]
+
+[node name="FasterChoresChallenge" type="Node"]
+script = ExtResource("1_faster_chores")

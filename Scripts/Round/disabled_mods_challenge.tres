@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RoundChallengeConfig" load_steps=2 format=3 uid="uid://dbev5o6ctue5j"]
+
+[ext_resource type="Script" uid="uid://b41v75rm14duq" path="res://Scripts/Round/round_challenge_config.gd" id="1_disabled_mods"]
+
+[resource]
+script = ExtResource("1_disabled_mods")
+challenge_id = "disabled_mods_challenge"
+description = "Score 220 Points without Mods"
+metadata/_custom_type_script = "uid://b41v75rm14duq"

@@ -15,4 +15,5 @@ debuff_ids = Array[String](["lock_dice"])
 target_score = 250
 reward_money = 150
 dice_type = "d6"
+difficulty = 1
 metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

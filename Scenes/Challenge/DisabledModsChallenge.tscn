@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cd1sabl3dm0ds"]
+
+[ext_resource type="Script" uid="uid://cd23vxxycbrl" path="res://Scripts/Challenge/disabled_mods_challenge.gd" id="1_disabled_mods"]
+
+[node name="DisabledModsChallenge" type="Node"]
+script = ExtResource("1_disabled_mods")

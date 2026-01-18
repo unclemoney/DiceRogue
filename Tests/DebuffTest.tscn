@@ -1,4 +1,4 @@
-[gd_scene load_steps=143 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=147 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -140,6 +140,10 @@
 [ext_resource type="Resource" uid="uid://dcvib1xw4rwnd" path="res://Scripts/Debuff/DisabledModsDebuff.tres" id="1027_disabled_mods"]
 [ext_resource type="Resource" uid="uid://dcvib1xm40sfd" path="res://Scripts/Debuff/DisabledColorsDebuff.tres" id="1028_disabled_colors"]
 [ext_resource type="Resource" uid="uid://depc441yf4w8" path="res://Scripts/Debuff/ReducedLevelsDebuff.tres" id="1029_reduced_levels"]
+[ext_resource type="Resource" uid="uid://fvhlq6f2onte" path="res://Scripts/Challenge/faster_chores_challenge.tres" id="1030_faster_chores"]
+[ext_resource type="Resource" uid="uid://bu1cmivubih7c" path="res://Scripts/Challenge/disabled_mods_challenge.tres" id="1031_disabled_mods"]
+[ext_resource type="Resource" uid="uid://dbevupfjtncly" path="res://Scripts/Challenge/disabled_colors_challenge.tres" id="1032_disabled_colors"]
+[ext_resource type="Resource" uid="uid://c8qlnoavd76fy" path="res://Scripts/Challenge/reduced_levels_challenge.tres" id="1033_reduced_levels_challenge"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wtptv"]
 
@@ -327,7 +331,7 @@ crt_manager_path = NodePath("../Background/CRTManager")
 power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc"), ExtResource("29_bonus_money"), ExtResource("29_money_multiplier"), ExtResource("30_8nt64"), ExtResource("30_2hxro"), ExtResource("31_sqb4o"), ExtResource("32_fullhouse"), ExtResource("33_stepbystep"), ExtResource("70_perfect_strangers"), ExtResource("83_green_monster"), ExtResource("39_hm8bq"), ExtResource("99_wild_dots"), ExtResource("100_pin_head"), ExtResource("101_money_well_spent"), ExtResource("102_highlighted_score"), ExtResource("103_the_consumer_is_always_right"), ExtResource("104_green_slime"), ExtResource("105_red_slime"), ExtResource("106_purple_slime"), ExtResource("107_blue_slime"), ExtResource("108_lower_ten"), ExtResource("109_different_straights"), ExtResource("110_plus_thelast"), ExtResource("111_allowance"), ExtResource("112_ungrounded"), ExtResource("113_shop_rerolls"), ExtResource("114_tango_and_cash"), ExtResource("115_even_higher"), ExtResource("116_money_bags"), ExtResource("117_failed_money")])
 
 [node name="ChallengeManager" parent="." instance=ExtResource("25_3vaha")]
-challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtResource("29_1jk2k"), ExtResource("30_o0xxd"), ExtResource("31_ja7vv"), ExtResource("32_ytf57"), ExtResource("33_3ia8s"), ExtResource("34_crossing")])
+challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtResource("29_1jk2k"), ExtResource("30_o0xxd"), ExtResource("31_ja7vv"), ExtResource("32_ytf57"), ExtResource("33_3ia8s"), ExtResource("34_crossing"), ExtResource("1030_faster_chores"), ExtResource("1031_disabled_mods"), ExtResource("1032_disabled_colors"), ExtResource("1033_reduced_levels_challenge")])
 
 [node name="ModManager" parent="." instance=ExtResource("23_8eqdw")]
 mod_defs = Array[ExtResource("60_moddata")]([ExtResource("61_evenonly"), ExtResource("62_fiveone"), ExtResource("63_goldsix"), ExtResource("64_oddonly"), ExtResource("65_threethree"), ExtResource("66_wildcard"), ExtResource("67_highroller")])

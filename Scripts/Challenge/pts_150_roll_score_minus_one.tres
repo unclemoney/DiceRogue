@@ -15,4 +15,5 @@ debuff_ids = Array[String](["roll_score_minus_one"])
 target_score = 200
 reward_money = 300
 dice_type = "d6"
+difficulty = 2
 metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

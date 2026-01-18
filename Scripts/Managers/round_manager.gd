@@ -7,13 +7,18 @@ class_name RoundManager
 ## signaling when rounds start/complete/fail, and coordinating with the
 ## TurnTracker, ChallengeManager, DiceHand and Scorecard.
 ##
+## Challenge Selection:
+## At game start, challenges are randomly selected based on difficulty tiers (0-5).
+## Each round gets one challenge from its corresponding difficulty tier.
+## If a tier has no challenges, the system falls back to adjacent tiers.
+##
 signal round_started(round_number: int)
 signal round_completed(round_number: int)
 signal all_rounds_completed
 signal round_failed(round_number: int)
 
 @export var max_rounds: int = 6
-@export var challenge_configs: Array[RoundChallengeConfig] = []
+@export var challenge_configs: Array[RoundChallengeConfig] = []  ## Deprecated: kept for backwards compatibility
 @export var dice_configs: Array[String] = ["d6", "d6", "d6", "d4", "d6", "d6"]  # Keep as fallback
 @export var turn_tracker_path: NodePath
 @export var challenge_manager_path: NodePath
@@ -30,6 +35,7 @@ var current_challenge_id: String = ""
 var is_challenge_completed: bool = false
 var rounds_data: Array[Dictionary] = []
 var game_started: bool = false
+var challenge_seed: int = 0  ## Seed used for random challenge selection
 
 ## _ready()
 ##
@@ -75,43 +81,38 @@ func _ready() -> void:
 
 ## _initialize_rounds_data()
 ##
-## Prepares the `rounds_data` array based on `max_rounds`, optional `challenge_configs`,
-## and fallback `dice_configs`. Each entry contains round_number, challenge_id, dice_type,
-## target_score, and status flags.
+## Prepares the `rounds_data` array based on `max_rounds` using dynamically
+## generated challenge sequences. Generates a new seed and selects one challenge
+## per difficulty tier (0 through max_rounds-1).
 func _initialize_rounds_data() -> void:
 	rounds_data.clear()
-
+	
+	# Generate random challenge sequence based on difficulty tiers
+	var challenge_sequence = _generate_challenge_sequence()
+	
 	# Create data for each round
 	for i in range(max_rounds):
 		var round_index = i
 		var round_number = i + 1
-
+		
 		var challenge_id = ""
 		var dice_type = "d6"  # Default
 		var target_score = 0
-
-		# Set challenge if available in configs
-		if round_index < challenge_configs.size():
-			var config = challenge_configs[round_index]
-			if config:
-				challenge_id = config.challenge_id
-
-				# Get dice type and target_score from ChallengeData if available
-				var challenge_data = challenge_manager.get_def(challenge_id) if challenge_manager else null
-				if challenge_data:
-					if not challenge_data.dice_type.is_empty():
-						dice_type = challenge_data.dice_type
-						print("[RoundManager] Round", round_number, "using dice type from challenge:", dice_type)
-					target_score = challenge_data.target_score
-					print("[RoundManager] Round", round_number, "target score set to:", target_score)
-				elif round_index < dice_configs.size():
-					# Fall back to dice_configs if no challenge-specific dice type
-					dice_type = dice_configs[round_index]
-					print("[RoundManager] Round", round_number, "using fallback dice type:", dice_type)
+		
+		# Get challenge from generated sequence
+		if round_index < challenge_sequence.size():
+			var challenge_data = challenge_sequence[round_index]
+			if challenge_data:
+				challenge_id = challenge_data.id
+				if not challenge_data.dice_type.is_empty():
+					dice_type = challenge_data.dice_type
+					print("[RoundManager] Round", round_number, "using dice type from challenge:", dice_type)
+				target_score = challenge_data.target_score
+				print("[RoundManager] Round", round_number, "challenge:", challenge_id, "target score:", target_score, "difficulty:", challenge_data.difficulty)
 		elif round_index < dice_configs.size():
-			# If no challenge config but we have a dice config, use that
+			# Fall back to dice_configs if no challenge
 			dice_type = dice_configs[round_index]
-
+		
 		var round_data = {
 			"round_number": round_number,
 			"challenge_id": challenge_id,
@@ -120,10 +121,96 @@ func _initialize_rounds_data() -> void:
 			"completed": false,
 			"failed": false
 		}
-
+		
 		rounds_data.append(round_data)
+	
+	print("[RoundManager] Initialized", rounds_data.size(), "rounds with seed:", challenge_seed)
 
-	print("[RoundManager] Initialized", rounds_data.size(), "rounds")
+
+## _generate_challenge_sequence() -> Array[ChallengeData]
+##
+## Generates a random sequence of challenges for the game session.
+## Selects one challenge per difficulty tier (0-5) for exactly 6 rounds.
+## Uses seeded random for reproducibility.
+## @return: Array of ChallengeData resources in round order
+func _generate_challenge_sequence() -> Array[ChallengeData]:
+	var result: Array[ChallengeData] = []
+	
+	if not challenge_manager:
+		push_error("[RoundManager] Cannot generate challenge sequence - ChallengeManager is null")
+		return result
+	
+	# Generate seed from time if not already set
+	if challenge_seed == 0:
+		challenge_seed = Time.get_ticks_msec()
+	
+	print("[RoundManager] Generating challenge sequence with seed:", challenge_seed)
+	
+	# Create seeded random number generator
+	var rng = RandomNumberGenerator.new()
+	rng.seed = challenge_seed
+	
+	# Group challenges by difficulty tier
+	var challenges_by_difficulty: Dictionary = {}
+	for tier in range(6):
+		challenges_by_difficulty[tier] = []
+	
+	# Get all challenge definitions and sort by difficulty
+	var all_challenges = challenge_manager.get_all_defs()
+	for challenge_data in all_challenges:
+		var difficulty = challenge_data.difficulty
+		if difficulty >= 0 and difficulty <= 5:
+			challenges_by_difficulty[difficulty].append(challenge_data)
+			print("[RoundManager] Challenge '", challenge_data.id, "' added to difficulty tier", difficulty)
+	
+	# Select one challenge per difficulty tier (0 through 5 for 6 rounds)
+	for tier in range(max_rounds):
+		var selected_challenge: ChallengeData = _select_challenge_for_tier(tier, challenges_by_difficulty, rng)
+		if selected_challenge:
+			result.append(selected_challenge)
+			print("[RoundManager] Round", tier + 1, "selected challenge:", selected_challenge.id, "(difficulty", selected_challenge.difficulty, ")")
+		else:
+			push_warning("[RoundManager] No challenge found for tier", tier, "- round will have no challenge")
+	
+	return result
+
+
+## _select_challenge_for_tier(tier, challenges_by_difficulty, rng) -> ChallengeData
+##
+## Selects a random challenge for the given difficulty tier.
+## Falls back to adjacent tiers if the target tier has no challenges.
+## @param tier: The difficulty tier (0-5)
+## @param challenges_by_difficulty: Dictionary mapping tiers to challenge arrays
+## @param rng: RandomNumberGenerator instance for seeded selection
+## @return: Selected ChallengeData or null if none available
+func _select_challenge_for_tier(tier: int, challenges_by_difficulty: Dictionary, rng: RandomNumberGenerator) -> ChallengeData:
+	# First try the exact tier
+	var tier_challenges = challenges_by_difficulty.get(tier, [])
+	if tier_challenges.size() > 0:
+		var index = rng.randi_range(0, tier_challenges.size() - 1)
+		return tier_challenges[index]
+	
+	# Fallback: search adjacent tiers (lower first, then higher)
+	for offset in range(1, 6):
+		# Try lower tier
+		var lower_tier = tier - offset
+		if lower_tier >= 0:
+			var lower_challenges = challenges_by_difficulty.get(lower_tier, [])
+			if lower_challenges.size() > 0:
+				var index = rng.randi_range(0, lower_challenges.size() - 1)
+				print("[RoundManager] Tier", tier, "empty, using fallback from tier", lower_tier)
+				return lower_challenges[index]
+		
+		# Try higher tier
+		var higher_tier = tier + offset
+		if higher_tier <= 5:
+			var higher_challenges = challenges_by_difficulty.get(higher_tier, [])
+			if higher_challenges.size() > 0:
+				var index = rng.randi_range(0, higher_challenges.size() - 1)
+				print("[RoundManager] Tier", tier, "empty, using fallback from tier", higher_tier)
+				return higher_challenges[index]
+	
+	return null
 
 # In round_manager.gd - Update start_game to explicitly set turn_tracker to inactive state
 ## start_game()

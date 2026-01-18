@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RoundChallengeConfig" load_steps=2 format=3 uid="uid://b3l4an1cytkiv"]
+
+[ext_resource type="Script" uid="uid://b41v75rm14duq" path="res://Scripts/Round/round_challenge_config.gd" id="1_faster_chores"]
+
+[resource]
+script = ExtResource("1_faster_chores")
+challenge_id = "faster_chores_challenge"
+description = "Score 180 Points with Faster Chores"
+metadata/_custom_type_script = "uid://b41v75rm14duq"

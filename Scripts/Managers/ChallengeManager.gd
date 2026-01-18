@@ -74,3 +74,14 @@ func _on_challenge_failed(id: String) -> void:
 
 func get_all_challenge_ids() -> Array[String]:
 	return _defs_by_id.keys()
+
+
+## get_all_defs() -> Array[ChallengeData]
+##
+## Returns all registered challenge definitions.
+## @return: Array of all ChallengeData resources
+func get_all_defs() -> Array[ChallengeData]:
+	var result: Array[ChallengeData] = []
+	for challenge_data in _defs_by_id.values():
+		result.append(challenge_data)
+	return result

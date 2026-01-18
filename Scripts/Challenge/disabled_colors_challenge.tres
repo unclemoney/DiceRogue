@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ChallengeData" load_steps=4 format=3 uid="uid://dbevupfjtncly"]
+
+[ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="1_disabled_colors_data"]
+[ext_resource type="Texture2D" uid="uid://cw6bry41p6cug" path="res://Resources/Art/Powerups/cassette_tape.png" id="1_disabled_colors_icon"]
+[ext_resource type="PackedScene" uid="uid://b0t5ehdem0qma" path="res://Scenes/Challenge/DisabledColorsChallenge.tscn" id="2_disabled_colors_scene"]
+
+[resource]
+script = ExtResource("1_disabled_colors_data")
+id = "disabled_colors_challenge"
+display_name = "Colorblind"
+description = "Score 220 Points without Colored Dice"
+icon = ExtResource("1_disabled_colors_icon")
+scene = ExtResource("2_disabled_colors_scene")
+debuff_ids = Array[String](["disabled_colors"])
+target_score = 220
+reward_money = 250
+dice_type = "d6"
+difficulty = 4
+metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

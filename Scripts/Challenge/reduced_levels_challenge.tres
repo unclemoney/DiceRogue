@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ChallengeData" load_steps=4 format=3 uid="uid://c8qlnoavd76fy"]
+
+[ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="1_reduced_levels_data"]
+[ext_resource type="Texture2D" uid="uid://cw6bry41p6cug" path="res://Resources/Art/Powerups/cassette_tape.png" id="1_reduced_levels_icon"]
+[ext_resource type="PackedScene" uid="uid://2epdt42ogtwy" path="res://Scenes/Challenge/ReducedLevelsChallenge.tscn" id="2_reduced_levels_scene"]
+
+[resource]
+script = ExtResource("1_reduced_levels_data")
+id = "reduced_levels_challenge"
+display_name = "Downgraded"
+description = "Score 250 Points with Reduced Category Levels"
+icon = ExtResource("1_reduced_levels_icon")
+scene = ExtResource("2_reduced_levels_scene")
+debuff_ids = Array[String](["reduced_levels"])
+target_score = 250
+reward_money = 350
+dice_type = "d6"
+difficulty = 5
+metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

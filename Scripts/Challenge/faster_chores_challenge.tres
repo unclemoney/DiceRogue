@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ChallengeData" load_steps=4 format=3 uid="uid://fvhlq6f2onte"]
+
+[ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="1_faster_chores_data"]
+[ext_resource type="Texture2D" uid="uid://cw6bry41p6cug" path="res://Resources/Art/Powerups/cassette_tape.png" id="1_faster_chores_icon"]
+[ext_resource type="PackedScene" uid="uid://cfast3rch0r3s" path="res://Scenes/Challenge/FasterChoresChallenge.tscn" id="2_faster_chores_scene"]
+
+[resource]
+script = ExtResource("1_faster_chores_data")
+id = "faster_chores_challenge"
+display_name = "Double Time"
+description = "Score 180 Points with Faster Chores"
+icon = ExtResource("1_faster_chores_icon")
+scene = ExtResource("2_faster_chores_scene")
+debuff_ids = Array[String](["faster_chores"])
+target_score = 180
+reward_money = 200
+dice_type = "d6"
+difficulty = 3
+metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://2epdt42ogtwy"]
+
+[ext_resource type="Script" path="res://Scripts/Challenge/reduced_levels_challenge.gd" id="1_reduced_levels"]
+
+[node name="ReducedLevelsChallenge" type="Node"]
+script = ExtResource("1_reduced_levels")
