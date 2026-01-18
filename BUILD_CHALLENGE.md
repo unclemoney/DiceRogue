@@ -142,12 +142,23 @@ func _on_game_completed() -> void:
 		print("[YourChallengeName] Game completed but target score not reached.")
 		emit_signal("challenge_failed")
 	end()
+
+
+## set_target_score_from_resource(resource, _round_number)
+##
+## CRITICAL: Sets the target score from the ChallengeData resource.
+## This method MUST be implemented or the challenge will have a target score of 0.
+func set_target_score_from_resource(resource: ChallengeData, _round_number: int) -> void:
+	if resource:
+		_target_score = resource.target_score
+		print("[YourChallengeName] Target score set from resource:", _target_score)
 ```
 
 ### Key Implementation Notes:
 - Always use `_target` parameter in `apply()` to avoid shadowing the base class variable
 - Use proper signal connection checks to avoid duplicate connections
 - Include comprehensive logging for debugging
+- **CRITICAL**: Always implement `set_target_score_from_resource()` or the challenge will have a target score of 0
 - Clean up all connections and debuffs in `remove()`
 - Track progress using scorecard signals
 

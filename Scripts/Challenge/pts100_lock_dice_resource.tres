@@ -8,12 +8,12 @@
 script = ExtResource("1_6dsf7")
 id = "pts100_lock_dice"
 display_name = "Lockdown"
-description = "Dice are frozen between rolls, No Locking"
+description = "Dice are frozen between rolls, No Locking allowed"
 icon = ExtResource("1_mp8je")
 scene = ExtResource("2_ls7bh")
 debuff_ids = Array[String](["lock_dice"])
 target_score = 250
 reward_money = 150
 dice_type = "d6"
-difficulty = 1
+difficulty = 2
 metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

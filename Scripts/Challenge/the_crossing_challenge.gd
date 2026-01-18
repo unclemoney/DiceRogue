@@ -115,3 +115,12 @@ func _on_game_completed() -> void:
 		print("[TheCrossingChallenge] Game completed but target score not reached.")
 		emit_signal("challenge_failed")
 	end()
+
+
+## set_target_score_from_resource(resource, _round_number)
+##
+## Sets the target score from the ChallengeData resource.
+func set_target_score_from_resource(resource: ChallengeData, _round_number: int) -> void:
+	if resource:
+		_target_score = resource.target_score
+		print("[TheCrossingChallenge] Target score set from resource:", _target_score)

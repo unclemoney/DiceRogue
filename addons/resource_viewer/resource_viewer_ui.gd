@@ -140,6 +140,7 @@ func _setup_sort_options() -> void:
 	sort_option.add_item("Price", 1)
 	sort_option.add_item("Rarity", 2)
 	sort_option.add_item("Rating", 3)
+	sort_option.add_item("Difficulty", 4)
 	sort_option.select(0)
 
 
@@ -275,9 +276,15 @@ func _get_display_text(resource: Resource, type: String) -> String:
 		var rarity_char = _get_rarity_char(resource.rarity)
 		return "%s [%s] %s" % [name_str, rarity_char, price_str]
 	
-	# For challenges, also show target score
-	if type == "challenge" and "target_score" in resource:
-		return "%s (%d pts) %s" % [name_str, resource.target_score, price_str]
+	# For challenges, also show target score and difficulty
+	if type == "challenge":
+		var difficulty_str = ""
+		if "difficulty" in resource:
+			difficulty_str = "[D%d]" % resource.difficulty
+		if "target_score" in resource:
+			return "%s %s (%d pts) %s" % [name_str, difficulty_str, resource.target_score, price_str]
+		else:
+			return "%s %s %s" % [name_str, difficulty_str, price_str]
 	
 	if price_str != "":
 		return "%s %s" % [name_str, price_str]
@@ -364,6 +371,15 @@ func _sort_resources(resources: Array, type: String) -> Array:
 				else:
 					return rating_a > rating_b
 			)
+		"difficulty":
+			resources.sort_custom(func(a, b):
+				var difficulty_a = a.difficulty if a.get("difficulty") != null else 0
+				var difficulty_b = b.difficulty if b.get("difficulty") != null else 0
+				if sort_ascending:
+					return difficulty_a < difficulty_b
+				else:
+					return difficulty_a > difficulty_b
+			)
 	
 	return resources
 
@@ -434,6 +450,9 @@ func _display_resource_properties(resource: Resource, type: String) -> void:
 			# Editable: Rarity description
 			_add_editable_text_row(grid, "Rarity Info", str(resource.rarity_description) if resource.get("rarity_description") else "", "rarity_description")
 		"challenge":
+			# Editable: Difficulty (0-5)
+			var difficulty_value: int = resource.difficulty if "difficulty" in resource else 0
+			_add_editable_difficulty_row(grid, "Difficulty", difficulty_value, "difficulty")
 			# Editable: Target score
 			var target_score_value: int = resource.target_score if "target_score" in resource else 0
 			_add_editable_score_row(grid, "Target Score", target_score_value, "target_score")
@@ -591,6 +610,33 @@ func _add_editable_score_row(grid: GridContainer, label_text: String, current_va
 	grid.add_child(spin_box)
 
 
+## _add_editable_difficulty_row(grid, label_text, current_value, property_name)
+##
+## Adds a label with editable SpinBox for difficulty values (0-5 range)
+func _add_editable_difficulty_row(grid: GridContainer, label_text: String, current_value: int, property_name: String) -> void:
+	# Create label
+	var label = Label.new()
+	label.text = label_text + ":"
+	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.5))  # Yellow tint for editable
+	label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	grid.add_child(label)
+	
+	# Create editable SpinBox
+	var spin_box = SpinBox.new()
+	# IMPORTANT: Set min/max BEFORE value to prevent clamping
+	spin_box.min_value = 0
+	spin_box.max_value = 5
+	spin_box.value = current_value
+	spin_box.step = 1
+	spin_box.suffix = " / 5"
+	spin_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spin_box.custom_minimum_size.x = 100
+	spin_box.set_meta("property_name", property_name)
+	spin_box.value_changed.connect(func(new_value): _on_difficulty_changed(new_value, property_name))
+	grid.add_child(spin_box)
+
+
 ## _add_editable_rarity_row(grid, label_text, current_value)
 ##
 ## Adds a label with OptionButton for rarity selection
@@ -736,6 +782,17 @@ func _on_rating_changed(index: int) -> void:
 		print("[ResourceViewer] Changed rating to: %s" % rating_values[index])
 
 
+## _on_difficulty_changed(new_value, property_name)
+##
+## Called when difficulty SpinBox value changes
+func _on_difficulty_changed(new_value: float, property_name: String) -> void:
+	if selected_resource and selected_resource.get(property_name) != null:
+		selected_resource.set(property_name, int(new_value))
+		print("[ResourceViewer] Changed %s to: %d" % [property_name, int(new_value)])
+		# Update item list to reflect difficulty change
+		_update_current_item_list()
+
+
 ## _update_current_item_list()
 ##
 ## Updates the current tab's item list to reflect changes
@@ -787,6 +844,7 @@ func _on_sort_option_selected(index: int) -> void:
 		1: current_sort_field = "price"
 		2: current_sort_field = "rarity"
 		3: current_sort_field = "rating"
+		4: current_sort_field = "difficulty"
 	
 	print("[ResourceViewer] Sort changed to: %s" % current_sort_field)
 	_populate_all_tabs()

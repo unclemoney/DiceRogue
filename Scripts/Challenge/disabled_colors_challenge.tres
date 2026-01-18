@@ -8,11 +8,11 @@
 script = ExtResource("1_disabled_colors_data")
 id = "disabled_colors_challenge"
 display_name = "Colorblind"
-description = "Score 220 Points without Colored Dice"
+description = "All colored dice are disabled"
 icon = ExtResource("1_disabled_colors_icon")
 scene = ExtResource("2_disabled_colors_scene")
 debuff_ids = Array[String](["disabled_colors"])
-target_score = 220
+target_score = 450
 reward_money = 250
 dice_type = "d6"
 difficulty = 4

@@ -8,11 +8,11 @@
 script = ExtResource("1_faster_chores_data")
 id = "faster_chores_challenge"
 display_name = "Double Time"
-description = "Score 180 Points with Faster Chores"
+description = "The Goof-off meter racks up 3x faster."
 icon = ExtResource("1_faster_chores_icon")
 scene = ExtResource("2_faster_chores_scene")
 debuff_ids = Array[String](["faster_chores"])
-target_score = 180
+target_score = 350
 reward_money = 200
 dice_type = "d6"
 difficulty = 3

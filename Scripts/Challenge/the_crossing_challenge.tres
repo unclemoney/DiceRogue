@@ -8,11 +8,11 @@
 script = ExtResource("1_crossing_data")
 id = "the_crossing_challenge"
 display_name = "The Crossing"
-description = "Score 150 Points Under Division"
+description = "Multipliing powerups turn into division"
 icon = ExtResource("1_crossing_icon")
 scene = ExtResource("2_crossing_scene")
 debuff_ids = Array[String](["the_division"])
-target_score = 300
+target_score = 550
 reward_money = 350
 dice_type = "d6"
 difficulty = 5

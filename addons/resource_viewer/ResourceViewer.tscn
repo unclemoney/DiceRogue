@@ -37,7 +37,7 @@ text = "Sort by:"
 [node name="SortOption" type="OptionButton" parent="MarginContainer/VBoxContainer/Toolbar"]
 layout_mode = 2
 selected = 0
-item_count = 4
+item_count = 5
 popup/item_0/text = "Name"
 popup/item_0/id = 0
 popup/item_1/text = "Price"
@@ -46,6 +46,8 @@ popup/item_2/text = "Rarity"
 popup/item_2/id = 2
 popup/item_3/text = "Rating"
 popup/item_3/id = 3
+popup/item_4/text = "Difficulty"
+popup/item_4/id = 4
 
 [node name="SortDirectionBtn" type="Button" parent="MarginContainer/VBoxContainer/Toolbar"]
 layout_mode = 2
@@ -246,20 +248,24 @@ visible = false
 layout_mode = 2
 split_offset = 300
 metadata/_tab_index = 4
-metadata/_tab_name = "Challenges (7)"
+metadata/_tab_name = "Challenges (11)"
 
 [node name="ItemList" type="ItemList" parent="MarginContainer/VBoxContainer/TabContainer/Challenges"]
 layout_mode = 2
 size_flags_horizontal = 3
 allow_reselect = true
-item_count = 7
-item_0/text = "Basic Bitch (300 pts) $150"
-item_1/text = "Disabled Dog (222 pts) $222"
-item_2/text = "Kiddy Ride (150 pts) $100"
-item_3/text = "Lockdown (250 pts) $150"
-item_4/text = "Precious Points (200 pts) $300"
-item_5/text = "Pretty Penny (200 pts) $150"
-item_6/text = "The Crossing (300 pts) $350"
+item_count = 11
+item_0/text = "Basic Bitch [D5] (300 pts) $150"
+item_1/text = "Colorblind [D4] (220 pts) $250"
+item_2/text = "Disabled Dog [D3] (222 pts) $222"
+item_3/text = "Double Time [D3] (180 pts) $200"
+item_4/text = "Downgraded [D5] (250 pts) $350"
+item_5/text = "Kiddy Ride [D0] (150 pts) $100"
+item_6/text = "Lockdown [D1] (250 pts) $150"
+item_7/text = "No Modifications [D4] (220 pts) $250"
+item_8/text = "Precious Points [D2] (200 pts) $300"
+item_9/text = "Pretty Penny [D2] (200 pts) $150"
+item_10/text = "The Crossing [D5] (300 pts) $350"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/TabContainer/Challenges"]
 layout_mode = 2

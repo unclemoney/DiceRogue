@@ -8,12 +8,12 @@
 script = ExtResource("1_reduced_levels_data")
 id = "reduced_levels_challenge"
 display_name = "Downgraded"
-description = "Score 250 Points with Reduced Category Levels"
+description = "Scorecard categories are downgraded each for each score."
 icon = ExtResource("1_reduced_levels_icon")
 scene = ExtResource("2_reduced_levels_scene")
 debuff_ids = Array[String](["reduced_levels"])
 target_score = 250
-reward_money = 350
+reward_money = 150
 dice_type = "d6"
-difficulty = 5
+difficulty = 2
 metadata/_custom_type_script = "uid://f8jnl4x2x0gr"
