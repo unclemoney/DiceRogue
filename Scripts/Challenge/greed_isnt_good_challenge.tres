@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ChallengeData" load_steps=4 format=3 uid="uid://bddj5ycu3mel8"]
+
+[ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="1_data"]
+[ext_resource type="Texture2D" uid="uid://betj5eeni1mpj" path="res://Resources/Art/Powerups/chore_chart.png" id="1_icon"]
+[ext_resource type="PackedScene" uid="uid://dgr33d1sntg00d" path="res://Scenes/Challenge/GreedIsntGoodChallenge.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_data")
+id = "greed_isnt_good"
+display_name = "Greed Isn't Good"
+description = "Your money penalizes scoring - reach 450 points"
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+debuff_ids = Array[String](["too_greedy"])
+target_score = 450
+reward_money = 250
+dice_type = "d6"
+difficulty = 4
+metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

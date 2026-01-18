@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ChallengeData" load_steps=4 format=3 uid="uid://cyvbiu4tmescx"]
+
+[ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="1_data"]
+[ext_resource type="Texture2D" uid="uid://cw6bry41p6cug" path="res://Resources/Art/Powerups/cassette_tape.png" id="1_icon"]
+[ext_resource type="PackedScene" uid="uid://dt0ugh4dd1t10n" path="res://Scenes/Challenge/ToughAdditionChallenge.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_data")
+id = "tough_addition"
+display_name = "Tough Addition"
+description = "All additive bonuses are halved - reach 350 points"
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+debuff_ids = Array[String](["half_additive"])
+target_score = 350
+reward_money = 200
+dice_type = "d6"
+difficulty = 3
+metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

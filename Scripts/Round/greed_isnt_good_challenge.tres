@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RoundChallengeConfig" load_steps=2 format=3 uid="uid://bddj5ycu3xd8t"]
+
+[ext_resource type="Script" uid="uid://b41v75rm14duq" path="res://Scripts/Round/round_challenge_config.gd" id="1_round"]
+
+[resource]
+script = ExtResource("1_round")
+challenge_id = "greed_isnt_good"
+description = "Score 450 Points While Wealth Penalizes You"
+metadata/_custom_type_script = "uid://b41v75rm14duq"

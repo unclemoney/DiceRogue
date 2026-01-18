@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dt00gr33dy5cn"]
+
+[ext_resource type="Script" uid="uid://ct00gr33dy5cn" path="res://Scripts/Debuff/too_greedy_debuff.gd" id="1_greedy"]
+
+[node name="TooGreedyDebuff" type="Node"]
+script = ExtResource("1_greedy")

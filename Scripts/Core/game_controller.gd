@@ -1696,6 +1696,12 @@ func apply_debuff(id: String) -> void:
 		"reduced_levels":
 			debuff.target = scorecard
 			debuff.start()
+		"half_additive":
+			debuff.target = self
+			debuff.start()
+		"too_greedy":
+			debuff.target = self
+			debuff.start()
 		_:
 			push_error("[GameController] Unknown debuff type: %s" % id)
 

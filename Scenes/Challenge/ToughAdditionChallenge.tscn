@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b67g7dukjkwix"]
+
+[ext_resource type="Script" uid="uid://ct0ugh4dd1t10n" path="res://Scripts/Challenge/tough_addition_challenge.gd" id="1_tough"]
+
+[node name="ToughAdditionChallenge" type="Node"]
+script = ExtResource("1_tough")

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://kopug2l0sirx"]
+
+[ext_resource type="Script" uid="uid://cgr33d1sntg00d" path="res://Scripts/Challenge/greed_isnt_good_challenge.gd" id="1_greed"]
+
+[node name="GreedIsntGoodChallenge" type="Node"]
+script = ExtResource("1_greed")

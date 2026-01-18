@@ -234,9 +234,15 @@ func _create_debug_tabs() -> void:
 		"Testing": [
 			{"text": "Apply The Division Debuff", "method": "_debug_apply_division_debuff"},
 			{"text": "Remove The Division Debuff", "method": "_debug_remove_division_debuff"},
+			{"text": "Apply Half Additive Debuff", "method": "_debug_apply_half_additive_debuff"},
+			{"text": "Remove Half Additive Debuff", "method": "_debug_remove_half_additive_debuff"},
+			{"text": "Apply Too Greedy Debuff", "method": "_debug_apply_too_greedy_debuff"},
+			{"text": "Remove Too Greedy Debuff", "method": "_debug_remove_too_greedy_debuff"},
 			{"text": "Test Division vs Perfect Strangers", "method": "_debug_test_division_perfect_strangers"},
 			{"text": "Activate The Crossing Challenge", "method": "_debug_activate_crossing_challenge"},
 			{"text": "Activate 150pts Roll Minus One", "method": "_debug_activate_pts150_challenge"},
+			{"text": "Activate Tough Addition Challenge", "method": "_debug_activate_tough_addition_challenge"},
+			{"text": "Activate Greed Isn't Good Challenge", "method": "_debug_activate_greed_isnt_good_challenge"},
 			{"text": "Show Active Challenges", "method": "_debug_show_active_challenges"},
 			{"text": "Show Mod/Dice Count", "method": "_debug_show_mod_dice_count"},
 			{"text": "Fill All Dice w/ Mods", "method": "_debug_fill_dice_with_mods"},
@@ -1409,6 +1415,119 @@ func _debug_activate_pts150_challenge() -> void:
 	game_controller.activate_challenge(challenge_id)
 	log_debug("✓ 150pts Roll Minus One Challenge activated!")
 	log_debug("Target: 150 points with Roll Score Minus One debuff active")
+
+## _debug_apply_half_additive_debuff()
+##
+## Applies the Half Additive debuff for testing
+func _debug_apply_half_additive_debuff() -> void:
+	log_debug("=== APPLYING HALF ADDITIVE DEBUFF ===")
+	
+	if not game_controller:
+		log_debug("✗ GameController not found!")
+		return
+	
+	if game_controller.is_debuff_active("half_additive"):
+		log_debug("Half Additive debuff is already active")
+		return
+	
+	game_controller.apply_debuff("half_additive")
+	log_debug("✓ Half Additive debuff applied!")
+	log_debug("Effect: All additive bonuses are halved before multipliers apply")
+
+## _debug_remove_half_additive_debuff()
+##
+## Removes the Half Additive debuff
+func _debug_remove_half_additive_debuff() -> void:
+	log_debug("=== REMOVING HALF ADDITIVE DEBUFF ===")
+	
+	if not game_controller:
+		log_debug("✗ GameController not found!")
+		return
+	
+	if not game_controller.is_debuff_active("half_additive"):
+		log_debug("Half Additive debuff is not active")
+		return
+	
+	game_controller.disable_debuff("half_additive")
+	log_debug("✓ Half Additive debuff removed!")
+
+## _debug_apply_too_greedy_debuff()
+##
+## Applies the Too Greedy debuff for testing
+func _debug_apply_too_greedy_debuff() -> void:
+	log_debug("=== APPLYING TOO GREEDY DEBUFF ===")
+	
+	if not game_controller:
+		log_debug("✗ GameController not found!")
+		return
+	
+	if game_controller.is_debuff_active("too_greedy"):
+		log_debug("Too Greedy debuff is already active")
+		return
+	
+	game_controller.apply_debuff("too_greedy")
+	var current_money = PlayerEconomy.get_money()
+	log_debug("✓ Too Greedy debuff applied!")
+	log_debug("Effect: Money over $50 penalizes score (current: $%d, penalty: -%d)" % [current_money, roundi(float(current_money) / 100.0) if current_money > 50 else 0])
+
+## _debug_remove_too_greedy_debuff()
+##
+## Removes the Too Greedy debuff
+func _debug_remove_too_greedy_debuff() -> void:
+	log_debug("=== REMOVING TOO GREEDY DEBUFF ===")
+	
+	if not game_controller:
+		log_debug("✗ GameController not found!")
+		return
+	
+	if not game_controller.is_debuff_active("too_greedy"):
+		log_debug("Too Greedy debuff is not active")
+		return
+	
+	game_controller.disable_debuff("too_greedy")
+	log_debug("✓ Too Greedy debuff removed!")
+
+## _debug_activate_tough_addition_challenge()
+##
+## Activates the Tough Addition Challenge for testing
+func _debug_activate_tough_addition_challenge() -> void:
+	log_debug("=== ACTIVATING TOUGH ADDITION CHALLENGE ===")
+	
+	if not game_controller:
+		log_debug("✗ GameController not found!")
+		return
+	
+	var challenge_id = "tough_addition"
+	
+	if game_controller.active_challenges.has(challenge_id):
+		log_debug("Tough Addition Challenge is already active")
+		return
+	
+	game_controller.activate_challenge(challenge_id)
+	log_debug("✓ Tough Addition Challenge activated!")
+	log_debug("Target: 350 points with Half Additive debuff active")
+	log_debug("Difficulty: 3 | Reward: $200")
+
+## _debug_activate_greed_isnt_good_challenge()
+##
+## Activates the Greed Isn't Good Challenge for testing
+func _debug_activate_greed_isnt_good_challenge() -> void:
+	log_debug("=== ACTIVATING GREED ISN'T GOOD CHALLENGE ===")
+	
+	if not game_controller:
+		log_debug("✗ GameController not found!")
+		return
+	
+	var challenge_id = "greed_isnt_good"
+	
+	if game_controller.active_challenges.has(challenge_id):
+		log_debug("Greed Isn't Good Challenge is already active")
+		return
+	
+	game_controller.activate_challenge(challenge_id)
+	log_debug("✓ Greed Isn't Good Challenge activated!")
+	log_debug("Target: 450 points with Too Greedy debuff active")
+	log_debug("Difficulty: 4 | Reward: $250")
 
 ## _debug_show_active_challenges()
 ##
