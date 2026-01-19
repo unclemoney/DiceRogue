@@ -1,11 +1,36 @@
-[gd_scene load_steps=4 format=3 uid="uid://bfditmacevklt"]
+[gd_scene load_steps=11 format=3 uid="uid://bfditmacevklt"]
 
-[sub_resource type="Gradient" id="Gradient_1"]
-offsets = PackedFloat32Array(0, 0.3, 1)
-colors = PackedColorArray(1, 0.8, 0, 1, 1, 0.4, 0, 1, 0, 0, 0, 0)
+[ext_resource type="Texture2D" uid="uid://b6drskb02qr4v" path="res://Resources/Art/Dice/dieWhite6.png" id="1_ui3er"]
 
-[sub_resource type="GradientTexture1D" id="GradientTexture1D_1"]
-gradient = SubResource("Gradient_1")
+[sub_resource type="Curve" id="Curve_0q4ey"]
+_limits = [-360.0, 360.0, 0.0, 1.0]
+_data = [Vector2(0, -360), 0.0, 0.0, 0, 0, Vector2(1, 360), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_vqngo"]
+curve = SubResource("Curve_0q4ey")
+
+[sub_resource type="Gradient" id="Gradient_ui3er"]
+offsets = PackedFloat32Array(0, 0.603675, 1)
+colors = PackedColorArray(0, 1, 1, 0.54902, 1, 0.427451, 1, 0.560784, 1, 1, 0, 0.294118)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_u25dm"]
+gradient = SubResource("Gradient_ui3er")
+
+[sub_resource type="Curve" id="Curve_u25dm"]
+_limits = [-1.0, 1.0, 0.0, 1.0]
+_data = [Vector2(0, -0.146949), 0.0, 0.0, 0, 0, Vector2(1, 0.232885), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_0q4ey"]
+curve = SubResource("Curve_u25dm")
+
+[sub_resource type="Curve" id="Curve_ui3er"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.458234, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.452592), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_u25dm"]
+curve = SubResource("Curve_ui3er")
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_1"]
 particle_flag_disable_z = true
@@ -15,16 +40,24 @@ direction = Vector3(0, -1, 0)
 spread = 180.0
 initial_velocity_min = 100.0
 initial_velocity_max = 200.0
+angular_velocity_min = -1.60933e-05
+angular_velocity_max = 370.49
+angular_velocity_curve = SubResource("CurveTexture_vqngo")
 gravity = Vector3(0, 200, 0)
-scale_min = 4.0
-scale_max = 8.0
-color = Color(1, 0.8, 0, 1)
-color_ramp = SubResource("GradientTexture1D_1")
+scale_min = 0.01
+scale_max = 0.25
+scale_curve = SubResource("CurveTexture_u25dm")
+color = Color(0.776306, 0.0015448, 0.912216, 1)
+color_ramp = SubResource("GradientTexture1D_u25dm")
+hue_variation_min = -0.04
+hue_variation_max = 0.04
+hue_variation_curve = SubResource("CurveTexture_0q4ey")
 
 [node name="ConsumableExplosion" type="GPUParticles2D"]
 z_index = 100
 emitting = false
 amount = 32
+texture = ExtResource("1_ui3er")
 one_shot = true
 explosiveness = 0.95
 process_material = SubResource("ParticleProcessMaterial_1")
