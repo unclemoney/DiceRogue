@@ -1,13 +1,13 @@
-[gd_resource type="Resource" script_class="ColoredDiceData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ColoredDiceData" load_steps=2 format=3 uid="uid://d0xlgx6d8pblu"]
 
-[ext_resource type="Script" path="res://Scripts/Core/colored_dice_data.gd" id="1_1a2b3c"]
+[ext_resource type="Script" uid="uid://d01jd2eh5modj" path="res://Scripts/Core/colored_dice_data.gd" id="1_1a2b3c"]
 
 [resource]
 script = ExtResource("1_1a2b3c")
 id = "blue_dice"
 display_name = "Blue Dice"
 description = "Rare dice that can dramatically amplify or diminish your score."
-price = 200
+price = 500
 color_type = 4
 effect_description = "Used Blue dice multiply score; unused Blue dice divide score"
 rarity_description = "1 in 100 chance to appear on rolled dice"

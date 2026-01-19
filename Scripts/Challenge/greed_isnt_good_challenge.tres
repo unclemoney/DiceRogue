@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="1_data"]
 [ext_resource type="Texture2D" uid="uid://betj5eeni1mpj" path="res://Resources/Art/Powerups/chore_chart.png" id="1_icon"]
-[ext_resource type="PackedScene" uid="uid://dgr33d1sntg00d" path="res://Scenes/Challenge/GreedIsntGoodChallenge.tscn" id="2_scene"]
+[ext_resource type="PackedScene" uid="uid://kopug2l0sirx" path="res://Scenes/Challenge/GreedIsntGoodChallenge.tscn" id="2_scene"]
 
 [resource]
 script = ExtResource("1_data")

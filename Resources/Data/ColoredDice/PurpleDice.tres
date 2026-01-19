@@ -1,13 +1,13 @@
-[gd_resource type="Resource" script_class="ColoredDiceData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ColoredDiceData" load_steps=2 format=3 uid="uid://ft66qnifxeuf"]
 
-[ext_resource type="Script" path="res://Scripts/Core/colored_dice_data.gd" id="1_1a2b3c"]
+[ext_resource type="Script" uid="uid://d01jd2eh5modj" path="res://Scripts/Core/colored_dice_data.gd" id="1_1a2b3c"]
 
 [resource]
 script = ExtResource("1_1a2b3c")
 id = "purple_dice"
 display_name = "Purple Dice"
 description = "Mystical dice that multiply your score in powerful ways."
-price = 150
+price = 350
 color_type = 3
 effect_description = "Each Purple die multiplies the score by its face value (additive)"
 rarity_description = "1 in 88 chance to appear on rolled dice"

@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="1_data"]
 [ext_resource type="Texture2D" uid="uid://cw6bry41p6cug" path="res://Resources/Art/Powerups/cassette_tape.png" id="1_icon"]
-[ext_resource type="PackedScene" uid="uid://dt0ugh4dd1t10n" path="res://Scenes/Challenge/ToughAdditionChallenge.tscn" id="2_scene"]
+[ext_resource type="PackedScene" uid="uid://b67g7dukjkwix" path="res://Scenes/Challenge/ToughAdditionChallenge.tscn" id="2_scene"]
 
 [resource]
 script = ExtResource("1_data")

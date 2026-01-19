@@ -894,7 +894,7 @@ func add_consumable(data: ConsumableData) -> Node:
 	var spine_pos = Vector2(spine_x, _consumable_spine_start.y)
 	spine.position = spine_pos
 	spine.set_base_position(spine_pos)
-	spine.z_index = 10
+	spine.z_index = 1
 	
 	# Reset layout mode and anchors to prevent position issues
 	spine.set_anchors_preset(Control.PRESET_TOP_LEFT)
