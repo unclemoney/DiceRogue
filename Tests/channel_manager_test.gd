@@ -3,10 +3,11 @@ extends Control
 ## ChannelManagerTest
 ##
 ## Test scene to verify ChannelManager functionality:
-## - Difficulty multiplier calculation (quadratic formula)
+## - Resource-based difficulty configuration (Channels 1-20)
+## - Channel unlock system
 ## - Channel selection UI
 ## - RoundWinnerPanel display
-## - Target score scaling
+## - Target score scaling via goal_score_multiplier
 
 const ChannelManagerScript = preload("res://Scripts/Managers/channel_manager.gd")
 const ChannelManagerUIScript = preload("res://Scripts/Managers/channel_manager_ui.gd")
@@ -130,17 +131,16 @@ func _run_tests() -> void:
 
 
 func _test_difficulty_multipliers() -> void:
-	_log("\n[color=cyan]Test: Difficulty Multipliers (Quadratic Formula)[/color]")
+	_log("\n[color=cyan]Test: Difficulty Multipliers (Resource-based)[/color]")
 	
-	# Expected values based on formula: 1.0 + pow((channel - 1) / 98.0, 2) * 99.0
+	# Test that each channel loads its resource and returns a valid multiplier
+	# Values from channel_XX.tres files: ch1=1.0, ch5=1.2, ch10=1.5, ch15=2.5, ch20=5.0
 	var test_cases = [
-		[1, 1.0],      # Channel 1: 1.0x
-		[2, 1.0103],   # Channel 2: ~1.01x
-		[10, 1.0836],  # Channel 10: ~1.08x
-		[25, 6.0153],  # Channel 25: ~6.02x
-		[50, 25.505],  # Channel 50: ~25.51x
-		[75, 55.766],  # Channel 75: ~55.77x
-		[99, 100.0]    # Channel 99: 100x
+		[1, 1.0],      # Channel 1: 1.0x (easiest)
+		[5, 1.2],      # Channel 5: 1.2x
+		[10, 1.5],     # Channel 10: 1.5x
+		[15, 2.5],     # Channel 15: 2.5x
+		[20, 5.0]      # Channel 20: 5.0x (hardest)
 	]
 	
 	for test in test_cases:
@@ -156,7 +156,7 @@ func _test_difficulty_multipliers() -> void:
 
 
 func _test_channel_clamping() -> void:
-	_log("\n[color=cyan]Test: Channel Clamping[/color]")
+	_log("\n[color=cyan]Test: Channel Clamping (1-20)[/color]")
 	
 	# Test lower bound
 	channel_manager.set_channel(0)
@@ -164,17 +164,17 @@ func _test_channel_clamping() -> void:
 	test_results.append("PASS" if lower_passed else "FAIL")
 	_log("  set_channel(0): expected 1, got %d - %s" % [channel_manager.current_channel, _status(lower_passed)])
 	
-	# Test upper bound
+	# Test upper bound (now 20 instead of 99)
 	channel_manager.set_channel(150)
-	var upper_passed = channel_manager.current_channel == 99
+	var upper_passed = channel_manager.current_channel == 20
 	test_results.append("PASS" if upper_passed else "FAIL")
-	_log("  set_channel(150): expected 99, got %d - %s" % [channel_manager.current_channel, _status(upper_passed)])
+	_log("  set_channel(150): expected 20, got %d - %s" % [channel_manager.current_channel, _status(upper_passed)])
 	
 	# Test valid value
-	channel_manager.set_channel(42)
-	var valid_passed = channel_manager.current_channel == 42
+	channel_manager.set_channel(15)
+	var valid_passed = channel_manager.current_channel == 15
 	test_results.append("PASS" if valid_passed else "FAIL")
-	_log("  set_channel(42): expected 42, got %d - %s" % [channel_manager.current_channel, _status(valid_passed)])
+	_log("  set_channel(15): expected 15, got %d - %s" % [channel_manager.current_channel, _status(valid_passed)])
 	
 	# Reset
 	channel_manager.reset()
@@ -185,11 +185,12 @@ func _test_target_score_scaling() -> void:
 	
 	var base_score = 100
 	
+	# Values based on goal_score_multiplier in channel resources
 	var test_cases = [
 		[1, 100],     # Channel 1: 100 * 1.0 = 100
-		[10, 108],    # Channel 10: 100 * 1.08 = 108
-		[50, 2551],   # Channel 50: 100 * 25.51 = 2551
-		[99, 10000]   # Channel 99: 100 * 100 = 10000
+		[5, 120],     # Channel 5: 100 * 1.2 = 120
+		[10, 150],    # Channel 10: 100 * 1.5 = 150
+		[20, 500]     # Channel 20: 100 * 5.0 = 500
 	]
 	
 	for test in test_cases:
@@ -212,17 +213,17 @@ func _test_display_text() -> void:
 	test_results.append("PASS" if passed1 else "FAIL")
 	_log("  Channel 1: expected '01', got '%s' - %s" % [text1, _status(passed1)])
 	
-	channel_manager.set_channel(42)
-	var text42 = channel_manager.get_channel_display_text()
-	var passed42 = text42 == "42"
-	test_results.append("PASS" if passed42 else "FAIL")
-	_log("  Channel 42: expected '42', got '%s' - %s" % [text42, _status(passed42)])
+	channel_manager.set_channel(10)
+	var text10 = channel_manager.get_channel_display_text()
+	var passed10 = text10 == "10"
+	test_results.append("PASS" if passed10 else "FAIL")
+	_log("  Channel 10: expected '10', got '%s' - %s" % [text10, _status(passed10)])
 	
-	channel_manager.set_channel(99)
-	var text99 = channel_manager.get_channel_display_text()
-	var passed99 = text99 == "99"
-	test_results.append("PASS" if passed99 else "FAIL")
-	_log("  Channel 99: expected '99', got '%s' - %s" % [text99, _status(passed99)])
+	channel_manager.set_channel(20)
+	var text20 = channel_manager.get_channel_display_text()
+	var passed20 = text20 == "20"
+	test_results.append("PASS" if passed20 else "FAIL")
+	_log("  Channel 20: expected '20', got '%s' - %s" % [text20, _status(passed20)])
 	
 	# Reset
 	channel_manager.reset()

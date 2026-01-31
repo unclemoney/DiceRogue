@@ -123,8 +123,11 @@ func setup(data: Resource, type: String) -> void:
 	print("[ShopItem] Setting up item:", data.id)
 	item_id = data.id
 	item_type = type
-	price = data.price
 	item_data = data  # Store the data for tooltip access
+	
+	# Apply shop price multiplier from channel difficulty
+	var base_price = data.price
+	price = _apply_price_multiplier(base_price, type)
 	
 	if not icon or not name_label or not price_label:
 		push_error("[ShopItem] One or more required nodes not found!")
@@ -164,6 +167,56 @@ func _update_button_state(_new_amount := 0, _change := 0) -> void:
 	if buy_button:
 		buy_button.disabled = not PlayerEconomy.can_afford(price)
 		#print("[ShopItem] Buy button state updated - disabled:", buy_button.disabled)
+
+
+## _apply_price_multiplier(base_price, type_str) -> int
+##
+## Applies the channel difficulty shop price multiplier to the base price.
+## Uses different multipliers for colored dice vs other shop items.
+## @param base_price: The original item price
+## @param type_str: The type of item ("colored_dice", "power_up", "consumable", "mod")
+## @return int: The modified price (rounded to nearest integer)
+func _apply_price_multiplier(base_price: int, type_str: String) -> int:
+	var channel_manager = _find_channel_manager()
+	if not channel_manager:
+		return base_price
+	
+	var multiplier: float = 1.0
+	if type_str == "colored_dice":
+		# Use specialized colored dice cost multiplier
+		if channel_manager.has_method("get_colored_dice_cost_multiplier"):
+			multiplier = channel_manager.get_colored_dice_cost_multiplier()
+	else:
+		# Use general shop price multiplier
+		if channel_manager.has_method("get_shop_price_multiplier"):
+			multiplier = channel_manager.get_shop_price_multiplier()
+	
+	return int(round(base_price * multiplier))
+
+
+## _find_channel_manager() -> Node
+##
+## Locates the ChannelManager in the scene tree.
+## @return Node: The ChannelManager or null if not found
+func _find_channel_manager():
+	# Try to find via scene tree
+	var root = get_tree().current_scene
+	if root:
+		var channel_manager = root.get_node_or_null("ChannelManager")
+		if channel_manager:
+			return channel_manager
+	
+	# Try to find via game controller
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller:
+		var parent = game_controller.get_parent()
+		if parent:
+			var channel_manager = parent.get_node_or_null("ChannelManager")
+			if channel_manager:
+				return channel_manager
+	
+	return null
+
 
 func _on_buy_button_pressed() -> void:
 	#print("[ShopItem] Buy button pressed for", item_id, "type:", item_type)

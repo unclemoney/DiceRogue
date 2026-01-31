@@ -1,0 +1,76 @@
+[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
+[ext_resource type="Script" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
+
+[sub_resource type="Resource" id="round_1"]
+script = ExtResource("2_round")
+round_number = 1
+challenge_difficulty_range = Vector2i(3, 4)
+max_debuffs = 2
+debuff_difficulty_cap = 3
+goof_off_threshold_override = -1
+bonus_multipliers = {"empty_category": 1.5, "points_above": 1.4, "chore_completion": 1.5}
+
+[sub_resource type="Resource" id="round_2"]
+script = ExtResource("2_round")
+round_number = 2
+challenge_difficulty_range = Vector2i(3, 4)
+max_debuffs = 2
+debuff_difficulty_cap = 3
+goof_off_threshold_override = -1
+bonus_multipliers = {"empty_category": 1.6, "points_above": 1.4, "chore_completion": 1.5}
+
+[sub_resource type="Resource" id="round_3"]
+script = ExtResource("2_round")
+round_number = 3
+challenge_difficulty_range = Vector2i(4, 5)
+max_debuffs = 3
+debuff_difficulty_cap = 3
+goof_off_threshold_override = -1
+bonus_multipliers = {"empty_category": 1.6, "points_above": 1.5, "chore_completion": 1.6}
+
+[sub_resource type="Resource" id="round_4"]
+script = ExtResource("2_round")
+round_number = 4
+challenge_difficulty_range = Vector2i(4, 5)
+max_debuffs = 3
+debuff_difficulty_cap = 4
+goof_off_threshold_override = -1
+bonus_multipliers = {"empty_category": 1.7, "points_above": 1.5, "chore_completion": 1.7}
+
+[sub_resource type="Resource" id="round_5"]
+script = ExtResource("2_round")
+round_number = 5
+challenge_difficulty_range = Vector2i(5, 5)
+max_debuffs = 3
+debuff_difficulty_cap = 4
+goof_off_threshold_override = -1
+bonus_multipliers = {"empty_category": 1.8, "points_above": 1.6, "chore_completion": 1.8}
+
+[sub_resource type="Resource" id="round_6"]
+script = ExtResource("2_round")
+round_number = 6
+challenge_difficulty_range = Vector2i(5, 5)
+max_debuffs = 3
+debuff_difficulty_cap = 5
+goof_off_threshold_override = -1
+bonus_multipliers = {"empty_category": 1.9, "points_above": 1.7, "chore_completion": 1.8}
+
+[resource]
+script = ExtResource("1_channel")
+channel_number = 14
+display_name = "Channel 14 - Expert Mode"
+description = "Late game territory. High tier challenges with powerful debuffs."
+unlock_requirement = 7
+round_configs = [SubResource("round_1"), SubResource("round_2"), SubResource("round_3"), SubResource("round_4"), SubResource("round_5"), SubResource("round_6")]
+goal_score_multiplier = 3.5
+yahtzee_bonus_multiplier = 2.8
+shop_price_multiplier = 2.0
+colored_dice_cost_multiplier = 1.6
+reroll_base_cost_multiplier = 1.7
+goof_off_multiplier = 1.6
+debuff_intensity_multiplier = 1.6
+force_specific_challenges = []
+disabled_shop_items = []
+special_rules = {}

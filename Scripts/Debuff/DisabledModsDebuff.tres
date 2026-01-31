@@ -11,4 +11,5 @@ display_name = "Disabled Mods"
 description = "All dice mods are disabled"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
+difficulty_rating = 3
 metadata/_custom_type_script = "uid://uiuqwtxbh7m0"

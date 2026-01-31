@@ -24,11 +24,13 @@ signal round_failed(round_number: int)
 @export var challenge_manager_path: NodePath
 @export var dice_hand_path: NodePath
 @export var scorecard_path: NodePath
+@export var channel_manager_path: NodePath = ^"../ChannelManager"
 
 @onready var turn_tracker: TurnTracker = get_node_or_null(turn_tracker_path)
 @onready var challenge_manager: ChallengeManager = get_node_or_null(challenge_manager_path)
 @onready var dice_hand: DiceHand = get_node_or_null(dice_hand_path)
 @onready var scorecard: Scorecard = get_node_or_null(scorecard_path)
+@onready var channel_manager = get_node_or_null(channel_manager_path)
 
 var current_round: int = 0
 var current_challenge_id: String = ""
@@ -130,7 +132,8 @@ func _initialize_rounds_data() -> void:
 ## _generate_challenge_sequence() -> Array[ChallengeData]
 ##
 ## Generates a random sequence of challenges for the game session.
-## Selects one challenge per difficulty tier (0-5) for exactly 6 rounds.
+## Uses channel config difficulty ranges to select challenges for each round.
+## Falls back to tier=round_index if no channel config is available.
 ## Uses seeded random for reproducibility.
 ## @return: Array of ChallengeData resources in round order
 func _generate_challenge_sequence() -> Array[ChallengeData]:
@@ -163,51 +166,79 @@ func _generate_challenge_sequence() -> Array[ChallengeData]:
 			challenges_by_difficulty[difficulty].append(challenge_data)
 			print("[RoundManager] Challenge '", challenge_data.id, "' added to difficulty tier", difficulty)
 	
-	# Select one challenge per difficulty tier (0 through 5 for 6 rounds)
-	for tier in range(max_rounds):
-		var selected_challenge: ChallengeData = _select_challenge_for_tier(tier, challenges_by_difficulty, rng)
+	# Select one challenge per round based on channel config's difficulty ranges
+	for round_index in range(max_rounds):
+		var difficulty_range: Vector2i = _get_difficulty_range_for_round(round_index)
+		var selected_challenge: ChallengeData = _select_challenge_in_range(difficulty_range, challenges_by_difficulty, rng)
 		if selected_challenge:
 			result.append(selected_challenge)
-			print("[RoundManager] Round", tier + 1, "selected challenge:", selected_challenge.id, "(difficulty", selected_challenge.difficulty, ")")
+			print("[RoundManager] Round", round_index + 1, "selected challenge:", selected_challenge.id, "(difficulty", selected_challenge.difficulty, ", range:", difficulty_range, ")")
 		else:
-			push_warning("[RoundManager] No challenge found for tier", tier, "- round will have no challenge")
+			push_warning("[RoundManager] No challenge found for round", round_index + 1, "with range", difficulty_range, "- round will have no challenge")
 	
 	return result
 
 
-## _select_challenge_for_tier(tier, challenges_by_difficulty, rng) -> ChallengeData
+## _get_difficulty_range_for_round(round_index) -> Vector2i
 ##
-## Selects a random challenge for the given difficulty tier.
-## Falls back to adjacent tiers if the target tier has no challenges.
-## @param tier: The difficulty tier (0-5)
+## Gets the difficulty range for a specific round from the channel config.
+## Falls back to (round_index, round_index) if no channel config is available.
+## @param round_index: The round index (0-based)
+## @return: Vector2i with (min_difficulty, max_difficulty)
+func _get_difficulty_range_for_round(round_index: int) -> Vector2i:
+	var round_number = round_index + 1  # Convert to 1-based
+	if channel_manager and channel_manager.has_method("get_challenge_difficulty_range"):
+		# Pass -1 for channel to use current_channel, and round_number (1-based)
+		return channel_manager.get_challenge_difficulty_range(-1, round_number)
+	
+	# Fallback: use round_index as the exact tier (original behavior)
+	var tier = clampi(round_index, 0, 5)
+	return Vector2i(tier, tier)
+
+
+## _select_challenge_in_range(difficulty_range, challenges_by_difficulty, rng) -> ChallengeData
+##
+## Selects a random challenge within the given difficulty range.
+## Collects all challenges in the range, then picks one randomly.
+## Falls back to expanding the range if no challenges are found.
+## @param difficulty_range: Vector2i with (min_difficulty, max_difficulty)
 ## @param challenges_by_difficulty: Dictionary mapping tiers to challenge arrays
 ## @param rng: RandomNumberGenerator instance for seeded selection
 ## @return: Selected ChallengeData or null if none available
-func _select_challenge_for_tier(tier: int, challenges_by_difficulty: Dictionary, rng: RandomNumberGenerator) -> ChallengeData:
-	# First try the exact tier
-	var tier_challenges = challenges_by_difficulty.get(tier, [])
-	if tier_challenges.size() > 0:
-		var index = rng.randi_range(0, tier_challenges.size() - 1)
-		return tier_challenges[index]
+func _select_challenge_in_range(difficulty_range: Vector2i, challenges_by_difficulty: Dictionary, rng: RandomNumberGenerator) -> ChallengeData:
+	var min_tier = clampi(difficulty_range.x, 0, 5)
+	var max_tier = clampi(difficulty_range.y, 0, 5)
 	
-	# Fallback: search adjacent tiers (lower first, then higher)
+	# Collect all challenges within the range
+	var valid_challenges: Array[ChallengeData] = []
+	for tier in range(min_tier, max_tier + 1):
+		var tier_challenges = challenges_by_difficulty.get(tier, [])
+		for challenge in tier_challenges:
+			valid_challenges.append(challenge)
+	
+	# If we found valid challenges, pick one randomly
+	if valid_challenges.size() > 0:
+		var index = rng.randi_range(0, valid_challenges.size() - 1)
+		return valid_challenges[index]
+	
+	# Fallback: expand search outward from the range
 	for offset in range(1, 6):
-		# Try lower tier
-		var lower_tier = tier - offset
+		# Try below min_tier
+		var lower_tier = min_tier - offset
 		if lower_tier >= 0:
 			var lower_challenges = challenges_by_difficulty.get(lower_tier, [])
 			if lower_challenges.size() > 0:
 				var index = rng.randi_range(0, lower_challenges.size() - 1)
-				print("[RoundManager] Tier", tier, "empty, using fallback from tier", lower_tier)
+				print("[RoundManager] Range", difficulty_range, "empty, using fallback from tier", lower_tier)
 				return lower_challenges[index]
 		
-		# Try higher tier
-		var higher_tier = tier + offset
+		# Try above max_tier
+		var higher_tier = max_tier + offset
 		if higher_tier <= 5:
 			var higher_challenges = challenges_by_difficulty.get(higher_tier, [])
 			if higher_challenges.size() > 0:
 				var index = rng.randi_range(0, higher_challenges.size() - 1)
-				print("[RoundManager] Tier", tier, "empty, using fallback from tier", higher_tier)
+				print("[RoundManager] Range", difficulty_range, "empty, using fallback from tier", higher_tier)
 				return higher_challenges[index]
 	
 	return null
@@ -219,10 +250,16 @@ func _select_challenge_for_tier(tier: int, challenges_by_difficulty: Dictionary,
 ## is inactive, and emits a `round_completed` with 0 to enable UI transition for the
 ## first round. Does not automatically start the round — it signals readiness.
 func start_game() -> void:
-	print("[RoundManager] Game is ready. Waiting for player to start the first round.")
+	print("[RoundManager] Game starting. Initializing rounds for selected channel...")
 	current_round = 0
 	is_challenge_completed = false
 	game_started = true
+	
+	# IMPORTANT: Regenerate rounds data NOW that channel is selected
+	# This ensures challenge difficulty ranges match the selected channel
+	challenge_seed = 0  # Reset seed for new random sequence
+	_initialize_rounds_data()
+	print("[RoundManager] Rounds data initialized for channel:", channel_manager.current_channel if channel_manager else "unknown")
 
 	# Reset colored dice purchases for new game session
 	if DiceColorManager:

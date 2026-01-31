@@ -318,6 +318,16 @@ func _create_debug_tabs() -> void:
 			{"text": "Show All Steps", "method": "_debug_tutorial_list_steps"},
 			{"text": "Jump to Step (Console)", "method": "_debug_tutorial_jump_prompt"},
 			{"text": "Force Complete Tutorial", "method": "_debug_tutorial_force_complete"},
+		],
+		"Difficulty": [
+			{"text": "Show Channel Info", "method": "_debug_difficulty_show_channel"},
+			{"text": "Show Round Config", "method": "_debug_difficulty_show_round"},
+			{"text": "Show Active Debuffs", "method": "_debug_difficulty_show_debuffs"},
+			{"text": "Show All Debuff Info", "method": "_debug_difficulty_show_all_debuffs"},
+			{"text": "Toggle Verbose Mode", "method": "_debug_difficulty_toggle_verbose"},
+			{"text": "Force Apply Debuffs", "method": "_debug_difficulty_force_apply"},
+			{"text": "Clear Active Debuffs", "method": "_debug_difficulty_clear_debuffs"},
+			{"text": "Show Multiplier Breakdown", "method": "_debug_difficulty_show_multipliers"},
 		]
 	}
 	
@@ -2813,4 +2823,335 @@ func _debug_tutorial_force_complete() -> void:
 		progress_mgr.tutorial_in_progress = false
 		progress_mgr.save_current_profile()
 	log_debug("Tutorial marked as completed")
+#endregion
+
+#region Difficulty Debug Methods
+## _debug_difficulty_show_channel()
+##
+## Displays current channel information including difficulty settings.
+func _debug_difficulty_show_channel() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not found")
+		return
+	
+	if not game_controller.channel_manager:
+		log_debug("ERROR: ChannelManager not found")
+		return
+	
+	var channel_mgr = game_controller.channel_manager
+	var channel_number = channel_mgr.current_channel
+	var channel = channel_mgr.get_channel_config(channel_number)
+	
+	if not channel:
+		log_debug("ERROR: No channel config found for channel %d" % channel_number)
+		return
+	
+	log_debug("=== CHANNEL INFORMATION ===")
+	log_debug("Name: %s" % channel.display_name)
+	log_debug("Description: %s" % channel.description)
+	log_debug("Channel Number: %d" % channel.channel_number)
+	
+	# Show round difficulty configurations
+	log_debug("")
+	log_debug("--- Round Difficulty Configs ---")
+	if channel.round_configs and channel.round_configs.size() > 0:
+		for i in range(channel.round_configs.size()):
+			var config = channel.round_configs[i]
+			if config:
+				var debuff_info = "max_debuffs=%d, cap=%d" % [config.max_debuffs, config.debuff_difficulty_cap]
+				var tier_info = "challenge_range=%s" % str(config.challenge_difficulty_range)
+				log_debug("  Round %d: %s, %s" % [i + 1, tier_info, debuff_info])
+			else:
+				log_debug("  Round %d: No config defined" % [i + 1])
+	else:
+		log_debug("  No round configs defined")
+	
+	log_debug("")
+	log_debug("Scaling Factors:")
+	log_debug("  Goal Score Multiplier: %.2f" % channel.goal_score_multiplier)
+	log_debug("  Yahtzee Bonus Multiplier: %.2f" % channel.yahtzee_bonus_multiplier)
+	log_debug("  Shop Price Multiplier: %.2f" % channel.shop_price_multiplier)
+	log_debug("  Debuff Intensity Multiplier: %.2f" % channel.debuff_intensity_multiplier)
+
+## _debug_difficulty_show_round()
+##
+## Shows the current round's difficulty configuration in detail.
+func _debug_difficulty_show_round() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not found")
+		return
+	
+	if not game_controller.channel_manager:
+		log_debug("ERROR: ChannelManager not found")
+		return
+	
+	var channel_mgr = game_controller.channel_manager
+	var channel_number = channel_mgr.current_channel
+	var channel = channel_mgr.get_channel_config(channel_number)
+	
+	var current_round = 1
+	if game_controller.round_manager:
+		current_round = game_controller.round_manager.current_round + 1  # Convert to 1-based
+	
+	log_debug("=== ROUND %d CONFIGURATION ===" % current_round)
+	log_debug("Channel: %s (#%d)" % [channel.display_name if channel else "Unknown", channel_number])
+	
+	if not channel:
+		log_debug("ERROR: No channel config found")
+		return
+	
+	var config = null
+	if channel.round_configs:
+		var idx = current_round - 1
+		if idx >= 0 and idx < channel.round_configs.size():
+			config = channel.round_configs[idx]
+	
+	if config:
+		log_debug("Challenge Settings:")
+		log_debug("  Difficulty Range: %s" % str(config.challenge_difficulty_range))
+		log_debug("")
+		log_debug("Debuff Settings:")
+		log_debug("  Max Debuffs: %d" % config.max_debuffs)
+		log_debug("  Difficulty Cap: %d (Level %d max)" % [config.debuff_difficulty_cap, config.debuff_difficulty_cap])
+	else:
+		log_debug("No difficulty config for this round")
+	
+	# Show active challenge if any
+	if game_controller.challenge_manager:
+		var cm = game_controller.challenge_manager
+		if cm.has_method("get_current_challenge"):
+			var challenge = cm.get_current_challenge()
+			if challenge:
+				log_debug("")
+				log_debug("Active Challenge:")
+				log_debug("  Name: %s" % challenge.challenge_name)
+				log_debug("  Target: %d" % challenge.target_score)
+				log_debug("  Tier: %d" % challenge.tier)
+
+## _debug_difficulty_show_debuffs()
+##
+## Shows currently active debuffs with their details.
+func _debug_difficulty_show_debuffs() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not found")
+		return
+	
+	var debuff_mgr = game_controller.debuff_manager
+	if not debuff_mgr:
+		log_debug("ERROR: DebuffManager not found")
+		return
+	
+	log_debug("=== ACTIVE DEBUFFS ===")
+	
+	var active_ids = []
+	if debuff_mgr.has_method("get_active_debuff_ids"):
+		active_ids = debuff_mgr.get_active_debuff_ids()
+	elif "_active_debuff_ids" in debuff_mgr:
+		active_ids = debuff_mgr._active_debuff_ids
+	
+	if active_ids.size() == 0:
+		log_debug("No active debuffs this round")
+		return
+	
+	log_debug("Count: %d" % active_ids.size())
+	log_debug("")
+	
+	for debuff_id in active_ids:
+		log_debug("  - %s" % debuff_id)
+
+## _debug_difficulty_show_all_debuffs()
+##
+## Shows all available debuffs with their difficulty ratings.
+func _debug_difficulty_show_all_debuffs() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not found")
+		return
+	
+	var debuff_mgr = game_controller.debuff_manager
+	if not debuff_mgr:
+		log_debug("ERROR: DebuffManager not found")
+		return
+	
+	log_debug("=== ALL DEBUFFS BY DIFFICULTY ===")
+	
+	if debuff_mgr.has_method("get_all_debuff_info"):
+		var info = debuff_mgr.get_all_debuff_info()
+		log_debug(info)
+	else:
+		# Manual fallback
+		for level in range(1, 6):
+			log_debug("")
+			log_debug("--- Level %d Debuffs ---" % level)
+			if debuff_mgr.has_method("get_debuffs_by_difficulty"):
+				var debuffs = debuff_mgr.get_debuffs_by_difficulty(level)
+				if debuffs.size() == 0:
+					log_debug("  (none)")
+				else:
+					for debuff in debuffs:
+						log_debug("  - %s" % debuff.debuff_name)
+			else:
+				log_debug("  (get_debuffs_by_difficulty not available)")
+
+## _debug_difficulty_toggle_verbose()
+##
+## Toggles verbose mode for debuff selection logging.
+func _debug_difficulty_toggle_verbose() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not found")
+		return
+	
+	var debuff_mgr = game_controller.debuff_manager
+	if not debuff_mgr:
+		log_debug("ERROR: DebuffManager not found")
+		return
+	
+	if "_verbose_mode" in debuff_mgr:
+		debuff_mgr._verbose_mode = not debuff_mgr._verbose_mode
+		log_debug("Verbose mode: %s" % ("ENABLED" if debuff_mgr._verbose_mode else "DISABLED"))
+		if debuff_mgr._verbose_mode:
+			log_debug("Debuff selection will now print detailed logs to console")
+	else:
+		log_debug("ERROR: _verbose_mode not found in DebuffManager")
+
+## _debug_difficulty_force_apply()
+##
+## Forces immediate debuff application for the current round.
+func _debug_difficulty_force_apply() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not found")
+		return
+	
+	var debuff_mgr = game_controller.debuff_manager
+	if not debuff_mgr:
+		log_debug("ERROR: DebuffManager not found")
+		return
+	
+	if not game_controller.channel_manager:
+		log_debug("ERROR: ChannelManager not found")
+		return
+	
+	var channel_mgr = game_controller.channel_manager
+	var channel_number = channel_mgr.current_channel
+	var channel = channel_mgr.get_channel_config(channel_number)
+	
+	var current_round = 1
+	if game_controller.round_manager:
+		current_round = game_controller.round_manager.current_round + 1  # 1-based
+	
+	if not channel:
+		log_debug("ERROR: No channel config found for channel %d" % channel_number)
+		return
+	
+	# Get round config from channel
+	var round_config = channel.get_round_config(current_round)
+	if not round_config:
+		log_debug("ERROR: No round config for round %d" % current_round)
+		return
+	
+	# Enable verbose for this operation
+	var was_verbose = debuff_mgr._verbose_mode if "_verbose_mode" in debuff_mgr else false
+	if "_verbose_mode" in debuff_mgr:
+		debuff_mgr._verbose_mode = true
+	
+	log_debug("=== FORCING DEBUFF APPLICATION ===")
+	log_debug("Channel: %s (#%d), Round: %d" % [channel.display_name, channel_number, current_round])
+	log_debug("Round Config: max_debuffs=%d, difficulty_cap=%d" % [round_config.max_debuffs, round_config.debuff_difficulty_cap])
+	
+	# Get debuff_container from game_controller
+	var debuff_container = game_controller.debuff_container
+	if not debuff_container:
+		log_debug("ERROR: debuff_container not found")
+		return
+	
+	if debuff_mgr.has_method("apply_round_debuffs"):
+		var spawned = debuff_mgr.apply_round_debuffs(debuff_container, round_config, channel_number)
+		log_debug("Debuffs applied: %d spawned" % spawned.size())
+	else:
+		log_debug("ERROR: apply_round_debuffs method not found")
+	
+	# Restore verbose state
+	if "_verbose_mode" in debuff_mgr:
+		debuff_mgr._verbose_mode = was_verbose
+
+## _debug_difficulty_clear_debuffs()
+##
+## Clears all active debuffs.
+func _debug_difficulty_clear_debuffs() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not found")
+		return
+	
+	var debuff_mgr = game_controller.debuff_manager
+	if not debuff_mgr:
+		log_debug("ERROR: DebuffManager not found")
+		return
+	
+	if debuff_mgr.has_method("clear_active_debuffs"):
+		debuff_mgr.clear_active_debuffs()
+		log_debug("Active debuffs cleared")
+	else:
+		if "_active_debuff_ids" in debuff_mgr:
+			debuff_mgr._active_debuff_ids.clear()
+			log_debug("Active debuffs cleared (direct)")
+		else:
+			log_debug("ERROR: Cannot clear debuffs - no method or property found")
+
+## _debug_difficulty_show_multipliers()
+##
+## Shows all active multipliers affecting scoring.
+func _debug_difficulty_show_multipliers() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not found")
+		return
+	
+	log_debug("=== MULTIPLIER BREAKDOWN ===")
+	
+	# Channel multipliers
+	var channel = null
+	var channel_number = 1
+	if game_controller.channel_manager:
+		channel_number = game_controller.channel_manager.current_channel
+		channel = game_controller.channel_manager.get_channel_config(channel_number)
+	
+	if channel:
+		log_debug("")
+		log_debug("Channel Multipliers (%s #%d):" % [channel.display_name, channel_number])
+		log_debug("  Goal Score: %.2fx" % channel.goal_score_multiplier)
+		log_debug("  Yahtzee Bonus: %.2fx" % channel.yahtzee_bonus_multiplier)
+		log_debug("  Shop Price: %.2fx" % channel.shop_price_multiplier)
+		log_debug("  Debuff Intensity: %.2fx" % channel.debuff_intensity_multiplier)
+	else:
+		log_debug("")
+		log_debug("Channel: No config loaded (channel %d)" % channel_number)
+	
+	# Debuff effects
+	var debuff_mgr = game_controller.debuff_manager
+	if debuff_mgr:
+		var active_ids = []
+		if debuff_mgr.has_method("get_active_debuff_ids"):
+			active_ids = debuff_mgr.get_active_debuff_ids()
+		elif "_active_debuff_ids" in debuff_mgr:
+			active_ids = debuff_mgr._active_debuff_ids
+		
+		if active_ids.size() > 0:
+			log_debug("")
+			log_debug("Debuff Modifiers:")
+			for debuff_id in active_ids:
+				log_debug("  - %s (active)" % debuff_id)
+	
+	# PowerUp bonuses
+	if game_controller.pu_manager:
+		var owned = game_controller.active_power_ups
+		if owned.size() > 0:
+			log_debug("")
+			log_debug("Active PowerUps: %d" % owned.size())
+			for pu_id in owned:
+				log_debug("  - %s" % pu_id)
+	
+	# ScoreModifierManager (autoload)
+	if ScoreModifierManager:
+		log_debug("")
+		log_debug("ScoreModifierManager State:")
+		log_debug("  Total Multiplier: %.2fx" % ScoreModifierManager.get_total_multiplier())
+		log_debug("  Total Additive: +%d" % ScoreModifierManager.get_total_additive())
 #endregion

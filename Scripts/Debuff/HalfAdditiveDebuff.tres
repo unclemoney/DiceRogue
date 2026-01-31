@@ -11,4 +11,5 @@ display_name = "Half Additive"
 description = "All additive bonuses are halved before multipliers apply"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
+difficulty_rating = 3
 metadata/_custom_type_script = "uid://uiuqwtxbh7m0"

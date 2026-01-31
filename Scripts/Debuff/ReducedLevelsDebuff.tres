@@ -11,4 +11,5 @@ display_name = "Reduced Levels"
 description = "All scorecard category levels reduced by 1 (permanent)"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
+difficulty_rating = 4
 metadata/_custom_type_script = "uid://uiuqwtxbh7m0"

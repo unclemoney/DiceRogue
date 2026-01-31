@@ -270,15 +270,58 @@ func reset_progress() -> void:
 
 ## get_scaled_max_progress()
 ##
-## Returns the max progress threshold scaled by round number.
+## Returns the max progress threshold scaled by round number and channel difficulty.
 ## Round 1 uses base value (100), each subsequent round scales down by 5%.
+## Channel goof_off_multiplier further reduces the threshold (higher multiplier = Mom appears faster).
 ## Uses ceil() to ensure whole numbers.
 ##
 ## Returns: int - scaled max progress threshold
 func get_scaled_max_progress() -> int:
 	# Round 1 = base value, Round 2+ = 5% decrease per round
 	var scale_factor = pow(0.95, max(0, current_round_number - 1))
-	return int(ceil(MAX_PROGRESS * scale_factor))
+	var base_scaled = MAX_PROGRESS * scale_factor
+	
+	# Apply channel goof-off multiplier (divides threshold - higher multiplier = faster fill)
+	var goof_off_multiplier = _get_goof_off_multiplier()
+	var final_threshold = base_scaled / goof_off_multiplier
+	
+	return int(ceil(max(10, final_threshold)))  # Minimum threshold of 10
+
+
+## _get_goof_off_multiplier() -> float
+##
+## Gets the goof-off multiplier from ChannelManager.
+## Higher multiplier = Mom appears faster (threshold is divided by this value).
+## @return float: The multiplier (1.0 if ChannelManager is not found)
+func _get_goof_off_multiplier() -> float:
+	var channel_manager = _find_channel_manager()
+	if channel_manager and channel_manager.has_method("get_goof_off_multiplier"):
+		return channel_manager.get_goof_off_multiplier()
+	return 1.0
+
+
+## _find_channel_manager() -> Node
+##
+## Locates the ChannelManager in the scene tree.
+## @return Node: The ChannelManager or null if not found
+func _find_channel_manager():
+	# Try to find via the chores_manager group's root
+	var root = get_tree().current_scene
+	if root:
+		var channel_manager = root.get_node_or_null("ChannelManager")
+		if channel_manager:
+			return channel_manager
+	
+	# Try to find via game controller
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller:
+		var parent = game_controller.get_parent()
+		if parent:
+			var channel_manager = parent.get_node_or_null("ChannelManager")
+			if channel_manager:
+				return channel_manager
+	
+	return null
 
 
 ## update_round(round_number)

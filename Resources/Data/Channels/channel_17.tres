@@ -1,0 +1,76 @@
+[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
+[ext_resource type="Script" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
+
+[sub_resource type="Resource" id="round_1"]
+script = ExtResource("2_round")
+round_number = 1
+challenge_difficulty_range = Vector2i(4, 5)
+max_debuffs = 2
+debuff_difficulty_cap = 4
+goof_off_threshold_override = -1
+bonus_multipliers = {"empty_category": 1.8, "points_above": 1.6, "chore_completion": 1.8}
+
+[sub_resource type="Resource" id="round_2"]
+script = ExtResource("2_round")
+round_number = 2
+challenge_difficulty_range = Vector2i(4, 5)
+max_debuffs = 3
+debuff_difficulty_cap = 4
+goof_off_threshold_override = -1
+bonus_multipliers = {"empty_category": 1.9, "points_above": 1.7, "chore_completion": 1.9}
+
+[sub_resource type="Resource" id="round_3"]
+script = ExtResource("2_round")
+round_number = 3
+challenge_difficulty_range = Vector2i(5, 5)
+max_debuffs = 3
+debuff_difficulty_cap = 5
+goof_off_threshold_override = -1
+bonus_multipliers = {"empty_category": 2.0, "points_above": 1.8, "chore_completion": 2.0}
+
+[sub_resource type="Resource" id="round_4"]
+script = ExtResource("2_round")
+round_number = 4
+challenge_difficulty_range = Vector2i(5, 5)
+max_debuffs = 4
+debuff_difficulty_cap = 5
+goof_off_threshold_override = -1
+bonus_multipliers = {"empty_category": 2.2, "points_above": 2.0, "chore_completion": 2.2}
+
+[sub_resource type="Resource" id="round_5"]
+script = ExtResource("2_round")
+round_number = 5
+challenge_difficulty_range = Vector2i(5, 5)
+max_debuffs = 4
+debuff_difficulty_cap = 5
+goof_off_threshold_override = -1
+bonus_multipliers = {"empty_category": 2.4, "points_above": 2.2, "chore_completion": 2.4}
+
+[sub_resource type="Resource" id="round_6"]
+script = ExtResource("2_round")
+round_number = 6
+challenge_difficulty_range = Vector2i(5, 5)
+max_debuffs = 4
+debuff_difficulty_cap = 5
+goof_off_threshold_override = -1
+bonus_multipliers = {"empty_category": 2.5, "points_above": 2.3, "chore_completion": 2.5}
+
+[resource]
+script = ExtResource("1_channel")
+channel_number = 17
+display_name = "Channel 17 - Hardened"
+description = "Tier 5 from round 3 onward. Quadruple debuffs common. Massive rewards."
+unlock_requirement = 9
+round_configs = [SubResource("round_1"), SubResource("round_2"), SubResource("round_3"), SubResource("round_4"), SubResource("round_5"), SubResource("round_6")]
+goal_score_multiplier = 5.0
+yahtzee_bonus_multiplier = 4.0
+shop_price_multiplier = 2.8
+colored_dice_cost_multiplier = 1.9
+reroll_base_cost_multiplier = 2.2
+goof_off_multiplier = 1.9
+debuff_intensity_multiplier = 2.2
+force_specific_challenges = []
+disabled_shop_items = []
+special_rules = {}

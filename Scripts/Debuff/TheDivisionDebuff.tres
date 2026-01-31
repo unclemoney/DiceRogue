@@ -11,4 +11,5 @@ display_name = "The Division"
 description = "All multiplier powerups now divide scores instead"
 icon = ExtResource("1_j54ng")
 scene = ExtResource("2_ta17l")
+difficulty_rating = 4
 metadata/_custom_type_script = "uid://uiuqwtxbh7m0"

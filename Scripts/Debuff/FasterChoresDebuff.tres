@@ -11,4 +11,5 @@ display_name = "Faster Chores"
 description = "Chore meter increases 3 points per roll instead of 1"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
+difficulty_rating = 1
 metadata/_custom_type_script = "uid://uiuqwtxbh7m0"

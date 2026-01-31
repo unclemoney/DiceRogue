@@ -352,14 +352,55 @@ func is_color_purchased(color_type: DiceColorClass.Type) -> bool:
 func get_color_purchase_count(color_type: DiceColorClass.Type) -> int:
 	return purchased_colors.get(color_type, 0)
 
+
 ## Get the current cost for purchasing a colored dice (exponential scaling)
-## Formula: base_cost * 2^purchase_count
+## Formula: (base_cost * 2^purchase_count) * colored_dice_multiplier
+## Applies channel difficulty multiplier if ChannelManager is available.
 ## @param color_type: DiceColor.Type to get cost for
 ## @return int: Current cost in dollars
 func get_current_color_cost(color_type: DiceColorClass.Type) -> int:
 	var base_cost = BASE_COSTS.get(color_type, 50)
 	var purchase_count = purchased_colors.get(color_type, 0)
-	return base_cost * int(pow(2, purchase_count))
+	var exponential_cost = base_cost * int(pow(2, purchase_count))
+	
+	# Apply channel difficulty multiplier
+	var multiplier = _get_colored_dice_cost_multiplier()
+	return int(round(exponential_cost * multiplier))
+
+
+## _get_colored_dice_cost_multiplier() -> float
+##
+## Gets the colored dice cost multiplier from ChannelManager.
+## @return float: The multiplier (1.0 if ChannelManager is not found)
+func _get_colored_dice_cost_multiplier() -> float:
+	var channel_manager = _find_channel_manager()
+	if channel_manager and channel_manager.has_method("get_colored_dice_cost_multiplier"):
+		return channel_manager.get_colored_dice_cost_multiplier()
+	return 1.0
+
+
+## _find_channel_manager() -> Node
+##
+## Locates the ChannelManager in the scene tree.
+## @return Node: The ChannelManager or null if not found
+func _find_channel_manager():
+	# Try to find via the dice_color_manager group's root
+	var root = get_tree().current_scene
+	if root:
+		var channel_manager = root.get_node_or_null("ChannelManager")
+		if channel_manager:
+			return channel_manager
+	
+	# Try to find via game controller
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller:
+		var parent = game_controller.get_parent()
+		if parent:
+			var channel_manager = parent.get_node_or_null("ChannelManager")
+			if channel_manager:
+				return channel_manager
+	
+	return null
 
 ## Get the current probability chance for a color (after purchase modifications)
 ## Each purchase halves the denominator (doubles the odds)

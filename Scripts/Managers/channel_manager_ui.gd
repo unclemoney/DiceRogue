@@ -4,7 +4,7 @@ class_name ChannelManagerUI
 ## ChannelManagerUI
 ##
 ## A TV remote-style UI for selecting the starting difficulty channel.
-## Displays at game start, allowing player to choose Channel 1-99.
+## Displays at game start, allowing player to choose Channel 1-20.
 ## Features Up/Down buttons, channel display, and Start button.
 
 signal start_pressed(channel: int)
@@ -307,6 +307,7 @@ func _create_channel_button(text: String, color: Color) -> Button:
 ## _update_display() -> void
 ##
 ## Updates all display elements based on current channel.
+## Shows lock status for channels that require completions to unlock.
 func _update_display() -> void:
 	if not channel_manager:
 		return
@@ -322,8 +323,15 @@ func _update_display() -> void:
 	
 	difficulty_label.text = channel_manager.get_difficulty_description()
 	
-	# Update difficulty label color based on difficulty
-	if mult < 1.1:
+	# Check if channel is locked
+	var is_locked = false
+	if channel_manager.has_method("is_channel_unlocked"):
+		is_locked = not channel_manager.is_channel_unlocked(channel_manager.current_channel)
+	
+	# Update difficulty label color based on difficulty or lock status
+	if is_locked:
+		difficulty_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))  # Gray for locked
+	elif mult < 1.1:
 		difficulty_label.add_theme_color_override("font_color", Color(0.5, 1.0, 0.5))
 	elif mult < 2.0:
 		difficulty_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.5))
@@ -336,13 +344,17 @@ func _update_display() -> void:
 	else:
 		difficulty_label.add_theme_color_override("font_color", Color(0.8, 0.1, 0.5))
 	
-	# Update completion status display
+	# Update completion status display (also handles lock status)
 	_update_completion_status()
+	
+	# Update start button state based on lock status
+	_update_start_button_state(is_locked)
 
 
 ## _update_completion_status() -> void
 ##
-## Updates the checkmark icon and completion label based on channel completion.
+## Updates the checkmark icon and completion label based on channel completion and lock status.
+## Prioritizes showing lock status for locked channels.
 ## Animates checkmark with scale tween when channel is completed.
 func _update_completion_status() -> void:
 	if not checkmark_icon or not completion_label or not channel_manager:
@@ -353,25 +365,51 @@ func _update_completion_status() -> void:
 		return
 	
 	var current_channel = channel_manager.current_channel
-	var is_completed = progress_manager.is_channel_completed(current_channel)
 	
-	if is_completed:
-		# Show checkmark with animation
+	# Check lock status first
+	var is_locked = false
+	var required_completions = 0
+	if channel_manager.has_method("is_channel_unlocked"):
+		is_locked = not channel_manager.is_channel_unlocked(current_channel)
+		# Get unlock requirement for display
+		var config = channel_manager.get_channel_config(current_channel) if channel_manager.has_method("get_channel_config") else null
+		if config:
+			required_completions = config.unlock_requirement
+	
+	if is_locked:
+		# Show lock status
 		checkmark_icon.visible = true
-		var tween = create_tween()
-		tween.tween_property(checkmark_icon, "scale", Vector2.ONE, 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+		checkmark_icon.text = "🔒"  # Lock emoji
+		checkmark_icon.scale = Vector2.ONE
+		checkmark_icon.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 		
-		# Update completion label
-		completion_label.text = "Cleared"
-		completion_label.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3))
-	else:
-		# Hide checkmark (no animation needed)
-		checkmark_icon.visible = false
-		checkmark_icon.scale = Vector2.ZERO
-		
-		# Update completion label
-		completion_label.text = "Not Completed"
+		# Show unlock requirement
+		var completed_channels = progress_manager.get_completed_channel_count() if progress_manager.has_method("get_completed_channel_count") else 0
+		completion_label.text = "Locked (%d/%d)" % [completed_channels, required_completions]
 		completion_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	else:
+		# Check completion status
+		var is_completed = progress_manager.is_channel_completed(current_channel)
+		
+		if is_completed:
+			# Show checkmark with animation
+			checkmark_icon.visible = true
+			checkmark_icon.text = "✓"  # Checkmark
+			checkmark_icon.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3))
+			var tween = create_tween()
+			tween.tween_property(checkmark_icon, "scale", Vector2.ONE, 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+			
+			# Update completion label
+			completion_label.text = "Cleared"
+			completion_label.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3))
+		else:
+			# Hide checkmark (no animation needed)
+			checkmark_icon.visible = false
+			checkmark_icon.scale = Vector2.ZERO
+			
+			# Update completion label
+			completion_label.text = "Not Completed"
+			completion_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 
 
 ## _on_up_pressed() -> void
@@ -395,11 +433,58 @@ func _on_down_pressed() -> void:
 ## _on_start_pressed() -> void
 ##
 ## Handles the start button being pressed.
+## Prevents starting on locked channels.
 func _on_start_pressed() -> void:
 	if channel_manager:
+		# Check if channel is locked
+		if channel_manager.has_method("is_channel_unlocked"):
+			if not channel_manager.is_channel_unlocked(channel_manager.current_channel):
+				# Show feedback that channel is locked
+				_show_locked_feedback()
+				return
+		
 		channel_manager.select_channel()
 		emit_signal("start_pressed", channel_manager.current_channel)
 	hide_channel_selector()
+
+
+## _update_start_button_state(is_locked) -> void
+##
+## Updates the start button appearance based on lock status.
+## @param is_locked: Whether the current channel is locked
+func _update_start_button_state(is_locked: bool) -> void:
+	if not start_button:
+		return
+	
+	if is_locked:
+		start_button.text = "LOCKED"
+		start_button.disabled = true
+		start_button.modulate = Color(0.6, 0.6, 0.6)
+	else:
+		start_button.text = "START"
+		start_button.disabled = false
+		start_button.modulate = Color.WHITE
+
+
+## _show_locked_feedback() -> void
+##
+## Shows visual feedback when player tries to start a locked channel.
+func _show_locked_feedback() -> void:
+	if not start_button:
+		return
+	
+	# Shake the start button
+	var original_pos = start_button.position
+	var tween = create_tween()
+	tween.tween_property(start_button, "position:x", original_pos.x + 10, 0.05)
+	tween.tween_property(start_button, "position:x", original_pos.x - 10, 0.05)
+	tween.tween_property(start_button, "position:x", original_pos.x + 5, 0.05)
+	tween.tween_property(start_button, "position:x", original_pos.x, 0.05)
+	
+	# Flash red
+	start_button.modulate = Color(1, 0.3, 0.3)
+	await get_tree().create_timer(0.2).timeout
+	start_button.modulate = Color(0.6, 0.6, 0.6)
 
 
 ## _on_channel_changed(new_channel: int) -> void

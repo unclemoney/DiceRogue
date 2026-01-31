@@ -11,4 +11,5 @@ display_name = "Costly Roll"
 description = "Charge $10 Per Roll"
 icon = ExtResource("1_j54ng")
 scene = ExtResource("2_ta17l")
+difficulty_rating = 1
 metadata/_custom_type_script = "uid://uiuqwtxbh7m0"

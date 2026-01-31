@@ -597,7 +597,7 @@ func track_upper_bonus_achieved() -> void:
 ##
 ## Marks a channel as completed and updates the highest channel stat.
 ## Called when player wins a channel. Persists to save file immediately.
-## @param channel_num: The channel number that was completed (1-99)
+## @param channel_num: The channel number that was completed (1-20)
 func mark_channel_completed(channel_num: int) -> void:
 	# Add to completed channels if not already there
 	if channel_num not in completed_channels:
@@ -619,6 +619,24 @@ func mark_channel_completed(channel_num: int) -> void:
 ## @return bool: True if the channel has been completed
 func is_channel_completed(channel_num: int) -> bool:
 	return channel_num in completed_channels
+
+
+## get_total_channel_completions() -> int
+##
+## Returns the total number of unique channels the player has completed.
+## Used by ChannelManager to determine which channels are unlocked.
+## @return int: Count of completed channels
+func get_total_channel_completions() -> int:
+	return completed_channels.size()
+
+
+## get_completed_channel_count() -> int
+##
+## Alias for get_total_channel_completions() for UI display.
+## @return int: Count of completed channels
+func get_completed_channel_count() -> int:
+	return completed_channels.size()
+
 
 ## Check if a specific item is unlocked
 ## @param item_id: String ID of the item to check

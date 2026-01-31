@@ -2982,6 +2982,9 @@ func _on_round_started(round_number: int) -> void:
 		if round_data.has("challenge_id") and not round_data.challenge_id.is_empty():
 			activate_challenge(round_data.challenge_id)
 			print("[GameController] Activated challenge:", round_data.challenge_id)
+			
+			# Apply automatic debuffs AFTER challenge reveal
+			_apply_automatic_debuffs(round_number)
 		else:
 			push_warning("[GameController] No challenge_id in round_data!")
 	else:
@@ -2991,6 +2994,48 @@ func _on_round_started(round_number: int) -> void:
 	if shop_ui:
 		shop_ui.reset_for_new_round()
 		print("[GameController] Shop reset for new round")
+
+
+## _apply_automatic_debuffs(round_number: int) -> void
+##
+## Applies automatic debuffs for the round based on channel configuration.
+## Called after challenge is revealed so player knows what they're facing.
+## Clears debuffs from previous round first (no persistence across rounds).
+func _apply_automatic_debuffs(round_number: int) -> void:
+	if not debuff_manager or not channel_manager:
+		print("[GameController] Cannot apply automatic debuffs - missing manager")
+		return
+	
+	# Clear previous round's debuffs (no persistence)
+	debuff_manager.clear_active_debuffs()
+	
+	# Get round config from channel manager
+	var round_config = channel_manager.get_round_config(channel_manager.current_channel, round_number)
+	if not round_config:
+		print("[GameController] No round config for round %d" % round_number)
+		return
+	
+	var channel_number = channel_manager.current_channel
+	print("[GameController] Applying automatic debuffs for Channel %d Round %d" % [channel_number, round_number])
+	
+	# Apply debuffs using DebuffManager
+	var spawned = debuff_manager.apply_round_debuffs(debuff_container, round_config, channel_number)
+	
+	# Track spawned debuffs in active_debuffs dict
+	for debuff in spawned:
+		if debuff and debuff.id:
+			active_debuffs[debuff.id] = debuff
+			# Update UI if available
+			if debuff_ui:
+				var def = debuff_manager.get_def(debuff.id)
+				if def:
+					debuff_ui.add_debuff_icon(debuff.id, def.icon, def.display_name)
+	
+	if spawned.size() > 0:
+		print("[GameController] Applied %d automatic debuffs" % spawned.size())
+	else:
+		print("[GameController] No automatic debuffs for this round")
+
 
 func _on_debuff_selected(id: String) -> void:
 	print("[GameController] Debuff selected:", id)

@@ -294,7 +294,10 @@ func _update_display() -> void:
 	
 	# Update button text with next channel info
 	if channel_manager:
-		var next_channel = mini(_current_channel + 1, 99)
+		var max_channel = 20
+		if channel_manager.get("MAX_CHANNEL"):
+			max_channel = channel_manager.MAX_CHANNEL
+		var next_channel = mini(_current_channel + 1, max_channel)
 		var next_mult = channel_manager.get_difficulty_multiplier(next_channel)
 		next_channel_button.text = "NEXT: CH %02d (%.1fx)" % [next_channel, next_mult]
 

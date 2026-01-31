@@ -4,12 +4,17 @@ class_name TooGreedyDebuff
 ## TooGreedyDebuff
 ##
 ## Penalizes players for hoarding money. Before scoring, this debuff takes
-## the player's total money, divides it by 100 (using roundi()), and subtracts
-## that amount from the additive score. Only applies if money > $50.
-## Example: $250 money = -3 penalty to additive score (250/100 = 2.5, rounded to 3)
+## the player's total money, divides by divisor (scaled by intensity), and subtracts
+## that amount from the additive score. Only applies if money > floor (scaled by intensity).
+## Intensity scaling: Higher intensity = lower divisor (more penalty) and lower floor.
+## Example at 1.0: $250 money = -3 penalty (250/100, floor $50)
+## Example at 2.0: $200 money = -4 penalty (200/50, floor $25)
 
-const MONEY_FLOOR: int = 50
+const BASE_MONEY_FLOOR: int = 50  ## Base floor before intensity scaling
+const BASE_DIVISOR: int = 100  ## Base divisor before intensity scaling
 
+var _effective_floor: int = 50  ## Floor after intensity scaling
+var _effective_divisor: int = 100  ## Divisor after intensity scaling
 var _game_controller: GameController = null
 var _scorecard_ui: ScoreCardUI = null
 var _penalty_applied: bool = false
@@ -19,7 +24,12 @@ var _penalty_applied: bool = false
 ## Connects to the ScoreCardUI's about_to_score signal to intercept scoring
 ## and apply the greed penalty based on player's current money.
 func apply(_target) -> void:
-	print("[TooGreedyDebuff] Applied - Penalizing high money amounts")
+	# Calculate effective values based on intensity
+	_effective_floor = int(round(BASE_MONEY_FLOOR / intensity))
+	_effective_divisor = int(round(BASE_DIVISOR / intensity))
+	_effective_divisor = maxi(10, _effective_divisor)  # Prevent division by very small numbers
+	
+	print("[TooGreedyDebuff] Applied - Intensity:", intensity, "Floor: $%d, Divisor: %d" % [_effective_floor, _effective_divisor])
 	
 	# Store the target for cleanup
 	self.target = _target
@@ -50,7 +60,7 @@ func apply(_target) -> void:
 			_scorecard_ui.hand_scored.connect(_on_hand_scored)
 			print("[TooGreedyDebuff] Connected to hand_scored signal")
 	
-	print("[TooGreedyDebuff] Successfully initialized (floor: $%d)" % MONEY_FLOOR)
+	print("[TooGreedyDebuff] Successfully initialized")
 
 ## remove()
 ##
@@ -76,18 +86,18 @@ func remove() -> void:
 ## _on_about_to_score(_section, _category, _dice_values)
 ##
 ## Called before score calculation. Applies a negative additive penalty
-## based on the player's current money (money / 100, only if money > $50).
+## based on the player's current money (money / divisor, only if money > floor).
 func _on_about_to_score(_section: Scorecard.Section, _category: String, _dice_values: Array[int]) -> void:
 	# Get current player money
 	var current_money: int = PlayerEconomy.get_money()
 	
 	# Only apply penalty if money exceeds the floor
-	if current_money <= MONEY_FLOOR:
-		print("[TooGreedyDebuff] Money ($%d) at or below floor ($%d) - no penalty" % [current_money, MONEY_FLOOR])
+	if current_money <= _effective_floor:
+		print("[TooGreedyDebuff] Money ($%d) at or below floor ($%d) - no penalty" % [current_money, _effective_floor])
 		return
 	
-	# Calculate penalty: money / 100, rounded
-	var penalty: int = roundi(float(current_money) / 100.0)
+	# Calculate penalty: money / divisor, rounded
+	var penalty: int = roundi(float(current_money) / float(_effective_divisor))
 	
 	if penalty <= 0:
 		print("[TooGreedyDebuff] Calculated penalty is 0 - no penalty applied")
@@ -101,7 +111,7 @@ func _on_about_to_score(_section: Scorecard.Section, _category: String, _dice_va
 	# Register negative additive as penalty
 	score_modifier_manager.register_additive("greed_penalty", -penalty)
 	_penalty_applied = true
-	print("[TooGreedyDebuff] Applied greed penalty: -%d (money: $%d)" % [penalty, current_money])
+	print("[TooGreedyDebuff] Applied greed penalty: -%d (money: $%d, divisor: %d)" % [penalty, current_money, _effective_divisor])
 
 ## _on_hand_scored()
 ##

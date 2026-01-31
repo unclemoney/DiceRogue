@@ -485,10 +485,15 @@ func check_bonus_yahtzee(values: Array[int], current_category: String = "") -> v
 	# Use ScoreEvaluator to check for Yahtzee with wildcards
 	print("[Scorecard] Checking if dice show yahtzee pattern...")
 	if ScoreEvaluatorSingleton.is_yahtzee(values):
-		print("[Scorecard] ✓ Bonus Yahtzee detected! Adding 100 points.")
+		# Apply channel difficulty yahtzee bonus multiplier
+		var base_bonus: int = 100
+		var multiplier = _get_yahtzee_bonus_multiplier()
+		var bonus_points = int(round(base_bonus * multiplier))
+		
+		print("[Scorecard] ✓ Bonus Yahtzee detected! Adding %d points (base %d x %.2f multiplier)" % [bonus_points, base_bonus, multiplier])
 		yahtzee_bonuses += 1
-		yahtzee_bonus_points += 100
-		emit_signal("yahtzee_bonus_achieved", 100)
+		yahtzee_bonus_points += bonus_points
+		emit_signal("yahtzee_bonus_achieved", bonus_points)
 		emit_signal("score_changed", get_total_score())
 		RollStats.track_yahtzee_bonus()
 		
@@ -1141,6 +1146,41 @@ func _track_combination_stats(category: String, score: int) -> void:
 	print("\n=== NEW ScoreModifierManager State ===")
 	ScoreModifierManager.debug_print_state()
 
+
+## _get_yahtzee_bonus_multiplier() -> float
+##
+## Gets the Yahtzee bonus multiplier from ChannelManager.
+## Higher multiplier = more points per bonus Yahtzee (rewards skill at higher difficulty).
+## @return float: The multiplier (1.0 if ChannelManager is not found)
+func _get_yahtzee_bonus_multiplier() -> float:
+	var channel_manager = _find_channel_manager()
+	if channel_manager and channel_manager.has_method("get_yahtzee_bonus_multiplier"):
+		return channel_manager.get_yahtzee_bonus_multiplier()
+	return 1.0
+
+
+## _find_channel_manager() -> Node
+##
+## Locates the ChannelManager in the scene tree.
+## @return Node: The ChannelManager or null if not found
+func _find_channel_manager():
+	# Try to find via the scene root
+	var root = get_tree().current_scene
+	if root:
+		var channel_manager = root.get_node_or_null("ChannelManager")
+		if channel_manager:
+			return channel_manager
+	
+	# Try to find via game controller
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller:
+		var parent = game_controller.get_parent()
+		if parent:
+			var channel_manager = parent.get_node_or_null("ChannelManager")
+			if channel_manager:
+				return channel_manager
+	
+	return null
 ## Reset the calculate_score call counter for debugging
 func reset_call_counter():
 	calculate_score_call_count = 0

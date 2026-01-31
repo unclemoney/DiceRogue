@@ -11,4 +11,5 @@ display_name = "Lock Dice"
 description = "Prevent you from locking dice"
 icon = ExtResource("1_ux30f")
 scene = ExtResource("2_l724p")
+difficulty_rating = 2
 metadata/_custom_type_script = "uid://uiuqwtxbh7m0"

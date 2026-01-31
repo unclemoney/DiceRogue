@@ -11,4 +11,5 @@ display_name = "Rolling Penalty"
 description = "Scores are reduced by the total number of rolls this round"
 icon = ExtResource("1_vjvdg")
 scene = ExtResource("2_l6qh4")
+difficulty_rating = 2
 metadata/_custom_type_script = "uid://uiuqwtxbh7m0"

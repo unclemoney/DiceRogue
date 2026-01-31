@@ -260,36 +260,67 @@ MusicManager.stop_music()
 ```
 
 ### Channel System (Difficulty Scaling)
-The **Channel Manager** provides an infinite difficulty progression system (Channels 1-99):
+The **Channel Manager** provides a resource-based difficulty progression system (Channels 1-20):
 
 **Features:**
 - **TV Remote UI**: Select starting channel at game start with Up/Down buttons
-- **Quadratic Scaling**: Difficulty increases smoothly using formula: `1.0 + ((channel - 1) / 98)² × 99`
-- **Target Score Scaling**: Challenge goals multiply by channel difficulty (100 pts at Ch1 → 10,000 pts at Ch99)
-- **Infinite Loop**: After completing Round 6, RoundWinnerPanel offers "Next Channel" to advance and restart
+- **Resource-Based Configuration**: Each channel defined by a `.tres` file with manually tuned settings
+- **Unlock Pacing**: Higher channels require completing lower channels first
+- **Multiple Scaling Multipliers**: Goal scores, shop prices, goof-off meter, Yahtzee bonuses, debuff intensity
+- **Per-Round Difficulty**: Each round has its own challenge difficulty range
 - **Persistent Completion**: Completed channels are saved and display a checkmark when browsing
-- **Achievement Tracking**: `highest_channel_completed` stat tracks player's best channel achievement
+- **Lock Feedback**: Locked channels show 🔒 icon and disable Start button
 
-**Difficulty Curve:**
-- **Channel 1**: 1.0x (100 points base → 100 points)
-- **Channel 2**: ~1.01x (100 points base → 101 points) - Very mild bump
-- **Channel 10**: ~1.08x (100 points base → 108 points)
-- **Channel 50**: ~25.5x (100 points base → 2,550 points)
-- **Channel 99**: 100x (100 points base → 10,000 points)
+**Channel Configuration Resources:**
+Each channel is configured via `Resources/Data/Channels/channel_XX.tres`:
+- `display_name`: Human-readable name (e.g., "Tutorial", "Expert", "ULTIMATE")
+- `goal_score_multiplier`: Scales target scores for challenges
+- `shop_price_multiplier`: Scales shop item prices
+- `colored_dice_cost_multiplier`: Scales colored dice purchase costs
+- `goof_off_multiplier`: Scales how fast the chore meter fills
+- `yahtzee_bonus_multiplier`: Scales bonus Yahtzee points (rewards skill)
+- `debuff_intensity_multiplier`: Scales debuff severity
+- `unlock_requirement`: Number of channels that must be completed to unlock
+- `round_configs`: Array of 6 RoundDifficultyConfig resources
 
-**Implementation:**
-- **ChannelManager** (`Scripts/Managers/channel_manager.gd`) - Core difficulty logic
-- **ChannelManagerUI** (`Scripts/Managers/channel_manager_ui.gd`) - TV remote selector UI with completion indicator
-- **RoundWinnerPanel** (`Scripts/UI/round_winner_panel.gd`) - Victory screen with stats
-- **ProgressManager** - Persists `completed_channels` array and `highest_channel_completed` stat
-- **Integration**: GameController coordinates showing/hiding UI and scaling targets
+**Round Difficulty Configuration:**
+Each round within a channel has:
+- `challenge_difficulty_range`: Vector2i (min, max) for challenge tier selection
+- `max_debuffs`: Maximum debuffs allowed this round
+- `debuff_difficulty_cap`: Maximum difficulty of debuffs allowed
+- `bonus_multipliers`: Dictionary of category-specific scoring bonuses
+
+**Difficulty Progression (20 Channels):**
+| Channel | Name | Goal | Shop | Debuff | Unlock Req |
+|---------|------|------|------|--------|------------|
+| 1 | Tutorial | 1.0x | 1.0x | 1.0x | 0 |
+| 5 | Moderate | 1.5x | 1.2x | 1.2x | 2 |
+| 10 | Expert | 3.0x | 1.8x | 2.0x | 5 |
+| 15 | Master | 5.0x | 2.5x | 3.0x | 10 |
+| 20 | ULTIMATE | 8.0x | 3.5x | 4.0x | 18 |
+
+**Implementation Files:**
+- **RoundDifficultyConfig** (`Scripts/Core/RoundDifficultyConfig.gd`) - Per-round settings resource
+- **ChannelDifficultyData** (`Scripts/Core/ChannelDifficultyData.gd`) - Channel-wide settings resource
+- **ChannelManager** (`Scripts/Managers/channel_manager.gd`) - Core difficulty logic, loads configs
+- **ChannelManagerUI** (`Scripts/Managers/channel_manager_ui.gd`) - TV remote UI with lock/completion indicators
+- **Channel Resources** (`Resources/Data/Channels/channel_01.tres` to `channel_20.tres`)
+- **ChannelDifficultyValidator** (`Scripts/Editor/ChannelDifficultyValidator.gd`) - Editor validation tool
+
+**Integration Points:**
+- **RoundManager**: Uses `get_challenge_difficulty_range()` for challenge selection
+- **ShopItem**: Uses `get_shop_price_multiplier()` for price display
+- **DiceColorManager**: Uses `get_colored_dice_cost_multiplier()` for dice costs
+- **ChoresManager**: Uses `get_goof_off_multiplier()` for meter threshold
+- **Scorecard**: Uses `get_yahtzee_bonus_multiplier()` for bonus Yahtzee points
+- **DebuffManager**: Uses `get_debuff_intensity_multiplier()` for debuff scaling
 
 **Game Flow:**
-1. Game starts → Channel selector appears (completed channels show checkmark)
-2. Player selects channel (1-99) and presses Start
-3. Game progresses through 6 rounds with scaled target scores
+1. Game starts → Channel selector appears (locked/completed status shown)
+2. Player selects unlocked channel (1-20) and presses Start
+3. Game progresses through 6 rounds with scaled difficulty
 4. After Round 6 completion → RoundWinnerPanel shows stats
-5. "Next Channel" marks channel complete, saves progress, advances to next channel, resets to Round 1
+5. "Next Channel" marks channel complete, saves progress, advances to next channel
 
 **Channel Progression Reset Behavior:**
 When advancing to the next channel, the following intentional resets occur:
