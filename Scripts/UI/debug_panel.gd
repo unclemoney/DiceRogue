@@ -20,6 +20,10 @@ static var instance: DebugPanel = null
 @onready var tab_container: TabContainer
 @onready var close_button: Button
 
+# Input fields for granting items by ID
+var powerup_id_input: LineEdit
+var consumable_id_input: LineEdit
+
 var game_controller: GameController
 var is_visible_debug := false
 var info_update_timer: Timer
@@ -346,6 +350,10 @@ func _create_debug_tabs() -> void:
 		vbox.add_theme_constant_override("separation", 5)
 		scroll_container.add_child(vbox)
 		
+		# Add custom input sections for Items tab
+		if tab_name == "Items":
+			_create_item_input_section(vbox)
+		
 		var button_grid = GridContainer.new()
 		button_grid.columns = 3  # 3 columns for better fit in tabs
 		button_grid.add_theme_constant_override("h_separation", 8)
@@ -363,6 +371,129 @@ func _create_debug_tabs() -> void:
 			var method_name = button_data["method"]
 			button.pressed.connect(Callable(self, method_name))
 			button_grid.add_child(button)
+
+## _create_item_input_section(parent: VBoxContainer)
+##
+## Creates the input section for granting PowerUps and Consumables by ID.
+## Adds text fields and buttons for user input in the Items tab.
+func _create_item_input_section(parent: VBoxContainer) -> void:
+	# Create a container for the input sections
+	var input_container = VBoxContainer.new()
+	input_container.add_theme_constant_override("separation", 8)
+	parent.add_child(input_container)
+	
+	# PowerUp input row
+	var powerup_row = HBoxContainer.new()
+	powerup_row.add_theme_constant_override("separation", 5)
+	input_container.add_child(powerup_row)
+	
+	var powerup_label = Label.new()
+	powerup_label.text = "PowerUp ID:"
+	powerup_label.custom_minimum_size = Vector2(90, 0)
+	powerup_label.add_theme_color_override("font_color", Color.WHITE)
+	powerup_row.add_child(powerup_label)
+	
+	powerup_id_input = LineEdit.new()
+	powerup_id_input.placeholder_text = "e.g., roll_efficiency"
+	powerup_id_input.custom_minimum_size = Vector2(200, 30)
+	powerup_id_input.add_theme_color_override("font_color", Color.WHITE)
+	powerup_id_input.text_submitted.connect(_on_powerup_id_submitted)
+	powerup_row.add_child(powerup_id_input)
+	
+	var powerup_button = Button.new()
+	powerup_button.text = "Grant PowerUp"
+	powerup_button.custom_minimum_size = Vector2(120, 30)
+	powerup_button.pressed.connect(_on_grant_powerup_by_id_pressed)
+	powerup_row.add_child(powerup_button)
+	
+	# Consumable input row
+	var consumable_row = HBoxContainer.new()
+	consumable_row.add_theme_constant_override("separation", 5)
+	input_container.add_child(consumable_row)
+	
+	var consumable_label = Label.new()
+	consumable_label.text = "Consumable ID:"
+	consumable_label.custom_minimum_size = Vector2(90, 0)
+	consumable_label.add_theme_color_override("font_color", Color.WHITE)
+	consumable_row.add_child(consumable_label)
+	
+	consumable_id_input = LineEdit.new()
+	consumable_id_input.placeholder_text = "e.g., any_score"
+	consumable_id_input.custom_minimum_size = Vector2(200, 30)
+	consumable_id_input.add_theme_color_override("font_color", Color.WHITE)
+	consumable_id_input.text_submitted.connect(_on_consumable_id_submitted)
+	consumable_row.add_child(consumable_id_input)
+	
+	var consumable_button = Button.new()
+	consumable_button.text = "Grant Consumable"
+	consumable_button.custom_minimum_size = Vector2(120, 30)
+	consumable_button.pressed.connect(_on_grant_consumable_by_id_pressed)
+	consumable_row.add_child(consumable_button)
+	
+	# Add a separator
+	var separator = HSeparator.new()
+	separator.custom_minimum_size = Vector2(0, 10)
+	input_container.add_child(separator)
+
+## _on_powerup_id_submitted(text: String)
+##
+## Called when user presses Enter in the PowerUp ID input field.
+func _on_powerup_id_submitted(_text: String) -> void:
+	_on_grant_powerup_by_id_pressed()
+
+## _on_consumable_id_submitted(text: String)
+##
+## Called when user presses Enter in the Consumable ID input field.
+func _on_consumable_id_submitted(_text: String) -> void:
+	_on_grant_consumable_by_id_pressed()
+
+## _on_grant_powerup_by_id_pressed()
+##
+## Grants a PowerUp using the ID from the input field.
+func _on_grant_powerup_by_id_pressed() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	if not powerup_id_input:
+		log_debug("ERROR: PowerUp input field not available")
+		return
+	
+	var powerup_id = powerup_id_input.text.strip_edges()
+	if powerup_id.is_empty():
+		log_debug("ERROR: Please enter a PowerUp ID")
+		return
+	
+	if game_controller.has_method("grant_power_up"):
+		game_controller.grant_power_up(powerup_id)
+		log_debug("Granted PowerUp by ID: " + powerup_id)
+		powerup_id_input.clear()
+	else:
+		log_debug("ERROR: GameController missing grant_power_up method")
+
+## _on_grant_consumable_by_id_pressed()
+##
+## Grants a Consumable using the ID from the input field.
+func _on_grant_consumable_by_id_pressed() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	if not consumable_id_input:
+		log_debug("ERROR: Consumable input field not available")
+		return
+	
+	var consumable_id = consumable_id_input.text.strip_edges()
+	if consumable_id.is_empty():
+		log_debug("ERROR: Please enter a Consumable ID")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable(consumable_id)
+		log_debug("Granted Consumable by ID: " + consumable_id)
+		consumable_id_input.clear()
+	else:
+		log_debug("ERROR: GameController missing grant_consumable method")
 
 func toggle_debug_panel() -> void:
 	print("[DebugPanel] Toggle called - current state: ", is_visible_debug)
