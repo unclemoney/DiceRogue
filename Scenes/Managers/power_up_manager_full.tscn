@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://c1du0dd6op7mn"]
+[gd_scene load_steps=34 format=3 uid="uid://c1du0dd6op7mn"]
 
 [ext_resource type="Script" uid="uid://cpw74djq06db4" path="res://Scripts/Managers/PowerUpManager.gd" id="1_j06d4"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="2_powerup_data"]
@@ -28,7 +28,12 @@
 [ext_resource type="Resource" path="res://Scripts/PowerUps/PlusTheLast.tres" id="26_plus_thelast"]
 [ext_resource type="Resource" path="res://Scripts/PowerUps/Allowance.tres" id="27_allowance"]
 [ext_resource type="Resource" path="res://Scripts/PowerUps/Ungrounded.tres" id="28_ungrounded"]
+[ext_resource type="Resource" uid="uid://cdiced1vres1ty" path="res://Scripts/PowerUps/DiceDiversityPowerUp.tres" id="29_dice_diversity"]
+[ext_resource type="Resource" uid="uid://clockandl0adres" path="res://Scripts/PowerUps/LockAndLoadPowerUp.tres" id="30_lock_and_load"]
+[ext_resource type="Resource" uid="uid://cchorechampres1" path="res://Scripts/PowerUps/ChoreChampionPowerUp.tres" id="31_chore_champion"]
+[ext_resource type="Resource" uid="uid://crolleffres1cy" path="res://Scripts/PowerUps/RollEfficiencyPowerUp.tres" id="32_roll_efficiency"]
+[ext_resource type="Resource" uid="uid://cpairparadieres" path="res://Scripts/PowerUps/PairParadisePowerUp.tres" id="33_pair_paradise"]
 
 [node name="PowerUpManager" type="Node"]
 script = ExtResource("1_j06d4")
-power_up_defs = Array[ExtResource("2_powerup_data")]([ExtResource("3_bonus_money"), ExtResource("4_chance520"), ExtResource("5_consumable_cash"), ExtResource("6_evens_no_odds"), ExtResource("7_extra_dice"), ExtResource("8_extra_rolls"), ExtResource("9_foursome"), ExtResource("10_full_house"), ExtResource("11_green_envy"), ExtResource("12_highlighted_score"), ExtResource("13_money_multiplier"), ExtResource("14_money_well_spent"), ExtResource("15_perfect_strangers"), ExtResource("16_pin_head"), ExtResource("17_randomizer"), ExtResource("18_red_power_ranger"), ExtResource("19_step_by_step"), ExtResource("20_consumer_always_right"), ExtResource("21_upper_bonus_mult"), ExtResource("22_wild_dots"), ExtResource("23_yahtzee_bonus_mult"), ExtResource("24_lower_ten"), ExtResource("25_different_straights"), ExtResource("26_plus_thelast"), ExtResource("27_allowance"), ExtResource("28_ungrounded")])
+power_up_defs = Array[ExtResource("2_powerup_data")]([ExtResource("3_bonus_money"), ExtResource("4_chance520"), ExtResource("5_consumable_cash"), ExtResource("6_evens_no_odds"), ExtResource("7_extra_dice"), ExtResource("8_extra_rolls"), ExtResource("9_foursome"), ExtResource("10_full_house"), ExtResource("11_green_envy"), ExtResource("12_highlighted_score"), ExtResource("13_money_multiplier"), ExtResource("14_money_well_spent"), ExtResource("15_perfect_strangers"), ExtResource("16_pin_head"), ExtResource("17_randomizer"), ExtResource("18_red_power_ranger"), ExtResource("19_step_by_step"), ExtResource("20_consumer_always_right"), ExtResource("21_upper_bonus_mult"), ExtResource("22_wild_dots"), ExtResource("23_yahtzee_bonus_mult"), ExtResource("24_lower_ten"), ExtResource("25_different_straights"), ExtResource("26_plus_thelast"), ExtResource("27_allowance"), ExtResource("28_ungrounded"), ExtResource("29_dice_diversity"), ExtResource("30_lock_and_load"), ExtResource("31_chore_champion"), ExtResource("32_roll_efficiency"), ExtResource("33_pair_paradise")])

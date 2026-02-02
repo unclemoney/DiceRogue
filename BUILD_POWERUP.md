@@ -154,7 +154,7 @@ metadata/_custom_type_script = "uid://b4upm4dbvhukm"
 - "legendary" (1% weight)
 
 **Price Guidelines:**
-- Common: 50-100
+- Common: 25-75
 - Uncommon: 100-200
 - Rare: 200-350
 - Epic: 350-500

@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://b3xib3gyisfhy"]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/pair_paradise_power_up.gd" id="1_script"]
+
+[node name="PairParadisePowerUp" type="Node2D"]
+script = ExtResource("1_script")
+id = "pair_paradise"

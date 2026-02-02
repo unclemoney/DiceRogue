@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://c02fdm4680d87"]
+
+[ext_resource type="Texture2D" uid="uid://c5euhoo3jpa3j" path="res://Resources/Art/Powerups/PowerUp_test3.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" uid="uid://wc3rbwqg3bdv" path="res://Scenes/PowerUp/ChoreChampionPowerUp.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "chore_champion"
+display_name = "Chore Champion"
+description = "Chores are 2x more effective (-40 instead of -20)"
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 50
+rarity = "common"
+rating = "G"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

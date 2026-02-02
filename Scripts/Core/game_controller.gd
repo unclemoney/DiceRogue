@@ -329,11 +329,11 @@ func _on_game_start() -> void:
 	#apply_debuff("disabled_mods")
 	#apply_debuff("reduced_levels")
 	#activate_challenge("300pts_no_debuff")
-	#grant_power_up("tango_and_cash")
-	#grant_power_up("shop_rerolls")
-	#grant_power_up("even_higher")
-	#grant_power_up("money_bags")
-	#grant_power_up("failed_money")
+	#grant_power_up("roll_efficiency")
+	#grant_power_up("dice_diversity")
+	#grant_power_up("lock_and_load")
+	#grant_power_up("chore_champion")
+	#grant_power_up("pair_paradise")
 	
 	# Reset shop reroll cost for new game
 	if shop_ui:
@@ -671,7 +671,7 @@ func _activate_power_up(power_up_id: String) -> void:
 		return
 	
 	# Connect to description_updated signal if the power-up has one
-	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus" or power_up_id == "step_by_step" or power_up_id == "perfect_strangers" or power_up_id == "green_monster" or power_up_id == "red_power_ranger" or power_up_id == "wild_dots" or power_up_id == "pin_head" or power_up_id == "money_well_spent" or power_up_id == "highlighted_score" or power_up_id == "the_consumer_is_always_right" or power_up_id == "lower_ten" or power_up_id == "plus_thelast" or power_up_id == "allowance" or power_up_id == "ungrounded" or power_up_id == "tango_and_cash" or power_up_id == "even_higher" or power_up_id == "money_bags" or power_up_id == "failed_money":
+	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus" or power_up_id == "step_by_step" or power_up_id == "perfect_strangers" or power_up_id == "green_monster" or power_up_id == "red_power_ranger" or power_up_id == "wild_dots" or power_up_id == "pin_head" or power_up_id == "money_well_spent" or power_up_id == "highlighted_score" or power_up_id == "the_consumer_is_always_right" or power_up_id == "lower_ten" or power_up_id == "plus_thelast" or power_up_id == "allowance" or power_up_id == "ungrounded" or power_up_id == "tango_and_cash" or power_up_id == "even_higher" or power_up_id == "money_bags" or power_up_id == "failed_money" or power_up_id == "dice_diversity" or power_up_id == "lock_and_load" or power_up_id == "chore_champion" or power_up_id == "roll_efficiency" or power_up_id == "pair_paradise":
 		# Disconnect first to avoid duplicates
 		if pu.is_connected("description_updated", _on_power_up_description_updated):
 			pu.description_updated.disconnect(_on_power_up_description_updated)
@@ -847,6 +847,33 @@ func _activate_power_up(power_up_id: String) -> void:
 		"failed_money":
 			pu.apply(self)
 			print("[GameController] Applied FailedMoneyPowerUp")
+		"dice_diversity":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied DiceDiversityPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for DiceDiversityPowerUp")
+		"lock_and_load":
+			if dice_hand:
+				pu.apply(dice_hand)
+				print("[GameController] Applied LockAndLoadPowerUp to dice_hand")
+			else:
+				push_error("[GameController] No dice_hand available for LockAndLoadPowerUp")
+		"chore_champion":
+			pu.apply(self)
+			print("[GameController] Applied ChoreChampionPowerUp")
+		"roll_efficiency":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied RollEfficiencyPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for RollEfficiencyPowerUp")
+		"pair_paradise":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied PairParadisePowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for PairParadisePowerUp")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -1002,6 +1029,21 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"failed_money":
 			print("[GameController] Removing failed_money PowerUp")
 			pu.remove(self)
+		"dice_diversity":
+			print("[GameController] Removing dice_diversity PowerUp")
+			pu.remove(scorecard)
+		"lock_and_load":
+			print("[GameController] Removing lock_and_load PowerUp")
+			pu.remove(dice_hand)
+		"chore_champion":
+			print("[GameController] Removing chore_champion PowerUp")
+			pu.remove(self)
+		"roll_efficiency":
+			print("[GameController] Removing roll_efficiency PowerUp")
+			pu.remove(scorecard)
+		"pair_paradise":
+			print("[GameController] Removing pair_paradise PowerUp")
+			pu.remove(scorecard)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -1078,6 +1120,16 @@ func revoke_power_up(power_up_id: String) -> void:
 				pu.remove(scorecard)
 			"failed_money":
 				pu.remove(self)
+			"dice_diversity":
+				pu.remove(scorecard)
+			"lock_and_load":
+				pu.remove(dice_hand)
+			"chore_champion":
+				pu.remove(self)
+			"roll_efficiency":
+				pu.remove(scorecard)
+			"pair_paradise":
+				pu.remove(scorecard)
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself
 				pu.remove(pu)

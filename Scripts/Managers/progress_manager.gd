@@ -983,6 +983,18 @@ func _create_default_unlockable_items() -> void:
 	_add_default_power_up("failed_money", "Failed Money", "+$25 for each failed hand at round end", 
 		UnlockConditionClass.ConditionType.COMPLETE_GAME, 2)  # Common
 	
+	# New Common PowerUps (5 total)
+	_add_default_power_up("roll_efficiency", "Roll Efficiency", "+N to scores (N = rolls used)", 
+		UnlockConditionClass.ConditionType.COMPLETE_GAME, 1)  # Common: $25, easiest unlock
+	_add_default_power_up("dice_diversity", "Dice Diversity", "+$5 per unique dice value scored", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 75)  # Common: $50
+	_add_default_power_up("chore_champion", "Chore Champion", "Chores are 2x more effective", 
+		UnlockConditionClass.ConditionType.COMPLETE_GAME, 2)  # Common: $50
+	_add_default_power_up("lock_and_load", "Lock & Load", "+$3 for each die locked", 
+		UnlockConditionClass.ConditionType.EARN_MONEY, 50)  # Common: $75
+	_add_default_power_up("pair_paradise", "Pair Paradise", "Pair bonuses: +3/+6/+9 based on pattern", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 100)  # Common: $75
+	
 	# ==========================================================================
 	# ALL CONSUMABLES (16 total) - From Scripts/Consumable/*.tres files  
 	# ==========================================================================

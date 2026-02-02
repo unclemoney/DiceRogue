@@ -950,7 +950,8 @@ func _categorize_modifier_source(source_name: String) -> String:
 			"upper_bonus_mult", "red_power_ranger", "randomizer",
 			"foursome", "highlighted_score", "green_monster",
 			"step_by_step", "evens_no_odds", "lower_ten", "plus_thelast",
-			"shop_rerolls", "tango_and_cash", "even_higher", "money_bags", "failed_money"
+			"shop_rerolls", "tango_and_cash", "even_higher", "money_bags", "failed_money",
+			"roll_efficiency", "pair_paradise"
 		]
 		
 		if lower_name in powerup_sources:
