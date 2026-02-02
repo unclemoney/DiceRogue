@@ -2232,6 +2232,11 @@ func _on_dice_spawned() -> void:
 			if applied_mod_counts[mod_id] >= mod_persistence_map.get(mod_id, 1):
 				continue
 
+			# Check if the mod still exists in active_mods (it may have been sold)
+			if not active_mods.has(mod_id):
+				print("[GameController] Mod", mod_id, "not found in active_mods (may have been sold), skipping")
+				continue
+
 			var def = active_mods[mod_id]
 			if def and not die.has_mod(mod_id):
 				var mod = mod_manager.spawn_mod(mod_id, die)
@@ -3029,7 +3034,7 @@ func _apply_automatic_debuffs(round_number: int) -> void:
 			if debuff_ui:
 				var def = debuff_manager.get_def(debuff.id)
 				if def:
-					debuff_ui.add_debuff_icon(debuff.id, def.icon, def.display_name)
+					debuff_ui.add_debuff(def, debuff)
 	
 	if spawned.size() > 0:
 		print("[GameController] Applied %d automatic debuffs" % spawned.size())

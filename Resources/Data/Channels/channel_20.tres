@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=9 format=3 uid="uid://o5605ctkjtk5"]
 
-[ext_resource type="Script" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
-[ext_resource type="Script" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
+[ext_resource type="Script" uid="uid://cseqx1haydrh1" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
+[ext_resource type="Script" uid="uid://yuj6od6ypw1a" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
 
 [sub_resource type="Resource" id="round_1"]
 script = ExtResource("2_round")
@@ -10,7 +10,11 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 4
 debuff_difficulty_cap = 5
 goof_off_threshold_override = -1
-bonus_multipliers = {"empty_category": 2.5, "points_above": 2.5, "chore_completion": 2.5}
+bonus_multipliers = {
+"chore_completion": 2.5,
+"empty_category": 2.5,
+"points_above": 2.5
+}
 
 [sub_resource type="Resource" id="round_2"]
 script = ExtResource("2_round")
@@ -19,7 +23,11 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 4
 debuff_difficulty_cap = 5
 goof_off_threshold_override = -1
-bonus_multipliers = {"empty_category": 3.0, "points_above": 3.0, "chore_completion": 3.0}
+bonus_multipliers = {
+"chore_completion": 3.0,
+"empty_category": 3.0,
+"points_above": 3.0
+}
 
 [sub_resource type="Resource" id="round_3"]
 script = ExtResource("2_round")
@@ -28,7 +36,11 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 5
 debuff_difficulty_cap = 5
 goof_off_threshold_override = -1
-bonus_multipliers = {"empty_category": 3.5, "points_above": 3.5, "chore_completion": 3.5}
+bonus_multipliers = {
+"chore_completion": 3.5,
+"empty_category": 3.5,
+"points_above": 3.5
+}
 
 [sub_resource type="Resource" id="round_4"]
 script = ExtResource("2_round")
@@ -37,7 +49,11 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 5
 debuff_difficulty_cap = 5
 goof_off_threshold_override = -1
-bonus_multipliers = {"empty_category": 4.0, "points_above": 4.0, "chore_completion": 4.0}
+bonus_multipliers = {
+"chore_completion": 4.0,
+"empty_category": 4.0,
+"points_above": 4.0
+}
 
 [sub_resource type="Resource" id="round_5"]
 script = ExtResource("2_round")
@@ -46,7 +62,11 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 5
 debuff_difficulty_cap = 5
 goof_off_threshold_override = -1
-bonus_multipliers = {"empty_category": 4.5, "points_above": 4.5, "chore_completion": 4.5}
+bonus_multipliers = {
+"chore_completion": 4.5,
+"empty_category": 4.5,
+"points_above": 4.5
+}
 
 [sub_resource type="Resource" id="round_6"]
 script = ExtResource("2_round")
@@ -55,7 +75,11 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 5
 debuff_difficulty_cap = 5
 goof_off_threshold_override = -1
-bonus_multipliers = {"empty_category": 5.0, "points_above": 5.0, "chore_completion": 5.0}
+bonus_multipliers = {
+"chore_completion": 5.0,
+"empty_category": 5.0,
+"points_above": 5.0
+}
 
 [resource]
 script = ExtResource("1_channel")
@@ -63,7 +87,7 @@ channel_number = 20
 display_name = "Channel 20 - ULTIMATE"
 description = "The final channel. Maximum everything. Only the best survive. 5x rewards."
 unlock_requirement = 10
-round_configs = [SubResource("round_1"), SubResource("round_2"), SubResource("round_3"), SubResource("round_4"), SubResource("round_5"), SubResource("round_6")]
+round_configs = Array[ExtResource("2_round")]([SubResource("round_1"), SubResource("round_2"), SubResource("round_3"), SubResource("round_4"), SubResource("round_5"), SubResource("round_6")])
 goal_score_multiplier = 8.0
 yahtzee_bonus_multiplier = 5.0
 shop_price_multiplier = 4.0
@@ -71,6 +95,6 @@ colored_dice_cost_multiplier = 2.5
 reroll_base_cost_multiplier = 3.0
 goof_off_multiplier = 2.5
 debuff_intensity_multiplier = 4.0
-force_specific_challenges = []
-disabled_shop_items = []
+force_specific_challenges = Array[String]([])
+disabled_shop_items = Array[String]([])
 special_rules = {}
