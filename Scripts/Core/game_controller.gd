@@ -147,6 +147,11 @@ var _challenge_reward_granted: bool = false  # Prevent double-granting challenge
 var _chores_reward_granted: bool = false  # Prevent double-granting chores reward
 var _game_ended: bool = false  # Track if game has ended (won or lost) - blocks shop access
 
+## Goal Mode Configuration (for testing)
+## When true, use RoundDifficultyConfig.target_score_override; when false, use Challenge resource goals
+var use_round_config_goals: bool = true
+var _goal_mode_locked: bool = false  # Prevents changing goal mode mid-game
+
 
 func _ready() -> void:
 	add_to_group("game_controller")
@@ -451,6 +456,9 @@ func _restart_game_for_new_channel() -> void:
 	
 	# Reset game ended flag for new game
 	_game_ended = false
+	
+	# Unlock goal mode for new game
+	_goal_mode_locked = false
 	
 	# Reset MAX_ROLLS back to default (in case Extra Rolls power-up was active)
 	if turn_tracker:
@@ -2498,17 +2506,13 @@ func activate_challenge(id: String) -> void:
 	var round_number = round_data.get("round_number", 1)
 
 	if challenge and def and challenge.has_method("set_target_score_from_resource"):
-		challenge.set_target_score_from_resource(def, round_number)
+		# Use validation method to determine and apply target score
+		var final_target = _validate_and_get_target_score(def, round_number)
+		challenge._target_score = final_target
 		
-		# Apply channel difficulty multiplier to target score
-		if channel_manager:
-			var base_target = challenge.get_target_score()
-			var scaled_target = channel_manager.get_scaled_target_score(base_target)
-			challenge._target_score = scaled_target
-			# Also update rounds_data to keep in sync
-			if round_manager:
-				round_manager.set_current_challenge_target_score(scaled_target)
-			print("[GameController] Channel", channel_manager.current_channel, "scaled target:", base_target, "->", scaled_target, "(%.2fx)" % channel_manager.get_difficulty_multiplier())
+		# Also update rounds_data to keep in sync
+		if round_manager:
+			round_manager.set_current_challenge_target_score(final_target)
 
 	# Apply to game controller to access all needed systems
 	challenge.target = self
@@ -2531,6 +2535,47 @@ func activate_challenge(id: String) -> void:
 			push_error("[GameController] Failed to create UI for challenge:", id)
 	else:
 		push_error("[GameController] No challenge_ui or corkboard_ui reference")
+
+
+## _validate_and_get_target_score(challenge_data: ChallengeData, round_number: int) -> int
+##
+## Validates and returns the target score for the current round.
+## If use_round_config_goals is true, uses RoundDifficultyConfig.target_score_override.
+## Falls back to Challenge resource target_score if override is 0 or unavailable.
+## Always applies channel scaling to the final value.
+func _validate_and_get_target_score(challenge_data: ChallengeData, round_number: int) -> int:
+	var base_target: int = 0
+	var goal_source: String = "Challenge"
+	
+	# Determine base target based on goal mode
+	if use_round_config_goals and channel_manager:
+		# Try to get target from round config
+		var round_config = channel_manager.get_round_config(channel_manager.current_channel, round_number)
+		if round_config and round_config.target_score_override > 0:
+			base_target = round_config.target_score_override
+			goal_source = "RoundConfig"
+		else:
+			# Fallback to challenge data with warning
+			base_target = challenge_data.target_score
+			goal_source = "Challenge (fallback)"
+			if use_round_config_goals:
+				push_warning("[GameController] Round config has no target_score_override, using Challenge goal")
+	else:
+		# Use challenge resource target score (default behavior)
+		base_target = challenge_data.target_score
+		goal_source = "Challenge"
+	
+	# Apply channel scaling
+	var scaled_target: int = base_target
+	if channel_manager:
+		scaled_target = channel_manager.get_scaled_target_score(base_target)
+		print("[GameController] Goal from %s: %d -> %d (%.2fx channel scaling)" % [
+			goal_source, base_target, scaled_target, channel_manager.get_difficulty_multiplier()
+		])
+	else:
+		print("[GameController] Goal from %s: %d (no channel scaling)" % [goal_source, base_target])
+	
+	return scaled_target
 
 
 ## _on_challenge_completed(id)
@@ -2934,6 +2979,11 @@ func _on_max_power_ups_reached() -> void:
 
 func _on_round_started(round_number: int) -> void:
 	print("[GameController] Round", round_number, "started")
+	
+	# Lock goal mode after first round starts (prevent mid-game changes)
+	if not _goal_mode_locked:
+		_goal_mode_locked = true
+		print("[GameController] Goal mode locked: %s" % ("RoundConfig Goals" if use_round_config_goals else "Challenge Goals"))
 	
 	# Reset end of round stats flag for new round
 	_end_of_round_stats_shown = false

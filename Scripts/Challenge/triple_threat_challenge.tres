@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ChallengeData" load_steps=4 format=3 uid="uid://ctriple1res2"]
+
+[ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="1_triple_data"]
+[ext_resource type="Texture2D" uid="uid://cw6bry41p6cug" path="res://Resources/Art/Powerups/cassette_tape.png" id="1_triple_icon"]
+[ext_resource type="PackedScene" uid="uid://dd0crmyrgu730" path="res://Scenes/Challenge/TripleThreatChallenge.tscn" id="2_triple_scene"]
+
+[resource]
+script = ExtResource("1_triple_data")
+id = "triple_threat_challenge"
+display_name = "Triple Threat"
+description = "Can't lock dice, twos disabled, and chores rack up 3x faster"
+icon = ExtResource("1_triple_icon")
+scene = ExtResource("2_triple_scene")
+debuff_ids = Array[String](["lock_dice", "disabled_twos", "faster_chores"])
+target_score = 450
+reward_money = 275
+dice_type = "d6"
+difficulty = 4
+metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

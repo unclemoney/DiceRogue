@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RoundChallengeConfig" load_steps=2 format=3 uid="uid://ctriple1rnd2"]
+
+[ext_resource type="Script" uid="uid://b41v75rm14duq" path="res://Scripts/Round/round_challenge_config.gd" id="1_triple"]
+
+[resource]
+script = ExtResource("1_triple")
+challenge_id = "triple_threat_challenge"
+description = "Score 450 Points Under Three Debuffs"
+metadata/_custom_type_script = "uid://b41v75rm14duq"

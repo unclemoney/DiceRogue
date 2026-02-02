@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ChallengeData" load_steps=4 format=3 uid="uid://cchaos1res2"]
+
+[ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="1_chaos_data"]
+[ext_resource type="Texture2D" uid="uid://cw6bry41p6cug" path="res://Resources/Art/Powerups/cassette_tape.png" id="1_chaos_icon"]
+[ext_resource type="PackedScene" uid="uid://vw061aw711db" path="res://Scenes/Challenge/ChaosTheoryChallenge.tscn" id="2_chaos_scene"]
+
+[resource]
+script = ExtResource("1_chaos_data")
+id = "chaos_theory_challenge"
+display_name = "Chaos Theory"
+description = "Division replaces multiplication, money hurts scoring, all categories downgraded"
+icon = ExtResource("1_chaos_icon")
+scene = ExtResource("2_chaos_scene")
+debuff_ids = Array[String](["the_division", "too_greedy", "reduced_levels"])
+target_score = 600
+reward_money = 400
+dice_type = "d6"
+difficulty = 5
+metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ChallengeData" load_steps=4 format=3 uid="uid://bperfect1res2"]
+
+[ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="1_perfect_data"]
+[ext_resource type="Texture2D" uid="uid://cw6bry41p6cug" path="res://Resources/Art/Powerups/cassette_tape.png" id="1_perfect_icon"]
+[ext_resource type="PackedScene" uid="uid://c0uybns0miu8v" path="res://Scenes/Challenge/PerfectExecutionChallenge.tscn" id="2_perfect_scene"]
+
+[resource]
+script = ExtResource("1_perfect_data")
+id = "perfect_execution_challenge"
+display_name = "Perfect Execution"
+description = "Halved bonuses, no mods, roll penalties - execute perfectly or fail"
+icon = ExtResource("1_perfect_icon")
+scene = ExtResource("2_perfect_scene")
+debuff_ids = Array[String](["half_additive", "disabled_mods", "roll_score_minus_one"])
+target_score = 550
+reward_money = 350
+dice_type = "d6"
+difficulty = 5
+metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

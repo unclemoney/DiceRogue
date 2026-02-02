@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c0uybns0miu8v"]
+
+[ext_resource type="Script" path="res://Scripts/Challenge/perfect_execution_challenge.gd" id="1_perfect"]
+
+[node name="PerfectExecutionChallenge" type="Node"]
+script = ExtResource("1_perfect")

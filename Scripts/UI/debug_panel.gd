@@ -243,6 +243,10 @@ func _create_debug_tabs() -> void:
 			{"text": "Activate 150pts Roll Minus One", "method": "_debug_activate_pts150_challenge"},
 			{"text": "Activate Tough Addition Challenge", "method": "_debug_activate_tough_addition_challenge"},
 			{"text": "Activate Greed Isn't Good Challenge", "method": "_debug_activate_greed_isnt_good_challenge"},
+			{"text": "Activate Wildcard Run", "method": "_debug_activate_wildcard_run_challenge"},
+			{"text": "Activate Triple Threat", "method": "_debug_activate_triple_threat_challenge"},
+			{"text": "Activate Perfect Execution", "method": "_debug_activate_perfect_execution_challenge"},
+			{"text": "Activate Chaos Theory", "method": "_debug_activate_chaos_theory_challenge"},
 			{"text": "Show Active Challenges", "method": "_debug_show_active_challenges"},
 			{"text": "Show Mod/Dice Count", "method": "_debug_show_mod_dice_count"},
 			{"text": "Fill All Dice w/ Mods", "method": "_debug_fill_dice_with_mods"},
@@ -325,6 +329,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Show Active Debuffs", "method": "_debug_difficulty_show_debuffs"},
 			{"text": "Show All Debuff Info", "method": "_debug_difficulty_show_all_debuffs"},
 			{"text": "Toggle Verbose Mode", "method": "_debug_difficulty_toggle_verbose"},
+			{"text": "Toggle Round Config Goals", "method": "_debug_toggle_round_config_goals"},
 			{"text": "Force Apply Debuffs", "method": "_debug_difficulty_force_apply"},
 			{"text": "Clear Active Debuffs", "method": "_debug_difficulty_clear_debuffs"},
 			{"text": "Show Multiplier Breakdown", "method": "_debug_difficulty_show_multipliers"},
@@ -1538,6 +1543,90 @@ func _debug_activate_greed_isnt_good_challenge() -> void:
 	log_debug("✓ Greed Isn't Good Challenge activated!")
 	log_debug("Target: 450 points with Too Greedy debuff active")
 	log_debug("Difficulty: 4 | Reward: $250")
+
+## _debug_activate_wildcard_run_challenge()
+##
+## Activates the Wildcard Run Challenge for testing
+func _debug_activate_wildcard_run_challenge() -> void:
+	log_debug("=== ACTIVATING WILDCARD RUN CHALLENGE ===")
+	
+	if not game_controller:
+		log_debug("✗ GameController not found!")
+		return
+	
+	var challenge_id = "wildcard_run_challenge"
+	
+	if game_controller.active_challenges.has(challenge_id):
+		log_debug("Wildcard Run Challenge is already active")
+		return
+	
+	game_controller.activate_challenge(challenge_id)
+	log_debug("✓ Wildcard Run Challenge activated!")
+	log_debug("Target: 350 points - random debuff at round 3")
+	log_debug("Difficulty: 3 | Reward: $200")
+
+## _debug_activate_triple_threat_challenge()
+##
+## Activates the Triple Threat Challenge for testing
+func _debug_activate_triple_threat_challenge() -> void:
+	log_debug("=== ACTIVATING TRIPLE THREAT CHALLENGE ===")
+	
+	if not game_controller:
+		log_debug("✗ GameController not found!")
+		return
+	
+	var challenge_id = "triple_threat_challenge"
+	
+	if game_controller.active_challenges.has(challenge_id):
+		log_debug("Triple Threat Challenge is already active")
+		return
+	
+	game_controller.activate_challenge(challenge_id)
+	log_debug("✓ Triple Threat Challenge activated!")
+	log_debug("Target: 450 points with 3 debuffs: lock_dice, disabled_twos, faster_chores")
+	log_debug("Difficulty: 4 | Reward: $275")
+
+## _debug_activate_perfect_execution_challenge()
+##
+## Activates the Perfect Execution Challenge for testing
+func _debug_activate_perfect_execution_challenge() -> void:
+	log_debug("=== ACTIVATING PERFECT EXECUTION CHALLENGE ===")
+	
+	if not game_controller:
+		log_debug("✗ GameController not found!")
+		return
+	
+	var challenge_id = "perfect_execution_challenge"
+	
+	if game_controller.active_challenges.has(challenge_id):
+		log_debug("Perfect Execution Challenge is already active")
+		return
+	
+	game_controller.activate_challenge(challenge_id)
+	log_debug("✓ Perfect Execution Challenge activated!")
+	log_debug("Target: 550 points with 3 debuffs: half_additive, disabled_mods, roll_score_minus_one")
+	log_debug("Difficulty: 5 | Reward: $350")
+
+## _debug_activate_chaos_theory_challenge()
+##
+## Activates the Chaos Theory Challenge for testing (ultimate endgame challenge)
+func _debug_activate_chaos_theory_challenge() -> void:
+	log_debug("=== ACTIVATING CHAOS THEORY CHALLENGE ===")
+	
+	if not game_controller:
+		log_debug("✗ GameController not found!")
+		return
+	
+	var challenge_id = "chaos_theory_challenge"
+	
+	if game_controller.active_challenges.has(challenge_id):
+		log_debug("Chaos Theory Challenge is already active")
+		return
+	
+	game_controller.activate_challenge(challenge_id)
+	log_debug("✓ Chaos Theory Challenge activated!")
+	log_debug("Target: 600 points with 3 brutal debuffs: the_division, too_greedy, reduced_levels")
+	log_debug("Difficulty: 5 | Reward: $400 | ULTIMATE CHALLENGE")
 
 ## _debug_show_active_challenges()
 ##
@@ -2896,6 +2985,13 @@ func _debug_difficulty_show_round() -> void:
 	log_debug("=== ROUND %d CONFIGURATION ===" % current_round)
 	log_debug("Channel: %s (#%d)" % [channel.display_name if channel else "Unknown", channel_number])
 	
+	# Display goal mode
+	var goal_mode = "Challenge Goals (default)"
+	if "use_round_config_goals" in game_controller and game_controller.use_round_config_goals:
+		goal_mode = "RoundConfig Goals"
+	log_debug("Goal Mode: %s" % goal_mode)
+	log_debug("")
+	
 	if not channel:
 		log_debug("ERROR: No channel config found")
 		return
@@ -2909,6 +3005,7 @@ func _debug_difficulty_show_round() -> void:
 	if config:
 		log_debug("Challenge Settings:")
 		log_debug("  Difficulty Range: %s" % str(config.challenge_difficulty_range))
+		log_debug("  Target Score Override: %d%s" % [config.target_score_override, " (use Challenge goal)" if config.target_score_override == 0 else ""])
 		log_debug("")
 		log_debug("Debuff Settings:")
 		log_debug("  Max Debuffs: %d" % config.max_debuffs)
@@ -3147,6 +3244,36 @@ func _debug_difficulty_show_multipliers() -> void:
 			log_debug("Active PowerUps: %d" % owned.size())
 			for pu_id in owned:
 				log_debug("  - %s" % pu_id)
+
+
+## _debug_toggle_round_config_goals()
+##
+## Toggles between RoundConfig goals and Challenge goals.
+## Can only be changed before a game starts or between games.
+func _debug_toggle_round_config_goals() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not found")
+		return
+	
+	# Check if game is active (goal mode is locked)
+	if "_goal_mode_locked" in game_controller and game_controller._goal_mode_locked:
+		log_debug("Cannot change goal mode mid-game!")
+		log_debug("Start a new game to change this setting.")
+		return
+	
+	# Toggle the flag
+	if "use_round_config_goals" in game_controller:
+		game_controller.use_round_config_goals = not game_controller.use_round_config_goals
+		var mode = "RoundConfig Goals" if game_controller.use_round_config_goals else "Challenge Goals (default)"
+		log_debug("Goal mode set to: %s" % mode)
+		
+		if game_controller.use_round_config_goals:
+			log_debug("Will use RoundDifficultyConfig.target_score_override if > 0")
+			log_debug("Falls back to Challenge goal if override is 0")
+		else:
+			log_debug("Will use ChallengeData.target_score with channel scaling")
+	else:
+		log_debug("ERROR: use_round_config_goals not found in GameController")
 	
 	# ScoreModifierManager (autoload)
 	if ScoreModifierManager:

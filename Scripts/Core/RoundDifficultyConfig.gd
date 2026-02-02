@@ -26,6 +26,11 @@ class_name RoundDifficultyConfig
 ## -1 = use channel default with round scaling
 @export var goof_off_threshold_override: int = -1
 
+## Optional target score override for this round
+## 0 = use Challenge resource target_score (default)
+## > 0 = use this value as the base target (before channel scaling)
+@export var target_score_override: int = 0
+
 ## Multipliers for end-of-round bonus calculations
 ## Keys: "empty_category", "points_above", "chore_completion"
 ## Default 1.0 = no change, higher values = more rewarding

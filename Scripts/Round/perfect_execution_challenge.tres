@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RoundChallengeConfig" load_steps=2 format=3 uid="uid://bperfect1rnd2"]
+
+[ext_resource type="Script" uid="uid://b41v75rm14duq" path="res://Scripts/Round/round_challenge_config.gd" id="1_perfect"]
+
+[resource]
+script = ExtResource("1_perfect")
+challenge_id = "perfect_execution_challenge"
+description = "Score 550 Points with Precision Penalties"
+metadata/_custom_type_script = "uid://b41v75rm14duq"

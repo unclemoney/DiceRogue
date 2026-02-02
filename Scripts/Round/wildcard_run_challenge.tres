@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RoundChallengeConfig" load_steps=2 format=3 uid="uid://tjighdbybm4l"]
+
+[ext_resource type="Script" uid="uid://b41v75rm14duq" path="res://Scripts/Round/round_challenge_config.gd" id="1_wildcard"]
+
+[resource]
+script = ExtResource("1_wildcard")
+challenge_id = "wildcard_run_challenge"
+description = "Score 350 Points - Random Debuff at Round 3"
+metadata/_custom_type_script = "uid://b41v75rm14duq"

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ChallengeData" load_steps=4 format=3 uid="uid://ceu52hvt4w47d"]
+
+[ext_resource type="Script" uid="uid://f8jnl4x2x0gr" path="res://Scripts/Challenge/ChallengeData.gd" id="1_wildcard_data"]
+[ext_resource type="Texture2D" uid="uid://cw6bry41p6cug" path="res://Resources/Art/Powerups/cassette_tape.png" id="1_wildcard_icon"]
+[ext_resource type="PackedScene" uid="uid://tjighdbybufl" path="res://Scenes/Challenge/WildcardRunChallenge.tscn" id="2_wildcard_scene"]
+
+[resource]
+script = ExtResource("1_wildcard_data")
+id = "wildcard_run_challenge"
+display_name = "Wildcard Run"
+description = "Normal rules... until round 3 when a random debuff activates"
+icon = ExtResource("1_wildcard_icon")
+scene = ExtResource("2_wildcard_scene")
+debuff_ids = Array[String]([])
+target_score = 350
+reward_money = 200
+dice_type = "d6"
+difficulty = 3
+metadata/_custom_type_script = "uid://f8jnl4x2x0gr"
