@@ -204,7 +204,6 @@ scale = Vector2(1.15, 1)
 texture = ExtResource("5_w4iq5")
 
 [node name="DiceHand" parent="." instance=ExtResource("5_gxabo")]
-max_dice_per_row = 9
 dice_area_center = Vector2(850, 525)
 dice_area_size = Vector2(300, 250)
 

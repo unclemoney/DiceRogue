@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bx3n7qkp2mfws"]
+
+[ext_resource type="Script" path="res://Scripts/Consumable/stat_cashout_consumable.gd" id="1_script"]
+
+[node name="StatCashoutConsumable" type="Node"]
+script = ExtResource("1_script")

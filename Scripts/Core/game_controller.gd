@@ -49,6 +49,14 @@ const LARGE_STRAIGHT_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable
 const YAHTZEE_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/YahtzeeUpgradeConsumable.tres")
 const CHANCE_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/ChanceUpgradeConsumable.tres")
 const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/AllCategoriesUpgradeConsumable.tres")
+# New consumables - dice, stats, upgrades, streaks
+const DICE_SURGE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/DiceSurgeConsumable.tres")
+const STAT_CASHOUT_CONSUMABLE_DEF := preload("res://Scripts/Consumable/StatCashoutConsumable.tres")
+const UPPER_SECTION_BOOST_CONSUMABLE_DEF := preload("res://Scripts/Consumable/UpperSectionBoostConsumable.tres")
+const LOWER_SECTION_BOOST_CONSUMABLE_DEF := preload("res://Scripts/Consumable/LowerSectionBoostConsumable.tres")
+const SCORE_STREAK_CONSUMABLE_DEF := preload("res://Scripts/Consumable/ScoreStreakConsumable.tres")
+const SCORE_AMPLIFIER_CONSUMABLE_DEF := preload("res://Scripts/Consumable/ScoreAmplifierConsumable.tres")
+const BONUS_COLLECTOR_CONSUMABLE_DEF := preload("res://Scripts/Consumable/BonusCollectorConsumable.tres")
 
 # Centralized, explicit NodePaths (tweak in Inspector if scene changes)
 @export var dice_hand_path: NodePath            = ^"../DiceHand"
@@ -251,6 +259,12 @@ func _ready() -> void:
 		turn_tracker.turn_started.connect(_on_turn_started)
 		# Handle end of game (Turn 13 reached)
 		turn_tracker.game_over.connect(_on_game_over)
+		# Handle temporary consumable effects expiring
+		turn_tracker.temporary_effect_expired.connect(_on_temporary_effect_expired)
+		# Handle individual dice stacks expiring (for stacked Dice Surge)
+		turn_tracker.dice_stack_expired.connect(_on_dice_stack_expired)
+		# Handle score streak multiplier changes
+		turn_tracker.score_streak_changed.connect(_on_score_streak_changed)
 	
 	# Initialize ChoresManager and ChoreUI (now embedded in CorkboardUI)
 	if chores_manager:
@@ -303,6 +317,14 @@ func _ready() -> void:
 		consumable_manager.register_consumable_def(YAHTZEE_UPGRADE_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(CHANCE_UPGRADE_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF)
+		# New consumables - dice, stats, upgrades, streaks
+		consumable_manager.register_consumable_def(DICE_SURGE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(STAT_CASHOUT_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(UPPER_SECTION_BOOST_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(LOWER_SECTION_BOOST_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(SCORE_STREAK_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(SCORE_AMPLIFIER_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(BONUS_COLLECTOR_CONSUMABLE_DEF)
 
 	## _ready()
 	## Called when the GameController node enters the scene tree.
@@ -1382,6 +1404,28 @@ func _on_consumable_used(consumable_id: String) -> void:
 		"one_free_mod":
 			consumable.apply(self)
 			remove_consumable_instance.call()
+		# New consumables - dice surge, stat cashout, upgrades, streaks
+		"dice_surge":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"stat_cashout":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"upper_section_boost":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"lower_section_boost":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"score_streak":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"score_amplifier":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"bonus_collector":
+			consumable.apply(self)
+			remove_consumable_instance.call()
 		_:
 			push_error("Unknown consumable type: %s" % consumable_id)
 
@@ -1489,6 +1533,24 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 			"was_scratch": _score == 0
 		}
 		chores_manager.check_task_completion(context)
+	
+	# Handle score streak breaking on scratch (score == 0)
+	if turn_tracker and turn_tracker.score_streak_active:
+		if _score == 0:
+			# Player scratched, break the streak
+			turn_tracker.break_score_streak()
+			var score_modifier_manager = get_node_or_null("/root/ScoreModifierManager")
+			if score_modifier_manager and score_modifier_manager.has_method("unregister_multiplier"):
+				score_modifier_manager.unregister_multiplier("score_streak")
+				print("[GameController] Unregistered score_streak multiplier due to scratch")
+		else:
+			# Update streak multiplier for next turn if streak is still active
+			var score_modifier_manager = get_node_or_null("/root/ScoreModifierManager")
+			if score_modifier_manager and score_modifier_manager.has_method("register_multiplier"):
+				# Update the multiplier value based on current streak state
+				score_modifier_manager.unregister_multiplier("score_streak")
+				score_modifier_manager.register_multiplier("score_streak", turn_tracker.score_streak_multiplier)
+				print("[GameController] Updated score_streak multiplier to %.1fx" % turn_tracker.score_streak_multiplier)
 	
 	# Track statistics for scoring
 	var stats = get_node_or_null("/root/Statistics")
@@ -2026,6 +2088,54 @@ func _on_turn_started() -> void:
 	print("[GameController] New turn started - resetting dice to ROLLABLE state")
 	if dice_hand:
 		dice_hand.set_all_dice_rollable()
+
+
+## _on_temporary_effect_expired(effect_type)
+##
+## Called when ALL temporary effects of a type expire (legacy signal).
+## For dice_bonus, this means all stacks have expired.
+func _on_temporary_effect_expired(effect_type: String) -> void:
+	print("[GameController] All temporary effects expired: %s" % effect_type)
+	match effect_type:
+		"dice_bonus":
+			# All dice bonus stacks have expired - reset to base 5
+			if dice_hand:
+				dice_hand.dice_count = 5
+				dice_hand.update_dice_count()
+				print("[GameController] Dice count reset to 5 (all dice surge stacks expired)")
+		"score_streak":
+			# Unregister the streak multiplier
+			var score_modifier_manager = get_node_or_null("/root/ScoreModifierManager")
+			if score_modifier_manager and score_modifier_manager.has_method("unregister_multiplier"):
+				score_modifier_manager.unregister_multiplier("score_streak")
+				print("[GameController] Score streak multiplier unregistered")
+
+
+## _on_dice_stack_expired(stack_id, dice_removed)
+##
+## Called when a single dice bonus stack expires.
+## Adjusts the dice count based on remaining bonus.
+func _on_dice_stack_expired(stack_id: int, dice_removed: int) -> void:
+	print("[GameController] Dice stack #%d expired, removing %d dice" % [stack_id, dice_removed])
+	if dice_hand and turn_tracker:
+		# Get the new total dice count from TurnTracker
+		var new_count = turn_tracker.get_total_dice_count()
+		dice_hand.dice_count = new_count
+		dice_hand.update_dice_count()
+		print("[GameController] Dice count adjusted to %d" % new_count)
+
+
+## _on_score_streak_changed(multiplier, turns_remaining)
+##
+## Called when the score streak multiplier changes (each turn during a streak).
+## Updates the ScoreModifierManager with the new multiplier value.
+func _on_score_streak_changed(multiplier: float, turns_remaining: int) -> void:
+	print("[GameController] Score streak updated: %.2fx multiplier, %d turns remaining" % [multiplier, turns_remaining])
+	var score_modifier_manager = get_node_or_null("/root/ScoreModifierManager")
+	if score_modifier_manager and score_modifier_manager.has_method("register_multiplier"):
+		score_modifier_manager.register_multiplier("score_streak", multiplier)
+		print("[GameController] Updated score_streak multiplier to %.2fx" % multiplier)
+
 
 ## _on_game_over()
 ##

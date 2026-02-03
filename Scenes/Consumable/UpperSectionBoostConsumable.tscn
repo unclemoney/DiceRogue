@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cwp5nh8r2jk6x"]
+
+[ext_resource type="Script" path="res://Scripts/Consumable/upper_section_boost_consumable.gd" id="1_script"]
+
+[node name="UpperSectionBoostConsumable" type="Node"]
+script = ExtResource("1_script")

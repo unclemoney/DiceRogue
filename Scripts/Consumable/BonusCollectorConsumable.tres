@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3 uid="uid://c8h3jnm5rk7w1"]
+
+[ext_resource type="Texture2D" uid="uid://vju23ydk568k" path="res://Resources/Art/Powerups/consumable_test4.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://c8h3jnm5rk7wx" path="res://Scenes/Consumable/BonusCollectorConsumable.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_script")
+id = "bonus_collector"
+display_name = "Bonus Collector"
+description = "Grants $35 instantly if upper section total >= 63"
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 100
+metadata/_custom_type_script = "uid://wx2i3vixf1m5"

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bqr7wmx5ht2pk"]
+
+[ext_resource type="Script" path="res://Scripts/Consumable/score_streak_consumable.gd" id="1_script"]
+
+[node name="ScoreStreakConsumable" type="Node"]
+script = ExtResource("1_script")

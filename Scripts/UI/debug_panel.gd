@@ -197,6 +197,13 @@ func _create_debug_tabs() -> void:
 			{"text": "Grant All Chores", "method": "_debug_grant_all_chores"},
 			{"text": "Grant One Free Mod", "method": "_debug_grant_one_free_mod"},
 			{"text": "Grant Random Uncommon PowerUp", "method": "_debug_grant_random_uncommon_powerup"},
+			{"text": "Grant Dice Surge", "method": "_debug_grant_dice_surge"},
+			{"text": "Grant Stat Cashout", "method": "_debug_grant_stat_cashout"},
+			{"text": "Grant Upper Section Boost", "method": "_debug_grant_upper_section_boost"},
+			{"text": "Grant Lower Section Boost", "method": "_debug_grant_lower_section_boost"},
+			{"text": "Grant Score Streak", "method": "_debug_grant_score_streak"},
+			{"text": "Grant Score Amplifier", "method": "_debug_grant_score_amplifier"},
+			{"text": "Grant Bonus Collector", "method": "_debug_grant_bonus_collector"},
 			{"text": "Register AnyScore", "method": "_debug_register_any_score"},
 			{"text": "Grant Random Mod", "method": "_debug_grant_mod"},
 			{"text": "Test Consumer PowerUp", "method": "_debug_test_consumer_powerup"},
@@ -756,6 +763,83 @@ func _debug_grant_one_free_mod() -> void:
 	if game_controller.has_method("grant_consumable"):
 		game_controller.grant_consumable("one_free_mod")
 		log_debug("Granted One Free Mod consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_dice_surge() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("dice_surge")
+		log_debug("Granted Dice Surge consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_stat_cashout() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("stat_cashout")
+		log_debug("Granted Stat Cashout consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_upper_section_boost() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("upper_section_boost")
+		log_debug("Granted Upper Section Boost consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_lower_section_boost() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("lower_section_boost")
+		log_debug("Granted Lower Section Boost consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_score_streak() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("score_streak")
+		log_debug("Granted Score Streak consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_score_amplifier() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("score_amplifier")
+		log_debug("Granted Score Amplifier consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_bonus_collector() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("bonus_collector")
+		log_debug("Granted Bonus Collector consumable")
 	else:
 		log_debug("GameController missing grant_consumable method")
 

@@ -1048,6 +1048,38 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 5)  # Uncommon: need to use 5 consumables
 	
 	# ==========================================================================
+	# NEW CONSUMABLES (7 total) - Advanced gameplay consumables
+	# ==========================================================================
+	
+	# Dice Surge - Extra dice for 3 turns
+	_add_default_consumable("dice_surge", "Dice Surge", "Grants +2 temporary dice for 3 turns", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2)  # Uncommon: complete 2 channels
+	
+	# Stat Cashout - Money based on statistics
+	_add_default_consumable("stat_cashout", "Stat Cashout", "Earn $10/yahtzee and $5/full house scored this run", 
+		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 3)  # Uncommon: roll 3 yahtzees total
+	
+	# Upper Section Boost - Bulk upper upgrades
+	_add_default_consumable("upper_section_boost", "Upper Section Boost", "Upgrades all 6 upper section categories by one level", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3)  # Rare: complete 3 channels
+	
+	# Lower Section Boost - Bulk lower upgrades
+	_add_default_consumable("lower_section_boost", "Lower Section Boost", "Upgrades all 7 lower section categories by one level", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 4)  # Rare: complete 4 channels
+	
+	# Score Streak - Progressive multiplier
+	_add_default_consumable("score_streak", "Score Streak", "Score multiplier grows: 1x -> 1.5x -> 2x over 3 turns", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 500)  # Uncommon: score 500+ points
+	
+	# Score Amplifier - Double next score
+	_add_default_consumable("score_amplifier", "Score Amplifier", "Doubles your next category score", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 400)  # Uncommon: score 400+ points
+	
+	# Bonus Collector - Upper bonus money
+	_add_default_consumable("bonus_collector", "Bonus Collector", "Grants $35 if upper section bonus achieved", 
+		UnlockConditionClass.ConditionType.EARN_MONEY, 500)  # Uncommon: earn 500+ money total
+	
+	# ==========================================================================
 	# SCORE CARD UPGRADE CONSUMABLES (13 total)
 	# ==========================================================================
 	
