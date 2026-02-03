@@ -346,6 +346,20 @@ func _create_debug_tabs() -> void:
 			{"text": "Force Apply Debuffs", "method": "_debug_difficulty_force_apply"},
 			{"text": "Clear Active Debuffs", "method": "_debug_difficulty_clear_debuffs"},
 			{"text": "Show Multiplier Breakdown", "method": "_debug_difficulty_show_multipliers"},
+		],
+		"Audio": [
+			{"text": "Show Music State", "method": "_debug_audio_show_state"},
+			{"text": "Show Loaded Layers", "method": "_debug_audio_show_loaded_layers"},
+			{"text": "Show Active Layers", "method": "_debug_audio_show_active_layers"},
+			{"text": "Set Intensity 0", "method": "_debug_audio_intensity_0"},
+			{"text": "Set Intensity 1", "method": "_debug_audio_intensity_1"},
+			{"text": "Set Intensity 2", "method": "_debug_audio_intensity_2"},
+			{"text": "Set Intensity 3", "method": "_debug_audio_intensity_3"},
+			{"text": "Set Intensity 4", "method": "_debug_audio_intensity_4"},
+			{"text": "Set Intensity 5", "method": "_debug_audio_intensity_5"},
+			{"text": "Set Intensity 6", "method": "_debug_audio_intensity_6"},
+			{"text": "Stop Music", "method": "_debug_audio_stop_music"},
+			{"text": "Resume Music", "method": "_debug_audio_resume_music"},
 		]
 	}
 	
@@ -3522,4 +3536,150 @@ func _debug_toggle_round_config_goals() -> void:
 		log_debug("ScoreModifierManager State:")
 		log_debug("  Total Multiplier: %.2fx" % ScoreModifierManager.get_total_multiplier())
 		log_debug("  Total Additive: +%d" % ScoreModifierManager.get_total_additive())
+#endregion
+
+#region Audio Debug Methods
+## _get_music_manager()
+##
+## Helper to get MusicManager autoload.
+func _get_music_manager():
+	return get_node_or_null("/root/MusicManager")
+
+## _debug_audio_show_state()
+##
+## Shows complete state of MusicManager including intensity, playback status, and settings.
+func _debug_audio_show_state() -> void:
+	var music_manager = _get_music_manager()
+	if not music_manager:
+		log_debug("MusicManager not found")
+		return
+	
+	var state_text = "=== MusicManager State ===\n"
+	state_text += "Enabled: %s\n" % ("Yes" if music_manager._is_enabled else "No")
+	state_text += "Base Loop Duration: %.3fs\n" % music_manager.base_loop_duration
+	state_text += "Current Intensity: %d\n" % music_manager._current_intensity
+	state_text += "Pending Intensity: %s\n" % (str(music_manager._pending_intensity) if music_manager._pending_intensity >= 0 else "None")
+	state_text += "Music Volume: %.1f dB\n" % music_manager.music_volume_db
+	state_text += "Debug Mode: %s\n" % ("On" if music_manager.debug_mode else "Off")
+	state_text += "\nIntensity Presets:\n"
+	state_text += "  Shop: %d\n" % music_manager.intensity_shop
+	state_text += "  Round Start: %d\n" % music_manager.intensity_round_start
+	state_text += "  Round Complete: %d\n" % music_manager.intensity_round_complete
+	state_text += "  Challenge Complete: %d\n" % music_manager.intensity_challenge_complete
+	state_text += "  Game Over: %d\n" % music_manager.intensity_game_over
+	
+	log_debug(state_text)
+
+## _debug_audio_show_loaded_layers()
+##
+## Shows all loaded layer variants and their counts.
+func _debug_audio_show_loaded_layers() -> void:
+	var music_manager = _get_music_manager()
+	if not music_manager:
+		log_debug("MusicManager not found")
+		return
+	
+	var layers_text = "=== Loaded Music Layers ===\n"
+	layers_text += "Base Layer: %s\n" % ("Loaded" if music_manager.base_layer_stream else "Not Found")
+	layers_text += "Valid Layer Numbers: %s\n\n" % str(music_manager.valid_layer_numbers)
+	
+	for layer_num in music_manager.valid_layer_numbers:
+		if music_manager.layer_variants.has(layer_num):
+			var variants = music_manager.layer_variants[layer_num]
+			layers_text += "LAYER_%d: %d variants\n" % [layer_num, variants.size()]
+	
+	if music_manager.valid_layer_numbers.size() == 0:
+		layers_text += "\nNo layer variants loaded.\n"
+	
+	log_debug(layers_text)
+
+## _debug_audio_show_active_layers()
+##
+## Shows which layers are currently active/playing and their variants.
+func _debug_audio_show_active_layers() -> void:
+	var music_manager = _get_music_manager()
+	if not music_manager:
+		log_debug("MusicManager not found")
+		return
+	
+	var active_text = "=== Active Music Layers ===\n"
+	active_text += "Current Intensity: %d\n" % music_manager._current_intensity
+	active_text += "Active Layer Count: %d\n\n" % music_manager._active_layers.size()
+	
+	if music_manager._active_layers.size() == 0:
+		active_text += "No layers active (base layer only)\n"
+	else:
+		var sorted_layers = music_manager._active_layers.keys()
+		sorted_layers.sort()
+		for layer_num in sorted_layers:
+			active_text += "LAYER_%d: Active\n" % layer_num
+	
+	# Show variant history if available
+	if music_manager._variant_history.size() > 0:
+		active_text += "\nRecent Variant History:\n"
+		for layer_num in music_manager._variant_history.keys():
+			var history = music_manager._variant_history[layer_num]
+			active_text += "  LAYER_%d: %s\n" % [layer_num, str(history)]
+	
+	log_debug(active_text)
+
+## _debug_audio_intensity_0() through _debug_audio_intensity_6()
+##
+## Set music intensity to specific level (0-6).
+func _debug_audio_intensity_0() -> void:
+	_set_music_intensity(0)
+
+func _debug_audio_intensity_1() -> void:
+	_set_music_intensity(1)
+
+func _debug_audio_intensity_2() -> void:
+	_set_music_intensity(2)
+
+func _debug_audio_intensity_3() -> void:
+	_set_music_intensity(3)
+
+func _debug_audio_intensity_4() -> void:
+	_set_music_intensity(4)
+
+func _debug_audio_intensity_5() -> void:
+	_set_music_intensity(5)
+
+func _debug_audio_intensity_6() -> void:
+	_set_music_intensity(6)
+
+## _set_music_intensity(level: int)
+##
+## Helper to set music intensity and log the change.
+func _set_music_intensity(level: int) -> void:
+	var music_manager = _get_music_manager()
+	if not music_manager:
+		log_debug("MusicManager not found")
+		return
+	
+	music_manager.set_custom_intensity(level, 1.0)
+	log_debug("Music intensity queued: %d (will apply at next loop boundary)" % level)
+
+## _debug_audio_stop_music()
+##
+## Stops all music playback.
+func _debug_audio_stop_music() -> void:
+	var music_manager = _get_music_manager()
+	if not music_manager:
+		log_debug("MusicManager not found")
+		return
+	
+	music_manager.stop_music()
+	log_debug("Music stopped")
+
+## _debug_audio_resume_music()
+##
+## Resumes music playback from the beginning.
+func _debug_audio_resume_music() -> void:
+	var music_manager = _get_music_manager()
+	if not music_manager:
+		log_debug("MusicManager not found")
+		return
+	
+	music_manager.resume_music()
+	log_debug("Music resumed")
 #endregion
