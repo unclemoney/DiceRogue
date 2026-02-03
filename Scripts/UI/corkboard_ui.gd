@@ -909,6 +909,9 @@ func add_consumable(data: ConsumableData) -> Node:
 	spine.spine_hovered.connect(_on_consumable_spine_hovered)
 	spine.spine_unhovered.connect(_on_consumable_spine_unhovered)
 	
+	# Update the label to show new count
+	update_consumable_label()
+	
 	return spine
 
 
@@ -932,6 +935,15 @@ func remove_consumable(id: String) -> void:
 	
 	_active_consumable_count = max(0, _active_consumable_count - 1)
 	_reposition_consumable_spines()
+	update_consumable_label()
+	
+	# Check if overflow mode can be exited
+	if _overflow_mode:
+		_check_overflow_complete()
+	# If we're in fanned state and no consumables left, fold back
+	elif _active_consumable_count <= 0 and _current_state == State.FANNED_CONSUMABLES:
+		_cleanup_empty_consumable_state()
+	
 	print("[CorkboardUI] Removed consumable:", id)
 
 
@@ -958,6 +970,9 @@ func clear_all_consumables() -> void:
 	# Clear data
 	_consumable_data.clear()
 	_active_consumable_count = 0
+	
+	# Update label
+	update_consumable_label()
 	
 	print("[CorkboardUI] Cleared all consumables")
 
@@ -1152,16 +1167,26 @@ func _create_consumable_label() -> void:
 	spine_label.name = "SpineLabel"
 	spine_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	spine_label.position = Vector2(70, 5)
-	spine_label.size = Vector2(80, 20)
+	spine_label.size = Vector2(120, 20)
 	spine_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	spine_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	spine_label.add_theme_font_size_override("font_size", 18)
 	spine_label.add_theme_color_override("font_color", Color(0.0, 0.0, 0.0, 1))
 	spine_label.add_theme_font_override("font", load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf"))
-	spine_label.text = "COUPONS"
 	spine_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	spine_label.visible = true
 	add_child(spine_label)
+	
+	# Initialize label with count
+	update_consumable_label()
+
+
+## update_consumable_label()
+##
+## Updates the consumable spine label to show current count and max.
+func update_consumable_label() -> void:
+	if spine_label:
+		spine_label.text = "COUPONS %d/%d" % [_active_consumable_count, max_consumables]
 #endregion
 
 
@@ -1321,6 +1346,10 @@ func _stop_idle_animations() -> void:
 
 func _on_background_clicked(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		# Block folding if in overflow mode
+		if _overflow_mode:
+			print("[CorkboardUI] Cannot close - must use or sell %d consumables first" % _overflow_target_count)
+			return
 		if _current_state != State.SPINES and not _is_animating:
 			_fold_back_cards()
 #endregion
@@ -1385,6 +1414,179 @@ func get_challenge_count() -> int:
 
 func get_debuff_count() -> int:
 	return _debuff_data.size()
+
+
+## fold_back()
+##
+## Public method to fold back any fanned view and hide the background.
+## Called when shop opens or other UI needs to dismiss the corkboard fan.
+func fold_back() -> void:
+	print("[CorkboardUI] fold_back() called - current state:", State.keys()[_current_state])
+	
+	# Immediately hide background regardless of state
+	if _background:
+		_background.visible = false
+		_background.modulate.a = 0.0
+	
+	# If we're in a fanned state, clean up
+	if _current_state != State.SPINES:
+		_stop_idle_animations()
+		_cleanup_all_fanned_icons()
+		
+		# Show spines again
+		if _challenge_spine:
+			_challenge_spine.modulate.a = 1.0
+		if _debuff_spine:
+			_debuff_spine.modulate.a = 1.0
+		for id in _consumable_spines:
+			var spine = _consumable_spines[id]
+			if is_instance_valid(spine):
+				spine.modulate.a = 1.0
+		
+		_current_state = State.SPINES
+		_is_animating = false
+	
+	print("[CorkboardUI] fold_back() complete")
+
+
+## _cleanup_all_fanned_icons()
+##
+## Immediately cleans up all fanned icons without animation.
+func _cleanup_all_fanned_icons() -> void:
+	for icon in _challenge_fanned_icons.values():
+		if is_instance_valid(icon):
+			icon.queue_free()
+	_challenge_fanned_icons.clear()
+	
+	for icon in _debuff_fanned_icons.values():
+		if is_instance_valid(icon):
+			icon.queue_free()
+	_debuff_fanned_icons.clear()
+	
+	for icon in _consumable_fanned_icons.values():
+		if is_instance_valid(icon):
+			icon.queue_free()
+	_consumable_fanned_icons.clear()
+	
+	# Clean up dice label note
+	if _background:
+		for child in _background.get_children():
+			if child.name == "DiceLabelNote":
+				child.queue_free()
+
+
+## _cleanup_empty_consumable_state()
+##
+## Cleans up UI state when all consumables have been removed while fanned.
+func _cleanup_empty_consumable_state() -> void:
+	print("[CorkboardUI] Cleaning up empty consumable state")
+	
+	_stop_idle_animations()
+	
+	# Clear fanned icons
+	for icon in _consumable_fanned_icons.values():
+		if is_instance_valid(icon):
+			icon.queue_free()
+	_consumable_fanned_icons.clear()
+	
+	# Hide background immediately
+	if _background:
+		_background.visible = false
+		_background.modulate.a = 0.0
+	
+	# Reset state
+	_current_state = State.SPINES
+	_is_animating = false
+
+
+## handle_consumable_overflow(excess_count)
+##
+## Called when player loses Extra Coupons powerup and has more consumables than the default max.
+## Forces the fan-out view open and displays a message requiring the player to use or sell
+## consumables until count is at or below max_consumables.
+var _overflow_mode: bool = false
+var _overflow_target_count: int = 0
+var _overflow_label: Label = null
+
+func handle_consumable_overflow(excess_count: int) -> void:
+	print("[CorkboardUI] handle_consumable_overflow called with excess_count: %d" % excess_count)
+	print("[CorkboardUI] Current state: %s, Active count: %d, Max: %d" % [State.keys()[_current_state], _active_consumable_count, max_consumables])
+	
+	if excess_count <= 0:
+		print("[CorkboardUI] No overflow needed (excess <= 0)")
+		return
+	
+	print("[CorkboardUI] Entering overflow mode - must reduce by %d consumables" % excess_count)
+	_overflow_mode = true
+	_overflow_target_count = excess_count
+	
+	# Force fan out if not already
+	if _current_state != State.FANNED_CONSUMABLES:
+		print("[CorkboardUI] Forcing fan out for overflow mode")
+		_fan_out_consumables()
+		await get_tree().create_timer(0.7).timeout
+		print("[CorkboardUI] Fan out animation completed")
+	
+	# Create overflow label
+	_create_overflow_label()
+	_update_overflow_label()
+	print("[CorkboardUI] Overflow label created and updated")
+
+
+func _create_overflow_label() -> void:
+	if _overflow_label and is_instance_valid(_overflow_label):
+		return
+	
+	_overflow_label = Label.new()
+	_overflow_label.name = "OverflowLabel"
+	_overflow_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_overflow_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	
+	# Position above the fanned cards
+	_overflow_label.position = Vector2(_fan_center.x - 200, _fan_center.y - 180)
+	_overflow_label.custom_minimum_size = Vector2(400, 50)
+	_overflow_label.z_index = 70
+	
+	# Style the label
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	if vcr_font:
+		_overflow_label.add_theme_font_override("font", vcr_font)
+	_overflow_label.add_theme_font_size_override("font_size", 24)
+	_overflow_label.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
+	_overflow_label.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+	_overflow_label.add_theme_constant_override("outline_size", 4)
+	
+	_background.add_child(_overflow_label)
+
+
+func _update_overflow_label() -> void:
+	if _overflow_label and is_instance_valid(_overflow_label):
+		_overflow_label.text = "Must Use or Sell %d Consumables" % _overflow_target_count
+		_overflow_label.visible = _overflow_mode
+
+
+func _check_overflow_complete() -> void:
+	if not _overflow_mode:
+		return
+	
+	var excess: int = _active_consumable_count - max_consumables
+	if excess <= 0:
+		print("[CorkboardUI] Overflow resolved - exiting overflow mode")
+		_overflow_mode = false
+		_overflow_target_count = 0
+		
+		# Hide and cleanup overflow label
+		if _overflow_label and is_instance_valid(_overflow_label):
+			_overflow_label.queue_free()
+			_overflow_label = null
+		
+		# Allow normal fan out closure
+		_fold_back_cards()
+	else:
+		# Update remaining count
+		_overflow_target_count = excess
+		_update_overflow_label()
+		print("[CorkboardUI] Still in overflow mode - %d excess remaining" % excess)
 
 
 ## set_chores_manager()

@@ -995,6 +995,10 @@ func _create_default_unlockable_items() -> void:
 	_add_default_power_up("pair_paradise", "Pair Paradise", "Pair bonuses: +3/+6/+9 based on pattern", 
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 100)  # Common: $75
 	
+	# Consumable Capacity PowerUps
+	_add_default_power_up("extra_coupons", "Extra Coupons", "Hold 2 additional consumables (5 max)", 
+		UnlockConditionClass.ConditionType.EARN_MONEY, 200)  # Rare: $250, unlock with money achievement
+	
 	# ==========================================================================
 	# ALL CONSUMABLES (16 total) - From Scripts/Consumable/*.tres files  
 	# ==========================================================================
@@ -1026,6 +1030,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 3)
 	_add_default_consumable("the_rarities", "The Rarities", "Access to rare items", 
 		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 5)
+	_add_default_consumable("visit_the_shop", "Visit The Shop", "Open the shop during active play", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3)  # Uncommon: complete 3 channels
 	
 	# Advanced consumables
 	_add_default_consumable("add_max_power_up", "Add Max Power Up", "Increase PowerUp limit", 

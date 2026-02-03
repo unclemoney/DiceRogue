@@ -516,14 +516,54 @@ func remove_power_up(power_up_id: String) -> void:
 			icon.queue_free()
 		_fanned_icons.erase(power_up_id)
 		
-		# If we're in fanned state, recreate the fan layout
+		# If we're in fanned state and have remaining power-ups, recreate the fan layout
+		# If no power-ups remain, clean up the empty state
 		if _current_state == State.FANNED:
 			await get_tree().process_frame
-			_clear_fanned_icons()
-			_create_fanned_icons()
+			if _power_up_data.size() > 0:
+				_clear_fanned_icons()
+				_create_fanned_icons()
+			else:
+				_cleanup_empty_state()
+	
+	# Also check for empty state when not fanned (handles spine removal edge case)
+	if _power_up_data.size() == 0 and _current_state != State.FANNED:
+		_cleanup_empty_state()
 	
 	update_slots_label()
 	print("[PowerUpUI] Removed power-up:", power_up_id)
+
+## _cleanup_empty_state()
+##
+## Cleans up UI state when all power-ups have been removed.
+## Hides background, clears fanned icons, and resets to spine state.
+func _cleanup_empty_state() -> void:
+	print("[PowerUpUI] Cleaning up empty state")
+	
+	# Stop idle animations immediately
+	_stop_idle_animations()
+	
+	# If we're in fanned state, immediately hide everything
+	if _current_state == State.FANNED:
+		# Clear fanned icons immediately
+		for power_up_id in _fanned_icons.keys():
+			var icon: PowerUpIcon = _fanned_icons[power_up_id]
+			if icon and is_instance_valid(icon):
+				icon.queue_free()
+		_fanned_icons.clear()
+		
+		# Hide background immediately
+		_background.visible = false
+		_background.modulate.a = 0.0
+		
+		# Reset state
+		_current_state = State.SPINES
+		_is_animating = false
+	
+	# Clear all references
+	_spines.clear()
+	_power_up_data.clear()
+	_selected_spine_id = ""
 
 func update_slots_label() -> void:
 	# Update the slots label to show current/max power-ups

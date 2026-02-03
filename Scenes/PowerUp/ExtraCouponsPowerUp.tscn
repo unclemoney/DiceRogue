@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/extra_coupons_power_up.gd" id="1_extra_coupons"]
+
+[node name="ExtraCouponsPowerUp" type="Node2D"]
+script = ExtResource("1_extra_coupons")
+id = "extra_coupons"

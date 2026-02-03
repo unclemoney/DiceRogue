@@ -204,6 +204,8 @@ func _create_debug_tabs() -> void:
 			{"text": "Grant Score Streak", "method": "_debug_grant_score_streak"},
 			{"text": "Grant Score Amplifier", "method": "_debug_grant_score_amplifier"},
 			{"text": "Grant Bonus Collector", "method": "_debug_grant_bonus_collector"},
+			{"text": "Grant Extra Coupons", "method": "_debug_grant_extra_coupons"},
+			{"text": "Grant Visit The Shop", "method": "_debug_grant_visit_the_shop"},
 			{"text": "Register AnyScore", "method": "_debug_register_any_score"},
 			{"text": "Grant Random Mod", "method": "_debug_grant_mod"},
 			{"text": "Test Consumer PowerUp", "method": "_debug_test_consumer_powerup"},
@@ -840,6 +842,30 @@ func _debug_grant_bonus_collector() -> void:
 	if game_controller.has_method("grant_consumable"):
 		game_controller.grant_consumable("bonus_collector")
 		log_debug("Granted Bonus Collector consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+## Grant the Extra Coupons powerup (rare) - allows holding 2 additional consumables (5 max)
+func _debug_grant_extra_coupons() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_power_up"):
+		game_controller.grant_power_up("extra_coupons")
+		log_debug("Granted Extra Coupons PowerUp")
+	else:
+		log_debug("GameController missing grant_power_up method")
+
+## Grant the Visit The Shop consumable - opens shop during active play
+func _debug_grant_visit_the_shop() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("visit_the_shop")
+		log_debug("Granted Visit The Shop consumable")
 	else:
 		log_debug("GameController missing grant_consumable method")
 

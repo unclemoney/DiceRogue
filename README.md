@@ -1073,6 +1073,13 @@ A read-only editor tool for viewing all game resources in one centralized interf
   - Example: After using 3 consumables, all scores are multiplied by 1.75x
   - Synergizes excellently with consumable-heavy strategies
 
+### Inventory PowerUps
+- **ExtraCouponsPowerUp**: Increases maximum consumable slots from 3 to 5 (Rare, $250, R-rated)
+  - Allows holding 2 additional consumables beyond the default 3
+  - When sold or removed, triggers overflow handling: if you have more than 3 consumables, the consumable UI opens in "overflow mode" forcing you to use or sell excess consumables before continuing
+  - The overflow UI displays "Must sell [X]" message and blocks closing until you're back within limit
+  - Great for consumable-heavy builds that rely on having multiple options available
+
 ### PowerUp Ratings
 All PowerUps have content ratings that interact with the Mom system:
 - **G/PG/PG-13**: Safe ratings - no penalty from Mom
@@ -1190,6 +1197,14 @@ Score Card Upgrade consumables permanently increase the level of specific scorin
 - AnyScore is particularly useful for filling difficult categories
 - Green Envy is most effective when you have multiple green dice
 - Random PowerUps provide strategic risk/reward decisions
+
+### Shop & Inventory
+- **Visit The Shop**: Opens the shop UI mid-round without ending your turn (Price: $125)
+  - Can be used at any time during active play (before or after rolling)
+  - Does not consume a roll or end your turn
+  - Allows buying consumables, PowerUps, or Mods without waiting for round end
+  - Shop closes after purchase or pressing the close button, returning to gameplay
+  - Strategic use: grab that perfect PowerUp or consumable when you need it NOW
 
 ## Available Mods
 

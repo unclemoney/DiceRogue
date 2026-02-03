@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Consumable/visit_the_shop_consumable.gd" id="1_visit_shop"]
+
+[node name="VisitTheShopConsumable" type="Node"]
+script = ExtResource("1_visit_shop")

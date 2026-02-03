@@ -37,6 +37,11 @@ var _spine_tooltip_label: Label
 # Safe consumable tracking
 var _active_consumable_count: int = 0
 
+# Overflow state management
+var _overflow_mode: bool = false
+var _overflow_target_count: int = 0
+var _overflow_label: Label = null
+
 func _ready() -> void:
 	print("[ConsumableUI] Initializing new spine-based system...")
 	add_to_group("consumable_ui")
@@ -351,6 +356,40 @@ func _calculate_fan_positions(count: int) -> Array[Vector2]:
 	
 	return positions
 
+## fold_back()
+##
+## Public method to fold back the fan-out view and hide background.
+## Called when shop opens or other UI needs to dismiss the consumable fan.
+func fold_back() -> void:
+	print("[ConsumableUI] fold_back() called - current state: %s" % State.keys()[_current_state])
+	
+	# Immediately hide background regardless of state
+	if _background:
+		_background.visible = false
+		_background.modulate.a = 0.0
+	
+	# If we're in fanned state, clean up
+	if _current_state == State.FANNED:
+		_stop_idle_animations()
+		
+		# Immediately clear fanned icons
+		for consumable_id in _fanned_icons.keys():
+			var icon: ConsumableIcon = _fanned_icons[consumable_id]
+			if icon and is_instance_valid(icon):
+				icon.queue_free()
+		_fanned_icons.clear()
+		
+		# Show spines again
+		for spine_id in _consumable_spines.keys():
+			var spine: ConsumableSpine = _consumable_spines[spine_id]
+			if spine and is_instance_valid(spine):
+				spine.modulate.a = 1.0
+		
+		_current_state = State.SPINES
+		_is_animating = false
+	
+	print("[ConsumableUI] fold_back() complete")
+
 func _fold_back_cards() -> void:
 	print("[ConsumableUI] Folding back cards")
 	_is_animating = true
@@ -400,6 +439,10 @@ func _clear_fanned_icons() -> void:
 func _on_background_clicked(event: InputEvent) -> void:
 	#print("[DEBUG] Background clicked: ", event)
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		# Block folding if in overflow mode
+		if _overflow_mode:
+			print("[ConsumableUI] Cannot close - must use or sell %d consumables first" % _overflow_target_count)
+			return
 		if _current_state == State.FANNED and not _is_animating:
 			_fold_back_cards()
 
@@ -582,6 +625,100 @@ func _stop_idle_animations() -> void:
 			tween.kill()
 	_idle_tweens.clear()
 
+## handle_consumable_overflow(excess_count)
+##
+## Called when player loses Extra Coupons powerup and has more consumables than the default max.
+## Forces the fan-out view open and displays a message requiring the player to use or sell
+## consumables until count is at or below max_consumables.
+func handle_consumable_overflow(excess_count: int) -> void:
+	print("[ConsumableUI] handle_consumable_overflow called with excess_count: %d" % excess_count)
+	print("[ConsumableUI] Current state: %s, Active count: %d, Max: %d" % [State.keys()[_current_state], _active_consumable_count, max_consumables])
+	
+	if excess_count <= 0:
+		print("[ConsumableUI] No overflow needed (excess <= 0)")
+		return
+	
+	print("[ConsumableUI] Entering overflow mode - must reduce by %d consumables" % excess_count)
+	_overflow_mode = true
+	_overflow_target_count = excess_count
+	
+	# Force fan out if not already
+	if _current_state == State.SPINES:
+		print("[ConsumableUI] Currently in SPINES state, forcing fan out")
+		_fan_out_cards()
+		# Wait for fan out animation to complete
+		await get_tree().create_timer(0.7).timeout
+		print("[ConsumableUI] Fan out animation completed")
+	else:
+		print("[ConsumableUI] Already in FANNED state")
+	
+	# Create overflow label if it doesn't exist
+	_create_overflow_label()
+	_update_overflow_label()
+	print("[ConsumableUI] Overflow label created and updated")
+
+## _create_overflow_label()
+##
+## Creates the overflow warning label shown during overflow mode.
+func _create_overflow_label() -> void:
+	if _overflow_label and is_instance_valid(_overflow_label):
+		return
+	
+	_overflow_label = Label.new()
+	_overflow_label.name = "OverflowLabel"
+	_overflow_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_overflow_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	
+	# Position above the fanned cards
+	_overflow_label.position = Vector2(_fan_center.x - 200, _fan_center.y - 180)
+	_overflow_label.custom_minimum_size = Vector2(400, 50)
+	_overflow_label.z_index = 25
+	
+	# Style the label
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	if vcr_font:
+		_overflow_label.add_theme_font_override("font", vcr_font)
+	_overflow_label.add_theme_font_size_override("font_size", 24)
+	_overflow_label.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
+	_overflow_label.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+	_overflow_label.add_theme_constant_override("outline_size", 4)
+	
+	add_child(_overflow_label)
+
+## _update_overflow_label()
+##
+## Updates the overflow label text with current excess count.
+func _update_overflow_label() -> void:
+	if _overflow_label and is_instance_valid(_overflow_label):
+		_overflow_label.text = "Must Use or Sell %d Consumables" % _overflow_target_count
+		_overflow_label.visible = _overflow_mode
+
+## _check_overflow_complete()
+##
+## Checks if overflow mode can be exited (consumable count <= max_consumables).
+func _check_overflow_complete() -> void:
+	if not _overflow_mode:
+		return
+	
+	var excess: int = _active_consumable_count - max_consumables
+	if excess <= 0:
+		print("[ConsumableUI] Overflow resolved - exiting overflow mode")
+		_overflow_mode = false
+		_overflow_target_count = 0
+		
+		# Hide and cleanup overflow label
+		if _overflow_label and is_instance_valid(_overflow_label):
+			_overflow_label.queue_free()
+			_overflow_label = null
+		
+		# Allow normal fan out closure
+		_fold_back_cards()
+	else:
+		# Update remaining count
+		_overflow_target_count = excess
+		_update_overflow_label()
+		print("[ConsumableUI] Still in overflow mode - %d excess remaining" % excess)
+
 func _has_consumables() -> bool:
 	return _active_consumable_count > 0
 
@@ -658,6 +795,10 @@ func remove_consumable(consumable_id: String) -> void:
 	# Update slots label
 	update_slots_label()
 	
+	# Check if overflow mode can be exited
+	if _overflow_mode:
+		_check_overflow_complete()
+	
 	# Handle empty state
 	if _active_consumable_count <= 0:
 		_cleanup_empty_state()
@@ -665,27 +806,50 @@ func remove_consumable(consumable_id: String) -> void:
 func _cleanup_empty_state() -> void:
 	print("[ConsumableUI] Cleaning up empty state")
 	
-	# Ensure we're in spine state when empty
+	# Stop idle animations immediately
+	_stop_idle_animations()
+	
+	# If we're in fanned state, immediately hide everything without animation
 	if _current_state == State.FANNED:
-		_fold_back_cards()
+		# Clear fanned icons immediately
+		for consumable_id in _fanned_icons.keys():
+			var icon: ConsumableIcon = _fanned_icons[consumable_id]
+			if icon and is_instance_valid(icon):
+				icon.queue_free()
+		_fanned_icons.clear()
+		
+		# Hide background immediately
+		_background.visible = false
+		_background.modulate.a = 0.0
+		
+		# Reset state
+		_current_state = State.SPINES
+		_is_animating = false
 	
 	# Clear all references
 	_consumable_spines.clear()
-	_fanned_icons.clear()
 	_consumable_data.clear()
 	_active_consumable_count = 0
 	_selected_spine_id = ""
 
 func update_slots_label() -> void:
 	# Update the slots label to show current/max consumables
-	var current: int = _active_consumable_count  # Fixed: use _active_consumable_count instead of _icons
-	slots_label.text = "(%d/%d)" % [current, max_consumables]
+	var current: int = _active_consumable_count
+	slots_label.text = "%d/%d" % [current, max_consumables]
 	
-	# Change text color to red when at max capacity
+	# Ensure label has proper styling
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	if vcr_font and not slots_label.has_theme_font_override("font"):
+		slots_label.add_theme_font_override("font", vcr_font)
+		slots_label.add_theme_font_size_override("font_size", 16)
+		slots_label.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+		slots_label.add_theme_constant_override("outline_size", 2)
+	
+	# Change text color to red when at max capacity, otherwise white
 	if current >= max_consumables:
 		slots_label.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
 	else:
-		slots_label.remove_theme_color_override("font_color")
+		slots_label.add_theme_color_override("font_color", Color(1, 1, 1))
 
 func has_max_consumables() -> bool:
 	"""Check if the maximum number of consumables has been reached"""

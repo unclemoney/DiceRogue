@@ -896,6 +896,9 @@ func _activate_power_up(power_up_id: String) -> void:
 				print("[GameController] Applied PairParadisePowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for PairParadisePowerUp")
+		"extra_coupons":
+			pu.apply(self)  # Pass GameController so PowerUp can access both UIs
+			print("[GameController] Applied ExtraCouponsPowerUp")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -1066,6 +1069,9 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"pair_paradise":
 			print("[GameController] Removing pair_paradise PowerUp")
 			pu.remove(scorecard)
+		"extra_coupons":
+			print("[GameController] Removing extra_coupons PowerUp")
+			pu.remove(self)  # Pass GameController so PowerUp can access both UIs
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -1152,6 +1158,8 @@ func revoke_power_up(power_up_id: String) -> void:
 				pu.remove(scorecard)
 			"pair_paradise":
 				pu.remove(scorecard)
+			"extra_coupons":
+				pu.remove(self)  # Pass GameController so PowerUp can access both UIs
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself
 				pu.remove(pu)
@@ -1424,6 +1432,9 @@ func _on_consumable_used(consumable_id: String) -> void:
 			consumable.apply(self)
 			remove_consumable_instance.call()
 		"bonus_collector":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"visit_the_shop":
 			consumable.apply(self)
 			remove_consumable_instance.call()
 		_:
