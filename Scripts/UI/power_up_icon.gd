@@ -28,7 +28,7 @@ var hover_label: Label
 var sell_button: Button
 var card_frame: TextureRect
 var card_info: Control  # Can be VBoxContainer initially, then PanelContainer after styling
-var card_title: Label
+var card_title: RichTextLabel
 var shadow: TextureRect
 var rarity_icon: TextureRect
 var rarity_label: Label
@@ -218,13 +218,18 @@ func _create_card_structure() -> void:
 	card_info.name = "CardInfo"
 	card_info.z_index = 2
 	card_info.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	card_info.custom_minimum_size = Vector2(120, 20)
 	card_info.visible = false  # Start hidden, show on mouse enter
 	add_child(card_info)
 	
 	# Create Title
-	card_title = Label.new()
+	card_title = RichTextLabel.new()
 	card_title.name = "Title"
-	card_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	card_title.bbcode_enabled = true
+	card_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	card_title.fit_content = true
+	card_title.scroll_active = false
+	card_title.custom_minimum_size = Vector2(120, 20)
 	card_title.add_theme_font_size_override("font_size", 16)
 	card_info.add_child(card_title)
 	
@@ -324,6 +329,29 @@ func _setup_shader() -> void:
 	# Apply same texture to shadow if available
 	if shadow and card_art and card_art.texture:
 		shadow.texture = card_art.texture
+
+## _calculate_title_width(title_text)
+## Calculates optimal title width based on character count
+## <15 chars: 80px, 15-30 chars: 120px, 30+ chars: 160px
+func _calculate_title_width(title_text: String) -> float:
+	var char_count = title_text.length()
+	if char_count < 15:
+		return 80.0
+	elif char_count <= 30:
+		return 120.0
+	else:
+		return 160.0
+
+## _apply_shimmer_bbcode(text)
+## Wraps text with shimmer animation BBCode using rainbow wave effect
+func _apply_shimmer_bbcode(text: String) -> String:
+	# Use rainbow effect with wave for shimmer
+	return "[rainbow freq=0.2 sat=0.8 val=1.0][wave amp=5.0 freq=2.0 connected=1]" + text + "[/wave][/rainbow]"
+
+## _apply_color_bbcode(text)
+## Wraps text with static color BBCode (warm white)
+func _apply_color_bbcode(text: String) -> String:
+	return "[color=#fdfae6ff][center]" + text + "[/center][/color]"
 
 func _apply_data_to_ui() -> void:
 	if not data:
@@ -485,6 +513,10 @@ func _on_mouse_entered() -> void:
 	
 	_current_tween = create_tween()
 	card_info.visible = true  # Ensure card info is visible
+	
+	# Activate shimmer animation on title
+	_animate_title_shimmer(true)
+	
 	# Show hover label
 	if label_bg:
 		label_bg.visible = true
@@ -528,6 +560,9 @@ func _on_mouse_entered() -> void:
 func _on_mouse_exited() -> void:
 	print("[PowerUpIcon] Mouse exited:", data.id if data else "unknown")
 	_is_hovering = false
+	
+	# Deactivate shimmer animation on title
+	_animate_title_shimmer(false)
 	
 	# Reset shader rotation parameters immediately at the start
 	if _shader_material:
@@ -781,6 +816,22 @@ func update_hover_description() -> void:
 	hover_label.text = description + rating_suffix
 	print("[PowerUpIcon] Set hover_label.text to:", hover_label.text)
 
+## _animate_title_shimmer(active)
+## Toggles shimmer animation on card title
+## active: true = apply shimmer, false = revert to static color
+func _animate_title_shimmer(active: bool) -> void:
+	if not card_title or not data:
+		return
+	
+	var title_text = data.display_name if (data.display_name and data.display_name != "") else "Unknown PowerUp"
+	
+	if active:
+		# Apply shimmer animation
+		card_title.text = _apply_shimmer_bbcode(title_text)
+	else:
+		# Revert to static color
+		card_title.text = _apply_color_bbcode(title_text)
+
 ## _apply_action_button_style(button)
 ## Applies the action button styling directly to a button
 func _apply_action_button_style(button: Button) -> void:
@@ -899,9 +950,10 @@ func _apply_card_info_style() -> void:
 		card_info.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		card_info.z_index = 2
 		
-		# Set width 10 pixels wider as requested (was 70, now 80)
-		var title_width = 80
-		var title_height = 25
+		# Calculate dynamic title width based on text length
+		var title_text = data.display_name if (data and data.display_name and data.display_name != "") else ("Unknown PowerUp" if data else "")
+		var title_width = _calculate_title_width(title_text)
+		var title_height = 0  # Let height auto-fit content
 		card_info.custom_minimum_size = Vector2(title_width, title_height)
 		
 		# Calculate center position mathematically
@@ -910,7 +962,7 @@ func _apply_card_info_style() -> void:
 		
 		# Position title so its CENTER aligns horizontally with card center
 		# and appears 5 pixels below the bottom of the card art
-		var title_center_x = card_center_x - (title_width / 2.0)
+		var title_center_x = card_center_x - (title_width + 0.1 / 2.0)
 		var title_center_y = size.y + 5  # 5 pixels below the bottom of the card
 		
 		card_info.position = Vector2(title_center_x, title_center_y)
@@ -957,18 +1009,17 @@ func _apply_card_info_style() -> void:
 		card_info = new_card_info
 		add_child(card_info)
 	
-	# Style the Title label
+	# Style the Title RichTextLabel
 	if card_title and vcr_font:
-		card_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		card_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		card_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		card_title.fit_content = true
 		
 		# Apply VCR font with larger size
-		card_title.add_theme_font_override("font", vcr_font)
-		card_title.add_theme_font_size_override("font_size", 18)  # Bigger than before (was 16)
+		card_title.add_theme_font_override("normal_font", vcr_font)
+		card_title.add_theme_font_size_override("normal_font_size", 18)  # Bigger than before (was 16)
 		
-		# Enhanced text styling
-		card_title.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))  # Warm white
+		# Enhanced text styling (default color, BBCode will override)
+		card_title.add_theme_color_override("default_color", Color(1, 0.98, 0.9, 1))  # Warm white
 		card_title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
 		card_title.add_theme_constant_override("shadow_offset_x", 2)
 		card_title.add_theme_constant_override("shadow_offset_y", 2)
