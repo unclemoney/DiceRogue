@@ -6,7 +6,7 @@ signal debuff_selected(id: String)
 @export var data: DebuffData
 @export var glow_intensity: float = 0.25
 @export var hover_tilt: float = 0.05
-@export var hover_scale: float = 1.85
+@export var hover_scale: float = 1.05
 @export var transition_speed: float = 0.05
 @export var max_offset_shadow: float = 20.0
 
@@ -20,8 +20,8 @@ var card_art: TextureRect
 var label_bg: PanelContainer
 var hover_label: Label
 var card_frame: TextureRect
-var card_info: VBoxContainer
-var card_title: Label
+var card_info: Control
+var card_title: RichTextLabel
 var shadow: TextureRect
 
 var _shader_material: ShaderMaterial
@@ -40,7 +40,7 @@ var is_active := false
 
 func _ready() -> void:
 	print("[DebuffIcon] Initializing...")
-	
+	_create_card_structure()
 	# If we have no children, create the full card structure
 	if get_child_count() == 0:
 		print("[DebuffIcon] Creating card structure")
@@ -114,7 +114,7 @@ func _update_default_position() -> void:
 	_default_position = position
 	_last_pos = position
 
-func _update_shadow(delta: float) -> void:
+func _update_shadow(_delta: float) -> void:
 	if not shadow:
 		return
 	
@@ -124,8 +124,8 @@ func _update_shadow(delta: float) -> void:
 	
 	# Set shadow position with offset based on rotation and distance from center
 	var shadow_offset = Vector2(
-		lerp(5.0, -sign(distance) * max_offset_shadow, abs(distance/(center.x)))-50, 
-		5.0 + abs(_displacement * 10.0)-50
+		lerp(5.0, -sign(distance) * max_offset_shadow, abs(distance/(center.x))), 
+		5.0 + abs(_displacement * 10.0)
 	)
 	
 	shadow.position = shadow_offset
@@ -213,18 +213,21 @@ func _create_card_structure() -> void:
 	# Create CardInfo
 	card_info = VBoxContainer.new()
 	card_info.name = "CardInfo"
-	card_info.z_index = 1
+	card_info.z_index = 2
+	card_info.visible = false  # Start hidden, show on mouse enter
 	card_info.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	card_info.offset_top = -40  # Position for title
+	card_info.position = Vector2(-186, 100)
 	add_child(card_info)
 	
 	# Create Title
-	card_title = Label.new()
+	card_title = RichTextLabel.new()
 	card_title.name = "Title"
-	card_title.z_index = 1
-	card_title.visible = false
-	card_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	card_title.bbcode_enabled = true
+	card_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	card_title.fit_content = true
+	card_title.scroll_active = false
 	card_title.add_theme_font_size_override("font_size", 16)
+	card_title.visible = true
 	card_info.add_child(card_title)
 	
 	# Create LabelBg
@@ -233,8 +236,8 @@ func _create_card_structure() -> void:
 	label_bg.visible = false
 	label_bg.z_index = 2
 	label_bg.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	label_bg.position.y = -60
-	label_bg.position.x = -20
+	label_bg.position.y = -55
+	label_bg.position.x = -60
 	
 	# Apply hover styling directly
 	_apply_hover_tooltip_style(label_bg)
@@ -299,18 +302,16 @@ func _apply_data_to_ui() -> void:
 	
 	# Set text fields
 	if card_title:
-		card_title.text = data.display_name
-		card_title.add_theme_color_override("font_shadow_color", Color.BLACK)
-		card_title.add_theme_constant_override("shadow_offset_x", 1)
-		card_title.add_theme_constant_override("shadow_offset_y", 1)
-		card_title.add_theme_constant_override("shadow_outline_size", 0)
-		card_title.add_theme_constant_override("shadow_as_outline", 0)
+		card_title.text = _apply_color_bbcode(data.display_name)
 	
 	if hover_label:
 		print("[DebuffIcon] Setting hover_label text to:", data.description)
 		hover_label.text = "%s\n%s" % [data.display_name, data.description]
 	else:
 		print("[DebuffIcon] hover_label is null!")
+	
+	# Apply card info styling
+	_apply_card_info_style()
 
 func _start_mouse_following() -> void:
 	_default_position = position
@@ -425,8 +426,12 @@ func _on_mouse_entered() -> void:
 		_current_tween.kill()
 	
 	_current_tween = create_tween()
+	_animate_title_shimmer(true)
+
+	# Show card info and hover label
+	if card_info:
+		card_info.visible = true
 	
-	# Show hover label
 	if label_bg:
 		label_bg.visible = true
 		label_bg.modulate.a = 0.0
@@ -507,13 +512,13 @@ func _on_mouse_exited() -> void:
 	
 	# Animate card back to normal with elastic effect
 	_current_tween.parallel().tween_property(
-		self, "scale", Vector2.ONE * 0.55, 0.55
+		self, "scale", Vector2.ONE, 0.55
 	).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	
 	# Animate shadow back to normal
 	if shadow:
 		_current_tween.parallel().tween_property(
-			shadow, "scale", Vector2.ONE * 0.55, 0.55
+			shadow, "scale", Vector2.ONE, 0.55
 		).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	
 	# Animate tilt back to zero
@@ -557,14 +562,118 @@ func _apply_hover_tooltip_style(panel: PanelContainer) -> void:
 	print("[DebuffIcon] Hover tooltip styling applied")
 
 ## _apply_hover_label_style(label)
-## _apply_hover_label_style(label)
 ## Applies the hover label font styling directly to a Label
 func _apply_hover_label_style(label: Label) -> void:
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as FontFile
 	if vcr_font:
 		label.add_theme_font_override("font", vcr_font)
 		label.add_theme_font_size_override("font_size", 14)
-		label.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))
+		label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 		label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 		label.add_theme_constant_override("outline_size", 1)
 	print("[DebuffIcon] Hover label styling applied")
+
+## _calculate_title_width(title_text)
+## Calculates optimal title width based on character count
+## <15 chars: 80px, 15-30 chars: 120px, 30+ chars: 160px
+func _calculate_title_width(title_text: String) -> float:
+	var char_count = title_text.length()
+	if char_count < 15:
+		return 80.0
+	elif char_count <= 30:
+		return 120.0
+	else:
+		return 160.0
+
+## _apply_color_bbcode(text)
+## Wraps text with static color BBCode (warm white)
+func _apply_color_bbcode(text: String) -> String:
+	return "[color=#fdfae6ff][center]" + text + "[/center][/color]"
+
+## _animate_title_shimmer(active)
+## Toggles shimmer animation on card title
+## active: true = apply shimmer, false = revert to static color
+func _animate_title_shimmer(active: bool) -> void:
+	if not card_title or not data:
+		return
+	
+	if active:
+		# Apply shimmer with rainbow wave effect
+		card_title.text = "[rainbow freq=0.2 sat=0.8 val=1.0][wave amp=5.0 freq=2.0 connected=1][center]" + data.display_name + "[/center][/wave][/rainbow]"
+	else:
+		# Revert to static color
+		card_title.text = _apply_color_bbcode(data.display_name)
+
+## _apply_card_info_style()
+## Applies enhanced styling to CardInfo and Title elements
+func _apply_card_info_style() -> void:
+	if not card_info or not card_title or not data:
+		return
+	
+	# Calculate dynamic title width based on text length
+	var title_width = _calculate_title_width(data.display_name)
+	
+	# Calculate positioning to center title below the card
+	var card_center_x = size.x / 2.0
+	var title_center_x = card_center_x - (title_width / 2.0)
+	var title_center_y = size.y + 5  # 5px below card
+	
+	# Remove card_info from parent and convert to PanelContainer
+	var old_parent = card_info.get_parent()
+	var old_index = card_info.get_index()
+	
+	if old_parent:
+		old_parent.remove_child(card_info)
+	
+	# Create new PanelContainer
+	var new_card_info = PanelContainer.new()
+	new_card_info.name = "CardInfo"
+	new_card_info.z_index = 2
+	new_card_info.visible = card_info.visible
+	new_card_info.position = Vector2(title_center_x, title_center_y)
+	new_card_info.custom_minimum_size = Vector2(title_width, 0)
+	
+	# Apply golden border styling
+	var style_box = StyleBoxFlat.new()
+	style_box.bg_color = Color(0.08, 0.06, 0.12, 0.98)
+	style_box.border_width_left = 2
+	style_box.border_width_top = 2
+	style_box.border_width_right = 2
+	style_box.border_width_bottom = 2
+	style_box.border_color = Color(1, 0.8, 0.2, 1)
+	style_box.corner_radius_top_left = 4
+	style_box.corner_radius_top_right = 4
+	style_box.corner_radius_bottom_right = 4
+	style_box.corner_radius_bottom_left = 4
+	style_box.content_margin_left = 8.0
+	style_box.content_margin_top = 4.0
+	style_box.content_margin_right = 8.0
+	style_box.content_margin_bottom = 4.0
+	new_card_info.add_theme_stylebox_override("panel", style_box)
+	
+	# Reparent card_title to new container
+	if card_title.get_parent():
+		card_title.get_parent().remove_child(card_title)
+	new_card_info.add_child(card_title)
+	
+	# Apply VCR font and styling to title
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as FontFile
+	if vcr_font:
+		card_title.add_theme_font_override("normal_font", vcr_font)
+		card_title.add_theme_font_size_override("normal_font_size", 18)
+		card_title.add_theme_color_override("default_color", Color(0.99, 0.98, 0.9, 1))
+		card_title.add_theme_color_override("font_shadow_color", Color.BLACK)
+		card_title.add_theme_constant_override("shadow_offset_x", 2)
+		card_title.add_theme_constant_override("shadow_offset_y", 2)
+		card_title.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		card_title.add_theme_constant_override("outline_size", 1)
+	
+	# Add new container to parent
+	if old_parent:
+		old_parent.add_child(new_card_info)
+		if old_index >= 0:
+			old_parent.move_child(new_card_info, old_index)
+	
+	# Update reference
+	card_info = new_card_info
+	print("[DebuffIcon] Card info styling applied")

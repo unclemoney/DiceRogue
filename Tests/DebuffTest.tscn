@@ -1,4 +1,4 @@
-[gd_scene load_steps=158 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=162 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -86,7 +86,9 @@
 [ext_resource type="Resource" uid="uid://c4l8fhahk2wyp" path="res://Scripts/Mods/HighRollerMod.tres" id="67_highroller"]
 [ext_resource type="PackedScene" uid="uid://s7ortdkxgdxp" path="res://Scenes/UI/DebugPanel.tscn" id="69_6hkbr"]
 [ext_resource type="Resource" uid="uid://c7p2gvbh8r3kn" path="res://Scripts/PowerUps/PerfectStrangers.tres" id="70_perfect_strangers"]
+[ext_resource type="Resource" uid="uid://bddj5ycu3mel8" path="res://Scripts/Challenge/greed_isnt_good_challenge.tres" id="82_66wcx"]
 [ext_resource type="Resource" uid="uid://c2dv7lqytpbu" path="res://Scripts/Debuff/TheDivisionDebuff.tres" id="82_division"]
+[ext_resource type="Resource" uid="uid://cyvbiu4tmescx" path="res://Scripts/Challenge/tough_addition_challenge.tres" id="83_83ril"]
 [ext_resource type="Resource" uid="uid://dk8q4n7m1vbfs" path="res://Scripts/PowerUps/GreenWithEnvy.tres" id="83_green_monster"]
 [ext_resource type="Script" uid="uid://njvt03rpt35v" path="res://Scripts/Effects/scoring_animation_controller.gd" id="91_fjxkw"]
 [ext_resource type="PackedScene" uid="uid://banpa5fhdg13n" path="res://Scenes/UI/EndOfRoundStatsPanel.tscn" id="98_23y3a"]
@@ -114,6 +116,8 @@
 [ext_resource type="Resource" uid="uid://cpq4eupseaic8" path="res://Scripts/PowerUps/EvenHigherPowerUp.tres" id="115_even_higher"]
 [ext_resource type="Resource" uid="uid://dcw7vi0wy7xnr" path="res://Scripts/PowerUps/MoneyBagsPowerUp.tres" id="116_money_bags"]
 [ext_resource type="Resource" uid="uid://duqqnh13i0ndb" path="res://Scripts/PowerUps/FailedMoneyPowerUp.tres" id="117_failed_money"]
+[ext_resource type="Resource" uid="uid://ct00gr33dy5c4" path="res://Scripts/Debuff/TooGreedyDebuff.tres" id="138_ja73i"]
+[ext_resource type="Resource" uid="uid://ch4lf4dd1t1v4" path="res://Scripts/Debuff/HalfAdditiveDebuff.tres" id="139_tmun7"]
 [ext_resource type="PackedScene" uid="uid://ccn3jkgrhqwqe" path="res://Scenes/UI/StatisticsPanel.tscn" id="999_stats"]
 [ext_resource type="Script" uid="uid://du88ajtcwgupi" path="res://Scripts/Managers/ChoresManager.gd" id="1000_chores_mgr"]
 [ext_resource type="PackedScene" uid="uid://crlykvmh3v2xq" path="res://Scenes/UI/UnlockedItemPanel.tscn" id="1001_unlocked_panel"]
@@ -341,7 +345,7 @@ crt_manager_path = NodePath("../Background/CRTManager")
 power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc"), ExtResource("29_bonus_money"), ExtResource("29_money_multiplier"), ExtResource("30_8nt64"), ExtResource("30_2hxro"), ExtResource("31_sqb4o"), ExtResource("32_fullhouse"), ExtResource("33_stepbystep"), ExtResource("70_perfect_strangers"), ExtResource("83_green_monster"), ExtResource("39_hm8bq"), ExtResource("99_wild_dots"), ExtResource("100_pin_head"), ExtResource("101_money_well_spent"), ExtResource("102_highlighted_score"), ExtResource("103_the_consumer_is_always_right"), ExtResource("104_green_slime"), ExtResource("105_red_slime"), ExtResource("106_purple_slime"), ExtResource("107_blue_slime"), ExtResource("108_lower_ten"), ExtResource("109_different_straights"), ExtResource("110_plus_thelast"), ExtResource("111_allowance"), ExtResource("112_ungrounded"), ExtResource("113_shop_rerolls"), ExtResource("114_tango_and_cash"), ExtResource("115_even_higher"), ExtResource("116_money_bags"), ExtResource("117_failed_money"), ExtResource("59_7f4b6"), ExtResource("60_nxp7f"), ExtResource("61_oc53v"), ExtResource("62_3nuss"), ExtResource("63_ja73i"), ExtResource("1038_extra_coupons")])
 
 [node name="ChallengeManager" parent="." instance=ExtResource("25_3vaha")]
-challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtResource("29_1jk2k"), ExtResource("30_o0xxd"), ExtResource("31_ja7vv"), ExtResource("32_ytf57"), ExtResource("33_3ia8s"), ExtResource("34_crossing"), ExtResource("1030_faster_chores"), ExtResource("1031_disabled_mods"), ExtResource("1032_disabled_colors"), ExtResource("1033_reduced_levels_challenge"), ExtResource("1034_wildcard_run"), ExtResource("1035_triple_threat"), ExtResource("1036_perfect_execution"), ExtResource("1037_chaos_theory")])
+challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtResource("29_1jk2k"), ExtResource("30_o0xxd"), ExtResource("31_ja7vv"), ExtResource("32_ytf57"), ExtResource("33_3ia8s"), ExtResource("34_crossing"), ExtResource("1030_faster_chores"), ExtResource("1031_disabled_mods"), ExtResource("1032_disabled_colors"), ExtResource("1033_reduced_levels_challenge"), ExtResource("1034_wildcard_run"), ExtResource("1035_triple_threat"), ExtResource("1036_perfect_execution"), ExtResource("1037_chaos_theory"), ExtResource("82_66wcx"), ExtResource("83_83ril")])
 
 [node name="ModManager" parent="." instance=ExtResource("23_8eqdw")]
 mod_defs = Array[ExtResource("60_moddata")]([ExtResource("61_evenonly"), ExtResource("62_fiveone"), ExtResource("63_goldsix"), ExtResource("64_oddonly"), ExtResource("65_threethree"), ExtResource("66_wildcard"), ExtResource("67_highroller")])
@@ -350,7 +354,7 @@ mod_defs = Array[ExtResource("60_moddata")]([ExtResource("61_evenonly"), ExtReso
 consumable_defs = Array[ExtResource("31_gtvla")]([ExtResource("32_aeiu6"), ExtResource("41_5k370"), ExtResource("45_i7xol"), ExtResource("46_nkw3w"), ExtResource("50_cs0p4"), ExtResource("51_8nt64"), ExtResource("55_7m4k5"), ExtResource("56_qv1fg"), ExtResource("57_double_or_nothing"), ExtResource("1002_green_envy"), ExtResource("1003_poor_house"), ExtResource("1004_empty_shelves"), ExtResource("1005_the_rarities"), ExtResource("1006_the_pawn_shop"), ExtResource("1007_one_extra_dice"), ExtResource("1008_go_broke"), ExtResource("1009_ones_upgrade"), ExtResource("1010_twos_upgrade"), ExtResource("1011_threes_upgrade"), ExtResource("1012_fours_upgrade"), ExtResource("1013_fives_upgrade"), ExtResource("1014_sixes_upgrade"), ExtResource("1015_three_of_a_kind"), ExtResource("1016_four_of_a_kind"), ExtResource("1017_full_house"), ExtResource("1018_small_straight"), ExtResource("1019_large_straight"), ExtResource("1020_yahtzee"), ExtResource("1021_chance"), ExtResource("1022_all_categories"), ExtResource("1023_free_chores"), ExtResource("1024_all_chores"), ExtResource("1025_one_free_mod"), ExtResource("1039_visit_the_shop")])
 
 [node name="DebuffManager" parent="." instance=ExtResource("24_f4xs4")]
-debuff_defs = Array[ExtResource("24_4tiye")]([ExtResource("25_gxabo"), ExtResource("43_4tv4b"), ExtResource("46_0fq3x"), ExtResource("49_ghgbc"), ExtResource("82_division"), ExtResource("1026_faster_chores"), ExtResource("1027_disabled_mods"), ExtResource("1028_disabled_colors"), ExtResource("1029_reduced_levels")])
+debuff_defs = Array[ExtResource("24_4tiye")]([ExtResource("25_gxabo"), ExtResource("43_4tv4b"), ExtResource("46_0fq3x"), ExtResource("49_ghgbc"), ExtResource("82_division"), ExtResource("1026_faster_chores"), ExtResource("1027_disabled_mods"), ExtResource("1028_disabled_colors"), ExtResource("1029_reduced_levels"), ExtResource("138_ja73i"), ExtResource("139_tmun7")])
 
 [node name="RoundManager" parent="." instance=ExtResource("42_o2qgl")]
 challenge_configs = Array[ExtResource("43_2fp2s")]([ExtResource("52_ghgbc"), ExtResource("44_2lvko"), ExtResource("50_ytf57"), ExtResource("47_ja7vv"), ExtResource("52_3ia8s"), ExtResource("45_o0xxd")])

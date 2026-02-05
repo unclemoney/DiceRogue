@@ -962,7 +962,7 @@ func _apply_card_info_style() -> void:
 		
 		# Position title so its CENTER aligns horizontally with card center
 		# and appears 5 pixels below the bottom of the card art
-		var title_center_x = card_center_x - (title_width + 0.1 / 2.0)
+		var title_center_x = card_center_x - (title_width  / 2.0)
 		var title_center_y = size.y + 5  # 5 pixels below the bottom of the card
 		
 		card_info.position = Vector2(title_center_x, title_center_y)

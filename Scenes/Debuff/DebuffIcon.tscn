@@ -57,22 +57,27 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="CardInfo" type="VBoxContainer" parent="."]
+visible = false
 z_index = 2
+custom_minimum_size = Vector2(120, 23)
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -10.0
-offset_bottom = 13.0
+offset_left = -186.0
+offset_top = 100.0
+offset_right = -186.0
+offset_bottom = 123.0
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="Title" type="Label" parent="CardInfo"]
+[node name="Title" type="RichTextLabel" parent="CardInfo"]
+custom_minimum_size = Vector2(120, 23)
 layout_mode = 2
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 1
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
 
 [node name="LabelBg" type="PanelContainer" parent="."]
 visible = false
@@ -91,6 +96,7 @@ theme = ExtResource("3_hover_theme")
 [node name="HoverLabel" type="Label" parent="LabelBg"]
 custom_minimum_size = Vector2(220, 0)
 layout_mode = 2
+theme = ExtResource("3_hover_theme")
 horizontal_alignment = 1
 autowrap_mode = 3
 
