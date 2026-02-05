@@ -502,22 +502,40 @@ func _update_playing_as_label() -> void:
 ##
 ## Handler for when a profile button is clicked.
 ## Left-click selects the profile.
+## Includes safeguards against profile name sync issues.
 func _on_profile_button_pressed(slot: int) -> void:
+	print("[MainMenu] ========== PROFILE SWITCH START ==========")
 	print("[MainMenu] Profile %d selected" % slot)
+	print("[MainMenu] Current GameSettings slot before change: %d" % (_game_settings.active_profile_slot if _game_settings else -1))
+	print("[MainMenu] Current ProgressManager slot before change: %d" % (ProgressManager.current_profile_slot if ProgressManager else -1))
+	print("[MainMenu] Current ProgressManager name before change: %s" % (ProgressManager.current_profile_name if ProgressManager else "N/A"))
 	
 	# Update active profile in settings
 	if _game_settings:
 		_game_settings.active_profile_slot = slot
 		_game_settings.save_settings()
+		print("[MainMenu] GameSettings updated and saved - slot is now: %d" % _game_settings.active_profile_slot)
+	
+	# Wait a frame to ensure settings are fully saved before loading profile
+	await get_tree().process_frame
+	
+	# Verify settings saved correctly
+	if _game_settings:
+		print("[MainMenu] GameSettings slot after save+frame: %d" % _game_settings.active_profile_slot)
 	
 	# Load the profile
 	if ProgressManager:
+		print("[MainMenu] Loading profile %d via ProgressManager..." % slot)
 		ProgressManager.load_profile(slot)
+		print("[MainMenu] ProgressManager slot after load: %d" % ProgressManager.current_profile_slot)
+		print("[MainMenu] ProgressManager name after load: %s" % ProgressManager.current_profile_name)
 	
 	# Update UI
 	_update_profile_buttons()
 	_update_playing_as_label()
 	profile_selected.emit(slot)
+	
+	print("[MainMenu] ========== PROFILE SWITCH END ==========")
 
 
 ## _on_profile_button_gui_input(event, slot)

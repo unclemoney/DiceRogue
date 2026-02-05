@@ -834,6 +834,17 @@ func reset_reroll_cost() -> void:
 	_update_reroll_button_state()
 	print("[ShopUI] Reroll cost reset to $%d" % reroll_cost)
 
+
+## reset_shop_expansions()
+## Resets all shop expansion counts back to default values - called on new game/channel
+func reset_shop_expansions() -> void:
+	items_per_section = 2
+	power_up_items = 2
+	consumable_items = 2
+	mod_items = 2
+	colored_dice_items = 2
+	print("[ShopUI] Shop expansions reset to default (2 items per section)")
+
 ## _setup_backdrop()
 ## Sets up the backdrop for click-to-close functionality
 func _setup_backdrop() -> void:

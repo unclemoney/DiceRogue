@@ -488,10 +488,16 @@ func _restart_game_for_new_channel() -> void:
 		turn_tracker.emit_signal("max_rolls_changed", 3)
 		print("[GameController] MAX_ROLLS reset to 3")
 	
-	# Reset shop reroll cost back to default
+	# Reset shop reroll cost and expansions back to default
 	if shop_ui:
 		shop_ui.reset_reroll_cost()
-		print("[GameController] Shop reroll cost reset")
+		shop_ui.reset_shop_expansions()
+		print("[GameController] Shop reroll cost and expansions reset")
+	
+	# Reset scorecard level labels in the UI
+	if score_card_ui:
+		score_card_ui.reset_level_labels()
+		print("[GameController] Scorecard level labels reset")
 	
 	# Re-enable shop button for new game
 	if game_button_ui and game_button_ui.has_node("HBoxContainer/ShopButton"):

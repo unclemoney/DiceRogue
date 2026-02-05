@@ -1463,3 +1463,16 @@ func get_score_panel_position() -> Vector2:
 ## Reset breakdown labels before a scoring animation begins
 func prepare_for_scoring_animation() -> void:
 	_reset_score_breakdown_labels()
+
+
+## reset_level_labels()
+##
+## Resets all category level labels to "Lv.1" for new game/channel.
+## Called when starting a new game after finishing one.
+func reset_level_labels() -> void:
+	print("[ScoreCardUI] Resetting all level labels to Lv.1")
+	for category in category_level_labels.keys():
+		var level_label = category_level_labels[category]
+		if level_label:
+			level_label.text = "Lv.1"
+	print("[ScoreCardUI] Reset %d level labels" % category_level_labels.size())

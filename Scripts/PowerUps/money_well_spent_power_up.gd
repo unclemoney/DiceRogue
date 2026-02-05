@@ -93,7 +93,7 @@ func _start_money_tracking() -> void:
 	# We'll use a timer to periodically check if total_money_spent has changed
 	# This is more reliable than trying to connect to individual purchase events
 	var timer = Timer.new()
-	timer.wait_time = 0.1  # Check every 100ms
+	timer.wait_time = 0.5  # Check every 500ms
 	timer.timeout.connect(_check_money_spent)
 	timer.autostart = true
 	add_child(timer)
@@ -122,7 +122,7 @@ func get_current_additive() -> int:
 	if not statistics_ref:
 		return 0
 	
-	return statistics_ref.total_money_spent / 25
+	return statistics_ref.total_money_spent / 50
 
 func _update_additive_manager() -> void:
 	if not _is_score_modifier_manager_available():
@@ -169,7 +169,7 @@ func remove(_target) -> void:
 	statistics_ref = null
 
 func get_current_description() -> String:
-	var base_desc = "+1 to all scores per $25 spent"
+	var base_desc = "+1 to all scores per $50 spent"
 	
 	if not statistics_ref:
 		return base_desc

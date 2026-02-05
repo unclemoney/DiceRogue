@@ -28,3 +28,4 @@ Label/colors/font_shadow_color = Color(0, 0, 0, 0.8)
 Label/font_sizes/font_size = 14
 Label/fonts/font = ExtResource("1_vcr_font")
 Panel/styles/panel = SubResource("StyleBox_HoverBg")
+PanelContainer/styles/panel = SubResource("StyleBox_HoverBg")

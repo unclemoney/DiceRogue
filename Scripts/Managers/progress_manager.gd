@@ -189,14 +189,21 @@ func _create_default_profile(slot: int) -> void:
 ## load_profile(slot)
 ##
 ## Load a specific profile slot and update current progress data.
+## Includes debug logging for profile sync issue investigation.
 ## @param slot: Profile slot number (1-3)
 ## @return bool: True if successful
 func load_profile(slot: int) -> bool:
+	print("[ProgressManager] ===== LOAD PROFILE START =====")
+	print("[ProgressManager] Requested slot: %d" % slot)
+	print("[ProgressManager] Current slot before load: %d" % current_profile_slot)
+	print("[ProgressManager] Current name before load: %s" % current_profile_name)
+	
 	if slot < 1 or slot > 3:
 		push_error("[ProgressManager] Invalid profile slot: %d" % slot)
 		return false
 	
 	var save_path = PROFILE_SAVE_PATHS[slot]
+	print("[ProgressManager] Loading from path: %s" % save_path)
 	if not FileAccess.file_exists(save_path):
 		print("[ProgressManager] Profile slot %d not found, creating default" % slot)
 		_create_default_profile(slot)
@@ -223,6 +230,9 @@ func load_profile(slot: int) -> bool:
 	# Update current profile info
 	current_profile_slot = slot
 	current_profile_name = save_data.get("profile_name", DEFAULT_PROFILE_NAMES[slot])
+	print("[ProgressManager] Updated current slot to: %d" % current_profile_slot)
+	print("[ProgressManager] Updated current name to: %s" % current_profile_name)
+	print("[ProgressManager] Profile name from save_data: %s" % save_data.get("profile_name", "NOT FOUND"))
 	
 	# Load tutorial flags
 	tutorial_completed = save_data.get("tutorial_completed", false)
@@ -258,6 +268,8 @@ func load_profile(slot: int) -> bool:
 					unlocked_count += 1
 	
 	print("[ProgressManager] Loaded profile %d: %s (%d unlocked items)" % [slot, current_profile_name, unlocked_count])
+	print("[ProgressManager] Final state - slot: %d, name: %s" % [current_profile_slot, current_profile_name])
+	print("[ProgressManager] ===== LOAD PROFILE END =====")
 	profile_loaded.emit(slot)
 	progress_loaded.emit()
 	return true
@@ -293,16 +305,27 @@ func _reset_all_unlocks() -> void:
 ## save_current_profile()
 ##
 ## Save the current profile's progress to its save file.
+## Includes safeguards against profile slot mismatch.
 func save_current_profile() -> void:
+	print("[ProgressManager] ===== SAVE PROFILE START =====")
+	print("[ProgressManager] Saving - current slot: %d, name: %s" % [current_profile_slot, current_profile_name])
+	
 	# Ensure we're using the correct profile slot from GameSettings
 	var game_settings = get_node_or_null("/root/GameSettings")
-	if game_settings and game_settings.active_profile_slot != current_profile_slot:
-		print("[ProgressManager] Warning: Profile mismatch detected!")
-		print("  ProgressManager slot: %d, GameSettings slot: %d" % [current_profile_slot, game_settings.active_profile_slot])
-		print("  Syncing to GameSettings slot: %d" % game_settings.active_profile_slot)
-		current_profile_slot = game_settings.active_profile_slot
+	if game_settings:
+		print("[ProgressManager] GameSettings active slot: %d" % game_settings.active_profile_slot)
+		if game_settings.active_profile_slot != current_profile_slot:
+			print("[ProgressManager] WARNING: Profile mismatch detected!")
+			print("  ProgressManager slot: %d, GameSettings slot: %d" % [current_profile_slot, game_settings.active_profile_slot])
+			print("  Syncing to GameSettings slot: %d" % game_settings.active_profile_slot)
+			# Reload the correct profile before saving to avoid data corruption
+			print("[ProgressManager] CRITICAL: Loading correct profile before save to prevent name crossover")
+			load_profile(game_settings.active_profile_slot)
+	else:
+		print("[ProgressManager] WARNING: GameSettings not found during save!")
 	
 	var save_path = PROFILE_SAVE_PATHS[current_profile_slot]
+	print("[ProgressManager] Saving to path: %s" % save_path)
 	
 	var save_data = {
 		"profile_name": current_profile_name,

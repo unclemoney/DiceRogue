@@ -40,7 +40,6 @@ var is_active := false
 
 func _ready() -> void:
 	print("[DebuffIcon] Initializing...")
-	_create_card_structure()
 	# If we have no children, create the full card structure
 	if get_child_count() == 0:
 		print("[DebuffIcon] Creating card structure")
@@ -55,6 +54,12 @@ func _ready() -> void:
 		shadow = get_node_or_null("Shadow")
 		card_title = card_info.get_node_or_null("Title") if card_info else null
 		hover_label = label_bg.get_node_or_null("HoverLabel") if label_bg else null
+		
+		# Apply styling to existing nodes (in case theme isn't applying correctly)
+		if label_bg:
+			_apply_hover_tooltip_style(label_bg)
+		if hover_label:
+			_apply_hover_label_style(hover_label)
 			
 	# Report missing nodes for debugging
 	if not card_art:
