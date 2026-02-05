@@ -36,7 +36,11 @@ var tutorial_button: Button
 var quit_button: Button
 var rename_dialog: ConfirmationDialog
 var rename_line_edit: LineEdit  # Store direct reference to LineEdit
+var delete_dialog: ConfirmationDialog
 var settings_menu: Control = null
+
+# Theme for dialogs
+var powerup_hover_theme: Theme = null
 
 # Animation
 var title_tween: Tween
@@ -44,12 +48,14 @@ var title_base_position: Vector2
 const TITLE_FLOAT_AMOUNT := 8.0
 const TITLE_FLOAT_DURATION := 2.5
 
-# Currently selected profile for renaming
+# Currently selected profile for renaming/deleting
 var _renaming_slot: int = 0
+var _deleting_slot: int = 0
 
 
 func _ready() -> void:
 	_game_settings = get_node_or_null("/root/GameSettings")
+	_load_theme()
 	_build_ui()
 	_update_profile_buttons()
 	_update_playing_as_label()
@@ -59,6 +65,18 @@ func _ready() -> void:
 	if ProgressManager:
 		ProgressManager.profile_loaded.connect(_on_profile_loaded)
 		ProgressManager.profile_renamed.connect(_on_profile_renamed)
+
+
+## _load_theme()
+##
+## Loads the powerup hover theme for dialogs.
+func _load_theme() -> void:
+	var theme_path = "res://Resources/UI/powerup_hover_theme.tres"
+	if FileAccess.file_exists(theme_path):
+		powerup_hover_theme = load(theme_path) as Theme
+		print("[MainMenu] Loaded powerup_hover_theme")
+	else:
+		print("[MainMenu] Warning: powerup_hover_theme.tres not found")
 
 
 func _exit_tree() -> void:
@@ -185,6 +203,9 @@ func _build_ui() -> void:
 	
 	# Build rename dialog
 	_build_rename_dialog()
+	
+	# Build delete confirmation dialog
+	_build_delete_dialog()
 
 
 ## _build_title_section(parent)
@@ -371,13 +392,17 @@ func _create_nav_button(text: String, accent_color: Color) -> Button:
 
 ## _build_rename_dialog()
 ##
-## Builds the profile rename dialog.
+## Builds the profile rename dialog with delete button.
 func _build_rename_dialog() -> void:
 	rename_dialog = ConfirmationDialog.new()
 	rename_dialog.name = "RenameDialog"
 	rename_dialog.title = "Rename Profile"
-	rename_dialog.size = Vector2(400, 180)
+	rename_dialog.size = Vector2(400, 220)
 	rename_dialog.unresizable = true
+	
+	# Apply theme
+	if powerup_hover_theme:
+		rename_dialog.theme = powerup_hover_theme
 	
 	# Create content container
 	var dialog_vbox = VBoxContainer.new()
@@ -399,6 +424,20 @@ func _build_rename_dialog() -> void:
 	rename_line_edit.add_theme_font_size_override("font_size", 16)
 	dialog_vbox.add_child(rename_line_edit)
 	
+	# Add separator before delete button
+	var separator = HSeparator.new()
+	dialog_vbox.add_child(separator)
+	
+	# Add delete profile button
+	var delete_btn = Button.new()
+	delete_btn.text = "DELETE PROFILE"
+	delete_btn.add_theme_font_override("font", vcr_font)
+	delete_btn.add_theme_font_size_override("font_size", 14)
+	delete_btn.add_theme_color_override("font_color", Color(0.9, 0.3, 0.3, 1.0))
+	delete_btn.add_theme_color_override("font_hover_color", Color(1.0, 0.4, 0.4, 1.0))
+	delete_btn.pressed.connect(_on_delete_profile_button_pressed)
+	dialog_vbox.add_child(delete_btn)
+	
 	# Add the VBox to the dialog's content area
 	rename_dialog.add_child(dialog_vbox)
 	
@@ -406,6 +445,28 @@ func _build_rename_dialog() -> void:
 	rename_dialog.canceled.connect(_on_rename_canceled)
 	
 	add_child(rename_dialog)
+
+
+## _build_delete_dialog()
+##
+## Builds the profile deletion confirmation dialog.
+func _build_delete_dialog() -> void:
+	delete_dialog = ConfirmationDialog.new()
+	delete_dialog.name = "DeleteDialog"
+	delete_dialog.title = "Delete Profile?"
+	delete_dialog.dialog_text = "Are you sure you want to delete this profile?\n\nAll progress, statistics, and unlocks will be lost.\nThis action cannot be undone."
+	delete_dialog.ok_button_text = "Yes, Delete"
+	delete_dialog.cancel_button_text = "No, Cancel"
+	delete_dialog.size = Vector2(400, 180)
+	delete_dialog.unresizable = true
+	
+	# Apply theme
+	if powerup_hover_theme:
+		delete_dialog.theme = powerup_hover_theme
+	
+	delete_dialog.confirmed.connect(_on_delete_confirmed)
+	
+	add_child(delete_dialog)
 
 
 ## _start_title_animation()
@@ -606,6 +667,82 @@ func _on_rename_confirmed() -> void:
 ## Handler for when rename dialog is canceled.
 func _on_rename_canceled() -> void:
 	_renaming_slot = 0
+
+
+## _on_delete_profile_button_pressed()
+##
+## Handler for when delete profile button is pressed in rename dialog.
+## Shows confirmation dialog.
+func _on_delete_profile_button_pressed() -> void:
+	_deleting_slot = _renaming_slot
+	rename_dialog.hide()
+	
+	# Get profile name for confirmation message
+	var profile_name = "Player %d" % _deleting_slot
+	if ProgressManager:
+		var info = ProgressManager.get_profile_info(_deleting_slot)
+		profile_name = info["name"]
+	
+	delete_dialog.title = "Delete '%s'?" % profile_name
+	delete_dialog.popup_centered()
+
+
+## _on_delete_confirmed()
+##
+## Handler for when profile deletion is confirmed.
+## Erases the profile save data and resets to default.
+func _on_delete_confirmed() -> void:
+	print("[MainMenu] Deleting profile %d" % _deleting_slot)
+	
+	if ProgressManager:
+		_erase_profile(_deleting_slot)
+	
+	# If we deleted the current profile, switch to profile 1
+	var current_slot = _game_settings.active_profile_slot if _game_settings else 1
+	if current_slot == _deleting_slot:
+		if _game_settings:
+			_game_settings.active_profile_slot = 1
+			_game_settings.save_settings()
+		if ProgressManager:
+			ProgressManager.load_profile(1)
+	
+	_update_profile_buttons()
+	_update_playing_as_label()
+	_deleting_slot = 0
+
+
+## _erase_profile(slot)
+##
+## Erases all save data for the given profile slot.
+## Deletes the save file and resets to default state.
+func _erase_profile(slot: int) -> void:
+	# Get save path from ProgressManager's constant
+	var save_paths = {
+		1: "user://profile_1.save",
+		2: "user://profile_2.save",
+		3: "user://profile_3.save",
+	}
+	
+	var save_path = save_paths.get(slot, "")
+	if save_path.is_empty():
+		push_error("[MainMenu] Invalid profile slot: %d" % slot)
+		return
+	
+	# Delete the save file if it exists
+	if FileAccess.file_exists(save_path):
+		var err = DirAccess.remove_absolute(save_path)
+		if err == OK:
+			print("[MainMenu] Deleted save file: %s" % save_path)
+		else:
+			push_error("[MainMenu] Failed to delete save file: %s (error: %d)" % [save_path, err])
+	else:
+		print("[MainMenu] Save file doesn't exist (already clean): %s" % save_path)
+	
+	# If this was the current profile, reload to get fresh default state
+	if ProgressManager and ProgressManager.current_profile_slot == slot:
+		ProgressManager.load_profile(slot)
+	
+	print("[MainMenu] Profile %d erased successfully" % slot)
 
 
 ## _on_new_game_pressed()

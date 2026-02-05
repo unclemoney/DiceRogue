@@ -154,6 +154,7 @@ var _challenge_reward_this_round: int = 0  # Track challenge reward for end-of-r
 var _challenge_reward_granted: bool = false  # Prevent double-granting challenge reward
 var _chores_reward_granted: bool = false  # Prevent double-granting chores reward
 var _game_ended: bool = false  # Track if game has ended (won or lost) - blocks shop access
+var _challenge_celebration_shown: bool = false  # Prevent repeated celebration animation
 
 ## Goal Mode Configuration (for testing)
 ## When true, use RoundDifficultyConfig.target_score_override; when false, use Challenge resource goals
@@ -1300,6 +1301,11 @@ func set_consumable_usability(consumable_id: String, can_use: bool) -> void:
 ## Handles the actual effect of a consumable when the player uses it. Applies the consumable's
 ## effect, updates relevant UI events, and decrements/removes the consumable when consumed.
 func _on_consumable_used(consumable_id: String) -> void:
+	# Guard: Only allow consumable use during active turns (prevents between-round usage)
+	if turn_tracker and not turn_tracker.is_active:
+		print("[GameController] Consumable '%s' blocked - turn is not active" % consumable_id)
+		return
+	
 	var consumable = active_consumables.get(consumable_id)
 	print("\n=== Using Consumable: ", consumable_id, " ===")
 	if not consumable:
@@ -2812,7 +2818,14 @@ func _on_challenge_completed(id: String) -> void:
 ## _trigger_challenge_celebration()
 ##
 ## Triggers firework particle effects at the challenge spine location.
+## Only triggers once per round to prevent repeated animations.
 func _trigger_challenge_celebration() -> void:
+	# Only show celebration once per round
+	if _challenge_celebration_shown:
+		print("[GameController] Challenge celebration already shown this round, skipping")
+		return
+	_challenge_celebration_shown = true
+	
 	# Create celebration manager if needed
 	if _challenge_celebration == null:
 		_challenge_celebration = ChallengeCelebrationScript.new()
@@ -2935,9 +2948,8 @@ func _on_game_button_dice_rolled(dice_values: Array) -> void:
 	
 	# Check if we can afford to roll (for costly_roll debuff)
 	if is_debuff_active("costly_roll"):
-		var cost = active_debuffs["costly_roll"].roll_cost
-		PlayerEconomy.remove_money(cost, "debuff")
-		print("[GameController] Paid", cost, "coins to roll dice")
+		# Use internal method which handles notification and proper cost calculation
+		active_debuffs["costly_roll"]._on_roll_complete()
 	
 	# Increment chores progress on each roll
 	if chores_manager:
@@ -3171,6 +3183,7 @@ func _on_round_started(round_number: int) -> void:
 	_challenge_reward_this_round = 0
 	_challenge_reward_granted = false
 	_chores_reward_granted = false
+	_challenge_celebration_shown = false
 	
 	# Reset round-specific statistics (even/odd dice tracking, etc.)
 	Statistics.start_new_round()

@@ -182,6 +182,9 @@ func _update_dice_area_visual() -> void:
 func _animate_die_entry_delayed(die: Dice, from_pos: Vector2, delay: float) -> void:
 	if delay > 0:
 		await get_tree().create_timer(delay).timeout
+	# Check if die is still valid after delay
+	if not is_instance_valid(die):
+		return
 	die.animate_entry(from_pos, entry_duration)
 
 

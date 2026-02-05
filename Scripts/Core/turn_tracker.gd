@@ -158,11 +158,13 @@ func _on_turn_completed() -> void:
 
 ## reset()
 ##
-## Resets the tracker and emits update signals and turn_started.
+## Resets the tracker for a new round and emits update signals and turn_started.
+## Sets is_active = true because Turn 1 of a new round is an active turn.
 func reset() -> void:
 	print("[TurnTracker] Resetting turn tracker")
 	current_turn = 1
 	rolls_left = MAX_ROLLS
+	is_active = true  # Turn 1 is active when round starts
 	# Reset temporary effects
 	dice_bonus_stacks.clear()
 	_next_stack_id = 0

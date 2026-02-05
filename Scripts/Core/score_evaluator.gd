@@ -21,6 +21,10 @@ func evaluate_with_wildcards(dice_values: Array[int]) -> Dictionary:
 	
 	# Separate wildcards from regular dice
 	for i in range(dice_values.size()):
+		# Bounds check: ensure dice_refs has this index
+		if i >= DiceResults.dice_refs.size():
+			regular_values.append(dice_values[i])
+			continue
 		var die = DiceResults.dice_refs[i]
 		if is_instance_valid(die) and die.has_mod("wildcard"):
 			wildcard_indices.append(i)
@@ -241,7 +245,9 @@ func generate_wildcard_combinations(wildcard_count: int, sides: int) -> Array:
 	for i in range(DiceResults.dice_refs.size()):
 		var die = DiceResults.dice_refs[i]
 		if is_instance_valid(die) and not die.has_mod("wildcard"):
-			regular_values.append(DiceResults.values[i])
+			# Bounds check for values array
+			if i < DiceResults.values.size():
+				regular_values.append(DiceResults.values[i])
 
 	# If we have regular values, prioritize those and adjacent numbers
 	var priority_values = {}

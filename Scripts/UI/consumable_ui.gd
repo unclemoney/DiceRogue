@@ -543,6 +543,12 @@ func update_consumable_usability() -> void:
 			icon.set_useable(is_useable)
 
 func _can_use_consumable(data: ConsumableData) -> bool:
+	# Global check: All consumables require an active turn (prevents between-round usage)
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller and game_controller.turn_tracker:
+		if not game_controller.turn_tracker.is_active:
+			return false
+	
 	# Check specific consumable requirements
 	match data.id:
 		"any_score":
@@ -552,7 +558,6 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 				return false
 			
 			# Check for open categories via game controller
-			var game_controller = get_tree().get_first_node_in_group("game_controller")
 			if game_controller and game_controller.scorecard:
 				var scorecard = game_controller.scorecard
 				
@@ -573,7 +578,6 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 				return false
 		"random_power_up_uncommon":
 			# Random PowerUp consumable requires available PowerUp slots
-			var game_controller = get_tree().get_first_node_in_group("game_controller")
 			if game_controller and game_controller.powerup_ui:
 				return not game_controller.powerup_ui.has_max_power_ups()
 			else:
@@ -589,7 +593,6 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 			return not dice_values.is_empty()
 		"double_or_nothing":
 			# Double or Nothing MUST be used at the beginning of the turn (after Next Turn auto-roll, before manual rolls)
-			var game_controller = get_tree().get_first_node_in_group("game_controller")
 			if game_controller and game_controller.turn_tracker:
 				var turn_tracker = game_controller.turn_tracker
 				# Can be used when rolls_left >= MAX_ROLLS - 1 (after auto-roll but before manual rolls)
@@ -600,7 +603,6 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 				return false
 		"the_pawn_shop":
 			# The Pawn Shop requires at least one PowerUp to sell
-			var game_controller = get_tree().get_first_node_in_group("game_controller")
 			if game_controller:
 				return not game_controller.active_power_ups.is_empty()
 			else:
@@ -608,7 +610,6 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 				return false
 		"one_free_mod":
 			# One Free Mod requires an available dice slot for a mod
-			var game_controller = get_tree().get_first_node_in_group("game_controller")
 			if game_controller:
 				var current_mod_count = game_controller._get_total_active_mod_count()
 				var expected_dice_count = game_controller._get_expected_dice_count()

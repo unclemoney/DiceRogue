@@ -1093,6 +1093,12 @@ func update_consumable_usability() -> void:
 
 
 func _can_use_consumable(data: ConsumableData) -> bool:
+	# Global check: All consumables require an active turn (prevents between-round usage)
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller and game_controller.turn_tracker:
+		if not game_controller.turn_tracker.is_active:
+			return false
+	
 	# Check specific consumable requirements
 	match data.id:
 		"any_score":
@@ -1102,7 +1108,6 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 				return false
 			
 			# Check for open categories via game controller
-			var game_controller = get_tree().get_first_node_in_group("game_controller")
 			if game_controller and game_controller.scorecard:
 				var scorecard = game_controller.scorecard
 				
@@ -1122,7 +1127,6 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 				return false
 		"random_power_up_uncommon":
 			# Random PowerUp consumable requires available PowerUp slots
-			var game_controller = get_tree().get_first_node_in_group("game_controller")
 			if game_controller and game_controller.powerup_ui:
 				return not game_controller.powerup_ui.has_max_power_ups()
 			else:
@@ -1137,7 +1141,6 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 			return not dice_values.is_empty()
 		"double_or_nothing":
 			# Double or Nothing MUST be used at the beginning of the turn
-			var game_controller = get_tree().get_first_node_in_group("game_controller")
 			if game_controller and game_controller.turn_tracker:
 				var turn_tracker = game_controller.turn_tracker
 				return turn_tracker.is_active and turn_tracker.rolls_left >= turn_tracker.MAX_ROLLS - 1
@@ -1145,7 +1148,6 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 				return false
 		"the_pawn_shop":
 			# The Pawn Shop requires at least one PowerUp to sell
-			var game_controller = get_tree().get_first_node_in_group("game_controller")
 			if game_controller:
 				return not game_controller.active_power_ups.is_empty()
 			else:

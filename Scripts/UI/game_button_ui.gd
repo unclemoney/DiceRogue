@@ -37,6 +37,10 @@ var _shop_button_pulse_tween: Tween = null
 var _is_shop_pulsing: bool = false
 var _original_shop_button_modulate: Color = Color.WHITE
 
+## Keyboard input cooldown to prevent multiple rapid presses
+var _input_cooldown: float = 0.0
+const INPUT_COOLDOWN_DURATION: float = 0.5  # 500ms between key presses
+
 
 func _ready():
 	print("ScoreCardUI ready: ", score_card_ui_path)
@@ -45,6 +49,9 @@ func _ready():
 	turn_tracker   = get_node(turn_tracker_path)
 	round_manager  = get_node_or_null(round_manager_path)
 	challenge_manager = get_node_or_null(challenge_manager_path)  # Initialize challenge_manager
+	
+	# Add to group for Dice Surge lookup
+	add_to_group("game_button_ui")
 	
 	if not score_card_ui:
 		print("Error")
@@ -91,41 +98,65 @@ func _ready():
 	next_turn_button.disabled = true
 
 
+## _process(delta)
+##
+## Handles keyboard input cooldown timer.
+func _process(delta: float) -> void:
+	if _input_cooldown > 0.0:
+		_input_cooldown -= delta
+		if _input_cooldown < 0.0:
+			_input_cooldown = 0.0
+
+
 ## _unhandled_input(event)
 ##
 ## Handles keyboard/controller shortcuts for game actions.
 ## Uses InputMap actions configured in GameSettings.
+## Includes cooldown to prevent multiple rapid key presses.
 func _unhandled_input(event: InputEvent) -> void:
+	# Ignore echo events (key held down)
+	if event.is_echo():
+		return
+	
 	# Only handle pressed events (not released)
 	if not event.is_pressed():
+		return
+	
+	# Check cooldown to prevent rapid repeated inputs
+	if _input_cooldown > 0.0:
+		get_viewport().set_input_as_handled()
 		return
 	
 	# Roll action
 	if event.is_action_pressed("roll"):
 		if roll_button and not roll_button.disabled and roll_button.visible:
-			_on_roll_button_pressed()
 			get_viewport().set_input_as_handled()
+			_input_cooldown = INPUT_COOLDOWN_DURATION
+			_on_roll_button_pressed()
 			return
 	
 	# Next Turn action
 	if event.is_action_pressed("next_turn"):
 		if next_turn_button and not next_turn_button.disabled and next_turn_button.visible:
-			_on_next_turn_button_pressed()
 			get_viewport().set_input_as_handled()
+			_input_cooldown = INPUT_COOLDOWN_DURATION
+			_on_next_turn_button_pressed()
 			return
 	
 	# Shop action
 	if event.is_action_pressed("shop"):
 		if shop_button and not shop_button.disabled and shop_button.visible:
-			_on_shop_button_pressed()
 			get_viewport().set_input_as_handled()
+			_input_cooldown = INPUT_COOLDOWN_DURATION
+			_on_shop_button_pressed()
 			return
 	
 	# Next Round action
 	if event.is_action_pressed("next_round"):
 		if next_round_button and not next_round_button.disabled and next_round_button.visible:
-			_on_next_round_button_pressed()
 			get_viewport().set_input_as_handled()
+			_input_cooldown = INPUT_COOLDOWN_DURATION
+			_on_next_round_button_pressed()
 			return
 	
 	# Dice lock actions (1-16)
@@ -342,6 +373,19 @@ func _animate_shop_button_pulse() -> void:
 	_shop_button_pulse_tween.parallel().tween_property(shop_button, "scale", normal_scale, 0.5)\
 		.set_trans(Tween.TRANS_SINE)\
 		.set_ease(Tween.EASE_IN_OUT)
+
+
+## trigger_roll()
+##
+## Public method to programmatically trigger a dice roll.
+## Used by consumables like Dice Surge to initiate a roll when no dice exist.
+## Only works if the roll button is enabled and visible.
+func trigger_roll() -> void:
+	if roll_button and not roll_button.disabled and roll_button.visible:
+		print("[GameButtonUI] trigger_roll() called by consumable")
+		_on_roll_button_pressed()
+	else:
+		print("[GameButtonUI] trigger_roll() ignored - roll button not available")
 
 
 func _on_roll_button_pressed() -> void:

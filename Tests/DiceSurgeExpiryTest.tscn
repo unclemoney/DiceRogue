@@ -1,0 +1,111 @@
+[gd_scene load_steps=4 format=3 uid="uid://dice_surge_expiry_test"]
+
+[ext_resource type="PackedScene" uid="uid://dugpl3du3i6xo" path="res://Scenes/Dice/dice_hand.tscn" id="1_dicehand"]
+[ext_resource type="PackedScene" uid="uid://b8limy63m2tlo" path="res://Scenes/Tracker/turn_tracker.tscn" id="2_turntracker"]
+[ext_resource type="Script" path="res://Tests/dice_surge_expiry_test.gd" id="3_script"]
+
+[node name="DiceSurgeExpiryTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("3_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.12, 0.12, 0.15, 1)
+
+[node name="TurnTracker" parent="." instance=ExtResource("2_turntracker")]
+
+[node name="DiceHand" parent="." instance=ExtResource("1_dicehand")]
+position = Vector2(640, 500)
+
+[node name="UIPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -400.0
+offset_top = 20.0
+offset_right = 400.0
+offset_bottom = 420.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UIPanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TitleLabel" type="Label" parent="UIPanel/VBoxContainer"]
+layout_mode = 2
+text = "DICE SURGE EXPIRY TEST"
+horizontal_alignment = 1
+
+[node name="StatusLabel" type="Label" parent="UIPanel/VBoxContainer"]
+layout_mode = 2
+text = "Status: Initializing..."
+
+[node name="HSeparator" type="HSeparator" parent="UIPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="ButtonGrid" type="GridContainer" parent="UIPanel/VBoxContainer"]
+layout_mode = 2
+columns = 2
+
+[node name="StartTurnButton" type="Button" parent="UIPanel/VBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+text = "Start Turn"
+
+[node name="GrantDiceSurgeButton" type="Button" parent="UIPanel/VBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+text = "Grant Dice Surge"
+
+[node name="GrantMultipleSurgesButton" type="Button" parent="UIPanel/VBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+text = "Grant 3x Surge"
+
+[node name="RapidAdvanceButton" type="Button" parent="UIPanel/VBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+text = "Rapid 5 Turns"
+
+[node name="ForceExpireAllButton" type="Button" parent="UIPanel/VBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+text = "Force Expire All"
+
+[node name="VerifyCountsButton" type="Button" parent="UIPanel/VBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+text = "Verify Counts"
+
+[node name="ResetTestButton" type="Button" parent="UIPanel/VBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+text = "Reset Test"
+
+[node name="HSeparator2" type="HSeparator" parent="UIPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="LogLabel" type="Label" parent="UIPanel/VBoxContainer"]
+layout_mode = 2
+text = "Event Log:"
+
+[node name="ResultsLabel" type="RichTextLabel" parent="UIPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+bbcode_enabled = true
+text = "Waiting for test actions..."
+scroll_following = true
+
+[connection signal="pressed" from="UIPanel/VBoxContainer/ButtonGrid/StartTurnButton" to="." method="_on_start_turn_pressed"]
+[connection signal="pressed" from="UIPanel/VBoxContainer/ButtonGrid/GrantDiceSurgeButton" to="." method="_on_grant_dice_surge_pressed"]
+[connection signal="pressed" from="UIPanel/VBoxContainer/ButtonGrid/GrantMultipleSurgesButton" to="." method="_on_grant_multiple_surges_pressed"]
+[connection signal="pressed" from="UIPanel/VBoxContainer/ButtonGrid/RapidAdvanceButton" to="." method="_on_rapid_advance_pressed"]
+[connection signal="pressed" from="UIPanel/VBoxContainer/ButtonGrid/ForceExpireAllButton" to="." method="_on_force_expire_all_pressed"]
+[connection signal="pressed" from="UIPanel/VBoxContainer/ButtonGrid/VerifyCountsButton" to="." method="_on_verify_counts_pressed"]
+[connection signal="pressed" from="UIPanel/VBoxContainer/ButtonGrid/ResetTestButton" to="." method="_on_reset_test_pressed"]
