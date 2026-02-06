@@ -1425,21 +1425,21 @@ func _create_locked_item_display(item) -> void:
 	shader_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	
 	# Load and apply the retro dither shader
-	var shader = load("res://Scripts/Shaders/retro_dither.gdshader")
+	var shader = load("res://Scripts/Shaders/arcade_starfield.gdshader")
 	if shader:
 		var shader_mat = ShaderMaterial.new()
 		shader_mat.shader = shader
 		# Configure shader parameters for locked items
-		shader_mat.set_shader_parameter("step_posterize", 8)
-		shader_mat.set_shader_parameter("step_pixelated", 400)
-		shader_mat.set_shader_parameter("dithering_bayer", true)
-		shader_mat.set_shader_parameter("animated_dithering", true)
-		shader_mat.set_shader_parameter("smooth_animate", false)
-		shader_mat.set_shader_parameter("interval", 0.3)
+		#shader_mat.set_shader_parameter("step_posterize", 8)
+		#shader_mat.set_shader_parameter("step_pixelated", 400)
+		#shader_mat.set_shader_parameter("dithering_bayer", true)
+		#shader_mat.set_shader_parameter("animated_dithering", true)
+		#shader_mat.set_shader_parameter("smooth_animate", false)
+		#shader_mat.set_shader_parameter("interval", 0.3)
 		
 		# Default colors: black and grey
-		shader_mat.set_shader_parameter("color_A", Vector3(0.0, 0.0, 0.0))  # Black
-		shader_mat.set_shader_parameter("color_B", Vector3(0.4, 0.4, 0.4))  # Grey
+		#shader_mat.set_shader_parameter("color_A", Vector3(0.0, 0.0, 0.0))  # Black
+		#shader_mat.set_shader_parameter("color_B", Vector3(0.4, 0.4, 0.4))  # Grey
 		
 		shader_bg.material = shader_mat
 	

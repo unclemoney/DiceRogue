@@ -8,7 +8,7 @@
 script = ExtResource("1_moddata")
 id = "five_by_one"
 display_name = "Five By One"
-description = "Always Roll 5, Earn +1 Bonus Per Roll"
+description = "Always Roll 5, Earn +1 Bonus Per Roll Each Turn"
 icon = ExtResource("1_border5")
 scene = ExtResource("2_scene")
 price = 50

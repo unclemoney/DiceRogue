@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://bhv7dyrckqhk6"]
+[gd_scene load_steps=4 format=3 uid="uid://bhv7dyrckqhk6"]
 
 [ext_resource type="Script" uid="uid://ci1p8hb3o3ol4" path="res://Scripts/UI/power_up_ui.gd" id="1_0e0bw"]
 [ext_resource type="PackedScene" uid="uid://bb8xhf4j3fkbf" path="res://Scenes/UI/power_up_spine.tscn" id="2_spine"]
+[ext_resource type="FontFile" uid="uid://d30iuqvbxs6im" path="res://Resources/Font/VCR_OSD_MONO_1.001.ttf" id="3_m0mdk"]
 
 [node name="PowerUpUI" type="Control" groups=["power_up_ui"]]
 layout_mode = 3
@@ -22,6 +23,7 @@ offset_left = 280.0
 offset_top = 440.0
 offset_right = 372.0
 offset_bottom = 463.0
+theme_override_fonts/font = ExtResource("3_m0mdk")
 text = "POWER UPS"
 
 [node name="SlotsLabel" type="Label" parent="."]
@@ -30,4 +32,5 @@ offset_left = 380.0
 offset_top = 440.0
 offset_right = 420.0
 offset_bottom = 463.0
+theme_override_fonts/font = ExtResource("3_m0mdk")
 text = "0/10"
