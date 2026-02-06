@@ -1425,7 +1425,7 @@ func _create_locked_item_display(item) -> void:
 	shader_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	
 	# Load and apply the retro dither shader
-	var shader = load("res://Scripts/Shaders/arcade_starfield.gdshader")
+	var shader = load("res://Scripts/Shaders/marquee_lights.gdshader")
 	if shader:
 		var shader_mat = ShaderMaterial.new()
 		shader_mat.shader = shader

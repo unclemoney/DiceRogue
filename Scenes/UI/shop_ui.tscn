@@ -3,56 +3,64 @@
 [ext_resource type="Script" uid="uid://do82iklsw8hmg" path="res://Scripts/UI/shop_ui.gd" id="1_ksn61"]
 [ext_resource type="Theme" uid="uid://busf5kj4jt6yf" path="res://Resources/UI/powerup_hover_theme.tres" id="1_xwb05"]
 [ext_resource type="Texture2D" uid="uid://dhu773gp3lwd4" path="res://Resources/Art/Dice/BlueSquare.png" id="2_6hyjo"]
+[ext_resource type="Shader" uid="uid://baqepit4de2st" path="res://Scripts/Shaders/arcade_carpet.gdshader" id="4_5smyu"]
 [ext_resource type="Theme" uid="uid://cw123bpjsfi08" path="res://Resources/UI/shelf_panel_theme.tres" id="4_ocftj"]
-[ext_resource type="Shader" uid="uid://cc1roctpqrkxi" path="res://Scripts/Shaders/neon_grid.gdshader" id="5_uc064"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_uc064"]
-shader = ExtResource("5_uc064")
+shader = ExtResource("4_5smyu")
 shader_parameter/colour_1 = Color(0.15, 0.08, 0.25, 1)
 shader_parameter/colour_2 = Color(0, 0.8, 0.8, 1)
 shader_parameter/colour_3 = Color(0.8, 0, 1, 1)
-shader_parameter/grid_speed = 0.14
+shader_parameter/colour_4 = Color(1, 0.2, 0.5, 1)
+shader_parameter/colour_5 = Color(0, 0.9, 0.4, 1)
+shader_parameter/scroll_speed = 0.15
 shader_parameter/pixel_filter = 500.0
-shader_parameter/grid_density = 20.0
-shader_parameter/perspective_strength = 1.0
-shader_parameter/glow_intensity = 1.2
-shader_parameter/scanline_strength = 0.3
+shader_parameter/tile_size = 12.0
+shader_parameter/pattern_style = 0
+shader_parameter/fabric_texture = 0.25
+shader_parameter/glow_amount = 0.4
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_je541"]
-shader = ExtResource("5_uc064")
+shader = ExtResource("4_5smyu")
 shader_parameter/colour_1 = Color(0.15, 0.08, 0.25, 1)
 shader_parameter/colour_2 = Color(0, 0.8, 0.8, 1)
 shader_parameter/colour_3 = Color(0.8, 0, 1, 1)
-shader_parameter/grid_speed = 0.14
+shader_parameter/colour_4 = Color(1, 0.2, 0.5, 1)
+shader_parameter/colour_5 = Color(0, 0.9, 0.4, 1)
+shader_parameter/scroll_speed = 0.15
 shader_parameter/pixel_filter = 500.0
-shader_parameter/grid_density = 20.0
-shader_parameter/perspective_strength = 1.0
-shader_parameter/glow_intensity = 1.2
-shader_parameter/scanline_strength = 0.3
+shader_parameter/tile_size = 12.0
+shader_parameter/pattern_style = 0
+shader_parameter/fabric_texture = 0.25
+shader_parameter/glow_amount = 0.4
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_5smyu"]
-shader = ExtResource("5_uc064")
+shader = ExtResource("4_5smyu")
 shader_parameter/colour_1 = Color(0.15, 0.08, 0.25, 1)
 shader_parameter/colour_2 = Color(0, 0.8, 0.8, 1)
 shader_parameter/colour_3 = Color(0.8, 0, 1, 1)
-shader_parameter/grid_speed = 0.14
+shader_parameter/colour_4 = Color(1, 0.2, 0.5, 1)
+shader_parameter/colour_5 = Color(0, 0.9, 0.4, 1)
+shader_parameter/scroll_speed = 0.15
 shader_parameter/pixel_filter = 500.0
-shader_parameter/grid_density = 20.0
-shader_parameter/perspective_strength = 1.0
-shader_parameter/glow_intensity = 1.2
-shader_parameter/scanline_strength = 0.3
+shader_parameter/tile_size = 12.0
+shader_parameter/pattern_style = 0
+shader_parameter/fabric_texture = 0.25
+shader_parameter/glow_amount = 0.4
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_3j5rp"]
-shader = ExtResource("5_uc064")
+shader = ExtResource("4_5smyu")
 shader_parameter/colour_1 = Color(0.15, 0.08, 0.25, 1)
 shader_parameter/colour_2 = Color(0, 0.8, 0.8, 1)
 shader_parameter/colour_3 = Color(0.8, 0, 1, 1)
-shader_parameter/grid_speed = 0.14
+shader_parameter/colour_4 = Color(1, 0.2, 0.5, 1)
+shader_parameter/colour_5 = Color(0, 0.9, 0.4, 1)
+shader_parameter/scroll_speed = 0.15
 shader_parameter/pixel_filter = 500.0
-shader_parameter/grid_density = 20.0
-shader_parameter/perspective_strength = 1.0
-shader_parameter/glow_intensity = 1.2
-shader_parameter/scanline_strength = 0.3
+shader_parameter/tile_size = 12.0
+shader_parameter/pattern_style = 0
+shader_parameter/fabric_texture = 0.25
+shader_parameter/glow_amount = 0.4
 
 [node name="ShopUI" type="Control"]
 z_index = 4

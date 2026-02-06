@@ -34,38 +34,55 @@ Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill s
   - New Game / Settings / Quit navigation buttons
   - Profile data includes games completed and highest channel reached
 
-### Arcade Background Shaders
-Three custom shaders capture the late 80's/early 90's arcade/mall aesthetic with purple/teal neon themes:
+### Arcade Shader Collection
+Custom shader library capturing the late 80's/early 90's arcade/mall/SNES-era aesthetic with purple/teal neon themes.
 
-#### Available Shaders
-1. **Neon Grid** (`neon_grid.gdshader`) - Tron-inspired perspective grid with glowing lines
-2. **VHS Static Wave** (`vhs_wave.gdshader`) - Analog TV interference with chromatic aberration
-3. **Arcade Starfield** (`arcade_starfield.gdshader`) - Multi-layer parallax stars with color cycling
+#### Background Shaders (7)
+| Shader | Style |
+|--------|-------|
+| **Plasma Screen** (`plasma_screen.gdshader`) | Organic demoscene plasma blobs (Amiga/C64 era) |
+| **Arcade Carpet** (`arcade_carpet.gdshader`) | 90s geometric tile patterns (3 modes: Diamond, Starburst, Memphis) |
+| **Marquee Lights** (`marquee_lights.gdshader`) | Theater/casino chasing bulb borders |
+| **Neon Grid** (`neon_grid.gdshader`) | Tron-inspired perspective grid with glowing lines |
+| **VHS Static Wave** (`vhs_wave.gdshader`) | Analog TV interference with chromatic aberration |
+| **Arcade Starfield** (`arcade_starfield.gdshader`) | Multi-layer parallax stars with color cycling |
+| **Background Swirl** (`backgground_swirl.gdshader`) | Paint swirl effect (legacy, Balatro-sourced) |
+
+#### UI Effect Shaders (3)
+| Shader | Purpose |
+|--------|---------|
+| **Enhanced Glow** (`glow_overlay.gdshader`) | Chromatic aberration, pulsing, rainbow mode, distortion |
+| **Holographic Energy** (`power_up_ui.gdshader`) | Sci-fi hologram with hex grid and scanline sweep |
+| **Dramatic Burst** (`consumable_explosion.gdshader`) | Multi-stage explosion with streaks, debris, shockwave |
 
 #### Features
-- Consistent three-color uniform system (colour_1, colour_2, colour_3)
+- Consistent color uniform system (colour_1, colour_2, colour_3) across all background shaders
 - Tunable pixel_filter parameter (200-1000) for retro pixelation
-- Distinct speed controls (grid_speed, wave_speed, star_speed)
+- Distinct speed controls per shader
 - Purple/teal default color schemes matching game palette
 - Optimized for 60 FPS performance
+- UI shaders are backward compatible with existing code
 
-#### Switching Shaders
-Edit `Scripts/UI/main_menu.gd` in the `_build_ui()` method. Uncomment your desired shader option:
+#### Shader Gallery Test Scene
+Preview all background shaders interactively:
+```
+Tests/ShaderGallery.tscn
+```
+Keys 1-9 to switch shaders, C for side-by-side comparison, Left/Right to change comparison target.
+
+#### Switching Background Shaders
+Edit `Scripts/UI/main_menu.gd` in the `_build_ui()` method. Load your desired shader:
 ```gdscript
-# Current: Balatro swirl (default)
-var shader = load("res://Scripts/Shaders/backgground_swirl.gdshader")
-
-# Option 1: Neon Grid
-#var shader = load("res://Scripts/Shaders/neon_grid.gdshader")
-
-# Option 2: VHS Wave
-#var shader = load("res://Scripts/Shaders/vhs_wave.gdshader")
-
-# Option 3: Starfield
-#var shader = load("res://Scripts/Shaders/arcade_starfield.gdshader")
+# Options (uncomment one):
+var shader = load("res://Scripts/Shaders/plasma_screen.gdshader")      # Demoscene plasma
+#var shader = load("res://Scripts/Shaders/arcade_carpet.gdshader")     # 90s geometric
+#var shader = load("res://Scripts/Shaders/marquee_lights.gdshader")    # Theater lights
+#var shader = load("res://Scripts/Shaders/neon_grid.gdshader")         # Tron grid
+#var shader = load("res://Scripts/Shaders/vhs_wave.gdshader")          # VHS wave
+#var shader = load("res://Scripts/Shaders/arcade_starfield.gdshader")  # Space stars
 ```
 
-Full documentation with parameters and examples: See `ARCADE_SHADERS.md`
+Full documentation with parameters, recipes, and technical deep-dives: See `ARCADE_SHADERS.md`
 
 ### Profile System
 - **ProgressManager** handles 3 save slots (`user://profile_1.save` to `profile_3.save`)

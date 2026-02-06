@@ -129,7 +129,7 @@ func _build_ui() -> void:
 	#}
 	
 	# OPTION 2: VHS Static Wave (Analog TV interference)
-	var shader = load("res://Scripts/Shaders/vhs_wave.gdshader")
+	var shader = load("res://Scripts/Shaders/plasma_screen.gdshader")
 	var shader_params = {
 		"colour_1": Color(0.08, 0.04, 0.15, 1.0),  # Very dark purple
 		"colour_2": Color(0.25, 0.12, 0.35, 1.0),  # Medium purple
