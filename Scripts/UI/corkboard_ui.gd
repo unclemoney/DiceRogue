@@ -1093,6 +1093,10 @@ func update_consumable_usability() -> void:
 
 
 func _can_use_consumable(data: ConsumableData) -> bool:
+	# Debuff check: If consumables are blocked by a debuff, always return false
+	if get_meta("consumables_blocked", false):
+		return false
+
 	# Global check: All consumables require an active turn (prevents between-round usage)
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	if game_controller and game_controller.turn_tracker:

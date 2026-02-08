@@ -1847,6 +1847,18 @@ func apply_debuff(id: String) -> void:
 		"too_greedy":
 			debuff.target = self
 			debuff.start()
+		"rotating_disabled_powerup":
+			debuff.target = self
+			debuff.start()
+		"no_consumables_allowed":
+			debuff.target = self
+			debuff.start()
+		"all_powerups_sold":
+			debuff.target = self
+			debuff.start()
+		"one_shot":
+			debuff.target = self
+			debuff.start()
 		_:
 			push_error("[GameController] Unknown debuff type: %s" % id)
 

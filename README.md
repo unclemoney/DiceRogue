@@ -1281,6 +1281,29 @@ Debuffs are negative effects that hinder the player's progress and add challenge
   - Green, Red, Purple, and Blue dice provide no bonus
   - Colors are restored when the debuff is removed
 
+### PowerUp Debuffs
+- **Murphy's Law**: One random powerup is disabled each turn
+  - A random active powerup is chosen and deactivated at the start of each turn
+  - The previously disabled powerup is re-enabled when a new one is selected
+  - Disabled powerup shows a red X overlay on its spine in the UI
+  - All powerups are restored when the debuff is removed
+- **Liquidation Sale**: All your powerups are sold immediately
+  - One-time destructive effect: all active powerups are sold on apply
+  - Player receives half-price refund for each powerup sold
+  - Effect is permanent — removing the debuff does not restore powerups
+
+### Consumable Debuffs
+- **Abstinence**: Cannot use consumables (can still sell)
+  - Blocks the USE button on all consumable icons
+  - Player can still sell consumables for money
+  - Usage is restored when the debuff is removed
+
+### Extreme Debuffs
+- **One Shot**: Only 1 roll per turn instead of 3
+  - Reduces MAX_ROLLS to 1 for the duration of the debuff
+  - Player must score with whatever they roll on their first attempt
+  - Original roll count is restored when the debuff is removed
+
 ### Coding Standards
 - Use GDScript 4.4 syntax
 - Tabs for indentation (never spaces)

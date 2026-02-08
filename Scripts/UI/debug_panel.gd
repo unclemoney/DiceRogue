@@ -251,6 +251,14 @@ func _create_debug_tabs() -> void:
 			{"text": "Remove Half Additive Debuff", "method": "_debug_remove_half_additive_debuff"},
 			{"text": "Apply Too Greedy Debuff", "method": "_debug_apply_too_greedy_debuff"},
 			{"text": "Remove Too Greedy Debuff", "method": "_debug_remove_too_greedy_debuff"},
+			{"text": "Apply Murphy's Law", "method": "_debug_apply_murphys_law"},
+			{"text": "Remove Murphy's Law", "method": "_debug_remove_murphys_law"},
+			{"text": "Apply Abstinence", "method": "_debug_apply_abstinence"},
+			{"text": "Remove Abstinence", "method": "_debug_remove_abstinence"},
+			{"text": "Apply Liquidation Sale", "method": "_debug_apply_liquidation_sale"},
+			{"text": "Remove Liquidation Sale", "method": "_debug_remove_liquidation_sale"},
+			{"text": "Apply One Shot", "method": "_debug_apply_one_shot"},
+			{"text": "Remove One Shot", "method": "_debug_remove_one_shot"},
 			{"text": "Test Division vs Perfect Strangers", "method": "_debug_test_division_perfect_strangers"},
 			{"text": "Activate The Crossing Challenge", "method": "_debug_activate_crossing_challenge"},
 			{"text": "Activate 150pts Roll Minus One", "method": "_debug_activate_pts150_challenge"},
@@ -1756,6 +1764,111 @@ func _debug_remove_too_greedy_debuff() -> void:
 	
 	game_controller.disable_debuff("too_greedy")
 	log_debug("✓ Too Greedy debuff removed!")
+
+## _debug_apply_murphys_law()
+##
+## Applies the Murphy's Law debuff (rotating disabled powerup)
+func _debug_apply_murphys_law() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	if game_controller.is_debuff_active("rotating_disabled_powerup"):
+		log_debug("Murphy's Law debuff is already active")
+		return
+	game_controller.apply_debuff("rotating_disabled_powerup")
+	log_debug("Applied Murphy's Law - one random powerup disabled each turn")
+
+## _debug_remove_murphys_law()
+##
+## Removes the Murphy's Law debuff
+func _debug_remove_murphys_law() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	if not game_controller.is_debuff_active("rotating_disabled_powerup"):
+		log_debug("Murphy's Law debuff is not active")
+		return
+	game_controller.disable_debuff("rotating_disabled_powerup")
+	log_debug("Removed Murphy's Law debuff")
+
+## _debug_apply_abstinence()
+##
+## Applies the Abstinence debuff (no consumable usage)
+func _debug_apply_abstinence() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	if game_controller.is_debuff_active("no_consumables_allowed"):
+		log_debug("Abstinence debuff is already active")
+		return
+	game_controller.apply_debuff("no_consumables_allowed")
+	log_debug("Applied Abstinence - consumable usage blocked (selling still allowed)")
+
+## _debug_remove_abstinence()
+##
+## Removes the Abstinence debuff
+func _debug_remove_abstinence() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	if not game_controller.is_debuff_active("no_consumables_allowed"):
+		log_debug("Abstinence debuff is not active")
+		return
+	game_controller.disable_debuff("no_consumables_allowed")
+	log_debug("Removed Abstinence debuff - consumable usage restored")
+
+## _debug_apply_liquidation_sale()
+##
+## Applies the Liquidation Sale debuff (sells all powerups)
+func _debug_apply_liquidation_sale() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	if game_controller.is_debuff_active("all_powerups_sold"):
+		log_debug("Liquidation Sale debuff is already active")
+		return
+	var count = game_controller.active_power_ups.size()
+	game_controller.apply_debuff("all_powerups_sold")
+	log_debug("Applied Liquidation Sale - sold %d powerups" % count)
+
+## _debug_remove_liquidation_sale()
+##
+## Removes the Liquidation Sale debuff (effect is permanent)
+func _debug_remove_liquidation_sale() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	if not game_controller.is_debuff_active("all_powerups_sold"):
+		log_debug("Liquidation Sale debuff is not active")
+		return
+	game_controller.disable_debuff("all_powerups_sold")
+	log_debug("Removed Liquidation Sale debuff (powerups already sold permanently)")
+
+## _debug_apply_one_shot()
+##
+## Applies the One Shot debuff (1 roll per turn)
+func _debug_apply_one_shot() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	if game_controller.is_debuff_active("one_shot"):
+		log_debug("One Shot debuff is already active")
+		return
+	game_controller.apply_debuff("one_shot")
+	log_debug("Applied One Shot - only 1 roll per turn!")
+
+## _debug_remove_one_shot()
+##
+## Removes the One Shot debuff
+func _debug_remove_one_shot() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	if not game_controller.is_debuff_active("one_shot"):
+		log_debug("One Shot debuff is not active")
+		return
+	game_controller.disable_debuff("one_shot")
+	log_debug("Removed One Shot debuff - rolls restored")
 
 ## _debug_activate_tough_addition_challenge()
 ##

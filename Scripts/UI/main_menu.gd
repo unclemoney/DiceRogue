@@ -20,6 +20,9 @@ var vcr_font: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 const GAME_SCENE := preload("res://Tests/DebuffTest.tscn")
 const SETTINGS_MENU_SCENE := preload("res://Scenes/UI/SettingsMenu.tscn")
 
+# Button styling toggle - switch between programmatic and texture-based theme styling
+@export var use_theme_styling: bool = true
+
 # Autoload reference (fetched at runtime to avoid LSP errors)
 var _game_settings: Node = null
 
@@ -71,7 +74,7 @@ func _ready() -> void:
 ##
 ## Loads the powerup hover theme for dialogs.
 func _load_theme() -> void:
-	var theme_path = "res://Resources/UI/powerup_hover_theme.tres"
+	var theme_path = "res://Resources/UI/main_menu_theme.tres"
 	if FileAccess.file_exists(theme_path):
 		powerup_hover_theme = load(theme_path) as Theme
 		print("[MainMenu] Loaded powerup_hover_theme")
@@ -280,6 +283,7 @@ func _build_profile_section(parent: Control) -> void:
 ## _create_profile_button(slot)
 ##
 ## Creates a profile selection button for the given slot.
+## Styling is applied based on use_theme_styling bool.
 func _create_profile_button(slot: int) -> Button:
 	var btn = Button.new()
 	btn.name = "ProfileButton%d" % slot
@@ -287,27 +291,32 @@ func _create_profile_button(slot: int) -> Button:
 	btn.add_theme_font_override("font", vcr_font)
 	btn.add_theme_font_size_override("font_size", 16)
 	
-	# Style the button
-	var normal_style = StyleBoxFlat.new()
-	normal_style.bg_color = Color(0.15, 0.12, 0.18, 0.9)
-	normal_style.border_color = Color(0.4, 0.35, 0.45, 1.0)
-	normal_style.set_border_width_all(2)
-	normal_style.set_corner_radius_all(8)
-	normal_style.content_margin_left = 10
-	normal_style.content_margin_right = 10
-	normal_style.content_margin_top = 10
-	normal_style.content_margin_bottom = 10
-	btn.add_theme_stylebox_override("normal", normal_style)
-	
-	var hover_style = normal_style.duplicate()
-	hover_style.bg_color = Color(0.2, 0.15, 0.25, 0.95)
-	hover_style.border_color = Color(0.6, 0.5, 0.7, 1.0)
-	btn.add_theme_stylebox_override("hover", hover_style)
-	
-	var pressed_style = normal_style.duplicate()
-	pressed_style.bg_color = Color(0.25, 0.2, 0.3, 1.0)
-	pressed_style.border_color = Color(0.7, 0.6, 0.8, 1.0)
-	btn.add_theme_stylebox_override("pressed", pressed_style)
+	# Apply styling based on toggle
+	if use_theme_styling and powerup_hover_theme:
+		# Use texture-based theme styling
+		btn.theme = powerup_hover_theme
+	else:
+		# Use programmatic styling (original)
+		var normal_style = StyleBoxFlat.new()
+		normal_style.bg_color = Color(0.15, 0.12, 0.18, 0.9)
+		normal_style.border_color = Color(0.4, 0.35, 0.45, 1.0)
+		normal_style.set_border_width_all(2)
+		normal_style.set_corner_radius_all(8)
+		normal_style.content_margin_left = 10
+		normal_style.content_margin_right = 10
+		normal_style.content_margin_top = 10
+		normal_style.content_margin_bottom = 10
+		btn.add_theme_stylebox_override("normal", normal_style)
+		
+		var hover_style = normal_style.duplicate()
+		hover_style.bg_color = Color(0.2, 0.15, 0.25, 0.95)
+		hover_style.border_color = Color(0.6, 0.5, 0.7, 1.0)
+		btn.add_theme_stylebox_override("hover", hover_style)
+		
+		var pressed_style = normal_style.duplicate()
+		pressed_style.bg_color = Color(0.25, 0.2, 0.3, 1.0)
+		pressed_style.border_color = Color(0.7, 0.6, 0.8, 1.0)
+		btn.add_theme_stylebox_override("pressed", pressed_style)
 	
 	# Connect signals
 	btn.pressed.connect(_on_profile_button_pressed.bind(slot))
@@ -357,6 +366,7 @@ func _build_navigation_section(parent: Control) -> void:
 ## _create_nav_button(text, accent_color)
 ##
 ## Creates a navigation button with consistent styling.
+## Styling is applied based on use_theme_styling bool.
 func _create_nav_button(text: String, accent_color: Color) -> Button:
 	var btn = Button.new()
 	btn.text = text
@@ -364,28 +374,34 @@ func _create_nav_button(text: String, accent_color: Color) -> Button:
 	btn.add_theme_font_override("font", vcr_font)
 	btn.add_theme_font_size_override("font_size", 26)
 	
-	# Normal style
-	var normal_style = StyleBoxFlat.new()
-	normal_style.bg_color = Color(0.12, 0.1, 0.15, 0.95)
-	normal_style.border_color = accent_color * 0.7
-	normal_style.set_border_width_all(3)
-	normal_style.set_corner_radius_all(10)
-	btn.add_theme_stylebox_override("normal", normal_style)
-	btn.add_theme_color_override("font_color", accent_color)
-	
-	# Hover style
-	var hover_style = normal_style.duplicate()
-	hover_style.bg_color = Color(0.18, 0.15, 0.22, 0.98)
-	hover_style.border_color = accent_color
-	btn.add_theme_stylebox_override("hover", hover_style)
-	btn.add_theme_color_override("font_hover_color", accent_color * 1.2)
-	
-	# Pressed style
-	var pressed_style = normal_style.duplicate()
-	pressed_style.bg_color = accent_color * 0.3
-	pressed_style.border_color = accent_color * 1.2
-	btn.add_theme_stylebox_override("pressed", pressed_style)
-	btn.add_theme_color_override("font_pressed_color", Color.WHITE)
+	# Apply styling based on toggle
+	if use_theme_styling and powerup_hover_theme:
+		# Use texture-based theme styling
+		btn.theme = powerup_hover_theme
+	else:
+		# Use programmatic styling (original)
+		# Normal style
+		var normal_style = StyleBoxFlat.new()
+		normal_style.bg_color = Color(0.12, 0.1, 0.15, 0.95)
+		normal_style.border_color = accent_color * 0.7
+		normal_style.set_border_width_all(3)
+		normal_style.set_corner_radius_all(10)
+		btn.add_theme_stylebox_override("normal", normal_style)
+		btn.add_theme_color_override("font_color", accent_color)
+		
+		# Hover style
+		var hover_style = normal_style.duplicate()
+		hover_style.bg_color = Color(0.18, 0.15, 0.22, 0.98)
+		hover_style.border_color = accent_color
+		btn.add_theme_stylebox_override("hover", hover_style)
+		btn.add_theme_color_override("font_hover_color", accent_color * 1.2)
+		
+		# Pressed style
+		var pressed_style = normal_style.duplicate()
+		pressed_style.bg_color = accent_color * 0.3
+		pressed_style.border_color = accent_color * 1.2
+		btn.add_theme_stylebox_override("pressed", pressed_style)
+		btn.add_theme_color_override("font_pressed_color", Color.WHITE)
 	
 	return btn
 
@@ -534,8 +550,17 @@ func _update_profile_buttons() -> void:
 ## _set_profile_button_active(button, active)
 ##
 ## Sets the visual state of a profile button as active or inactive.
+## Only works with programmatic styling; theme-based styling ignores this.
 func _set_profile_button_active(button: Button, active: bool) -> void:
-	var style = button.get_theme_stylebox("normal").duplicate() as StyleBoxFlat
+	# Skip if using theme-based styling
+	if use_theme_styling:
+		return
+	
+	var style = button.get_theme_stylebox("normal")
+	if not style:
+		return
+	
+	style = style.duplicate() as StyleBoxFlat
 	if active:
 		style.border_color = Color(0.4, 0.8, 0.4, 1.0)  # Green border for active
 		style.set_border_width_all(3)

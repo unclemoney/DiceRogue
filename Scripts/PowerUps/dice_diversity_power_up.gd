@@ -55,7 +55,7 @@ func apply(target) -> void:
 
 func _on_score_assigned(_section: Scorecard.Section, _category: String, _score: int) -> void:
 	# Get the dice values that were just scored
-	var dice_values = DiceResults.get_values()
+	var dice_values = DiceResults.values
 	
 	# Track unique values
 	for value in dice_values:
