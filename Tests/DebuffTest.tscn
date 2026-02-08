@@ -169,7 +169,7 @@
 [ext_resource type="Resource" path="res://Scripts/PowerUps/ChoreSprintPowerUp.tres" id="1043_chore_sprint"]
 [ext_resource type="Resource" path="res://Scripts/PowerUps/StraightTripletMasterPowerUp.tres" id="1044_straight_triplet_master"]
 [ext_resource type="Resource" path="res://Scripts/PowerUps/ModdedDiceMasteryPowerUp.tres" id="1045_modded_dice_mastery"]
-[ext_resource type="Resource" path="res://Scripts/PowerUps/DebuffDestroyerPowerUp.tres" id="1046_debuff_destroyer"]
+[ext_resource type="Resource" uid="uid://d1mmea4bxoxk1" path="res://Scripts/PowerUps/DebuffDestroyerPowerUp.tres" id="1046_debuff_destroyer"]
 [ext_resource type="Resource" path="res://Scripts/PowerUps/ChallengeEaserPowerUp.tres" id="1047_challenge_easer"]
 [ext_resource type="Resource" path="res://Scripts/PowerUps/AzurePerfectionPowerUp.tres" id="1048_azure_perfection"]
 [ext_resource type="Resource" path="res://Scripts/PowerUps/RainbowSurgePowerUp.tres" id="1049_rainbow_surge"]
