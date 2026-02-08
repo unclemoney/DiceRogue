@@ -15,6 +15,7 @@ var consumable_counts: Dictionary = {}  # id -> int (count of instances)
 var active_debuffs: Dictionary = {}  # id -> Debuff
 var active_mods: Dictionary = {}  # id -> Mod
 var active_challenges: Dictionary = {}  # id -> Challenge
+var challenge_score_modifier: float = 1.0  # Multiplier applied to challenge target scores (e.g., 0.8 for 20% reduction)
 
 const SCORE_CARD_UI_SCRIPT := preload("res://Scripts/UI/score_card_ui.gd")
 const DEBUFF_MANAGER_SCRIPT := preload("res://Scripts/Managers/DebuffManager.gd")
@@ -700,7 +701,7 @@ func _activate_power_up(power_up_id: String) -> void:
 		return
 	
 	# Connect to description_updated signal if the power-up has one
-	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus" or power_up_id == "step_by_step" or power_up_id == "perfect_strangers" or power_up_id == "green_monster" or power_up_id == "red_power_ranger" or power_up_id == "wild_dots" or power_up_id == "pin_head" or power_up_id == "money_well_spent" or power_up_id == "highlighted_score" or power_up_id == "the_consumer_is_always_right" or power_up_id == "lower_ten" or power_up_id == "plus_thelast" or power_up_id == "allowance" or power_up_id == "ungrounded" or power_up_id == "tango_and_cash" or power_up_id == "even_higher" or power_up_id == "money_bags" or power_up_id == "failed_money" or power_up_id == "dice_diversity" or power_up_id == "lock_and_load" or power_up_id == "chore_champion" or power_up_id == "roll_efficiency" or power_up_id == "pair_paradise":
+	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus" or power_up_id == "step_by_step" or power_up_id == "perfect_strangers" or power_up_id == "green_monster" or power_up_id == "red_power_ranger" or power_up_id == "wild_dots" or power_up_id == "pin_head" or power_up_id == "money_well_spent" or power_up_id == "highlighted_score" or power_up_id == "the_consumer_is_always_right" or power_up_id == "lower_ten" or power_up_id == "plus_thelast" or power_up_id == "allowance" or power_up_id == "ungrounded" or power_up_id == "tango_and_cash" or power_up_id == "even_higher" or power_up_id == "money_bags" or power_up_id == "failed_money" or power_up_id == "dice_diversity" or power_up_id == "lock_and_load" or power_up_id == "chore_champion" or power_up_id == "roll_efficiency" or power_up_id == "pair_paradise" or power_up_id == "purple_payout" or power_up_id == "mod_money" or power_up_id == "blue_safety_net" or power_up_id == "chore_sprint" or power_up_id == "straight_triplet_master" or power_up_id == "modded_dice_mastery" or power_up_id == "debuff_destroyer" or power_up_id == "challenge_easer" or power_up_id == "azure_perfection" or power_up_id == "rainbow_surge":
 		# Disconnect first to avoid duplicates
 		if pu.is_connected("description_updated", _on_power_up_description_updated):
 			pu.description_updated.disconnect(_on_power_up_description_updated)
@@ -906,6 +907,51 @@ func _activate_power_up(power_up_id: String) -> void:
 		"extra_coupons":
 			pu.apply(self)  # Pass GameController so PowerUp can access both UIs
 			print("[GameController] Applied ExtraCouponsPowerUp")
+		"purple_payout":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied PurplePayoutPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for PurplePayoutPowerUp")
+		"mod_money":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied ModMoneyPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for ModMoneyPowerUp")
+		"blue_safety_net":
+			pu.apply(self)
+			print("[GameController] Applied BlueSafetyNetPowerUp")
+		"chore_sprint":
+			pu.apply(self)
+			print("[GameController] Applied ChoreSprintPowerUp")
+		"straight_triplet_master":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied StraightTripletMasterPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for StraightTripletMasterPowerUp")
+		"modded_dice_mastery":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied ModdedDiceMasteryPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for ModdedDiceMasteryPowerUp")
+		"debuff_destroyer":
+			pu.apply(self)
+			print("[GameController] Applied DebuffDestroyerPowerUp")
+		"challenge_easer":
+			pu.apply(self)
+			print("[GameController] Applied ChallengeEaserPowerUp")
+		"azure_perfection":
+			pu.apply(self)
+			print("[GameController] Applied AzurePerfectionPowerUp")
+		"rainbow_surge":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied RainbowSurgePowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for RainbowSurgePowerUp")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -1079,6 +1125,36 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"extra_coupons":
 			print("[GameController] Removing extra_coupons PowerUp")
 			pu.remove(self)  # Pass GameController so PowerUp can access both UIs
+		"purple_payout":
+			print("[GameController] Removing purple_payout PowerUp")
+			pu.remove(scorecard)
+		"mod_money":
+			print("[GameController] Removing mod_money PowerUp")
+			pu.remove(scorecard)
+		"blue_safety_net":
+			print("[GameController] Removing blue_safety_net PowerUp")
+			pu.remove(self)
+		"chore_sprint":
+			print("[GameController] Removing chore_sprint PowerUp")
+			pu.remove(self)
+		"straight_triplet_master":
+			print("[GameController] Removing straight_triplet_master PowerUp")
+			pu.remove(scorecard)
+		"modded_dice_mastery":
+			print("[GameController] Removing modded_dice_mastery PowerUp")
+			pu.remove(scorecard)
+		"debuff_destroyer":
+			print("[GameController] Removing debuff_destroyer PowerUp")
+			pu.remove(self)
+		"challenge_easer":
+			print("[GameController] Removing challenge_easer PowerUp")
+			pu.remove(self)
+		"azure_perfection":
+			print("[GameController] Removing azure_perfection PowerUp")
+			pu.remove(self)
+		"rainbow_surge":
+			print("[GameController] Removing rainbow_surge PowerUp")
+			pu.remove(scorecard)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -1167,6 +1243,26 @@ func revoke_power_up(power_up_id: String) -> void:
 				pu.remove(scorecard)
 			"extra_coupons":
 				pu.remove(self)  # Pass GameController so PowerUp can access both UIs
+			"purple_payout":
+				pu.remove(scorecard)
+			"mod_money":
+				pu.remove(scorecard)
+			"blue_safety_net":
+				pu.remove(self)
+			"chore_sprint":
+				pu.remove(self)
+			"straight_triplet_master":
+				pu.remove(scorecard)
+			"modded_dice_mastery":
+				pu.remove(scorecard)
+			"debuff_destroyer":
+				pu.remove(self)
+			"challenge_easer":
+				pu.remove(self)
+			"azure_perfection":
+				pu.remove(self)
+			"rainbow_surge":
+				pu.remove(scorecard)
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself
 				pu.remove(pu)
@@ -2771,6 +2867,12 @@ func _validate_and_get_target_score(challenge_data: ChallengeData, round_number:
 		])
 	else:
 		print("[GameController] Goal from %s: %d (no channel scaling)" % [goal_source, base_target])
+	
+	# Apply challenge score modifier (e.g., from ChallengeEaserPowerUp)
+	if challenge_score_modifier != 1.0:
+		var modified_target = int(scaled_target * challenge_score_modifier)
+		print("[GameController] Challenge score modifier applied: %d -> %d (%.2fx)" % [scaled_target, modified_target, challenge_score_modifier])
+		scaled_target = modified_target
 	
 	return scaled_target
 

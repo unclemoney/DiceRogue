@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://dw7dok1tye5gg"]
+[gd_scene load_steps=4 format=3 uid="uid://dw7dok1tye5gg"]
 
 [ext_resource type="Script" uid="uid://dj4tbffxvlrbb" path="res://Scripts/UI/vcr_turn_tracker_ui.gd" id="1_vcr_ui"]
 [ext_resource type="Theme" uid="uid://yij15afv8bdr" path="res://Resources/UI/scorecard_theme.tres" id="2_1lhlw"]
+[ext_resource type="Texture2D" uid="uid://dpb6jg8ux7adi" path="res://Resources/Art/Background/VCR.png" id="2_1s3wn"]
 
 [node name="VCRTurnTrackerUI" type="Control"]
 layout_mode = 3
@@ -9,6 +10,14 @@ anchors_preset = 0
 offset_right = 400.0
 offset_bottom = 200.0
 script = ExtResource("1_vcr_ui")
+
+[node name="ColorRect" type="TextureRect" parent="."]
+visible = false
+layout_mode = 0
+offset_top = -114.0
+offset_right = 370.0
+offset_bottom = 132.0
+texture = ExtResource("2_1s3wn")
 
 [node name="VCRDisplay" type="Control" parent="."]
 layout_mode = 1
@@ -20,9 +29,10 @@ grow_vertical = 2
 
 [node name="MoneyLabel" type="Label" parent="VCRDisplay"]
 layout_mode = 1
-offset_top = 20.0
-offset_right = 100.0
-offset_bottom = 45.0
+offset_left = 24.0
+offset_top = -4.0
+offset_right = 345.0
+offset_bottom = 21.0
 theme = ExtResource("2_1lhlw")
 theme_override_colors/font_color = Color(0, 1, 0, 1)
 theme_override_font_sizes/font_size = 24
@@ -32,36 +42,36 @@ vertical_alignment = 1
 
 [node name="TurnLabel" type="Label" parent="VCRDisplay"]
 layout_mode = 1
-offset_left = 98.0
-offset_top = 20.0
-offset_right = 178.0
-offset_bottom = 45.0
+offset_left = 44.0
+offset_top = 30.0
+offset_right = 124.0
+offset_bottom = 55.0
 theme = ExtResource("2_1lhlw")
 theme_override_colors/font_color = Color(0, 1, 0, 1)
 theme_override_font_sizes/font_size = 16
-text = "T:1/10"
+text = "TRN:1/10"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="RollsLabel" type="Label" parent="VCRDisplay"]
 layout_mode = 1
-offset_left = 177.0
-offset_top = 20.0
-offset_right = 257.0
-offset_bottom = 45.0
+offset_left = 147.0
+offset_top = 30.0
+offset_right = 227.0
+offset_bottom = 55.0
 theme = ExtResource("2_1lhlw")
 theme_override_colors/font_color = Color(0, 1, 0, 1)
 theme_override_font_sizes/font_size = 16
-text = "R:3/3"
+text = "RLL:3/3"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="RoundLabel" type="Label" parent="VCRDisplay"]
 layout_mode = 1
-offset_left = 268.0
-offset_top = 20.0
-offset_right = 328.0
-offset_bottom = 45.0
+offset_left = 254.0
+offset_top = 30.0
+offset_right = 314.0
+offset_bottom = 55.0
 theme = ExtResource("2_1lhlw")
 theme_override_colors/font_color = Color(0, 1, 0, 1)
 theme_override_font_sizes/font_size = 16

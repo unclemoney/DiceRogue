@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" uid="uid://crx5s47rraxji" path="res://Resources/Art/Powerups/chore_chart.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" path="res://Scenes/PowerUp/ChoreSprintPowerUp.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "chore_sprint"
+display_name = "Chore Sprint"
+description = "Chores reduce goof-off meter by 30 instead of 20"
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 150
+rarity = "uncommon"
+rating = "PG"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

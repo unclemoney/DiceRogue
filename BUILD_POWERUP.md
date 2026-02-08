@@ -568,6 +568,38 @@ _add_default_power_up("grand_master", "Grand Master", "All scoring categories ge
 | Rare | ROLL_STRAIGHT, USE_CONSUMABLES | 2-3 straights, 5-7 consumables |
 | Legendary | COMPLETE_CHANNEL, CUMULATIVE_YAHTZEES | Channel 10-20, 10+ yahtzees |
 
+## New Wave PowerUps (10 total)
+
+### Common ($50-$75)
+| ID | Name | Effect |
+|----|------|--------|
+| `purple_payout` | Purple Payout | Earn $3 per purple die when scoring |
+| `mod_money` | Mod Money | Earn $8 per modded die when scoring |
+
+### Uncommon ($125-$150)
+| ID | Name | Effect |
+|----|------|--------|
+| `blue_safety_net` | Blue Safety Net | Halves blue dice penalties (divide factor reduced) |
+| `chore_sprint` | Chore Sprint | Chore completions reduce goof-off by extra 10 |
+
+### Rare ($275-$300)
+| ID | Name | Effect |
+|----|------|--------|
+| `straight_triplet_master` | Straight Triplet Master | Score large straight in 3 categories (large_straight, small_straight, chance) in 1 round → $150 + 75 bonus pts |
+| `modded_dice_mastery` | Modded Dice Mastery | +10 additive per modded die when scoring |
+
+### Epic ($400-$450)
+| ID | Name | Effect |
+|----|------|--------|
+| `debuff_destroyer` | Debuff Destroyer | Removes a random active debuff when this powerup is sold |
+| `challenge_easer` | Challenge Easer | All challenge target scores reduced by 20% |
+
+### Legendary ($600-$650)
+| ID | Name | Effect |
+|----|------|--------|
+| `azure_perfection` | Azure Perfection | Blue dice always multiply (never divide) |
+| `rainbow_surge` | Rainbow Surge | 2.0x score multiplier when 4+ unique dice colors present |
+
 ## Best Practices
 
 1. **Always test PowerUp cleanup** - Use remove() and verify no memory leaks

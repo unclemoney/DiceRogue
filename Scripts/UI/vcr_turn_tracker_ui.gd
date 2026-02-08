@@ -37,8 +37,8 @@ func _setup_vcr_styling() -> void:
 	
 	if money_label:
 		money_label.add_theme_font_override("font", vcr_font)
-		money_label.add_theme_font_size_override("font_size", 20)
-		money_label.add_theme_color_override("font_color", VCR_GREEN)
+		money_label.add_theme_font_size_override("font_size", 34)
+		money_label.add_theme_color_override("font_color", VCR_GREEN_BRIGHT)
 	
 	if turn_label:
 		turn_label.add_theme_font_override("font", vcr_font)
@@ -144,14 +144,14 @@ func _on_turn_updated(turn: int) -> void:
 		return
 	
 	var max_turns := tracker.max_turns
-	turn_label.text = "T:%d/%d" % [turn, max_turns]
+	turn_label.text = "TRN:%d/%d" % [turn, max_turns]
 	_animate_label_change(turn_label, turn_tween)
 
 func _on_rolls_updated(rolls: int) -> void:
 	if not tracker or not rolls_label:
 		return
 	
-	rolls_label.text = "R:%d/%d" % [rolls, tracker.MAX_ROLLS]
+	rolls_label.text = "RLL:%d/%d" % [rolls, tracker.MAX_ROLLS]
 	
 	# Change color based on extra rolls
 	if tracker.MAX_ROLLS > 3:
@@ -208,10 +208,10 @@ func reset_for_new_channel() -> void:
 	print("[VCRTurnTrackerUI] Resetting display for new channel")
 	
 	if turn_label:
-		turn_label.text = "T:--/13"
+		turn_label.text = "TRN:--/13"
 	
 	if rolls_label:
-		rolls_label.text = "R:--/3"
+		rolls_label.text = "RLL:--/3"
 		rolls_label.add_theme_color_override("font_color", VCR_GREEN)
 	
 	if round_label:

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" uid="uid://dthrqomtruhd0" path="res://Resources/Art/Powerups/coupon_spine.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" path="res://Scenes/PowerUp/AzurePerfectionPowerUp.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "azure_perfection"
+display_name = "Azure Perfection"
+description = "Blue dice ALWAYS count as used - no penalties, only multipliers!"
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 600
+rarity = "legendary"
+rating = "R"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

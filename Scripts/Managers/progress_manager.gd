@@ -1022,6 +1022,28 @@ func _create_default_unlockable_items() -> void:
 	_add_default_power_up("extra_coupons", "Extra Coupons", "Hold 2 additional consumables (5 max)", 
 		UnlockConditionClass.ConditionType.EARN_MONEY, 200)  # Rare: $250, unlock with money achievement
 	
+	# New Wave PowerUps (10 total)
+	_add_default_power_up("purple_payout", "Purple Payout", "Earn $3 per purple die when scoring", 
+		UnlockConditionClass.ConditionType.EARN_MONEY, 75)  # Common: $50
+	_add_default_power_up("mod_money", "Mod Money", "Earn $8 per modded die when scoring", 
+		UnlockConditionClass.ConditionType.COMPLETE_GAME, 2)  # Common: $75
+	_add_default_power_up("blue_safety_net", "Blue Safety Net", "Halves blue dice penalties", 
+		UnlockConditionClass.ConditionType.EARN_MONEY, 150)  # Uncommon: $125
+	_add_default_power_up("chore_sprint", "Chore Sprint", "Chore completions reduce goof-off by extra 10", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 120)  # Uncommon: $150
+	_add_default_power_up("straight_triplet_master", "Straight Triplet Master", "Score large straight in 3 categories for $150 + 75 bonus", 
+		UnlockConditionClass.ConditionType.ROLL_STRAIGHT, 3)  # Rare: $275
+	_add_default_power_up("modded_dice_mastery", "Modded Dice Mastery", "+10 per modded die when scoring", 
+		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 4)  # Rare: $300
+	_add_default_power_up("debuff_destroyer", "Debuff Destroyer", "Removes random debuff when sold", 
+		UnlockConditionClass.ConditionType.ROLL_YAHTZEE, 2)  # Epic: $400
+	_add_default_power_up("challenge_easer", "Challenge Easer", "All challenge targets reduced by 20%", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5)  # Epic: $450
+	_add_default_power_up("azure_perfection", "Azure Perfection", "Blue dice always multiply (never divide)", 
+		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 3)  # Legendary: $600
+	_add_default_power_up("rainbow_surge", "Rainbow Surge", "2x multiplier when 4+ dice colors present", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 10)  # Legendary: $650
+	
 	# ==========================================================================
 	# ALL CONSUMABLES (16 total) - From Scripts/Consumable/*.tres files  
 	# ==========================================================================

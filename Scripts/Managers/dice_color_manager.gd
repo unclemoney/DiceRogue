@@ -20,6 +20,10 @@ var colored_dice_data: Dictionary = {}  # color_id -> ColoredDiceData
 # Color probability modifiers (multipliers applied to base chance denominators)
 var color_chance_modifiers: Dictionary = {}  # DiceColor.Type -> float
 
+# Blue dice modifiers (set by PowerUps)
+var blue_always_used: bool = false  # When true, blue dice always count as "used" (Azure Perfection)
+var blue_penalty_reduction_factor: float = 1.0  # Multiplier for blue penalty (1.0 = full, 0.5 = half) (Blue Safety Net)
+
 # Base costs per rarity tier (exponential scaling: cost = base * 2^purchase_count)
 const BASE_COSTS: Dictionary = {
 	DiceColorClass.Type.GREEN: 50,   # Common: $50 base
@@ -73,14 +77,19 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = []) -> 
 			DiceColorClass.Type.BLUE:
 				blue_count += 1
 				# Blue dice effect depends on whether it's used in scoring
-				var is_used = used_dice_array.size() == 0 or i in used_dice_array
+				# Azure Perfection: blue_always_used overrides to always count as used
+				var is_used = blue_always_used or used_dice_array.size() == 0 or i in used_dice_array
 				if is_used:
 					# Used: multiply score
 					blue_score_multiplier *= dice_value
 				else:
 					# Not used: divide score (implemented as fractional multiplier)
+					# Blue Safety Net: blue_penalty_reduction_factor reduces the penalty
 					if dice_value > 0:
-						blue_score_multiplier *= (1.0 / dice_value)
+						var penalty = 1.0 / dice_value
+						# Apply penalty reduction: lerp between 1.0 (no penalty) and penalty
+						var reduced_penalty = lerpf(1.0, penalty, blue_penalty_reduction_factor)
+						blue_score_multiplier *= reduced_penalty
 			DiceColorClass.Type.NONE:
 				pass  # No effect
 	
