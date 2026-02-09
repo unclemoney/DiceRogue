@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://dghwsmpaqpinu"]
+
+[ext_resource type="Texture2D" uid="uid://c5euhoo3jpa3j" path="res://Resources/Art/Powerups/PowerUp_test3.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" uid="uid://dghwsmpaqpvlp" path="res://Scenes/PowerUp/TheReplicatorPowerUp.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "the_replicator"
+display_name = "The Replicator"
+description = "After 1 turn, duplicates a random PowerUp you own"
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 300
+rarity = "rare"
+rating = "PG-13"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

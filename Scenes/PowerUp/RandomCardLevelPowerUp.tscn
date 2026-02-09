@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://md6bi42hpjnt"]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/random_card_level_power_up.gd" id="1_random_card"]
+
+[node name="RandomCardLevelPowerUp" type="Node2D"]
+script = ExtResource("1_random_card")
+id = "random_card_level"

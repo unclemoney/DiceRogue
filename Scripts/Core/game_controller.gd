@@ -690,6 +690,53 @@ func grant_power_up(id: String) -> void:
 	_activate_power_up(id)
 
 
+## grant_replica_power_up(original_id)
+##
+## Spawns a fully independent replica of an existing PowerUp, registers it
+## in active_power_ups with a "_replica" suffix, creates a UI spine/icon,
+## and activates it using the same logic as the original. Called by
+## TheReplicatorPowerUp when it is sold after being charged.
+func grant_replica_power_up(original_id: String) -> void:
+	var replica_id = original_id + "_replica"
+	print("\n=== Granting Replica Power-Up: ", replica_id, " ===")
+	
+	# Don't create if one already exists
+	if active_power_ups.has(replica_id):
+		print("[GameController] Replica '", replica_id, "' already exists. Skipping.")
+		return
+	
+	# Check max slots
+	if powerup_ui and powerup_ui.has_max_power_ups():
+		print("[GameController] Maximum power-ups reached. Cannot add replica.")
+		return
+	
+	# Spawn logic scene via the original ID
+	var pu := pu_manager.spawn_power_up(original_id, power_up_container) as PowerUp
+	if pu == null:
+		push_error("[GameController] Failed to spawn replica of '%s'" % original_id)
+		return
+	
+	# Create UI with replica-specific data
+	var def: PowerUpData = pu_manager.get_def(original_id)
+	if def:
+		var replica_data: PowerUpData = def.duplicate()
+		replica_data.id = replica_id
+		replica_data.display_name = def.display_name + " (Replica)"
+		var icon = powerup_ui.add_power_up(replica_data)
+		if icon:
+			print("[GameController] Created UI for replica:", replica_id)
+			if not powerup_ui.is_connected("power_up_sold", _on_power_up_sold):
+				powerup_ui.connect("power_up_sold", _on_power_up_sold)
+		else:
+			push_error("[GameController] Failed to create UI for replica:", replica_id)
+	
+	# Register and activate using the replica ID
+	active_power_ups[replica_id] = pu
+	emit_signal("power_up_granted", replica_id, pu)
+	_activate_power_up(replica_id)
+	print("[GameController] Replica power-up granted and activated:", replica_id)
+
+
 ## _activate_power_up(power_up_id)
 ##
 ##+ Internal helper that applies a spawned PowerUp instance to its intended target(s).
@@ -706,8 +753,13 @@ func _activate_power_up(power_up_id: String) -> void:
 		push_error("[GameController] No PowerUp found for id:", power_up_id)
 		return
 	
+	# For replica PowerUps, use the original (base) ID for matching
+	var match_id = power_up_id
+	if power_up_id.ends_with("_replica"):
+		match_id = power_up_id.substr(0, power_up_id.length() - "_replica".length())
+	
 	# Connect to description_updated signal if the power-up has one
-	if power_up_id == "upper_bonus_mult" or power_up_id == "consumable_cash" or power_up_id == "evens_no_odds" or power_up_id == "bonus_money" or power_up_id == "money_multiplier" or power_up_id == "full_house_bonus" or power_up_id == "step_by_step" or power_up_id == "perfect_strangers" or power_up_id == "green_monster" or power_up_id == "red_power_ranger" or power_up_id == "wild_dots" or power_up_id == "pin_head" or power_up_id == "money_well_spent" or power_up_id == "highlighted_score" or power_up_id == "the_consumer_is_always_right" or power_up_id == "lower_ten" or power_up_id == "plus_thelast" or power_up_id == "allowance" or power_up_id == "ungrounded" or power_up_id == "tango_and_cash" or power_up_id == "even_higher" or power_up_id == "money_bags" or power_up_id == "failed_money" or power_up_id == "dice_diversity" or power_up_id == "lock_and_load" or power_up_id == "chore_champion" or power_up_id == "roll_efficiency" or power_up_id == "pair_paradise" or power_up_id == "purple_payout" or power_up_id == "mod_money" or power_up_id == "blue_safety_net" or power_up_id == "chore_sprint" or power_up_id == "straight_triplet_master" or power_up_id == "modded_dice_mastery" or power_up_id == "debuff_destroyer" or power_up_id == "challenge_easer" or power_up_id == "azure_perfection" or power_up_id == "rainbow_surge":
+	if pu.has_signal("description_updated"):
 		# Disconnect first to avoid duplicates
 		if pu.is_connected("description_updated", _on_power_up_description_updated):
 			pu.description_updated.disconnect(_on_power_up_description_updated)
@@ -717,7 +769,7 @@ func _activate_power_up(power_up_id: String) -> void:
 		print("[GameController] Connected to description_updated signal")
 	
 	# Connect to effect_updated signal for randomizer power-up
-	if power_up_id == "randomizer":
+	if match_id == "randomizer":
 		if pu.is_connected("effect_updated", _on_randomizer_effect_updated):
 			pu.effect_updated.disconnect(_on_randomizer_effect_updated)
 		
@@ -725,7 +777,7 @@ func _activate_power_up(power_up_id: String) -> void:
 		print("[GameController] Connected to randomizer effect_updated signal")
 	
 	# Special handling for different power-ups
-	match power_up_id:
+	match match_id:
 		"foursome":
 			if scorecard:
 				pu.apply(scorecard)
@@ -958,6 +1010,39 @@ func _activate_power_up(power_up_id: String) -> void:
 				print("[GameController] Applied RainbowSurgePowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for RainbowSurgePowerUp")
+		"the_replicator":
+			pu.apply(self)
+			print("[GameController] Applied TheReplicatorPowerUp with game_controller ref")
+		"the_piggy_bank":
+			if dice_hand:
+				pu.apply(dice_hand)
+				print("[GameController] Applied ThePiggyBankPowerUp to dice_hand")
+			else:
+				push_error("[GameController] No dice_hand available for ThePiggyBankPowerUp")
+		"random_card_level":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied RandomCardLevelPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for RandomCardLevelPowerUp")
+		"yahtzeed_dice":
+			if dice_hand:
+				pu.apply(dice_hand)
+				print("[GameController] Applied YahtzeedDicePowerUp to dice_hand")
+			else:
+				push_error("[GameController] No dice_hand available for YahtzeedDicePowerUp")
+		"consumable_collector":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied ConsumableCollectorPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for ConsumableCollectorPowerUp")
+		"daring_dice":
+			if dice_hand:
+				pu.apply(dice_hand)
+				print("[GameController] Applied DaringDicePowerUp to dice_hand")
+			else:
+				push_error("[GameController] No dice_hand available for DaringDicePowerUp")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -973,7 +1058,11 @@ func _on_power_up_sold(power_up_id: String) -> void:
 		push_error("[GameController] No PowerUp found for id:", power_up_id)
 		return
 
-	var def = pu_manager.get_def(power_up_id)
+	# For replica PowerUps, look up the original ID for the price definition
+	var lookup_id = power_up_id
+	if power_up_id.ends_with("_replica"):
+		lookup_id = power_up_id.substr(0, power_up_id.length() - "_replica".length())
+	var def = pu_manager.get_def(lookup_id)
 	if def:
 		var refund = def.price / 2.0  # Half price
 		print("[GameController] Refunding", refund, "coins for power-up:", power_up_id)
@@ -1015,7 +1104,12 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		push_error("[GameController] No PowerUp found for id:", power_up_id)
 		return
 
-	match power_up_id:
+	# For replica PowerUps, use the original ID for the target match lookup
+	var match_id = power_up_id
+	if power_up_id.ends_with("_replica"):
+		match_id = power_up_id.substr(0, power_up_id.length() - "_replica".length())
+
+	match match_id:
 		"extra_dice":
 			pu.remove(dice_hand)
 			disable_debuff("lock_dice")
@@ -1161,6 +1255,24 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"rainbow_surge":
 			print("[GameController] Removing rainbow_surge PowerUp")
 			pu.remove(scorecard)
+		"the_replicator":
+			print("[GameController] Removing the_replicator PowerUp")
+			pu.remove(self)
+		"the_piggy_bank":
+			print("[GameController] Removing the_piggy_bank PowerUp")
+			pu.remove(dice_hand)
+		"random_card_level":
+			print("[GameController] Removing random_card_level PowerUp")
+			pu.remove(scorecard)
+		"yahtzeed_dice":
+			print("[GameController] Removing yahtzeed_dice PowerUp")
+			pu.remove(dice_hand)
+		"consumable_collector":
+			print("[GameController] Removing consumable_collector PowerUp")
+			pu.remove(scorecard)
+		"daring_dice":
+			print("[GameController] Removing daring_dice PowerUp")
+			pu.remove(dice_hand)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -1175,8 +1287,12 @@ func revoke_power_up(power_up_id: String) -> void:
 
 	var pu := active_power_ups[power_up_id] as PowerUp
 	if pu:
+		# For replica PowerUps, use the original ID for the target match lookup
+		var match_id = power_up_id
+		if power_up_id.ends_with("_replica"):
+			match_id = power_up_id.substr(0, power_up_id.length() - "_replica".length())
 		# Pass the correct target based on power-up type
-		match power_up_id:
+		match match_id:
 			"extra_dice":
 				pu.remove(dice_hand)
 			"extra_rolls":
@@ -1269,6 +1385,18 @@ func revoke_power_up(power_up_id: String) -> void:
 				pu.remove(self)
 			"rainbow_surge":
 				pu.remove(scorecard)
+			"the_replicator":
+				pu.remove(turn_tracker)
+			"the_piggy_bank":
+				pu.remove(dice_hand)
+			"random_card_level":
+				pu.remove(scorecard)
+			"yahtzeed_dice":
+				pu.remove(dice_hand)
+			"consumable_collector":
+				pu.remove(scorecard)
+			"daring_dice":
+				pu.remove(dice_hand)
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself
 				pu.remove(pu)

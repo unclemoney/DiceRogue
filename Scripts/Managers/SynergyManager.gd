@@ -229,17 +229,8 @@ func _update_rainbow_bonus(manager) -> void:
 ##
 ## Helper to find the ScoreModifierManager singleton or node.
 func _get_score_modifier_manager():
-	# Try autoload first
-	if Engine.has_singleton("ScoreModifierManager"):
-		return Engine.get_singleton("ScoreModifierManager")
-	
-	# Try getting from scene tree
-	if get_tree():
-		var group_node = get_tree().get_first_node_in_group("score_modifier_manager")
-		if group_node:
-			return group_node
-	
-	return null
+	# ScoreModifierManager is a registered autoload — use direct reference
+	return ScoreModifierManager
 
 
 ## get_rating_counts() -> Dictionary

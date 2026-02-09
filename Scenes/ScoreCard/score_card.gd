@@ -672,7 +672,7 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 	
 	# Get modifiers from ScoreModifierManager (fallback for compatibility)
 	var modifier_manager = null
-	if Engine.has_singleton("ScoreModifierManager"):
+	if ScoreModifierManager != null:
 		modifier_manager = ScoreModifierManager
 	elif get_tree():
 		modifier_manager = get_tree().get_first_node_in_group("score_modifier_manager")
@@ -952,7 +952,8 @@ func _categorize_modifier_source(source_name: String) -> String:
 			"step_by_step", "evens_no_odds", "lower_ten", "plus_thelast",
 			"shop_rerolls", "tango_and_cash", "even_higher", "money_bags", "failed_money",
 			"roll_efficiency", "pair_paradise",
-			"modded_dice_mastery", "rainbow_surge"
+			"modded_dice_mastery", "rainbow_surge",
+			"consumable_collector", "daring_dice"
 		]
 		
 		if lower_name in powerup_sources:
@@ -982,7 +983,7 @@ func _calculate_score_with_preserved_effects(category: String, dice_values: Arra
 	
 	# Get modifiers from ScoreModifierManager
 	var modifier_manager = null
-	if Engine.has_singleton("ScoreModifierManager"):
+	if ScoreModifierManager != null:
 		modifier_manager = ScoreModifierManager
 	elif get_tree():
 		modifier_manager = get_tree().get_first_node_in_group("score_modifier_manager")

@@ -1119,6 +1119,20 @@ func _create_default_unlockable_items() -> void:
 	_add_default_power_up("dice_lord", "Dice Lord", "Start each round with one guaranteed Yahtzee", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 20, 10)
 	
+	# --- New Wave PowerUps ---
+	_add_default_power_up("the_piggy_bank", "The Piggy Bank", "Saves $3 per roll. Sell to cash out!", 
+		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 6, 4, {"cumulative": true})
+	_add_default_power_up("daring_dice", "Daring Dice", "Remove 2 dice but gain +50 score bonus", 
+		UnlockConditionClass.ConditionType.ROLL_STRAIGHT, 4, 5)
+	_add_default_power_up("consumable_collector", "Consumable Collector", "+0.1x multiplier per consumable used", 
+		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 8, 5)
+	_add_default_power_up("random_card_level", "Random Card Level", "20% chance each turn to level up a category", 
+		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 4, 6)
+	_add_default_power_up("the_replicator", "The Replicator", "Duplicates a random PowerUp you own after 1 turn", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 4, 7)
+	_add_default_power_up("yahtzeed_dice", "Yahtzeed Dice", "Gain +1 die per Yahtzee (max 16)", 
+		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 6, 8)
+	
 	# --- Channel-based PowerUps (NOT IMPLEMENTED - preserved) ---
 	_add_default_power_up("lucky_streak", "Lucky Streak", "Increased chance of rolling pairs", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 5)
@@ -1283,6 +1297,15 @@ func _create_default_unlockable_items() -> void:
 	
 	print("[ProgressManager] Created %d total unlockable items across all categories" % unlockable_items.size())
 
+## Helper function to create unlockable items with consistent structure
+## Parameters:
+## - id: Unique identifier for the item
+## - item_name: Display name for the item
+## - desc: Description of the item's effects
+## - condition_type: Type of unlock condition (from UnlockConditionClass.ConditionType)
+## - target: Target value for the unlock condition (meaning depends on condition type)
+## - difficulty: Difficulty rating for the item (1-10)
+## - extra_params: Dictionary for any additional parameters needed for the condition (e.g. category for score-based conditions, cumulative flag for chore completions, etc.)
 func _add_default_power_up(id: String, item_name: String, desc: String, condition_type: int, target: int, difficulty: int = 1, extra_params: Dictionary = {}) -> void:
 	var condition = UnlockConditionClass.new()
 	condition.id = id + "_condition"

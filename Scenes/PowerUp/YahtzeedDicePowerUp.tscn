@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://bdr5jlk1b0x6"]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/yahtzeed_dice_power_up.gd" id="1_yahtzeed"]
+
+[node name="YahtzeedDicePowerUp" type="Node2D"]
+script = ExtResource("1_yahtzeed")
+id = "yahtzeed_dice"

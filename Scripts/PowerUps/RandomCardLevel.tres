@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://md6bi42hpipy"]
+
+[ext_resource type="Texture2D" uid="uid://chnl0hqqr66pv" path="res://Resources/Art/Powerups/PowerUp_test6.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" uid="uid://md6bi42hpjnt" path="res://Scenes/PowerUp/RandomCardLevelPowerUp.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "random_card_level"
+display_name = "Random Card Level"
+description = "20% chance each turn to level up a random scorecard category"
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 300
+rarity = "rare"
+rating = "PG-13"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

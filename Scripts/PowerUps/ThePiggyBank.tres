@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://c4j0vl8msqabm"]
+
+[ext_resource type="Texture2D" uid="uid://bgsc1aos08ilx" path="res://Resources/Art/Powerups/PowerUp_test5.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" uid="uid://c4j0vl8msqa8h" path="res://Scenes/PowerUp/ThePiggyBankPowerUp.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "the_piggy_bank"
+display_name = "The Piggy Bank"
+description = "Saves $3 per roll. Sell to cash out all savings!"
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 125
+rarity = "uncommon"
+rating = "E"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

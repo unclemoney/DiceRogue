@@ -180,6 +180,13 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - **FullHousePowerUp**: Grants $7 × (total full houses rolled) for each new full house
   - **New Wave PowerUps** (10 total): Purple Payout, Mod Money, Blue Safety Net, Chore Sprint, Straight Triplet Master, Modded Dice Mastery, Debuff Destroyer, Challenge Easer, Azure Perfection, Rainbow Surge
     - Themes: dice color synergies, mod-powerup synergies, straight combos, economy/chores, debuff management, challenge easing
+  - **Risk & Reward PowerUps** (6 total):
+    - **The Replicator** (Rare/$300): After 1 turn, duplicates a random PowerUp you own — with dramatic visual/audio effects
+    - **The Piggy Bank** (Uncommon/$125): Saves $3 per roll; sell to cash out accumulated savings with animated coin effects
+    - **Random Card Level** (Rare/$300): 20% chance each turn to level up a random scorecard category
+    - **Yahtzeed Dice** (Epic/$450): Gain +1 die every time you roll a Yahtzee (max 16 dice)
+    - **Consumable Collector** (Rare/$275): +0.1× score multiplier for each consumable used during the game
+    - **Daring Dice** (Rare/$300): Remove 2 dice but gain permanent +50 score bonus per category
 - **Consumables** (`Scripts/Consumable/`) - Single-use strategic items
 - **Mods** (`Scripts/Mods/`) - Dice behavior modifiers
 

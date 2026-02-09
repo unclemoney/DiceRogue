@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://4b48lr157e41"]
+
+[ext_resource type="Texture2D" uid="uid://deexsyh7pkoer" path="res://Resources/Art/Powerups/PowerUp_test8.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" uid="uid://4b48lr157eov" path="res://Scenes/PowerUp/ConsumableCollectorPowerUp.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "consumable_collector"
+display_name = "Consumable Collector"
+description = "+0.1x score multiplier for each consumable used"
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 275
+rarity = "rare"
+rating = "PG-13"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

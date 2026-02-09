@@ -12,22 +12,21 @@ func _ready() -> void:
 	add_to_group("power_ups")
 	print("[YahtzeeBonusMultPowerUp] Added to 'power_ups' group")
 	
-	# Guard against missing ScoreModifierManager
-	if not _is_score_modifier_manager_available():
-		push_error("[YahtzeeBonusMultPowerUp] ScoreModifierManager not available")
-		return
-	
-	# Get the correct ScoreModifierManager reference
-	var manager = _get_score_modifier_manager()
-	
 	# Connect to ScoreModifierManager signals to update UI when total multiplier changes
+	# Use call_deferred to ensure autoloads have finished _ready()
+	call_deferred("_connect_to_score_modifier_manager")
+
+func _connect_to_score_modifier_manager() -> void:
+	var manager = _get_score_modifier_manager()
 	if manager and not manager.is_connected("multiplier_changed", _on_multiplier_manager_changed):
 		manager.multiplier_changed.connect(_on_multiplier_manager_changed)
 		print("[YahtzeeBonusMultPowerUp] Connected to ScoreModifierManager signals")
+	elif not manager:
+		push_error("[YahtzeeBonusMultPowerUp] ScoreModifierManager not available")
 
 func _is_score_modifier_manager_available() -> bool:
-	# Check if ScoreModifierManager exists as an autoload singleton
-	if Engine.has_singleton("ScoreModifierManager"):
+	# Check if ScoreModifierManager autoload is accessible
+	if ScoreModifierManager != null:
 		return true
 	
 	# Fallback: check if it exists in the scene tree as a group member
@@ -35,7 +34,6 @@ func _is_score_modifier_manager_available() -> bool:
 		var group_node = get_tree().get_first_node_in_group("score_modifier_manager")
 		if group_node:
 			return true
-		# Also check old group name for backward compatibility
 		var old_group_node = get_tree().get_first_node_in_group("multiplier_manager")
 		if old_group_node:
 			return true
@@ -43,16 +41,15 @@ func _is_score_modifier_manager_available() -> bool:
 	return false
 
 func _get_score_modifier_manager():
-	# Check if ScoreModifierManager exists as an autoload singleton
-	if Engine.has_singleton("ScoreModifierManager"):
+	# Use direct autoload reference (Engine.has_singleton doesn't work for autoloads)
+	if ScoreModifierManager != null:
 		return ScoreModifierManager
 	
-	# Fallback: check new group name first
+	# Fallback: check group names
 	if get_tree():
 		var group_node = get_tree().get_first_node_in_group("score_modifier_manager")
 		if group_node:
 			return group_node
-		# Then check old group name for backward compatibility
 		var old_group_node = get_tree().get_first_node_in_group("multiplier_manager")
 		if old_group_node:
 			return old_group_node
@@ -75,10 +72,20 @@ func apply(target) -> void:
 		bonus_count = scorecard.yahtzee_bonuses
 		print("[YahtzeeBonusMultPowerUp] Found existing yahtzee bonuses:", bonus_count, ", setting multiplier to:", get_current_multiplier())
 	
-	# Connect to the yahtzee_bonus_achieved signal
+	# Check if a Yahtzee was already scored on the Yahtzee row
+	if scorecard.yahtzee_scored:
+		bonus_count += 1
+		print("[YahtzeeBonusMultPowerUp] Initial Yahtzee already scored, adding to count:", bonus_count)
+	
+	# Connect to yahtzee_bonus_achieved for bonus Yahtzees (2nd+ Yahtzee)
 	if not scorecard.is_connected("yahtzee_bonus_achieved", _on_yahtzee_bonus_achieved):
 		scorecard.yahtzee_bonus_achieved.connect(_on_yahtzee_bonus_achieved)
 		print("[YahtzeeBonusMultPowerUp] Connected to yahtzee_bonus_achieved signal")
+	
+	# Connect to score_assigned to detect when the first Yahtzee is scored
+	if not scorecard.is_connected("score_assigned", _on_score_assigned):
+		scorecard.score_assigned.connect(_on_score_assigned)
+		print("[YahtzeeBonusMultPowerUp] Connected to score_assigned signal")
 	
 	# Make sure we clean up when the node is destroyed
 	if not is_connected("tree_exiting", _on_tree_exiting):
@@ -103,6 +110,22 @@ func _on_yahtzee_bonus_achieved(_bonus_points: int) -> void:
 		_update_power_up_icons()
 	
 	print("[YahtzeeBonusMultPowerUp] ALL SCORES NOW MULTIPLIED BY:", get_current_multiplier())
+
+func _on_score_assigned(_section, category: String, score: int) -> void:
+	## _on_score_assigned()
+	##
+	## Detects when the Yahtzee category is scored with a valid hand (score > 0).
+	## This captures the FIRST Yahtzee — bonus Yahtzees are handled by
+	## _on_yahtzee_bonus_achieved instead.
+	if category == "yahtzee" and score > 0:
+		print("\n=== First Yahtzee Scored! ===")
+		bonus_count += 1
+		print("[YahtzeeBonusMultPowerUp] First Yahtzee! Count:", bonus_count, "Multiplier:", get_current_multiplier())
+		emit_signal("description_updated", id, get_current_description())
+		_update_multiplier_manager()
+		if is_inside_tree():
+			_update_power_up_icons()
+		print("[YahtzeeBonusMultPowerUp] ALL SCORES NOW MULTIPLIED BY:", get_current_multiplier())
 
 func get_current_multiplier() -> float:
 	return base_multiplier + bonus_count
@@ -134,6 +157,8 @@ func _on_tree_exiting() -> void:
 	if scorecard_ref:
 		if scorecard_ref.is_connected("yahtzee_bonus_achieved", _on_yahtzee_bonus_achieved):
 			scorecard_ref.yahtzee_bonus_achieved.disconnect(_on_yahtzee_bonus_achieved)
+		if scorecard_ref.is_connected("score_assigned", _on_score_assigned):
+			scorecard_ref.score_assigned.disconnect(_on_score_assigned)
 	
 	# Unregister from ScoreModifierManager
 	if _is_score_modifier_manager_available():
@@ -155,6 +180,8 @@ func remove(target) -> void:
 	if scorecard:
 		if scorecard.is_connected("yahtzee_bonus_achieved", _on_yahtzee_bonus_achieved):
 			scorecard.yahtzee_bonus_achieved.disconnect(_on_yahtzee_bonus_achieved)
+		if scorecard.is_connected("score_assigned", _on_score_assigned):
+			scorecard.score_assigned.disconnect(_on_score_assigned)
 	
 	# Unregister from ScoreModifierManager
 	if _is_score_modifier_manager_available():
@@ -166,7 +193,7 @@ func remove(target) -> void:
 	scorecard_ref = null
 
 func get_current_description() -> String:
-	var base_desc = "🎲 mult by 1x for each Yahtzee Bonus"
+	var base_desc = "🎲 mult by 1x for each Yahtzee rolled"
 	
 	if not scorecard_ref:
 		return base_desc
@@ -176,9 +203,9 @@ func get_current_description() -> String:
 	
 	var current_mult = get_current_multiplier()
 	var manager = _get_score_modifier_manager()
-	var total_mult = 1.0
+	var _total_mult = 1.0
 	if manager:
-		total_mult = manager.get_total_multiplier()
+		_total_mult = manager.get_total_multiplier()
 	
 	var desc = "\nCurrent : %dx" % [current_mult]
 	

@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://c4j0vl8msqa8h"]
+
+[ext_resource type="Script" path="res://Scripts/PowerUps/the_piggy_bank_power_up.gd" id="1_piggy_bank"]
+
+[node name="ThePiggyBankPowerUp" type="Node2D"]
+script = ExtResource("1_piggy_bank")
+id = "the_piggy_bank"

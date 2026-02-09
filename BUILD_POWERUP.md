@@ -600,6 +600,26 @@ _add_default_power_up("grand_master", "Grand Master", "All scoring categories ge
 | `azure_perfection` | Azure Perfection | Blue dice always multiply (never divide) |
 | `rainbow_surge` | Rainbow Surge | 2.0x score multiplier when 4+ unique dice colors present |
 
+### Risk & Reward Wave
+
+#### Uncommon ($125)
+| ID | Name | Effect |
+|----|------|--------|
+| `the_piggy_bank` | The Piggy Bank | Saves $3 per roll; sell to cash out all savings with animated coin effects |
+
+#### Rare ($275-$300)
+| ID | Name | Effect |
+|----|------|--------|
+| `consumable_collector` | Consumable Collector | +0.1× score multiplier for each consumable used during the game |
+| `random_card_level` | Random Card Level | 20% chance each turn to level up a random scorecard category |
+| `the_replicator` | The Replicator | After 1 turn, duplicates a random PowerUp you own (with dramatic VFX) |
+| `daring_dice` | Daring Dice | Remove 2 dice but gain permanent +50 score bonus per category |
+
+#### Epic ($450)
+| ID | Name | Effect |
+|----|------|--------|
+| `yahtzeed_dice` | Yahtzeed Dice | Gain +1 die every time you roll a Yahtzee (max 16 dice) |
+
 ## Best Practices
 
 1. **Always test PowerUp cleanup** - Use remove() and verify no memory leaks
@@ -612,3 +632,1937 @@ _add_default_power_up("grand_master", "Grand Master", "All scoring categories ge
 8. **Consider performance** - Avoid expensive operations in frequently called methods
 9. **Prevent duplicate execution** - Use flags or tracking variables for one-time effects
 10. **Keep console output clean** - Remove excessive print statements that clutter terminal output
+
+## Signal Architecture & Timing
+
+### Scorecard Signals
+
+| Signal | Parameters | When It Fires | Use Cases |
+|--------|-----------|---------------|-----------|
+| `score_assigned` | `(section: Section, category: String, score: int)` | Every time ANY category is scored | Track ALL scoring events, detect first-time scoring |
+| `upper_bonus_achieved` | `(bonus_points: int)` | When upper section bonus threshold reached (63+ points) | React to upper bonus, one-time per game |
+| `yahtzee_bonus_achieved` | `(bonus_points: int)` | When bonus Yahtzee rolled (2nd+ Yahtzee) | Track bonus Yahtzees ONLY, not first |
+| `yahtzee_scored` | Boolean flag | Set true when Yahtzee row scored with score > 0 | Check if player has already scored a Yahtzee |
+
+**Critical: First Yahtzee vs Bonus Yahtzee**
+- First Yahtzee: Detected via `score_assigned` with `category == "yahtzee" and score > 0`
+- Bonus Yahtzees: Fire `yahtzee_bonus_achieved` signal
+- PowerUps tracking "all Yahtzees" need BOTH signals
+
+## Anti-Patterns & Common Mistakes
+
+### ❌ DON'T: Maintain Your Own Target Mapping
+**Wrong:**
+```gdscript
+func _get_apply_target_for(power_up_id: String) -> Node:
+    var turn_targets = ["allowance", "ungrounded"]  # ❌ Out of sync with GameController
+    if power_up_id in turn_targets:
+        return game_controller_ref.turn_tracker  # ❌ Wrong for Allowance
+```
+
+### Correct Approach
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Common Mistake
+- Using `get_tree().get_first_node_in_group("power_up_ui")` to find the PowerUp
+- This is not the correct way to find the PowerUp
+- The PowerUp is not a node in the game tree
+
+### Correct Way
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection is handled by the GameController, not by the PowerUp script
+
+### Example
+- `apply(target)` should be called with the target object (e.g., `scorecard`)
+- The GameController handles the rest
+
+### Debugging Tips
+- Use `get_tree().get_first_node_in_group("game_controller")` to find the GameController
+- Use `game_controller.turn_tracker` to find the turn tracker
+- Use `game_controller.score_card_ui` to find the ScoreCardUI
+
+### Common Issues
+- PowerUp not appearing in the game
+- PowerUp not activating
+- PowerUp not updating description
+
+### Solutions
+- Check PowerUpManager.power_up_defs array includes your resource
+- Verify resource file has correct id and scene reference
+- Ensure scene file has proper script attachment
+- Use the GameController's built-in target selection logic
+- PowerUps should be applied through the GameController's activation system
+- Target selection

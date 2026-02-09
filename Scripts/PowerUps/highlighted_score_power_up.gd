@@ -222,15 +222,8 @@ func _clear_highlight() -> void:
 		highlighted_button = null
 
 func _get_modifier_manager():
-	# Try singleton first
-	if Engine.has_singleton("ScoreModifierManager"):
-		return ScoreModifierManager
-	
-	# Fallback to finding in tree
-	if get_tree():
-		return get_tree().get_first_node_in_group("score_modifier_manager")
-	
-	return null
+	# ScoreModifierManager is a registered autoload — use direct reference
+	return ScoreModifierManager
 
 func get_current_description() -> String:
 	var base_desc = "Highlights a random unscored category for 1.5x score"

@@ -12,22 +12,21 @@ func _ready() -> void:
 	add_to_group("power_ups")
 	print("[UpperBonusMultPowerUp] Added to 'power_ups' group")
 	
-	# Guard against missing ScoreModifierManager
-	if not _is_score_modifier_manager_available():
-		push_error("[UpperBonusMultPowerUp] ScoreModifierManager not available")
-		return
-	
-	# Get the correct ScoreModifierManager reference
-	var manager = _get_score_modifier_manager()
-	
 	# Connect to ScoreModifierManager signals to update UI when total multiplier changes
+	# Use call_deferred to ensure autoloads have finished _ready()
+	call_deferred("_connect_to_score_modifier_manager")
+
+func _connect_to_score_modifier_manager() -> void:
+	var manager = _get_score_modifier_manager()
 	if manager and not manager.is_connected("multiplier_changed", _on_multiplier_manager_changed):
 		manager.multiplier_changed.connect(_on_multiplier_manager_changed)
 		print("[UpperBonusMultPowerUp] Connected to ScoreModifierManager signals")
+	elif not manager:
+		push_error("[UpperBonusMultPowerUp] ScoreModifierManager not available")
 
 func _is_score_modifier_manager_available() -> bool:
-	# Check if ScoreModifierManager exists as an autoload singleton
-	if Engine.has_singleton("ScoreModifierManager"):
+	# Use direct autoload reference (Engine.has_singleton doesn't work for autoloads)
+	if ScoreModifierManager != null:
 		return true
 	
 	# Fallback: check if it exists in the scene tree as a group member
@@ -35,7 +34,6 @@ func _is_score_modifier_manager_available() -> bool:
 		var group_node = get_tree().get_first_node_in_group("score_modifier_manager")
 		if group_node:
 			return true
-		# Also check old group name for backward compatibility
 		var old_group_node = get_tree().get_first_node_in_group("multiplier_manager")
 		if old_group_node:
 			return true
@@ -43,16 +41,15 @@ func _is_score_modifier_manager_available() -> bool:
 	return false
 
 func _get_score_modifier_manager():
-	# Check if ScoreModifierManager exists as an autoload singleton
-	if Engine.has_singleton("ScoreModifierManager"):
+	# Use direct autoload reference (Engine.has_singleton doesn't work for autoloads)
+	if ScoreModifierManager != null:
 		return ScoreModifierManager
 	
-	# Fallback: check new group name first
+	# Fallback: check group names
 	if get_tree():
 		var group_node = get_tree().get_first_node_in_group("score_modifier_manager")
 		if group_node:
 			return group_node
-		# Then check old group name for backward compatibility
 		var old_group_node = get_tree().get_first_node_in_group("multiplier_manager")
 		if old_group_node:
 			return old_group_node
@@ -176,9 +173,9 @@ func get_current_description() -> String:
 	
 	var current_mult = get_current_multiplier()
 	var manager = _get_score_modifier_manager()
-	var total_mult = 1.0
+	var _total_mult = 1.0
 	if manager:
-		total_mult = manager.get_total_multiplier()
+		_total_mult = manager.get_total_multiplier()
 	
 	var desc = "\nCurrent : %dx" % [current_mult]
 

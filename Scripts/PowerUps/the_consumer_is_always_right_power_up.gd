@@ -35,38 +35,12 @@ func _ready() -> void:
 		print("[TheConsumerIsAlwaysRightPowerUp] Connected to ScoreModifierManager signals")
 
 func _is_score_modifier_manager_available() -> bool:
-	# Check if ScoreModifierManager exists as an autoload singleton
-	if Engine.has_singleton("ScoreModifierManager"):
-		return true
-	
-	# Fallback: check if it exists in the scene tree as a group member
-	if get_tree():
-		var group_node = get_tree().get_first_node_in_group("score_modifier_manager")
-		if group_node:
-			return true
-		# Also check old group name for backward compatibility
-		var old_group_node = get_tree().get_first_node_in_group("multiplier_manager")
-		if old_group_node:
-			return true
-	
-	return false
+	# ScoreModifierManager is a registered autoload — always accessible
+	return ScoreModifierManager != null
 
 func _get_score_modifier_manager():
-	# Check if ScoreModifierManager exists as an autoload singleton
-	if Engine.has_singleton("ScoreModifierManager"):
-		return ScoreModifierManager
-	
-	# Fallback: check new group name first
-	if get_tree():
-		var group_node = get_tree().get_first_node_in_group("score_modifier_manager")
-		if group_node:
-			return group_node
-		# Then check old group name for backward compatibility
-		var old_group_node = get_tree().get_first_node_in_group("multiplier_manager")
-		if old_group_node:
-			return old_group_node
-	
-	return null
+	# ScoreModifierManager is a registered autoload — use direct reference
+	return ScoreModifierManager
 
 func apply(_target) -> void:
 	print("=== Applying TheConsumerIsAlwaysRightPowerUp ===")
