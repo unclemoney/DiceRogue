@@ -17,10 +17,10 @@ signal task_completed(task)
 signal task_rotated(task)  # Emitted when chore auto-rotates every 20 rolls
 signal mom_triggered
 signal mom_mood_changed(new_mood: int)
+signal request_chore_selection  # Emitted when player needs to choose next chore (EASY/HARD)
 
 const MAX_PROGRESS: int = 100
 const PROGRESS_PER_ROLL: int = 1
-const PROGRESS_REDUCTION: int = 20
 const ROLLS_PER_ROTATION: int = 20  # Chores rotate every 20 rolls
 const CHORE_REWARD_MONEY: int = 50  # Reward per chore completed
 
@@ -36,6 +36,9 @@ var tasks_completed: int = 0
 var total_rolls_tracked: int = 0  # Track total rolls for chore rotation
 var is_mom_active: bool = false
 var _task_history: Array[String] = []  # Track recent tasks to avoid repetition
+var pending_chore_selection: bool = false  # True when waiting to show chore selection popup
+var _pending_easy_task = null  # Cached EASY task option for popup
+var _pending_hard_task = null  # Cached HARD task option for popup
 
 # Round-based scaling for goof-off meter
 # Round 1 uses base value (100), each subsequent round scales down by 5%
@@ -82,9 +85,10 @@ func increment_progress(amount: int = PROGRESS_PER_ROLL) -> void:
 ## Rotates to a new random chore task.
 ## Called every 20 rolls regardless of completion status.
 func _rotate_current_task() -> void:
-	print("[ChoresManager] Rotating chore task (every %d rolls)" % ROLLS_PER_ROTATION)
-	select_new_task()
+	print("[ChoresManager] Chore expired (every %d rolls) - queuing selection popup" % ROLLS_PER_ROTATION)
 	task_rotated.emit(current_task)
+	# Queue chore selection popup instead of auto-selecting
+	_queue_chore_selection()
 
 ## complete_current_task()
 ##
@@ -95,7 +99,10 @@ func complete_current_task() -> void:
 	if current_task == null:
 		return
 	
-	print("[ChoresManager] Task completed: %s" % current_task.display_name)
+	print("[ChoresManager] Task completed: %s (difficulty: %s)" % [
+		current_task.display_name,
+		"HARD" if current_task.difficulty == ChoreData.Difficulty.HARD else "EASY"
+	])
 	
 	# Track completed chore for display
 	completed_chores.append(current_task)
@@ -106,16 +113,25 @@ func complete_current_task() -> void:
 	task_completed.emit(current_task)
 	tasks_completed += 1
 	
+	# Track with ProgressManager for unlock conditions
+	var progress_manager = get_node_or_null("/root/ProgressManager")
+	if progress_manager and progress_manager.has_method("track_chore_completed"):
+		progress_manager.track_chore_completed(current_task.difficulty)
+	
 	# Improve Mom's mood (lower = happier)
 	adjust_mood(-1)
 	
-	# Reduce progress
-	current_progress = maxi(current_progress - PROGRESS_REDUCTION, 0)
+	# Reduce progress using dynamic difficulty-based reduction
+	var reduction = current_task.get_progress_reduction()
+	current_progress = maxi(current_progress - reduction, 0)
 	progress_changed.emit(current_progress)
-	print("[ChoresManager] Progress reduced to: %d" % current_progress)
+	print("[ChoresManager] Progress reduced by %d to: %d" % [reduction, current_progress])
 	
-	# Select new task
-	select_new_task()
+	# Reset roll tracking for expiry timer
+	total_rolls_tracked = 0
+	
+	# Queue chore selection popup instead of auto-selecting
+	_queue_chore_selection()
 
 ## adjust_mood(delta)
 ##
@@ -229,6 +245,90 @@ func check_task_completion(context: Dictionary) -> bool:
 		return true
 	
 	return false
+
+## _queue_chore_selection()
+##
+## Queues a chore selection popup to appear at the next turn end.
+## Pre-generates one EASY and one HARD task option for the player to choose from.
+func _queue_chore_selection() -> void:
+	pending_chore_selection = true
+	# Pre-generate task options
+	_pending_easy_task = _get_random_task_by_difficulty(0)  # EASY
+	_pending_hard_task = _get_random_task_by_difficulty(1)  # HARD
+	print("[ChoresManager] Chore selection queued: EASY=%s, HARD=%s" % [
+		_pending_easy_task.display_name if _pending_easy_task else "None",
+		_pending_hard_task.display_name if _pending_hard_task else "None"
+	])
+	request_chore_selection.emit()
+
+
+## get_pending_tasks() -> Dictionary
+##
+## Returns the pending EASY and HARD task options for the selection popup.
+## @return Dictionary: {"easy": ChoreData, "hard": ChoreData}
+func get_pending_tasks() -> Dictionary:
+	return {
+		"easy": _pending_easy_task,
+		"hard": _pending_hard_task
+	}
+
+
+## accept_chore_selection(is_hard: bool)
+##
+## Accepts the player's chore selection from the popup.
+## @param is_hard: True if player chose the HARD chore, false for EASY
+func accept_chore_selection(is_hard: bool) -> void:
+	pending_chore_selection = false
+	if is_hard and _pending_hard_task:
+		current_task = _pending_hard_task
+	elif _pending_easy_task:
+		current_task = _pending_easy_task
+	else:
+		select_new_task()
+		return
+	
+	_pending_easy_task = null
+	_pending_hard_task = null
+	total_rolls_tracked = 0  # Reset expiry timer for new task
+	task_selected.emit(current_task)
+	print("[ChoresManager] Player selected %s chore: %s" % [
+		"HARD" if is_hard else "EASY", current_task.display_name])
+
+
+## _get_random_task_by_difficulty(difficulty: int)
+##
+## Gets a random task from the library filtered by difficulty.
+## @param difficulty: 0 = EASY, 1 = HARD
+## @return ChoreData: A random task of the specified difficulty
+func _get_random_task_by_difficulty(difficulty: int):
+	var tasks: Array
+	if difficulty == 1:
+		tasks = ChoreTasksLibrary.get_hard_tasks()
+	else:
+		tasks = ChoreTasksLibrary.get_easy_tasks()
+	
+	if tasks.is_empty():
+		return ChoreTasksLibrary.get_random_task()
+	
+	# Try to avoid recent tasks
+	var attempts = 0
+	var selected_task = null
+	while attempts < 5:
+		selected_task = tasks[randi() % tasks.size()]
+		if selected_task.id not in _task_history:
+			break
+		attempts += 1
+	
+	return selected_task
+
+
+## get_rolls_until_expiry() -> int
+##
+## Returns the number of rolls remaining before the current chore expires.
+## @return int: Rolls remaining (0 to ROLLS_PER_ROTATION)
+func get_rolls_until_expiry() -> int:
+	return max(0, ROLLS_PER_ROTATION - total_rolls_tracked)
+
 
 ## select_new_task()
 ##

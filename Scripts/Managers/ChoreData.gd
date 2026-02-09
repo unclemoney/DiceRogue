@@ -16,12 +16,31 @@ enum TaskType {
 	NO_SCORE_TURN,     # Finish a turn without scoring (scratch)
 }
 
+enum Difficulty {
+	EASY,   # Reduces goof-off meter by 10
+	HARD,   # Reduces goof-off meter by 30
+}
+
+const EASY_REDUCTION: int = 10
+const HARD_REDUCTION: int = 30
+
 @export var id: String
 @export var display_name: String
 @export var description: String
 @export var icon: Texture2D
 @export var task_type: TaskType = TaskType.SCORE_UPPER
-@export var progress_reduction: int = 20  # Always reduces by 20
+@export var difficulty: Difficulty = Difficulty.EASY
+@export var progress_reduction: int = 10  # Default EASY reduction
+
+## get_progress_reduction()
+##
+## Returns the goof-off meter reduction based on difficulty.
+## EASY = 10, HARD = 30.
+## @return int: The progress reduction amount
+func get_progress_reduction() -> int:
+	if difficulty == Difficulty.HARD:
+		return HARD_REDUCTION
+	return EASY_REDUCTION
 
 ## Optional parameters for specific task requirements
 @export var target_category: String = ""  # e.g., "ones", "full_house"

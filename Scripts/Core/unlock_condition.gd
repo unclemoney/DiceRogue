@@ -21,7 +21,28 @@ enum ConditionType {
 	DICE_COMBINATIONS,     # Roll specific dice combinations
 	CUMULATIVE_YAHTZEES,   # Roll X yahtzees across all games (cumulative)
 	COMPLETE_CHANNEL,      # Complete channel X (reach highest_channel_completed >= target)
-	REACH_CHANNEL          # Alias for COMPLETE_CHANNEL - reach a specific channel
+	REACH_CHANNEL,         # Alias for COMPLETE_CHANNEL - reach a specific channel
+	SCORE_THRESHOLD_CATEGORY,  # Score X+ points in a specific category (uses additional_params.category)
+	CHORE_COMPLETIONS      # Complete X chores (single game or cumulative, uses additional_params.cumulative)
+}
+
+## Category score threshold baselines - calculated as face_value * ~3-4 for upper,
+## difficulty-scaled averages for lower. Adjust after playtesting.
+## Key = category name, Value = calculated baseline threshold score.
+const CATEGORY_SCORE_THRESHOLDS := {
+	"ones": 4,              # 1 * 4 dice = 4 -- adjust after playtesting
+	"twos": 8,              # 2 * 4 dice = 8 -- adjust after playtesting
+	"threes": 12,           # 3 * 4 dice = 12 -- adjust after playtesting
+	"fours": 16,            # 4 * 4 dice = 16 -- adjust after playtesting
+	"fives": 20,            # 5 * 4 dice = 20 -- adjust after playtesting
+	"sixes": 24,            # 6 * 4 dice = 24 -- adjust after playtesting
+	"three_of_a_kind": 18,  # avg ~18 with 3 matching -- adjust after playtesting
+	"four_of_a_kind": 22,   # avg ~22 with 4 matching -- adjust after playtesting
+	"full_house": 28,       # fixed 25 + buffer -- adjust after playtesting
+	"small_straight": 35,   # fixed 30 + buffer -- adjust after playtesting
+	"large_straight": 45,   # fixed 40 + buffer -- adjust after playtesting
+	"yahtzee": 50,          # fixed 50 -- adjust after playtesting
+	"chance": 25,           # avg 5-die sum ~20-25 -- adjust after playtesting
 }
 
 @export var id: String = ""
@@ -98,6 +119,21 @@ func is_satisfied(game_stats: Dictionary, progress_data: Dictionary) -> bool:
 		ConditionType.REACH_CHANNEL:
 			var highest_channel_reached = progress_data.get("highest_channel_completed", 0)
 			return highest_channel_reached >= target_value
+		
+		ConditionType.SCORE_THRESHOLD_CATEGORY:
+			var threshold_category = additional_params.get("category", "")
+			var category_scores = game_stats.get("category_scores", {})
+			var category_score_val = category_scores.get(threshold_category, 0)
+			return category_score_val >= target_value
+		
+		ConditionType.CHORE_COMPLETIONS:
+			var is_cumulative = additional_params.get("cumulative", false)
+			if is_cumulative:
+				var total_chores = progress_data.get("total_chores_completed", 0)
+				return total_chores >= target_value
+			else:
+				var game_chores = game_stats.get("chores_completed", 0)
+				return game_chores >= target_value
 			
 		_:
 			push_error("[UnlockCondition] Unknown condition type: %s" % condition_type)
@@ -160,5 +196,20 @@ func get_formatted_description() -> String:
 			return "Complete Channel %d" % target_value
 		ConditionType.REACH_CHANNEL:
 			return "Reach Channel %d" % target_value
+		ConditionType.SCORE_THRESHOLD_CATEGORY:
+			var cat = additional_params.get("category", "unknown")
+			return "Score %d+ in %s" % [target_value, cat.replace("_", " ").capitalize()]
+		ConditionType.CHORE_COMPLETIONS:
+			var is_cumul = additional_params.get("cumulative", false)
+			if is_cumul:
+				if target_value == 1:
+					return "Complete 1 chore (total across all games)"
+				else:
+					return "Complete %d chores (total across all games)" % target_value
+			else:
+				if target_value == 1:
+					return "Complete 1 chore in a single game"
+				else:
+					return "Complete %d chores in a single game" % target_value
 		_:
 			return description if description else "Unknown condition"

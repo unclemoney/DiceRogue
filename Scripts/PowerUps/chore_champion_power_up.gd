@@ -58,14 +58,14 @@ func apply(target) -> void:
 	if not is_connected("tree_exiting", _on_tree_exiting):
 		connect("tree_exiting", _on_tree_exiting)
 
-func _on_task_completed(_task) -> void:
+func _on_task_completed(task) -> void:
 	if not chores_manager_ref:
 		return
 	
 	# Calculate bonus reduction (the additional amount beyond the normal reduction)
-	# Normal reduction is PROGRESS_REDUCTION (20), multiplier 2.0 means total 40
-	# So bonus is PROGRESS_REDUCTION * (multiplier - 1.0) = 20 * 1.0 = 20
-	var base_reduction = ChoresManager.PROGRESS_REDUCTION
+	# Base reduction depends on task difficulty: EASY=10, HARD=30
+	# Multiplier 2.0 means we apply an additional 1.0x the base reduction
+	var base_reduction = task.get_progress_reduction() if task else 10
 	var bonus_reduction = int(base_reduction * (EFFECTIVENESS_MULTIPLIER - 1.0))
 	
 	# Apply the bonus reduction
@@ -83,8 +83,10 @@ func _on_task_completed(_task) -> void:
 			_update_power_up_icons()
 
 func get_current_description() -> String:
-	var total_reduction = int(ChoresManager.PROGRESS_REDUCTION * EFFECTIVENESS_MULTIPLIER)
-	var base_desc = "Chores are %.0fx more effective (-%d instead of -%d)" % [EFFECTIVENESS_MULTIPLIER, total_reduction, ChoresManager.PROGRESS_REDUCTION]
+	# Show example with EASY task (10 base reduction)
+	var example_base = 10
+	var example_total = int(example_base * EFFECTIVENESS_MULTIPLIER)
+	var base_desc = "Chores are %.0fx more effective (EASY: -%d, HARD: -%d)" % [EFFECTIVENESS_MULTIPLIER, example_total, int(30 * EFFECTIVENESS_MULTIPLIER)]
 	
 	if total_bonus_reductions > 0:
 		base_desc += "\nBonus reduction applied: %d total" % total_bonus_reductions

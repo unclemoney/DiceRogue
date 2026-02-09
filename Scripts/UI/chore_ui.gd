@@ -241,8 +241,9 @@ func _on_task_completed(_task) -> void:  # ChoreData - duck typed, unused
 
 ## _update_details_with_progress()
 ##
-## Updates the details tooltip with current task info and progress.
-## Shows scaled max progress threshold in the tooltip.
+## Updates the details tooltip with current task info, progress, and expiration timer.
+## Shows scaled max progress threshold and rolls until chore expires.
+## Expiration text turns red when fewer than 5 rolls remain.
 func _update_details_with_progress() -> void:
 	if not details_label or not _chores_manager:
 		return
@@ -256,11 +257,21 @@ func _update_details_with_progress() -> void:
 		max_progress = _chores_manager.get_scaled_max_progress()
 	
 	if task:
-		details_label.text = "[b]%s[/b]\n%s\n[color=#888888]Progress:[/color] %d / %d" % [
+		var expiry_text = ""
+		if _chores_manager.has_method("get_rolls_until_expiry"):
+			var rolls_left = _chores_manager.get_rolls_until_expiry()
+			if rolls_left >= 0:
+				if rolls_left < 5:
+					expiry_text = "\n[color=#cc3333]⏰ Expires in %d rolls![/color]" % rolls_left
+				else:
+					expiry_text = "\n[color=#888888]⏰ Expires in %d rolls[/color]" % rolls_left
+		
+		details_label.text = "[b]%s[/b]\n%s\n[color=#888888]Progress:[/color] %d / %d%s" % [
 			task.display_name,
 			task.description,
 			current_progress_val,
-			max_progress
+			max_progress,
+			expiry_text
 		]
 	else:
 		details_label.text = "[color=#888888]Progress:[/color] %d / %d" % [current_progress_val, max_progress]

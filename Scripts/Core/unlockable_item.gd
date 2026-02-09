@@ -21,6 +21,7 @@ enum ItemType {
 @export var unlock_condition: Resource  # UnlockCondition resource
 @export var is_unlocked: bool = false
 @export var unlock_timestamp: int = 0  # Unix timestamp when unlocked
+@export var difficulty_rating: int = 1  # 1-10 scale: 1-3 common, 4-6 uncommon, 7-9 rare, 10 legendary
 
 ## Check if this item should be unlocked based on game statistics
 ## @param game_stats: Dictionary containing current game statistics

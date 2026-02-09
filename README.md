@@ -87,11 +87,23 @@ Full documentation with parameters, recipes, and technical deep-dives: See `ARCA
 ### Profile System
 - **ProgressManager** handles 3 save slots (`user://profile_1.save` to `profile_3.save`)
 - Legacy save migration: Old `user://save.json` auto-migrates to slot 1
+- **Save Version 2**: Current format tracks chore completions, category scores, and difficulty stats
+  - Old v1 profiles are auto-detected on load, user is notified, then deleted and recreated
 - Profile names limited to 30 characters
-- Statistics tracked per-profile: games completed, games won, highest channel, etc.
+- Statistics tracked per-profile: games completed, games won, highest channel, chores completed, category scores, etc.
 - **IMPORTANT**: GameSettings must be loaded BEFORE ProgressManager in autoload order
   - ProgressManager reads `active_profile_slot` from GameSettings on startup
   - If order is wrong, profile 2/3 unlocks won't work correctly
+
+### Item Unlock & Difficulty System
+- All ~100 unlockable items (PowerUps, Consumables, Mods, Colored Dice) have a **difficulty rating** (1-10)
+- Difficulty scales with item power: starter items at 1, ultimate items at 10
+- **Diversified unlock conditions** include:
+  - `GAMES_PLAYED`, `GAMES_WON`, `HIGH_SCORE`, `TOTAL_SCORE`
+  - `CHALLENGES_COMPLETED`, `ROUNDS_SURVIVED`, `REACH_ROUND`, `COMPLETE_CHANNEL`
+  - `SCORE_THRESHOLD_CATEGORY` (NEW): Score ≥ threshold in a specific Yahtzee category
+  - `CHORE_COMPLETIONS` (NEW): Complete N chores total (cumulative or single-game)
+- See [Docs/item_difficulty_ratings.md](Docs/item_difficulty_ratings.md) for the full item reference
 
 ### Settings System
 - **GameSettings** (autoload) - Centralized settings management
@@ -639,8 +651,20 @@ The **Chores System** adds a strategic tension mechanic where neglecting househo
 **Core Mechanics:**
 - **Progress Bar**: Vertical progress bar (0-100) displayed in top-left corner
 - **Progress Increase**: +1 per dice roll (automatic)
-- **Progress Decrease**: -20 when completing a chore task
+- **Progress Decrease**: Varies by chore difficulty (EASY: -10, HARD: -30)
 - **Mom Trigger**: At 100 progress, Mom appears to check your PowerUps
+
+**Chore Difficulty:**
+Each chore has an EASY or HARD difficulty level:
+- **EASY** tasks (meter -10): Score in upper section, generic lower section, use items, lock 3 dice
+- **HARD** tasks (meter -30): Specific combos, Yahtzees, full house with specific triples, lock 4-5 dice
+
+**Chore Selection Popup:**
+When a chore completes or expires, a **ChoreSelectionPopup** appears at turn end:
+- Shows current goof-off meter progress bar with color-coded fill
+- Displays Mom's mood emoji and description (e.g., "😊 Content (3/10)")
+- Presents EASY and HARD task cards side-by-side with names, descriptions, and reduction values
+- Player must choose one before continuing — only one popup per turn
 
 **Chore Tasks:**
 Tasks are randomly selected from a pool of 40+ options across different categories:
@@ -650,11 +674,19 @@ Tasks are randomly selected from a pool of 40+ options across different categori
 - **Utility Tasks**: Lock dice, use consumables, scratch categories
 - **Challenge Tasks**: Roll Yahtzees or specific high-value combinations
 
-**Task Completion:**
-- Hover over ChoreUI to see current task requirements
+**Task Completion & Expiration:**
+- Hover over ChoreUI to see current task requirements and **expiration timer**
+- Expiration timer shows "Expires in X rolls" (turns red when < 5 rolls remain)
 - Complete the task requirement during normal gameplay
-- Progress reduces by 20 when task is completed
-- New task is automatically selected
+- Progress reduces by task difficulty (EASY: -10, HARD: -30)
+- Chore selection popup appears for the player to pick their next chore
+
+**Chore Tracking (ProgressManager):**
+- `total_chores_completed`: Cumulative across all games (per profile)
+- `total_chores_completed_easy` / `total_chores_completed_hard`: By difficulty
+- Used as unlock conditions for items (`CHORE_COMPLETIONS` condition type)
+
+See [Docs/chores_list.md](Docs/chores_list.md) for the full chore reference.
 
 **PowerUp Rating System:**
 All PowerUps now have movie-style content ratings that affect Mom's reaction:

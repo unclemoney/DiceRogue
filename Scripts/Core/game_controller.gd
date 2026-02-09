@@ -24,6 +24,7 @@ const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
 const ScoringAnimationControllerScript := preload("res://Scripts/Effects/scoring_animation_controller.gd")
 const ChoresManagerScript := preload("res://Scripts/Managers/ChoresManager.gd")
 const ChoreUIScript := preload("res://Scripts/UI/chore_ui.gd")
+const ChoreSelectionPopupScript := preload("res://Scripts/UI/chore_selection_popup.gd")
 const MomCharacterScript := preload("res://Scripts/UI/mom_character.gd")
 const MomLogicHandlerScript := preload("res://Scripts/Core/mom_logic_handler.gd")
 const ChallengeCelebrationScript := preload("res://Scripts/Effects/challenge_celebration.gd")
@@ -139,6 +140,9 @@ const PAUSE_MENU_SCENE := preload("res://Scenes/UI/PauseMenu.tscn")
 
 # Challenge celebration effect manager
 var _challenge_celebration = null
+
+# Chore selection popup (instantiated when needed)
+var _chore_selection_popup = null
 
 # Pending unlocked items to display before stats panel
 var _pending_unlocked_items: Array = []
@@ -271,7 +275,9 @@ func _ready() -> void:
 	# Initialize ChoresManager and ChoreUI (now embedded in CorkboardUI)
 	if chores_manager:
 		chores_manager.mom_triggered.connect(_on_mom_triggered)
+		chores_manager.request_chore_selection.connect(_on_chore_selection_requested)
 		print("[GameController] Connected to ChoresManager.mom_triggered")
+		print("[GameController] Connected to ChoresManager.request_chore_selection")
 	if corkboard_ui and chores_manager:
 		corkboard_ui.set_chores_manager(chores_manager)
 		print("[GameController] Connected CorkboardUI.ChoreUI to ChoresManager")
@@ -3611,6 +3617,40 @@ func get_active_power_up(id: String) -> PowerUp:
 	if active_power_ups.has(id):
 		return active_power_ups[id]
 	return null
+
+
+## _on_chore_selection_requested()
+##
+## Handler for when ChoresManager needs the player to choose a new chore.
+## Creates and displays the ChoreSelectionPopup overlay.
+## Only one popup is shown per turn to avoid spam.
+func _on_chore_selection_requested() -> void:
+	if not chores_manager:
+		return
+	
+	print("[GameController] Chore selection requested — showing popup")
+	
+	# Create popup if not already existing
+	if not _chore_selection_popup or not is_instance_valid(_chore_selection_popup):
+		_chore_selection_popup = ChoreSelectionPopup.new()
+		_chore_selection_popup.name = "ChoreSelectionPopup"
+		_chore_selection_popup.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(_chore_selection_popup)
+		_chore_selection_popup.chore_selected.connect(_on_chore_popup_selection_made)
+	
+	_chore_selection_popup.show_popup(chores_manager)
+
+
+## _on_chore_popup_selection_made(is_hard: bool)
+##
+## Handles player's choice from the ChoreSelectionPopup.
+## Forwards to ChoresManager.accept_chore_selection().
+## @param is_hard: True if HARD selected, false if EASY
+func _on_chore_popup_selection_made(is_hard: bool) -> void:
+	if chores_manager:
+		chores_manager.accept_chore_selection(is_hard)
+		print("[GameController] Chore selection forwarded: %s" % ("HARD" if is_hard else "EASY"))
+
 
 ## _on_mom_triggered()
 ##
