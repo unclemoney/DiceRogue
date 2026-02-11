@@ -1043,6 +1043,15 @@ func _activate_power_up(power_up_id: String) -> void:
 				print("[GameController] Applied DaringDicePowerUp to dice_hand")
 			else:
 				push_error("[GameController] No dice_hand available for DaringDicePowerUp")
+		"great_exchange":
+			pu.apply(self)
+			print("[GameController] Applied GreatExchangePowerUp to self")
+		"extra_rainbow":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied ExtraRainbowPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for ExtraRainbowPowerUp")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -1273,6 +1282,12 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"daring_dice":
 			print("[GameController] Removing daring_dice PowerUp")
 			pu.remove(dice_hand)
+		"great_exchange":
+			print("[GameController] Removing great_exchange PowerUp")
+			pu.remove(self)
+		"extra_rainbow":
+			print("[GameController] Removing extra_rainbow PowerUp")
+			pu.remove(scorecard)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -1397,6 +1412,10 @@ func revoke_power_up(power_up_id: String) -> void:
 				pu.remove(scorecard)
 			"daring_dice":
 				pu.remove(dice_hand)
+			"great_exchange":
+				pu.remove(self)
+			"extra_rainbow":
+				pu.remove(scorecard)
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself
 				pu.remove(pu)
@@ -1677,6 +1696,9 @@ func _on_consumable_used(consumable_id: String) -> void:
 			consumable.apply(self)
 			remove_consumable_instance.call()
 		"visit_the_shop":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"lucky_upgrade":
 			consumable.apply(self)
 			remove_consumable_instance.call()
 		_:

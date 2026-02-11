@@ -187,7 +187,11 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
     - **Yahtzeed Dice** (Epic/$450): Gain +1 die every time you roll a Yahtzee (max 16 dice)
     - **Consumable Collector** (Rare/$275): +0.1× score multiplier for each consumable used during the game
     - **Daring Dice** (Rare/$300): Remove 2 dice but gain permanent +50 score bonus per category
+  - **Trade-off & Color PowerUps**:
+    - **The Great Exchange** (Rare/$350): +2 dice, -1 roll per turn — more dice but fewer re-roll chances
+    - **Extra Rainbow** (Rare/$300): +10 additive score per colored die scored — rewards color dice strategy
 - **Consumables** (`Scripts/Consumable/`) - Single-use strategic items
+  - **Lucky Upgrade** ($25): Randomly upgrades one unscored scorecard category by 1 level
 - **Mods** (`Scripts/Mods/`) - Dice behavior modifiers
 
 ### Statistics & Analytics

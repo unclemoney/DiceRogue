@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://oj1dby7yhs7u"]
+[gd_scene load_steps=20 format=3 uid="uid://oj1dby7yhs7u"]
 
 [ext_resource type="Script" uid="uid://do4monceted6m" path="res://Scripts/Managers/ConsumableManager.gd" id="1_ly1vs"]
 [ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="2_consumable_data"]
@@ -18,7 +18,8 @@
 [ext_resource type="Resource" uid="uid://bg2r68x2b6iyj" path="res://Scripts/Consumable/ThePawnShopConsumable.tres" id="16_pawn_shop"]
 [ext_resource type="Resource" uid="uid://bbbfbdvb6kdny" path="res://Scripts/Consumable/TheRaritiesConsumable.tres" id="17_rarities"]
 [ext_resource type="Resource" uid="uid://cywprylrby1js" path="res://Scripts/Consumable/ThreeMoreRollsConsumable.tres" id="18_three_more_rolls"]
+[ext_resource type="Resource" path="res://Scripts/Consumable/LuckyUpgradeConsumable.tres" id="19_lucky_upgrade"]
 
 [node name="ConsumableManager" type="Node2D"]
 script = ExtResource("1_ly1vs")
-consumable_defs = Array[ExtResource("2_consumable_data")]([ExtResource("3_add_max_power_up"), ExtResource("4_any_score"), ExtResource("5_double_existing"), ExtResource("6_double_or_nothing"), ExtResource("7_empty_shelves"), ExtResource("8_go_broke"), ExtResource("9_green_envy"), ExtResource("10_one_extra_dice"), ExtResource("11_poor_house"), ExtResource("12_power_up_shop_num"), ExtResource("13_quick_cash"), ExtResource("14_random_power_up"), ExtResource("15_score_reroll"), ExtResource("16_pawn_shop"), ExtResource("17_rarities"), ExtResource("18_three_more_rolls")])
+consumable_defs = Array[ExtResource("2_consumable_data")]([ExtResource("3_add_max_power_up"), ExtResource("4_any_score"), ExtResource("5_double_existing"), ExtResource("6_double_or_nothing"), ExtResource("7_empty_shelves"), ExtResource("8_go_broke"), ExtResource("9_green_envy"), ExtResource("10_one_extra_dice"), ExtResource("11_poor_house"), ExtResource("12_power_up_shop_num"), ExtResource("13_quick_cash"), ExtResource("14_random_power_up"), ExtResource("15_score_reroll"), ExtResource("16_pawn_shop"), ExtResource("17_rarities"), ExtResource("18_three_more_rolls"), ExtResource("19_lucky_upgrade")])

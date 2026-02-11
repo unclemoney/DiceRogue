@@ -559,6 +559,18 @@ func end_game_tracking(final_score: int, did_win: bool = false) -> void:
 	# Update current game stats
 	current_game_stats["final_score"] = final_score
 	current_game_stats["game_completed"] = true
+	current_game_stats["game_won"] = did_win
+	
+	# Compute unscored categories (categories left completely blank, not scored at all)
+	var all_categories = ["ones", "twos", "threes", "fours", "fives", "sixes",
+		"three_of_a_kind", "four_of_a_kind", "full_house", "small_straight",
+		"large_straight", "yahtzee", "chance"]
+	var unscored: Array = []
+	for cat in all_categories:
+		if cat not in current_game_stats["categories_scored"]:
+			unscored.append(cat)
+	current_game_stats["unscored_categories"] = unscored
+	print("[ProgressManager] Unscored categories: %s" % [str(unscored)])
 	
 	# Update cumulative stats
 	cumulative_stats["games_completed"] += 1
@@ -1062,6 +1074,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 6, 5)
 	_add_default_power_up("even_higher", "Even Higher", "+1 additive per even die scored (cumulative)", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 20, 5, {"category": "fives"})
+	_add_default_power_up("extra_rainbow", "Extra Rainbow", "+10 per colored die scored", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5, 5)
 	
 	# --- Difficulty 6: Rare PowerUps ---
 	_add_default_power_up("money_well_spent", "Money Well Spent", "Convert money to score", 
@@ -1082,6 +1096,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 15, 6, {"cumulative": true})
 	_add_default_power_up("blue_safety_net", "Blue Safety Net", "Halves blue dice penalties", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 6)
+	_add_default_power_up("great_exchange", "The Great Exchange", "+2 dice, -1 roll per turn", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 6, 6)
 	
 	# --- Difficulty 7: Epic PowerUps ---
 	_add_default_power_up("the_consumer_is_always_right", "The Consumer Is Always Right", "Consumable synergies", 
@@ -1144,6 +1160,22 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 12, 8)
 	
 	# ==========================================================================
+	# AVOIDANCE CHALLENGES - Win without scoring in specific categories/sections
+	# ==========================================================================
+	
+	# --- Difficulty 1: Win without scoring in a single number category ---
+	_add_default_power_up("avoidance_ones", "Ones Avoider", "Win without scoring in Ones", 
+		UnlockConditionClass.ConditionType.WIN_WITHOUT_SCORING, 1, 1, {"category": "ones"})
+	
+	# --- Difficulty 6: Win without scoring in the entire Upper Section ---
+	_add_default_power_up("avoidance_upper", "Upper Section Avoider", "Win without scoring in Upper Section", 
+		UnlockConditionClass.ConditionType.WIN_WITHOUT_SCORING, 1, 6, {"section": "upper"})
+	
+	# --- Difficulty 10: Win without scoring in the entire Lower Section ---
+	_add_default_power_up("avoidance_lower", "Lower Section Avoider", "Win without scoring in Lower Section", 
+		UnlockConditionClass.ConditionType.WIN_WITHOUT_SCORING, 1, 10, {"section": "lower"})
+	
+	# ==========================================================================
 	# ALL CONSUMABLES - Difficulty 1-10, diversified unlock conditions
 	# ==========================================================================
 	
@@ -1162,6 +1194,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 4, 2, {"category": "ones"})
 	_add_default_consumable("twos_upgrade", "Twos Upgrade", "Upgrade Twos category level", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 8, 2, {"category": "twos"})
+	_add_default_consumable("lucky_upgrade", "Lucky Upgrade", "Randomly upgrade one category by 1 level", 
+		UnlockConditionClass.ConditionType.COMPLETE_GAME, 2, 2)
 	
 	# --- Difficulty 3: Common consumables ---
 	_add_default_consumable("one_extra_dice", "One Extra Dice", "Add one die temporarily", 

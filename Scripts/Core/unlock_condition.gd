@@ -23,7 +23,10 @@ enum ConditionType {
 	COMPLETE_CHANNEL,      # Complete channel X (reach highest_channel_completed >= target)
 	REACH_CHANNEL,         # Alias for COMPLETE_CHANNEL - reach a specific channel
 	SCORE_THRESHOLD_CATEGORY,  # Score X+ points in a specific category (uses additional_params.category)
-	CHORE_COMPLETIONS      # Complete X chores (single game or cumulative, uses additional_params.cumulative)
+	CHORE_COMPLETIONS,     # Complete X chores (single game or cumulative, uses additional_params.cumulative)
+	WIN_WITHOUT_SCORING    # Win a game without scoring in a specific category or section
+	                       # Uses additional_params.category (e.g. "ones") or additional_params.section ("upper" or "lower")
+	                       # Scoring 0 counts as scoring - category must be left completely blank
 }
 
 ## Category score threshold baselines - calculated as face_value * ~3-4 for upper,
@@ -134,6 +137,30 @@ func is_satisfied(game_stats: Dictionary, progress_data: Dictionary) -> bool:
 			else:
 				var game_chores = game_stats.get("chores_completed", 0)
 				return game_chores >= target_value
+		
+		ConditionType.WIN_WITHOUT_SCORING:
+			# Check if the player won without scoring in a specific category or section
+			var game_won = game_stats.get("game_won", false)
+			if not game_won:
+				return false
+			var unscored_categories = game_stats.get("unscored_categories", [])
+			var avoid_category = additional_params.get("category", "")
+			var avoid_section = additional_params.get("section", "")
+			if avoid_category != "":
+				return avoid_category in unscored_categories
+			if avoid_section == "upper":
+				var upper_cats = ["ones", "twos", "threes", "fours", "fives", "sixes"]
+				for cat in upper_cats:
+					if cat not in unscored_categories:
+						return false
+				return true
+			if avoid_section == "lower":
+				var lower_cats = ["three_of_a_kind", "four_of_a_kind", "full_house", "small_straight", "large_straight", "yahtzee", "chance"]
+				for cat in lower_cats:
+					if cat not in unscored_categories:
+						return false
+				return true
+			return false
 			
 		_:
 			push_error("[UnlockCondition] Unknown condition type: %s" % condition_type)
@@ -211,5 +238,15 @@ func get_formatted_description() -> String:
 					return "Complete 1 chore in a single game"
 				else:
 					return "Complete %d chores in a single game" % target_value
+		ConditionType.WIN_WITHOUT_SCORING:
+			var avoid_cat = additional_params.get("category", "")
+			var avoid_sec = additional_params.get("section", "")
+			if avoid_cat != "":
+				return "Win a game without scoring in %s" % avoid_cat.replace("_", " ").capitalize()
+			if avoid_sec == "upper":
+				return "Win a game without scoring in the Upper Section"
+			if avoid_sec == "lower":
+				return "Win a game without scoring in the Lower Section"
+			return "Win a game without scoring in a category"
 		_:
 			return description if description else "Unknown condition"
