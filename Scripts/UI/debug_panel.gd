@@ -239,6 +239,13 @@ func _create_debug_tabs() -> void:
 			{"text": "Force All Red", "method": "_debug_force_all_red"},
 			{"text": "Force All Purple", "method": "_debug_force_all_purple"},
 			{"text": "Force All Blue", "method": "_debug_force_all_blue"},
+			{"text": "Force All Yellow", "method": "_debug_force_all_yellow"},
+			{"text": "Force One Green", "method": "_debug_force_one_green"},
+			{"text": "Force One Red", "method": "_debug_force_one_red"},
+			{"text": "Force One Purple", "method": "_debug_force_one_purple"},
+			{"text": "Force One Blue", "method": "_debug_force_one_blue"},
+			{"text": "Force One Yellow", "method": "_debug_force_one_yellow"},
+			{"text": "Force Rainbow Set", "method": "_debug_force_rainbow"},
 			{"text": "Clear All Colors", "method": "_debug_clear_all_colors"},
 			{"text": "Show Color Effects", "method": "_debug_show_color_effects"},
 			{"text": "Test Color Scoring", "method": "_debug_test_color_scoring"},
@@ -2072,6 +2079,105 @@ func _debug_force_all_blue() -> void:
 	dice_hand.debug_force_all_colors(preload("res://Scripts/Core/dice_color.gd").Type.BLUE)
 	log_debug("Forced all dice to BLUE color")
 
+func _debug_force_all_yellow() -> void:
+	var dice_hand = _get_dice_hand()
+	if not dice_hand:
+		return
+		
+	dice_hand.debug_force_all_colors(preload("res://Scripts/Core/dice_color.gd").Type.YELLOW)
+	log_debug("Forced all dice to YELLOW color")
+
+## _debug_force_one_green()
+##
+## Forces the first dice to green color.
+func _debug_force_one_green() -> void:
+	_debug_force_one_color(preload("res://Scripts/Core/dice_color.gd").Type.GREEN, "GREEN")
+
+## _debug_force_one_red()
+##
+## Forces the first dice to red color.
+func _debug_force_one_red() -> void:
+	_debug_force_one_color(preload("res://Scripts/Core/dice_color.gd").Type.RED, "RED")
+
+## _debug_force_one_purple()
+##
+## Forces the first dice to purple color.
+func _debug_force_one_purple() -> void:
+	_debug_force_one_color(preload("res://Scripts/Core/dice_color.gd").Type.PURPLE, "PURPLE")
+
+## _debug_force_one_blue()
+##
+## Forces the first dice to blue color.
+func _debug_force_one_blue() -> void:
+	_debug_force_one_color(preload("res://Scripts/Core/dice_color.gd").Type.BLUE, "BLUE")
+
+## _debug_force_one_yellow()
+##
+## Forces the first dice to yellow color.
+func _debug_force_one_yellow() -> void:
+	_debug_force_one_color(preload("res://Scripts/Core/dice_color.gd").Type.YELLOW, "YELLOW")
+
+## _debug_force_one_color(color_type, color_name)
+##
+## Forces the first available uncolored dice to the specified color.
+## If all dice already have colors, forces the first dice.
+func _debug_force_one_color(color_type, color_name: String) -> void:
+	var dice_hand = _get_dice_hand()
+	if not dice_hand:
+		return
+	
+	var dice_list = dice_hand.get_all_dice()
+	if dice_list.size() == 0:
+		log_debug("ERROR: No dice in hand")
+		return
+	
+	# Find first uncolored dice, or use first dice if all colored
+	var target_die = null
+	for die in dice_list:
+		if die is Dice and die.get_color() == preload("res://Scripts/Core/dice_color.gd").Type.NONE:
+			target_die = die
+			break
+	
+	if target_die == null:
+		target_die = dice_list[0]
+	
+	target_die.force_color(color_type)
+	log_debug("Forced one dice to %s color" % color_name)
+
+## _debug_force_rainbow()
+##
+## Forces dice[0-4] to Green, Red, Purple, Blue, Yellow respectively.
+## Creates a rainbow set for testing the rainbow bonus.
+func _debug_force_rainbow() -> void:
+	var dice_hand = _get_dice_hand()
+	if not dice_hand:
+		return
+	
+	var dice_list = dice_hand.get_all_dice()
+	if dice_list.size() < 5:
+		log_debug("ERROR: Need at least 5 dice for rainbow set")
+		return
+	
+	var DiceColorScript = preload("res://Scripts/Core/dice_color.gd")
+	var colors = [
+		DiceColorScript.Type.GREEN,
+		DiceColorScript.Type.RED,
+		DiceColorScript.Type.PURPLE,
+		DiceColorScript.Type.BLUE,
+		DiceColorScript.Type.YELLOW
+	]
+	
+	for i in range(5):
+		if dice_list[i] is Dice:
+			dice_list[i].force_color(colors[i])
+	
+	# Set remaining dice to NONE
+	for i in range(5, dice_list.size()):
+		if dice_list[i] is Dice:
+			dice_list[i].clear_color()
+	
+	log_debug("Forced rainbow set: Green, Red, Purple, Blue, Yellow")
+
 func _debug_clear_all_colors() -> void:
 	var dice_hand = _get_dice_hand()
 	if not dice_hand:
@@ -2098,13 +2204,18 @@ func _debug_show_color_effects() -> void:
 	log_debug("  Green: " + str(counts.green))
 	log_debug("  Red: " + str(counts.red))
 	log_debug("  Purple: " + str(counts.purple))
+	log_debug("  Blue: " + str(counts.get("blue", 0)))
+	log_debug("  Yellow: " + str(counts.get("yellow", 0)))
 	log_debug("  None: " + str(counts.none))
 	
 	log_debug("Color effects:")
 	log_debug("  Green money bonus: $" + str(effects.green_money))
 	log_debug("  Red additive bonus: +" + str(effects.red_additive))
 	log_debug("  Purple multiplier: x" + str(effects.purple_multiplier))
+	log_debug("  Blue multiplier: x" + str(effects.get("blue_score_multiplier", 1.0)))
+	log_debug("  Yellow scored: " + str(effects.get("yellow_scored", false)))
 	log_debug("  Same color bonus (5+): " + str(effects.same_color_bonus))
+	log_debug("  Rainbow bonus (all 5): " + str(effects.get("rainbow_bonus", false)))
 
 func _get_dice_hand():
 	var dice_hand = get_tree().get_first_node_in_group("dice_hand")
@@ -2139,7 +2250,7 @@ func _debug_test_color_scoring():
 		log_debug("ERROR: No dice hand found!")
 		return
 	
-	var dice_list = dice_hand.get_dice()
+	var dice_list = dice_hand.get_all_dice()
 	if dice_list.size() < 5:
 		log_debug("ERROR: Need at least 5 dice for test")
 		return
@@ -2478,7 +2589,7 @@ func _debug_unlock_all_colored_dice() -> void:
 		log_debug("ProgressManager not found")
 		return
 	
-	var colored_dice_items = ["green_dice", "red_dice", "purple_dice", "blue_dice"]
+	var colored_dice_items = ["green_dice", "red_dice", "purple_dice", "blue_dice", "yellow_dice"]
 	var unlocked_count = 0
 	
 	for item_id in colored_dice_items:
@@ -2501,7 +2612,7 @@ func _debug_lock_all_colored_dice() -> void:
 		log_debug("ProgressManager not found")
 		return
 	
-	var colored_dice_items = ["green_dice", "red_dice", "purple_dice", "blue_dice"]
+	var colored_dice_items = ["green_dice", "red_dice", "purple_dice", "blue_dice", "yellow_dice"]
 	var locked_count = 0
 	
 	for item_id in colored_dice_items:

@@ -202,27 +202,119 @@ Create test scenes for:
 - Adjustable Blue dice probability
 - Debug modes for testing different scenarios
 
-## Code Examples
+## Yellow Dice
 
-### Basic Blue Dice Usage Check
+### Overview
+- **Color**: Yellow
+- **Effect**: **Grants a random consumable when the yellow die is scored (used in a scoring category)**
+  - Only triggers if there is available consumable slot space
+  - If slots are full, no consumable is granted (no error)
+- **Probability**: 1:60 (moderate rarity, between Red 1:50 and Purple 1:88)
+- **Base Cost**: $85 (exponential scaling with purchases)
+
+### Yellow Dice Examples
+
+**Example 1 - Yellow Die Used (Consumable Granted)**
+- Roll: 3, 3, 3, 2, 5 (where 5 is Yellow)
+- Score in: Three of a Kind (all dice used)
+- Yellow die is USED → Random consumable granted to player
+- If consumable slots are full → Nothing happens
+
+**Example 2 - Yellow Die NOT Used (No Effect)**
+- Roll: 4, 4, 4, 4, 2 (where 2 is Yellow)
+- Score in: Fours category (upper section, only 4s count)
+- Yellow die is NOT used → No consumable granted
+
+### Same Color Bonus (5+ Yellow Dice)
+- When 5+ Yellow dice are present and scored: 2 consumables are granted instead of 1
+
+## Rainbow Bonus System
+
+### Overview
+When all 5 different dice colors are present in a single roll (Green, Red, Purple, Blue, Yellow):
+- **All color effects are boosted by 50%**
+  - Green money: ×1.5
+  - Red additive: ×1.5
+  - Purple multiplier: ×1.5
+  - Blue score multiplier: ×1.5
+  - Yellow: Grants an additional consumable (+1 on top of normal grant)
+
+### Rainbow Bonus Example
+- Roll: 3(Green), 4(Red), 2(Purple), 5(Blue), 6(Yellow)
+- Green money: $3 → $4 (×1.5 rounded)
+- Red additive: +4 → +6 (×1.5 rounded)
+- Purple multiplier: ×2 → ×3.0 (×1.5)
+- Blue multiplier: ×5 → ×7.5 (×1.5)
+- Yellow: Grants 2 consumables (1 base + 1 rainbow bonus)
+
+## Max Odds System
+
+### Overview
+- Dice colors can be purchased multiple times, each purchase halving the probability denominator
+- **Maximum odds are now 1:2 (50% chance)**, changed from the previous 1:1 (guaranteed)
+- This preserves some randomness even at max investment
+- Once at max odds, no further purchases are allowed for that color
+
+### Odds Progression Example (Green Dice)
+| Purchases | Odds | Cost |
+|---|---|---|
+| 0 | N/A (not purchased) | $50 |
+| 1 | 1:25 | $100 |
+| 2 | 1:13 | $200 |
+| 3 | 1:7 | $400 |
+| 4 | 1:4 | $800 |
+| 5 | 1:2 (MAX) | Cannot purchase |
+
+## Same Color Bonus
+When 5 or more dice of the same color are rolled:
+- Green: Money bonus doubled
+- Red: Additive bonus doubled  
+- Purple: Multiplier bonus doubled
+- Blue: Effect doubled (2× multiplier when used, 2× divisor when not used)
+- Yellow: Grants 2 consumables instead of 1 when scored
+
+## Implementation Architecture
+
+### Core Classes
+
+#### DiceColor (Scripts/Core/dice_color.gd)
 ```gdscript
-func is_blue_die_used_in_scoring(blue_die: Dice, used_dice: Array) -> bool:
-    return blue_die in used_dice
+enum Type {
+    NONE,
+    GREEN,    # Money bonus
+    RED,      # Additive bonus
+    PURPLE,   # Multiplicative bonus
+    BLUE,     # Conditional multiplier/divisor
+    YELLOW    # Consumable grant on score
+}
 ```
 
-### Blue Dice Effect Calculation
-```gdscript
-func apply_blue_dice_effects(base_score: int, blue_dice: Array, used_dice: Array) -> int:
-    var final_score = base_score
-    for blue_die in blue_dice:
-        if blue_die in used_dice:
-            # Used: multiply
-            final_score *= blue_die.value
-        else:
-            # Not used: divide (rounded down)
-            final_score = int(final_score / blue_die.value)
-    return final_score
-```
+#### DiceColorManager (Scripts/Managers/dice_color_manager.gd)
+- Calculates all color effects from dice arrays
+- Handles Yellow dice consumable granting logic
+- Handles Blue dice conditional logic
+- Detects rainbow bonus (all 5 colors present)
+- Integrates with scoring system
+- Emits signals for UI updates
+
+#### Yellow Dice Consumable Flow
+1. `calculate_color_effects()` detects yellow dice and checks if they are "used" in scoring
+2. The `apply_side_effects` parameter controls whether consumables are actually granted (default: false)
+3. When `apply_side_effects=true` and yellow is used, `_grant_yellow_dice_consumable()` is called
+4. The method checks for available consumable space via CorkboardUI/ConsumableUI
+5. If space is available, a random consumable is picked and granted via GameController
+
+**Important:** The `apply_side_effects` parameter prevents duplicate consumable grants during score preview/breakdown calculations. Only the final scoring operation should pass `apply_side_effects=true`.
+
+## Debug Panel Features
+
+### Dice Color Debug Commands
+- **Force All [Color]**: Sets all dice to a specific color
+- **Force One [Color]**: Sets one uncolored dice to a specific color
+- **Force Rainbow Set**: Sets dice 0-4 to Green, Red, Purple, Blue, Yellow
+- **Toggle Dice Colors**: Enable/disable the color system
+- **Show Color Effects**: Display full color effect breakdown
+- **Test Color Scoring**: Run color scoring pipeline test
 
 ## References
 - See DICE_COLOR_IMPLEMENTATION.md for original color system details

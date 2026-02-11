@@ -88,7 +88,7 @@ This document lists all signals in the DiceRogue codebase and explains their pur
 
 ### Dice Color Manager Signals (`Scripts/Managers/dice_color_manager.gd`)
 - `signal colors_enabled_changed(enabled: bool)` - Dice color system toggled
-- `signal color_effects_calculated(green_money: int, red_additive: int, purple_multiplier: float, same_color_bonus: bool)` - Color effects calculated
+- `signal color_effects_calculated(green_money: int, red_additive: int, purple_multiplier: float, same_color_bonus: bool, rainbow_bonus: bool)` - Color effects calculated
 
 ## PowerUp Signals
 

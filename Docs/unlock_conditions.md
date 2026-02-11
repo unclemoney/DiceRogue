@@ -134,10 +134,11 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 
 | ID | Name | Condition | Target | Description |
 |---|---:|---|---:|---|
-| green_dice | Green Dice | SCORE_POINTS | 100 | Unlocks green colored dice (earn money) |
-| red_dice | Red Dice | SCORE_POINTS | 150 | Unlocks red colored dice (score bonus) |
-| purple_dice | Purple Dice | SCORE_POINTS | 200 | Unlocks purple colored dice (score multiplier) |
-| blue_dice | Blue Dice | SCORE_POINTS | 250 | Unlocks blue colored dice (complex effects) |
+| green_dice | Green Dice | CHORE_COMPLETIONS | 3 | Unlocks green colored dice (earn money) |
+| red_dice | Red Dice | SCORE_THRESHOLD_CATEGORY | 18 | Unlocks red colored dice (score bonus) |
+| purple_dice | Purple Dice | CUMULATIVE_YAHTZEES | 2 | Unlocks purple colored dice (score multiplier) |
+| blue_dice | Blue Dice | COMPLETE_CHANNEL | 3 | Unlocks blue colored dice (complex effects) |
+| yellow_dice | Yellow Dice | USE_CONSUMABLES | 8 | Unlocks yellow colored dice (grants consumables when scored) |
 
 ---
 

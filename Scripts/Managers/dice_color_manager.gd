@@ -8,7 +8,7 @@ const DiceColorClass = preload("res://Scripts/Core/dice_color.gd")
 const ColoredDiceDataClass = preload("res://Scripts/Core/colored_dice_data.gd")
 
 signal colors_enabled_changed(enabled: bool)
-signal color_effects_calculated(green_money: int, red_additive: int, purple_multiplier: float, same_color_bonus: bool)
+signal color_effects_calculated(green_money: int, red_additive: int, purple_multiplier: float, same_color_bonus: bool, rainbow_bonus: bool)
 
 var colors_enabled: bool = true
 
@@ -29,7 +29,8 @@ const BASE_COSTS: Dictionary = {
 	DiceColorClass.Type.GREEN: 50,   # Common: $50 base
 	DiceColorClass.Type.RED: 75,     # Uncommon: $75 base
 	DiceColorClass.Type.PURPLE: 100, # Rare: $100 base
-	DiceColorClass.Type.BLUE: 125    # Very Rare: $125 base
+	DiceColorClass.Type.BLUE: 125,   # Very Rare: $125 base
+	DiceColorClass.Type.YELLOW: 85   # Uncommon-Rare: $85 base
 }
 
 func _ready() -> void:
@@ -41,8 +42,9 @@ func _ready() -> void:
 ## Calculate dice color effects for scoring
 ## @param dice_array: Array[Dice] dice to analyze for color effects
 ## @param used_dice_array: Array[Dice] dice that are actually used in the scoring category (optional)
+## @param apply_side_effects: bool whether to grant consumables (default false to prevent duplicate grants)
 ## @return Dictionary with money, additive, multiplier, and bonus information
-func calculate_color_effects(dice_array: Array, used_dice_array: Array = []) -> Dictionary:
+func calculate_color_effects(dice_array: Array, used_dice_array: Array = [], apply_side_effects: bool = false) -> Dictionary:
 	if not colors_enabled:
 		return _get_empty_effects()
 	
@@ -50,10 +52,12 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = []) -> 
 	var red_count := 0
 	var purple_count := 0
 	var blue_count := 0
+	var yellow_count := 0
 	var green_money := 0
 	var red_additive := 0
 	var purple_multiplier := 1.0
 	var blue_score_multiplier := 1.0
+	var yellow_scored := false
 	
 	# Count colored dice and calculate base effects
 	for i in range(dice_array.size()):
@@ -90,12 +94,18 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = []) -> 
 						# Apply penalty reduction: lerp between 1.0 (no penalty) and penalty
 						var reduced_penalty = lerpf(1.0, penalty, blue_penalty_reduction_factor)
 						blue_score_multiplier *= reduced_penalty
+			DiceColorClass.Type.YELLOW:
+				yellow_count += 1
+				# Yellow dice effect: grant consumable when scored
+				var is_yellow_used = used_dice_array.size() == 0 or i in used_dice_array
+				if is_yellow_used:
+					yellow_scored = true
 			DiceColorClass.Type.NONE:
 				pass  # No effect
 	
 	# Check for same color bonus (5+ of any color gets 2x)
 	var same_color_bonus := false
-	if green_count >= 5 or red_count >= 5 or purple_count >= 5 or blue_count >= 5:
+	if green_count >= 5 or red_count >= 5 or purple_count >= 5 or blue_count >= 5 or yellow_count >= 5:
 		same_color_bonus = true
 		
 		# Only apply bonus to the colors that actually exist
@@ -107,6 +117,18 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = []) -> 
 			purple_multiplier *= 2
 		if blue_count >= 5:
 			blue_score_multiplier *= 2
+		# Yellow 5+ bonus: grant an extra consumable (handled in _grant_yellow_dice_consumable)
+	
+	# Check for rainbow bonus (1+ of each color type)
+	var rainbow_bonus := false
+	if green_count >= 1 and red_count >= 1 and purple_count >= 1 and blue_count >= 1 and yellow_count >= 1:
+		rainbow_bonus = true
+		# Rainbow bonus: +50% to all color effects
+		green_money = int(green_money * 1.5)
+		red_additive = int(red_additive * 1.5)
+		purple_multiplier *= 1.5
+		blue_score_multiplier *= 1.5
+		print("[DiceColorManager] RAINBOW BONUS! All 5 colors present - effects boosted by 50%!")
 	
 	var effects = {
 		"green_money": green_money,
@@ -114,6 +136,9 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = []) -> 
 		"purple_multiplier": purple_multiplier,
 		"blue_score_multiplier": blue_score_multiplier,
 		"same_color_bonus": same_color_bonus,
+		"rainbow_bonus": rainbow_bonus,
+		"yellow_scored": yellow_scored,
+		"yellow_count": yellow_count,
 		"green_count": green_count,
 		"red_count": red_count, 
 		"purple_count": purple_count,
@@ -121,15 +146,26 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = []) -> 
 	}
 	
 	# Only print summary if there are actual effects
-	if green_count > 0 or red_count > 0 or purple_count > 0 or blue_count > 0:
-		print("[DiceColorManager] Effects: Green(", green_count, "):$", green_money, " Red(", red_count, "):+", red_additive, " Purple(", purple_count, "):x", purple_multiplier, " Blue(", blue_count, "):x", blue_score_multiplier)
+	if green_count > 0 or red_count > 0 or purple_count > 0 or blue_count > 0 or yellow_count > 0:
+		print("[DiceColorManager] Effects: Green(", green_count, "):$", green_money, " Red(", red_count, "):+", red_additive, " Purple(", purple_count, "):x", purple_multiplier, " Blue(", blue_count, "):x", blue_score_multiplier, " Yellow(", yellow_count, ")")
 		if same_color_bonus:
 			print("[DiceColorManager] Same color bonus applied!")
+		if rainbow_bonus:
+			print("[DiceColorManager] Rainbow bonus applied!")
+	
+	# Grant yellow dice consumable if yellow was scored (only if side effects enabled)
+	if yellow_scored and apply_side_effects:
+		var grant_count = 1
+		# Yellow same-color bonus: grant 2 consumables instead of 1
+		if same_color_bonus and yellow_count >= 5:
+			grant_count = 2
+		for _i in range(grant_count):
+			_grant_yellow_dice_consumable()
 	
 	# Register effects with ScoreModifierManager for proper tracking
 	_register_color_effects_with_manager(effects)
 	
-	emit_signal("color_effects_calculated", green_money, red_additive, purple_multiplier, same_color_bonus)
+	emit_signal("color_effects_calculated", green_money, red_additive, purple_multiplier, same_color_bonus, rainbow_bonus)
 	return effects
 
 ## Register dice color effects with ScoreModifierManager for proper tracking
@@ -174,6 +210,53 @@ func clear_color_effects() -> void:
 	_unregister_color_effects_from_manager()
 	print("[DiceColorManager] Cleared all dice color effects from ScoreModifierManager")
 
+## _grant_yellow_dice_consumable()
+##
+## Grants a random consumable when a yellow dice is scored.
+## Checks if there is available space for a new consumable first.
+## Uses GameController to find ConsumableManager and CorkboardUI/ConsumableUI.
+func _grant_yellow_dice_consumable() -> void:
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if not game_controller:
+		print("[DiceColorManager] Yellow dice: No GameController found, cannot grant consumable")
+		return
+	
+	# Check if consumable slots are full
+	var has_space = true
+	if game_controller.get("corkboard_ui") and game_controller.corkboard_ui:
+		if game_controller.corkboard_ui.has_method("has_max_consumables"):
+			has_space = not game_controller.corkboard_ui.has_max_consumables()
+	elif game_controller.get("consumable_ui") and game_controller.consumable_ui:
+		if game_controller.consumable_ui.has_method("has_max_consumables"):
+			has_space = not game_controller.consumable_ui.has_max_consumables()
+	
+	if not has_space:
+		print("[DiceColorManager] Yellow dice: Consumable slots full, no consumable granted")
+		return
+	
+	# Get available consumables from ConsumableManager
+	var consumable_manager = game_controller.get("consumable_manager")
+	if not consumable_manager:
+		print("[DiceColorManager] Yellow dice: No ConsumableManager found")
+		return
+	
+	if not consumable_manager.has_method("get_available_consumables"):
+		print("[DiceColorManager] Yellow dice: ConsumableManager missing get_available_consumables")
+		return
+	
+	var available_ids = consumable_manager.get_available_consumables()
+	if available_ids.size() == 0:
+		print("[DiceColorManager] Yellow dice: No consumables available to grant")
+		return
+	
+	# Pick a random consumable and grant it
+	var random_id = available_ids[randi() % available_ids.size()]
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable(random_id)
+		print("[DiceColorManager] Yellow dice granted consumable: %s" % random_id)
+	else:
+		print("[DiceColorManager] Yellow dice: GameController missing grant_consumable method")
+
 ## Enable or disable the dice color system globally
 ## @param enabled: bool whether to enable dice colors
 func set_colors_enabled(enabled: bool) -> void:
@@ -196,6 +279,9 @@ func _get_empty_effects() -> Dictionary:
 		"purple_multiplier": 1.0,
 		"blue_score_multiplier": 1.0,
 		"same_color_bonus": false,
+		"rainbow_bonus": false,
+		"yellow_scored": false,
+		"yellow_count": 0,
 		"green_count": 0,
 		"red_count": 0,
 		"purple_count": 0,
@@ -277,6 +363,17 @@ func get_current_effects_description(dice_array: Array, used_dice_array: Array =
 	if effects.same_color_bonus:
 		descriptions.append("Same Color Bonus: 2x (5+ dice)")
 	
+	# Add yellow dice effect info
+	if effects.get("yellow_count", 0) > 0:
+		if effects.get("yellow_scored", false):
+			descriptions.append("Yellow Dice: Consumable granted!")
+		else:
+			descriptions.append("Yellow Dice: %d (not scored)" % effects.yellow_count)
+	
+	# Add rainbow bonus info
+	if effects.get("rainbow_bonus", false):
+		descriptions.append("Rainbow Bonus: +50% all effects (all 5 colors)")
+	
 	# Return combined description
 	if descriptions.size() == 0:
 		return "Dice Colors: No Effects"
@@ -302,7 +399,8 @@ func _load_colored_dice_data() -> void:
 		"res://Resources/Data/ColoredDice/GreenDice.tres",
 		"res://Resources/Data/ColoredDice/RedDice.tres", 
 		"res://Resources/Data/ColoredDice/PurpleDice.tres",
-		"res://Resources/Data/ColoredDice/BlueDice.tres"
+		"res://Resources/Data/ColoredDice/BlueDice.tres",
+		"res://Resources/Data/ColoredDice/YellowDice.tres"
 	]
 	
 	for file_path in data_files:
@@ -318,7 +416,7 @@ func _load_colored_dice_data() -> void:
 ## Reset purchased colors for new game session
 func _reset_purchased_colors() -> void:
 	purchased_colors.clear()
-	for color_type in [DiceColorClass.Type.GREEN, DiceColorClass.Type.RED, DiceColorClass.Type.PURPLE, DiceColorClass.Type.BLUE]:
+	for color_type in [DiceColorClass.Type.GREEN, DiceColorClass.Type.RED, DiceColorClass.Type.PURPLE, DiceColorClass.Type.BLUE, DiceColorClass.Type.YELLOW]:
 		purchased_colors[color_type] = 0  # Changed from false to 0 (purchase count)
 	print("[DiceColorManager] Reset purchased colors for new game session")
 
@@ -335,9 +433,9 @@ func purchase_colored_dice(color_id: String) -> bool:
 	var color_type = data.color_type
 	var current_count = purchased_colors.get(color_type, 0)
 	
-	# Check if already at max odds (1:1)
+	# Check if already at max odds (1:2)
 	if is_color_at_max_odds(color_type):
-		print("[DiceColorManager] %s already at MAX odds (1:1)" % data.display_name)
+		print("[DiceColorManager] %s already at MAX odds (1:2)" % data.display_name)
 		return false
 	
 	# Increment purchase count
@@ -432,13 +530,13 @@ func get_current_color_chance(color_type: DiceColorClass.Type) -> int:
 		var modifier = color_chance_modifiers[color_type]
 		modified_chance = int(modified_chance * modifier)
 	
-	return max(1, modified_chance)  # Minimum 1:1 odds
+	return max(2, modified_chance)  # Minimum 1:2 odds
 
-## Check if a color is at maximum odds (1:1)
+## Check if a color is at maximum odds (1:2)
 ## @param color_type: DiceColor.Type to check
-## @return bool: True if at 1:1 odds
+## @return bool: True if at 1:2 odds
 func is_color_at_max_odds(color_type: DiceColorClass.Type) -> bool:
-	return get_current_color_chance(color_type) <= 1
+	return get_current_color_chance(color_type) <= 2
 
 ## Get tooltip info for shop display showing purchase status and odds
 ## @param color_type: DiceColor.Type to get info for
@@ -452,11 +550,11 @@ func get_color_shop_tooltip(color_type: DiceColorClass.Type) -> String:
 	tooltip += "Owned: %d\n" % count
 	
 	if is_color_at_max_odds(color_type):
-		tooltip += "Odds: 1/1 (MAX)\n"
+		tooltip += "Odds: 1/2 (MAX)\n"
 		tooltip += "Cannot purchase more"
 	else:
 		tooltip += "Current Odds: 1/%d\n" % current_odds
-		var next_odds = max(1, int(ceil(current_odds / 2.0)))
+		var next_odds = max(2, int(ceil(current_odds / 2.0)))
 		tooltip += "Next: $%d (1/%d odds)" % [current_cost, next_odds]
 	
 	return tooltip

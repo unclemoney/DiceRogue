@@ -974,7 +974,7 @@ func _on_money_changed(_new_amount: int, change: int) -> void:
 	if change > 0:
 		track_money_earned(change)
 
-func _on_color_effects_calculated(_green_money: int, _red_additive: int, _purple_multiplier: float, same_color_bonus: bool) -> void:
+func _on_color_effects_calculated(_green_money: int, _red_additive: int, _purple_multiplier: float, same_color_bonus: bool, _rainbow_bonus: bool) -> void:
 	if same_color_bonus:
 		track_color_bonus()
 
@@ -1294,6 +1294,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 2, 5)
 	_add_default_colored_dice("blue_dice", "Blue Dice", "Unlocks blue colored dice (complex effects)", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 6)
+	_add_default_colored_dice("yellow_dice", "Yellow Dice", "Unlocks yellow colored dice (grants consumables when scored)", 
+		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 8, 5)
 	
 	print("[ProgressManager] Created %d total unlockable items across all categories" % unlockable_items.size())
 

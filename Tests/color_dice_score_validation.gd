@@ -194,7 +194,9 @@ func _simulate_color_effects(dice_values: Array, dice_colors: Array, test_name: 
 	_log_result("  Green (money): $%d" % effects.get("green_money", 0))
 	_log_result("  Red (additive): +%d" % effects.get("red_additive", 0))
 	_log_result("  Purple (multiplier): x%.1f" % effects.get("purple_multiplier", 1.0))
+	_log_result("  Yellow (scored): %s" % str(effects.get("yellow_scored", false)))
 	_log_result("  Same Color Bonus: %s" % str(effects.get("same_color_bonus", false)))
+	_log_result("  Rainbow Bonus: %s" % str(effects.get("rainbow_bonus", false)))
 	
 	# Validate expected results based on test_name
 	_validate_color_test(test_name, effects, dice_values, dice_colors)

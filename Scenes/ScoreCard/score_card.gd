@@ -649,7 +649,8 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 		print("[Scorecard] DEBUG: Category:", category, "Used dice indices:", used_dice_indices)
 		
 		# Calculate color effects with used dice information for Blue dice
-		color_effects = DiceColorManager.calculate_color_effects(dice_hand.get_all_dice(), used_dice_indices)
+		# Enable side effects (consumable grants) only when apply_money_effects is true (actual scoring, not preview)
+		color_effects = DiceColorManager.calculate_color_effects(dice_hand.get_all_dice(), used_dice_indices, apply_money_effects)
 		print("[Scorecard] DEBUG: Got color effects from DiceColorManager:", color_effects)
 	elif dice_hand and dice_hand.has_method("get_color_effects"):
 		# Fallback to dice_hand method (won't handle Blue dice correctly)

@@ -554,6 +554,8 @@ func _assign_random_color() -> void:
 			available_colors.append(DiceColor.Type.PURPLE)
 		if progress_manager.is_item_unlocked("blue_dice") and color_manager.is_color_purchased(DiceColor.Type.BLUE):
 			available_colors.append(DiceColor.Type.BLUE)
+		if progress_manager.is_item_unlocked("yellow_dice") and color_manager.is_color_purchased(DiceColor.Type.YELLOW):
+			available_colors.append(DiceColor.Type.YELLOW)
 	
 	if available_colors.size() == 0:
 		#print("[Dice] No colored dice purchased for this session - setting to NONE")
@@ -624,6 +626,7 @@ func _update_color_shader() -> void:
 	dice_material.set_shader_parameter("red_color_strength", 0.0)
 	dice_material.set_shader_parameter("purple_color_strength", 0.0)
 	dice_material.set_shader_parameter("blue_color_strength", 0.0)
+	dice_material.set_shader_parameter("yellow_color_strength", 0.0)
 	
 	# Set appropriate color strength
 	match color:
@@ -639,6 +642,9 @@ func _update_color_shader() -> void:
 		DiceColor.Type.BLUE:
 			dice_material.set_shader_parameter("blue_color_strength", 0.8)
 			print("[Dice] Set BLUE shader strength to 0.8")
+		DiceColor.Type.YELLOW:
+			dice_material.set_shader_parameter("yellow_color_strength", 0.8)
+			print("[Dice] Set YELLOW shader strength to 0.8")
 		DiceColor.Type.NONE:
 			print("[Dice] All color strengths set to 0.0 (NONE)")
 		_:

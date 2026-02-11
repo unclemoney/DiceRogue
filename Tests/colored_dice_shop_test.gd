@@ -103,7 +103,7 @@ func _test_progress_integration() -> void:
 	_log_test("✅ ProgressManager found")
 	
 	# Check colored dice unlock status
-	var colored_dice_items = ["green_dice", "red_dice", "purple_dice", "blue_dice"]
+	var colored_dice_items = ["green_dice", "red_dice", "purple_dice", "blue_dice", "yellow_dice"]
 	for item_id in colored_dice_items:
 		var is_unlocked = progress_manager.is_item_unlocked(item_id)
 		_log_test("%s %s: %s" % ["✅" if is_unlocked else "❌", item_id, "unlocked" if is_unlocked else "locked"])

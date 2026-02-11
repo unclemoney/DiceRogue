@@ -697,6 +697,8 @@ func get_color_counts() -> Dictionary:
 		"green": 0,
 		"red": 0,
 		"purple": 0,
+		"blue": 0,
+		"yellow": 0,
 		"none": 0
 	}
 	
@@ -711,6 +713,10 @@ func get_color_counts() -> Dictionary:
 				counts["red"] += 1
 			DiceColorClass.Type.PURPLE:
 				counts["purple"] += 1
+			DiceColorClass.Type.BLUE:
+				counts["blue"] += 1
+			DiceColorClass.Type.YELLOW:
+				counts["yellow"] += 1
 			DiceColorClass.Type.NONE:
 				counts["none"] += 1
 	
@@ -720,7 +726,7 @@ func get_color_counts() -> Dictionary:
 ## @return bool true if 5+ same color bonus should apply
 func has_same_color_bonus() -> bool:
 	var counts = get_color_counts()
-	return counts["green"] >= 5 or counts["red"] >= 5 or counts["purple"] >= 5
+	return counts["green"] >= 5 or counts["red"] >= 5 or counts["purple"] >= 5 or counts["blue"] >= 5 or counts["yellow"] >= 5
 
 ## Get dice color effects for scoring
 ## @return Dictionary with color effects from DiceColorManager
@@ -736,6 +742,9 @@ func get_color_effects() -> Dictionary:
 			"purple_multiplier": 1.0,
 			"blue_score_multiplier": 1.0,
 			"same_color_bonus": false,
+			"rainbow_bonus": false,
+			"yellow_scored": false,
+			"yellow_count": 0,
 			"green_count": 0,
 			"red_count": 0,
 			"purple_count": 0,

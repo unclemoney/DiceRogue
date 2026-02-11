@@ -45,6 +45,9 @@ func _on_test_pressed() -> void:
 		"purple_multiplier": 1.0,
 		"blue_score_multiplier": 1.5,  # Simulate blue dice multiplier
 		"same_color_bonus": false,
+		"rainbow_bonus": false,
+		"yellow_scored": false,
+		"yellow_count": 0,
 		"green_count": 0,
 		"red_count": 0,
 		"purple_count": 0,

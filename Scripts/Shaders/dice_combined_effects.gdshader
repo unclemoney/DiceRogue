@@ -10,6 +10,7 @@ uniform float green_color_strength = 0.0;
 uniform float red_color_strength = 0.0;
 uniform float purple_color_strength = 0.0;
 uniform float blue_color_strength = 0.0;
+uniform float yellow_color_strength = 0.0;
 
 void fragment() {
     vec4 original = texture(TEXTURE, UV);
@@ -21,7 +22,7 @@ void fragment() {
     }
 
     // Apply dice color effects (radiate from edges)
-    if (green_color_strength > 0.0 || red_color_strength > 0.0 || purple_color_strength > 0.0 || blue_color_strength > 0.0) {
+    if (green_color_strength > 0.0 || red_color_strength > 0.0 || purple_color_strength > 0.0 || blue_color_strength > 0.0 || yellow_color_strength > 0.0) {
         // Calculate distance from edge
         float edge_dist = min(min(UV.x, 1.0 - UV.x), min(UV.y, 1.0 - UV.y));
         float edge_effect = 1.0 - smoothstep(0.0, 0.3, edge_dist);
@@ -52,6 +53,13 @@ void fragment() {
             vec4 blue_color = vec4(0.0, 0.5, 1.0, 1.0);
             float blue_pulse = 0.8 + 0.2 * sin(TIME * 6.0);
             result = mix(result, blue_color, blue_color_strength * edge_effect * blue_pulse * 0.6);
+        }
+
+        // Apply yellow color effect
+        if (yellow_color_strength > 0.0) {
+            vec4 yellow_color = vec4(1.0, 0.9, 0.0, 1.0);
+            float yellow_pulse = 0.8 + 0.2 * sin(TIME * 4.5);
+            result = mix(result, yellow_color, yellow_color_strength * edge_effect * yellow_pulse * 0.6);
         }
     }
 
