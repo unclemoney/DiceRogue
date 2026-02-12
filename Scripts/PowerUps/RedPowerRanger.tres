@@ -8,7 +8,7 @@
 script = ExtResource("1_powerup_data")
 id = "red_power_ranger"
 display_name = "Red Power Ranger"
-description = "Gain +additive score for each red dice scored. The additive is cumulative and applies to all future scores."
+description = "Gain +1 additive score for each red dice scored. The additive is cumulative and applies to all future scores."
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
 price = 75

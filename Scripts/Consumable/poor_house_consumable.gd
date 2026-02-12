@@ -26,7 +26,7 @@ func apply(target) -> void:
 		push_error("[PoorHouseConsumable] PlayerEconomy autoload not found")
 		return
 	
-	var current_money = player_economy.get_money()
+	var current_money = player_economy.get_money() * 0.5 # Transfer 50% of current money as bonus score
 	if current_money <= 0:
 		print("[PoorHouseConsumable] Player has no money to transfer")
 		return

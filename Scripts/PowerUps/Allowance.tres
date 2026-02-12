@@ -8,7 +8,7 @@
 script = ExtResource("1_powerup_data")
 id = "allowance"
 display_name = "Allowance"
-description = "Grants $100 when challenge completes"
+description = "Grants a bonus $100 when completeing a challenge"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
 price = 75

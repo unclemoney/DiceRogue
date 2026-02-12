@@ -6,7 +6,7 @@ class_name BonusCollectorConsumable
 ## Grants $35 instantly if the upper section total is >= 63 (bonus threshold).
 ## If not eligible, shows feedback message but does nothing.
 
-const BONUS_AMOUNT := 35
+const BONUS_AMOUNT := 150
 const UPPER_BONUS_THRESHOLD := 63
 
 func _ready() -> void:

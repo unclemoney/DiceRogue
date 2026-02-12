@@ -8,7 +8,7 @@
 script = ExtResource("1_powerup_data")
 id = "full_house_bonus"
 display_name = "Full House Fortune"
-description = "+$7 for each full house rolled (scaling with total rolled this game)"
+description = "+$25 for each full house rolled (scaling with total rolled this game)"
 icon = ExtResource("1_fullhouse_icon")
 scene = ExtResource("2_fullhouse_scene")
 price = 75

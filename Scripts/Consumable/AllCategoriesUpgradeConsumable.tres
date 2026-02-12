@@ -11,4 +11,4 @@ display_name = "Master Upgrade"
 description = "Upgrade ALL scoring categories by 1 level. The ultimate enhancement!"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
-price = 500
+price = 550

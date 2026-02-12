@@ -9,6 +9,7 @@ class_name MoneyWellSpentPowerUp
 # Reference to Statistics manager for tracking money spent
 var statistics_ref = null
 var last_money_spent: int = 0
+var MONEY_SPENT_THRESHOLD: int = 50
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -96,7 +97,7 @@ func get_current_additive() -> int:
 	if not statistics_ref:
 		return 0
 	
-	return statistics_ref.total_money_spent / 50
+	return statistics_ref.total_money_spent / MONEY_SPENT_THRESHOLD
 
 func _update_additive_manager() -> void:
 	if not _is_score_modifier_manager_available():

@@ -8,7 +8,7 @@
 script = ExtResource("1_powerup_data")
 id = "daring_dice"
 display_name = "Daring Dice"
-description = "Remove 2 dice but gain +50 score bonus per category"
+description = "Remove 2 dice but gain +50 additive"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
 price = 300

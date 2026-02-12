@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://v4gtplart7n4"]
 
 [ext_resource type="Texture2D" uid="uid://dthrqomtruhd0" path="res://Resources/Art/Powerups/coupon_spine.png" id="1_icon"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
@@ -8,10 +8,10 @@
 script = ExtResource("1_powerup_data")
 id = "rainbow_surge"
 display_name = "Rainbow Surge"
-description = "2.0x score multiplier when 4+ different dice colors are present!"
+description = "2.0x score multiplier when 5 different dice colors are present!"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
 price = 650
-rarity = "legendary"
+rarity = "epic"
 rating = "R"
 metadata/_custom_type_script = "uid://b4upm4dbvhukm"

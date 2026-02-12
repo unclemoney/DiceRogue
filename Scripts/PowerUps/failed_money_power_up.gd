@@ -11,7 +11,7 @@ class_name FailedMoneyPowerUp
 var round_manager_ref: Node = null
 var total_money_granted: int = 0
 
-const MONEY_PER_FAILED_HAND: int = 25
+const MONEY_PER_FAILED_HAND: int = 50
 
 signal description_updated(power_up_id: String, new_description: String)
 

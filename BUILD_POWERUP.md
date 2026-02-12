@@ -653,7 +653,7 @@ _add_default_power_up("grand_master", "Grand Master", "All scoring categories ge
 ### Common ($50-$75)
 | ID | Name | Effect |
 |----|------|--------|
-| `purple_payout` | Purple Payout | Earn $3 per purple die when scoring |
+| `purple_payout` | Purple Payout | Earn $3 per when scoring |
 | `mod_money` | Mod Money | Earn $8 per modded die when scoring |
 
 ### Uncommon ($125-$150)

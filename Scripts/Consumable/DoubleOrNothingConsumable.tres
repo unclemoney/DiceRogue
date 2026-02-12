@@ -8,7 +8,7 @@
 script = ExtResource("1_script")
 id = "double_or_nothing"
 display_name = "Double or Nothing"
-description = "Use rolling the dice on your next turn. Roll a Yahtzee for 2x score, otherwise your next score is 0."
+description = "Use for your on your next turn. Roll a Yahtzee for 2x score, otherwise your next score is 0."
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
 price = 25

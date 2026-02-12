@@ -8,7 +8,7 @@
 script = ExtResource("1_powerup_data")
 id = "yahtzeed_dice"
 display_name = "Yahtzeed Dice"
-description = "Gain +1 die every time you roll a Yahtzee! (Not Bonus Yahtzees)"
+description = "Gain +1 die every time you roll a Yahtzee! (Excluding Bonus Yahtzees)"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
 price = 450

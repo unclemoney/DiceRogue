@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3 uid="uid://cubsnfa7pq7yi"]
 
 [ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_consumable_data"]
-[ext_resource type="Texture2D" uid="uid://7ybwjxc4v6hd" path="res://Resources/Art/Powerups/consumable_test7.png" id="2_icon"]
+[ext_resource type="Texture2D" uid="uid://da40sugvm8tf8" path="res://Resources/Art/Powerups/consumable_test7.png" id="2_icon"]
 [ext_resource type="PackedScene" path="res://Scenes/Consumable/VisitTheShopConsumable.tscn" id="3_scene"]
 
 [resource]

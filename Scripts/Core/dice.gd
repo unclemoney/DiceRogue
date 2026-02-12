@@ -684,12 +684,14 @@ func _update_color_tooltip() -> void:
 	match color:
 		DiceColor.Type.GREEN:
 			tooltip_text = "%s Die\nGrants $%d money" % [color_name, value]
+		DiceColor.Type.YELLOW:
+			tooltip_text = "%s Die\nGrants a Coupon" % [color_name, value]
 		DiceColor.Type.RED:
 			tooltip_text = "%s Die\nAdds +%d points" % [color_name, value]
 		DiceColor.Type.PURPLE:
-			tooltip_text = "%s Die\nMultiplies score ×%d" % [color_name, value]
+			tooltip_text = "%s Die\nMultiplies score ×%d" % [color_name, 2]
 		DiceColor.Type.BLUE:
-			tooltip_text = "%s Die\nScore multiplier ×%d" % [color_name, value]
+			tooltip_text = "%s Die\nMultiplier: ×%d or Divides" % [color_name, value]
 		_:
 			tooltip_text = "%s Die" % color_name
 	

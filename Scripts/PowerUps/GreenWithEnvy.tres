@@ -8,7 +8,7 @@
 script = ExtResource("1_powerup_data")
 id = "green_monster"
 display_name = "Green Monster"
-description = "+0.05x green money multiplier per green dice scored. Stacks throughout the game!"
+description = "+0.05x green money multiplier per green dice scored. Stacks throughout the game! (Verify It works)"
 icon = ExtResource("1_green_icon")
 scene = ExtResource("2_green_scene")
 price = 200

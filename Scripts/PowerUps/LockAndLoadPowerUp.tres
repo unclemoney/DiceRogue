@@ -8,7 +8,7 @@
 script = ExtResource("1_powerup_data")
 id = "lock_and_load"
 display_name = "Lock & Load"
-description = "+$3 for each die locked"
+description = "+$3 for each die locked (Seems useless)"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
 price = 75

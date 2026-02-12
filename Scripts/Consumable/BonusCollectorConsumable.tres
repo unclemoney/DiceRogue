@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 id = "bonus_collector"
 display_name = "Bonus Collector"
-description = "Grants $35 instantly if upper section total >= 63"
+description = "Grants $150 instantly if upper section total >= 63"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
-price = 100
+price = 75
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

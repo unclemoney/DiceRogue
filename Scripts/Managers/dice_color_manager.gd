@@ -28,9 +28,9 @@ var blue_penalty_reduction_factor: float = 1.0  # Multiplier for blue penalty (1
 const BASE_COSTS: Dictionary = {
 	DiceColorClass.Type.GREEN: 50,   # Common: $50 base
 	DiceColorClass.Type.RED: 75,     # Uncommon: $75 base
-	DiceColorClass.Type.PURPLE: 100, # Rare: $100 base
-	DiceColorClass.Type.BLUE: 125,   # Very Rare: $125 base
-	DiceColorClass.Type.YELLOW: 85   # Uncommon-Rare: $85 base
+	DiceColorClass.Type.PURPLE: 125, # Rare: $100 base
+	DiceColorClass.Type.BLUE: 150,   # Very Rare: $125 base
+	DiceColorClass.Type.YELLOW: 100   # Uncommon-Rare: $85 base
 }
 
 func _ready() -> void:
@@ -71,13 +71,21 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = [], app
 		match dice_color:
 			DiceColorClass.Type.GREEN:
 				green_count += 1
-				green_money += dice_value
+				var is_used = used_dice_array.size() == 0 or i in used_dice_array
+				if is_used:
+					green_money += dice_value
 			DiceColorClass.Type.RED:
 				red_count += 1
-				red_additive += dice_value
+				var is_used = used_dice_array.size() == 0 or i in used_dice_array
+				if is_used:
+					red_additive += dice_value
+				else:
+					red_additive += 0  # No penalty for unused red dice, just no bonus
 			DiceColorClass.Type.PURPLE:
 				purple_count += 1
-				purple_multiplier *= dice_value # CHANGED FROM *= to +=
+				var is_used = used_dice_array.size() == 0 or i in used_dice_array
+				if is_used:
+					purple_multiplier *= 2 # CHANGED FROM dice_value to 2x
 			DiceColorClass.Type.BLUE:
 				blue_count += 1
 				# Blue dice effect depends on whether it's used in scoring
@@ -127,7 +135,7 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = [], app
 		green_money = int(green_money * 1.5)
 		red_additive = int(red_additive * 1.5)
 		purple_multiplier *= 1.5
-		blue_score_multiplier *= 1.5
+		blue_score_multiplier *= 1.5	
 		print("[DiceColorManager] RAINBOW BONUS! All 5 colors present - effects boosted by 50%!")
 	
 	var effects = {
@@ -162,8 +170,10 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = [], app
 		for _i in range(grant_count):
 			_grant_yellow_dice_consumable()
 	
-	# Register effects with ScoreModifierManager for proper tracking
-	_register_color_effects_with_manager(effects)
+	# NOTE: Do NOT register effects with ScoreModifierManager to prevent double-application
+	# score_card.gd manually applies these effects from the returned dictionary
+	# Registering them would cause effects to be counted twice (once from manager, once manually)
+	#_register_color_effects_with_manager(effects)  # DISABLED - causes double-triggering bug
 	
 	emit_signal("color_effects_calculated", green_money, red_additive, purple_multiplier, same_color_bonus, rainbow_bonus)
 	return effects
@@ -206,9 +216,10 @@ func _unregister_color_effects_from_manager() -> void:
 	ScoreModifierManager.unregister_multiplier("blue_dice")
 
 ## Clear all dice color effects from ScoreModifierManager (called when round ends)
+## NOTE: Currently disabled since we don't register effects to prevent double-application
 func clear_color_effects() -> void:
-	_unregister_color_effects_from_manager()
-	print("[DiceColorManager] Cleared all dice color effects from ScoreModifierManager")
+	# _unregister_color_effects_from_manager()  # DISABLED - effects not registered anymore
+	print("[DiceColorManager] Color effects cleared (no ScoreModifierManager unregistration needed)")
 
 ## _grant_yellow_dice_consumable()
 ##

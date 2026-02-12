@@ -8,7 +8,7 @@
 script = ExtResource("1_powerup_data")
 id = "money_multiplier"
 display_name = "Money Multiplier"
-description = "+0.1x money multiplier per Yahtzee rolled"
+description = "Immediately multiple your cash for every Yahtzee rolled (increases +.1 each Yahtzee)"
 icon = ExtResource("1_money_multiplier_icon")
 scene = ExtResource("2_money_multiplier_scene")
 price = 100

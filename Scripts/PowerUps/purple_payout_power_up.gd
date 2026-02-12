@@ -7,7 +7,7 @@ class_name PurplePayoutPowerUp
 ## Encourages players to invest in purple dice for passive income.
 ## Price: $50, Rarity: Common
 
-const MONEY_PER_PURPLE_DIE: int = 3
+const MONEY_PER_PURPLE_DIE: int = 25
 
 var scorecard_ref: Scorecard = null
 var score_card_ui_ref = null

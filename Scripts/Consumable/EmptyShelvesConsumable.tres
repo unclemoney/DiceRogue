@@ -11,4 +11,4 @@ display_name = "Empty Shelves"
 description = "Multiply next score by the number of empty PowerUp slots. Only usable during active rounds."
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
-price = 50
+price = 75

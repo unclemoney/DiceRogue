@@ -8,7 +8,7 @@
 script = ExtResource("1_powerup_data")
 id = "shop_rerolls"
 display_name = "Shop Rerolls"
-description = "Shop rerolls always cost $25 - never increases"
+description = "Shop rerolls always cost $25 - never increases unless sold"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
 price = 100

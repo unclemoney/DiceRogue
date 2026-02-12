@@ -25,7 +25,7 @@ The Dice Color System adds strategic depth to DiceRogue by giving dice special p
 ### Purple Dice
 - **Color**: Purple  
 - **Effect**: Multiplies score by die value (multiplicative bonus)
-- **Example**: Base score 20 × Purple die showing 2 = 40 total score
+- **Example**: Base score 20 × showing 2 = 40 total score
 - **Probability**: Standard colored die probability
 
 ### Blue Dice (NEW)

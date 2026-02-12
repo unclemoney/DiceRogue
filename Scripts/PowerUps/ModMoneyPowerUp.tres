@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://d3b4c0jmx35qm"]
 
-[ext_resource type="Texture2D" uid="uid://dh57x04b0kvjx" path="res://Resources/Art/Powerups/PowerUp_test6.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://chnl0hqqr66pv" path="res://Resources/Art/Powerups/PowerUp_test6.png" id="1_icon"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/ModMoneyPowerUp.tscn" id="2_scene"]
 
@@ -8,7 +8,7 @@
 script = ExtResource("1_powerup_data")
 id = "mod_money"
 display_name = "Mod Money"
-description = "Earn $8 per modded die when scoring"
+description = "Earn $8 per modded die when scoring "
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
 price = 75

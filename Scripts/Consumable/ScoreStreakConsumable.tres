@@ -11,5 +11,5 @@ display_name = "Score Streak"
 description = "Next 3 scores get 1.5x/1.75x/2x multipliers (breaks on scratch)"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
-price = 100
+price = 200
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

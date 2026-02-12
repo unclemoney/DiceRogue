@@ -8,7 +8,7 @@
 script = ExtResource("1_powerup_data")
 id = "chore_champion"
 display_name = "Chore Champion"
-description = "Chores are 2x more effective (-40 instead of -20)"
+description = "Chores are 2x more effective (Check to make sure since refactor)"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
 price = 50

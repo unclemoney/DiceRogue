@@ -12,7 +12,7 @@ class_name FullHousePowerUp
 
 # Track full houses for this session
 var total_full_houses_earned: int = 0
-var base_money_per_full_house: int = 7
+var base_money_per_full_house: int = 25
 
 signal description_updated(power_up_id: String, new_description: String)
 

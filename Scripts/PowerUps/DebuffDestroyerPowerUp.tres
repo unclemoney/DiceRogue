@@ -8,7 +8,7 @@
 script = ExtResource("1_powerup_data")
 id = "debuff_destroyer"
 display_name = "Debuff Destroyer"
-description = "Removes 1 random debuff on purchase & each round start"
+description = "Removes 1 random debuff upon selling"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
 price = 400

@@ -8,8 +8,8 @@
 script = ExtResource("1_script")
 id = "stat_cashout"
 display_name = "Stat Cashout"
-description = "Grants $10 per Yahtzee scored + $5 per Full House scored"
+description = "Grants $10 per Yahtzee scored + $5 per Full House scored this game"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
-price = 125
+price = 25
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"
