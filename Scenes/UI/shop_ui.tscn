@@ -95,7 +95,7 @@ color = Color(0, 0, 0, 0.7)
 
 [node name="PanelContainer" type="PanelContainer" parent="."]
 layout_mode = 0
-offset_top = 69.0
+offset_top = 106.0
 offset_right = 938.0
 offset_bottom = 575.0
 
@@ -108,13 +108,14 @@ texture = ExtResource("2_6hyjo")
 layout_mode = 1
 anchors_preset = -1
 offset_left = -1.0
-offset_top = -1.0
+offset_top = 37.0
 offset_right = 937.0
-offset_bottom = 68.0
+offset_bottom = 106.0
 
 [node name="ShopLabel" type="RichTextLabel" parent="MarginContainer"]
 custom_minimum_size = Vector2(320, 0)
 layout_mode = 2
+mouse_filter = 2
 bbcode_enabled = true
 text = "SHOP"
 horizontal_alignment = 1
@@ -123,7 +124,7 @@ vertical_alignment = 1
 [node name="TabContainer" type="TabContainer" parent="."]
 layout_mode = 2
 offset_left = 7.0
-offset_top = 75.0
+offset_top = 111.0
 offset_right = 932.0
 offset_bottom = 568.0
 tab_alignment = 1
@@ -248,9 +249,9 @@ columns = 3
 custom_minimum_size = Vector2(40, 40)
 layout_mode = 0
 offset_left = 894.0
-offset_top = 73.0
+offset_top = 110.0
 offset_right = 934.0
-offset_bottom = 113.0
+offset_bottom = 150.0
 text = "X"
 
 [connection signal="pressed" from="CloseButton" to="." method="_on_close_button_pressed"]

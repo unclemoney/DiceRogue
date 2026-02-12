@@ -55,6 +55,9 @@ func _ready() -> void:
 	print("PowerUpManager path:", power_up_manager_path)
 	print("ConsumableManager path:", consumable_manager_path)
 	print("ModManager path:", mod_manager_path)
+	
+	# Set z_index so shop is above base UI but below fan-outs and pause menu
+	z_index = 100
 
 	# Initialize purchased items tracking
 	purchased_items = {

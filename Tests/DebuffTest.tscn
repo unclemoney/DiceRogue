@@ -164,7 +164,7 @@
 [ext_resource type="Resource" uid="uid://eqic5nk5mvoh" path="res://Scripts/PowerUps/ExtraCoupons.tres" id="1038_extra_coupons"]
 [ext_resource type="Resource" uid="uid://cubsnfa7pq7yi" path="res://Scripts/Consumable/VisitTheShopConsumable.tres" id="1039_visit_the_shop"]
 [ext_resource type="Resource" uid="uid://ofk1qti27od0" path="res://Scripts/PowerUps/PurplePayoutPowerUp.tres" id="1040_purple_payout"]
-[ext_resource type="Resource" path="res://Scripts/PowerUps/ModMoneyPowerUp.tres" id="1041_mod_money"]
+[ext_resource type="Resource" uid="uid://d3b4c0jmx35qm" path="res://Scripts/PowerUps/ModMoneyPowerUp.tres" id="1041_mod_money"]
 [ext_resource type="Resource" path="res://Scripts/PowerUps/BlueSafetyNetPowerUp.tres" id="1042_blue_safety_net"]
 [ext_resource type="Resource" uid="uid://cy1tnxgionwd" path="res://Scripts/PowerUps/ChoreSprintPowerUp.tres" id="1043_chore_sprint"]
 [ext_resource type="Resource" path="res://Scripts/PowerUps/StraightTripletMasterPowerUp.tres" id="1044_straight_triplet_master"]

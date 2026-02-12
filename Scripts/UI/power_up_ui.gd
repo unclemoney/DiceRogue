@@ -92,32 +92,36 @@ func _create_background() -> void:
 	_background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_background.mouse_filter = Control.MOUSE_FILTER_STOP
 	_background.visible = false
-	_background.z_index = 5  # Above spines but below fanned cards
+	_background.z_index = 120  # Above shop UI but below fanned cards
 	add_child(_background)
 	
 	# Connect background click to fold cards back
 	_background.gui_input.connect(_on_background_clicked)
 
 func _create_spine_tooltip() -> void:
-	# Create tooltip for spine hover
+	# Create tooltip for spine hover - shows detailed PowerUp info
 	_spine_tooltip = PanelContainer.new()
 	_spine_tooltip.name = "SpineTooltip"
 	_spine_tooltip.visible = false
-	_spine_tooltip.z_index = 20
+	_spine_tooltip.z_index = 140  # Above fanned icons
+	_spine_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Don't block clicks
 	
 	# Apply direct hover styling
 	_apply_hover_tooltip_style(_spine_tooltip)
 	
-	# Create the label inside the panel
+	# Create a VBoxContainer to hold multiple power-up entries
+	var vbox = VBoxContainer.new()
+	vbox.name = "TooltipContent"
+	vbox.add_theme_constant_override("separation", 8)
+	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_spine_tooltip.add_child(vbox)
+	
+	# Keep _spine_tooltip_label for backwards compat but we won't use it for display
 	_spine_tooltip_label = Label.new()
 	_spine_tooltip_label.name = "SpineTooltipLabel"
-	_spine_tooltip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_spine_tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_spine_tooltip_label.custom_minimum_size = Vector2(200, 0)
-	
-	# Apply label styling
-	_apply_hover_label_style(_spine_tooltip_label)
-	_spine_tooltip.add_child(_spine_tooltip_label)
+	_spine_tooltip_label.visible = false  # Hidden - we use the VBox now
+	_spine_tooltip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vbox.add_child(_spine_tooltip_label)
 	
 	add_child(_spine_tooltip)
 
@@ -276,7 +280,7 @@ func _create_fanned_icons() -> void:
 		
 		add_child(icon)
 		icon.set_data(data)
-		icon.z_index = 10 + i  # Ensure cards are above background
+		icon.z_index = 125 + i  # Ensure cards are above background and shop
 		
 		# Hide CardInfo/Title for cleaner fanned view
 		var card_info: Control = icon.get_node_or_null("CardInfo")
@@ -470,22 +474,156 @@ func _on_spine_hovered(_power_up_id: String, mouse_pos: Vector2) -> void:
 	if _current_state != State.SPINES:
 		return
 	
-	# Create list of all power-up names
-	var power_up_names: Array[String] = []
-	for id in _power_up_data.keys():
-		var data: PowerUpData = _power_up_data[id]
-		if data:
-			power_up_names.append(data.display_name)
+	# Build detailed tooltip with title, description, and rarity for each PowerUp
+	_build_detailed_spine_tooltip()
 	
-	if power_up_names.size() > 0:
-		_spine_tooltip_label.text = "Videos:\n" + "\n".join(power_up_names)
-		# Adjust position: move up 50 pixels on x-axis (left) and center vertically on tooltip height
-		await get_tree().process_frame  # Wait for tooltip to calculate its size
-		_spine_tooltip.position = mouse_pos + Vector2(-50, -_spine_tooltip.size.y * 2)
-		_spine_tooltip.visible = true
+	# Position and show tooltip
+	await get_tree().process_frame  # Wait for tooltip to calculate its size
+	_spine_tooltip.position = mouse_pos + Vector2(-50, -_spine_tooltip.size.y * 2)
+	
+	# Keep tooltip on screen
+	var viewport_size = get_viewport_rect().size
+	if _spine_tooltip.position.x + _spine_tooltip.size.x > viewport_size.x:
+		_spine_tooltip.position.x = viewport_size.x - _spine_tooltip.size.x - 10
+	if _spine_tooltip.position.y < 0:
+		_spine_tooltip.position.y = mouse_pos.y + 20
+	
+	_spine_tooltip.visible = true
 
 func _on_spine_unhovered(_power_up_id: String) -> void:
 	_spine_tooltip.visible = false
+
+
+## _build_detailed_spine_tooltip()
+##
+## Builds a rich tooltip showing each PowerUp's title, description, and rarity.
+## Clears and rebuilds the tooltip VBox content each time.
+func _build_detailed_spine_tooltip() -> void:
+	var vbox = _spine_tooltip.get_node_or_null("TooltipContent")
+	if not vbox:
+		return
+	
+	# Clear existing entries (keep the hidden label)
+	for child in vbox.get_children():
+		if child != _spine_tooltip_label:
+			child.queue_free()
+	
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	
+	# Title header
+	var header = Label.new()
+	header.text = "VIDEOS"
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if vcr_font:
+		header.add_theme_font_override("font", vcr_font)
+	header.add_theme_font_size_override("font_size", 16)
+	header.add_theme_color_override("font_color", Color(1, 0.8, 0.2, 1))  # Gold
+	vbox.add_child(header)
+	
+	# Separator
+	var sep = HSeparator.new()
+	sep.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sep.add_theme_constant_override("separation", 4)
+	vbox.add_child(sep)
+	
+	if _power_up_data.is_empty():
+		var empty_label = Label.new()
+		empty_label.text = "No videos owned"
+		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if vcr_font:
+			empty_label.add_theme_font_override("font", vcr_font)
+		empty_label.add_theme_font_size_override("font_size", 12)
+		empty_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6, 1))
+		vbox.add_child(empty_label)
+		return
+	
+	for id in _power_up_data.keys():
+		var data: PowerUpData = _power_up_data[id]
+		if not data:
+			continue
+		
+		# Entry container for this power-up
+		var entry = VBoxContainer.new()
+		entry.name = "Entry_" + id
+		entry.add_theme_constant_override("separation", 2)
+		entry.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		
+		# Title row: rarity indicator + name
+		var title_row = HBoxContainer.new()
+		title_row.add_theme_constant_override("separation", 6)
+		title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		
+		# Rarity dot/indicator
+		var rarity_label = Label.new()
+		var rarity_char = PowerUpData.get_rarity_display_char(data.rarity)
+		rarity_label.text = "[" + rarity_char + "]"
+		rarity_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if vcr_font:
+			rarity_label.add_theme_font_override("font", vcr_font)
+		rarity_label.add_theme_font_size_override("font_size", 12)
+		rarity_label.add_theme_color_override("font_color", _get_tooltip_rarity_color(data.rarity))
+		title_row.add_child(rarity_label)
+		
+		# PowerUp name
+		var name_label = Label.new()
+		name_label.text = data.display_name
+		name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if vcr_font:
+			name_label.add_theme_font_override("font", vcr_font)
+		name_label.add_theme_font_size_override("font_size", 13)
+		name_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+		title_row.add_child(name_label)
+		
+		entry.add_child(title_row)
+		
+		# Description
+		var desc_label = Label.new()
+		desc_label.text = data.description
+		desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc_label.custom_minimum_size = Vector2(250, 0)
+		desc_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if vcr_font:
+			desc_label.add_theme_font_override("font", vcr_font)
+		desc_label.add_theme_font_size_override("font_size", 11)
+		desc_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8, 0.9))
+		entry.add_child(desc_label)
+		
+		# Rating
+		var rating_label = Label.new()
+		rating_label.text = "Rated: " + PowerUpData.get_rating_display_char(data.rating)
+		rating_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if vcr_font:
+			rating_label.add_theme_font_override("font", vcr_font)
+		rating_label.add_theme_font_size_override("font_size", 10)
+		rating_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7, 0.8))
+		entry.add_child(rating_label)
+		
+		vbox.add_child(entry)
+		
+		# Add separator between entries (not after last)
+		var keys = _power_up_data.keys()
+		if keys.find(id) < keys.size() - 1:
+			var entry_sep = HSeparator.new()
+			entry_sep.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			entry_sep.add_theme_constant_override("separation", 2)
+			entry_sep.modulate = Color(1, 1, 1, 0.3)
+			vbox.add_child(entry_sep)
+
+
+## _get_tooltip_rarity_color(rarity_string)
+##
+## Returns the display color for a given rarity string.
+func _get_tooltip_rarity_color(rarity_string: String) -> Color:
+	match rarity_string.to_lower():
+		"common": return Color.GRAY
+		"uncommon": return Color.GREEN
+		"rare": return Color(0.3, 0.5, 1.0)  # Brighter blue for readability
+		"epic": return Color(0.7, 0.3, 1.0)  # Brighter purple for readability
+		"legendary": return Color.ORANGE
+		_: return Color.WHITE
+
 	
 func _on_power_up_sell_requested(power_up_id: String) -> void:
 	print("[PowerUpUI] Power-up sell requested:", power_up_id)

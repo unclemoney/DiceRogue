@@ -132,7 +132,7 @@ func _create_background() -> void:
 	_background.color = Color(0, 0, 0, 0.5)
 	_background.mouse_filter = Control.MOUSE_FILTER_STOP
 	_background.visible = false
-	_background.z_index = 50
+	_background.z_index = 120  # Above shop UI (100) but below fanned icons (125+)
 	
 	add_child(_background)
 	_background.gui_input.connect(_on_background_clicked)
@@ -154,7 +154,7 @@ func _create_spine_tooltip() -> void:
 	_spine_tooltip = PanelContainer.new()
 	_spine_tooltip.name = "SpineTooltip"
 	_spine_tooltip.visible = false
-	_spine_tooltip.z_index = 15  # Lower to not block consumable spine clicks
+	_spine_tooltip.z_index = 140  # Above fanned icons but won't block due to MOUSE_FILTER_IGNORE
 	_spine_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Don't block clicks
 	_apply_hover_tooltip_style(_spine_tooltip)
 	
@@ -581,16 +581,21 @@ func _create_next_challenge_preview_note() -> Control:
 		print("[CorkboardUI] Could not find challenge_manager or get_def method")
 	
 	var next_challenge_name = "???"
+	var next_challenge_goal = ""
 	if next_challenge_data:
 		next_challenge_name = next_challenge_data.display_name
+		next_challenge_goal = next_challenge_data.description if next_challenge_data.description else ""
 	
 	print("[CorkboardUI] next_challenge_name =", next_challenge_name)
+	print("[CorkboardUI] next_challenge_goal =", next_challenge_goal)
 	
 	# Create the "NEXT UP" post-it note with distinct styling
+	# Make it taller to fit goal text below the name
+	var note_height = 140 if next_challenge_goal.is_empty() else 160
 	var note = Control.new()
 	note.name = "ChallengeNote_NEXT_UP_" + next_challenge_id
-	note.custom_minimum_size = Vector2(120, 120)
-	note.size = Vector2(120, 120)
+	note.custom_minimum_size = Vector2(140, note_height)
+	note.size = Vector2(140, note_height)
 	note.mouse_filter = Control.MOUSE_FILTER_STOP
 	
 	# Store base position for hover animation
@@ -611,27 +616,42 @@ func _create_next_challenge_preview_note() -> Control:
 	var title_label = Label.new()
 	title_label.text = "NEXT UP"
 	title_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	title_label.position = Vector2(-50, 25)
-	title_label.size = Vector2(100, 20)
+	title_label.position = Vector2(-55, 18)
+	title_label.size = Vector2(110, 20)
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_label.add_theme_font_size_override("font_size", 12)
+	title_label.add_theme_font_size_override("font_size", 11)
 	title_label.add_theme_color_override("font_color", Color(0.3, 0.3, 0.6, 1))  # Blue/purple tint
 	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	note.add_child(title_label)
 	
-	# Value label in center - challenge name
+	# Value label - challenge name
 	var value_label = Label.new()
 	value_label.text = next_challenge_name
 	value_label.set_anchors_preset(Control.PRESET_CENTER)
-	value_label.position = Vector2(-55, -15)
-	value_label.size = Vector2(110, 60)
+	value_label.position = Vector2(-60, -25)
+	value_label.size = Vector2(120, 30)
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	value_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	value_label.add_theme_font_size_override("font_size", 14)
+	value_label.add_theme_font_size_override("font_size", 13)
 	value_label.add_theme_color_override("font_color", Color(0.2, 0.2, 0.4, 1))  # Darker blue text
 	value_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	note.add_child(value_label)
+	
+	# Goal label - challenge description/goal below the name
+	if not next_challenge_goal.is_empty():
+		var goal_label = Label.new()
+		goal_label.text = next_challenge_goal
+		goal_label.set_anchors_preset(Control.PRESET_CENTER)
+		goal_label.position = Vector2(-60, 10)
+		goal_label.size = Vector2(120, 50)
+		goal_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		goal_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+		goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		goal_label.add_theme_font_size_override("font_size", 10)
+		goal_label.add_theme_color_override("font_color", Color(0.35, 0.35, 0.55, 0.9))  # Lighter blue/grey
+		goal_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		note.add_child(goal_label)
 	
 	# Connect hover signals
 	note.mouse_entered.connect(_on_challenge_note_mouse_entered.bind(note))
@@ -650,7 +670,7 @@ func _on_challenge_note_mouse_entered(note: Control) -> void:
 	var tween = create_tween().set_parallel()
 	tween.tween_property(note, "position", base_pos + Vector2(0, -10), 0.1)
 	tween.tween_property(note, "scale", Vector2(1.1, 1.1), 0.1)
-	tween.tween_property(note, "z_index", 50, 0.0)
+	tween.tween_property(note, "z_index", 135, 0.0)  # Boost above other fanned cards
 
 
 func _on_challenge_note_mouse_exited(note: Control) -> void:
@@ -661,7 +681,7 @@ func _on_challenge_note_mouse_exited(note: Control) -> void:
 	var tween = create_tween().set_parallel()
 	tween.tween_property(note, "position", base_pos, 0.1)
 	tween.tween_property(note, "scale", Vector2.ONE, 0.1)
-	tween.tween_property(note, "z_index", 10, 0.0)
+	tween.tween_property(note, "z_index", 125, 0.0)  # Return to standard fanned z
 
 
 func _on_challenge_note_gui_input(event: InputEvent, note: Control) -> void:
@@ -1225,7 +1245,7 @@ func _animate_card_fan_in(card: Control, target_pos: Vector2, delay: float) -> v
 	card.position = viewport_center
 	card.scale = Vector2(0.1, 0.1)
 	card.modulate.a = 0
-	card.z_index = 60
+	card.z_index = 125  # Above background (120) and shop (100)
 	
 	# Store base position for hover animations
 	card.set_meta("base_position", target_pos)
@@ -1551,7 +1571,7 @@ func _create_overflow_label() -> void:
 	# Position above the fanned cards
 	_overflow_label.position = Vector2(_fan_center.x - 200, _fan_center.y - 180)
 	_overflow_label.custom_minimum_size = Vector2(400, 50)
-	_overflow_label.z_index = 70
+	_overflow_label.z_index = 145  # Above fanned icons
 	
 	# Style the label
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")

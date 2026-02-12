@@ -44,6 +44,8 @@ func _input(event: InputEvent) -> void:
 ## Programmatically builds the pause menu UI.
 func _build_ui() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	z_index = 200  # Always on top of everything (shop=100, fan-outs=120-135)
+	mouse_filter = Control.MOUSE_FILTER_STOP  # Block all input to elements behind
 	
 	# Dark overlay background
 	var overlay = ColorRect.new()
