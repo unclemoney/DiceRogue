@@ -59,7 +59,7 @@ func _create_spine_structure() -> void:
 	# Create spine texture display
 	spine_rect = TextureRect.new()
 	spine_rect.name = "SpineRect"
-	spine_rect.z_index = 1
+	spine_rect.z_index = 15
 	spine_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	spine_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	spine_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE

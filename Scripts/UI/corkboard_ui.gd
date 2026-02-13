@@ -15,6 +15,7 @@ signal max_consumables_reached
 # Export paths for manager references
 @export var round_manager_path: NodePath
 @export var chore_ui_path: NodePath = ^"Panel/ChoreUI"
+@export var shop_ui_path: NodePath
 
 # Scene references
 @export var challenge_spine_scene: PackedScene
@@ -76,6 +77,10 @@ var _spine_tooltip_label: Label
 # Dice label for round info
 var _current_dice_type: String = "d6"
 
+# Shop auto-minimize state
+var _shop_ui: Control = null
+var _shop_was_visible_before_fan: bool = false
+
 
 func _ready() -> void:
 	print("[CorkboardUI] Initializing...")
@@ -100,6 +105,12 @@ func _ready() -> void:
 	_create_challenge_spine()
 	_create_debuff_spine()
 	_create_consumable_label()
+	
+	# Get shop UI reference for auto-minimize
+	if shop_ui_path:
+		_shop_ui = get_node_or_null(shop_ui_path)
+	if not _shop_ui:
+		_shop_ui = get_node_or_null("../ShopUI")
 	
 	# Connect to round manager for dice label updates
 	if round_manager:
@@ -132,7 +143,7 @@ func _create_background() -> void:
 	_background.color = Color(0, 0, 0, 0.5)
 	_background.mouse_filter = Control.MOUSE_FILTER_STOP
 	_background.visible = false
-	_background.z_index = 120  # Above shop UI (100) but below fanned icons (125+)
+	_background.z_index = 121  # Above shop UI (100) but below fanned icons (125+), separate from PowerUpUI bg (120)
 	
 	add_child(_background)
 	_background.gui_input.connect(_on_background_clicked)
@@ -397,6 +408,14 @@ func _fan_out_challenges() -> void:
 	_is_animating = true
 	_current_state = State.FANNED_CHALLENGES
 	
+	# Auto-minimize shop if it's open
+	if _shop_ui and _shop_ui.visible:
+		_shop_was_visible_before_fan = true
+		_shop_ui.temporarily_minimize()
+		print("[CorkboardUI] Shop was open, temporarily minimized for challenges")
+	else:
+		_shop_was_visible_before_fan = false
+	
 	# Show background
 	_background.visible = true
 	_background.modulate.a = 0
@@ -453,10 +472,11 @@ func _fan_out_challenges() -> void:
 	# Calculate fan positions for all notes
 	var positions = _calculate_fan_positions(all_notes.size())
 	
-	# Add notes to background and animate them in
+	# Add notes to self (not _background) so they receive mouse input above the background
 	for i in range(all_notes.size()):
 		var note = all_notes[i]
-		_background.add_child(note)
+		add_child(note)
+		note.z_index = 125 + i
 		_challenge_fanned_icons[note.name] = note
 		_animate_card_fan_in(note, positions[i], i * 0.03)
 	
@@ -851,6 +871,14 @@ func _fan_out_debuffs() -> void:
 	_is_animating = true
 	_current_state = State.FANNED_DEBUFFS
 	
+	# Auto-minimize shop if it's open
+	if _shop_ui and _shop_ui.visible:
+		_shop_was_visible_before_fan = true
+		_shop_ui.temporarily_minimize()
+		print("[CorkboardUI] Shop was open, temporarily minimized for debuffs")
+	else:
+		_shop_was_visible_before_fan = false
+	
 	# Show background
 	_background.visible = true
 	_background.modulate.a = 0
@@ -871,7 +899,8 @@ func _fan_out_debuffs() -> void:
 		
 		if debuff_icon_scene:
 			var icon = debuff_icon_scene.instantiate()
-			_background.add_child(icon)
+			add_child(icon)
+			icon.z_index = 125 + i
 			icon.set_data(data)
 			_debuff_fanned_icons[id] = icon
 			
@@ -914,7 +943,7 @@ func add_consumable(data: ConsumableData) -> Node:
 	var spine_pos = Vector2(spine_x, _consumable_spine_start.y)
 	spine.position = spine_pos
 	spine.set_base_position(spine_pos)
-	spine.z_index = 1
+	spine.z_index = 15
 	
 	# Reset layout mode and anchors to prevent position issues
 	spine.set_anchors_preset(Control.PRESET_TOP_LEFT)
@@ -1047,6 +1076,14 @@ func _fan_out_consumables() -> void:
 	_is_animating = true
 	_current_state = State.FANNED_CONSUMABLES
 	
+	# Auto-minimize shop if it's open
+	if _shop_ui and _shop_ui.visible:
+		_shop_was_visible_before_fan = true
+		_shop_ui.temporarily_minimize()
+		print("[CorkboardUI] Shop was open, temporarily minimized for consumables")
+	else:
+		_shop_was_visible_before_fan = false
+	
 	# Update background position before showing
 	_position_background()
 	
@@ -1072,7 +1109,8 @@ func _fan_out_consumables() -> void:
 		
 		if consumable_icon_scene:
 			var icon = consumable_icon_scene.instantiate()
-			_background.add_child(icon)
+			add_child(icon)
+			icon.z_index = 125 + i
 			icon.set_data(data)
 			_consumable_fanned_icons[id] = icon
 			
@@ -1276,10 +1314,10 @@ func _fold_back_cards() -> void:
 		if is_instance_valid(icon):
 			all_icons.append(icon)
 	
-	# Also handle dice label note
-	for child in _background.get_children():
-		if child.name == "DiceLabelNote":
-			all_icons.append(child)
+	# Also handle dice label note (now a child of self, not _background)
+	var dice_label_note = get_node_or_null("DiceLabelNote")
+	if dice_label_note and is_instance_valid(dice_label_note):
+		all_icons.append(dice_label_note)
 	
 	for i in range(all_icons.size()):
 		var icon = all_icons[i]
@@ -1314,10 +1352,10 @@ func _on_fold_complete() -> void:
 			icon.queue_free()
 	_consumable_fanned_icons.clear()
 	
-	# Clean up dice label note
-	for child in _background.get_children():
-		if child.name == "DiceLabelNote":
-			child.queue_free()
+	# Clean up dice label note (now a child of self, not _background)
+	var dice_label_note = get_node_or_null("DiceLabelNote")
+	if dice_label_note and is_instance_valid(dice_label_note):
+		dice_label_note.queue_free()
 	
 	# Hide background
 	var bg_tween = create_tween()
@@ -1336,6 +1374,13 @@ func _on_fold_complete() -> void:
 	
 	_current_state = State.SPINES
 	_is_animating = false
+	
+	# Restore shop if we minimized it
+	if _shop_was_visible_before_fan:
+		if _shop_ui and not _shop_ui.visible:
+			_shop_ui.restore_from_minimize()
+			print("[CorkboardUI] Restored shop after fold complete")
+		_shop_was_visible_before_fan = false
 
 
 func _start_idle_animations() -> void:
@@ -1346,9 +1391,10 @@ func _start_idle_animations() -> void:
 	all_icons.append_array(_debuff_fanned_icons.values())
 	all_icons.append_array(_consumable_fanned_icons.values())
 	
-	for child in _background.get_children():
-		if child.name == "DiceLabelNote":
-			all_icons.append(child)
+	# Also check for dice label note (now a child of self, not _background)
+	var dice_label_note = get_node_or_null("DiceLabelNote")
+	if dice_label_note and is_instance_valid(dice_label_note):
+		all_icons.append(dice_label_note)
 	
 	for i in range(all_icons.size()):
 		var icon = all_icons[i]
@@ -1472,6 +1518,13 @@ func fold_back() -> void:
 		_current_state = State.SPINES
 		_is_animating = false
 	
+	# Restore shop if we minimized it
+	if _shop_was_visible_before_fan:
+		if _shop_ui and not _shop_ui.visible:
+			_shop_ui.restore_from_minimize()
+			print("[CorkboardUI] Restored shop after immediate fold back")
+		_shop_was_visible_before_fan = false
+	
 	print("[CorkboardUI] fold_back() complete")
 
 
@@ -1494,11 +1547,10 @@ func _cleanup_all_fanned_icons() -> void:
 			icon.queue_free()
 	_consumable_fanned_icons.clear()
 	
-	# Clean up dice label note
-	if _background:
-		for child in _background.get_children():
-			if child.name == "DiceLabelNote":
-				child.queue_free()
+	# Clean up dice label note (now a child of self, not _background)
+	var dice_label_note = get_node_or_null("DiceLabelNote")
+	if dice_label_note and is_instance_valid(dice_label_note):
+		dice_label_note.queue_free()
 
 
 ## _cleanup_empty_consumable_state()
@@ -1523,6 +1575,13 @@ func _cleanup_empty_consumable_state() -> void:
 	# Reset state
 	_current_state = State.SPINES
 	_is_animating = false
+	
+	# Restore shop if we minimized it
+	if _shop_was_visible_before_fan:
+		if _shop_ui and not _shop_ui.visible:
+			_shop_ui.restore_from_minimize()
+			print("[CorkboardUI] Restored shop after empty consumable cleanup")
+		_shop_was_visible_before_fan = false
 
 
 ## handle_consumable_overflow(excess_count)

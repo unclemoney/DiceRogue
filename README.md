@@ -1501,6 +1501,20 @@ Resources/             # Art, audio, data
 
 ## Known Issues & Cleanup
 
+### UI Z-Index Hierarchy
+The UI layering system uses z_index values to control rendering and input order:
+
+| Layer | Z-Index | Elements |
+|-------|---------|----------|
+| Base Game Elements | 0 | Dice, ScoreCard, etc. |
+| Cork Board Spines | 10-19 | Challenge/Debuff spines (10), Consumable spines (15) |
+| Shop UI | 100 | Shop panel, tabs, items |
+| Fan-Out Backgrounds | 120-121 | PowerUpUI background (120), CorkboardUI background (121) |
+| Fanned Icons | 125-135 | PowerUpIcon, ConsumableIcon, DebuffIcon (125 + i) |
+| Tooltips | 140 | Spine and icon hover tooltips |
+
+**Shop Auto-Minimize:** When PowerUpUI or CorkboardUI fans out while the shop is open, the shop is temporarily minimized. When the fan-out folds back, the shop is automatically restored.
+
 ### Deprecated Methods
 These methods exist for compatibility but should not be used in new code:
 - `Scorecard.clear_score_multiplier()` - Use `ScoreModifierManager` instead

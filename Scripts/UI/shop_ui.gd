@@ -1611,3 +1611,24 @@ func _on_locked_item_mouse_exited(shader_bg: ColorRect) -> void:
 	if shader_mat:
 		shader_mat.set_shader_parameter("color_A", Vector3(0.0, 0.0, 0.0))  # Black
 		shader_mat.set_shader_parameter("color_B", Vector3(0.4, 0.4, 0.4))  # Grey
+
+
+## temporarily_minimize()
+##
+## Hides the shop UI while preserving all internal state (current tab, scroll, items).
+## Used when fan-out UIs (PowerUpUI, CorkboardUI) need to be interactive above the shop.
+## Call restore_from_minimize() to bring the shop back.
+func temporarily_minimize() -> void:
+	if visible:
+		visible = false
+		print("[ShopUI] Temporarily minimized for fan-out overlay")
+
+
+## restore_from_minimize()
+##
+## Restores the shop UI that was temporarily minimized by a fan-out overlay.
+## All shop state (tab, items, scroll) is preserved from before minimization.
+func restore_from_minimize() -> void:
+	if not visible:
+		visible = true
+		print("[ShopUI] Restored from minimize")

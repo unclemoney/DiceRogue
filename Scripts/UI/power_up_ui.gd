@@ -10,6 +10,7 @@ signal max_power_ups_reached
 @export var power_up_icon_scene: PackedScene
 @export var power_up_spine_scene: PackedScene
 @export var max_power_ups: int = 10
+@export var shop_ui_path: NodePath
 @onready var slots_label: Label = $SlotsLabel
 
 # Data storage
@@ -38,6 +39,10 @@ var _background: ColorRect
 var _idle_tweens: Array[Tween] = []  # Track individual idle animation tweens
 var _spine_tooltip: PanelContainer
 var _spine_tooltip_label: Label
+
+# Shop auto-minimize state
+var _shop_ui: Control = null
+var _shop_was_visible_before_fan: bool = false
 
 func _ready() -> void:
 	print("[PowerUpUI] Initializing new spine-based system...")
@@ -74,6 +79,12 @@ func _ready() -> void:
 	
 	# Initialize slots label
 	update_slots_label()
+	
+	# Get shop UI reference for auto-minimize
+	if shop_ui_path:
+		_shop_ui = get_node_or_null(shop_ui_path)
+	if not _shop_ui:
+		_shop_ui = get_node_or_null("../ShopUI")
 	
 	print("[PowerUpUI] New spine-based system initialized")
 
@@ -234,6 +245,14 @@ func _fan_out_cards() -> void:
 	# Safety check - don't create tweens on invalid nodes
 	if not is_inside_tree():
 		return
+	
+	# Auto-minimize shop if it's open
+	if _shop_ui and _shop_ui.visible:
+		_shop_was_visible_before_fan = true
+		_shop_ui.temporarily_minimize()
+		print("[PowerUpUI] Shop was open, temporarily minimized")
+	else:
+		_shop_was_visible_before_fan = false
 	
 	# Show background
 	_background.visible = true
@@ -398,6 +417,13 @@ func _fold_back_cards() -> void:
 	
 	_selected_spine_id = ""
 	_is_animating = false
+	
+	# Restore shop if we minimized it
+	if _shop_was_visible_before_fan:
+		if _shop_ui and not _shop_ui.visible:
+			_shop_ui.restore_from_minimize()
+			print("[PowerUpUI] Restored shop after fold back")
+		_shop_was_visible_before_fan = false
 
 func _clear_fanned_icons() -> void:
 	# Stop idle animations before freeing icons to prevent warnings
@@ -698,6 +724,13 @@ func _cleanup_empty_state() -> void:
 		_current_state = State.SPINES
 		_is_animating = false
 	
+	# Restore shop if we minimized it
+	if _shop_was_visible_before_fan:
+		if _shop_ui and not _shop_ui.visible:
+			_shop_ui.restore_from_minimize()
+			print("[PowerUpUI] Restored shop after empty state cleanup")
+		_shop_was_visible_before_fan = false
+	
 	# Clear all references
 	_spines.clear()
 	_power_up_data.clear()
@@ -719,6 +752,16 @@ func has_max_power_ups() -> bool:
 
 func has_power_up(power_up_id: String) -> bool:
 	return _power_up_data.has(power_up_id)
+
+
+## fold_back()
+##
+## Public method to fold back fanned cards.
+## Restores shop if it was minimized before the fan-out.
+func fold_back() -> void:
+	if _current_state == State.FANNED and not _is_animating:
+		_fold_back_cards()
+
 
 func get_owned_power_up_ids() -> Array[String]:
 	var result: Array[String] = []
