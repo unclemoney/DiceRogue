@@ -1068,6 +1068,8 @@ DiceRogue uses the **TweenFX** addon (v1.1) for standardized micro-animations ac
 
 ### Key Features
 - **Button hover/press** — Jelly + punch-in on every interactive button (menus, panels, shop, game controls)
+- **Disabled button guard** — Buttons with `disabled = true` skip all hover/press/denied animations automatically
+- **Auto-center pivot** — All scale/rotation effects automatically center `pivot_offset` on Control nodes, so animations appear balanced (not anchored top-left)
 - **Spine idle personalities** — Power-up/consumable spines gently sway, challenge post-its wiggle, debuff notes sway
 - **Spine hover** — Snap-scale effect on mouse enter/exit for all corkboard spines
 - **Title float** — Shop and main menu titles bob with `idle_float`
@@ -1076,12 +1078,17 @@ DiceRogue uses the **TweenFX** addon (v1.1) for standardized micro-animations ac
 - **Debuff feedback** — `negative_hit` red flash when debuff count increases
 - **Challenge celebration** — `celebration` tada when challenge goal is met
 - **Tutorial highlight** — Pulse + bounce replaced with `idle_pulse` and `idle_float`
-- **FX Group Toggles** — 8 groups (Buttons, Spines, Idle, Panels, Icons, Events, Threats, Reveals) can be toggled on/off in Settings > FX tab; persisted to `user://settings.cfg`
+- **FX Group Toggles** — 8 groups (Buttons, Spines, Idle, Panels, Icons, Events, Threats, Reveals) can be toggled on/off in Settings > FX tab; persisted to `user://settings.cfg` and per-profile via `progress_manager.gd`
+- **Per-profile FX persistence** — FX toggle states are saved/loaded with each player profile, synced between GameSettings and TweenFXHelper on profile load
 
 ### Architecture
 ```
 TweenFX addon (addons/TweenFX/) → TweenFXHelper autoload (Scripts/Core/) → Game scripts
 ```
+
+### Signals
+- `group_toggled(group: int, enabled: bool)` — Emitted by TweenFXHelper when any FX group is toggled
+- `fx_settings_changed` — Emitted by GameSettings when FX toggles change
 
 ### Documentation
 See [BUILD_TWEENFX.md](BUILD_TWEENFX.md) for full API reference, patterns, file change list, and integration guide.

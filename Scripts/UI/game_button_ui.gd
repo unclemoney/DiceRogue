@@ -69,7 +69,6 @@ func _ready():
 	# Connect TweenFX hover/press effects to all game buttons
 	for btn in [roll_button, shop_button, next_turn_button, next_round_button]:
 		if btn:
-			btn.pivot_offset = btn.size / 2.0
 			btn.mouse_entered.connect(_tfx.button_hover.bind(btn))
 			btn.mouse_exited.connect(_tfx.button_unhover.bind(btn))
 			btn.pressed.connect(_tfx.button_press.bind(btn))
@@ -229,7 +228,7 @@ func _start_roll_button_pulse() -> void:
 		return
 	
 	_is_pulsing = true
-	roll_button.pivot_offset = roll_button.size / 2.0
+
 	_tfx.idle_pulse(roll_button)
 	print("[GameButtonUI] Starting Roll button pulse animation")
 
@@ -258,7 +257,6 @@ func _start_shop_button_pulse() -> void:
 		return
 	
 	_is_shop_pulsing = true
-	shop_button.pivot_offset = shop_button.size / 2.0
 	_tfx.idle_pulse(shop_button)
 	print("[GameButtonUI] Starting Shop button pulse animation")
 

@@ -158,6 +158,12 @@ The `_complete_auto_scoring()` method is called deferred, which means it can exe
 
 ## Common Signal Patterns
 
+### TweenFXHelper Signals (`Scripts/Core/tween_fx_helper.gd`)
+- `signal group_toggled(group: int, enabled: bool)` - Emitted when an FX group is toggled on/off. The `group` parameter is a `TweenFXHelper.Group` enum value. Used by the Settings UI to reflect toggle state.
+
+### GameSettings FX Signals (`Scripts/Managers/game_settings.gd`)
+- `signal fx_settings_changed` - Emitted when any FX group toggle is changed via the Settings UI. Triggers ConfigFile save and pushes state to TweenFXHelper.
+
 ### PowerUp Lifecycle
 1. `power_up_granted` → PowerUp connects to `about_to_score`
 2. `about_to_score` → PowerUp registers modifiers

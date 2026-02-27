@@ -48,7 +48,6 @@ func _ready() -> void:
 	vbox.add_child(title)
 	
 	# Float the title
-	title.pivot_offset = title.size / 2
 	_tfx.idle_float(title, 6.0)
 	
 	# Status label
@@ -94,7 +93,6 @@ func _ready() -> void:
 	
 	var pulse_panel = _create_test_panel("PULSE", Color(0.3, 0.6, 0.3))
 	row2.add_child(pulse_panel)
-	pulse_panel.pivot_offset = pulse_panel.custom_minimum_size / 2
 	_tfx.idle_pulse(pulse_panel, 0.06)
 	
 	var float_label = _create_test_label("FLOAT")
@@ -103,12 +101,10 @@ func _ready() -> void:
 	
 	var sway_panel = _create_test_panel("SWAY", Color(0.6, 0.3, 0.6))
 	row2.add_child(sway_panel)
-	sway_panel.pivot_offset = sway_panel.custom_minimum_size / 2
 	_tfx.idle_sway(sway_panel, 5.0)
 	
 	var wiggle_panel = _create_test_panel("WIGGLE", Color(0.6, 0.6, 0.2))
 	row2.add_child(wiggle_panel)
-	wiggle_panel.pivot_offset = wiggle_panel.custom_minimum_size / 2
 	_tfx.idle_wiggle(wiggle_panel)
 	
 	# === ROW 3: One-Shot Event Effects ===
@@ -148,7 +144,6 @@ func _ready() -> void:
 	for spine_name in ["PowerUp", "Consumable", "Debuff", "Challenge"]:
 		var spine_panel = _create_test_panel(spine_name, _get_spine_color(spine_name))
 		spine_panel.custom_minimum_size = Vector2(80, 100)
-		spine_panel.pivot_offset = Vector2(40, 50)
 		row4.add_child(spine_panel)
 		
 		spine_panel.mouse_entered.connect(func(): _tfx.spine_hover(spine_panel); _update_status("spine_hover: " + spine_name))
@@ -213,9 +208,6 @@ func _create_test_button(text: String, color: Color) -> Button:
 		btn.add_theme_font_override("font", vcr_font)
 		btn.add_theme_font_size_override("font_size", 14)
 	btn.add_theme_color_override("font_color", Color.WHITE)
-	
-	# Set pivot for TweenFX scale effects
-	btn.pivot_offset = btn.custom_minimum_size / 2
 	
 	return btn
 

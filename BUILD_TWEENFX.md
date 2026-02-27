@@ -9,7 +9,7 @@ DiceRogue uses the **TweenFX** addon (v1.1) for standardized animation effects a
 ```
 TweenFX addon (62 animations)
   └── TweenFXHelper autoload (game-specific wrappers)
-       └── Individual scripts call TweenFXHelper methods
+	   └── Individual scripts call TweenFXHelper methods
 ```
 
 - **TweenFX** (`addons/TweenFX/TweenFX.gd`) — Low-level addon autoload. 42 one-shot + 20 looping animations. Manages lifecycle via `TweenManager`.
@@ -72,7 +72,7 @@ When the Panels group is disabled, `panel_show()` and `panel_hide()` still set t
 ### Button Effects
 | Method | Description | TweenFX Call |
 |--------|-------------|-------------|
-| `button_hover(node)` | Subtle jelly on mouse enter | `TweenFX.jelly(node, 0.4, 0.15, 2)` |
+| `button_hover(node)` | Subtle rubber band on mouse enter | `TweenFX.rubber_band(node, 0.4, 0.15)` |
 | `button_unhover(node)` | Stop jelly + reset scale | `TweenFX.stop` + `scale = Vector2.ONE` |
 | `button_press(node)` | Quick inward punch on click | `TweenFX.punch_in(node, 0.12, 0.2)` |
 | `button_denied(node)` | Horizontal shake (insufficient funds) | `TweenFX.shake(node, 0.3, 8.0, 4)` |
@@ -154,22 +154,22 @@ For scene-placed buttons (no `pressed.connect` in code), add all 3 signals after
 @onready var close_button: Button = $CloseButton
 
 func _ready() -> void:
-    close_button.mouse_entered.connect(TweenFXHelper.button_hover.bind(close_button))
-    close_button.mouse_exited.connect(TweenFXHelper.button_unhover.bind(close_button))
-    close_button.pressed.connect(TweenFXHelper.button_press.bind(close_button))
+	close_button.mouse_entered.connect(TweenFXHelper.button_hover.bind(close_button))
+	close_button.mouse_exited.connect(TweenFXHelper.button_unhover.bind(close_button))
+	close_button.pressed.connect(TweenFXHelper.button_press.bind(close_button))
 ```
 
 ### Adding Idle Animation to a Spine
 
 ```gdscript
 func _ready() -> void:
-    # ... existing setup ...
-    
-    # Idle personality animation
-    TweenFXHelper.idle_sway(self, 2.0)
+	# ... existing setup ...
+	
+	# Idle personality animation
+	TweenFXHelper.idle_sway(self, 2.0)
 
 func _exit_tree() -> void:
-    TweenFXHelper.stop_effect(self)
+	TweenFXHelper.stop_effect(self)
 ```
 
 ### Replacing a Manual Tween Loop
@@ -180,27 +180,27 @@ var title_tween: Tween
 var title_base_position: Vector2
 
 func _animate_title_float() -> void:
-    if title_tween and title_tween.is_valid():
-        title_tween.kill()
-    title_tween = create_tween()
-    title_tween.set_loops()
-    title_tween.set_trans(Tween.TRANS_SINE)
-    title_tween.set_ease(Tween.EASE_IN_OUT)
-    title_tween.tween_property(node, "position:y", base_y - 8.0, 2.5)
-    title_tween.tween_property(node, "position:y", base_y + 8.0, 2.5)
+	if title_tween and title_tween.is_valid():
+		title_tween.kill()
+	title_tween = create_tween()
+	title_tween.set_loops()
+	title_tween.set_trans(Tween.TRANS_SINE)
+	title_tween.set_ease(Tween.EASE_IN_OUT)
+	title_tween.tween_property(node, "position:y", base_y - 8.0, 2.5)
+	title_tween.tween_property(node, "position:y", base_y + 8.0, 2.5)
 
 func _exit_tree() -> void:
-    if title_tween and title_tween.is_valid():
-        title_tween.kill()
+	if title_tween and title_tween.is_valid():
+		title_tween.kill()
 ```
 
 After:
 ```gdscript
 func _start_title_animation() -> void:
-    TweenFXHelper.idle_float(shop_label, 8.0)
+	TweenFXHelper.idle_float(shop_label, 8.0)
 
 func _exit_tree() -> void:
-    TweenFXHelper.stop_effect(shop_label)
+	TweenFXHelper.stop_effect(shop_label)
 ```
 
 ---
@@ -311,8 +311,8 @@ Panel transitions in `end_of_round_stats_panel.gd`, `round_winner_panel.gd`, etc
 
 ## Adding New TweenFX Effects
 
-1. **Add method to TweenFXHelper** — Pick the right TweenFX call, wrap it with a descriptive name and the `_valid()` guard.
-2. **Connect in the target script** — For one-shot: call directly. For signals: use `.bind(node)`.
+1. **Add method to TweenFXHelper** — Pick the right TweenFX call, wrap it with a descriptive name and the `_valid()` guard. If the animation tweens `scale` or `rotation`, add `_center_pivot(node)` before the TweenFX call.
+2. **Connect in the target script** — For one-shot: call directly. For signals: use `.bind(node)`. No need to set `pivot_offset` — the helper handles it automatically.
 3. **Clean up in `_exit_tree()`** — Call `TweenFXHelper.stop_effect(self)` for any looping effects.
 4. **Test visually** — Run the relevant test scene to verify the effect feels right.
 
@@ -321,3 +321,98 @@ Panel transitions in `end_of_round_stats_panel.gd`, `round_winner_panel.gd`, etc
 - **Rotation effects** (`idle_sway`, `idle_wiggle`) — Safe to combine with scale-based hover since they use different properties.
 - **Position effects** (`idle_float`) — Don't combine with manual position tweens on the same node.
 - **Modulate effects** (`negative_hit`, `threat_alarm`) — Target `self` when child nodes set their own `modulate` directly.
+
+---
+
+## Phase 11 — Auto-Center Pivot
+
+### Problem
+
+TweenFX tweens `node.scale` and `node.rotation` but never touches `pivot_offset`. In Godot 4, `Control` nodes scale/rotate around their `pivot_offset`, which defaults to `Vector2(0, 0)` (top-left corner). This caused scale-based animations like `rubber_band` and `breathe` to appear anchored to the top-left instead of centered.
+
+Some scripts (`game_button_ui.gd`, `tween_fx_test.gd`) had manually set `pivot_offset = size / 2.0` before calling TweenFXHelper, but 12+ other scripts did not — causing inconsistent animation behavior.
+
+### Solution
+
+Added a private `_center_pivot(node)` helper in `tween_fx_helper.gd` that auto-centers `pivot_offset` on any `Control` node before the TweenFX call. This is a no-op for non-Control nodes (e.g. `Node2D`).
+
+```gdscript
+func _center_pivot(node: CanvasItem) -> void:
+    if node is Control:
+        (node as Control).pivot_offset = (node as Control).size / 2.0
+```
+
+### Methods with `_center_pivot`
+
+Inserted `_center_pivot(node)` before the TweenFX call in all 17 methods that tween `scale` or `rotation`:
+
+| Method | Reason |
+|--------|--------|
+| `button_hover` | `rubber_band` → scale |
+| `button_press` | `punch_in` → scale |
+| `panel_show` | `pop_in` → scale (panel param) |
+| `panel_hide` | `pop_out` → scale (panel param) |
+| `icon_appear` | `pop_in` → scale |
+| `icon_hover` | `jelly` → scale |
+| `icon_remove` | `vanish` → scale |
+| `spine_hover` | `snap` → scale |
+| `spine_unhover` | `snap` → scale |
+| `idle_pulse` | `breathe` → scale |
+| `idle_sway` | `sway` → rotation |
+| `idle_wiggle` | `wiggle` → rotation |
+| `value_change` | `punch_in` → scale |
+| `negative_hit` | `critical_hit` → scale |
+| `positive_reward` | `upgrade` → scale |
+| `celebration` | `tada` → scale + rotation |
+| `staggered_pop_in` | `pop_in` → scale (per-node) |
+
+Methods that do **not** need pivot (position/modulate only): `button_unhover`, `button_denied`, `idle_float`, `threat_alarm`, `threat_flicker`, `spotlight_enter`, `spotlight_exit`, `stop_effect`, `stop_specific`.
+
+### Redundant Pivot Calls Removed
+
+Previously these scripts manually set `pivot_offset` before calling TweenFXHelper. Now handled centrally:
+
+| File | Lines Removed |
+|------|---------------|
+| `Scripts/UI/game_button_ui.gd` | 3 lines: button loop pivot, roll_button pivot, shop_button pivot |
+| `Scripts/UI/tutorial_highlight.gd` | 1 line: highlight_panel pivot |
+| `Tests/tween_fx_test.gd` | 6 lines: title, pulse, sway, wiggle, spine, button pivots |
+
+### Pivot Calls Kept (Non-TweenFXHelper)
+
+These manual pivot calls serve direct `create_tween()` animations and were **not** removed:
+
+| File | Purpose |
+|------|--------|
+| `unlocked_item_panel.gd` | Manual scale:x flip animation |
+| `end_of_round_stats_panel.gd` | Manual scale tween for counter animation |
+| `chore_ui.gd` | Manual scale tween for card fan-in |
+| `chore_selection_popup.gd` | Manual scale tween for popup entrance |
+| `channel_manager_ui.gd` | Manual scale tween for checkmark appear/disappear |
+
+### Phase 11 — Disabled Button Guard
+
+All four button methods (`button_hover`, `button_unhover`, `button_press`, `button_denied`) now check `BaseButton.disabled` before animating. If a button is disabled, the method early-returns without playing any effect.
+
+```gdscript
+if node is BaseButton and (node as BaseButton).disabled:
+    return null
+```
+
+### Phase 11 — Per-Profile FX Persistence
+
+FX group toggle states are now saved/loaded per player profile in `progress_manager.gd`:
+
+- `save_current_profile()` writes `fx_settings` dict (string keys `"0"` through `"7"` → bool values)
+- `load_profile()` reads `fx_settings` and pushes to both `GameSettings.fx_group_enabled` and `TweenFXHelper.set_group_enabled()`
+- `_create_default_profile()` initializes all 8 groups to `true`
+
+### Files Modified — Phase 11
+
+| File | Change |
+|------|--------|
+| `Scripts/Core/tween_fx_helper.gd` | Added `_center_pivot()`, inserted in 17 methods, added disabled button guard to 4 button methods |
+| `Scripts/UI/game_button_ui.gd` | Removed 3 redundant `pivot_offset` lines |
+| `Scripts/UI/tutorial_highlight.gd` | Removed 1 redundant `pivot_offset` line |
+| `Tests/tween_fx_test.gd` | Removed 6 redundant `pivot_offset` lines |
+| `Scripts/Managers/progress_manager.gd` | Added `fx_settings` to save/load/default profile |

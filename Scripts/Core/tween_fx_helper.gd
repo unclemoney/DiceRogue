@@ -97,7 +97,8 @@ func button_hover(node: CanvasItem) -> Tween:
 		return null
 	if node is BaseButton and (node as BaseButton).disabled:
 		return null
-	return TweenFX.jelly(node, 0.4, 0.15, 2)
+	_center_pivot(node)
+	return TweenFX.rubber_band(node, 0.4, 0.15) #2
 
 ## button_unhover(node)
 ##
@@ -122,6 +123,7 @@ func button_press(node: CanvasItem) -> Tween:
 		return null
 	if node is BaseButton and (node as BaseButton).disabled:
 		return null
+	_center_pivot(node)
 	return TweenFX.punch_in(node, 0.12, 0.2)
 
 ## button_denied(node)
@@ -158,6 +160,7 @@ func panel_show(panel: CanvasItem, overlay: CanvasItem = null) -> Tween:
 		overlay.visible = true
 		TweenFX.fade_in(overlay, 0.25)
 	if panel and _valid(panel):
+		_center_pivot(panel)
 		panel.scale = Vector2(0.8, 0.8)
 		panel.modulate.a = 0.0
 		panel.visible = true
@@ -179,6 +182,7 @@ func panel_hide(panel: CanvasItem, overlay: CanvasItem = null) -> Tween:
 	if overlay and _valid(overlay):
 		TweenFX.fade_out(overlay, 0.2)
 	if panel and _valid(panel):
+		_center_pivot(panel)
 		tween = TweenFX.pop_out(panel, 0.25, 0.1)
 	return tween
 
@@ -190,6 +194,7 @@ func panel_hide(panel: CanvasItem, overlay: CanvasItem = null) -> Tween:
 func icon_appear(node: CanvasItem) -> Tween:
 	if not _valid(node) or not is_group_enabled(Group.ICONS):
 		return null
+	_center_pivot(node)
 	return TweenFX.pop_in(node, 0.3, 0.1)
 
 ## icon_hover(node)
@@ -198,6 +203,7 @@ func icon_appear(node: CanvasItem) -> Tween:
 func icon_hover(node: CanvasItem) -> Tween:
 	if not _valid(node) or not is_group_enabled(Group.ICONS):
 		return null
+	_center_pivot(node)
 	return TweenFX.jelly(node, 0.5, 0.2, 2)
 
 ## icon_remove(node)
@@ -206,6 +212,7 @@ func icon_hover(node: CanvasItem) -> Tween:
 func icon_remove(node: CanvasItem) -> Tween:
 	if not _valid(node) or not is_group_enabled(Group.ICONS):
 		return null
+	_center_pivot(node)
 	return TweenFX.vanish(node, 0.3)
 
 ## ─── SPINE EFFECTS ─────────────────────────────────────────────────
@@ -217,6 +224,7 @@ func icon_remove(node: CanvasItem) -> Tween:
 func spine_hover(node: CanvasItem) -> Tween:
 	if not _valid(node) or not is_group_enabled(Group.SPINES):
 		return null
+	_center_pivot(node)
 	return TweenFX.snap(node, 0.1, Vector2(1.05, 1.05), TweenFX.PlayState.ENTER)
 
 ## spine_unhover(node)
@@ -225,6 +233,7 @@ func spine_hover(node: CanvasItem) -> Tween:
 func spine_unhover(node: CanvasItem) -> Tween:
 	if not _valid(node) or not is_group_enabled(Group.SPINES):
 		return null
+	_center_pivot(node)
 	return TweenFX.snap(node, 0.1, Vector2(1.05, 1.05), TweenFX.PlayState.EXIT)
 
 ## ─── IDLE / LOOPING EFFECTS ────────────────────────────────────────
@@ -236,6 +245,7 @@ func spine_unhover(node: CanvasItem) -> Tween:
 func idle_pulse(node: CanvasItem, strength: float = 0.04) -> Tween:
 	if not _valid(node) or not is_group_enabled(Group.IDLE):
 		return null
+	_center_pivot(node)
 	return TweenFX.breathe(node, 2.0, strength)
 
 ## idle_float(node, height)
@@ -253,6 +263,7 @@ func idle_float(node: CanvasItem, height: float = 5.0) -> Tween:
 func idle_sway(node: CanvasItem, angle: float = 4.0) -> Tween:
 	if not _valid(node) or not is_group_enabled(Group.IDLE):
 		return null
+	_center_pivot(node)
 	return TweenFX.sway(node, 2.5, angle)
 
 ## idle_wiggle(node)
@@ -261,6 +272,7 @@ func idle_sway(node: CanvasItem, angle: float = 4.0) -> Tween:
 func idle_wiggle(node: CanvasItem) -> Tween:
 	if not _valid(node) or not is_group_enabled(Group.IDLE):
 		return null
+	_center_pivot(node)
 	return TweenFX.wiggle(node, 1.2)
 
 ## ─── VALUE CHANGE EFFECTS ──────────────────────────────────────────
@@ -271,6 +283,7 @@ func idle_wiggle(node: CanvasItem) -> Tween:
 func value_change(node: CanvasItem) -> Tween:
 	if not _valid(node) or not is_group_enabled(Group.EVENTS):
 		return null
+	_center_pivot(node)
 	return TweenFX.punch_in(node, 0.15, 0.2)
 
 ## negative_hit(node)
@@ -279,6 +292,7 @@ func value_change(node: CanvasItem) -> Tween:
 func negative_hit(node: CanvasItem) -> Tween:
 	if not _valid(node) or not is_group_enabled(Group.EVENTS):
 		return null
+	_center_pivot(node)
 	return TweenFX.critical_hit(node, 0.4, Color(2.0, 0.3, 0.3, 1.0))
 
 ## positive_reward(node)
@@ -287,6 +301,7 @@ func negative_hit(node: CanvasItem) -> Tween:
 func positive_reward(node: CanvasItem) -> Tween:
 	if not _valid(node) or not is_group_enabled(Group.EVENTS):
 		return null
+	_center_pivot(node)
 	return TweenFX.upgrade(node, 0.6, Color(2.0, 1.8, 0.2, 1.0))
 
 ## celebration(node)
@@ -295,6 +310,7 @@ func positive_reward(node: CanvasItem) -> Tween:
 func celebration(node: CanvasItem) -> Tween:
 	if not _valid(node) or not is_group_enabled(Group.EVENTS):
 		return null
+	_center_pivot(node)
 	return TweenFX.tada(node, 0.6)
 
 ## ─── THREAT EFFECTS ────────────────────────────────────────────────
@@ -368,6 +384,7 @@ func staggered_pop_in(nodes: Array, delay_between: float = 0.08) -> Tween:
 			continue
 		node.scale = Vector2.ZERO
 		node.modulate.a = 0.0
+		_center_pivot(node)
 		# Use a timer-based delay via get_tree (fire-and-forget)
 		if i > 0:
 			await get_tree().create_timer(delay_between).timeout
@@ -375,6 +392,16 @@ func staggered_pop_in(nodes: Array, delay_between: float = 0.08) -> Tween:
 	return last_tween
 
 ## ─── INTERNAL ──────────────────────────────────────────────────────
+
+## _center_pivot(node)
+##
+## Ensures a Control node's pivot_offset is set to its center so that
+## scale and rotation effects appear balanced (not anchored top-left).
+## No-op for non-Control nodes (e.g. Node2D).
+func _center_pivot(node: CanvasItem) -> void:
+	if node is Control:
+		(node as Control).pivot_offset = (node as Control).size / 2.0
+
 
 ## Returns true if the node is valid and in the scene tree.
 func _valid(node: CanvasItem) -> bool:

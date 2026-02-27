@@ -256,7 +256,6 @@ func _estimate_node2d_size(node: Node2D) -> Vector2:
 func _start_pulse_animation() -> void:
 	if not highlight_panel:
 		return
-	highlight_panel.pivot_offset = highlight_panel.size / 2
 	_tfx.idle_pulse(highlight_panel, PULSE_SCALE_MAX - PULSE_SCALE_MIN)
 
 
