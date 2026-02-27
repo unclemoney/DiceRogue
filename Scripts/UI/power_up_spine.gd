@@ -12,6 +12,7 @@ signal spine_unhovered(power_up_id: String)
 @onready var spine_rect: TextureRect
 @onready var title_label: Label
 @onready var rating_label: Label
+@onready var _tfx := get_node("/root/TweenFXHelper")
 
 # Animation properties
 var _base_position: Vector2
@@ -31,12 +32,16 @@ func _ready() -> void:
 		mouse_entered.connect(_on_mouse_entered)
 	if not mouse_exited.is_connected(_on_mouse_exited):
 		mouse_exited.connect(_on_mouse_exited)
+	
+	# Idle personality animation
+	_tfx.idle_sway(self, 2.0)
 
 func _exit_tree() -> void:
 	# Clean up any active tweens to prevent warnings
 	if _current_tween and _current_tween.is_valid():
 		_current_tween.kill()
 		_current_tween = null
+	_tfx.stop_effect(self)
 
 func _create_spine_structure() -> void:
 	# Create spine texture display
@@ -174,6 +179,9 @@ func _on_mouse_entered() -> void:
 	_current_tween.tween_property(self, "position", _base_position + _hover_offset, 0.1)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	
+	# Jelly scale effect via TweenFXHelper
+	_tfx.spine_hover(self)
+	
 	# Emit hover signal with global mouse position
 	if data:
 		emit_signal("spine_hovered", data.id, get_global_mouse_position())
@@ -200,6 +208,9 @@ func _on_mouse_exited() -> void:
 	_current_tween = create_tween()
 	_current_tween.tween_property(self, "position", _base_position, 0.1)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	
+	# Snap-back scale effect via TweenFXHelper
+	_tfx.spine_unhover(self)
 	
 	# Emit unhover signal
 	if data:

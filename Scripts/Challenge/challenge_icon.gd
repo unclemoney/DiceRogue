@@ -131,7 +131,7 @@ func _update_default_position() -> void:
 	_default_position = position
 	_last_pos = position
 
-func _update_shadow(delta: float) -> void:
+func _update_shadow(_delta: float) -> void:
 	if not shadow:
 		return
 
@@ -198,10 +198,10 @@ func _handle_mouse_tilt(mouse_pos: Vector2) -> void:
 	var lerp_val_y = clamp(mouse_pos.y / size.y, 0, 1)
 	
 	# Calculate rotation angles
-	var angle_x_max = deg_to_rad(15.0)
-	var angle_y_max = deg_to_rad(15.0)
-	var rot_x = rad_to_deg(lerp_angle(-angle_x_max, angle_x_max, lerp_val_x))
-	var rot_y = rad_to_deg(lerp_angle(angle_y_max, -angle_y_max, lerp_val_y))
+	var local_angle_x_max = deg_to_rad(15.0)
+	var local_angle_y_max = deg_to_rad(15.0)
+	var rot_x = rad_to_deg(lerp_angle(-local_angle_x_max, local_angle_x_max, lerp_val_x))
+	var rot_y = rad_to_deg(lerp_angle(local_angle_y_max, -local_angle_y_max, lerp_val_y))
 	
 	# Apply to shader parameters
 	if _shader_material:

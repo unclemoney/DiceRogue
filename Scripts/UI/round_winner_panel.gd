@@ -38,6 +38,8 @@ var vcr_font: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 # Animation
 var _animation_tween: Tween
 
+@onready var _tfx := get_node("/root/TweenFXHelper")
+
 
 func _ready() -> void:
 	visible = false
@@ -239,6 +241,9 @@ func _build_ui() -> void:
 	next_channel_button.add_theme_stylebox_override("pressed", btn_pressed)
 	
 	next_channel_button.pressed.connect(_on_next_channel_pressed)
+	next_channel_button.mouse_entered.connect(_tfx.button_hover.bind(next_channel_button))
+	next_channel_button.mouse_exited.connect(_tfx.button_unhover.bind(next_channel_button))
+	next_channel_button.pressed.connect(_tfx.button_press.bind(next_channel_button))
 	content_vbox.add_child(next_channel_button)
 
 

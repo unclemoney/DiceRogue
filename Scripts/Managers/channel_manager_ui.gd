@@ -27,6 +27,8 @@ var start_button: Button
 # Font
 var vcr_font: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 
+@onready var _tfx := get_node("/root/TweenFXHelper")
+
 
 func _ready() -> void:
 	visible = false
@@ -233,11 +235,17 @@ func _build_ui() -> void:
 	# Down button
 	down_button = _create_channel_button("▼", Color(0.8, 0.3, 0.3))
 	down_button.pressed.connect(_on_down_pressed)
+	down_button.mouse_entered.connect(_tfx.button_hover.bind(down_button))
+	down_button.mouse_exited.connect(_tfx.button_unhover.bind(down_button))
+	down_button.pressed.connect(_tfx.button_press.bind(down_button))
 	buttons_hbox.add_child(down_button)
 	
 	# Up button
 	up_button = _create_channel_button("▲", Color(0.3, 0.8, 0.3))
 	up_button.pressed.connect(_on_up_pressed)
+	up_button.mouse_entered.connect(_tfx.button_hover.bind(up_button))
+	up_button.mouse_exited.connect(_tfx.button_unhover.bind(up_button))
+	up_button.pressed.connect(_tfx.button_press.bind(up_button))
 	buttons_hbox.add_child(up_button)
 	
 	# Spacer
@@ -272,6 +280,9 @@ func _build_ui() -> void:
 	start_button.add_theme_stylebox_override("pressed", start_pressed_style)
 	
 	start_button.pressed.connect(_on_start_pressed)
+	start_button.mouse_entered.connect(_tfx.button_hover.bind(start_button))
+	start_button.mouse_exited.connect(_tfx.button_unhover.bind(start_button))
+	start_button.pressed.connect(_tfx.button_press.bind(start_button))
 	content_vbox.add_child(start_button)
 
 

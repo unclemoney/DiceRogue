@@ -43,6 +43,7 @@ signal die_locked(die: Dice)
 @onready var mod_container: Control = $ModContainer
 @onready var color_label_bg: PanelContainer = $ColorLabelBg
 @onready var color_hover_label: Label = $ColorLabelBg/ColorHoverLabel
+@onready var _tfx := get_node("/root/TweenFXHelper")
 const ModIconScene := preload("res://Scenes/Mods/ModIcon.tscn")
 
 var _is_hovering := false
@@ -208,6 +209,9 @@ func lock() -> void:
 
 	set_state(DiceState.LOCKED)
 	emit_signal("die_locked", self)
+	
+	# Jelly feedback via TweenFXHelper
+	_tfx.spine_hover(self)
 	
 	# Play lock sound
 	var audio_manager = get_node_or_null("/root/AudioManager")
@@ -392,6 +396,9 @@ func reset_visual_for_spawn() -> void:
 func unlock() -> void:
 	if current_state == DiceState.LOCKED:
 		set_state(DiceState.ROLLED)
+		
+		# Snap-back feedback via TweenFXHelper
+		_tfx.spine_unhover(self)
 		
 		# Play unlock sound
 		var audio_manager = get_node_or_null("/root/AudioManager")

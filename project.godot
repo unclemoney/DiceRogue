@@ -30,6 +30,8 @@ AudioManager="*res://Scripts/Managers/audio_manager.gd"
 MusicManager="*res://Scripts/Managers/music_manager.gd"
 GameSettings="*res://Scripts/Managers/game_settings.gd"
 TutorialManager="*res://Scripts/Game/tutorial_manager.gd"
+TweenFX="*res://addons/TweenFX/TweenFX.gd"
+TweenFXHelper="*res://Scripts/Core/tween_fx_helper.gd"
 
 [display]
 
@@ -40,7 +42,7 @@ window/stretch/mode="canvas_items"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/gdai-mcp-plugin-godot/plugin.cfg", "res://addons/resource_viewer/plugin.cfg")
+enabled=PackedStringArray("res://addons/TweenFX/plugin.cfg", "res://addons/gdai-mcp-plugin-godot/plugin.cfg", "res://addons/resource_viewer/plugin.cfg")
 
 [file_customization]
 

@@ -27,6 +27,7 @@ var close_button: Button
 var _current_expression: MomExpression = MomExpression.NEUTRAL
 var _is_animating: bool = false
 var _full_dialog_text: String = ""
+@onready var _tfx := get_node("/root/TweenFXHelper")
 
 func _ready() -> void:
 	_load_textures()
@@ -191,6 +192,8 @@ func _create_ui_structure() -> void:
 	close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_apply_button_style()
 	close_button.pressed.connect(_on_close_pressed)
+	close_button.mouse_entered.connect(func(): _tfx.button_hover(close_button))
+	close_button.mouse_exited.connect(func(): _tfx.button_unhover(close_button))
 	vbox.add_child(close_button)
 
 func _apply_panel_style() -> void:

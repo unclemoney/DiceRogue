@@ -19,6 +19,8 @@ const HARD_COLOR := Color(0.8, 0.2, 0.2)   # Red for hard
 const EASY_REDUCTION := 10
 const HARD_REDUCTION := 30
 
+@onready var _tfx := get_node("/root/TweenFXHelper")
+
 
 func _ready() -> void:
 	visible = false
@@ -287,6 +289,9 @@ func _create_task_card(task, is_hard: bool) -> Control:
 	button.custom_minimum_size = Vector2(120, 30)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.pressed.connect(_on_task_selected.bind(is_hard))
+	button.mouse_entered.connect(_tfx.button_hover.bind(button))
+	button.mouse_exited.connect(_tfx.button_unhover.bind(button))
+	button.pressed.connect(_tfx.button_press.bind(button))
 	
 	# Button style
 	var btn_style = StyleBoxFlat.new()

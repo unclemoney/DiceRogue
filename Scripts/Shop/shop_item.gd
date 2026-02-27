@@ -8,6 +8,7 @@ signal purchased(item_id: String, item_type: String)
 @onready var price_label: Label = $MarginContainer/VBoxContainer/PriceLabel
 @onready var buy_button: Button = $MarginContainer/VBoxContainer/BuyButton
 @onready var shop_label: Label = $MarginContainer/ShopLabel
+@onready var _tfx := get_node("/root/TweenFXHelper")
 
 # Dice texture and shader for colored dice shop cards
 const DICE_TEXTURE_PATH := "res://Resources/Art/Dice/dieWhite1.png"
@@ -47,6 +48,8 @@ func _ready() -> void:
 	# Explicitly connect the button signal
 	if buy_button:
 		buy_button.pressed.connect(_on_buy_button_pressed)
+		buy_button.mouse_entered.connect(func(): _tfx.button_hover(buy_button))
+		buy_button.mouse_exited.connect(func(): _tfx.button_unhover(buy_button))
 		print("[ShopItem] Connected buy button signal")
 
 func _process(delta: float) -> void:

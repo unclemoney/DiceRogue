@@ -12,6 +12,7 @@ var vcr_font: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 
 # Autoload reference (fetched at runtime to avoid LSP errors)
 var _game_settings: Node = null
+var _tfx: Node = null
 
 # UI References
 var tab_container: TabContainer
@@ -59,6 +60,7 @@ const RESOLUTIONS := [
 
 func _ready() -> void:
 	_game_settings = get_node_or_null("/root/GameSettings")
+	_tfx = get_node_or_null("/root/TweenFXHelper")
 	_build_ui()
 	_load_current_settings()
 
@@ -132,6 +134,7 @@ func _build_ui() -> void:
 	_build_gameplay_tab()
 	_build_keyboard_tab()
 	_build_controller_tab()
+	_build_fx_tab()
 
 
 ## _build_header()
@@ -155,6 +158,9 @@ func _build_header() -> Control:
 	close_button.add_theme_font_override("font", vcr_font)
 	close_button.add_theme_font_size_override("font_size", 20)
 	close_button.pressed.connect(_on_close_pressed)
+	close_button.mouse_entered.connect(_tfx.button_hover.bind(close_button))
+	close_button.mouse_exited.connect(_tfx.button_unhover.bind(close_button))
+	close_button.pressed.connect(_tfx.button_press.bind(close_button))
 	header.add_child(close_button)
 	
 	return header
@@ -267,6 +273,9 @@ func _build_video_tab() -> void:
 	apply_video_button.add_theme_font_override("font", vcr_font)
 	apply_video_button.add_theme_font_size_override("font_size", 20)
 	apply_video_button.pressed.connect(_on_apply_video_pressed)
+	apply_video_button.mouse_entered.connect(_tfx.button_hover.bind(apply_video_button))
+	apply_video_button.mouse_exited.connect(_tfx.button_unhover.bind(apply_video_button))
+	apply_video_button.pressed.connect(_tfx.button_press.bind(apply_video_button))
 	apply_container.add_child(apply_video_button)
 	
 	# Info label
@@ -341,6 +350,9 @@ func _build_keyboard_tab() -> void:
 	reset_btn.add_theme_font_override("font", vcr_font)
 	reset_btn.add_theme_font_size_override("font_size", 16)
 	reset_btn.pressed.connect(_on_reset_keyboard_pressed)
+	reset_btn.mouse_entered.connect(_tfx.button_hover.bind(reset_btn))
+	reset_btn.mouse_exited.connect(_tfx.button_unhover.bind(reset_btn))
+	reset_btn.pressed.connect(_tfx.button_press.bind(reset_btn))
 	reset_container.add_child(reset_btn)
 
 
@@ -376,7 +388,103 @@ func _build_controller_tab() -> void:
 	reset_btn.add_theme_font_override("font", vcr_font)
 	reset_btn.add_theme_font_size_override("font_size", 16)
 	reset_btn.pressed.connect(_on_reset_controller_pressed)
+	reset_btn.mouse_entered.connect(_tfx.button_hover.bind(reset_btn))
+	reset_btn.mouse_exited.connect(_tfx.button_unhover.bind(reset_btn))
+	reset_btn.pressed.connect(_tfx.button_press.bind(reset_btn))
 	reset_container.add_child(reset_btn)
+
+
+## _build_fx_tab()
+##
+## Builds the FX settings tab with toggle switches for each animation group.
+## Each group corresponds to a TweenFXHelper.Group enum value.
+func _build_fx_tab() -> void:
+	var fx_tab = VBoxContainer.new()
+	fx_tab.name = "FX"
+	fx_tab.add_theme_constant_override("separation", 12)
+	tab_container.add_child(fx_tab)
+	
+	# Spacer
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 10)
+	fx_tab.add_child(spacer)
+	
+	# Description label
+	var desc_label = Label.new()
+	desc_label.text = "Toggle visual effect groups on or off."
+	desc_label.add_theme_font_override("font", vcr_font)
+	desc_label.add_theme_font_size_override("font_size", 14)
+	desc_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.75, 1.0))
+	fx_tab.add_child(desc_label)
+	
+	# Separator
+	var sep = HSeparator.new()
+	fx_tab.add_child(sep)
+	
+	# Scroll container for the toggles
+	var scroll = ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 350)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	fx_tab.add_child(scroll)
+	
+	var toggle_container = VBoxContainer.new()
+	toggle_container.add_theme_constant_override("separation", 10)
+	scroll.add_child(toggle_container)
+	
+	# Build one row per FX group
+	if not _tfx:
+		var err_label = Label.new()
+		err_label.text = "TweenFXHelper not found."
+		err_label.add_theme_font_override("font", vcr_font)
+		err_label.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
+		toggle_container.add_child(err_label)
+		return
+	
+	for group_id in _tfx.Group.values():
+		var row = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 15)
+		toggle_container.add_child(row)
+		
+		# Group name
+		var name_label = Label.new()
+		name_label.text = _tfx.GROUP_NAMES.get(group_id, "Unknown") + ":"
+		name_label.custom_minimum_size = Vector2(180, 0)
+		name_label.add_theme_font_override("font", vcr_font)
+		name_label.add_theme_font_size_override("font_size", 16)
+		row.add_child(name_label)
+		
+		# Toggle
+		var toggle = CheckButton.new()
+		toggle.button_pressed = _tfx.is_group_enabled(group_id)
+		toggle.add_theme_font_override("font", vcr_font)
+		toggle.toggled.connect(_on_fx_group_toggled.bind(group_id))
+		toggle.mouse_entered.connect(func(): _tfx.button_hover(toggle))
+		toggle.mouse_exited.connect(func(): _tfx.button_unhover(toggle))
+		row.add_child(toggle)
+		
+		# Description
+		var desc = Label.new()
+		desc.text = _tfx.GROUP_DESCRIPTIONS.get(group_id, "")
+		desc.add_theme_font_override("font", vcr_font)
+		desc.add_theme_font_size_override("font_size", 12)
+		desc.add_theme_color_override("font_color", Color(0.55, 0.55, 0.6, 1.0))
+		row.add_child(desc)
+	
+	# Info label
+	var info_label = Label.new()
+	info_label.text = "FX changes apply immediately and are saved."
+	info_label.add_theme_font_override("font", vcr_font)
+	info_label.add_theme_font_size_override("font_size", 14)
+	info_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.65, 1.0))
+	fx_tab.add_child(info_label)
+
+
+## _on_fx_group_toggled(enabled, group_id)
+##
+## Handler for individual FX group CheckButton toggles.
+## Pushes the change to GameSettings which applies it to TweenFXHelper and saves.
+func _on_fx_group_toggled(enabled: bool, group_id: int) -> void:
+	GameSettings.set_fx_group(group_id, enabled)
 
 
 ## _build_keybinding_rows(container, is_controller)
@@ -415,6 +523,8 @@ func _build_keybinding_rows(container: VBoxContainer, is_controller: bool) -> vo
 		bind_btn.add_theme_font_override("font", vcr_font)
 		bind_btn.add_theme_font_size_override("font_size", 14)
 		bind_btn.pressed.connect(_on_keybind_button_pressed.bind(action, is_controller, bind_btn))
+		bind_btn.mouse_entered.connect(func(): _tfx.button_hover(bind_btn))
+		bind_btn.mouse_exited.connect(func(): _tfx.button_unhover(bind_btn))
 		row.add_child(bind_btn)
 		
 		# Store reference

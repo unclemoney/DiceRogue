@@ -187,7 +187,17 @@ func _create_default_profile(slot: int) -> void:
 			"total_chores_completed_hard": 0
 		},
 		"completed_channels": [],
-		"unlocked_items": []
+		"unlocked_items": [],
+		"fx_settings": {
+			"0": true,
+			"1": true,
+			"2": true,
+			"3": true,
+			"4": true,
+			"5": true,
+			"6": true,
+			"7": true
+		}
 	}
 	
 	var json_string = JSON.stringify(default_data, "\t")
@@ -301,6 +311,23 @@ func load_profile(slot: int) -> bool:
 					item.unlock_item()
 					unlocked_count += 1
 	
+	# Load FX group settings (per-profile persistence)
+	if save_data.has("fx_settings"):
+		var fx_data = save_data["fx_settings"]
+		var game_settings_node = get_node_or_null("/root/GameSettings")
+		var fx_helper = get_node_or_null("/root/TweenFXHelper")
+		for key in fx_data.keys():
+			var group_id = int(key)
+			var enabled = fx_data[key]
+			if game_settings_node and "fx_group_enabled" in game_settings_node:
+				game_settings_node.fx_group_enabled[group_id] = enabled
+			if fx_helper:
+				fx_helper.set_group_enabled(group_id, enabled)
+		# Persist to settings.cfg so GameSettings stays in sync
+		if game_settings_node and game_settings_node.has_method("save_settings"):
+			game_settings_node.save_settings()
+		print("[ProgressManager] Loaded FX settings from profile")
+	
 	print("[ProgressManager] Loaded profile %d: %s (%d unlocked items)" % [slot, current_profile_name, unlocked_count])
 	print("[ProgressManager] Final state - slot: %d, name: %s" % [current_profile_slot, current_profile_name])
 	print("[ProgressManager] ===== LOAD PROFILE END =====")
@@ -374,6 +401,22 @@ func save_current_profile() -> void:
 		"completed_channels": completed_channels,
 		"unlocked_items": []
 	}
+	
+	# Save FX group settings from GameSettings (per-profile persistence)
+	if game_settings and "fx_group_enabled" in game_settings:
+		var fx_dict := {}
+		for g in game_settings.fx_group_enabled.keys():
+			fx_dict[str(g)] = game_settings.fx_group_enabled[g]
+		save_data["fx_settings"] = fx_dict
+	else:
+		# Fallback: read directly from TweenFXHelper
+		var fx_helper = get_node_or_null("/root/TweenFXHelper")
+		if fx_helper:
+			var fx_dict := {}
+			var states = fx_helper.get_all_group_states()
+			for g in states.keys():
+				fx_dict[str(g)] = states[g]
+			save_data["fx_settings"] = fx_dict
 	
 	# Collect unlocked item IDs
 	for item_id in unlockable_items:

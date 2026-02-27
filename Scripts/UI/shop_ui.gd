@@ -2,7 +2,7 @@ extends Control
 class_name ShopUI
 
 signal item_purchased(item_id: String, item_type: String)
-signal shop_button_opened
+signal shop_button_opened  # May be used by external listeners
 signal shop_closed
 
 @export var power_up_manager_path: NodePath
@@ -21,6 +21,7 @@ signal shop_closed
 @onready var shop_label: RichTextLabel = $MarginContainer/ShopLabel
 @onready var close_button: Button = $CloseButton
 @onready var backdrop: ColorRect = $Backdrop
+@onready var _tfx := get_node("/root/TweenFXHelper")
 
 # Reroll system
 var reroll_button: Button
@@ -35,10 +36,7 @@ var _managers_ready := 0
 const REQUIRED_MANAGERS := 3
 
 # Title animation
-var title_tween: Tween
-var title_base_position: Vector2
 const TITLE_FLOAT_AMOUNT := 8.0
-const TITLE_FLOAT_DURATION := 2.5
 
 const ShopItemScene := preload("res://Scenes/Shop/shop_item.tscn")
 
@@ -126,8 +124,8 @@ func _ready() -> void:
 	#buy_button.pressed.connect(_on_buy_button_pressed)
 
 func _exit_tree() -> void:
-	if title_tween and title_tween.is_valid():
-		title_tween.kill()
+	if shop_label:
+		_tfx.stop_effect(shop_label)
 
 func _process(delta: float) -> void:
 	# Handle reroll cooldown
@@ -139,32 +137,11 @@ func _process(delta: float) -> void:
 
 ## _start_title_animation()
 ##
-## Starts the floating animation for the shop title.
+## Starts the floating animation for the shop title using TweenFXHelper.
 func _start_title_animation() -> void:
 	if not shop_label:
 		return
-	
-	title_base_position = shop_label.position
-	_animate_title_float()
-
-## _animate_title_float()
-##
-## Creates a looping float animation for the title.
-func _animate_title_float() -> void:
-	if title_tween and title_tween.is_valid():
-		title_tween.kill()
-	
-	title_tween = create_tween()
-	title_tween.set_loops()
-	title_tween.set_trans(Tween.TRANS_SINE)
-	title_tween.set_ease(Tween.EASE_IN_OUT)
-	
-	# Float up
-	title_tween.tween_property(shop_label, "position:y", 
-		title_base_position.y - TITLE_FLOAT_AMOUNT, TITLE_FLOAT_DURATION)
-	# Float down
-	title_tween.tween_property(shop_label, "position:y",
-		title_base_position.y + TITLE_FLOAT_AMOUNT, TITLE_FLOAT_DURATION)
+	_tfx.idle_float(shop_label, TITLE_FLOAT_AMOUNT)
 	
 func _on_manager_ready() -> void:
 	_managers_ready += 1
@@ -530,6 +507,11 @@ func _setup_reroll_ui() -> void:
 	# Connect pressed signal
 	reroll_button.pressed.connect(_on_reroll_button_pressed)
 	
+	# TweenFX hover/press feedback
+	reroll_button.mouse_entered.connect(_tfx.button_hover.bind(reroll_button))
+	reroll_button.mouse_exited.connect(_tfx.button_unhover.bind(reroll_button))
+	reroll_button.pressed.connect(_tfx.button_press.bind(reroll_button))
+	
 	# Create cost label (RichTextLabel for BBCode bounce animation)
 	reroll_cost_label = RichTextLabel.new()
 	reroll_cost_label.name = "RerollCostLabel"
@@ -773,7 +755,7 @@ func _reroll_consumables() -> void:
 ## Updates the reroll button enabled/disabled state based on available items and money
 ## Now updates all reroll buttons across tabs
 func _update_reroll_button_state() -> void:
-	var current_tab = tab_container.current_tab if tab_container else -1
+	var _current_tab = tab_container.current_tab if tab_container else -1
 	
 	# Update reroll UI in both PowerUps and Consumables tabs
 	var tab_names = ["PowerUps", "Consumables"]
@@ -915,6 +897,11 @@ func _style_close_button() -> void:
 	close_button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 	close_button.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 	close_button.add_theme_constant_override("outline_size", 1)
+	
+	# TweenFX hover/press feedback
+	close_button.mouse_entered.connect(_tfx.button_hover.bind(close_button))
+	close_button.mouse_exited.connect(_tfx.button_unhover.bind(close_button))
+	close_button.pressed.connect(_tfx.button_press.bind(close_button))
 
 func _get_container_for_type(type: String) -> Node:
 	match type:
@@ -1198,6 +1185,8 @@ func _add_reroll_ui_to_tab(tab_node: Control) -> void:
 	tab_reroll_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_apply_reroll_button_styling(tab_reroll_button)
 	tab_reroll_button.pressed.connect(_on_reroll_button_pressed)
+	tab_reroll_button.mouse_entered.connect(func(): _tfx.button_hover(tab_reroll_button))
+	tab_reroll_button.mouse_exited.connect(func(): _tfx.button_unhover(tab_reroll_button))
 	
 	# Add to container
 	reroll_container.add_child(cost_label)

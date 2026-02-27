@@ -11,11 +11,9 @@ extends CanvasLayer
 const GOLDEN_COLOR := Color(1.0, 0.85, 0.32, 1.0)
 const BACKDROP_COLOR := Color(0.0, 0.0, 0.0, 0.6)
 const BORDER_WIDTH := 4
-const PULSE_DURATION := 1.2
 const PULSE_SCALE_MIN := 1.0
 const PULSE_SCALE_MAX := 1.05
 const INDICATOR_BOUNCE_HEIGHT := 10.0
-const INDICATOR_BOUNCE_DURATION := 0.6
 
 # Fonts
 var vcr_font: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
@@ -31,14 +29,14 @@ var _manual_size: Vector2 = Vector2.ZERO
 var _manual_offset: Vector2 = Vector2.ZERO
 
 # Animation
-var pulse_tween: Tween
-var bounce_tween: Tween
 var _update_position: bool = false
+var _tfx: Node = null
 
 
 func _ready() -> void:
 	# Ensure highlight works when game is paused
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_tfx = get_node_or_null("/root/TweenFXHelper")
 	_build_ui()
 	hide_highlight()
 
@@ -138,10 +136,10 @@ func hide_highlight() -> void:
 	_update_position = false
 	target_node = null
 	
-	if pulse_tween and pulse_tween.is_valid():
-		pulse_tween.kill()
-	if bounce_tween and bounce_tween.is_valid():
-		bounce_tween.kill()
+	if highlight_panel:
+		_tfx.stop_effect(highlight_panel)
+	if click_indicator:
+		_tfx.stop_effect(click_indicator)
 	
 	if backdrop:
 		backdrop.hide()
@@ -254,40 +252,21 @@ func _estimate_node2d_size(node: Node2D) -> Vector2:
 
 ## _start_pulse_animation()
 ##
-## Starts the pulsing scale animation on the highlight panel.
+## Starts the pulsing scale animation on the highlight panel using TweenFXHelper.
 func _start_pulse_animation() -> void:
-	if pulse_tween and pulse_tween.is_valid():
-		pulse_tween.kill()
-	
-	pulse_tween = create_tween()
-	pulse_tween.set_loops()
-	
-	# Store original size for scaling
-	var original_pivot = highlight_panel.size / 2
-	highlight_panel.pivot_offset = original_pivot
-	
-	pulse_tween.tween_property(highlight_panel, "scale", Vector2(PULSE_SCALE_MAX, PULSE_SCALE_MAX), PULSE_DURATION / 2)
-	pulse_tween.tween_property(highlight_panel, "scale", Vector2(PULSE_SCALE_MIN, PULSE_SCALE_MIN), PULSE_DURATION / 2)
+	if not highlight_panel:
+		return
+	highlight_panel.pivot_offset = highlight_panel.size / 2
+	_tfx.idle_pulse(highlight_panel, PULSE_SCALE_MAX - PULSE_SCALE_MIN)
 
 
 ## _start_bounce_animation()
 ##
-## Starts the bouncing animation on the click indicator.
+## Starts the bouncing animation on the click indicator using TweenFXHelper.
 func _start_bounce_animation() -> void:
-	if bounce_tween and bounce_tween.is_valid():
-		bounce_tween.kill()
-	
-	# Store base Y position after layout
-	await get_tree().process_frame
-	var base_y = click_indicator.position.y
-	
-	bounce_tween = create_tween()
-	bounce_tween.set_loops()
-	bounce_tween.set_trans(Tween.TRANS_SINE)
-	bounce_tween.set_ease(Tween.EASE_IN_OUT)
-	
-	bounce_tween.tween_property(click_indicator, "position:y", base_y - INDICATOR_BOUNCE_HEIGHT, INDICATOR_BOUNCE_DURATION / 2)
-	bounce_tween.tween_property(click_indicator, "position:y", base_y, INDICATOR_BOUNCE_DURATION / 2)
+	if not click_indicator:
+		return
+	_tfx.idle_float(click_indicator, INDICATOR_BOUNCE_HEIGHT)
 
 
 ## set_backdrop_visible(visible)

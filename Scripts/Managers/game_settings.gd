@@ -17,6 +17,7 @@ signal settings_saved
 signal profile_changed(slot: int)
 signal video_settings_changed
 signal keybinding_changed(action: String, is_controller: bool)
+signal fx_settings_changed
 
 const SETTINGS_FILE_PATH := "user://settings.cfg"
 const PROFILE_NAME_MAX_LENGTH := 30
@@ -40,6 +41,10 @@ var keybindings: Dictionary = {}
 
 # Controller bindings (action name -> JoyButton/JoyAxis)
 var controller_bindings: Dictionary = {}
+
+# FX group toggle settings (all enabled by default)
+# Keys match TweenFXHelper.Group enum values (ints)
+var fx_group_enabled: Dictionary = {}
 
 # Default keyboard bindings - supports up to 16 dice locks
 const DEFAULT_KEYBINDINGS := {
@@ -146,9 +151,17 @@ func load_settings() -> void:
 		var button = config.get_value("controller", action, DEFAULT_CONTROLLER_BINDINGS[action])
 		controller_bindings[action] = button
 	
+	# Load FX group settings
+	var fx_helper = get_node_or_null("/root/TweenFXHelper")
+	if fx_helper:
+		for g in fx_helper.Group.values():
+			var key = "group_%d" % g
+			fx_group_enabled[g] = config.get_value("fx", key, true)
+	
 	# Apply loaded settings
 	_apply_audio_settings()
 	_apply_input_mappings()
+	_apply_fx_settings()
 	
 	print("[GameSettings] Settings loaded successfully")
 	settings_loaded.emit()
@@ -183,6 +196,11 @@ func save_settings() -> void:
 	for action in controller_bindings.keys():
 		config.set_value("controller", action, controller_bindings[action])
 	
+	# Save FX group settings
+	for g in fx_group_enabled.keys():
+		var key = "group_%d" % g
+		config.set_value("fx", key, fx_group_enabled[g])
+	
 	var err = config.save(SETTINGS_FILE_PATH)
 	if err != OK:
 		push_error("[GameSettings] Failed to save settings file: %d" % err)
@@ -213,6 +231,30 @@ func _apply_audio_settings() -> void:
 ## Public method to apply audio settings (for use by settings menu).
 func apply_audio_settings() -> void:
 	_apply_audio_settings()
+
+
+## _apply_fx_settings()
+##
+## Push persisted FX group toggles into TweenFXHelper.
+func _apply_fx_settings() -> void:
+	var fx_helper = get_node_or_null("/root/TweenFXHelper")
+	if not fx_helper:
+		return
+	for g in fx_group_enabled.keys():
+		fx_helper.set_group_enabled(g, fx_group_enabled[g])
+
+
+## set_fx_group(group, enabled)
+##
+## Public setter for the settings UI. Updates local state, pushes to
+## TweenFXHelper, saves, and emits signal.
+func set_fx_group(group: int, enabled: bool) -> void:
+	fx_group_enabled[group] = enabled
+	var fx_helper = get_node_or_null("/root/TweenFXHelper")
+	if fx_helper:
+		fx_helper.set_group_enabled(group, enabled)
+	save_settings()
+	fx_settings_changed.emit()
 
 
 ## _apply_input_mappings()

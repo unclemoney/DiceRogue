@@ -24,6 +24,8 @@ const SETTINGS_MENU_SCENE := preload("res://Scenes/UI/SettingsMenu.tscn")
 # Tutorial warning dialog
 var tutorial_warning_dialog: ConfirmationDialog = null
 
+@onready var _tfx := get_node("/root/TweenFXHelper")
+
 
 func _ready() -> void:
 	visible = false
@@ -115,6 +117,13 @@ func _build_ui() -> void:
 	main_menu_button = _create_button("MAIN MENU", Color(0.7, 0.5, 0.4, 1.0))
 	main_menu_button.pressed.connect(_on_main_menu_pressed)
 	btn_container.add_child(main_menu_button)
+	
+	# Connect TweenFX hover/press effects to all buttons
+	var all_buttons = [resume_button, settings_button, main_menu_button]
+	for btn in all_buttons:
+		btn.mouse_entered.connect(func(): _tfx.button_hover(btn))
+		btn.mouse_exited.connect(func(): _tfx.button_unhover(btn))
+		btn.pressed.connect(func(): _tfx.button_press(btn))
 	
 	# Build tutorial warning dialog
 	_build_tutorial_warning_dialog()

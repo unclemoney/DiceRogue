@@ -14,6 +14,7 @@ extends Control
 @onready var next_round_button: Button = $HBoxContainer/NextRoundButton  
 @onready var roll_button: Button = $HBoxContainer/RollButton
 @onready var next_turn_button: Button = $HBoxContainer/NextTurnButton  
+@onready var _tfx := get_node("/root/TweenFXHelper")
 
 signal shop_button_pressed
 signal next_round_pressed
@@ -27,15 +28,9 @@ var scorecard: Scorecard
 var is_shop_open: bool = true
 var first_roll_done: bool = false
 
-## Pulse animation state - Roll button
-var _roll_button_pulse_tween: Tween = null
+## Pulse animation state
 var _is_pulsing: bool = false
-var _original_roll_button_modulate: Color = Color.WHITE
-
-## Pulse animation state - Shop button
-var _shop_button_pulse_tween: Tween = null
 var _is_shop_pulsing: bool = false
-var _original_shop_button_modulate: Color = Color.WHITE
 
 ## Keyboard input cooldown to prevent multiple rapid presses
 var _input_cooldown: float = 0.0
@@ -66,15 +61,18 @@ func _ready():
 	score_card_ui.connect("hand_scored", Callable(self, "_hand_scored_disable"))
 	score_card_ui.connect("manual_score", Callable(self, "_scored_hand_setup_next_round"))
 	
-	# Store original roll button modulate for pulse effect
-	if roll_button:
-		_original_roll_button_modulate = roll_button.modulate
-	
 	# Shop button is already connected in the scene file, so just configure it
 	if shop_button:
 		shop_button.disabled = false  # Enabled at the very beginning
-		_original_shop_button_modulate = shop_button.modulate
 		print("Shop button status: ", shop_button.disabled)
+	
+	# Connect TweenFX hover/press effects to all game buttons
+	for btn in [roll_button, shop_button, next_turn_button, next_round_button]:
+		if btn:
+			btn.pivot_offset = btn.size / 2.0
+			btn.mouse_entered.connect(_tfx.button_hover.bind(btn))
+			btn.mouse_exited.connect(_tfx.button_unhover.bind(btn))
+			btn.pressed.connect(_tfx.button_press.bind(btn))
 	
 	if next_round_button:
 		next_round_button.pressed.connect(_on_next_round_button_pressed)
@@ -221,7 +219,7 @@ func reset_for_new_channel() -> void:
 
 ## _start_roll_button_pulse()
 ##
-## Starts the pulsing glow animation on the Roll button.
+## Starts the pulsing glow animation on the Roll button via TweenFXHelper.
 ## Used when waiting for the first roll of a turn.
 func _start_roll_button_pulse() -> void:
 	if _is_pulsing or not roll_button:
@@ -231,8 +229,9 @@ func _start_roll_button_pulse() -> void:
 		return
 	
 	_is_pulsing = true
+	roll_button.pivot_offset = roll_button.size / 2.0
+	_tfx.idle_pulse(roll_button)
 	print("[GameButtonUI] Starting Roll button pulse animation")
-	_animate_roll_button_pulse()
 
 
 ## _stop_roll_button_pulse()
@@ -243,63 +242,13 @@ func _stop_roll_button_pulse() -> void:
 		return
 	
 	_is_pulsing = false
-	
-	if _roll_button_pulse_tween:
-		_roll_button_pulse_tween.kill()
-		_roll_button_pulse_tween = null
-	
-	# Reset to original state
-	if roll_button:
-		roll_button.modulate = _original_roll_button_modulate
-		roll_button.scale = Vector2.ONE
-	
+	_tfx.stop_effect(roll_button)
 	print("[GameButtonUI] Stopped Roll button pulse animation")
-
-
-## _animate_roll_button_pulse()
-##
-## Creates and runs the looping pulse animation on the Roll button.
-func _animate_roll_button_pulse() -> void:
-	if not _is_pulsing or not roll_button:
-		return
-	
-	if _roll_button_pulse_tween:
-		_roll_button_pulse_tween.kill()
-	
-	_roll_button_pulse_tween = create_tween()
-	_roll_button_pulse_tween.set_loops()
-	
-	# Pulse color: subtle golden glow
-	var pulse_color = Color(1.3, 1.2, 0.9, 1.0)
-	var normal_color = _original_roll_button_modulate
-	
-	# Pulse scale
-	var pulse_scale = Vector2(1.05, 1.05)
-	var normal_scale = Vector2.ONE
-	
-	# Set pivot to center for scaling
-	roll_button.pivot_offset = roll_button.size / 2.0
-	
-	# Glow up
-	_roll_button_pulse_tween.tween_property(roll_button, "modulate", pulse_color, 0.5)\
-		.set_trans(Tween.TRANS_SINE)\
-		.set_ease(Tween.EASE_IN_OUT)
-	_roll_button_pulse_tween.parallel().tween_property(roll_button, "scale", pulse_scale, 0.5)\
-		.set_trans(Tween.TRANS_SINE)\
-		.set_ease(Tween.EASE_IN_OUT)
-	
-	# Glow down
-	_roll_button_pulse_tween.tween_property(roll_button, "modulate", normal_color, 0.5)\
-		.set_trans(Tween.TRANS_SINE)\
-		.set_ease(Tween.EASE_IN_OUT)
-	_roll_button_pulse_tween.parallel().tween_property(roll_button, "scale", normal_scale, 0.5)\
-		.set_trans(Tween.TRANS_SINE)\
-		.set_ease(Tween.EASE_IN_OUT)
 
 
 ## _start_shop_button_pulse()
 ##
-## Starts the pulsing glow animation on the Shop button.
+## Starts the pulsing glow animation on the Shop button via TweenFXHelper.
 ## Used when the shop becomes available between rounds.
 func _start_shop_button_pulse() -> void:
 	if _is_shop_pulsing or not shop_button:
@@ -309,8 +258,9 @@ func _start_shop_button_pulse() -> void:
 		return
 	
 	_is_shop_pulsing = true
+	shop_button.pivot_offset = shop_button.size / 2.0
+	_tfx.idle_pulse(shop_button)
 	print("[GameButtonUI] Starting Shop button pulse animation")
-	_animate_shop_button_pulse()
 
 
 ## _stop_shop_button_pulse()
@@ -321,58 +271,8 @@ func _stop_shop_button_pulse() -> void:
 		return
 	
 	_is_shop_pulsing = false
-	
-	if _shop_button_pulse_tween:
-		_shop_button_pulse_tween.kill()
-		_shop_button_pulse_tween = null
-	
-	# Reset to original state
-	if shop_button:
-		shop_button.modulate = _original_shop_button_modulate
-		shop_button.scale = Vector2.ONE
-	
+	_tfx.stop_effect(shop_button)
 	print("[GameButtonUI] Stopped Shop button pulse animation")
-
-
-## _animate_shop_button_pulse()
-##
-## Creates and runs the looping pulse animation on the Shop button.
-func _animate_shop_button_pulse() -> void:
-	if not _is_shop_pulsing or not shop_button:
-		return
-	
-	if _shop_button_pulse_tween:
-		_shop_button_pulse_tween.kill()
-	
-	_shop_button_pulse_tween = create_tween()
-	_shop_button_pulse_tween.set_loops()
-	
-	# Pulse color: subtle golden glow (same as roll button)
-	var pulse_color = Color(1.3, 1.2, 0.9, 1.0)
-	var normal_color = _original_shop_button_modulate
-	
-	# Pulse scale
-	var pulse_scale = Vector2(1.05, 1.05)
-	var normal_scale = Vector2.ONE
-	
-	# Set pivot to center for scaling
-	shop_button.pivot_offset = shop_button.size / 2.0
-	
-	# Glow up
-	_shop_button_pulse_tween.tween_property(shop_button, "modulate", pulse_color, 0.5)\
-		.set_trans(Tween.TRANS_SINE)\
-		.set_ease(Tween.EASE_IN_OUT)
-	_shop_button_pulse_tween.parallel().tween_property(shop_button, "scale", pulse_scale, 0.5)\
-		.set_trans(Tween.TRANS_SINE)\
-		.set_ease(Tween.EASE_IN_OUT)
-	
-	# Glow down
-	_shop_button_pulse_tween.tween_property(shop_button, "modulate", normal_color, 0.5)\
-		.set_trans(Tween.TRANS_SINE)\
-		.set_ease(Tween.EASE_IN_OUT)
-	_shop_button_pulse_tween.parallel().tween_property(shop_button, "scale", normal_scale, 0.5)\
-		.set_trans(Tween.TRANS_SINE)\
-		.set_ease(Tween.EASE_IN_OUT)
 
 
 ## trigger_roll()

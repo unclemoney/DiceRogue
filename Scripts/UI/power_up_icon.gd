@@ -49,6 +49,7 @@ var _hover_card_tween: Tween
 # Add these class variables near the top
 var _sell_mode_active := false
 var _sell_button_pressed := false  # Track when the sell button itself is clicked
+@onready var _tfx := get_node("/root/TweenFXHelper")
 
 func _ready() -> void:
 	print("[PowerUpIcon] Initializing...")
@@ -246,6 +247,8 @@ func _create_card_structure() -> void:
 	_apply_action_button_style(sell_button)
 	
 	sell_button.pressed.connect(_on_sell_button_pressed)
+	sell_button.mouse_entered.connect(func(): _tfx.button_hover(sell_button))
+	sell_button.mouse_exited.connect(func(): _tfx.button_unhover(sell_button))
 	add_child(sell_button)
 	
 	# Create LabelBg

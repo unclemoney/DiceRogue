@@ -26,6 +26,7 @@ This game takes its inspiration from the following games: Balatro, Dicey Dungeon
 - Godot installation folder: "C:\Users\danie\OneDrive\Documents\GODOT\Godot_v4.4.1-stable_win64.exe".
 - Update the README.md file to reflect any new features or changes made to the project structure.
 - Autoload scripts should not have class_name declarations.
+- When applicable be sure to use the godot-tools MCP server tools.
 
 ## Documentation Standards
 - Use Godot doc comments ## for any function header or documentation you want editors/IDE to surface.

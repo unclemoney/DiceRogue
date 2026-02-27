@@ -32,6 +32,7 @@ var sell_button: Button
 var _is_hovering := false
 var _sell_button_visible := false
 var _hover_card_tween: Tween
+@onready var _tfx := get_node("/root/TweenFXHelper")
 
 func _ready() -> void:
 	if not _should_auto_create_structure():
@@ -44,6 +45,7 @@ func _exit_tree() -> void:
 	if _hover_card_tween and _hover_card_tween.is_valid():
 		_hover_card_tween.kill()
 		_hover_card_tween = null
+	_tfx.stop_effect(self)
 
 ## _should_auto_create_structure()
 ##
@@ -124,6 +126,8 @@ func _setup_card_interactions() -> void:
 	
 	if sell_button:
 		sell_button.pressed.connect(_on_sell_button_pressed)
+		sell_button.mouse_entered.connect(func(): _tfx.button_hover(sell_button))
+		sell_button.mouse_exited.connect(func(): _tfx.button_unhover(sell_button))
 
 ## _on_mouse_entered()
 ##
@@ -141,23 +145,15 @@ func _on_mouse_exited() -> void:
 
 ## _start_hover_effect()
 ##
-## Basic hover animation. Can be overridden for custom hover effects.
+## Basic hover animation using TweenFXHelper. Can be overridden for custom hover effects.
 func _start_hover_effect() -> void:
-	if _hover_card_tween:
-		_hover_card_tween.kill()
-	
-	_hover_card_tween = create_tween()
-	_hover_card_tween.parallel().tween_property(self, "scale", Vector2.ONE * hover_scale, transition_speed)
+	_tfx.icon_hover(self)
 
 ## _stop_hover_effect()
 ##
-## Basic hover exit animation. Can be overridden for custom hover effects.
+## Basic hover exit animation using TweenFXHelper. Can be overridden for custom hover effects.
 func _stop_hover_effect() -> void:
-	if _hover_card_tween:
-		_hover_card_tween.kill()
-	
-	_hover_card_tween = create_tween()
-	_hover_card_tween.parallel().tween_property(self, "scale", Vector2.ONE, transition_speed)
+	_tfx.stop_effect(self)
 
 ## _on_sell_button_pressed()
 ##

@@ -1062,6 +1062,30 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 - `MultiplierManagerTest.tscn` - Score modifier system
 - `TutorialTest.tscn` - Tutorial system with mock UI elements
 
+## TweenFX Animation System
+
+DiceRogue uses the **TweenFX** addon (v1.1) for standardized micro-animations across all interactive UI. A central **TweenFXHelper** autoload (`Scripts/Core/tween_fx_helper.gd`) wraps TweenFX's 62 animations into game-specific patterns.
+
+### Key Features
+- **Button hover/press** — Jelly + punch-in on every interactive button (menus, panels, shop, game controls)
+- **Spine idle personalities** — Power-up/consumable spines gently sway, challenge post-its wiggle, debuff notes sway
+- **Spine hover** — Snap-scale effect on mouse enter/exit for all corkboard spines
+- **Title float** — Shop and main menu titles bob with `idle_float`
+- **Game button pulse** — Roll/Shop buttons breathe with `idle_pulse` when actionable
+- **Dice lock/unlock** — Jelly feedback on locking/unlocking dice
+- **Debuff feedback** — `negative_hit` red flash when debuff count increases
+- **Challenge celebration** — `celebration` tada when challenge goal is met
+- **Tutorial highlight** — Pulse + bounce replaced with `idle_pulse` and `idle_float`
+- **FX Group Toggles** — 8 groups (Buttons, Spines, Idle, Panels, Icons, Events, Threats, Reveals) can be toggled on/off in Settings > FX tab; persisted to `user://settings.cfg`
+
+### Architecture
+```
+TweenFX addon (addons/TweenFX/) → TweenFXHelper autoload (Scripts/Core/) → Game scripts
+```
+
+### Documentation
+See [BUILD_TWEENFX.md](BUILD_TWEENFX.md) for full API reference, patterns, file change list, and integration guide.
+
 ## Editor Tools
 
 ### Resource Viewer Plugin

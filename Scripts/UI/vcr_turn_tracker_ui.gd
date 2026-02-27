@@ -76,7 +76,7 @@ func bind_tracker(t: TurnTracker) -> void:
 	tracker = t
 	tracker.turn_updated.connect(_on_turn_updated)
 	tracker.rolls_updated.connect(_on_rolls_updated)
-	tracker.max_rolls_changed.connect(func(max_rolls): _on_rolls_updated(tracker.rolls_left))
+	tracker.max_rolls_changed.connect(func(_max_rolls): _on_rolls_updated(tracker.rolls_left))
 	
 	# Initialize display with current values
 	_on_turn_updated(tracker.current_turn)
@@ -181,8 +181,8 @@ func _animate_label_change(label: Label, tween_ref: Tween) -> void:
 	tween_ref.set_parallel(true)
 	
 	# Subtle pulse animation
-	tween_ref.tween_method(func(scale): label.scale = Vector2(scale, scale), 1.0, 1.15, 0.1)
-	tween_ref.tween_method(func(scale): label.scale = Vector2(scale, scale), 1.15, 1.0, 0.15)
+	tween_ref.tween_method(func(s): label.scale = Vector2(s, s), 1.0, 1.15, 0.1)
+	tween_ref.tween_method(func(s): label.scale = Vector2(s, s), 1.15, 1.0, 0.15)
 	
 	# Brief color brightening
 	var original_color := label.get_theme_color("font_color")

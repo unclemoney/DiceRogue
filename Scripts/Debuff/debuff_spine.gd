@@ -14,6 +14,7 @@ signal spine_unhovered()
 @onready var spine_rect: TextureRect
 @onready var title_label: Label
 @onready var count_label: Label
+@onready var _tfx := get_node("/root/TweenFXHelper")
 
 # State tracking
 var _has_debuffs: bool = false
@@ -37,12 +38,16 @@ func _ready() -> void:
 		mouse_entered.connect(_on_mouse_entered)
 	if not mouse_exited.is_connected(_on_mouse_exited):
 		mouse_exited.connect(_on_mouse_exited)
+	
+	# Idle personality animation
+	_tfx.idle_sway(self, 2.0)
 
 
 func _exit_tree() -> void:
 	if _current_tween and _current_tween.is_valid():
 		_current_tween.kill()
 		_current_tween = null
+	_tfx.stop_effect(self)
 
 
 func _set_spine_size() -> void:
@@ -131,10 +136,14 @@ func set_has_debuffs(has_debuffs: bool) -> void:
 ## set_debuff_count(count)
 ##
 ## Updates the debuff count display.
+## Fires a negative_hit effect when the debuff count increases.
 func set_debuff_count(count: int) -> void:
+	var was_lower := count > _debuff_count
 	_debuff_count = count
 	_has_debuffs = count > 0
 	_update_visual_state()
+	if was_lower and count > 0:
+		_tfx.negative_hit(self)
 
 
 func set_base_position(pos: Vector2) -> void:
@@ -154,9 +163,11 @@ func _on_mouse_entered() -> void:
 	if _current_tween and _current_tween.is_valid():
 		_current_tween.kill()
 	
-	_current_tween = create_tween().set_parallel()
+	_current_tween = create_tween()
 	_current_tween.tween_property(self, "position", _base_position + _hover_offset, 0.1)
-	_current_tween.tween_property(self, "scale", Vector2(1.05, 1.05), 0.1)
+	
+	# Jelly scale effect via TweenFXHelper
+	_tfx.spine_hover(self)
 
 
 func _on_mouse_exited() -> void:
@@ -171,9 +182,11 @@ func _on_mouse_exited() -> void:
 	if _current_tween and _current_tween.is_valid():
 		_current_tween.kill()
 	
-	_current_tween = create_tween().set_parallel()
+	_current_tween = create_tween()
 	_current_tween.tween_property(self, "position", _base_position, 0.1)
-	_current_tween.tween_property(self, "scale", Vector2.ONE, 0.1)
+	
+	# Snap-back scale effect via TweenFXHelper
+	_tfx.spine_unhover(self)
 
 
 func _gui_input(event: InputEvent) -> void:

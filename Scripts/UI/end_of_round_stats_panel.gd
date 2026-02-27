@@ -59,6 +59,8 @@ var total_bonus: int = 0
 var _animation_tween: Tween
 var _is_animating: bool = false
 
+@onready var _tfx := get_node("/root/TweenFXHelper")
+
 
 func _ready() -> void:
 	# Hide by default
@@ -318,6 +320,9 @@ func _build_ui() -> void:
 	
 	# Connect button signal
 	continue_button.pressed.connect(_on_continue_button_pressed)
+	continue_button.mouse_entered.connect(_tfx.button_hover.bind(continue_button))
+	continue_button.mouse_exited.connect(_tfx.button_unhover.bind(continue_button))
+	continue_button.pressed.connect(_tfx.button_press.bind(continue_button))
 
 
 ## show_stats(data: Dictionary)

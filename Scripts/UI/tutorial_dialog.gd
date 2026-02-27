@@ -8,7 +8,7 @@ extends Control
 
 signal next_clicked
 signal skip_confirmed
-signal dialog_dismissed
+signal dialog_dismissed  # May be used by external listeners
 
 # Constants
 const TYPEWRITER_SPEED: float = 0.02  # Seconds per character
@@ -42,12 +42,14 @@ var _typewriter_tween: Tween
 var _transition_tween: Tween
 var _full_message_text: String = ""
 var _typing_complete: bool = false
+var _tfx: Node = null
 
 
 func _ready() -> void:
 	# Ensure dialog works when game is paused
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	print("[TutorialDialog] _ready() called")
+	_tfx = get_node_or_null("/root/TweenFXHelper")
 	_load_textures()
 	_build_ui()
 	hide_dialog()
@@ -178,11 +180,15 @@ func _build_ui() -> void:
 	# Skip button
 	skip_button = _create_button("Skip Tutorial", Color(0.5, 0.4, 0.4, 1.0), true)
 	skip_button.pressed.connect(_on_skip_pressed)
+	skip_button.mouse_entered.connect(func(): _tfx.button_hover(skip_button))
+	skip_button.mouse_exited.connect(func(): _tfx.button_unhover(skip_button))
 	button_row.add_child(skip_button)
 	
 	# Next button
 	next_button = _create_button("Next →", Color(0.3, 0.7, 0.4, 1.0), false)
 	next_button.pressed.connect(_on_next_pressed)
+	next_button.mouse_entered.connect(func(): _tfx.button_hover(next_button))
+	next_button.mouse_exited.connect(func(): _tfx.button_unhover(next_button))
 	button_row.add_child(next_button)
 	
 	# Skip confirmation dialog
@@ -373,7 +379,7 @@ func _position_dialog(step) -> void:
 		return
 	
 	var screen_size = get_viewport_rect().size
-	var dialog_size = dialog_panel.custom_minimum_size
+	var _dialog_size = dialog_panel.custom_minimum_size
 	var margin := 20.0
 	
 	# Get position hint (defaults to "auto" if property doesn't exist)

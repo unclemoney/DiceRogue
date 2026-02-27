@@ -35,11 +35,13 @@ var _is_animating: bool = false
 
 # Reference to ProgressManager for getting item details
 var _progress_manager = null
+var _tfx: Node = null
 
 
 func _ready() -> void:
 	visible = false
 	_progress_manager = get_node_or_null("/root/ProgressManager")
+	_tfx = get_node_or_null("/root/TweenFXHelper")
 	
 	# Ensure this control fills the entire screen
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -133,6 +135,8 @@ func _build_ui() -> void:
 	ok_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	ok_button.add_theme_font_size_override("font_size", 18)
 	ok_button.pressed.connect(_on_ok_pressed)
+	ok_button.mouse_entered.connect(func(): _tfx.button_hover(ok_button))
+	ok_button.mouse_exited.connect(func(): _tfx.button_unhover(ok_button))
 	ok_button.disabled = true  # Disabled until reveal completes
 	main_vbox.add_child(ok_button)
 

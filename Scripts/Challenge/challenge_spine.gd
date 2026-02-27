@@ -17,6 +17,7 @@ signal spine_unhovered()
 @onready var points_label: Label
 @onready var title_label: Label
 @onready var reward_label: Label
+@onready var _tfx := get_node("/root/TweenFXHelper")
 
 # Text to display
 var _goal_text: String = "No Goal"
@@ -50,12 +51,16 @@ func _ready() -> void:
 		mouse_entered.connect(_on_mouse_entered)
 	if not mouse_exited.is_connected(_on_mouse_exited):
 		mouse_exited.connect(_on_mouse_exited)
+	
+	# Idle personality animation — post-it wiggle
+	_tfx.idle_wiggle(self)
 
 
 func _exit_tree() -> void:
 	if _current_tween and _current_tween.is_valid():
 		_current_tween.kill()
 		_current_tween = null
+	_tfx.stop_effect(self)
 	if _hover_timer:
 		_hover_timer.stop()
 	_hide_tooltip()
@@ -221,8 +226,12 @@ func set_points_goal(points: int) -> void:
 ## set_current_progress(progress)
 ##
 ## Updates the current progress for tooltip display.
+## Fires a celebration effect when the challenge goal is met.
 func set_current_progress(progress: int) -> void:
+	var was_incomplete := _current_progress < _points_goal
 	_current_progress = progress
+	if was_incomplete and _points_goal > 0 and progress >= _points_goal:
+		_tfx.celebration(self)
 
 
 ## set_reward_text(text)
@@ -325,9 +334,11 @@ func _on_mouse_entered() -> void:
 	if _current_tween and _current_tween.is_valid():
 		_current_tween.kill()
 	
-	_current_tween = create_tween().set_parallel()
+	_current_tween = create_tween()
 	_current_tween.tween_property(self, "position", _base_position + _hover_offset, 0.1)
-	_current_tween.tween_property(self, "scale", Vector2(1.05, 1.05), 0.1)
+	
+	# Jelly scale effect via TweenFXHelper
+	_tfx.spine_hover(self)
 
 
 func _on_mouse_exited() -> void:
@@ -347,9 +358,11 @@ func _on_mouse_exited() -> void:
 	if _current_tween and _current_tween.is_valid():
 		_current_tween.kill()
 	
-	_current_tween = create_tween().set_parallel()
+	_current_tween = create_tween()
 	_current_tween.tween_property(self, "position", _base_position, 0.1)
-	_current_tween.tween_property(self, "scale", Vector2.ONE, 0.1)
+	
+	# Snap-back scale effect via TweenFXHelper
+	_tfx.spine_unhover(self)
 
 
 func _gui_input(event: InputEvent) -> void:

@@ -25,6 +25,7 @@ const SETTINGS_MENU_SCENE := preload("res://Scenes/UI/SettingsMenu.tscn")
 
 # Autoload reference (fetched at runtime to avoid LSP errors)
 var _game_settings: Node = null
+var _tfx: Node = null
 
 # UI References
 var title_label: Label
@@ -58,6 +59,7 @@ var _deleting_slot: int = 0
 
 func _ready() -> void:
 	_game_settings = get_node_or_null("/root/GameSettings")
+	_tfx = get_node_or_null("/root/TweenFXHelper")
 	_load_theme()
 	_build_ui()
 	_update_profile_buttons()
@@ -83,8 +85,8 @@ func _load_theme() -> void:
 
 
 func _exit_tree() -> void:
-	if title_tween and title_tween.is_valid():
-		title_tween.kill()
+	if title_label:
+		_tfx.stop_effect(title_label)
 
 
 ## _build_ui()
@@ -322,6 +324,11 @@ func _create_profile_button(slot: int) -> Button:
 	btn.pressed.connect(_on_profile_button_pressed.bind(slot))
 	btn.gui_input.connect(_on_profile_button_gui_input.bind(slot))
 	
+	# TweenFX hover/press effects
+	btn.mouse_entered.connect(func(): _tfx.button_hover(btn))
+	btn.mouse_exited.connect(func(): _tfx.button_unhover(btn))
+	btn.pressed.connect(func(): _tfx.button_press(btn))
+	
 	return btn
 
 
@@ -361,6 +368,13 @@ func _build_navigation_section(parent: Control) -> void:
 	quit_button = _create_nav_button("QUIT", Color(0.7, 0.4, 0.4, 1.0))
 	quit_button.pressed.connect(_on_quit_pressed)
 	button_container.add_child(quit_button)
+	
+	# Connect TweenFX hover/press effects to all nav buttons
+	var nav_buttons = [new_game_button, settings_button, tutorial_button, quit_button]
+	for btn in nav_buttons:
+		btn.mouse_entered.connect(func(): _tfx.button_hover(btn))
+		btn.mouse_exited.connect(func(): _tfx.button_unhover(btn))
+		btn.pressed.connect(func(): _tfx.button_press(btn))
 
 
 ## _create_nav_button(text, accent_color)
@@ -452,6 +466,8 @@ func _build_rename_dialog() -> void:
 	delete_btn.add_theme_color_override("font_color", Color(0.9, 0.3, 0.3, 1.0))
 	delete_btn.add_theme_color_override("font_hover_color", Color(1.0, 0.4, 0.4, 1.0))
 	delete_btn.pressed.connect(_on_delete_profile_button_pressed)
+	delete_btn.mouse_entered.connect(func(): _tfx.button_hover(delete_btn))
+	delete_btn.mouse_exited.connect(func(): _tfx.button_unhover(delete_btn))
 	dialog_vbox.add_child(delete_btn)
 	
 	# Add the VBox to the dialog's content area
@@ -487,33 +503,12 @@ func _build_delete_dialog() -> void:
 
 ## _start_title_animation()
 ##
-## Starts the floating animation for the title.
+## Starts the floating animation for the title using TweenFXHelper.
 func _start_title_animation() -> void:
 	if not title_label:
 		return
 	
-	title_base_position = title_label.position
-	_animate_title_float()
-
-
-## _animate_title_float()
-##
-## Creates a looping float animation for the title.
-func _animate_title_float() -> void:
-	if title_tween and title_tween.is_valid():
-		title_tween.kill()
-	
-	title_tween = create_tween()
-	title_tween.set_loops()
-	title_tween.set_trans(Tween.TRANS_SINE)
-	title_tween.set_ease(Tween.EASE_IN_OUT)
-	
-	# Float up
-	title_tween.tween_property(title_label, "position:y", 
-		title_base_position.y - TITLE_FLOAT_AMOUNT, TITLE_FLOAT_DURATION)
-	# Float down
-	title_tween.tween_property(title_label, "position:y",
-		title_base_position.y + TITLE_FLOAT_AMOUNT, TITLE_FLOAT_DURATION)
+	_tfx.idle_float(title_label, TITLE_FLOAT_AMOUNT)
 
 
 ## _update_profile_buttons()
