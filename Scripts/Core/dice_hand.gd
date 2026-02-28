@@ -34,6 +34,10 @@ signal all_dice_exited
 @export var default_dice_data: DiceData
 @export var d6_dice_data: DiceData = preload("res://Scripts/Dice/d6_dice.tres")
 @export var d4_dice_data: DiceData = preload("res://Scripts/Dice/d4_dice.tres")
+@export var d8_dice_data: DiceData = preload("res://Scripts/Dice/d8_dice.tres")
+@export var d10_dice_data: DiceData = preload("res://Scripts/Dice/d10_dice.tres")
+@export var d12_dice_data: DiceData = preload("res://Scripts/Dice/d12_dice.tres")
+@export var d20_dice_data: DiceData = preload("res://Scripts/Dice/d20_dice.tres")
 @export var roll_sound: AudioStreamWAV
 
 # Add debug state tracking
@@ -659,6 +663,26 @@ func switch_dice_type(type: String) -> void:
 				push_error("[DiceHand] D6 dice data not assigned!")
 				return
 			new_dice_data = d6_dice_data
+		"d8":
+			if not d8_dice_data:
+				push_error("[DiceHand] D8 dice data not assigned!")
+				return
+			new_dice_data = d8_dice_data
+		"d10":
+			if not d10_dice_data:
+				push_error("[DiceHand] D10 dice data not assigned!")
+				return
+			new_dice_data = d10_dice_data
+		"d12":
+			if not d12_dice_data:
+				push_error("[DiceHand] D12 dice data not assigned!")
+				return
+			new_dice_data = d12_dice_data
+		"d20":
+			if not d20_dice_data:
+				push_error("[DiceHand] D20 dice data not assigned!")
+				return
+			new_dice_data = d20_dice_data
 		_:
 			push_error("[DiceHand] Unknown dice type:", type)
 			return

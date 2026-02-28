@@ -133,7 +133,22 @@ Full documentation with parameters, recipes, and technical deep-dives: See `ARCA
 - **Dice** (`Scripts/Core/dice.gd`) - Individual die behavior
 - **DiceHand** (`Scripts/Core/dice_hand.gd`) - Collection of 5 dice
 - **DiceResults** (autoload) - Result data structure
+- **DiceData** (`Scripts/Dice/DiceData.gd`) - Resource defining dice type (sides, textures)
 - **DiceColor** (`Scripts/Core/dice_color.gd`) - Color system for dice enhancement
+
+#### Dice Types
+DiceRogue supports multiple dice types, each with their own face textures and value ranges:
+
+| Type | Sides | Resource | Status |
+|------|-------|----------|--------|
+| d4   | 4     | `Scripts/Dice/d4_dice.tres` | Active |
+| d6   | 6     | `Scripts/Dice/d6_dice.tres` | Active (default) |
+| d8   | 8     | `Scripts/Dice/d8_dice.tres` | Resource ready |
+| d10  | 10    | `Scripts/Dice/d10_dice.tres` | Resource ready |
+| d12  | 12    | `Scripts/Dice/d12_dice.tres` | Resource ready |
+| d20  | 20    | `Scripts/Dice/d20_dice.tres` | Resource ready |
+
+Dice types are assigned per-round via `ChallengeData.dice_type` and applied through `DiceHand.switch_dice_type()`. See `BUILD_DICE.md` for full design rules covering dynamic upper section scoring, balance considerations, and debuff concepts for non-standard dice.
 
 #### Dice Color System
 The **Dice Color System** adds strategic depth through randomly colored dice that provide different bonuses:
