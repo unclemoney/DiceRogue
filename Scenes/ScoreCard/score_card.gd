@@ -955,7 +955,8 @@ func _categorize_modifier_source(source_name: String) -> String:
 			"roll_efficiency", "pair_paradise",
 			"modded_dice_mastery", "rainbow_surge",
 			"consumable_collector", "daring_dice",
-			"extra_rainbow"
+			"extra_rainbow",
+			"melting_dice", "one_roll_wonder", "power_surge", "snake_eyes"
 		]
 		
 		if lower_name in powerup_sources:

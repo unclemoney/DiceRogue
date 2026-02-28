@@ -29,6 +29,7 @@ var tutorial_warning_dialog: ConfirmationDialog = null
 
 func _ready() -> void:
 	visible = false
+	#process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_ui()
 
 
@@ -224,6 +225,7 @@ func _on_main_menu_pressed() -> void:
 		_show_tutorial_warning()
 		return
 	
+	hide_menu()
 	_return_to_main_menu()
 
 

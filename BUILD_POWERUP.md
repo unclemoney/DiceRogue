@@ -700,6 +700,35 @@ _add_default_power_up("grand_master", "Grand Master", "All scoring categories ge
 |----|------|--------|
 | `yahtzeed_dice` | Yahtzeed Dice | Gain +1 die every time you roll a Yahtzee (max 16 dice) |
 
+### Momentum Wave (5 total)
+
+Streak/momentum powerups that reward consistency, risk-taking, and synergy.
+
+#### Common ($50)
+| ID | Name | Effect |
+|----|------|--------|
+| `melting_dice` | Melting Dice | Starts at +80 additive bonus; decays by 8 each time you score (min 0). Front-loaded value that rewards early purchases. |
+
+#### Uncommon ($125)
+| ID | Name | Effect |
+|----|------|--------|
+| `hot_streak` | Hot Streak | +3 additive per consecutive turn scoring 15+. Resets to 0 on any turn scoring below 15. Rewards consistency. |
+
+#### Rare ($250)
+| ID | Name | Effect |
+|----|------|--------|
+| `one_roll_wonder` | One Roll Wonder | +40 additive bonus when you score on your first roll (0 rerolls used). Rewards bold play. |
+
+#### Epic ($400)
+| ID | Name | Effect |
+|----|------|--------|
+| `power_surge` | Power Surge | +0.15× multiplier per owned PowerUp when scoring. Scales with your collection size. |
+
+#### Legendary ($600)
+| ID | Name | Effect |
+|----|------|--------|
+| `snake_eyes` | Snake Eyes | Each die showing 1 grants +0.2× multiplier. All dice showing 1 = flat 3.0× multiplier. High risk, massive reward. |
+
 ## Best Practices
 
 1. **Always test PowerUp cleanup** - Use remove() and verify no memory leaks

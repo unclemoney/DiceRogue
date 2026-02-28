@@ -98,7 +98,7 @@ func button_hover(node: CanvasItem) -> Tween:
 	if node is BaseButton and (node as BaseButton).disabled:
 		return null
 	_center_pivot(node)
-	return TweenFX.rubber_band(node, 0.4, 0.15) #2
+	return TweenFX.rubber_band(node, 0.3, 0.05) #2
 
 ## button_unhover(node)
 ##

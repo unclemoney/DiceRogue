@@ -1052,6 +1052,36 @@ func _activate_power_up(power_up_id: String) -> void:
 				print("[GameController] Applied ExtraRainbowPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for ExtraRainbowPowerUp")
+		"melting_dice":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied MeltingDicePowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for MeltingDicePowerUp")
+		"hot_streak":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied HotStreakPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for HotStreakPowerUp")
+		"one_roll_wonder":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied OneRollWonderPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for OneRollWonderPowerUp")
+		"power_surge":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied PowerSurgePowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for PowerSurgePowerUp")
+		"snake_eyes":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied SnakeEyesPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for SnakeEyesPowerUp")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -1288,6 +1318,21 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"extra_rainbow":
 			print("[GameController] Removing extra_rainbow PowerUp")
 			pu.remove(scorecard)
+		"melting_dice":
+			print("[GameController] Removing melting_dice PowerUp")
+			pu.remove(scorecard)
+		"hot_streak":
+			print("[GameController] Removing hot_streak PowerUp")
+			pu.remove(scorecard)
+		"one_roll_wonder":
+			print("[GameController] Removing one_roll_wonder PowerUp")
+			pu.remove(scorecard)
+		"power_surge":
+			print("[GameController] Removing power_surge PowerUp")
+			pu.remove(scorecard)
+		"snake_eyes":
+			print("[GameController] Removing snake_eyes PowerUp")
+			pu.remove(scorecard)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -1415,6 +1460,16 @@ func revoke_power_up(power_up_id: String) -> void:
 			"great_exchange":
 				pu.remove(self)
 			"extra_rainbow":
+				pu.remove(scorecard)
+			"melting_dice":
+				pu.remove(scorecard)
+			"hot_streak":
+				pu.remove(scorecard)
+			"one_roll_wonder":
+				pu.remove(scorecard)
+			"power_surge":
+				pu.remove(scorecard)
+			"snake_eyes":
 				pu.remove(scorecard)
 			_:
 				# For unknown types, use the stored reference in the PowerUp itself

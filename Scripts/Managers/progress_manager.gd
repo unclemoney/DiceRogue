@@ -1069,6 +1069,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 2, 2)
 	_add_default_power_up("dice_diversity", "Dice Diversity", "+$5 per unique dice value scored", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 25, 2, {"category": "chance"})
+	_add_default_power_up("melting_dice", "Melting Dice", "Starts +80 additive, melts by 8 each score", 
+		UnlockConditionClass.ConditionType.COMPLETE_GAME, 3, 2)
 	
 	# --- Difficulty 3: Common PowerUps ---
 	_add_default_power_up("foursome", "Foursome", "Bonus for four of a kind", 
@@ -1101,6 +1103,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 120, 4)
 	_add_default_power_up("chore_sprint", "Chore Sprint", "Chore completions reduce goof-off by extra 10", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 8, 4, {"cumulative": true})
+	_add_default_power_up("hot_streak", "Hot Streak", "+3 per consecutive turn scoring 15+", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 125, 4)
 	
 	# --- Difficulty 5: Mid-tier PowerUps ---
 	_add_default_power_up("upper_bonus_mult", "Upper Bonus Multiplier", "Multiplies upper bonus", 
@@ -1119,6 +1123,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 20, 5, {"category": "fives"})
 	_add_default_power_up("extra_rainbow", "Extra Rainbow", "+10 per colored die scored", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5, 5)
+	_add_default_power_up("one_roll_wonder", "One-Roll Wonder", "Score on first roll = +40 additive", 
+		UnlockConditionClass.ConditionType.WIN_GAMES, 5, 5)
 	
 	# --- Difficulty 6: Rare PowerUps ---
 	_add_default_power_up("money_well_spent", "Money Well Spent", "Convert money to score", 
@@ -1157,6 +1163,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 4, 7)
 	_add_default_power_up("extra_coupons", "Extra Coupons", "Hold 2 additional consumables (5 max)", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 20, 7, {"cumulative": true})
+	_add_default_power_up("power_surge", "Power Surge", "+0.15x multiplier per owned PowerUp", 
+		UnlockConditionClass.ConditionType.WIN_GAMES, 15, 7)
 	
 	# --- Difficulty 8: High-tier PowerUps ---
 	_add_default_power_up("blue_slime", "Blue Slime", "Doubles blue dice probability", 
@@ -1173,6 +1181,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 10, 9)
 	_add_default_power_up("grand_master", "Grand Master", "All scoring categories get +10%", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 15, 9)
+	_add_default_power_up("snake_eyes", "Snake Eyes", "Each 1 = +0.2x mult. All 1s = 3.0x!", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 10, 9)
 	
 	# --- Difficulty 10: Mythic PowerUps ---
 	_add_default_power_up("dice_lord", "Dice Lord", "Start each round with one guaranteed Yahtzee", 
