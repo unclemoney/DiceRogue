@@ -22,10 +22,10 @@ Dice types are assigned per-round via `ChallengeData.dice_type` and applied thro
 |------|-------|--------|---------------|
 | d4   | 4     | Active | `Scripts/Dice/d4_dice.tres` |
 | d6   | 6     | Active (default) | `Scripts/Dice/d6_dice.tres` |
-| d8   | 8     | Resource ready | `Scripts/Dice/d8_dice.tres` |
-| d10  | 10    | Resource ready | `Scripts/Dice/d10_dice.tres` |
-| d12  | 12    | Resource ready | `Scripts/Dice/d12_dice.tres` |
-| d20  | 20    | Resource ready | `Scripts/Dice/d20_dice.tres` |
+| d8   | 8     | Scoring active | `Scripts/Dice/d8_dice.tres` |
+| d10  | 10    | Scoring active | `Scripts/Dice/d10_dice.tres` |
+| d12  | 12    | Scoring active | `Scripts/Dice/d12_dice.tres` |
+| d20  | 20    | Scoring active | `Scripts/Dice/d20_dice.tres` |
 
 ### Art Assets
 
@@ -133,27 +133,30 @@ The risk/reward increases with dice size — higher ceiling on the 6th slot, but
 
 #### Implementation Notes
 
-**Files to modify** (not yet implemented):
+**IMPLEMENTED** — Dynamic 6th slot scoring is now active:
 
 1. **`Scenes/ScoreCard/score_card.gd`**:
-   - Replace the static `"sixes"` key in `upper_scores` with a dynamic key based on `dice_data.sides`
-   - Add a function like `get_dynamic_upper_key(sides: int) -> String` that returns `"eights"`, `"tens"`, etc.
-   - Update `calculate_number_score()` calls for the 6th category to use `sides` as the target number
-   - Consider disabling Fives/Sixes rows for d4
+   - Added `current_dice_sides`, `sixth_slot_target` variables
+   - Added `set_dice_type(sides)` to update the 6th slot target at runtime
+   - Added `get_sixth_slot_display_name()` for UI text ("Sixes", "Eights", etc.)
+   - Added `calculate_upper_bonus_base_threshold()` for dice-type-aware bonus threshold
+   - `_get_used_dice_for_category()` uses `sixth_slot_target` for the "sixes" category
+   - `_format_category_display_name()` returns the dynamic name
+   - The key remains `"sixes"` internally to avoid breaking node path references
 
 2. **`Scripts/Core/score_evaluator.gd`**:
-   - `evaluate_normal()` currently hardcodes `calculate_number_score(values, 1)` through `calculate_number_score(values, 6)`
-   - The 6th call should use the active dice's `sides` value instead of `6`
-   - For d4: skip categories 5 and 6 (or return 0)
+   - Added `current_dice_sides` property and `set_dice_sides()` method
+   - `evaluate_normal()` uses `current_dice_sides` for the 6th upper category
+   - `is_small_straight()` generalized to check all 4-consecutive sequences up to `current_dice_sides`
+   - `generate_wildcard_combinations()` uses `current_dice_sides` instead of hardcoded 6
 
 3. **`Scripts/UI/score_card_ui.gd`**:
-   - `SixesContainer` node label/button text should update dynamically (e.g., "Eights:" for d8)
-   - `_create_level_labels()` has a hardcoded `["ones", "twos", "threes", "fours", "fives", "sixes"]` array that needs updating
-   - For d4: visually disable/hide the 5th and 6th row containers
+   - Added `update_sixth_slot_display()` — updates SixesButton text dynamically
+   - Called from `bind_scorecard()` and by RoundManager after dice type changes
 
-4. **`Scenes/UI/score_card_ui.tscn`**:
-   - The `SixesContainer` should be renamed or made generic (e.g., `DynamicUpperContainer`)
-   - Consider adding a label that shows the current dice type name
+4. **`Scripts/Managers/round_manager.gd`**:
+   - After `switch_dice_type()`, propagates dice sides to Scorecard and ScoreEvaluator
+   - Also triggers `update_sixth_slot_display()` on the UI
 
 ### Upper Bonus Threshold Rebalancing
 
@@ -172,17 +175,19 @@ For different dice types, the threshold should scale:
 
 **Formula**: `threshold = 3 × (1 + 2 + 3 + 4 + 5 + sides)` when sides ≥ 6, or `3 × sum(1..sides)` when sides < 6.
 
-This could be implemented as:
+**IMPLEMENTED** as `calculate_upper_bonus_base_threshold()` in `score_card.gd`:
 ```gdscript
-func calculate_upper_bonus_threshold(sides: int) -> int:
-    if sides <= 5:
+func calculate_upper_bonus_base_threshold() -> int:
+    if current_dice_sides <= 5:
         var total := 0
-        for i in range(1, sides + 1):
+        for i in range(1, current_dice_sides + 1):
             total += i
         return total * 3
     else:
-        return (1 + 2 + 3 + 4 + 5 + sides) * 3
+        return (1 + 2 + 3 + 4 + 5 + sixth_slot_target) * 3
 ```
+
+`get_scaled_upper_bonus_threshold()` now calls this instead of using the hardcoded UPPER_BONUS_THRESHOLD constant.
 
 ### Lower Section Considerations
 
@@ -286,7 +291,7 @@ func remove() -> void:
 | 4 | 1×d6 + 2×d4 + 2×d8 (chaotic) |
 | 5 | All different types (1×d4, 1×d6, 1×d8, 1×d10, 1×d12) |
 
-**Implementation**: Follow `BUILD_DEBUFF.md` (Script → Scene → Resource → register in DebuffManager).
+**IMPLEMENTED**: Script at `Scripts/Debuff/mixed_bag_debuff.gd`, scene at `Scenes/Debuff/MixedBagDebuff.tscn`, resource at `Scripts/Debuff/MixedBagDebuff.tres`. Registered in `game_controller.gd` `apply_debuff()`. Add the `.tres` to DebuffManager's `debuff_defs` array via the Inspector to activate.
 
 ---
 

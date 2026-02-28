@@ -2166,6 +2166,9 @@ func apply_debuff(id: String) -> void:
 		"one_shot":
 			debuff.target = self
 			debuff.start()
+		"mixed_bag":
+			debuff.target = dice_hand
+			debuff.start()
 		_:
 			push_error("[GameController] Unknown debuff type: %s" % id)
 

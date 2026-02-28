@@ -14,6 +14,6 @@ scene = ExtResource("2_tblbe")
 debuff_ids = Array[String]([])
 target_score = 150
 reward_money = 100
-dice_type = "d20"
+dice_type = "d8"
 difficulty = 0
 metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

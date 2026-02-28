@@ -147,6 +147,24 @@ func bind_scorecard(sc: Scorecard):
 
 	# Set scorecard in DiceResults
 	DiceResults.set_scorecard(scorecard)
+	
+	# Update 6th slot display for current dice type
+	update_sixth_slot_display()
+
+
+## update_sixth_slot_display()
+##
+## Updates the 6th upper section row (SixesContainer) to show the correct
+## category name for the active dice type. For d6: "Sixes:", for d8: "Eights:", etc.
+func update_sixth_slot_display() -> void:
+	if not scorecard:
+		return
+	var display_name = scorecard.get_sixth_slot_display_name()
+	var button_path = "HBoxContainer/UpperVBoxContainer/UpperGridContainer/SixesContainer/SixesButton"
+	var button = get_node_or_null(button_path)
+	if button:
+		button.text = display_name + ":"
+		print("[ScoreCardUI] Updated 6th slot button text to '%s:'" % display_name)
 
 
 ## update_all()

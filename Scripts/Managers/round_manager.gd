@@ -310,6 +310,19 @@ func start_round(round_number: int) -> void:
 	# Set the dice type
 	if dice_hand:
 		dice_hand.switch_dice_type(round_data.dice_type)
+		
+		# Propagate dice sides to scoring systems for dynamic upper section
+		var dice_sides = dice_hand.default_dice_data.sides if dice_hand.default_dice_data else 6
+		if scorecard:
+			scorecard.set_dice_type(dice_sides)
+		ScoreEvaluatorSingleton.set_dice_sides(dice_sides)
+		
+		# Update ScoreCardUI 6th slot display
+		var score_card_ui = get_tree().get_first_node_in_group("scorecard_ui")
+		if score_card_ui and score_card_ui.has_method("update_sixth_slot_display"):
+			score_card_ui.update_sixth_slot_display()
+		
+		print("[RoundManager] Propagated dice sides (%d) to scorecard and evaluator" % dice_sides)
 
 	# Reset the scorecard scores but preserve category levels (upgrades persist across rounds)
 	if scorecard:

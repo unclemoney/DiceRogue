@@ -143,12 +143,16 @@ DiceRogue supports multiple dice types, each with their own face textures and va
 |------|-------|----------|--------|
 | d4   | 4     | `Scripts/Dice/d4_dice.tres` | Active |
 | d6   | 6     | `Scripts/Dice/d6_dice.tres` | Active (default) |
-| d8   | 8     | `Scripts/Dice/d8_dice.tres` | Resource ready |
-| d10  | 10    | `Scripts/Dice/d10_dice.tres` | Resource ready |
-| d12  | 12    | `Scripts/Dice/d12_dice.tres` | Resource ready |
-| d20  | 20    | `Scripts/Dice/d20_dice.tres` | Resource ready |
+| d8   | 8     | `Scripts/Dice/d8_dice.tres` | Scoring active |
+| d10  | 10    | `Scripts/Dice/d10_dice.tres` | Scoring active |
+| d12  | 12    | `Scripts/Dice/d12_dice.tres` | Scoring active |
+| d20  | 20    | `Scripts/Dice/d20_dice.tres` | Scoring active |
 
-Dice types are assigned per-round via `ChallengeData.dice_type` and applied through `DiceHand.switch_dice_type()`. See `BUILD_DICE.md` for full design rules covering dynamic upper section scoring, balance considerations, and debuff concepts for non-standard dice.
+Dice types are assigned per-round via `ChallengeData.dice_type` and applied through `DiceHand.switch_dice_type()`. When a non-d6 dice type is active, the scoring system adapts automatically:
+- **Dynamic 6th slot**: The upper section's 6th row changes to match the dice's max value (e.g., "Eights" for d8, "Twenties" for d20)
+- **Upper bonus scaling**: The bonus threshold adjusts per dice type (63 for d6, 69 for d8, 105 for d20)
+- **Generalized straights**: Small and large straight detection works with any dice size
+- See `BUILD_DICE.md` for full design rules and balance considerations.
 
 #### Dice Color System
 The **Dice Color System** adds strategic depth through randomly colored dice that provide different bonuses:

@@ -3,6 +3,20 @@ extends Node
 
 var _evaluation_count := 0  # Add at top of class
 
+# Tracks the active dice type for dynamic upper section scoring
+# Set by Scorecard/RoundManager when dice type changes
+var current_dice_sides: int = 6
+
+
+## set_dice_sides(sides)
+##
+## Updates the evaluator to score the 6th upper category for the given dice type.
+## For d8+, the "sixes" key evaluates count(sides) × sides instead of count(6) × 6.
+func set_dice_sides(sides: int) -> void:
+	current_dice_sides = sides
+	print("[ScoreEvaluator] Dice sides set to %d" % sides)
+
+
 func reset_evaluation_count() -> void:
 	_evaluation_count = 0
 
@@ -37,7 +51,7 @@ func evaluate_with_wildcards(dice_values: Array[int]) -> Dictionary:
 	# ScoreEvaluator only calculates base scores for categories
 
 	# Only generate combinations once
-	var combinations = generate_wildcard_combinations(wildcard_indices.size(), 6)
+	var combinations = generate_wildcard_combinations(wildcard_indices.size(), current_dice_sides)
 	#print("Generated", combinations.size(), "possible combinations")
 	
 	# Check if this could be a bonus Yahtzee first
@@ -140,13 +154,19 @@ func evaluate_normal(values: Array[int]) -> Dictionary:
 	# Cache yahtzee check to avoid multiple calls
 	var yahtzee_score = calculate_yahtzee_score(filtered_values)
 	
+	# Determine what value the 6th upper slot targets
+	# For d6: targets 6 (standard). For d8+: targets dice_sides (e.g., 8, 10, 12, 20)
+	var sixth_target = 6
+	if current_dice_sides > 6:
+		sixth_target = current_dice_sides
+	
 	return {
 		"ones": calculate_number_score(filtered_values, 1),
 		"twos": calculate_number_score(filtered_values, 2),
 		"threes": calculate_number_score(filtered_values, 3),
 		"fours": calculate_number_score(filtered_values, 4),
 		"fives": calculate_number_score(filtered_values, 5),
-		"sixes": calculate_number_score(filtered_values, 6),
+		"sixes": calculate_number_score(filtered_values, sixth_target),
 		"three_of_a_kind": calculate_of_a_kind_score(filtered_values, 3),
 		"four_of_a_kind": calculate_of_a_kind_score(filtered_values, 4),
 		"full_house": calculate_full_house_score(filtered_values),
@@ -255,7 +275,7 @@ func generate_wildcard_combinations(wildcard_count: int, sides: int) -> Array:
 		for v in regular_values:
 			priority_values[v] = true  # Same value for matching
 			priority_values[max(1, v - 1)] = true  # One less for straights
-			priority_values[min(6, v + 1)] = true  # One more for straights
+			priority_values[min(sides, v + 1)] = true  # One more for straights
 	else:
 		# If no regular values, use all sides
 		for i in range(1, sides + 1):
@@ -349,12 +369,17 @@ func get_unique(values: Array[int]) -> Array[int]:
 	
 func is_small_straight(values: Array[int]) -> bool:
 	var unique := get_unique(values)
-	var check_values: Array[int] = [1,2,3,4]
-	var check_values2: Array[int] = [2,3,4,5]
-	var check_values3: Array[int] = [3,4,5,6]
-	return check_values.all(func(x): return unique.has(x)) or \
-		   check_values2.all(func(x): return unique.has(x)) or \
-		   check_values3.all(func(x): return unique.has(x))
+	# Generalized: check all possible 4-consecutive sequences from 1 to current_dice_sides
+	var max_start = current_dice_sides - 3
+	for start in range(1, max_start + 1):
+		var seq_valid := true
+		for offset in range(4):
+			if not unique.has(start + offset):
+				seq_valid = false
+				break
+		if seq_valid:
+			return true
+	return false
 
 
 ## is_yahtzee()

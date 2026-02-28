@@ -26,6 +26,11 @@ var yahtzee_scored := false  # Tracks if initial yahtzee has been scored (not sc
 # Round 1 uses base values, each subsequent round scales by 10%
 var current_round_number: int = 1
 
+# Dice type tracking for dynamic 6th upper section slot
+# When dice_sides > 6, the 6th upper row scores for that value instead of 6
+var current_dice_sides: int = 6
+var sixth_slot_target: int = 6
+
 # Debug counter for calculate_score calls
 var calculate_score_call_count := 0
 
@@ -79,6 +84,54 @@ var allow_gap_straights: bool = false
 func _ready() -> void:
 	add_to_group("scorecard")
 	print("[Scorecard] Ready - Added to 'scorecard' group")
+
+
+## set_dice_type(sides)
+##
+## Updates the scorecard to reflect the active dice type.
+## For d8+, the 6th upper section slot targets the max face value.
+## For d4/d6, the 6th slot remains standard Sixes.
+##
+## Parameters:
+##   sides: int - number of faces on the active dice (4, 6, 8, 10, 12, 20)
+func set_dice_type(sides: int) -> void:
+	current_dice_sides = sides
+	if sides > 6:
+		sixth_slot_target = sides
+	else:
+		sixth_slot_target = 6
+	print("[Scorecard] Dice type set to d%d - 6th slot targets: %d (%s)" % [sides, sixth_slot_target, get_sixth_slot_display_name()])
+
+
+## get_sixth_slot_display_name()
+##
+## Returns the human-readable display name for the 6th upper section category.
+## Examples: "Sixes" (d6), "Eights" (d8), "Tens" (d10), "Twenties" (d20).
+func get_sixth_slot_display_name() -> String:
+	match sixth_slot_target:
+		4: return "Fours"
+		6: return "Sixes"
+		8: return "Eights"
+		10: return "Tens"
+		12: return "Twelves"
+		20: return "Twenties"
+		_: return "%ds" % sixth_slot_target
+
+
+## calculate_upper_bonus_base_threshold()
+##
+## Returns the base upper bonus threshold for the current dice type.
+## Formula: 3 × (1 + 2 + 3 + 4 + 5 + sixth_slot_target) for d6+
+## For d4: 3 × (1 + 2 + 3 + 4) = 30
+## Standard d6: 3 × (1 + 2 + 3 + 4 + 5 + 6) = 63
+func calculate_upper_bonus_base_threshold() -> int:
+	if current_dice_sides <= 5:
+		var total := 0
+		for i in range(1, current_dice_sides + 1):
+			total += i
+		return total * 3
+	else:
+		return (1 + 2 + 3 + 4 + 5 + sixth_slot_target) * 3
 
 
 func register_score_modifier(modifier: Object) -> void:
@@ -407,15 +460,17 @@ func check_lower_section() -> void:
 
 ## get_scaled_upper_bonus_threshold()
 ##
-## Returns the upper bonus threshold scaled by round number.
-## Round 1 uses base value (63), each subsequent round scales by 10%.
+## Returns the upper bonus threshold scaled by round number and dice type.
+## Uses dice-type-aware base threshold instead of hardcoded 63.
+## Round 1 uses base value, each subsequent round scales by 10%.
 ## Uses ceil() to ensure whole numbers and slightly harder progression.
 ##
 ## Returns: int - scaled threshold
 func get_scaled_upper_bonus_threshold() -> int:
+	var base = calculate_upper_bonus_base_threshold()
 	# Round 1 = base value, Round 2+ = 10% increase per round
 	var scale_factor = pow(1.1, max(0, current_round_number - 1))
-	return int(ceil(UPPER_BONUS_THRESHOLD * scale_factor))
+	return int(ceil(base * scale_factor))
 
 
 ## get_scaled_upper_bonus_amount()
@@ -572,6 +627,10 @@ func reset_scores() -> void:
 	
 	# Reset round scaling
 	current_round_number = 1
+	
+	# Reset dice type tracking
+	current_dice_sides = 6
+	sixth_slot_target = 6
 	
 	# Note: Multipliers are now handled by ScoreModifierManager
 	# PowerUps should manage their own multiplier lifecycle
@@ -888,9 +947,9 @@ func _get_used_dice_for_category(category: String, dice_values: Array, _dice_lis
 				if dice_values[i] == 5:
 					used_indices.append(i)
 		"sixes":
-			# Only dice with value 6 are used
+			# Dynamic 6th slot: uses sixth_slot_target instead of hardcoded 6
 			for i in range(dice_values.size()):
-				if dice_values[i] == 6:
+				if dice_values[i] == sixth_slot_target:
 					used_indices.append(i)
 		"three_of_a_kind", "four_of_a_kind":
 			# All dice are used (sum of all dice)
@@ -920,7 +979,7 @@ func _format_category_display_name(category: String) -> String:
 		"threes": return "Threes"
 		"fours": return "Fours"
 		"fives": return "Fives"
-		"sixes": return "Sixes"
+		"sixes": return get_sixth_slot_display_name()
 		"three_of_a_kind": return "Three of a Kind"
 		"four_of_a_kind": return "Four of a Kind"
 		"full_house": return "Full House"
