@@ -634,9 +634,9 @@ After completing a challenge and clicking the Shop button, an End of Round Stati
 - "Head to Shop" button to proceed after viewing stats
 
 **End of Round Bonuses:**
-- **Empty Category Bonus**: $25 for each unscored category on the scorecard
+- **Empty Category Bonus**: $10 for each unscored category on the scorecard
   - Rewards efficient play and early challenge completion
-  - Max possible: 13 categories × $25 = $325 (if completed without scoring anything)
+  - Max possible: 13 categories × $10 = $130 (if completed without scoring anything)
 - **Points Above Target Bonus**: $1 for each point above the challenge target score
   - Rewards exceeding the challenge requirements
   - Example: Challenge target 100, final score 130 = $30 bonus
@@ -651,7 +651,7 @@ After completing a challenge and clicking the Shop button, an End of Round Stati
 
 **Implementation:**
 - `EndOfRoundStatsPanel` (`Scripts/UI/end_of_round_stats_panel.gd`) - Panel UI and animation
-- `RoundManager.calculate_empty_category_bonus()` - Counts null categories × $25
+- `RoundManager.calculate_empty_category_bonus()` - Counts null categories × $10
 - `RoundManager.calculate_score_above_target_bonus()` - (score - target) × $1
 - Bonuses awarded via `PlayerEconomy.add_money()` when "Head to Shop" is clicked
 

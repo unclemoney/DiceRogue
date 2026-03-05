@@ -54,6 +54,9 @@ func _ready() -> void:
 	# Enable all groups by default
 	for g in Group.values():
 		_enabled_groups[g] = true
+	# Disable IDLE animations by default
+	_enabled_groups[Group.IDLE] = false
+	_enabled_groups[Group.SPINES] = false
 
 
 ## is_group_enabled(group)

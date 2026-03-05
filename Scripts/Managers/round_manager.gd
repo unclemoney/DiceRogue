@@ -428,11 +428,11 @@ func _on_challenge_failed(challenge_id: String) -> void:
 ## calculate_empty_category_bonus(scorecard_ref: Scorecard) -> int
 ##
 ## Calculates the bonus for unscored categories on the scorecard.
-## Awards $25 per empty (null) category in both upper and lower sections.
+## Awards $10 per empty (null) category in both upper and lower sections.
 ## @param scorecard_ref: Reference to the Scorecard node
 ## @return: Total bonus amount for empty categories
 func calculate_empty_category_bonus(scorecard_ref) -> int:
-	const EMPTY_CATEGORY_BONUS: int = 25
+	const EMPTY_CATEGORY_BONUS: int = 10
 	var empty_count: int = 0
 	
 	# Count upper section empty categories

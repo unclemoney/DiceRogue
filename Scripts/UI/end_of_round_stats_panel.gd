@@ -6,13 +6,13 @@ class_name EndOfRoundStatsPanel
 ## Displays end-of-round statistics with animated bonus reveals.
 ## Shows after clicking Shop button but before the Shop opens.
 ## Awards bonuses for challenge completion, chores completed,
-## empty scorecard categories ($25 each), and points above challenge target ($1 per point).
+## empty scorecard categories ($10 each), and points above challenge target ($1 per point).
 
 signal continue_to_shop_pressed
 signal panel_closed
 
 # Constants for bonus calculations
-const EMPTY_CATEGORY_BONUS: int = 25
+const EMPTY_CATEGORY_BONUS: int = 10
 const POINTS_ABOVE_TARGET_BONUS: int = 1
 
 # Animation settings
