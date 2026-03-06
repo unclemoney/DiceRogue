@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="BotConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Bot/BotConfig.gd" id="1_config"]
+
+[resource]
+script = ExtResource("1_config")
+attempts = 10
+channel_min = 1
+channel_max = 1
+visual_mode = false
+speed_multiplier = 10.0
+reset_between_runs = true
+turn_delay = 0.1
+log_verbose = true
+open_report_on_finish = true
+strategy_preset = "default"

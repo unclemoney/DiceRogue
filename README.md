@@ -1578,3 +1578,25 @@ These methods exist for compatibility but should not be used in new code:
 
 These issues are documented and tracked but don't impact functionality.
 
+### Automated Bot Testing System
+
+An automated bot player that runs full game sessions for stress-testing and balance analysis. The bot plays through complete runs (channel selection → rounds → turns → shop phases → win/lose) using a configurable strategy.
+
+**Key Features:**
+- State-machine-driven `BotController` that hooks into real game systems
+- Configurable via `BotConfig` resource (attempts, channels, speed, visual mode)
+- Strategy engine: always picks best score, highest rarity purchases, sells lowest rarity
+- Statistics collection: win rate, score distribution, loss round patterns, channel results
+- Error/crash/edge-case logging with severity levels
+- JSON report output to `user://bot_reports/`
+- In-game results panel with live status updates
+
+**Quick Start:**
+1. Open `Tests/BotTest.tscn`
+2. Assign `Resources/Data/default_bot_config.tres` to the root node's **Bot Config** export
+3. Run the scene (F6)
+
+**Files:** `Scripts/Bot/` (7 scripts), `Tests/bot_test.gd`, `Tests/bot_results_panel.gd`, `Tests/BotTest.tscn`
+
+See [BUILD_BOT.md](BUILD_BOT.md) for full setup instructions, configuration reference, and architecture details.
+

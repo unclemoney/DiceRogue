@@ -28,6 +28,14 @@ This game takes its inspiration from the following games: Balatro, Dicey Dungeon
 - Autoload scripts should not have class_name declarations.
 - When applicable be sure to use the godot-tools MCP server tools.
 
+## API Verification Guardrail
+Before calling any method, signal, or property from another script, **always verify its exact signature** (name, argument count, argument types, return type) by reading the source file.  Common mistakes this prevents:
+- Calling a method with the wrong number of arguments (e.g. `select_channel(channel)` when the method takes 0 args).
+- Calling a method that doesn't exist (e.g. `PlayerEconomy.reset()` when the actual method is `reset_to_starting_money()`).
+- Using the wrong property name or assuming a property exists without checking.
+
+**class_name scope errors in VS Code:** When the GDScript Language Server reports "Could not find type X in current scope" for class_name types that are correctly declared, this is typically an LSP indexing issue—not a code error.  Godot's own `global_script_class_cache.cfg` (in `.godot/`) is the source of truth for registered class_names.  To resolve: restart the GDScript language server, or close and reopen the Godot editor to force a re-import.  Do not refactor code to work around IDE-only scope errors when the class_name declarations are valid.
+
 ## Documentation Standards
 - Use Godot doc comments ## for any function header or documentation you want editors/IDE to surface.
 - Keep the top line the function signature (as a doc title): e.g. ## _on_game_start() then ## blank line, then description lines.

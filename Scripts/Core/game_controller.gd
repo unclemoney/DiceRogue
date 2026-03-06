@@ -3947,7 +3947,7 @@ func _apply_enhanced_mom_punishment() -> void:
 	
 	# Higher fine ($200-300)
 	var fine = randi_range(200, 300)
-	PlayerEconomy.subtract_money(fine)
+	PlayerEconomy.remove_money(fine, "mom_fine")
 	print("[GameController] Mom imposed fine: $%d" % fine)
 
 ## _show_mom_dialog(result)
