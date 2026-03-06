@@ -28,6 +28,21 @@ This game takes its inspiration from the following games: Balatro, Dicey Dungeon
 - Autoload scripts should not have class_name declarations.
 - When applicable be sure to use the godot-tools MCP server tools.
 
+## Item Creation & Unlock System
+**CRITICAL**: Every item (PowerUp, Consumable, Challenge, Debuff, Color Dice Mod, etc.) must register in the unlock system.
+
+**Required Steps for Every New Item**:
+1. **Create the item class** (.gd file extending proper base class)
+2. **Create UnlockCondition Resource** (.tres file defining when item unlocks)
+3. **Register in manager** (add to appropriate Manager's preload dictionary)
+4. **Verify unlock integration** (test that item unlocks when condition is met)
+
+**No item is complete without unlock system integration.** This ensures:
+- Items are properly gated by difficulty
+- Player progression is tracked correctly
+- Shop and reward systems work with item availability
+- Items appear in the correct game progression phases
+
 ## API Verification Guardrail
 Before calling any method, signal, or property from another script, **always verify its exact signature** (name, argument count, argument types, return type) by reading the source file.  Common mistakes this prevents:
 - Calling a method with the wrong number of arguments (e.g. `select_channel(channel)` when the method takes 0 args).

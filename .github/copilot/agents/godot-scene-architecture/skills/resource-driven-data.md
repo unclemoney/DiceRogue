@@ -1,3 +1,23 @@
+---
+skillName: Resource-Driven Data
+agentId: godot-scene-architecture
+activationKeywords:
+  - resource
+  - data
+  - configuration
+  - tres
+  - serialization
+  - export
+filePatterns:
+  - Resources/Data/*.tres
+  - Scripts/Core/*.gd
+  - Scripts/Game/*.gd
+examplePrompts:
+  - How do I make this data-driven instead of hardcoded?
+  - How do I design a custom Resource class?
+  - How should I structure game item data?
+---
+
 # Skill: Resource-Driven Data
 
 ## Purpose
@@ -32,7 +52,31 @@ Design clean, scalable data pipelines using Godot’s Resource system (.tres/.re
 - Focus exclusively on Godot 4.4.1 Resource systems.
 - Avoid speculative features or non-Godot data formats unless requested.
 - Do not enforce a specific data pipeline unless the user requests it.
+## DiceRogue Data Resources
 
+DiceRogue's game systems heavily use Resources:
+- **Challenge, Debuff, PowerUp, Consumable**: All inherit from Resource
+- **Dice configurations**: Color, behavior, modifiers
+- **Theme resources**: UI styling in `Resources/UI/theme.tres`
+
+When designing Resources for DiceRogue:
+1. Extend `Resource` and use `class_name`
+2. Mark properties as `@export` for inspector editing
+3. Use custom icons (16x16 PNG in Resources/Data/)
+4. Preload common resources in autoloads
+5. Version resources if they'll evolve over time
+
+Example resource structure:
+```gdscript
+extends Resource
+class_name ItemConfig
+
+@export var item_name: String
+@export var description: String
+@export var rarity: int = 1
+```
+
+Store in `Resources/Data/` by category (Items/, Challenges/, etc.)
 ## Example Prompt
 “I want all my items to be data-driven instead of hardcoded.”
 

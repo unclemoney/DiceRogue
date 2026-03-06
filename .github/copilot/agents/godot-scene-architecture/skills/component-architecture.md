@@ -1,3 +1,20 @@
+---
+skillName: Component Architecture
+agentId: godot-scene-architecture
+activationKeywords:
+  - component
+  - reusable
+  - composition
+  - modular
+filePatterns:
+  - Scripts/**/*.gd
+  - Scenes/**/*.tscn
+examplePrompts:
+  - Make this behavior reusable across multiple scenes
+  - Should I use inheritance or composition here?
+  - Convert this monolithic script into components
+---
+
 # Skill: Component Architecture
 
 ## Purpose
@@ -31,8 +48,17 @@ Design reusable, composition-based components for Godot 4.x that encapsulate beh
 ## Constraints
 - Focus exclusively on Godot 4.4.1.
 - Avoid speculative features or non-Godot patterns.
-- Do not enforce a specific architecture unless the user requests it.
+- Do not enforce a specific architecture unless the user requests it.- Follow DiceRogue coding standards: tabs, @onready, no ternary operators, class_name prefix unless autoload.
 
+## DiceRogue Component Examples
+
+When designing components for DiceRogue, consider systems like:
+- **HealthComponent**: Used by player, enemies, bosses - signal-based damage/heal
+- **AnimationComponent**: Handles TweenFX animations for dice rolls, scoring
+- **DebuffComponent**: Applies debuff logic to dice or scoring
+- **ConsumableEffect**: Applies consumable effects to scorecard or rolls
+
+Each should emit signals (e.g., `health_changed`, `debuff_applied`) that UI listens to without tight coupling.
 ## Example Prompt
 “I want enemies, NPCs, and the player to all use the same Health system. How should I build it?”
 

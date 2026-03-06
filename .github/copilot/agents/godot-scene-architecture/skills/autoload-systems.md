@@ -1,3 +1,21 @@
+---
+skillName: Autoload & Global Systems
+agentId: godot-scene-architecture
+activationKeywords:
+  - autoload
+  - global
+  - singleton
+  - service
+  - manager
+filePatterns:
+  - Scripts/Game/*.gd
+  - Scripts/Managers/*.gd
+examplePrompts:
+  - Should this be an autoload or a component?
+  - How do I design a clean global service?
+  - How do I reduce coupling in my autoloads?
+---
+
 # Skill: Autoload & Global Systems
 
 ## Purpose
@@ -32,7 +50,31 @@ Design clean, maintainable global systems using Godot’s autoload (singleton) m
 - Focus exclusively on Godot 4.4.1.
 - Avoid speculative features or non-Godot patterns.
 - Do not enforce autoload usage unless the user requests it.
+## DiceRogue Autoload Pattern
 
+DiceRogue autoloads should NOT have `class_name` (per project standard).
+Key autoloads in the project:
+- **GameController** (main lifecycle manager)
+- **PlayerEconomy** (money, progression state)
+- **ChoresManager** (task/challenge tracking)
+- **ChannelManager** (dice channel state)
+
+When designing new autoloads:
+1. Keep public API minimal and signal-driven
+2. Emit signals for state changes (UI listens, doesn't query)
+3. Avoid coupling to UI or scene nodes
+4. Use signal-based communication with scenes
+5. Initialize in `_ready()`, connect in `_enter_tree()`
+
+Example pattern:
+```gdscript
+extends Node
+
+signal state_changed(new_state)
+
+func set_state(new_state):
+    state_changed.emit(new_state)
+```
 ## Example Prompt
 “Should my inventory system be an autoload or a component?”
 

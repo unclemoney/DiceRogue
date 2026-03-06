@@ -1059,6 +1059,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.COMPLETE_GAME, 1, 1)
 	
 	# --- Difficulty 2: Early common PowerUps ---
+	_add_default_power_up("dice_doubler", "Dice Doubler", "Doubles the face value of every die after each roll", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 100, 2)
 	_add_default_power_up("extra_dice", "Extra Dice", "Start with an extra die", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 8, 2, {"category": "twos"})
 	_add_default_power_up("evens_no_odds", "Evens No Odds", "Additive bonus for even dice", 
