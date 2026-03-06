@@ -38,7 +38,7 @@ Create advanced, production-ready Godot 4.4.1 UI themes that support consistent 
 - When generating theme code, keep it modular and easy to maintain.
 
 ## Constraints
-- Focus exclusively on Godot 4.x theme systems.
+- Focus exclusively on Godot 4.4.1 theme systems.
 - Do not assume assets exist; always prompt for missing textures or icons.
 - Avoid speculative features or non-Godot frameworks.
 - Do not override project-specific design systems unless the user requests it.
