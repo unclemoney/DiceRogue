@@ -1082,12 +1082,6 @@ func _activate_power_up(power_up_id: String) -> void:
 				print("[GameController] Applied SnakeEyesPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for SnakeEyesPowerUp")
-		"dice_doubler":
-			if dice_hand:
-				pu.apply(dice_hand)
-				print("[GameController] Applied DiceDoublerPowerUp to dice_hand")
-			else:
-				push_error("[GameController] No dice_hand available for DiceDoublerPowerUp")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -1339,9 +1333,6 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"snake_eyes":
 			print("[GameController] Removing snake_eyes PowerUp")
 			pu.remove(scorecard)
-		"dice_doubler":
-			print("[GameController] Removing dice_doubler PowerUp")
-			pu.remove(dice_hand)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 

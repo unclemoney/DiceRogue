@@ -1,22 +1,3 @@
----
-skillName: Plugin Architecture
-agentId: godot-scene-architecture
-activationKeywords:
-  - plugin
-  - editor
-  - tool
-  - inspector
-  - gizmo
-  - addon
-filePatterns:
-  - addons/**/*.gd
-  - Scripts/Editor/*.gd
-examplePrompts:
-  - How do I create a custom editor plugin?
-  - How do I build a custom inspector for this resource?
-  - How do I automate this repetitive editor task?
----
-
 # Skill: Plugin Architecture
 
 ## Purpose
@@ -51,19 +32,7 @@ Help the user design and implement Godot Editor plugins using the EditorPlugin A
 - Focus exclusively on Godot 4.4.1 editor APIs.
 - Avoid speculative features or non-Godot tooling.
 - Do not modify project-specific editor workflows unless requested.
-## DiceRogue Plugin Context
 
-DiceRogue has existing plugins in `addons/`:
-- **gdai-mcp-plugin-godot**: MCP integration for code assistance
-- **resource_viewer**: Visual resource inspection
-- **TweenFX**: Animation tween utility addon
-
-When building new plugins:
-1. Place in `addons/plugin-name/`
-2. Include `plugin.cfg` with metadata
-3. Use `EditorPlugin` or `EditorInspectorPlugin` appropriately
-4. Keep tool scripts separate from runtime scripts
-5. Test with: `& "Godot_v4.4.1-stable.exe" --path "project" --editor`
 ## Example Prompt
 “I want a plugin that auto-generates collision shapes for imported sprites.”
 
