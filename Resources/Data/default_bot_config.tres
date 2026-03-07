@@ -1,13 +1,13 @@
-[gd_resource type="Resource" script_class="BotConfig" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="BotConfig" load_steps=2 format=3 uid="uid://h4x8v0sjo44p"]
 
-[ext_resource type="Script" path="res://Scripts/Bot/BotConfig.gd" id="1_config"]
+[ext_resource type="Script" uid="uid://cjf3akhe8bl3v" path="res://Scripts/Bot/BotConfig.gd" id="1_config"]
 
 [resource]
 script = ExtResource("1_config")
-attempts = 10
+attempts = 5
 channel_min = 1
-channel_max = 1
-visual_mode = false
+channel_max = 5
+visual_mode = true
 speed_multiplier = 10.0
 reset_between_runs = true
 turn_delay = 0.1

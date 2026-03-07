@@ -1590,6 +1590,12 @@ An automated bot player that runs full game sessions for stress-testing and bala
 - Error/crash/edge-case logging with severity levels
 - JSON report output to `user://bot_reports/`
 - In-game results panel with live status updates
+- **50/50 early shop exit**: After completing a challenge mid-round, the bot has a 50% chance each subsequent turn to stop early and visit the shop instead of playing all 13 turns
+- **Consumable management**: Bot auto-uses "fire and forget" consumables (upgrades, cash, rolls, chores, etc.) on the first turn after purchase; interactive consumables that require UI (score_reroll, double_existing, any_score) are sold for half price
+- **Mod & color dice purchasing**: 25% chance per shop visit to purchase a random mod or color dice
+- **Auto-dismiss UI panels**: Chore Selection Popup and You Win panel are automatically dismissed so they don't block the bot
+- **Item unlock management**: Bot profile defaults to `unlock_all_items: true`, which unlocks everything in ProgressManager at run start so the shop is fully stocked
+- **Results panel fix**: All overlay panels (winner panel, chore popup, shop) are dismissed before showing the final results panel at z_index 200
 
 **Quick Start:**
 1. Open `Tests/BotTest.tscn`

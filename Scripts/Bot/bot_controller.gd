@@ -46,6 +46,11 @@ var round_manager: RoundManager
 var channel_manager: Node
 var shop_ui: Control
 var chores_manager: Node
+var consumable_ui: Node
+var consumable_manager: Node
+var mod_manager: Node
+var round_winner_panel: Node
+var bot_results_panel: Node
 
 # Bot components
 var config: BotConfig
@@ -69,6 +74,9 @@ var _is_game_over: bool = false
 var _waiting_for_shop: bool = false
 var _pending_chore_selection: bool = false
 var _pending_mom_dialog: bool = false
+var _challenge_completed_this_round: bool = false
+var _chose_early_shop: bool = false
+var _consumables_purchased_this_round: Array[String] = []
 
 
 func _ready() -> void:
@@ -120,6 +128,9 @@ func _start_next_run() -> void:
 	_is_all_rounds_done = false
 	_is_game_over = false
 	_waiting_for_shop = false
+	_challenge_completed_this_round = false
+	_chose_early_shop = false
+	_consumables_purchased_this_round.clear()
 
 	logger.set_context(current_run_id, current_channel)
 	statistics.start_run(current_run_id, current_channel)
@@ -148,6 +159,9 @@ func _connect_signals() -> void:
 		round_manager.round_completed.connect(_on_round_completed)
 		round_manager.round_failed.connect(_on_round_failed)
 		round_manager.all_rounds_completed.connect(_on_all_rounds_completed)
+		# Connect to challenge_completed via round_manager's challenge_manager
+		if round_manager.challenge_manager:
+			round_manager.challenge_manager.challenge_completed.connect(_on_challenge_completed)
 	if turn_tracker:
 		turn_tracker.game_over.connect(_on_game_over)
 		turn_tracker.rolls_exhausted.connect(_on_rolls_exhausted)
@@ -171,6 +185,9 @@ func _disconnect_signals() -> void:
 			round_manager.round_failed.disconnect(_on_round_failed)
 		if round_manager.all_rounds_completed.is_connected(_on_all_rounds_completed):
 			round_manager.all_rounds_completed.disconnect(_on_all_rounds_completed)
+		if round_manager.challenge_manager:
+			if round_manager.challenge_manager.challenge_completed.is_connected(_on_challenge_completed):
+				round_manager.challenge_manager.challenge_completed.disconnect(_on_challenge_completed)
 	if turn_tracker:
 		if turn_tracker.game_over.is_connected(_on_game_over):
 			turn_tracker.game_over.disconnect(_on_game_over)
@@ -192,7 +209,11 @@ func _disconnect_signals() -> void:
 ## _begin_game()
 ##
 ## Sets the channel and kicks off the game via the normal flow.
+## Also unlocks all items so the bot has access to everything in the shop.
 func _begin_game() -> void:
+	# Unlock all items in ProgressManager so the shop is fully stocked
+	unlock_all_items()
+
 	# Set channel
 	if channel_manager and channel_manager.has_method("set_channel"):
 		channel_manager.set_channel(current_channel)
@@ -238,6 +259,9 @@ func _on_round_started(round_number: int) -> void:
 	_is_round_active = true
 	_is_challenge_done = false
 	_is_round_failed = false
+	_challenge_completed_this_round = false
+	_chose_early_shop = false
+	_consumables_purchased_this_round.clear()
 	statistics.record_round_completed()
 
 	# Update chores manager with current round info
@@ -268,6 +292,9 @@ func _on_round_failed(round_number: int) -> void:
 func _on_all_rounds_completed() -> void:
 	logger.log_info("All rounds completed — run won!")
 	_is_all_rounds_done = true
+	# Dismiss the You Win panel if it appears
+	await get_tree().create_timer(0.5).timeout
+	await _dismiss_winner_panel()
 	_end_current_run("win")
 
 
@@ -291,10 +318,16 @@ func _on_upper_bonus(_bonus: int) -> void:
 	logger.log_info("Upper bonus achieved!")
 
 
+func _on_challenge_completed(_challenge_id: String) -> void:
+	logger.log_info("Challenge completed mid-round: %s" % _challenge_id)
+	_challenge_completed_this_round = true
+
+
 ## _on_bot_chore_selection_requested()
 ##
 ## Called when ChoresManager rotates tasks and needs EASY/HARD selection.
 ## Bot picks randomly via strategy, then accepts the selection directly.
+## Also dismisses the ChoreSelectionPopup UI if it was shown.
 func _on_bot_chore_selection_requested() -> void:
 	_pending_chore_selection = true
 	var pick_hard: bool = strategy.choose_chore_difficulty()
@@ -302,6 +335,9 @@ func _on_bot_chore_selection_requested() -> void:
 	logger.log_info("Chore selection requested — bot chose: %s" % label)
 	chores_manager.accept_chore_selection(pick_hard)
 	statistics.record_chore_selected(pick_hard)
+	# Dismiss the ChoreSelectionPopup if it's visible
+	await get_tree().create_timer(0.3).timeout
+	_dismiss_chore_selection_popup()
 	_pending_chore_selection = false
 
 
@@ -365,16 +401,31 @@ func _handle_pending_chore_events() -> void:
 ## _play_turn_loop()
 ##
 ## Plays through all 13 turns of the current round.
+## After challenge completion, the bot has a 50/50 chance each turn to
+## stop early and go to the shop instead of finishing all 13 turns.
 func _play_turn_loop() -> void:
 	for turn_num in range(1, 14):  # Turns 1-13
 		if _is_round_failed or _is_all_rounds_done:
 			break
+
+		# After challenge is done, 50/50 chance to stop and go to shop
+		if _challenge_completed_this_round and turn_num > 1:
+			var go_to_shop := randf() < 0.5
+			if go_to_shop:
+				logger.log_info("Challenge done — bot chose to leave early at turn %d" % turn_num)
+				_chose_early_shop = true
+				break
+			else:
+				logger.log_info("Challenge done — bot chose to play turn %d" % turn_num)
 
 		logger.set_context(current_run_id, current_channel, round_manager.get_current_round_number() if round_manager else -1, turn_num)
 		statistics.record_turn()
 
 		await _play_single_turn(turn_num)
 		await _delay()
+
+		# Use consumables on the first turn after purchasing them
+		await _bot_use_consumables()
 
 		# Check if game over triggered (turn 13 complete)
 		if _is_game_over:
@@ -545,24 +596,17 @@ func _handle_post_round() -> void:
 
 	logger.log_info("Round %d ended — score: %d" % [round_num, total_score])
 
-	# Check if challenge was completed or failed
-	if round_manager and round_manager.is_challenge_completed:
-		logger.log_info("Challenge completed for round %d" % round_num)
-	elif _is_round_failed:
-		logger.log_info("Challenge failed for round %d — run lost" % round_num)
-		_end_current_run("loss")
-		return
-
-	# If game over was triggered (turn 13 reached and challenge checked)
-	# Check the challenge result
-	if _is_game_over:
-		if round_manager and not round_manager.is_challenge_completed:
-			logger.log_info("Game over without completing challenge — run lost")
-			_end_current_run("loss")
-			return
-
 	# If all rounds done, the _on_all_rounds_completed handler will end the run
 	if _is_all_rounds_done:
+		return
+
+	# Check challenge result directly — the bot never calls fail_round()
+	# and game_over signal doesn't fire, so check the actual state.
+	if round_manager and round_manager.is_challenge_completed:
+		logger.log_info("Challenge completed for round %d" % round_num)
+	else:
+		logger.log_info("Challenge NOT completed for round %d — run lost" % round_num)
+		_end_current_run("loss")
 		return
 
 	# Shop phase (between rounds)
@@ -577,6 +621,7 @@ func _handle_post_round() -> void:
 ## _bot_shop_phase()
 ##
 ## Opens the shop, buys items based on strategy, then closes.
+## Also has a 25% chance to buy a mod or color dice.
 func _bot_shop_phase() -> void:
 	_set_state(State.SHOP_PHASE)
 
@@ -603,11 +648,16 @@ func _bot_shop_phase() -> void:
 	for item in to_buy:
 		if not PlayerEconomy.can_afford(item.price):
 			break
-		# Simulate buying
+		# Track consumable purchases for later usage
+		if item.item_type == "consumable":
+			_consumables_purchased_this_round.append(item.item_id)
 		logger.log_info("Buying: %s (%s) for $%d" % [item.item_id, item.item_type, item.price])
 		item._on_buy_button_pressed()
 		statistics.record_purchase(item.item_id, item.item_type, item.price)
 		await get_tree().create_timer(0.1).timeout
+
+	# 25% chance to buy a mod or color dice
+	await _bot_buy_mod_or_color_dice()
 
 	# Hide shop
 	if config.visual_mode and shop_ui.has_method("hide"):
@@ -744,8 +794,17 @@ func _reset_game_state() -> void:
 ## _finalize()
 ##
 ## Saves all reports and signals completion.
+## Dismisses any overlapping panels before showing results.
 func _finalize() -> void:
 	_set_state(State.FINISHED)
+
+	# Dismiss any panels that might overlay the results
+	await _dismiss_all_overlays()
+
+	# Ensure results panel is visible and on top
+	if bot_results_panel and is_instance_valid(bot_results_panel):
+		bot_results_panel.visible = true
+		bot_results_panel.z_index = 200
 
 	# Save reports
 	var report_path = report_writer.write_report(statistics, config)
@@ -783,3 +842,167 @@ func _get_dice_values() -> Array[int]:
 	if dice_hand:
 		return dice_hand.get_current_dice_values()
 	return []
+
+
+# ─── Consumable Usage ───
+
+## List of consumable IDs that can be auto-used without UI interaction.
+## These are "fire and forget" — apply their effect immediately.
+const AUTO_USE_CONSUMABLES: Array[String] = [
+	"quick_cash", "three_more_rolls", "free_chores", "all_chores",
+	"power_up_shop_num", "add_max_power_up", "one_extra_dice",
+	"dice_surge", "stat_cashout", "score_amplifier", "bonus_collector",
+	"upper_section_boost", "lower_section_boost", "score_streak",
+	"ones_upgrade", "twos_upgrade", "threes_upgrade", "fours_upgrade",
+	"fives_upgrade", "sixes_upgrade", "three_of_a_kind_upgrade",
+	"four_of_a_kind_upgrade", "full_house_upgrade", "small_straight_upgrade",
+	"large_straight_upgrade", "yahtzee_upgrade", "chance_upgrade",
+	"all_categories_upgrade", "random_power_up_uncommon",
+	"green_envy", "poor_house", "empty_shelves", "double_or_nothing",
+	"the_rarities", "the_pawn_shop", "go_broke_or_go_home",
+	"one_free_mod", "visit_the_shop", "lucky_upgrade",
+]
+
+## _bot_use_consumables()
+##
+## Attempts to use any consumables purchased this round.
+## Auto-use safe ones, sell interactive ones the bot can't handle.
+func _bot_use_consumables() -> void:
+	if not game_controller:
+		return
+
+	var to_process := _consumables_purchased_this_round.duplicate()
+	_consumables_purchased_this_round.clear()
+
+	for consumable_id in to_process:
+		# Check if it's still in active consumables
+		if not game_controller.active_consumables.has(consumable_id):
+			continue
+
+		if consumable_id in AUTO_USE_CONSUMABLES:
+			logger.log_info("Using consumable: %s" % consumable_id)
+			game_controller._on_consumable_used(consumable_id)
+			statistics.record_consumable_used(consumable_id)
+			await get_tree().create_timer(0.15).timeout
+		else:
+			# Interactive consumable the bot can't handle — sell it
+			logger.log_info("Selling unusable consumable: %s" % consumable_id)
+			game_controller._on_consumable_sold(consumable_id)
+			await get_tree().create_timer(0.1).timeout
+
+
+# ─── Panel Dismissal ───
+
+## _dismiss_chore_selection_popup()
+##
+## Finds and hides the ChoreSelectionPopup that GameController creates.
+func _dismiss_chore_selection_popup() -> void:
+	if not game_controller:
+		return
+	var popup = game_controller._chore_selection_popup
+	if popup and is_instance_valid(popup) and popup.visible:
+		popup.visible = false
+		# Clean up children to match _on_animation_finished behavior
+		for child in popup.get_children():
+			child.queue_free()
+		logger.log_info("Chore selection popup dismissed")
+
+
+## _dismiss_winner_panel()
+##
+## Finds and hides the RoundWinnerPanel so it doesn't block the results.
+func _dismiss_winner_panel() -> void:
+	if round_winner_panel and is_instance_valid(round_winner_panel):
+		if round_winner_panel.visible:
+			round_winner_panel.hide_panel()
+			logger.log_info("Round winner panel dismissed")
+			await get_tree().create_timer(0.5).timeout
+			return
+	# Fallback: search game_controller's round_winner_panel
+	if game_controller and game_controller.round_winner_panel:
+		var panel = game_controller.round_winner_panel
+		if is_instance_valid(panel) and panel.visible:
+			panel.hide_panel()
+			logger.log_info("Round winner panel dismissed (via game_controller)")
+			await get_tree().create_timer(0.5).timeout
+
+
+## _dismiss_all_overlays()
+##
+## Hides all overlay panels that might block the results panel.
+func _dismiss_all_overlays() -> void:
+	await _dismiss_winner_panel()
+	_dismiss_chore_selection_popup()
+	_dismiss_game_over_popup()
+	if shop_ui and shop_ui.visible:
+		shop_ui.hide()
+
+
+## _dismiss_game_over_popup()
+##
+## Finds and frees the GameController's game over popup if present.
+func _dismiss_game_over_popup() -> void:
+	if not game_controller:
+		return
+	if game_controller._game_over_popup and is_instance_valid(game_controller._game_over_popup):
+		game_controller._game_over_popup.queue_free()
+		game_controller._game_over_popup = null
+		logger.log_info("Game over popup dismissed")
+
+
+# ─── Mod and Color Dice Purchasing ───
+
+## _bot_buy_mod_or_color_dice()
+##
+## 25% chance to buy either 1 mod or 1 color dice from the shop.
+## Searches the shop items for available mods/color dice and picks one randomly.
+func _bot_buy_mod_or_color_dice() -> void:
+	if randf() > 0.25:
+		return  # 75% chance to skip
+
+	var money = PlayerEconomy.get_money() if PlayerEconomy else 0
+	if money <= 0:
+		return
+
+	var shop_items := _get_shop_items()
+	var mod_items := []
+	var color_items := []
+
+	for item in shop_items:
+		if not "item_type" in item:
+			continue
+		if item.item_type == "mod" and item.price <= money:
+			mod_items.append(item)
+		elif item.item_type == "colored_dice" and item.price <= money:
+			color_items.append(item)
+
+	# Randomly decide: mod or color dice
+	var combined := mod_items + color_items
+	if combined.is_empty():
+		return
+
+	var pick = combined[randi() % combined.size()]
+	logger.log_info("Buying %s: %s for $%d" % [pick.item_type, pick.item_id, pick.price])
+	pick._on_buy_button_pressed()
+	statistics.record_purchase(pick.item_id, pick.item_type, pick.price)
+	await get_tree().create_timer(0.1).timeout
+
+
+# ─── Item Unlock Management ───
+
+## unlock_all_items()
+##
+## Unlocks all items in ProgressManager so the bot can see everything in the shop.
+## Called at the start of each run.
+func unlock_all_items() -> void:
+	if not ProgressManager:
+		logger.log_warning("ProgressManager not found — cannot unlock items")
+		return
+	var count := 0
+	for item_id in ProgressManager.unlockable_items:
+		var item = ProgressManager.unlockable_items[item_id]
+		if not item.is_unlocked:
+			ProgressManager.debug_unlock_item(item_id)
+			count += 1
+	if count > 0:
+		logger.log_info("Unlocked %d items in ProgressManager" % count)

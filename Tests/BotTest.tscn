@@ -1,7 +1,7 @@
 [gd_scene load_steps=193 format=3 uid="uid://cxmuo2t1grbxy"]
 
 [ext_resource type="Script" uid="uid://bl81cx362nw8h" path="res://Tests/bot_test.gd" id="1_bot_test"]
-[ext_resource type="Resource" path="res://Resources/Data/default_bot_config.tres" id="2_5xelv"]
+[ext_resource type="Resource" uid="uid://h4x8v0sjo44p" path="res://Resources/Data/default_bot_config.tres" id="2_5xelv"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
 [ext_resource type="PackedScene" uid="uid://q27dsqs2pyd8" path="res://Scenes/UI/crt_overlay.tscn" id="3_f4xs4"]
 [ext_resource type="Shader" uid="uid://b0xapgpcexxb6" path="res://Scripts/Shaders/plasma_screen.gdshader" id="4_66wcx"]

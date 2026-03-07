@@ -51,6 +51,11 @@ func _ready() -> void:
 	bot_controller.channel_manager = channel_manager
 	bot_controller.shop_ui = shop_ui
 	bot_controller.chores_manager = chores_manager
+	bot_controller.consumable_ui = consumable_ui
+	bot_controller.consumable_manager = consumable_manager
+	bot_controller.mod_manager = mod_manager
+	bot_controller.round_winner_panel = get_node_or_null("RoundWinnerPanel")
+	bot_controller.bot_results_panel = bot_results_panel
 
 	# Connect bot signals to results panel
 	if bot_results_panel:

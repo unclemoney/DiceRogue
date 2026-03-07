@@ -90,6 +90,47 @@ func _default_data() -> Dictionary:
 		"highest_channel_completed": 0,
 		"channel_wins": {},
 		"unlocked_items": [],
+		"unlock_all_items": true,
 		"created_at": Time.get_datetime_string_from_system(),
 		"last_played": ""
 	}
+
+
+## should_unlock_all() -> bool
+##
+## Returns true if the profile wants all items unlocked.
+func should_unlock_all() -> bool:
+	return data.get("unlock_all_items", true)
+
+
+## set_unlock_all(enabled: bool)
+##
+## Sets whether the bot should unlock all items at run start.
+func set_unlock_all(enabled: bool) -> void:
+	data["unlock_all_items"] = enabled
+
+
+## add_unlocked_item(item_id: String)
+##
+## Adds a specific item to the bot's unlock list (used when unlock_all is false).
+func add_unlocked_item(item_id: String) -> void:
+	var items: Array = data.get("unlocked_items", [])
+	if item_id not in items:
+		items.append(item_id)
+		data["unlocked_items"] = items
+
+
+## remove_unlocked_item(item_id: String)
+##
+## Removes a specific item from the bot's unlock list.
+func remove_unlocked_item(item_id: String) -> void:
+	var items: Array = data.get("unlocked_items", [])
+	items.erase(item_id)
+	data["unlocked_items"] = items
+
+
+## get_unlocked_items() -> Array
+##
+## Returns the list of specifically unlocked item IDs.
+func get_unlocked_items() -> Array:
+	return data.get("unlocked_items", [])
