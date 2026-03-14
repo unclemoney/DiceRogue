@@ -431,13 +431,14 @@ script = ExtResource("101_wcrst")
 script = ExtResource("2000_bot_ctrl")
 
 [node name="BotResultsPanel" type="PanelContainer" parent="."]
+visible = false
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = -200.0
-offset_right = 400.0
-offset_bottom = -10.0
+offset_left = 34.0
+offset_top = 91.0
+offset_right = 424.0
+offset_bottom = 281.0
 grow_vertical = 0
 script = ExtResource("2001_bot_panel")
 

@@ -7,13 +7,18 @@ class_name BotStatistics
 ## Used by BotReportWriter to produce the final JSON report.
 
 var runs: Array[Dictionary] = []
+var attempts: Array[Dictionary] = []
 var _current_run: Dictionary = {}
+var _current_attempt: Dictionary = {}
 
 
 ## start_run(run_id, channel)
 ##
 ## Initializes tracking for a new run.
 func start_run(run_id: int, channel: int) -> void:
+	# Start a new attempt if none is active
+	if _current_attempt.is_empty():
+		_start_attempt()
 	_current_run = {
 		"run_id": run_id,
 		"channel": channel,
@@ -27,6 +32,7 @@ func start_run(run_id: int, channel: int) -> void:
 		"items_purchased": [],
 		"power_ups_active": [],
 		"consumables_used": [],
+		"consumables_sold": [],
 		"turns_played": 0,
 		"rolls_used": 0,
 		"yahtzees_rolled": 0,
@@ -35,8 +41,43 @@ func start_run(run_id: int, channel: int) -> void:
 		"chores_selected_hard": 0,
 		"mom_visits": 0,
 		"loss_round": -1,
+		"highest_channel_reached": channel,
+		"power_ups_purchased": 0,
+		"consumables_purchased": 0,
+		"consumables_sold_count": 0,
+		"mods_purchased": 0,
+		"color_dice_purchased": 0,
+		"total_money_earned": 0,
+		"challenge_rewards_earned": 0,
+		"end_of_round_bonuses": 0,
 		"start_time": Time.get_ticks_msec()
 	}
+
+
+## _start_attempt()
+##
+## Begins tracking a new attempt (channel 1 through channel_max or until loss).
+func _start_attempt() -> void:
+	_current_attempt = {
+		"attempt_id": attempts.size() + 1,
+		"outcome": "in_progress",
+		"highest_channel_reached": 0,
+		"channels_completed": 0,
+		"total_runs": 0,
+		"total_score": 0,
+		"start_time": Time.get_ticks_msec()
+	}
+
+
+## end_attempt(outcome, final_channel)
+##
+## Finalizes the current attempt. outcome is "full_win" or "loss".
+func end_attempt(outcome: String, final_channel: int) -> void:
+	_current_attempt.outcome = outcome
+	_current_attempt.highest_channel_reached = final_channel
+	_current_attempt.duration_ms = Time.get_ticks_msec() - _current_attempt.start_time
+	attempts.append(_current_attempt)
+	_current_attempt = {}
 
 
 ## record_round_score(round_number, score)
@@ -86,16 +127,50 @@ func record_purchase(item_id: String, item_type: String, price: int) -> void:
 		"price": price
 	})
 	_current_run.money_spent += price
+	match item_type:
+		"power_up":
+			_current_run.power_ups_purchased += 1
+		"consumable":
+			_current_run.consumables_purchased += 1
+		"mod":
+			_current_run.mods_purchased += 1
+		"colored_dice":
+			_current_run.color_dice_purchased += 1
 
 
 ## record_money_earned(amount)
 func record_money_earned(amount: int) -> void:
 	_current_run.money_earned += amount
+	_current_run.total_money_earned += amount
+
+
+## record_challenge_reward(amount)
+func record_challenge_reward(amount: int) -> void:
+	_current_run.challenge_rewards_earned += amount
+	_current_run.total_money_earned += amount
+
+
+## record_end_of_round_bonus(amount)
+func record_end_of_round_bonus(amount: int) -> void:
+	_current_run.end_of_round_bonuses += amount
+	_current_run.total_money_earned += amount
 
 
 ## record_consumable_used(consumable_id)
 func record_consumable_used(consumable_id: String) -> void:
 	_current_run.consumables_used.append(consumable_id)
+
+
+## record_consumable_sold(consumable_id)
+func record_consumable_sold(consumable_id: String) -> void:
+	_current_run.consumables_sold.append(consumable_id)
+	_current_run.consumables_sold_count += 1
+
+
+## record_highest_channel(channel)
+func record_highest_channel(channel: int) -> void:
+	if channel > _current_run.highest_channel_reached:
+		_current_run.highest_channel_reached = channel
 
 
 ## record_chore_selected(is_hard)
@@ -123,6 +198,17 @@ func end_run(outcome: String, final_score: int) -> void:
 	_current_run.final_score = final_score
 	_current_run.duration_ms = Time.get_ticks_msec() - _current_run.start_time
 	runs.append(_current_run)
+
+	# Update current attempt tracking
+	if not _current_attempt.is_empty():
+		_current_attempt.total_runs += 1
+		_current_attempt.total_score += final_score
+		if outcome == "win":
+			_current_attempt.channels_completed += 1
+			var ch: int = _current_run.channel
+			if ch > _current_attempt.highest_channel_reached:
+				_current_attempt.highest_channel_reached = ch
+
 	_current_run = {}
 
 
@@ -145,6 +231,17 @@ func get_aggregate() -> Dictionary:
 	var total_mom_visits := 0
 	var total_chores_easy := 0
 	var total_chores_hard := 0
+	var total_power_ups_purchased := 0
+	var total_consumables_purchased := 0
+	var total_consumables_used := 0
+	var total_consumables_sold := 0
+	var total_mods_purchased := 0
+	var total_color_dice_purchased := 0
+	var total_money_earned := 0
+	var total_money_spent := 0
+	var total_challenge_rewards := 0
+	var total_end_of_round_bonuses := 0
+	var overall_highest_channel := 0
 	var loss_round_counts := {}
 	var channel_results := {}
 	var highest_score := 0
@@ -168,6 +265,20 @@ func get_aggregate() -> Dictionary:
 		total_mom_visits += run.get("mom_visits", 0)
 		total_chores_easy += run.get("chores_selected_easy", 0)
 		total_chores_hard += run.get("chores_selected_hard", 0)
+		total_power_ups_purchased += run.get("power_ups_purchased", 0)
+		total_consumables_purchased += run.get("consumables_purchased", 0)
+		total_consumables_used += run.get("consumables_used", []).size()
+		total_consumables_sold += run.get("consumables_sold_count", 0)
+		total_mods_purchased += run.get("mods_purchased", 0)
+		total_color_dice_purchased += run.get("color_dice_purchased", 0)
+		total_money_earned += run.get("total_money_earned", 0)
+		total_money_spent += run.get("money_spent", 0)
+		total_challenge_rewards += run.get("challenge_rewards_earned", 0)
+		total_end_of_round_bonuses += run.get("end_of_round_bonuses", 0)
+
+		var run_highest_ch: int = run.get("highest_channel_reached", 0)
+		if run_highest_ch > overall_highest_channel:
+			overall_highest_channel = run_highest_ch
 
 		if run.final_score > highest_score:
 			highest_score = run.final_score
@@ -195,9 +306,15 @@ func get_aggregate() -> Dictionary:
 
 	return {
 		"total_runs": total_runs,
+		"total_attempts": attempts.size(),
+		"full_clears": _count_attempt_outcomes("full_win"),
+		"attempt_losses": _count_attempt_outcomes("loss"),
+		"attempt_clear_rate": float(_count_attempt_outcomes("full_win")) / attempts.size() if attempts.size() > 0 else 0.0,
+		"avg_channels_per_attempt": _avg_channels_per_attempt(),
+		"channel_reached_distribution": _channel_reached_distribution(),
 		"wins": wins,
 		"losses": losses,
-		"win_rate": float(wins) / total_runs if total_runs > 0 else 0.0,
+		"channel_win_rate": float(wins) / total_runs if total_runs > 0 else 0.0,
 		"average_score": avg_score,
 		"highest_score": highest_score,
 		"lowest_score": lowest_score if lowest_score < 999999 else 0,
@@ -209,6 +326,17 @@ func get_aggregate() -> Dictionary:
 		"total_mom_visits": total_mom_visits,
 		"total_chores_easy": total_chores_easy,
 		"total_chores_hard": total_chores_hard,
+		"highest_channel_reached": overall_highest_channel,
+		"total_power_ups_purchased": total_power_ups_purchased,
+		"total_consumables_purchased": total_consumables_purchased,
+		"total_consumables_used": total_consumables_used,
+		"total_consumables_sold": total_consumables_sold,
+		"total_mods_purchased": total_mods_purchased,
+		"total_color_dice_purchased": total_color_dice_purchased,
+		"total_money_earned": total_money_earned,
+		"total_money_spent": total_money_spent,
+		"total_challenge_rewards": total_challenge_rewards,
+		"total_end_of_round_bonuses": total_end_of_round_bonuses,
 		"most_common_loss_round": most_common_loss_round,
 		"loss_round_distribution": loss_round_counts,
 		"channel_results": channel_results
@@ -218,4 +346,37 @@ func get_aggregate() -> Dictionary:
 ## clear()
 func clear() -> void:
 	runs.clear()
+	attempts.clear()
 	_current_run = {}
+	_current_attempt = {}
+
+
+## _count_attempt_outcomes(outcome) -> int
+func _count_attempt_outcomes(outcome: String) -> int:
+	var count := 0
+	for attempt in attempts:
+		if attempt.outcome == outcome:
+			count += 1
+	return count
+
+
+## _avg_channels_per_attempt() -> float
+func _avg_channels_per_attempt() -> float:
+	if attempts.is_empty():
+		return 0.0
+	var total := 0
+	for attempt in attempts:
+		total += attempt.channels_completed
+	return float(total) / attempts.size()
+
+
+## _channel_reached_distribution() -> Dictionary
+##
+## Returns { channel_number: count } showing how many attempts reached each channel.
+func _channel_reached_distribution() -> Dictionary:
+	var dist := {}
+	for attempt in attempts:
+		var ch: int = attempt.highest_channel_reached
+		var ch_key := str(ch)
+		dist[ch_key] = dist.get(ch_key, 0) + 1
+	return dist

@@ -66,6 +66,7 @@ var current_run_id: int = 0
 var current_channel: int = 1
 var _action_delay: float = 0.05
 var _runs_completed: int = 0
+var _attempts_completed: int = 0
 var _is_round_active: bool = false
 var _is_challenge_done: bool = false
 var _is_round_failed: bool = false
@@ -76,7 +77,7 @@ var _pending_chore_selection: bool = false
 var _pending_mom_dialog: bool = false
 var _challenge_completed_this_round: bool = false
 var _chose_early_shop: bool = false
-var _consumables_purchased_this_round: Array[String] = []
+var _audio_was_muted: bool = false
 
 
 func _ready() -> void:
@@ -103,23 +104,29 @@ func start(bot_config: BotConfig) -> void:
 		profile.load_profile()
 
 	_runs_completed = 0
+	_attempts_completed = 0
+	current_channel = config.channel_min
 	statistics.clear()
 	logger.clear()
 
-	emit_signal("bot_status_changed", "Bot starting %d run(s)..." % config.attempts)
+	# Mute all audio during bot runs
+	_mute_audio()
+
+	emit_signal("bot_status_changed", "Bot starting %d attempt(s)..." % config.attempts)
 	_start_next_run()
 
 
 ## _start_next_run()
 ##
-## Begins a new run. If all runs are done, finalize reports.
+## Begins a new channel run within the current attempt.
+## If all attempts are done, finalize reports.
 func _start_next_run() -> void:
-	if _runs_completed >= config.attempts:
+	if _attempts_completed >= config.attempts:
 		_finalize()
 		return
 
 	current_run_id = _runs_completed + 1
-	current_channel = config.channel_min + ((_runs_completed) % (config.channel_max - config.channel_min + 1))
+	# current_channel is managed by _end_current_run (advance on win, reset on loss)
 
 	# Reset per-run flags
 	_is_round_active = false
@@ -130,17 +137,16 @@ func _start_next_run() -> void:
 	_waiting_for_shop = false
 	_challenge_completed_this_round = false
 	_chose_early_shop = false
-	_consumables_purchased_this_round.clear()
 
 	logger.set_context(current_run_id, current_channel)
 	statistics.start_run(current_run_id, current_channel)
-	logger.log_info("Starting run %d on channel %d" % [current_run_id, current_channel])
+	logger.log_info("Attempt %d/%d — Starting run %d on channel %d" % [_attempts_completed + 1, config.attempts, current_run_id, current_channel])
 
 	if config.reset_between_runs:
 		profile.reset()
 
 	emit_signal("bot_run_started", current_run_id)
-	emit_signal("bot_status_changed", "Run %d/%d — Channel %d" % [current_run_id, config.attempts, current_channel])
+	emit_signal("bot_status_changed", "Attempt %d/%d — Channel %d (run %d)" % [_attempts_completed + 1, config.attempts, current_channel, current_run_id])
 
 	_set_state(State.STARTING_RUN)
 	_connect_signals()
@@ -261,7 +267,6 @@ func _on_round_started(round_number: int) -> void:
 	_is_round_failed = false
 	_challenge_completed_this_round = false
 	_chose_early_shop = false
-	_consumables_purchased_this_round.clear()
 	statistics.record_round_completed()
 
 	# Update chores manager with current round info
@@ -421,11 +426,11 @@ func _play_turn_loop() -> void:
 		logger.set_context(current_run_id, current_channel, round_manager.get_current_round_number() if round_manager else -1, turn_num)
 		statistics.record_turn()
 
+		# Use any available consumables at the start of each turn (before rolling)
+		await _bot_use_consumables()
+
 		await _play_single_turn(turn_num)
 		await _delay()
-
-		# Use consumables on the first turn after purchasing them
-		await _bot_use_consumables()
 
 		# Check if game over triggered (turn 13 complete)
 		if _is_game_over:
@@ -609,6 +614,9 @@ func _handle_post_round() -> void:
 		_end_current_run("loss")
 		return
 
+	# Award end-of-round bonuses (the bot skips the stats panel, so we calculate manually)
+	_bot_award_round_bonuses()
+
 	# Shop phase (between rounds)
 	await _bot_shop_phase()
 
@@ -616,6 +624,66 @@ func _handle_post_round() -> void:
 	_set_state(State.COMPLETING_ROUND)
 	await _delay()
 	_advance_to_next_round()
+
+
+## _bot_award_round_bonuses()
+##
+## Calculates and awards end-of-round bonuses that the player normally gets
+## via the stats panel. The bot bypasses the stats panel UI entirely.
+## Bonuses: challenge reward + chore reward + empty categories + score above target.
+func _bot_award_round_bonuses() -> void:
+	var challenge_reward: int = 0
+	var chore_reward: int = 0
+	var empty_bonus: int = 0
+	var score_above: int = 0
+
+	# Challenge reward — stored in game_controller when challenge_completed fires
+	if game_controller:
+		challenge_reward = game_controller._challenge_reward_this_round
+
+	# Chore reward — number of chores completed this round × $50
+	if chores_manager and chores_manager.has_method("get_chores_completed_this_round"):
+		var chores_done: int = chores_manager.get_chores_completed_this_round()
+		chore_reward = chores_done * 50  # ChoresManager.CHORE_REWARD_MONEY
+
+	# Empty categories bonus — count unscored categories × $10
+	if score_card:
+		var empty_count := _count_empty_scorecard_categories()
+		empty_bonus = empty_count * 10  # EMPTY_CATEGORY_BONUS
+
+	# Score above target bonus — points above challenge target × $1
+	if round_manager and score_card:
+		var target: int = round_manager.get_current_challenge_target_score()
+		var final_score: int = score_card.get_total_score()
+		var above: int = max(0, final_score - target)
+		score_above = above * 1  # POINTS_ABOVE_TARGET_BONUS
+
+	var total_bonus: int = challenge_reward + chore_reward + empty_bonus + score_above
+
+	if total_bonus > 0:
+		PlayerEconomy.add_money(total_bonus)
+		logger.log_info("Awarded round bonuses: $%d (challenge: $%d, chores: $%d, empty: $%d, score: $%d)" % [total_bonus, challenge_reward, chore_reward, empty_bonus, score_above])
+		statistics.record_end_of_round_bonus(total_bonus)
+		if challenge_reward > 0:
+			statistics.record_challenge_reward(challenge_reward)
+	else:
+		logger.log_info("No round bonuses to award")
+
+
+## _count_empty_scorecard_categories() -> int
+##
+## Counts the number of unscored (null) categories in the scorecard.
+func _count_empty_scorecard_categories() -> int:
+	var count: int = 0
+	if score_card.upper_scores:
+		for category in score_card.upper_scores.keys():
+			if score_card.upper_scores[category] == null:
+				count += 1
+	if score_card.lower_scores:
+		for category in score_card.lower_scores.keys():
+			if score_card.lower_scores[category] == null:
+				count += 1
+	return count
 
 
 ## _bot_shop_phase()
@@ -648,9 +716,6 @@ func _bot_shop_phase() -> void:
 	for item in to_buy:
 		if not PlayerEconomy.can_afford(item.price):
 			break
-		# Track consumable purchases for later usage
-		if item.item_type == "consumable":
-			_consumables_purchased_this_round.append(item.item_id)
 		logger.log_info("Buying: %s (%s) for $%d" % [item.item_id, item.item_type, item.price])
 		item._on_buy_button_pressed()
 		statistics.record_purchase(item.item_id, item.item_type, item.price)
@@ -724,6 +789,9 @@ func _advance_to_next_round() -> void:
 # ─── Run Lifecycle ───
 
 ## _end_current_run(outcome)
+##
+## Handles run completion. On win: advance to next channel (or complete attempt).
+## On loss: end the attempt and reset to channel 1 for the next attempt.
 func _end_current_run(outcome: String) -> void:
 	var final_score := score_card.get_total_score() if score_card else 0
 
@@ -731,6 +799,7 @@ func _end_current_run(outcome: String) -> void:
 		_set_state(State.RUN_WON)
 		profile.record_channel_win(current_channel)
 		profile.data["total_games_won"] = profile.data.get("total_games_won", 0) + 1
+		statistics.record_highest_channel(current_channel)
 	else:
 		_set_state(State.RUN_LOST)
 		profile.data["total_games_lost"] = profile.data.get("total_games_lost", 0) + 1
@@ -742,22 +811,45 @@ func _end_current_run(outcome: String) -> void:
 	statistics.end_run(outcome, final_score)
 	_runs_completed += 1
 
-	logger.log_info("Run %d finished: %s (score: %d)" % [current_run_id, outcome, final_score])
+	logger.log_info("Run %d finished: %s (score: %d, channel: %d)" % [current_run_id, outcome, final_score, current_channel])
 	emit_signal("bot_run_ended", current_run_id, outcome)
-	emit_signal("bot_status_changed", "Run %d: %s (score: %d)" % [current_run_id, outcome.to_upper(), final_score])
+	emit_signal("bot_status_changed", "Attempt %d — Ch %d: %s (score: %d)" % [_attempts_completed + 1, current_channel, outcome.to_upper(), final_score])
 
 	_disconnect_signals()
 
-	# Reset game state for next run
-	await _delay()
-	_reset_game_state()
-	await _delay()
-	_start_next_run()
+	# Determine next action based on outcome
+	if outcome == "win" and current_channel < config.channel_max:
+		# Channel won but more channels remain — advance channel, continue attempt
+		current_channel += 1
+		logger.log_info("Channel won — advancing to channel %d" % current_channel)
+		await _delay()
+		await _reset_game_state()
+		await _delay()
+		_start_next_run()
+	else:
+		# Attempt is over: either all channels beaten (full win) or a loss
+		var attempt_outcome := "full_win" if outcome == "win" else "loss"
+		statistics.end_attempt(attempt_outcome, current_channel)
+		_attempts_completed += 1
+
+		if attempt_outcome == "full_win":
+			logger.log_info("Attempt %d COMPLETE — all channels beaten!" % _attempts_completed)
+		else:
+			logger.log_info("Attempt %d FAILED at channel %d" % [_attempts_completed, current_channel])
+
+		# Reset to channel 1 for next attempt
+		current_channel = config.channel_min
+		await _delay()
+		await _reset_game_state()
+		await _delay()
+		_start_next_run()
 
 
 ## _reset_game_state()
 ##
 ## Resets all game systems to prepare for a new run.
+## Mirrors game_controller._restart_game_for_new_channel() logic,
+## properly freeing instances and clearing UI via the game_controller's methods.
 func _reset_game_state() -> void:
 	# Reset economy
 	if PlayerEconomy:
@@ -767,26 +859,71 @@ func _reset_game_state() -> void:
 	if dice_hand:
 		dice_hand.clear_dice()
 
-	# Reset scorecard
-	if score_card:
-		score_card.reset_scores_preserve_levels()
+	# Clear all power-ups (frees instances and clears UI)
+	if game_controller:
+		game_controller._clear_all_power_ups()
 
-	# Reset turn tracker
+	# Clear all consumables (frees instances and clears UI)
+	if game_controller:
+		game_controller._clear_all_consumables()
+
+	# Clear active challenges (frees instances and clears UI)
+	if game_controller:
+		game_controller._clear_active_challenges()
+
+	# Clear active debuffs (frees instances and clears UI)
+	if game_controller:
+		game_controller._clear_active_debuffs()
+
+	# Also clear grounded debuffs
+	if game_controller:
+		game_controller._grounded_debuffs.clear()
+
+	# Clear remaining dictionaries the game_controller may not have emptied
+	if game_controller:
+		game_controller.consumable_counts.clear()
+		game_controller.active_mods.clear()
+
+	# Reset ScoreModifierManager
+	if ScoreModifierManager:
+		ScoreModifierManager.reset()
+
+	# Reset scorecard completely (including levels)
+	if score_card:
+		score_card.reset_scores()
+
+	# Reset turn tracker — back to default MAX_ROLLS
 	if turn_tracker:
+		turn_tracker.MAX_ROLLS = 3
 		turn_tracker.reset()
 
-	# Clear active items from game controller
+	# Reset shop reroll cost and expansions
+	if shop_ui:
+		if shop_ui.has_method("reset_reroll_cost"):
+			shop_ui.reset_reroll_cost()
+		if shop_ui.has_method("reset_shop_expansions"):
+			shop_ui.reset_shop_expansions()
+
+	# Reset round manager to round 0
+	if round_manager:
+		round_manager.current_round = 0
+
+	# Reset game-ended flag
 	if game_controller:
-		game_controller.active_power_ups.clear()
-		game_controller.active_consumables.clear()
-		game_controller.consumable_counts.clear()
-		game_controller.active_debuffs.clear()
-		game_controller.active_mods.clear()
-		game_controller.active_challenges.clear()
+		game_controller._game_ended = false
+		game_controller._end_of_round_stats_shown = false
+		game_controller._goal_mode_locked = false
 
 	# Reset chores system for new run
 	if chores_manager:
 		chores_manager.reset_for_new_game()
+
+	# Clean up challenge celebration particles to prevent accumulation
+	if game_controller and game_controller._challenge_celebration:
+		game_controller._challenge_celebration.cleanup_all()
+
+	# Wait a full frame so all queue_free'd objects are actually freed
+	await get_tree().process_frame
 
 	logger.log_info("Game state reset for next run")
 
@@ -811,15 +948,20 @@ func _finalize() -> void:
 	var log_path = logger.save_log()
 
 	var agg = statistics.get_aggregate()
-	var summary = "Bot completed %d runs — Win rate: %.1f%% — Avg score: %d" % [
-		agg.total_runs,
-		agg.win_rate * 100.0,
-		agg.average_score
+	var summary = "Bot completed %d attempts — Full clears: %d/%d (%.1f%%) — Highest ch: %d" % [
+		agg.total_attempts,
+		agg.full_clears,
+		agg.total_attempts,
+		agg.attempt_clear_rate * 100.0,
+		agg.highest_channel_reached
 	]
 
 	logger.log_info(summary)
 	emit_signal("bot_status_changed", summary)
 	emit_signal("bot_all_runs_completed")
+
+	# Restore audio
+	_unmute_audio()
 
 	print("[BotController] === FINAL REPORT ===")
 	print("[BotController] %s" % summary)
@@ -836,6 +978,27 @@ func _set_state(new_state: State) -> void:
 
 func _delay() -> void:
 	await get_tree().create_timer(_action_delay).timeout
+
+
+## _mute_audio()
+##
+## Mutes the Master audio bus so SFX and music don't play during bot runs.
+func _mute_audio() -> void:
+	var master_idx := AudioServer.get_bus_index("Master")
+	_audio_was_muted = AudioServer.is_bus_mute(master_idx)
+	if not _audio_was_muted:
+		AudioServer.set_bus_mute(master_idx, true)
+		logger.log_info("Audio muted for bot run")
+
+
+## _unmute_audio()
+##
+## Restores the Master audio bus mute state to what it was before the bot ran.
+func _unmute_audio() -> void:
+	if not _audio_was_muted:
+		var master_idx := AudioServer.get_bus_index("Master")
+		AudioServer.set_bus_mute(master_idx, false)
+		logger.log_info("Audio restored after bot run")
 
 
 func _get_dice_values() -> Array[int]:
@@ -865,17 +1028,23 @@ const AUTO_USE_CONSUMABLES: Array[String] = [
 
 ## _bot_use_consumables()
 ##
-## Attempts to use any consumables purchased this round.
-## Auto-use safe ones, sell interactive ones the bot can't handle.
+## Scans game_controller.active_consumables for any items the bot can use.
+## Auto-uses safe consumables, sells interactive ones the bot can't handle.
+## Called at the beginning of each turn when turn_tracker is active.
 func _bot_use_consumables() -> void:
 	if not game_controller:
 		return
 
-	var to_process := _consumables_purchased_this_round.duplicate()
-	_consumables_purchased_this_round.clear()
+	# Ensure the turn is active so game_controller won't block usage
+	if turn_tracker and not turn_tracker.is_active:
+		return
 
-	for consumable_id in to_process:
-		# Check if it's still in active consumables
+	var consumable_ids := game_controller.active_consumables.keys().duplicate()
+	if consumable_ids.is_empty():
+		return
+
+	for consumable_id in consumable_ids:
+		# Re-check — a previous consumable might have removed others
 		if not game_controller.active_consumables.has(consumable_id):
 			continue
 
@@ -888,6 +1057,7 @@ func _bot_use_consumables() -> void:
 			# Interactive consumable the bot can't handle — sell it
 			logger.log_info("Selling unusable consumable: %s" % consumable_id)
 			game_controller._on_consumable_sold(consumable_id)
+			statistics.record_consumable_sold(consumable_id)
 			await get_tree().create_timer(0.1).timeout
 
 
@@ -957,7 +1127,7 @@ func _dismiss_game_over_popup() -> void:
 ## 25% chance to buy either 1 mod or 1 color dice from the shop.
 ## Searches the shop items for available mods/color dice and picks one randomly.
 func _bot_buy_mod_or_color_dice() -> void:
-	if randf() > 0.25:
+	if randf() > 0.05:
 		return  # 75% chance to skip
 
 	var money = PlayerEconomy.get_money() if PlayerEconomy else 0

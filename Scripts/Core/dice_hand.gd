@@ -408,7 +408,8 @@ func _update_results() -> void:
 ## Frees all child dice nodes and clears the internal dice_list.
 func clear_dice() -> void:
 	for die in dice_list:
-		die.queue_free()
+		if is_instance_valid(die):
+			die.queue_free()
 	dice_list.clear()
 
 
@@ -418,6 +419,8 @@ func clear_dice() -> void:
 func get_current_dice_values() -> Array[int]:
 	var arr: Array[int] = []
 	for die in dice_list:
+		if not is_instance_valid(die):
+			continue
 		arr.append(die.value)
 	return arr
 
@@ -485,6 +488,8 @@ func enable_all_dice() -> void:
 	# Note: With state machine, dice input is controlled by their state
 	# This function is kept for compatibility with debuffs, but should not override state machine
 	for die in get_children():
+		if not is_instance_valid(die):
+			continue
 		if die is Dice:
 			# Only enable input if the dice is not in DISABLED state
 			if die.get_state() != Dice.DiceState.DISABLED:
@@ -499,6 +504,8 @@ func enable_all_dice() -> void:
 func disable_locking_only() -> void:
 	print("[DiceHand] Disabling locking only (dice remain scoreable)")
 	for die in dice_list:
+		if not is_instance_valid(die):
+			continue
 		if die is Dice:
 			die.set_lock_shader_enabled(false)
 			die.set_dice_input_enabled(false)
@@ -511,6 +518,8 @@ func disable_locking_only() -> void:
 func restore_locking() -> void:
 	print("[DiceHand] Restoring locking ability")
 	for die in dice_list:
+		if not is_instance_valid(die):
+			continue
 		if die is Dice:
 			# Only restore input for dice that aren't disabled
 			if die.get_state() != Dice.DiceState.DISABLED:
@@ -522,6 +531,8 @@ func disable_all_dice() -> void:
 	print("[DiceHand] Disabling all dice (legacy method)")
 	# Note: With state machine, this should call set_all_dice_disabled() instead
 	for die in get_children():
+		if not is_instance_valid(die):
+			continue
 		if die is Dice:
 			# Transition to DISABLED state instead of manual input disabling
 			die.make_disabled()
@@ -534,6 +545,8 @@ func disable_all_dice() -> void:
 func set_all_dice_rollable() -> void:
 	print("[DiceHand] Setting all dice to ROLLABLE state")
 	for die in dice_list:
+		if not is_instance_valid(die):
+			continue
 		if die is Dice:
 			die.make_rollable()
 
@@ -553,6 +566,8 @@ func reset_roll_count() -> void:
 func set_all_dice_disabled() -> void:
 	print("[DiceHand] Setting all dice to DISABLED state")
 	for die in dice_list:
+		if not is_instance_valid(die):
+			continue
 		if die is Dice:
 			die.make_disabled()
 
@@ -563,6 +578,8 @@ func set_all_dice_disabled() -> void:
 func prepare_dice_for_roll() -> void:
 	print("[DiceHand] Preparing dice for roll - preserving locks")
 	for die in dice_list:
+		if not is_instance_valid(die):
+			continue
 		if die is Dice:
 			if die.current_state == Dice.DiceState.ROLLED:
 				die.make_rollable()
@@ -580,7 +597,7 @@ func prepare_dice_for_roll() -> void:
 ## Returns true if any dice can be rolled (are in ROLLABLE state).
 func can_any_dice_roll() -> bool:
 	for die in dice_list:
-		if die is Dice and die.can_roll():
+		if is_instance_valid(die) and die is Dice and die.can_roll():
 			return true
 	return false
 
@@ -589,7 +606,7 @@ func can_any_dice_roll() -> bool:
 ## Returns true if any dice can be used for scoring (ROLLED or LOCKED states).
 func can_any_dice_score() -> bool:
 	for die in dice_list:
-		if die is Dice and die.can_score():
+		if is_instance_valid(die) and die is Dice and die.can_score():
 			return true
 	return false
 
@@ -599,7 +616,7 @@ func can_any_dice_score() -> bool:
 func get_dice_in_state(state: Dice.DiceState) -> Array[Dice]:
 	var result: Array[Dice] = []
 	for die in dice_list:
-		if die is Dice and die.get_state() == state:
+		if is_instance_valid(die) and die is Dice and die.get_state() == state:
 			result.append(die)
 	return result
 
@@ -610,12 +627,12 @@ func print_dice_states() -> void:
 	print("[DiceHand] Current dice states:")
 	for i in range(dice_list.size()):
 		var die = dice_list[i]
-		if die is Dice:
+		if is_instance_valid(die) and die is Dice:
 			print("  Die ", i, ": ", die.get_state_name(), " (value: ", die.value, ")")
 
 ## Lock a specific die and emit die_locked signal
 func lock_die(die: Dice) -> void:
-	if die is Dice and not die.is_locked:
+	if is_instance_valid(die) and die is Dice and not die.is_locked:
 		die.lock()
 		emit_signal("die_locked", die)
 
@@ -642,7 +659,7 @@ func roll_unlocked_dice() -> void:
 func get_unlocked_dice() -> Array[Dice]:
 	var unlocked: Array[Dice] = []
 	for die in dice_list:
-		if die is Dice and not die.is_locked:
+		if is_instance_valid(die) and die is Dice and not die.is_locked:
 			unlocked.append(die)
 	return unlocked
 
@@ -710,7 +727,7 @@ func roll_dice() -> void:
 func get_dice_by_color(color_type: DiceColorClass.Type) -> Array[Dice]:
 	var colored_dice: Array[Dice] = []
 	for die in dice_list:
-		if die is Dice and die.get_color() == color_type:
+		if is_instance_valid(die) and die is Dice and die.get_color() == color_type:
 			colored_dice.append(die)
 	return colored_dice
 
@@ -727,7 +744,7 @@ func get_color_counts() -> Dictionary:
 	}
 	
 	for die in dice_list:
-		if not die is Dice:
+		if not is_instance_valid(die) or not die is Dice:
 			continue
 			
 		match die.get_color():
@@ -794,14 +811,14 @@ func _get_dice_color_manager():
 ## @param color_type: DiceColorClass.Type to set all dice to
 func debug_force_all_colors(color_type: DiceColorClass.Type) -> void:
 	for die in dice_list:
-		if die is Dice:
+		if is_instance_valid(die) and die is Dice:
 			die.force_color(color_type)
 	print("[DiceHand] DEBUG: Set all dice to ", DiceColorClass.get_color_name(color_type))
 
 ## Clear all dice colors (debug function)
 func debug_clear_all_colors() -> void:
 	for die in dice_list:
-		if die is Dice:
+		if is_instance_valid(die) and die is Dice:
 			die.clear_color()
 	print("[DiceHand] DEBUG: Cleared all dice colors")
 

@@ -4,9 +4,9 @@
 
 [resource]
 script = ExtResource("1_config")
-attempts = 5
+attempts = 25
 channel_min = 1
-channel_max = 5
+channel_max = 20
 visual_mode = true
 speed_multiplier = 10.0
 reset_between_runs = true

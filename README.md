@@ -1591,11 +1591,14 @@ An automated bot player that runs full game sessions for stress-testing and bala
 - JSON report output to `user://bot_reports/`
 - In-game results panel with live status updates
 - **50/50 early shop exit**: After completing a challenge mid-round, the bot has a 50% chance each subsequent turn to stop early and visit the shop instead of playing all 13 turns
-- **Consumable management**: Bot auto-uses "fire and forget" consumables (upgrades, cash, rolls, chores, etc.) on the first turn after purchase; interactive consumables that require UI (score_reroll, double_existing, any_score) are sold for half price
+- **Consumable management**: Bot scans `active_consumables` at the start of each turn and auto-uses "fire and forget" consumables (upgrades, cash, rolls, chores, etc.); interactive consumables requiring UI (score_reroll, double_existing, any_score) are sold for half price
 - **Mod & color dice purchasing**: 25% chance per shop visit to purchase a random mod or color dice
 - **Auto-dismiss UI panels**: Chore Selection Popup and You Win panel are automatically dismissed so they don't block the bot
 - **Item unlock management**: Bot profile defaults to `unlock_all_items: true`, which unlocks everything in ProgressManager at run start so the shop is fully stocked
 - **Results panel fix**: All overlay panels (winner panel, chore popup, shop) are dismissed before showing the final results panel at z_index 200
+- **End-of-round bonus awards**: Bot calculates and awards challenge reward, chore reward (×$50), empty categories bonus (×$10), and score-above-target bonus (×$1) — matching the stats panel logic the player sees
+- **Full game reset between runs**: Properly frees power-ups, consumables, challenges, debuffs via game_controller methods; resets ScoreModifierManager, MAX_ROLLS, shop reroll cost/expansions, and round_manager
+- **Expanded statistics**: Tracks highest channel reached, power-ups/consumables/mods/color dice purchased, consumables used vs sold, total money earned/spent, challenge rewards, end-of-round bonuses
 
 **Quick Start:**
 1. Open `Tests/BotTest.tscn`

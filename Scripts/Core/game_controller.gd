@@ -3996,6 +3996,8 @@ func _count_locked_dice() -> int:
 		return 0
 	var count = 0
 	for die in dice_hand.dice_list:
+		if not is_instance_valid(die):
+			continue
 		if die is Dice and die.is_locked:
 			count += 1
 	return count
