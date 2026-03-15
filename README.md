@@ -70,6 +70,16 @@ Tests/ShaderGallery.tscn
 ```
 Keys 1-9 to switch shaders, C for side-by-side comparison, Left/Right to change comparison target.
 
+#### Shader Debug Test Scene
+Isolates the **neon_energy** and **score_panel_energy** shaders used on the ScoreCard UI:
+```
+Tests/ShaderDebugTest.tscn
+```
+- Additive panel (gold neon_energy), Multiplier panel (cyan neon_energy), Score panel (score_panel_energy)
+- Sliders for **Effect Strength** (0—1) and **Intensity** (0—2)
+- Tier +/- buttons to cycle milestone tiers (0—4) on the score panel shader
+- Division toggle to switch multiplier between cyan (normal) and red (division mode)
+
 #### Switching Background Shaders
 Edit `Scripts/UI/main_menu.gd` in the `_build_ui()` method. Load your desired shader:
 ```gdscript
@@ -472,12 +482,27 @@ Statistics.export_logbook_to_file("session_analysis.json")
 The **Score Breakdown UI** provides visual feedback during scoring animations, showing how bonuses and multipliers contribute to the final score:
 
 **Panel Structure:**
-- **LogbookPanel**: Shows recent scoring history (moved from ExtraInfo to dedicated panel)
-- **BestHandPanel**: Contains best hand name and score breakdown labels
-  - **BestHandScore**: Shows the highest-scoring category for current dice (simplified to category name only)
-  - **AdditiveScoreLabel**: Displays cumulative additive bonuses ("+X") with themed background
-  - **MultiplierScoreLabel**: Displays combined multiplier effects ("×Y") with themed background
-- **TotalScorePanel**: Contains the total score display with animated updates
+- **LogbookPanel**: ~~Shows recent scoring history~~ **DEPRECATED** — hidden; kept in scene for future revival
+- **BestHandPanel**: Contains best hand name with score preview and score breakdown labels
+  - **BestHandScore**: Shows the highest-scoring category for current dice with score preview (e.g. "Full House → 25")
+  - **AdditiveScoreLabel**: Displays cumulative additive bonuses ("+X") with **Neon Energy shader** (gold/yellow electric arcs)
+  - **MultiplierScoreLabel**: Displays combined multiplier effects ("×Y") with **Neon Energy shader** (cyan/blue electric arcs; red in division mode)
+  - **Category Highlight**: The matching scorecard button pulses gold to guide the player
+  - **Idle Float**: Best hand label gently bobs up/down for a "living" feel
+- **TotalScorePanel**: Contains the total score display with animated roll-up and milestone-driven shader background
+  - **Score Counter Roll-Up**: Total score counts up from old→new with gold flash
+  - **Score Panel Energy Shader**: Background energy field intensifies with score; color shifts at milestone tiers (100=gold, 250=blue, 500=purple, 1000=rainbow)
+  - **Milestone Celebrations**: Screen shake + panel flash at 100/250/500/1000 point thresholds
+
+**Neon Energy Shader System:**
+Two GLSL shaders provide animated backgrounds behind the score labels and total score panel:
+- `Scripts/Shaders/neon_energy.gdshader` — Electric plasma arcs with FBM noise, edge glow, and crackling sparks. Shared by additive (gold) and multiplier (cyan) labels with different uniform parameters.
+- `Scripts/Shaders/score_panel_energy.gdshader` — Full-panel energy field that grows with total score. Supports 5 milestone tiers with distinct color palettes, edge lightning arcs, and rainbow mode at tier 4.
+
+Shader uniforms are driven from GDScript in real-time:
+- `effect_strength` (0→1): Master visibility toggle, tweened on score changes
+- `intensity`: Proportional to score magnitude
+- `milestone_tier` (0-4): Controls color palette in score panel shader
 
 **Base Additive Score Calculation:**
 The additive score starts with a **base value** calculated from the best hand:
@@ -486,28 +511,32 @@ The additive score starts with a **base value** calculated from the best hand:
 - Updates dynamically as dice values change and new best hands are identified
 - Additional bonuses from consumables/powerups add to this base during scoring
 
-**Themed Labels:**
-Both additive and multiplier labels use a custom theme with `UI_BACKGROUND.png` texture:
-- 1-pixel texture margin on all sides for subtle border effect
-- Semi-transparent dark background (Color: 0.3, 0.3, 0.4, 0.8)
-- Applied via `score_breakdown_theme.tres`
-
 **Animation Integration:**
 The panels update in real-time during the `ScoringAnimationController` sequence:
 1. Dice bounce animation starts
-2. Additive panel shows base score (yellow dim) during preview, then updates with consumable animations (yellow bounce)
-3. Multiplier panel updates after powerup animations (cyan bounce on value > 1.0, white bounce on 1.0)
+2. Additive panel shows base score (yellow dim) during preview, then updates with consumable animations (yellow bounce + shader ramp-up)
+3. Multiplier panel updates after powerup animations (cyan bounce + shader ramp-up on value > 1.0)
 4. Final score floating number appears
-5. Total score panel animates with bounce effect
+5. Total score counter rolls up from old→new with gold flash
+6. Score panel shader intensity updates; milestone celebrations fire if threshold crossed
+7. Score label "pops" into existence (scale 0→1.2→1.0) when category first scored
+
+**UX Extras:**
+- **Score Label Pop**: When any category score is first set (null→value), plays a quick pop animation with gold flash
+- **Best Hand Idle Float**: Subtle sin-wave bob (±2px) on the best hand label
+- **Button Hover Glow**: Warm highlight (Color 1.1, 1.1, 0.9) on hover over unscored category buttons
+- **Label Shimmer**: When additive/multiplier values are non-default, shader intensity gently oscillates
 
 **Key Methods:**
-- `prepare_for_scoring_animation()`: Resets breakdown labels before animation starts
-- `update_additive_score_panel(value, animate)`: Updates additive display with optional bounce
-- `update_multiplier_score_panel(value, animate)`: Updates multiplier display with optional bounce
-- `animate_total_score_bounce(new_score)`: Applies gold flash and bounce to total score
+- `prepare_for_scoring_animation()`: Resets breakdown labels and shaders before animation starts
+- `update_additive_score_panel(value, animate)`: Updates additive display with bounce + shader driving
+- `update_multiplier_score_panel(value, animate)`: Updates multiplier display with bounce + shader driving
+- `animate_score_counter(old, new)`: Tweens displayed total from old→new with gold flash
+- `check_score_milestones(score)`: Fires celebrations at 100/250/500/1000 thresholds
+- `highlight_best_hand_category()`: Pulses gold on the matching scorecard button
+- `pop_score_label(label)`: Scale-bounce animation when score first appears
+- `reset_score_tracking()`: Resets counters/shaders for new game
 - `_apply_score_breakdown_theme()`: Loads and applies themed background to score labels
-
-**Note**: BBCode tornado/rainbow effects are currently disabled for cleaner presentation.
 
 ### Progress Tracking System
 The **Progress Tracking System** enables persistent player progression across multiple game sessions, unlocking new content based on gameplay achievements:

@@ -6,18 +6,18 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_mj0f2"]
 shader = ExtResource("2_b6481")
 shader_parameter/effect_strength = 0.0
-shader_parameter/bar_thickness = 4.0
+shader_parameter/bar_thickness = 12.815
 shader_parameter/roll_speed = 0.8
-shader_parameter/bar_darkness = 0.3
+shader_parameter/bar_darkness = 0.09
 shader_parameter/glitch_chance = 0.05
 shader_parameter/glitch_offset = 0.02
-shader_parameter/glitch_width = 0.08
+shader_parameter/glitch_width = 0.025
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_b6481"]
 shader = ExtResource("1_rwiwr")
 shader_parameter/curvature = 0.012
 shader_parameter/chroma_offset = 1.0
-shader_parameter/effect_strength = 0.265
+shader_parameter/effect_strength = 0.08
 shader_parameter/bar_thickness = 9.143
 shader_parameter/roll_speed = 0.8
 shader_parameter/bar_darkness = 0.24

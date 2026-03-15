@@ -1918,9 +1918,10 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 	if DiceColorManager and DiceColorManager.are_colors_enabled() and dice_hand:
 		var dice_array = dice_hand.get_all_dice()
 		var color_description = DiceColorManager.get_current_effects_description(dice_array)
-		if score_card_ui and score_card_ui.has_method("update_extra_info"):
-			score_card_ui.update_extra_info(color_description)
-			print("[GameController] Displayed dice color effects:", color_description)
+		# DEPRECATED: Logbook panel hidden — update_extra_info disabled
+		#if score_card_ui and score_card_ui.has_method("update_extra_info"):
+		#	score_card_ui.update_extra_info(color_description)
+		print("[GameController] Dice color effects (logbook deprecated):", color_description)
 
 	if scorecard.has_any_scores():
 		# Update score reroll usability through the new system
@@ -3692,11 +3693,11 @@ func _on_power_up_description_updated(power_up_id: String, new_description: Stri
 func _on_randomizer_effect_updated(effect_type: String, value_text: String) -> void:
 	print("[GameController] Randomizer effect updated - Type:", effect_type, "Value:", value_text)
 	
-	# Update the ExtraInfo display in score_card_ui
-	if score_card_ui:
-		var effect_description = "Random Effect: %s %s" % [effect_type.capitalize(), value_text]
-		score_card_ui.update_extra_info(effect_description)
-		print("[GameController] Updated ExtraInfo with randomizer effect")
+	# DEPRECATED: Logbook panel hidden — ExtraInfo calls disabled
+	#if score_card_ui:
+	#	var effect_description = "Random Effect: %s %s" % [effect_type.capitalize(), value_text]
+	#	score_card_ui.update_extra_info(effect_description)
+	print("[GameController] Randomizer effect (logbook deprecated):", effect_type, value_text)
 
 ## _on_items_unlocked(item_ids)
 ##

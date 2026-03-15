@@ -34,6 +34,11 @@ signal manual_score
 @onready var total_score_panel: PanelContainer = $TotalScorePanel
 @onready var best_hand_panel: PanelContainer = $BestHandPanel
 
+# Shader background ColorRects
+@onready var additive_shader_bg: ColorRect = $BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer/AdditiveScoreLabel/AdditiveShaderBG
+@onready var multiplier_shader_bg: ColorRect = $BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer/MultiplierScoreLabel/MultiplierShaderBG
+@onready var score_panel_shader_bg: ColorRect = $TotalScorePanel/MarginContainer/RichTextTotalScore/ScorePanelShaderBG
+
 const LOWER_CATEGORY_NODE_NAMES := {
 	"three_of_a_kind": "Threeofakind",
 	"four_of_a_kind": "Fourofakind",
@@ -49,6 +54,15 @@ var go_broke_mode := false
 var current_best_hand_category := ""
 var current_best_hand_section
 var current_base_additive_score := 0
+
+# Score tracking for counter roll-up and milestones
+var previous_total_score := 0
+var current_milestone_tier := 0
+var _highlight_tween: Tween
+var _highlighted_button: Button
+var _idle_float_tween: Tween
+var _shimmer_tween: Tween
+var _counter_tween: Tween
 
 
 ## _ready()
@@ -102,10 +116,22 @@ func _ready():
 
 
 func _exit_tree() -> void:
-	# Clean up stored tween to prevent warnings
+	# Clean up stored tweens to prevent warnings
 	if _extra_info_tween and _extra_info_tween.is_valid():
 		_extra_info_tween.kill()
 		_extra_info_tween = null
+	if _highlight_tween and _highlight_tween.is_valid():
+		_highlight_tween.kill()
+		_highlight_tween = null
+	if _idle_float_tween and _idle_float_tween.is_valid():
+		_idle_float_tween.kill()
+		_idle_float_tween = null
+	if _shimmer_tween and _shimmer_tween.is_valid():
+		_shimmer_tween.kill()
+		_shimmer_tween = null
+	if _counter_tween and _counter_tween.is_valid():
+		_counter_tween.kill()
+		_counter_tween = null
 
 
 ## _apply_custom_theme()
@@ -176,7 +202,11 @@ func update_all():
 		var label = get_node_or_null(label_path)
 		if label:
 			var value = scorecard.upper_scores[category]
+			var old_text = label.text
 			label.text = str(int(value)) if value != null else "-"
+			# Pop animation when score first set
+			if old_text == "-" and value != null:
+				pop_score_label(label)
 
 	for category in scorecard.lower_scores.keys():
 		var node_name = LOWER_CATEGORY_NODE_NAMES.get(category, category.capitalize())
@@ -184,7 +214,11 @@ func update_all():
 		var label = get_node_or_null(label_path)
 		if label:
 			var value = scorecard.lower_scores[category]
+			var old_text = label.text
 			label.text = str(int(value)) if value != null else "-"
+			# Pop animation when score first set
+			if old_text == "-" and value != null:
+				pop_score_label(label)
 
 	# Update upper section totals with debug prints
 	var upper_subtotal = scorecard.get_upper_section_total()
@@ -238,14 +272,25 @@ func update_all():
 		var upper_total = scorecard.get_upper_section_final_total()
 		var total_score = upper_total + lower_total  # lower_total already includes Yahtzee bonus
 		
-		# Format with BBCode - tornado disabled for now
-		var text = "[center]Total Score:\n%d[/center]" % total_score
-		total_score_label.text = text
+		# Counter roll-up animation if score changed
+		if total_score != previous_total_score:
+			animate_score_counter(previous_total_score, total_score)
+			check_score_milestones(total_score)
+			_update_score_panel_shader(total_score)
+			previous_total_score = total_score
+		else:
+			# Just set text directly (no change)
+			var text = "[center]Total Score:\n%d[/center]" % total_score
+			total_score_label.text = text
 		
-		# Adjust font size based on score
+		# Adjust font size based on score - capped to prevent overflow
 		var base_size = 24
+		var max_size = 32
 		var size_scale = remap(total_score, 0, 500, 1.0, 1.3)
-		total_score_label.add_theme_font_size_override("normal_font_size", int(base_size * size_scale))
+		var scaled_size = int(base_size * size_scale)
+		if scaled_size > max_size:
+			scaled_size = max_size
+		total_score_label.add_theme_font_size_override("normal_font_size", scaled_size)
 
 	# Update Yahtzee bonus display
 	if yahtzee_bonus_label:
@@ -414,6 +459,9 @@ func connect_buttons():
 		else:
 			print("❌ Lower button not found for:", category, "→", button_path)
 
+	# Connect hover glow signals for UX juice
+	_connect_button_hover_signals()
+
 func on_category_selected(section: Scorecard.Section, category: String) -> void:
 	print("\n=== SCORECARD UI CATEGORY SELECTED ===")
 	print("[ScoreCardUI] *** FUNCTION CALLED *** on_category_selected")
@@ -509,14 +557,14 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 	turn_scored = true
 	disable_all_score_buttons()
 	
-	# Create logbook entry before emitting hand_scored signal
-	create_logbook_entry(section, category, values, score)
+	# DEPRECATED: Logbook panel hidden — calls commented out
+	#create_logbook_entry(section, category, values, score)
 	
 	# Emit signal for randomizer effect display
 	emit_signal("hand_scored")
 	
-	# Update ExtraInfo with recent logbook entries
-	update_extra_info_with_logbook()
+	# DEPRECATED: Logbook panel hidden
+	#update_extra_info_with_logbook()
 	
 	# Note: GameController will be notified via scorecard.score_assigned signal connection
 
@@ -548,6 +596,10 @@ func show_invalid_score_feedback(category: String):
 func update_best_hand_preview(dice_values: Array) -> void:
 	if not best_hand_label:
 		return
+
+	# Clear previous highlight and idle animation before recalculating
+	clear_category_highlight()
+	stop_idle_float()
 
 	# Reset evaluation counter for preview calculations
 	ScoreEvaluatorSingleton.reset_evaluation_count()
@@ -583,12 +635,14 @@ func update_best_hand_preview(dice_values: Array) -> void:
 	if best_category != "":
 		var display_category = best_category.capitalize().replace("_", " ")
 		
-		# Simple formatting - show only category name (tornado disabled for now)
-		var format_text = "[center][b]Best Hand:[/b]\n%s[/center]" % display_category
+		# Show category name + score preview number
+		var score_color = "yellow" if best_score >= 25 else "white"
+		var format_text = "[center][b]Best Hand:[/b]\n%s → [color=%s]%d[/color][/center]" % [display_category, score_color, best_score]
 		
 		best_hand_label.add_theme_font_size_override("normal_font_size", 18)
 		best_hand_label.text = format_text
 		animate_best_hand_label()
+		start_idle_float()
 		
 		# Calculate RAW base score (without any powerups/modifiers) × category level
 		# Use ScoreEvaluatorSingleton directly to get unmodified base score
@@ -601,6 +655,9 @@ func update_best_hand_preview(dice_values: Array) -> void:
 		current_best_hand_category = best_category
 		current_best_hand_section = _best_section
 		current_base_additive_score = base_additive
+		
+		# Highlight the matching category button on the scorecard
+		highlight_best_hand_category()
 		
 		# Update the additive panel with base score (no animation for preview)
 		if additive_score_label:
@@ -692,14 +749,14 @@ func handle_score_reroll(section: Scorecard.Section, category: String) -> void:
 	reroll_active = false
 	disable_all_score_buttons()
 	
-	# Create logbook entry for reroll
-	create_logbook_entry(section, category, values, score)
+	# DEPRECATED: Logbook panel hidden — calls commented out
+	#create_logbook_entry(section, category, values, score)
 	
 	emit_signal("hand_scored")
 	emit_signal("score_rerolled", section, category, score)
 	
-	# Update ExtraInfo with recent logbook entries
-	update_extra_info_with_logbook()
+	# DEPRECATED: Logbook panel hidden
+	#update_extra_info_with_logbook()
 
 func _on_yahtzee_bonus_achieved(_points: int) -> void:
 	# Extra visual feedback for bonus yahtzee
@@ -777,6 +834,8 @@ func _handle_double_score(section: Scorecard.Section, category: String) -> void:
 
 var _extra_info_tween: Tween = null
 
+## DEPRECATED: update_extra_info()
+## Logbook panel has been hidden. This function is preserved for potential future use.
 func update_extra_info(info_text: String) -> void:
 	"""Update the ExtraInfo RichTextLabel with randomizer or other power-up effects"""
 	if extra_info_label:
@@ -826,8 +885,8 @@ func update_extra_info(info_text: String) -> void:
 			# Retry the animation with found label
 			update_extra_info(info_text)
 
-## update_extra_info_with_logbook()
-##
+## DEPRECATED: update_extra_info_with_logbook()
+## Logbook panel has been hidden. This function is preserved for potential future use.
 ## Update ExtraInfo with recent logbook entries from Statistics Manager
 func update_extra_info_with_logbook(entry_count: int = 3) -> void:
 	if not Statistics:
@@ -893,8 +952,8 @@ func update_extra_info_with_logbook(entry_count: int = 3) -> void:
 		else:
 			print("[ScoreCardUI] Error: ExtraInfo node not found or not a RichTextLabel")
 
-## _update_extra_info_for_logbook()
-##
+## DEPRECATED: _update_extra_info_for_logbook()
+## Logbook panel has been hidden. This function is preserved for potential future use.
 ## Internal method to update ExtraInfo without center alignment (for logbook entries)
 func _update_extra_info_for_logbook(info_text: String) -> void:
 	if extra_info_label:
@@ -927,10 +986,9 @@ func _update_extra_info_for_logbook(info_text: String) -> void:
 		
 		print("[ScoreCardUI] Updated ExtraInfo with logbook entries")
 
-## create_logbook_entry()
-##
+## DEPRECATED: create_logbook_entry()
+## Logbook panel has been hidden. This function is preserved for potential future use.
 ## Create and log a detailed entry for the hand that was just scored
-## This function gets the current breakdown info and calls the comprehensive version
 func create_logbook_entry(section: Scorecard.Section, category: String, dice_values: Array[int], final_score: int) -> void:
 	print("[ScoreCardUI] DEBUG: create_logbook_entry called for", category, "with score", final_score)
 	
@@ -941,10 +999,9 @@ func create_logbook_entry(section: Scorecard.Section, category: String, dice_val
 	# Call the comprehensive version with breakdown info
 	_create_logbook_entry_with_breakdown(section, category, dice_values, final_score, breakdown_info)
 
-## _create_logbook_entry_with_breakdown()
-##
+## DEPRECATED: _create_logbook_entry_with_breakdown()
+## Logbook panel has been hidden. This function is preserved for potential future use.
 ## Create a logbook entry using pre-calculated breakdown info (for auto-scoring)
-## This prevents the timing issue where PowerUps are cleared before logbook entry creation
 func _create_logbook_entry_with_breakdown(section: Scorecard.Section, category: String, dice_values: Array[int], final_score: int, breakdown_info: Dictionary) -> void:
 	print("[ScoreCardUI] DEBUG: _create_logbook_entry_with_breakdown called for", category, "with score", final_score)
 	
@@ -1174,13 +1231,13 @@ func handle_any_score(section: Scorecard.Section, category: String) -> void:
 	# Reset any score mode and clear highlighting
 	deactivate_any_score_mode()
 	
-	# Create logbook entry for AnyScore usage
-	create_logbook_entry(section, category, dice_values, score)
+	# DEPRECATED: Logbook panel hidden — calls commented out
+	#create_logbook_entry(section, category, dice_values, score)
 	
 	emit_signal("hand_scored")
 	
-	# Update ExtraInfo with recent logbook entries
-	update_extra_info_with_logbook()
+	# DEPRECATED: Logbook panel hidden
+	#update_extra_info_with_logbook()
 	
 	print("[ScoreCardUI] AnyScore completed for", category)
 
@@ -1225,13 +1282,13 @@ func handle_go_broke_score(section: Scorecard.Section, category: String) -> void
 	turn_scored = true
 	disable_all_score_buttons()
 	
-	# Create logbook entry for Go Broke usage
-	create_logbook_entry(section, category, dice_values, score)
+	# DEPRECATED: Logbook panel hidden — calls commented out
+	#create_logbook_entry(section, category, dice_values, score)
 	
 	emit_signal("hand_scored")
 	
-	# Update ExtraInfo with recent logbook entries
-	update_extra_info_with_logbook()
+	# DEPRECATED: Logbook panel hidden
+	#update_extra_info_with_logbook()
 	
 	print("[ScoreCardUI] Go Broke completed for", category, "with score:", score)
 
@@ -1288,15 +1345,15 @@ func _on_score_auto_assigned(section: Scorecard.Section, category: String, score
 	else:
 		print("[ScoreCardUI] DEBUG: No dice values available from DiceResults")
 	
-	# Create logbook entry for the auto-scored hand using the passed breakdown info
-	if dice_values.size() > 0:
-		print("[ScoreCardUI] DEBUG: Creating logbook entry for auto-scored hand")
-		_create_logbook_entry_with_breakdown(section, category, dice_values, score, breakdown_info)
-	else:
-		print("[ScoreCardUI] DEBUG: Skipping logbook entry - no dice values")
+	# DEPRECATED: Logbook panel hidden — calls commented out
+	#if dice_values.size() > 0:
+	#	print("[ScoreCardUI] DEBUG: Creating logbook entry for auto-scored hand")
+	#	_create_logbook_entry_with_breakdown(section, category, dice_values, score, breakdown_info)
+	#else:
+	#	print("[ScoreCardUI] DEBUG: Skipping logbook entry - no dice values")
 	
-	# Update ExtraInfo with recent logbook entries
-	update_extra_info_with_logbook()
+	# DEPRECATED: Logbook panel hidden
+	#update_extra_info_with_logbook()
 	
 	# Note: GameController will be notified via scorecard.score_assigned signal connection
 
@@ -1317,21 +1374,34 @@ func _on_score_changed_from_scorecard(total_score: int) -> void:
 ##
 ## Apply custom theme with UI_BACKGROUND texture to score breakdown labels
 func _apply_score_breakdown_theme() -> void:
-	var custom_theme = load("res://Resources/UI/score_breakdown_theme.tres") as Theme
-	if custom_theme:
-		if additive_score_label:
-			additive_score_label.theme = custom_theme
-			print("[ScoreCardUI] Applied custom theme to additive label")
-		if multiplier_score_label:
-			multiplier_score_label.theme = custom_theme
-			print("[ScoreCardUI] Applied custom theme to multiplier label")
-	else:
-		push_error("[ScoreCardUI] Failed to load score_breakdown_theme.tres")
+	# Use transparent backgrounds on score labels so neon_energy shader shows through.
+	# The old score_breakdown_theme.tres used an opaque StyleBoxTexture that covered the shader.
+	var transparent_style = StyleBoxFlat.new()
+	transparent_style.bg_color = Color(0.0, 0.0, 0.0, 0.0) #Color(0.12, 0.12, 0.18, 0.45)
+	transparent_style.set_corner_radius_all(3)
+	transparent_style.border_color = Color(0.3, 0.3, 0.5, 0.3)
+	transparent_style.set_border_width_all(1)
+	if additive_score_label:
+		additive_score_label.add_theme_stylebox_override("normal", transparent_style)
+		print("[ScoreCardUI] Applied transparent style to additive label for shader visibility")
+	if multiplier_score_label:
+		var mul_style = transparent_style.duplicate()
+		multiplier_score_label.add_theme_stylebox_override("normal", mul_style)
+		print("[ScoreCardUI] Applied transparent style to multiplier label for shader visibility")
+	# Make TotalScorePanel semi-transparent so score_panel_energy shader shows through
+	if total_score_panel:
+		var panel_style = StyleBoxFlat.new()
+		panel_style.bg_color = Color(0.08, 0.08, 0.12, 0.5)
+		panel_style.set_corner_radius_all(4)
+		panel_style.border_color = Color(0.3, 0.3, 0.5, 0.6)
+		panel_style.set_border_width_all(2)
+		total_score_panel.add_theme_stylebox_override("panel", panel_style)
+		print("[ScoreCardUI] Applied semi-transparent style to TotalScorePanel for shader visibility")
 
 
 ## _reset_score_breakdown_labels()
 ##
-## Reset additive and multiplier labels to default values
+## Reset additive and multiplier labels to default values and turn off shaders
 func _reset_score_breakdown_labels() -> void:
 	if additive_score_label:
 		additive_score_label.text = "+0"
@@ -1339,12 +1409,22 @@ func _reset_score_breakdown_labels() -> void:
 	if multiplier_score_label:
 		multiplier_score_label.text = "x1.0"
 		multiplier_score_label.modulate = Color.WHITE
+	# Reset shader effects
+	if additive_shader_bg and additive_shader_bg.material:
+		(additive_shader_bg.material as ShaderMaterial).set_shader_parameter("effect_strength", 0.0)
+	if multiplier_shader_bg and multiplier_shader_bg.material:
+		(multiplier_shader_bg.material as ShaderMaterial).set_shader_parameter("effect_strength", 0.0)
+	# Kill any running shimmer
+	if _shimmer_tween and _shimmer_tween.is_valid():
+		_shimmer_tween.kill()
+		_shimmer_tween = null
 
 
 ## update_additive_score_panel(additive_value, animate)
 ##
 ## Update the additive score panel label with optional bounce animation.
 ## Called by ScoringAnimationController during animation sequence.
+## Also drives the neon_energy shader effect behind the label.
 func update_additive_score_panel(additive_value: int, animate: bool = true) -> void:
 	if not additive_score_label:
 		return
@@ -1356,6 +1436,29 @@ func update_additive_score_panel(additive_value: int, animate: bool = true) -> v
 		additive_score_label.text = "+%d" % additive_value
 	else:
 		additive_score_label.text = "%d" % additive_value  # Negative already has - sign
+	
+	# Drive shader effect
+	if additive_shader_bg and additive_shader_bg.material:
+		var mat = additive_shader_bg.material as ShaderMaterial
+		if additive_value == 0:
+			mat.set_shader_parameter("effect_strength", 0.0)
+		else:
+			var strength = clampf(remap(absf(additive_value), 0, 100, 0.7, 1.0), 0.0, 1.0)
+			var shader_intensity = clampf(remap(absf(additive_value), 0, 100, 0.8, 1.4), 0.0, 1.4)
+			if animate:
+				var shader_tween = create_tween()
+				shader_tween.tween_method(func(v): mat.set_shader_parameter("effect_strength", v), 0.0, strength, 0.3)
+				shader_tween.parallel().tween_method(func(v): mat.set_shader_parameter("intensity", v), 0.0, shader_intensity, 0.3)
+			else:
+				mat.set_shader_parameter("effect_strength", strength)
+				mat.set_shader_parameter("intensity", shader_intensity)
+			# Red tint for negative values
+			if additive_value < 0:
+				mat.set_shader_parameter("energy_color", Vector4(1.0, 0.2, 0.1, 1.0))
+				mat.set_shader_parameter("accent_color", Vector4(0.8, 0.0, 0.0, 1.0))
+			else:
+				mat.set_shader_parameter("energy_color", Vector4(1.0, 0.84, 0.0, 1.0))
+				mat.set_shader_parameter("accent_color", Vector4(1.0, 0.5, 0.0, 1.0))
 	
 	if animate:
 		# Use yellow for positive, red for negative, white for zero
@@ -1372,9 +1475,7 @@ func update_additive_score_panel(additive_value: int, animate: bool = true) -> v
 ## Update the multiplier score panel label with optional bounce animation.
 ## Called by ScoringAnimationController during animation sequence.
 ## Supports division mode from The Division debuff - displays ÷ symbol in RED.
-## 
-## In division mode, the multiplier_value passed is the RAW multiplier (e.g., 6.0),
-## but it will be used as a divisor. So we display it directly as ÷6.0.
+## Also drives the neon_energy shader effect behind the label.
 func update_multiplier_score_panel(multiplier_value: float, animate: bool = true) -> void:
 	if not multiplier_score_label:
 		return
@@ -1387,20 +1488,48 @@ func update_multiplier_score_panel(multiplier_value: float, animate: bool = true
 	
 	if is_division_mode:
 		# Division mode: show ÷ symbol with the multiplier value directly
-		# The multiplier_value is the raw multiplier (e.g., 6.0) which divides the score
 		print("[ScoreCardUI] Updating multiplier panel (DIVISION MODE): ÷%.1f (animate=%s)" % [multiplier_value, animate])
 		multiplier_score_label.text = "÷%.1f" % multiplier_value
 		
+		# Drive shader with red danger colors for division mode
+		if multiplier_shader_bg and multiplier_shader_bg.material:
+			var mat = multiplier_shader_bg.material as ShaderMaterial
+			var strength = clampf(remap(multiplier_value, 1.0, 10.0, 0.5, 1.0), 0.0, 1.0)
+			mat.set_shader_parameter("energy_color", Vector4(1.0, 0.1, 0.0, 1.0))
+			mat.set_shader_parameter("accent_color", Vector4(0.8, 0.0, 0.0, 1.0))
+			if animate:
+				var shader_tween = create_tween()
+				shader_tween.tween_method(func(v): mat.set_shader_parameter("effect_strength", v), 0.0, strength, 0.3)
+			else:
+				mat.set_shader_parameter("effect_strength", strength)
+		
 		if animate:
-			# Use RED for division mode to clearly signal score reduction
 			_bounce_label(multiplier_score_label, Color.RED)
 	else:
 		# Normal multiplier mode
 		print("[ScoreCardUI] Updating multiplier panel: %.1f (animate=%s)" % [multiplier_value, animate])
 		multiplier_score_label.text = "x%.1f" % multiplier_value
 		
+		# Drive shader effect
+		if multiplier_shader_bg and multiplier_shader_bg.material:
+			var mat = multiplier_shader_bg.material as ShaderMaterial
+			if multiplier_value <= 1.0:
+				mat.set_shader_parameter("effect_strength", 0.0)
+			else:
+				var strength = clampf(remap(multiplier_value, 1.0, 10.0, 0.7, 1.0), 0.0, 1.0)
+				var shader_intensity = clampf(remap(multiplier_value, 1.0, 10.0, 0.8, 1.4), 0.0, 1.4)
+				# Reset to default cyan/blue colors
+				mat.set_shader_parameter("energy_color", Vector4(0.2, 0.8, 1.0, 1.0))
+				mat.set_shader_parameter("accent_color", Vector4(0.1, 0.4, 1.0, 1.0))
+				if animate:
+					var shader_tween = create_tween()
+					shader_tween.tween_method(func(v): mat.set_shader_parameter("effect_strength", v), 0.0, strength, 0.3)
+					shader_tween.parallel().tween_method(func(v): mat.set_shader_parameter("intensity", v), 0.0, shader_intensity, 0.3)
+				else:
+					mat.set_shader_parameter("effect_strength", strength)
+					mat.set_shader_parameter("intensity", shader_intensity)
+		
 		if animate:
-			# Use cyan for values > 1.0, white for 1.0 (always bounce to show multiplication step)
 			var flash_color = Color.CYAN if multiplier_value > 1.0 else Color.WHITE
 			_bounce_label(multiplier_score_label, flash_color)
 
@@ -1494,3 +1623,224 @@ func reset_level_labels() -> void:
 		if level_label:
 			level_label.text = "Lv.1"
 	print("[ScoreCardUI] Reset %d level labels" % category_level_labels.size())
+
+
+# ──────────────────────────────────────────────────────────
+# Phase 4 — Counter Roll-Up, Milestones & Score Panel Shader
+# ──────────────────────────────────────────────────────────
+
+## animate_score_counter(old_score, new_score)
+##
+## Tweens the displayed total score number from old→new with a counting effect.
+## Uses TRANS_QUAD ease-out for satisfying deceleration.
+func animate_score_counter(old_score: int, new_score: int) -> void:
+	if not total_score_label:
+		return
+	if _counter_tween and _counter_tween.is_valid():
+		_counter_tween.kill()
+	
+	var duration = clampf(remap(absf(new_score - old_score), 1, 200, 0.3, 1.0), 0.3, 1.0)
+	_counter_tween = create_tween()
+	_counter_tween.tween_method(func(v: float):
+		var display_val = int(v)
+		total_score_label.text = "[center]Total Score:\n%d[/center]" % display_val
+		# Flash white→gold during counting
+		var t = inverse_lerp(old_score, new_score, v)
+		var color = Color.WHITE.lerp(Color(1.0, 0.84, 0.0), t)
+		total_score_label.modulate = color
+	, float(old_score), float(new_score), duration).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	# Fade back to white after counting
+	_counter_tween.tween_property(total_score_label, "modulate", Color.WHITE, 0.3)
+
+
+## check_score_milestones(score)
+##
+## At 100, 250, 500, 1000: trigger screen shake + panel flash.
+## Updates the score_panel_energy shader milestone_tier uniform.
+func check_score_milestones(score: int) -> void:
+	var new_tier := 0
+	if score >= 1000:
+		new_tier = 4
+	elif score >= 500:
+		new_tier = 3
+	elif score >= 250:
+		new_tier = 2
+	elif score >= 100:
+		new_tier = 1
+	
+	if new_tier > current_milestone_tier:
+		current_milestone_tier = new_tier
+		print("[ScoreCardUI] 🎉 Milestone tier %d reached! Score: %d" % [new_tier, score])
+		_screen_shaker(50, 50)
+		# Flash the total score panel gold
+		if total_score_panel:
+			var flash_tween = create_tween()
+			total_score_panel.modulate = Color(1.0, 0.84, 0.0)
+			flash_tween.tween_property(total_score_panel, "modulate", Color.WHITE, 0.6).set_ease(Tween.EASE_OUT)
+		animate_total_score_panel_bounce()
+
+
+## _update_score_panel_shader(total_score)
+##
+## Drive the score_panel_energy shader intensity and milestone_tier based on total score.
+func _update_score_panel_shader(total_score: int) -> void:
+	if not score_panel_shader_bg or not score_panel_shader_bg.material:
+		return
+	var mat = score_panel_shader_bg.material as ShaderMaterial
+	var strength = clampf(remap(total_score, 0, 500, 0.1, 1.0), 0.0, 1.0)
+	var shader_intensity = clampf(remap(total_score, 0, 500, 0.2, 0.8), 0.0, 0.8)
+	mat.set_shader_parameter("effect_strength", strength)
+	mat.set_shader_parameter("intensity", shader_intensity)
+	mat.set_shader_parameter("milestone_tier", current_milestone_tier)
+
+
+## reset_score_tracking()
+##
+## Resets score tracking vars for a new game. Call from game_controller on new game start.
+func reset_score_tracking() -> void:
+	previous_total_score = 0
+	current_milestone_tier = 0
+	if score_panel_shader_bg and score_panel_shader_bg.material:
+		var mat = score_panel_shader_bg.material as ShaderMaterial
+		mat.set_shader_parameter("effect_strength", 0.0)
+		mat.set_shader_parameter("intensity", 0.0)
+		mat.set_shader_parameter("milestone_tier", 0)
+
+
+# ──────────────────────────────────────────────────────────
+# Phase 5 — Best Hand Panel Enhancements
+# ──────────────────────────────────────────────────────────
+
+## highlight_best_hand_category()
+##
+## Applies a subtle gold pulse animation to the scorecard button matching the best hand.
+## Only highlights if the category is unscored.
+func highlight_best_hand_category() -> void:
+	clear_category_highlight()
+	if current_best_hand_category == "":
+		return
+	
+	var button: Button = null
+	# Find the matching button
+	if current_best_hand_section == Scorecard.Section.UPPER:
+		button = upper_section_buttons.get(current_best_hand_category)
+	else:
+		button = lower_section_buttons.get(current_best_hand_category)
+	
+	if not button or button.disabled:
+		return
+	
+	_highlighted_button = button
+	_highlight_tween = create_tween().set_loops()
+	_highlight_tween.tween_property(button, "modulate", Color(1.0, 0.9, 0.5), 0.6).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	_highlight_tween.tween_property(button, "modulate", Color.WHITE, 0.6).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+
+
+## clear_category_highlight()
+##
+## Removes the gold pulse highlight from any previously highlighted category button.
+func clear_category_highlight() -> void:
+	if _highlight_tween and _highlight_tween.is_valid():
+		_highlight_tween.kill()
+		_highlight_tween = null
+	if _highlighted_button:
+		_highlighted_button.modulate = Color.WHITE
+		_highlighted_button = null
+
+
+# ──────────────────────────────────────────────────────────
+# Phase 6 — Fun UX Extras
+# ──────────────────────────────────────────────────────────
+
+## pop_score_label(label)
+##
+## Play a quick pop animation when a category score is first set (null→value).
+## Scale 0→1.2→1.0 with TRANS_BACK ease + brief gold flash.
+func pop_score_label(label: Control) -> void:
+	if not label:
+		return
+	label.scale = Vector2.ZERO
+	label.modulate = Color(1.0, 0.84, 0.0)
+	var tween = create_tween()
+	tween.tween_property(label, "scale", Vector2(1.2, 1.2), 0.15).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(label, "scale", Vector2(1.0, 1.0), 0.2).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_ELASTIC)
+	tween.parallel().tween_property(label, "modulate", Color.WHITE, 0.3)
+
+
+## start_idle_float()
+##
+## Starts a gentle sin-wave bob on the best hand label for a "living" feel.
+func start_idle_float() -> void:
+	if not best_hand_label:
+		return
+	if _idle_float_tween and _idle_float_tween.is_valid():
+		_idle_float_tween.kill()
+	var base_y = best_hand_label.position.y
+	_idle_float_tween = create_tween().set_loops()
+	_idle_float_tween.tween_property(best_hand_label, "position:y", base_y - 2.0, 1.0).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	_idle_float_tween.tween_property(best_hand_label, "position:y", base_y + 2.0, 1.0).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+
+
+## stop_idle_float()
+##
+## Stops the gentle bob animation on the best hand label.
+func stop_idle_float() -> void:
+	if _idle_float_tween and _idle_float_tween.is_valid():
+		_idle_float_tween.kill()
+		_idle_float_tween = null
+
+
+## start_label_shimmer()
+##
+## When additive/multiplier values are non-default, slowly oscillate shader intensity
+## to create an idle shimmer effect.
+func start_label_shimmer() -> void:
+	if _shimmer_tween and _shimmer_tween.is_valid():
+		_shimmer_tween.kill()
+	
+	_shimmer_tween = create_tween().set_loops()
+	
+	# Additive shimmer
+	if additive_shader_bg and additive_shader_bg.material:
+		var add_mat = additive_shader_bg.material as ShaderMaterial
+		var current_strength = add_mat.get_shader_parameter("effect_strength")
+		if current_strength != null and current_strength > 0.0:
+			_shimmer_tween.tween_method(func(v): add_mat.set_shader_parameter("intensity", v), 0.3, 0.5, 1.5).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+			_shimmer_tween.tween_method(func(v): add_mat.set_shader_parameter("intensity", v), 0.5, 0.3, 1.5).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	
+	# Multiplier shimmer
+	if multiplier_shader_bg and multiplier_shader_bg.material:
+		var mul_mat = multiplier_shader_bg.material as ShaderMaterial
+		var current_strength = mul_mat.get_shader_parameter("effect_strength")
+		if current_strength != null and current_strength > 0.0:
+			_shimmer_tween.parallel().tween_method(func(v): mul_mat.set_shader_parameter("intensity", v), 0.3, 0.5, 1.5).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+			_shimmer_tween.parallel().tween_method(func(v): mul_mat.set_shader_parameter("intensity", v), 0.5, 0.3, 1.5).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+
+
+## _connect_button_hover_signals()
+##
+## Connect mouse_entered/mouse_exited signals on unscored buttons for hover glow.
+func _connect_button_hover_signals() -> void:
+	for button in upper_section_buttons.values():
+		if not button.is_connected("mouse_entered", _on_category_button_hover_enter.bind(button)):
+			button.mouse_entered.connect(_on_category_button_hover_enter.bind(button))
+			button.mouse_exited.connect(_on_category_button_hover_exit.bind(button))
+	for button in lower_section_buttons.values():
+		if not button.is_connected("mouse_entered", _on_category_button_hover_enter.bind(button)):
+			button.mouse_entered.connect(_on_category_button_hover_enter.bind(button))
+			button.mouse_exited.connect(_on_category_button_hover_exit.bind(button))
+
+
+func _on_category_button_hover_enter(button: Button) -> void:
+	if button.disabled:
+		return
+	var tween = create_tween()
+	tween.tween_property(button, "modulate", Color(1.1, 1.1, 0.9), 0.15)
+
+
+func _on_category_button_hover_exit(button: Button) -> void:
+	# Don't reset if this button is the highlighted best-hand button
+	if button == _highlighted_button:
+		return
+	var tween = create_tween()
+	tween.tween_property(button, "modulate", Color.WHITE, 0.15)

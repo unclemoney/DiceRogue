@@ -1,8 +1,42 @@
-[gd_scene load_steps=4 format=3 uid="uid://sliaarrkymdo"]
+[gd_scene load_steps=9 format=3 uid="uid://sliaarrkymdo"]
 
 [ext_resource type="Script" uid="uid://6yelginq6gfe" path="res://Scripts/UI/score_card_ui.gd" id="1_3x83p"]
 [ext_resource type="Theme" uid="uid://yij15afv8bdr" path="res://Resources/UI/scorecard_theme.tres" id="1_pm5im"]
 [ext_resource type="FontFile" uid="uid://dl7ws7oxo8mno" path="res://Resources/Font/BRICK_SANS.ttf" id="3_r7ft4"]
+[ext_resource type="Shader" uid="uid://d7aimlj1biry" path="res://Scripts/Shaders/neon_energy.gdshader" id="4_neon"]
+[ext_resource type="Shader" uid="uid://7v4a84q7n0pk" path="res://Scripts/Shaders/score_panel_energy.gdshader" id="5_panel"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_additive"]
+shader = ExtResource("4_neon")
+shader_parameter/energy_color = Color(1, 0.84, 0, 1)
+shader_parameter/accent_color = Color(1, 0.5, 0, 1)
+shader_parameter/energy_speed = 1.5
+shader_parameter/intensity = 0.8
+shader_parameter/arc_density = 4.0
+shader_parameter/pulse_rate = 1.2
+shader_parameter/effect_strength = 0.0
+shader_parameter/edge_glow_width = 0.12
+shader_parameter/spark_amount = 0.5
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_multiplier"]
+shader = ExtResource("4_neon")
+shader_parameter/energy_color = Color(0.2, 0.8, 1, 1)
+shader_parameter/accent_color = Color(0.4, 0.4, 1, 1)
+shader_parameter/energy_speed = 1.8
+shader_parameter/intensity = 0.8
+shader_parameter/arc_density = 5.0
+shader_parameter/pulse_rate = 1.0
+shader_parameter/effect_strength = 0.0
+shader_parameter/edge_glow_width = 0.1
+shader_parameter/spark_amount = 0.6
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_score_panel"]
+shader = ExtResource("5_panel")
+shader_parameter/intensity = 0.3
+shader_parameter/energy_speed = 0.8
+shader_parameter/milestone_tier = 0
+shader_parameter/effect_strength = 0.0
+shader_parameter/edge_arc_strength = 0.3
 
 [node name="ScoreCardUI" type="Control"]
 layout_mode = 3
@@ -432,6 +466,7 @@ layout_mode = 2
 vertical_alignment = 1
 
 [node name="LogbookPanel" type="PanelContainer" parent="."]
+visible = false
 layout_mode = 0
 offset_left = -280.0
 offset_top = -55.0
@@ -454,9 +489,9 @@ fit_content = true
 [node name="BestHandPanel" type="PanelContainer" parent="."]
 layout_mode = 0
 offset_left = -280.0
-offset_top = 48.0
+offset_top = -55.0
 offset_right = -20.0
-offset_bottom = 168.0
+offset_bottom = 85.0
 
 [node name="MarginContainer" type="MarginContainer" parent="BestHandPanel"]
 layout_mode = 2
@@ -500,6 +535,17 @@ text = "+0"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="AdditiveShaderBG" type="ColorRect" parent="BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer/AdditiveScoreLabel"]
+show_behind_parent = true
+material = SubResource("ShaderMaterial_additive")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 1, 1, 0)
+
 [node name="MultiplierContainer" type="VBoxContainer" parent="BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -518,10 +564,20 @@ text = "x1.0"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="MultiplierShaderBG" type="ColorRect" parent="BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer/MultiplierScoreLabel"]
+show_behind_parent = true
+material = SubResource("ShaderMaterial_multiplier")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
 [node name="TotalScorePanel" type="PanelContainer" parent="."]
 layout_mode = 0
 offset_left = -280.0
-offset_top = 176.0
+offset_top = 93.0
 offset_right = -20.0
 offset_bottom = 296.0
 
@@ -537,3 +593,17 @@ layout_mode = 2
 theme_override_font_sizes/normal_font_size = 45
 bbcode_enabled = true
 vertical_alignment = 1
+
+[node name="ScorePanelShaderBG" type="ColorRect" parent="TotalScorePanel/MarginContainer/RichTextTotalScore"]
+show_behind_parent = true
+material = SubResource("ShaderMaterial_score_panel")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -16.0
+offset_top = -12.0
+offset_right = 16.0
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2

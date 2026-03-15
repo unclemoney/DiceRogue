@@ -1,0 +1,235 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://Tests/shader_debug_test.gd" id="1_script"]
+[ext_resource type="Shader" uid="uid://d7aimlj1biry" path="res://Scripts/Shaders/neon_energy.gdshader" id="2_neon"]
+[ext_resource type="Shader" uid="uid://7v4a84q7n0pk" path="res://Scripts/Shaders/score_panel_energy.gdshader" id="3_panel"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_add_demo"]
+shader = ExtResource("2_neon")
+shader_parameter/energy_color = Color(1, 0.84, 0, 1)
+shader_parameter/accent_color = Color(1, 0.5, 0, 1)
+shader_parameter/energy_speed = 1.5
+shader_parameter/intensity = 0.6
+shader_parameter/arc_density = 4.0
+shader_parameter/pulse_rate = 1.2
+shader_parameter/effect_strength = 0.8
+shader_parameter/edge_glow_width = 0.12
+shader_parameter/spark_amount = 0.5
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mul_demo"]
+shader = ExtResource("2_neon")
+shader_parameter/energy_color = Color(0.2, 0.8, 1, 1)
+shader_parameter/accent_color = Color(0.1, 0.4, 1, 1)
+shader_parameter/energy_speed = 1.8
+shader_parameter/intensity = 0.6
+shader_parameter/arc_density = 5.0
+shader_parameter/pulse_rate = 1.0
+shader_parameter/effect_strength = 0.8
+shader_parameter/edge_glow_width = 0.1
+shader_parameter/spark_amount = 0.6
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_panel_demo"]
+shader = ExtResource("3_panel")
+shader_parameter/intensity = 0.6
+shader_parameter/energy_speed = 0.8
+shader_parameter/milestone_tier = 0
+shader_parameter/effect_strength = 0.8
+shader_parameter/edge_arc_strength = 0.3
+
+[node name="ShaderDebugTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.08, 0.08, 0.12, 1)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 22
+text = "Shader Debug Test — neon_energy + score_panel_energy"
+horizontal_alignment = 1
+
+[node name="ShaderRow" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
+theme_override_constants/separation = 20
+
+[node name="AdditivePanel" type="PanelContainer" parent="VBoxContainer/ShaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AdditiveShaderRect" type="ColorRect" parent="VBoxContainer/ShaderRow/AdditivePanel"]
+material = SubResource("ShaderMaterial_add_demo")
+layout_mode = 2
+
+[node name="AdditiveLabel" type="Label" parent="VBoxContainer/ShaderRow/AdditivePanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_font_sizes/font_size = 28
+text = "+42"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="AdditiveTitle" type="Label" parent="VBoxContainer/ShaderRow/AdditivePanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 12
+text = "ADDITIVE (neon_energy — gold)"
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="MultiplierPanel" type="PanelContainer" parent="VBoxContainer/ShaderRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MultiplierShaderRect" type="ColorRect" parent="VBoxContainer/ShaderRow/MultiplierPanel"]
+material = SubResource("ShaderMaterial_mul_demo")
+layout_mode = 2
+
+[node name="MultiplierLabel" type="Label" parent="VBoxContainer/ShaderRow/MultiplierPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 28
+text = "x3.5"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MultiplierTitle" type="Label" parent="VBoxContainer/ShaderRow/MultiplierPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 12
+text = "MULTIPLIER (neon_energy — cyan)"
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="ScorePanelDemo" type="PanelContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.5
+
+[node name="ScorePanelShaderRect" type="ColorRect" parent="VBoxContainer/ScorePanelDemo"]
+material = SubResource("ShaderMaterial_panel_demo")
+layout_mode = 2
+
+[node name="ScorePanelLabel" type="RichTextLabel" parent="VBoxContainer/ScorePanelDemo"]
+layout_mode = 2
+theme_override_colors/default_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/normal_font_size = 32
+bbcode_enabled = true
+text = "[center]Total Score:
+350[/center]"
+vertical_alignment = 1
+
+[node name="ScorePanelTitle" type="Label" parent="VBoxContainer/ScorePanelDemo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 12
+text = "SCORE PANEL (score_panel_energy)"
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="Controls" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ControlsTitle" type="Label" parent="VBoxContainer/Controls"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 16
+text = "Controls"
+horizontal_alignment = 1
+
+[node name="StrengthRow" type="HBoxContainer" parent="VBoxContainer/Controls"]
+layout_mode = 2
+
+[node name="StrengthLabel" type="Label" parent="VBoxContainer/Controls/StrengthRow"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "Effect Strength:"
+
+[node name="StrengthSlider" type="HSlider" parent="VBoxContainer/Controls/StrengthRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 0.8
+
+[node name="StrengthValue" type="Label" parent="VBoxContainer/Controls/StrengthRow"]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "0.80"
+
+[node name="IntensityRow" type="HBoxContainer" parent="VBoxContainer/Controls"]
+layout_mode = 2
+
+[node name="IntensityLabel" type="Label" parent="VBoxContainer/Controls/IntensityRow"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "Intensity:"
+
+[node name="IntensitySlider" type="HSlider" parent="VBoxContainer/Controls/IntensityRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 0.0
+max_value = 2.0
+step = 0.01
+value = 0.6
+
+[node name="IntensityValue" type="Label" parent="VBoxContainer/Controls/IntensityRow"]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "0.60"
+
+[node name="TierRow" type="HBoxContainer" parent="VBoxContainer/Controls"]
+layout_mode = 2
+
+[node name="TierDownBtn" type="Button" parent="VBoxContainer/Controls/TierRow"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "Tier -"
+
+[node name="TierLabel" type="Label" parent="VBoxContainer/Controls/TierRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "Tier 0: Dim White (0-99)"
+horizontal_alignment = 1
+
+[node name="TierUpBtn" type="Button" parent="VBoxContainer/Controls/TierRow"]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+text = "Tier +"
+
+[node name="DivisionToggleBtn" type="Button" parent="VBoxContainer/Controls/TierRow"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+text = "Toggle Division"
+
+[connection signal="pressed" from="VBoxContainer/Controls/TierRow/TierDownBtn" to="." method="_on_tier_down_pressed"]
+[connection signal="pressed" from="VBoxContainer/Controls/TierRow/TierUpBtn" to="." method="_on_tier_up_pressed"]
+[connection signal="pressed" from="VBoxContainer/Controls/TierRow/DivisionToggleBtn" to="." method="_on_division_toggle_pressed"]
