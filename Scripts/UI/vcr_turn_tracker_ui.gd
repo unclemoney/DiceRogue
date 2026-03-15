@@ -4,6 +4,7 @@ class_name VCRTurnTrackerUI
 # VCR-style Turn Tracker with dynamic animations
 var tracker: TurnTracker
 var previous_money: int = 0
+var _channel_manager = null
 
 # VCR Display Colors
 const VCR_GREEN := Color(0.2, 1.0, 0.3, 1.0)
@@ -19,14 +20,17 @@ const VCR_GREEN_DIM := Color(0.1, 0.8, 0.2, 1.0)
 @onready var turn_label: Label = $VCRDisplay/TurnLabel
 @onready var rolls_label: Label = $VCRDisplay/RollsLabel
 @onready var round_label: Label = $VCRDisplay/RoundLabel
+@onready var channel_label: Label = $VCRDisplay/ChannelPanel/ChannelLabel
 
 # Animation components
 @onready var money_tween: Tween
 @onready var turn_tween: Tween
 @onready var rolls_tween: Tween
 @onready var round_tween: Tween
+var channel_tween: Tween
 
 func _ready() -> void:
+	add_to_group("turn_tracker_ui")
 	_setup_vcr_styling()
 	_connect_signals()
 	_initialize_display()
@@ -54,6 +58,15 @@ func _setup_vcr_styling() -> void:
 		round_label.add_theme_font_override("font", vcr_font)
 		round_label.add_theme_font_size_override("font_size", 20)
 		round_label.add_theme_color_override("font_color", VCR_GREEN)
+
+	if channel_label:
+		channel_label.add_theme_font_override("font", vcr_font)
+		channel_label.add_theme_font_size_override("font_size", 16)
+		channel_label.add_theme_color_override("font_color", VCR_GREEN_BRIGHT)
+		channel_label.add_theme_color_override("font_shadow_color", VCR_GREEN_DIM)
+		channel_label.add_theme_constant_override("shadow_outline_size", 1)
+		channel_label.add_theme_constant_override("shadow_offset_x", 0)
+		channel_label.add_theme_constant_override("shadow_offset_y", 0)
 
 func _connect_signals() -> void:
 	# Connect to economy changes for money animations
@@ -169,6 +182,27 @@ func _update_round_display(round_number: int) -> void:
 		round_label.text = "RND:%d" % round_number
 		_animate_label_change(round_label, round_tween)
 
+## bind_channel_manager(cm)
+##
+## Binds the ChannelManager to this UI, connecting channel_changed signal.
+## Initializes the channel display from the manager's current state.
+## Notes: Must be called after the ChannelManager node is ready.
+func bind_channel_manager(cm) -> void:
+	if cm == null:
+		push_error("ChannelManager is null—cannot bind signals.")
+		return
+	_channel_manager = cm
+	cm.channel_changed.connect(_on_channel_changed)
+	_update_channel_display(cm.current_channel)
+
+func _on_channel_changed(channel: int) -> void:
+	_update_channel_display(channel)
+	_animate_label_change(channel_label, channel_tween)
+
+func _update_channel_display(channel: int) -> void:
+	if channel_label:
+		channel_label.text = "Channel: %02d" % channel
+
 func _animate_label_change(label: Label, tween_ref: Tween) -> void:
 	if not label:
 		return
@@ -209,10 +243,13 @@ func reset_for_new_channel() -> void:
 	
 	if turn_label:
 		turn_label.text = "TRN:--/13"
-	
+
 	if rolls_label:
 		rolls_label.text = "RLL:--/3"
 		rolls_label.add_theme_color_override("font_color", VCR_GREEN)
-	
+
 	if round_label:
 		round_label.text = "RND:--"
+
+	if channel_label:
+		channel_label.text = "Channel: --"

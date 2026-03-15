@@ -300,6 +300,12 @@ func _ready() -> void:
 		round_winner_panel.next_channel_pressed.connect(_on_next_channel_pressed)
 		print("[GameController] RoundWinnerPanel connected")
 
+	# Bind VCR tracker UI channel display
+	var _vcr_tracker = get_tree().get_first_node_in_group("turn_tracker_ui")
+	if _vcr_tracker and _vcr_tracker.has_method("bind_channel_manager") and channel_manager:
+		_vcr_tracker.bind_channel_manager(channel_manager)
+		print("[GameController] VCR tracker UI bound to ChannelManager")
+
 	# Register new consumables programmatically
 	if consumable_manager:
 		consumable_manager.register_consumable_def(RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF)
