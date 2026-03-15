@@ -441,6 +441,9 @@ func _build_fx_tab() -> void:
 		return
 	
 	for group_id in _tfx.Group.values():
+		# SPINES and IDLE are permanently disabled — hide their toggles.
+		if group_id in _tfx.PERMANENTLY_DISABLED_GROUPS:
+			continue
 		var row = HBoxContainer.new()
 		row.add_theme_constant_override("separation", 15)
 		toggle_container.add_child(row)

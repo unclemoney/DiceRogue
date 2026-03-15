@@ -59,17 +59,27 @@ func _ready() -> void:
 	_enabled_groups[Group.SPINES] = false
 
 
+## Groups that are permanently off and cannot be re-enabled by settings or profiles.
+const PERMANENTLY_DISABLED_GROUPS: Array[int] = [Group.SPINES, Group.IDLE]
+
+
 ## is_group_enabled(group)
 ##
 ## Returns whether a specific FX group is currently active.
+## SPINES and IDLE are permanently disabled and always return false.
 func is_group_enabled(group: Group) -> bool:
+	if group in PERMANENTLY_DISABLED_GROUPS:
+		return false
 	return _enabled_groups.get(group, true)
 
 
 ## set_group_enabled(group, enabled)
 ##
 ## Enables or disables an entire FX group at runtime.
+## Calls for permanently disabled groups (SPINES, IDLE) are silently ignored.
 func set_group_enabled(group: Group, enabled: bool) -> void:
+	if group in PERMANENTLY_DISABLED_GROUPS:
+		return
 	_enabled_groups[group] = enabled
 	group_toggled.emit(group, enabled)
 
