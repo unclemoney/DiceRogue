@@ -1,8 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://lc4xqvsxdnpy"]
+[gd_scene load_steps=6 format=3 uid="uid://lc4xqvsxdnpy"]
 
 [ext_resource type="Theme" uid="uid://yij15afv8bdr" path="res://Resources/UI/scorecard_theme.tres" id="1_6ljww"]
 [ext_resource type="Script" uid="uid://bs540x55u5587" path="res://Scripts/UI/game_button_ui.gd" id="1_v70y2"]
-[ext_resource type="Texture2D" uid="uid://dpb6jg8ux7adi" path="res://Resources/Art/Background/VCR.png" id="3_ah431"]
+[ext_resource type="Texture2D" uid="uid://dkmodd5s24gg" path="res://Resources/Art/Background/VCR_OPEN.png" id="3_ah431"]
+[ext_resource type="Texture2D" uid="uid://c51q0jsn7pi86" path="res://Resources/Art/Background/VCR_TAPE.png" id="4_tape"]
+[ext_resource type="Texture2D" uid="uid://dvdfxuf52k7b6" path="res://Resources/Art/Background/VCR_DOOR.png" id="5_door"]
 
 [node name="GameButtonUI" type="Control"]
 layout_mode = 3
@@ -20,6 +22,23 @@ offset_right = 360.0
 offset_bottom = 243.0
 texture = ExtResource("3_ah431")
 expand_mode = 1
+
+[node name="VCRTape" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 34.0
+offset_top = 35.0
+offset_right = 327.0
+offset_bottom = 80.0
+texture = ExtResource("4_tape")
+
+[node name="VCRDoor" type="TextureRect" parent="."]
+layout_mode = 0
+offset_left = 38.0
+offset_top = 34.0
+offset_right = 331.0
+offset_bottom = 79.0
+mouse_filter = 0
+texture = ExtResource("5_door")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 0

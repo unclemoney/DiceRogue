@@ -16,6 +16,10 @@ extends Control
 @onready var next_turn_button: Button = $HBoxContainer/NextTurnButton  
 @onready var _tfx := get_node("/root/TweenFXHelper")
 
+# VCR Door Elements
+@onready var vcr_door: TextureRect = $VCRDoor
+var _door_is_animating: bool = false
+
 signal shop_button_pressed
 signal next_round_pressed
 signal dice_rolled(dice_values: Array)
@@ -93,6 +97,10 @@ func _ready():
 	# Disable gameplay buttons initially
 	roll_button.disabled = true
 	next_turn_button.disabled = true
+
+	# Connect VCR door click
+	if vcr_door:
+		vcr_door.gui_input.connect(_on_vcr_door_input)
 
 
 ## _process(delta)
@@ -192,6 +200,34 @@ func _toggle_die_lock(index: int) -> void:
 	if die and die.has_method("toggle_lock"):
 		die.toggle_lock()
 		print("[GameButtonUI] Toggled lock on die %d" % (index + 1))
+
+
+## _on_vcr_door_input(event)
+##
+## Plays a snappy "swing open" tween on the VCR door when clicked.
+## The door's pivot is at the top edge so it swings upward and away.
+## Resets automatically after 5 seconds.
+func _on_vcr_door_input(event: InputEvent) -> void:
+	if not event is InputEventMouseButton:
+		return
+	if not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
+		return
+	if _door_is_animating or not vcr_door:
+		return
+	_door_is_animating = true
+
+	# Hinge at the top center of the door
+	vcr_door.pivot_offset = Vector2(vcr_door.size.x / 2.0, 0.0)
+
+	var door_tween := create_tween()
+	door_tween.tween_property(vcr_door, "scale:y", 0.0, 0.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	door_tween.tween_callback(func(): vcr_door.visible = false)
+
+	# Wait then reset
+	await get_tree().create_timer(1.0).timeout
+	vcr_door.scale = Vector2.ONE
+	vcr_door.visible = true
+	_door_is_animating = false
 
 
 ## reset_for_new_channel() -> void
