@@ -37,7 +37,7 @@ signal manual_score
 # Shader background ColorRects
 @onready var additive_shader_bg: ColorRect = $BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer/AdditiveScoreLabel/AdditiveShaderBG
 @onready var multiplier_shader_bg: ColorRect = $BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer/MultiplierScoreLabel/MultiplierShaderBG
-@onready var score_panel_shader_bg: ColorRect = $TotalScorePanel/MarginContainer/RichTextTotalScore/ScorePanelShaderBG
+@onready var score_panel_shader_bg: ColorRect = $TotalScorePanel/ScorePanelShaderBG
 
 const LOWER_CATEGORY_NODE_NAMES := {
 	"three_of_a_kind": "Threeofakind",
@@ -1388,15 +1388,9 @@ func _apply_score_breakdown_theme() -> void:
 		var mul_style = transparent_style.duplicate()
 		multiplier_score_label.add_theme_stylebox_override("normal", mul_style)
 		print("[ScoreCardUI] Applied transparent style to multiplier label for shader visibility")
-	# Make TotalScorePanel semi-transparent so score_panel_energy shader shows through
-	if total_score_panel:
-		var panel_style = StyleBoxFlat.new()
-		panel_style.bg_color = Color(0.08, 0.08, 0.12, 0.5)
-		panel_style.set_corner_radius_all(4)
-		panel_style.border_color = Color(0.3, 0.3, 0.5, 0.6)
-		panel_style.set_border_width_all(2)
-		total_score_panel.add_theme_stylebox_override("panel", panel_style)
-		print("[ScoreCardUI] Applied semi-transparent style to TotalScorePanel for shader visibility")
+	# TotalScorePanel uses the theme's panel_border.png StyleBoxTexture (same as BestHandPanel).
+	# WhiteBackground and ScorePanelShaderBG are direct children with show_behind_parent=true
+	# so they render before the StyleBox, letting the border frame show on top.
 
 
 ## _reset_score_breakdown_labels()
