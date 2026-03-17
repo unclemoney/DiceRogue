@@ -33,12 +33,12 @@ float noise(vec2 p) {
 	vec2 i = floor(p);
 	vec2 f = fract(p);
 	f = f * f * (3.0 - 2.0 * f);  // Smoothstep interpolation
-	
+
 	float a = hash21(i);
 	float b = hash21(i + vec2(1.0, 0.0));
 	float c = hash21(i + vec2(0.0, 1.0));
 	float d = hash21(i + vec2(1.0, 1.0));
-	
+
 	return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
@@ -47,7 +47,7 @@ float fbm(vec2 p, int octaves) {
 	float value = 0.0;
 	float amplitude = 0.5;
 	float frequency = 1.0;
-	
+
 	for (int i = 0; i < octaves; i++) {
 		value += amplitude * noise(p * frequency);
 		amplitude *= 0.5;
@@ -60,19 +60,19 @@ float fbm(vec2 p, int octaves) {
 // Electric arc function - creates bright tendril-like patterns
 float electric_arc(vec2 uv, float time_offset) {
 	float t = TIME * energy_speed + time_offset;
-	
+
 	// Multiple flowing noise layers that create arc-like patterns
 	vec2 flow = vec2(t * 0.7, t * 0.3);
 	float n1 = fbm(uv * arc_density + flow, 3);
 	float n2 = fbm(uv * arc_density * 1.5 - flow * 0.8 + vec2(5.0, 3.0), 3);
-	
+
 	// Create sharp arc ridges by using abs of sine of noise
 	float arc = sin(n1 * 6.28 + t * 2.0) * 0.5 + 0.5;
 	arc *= sin(n2 * 4.0 - t * 1.5) * 0.5 + 0.5;
-	
-	// Sharpen the arcs to create defined tendril lines  
+
+	// Sharpen the arcs to create defined tendril lines
 	arc = pow(arc, 2.5);
-	
+
 	return arc;
 }
 
@@ -82,29 +82,29 @@ void fragment() {
 	} else {
 		vec2 uv = UV;
 		float t = TIME * energy_speed;
-		
+
 		// Pulsing intensity modulation
 		float pulse = 1.0;
 		if (pulse_rate > 0.0) {
 			pulse = 0.7 + 0.3 * sin(TIME * pulse_rate);
 		}
 		float eff_intensity = intensity * pulse * effect_strength;
-		
+
 		// === ELECTRIC ARC LAYERS ===
 		float arc1 = electric_arc(uv, 0.0);
 		float arc2 = electric_arc(uv * 1.3 + vec2(3.7, 1.2), 2.5);
 		float arcs = max(arc1, arc2 * 0.7);
-		
+
 		// === EDGE GLOW ===
 		// Bright neon-tube border emission
 		float edge_dist = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
 		float edge = smoothstep(edge_glow_width, 0.0, edge_dist);
-		
+
 		// Animate edge with flowing energy
 		float edge_flow1 = sin(uv.y * 15.0 - t * 3.0) * 0.5 + 0.5;
 		float edge_flow2 = sin(uv.x * 12.0 + t * 2.5) * 0.5 + 0.5;
 		float edge_anim = edge * (0.5 + 0.5 * edge_flow1 * edge_flow2);
-		
+
 		// === CRACKLING SPARKS ===
 		float sparks = 0.0;
 		if (spark_amount > 0.0) {
@@ -120,23 +120,23 @@ void fragment() {
 				sparks = min(sparks, 1.0);
 			}
 		}
-		
+
 		// === COMBINE ===
 		// Mix primary and accent colors based on arc position
 		float color_mix = fbm(uv * 2.0 + vec2(t * 0.2, 0.0), 2);
 		vec3 base_energy = mix(energy_color.rgb, accent_color.rgb, color_mix * 0.4);
-		
+
 		// Arcs are colored, edges are brighter (more white/saturated)
 		vec3 arc_color = base_energy * arcs * eff_intensity;
 		vec3 edge_color = mix(base_energy, vec3(1.0), 0.4) * edge_anim * eff_intensity * 1.2;
 		vec3 spark_color = vec3(1.0, 0.98, 0.9) * sparks * eff_intensity;
-		
+
 		vec3 final_color = arc_color + edge_color + spark_color;
-		
+
 		// Overall alpha - arcs + edges + sparks contribute
 		float alpha = (arcs * 0.6 + edge_anim * 0.8 + sparks) * eff_intensity;
 		alpha = clamp(alpha, 0.0, 1.0) * effect_strength;
-		
+
 		COLOR = vec4(final_color, alpha);
 	}
 }

@@ -686,8 +686,14 @@ func _on_challenge_note_mouse_entered(note: Control) -> void:
 	if not is_instance_valid(note):
 		return
 	
+	# Kill any existing hover tween to prevent animation conflicts from rapid mouse movement
+	var old_tween = note.get_meta("hover_tween", null)
+	if old_tween and old_tween is Tween and old_tween.is_valid():
+		old_tween.kill()
+	
 	var base_pos = note.get_meta("base_position", note.position)
 	var tween = create_tween().set_parallel()
+	note.set_meta("hover_tween", tween)
 	tween.tween_property(note, "position", base_pos + Vector2(0, -10), 0.1)
 	tween.tween_property(note, "scale", Vector2(1.1, 1.1), 0.1)
 	tween.tween_property(note, "z_index", 135, 0.0)  # Boost above other fanned cards
@@ -697,8 +703,14 @@ func _on_challenge_note_mouse_exited(note: Control) -> void:
 	if not is_instance_valid(note):
 		return
 	
+	# Kill any existing hover tween to prevent animation conflicts from rapid mouse movement
+	var old_tween = note.get_meta("hover_tween", null)
+	if old_tween and old_tween is Tween and old_tween.is_valid():
+		old_tween.kill()
+	
 	var base_pos = note.get_meta("base_position", note.position)
 	var tween = create_tween().set_parallel()
+	note.set_meta("hover_tween", tween)
 	tween.tween_property(note, "position", base_pos, 0.1)
 	tween.tween_property(note, "scale", Vector2.ONE, 0.1)
 	tween.tween_property(note, "z_index", 125, 0.0)  # Return to standard fanned z

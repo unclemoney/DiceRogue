@@ -195,7 +195,10 @@ func calculate_small_straight_score(values: Array[int]) -> int:
 	return 30 if is_small_straight(values) else 0
 
 func calculate_large_straight_score(values: Array[int]) -> int:
-	return 40 if is_straight(values) else 0
+	var result = 40 if is_straight(values) else 0
+	if result == 0 and values.size() >= 5:
+		print("[ScoreEvaluator] Large straight FAILED for values:", values, " unique:", get_unique(values))
+	return result
 
 func calculate_yahtzee_score(values: Array[int]) -> int:
 	if is_yahtzee(values):

@@ -251,5 +251,6 @@ func reset_for_new_channel() -> void:
 	if round_label:
 		round_label.text = "RND:--"
 
-	if channel_label:
-		channel_label.text = "Channel: --"
+	# NOTE: Do NOT reset channel_label here — it was already updated
+	# correctly by the channel_changed signal before this function is called.
+	# Blanking it would overwrite the correct "Channel: XX" text.

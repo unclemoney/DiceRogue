@@ -511,7 +511,14 @@ func _restart_game_for_new_channel() -> void:
 	# Reset scorecard level labels in the UI
 	if score_card_ui:
 		score_card_ui.reset_level_labels()
-		print("[GameController] Scorecard level labels reset")
+		score_card_ui.prepare_for_scoring_animation()
+		print("[GameController] Scorecard level labels and score breakdown reset")
+	
+	# Reset dice count back to default 5 (safety net after power-up cleanup)
+	if dice_hand:
+		dice_hand.dice_count = 5
+		dice_hand.update_dice_count()
+		print("[GameController] Dice count reset to 5 for new channel")
 	
 	# Re-enable shop button for new game
 	if game_button_ui and game_button_ui.has_node("HBoxContainer/ShopButton"):
@@ -573,10 +580,11 @@ func _clear_active_debuffs() -> void:
 ## Removes all active power-ups for new channel start.
 ## Clears both runtime instances and UI.
 func _clear_all_power_ups() -> void:
-	# Free all power-up instances
+	# Deactivate all power-ups first (calls remove() to revert side effects)
 	for id in active_power_ups.keys():
 		var pu = active_power_ups[id]
-		if pu:
+		if pu and is_instance_valid(pu):
+			_deactivate_power_up(id)
 			pu.queue_free()
 	active_power_ups.clear()
 	
@@ -3541,6 +3549,8 @@ func _on_round_started(round_number: int) -> void:
 	if score_card_ui:
 		score_card_ui.turn_scored = false
 		score_card_ui.enable_all_score_buttons()
+		# Reset additive/multiplier labels and shader glow from previous round
+		score_card_ui.prepare_for_scoring_animation()
 		# Refresh UI to show updated scaling values
 		score_card_ui.update_all()
 		print("[GameController] Scorecard unlocked for new round")

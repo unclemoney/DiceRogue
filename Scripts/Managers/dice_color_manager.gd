@@ -162,11 +162,12 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = [], app
 			print("[DiceColorManager] Rainbow bonus applied!")
 	
 	# Grant yellow dice consumable if yellow was scored (only if side effects enabled)
+	# Grant 1 consumable per yellow die scored in the category
 	if yellow_scored and apply_side_effects:
-		var grant_count = 1
-		# Yellow same-color bonus: grant 2 consumables instead of 1
+		var grant_count = yellow_count
+		# Yellow same-color bonus: double the grants
 		if same_color_bonus and yellow_count >= 5:
-			grant_count = 2
+			grant_count = yellow_count * 2
 		for _i in range(grant_count):
 			_grant_yellow_dice_consumable()
 	

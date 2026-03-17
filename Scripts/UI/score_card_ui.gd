@@ -473,16 +473,16 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 	print("[ScoreCardUI] Reroll active:", reroll_active)
 	print("[ScoreCardUI] Turn scored:", turn_scored)
 	
+	# Check if we're in double mode FIRST — no dice interaction needed
+	if is_double_mode:
+		_handle_double_score(section, category)
+		return
+	
 	# Check if dice are in a valid state for scoring
 	var dice_hand = get_node_or_null("../DiceHand") as DiceHand
 	if dice_hand and not dice_hand.can_any_dice_score():
 		print("[ScoreCardUI] Cannot score - no dice are in ROLLED or LOCKED state")
 		show_invalid_score_feedback(category)
-		return
-	
-	# Check if we're in double mode
-	if is_double_mode:
-		_handle_double_score(section, category)
 		return
 	
 	# Check if we're in go broke mode - only allow lower section
