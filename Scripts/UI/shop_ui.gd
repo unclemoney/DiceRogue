@@ -470,6 +470,28 @@ func _find_consumable_ui() -> ConsumableUI:
 func _find_game_controller() -> GameController:
 	return get_tree().get_first_node_in_group("game_controller") as GameController
 
+
+## on_shop_opened()
+##
+## Called by GameController when the shop is opened.
+## Refreshes all item prices and reroll display to reflect current discount state.
+func on_shop_opened() -> void:
+	refresh_all_prices()
+	_update_reroll_cost_display()
+	_update_reroll_button_state()
+
+## refresh_all_prices()
+##
+## Iterates all ShopItem children in power_up and consumable containers
+## and calls refresh_price() on each. Called when discount state changes.
+func refresh_all_prices() -> void:
+	for container in [power_up_container, consumable_container]:
+		if not container:
+			continue
+		for child in container.get_children():
+			if child is ShopItem:
+				child.refresh_price()
+
 # Helper function to check if mod limit has been reached
 func _has_reached_mod_limit(game_controller: GameController) -> bool:
 	if not game_controller:
@@ -482,6 +504,12 @@ func _has_reached_mod_limit(game_controller: GameController) -> bool:
 	return current_mod_count >= expected_dice_count
 
 func _on_close_button_pressed() -> void:
+	# Reset Clearance Rack on shop close
+	var game_controller = _find_game_controller()
+	if game_controller and game_controller.clearance_rack_active:
+		game_controller.clearance_rack_active = false
+		print("[ShopUI] Clearance Rack expired on shop close")
+	
 	shop_closed.emit()
 	# Notify tutorial system about shop being closed
 	var tutorial_manager = get_node_or_null("/root/TutorialManager")
@@ -612,6 +640,10 @@ func _apply_reroll_button_styling(button: Button) -> void:
 ## _update_reroll_cost_display()
 ## Updates the cost label text with current reroll cost in all tabs
 func _update_reroll_cost_display() -> void:
+	# Check if Clearance Rack makes rerolls free
+	var game_controller = _find_game_controller()
+	var free_reroll = game_controller and game_controller.clearance_rack_active
+	
 	# Update cost labels in both PowerUps and Consumables tabs
 	var tab_names = ["PowerUps", "Consumables"]
 	for tab_name in tab_names:
@@ -625,7 +657,10 @@ func _update_reroll_cost_display() -> void:
 		
 		var tab_cost_label = reroll_container.get_node_or_null("RerollCostLabel")
 		if tab_cost_label:
-			tab_cost_label.text = "[center]$%d[/center]" % reroll_cost
+			if free_reroll:
+				tab_cost_label.text = "[center]FREE[/center]"
+			else:
+				tab_cost_label.text = "[center]$%d[/center]" % reroll_cost
 
 ## _animate_reroll_cost_bounce()
 ## Animates the cost label with a bounce effect in the current tab
@@ -662,8 +697,12 @@ func _on_reroll_button_pressed() -> void:
 		print("[ShopUI] Reroll on cooldown")
 		return
 	
-	# Check if player can afford
-	if not PlayerEconomy.can_afford(reroll_cost):
+	# Check if Clearance Rack is active (free rerolls)
+	var game_controller = _find_game_controller()
+	var free_reroll = game_controller and game_controller.clearance_rack_active
+	
+	# Check if player can afford (skip if free reroll)
+	if not free_reroll and not PlayerEconomy.can_afford(reroll_cost):
 		print("[ShopUI] Cannot afford reroll - cost:", reroll_cost)
 		return
 	
@@ -673,10 +712,13 @@ func _on_reroll_button_pressed() -> void:
 		print("[ShopUI] Reroll not available on this tab")
 		return
 	
-	# Deduct money
+	# Deduct money (skip if free reroll)
 	var item_type = "power_up" if current_tab == 0 else "consumable"
-	PlayerEconomy.remove_money(reroll_cost, "reroll_" + item_type)
-	print("[ShopUI] Rerolling %s items for $%d" % [item_type, reroll_cost])
+	if free_reroll:
+		print("[ShopUI] Free reroll (Clearance Rack) for %s items" % item_type)
+	else:
+		PlayerEconomy.remove_money(reroll_cost, "reroll_" + item_type)
+		print("[ShopUI] Rerolling %s items for $%d" % [item_type, reroll_cost])
 	
 	# Set cooldown
 	reroll_cooldown = REROLL_COOLDOWN_TIME
@@ -757,6 +799,10 @@ func _reroll_consumables() -> void:
 func _update_reroll_button_state() -> void:
 	var _current_tab = tab_container.current_tab if tab_container else -1
 	
+	# Check if Clearance Rack makes rerolls free
+	var game_controller_ref = _find_game_controller()
+	var free_reroll = game_controller_ref and game_controller_ref.clearance_rack_active
+	
 	# Update reroll UI in both PowerUps and Consumables tabs
 	var tab_names = ["PowerUps", "Consumables"]
 	for tab_name in tab_names:
@@ -781,8 +827,8 @@ func _update_reroll_button_state() -> void:
 			tab_button.disabled = true
 			continue
 		
-		# Check if can afford
-		if not PlayerEconomy.can_afford(reroll_cost):
+		# Check if can afford (skip if free reroll from Clearance Rack)
+		if not free_reroll and not PlayerEconomy.can_afford(reroll_cost):
 			tab_button.disabled = true
 			continue
 		

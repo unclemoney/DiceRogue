@@ -132,6 +132,9 @@ func setup(data: Resource, type: String) -> void:
 	var base_price = data.price
 	price = _apply_price_multiplier(base_price, type)
 	
+	# Apply consumable-based discounts (Half Price, Loss Leader)
+	price = _apply_consumable_discounts(price, type)
+	
 	if not icon or not name_label or not price_label:
 		push_error("[ShopItem] One or more required nodes not found!")
 		return
@@ -148,7 +151,10 @@ func setup(data: Resource, type: String) -> void:
 		icon.texture = data.icon
 	
 	name_label.text = data.display_name
-	price_label.text = "$%d" % price
+	if price == 0:
+		price_label.text = "FREE"
+	else:
+		price_label.text = "$%d" % price
 	
 	# Apply shop item styling with border
 	_apply_shop_item_styling()
@@ -195,6 +201,44 @@ func _apply_price_multiplier(base_price: int, type_str: String) -> int:
 			multiplier = channel_manager.get_shop_price_multiplier()
 	
 	return int(round(base_price * multiplier))
+
+
+## _apply_consumable_discounts(current_price, type_str) -> int
+##
+## Applies active consumable-based discounts (Half Price for power_ups, Loss Leader for consumables).
+## Called during setup() and refresh_price().
+func _apply_consumable_discounts(current_price: int, type_str: String) -> int:
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if not game_controller:
+		return current_price
+	
+	if type_str == "power_up" and game_controller.half_price_stacks > 0:
+		var multiplier = game_controller.get_half_price_multiplier()
+		current_price = int(round(current_price * multiplier))
+		if current_price < 1:
+			current_price = 1
+	elif type_str == "consumable" and game_controller.loss_leader_stacks > 0:
+		current_price = 0
+	
+	return current_price
+
+
+## refresh_price()
+##
+## Recalculates price with channel multiplier + consumable discounts and updates the label.
+## Called by ShopUI.refresh_all_prices() when discount state changes.
+func refresh_price() -> void:
+	if not item_data:
+		return
+	var base_price = item_data.price
+	price = _apply_price_multiplier(base_price, item_type)
+	price = _apply_consumable_discounts(price, item_type)
+	if price_label:
+		if price == 0:
+			price_label.text = "FREE"
+		else:
+			price_label.text = "$%d" % price
+	_update_button_state()
 
 
 ## _find_channel_manager() -> Node

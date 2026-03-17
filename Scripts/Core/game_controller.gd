@@ -17,6 +17,12 @@ var active_mods: Dictionary = {}  # id -> Mod
 var active_challenges: Dictionary = {}  # id -> Challenge
 var challenge_score_modifier: float = 1.0  # Multiplier applied to challenge target scores (e.g., 0.8 for 20% reduction)
 
+# Consumable discount state
+var half_price_stacks: int = 0  # Each stack halves PowerUp prices multiplicatively
+var loss_leader_stacks: int = 0  # Each stack makes one consumable purchase free
+var insurance_policy_active: bool = false  # If true, next 0-score grants $75
+var clearance_rack_active: bool = false  # If true, shop rerolls are free this visit
+
 const SCORE_CARD_UI_SCRIPT := preload("res://Scripts/UI/score_card_ui.gd")
 const DEBUFF_MANAGER_SCRIPT := preload("res://Scripts/Managers/DebuffManager.gd")
 const DEBUFF_UI_SCRIPT := preload("res://Scripts/UI/debuff_ui.gd")
@@ -1770,6 +1776,22 @@ func _on_consumable_used(consumable_id: String) -> void:
 		"lucky_upgrade":
 			consumable.apply(self)
 			remove_consumable_instance.call()
+		# Shop discount and utility consumables
+		"half_price":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"loss_leader":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"insurance_policy":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"clearance_rack":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"loaded_dice":
+			consumable.apply(self)
+			remove_consumable_instance.call()
 		_:
 			push_error("Unknown consumable type: %s" % consumable_id)
 
@@ -1855,6 +1877,15 @@ func _on_score_manual_assigned(_section: int, _category: String, _score: int, _b
 ## Sets all dice to DISABLED state to prevent further interaction until next turn.
 ## Resets roll count for audio pitch progression.
 func _handle_post_scoring_effects(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
+	# Insurance Policy: if active and score is 0, grant consolation money
+	if insurance_policy_active:
+		insurance_policy_active = false
+		if _score == 0:
+			PlayerEconomy.add_money(75)
+			print("[GameController] Insurance Policy triggered - granted $75 for 0-score")
+		else:
+			print("[GameController] Insurance Policy consumed - score was not 0")
+	
 	# Disable all dice after scoring
 	if dice_hand:
 		dice_hand.set_all_dice_disabled()
@@ -2448,6 +2479,10 @@ func _on_turn_started() -> void:
 	print("[GameController] New turn started - resetting dice to ROLLABLE state")
 	if dice_hand:
 		dice_hand.set_all_dice_rollable()
+	# Expire half price stacks on new turn
+	if half_price_stacks > 0:
+		print("[GameController] Clearing half_price_stacks on turn start")
+		half_price_stacks = 0
 
 
 ## _on_temporary_effect_expired(effect_type)
@@ -2921,6 +2956,9 @@ func _open_shop_ui() -> void:
 		return
 	
 	if not shop_ui.visible:
+		# Refresh prices and reroll display for current discount state
+		shop_ui.on_shop_opened()
+		
 		# Disable CRT when opening shop
 		if crt_manager:
 			crt_manager.disable_crt()
@@ -2987,9 +3025,19 @@ func _on_shop_item_purchased(item_id: String, item_type: String) -> void:
 		"power_up":
 			print("[GameController] Granting power-up:", item_id)
 			grant_power_up(item_id)
+			# Consume all half price stacks after a PowerUp purchase
+			if half_price_stacks > 0:
+				print("[GameController] Consuming half_price stacks after PowerUp purchase")
+				half_price_stacks = 0
+				_refresh_shop_prices()
 		"consumable":
 			print("[GameController] Granting consumable:", item_id)
 			grant_consumable(item_id)
+			# Consume one loss leader stack after a consumable purchase
+			if loss_leader_stacks > 0:
+				loss_leader_stacks -= 1
+				print("[GameController] Consumed loss_leader stack, remaining: %d" % loss_leader_stacks)
+				_refresh_shop_prices()
 		"mod":
 			print("[GameController] Granting mod:", item_id)
 			grant_mod(item_id)
@@ -2998,6 +3046,24 @@ func _on_shop_item_purchased(item_id: String, item_type: String) -> void:
 			grant_colored_dice(item_id)
 		_:
 			push_error("[GameController] Unknown item type purchased:", item_type)
+
+
+## get_half_price_multiplier() -> float
+##
+## Returns the price multiplier for PowerUps based on active Half Price stacks.
+## Each stack halves the price multiplicatively: 1 stack = 0.5x, 2 stacks = 0.25x, etc.
+func get_half_price_multiplier() -> float:
+	if half_price_stacks <= 0:
+		return 1.0
+	return pow(0.5, half_price_stacks)
+
+
+## _refresh_shop_prices()
+##
+## Tells the ShopUI to refresh all item prices after a discount state change.
+func _refresh_shop_prices() -> void:
+	if shop_ui and shop_ui.has_method("refresh_all_prices"):
+		shop_ui.refresh_all_prices()
 
 
 ## activate_challenge(id)

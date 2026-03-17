@@ -206,6 +206,11 @@ func _create_debug_tabs() -> void:
 			{"text": "Grant Bonus Collector", "method": "_debug_grant_bonus_collector"},
 			{"text": "Grant Extra Coupons", "method": "_debug_grant_extra_coupons"},
 			{"text": "Grant Visit The Shop", "method": "_debug_grant_visit_the_shop"},
+			{"text": "Grant Half Price", "method": "_debug_grant_half_price"},
+			{"text": "Grant Loss Leader", "method": "_debug_grant_loss_leader"},
+			{"text": "Grant Insurance Policy", "method": "_debug_grant_insurance_policy"},
+			{"text": "Grant Clearance Rack", "method": "_debug_grant_clearance_rack"},
+			{"text": "Grant Loaded Dice", "method": "_debug_grant_loaded_dice"},
 			{"text": "Register AnyScore", "method": "_debug_register_any_score"},
 			{"text": "Grant Random Mod", "method": "_debug_grant_mod"},
 			{"text": "Test Consumer PowerUp", "method": "_debug_test_consumer_powerup"},
@@ -895,6 +900,56 @@ func _debug_grant_visit_the_shop() -> void:
 	if game_controller.has_method("grant_consumable"):
 		game_controller.grant_consumable("visit_the_shop")
 		log_debug("Granted Visit The Shop consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_half_price() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("half_price")
+		log_debug("Granted Half Price consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_loss_leader() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("loss_leader")
+		log_debug("Granted Loss Leader consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_insurance_policy() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("insurance_policy")
+		log_debug("Granted Insurance Policy consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_clearance_rack() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("clearance_rack")
+		log_debug("Granted Clearance Rack consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+func _debug_grant_loaded_dice() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("loaded_dice")
+		log_debug("Granted Loaded Dice consumable")
 	else:
 		log_debug("GameController missing grant_consumable method")
 

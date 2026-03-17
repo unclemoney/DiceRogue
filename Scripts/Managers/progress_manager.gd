@@ -1263,6 +1263,14 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 16, 3, {"category": "fours"})
 	_add_default_consumable("all_chores", "All Chores", "Clears goof-off meter completely", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 5, 3, {"cumulative": true})
+	_add_default_consumable("half_price", "Half Price", "Halves PowerUp prices in shop. Stacks. Expires on purchase or new turn.", 
+		UnlockConditionClass.ConditionType.EARN_MONEY, 50, 3)
+	_add_default_consumable("loss_leader", "Loss Leader", "Next consumable purchase is free. Stacks.", 
+		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 3, 3)
+	_add_default_consumable("insurance_policy", "Insurance Policy", "Receive $75 if next score is 0.", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 50, 3)
+	_add_default_consumable("clearance_rack", "Clearance Rack", "Free shop rerolls until you close the shop.", 
+		UnlockConditionClass.ConditionType.COMPLETE_GAME, 2, 3)
 	
 	# --- Difficulty 4: Uncommon consumables ---
 	_add_default_consumable("double_existing", "Double Existing", "Double a scored category", 
@@ -1295,6 +1303,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 3, 5)
 	_add_default_consumable("visit_the_shop", "Visit The Shop", "Open the shop during active play", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 5)
+	_add_default_consumable("loaded_dice", "Loaded Dice", "Randomly set one die to a random value (1-6).", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 200, 5)
 	
 	# --- Difficulty 6: Rare consumables ---
 	_add_default_consumable("add_max_power_up", "Add Max Power Up", "Increase PowerUp limit", 

@@ -221,6 +221,11 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
     - **Extra Rainbow** (Rare/$300): +10 additive score per colored die scored — rewards color dice strategy
 - **Consumables** (`Scripts/Consumable/`) - Single-use strategic items
   - **Lucky Upgrade** ($25): Randomly upgrades one unscored scorecard category by 1 level
+  - **Half Price** ($25): Halves PowerUp prices in the shop. Stacks multiplicatively. Expires on first PowerUp purchase or new turn.
+  - **Loss Leader** ($25): Next consumable purchase is free. Stacks — each use grants one additional free purchase. Persists across turns.
+  - **Insurance Policy** ($25): If your next score is 0, receive $75 as consolation. Consumed after any scoring action.
+  - **Clearance Rack** ($25): All shop rerolls are free until you close the shop.
+  - **Loaded Dice** ($75): Randomly sets one of your dice to a random value (1-6).
 - **Mods** (`Scripts/Mods/`) - Dice behavior modifiers
 
 ### Statistics & Analytics
@@ -1014,7 +1019,7 @@ var total_matching = synergy_manager.get_total_matching_bonus()
 - **Tab System**: Five tabs (PowerUps, Consumables, Mods, Colors, Locked)
 - **Reroll System**: Reroll button available on PowerUp and Consumable tabs
   - Base cost: $25, increases by $5 per reroll
-  - 500ms cooldown between rerolls
+  - 750ms cooldown between rerolls
   - Cost resets when starting a new game
   - Disabled when no items available or cannot afford
   - Cost label displays with bounce animation on each reroll

@@ -38,7 +38,7 @@ var _is_shop_pulsing: bool = false
 
 ## Keyboard input cooldown to prevent multiple rapid presses
 var _input_cooldown: float = 0.0
-const INPUT_COOLDOWN_DURATION: float = 0.5  # 500ms between key presses
+const INPUT_COOLDOWN_DURATION: float = 0.75  # 750ms between key presses
 
 
 func _ready():

@@ -1,4 +1,4 @@
-[gd_scene load_steps=190 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=195 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -122,6 +122,11 @@
 [ext_resource type="Resource" path="res://Scripts/Debuff/NoConsumablesAllowedDebuff.tres" id="143_qm380"]
 [ext_resource type="Resource" path="res://Scripts/Debuff/AllPowerUpsSoldDebuff.tres" id="144_my83g"]
 [ext_resource type="Resource" path="res://Scripts/Debuff/OneShotDebuff.tres" id="145_w4xk6"]
+[ext_resource type="Resource" path="res://Scripts/Consumable/HalfPriceConsumable.tres" id="153_01vi1"]
+[ext_resource type="Resource" path="res://Scripts/Consumable/LossLeaderConsumable.tres" id="154_0gdhi"]
+[ext_resource type="Resource" path="res://Scripts/Consumable/InsurancePolicyConsumable.tres" id="155_um873"]
+[ext_resource type="Resource" path="res://Scripts/Consumable/ClearanceRackConsumable.tres" id="156_4u56d"]
+[ext_resource type="Resource" path="res://Scripts/Consumable/LoadedDiceConsumable.tres" id="157_j87a4"]
 [ext_resource type="PackedScene" uid="uid://ccn3jkgrhqwqe" path="res://Scenes/UI/StatisticsPanel.tscn" id="999_stats"]
 [ext_resource type="Script" uid="uid://du88ajtcwgupi" path="res://Scripts/Managers/ChoresManager.gd" id="1000_chores_mgr"]
 [ext_resource type="PackedScene" uid="uid://crlykvmh3v2xq" path="res://Scenes/UI/UnlockedItemPanel.tscn" id="1001_unlocked_panel"]
@@ -381,7 +386,7 @@ challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtRes
 mod_defs = Array[ExtResource("60_moddata")]([ExtResource("61_evenonly"), ExtResource("62_fiveone"), ExtResource("63_goldsix"), ExtResource("64_oddonly"), ExtResource("65_threethree"), ExtResource("66_wildcard"), ExtResource("67_highroller")])
 
 [node name="ConsumableManager" parent="." instance=ExtResource("20_1jk2k")]
-consumable_defs = Array[ExtResource("31_gtvla")]([ExtResource("32_aeiu6"), ExtResource("41_5k370"), ExtResource("45_i7xol"), ExtResource("46_nkw3w"), ExtResource("50_cs0p4"), ExtResource("51_8nt64"), ExtResource("55_7m4k5"), ExtResource("56_qv1fg"), ExtResource("57_double_or_nothing"), ExtResource("1002_green_envy"), ExtResource("1003_poor_house"), ExtResource("1004_empty_shelves"), ExtResource("1005_the_rarities"), ExtResource("1006_the_pawn_shop"), ExtResource("1007_one_extra_dice"), ExtResource("1008_go_broke"), ExtResource("1009_ones_upgrade"), ExtResource("1010_twos_upgrade"), ExtResource("1011_threes_upgrade"), ExtResource("1012_fours_upgrade"), ExtResource("1013_fives_upgrade"), ExtResource("1014_sixes_upgrade"), ExtResource("1015_three_of_a_kind"), ExtResource("1016_four_of_a_kind"), ExtResource("1017_full_house"), ExtResource("1018_small_straight"), ExtResource("1019_large_straight"), ExtResource("1020_yahtzee"), ExtResource("1021_chance"), ExtResource("1022_all_categories"), ExtResource("1023_free_chores"), ExtResource("1024_all_chores"), ExtResource("1025_one_free_mod"), ExtResource("1039_visit_the_shop"), ExtResource("1058_lucky_upgrade")])
+consumable_defs = Array[ExtResource("31_gtvla")]([ExtResource("32_aeiu6"), ExtResource("41_5k370"), ExtResource("45_i7xol"), ExtResource("46_nkw3w"), ExtResource("50_cs0p4"), ExtResource("51_8nt64"), ExtResource("55_7m4k5"), ExtResource("56_qv1fg"), ExtResource("57_double_or_nothing"), ExtResource("1002_green_envy"), ExtResource("1003_poor_house"), ExtResource("1004_empty_shelves"), ExtResource("1005_the_rarities"), ExtResource("1006_the_pawn_shop"), ExtResource("1007_one_extra_dice"), ExtResource("1008_go_broke"), ExtResource("1009_ones_upgrade"), ExtResource("1010_twos_upgrade"), ExtResource("1011_threes_upgrade"), ExtResource("1012_fours_upgrade"), ExtResource("1013_fives_upgrade"), ExtResource("1014_sixes_upgrade"), ExtResource("1015_three_of_a_kind"), ExtResource("1016_four_of_a_kind"), ExtResource("1017_full_house"), ExtResource("1018_small_straight"), ExtResource("1019_large_straight"), ExtResource("1020_yahtzee"), ExtResource("1021_chance"), ExtResource("1022_all_categories"), ExtResource("1023_free_chores"), ExtResource("1024_all_chores"), ExtResource("1025_one_free_mod"), ExtResource("1039_visit_the_shop"), ExtResource("1058_lucky_upgrade"), ExtResource("153_01vi1"), ExtResource("154_0gdhi"), ExtResource("155_um873"), ExtResource("156_4u56d"), ExtResource("157_j87a4")])
 
 [node name="DebuffManager" parent="." instance=ExtResource("24_f4xs4")]
 debuff_defs = Array[ExtResource("24_4tiye")]([ExtResource("25_gxabo"), ExtResource("43_4tv4b"), ExtResource("46_0fq3x"), ExtResource("49_ghgbc"), ExtResource("82_division"), ExtResource("1026_faster_chores"), ExtResource("1027_disabled_mods"), ExtResource("1028_disabled_colors"), ExtResource("1029_reduced_levels"), ExtResource("138_ja73i"), ExtResource("139_tmun7"), ExtResource("142_keu41"), ExtResource("143_qm380"), ExtResource("144_my83g"), ExtResource("145_w4xk6")])

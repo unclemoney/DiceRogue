@@ -19,7 +19,7 @@ const COLOR_CHANCES = {
 	Type.RED: 50,     # 1 in 50 chance  
 	Type.PURPLE: 88,  # 1 in 88 chance
 	Type.BLUE: 100,   # 1 in 100 chance (very rare)
-	Type.YELLOW: 60   # 1 in 60 chance (grants consumable when scored)
+	Type.YELLOW: 120   # 1 in 120 chance (grants consumable when scored)
 }
 
 ## Color names for display
