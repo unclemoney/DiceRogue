@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cseqx1haydrh1" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
 [ext_resource type="Script" uid="uid://yuj6od6ypw1a" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
-[ext_resource type="Shader" path="res://Scripts/Shaders/arcade_starfield.gdshader" id="3_shader_bg"]
+[ext_resource type="Shader" uid="uid://6cpuyjwc7kw1" path="res://Scripts/Shaders/arcade_starfield.gdshader" id="3_shader_bg"]
 
 [sub_resource type="Resource" id="round_1"]
 script = ExtResource("2_round")
@@ -107,13 +107,13 @@ disabled_shop_items = Array[String]([])
 special_rules = {}
 background_shader = ExtResource("3_shader_bg")
 background_shader_params = {
-"colour_1": Color(0.08, 0.04, 0.15, 1.0),
-"colour_2": Color(0.8, 0.0, 1.0, 1.0),
-"colour_3": Color(0.0, 0.8, 0.8, 1.0),
-"star_speed": 0.2,
+"color_cycle_speed": 1.0,
+"colour_1": Color(0.08, 0.04, 0.15, 1),
+"colour_2": Color(0.8, 0, 1, 1),
+"colour_3": Color(0, 0.8, 0.8, 1),
+"comet_trails": 0.3,
 "pixel_filter": 500.0,
 "star_density": 200.0,
-"twinkle_speed": 2.0,
-"comet_trails": 0.3,
-"color_cycle_speed": 1.0
+"star_speed": 0.2,
+"twinkle_speed": 2.0
 }

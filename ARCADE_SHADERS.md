@@ -658,6 +658,442 @@ background.material = shader_mat
 
 ---
 
+### 14. Neon Raindrop (`neon_raindrop.gdshader`)
+
+Trapper Keeper–inspired teal-to-pink gradient surface with procedural 3D water droplets across three parallax layers. Each droplet has refraction, dual specular highlights, iridescent rainbow edges, and drip streaks.
+
+#### Visual Style
+- Smooth teal-to-magenta gradient background
+- 3 parallax droplet layers at different depths/speeds
+- Fake refraction (UV offset inside droplet lens)
+- Dual specular highlights per drop
+- Iridescent thin-film rainbow along droplet edges
+- Vertical drip streaks trailing below each drop
+- Shadow underneath drops for depth
+
+#### Parameters
+
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `colour_1` | Color | - | Teal | Gradient top color |
+| `colour_2` | Color | - | Magenta | Gradient bottom color |
+| `colour_3` | Color | - | Pink | Highlight tint |
+| `drop_density` | Float | 3.0 - 15.0 | 8.0 | Droplets per grid unit |
+| `drift_speed` | Float | 0.0 - 0.5 | 0.15 | Droplet drift rate |
+| `drop_size` | Float | 0.5 - 2.0 | 1.0 | Overall droplet scale |
+| `refraction_strength` | Float | 0.0 - 1.0 | 0.5 | UV distortion inside drops |
+| `highlight_intensity` | Float | 0.0 - 1.0 | 0.6 | Specular brightness |
+| `streak_amount` | Float | 0.0 - 1.0 | 0.5 | Drip streak visibility |
+| `iridescence` | Float | 0.0 - 1.0 | 0.4 | Rainbow edge strength |
+| `pixel_filter` | Float | 200 - 1000 | 500 | Pixelation amount |
+| `scanline_strength` | Float | 0.0 - 1.0 | 0.05 | CRT scanline overlay |
+
+#### Parameter Recipes
+- **Classic Trapper Keeper**: `drop_density=8, refraction_strength=0.5, iridescence=0.4`
+- **Rainy Window**: `drop_density=12, drift_speed=0.25, streak_amount=0.8, drop_size=0.7`
+- **Dew Drops**: `drop_density=5, drift_speed=0.05, highlight_intensity=0.8, drop_size=1.5`
+
+#### Code Example
+```gdscript
+var shader = load("res://Scripts/Shaders/neon_raindrop.gdshader")
+var shader_mat = ShaderMaterial.new()
+shader_mat.shader = shader
+shader_mat.set_shader_parameter("colour_1", Color(0.0, 0.6, 0.65, 1.0))
+shader_mat.set_shader_parameter("colour_2", Color(0.85, 0.0, 0.55, 1.0))
+shader_mat.set_shader_parameter("drop_density", 8.0)
+shader_mat.set_shader_parameter("pixel_filter", 500.0)
+background.material = shader_mat
+```
+
+---
+
+### 15. Neon Objects (`neon_objects.gdshader`)
+
+Floating 3D geometric shapes on a dark perspective grid — cubes, spheres, wireframe pyramids, and faceted diamonds drifting in space with neon edge glow, chrome rainbow sheen, and depth fog. Classic Trapper Keeper art circa 1989.
+
+#### Visual Style
+- Dark void background with subtle perspective grid
+- 4 shape types: sphere (specular), isometric cube (3-face lit), wireframe pyramid, faceted diamond
+- Shapes rotate and bob in place at varying speeds
+- Neon edge glow per shape
+- Chrome/rainbow color sheen (hue shift over time)
+- Depth fog fading distant shapes
+- Hash-grid placement for even distribution
+
+#### Parameters
+
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `colour_1` | Color | - | Deep dark void | Background color |
+| `colour_2` | Color | - | Teal | Grid line color |
+| `colour_3` | Color | - | Purple | Grid accent color |
+| `shape_color_1` | Color | - | Blue | Shape palette 1 |
+| `shape_color_2` | Color | - | Pink | Shape palette 2 |
+| `shape_color_3` | Color | - | Cyan | Shape palette 3 |
+| `shape_density` | Float | 2.0 - 10.0 | 5.0 | Shapes per grid unit |
+| `float_speed` | Float | 0.0 - 1.0 | 0.15 | Bobbing animation speed |
+| `rotation_speed` | Float | 0.0 - 1.0 | 0.25 | Shape rotation speed |
+| `grid_opacity` | Float | 0.0 - 1.0 | 0.35 | Background grid visibility |
+| `glow_intensity` | Float | 0.0 - 2.0 | 1.0 | Neon edge glow |
+| `chrome_sheen` | Float | 0.0 - 1.0 | 0.4 | Rainbow chrome effect |
+| `pixel_filter` | Float | 200 - 1000 | 500 | Pixelation amount |
+| `scanline_strength` | Float | 0.0 - 1.0 | 0.08 | CRT scanline overlay |
+
+#### Parameter Recipes
+- **Trapper Keeper Classic**: `shape_density=5, glow_intensity=1.0, chrome_sheen=0.4`
+- **Minimal Float**: `shape_density=3, grid_opacity=0.1, glow_intensity=0.5`
+- **Maximum Chrome**: `chrome_sheen=0.9, glow_intensity=1.5, rotation_speed=0.5`
+
+#### Code Example
+```gdscript
+var shader = load("res://Scripts/Shaders/neon_objects.gdshader")
+var shader_mat = ShaderMaterial.new()
+shader_mat.shader = shader
+shader_mat.set_shader_parameter("colour_1", Color(0.04, 0.02, 0.12, 1.0))
+shader_mat.set_shader_parameter("shape_color_1", Color(0.1, 0.5, 0.95, 1.0))
+shader_mat.set_shader_parameter("shape_density", 5.0)
+shader_mat.set_shader_parameter("pixel_filter", 500.0)
+background.material = shader_mat
+```
+
+---
+
+### 16. Paint Splatter (`paint_splatter.gdshader`)
+
+Animated neon paint canvas where splats accumulate over a 20-second cycle, then cross-dissolve and reset. Each splat has FBM noise edges, spray particles, drip streaks, and glow halos. Trapper Keeper art-class energy.
+
+#### Visual Style
+- Dark canvas background with subtle texture
+- 16 procedural splats appear one-by-one over the cycle
+- FBM noise-edge blobs for organic splat shapes
+- 10 spray particles per splat (radial scatter)
+- Vertical drip streaks with rounded tips
+- Glow halo around each splat
+- Cross-dissolve fade at cycle end, then fresh cycle begins
+
+#### Parameters
+
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `colour_1` | Color | - | Dark canvas | Background |
+| `colour_2` | Color | - | Teal | Splat color 1 |
+| `colour_3` | Color | - | Magenta | Splat color 2 |
+| `colour_4` | Color | - | Yellow | Splat color 3 |
+| `colour_5` | Color | - | Blue | Splat color 4 |
+| `splat_rate` | Float | 3.0 - 12.0 | 6.0 | Splats per cycle |
+| `splat_size` | Float | 0.5 - 2.0 | 1.0 | Overall splat scale |
+| `drip_amount` | Float | 0.0 - 1.0 | 0.5 | Drip streak length |
+| `spray_density` | Float | 0.0 - 1.0 | 0.6 | Spray particle count |
+| `cycle_duration` | Float | 10.0 - 60.0 | 20.0 | Seconds per cycle |
+| `glow_amount` | Float | 0.0 - 1.0 | 0.4 | Glow halo intensity |
+| `pixel_filter` | Float | 200 - 1000 | 500 | Pixelation amount |
+| `scanline_strength` | Float | 0.0 - 1.0 | 0.05 | CRT scanline overlay |
+
+#### Parameter Recipes
+- **Paint Party**: `splat_rate=10, cycle_duration=15, glow_amount=0.6`
+- **Slow Art**: `splat_rate=4, cycle_duration=30, drip_amount=0.8`
+- **Neon Chaos**: `splat_rate=12, splat_size=1.5, spray_density=0.9, glow_amount=0.8`
+
+#### Code Example
+```gdscript
+var shader = load("res://Scripts/Shaders/paint_splatter.gdshader")
+var shader_mat = ShaderMaterial.new()
+shader_mat.shader = shader
+shader_mat.set_shader_parameter("cycle_duration", 20.0)
+shader_mat.set_shader_parameter("splat_rate", 6.0)
+shader_mat.set_shader_parameter("pixel_filter", 500.0)
+background.material = shader_mat
+```
+
+---
+
+### 17. Mystify Screen (`mystify_screen.gdshader`)
+
+Faithful recreation of the Windows 3.1 "Mystify Your Mind" screensaver — two quadrilateral polygons with vertices bouncing off screen walls, leaving glowing color trails that fade over time. Pure early-90s nostalgia on a black field.
+
+#### Visual Style
+- Black background (zero light)
+- 2 polygon groups (cyan and magenta by default)
+- 4 vertices per polygon bouncing linearly (triangle wave off walls)
+- Ghost trail: 10 past polygon positions rendered with fading opacity
+- Thin glowing line edges with soft bloom
+- Older ghosts drawn thinner and dimmer
+- Additive blending for glow buildup at trail crossings
+
+#### Parameters
+
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `colour_1` | Color | - | Black | Background color |
+| `colour_2` | Color | - | Cyan | Polygon 1 color |
+| `colour_3` | Color | - | Magenta | Polygon 2 color |
+| `move_speed` | Float | 0.1 - 2.0 | 0.7 | Vertex bounce speed |
+| `trail_length` | Float | 3.0 - 16.0 | 10.0 | Ghost trail count |
+| `line_thickness` | Float | 0.001 - 0.008 | 0.003 | Line edge width |
+| `glow_width` | Float | 0.5 - 3.0 | 1.5 | Bloom spread |
+| `pixel_filter` | Float | 200 - 1000 | 600 | Pixelation amount |
+| `scanline_strength` | Float | 0.0 - 1.0 | 0.05 | CRT scanline overlay |
+
+#### Parameter Recipes
+- **Classic Win 3.1**: `move_speed=0.7, trail_length=10, line_thickness=0.003`
+- **Hyperactive**: `move_speed=1.5, trail_length=6, glow_width=2.0`
+- **Zen Drift**: `move_speed=0.2, trail_length=14, glow_width=1.0`
+
+#### Code Example
+```gdscript
+var shader = load("res://Scripts/Shaders/mystify_screen.gdshader")
+var shader_mat = ShaderMaterial.new()
+shader_mat.shader = shader
+shader_mat.set_shader_parameter("colour_2", Color(0.0, 0.95, 0.95, 1.0))
+shader_mat.set_shader_parameter("colour_3", Color(0.95, 0.0, 0.95, 1.0))
+shader_mat.set_shader_parameter("move_speed", 0.7)
+shader_mat.set_shader_parameter("pixel_filter", 600.0)
+background.material = shader_mat
+```
+
+---
+
+### 18. Nick Splat (`nick_splat.gdshader`)
+
+90s Nickelodeon bumper/promo chaos — bold orange background covered in scattered hand-drawn doodles: scribble clouds with hatching, zigzag arrows, S-squiggles, spiral doodles, chevron waves, and confetti triangles. Every element drifts and rotates slowly.
+
+#### Visual Style
+- Bright orange background with subtle diagonal stripe texture
+- Scattered large shapes (scribble clouds, arrows, squiggles, spirals, chevrons, triangles)
+- Hand-drawn roughened edges via value noise
+- Hatching texture inside cloud shapes
+- Tiny confetti dots and mini-squiggles as detail layer
+- Black outline behind each shape for hand-drawn look
+- 5-color palette (orange, purple, teal, pink, yellow)
+
+#### Parameters
+
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `colour_1` | Color | - | Nick orange | Background |
+| `colour_2` | Color | - | Purple | Scribble color 1 |
+| `colour_3` | Color | - | Teal/mint | Shape color 2 |
+| `colour_4` | Color | - | Hot pink | Accent color 3 |
+| `colour_5` | Color | - | Yellow | Squiggle color 4 |
+| `chaos_density` | Float | 3.0 - 12.0 | 6.0 | Element grid density |
+| `drift_speed` | Float | 0.0 - 0.5 | 0.08 | Drift/rotation rate |
+| `doodle_scale` | Float | 0.5 - 2.0 | 1.0 | Overall element size |
+| `roughness` | Float | 0.0 - 1.0 | 0.6 | Edge roughness amount |
+| `pixel_filter` | Float | 200 - 1000 | 450 | Pixelation amount |
+| `scanline_strength` | Float | 0.0 - 1.0 | 0.05 | CRT scanline overlay |
+
+#### Parameter Recipes
+- **Classic Nick**: `chaos_density=6, roughness=0.6, drift_speed=0.08`
+- **Manic Energy**: `chaos_density=10, drift_speed=0.2, doodle_scale=0.7`
+- **Chill Doodle**: `chaos_density=4, drift_speed=0.03, doodle_scale=1.3, roughness=0.3`
+
+#### Code Example
+```gdscript
+var shader = load("res://Scripts/Shaders/nick_splat.gdshader")
+var shader_mat = ShaderMaterial.new()
+shader_mat.shader = shader
+shader_mat.set_shader_parameter("colour_1", Color(0.98, 0.55, 0.0, 1.0))
+shader_mat.set_shader_parameter("chaos_density", 6.0)
+shader_mat.set_shader_parameter("pixel_filter", 450.0)
+background.material = shader_mat
+```
+
+---
+
+### 19. Laser Show (`laser_show.gdshader`)
+
+80s arena rock laser light show — vivid laser beams sweeping through volumetric smoke in a dark venue. Beams originate from screen edges, sweep back and forth, scatter through procedural FBM fog, and create bright flares at intersection points.
+
+#### Visual Style
+- Near-black background with subtle gradient
+- 7 laser beams (green, red, blue, yellow) from screen edges
+- Each beam sweeps with unique speed and phase
+- FBM fog volumes that scatter beam light
+- Bright flares at beam origins
+- White-hot flares at beam intersections
+- Gaussian beam core with wider glow halo
+
+#### Parameters
+
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `colour_1` | Color | - | Deep purple-black | Background |
+| `colour_2` | Color | - | Green | Argon laser |
+| `colour_3` | Color | - | Red | Helium-neon laser |
+| `colour_4` | Color | - | Blue | Krypton laser |
+| `colour_5` | Color | - | Yellow | Fourth beam color |
+| `beam_count` | Float | 3.0 - 12.0 | 7.0 | Number of beams |
+| `sweep_speed` | Float | 0.1 - 2.0 | 0.6 | Sweep oscillation rate |
+| `beam_width` | Float | 0.001 - 0.01 | 0.004 | Beam core thickness |
+| `glow_intensity` | Float | 0.5 - 4.0 | 2.0 | Beam brightness |
+| `fog_density` | Float | 0.0 - 1.0 | 0.5 | Fog volume amount |
+| `flare_intensity` | Float | 0.0 - 2.0 | 1.0 | Origin/intersection flares |
+| `pixel_filter` | Float | 200 - 1000 | 550 | Pixelation amount |
+| `scanline_strength` | Float | 0.0 - 1.0 | 0.1 | CRT scanline overlay |
+
+#### Parameter Recipes
+- **Arena Rock**: `beam_count=7, sweep_speed=0.6, fog_density=0.5, flare_intensity=1.0`
+- **Planetarium**: `beam_count=10, sweep_speed=0.3, fog_density=0.8, glow_intensity=3.0`
+- **Disco Minimal**: `beam_count=4, sweep_speed=1.0, fog_density=0.2, beam_width=0.006`
+
+#### Code Example
+```gdscript
+var shader = load("res://Scripts/Shaders/laser_show.gdshader")
+var shader_mat = ShaderMaterial.new()
+shader_mat.shader = shader
+shader_mat.set_shader_parameter("beam_count", 7.0)
+shader_mat.set_shader_parameter("fog_density", 0.5)
+shader_mat.set_shader_parameter("pixel_filter", 550.0)
+background.material = shader_mat
+```
+
+---
+
+### 20. Pinball Machine (`pinball_machine.gdshader`)
+
+Top-down 80s pinball playfield with round bumpers that flash on activation, chrome guide rails, chase-animated arrow lanes, blinking star inserts, and a chrome border frame. Inspired by classic pins like High Speed and Black Knight.
+
+#### Visual Style
+- Deep blue playfield with diamond pattern underlay
+- Round bumpers with chrome cap rings and activation flash
+- Curved chrome guide rails with sliding specular highlights
+- 3 arrow chase lanes at bottom (triangles pointing up)
+- Diamond-shaped star rollover inserts (blinking)
+- Chrome rounded-rect frame border
+- Occasional "TILT" red flash pulse
+
+#### Parameters
+
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `colour_1` | Color | - | Deep blue | Playfield color |
+| `colour_2` | Color | - | Red | Bumper color 1 |
+| `colour_3` | Color | - | Orange/gold | Bumper color 2 |
+| `colour_4` | Color | - | Chrome silver | Rail/frame color |
+| `colour_5` | Color | - | Green | Arrow/insert color |
+| `bumper_density` | Float | 3.0 - 8.0 | 5.0 | Bumper grid density |
+| `flash_speed` | Float | 0.5 - 3.0 | 1.5 | Activation flash rate |
+| `rail_count` | Float | 2.0 - 6.0 | 4.0 | Number of guide rails |
+| `glow_intensity` | Float | 0.5 - 3.0 | 1.8 | Bumper/arrow glow |
+| `pixel_filter` | Float | 200 - 1000 | 500 | Pixelation amount |
+| `scanline_strength` | Float | 0.0 - 1.0 | 0.08 | CRT scanline overlay |
+
+#### Parameter Recipes
+- **Classic Pin**: `bumper_density=5, flash_speed=1.5, rail_count=4`
+- **High Score Frenzy**: `flash_speed=2.5, glow_intensity=2.5`
+- **Quiet Table**: `flash_speed=0.7, glow_intensity=1.0, bumper_density=3`
+
+#### Code Example
+```gdscript
+var shader = load("res://Scripts/Shaders/pinball_machine.gdshader")
+var shader_mat = ShaderMaterial.new()
+shader_mat.shader = shader
+shader_mat.set_shader_parameter("bumper_density", 5.0)
+shader_mat.set_shader_parameter("flash_speed", 1.5)
+shader_mat.set_shader_parameter("pixel_filter", 500.0)
+background.material = shader_mat
+```
+
+---
+
+### 21. Cassette Reel (`cassette_reel.gdshader`)
+
+Detailed view of an 80s cassette tape with spinning reel hubs, visible magnetic tape with iridescent rainbow shimmer, chrome screw heads, a cream paper label with ruled lines, and a blinking recording LED. Pure Walkman-era nostalgia.
+
+#### Visual Style
+- Dark plastic cassette shell with chrome edge trim
+- Cream-colored label area with horizontal ruled lines
+- Tape window showing moving magnetic tape between reels
+- Two reel hubs (6-spoke) spinning at different rates (supply slower, take-up faster)
+- Iridescent thin-film rainbow on tape surface
+- 4 Phillips-head chrome screws at corners
+- Tape guide pins flanking the window
+- Red recording LED with blinking glow halo
+
+#### Parameters
+
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `colour_1` | Color | - | Dark grey | Shell plastic |
+| `colour_2` | Color | - | Brown | Magnetic tape |
+| `colour_3` | Color | - | Chrome silver | Metallic parts |
+| `colour_4` | Color | - | Cream | Label area |
+| `colour_5` | Color | - | Red | Recording LED |
+| `reel_speed` | Float | 0.2 - 3.0 | 1.2 | Reel rotation speed |
+| `tape_shimmer` | Float | 0.0 - 1.0 | 0.7 | Tape streak visibility |
+| `iridescence_amount` | Float | 0.0 - 1.0 | 0.6 | Rainbow tape sheen |
+| `recording_blink` | Float | 0.0 - 1.0 | 0.8 | LED blink intensity |
+| `pixel_filter` | Float | 200 - 1000 | 500 | Pixelation amount |
+| `scanline_strength` | Float | 0.0 - 1.0 | 0.08 | CRT scanline overlay |
+
+#### Parameter Recipes
+- **Mixtape Vibes**: `reel_speed=1.2, iridescence_amount=0.6, recording_blink=0.8`
+- **Chrome Deluxe**: `tape_shimmer=0.9, iridescence_amount=0.9, reel_speed=0.8`
+- **Stalled Tape**: `reel_speed=0.3, recording_blink=0.0, tape_shimmer=0.3`
+
+#### Code Example
+```gdscript
+var shader = load("res://Scripts/Shaders/cassette_reel.gdshader")
+var shader_mat = ShaderMaterial.new()
+shader_mat.shader = shader
+shader_mat.set_shader_parameter("reel_speed", 1.2)
+shader_mat.set_shader_parameter("iridescence_amount", 0.6)
+shader_mat.set_shader_parameter("pixel_filter", 500.0)
+background.material = shader_mat
+```
+
+---
+
+### 22. Roller Rink (`roller_rink.gdshader`)
+
+Perspective hardwood roller rink floor with sweeping disco ball light spots, colored gel washes, lane stripe markings, and a distant foggy horizon. A tiny disco ball sparkles at the top. Saturday night at the skating rink, circa 1986.
+
+#### Visual Style
+- Perspective-projected hardwood floor with plank texture and grain
+- Multiple disco ball light spots following circular/elliptical orbits
+- Light spots scale with perspective (bigger near camera)
+- Pink/blue/purple colored light discs with specular centers
+- Overhead color gel washes (broad pink and blue)
+- Center and lane boundary stripe markings
+- Dark ceiling above horizon with fog glow
+- Chrome disco ball hint at top with spinning sparkle
+- Staggered plank joints and gap lines
+
+#### Parameters
+
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `colour_1` | Color | - | Warm wood | Base wood tone |
+| `colour_2` | Color | - | Light wood | Grain highlight |
+| `colour_3` | Color | - | Pink | Disco light 1 |
+| `colour_4` | Color | - | Blue | Disco light 2 |
+| `colour_5` | Color | - | Purple | Disco light 3 |
+| `disco_speed` | Float | 0.1 - 2.0 | 0.5 | Light orbit speed |
+| `light_count` | Float | 3.0 - 12.0 | 8.0 | Number of light spots |
+| `specular_intensity` | Float | 0.0 - 2.0 | 1.2 | Floor specular highlights |
+| `fog_amount` | Float | 0.0 - 1.0 | 0.3 | Horizon fog density |
+| `perspective_strength` | Float | 0.5 - 2.0 | 1.2 | Floor perspective effect |
+| `pixel_filter` | Float | 200 - 1000 | 500 | Pixelation amount |
+| `scanline_strength` | Float | 0.0 - 1.0 | 0.08 | CRT scanline overlay |
+
+#### Parameter Recipes
+- **Saturday Night**: `disco_speed=0.5, light_count=8, specular_intensity=1.2`
+- **Twilight Session**: `disco_speed=0.3, light_count=5, fog_amount=0.6, specular_intensity=0.8`
+- **Disco Inferno**: `disco_speed=1.0, light_count=12, specular_intensity=2.0, fog_amount=0.1`
+
+#### Code Example
+```gdscript
+var shader = load("res://Scripts/Shaders/roller_rink.gdshader")
+var shader_mat = ShaderMaterial.new()
+shader_mat.shader = shader
+shader_mat.set_shader_parameter("disco_speed", 0.5)
+shader_mat.set_shader_parameter("light_count", 8.0)
+shader_mat.set_shader_parameter("pixel_filter", 500.0)
+background.material = shader_mat
+```
+
+---
+
 ## Color Palette Reference
 
 ### Standard 3-Color System (Background Shaders)
@@ -784,7 +1220,9 @@ Preview all background shaders interactively using:
 ### Controls
 | Key | Action |
 |-----|--------|
-| 1-9 | Switch between shaders |
+| 1-0 | Switch shaders 1-10 |
+| Shift+1-0 | Switch shaders 11-20 |
+| Up/Down | Switch shaders 21-22 |
 | C | Toggle side-by-side comparison mode |
 | ←/→ | Change comparison shader (in compare mode) |
 | ESC | Quit |
@@ -803,6 +1241,15 @@ Preview all background shaders interactively using:
 11. Memphis Geo (geometric shapes)
 12. Zigzag Bolts (Saved By The Bell)
 13. Neon City (cyberpunk skyline)
+14. Neon Raindrop (Trapper Keeper water drops)
+15. Neon Objects (floating 3D shapes)
+16. Paint Splatter (accumulating neon splats)
+17. Mystify Screen (Win 3.1 screensaver)
+18. Nick Splat (90s Nickelodeon chaos)
+19. Laser Show (80s arena lasers)
+20. Pinball Machine (80s playfield)
+21. Cassette Reel (Walkman tape)
+22. Roller Rink (disco ball floor)
 
 ---
 

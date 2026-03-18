@@ -3,12 +3,13 @@ extends Control
 ## ShaderGallery
 ##
 ## Interactive test scene to preview, compare, and tune all background shaders.
-## Includes the 4 original shaders plus 3 creative background shaders
-## plus 4 new 90s-inspired shaders (Jazz Cup, Memphis Geo, Zigzag Bolts, Neon City).
+## Includes 22 shaders across retro eras: original arcade, 90s pop culture, Trapper Keeper,
+## Windows 3.1, Nickelodeon, and late 80s nostalgia collections.
 ##
 ## Controls:
 ## - Keys 1-9, 0: Switch between shaders 1-10
-## - Shift+1-3: Switch to shaders 11-13
+## - Shift+1-9, Shift+0: Switch to shaders 11-20
+## - Up/Down arrows: Shaders 21-22
 ## - C: Toggle comparison mode (side-by-side)
 ## - Left/Right arrows: Change comparison shader in comparison mode
 ## - ESC: Quit
@@ -254,6 +255,175 @@ var shader_configs: Array = [
 			"horizon_glow": 0.3,
 			"scanline_strength": 0.1
 		}
+	},
+	{
+		"name": "14. Neon Raindrop",
+		"description": "Trapper Keeper water droplets on teal-to-pink gradient",
+		"path": "res://Scripts/Shaders/neon_raindrop.gdshader",
+		"params": {
+			"colour_1": Color(0.0, 0.6, 0.65, 1.0),
+			"colour_2": Color(0.85, 0.0, 0.55, 1.0),
+			"colour_3": Color(0.95, 0.5, 0.9, 1.0),
+			"drop_density": 8.0,
+			"drift_speed": 0.15,
+			"drop_size": 1.0,
+			"refraction_strength": 0.5,
+			"highlight_intensity": 0.6,
+			"streak_amount": 0.5,
+			"iridescence": 0.4,
+			"pixel_filter": 500.0,
+			"scanline_strength": 0.05
+		}
+	},
+	{
+		"name": "15. Neon Objects",
+		"description": "Trapper Keeper floating 3D shapes on dark grid — cubes, spheres, prisms",
+		"path": "res://Scripts/Shaders/neon_objects.gdshader",
+		"params": {
+			"colour_1": Color(0.04, 0.02, 0.12, 1.0),
+			"colour_2": Color(0.0, 0.7, 0.75, 1.0),
+			"colour_3": Color(0.65, 0.0, 0.9, 1.0),
+			"shape_color_1": Color(0.1, 0.5, 0.95, 1.0),
+			"shape_color_2": Color(0.9, 0.1, 0.5, 1.0),
+			"shape_color_3": Color(0.0, 0.85, 0.7, 1.0),
+			"shape_density": 5.0,
+			"float_speed": 0.15,
+			"rotation_speed": 0.25,
+			"grid_opacity": 0.35,
+			"glow_intensity": 1.0,
+			"chrome_sheen": 0.4,
+			"pixel_filter": 500.0,
+			"scanline_strength": 0.08
+		}
+	},
+	{
+		"name": "16. Paint Splatter",
+		"description": "Trapper Keeper animated neon splats accumulating over 20s cycle",
+		"path": "res://Scripts/Shaders/paint_splatter.gdshader",
+		"params": {
+			"colour_1": Color(0.08, 0.06, 0.12, 1.0),
+			"colour_2": Color(0.0, 0.95, 0.85, 1.0),
+			"colour_3": Color(0.9, 0.0, 0.5, 1.0),
+			"colour_4": Color(0.95, 0.85, 0.0, 1.0),
+			"colour_5": Color(0.3, 0.0, 0.95, 1.0),
+			"splat_rate": 6.0,
+			"splat_size": 1.0,
+			"drip_amount": 0.5,
+			"spray_density": 0.6,
+			"cycle_duration": 20.0,
+			"glow_amount": 0.4,
+			"pixel_filter": 500.0,
+			"scanline_strength": 0.05
+		}
+	},
+	{
+		"name": "17. Mystify Screen",
+		"description": "Windows 3.1 Mystify Your Mind — bouncing polygons with color trails",
+		"path": "res://Scripts/Shaders/mystify_screen.gdshader",
+		"params": {
+			"colour_1": Color(0.0, 0.0, 0.0, 1.0),
+			"colour_2": Color(0.0, 0.95, 0.95, 1.0),
+			"colour_3": Color(0.95, 0.0, 0.95, 1.0),
+			"move_speed": 0.7,
+			"trail_length": 10.0,
+			"line_thickness": 0.003,
+			"glow_width": 1.5,
+			"pixel_filter": 600.0,
+			"scanline_strength": 0.05
+		}
+	},
+	{
+		"name": "18. Nick Splat",
+		"description": "90s Nickelodeon chaos — scribbles, squiggles, spirals on orange",
+		"path": "res://Scripts/Shaders/nick_splat.gdshader",
+		"params": {
+			"colour_1": Color(0.98, 0.55, 0.0, 1.0),
+			"colour_2": Color(0.6, 0.0, 0.85, 1.0),
+			"colour_3": Color(0.0, 0.9, 0.75, 1.0),
+			"colour_4": Color(0.95, 0.15, 0.5, 1.0),
+			"colour_5": Color(0.95, 0.9, 0.0, 1.0),
+			"chaos_density": 6.0,
+			"drift_speed": 0.08,
+			"doodle_scale": 1.0,
+			"roughness": 0.6,
+			"pixel_filter": 450.0,
+			"scanline_strength": 0.05
+		}
+	},
+	{
+		"name": "19. Laser Show",
+		"description": "80s arena laser light show — sweeping beams through smoke",
+		"path": "res://Scripts/Shaders/laser_show.gdshader",
+		"params": {
+			"colour_1": Color(0.02, 0.01, 0.06, 1.0),
+			"colour_2": Color(0.0, 1.0, 0.15, 1.0),
+			"colour_3": Color(1.0, 0.0, 0.1, 1.0),
+			"colour_4": Color(0.1, 0.3, 1.0, 1.0),
+			"colour_5": Color(0.95, 0.9, 0.1, 1.0),
+			"beam_count": 7.0,
+			"sweep_speed": 0.6,
+			"beam_width": 0.004,
+			"glow_intensity": 2.0,
+			"fog_density": 0.5,
+			"flare_intensity": 1.0,
+			"pixel_filter": 550.0,
+			"scanline_strength": 0.1
+		}
+	},
+	{
+		"name": "20. Pinball Machine",
+		"description": "80s pinball playfield — bumpers, rails, chase arrows, star inserts",
+		"path": "res://Scripts/Shaders/pinball_machine.gdshader",
+		"params": {
+			"colour_1": Color(0.04, 0.02, 0.15, 1.0),
+			"colour_2": Color(1.0, 0.15, 0.1, 1.0),
+			"colour_3": Color(1.0, 0.75, 0.0, 1.0),
+			"colour_4": Color(0.75, 0.78, 0.82, 1.0),
+			"colour_5": Color(0.0, 0.95, 0.3, 1.0),
+			"bumper_density": 5.0,
+			"flash_speed": 1.5,
+			"rail_count": 4.0,
+			"glow_intensity": 1.8,
+			"pixel_filter": 500.0,
+			"scanline_strength": 0.08
+		}
+	},
+	{
+		"name": "21. Cassette Reel",
+		"description": "80s cassette tape with spinning reels & iridescent magnetic tape",
+		"path": "res://Scripts/Shaders/cassette_reel.gdshader",
+		"params": {
+			"colour_1": Color(0.12, 0.12, 0.14, 1.0),
+			"colour_2": Color(0.25, 0.12, 0.06, 1.0),
+			"colour_3": Color(0.78, 0.80, 0.83, 1.0),
+			"colour_4": Color(0.92, 0.88, 0.75, 1.0),
+			"colour_5": Color(0.9, 0.1, 0.1, 1.0),
+			"reel_speed": 1.2,
+			"tape_shimmer": 0.7,
+			"iridescence_amount": 0.6,
+			"recording_blink": 0.8,
+			"pixel_filter": 500.0,
+			"scanline_strength": 0.08
+		}
+	},
+	{
+		"name": "22. Roller Rink",
+		"description": "80s roller rink hardwood floor with disco ball light spots",
+		"path": "res://Scripts/Shaders/roller_rink.gdshader",
+		"params": {
+			"colour_1": Color(0.45, 0.28, 0.12, 1.0),
+			"colour_2": Color(0.55, 0.35, 0.16, 1.0),
+			"colour_3": Color(1.0, 0.2, 0.6, 1.0),
+			"colour_4": Color(0.2, 0.5, 1.0, 1.0),
+			"colour_5": Color(0.7, 0.15, 0.9, 1.0),
+			"disco_speed": 0.5,
+			"light_count": 8.0,
+			"specular_intensity": 1.2,
+			"fog_amount": 0.3,
+			"perspective_strength": 1.2,
+			"pixel_filter": 500.0,
+			"scanline_strength": 0.08
+		}
 	}
 ]
 
@@ -314,7 +484,7 @@ func _ready() -> void:
 	# Apply first shader
 	_apply_shader(0)
 
-	print("[ShaderGallery] Ready! Keys 1-0 for shaders 1-10, Shift+1-3 for 11-13, C for compare, ESC to quit")
+	print("[ShaderGallery] Ready! Keys 1-0 for shaders 1-10, Shift+1-9 for 11-19, Shift+0 for 20, Up/Down for 21-22, C for compare, ESC to quit")
 
 
 func _input(event: InputEvent) -> void:
@@ -336,19 +506,44 @@ func _input(event: InputEvent) -> void:
 				else:
 					_apply_shader(2)
 			KEY_4:
-				_apply_shader(3)
+				if event.shift_pressed:
+					_apply_shader(13)
+				else:
+					_apply_shader(3)
 			KEY_5:
-				_apply_shader(4)
+				if event.shift_pressed:
+					_apply_shader(14)
+				else:
+					_apply_shader(4)
 			KEY_6:
-				_apply_shader(5)
+				if event.shift_pressed:
+					_apply_shader(15)
+				else:
+					_apply_shader(5)
 			KEY_7:
-				_apply_shader(6)
+				if event.shift_pressed:
+					_apply_shader(16)
+				else:
+					_apply_shader(6)
 			KEY_8:
-				_apply_shader(7)
+				if event.shift_pressed:
+					_apply_shader(17)
+				else:
+					_apply_shader(7)
 			KEY_9:
-				_apply_shader(8)
+				if event.shift_pressed:
+					_apply_shader(18)
+				else:
+					_apply_shader(8)
 			KEY_0:
-				_apply_shader(9)
+				if event.shift_pressed:
+					_apply_shader(19)
+				else:
+					_apply_shader(9)
+			KEY_UP:
+				_apply_shader(20)
+			KEY_DOWN:
+				_apply_shader(21)
 			KEY_C:
 				_toggle_comparison()
 			KEY_LEFT:
@@ -454,7 +649,8 @@ func _update_label() -> void:
 
 	text += "\n[color=gray]── Controls ──[/color]\n"
 	text += "1-0: Shaders 1-10\n"
-	text += "Shift+1-3: Shaders 11-13\n"
+	text += "Shift+1-0: Shaders 11-20\n"
+	text += "Up/Down: Shaders 21-22\n"
 	text += "C: Toggle comparison\n"
 	text += "ESC: Quit\n"
 

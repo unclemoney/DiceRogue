@@ -402,36 +402,28 @@ func _on_game_start() -> void:
 		round_manager.start_game()
 
 
-## _apply_channel_background(channel: int) -> void
-##
-## Applies the background shader from the channel's ChannelDifficultyData.
-## If the channel config has a background_shader set, creates a new ShaderMaterial
-## and applies it to the BackgroundSwirl ColorRect. Falls back to current shader
-## if no background_shader is configured.
-func _apply_channel_background(channel: int) -> void:
-	if background_swirl == null:
-		print("[GameController] No BackgroundSwirl node found, skipping background swap")
-		return
-	if channel_manager == null:
-		return
-	var config = channel_manager.get_channel_config(channel)
-	if config == null:
-		return
-	if config.background_shader == null:
-		print("[GameController] Channel %d has no background shader, keeping default" % channel)
-		return
-	config.apply_background(background_swirl)
-	print("[GameController] Applied background shader for channel %d: %s" % [channel, config.get_background_summary()])
-
-
 ## _on_channel_selected(channel: int) -> void
 ##
 ## Called when player confirms their channel selection. Starts the game.
 func _on_channel_selected(channel: int) -> void:
 	print("[GameController] Channel", channel, "selected, starting game...")
-	_apply_channel_background(channel)
+	_apply_channel_background()
 	if round_manager:
 		round_manager.start_game()
+
+
+## _apply_channel_background() -> void
+##
+## Applies the current channel's background shader to the BackgroundSwirl ColorRect.
+## Called when a channel is selected or when advancing to the next channel.
+func _apply_channel_background() -> void:
+	if not channel_manager or not background_swirl:
+		return
+	var config = channel_manager.get_channel_config()
+	if config:
+		config.apply_background(background_swirl)
+		background_swirl.visible = true
+		print("[GameController] Applied background shader for channel %d: %s" % [channel_manager.current_channel, config.get_background_summary()])
 
 
 ## _on_channel_start_pressed(channel: int) -> void
@@ -562,10 +554,6 @@ func _restart_game_for_new_channel() -> void:
 	if round_manager:
 		round_manager.current_round = 0
 		print("[GameController] Round reset to 0 (will start at round 1)")
-	
-	# Apply background shader for new channel
-	if channel_manager:
-		_apply_channel_background(channel_manager.current_channel)
 	
 	# Start new game session
 	if round_manager:
@@ -3927,6 +3915,8 @@ func _proceed_to_next_channel() -> void:
 	if channel_manager:
 		channel_manager.advance_to_next_channel()
 		print("[GameController] Advanced to Channel", channel_manager.current_channel)
+	
+	_apply_channel_background()
 	
 	# Restart the game loop at Round 1
 	_restart_game_for_new_channel()
