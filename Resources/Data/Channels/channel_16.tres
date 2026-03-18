@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
 [ext_resource type="Script" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
+[ext_resource type="Shader" path="res://Scripts/Shaders/neon_city.gdshader" id="3_shader_bg"]
 
 [sub_resource type="Resource" id="round_1"]
 script = ExtResource("2_round")
@@ -74,3 +75,20 @@ debuff_intensity_multiplier = 2.0
 force_specific_challenges = []
 disabled_shop_items = []
 special_rules = {}
+background_shader = ExtResource("3_shader_bg")
+background_shader_params = {
+"colour_1": Color(0.02, 0.05, 0.02, 1.0),
+"colour_2": Color(0.05, 0.1, 0.05, 1.0),
+"colour_3": Color(0.08, 0.15, 0.08, 1.0),
+"neon_color_1": Color(0.0, 1.0, 0.3, 1.0),
+"neon_color_2": Color(0.3, 1.0, 0.0, 1.0),
+"neon_color_3": Color(0.0, 0.8, 0.5, 1.0),
+"scroll_speed": 0.06,
+"pixel_filter": 500.0,
+"building_density": 10.0,
+"neon_flicker_speed": 4.0,
+"neon_glow_intensity": 0.5,
+"star_density": 100.0,
+"horizon_glow": 0.2,
+"scanline_strength": 0.15
+}

@@ -6,7 +6,7 @@ A comprehensive library of custom shaders for DiceRogue (Guhtzee), capturing the
 
 The shader collection is organized into three categories:
 
-### Background Shaders (7 total)
+### Background Shaders (11 total)
 Full-screen animated backgrounds applied to `ColorRect` nodes. All use the consistent three-color system (`colour_1`, `colour_2`, `colour_3`) and shared `pixel_filter` parameter for retro pixelation.
 
 | Shader | Style | Era Feel |
@@ -18,6 +18,10 @@ Full-screen animated backgrounds applied to `ColorRect` nodes. All use the consi
 | `vhs_wave` | Analog TV interference | VHS tape degradation |
 | `arcade_starfield` | Parallax stars with comets | 80s space arcade |
 | `backgground_swirl` | Paint swirl (Balatro-sourced, legacy) | Balatro reference |
+| `jazz_cup` | Teal swoosh & purple brush strokes | 90s Solo Jazz cup (1991) |
+| `memphis_geo` | Scattered geometric shapes | Memphis Group design (late 80s) |
+| `zigzag_bolts` | Bold zigzag stripes & confetti | Saved By The Bell / Trapper Keeper |
+| `neon_city` | Scrolling cityscape silhouette | Synthwave / cyberpunk |
 
 ### UI Effect Shaders (3 upgraded)
 Applied to sprites, texture rects, and particle systems for interactive visual feedback.
@@ -435,6 +439,225 @@ tween.tween_property(shader_mat, "shader_parameter/explosion_stage", 1.0, 0.8)
 
 ---
 
+## Background Shaders - 90s Pop Culture Set
+
+### 10. Jazz Cup (`jazz_cup.gdshader`)
+
+Procedural recreation of the iconic Solo Jazz paper cup design (1991) — large teal swoosh arcs on an off-white field with thinner purple/magenta brush strokes. The design that defined disposable cup aesthetics for a decade.
+
+#### Visual Style
+- Multiple layered sine/cosine swoosh curves with varying thickness
+- Natural brush-edge noise via fractional Brownian motion (fbm)
+- Distance-tapered strokes: thick in center, thin at edges
+- Paint texture variation within swoosh fills
+- Subtle paper-grain speckle overlay
+- Slow drift animation (swooshes gently shift position)
+
+#### Technical Deep-Dive
+Each swoosh is generated from a sine curve with distance-field rendering:
+1. Curve position: `y = sin(x * freq + offset + drift)` at varying amplitudes
+2. Distance from pixel to curve: `abs(uv.y - curve_y)`
+3. Tapering: `smoothstep()` at both x-endpoints creates natural brush lift
+4. Edge noise: 4-octave fbm adds organic brush-edge imperfections
+5. Final blend: `smoothstep(thickness + noise, thickness*0.3 + noise, dist)` for anti-aliased strokes
+
+Three teal swooshes (large arc, thinner upper, small accent) plus two purple strokes create the classic layered look.
+
+#### Parameters
+
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `colour_1` | Color | - | Off-white | Paper background color |
+| `colour_2` | Color | - | Teal | Large splash/swoosh color |
+| `colour_3` | Color | - | Purple | Thin brush stroke color |
+| `drift_speed` | Float | 0.0 - 1.0 | 0.08 | Swoosh animation drift speed |
+| `pixel_filter` | Float | 200 - 1000 | 500 | Pixelation amount |
+| `swoosh_scale` | Float | 0.5 - 3.0 | 1.0 | Overall pattern zoom |
+| `stroke_thickness` | Float | 0.5 - 2.0 | 1.0 | Brush stroke width multiplier |
+| `scanline_strength` | Float | 0.0 - 1.0 | 0.08 | CRT scanline overlay |
+| `speckle_amount` | Float | 0.0 - 1.0 | 0.3 | Paper grain / paint splatter |
+| `teal_opacity` | Float | 0.5 - 1.0 | 0.92 | Teal swoosh opacity |
+| `purple_opacity` | Float | 0.5 - 1.0 | 0.88 | Purple stroke opacity |
+
+#### Parameter Recipes
+- **Classic Cup**: `drift_speed=0.08, swoosh_scale=1.0, stroke_thickness=1.0, pixel_filter=500`
+- **Bold Statement**: `stroke_thickness=1.5, teal_opacity=1.0, purple_opacity=1.0, pixel_filter=600`
+- **Subtle Background**: `drift_speed=0.04, speckle_amount=0.15, scanline_strength=0.15, pixel_filter=400`
+- **Energetic**: `drift_speed=0.2, swoosh_scale=0.8, stroke_thickness=1.3`
+
+#### Code Example
+```gdscript
+var shader = load("res://Scripts/Shaders/jazz_cup.gdshader")
+var shader_mat = ShaderMaterial.new()
+shader_mat.shader = shader
+shader_mat.set_shader_parameter("colour_1", Color(0.95, 0.95, 0.93, 1.0))
+shader_mat.set_shader_parameter("colour_2", Color(0.0, 0.75, 0.78, 1.0))
+shader_mat.set_shader_parameter("colour_3", Color(0.55, 0.0, 0.85, 1.0))
+shader_mat.set_shader_parameter("drift_speed", 0.08)
+shader_mat.set_shader_parameter("pixel_filter", 500.0)
+background.material = shader_mat
+```
+
+---
+
+### 11. Memphis Geo (`memphis_geo.gdshader`)
+
+Scattered geometric shapes on a bright teal field, inspired by the Memphis Group postmodern design movement (late 80s/early 90s Italy). Features circles, triangles, diamonds, rings, grid-spheres, zigzag decorations, and confetti dots.
+
+#### Visual Style
+- Hash-based deterministic random placement of shapes in a grid
+- 7 shape types: filled circle, ring, equilateral triangle, diamond, grid-sphere (crosshatch circle), confetti cluster, zigzag line
+- 5-color palette for authentic Memphis variety
+- Two shape layers: large background shapes + small foreground details
+- Subtle diagonal stripe texture in background
+- Slow pan/scroll animation; shapes gently float
+
+#### Parameters
+
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `colour_1` | Color | - | Bright teal | Background field color |
+| `colour_2` | Color | - | Purple | Shape color 1 |
+| `colour_3` | Color | - | Hot pink | Shape color 2 |
+| `colour_4` | Color | - | Yellow | Shape color 3 |
+| `colour_5` | Color | - | White | Accent / detail color |
+| `scroll_speed` | Float | 0.0 - 1.0 | 0.06 | Pan scroll speed |
+| `pixel_filter` | Float | 200 - 1000 | 500 | Pixelation amount |
+| `shape_density` | Float | 3.0 - 15.0 | 7.0 | Grid cells per axis (more = more shapes) |
+| `shape_scale` | Float | 0.5 - 2.0 | 1.0 | Individual shape size multiplier |
+| `glow_amount` | Float | 0.0 - 1.0 | 0.3 | Shape glow / halo intensity |
+| `rotation_speed` | Float | 0.0 - 1.0 | 0.15 | Shape rotation rate |
+| `scanline_strength` | Float | 0.0 - 1.0 | 0.05 | CRT scanline overlay |
+
+#### Parameter Recipes
+- **Classic Memphis**: `shape_density=7.0, shape_scale=1.0, rotation_speed=0.15, glow_amount=0.3`
+- **Busy Pattern**: `shape_density=12.0, shape_scale=0.8, rotation_speed=0.25, glow_amount=0.4`
+- **Minimal Accent**: `shape_density=4.0, shape_scale=1.3, rotation_speed=0.08, glow_amount=0.15`
+- **Party Mode**: `shape_density=10.0, scroll_speed=0.15, rotation_speed=0.3, glow_amount=0.5`
+
+#### Code Example
+```gdscript
+var shader = load("res://Scripts/Shaders/memphis_geo.gdshader")
+var shader_mat = ShaderMaterial.new()
+shader_mat.shader = shader
+shader_mat.set_shader_parameter("colour_1", Color(0.0, 0.9, 0.82, 1.0))
+shader_mat.set_shader_parameter("colour_2", Color(0.55, 0.0, 0.85, 1.0))
+shader_mat.set_shader_parameter("colour_3", Color(1.0, 0.2, 0.55, 1.0))
+shader_mat.set_shader_parameter("colour_4", Color(1.0, 0.85, 0.1, 1.0))
+shader_mat.set_shader_parameter("colour_5", Color(0.95, 0.95, 0.95, 1.0))
+shader_mat.set_shader_parameter("shape_density", 7.0)
+shader_mat.set_shader_parameter("pixel_filter", 500.0)
+background.material = shader_mat
+```
+
+---
+
+### 12. Zigzag Bolts (`zigzag_bolts.gdshader`)
+
+Saved By The Bell–style bold zigzag stripes with scattered confetti shapes. Bright, energetic, unapologetically 90s — the visual language of teen TV show title cards and Trapper Keeper art.
+
+#### Visual Style
+- Multiple thick diagonal zigzag "lightning bolt" stripes across the screen
+- Triangle, circle, and 4-pointed star confetti scattered between bolts
+- Color-blocked background bands
+- Bold outlines on zigzag stripes
+- Thin sine-wave accent lines
+- Horizontal scroll animation
+
+#### Parameters
+
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `colour_1` | Color | - | Neon yellow | Background color |
+| `colour_2` | Color | - | Bold purple | Bolt/confetti color 1 |
+| `colour_3` | Color | - | Teal | Bolt/confetti color 2 |
+| `colour_4` | Color | - | Hot pink | Bolt/confetti color 3 |
+| `scroll_speed` | Float | 0.0 - 1.0 | 0.1 | Horizontal scroll rate |
+| `pixel_filter` | Float | 200 - 1000 | 500 | Pixelation amount |
+| `bolt_count` | Float | 2.0 - 8.0 | 4.0 | Number of zigzag stripes |
+| `bolt_thickness` | Float | 0.5 - 2.0 | 1.0 | Stripe width multiplier |
+| `confetti_density` | Float | 0.0 - 1.0 | 0.5 | Scattered shape density |
+| `color_block_strength` | Float | 0.0 - 1.0 | 0.4 | Background banding intensity |
+| `scanline_strength` | Float | 0.0 - 1.0 | 0.08 | CRT scanline overlay |
+
+#### Parameter Recipes
+- **Classic SBTB**: `bolt_count=4.0, bolt_thickness=1.0, confetti_density=0.5, color_block_strength=0.4`
+- **Intense**: `bolt_count=6.0, bolt_thickness=1.3, confetti_density=0.7, scroll_speed=0.2`
+- **Minimal**: `bolt_count=3.0, bolt_thickness=0.7, confetti_density=0.2, color_block_strength=0.2`
+- **Dark Variant**: Use dark colour_1, lighter bolt colors for a nightclub vibe
+
+#### Code Example
+```gdscript
+var shader = load("res://Scripts/Shaders/zigzag_bolts.gdshader")
+var shader_mat = ShaderMaterial.new()
+shader_mat.shader = shader
+shader_mat.set_shader_parameter("colour_1", Color(0.95, 0.95, 0.1, 1.0))
+shader_mat.set_shader_parameter("colour_2", Color(0.55, 0.0, 0.9, 1.0))
+shader_mat.set_shader_parameter("colour_3", Color(0.0, 0.85, 0.8, 1.0))
+shader_mat.set_shader_parameter("colour_4", Color(1.0, 0.15, 0.5, 1.0))
+shader_mat.set_shader_parameter("bolt_count", 4.0)
+shader_mat.set_shader_parameter("pixel_filter", 500.0)
+background.material = shader_mat
+```
+
+---
+
+### 13. Neon City (`neon_city.gdshader`)
+
+Scrolling pixel-art cityscape silhouette against a gradient night sky with flickering neon signs. Evokes synthwave album covers, cyberpunk aesthetics, and 80s/90s sci-fi.
+
+#### Visual Style
+- 3-layer parallax building silhouettes at different scroll speeds
+- Procedurally generated building heights/widths via hash functions
+- Lit/unlit window grid patterns on each building layer
+- Flickering neon sign rectangles in teal/purple/pink
+- Neon glow bleed effect around signs
+- Twinkling stars in the sky portion
+- Purple-to-dark gradient night sky with horizon glow
+
+#### Parameters
+
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `colour_1` | Color | - | Deep dark blue | Sky gradient top |
+| `colour_2` | Color | - | Purple horizon | Sky gradient bottom |
+| `colour_3` | Color | - | Near-black | Building silhouette color |
+| `neon_color_1` | Color | - | Teal | Neon sign color 1 |
+| `neon_color_2` | Color | - | Purple | Neon sign color 2 |
+| `neon_color_3` | Color | - | Pink | Neon sign color 3 |
+| `scroll_speed` | Float | 0.0 - 1.0 | 0.12 | Building scroll rate |
+| `pixel_filter` | Float | 200 - 1000 | 450 | Pixelation amount |
+| `building_density` | Float | 5.0 - 25.0 | 12.0 | Buildings per screen width |
+| `neon_flicker_speed` | Float | 0.5 - 5.0 | 2.0 | Neon sign flicker rate |
+| `neon_glow_intensity` | Float | 0.0 - 2.0 | 1.2 | Neon brightness/glow |
+| `star_density` | Float | 50 - 500 | 150 | Stars in the sky |
+| `horizon_glow` | Float | 0.0 - 1.0 | 0.5 | Glow at city horizon |
+| `scanline_strength` | Float | 0.0 - 1.0 | 0.12 | CRT scanline overlay |
+
+#### Parameter Recipes
+- **Cyberpunk Night**: `scroll_speed=0.12, neon_glow_intensity=1.2, horizon_glow=0.5, building_density=12`
+- **Calm Evening**: `scroll_speed=0.06, neon_flicker_speed=1.0, neon_glow_intensity=0.7, star_density=250`
+- **Blade Runner**: `scroll_speed=0.08, neon_glow_intensity=1.8, horizon_glow=0.8, building_density=18`
+- **Quiet Suburbs**: `building_density=6.0, neon_glow_intensity=0.4, star_density=300, horizon_glow=0.2`
+
+#### Code Example
+```gdscript
+var shader = load("res://Scripts/Shaders/neon_city.gdshader")
+var shader_mat = ShaderMaterial.new()
+shader_mat.shader = shader
+shader_mat.set_shader_parameter("colour_1", Color(0.02, 0.01, 0.08, 1.0))
+shader_mat.set_shader_parameter("colour_2", Color(0.12, 0.04, 0.25, 1.0))
+shader_mat.set_shader_parameter("colour_3", Color(0.04, 0.03, 0.06, 1.0))
+shader_mat.set_shader_parameter("neon_color_1", Color(0.0, 0.9, 0.85, 1.0))
+shader_mat.set_shader_parameter("neon_color_2", Color(0.85, 0.0, 1.0, 1.0))
+shader_mat.set_shader_parameter("neon_color_3", Color(1.0, 0.2, 0.5, 1.0))
+shader_mat.set_shader_parameter("scroll_speed", 0.12)
+shader_mat.set_shader_parameter("pixel_filter", 450.0)
+background.material = shader_mat
+```
+
+---
+
 ## Color Palette Reference
 
 ### Standard 3-Color System (Background Shaders)
@@ -576,6 +799,10 @@ Preview all background shaders interactively using:
 7. VHS Static Wave (original)
 8. Arcade Starfield (original)
 9. Background Swirl (legacy)
+10. Jazz Cup (90s paper cup)
+11. Memphis Geo (geometric shapes)
+12. Zigzag Bolts (Saved By The Bell)
+13. Neon City (cyberpunk skyline)
 
 ---
 

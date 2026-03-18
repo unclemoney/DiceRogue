@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
 [ext_resource type="Script" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
+[ext_resource type="Shader" path="res://Scripts/Shaders/arcade_carpet.gdshader" id="3_shader_bg"]
 
 [sub_resource type="Resource" id="round_1"]
 script = ExtResource("2_round")
@@ -74,3 +75,17 @@ debuff_intensity_multiplier = 1.4
 force_specific_challenges = []
 disabled_shop_items = []
 special_rules = {}
+background_shader = ExtResource("3_shader_bg")
+background_shader_params = {
+"colour_1": Color(0.06, 0.02, 0.12, 1.0),
+"colour_2": Color(0.5, 0.0, 0.8, 1.0),
+"colour_3": Color(0.0, 0.75, 0.75, 1.0),
+"colour_4": Color(1.0, 0.2, 0.5, 1.0),
+"colour_5": Color(0.0, 0.9, 0.4, 1.0),
+"scroll_speed": 0.12,
+"pixel_filter": 450.0,
+"tile_size": 10.0,
+"pattern_style": 1,
+"fabric_texture": 0.3,
+"glow_amount": 0.35
+}

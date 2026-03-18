@@ -338,8 +338,8 @@ Added a private `_center_pivot(node)` helper in `tween_fx_helper.gd` that auto-c
 
 ```gdscript
 func _center_pivot(node: CanvasItem) -> void:
-    if node is Control:
-        (node as Control).pivot_offset = (node as Control).size / 2.0
+	if node is Control:
+		(node as Control).pivot_offset = (node as Control).size / 2.0
 ```
 
 ### Methods with `_center_pivot`
@@ -396,7 +396,7 @@ All four button methods (`button_hover`, `button_unhover`, `button_press`, `butt
 
 ```gdscript
 if node is BaseButton and (node as BaseButton).disabled:
-    return null
+	return null
 ```
 
 ### Phase 11 — Per-Profile FX Persistence

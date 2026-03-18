@@ -78,6 +78,17 @@ class_name ChannelDifficultyData
 ## Examples: {"no_colored_dice": true, "double_yahtzee_scoring": true}
 @export var special_rules: Dictionary = {}
 
+## ============== BACKGROUND SHADER ==============
+
+## The shader resource to use for this channel's background
+## If null, the default background shader (plasma_screen) is used
+@export var background_shader: Shader = null
+
+## Shader parameter overrides for the background shader
+## Keys are parameter names (e.g., "colour_1", "pixel_filter"), values are the param values
+## Color values should be stored as Color objects, floats as floats, ints as ints
+@export var background_shader_params: Dictionary = {}
+
 
 ## ============== METHODS ==============
 
@@ -185,6 +196,36 @@ func get_special_rule(rule_key: String, default_value: Variant = null) -> Varian
 	return special_rules.get(rule_key, default_value)
 
 
+## apply_background(target: ColorRect) -> void
+##
+## Applies this channel's background shader and parameters to a ColorRect node.
+## Creates a new ShaderMaterial, assigns the shader, and sets all parameters.
+## If no background_shader is set, the target's material is left unchanged.
+## @param target: The ColorRect node to apply the background shader to
+func apply_background(target: ColorRect) -> void:
+	if target == null:
+		return
+	if background_shader == null:
+		return
+	var shader_mat = ShaderMaterial.new()
+	shader_mat.shader = background_shader
+	for param_name in background_shader_params:
+		shader_mat.set_shader_parameter(param_name, background_shader_params[param_name])
+	target.material = shader_mat
+
+
+## get_background_summary() -> String
+##
+## Returns a human-readable summary of the background shader configuration.
+## Useful for debugging and the channel background test scene.
+func get_background_summary() -> String:
+	if background_shader == null:
+		return "No background shader (using default)"
+	var shader_name = background_shader.resource_path.get_file().get_basename()
+	var param_count = background_shader_params.size()
+	return "%s (%d params)" % [shader_name, param_count]
+
+
 ## get_summary() -> String
 ##
 ## Returns a human-readable summary of this channel's configuration.
@@ -224,6 +265,8 @@ func get_summary() -> String:
 	
 	if special_rules.size() > 0:
 		lines.append("Special Rules: %s" % str(special_rules))
+	
+	lines.append("Background: %s" % get_background_summary())
 	
 	return "\n".join(lines)
 

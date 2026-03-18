@@ -37,7 +37,7 @@ Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill s
 ### Arcade Shader Collection
 Custom shader library capturing the late 80's/early 90's arcade/mall/SNES-era aesthetic with purple/teal neon themes.
 
-#### Background Shaders (7)
+#### Background Shaders (11)
 | Shader | Style |
 |--------|-------|
 | **Plasma Screen** (`plasma_screen.gdshader`) | Organic demoscene plasma blobs (Amiga/C64 era) |
@@ -47,6 +47,17 @@ Custom shader library capturing the late 80's/early 90's arcade/mall/SNES-era ae
 | **VHS Static Wave** (`vhs_wave.gdshader`) | Analog TV interference with chromatic aberration |
 | **Arcade Starfield** (`arcade_starfield.gdshader`) | Multi-layer parallax stars with color cycling |
 | **Background Swirl** (`backgground_swirl.gdshader`) | Paint swirl effect (legacy, Balatro-sourced) |
+| **Jazz Cup** (`jazz_cup.gdshader`) | 90s Solo Jazz paper cup teal swooshes & purple brush strokes |
+| **Memphis Geo** (`memphis_geo.gdshader`) | Memphis Group scattered geometric shapes on bright teal |
+| **Zigzag Bolts** (`zigzag_bolts.gdshader`) | Saved By The Bell bold zigzag stripes with confetti |
+| **Neon City** (`neon_city.gdshader`) | Scrolling cyberpunk cityscape with neon signs & parallax |
+
+#### Per-Channel Backgrounds
+Each of the 20 channels has a unique background shader and color palette configured in its `ChannelDifficultyData` resource. Channels 1-11 each use a distinct shader; channels 12-20 reuse shaders with different color palettes for variety.
+
+- **ChannelDifficultyData** exports: `background_shader` (Shader) and `background_shader_params` (Dictionary)
+- **GameController** auto-applies the channel's background when selected or when advancing to a new channel
+- Shader + param overrides are inspector-editable per channel `.tres` file in `Resources/Data/Channels/`
 
 #### UI Effect Shaders (3)
 | Shader | Purpose |
@@ -68,7 +79,14 @@ Preview all background shaders interactively:
 ```
 Tests/ShaderGallery.tscn
 ```
-Keys 1-9 to switch shaders, C for side-by-side comparison, Left/Right to change comparison target.
+Keys 1-0 for shaders 1-10, Shift+1-3 for shaders 11-13, C for side-by-side comparison, Left/Right to change comparison target.
+
+#### Channel Background Test Scene
+Preview all 20 channel backgrounds with their configured shader + color palette:
+```
+Tests/ChannelBackgroundTest.tscn
+```
+Left/Right or A/D to navigate channels, 1-0 for channels 1-10, Shift+1-0 for channels 11-20, Space for auto-cycle.
 
 #### Shader Debug Test Scene
 Isolates the **neon_energy** and **score_panel_energy** shaders used on the ScoreCard UI:

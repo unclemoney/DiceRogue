@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=9 format=3 uid="uid://h1c1iwy2muhb"]
+[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://h1c1iwy2muhb"]
 
 [ext_resource type="Script" uid="uid://cseqx1haydrh1" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
 [ext_resource type="Script" uid="uid://yuj6od6ypw1a" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
+[ext_resource type="Shader" path="res://Scripts/Shaders/jazz_cup.gdshader" id="3_shader_bg"]
 
 [sub_resource type="Resource" id="round_1"]
 script = ExtResource("2_round")
@@ -104,3 +105,17 @@ debuff_intensity_multiplier = 1.0
 force_specific_challenges = Array[String]([])
 disabled_shop_items = Array[String]([])
 special_rules = {}
+background_shader = ExtResource("3_shader_bg")
+background_shader_params = {
+"colour_1": Color(0.95, 0.93, 0.88, 1.0),
+"colour_2": Color(0.0, 0.65, 0.65, 1.0),
+"colour_3": Color(0.45, 0.15, 0.55, 1.0),
+"drift_speed": 0.15,
+"pixel_filter": 500.0,
+"swoosh_scale": 1.0,
+"stroke_thickness": 0.08,
+"scanline_strength": 0.1,
+"speckle_amount": 0.06,
+"teal_opacity": 0.8,
+"purple_opacity": 0.6
+}

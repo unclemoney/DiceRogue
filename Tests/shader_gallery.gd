@@ -3,10 +3,12 @@ extends Control
 ## ShaderGallery
 ##
 ## Interactive test scene to preview, compare, and tune all background shaders.
-## Includes the 4 original shaders plus 3 new creative background shaders.
+## Includes the 4 original shaders plus 3 creative background shaders
+## plus 4 new 90s-inspired shaders (Jazz Cup, Memphis Geo, Zigzag Bolts, Neon City).
 ##
 ## Controls:
-## - Keys 1-7: Switch between shaders
+## - Keys 1-9, 0: Switch between shaders 1-10
+## - Shift+1-3: Switch to shaders 11-13
 ## - C: Toggle comparison mode (side-by-side)
 ## - Left/Right arrows: Change comparison shader in comparison mode
 ## - ESC: Quit
@@ -176,6 +178,82 @@ var shader_configs: Array = [
 			"lighting": 0.5,
 			"pixel_filter": 500.0
 		}
+	},
+	{
+		"name": "10. Jazz Cup",
+		"description": "90s Solo Jazz paper cup swooshes — teal arcs & purple strokes",
+		"path": "res://Scripts/Shaders/jazz_cup.gdshader",
+		"params": {
+			"colour_1": Color(0.95, 0.93, 0.88, 1.0),
+			"colour_2": Color(0.0, 0.65, 0.65, 1.0),
+			"colour_3": Color(0.45, 0.15, 0.55, 1.0),
+			"drift_speed": 0.15,
+			"pixel_filter": 500.0,
+			"swoosh_scale": 1.0,
+			"stroke_thickness": 0.08,
+			"scanline_strength": 0.1,
+			"speckle_amount": 0.06,
+			"teal_opacity": 0.8,
+			"purple_opacity": 0.6
+		}
+	},
+	{
+		"name": "11. Memphis Geo",
+		"description": "Memphis Group scattered geometric shapes on bright teal",
+		"path": "res://Scripts/Shaders/memphis_geo.gdshader",
+		"params": {
+			"colour_1": Color(0.0, 0.65, 0.65, 1.0),
+			"colour_2": Color(0.95, 0.8, 0.0, 1.0),
+			"colour_3": Color(0.9, 0.2, 0.35, 1.0),
+			"colour_4": Color(0.25, 0.15, 0.55, 1.0),
+			"colour_5": Color(0.95, 0.55, 0.0, 1.0),
+			"scroll_speed": 0.1,
+			"pixel_filter": 450.0,
+			"shape_density": 6.0,
+			"shape_scale": 1.0,
+			"glow_amount": 0.3,
+			"rotation_speed": 0.5,
+			"scanline_strength": 0.1
+		}
+	},
+	{
+		"name": "12. Zigzag Bolts",
+		"description": "Saved By The Bell bold zigzag stripes with confetti",
+		"path": "res://Scripts/Shaders/zigzag_bolts.gdshader",
+		"params": {
+			"colour_1": Color(0.95, 0.25, 0.5, 1.0),
+			"colour_2": Color(0.0, 0.75, 0.7, 1.0),
+			"colour_3": Color(0.95, 0.85, 0.0, 1.0),
+			"colour_4": Color(0.55, 0.2, 0.75, 1.0),
+			"scroll_speed": 0.15,
+			"pixel_filter": 500.0,
+			"bolt_count": 6.0,
+			"bolt_thickness": 0.06,
+			"confetti_density": 8.0,
+			"color_block_strength": 0.25,
+			"scanline_strength": 0.1
+		}
+	},
+	{
+		"name": "13. Neon City",
+		"description": "Scrolling cyberpunk cityscape with neon signs & parallax",
+		"path": "res://Scripts/Shaders/neon_city.gdshader",
+		"params": {
+			"colour_1": Color(0.05, 0.02, 0.15, 1.0),
+			"colour_2": Color(0.15, 0.05, 0.25, 1.0),
+			"colour_3": Color(0.25, 0.1, 0.35, 1.0),
+			"neon_color_1": Color(1.0, 0.1, 0.4, 1.0),
+			"neon_color_2": Color(0.0, 0.9, 0.8, 1.0),
+			"neon_color_3": Color(0.5, 0.0, 1.0, 1.0),
+			"scroll_speed": 0.08,
+			"pixel_filter": 500.0,
+			"building_density": 8.0,
+			"neon_flicker_speed": 3.0,
+			"neon_glow_intensity": 0.4,
+			"star_density": 150.0,
+			"horizon_glow": 0.3,
+			"scanline_strength": 0.1
+		}
 	}
 ]
 
@@ -236,18 +314,27 @@ func _ready() -> void:
 	# Apply first shader
 	_apply_shader(0)
 
-	print("[ShaderGallery] Ready! Keys 1-9 to switch, C for compare, ESC to quit")
+	print("[ShaderGallery] Ready! Keys 1-0 for shaders 1-10, Shift+1-3 for 11-13, C for compare, ESC to quit")
 
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
 		match event.keycode:
 			KEY_1:
-				_apply_shader(0)
+				if event.shift_pressed:
+					_apply_shader(10)
+				else:
+					_apply_shader(0)
 			KEY_2:
-				_apply_shader(1)
+				if event.shift_pressed:
+					_apply_shader(11)
+				else:
+					_apply_shader(1)
 			KEY_3:
-				_apply_shader(2)
+				if event.shift_pressed:
+					_apply_shader(12)
+				else:
+					_apply_shader(2)
 			KEY_4:
 				_apply_shader(3)
 			KEY_5:
@@ -260,6 +347,8 @@ func _input(event: InputEvent) -> void:
 				_apply_shader(7)
 			KEY_9:
 				_apply_shader(8)
+			KEY_0:
+				_apply_shader(9)
 			KEY_C:
 				_toggle_comparison()
 			KEY_LEFT:
@@ -364,7 +453,8 @@ func _update_label() -> void:
 				text += "  %s: %s\n" % [param_name, str(val)]
 
 	text += "\n[color=gray]── Controls ──[/color]\n"
-	text += "1-9: Switch shaders\n"
+	text += "1-0: Shaders 1-10\n"
+	text += "Shift+1-3: Shaders 11-13\n"
 	text += "C: Toggle comparison\n"
 	text += "ESC: Quit\n"
 
