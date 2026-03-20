@@ -1,8 +1,8 @@
-﻿[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://o5605ctkjtk5"]
+[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://o5605ctkjtk5"]
 
 [ext_resource type="Script" uid="uid://cseqx1haydrh1" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
 [ext_resource type="Script" uid="uid://yuj6od6ypw1a" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
-[ext_resource type="Shader" path="res://Scripts/Shaders/backgground_swirl.gdshader" id="3_shader_bg"]
+[ext_resource type="Shader" uid="uid://buwv6htlmlig8" path="res://Scripts/Shaders/backgground_swirl.gdshader" id="3_shader_bg"]
 
 [sub_resource type="Resource" id="round_1"]
 script = ExtResource("2_round")

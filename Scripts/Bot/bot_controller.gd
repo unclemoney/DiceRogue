@@ -544,18 +544,19 @@ func _bot_score(values: Array[int]) -> void:
 	var score_value: int = choice.score
 
 	# Use the scorecard's on_category_selected to go through the full scoring pipeline
-	score_card.on_category_selected(section, category)
+	if is_instance_valid(score_card):
+		score_card.on_category_selected(section, category)
 
 	# Mark UI as scored
-	if score_card_ui and "turn_scored" in score_card_ui:
+	if is_instance_valid(score_card_ui) and "turn_scored" in score_card_ui:
 		score_card_ui.turn_scored = true
-	if score_card_ui and score_card_ui.has_method("update_all"):
+	if is_instance_valid(score_card_ui) and score_card_ui.has_method("update_all"):
 		score_card_ui.update_all()
 
-	logger.log_info("Scored %s = %d pts (total: %d)" % [category, score_value, score_card.get_total_score()])
+	logger.log_info("Scored %s = %d pts (total: %d)" % [category, score_value, score_card.get_total_score() if is_instance_valid(score_card) else 0])
 
 	# Check if chore task was completed by this scoring action
-	if chores_manager:
+	if is_instance_valid(chores_manager):
 		var dice_values = _get_dice_values()
 		var context = {
 			"category": category,
@@ -572,7 +573,7 @@ func _bot_score(values: Array[int]) -> void:
 	await _handle_pending_chore_events()
 
 	# Animate dice exit after scoring
-	if dice_hand:
+	if is_instance_valid(dice_hand):
 		dice_hand.set_all_dice_disabled()
 
 	await get_tree().create_timer(0.1).timeout
@@ -582,13 +583,13 @@ func _bot_score(values: Array[int]) -> void:
 ##
 ## Advances to the next turn (mirrors _on_next_turn_button_pressed logic).
 func _bot_next_turn() -> void:
-	if turn_tracker:
+	if is_instance_valid(turn_tracker):
 		turn_tracker.start_new_turn()
-	if score_card_ui and "turn_scored" in score_card_ui:
+	if is_instance_valid(score_card_ui) and "turn_scored" in score_card_ui:
 		score_card_ui.turn_scored = false
-	if score_card_ui and score_card_ui.has_method("enable_all_score_buttons"):
+	if is_instance_valid(score_card_ui) and score_card_ui.has_method("enable_all_score_buttons"):
 		score_card_ui.enable_all_score_buttons()
-	if dice_hand:
+	if is_instance_valid(dice_hand):
 		dice_hand.set_all_dice_rollable()
 
 
@@ -614,6 +615,7 @@ func _handle_post_round() -> void:
 		logger.log_info("Challenge completed for round %d" % round_num)
 	else:
 		logger.log_info("Challenge NOT completed for round %d — run lost" % round_num)
+		statistics.record_round_failed(round_num)
 		_end_current_run("loss")
 		return
 
@@ -820,7 +822,7 @@ func _advance_to_next_round() -> void:
 		dice_hand.clear_dice()
 	if score_card:
 		score_card.reset_scores_preserve_levels()
-	if score_card_ui and score_card_ui.has_method("update_all"):
+	if is_instance_valid(score_card_ui) and score_card_ui.has_method("update_all"):
 		score_card_ui.update_all()
 
 	round_manager.complete_round()
@@ -944,7 +946,7 @@ func _reset_game_state() -> void:
 		turn_tracker.reset()
 
 	# Reset shop reroll cost and expansions
-	if shop_ui:
+	if is_instance_valid(shop_ui):
 		if shop_ui.has_method("reset_reroll_cost"):
 			shop_ui.reset_reroll_cost()
 		if shop_ui.has_method("reset_shop_expansions"):

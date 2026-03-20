@@ -1,2 +1,7 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Godot resource/scene files must always use LF — BOM or CRLF breaks the parser
+*.tres text eol=lf
+*.tscn text eol=lf
+*.gd text eol=lf

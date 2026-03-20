@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://5mnk1hfpsv0k" path="res://Resources/Art/Powerups/consumable_test3.png" id="1_ti2y2"]
 [ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_vdnug"]
-[ext_resource type="PackedScene" path="res://Scenes/Consumable/PowerUpShopNumConsumable.tscn" id="2_bfh4v"]
+[ext_resource type="PackedScene" uid="uid://ce8x4tpgr2q7w" path="res://Scenes/Consumable/PowerUpShopNumConsumable.tscn" id="2_bfh4v"]
 
 [resource]
 script = ExtResource("1_vdnug")

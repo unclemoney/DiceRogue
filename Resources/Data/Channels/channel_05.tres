@@ -1,4 +1,4 @@
-﻿[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://h1c1iwy2muhb"]
+[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://h1c1iwy2muhb"]
 
 [ext_resource type="Script" uid="uid://cseqx1haydrh1" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
 [ext_resource type="Script" uid="uid://yuj6od6ypw1a" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]

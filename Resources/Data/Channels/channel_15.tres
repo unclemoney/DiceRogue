@@ -1,8 +1,8 @@
-﻿[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=9 format=3]
+[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://me2tc8vz1j7kn"]
 
-[ext_resource type="Script" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
-[ext_resource type="Script" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
-[ext_resource type="Shader" path="res://Scripts/Shaders/zigzag_bolts.gdshader" id="3_shader_bg"]
+[ext_resource type="Script" uid="uid://cseqx1haydrh1" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
+[ext_resource type="Script" uid="uid://yuj6od6ypw1a" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
+[ext_resource type="Shader" uid="uid://cucr35bkekw1l" path="res://Scripts/Shaders/zigzag_bolts.gdshader" id="3_shader_bg"]
 
 [sub_resource type="Resource" id="round_1"]
 script = ExtResource("2_round")
@@ -70,7 +70,7 @@ channel_number = 15
 display_name = "Channel 15 - Master Class"
 description = "Tier 5 challenges dominate. Four debuffs possible in final round."
 unlock_requirement = 8
-round_configs = [SubResource("round_1"), SubResource("round_2"), SubResource("round_3"), SubResource("round_4"), SubResource("round_5"), SubResource("round_6")]
+round_configs = Array[ExtResource("2_round")]([SubResource("round_1"), SubResource("round_2"), SubResource("round_3"), SubResource("round_4"), SubResource("round_5"), SubResource("round_6")])
 goal_score_multiplier = 4.0
 yahtzee_bonus_multiplier = 3.0
 shop_price_multiplier = 2.2
@@ -78,8 +78,8 @@ colored_dice_cost_multiplier = 1.7
 reroll_base_cost_multiplier = 1.8
 goof_off_multiplier = 1.7
 debuff_intensity_multiplier = 1.8
-force_specific_challenges = []
-disabled_shop_items = []
+force_specific_challenges = Array[String]([])
+disabled_shop_items = Array[String]([])
 special_rules = {}
 background_shader = ExtResource("3_shader_bg")
 background_shader_params = {

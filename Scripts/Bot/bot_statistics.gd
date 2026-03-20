@@ -41,6 +41,7 @@ func start_run(run_id: int, channel: int) -> void:
 		"chores_selected_hard": 0,
 		"mom_visits": 0,
 		"loss_round": -1,
+		"round_failed": 7,
 		"highest_channel_reached": channel,
 		"power_ups_purchased": 0,
 		"consumables_purchased": 0,
@@ -99,6 +100,7 @@ func record_round_completed() -> void:
 func record_round_failed(round_number: int) -> void:
 	_current_run.rounds_failed += 1
 	_current_run.loss_round = round_number
+	_current_run.round_failed = round_number
 
 
 ## record_turn()
