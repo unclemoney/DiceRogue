@@ -1,0 +1,29 @@
+[gd_scene load_steps=3 format=3 uid="uid://s0lrr1ksnd2p"]
+
+[ext_resource type="Script" uid="uid://bdmsh15814elg" path="res://Tests/item_value_test.gd" id="1_test"]
+[ext_resource type="Script" uid="uid://dspgmo0o28ytj" path="res://Tests/item_value_results_panel.gd" id="2_panel"]
+
+[node name="ItemValueTest" type="Node2D"]
+script = ExtResource("1_test")
+
+[node name="ItemValueResultsPanel" type="PanelContainer" parent="."]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 1140.0
+offset_bottom = 640.0
+script = ExtResource("2_panel")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ItemValueResultsPanel"]
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="ItemValueResultsPanel/VBoxContainer"]
+layout_mode = 2
+text = "Item Value Estimator - Initializing..."
+
+[node name="ResultsLabel" type="RichTextLabel" parent="ItemValueResultsPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 560)
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "Waiting for results..."
+scroll_following = true

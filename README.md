@@ -1646,13 +1646,35 @@ An automated bot player that runs full game sessions for stress-testing and bala
 - **End-of-round bonus awards**: Bot calculates and awards challenge reward, chore reward (×$50), empty categories bonus (×$10), and score-above-target bonus (×$1) — matching the stats panel logic the player sees
 - **Full game reset between runs**: Properly frees power-ups, consumables, challenges, debuffs via game_controller methods; resets ScoreModifierManager, MAX_ROLLS, shop reroll cost/expansions, and round_manager
 - **Expanded statistics**: Tracks highest channel reached, power-ups/consumables/mods/color dice purchased, consumables used vs sold, total money earned/spent, challenge rewards, end-of-round bonuses
+- **Smart shop rerolling**: Rerolls the shop when no powerup outranks the bot's worst owned powerup and the reroll cost is ≤10% of current money (configurable max rerolls per shop visit)
+- **Economy estimation**: Before each shop visit, estimates remaining budget pressure (low/medium/high/critical) based on projected income vs remaining targets, and filters purchases accordingly
+- **Budget-aware purchasing**: Under high/critical budget pressure, skips common/uncommon items to conserve money for harder rounds ahead
 
 **Quick Start:**
 1. Open `Tests/BotTest.tscn`
 2. Assign `Resources/Data/default_bot_config.tres` to the root node's **Bot Config** export
 3. Run the scene (F6)
 
-**Files:** `Scripts/Bot/` (7 scripts), `Tests/bot_test.gd`, `Tests/bot_results_panel.gd`, `Tests/BotTest.tscn`
+**Files:** `Scripts/Bot/` (9 scripts), `Tests/bot_test.gd`, `Tests/bot_results_panel.gd`, `Tests/BotTest.tscn`
 
 See [BUILD_BOT.md](BUILD_BOT.md) for full setup instructions, configuration reference, and architecture details.
+
+### Item Value Estimation Tool
+
+A standalone Monte Carlo simulation tool that evaluates every PowerUp and Consumable in the game. Simulates Yahtzee games to estimate each item's expected score improvement, then assigns $/point efficiency ratings and tier rankings (S/A/B/C/D/F).
+
+**Key Features:**
+- Monte Carlo Yahtzee scoring simulation (configurable N games per item)
+- Classifies items by effect type: score multipliers, additives, extra dice/rolls, economy, utility
+- Produces tier rankings with color-coded BBCode output
+- Saves text reports to `user://item_value_reports/`
+- Configurable via `ItemValueConfig` resource
+
+**Quick Start:**
+1. Open `Tests/ItemValueTest.tscn`
+2. Run the scene (F6)
+
+**Files:** `Scripts/Bot/ItemValueEstimator.gd`, `Scripts/Bot/ItemValueConfig.gd`, `Tests/item_value_test.gd`, `Tests/item_value_results_panel.gd`, `Tests/ItemValueTest.tscn`
+
+See [BUILD_BOT.md](BUILD_BOT.md) for item effect types, configuration reference, and how to add new items.
 

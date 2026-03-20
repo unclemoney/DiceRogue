@@ -33,5 +33,12 @@ class_name BotConfig
 ## If true, open the JSON report file location after all runs complete
 @export var open_report_on_finish: bool = true
 
+## Maximum shop rerolls per shop visit (safety cap for bot reroll logic)
+@export_range(0, 20) var max_rerolls_per_shop: int = 5
+
 ## Strategy preset name (for future expansion)
 @export var strategy_preset: String = "default"
+
+## If true, mute the Master audio bus while the bot is running.
+## Set to false to hear SFX and music during visual bot runs.
+@export var mute_audio: bool = true

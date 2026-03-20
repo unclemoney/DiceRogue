@@ -258,3 +258,179 @@ func should_use_reroll(turn_tracker: TurnTracker, scorecard: Scorecard, values: 
 
 	# Otherwise, reroll if we have rolls left
 	return true
+
+
+## _get_powerup_rarity_value(rarity: String) -> int
+##
+## Returns the numeric quality tier for a rarity string.
+## Higher value = better quality.
+func _get_powerup_rarity_value(rarity: String) -> int:
+	return RARITY_ORDER.get(rarity, 0)
+
+
+## get_owned_min_rarity(active_power_ups: Dictionary) -> int
+##
+## Returns the lowest rarity tier among all owned power-ups.
+## Returns -1 if no power-ups are owned.
+func get_owned_min_rarity(active_power_ups: Dictionary) -> int:
+	if active_power_ups.is_empty():
+		return -1
+	var min_rarity := 999
+	for id in active_power_ups:
+		var power_up = active_power_ups[id]
+		if not power_up:
+			continue
+		var data = null
+		if power_up.has_method("get_data"):
+			data = power_up.get_data()
+		elif "power_up_data" in power_up:
+			data = power_up.power_up_data
+		if not data:
+			continue
+		var rarity_str: String = data.get("rarity") if data.get("rarity") else "common"
+		var rarity_val: int = RARITY_ORDER.get(rarity_str, 0)
+		if rarity_val < min_rarity:
+			min_rarity = rarity_val
+	if min_rarity == 999:
+		return -1
+	return min_rarity
+
+
+## _shop_has_upgrade(shop_items: Array, active_power_ups: Dictionary) -> bool
+##
+## Returns true if any shop power-up is higher rarity than the lowest owned,
+## or if the bot owns no power-ups (any purchase is an upgrade).
+func _shop_has_upgrade(shop_items: Array, active_power_ups: Dictionary) -> bool:
+	var owned_min := get_owned_min_rarity(active_power_ups)
+	# If we own nothing, any power-up is worth buying
+	if owned_min < 0:
+		return true
+	for item in shop_items:
+		if not item or not item.item_data:
+			continue
+		# Only consider power-up type items
+		if not ("item_type" in item) or item.item_type != "power_up":
+			continue
+		var rarity_str: String = ""
+		if "rarity" in item.item_data:
+			rarity_str = item.item_data.rarity
+		if rarity_str == "":
+			rarity_str = "common"
+		var rarity_val: int = RARITY_ORDER.get(rarity_str, 0)
+		if rarity_val > owned_min:
+			return true
+	return false
+
+
+## should_reroll_shop(shop_items, active_power_ups, money, reroll_cost) -> bool
+##
+## Determines whether the bot should reroll the shop.
+## Conditions (all must be true):
+##   1. No shop power-up has higher rarity than lowest owned
+##   2. Reroll cost < 10% of current money
+##   3. Bot has enough money to afford the reroll
+func should_reroll_shop(shop_items: Array, active_power_ups: Dictionary, money: int, reroll_cost: int) -> bool:
+	# If there's already something worth buying, don't reroll
+	if _shop_has_upgrade(shop_items, active_power_ups):
+		return false
+	# Check cost threshold: reroll must cost less than 10% of total money
+	if reroll_cost >= int(money * 0.1):
+		return false
+	# Must be able to afford the reroll
+	if reroll_cost > money:
+		return false
+	return true
+
+
+## estimate_channel_economy(channel_config, channel_manager) -> Dictionary
+##
+## Estimates the total economy for a full channel run.
+## Returns: { total_target, total_reward, surplus, difficulty_rating }
+## difficulty_rating: "easy" | "moderate" | "hard" | "extreme"
+func estimate_channel_economy(channel_config: Resource, channel_manager: Node) -> Dictionary:
+	const VANILLA_BASELINE_SCORE := 210
+
+	var total_target := 0
+	var total_reward := 0
+
+	for round_num in range(1, 7):
+		var round_config = channel_config.get_round_config(round_num) if channel_config.has_method("get_round_config") else null
+		var scaled_target: int = VANILLA_BASELINE_SCORE
+		if channel_manager and channel_manager.has_method("get_scaled_target_score"):
+			scaled_target = channel_manager.get_scaled_target_score(round_num)
+		total_target += scaled_target
+
+		if round_config and round_config.get("reward_money_override") and round_config.reward_money_override > 0:
+			total_reward += round_config.reward_money_override
+		elif channel_config.get("base_reward_money"):
+			total_reward += channel_config.base_reward_money
+
+	var surplus: int = total_reward - total_target
+	var difficulty_rating := "moderate"
+	if surplus > 200:
+		difficulty_rating = "easy"
+	elif surplus < -200:
+		difficulty_rating = "extreme"
+	elif surplus < 0:
+		difficulty_rating = "hard"
+
+	return {
+		"total_target": total_target,
+		"total_reward": total_reward,
+		"surplus": surplus,
+		"difficulty_rating": difficulty_rating
+	}
+
+
+## estimate_remaining_budget(channel_config, channel_manager, current_round, current_money) -> Dictionary
+##
+## Estimates how much money the bot needs to finish the channel vs projected income.
+## Returns: { remaining_target, remaining_reward, projected_income, points_gap,
+##            dollars_per_point_needed, budget_pressure }
+## budget_pressure: "low" | "medium" | "high" | "critical"
+func estimate_remaining_budget(channel_config: Resource, channel_manager: Node, current_round: int, current_money: int) -> Dictionary:
+	const VANILLA_BASELINE_SCORE := 210
+
+	var remaining_target := 0
+	var remaining_reward := 0
+
+	for round_num in range(current_round, 7):
+		var round_config = channel_config.get_round_config(round_num) if channel_config.has_method("get_round_config") else null
+		var scaled_target: int = VANILLA_BASELINE_SCORE
+		if channel_manager and channel_manager.has_method("get_scaled_target_score"):
+			scaled_target = channel_manager.get_scaled_target_score(round_num)
+		remaining_target += scaled_target
+
+		if round_config and round_config.get("reward_money_override") and round_config.reward_money_override > 0:
+			remaining_reward += round_config.reward_money_override
+		elif channel_config.get("base_reward_money"):
+			remaining_reward += channel_config.base_reward_money
+
+	# Projected income: current money + remaining rewards + estimated score bonuses
+	var rounds_left: int = 6 - current_round + 1
+	var estimated_score_bonus: int = rounds_left * 10  # rough: ~10 pts above target avg
+	var projected_income: int = current_money + remaining_reward + estimated_score_bonus
+
+	# Points gap: how short we expect to be
+	var points_gap: int = remaining_target - projected_income
+	var dollars_per_point_needed: float = 0.0
+	if remaining_target > 0:
+		dollars_per_point_needed = float(current_money) / float(remaining_target)
+
+	# Budget pressure rating
+	var budget_pressure := "low"
+	if points_gap > 300:
+		budget_pressure = "critical"
+	elif points_gap > 100:
+		budget_pressure = "high"
+	elif points_gap > 0:
+		budget_pressure = "medium"
+
+	return {
+		"remaining_target": remaining_target,
+		"remaining_reward": remaining_reward,
+		"projected_income": projected_income,
+		"points_gap": points_gap,
+		"dollars_per_point_needed": dollars_per_point_needed,
+		"budget_pressure": budget_pressure
+	}

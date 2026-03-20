@@ -50,6 +50,8 @@ func start_run(run_id: int, channel: int) -> void:
 		"total_money_earned": 0,
 		"challenge_rewards_earned": 0,
 		"end_of_round_bonuses": 0,
+		"shop_rerolls": 0,
+		"budget_estimates": [],
 		"start_time": Time.get_ticks_msec()
 	}
 
@@ -156,6 +158,26 @@ func record_end_of_round_bonus(amount: int) -> void:
 	_current_run.total_money_earned += amount
 
 
+## record_shop_reroll()
+##
+## Tracks when the bot rerolls the shop.
+func record_shop_reroll() -> void:
+	_current_run.shop_rerolls += 1
+
+
+## record_economy_estimate(round_num, budget_info)
+##
+## Stores the economy estimate snapshot taken during a shop phase.
+func record_economy_estimate(round_num: int, budget_info: Dictionary) -> void:
+	_current_run.budget_estimates.append({
+		"round": round_num,
+		"pressure": budget_info.get("budget_pressure", "low"),
+		"points_gap": budget_info.get("points_gap", 0),
+		"dollars_per_point": budget_info.get("dollars_per_point_needed", 0.0),
+		"projected_income": budget_info.get("projected_income", 0)
+	})
+
+
 ## record_consumable_used(consumable_id)
 func record_consumable_used(consumable_id: String) -> void:
 	_current_run.consumables_used.append(consumable_id)
@@ -241,6 +263,7 @@ func get_aggregate() -> Dictionary:
 	var total_money_spent := 0
 	var total_challenge_rewards := 0
 	var total_end_of_round_bonuses := 0
+	var total_shop_rerolls := 0
 	var overall_highest_channel := 0
 	var loss_round_counts := {}
 	var channel_results := {}
@@ -275,6 +298,9 @@ func get_aggregate() -> Dictionary:
 		total_money_spent += run.get("money_spent", 0)
 		total_challenge_rewards += run.get("challenge_rewards_earned", 0)
 		total_end_of_round_bonuses += run.get("end_of_round_bonuses", 0)
+
+		var run_shop_rerolls: int = run.get("shop_rerolls", 0)
+		total_shop_rerolls += run_shop_rerolls
 
 		var run_highest_ch: int = run.get("highest_channel_reached", 0)
 		if run_highest_ch > overall_highest_channel:
@@ -337,6 +363,7 @@ func get_aggregate() -> Dictionary:
 		"total_money_spent": total_money_spent,
 		"total_challenge_rewards": total_challenge_rewards,
 		"total_end_of_round_bonuses": total_end_of_round_bonuses,
+		"total_shop_rerolls": total_shop_rerolls,
 		"most_common_loss_round": most_common_loss_round,
 		"loss_round_distribution": loss_round_counts,
 		"channel_results": channel_results

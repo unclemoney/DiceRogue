@@ -3199,11 +3199,26 @@ func _on_challenge_completed(id: String) -> void:
 	print("[GameController] Challenge completed:", id)
 
 	# Store reward for end-of-round stats (don't grant immediately)
+	# Priority: RoundDifficultyConfig.reward_money_override > ChallengeData.reward_money
 	var def = challenge_manager.get_def(id)
-	if def and def.reward_money > 0 and not _challenge_reward_granted:
-		print("[GameController] Storing challenge reward for end-of-round: $%d" % def.reward_money)
-		_challenge_reward_this_round = def.reward_money
-		_challenge_reward_granted = true  # Prevent double-granting
+	if def and not _challenge_reward_granted:
+		var reward: int = 0
+		var reward_source: String = ""
+		# Check round config override first
+		if channel_manager and round_manager:
+			var round_number = round_manager.get_current_round_number()
+			var round_config = channel_manager.get_round_config(channel_manager.current_channel, round_number)
+			if round_config and round_config.reward_money_override > 0:
+				reward = round_config.reward_money_override
+				reward_source = "RoundConfig"
+		# Fallback to ChallengeData.reward_money
+		if reward == 0 and def.reward_money > 0:
+			reward = def.reward_money
+			reward_source = "ChallengeData"
+		if reward > 0:
+			print("[GameController] Storing challenge reward for end-of-round: $%d (source: %s)" % [reward, reward_source])
+			_challenge_reward_this_round = reward
+			_challenge_reward_granted = true  # Prevent double-granting
 
 	# Trigger celebration fireworks
 	_trigger_challenge_celebration()

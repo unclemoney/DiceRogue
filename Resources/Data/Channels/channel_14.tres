@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=9 format=3]
+﻿[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
 [ext_resource type="Script" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
@@ -11,6 +11,7 @@ challenge_difficulty_range = Vector2i(3, 4)
 max_debuffs = 2
 debuff_difficulty_cap = 3
 goof_off_threshold_override = -1
+reward_money_override = 250
 bonus_multipliers = {"empty_category": 1.5, "points_above": 1.4, "chore_completion": 1.5}
 
 [sub_resource type="Resource" id="round_2"]
@@ -20,6 +21,7 @@ challenge_difficulty_range = Vector2i(3, 4)
 max_debuffs = 2
 debuff_difficulty_cap = 3
 goof_off_threshold_override = -1
+reward_money_override = 300
 bonus_multipliers = {"empty_category": 1.6, "points_above": 1.4, "chore_completion": 1.5}
 
 [sub_resource type="Resource" id="round_3"]
@@ -29,6 +31,7 @@ challenge_difficulty_range = Vector2i(4, 5)
 max_debuffs = 3
 debuff_difficulty_cap = 3
 goof_off_threshold_override = -1
+reward_money_override = 365
 bonus_multipliers = {"empty_category": 1.6, "points_above": 1.5, "chore_completion": 1.6}
 
 [sub_resource type="Resource" id="round_4"]
@@ -38,6 +41,7 @@ challenge_difficulty_range = Vector2i(4, 5)
 max_debuffs = 3
 debuff_difficulty_cap = 4
 goof_off_threshold_override = -1
+reward_money_override = 440
 bonus_multipliers = {"empty_category": 1.7, "points_above": 1.5, "chore_completion": 1.7}
 
 [sub_resource type="Resource" id="round_5"]
@@ -47,6 +51,7 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 3
 debuff_difficulty_cap = 4
 goof_off_threshold_override = -1
+reward_money_override = 525
 bonus_multipliers = {"empty_category": 1.8, "points_above": 1.6, "chore_completion": 1.8}
 
 [sub_resource type="Resource" id="round_6"]
@@ -56,6 +61,7 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 3
 debuff_difficulty_cap = 5
 goof_off_threshold_override = -1
+reward_money_override = 625
 bonus_multipliers = {"empty_category": 1.9, "points_above": 1.7, "chore_completion": 1.8}
 
 [resource]

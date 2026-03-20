@@ -15,9 +15,14 @@ The Bot system provides automated play-testing of the dice roguelite game. A sta
 | `Scripts/Bot/bot_report_writer.gd` | JSON report writer |
 | `Scripts/Bot/bot_logger.gd` | Error/crash/edge-case logging |
 | `Scripts/Bot/bot_profile.gd` | Persistent bot player profile (JSON save/load) |
+| `Scripts/Bot/ItemValueConfig.gd` | Configuration resource for item value estimation |
+| `Scripts/Bot/ItemValueEstimator.gd` | Monte Carlo Yahtzee simulation for item value |
 | `Tests/bot_test.gd` | Scene script wiring BotController to game nodes |
 | `Tests/bot_results_panel.gd` | In-game results panel (BBCode rich text) |
 | `Tests/BotTest.tscn` | Godot scene file (mirrors DebuffTest.tscn + bot nodes) |
+| `Tests/item_value_test.gd` | Scene script for item value estimation tool |
+| `Tests/item_value_results_panel.gd` | BBCode results panel for item value report |
+| `Tests/ItemValueTest.tscn` | Standalone scene for running item value estimation |
 | `Resources/Data/default_bot_config.tres` | Default configuration resource |
 
 ## Setup Instructions
@@ -49,6 +54,7 @@ Edit `default_bot_config.tres` in the Inspector or create a new `BotConfig` reso
 | `log_verbose` | true | Log every bot action |
 | `open_report_on_finish` | true | Open report file location when done |
 | `strategy_preset` | "default" | Strategy name (for future expansion) |
+| `max_rerolls_per_shop` | 5 | Max shop rerolls per visit (0 = no rerolling) |
 
 ## Bot Strategy
 
@@ -71,6 +77,13 @@ The bot follows these rules (defined in `bot_strategy.gd`):
 - Evaluates items by rarity (higher rarity = higher priority)
 - Buys greedily within budget, highest priority first
 - When forced to sell a power-up, sells the lowest rarity one
+- **Smart rerolling**: Rerolls the shop when no available powerup outranks the bot's lowest-rarity owned powerup, provided the reroll cost is ≤10% of the bot's current money (up to `max_rerolls_per_shop` times)
+- **Budget-aware filtering**: Under high/critical budget pressure, the bot skips common/uncommon purchases to conserve money for later rounds
+
+### Economy Estimation
+- Before each shop phase, `estimate_remaining_budget()` computes remaining targets, projected income, points gap, and a budget pressure rating (low/medium/high/critical)
+- Budget pressure feeds into purchase filtering: under pressure, only rare+ items are bought
+- Per-shop economy estimates are recorded in `bot_statistics.gd` for post-run analysis
 
 ### Chore / Goof-Off / Mom Handling
 - After every roll, increments goof-off progress via `chores_manager.increment_progress(1)`
@@ -161,3 +174,61 @@ Create a new function in `bot_strategy.gd` or subclass it. The `strategy_preset`
 
 ### Adding New Statistics
 Add tracking calls in `bot_statistics.gd` and update `bot_report_writer.gd` to include them in the report.
+
+## Item Value Estimation Tool
+
+A standalone Monte Carlo simulation tool that evaluates every PowerUp and Consumable to produce $/point efficiency ratings and tier rankings (S/A/B/C/D/F).
+
+### How It Works
+
+1. **Baseline**: Simulates N Yahtzee games (default 100) with vanilla rules to establish an average baseline score
+2. **Per-item**: For each item, classifies its effect type (score multiplier, additive, extra dice, extra rolls, economy, utility) and models the expected scoring improvement
+3. **Rating**: Calculates score delta, $/point efficiency (price ÷ delta), and assigns a tier rating adjusted for rarity expectations
+
+### Item Effect Types
+
+| Type | Description | Example Items |
+|------|-------------|---------------|
+| `SCORE_MULTIPLIER` | Multiplies total/category scores | foursome, purple_slime, hot_streak |
+| `SCORE_ADDITIVE` | Adds flat bonus per scoring event | green_slime, lower_ten, full_house_bonus |
+| `EXTRA_DICE` | Adds extra dice to the hand | extra_dice |
+| `EXTRA_ROLLS` | Adds extra re-rolls per turn | extra_rolls |
+| `CATEGORY_UPGRADE` | Boosts category level multiplier | step_by_step, random_card_level |
+| `ECONOMY_FLAT` | Flat money added per game | allowance, bonus_money, money_bags |
+| `ECONOMY_SCALING` | Multiplies money earned | money_multiplier, money_well_spent |
+| `UTILITY` | Indirect value (defense, slots, rerolls) | debuff_destroyer, extra_coupons |
+
+### Quick Start
+
+1. Open `Tests/ItemValueTest.tscn` in the Godot editor
+2. Optionally assign an `ItemValueConfig` resource to the root node's **Config** export
+3. Run the scene (F6) or:
+   ```
+   & "C:\Users\danie\OneDrive\Documents\GODOT\Godot_v4.4.1-stable_win64.exe" --path "c:\Users\danie\Documents\dicerogue\DiceRogue" Tests/ItemValueTest.tscn
+   ```
+4. Results display in the in-scene panel and save to `user://item_value_reports/`
+
+### Configuration Options
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `simulations_per_item` | 100 | Simulated games per item (higher = more accurate) |
+| `target_channel` | 5 | Channel context for target score scaling |
+| `test_all_powerups` | true | Evaluate all PowerUpData .tres files |
+| `test_all_consumables` | true | Evaluate all ConsumableData .tres files |
+| `specific_item_ids` | [] | Test only these item IDs (when test_all is false) |
+| `save_report` | true | Save text report to `user://item_value_reports/` |
+| `verbose` | true | Print each item result to console |
+
+### Output
+
+- **In-scene panel**: BBCode rich text grouped by tier with color coding
+- **Console**: Per-item results as they complete (when verbose)
+- **File report**: `user://item_value_reports/item_values_{timestamp}.txt`
+
+### Adding New Items
+
+When a new PowerUp is added to the game:
+1. Add its effect classification to `KNOWN_EFFECTS` in `ItemValueEstimator.gd`
+2. Re-run the estimation to update tier rankings
+3. Items not in `KNOWN_EFFECTS` get a conservative estimate based on rarity

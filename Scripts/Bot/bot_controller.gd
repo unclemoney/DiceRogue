@@ -73,6 +73,7 @@ var _is_round_failed: bool = false
 var _is_all_rounds_done: bool = false
 var _is_game_over: bool = false
 var _waiting_for_shop: bool = false
+var _budget_pressure: String = "low"
 var _pending_chore_selection: bool = false
 var _pending_mom_dialog: bool = false
 var _challenge_completed_this_round: bool = false
@@ -109,8 +110,9 @@ func start(bot_config: BotConfig) -> void:
 	statistics.clear()
 	logger.clear()
 
-	# Mute all audio during bot runs
-	_mute_audio()
+	# Mute all audio during bot runs (if configured)
+	if config.mute_audio:
+		_mute_audio()
 
 	emit_signal("bot_status_changed", "Bot starting %d attempt(s)..." % config.attempts)
 	_start_next_run()
@@ -135,6 +137,7 @@ func _start_next_run() -> void:
 	_is_all_rounds_done = false
 	_is_game_over = false
 	_waiting_for_shop = false
+	_budget_pressure = "low"
 	_challenge_completed_this_round = false
 	_chose_early_shop = false
 
@@ -704,6 +707,17 @@ func _bot_shop_phase() -> void:
 
 	logger.log_info("Shop phase — money: $%d" % money)
 
+	# Estimate budget pressure for remaining rounds
+	_budget_pressure = "low"
+	if channel_manager and round_manager:
+		var ch_config = channel_manager.get_channel_config(current_channel)
+		var cur_round: int = round_manager.get_current_round_number()
+		if ch_config:
+			var budget_info: Dictionary = strategy.estimate_remaining_budget(ch_config, channel_manager, cur_round, money)
+			_budget_pressure = budget_info.get("budget_pressure", "low")
+			logger.log_info("Economy: pressure=%s, gap=%d pts, $/pt=%.1f" % [_budget_pressure, budget_info.get("points_gap", 0), budget_info.get("dollars_per_point_needed", 0.0)])
+			statistics.record_economy_estimate(cur_round, budget_info)
+
 	# Show shop if in visual mode
 	if config.visual_mode and shop_ui.has_method("show"):
 		shop_ui.show()
@@ -713,9 +727,41 @@ func _bot_shop_phase() -> void:
 	var shop_items := _get_shop_items()
 	var to_buy = strategy.choose_shop_purchases(shop_items, money)
 
+	# Reroll loop: if no good upgrades available, try rerolling
+	var reroll_count := 0
+	var max_rerolls: int = config.max_rerolls_per_shop if config else 5
+	var owned_power_ups: Dictionary = game_controller.active_power_ups if game_controller else {}
+	while to_buy.is_empty() and reroll_count < max_rerolls:
+		var current_money: int = PlayerEconomy.get_money() if PlayerEconomy else 0
+		var current_reroll_cost: int = shop_ui.reroll_cost if "reroll_cost" in shop_ui else 25
+		if not strategy.should_reroll_shop(shop_items, owned_power_ups, current_money, current_reroll_cost):
+			break
+		# Ensure we're on the PowerUps tab (tab 0) for reroll
+		if "tab_container" in shop_ui and shop_ui.tab_container:
+			shop_ui.tab_container.current_tab = 0
+		logger.log_info("Rerolling shop (cost: $%d, money: $%d)" % [current_reroll_cost, current_money])
+		shop_ui._on_reroll_button_pressed()
+		statistics.record_shop_reroll()
+		reroll_count += 1
+		# Wait for reroll to populate and cooldown to pass
+		await get_tree().create_timer(0.6).timeout
+		# Re-gather items and evaluate
+		shop_items = _get_shop_items()
+		current_money = PlayerEconomy.get_money() if PlayerEconomy else 0
+		to_buy = strategy.choose_shop_purchases(shop_items, current_money)
+
 	for item in to_buy:
 		if not PlayerEconomy.can_afford(item.price):
 			break
+		# Under high/critical budget pressure, skip low-rarity powerups
+		if _budget_pressure == "high" or _budget_pressure == "critical":
+			if "item_type" in item and item.item_type == "power_up":
+				if item.item_data and "rarity" in item.item_data:
+					var rarity_str: String = item.item_data.rarity
+					var rarity_val: int = strategy.RARITY_ORDER.get(rarity_str, 0)
+					if rarity_val <= 1:
+						logger.log_info("Skipping low-rarity %s (budget pressure: %s)" % [item.item_id, _budget_pressure])
+						continue
 		logger.log_info("Buying: %s (%s) for $%d" % [item.item_id, item.item_type, item.price])
 		item._on_buy_button_pressed()
 		statistics.record_purchase(item.item_id, item.item_type, item.price)
@@ -961,7 +1007,8 @@ func _finalize() -> void:
 	emit_signal("bot_all_runs_completed")
 
 	# Restore audio
-	_unmute_audio()
+	if config.mute_audio:
+		_unmute_audio()
 
 	print("[BotController] === FINAL REPORT ===")
 	print("[BotController] %s" % summary)

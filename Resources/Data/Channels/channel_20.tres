@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://o5605ctkjtk5"]
+﻿[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://o5605ctkjtk5"]
 
 [ext_resource type="Script" uid="uid://cseqx1haydrh1" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
 [ext_resource type="Script" uid="uid://yuj6od6ypw1a" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
@@ -11,6 +11,7 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 4
 debuff_difficulty_cap = 5
 goof_off_threshold_override = -1
+reward_money_override = 500
 bonus_multipliers = {
 "chore_completion": 2.5,
 "empty_category": 2.5,
@@ -24,6 +25,7 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 4
 debuff_difficulty_cap = 5
 goof_off_threshold_override = -1
+reward_money_override = 600
 bonus_multipliers = {
 "chore_completion": 3.0,
 "empty_category": 3.0,
@@ -37,6 +39,7 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 5
 debuff_difficulty_cap = 5
 goof_off_threshold_override = -1
+reward_money_override = 725
 bonus_multipliers = {
 "chore_completion": 3.5,
 "empty_category": 3.5,
@@ -50,6 +53,7 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 5
 debuff_difficulty_cap = 5
 goof_off_threshold_override = -1
+reward_money_override = 875
 bonus_multipliers = {
 "chore_completion": 4.0,
 "empty_category": 4.0,
@@ -63,6 +67,7 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 5
 debuff_difficulty_cap = 5
 goof_off_threshold_override = -1
+reward_money_override = 1000
 bonus_multipliers = {
 "chore_completion": 4.5,
 "empty_category": 4.5,
@@ -76,6 +81,7 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 5
 debuff_difficulty_cap = 5
 goof_off_threshold_override = -1
+reward_money_override = 1200
 bonus_multipliers = {
 "chore_completion": 5.0,
 "empty_category": 5.0,

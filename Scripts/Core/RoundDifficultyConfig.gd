@@ -31,6 +31,11 @@ class_name RoundDifficultyConfig
 ## > 0 = use this value as the base target (before channel scaling)
 @export var target_score_override: int = 0
 
+## Optional reward money override for this round
+## 0 = use ChallengeData.reward_money as fallback
+## > 0 = use this value as the challenge reward for the round
+@export var reward_money_override: int = 0
+
 ## Multipliers for end-of-round bonus calculations
 ## Keys: "empty_category", "points_above", "chore_completion"
 ## Default 1.0 = no change, higher values = more rewarding
@@ -93,5 +98,8 @@ func get_summary() -> String:
 	
 	if goof_off_threshold_override >= 0:
 		summary += ", Goof-off: %d" % goof_off_threshold_override
+	
+	if reward_money_override > 0:
+		summary += ", Reward: $%d" % reward_money_override
 	
 	return summary

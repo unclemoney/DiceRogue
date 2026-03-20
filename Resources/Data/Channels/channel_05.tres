@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://h1c1iwy2muhb"]
+﻿[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://h1c1iwy2muhb"]
 
 [ext_resource type="Script" uid="uid://cseqx1haydrh1" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
 [ext_resource type="Script" uid="uid://yuj6od6ypw1a" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
@@ -12,6 +12,7 @@ max_debuffs = 0
 debuff_difficulty_cap = 0
 goof_off_threshold_override = -1
 target_score_override = 0
+reward_money_override = 85
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
@@ -26,6 +27,7 @@ max_debuffs = 1
 debuff_difficulty_cap = 1
 goof_off_threshold_override = -1
 target_score_override = 0
+reward_money_override = 100
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
@@ -40,6 +42,7 @@ max_debuffs = 1
 debuff_difficulty_cap = 1
 goof_off_threshold_override = -1
 target_score_override = 0
+reward_money_override = 130
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
@@ -54,6 +57,7 @@ max_debuffs = 1
 debuff_difficulty_cap = 2
 goof_off_threshold_override = -1
 target_score_override = 0
+reward_money_override = 165
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.1,
@@ -68,6 +72,7 @@ max_debuffs = 1
 debuff_difficulty_cap = 2
 goof_off_threshold_override = -1
 target_score_override = 0
+reward_money_override = 200
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.1,
@@ -82,6 +87,7 @@ max_debuffs = 2
 debuff_difficulty_cap = 2
 goof_off_threshold_override = -1
 target_score_override = 0
+reward_money_override = 250
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.1,
