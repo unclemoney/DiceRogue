@@ -224,7 +224,7 @@ func _begin_game() -> void:
 	unlock_all_items()
 
 	# Set channel
-	if channel_manager and channel_manager.has_method("set_channel"):
+	if is_instance_valid(channel_manager) and channel_manager.has_method("set_channel"):
 		channel_manager.set_channel(current_channel)
 		logger.log_info("Channel set to %d" % current_channel)
 
@@ -237,7 +237,7 @@ func _begin_game() -> void:
 	await get_tree().create_timer(0.2).timeout
 
 	# Skip channel selector UI if it exists
-	if channel_manager and channel_manager.has_method("select_channel"):
+	if is_instance_valid(channel_manager) and channel_manager.has_method("select_channel"):
 		channel_manager.select_channel()
 
 	# Trigger round 1 start (mirrors clicking "Next Round" button at game start)
@@ -254,7 +254,7 @@ func _start_first_round() -> void:
 			dice_hand.clear_dice()
 		if score_card:
 			score_card.reset_scores_preserve_levels()
-		if score_card_ui and score_card_ui.has_method("update_all"):
+		if is_instance_valid(score_card_ui) and score_card_ui.has_method("update_all"):
 			score_card_ui.update_all()
 		round_manager.start_round(1)
 		logger.log_info("Round 1 started")
@@ -361,7 +361,7 @@ func _on_bot_mom_triggered() -> void:
 	await get_tree().create_timer(0.3).timeout
 	# Find and dismiss any Mom dialog popup in the scene tree
 	var mom_dialog = _find_mom_dialog()
-	if mom_dialog and mom_dialog.has_method("close_dialog"):
+	if is_instance_valid(mom_dialog) and mom_dialog.has_method("close_dialog"):
 		mom_dialog.close_dialog()
 		logger.log_info("Mom dialog dismissed")
 	else:
@@ -381,7 +381,7 @@ func _find_node_by_class_recursive(node: Node, target_class: String) -> Node:
 	if node.get_class() == target_class:
 		return node
 	# Also check script class name
-	if node.get_script() and node.has_method("close_dialog"):
+	if is_instance_valid(node) and node.get_script() and node.has_method("close_dialog"):
 		return node
 	for child in node.get_children():
 		var result = _find_node_by_class_recursive(child, target_class)
@@ -647,7 +647,7 @@ func _bot_award_round_bonuses() -> void:
 		challenge_reward = game_controller._challenge_reward_this_round
 
 	# Chore reward — number of chores completed this round × $50
-	if chores_manager and chores_manager.has_method("get_chores_completed_this_round"):
+	if is_instance_valid(chores_manager) and chores_manager.has_method("get_chores_completed_this_round"):
 		var chores_done: int = chores_manager.get_chores_completed_this_round()
 		chore_reward = chores_done * 50  # ChoresManager.CHORE_REWARD_MONEY
 
@@ -721,7 +721,7 @@ func _bot_shop_phase() -> void:
 			statistics.record_economy_estimate(cur_round, budget_info)
 
 	# Show shop if in visual mode
-	if config.visual_mode and shop_ui.has_method("show"):
+	if config.visual_mode and is_instance_valid(shop_ui) and shop_ui.has_method("show"):
 		shop_ui.show()
 		await _delay()
 
@@ -773,7 +773,7 @@ func _bot_shop_phase() -> void:
 	await _bot_buy_mod_or_color_dice()
 
 	# Hide shop
-	if config.visual_mode and shop_ui.has_method("hide"):
+	if config.visual_mode and is_instance_valid(shop_ui) and shop_ui.has_method("hide"):
 		shop_ui.hide()
 		await _delay()
 
@@ -1153,7 +1153,7 @@ func _dismiss_all_overlays() -> void:
 	await _dismiss_winner_panel()
 	_dismiss_chore_selection_popup()
 	_dismiss_game_over_popup()
-	if shop_ui and shop_ui.visible:
+	if is_instance_valid(shop_ui) and shop_ui.visible:
 		shop_ui.hide()
 
 
