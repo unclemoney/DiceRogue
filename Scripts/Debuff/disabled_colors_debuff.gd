@@ -36,6 +36,6 @@ func apply(_target) -> void:
 func remove() -> void:
 	print("[DisabledColorsDebuff] Removed - Re-enabling colored dice")
 	
-	if dice_color_manager and dice_color_manager.has_method("set_colors_enabled"):
+	if is_instance_valid(dice_color_manager) and dice_color_manager.has_method("set_colors_enabled"):
 		dice_color_manager.set_colors_enabled(true)
 		print("[DisabledColorsDebuff] Dice colors re-enabled")

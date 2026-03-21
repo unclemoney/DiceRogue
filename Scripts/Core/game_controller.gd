@@ -286,12 +286,12 @@ func _ready() -> void:
 		chores_manager.request_chore_selection.connect(_on_chore_selection_requested)
 		print("[GameController] Connected to ChoresManager.mom_triggered")
 		print("[GameController] Connected to ChoresManager.request_chore_selection")
-	if corkboard_ui and chores_manager:
+	if is_instance_valid(corkboard_ui) and is_instance_valid(chores_manager):
 		corkboard_ui.set_chores_manager(chores_manager)
 		print("[GameController] Connected CorkboardUI.ChoreUI to ChoresManager")
 
 	# Initialize SynergyManager
-	if synergy_manager:
+	if is_instance_valid(synergy_manager):
 		synergy_manager.connect_to_game_controller(self)
 		print("[GameController] Connected SynergyManager to GameController")
 
@@ -310,7 +310,7 @@ func _ready() -> void:
 
 	# Bind VCR tracker UI channel display
 	var _vcr_tracker = get_tree().get_first_node_in_group("turn_tracker_ui")
-	if _vcr_tracker and _vcr_tracker.has_method("bind_channel_manager") and channel_manager:
+	if is_instance_valid(_vcr_tracker) and _vcr_tracker.has_method("bind_channel_manager") and is_instance_valid(channel_manager):
 		_vcr_tracker.bind_channel_manager(channel_manager)
 		print("[GameController] VCR tracker UI bound to ChannelManager")
 
@@ -500,13 +500,13 @@ func _restart_game_for_new_channel() -> void:
 		print("[GameController] Scorecard scores and levels reset for new channel")
 	
 	# Reset game button UI state (first_roll_done flag, etc.)
-	if game_button_ui and game_button_ui.has_method("reset_for_new_channel"):
+	if is_instance_valid(game_button_ui) and game_button_ui.has_method("reset_for_new_channel"):
 		game_button_ui.reset_for_new_channel()
 		print("[GameController] GameButtonUI reset")
 	
 	# Reset VCR turn tracker UI display to show blank/waiting state
 	var vcr_tracker = get_tree().get_first_node_in_group("turn_tracker_ui")
-	if vcr_tracker and vcr_tracker.has_method("reset_for_new_channel"):
+	if is_instance_valid(vcr_tracker) and vcr_tracker.has_method("reset_for_new_channel"):
 		vcr_tracker.reset_for_new_channel()
 		print("[GameController] VCR turn tracker UI reset")
 	
@@ -568,12 +568,12 @@ func _restart_game_for_new_channel() -> void:
 func _clear_active_challenges() -> void:
 	for id in active_challenges.keys():
 		var challenge = active_challenges[id]
-		if challenge:
+		if is_instance_valid(challenge):
 			challenge.queue_free()
 	active_challenges.clear()
 	
 	# Clear UI in corkboard
-	if corkboard_ui and corkboard_ui.has_method("clear_all_challenges"):
+	if is_instance_valid(corkboard_ui) and corkboard_ui.has_method("clear_all_challenges"):
 		corkboard_ui.clear_all_challenges()
 	
 	print("[GameController] Cleared all active challenges")
@@ -586,13 +586,13 @@ func _clear_active_challenges() -> void:
 func _clear_active_debuffs() -> void:
 	for id in active_debuffs.keys():
 		var debuff = active_debuffs[id]
-		if debuff:
+		if is_instance_valid(debuff):
 			debuff.queue_free()
 	active_debuffs.clear()
 	_grounded_debuffs.clear()
 	
 	# Clear UI in corkboard
-	if corkboard_ui and corkboard_ui.has_method("clear_all_debuffs"):
+	if is_instance_valid(corkboard_ui) and corkboard_ui.has_method("clear_all_debuffs"):
 		corkboard_ui.clear_all_debuffs()
 	
 	print("[GameController] Cleared all active debuffs")
@@ -612,9 +612,9 @@ func _clear_all_power_ups() -> void:
 	active_power_ups.clear()
 	
 	# Clear UI if available
-	if powerup_ui and powerup_ui.has_method("clear_all"):
+	if is_instance_valid(powerup_ui) and powerup_ui.has_method("clear_all"):
 		powerup_ui.clear_all()
-	elif powerup_ui:
+	elif is_instance_valid(powerup_ui):
 		# Fallback: remove each power-up from UI individually
 		for id in active_power_ups.keys():
 			if powerup_ui.has_method("remove_power_up"):
@@ -631,12 +631,12 @@ func _clear_all_consumables() -> void:
 	# Free all consumable instances
 	for id in active_consumables.keys():
 		var consumable = active_consumables[id]
-		if consumable:
+		if is_instance_valid(consumable):
 			consumable.queue_free()
 	active_consumables.clear()
 	
 	# Clear UI in corkboard
-	if corkboard_ui and corkboard_ui.has_method("clear_all_consumables"):
+	if is_instance_valid(corkboard_ui) and corkboard_ui.has_method("clear_all_consumables"):
 		corkboard_ui.clear_all_consumables()
 	
 	print("[GameController] Cleared all consumables")
@@ -696,7 +696,7 @@ func grant_power_up(id: String) -> void:
 		return
 	
 	# Check if we've reached the maximum number of power-ups
-	if powerup_ui and powerup_ui.has_max_power_ups():
+	if is_instance_valid(powerup_ui) and powerup_ui.has_max_power_ups():
 		print("[GameController] Maximum number of power-ups reached. Cannot add more.")
 		return
 	
@@ -743,7 +743,7 @@ func grant_replica_power_up(original_id: String) -> void:
 		return
 	
 	# Check max slots
-	if powerup_ui and powerup_ui.has_max_power_ups():
+	if is_instance_valid(powerup_ui) and powerup_ui.has_max_power_ups():
 		print("[GameController] Maximum power-ups reached. Cannot add replica.")
 		return
 	
@@ -1631,9 +1631,9 @@ func update_consumable_usability() -> void:
 ## Updates a single consumable's usability state while the consumable UI is in the fanned state.
 func set_consumable_usability(consumable_id: String, can_use: bool) -> void:
 	# Only works when consumables are in fanned state
-	if consumable_ui and consumable_ui._current_state == ConsumableUI.State.FANNED:
+	if is_instance_valid(consumable_ui) and consumable_ui._current_state == ConsumableUI.State.FANNED:
 		var icon = consumable_ui.get_fanned_icon(consumable_id)
-		if icon and icon.has_method("set_useable"):
+		if is_instance_valid(icon) and icon.has_method("set_useable"):
 			icon.set_useable(can_use)
 
 
@@ -1967,7 +1967,7 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 	# Show randomizer effect after scoring
 	if active_power_ups.has("randomizer"):
 		var randomizer = active_power_ups["randomizer"] as RandomizerPowerUp
-		if randomizer and randomizer.has_method("show_effect_after_scoring"):
+		if is_instance_valid(randomizer) and randomizer.has_method("show_effect_after_scoring"):
 			randomizer.show_effect_after_scoring()
 
 	# Show dice color effects after scoring
@@ -2036,7 +2036,7 @@ func _create_manual_breakdown_info(category: String = "") -> Dictionary:
 	# Ask all active powerups to ensure their modifiers are registered for this context
 	for powerup_id in active_power_ups.keys():
 		var powerup_node = active_power_ups[powerup_id]
-		if powerup_node and powerup_node.has_method("ensure_additive_for_context"):
+		if is_instance_valid(powerup_node) and powerup_node.has_method("ensure_additive_for_context"):
 			powerup_node.ensure_additive_for_context(category, section)
 	
 	# Get detailed breakdown from ScoreModifierManager for animation system
@@ -2529,7 +2529,7 @@ func _on_temporary_effect_expired(effect_type: String) -> void:
 ## Adjusts the dice count based on remaining bonus.
 func _on_dice_stack_expired(stack_id: int, dice_removed: int) -> void:
 	print("[GameController] Dice stack #%d expired, removing %d dice" % [stack_id, dice_removed])
-	if dice_hand and turn_tracker:
+	if is_instance_valid(dice_hand) and is_instance_valid(turn_tracker):
 		# Get the new total dice count from TurnTracker
 		var new_count = turn_tracker.get_total_dice_count()
 		dice_hand.dice_count = new_count
@@ -3079,7 +3079,7 @@ func get_half_price_multiplier() -> float:
 ##
 ## Tells the ShopUI to refresh all item prices after a discount state change.
 func _refresh_shop_prices() -> void:
-	if shop_ui and shop_ui.has_method("refresh_all_prices"):
+	if is_instance_valid(shop_ui) and shop_ui.has_method("refresh_all_prices"):
 		shop_ui.refresh_all_prices()
 
 
@@ -3274,9 +3274,9 @@ func _trigger_challenge_celebration() -> void:
 	
 	# Get position from CorkboardUI challenge spine
 	var celebration_position := Vector2(150, 100)  # Default fallback position
-	if corkboard_ui and corkboard_ui.has_method("get_challenge_spine_position"):
+	if is_instance_valid(corkboard_ui) and corkboard_ui.has_method("get_challenge_spine_position"):
 		celebration_position = corkboard_ui.get_challenge_spine_position()
-	elif corkboard_ui:
+	elif is_instance_valid(corkboard_ui):
 		# Try to find the challenge spine directly
 		var challenge_spine = corkboard_ui.get_node_or_null("Panel/ChallengeSpine")
 		if challenge_spine:
@@ -3406,7 +3406,7 @@ func _update_power_ups_for_dice(dice_values: Array) -> void:
 	# Update FoursomePowerUp if active
 	if active_power_ups.has("foursome"):
 		var foursome_pu = active_power_ups["foursome"] as FoursomePowerUp
-		if foursome_pu and foursome_pu.has_method("update_multiplier_for_dice"):
+		if is_instance_valid(foursome_pu) and foursome_pu.has_method("update_multiplier_for_dice"):
 			foursome_pu.update_multiplier_for_dice(dice_values)
 	
 	# Add other dice-dependent PowerUps here as needed

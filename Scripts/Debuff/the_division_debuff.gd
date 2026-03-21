@@ -40,7 +40,7 @@ func apply(_target) -> void:
 func remove() -> void:
 	print("[TheDivisionDebuff] Removed - Restoring normal multiplier behavior")
 	
-	if score_modifier_manager and score_modifier_manager.has_method("set_division_mode"):
+	if is_instance_valid(score_modifier_manager) and score_modifier_manager.has_method("set_division_mode"):
 		# Disable division mode
 		score_modifier_manager.set_division_mode(false)
 		print("[TheDivisionDebuff] Division mode disabled")

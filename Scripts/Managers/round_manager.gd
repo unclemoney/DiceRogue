@@ -187,7 +187,7 @@ func _generate_challenge_sequence() -> Array[ChallengeData]:
 ## @return: Vector2i with (min_difficulty, max_difficulty)
 func _get_difficulty_range_for_round(round_index: int) -> Vector2i:
 	var round_number = round_index + 1  # Convert to 1-based
-	if channel_manager and channel_manager.has_method("get_challenge_difficulty_range"):
+	if is_instance_valid(channel_manager) and channel_manager.has_method("get_challenge_difficulty_range"):
 		# Pass -1 for channel to use current_channel, and round_number (1-based)
 		return channel_manager.get_challenge_difficulty_range(-1, round_number)
 	
@@ -319,7 +319,7 @@ func start_round(round_number: int) -> void:
 		
 		# Update ScoreCardUI 6th slot display
 		var score_card_ui = get_tree().get_first_node_in_group("scorecard_ui")
-		if score_card_ui and score_card_ui.has_method("update_sixth_slot_display"):
+		if is_instance_valid(score_card_ui) and score_card_ui.has_method("update_sixth_slot_display"):
 			score_card_ui.update_sixth_slot_display()
 		
 		print("[RoundManager] Propagated dice sides (%d) to scorecard and evaluator" % dice_sides)

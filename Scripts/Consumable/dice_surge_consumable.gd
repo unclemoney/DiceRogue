@@ -58,7 +58,7 @@ func apply(target) -> void:
 		var game_button_ui = game_controller.get_node_or_null("GameButtonUI")
 		if not game_button_ui:
 			game_button_ui = game_controller.get_tree().get_first_node_in_group("game_button_ui")
-		if game_button_ui and game_button_ui.has_method("trigger_roll"):
+		if is_instance_valid(game_button_ui) and game_button_ui.has_method("trigger_roll"):
 			game_button_ui.trigger_roll()
 		else:
 			# Fallback: manually spawn and roll

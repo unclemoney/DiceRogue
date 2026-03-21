@@ -241,7 +241,7 @@ func _update_challenge_spine_display() -> void:
 			# Use challenge instance's scaled target score if available, otherwise fall back to data
 			if _challenge_instances.has(first_key):
 				var challenge_instance = _challenge_instances[first_key]
-				if challenge_instance and challenge_instance.has_method("get_target_score"):
+				if is_instance_valid(challenge_instance) and challenge_instance.has_method("get_target_score"):
 					points_goal = challenge_instance.get_target_score()
 				else:
 					points_goal = data.target_score
@@ -252,7 +252,7 @@ func _update_challenge_spine_display() -> void:
 			# Get current progress from challenge instance
 			if _challenge_instances.has(first_key):
 				var challenge_instance = _challenge_instances[first_key]
-				if challenge_instance and challenge_instance.has_method("get_current_score"):
+				if is_instance_valid(challenge_instance) and challenge_instance.has_method("get_current_score"):
 					current_progress = challenge_instance.get_current_score()
 	
 	# Update reward text at the top of the spine (title-style label)
@@ -436,7 +436,7 @@ func _fan_out_challenges() -> void:
 		
 		# Get target score from challenge instance (with channel scaling) if available
 		var target_score := 0
-		if challenge_instance and challenge_instance.has_method("get_target_score"):
+		if is_instance_valid(challenge_instance) and challenge_instance.has_method("get_target_score"):
 			target_score = challenge_instance.get_target_score()
 		else:
 			target_score = data.target_score
@@ -448,7 +448,7 @@ func _fan_out_challenges() -> void:
 		
 		# Calculate progress percentage
 		var progress_pct := 0
-		if challenge_instance and challenge_instance.has_method("get_current_score"):
+		if is_instance_valid(challenge_instance) and challenge_instance.has_method("get_current_score"):
 			var current_score = challenge_instance.get_current_score()
 			if target_score > 0:
 				progress_pct = int((float(current_score) / float(target_score)) * 100)

@@ -100,7 +100,7 @@ func complete_any_score() -> void:
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	if game_controller:
 		var score_card_ui = game_controller.score_card_ui
-		if score_card_ui and score_card_ui.has_method("deactivate_any_score_mode"):
+		if is_instance_valid(score_card_ui) and score_card_ui.has_method("deactivate_any_score_mode"):
 			score_card_ui.deactivate_any_score_mode()
 	
 	emit_signal("any_score_completed")
@@ -117,7 +117,7 @@ func cancel_any_score() -> void:
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	if game_controller:
 		var score_card_ui = game_controller.score_card_ui
-		if score_card_ui and score_card_ui.has_method("deactivate_any_score_mode"):
+		if is_instance_valid(score_card_ui) and score_card_ui.has_method("deactivate_any_score_mode"):
 			score_card_ui.deactivate_any_score_mode()
 	
 	emit_signal("any_score_denied")

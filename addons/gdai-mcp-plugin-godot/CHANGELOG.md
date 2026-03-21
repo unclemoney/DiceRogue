@@ -1,5 +1,43 @@
 # Changelog
 
+> Get access to beta/dev versions exclusively on the [Discord server](/docs/update-guide).
+
+## 0.3.1
+
+- Improve `execute_editor_script` with static types
+- Improve `get_godot_errors` and add .NET build errors/output
+- Added support for macOS 10.15+
+
+## 0.3.0
+
+- Update `move_node` to be able to move node to specific index
+- Updates for `get_godot_errors` and `clear_output_logs` for Godot 4.6
+- Added support for windows x64 double precision build
+
+## 0.2.9
+
+- Resolve windows defender issues
+
+## 0.2.8
+
+- Auto check for updates on start
+- Improved `update_property` tool for string literals
+- Fixed errors/crash when save scene is called concurrently
+- Updated `get_godot_errors` to limit max lines returned for errors/session errors/etc
+- `simulate_input` tool now presses the actual key rather than just the action
+- Added disabling tools in config file
+- New implementation for `get_running_scene_screenshot`
+
+## 0.2.7
+
+- Fix for Antigravity IDE on Windows ([Antigravity Windows Fix](/docs/installation#antigravity-windows-fix))
+- Fixed `get_godot_errors` to work when Editor has different language
+- Added windows arm64 support
+- Added configuration file to update plugin configuration
+- Now AI can simulate inputs in your game!
+- Added tools `get_input_map` and `simulate_input`
+- Don't load plugin when exporting project from Godot cli
+
 ## 0.2.6
 
 - New implementation for `get_running_scene_screenshot` which supports more MCP clients

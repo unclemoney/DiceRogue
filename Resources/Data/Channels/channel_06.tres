@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://drf3kt9mq2a8b"]
+[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://drf3kuamq2a8b"]
 
 [ext_resource type="Script" uid="uid://cseqx1haydrh1" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
 [ext_resource type="Script" uid="uid://yuj6od6ypw1a" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
@@ -11,8 +11,13 @@ challenge_difficulty_range = Vector2i(1, 2)
 max_debuffs = 0
 debuff_difficulty_cap = 1
 goof_off_threshold_override = -1
-reward_money_override = 100
-bonus_multipliers = {"empty_category": 1.1, "points_above": 1.0, "chore_completion": 1.0}
+target_score_override = 50
+reward_money_override = 150
+bonus_multipliers = {
+"chore_completion": 1.0,
+"empty_category": 1.1,
+"points_above": 1.0
+}
 
 [sub_resource type="Resource" id="round_2"]
 script = ExtResource("2_round")
@@ -21,8 +26,13 @@ challenge_difficulty_range = Vector2i(2, 2)
 max_debuffs = 1
 debuff_difficulty_cap = 1
 goof_off_threshold_override = -1
-reward_money_override = 120
-bonus_multipliers = {"empty_category": 1.1, "points_above": 1.0, "chore_completion": 1.0}
+target_score_override = 75
+reward_money_override = 150
+bonus_multipliers = {
+"chore_completion": 1.0,
+"empty_category": 1.1,
+"points_above": 1.0
+}
 
 [sub_resource type="Resource" id="round_3"]
 script = ExtResource("2_round")
@@ -31,8 +41,13 @@ challenge_difficulty_range = Vector2i(2, 3)
 max_debuffs = 1
 debuff_difficulty_cap = 2
 goof_off_threshold_override = -1
+target_score_override = 0
 reward_money_override = 150
-bonus_multipliers = {"empty_category": 1.1, "points_above": 1.0, "chore_completion": 1.0}
+bonus_multipliers = {
+"chore_completion": 1.0,
+"empty_category": 1.1,
+"points_above": 1.0
+}
 
 [sub_resource type="Resource" id="round_4"]
 script = ExtResource("2_round")
@@ -41,8 +56,13 @@ challenge_difficulty_range = Vector2i(2, 3)
 max_debuffs = 1
 debuff_difficulty_cap = 2
 goof_off_threshold_override = -1
+target_score_override = 0
 reward_money_override = 185
-bonus_multipliers = {"empty_category": 1.2, "points_above": 1.0, "chore_completion": 1.1}
+bonus_multipliers = {
+"chore_completion": 1.1,
+"empty_category": 1.2,
+"points_above": 1.0
+}
 
 [sub_resource type="Resource" id="round_5"]
 script = ExtResource("2_round")
@@ -51,8 +71,13 @@ challenge_difficulty_range = Vector2i(3, 3)
 max_debuffs = 2
 debuff_difficulty_cap = 2
 goof_off_threshold_override = -1
+target_score_override = 0
 reward_money_override = 225
-bonus_multipliers = {"empty_category": 1.2, "points_above": 1.0, "chore_completion": 1.1}
+bonus_multipliers = {
+"chore_completion": 1.1,
+"empty_category": 1.2,
+"points_above": 1.0
+}
 
 [sub_resource type="Resource" id="round_6"]
 script = ExtResource("2_round")
@@ -61,8 +86,13 @@ challenge_difficulty_range = Vector2i(3, 4)
 max_debuffs = 2
 debuff_difficulty_cap = 2
 goof_off_threshold_override = -1
+target_score_override = 0
 reward_money_override = 275
-bonus_multipliers = {"empty_category": 1.2, "points_above": 1.1, "chore_completion": 1.1}
+bonus_multipliers = {
+"chore_completion": 1.1,
+"empty_category": 1.2,
+"points_above": 1.1
+}
 
 [resource]
 script = ExtResource("1_channel")
@@ -83,16 +113,16 @@ disabled_shop_items = Array[String]([])
 special_rules = {}
 background_shader = ExtResource("3_shader_bg")
 background_shader_params = {
-"colour_1": Color(0.0, 0.65, 0.65, 1.0),
-"colour_2": Color(0.95, 0.8, 0.0, 1.0),
-"colour_3": Color(0.9, 0.2, 0.35, 1.0),
-"colour_4": Color(0.25, 0.15, 0.55, 1.0),
-"colour_5": Color(0.95, 0.55, 0.0, 1.0),
-"scroll_speed": 0.1,
-"pixel_filter": 450.0,
-"shape_density": 6.0,
-"shape_scale": 1.0,
+"colour_1": Color(0, 0.65, 0.65, 1),
+"colour_2": Color(0.95, 0.8, 0, 1),
+"colour_3": Color(0.9, 0.2, 0.35, 1),
+"colour_4": Color(0.25, 0.15, 0.55, 1),
+"colour_5": Color(0.95, 0.55, 0, 1),
 "glow_amount": 0.3,
+"pixel_filter": 450.0,
 "rotation_speed": 0.5,
-"scanline_strength": 0.1
+"scanline_strength": 0.1,
+"scroll_speed": 0.1,
+"shape_density": 6.0,
+"shape_scale": 1.0
 }

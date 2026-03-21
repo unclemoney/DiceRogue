@@ -76,7 +76,7 @@ func spawn_debuff(id: String, target: Node) -> Debuff:
 ## @return float: The intensity multiplier (1.0 if ChannelManager not found)
 func _get_debuff_intensity() -> float:
 	var channel_manager = _find_channel_manager()
-	if channel_manager and channel_manager.has_method("get_debuff_intensity_multiplier"):
+	if is_instance_valid(channel_manager) and channel_manager.has_method("get_debuff_intensity_multiplier"):
 		return channel_manager.get_debuff_intensity_multiplier()
 	return 1.0
 

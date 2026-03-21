@@ -1030,7 +1030,7 @@ func _create_logbook_entry_with_breakdown(section: Scorecard.Section, category: 
 				if dice.active_mods and dice.active_mods.size() > 0:
 					for mod_id in dice.active_mods.keys():
 						var mod = dice.active_mods[mod_id]
-						if mod and mod.has_method("get_name"):
+						if is_instance_valid(mod) and mod.has_method("get_name"):
 							dice_mod_names.append(mod.get_name())
 						else:
 							dice_mod_names.append(mod_id)

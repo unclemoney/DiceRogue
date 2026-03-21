@@ -79,6 +79,7 @@ var _pending_mom_dialog: bool = false
 var _challenge_completed_this_round: bool = false
 var _chose_early_shop: bool = false
 var _audio_was_muted: bool = false
+var _run_generation: int = 0  # Incremented each run to invalidate stale coroutines
 
 
 func _ready() -> void:
@@ -128,6 +129,7 @@ func _start_next_run() -> void:
 		return
 
 	current_run_id = _runs_completed + 1
+	_run_generation += 1
 	# current_channel is managed by _end_current_run (advance on win, reset on loss)
 
 	# Reset per-run flags
@@ -163,29 +165,29 @@ func _connect_signals() -> void:
 	# Disconnect any previous connections first
 	_disconnect_signals()
 
-	if round_manager:
+	if is_instance_valid(round_manager):
 		round_manager.round_started.connect(_on_round_started)
 		round_manager.round_completed.connect(_on_round_completed)
 		round_manager.round_failed.connect(_on_round_failed)
 		round_manager.all_rounds_completed.connect(_on_all_rounds_completed)
 		# Connect to challenge_completed via round_manager's challenge_manager
-		if round_manager.challenge_manager:
+		if is_instance_valid(round_manager.challenge_manager):
 			round_manager.challenge_manager.challenge_completed.connect(_on_challenge_completed)
-	if turn_tracker:
+	if is_instance_valid(turn_tracker):
 		turn_tracker.game_over.connect(_on_game_over)
 		turn_tracker.rolls_exhausted.connect(_on_rolls_exhausted)
-	if score_card:
+	if is_instance_valid(score_card):
 		score_card.upper_bonus_achieved.connect(_on_upper_bonus)
-	if dice_hand:
+	if is_instance_valid(dice_hand):
 		dice_hand.roll_complete.connect(_on_roll_complete)
-	if chores_manager:
+	if is_instance_valid(chores_manager):
 		chores_manager.request_chore_selection.connect(_on_bot_chore_selection_requested)
 		chores_manager.mom_triggered.connect(_on_bot_mom_triggered)
 
 
 ## _disconnect_signals()
 func _disconnect_signals() -> void:
-	if round_manager:
+	if is_instance_valid(round_manager):
 		if round_manager.round_started.is_connected(_on_round_started):
 			round_manager.round_started.disconnect(_on_round_started)
 		if round_manager.round_completed.is_connected(_on_round_completed):
@@ -194,21 +196,21 @@ func _disconnect_signals() -> void:
 			round_manager.round_failed.disconnect(_on_round_failed)
 		if round_manager.all_rounds_completed.is_connected(_on_all_rounds_completed):
 			round_manager.all_rounds_completed.disconnect(_on_all_rounds_completed)
-		if round_manager.challenge_manager:
+		if is_instance_valid(round_manager.challenge_manager):
 			if round_manager.challenge_manager.challenge_completed.is_connected(_on_challenge_completed):
 				round_manager.challenge_manager.challenge_completed.disconnect(_on_challenge_completed)
-	if turn_tracker:
+	if is_instance_valid(turn_tracker):
 		if turn_tracker.game_over.is_connected(_on_game_over):
 			turn_tracker.game_over.disconnect(_on_game_over)
 		if turn_tracker.rolls_exhausted.is_connected(_on_rolls_exhausted):
 			turn_tracker.rolls_exhausted.disconnect(_on_rolls_exhausted)
-	if score_card:
+	if is_instance_valid(score_card):
 		if score_card.upper_bonus_achieved.is_connected(_on_upper_bonus):
 			score_card.upper_bonus_achieved.disconnect(_on_upper_bonus)
-	if dice_hand:
+	if is_instance_valid(dice_hand):
 		if dice_hand.roll_complete.is_connected(_on_roll_complete):
 			dice_hand.roll_complete.disconnect(_on_roll_complete)
-	if chores_manager:
+	if is_instance_valid(chores_manager):
 		if chores_manager.request_chore_selection.is_connected(_on_bot_chore_selection_requested):
 			chores_manager.request_chore_selection.disconnect(_on_bot_chore_selection_requested)
 		if chores_manager.mom_triggered.is_connected(_on_bot_mom_triggered):
@@ -220,6 +222,7 @@ func _disconnect_signals() -> void:
 ## Sets the channel and kicks off the game via the normal flow.
 ## Also unlocks all items so the bot has access to everything in the shop.
 func _begin_game() -> void:
+	var gen := _run_generation
 	# Unlock all items in ProgressManager so the shop is fully stocked
 	unlock_all_items()
 
@@ -229,12 +232,14 @@ func _begin_game() -> void:
 		logger.log_info("Channel set to %d" % current_channel)
 
 	# Start game via round manager (mirrors what GameController._on_game_start does)
-	if round_manager:
+	if is_instance_valid(round_manager):
 		round_manager.start_game()
 		logger.log_info("Game started via RoundManager")
 
 	# Wait for round_completed(0) signal — that means we can start round 1
 	await get_tree().create_timer(0.2).timeout
+	if _run_generation != gen:
+		return
 
 	# Skip channel selector UI if it exists
 	if is_instance_valid(channel_manager) and channel_manager.has_method("select_channel"):
@@ -243,16 +248,18 @@ func _begin_game() -> void:
 	# Trigger round 1 start (mirrors clicking "Next Round" button at game start)
 	_set_state(State.WAITING_FOR_ROUND)
 	await _delay()
+	if _run_generation != gen:
+		return
 	_start_first_round()
 
 
 ## _start_first_round()
 func _start_first_round() -> void:
-	if round_manager:
+	if is_instance_valid(round_manager):
 		# Clear dice and scorecard before first round (mirrors _on_next_round_button_pressed)
-		if dice_hand:
+		if is_instance_valid(dice_hand):
 			dice_hand.clear_dice()
-		if score_card:
+		if is_instance_valid(score_card):
 			score_card.reset_scores_preserve_levels()
 		if is_instance_valid(score_card_ui) and score_card_ui.has_method("update_all"):
 			score_card_ui.update_all()
@@ -263,6 +270,7 @@ func _start_first_round() -> void:
 # ─── Signal Handlers ───
 
 func _on_round_started(round_number: int) -> void:
+	var gen := _run_generation
 	logger.set_context(current_run_id, current_channel, round_number)
 	logger.log_info("Round %d started" % round_number)
 	_is_round_active = true
@@ -273,12 +281,14 @@ func _on_round_started(round_number: int) -> void:
 	statistics.record_round_completed()
 
 	# Update chores manager with current round info
-	if chores_manager:
+	if is_instance_valid(chores_manager):
 		chores_manager.update_round(round_number)
 		chores_manager.reset_round_tracking()
 
 	# Wait for dice to spawn, then begin turn loop
 	await get_tree().create_timer(0.5).timeout
+	if _run_generation != gen:
+		return
 	_play_turn_loop()
 
 
@@ -287,7 +297,7 @@ func _on_round_completed(round_number: int) -> void:
 		return  # Initial game setup signal
 	logger.log_info("Round %d completed" % round_number)
 	_is_round_active = false
-	statistics.record_round_score(round_number, score_card.get_total_score() if score_card else 0)
+	statistics.record_round_score(round_number, score_card.get_total_score() if is_instance_valid(score_card) else 0)
 
 
 func _on_round_failed(round_number: int) -> void:
@@ -298,11 +308,16 @@ func _on_round_failed(round_number: int) -> void:
 
 
 func _on_all_rounds_completed() -> void:
+	var gen := _run_generation
 	logger.log_info("All rounds completed — run won!")
 	_is_all_rounds_done = true
 	# Dismiss the You Win panel if it appears
 	await get_tree().create_timer(0.5).timeout
+	if _run_generation != gen:
+		return
 	await _dismiss_winner_panel()
+	if _run_generation != gen:
+		return
 	_end_current_run("win")
 
 
@@ -337,14 +352,19 @@ func _on_challenge_completed(_challenge_id: String) -> void:
 ## Bot picks randomly via strategy, then accepts the selection directly.
 ## Also dismisses the ChoreSelectionPopup UI if it was shown.
 func _on_bot_chore_selection_requested() -> void:
+	var gen := _run_generation
 	_pending_chore_selection = true
 	var pick_hard: bool = strategy.choose_chore_difficulty()
 	var label := "HARD" if pick_hard else "EASY"
 	logger.log_info("Chore selection requested — bot chose: %s" % label)
-	chores_manager.accept_chore_selection(pick_hard)
+	if is_instance_valid(chores_manager):
+		chores_manager.accept_chore_selection(pick_hard)
 	statistics.record_chore_selected(pick_hard)
 	# Dismiss the ChoreSelectionPopup if it's visible
 	await get_tree().create_timer(0.3).timeout
+	if _run_generation != gen:
+		_pending_chore_selection = false
+		return
 	_dismiss_chore_selection_popup()
 	_pending_chore_selection = false
 
@@ -354,11 +374,15 @@ func _on_bot_chore_selection_requested() -> void:
 ## Called when chore progress reaches the threshold and Mom appears.
 ## Bot dismisses the dialog automatically after a brief delay.
 func _on_bot_mom_triggered() -> void:
+	var gen := _run_generation
 	_pending_mom_dialog = true
 	logger.log_info("Mom triggered — bot will dismiss dialog")
 	statistics.record_mom_visit()
 	# Give the game controller time to show the dialog
 	await get_tree().create_timer(0.3).timeout
+	if _run_generation != gen:
+		_pending_mom_dialog = false
+		return
 	# Find and dismiss any Mom dialog popup in the scene tree
 	var mom_dialog = _find_mom_dialog()
 	if is_instance_valid(mom_dialog) and mom_dialog.has_method("close_dialog"):
@@ -378,10 +402,12 @@ func _find_mom_dialog() -> Node:
 
 
 func _find_node_by_class_recursive(node: Node, target_class: String) -> Node:
+	if not is_instance_valid(node):
+		return null
 	if node.get_class() == target_class:
 		return node
 	# Also check script class name
-	if is_instance_valid(node) and node.get_script() and node.has_method("close_dialog"):
+	if node.get_script() and node.has_method("close_dialog"):
 		return node
 	for child in node.get_children():
 		var result = _find_node_by_class_recursive(child, target_class)
@@ -412,9 +438,12 @@ func _handle_pending_chore_events() -> void:
 ## After challenge completion, the bot has a 50/50 chance each turn to
 ## stop early and go to the shop instead of finishing all 13 turns.
 func _play_turn_loop() -> void:
+	var gen := _run_generation
 	for turn_num in range(1, 14):  # Turns 1-13
 		if _is_round_failed or _is_all_rounds_done:
 			break
+		if _run_generation != gen:
+			return
 
 		# After challenge is done, 50/50 chance to stop and go to shop
 		if _challenge_completed_this_round and turn_num > 1:
@@ -426,14 +455,18 @@ func _play_turn_loop() -> void:
 			else:
 				logger.log_info("Challenge done — bot chose to play turn %d" % turn_num)
 
-		logger.set_context(current_run_id, current_channel, round_manager.get_current_round_number() if round_manager else -1, turn_num)
+		logger.set_context(current_run_id, current_channel, round_manager.get_current_round_number() if is_instance_valid(round_manager) else -1, turn_num)
 		statistics.record_turn()
 
 		# Use any available consumables at the start of each turn (before rolling)
 		await _bot_use_consumables()
+		if _run_generation != gen:
+			return
 
 		await _play_single_turn(turn_num)
 		await _delay()
+		if _run_generation != gen:
+			return
 
 		# Check if game over triggered (turn 13 complete)
 		if _is_game_over:
@@ -441,6 +474,8 @@ func _play_turn_loop() -> void:
 
 	# After all turns, handle round outcome
 	await _delay()
+	if _run_generation != gen:
+		return
 	await _handle_post_round()
 
 
@@ -487,6 +522,9 @@ func _play_single_turn(turn_num: int) -> void:
 func _bot_roll() -> void:
 	statistics.record_roll()
 
+	if not is_instance_valid(dice_hand):
+		return
+
 	if dice_hand.dice_list.is_empty():
 		await dice_hand.spawn_dice()
 		await get_tree().create_timer(0.1).timeout
@@ -495,17 +533,17 @@ func _bot_roll() -> void:
 	dice_hand.roll_all()
 
 	# Use a roll on the turn tracker
-	if turn_tracker:
+	if is_instance_valid(turn_tracker):
 		turn_tracker.use_roll()
 
 	# Give signals time to propagate
 	await get_tree().create_timer(0.1).timeout
 
 	var values = _get_dice_values()
-	logger.log_info("Rolled: %s (rolls left: %d)" % [str(values), turn_tracker.rolls_left if turn_tracker else -1])
+	logger.log_info("Rolled: %s (rolls left: %d)" % [str(values), turn_tracker.rolls_left if is_instance_valid(turn_tracker) else -1])
 
 	# Increment chore progress on each roll (mirrors GameController behavior)
-	if chores_manager:
+	if is_instance_valid(chores_manager):
 		chores_manager.increment_progress(1)
 
 
@@ -599,8 +637,9 @@ func _bot_next_turn() -> void:
 ##
 ## After all 13 turns, decide whether to shop and advance to the next round.
 func _handle_post_round() -> void:
-	var round_num := round_manager.get_current_round_number() if round_manager else 0
-	var total_score := score_card.get_total_score() if score_card else 0
+	var gen := _run_generation
+	var round_num := round_manager.get_current_round_number() if is_instance_valid(round_manager) else 0
+	var total_score := score_card.get_total_score() if is_instance_valid(score_card) else 0
 	statistics.record_round_score(round_num, total_score)
 
 	logger.log_info("Round %d ended — score: %d" % [round_num, total_score])
@@ -611,7 +650,7 @@ func _handle_post_round() -> void:
 
 	# Check challenge result directly — the bot never calls fail_round()
 	# and game_over signal doesn't fire, so check the actual state.
-	if round_manager and round_manager.is_challenge_completed:
+	if is_instance_valid(round_manager) and round_manager.is_challenge_completed:
 		logger.log_info("Challenge completed for round %d" % round_num)
 	else:
 		logger.log_info("Challenge NOT completed for round %d — run lost" % round_num)
@@ -624,10 +663,14 @@ func _handle_post_round() -> void:
 
 	# Shop phase (between rounds)
 	await _bot_shop_phase()
+	if _run_generation != gen:
+		return
 
 	# Advance to next round
 	_set_state(State.COMPLETING_ROUND)
 	await _delay()
+	if _run_generation != gen:
+		return
 	_advance_to_next_round()
 
 
@@ -643,7 +686,7 @@ func _bot_award_round_bonuses() -> void:
 	var score_above: int = 0
 
 	# Challenge reward — stored in game_controller when challenge_completed fires
-	if game_controller:
+	if is_instance_valid(game_controller):
 		challenge_reward = game_controller._challenge_reward_this_round
 
 	# Chore reward — number of chores completed this round × $50
@@ -652,12 +695,12 @@ func _bot_award_round_bonuses() -> void:
 		chore_reward = chores_done * 50  # ChoresManager.CHORE_REWARD_MONEY
 
 	# Empty categories bonus — count unscored categories × $10
-	if score_card:
+	if is_instance_valid(score_card):
 		var empty_count := _count_empty_scorecard_categories()
 		empty_bonus = empty_count * 10  # EMPTY_CATEGORY_BONUS
 
 	# Score above target bonus — points above challenge target × $1
-	if round_manager and score_card:
+	if is_instance_valid(round_manager) and is_instance_valid(score_card):
 		var target: int = round_manager.get_current_challenge_target_score()
 		var final_score: int = score_card.get_total_score()
 		var above: int = max(0, final_score - target)
@@ -698,7 +741,7 @@ func _count_empty_scorecard_categories() -> int:
 func _bot_shop_phase() -> void:
 	_set_state(State.SHOP_PHASE)
 
-	if not shop_ui:
+	if not is_instance_valid(shop_ui):
 		logger.log_info("No shop UI — skipping shop phase")
 		return
 
@@ -711,7 +754,7 @@ func _bot_shop_phase() -> void:
 
 	# Estimate budget pressure for remaining rounds
 	_budget_pressure = "low"
-	if channel_manager and round_manager:
+	if is_instance_valid(channel_manager) and is_instance_valid(round_manager):
 		var ch_config = channel_manager.get_channel_config(current_channel)
 		var cur_round: int = round_manager.get_current_round_number()
 		if ch_config:
@@ -732,7 +775,7 @@ func _bot_shop_phase() -> void:
 	# Reroll loop: if no good upgrades available, try rerolling
 	var reroll_count := 0
 	var max_rerolls: int = config.max_rerolls_per_shop if config else 5
-	var owned_power_ups: Dictionary = game_controller.active_power_ups if game_controller else {}
+	var owned_power_ups: Dictionary = game_controller.active_power_ups if is_instance_valid(game_controller) else {}
 	while to_buy.is_empty() and reroll_count < max_rerolls:
 		var current_money: int = PlayerEconomy.get_money() if PlayerEconomy else 0
 		var current_reroll_cost: int = shop_ui.reroll_cost if "reroll_cost" in shop_ui else 25
@@ -783,7 +826,7 @@ func _bot_shop_phase() -> void:
 ## Gathers all visible ShopItem nodes from the shop UI.
 func _get_shop_items() -> Array:
 	var items := []
-	if not shop_ui:
+	if not is_instance_valid(shop_ui):
 		return items
 
 	# ShopUI has grid containers for each tab
@@ -794,6 +837,8 @@ func _get_shop_items() -> Array:
 
 
 func _collect_shop_items_recursive(node: Node, items: Array) -> void:
+	if not is_instance_valid(node):
+		return
 	# Check if this node is a ShopItem (has item_id property)
 	if "item_id" in node and "item_data" in node and "price" in node:
 		items.append(node)
@@ -805,7 +850,7 @@ func _collect_shop_items_recursive(node: Node, items: Array) -> void:
 ##
 ## Mirrors _on_next_round_button_pressed logic.
 func _advance_to_next_round() -> void:
-	if not round_manager:
+	if not is_instance_valid(round_manager):
 		logger.log_error("No RoundManager — cannot advance round")
 		return
 
@@ -818,9 +863,9 @@ func _advance_to_next_round() -> void:
 		return
 
 	# Clear dice and reset scorecard for new round
-	if dice_hand:
+	if is_instance_valid(dice_hand):
 		dice_hand.clear_dice()
-	if score_card:
+	if is_instance_valid(score_card):
 		score_card.reset_scores_preserve_levels()
 	if is_instance_valid(score_card_ui) and score_card_ui.has_method("update_all"):
 		score_card_ui.update_all()
@@ -841,7 +886,7 @@ func _advance_to_next_round() -> void:
 ## Handles run completion. On win: advance to next channel (or complete attempt).
 ## On loss: end the attempt and reset to channel 1 for the next attempt.
 func _end_current_run(outcome: String) -> void:
-	var final_score := score_card.get_total_score() if score_card else 0
+	var final_score := score_card.get_total_score() if is_instance_valid(score_card) else 0
 
 	if outcome == "win":
 		_set_state(State.RUN_WON)
@@ -904,31 +949,31 @@ func _reset_game_state() -> void:
 		PlayerEconomy.reset_to_starting_money()
 
 	# Clear dice
-	if dice_hand:
+	if is_instance_valid(dice_hand):
 		dice_hand.clear_dice()
 
 	# Clear all power-ups (frees instances and clears UI)
-	if game_controller:
+	if is_instance_valid(game_controller):
 		game_controller._clear_all_power_ups()
 
 	# Clear all consumables (frees instances and clears UI)
-	if game_controller:
+	if is_instance_valid(game_controller):
 		game_controller._clear_all_consumables()
 
 	# Clear active challenges (frees instances and clears UI)
-	if game_controller:
+	if is_instance_valid(game_controller):
 		game_controller._clear_active_challenges()
 
 	# Clear active debuffs (frees instances and clears UI)
-	if game_controller:
+	if is_instance_valid(game_controller):
 		game_controller._clear_active_debuffs()
 
 	# Also clear grounded debuffs
-	if game_controller:
+	if is_instance_valid(game_controller):
 		game_controller._grounded_debuffs.clear()
 
 	# Clear remaining dictionaries the game_controller may not have emptied
-	if game_controller:
+	if is_instance_valid(game_controller):
 		game_controller.consumable_counts.clear()
 		game_controller.active_mods.clear()
 
@@ -937,11 +982,11 @@ func _reset_game_state() -> void:
 		ScoreModifierManager.reset()
 
 	# Reset scorecard completely (including levels)
-	if score_card:
+	if is_instance_valid(score_card):
 		score_card.reset_scores()
 
 	# Reset turn tracker — back to default MAX_ROLLS
-	if turn_tracker:
+	if is_instance_valid(turn_tracker):
 		turn_tracker.MAX_ROLLS = 3
 		turn_tracker.reset()
 
@@ -953,21 +998,21 @@ func _reset_game_state() -> void:
 			shop_ui.reset_shop_expansions()
 
 	# Reset round manager to round 0
-	if round_manager:
+	if is_instance_valid(round_manager):
 		round_manager.current_round = 0
 
 	# Reset game-ended flag
-	if game_controller:
+	if is_instance_valid(game_controller):
 		game_controller._game_ended = false
 		game_controller._end_of_round_stats_shown = false
 		game_controller._goal_mode_locked = false
 
 	# Reset chores system for new run
-	if chores_manager:
+	if is_instance_valid(chores_manager):
 		chores_manager.reset_for_new_game()
 
 	# Clean up challenge celebration particles to prevent accumulation
-	if game_controller and game_controller._challenge_celebration:
+	if is_instance_valid(game_controller) and game_controller._challenge_celebration:
 		game_controller._challenge_celebration.cleanup_all()
 
 	# Wait a full frame so all queue_free'd objects are actually freed
@@ -1051,7 +1096,7 @@ func _unmute_audio() -> void:
 
 
 func _get_dice_values() -> Array[int]:
-	if dice_hand:
+	if is_instance_valid(dice_hand):
 		return dice_hand.get_current_dice_values()
 	return []
 
@@ -1081,11 +1126,12 @@ const AUTO_USE_CONSUMABLES: Array[String] = [
 ## Auto-uses safe consumables, sells interactive ones the bot can't handle.
 ## Called at the beginning of each turn when turn_tracker is active.
 func _bot_use_consumables() -> void:
-	if not game_controller:
+	var gen := _run_generation
+	if not is_instance_valid(game_controller):
 		return
 
 	# Ensure the turn is active so game_controller won't block usage
-	if turn_tracker and not turn_tracker.is_active:
+	if is_instance_valid(turn_tracker) and not turn_tracker.is_active:
 		return
 
 	var consumable_ids := game_controller.active_consumables.keys().duplicate()
@@ -1094,7 +1140,13 @@ func _bot_use_consumables() -> void:
 
 	for consumable_id in consumable_ids:
 		# Re-check — a previous consumable might have removed others
+		if not is_instance_valid(game_controller):
+			return
 		if not game_controller.active_consumables.has(consumable_id):
+			continue
+		# Guard: ensure the consumable object itself hasn't been freed
+		var consumable_obj = game_controller.active_consumables[consumable_id]
+		if not is_instance_valid(consumable_obj):
 			continue
 
 		if consumable_id in AUTO_USE_CONSUMABLES:
@@ -1102,12 +1154,16 @@ func _bot_use_consumables() -> void:
 			game_controller._on_consumable_used(consumable_id)
 			statistics.record_consumable_used(consumable_id)
 			await get_tree().create_timer(0.15).timeout
+			if _run_generation != gen:
+				return
 		else:
 			# Interactive consumable the bot can't handle — sell it
 			logger.log_info("Selling unusable consumable: %s" % consumable_id)
 			game_controller._on_consumable_sold(consumable_id)
 			statistics.record_consumable_sold(consumable_id)
 			await get_tree().create_timer(0.1).timeout
+			if _run_generation != gen:
+				return
 
 
 # ─── Panel Dismissal ───
@@ -1116,7 +1172,7 @@ func _bot_use_consumables() -> void:
 ##
 ## Finds and hides the ChoreSelectionPopup that GameController creates.
 func _dismiss_chore_selection_popup() -> void:
-	if not game_controller:
+	if not is_instance_valid(game_controller):
 		return
 	var popup = game_controller._chore_selection_popup
 	if popup and is_instance_valid(popup) and popup.visible:
@@ -1131,16 +1187,16 @@ func _dismiss_chore_selection_popup() -> void:
 ##
 ## Finds and hides the RoundWinnerPanel so it doesn't block the results.
 func _dismiss_winner_panel() -> void:
-	if round_winner_panel and is_instance_valid(round_winner_panel):
+	if is_instance_valid(round_winner_panel):
 		if round_winner_panel.visible:
 			round_winner_panel.hide_panel()
 			logger.log_info("Round winner panel dismissed")
 			await get_tree().create_timer(0.5).timeout
 			return
 	# Fallback: search game_controller's round_winner_panel
-	if game_controller and game_controller.round_winner_panel:
+	if is_instance_valid(game_controller) and is_instance_valid(game_controller.round_winner_panel):
 		var panel = game_controller.round_winner_panel
-		if is_instance_valid(panel) and panel.visible:
+		if panel.visible:
 			panel.hide_panel()
 			logger.log_info("Round winner panel dismissed (via game_controller)")
 			await get_tree().create_timer(0.5).timeout
@@ -1161,9 +1217,9 @@ func _dismiss_all_overlays() -> void:
 ##
 ## Finds and frees the GameController's game over popup if present.
 func _dismiss_game_over_popup() -> void:
-	if not game_controller:
+	if not is_instance_valid(game_controller):
 		return
-	if game_controller._game_over_popup and is_instance_valid(game_controller._game_over_popup):
+	if is_instance_valid(game_controller._game_over_popup):
 		game_controller._game_over_popup.queue_free()
 		game_controller._game_over_popup = null
 		logger.log_info("Game over popup dismissed")

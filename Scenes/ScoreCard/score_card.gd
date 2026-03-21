@@ -217,6 +217,8 @@ func set_score(section: int, category: String, score: int) -> void:
 	# Apply legacy score modifiers if any exist (for backward compatibility)
 	var final_score = score
 	for modifier in score_modifiers:
+		if not is_instance_valid(modifier):
+			continue
 		if modifier.has_method("modify_score"):
 			var result = modifier.modify_score(section, category, final_score)
 			if result != null:
@@ -324,7 +326,7 @@ func on_category_selected(section: Section, category: String):
 	# CRITICAL FIX: Trigger powerup registration BEFORE score calculation
 	# This ensures additives like step_by_step are available during calculate_score_internal
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
-	if game_controller and game_controller.has_method("_create_manual_breakdown_info"):
+	if is_instance_valid(game_controller) and game_controller.has_method("_create_manual_breakdown_info"):
 		print("[Scorecard] Pre-triggering powerup registration for category:", category)
 		var _temp_breakdown = game_controller._create_manual_breakdown_info(category)
 		print("[Scorecard] Powerup registration completed, proceeding with score calculation")
@@ -337,7 +339,7 @@ func auto_score_best(values: Array[int]) -> void:
 	
 	# Validate dice states before auto-scoring
 	var dice_hand_ref = get_node_or_null("../DiceHand") as DiceHand
-	if dice_hand_ref and not dice_hand_ref.can_any_dice_score():
+	if is_instance_valid(dice_hand_ref) and not dice_hand_ref.can_any_dice_score():
 		print("[Scorecard] Cannot auto-score - no dice are in ROLLED or LOCKED state")
 		return
 	
@@ -384,12 +386,12 @@ func auto_score_best(values: Array[int]) -> void:
 		# Calculate color effects NOW before dice state changes
 		var dice_hand = get_tree().get_first_node_in_group("dice_hand")
 		var color_effects = {}
-		if dice_hand and dice_hand.has_method("get_color_effects"):
+		if is_instance_valid(dice_hand) and dice_hand.has_method("get_color_effects"):
 			color_effects = dice_hand.get_color_effects()
 		
 		# Emit about_to_score signal for PowerUps BEFORE calculating final score
 		var game_controller = get_tree().get_first_node_in_group("game_controller")
-		if game_controller and game_controller.score_card_ui:
+		if is_instance_valid(game_controller) and is_instance_valid(game_controller.score_card_ui):
 			print("[Scorecard] Emitting about_to_score signal for autoscoring:", best_category)
 			game_controller.score_card_ui.about_to_score.emit(best_section, best_category, values)
 		
@@ -745,7 +747,7 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 	var active_powerup_sources: Array[String] = []
 	var active_consumable_sources: Array[String] = []
 	
-	if modifier_manager:
+	if is_instance_valid(modifier_manager):
 		if modifier_manager.has_method("get_total_additive"):
 			total_additive = modifier_manager.get_total_additive()
 		total_multiplier = modifier_manager.get_total_multiplier()
@@ -857,7 +859,7 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 	}
 	
 	# Populate specific source information for accurate calculation summaries
-	if modifier_manager:
+	if is_instance_valid(modifier_manager):
 		# Get additive sources
 		if modifier_manager.has_method("get_active_additive_sources"):
 			var additive_sources = modifier_manager.get_active_additive_sources()
@@ -1055,7 +1057,7 @@ func _calculate_score_with_preserved_effects(category: String, dice_values: Arra
 	var total_additive = 0
 	var total_multiplier = 1.0
 	
-	if modifier_manager:
+	if is_instance_valid(modifier_manager):
 		if modifier_manager.has_method("get_total_additive"):
 			total_additive = modifier_manager.get_total_additive()
 		total_multiplier = modifier_manager.get_total_multiplier()
@@ -1219,7 +1221,7 @@ func _track_combination_stats(category: String, score: int) -> void:
 ## @return float: The multiplier (1.0 if ChannelManager is not found)
 func _get_yahtzee_bonus_multiplier() -> float:
 	var channel_manager = _find_channel_manager()
-	if channel_manager and channel_manager.has_method("get_yahtzee_bonus_multiplier"):
+	if is_instance_valid(channel_manager) and channel_manager.has_method("get_yahtzee_bonus_multiplier"):
 		return channel_manager.get_yahtzee_bonus_multiplier()
 	return 1.0
 
