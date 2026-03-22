@@ -41,7 +41,7 @@ challenge_difficulty_range = Vector2i(2, 3)
 max_debuffs = 1
 debuff_difficulty_cap = 2
 goof_off_threshold_override = -1
-target_score_override = 0
+target_score_override = 100
 reward_money_override = 150
 bonus_multipliers = {
 "chore_completion": 1.0,

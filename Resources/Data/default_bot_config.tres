@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_config")
-attempts = 6
+attempts = 10
 channel_min = 6
 channel_max = 6
 visual_mode = true

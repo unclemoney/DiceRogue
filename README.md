@@ -920,6 +920,42 @@ When challenges are completed, celebratory GPU particle effects are displayed:
 - **ChallengeCelebration**: `Scripts/Effects/challenge_celebration.gd` - Celebration manager
 - **Particle Scene**: `Scenes/Effects/ChallengeCelebration.tscn` - GPU particle configuration
 
+### Round Transition Overlay
+A cinematic full-screen overlay displayed after challenge celebration fireworks, giving the player a moment to appreciate their progress before continuing.
+
+**Entrance Animations (sequenced):**
+1. **Background Fade**: Dark overlay fades in over 0.3s
+2. **Completion Banner**: Slides in from the LEFT with `TRANS_BACK` overshoot, then `TweenFX.tada()` flourish
+3. **Next Challenge Banner**: Slides in from the RIGHT with `TRANS_BACK`, then `TweenFX.pop_in()`
+4. **Action Buttons**: Fly up from below with `TRANS_ELASTIC`, then idle loops (`breathe` + `float_bob`)
+
+**Dismiss Animations:**
+- Banners slide out opposite directions, buttons drop off-screen, overlay fades out
+
+**Visual Styling:**
+- Dark burgundy panels with gold borders (completion) and green borders (next challenge)
+- VCR_OSD_MONO font throughout, matching game theme
+- CanvasLayer layer 10 renders above all game UI
+
+**Final Round Variant:**
+- When all rounds are complete, displays "ALL ROUNDS COMPLETE!" with a special message
+- **Enter Shop** button hidden since there's no next round
+
+**Button Actions:**
+- **Keep Playing**: Dismisses overlay, player continues current state
+- **Enter Shop**: Dismisses overlay, opens shop via `_on_shop_button_pressed()`
+
+**Trigger Flow:**
+1. Challenge completed → fireworks fire
+2. After 1.6s delay → overlay appears with transition data
+3. Player chooses action → overlay dismisses with exit animation
+
+**Implementation Files:**
+- **Overlay Script**: `Scripts/UI/round_transition_overlay.gd` - Full overlay with animations and UI
+- **Overlay Scene**: `Scenes/UI/RoundTransitionOverlay.tscn` - CanvasLayer scene wrapper
+- **Game Controller Integration**: `Scripts/Core/game_controller.gd` - Trigger, signal handling, cleanup
+- **Test Scene**: `Tests/RoundTransitionTest.tscn` - Manual test with Normal/Final/Early round buttons
+
 ### Debuff Animation System
 Negative score contributions now feature dramatic visual feedback:
 

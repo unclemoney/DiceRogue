@@ -34,6 +34,7 @@ const ChoreSelectionPopupScript := preload("res://Scripts/UI/chore_selection_pop
 const MomCharacterScript := preload("res://Scripts/UI/mom_character.gd")
 const MomLogicHandlerScript := preload("res://Scripts/Core/mom_logic_handler.gd")
 const ChallengeCelebrationScript := preload("res://Scripts/Effects/challenge_celebration.gd")
+const RoundTransitionOverlayScript := preload("res://Scripts/UI/round_transition_overlay.gd")
 const RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF := preload("res://Scripts/Consumable/RandomPowerUpUncommonConsumable.tres")
 const GREEN_ENVY_CONSUMABLE_DEF := preload("res://Scripts/Consumable/GreenEnvyConsumable.tres")
 const POOR_HOUSE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/PoorHouseConsumable.tres")
@@ -168,6 +169,8 @@ var _challenge_reward_granted: bool = false  # Prevent double-granting challenge
 var _chores_reward_granted: bool = false  # Prevent double-granting chores reward
 var _game_ended: bool = false  # Track if game has ended (won or lost) - blocks shop access
 var _challenge_celebration_shown: bool = false  # Prevent repeated celebration animation
+var _round_transition_overlay: CanvasLayer = null
+var _round_transition_shown: bool = false  # Prevent repeated transition overlay
 
 ## Goal Mode Configuration (for testing)
 ## When true, use RoundDifficultyConfig.target_score_override; when false, use Challenge resource goals
@@ -3223,6 +3226,9 @@ func _on_challenge_completed(id: String) -> void:
 	# Trigger celebration fireworks
 	_trigger_challenge_celebration()
 
+	# Queue the round transition overlay after fireworks finish (~1.5s)
+	_queue_round_transition_overlay(id)
+
 	# Animate challenge completion before removing
 	# Try CorkboardUI first, fall back to old ChallengeUI
 	if corkboard_ui:
@@ -3287,6 +3293,103 @@ func _trigger_challenge_celebration() -> void:
 	
 	print("[GameController] Triggering challenge celebration at: %s" % str(celebration_position))
 	_challenge_celebration.trigger_celebration(celebration_position, get_tree().current_scene)
+
+
+## _queue_round_transition_overlay(challenge_id)
+##
+## Starts a timer that waits for fireworks to finish, then shows the round
+## transition overlay with challenge completion info and next-challenge preview.
+func _queue_round_transition_overlay(challenge_id: String) -> void:
+	if _round_transition_shown:
+		return
+	_round_transition_shown = true
+
+	# Wait for fireworks to finish before showing overlay
+	var timer = get_tree().create_timer(1.6)
+	await timer.timeout
+
+	_show_round_transition_overlay(challenge_id)
+
+
+## _show_round_transition_overlay(challenge_id)
+##
+## Creates and displays the round transition overlay with current and next
+## challenge information. Connects keep_playing/enter_shop signals.
+func _show_round_transition_overlay(challenge_id: String) -> void:
+	# Gather current round data
+	var round_number: int = round_manager.get_current_round_number() if round_manager else 1
+	var challenge_name: String = ""
+	var def = challenge_manager.get_def(challenge_id) if challenge_manager else null
+	if def:
+		challenge_name = def.display_name
+
+	# Determine if this is the final round
+	var is_final: bool = false
+	if round_manager:
+		is_final = round_number >= round_manager.max_rounds
+
+	# Gather next challenge data
+	var next_name: String = ""
+	var next_target: int = 0
+	if not is_final and round_manager:
+		var next_index: int = round_manager.current_round + 1
+		if next_index < round_manager.rounds_data.size():
+			var next_data: Dictionary = round_manager.rounds_data[next_index]
+			var next_id: String = next_data.get("challenge_id", "")
+			if next_id and challenge_manager:
+				var next_def = challenge_manager.get_def(next_id)
+				if next_def:
+					next_name = next_def.display_name
+					next_target = next_def.target_score
+
+	# Build data dictionary
+	var data := {
+		"round_number": round_number,
+		"challenge_name": challenge_name,
+		"next_challenge_name": next_name,
+		"next_challenge_target": next_target,
+		"is_final_round": is_final,
+	}
+
+	# Create overlay instance
+	if _round_transition_overlay and is_instance_valid(_round_transition_overlay):
+		_round_transition_overlay.queue_free()
+		_round_transition_overlay = null
+
+	_round_transition_overlay = RoundTransitionOverlayScript.new()
+	add_child(_round_transition_overlay)
+
+	# Connect signals (one-shot)
+	_round_transition_overlay.keep_playing_pressed.connect(_on_transition_keep_playing, CONNECT_ONE_SHOT)
+	_round_transition_overlay.enter_shop_pressed.connect(_on_transition_enter_shop, CONNECT_ONE_SHOT)
+
+	_round_transition_overlay.show_transition(data)
+	print("[GameController] Round transition overlay shown for round %d" % round_number)
+
+
+## _on_transition_keep_playing()
+##
+## Player chose to keep playing without entering the shop.
+## Dismisses overlay; player can enter shop later via the shop button.
+func _on_transition_keep_playing() -> void:
+	print("[GameController] Player chose to keep playing")
+	if _round_transition_overlay and is_instance_valid(_round_transition_overlay):
+		_round_transition_overlay.queue_free()
+		_round_transition_overlay = null
+
+
+## _on_transition_enter_shop()
+##
+## Player chose to enter the shop from the transition overlay.
+## Dismisses overlay then triggers the existing shop flow
+## (unlock panels → stats panel → shop).
+func _on_transition_enter_shop() -> void:
+	print("[GameController] Player chose to enter shop from transition overlay")
+	if _round_transition_overlay and is_instance_valid(_round_transition_overlay):
+		_round_transition_overlay.queue_free()
+		_round_transition_overlay = null
+	# Trigger the existing shop flow
+	_on_shop_button_pressed()
 
 
 ## _on_challenge_failed(id)
@@ -3625,6 +3728,7 @@ func _on_round_started(round_number: int) -> void:
 	_challenge_reward_granted = false
 	_chores_reward_granted = false
 	_challenge_celebration_shown = false
+	_round_transition_shown = false
 	
 	# Reset round-specific statistics (even/odd dice tracking, etc.)
 	Statistics.start_new_round()

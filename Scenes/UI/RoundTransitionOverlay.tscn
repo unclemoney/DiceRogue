@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://brt0v4kx8qpjn"]
+
+[ext_resource type="Script" uid="uid://placeholder_rto" path="res://Scripts/UI/round_transition_overlay.gd" id="1_script"]
+
+[node name="RoundTransitionOverlay" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1_script")
