@@ -1394,6 +1394,23 @@ func _create_default_unlockable_items() -> void:
 	_add_default_colored_dice("yellow_dice", "Yellow Dice", "Unlocks yellow colored dice (grants consumables when scored)", 
 		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 8, 5)
 	
+	# ==========================================================================
+	# ALL GAMING CONSOLES - Unlocked by completing specific channels
+	# ==========================================================================
+	
+	_add_default_gaming_console("atari_console", "Atari", "Save State: Once per round, save your dice values and reload them on a later turn.",
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 2)
+	_add_default_gaming_console("nes_console", "NES", "Power Glove: Once per round, adjust one die by +1 or -1 after rolling.",
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 4)
+	_add_default_gaming_console("snes_console", "SNES", "Blast Processing: Every 3rd category scored in a round gets a 1.5x multiplier.",
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5, 5)
+	_add_default_gaming_console("sega_console", "Sega", "Combo System: Each consecutive non-zero score adds +3 to a running combo bonus. Resets on 0.",
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 7, 6)
+	_add_default_gaming_console("playstation_console", "PlayStation", "Continue?: Auto-grants one bonus turn when a challenge fails.",
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 9, 8)
+	_add_default_gaming_console("sega_saturn_console", "Sega Saturn", "Cartridge Tilt: Once per round, shift ALL unlocked dice by +1 or -1 after rolling.",
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 10, 9)
+	
 	print("[ProgressManager] Created %d total unlockable items across all categories" % unlockable_items.size())
 
 ## Helper function to create unlockable items with consistent structure
@@ -1466,6 +1483,23 @@ func _add_default_mod(id: String, item_name: String, desc: String, condition_typ
 	var item = UnlockableItemClass.new()
 	item.id = id
 	item.item_type = UnlockableItemClass.ItemType.MOD
+	item.display_name = item_name
+	item.description = desc
+	item.unlock_condition = condition
+	item.difficulty_rating = difficulty
+	
+	unlockable_items[id] = item
+
+func _add_default_gaming_console(id: String, item_name: String, desc: String, condition_type: int, target: int, difficulty: int = 1, extra_params: Dictionary = {}) -> void:
+	var condition = UnlockConditionClass.new()
+	condition.id = id + "_condition"
+	condition.condition_type = condition_type
+	condition.target_value = target
+	condition.additional_params = extra_params
+	
+	var item = UnlockableItemClass.new()
+	item.id = id
+	item.item_type = UnlockableItemClass.ItemType.GAMING_CONSOLE
 	item.display_name = item_name
 	item.description = desc
 	item.unlock_condition = condition

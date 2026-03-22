@@ -1,0 +1,13 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Managers/gaming_console_manager.gd" id="1_script"]
+[ext_resource type="Resource" path="res://Resources/Data/GamingConsoles/AtariConsole.tres" id="2_atari"]
+[ext_resource type="Resource" path="res://Resources/Data/GamingConsoles/NesConsole.tres" id="3_nes"]
+[ext_resource type="Resource" path="res://Resources/Data/GamingConsoles/SnesConsole.tres" id="4_snes"]
+[ext_resource type="Resource" path="res://Resources/Data/GamingConsoles/SegaConsole.tres" id="5_sega"]
+[ext_resource type="Resource" path="res://Resources/Data/GamingConsoles/PlaystationConsole.tres" id="6_playstation"]
+[ext_resource type="Resource" path="res://Resources/Data/GamingConsoles/SegaSaturnConsole.tres" id="7_sega_saturn"]
+
+[node name="GamingConsoleManager" type="Node"]
+script = ExtResource("1_script")
+console_defs = [ExtResource("2_atari"), ExtResource("3_nes"), ExtResource("4_snes"), ExtResource("5_sega"), ExtResource("6_playstation"), ExtResource("7_sega_saturn")]

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GamingConsoleData" load_steps=4 format=3 uid="uid://dkuut3l2uvweq"]
+
+[ext_resource type="Script" uid="uid://ce1oea30e7i4q" path="res://Scripts/GamingConsole/gaming_console_data.gd" id="1_data"]
+[ext_resource type="Texture2D" uid="uid://ci4lkln6lm4tu" path="res://Resources/Art/Background/CONSOLE_PLAYSTATION.png" id="1_icon"]
+[ext_resource type="PackedScene" path="res://Scenes/GamingConsole/PlaystationConsole.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_data")
+id = "playstation_console"
+display_name = "PlayStation — Continue?"
+description = "Auto-grants +3 rolls when a challenge fails. 1 use per round. Passive."
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 300

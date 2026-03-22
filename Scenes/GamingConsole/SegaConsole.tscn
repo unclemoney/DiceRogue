@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/GamingConsole/sega_console.gd" id="1_script"]
+
+[node name="SegaConsole" type="Node2D"]
+script = ExtResource("1_script")
+id = "sega_console"
+console_name = "Sega"
+uses_per_round = 0

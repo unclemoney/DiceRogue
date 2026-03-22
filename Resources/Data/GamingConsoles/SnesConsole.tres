@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GamingConsoleData" load_steps=4 format=3 uid="uid://bari8dit51s3n"]
+
+[ext_resource type="Script" uid="uid://ce1oea30e7i4q" path="res://Scripts/GamingConsole/gaming_console_data.gd" id="1_data"]
+[ext_resource type="Texture2D" uid="uid://dh5bguba36k0r" path="res://Resources/Art/Background/CONSOLE_SNES.png" id="1_icon"]
+[ext_resource type="PackedScene" path="res://Scenes/GamingConsole/SnesConsole.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_data")
+id = "snes_console"
+display_name = "SNES — Blast Processing"
+description = "Every 3rd category scored gets a 1.5x multiplier. Passive."
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 300

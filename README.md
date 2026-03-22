@@ -240,6 +240,7 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - **Clearance Rack** ($25): All shop rerolls are free until you close the shop.
   - **Loaded Dice** ($75): Randomly sets one of your dice to a random value (1-6).
 - **Mods** (`Scripts/Mods/`) - Dice behavior modifiers
+- **Gaming Consoles** (`Scripts/GamingConsole/`) - Unique console abilities (one active at a time)
 
 ### Statistics & Analytics
 - **RollStats** (autoload) - Tracks game statistics like yahtzees, bonuses, and combinations
@@ -1163,6 +1164,7 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 - `PowerUpTest.tscn` - Power-up functionality
 - `MultiplierManagerTest.tscn` - Score modifier system
 - `TutorialTest.tscn` - Tutorial system with mock UI elements
+- `GamingConsoleTest.tscn` - All 6 gaming consoles (Atari, NES, SNES, Sega, PlayStation, Sega Saturn): spawn, apply, activate, reset, UI show/hide
 
 ## TweenFX Animation System
 
@@ -1488,6 +1490,68 @@ Debuffs are negative effects that hinder the player's progress and add challenge
 - `snake_case` for variables/methods, `PascalCase` for classes
 - Document functions with `##` comment blocks
 - Never use `class_name` in autoload scripts
+
+## Available Gaming Consoles
+
+Gaming Consoles are a unique item class that provides powerful, specialized abilities alongside PowerUps and Consumables. The player can own **one console at a time**, and each console offers a distinct play style. Consoles are purchased from a dedicated **Consoles** tab in the Shop and persist until the player changes channels or purchases a different console.
+
+### Active Consoles (Click to Activate)
+- **Atari — Save State** (Price: $300, 2 uses/round)
+  - Toggle between **Save** and **Load** modes
+  - **Save**: Stores all current dice values as a snapshot
+  - **Load**: Restores dice to the saved snapshot
+  - Great for preserving a strong hand before a risky reroll
+  - Target: Dice Hand
+
+- **NES — Power Glove** (Price: $300, 3 uses/round)
+  - Click on any individual die, then choose **+1** or **-1** to nudge its value
+  - Values clamp between 1 and the die's max sides
+  - Precise single-die manipulation for fine-tuning hands
+  - Target: Dice Hand
+
+- **Sega Saturn — Cartridge Tilt** (Price: $300, 1 use/round)
+  - Choose **+1** or **-1** to shift **ALL** dice values at once
+  - Values clamp between 1 and each die's max sides
+  - Powerful for pushing an entire hand up or down by one
+  - Target: Dice Hand
+
+### Passive Consoles (Automatic Effects)
+- **SNES — Blast Processing** (Price: $300, Passive)
+  - Every **3rd category scored** receives a **1.5× score multiplier**
+  - Tracks scoring count internally; resets on new game
+  - Visual feedback: console icon flashes + VCR text notification
+  - Target: Scorecard
+
+- **Sega Genesis — Combo System** (Price: $300, Passive)
+  - Builds a **running combo counter** that increments with each score
+  - Grants a **combo × $3 additive bonus** to every scored category
+  - Combo resets if a round is failed
+  - Target: Scorecard
+
+- **PlayStation — Continue?** (Price: $300, Passive)
+  - Automatically triggers when a **round is failed**
+  - Grants **+3 bonus rolls** to give the player another chance
+  - Single-use per failure event (does not stack)
+  - Target: Game Controller (Round Manager)
+
+### Console Mechanics
+- **One Console Limit**: Only one gaming console can be active at a time. Purchasing a new one replaces the old one.
+- **Shop Tab**: All consoles appear in the dedicated "Consoles" tab, filtered by unlock status and current ownership.
+- **Unlock Progression**: Consoles are locked behind ProgressManager milestones and unlock as the player advances.
+- **Round Reset**: Active-use consoles reset their remaining uses at the start of each round.
+- **UI Display**: The active console appears above the VCR area with an icon, name, and ACTIVATE button (for non-passive consoles).
+- **Hover Tooltip**: Hovering the console UI shows a gold-bordered tooltip with the console's power description.
+
+### Architecture & File Locations
+- **Data Resource**: `Scripts/GamingConsole/gaming_console_data.gd` — `GamingConsoleData` extends `Resource`
+- **Base Class**: `Scripts/GamingConsole/gaming_console.gd` — `GamingConsole` extends `Node2D`
+- **Implementations**: `Scripts/GamingConsole/{atari,nes,snes,sega,playstation,sega_saturn}_console.gd`
+- **Scenes**: `Scenes/GamingConsole/{Atari,Nes,Snes,Sega,Playstation,SegaSaturn}Console.tscn`
+- **Resources**: `Resources/Data/GamingConsoles/{Atari,Nes,Snes,Sega,Playstation,SegaSaturn}Console.tres`
+- **Manager**: `Scripts/Managers/gaming_console_manager.gd` + `Scenes/Managers/gaming_console_manager.tscn`
+- **UI**: `Scripts/UI/gaming_console_ui.gd` + `Scenes/UI/gaming_console_ui.tscn`
+- **Shop Integration**: Consoles tab added to `Scripts/UI/shop_ui.gd`
+- **Game Controller**: Purchase flow, activation, and reset logic in `Scripts/Core/game_controller.gd`
 
 ## Debug System
 

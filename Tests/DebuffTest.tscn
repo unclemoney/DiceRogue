@@ -1,4 +1,4 @@
-[gd_scene load_steps=195 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=197 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -192,6 +192,8 @@
 [ext_resource type="Resource" path="res://Scripts/PowerUps/OneRollWonder.tres" id="1061_one_roll_wonder"]
 [ext_resource type="Resource" path="res://Scripts/PowerUps/PowerSurge.tres" id="1062_power_surge"]
 [ext_resource type="Resource" path="res://Scripts/PowerUps/SnakeEyes.tres" id="1063_snake_eyes"]
+[ext_resource type="PackedScene" path="res://Scenes/Managers/gaming_console_manager.tscn" id="1064_gaming_console_mgr"]
+[ext_resource type="PackedScene" uid="uid://4srbudn4gald" path="res://Scenes/UI/gaming_console_ui.tscn" id="1065_gaming_console_ui"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wtptv"]
 
@@ -371,6 +373,7 @@ offset_bottom = 4.0
 power_up_manager_path = NodePath("../PowerUpManager")
 consumable_manager_path = NodePath("../ConsumableManager")
 mod_manager_path = NodePath("../ModManager")
+gaming_console_manager_path = NodePath("../GamingConsoleManager")
 
 [node name="GameController" parent="." instance=ExtResource("15_aeiu6")]
 challenge_container_path = NodePath("../ChallengeContainer")
@@ -427,3 +430,12 @@ size_flags_vertical = 3
 
 [node name="ChannelManager" type="Node" parent="."]
 script = ExtResource("101_wcrst")
+
+[node name="GamingConsoleManager" parent="." instance=ExtResource("1064_gaming_console_mgr")]
+
+[node name="GamingConsoleUI" parent="." instance=ExtResource("1065_gaming_console_ui")]
+offset_left = 36.0
+offset_top = 329.0
+offset_right = 336.0
+offset_bottom = 379.0
+gaming_console_manager_path = NodePath("../GamingConsoleManager")

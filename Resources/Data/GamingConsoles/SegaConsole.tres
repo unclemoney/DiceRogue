@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GamingConsoleData" load_steps=4 format=3 uid="uid://cbw138rfm7utb"]
+
+[ext_resource type="Script" uid="uid://ce1oea30e7i4q" path="res://Scripts/GamingConsole/gaming_console_data.gd" id="1_data"]
+[ext_resource type="Texture2D" uid="uid://cgxh1ek2yk0wu" path="res://Resources/Art/Background/CONSOLE_SEGA.png" id="1_icon"]
+[ext_resource type="PackedScene" path="res://Scenes/GamingConsole/SegaConsole.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_data")
+id = "sega_console"
+display_name = "Sega — Combo System"
+description = "+3 bonus per consecutive non-zero score. Resets on 0. Passive."
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 300

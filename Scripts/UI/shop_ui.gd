@@ -8,16 +8,19 @@ signal shop_closed
 @export var power_up_manager_path: NodePath
 @export var consumable_manager_path: NodePath
 @export var mod_manager_path: NodePath
+@export var gaming_console_manager_path: NodePath
 
 @onready var tab_container: TabContainer = $TabContainer
 @onready var power_up_container: Container = $TabContainer/PowerUps/GridContainer
 @onready var consumable_container: Container = $TabContainer/Consumables/GridContainer
 @onready var mod_container: Container = $TabContainer/Mods/GridContainer
 @onready var colored_dice_container: Container = get_node_or_null("TabContainer/Colors/GridContainer")
+@onready var gaming_console_container: Container = get_node_or_null("TabContainer/Consoles/GridContainer")
 @onready var locked_container: Container = $TabContainer/Locked/ScrollContainer/GridContainer
 @onready var power_up_manager: PowerUpManager = get_node_or_null(power_up_manager_path)
 @onready var consumable_manager: ConsumableManager = get_node_or_null(consumable_manager_path)
 @onready var mod_manager: ModManager = get_node_or_null(mod_manager_path)
+@onready var gaming_console_manager: GamingConsoleManager = get_node_or_null(gaming_console_manager_path)
 @onready var shop_label: RichTextLabel = $MarginContainer/ShopLabel
 @onready var close_button: Button = $CloseButton
 @onready var backdrop: ColorRect = $Backdrop
@@ -62,7 +65,8 @@ func _ready() -> void:
 		"power_up": [],
 		"consumable": [],
 		"mod": [],
-		"colored_dice": []
+		"colored_dice": [],
+		"gaming_console": []
 	}
 	
 	if not shop_label:
@@ -81,6 +85,9 @@ func _ready() -> void:
 	if not colored_dice_container:
 		print("[ShopUI] ColoredDiceContainer not found - creating programmatically")
 		_create_colors_tab()
+	if not gaming_console_container:
+		print("[ShopUI] GamingConsoleContainer not found - creating programmatically")
+		_create_consoles_tab()
 	if not power_up_manager:
 		push_error("[ShopUI] PowerUpManager not found at path:", power_up_manager_path)
 	if not consumable_manager:
@@ -110,6 +117,10 @@ func _ready() -> void:
 	consumable_manager.definitions_loaded.connect(_on_manager_ready)
 	mod_manager.definitions_loaded.connect(_on_manager_ready)
 	PlayerEconomy.money_changed.connect(_on_money_changed)
+	
+	# Connect to GamingConsoleManager separately (it may load after other managers)
+	if gaming_console_manager:
+		gaming_console_manager.definitions_loaded.connect(_on_gaming_console_manager_ready)
 	
 	# Connect to ProgressManager to refresh shop when items are unlocked/locked
 	var progress_manager = get_node("/root/ProgressManager")
@@ -151,6 +162,17 @@ func _on_manager_ready() -> void:
 		print("[ShopUI] All managers ready - populating shop")
 		_populate_shop_items()
 		populate_locked_items()  # Add locked items population
+
+## _on_gaming_console_manager_ready()
+##
+## Called when GamingConsoleManager finishes loading definitions.
+## If the other managers are already ready, repopulate to include consoles.
+func _on_gaming_console_manager_ready() -> void:
+	print("[ShopUI] GamingConsoleManager ready")
+	if _managers_ready >= REQUIRED_MANAGERS:
+		print("[ShopUI] Other managers already ready - repopulating to include consoles")
+		_populate_shop_items()
+		populate_locked_items()
 
 ## _on_progress_changed()
 ##
@@ -231,6 +253,22 @@ func _populate_shop_items() -> void:
 			_add_shop_item(data, "colored_dice")
 		else:
 			push_error("[ShopUI] Failed to get ColoredDiceData for:", id)
+
+	# Populate Gaming Consoles — show ALL consoles (no random selection), filtered by unlock
+	if gaming_console_manager:
+		var consoles = gaming_console_manager.get_available_consoles()
+		var filtered_consoles = _filter_out_purchased_items(consoles, "gaming_console")
+		filtered_consoles = _filter_unlocked_items(filtered_consoles, "gaming_console")
+		# Also filter out already-owned console (only one allowed at a time)
+		if game_controller and game_controller.has_method("has_gaming_console"):
+			if game_controller.has_gaming_console():
+				filtered_consoles = []
+		for id in filtered_consoles:
+			var data = gaming_console_manager.get_def(id)
+			if data:
+				_add_shop_item(data, "gaming_console")
+			else:
+				push_error("[ShopUI] Failed to get GamingConsoleData for:", id)
 
 # Helper function to filter out already purchased items
 func _filter_out_purchased_items(items: Array, type: String) -> Array:
@@ -333,6 +371,10 @@ func _clear_shop_containers() -> void:
 	if colored_dice_container:
 		for child in colored_dice_container.get_children():
 			child.queue_free()
+	
+	if gaming_console_container:
+		for child in gaming_console_container.get_children():
+			child.queue_free()
 
 # Add this function to reset purchased items for a new round
 func reset_for_new_round() -> void:
@@ -341,7 +383,8 @@ func reset_for_new_round() -> void:
 		"power_up": [],
 		"consumable": [], 
 		"mod": [],
-		"colored_dice": []
+		"colored_dice": [],
+		"gaming_console": []
 	}
 	_populate_shop_items()
 
@@ -406,6 +449,14 @@ func _on_item_purchased(item_id: String, item_type: String) -> void:
 			return
 		
 		print("[ShopUI] Colored dice purchase validation passed for:", colored_dice_data.get_color_name())
+	# Check if it's a gaming console purchase
+	elif item_type == "gaming_console":
+		# Only one console allowed at a time — check if player already has one
+		var gc = _find_game_controller()
+		if gc and gc.has_method("has_gaming_console"):
+			if gc.has_gaming_console():
+				print("[ShopUI] Player already has a gaming console, purchase blocked")
+				return
 	
 	print("[ShopUI] Purchase validation passed, proceeding with purchase")
 	
@@ -485,7 +536,7 @@ func on_shop_opened() -> void:
 ## Iterates all ShopItem children in power_up and consumable containers
 ## and calls refresh_price() on each. Called when discount state changes.
 func refresh_all_prices() -> void:
-	for container in [power_up_container, consumable_container]:
+	for container in [power_up_container, consumable_container, gaming_console_container]:
 		if not container:
 			continue
 		for child in container.get_children():
@@ -963,13 +1014,16 @@ func _get_container_for_type(type: String) -> Node:
 		"colored_dice":
 			print("[ShopUI] Getting colored dice container")
 			return colored_dice_container
+		"gaming_console":
+			print("[ShopUI] Getting gaming console container")
+			return gaming_console_container
 		_:
 			push_error("[ShopUI] Unknown item type:", type)
 			return null
 
 func _on_money_changed(_new_amount: int, _change: int = 0) -> void:
 	# Update all shop item buttons in all containers
-	for container in [power_up_container, consumable_container, mod_container, colored_dice_container]:
+	for container in [power_up_container, consumable_container, mod_container, colored_dice_container, gaming_console_container]:
 		if container:
 			for child in container.get_children():
 				if child is ShopItem:
@@ -1049,7 +1103,7 @@ func _style_grid_containers() -> void:
 	_replace_grid_with_centered_layout()
 	
 	# Apply styling to any remaining grid containers
-	var containers = [power_up_container, consumable_container, mod_container, colored_dice_container]
+	var containers = [power_up_container, consumable_container, mod_container, colored_dice_container, gaming_console_container]
 	
 	for container in containers:
 		if container:
@@ -1078,7 +1132,8 @@ func _replace_grid_with_centered_layout() -> void:
 		tab_container.get_node_or_null("PowerUps"),
 		tab_container.get_node_or_null("Consumables"), 
 		tab_container.get_node_or_null("Mods"),
-		tab_container.get_node_or_null("Colors")
+		tab_container.get_node_or_null("Colors"),
+		tab_container.get_node_or_null("Consoles")
 	]
 	
 	for i in range(tab_nodes.size()):
@@ -1092,9 +1147,10 @@ func _replace_grid_with_centered_layout() -> void:
 		
 		print("[ShopUI] Creating centered layout for tab:", tab_node.name)
 		
-		# For PowerUps and Consumables tabs, add shelf background
+		# For PowerUps, Consumables, and Consoles tabs, add shelf background
 		var is_reroll_tab = tab_node.name == "PowerUps" or tab_node.name == "Consumables"
-		if is_reroll_tab:
+		var needs_shelf = is_reroll_tab or tab_node.name == "Consoles"
+		if needs_shelf:
 			_add_shelf_background_to_tab(tab_node)
 		
 		# Create margin container for padding from edges - this fills the tab
@@ -1155,6 +1211,8 @@ func _replace_grid_with_centered_layout() -> void:
 			mod_container = hbox
 		elif tab_node.name == "Colors":
 			colored_dice_container = hbox
+		elif tab_node.name == "Consoles":
+			gaming_console_container = hbox
 		
 		print("[ShopUI] Created centered layout for:", tab_node.name)
 
@@ -1358,6 +1416,31 @@ func _create_colors_tab() -> void:
 	
 	print("[ShopUI] COLORS tab created successfully")
 
+## _create_consoles_tab()
+## Creates the CONSOLES tab programmatically if it doesn't exist in the scene
+func _create_consoles_tab() -> void:
+	print("[ShopUI] Creating CONSOLES tab programmatically")
+	
+	if not tab_container:
+		push_error("[ShopUI] TabContainer not found - cannot create CONSOLES tab")
+		return
+	
+	# Create the Consoles tab
+	var consoles_tab = Control.new()
+	consoles_tab.name = "Consoles"
+	tab_container.add_child(consoles_tab)
+	
+	# Create GridContainer for the gaming console items
+	var grid_container = GridContainer.new()
+	grid_container.name = "GridContainer"
+	grid_container.columns = 3  # Show consoles in a 3-column grid
+	consoles_tab.add_child(grid_container)
+	
+	# Set up the container reference
+	gaming_console_container = grid_container
+	
+	print("[ShopUI] CONSOLES tab created successfully")
+
 ## _configure_mouse_input()
 ## Configures mouse input filters to prevent background elements from blocking shop items
 func _configure_mouse_input() -> void:
@@ -1424,6 +1507,11 @@ func populate_locked_items() -> void:
 	# Get locked Colored Dice features
 	var locked_dice_features = progress_manager.get_locked_items(UnlockableItemClass.ItemType.COLORED_DICE_FEATURE)
 	for item in locked_dice_features:
+		_create_locked_item_display(item)
+	
+	# Get locked Gaming Consoles
+	var locked_consoles = progress_manager.get_locked_items(UnlockableItemClass.ItemType.GAMING_CONSOLE)
+	for item in locked_consoles:
 		_create_locked_item_display(item)
 	
 	print("[ShopUI] Locked items populated")

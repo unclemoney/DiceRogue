@@ -101,6 +101,8 @@ const BONUS_COLLECTOR_CONSUMABLE_DEF := preload("res://Scripts/Consumable/BonusC
 @export var channel_manager_ui_path: NodePath   = ^"../ChannelManagerUI"
 @export var round_winner_panel_path: NodePath   = ^"../RoundWinnerPanel"
 @export var background_swirl_path: NodePath      = ^"../Background/BackgroundSwirl"
+@export var gaming_console_manager_path: NodePath  = ^"../GamingConsoleManager"
+@export var gaming_console_ui_path: NodePath       = ^"../GamingConsoleUI"
 
 @onready var consumable_manager: ConsumableManager = get_node(consumable_manager_path)
 @onready var consumable_ui: ConsumableUI = get_node(consumable_ui_path)
@@ -135,6 +137,11 @@ const BONUS_COLLECTOR_CONSUMABLE_DEF := preload("res://Scripts/Consumable/BonusC
 @onready var channel_manager_ui = get_node_or_null(channel_manager_ui_path)
 @onready var round_winner_panel = get_node_or_null(round_winner_panel_path)
 @onready var background_swirl: ColorRect = get_node_or_null(background_swirl_path)
+@onready var gaming_console_manager = get_node_or_null(gaming_console_manager_path)
+@onready var gaming_console_ui = get_node_or_null(gaming_console_ui_path)
+
+# Active gaming console (only one allowed at a time)
+var active_gaming_console: Dictionary = {}  # id -> GamingConsole (max 1 entry)
 
 # Mom dialog popup (instantiated when needed)
 var _mom_dialog = null
@@ -486,6 +493,9 @@ func _restart_game_for_new_channel() -> void:
 	# Clear active challenges and debuffs
 	_clear_active_challenges()
 	_clear_active_debuffs()
+	
+	# Clear gaming console
+	_clear_gaming_console()
 	
 	# Reset the goof-off meter (ChoresManager)
 	if chores_manager:
@@ -2471,6 +2481,112 @@ func _show_colored_dice_purchase_notification(data) -> void:
 	print("[GameController] 🎲 %s purchased! New dice will have a chance to be %s." % [data.display_name, data.get_color_name()])
 
 
+## grant_gaming_console(id)
+##
+## Purchases a gaming console and activates it. Only one console allowed at a time.
+func grant_gaming_console(id: String) -> void:
+	print("\n=== Granting Gaming Console: ", id, " ===")
+	
+	# Only one console allowed at a time
+	if not active_gaming_console.is_empty():
+		print("[GameController] Already have a gaming console. Cannot purchase another.")
+		return
+	
+	if not gaming_console_manager:
+		push_error("[GameController] GamingConsoleManager not found")
+		return
+	
+	var def = gaming_console_manager.get_def(id)
+	if not def:
+		push_error("[GameController] No GamingConsoleData found for: %s" % id)
+		return
+	
+	# Note: Money is already deducted by ShopItem._on_buy_button_pressed()
+	# before the purchased signal reaches here. Do NOT deduct again.
+	
+	# Spawn the console instance (parent it under GameController)
+	var console = gaming_console_manager.spawn_console(id, self)
+	if not console:
+		push_error("[GameController] Failed to spawn console: %s" % id)
+		return
+	
+	active_gaming_console[id] = console
+	print("[GameController] Gaming console granted: %s" % id)
+	
+	# Activate the console (connect it to its target)
+	_activate_gaming_console(id)
+	
+	# Show in UI
+	if gaming_console_ui and gaming_console_ui.has_method("show_console"):
+		gaming_console_ui.show_console(def, console)
+
+
+## _activate_gaming_console(id)
+##
+## Connects the gaming console to its appropriate target based on type.
+## - Atari, NES, Sega Saturn → DiceHand
+## - SNES, Sega Genesis → Scorecard
+## - PlayStation → GameController (for round_manager/turn_tracker access)
+func _activate_gaming_console(id: String) -> void:
+	if not active_gaming_console.has(id):
+		return
+	var console = active_gaming_console[id] as GamingConsole
+	if not console:
+		return
+	
+	print("[GameController] Activating gaming console: %s" % id)
+	
+	match id:
+		"atari_console", "nes_console", "sega_saturn_console":
+			if dice_hand:
+				console.apply(dice_hand)
+				print("[GameController] Console %s applied to DiceHand" % id)
+		"snes_console", "sega_console":
+			if scorecard:
+				console.apply(scorecard)
+				print("[GameController] Console %s applied to Scorecard" % id)
+		"playstation_console":
+			console.apply(self)
+			print("[GameController] Console %s applied to GameController" % id)
+		_:
+			push_warning("[GameController] Unknown console type: %s" % id)
+
+
+## has_gaming_console() -> bool
+##
+## Returns true if the player currently has an active gaming console.
+func has_gaming_console() -> bool:
+	return not active_gaming_console.is_empty()
+
+
+## _clear_gaming_console()
+##
+## Removes the active gaming console. Called on channel change.
+func _clear_gaming_console() -> void:
+	for id in active_gaming_console.keys():
+		var console = active_gaming_console[id]
+		if is_instance_valid(console):
+			console.remove(console._target)
+			console.queue_free()
+	active_gaming_console.clear()
+	if gaming_console_ui and gaming_console_ui.has_method("hide_console"):
+		gaming_console_ui.hide_console()
+	print("[GameController] Gaming console cleared")
+
+
+## _reset_gaming_console_for_round()
+##
+## Resets the gaming console uses for a new round.
+func _reset_gaming_console_for_round() -> void:
+	for id in active_gaming_console:
+		var console = active_gaming_console[id] as GamingConsole
+		if is_instance_valid(console):
+			console.reset_for_new_round()
+			print("[GameController] Gaming console %s reset for new round" % id)
+	if gaming_console_ui and gaming_console_ui.has_method("reset_for_new_round"):
+		gaming_console_ui.reset_for_new_round()
+
+
 ## _on_roll_completed()
 ##
 ## Called when a dice roll completes. All dice should now be in ROLLED state and ready for
@@ -2487,6 +2603,10 @@ func _on_roll_completed() -> void:
 	# Print dice states for debugging
 	if dice_hand:
 		dice_hand.print_dice_states()
+	
+	# Refresh gaming console button state after dice roll
+	if gaming_console_ui and gaming_console_ui.has_method("refresh_button_state"):
+		gaming_console_ui.refresh_button_state()
 	
 	# Check lock dice chore completion after rolling
 	# The chore requires locking dice THEN rolling, so we check here
@@ -3064,6 +3184,9 @@ func _on_shop_item_purchased(item_id: String, item_type: String) -> void:
 		"colored_dice":
 			print("[GameController] Granting colored dice:", item_id)
 			grant_colored_dice(item_id)
+		"gaming_console":
+			print("[GameController] Granting gaming console:", item_id)
+			grant_gaming_console(item_id)
 		_:
 			push_error("[GameController] Unknown item type purchased:", item_type)
 
@@ -3788,6 +3911,9 @@ func _on_round_started(round_number: int) -> void:
 	if shop_ui:
 		shop_ui.reset_for_new_round()
 		print("[GameController] Shop reset for new round")
+	
+	# Reset gaming console uses for new round
+	_reset_gaming_console_for_round()
 
 
 ## _apply_automatic_debuffs(round_number: int) -> void
