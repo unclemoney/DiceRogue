@@ -24,7 +24,7 @@ theme = ExtResource("2_theme")
 
 [node name="ChoreUI" parent="Panel" instance=ExtResource("3_chore_ui")]
 layout_mode = 1
-offset_left = 243.0
-offset_top = 154.0
+offset_left = 82.0
+offset_top = 97.0
 offset_right = 383.0
-offset_bottom = 254.0
+offset_bottom = 202.0

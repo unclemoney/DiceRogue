@@ -41,10 +41,10 @@ shader_parameter/edge_arc_strength = 0.3
 [node name="ScoreCardUI" type="Control"]
 layout_mode = 3
 anchors_preset = 0
-offset_left = -32.0
-offset_top = 3.0
-offset_right = 8.0
-offset_bottom = 43.0
+offset_left = -28.0
+offset_top = 23.0
+offset_right = 12.0
+offset_bottom = 63.0
 theme = ExtResource("1_pm5im")
 script = ExtResource("1_3x83p")
 
@@ -52,7 +52,7 @@ script = ExtResource("1_3x83p")
 layout_mode = 0
 offset_left = -8.0
 offset_top = -52.0
-offset_right = 348.0
+offset_right = 382.0
 offset_bottom = 293.0
 scale = Vector2(1.01, 1.01)
 color = Color(0, 0, 0, 1)
@@ -60,21 +60,21 @@ color = Color(0, 0, 0, 1)
 [node name="ColorRect" type="ColorRect" parent="."]
 layout_mode = 0
 offset_left = -6.0
-offset_right = 349.0
+offset_right = 383.0
 offset_bottom = 294.0
 color = Color(1, 1, 0.980392, 1)
 
 [node name="ColorRect" type="ColorRect" parent="ColorRect"]
 layout_mode = 0
 offset_top = -50.0
-offset_right = 355.0
+offset_right = 389.0
 offset_bottom = -3.0
 color = Color(1, 1, 0.980392, 1)
 
 [node name="RichTextLabel" type="RichTextLabel" parent="ColorRect/ColorRect"]
 layout_mode = 0
 offset_top = 5.0
-offset_right = 355.0
+offset_right = 389.0
 offset_bottom = 50.0
 theme_override_fonts/normal_font = ExtResource("3_r7ft4")
 theme_override_font_sizes/normal_font_size = 28
@@ -84,10 +84,13 @@ horizontal_alignment = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 0
-offset_right = 388.0
-offset_bottom = 338.0
+offset_left = -6.0
+offset_right = 384.0
+offset_bottom = 296.0
+alignment = 1
 
 [node name="UpperVBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
+custom_minimum_size = Vector2(180, 0)
 layout_mode = 2
 
 [node name="UpperSectionLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer"]

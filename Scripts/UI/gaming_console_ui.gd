@@ -22,7 +22,7 @@ var _name_label: Label = null
 var _activate_button: Button = null
 var _tooltip_panel: PanelContainer = null
 var _tooltip_label: Label = null
-var _container: HBoxContainer = null
+var _container: VBoxContainer = null
 var _bg_panel: PanelContainer = null
 
 # Power Glove popup
@@ -40,20 +40,21 @@ func _ready() -> void:
 	_tfx = get_node_or_null("/root/TweenFXHelper")
 	z_index = 100
 	visible = false
-	scale = Vector2(0.5, 0.5)
+	scale = Vector2(1.0, 1.0)
 	_build_ui()
+	#visible = true
 
 
 func _build_ui() -> void:
 	# Background panel
 	_bg_panel = PanelContainer.new()
 	var bg_style = StyleBoxFlat.new()
-	bg_style.bg_color = Color(0.08, 0.06, 0.12, 0.95)
+	bg_style.bg_color = Color(0.08, 0.06, 0.12, 0.0)
 	bg_style.border_width_left = 2
 	bg_style.border_width_top = 2
 	bg_style.border_width_right = 2
 	bg_style.border_width_bottom = 2
-	bg_style.border_color = Color(0.9, 0.8, 0.3, 1.0)
+	bg_style.border_color = Color(0.9, 0.8, 0.3, 0.0)
 	bg_style.corner_radius_top_left = 4
 	bg_style.corner_radius_top_right = 4
 	bg_style.corner_radius_bottom_right = 4
@@ -66,9 +67,18 @@ func _build_ui() -> void:
 	add_child(_bg_panel)
 
 	# HBox layout: icon | name | button
-	_container = HBoxContainer.new()
+	_container = VBoxContainer.new()
 	_container.add_theme_constant_override("separation", 8)
 	_bg_panel.add_child(_container)
+	
+	# Activate button
+	_activate_button = Button.new()
+	_activate_button.text = "ACTIVATE"
+	_activate_button.add_theme_font_override("font", vcr_font)
+	_activate_button.add_theme_font_size_override("font_size", 12)
+	_activate_button.custom_minimum_size = Vector2(90, 20)
+	_activate_button.pressed.connect(_on_activate_pressed)
+	_container.add_child(_activate_button)
 
 	# Console icon
 	_icon_rect = TextureRect.new()
@@ -86,16 +96,9 @@ func _build_ui() -> void:
 	_name_label.add_theme_color_override("font_color", VCR_GREEN_BRIGHT)
 	_name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_name_label.text = ""
-	_container.add_child(_name_label)
+	#_container.add_child(_name_label)
 
-	# Activate button
-	_activate_button = Button.new()
-	_activate_button.text = "ACTIVATE"
-	_activate_button.add_theme_font_override("font", vcr_font)
-	_activate_button.add_theme_font_size_override("font_size", 12)
-	_activate_button.custom_minimum_size = Vector2(90, 30)
-	_activate_button.pressed.connect(_on_activate_pressed)
-	_container.add_child(_activate_button)
+
 
 	if _tfx:
 		_activate_button.mouse_entered.connect(_tfx.button_hover.bind(_activate_button))

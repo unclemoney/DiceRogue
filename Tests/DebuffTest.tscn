@@ -224,9 +224,9 @@ texture = ExtResource("5_sqb4o")
 [node name="BackgroundSwirl" type="ColorRect" parent="Background"]
 material = SubResource("ShaderMaterial_w6663")
 offset_left = -137.0
-offset_top = -274.0
+offset_top = -276.0
 offset_right = 563.0
-offset_bottom = 275.0
+offset_bottom = 284.0
 mouse_filter = 2
 
 [node name="CRTManager" parent="Background" instance=ExtResource("5_6hkbr")]
@@ -238,9 +238,9 @@ transform = Transform2D(0.45, 0, 0, 0.65, 580, 120)
 
 [node name="TextureRect" type="TextureRect" parent="Background"]
 offset_left = -173.0
-offset_top = -319.0
-offset_right = 504.0
-offset_bottom = 340.0
+offset_top = -336.0
+offset_right = 507.0
+offset_bottom = 344.0
 scale = Vector2(1.15, 1)
 texture = ExtResource("5_w4iq5")
 
@@ -271,25 +271,25 @@ editor_only = false
 
 [node name="ScoreCardUI" parent="." instance=ExtResource("11_oy5od")]
 offset_left = 810.0
-offset_top = 145.0
+offset_top = 158.0
 offset_right = 810.0
-offset_bottom = 185.0
+offset_bottom = 198.0
 
 [node name="CorkboardUI" parent="." instance=ExtResource("98_ocuqv")]
-offset_left = 30.0
-offset_top = 41.0
-offset_right = 430.0
-offset_bottom = 321.0
+offset_left = 21.0
+offset_top = 21.0
+offset_right = 435.0
+offset_bottom = 213.0
 shop_ui_path = NodePath("../ShopUI")
 
 [node name="PowerUpUI" parent="." instance=ExtResource("14_gtvla")]
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
-offset_left = -3.0
-offset_top = 2.0
-offset_right = 1276.0
-offset_bottom = 720.0
+offset_left = -22.0
+offset_top = -99.0
+offset_right = 1257.0
+offset_bottom = 619.0
 grow_horizontal = 1
 grow_vertical = 1
 size_flags_horizontal = 3
@@ -359,9 +359,9 @@ challenge_manager_path = NodePath("../ChallengeManager")
 
 [node name="VCRTurnTrackerUI" parent="." instance=ExtResource("19_w4iq5")]
 offset_left = 46.0
-offset_top = 578.0
+offset_top = 608.0
 offset_right = 398.0
-offset_bottom = 633.0
+offset_bottom = 663.0
 round_manager_path = NodePath("../RoundManager")
 
 [node name="ShopUI" parent="." instance=ExtResource("32_oy5od")]
@@ -434,8 +434,8 @@ script = ExtResource("101_wcrst")
 [node name="GamingConsoleManager" parent="." instance=ExtResource("1064_gaming_console_mgr")]
 
 [node name="GamingConsoleUI" parent="." instance=ExtResource("1065_gaming_console_ui")]
-offset_left = 36.0
-offset_top = 329.0
-offset_right = 336.0
-offset_bottom = 379.0
+offset_left = 91.0
+offset_top = 339.0
+offset_right = 430.0
+offset_bottom = 497.0
 gaming_console_manager_path = NodePath("../GamingConsoleManager")

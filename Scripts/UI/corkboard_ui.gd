@@ -62,10 +62,10 @@ var _current_state: State = State.SPINES
 var _is_animating: bool = false
 
 # Layout positions (relative to panel)
-var _challenge_spine_pos := Vector2(20, 20)
-var _debuff_spine_pos := Vector2(20, 150)
-var _consumable_spine_start := Vector2(180, 20)
-var _consumable_spine_spacing := 50.0
+var _challenge_spine_pos := Vector2(0, 20)  #20, 15
+var _debuff_spine_pos := Vector2(150, 5)  #25, 115
+var _consumable_spine_start := Vector2(240, 20) #180, 15
+var _consumable_spine_spacing := 45.0
 
 # Animation and overlay
 var _background: ColorRect

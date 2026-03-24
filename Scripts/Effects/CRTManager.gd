@@ -15,7 +15,7 @@ var _is_crt_enabled: bool = false
 
 func _ready() -> void:
 	# Default state: TV is off (black screen)
-	_set_tv_off_state()
+	#_set_tv_off_state()
 	print("[CRTManager] Initialized with TV off state")
 
 func enable_crt() -> void:

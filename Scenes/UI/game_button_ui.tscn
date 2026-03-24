@@ -18,34 +18,35 @@ script = ExtResource("1_v70y2")
 
 [node name="TextureRect" type="TextureRect" parent="."]
 layout_mode = 0
+offset_top = 34.0
 offset_right = 360.0
-offset_bottom = 243.0
+offset_bottom = 277.0
 texture = ExtResource("3_ah431")
 expand_mode = 1
 
 [node name="VCRTape" type="TextureRect" parent="."]
 layout_mode = 0
 offset_left = 34.0
-offset_top = 35.0
+offset_top = 69.0
 offset_right = 327.0
-offset_bottom = 80.0
+offset_bottom = 114.0
 texture = ExtResource("4_tape")
 
 [node name="VCRDoor" type="TextureRect" parent="."]
 layout_mode = 0
 offset_left = 38.0
-offset_top = 34.0
+offset_top = 68.0
 offset_right = 331.0
-offset_bottom = 79.0
+offset_bottom = 113.0
 mouse_filter = 0
 texture = ExtResource("5_door")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 layout_mode = 0
-offset_left = 54.0
-offset_top = 176.0
-offset_right = 306.0
-offset_bottom = 214.0
+offset_left = 618.0
+offset_top = 189.0
+offset_right = 870.0
+offset_bottom = 227.0
 theme_override_constants/separation = 0
 
 [node name="NextRoundButton" type="Button" parent="HBoxContainer"]

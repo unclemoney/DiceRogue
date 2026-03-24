@@ -211,10 +211,30 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("4_ocftj")
 
-[node name="Locked" type="TabBar" parent="TabContainer"]
+[node name="Consoles" type="TabBar" parent="TabContainer"]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 4
+
+[node name="GridContainer" type="GridContainer" parent="TabContainer/Consoles"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+columns = 6
+
+[node name="Panel5" type="Panel" parent="TabContainer/Consoles"]
+material = SubResource("ShaderMaterial_3j5rp")
+layout_mode = 2
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("4_ocftj")
+
+[node name="Locked" type="TabBar" parent="TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 5
 
 [node name="Panel5" type="Panel" parent="TabContainer/Locked"]
 material = SubResource("ShaderMaterial_3j5rp")

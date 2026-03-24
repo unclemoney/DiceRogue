@@ -28,8 +28,8 @@ var _is_animating: bool = false
 var _fan_center: Vector2
 
 # Visual settings
-const BAR_WIDTH: float = 100.0
-const BAR_HEIGHT: float = 40.0
+const BAR_WIDTH: float = 120.0
+const BAR_HEIGHT: float = 20.0
 const DANGER_THRESHOLD: float = 80.0
 const WARNING_THRESHOLD: float = 60.0
 
@@ -92,11 +92,11 @@ func _disconnect_signals() -> void:
 
 func _create_ui_structure() -> void:
 	# Set size and position - wider and shorter layout
-	custom_minimum_size = Vector2(140, 100)
-	size = Vector2(140, 100)
+	custom_minimum_size = Vector2(240, 100)
+	size = Vector2(240, 100)
 	
 	# Main container
-	var main_container = VBoxContainer.new()
+	var main_container = HBoxContainer.new()
 	main_container.name = "MainContainer"
 	main_container.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(main_container)
@@ -121,7 +121,7 @@ func _create_ui_structure() -> void:
 	
 	# Spacer
 	var spacer = Control.new()
-	spacer.custom_minimum_size = Vector2(0, 5)
+	spacer.custom_minimum_size = Vector2(5, 0)
 	main_container.add_child(spacer)
 	
 	# Progress bar container (centered)

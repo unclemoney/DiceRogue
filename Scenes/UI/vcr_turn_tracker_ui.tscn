@@ -98,10 +98,10 @@ vertical_alignment = 1
 
 [node name="ChannelPanel" type="Panel" parent="VCRDisplay"]
 layout_mode = 0
-offset_left = 914.0
-offset_top = 59.0
-offset_right = 1118.0
-offset_bottom = 83.0
+offset_left = 902.0
+offset_top = 46.0
+offset_right = 1106.0
+offset_bottom = 70.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_channel")
 
 [node name="ChannelLabel" type="Label" parent="VCRDisplay/ChannelPanel"]
