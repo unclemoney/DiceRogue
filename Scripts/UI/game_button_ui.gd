@@ -328,7 +328,10 @@ func _on_roll_button_pressed() -> void:
 	
 	print("[GameButtonUI] Roll button pressed. Dice list size:", dice_hand.dice_list.size())
 	
-	next_turn_button.disabled = false
+	# Only re-enable Next Turn if challenge hasn't been completed yet
+	# (after challenge complete + Keep Playing, Next Turn must stay disabled)
+	if not (round_manager and round_manager.is_challenge_completed):
+		next_turn_button.disabled = false
 	if not first_roll_done:
 		first_roll_done = true
 		if shop_button:
@@ -382,6 +385,11 @@ func _on_next_turn_button_pressed() -> void:
 		score_card_ui.update_all()
 		print("[GameButtonUI] Manual update_all() completed")
 		_scored_hand_setup_next_round()
+
+	# If scorecard is complete, game_completed signal already fired — don't advance turn
+	if score_card_ui.scorecard.is_game_complete():
+		print("[GameButtonUI] Scorecard complete — skipping turn advancement")
+		return
 
 	# 2) Proceed with turn advancement (after scoring is complete)
 	print("[GameButtonUI] Starting new turn - enabling roll button and setting dice to ROLLABLE")
@@ -491,6 +499,8 @@ func _on_challenge_completed(challenge_id: String) -> void:
 			if next_round_button:
 				next_round_button.disabled = false
 				print("[GameButtonUI] Next Round button enabled: disabled=", next_round_button.disabled)
+			# Disable Next Turn so player doesn't skip end-of-round rewards
+			next_turn_button.disabled = true
 			if shop_button:
 				shop_button.disabled = false  # Enable shop when challenge is completed
 				_start_shop_button_pulse()  # Start pulse to attract attention

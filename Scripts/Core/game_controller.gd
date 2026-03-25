@@ -150,6 +150,9 @@ var _grounded_debuffs: Array[String] = []  # Debuffs from NC-17 that persist unt
 # Game Over popup
 var _game_over_popup: Control = null
 
+# Continue? panel (PlayStation console)
+var _continue_panel: Control = null
+
 # Pause menu (instantiated on demand)
 var _pause_menu: Control = null
 const PAUSE_MENU_SCENE := preload("res://Scenes/UI/PauseMenu.tscn")
@@ -215,6 +218,7 @@ func _ready() -> void:
 		scorecard.score_assigned.connect(_on_score_manual_assigned)
 		scorecard.score_auto_assigned.connect(update_double_existing_usability)
 		#scorecard.score_added.connect(update_double_existing_usability)
+		scorecard.game_completed.connect(_on_scorecard_complete)
 	if game_button_ui:
 		game_button_ui.connect("shop_button_pressed", _on_shop_button_pressed)	
 		if not game_button_ui.is_connected("dice_rolled", _on_game_button_dice_rolled):
@@ -2672,12 +2676,237 @@ func _on_score_streak_changed(multiplier: float, turns_remaining: int) -> void:
 		print("[GameController] Updated score_streak multiplier to %.2fx" % multiplier)
 
 
+## _on_scorecard_complete(final_score)
+##
+## Called immediately when the last scorecard category is filled.
+## Checks if a PlayStation console is active and has uses remaining.
+## If yes, shows a Continue? panel. Otherwise, triggers game over.
+func _on_scorecard_complete(final_score: int) -> void:
+	if _game_ended:
+		return
+	print("[GameController] Scorecard complete — final score: %d" % final_score)
+	
+	# Check for PlayStation continue
+	if active_gaming_console.has("playstation_console"):
+		var ps_console = active_gaming_console["playstation_console"]
+		if ps_console and ps_console.uses_remaining > 0 and not ps_console._continued_this_round:
+			print("[GameController] PlayStation active with %d uses — showing Continue? panel" % ps_console.uses_remaining)
+			_show_continue_panel(final_score)
+			return
+	
+	# No PlayStation or no uses left — check if challenge was completed
+	# Note: The challenge may have self-destructed via end() after the first
+	# game_completed signal (emitting challenge_failed when target wasn't met).
+	# After a PlayStation Continue reroll, the challenge is no longer listening,
+	# so we manually verify the score against the target.
+	if round_manager and not round_manager.is_challenge_completed:
+		var target_score = round_manager.get_current_challenge_target_score()
+		var current_score = scorecard.get_total_score() if scorecard else 0
+		if target_score > 0 and current_score >= target_score:
+			print("[GameController] Challenge target met after reroll: %d/%d — marking completed" % [current_score, target_score])
+			round_manager.is_challenge_completed = true
+	
+	if round_manager and round_manager.is_challenge_completed:
+		print("[GameController] Challenge completed — proceeding to end-of-round flow")
+		_on_shop_button_pressed()
+		return
+	
+	# Challenge not completed — proceed to game over
+	_on_game_over()
+
+
+## _show_continue_panel(final_score)
+##
+## Displays an arcade-style "CONTINUE?" panel when PlayStation console is active.
+## Player can choose to use the continue (+3 bonus rolls + score reroll) or quit.
+func _show_continue_panel(final_score: int) -> void:
+	if _continue_panel and is_instance_valid(_continue_panel):
+		_continue_panel.queue_free()
+	
+	# Mark game as paused to prevent turn advancement
+	_game_ended = true
+	
+	# Create dark overlay
+	var overlay = ColorRect.new()
+	overlay.name = "ContinueOverlay"
+	overlay.color = Color(0, 0, 0, 0.8)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.z_index = 100
+	
+	# Create popup panel
+	var popup = PanelContainer.new()
+	popup.name = "ContinuePopup"
+	popup.custom_minimum_size = Vector2(400, 280)
+	popup.set_anchors_preset(Control.PRESET_CENTER)
+	popup.z_index = 101
+	
+	# Style the popup with arcade-continue theme (blue/purple)
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.1, 0.08, 0.18, 0.98)
+	style.border_color = Color(0.4, 0.3, 1.0, 1.0)
+	style.set_border_width_all(4)
+	style.set_corner_radius_all(12)
+	style.set_content_margin_all(20)
+	style.shadow_color = Color(0.2, 0.1, 0.5, 0.6)
+	style.shadow_size = 10
+	popup.add_theme_stylebox_override("panel", style)
+	
+	# Content container
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 15)
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	
+	# "CONTINUE?" title with arcade animation
+	var title_label = RichTextLabel.new()
+	title_label.bbcode_enabled = true
+	title_label.fit_content = true
+	title_label.scroll_active = false
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.text = "[center][color=#7B68EE][shake rate=8 level=4]CONTINUE?[/shake][/color][/center]"
+	title_label.add_theme_font_size_override("normal_font_size", 36)
+	vbox.add_child(title_label)
+	
+	# Description
+	var desc_label = Label.new()
+	desc_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc_label.text = "+3 Bonus Rolls & Score Reroll"
+	desc_label.add_theme_font_size_override("font_size", 18)
+	desc_label.add_theme_color_override("font_color", Color(0.8, 0.8, 1.0, 0.9))
+	vbox.add_child(desc_label)
+	
+	# Current score display
+	var score_label = Label.new()
+	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	score_label.text = "Current Score: %d" % final_score
+	score_label.add_theme_font_size_override("font_size", 16)
+	score_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7, 1))
+	vbox.add_child(score_label)
+	
+	# Spacer
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 15)
+	vbox.add_child(spacer)
+	
+	# Button container
+	var button_container = HBoxContainer.new()
+	button_container.add_theme_constant_override("separation", 30)
+	button_container.alignment = BoxContainer.ALIGNMENT_CENTER
+	
+	# "Use Continue" button
+	var use_button = Button.new()
+	use_button.text = "Use Continue"
+	use_button.custom_minimum_size = Vector2(150, 45)
+	use_button.pressed.connect(_on_use_continue_pressed)
+	button_container.add_child(use_button)
+	
+	# Style the use button with a highlight
+	var use_style_normal = StyleBoxFlat.new()
+	use_style_normal.bg_color = Color(0.2, 0.15, 0.5, 1.0)
+	use_style_normal.border_color = Color(0.5, 0.4, 1.0, 1.0)
+	use_style_normal.set_border_width_all(2)
+	use_style_normal.set_corner_radius_all(6)
+	use_style_normal.set_content_margin_all(8)
+	use_button.add_theme_stylebox_override("normal", use_style_normal)
+	
+	var use_style_hover = use_style_normal.duplicate()
+	use_style_hover.bg_color = Color(0.3, 0.25, 0.6, 1.0)
+	use_button.add_theme_stylebox_override("hover", use_style_hover)
+	
+	# "Quit" button
+	var quit_button = Button.new()
+	quit_button.text = "Quit"
+	quit_button.custom_minimum_size = Vector2(120, 45)
+	quit_button.pressed.connect(_on_continue_quit_pressed)
+	button_container.add_child(quit_button)
+	
+	vbox.add_child(button_container)
+	popup.add_child(vbox)
+	
+	# Add to tree
+	overlay.add_child(popup)
+	add_child(overlay)
+	_continue_panel = overlay
+	
+	# Center popup after adding to tree
+	await get_tree().process_frame
+	var viewport_size = get_tree().root.get_viewport().get_visible_rect().size
+	popup.position = (viewport_size - popup.size) / 2.0
+	
+	# Animate popup in
+	popup.scale = Vector2(0.5, 0.5)
+	popup.modulate.a = 0
+	var tween = create_tween().set_parallel()
+	tween.tween_property(popup, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(popup, "modulate:a", 1.0, 0.2)
+
+
+## _on_use_continue_pressed()
+##
+## Player chose to use the PlayStation continue. Triggers the bonus rolls
+## and score reroll, then dismisses the Continue? panel.
+func _on_use_continue_pressed() -> void:
+	print("[GameController] Player used Continue!")
+	
+	# Dismiss the continue panel
+	if _continue_panel and is_instance_valid(_continue_panel):
+		_continue_panel.queue_free()
+		_continue_panel = null
+	
+	# Undo the game_ended flag so the player can keep playing
+	_game_ended = false
+	
+	# Trigger the PlayStation continue
+	if active_gaming_console.has("playstation_console"):
+		var ps_console = active_gaming_console["playstation_console"]
+		if ps_console:
+			ps_console._trigger_continue()
+	
+	# Re-enable game buttons for the bonus rolls
+	if game_button_ui:
+		var roll_btn = game_button_ui.get_node_or_null("HBoxContainer/RollButton")
+		if roll_btn:
+			roll_btn.disabled = false
+		var next_btn = game_button_ui.get_node_or_null("HBoxContainer/NextTurnButton")
+		if next_btn:
+			next_btn.disabled = true
+		var shop_btn = game_button_ui.get_node_or_null("HBoxContainer/ShopButton")
+		if shop_btn:
+			shop_btn.disabled = true
+	
+	# Set dice to rollable state
+	if dice_hand:
+		dice_hand.set_all_dice_rollable()
+	
+	print("[GameController] Continue activated — player has bonus rolls")
+
+
+## _on_continue_quit_pressed()
+##
+## Player chose to quit instead of using the continue. Proceeds to game over.
+func _on_continue_quit_pressed() -> void:
+	print("[GameController] Player declined Continue — going to Game Over")
+	
+	# Dismiss the continue panel
+	if _continue_panel and is_instance_valid(_continue_panel):
+		_continue_panel.queue_free()
+		_continue_panel = null
+	
+	# _game_ended is already true from _show_continue_panel
+	_on_game_over()
+
+
 ## _on_game_over()
 ##
-## Called when max turns (13) is reached. Shows Game Over popup with results.
+## Called when max turns (13) is reached or scorecard is complete. Shows Game Over popup.
 ## If items were unlocked, shows unlock panel before the game over popup.
+## Guards against double-firing.
 func _on_game_over() -> void:
-	print("[GameController] Game over - max turns reached")
+	# Guard against double-firing (game_completed + turn_tracker game_over)
+	if _game_over_popup and is_instance_valid(_game_over_popup):
+		print("[GameController] Game over already shown — ignoring duplicate")
+		return
+	
+	print("[GameController] Game over triggered")
 	
 	# Mark game as ended - blocks shop access
 	_game_ended = true
@@ -2860,6 +3089,9 @@ func _on_new_game_pressed() -> void:
 	if _game_over_popup and is_instance_valid(_game_over_popup):
 		_game_over_popup.queue_free()
 		_game_over_popup = null
+	# Reset autoloads that persist across scene reloads
+	if PlayerEconomy:
+		PlayerEconomy.reset_to_starting_money()
 	get_tree().reload_current_scene()
 
 
@@ -3098,6 +3330,23 @@ func _open_shop_ui() -> void:
 	if not shop_ui.visible:
 		# Refresh prices and reroll display for current discount state
 		shop_ui.on_shop_opened()
+		
+		# Disable Roll button while shop is open
+		if game_button_ui:
+			var roll_btn = game_button_ui.get_node_or_null("HBoxContainer/RollButton")
+			if roll_btn:
+				roll_btn.disabled = true
+		
+		# Clear scorecard display and score panels for visual closure
+		if score_card_ui:
+			score_card_ui._reset_score_breakdown_labels()
+			score_card_ui.clear_category_highlight()
+			score_card_ui.stop_idle_float()
+			if score_card_ui.best_hand_label:
+				score_card_ui.best_hand_label.text = ""
+			if score_card_ui.scorecard:
+				score_card_ui.scorecard.reset_scores_preserve_levels()
+				score_card_ui.update_all()
 		
 		# Disable CRT when opening shop
 		if crt_manager:
@@ -3499,6 +3748,12 @@ func _on_transition_keep_playing() -> void:
 	if _round_transition_overlay and is_instance_valid(_round_transition_overlay):
 		_round_transition_overlay.queue_free()
 		_round_transition_overlay = null
+	
+	# Disable Next Turn so player doesn't skip end-of-round rewards
+	if game_button_ui:
+		var next_btn = game_button_ui.get_node_or_null("HBoxContainer/NextTurnButton")
+		if next_btn:
+			next_btn.disabled = true
 
 
 ## _on_transition_enter_shop()
@@ -3521,6 +3776,10 @@ func _on_transition_enter_shop() -> void:
 # notification (currently commented out).
 func _on_challenge_failed(id: String) -> void:
 	print("[GameController] Challenge failed:", id)
+
+	# Notify round_manager so consoles like PlayStation can respond
+	if round_manager:
+		round_manager.fail_round()
 
 	# Get challenge data for notification
 	var def = challenge_manager.get_def(id)

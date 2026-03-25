@@ -19,18 +19,18 @@ power_up_spine_scene = ExtResource("2_spine")
 
 [node name="Label" type="Label" parent="."]
 layout_mode = 0
-offset_left = 280.0
-offset_top = 417.0
-offset_right = 372.0
-offset_bottom = 440.0
+offset_left = 54.0
+offset_top = 429.0
+offset_right = 146.0
+offset_bottom = 452.0
 theme_override_fonts/font = ExtResource("3_m0mdk")
 text = "POWER UPS"
 
 [node name="SlotsLabel" type="Label" parent="."]
 layout_mode = 0
-offset_left = 380.0
-offset_top = 417.0
-offset_right = 420.0
-offset_bottom = 440.0
+offset_left = 154.0
+offset_top = 429.0
+offset_right = 194.0
+offset_bottom = 452.0
 theme_override_fonts/font = ExtResource("3_m0mdk")
 text = "0/10"

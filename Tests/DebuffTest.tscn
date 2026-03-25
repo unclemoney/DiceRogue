@@ -286,10 +286,10 @@ shop_ui_path = NodePath("../ShopUI")
 anchors_preset = 0
 anchor_right = 0.0
 anchor_bottom = 0.0
-offset_left = -22.0
-offset_top = -99.0
-offset_right = 1257.0
-offset_bottom = 619.0
+offset_left = -27.0
+offset_top = -111.0
+offset_right = 1252.0
+offset_bottom = 607.0
 grow_horizontal = 1
 grow_vertical = 1
 size_flags_horizontal = 3
@@ -356,6 +356,13 @@ score_card_ui_path = NodePath("../ScoreCardUI")
 turn_tracker_path = NodePath("../TurnTracker")
 round_manager_path = NodePath("../RoundManager")
 challenge_manager_path = NodePath("../ChallengeManager")
+
+[node name="GamingConsoleUI" parent="." instance=ExtResource("1065_gaming_console_ui")]
+offset_left = 91.0
+offset_top = 339.0
+offset_right = 430.0
+offset_bottom = 497.0
+gaming_console_manager_path = NodePath("../GamingConsoleManager")
 
 [node name="VCRTurnTrackerUI" parent="." instance=ExtResource("19_w4iq5")]
 offset_left = 46.0
@@ -432,10 +439,3 @@ size_flags_vertical = 3
 script = ExtResource("101_wcrst")
 
 [node name="GamingConsoleManager" parent="." instance=ExtResource("1064_gaming_console_mgr")]
-
-[node name="GamingConsoleUI" parent="." instance=ExtResource("1065_gaming_console_ui")]
-offset_left = 91.0
-offset_top = 339.0
-offset_right = 430.0
-offset_bottom = 497.0
-gaming_console_manager_path = NodePath("../GamingConsoleManager")

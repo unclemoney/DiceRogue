@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_data")
 id = "playstation_console"
-display_name = "PlayStation — Continue?"
+display_name = "Continue?"
 description = "Auto-grants +3 rolls when a challenge fails. 1 use per round. Passive."
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")

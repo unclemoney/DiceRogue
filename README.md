@@ -241,6 +241,12 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - **Loaded Dice** ($75): Randomly sets one of your dice to a random value (1-6).
 - **Mods** (`Scripts/Mods/`) - Dice behavior modifiers
 - **Gaming Consoles** (`Scripts/GamingConsole/`) - Unique console abilities (one active at a time)
+  - **Shop Layout**: Consoles displayed in a 3-column grid (2 rows of 3) to prevent overflow; consoles remain visible after purchase with "LIMIT (1)" on the buy button
+  - **NES / Power Glove**: After ACTIVATE, compact +1/-1 buttons spawn above each rolled/locked die; buttons clear on use or next roll. Dice value changes are synced to `DiceResults` so scoring reads updated values.
+  - **SNES / Blast Processing**: ACTIVATE button glows yellow with "1.5x READY" text when the multiplier is primed; resets after consumption. Category counter tracks via `score_assigned` only (no double-counting on auto-scored categories).
+  - **SEGA / Combo System**: Combo break detection uses the **base score** (before modifiers) so that Sega's own additive bonus cannot prevent zero-score resets. A pre-scoring hook (`about_to_score`) unregisters the combo additive **before** score calculation when the base score is 0, ensuring zero-base scores stay zero.
+  - **SEGA Saturn / Cartridge Tilt**: Shifts all rolled/locked dice by +1 or −1; syncs `DiceResults` after modification so scoring uses updated values.
+  - **PlayStation / Continue?**: When the scorecard is completely filled, a **Continue? panel** appears if PlayStation is active. The player can choose to **Use Continue** (+3 bonus rolls + score reroll mode) or **Quit** (proceed to Game Over). The `game_completed` signal fires immediately when the last category is scored—no need to press Next Turn.
 
 ### Statistics & Analytics
 - **RollStats** (autoload) - Tracks game statistics like yahtzees, bonuses, and combinations
@@ -698,10 +704,20 @@ After completing a challenge and clicking the Shop button, an End of Round Stati
 - **Total round bonus: $105**
 
 **Implementation:**
-- `EndOfRoundStatsPanel` (`Scripts/UI/end_of_round_stats_panel.gd`) - Panel UI and animation
+- `EndOfRoundStatsPanel` (`Scripts/UI/end_of_round_stats_panel.gd`) - Panel UI and animation; stops money sounds and cancels remaining animations when dismissed early
 - `RoundManager.calculate_empty_category_bonus()` - Counts null categories × $10
 - `RoundManager.calculate_score_above_target_bonus()` - (score - target) × $1
 - Bonuses awarded via `PlayerEconomy.add_money()` when "Head to Shop" is clicked
+
+**End-of-Round Button Behavior:**
+- When a challenge is completed, the **Next Turn** button is disabled to prevent skipping end-of-round rewards
+- The **Shop** button pulses to guide the player toward the end-of-round stats flow
+- When entering the Shop, the **Roll** button is disabled and the scorecard display is cleared (scores, additive/multiplier labels, Best Hand label, and category highlight) for visual closure
+
+**PlayStation Reroll & Challenge Check:**
+- After using the PlayStation Continue, the Shop button is disabled during bonus rolls
+- When the rerolled category is scored and the scorecard completes again, the game checks if the challenge was completed — if so, it routes to the normal end-of-round flow (stats panel → shop) instead of game over
+- **Fallback Detection**: Because the challenge self-destructs (disconnects from all scorecard signals) when the first `game_completed` fires with an insufficient score, a manual score-vs-target check in `_on_scorecard_complete` ensures challenge completion is detected after a PlayStation reroll
 
 **Challenge Reward Display:**
 - Challenge UI now displays reward amount on the post-it note
@@ -943,7 +959,7 @@ A cinematic full-screen overlay displayed after challenge celebration fireworks,
 - **Enter Shop** button hidden since there's no next round
 
 **Button Actions:**
-- **Keep Playing**: Dismisses overlay, player continues current state
+- **Keep Playing**: Dismisses overlay, disables the Next Turn button (also guarded against re-enable during subsequent rolls), player continues current state
 - **Enter Shop**: Dismisses overlay, opens shop via `_on_shop_button_pressed()`
 
 **Trigger Flow:**
@@ -1072,6 +1088,9 @@ var total_matching = synergy_manager.get_total_matching_bonus()
   - 750ms cooldown between rerolls
   - Cost resets when starting a new game
   - Disabled when no items available or cannot afford
+
+**New Game Reset:**
+- The **New Game** button on the Game Over panel resets player economy (`PlayerEconomy.reset_to_starting_money()`) before reloading the scene, ensuring autoload state doesn't persist
   - Cost label displays with bounce animation on each reroll
 - **Centered Item Layout**: Items automatically center horizontally and vertically regardless of count
 - **Backdrop Click-to-Close**: Clicking outside the shop panel closes it
@@ -1499,7 +1518,7 @@ Gaming Consoles are a unique item class that provides powerful, specialized abil
 - **Atari — Save State** (Price: $300, 2 uses/round)
   - Toggle between **Save** and **Load** modes
   - **Save**: Stores all current dice values as a snapshot
-  - **Load**: Restores dice to the saved snapshot
+  - **Load**: Restores dice to the saved snapshot and syncs the DiceResults cache for accurate scoring
   - Great for preserving a strong hand before a risky reroll
   - Target: Dice Hand
 
@@ -1529,10 +1548,12 @@ Gaming Consoles are a unique item class that provides powerful, specialized abil
   - Target: Scorecard
 
 - **PlayStation — Continue?** (Price: $300, Passive)
-  - Automatically triggers when a **round is failed**
-  - Grants **+3 bonus rolls** to give the player another chance
-  - Single-use per failure event (does not stack)
-  - Target: Game Controller (Round Manager)
+  - Triggers immediately when the **last scorecard category is filled**
+  - Shows an arcade-style **Continue?** panel with two choices:
+    - **Use Continue**: Grants **+3 bonus rolls** and activates **score reroll** mode
+    - **Quit**: Proceeds directly to Game Over
+  - Single-use per round (one continue per round)
+  - Target: Game Controller (via `game_completed` signal)
 
 ### Console Mechanics
 - **One Console Limit**: Only one gaming console can be active at a time. Purchasing a new one replaces the old one.

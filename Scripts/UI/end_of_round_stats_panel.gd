@@ -464,22 +464,40 @@ func _animate_bonuses() -> void:
 	
 	# Animate challenge reward (with zero-value handling)
 	await _animate_counter_with_zero_effect(challenge_reward_value_label, challenge_reward_amount, COUNTER_ANIMATION_DURATION * 0.6)
+	if not _is_animating:
+		return
 	await get_tree().create_timer(REVEAL_DELAY).timeout
+	if not _is_animating:
+		return
 	
 	# Animate chore reward (with zero-value handling)
 	await _animate_counter_with_zero_effect(chore_reward_value_label, chore_reward_amount, COUNTER_ANIMATION_DURATION * 0.6)
+	if not _is_animating:
+		return
 	await get_tree().create_timer(REVEAL_DELAY).timeout
+	if not _is_animating:
+		return
 	
 	# Animate empty categories bonus (with zero-value handling)
 	await _animate_counter_with_zero_effect(empty_categories_bonus_label, empty_categories_bonus, COUNTER_ANIMATION_DURATION * 0.6)
+	if not _is_animating:
+		return
 	await get_tree().create_timer(REVEAL_DELAY).timeout
+	if not _is_animating:
+		return
 	
 	# Animate score above bonus (with zero-value handling)
 	await _animate_counter_with_zero_effect(score_above_bonus_label, score_above_bonus, COUNTER_ANIMATION_DURATION * 0.6)
+	if not _is_animating:
+		return
 	await get_tree().create_timer(REVEAL_DELAY).timeout
+	if not _is_animating:
+		return
 	
 	# Animate total with longer duration and celebration
 	await _animate_counter(total_bonus_label, total_bonus, COUNTER_ANIMATION_DURATION)
+	if not _is_animating:
+		return
 	
 	# Trigger celebration if bonus is high enough
 	if total_bonus >= CELEBRATION_THRESHOLD:
@@ -618,6 +636,12 @@ func _on_continue_button_pressed() -> void:
 ##
 ## Animates the panel hiding and emits signals.
 func _hide_panel() -> void:
+	# Stop any ongoing bonus animations and their sounds
+	_is_animating = false
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.money_player:
+		audio_mgr.money_player.stop()
+	
 	if _animation_tween:
 		_animation_tween.kill()
 	

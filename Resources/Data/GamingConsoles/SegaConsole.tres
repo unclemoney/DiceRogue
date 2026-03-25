@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_data")
 id = "sega_console"
-display_name = "Sega — Combo System"
+display_name = "Combo System"
 description = "+3 bonus per consecutive non-zero score. Resets on 0. Passive."
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")

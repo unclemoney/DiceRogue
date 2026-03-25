@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_data")
 id = "snes_console"
-display_name = "SNES — Blast Processing"
+display_name = "Blast Processing"
 description = "Every 3rd category scored gets a 1.5x multiplier. Passive."
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")

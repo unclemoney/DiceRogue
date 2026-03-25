@@ -67,7 +67,35 @@ func adjust_die(amount: int) -> void:
 	var new_value = clampi(_selected_die.value + amount, 1, _selected_die.dice_data.sides)
 	_selected_die.value = new_value
 	_selected_die.update_visual()
+	# Sync DiceResults cache so scoring sees the updated value
+	if dice_hand_ref:
+		DiceResults.update_from_dice(dice_hand_ref.get_all_dice())
 	print("[NesConsole] Adjusted die to %d" % new_value)
+
+	_disconnect_die_clicks()
+	_selected_die = null
+	_waiting_for_die = false
+	uses_remaining -= 1
+	emit_signal("uses_changed", uses_remaining)
+	emit_signal("die_adjustment_complete")
+	emit_signal("description_updated", get_power_description())
+	emit_signal("activated")
+
+
+## adjust_specific_die(die, amount)
+##
+## Adjusts a specific die by the given amount without requiring die selection.
+## Used by the per-die +/- buttons spawned by the UI.
+func adjust_specific_die(die: Dice, amount: int) -> void:
+	if not die:
+		return
+	var new_value = clampi(die.value + amount, 1, die.dice_data.sides)
+	die.value = new_value
+	die.update_visual()
+	# Sync DiceResults cache so scoring sees the updated value
+	if dice_hand_ref:
+		DiceResults.update_from_dice(dice_hand_ref.get_all_dice())
+	print("[NesConsole] Adjusted specific die to %d" % new_value)
 
 	_disconnect_die_clicks()
 	_selected_die = null

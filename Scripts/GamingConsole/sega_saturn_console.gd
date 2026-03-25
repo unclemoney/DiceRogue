@@ -75,6 +75,9 @@ func apply_tilt(amount: int) -> void:
 			die.update_visual()
 			adjusted_count += 1
 
+	# Sync DiceResults cache so scoring sees the updated values
+	DiceResults.update_from_dice(dice_hand_ref.get_all_dice())
+
 	var direction = "+1" if amount > 0 else "-1"
 	print("[SegaSaturnConsole] Cartridge Tilt %s applied to %d dice" % [direction, adjusted_count])
 

@@ -7,6 +7,9 @@ class_name SnesConsole
 ## Every 3rd category scored gets a 1.5× multiplier applied to that score.
 ## Visual feedback: console icon flash + VCR text.
 
+signal blast_ready
+signal blast_consumed
+
 var scorecard_ref: Scorecard = null
 var categories_scored: int = 0
 var blast_interval: int = 3
@@ -23,8 +26,6 @@ func apply(target) -> void:
 
 	if not scorecard_ref.is_connected("score_assigned", _on_score_assigned):
 		scorecard_ref.score_assigned.connect(_on_score_assigned)
-	if not scorecard_ref.is_connected("score_auto_assigned", _on_score_auto_assigned):
-		scorecard_ref.score_auto_assigned.connect(_on_score_auto_assigned)
 
 	if not is_connected("tree_exiting", _on_tree_exiting):
 		connect("tree_exiting", _on_tree_exiting)
@@ -35,8 +36,6 @@ func remove(_target_node) -> void:
 	if scorecard_ref:
 		if scorecard_ref.is_connected("score_assigned", _on_score_assigned):
 			scorecard_ref.score_assigned.disconnect(_on_score_assigned)
-		if scorecard_ref.is_connected("score_auto_assigned", _on_score_auto_assigned):
-			scorecard_ref.score_auto_assigned.disconnect(_on_score_auto_assigned)
 	if ScoreModifierManager.has_multiplier(modifier_source_name):
 		ScoreModifierManager.unregister_multiplier(modifier_source_name)
 	scorecard_ref = null
@@ -44,10 +43,6 @@ func remove(_target_node) -> void:
 
 
 func _on_score_assigned(_section: Scorecard.Section, _category: String, _score: int) -> void:
-	_track_category_scored()
-
-
-func _on_score_auto_assigned(_section: Scorecard.Section, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
 	_track_category_scored()
 
 
@@ -60,10 +55,12 @@ func _track_category_scored() -> void:
 		ScoreModifierManager.register_multiplier(modifier_source_name, blast_multiplier)
 		print("[SnesConsole] BLAST PROCESSING! 1.5x multiplier active for next score")
 		emit_signal("activated")
+		emit_signal("blast_ready")
 	else:
 		# Remove multiplier if it was active
 		if ScoreModifierManager.has_multiplier(modifier_source_name):
 			ScoreModifierManager.unregister_multiplier(modifier_source_name)
+			emit_signal("blast_consumed")
 
 	emit_signal("description_updated", get_power_description())
 

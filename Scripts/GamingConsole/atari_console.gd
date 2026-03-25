@@ -93,6 +93,9 @@ func _load_dice_state() -> void:
 		else:
 			if dice_list[i].get_state() == Dice.DiceState.LOCKED:
 				dice_list[i].set_state(Dice.DiceState.ROLLED)
+	# Sync DiceResults cache so scoring sees the updated values
+	if dice_hand_ref:
+		DiceResults.update_from_dice(dice_hand_ref.get_all_dice())
 	print("[AtariConsole] Loaded dice state: %s" % str(saved_values))
 	_clear_saved_state()
 

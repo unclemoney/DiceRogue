@@ -259,10 +259,6 @@ func _populate_shop_items() -> void:
 		var consoles = gaming_console_manager.get_available_consoles()
 		var filtered_consoles = _filter_out_purchased_items(consoles, "gaming_console")
 		filtered_consoles = _filter_unlocked_items(filtered_consoles, "gaming_console")
-		# Also filter out already-owned console (only one allowed at a time)
-		if game_controller and game_controller.has_method("has_gaming_console"):
-			if game_controller.has_gaming_console():
-				filtered_consoles = []
 		for id in filtered_consoles:
 			var data = gaming_console_manager.get_def(id)
 			if data:
@@ -1108,7 +1104,8 @@ func _style_grid_containers() -> void:
 	for container in containers:
 		if container:
 			# Set columns to create more centered layout (only for GridContainer)
-			if container is GridContainer:
+			# Skip gaming_console_container — it uses 3 columns set in _replace_grid_with_centered_layout
+			if container is GridContainer and container != gaming_console_container:
 				container.columns = 2
 			
 			# Center the container content
@@ -1173,25 +1170,39 @@ func _replace_grid_with_centered_layout() -> void:
 		main_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		main_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 		
-		# Create inner HBox for horizontal centering of items
-		var hbox = HBoxContainer.new()
-		hbox.name = "ItemContainer"
-		hbox.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		hbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-		hbox.add_theme_constant_override("separation", 40)
+		# Create inner container for items
+		# Consoles tab uses GridContainer (3 columns, 2 rows) to avoid spilling off-screen
+		var item_container: Control
+		if tab_node.name == "Consoles":
+			var grid_item = GridContainer.new()
+			grid_item.name = "ItemContainer"
+			grid_item.columns = 3
+			grid_item.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			grid_item.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			grid_item.add_theme_constant_override("h_separation", 30)
+			grid_item.add_theme_constant_override("v_separation", 16)
+			item_container = grid_item
+			print("[ShopUI] Using GridContainer for Consoles tab to fit more items")
+		else:
+			var hbox = HBoxContainer.new()
+			hbox.name = "ItemContainer"
+			hbox.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			hbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+			hbox.add_theme_constant_override("separation", 40)
+			item_container = hbox
 		
-		# Move children from grid to hbox
+		# Move children from grid to item_container
 		var children_to_move = []
 		for child in grid.get_children():
 			children_to_move.append(child)
 		
 		for child in children_to_move:
 			grid.remove_child(child)
-			hbox.add_child(child)
+			item_container.add_child(child)
 		
-		# Build the hierarchy: tab -> margin -> main_vbox -> hbox -> items
-		main_vbox.add_child(hbox)
+		# Build the hierarchy: tab -> margin -> main_vbox -> item_container -> items
+		main_vbox.add_child(item_container)
 		margin_container.add_child(main_vbox)
 		tab_node.add_child(margin_container)
 		
@@ -1200,19 +1211,19 @@ func _replace_grid_with_centered_layout() -> void:
 		
 		# Update container references
 		if tab_node.name == "PowerUps":
-			power_up_container = hbox
+			power_up_container = item_container
 			# Add reroll UI to PowerUps tab
 			_add_reroll_ui_to_tab(tab_node)
 		elif tab_node.name == "Consumables":
-			consumable_container = hbox
+			consumable_container = item_container
 			# Add reroll UI to Consumables tab (clone of the buttons)
 			_add_reroll_ui_to_tab(tab_node)
 		elif tab_node.name == "Mods":
-			mod_container = hbox
+			mod_container = item_container
 		elif tab_node.name == "Colors":
-			colored_dice_container = hbox
+			colored_dice_container = item_container
 		elif tab_node.name == "Consoles":
-			gaming_console_container = hbox
+			gaming_console_container = item_container
 		
 		print("[ShopUI] Created centered layout for:", tab_node.name)
 

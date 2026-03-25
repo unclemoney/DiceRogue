@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_data")
 id = "nes_console"
-display_name = "NES — Power Glove"
+display_name = "Power Glove"
 description = "Adjust any die by +1 or -1. 1 use per round."
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")

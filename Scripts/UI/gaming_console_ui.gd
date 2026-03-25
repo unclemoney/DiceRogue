@@ -70,7 +70,7 @@ func _build_ui() -> void:
 	_container = VBoxContainer.new()
 	_container.add_theme_constant_override("separation", 8)
 	_bg_panel.add_child(_container)
-	
+
 	# Activate button
 	_activate_button = Button.new()
 	_activate_button.text = "ACTIVATE"
@@ -186,6 +186,13 @@ func show_console(data: GamingConsoleData, instance: GamingConsole) -> void:
 		if not instance.is_connected("tilt_complete", _on_tilt_complete):
 			instance.tilt_complete.connect(_on_tilt_complete)
 
+	# Connect Blast Processing glow signals
+	if instance is SnesConsole:
+		if not instance.is_connected("blast_ready", _on_blast_ready):
+			instance.blast_ready.connect(_on_blast_ready)
+		if not instance.is_connected("blast_consumed", _on_blast_consumed):
+			instance.blast_consumed.connect(_on_blast_consumed)
+
 	visible = true
 	print("[GamingConsoleUI] Showing console: %s" % data.display_name)
 
@@ -200,11 +207,24 @@ func hide_console() -> void:
 				_console_instance.description_updated.disconnect(_on_description_updated)
 		if _console_instance.is_connected("uses_changed", _on_uses_changed):
 			_console_instance.uses_changed.disconnect(_on_uses_changed)
+		if _console_instance is SnesConsole:
+			if _console_instance.is_connected("blast_ready", _on_blast_ready):
+				_console_instance.blast_ready.disconnect(_on_blast_ready)
+			if _console_instance.is_connected("blast_consumed", _on_blast_consumed):
+				_console_instance.blast_consumed.disconnect(_on_blast_consumed)
+		if _console_instance is NesConsole:
+			var nes = _console_instance as NesConsole
+			if nes.dice_hand_ref and nes.dice_hand_ref.is_connected("roll_started", _clear_nes_die_buttons):
+				nes.dice_hand_ref.roll_started.disconnect(_clear_nes_die_buttons)
+	_blast_glow_active = false
+	if _activate_button:
+		_activate_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	_console_data = null
 	_console_instance = null
 	visible = false
 	_hide_power_glove_popup()
 	_hide_tilt_popup()
+	_clear_nes_die_buttons()
 	emit_signal("console_removed")
 
 
@@ -278,87 +298,124 @@ func _hide_tooltip() -> void:
 		_tooltip_panel.visible = false
 
 
-# ── Power Glove Popup ────────────────────────────────────
+# ── Blast Processing Glow ────────────────────────────────
+
+var _blast_glow_active: bool = false
+
+func _on_blast_ready() -> void:
+	_blast_glow_active = true
+	if _activate_button and _console_instance and _console_instance.is_passive():
+		_activate_button.text = "1.5x READY"
+		_activate_button.modulate = Color(1.0, 0.9, 0.2, 1.0)
+		if _tfx:
+			_tfx.idle_pulse(_activate_button)
+
+
+func _on_blast_consumed() -> void:
+	_blast_glow_active = false
+	if _activate_button and _console_instance and _console_instance.is_passive():
+		_activate_button.text = "ACTIVE"
+		_activate_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
+		if _tfx:
+			_tfx.stop_effect(_activate_button)
+
+
+# ── Power Glove Per-Die Buttons ──────────────────────────
+
+var _nes_die_buttons: Array = []
 
 func _on_awaiting_die_click() -> void:
 	_activate_button.text = "PICK DIE"
 	_activate_button.disabled = true
+	_spawn_nes_die_buttons()
 
 
 func _on_die_adjustment_complete() -> void:
-	_show_power_glove_popup()
+	_clear_nes_die_buttons()
+	_update_button_state()
 
 
-func _show_power_glove_popup() -> void:
-	# The popup is actually shown AFTER the die is selected
-	# by the NesConsole, so we check for a selected die
+## _spawn_nes_die_buttons()
+##
+## Spawns +1/-1 button pairs above each rolled/locked die.
+## Clicking a button adjusts that specific die and removes all buttons.
+func _spawn_nes_die_buttons() -> void:
+	_clear_nes_die_buttons()
 	var nes = _console_instance as NesConsole
-	if not nes or not nes.get_selected_die():
-		_update_button_state()
+	if not nes or not nes.dice_hand_ref:
 		return
 
-	if _power_glove_popup:
-		_power_glove_popup.queue_free()
+	# Connect roll_started to clean up buttons when player rolls again
+	if not nes.dice_hand_ref.is_connected("roll_started", _clear_nes_die_buttons):
+		nes.dice_hand_ref.roll_started.connect(_clear_nes_die_buttons)
 
-	_power_glove_popup = PanelContainer.new()
-	_power_glove_popup.z_index = 150
+	for die in nes.dice_hand_ref.get_all_dice():
+		var state = die.get_state()
+		if state == Dice.DiceState.ROLLED or state == Dice.DiceState.LOCKED:
+			var panel = PanelContainer.new()
+			panel.z_index = 150
 
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.06, 0.12, 0.98)
-	style.border_width_left = 3
-	style.border_width_top = 3
-	style.border_width_right = 3
-	style.border_width_bottom = 3
-	style.border_color = Color(1, 0.8, 0.2, 1)
-	style.corner_radius_top_left = 4
-	style.corner_radius_top_right = 4
-	style.corner_radius_bottom_right = 4
-	style.corner_radius_bottom_left = 4
-	style.content_margin_left = 8.0
-	style.content_margin_top = 8.0
-	style.content_margin_right = 8.0
-	style.content_margin_bottom = 8.0
-	_power_glove_popup.add_theme_stylebox_override("panel", style)
+			var style = StyleBoxFlat.new()
+			style.bg_color = Color(0.08, 0.06, 0.12, 0.98)
+			style.border_width_left = 2
+			style.border_width_top = 2
+			style.border_width_right = 2
+			style.border_width_bottom = 2
+			style.border_color = Color(1, 0.8, 0.2, 1)
+			style.corner_radius_top_left = 4
+			style.corner_radius_top_right = 4
+			style.corner_radius_bottom_right = 4
+			style.corner_radius_bottom_left = 4
+			style.content_margin_left = 4.0
+			style.content_margin_top = 4.0
+			style.content_margin_right = 4.0
+			style.content_margin_bottom = 4.0
+			panel.add_theme_stylebox_override("panel", style)
 
-	var hbox = HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 8)
-	_power_glove_popup.add_child(hbox)
+			var hbox = HBoxContainer.new()
+			hbox.add_theme_constant_override("separation", 4)
+			panel.add_child(hbox)
 
-	var plus_btn = Button.new()
-	plus_btn.text = "+1"
-	plus_btn.add_theme_font_override("font", vcr_font)
-	plus_btn.add_theme_font_size_override("font_size", 14)
-	plus_btn.custom_minimum_size = Vector2(50, 30)
-	plus_btn.pressed.connect(_on_power_glove_adjust.bind(1))
-	hbox.add_child(plus_btn)
+			var plus_btn = Button.new()
+			plus_btn.text = "+1"
+			plus_btn.add_theme_font_override("font", vcr_font)
+			plus_btn.add_theme_font_size_override("font_size", 10)
+			plus_btn.custom_minimum_size = Vector2(26, 20)
+			plus_btn.pressed.connect(_on_nes_die_adjust.bind(die, 1))
+			hbox.add_child(plus_btn)
 
-	var minus_btn = Button.new()
-	minus_btn.text = "-1"
-	minus_btn.add_theme_font_override("font", vcr_font)
-	minus_btn.add_theme_font_size_override("font_size", 14)
-	minus_btn.custom_minimum_size = Vector2(50, 30)
-	minus_btn.pressed.connect(_on_power_glove_adjust.bind(-1))
-	hbox.add_child(minus_btn)
+			var minus_btn = Button.new()
+			minus_btn.text = "-1"
+			minus_btn.add_theme_font_override("font", vcr_font)
+			minus_btn.add_theme_font_size_override("font_size", 10)
+			minus_btn.custom_minimum_size = Vector2(26, 20)
+			minus_btn.pressed.connect(_on_nes_die_adjust.bind(die, -1))
+			hbox.add_child(minus_btn)
 
-	# Position near the selected die
-	var die = nes.get_selected_die()
-	_power_glove_popup.position = die.global_position + Vector2(0, -50)
+			# Position centered above the die
+			panel.position = die.global_position + Vector2(-20, -45)
+			get_tree().root.add_child(panel)
+			_nes_die_buttons.append(panel)
 
-	get_tree().root.add_child(_power_glove_popup)
 
-
-func _on_power_glove_adjust(amount: int) -> void:
+func _on_nes_die_adjust(die: Dice, amount: int) -> void:
 	var nes = _console_instance as NesConsole
 	if nes:
-		nes.adjust_die(amount)
-	_hide_power_glove_popup()
-	_update_button_state()
+		nes.adjust_specific_die(die, amount)
+
+
+func _clear_nes_die_buttons() -> void:
+	for btn in _nes_die_buttons:
+		if is_instance_valid(btn):
+			btn.queue_free()
+	_nes_die_buttons.clear()
 
 
 func _hide_power_glove_popup() -> void:
 	if _power_glove_popup and is_instance_valid(_power_glove_popup):
 		_power_glove_popup.queue_free()
 		_power_glove_popup = null
+	_clear_nes_die_buttons()
 
 
 # ── Cartridge Tilt Popup ─────────────────────────────────

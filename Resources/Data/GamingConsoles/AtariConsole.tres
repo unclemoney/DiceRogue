@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_data")
 id = "atari_console"
-display_name = "Atari — Save State"
+display_name = "Save State"
 description = "Save your current dice values, then load them later. 1 use per round."
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")

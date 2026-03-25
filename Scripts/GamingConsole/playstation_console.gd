@@ -11,17 +11,19 @@ signal continue_triggered
 
 var round_manager_ref = null
 var turn_tracker_ref = null
+var scorecard_ref = null
 var bonus_rolls: int = 3
 var _continued_this_round: bool = false
 
 
 func apply(target) -> void:
 	super.apply(target)
-	# Target is the GameController — we need RoundManager and TurnTracker
+	# Target is the GameController — we need RoundManager, TurnTracker, and Scorecard
 	var game_controller = target
 	if game_controller.has_method("get") or true:
 		round_manager_ref = game_controller.get("round_manager")
 		turn_tracker_ref = game_controller.get("turn_tracker")
+		scorecard_ref = game_controller.get("scorecard")
 
 	if round_manager_ref and round_manager_ref.has_signal("round_failed"):
 		if not round_manager_ref.is_connected("round_failed", _on_round_failed):
@@ -38,6 +40,7 @@ func remove(_target_node) -> void:
 			round_manager_ref.round_failed.disconnect(_on_round_failed)
 	round_manager_ref = null
 	turn_tracker_ref = null
+	scorecard_ref = null
 	super.remove(_target_node)
 
 
@@ -60,6 +63,14 @@ func _trigger_continue() -> void:
 		turn_tracker_ref.rolls_left += bonus_rolls
 		turn_tracker_ref.emit_signal("rolls_updated", turn_tracker_ref.rolls_left)
 		print("[PlaystationConsole] CONTINUE? Granted %d bonus rolls!" % bonus_rolls)
+
+	# If the scorecard is completely full, enable score reroll so the player
+	# can pick an existing category to re-score with the bonus rolls
+	if scorecard_ref and _is_scorecard_full():
+		var score_card_ui = get_tree().get_first_node_in_group("scorecard_ui")
+		if score_card_ui and score_card_ui.has_method("activate_score_reroll"):
+			score_card_ui.activate_score_reroll()
+			print("[PlaystationConsole] Scorecard full — activated score reroll mode")
 
 	emit_signal("continue_triggered")
 	emit_signal("activated")
@@ -90,8 +101,21 @@ func get_power_description() -> String:
 	return "Continue?: Auto-grants +%d rolls when a challenge fails. [%d use/round]" % [bonus_rolls, uses_remaining]
 
 
+func _is_scorecard_full() -> bool:
+	if not scorecard_ref:
+		return false
+	for score in scorecard_ref.upper_scores.values():
+		if score == null:
+			return false
+	for score in scorecard_ref.lower_scores.values():
+		if score == null:
+			return false
+	return true
+
+
 func _on_tree_exiting() -> void:
 	if round_manager_ref and round_manager_ref.is_connected("round_failed", _on_round_failed):
 		round_manager_ref.round_failed.disconnect(_on_round_failed)
 	round_manager_ref = null
 	turn_tracker_ref = null
+	scorecard_ref = null

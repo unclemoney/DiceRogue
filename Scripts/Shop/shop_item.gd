@@ -122,6 +122,18 @@ func _process(delta: float) -> void:
 	elif item_type == "colored_dice":
 		_update_colored_dice_display()
 
+	# Check if this is a gaming console and the player already owns one
+	elif item_type == "gaming_console":
+		var game_controller = get_tree().get_first_node_in_group("game_controller")
+		if game_controller and game_controller.has_method("has_gaming_console"):
+			if game_controller.has_gaming_console():
+				buy_button.disabled = true
+				buy_button.text = "LIMIT (1)"
+			else:
+				if buy_button.disabled and buy_button.text == "LIMIT (1)":
+					buy_button.disabled = false
+					buy_button.text = "BUY"
+
 func setup(data: Resource, type: String) -> void:
 	print("[ShopItem] Setting up item:", data.id)
 	item_id = data.id

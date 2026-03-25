@@ -34,6 +34,10 @@ var sixth_slot_target: int = 6
 # Debug counter for calculate_score calls
 var calculate_score_call_count := 0
 
+# Stores the base score (before any modifiers) from the most recent actual scoring
+# Used by SEGA combo system to detect true zero scores
+var last_base_score: int = 0
+
 var upper_scores := {
 	"ones": null,
 	"twos": null,
@@ -270,6 +274,11 @@ func set_score(section: int, category: String, score: int) -> void:
 	
 	# Always emit score_changed signal
 	emit_signal("score_changed", new_total)
+	
+	# Check if ALL categories are now filled — emit game_completed immediately
+	if is_game_complete():
+		print("[Scorecard] All categories filled — emitting game_completed")
+		emit_signal("game_completed", new_total)
 	
 	print("[Scorecard] Score setting complete")
 	print("===============================")
@@ -695,6 +704,8 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 	calculate_score_call_count += 1
 	
 	var base_score = _calculate_base_score(category, dice_values)
+	if apply_money_effects:
+		last_base_score = base_score
 	
 	# Get dice hand to calculate color effects
 	var dice_hand = get_tree().get_first_node_in_group("dice_hand")
@@ -1041,6 +1052,8 @@ func _categorize_modifier_source(source_name: String) -> String:
 ## This prevents autoscoring bugs when dice roll between signal and deferred call
 func _calculate_score_with_preserved_effects(category: String, dice_values: Array, apply_money_effects: bool, preserved_color_effects: Dictionary) -> int:
 	var base_score = _calculate_base_score(category, dice_values)
+	if apply_money_effects:
+		last_base_score = base_score
 	
 	# Use preserved color effects instead of querying current dice state
 	var color_effects = preserved_color_effects
