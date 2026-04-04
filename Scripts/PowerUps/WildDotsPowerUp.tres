@@ -6,7 +6,7 @@
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
 atlas = ExtResource("1_icon")
-region = Rect2(206, 303, 96, 143)
+region = Rect2(206, 267, 88, 124)
 
 [resource]
 script = ExtResource("1_powerup_data")
@@ -18,4 +18,3 @@ scene = ExtResource("2_scene")
 price = 250
 rarity = "rare"
 rating = "NC-17"
-metadata/_custom_type_script = "uid://powerupdata"

@@ -6,7 +6,7 @@
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
 atlas = ExtResource("1_icon")
-region = Rect2(107, 155, 96, 143)
+region = Rect2(105, 151, 98, 133)
 
 [resource]
 script = ExtResource("1_powerup_data")
