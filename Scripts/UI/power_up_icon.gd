@@ -94,7 +94,7 @@ func _ready() -> void:
 		print("[PowerUpIcon] WARNING: RarityLabel node missing")
 	
 	# Setup card visuals
-	custom_minimum_size = Vector2(80, 120)  # Standard card ratio 2:3
+	custom_minimum_size = Vector2(120, 180)  # Updated card ratio for new atlas art
 	size_flags_horizontal = SIZE_SHRINK_CENTER
 	size_flags_vertical = SIZE_SHRINK_CENTER
 	
@@ -219,7 +219,7 @@ func _create_card_structure() -> void:
 	card_info.name = "CardInfo"
 	card_info.z_index = 2
 	card_info.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	card_info.custom_minimum_size = Vector2(120, 20)
+	card_info.custom_minimum_size = Vector2(160, 20)
 	card_info.visible = false  # Start hidden, show on mouse enter
 	add_child(card_info)
 	
@@ -230,7 +230,7 @@ func _create_card_structure() -> void:
 	card_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	card_title.fit_content = true
 	card_title.scroll_active = false
-	card_title.custom_minimum_size = Vector2(120, 20)
+	card_title.custom_minimum_size = Vector2(160, 20)
 	card_title.add_theme_font_size_override("font_size", 16)
 	card_info.add_child(card_title)
 	
@@ -241,7 +241,7 @@ func _create_card_structure() -> void:
 	sell_button.visible = false
 	sell_button.z_index = 3
 	sell_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	sell_button.size = Vector2(44, 31)
+	sell_button.size = Vector2(50, 35)
 	
 	# Apply button styling directly
 	_apply_action_button_style(sell_button)
@@ -257,8 +257,8 @@ func _create_card_structure() -> void:
 	label_bg.visible = false
 	label_bg.z_index = 3
 	label_bg.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	label_bg.position.y = -55  # Raise by 5 pixels (was -60, now -55)
-	label_bg.position.x = -60
+	label_bg.position.y = -75
+	label_bg.position.x = -40
 	
 	# Apply hover styling directly
 	_apply_hover_tooltip_style(label_bg)
@@ -282,8 +282,8 @@ func _create_card_structure() -> void:
 	rarity_icon.name = "RarityIcon"
 	rarity_icon.z_index = 4
 	rarity_icon.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	rarity_icon.size = Vector2(20, 20)
-	rarity_icon.position = Vector2(-20, -20)
+	rarity_icon.size = Vector2(24, 24)
+	rarity_icon.position = Vector2(-24, -24)
 	add_child(rarity_icon)
 	
 	# Create RarityLabel
@@ -339,11 +339,11 @@ func _setup_shader() -> void:
 func _calculate_title_width(title_text: String) -> float:
 	var char_count = title_text.length()
 	if char_count < 15:
-		return 80.0
-	elif char_count <= 30:
 		return 120.0
-	else:
+	elif char_count <= 30:
 		return 160.0
+	else:
+		return 200.0
 
 ## _apply_shimmer_bbcode(text)
 ## Wraps text with shimmer animation BBCode using rainbow wave effect
@@ -363,7 +363,7 @@ func _apply_data_to_ui() -> void:
 	# Set card art texture
 	if card_art and data.icon:
 		card_art.texture = data.icon
-		card_art.custom_minimum_size = Vector2(59, 93) # match atlas region size
+		card_art.custom_minimum_size = Vector2(96, 143) # match new atlas region size
 		card_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		# Apply same texture to shadow and ensure it's visible
 		if shadow:

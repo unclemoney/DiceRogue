@@ -1,15 +1,19 @@
-[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://b8kfm2yanw7eb"]
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://b8kfm2yanw7eb"]
 
-[ext_resource type="Texture2D" uid="uid://c37jvwhbnvmer" path="res://Resources/Art/Powerups/PowerUp_test7.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://c6e6a483j4vfn" path="res://Resources/Art/Powerups/regular_movies_500.png" id="1_icon"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" uid="uid://bex4k0xhe3xgn" path="res://Scenes/PowerUp/RedPowerRanger.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
+atlas = ExtResource("1_icon")
+region = Rect2(404, 155, 96, 143)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "red_power_ranger"
 display_name = "Red Power Ranger"
 description = "Gain +1 additive score for each red dice scored. The additive is cumulative and applies to all future scores."
-icon = ExtResource("1_icon")
+icon = SubResource("AtlasTexture_icon")
 scene = ExtResource("2_scene")
 price = 75
 rarity = "uncommon"

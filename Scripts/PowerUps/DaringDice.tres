@@ -1,15 +1,19 @@
-[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://ch3ocw278laxw"]
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://ch3ocw278laxw"]
 
-[ext_resource type="Texture2D" uid="uid://cibi06ah5yg8q" path="res://Resources/Art/Powerups/PowerUp_test4.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://ffjem017owqi" path="res://Resources/Art/Powerups/campy_80s_500.png" id="1_icon"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" uid="uid://cnwsp0rgugc14" path="res://Scenes/PowerUp/DaringDicePowerUp.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
+atlas = ExtResource("1_icon")
+region = Rect2(206, 7, 96, 143)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "daring_dice"
 display_name = "Daring Dice"
 description = "Remove 2 dice but gain +50 additive"
-icon = ExtResource("1_icon")
+icon = SubResource("AtlasTexture_icon")
 scene = ExtResource("2_scene")
 price = 300
 rarity = "rare"

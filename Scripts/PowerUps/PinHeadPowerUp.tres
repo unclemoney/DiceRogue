@@ -1,15 +1,19 @@
-[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://c2kn4gf8x7lwm"]
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://c2kn4gf8x7lwm"]
 
-[ext_resource type="Texture2D" uid="uid://chnl0hqqr66pv" path="res://Resources/Art/Powerups/PowerUp_test6.png" id="1_pin_head_icon"]
+[ext_resource type="Texture2D" uid="uid://jvrs8f1vumwa" path="res://Resources/Art/Powerups/80s_horror_500.png" id="1_pin_head_icon"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" uid="uid://bg8hq7kv0lfs" path="res://Scenes/PowerUp/PinHeadPowerUp.tscn" id="2_pin_head_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
+atlas = ExtResource("1_pin_head_icon")
+region = Rect2(305, 155, 96, 143)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "pin_head"
 display_name = "Pin Head"
 description = "When scoring, picks a random dice value as multiplier"
-icon = ExtResource("1_pin_head_icon")
+icon = SubResource("AtlasTexture_icon")
 scene = ExtResource("2_pin_head_scene")
 price = 275
 rarity = "epic"

@@ -1075,6 +1075,14 @@ var has_rainbow = synergy_manager.has_rainbow_bonus()
 var total_matching = synergy_manager.get_total_matching_bonus()
 ```
 
+### PowerUp Card Art & Layout
+- **Sprite Sheet Art**: All 64 PowerUp icons use AtlasTexture regions from 5 VHS-style movie poster sprite sheets (500×750px, 5×5 grid each) in `Resources/Art/Powerups/`
+  - Sheets: `80s_horror_500.png`, `campy_80s_500.png`, `onscure_90s_500.png`, `regular_movies_500.png`, `teen_classics_500px.png`
+  - Atlas grid: 96×143px cells, formula `Rect2(8 + col*99, 7 + row*148, 96, 143)`
+  - Assignment: interleaved across sheets by alphabetical order (`sheet = i % 5`, `slot = i / 5`)
+- **Card Size**: 120×180 pixels (PowerUpIcon scene and script)
+- **Fanout Layout**: ≤5 cards display as a single centered row; 6–10 cards display as 2 rows × 5 columns with 30px spacing
+
 ### UI Architecture
 - **Spine/Fan System**: Cards can be displayed as compact spines or fanned out for interaction
 - **PowerUpUI** (`Scripts/UI/power_up_ui.gd`) - Manages power-up display

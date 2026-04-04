@@ -1,15 +1,19 @@
-[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://b35c4e3am05ds"]
 
+[ext_resource type="Texture2D" uid="uid://ffjem017owqi" path="res://Resources/Art/Powerups/campy_80s_500.png" id="1_icon"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://bgsc1aos08ilx" path="res://Resources/Art/Powerups/PowerUp_test5.png" id="1_icon"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/MeltingDicePowerUp.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
+atlas = ExtResource("1_icon")
+region = Rect2(107, 155, 96, 143)
 
 [resource]
 script = ExtResource("1_script")
 id = "melting_dice"
 display_name = "Melting Dice"
 description = "Starts +80 additive, melts by 8 each score"
-icon = ExtResource("1_icon")
+icon = SubResource("AtlasTexture_icon")
 scene = ExtResource("2_scene")
 price = 50
 rarity = "common"

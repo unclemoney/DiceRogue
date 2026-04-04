@@ -1,15 +1,19 @@
-[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://daf2dal6ft65i"]
 
-[ext_resource type="Texture2D" uid="uid://cpujl0bab3sxp" path="res://Resources/Art/Powerups/PowerUp_test7.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://divncawucf60p" path="res://Resources/Art/Powerups/teen_classics_500px.png" id="1_icon"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/StraightTripletMasterPowerUp.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
+atlas = ExtResource("1_icon")
+region = Rect2(8, 303, 96, 143)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "straight_triplet_master"
 display_name = "Straight Triplet Master"
 description = "Score straights in Lg Straight, Sm Straight, AND Chance in 1 round for +$150 and +75pts"
-icon = ExtResource("1_icon")
+icon = SubResource("AtlasTexture_icon")
 scene = ExtResource("2_scene")
 price = 275
 rarity = "rare"

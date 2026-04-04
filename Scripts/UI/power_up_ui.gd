@@ -340,9 +340,12 @@ func _calculate_fan_positions(count: int) -> Array[Vector2]:
 	var positions: Array[Vector2] = []
 	
 	# Card dimensions (from PowerUpIcon)
-	var card_width: float = 80.0  # PowerUpIcon minimum width
-	var spacing: float = 20.0     # Desired spacing between cards
+	var card_width: float = 120.0  # PowerUpIcon minimum width
+	var card_height: float = 180.0  # PowerUpIcon minimum height
+	var spacing: float = 80.0      # Desired spacing between cards
+	var row_spacing: float = 80.0  # Vertical spacing between rows
 	var card_spacing: float = card_width + spacing  # Total space per card
+	var max_per_row: int = 5
 	
 	# Screen center
 	var center_x: float = _fan_center.x
@@ -350,31 +353,44 @@ func _calculate_fan_positions(count: int) -> Array[Vector2]:
 	
 	print("[PowerUpUI] Calculating fan positions for ", count, " cards")
 	print("[PowerUpUI] Center position: ", _fan_center)
-	print("[PowerUpUI] Card width: ", card_width, ", Spacing: ", spacing, ", Total per card: ", card_spacing)
+	print("[PowerUpUI] Card size: ", card_width, "x", card_height, ", Spacing: ", spacing)
 	
-	if count == 1:
-		# Single card in center
-		var pos: Vector2 = Vector2(center_x - card_width / 2.0, center_y)
-		positions.append(pos)
-		print("[PowerUpUI] Single card position: ", pos)
-	elif count == 2:
-		# Two cards: left and right of center
-		var offset: float = card_spacing / 2.0
-		var left_pos: Vector2 = Vector2(center_x - offset - card_width / 2.0, center_y)
-		var right_pos: Vector2 = Vector2(center_x + offset - card_width / 2.0, center_y)
-		positions.append(left_pos)
-		positions.append(right_pos)
-		print("[PowerUpUI] Two cards - Left: ", left_pos, ", Right: ", right_pos)
-	else:
-		# Three or more cards: spread horizontally from center
+	if count <= max_per_row:
+		# Single row, centered horizontally and vertically
 		var total_width: float = (count - 1) * card_spacing
 		var start_x: float = center_x - total_width / 2.0 - card_width / 2.0
+		var pos_y: float = center_y - card_height / 2.0
 		
 		for i in range(count):
 			var pos_x: float = start_x + i * card_spacing
-			var pos: Vector2 = Vector2(pos_x, center_y)
+			var pos: Vector2 = Vector2(pos_x, pos_y)
 			positions.append(pos)
 			print("[PowerUpUI] Card ", i, " position: ", pos)
+	else:
+		# Two rows: top row gets ceil(count/2), bottom row gets the rest
+		var top_count: int = int(ceil(float(count) / 2.0))
+		var bottom_count: int = count - top_count
+		var total_height: float = 2.0 * card_height + row_spacing
+		var top_y: float = center_y - total_height / 2.0
+		var bottom_y: float = top_y + card_height + row_spacing
+		
+		# Top row
+		var top_total_width: float = (top_count - 1) * card_spacing
+		var top_start_x: float = center_x - top_total_width / 2.0 - card_width / 2.0
+		for i in range(top_count):
+			var pos_x: float = top_start_x + i * card_spacing
+			var pos: Vector2 = Vector2(pos_x, top_y)
+			positions.append(pos)
+			print("[PowerUpUI] Row 0, Card ", i, " position: ", pos)
+		
+		# Bottom row
+		var bottom_total_width: float = (bottom_count - 1) * card_spacing
+		var bottom_start_x: float = center_x - bottom_total_width / 2.0 - card_width / 2.0
+		for i in range(bottom_count):
+			var pos_x: float = bottom_start_x + i * card_spacing
+			var pos: Vector2 = Vector2(pos_x, bottom_y)
+			positions.append(pos)
+			print("[PowerUpUI] Row 1, Card ", i, " position: ", pos)
 	
 	return positions
 
