@@ -1847,6 +1847,10 @@ func _on_consumable_ui_used(consumable_id: String) -> void:
 	print("[GameController] About to emit consumable_used signal AFTER stats update")
 	emit_signal("consumable_used", consumable_id, consumable)
 	print("[GameController] consumable_used signal emitted")
+	
+	# Notify chores manager immediately so "use consumable" task is credited
+	if chores_manager:
+		chores_manager.check_task_completion({"consumable_used": true})
 
 
 ## _on_score_rerolled(_section, _category, _score)
@@ -3283,6 +3287,10 @@ func _show_end_of_round_stats() -> void:
 	if not end_of_round_stats_panel.is_connected("continue_to_shop_pressed", _on_stats_panel_continue):
 		end_of_round_stats_panel.continue_to_shop_pressed.connect(_on_stats_panel_continue, CONNECT_ONE_SHOT)
 	
+	# Update button text for final round
+	var is_final_round: bool = round_manager and current_round_num >= round_manager.max_rounds
+	end_of_round_stats_panel.set_final_round(is_final_round)
+	
 	# Show the panel - it will calculate bonuses internally
 	end_of_round_stats_panel.show_stats(stats_data)
 
@@ -3712,7 +3720,21 @@ func _show_round_transition_overlay(challenge_id: String) -> void:
 				var next_def = challenge_manager.get_def(next_id)
 				if next_def:
 					next_name = next_def.display_name
-					next_target = next_def.target_score
+					# Determine base target: check round config override first
+					var next_round_number: int = next_index + 1
+					var base_target: int = next_def.target_score
+					if use_round_config_goals and channel_manager:
+						var next_round_config = channel_manager.get_round_config(channel_manager.current_channel, next_round_number)
+						if next_round_config and next_round_config.target_score_override > 0:
+							base_target = next_round_config.target_score_override
+					# Apply channel scaling
+					if channel_manager:
+						next_target = channel_manager.get_scaled_target_score(base_target)
+					else:
+						next_target = base_target
+					# Apply challenge score modifier (same as live gameplay)
+					if challenge_score_modifier != 1.0:
+						next_target = int(next_target * challenge_score_modifier)
 
 	# Build data dictionary
 	var data := {

@@ -240,7 +240,11 @@ func _on_uses_changed(_remaining: int) -> void:
 
 
 func _on_description_updated(_new_desc: String) -> void:
-	pass
+	# Update Atari console button to reflect its current save/load mode
+	if _console_instance is AtariConsole and _activate_button:
+		var atari := _console_instance as AtariConsole
+		if not atari.is_passive() and atari.uses_remaining > 0:
+			_activate_button.text = "READY" if atari.current_mode == AtariConsole.SaveMode.SAVE else "RESTORE"
 
 
 func _update_button_state() -> void:

@@ -81,6 +81,7 @@ func _create_spine_structure() -> void:
 	title_label.add_theme_color_override("font_shadow_color", Color.BLACK)
 	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(title_label)
+	title_label.visible = false  # Hidden for now; code kept for future re-enabling
 	
 	# Create count label (shows multiple instances)
 	count_label = Label.new()

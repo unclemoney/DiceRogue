@@ -332,6 +332,14 @@ func _build_ui() -> void:
 ##   - round_number: int
 ##   - challenge_target: int
 ##   - final_score: int
+## set_final_round(is_final: bool)
+##
+## Updates the continue button text based on whether this is the final round.
+## Call before show_stats() to ensure the correct label is visible.
+func set_final_round(is_final: bool) -> void:
+	if continue_button:
+		continue_button.text = "Head to Next Channel" if is_final else "Head to Shop"
+
 ##   - empty_categories: int
 ##   - scorecard: Scorecard reference (for calculating empty categories)
 ##   - challenge_reward: int (reward from completing the challenge)
