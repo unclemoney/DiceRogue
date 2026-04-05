@@ -1025,7 +1025,8 @@ func _spawn_shockwave() -> void:
 	var shockwave = ColorRect.new()
 	shockwave.size = Vector2(ring_size, ring_size)
 	shockwave.position = -Vector2(ring_size / 2.0, ring_size / 2.0)
-	shockwave.z_index = -1  # Behind the die
+	shockwave.z_index = 1  # Above die sprite so it's visible over DiceAreaBackground
+	shockwave.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shockwave.color = Color(1, 1, 1, 0)  # Transparent base—shader handles visuals
 	
 	var shader_mat = ShaderMaterial.new()
@@ -1080,9 +1081,18 @@ func animate_anticipation() -> void:
 ## animate_critical_flash()
 ##
 ## On high scores (Yahtzee, 50+ points): white flash on die for impact.
+## Uses shader flash_strength uniform for a visible SDR-friendly flash.
 func animate_critical_flash() -> void:
 	var tween = get_tree().create_tween()
-	tween.tween_property(self, "modulate", Color(2.5, 2.5, 2.5, 1.0), 0.03)\
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "modulate", Color.WHITE, 0.12)\
-		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	# Flash to bright white via shader
+	tween.tween_method(
+		func(v): dice_material.set_shader_parameter("flash_strength", v),
+		0.0, 0.85, 0.05
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# Hold briefly at peak
+	tween.tween_interval(0.06)
+	# Fade back out
+	tween.tween_method(
+		func(v): dice_material.set_shader_parameter("flash_strength", v),
+		0.85, 0.0, 0.2
+	).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)

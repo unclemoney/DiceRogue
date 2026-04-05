@@ -162,6 +162,7 @@ var _challenge_celebration = null
 
 # Chore selection popup (instantiated when needed)
 var _chore_selection_popup = null
+var _pending_chore_selection: bool = false  # True when chore selection is waiting to be shown
 
 # Pending unlocked items to display before stats panel
 var _pending_unlocked_items: Array = []
@@ -174,6 +175,7 @@ var pending_mods: Array[String] = []
 var mod_persistence_map: Dictionary = {}  # mod_id -> int tracking how many instances of each mod should persist
 var _shop_tween: Tween
 var _end_of_round_stats_shown: bool = false  # Track if stats panel was shown this round
+var _pending_end_of_round_stats: bool = false  # Deferred stats display waiting for chore popup to close
 var _challenge_reward_this_round: int = 0  # Track challenge reward for end-of-round stats
 var _challenge_reward_granted: bool = false  # Prevent double-granting challenge reward
 var _chores_reward_granted: bool = false  # Prevent double-granting chores reward
@@ -194,9 +196,10 @@ func _ready() -> void:
 	var debug_panel = preload("res://Scenes/UI/DebugPanel.tscn").instantiate()
 	add_child(debug_panel)
 	
-	# Add unlock notification UI
+	# Add unlock notification UI (replaces UnlockedItemPanel for unlock display)
 	var unlock_notification_ui = preload("res://Scenes/UI/UnlockNotificationUI.tscn").instantiate()
 	add_child(unlock_notification_ui)
+	unlocked_item_panel = unlock_notification_ui
 	
 	# Connect to ProgressManager unlock signals and tell it to connect to game scene
 	var progress_manager = get_node("/root/ProgressManager")
@@ -529,6 +532,10 @@ func _restart_game_for_new_channel() -> void:
 	
 	# Reset end of round stats shown flag
 	_end_of_round_stats_shown = false
+	_pending_end_of_round_stats = false
+	# NOTE: Do NOT reset _pending_chore_selection here — it was just set by
+	# chores_manager.reset_for_new_game() above and needs to survive until
+	# the popup is actually shown after round_manager.start_game().
 	
 	# Reset game ended flag for new game
 	_game_ended = false
@@ -576,6 +583,10 @@ func _restart_game_for_new_channel() -> void:
 	if round_manager:
 		round_manager.start_game()
 		print("[GameController] Game restarted for new channel")
+	
+	# Show chore selection popup for the new game (queued by reset_for_new_game)
+	if _pending_chore_selection:
+		_show_chore_selection_popup()
 
 
 ## _clear_active_challenges() -> void
@@ -3287,6 +3298,13 @@ func _on_shop_button_pressed() -> void:
 ## Shows the end of round statistics panel with bonus calculations.
 ## Calculates and awards bonuses, then connects to panel signal to open shop after.
 func _show_end_of_round_stats() -> void:
+	# Defer if chore selection popup is currently open
+	if _chore_selection_popup and is_instance_valid(_chore_selection_popup) and _chore_selection_popup.visible:
+		print("[GameController] Chore popup open — deferring end of round stats")
+		_pending_end_of_round_stats = true
+		return
+	
+	_pending_end_of_round_stats = false
 	print("[GameController] Showing end of round stats panel")
 	
 	# Get current round data
@@ -3714,7 +3732,16 @@ func _queue_round_transition_overlay(challenge_id: String) -> void:
 	var timer = get_tree().create_timer(1.6)
 	await timer.timeout
 
+	# Show the round transition overlay first
 	_show_round_transition_overlay(challenge_id)
+
+	# If a chore selection is pending, show popup ON TOP of the overlay and wait
+	if _pending_chore_selection:
+		_show_chore_selection_popup()
+		# Wait until the popup is dismissed before the overlay becomes interactive
+		while _chore_selection_popup and is_instance_valid(_chore_selection_popup) and _chore_selection_popup.visible:
+			await get_tree().process_frame
+		print("[GameController] Chore selection done — overlay now interactive")
 
 
 ## _show_round_transition_overlay(challenge_id)
@@ -4152,6 +4179,9 @@ func _on_round_started(round_number: int) -> void:
 	
 	# Reset end of round stats flag for new round
 	_end_of_round_stats_shown = false
+	_pending_end_of_round_stats = false
+	# NOTE: Do NOT reset _pending_chore_selection here — it is cleared only
+	# when the popup is actually shown via _show_chore_selection_popup().
 	
 	# Reset challenge and chores reward tracking for new round
 	_challenge_reward_this_round = 0
@@ -4490,7 +4520,25 @@ func _on_chore_selection_requested() -> void:
 	if not chores_manager:
 		return
 	
-	print("[GameController] Chore selection requested — showing popup")
+	# If a challenge was just completed, defer chore popup until the round
+	# transition overlay is ready (avoids stacking panels).
+	if round_manager and round_manager.is_challenge_completed:
+		print("[GameController] Chore selection deferred — challenge completing")
+		_pending_chore_selection = true
+		return
+	
+	_show_chore_selection_popup()
+
+
+## _show_chore_selection_popup()
+##
+## Creates (if needed) and displays the ChoreSelectionPopup overlay.
+func _show_chore_selection_popup() -> void:
+	if not chores_manager:
+		return
+	
+	print("[GameController] Showing chore selection popup")
+	_pending_chore_selection = false
 	
 	# Create popup if not already existing
 	if not _chore_selection_popup or not is_instance_valid(_chore_selection_popup):
@@ -4512,6 +4560,12 @@ func _on_chore_popup_selection_made(is_hard: bool) -> void:
 	if chores_manager:
 		chores_manager.accept_chore_selection(is_hard)
 		print("[GameController] Chore selection forwarded: %s" % ("HARD" if is_hard else "EASY"))
+	
+	# If end-of-round stats were deferred, show them after popup animates out
+	if _pending_end_of_round_stats:
+		# Wait for the popup's exit animation to finish (~0.2s)
+		await get_tree().create_timer(0.3).timeout
+		_show_end_of_round_stats()
 
 
 ## _on_mom_triggered()

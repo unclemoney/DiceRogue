@@ -205,7 +205,8 @@ func reset_for_new_game() -> void:
 	reset_round_tracking()  # Reset round-specific tracking
 	progress_changed.emit(current_progress)
 	mom_mood_changed.emit(mom_mood)
-	select_new_task()
+	# Queue chore selection popup so the player picks their first chore
+	_queue_chore_selection()
 	print("[ChoresManager] Reset for new game - mood: %d, round: %d" % [mom_mood, current_round_number])
 
 

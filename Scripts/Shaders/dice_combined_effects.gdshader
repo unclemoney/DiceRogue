@@ -4,6 +4,7 @@ uniform float glow_strength = 0.0;
 uniform float lock_overlay_strength = 0.0;
 uniform bool disabled = false;
 uniform vec4 disabled_color : source_color = vec4(0.8, 0.0, 0.0, 0.5);
+uniform float flash_strength : hint_range(0.0, 1.0) = 0.0;
 
 // Perspective tilt uniforms (mouse-reactive hover)
 uniform float x_rot : hint_range(-15.0, 15.0) = 0.0;
@@ -97,6 +98,11 @@ void fragment() {
         // Mix with red color and add pulsing effect
         float pulse = 0.8 + 0.2 * sin(TIME * 3.0);
         result = mix(result, disabled_color, 0.5 * pulse);
+    }
+
+    // Apply critical flash (white flash overlay)
+    if (flash_strength > 0.0) {
+        result = mix(result, vec4(1.0, 1.0, 1.0, result.a), flash_strength);
     }
 
     COLOR = result;
