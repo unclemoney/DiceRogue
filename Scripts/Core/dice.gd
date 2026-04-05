@@ -30,8 +30,32 @@ var _previous_state: DiceState = DiceState.ROLLABLE
 
 @export var dice_data: DiceData
 
+# Mouse-reactive tilt settings
+@export var angle_x_max: float = 15.0
+@export var angle_y_max: float = 15.0
+
 var value: int = 1
 var color: DiceColorClass.Type = DiceColorClass.Type.NONE
+
+# Idle breathing state
+var _breathing_phase_offset: float = 0.0
+var _is_breathing := false
+var _breathing_base_pos: Vector2 = Vector2.ZERO
+
+# Animation tracking
+var _hover_tween: Tween
+var _roll_tween: Tween
+var _entry_tween: Tween
+var _exit_tween: Tween
+
+# Intensity parameters from DiceAnimationIntensity (updated per-turn)
+var intensity_params: Dictionary = {
+	"bounce_height_mult": 1.0,
+	"speed_mult": 1.0,
+	"rotation_mult": 1.0,
+	"shockwave_scale": 1.0,
+	"idle_intensity": 1.0,
+}
 
 # Signal for when this die is locked
 signal die_locked(die: Dice)
@@ -62,6 +86,11 @@ func _ready():
 	dice_material.set_shader_parameter("glow_strength", 0.0)
 	dice_material.set_shader_parameter("lock_overlay_strength", 0.6 if is_locked else 0.0)
 	dice_material.set_shader_parameter("disabled", false)
+	dice_material.set_shader_parameter("x_rot", 0.0)
+	dice_material.set_shader_parameter("y_rot", 0.0)
+	
+	# Randomize idle breathing phase so dice don't sync
+	_breathing_phase_offset = randf() * TAU
 
 	update_visual()
 	
@@ -230,9 +259,51 @@ func set_lock_shader_enabled(enabled: bool) -> void:
 			0.6 if (is_locked && enabled) else 0.0)
 
 func animate_roll():
-	var tween := get_tree().create_tween()
-	tween.tween_property(self, "scale", Vector2(1.2, 1.2), 0.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "scale", Vector2(1, 1), 0.1).set_delay(0.1)
+	_stop_idle_breathing()
+	
+	if _roll_tween and _roll_tween.is_valid():
+		_roll_tween.kill()
+	
+	var rand_mult = randf_range(0.85, 1.15)
+	var bounce_mult = intensity_params.get("bounce_height_mult", 1.0)
+	var rot_mult = intensity_params.get("rotation_mult", 1.0)
+	var spd_mult = intensity_params.get("speed_mult", 1.0)
+	var hop_height = 12.0 * rand_mult * bounce_mult
+	var rand_rotation = randf_range(-5.0, 5.0) * rot_mult
+	var base_y = home_position.y
+	var time_scale = rand_mult / maxf(spd_mult, 0.5)
+	
+	_roll_tween = get_tree().create_tween()
+	
+	# Phase A: Anticipation squash
+	_roll_tween.tween_property(self, "scale", Vector2(1.15, 0.85), 0.06 * time_scale)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	
+	# Phase B: Launch stretch + hop up + slight rotation
+	_roll_tween.tween_property(self, "scale", Vector2(0.85, 1.25), 0.08 * time_scale)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_roll_tween.parallel().tween_property(self, "position:y", base_y - hop_height, 0.08 * time_scale)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_roll_tween.parallel().tween_property(self, "rotation_degrees", rand_rotation, 0.08 * time_scale)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	
+	# Phase C: Impact squash + land
+	_roll_tween.tween_property(self, "scale", Vector2(1.2, 0.8), 0.06 * time_scale)\
+		.set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	_roll_tween.parallel().tween_property(self, "position:y", base_y, 0.06 * time_scale)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	
+	# Phase D: Elastic settle
+	_roll_tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.12 * time_scale)\
+		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	_roll_tween.parallel().tween_property(self, "rotation_degrees", 0.0, 0.12 * time_scale)\
+		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	
+	# Spawn shockwave after settle
+	_roll_tween.tween_callback(_spawn_shockwave)
+	
+	# Start idle breathing after roll animation completes
+	_roll_tween.tween_callback(_start_idle_breathing)
 
 func update_visual():
 	if not dice_data:
@@ -249,6 +320,10 @@ func update_visual():
 
 
 func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
+	# Handle mouse motion for perspective tilt while hovering
+	if event is InputEventMouseMotion and _is_hovering:
+		_handle_mouse_tilt(event.position)
+	
 	# Replace check for non-existent "select_die" action with direct mouse button check
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		# Check if input is disabled (e.g., Lock Dice Debuff active)
@@ -278,6 +353,7 @@ func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 
 func _on_mouse_entered():
 	_is_hovering = true
+	_stop_idle_breathing()
 	
 	# Check if input is disabled first (Lock Dice Debuff)
 	if not _can_process_input:
@@ -288,16 +364,19 @@ func _on_mouse_entered():
 		shake_denied()
 		return  # Don't show hover effects if disabled
 	
-	var tween := get_tree().create_tween()
+	if _hover_tween and _hover_tween.is_valid():
+		_hover_tween.kill()
+	
+	_hover_tween = get_tree().create_tween()
 
-	tween.parallel().tween_method(
+	_hover_tween.parallel().tween_method(
 		func(strength):
 			dice_material.set_shader_parameter("glow_strength", strength),
 		0.0, 0.5, 0.2
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
-	tween.parallel().tween_property(
-		self, "scale", Vector2(1.2, 1.2), 0.2
+	_hover_tween.parallel().tween_property(
+		self, "scale", Vector2(1.15, 1.15), 0.3
 	).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	
 	# Show color tooltip for colored dice
@@ -307,7 +386,7 @@ func _on_mouse_entered():
 		color_label_bg.modulate.a = 0.0
 		
 		# Animate tooltip appearance
-		tween.parallel().tween_property(color_label_bg, "modulate:a", 1.0, 0.2)
+		_hover_tween.parallel().tween_property(color_label_bg, "modulate:a", 1.0, 0.2)
 
 func _on_mouse_exited():
 	_is_hovering = false
@@ -315,21 +394,33 @@ func _on_mouse_exited():
 	if current_state == DiceState.DISABLED:
 		return
 	
-	var tween := get_tree().create_tween()
+	# Reset perspective tilt
+	if dice_material:
+		dice_material.set_shader_parameter("x_rot", 0.0)
+		dice_material.set_shader_parameter("y_rot", 0.0)
+	
+	if _hover_tween and _hover_tween.is_valid():
+		_hover_tween.kill()
+	
+	_hover_tween = get_tree().create_tween()
 
-	tween.parallel().tween_method(
+	_hover_tween.parallel().tween_method(
 		func(strength):
 			dice_material.set_shader_parameter("glow_strength", strength),
 		0.5, 0.0, 0.2
 	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
-	tween.parallel().tween_property(
-		self, "scale", Vector2(1.0, 1.0), 0.2
+	_hover_tween.parallel().tween_property(
+		self, "scale", Vector2(1.0, 1.0), 0.3
 	).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	
 	# Hide color tooltip
 	if color_label_bg:
 		color_label_bg.visible = false
+	
+	# Resume idle breathing if in appropriate state
+	if current_state in [DiceState.ROLLED, DiceState.LOCKED]:
+		_start_idle_breathing()
 
 func toggle_lock():
 	if current_state == DiceState.ROLLED:
@@ -342,39 +433,106 @@ func toggle_lock():
 
 ## animate_entry(from_position: Vector2, duration: float)
 ##
-## Animates the die entering from a starting position to its home position.
-## Uses bounce easing for a playful feel.
-func animate_entry(from_position: Vector2, duration := 0.4) -> void:
+## Animates the die entering with multi-phase bouncy overshoot and elastic settle.
+## Includes scale pop, rotation wobble, and fade-in for juicy feel.
+func animate_entry(from_position: Vector2, duration := 0.6) -> void:
 	position = from_position
-	var tween := get_tree().create_tween()
-	tween.tween_property(self, "position", home_position, duration)\
-		.set_trans(Tween.TRANS_BOUNCE)\
-		.set_ease(Tween.EASE_OUT)
+	scale = Vector2(0.4, 0.4)
+	modulate.a = 0.0
+	var rand_rot = randf_range(-30.0, 30.0)
+	rotation_degrees = rand_rot
+	
+	if _entry_tween and _entry_tween.is_valid():
+		_entry_tween.kill()
+	
+	var rand_mult = randf_range(0.9, 1.1)
+	var bounce_mult = intensity_params.get("bounce_height_mult", 1.0)
+	
+	# Calculate overshoot direction (past home_position)
+	var travel_dir = (home_position - from_position).normalized()
+	var overshoot_dist = randf_range(20.0, 40.0) * rand_mult * bounce_mult
+	var overshoot_pos = home_position + travel_dir * overshoot_dist
+	
+	# Opposite side bounce
+	var bounce_back_dist = randf_range(10.0, 20.0) * rand_mult * bounce_mult
+	var bounce_back_pos = home_position - travel_dir * bounce_back_dist
+	
+	_entry_tween = get_tree().create_tween()
+	
+	# Phase A: Fly in fast to overshoot + fade in + scale up
+	_entry_tween.tween_property(self, "position", overshoot_pos, 0.2 * rand_mult)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_entry_tween.parallel().tween_property(self, "modulate:a", 1.0, 0.1 * rand_mult)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_entry_tween.parallel().tween_property(self, "scale", Vector2(1.15, 1.15), 0.2 * rand_mult)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_entry_tween.parallel().tween_property(self, "rotation_degrees", rand_rot * -0.3, 0.2 * rand_mult)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	
+	# Phase B: Bounce back through home to opposite side
+	_entry_tween.tween_property(self, "position", bounce_back_pos, 0.15 * rand_mult)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_entry_tween.parallel().tween_property(self, "scale", Vector2(0.95, 1.05), 0.15 * rand_mult)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	
+	# Phase C: Elastic settle to home position
+	_entry_tween.tween_property(self, "position", home_position, 0.25 * rand_mult)\
+		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	_entry_tween.parallel().tween_property(self, "scale", Vector2(1.0, 1.0), 0.25 * rand_mult)\
+		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	_entry_tween.parallel().tween_property(self, "rotation_degrees", 0.0, 0.25 * rand_mult)\
+		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 
 signal exit_complete(die: Dice)
 
 ## animate_exit(to_position: Vector2, duration: float)
 ##
-## Animates the die exiting from its current position to a target position.
-## Uses back easing for a smooth departure and emits exit_complete when done.
-func animate_exit(to_position: Vector2, duration := 0.3) -> void:
-	var tween := get_tree().create_tween()
+## Animates the die exiting with explosion effect: scale punch, spin,
+## perpendicular scatter, alpha fade, and white flash on launch.
+func animate_exit(to_position: Vector2, duration := 0.5) -> void:
+	_stop_idle_breathing()
 	
-	# Scale down and move out
-	tween.set_parallel(true)
-	tween.tween_property(self, "position", to_position, duration)\
-		.set_trans(Tween.TRANS_BACK)\
-		.set_ease(Tween.EASE_IN)
-	tween.tween_property(self, "scale", Vector2(0.3, 0.3), duration)\
-		.set_trans(Tween.TRANS_QUAD)\
-		.set_ease(Tween.EASE_IN)
-	tween.tween_property(self, "modulate:a", 0.0, duration * 0.8)\
-		.set_trans(Tween.TRANS_QUAD)\
-		.set_ease(Tween.EASE_IN)
+	if _exit_tween and _exit_tween.is_valid():
+		_exit_tween.kill()
 	
-	# Connect to tween finished using bound callable to avoid freed lambda capture
-	tween.finished.connect(_on_exit_tween_finished)
+	var rand_mult = randf_range(0.85, 1.15)
+	var rot_mult = intensity_params.get("rotation_mult", 1.0)
+	var spin_amount = randf_range(180.0, 720.0) * rot_mult
+	if randf() > 0.5:
+		spin_amount = -spin_amount
+	
+	# Add perpendicular scatter offset
+	var travel_dir = (to_position - position).normalized()
+	var perp = Vector2(-travel_dir.y, travel_dir.x)
+	var scatter = perp * randf_range(-100.0, 100.0)
+	var final_pos = to_position + scatter
+	
+	_exit_tween = get_tree().create_tween()
+	
+	# Phase A: Anticipation punch + white flash
+	_exit_tween.tween_property(self, "scale", Vector2(1.3, 1.3), 0.08 * rand_mult)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_exit_tween.parallel().tween_property(self, "modulate", Color(2.0, 2.0, 2.0, 1.0), 0.04 * rand_mult)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_exit_tween.parallel().tween_property(self, "modulate", Color.WHITE, 0.04 * rand_mult)\
+		.set_delay(0.04 * rand_mult)
+	
+	# Phase B: Explosion launch (parallel)
+	var launch_dur = 0.4 * rand_mult
+	_exit_tween.tween_property(self, "position", final_pos, launch_dur)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_exit_tween.parallel().tween_property(self, "scale", Vector2(1.6, 1.6), launch_dur * 0.4)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_exit_tween.parallel().tween_property(self, "scale", Vector2(0.0, 0.0), launch_dur * 0.6)\
+		.set_delay(launch_dur * 0.4).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_exit_tween.parallel().tween_property(self, "rotation_degrees", spin_amount, launch_dur)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_exit_tween.parallel().tween_property(self, "modulate:a", 0.0, launch_dur * 0.4)\
+		.set_delay(launch_dur * 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	
+	# Emit exit_complete when done
+	_exit_tween.finished.connect(_on_exit_tween_finished)
 
 
 ## _on_exit_tween_finished()
@@ -387,10 +545,15 @@ func _on_exit_tween_finished() -> void:
 
 ## reset_visual_for_spawn()
 ##
-## Resets visual properties to default for next spawn (scale, modulate, etc.)
+## Resets visual properties to default for next spawn (scale, modulate, rotation, etc.)
 func reset_visual_for_spawn() -> void:
 	scale = Vector2.ONE
 	modulate = Color.WHITE
+	rotation_degrees = 0.0
+	_is_breathing = false
+	if dice_material:
+		dice_material.set_shader_parameter("x_rot", 0.0)
+		dice_material.set_shader_parameter("y_rot", 0.0)
 
 
 func unlock() -> void:
@@ -764,3 +927,162 @@ func get_state() -> DiceState:
 ## Returns the current state name as a string for debugging.
 func get_state_name() -> String:
 	return DiceState.keys()[current_state]
+
+
+# ==============================
+# Juicy Animation Methods
+# ==============================
+
+## _handle_mouse_tilt(mouse_pos: Vector2)
+##
+## Computes normalized mouse position within die bounds and sets shader
+## x_rot/y_rot for 3D perspective tilt effect. Adapted from power_up_icon.gd.
+func _handle_mouse_tilt(mouse_pos: Vector2) -> void:
+	if not dice_material:
+		return
+	
+	# Get collision shape size for normalization
+	var shape_node = get_node_or_null("CollisionShape2D")
+	var die_size = Vector2(64, 64)  # Default fallback
+	if shape_node and shape_node.shape:
+		if shape_node.shape is RectangleShape2D:
+			die_size = shape_node.shape.size
+		elif shape_node.shape is CircleShape2D:
+			var r = shape_node.shape.radius
+			die_size = Vector2(r * 2, r * 2)
+	
+	# Normalize mouse position (0 to 1) across die bounds
+	var lerp_val_x = clampf((mouse_pos.x + die_size.x * 0.5) / die_size.x, 0.0, 1.0)
+	var lerp_val_y = clampf((mouse_pos.y + die_size.y * 0.5) / die_size.y, 0.0, 1.0)
+	
+	# X position controls Y rotation, Y position controls X rotation
+	var rot_x = rad_to_deg(lerp_angle(deg_to_rad(-angle_x_max), deg_to_rad(angle_x_max), lerp_val_x))
+	var rot_y = rad_to_deg(lerp_angle(deg_to_rad(angle_y_max), deg_to_rad(-angle_y_max), lerp_val_y))
+	
+	dice_material.set_shader_parameter("x_rot", rot_y)
+	dice_material.set_shader_parameter("y_rot", rot_x)
+
+
+## _process(delta: float)
+##
+## Handles idle breathing animation using sin wave for smooth oscillation.
+## Each die has a unique phase offset so they don't breathe in sync.
+func _process(_delta: float) -> void:
+	if not _is_breathing:
+		return
+	if _is_hovering:
+		return
+	
+	var time = Time.get_ticks_msec() / 1000.0
+	var breath = sin(time * PI + _breathing_phase_offset)
+	
+	# Subtle Y bob (±2px) and scale breathing (±0.02), scaled by intensity
+	var idle_mult = intensity_params.get("idle_intensity", 1.0)
+	var bob_amount = 2.0 * idle_mult
+	var scale_amount = 0.02 * idle_mult
+	
+	# Locked dice breathe at half intensity
+	if current_state == DiceState.LOCKED:
+		bob_amount = 1.0
+		scale_amount = 0.01
+	
+	position.y = _breathing_base_pos.y + breath * bob_amount
+	scale = Vector2(1.0 + breath * scale_amount, 1.0 - breath * scale_amount * 0.5)
+
+
+## _start_idle_breathing()
+##
+## Starts the idle breathing animation. Called after roll settles.
+func _start_idle_breathing() -> void:
+	if current_state not in [DiceState.ROLLED, DiceState.LOCKED]:
+		return
+	_is_breathing = true
+	_breathing_base_pos = home_position
+
+
+## _stop_idle_breathing()
+##
+## Stops idle breathing and resets position/scale to home values.
+func _stop_idle_breathing() -> void:
+	if not _is_breathing:
+		return
+	_is_breathing = false
+	position = home_position
+	# Don't reset scale here - the hover/roll animation will handle it
+
+
+## _spawn_shockwave()
+##
+## Spawns a temporary radial shockwave ring behind the die after rolling.
+## Uses the dice_shockwave shader with progress tween 0→1 over 0.4s.
+func _spawn_shockwave() -> void:
+	if not is_instance_valid(self):
+		return
+	
+	var sw_scale = intensity_params.get("shockwave_scale", 1.0)
+	var ring_size = 128.0 * sw_scale
+	
+	var shockwave = ColorRect.new()
+	shockwave.size = Vector2(ring_size, ring_size)
+	shockwave.position = -Vector2(ring_size / 2.0, ring_size / 2.0)
+	shockwave.z_index = -1  # Behind the die
+	shockwave.color = Color(1, 1, 1, 0)  # Transparent base—shader handles visuals
+	
+	var shader_mat = ShaderMaterial.new()
+	var shader = load("res://Scripts/Shaders/dice_shockwave.gdshader")
+	if not shader:
+		shockwave.queue_free()
+		return
+	shader_mat.shader = shader
+	shader_mat.set_shader_parameter("progress", 0.0)
+	var ring_alpha = clampf(0.6 * sw_scale, 0.3, 1.0)
+	shader_mat.set_shader_parameter("ring_color", Color(1.0, 1.0, 0.8, ring_alpha))
+	shader_mat.set_shader_parameter("ring_width", 0.08)
+	shader_mat.set_shader_parameter("max_radius", 0.5)
+	shockwave.material = shader_mat
+	
+	add_child(shockwave)
+	
+	var tween = get_tree().create_tween()
+	tween.tween_method(
+		func(p): shader_mat.set_shader_parameter("progress", p),
+		0.0, 1.0, 0.4
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	
+	tween.tween_callback(shockwave.queue_free)
+
+
+## animate_anticipation()
+##
+## Pre-roll tremble effect. Rapid position jitter with increasing intensity
+## for 0.3s. Called before dice actually roll for anticipation buildup.
+func animate_anticipation() -> void:
+	_stop_idle_breathing()
+	var tween = get_tree().create_tween()
+	var shake_count = 4
+	var base_pos = home_position
+	
+	for i in range(shake_count):
+		var intensity = (float(i + 1) / shake_count) * 3.0
+		var offset = Vector2(randf_range(-intensity, intensity), randf_range(-intensity, intensity))
+		tween.tween_property(self, "position", base_pos + offset, 0.02)
+	
+	# Scale pulse during tremble
+	tween.parallel().tween_property(self, "scale", Vector2(1.05, 1.05), 0.05)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.parallel().tween_property(self, "scale", Vector2(1.0, 1.0), 0.05)\
+		.set_delay(0.05).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	
+	# Snap back to home
+	tween.tween_property(self, "position", base_pos, 0.01)
+
+
+## animate_critical_flash()
+##
+## On high scores (Yahtzee, 50+ points): white flash on die for impact.
+func animate_critical_flash() -> void:
+	var tween = get_tree().create_tween()
+	tween.tween_property(self, "modulate", Color(2.5, 2.5, 2.5, 1.0), 0.03)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "modulate", Color.WHITE, 0.12)\
+		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)

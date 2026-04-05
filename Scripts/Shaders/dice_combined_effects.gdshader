@@ -5,12 +5,33 @@ uniform float lock_overlay_strength = 0.0;
 uniform bool disabled = false;
 uniform vec4 disabled_color : source_color = vec4(0.8, 0.0, 0.0, 0.5);
 
+// Perspective tilt uniforms (mouse-reactive hover)
+uniform float x_rot : hint_range(-15.0, 15.0) = 0.0;
+uniform float y_rot : hint_range(-15.0, 15.0) = 0.0;
+
 // Dice color uniforms
 uniform float green_color_strength = 0.0;
 uniform float red_color_strength = 0.0;
 uniform float purple_color_strength = 0.0;
 uniform float blue_color_strength = 0.0;
 uniform float yellow_color_strength = 0.0;
+
+void vertex() {
+	// Perspective tilt based on mouse position
+	vec2 centered_uv = UV - vec2(0.5, 0.5);
+
+	// Apply X rotation (tilt forward/backward)
+	float x_rad = radians(x_rot);
+	VERTEX.y *= cos(x_rad);
+
+	// Apply Y rotation (tilt left/right)
+	float y_rad = radians(y_rot);
+	VERTEX.x *= cos(y_rad);
+
+	// Apply slight skew to enhance 3D perspective
+	VERTEX.x += centered_uv.y * sin(y_rad) * 8.0;
+	VERTEX.y += centered_uv.x * sin(x_rad) * 8.0;
+}
 
 void fragment() {
     vec4 original = texture(TEXTURE, UV);

@@ -158,6 +158,33 @@ Full documentation with parameters, recipes, and technical deep-dives: See `ARCA
 - **DiceResults** (autoload) - Result data structure
 - **DiceData** (`Scripts/Dice/DiceData.gd`) - Resource defining dice type (sides, textures)
 - **DiceColor** (`Scripts/Core/dice_color.gd`) - Color system for dice enhancement
+- **DiceAnimationIntensity** (`Scripts/Effects/dice_animation_intensity.gd`) - Score/challenge-linked animation scaling
+
+#### Dice Animation System
+
+All dice use multi-phase tween animations with bounce easing, randomization, and intensity scaling.
+
+| Animation | Trigger | Description |
+|-----------|---------|-------------|
+| **Mouse Tilt** | Hover | 3D perspective rotation via `x_rot`/`y_rot` shader uniforms, following mouse position |
+| **Squash/Stretch Roll** | Roll | 4-phase: anticipation squash → launch stretch + hop → impact squash → elastic settle |
+| **Roll Stagger** | Roll All | Each die rolls with a `roll_stagger_delay` (0.08s) between them, preceded by anticipation tremble |
+| **Bouncy Entry** | Spawn | 3-phase: fly in with overshoot → bounce back → elastic settle. Scale, rotation, and alpha all animate |
+| **Explosion Exit** | Score/Exit | Scale punch + white flash → fly out with perpendicular scatter, spin, scale, and alpha fade |
+| **Anticipation Tremble** | Pre-roll | 8-step position jitter with increasing intensity before dice roll |
+| **Shockwave Ring** | Post-roll | Radial expanding ring shader (`dice_shockwave.gdshader`) spawned after each die settles |
+| **Idle Breathing** | Rolled/Locked | Subtle Y bob (±2px) and scale breathing via `sin(TIME + phase_offset)`. Stops on hover |
+| **Celebration Cascade** | High score | Left-to-right hop wave across all dice with squash/stretch, triggered at intensity ≥ 1.6 |
+| **Critical Flash** | High score | All dice flash white + screen shake, triggered at intensity ≥ 1.6 |
+| **Screen Shake** | High score | Rapid DiceHand position offsets for 0.15s |
+
+**Intensity Scaling**: Animation parameters (bounce height, speed, rotation, shockwave size, idle amplitude) scale dynamically based on challenge progress (0-1) and total score milestone tier (0-4). Calculated by `DiceAnimationIntensity.calculate()` and distributed to dice via `intensity_params` dictionary.
+
+**Shaders**:
+- `dice_combined_effects.gdshader` — Glow, lock overlay, disabled pulse, 5 color effects, and perspective tilt (`x_rot`/`y_rot` vertex transforms)
+- `dice_shockwave.gdshader` — Radial expanding ring with `progress`, `ring_width`, `ring_color`, `max_radius` uniforms
+
+**Test Scene**: `Tests/DiceAnimationTest.tscn` — Interactive test with Spawn/Roll/Exit/Celebrate/Shake/Flash buttons, score slider (0-1500), and challenge progress slider (0-100%).
 
 #### Dice Types
 DiceRogue supports multiple dice types, each with their own face textures and value ranges:

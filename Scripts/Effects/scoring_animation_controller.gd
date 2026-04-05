@@ -256,6 +256,18 @@ func _execute_animation_sequence(score: int, _category: String, breakdown_info: 
 	if score_card_ui:
 		score_card_ui.animate_total_score_bounce(score)
 	
+	# Phase 7: Critical flash + screen shake + celebration cascade on high scores
+	if intensity_scale >= 1.6 and dice_hand:
+		# Critical flash on all dice
+		for die in dice_hand.dice_list:
+			if is_instance_valid(die):
+				die.animate_critical_flash()
+		# Screen shake proportional to intensity
+		dice_hand.animate_screen_shake(intensity_scale)
+		await get_tree().create_timer(0.15).timeout
+		# Celebration wave across dice
+		dice_hand.animate_celebration_cascade(intensity_scale)
+	
 	# Wait for all animations to complete
 	await get_tree().create_timer(1.0 / speed_scale).timeout
 

@@ -350,14 +350,7 @@ func _on_roll_button_pressed() -> void:
 	
 	dice_hand.roll_all()
 	print("▶ Roll pressed — using dice_count =", dice_hand.dice_count)
-	if dice_hand:
-		var dice_values = dice_hand.get_current_dice_values() # dice_hand.roll_dice() returns the values immediately
-		#emit_signal("dice_rolled", dice_values)
-		print("[GameButtonUI] Dice rolled with values:", dice_values)
-	if score_card_ui:
-		score_card_ui.update_best_hand_preview(DiceResults.values)
-	else:
-		push_error("GameButtonUI: score_card_ui reference is null")
+	# Best hand preview now updates in _on_dice_roll_complete() after DiceResults are current
 
 
 func _on_dice_roll_complete() -> void:
@@ -369,6 +362,10 @@ func _on_dice_roll_complete() -> void:
 	# Now that dice have settled, get their values and emit signal
 	var dice_values = dice_hand.get_current_dice_values()
 	emit_signal("dice_rolled", dice_values)
+	
+	# Update best hand preview now that DiceResults are current
+	if score_card_ui:
+		score_card_ui.update_best_hand_preview(DiceResults.values)
 
 func _on_next_turn_button_pressed() -> void:
 	# Notify tutorial manager of next turn action

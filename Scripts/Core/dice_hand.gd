@@ -12,6 +12,7 @@ signal all_dice_exited
 
 @export var roll_delay: float = 0.1
 @export var roll_duration: float = 0.5
+@export var roll_stagger_delay: float = 0.08
 @export var dice_scene:      PackedScene
 @export var dice_count:      int     = 5
 @export var spacing:         float   = 80.0
@@ -287,11 +288,15 @@ func _get_entry_offset(index: int, total_count: int) -> Vector2:
 
 ## _get_exit_offset(index: int, total_count: int) -> Vector2
 ##
-## Returns exit offset (opposite of entry direction).
-func _get_exit_offset(index: int, total_count: int) -> Vector2:
-	# Exit in opposite direction of entry
-	var entry = _get_entry_offset(index, total_count)
-	return -entry * (exit_distance / 400.0)
+## Returns a randomized radial exit offset for explosion scatter effect.
+## Each die gets a random angle with distance variation and slight upward bias.
+func _get_exit_offset(_index: int, _total_count: int) -> Vector2:
+	var angle = randf() * TAU
+	var base_distance = exit_distance * randf_range(0.7, 1.3)
+	var offset = Vector2(cos(angle), sin(angle)) * base_distance
+	# Slight upward bias for a "pop" feel
+	offset.y -= base_distance * 0.15
+	return offset
 
 
 ## animate_all_dice_exit()
@@ -351,7 +356,8 @@ func _on_die_exit_complete(_die: Dice) -> void:
 
 ## roll_all()
 ##
-## Rolls every die in `dice_list` that can be rolled (not locked). 
+## Rolls every die in `dice_list` that can be rolled (not locked).
+## Plays anticipation tremble on all rollable dice first, then staggers rolls.
 ## Plays per-die roll sounds via AudioManager with pitch progression.
 ## Emits `roll_complete` when finished.
 func roll_all() -> void:
@@ -365,25 +371,32 @@ func roll_all() -> void:
 	print("[DiceHand] Current dice type:", current_dice_type.to_upper())
 	print("[DiceHand] Number of dice:", dice_list.size())
 
+	# Phase 1: Anticipation tremble on all rollable dice simultaneously
+	var rollable_dice: Array[Dice] = []
+	for die in dice_list:
+		if die.can_roll():
+			rollable_dice.append(die)
+			die.animate_anticipation()
+
+	if rollable_dice.size() > 0:
+		# Brief pause so anticipation tremble is visible before rolling starts
+		await get_tree().create_timer(0.1).timeout
+
+	# Phase 2: Staggered roll — each die rolls with a small delay
 	var rolled_count = 0
 	for i in range(dice_list.size()):
 		var die = dice_list[i]
 		if die.can_roll():
-			# Play per-die roll sound via AudioManager with slight stagger
-			if Engine.has_singleton("AudioManager") or has_node("/root/AudioManager"):
-				var audio_mgr = get_node_or_null("/root/AudioManager")
-				if audio_mgr:
-					# Stagger sound by roll_delay * die index for natural feel
-					var delay = rolled_count * roll_delay * 0.3
-					if delay > 0:
-						get_tree().create_timer(delay).timeout.connect(
-							func(): audio_mgr.play_dice_roll(i, current_roll_number)
-						)
-					else:
-						audio_mgr.play_dice_roll(i, current_roll_number)
+			# Play per-die roll sound via AudioManager
+			var audio_mgr = get_node_or_null("/root/AudioManager")
+			if audio_mgr:
+				audio_mgr.play_dice_roll(i, current_roll_number)
 			die.roll()
 			rolled_count += 1
 			print("[DiceHand] Die", i + 1, "rolled:", die.value, "- now in state:", die.get_state_name())
+			# Stagger delay between dice (skip delay after last die)
+			if rolled_count < rollable_dice.size():
+				await get_tree().create_timer(roll_stagger_delay * randf_range(0.8, 1.2)).timeout
 		else:
 			print("[DiceHand] Die", i + 1, "skipped (state:", die.get_state_name(), ")")
 
@@ -826,3 +839,69 @@ func debug_clear_all_colors() -> void:
 ## @return Array[Dice] all dice currently in the hand
 func get_all_dice() -> Array[Dice]:
 	return dice_list
+
+
+## animate_celebration_cascade(intensity: float)
+##
+## Choreographed wave across all dice — each die hops in sequence (left to right)
+## with stagger delay. Height scales with intensity. Creates a "Mexican wave" effect.
+func animate_celebration_cascade(intensity: float = 1.0) -> void:
+	if dice_list.is_empty():
+		return
+	# Sort dice by x position for left-to-right wave
+	var sorted_dice: Array[Dice] = dice_list.duplicate()
+	sorted_dice.sort_custom(func(a: Dice, b: Dice): return a.position.x < b.position.x)
+	var hop_height = 18.0 * intensity
+	var hop_duration = 0.25
+	var cascade_stagger = 0.05
+	for i in range(sorted_dice.size()):
+		var die = sorted_dice[i]
+		if not is_instance_valid(die):
+			continue
+		var delay = i * cascade_stagger
+		_animate_cascade_hop(die, hop_height, hop_duration, delay)
+
+
+## _animate_cascade_hop(die, hop_height, duration, delay)
+##
+## Performs a single hop in the celebration cascade for one die.
+func _animate_cascade_hop(die: Dice, hop_height: float, duration: float, delay: float) -> void:
+	if delay > 0:
+		await get_tree().create_timer(delay).timeout
+	if not is_instance_valid(die):
+		return
+	var base_y = die.position.y
+	var tween = get_tree().create_tween()
+	# Hop up
+	tween.tween_property(die, "position:y", base_y - hop_height, duration * 0.4)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	# Scale stretch during hop
+	tween.parallel().tween_property(die, "scale", Vector2(0.9, 1.15), duration * 0.4)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	# Come back down with squash
+	tween.tween_property(die, "position:y", base_y, duration * 0.3)\
+		.set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(die, "scale", Vector2(1.1, 0.9), duration * 0.3)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	# Settle
+	tween.tween_property(die, "scale", Vector2(1.0, 1.0), duration * 0.3)\
+		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+
+## animate_screen_shake(intensity: float)
+##
+## Rapidly offsets the DiceHand node position to simulate screen shake.
+## Intensity scales the offset magnitude.
+func animate_screen_shake(intensity: float = 1.0) -> void:
+	var shake_magnitude = 3.0 * intensity
+	var shake_duration = 0.15
+	var shake_count = 6
+	var step_time = shake_duration / shake_count
+	var original_pos = position
+	var tween = get_tree().create_tween()
+	for i in range(shake_count):
+		var offset = Vector2(randf_range(-shake_magnitude, shake_magnitude), randf_range(-shake_magnitude, shake_magnitude))
+		tween.tween_property(self, "position", original_pos + offset, step_time)
+	# Return to original position
+	tween.tween_property(self, "position", original_pos, step_time)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)

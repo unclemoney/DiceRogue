@@ -2010,6 +2010,29 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 	else:
 		print("[GameController] No scores yet, reroll remains disabled")
 
+	# Update dice animation intensity for next turn
+	_update_dice_animation_intensity()
+
+
+## _update_dice_animation_intensity()
+##
+## Recalculates dice animation intensity based on challenge progress and total score.
+## Distributes updated intensity_params to all dice in the hand.
+func _update_dice_animation_intensity() -> void:
+	if not dice_hand:
+		return
+	var total_score = scorecard.get_total_score() if scorecard else 0
+	var challenge_progress = 0.0
+	for id in active_challenges:
+		var challenge = active_challenges[id]
+		if is_instance_valid(challenge) and challenge.has_method("get_progress"):
+			challenge_progress = maxf(challenge_progress, challenge.get_progress())
+	var params = DiceAnimationIntensity.calculate(challenge_progress, total_score)
+	for die in dice_hand.dice_list:
+		if is_instance_valid(die):
+			die.intensity_params = params
+
+
 ## _create_manual_breakdown_info(category)
 ##
 ## Create breakdown info for manual scoring with active powerups and consumables.
@@ -3126,6 +3149,9 @@ func _on_dice_spawned() -> void:
 	print("[GameController] mod_persistence_map:", mod_persistence_map)
 	if not dice_hand:
 		return
+
+	# Update dice animation intensity for newly spawned dice
+	_update_dice_animation_intensity()
 
 	# Connect mod sell signals for each die
 	for die in dice_hand.dice_list:
