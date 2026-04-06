@@ -53,7 +53,7 @@ var intensity_params: Dictionary = {
 	"bounce_height_mult": 1.0,
 	"speed_mult": 1.0,
 	"rotation_mult": 1.0,
-	"shockwave_scale": 1.0,
+	"shockwave_scale": 20.0,
 	"idle_intensity": 1.0,
 }
 

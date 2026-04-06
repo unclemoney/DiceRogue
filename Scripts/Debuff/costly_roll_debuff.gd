@@ -43,8 +43,8 @@ func _find_dice_hand() -> void:
 	dice_hand = get_tree().get_first_node_in_group("dice_hand")
 	if not dice_hand:
 		var game_controller = get_tree().get_first_node_in_group("game_controller")
-		if game_controller and game_controller.has_node("DiceHand"):
-			dice_hand = game_controller.get_node("DiceHand")
+		if game_controller and game_controller.has_node("../CRTTV/DiceHand"):
+			dice_hand = game_controller.get_node("../CRTTV/DiceHand")
 	if not dice_hand:
 		dice_hand = get_tree().get_root().find_child("DiceHand", true, false)
 	

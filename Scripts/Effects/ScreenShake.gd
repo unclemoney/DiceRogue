@@ -28,13 +28,13 @@ func _process(delta: float) -> void:
 	var x := noise.get_noise_2d(1, noise_i) * shake_strength
 	var y := noise.get_noise_2d(100, noise_i) * shake_strength
 	
-	owner.position = original_pos + Vector2(x, y)
+	get_parent().position = original_pos + Vector2(x, y)
 	
 	if shake_strength <= 0:
-		owner.position = original_pos
+		get_parent().position = original_pos
 		emit_signal("shake_finished")
 
 func shake(intensity: float = 1.0, duration: float = 0.5) -> void:
 	shake_strength = noise_shake_strength * intensity
 	shake_fade = shake_strength / duration
-	original_pos = owner.position
+	original_pos = get_parent().position

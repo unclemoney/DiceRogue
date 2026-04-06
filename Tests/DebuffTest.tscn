@@ -213,15 +213,18 @@ shader_parameter/scanline_strength = 0.15
 [node name="Node2D" type="Node2D"]
 script = ExtResource("1_d3q3t")
 
-[node name="ScreenShake" type="Node" parent="."]
-script = ExtResource("2_oxb5w")
-
-[node name="Background" type="Sprite2D" parent="."]
+[node name="HutchBackground" type="Sprite2D" parent="."]
 material = SubResource("ShaderMaterial_wtptv")
 position = Vector2(641, 360)
 texture = ExtResource("5_sqb4o")
 
-[node name="BackgroundSwirl" type="ColorRect" parent="Background"]
+[node name="CRTTV" type="Node2D" parent="."]
+position = Vector2(641, 360)
+
+[node name="ScreenShake" type="Node" parent="CRTTV"]
+script = ExtResource("2_oxb5w")
+
+[node name="BackgroundSwirl" type="ColorRect" parent="CRTTV"]
 material = SubResource("ShaderMaterial_w6663")
 offset_left = -137.0
 offset_top = -276.0
@@ -229,37 +232,49 @@ offset_right = 563.0
 offset_bottom = 284.0
 mouse_filter = 2
 
-[node name="CRTManager" parent="Background" instance=ExtResource("5_6hkbr")]
+[node name="CRTManager" parent="CRTTV" instance=ExtResource("5_6hkbr")]
 
-[node name="CRTOverlay" parent="Background" instance=ExtResource("3_f4xs4")]
+[node name="CRTOverlay" parent="CRTTV" instance=ExtResource("3_f4xs4")]
 offset = Vector2(580, 120)
 scale = Vector2(0.45, 0.65)
 transform = Transform2D(0.45, 0, 0, 0.65, 580, 120)
 
-[node name="TextureRect" type="TextureRect" parent="Background"]
-offset_left = -173.0
-offset_top = -336.0
-offset_right = 507.0
-offset_bottom = 344.0
-scale = Vector2(1.15, 1)
-texture = ExtResource("5_w4iq5")
-
-[node name="DiceHand" parent="." instance=ExtResource("5_gxabo")]
-dice_area_center = Vector2(850, 525)
+[node name="DiceHand" parent="CRTTV" instance=ExtResource("5_gxabo")]
+dice_area_center = Vector2(209, 165)
 dice_area_size = Vector2(300, 250)
 
-[node name="DiceAreaVisual" type="ReferenceRect" parent="DiceHand"]
+[node name="DiceAreaVisual" type="ReferenceRect" parent="CRTTV/DiceHand"]
 visible = false
-offset_left = 500.0
-offset_top = 200.0
-offset_right = 1100.0
-offset_bottom = 800.0
+offset_left = -141.0
+offset_top = -160.0
+offset_right = 459.0
+offset_bottom = 440.0
 mouse_filter = 2
 border_color = Color(1, 0, 0, 0.5)
 border_width = 2.0
 editor_only = false
 
-[node name="DiceContainer" type="Node2D" parent="."]
+[node name="DiceContainer" type="Node2D" parent="CRTTV"]
+
+[node name="ScoreCardUI" parent="CRTTV" instance=ExtResource("11_oy5od")]
+offset_left = 169.0
+offset_top = -202.0
+offset_right = 169.0
+offset_bottom = -162.0
+
+[node name="ScoringAnimationController" type="Node2D" parent="CRTTV"]
+z_index = 11
+z_as_relative = false
+script = ExtResource("91_fjxkw")
+
+[node name="TVFrame" type="TextureRect" parent="."]
+offset_left = 468.0
+offset_top = 24.0
+offset_right = 1148.0
+offset_bottom = 704.0
+scale = Vector2(1.15, 1)
+mouse_filter = 2
+texture = ExtResource("5_w4iq5")
 
 [node name="ChallengeContainer" type="Node2D" parent="."]
 
@@ -268,12 +283,6 @@ editor_only = false
 [node name="ScoreCard" parent="." instance=ExtResource("7_w6663")]
 
 [node name="TurnTracker" parent="." instance=ExtResource("8_8eqdw")]
-
-[node name="ScoreCardUI" parent="." instance=ExtResource("11_oy5od")]
-offset_left = 810.0
-offset_top = 158.0
-offset_right = 810.0
-offset_bottom = 198.0
 
 [node name="CorkboardUI" parent="." instance=ExtResource("98_ocuqv")]
 offset_left = 21.0
@@ -326,7 +335,7 @@ offset_right = 216.0
 offset_bottom = 224.0
 grow_horizontal = 1
 grow_vertical = 1
-round_manager_path = NodePath("../RoundManager")
+round_manager_path = NodePath("../Managers/RoundManager")
 
 [node name="DebuffUI" parent="." instance=ExtResource("14_oxb5w")]
 visible = false
@@ -351,25 +360,25 @@ offset_right = 47.0
 offset_bottom = 463.0
 grow_horizontal = 1
 grow_vertical = 1
-dice_hand_path = NodePath("../DiceHand")
-score_card_ui_path = NodePath("../ScoreCardUI")
+dice_hand_path = NodePath("../CRTTV/DiceHand")
+score_card_ui_path = NodePath("../CRTTV/ScoreCardUI")
 turn_tracker_path = NodePath("../TurnTracker")
-round_manager_path = NodePath("../RoundManager")
-challenge_manager_path = NodePath("../ChallengeManager")
+round_manager_path = NodePath("../Managers/RoundManager")
+challenge_manager_path = NodePath("../Managers/ChallengeManager")
 
 [node name="GamingConsoleUI" parent="." instance=ExtResource("1065_gaming_console_ui")]
 offset_left = 91.0
 offset_top = 339.0
 offset_right = 430.0
 offset_bottom = 497.0
-gaming_console_manager_path = NodePath("../GamingConsoleManager")
+gaming_console_manager_path = NodePath("../Managers/GamingConsoleManager")
 
 [node name="VCRTurnTrackerUI" parent="." instance=ExtResource("19_w4iq5")]
 offset_left = 46.0
 offset_top = 608.0
 offset_right = 398.0
 offset_bottom = 663.0
-round_manager_path = NodePath("../RoundManager")
+round_manager_path = NodePath("../Managers/RoundManager")
 
 [node name="ShopUI" parent="." instance=ExtResource("32_oy5od")]
 visible = false
@@ -377,36 +386,47 @@ offset_left = 213.0
 offset_top = 4.0
 offset_right = 213.0
 offset_bottom = 4.0
-power_up_manager_path = NodePath("../PowerUpManager")
-consumable_manager_path = NodePath("../ConsumableManager")
-mod_manager_path = NodePath("../ModManager")
-gaming_console_manager_path = NodePath("../GamingConsoleManager")
+power_up_manager_path = NodePath("../Managers/PowerUpManager")
+consumable_manager_path = NodePath("../Managers/ConsumableManager")
+mod_manager_path = NodePath("../Managers/ModManager")
+gaming_console_manager_path = NodePath("../Managers/GamingConsoleManager")
 
 [node name="GameController" parent="." instance=ExtResource("15_aeiu6")]
 challenge_container_path = NodePath("../ChallengeContainer")
-crt_manager_path = NodePath("../Background/CRTManager")
 
-[node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
+[node name="Managers" type="Node" parent="."]
+
+[node name="PowerUpManager" parent="Managers" instance=ExtResource("16_07va6")]
 power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc"), ExtResource("29_bonus_money"), ExtResource("29_money_multiplier"), ExtResource("30_8nt64"), ExtResource("30_2hxro"), ExtResource("31_sqb4o"), ExtResource("32_fullhouse"), ExtResource("33_stepbystep"), ExtResource("70_perfect_strangers"), ExtResource("83_green_monster"), ExtResource("39_hm8bq"), ExtResource("99_wild_dots"), ExtResource("100_pin_head"), ExtResource("101_money_well_spent"), ExtResource("102_highlighted_score"), ExtResource("103_the_consumer_is_always_right"), ExtResource("104_green_slime"), ExtResource("105_red_slime"), ExtResource("106_purple_slime"), ExtResource("107_blue_slime"), ExtResource("108_lower_ten"), ExtResource("109_different_straights"), ExtResource("110_plus_thelast"), ExtResource("111_allowance"), ExtResource("112_ungrounded"), ExtResource("113_shop_rerolls"), ExtResource("114_tango_and_cash"), ExtResource("115_even_higher"), ExtResource("116_money_bags"), ExtResource("117_failed_money"), ExtResource("59_7f4b6"), ExtResource("60_nxp7f"), ExtResource("61_oc53v"), ExtResource("62_3nuss"), ExtResource("63_ja73i"), ExtResource("1038_extra_coupons"), ExtResource("1040_purple_payout"), ExtResource("1041_mod_money"), ExtResource("1042_blue_safety_net"), ExtResource("1043_chore_sprint"), ExtResource("1044_straight_triplet_master"), ExtResource("1045_modded_dice_mastery"), ExtResource("1046_debuff_destroyer"), ExtResource("1047_challenge_easer"), ExtResource("1048_azure_perfection"), ExtResource("1049_rainbow_surge"), ExtResource("1050_the_replicator"), ExtResource("1051_the_piggy_bank"), ExtResource("1052_random_card_level"), ExtResource("1053_yahtzeed_dice"), ExtResource("1054_consumable_collector"), ExtResource("1055_daring_dice"), ExtResource("1056_great_exchange"), ExtResource("1057_extra_rainbow"), ExtResource("1059_melting_dice"), ExtResource("1060_hot_streak"), ExtResource("1061_one_roll_wonder"), ExtResource("1062_power_surge"), ExtResource("1063_snake_eyes")])
 
-[node name="ChallengeManager" parent="." instance=ExtResource("25_3vaha")]
+[node name="ChallengeManager" parent="Managers" instance=ExtResource("25_3vaha")]
 challenge_defs = Array[ExtResource("26_si81o")]([ExtResource("27_1jk2k"), ExtResource("29_1jk2k"), ExtResource("30_o0xxd"), ExtResource("31_ja7vv"), ExtResource("32_ytf57"), ExtResource("33_3ia8s"), ExtResource("34_crossing"), ExtResource("1030_faster_chores"), ExtResource("1031_disabled_mods"), ExtResource("1032_disabled_colors"), ExtResource("1033_reduced_levels_challenge"), ExtResource("1034_wildcard_run"), ExtResource("1035_triple_threat"), ExtResource("1036_perfect_execution"), ExtResource("1037_chaos_theory"), ExtResource("82_66wcx"), ExtResource("83_83ril")])
 
-[node name="ModManager" parent="." instance=ExtResource("23_8eqdw")]
+[node name="ModManager" parent="Managers" instance=ExtResource("23_8eqdw")]
 mod_defs = Array[ExtResource("60_moddata")]([ExtResource("61_evenonly"), ExtResource("62_fiveone"), ExtResource("63_goldsix"), ExtResource("64_oddonly"), ExtResource("65_threethree"), ExtResource("66_wildcard"), ExtResource("67_highroller")])
 
-[node name="ConsumableManager" parent="." instance=ExtResource("20_1jk2k")]
+[node name="ConsumableManager" parent="Managers" instance=ExtResource("20_1jk2k")]
 consumable_defs = Array[ExtResource("31_gtvla")]([ExtResource("32_aeiu6"), ExtResource("41_5k370"), ExtResource("45_i7xol"), ExtResource("46_nkw3w"), ExtResource("50_cs0p4"), ExtResource("51_8nt64"), ExtResource("55_7m4k5"), ExtResource("56_qv1fg"), ExtResource("57_double_or_nothing"), ExtResource("1002_green_envy"), ExtResource("1003_poor_house"), ExtResource("1004_empty_shelves"), ExtResource("1005_the_rarities"), ExtResource("1006_the_pawn_shop"), ExtResource("1007_one_extra_dice"), ExtResource("1008_go_broke"), ExtResource("1009_ones_upgrade"), ExtResource("1010_twos_upgrade"), ExtResource("1011_threes_upgrade"), ExtResource("1012_fours_upgrade"), ExtResource("1013_fives_upgrade"), ExtResource("1014_sixes_upgrade"), ExtResource("1015_three_of_a_kind"), ExtResource("1016_four_of_a_kind"), ExtResource("1017_full_house"), ExtResource("1018_small_straight"), ExtResource("1019_large_straight"), ExtResource("1020_yahtzee"), ExtResource("1021_chance"), ExtResource("1022_all_categories"), ExtResource("1023_free_chores"), ExtResource("1024_all_chores"), ExtResource("1025_one_free_mod"), ExtResource("1039_visit_the_shop"), ExtResource("1058_lucky_upgrade"), ExtResource("153_01vi1"), ExtResource("154_0gdhi"), ExtResource("155_um873"), ExtResource("156_4u56d"), ExtResource("157_j87a4")])
 
-[node name="DebuffManager" parent="." instance=ExtResource("24_f4xs4")]
+[node name="DebuffManager" parent="Managers" instance=ExtResource("24_f4xs4")]
 debuff_defs = Array[ExtResource("24_4tiye")]([ExtResource("25_gxabo"), ExtResource("43_4tv4b"), ExtResource("46_0fq3x"), ExtResource("49_ghgbc"), ExtResource("82_division"), ExtResource("1026_faster_chores"), ExtResource("1027_disabled_mods"), ExtResource("1028_disabled_colors"), ExtResource("1029_reduced_levels"), ExtResource("138_ja73i"), ExtResource("139_tmun7"), ExtResource("142_keu41"), ExtResource("143_qm380"), ExtResource("144_my83g"), ExtResource("145_w4xk6")])
 
-[node name="RoundManager" parent="." instance=ExtResource("42_o2qgl")]
+[node name="RoundManager" parent="Managers" instance=ExtResource("42_o2qgl")]
 challenge_configs = Array[ExtResource("43_2fp2s")]([ExtResource("52_ghgbc"), ExtResource("44_2lvko"), ExtResource("50_ytf57"), ExtResource("47_ja7vv"), ExtResource("52_3ia8s"), ExtResource("45_o0xxd")])
-turn_tracker_path = NodePath("../TurnTracker")
+turn_tracker_path = NodePath("../../TurnTracker")
 challenge_manager_path = NodePath("../ChallengeManager")
-dice_hand_path = NodePath("../DiceHand")
-scorecard_path = NodePath("../ScoreCard")
+dice_hand_path = NodePath("../../CRTTV/DiceHand")
+scorecard_path = NodePath("../../ScoreCard")
+
+[node name="ChoresManager" type="Node" parent="Managers"]
+script = ExtResource("1000_chores_mgr")
+
+[node name="SynergyManager" parent="Managers" instance=ExtResource("98_vch7i")]
+
+[node name="ChannelManager" type="Node" parent="Managers"]
+script = ExtResource("101_wcrst")
+
+[node name="GamingConsoleManager" parent="Managers" instance=ExtResource("1064_gaming_console_mgr")]
 
 [node name="DebugPanel" parent="." instance=ExtResource("69_6hkbr")]
 z_index = 10
@@ -414,16 +434,6 @@ z_as_relative = false
 
 [node name="StatisticsPanel" parent="." instance=ExtResource("999_stats")]
 visible = false
-
-[node name="ScoringAnimationController" type="Node2D" parent="."]
-z_index = 11
-z_as_relative = false
-script = ExtResource("91_fjxkw")
-
-[node name="ChoresManager" type="Node" parent="."]
-script = ExtResource("1000_chores_mgr")
-
-[node name="SynergyManager" parent="." instance=ExtResource("98_vch7i")]
 
 [node name="EndOfRoundStatsPanel" parent="." instance=ExtResource("98_23y3a")]
 size_flags_horizontal = 3
@@ -434,8 +444,3 @@ size_flags_vertical = 3
 [node name="RoundWinnerPanel" parent="." instance=ExtResource("100_sxl8b")]
 
 [node name="UnlockedItemPanel" parent="." instance=ExtResource("1001_unlocked_panel")]
-
-[node name="ChannelManager" type="Node" parent="."]
-script = ExtResource("101_wcrst")
-
-[node name="GamingConsoleManager" parent="." instance=ExtResource("1064_gaming_console_mgr")]

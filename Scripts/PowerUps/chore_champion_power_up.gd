@@ -42,8 +42,8 @@ func apply(target) -> void:
 	if not chores_manager_ref:
 		# Fallback: try GameController reference
 		var game_controller = tree.get_first_node_in_group("game_controller")
-		if game_controller and game_controller.has_node("../ChoresManager"):
-			chores_manager_ref = game_controller.get_node("../ChoresManager")
+		if game_controller and game_controller.has_node("../Managers/ChoresManager"):
+			chores_manager_ref = game_controller.get_node("../Managers/ChoresManager")
 	
 	if not chores_manager_ref:
 		push_error("[ChoreChampionPowerUp] ChoresManager not found")

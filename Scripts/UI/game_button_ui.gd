@@ -5,7 +5,7 @@ extends Control
 @export var turn_tracker_path:   NodePath
 @export var round_manager_path:  NodePath
 @export var challenge_manager_path: NodePath
-@export var scoring_animation_controller_path: NodePath = ^"../ScoringAnimationController"
+@export var scoring_animation_controller_path: NodePath = ^"../CRTTV/ScoringAnimationController"
 
 @onready var challenge_manager: ChallengeManager = get_node_or_null(challenge_manager_path)
 @onready var scoring_animation_controller = get_node_or_null(scoring_animation_controller_path)

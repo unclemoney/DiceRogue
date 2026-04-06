@@ -1,9 +1,9 @@
 extends Node2D
 
-@onready var dice_hand: DiceHand       = $DiceHand
-@onready var dice_container: Node2D    = $DiceContainer
+@onready var dice_hand: DiceHand       = $CRTTV/DiceHand
+@onready var dice_container: Node2D    = $CRTTV/DiceContainer
 @onready var score_card: Scorecard     = $ScoreCard
-@onready var score_card_ui: Control    = $ScoreCardUI
+@onready var score_card_ui: Control    = $CRTTV/ScoreCardUI
 @onready var turn_tracker: TurnTracker = $TurnTracker 
 #@onready var turn_tracker_ui: Control  = $TurnTrackerUI
 @onready var game_button_ui: Control   = $GameButtonUI
@@ -11,10 +11,10 @@ extends Node2D
 @onready var pu_manager = get_node_or_null("../PowerUpManager")
 @onready var pu_ui = get_node_or_null("../PowerUpUI")
 @onready var consumable_ui: ConsumableUI = $ConsumableUI
-@onready var consumable_manager: ConsumableManager = $ConsumableManager
-@onready var mod_manager: ModManager = $ModManager
-@onready var debuff_manager: DebuffManager = $DebuffManager
-@onready var challenge_manager: ChallengeManager = $ChallengeManager
+@onready var consumable_manager: ConsumableManager = $Managers/ConsumableManager
+@onready var mod_manager: ModManager = $Managers/ModManager
+@onready var debuff_manager: DebuffManager = $Managers/DebuffManager
+@onready var challenge_manager: ChallengeManager = $Managers/ChallengeManager
 @onready var challenge_ui_node: Control = $ChallengeUI
 @onready var vcr_ui: VCRTurnTrackerUI = $VCRTurnTrackerUI
 
