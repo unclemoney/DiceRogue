@@ -186,6 +186,22 @@ All dice use multi-phase tween animations with bounce easing, randomization, and
 
 **Test Scene**: `Tests/DiceAnimationTest.tscn` — Interactive test with Spawn/Roll/Exit/Celebrate/Shake/Flash buttons, score slider (0-1500), and challenge progress slider (0-100%).
 
+#### UI Popup Animations
+
+All major UI popups use TweenFX-based bouncy entrance/exit animations for juicy game feel.
+
+| UI System | Entrance | Exit | Notes |
+|-----------|----------|------|-------|
+| **ChannelManagerUI** | VHS shader overlay fade → "CHOOSE YOUR CHANNEL" label drop-in → TV remote panel bounce | Panel flies down → shader fades → overlay fades | Uses `vhs_wave.gdshader` overlay |
+| **ChoreSelectionPopup** | Overlay fade + `TweenFX.drop_in` bounce from top + jelly settle | `TweenFX.drop_out` fly-off + overlay fade | — |
+| **PauseMenu** | Overlay fade + `TweenFX.drop_in` from top + jelly wobble | `TweenFX.drop_out` flies UP (negative height) + fade | Uses `_is_animating` guard |
+| **MomCharacter** | Overlay fade + `TweenFX.drop_in` bounce from below + jelly on panel & sprite | Hop on Mom sprite → `TweenFX.drop_out` fly down + fade | Dramatic personality wobble |
+| **PowerUp Sell** | Jelly wobble → spin + shrink → fly toward money counter | — | Targets `MoneyLabel` global position |
+| **PowerUp Expiry** | Alarm flash highlight → fidget wild spin → fly to random screen edge + vanish | — | Orange alarm color |
+| **Mom Confiscation** | Auto-fan cards → red alarm flash on condemned → fidget + fly-to-Mom + vanish (staggered) | Folds cards back | Stagger: 0.2s (≤3 items) or 0.1s (>3) |
+| **Consumable Sell** | Jelly wobble → spin + shrink → fly toward money counter | — | Same pattern as PowerUp sell |
+| **Consumable Use** | Fidget wild spin → fly to random edge → `ConsumableExplosion` at exit | — | Explosion effect at exit point |
+
 #### Dice Types
 DiceRogue supports multiple dice types, each with their own face textures and value ranges:
 

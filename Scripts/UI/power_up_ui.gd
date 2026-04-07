@@ -827,34 +827,196 @@ func get_power_up_icon(id: String) -> PowerUpIcon:
 	return null
 
 func animate_power_up_removal(power_up_id: String, on_finished: Callable) -> void:
-	# Check if we have a spine to animate
-	if _spines.has(power_up_id):
-		var spine: PowerUpSpine = _spines[power_up_id]
-		if spine:
-			print("[PowerUpUI] Animating spine removal for:", power_up_id)
-			var tween: Tween = create_tween()
-			tween.tween_property(spine, "scale", Vector2(1.2, 0.2), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-			tween.tween_property(spine, "scale", Vector2(0.8, 1.6), 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-			tween.tween_property(spine, "position", spine.position + Vector2(0, -100), 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-			tween.parallel().tween_property(spine, "modulate:a", 0.0, 0.35).set_trans(Tween.TRANS_LINEAR)
-			tween.finished.connect(on_finished)
-			return
+	# Find target node to animate — prefer the VISIBLE representation
+	# When fanned, the fanned icon is visible; when collapsed, the spine is visible
+	var node: CanvasItem = null
+	if _current_state == State.FANNED and _fanned_icons.has(power_up_id) and is_instance_valid(_fanned_icons[power_up_id]):
+		node = _fanned_icons[power_up_id]
+	elif _spines.has(power_up_id) and is_instance_valid(_spines[power_up_id]):
+		node = _spines[power_up_id]
+	elif _fanned_icons.has(power_up_id) and is_instance_valid(_fanned_icons[power_up_id]):
+		node = _fanned_icons[power_up_id]
 	
-	# Check if we have a fanned icon to animate
-	if _fanned_icons.has(power_up_id):
-		var icon: PowerUpIcon = _fanned_icons[power_up_id]
-		if icon:
-			print("[PowerUpUI] Animating fanned icon removal for:", power_up_id)
-			var tween: Tween = create_tween()
-			tween.tween_property(icon, "scale", Vector2(1.2, 0.2), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-			tween.tween_property(icon, "scale", Vector2(0.8, 1.6), 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-			tween.tween_property(icon, "position", icon.position + Vector2(0, -200), 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-			tween.parallel().tween_property(icon, "modulate:a", 0.0, 0.35).set_trans(Tween.TRANS_LINEAR)
-			tween.finished.connect(on_finished)
-			return
+	if not node:
+		print("[PowerUpUI] No visual element found for power-up, skipping animation:", power_up_id)
+		on_finished.call()
+		return
 	
-	# No animation needed, call callback immediately
-	print("[PowerUpUI] No visual element found for power-up, skipping animation:", power_up_id)
+	print("[PowerUpUI] Animating juicy sell removal for:", power_up_id)
+	
+	# Find money label as fly target
+	var fly_target: Vector2 = Vector2(100, 50)
+	var tracker_ui = get_tree().get_first_node_in_group("turn_tracker_ui")
+	if tracker_ui:
+		var money_lbl = tracker_ui.get_node_or_null("MoneyLabel")
+		if money_lbl:
+			fly_target = money_lbl.global_position + money_lbl.size * 0.5
+	
+	# Step 1: Jelly wobble — item shakes as if being grabbed
+	TweenFX.jelly(node, 0.25, 0.2, 2)
+	await get_tree().create_timer(0.25).timeout
+	
+	# Step 2: Spin + shrink + fly toward money display
+	var fly_tween: Tween = create_tween()
+	fly_tween.set_parallel(true)
+	fly_tween.tween_property(node, "global_position", fly_target, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	fly_tween.tween_property(node, "scale", Vector2(0.2, 0.2), 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	fly_tween.tween_property(node, "modulate:a", 0.0, 0.3)
+	TweenFX.spin(node, 0.35, 1.0)
+	
+	fly_tween.finished.connect(on_finished)
+	return
+
+## animate_mom_confiscation(power_up_ids, fly_target, on_finished)
+##
+## Animated confiscation sequence for Mom taking away power-ups.
+## Fans out cards, highlights condemned items with alarm flash,
+## then each item does a wild fidget spin and flies toward the target position.
+##
+## Parameters:
+##   power_up_ids: Array of power_up_id strings to confiscate
+##   fly_target: Vector2 global position to fly items toward (Mom's sprite)
+##   on_finished: Callable invoked after all items have been confiscated
+func animate_mom_confiscation(power_up_ids: Array, fly_target: Vector2, on_finished: Callable) -> void:
+	if power_up_ids.is_empty():
+		on_finished.call()
+		return
+	
+	print("[PowerUpUI] Starting Mom confiscation for %d items" % power_up_ids.size())
+	
+	# Fan out cards if not already fanned so player can see them
+	if _current_state != State.FANNED:
+		_fan_out_cards()
+		await get_tree().create_timer(0.5).timeout
+	
+	# Collect valid nodes and start alarm flashing on condemned items
+	var alarm_tweens: Array[Tween] = []
+	var condemned_nodes: Array = []
+	for pid in power_up_ids:
+		var node: CanvasItem = null
+		if _fanned_icons.has(pid) and is_instance_valid(_fanned_icons[pid]):
+			node = _fanned_icons[pid]
+		elif _spines.has(pid) and is_instance_valid(_spines[pid]):
+			node = _spines[pid]
+		if node:
+			condemned_nodes.append({"id": pid, "node": node})
+			var alarm_tween: Tween = TweenFX.alarm(node, 0.3, Color(2.0, 0.2, 0.2, 1.0))
+			alarm_tweens.append(alarm_tween)
+	
+	# Let alarm flash for a beat so player sees which items are condemned
+	await get_tree().create_timer(0.8).timeout
+	
+	# Kill alarm tweens and reset modulate
+	for t in alarm_tweens:
+		if t and t.is_valid():
+			t.kill()
+	for entry in condemned_nodes:
+		var node: CanvasItem = entry["node"]
+		if is_instance_valid(node):
+			node.modulate = Color.WHITE
+	
+	# Stagger confiscation: fidget → fly to Mom → vanish per item
+	var stagger_delay: float = 0.2
+	if condemned_nodes.size() > 3:
+		stagger_delay = 0.1
+	
+	var items_remaining: int = condemned_nodes.size()
+	for i in range(condemned_nodes.size()):
+		var entry: Dictionary = condemned_nodes[i]
+		var node: CanvasItem = entry["node"]
+		if not is_instance_valid(node):
+			items_remaining -= 1
+			continue
+		
+		# Wild fidget spin
+		TweenFX.fidget(node, 0.4, 6)
+		await get_tree().create_timer(0.3).timeout
+		
+		# Fly toward Mom's position while spinning
+		var fly_tween: Tween = create_tween()
+		fly_tween.set_parallel(true)
+		fly_tween.tween_property(node, "global_position", fly_target, 0.4).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		fly_tween.tween_property(node, "scale", Vector2(0.3, 0.3), 0.4).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		fly_tween.tween_property(node, "modulate:a", 0.0, 0.35)
+		TweenFX.spin(node, 0.4, 2.0)
+		
+		await fly_tween.finished
+		items_remaining -= 1
+		
+		# Brief pause between items
+		if items_remaining > 0:
+			await get_tree().create_timer(stagger_delay).timeout
+	
+	# Fold cards back after confiscation
+	if _current_state == State.FANNED:
+		_fold_back_cards()
+		await get_tree().create_timer(0.4).timeout
+	
+	print("[PowerUpUI] Mom confiscation animation complete")
+	on_finished.call()
+
+## animate_power_up_expiry(power_up_id, on_finished)
+##
+## Animated expiry/used-up removal for a power-up.
+## Highlights the item, does a wild fidget spin, then flies it off to a random screen edge.
+##
+## Parameters:
+##   power_up_id: String - the power-up to animate
+##   on_finished: Callable - called when animation completes
+func animate_power_up_expiry(power_up_id: String, on_finished: Callable) -> void:
+	# Find the visual node
+	var node: CanvasItem = null
+	if _spines.has(power_up_id) and is_instance_valid(_spines[power_up_id]):
+		node = _spines[power_up_id]
+	elif _fanned_icons.has(power_up_id) and is_instance_valid(_fanned_icons[power_up_id]):
+		node = _fanned_icons[power_up_id]
+	
+	if not node:
+		print("[PowerUpUI] No visual for expiry animation:", power_up_id)
+		on_finished.call()
+		return
+	
+	print("[PowerUpUI] Animating power-up expiry for:", power_up_id)
+	
+	# Brief alarm flash to highlight the expiring item
+	var alarm_tween: Tween = TweenFX.alarm(node, 0.25, Color(1.5, 0.5, 0.2, 1.0))
+	await get_tree().create_timer(0.5).timeout
+	if alarm_tween and alarm_tween.is_valid():
+		alarm_tween.kill()
+	if not is_instance_valid(node):
+		print("[PowerUpUI] Node freed during expiry alarm, skipping:", power_up_id)
+		on_finished.call()
+		return
+	node.modulate = Color.WHITE
+	
+	# Wild fidget spin
+	TweenFX.fidget(node, 0.5, 6)
+	await get_tree().create_timer(0.4).timeout
+	
+	if not is_instance_valid(node):
+		print("[PowerUpUI] Node freed during expiry fidget, skipping:", power_up_id)
+		on_finished.call()
+		return
+	
+	# Fly off to a random screen edge
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var edge_targets: Array[Vector2] = [
+		Vector2(-100, randf_range(0, viewport_size.y)),
+		Vector2(viewport_size.x + 100, randf_range(0, viewport_size.y)),
+		Vector2(randf_range(0, viewport_size.x), -100),
+		Vector2(randf_range(0, viewport_size.x), viewport_size.y + 100),
+	]
+	var fly_target: Vector2 = edge_targets[randi() % edge_targets.size()]
+	
+	var fly_tween: Tween = create_tween()
+	fly_tween.set_parallel(true)
+	fly_tween.tween_property(node, "global_position", fly_target, 0.4).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	fly_tween.tween_property(node, "scale", Vector2(0.1, 0.1), 0.4).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	fly_tween.tween_property(node, "modulate:a", 0.0, 0.35)
+	TweenFX.spin(node, 0.4, 3.0)
+	
+	await fly_tween.finished
+	print("[PowerUpUI] Power-up expiry animation complete:", power_up_id)
 	on_finished.call()
 
 func _on_power_up_selected(power_up_id: String) -> void:

@@ -16,6 +16,9 @@ var resume_button: Button
 var main_menu_button: Button
 var settings_button: Button
 var settings_menu: Control = null
+var _overlay: ColorRect
+var _panel: PanelContainer
+var _is_animating: bool = false
 
 # Scene reference
 const MAIN_MENU_SCENE := preload("res://Scenes/UI/MainMenu.tscn")
@@ -29,7 +32,7 @@ var tutorial_warning_dialog: ConfirmationDialog = null
 
 func _ready() -> void:
 	visible = false
-	#process_mode = Node.PROCESS_MODE_ALWAYS
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_ui()
 
 
@@ -51,34 +54,34 @@ func _build_ui() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP  # Block all input to elements behind
 	
 	# Dark overlay background
-	var overlay = ColorRect.new()
-	overlay.name = "Overlay"
-	overlay.color = Color(0, 0, 0, 0.75)
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(overlay)
+	_overlay = ColorRect.new()
+	_overlay.name = "Overlay"
+	_overlay.color = Color(0, 0, 0, 0.75)
+	_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(_overlay)
 	
 	# Main panel
-	var panel = PanelContainer.new()
-	panel.name = "PausePanel"
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -180
-	panel.offset_top = -160
-	panel.offset_right = 180
-	panel.offset_bottom = 160
+	_panel = PanelContainer.new()
+	_panel.name = "PausePanel"
+	_panel.set_anchors_preset(Control.PRESET_CENTER)
+	_panel.offset_left = -180
+	_panel.offset_top = -160
+	_panel.offset_right = 180
+	_panel.offset_bottom = 160
 	
 	var panel_style = StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.1, 0.08, 0.12, 0.98)
 	panel_style.border_color = Color(0.5, 0.45, 0.6, 1.0)
 	panel_style.set_border_width_all(3)
 	panel_style.set_corner_radius_all(12)
-	panel.add_theme_stylebox_override("panel", panel_style)
-	add_child(panel)
+	_panel.add_theme_stylebox_override("panel", panel_style)
+	add_child(_panel)
 	
 	# Content container
 	var vbox = VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 20)
-	panel.add_child(vbox)
+	_panel.add_child(vbox)
 	
 	# Spacer
 	var top_spacer = Control.new()
@@ -169,9 +172,12 @@ func _create_button(text: String, accent_color: Color) -> Button:
 ## show_menu()
 ##
 ## Shows the pause menu and pauses the game.
+## Plays bouncy drop-in entrance animation.
 func show_menu() -> void:
 	get_tree().paused = true
 	visible = true
+	_is_animating = true
+	_animate_in()
 	resume_button.grab_focus()
 	print("[PauseMenu] Pause menu opened")
 
@@ -179,9 +185,16 @@ func show_menu() -> void:
 ## hide_menu()
 ##
 ## Hides the pause menu and resumes the game.
+## Plays fly-off exit animation before hiding.
 func hide_menu() -> void:
+	if _is_animating:
+		return
+	_is_animating = true
+	print("[PauseMenu] Pause menu closing")
+	await _animate_out()
 	visible = false
 	get_tree().paused = false
+	_is_animating = false
 	print("[PauseMenu] Pause menu closed")
 
 
@@ -227,6 +240,66 @@ func _on_main_menu_pressed() -> void:
 	
 	hide_menu()
 	_return_to_main_menu()
+
+
+## _animate_in()
+##
+## Bouncy drop-in entrance for the pause panel.
+## Overlay fades in, panel drops from above with bounce and jelly settle.
+## Uses local create_tween() (bound to this node with PROCESS_MODE_ALWAYS)
+## instead of TweenFX so animations run while the tree is paused.
+func _animate_in() -> void:
+	_overlay.modulate.a = 0.0
+	_panel.pivot_offset = _panel.size / 2.0
+	
+	# Save original state for drop-in
+	var original_pos: Vector2 = _panel.position
+	var original_scale: Vector2 = _panel.scale
+	_panel.position = original_pos - Vector2(0, 300)
+	_panel.scale = Vector2(1.15, 0.85)
+	_panel.modulate.a = 0.0
+	
+	# Fade in overlay
+	var overlay_tween: Tween = create_tween()
+	overlay_tween.tween_property(_overlay, "modulate:a", 1.0, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	
+	# Drop in panel from above with bounce
+	var panel_tween: Tween = create_tween()
+	panel_tween.tween_property(_panel, "position", original_pos, 0.4).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	panel_tween.parallel().tween_property(_panel, "scale", original_scale, 0.24).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	panel_tween.parallel().tween_property(_panel, "modulate:a", 1.0, 0.16)
+	await panel_tween.finished
+	
+	# Jelly wobble settle
+	var jelly_tween: Tween = create_tween()
+	var s: Vector2 = _panel.scale
+	jelly_tween.tween_property(_panel, "scale", s * Vector2(1.1, 0.9), 0.075).set_trans(Tween.TRANS_SINE)
+	jelly_tween.tween_property(_panel, "scale", s * Vector2(0.9, 1.1), 0.075).set_trans(Tween.TRANS_SINE)
+	jelly_tween.tween_property(_panel, "scale", s, 0.1).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	_is_animating = false
+
+
+## _animate_out()
+##
+## Fly-off exit for the pause panel.
+## Panel flies up, overlay fades out.
+## Uses local create_tween() so animations run while the tree is paused.
+func _animate_out() -> void:
+	# Panel flies up off screen
+	var original_pos: Vector2 = _panel.position
+	var panel_tween: Tween = create_tween()
+	panel_tween.tween_property(_panel, "position", original_pos + Vector2(0, -400), 0.3).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	panel_tween.parallel().tween_property(_panel, "modulate:a", 0.0, 0.18)
+	await panel_tween.finished
+	
+	# Fade out overlay
+	var overlay_tween: Tween = create_tween()
+	overlay_tween.tween_property(_overlay, "modulate:a", 0.0, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await overlay_tween.finished
+	
+	# Reset panel position for next show
+	_panel.position = original_pos
+	_panel.modulate.a = 1.0
 
 
 ## _show_tutorial_warning()

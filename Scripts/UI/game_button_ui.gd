@@ -328,10 +328,7 @@ func _on_roll_button_pressed() -> void:
 	
 	print("[GameButtonUI] Roll button pressed. Dice list size:", dice_hand.dice_list.size())
 	
-	# Only re-enable Next Turn if challenge hasn't been completed yet
-	# (after challenge complete + Keep Playing, Next Turn must stay disabled)
-	if not (round_manager and round_manager.is_challenge_completed):
-		next_turn_button.disabled = false
+	next_turn_button.disabled = false
 	if not first_roll_done:
 		first_roll_done = true
 		if shop_button:

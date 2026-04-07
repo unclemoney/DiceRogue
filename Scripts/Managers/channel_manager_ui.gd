@@ -14,6 +14,7 @@ var channel_manager = null
 
 # UI Components
 var overlay: ColorRect
+var shader_overlay: ColorRect
 var panel_container: PanelContainer
 var channel_label: Label
 var checkmark_icon: Label
@@ -23,6 +24,10 @@ var difficulty_label: Label
 var up_button: Button
 var down_button: Button
 var start_button: Button
+var _intro_label: Label
+
+# Shader
+var _shader_material: ShaderMaterial
 
 # Font
 var vcr_font: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
@@ -77,13 +82,48 @@ func hide_channel_selector() -> void:
 ##
 ## Programmatically builds the TV remote-style UI.
 func _build_ui() -> void:
-	# Create semi-transparent overlay
+	# Create dark base overlay (blocks input)
 	overlay = ColorRect.new()
 	overlay.name = "Overlay"
 	overlay.color = Color(0, 0, 0, 0.8)
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(overlay)
+	
+	# Create VHS shader overlay on top of the dark base
+	shader_overlay = ColorRect.new()
+	shader_overlay.name = "ShaderOverlay"
+	shader_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	shader_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_shader_material = ShaderMaterial.new()
+	var shader = load("res://Scripts/Shaders/vhs_wave.gdshader")
+	if shader:
+		_shader_material.shader = shader
+		_shader_material.set_shader_parameter("wave_speed", 0.5)
+		_shader_material.set_shader_parameter("chromatic_drift", 0.02)
+		_shader_material.set_shader_parameter("noise_strength", 0.15)
+		_shader_material.set_shader_parameter("scanline_intensity", 0.4)
+		shader_overlay.material = _shader_material
+	shader_overlay.modulate.a = 0.0
+	add_child(shader_overlay)
+	
+	# Create intro label ("CHOOSE YOUR CHANNEL") — hidden until entrance animation
+	_intro_label = Label.new()
+	_intro_label.name = "IntroLabel"
+	_intro_label.text = "CHOOSE YOUR CHANNEL"
+	_intro_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_intro_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_intro_label.add_theme_font_override("font", vcr_font)
+	_intro_label.add_theme_font_size_override("font_size", 36)
+	_intro_label.add_theme_color_override("font_color", Color(0.2, 1.0, 0.3))
+	_intro_label.set_anchors_preset(Control.PRESET_CENTER)
+	_intro_label.offset_left = -250
+	_intro_label.offset_top = -30
+	_intro_label.offset_right = 250
+	_intro_label.offset_bottom = 30
+	_intro_label.modulate.a = 0.0
+	_intro_label.visible = false
+	add_child(_intro_label)
 	
 	# Create centered panel container (TV Remote shape)
 	panel_container = PanelContainer.new()
@@ -112,7 +152,7 @@ func _build_ui() -> void:
 	style.corner_detail = 8
 	panel_container.add_theme_stylebox_override("panel", style)
 	
-	overlay.add_child(panel_container)
+	add_child(panel_container)
 	
 	# Main vertical container
 	var main_vbox = VBoxContainer.new()
@@ -516,42 +556,77 @@ func _pulse_display() -> void:
 
 ## _animate_entrance() -> void
 ##
-## Animates the panel appearing.
+## Cinematic entrance sequence:
+## 1. Fade in dark overlay + VHS shader with bounce intensity
+## 2. Drop in "CHOOSE YOUR CHANNEL" label with bounce, hold, then vanish
+## 3. Drop in TV remote panel with bounce
 func _animate_entrance() -> void:
-	panel_container.scale = Vector2(0.5, 0.5)
+	# Hide panel initially
 	panel_container.modulate.a = 0.0
+	panel_container.scale = Vector2.ONE
+	panel_container.pivot_offset = panel_container.size / 2.0
 	overlay.modulate.a = 0.0
+	shader_overlay.modulate.a = 0.0
+	_intro_label.visible = true
+	_intro_label.modulate.a = 0.0
+	_intro_label.pivot_offset = Vector2(250, 30)  # Center of the label
 	
-	var tween = create_tween()
-	tween.set_parallel(true)
+	# Step 1: Fade in dark overlay (0.3s)
+	var overlay_tween = create_tween()
+	overlay_tween.tween_property(overlay, "modulate:a", 1.0, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	await overlay_tween.finished
 	
-	tween.tween_property(overlay, "modulate:a", 1.0, 0.3)\
-		.set_trans(Tween.TRANS_QUAD)\
-		.set_ease(Tween.EASE_OUT)
+	# Step 2: Fade in VHS shader overlay with bounce intensity (0.5s)
+	var shader_tween = create_tween()
+	shader_tween.tween_property(shader_overlay, "modulate:a", 0.6, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	await shader_tween.finished
 	
-	tween.tween_property(panel_container, "modulate:a", 1.0, 0.3)\
-		.set_trans(Tween.TRANS_QUAD)\
-		.set_ease(Tween.EASE_OUT)
+	# Step 3: Drop in "CHOOSE YOUR CHANNEL" label with bounce
+	# Set alpha=1.0 right before drop_in so it doesn't flash during the overlay fades
+	_intro_label.modulate.a = 1.0
+	var label_tween = TweenFX.drop_in(_intro_label, 0.6, 150.0, Vector2(1.3, 0.7))
+	await label_tween.finished
 	
-	tween.tween_property(panel_container, "scale", Vector2(1.0, 1.0), 0.4)\
-		.set_trans(Tween.TRANS_BACK)\
-		.set_ease(Tween.EASE_OUT)
+	# Hold the label for a moment
+	await get_tree().create_timer(0.8).timeout
+	
+	# Step 4: Vanish the intro label
+	var vanish_tween = TweenFX.vanish(_intro_label, 0.3)
+	await vanish_tween.finished
+	_intro_label.visible = false
+	
+	# Step 5: Drop in the TV remote panel with smooth overshoot landing
+	var panel_original_pos: Vector2 = panel_container.position
+	var panel_original_scale: Vector2 = panel_container.scale
+	panel_container.position = panel_original_pos - Vector2(0, 200)
+	panel_container.scale = Vector2(1.1, 0.9)
+	panel_container.modulate.a = 0.0
+	var panel_tween = create_tween()
+	panel_tween.tween_property(panel_container, "position", panel_original_pos, 0.7).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	panel_tween.parallel().tween_property(panel_container, "scale", panel_original_scale, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	panel_tween.parallel().tween_property(panel_container, "modulate:a", 1.0, 0.3)
+	await panel_tween.finished
 
 
 ## _animate_exit() -> void
 ##
-## Animates the panel disappearing.
+## Cinematic exit sequence:
+## 1. TV remote flies off downward with acceleration
+## 2. VHS shader fades out
+## 3. Dark overlay fades out
 func _animate_exit() -> void:
-	var tween = create_tween()
-	tween.set_parallel(true)
+	# Step 1: TV remote flies off downward
+	var panel_tween = TweenFX.drop_out(panel_container, 0.4, 600.0)
+	await panel_tween.finished
 	
-	tween.tween_property(overlay, "modulate:a", 0.0, 0.2)\
-		.set_trans(Tween.TRANS_QUAD)\
-		.set_ease(Tween.EASE_IN)
+	# Step 2: Fade out shader overlay (0.3s)
+	var shader_tween = create_tween()
+	shader_tween.tween_property(shader_overlay, "modulate:a", 0.0, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await shader_tween.finished
 	
-	tween.tween_property(panel_container, "scale", Vector2(0.8, 0.8), 0.2)\
-		.set_trans(Tween.TRANS_QUAD)\
-		.set_ease(Tween.EASE_IN)
+	# Step 3: Fade out dark overlay (0.2s)
+	var overlay_tween = create_tween()
+	overlay_tween.tween_property(overlay, "modulate:a", 0.0, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await overlay_tween.finished
 	
-	await tween.finished
 	visible = false

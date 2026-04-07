@@ -361,7 +361,8 @@ func _calculate_fan_positions(count: int) -> Array[Vector2]:
 ## Public method to fold back the fan-out view and hide background.
 ## Called when shop opens or other UI needs to dismiss the consumable fan.
 func fold_back() -> void:
-	print("[ConsumableUI] fold_back() called - current state: %s" % State.keys()[_current_state])
+	print("[ConsumableUI] *** fold_back() CALLED — state=%s, _is_animating=%s ***" % [State.keys()[_current_state], _is_animating])
+	print("[ConsumableUI]   Stack: ", get_stack())
 	
 	# Immediately hide background regardless of state
 	if _background:
@@ -391,7 +392,8 @@ func fold_back() -> void:
 	print("[ConsumableUI] fold_back() complete")
 
 func _fold_back_cards() -> void:
-	print("[ConsumableUI] Folding back cards")
+	print("[ConsumableUI] *** _fold_back_cards() CALLED — state=%s, _is_animating=%s ***" % [State.keys()[_current_state], _is_animating])
+	print("[ConsumableUI]   Stack: ", get_stack())
 	_is_animating = true
 	_current_state = State.SPINES
 	
@@ -437,8 +439,8 @@ func _clear_fanned_icons() -> void:
 	_fanned_icons.clear()
 
 func _on_background_clicked(event: InputEvent) -> void:
-	#print("[DEBUG] Background clicked: ", event)
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		print("[ConsumableUI] *** BACKGROUND CLICK — state=%s, _is_animating=%s, _overflow=%s ***" % [State.keys()[_current_state], _is_animating, _overflow_mode])
 		# Block folding if in overflow mode
 		if _overflow_mode:
 			print("[ConsumableUI] Cannot close - must use or sell %d consumables first" % _overflow_target_count)
@@ -517,7 +519,7 @@ func _on_consumable_sell_requested(consumable_id: String) -> void:
 	print("[ConsumableUI] Consumable sell requested:", consumable_id)
 	
 	if _has_consumables() and _consumable_data.has(consumable_id):
-		remove_consumable(consumable_id)
+		# Do NOT remove here — let GameController animate then remove via callback
 		emit_signal("consumable_sold", consumable_id)
 
 func update_consumable_usability() -> void:
@@ -772,19 +774,7 @@ func remove_consumable(consumable_id: String) -> void:
 			if icon._hover_card_tween and icon._hover_card_tween.is_valid():
 				icon._hover_card_tween.kill()
 			
-			# Tell the icon to destroy itself with effect
-			print("[ConsumableUI] Triggering destruction effect for sold icon:", consumable_id)
-			icon.play_destruction_effect()
-			
-			# Add delay for effect before cleanup
-			if icon.is_inside_tree():
-				var tree = icon.get_tree()
-				if tree:
-					var timer = tree.create_timer(0.2)
-					if timer:
-						await timer.timeout
-			
-			# Now safely remove from parent and queue free
+			# Remove from parent immediately to prevent mouse events, then free
 			if icon.get_parent():
 				icon.get_parent().remove_child(icon)
 			icon.queue_free()
@@ -889,34 +879,134 @@ func get_all_consumable_ids() -> Array[String]:
 	return ids
 
 func animate_consumable_removal(consumable_id: String, on_finished: Callable) -> void:
-	# Check if we have a spine to animate
-	if _consumable_spines.has(consumable_id):
-		var spine: ConsumableSpine = _consumable_spines[consumable_id]
-		if spine and is_instance_valid(spine):
-			print("[ConsumableUI] Animating spine removal for:", consumable_id)
-			var tween: Tween = create_tween()
-			tween.tween_property(spine, "scale", Vector2(1.2, 0.2), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-			tween.tween_property(spine, "scale", Vector2(0.8, 1.6), 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-			tween.tween_property(spine, "position", spine.position + Vector2(0, -100), 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-			tween.parallel().tween_property(spine, "modulate:a", 0.0, 0.35).set_trans(Tween.TRANS_LINEAR)
-			tween.finished.connect(on_finished)
-			return
+	# DEBUG: Log full state at entry
+	var state_name: String = "SPINES" if _current_state == State.SPINES else "FANNED"
+	print("[ConsumableUI] animate_consumable_removal('%s') — state=%s, _is_animating=%s" % [consumable_id, state_name, _is_animating])
+	print("[ConsumableUI]   _fanned_icons keys: ", _fanned_icons.keys())
+	print("[ConsumableUI]   _consumable_spines keys: ", _consumable_spines.keys())
 	
-	# Check if we have a fanned icon to animate
-	if _fanned_icons.has(consumable_id):
-		var icon: ConsumableIcon = _fanned_icons[consumable_id]
-		if icon and is_instance_valid(icon):
-			print("[ConsumableUI] Animating fanned icon removal for:", consumable_id)
-			var tween: Tween = create_tween()
-			tween.tween_property(icon, "scale", Vector2(1.2, 0.2), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-			tween.tween_property(icon, "scale", Vector2(0.8, 1.6), 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-			tween.tween_property(icon, "position", icon.position + Vector2(0, -200), 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-			tween.parallel().tween_property(icon, "modulate:a", 0.0, 0.35).set_trans(Tween.TRANS_LINEAR)
-			tween.finished.connect(on_finished)
-			return
+	# Find target node to animate — prefer the VISIBLE representation
+	# When fanned, the fanned icon is visible; when collapsed, the spine is visible
+	var node: CanvasItem = null
+	var node_source: String = "none"
+	if _current_state == State.FANNED and _fanned_icons.has(consumable_id) and is_instance_valid(_fanned_icons[consumable_id]):
+		node = _fanned_icons[consumable_id]
+		node_source = "fanned_icon (FANNED state)"
+	elif _consumable_spines.has(consumable_id) and is_instance_valid(_consumable_spines[consumable_id]):
+		node = _consumable_spines[consumable_id]
+		node_source = "spine"
+	elif _fanned_icons.has(consumable_id) and is_instance_valid(_fanned_icons[consumable_id]):
+		node = _fanned_icons[consumable_id]
+		node_source = "fanned_icon (fallback)"
 	
-	# No animation needed, call callback immediately
-	print("[ConsumableUI] No visual element found for consumable, skipping animation:", consumable_id)
+	print("[ConsumableUI]   Node source: %s, node=%s" % [node_source, node])
+	
+	if not node:
+		print("[ConsumableUI] *** NO NODE FOUND — calling on_finished immediately ***")
+		on_finished.call()
+		return
+	
+	print("[ConsumableUI]   Node valid=%s, in_tree=%s, visible=%s, pos=%s" % [is_instance_valid(node), node.is_inside_tree(), node.visible, node.global_position])
+	
+	# Lock animating flag so fold_back doesn't fire during animation
+	_is_animating = true
+	
+	# Find money label as fly target
+	var fly_target: Vector2 = Vector2(100, 50)
+	var tracker_ui = get_tree().get_first_node_in_group("turn_tracker_ui")
+	if tracker_ui:
+		var money_lbl = tracker_ui.get_node_or_null("MoneyLabel")
+		if money_lbl:
+			fly_target = money_lbl.global_position + money_lbl.size * 0.5
+	
+	print("[ConsumableUI]   Step 1: Jelly wobble starting...")
+	# Step 1: Jelly wobble — item shakes as if being grabbed
+	TweenFX.jelly(node, 0.25, 0.2, 2)
+	await get_tree().create_timer(0.25).timeout
+	
+	# DEBUG: Check node state after await
+	var still_valid: bool = is_instance_valid(node)
+	var still_in_tree: bool = still_valid and node.is_inside_tree()
+	var state_after: String = "SPINES" if _current_state == State.SPINES else "FANNED"
+	print("[ConsumableUI]   After await: node_valid=%s, in_tree=%s, state=%s" % [still_valid, still_in_tree, state_after])
+	
+	if not still_valid:
+		print("[ConsumableUI] *** NODE FREED DURING AWAIT — animation aborted ***")
+		_is_animating = false
+		on_finished.call()
+		return
+	
+	print("[ConsumableUI]   Step 2: Fly tween starting → target=%s" % fly_target)
+	# Step 2: Spin + shrink + fly toward money display
+	var fly_tween: Tween = create_tween()
+	fly_tween.set_parallel(true)
+	fly_tween.tween_property(node, "global_position", fly_target, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	fly_tween.tween_property(node, "scale", Vector2(0.2, 0.2), 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	fly_tween.tween_property(node, "modulate:a", 0.0, 0.3)
+	TweenFX.spin(node, 0.35, 1.0)
+	
+	fly_tween.finished.connect(func():
+		print("[ConsumableUI]   Fly tween FINISHED — calling on_finished callback")
+		_is_animating = false
+		on_finished.call()
+	)
+	return
+
+## animate_consumable_use(consumable_id, on_finished)
+##
+## Animated use removal for a consumable. Wild spin-off then explosion at exit point.
+##
+## Parameters:
+##   consumable_id: String - the consumable to animate
+##   on_finished: Callable - called when animation completes
+func animate_consumable_use(consumable_id: String, on_finished: Callable) -> void:
+	# Find target node to animate
+	var node: CanvasItem = null
+	if _consumable_spines.has(consumable_id) and is_instance_valid(_consumable_spines[consumable_id]):
+		node = _consumable_spines[consumable_id]
+	elif _fanned_icons.has(consumable_id) and is_instance_valid(_fanned_icons[consumable_id]):
+		node = _fanned_icons[consumable_id]
+	
+	if not node:
+		print("[ConsumableUI] No visual for use animation:", consumable_id)
+		on_finished.call()
+		return
+	
+	print("[ConsumableUI] Animating consumable use for:", consumable_id)
+	
+	# Wild fidget spin — "thrown" feeling
+	TweenFX.fidget(node, 0.4, 6)
+	await get_tree().create_timer(0.35).timeout
+	
+	# Fly off to a random direction
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var edge_targets: Array[Vector2] = [
+		Vector2(-100, randf_range(0, viewport_size.y)),
+		Vector2(viewport_size.x + 100, randf_range(0, viewport_size.y)),
+		Vector2(randf_range(0, viewport_size.x), -100),
+		Vector2(randf_range(0, viewport_size.x), viewport_size.y + 100),
+	]
+	var fly_target: Vector2 = edge_targets[randi() % edge_targets.size()]
+	
+	var fly_tween: Tween = create_tween()
+	fly_tween.set_parallel(true)
+	fly_tween.tween_property(node, "global_position", fly_target, 0.3).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	fly_tween.tween_property(node, "scale", Vector2(0.1, 0.1), 0.3).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	fly_tween.tween_property(node, "modulate:a", 0.0, 0.25)
+	TweenFX.spin(node, 0.3, 2.0)
+	
+	await fly_tween.finished
+	
+	# Trigger explosion at exit point
+	var explosion_scene = preload("res://Scenes/Effects/ConsumableExplosion.tscn")
+	if explosion_scene:
+		var explosion = explosion_scene.instantiate()
+		get_tree().root.add_child(explosion)
+		explosion.global_position = fly_target
+		if explosion.has_method("restart"):
+			explosion.restart()
+	
+	print("[ConsumableUI] Consumable use animation complete:", consumable_id)
 	on_finished.call()
 
 # Deprecated method for backward compatibility - logs warning and returns null

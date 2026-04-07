@@ -976,6 +976,62 @@ func add_consumable(data: ConsumableData) -> Node:
 	return spine
 
 
+func animate_consumable_removal(id: String, callback: Callable = Callable()) -> void:
+	if not _consumable_data.has(id):
+		if callback.is_valid():
+			callback.call()
+		return
+	
+	# Find target node — prefer fanned icon if visible, fall back to spine
+	var node: CanvasItem = null
+	if _current_state == State.FANNED_CONSUMABLES and _consumable_fanned_icons.has(id) and is_instance_valid(_consumable_fanned_icons[id]):
+		node = _consumable_fanned_icons[id]
+	elif _consumable_spines.has(id) and is_instance_valid(_consumable_spines[id]):
+		node = _consumable_spines[id]
+	
+	if not node:
+		remove_consumable(id)
+		if callback.is_valid():
+			callback.call()
+		return
+	
+	print("[CorkboardUI] Animating consumable removal:", id)
+	_is_animating = true
+	
+	# Find money label as fly target
+	var fly_target: Vector2 = Vector2(100, 50)
+	var tracker_ui = get_tree().get_first_node_in_group("turn_tracker_ui")
+	if tracker_ui:
+		var money_lbl = tracker_ui.get_node_or_null("MoneyLabel")
+		if money_lbl:
+			fly_target = money_lbl.global_position + money_lbl.size * 0.5
+	
+	# Step 1: Jelly wobble
+	TweenFX.jelly(node, 0.25, 0.2, 2)
+	await get_tree().create_timer(0.25).timeout
+	
+	if not is_instance_valid(node):
+		_is_animating = false
+		remove_consumable(id)
+		if callback.is_valid():
+			callback.call()
+		return
+	
+	# Step 2: Spin + shrink + fly toward money display
+	var fly_tween: Tween = create_tween()
+	fly_tween.set_parallel(true)
+	fly_tween.tween_property(node, "global_position", fly_target, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	fly_tween.tween_property(node, "scale", Vector2(0.2, 0.2), 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	fly_tween.tween_property(node, "modulate:a", 0.0, 0.3)
+	TweenFX.spin(node, 0.35, 1.0)
+	
+	fly_tween.finished.connect(func():
+		_is_animating = false
+		if callback.is_valid():
+			callback.call()
+	)
+
+
 func remove_consumable(id: String) -> void:
 	if not _consumable_data.has(id):
 		return

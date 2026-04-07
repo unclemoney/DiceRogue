@@ -328,38 +328,44 @@ func _on_task_selected(is_hard: bool) -> void:
 
 ## _animate_in()
 ##
-## Plays entrance animation for the popup.
+## Plays bouncy drop-in entrance animation for the popup.
+## Overlay fades in, panel drops from above with bounce and impact squash.
 func _animate_in() -> void:
 	if _overlay:
 		_overlay.modulate.a = 0
 	if _panel:
-		_panel.modulate.a = 0
-		_panel.scale = Vector2(0.8, 0.8)
+		_panel.modulate.a = 1.0
 		_panel.pivot_offset = _panel.size / 2.0
 	
-	var tween = create_tween()
-	tween.set_parallel()
+	# Step 1: Fade in overlay
 	if _overlay:
-		tween.tween_property(_overlay, "modulate:a", 1.0, 0.2)
+		var overlay_tween = create_tween()
+		overlay_tween.tween_property(_overlay, "modulate:a", 1.0, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	
+	# Step 2: Drop in panel from above with bounce
 	if _panel:
-		tween.tween_property(_panel, "modulate:a", 1.0, 0.2)
-		tween.tween_property(_panel, "scale", Vector2.ONE, 0.3)\
-			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		var panel_tween = TweenFX.drop_in(_panel, 0.5, 400.0, Vector2(1.2, 0.8))
+		await panel_tween.finished
+		# Impact squash-stretch settle
+		TweenFX.jelly(_panel, 0.3, 0.15, 2)
 
 
 ## _animate_out()
 ##
-## Plays exit animation and hides the popup.
+## Plays fly-off exit animation — panel flies downward and fades.
 func _animate_out() -> void:
-	var tween = create_tween()
-	tween.set_parallel()
-	if _overlay:
-		tween.tween_property(_overlay, "modulate:a", 0.0, 0.15)
+	# Panel flies off downward
 	if _panel:
-		tween.tween_property(_panel, "modulate:a", 0.0, 0.15)
-		tween.tween_property(_panel, "scale", Vector2(0.8, 0.8), 0.15)
+		var panel_tween = TweenFX.drop_out(_panel, 0.4, 600.0)
+		await panel_tween.finished
 	
-	tween.chain().tween_callback(_on_animation_finished)
+	# Fade overlay
+	if _overlay:
+		var overlay_tween = create_tween()
+		overlay_tween.tween_property(_overlay, "modulate:a", 0.0, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		await overlay_tween.finished
+	
+	_on_animation_finished()
 
 
 func _on_animation_finished() -> void:

@@ -1189,12 +1189,14 @@ func _on_power_up_sold(power_up_id: String) -> void:
 
 ## _on_power_up_revoked(power_up_id)
 ##
-## Handler for power_up_revoked signal - removes PowerUp from UI when revoked programmatically.
+## Handler for power_up_revoked signal - animates expiry then removes PowerUp from UI.
 func _on_power_up_revoked(power_up_id: String) -> void:
-	print("[GameController] PowerUp revoked, removing from UI:", power_up_id)
+	print("[GameController] PowerUp revoked, animating expiry:", power_up_id)
 	if powerup_ui:
-		powerup_ui.remove_power_up(power_up_id)
-		print("[GameController] PowerUp removed from UI:", power_up_id)
+		powerup_ui.animate_power_up_expiry(power_up_id, func():
+			powerup_ui.remove_power_up(power_up_id)
+			print("[GameController] PowerUp removed from UI after expiry:", power_up_id)
+		)
 
 
 ## _deactivate_power_up(power_up_id)
@@ -3824,11 +3826,30 @@ func _on_transition_keep_playing() -> void:
 		_round_transition_overlay.queue_free()
 		_round_transition_overlay = null
 	
-	# Disable Next Turn so player doesn't skip end-of-round rewards
+	# Start a new turn so the player can roll
+	if turn_tracker:
+		turn_tracker.start_new_turn()
+	
+	# Re-enable game buttons for continued play
 	if game_button_ui:
+		var roll_btn = game_button_ui.get_node_or_null("HBoxContainer/RollButton")
+		if roll_btn:
+			roll_btn.disabled = false
 		var next_btn = game_button_ui.get_node_or_null("HBoxContainer/NextTurnButton")
 		if next_btn:
-			next_btn.disabled = true
+			next_btn.disabled = false
+		var shop_btn = game_button_ui.get_node_or_null("HBoxContainer/ShopButton")
+		if shop_btn:
+			shop_btn.disabled = false
+	
+	# Set dice to rollable state
+	if dice_hand:
+		dice_hand.set_all_dice_rollable()
+	
+	# Re-enable scoring so player can pick categories
+	if score_card_ui:
+		score_card_ui.turn_scored = false
+		score_card_ui.enable_all_score_buttons()
 
 
 ## _on_transition_enter_shop()
@@ -4040,20 +4061,39 @@ func _on_consumable_sold(consumable_id: String) -> void:
 	if not consumable:
 		push_error("[GameController] No Consumable found for id:", consumable_id)
 		return
-		
+	
+	# Erase from active immediately to prevent double-sell during animation
+	active_consumables.erase(consumable_id)
+	
 	var def = consumable_manager.get_def(consumable_id)
 	if def:
 		var refund = def.price / 2.0  # Half price
 		print("[GameController] Refunding", refund, "coins for consumable:", consumable_id)
 		PlayerEconomy.add_money(refund)
 	
-	# Remove from UI
+	# Animate removal then clean up — try CorkboardUI first, fall back to ConsumableUI
 	if corkboard_ui:
-		corkboard_ui.remove_consumable(consumable_id)
+		corkboard_ui.animate_consumable_removal(consumable_id, func():
+			corkboard_ui.remove_consumable(consumable_id)
+			if is_instance_valid(consumable):
+				consumable.queue_free()
+			print("[GameController] Removed consumable from game data:", consumable_id)
+		)
 	elif consumable_ui:
-		consumable_ui.remove_consumable(consumable_id)
-	
-	# Remove from game data
+		consumable_ui.animate_consumable_removal(consumable_id, func():
+			consumable_ui.remove_consumable(consumable_id)
+			if is_instance_valid(consumable):
+				consumable.queue_free()
+			print("[GameController] Removed consumable from game data:", consumable_id)
+		)
+	else:
+		if is_instance_valid(consumable):
+			consumable.queue_free()
+
+## _cleanup_sold_consumable(consumable_id)
+##
+## Removes a sold consumable from game data after animation completes.
+func _cleanup_sold_consumable(consumable_id: String) -> void:
 	if active_consumables.has(consumable_id):
 		var consumable_to_remove = active_consumables[consumable_id]
 		if consumable_to_remove:
@@ -4671,6 +4711,30 @@ func _show_mom_dialog(result) -> void:
 	
 	# Show dialog with result
 	await _mom_dialog.show_dialog(result.expression, result.dialog_text)
+	
+	# Animate confiscation of power-ups BEFORE closing dialog
+	if result.removed_power_ups.size() > 0 and powerup_ui:
+		# Disable close button during confiscation to prevent premature dialog_closed
+		if _mom_dialog.close_button:
+			_mom_dialog.close_button.disabled = true
+		
+		# Get Mom sprite's global position as fly target
+		var fly_target: Vector2 = Vector2(640, 360)
+		if _mom_dialog and _mom_dialog.sprite_rect:
+			fly_target = _mom_dialog.sprite_rect.global_position + _mom_dialog.sprite_rect.size * 0.5
+		
+		var confiscation_state: Array = [false]
+		powerup_ui.animate_mom_confiscation(result.removed_power_ups, fly_target, func():
+			confiscation_state[0] = true
+		)
+		
+		# Wait for confiscation animation to complete
+		while not confiscation_state[0]:
+			await get_tree().process_frame
+		
+		# Re-enable close button
+		if _mom_dialog and _mom_dialog.close_button:
+			_mom_dialog.close_button.disabled = false
 	
 	# Wait for dialog to close
 	await _mom_dialog.dialog_closed

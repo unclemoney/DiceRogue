@@ -383,8 +383,12 @@ func roll_all() -> void:
 		await get_tree().create_timer(0.1).timeout
 
 	# Phase 2: Staggered roll — each die rolls with a small delay
+	# Snapshot size before loop — dice_list can change during await between iterations
 	var rolled_count = 0
-	for i in range(dice_list.size()):
+	var roll_count: int = dice_list.size()
+	for i in range(roll_count):
+		if i >= dice_list.size():
+			break
 		var die = dice_list[i]
 		if die.can_roll():
 			# Play per-die roll sound via AudioManager

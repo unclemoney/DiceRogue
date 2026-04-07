@@ -105,14 +105,14 @@ func close_dialog() -> void:
 	if _is_animating:
 		return
 	
-	_animate_out()
-	await get_tree().create_timer(TWEEN_DURATION).timeout
+	await _animate_out()
 	visible = false
 	dialog_closed.emit()
 
 func _create_ui_structure() -> void:
 	# Set to fill screen
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	z_index = 150  # Above corkboard/shop (100-135) but below pause menu (200)
 	
 	# Background overlay (semi-transparent black)
 	background_overlay = ColorRect.new()
@@ -122,18 +122,19 @@ func _create_ui_structure() -> void:
 	background_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(background_overlay)
 	
-	# Center container for dialog
-	var center = CenterContainer.new()
-	center.name = "CenterContainer"
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(center)
-	
-	# Main dialog panel
+	# Main dialog panel — centered via anchors (NOT CenterContainer, which fights tweens)
 	dialog_panel = PanelContainer.new()
 	dialog_panel.name = "DialogPanel"
 	dialog_panel.custom_minimum_size = Vector2(500, 300)
+	dialog_panel.set_anchors_preset(Control.PRESET_CENTER)
+	dialog_panel.offset_left = -250
+	dialog_panel.offset_top = -150
+	dialog_panel.offset_right = 250
+	dialog_panel.offset_bottom = 150
+	dialog_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	dialog_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 	_apply_panel_style()
-	center.add_child(dialog_panel)
+	add_child(dialog_panel)
 	
 	# Content container
 	var vbox = VBoxContainer.new()
@@ -239,33 +240,62 @@ func _apply_button_style() -> void:
 func _animate_in() -> void:
 	_is_animating = true
 	
-	# Fade in background
+	# Fade in background overlay
 	background_overlay.modulate.a = 0
 	var bg_tween = create_tween()
-	bg_tween.tween_property(background_overlay, "modulate:a", 1.0, TWEEN_DURATION)
+	bg_tween.tween_property(background_overlay, "modulate:a", 1.0, 0.3)
 	
-	# Slide in dialog panel from bottom
-	dialog_panel.position.y += 100
-	var panel_tween = create_tween()
-	panel_tween.set_ease(Tween.EASE_OUT)
-	panel_tween.set_trans(Tween.TRANS_BACK)
-	panel_tween.tween_property(dialog_panel, "position:y", dialog_panel.position.y - 100, TWEEN_DURATION)
+	# Reset panel to home offsets in case of a previous _animate_out
+	dialog_panel.offset_left = -250
+	dialog_panel.offset_top = -150
+	dialog_panel.offset_right = 250
+	dialog_panel.offset_bottom = 150
+	dialog_panel.scale = Vector2.ONE
+	dialog_panel.modulate.a = 1.0
+	dialog_panel.pivot_offset = dialog_panel.size / 2.0
 	
+	# Bouncy drop-in using offset tweening (works with anchor-based layout)
+	var target_top: float = dialog_panel.offset_top
+	var target_bottom: float = dialog_panel.offset_bottom
+	dialog_panel.offset_top = target_top - 300.0
+	dialog_panel.offset_bottom = target_bottom - 300.0
+	dialog_panel.scale = Vector2(1.2, 0.8)
+	dialog_panel.modulate.a = 0.0
+	
+	var panel_tween: Tween = create_tween()
+	panel_tween.tween_property(dialog_panel, "offset_top", target_top, 0.5).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	panel_tween.parallel().tween_property(dialog_panel, "offset_bottom", target_bottom, 0.5).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	panel_tween.parallel().tween_property(dialog_panel, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	panel_tween.parallel().tween_property(dialog_panel, "modulate:a", 1.0, 0.2)
 	await panel_tween.finished
+	
+	# Jelly settle wobble on landing
+	TweenFX.jelly(dialog_panel, 0.3, 0.15, 2)
+	
+	# Wobble Mom sprite for extra personality
+	TweenFX.jelly(sprite_rect, 0.4, 0.1, 2)
+	
+	await get_tree().create_timer(0.4).timeout
 	_is_animating = false
 
 func _animate_out() -> void:
 	_is_animating = true
 	
-	# Fade out background
-	var bg_tween = create_tween()
-	bg_tween.tween_property(background_overlay, "modulate:a", 0.0, TWEEN_DURATION)
+	# Quick hop on Mom sprite before exit
+	TweenFX.hop(sprite_rect, 0.2, 20.0)
+	await get_tree().create_timer(0.2).timeout
 	
-	# Slide out dialog panel to bottom
-	var panel_tween = create_tween()
-	panel_tween.set_ease(Tween.EASE_IN)
-	panel_tween.set_trans(Tween.TRANS_BACK)
-	panel_tween.tween_property(dialog_panel, "position:y", dialog_panel.position.y + 100, TWEEN_DURATION)
+	# Panel flies out downward using offset tweening
+	var exit_offset_top: float = dialog_panel.offset_top + 400.0
+	var exit_offset_bottom: float = dialog_panel.offset_bottom + 400.0
+	var panel_tween: Tween = create_tween()
+	panel_tween.tween_property(dialog_panel, "offset_top", exit_offset_top, 0.4).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	panel_tween.parallel().tween_property(dialog_panel, "offset_bottom", exit_offset_bottom, 0.4).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	panel_tween.parallel().tween_property(dialog_panel, "modulate:a", 0.0, 0.3)
+	
+	# Fade out background overlay
+	var bg_tween = create_tween()
+	bg_tween.tween_property(background_overlay, "modulate:a", 0.0, 0.3)
 	
 	await panel_tween.finished
 	_is_animating = false
