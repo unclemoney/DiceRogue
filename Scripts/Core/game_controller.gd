@@ -100,6 +100,7 @@ const BONUS_COLLECTOR_CONSUMABLE_DEF := preload("res://Scripts/Consumable/BonusC
 @export var channel_manager_path: NodePath      = ^"../Managers/ChannelManager"
 @export var channel_manager_ui_path: NodePath   = ^"../ChannelManagerUI"
 @export var round_winner_panel_path: NodePath   = ^"../RoundWinnerPanel"
+@export var carry_over_panel_path: NodePath     = ^"../CarryOverPanel"
 @export var background_swirl_path: NodePath      = ^"../CRTTV/BackgroundSwirl"
 @export var gaming_console_manager_path: NodePath  = ^"../Managers/GamingConsoleManager"
 @export var gaming_console_ui_path: NodePath       = ^"../GamingConsoleUI"
@@ -136,6 +137,7 @@ const BONUS_COLLECTOR_CONSUMABLE_DEF := preload("res://Scripts/Consumable/BonusC
 @onready var channel_manager = get_node_or_null(channel_manager_path)
 @onready var channel_manager_ui = get_node_or_null(channel_manager_ui_path)
 @onready var round_winner_panel = get_node_or_null(round_winner_panel_path)
+@onready var carry_over_panel = get_node_or_null(carry_over_panel_path)
 @onready var background_swirl: ColorRect = get_node_or_null(background_swirl_path)
 @onready var gaming_console_manager = get_node_or_null(gaming_console_manager_path)
 @onready var gaming_console_ui = get_node_or_null(gaming_console_ui_path)
@@ -324,6 +326,9 @@ func _ready() -> void:
 		round_winner_panel.set_channel_manager(channel_manager)
 		round_winner_panel.next_channel_pressed.connect(_on_next_channel_pressed)
 		print("[GameController] RoundWinnerPanel connected")
+	if carry_over_panel:
+		carry_over_panel.carryover_confirmed.connect(_on_carryover_confirmed)
+		print("[GameController] CarryOverPanel connected")
 
 	# Bind VCR tracker UI channel display
 	var _vcr_tracker = get_tree().get_first_node_in_group("turn_tracker_ui")
@@ -474,50 +479,82 @@ func _on_next_channel_pressed() -> void:
 		_show_unlocked_items_before_next_channel()
 		return
 	
-	# No pending unlocks - proceed directly to next channel
-	_proceed_to_next_channel()
+	# No pending unlocks - show carry-over panel
+	_show_carry_over_panel()
 
 
-## _restart_game_for_new_channel() -> void
+## _restart_game_for_new_channel(carried_types: Array[String]) -> void
 ##
 ## Resets game state and starts Round 1 for the new channel.
 ## Does NOT reset the channel number (keeps current channel).
-## Resets: money, power-ups, consumables, debuffs, goof-off meter, scorecard levels.
-func _restart_game_for_new_channel() -> void:
-	print("[GameController] Restarting game for new channel...")
+## Items whose type is in carried_types are preserved; everything else resets.
+## Valid types: "power_ups", "consumables", "colored_dice", "mods", "consoles",
+##              "money", "scorecard_levels"
+func _restart_game_for_new_channel(carried_types: Array[String] = []) -> void:
+	print("[GameController] Restarting game for new channel... carry-overs: %s" % str(carried_types))
 	
-	# Reset player money to starting amount
-	if PlayerEconomy:
-		PlayerEconomy.reset_to_starting_money()
-		print("[GameController] Money reset to starting amount")
+	# Reset player money to starting amount (unless carried over)
+	if not carried_types.has("money"):
+		if PlayerEconomy:
+			PlayerEconomy.reset_to_starting_money()
+			print("[GameController] Money reset to starting amount")
+	else:
+		print("[GameController] Money CARRIED OVER")
 	
-	# Clear all power-ups (instances and UI)
-	_clear_all_power_ups()
+	# Clear all power-ups (unless carried over)
+	if not carried_types.has("power_ups"):
+		_clear_all_power_ups()
+	else:
+		print("[GameController] Power-ups CARRIED OVER")
 	
-	# Clear all consumables (instances and UI)
-	_clear_all_consumables()
+	# Clear all consumables (unless carried over)
+	if not carried_types.has("consumables"):
+		_clear_all_consumables()
+	else:
+		print("[GameController] Consumables CARRIED OVER")
 	
-	# Clear active challenges and debuffs
+	# Clear active challenges and debuffs (always reset)
 	_clear_active_challenges()
 	_clear_active_debuffs()
 	
-	# Clear gaming console
-	_clear_gaming_console()
+	# Clear gaming console (unless carried over)
+	if not carried_types.has("consoles"):
+		_clear_gaming_console()
+	else:
+		print("[GameController] Gaming console CARRIED OVER")
 	
-	# Reset the goof-off meter (ChoresManager)
+	# Clear all mods from dice (unless carried over)
+	if not carried_types.has("mods"):
+		_clear_all_mods()
+	else:
+		print("[GameController] Mods CARRIED OVER")
+	
+	# Clear colored dice purchases (unless carried over)
+	if not carried_types.has("colored_dice"):
+		if DiceColorManager:
+			DiceColorManager.clear_purchased_colors()
+			print("[GameController] Colored dice purchases cleared")
+	else:
+		print("[GameController] Colored dice CARRIED OVER")
+	
+	# Reset the goof-off meter (ChoresManager) — always resets
 	if chores_manager:
 		chores_manager.reset_for_new_game()
 		print("[GameController] Goof-off meter reset")
 	
-	# Reset ScoreModifierManager
+	# Reset ScoreModifierManager — always resets
 	if ScoreModifierManager:
 		ScoreModifierManager.reset()
 		print("[GameController] ScoreModifierManager reset")
 	
-	# Reset scorecard completely (including levels back to 1) for new channel
+	# Reset scorecard (levels conditionally preserved)
 	if scorecard:
-		scorecard.reset_scores()
-		print("[GameController] Scorecard scores and levels reset for new channel")
+		if carried_types.has("scorecard_levels"):
+			scorecard.reset_scores_preserve_levels()
+			print("[GameController] Scorecard scores reset, levels CARRIED OVER")
+		else:
+			scorecard.reset_scores()
+			print("[GameController] Scorecard scores and levels reset for new channel")
 	
 	# Reset game button UI state (first_roll_done flag, etc.)
 	if is_instance_valid(game_button_ui) and game_button_ui.has_method("reset_for_new_channel"):
@@ -2618,6 +2655,31 @@ func _clear_gaming_console() -> void:
 	print("[GameController] Gaming console cleared")
 
 
+## _clear_all_mods() -> void
+##
+## Removes all mods from all dice, clears mod persistence tracking,
+## and resets pending mod queue. Used during channel reset when mods
+## are not carried over.
+func _clear_all_mods() -> void:
+	# Remove mods from each die
+	if dice_hand:
+		for die in dice_hand.dice_list:
+			if is_instance_valid(die):
+				for mod_id in die.active_mods.keys():
+					die.remove_mod(mod_id)
+	
+	# Clear tracking dictionaries
+	active_mods.clear()
+	pending_mods.clear()
+	mod_persistence_map.clear()
+	
+	# Clear mod UI if available
+	if mod_manager and mod_manager.has_method("clear_all"):
+		mod_manager.clear_all()
+	
+	print("[GameController] All mods cleared")
+
+
 ## _reset_gaming_console_for_round()
 ##
 ## Resets the gaming console uses for a new round.
@@ -4524,15 +4586,58 @@ func _show_unlocked_items_before_next_channel() -> void:
 ## _on_unlocks_acknowledged_then_next_channel()
 ##
 ## Called when player has acknowledged all unlocked items after channel win.
-## Now proceeds to next channel.
+## Now shows the carry-over panel before proceeding.
 func _on_unlocks_acknowledged_then_next_channel() -> void:
-	print("[GameController] All unlocked items acknowledged - proceeding to next channel")
-	_proceed_to_next_channel()
+	print("[GameController] All unlocked items acknowledged - showing carry-over panel")
+	_show_carry_over_panel()
+
+
+## _show_carry_over_panel()
+##
+## Displays the carry-over selection panel based on the NEXT channel's config.
+## If no CarryOverPanel node is available, proceeds directly.
+func _show_carry_over_panel() -> void:
+	if not carry_over_panel or not channel_manager:
+		print("[GameController] No carry-over panel or channel manager - proceeding directly")
+		_proceed_to_next_channel_with_carryovers([])
+		return
+	
+	var next_channel = channel_manager.current_channel + 1
+	var count = channel_manager.get_allowed_carryover_count(next_channel)
+	var types = channel_manager.get_allowed_carryover_types(next_channel)
+	
+	print("[GameController] Showing carry-over panel for Channel %d: count=%d, types=%s" % [next_channel, count, str(types)])
+	carry_over_panel.show_panel(count, types, next_channel)
+
+
+## _on_carryover_confirmed(selected_types: Array[String])
+##
+## Handles the player's carry-over selections and proceeds to the next channel.
+## Items NOT in selected_types will be reset.
+func _on_carryover_confirmed(selected_types: Array[String]) -> void:
+	print("[GameController] Carry-over confirmed: %s" % str(selected_types))
+	_proceed_to_next_channel_with_carryovers(selected_types)
+
+
+## _proceed_to_next_channel_with_carryovers(selected_types: Array[String])
+##
+## Advances to the next channel and restarts the game with conditional resets
+## based on the player's carry-over selections.
+func _proceed_to_next_channel_with_carryovers(selected_types: Array[String]) -> void:
+	if channel_manager:
+		channel_manager.advance_to_next_channel()
+		print("[GameController] Advanced to Channel", channel_manager.current_channel)
+	
+	_apply_channel_background()
+	
+	# Restart the game loop at Round 1 with carry-over info
+	_restart_game_for_new_channel(selected_types)
 
 
 ## _proceed_to_next_channel()
 ##
 ## Advances to the next channel and restarts the game loop.
+## Legacy path: resets everything (no carry-overs).
 func _proceed_to_next_channel() -> void:
 	if channel_manager:
 		channel_manager.advance_to_next_channel()

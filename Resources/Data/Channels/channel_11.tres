@@ -81,6 +81,8 @@ debuff_intensity_multiplier = 1.3
 force_specific_challenges = Array[String]([])
 disabled_shop_items = Array[String]([])
 special_rules = {}
+allowed_carryover_count = 2
+allowed_carryover_types = Array[String](["power_ups", "consumables", "colored_dice", "mods", "money"])
 background_shader = ExtResource("3_shader_bg")
 background_shader_params = {
 "colour_1": Color(0.05, 0.02, 0.1, 1.0),

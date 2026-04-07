@@ -265,6 +265,32 @@ func get_unlock_requirement(channel: int) -> int:
 	return 0
 
 
+## get_allowed_carryover_count(channel: int) -> int
+##
+## Returns the maximum number of carry-over items the player can select
+## when entering the specified channel.
+## @param channel: Channel number (defaults to current_channel if -1)
+## @return: Number of allowed carry-over selections (0 = full reset)
+func get_allowed_carryover_count(channel: int = -1) -> int:
+	var config = get_channel_config(channel)
+	if config:
+		return config.allowed_carryover_count
+	return 0
+
+
+## get_allowed_carryover_types(channel: int) -> Array[String]
+##
+## Returns the carry-over categories available for selection when entering
+## the specified channel.
+## @param channel: Channel number (defaults to current_channel if -1)
+## @return: Array of valid carry-over type strings
+func get_allowed_carryover_types(channel: int = -1) -> Array[String]:
+	var config = get_channel_config(channel)
+	if config:
+		return config.allowed_carryover_types
+	return []
+
+
 ## set_channel(channel: int) -> void
 ##
 ## Sets the current channel, clamped to valid range.

@@ -443,6 +443,7 @@ Each round within a channel has:
 - **ChannelDifficultyData** (`Scripts/Core/ChannelDifficultyData.gd`) - Channel-wide settings resource
 - **ChannelManager** (`Scripts/Managers/channel_manager.gd`) - Core difficulty logic, loads configs
 - **ChannelManagerUI** (`Scripts/Managers/channel_manager_ui.gd`) - TV remote UI with lock/completion indicators
+- **CarryOverPanel** (`Scripts/UI/carry_over_panel.gd`) - Carry-over selection UI between channels
 - **Channel Resources** (`Resources/Data/Channels/channel_01.tres` to `channel_20.tres`)
 - **ChannelDifficultyValidator** (`Scripts/Editor/ChannelDifficultyValidator.gd`) - Editor validation tool
 
@@ -459,21 +460,51 @@ Each round within a channel has:
 2. Player selects unlocked channel (1-20) and presses Start
 3. Game progresses through 6 rounds with scaled difficulty
 4. After Round 6 completion → RoundWinnerPanel shows stats
-5. "Next Channel" marks channel complete, saves progress, advances to next channel
+5. "Next Channel" marks channel complete, saves progress
+6. **Carry-Over Panel** appears — player selects which items to keep for the next channel
+7. Game advances to next channel with conditional resets based on selections
 
-**Channel Progression Reset Behavior:**
-When advancing to the next channel, the following intentional resets occur:
-- **Scorecard Levels**: All scorecard category levels reset to Level 1. This is by design to:
-  - Maintain game balance as difficulty scales with each channel
-  - Prevent runaway scoring from accumulated level bonuses
-  - Create a fresh strategic challenge each channel
-  - Encourage players to rebuild their scoring strategy
-- **Round Counter**: Resets to Round 1
-- **Scorecard**: All categories become available again for scoring
-- **Player Inventory**: PowerUps, Consumables, and Mods are RETAINED across channels
-- **Economy**: Player money is RETAINED across channels
+**Channel Carry-Over System:**
+When advancing to the next channel, a **Carry-Over Selection Panel** lets the player choose what to keep. Each channel's `.tres` resource defines:
+- `allowed_carryover_count`: Maximum number of categories the player can carry over (0 = full reset)
+- `allowed_carryover_types`: Which carry-over categories are available for selection
 
-> **Design Note**: The level reset is intentional game design, not a bug. Players keep their items and money but must rebuild scorecard levels each channel, creating a balanced progression where higher channels require strategic item management rather than relying on accumulated level bonuses.
+**Carry-Over Categories:**
+| Type Key | Description |
+|----------|-------------|
+| `power_ups` | Active PowerUps (Extra Dice, Loaded Dice, etc.) |
+| `consumables` | Active Consumables (Reroll Tokens, Score Doublers, etc.) |
+| `colored_dice` | Purchased dice color boosts |
+| `mods` | Dice Mods attached to dice |
+| `consoles` | Active Gaming Console |
+| `money` | Player's current money balance |
+| `scorecard_levels` | Scorecard category level progression (levels preserved, scores reset) |
+
+**Carry-Over Progression (by Channel):**
+| Channels | Max Selections | Available Types |
+|----------|---------------|-----------------|
+| 1 | 0 | None (tutorial, starting fresh) |
+| 2-3 | 5 | All 7 types |
+| 4-5 | 4 | All 7 types |
+| 6 | 4 | 6 types (no consoles) |
+| 7-8 | 3 | 6 types |
+| 9-10 | 3 | 5 types (no scorecard_levels) |
+| 11 | 2 | 5 types |
+| 12-13 | 2 | 4 types (no mods, no scorecard_levels) |
+| 14 | 2 | 3 types (power_ups, consumables, money) |
+| 15-16 | 1 | 3 types |
+| 17 | 1 | 2 types (power_ups, money) |
+| 18-20 | 0 | None (hardest channels, full reset) |
+
+**Items that ALWAYS reset (never carry-over):**
+- Round Counter (resets to Round 1)
+- Scorecard Scores (all categories available for scoring)
+- Active Challenges and Debuffs
+- Goof-Off Meter
+- Shop Reroll Costs and Expansions
+- ScoreModifierManager state
+
+> **Design Note**: The carry-over system creates strategic tension — players must decide which investments to protect as options narrow in harder channels. At channels 18-20, everything resets, requiring mastery of fresh starts.
 
 ## Key Systems
 

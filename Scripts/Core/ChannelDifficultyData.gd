@@ -63,6 +63,17 @@ class_name ChannelDifficultyData
 ## 1.0 = normal effects, 2.0 = double intensity (e.g., costly_roll costs 2x)
 @export var debuff_intensity_multiplier: float = 1.0
 
+## ============== CARRY-OVER SYSTEM ==============
+
+## Maximum number of carry-over items the player can select when entering this channel
+## 0 = no carry-overs allowed (full reset), higher = more generous
+@export var allowed_carryover_count: int = 0
+
+## Which carry-over categories are available for selection when entering this channel
+## Valid values: "power_ups", "consumables", "colored_dice", "mods", "consoles", "money", "scorecard_levels"
+## Empty array = no options shown (used with allowed_carryover_count = 0)
+@export var allowed_carryover_types: Array[String] = []
+
 ## ============== SPECIAL OVERRIDES ==============
 
 ## Force specific challenge IDs for certain rounds (optional)
@@ -266,6 +277,7 @@ func get_summary() -> String:
 	if special_rules.size() > 0:
 		lines.append("Special Rules: %s" % str(special_rules))
 	
+	lines.append("Carry-Over: %d selections from %s" % [allowed_carryover_count, str(allowed_carryover_types)])
 	lines.append("Background: %s" % get_background_summary())
 	
 	return "\n".join(lines)
@@ -307,5 +319,20 @@ func validate() -> Array[String]:
 	# Channel N should require roughly N-1 or similar progression
 	if channel_number > 1 and unlock_requirement < 0:
 		errors.append("unlock_requirement cannot be negative: %d" % unlock_requirement)
+	
+	# Validate carry-over settings
+	if allowed_carryover_count < 0:
+		errors.append("allowed_carryover_count cannot be negative: %d" % allowed_carryover_count)
+	
+	var valid_carryover_types := ["power_ups", "consumables", "colored_dice", "mods", "consoles", "money", "scorecard_levels"]
+	for carryover_type in allowed_carryover_types:
+		if carryover_type not in valid_carryover_types:
+			errors.append("Invalid carryover type: '%s' (valid: %s)" % [carryover_type, str(valid_carryover_types)])
+	
+	if allowed_carryover_count > 0 and allowed_carryover_types.is_empty():
+		errors.append("allowed_carryover_count is %d but allowed_carryover_types is empty" % allowed_carryover_count)
+	
+	if allowed_carryover_count > allowed_carryover_types.size() and allowed_carryover_types.size() > 0:
+		errors.append("allowed_carryover_count (%d) exceeds available types (%d)" % [allowed_carryover_count, allowed_carryover_types.size()])
 	
 	return errors

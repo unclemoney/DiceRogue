@@ -1,4 +1,4 @@
-[gd_scene load_steps=193 format=3 uid="uid://cxmuo2t1grbxy"]
+[gd_scene load_steps=194 format=3 uid="uid://cxmuo2t1grbxy"]
 
 [ext_resource type="Script" uid="uid://bl81cx362nw8h" path="res://Tests/bot_test.gd" id="1_bot_test"]
 [ext_resource type="Resource" uid="uid://h4x8v0sjo44p" path="res://Resources/Data/default_bot_config.tres" id="2_5xelv"]
@@ -97,6 +97,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/Managers/synergy_manager.tscn" id="98_vch7i"]
 [ext_resource type="PackedScene" uid="uid://b8qm3rvhj4dnr" path="res://Scenes/Managers/ChannelManagerUI.tscn" id="99_ocuqv"]
 [ext_resource type="Resource" uid="uid://wvpnvey8q20j" path="res://Scripts/PowerUps/WildDotsPowerUp.tres" id="99_wild_dots"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/CarryOverPanel.tscn" id="100_carry_over"]
 [ext_resource type="Resource" uid="uid://c2kn4gf8x7lwm" path="res://Scripts/PowerUps/PinHeadPowerUp.tres" id="100_pin_head"]
 [ext_resource type="PackedScene" uid="uid://cfnq7mvpk2r8d" path="res://Scenes/UI/RoundWinnerPanel.tscn" id="100_sxl8b"]
 [ext_resource type="Resource" uid="uid://d3hc8h0p7bj6w" path="res://Scripts/PowerUps/MoneyWellSpentPowerUp.tres" id="101_money_well_spent"]
@@ -421,6 +422,8 @@ size_flags_vertical = 3
 [node name="ChannelManagerUI" parent="." instance=ExtResource("99_ocuqv")]
 
 [node name="RoundWinnerPanel" parent="." instance=ExtResource("100_sxl8b")]
+
+[node name="CarryOverPanel" parent="." instance=ExtResource("100_carry_over")]
 
 [node name="UnlockedItemPanel" parent="." instance=ExtResource("1001_unlocked_panel")]
 
