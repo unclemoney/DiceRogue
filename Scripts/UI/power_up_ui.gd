@@ -246,6 +246,13 @@ func _fan_out_cards() -> void:
 	if not is_inside_tree():
 		return
 	
+	# Recalculate fan center in local coordinates to account for node's global position
+	_fan_center = get_viewport_rect().size / 2.0 - global_position
+	
+	# Reposition background to cover entire viewport
+	_background.position = -global_position
+	_background.size = get_viewport_rect().size
+	
 	# Auto-minimize shop if it's open
 	if _shop_ui and _shop_ui.visible:
 		_shop_was_visible_before_fan = true

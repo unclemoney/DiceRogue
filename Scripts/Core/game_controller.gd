@@ -616,6 +616,15 @@ func _restart_game_for_new_channel(carried_types: Array[String] = []) -> void:
 		round_manager.current_round = 0
 		print("[GameController] Round reset to 0 (will start at round 1)")
 	
+	# Re-apply carried-over power-up effects that were wiped by the resets above
+	if carried_types.has("power_ups") and not active_power_ups.is_empty():
+		print("[GameController] Re-applying carried-over power-up effects...")
+		for pu_id in active_power_ups.keys():
+			var pu = active_power_ups[pu_id]
+			if pu and is_instance_valid(pu):
+				_activate_power_up(pu_id)
+				print("[GameController] Re-applied power-up: %s" % pu_id)
+	
 	# Start new game session
 	if round_manager:
 		round_manager.start_game()
@@ -4384,10 +4393,12 @@ func _apply_automatic_debuffs(round_number: int) -> void:
 	for debuff in spawned:
 		if debuff and debuff.id:
 			active_debuffs[debuff.id] = debuff
-			# Update UI if available
-			if debuff_ui:
-				var def = debuff_manager.get_def(debuff.id)
-				if def:
+			# Update UI — try CorkboardUI first, fall back to old DebuffUI
+			var def = debuff_manager.get_def(debuff.id)
+			if def:
+				if corkboard_ui:
+					corkboard_ui.add_debuff(def, debuff)
+				elif debuff_ui:
 					debuff_ui.add_debuff(def, debuff)
 	
 	if spawned.size() > 0:

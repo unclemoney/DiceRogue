@@ -111,6 +111,7 @@ offset_left = -1.0
 offset_top = 37.0
 offset_right = 937.0
 offset_bottom = 106.0
+mouse_filter = 2
 
 [node name="ShopLabel" type="RichTextLabel" parent="MarginContainer"]
 custom_minimum_size = Vector2(320, 0)

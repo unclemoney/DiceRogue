@@ -122,7 +122,7 @@ func _create_spine_structure() -> void:
 	title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(title_label)
 	
-	# Create reward label (shows reward at top of post-it, title-style)
+	# Create reward label (deprecated — hidden, kept for backwards compatibility)
 	reward_label = Label.new()
 	reward_label.name = "RewardLabel"
 	reward_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
@@ -134,6 +134,7 @@ func _create_spine_structure() -> void:
 	reward_label.add_theme_color_override("font_color", Color(0.1, 0.5, 0.1, 1))  # Green for money
 	reward_label.text = ""
 	reward_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	reward_label.visible = false
 	add_child(reward_label)
 
 func _apply_data_to_ui() -> void:

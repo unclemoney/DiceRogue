@@ -87,13 +87,23 @@ func show_panel(allowed_count: int, allowed_types: Array[String], next_channel: 
 	_rebuild_checkbox_list()
 	_update_display()
 	
-	# Position to fill viewport
+	# Position to fill viewport — reset anchors to avoid conflicts with Node2D parent
 	var viewport = get_viewport()
 	if viewport:
 		var viewport_rect = viewport.get_visible_rect()
+		set_anchors_preset(Control.PRESET_TOP_LEFT)
+		anchor_left = 0.0
+		anchor_top = 0.0
+		anchor_right = 0.0
+		anchor_bottom = 0.0
 		global_position = Vector2.ZERO
 		size = viewport_rect.size
 		z_index = 100
+		
+		# Re-center the panel container explicitly
+		if panel_container:
+			var panel_size = panel_container.custom_minimum_size
+			panel_container.position = (viewport_rect.size - panel_size) / 2.0
 	
 	visible = true
 	_animate_entrance()
@@ -111,17 +121,11 @@ func _build_ui() -> void:
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(overlay)
 	
-	# Create centered panel container
+	# Create centered panel container — positioned explicitly in show_panel()
 	panel_container = PanelContainer.new()
 	panel_container.name = "CarryOverPanel"
 	panel_container.custom_minimum_size = Vector2(480, 550)
-	panel_container.set_anchors_preset(Control.PRESET_CENTER)
-	panel_container.offset_left = -240
-	panel_container.offset_top = -275
-	panel_container.offset_right = 240
-	panel_container.offset_bottom = 275
-	panel_container.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	panel_container.grow_vertical = Control.GROW_DIRECTION_BOTH
+	panel_container.size = Vector2(480, 550)
 	
 	# Create custom StyleBox
 	var style = StyleBoxFlat.new()
