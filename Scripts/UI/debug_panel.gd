@@ -184,6 +184,7 @@ func _create_debug_tabs() -> void:
 		"Items": [
 			{"text": "Grant Random PowerUp", "method": "_debug_grant_powerup"},
 			{"text": "Grant PlusADollar", "method": "_debug_grant_plus_a_dollar"},
+			{"text": "Grant SweetSixteen", "method": "_debug_grant_sweet_sixteen"},
 			{"text": "Grant Random Consumable", "method": "_debug_grant_consumable"},
 			{"text": "Grant AnyScore", "method": "_debug_grant_any_score"},
 			{"text": "Grant Green Envy", "method": "_debug_grant_green_envy"},
@@ -1010,6 +1011,17 @@ func _debug_grant_plus_a_dollar() -> void:
 	if game_controller.has_method("grant_power_up"):
 		game_controller.grant_power_up("plus_a_dollar")
 		log_debug("Granted PlusADollar PowerUp")
+	else:
+		log_debug("GameController missing grant_power_up method")
+
+func _debug_grant_sweet_sixteen() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_power_up"):
+		game_controller.grant_power_up("sweet_sixteen")
+		log_debug("Granted SweetSixteen PowerUp")
 	else:
 		log_debug("GameController missing grant_power_up method")
 

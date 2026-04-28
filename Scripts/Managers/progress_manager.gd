@@ -1127,6 +1127,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5, 5)
 	_add_default_power_up("one_roll_wonder", "One-Roll Wonder", "Score on first roll = +40 additive", 
 		UnlockConditionClass.ConditionType.WIN_GAMES, 5, 5)
+	_add_default_power_up("sweet_sixteen", "Sweet Sixteen", "Grants $16 per turn. Turn 16 score bonus: $256",
+		UnlockConditionClass.ConditionType.REACH_CHANNEL, 10, 5)
 	
 	# --- Difficulty 6: Rare PowerUps ---
 	_add_default_power_up("money_well_spent", "Money Well Spent", "Convert money to score", 

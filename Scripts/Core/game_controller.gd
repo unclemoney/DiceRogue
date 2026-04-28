@@ -1028,6 +1028,12 @@ func _activate_power_up(power_up_id: String) -> void:
 				print("[GameController] Applied PlusADollarPowerUp to dice_hand")
 			else:
 				push_error("[GameController] No dice_hand available for PlusADollarPowerUp")
+		"sweet_sixteen":
+			if scorecard:
+				pu.apply(scorecard)
+				print("[GameController] Applied SweetSixteenPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for SweetSixteenPowerUp")
 		"ungrounded":
 			pu.apply(self)
 			print("[GameController] Applied UngroundedPowerUp")
@@ -1350,6 +1356,9 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"plus_a_dollar":
 			print("[GameController] Removing plus_a_dollar PowerUp")
 			pu.remove(dice_hand)
+		"sweet_sixteen":
+			print("[GameController] Removing sweet_sixteen PowerUp")
+			pu.remove(scorecard)
 		"ungrounded":
 			print("[GameController] Removing ungrounded PowerUp")
 			pu.remove(self)
@@ -1525,6 +1534,8 @@ func revoke_power_up(power_up_id: String) -> void:
 				pu.remove(scorecard)
 			"plus_a_dollar":
 				pu.remove(dice_hand)
+			"sweet_sixteen":
+				pu.remove(scorecard)
 			"ungrounded":
 				pu.remove(self)
 			"shop_rerolls":
