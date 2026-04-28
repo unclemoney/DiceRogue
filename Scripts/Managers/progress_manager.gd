@@ -1055,6 +1055,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.COMPLETE_GAME, 1, 1)
 	_add_default_power_up("allowance", "Allowance", "Grants $100 when challenge completes", 
 		UnlockConditionClass.ConditionType.COMPLETE_GAME, 1, 1)
+	_add_default_power_up("plus_a_dollar", "Plus A Dollar", "Grants $1 after each dice roll",
+		UnlockConditionClass.ConditionType.COMPLETE_GAME, 1, 1)
 	_add_default_power_up("roll_efficiency", "Roll Efficiency", "+N to scores (N = rolls used)", 
 		UnlockConditionClass.ConditionType.COMPLETE_GAME, 1, 1)
 	
