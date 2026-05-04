@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3 uid="uid://bqp6w2f2qtxqr"]
+
+[ext_resource type="Script" path="res://Scripts/UI/menu_dice.gd" id="1_menu_dice"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_menu"]
+bounce = 0.6
+friction = 0.4
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_menu"]
+radius = 28.0
+
+[node name="MenuDice" type="RigidBody2D"]
+input_pickable = true
+physics_material_override = SubResource("PhysicsMaterial_menu")
+gravity_scale = 1.0
+mass = 0.5
+script = ExtResource("1_menu_dice")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.8, 0.8)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_menu")

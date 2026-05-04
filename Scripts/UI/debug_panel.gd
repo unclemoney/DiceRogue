@@ -382,6 +382,11 @@ func _create_debug_tabs() -> void:
 			{"text": "Set Intensity 6", "method": "_debug_audio_intensity_6"},
 			{"text": "Stop Music", "method": "_debug_audio_stop_music"},
 			{"text": "Resume Music", "method": "_debug_audio_resume_music"},
+		],
+		"Main Menu": [
+			{"text": "Spawn Extra Dice", "method": "_debug_menu_spawn_dice"},
+			{"text": "Clear All Dice", "method": "_debug_menu_clear_dice"},
+			{"text": "Show Dice Count", "method": "_debug_menu_show_dice_count"},
 		]
 	}
 	
@@ -3986,3 +3991,54 @@ func _debug_audio_resume_music() -> void:
 	music_manager.resume_music()
 	log_debug("Music resumed")
 #endregion
+
+
+## ─── MAIN MENU DEBUG COMMANDS ──────────────────────────────────────
+
+## _debug_menu_spawn_dice()
+##
+## Spawns 5 extra menu dice in the main menu.
+func _debug_menu_spawn_dice() -> void:
+	var main_menu = get_tree().get_first_node_in_group("main_menu")
+	if not main_menu:
+		log_debug("MainMenu not found - ensure you are in the main menu scene")
+		return
+	
+	if main_menu.has_method("_spawn_menu_dice"):
+		for i in range(5):
+			main_menu._spawn_menu_dice()
+		log_debug("Spawned 5 menu dice")
+	else:
+		log_debug("MainMenu does not support dice spawning")
+
+
+## _debug_menu_clear_dice()
+##
+## Removes all menu dice from the main menu.
+func _debug_menu_clear_dice() -> void:
+	var main_menu = get_tree().get_first_node_in_group("main_menu")
+	if not main_menu:
+		log_debug("MainMenu not found - ensure you are in the main menu scene")
+		return
+	
+	if main_menu.has_method("_cleanup_menu_dice"):
+		main_menu._cleanup_menu_dice()
+		log_debug("Cleared all menu dice")
+	else:
+		log_debug("MainMenu does not support dice cleanup")
+
+
+## _debug_menu_show_dice_count()
+##
+## Shows the current number of menu dice in the main menu.
+func _debug_menu_show_dice_count() -> void:
+	var main_menu = get_tree().get_first_node_in_group("main_menu")
+	if not main_menu:
+		log_debug("MainMenu not found - ensure you are in the main menu scene")
+		return
+	
+	var dice_array = main_menu.get("_menu_dice")
+	if dice_array != null:
+		log_debug("Menu dice count: %d" % dice_array.size())
+	else:
+		log_debug("MainMenu does not expose dice count")

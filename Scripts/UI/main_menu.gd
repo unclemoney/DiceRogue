@@ -19,6 +19,7 @@ var vcr_font: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 # Use DebuffTest.tscn as the main game scene until a dedicated production scene is created
 const GAME_SCENE := preload("res://Tests/DebuffTest.tscn")
 const SETTINGS_MENU_SCENE := preload("res://Scenes/UI/SettingsMenu.tscn")
+const MENU_DICE_SCENE := preload("res://Scenes/UI/menu_dice.tscn")
 
 # Button styling toggle - switch between programmatic and texture-based theme styling
 @export var use_theme_styling: bool = true
@@ -28,8 +29,8 @@ var _game_settings: Node = null
 var _tfx: Node = null
 
 # UI References
-var title_label: Label
-var subtitle_label: Label
+var _title_letters: Array[TitleLetter] = []
+var _subtitle_letters: Array[TitleLetter] = []
 var playing_as_label: Label
 var profile_button_container: HBoxContainer
 var profile_buttons: Array[Button] = []
@@ -46,11 +47,18 @@ var settings_menu: Control = null
 # Theme for dialogs
 var powerup_hover_theme: Theme = null
 
-# Animation
-var title_tween: Tween
-var title_base_position: Vector2
-const TITLE_FLOAT_AMOUNT := 8.0
-const TITLE_FLOAT_DURATION := 2.5
+# Physics dice manager
+var _physics_layer: Node2D
+var _menu_dice: Array[MenuDice] = []
+var _dice_spawn_timer: Timer
+const MAX_MENU_DICE := 30
+const MIN_MENU_DICE := 20
+const DICE_SPAWN_INTERVAL := 0.8
+const MOUSE_WIND_RADIUS := 200.0
+const MOUSE_WIND_STRENGTH := 3.0
+
+var _prev_mouse_pos: Vector2 = Vector2.ZERO
+var _floor_y: float = 0.0
 
 # Currently selected profile for renaming/deleting
 var _renaming_slot: int = 0
@@ -58,18 +66,26 @@ var _deleting_slot: int = 0
 
 
 func _ready() -> void:
+	add_to_group("main_menu")
 	_game_settings = get_node_or_null("/root/GameSettings")
 	_tfx = get_node_or_null("/root/TweenFXHelper")
 	_load_theme()
 	_build_ui()
 	_update_profile_buttons()
 	_update_playing_as_label()
-	_start_title_animation()
+	_animate_title_entry()
+	_start_dice_spawner()
+	
+	# Init mouse wind tracker to avoid explosive first-frame velocity
+	_prev_mouse_pos = get_global_mouse_position()
 	
 	# Connect to profile changes
 	if ProgressManager:
 		ProgressManager.profile_loaded.connect(_on_profile_loaded)
 		ProgressManager.profile_renamed.connect(_on_profile_renamed)
+	
+	get_viewport().size_changed.connect(_update_boundaries)
+	print("[MainMenu] Ready - viewport: ", get_viewport_rect().size, " dice: ", _menu_dice.size())
 
 
 ## _load_theme()
@@ -85,8 +101,13 @@ func _load_theme() -> void:
 
 
 func _exit_tree() -> void:
-	if title_label:
-		_tfx.stop_effect(title_label)
+	for letter in _title_letters:
+		if is_instance_valid(letter):
+			_tfx.stop_effect(letter)
+	for letter in _subtitle_letters:
+		if is_instance_valid(letter):
+			_tfx.stop_effect(letter)
+	_cleanup_menu_dice()
 
 
 ## _build_ui()
@@ -102,6 +123,7 @@ func _build_ui() -> void:
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	background.color = Color.WHITE  # Base color for shader
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Don't block clicks
+	background.z_index = -1  # Render behind dice and UI
 	
 	# === SHADER SELECTION ===
 	# Uncomment one shader option below to change the main menu background
@@ -176,6 +198,9 @@ func _build_ui() -> void:
 		background.color = Color(0.1, 0.05, 0.15, 1.0)  # Fallback solid color
 	add_child(background)
 	
+	# Physics layer for background dice
+	_build_physics_layer()
+	
 	# Main container
 	var main_container = VBoxContainer.new()
 	main_container.name = "MainContainer"
@@ -215,35 +240,57 @@ func _build_ui() -> void:
 
 ## _build_title_section(parent)
 ##
-## Builds the animated title and subtitle.
+## Builds the animated title and subtitle using individual TitleLetter nodes.
 func _build_title_section(parent: Control) -> void:
 	var title_container = VBoxContainer.new()
 	title_container.name = "TitleContainer"
 	title_container.add_theme_constant_override("separation", 5)
 	parent.add_child(title_container)
 	
-	# Main title - "GUHTZEE"
-	title_label = Label.new()
-	title_label.name = "TitleLabel"
-	title_label.text = "GUHTZEE!"
-	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_label.add_theme_font_override("font", brick_font)
-	title_label.add_theme_font_size_override("font_size", 120)
-	title_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3, 1.0))  # Golden yellow
-	title_label.add_theme_color_override("font_shadow_color", Color(0.6, 0.3, 0.0, 0.8))
-	title_label.add_theme_constant_override("shadow_offset_x", 4)
-	title_label.add_theme_constant_override("shadow_offset_y", 4)
-	title_container.add_child(title_label)
+	# Main title letters - "GUHTZEE!"
+	var title_hbox = HBoxContainer.new()
+	title_hbox.name = "TitleHBox"
+	title_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	title_hbox.add_theme_constant_override("separation", 2)
+	title_container.add_child(title_hbox)
 	
-	# Subtitle
-	subtitle_label = Label.new()
-	subtitle_label.name = "SubtitleLabel"
-	subtitle_label.text = "A Daring Dice Adventure"
-	subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle_label.add_theme_font_override("font", vcr_font)
-	subtitle_label.add_theme_font_size_override("font_size", 24)
-	subtitle_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.75, 1.0))
-	title_container.add_child(subtitle_label)
+	var title_text = "GUHTZEE!"
+	for i in range(title_text.length()):
+		var letter = TitleLetter.new()
+		letter.name = "TitleLetter%d" % i
+		letter.text = title_text[i]
+		letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		letter.add_theme_font_override("font", brick_font)
+		letter.add_theme_font_size_override("font_size", 120)
+		letter.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3, 1.0))
+		letter.add_theme_color_override("font_shadow_color", Color(0.6, 0.3, 0.0, 0.8))
+		letter.add_theme_color_override("font_outline_color", Color(0.4, 0.2, 0.0, 1.0))
+		letter.add_theme_constant_override("outline_size", 3)
+		letter.add_theme_constant_override("shadow_offset_x", 4)
+		letter.add_theme_constant_override("shadow_offset_y", 4)
+		letter.set_phase_offset(i * TitleLetter.BASE_PHASE_OFFSET)
+		title_hbox.add_child(letter)
+		_title_letters.append(letter)
+	
+	# Subtitle letters - "A Daring Dice Adventure"
+	var subtitle_hbox = HBoxContainer.new()
+	subtitle_hbox.name = "SubtitleHBox"
+	subtitle_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	subtitle_hbox.add_theme_constant_override("separation", 1)
+	title_container.add_child(subtitle_hbox)
+	
+	var subtitle_text = "A Daring Dice Adventure"
+	for i in range(subtitle_text.length()):
+		var letter = TitleLetter.new()
+		letter.name = "SubtitleLetter%d" % i
+		letter.text = subtitle_text[i]
+		letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		letter.add_theme_font_override("font", vcr_font)
+		letter.add_theme_font_size_override("font_size", 24)
+		letter.add_theme_color_override("font_color", Color(0.7, 0.7, 0.75, 1.0))
+		letter.set_phase_offset(i * TitleLetter.BASE_PHASE_OFFSET + 2.0)
+		subtitle_hbox.add_child(letter)
+		_subtitle_letters.append(letter)
 
 
 ## _build_profile_section(parent)
@@ -501,14 +548,22 @@ func _build_delete_dialog() -> void:
 	add_child(delete_dialog)
 
 
-## _start_title_animation()
+## _animate_title_entry()
 ##
-## Starts the floating animation for the title using TweenFXHelper.
-func _start_title_animation() -> void:
-	if not title_label:
-		return
+## Plays a staggered pop-in animation for all title and subtitle letters.
+func _animate_title_entry() -> void:
+	var all_letters: Array[TitleLetter] = []
+	all_letters.append_array(_title_letters)
+	all_letters.append_array(_subtitle_letters)
 	
-	_tfx.idle_float(title_label, TITLE_FLOAT_AMOUNT)
+	for i in range(all_letters.size()):
+		var letter = all_letters[i]
+		letter.scale = Vector2.ZERO
+		letter.modulate.a = 0.0
+		await get_tree().create_timer(0.03).timeout
+		var tween = get_tree().create_tween()
+		tween.tween_property(letter, "scale", Vector2(1.0, 1.0), 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.parallel().tween_property(letter, "modulate:a", 1.0, 0.2)
 
 
 ## _update_profile_buttons()
@@ -851,3 +906,155 @@ func _update_tutorial_button() -> void:
 		tutorial_button.text = "REPLAY TUTORIAL"
 	else:
 		tutorial_button.text = "PLAY TUTORIAL"
+
+
+## _build_physics_layer()
+##
+## Creates the physics world for background menu dice (floor, walls).
+func _build_physics_layer() -> void:
+	_physics_layer = Node2D.new()
+	_physics_layer.name = "PhysicsLayer"
+	add_child(_physics_layer)
+	
+	_update_boundaries()
+
+
+## _update_boundaries()
+##
+## Updates floor and wall positions based on current viewport size.
+func _update_boundaries() -> void:
+	# Remove old boundary nodes only (keep dice)
+	for child in _physics_layer.get_children():
+		if child is StaticBody2D:
+			child.queue_free()
+	
+	var viewport_size = get_viewport_rect().size
+	if viewport_size.x <= 0 or viewport_size.y <= 0:
+		viewport_size = Vector2(1152, 648)
+	_floor_y = viewport_size.y - 10.0
+	
+	# Floor
+	var floor_body = StaticBody2D.new()
+	floor_body.name = "Floor"
+	_physics_layer.add_child(floor_body)
+	var floor_shape = WorldBoundaryShape2D.new()
+	floor_shape.normal = Vector2.UP
+	floor_shape.distance = -_floor_y
+	var floor_collision = CollisionShape2D.new()
+	floor_collision.shape = floor_shape
+	floor_body.add_child(floor_collision)
+	
+	# Left wall
+	var left_wall = StaticBody2D.new()
+	left_wall.name = "LeftWall"
+	_physics_layer.add_child(left_wall)
+	var left_shape = WorldBoundaryShape2D.new()
+	left_shape.normal = Vector2.RIGHT
+	left_shape.distance = 0.0
+	var left_collision = CollisionShape2D.new()
+	left_collision.shape = left_shape
+	left_wall.add_child(left_collision)
+	
+	# Right wall
+	var right_wall = StaticBody2D.new()
+	right_wall.name = "RightWall"
+	_physics_layer.add_child(right_wall)
+	var right_shape = WorldBoundaryShape2D.new()
+	right_shape.normal = Vector2.LEFT
+	right_shape.distance = -viewport_size.x
+	var right_collision = CollisionShape2D.new()
+	right_collision.shape = right_shape
+	right_wall.add_child(right_collision)
+
+
+## _start_dice_spawner()
+##
+## Starts the timer that periodically spawns menu dice.
+func _start_dice_spawner() -> void:
+	_dice_spawn_timer = Timer.new()
+	_dice_spawn_timer.name = "DiceSpawnTimer"
+	_dice_spawn_timer.wait_time = DICE_SPAWN_INTERVAL
+	_dice_spawn_timer.timeout.connect(_on_dice_spawn_timer_timeout)
+	add_child(_dice_spawn_timer)
+	_dice_spawn_timer.start()
+	
+	# Spawn initial batch
+	for i in range(MIN_MENU_DICE):
+		_spawn_menu_dice()
+
+
+## _on_dice_spawn_timer_timeout()
+##
+## Spawns a new menu die and enforces the max dice limit.
+func _on_dice_spawn_timer_timeout() -> void:
+	_spawn_menu_dice()
+	if _menu_dice.size() > MAX_MENU_DICE:
+		_remove_oldest_dice()
+
+
+## _spawn_menu_dice()
+##
+## Instantiates a MenuDice at a random X position above the viewport.
+func _spawn_menu_dice() -> void:
+	var viewport_size = get_viewport_rect().size
+	if viewport_size.x <= 0 or viewport_size.y <= 0:
+		viewport_size = Vector2(1152, 648)
+	
+	var die = MENU_DICE_SCENE.instantiate() as MenuDice
+	if not die:
+		push_error("[MainMenu] Failed to instantiate menu dice")
+		return
+	
+	var spawn_pos = Vector2(
+		randf_range(30.0, maxf(30.0, viewport_size.x - 30.0)),
+		randf_range(-100.0, -20.0)
+	)
+	die.global_position = spawn_pos
+	die.set_floor_y(_floor_y)
+	_physics_layer.add_child(die)
+	_menu_dice.append(die)
+	print("[MainMenu] Spawned dice at ", spawn_pos, " total: ", _menu_dice.size())
+
+
+## _remove_oldest_dice()
+##
+## Removes the oldest menu die from the scene and array.
+func _remove_oldest_dice() -> void:
+	if _menu_dice.is_empty():
+		return
+	var die = _menu_dice.pop_front()
+	if is_instance_valid(die):
+		die.queue_free()
+
+
+## _cleanup_menu_dice()
+##
+## Removes all menu dice and stops the spawn timer.
+func _cleanup_menu_dice() -> void:
+	if _dice_spawn_timer and is_instance_valid(_dice_spawn_timer):
+		_dice_spawn_timer.stop()
+		_dice_spawn_timer.queue_free()
+	for die in _menu_dice:
+		if is_instance_valid(die):
+			die.queue_free()
+	_menu_dice.clear()
+
+
+func _process(delta: float) -> void:
+	# Mouse wind effect
+	var mouse_pos = get_global_mouse_position()
+	var mouse_vel = (mouse_pos - _prev_mouse_pos) / maxf(delta, 0.001)
+	_prev_mouse_pos = mouse_pos
+	
+	# Skip wind on first frame to avoid explosive initial velocity
+	if mouse_vel.length() > 50000.0:
+		return
+	
+	for die in _menu_dice:
+		if not is_instance_valid(die):
+			continue
+		var dist = mouse_pos.distance_to(die.global_position)
+		if dist < MOUSE_WIND_RADIUS and mouse_vel.length() > 100.0:
+			var force_dir = mouse_vel.normalized()
+			var force = mouse_vel.length() * MOUSE_WIND_STRENGTH * (1.0 - dist / MOUSE_WIND_RADIUS) * delta
+			die.apply_central_impulse(force_dir * force)
