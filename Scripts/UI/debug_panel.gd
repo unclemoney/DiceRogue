@@ -369,6 +369,10 @@ func _create_debug_tabs() -> void:
 			{"text": "Force Apply Debuffs", "method": "_debug_difficulty_force_apply"},
 			{"text": "Clear Active Debuffs", "method": "_debug_difficulty_clear_debuffs"},
 			{"text": "Show Multiplier Breakdown", "method": "_debug_difficulty_show_multipliers"},
+			{"text": "Show Channel Bonuses", "method": "_debug_difficulty_show_channel_bonuses"},
+			{"text": "Simulate Channel 5 Bonus", "method": "_debug_difficulty_simulate_ch5_bonus"},
+			{"text": "Simulate Channel 10 Bonus", "method": "_debug_difficulty_simulate_ch10_bonus"},
+			{"text": "Reset Scorecard Levels", "method": "_debug_difficulty_reset_levels"},
 		],
 		"Audio": [
 			{"text": "Show Music State", "method": "_debug_audio_show_state"},
@@ -4054,3 +4058,65 @@ func _debug_menu_show_dice_count() -> void:
 		log_debug("Menu dice count: %d" % dice_array.size())
 	else:
 		log_debug("MainMenu does not expose dice count")
+
+
+## ─── CHANNEL START BONUS DEBUG COMMANDS ────────────────────────────
+
+## _debug_difficulty_show_channel_bonuses()
+##
+## Prints the starting bonus table for all channels 1-20.
+func _debug_difficulty_show_channel_bonuses() -> void:
+	if not game_controller or not game_controller.channel_manager:
+		log_debug("ERROR: ChannelManager not found")
+		return
+	
+	log_debug("=== CHANNEL STARTING BONUSES ===")
+	log_debug("Ch | Money | PowerUps | Consumables | Level Boosts")
+	log_debug("---+-------+----------+-------------+-------------")
+	for ch in range(1, 21):
+		var bonus = game_controller.channel_manager.get_channel_start_bonus(ch)
+		log_debug("%2d | $%4d | %8d | %11d | %12d" % [
+			ch,
+			bonus["bonus_money"],
+			bonus["bonus_powerup_count"],
+			bonus["bonus_consumable_count"],
+			bonus["bonus_level_boost_count"]
+		])
+
+
+## _debug_difficulty_simulate_ch5_bonus()
+##
+## Simulates applying the channel 5 starting bonus for testing.
+func _debug_difficulty_simulate_ch5_bonus() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not found")
+		return
+	
+	log_debug("Simulating Channel 5 starting bonus...")
+	game_controller._apply_channel_starting_bonuses(5)
+	log_debug("Channel 5 bonuses applied. Check GameController output for details.")
+
+
+## _debug_difficulty_simulate_ch10_bonus()
+##
+## Simulates applying the channel 10 starting bonus for testing.
+func _debug_difficulty_simulate_ch10_bonus() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not found")
+		return
+	
+	log_debug("Simulating Channel 10 starting bonus...")
+	game_controller._apply_channel_starting_bonuses(10)
+	log_debug("Channel 10 bonuses applied. Check GameController output for details.")
+
+
+## _debug_difficulty_reset_levels()
+##
+## Resets all scorecard category levels to 1.
+func _debug_difficulty_reset_levels() -> void:
+	if not game_controller or not game_controller.scorecard:
+		log_debug("ERROR: Scorecard not found")
+		return
+	
+	game_controller.scorecard.reset_scores()
+	log_debug("Scorecard levels reset to 1")

@@ -293,7 +293,7 @@ func _load_audio_resources() -> void:
 		push_warning("[AudioManager] Failed to load confirm sound")
 	
 	# Load dice land sound (repurposed dice click)
-	dice_land_sound = load("res://Resources/Audio/UI/DICE_CLICK.wav")
+	dice_land_sound = load("res://Resources/Audio/UI/DENIED_1.wav")
 	if dice_land_sound:
 		print("[AudioManager] Loaded dice land sound")
 	else:

@@ -21,6 +21,7 @@ var checkmark_icon: Label
 var completion_label: Label
 var multiplier_label: Label
 var difficulty_label: Label
+var bonus_label: Label
 var up_button: Button
 var down_button: Button
 var start_button: Button
@@ -261,6 +262,16 @@ func _build_ui() -> void:
 	completion_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 	content_vbox.add_child(completion_label)
 	
+	# Starting bonus preview label
+	bonus_label = Label.new()
+	bonus_label.name = "BonusLabel"
+	bonus_label.text = ""
+	bonus_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	bonus_label.add_theme_font_override("font", vcr_font)
+	bonus_label.add_theme_font_size_override("font_size", 13)
+	bonus_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+	content_vbox.add_child(bonus_label)
+	
 	# Spacer
 	var spacer1 = Control.new()
 	spacer1.custom_minimum_size = Vector2(0, 10)
@@ -398,6 +409,9 @@ func _update_display() -> void:
 	# Update completion status display (also handles lock status)
 	_update_completion_status()
 	
+	# Update starting bonus preview
+	_update_bonus_preview()
+	
 	# Update start button state based on lock status
 	_update_start_button_state(is_locked)
 
@@ -497,6 +511,33 @@ func _on_start_pressed() -> void:
 		channel_manager.select_channel()
 		emit_signal("start_pressed", channel_manager.current_channel)
 	hide_channel_selector()
+
+
+## _update_bonus_preview() -> void
+##
+## Updates the bonus preview label to show starting bonuses for the current channel.
+func _update_bonus_preview() -> void:
+	if not bonus_label or not channel_manager:
+		return
+	
+	var current_channel = channel_manager.current_channel
+	var bonus_data = channel_manager.get_channel_start_bonus(current_channel)
+	
+	if bonus_data["bonus_money"] == 0 and bonus_data["bonus_powerup_count"] == 0 and bonus_data["bonus_consumable_count"] == 0 and bonus_data["bonus_level_boost_count"] == 0:
+		bonus_label.text = ""
+		return
+	
+	var parts: Array[String] = []
+	if bonus_data["bonus_money"] > 0:
+		parts.append("+$%d" % bonus_data["bonus_money"])
+	if bonus_data["bonus_powerup_count"] > 0:
+		parts.append("%d PowerUp" % bonus_data["bonus_powerup_count"])
+	if bonus_data["bonus_consumable_count"] > 0:
+		parts.append("%d Consumable" % bonus_data["bonus_consumable_count"])
+	if bonus_data["bonus_level_boost_count"] > 0:
+		parts.append("%d Level Up" % bonus_data["bonus_level_boost_count"])
+	
+	bonus_label.text = "Bonus: " + ", ".join(parts)
 
 
 ## _update_start_button_state(is_locked) -> void

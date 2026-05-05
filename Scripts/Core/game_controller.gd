@@ -427,11 +427,114 @@ func _on_game_start() -> void:
 ## _on_channel_selected(channel: int) -> void
 ##
 ## Called when player confirms their channel selection. Starts the game.
+## Applies channel starting bonuses (money, powerups, consumables, level boosts)
+## before RoundManager begins the first round.
 func _on_channel_selected(channel: int) -> void:
 	print("[GameController] Channel", channel, "selected, starting game...")
 	_apply_channel_background()
+	_apply_channel_starting_bonuses(channel)
 	if round_manager:
 		round_manager.start_game()
+
+
+## _apply_channel_starting_bonuses(channel: int) -> void
+##
+## Grants starting bonuses based on the selected channel.
+## Resets money to baseline $100, then adds bonus money.
+## Grants random unlocked powerups and consumables.
+## Randomly boosts one scorecard category per level boost.
+## @param channel: The channel number the player selected
+func _apply_channel_starting_bonuses(channel: int) -> void:
+	if not channel_manager:
+		return
+	
+	var bonus_data = channel_manager.get_channel_start_bonus(channel)
+	if bonus_data["bonus_money"] == 0 and bonus_data["bonus_powerup_count"] == 0 and bonus_data["bonus_consumable_count"] == 0 and bonus_data["bonus_level_boost_count"] == 0:
+		print("[GameController] No starting bonuses for channel %d" % channel)
+		return
+	
+	print("[GameController] Applying starting bonuses for channel %d..." % channel)
+	
+	# Reset money to baseline, then add bonus
+	if PlayerEconomy:
+		PlayerEconomy.reset_to_starting_money()
+		if bonus_data["bonus_money"] > 0:
+			PlayerEconomy.add_money(bonus_data["bonus_money"])
+			print("[GameController] Bonus money granted: +$%d (total: $%d)" % [bonus_data["bonus_money"], PlayerEconomy.get_money()])
+	
+	# Grant random unlocked powerups
+	if bonus_data["bonus_powerup_count"] > 0:
+		_grant_random_bonus_items(bonus_data["bonus_powerup_count"], UnlockableItem.ItemType.POWER_UP)
+	
+	# Grant random unlocked consumables
+	if bonus_data["bonus_consumable_count"] > 0:
+		_grant_random_bonus_items(bonus_data["bonus_consumable_count"], UnlockableItem.ItemType.CONSUMABLE)
+	
+	# Grant random scorecard level boosts
+	if bonus_data["bonus_level_boost_count"] > 0 and scorecard:
+		_grant_random_scorecard_boosts(bonus_data["bonus_level_boost_count"])
+	
+	print("[GameController] Starting bonuses applied for channel %d" % channel)
+
+
+## _grant_random_bonus_items(count: int, item_type: int) -> void
+##
+## Grants a number of random items from the player's unlocked pool.
+## Falls back to extra money if no unlocked items of that type are available.
+## @param count: Number of items to grant
+## @param item_type: UnlockableItem.ItemType value
+func _grant_random_bonus_items(count: int, item_type: int) -> void:
+	var progress_manager = get_node_or_null("/root/ProgressManager")
+	if not progress_manager:
+		return
+	
+	var unlocked_items = progress_manager.get_unlocked_items(item_type)
+	if unlocked_items.is_empty():
+		print("[GameController] No unlocked items of type %d available for bonus. Converting to money." % item_type)
+		if PlayerEconomy:
+			var fallback_money = count * 100
+			PlayerEconomy.add_money(fallback_money)
+			print("[GameController] Fallback bonus money granted: +$%d" % fallback_money)
+		return
+	
+	unlocked_items.shuffle()
+	var granted_count = 0
+	for i in range(min(count, unlocked_items.size())):
+		var item_id = unlocked_items[i]
+		if item_type == UnlockableItem.ItemType.POWER_UP:
+			grant_power_up(item_id)
+			granted_count += 1
+		elif item_type == UnlockableItem.ItemType.CONSUMABLE:
+			grant_consumable(item_id)
+			granted_count += 1
+	
+	var type_name = "powerup" if item_type == UnlockableItem.ItemType.POWER_UP else "consumable"
+	print("[GameController] Granted %d bonus %s(s)" % [granted_count, type_name])
+
+
+## _grant_random_scorecard_boosts(count: int) -> void
+##
+## Randomly selects categories and upgrades them by one level each.
+## Distributes boosts across upper and lower sections.
+## @param count: Number of categories to boost
+func _grant_random_scorecard_boosts(count: int) -> void:
+	if not scorecard:
+		return
+	
+	var all_categories: Array[Dictionary] = []
+	for category in scorecard.upper_levels.keys():
+		all_categories.append({"section": Scorecard.Section.UPPER, "category": category})
+	for category in scorecard.lower_levels.keys():
+		all_categories.append({"section": Scorecard.Section.LOWER, "category": category})
+	
+	all_categories.shuffle()
+	var boosted_count = 0
+	for i in range(min(count, all_categories.size())):
+		var entry = all_categories[i]
+		scorecard.upgrade_category(entry["section"], entry["category"])
+		boosted_count += 1
+	
+	print("[GameController] Granted %d scorecard level boost(s)" % boosted_count)
 
 
 ## _apply_channel_background() -> void

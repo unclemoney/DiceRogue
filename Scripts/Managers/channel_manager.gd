@@ -403,6 +403,41 @@ func get_difficulty_description() -> String:
 		return "Impossible"
 
 
+## get_channel_start_bonus(channel: int) -> Dictionary
+##
+## Returns the starting bonus for selecting a given channel.
+## Bonuses scale linearly: higher channels grant more money, powerups,
+## consumables, and scorecard level boosts.
+## @param channel: Channel number (1-20), defaults to current if -1
+## @return: Dictionary with keys: bonus_money, bonus_powerup_count,
+##          bonus_consumable_count, bonus_level_boost_count
+func get_channel_start_bonus(channel: int = -1) -> Dictionary:
+	if channel < 0:
+		channel = current_channel
+	
+	if channel <= 1:
+		return {
+			"bonus_money": 0,
+			"bonus_powerup_count": 0,
+			"bonus_consumable_count": 0,
+			"bonus_level_boost_count": 0
+		}
+	
+	# Linear progression formulas
+	# Channel 2: $150, Channel 3: $300 + 1 PU, Channel 4: $450 + 1 PU + 1 Cons, etc.
+	var bonus_money = (channel - 1) * 150
+	var bonus_powerups = (channel - 1) / 2
+	var bonus_consumables = max(0, (channel - 2) / 2)
+	var bonus_level_boosts = max(0, (channel - 3) / 2)
+	
+	return {
+		"bonus_money": bonus_money,
+		"bonus_powerup_count": bonus_powerups,
+		"bonus_consumable_count": bonus_consumables,
+		"bonus_level_boost_count": bonus_level_boosts
+	}
+
+
 ## validate_all_configs() -> Array[String]
 ##
 ## Validates all loaded channel configurations.
