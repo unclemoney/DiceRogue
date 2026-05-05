@@ -223,7 +223,7 @@ func _load_audio_resources() -> void:
 		push_warning("[AudioManager] Failed to load money sound")
 	
 	# Load button click sound
-	button_click_sound = load("res://Resources/Audio/UI/BUTTON_CLICK_1.wav")
+	button_click_sound = load("res://Resources/Audio/UI/BUTTON_CLICK_2.wav")
 	if button_click_sound:
 		print("[AudioManager] Loaded button click sound")
 	else:
@@ -251,14 +251,14 @@ func _load_audio_resources() -> void:
 		push_warning("[AudioManager] Failed to load swoosh sound")
 	
 	# Load fan out sound (repurposed dice click)
-	fan_out_sound = load("res://Resources/Audio/UI/DICE_CLICK.wav")
+	fan_out_sound = load("res://Resources/Audio/UI/FANOUT_1.wav")
 	if fan_out_sound:
 		print("[AudioManager] Loaded fan out sound")
 	else:
 		push_warning("[AudioManager] Failed to load fan out sound")
 	
 	# Load fan in sound (repurposed button click)
-	fan_in_sound = load("res://Resources/Audio/UI/BUTTON_CLICK_1.wav")
+	fan_in_sound = load("res://Resources/Audio/UI/FANOUT_1.wav")
 	if fan_in_sound:
 		print("[AudioManager] Loaded fan in sound")
 	else:
@@ -286,7 +286,7 @@ func _load_audio_resources() -> void:
 		push_warning("[AudioManager] Failed to load denied sound")
 	
 	# Load confirm sound (repurposed score)
-	confirm_sound = load("res://Resources/Audio/SCORING/SCORE_1.wav")
+	confirm_sound = load("res://Resources/Audio/UI/CONFIRM_1.wav")
 	if confirm_sound:
 		print("[AudioManager] Loaded confirm sound")
 	else:
@@ -300,14 +300,14 @@ func _load_audio_resources() -> void:
 		push_warning("[AudioManager] Failed to load dice land sound")
 	
 	# Load sell sound (repurposed cash)
-	sell_sound = load("res://Resources/Audio/MONEY/CASH_1.wav")
+	sell_sound = load("res://Resources/Audio/UI/SELL_ITEM_1.wav")
 	if sell_sound:
 		print("[AudioManager] Loaded sell sound")
 	else:
 		push_warning("[AudioManager] Failed to load sell sound")
 	
 	# Load round start sound (repurposed ding)
-	round_start_sound = load("res://Resources/Audio/ding.wav")
+	round_start_sound = load("res://Resources/Audio/UI/ROUND_START_1.wav")
 	if round_start_sound:
 		print("[AudioManager] Loaded round start sound")
 	else:
@@ -699,8 +699,9 @@ func play_panel_swoosh() -> void:
 ## Play a crisp spread sound when cards fan out.
 func play_fan_out() -> void:
 	if not fan_out_sound:
+		print("[AudioManager] Fan out sound not loaded, skipping")
 		return
-	
+	print("[AudioManager] Playing fan out sound")
 	fan_out_player.stream = fan_out_sound
 	fan_out_player.pitch_scale = randf_range(FAN_OUT_PITCH_MIN, FAN_OUT_PITCH_MAX)
 	fan_out_player.volume_db = master_volume_db

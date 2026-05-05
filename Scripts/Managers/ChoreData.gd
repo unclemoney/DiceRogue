@@ -31,6 +31,7 @@ const HARD_REDUCTION: int = 30
 @export var task_type: TaskType = TaskType.SCORE_UPPER
 @export var difficulty: Difficulty = Difficulty.EASY
 @export var progress_reduction: int = 10  # Default EASY reduction
+@export var reward_value: int = 50  # Money rewarded when completed
 
 ## get_progress_reduction()
 ##
