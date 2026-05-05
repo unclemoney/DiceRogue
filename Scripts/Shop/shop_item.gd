@@ -287,6 +287,10 @@ func _on_buy_button_pressed() -> void:
 			#print("[ShopItem] Mod purchase blocked - limit reached (all dice have mods)")
 			buy_button.disabled = true
 			buy_button.text = "LIMIT REACHED"
+			# Play denied sound
+			var audio_mgr = get_node_or_null("/root/AudioManager")
+			if audio_mgr:
+				audio_mgr.play_denied_sound()
 			return
 	
 	if PlayerEconomy.can_afford(price):
@@ -300,6 +304,10 @@ func _on_buy_button_pressed() -> void:
 			print("[ShopItem] Failed to remove money for purchase")
 	else:
 		print("[ShopItem] Cannot afford", item_id, "(cost:", price, ", money:", PlayerEconomy.money, ")")
+		# Play denied sound
+		var audio_mgr = get_node_or_null("/root/AudioManager")
+		if audio_mgr:
+			audio_mgr.play_denied_sound()
 	_update_button_state()
 
 

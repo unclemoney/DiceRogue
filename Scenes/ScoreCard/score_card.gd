@@ -321,6 +321,11 @@ func on_category_selected(section: Section, category: String):
 	print("[Scorecard] *** DIRECT SCORECARD CALL *** on_category_selected")
 	print("[Scorecard] Section:", section, "Category:", category)
 	
+	# Play confirm sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_confirm_sound()
+	
 	var values = DiceResults.values
 	print("[Scorecard] Dice values:", values)
 	

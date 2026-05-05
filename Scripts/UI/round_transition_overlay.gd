@@ -299,6 +299,11 @@ func _play_entrance_sequence() -> void:
 
 	# Reset background
 	background_overlay.color = Color(0, 0, 0, 0)
+	
+	# Play round start sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_round_start_sound()
 
 	# Build the tween sequence
 	_entrance_tween = create_tween()

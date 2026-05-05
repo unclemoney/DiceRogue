@@ -242,6 +242,11 @@ func _fan_out_cards() -> void:
 	_is_animating = true
 	_current_state = State.FANNED
 	
+	# Play fan out sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_fan_out()
+	
 	# Safety check - don't create tweens on invalid nodes
 	if not is_inside_tree():
 		return
@@ -405,6 +410,11 @@ func _fold_back_cards() -> void:
 	print("[PowerUpUI] Folding back cards")
 	_is_animating = true
 	_current_state = State.SPINES
+	
+	# Play fan in sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_fan_in()
 	
 	# Safety check - don't create tweens on invalid nodes
 	if not is_inside_tree():
@@ -850,6 +860,11 @@ func animate_power_up_removal(power_up_id: String, on_finished: Callable) -> voi
 		return
 	
 	print("[PowerUpUI] Animating juicy sell removal for:", power_up_id)
+	
+	# Play sell sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_sell_sound()
 	
 	# Find money label as fly target
 	var fly_target: Vector2 = Vector2(100, 50)

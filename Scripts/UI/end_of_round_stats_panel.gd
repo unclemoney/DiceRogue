@@ -444,6 +444,11 @@ func _animate_entrance() -> void:
 	panel_container.modulate.a = 0.0
 	overlay.modulate.a = 0.0
 	
+	# Play swoosh sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_panel_swoosh()
+	
 	_animation_tween = create_tween()
 	_animation_tween.set_parallel(true)
 	

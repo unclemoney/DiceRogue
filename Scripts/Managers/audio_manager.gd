@@ -42,6 +42,41 @@ const FIREWORK_PITCH_MAX: float = 1.1
 const DICE_LOCK_PITCH_MIN: float = 0.95
 const DICE_LOCK_PITCH_MAX: float = 1.05
 
+# Panel swoosh audio configuration
+const SWOOSH_PITCH: float = 0.55
+
+# Fan out/in audio configuration
+const FAN_OUT_PITCH_MIN: float = 1.15
+const FAN_OUT_PITCH_MAX: float = 1.35
+const FAN_IN_PITCH_MIN: float = 0.75
+const FAN_IN_PITCH_MAX: float = 0.90
+
+# Tab switch audio configuration
+const TAB_SWITCH_PITCH_MIN: float = 1.10
+const TAB_SWITCH_PITCH_MAX: float = 1.25
+
+# Money tick audio configuration
+const MONEY_TICK_PITCH_MIN: float = 1.0
+const MONEY_TICK_PITCH_MAX: float = 1.3
+const MONEY_TICK_MAX_AMOUNT: int = 25
+const MONEY_DEBOUNCE_MS: int = 250
+
+# Denied audio configuration
+const DENIED_PITCH: float = 0.6
+
+# Confirm audio configuration
+const CONFIRM_PITCH: float = 0.7
+
+# Dice land audio configuration
+const DICE_LAND_PITCH_MIN: float = 0.85
+const DICE_LAND_PITCH_MAX: float = 0.95
+
+# Sell audio configuration
+const SELL_PITCH: float = 1.3
+
+# Round start audio configuration
+const ROUND_START_PITCH: float = 1.0
+
 # Audio resources
 var dice_sounds: Array[AudioStream] = []
 var scoring_sound: AudioStream
@@ -49,6 +84,16 @@ var money_sound: AudioStream
 var button_click_sound: AudioStream
 var firework_sound: AudioStream
 var dice_click_sound: AudioStream
+var swoosh_sound: AudioStream
+var fan_out_sound: AudioStream
+var fan_in_sound: AudioStream
+var tab_switch_sound: AudioStream
+var money_tick_sound: AudioStream
+var denied_sound: AudioStream
+var confirm_sound: AudioStream
+var dice_land_sound: AudioStream
+var sell_sound: AudioStream
+var round_start_sound: AudioStream
 
 # Audio players - pooled for dice (one per die), single for others
 var dice_players: Array[AudioStreamPlayer] = []
@@ -57,6 +102,16 @@ var money_player: AudioStreamPlayer
 var button_player: AudioStreamPlayer
 var firework_player: AudioStreamPlayer
 var dice_click_player: AudioStreamPlayer
+var swoosh_player: AudioStreamPlayer
+var fan_out_player: AudioStreamPlayer
+var fan_in_player: AudioStreamPlayer
+var tab_switch_player: AudioStreamPlayer
+var money_tick_player: AudioStreamPlayer
+var denied_player: AudioStreamPlayer
+var confirm_player: AudioStreamPlayer
+var dice_land_player: AudioStreamPlayer
+var sell_player: AudioStreamPlayer
+var round_start_player: AudioStreamPlayer
 
 # Roll tracking - reset after scoring
 var current_roll_number: int = 0
@@ -66,6 +121,9 @@ var current_scoring_step: int = 0
 
 # Track buttons we've already connected to avoid duplicate connections
 var _connected_buttons: Dictionary = {}
+
+# Debounce for explicit money sounds vs auto-tick
+var _last_explicit_money_time: int = 0
 
 
 func _ready() -> void:
@@ -78,6 +136,11 @@ func _ready() -> void:
 	
 	# Connect to any existing buttons in the tree (deferred to allow scene to load)
 	call_deferred("_connect_existing_buttons")
+	
+	# Connect to PlayerEconomy for mid-round money ticks
+	var player_economy = get_node_or_null("/root/PlayerEconomy")
+	if player_economy:
+		player_economy.money_changed.connect(_on_money_changed)
 	
 	print("[AudioManager] Ready with %d dice sounds loaded" % dice_sounds.size())
 
@@ -179,6 +242,76 @@ func _load_audio_resources() -> void:
 		print("[AudioManager] Loaded dice click sound")
 	else:
 		push_warning("[AudioManager] Failed to load dice click sound")
+	
+	# Load swoosh sound (repurposed dice roll)
+	swoosh_sound = load("res://Resources/Audio/DICE/DICE_ROLL_1.wav")
+	if swoosh_sound:
+		print("[AudioManager] Loaded swoosh sound")
+	else:
+		push_warning("[AudioManager] Failed to load swoosh sound")
+	
+	# Load fan out sound (repurposed dice click)
+	fan_out_sound = load("res://Resources/Audio/UI/DICE_CLICK.wav")
+	if fan_out_sound:
+		print("[AudioManager] Loaded fan out sound")
+	else:
+		push_warning("[AudioManager] Failed to load fan out sound")
+	
+	# Load fan in sound (repurposed button click)
+	fan_in_sound = load("res://Resources/Audio/UI/BUTTON_CLICK_1.wav")
+	if fan_in_sound:
+		print("[AudioManager] Loaded fan in sound")
+	else:
+		push_warning("[AudioManager] Failed to load fan in sound")
+	
+	# Load tab switch sound (repurposed dice click)
+	tab_switch_sound = load("res://Resources/Audio/UI/DICE_CLICK.wav")
+	if tab_switch_sound:
+		print("[AudioManager] Loaded tab switch sound")
+	else:
+		push_warning("[AudioManager] Failed to load tab switch sound")
+	
+	# Load money tick sound (repurposed cash)
+	money_tick_sound = load("res://Resources/Audio/MONEY/CASH_1.wav")
+	if money_tick_sound:
+		print("[AudioManager] Loaded money tick sound")
+	else:
+		push_warning("[AudioManager] Failed to load money tick sound")
+	
+	# Load denied sound (repurposed bongo)
+	denied_sound = load("res://Resources/Audio/bongo.wav")
+	if denied_sound:
+		print("[AudioManager] Loaded denied sound")
+	else:
+		push_warning("[AudioManager] Failed to load denied sound")
+	
+	# Load confirm sound (repurposed score)
+	confirm_sound = load("res://Resources/Audio/SCORING/SCORE_1.wav")
+	if confirm_sound:
+		print("[AudioManager] Loaded confirm sound")
+	else:
+		push_warning("[AudioManager] Failed to load confirm sound")
+	
+	# Load dice land sound (repurposed dice click)
+	dice_land_sound = load("res://Resources/Audio/UI/DICE_CLICK.wav")
+	if dice_land_sound:
+		print("[AudioManager] Loaded dice land sound")
+	else:
+		push_warning("[AudioManager] Failed to load dice land sound")
+	
+	# Load sell sound (repurposed cash)
+	sell_sound = load("res://Resources/Audio/MONEY/CASH_1.wav")
+	if sell_sound:
+		print("[AudioManager] Loaded sell sound")
+	else:
+		push_warning("[AudioManager] Failed to load sell sound")
+	
+	# Load round start sound (repurposed ding)
+	round_start_sound = load("res://Resources/Audio/ding.wav")
+	if round_start_sound:
+		print("[AudioManager] Loaded round start sound")
+	else:
+		push_warning("[AudioManager] Failed to load round start sound")
 
 
 ## _create_audio_players()
@@ -222,6 +355,66 @@ func _create_audio_players() -> void:
 	dice_click_player.name = "DiceClickPlayer"
 	dice_click_player.volume_db = master_volume_db
 	add_child(dice_click_player)
+	
+	# Create swoosh player
+	swoosh_player = AudioStreamPlayer.new()
+	swoosh_player.name = "SwooshPlayer"
+	swoosh_player.volume_db = master_volume_db
+	add_child(swoosh_player)
+	
+	# Create fan out player
+	fan_out_player = AudioStreamPlayer.new()
+	fan_out_player.name = "FanOutPlayer"
+	fan_out_player.volume_db = master_volume_db
+	add_child(fan_out_player)
+	
+	# Create fan in player
+	fan_in_player = AudioStreamPlayer.new()
+	fan_in_player.name = "FanInPlayer"
+	fan_in_player.volume_db = master_volume_db
+	add_child(fan_in_player)
+	
+	# Create tab switch player
+	tab_switch_player = AudioStreamPlayer.new()
+	tab_switch_player.name = "TabSwitchPlayer"
+	tab_switch_player.volume_db = master_volume_db
+	add_child(tab_switch_player)
+	
+	# Create money tick player
+	money_tick_player = AudioStreamPlayer.new()
+	money_tick_player.name = "MoneyTickPlayer"
+	money_tick_player.volume_db = master_volume_db
+	add_child(money_tick_player)
+	
+	# Create denied player
+	denied_player = AudioStreamPlayer.new()
+	denied_player.name = "DeniedPlayer"
+	denied_player.volume_db = master_volume_db
+	add_child(denied_player)
+	
+	# Create confirm player
+	confirm_player = AudioStreamPlayer.new()
+	confirm_player.name = "ConfirmPlayer"
+	confirm_player.volume_db = master_volume_db
+	add_child(confirm_player)
+	
+	# Create dice land player
+	dice_land_player = AudioStreamPlayer.new()
+	dice_land_player.name = "DiceLandPlayer"
+	dice_land_player.volume_db = master_volume_db
+	add_child(dice_land_player)
+	
+	# Create sell player
+	sell_player = AudioStreamPlayer.new()
+	sell_player.name = "SellPlayer"
+	sell_player.volume_db = master_volume_db
+	add_child(sell_player)
+	
+	# Create round start player
+	round_start_player = AudioStreamPlayer.new()
+	round_start_player.name = "RoundStartPlayer"
+	round_start_player.volume_db = master_volume_db
+	add_child(round_start_player)
 
 
 ## play_dice_roll(die_index: int, roll_number: int)
@@ -298,6 +491,9 @@ func play_money_sound(amount: int) -> void:
 	if not money_sound:
 		return
 	
+	# Track explicit call time for debounce
+	_last_explicit_money_time = Time.get_ticks_msec()
+	
 	money_player.stream = money_sound
 	
 	# Calculate pitch: random base + amount scaling
@@ -361,6 +557,36 @@ func set_master_volume(volume_db: float) -> void:
 	if dice_click_player:
 		dice_click_player.volume_db = volume_db
 	
+	if swoosh_player:
+		swoosh_player.volume_db = volume_db
+	
+	if fan_out_player:
+		fan_out_player.volume_db = volume_db
+	
+	if fan_in_player:
+		fan_in_player.volume_db = volume_db
+	
+	if tab_switch_player:
+		tab_switch_player.volume_db = volume_db
+	
+	if money_tick_player:
+		money_tick_player.volume_db = volume_db
+	
+	if denied_player:
+		denied_player.volume_db = volume_db
+	
+	if confirm_player:
+		confirm_player.volume_db = volume_db
+	
+	if dice_land_player:
+		dice_land_player.volume_db = volume_db
+	
+	if sell_player:
+		sell_player.volume_db = volume_db
+	
+	if round_start_player:
+		round_start_player.volume_db = volume_db
+	
 	print("[AudioManager] Master volume set to: %.1f dB" % volume_db)
 
 
@@ -420,3 +646,153 @@ func play_dice_lock() -> void:
 	dice_click_player.volume_db = master_volume_db
 	
 	dice_click_player.play()
+
+
+## _on_money_changed(new_amount: int, change: int)
+##
+## Connected to PlayerEconomy.money_changed. Plays a quick tick for small
+## mid-round earnings, but debounces when explicit money sounds were recently triggered.
+func _on_money_changed(_new_amount: int, change: int) -> void:
+	if change <= 0:
+		return
+	if change > MONEY_TICK_MAX_AMOUNT:
+		return
+	if Time.get_ticks_msec() - _last_explicit_money_time < MONEY_DEBOUNCE_MS:
+		return
+	play_money_tick(change)
+
+
+## play_money_tick(amount: int)
+##
+## Plays a brief cash tick for small mid-round money earnings.
+func play_money_tick(amount: int) -> void:
+	if not money_tick_sound:
+		return
+	
+	money_tick_player.stream = money_tick_sound
+	
+	var base_pitch = randf_range(MONEY_TICK_PITCH_MIN, MONEY_TICK_PITCH_MAX)
+	var amount_bonus = amount * MONEY_PITCH_SCALE
+	var final_pitch = base_pitch + amount_bonus
+	final_pitch = minf(final_pitch, MONEY_MAX_PITCH)
+	money_tick_player.pitch_scale = final_pitch
+	money_tick_player.volume_db = master_volume_db
+	money_tick_player.play()
+
+
+## play_panel_swoosh()
+##
+## Play a swoosh sound for panel fly-in animations.
+## Repurposes dice roll at very low pitch.
+func play_panel_swoosh() -> void:
+	if not swoosh_sound:
+		return
+	
+	swoosh_player.stream = swoosh_sound
+	swoosh_player.pitch_scale = SWOOSH_PITCH
+	swoosh_player.volume_db = master_volume_db
+	swoosh_player.play()
+
+
+## play_fan_out()
+##
+## Play a crisp spread sound when cards fan out.
+func play_fan_out() -> void:
+	if not fan_out_sound:
+		return
+	
+	fan_out_player.stream = fan_out_sound
+	fan_out_player.pitch_scale = randf_range(FAN_OUT_PITCH_MIN, FAN_OUT_PITCH_MAX)
+	fan_out_player.volume_db = master_volume_db
+	fan_out_player.play()
+
+
+## play_fan_in()
+##
+## Play a soft collapse sound when cards fold back.
+func play_fan_in() -> void:
+	if not fan_in_sound:
+		return
+	
+	fan_in_player.stream = fan_in_sound
+	fan_in_player.pitch_scale = randf_range(FAN_IN_PITCH_MIN, FAN_IN_PITCH_MAX)
+	fan_in_player.volume_db = master_volume_db
+	fan_in_player.play()
+
+
+## play_tab_switch()
+##
+## Play a crisp sound when switching tabs in the shop.
+func play_tab_switch() -> void:
+	if not tab_switch_sound:
+		return
+	
+	tab_switch_player.stream = tab_switch_sound
+	tab_switch_player.pitch_scale = randf_range(TAB_SWITCH_PITCH_MIN, TAB_SWITCH_PITCH_MAX)
+	tab_switch_player.volume_db = master_volume_db
+	tab_switch_player.play()
+
+
+## play_denied_sound()
+##
+## Play a low thud for blocked or unaffordable actions.
+func play_denied_sound() -> void:
+	if not denied_sound:
+		return
+	
+	denied_player.stream = denied_sound
+	denied_player.pitch_scale = DENIED_PITCH
+	denied_player.volume_db = master_volume_db
+	denied_player.play()
+
+
+## play_confirm_sound()
+##
+## Play a short confirmation sound for category selection or similar.
+func play_confirm_sound() -> void:
+	if not confirm_sound:
+		return
+	
+	confirm_player.stream = confirm_sound
+	confirm_player.pitch_scale = CONFIRM_PITCH
+	confirm_player.volume_db = master_volume_db
+	confirm_player.play()
+
+
+## play_dice_land_sound()
+##
+## Play a soft clack when dice finish rolling and land.
+func play_dice_land_sound() -> void:
+	if not dice_land_sound:
+		return
+	
+	dice_land_player.stream = dice_land_sound
+	dice_land_player.pitch_scale = randf_range(DICE_LAND_PITCH_MIN, DICE_LAND_PITCH_MAX)
+	dice_land_player.volume_db = master_volume_db
+	dice_land_player.play()
+
+
+## play_sell_sound()
+##
+## Play a cash sound when selling an item.
+func play_sell_sound() -> void:
+	if not sell_sound:
+		return
+	
+	sell_player.stream = sell_sound
+	sell_player.pitch_scale = SELL_PITCH
+	sell_player.volume_db = master_volume_db
+	sell_player.play()
+
+
+## play_round_start_sound()
+##
+## Play a ding when a round transition/round starts.
+func play_round_start_sound() -> void:
+	if not round_start_sound:
+		return
+	
+	round_start_player.stream = round_start_sound
+	round_start_player.pitch_scale = ROUND_START_PITCH
+	round_start_player.volume_db = master_volume_db
+	round_start_player.play()

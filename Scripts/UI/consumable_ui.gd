@@ -230,6 +230,11 @@ func _fan_out_cards() -> void:
 	_is_animating = true
 	_current_state = State.FANNED
 	
+	# Play fan out sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_fan_out()
+	
 	# Show background
 	_background.visible = true
 	_background.modulate.a = 0.0
@@ -396,6 +401,11 @@ func _fold_back_cards() -> void:
 	print("[ConsumableUI]   Stack: ", get_stack())
 	_is_animating = true
 	_current_state = State.SPINES
+	
+	# Play fan in sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_fan_in()
 	
 	# Stop idle animations
 	_stop_idle_animations()
@@ -910,6 +920,11 @@ func animate_consumable_removal(consumable_id: String, on_finished: Callable) ->
 	
 	# Lock animating flag so fold_back doesn't fire during animation
 	_is_animating = true
+	
+	# Play sell sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_sell_sound()
 	
 	# Find money label as fly target
 	var fly_target: Vector2 = Vector2(100, 50)

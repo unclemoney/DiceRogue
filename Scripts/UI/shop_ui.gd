@@ -901,6 +901,12 @@ func _update_reroll_button_state() -> void:
 ## Called when the shop tab changes - shows/hides reroll button accordingly
 func _on_tab_changed(tab_index: int) -> void:
 	print("[ShopUI] Tab changed to index:", tab_index)
+	
+	# Play tab switch sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_tab_switch()
+	
 	_update_reroll_button_state()
 
 ## reset_reroll_cost()

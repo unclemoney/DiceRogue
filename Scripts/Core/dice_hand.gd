@@ -407,6 +407,13 @@ func roll_all() -> void:
 	print("[DiceHand] Rolled", rolled_count, "out of", dice_list.size(), "dice")
 	_update_results()
 	emit_signal("roll_complete")
+	
+	# Play dice land sound after a short delay for visual sync
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		await get_tree().create_timer(0.3).timeout
+		if is_instance_valid(self):
+			audio_mgr.play_dice_land_sound()
 
 func _on_child_die_locked(die: Dice) -> void:
 	emit_signal("die_locked", die)

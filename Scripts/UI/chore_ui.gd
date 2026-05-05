@@ -467,6 +467,11 @@ func _fan_out_completed_chores() -> void:
 	_is_animating = true
 	_current_state = State.FANNED
 	
+	# Play fan out sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_fan_out()
+	
 	# Hide details panel
 	details_panel.visible = false
 	
@@ -708,6 +713,11 @@ func _fold_back_cards() -> void:
 		return
 	
 	_is_animating = true
+	
+	# Play fan in sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_fan_in()
 	
 	# Animate cards back
 	for i in range(_fanned_cards.size()):

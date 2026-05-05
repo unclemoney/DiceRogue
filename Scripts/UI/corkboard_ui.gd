@@ -408,6 +408,11 @@ func _fan_out_challenges() -> void:
 	_is_animating = true
 	_current_state = State.FANNED_CHALLENGES
 	
+	# Play fan out sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_fan_out()
+	
 	# Auto-minimize shop if it's open
 	if _shop_ui and _shop_ui.visible:
 		_shop_was_visible_before_fan = true
@@ -883,6 +888,11 @@ func _fan_out_debuffs() -> void:
 	_is_animating = true
 	_current_state = State.FANNED_DEBUFFS
 	
+	# Play fan out sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_fan_out()
+	
 	# Auto-minimize shop if it's open
 	if _shop_ui and _shop_ui.visible:
 		_shop_was_visible_before_fan = true
@@ -1144,6 +1154,11 @@ func _fan_out_consumables() -> void:
 	_is_animating = true
 	_current_state = State.FANNED_CONSUMABLES
 	
+	# Play fan out sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_fan_out()
+	
 	# Auto-minimize shop if it's open
 	if _shop_ui and _shop_ui.visible:
 		_shop_was_visible_before_fan = true
@@ -1366,6 +1381,11 @@ func _animate_card_fan_in(card: Control, target_pos: Vector2, delay: float) -> v
 func _fold_back_cards() -> void:
 	_is_animating = true
 	_stop_idle_animations()
+	
+	# Play fan in sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr:
+		audio_mgr.play_fan_in()
 	
 	# Animate all fanned icons back to center
 	var all_icons: Array = []
