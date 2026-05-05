@@ -3409,9 +3409,11 @@ func _show_end_of_round_stats() -> void:
 	
 	# Get chores completed this round
 	var chores_completed = 0
+	var chore_reward_total = 0
 	if chores_manager:
 		chores_completed = chores_manager.get_chores_completed_this_round()
-	
+		chore_reward_total = chores_manager.get_chore_rewards_this_round()
+
 	# Prepare data for the stats panel
 	var stats_data = {
 		"round_number": current_round_num,
@@ -3419,7 +3421,8 @@ func _show_end_of_round_stats() -> void:
 		"final_score": final_score,
 		"scorecard": scorecard,
 		"challenge_reward": _challenge_reward_this_round,
-		"chores_completed": chores_completed
+		"chores_completed": chores_completed,
+		"chore_reward_total": chore_reward_total
 	}
 	
 	# Connect to panel's continue signal (one-shot)

@@ -128,6 +128,21 @@ text = "Test Mom (Furious)"
 layout_mode = 2
 text = "Test Mom (Happy)"
 
+[node name="HSeparator5" type="HSeparator" parent="ControlPanel"]
+layout_mode = 2
+
+[node name="RewardsLabel" type="Label" parent="ControlPanel"]
+layout_mode = 2
+text = "Reward Tests:"
+
+[node name="ShowRewardsButton" type="Button" parent="ControlPanel"]
+layout_mode = 2
+text = "Show All Rewards"
+
+[node name="TestRewardsButton" type="Button" parent="ControlPanel"]
+layout_mode = 2
+text = "Test Reward Accumulation"
+
 [node name="OutputLabel" type="RichTextLabel" parent="."]
 layout_mode = 1
 anchors_preset = 10
@@ -151,3 +166,5 @@ text = "Test output will appear here..."
 [connection signal="pressed" from="ControlPanel/TestUpsetButton" to="." method="_on_test_mom_upset_pressed"]
 [connection signal="pressed" from="ControlPanel/TestFuriousButton" to="." method="_on_test_mom_furious_pressed"]
 [connection signal="pressed" from="ControlPanel/TestHappyButton" to="." method="_on_test_mom_happy_pressed"]
+[connection signal="pressed" from="ControlPanel/ShowRewardsButton" to="." method="_on_show_rewards_pressed"]
+[connection signal="pressed" from="ControlPanel/TestRewardsButton" to="." method="_on_test_rewards_pressed"]

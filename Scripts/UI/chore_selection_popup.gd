@@ -273,13 +273,22 @@ func _create_task_card(task, is_hard: bool) -> Control:
 	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	desc_label.custom_minimum_size = Vector2(180, 0)
 	card_vbox.add_child(desc_label)
-	
+
+	# Reward amount
+	var reward = task.reward_value if task else 0
+	var reward_label = Label.new()
+	reward_label.text = "Reward: $%d" % reward
+	reward_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	reward_label.add_theme_font_size_override("font_size", 13)
+	reward_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
+	card_vbox.add_child(reward_label)
+
 	# Reduction amount
 	var reduction = HARD_REDUCTION if is_hard else EASY_REDUCTION
 	var reduction_label = Label.new()
 	reduction_label.text = "Meter -%d" % reduction
 	reduction_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	reduction_label.add_theme_font_size_override("font_size", 13)
+	reduction_label.add_theme_font_size_override("font_size", 12)
 	reduction_label.add_theme_color_override("font_color", accent_color)
 	card_vbox.add_child(reduction_label)
 	

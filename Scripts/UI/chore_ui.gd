@@ -611,13 +611,25 @@ func _create_completed_chore_card(chore) -> Control:
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 	name_label.set_anchors_preset(Control.PRESET_CENTER)
-	name_label.position = Vector2(-60, 0)
-	name_label.size = Vector2(120, 60)
+	name_label.position = Vector2(-60, -10)
+	name_label.size = Vector2(120, 50)
 	name_label.add_theme_font_size_override("font_size", 11)
 	name_label.add_theme_color_override("font_color", Color(0.2, 0.2, 0.2))
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(name_label)
-	
+
+	# Reward value
+	var reward_label = Label.new()
+	reward_label.text = "$%d" % (chore.reward_value if chore else 0)
+	reward_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	reward_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	reward_label.position = Vector2(-60, -50)
+	reward_label.size = Vector2(120, 20)
+	reward_label.add_theme_font_size_override("font_size", 12)
+	reward_label.add_theme_color_override("font_color", Color(0.2, 0.6, 0.2))
+	reward_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(reward_label)
+
 	return card
 
 

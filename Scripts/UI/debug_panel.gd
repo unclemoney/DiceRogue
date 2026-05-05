@@ -330,6 +330,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Reset Progress", "method": "_debug_chores_reset"},
 			{"text": "Show Chore State", "method": "_debug_chores_show_state"},
 			{"text": "Show PowerUp Ratings", "method": "_debug_chores_show_ratings"},
+			{"text": "List Chore Rewards", "method": "_debug_chores_list_rewards"},
 			{"text": "Test Mom Dialog (Neutral)", "method": "_debug_chores_mom_neutral"},
 			{"text": "Test Mom Dialog (Upset)", "method": "_debug_chores_mom_upset"},
 			{"text": "Test Mom Dialog (Happy)", "method": "_debug_chores_mom_happy"},
@@ -3043,6 +3044,17 @@ func _debug_chores_show_ratings() -> void:
 			])
 		else:
 			log_debug("  %s: (data not found)" % pu_id)
+
+## _debug_chores_list_rewards()
+##
+## Lists all chores and their reward values for verification.
+func _debug_chores_list_rewards() -> void:
+	log_debug("=== CHORE REWARD LIST ===")
+	var all_tasks = ChoreTasksLibrary.get_all_tasks()
+	for task in all_tasks:
+		var diff_str = "HARD" if task.difficulty == ChoreData.Difficulty.HARD else "EASY"
+		log_debug("  %s | $%d | %s | %s" % [task.id, task.reward_value, diff_str, task.display_name])
+	log_debug("Total tasks: %d" % all_tasks.size())
 
 ## _debug_chores_mom_neutral()
 ##

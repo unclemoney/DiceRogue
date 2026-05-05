@@ -689,10 +689,9 @@ func _bot_award_round_bonuses() -> void:
 	if is_instance_valid(game_controller):
 		challenge_reward = game_controller._challenge_reward_this_round
 
-	# Chore reward — number of chores completed this round × $50
-	if is_instance_valid(chores_manager) and chores_manager.has_method("get_chores_completed_this_round"):
-		var chores_done: int = chores_manager.get_chores_completed_this_round()
-		chore_reward = chores_done * 50  # ChoresManager.CHORE_REWARD_MONEY
+	# Chore reward — total reward value from chores completed this round
+	if is_instance_valid(chores_manager) and chores_manager.has_method("get_chore_rewards_this_round"):
+		chore_reward = chores_manager.get_chore_rewards_this_round()
 
 	# Empty categories bonus — count unscored categories × $10
 	if is_instance_valid(score_card):

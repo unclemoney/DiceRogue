@@ -355,7 +355,7 @@ func show_stats(data: Dictionary) -> void:
 	# Get challenge reward and chores completed
 	challenge_reward_amount = data.get("challenge_reward", 0)
 	chores_completed_count = data.get("chores_completed", 0)
-	chore_reward_amount = chores_completed_count * ChoresManager.CHORE_REWARD_MONEY
+	chore_reward_amount = data.get("chore_reward_total", 0)
 	
 	# Calculate empty categories if scorecard provided
 	if data.has("scorecard"):
@@ -382,7 +382,7 @@ func show_stats(data: Dictionary) -> void:
 	challenge_score_label.text = str(challenge_target_score)
 	final_score_label.text = str(final_score)
 	challenge_reward_label.text = "Challenge Reward:"
-	chore_reward_label.text = "Chores Completed (%d × $%d):" % [chores_completed_count, ChoresManager.CHORE_REWARD_MONEY]
+	chore_reward_label.text = "Chore Rewards (%d chores):" % chores_completed_count
 	empty_categories_label.text = "Empty Categories (%d × $%d):" % [empty_category_count, EMPTY_CATEGORY_BONUS]
 	score_above_label.text = "Points Above Target (%d × $%d):" % [points_above_target, POINTS_ABOVE_TARGET_BONUS]
 	

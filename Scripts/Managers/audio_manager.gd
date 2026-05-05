@@ -244,7 +244,7 @@ func _load_audio_resources() -> void:
 		push_warning("[AudioManager] Failed to load dice click sound")
 	
 	# Load swoosh sound (repurposed dice roll)
-	swoosh_sound = load("res://Resources/Audio/DICE/DICE_ROLL_1.wav")
+	swoosh_sound = load("res://Resources/Audio/UI/SWOOSH_1.wav")
 	if swoosh_sound:
 		print("[AudioManager] Loaded swoosh sound")
 	else:
@@ -272,14 +272,14 @@ func _load_audio_resources() -> void:
 		push_warning("[AudioManager] Failed to load tab switch sound")
 	
 	# Load money tick sound (repurposed cash)
-	money_tick_sound = load("res://Resources/Audio/MONEY/CASH_1.wav")
+	money_tick_sound = load("res://Resources/Audio/UI/COIN_1.wav")
 	if money_tick_sound:
 		print("[AudioManager] Loaded money tick sound")
 	else:
 		push_warning("[AudioManager] Failed to load money tick sound")
 	
 	# Load denied sound (repurposed bongo)
-	denied_sound = load("res://Resources/Audio/bongo.wav")
+	denied_sound = load("res://Resources/Audio/UI/DENIED_1.wav")
 	if denied_sound:
 		print("[AudioManager] Loaded denied sound")
 	else:
