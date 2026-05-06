@@ -695,8 +695,8 @@ func _restart_game_for_new_channel(carried_types: Array[String] = []) -> void:
 		shop_ui.reset_shop_expansions()
 		print("[GameController] Shop reroll cost and expansions reset")
 	
-	# Reset scorecard level labels in the UI
-	if score_card_ui:
+	# Reset scorecard level labels in the UI only if scorecard levels are not being carried over, since they would be out of sync with the preserved levels otherwise
+	if score_card_ui and not carried_types.has("scorecard_levels"):
 		score_card_ui.reset_level_labels()
 		score_card_ui.prepare_for_scoring_animation()
 		print("[GameController] Scorecard level labels and score breakdown reset")
