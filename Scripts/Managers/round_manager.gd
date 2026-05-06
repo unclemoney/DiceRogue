@@ -263,8 +263,8 @@ func start_game() -> void:
 
 	# Reset colored dice purchases for new game session
 	if DiceColorManager:
-		DiceColorManager.clear_purchased_colors()
-		print("[RoundManager] Cleared colored dice purchases for new game")
+		#DiceColorManager.clear_purchased_colors()
+		print("[RoundManager] Cleared colored dice purchases for new game has been disabled here")
 
 	# Make sure turn tracker is in inactive state with no rolls
 	if turn_tracker:
