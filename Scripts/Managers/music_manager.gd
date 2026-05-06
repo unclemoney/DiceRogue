@@ -26,7 +26,7 @@ const MUTED_VOLUME_DB := -80.0
 # Configuration exports
 @export var music_volume_db: float = -6.0
 @export var variant_memory_depth: int = 2
-@export var debug_mode: bool = false
+@export var debug_mode: bool = true
 
 # Intensity presets for game phases
 @export var intensity_shop: int = 1
