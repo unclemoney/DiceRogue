@@ -267,12 +267,10 @@ size_flags_vertical = 3
 columns = 3
 
 [node name="CloseButton" type="Button" parent="."]
-custom_minimum_size = Vector2(40, 40)
 layout_mode = 0
-offset_left = 894.0
-offset_top = 110.0
-offset_right = 934.0
-offset_bottom = 150.0
-text = "X"
+offset_left = 878.0
+offset_top = 111.0
+offset_right = 918.0
+offset_bottom = 151.0
 
 [connection signal="pressed" from="CloseButton" to="." method="_on_close_button_pressed"]

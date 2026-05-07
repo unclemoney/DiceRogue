@@ -526,6 +526,7 @@ func on_shop_opened() -> void:
 	refresh_all_prices()
 	_update_reroll_cost_display()
 	_update_reroll_button_state()
+	tab_container.current_tab = 0  # Default to first tab
 
 ## refresh_all_prices()
 ##
@@ -954,13 +955,13 @@ func _style_close_button() -> void:
 	print("[ShopUI] Styling close button")
 	
 	# Set size to match tab height (40px)
-	close_button.custom_minimum_size = Vector2(40, 40)
+	close_button.custom_minimum_size = Vector2(20, 20)
 	
 	# Load VCR font
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 	if vcr_font:
 		close_button.add_theme_font_override("font", vcr_font)
-		close_button.add_theme_font_size_override("font_size", 20)
+		close_button.add_theme_font_size_override("font_size", 14)
 	
 	# Style the button
 	var style_normal = StyleBoxFlat.new()
@@ -1001,6 +1002,7 @@ func _style_close_button() -> void:
 	close_button.mouse_entered.connect(_tfx.button_hover.bind(close_button))
 	close_button.mouse_exited.connect(_tfx.button_unhover.bind(close_button))
 	close_button.pressed.connect(_tfx.button_press.bind(close_button))
+	close_button.text = "X"
 
 func _get_container_for_type(type: String) -> Node:
 	match type:
@@ -1079,7 +1081,7 @@ func _style_tab_container() -> void:
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 	if vcr_font:
 		tab_container.add_theme_font_override("font", vcr_font)
-		tab_container.add_theme_font_size_override("font_size", 20)  # Larger font size
+		tab_container.add_theme_font_size_override("font_size", 28)  # Larger font size
 		tab_container.add_theme_color_override("font_selected_color", Color(1, 0.8, 0.2, 1))  # Golden selected
 		tab_container.add_theme_color_override("font_unselected_color", Color(0.9, 0.9, 0.9, 1))  # Light gray unselected
 		tab_container.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
