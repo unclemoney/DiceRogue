@@ -302,6 +302,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Save Debug State", "method": "_debug_save_state"},
 			{"text": "Load Debug State", "method": "_debug_load_state"},
 			{"text": "Reset Game", "method": "_debug_reset_game"},
+			{"text": "Show RNG Seed", "method": "_debug_show_rng_seed"},
 			{"text": "Clear Output", "method": "_on_clear_output_pressed"},
 		],
 		"Progress": [
@@ -1315,6 +1316,11 @@ func _debug_skip_shop() -> void:
 		log_debug("Skipped to shop phase")
 	else:
 		log_debug("RoundManager not found or skip method missing")
+
+func _debug_show_rng_seed() -> void:
+	var seed_val = GameRNG.get_initial_seed()
+	log_debug("Current RNG seed: %d" % seed_val)
+
 
 func _debug_reset_game() -> void:
 	if not game_controller:

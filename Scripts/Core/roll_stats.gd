@@ -134,3 +134,40 @@ func get_stats_summary() -> String:
 ## Get brief statistics for UI display
 func get_brief_stats() -> String:
 	return "Yahtzees: %d | Bonuses: %d | Rolls: %d" % [yahtzees_rolled, total_bonuses, total_rolls]
+
+## get_state() -> Dictionary
+##
+## Returns the current roll statistics state for saving.
+func get_state() -> Dictionary:
+	return {
+		"yahtzees_rolled": yahtzees_rolled,
+		"yahtzee_bonuses_earned": yahtzee_bonuses_earned,
+		"three_of_a_kinds": three_of_a_kinds,
+		"four_of_a_kinds": four_of_a_kinds,
+		"full_houses": full_houses,
+		"small_straights": small_straights,
+		"large_straights": large_straights,
+		"upper_bonuses_earned": upper_bonuses_earned,
+		"total_bonuses": total_bonuses,
+		"total_rolls": total_rolls,
+		"total_score": total_score,
+		"games_played": games_played
+	}
+
+
+## load_state(state)
+##
+## Restores the roll statistics state from a saved dictionary.
+func load_state(state: Dictionary) -> void:
+	yahtzees_rolled = state.get("yahtzees_rolled", 0)
+	yahtzee_bonuses_earned = state.get("yahtzee_bonuses_earned", 0)
+	three_of_a_kinds = state.get("three_of_a_kinds", 0)
+	four_of_a_kinds = state.get("four_of_a_kinds", 0)
+	full_houses = state.get("full_houses", 0)
+	small_straights = state.get("small_straights", 0)
+	large_straights = state.get("large_straights", 0)
+	upper_bonuses_earned = state.get("upper_bonuses_earned", 0)
+	total_bonuses = state.get("total_bonuses", 0)
+	total_rolls = state.get("total_rolls", 0)
+	total_score = state.get("total_score", 0)
+	games_played = state.get("games_played", 0)

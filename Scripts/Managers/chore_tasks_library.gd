@@ -136,7 +136,7 @@ static func get_all_tasks() -> Array:
 ## Returns: ChoreData
 static func get_random_task():
 	var tasks = get_all_tasks()
-	return tasks[randi() % tasks.size()]
+	return tasks[GameRNG.random_index(tasks)]
 
 ## get_task_by_id()
 ##

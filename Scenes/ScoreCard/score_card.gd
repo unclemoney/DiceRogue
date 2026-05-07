@@ -1270,3 +1270,47 @@ func _find_channel_manager():
 func reset_call_counter():
 	calculate_score_call_count = 0
 	print("[Scorecard] Reset call counter to 0")
+
+
+## get_state() -> Dictionary
+##
+## Returns the current scorecard state for saving.
+func get_state() -> Dictionary:
+	return {
+		"upper_scores": upper_scores.duplicate(),
+		"lower_scores": lower_scores.duplicate(),
+		"upper_levels": upper_levels.duplicate(),
+		"lower_levels": lower_levels.duplicate(),
+		"upper_bonus": upper_bonus,
+		"upper_bonus_awarded": upper_bonus_awarded,
+		"yahtzee_bonuses": yahtzee_bonuses,
+		"yahtzee_bonus_points": yahtzee_bonus_points,
+		"yahtzee_scored": yahtzee_scored,
+		"current_round_number": current_round_number,
+		"current_dice_sides": current_dice_sides,
+		"sixth_slot_target": sixth_slot_target,
+		"allow_gap_straights": allow_gap_straights,
+		"last_base_score": last_base_score
+	}
+
+
+## load_state(state)
+##
+## Restores the scorecard state from a saved dictionary.
+func load_state(state: Dictionary) -> void:
+	upper_scores = state.get("upper_scores", {"ones": null, "twos": null, "threes": null, "fours": null, "fives": null, "sixes": null})
+	lower_scores = state.get("lower_scores", {"three_of_a_kind": null, "four_of_a_kind": null, "full_house": null, "small_straight": null, "large_straight": null, "yahtzee": null, "chance": null})
+	upper_levels = state.get("upper_levels", {"ones": 1, "twos": 1, "threes": 1, "fours": 1, "fives": 1, "sixes": 1})
+	lower_levels = state.get("lower_levels", {"three_of_a_kind": 1, "four_of_a_kind": 1, "full_house": 1, "small_straight": 1, "large_straight": 1, "yahtzee": 1, "chance": 1})
+	upper_bonus = state.get("upper_bonus", 0)
+	upper_bonus_awarded = state.get("upper_bonus_awarded", false)
+	yahtzee_bonuses = state.get("yahtzee_bonuses", 0)
+	yahtzee_bonus_points = state.get("yahtzee_bonus_points", 0)
+	yahtzee_scored = state.get("yahtzee_scored", false)
+	current_round_number = state.get("current_round_number", 1)
+	current_dice_sides = state.get("current_dice_sides", 6)
+	sixth_slot_target = state.get("sixth_slot_target", 6)
+	allow_gap_straights = state.get("allow_gap_straights", false)
+	last_base_score = state.get("last_base_score", 0)
+	emit_signal("score_changed", get_total_score())
+	print("[Scorecard] State loaded")

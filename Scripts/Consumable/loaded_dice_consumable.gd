@@ -22,8 +22,8 @@ func apply(target) -> void:
 		return
 	
 	# Pick a random die and set it to a random value 1-6
-	var random_die = dice[randi() % dice.size()]
-	var random_value = randi_range(1, 6)
+	var random_die = dice[GameRNG.random_index(dice)]
+	var random_value = GameRNG.randi_range(1, 6)
 	random_die.value = random_value
 	random_die.update_visual()
 	

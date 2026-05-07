@@ -13,6 +13,7 @@ var vcr_font: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 
 # UI References
 var resume_button: Button
+var save_button: Button
 var main_menu_button: Button
 var settings_button: Button
 var settings_menu: Control = null
@@ -112,6 +113,11 @@ func _build_ui() -> void:
 	resume_button.pressed.connect(_on_resume_pressed)
 	btn_container.add_child(resume_button)
 	
+	# Save button
+	save_button = _create_button("SAVE", Color(0.3, 0.5, 0.8, 1.0))
+	save_button.pressed.connect(_on_save_pressed)
+	btn_container.add_child(save_button)
+	
 	# Settings button
 	settings_button = _create_button("SETTINGS", Color(0.5, 0.5, 0.7, 1.0))
 	settings_button.pressed.connect(_on_settings_pressed)
@@ -123,7 +129,7 @@ func _build_ui() -> void:
 	btn_container.add_child(main_menu_button)
 	
 	# Connect TweenFX hover/press effects to all buttons
-	var all_buttons = [resume_button, settings_button, main_menu_button]
+	var all_buttons = [resume_button, save_button, settings_button, main_menu_button]
 	for btn in all_buttons:
 		btn.mouse_entered.connect(func(): _tfx.button_hover(btn))
 		btn.mouse_exited.connect(func(): _tfx.button_unhover(btn))
@@ -204,6 +210,19 @@ func hide_menu() -> void:
 func _on_resume_pressed() -> void:
 	hide_menu()
 	resume_pressed.emit()
+
+
+## _on_save_pressed()
+##
+## Handler for Save button. Captures current state and writes to disk.
+func _on_save_pressed() -> void:
+	var gc = get_tree().get_first_node_in_group("game_controller")
+	if gc and gc.has_method("get_save_state"):
+		var data = gc.get_save_state()
+		GameSaveManager.save_snapshot(data)
+		print("[PauseMenu] Game saved successfully")
+	else:
+		push_error("[PauseMenu] Could not find GameController to save")
 
 
 ## _on_settings_pressed()
@@ -338,6 +357,13 @@ func _on_tutorial_warning_confirmed() -> void:
 func _return_to_main_menu() -> void:
 	print("[PauseMenu] Returning to main menu")
 	main_menu_pressed.emit()
+	
+	# Auto-save run before leaving
+	var gc = get_tree().get_first_node_in_group("game_controller")
+	if gc and gc.has_method("get_save_state"):
+		var data = gc.get_save_state()
+		GameSaveManager.save_snapshot(data)
+		print("[PauseMenu] Auto-saved before returning to main menu")
 	
 	# Save progress before leaving
 	if ProgressManager:

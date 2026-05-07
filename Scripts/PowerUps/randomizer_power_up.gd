@@ -57,7 +57,7 @@ func _apply_additive_effect() -> void:
 	
 	# Equal 10% chance for each additive value
 	var additive_values = [-20, -10, 0, 5, 10, 15, 20, 25, 30, 50]
-	var index = randi() % additive_values.size()
+	var index = GameRNG.random_index(additive_values)
 	current_effect_value = additive_values[index]
 	
 	# Register with ScoreModifierManager

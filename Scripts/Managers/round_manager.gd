@@ -143,9 +143,9 @@ func _generate_challenge_sequence() -> Array[ChallengeData]:
 		push_error("[RoundManager] Cannot generate challenge sequence - ChallengeManager is null")
 		return result
 	
-	# Generate seed from time if not already set
+	# Use GameRNG seed if not already set (fresh start)
 	if challenge_seed == 0:
-		challenge_seed = Time.get_ticks_msec()
+		challenge_seed = GameRNG.get_initial_seed()
 	
 	print("[RoundManager] Generating challenge sequence with seed:", challenge_seed)
 	
@@ -486,3 +486,33 @@ func set_current_challenge_target_score(new_target: int) -> void:
 	if current_round >= 0 and current_round < rounds_data.size():
 		rounds_data[current_round]["target_score"] = new_target
 		print("[RoundManager] Updated current round target score to:", new_target)
+
+
+## get_state() -> Dictionary
+##
+## Returns the current round manager state for saving.
+func get_state() -> Dictionary:
+	return {
+		"current_round": current_round,
+		"current_challenge_id": current_challenge_id,
+		"is_challenge_completed": is_challenge_completed,
+		"game_started": game_started,
+		"max_rounds": max_rounds,
+		"rounds_data": rounds_data.duplicate(true),
+		"challenge_seed": challenge_seed
+	}
+
+
+## load_state(state)
+##
+## Restores the round manager state from a saved dictionary.
+func load_state(state: Dictionary) -> void:
+	current_round = state.get("current_round", 0)
+	current_challenge_id = state.get("current_challenge_id", "")
+	is_challenge_completed = state.get("is_challenge_completed", false)
+	game_started = state.get("game_started", false)
+	max_rounds = state.get("max_rounds", 6)
+	var loaded_rounds = state.get("rounds_data", [])
+	rounds_data.assign(loaded_rounds)
+	challenge_seed = state.get("challenge_seed", 0)
+	print("[RoundManager] State loaded - round:", current_round, "challenge:", current_challenge_id)

@@ -36,6 +36,7 @@ var profile_button_container: HBoxContainer
 var profile_buttons: Array[Button] = []
 var button_container: VBoxContainer
 var new_game_button: Button
+var continue_button: Button
 var settings_button: Button
 var tutorial_button: Button
 var quit_button: Button
@@ -73,6 +74,7 @@ func _ready() -> void:
 	_build_ui()
 	_update_profile_buttons()
 	_update_playing_as_label()
+	_update_continue_button_visibility()
 	_animate_title_entry()
 	_start_dice_spawner()
 	
@@ -398,6 +400,11 @@ func _build_navigation_section(parent: Control) -> void:
 	new_game_button.pressed.connect(_on_new_game_pressed)
 	button_container.add_child(new_game_button)
 	
+	# Continue button
+	continue_button = _create_nav_button("CONTINUE", Color(0.3, 0.5, 0.8, 1.0))
+	continue_button.pressed.connect(_on_continue_pressed)
+	button_container.add_child(continue_button)
+	
 	# Settings button
 	settings_button = _create_nav_button("SETTINGS", Color(0.5, 0.5, 0.7, 1.0))
 	settings_button.pressed.connect(_on_settings_pressed)
@@ -417,7 +424,7 @@ func _build_navigation_section(parent: Control) -> void:
 	button_container.add_child(quit_button)
 	
 	# Connect TweenFX hover/press effects to all nav buttons
-	var nav_buttons = [new_game_button, settings_button, tutorial_button, quit_button]
+	var nav_buttons = [new_game_button, continue_button, settings_button, tutorial_button, quit_button]
 	for btn in nav_buttons:
 		btn.mouse_entered.connect(func(): _tfx.button_hover(btn))
 		btn.mouse_exited.connect(func(): _tfx.button_unhover(btn))
@@ -669,6 +676,7 @@ func _on_profile_button_pressed(slot: int) -> void:
 	# Update UI
 	_update_profile_buttons()
 	_update_playing_as_label()
+	_update_continue_button_visibility()
 	profile_selected.emit(slot)
 	
 	print("[MainMenu] ========== PROFILE SWITCH END ==========")
@@ -828,6 +836,24 @@ func _on_new_game_pressed() -> void:
 	new_game_pressed.emit()
 	
 	# Change to game scene
+	get_tree().change_scene_to_packed(GAME_SCENE)
+
+
+## _on_continue_pressed()
+##
+## Handler for Continue button - loads existing run save.
+func _on_continue_pressed() -> void:
+	var slot = _game_settings.active_profile_slot if _game_settings else 1
+	print("[MainMenu] Continue pressed for profile %d" % slot)
+	
+	if not GameSaveManager.has_save_for_profile(slot):
+		print("[MainMenu] No save found for profile %d" % slot)
+		return
+	
+	if not GameSaveManager.load_save_for_profile(slot):
+		print("[MainMenu] Failed to load save for profile %d" % slot)
+		return
+	
 	get_tree().change_scene_to_packed(GAME_SCENE)
 
 
@@ -1058,3 +1084,13 @@ func _process(delta: float) -> void:
 			var force_dir = mouse_vel.normalized()
 			var force = mouse_vel.length() * MOUSE_WIND_STRENGTH * (1.0 - dist / MOUSE_WIND_RADIUS) * delta
 			die.apply_central_impulse(force_dir * force)
+
+func _update_continue_button_visibility() -> void:
+	if not continue_button:
+		return
+	
+	var slot = _game_settings.active_profile_slot if _game_settings else 1
+	if GameSaveManager.has_save_for_profile(slot):
+		continue_button.show()
+	else:
+		continue_button.hide()

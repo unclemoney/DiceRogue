@@ -452,3 +452,18 @@ func validate_all_configs() -> Array[String]:
 				all_errors.append("Channel %d: %s" % [config.channel_number, error])
 	
 	return all_errors
+
+
+## get_state() -> Dictionary
+##
+## Returns the current channel state for saving.
+func get_state() -> Dictionary:
+	return {"current_channel": current_channel}
+
+
+## load_state(state)
+##
+## Restores the channel state from a saved dictionary.
+func load_state(state: Dictionary) -> void:
+	var new_channel = state.get("current_channel", 1)
+	set_channel(new_channel)

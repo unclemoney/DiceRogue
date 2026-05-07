@@ -148,7 +148,7 @@ func _on_about_to_score(section: Scorecard.Section, category: String, dice_value
 		return
 	
 	# Pick a random dice value as the multiplier
-	var multiplier = dice_values[randi() % dice_values.size()]
+	var multiplier = dice_values[GameRNG.random_index(dice_values)]
 	
 	# Validate multiplier is within expected bounds (1-6 for standard dice)
 	if multiplier < 1 or multiplier > 6:

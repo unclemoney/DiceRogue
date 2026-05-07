@@ -45,7 +45,7 @@ func apply(target) -> void:
 		return
 
 	# Randomly select one category
-	var selected = available_categories[randi() % available_categories.size()]
+	var selected = available_categories[GameRNG.random_index(available_categories)]
 	var section: Scorecard.Section = selected["section"]
 	var category: String = selected["category"]
 

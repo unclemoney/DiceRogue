@@ -56,7 +56,7 @@ func _on_any_power_up_sold(power_up_id: String) -> void:
 		return
 	
 	# Pick a random debuff to remove
-	var random_index = randi() % active_ids.size()
+	var random_index = GameRNG.random_index(active_ids)
 	var debuff_to_remove = active_ids[random_index]
 	
 	print("[DebuffDestroyerPowerUp] Removing random debuff: %s" % debuff_to_remove)

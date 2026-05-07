@@ -102,7 +102,7 @@ func _rotate_disabled_powerup() -> void:
 		return
 
 	# Pick a random power-up
-	var random_index: int = randi() % active_ids.size()
+	var random_index: int = GameRNG.random_index(active_ids)
 	currently_disabled_id = active_ids[random_index]
 	print("[RotatingDisabledPowerUp] Disabling powerup: %s" % currently_disabled_id)
 

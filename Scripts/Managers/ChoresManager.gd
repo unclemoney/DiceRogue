@@ -327,7 +327,7 @@ func _get_random_task_by_difficulty(difficulty: int):
 	var attempts = 0
 	var selected_task = null
 	while attempts < 5:
-		selected_task = tasks[randi() % tasks.size()]
+		selected_task = tasks[GameRNG.random_index(tasks)]
 		if selected_task.id not in _task_history:
 			break
 		attempts += 1
@@ -500,3 +500,91 @@ func _trigger_mom() -> void:
 		print("[ChoresManager] No chores done - Mom is angrier!")
 	
 	mom_triggered.emit()
+
+
+## get_state() -> Dictionary
+##
+## Returns the current chores state for saving.
+func get_state() -> Dictionary:
+	var task_id = ""
+	if current_task != null and current_task.has_method("get"):
+		task_id = current_task.id
+	var easy_id = ""
+	if _pending_easy_task != null and _pending_easy_task.has_method("get"):
+		easy_id = _pending_easy_task.id
+	var hard_id = ""
+	if _pending_hard_task != null and _pending_hard_task.has_method("get"):
+		hard_id = _pending_hard_task.id
+	return {
+		"current_progress": current_progress,
+		"chores_completed_this_round": chores_completed_this_round,
+		"chore_rewards_this_round": chore_rewards_this_round,
+		"current_task_id": task_id,
+		"tasks_completed": tasks_completed,
+		"total_rolls_tracked": total_rolls_tracked,
+		"is_mom_active": is_mom_active,
+		"_task_history": _task_history.duplicate(),
+		"pending_chore_selection": pending_chore_selection,
+		"_pending_easy_task_id": easy_id,
+		"_pending_hard_task_id": hard_id,
+		"current_round_number": current_round_number,
+		"mom_mood": mom_mood,
+		"completed_chores_ids": _get_completed_chores_ids()
+	}
+
+
+## _get_completed_chores_ids() -> Array[String]
+##
+## Helper to serialize completed chore IDs.
+func _get_completed_chores_ids() -> Array[String]:
+	var ids: Array[String] = []
+	for chore in completed_chores:
+		if chore != null and chore.has_method("get"):
+			ids.append(chore.id)
+	return ids
+
+
+## load_state(state)
+##
+## Restores the chores state from a saved dictionary.
+func load_state(state: Dictionary) -> void:
+	current_progress = state.get("current_progress", 0)
+	chores_completed_this_round = state.get("chores_completed_this_round", 0)
+	chore_rewards_this_round = state.get("chore_rewards_this_round", 0)
+	tasks_completed = state.get("tasks_completed", 0)
+	total_rolls_tracked = state.get("total_rolls_tracked", 0)
+	is_mom_active = state.get("is_mom_active", false)
+	var loaded_history = state.get("_task_history", [])
+	_task_history.assign(loaded_history)
+	pending_chore_selection = state.get("pending_chore_selection", false)
+	current_round_number = state.get("current_round_number", 1)
+	mom_mood = state.get("mom_mood", DEFAULT_MOOD)
+	
+	# Restore current task by ID
+	var task_id = state.get("current_task_id", "")
+	if not task_id.is_empty():
+		current_task = ChoreTasksLibrary.get_task_by_id(task_id)
+	else:
+		current_task = null
+	
+	# Restore pending tasks by ID
+	var easy_id = state.get("_pending_easy_task_id", "")
+	var hard_id = state.get("_pending_hard_task_id", "")
+	if not easy_id.is_empty():
+		_pending_easy_task = ChoreTasksLibrary.get_task_by_id(easy_id)
+	else:
+		_pending_easy_task = null
+	if not hard_id.is_empty():
+		_pending_hard_task = ChoreTasksLibrary.get_task_by_id(hard_id)
+	else:
+		_pending_hard_task = null
+	
+	# Restore completed chores by ID
+	completed_chores.clear()
+	for chore_id in state.get("completed_chores_ids", []):
+		var chore = ChoreTasksLibrary.get_task_by_id(chore_id)
+		if chore != null:
+			completed_chores.append(chore)
+	
+	progress_changed.emit(current_progress)
+	mom_mood_changed.emit(mom_mood)

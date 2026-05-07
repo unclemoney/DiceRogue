@@ -109,7 +109,7 @@ func _on_about_to_score(section: Scorecard.Section, category: String, _dice_valu
 		return
 	
 	# Pick a random multiplier from our options
-	var random_index = randi() % RANDOM_MULTIPLIERS.size()
+	var random_index = GameRNG.random_index(RANDOM_MULTIPLIERS)
 	var random_multiplier = RANDOM_MULTIPLIERS[random_index]
 	
 	print("[PerfectStrangersPowerUp] ✓ CHANCE category detected!")

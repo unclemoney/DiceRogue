@@ -389,3 +389,25 @@ func validate_and_report() -> Array[String]:
 			issues.append("Extremely low additive from " + source + ": " + str(additive))
 
 	return issues
+
+
+## get_state() -> Dictionary
+##
+## Returns the current modifier state for saving.
+func get_state() -> Dictionary:
+	return {
+		"multipliers": _active_multipliers.duplicate(),
+		"additives": _active_additives.duplicate(),
+		"division_mode": _division_mode
+	}
+
+
+## load_state(state)
+##
+## Restores the modifier state from a saved dictionary.
+func load_state(state: Dictionary) -> void:
+	_active_multipliers = state.get("multipliers", {})
+	_active_additives = state.get("additives", {})
+	_division_mode = state.get("division_mode", false)
+	emit_signal("multiplier_changed", get_total_multiplier())
+	emit_signal("additive_changed", get_total_additive())

@@ -62,16 +62,16 @@ func _upgrade_random_category() -> void:
 	var lower_categories = ["three_of_a_kind", "four_of_a_kind", "full_house", "small_straight", "large_straight", "yahtzee", "chance"]
 	
 	# Randomly pick upper or lower, then pick category
-	var use_upper = randi() % 2 == 0
+	var use_upper = GameRNG.randi_mod(2) == 0
 	var section: Scorecard.Section
 	var category: String
 	
 	if use_upper:
 		section = Scorecard.Section.UPPER
-		category = upper_categories[randi() % upper_categories.size()]
+		category = upper_categories[GameRNG.random_index(upper_categories)]
 	else:
 		section = Scorecard.Section.LOWER
-		category = lower_categories[randi() % lower_categories.size()]
+		category = lower_categories[GameRNG.random_index(lower_categories)]
 	
 	var current_level = scorecard_ref.get_category_level(section, category)
 	var section_name = "upper" if use_upper else "lower"

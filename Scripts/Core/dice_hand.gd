@@ -916,3 +916,97 @@ func animate_screen_shake(intensity: float = 1.0) -> void:
 	# Return to original position
 	tween.tween_property(self, "position", original_pos, step_time)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+
+## get_state() -> Dictionary
+##
+## Returns the current dice hand state for saving.
+func get_state() -> Dictionary:
+	var dice_states: Array[Dictionary] = []
+	for die in dice_list:
+		if not is_instance_valid(die):
+			continue
+		var mod_ids: Array[String] = []
+		for mod_id in die.active_mods.keys():
+			mod_ids.append(mod_id)
+		dice_states.append({
+			"value": die.value,
+			"color": int(die.color),
+			"is_locked": die.is_locked,
+			"state": int(die.current_state),
+			"mods": mod_ids
+		})
+	return {
+		"dice_count": dice_count,
+		"current_dice_type": current_dice_type,
+		"current_roll_number": current_roll_number,
+		"dice": dice_states
+	}
+
+
+## load_state(state)
+##
+## Restores the dice hand state from a saved dictionary.
+## Spawns dice without entry animations and restores their values/colors/locks/states.
+## Mod re-application is handled by GameController after this call.
+func load_state(state: Dictionary) -> void:
+	clear_dice()
+	
+	var saved_count = state.get("dice_count", 5)
+	var saved_type = state.get("current_dice_type", "d6")
+	current_roll_number = state.get("current_roll_number", 0)
+	
+	switch_dice_type(saved_type)
+	dice_count = saved_count
+	
+	# Calculate centered positions
+	var positions = _calculate_centered_positions(dice_count)
+	
+	var saved_dice = state.get("dice", [])
+	
+	for i in range(dice_count):
+		var die = dice_scene.instantiate() as Dice
+		if not die:
+			continue
+		die.dice_data = default_dice_data
+		add_child(die)
+		
+		# Connect signals
+		if not die.is_connected("die_locked", Callable(self, "_on_child_die_locked")):
+			die.die_locked.connect(Callable(self, "_on_child_die_locked"))
+		
+		# Position at home (skip entry animation)
+		if i < positions.size():
+			die.home_position = positions[i]
+			die.position = positions[i]
+		
+		die.reset_visual_for_spawn()
+		dice_list.append(die)
+		
+		# Restore saved state if available
+		if i < saved_dice.size():
+			var saved = saved_dice[i]
+			die.value = saved.get("value", 1)
+			die.color = saved.get("color", 0)
+			die.is_locked = saved.get("is_locked", false)
+			
+			# Set state via state machine
+			var state_int = saved.get("state", 0)
+			if state_int == int(Dice.DiceState.ROLLABLE):
+				die.make_rollable()
+			elif state_int == int(Dice.DiceState.ROLLED):
+				die.set_state(Dice.DiceState.ROLLED)
+			elif state_int == int(Dice.DiceState.LOCKED):
+				die.set_state(Dice.DiceState.LOCKED)
+			elif state_int == int(Dice.DiceState.DISABLED):
+				die.make_disabled()
+			
+			die.update_visual()
+			
+			# Re-apply color shader
+			if die.color != 0:
+				die._update_color_shader()
+	
+	emit_signal("dice_spawned")
+	_update_results()
+	print("[DiceHand] State loaded -", dice_list.size(), "dice restored")

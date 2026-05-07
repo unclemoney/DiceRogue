@@ -213,11 +213,11 @@ func roll() -> void:
 		remove_meta("wild_dots_bias")
 
 	# If bias triggers, force the highest face (e.g., 6 on d6)
-	if bias > 0.0 and randf() < bias:
+	if bias > 0.0 and GameRNG.randf() < bias:
 		value = dice_data.sides
 	else:
 		# Generate value between 1 and number of sides
-		value = (randi() % dice_data.sides) + 1
+		value = GameRNG.randi_range(1, dice_data.sides)
 
 	# Assign color based on random chance (if colors are enabled)
 	_assign_random_color()
@@ -741,7 +741,7 @@ func _assign_random_color() -> void:
 	for color_type in available_colors:
 		var chance = color_manager.get_modified_color_chance(color_type)
 		if chance > 0:
-			var color_roll = randi() % chance
+			var color_roll = GameRNG.randi_mod(chance)
 			#print("[Dice] Color", DiceColor.get_color_name(color_type), "chance 1/", chance, "rolled:", color_roll)
 			if color_roll == 0:
 				new_color = color_type

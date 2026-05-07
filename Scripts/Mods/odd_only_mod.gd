@@ -27,5 +27,5 @@ func remove() -> void:
 func _on_die_roll_completed(value: int) -> void:
 	if value % 2 == 0:  # If even number
 		# Force reroll to odd number
-		_attached_die.value = (randi() % 3) * 2 + 1  # Will give 1, 3, or 5
+		_attached_die.value = (GameRNG.randi_mod(3)) * 2 + 1  # Will give 1, 3, or 5
 		print("[OddOnlyMod] Converted even roll to odd:", _attached_die.value)

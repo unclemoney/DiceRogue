@@ -850,3 +850,124 @@ func _check_milestone(stat_name: String, value: int):
 	
 	if value in milestones:
 		milestone_reached.emit(stat_name, value)
+
+
+## get_state() -> Dictionary
+##
+## Returns the current statistics state for saving.
+func get_state() -> Dictionary:
+	return {
+		"total_turns": total_turns,
+		"total_rolls": total_rolls,
+		"total_rerolls": total_rerolls,
+		"hands_completed": hands_completed,
+		"failed_hands": failed_hands,
+		"total_money_earned": total_money_earned,
+		"total_money_spent": total_money_spent,
+		"money_spent_on_powerups": money_spent_on_powerups,
+		"money_spent_on_consumables": money_spent_on_consumables,
+		"money_spent_on_mods": money_spent_on_mods,
+		"dice_rolled_by_color": dice_rolled_by_color.duplicate(),
+		"dice_scored_by_color": dice_scored_by_color.duplicate(),
+		"dice_locked_count": dice_locked_count,
+		"highest_single_roll": highest_single_roll,
+		"snake_eyes_count": snake_eyes_count,
+		"yahtzee_count": yahtzee_count,
+		"ones_scored": ones_scored,
+		"twos_scored": twos_scored,
+		"threes_scored": threes_scored,
+		"fours_scored": fours_scored,
+		"fives_scored": fives_scored,
+		"sixes_scored": sixes_scored,
+		"three_of_kind_scored": three_of_kind_scored,
+		"four_of_kind_scored": four_of_kind_scored,
+		"full_house_scored": full_house_scored,
+		"small_straight_scored": small_straight_scored,
+		"large_straight_scored": large_straight_scored,
+		"yahtzee_scored": yahtzee_scored,
+		"chance_scored": chance_scored,
+		"yahtzee_bonuses_earned": yahtzee_bonuses_earned,
+		"upper_bonuses_earned": upper_bonuses_earned,
+		"powerups_purchased": powerups_purchased,
+		"consumables_purchased": consumables_purchased,
+		"mods_purchased": mods_purchased,
+		"powerups_used": powerups_used,
+		"consumables_used": consumables_used,
+		"available_powerup_slots": available_powerup_slots,
+		"available_consumable_slots": available_consumable_slots,
+		"max_powerup_slots": max_powerup_slots,
+		"max_consumable_slots": max_consumable_slots,
+		"session_start_time": session_start_time,
+		"total_play_time": total_play_time,
+		"highest_score": highest_score,
+		"longest_streak": longest_streak,
+		"current_streak": current_streak,
+		"current_round_points": current_round_points,
+		"current_round_money_earned": current_round_money_earned,
+		"current_round_bonus_money": current_round_bonus_money,
+		"current_round_empty_category_bonus": current_round_empty_category_bonus,
+		"current_round_score_above_bonus": current_round_score_above_bonus,
+		"rounds_completed": rounds_completed,
+		"even_dice_scored_this_round": even_dice_scored_this_round,
+		"odd_dice_scored_this_round": odd_dice_scored_this_round,
+		"logbook_size": logbook.size()
+	}
+
+
+## load_state(state)
+##
+## Restores the statistics state from a saved dictionary.
+func load_state(state: Dictionary) -> void:
+	total_turns = state.get("total_turns", 0)
+	total_rolls = state.get("total_rolls", 0)
+	total_rerolls = state.get("total_rerolls", 0)
+	hands_completed = state.get("hands_completed", 0)
+	failed_hands = state.get("failed_hands", 0)
+	total_money_earned = state.get("total_money_earned", 0)
+	total_money_spent = state.get("total_money_spent", 0)
+	money_spent_on_powerups = state.get("money_spent_on_powerups", 0)
+	money_spent_on_consumables = state.get("money_spent_on_consumables", 0)
+	money_spent_on_mods = state.get("money_spent_on_mods", 0)
+	dice_rolled_by_color = state.get("dice_rolled_by_color", {})
+	dice_scored_by_color = state.get("dice_scored_by_color", {})
+	dice_locked_count = state.get("dice_locked_count", 0)
+	highest_single_roll = state.get("highest_single_roll", 0)
+	snake_eyes_count = state.get("snake_eyes_count", 0)
+	yahtzee_count = state.get("yahtzee_count", 0)
+	ones_scored = state.get("ones_scored", 0)
+	twos_scored = state.get("twos_scored", 0)
+	threes_scored = state.get("threes_scored", 0)
+	fours_scored = state.get("fours_scored", 0)
+	fives_scored = state.get("fives_scored", 0)
+	sixes_scored = state.get("sixes_scored", 0)
+	three_of_kind_scored = state.get("three_of_kind_scored", 0)
+	four_of_kind_scored = state.get("four_of_kind_scored", 0)
+	full_house_scored = state.get("full_house_scored", 0)
+	small_straight_scored = state.get("small_straight_scored", 0)
+	large_straight_scored = state.get("large_straight_scored", 0)
+	yahtzee_scored = state.get("yahtzee_scored", 0)
+	chance_scored = state.get("chance_scored", 0)
+	yahtzee_bonuses_earned = state.get("yahtzee_bonuses_earned", 0)
+	upper_bonuses_earned = state.get("upper_bonuses_earned", 0)
+	powerups_purchased = state.get("powerups_purchased", 0)
+	consumables_purchased = state.get("consumables_purchased", 0)
+	mods_purchased = state.get("mods_purchased", 0)
+	powerups_used = state.get("powerups_used", 0)
+	consumables_used = state.get("consumables_used", 0)
+	available_powerup_slots = state.get("available_powerup_slots", 0)
+	available_consumable_slots = state.get("available_consumable_slots", 0)
+	max_powerup_slots = state.get("max_powerup_slots", 0)
+	max_consumable_slots = state.get("max_consumable_slots", 0)
+	session_start_time = state.get("session_start_time", Time.get_unix_time_from_system())
+	total_play_time = state.get("total_play_time", 0.0)
+	highest_score = state.get("highest_score", 0)
+	longest_streak = state.get("longest_streak", 0)
+	current_streak = state.get("current_streak", 0)
+	current_round_points = state.get("current_round_points", 0)
+	current_round_money_earned = state.get("current_round_money_earned", 0)
+	current_round_bonus_money = state.get("current_round_bonus_money", 0)
+	current_round_empty_category_bonus = state.get("current_round_empty_category_bonus", 0)
+	current_round_score_above_bonus = state.get("current_round_score_above_bonus", 0)
+	rounds_completed = state.get("rounds_completed", 0)
+	even_dice_scored_this_round = state.get("even_dice_scored_this_round", 0)
+	odd_dice_scored_this_round = state.get("odd_dice_scored_this_round", 0)

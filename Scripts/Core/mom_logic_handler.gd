@@ -151,9 +151,9 @@ static func _get_random_non_active_debuff(active_debuffs: Dictionary, already_ap
 	
 	if available.is_empty():
 		# All debuffs already active, pick a random one anyway (will stack or do nothing)
-		return AVAILABLE_DEBUFFS[randi() % AVAILABLE_DEBUFFS.size()]
+		return AVAILABLE_DEBUFFS[GameRNG.random_index(AVAILABLE_DEBUFFS)]
 	
-	return available[randi() % available.size()]
+	return available[GameRNG.random_index(available)]
 
 ## apply_consequences()
 ##
@@ -211,7 +211,7 @@ static func _get_nc17_dialog(_count: int) -> String:
 		"[wave amp=30 freq=5][color=red]I can't believe what I'm seeing![/color][/wave] You're in [shake rate=15 level=8]BIG TROUBLE[/shake]! Hand it over!",
 		"[color=red][shake rate=25 level=12]ABSOLUTELY NOT![/shake][/color] Where did you even GET this?! You're grounded until further notice!"
 	]
-	return dialogs[randi() % dialogs.size()]
+	return dialogs[GameRNG.random_index(dialogs)]
 
 static func _get_r_rated_dialog(_count: int) -> String:
 	var dialogs = [
@@ -219,7 +219,7 @@ static func _get_r_rated_dialog(_count: int) -> String:
 		"[color=orange]Excuse me?[/color] This is [i]not[/i] appropriate for someone your age. Hand it over.",
 		"[color=orange]*sigh*[/color] We've talked about this. You're not ready for this yet. Consider it confiscated."
 	]
-	return dialogs[randi() % dialogs.size()]
+	return dialogs[GameRNG.random_index(dialogs)]
 
 static func _get_no_chores_fine_dialog() -> String:
 	var dialogs = [
@@ -227,7 +227,7 @@ static func _get_no_chores_fine_dialog() -> String:
 		"[color=orange]Wait a minute...[/color] Not a [i]single[/i] chore done?! I'm taking [b]$100[/b] for being so irresponsible!",
 		"[color=orange]*sigh*[/color] No chores completed? Really? That'll be [b]$100[/b]. Maybe you'll learn to be more responsible."
 	]
-	return dialogs[randi() % dialogs.size()]
+	return dialogs[GameRNG.random_index(dialogs)]
 
 static func _get_no_chores_debuff_dialog() -> String:
 	var dialogs = [
@@ -235,7 +235,7 @@ static func _get_no_chores_debuff_dialog() -> String:
 		"[wave amp=30 freq=4][color=red]UNBELIEVABLE![/color][/wave] No chores AND no money?! Consider yourself [shake rate=12 level=6]PUNISHED[/shake]!",
 		"[color=red]Not only did you skip ALL your chores,[/color] but you're broke too?! There will be [shake rate=10 level=5]CONSEQUENCES[/shake]!"
 	]
-	return dialogs[randi() % dialogs.size()]
+	return dialogs[GameRNG.random_index(dialogs)]
 
 static func _get_happy_dialog() -> String:
 	var dialogs = [
@@ -244,4 +244,4 @@ static func _get_happy_dialog() -> String:
 		"[color=green]Doing your chores?[/color] That's my good kid! Let me know if you need anything.",
 		"[color=green]Don't forget to take breaks![/color] You're doing great!"
 	]
-	return dialogs[randi() % dialogs.size()]
+	return dialogs[GameRNG.random_index(dialogs)]

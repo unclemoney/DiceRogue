@@ -1255,7 +1255,7 @@ func _bot_buy_mod_or_color_dice() -> void:
 	if combined.is_empty():
 		return
 
-	var pick = combined[randi() % combined.size()]
+	var pick = combined[GameRNG.random_index(combined)]
 	logger.log_info("Buying %s: %s for $%d" % [pick.item_type, pick.item_id, pick.price])
 	pick._on_buy_button_pressed()
 	statistics.record_purchase(pick.item_id, pick.item_type, pick.price)

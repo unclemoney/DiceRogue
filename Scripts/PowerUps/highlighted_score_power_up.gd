@@ -138,7 +138,7 @@ func _highlight_random_category() -> void:
 		return
 	
 	# Choose a random category
-	var random_choice = available_categories[randi() % available_categories.size()]
+	var random_choice = available_categories[GameRNG.random_index(available_categories)]
 	highlighted_section = random_choice.section
 	highlighted_category = random_choice.category
 	

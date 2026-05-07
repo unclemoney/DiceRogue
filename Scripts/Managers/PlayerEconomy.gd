@@ -76,3 +76,17 @@ func reset_to_starting_money() -> void:
 	money = starting_money
 	print("[PlayerEconomy] Reset to starting money:", money)
 	emit_signal("money_changed", money, change)
+
+## get_state() -> Dictionary
+##
+## Returns the current economy state for saving.
+func get_state() -> Dictionary:
+	return {"money": money}
+
+
+## load_state(state)
+##
+## Restores the economy state from a saved dictionary.
+func load_state(state: Dictionary) -> void:
+	money = state.get("money", 100)
+	emit_signal("money_changed", money, 0)

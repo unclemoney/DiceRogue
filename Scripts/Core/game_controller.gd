@@ -379,8 +379,22 @@ func _ready() -> void:
 	## Notes:
 	## - Uses get_node() and get_node_or_null() lookups assigned to @onready vars above.
 	## - Keep connections idempotent (checks for is_connected before connecting) to avoid duplicate handlers.
-	call_deferred("_on_game_start")
+	if GameSaveManager.has_pending_load():
+		call_deferred("load_game_state", GameSaveManager.consume_pending_load())
+	else:
+		call_deferred("_on_game_start")
 	print("[GameController] Handler expects args:", _on_game_button_dice_rolled.get_argument_count())
+
+
+## _notification(what)
+##
+## Handles engine notifications. Auto-saves on window close request.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		print("[GameController] Window close requested - auto-saving...")
+		var state = get_save_state()
+		GameSaveManager.save_snapshot(state)
+		get_tree().quit()
 
 
 ## _on_game_start()
@@ -400,6 +414,12 @@ func _on_game_start() -> void:
 	#grant_power_up("lock_and_load")
 	#grant_power_up("chore_champion")
 	#grant_power_up("pair_paradise")
+	
+	# Initialize deterministic RNG for this run
+	GameRNG.initialize()
+	
+	# Delete any existing run save for fresh start
+	GameSaveManager.delete_current_save()
 	
 	# Reset shop reroll cost for new game
 	if shop_ui:
@@ -902,6 +922,8 @@ func grant_power_up(id: String) -> void:
 	
 	# Automatically activate the power-up
 	_activate_power_up(id)
+	
+	GameSaveManager.update_settled_snapshot()
 
 
 ## grant_replica_power_up(original_id)
@@ -1815,6 +1837,8 @@ func grant_consumable(id: String) -> void:
 	# Usability is handled when icons are fanned out via update_consumable_usability()
 
 	print("[GameController] Consumable granted with spine:", id)
+	
+	GameSaveManager.update_settled_snapshot()
 
 ## update_consumable_usability()
 ##
@@ -2012,6 +2036,8 @@ func _on_consumable_used(consumable_id: String) -> void:
 			remove_consumable_instance.call()
 		_:
 			push_error("Unknown consumable type: %s" % consumable_id)
+	
+	GameSaveManager.update_settled_snapshot()
 
 
 ## _on_consumable_ui_used(consumable_id)
@@ -2196,6 +2222,8 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 
 	# Update dice animation intensity for next turn
 	_update_dice_animation_intensity()
+	
+	GameSaveManager.update_settled_snapshot()
 
 
 ## _update_dice_animation_intensity()
@@ -2462,6 +2490,8 @@ func apply_debuff(id: String) -> void:
 			debuff.start()
 		_:
 			push_error("[GameController] Unknown debuff type: %s" % id)
+	
+	GameSaveManager.update_settled_snapshot()
 
 
 ## enable_debuff(id)
@@ -2596,6 +2626,8 @@ func grant_mod(id: String) -> void:
 		print("[GameController] No dice available - adding to pending mods")
 		if not pending_mods.has(id):
 			pending_mods.append(id)
+
+	GameSaveManager.update_settled_snapshot()
 
 # Helper function to find and apply a mod to an available die
 
@@ -2851,6 +2883,8 @@ func _on_roll_completed() -> void:
 	# Check lock dice chore completion after rolling
 	# The chore requires locking dice THEN rolling, so we check here
 	_check_lock_dice_chore()
+	
+	GameSaveManager.update_settled_snapshot()
 
 ## _on_turn_started()
 ##
@@ -2863,6 +2897,8 @@ func _on_turn_started() -> void:
 	if half_price_stacks > 0:
 		print("[GameController] Clearing half_price_stacks on turn start")
 		half_price_stacks = 0
+	
+	GameSaveManager.update_settled_snapshot()
 
 
 ## _on_temporary_effect_expired(effect_type)
@@ -3144,6 +3180,9 @@ func _on_game_over() -> void:
 	
 	print("[GameController] Game over triggered")
 	
+	# Delete run save on game over
+	GameSaveManager.delete_current_save()
+	
 	# Mark game as ended - blocks shop access
 	_game_ended = true
 	
@@ -3336,6 +3375,8 @@ func _on_new_game_pressed() -> void:
 ## Handler for Continue button after completing challenge - opens shop for next round.
 func _on_continue_after_game_over() -> void:
 	print("[GameController] Continue after game over - opening shop")
+	# Ensure run save is deleted when continuing after game over
+	GameSaveManager.delete_current_save()
 	if _game_over_popup and is_instance_valid(_game_over_popup):
 		_game_over_popup.queue_free()
 		_game_over_popup = null
@@ -3768,6 +3809,8 @@ func activate_challenge(id: String) -> void:
 			push_error("[GameController] Failed to create UI for challenge:", id)
 	else:
 		push_error("[GameController] No challenge_ui or corkboard_ui reference")
+	
+	GameSaveManager.update_settled_snapshot()
 
 
 ## _validate_and_get_target_score(challenge_data: ChallengeData, round_number: int) -> int
@@ -3885,6 +3928,8 @@ func _on_challenge_completed(id: String) -> void:
 
 	# Show notification
 	# NotificationSystem.show_notification("Challenge Completed: " + def.display_name)
+	
+	GameSaveManager.update_settled_snapshot()
 
 
 ## _trigger_challenge_celebration()
@@ -4111,7 +4156,8 @@ func _on_challenge_failed(id: String) -> void:
 
 	# Show notification
 	# NotificationSystem.show_notification("Challenge Failed: " + _display_name)
-
+	
+	GameSaveManager.update_settled_snapshot()
 
 
 ## _on_challenge_selected(id)
@@ -4892,29 +4938,29 @@ func _on_mom_triggered() -> void:
 ## Grants a random reward when Mom's mood reaches 1 (very happy).
 ## Possible rewards: money ($50-150), consumable, or power-up.
 func _grant_mom_reward() -> void:
-	var reward_type = randi() % 3
+	var reward_type = GameRNG.randi_mod(3)
 	match reward_type:
 		0:
 			# Grant money (allowance)
-			var amount = randi_range(50, 150)
+			var amount = GameRNG.randi_range(50, 150)
 			PlayerEconomy.add_money(amount)
 			print("[GameController] Mom gave allowance: $%d" % amount)
 		1:
 			# Grant random consumable
 			var consumable_ids = ["random_power_up_uncommon", "green_envy", "the_rarities"]
-			var random_id = consumable_ids[randi() % consumable_ids.size()]
+			var random_id = consumable_ids[GameRNG.random_index(consumable_ids)]
 			grant_consumable(random_id)
 			print("[GameController] Mom gave consumable: %s" % random_id)
 		2:
 			# Grant random power-up (from a safe list)
 			var powerup_ids = ["extra_rolls", "bonus_money", "full_house_bonus"]
-			var random_id = powerup_ids[randi() % powerup_ids.size()]
+			var random_id = powerup_ids[GameRNG.random_index(powerup_ids)]
 			if not active_power_ups.has(random_id):
 				grant_power_up(random_id)
 				print("[GameController] Mom gave power-up: %s" % random_id)
 			else:
 				# Fallback to money if already have the power-up
-				var amount = randi_range(75, 125)
+				var amount = GameRNG.randi_range(75, 125)
 				PlayerEconomy.add_money(amount)
 				print("[GameController] Mom gave allowance instead: $%d" % amount)
 
@@ -4926,11 +4972,11 @@ func _grant_mom_reward() -> void:
 func _apply_enhanced_mom_punishment() -> void:
 	# Apply 2-3 random debuffs
 	var debuff_ids = ["lock_dice", "costly_roll", "disabled_twos", "the_division"]
-	var num_debuffs = randi_range(2, 3)
+	var num_debuffs = GameRNG.randi_range(2, 3)
 	var applied_debuffs: Array[String] = []
 	
 	for i in range(num_debuffs):
-		var random_id = debuff_ids[randi() % debuff_ids.size()]
+		var random_id = debuff_ids[GameRNG.random_index(debuff_ids)]
 		if random_id not in applied_debuffs and not active_debuffs.has(random_id):
 			apply_debuff(random_id)
 			applied_debuffs.append(random_id)
@@ -4938,7 +4984,7 @@ func _apply_enhanced_mom_punishment() -> void:
 			print("[GameController] Mom applied debuff: %s" % random_id)
 	
 	# Higher fine ($200-300)
-	var fine = randi_range(200, 300)
+	var fine = GameRNG.randi_range(200, 300)
 	PlayerEconomy.remove_money(fine, "mom_fine")
 	print("[GameController] Mom imposed fine: $%d" % fine)
 
@@ -5046,3 +5092,205 @@ func _clear_grounded_debuffs() -> void:
 	for debuff_id in _grounded_debuffs:
 		disable_debuff(debuff_id)
 	_grounded_debuffs.clear()
+
+
+## get_save_state() -> Dictionary
+##
+## Aggregates the full game state from all subsystems for saving.
+func get_save_state() -> Dictionary:
+	return {
+		"rng": GameRNG.get_state(),
+		"channel_manager": channel_manager.get_state() if channel_manager else {},
+		"round_manager": round_manager.get_state() if round_manager else {},
+		"turn_tracker": turn_tracker.get_state() if turn_tracker else {},
+		"scorecard": scorecard.get_state() if scorecard else {},
+		"dice_hand": dice_hand.get_state() if dice_hand else {},
+		"player_economy": PlayerEconomy.get_state(),
+		"score_modifier_manager": ScoreModifierManager.get_state(),
+		"dice_color_manager": DiceColorManager.get_state(),
+		"statistics": Statistics.get_state(),
+		"roll_stats": RollStats.get_state(),
+		"chores_manager": chores_manager.get_state() if chores_manager else {},
+		"game_controller": {
+			"active_power_up_ids": active_power_ups.keys(),
+			"active_consumable_counts": consumable_counts.duplicate(),
+			"active_debuff_ids": active_debuffs.keys(),
+			"active_mod_ids": active_mods.keys(),
+			"mod_persistence_map": mod_persistence_map.duplicate(),
+			"active_challenge_ids": active_challenges.keys(),
+			"challenge_score_modifier": challenge_score_modifier,
+			"half_price_stacks": half_price_stacks,
+			"loss_leader_stacks": loss_leader_stacks,
+			"insurance_policy_active": insurance_policy_active,
+			"clearance_rack_active": clearance_rack_active,
+			"active_gaming_console_ids": active_gaming_console.keys(),
+			"pending_mods": pending_mods.duplicate(),
+			"_game_ended": _game_ended,
+			"use_round_config_goals": use_round_config_goals,
+			"_goal_mode_locked": _goal_mode_locked,
+			"_challenge_reward_this_round": _challenge_reward_this_round,
+			"_challenge_reward_granted": _challenge_reward_granted,
+			"_grounded_debuffs": _grounded_debuffs.duplicate()
+		}
+	}
+
+
+## load_game_state(save_data)
+##
+## Restores the entire game state from a saved dictionary.
+## Called by _ready() when continuing a saved game.
+func load_game_state(save_data: Dictionary) -> void:
+	print("[GameController] Loading saved game state...")
+	
+	# 1. Clear all existing runtime instances
+	_clear_all_power_ups()
+	_clear_all_consumables()
+	_clear_active_debuffs()
+	_clear_all_mods()
+	_clear_active_challenges()
+	_clear_active_gaming_console()
+	
+	# 2. Restore GameRNG first (so any randomness during restore is deterministic)
+	var rng_state = save_data.get("rng", {})
+	if not rng_state.is_empty():
+		GameRNG.load_state(rng_state)
+	
+	# 3. Restore autoload singletons
+	var channel_state = save_data.get("channel_manager", {})
+	if not channel_state.is_empty():
+		channel_manager.load_state(channel_state)
+	
+	var economy_state = save_data.get("player_economy", {})
+	if not economy_state.is_empty():
+		PlayerEconomy.load_state(economy_state)
+	
+	var modifier_state = save_data.get("score_modifier_manager", {})
+	if not modifier_state.is_empty():
+		ScoreModifierManager.load_state(modifier_state)
+	
+	var color_state = save_data.get("dice_color_manager", {})
+	if not color_state.is_empty():
+		DiceColorManager.load_state(color_state)
+	
+	var stats_state = save_data.get("statistics", {})
+	if not stats_state.is_empty():
+		Statistics.load_state(stats_state)
+	
+	var roll_stats_state = save_data.get("roll_stats", {})
+	if not roll_stats_state.is_empty():
+		RollStats.load_state(roll_stats_state)
+	
+	var chores_state = save_data.get("chores_manager", {})
+	if not chores_state.is_empty() and chores_manager:
+		chores_manager.load_state(chores_state)
+	
+	# 4. Restore RoundManager
+	var round_state = save_data.get("round_manager", {})
+	if not round_state.is_empty() and round_manager:
+		round_manager.load_state(round_state)
+	
+	# 5. Restore TurnTracker
+	var turn_state = save_data.get("turn_tracker", {})
+	if not turn_state.is_empty() and turn_tracker:
+		turn_tracker.load_state(turn_state)
+	
+	# 6. Restore Scorecard
+	var scorecard_state = save_data.get("scorecard", {})
+	if not scorecard_state.is_empty() and scorecard:
+		scorecard.load_state(scorecard_state)
+	
+	# 7. Restore DiceHand (spawns dice without entry animations)
+	var dice_hand_state = save_data.get("dice_hand", {})
+	if not dice_hand_state.is_empty() and dice_hand:
+		dice_hand.load_state(dice_hand_state)
+	
+	# 8. Restore GameController-specific state
+	var gc_state = save_data.get("game_controller", {})
+	challenge_score_modifier = gc_state.get("challenge_score_modifier", 1.0)
+	half_price_stacks = gc_state.get("half_price_stacks", 0)
+	loss_leader_stacks = gc_state.get("loss_leader_stacks", 0)
+	insurance_policy_active = gc_state.get("insurance_policy_active", false)
+	clearance_rack_active = gc_state.get("clearance_rack_active", false)
+	var loaded_pending = gc_state.get("pending_mods", [])
+	pending_mods.assign(loaded_pending)
+	mod_persistence_map = gc_state.get("mod_persistence_map", {})
+	_game_ended = gc_state.get("_game_ended", false)
+	use_round_config_goals = gc_state.get("use_round_config_goals", true)
+	_goal_mode_locked = gc_state.get("_goal_mode_locked", false)
+	_challenge_reward_this_round = gc_state.get("_challenge_reward_this_round", 0)
+	_challenge_reward_granted = gc_state.get("_challenge_reward_granted", false)
+	var loaded_grounded = gc_state.get("_grounded_debuffs", [])
+	_grounded_debuffs.assign(loaded_grounded)
+	
+	# 9. Re-grant active items
+	# Re-grant power-ups
+	for pu_id in gc_state.get("active_power_up_ids", []):
+		if not active_power_ups.has(pu_id):
+			grant_power_up(pu_id)
+	
+	# Re-grant consumables
+	var saved_consumable_counts = gc_state.get("active_consumable_counts", {})
+	for cons_id in saved_consumable_counts.keys():
+		var count = saved_consumable_counts[cons_id]
+		for i in range(count):
+			grant_consumable(cons_id)
+	
+	# Re-grant mods
+	for mod_id in gc_state.get("active_mod_ids", []):
+		if not active_mods.has(mod_id):
+			grant_mod(mod_id)
+	
+	# Re-apply per-die mods from dice hand state
+	var saved_dice = dice_hand_state.get("dice", [])
+	for i in range(min(saved_dice.size(), dice_hand.dice_list.size())):
+		var die = dice_hand.dice_list[i]
+		var die_state = saved_dice[i]
+		for mod_id in die_state.get("mods", []):
+			if not die.has_mod(mod_id):
+				var mod_data = mod_manager.get_def(mod_id)
+				if mod_data:
+					die.add_mod(mod_data)
+	
+	# Re-grant gaming console
+	for console_id in gc_state.get("active_gaming_console_ids", []):
+		if not active_gaming_console.has(console_id):
+			grant_gaming_console(console_id)
+	
+	# Re-activate challenge for current round
+	for challenge_id in gc_state.get("active_challenge_ids", []):
+		if not active_challenges.has(challenge_id):
+			activate_challenge(challenge_id)
+	
+	# Re-apply debuffs
+	for debuff_id in gc_state.get("active_debuff_ids", []):
+		if not active_debuffs.has(debuff_id):
+			apply_debuff(debuff_id)
+	
+	# 10. Sync UI state
+	if dice_hand:
+		dice_hand._update_results()
+	
+	if scorecard:
+		scorecard.emit_signal("score_changed", scorecard.get_total_score())
+	
+	if score_card_ui:
+		score_card_ui.update_all()
+	
+	# Update consumable usability
+	update_consumable_usability()
+	
+	print("[GameController] Saved game state loaded successfully!")
+
+
+## _clear_active_gaming_console()
+##
+## Removes the active gaming console.
+func _clear_active_gaming_console() -> void:
+	for id in active_gaming_console.keys():
+		var console = active_gaming_console[id]
+		if is_instance_valid(console):
+			console.queue_free()
+	active_gaming_console.clear()
+	if gaming_console_ui and gaming_console_ui.has_method("hide_console"):
+		gaming_console_ui.hide_console()
+	print("[GameController] Cleared gaming console")

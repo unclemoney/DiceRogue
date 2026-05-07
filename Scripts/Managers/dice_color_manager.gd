@@ -262,7 +262,7 @@ func _grant_yellow_dice_consumable() -> void:
 		return
 	
 	# Pick a random consumable and grant it
-	var random_id = available_ids[randi() % available_ids.size()]
+	var random_id = available_ids[GameRNG.random_index(available_ids)]
 	if game_controller.has_method("grant_consumable"):
 		game_controller.grant_consumable(random_id)
 		print("[DiceColorManager] Yellow dice granted consumable: %s" % random_id)
@@ -626,3 +626,25 @@ func get_modified_color_chance(color_type: DiceColorClass.Type) -> int:
 func clear_all_color_chance_modifiers() -> void:
 	color_chance_modifiers.clear()
 	print("[DiceColorManager] Cleared all color chance modifiers")
+
+
+## get_state() -> Dictionary
+##
+## Returns the current dice color state for saving.
+func get_state() -> Dictionary:
+	return {
+		"purchased_colors": purchased_colors.duplicate(),
+		"color_chance_modifiers": color_chance_modifiers.duplicate(),
+		"blue_always_used": blue_always_used,
+		"blue_penalty_reduction_factor": blue_penalty_reduction_factor
+	}
+
+
+## load_state(state)
+##
+## Restores the dice color state from a saved dictionary.
+func load_state(state: Dictionary) -> void:
+	purchased_colors = state.get("purchased_colors", {})
+	color_chance_modifiers = state.get("color_chance_modifiers", {})
+	blue_always_used = state.get("blue_always_used", false)
+	blue_penalty_reduction_factor = state.get("blue_penalty_reduction_factor", 1.0)

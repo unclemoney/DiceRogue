@@ -32,6 +32,8 @@ GameSettings="*res://Scripts/Managers/game_settings.gd"
 TutorialManager="*res://Scripts/Game/tutorial_manager.gd"
 TweenFX="*res://addons/TweenFX/TweenFX.gd"
 TweenFXHelper="*res://Scripts/Core/tween_fx_helper.gd"
+GameRNG="*res://Scripts/Managers/game_rng.gd"
+GameSaveManager="*res://Scripts/Managers/game_save_manager.gd"
 
 [display]
 

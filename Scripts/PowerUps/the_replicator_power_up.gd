@@ -94,7 +94,7 @@ func _choose_replication_target() -> void:
 		replicated_power_up_name = "nothing (no other PowerUps)"
 		return
 	
-	var random_index = randi() % available_ids.size()
+	var random_index = GameRNG.random_index(available_ids)
 	chosen_target_id = available_ids[random_index]
 	is_charged = true
 	

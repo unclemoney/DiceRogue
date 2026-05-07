@@ -34,7 +34,7 @@ func apply(target) -> void:
 		return
 	
 	# Select a random unowned uncommon power-up
-	var random_index = randi() % unowned_uncommon_power_ups.size()
+	var random_index = GameRNG.random_index(unowned_uncommon_power_ups)
 	var selected_power_up = unowned_uncommon_power_ups[random_index]
 	
 	print("[RandomPowerUpUncommonConsumable] Granting random uncommon power-up: ", selected_power_up)
