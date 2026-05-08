@@ -1,69 +1,56 @@
-[gd_scene load_steps=2 format=3 uid="uid://dtw4pr3xvqpoc"]
+[gd_scene load_steps=5 format=3 uid="uid://roundtransitiontest"]
 
-[ext_resource type="Script" uid="uid://bijowxg877rnx" path="res://Tests/round_transition_test.gd" id="1_script"]
+[ext_resource type="Script" path="res://Tests/round_transition_test.gd" id="1_test"]
+[ext_resource type="PackedScene" uid="uid://dqgkm7s8toq66" path="res://Scenes/Effects/CRTManager.tscn" id="2_crt"]
+[ext_resource type="Script" path="res://Scripts/Effects/tv_power_controller.gd" id="3_tv"]
+[ext_resource type="Shader" path="res://Scripts/Shaders/tv_power_on.gdshader" id="4_shader"]
 
-[node name="RoundTransitionTest" type="Control"]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-script = ExtResource("1_script")
+[node name="RoundTransitionTest" type="Node2D"]
+script = ExtResource("1_test")
 
-[node name="Background" type="ColorRect" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.12, 0.1, 0.18, 1)
+[node name="CRTTV" type="Node2D" parent="."]
+position = Vector2(640, 360)
 
-[node name="VBox" type="VBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = -20.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="Background" type="ColorRect" parent="CRTTV"]
+offset_left = -300.0
+offset_top = -200.0
+offset_right = 300.0
+offset_bottom = 200.0
+color = Color(0.1, 0.2, 0.3, 1)
 
-[node name="Title" type="Label" parent="VBox"]
+[node name="CRTManager" parent="CRTTV" instance=ExtResource("2_crt")]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tv"]
+shader = ExtResource("4_shader")
+
+[node name="TVPowerOverlay" type="ColorRect" parent="CRTTV"]
+offset_left = -300.0
+offset_top = -200.0
+offset_right = 300.0
+offset_bottom = 200.0
+mouse_filter = 2
+material = SubResource("ShaderMaterial_tv")
+script = ExtResource("3_tv")
+
+[node name="TestButtons" type="VBoxContainer" parent="."]
+offset_left = 50.0
+offset_top = 50.0
+offset_right = 250.0
+offset_bottom = 300.0
+theme_override_constants/separation = 12
+
+[node name="TVOnButton" type="Button" parent="TestButtons"]
 layout_mode = 2
-text = "Round Transition Overlay Test"
-horizontal_alignment = 1
+text = "TV On"
 
-[node name="HSep" type="HSeparator" parent="VBox"]
+[node name="TVOffButton" type="Button" parent="TestButtons"]
 layout_mode = 2
+text = "TV Off"
 
-[node name="ButtonRow" type="HBoxContainer" parent="VBox"]
+[node name="ShowPanelButton" type="Button" parent="TestButtons"]
 layout_mode = 2
-alignment = 1
+text = "Show Round Panel"
 
-[node name="NormalRoundBtn" type="Button" parent="VBox/ButtonRow"]
+[node name="WaveButton" type="Button" parent="TestButtons"]
 layout_mode = 2
-text = "Normal Round (3)"
-
-[node name="FinalRoundBtn" type="Button" parent="VBox/ButtonRow"]
-layout_mode = 2
-text = "Final Round (6)"
-
-[node name="EarlyRoundBtn" type="Button" parent="VBox/ButtonRow"]
-layout_mode = 2
-text = "Early Round (1)"
-
-[node name="HSep2" type="HSeparator" parent="VBox"]
-layout_mode = 2
-
-[node name="OutputLabel" type="RichTextLabel" parent="VBox"]
-layout_mode = 2
-size_flags_vertical = 3
-scroll_following = true
-
-[connection signal="pressed" from="VBox/ButtonRow/NormalRoundBtn" to="." method="_on_normal_round_pressed"]
-[connection signal="pressed" from="VBox/ButtonRow/FinalRoundBtn" to="." method="_on_final_round_pressed"]
-[connection signal="pressed" from="VBox/ButtonRow/EarlyRoundBtn" to="." method="_on_early_round_pressed"]
+text = "Wave Buttons"

@@ -185,6 +185,10 @@ var _game_ended: bool = false  # Track if game has ended (won or lost) - blocks 
 var _challenge_celebration_shown: bool = false  # Prevent repeated celebration animation
 var _round_transition_overlay: CanvasLayer = null
 var _round_transition_shown: bool = false  # Prevent repeated transition overlay
+var _round_transition_tv_off: bool = false  # True when TV is off between rounds
+var _new_round_panel: NewRoundPanel = null
+var _pending_round_num: int = -1
+var _pending_is_first_round: bool = false
 
 ## Goal Mode Configuration (for testing)
 ## When true, use RoundDifficultyConfig.target_score_override; when false, use Challenge resource goals
@@ -225,7 +229,8 @@ func _ready() -> void:
 		#scorecard.score_added.connect(update_double_existing_usability)
 		scorecard.game_completed.connect(_on_scorecard_complete)
 	if game_button_ui:
-		game_button_ui.connect("shop_button_pressed", _on_shop_button_pressed)	
+		game_button_ui.connect("shop_button_pressed", _on_shop_button_pressed)
+		game_button_ui.connect("next_round_pressed", _on_next_round_pressed)
 		if not game_button_ui.is_connected("dice_rolled", _on_game_button_dice_rolled):
 			game_button_ui.dice_rolled.connect(_on_game_button_dice_rolled)
 			print("[GameController] Connected to dice_rolled signal from GameButtonUI")
@@ -455,6 +460,8 @@ func _on_channel_selected(channel: int) -> void:
 	_apply_channel_starting_bonuses(channel)
 	if round_manager:
 		round_manager.start_game()
+	if crt_manager:
+		crt_manager.snap_tv_off()
 
 
 ## _apply_channel_starting_bonuses(channel: int) -> void
@@ -3601,6 +3608,11 @@ func _on_stats_panel_continue() -> void:
 			# Track in statistics
 			Statistics.total_money_earned += total_bonus
 	
+	# Turn off TV before opening shop
+	_round_transition_tv_off = true
+	if crt_manager:
+		await crt_manager.turn_off_tv()
+	
 	# Complete the round
 	if round_manager:
 		round_manager.complete_round()
@@ -3694,8 +3706,8 @@ func _open_shop_ui() -> void:
 		await _shop_tween.finished
 		shop_ui.hide()
 
-		# Re-enable CRT when closing shop
-		if crt_manager:
+		# Re-enable CRT when closing shop only if not between rounds
+		if crt_manager and not _round_transition_tv_off:
 			crt_manager.enable_crt()
 
 
@@ -5294,3 +5306,140 @@ func _clear_active_gaming_console() -> void:
 	if gaming_console_ui and gaming_console_ui.has_method("hide_console"):
 		gaming_console_ui.hide_console()
 	print("[GameController] Cleared gaming console")
+
+
+## _on_next_round_pressed()
+##
+## Handles the Next Round button press. Runs the full round intro sequence
+## (TV turn-on, New Round Panel, Scorecard entrance, chore selection) before
+## actually starting the round.
+func _on_next_round_pressed() -> void:
+	print("[GameController] Next Round pressed - starting intro sequence")
+	
+	var current_round_num = round_manager.get_current_round_number() if round_manager else 1
+	var is_first_round = not game_button_ui.first_roll_done
+	var intro_round_num = current_round_num if is_first_round else current_round_num + 1
+	
+	_pending_round_num = intro_round_num
+	_pending_is_first_round = is_first_round
+	
+	# Hide scorecard so it can animate in later
+	if score_card_ui:
+		score_card_ui.visible = false
+	
+	# Show New Round Panel (TV stays black until Let's Play)
+	await _show_new_round_panel(intro_round_num)
+
+
+func _continue_round_start() -> void:
+	## Continues the round start sequence after the New Round Panel is dismissed.
+	if _pending_round_num < 0:
+		return
+	
+	var round_num = _pending_round_num
+	var is_first_round = _pending_is_first_round
+	_pending_round_num = -1
+	
+	print("[GameController] Continuing round start for round %d" % round_num)
+	
+	# TV Turn On (triggered after Let's Play)
+	if crt_manager:
+		await crt_manager.turn_on_tv()
+	
+	# Scorecard Entrance
+	if score_card_ui:
+		await score_card_ui.animate_entrance()
+	
+	# Chore Selection (Round 1 only, if no active chore)
+	if is_first_round and chores_manager:
+		if chores_manager.pending_chore_selection or chores_manager.current_task == null:
+			_show_chore_selection_popup()
+			while _chore_selection_popup and is_instance_valid(_chore_selection_popup) and _chore_selection_popup.visible:
+				await get_tree().process_frame
+	
+	# Start Actual Round
+	if is_first_round:
+		round_manager.start_round(1)
+	else:
+		var prev_round_index = round_manager.current_round
+		if prev_round_index >= 0 and prev_round_index < round_manager.rounds_data.size() and not round_manager.rounds_data[prev_round_index].completed:
+			round_manager.complete_round()
+		round_manager.start_round(round_num)
+
+
+## _show_new_round_panel(round_num)
+##
+## Creates (if needed), populates, and shows the New Round Panel.
+## Awaits dismissal via the Let's Play button.
+func _show_new_round_panel(round_num: int) -> void:
+	if not _new_round_panel or not is_instance_valid(_new_round_panel):
+		_new_round_panel = preload("res://Scenes/UI/new_round_panel.tscn").instantiate()
+		_new_round_panel.name = "NewRoundPanel"
+		_new_round_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(_new_round_panel)
+		_new_round_panel.panel_dismissed.connect(_on_new_round_panel_dismissed)
+	
+	var data = _build_round_panel_data(round_num)
+	_new_round_panel.setup(data)
+	await _new_round_panel.show_panel()
+
+
+## _on_new_round_panel_dismissed()
+##
+## Callback when the player clicks Let's Play on the New Round Panel.
+func _on_new_round_panel_dismissed() -> void:
+	print("[GameController] New Round Panel dismissed")
+	_continue_round_start()
+
+
+## _build_round_panel_data(round_num)
+##
+## Gathers round intro data from managers for the New Round Panel.
+func _build_round_panel_data(round_num: int) -> Dictionary:
+	var data = {
+		"channel": 1,
+		"round_number": round_num,
+		"challenge_name": "",
+		"challenge_desc": "",
+		"debuffs": [],
+		"chore_name": ""
+	}
+	
+	if channel_manager:
+		data["channel"] = channel_manager.current_channel
+	
+	if round_manager and round_num >= 1 and round_num <= round_manager.rounds_data.size():
+		var round_data = round_manager.rounds_data[round_num - 1]
+		var challenge_id = round_data.get("challenge_id", "")
+		if challenge_manager and not challenge_id.is_empty():
+			var challenge_def = challenge_manager.get_def(challenge_id)
+			if challenge_def:
+				data["challenge_name"] = challenge_def.display_name
+				data["challenge_desc"] = challenge_def.description
+	
+	if debuff_manager:
+		var active_ids = debuff_manager.get_active_debuff_ids()
+		for debuff_id in active_ids:
+			var debuff_def = _find_debuff_def(debuff_id)
+			if debuff_def:
+				data["debuffs"].append({
+					"name": debuff_def.display_name,
+					"icon": debuff_def.icon
+				})
+	
+	if chores_manager and chores_manager.current_task:
+		data["chore_name"] = chores_manager.current_task.display_name
+	
+	return data
+
+
+## _find_debuff_def(debuff_id)
+##
+## Helper to find a DebuffData definition by id from DebuffManager.
+func _find_debuff_def(debuff_id: String) -> DebuffData:
+	if not debuff_manager:
+		return null
+	for def in debuff_manager.debuff_defs:
+		if def and def.id == debuff_id:
+			return def
+	return null

@@ -106,3 +106,58 @@ This agent has file system, shell, search, and documentation tools. Prefer them 
 - **Key Controllers**: `GameController` (root coordinator), `RoundManager`, `TurnTracker`, `DiceHand`
 - **Build Guides**: `BUILD_*.md` files exist for most major systems (Dice, PowerUp, Consumable, Debuff, Mod, Challenge, TweenFX, Bot).
 - **Debug Panel**: Press `F12` in-game. All new features need debug commands in `debug_panel.gd`.
+
+
+---
+
+## Panel Construction Standards
+
+All new full-screen popup/panel overlays must follow the pattern established by `ChoreSelectionPopup` and `ChannelManagerUI`:
+
+### Root Node
+- Use `extends Control` (not `CanvasLayer`).
+- Set `mouse_filter = MOUSE_FILTER_STOP` to block input behind the panel.
+- Set a high `z_index` (e.g., 100) to render above gameplay.
+
+### Overlay
+- Create a `ColorRect` child named `Overlay`.
+- Use `PRESET_FULL_RECT` and `mouse_filter = MOUSE_FILTER_STOP`.
+- Typical color: `Color(0, 0, 0, 0.6)`.
+
+### Panel Container
+- Create a `PanelContainer` child named `Panel`.
+- Center with `set_anchors_preset(Control.PRESET_CENTER)`.
+- Set `custom_minimum_size` explicitly (e.g., `Vector2(460, 340)`).
+- Position with offsets: `offset_left = -230`, `offset_top = -170`, `offset_right = 230`, `offset_bottom = 170`.
+
+### Theme & Styling
+- Load and apply `res://Resources/UI/powerup_hover_theme.tres` to the `PanelContainer`.
+- Apply a custom `StyleBoxFlat` override on the `"panel"` style for background and border:
+  ```gdscript
+  var style = StyleBoxFlat.new()
+  style.bg_color = Color(0.12, 0.10, 0.14, 0.98)
+  style.border_color = Color(0.3, 0.25, 0.35, 1.0)
+  style.set_border_width_all(4)
+  style.set_corner_radius_all(20)
+  style.corner_detail = 8
+  _panel.add_theme_stylebox_override("panel", style)
+  ```
+
+### Animation
+- **Never** apply `TweenFX.drop_in()` or `TweenFX.jelly()` directly to a `PanelContainer` — scale distortion will stretch child content.
+- Animate `position` and `modulate:a` on the `PanelContainer` instead:
+  ```gdscript
+  _panel.position = _original_pos - Vector2(0, 300)
+  _panel.modulate.a = 0.0
+  var tween = create_tween()
+  tween.tween_property(_panel, "position", _original_pos, 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+  tween.parallel().tween_property(_panel, "modulate:a", 1.0, 0.4)
+  ```
+- For exit, tween `position` downward and fade out both overlay and panel.
+
+### Buttons
+- Connect `_tfx.button_hover`, `_tfx.button_unhover`, and `_tfx.button_press` to all interactive buttons via `TweenFXHelper`.
+
+### Dynamic Building
+- Build UI dynamically in `_build_ui()` or similar.
+- Call `queue_free()` on existing children before rebuilding to support re-showing.

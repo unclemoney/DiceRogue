@@ -389,6 +389,12 @@ func _create_debug_tabs() -> void:
 			{"text": "Stop Music", "method": "_debug_audio_stop_music"},
 			{"text": "Resume Music", "method": "_debug_audio_resume_music"},
 		],
+		"Round Transitions": [
+			{"text": "TV On", "method": "_debug_tv_on"},
+			{"text": "TV Off", "method": "_debug_tv_off"},
+			{"text": "Show Round Panel", "method": "_debug_show_round_panel"},
+			{"text": "Wave Buttons", "method": "_debug_wave_buttons"},
+		],
 		"Main Menu": [
 			{"text": "Spawn Extra Dice", "method": "_debug_menu_spawn_dice"},
 			{"text": "Clear All Dice", "method": "_debug_menu_clear_dice"},
@@ -4126,3 +4132,56 @@ func _debug_difficulty_reset_levels() -> void:
 	
 	game_controller.scorecard.reset_scores()
 	log_debug("Scorecard levels reset to 1")
+
+
+## _debug_tv_on()
+##
+## Instantly turns the TV on via CRTManager.
+func _debug_tv_on() -> void:
+	if not game_controller or not game_controller.crt_manager:
+		log_debug("ERROR: CRTManager not found")
+		return
+	log_debug("Turning TV on...")
+	await game_controller.crt_manager.turn_on_tv()
+	log_debug("TV turned on.")
+
+
+## _debug_tv_off()
+##
+## Instantly turns the TV off via CRTManager.
+func _debug_tv_off() -> void:
+	if not game_controller or not game_controller.crt_manager:
+		log_debug("ERROR: CRTManager not found")
+		return
+	log_debug("Turning TV off...")
+	await game_controller.crt_manager.turn_off_tv()
+	log_debug("TV turned off.")
+
+
+## _debug_show_round_panel()
+##
+## Shows the New Round Panel with dummy data for the current round.
+func _debug_show_round_panel() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not found")
+		return
+	var round_num = 1
+	if game_controller.round_manager:
+		round_num = game_controller.round_manager.get_current_round_number()
+	log_debug("Showing New Round Panel for round %d..." % round_num)
+	await game_controller._show_new_round_panel(round_num)
+	log_debug("New Round Panel dismissed.")
+
+
+## _debug_wave_buttons()
+##
+## Triggers the button wave animation on GameButtonUI.
+func _debug_wave_buttons() -> void:
+	if not game_controller or not game_controller.game_button_ui:
+		log_debug("ERROR: GameButtonUI not found")
+		return
+	if game_controller.game_button_ui.has_method("animate_button_wave"):
+		game_controller.game_button_ui.animate_button_wave()
+		log_debug("Button wave triggered.")
+	else:
+		log_debug("ERROR: animate_button_wave not found on GameButtonUI")

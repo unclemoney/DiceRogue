@@ -456,6 +456,9 @@ func _on_round_started(_round_number: int) -> void:
 	roll_button.disabled = false
 	next_turn_button.disabled = false
 	
+	# Staggered bounce wave on all gameplay buttons
+	animate_button_wave()
+	
 	# Start Roll button pulse to draw attention
 	_start_roll_button_pulse()
 	
@@ -479,6 +482,22 @@ func _on_round_completed(_round_number: int) -> void:
 	if _round_number == 0:  # Initial game state - don't enable next round button yet
 		if next_round_button:
 			next_round_button.disabled = false
+
+func animate_button_wave() -> void:
+	"""
+	Staggered bounce on all enabled gameplay buttons.
+	Called at round start after buttons are enabled.
+	"""
+	var buttons = [roll_button, next_turn_button, shop_button, next_round_button]
+	for i in range(buttons.size()):
+		var btn = buttons[i]
+		if not btn or btn.disabled or not btn.visible:
+			continue
+		btn.pivot_offset = btn.size / 2.0
+		var tween = create_tween()
+		tween.tween_property(btn, "scale", Vector2(1.15, 0.85), 0.08).set_delay(i * 0.06)
+		tween.tween_property(btn, "scale", Vector2(0.95, 1.05), 0.08)
+		tween.tween_property(btn, "scale", Vector2.ONE, 0.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func _on_challenge_completed(challenge_id: String) -> void:
 	print("[GameButtonUI] === CHALLENGE COMPLETED ===")
@@ -525,18 +544,4 @@ func _on_next_round_button_pressed() -> void:
 		score_card_ui.scorecard.reset_scores_preserve_levels()
 		score_card_ui.update_all()
 	
-	# After clearing dice, proceed with round management
-	if round_manager:
-		var current_round = round_manager.get_current_round_number()
-		
-		# If this is the initial state (no round started yet)
-		if current_round == 1 and not first_roll_done:
-			print("[GameButtonUI] Starting first round")
-			round_manager.start_round(1)
-		else:
-			# Normal round advancement
-			print("[GameButtonUI] Advancing from round", current_round, "to round", current_round + 1)
-			round_manager.complete_round()
-			round_manager.start_round(current_round + 1)
-		
-		emit_signal("next_round_pressed")
+	emit_signal("next_round_pressed")

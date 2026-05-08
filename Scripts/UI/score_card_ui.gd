@@ -1838,3 +1838,18 @@ func _on_category_button_hover_exit(button: Button) -> void:
 		return
 	var tween = create_tween()
 	tween.tween_property(button, "modulate", Color.WHITE, 0.15)
+
+
+## animate_entrance()
+##
+## Flies the scorecard in from above the CRTTV area with a bouncy landing.
+## Called by GameController after the New Round Panel is dismissed.
+func animate_entrance() -> void:
+	var target_y = position.y
+	position.y = target_y - 400.0
+	visible = true
+	modulate.a = 1.0
+	var tween = create_tween()
+	tween.tween_property(self, "position:y", target_y, 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	await tween.finished
+	TweenFX.jelly(self, 0.3, 0.08, 1)
