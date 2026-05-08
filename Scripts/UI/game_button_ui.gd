@@ -523,6 +523,13 @@ func _on_challenge_completed(challenge_id: String) -> void:
 func _on_next_round_button_pressed() -> void:
 	print("[GameButtonUI] Next Round button pressed")
 	
+	# Close shop if currently open
+	var shop_ui_node = get_node_or_null("../ShopUI")
+	if shop_ui_node and shop_ui_node.visible:
+		shop_ui_node.hide()
+		is_shop_open = false
+		print("[GameButtonUI] Closed open shop on next round press")
+	
 	# Notify tutorial manager of next round action
 	var tutorial_manager = get_node_or_null("/root/TutorialManager")
 	if tutorial_manager and tutorial_manager.is_tutorial_active():

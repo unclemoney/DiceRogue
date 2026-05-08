@@ -3,8 +3,9 @@ class_name HotStreakPowerUp
 
 ## HotStreakPowerUp
 ##
-## Gains +3 additive per consecutive turn scoring 15+. Resets to 0 on any
-## turn scoring less than 15. Rewards consistent high scoring.
+## Gains +3 additive per consecutive turn scoring above a threshold.
+## Threshold starts at 15 and grows via Fibonacci progression after 5 turns.
+## Resets to 0 on any turn scoring below the current threshold.
 ## Uncommon rarity, $125 price.
 
 # References
@@ -48,13 +49,32 @@ func apply(target) -> void:
 	# Register initial additive (0 until first qualifying score)
 	print("[HotStreakPowerUp] Applied — streak starts at 0")
 
+func _fibonacci(n: int) -> int:
+	if n <= 0:
+		return 0
+	if n == 1:
+		return 1
+	var a := 0
+	var b := 1
+	for i in range(2, n + 1):
+		var temp := a + b
+		a = b
+		b = temp
+	return b
+
+func _get_threshold() -> int:
+	if streak_count <= 5:
+		return score_threshold
+	return score_threshold + _fibonacci(streak_count - 5)
+
 func _on_score_assigned(_section: Scorecard.Section, _category: String, score: int, _breakdown_info: Dictionary = {}) -> void:
-	if score >= score_threshold:
+	var current_threshold = _get_threshold()
+	if score >= current_threshold:
 		streak_count += 1
-		print("[HotStreakPowerUp] Score %d >= %d — streak now %d" % [score, score_threshold, streak_count])
+		print("[HotStreakPowerUp] Score %d >= %d — streak now %d" % [score, current_threshold, streak_count])
 	else:
 		streak_count = 0
-		print("[HotStreakPowerUp] Score %d < %d — streak reset" % [score, score_threshold])
+		print("[HotStreakPowerUp] Score %d < %d — streak reset" % [score, current_threshold])
 	
 	# Update the ScoreModifierManager
 	var total_bonus = streak_count * bonus_per_streak
@@ -74,7 +94,8 @@ func _on_score_assigned(_section: Scorecard.Section, _category: String, score: i
 
 func get_current_description() -> String:
 	var total_bonus = streak_count * bonus_per_streak
-	var base_desc = "+3 per consecutive turn scoring 15+"
+	var current_threshold = _get_threshold()
+	var base_desc = "+3 per consecutive turn scoring %d+" % current_threshold
 	base_desc += "\nStreak: %d (+%d bonus)" % [streak_count, total_bonus]
 	return base_desc
 

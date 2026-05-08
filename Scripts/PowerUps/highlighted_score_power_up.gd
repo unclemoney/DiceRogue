@@ -122,10 +122,31 @@ func _on_score_assigned(_section: Scorecard.Section, category: String, score: in
 	# Delay highlighting to allow UI to update
 	call_deferred("_highlight_random_category")
 
+func _clear_all_highlights() -> void:
+	if not scorecard_ui_ref:
+		return
+	
+	for btn in scorecard_ui_ref.upper_section_buttons.values():
+		if is_instance_valid(btn):
+			btn.remove_theme_stylebox_override("normal")
+			btn.remove_theme_stylebox_override("hover")
+			btn.remove_theme_stylebox_override("pressed")
+	
+	for btn in scorecard_ui_ref.lower_section_buttons.values():
+		if is_instance_valid(btn):
+			btn.remove_theme_stylebox_override("normal")
+			btn.remove_theme_stylebox_override("hover")
+			btn.remove_theme_stylebox_override("pressed")
+	
+	highlighted_button = null
+
 func _highlight_random_category() -> void:
 	if not scorecard_ref or not scorecard_ui_ref:
 		print("[HighlightedScorePowerUp] Missing references, cannot highlight")
 		return
+	
+	# Guard: clear any stale highlights from all buttons before selecting a new one
+	_clear_all_highlights()
 	
 	# Get all unscored categories
 	var available_categories = _get_unscored_categories()
@@ -212,7 +233,7 @@ func _apply_visual_highlight() -> void:
 		push_error("[HighlightedScorePowerUp] Could not find button for category:", highlighted_category)
 
 func _clear_highlight() -> void:
-	if highlighted_button:
+	if highlighted_button and is_instance_valid(highlighted_button):
 		# Remove theme overrides to restore original styling
 		highlighted_button.remove_theme_stylebox_override("normal")
 		highlighted_button.remove_theme_stylebox_override("hover") 

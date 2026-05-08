@@ -7,12 +7,14 @@ class_name FullHousePowerUp
 ## Base reward: $7 per full house
 ## Scaling: Adds $7 for each additional full house rolled (e.g., 1st = $7, 2nd = $14, etc.)
 ##
-## This PowerUp connects to RollStats to track cumulative full house achievements
-## and automatically scales money rewards based on total full houses rolled.
+## This PowerUp connects to the Scorecard to detect full house patterns in dice
+## regardless of which category the player scores them in.
 
 # Track full houses for this session
 var total_full_houses_earned: int = 0
-var base_money_per_full_house: int = 25
+var base_money_per_full_house: int = 7
+
+var scorecard_ref: Scorecard = null
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -22,17 +24,25 @@ func _ready() -> void:
 func apply(_target) -> void:
 	print("=== Applying FullHousePowerUp ===")
 	
-	# Connect to RollStats for tracking full houses
-	if not RollStats.is_connected("combination_achieved", _on_combination_achieved):
-		RollStats.combination_achieved.connect(_on_combination_achieved)
-		print("[FullHousePowerUp] Connected to RollStats combination_achieved signal")
+	# Find the scorecard in the scene
+	scorecard_ref = get_tree().get_first_node_in_group("scorecard") as Scorecard
+	if scorecard_ref:
+		if not scorecard_ref.is_connected("score_assigned", _on_score_assigned):
+			scorecard_ref.score_assigned.connect(_on_score_assigned)
+			print("[FullHousePowerUp] Connected to scorecard score_assigned signal")
+	else:
+		push_error("[FullHousePowerUp] Could not find Scorecard in scene")
 	
 	# Connect cleanup signal
 	if not is_connected("tree_exiting", _on_tree_exiting):
 		connect("tree_exiting", _on_tree_exiting)
 
-func _on_combination_achieved(combination_type: String) -> void:
-	if combination_type == "full_house":
+func _on_score_assigned(_section: Scorecard.Section, _category: String, score: int) -> void:
+	if score <= 0:
+		return
+	
+	# Check if the current dice values form a full house
+	if DiceResults.values.size() >= 5 and ScoreEvaluatorSingleton.is_full_house(DiceResults.values):
 		_grant_full_house_money()
 
 func _grant_full_house_money() -> void:
@@ -78,15 +88,16 @@ func _update_power_up_icons() -> void:
 			icon.update_hover_description()
 
 func _on_tree_exiting() -> void:
-	if RollStats.is_connected("combination_achieved", _on_combination_achieved):
-		RollStats.combination_achieved.disconnect(_on_combination_achieved)
+	if scorecard_ref and scorecard_ref.is_connected("score_assigned", _on_score_assigned):
+		scorecard_ref.score_assigned.disconnect(_on_score_assigned)
 
 func remove(_target) -> void:
 	print("=== Removing FullHousePowerUp ===")
 	
-	# Disconnect RollStats signals
-	if RollStats.is_connected("combination_achieved", _on_combination_achieved):
-		RollStats.combination_achieved.disconnect(_on_combination_achieved)
+	# Disconnect scorecard signals
+	if scorecard_ref and scorecard_ref.is_connected("score_assigned", _on_score_assigned):
+		scorecard_ref.score_assigned.disconnect(_on_score_assigned)
 	
 	# Reset state
 	total_full_houses_earned = 0
+	scorecard_ref = null
