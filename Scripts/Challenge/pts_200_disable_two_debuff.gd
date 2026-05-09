@@ -43,9 +43,9 @@ func apply(target) -> void:
 		else:
 			push_error("[Pts200DisabledTwoDebuff:] Scorecard does not have signal game_completed")
 		
-		# Apply the lock_dice debuff
+		# Apply the disabled_twos debuff
 		_game_controller.enable_debuff(_debuff_id)
-		print("[Pts200DisabledTwoDebuff:] Lock dice debuff enabled")
+		print("[Pts200DisabledTwoDebuff:] Disabled twos debuff enabled")
 		
 		# Update initial progress
 		_update_progress()
@@ -54,9 +54,9 @@ func apply(target) -> void:
 
 func remove() -> void:
 	if _game_controller:
-		# Remove the lock_dice debuff
+		# Remove the disabled_twos debuff
 		_game_controller.disable_debuff(_debuff_id)
-		print("[Pts200DisabledTwoDebuff:] Lock dice debuff disabled")
+		print("[Pts200DisabledTwoDebuff:] Disabled twos debuff disabled")
 		
 		# Disconnect signals
 		if _scorecard:

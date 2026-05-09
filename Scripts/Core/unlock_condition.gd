@@ -24,7 +24,8 @@ enum ConditionType {
 	REACH_CHANNEL,         # Alias for COMPLETE_CHANNEL - reach a specific channel
 	SCORE_THRESHOLD_CATEGORY,  # Score X+ points in a specific category (uses additional_params.category)
 	CHORE_COMPLETIONS,     # Complete X chores (single game or cumulative, uses additional_params.cumulative)
-	WIN_WITHOUT_SCORING    # Win a game without scoring in a specific category or section
+	WIN_WITHOUT_SCORING,   # Win a game without scoring in a specific category or section
+	LOCK_CONSTRAINT        # Score X+ points over Y turns while locking no more than Z dice (uses additional_params)
 	                       # Uses additional_params.category (e.g. "ones") or additional_params.section ("upper" or "lower")
 	                       # Scoring 0 counts as scoring - category must be left completely blank
 }
@@ -161,6 +162,24 @@ func is_satisfied(game_stats: Dictionary, progress_data: Dictionary) -> bool:
 						return false
 				return true
 			return false
+		
+		ConditionType.LOCK_CONSTRAINT:
+			var turn_window = additional_params.get("turn_window", 3)
+			var max_locked = additional_params.get("max_locked_dice", 0)
+			var min_score = target_value
+			var history = game_stats.get("turn_history", [])
+			if history.size() < turn_window:
+				return false
+			for i in range(history.size() - turn_window + 1):
+				var window = history.slice(i, i + turn_window)
+				var total_score = 0
+				var total_locked = 0
+				for turn in window:
+					total_score += turn.get("score", 0)
+					total_locked = maxi(total_locked, turn.get("max_locked_at_roll", 0))
+				if total_score >= min_score and total_locked <= max_locked:
+					return true
+			return false
 			
 		_:
 			push_error("[UnlockCondition] Unknown condition type: %s" % condition_type)
@@ -248,5 +267,12 @@ func get_formatted_description() -> String:
 			if avoid_sec == "lower":
 				return "Win a game without scoring in the Lower Section"
 			return "Win a game without scoring in a category"
+		ConditionType.LOCK_CONSTRAINT:
+			var turn_window = additional_params.get("turn_window", 3)
+			var max_locked = additional_params.get("max_locked_dice", 0)
+			if max_locked == 0:
+				return "Score %d+ points over %d turns without locking dice" % [target_value, turn_window]
+			else:
+				return "Score %d+ points over %d turns while locking no more than %d dice" % [target_value, turn_window, max_locked]
 		_:
 			return description if description else "Unknown condition"

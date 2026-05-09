@@ -43,9 +43,9 @@ func apply(target) -> void:
 		else:
 			push_error("[Pts150RollScoreMinusOne] Scorecard does not have signal game_completed")
 		
-		# Apply the lock_dice debuff
+		# Apply the roll_score_minus_one debuff
 		_game_controller.apply_debuff(_debuff_id)
-		print("[Pts150RollScoreMinusOne] Lock dice debuff enabled")
+		print("[Pts150RollScoreMinusOne] Roll score minus one debuff enabled")
 		
 		# Update initial progress
 		_update_progress()
@@ -54,7 +54,7 @@ func apply(target) -> void:
 
 func remove() -> void:
 	if _game_controller:
-		# Remove the lock_dice debuff
+		# Remove the roll_score_minus_one debuff
 		if _game_controller.is_debuff_active(_debuff_id):
 			_game_controller.disable_debuff(_debuff_id)
 			print("[Pts150RollScoreMinusOne] Roll score minus one debuff disabled")

@@ -39,20 +39,20 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | allowance | Allowance | COMPLETE_GAME | 1 | Grants $100 when challenge completes |
 | ungrounded | Ungrounded | CUMULATIVE_YAHTZEES | 15 | Prevents all debuffs |
 | shop_rerolls | Shop Rerolls | EARN_MONEY | 75 | Shop rerolls always cost $25 |
-| tango_and_cash | Tango & Cash | SCORE_POINTS | 150 | +$10 for every odd die scored |
+| tango_and_cash | Tango & Cash | CHORE_COMPLETIONS | 3 | +$10 for every odd die scored |
 | even_higher | Even Higher | EARN_MONEY | 200 | +1 additive per even die scored |
 | money_bags | Money Bags | CUMULATIVE_YAHTZEES | 3 | Score multiplier based on current money |
 | failed_money | Failed Money | COMPLETE_GAME | 2 | +$25 for each failed hand at round end |
 | roll_efficiency | Roll Efficiency | COMPLETE_GAME | 1 | +N to scores (N = rolls used) |
 | dice_diversity | Dice Diversity | SCORE_POINTS | 75 | +$5 per unique dice value scored |
-| chore_champion | Chore Champion | COMPLETE_GAME | 2 | Chores are 2x more effective |
-| lock_and_load | Lock & Load | EARN_MONEY | 50 | +$3 for each die locked |
+| chore_champion | Chore Champion | CHORE_COMPLETIONS | 5 | Chores are 2x more effective (cumulative) |
+| lock_and_load | Lock & Load | LOCK_CONSTRAINT | 75 | +$3 for each die locked (unlock: score 75+ over 3 turns, max 2 locks) |
 | pair_paradise | Pair Paradise | SCORE_POINTS | 100 | Pair bonuses based on pattern |
-| extra_coupons | Extra Coupons | EARN_MONEY | 200 | Hold 2 additional consumables (5 max) |
+| extra_coupons | Extra Coupons | CHORE_COMPLETIONS | 20 | Hold 2 additional consumables (5 max) (cumulative) |
 | purple_payout | Purple Payout | EARN_MONEY | 75 | Earn $3 per purple die when scoring |
 | mod_money | Mod Money | COMPLETE_GAME | 2 | Earn $8 per modded die when scoring |
 | blue_safety_net | Blue Safety Net | EARN_MONEY | 150 | Halves blue dice penalties |
-| chore_sprint | Chore Sprint | SCORE_POINTS | 120 | Chore completions reduce goof-off by 10 |
+| chore_sprint | Chore Sprint | CHORE_COMPLETIONS | 8 | Chore completions reduce goof-off by 10 (cumulative) |
 | straight_triplet_master | Straight Triplet Master | ROLL_STRAIGHT | 3 | Score large straight in 3 categories |
 | modded_dice_mastery | Modded Dice Mastery | USE_CONSUMABLES | 4 | +10 per modded die when scoring |
 | debuff_destroyer | Debuff Destroyer | ROLL_YAHTZEE | 2 | Removes random debuff when sold |
@@ -126,7 +126,7 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | five_by_one | Five by One | CUMULATIVE_YAHTZEES | 12 | All dice show 1 or 5 |
 | three_but_three | Three But Three | ROLL_STRAIGHT | 4 | Dice avoid rolling 3s |
 | wild_card | Wild Card | USE_CONSUMABLES | 10 | Random special effects on each roll |
-| high_roller | High Roller | SCORE_POINTS | 350 | Dice tend toward high values |
+| high_roller | High Roller | LOCK_CONSTRAINT | 100 | Dice tend toward high values (unlock: score 100+ over 4 turns, no locks) |
 | channel_veteran | Channel Veteran | COMPLETE_CHANNEL | 5 | Start with +$25 per channel completed (NOT IMPLEMENTED) |
 | precision_roller | Precision Roller | COMPLETE_CHANNEL | 12 | First roll each turn is always 4+ (NOT IMPLEMENTED) |
 
@@ -141,6 +141,32 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | yellow_dice | Yellow Dice | USE_CONSUMABLES | 8 | Unlocks yellow colored dice (grants consumables when scored) |
 
 ---
+
+## Condition Types
+
+| Type | Description |
+|---|---|
+| SCORE_POINTS | Score X points in a single category |
+| ROLL_YAHTZEE | Roll X Yahtzees |
+| COMPLETE_GAME | Complete X games |
+| SCORE_CATEGORY | Score in a specific category |
+| ROLL_STRAIGHT | Roll X straights |
+| USE_CONSUMABLES | Use X consumables in one game |
+| EARN_MONEY | Earn $X in a single game |
+| COLORED_DICE_BONUS | Trigger X same-color bonuses |
+| SCORE_UPPER_BONUS | Achieve upper section bonus |
+| WIN_GAMES | Win X games |
+| CUMULATIVE_SCORE | Score X total points across all games |
+| DICE_COMBINATIONS | Roll specific combinations |
+| CUMULATIVE_YAHTZEES | Roll X Yahtzees across all games |
+| COMPLETE_CHANNEL | Complete channel X |
+| REACH_CHANNEL | Alias for COMPLETE_CHANNEL |
+| SCORE_THRESHOLD_CATEGORY | Score X+ in a specific category |
+| CHORE_COMPLETIONS | Complete X chores (single game or cumulative) |
+| WIN_WITHOUT_SCORING | Win without scoring in a category/section |
+| **LOCK_CONSTRAINT** | **Score X+ points over Y turns while locking no more than Z dice** |
+
+> **Note:** This document is partially stale. Several entries were corrected during the Lock Constraint refactor (May 2026). A full audit against `Scripts/Managers/progress_manager.gd` is recommended for complete accuracy.
 
 If you'd like, I can also:
 

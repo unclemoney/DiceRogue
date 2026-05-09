@@ -335,6 +335,9 @@ func _create_debug_tabs() -> void:
 			{"text": "Test Mom Dialog (Neutral)", "method": "_debug_chores_mom_neutral"},
 			{"text": "Test Mom Dialog (Upset)", "method": "_debug_chores_mom_upset"},
 			{"text": "Test Mom Dialog (Happy)", "method": "_debug_chores_mom_happy"},
+			{"text": "Show Lock Tracker", "method": "_debug_lock_tracker_show"},
+			{"text": "Force Satisfy Tracker", "method": "_debug_lock_tracker_force"},
+			{"text": "Show Turn History", "method": "_debug_lock_tracker_history"},
 		],
 		"Synergies": [
 			{"text": "Show Synergy Status", "method": "_debug_synergy_show_status"},
@@ -3089,6 +3092,53 @@ func _debug_chores_mom_upset() -> void:
 ## Tests the Mom dialog with happy expression.
 func _debug_chores_mom_happy() -> void:
 	_test_mom_dialog("happy", "[color=lime]Good job keeping your room clean![/color] I'm so proud of you, sweetie!")
+
+## Lock Constraint Tracker Debug Methods
+
+func _debug_lock_tracker_show() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	var tracker = game_controller.get("_active_lock_tracker")
+	if tracker:
+		log_debug("=== LOCK CONSTRAINT TRACKER ===")
+		log_debug(tracker.get_progress_summary())
+		var progress = tracker.get_window_progress()
+		log_debug("Turns recorded: %d / %d" % [progress.turns_recorded, progress.turn_window])
+		log_debug("Violated: %s" % tracker.is_violated())
+		log_debug("Satisfied: %s" % tracker.is_satisfied())
+	else:
+		log_debug("No active lock constraint tracker")
+
+func _debug_lock_tracker_force() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	var tracker = game_controller.get("_active_lock_tracker")
+	if tracker:
+		# Inject a satisfied window by overriding internal records
+		tracker._turn_records.clear()
+		for i in range(tracker._turn_window):
+			tracker._turn_records.append({"turn": tracker._start_turn + i, "score": tracker._min_score, "max_locked": 0})
+		log_debug("Forced tracker to satisfied state")
+		var chores_manager = game_controller.get("chores_manager")
+		if chores_manager and chores_manager.current_task:
+			var context = {"lock_constraint_tracker": tracker}
+			chores_manager.check_task_completion(context)
+	else:
+		log_debug("No active lock constraint tracker to force")
+
+func _debug_lock_tracker_history() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	var history = game_controller.get("_turn_history")
+	if history and history.size() > 0:
+		log_debug("=== TURN HISTORY (%d turns) ===" % history.size())
+		for record in history:
+			log_debug("Turn %d: score=%d, max_locked=%d" % [record.get("turn", 0), record.get("score", 0), record.get("max_locked_at_roll", 0)])
+	else:
+		log_debug("No turn history recorded")
 
 ## _test_mom_dialog()
 ##

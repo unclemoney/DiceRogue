@@ -7,13 +7,14 @@ class_name ChoreData
 ## Tasks are randomly selected each turn and reduce chore progress when completed.
 
 enum TaskType {
-	SCORE_UPPER,       # Score in upper section (Ones, Twos, etc.)
-	SCORE_LOWER,       # Score in lower section (Three of a Kind, Full House, etc.)
-	SCORE_SPECIFIC,    # Score a specific combination (e.g., Full House with 3 sixes)
-	ROLL_YAHTZEE,      # Roll a Yahtzee
-	USE_CONSUMABLE,    # Use any consumable
-	LOCK_DICE,         # Lock a specific number of dice
-	NO_SCORE_TURN,     # Finish a turn without scoring (scratch)
+	SCORE_UPPER,        # Score in upper section (Ones, Twos, etc.)
+	SCORE_LOWER,        # Score in lower section (Three of a Kind, Full House, etc.)
+	SCORE_SPECIFIC,     # Score a specific combination (e.g., Full House with 3 sixes)
+	ROLL_YAHTZEE,       # Roll a Yahtzee
+	USE_CONSUMABLE,     # Use any consumable
+	LOCK_DICE,          # DEPRECATED: Replaced by LOCK_CONSTRAINT. Kept for save compatibility.
+	NO_SCORE_TURN,      # Finish a turn without scoring (scratch)
+	LOCK_CONSTRAINT,    # Score X points over Y turns while respecting a dice-lock limit
 }
 
 enum Difficulty {
@@ -48,6 +49,12 @@ func get_progress_reduction() -> int:
 @export var target_value: int = 0  # e.g., specific die value required
 @export var target_count: int = 0  # e.g., number of dice to lock
 
+## Additional params for complex task types (e.g., LOCK_CONSTRAINT).
+## Expected keys for LOCK_CONSTRAINT:
+##   "turn_window": int — number of turns the constraint spans
+##   "max_locked_dice": int — max dice allowed locked at any roll press
+@export var additional_params: Dictionary = {}
+
 ## check_completion()
 ##
 ## Validates whether the task has been completed based on the scoring context.
@@ -78,6 +85,9 @@ func check_completion(context: Dictionary) -> bool:
 			return context.get("consumable_used", false)
 		TaskType.LOCK_DICE:
 			return context.get("locked_count", 0) >= target_count
+		TaskType.LOCK_CONSTRAINT:
+			var tracker = context.get("lock_constraint_tracker")
+			return tracker != null and tracker.is_satisfied()
 		TaskType.NO_SCORE_TURN:
 			return context.get("was_scratch", false)
 		_:

@@ -584,7 +584,8 @@ func start_game_tracking() -> void:
 		"final_score": 0,
 		"chores_completed": 0,
 		"chores_completed_easy": 0,
-		"chores_completed_hard": 0
+		"chores_completed_hard": 0,
+		"turn_history": []
 	}
 	is_tracking_game = true
 	print("[ProgressManager] Started tracking new game")
@@ -734,6 +735,17 @@ func track_chore_completed(difficulty: int) -> void:
 		current_game_stats["chores_completed_hard"] += 1
 	print("[ProgressManager] Chore completed! (difficulty: %s, total this game: %d)" % [
 		"EASY" if difficulty == 0 else "HARD", current_game_stats["chores_completed"]])
+
+## track_turn(turn_record: Dictionary)
+##
+## Records per-turn data for lock constraint sliding window checks.
+## Called by GameController after each scoring event.
+func track_turn(turn_record: Dictionary) -> void:
+	if not is_tracking_game:
+		return
+	if not current_game_stats.has("turn_history"):
+		current_game_stats["turn_history"] = []
+	current_game_stats["turn_history"].append(turn_record)
 
 ## mark_channel_completed(channel_num: int) -> void
 ##
@@ -1068,7 +1080,7 @@ func _create_default_unlockable_items() -> void:
 	_add_default_power_up("bonus_money", "Bonus Money", "Earn extra money per round", 
 		UnlockConditionClass.ConditionType.EARN_MONEY, 50, 2)
 	_add_default_power_up("lock_and_load", "Lock & Load", "+$3 for each die locked", 
-		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 2, 2)
+		UnlockConditionClass.ConditionType.LOCK_CONSTRAINT, 75, 2, {"turn_window": 3, "max_locked_dice": 2})
 	_add_default_power_up("dice_diversity", "Dice Diversity", "+$5 per unique dice value scored", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 25, 2, {"category": "chance"})
 	_add_default_power_up("melting_dice", "Melting Dice", "Starts +80 additive, melts by 8 each score", 
@@ -1377,7 +1389,7 @@ func _create_default_unlockable_items() -> void:
 	_add_default_mod("wild_card", "Wild Card", "Random special effects on each roll", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 30, 7, {"cumulative": true})
 	_add_default_mod("high_roller", "High Roller", "Dice tend toward high values", 
-		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 50, 7, {"category": "yahtzee"})
+		UnlockConditionClass.ConditionType.LOCK_CONSTRAINT, 100, 7, {"turn_window": 4, "max_locked_dice": 0})
 	_add_default_mod("channel_veteran", "Channel Veteran", "Start with +$25 per channel completed", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5, 6)
 	_add_default_mod("precision_roller", "Precision Roller", "First roll each turn is always 4+", 

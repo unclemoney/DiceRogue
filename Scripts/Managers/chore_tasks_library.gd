@@ -18,6 +18,7 @@ const TASK_ROLL_YAHTZEE = 3
 const TASK_USE_CONSUMABLE = 4
 const TASK_LOCK_DICE = 5
 const TASK_NO_SCORE_TURN = 6
+const TASK_LOCK_CONSTRAINT = 7
 
 ## get_all_tasks()
 ##
@@ -119,13 +120,32 @@ static func get_all_tasks() -> Array:
 	tasks.append(_create_task("scratch_score", "Take Zero", "Scratch a category (score 0)",
 		TASK_NO_SCORE_TURN, "", 0, 0, 0, 5))
 	
-	# Dice locking tasks (EASY for 3, HARD for 4-5)
-	tasks.append(_create_task("lock_three_dice", "Lock Three", "Lock at least 3 dice",
-		TASK_LOCK_DICE, "", 0, 3, 0, 5))
-	tasks.append(_create_task("lock_four_dice", "Lock Four", "Lock at least 4 dice",
-		TASK_LOCK_DICE, "", 0, 4, 1, 35))
-	tasks.append(_create_task("lock_all_dice", "Full Lock", "Lock all 5 dice",
-		TASK_LOCK_DICE, "", 0, 5, 1, 65))
+	# Lock constraint tasks (score target over turn window with dice-lock limits)
+	# Uses TASK_LOCK_CONSTRAINT (7) with additional_params for turn_window and max_locked_dice
+	var soft_touch = _create_task("soft_touch", "Soft Touch", "Score 50 points over 3 turns while locking no more than 1 die",
+		TASK_LOCK_CONSTRAINT, "", 50, 1, 0, 5)
+	soft_touch.additional_params = {"turn_window": 3, "max_locked_dice": 1}
+	tasks.append(soft_touch)
+	
+	var steady_hand = _create_task("steady_hand", "Steady Hand", "Score 75 points over 3 turns without locking any dice",
+		TASK_LOCK_CONSTRAINT, "", 75, 0, 0, 10)
+	steady_hand.additional_params = {"turn_window": 3, "max_locked_dice": 0}
+	tasks.append(steady_hand)
+	
+	var controlled_risk = _create_task("controlled_risk", "Controlled Risk", "Score 100 points over 4 turns while locking no more than 2 dice",
+		TASK_LOCK_CONSTRAINT, "", 100, 2, 0, 15)
+	controlled_risk.additional_params = {"turn_window": 4, "max_locked_dice": 2}
+	tasks.append(controlled_risk)
+	
+	var iron_discipline = _create_task("iron_discipline", "Iron Discipline", "Score 150 points over 5 turns while locking no more than 1 die",
+		TASK_LOCK_CONSTRAINT, "", 150, 1, 1, 35)
+	iron_discipline.additional_params = {"turn_window": 5, "max_locked_dice": 1}
+	tasks.append(iron_discipline)
+	
+	var free_agent = _create_task("free_agent", "Free Agent", "Score 200 points over 6 turns without locking any dice",
+		TASK_LOCK_CONSTRAINT, "", 200, 0, 1, 65)
+	free_agent.additional_params = {"turn_window": 6, "max_locked_dice": 0}
+	tasks.append(free_agent)
 	
 	return tasks
 
@@ -185,7 +205,7 @@ static func get_easy_tasks() -> Array:
 
 ## get_hard_tasks()
 ##
-## Returns tasks with HARD difficulty (specific combos, yahtzees, locking 4+).
+## Returns tasks with HARD difficulty (specific combos, yahtzees, lock constraints).
 ## Filters by the ChoreData.Difficulty.HARD enum value.
 ##
 ## Returns: Array

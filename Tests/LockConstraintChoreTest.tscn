@@ -1,0 +1,77 @@
+[gd_scene load_steps=2 format=3 uid="uid://cxup2s0p6ugld"]
+
+[ext_resource type="Script" uid="uid://ckk74nkxwvp36" path="res://Tests/lock_constraint_test.gd" id="1_test"]
+
+[node name="LockConstraintChoreTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_test")
+
+[node name="TitleLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 10.0
+offset_bottom = 40.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 20
+text = "Lock Constraint Tracker Tests"
+horizontal_alignment = 1
+
+[node name="OutputLabel" type="RichTextLabel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 60.0
+offset_right = -20.0
+offset_bottom = -70.0
+grow_horizontal = 2
+grow_vertical = 2
+bbcode_enabled = true
+text = "Press a button to run tests..."
+
+[node name="ButtonRow" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -60.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
+
+[node name="TestBasicButton" type="Button" parent="ButtonRow"]
+layout_mode = 2
+text = "Test Basic"
+
+[node name="TestViolationButton" type="Button" parent="ButtonRow"]
+layout_mode = 2
+text = "Test Violation"
+
+[node name="TestZeroLockButton" type="Button" parent="ButtonRow"]
+layout_mode = 2
+text = "Test Zero Lock"
+
+[node name="TestWindowButton" type="Button" parent="ButtonRow"]
+layout_mode = 2
+text = "Test Window"
+
+[node name="RunAllButton" type="Button" parent="ButtonRow"]
+layout_mode = 2
+text = "Run All"
+
+[connection signal="pressed" from="ButtonRow/TestBasicButton" to="." method="_on_test_basic_pressed"]
+[connection signal="pressed" from="ButtonRow/TestViolationButton" to="." method="_on_test_violation_pressed"]
+[connection signal="pressed" from="ButtonRow/TestZeroLockButton" to="." method="_on_test_zero_lock_pressed"]
+[connection signal="pressed" from="ButtonRow/TestWindowButton" to="." method="_on_test_window_pressed"]
+[connection signal="pressed" from="ButtonRow/RunAllButton" to="." method="_on_run_all_pressed"]

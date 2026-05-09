@@ -23,6 +23,7 @@ var _door_is_animating: bool = false
 signal shop_button_pressed
 signal next_round_pressed
 signal dice_rolled(dice_values: Array)
+signal roll_pressed  # Emitted when roll button is pressed, before dice begin rolling
 
 var dice_hand
 var score_card_ui
@@ -325,6 +326,8 @@ func trigger_roll() -> void:
 func _on_roll_button_pressed() -> void:
 	# Stop the pulse animation when roll button is pressed
 	_stop_roll_button_pulse()
+	
+	emit_signal("roll_pressed")
 	
 	print("[GameButtonUI] Roll button pressed. Dice list size:", dice_hand.dice_list.size())
 	

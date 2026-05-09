@@ -35,6 +35,7 @@ const MomCharacterScript := preload("res://Scripts/UI/mom_character.gd")
 const MomLogicHandlerScript := preload("res://Scripts/Core/mom_logic_handler.gd")
 const ChallengeCelebrationScript := preload("res://Scripts/Effects/challenge_celebration.gd")
 const RoundTransitionOverlayScript := preload("res://Scripts/UI/round_transition_overlay.gd")
+const LockConstraintTrackerScript := preload("res://Scripts/Core/lock_constraint_tracker.gd")
 const RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF := preload("res://Scripts/Consumable/RandomPowerUpUncommonConsumable.tres")
 const GREEN_ENVY_CONSUMABLE_DEF := preload("res://Scripts/Consumable/GreenEnvyConsumable.tres")
 const POOR_HOUSE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/PoorHouseConsumable.tres")
@@ -149,6 +150,11 @@ var active_gaming_console: Dictionary = {}  # id -> GamingConsole (max 1 entry)
 var _mom_dialog = null
 var _grounded_debuffs: Array[String] = []  # Debuffs from NC-17 that persist until round end
 
+# Lock constraint tracking
+var _turn_history: Array[Dictionary] = []  # Per-turn records for unlock sliding window checks
+var _current_turn_max_locked: int = 0      # Max dice locked at any roll press this turn
+var _active_lock_tracker: LockConstraintTracker = null  # Tracker for active LOCK_CONSTRAINT chore
+
 # Game Over popup
 var _game_over_popup: Control = null
 
@@ -234,6 +240,9 @@ func _ready() -> void:
 		if not game_button_ui.is_connected("dice_rolled", _on_game_button_dice_rolled):
 			game_button_ui.dice_rolled.connect(_on_game_button_dice_rolled)
 			print("[GameController] Connected to dice_rolled signal from GameButtonUI")
+		if not game_button_ui.is_connected("roll_pressed", _on_roll_pressed):
+			game_button_ui.roll_pressed.connect(_on_roll_pressed)
+			print("[GameController] Connected to roll_pressed signal from GameButtonUI")
 	if shop_ui:
 		print("[GameController] Setting up shop UI")
 		shop_ui.hide()
@@ -308,8 +317,10 @@ func _ready() -> void:
 	if chores_manager:
 		chores_manager.mom_triggered.connect(_on_mom_triggered)
 		chores_manager.request_chore_selection.connect(_on_chore_selection_requested)
+		chores_manager.task_selected.connect(_on_chore_task_selected)
 		print("[GameController] Connected to ChoresManager.mom_triggered")
 		print("[GameController] Connected to ChoresManager.request_chore_selection")
+		print("[GameController] Connected to ChoresManager.task_selected")
 	if is_instance_valid(corkboard_ui) and is_instance_valid(chores_manager):
 		corkboard_ui.set_chores_manager(chores_manager)
 		print("[GameController] Connected CorkboardUI.ChoreUI to ChoresManager")
@@ -2147,6 +2158,16 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 		dice_hand.reset_roll_count()
 		print("[GameController] Disabled all dice and reset roll count after scoring")
 	
+	# Record turn data for lock constraint sliding window checks
+	var current_turn_num = turn_tracker.current_turn if turn_tracker else 0
+	var turn_record = {
+		"turn": current_turn_num,
+		"score": _score,
+		"max_locked_at_roll": _current_turn_max_locked
+	}
+	_turn_history.append(turn_record)
+	ProgressManager.track_turn(turn_record.duplicate())
+	
 	# Check if chore task was completed
 	if chores_manager:
 		var dice_values = []
@@ -2160,9 +2181,22 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 			"was_yahtzee": _category == "yahtzee" and _score > 0,
 			"consumable_used": false,  # TODO: Track from consumable usage
 			"locked_count": _count_locked_dice() if dice_hand else 0,
-			"was_scratch": _score == 0
+			"was_scratch": _score == 0,
+			"lock_constraint_tracker": _active_lock_tracker
 		}
-		chores_manager.check_task_completion(context)
+		
+		# Feed active lock tracker and evaluate
+		if _active_lock_tracker:
+			_active_lock_tracker.record_turn_score(current_turn_num, _score)
+			if _active_lock_tracker.is_satisfied():
+				chores_manager.check_task_completion(context)
+			elif _active_lock_tracker.is_expired(current_turn_num):
+				print("[GameController] Lock constraint chore expired unsatisfied")
+				_active_lock_tracker = null
+				# Optionally rotate the failed chore
+				chores_manager._rotate_current_task()
+		else:
+			chores_manager.check_task_completion(context)
 	
 	# Handle score streak breaking on scratch (score == 0)
 	if turn_tracker and turn_tracker.score_streak_active:
@@ -2887,10 +2921,6 @@ func _on_roll_completed() -> void:
 	if gaming_console_ui and gaming_console_ui.has_method("refresh_button_state"):
 		gaming_console_ui.refresh_button_state()
 	
-	# Check lock dice chore completion after rolling
-	# The chore requires locking dice THEN rolling, so we check here
-	_check_lock_dice_chore()
-	
 	GameSaveManager.update_settled_snapshot()
 
 ## _on_turn_started()
@@ -2900,6 +2930,8 @@ func _on_turn_started() -> void:
 	print("[GameController] New turn started - resetting dice to ROLLABLE state")
 	if dice_hand:
 		dice_hand.set_all_dice_rollable()
+	# Reset per-turn lock tracking for constraint chores
+	_current_turn_max_locked = 0
 	# Expire half price stacks on new turn
 	if half_price_stacks > 0:
 		print("[GameController] Clearing half_price_stacks on turn start")
@@ -3496,6 +3528,37 @@ func _on_die_locked(die) -> void:
 	var tutorial_manager = get_node_or_null("/root/TutorialManager")
 	if tutorial_manager and tutorial_manager.is_tutorial_active():
 		tutorial_manager.action_completed("lock_die")
+
+## _on_roll_pressed()
+##
+## Called when the player presses the Roll button (before dice begin rolling).
+## Records the number of dice locked at roll time for constraint tracking.
+func _on_roll_pressed() -> void:
+	if not dice_hand or not turn_tracker:
+		return
+	var locked_count = _count_locked_dice()
+	_current_turn_max_locked = maxi(_current_turn_max_locked, locked_count)
+	
+	if _active_lock_tracker:
+		_active_lock_tracker.record_roll(turn_tracker.current_turn, locked_count)
+		if _active_lock_tracker.is_violated():
+			print("[GameController] Lock constraint violated: %d dice locked (max %d)" % [locked_count, _active_lock_tracker._max_locked_dice])
+
+## _on_chore_task_selected(task)
+##
+## Called when a new chore task is assigned. Initializes the lock constraint
+## tracker if the selected task is a LOCK_CONSTRAINT type.
+func _on_chore_task_selected(task: ChoreData) -> void:
+	if task.task_type == ChoreData.TaskType.LOCK_CONSTRAINT:
+		_active_lock_tracker = LockConstraintTrackerScript.new()
+		var turn_window = task.additional_params.get("turn_window", 3)
+		var max_locked = task.additional_params.get("max_locked_dice", 0)
+		var min_score = task.target_value
+		var start_turn = turn_tracker.current_turn if turn_tracker else 1
+		_active_lock_tracker.setup(start_turn, turn_window, min_score, max_locked)
+		print("[GameController] Lock constraint tracker started: score %d+ over %d turns, max %d locks" % [min_score, turn_window, max_locked])
+	else:
+		_active_lock_tracker = null
 
 ## _on_shop_button_pressed()
 ##
@@ -4490,6 +4553,16 @@ func _on_round_started(round_number: int) -> void:
 	# Reset round-specific statistics (even/odd dice tracking, etc.)
 	Statistics.start_new_round()
 	
+	# Reset turn history for lock constraint sliding window checks
+	# If an active lock constraint chore survived to the next round, rotate it
+	if _active_lock_tracker and chores_manager and chores_manager.current_task:
+		if chores_manager.current_task.task_type == ChoreData.TaskType.LOCK_CONSTRAINT:
+			print("[GameController] Lock constraint chore expired at round boundary")
+			chores_manager._rotate_current_task()
+	_turn_history.clear()
+	_current_turn_max_locked = 0
+	_active_lock_tracker = null
+	
 	# Update round-based scaling for scorecard and chores manager
 	if scorecard:
 		scorecard.update_round(round_number)
@@ -5079,16 +5152,16 @@ func _count_locked_dice() -> int:
 
 ## _check_lock_dice_chore()
 ##
-## Checks if a lock dice chore should be completed after rolling.
-## This is called after roll completion because the chore requires:
-## 1. Lock dice THEN 2. Roll - so we check after the roll happens.
+## DEPRECATED: Replaced by the LockConstraintTracker system in _handle_post_scoring_effects().
+## LOCK_DICE tasks are no longer generated in the chore library.
+## Kept for backward compatibility in case an old save still has an active LOCK_DICE chore.
 func _check_lock_dice_chore() -> void:
 	if not chores_manager:
 		return
 	
 	var locked_count = _count_locked_dice()
 	if locked_count > 0:
-		print("[GameController] Checking lock dice chore: %d dice locked" % locked_count)
+		print("[GameController] [DEPRECATED] Checking legacy lock dice chore: %d dice locked" % locked_count)
 		var context = {
 			"locked_count": locked_count
 		}
@@ -5195,6 +5268,9 @@ func load_game_state(save_data: Dictionary) -> void:
 	var chores_state = save_data.get("chores_manager", {})
 	if not chores_state.is_empty() and chores_manager:
 		chores_manager.load_state(chores_state)
+		# Re-initialize lock constraint tracker if the loaded chore requires it
+		if chores_manager.current_task and chores_manager.current_task.task_type == ChoreData.TaskType.LOCK_CONSTRAINT:
+			_on_chore_task_selected(chores_manager.current_task)
 	
 	# 4. Restore RoundManager
 	var round_state = save_data.get("round_manager", {})
