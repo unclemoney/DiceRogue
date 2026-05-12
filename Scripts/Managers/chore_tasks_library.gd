@@ -117,8 +117,9 @@ static func get_all_tasks() -> Array:
 	# Utility tasks (EASY)
 	tasks.append(_create_task("use_consumable", "Use Item", "Use any consumable item",
 		TASK_USE_CONSUMABLE, "", 0, 0, 0, 5))
-	tasks.append(_create_task("scratch_score", "Take Zero", "Scratch a category (score 0)",
-		TASK_NO_SCORE_TURN, "", 0, 0, 0, 5))
+	# This task is a bit awkward since it requires player to intentionally scratch a category, which isn't a common strategy. It could be reworked to be more intuitive, but for now we'll include it as a niche challenge.
+	#tasks.append(_create_task("scratch_score", "Take Zero", "Scratch a category (score 0)",
+	#	TASK_NO_SCORE_TURN, "", 0, 0, 0, 5))
 	
 	# Lock constraint tasks (score target over turn window with dice-lock limits)
 	# Uses TASK_LOCK_CONSTRAINT (7) with additional_params for turn_window and max_locked_dice

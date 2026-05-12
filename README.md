@@ -1269,7 +1269,7 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 
 ## TweenFX Animation System
 
-DiceRogue uses the **TweenFX** addon (v1.1) for standardized micro-animations across all interactive UI. A central **TweenFXHelper** autoload (`Scripts/Core/tween_fx_helper.gd`) wraps TweenFX's 62 animations into game-specific patterns.
+DiceRogue uses the **TweenFX** addon (v1.2) for standardized micro-animations across all interactive UI. A central **TweenFXHelper** autoload (`Scripts/Core/tween_fx_helper.gd`) wraps TweenFX's 67 animations into game-specific patterns.
 
 ### Key Features
 - **Button hover/press** — Jelly + punch-in on every interactive button (menus, panels, shop, game controls)
@@ -1283,7 +1283,11 @@ DiceRogue uses the **TweenFX** addon (v1.1) for standardized micro-animations ac
 - **Debuff feedback** — `negative_hit` red flash when debuff count increases
 - **Challenge celebration** — `celebration` tada when challenge goal is met
 - **Tutorial highlight** — Pulse + bounce replaced with `idle_pulse` and `idle_float`
-- **FX Group Toggles** — 8 groups (Buttons, Spines, Idle, Panels, Icons, Events, Threats, Reveals) can be toggled on/off in Settings > FX tab; persisted to `user://settings.cfg` and per-profile via `progress_manager.gd`
+- **FX Group Toggles** — 11 groups (Buttons, Spines, Idle, Panels, Icons, Events, Threats, Reveals, Dialogue, Shaders, Counters) can be toggled on/off in Settings > FX tab; persisted to `user://settings.cfg` and per-profile via `progress_manager.gd`
+- **Typewriter dialogs** — `dialogue_typewriter` for tutorial and NPC text reveals with punctuation pauses
+- **Animated counters** — `score_count_up` for money, score, and any numeric display
+- **Shader parameter tweens** — `shader_pulse` for driving glow, flash, and progress shader uniforms
+- **Tooltip fades** — `tooltip_fade_in`/`tooltip_fade_out` for smooth tooltip visibility transitions
 - **Per-profile FX persistence** — FX toggle states are saved/loaded with each player profile, synced between GameSettings and TweenFXHelper on profile load
 
 ### Architecture

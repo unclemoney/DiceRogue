@@ -680,9 +680,15 @@ func _validate_resolution_display() -> void:
 	
 	if selected_res.x > screen_size.x or selected_res.y > screen_size.y:
 		resolution_warning_label.text = "Warning: Resolution larger than screen (%dx%d)" % [screen_size.x, screen_size.y]
+		resolution_warning_label.modulate.a = 0.0
 		resolution_warning_label.visible = true
+		var tween = create_tween()
+		tween.tween_property(resolution_warning_label, "modulate:a", 1.0, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	else:
-		resolution_warning_label.visible = false
+		if resolution_warning_label.visible:
+			var tween = create_tween()
+			tween.tween_property(resolution_warning_label, "modulate:a", 0.0, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			tween.finished.connect(func(): resolution_warning_label.visible = false)
 
 
 ## _on_sfx_volume_changed(value)

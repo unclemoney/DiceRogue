@@ -89,6 +89,11 @@ enum Animations {
 	GHOST,
 	ATTRACT,
 	ORBIT,
+	TYPEWRITER,
+	COUNT_UP,
+	SHAKE_NOISE,
+	FLOATING_LABEL,
+	KNOCKBACK,
 }
 
 enum AnimationType {
@@ -168,6 +173,12 @@ const ANIMATION_TYPES: Dictionary = {
 	Animations.GHOST:             AnimationType.LOOPING,
 	Animations.ATTRACT:           AnimationType.LOOPING,
 	Animations.ORBIT:             AnimationType.LOOPING,
+
+	Animations.TYPEWRITER:        AnimationType.ONE_SHOT,
+	Animations.COUNT_UP:          AnimationType.ONE_SHOT,
+	Animations.SHAKE_NOISE:       AnimationType.ONE_SHOT,
+	Animations.FLOATING_LABEL:    AnimationType.ONE_SHOT,
+	Animations.KNOCKBACK:         AnimationType.ONE_SHOT,
 }
 
 const ANIMATION_REQUIREMENTS: Dictionary = {
@@ -1021,6 +1032,106 @@ func orbit(node: CanvasItem, duration: float = 2.0, radius: float = 30.0) -> Twe
 	TweenManager.track(node, Animations.ORBIT, tween)
 	return tween
 
+	#region Phase 1 — Advanced Tween API Presets
+
+## Typewriter effect: reveals text one character at a time with punctuation pauses.
+func typewriter(node: Label, text: String, speed: float = 0.04, punctuation_pause: float = 0.3) -> Tween:
+	TweenManager.stop(node, Animations.TYPEWRITER)
+	node.text = text
+	node.visible_characters = 0
+	var tween = node.get_tree().create_tween()
+	var index := 0
+	var last_punctuation_index := 0
+
+	for letter in text:
+		index += 1
+		if not (letter in [".", "?", "!", ","] or index == text.length()):
+			continue
+		var duration := (index - last_punctuation_index) * speed
+		tween.tween_method(func(v: int): node.visible_characters = v, last_punctuation_index, index, duration)
+		if letter == ",":
+			tween.tween_interval(punctuation_pause / 2.0)
+		else:
+			tween.tween_interval(punctuation_pause)
+		last_punctuation_index = index
+	TweenManager.track(node, Animations.TYPEWRITER, tween)
+	return tween
+
+## Animated number counter. Formats the value with the given format string.
+func count_up(node: Label, from: int, to: int, duration: float = 0.5, format: String = "%d") -> Tween:
+	TweenManager.stop(node, Animations.COUNT_UP)
+	var tween = node.get_tree().create_tween()
+	tween.tween_method(func(v: int): node.text = format % v, from, to, duration)
+	TweenManager.track(node, Animations.COUNT_UP, tween)
+	return tween
+
+## Noise-driven shake with optional decay. Smoother than random-offset shake.
+func shake_noise(node: CanvasItem, duration: float = 0.5, intensity: float = 10.0, decay: bool = true) -> Tween:
+	TweenManager.stop(node, Animations.SHAKE_NOISE)
+	var original_pos = node.position
+	var noise = FastNoiseLite.new()
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	var tween = node.get_tree().create_tween()
+	tween.tween_method(func(v: float):
+		var current_intensity := intensity * (1.0 - v) if decay else intensity
+		var offset_x := noise.get_noise_2d(v * 1000.0, 0.0) * current_intensity * 2.0
+		var offset_y := noise.get_noise_2d(0.0, v * 1000.0) * current_intensity * 2.0
+		node.position = original_pos + Vector2(offset_x, offset_y)
+	, 0.0, 1.0, duration)
+	tween.tween_callback(func(): node.position = original_pos)
+	TweenManager.track(node, Animations.SHAKE_NOISE, tween)
+	return tween
+
+## Floats a label in a direction while fading out. Good for damage numbers or score popups.
+func floating_label(node: Label, direction: Vector2 = Vector2.UP, duration: float = 0.8) -> Tween:
+	TweenManager.stop(node, Animations.FLOATING_LABEL)
+	var tween = node.get_tree().create_tween()
+	tween.set_parallel()
+	tween.tween_property(node, "position", direction, duration).as_relative().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(node, "modulate:a", 0.0, duration * 0.7).set_delay(duration * 0.3)
+	TweenManager.track(node, Animations.FLOATING_LABEL, tween)
+	return tween
+
+## Knockback / relative nudge in a direction, then returns to original position.
+func knockback(node: CanvasItem, direction: Vector2 = Vector2.RIGHT, distance: float = 30.0, duration: float = 0.3) -> Tween:
+	TweenManager.stop(node, Animations.KNOCKBACK)
+	var original_pos = node.position
+	var tween = node.get_tree().create_tween()
+	tween.tween_property(node, "position", direction.normalized() * distance, duration * 0.4).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT).as_relative()
+	tween.tween_property(node, "position", original_pos, duration * 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	TweenManager.track(node, Animations.KNOCKBACK, tween)
+	return tween
+
 	#endregion
+
+	#region Generic Utilities (caller-managed lifecycle)
+
+## Generic tween_method wrapper. Caller manages tween lifecycle — NOT tracked by TweenManager.
+func tween_method(node: CanvasItem, method: Callable, from_val: Variant, to_val: Variant, duration: float) -> Tween:
+	var tween = node.get_tree().create_tween()
+	tween.tween_method(method, from_val, to_val, duration)
+	return tween
+
+## Animate a shader parameter by name. Caller manages tween lifecycle.
+func tween_shader_param(node: CanvasItem, param: String, from_val: Variant, to_val: Variant, duration: float) -> Tween:
+	var tween = node.get_tree().create_tween()
+	tween.tween_property(node, "material:shader_parameter/" + param, to_val, duration).from(from_val)
+	return tween
+
+## Calls callback after delay. Caller manages tween lifecycle.
+func delayed_callback(node: CanvasItem, delay: float, callback: Callable) -> Tween:
+	var tween = node.get_tree().create_tween()
+	tween.tween_callback(callback).set_delay(delay)
+	return tween
+
+## Simple delay tween. Caller manages tween lifecycle.
+func interval(node: CanvasItem, delay: float) -> Tween:
+	var tween = node.get_tree().create_tween()
+	tween.tween_interval(delay)
+	return tween
+
+	#endregion
+
+#endregion
 
 #endregion

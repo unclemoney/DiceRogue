@@ -49,8 +49,15 @@ func _update_money_display() -> void:
 	if money_label:
 		money_label.text = "$%d" % PlayerEconomy.money
 
-func _on_money_changed(_new_amount: int, _change: int = 0) -> void:
+func _on_money_changed(new_amount: int, change: int = 0) -> void:
 	_update_money_display()
+	if money_label and change != 0:
+		var tfx = get_node_or_null("/root/TweenFXHelper")
+		if tfx:
+			if change > 0:
+				tfx.positive_reward(money_label)
+			else:
+				tfx.negative_hit(money_label)
 
 func _update_round_display(round_number: int) -> void:
 	if round_label:

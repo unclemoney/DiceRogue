@@ -7,12 +7,12 @@ DiceRogue uses the **TweenFX** addon (v1.1) for standardized animation effects a
 ### Architecture
 
 ```
-TweenFX addon (62 animations)
+TweenFX addon (67 animations)
   └── TweenFXHelper autoload (game-specific wrappers)
 	   └── Individual scripts call TweenFXHelper methods
 ```
 
-- **TweenFX** (`addons/TweenFX/TweenFX.gd`) — Low-level addon autoload. 42 one-shot + 20 looping animations. Manages lifecycle via `TweenManager`.
+- **TweenFX** (`addons/TweenFX/TweenFX.gd`) — Low-level addon autoload. 47 one-shot + 20 looping animations. Manages lifecycle via `TweenManager`.
 - **TweenFXHelper** (`Scripts/Core/tween_fx_helper.gd`) — Game-level autoload. Wraps TweenFX into named patterns (button_hover, spine_hover, idle_pulse, etc.). All game scripts call this instead of TweenFX directly.
 
 ### Why the Helper Layer?
@@ -40,6 +40,9 @@ All TweenFXHelper methods belong to exactly one **FX Group**. Each group can be 
 | `Group.EVENTS` | Events | `value_change`, `negative_hit`, `positive_reward`, `celebration` | Celebration, reward glow, negative hit flash |
 | `Group.THREATS` | Threats | `threat_alarm`, `threat_flicker` | Alarm pulse and flicker on debuffs |
 | `Group.REVEALS` | Reveals | `spotlight_enter`, `spotlight_exit` | Spotlight glow enter / exit |
+| `Group.DIALOGUE` | Dialogue | `dialogue_typewriter` | Typewriter text reveal for dialogs |
+| `Group.SHADERS` | Shaders | `shader_pulse` | Shader parameter tween animations |
+| `Group.COUNTERS` | Counters | `score_count_up` | Animated number count-up effects |
 
 ### API
 
@@ -123,6 +126,27 @@ When the Panels group is disabled, `panel_show()` and `panel_hide()` still set t
 |--------|-------------|-------------|
 | `spotlight_enter(node, glow)` | Brighten + glow (stays lit) | `TweenFX.spotlight(ENTER)` |
 | `spotlight_exit(node, glow)` | Return to normal modulate | `TweenFX.spotlight(EXIT)` |
+
+### Dialogue Effects
+| Method | Description | TweenFX Call |
+|--------|-------------|-------------|
+| `dialogue_typewriter(label, text, speed)` | Typewriter text reveal for dialogs | `TweenFX.typewriter` |
+
+### Counter Effects
+| Method | Description | TweenFX Call |
+|--------|-------------|-------------|
+| `score_count_up(label, from, to, duration)` | Animated number counter | `TweenFX.count_up` |
+
+### Shader Effects
+| Method | Description | TweenFX Call |
+|--------|-------------|-------------|
+| `shader_pulse(node, param, from, to, duration)` | Animate shader parameter by name | `TweenFX.tween_shader_param` |
+
+### Tooltip Effects
+| Method | Description | TweenFX Call |
+|--------|-------------|-------------|
+| `tooltip_fade_in(node)` | Fade in a tooltip background | `TweenFX.fade_in` |
+| `tooltip_fade_out(node)` | Fade out a tooltip background | `TweenFX.fade_out` |
 
 ### Utility
 | Method | Description |
@@ -299,7 +323,13 @@ Panel transitions in `end_of_round_stats_panel.gd`, `round_winner_panel.gd`, etc
 `PowerUpIcon`, `ConsumableIcon`, `DebuffIcon`, `ChallengeIcon` each have unique multi-step hover animations (shader tilt, glow ramp, label popup). These are complex sequences that don't map cleanly to a single TweenFX call. Only the base class (`card_icon_base.gd`) fallback methods were updated.
 
 ### Dice Hover Shader
-`dice.gd` hover uses `tween_method` to drive a shader parameter — TweenFX can't drive arbitrary shader uniforms. Lock/unlock jelly was added as new juice instead.
+`dice.gd` hover uses `tween_method` to drive a shader parameter — Now possible via `TweenFXHelper.shader_pulse()`, but the existing manual tweens have fine-grained parallel execution that TweenFX's generic wrapper can't replicate 1:1. Lock/unlock jelly was added as new juice instead.
+
+### ScoringAnimationController Dice/Spine Bounces
+`scoring_animation_controller.gd` uses `tween_method` for dice bounces (local-space positioning to avoid camera shake interference) and consumable/powerup spine bounces (sine-wave precision with per-frame validation). These are too tightly coupled to game logic and audio sync for safe replacement.
+
+### ChallengeUI / DebuffUI Removal Animations
+`challenge_ui.gd` and `debuff_ui.gd` use multi-step choreographed sequences (squish → stretch → move up + fade out). These complex sequences don't map cleanly to a single TweenFX preset.
 
 ### Score Card Tweens
 `score_card_ui.gd` has 13+ tweens tightly coupled to the scoring animation pipeline. Modifying these risks breaking score display timing. Left untouched.
@@ -403,9 +433,9 @@ if node is BaseButton and (node as BaseButton).disabled:
 
 FX group toggle states are now saved/loaded per player profile in `progress_manager.gd`:
 
-- `save_current_profile()` writes `fx_settings` dict (string keys `"0"` through `"7"` → bool values)
+- `save_current_profile()` writes `fx_settings` dict (string keys `"0"` through `"10"` → bool values)
 - `load_profile()` reads `fx_settings` and pushes to both `GameSettings.fx_group_enabled` and `TweenFXHelper.set_group_enabled()`
-- `_create_default_profile()` initializes all 8 groups to `true`
+- `_create_default_profile()` initializes all 11 groups to `true`
 
 ### Files Modified — Phase 11
 

@@ -185,6 +185,50 @@ func _ready() -> void:
 			_update_status("threat_flicker stopped")
 	)
 	
+	# === ROW 6: New Phase 1 Effects ===
+	var row6_label = _create_section_label("NEW PHASE 1 EFFECTS")
+	vbox.add_child(row6_label)
+	
+	var row6 = HBoxContainer.new()
+	row6.add_theme_constant_override("separation", 10)
+	vbox.add_child(row6)
+	
+	var typewriter_label = _create_test_label("TYPEWRITER")
+	row6.add_child(typewriter_label)
+	var typewriter_btn = _create_test_button("Start", Color(0.3, 0.5, 0.7))
+	row6.add_child(typewriter_btn)
+	typewriter_btn.pressed.connect(func():
+		TweenFX.typewriter(typewriter_label, "Hello from TweenFX typewriter!", 0.03)
+		_update_status("typewriter started")
+	)
+	
+	var count_label = _create_test_label("COUNT: 0")
+	row6.add_child(count_label)
+	var count_btn = _create_test_button("Count Up", Color(0.3, 0.7, 0.5))
+	row6.add_child(count_btn)
+	count_btn.pressed.connect(func():
+		TweenFX.count_up(count_label, 0, 999, 1.0, "COUNT: %d")
+		_update_status("count_up started")
+	)
+	
+	var shake_panel = _create_test_panel("NOISE SHAKE", Color(0.7, 0.3, 0.3))
+	row6.add_child(shake_panel)
+	var shake_btn = _create_test_button("Shake", Color(0.5, 0.15, 0.15))
+	row6.add_child(shake_btn)
+	shake_btn.pressed.connect(func():
+		TweenFX.shake_noise(shake_panel, 0.8, 15.0)
+		_update_status("shake_noise fired!")
+	)
+	
+	var knockback_panel = _create_test_panel("KNOCKBACK", Color(0.7, 0.5, 0.3))
+	row6.add_child(knockback_panel)
+	var knockback_btn = _create_test_button("Hit", Color(0.5, 0.3, 0.15))
+	row6.add_child(knockback_btn)
+	knockback_btn.pressed.connect(func():
+		TweenFX.knockback(knockback_panel, Vector2.RIGHT, 40.0, 0.4)
+		_update_status("knockback fired!")
+	)
+	
 	print("[TweenFXTest] All test elements created")
 
 

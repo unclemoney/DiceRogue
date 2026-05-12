@@ -17,6 +17,9 @@ enum Group {
 	EVENTS,    ## One-shot event effects (celebration, negative_hit, reward, value_change)
 	THREATS,   ## Looping threat effects (alarm, flicker)
 	REVEALS,   ## Spotlight enter/exit effects
+	DIALOGUE,  ## Typewriter text reveal effects
+	SHADERS,   ## Shader parameter tween effects
+	COUNTERS,  ## Animated number counter effects
 }
 
 ## Human-readable display names for the settings UI.
@@ -29,6 +32,9 @@ const GROUP_NAMES := {
 	Group.EVENTS: "Events",
 	Group.THREATS: "Threats",
 	Group.REVEALS: "Reveals",
+	Group.DIALOGUE: "Dialogue",
+	Group.SHADERS: "Shaders",
+	Group.COUNTERS: "Counters",
 }
 
 ## Short descriptions shown in the settings UI.
@@ -41,6 +47,9 @@ const GROUP_DESCRIPTIONS := {
 	Group.EVENTS: "Celebration, reward glow, negative hit flash",
 	Group.THREATS: "Alarm pulse and flicker on debuffs",
 	Group.REVEALS: "Spotlight glow enter / exit",
+	Group.DIALOGUE: "Typewriter text reveal for dialogs",
+	Group.SHADERS: "Shader parameter tween animations",
+	Group.COUNTERS: "Animated number count-up effects",
 }
 
 ## Which groups are currently enabled. All default to true.
@@ -361,6 +370,54 @@ func spotlight_exit(node: CanvasItem, glow: Color = Color(1.5, 1.5, 1.5, 1.0)) -
 	if not _valid(node) or not is_group_enabled(Group.REVEALS):
 		return null
 	return TweenFX.spotlight(node, 0.3, glow, TweenFX.PlayState.EXIT)
+
+## ─── DIALOGUE EFFECTS ──────────────────────────────────────────────
+
+## dialogue_typewriter(label, text, speed)
+##
+## Typewriter text reveal for tutorial and dialog panels.
+func dialogue_typewriter(label: Label, text: String, speed: float = 0.04) -> Tween:
+	if not _valid(label) or not is_group_enabled(Group.DIALOGUE):
+		return null
+	return TweenFX.typewriter(label, text, speed)
+
+## ─── COUNTER EFFECTS ───────────────────────────────────────────────
+
+## score_count_up(label, from, to, duration)
+##
+## Animated number counter for money, score, or any numeric display.
+func score_count_up(label: Label, from: int, to: int, duration: float = 0.5) -> Tween:
+	if not _valid(label) or not is_group_enabled(Group.COUNTERS):
+		return null
+	return TweenFX.count_up(label, from, to, duration)
+
+## ─── SHADER EFFECTS ────────────────────────────────────────────────
+
+## shader_pulse(node, param, from, to, duration)
+##
+## Animate a shader parameter by name (e.g., glow_strength, flash_intensity).
+func shader_pulse(node: CanvasItem, param: String, from_val: Variant, to_val: Variant, duration: float = 0.3) -> Tween:
+	if not _valid(node) or not is_group_enabled(Group.SHADERS):
+		return null
+	return TweenFX.tween_shader_param(node, param, from_val, to_val, duration)
+
+## ─── TOOLTIP EFFECTS ───────────────────────────────────────────────
+
+## tooltip_fade_in(node)
+##
+## Fade in a tooltip background instead of instant alpha toggle.
+func tooltip_fade_in(node: CanvasItem, duration: float = 0.1) -> Tween:
+	if not _valid(node) or not is_group_enabled(Group.ICONS):
+		return null
+	return TweenFX.fade_in(node, duration)
+
+## tooltip_fade_out(node)
+##
+## Fade out a tooltip background instead of instant alpha toggle.
+func tooltip_fade_out(node: CanvasItem, duration: float = 0.1) -> Tween:
+	if not _valid(node) or not is_group_enabled(Group.ICONS):
+		return null
+	return TweenFX.fade_out(node, duration)
 
 ## ─── STOP HELPERS ──────────────────────────────────────────────────
 
