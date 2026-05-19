@@ -20,6 +20,7 @@ enum Group {
 	DIALOGUE,  ## Typewriter text reveal effects
 	SHADERS,   ## Shader parameter tween effects
 	COUNTERS,  ## Animated number counter effects
+	CONTAINERS,## Container stagger and sequencing effects
 }
 
 ## Human-readable display names for the settings UI.
@@ -35,6 +36,7 @@ const GROUP_NAMES := {
 	Group.DIALOGUE: "Dialogue",
 	Group.SHADERS: "Shaders",
 	Group.COUNTERS: "Counters",
+	Group.CONTAINERS: "Containers",
 }
 
 ## Short descriptions shown in the settings UI.
@@ -50,6 +52,7 @@ const GROUP_DESCRIPTIONS := {
 	Group.DIALOGUE: "Typewriter text reveal for dialogs",
 	Group.SHADERS: "Shader parameter tween animations",
 	Group.COUNTERS: "Animated number count-up effects",
+	Group.CONTAINERS: "Staggered container entrance and exit animations",
 }
 
 ## Which groups are currently enabled. All default to true.
@@ -437,6 +440,140 @@ func stop_specific(node: CanvasItem, anim: TweenFX.Animations) -> void:
 		return
 	TweenFX.stop(node, anim)
 
+## ─── JUICE PROFILE ─────────────────────────────────────────────────
+
+## Default juice profile used when none is explicitly provided.
+## Lazy-initialised on first access so the autoload doesn't depend on
+## Resources/Data existing at startup.
+var default_juice_profile: JuiceProfile = null
+
+## get_default_juice_profile()
+##
+## Returns the default JuiceProfile, creating an inline default if none
+## has been assigned. Callers can safely use this as a fallback.
+func get_default_juice_profile() -> JuiceProfile:
+	if default_juice_profile == null:
+		var res = load("res://Resources/Data/default_juice_profile.tres")
+		if res is JuiceProfile:
+			default_juice_profile = res
+		else:
+			default_juice_profile = JuiceProfile.new()
+	return default_juice_profile
+
+
+## ─── PRESET ORCHESTRATION ──────────────────────────────────────────
+
+## play_preset(node, preset_name, profile, delay)
+##
+## Plays a named UI animation preset on the target node.
+## Valid preset names (entrance):
+##   "pop_in", "fade_in", "fly_in_left", "fly_in_right",
+##   "fly_in_up", "fly_in_down", "overshoot_pop", "slide_and_fade"
+## Valid preset names (exit):
+##   "pop_out", "fade_out", "fly_out_left", "fly_out_right",
+##   "fly_out_up", "fly_out_down", "slide_and_fade_out"
+## Returns the Tween so callers can await it, or null if invalid/disabled.
+func play_preset(node: CanvasItem, preset_name: String, profile: JuiceProfile = null, delay: float = 0.0) -> Tween:
+	if not _valid(node) or not is_group_enabled(Group.CONTAINERS):
+		return null
+	if profile == null:
+		profile = get_default_juice_profile()
+
+	var tween: Tween = null
+	var dur: float = profile.default_duration
+	var dist: float = profile.entrance_distance
+
+	match preset_name:
+		# ── Entrance presets ──
+		"pop_in":
+			_center_pivot(node)
+			node.scale = Vector2.ZERO
+			node.modulate.a = 0.0
+			tween = TweenFX.pop_in(node, dur, profile.overshoot_strength)
+		"fade_in":
+			node.modulate.a = 0.0
+			tween = TweenFX.fade_in(node, profile.fade_in_duration)
+		"fly_in_left":
+			tween = TweenFX.fly_in(node, Vector2.LEFT, dist, dur)
+		"fly_in_right":
+			tween = TweenFX.fly_in(node, Vector2.RIGHT, dist, dur)
+		"fly_in_up":
+			tween = TweenFX.fly_in(node, Vector2.UP, dist, dur)
+		"fly_in_down":
+			tween = TweenFX.fly_in(node, Vector2.DOWN, dist, dur)
+		"overshoot_pop":
+			_center_pivot(node)
+			node.scale = Vector2.ONE * profile.pop_in_scale
+			node.modulate.a = 0.0
+			tween = TweenFX.overshoot_pop_in(node, dur, profile.overshoot_strength)
+		"slide_and_fade":
+			tween = TweenFX.slide_and_fade_in(node, Vector2.LEFT, dist, dur)
+
+		# ── Exit presets ──
+		"pop_out":
+			_center_pivot(node)
+			tween = TweenFX.pop_out(node, dur * 0.8, profile.overshoot_strength)
+		"fade_out":
+			tween = TweenFX.fade_out(node, profile.fade_in_duration)
+		"fly_out_left":
+			tween = TweenFX.fly_out(node, Vector2.LEFT, dist, dur)
+		"fly_out_right":
+			tween = TweenFX.fly_out(node, Vector2.RIGHT, dist, dur)
+		"fly_out_up":
+			tween = TweenFX.fly_out(node, Vector2.UP, dist, dur)
+		"fly_out_down":
+			tween = TweenFX.fly_out(node, Vector2.DOWN, dist, dur)
+		"slide_and_fade_out":
+			tween = TweenFX.slide_and_fade_out(node, Vector2.RIGHT, dist, dur)
+		_:
+			push_warning("[TweenFXHelper] Unknown preset: " + preset_name)
+			return null
+
+	if tween and delay > 0.0:
+		tween.set_delay(delay)
+	return tween
+
+
+## animate_container_children(container, preset_name, pattern, profile, stagger)
+##
+## Animates every CanvasItem child of the given Container with the named preset,
+## applying a stagger delay between each child.
+## pattern: "cascade", "reverse", "center_out", or "random"
+## Returns an array of Tweens fired (one per animated child).
+func animate_container_children(container: Container, preset_name: String, pattern: String = "cascade", profile: JuiceProfile = null, stagger: float = -1.0) -> Array[Tween]:
+	if not is_group_enabled(Group.CONTAINERS):
+		return []
+	if profile == null:
+		profile = get_default_juice_profile()
+	var stagger_delay: float = profile.get_stagger(stagger)
+	var children := container.get_children()
+	var filtered: Array[Node] = []
+	for child in children:
+		if child is CanvasItem:
+			filtered.append(child)
+
+	match pattern:
+		"reverse":
+			filtered.reverse()
+		"center_out":
+			filtered = _sort_center_out(filtered, container)
+		"random":
+			filtered = _sort_random(filtered, container)
+		# "cascade" uses tree order (default)
+
+	var tweens: Array[Tween] = []
+	var cumulative_delay: float = 0.0
+	for i in range(filtered.size()):
+		var child = filtered[i] as CanvasItem
+		if not _valid(child):
+			continue
+		var tween: Tween = play_preset(child, preset_name, profile, cumulative_delay)
+		if tween:
+			tweens.append(tween)
+		cumulative_delay += stagger_delay
+	return tweens
+
+
 ## ─── STAGGERED APPEAR ──────────────────────────────────────────────
 
 ## staggered_pop_in(nodes, delay_between)
@@ -461,7 +598,62 @@ func staggered_pop_in(nodes: Array, delay_between: float = 0.08) -> Tween:
 		last_tween = TweenFX.pop_in(node, 0.3, 0.1)
 	return last_tween
 
+
 ## ─── INTERNAL ──────────────────────────────────────────────────────
+
+## _sort_center_out(children, container)
+##
+## Sorts children by distance from the visual center of the container.
+## Used by animate_container_children for the "center_out" pattern.
+func _sort_center_out(children: Array[Node], container: Container) -> Array[Node]:
+	if children.is_empty():
+		return children
+	var count: int = children.size()
+	var center_indices: Array[float] = []
+	if container is GridContainer:
+		var cols: int = container.columns
+		if cols < 1:
+			cols = 1
+		var rows: int = ceili(float(count) / float(cols))
+		var center_row: float = (rows - 1) / 2.0
+		var center_col: float = (cols - 1) / 2.0
+		for i in range(count):
+			var row: float = float(i) / float(cols)
+			var col: float = float(i - (i / cols) * cols)
+			var dist: float = abs(row - center_row) + abs(col - center_col)
+			center_indices.append(dist)
+	else:
+		var center: float = (count - 1) / 2.0
+		for i in range(count):
+			center_indices.append(abs(i - center))
+	var sorted := children.duplicate()
+	for i in range(sorted.size()):
+		for j in range(i + 1, sorted.size()):
+			if center_indices[j] < center_indices[i]:
+				var temp = sorted[i]
+				sorted[i] = sorted[j]
+				sorted[j] = temp
+				var temp_idx = center_indices[i]
+				center_indices[i] = center_indices[j]
+				center_indices[j] = temp_idx
+	return sorted
+
+
+## _sort_random(children, container)
+##
+## Shuffles children deterministically based on container name hash.
+## Used by animate_container_children for the "random" pattern.
+func _sort_random(children: Array[Node], container: Container) -> Array[Node]:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(container.name)
+	var shuffled := children.duplicate()
+	for i in range(shuffled.size() - 1, 0, -1):
+		var j = rng.randi_range(0, i)
+		var temp = shuffled[i]
+		shuffled[i] = shuffled[j]
+		shuffled[j] = temp
+	return shuffled
+
 
 ## _center_pivot(node)
 ##

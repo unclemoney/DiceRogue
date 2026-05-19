@@ -229,6 +229,126 @@ func _ready() -> void:
 		_update_status("knockback fired!")
 	)
 	
+	# === ROW 7: UI Presets ===
+	var row7_label = _create_section_label("UI PRESETS (click to trigger)")
+	vbox.add_child(row7_label)
+
+	var row7 = HBoxContainer.new()
+	row7.add_theme_constant_override("separation", 10)
+	vbox.add_child(row7)
+
+	var fly_target = _create_test_panel("FLY LEFT", Color(0.3, 0.5, 0.7))
+	row7.add_child(fly_target)
+	var fly_btn = _create_test_button("Fly", Color(0.2, 0.35, 0.5))
+	row7.add_child(fly_btn)
+	fly_btn.pressed.connect(func():
+		TweenFX.fly_in(fly_target, Vector2.LEFT, 120.0, 0.5)
+		_update_status("fly_in_left fired!")
+	)
+
+	var overshoot_target = _create_test_panel("POP", Color(0.7, 0.5, 0.3))
+	row7.add_child(overshoot_target)
+	var overshoot_btn = _create_test_button("Pop", Color(0.5, 0.3, 0.2))
+	row7.add_child(overshoot_btn)
+	overshoot_btn.pressed.connect(func():
+		TweenFX.overshoot_pop_in(overshoot_target, 0.5, 0.2)
+		_update_status("overshoot_pop_in fired!")
+	)
+
+	var slide_target = _create_test_panel("SLIDE", Color(0.3, 0.7, 0.5))
+	row7.add_child(slide_target)
+	var slide_btn = _create_test_button("Slide", Color(0.2, 0.45, 0.35))
+	row7.add_child(slide_btn)
+	slide_btn.pressed.connect(func():
+		TweenFX.slide_and_fade_in(slide_target, Vector2.LEFT, 100.0, 0.5)
+		_update_status("slide_and_fade_in fired!")
+	)
+
+	# === ROW 8: Container Stagger ===
+	var row8_label = _create_section_label("CONTAINER STAGGER (click to trigger)")
+	vbox.add_child(row8_label)
+
+	var row8 = HBoxContainer.new()
+	row8.add_theme_constant_override("separation", 20)
+	vbox.add_child(row8)
+
+	# Cascade VBox
+	var cascade_vbox = VBoxContainer.new()
+	cascade_vbox.add_theme_constant_override("separation", 6)
+	cascade_vbox.name = "CascadeVBox"
+	row8.add_child(cascade_vbox)
+
+	for i in range(4):
+		var p = _create_test_panel("C" + str(i + 1), Color(0.4, 0.4, 0.6))
+		p.custom_minimum_size = Vector2(60, 30)
+		cascade_vbox.add_child(p)
+
+	var ContainerAnimatorClass = load("res://Scripts/UI/container_animator.gd")
+	var cascade_anim = ContainerAnimatorClass.new()
+	cascade_anim.name = "CascadeAnimator"
+	cascade_anim.trigger_mode = ContainerAnimatorClass.TriggerMode.MANUAL
+	cascade_anim.entrance_preset = "pop_in"
+	cascade_anim.stagger_pattern = ContainerAnimatorClass.StaggerPattern.CASCADE
+	cascade_anim.stagger_delay = 0.08
+	cascade_vbox.add_child(cascade_anim)
+
+	var cascade_btn = _create_test_button("Cascade", Color(0.3, 0.3, 0.5))
+	row8.add_child(cascade_btn)
+	cascade_btn.pressed.connect(func():
+		cascade_anim.trigger_entrance()
+		_update_status("Cascade stagger fired!")
+	)
+
+	# Center-out HBox
+	var center_hbox = HBoxContainer.new()
+	center_hbox.add_theme_constant_override("separation", 6)
+	center_hbox.name = "CenterHBox"
+	row8.add_child(center_hbox)
+
+	for i in range(4):
+		var p = _create_test_panel("M" + str(i + 1), Color(0.6, 0.4, 0.4))
+		p.custom_minimum_size = Vector2(60, 30)
+		center_hbox.add_child(p)
+
+	var center_anim = ContainerAnimatorClass.new()
+	center_anim.name = "CenterAnimator"
+	center_anim.trigger_mode = ContainerAnimatorClass.TriggerMode.MANUAL
+	center_anim.entrance_preset = "fly_in_up"
+	center_anim.stagger_pattern = ContainerAnimatorClass.StaggerPattern.CENTER_OUT
+	center_anim.stagger_delay = 0.06
+	center_hbox.add_child(center_anim)
+
+	var center_btn = _create_test_button("Center", Color(0.5, 0.3, 0.3))
+	row8.add_child(center_btn)
+	center_btn.pressed.connect(func():
+		center_anim.trigger_entrance()
+		_update_status("Center-out stagger fired!")
+	)
+
+	# === ROW 9: Preset via Helper ===
+	var row9_label = _create_section_label("HELPER PRESETS (click to trigger)")
+	vbox.add_child(row9_label)
+
+	var row9 = HBoxContainer.new()
+	row9.add_theme_constant_override("separation", 10)
+	vbox.add_child(row9)
+
+	var helper_target = _create_test_panel("HELPER", Color(0.5, 0.5, 0.3))
+	row9.add_child(helper_target)
+	var helper_btn = _create_test_button("Play", Color(0.35, 0.35, 0.2))
+	row9.add_child(helper_btn)
+	helper_btn.pressed.connect(func():
+		_tfx.play_preset(helper_target, "overshoot_pop")
+		_update_status("play_preset(overshoot_pop) fired!")
+	)
+
+	var helper_exit_btn = _create_test_button("Exit", Color(0.35, 0.2, 0.2))
+	row9.add_child(helper_exit_btn)
+	helper_exit_btn.pressed.connect(func():
+		_tfx.play_preset(helper_target, "fly_out_right")
+		_update_status("play_preset(fly_out_right) fired!")
+	)
+
 	print("[TweenFXTest] All test elements created")
 
 

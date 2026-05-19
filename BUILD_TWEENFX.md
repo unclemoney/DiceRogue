@@ -446,3 +446,229 @@ FX group toggle states are now saved/loaded per player profile in `progress_mana
 | `Scripts/UI/tutorial_highlight.gd` | Removed 1 redundant `pivot_offset` line |
 | `Tests/tween_fx_test.gd` | Removed 6 redundant `pivot_offset` lines |
 | `Scripts/Managers/progress_manager.gd` | Added `fx_settings` to save/load/default profile |
+
+---
+
+## Phase 12 — UI Animation Framework
+
+### Overview
+
+A full container-aware UI animation framework built on top of TweenFX. Provides preset-based animations, global juice profiles, and plug-and-play `ContainerAnimator` nodes for staggered entrance/exit sequences.
+
+### New Files
+
+| File | Role |
+|------|------|
+| `Scripts/Core/juice_profile.gd` | `JuiceProfile` Resource — tuneable timing, easing, overshoot, and distance parameters |
+| `Scripts/UI/ui_animated.gd` | `UIAnimated` component node — attach to any Control to declare entrance/exit presets |
+| `Scripts/UI/container_animator.gd` | `ContainerAnimator` node — auto-detects parent Container and staggers children |
+| `Scripts/UI/Examples/ui_animation_examples.gd` | Copy-paste reference snippets for common patterns |
+
+### Modified Files
+
+| File | Change |
+|------|--------|
+| `addons/TweenFX/TweenFX.gd` | Added `FLY_IN`, `FLY_OUT`, `OVERSHOOT_POP_IN`, `SLIDE_AND_FADE_IN`, `SLIDE_AND_FADE_OUT` enums and methods |
+| `Scripts/Core/tween_fx_helper.gd` | Added `Group.CONTAINERS`, `play_preset()`, `animate_container_children()`, `get_default_juice_profile()`, `_sort_center_out()`, `_sort_random()` |
+| `Tests/tween_fx_test.gd` | Added test rows for UI presets, container stagger, and helper preset playback |
+
+---
+
+### JuiceProfile
+
+Create a `JuiceProfile` Resource in the inspector (or load one at runtime) to control animation personality across an entire scene.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| `default_duration` | 0.4 | Base duration for entrance/exit presets |
+| `default_stagger` | 0.08 | Delay between each child in a stagger |
+| `entrance_distance` | 100.0 | Travel distance for fly/slide presets (px) |
+| `overshoot_strength` | 0.15 | Overshoot on pop/elastic animations |
+| `bounce_strength` | 0.3 | Bounce settle on elastic animations |
+| `default_easing` | EASE_OUT | Default easing mode |
+| `default_transition` | TRANS_BACK | Default transition type |
+| `pop_in_scale` | 0.8 | Starting scale for pop_in presets |
+| `fade_in_duration` | 0.35 | Duration for pure fade presets |
+| `pause_mode` | TWEEN_PAUSE_PROCESS | Ensures UI tweens run while game is paused |
+
+#### Global Default
+
+TweenFXHelper lazy-loads `res://Resources/Data/default_juice_profile.tres` on first access. If the file doesn't exist, an inline default is created automatically.
+
+```gdscript
+# Override globally
+TweenFXHelper.default_juice_profile = preload("res://Resources/Data/snappy_profile.tres")
+
+# Override per-call
+var profile = JuiceProfile.new()
+profile.overshoot_strength = 0.25
+TweenFXHelper.play_preset(my_button, "overshoot_pop", profile)
+```
+
+---
+
+### Preset String Reference
+
+All presets are passed as strings to `TweenFXHelper.play_preset()` or `ContainerAnimator`.
+
+#### Entrance Presets
+
+| Preset | Animation | Properties Affected |
+|--------|-----------|---------------------|
+| `"pop_in"` | Scale from 0 → 1 with overshoot | scale, modulate:a |
+| `"fade_in"` | Alpha 0 → 1 | modulate:a |
+| `"fly_in_left"` | Fly in from left + fade | position, modulate:a |
+| `"fly_in_right"` | Fly in from right + fade | position, modulate:a |
+| `"fly_in_up"` | Fly in from above + fade | position, modulate:a |
+| `"fly_in_down"` | Fly in from below + fade | position, modulate:a |
+| `"overshoot_pop"` | Scale 0.7 → 1.0 + overshoot → 1.0 with elastic settle | scale, modulate:a |
+| `"slide_and_fade"` | Smooth slide from left + fade (softer than fly_in) | position, modulate:a |
+
+#### Exit Presets
+
+| Preset | Animation | Properties Affected |
+|--------|-----------|---------------------|
+| `"pop_out"` | Scale to 0 with overshoot pull | scale, modulate:a |
+| `"fade_out"` | Alpha 1 → 0 | modulate:a |
+| `"fly_out_left"` | Fly out left + fade | position, modulate:a |
+| `"fly_out_right"` | Fly out right + fade | position, modulate:a |
+| `"fly_out_up"` | Fly out up + fade | position, modulate:a |
+| `"fly_out_down"` | Fly out down + fade | position, modulate:a |
+| `"slide_and_fade_out"` | Smooth slide out right + fade | position, modulate:a |
+
+---
+
+### ContainerAnimator
+
+Drop `ContainerAnimator` as a child of any `Container` (`VBoxContainer`, `HBoxContainer`, `GridContainer`, etc.).
+
+#### Inspector Settings
+
+| Property | Description |
+|----------|-------------|
+| `trigger_mode` | `READY` (auto on `_ready()`), `MANUAL` (call from code), `SIGNAL` (reserved) |
+| `entrance_preset` | Preset applied to all children on entrance |
+| `exit_preset` | Preset applied to all children on exit |
+| `stagger_pattern` | `CASCADE`, `REVERSE`, `CENTER_OUT`, `RANDOM` |
+| `stagger_delay` | Delay between children. `-1` uses profile default. |
+| `delay_before_start` | Global delay before first child animates |
+| `juice_profile` | Optional per-scene profile override |
+| `respect_child_overrides` | If true, children with `UIAnimated` use their own preset/delay |
+
+#### Stagger Patterns
+
+- **CASCADE** — Tree order (top-to-bottom for VBox, left-to-right for HBox/Grid)
+- **REVERSE** — Inverted tree order
+- **CENTER_OUT** — Middle child first, radiating outward. For GridContainer, sorts by Manhattan distance from grid center.
+- **RANDOM** — Deterministic shuffle seeded by container name hash
+
+#### Code Example
+
+```gdscript
+func show_menu() -> void:
+	visible = true
+	$ButtonList/ContainerAnimator.trigger_entrance()
+
+func hide_menu() -> void:
+	var tweens = $ButtonList/ContainerAnimator.trigger_exit()
+	if not tweens.is_empty():
+		await tweens[-1].finished
+	visible = false
+```
+
+---
+
+### UIAnimated Component
+
+Add `UIAnimated` as a child of any Control to declare per-node animation behavior.
+
+```gdscript
+# In the scene tree:
+#   HeaderLabel (Label)
+#   └── UIAnimated (Node)
+#         entrance_preset = "slide_and_fade"
+#         delay = 0.1
+```
+
+When a parent `ContainerAnimator` has `respect_child_overrides = true`, it will use the `UIAnimated` child's preset and delay instead of the container defaults.
+
+---
+
+### TweenFXHelper.play_preset()
+
+Direct API for playing a preset on any node without a ContainerAnimator.
+
+```gdscript
+# Fire-and-forget
+TweenFXHelper.play_preset(my_panel, "fly_in_up")
+
+# With await
+await TweenFXHelper.play_preset(my_panel, "overshoot_pop").finished
+
+# With custom profile and delay
+var profile = JuiceProfile.new()
+profile.default_duration = 0.6
+TweenFXHelper.play_preset(my_panel, "pop_in", profile, 0.2)
+```
+
+---
+
+### TweenFXHelper.animate_container_children()
+
+Programmatic container sequencing without adding a node.
+
+```gdscript
+TweenFXHelper.animate_container_children(
+	$StatsVBox,
+	"fly_in_up",
+	"cascade",
+	profile,
+	0.12
+)
+```
+
+---
+
+### Best Practices
+
+#### Tuning Juice for Different Art Styles
+
+| Art Style | Recommended Tweaks |
+|-----------|-------------------|
+| Pixel art / retro | Lower `default_duration` (0.25–0.35), reduce `overshoot_strength` (0.08–0.12), use `TRANS_QUAD` instead of `TRANS_BACK` |
+| Clean vector / flat | Medium `default_duration` (0.35–0.45), subtle overshoot (0.1), `TRANS_CUBIC` |
+| Juicy cartoony | Higher `default_duration` (0.45–0.6), generous overshoot (0.18–0.25), `TRANS_BACK` / `TRANS_ELASTIC`, longer `default_stagger` (0.1–0.14) |
+| Minimalist | Very low `default_duration` (0.2–0.3), zero overshoot, `TRANS_SINE`, short stagger (0.04–0.06) |
+
+#### Avoiding Over-Juicing
+
+- **One effect per property** — Don't stack `fly_in` with `idle_float` on the same node; they both fight for `position`.
+- **Stagger caps** — For large lists (>12 items), consider reducing `default_stagger` or switching to `CASCADE` with a very short delay so the total sequence doesn't feel sluggish.
+- **Exit restraint** — Exit animations should typically be faster than entrances (0.6×–0.8× duration) so the UI feels responsive when closing.
+- **Disable during gameplay** — Container animations are great for menus and popups, but avoid them on HUD elements that update every frame.
+
+#### Keeping UI Responsive While Animating
+
+- All new UI preset tweens use `TWEEN_PAUSE_PROCESS` so they continue during pause menus.
+- `ContainerAnimator` does NOT block input — it only tweens visual properties. Connect your buttons before triggering entrance.
+- If you need to block input until animation
+ finishes, use `await tweens[-1].finished` after `trigger_entrance()`.
+
+#### Scene Structure for Clean Animation Flow
+
+```
+PopupRoot (Control)
+├── Overlay (ColorRect)          <-- fade manually, do NOT scale
+├── Panel (PanelContainer)
+│   └── ContentVBox (VBoxContainer)
+│       ├── ContainerAnimator    <-- animates ContentVBox's children
+│       ├── TitleLabel
+│       ├── BodyText
+│       └── CloseButton
+└── UIAnimated (Node)            <-- optional, for Panel itself
+```
+
+- **Never** animate `scale` on `PanelContainer` directly — animate `position` and `modulate:a` on the panel, and let `ContainerAnimator` handle the children.
+- Use `UIAnimated` on the panel root for single-node entrance/exit (e.g., slide in from left).
+- Use `ContainerAnimator` inside the panel for staggered child sequences.
+- Keep animation nodes separate from logic nodes — animation components are children, not replacements for your UI scripts.
