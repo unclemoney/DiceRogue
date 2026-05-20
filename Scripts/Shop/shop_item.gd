@@ -308,6 +308,9 @@ func _on_buy_button_pressed() -> void:
 		var audio_mgr = get_node_or_null("/root/AudioManager")
 		if audio_mgr:
 			audio_mgr.play_denied_sound()
+		# Shake the buy button to indicate insufficient funds
+		if buy_button:
+			TweenFX.shake(buy_button, 0.2, 5.0, 3)
 	_update_button_state()
 
 

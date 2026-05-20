@@ -129,7 +129,7 @@ func _build_ui() -> void:
 	# Create centered panel container (TV Remote shape)
 	panel_container = PanelContainer.new()
 	panel_container.name = "RemotePanel"
-	panel_container.custom_minimum_size = Vector2(280, 420)
+	panel_container.custom_minimum_size = Vector2(280, 620)
 	panel_container.set_anchors_preset(Control.PRESET_CENTER)
 	panel_container.offset_left = -140
 	panel_container.offset_top = -210
@@ -139,7 +139,7 @@ func _build_ui() -> void:
 	panel_container.grow_vertical = Control.GROW_DIRECTION_BOTH
 	
 	# Load and apply theme
-	var theme_path = "res://Resources/UI/powerup_hover_theme.tres"
+	var theme_path = "res://Resources/UI/remote_control_theme.tres"
 	var panel_theme = load(theme_path) as Theme
 	if panel_theme:
 		panel_container.theme = panel_theme
@@ -151,7 +151,7 @@ func _build_ui() -> void:
 	style.set_border_width_all(4)
 	style.set_corner_radius_all(20)
 	style.corner_detail = 8
-	panel_container.add_theme_stylebox_override("panel", style)
+	#panel_container.add_theme_stylebox_override("panel", style)
 	
 	add_child(panel_container)
 	
@@ -531,11 +531,11 @@ func _update_bonus_preview() -> void:
 	if bonus_data["bonus_money"] > 0:
 		parts.append("+$%d" % bonus_data["bonus_money"])
 	if bonus_data["bonus_powerup_count"] > 0:
-		parts.append("%d PowerUp" % bonus_data["bonus_powerup_count"])
+		parts.append("\n%d PowerUp" % bonus_data["bonus_powerup_count"])
 	if bonus_data["bonus_consumable_count"] > 0:
-		parts.append("%d Consumable" % bonus_data["bonus_consumable_count"])
+		parts.append("\n%d Consumable" % bonus_data["bonus_consumable_count"])
 	if bonus_data["bonus_level_boost_count"] > 0:
-		parts.append("%d Level Up" % bonus_data["bonus_level_boost_count"])
+		parts.append("\n%d Level Up" % bonus_data["bonus_level_boost_count"])
 	
 	bonus_label.text = "Bonus: " + ", ".join(parts)
 

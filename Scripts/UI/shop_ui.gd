@@ -131,8 +131,32 @@ func _ready() -> void:
 			progress_manager.item_locked.connect(func(_item_id: String, _item_type: String): _on_progress_changed())
 		if progress_manager.has_signal("progress_saved"):
 			progress_manager.progress_saved.connect(_on_progress_changed)
+	# Connect visibility for open animation
+	visibility_changed.connect(_on_visibility_changed)
 	hide()
 	#buy_button.pressed.connect(_on_buy_button_pressed)
+
+func _on_visibility_changed() -> void:
+	if visible:
+		_animate_shop_open()
+
+## _animate_shop_open()
+##
+## Plays drop-in entrance animation for the shop panel, backdrop, label and close button.
+func _animate_shop_open() -> void:
+	if backdrop:
+		backdrop.modulate.a = 0.0
+		var tween = create_tween()
+		tween.tween_property(backdrop, "modulate:a", 0.75, 0.2)
+	
+	if tab_container:
+		TweenFX.fly_in(tab_container, Vector2.DOWN, 150.0, 0.4)
+	
+	if shop_label:
+		TweenFX.fly_in(shop_label, Vector2.DOWN, 80.0, 0.35, 0.15)
+	
+	if close_button:
+		TweenFX.fly_in(close_button, Vector2.DOWN, 60.0, 0.3, 0.25)
 
 func _exit_tree() -> void:
 	if shop_label:
@@ -464,13 +488,15 @@ func _on_item_purchased(item_id: String, item_type: String) -> void:
 	# Remove the item from the shop after purchase
 	# For colored dice: removed this turn, but available again next turn (not tracked in purchased_items for filtering)
 	print("[ShopUI] Calling _remove_shop_item for:", item_id, "type:", item_type)
-	_remove_shop_item(item_id, item_type)
+	await _remove_shop_item(item_id, item_type)
 	
 	# If we got here, proceed with purchase
 	print("[ShopUI] Emitting item_purchased signal for:", item_id, "type:", item_type)
 	emit_signal("item_purchased", item_id, item_type)
 
-# Add function to remove a shop item after purchase
+## _remove_shop_item(item_id, item_type)
+##
+## Finds the matching ShopItem and plays a purchase-out animation before freeing it.
 func _remove_shop_item(item_id: String, item_type: String) -> void:
 	var container = _get_container_for_type(item_type)
 	if not container:
@@ -480,14 +506,32 @@ func _remove_shop_item(item_id: String, item_type: String) -> void:
 	# Find and remove the shop item with matching ID
 	for child in container.get_children():
 		if child is ShopItem and child.item_id == item_id:
-			# Hide immediately and disable the button to prevent multiple purchases
-			child.visible = false
-			if child.buy_button:
-				child.buy_button.disabled = true
-			# Then queue for deletion
-			child.queue_free()
+			await _animate_purchase_out(child)
 			print("[ShopUI] Removed shop item:", item_id, "from shop")
 			break
+
+## _animate_purchase_out(item)
+##
+## Flashes the item border gold, then slides it up and fades it out before freeing.
+func _animate_purchase_out(item: ShopItem) -> void:
+	# Disable the button to prevent double purchase
+	if item.buy_button:
+		item.buy_button.disabled = true
+	
+	# Flash gold border
+	var style := item.get_theme_stylebox("panel") as StyleBoxFlat
+	if style:
+		var flash_style := style.duplicate() as StyleBoxFlat
+		flash_style.border_color = Color(1.0, 0.85, 0.0, 1.0)
+		flash_style.set_border_width_all(5)
+		item.add_theme_stylebox_override("panel", flash_style)
+	
+	# Slide up and fade out
+	var tween := TweenFX.slide_and_fade_out(item, Vector2.UP, 40.0, 0.25)
+	if tween:
+		await tween.finished
+	
+	item.queue_free()
 
 # Helper function to find PowerUpUI
 func _find_power_up_ui() -> PowerUpUI:
@@ -788,7 +832,13 @@ func _on_reroll_button_pressed() -> void:
 func _reroll_power_ups() -> void:
 	print("[ShopUI] Rerolling power-up items")
 	
-	# Clear existing power-up items
+	# 1. Animate existing items out
+	var items := _get_shop_items(power_up_container)
+	var last_tween := _animate_items_out(items, Vector2.LEFT)
+	if last_tween:
+		await last_tween.finished
+	
+	# 2. Clear existing power-up items
 	if power_up_container:
 		for child in power_up_container.get_children():
 			child.queue_free()
@@ -796,7 +846,7 @@ func _reroll_power_ups() -> void:
 	# Wait a frame for children to be freed
 	await get_tree().process_frame
 	
-	# Repopulate power-ups
+	# 3. Repopulate power-ups
 	var power_ups = power_up_manager.get_available_power_ups()
 	var filtered_power_ups = _filter_out_purchased_items(power_ups, "power_up")
 	filtered_power_ups = _filter_unlocked_items(filtered_power_ups, "power_up")
@@ -813,14 +863,25 @@ func _reroll_power_ups() -> void:
 		if data:
 			_add_shop_item(data, "power_up")
 	
+	# 4. Animate new items in
+	await get_tree().process_frame
+	items = _get_shop_items(power_up_container)
+	_animate_items_in(items, Vector2.RIGHT)
+	
 	_update_reroll_button_state()
 
 ## _reroll_consumables()
-## Clears and repopulates consumable items
+## Clears and repopulates consumable items with fly-out / fly-in animation.
 func _reroll_consumables() -> void:
 	print("[ShopUI] Rerolling consumable items")
 	
-	# Clear existing consumable items
+	# 1. Animate existing items out
+	var items := _get_shop_items(consumable_container)
+	var last_tween := _animate_items_out(items, Vector2.LEFT)
+	if last_tween:
+		await last_tween.finished
+	
+	# 2. Clear existing consumable items
 	if consumable_container:
 		for child in consumable_container.get_children():
 			child.queue_free()
@@ -828,7 +889,7 @@ func _reroll_consumables() -> void:
 	# Wait a frame for children to be freed
 	await get_tree().process_frame
 	
-	# Repopulate consumables
+	# 3. Repopulate consumables
 	var consumables = consumable_manager._defs_by_id.keys()
 	var filtered_consumables = _filter_out_purchased_items(consumables, "consumable")
 	filtered_consumables = _filter_unlocked_items(filtered_consumables, "consumable")
@@ -838,6 +899,11 @@ func _reroll_consumables() -> void:
 		var data = consumable_manager.get_def(id)
 		if data:
 			_add_shop_item(data, "consumable")
+	
+	# 4. Animate new items in
+	await get_tree().process_frame
+	items = _get_shop_items(consumable_container)
+	_animate_items_in(items, Vector2.RIGHT)
 	
 	_update_reroll_button_state()
 
@@ -909,6 +975,16 @@ func _on_tab_changed(tab_index: int) -> void:
 		audio_mgr.play_tab_switch()
 	
 	_update_reroll_button_state()
+	
+	# Animate items in the newly selected tab
+	var container := _get_container_for_tab_index(tab_index)
+	if container:
+		# Wait one frame so the container finishes its sort pass
+		# (items in a freshly-visible tab share the same uncalculated position until sorted)
+		await get_tree().process_frame
+		var direction := Vector2.RIGHT if tab_index % 2 == 0 else Vector2.LEFT
+		var items := _get_shop_items(container)
+		_animate_items_in(items, direction)
 
 ## reset_reroll_cost()
 ## Resets the reroll cost to base value - called on new game
@@ -1024,6 +1100,52 @@ func _get_container_for_type(type: String) -> Node:
 		_:
 			push_error("[ShopUI] Unknown item type:", type)
 			return null
+
+## _get_container_for_tab_index(tab_index)
+##
+## Returns the item container for the given TabContainer tab index.
+func _get_container_for_tab_index(tab_index: int) -> Container:
+	match tab_index:
+		0: return power_up_container
+		1: return consumable_container
+		2: return mod_container
+		3: return colored_dice_container
+		4: return gaming_console_container
+		5: return locked_container
+	return null
+
+## _get_shop_items(container)
+##
+## Collects all ShopItem instances inside a container.
+func _get_shop_items(container: Container) -> Array[ShopItem]:
+	var items: Array[ShopItem] = []
+	if not container:
+		return items
+	for child in container.get_children():
+		if child is ShopItem:
+			items.append(child)
+	return items
+
+## _animate_items_in(items, direction)
+##
+## Plays a staggered fly-in entrance on an array of shop items.
+func _animate_items_in(items: Array[ShopItem], direction: Vector2 = Vector2.RIGHT) -> void:
+	for i in range(items.size()):
+		var item := items[i]
+		var delay := i * 0.06
+		TweenFX.fly_in(item, direction, 120.0, 0.35, delay)
+
+## _animate_items_out(items, direction)
+##
+## Plays a staggered fly-out exit on an array of shop items.
+## Returns the last Tween so callers can await completion.
+func _animate_items_out(items: Array[ShopItem], direction: Vector2 = Vector2.LEFT) -> Tween:
+	var last_tween: Tween = null
+	for i in range(items.size()):
+		var item := items[i]
+		var delay := i * 0.04
+		last_tween = TweenFX.fly_out(item, direction, 80.0, 0.3, delay)
+	return last_tween
 
 func _on_money_changed(_new_amount: int, _change: int = 0) -> void:
 	# Update all shop item buttons in all containers
