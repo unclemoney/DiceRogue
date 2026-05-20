@@ -11,6 +11,12 @@ signal main_menu_pressed
 # Font
 var vcr_font: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 
+# Theme
+var powerup_hover_theme: Theme = null
+
+# Button styling toggle — match main menu nav buttons
+@export var use_theme_styling: bool = true
+
 # UI References
 var resume_button: Button
 var save_button: Button
@@ -34,7 +40,17 @@ var tutorial_warning_dialog: ConfirmationDialog = null
 func _ready() -> void:
 	visible = false
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_load_theme()
 	_build_ui()
+
+
+## _load_theme()
+##
+## Loads the powerup hover theme for buttons (same as main menu).
+func _load_theme() -> void:
+	var theme_path = "res://Resources/UI/main_menu_theme.tres"
+	if FileAccess.file_exists(theme_path):
+		powerup_hover_theme = load(theme_path) as Theme
 
 
 func _input(event: InputEvent) -> void:
@@ -72,8 +88,8 @@ func _build_ui() -> void:
 	_panel.offset_bottom = 160
 	
 	var panel_style = StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.1, 0.08, 0.12, 0.98)
-	panel_style.border_color = Color(0.5, 0.45, 0.6, 1.0)
+	panel_style.bg_color = Color(0.1, 0.08, 0.12, 0.0) #.98
+	panel_style.border_color = Color(0.5, 0.45, 0.6, 0.0) #1.0
 	panel_style.set_border_width_all(3)
 	panel_style.set_corner_radius_all(12)
 	_panel.add_theme_stylebox_override("panel", panel_style)
@@ -141,36 +157,39 @@ func _build_ui() -> void:
 
 ## _create_button(text, accent_color)
 ##
-## Creates a styled button.
+## Creates a styled button matching the main menu navigation buttons.
 func _create_button(text: String, accent_color: Color) -> Button:
 	var btn = Button.new()
 	btn.text = text
-	btn.custom_minimum_size = Vector2(240, 45)
+	btn.custom_minimum_size = Vector2(280, 48)
 	btn.add_theme_font_override("font", vcr_font)
-	btn.add_theme_font_size_override("font_size", 22)
+	btn.add_theme_font_size_override("font_size", 26)
 	
-	# Normal style
-	var normal_style = StyleBoxFlat.new()
-	normal_style.bg_color = Color(0.12, 0.1, 0.15, 0.95)
-	normal_style.border_color = accent_color * 0.7
-	normal_style.set_border_width_all(2)
-	normal_style.set_corner_radius_all(8)
-	btn.add_theme_stylebox_override("normal", normal_style)
-	btn.add_theme_color_override("font_color", accent_color)
-	
-	# Hover style
-	var hover_style = normal_style.duplicate()
-	hover_style.bg_color = Color(0.18, 0.15, 0.22, 0.98)
-	hover_style.border_color = accent_color
-	btn.add_theme_stylebox_override("hover", hover_style)
-	btn.add_theme_color_override("font_hover_color", accent_color * 1.2)
-	
-	# Pressed style
-	var pressed_style = normal_style.duplicate()
-	pressed_style.bg_color = accent_color * 0.3
-	pressed_style.border_color = accent_color * 1.2
-	btn.add_theme_stylebox_override("pressed", pressed_style)
-	btn.add_theme_color_override("font_pressed_color", Color.WHITE)
+	if use_theme_styling and powerup_hover_theme:
+		btn.theme = powerup_hover_theme
+	else:
+		# Normal style
+		var normal_style = StyleBoxFlat.new()
+		normal_style.bg_color = Color(0.12, 0.1, 0.15, 0.95)
+		normal_style.border_color = accent_color * 0.7
+		normal_style.set_border_width_all(3)
+		normal_style.set_corner_radius_all(10)
+		btn.add_theme_stylebox_override("normal", normal_style)
+		btn.add_theme_color_override("font_color", accent_color)
+		
+		# Hover style
+		var hover_style = normal_style.duplicate()
+		hover_style.bg_color = Color(0.18, 0.15, 0.22, 0.98)
+		hover_style.border_color = accent_color
+		btn.add_theme_stylebox_override("hover", hover_style)
+		btn.add_theme_color_override("font_hover_color", accent_color * 1.2)
+		
+		# Pressed style
+		var pressed_style = normal_style.duplicate()
+		pressed_style.bg_color = accent_color * 0.3
+		pressed_style.border_color = accent_color * 1.2
+		btn.add_theme_stylebox_override("pressed", pressed_style)
+		btn.add_theme_color_override("font_pressed_color", Color.WHITE)
 	
 	return btn
 
