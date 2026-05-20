@@ -483,7 +483,7 @@ func _update_completion_status() -> void:
 func _on_up_pressed() -> void:
 	if channel_manager:
 		channel_manager.increment_channel()
-		_pulse_display()
+		_trigger_channel_glitch(+1)
 
 
 ## _on_down_pressed() -> void
@@ -492,7 +492,7 @@ func _on_up_pressed() -> void:
 func _on_down_pressed() -> void:
 	if channel_manager:
 		channel_manager.decrement_channel()
-		_pulse_display()
+		_trigger_channel_glitch(-1)
 
 
 ## _on_start_pressed() -> void
@@ -586,9 +586,58 @@ func _on_channel_changed(_new_channel: int) -> void:
 	_update_display()
 
 
+## _trigger_channel_glitch(direction: int) -> void
+##
+## Triggers a subtle CRT TV glitch burst when changing channels.
+## Spikes shader parameters, shakes the panel, stretches the display,
+## and plays a static burst sound.
+func _trigger_channel_glitch(direction: int) -> void:
+	# --- Shader spike ---
+	if _shader_material:
+		_shader_material.set_shader_parameter("glitch_intensity", 0.6)
+		_shader_material.set_shader_parameter("horizontal_tear", 0.25)
+		_shader_material.set_shader_parameter("brightness_spike", 0.4)
+		_shader_material.set_shader_parameter("rgb_split", 0.04)
+		
+		var tween = create_tween().set_parallel()
+		tween.tween_property(_shader_material, "shader_parameter/glitch_intensity", 0.0, 0.25).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+		tween.tween_property(_shader_material, "shader_parameter/horizontal_tear", 0.0, 0.2)
+		tween.tween_property(_shader_material, "shader_parameter/brightness_spike", 0.0, 0.15)
+		tween.tween_property(_shader_material, "shader_parameter/rgb_split", 0.0, 0.2)
+	
+	# --- Panel micro-shake ---
+	_shake_panel(0.12, 3.0)
+	
+	# --- Display stretch ---
+	var target_scale_y = 1.15 if direction > 0 else 0.85
+	var stretch_tween = create_tween()
+	stretch_tween.tween_property(channel_label, "scale:y", target_scale_y, 0.05)
+	stretch_tween.tween_property(channel_label, "scale:y", 1.0, 0.13).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	
+	# --- Audio ---
+	var audio_manager = get_node_or_null("/root/AudioManager")
+	if audio_manager and audio_manager.has_method("play_static_burst"):
+		audio_manager.play_static_burst()
+
+
+## _shake_panel(duration: float, intensity: float) -> void
+##
+## Brief elastic shake on the remote panel for mechanical juice.
+func _shake_panel(duration: float, intensity: float) -> void:
+	if not panel_container:
+		return
+	
+	var original_pos = panel_container.position
+	var shake_tween = create_tween()
+	shake_tween.tween_property(panel_container, "position:x", original_pos.x + intensity, duration * 0.25).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	shake_tween.tween_property(panel_container, "position:x", original_pos.x - intensity * 0.6, duration * 0.25).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	shake_tween.tween_property(panel_container, "position:x", original_pos.x, duration * 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
 ## _pulse_display() -> void
 ##
 ## Creates a visual pulse effect on the channel display.
+## Kept for backward compatibility; channel changes use _trigger_channel_glitch.
 func _pulse_display() -> void:
 	var tween = create_tween()
 	tween.tween_property(channel_label, "scale", Vector2(1.15, 1.15), 0.1)

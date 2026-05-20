@@ -16,6 +16,12 @@ uniform float chromatic_drift : hint_range(0.0, 0.1) = 0.02;
 uniform float noise_strength : hint_range(0.0, 0.5) = 0.15;
 uniform float scanline_intensity : hint_range(0.0, 1.0) = 0.4;
 
+// Glitch parameters for CRT channel-change effect
+uniform float glitch_intensity : hint_range(0.0, 1.0) = 0.0;
+uniform float horizontal_tear : hint_range(0.0, 1.0) = 0.0;
+uniform float brightness_spike : hint_range(0.0, 1.0) = 0.0;
+uniform float rgb_split : hint_range(0.0, 0.15) = 0.0;
+
 // Pseudo-random noise function
 float random(vec2 st) {
 	return fract(sin(dot(st, vec2(12.9898, 78.233))) * 43758.5453);
@@ -39,6 +45,13 @@ void fragment() {
 	float pixel_size = length(screen_size) / pixel_filter;
 	vec2 uv = floor(UV * screen_size / pixel_size) * pixel_size / screen_size;
 	
+	// Horizontal tearing (CRT channel-change artifact)
+	if (horizontal_tear > 0.0) {
+		float row_rand = random(vec2(floor(uv.y * 200.0), floor(TIME * 60.0)));
+		float tear_offset = (row_rand - 0.5) * horizontal_tear * 0.15;
+		uv.x += tear_offset;
+	}
+	
 	float time_var = TIME * wave_speed;
 	
 	// Multi-frequency wave displacement
@@ -48,10 +61,11 @@ void fragment() {
 	
 	float total_wave = wave1 + wave2 + wave3;
 	
-	// Apply chromatic drift (VHS color separation)
-	vec2 uv_r = vec2(uv.x + total_wave + chromatic_drift, uv.y);
+	// Apply chromatic drift (VHS color separation) + glitch rgb split
+	float total_chromatic = chromatic_drift + rgb_split;
+	vec2 uv_r = vec2(uv.x + total_wave + total_chromatic, uv.y);
 	vec2 uv_g = vec2(uv.x + total_wave, uv.y);
-	vec2 uv_b = vec2(uv.x + total_wave - chromatic_drift, uv.y);
+	vec2 uv_b = vec2(uv.x + total_wave - total_chromatic, uv.y);
 	
 	// Sample colors with drift
 	float r_channel = fract(uv_r.x + uv_r.y * 0.3 + time_var * 0.1);
@@ -62,9 +76,10 @@ void fragment() {
 	vec3 wave_color = mix(colour_1.rgb, colour_2.rgb, r_channel);
 	wave_color = mix(wave_color, colour_3.rgb, g_channel * 0.5);
 	
-	// Add noise (TV static)
+	// Add noise (TV static) — boosted during glitch
 	float noise_val = noise(uv * 100.0, floor(time_var * 10.0) * 0.1);
-	wave_color += vec3(noise_val * noise_strength);
+	float boosted_noise = noise_val * noise_strength * (1.0 + glitch_intensity * 3.0);
+	wave_color += vec3(boosted_noise);
 	
 	// Rolling interference bars
 	float bar_pos = mod(uv.y + time_var * 0.2, 1.0);
@@ -74,6 +89,9 @@ void fragment() {
 	// Scanlines
 	float scanline = sin(uv.y * screen_size.y * 1.5) * 0.5 + 0.5;
 	wave_color *= 1.0 - (scanline * scanline_intensity * 0.5);
+	
+	// Brightness spike (overdrive)
+	wave_color *= 1.0 + brightness_spike * 0.5;
 	
 	// Vignette effect
 	vec2 center_dist = abs(uv - vec2(0.5));

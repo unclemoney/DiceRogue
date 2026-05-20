@@ -94,6 +94,7 @@ var confirm_sound: AudioStream
 var dice_land_sound: AudioStream
 var sell_sound: AudioStream
 var round_start_sound: AudioStream
+var static_burst_sound: AudioStream
 
 # Audio players - pooled for dice (one per die), single for others
 var dice_players: Array[AudioStreamPlayer] = []
@@ -112,6 +113,7 @@ var confirm_player: AudioStreamPlayer
 var dice_land_player: AudioStreamPlayer
 var sell_player: AudioStreamPlayer
 var round_start_player: AudioStreamPlayer
+var static_burst_player: AudioStreamPlayer
 
 # Roll tracking - reset after scoring
 var current_roll_number: int = 0
@@ -312,6 +314,13 @@ func _load_audio_resources() -> void:
 		print("[AudioManager] Loaded round start sound")
 	else:
 		push_warning("[AudioManager] Failed to load round start sound")
+	
+	# Load static burst sound for CRT channel change
+	static_burst_sound = load("res://Resources/Audio/UI/STATIC_BURST.wav")
+	if static_burst_sound:
+		print("[AudioManager] Loaded static burst sound")
+	else:
+		push_warning("[AudioManager] Failed to load static burst sound")
 
 
 ## _create_audio_players()
@@ -415,6 +424,12 @@ func _create_audio_players() -> void:
 	round_start_player.name = "RoundStartPlayer"
 	round_start_player.volume_db = master_volume_db
 	add_child(round_start_player)
+	
+	# Create static burst player
+	static_burst_player = AudioStreamPlayer.new()
+	static_burst_player.name = "StaticBurstPlayer"
+	static_burst_player.volume_db = master_volume_db
+	add_child(static_burst_player)
 
 
 ## play_dice_roll(die_index: int, roll_number: int)
@@ -587,7 +602,23 @@ func set_master_volume(volume_db: float) -> void:
 	if round_start_player:
 		round_start_player.volume_db = volume_db
 	
+	if static_burst_player:
+		static_burst_player.volume_db = volume_db
+	
 	print("[AudioManager] Master volume set to: %.1f dB" % volume_db)
+
+
+## play_static_burst()
+##
+## Play a brief static burst for CRT channel-change glitch effect.
+func play_static_burst() -> void:
+	if not static_burst_sound:
+		return
+	
+	static_burst_player.stream = static_burst_sound
+	static_burst_player.pitch_scale = randf_range(0.95, 1.05)
+	static_burst_player.volume_db = master_volume_db
+	static_burst_player.play()
 
 
 ## play_button_click()
