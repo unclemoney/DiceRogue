@@ -489,48 +489,46 @@ func play_preset(node: CanvasItem, preset_name: String, profile: JuiceProfile = 
 			_center_pivot(node)
 			node.scale = Vector2.ZERO
 			node.modulate.a = 0.0
-			tween = TweenFX.pop_in(node, dur, profile.overshoot_strength)
+			tween = TweenFX.pop_in(node, dur, profile.overshoot_strength, delay)
 		"fade_in":
 			node.modulate.a = 0.0
-			tween = TweenFX.fade_in(node, profile.fade_in_duration)
+			tween = TweenFX.fade_in(node, profile.fade_in_duration, delay)
 		"fly_in_left":
-			tween = TweenFX.fly_in(node, Vector2.LEFT, dist, dur)
+			tween = TweenFX.fly_in(node, Vector2.LEFT, dist, dur, delay)
 		"fly_in_right":
-			tween = TweenFX.fly_in(node, Vector2.RIGHT, dist, dur)
+			tween = TweenFX.fly_in(node, Vector2.RIGHT, dist, dur, delay)
 		"fly_in_up":
-			tween = TweenFX.fly_in(node, Vector2.UP, dist, dur)
+			tween = TweenFX.fly_in(node, Vector2.UP, dist, dur, delay)
 		"fly_in_down":
-			tween = TweenFX.fly_in(node, Vector2.DOWN, dist, dur)
+			tween = TweenFX.fly_in(node, Vector2.DOWN, dist, dur, delay)
 		"overshoot_pop":
 			_center_pivot(node)
 			node.scale = Vector2.ONE * profile.pop_in_scale
 			node.modulate.a = 0.0
-			tween = TweenFX.overshoot_pop_in(node, dur, profile.overshoot_strength)
+			tween = TweenFX.overshoot_pop_in(node, dur, profile.overshoot_strength, delay)
 		"slide_and_fade":
-			tween = TweenFX.slide_and_fade_in(node, Vector2.LEFT, dist, dur)
+			tween = TweenFX.slide_and_fade_in(node, Vector2.LEFT, dist, dur, delay)
 
 		# ── Exit presets ──
 		"pop_out":
 			_center_pivot(node)
-			tween = TweenFX.pop_out(node, dur * 0.8, profile.overshoot_strength)
+			tween = TweenFX.pop_out(node, dur * 0.8, profile.overshoot_strength, delay)
 		"fade_out":
-			tween = TweenFX.fade_out(node, profile.fade_in_duration)
+			tween = TweenFX.fade_out(node, profile.fade_in_duration, delay)
 		"fly_out_left":
-			tween = TweenFX.fly_out(node, Vector2.LEFT, dist, dur)
+			tween = TweenFX.fly_out(node, Vector2.LEFT, dist, dur, delay)
 		"fly_out_right":
-			tween = TweenFX.fly_out(node, Vector2.RIGHT, dist, dur)
+			tween = TweenFX.fly_out(node, Vector2.RIGHT, dist, dur, delay)
 		"fly_out_up":
-			tween = TweenFX.fly_out(node, Vector2.UP, dist, dur)
+			tween = TweenFX.fly_out(node, Vector2.UP, dist, dur, delay)
 		"fly_out_down":
-			tween = TweenFX.fly_out(node, Vector2.DOWN, dist, dur)
+			tween = TweenFX.fly_out(node, Vector2.DOWN, dist, dur, delay)
 		"slide_and_fade_out":
-			tween = TweenFX.slide_and_fade_out(node, Vector2.RIGHT, dist, dur)
+			tween = TweenFX.slide_and_fade_out(node, Vector2.RIGHT, dist, dur, delay)
 		_:
 			push_warning("[TweenFXHelper] Unknown preset: " + preset_name)
 			return null
 
-	if tween and delay > 0.0:
-		tween.set_delay(delay)
 	return tween
 
 

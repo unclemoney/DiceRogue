@@ -40,6 +40,10 @@ var continue_button: Button
 var settings_button: Button
 var tutorial_button: Button
 var quit_button: Button
+var _menu_panel: PanelContainer
+var _menu_animator: ContainerAnimator
+var _profile_panel: PanelContainer
+var _profile_animator: ContainerAnimator
 var rename_dialog: ConfirmationDialog
 var rename_line_edit: LineEdit  # Store direct reference to LineEdit
 var delete_dialog: ConfirmationDialog
@@ -77,6 +81,9 @@ func _ready() -> void:
 	_update_continue_button_visibility()
 	_animate_title_entry()
 	_start_dice_spawner()
+	
+	# Wait for dice to start falling, then cascade the menu buttons in
+	call_deferred("_trigger_menu_entrance")
 	
 	# Init mouse wind tracker to avoid explosive first-frame velocity
 	_prev_mouse_pos = get_global_mouse_position()
@@ -232,7 +239,12 @@ func _build_ui() -> void:
 	
 	# Navigation buttons section
 	_build_navigation_section(main_container)
-	
+	# Menu panel starts invisible -- dice fall first, then cascade in
+	if _menu_panel:
+		_menu_panel.visible = false
+	if _profile_panel:
+		_profile_panel.visible = false
+
 	# Build rename dialog
 	_build_rename_dialog()
 	
@@ -298,6 +310,7 @@ func _build_title_section(parent: Control) -> void:
 ## _build_profile_section(parent)
 ##
 ## Builds the profile buttons and "Playing as" label.
+## The buttons live inside a centred PanelContainer that drops in after the nav menu.
 func _build_profile_section(parent: Control) -> void:
 	var profile_section = VBoxContainer.new()
 	profile_section.name = "ProfileSection"
@@ -313,22 +326,49 @@ func _build_profile_section(parent: Control) -> void:
 	playing_as_label.add_theme_color_override("font_color", Color(0.6, 0.8, 0.6, 1.0))  # Green tint
 	profile_section.add_child(playing_as_label)
 	
-	# Center container for profile buttons
-	var profile_center = CenterContainer.new()
-	profile_center.name = "ProfileCenter"
-	profile_section.add_child(profile_center)
+	# Wrapper Control — same centre fix as the nav panel
+	var profile_wrapper = Control.new()
+	profile_wrapper.name = "ProfileWrapper"
+	profile_section.add_child(profile_wrapper)
+	
+	# Profile Panel — wraps the profile buttons
+	_profile_panel = PanelContainer.new()
+	_profile_panel.name = "ProfilePanel"
+	_profile_panel.custom_minimum_size = Vector2(600, 0)
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.06, 0.08, 0.12, 0.0)
+	panel_style.border_color = Color(0.25, 0.35, 0.4, 0.0)
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(16)
+	panel_style.set_content_margin_all(12)
+	_profile_panel.add_theme_stylebox_override("panel", panel_style)
+	var main_container_width := parent.offset_right - parent.offset_left
+	var panel_x := (main_container_width - _profile_panel.custom_minimum_size.x) * 0.5
+	_profile_panel.position = Vector2(panel_x, 0.0)
+	profile_wrapper.add_child(_profile_panel)
 	
 	# Profile button container
 	profile_button_container = HBoxContainer.new()
 	profile_button_container.name = "ProfileButtons"
+	profile_button_container.alignment = BoxContainer.ALIGNMENT_CENTER
 	profile_button_container.add_theme_constant_override("separation", 20)
-	profile_center.add_child(profile_button_container)
+	_profile_panel.add_child(profile_button_container)
 	
 	# Create 3 profile buttons
 	for i in range(1, 4):
 		var btn = _create_profile_button(i)
 		profile_button_container.add_child(btn)
 		profile_buttons.append(btn)
+	
+	# ContainerAnimator — staggered cascade entrance for profile buttons
+	_profile_animator = ContainerAnimator.new()
+	_profile_animator.name = "ProfileAnimator"
+	_profile_animator.trigger_mode = ContainerAnimator.TriggerMode.MANUAL
+	_profile_animator.entrance_preset = "fly_in_down"
+	_profile_animator.stagger_pattern = ContainerAnimator.StaggerPattern.CASCADE
+	_profile_animator.stagger_delay = 0.1
+	_profile_animator.delay_before_start = 0.15
+	profile_button_container.add_child(_profile_animator)
 
 
 ## _create_profile_button(slot)
@@ -338,7 +378,7 @@ func _build_profile_section(parent: Control) -> void:
 func _create_profile_button(slot: int) -> Button:
 	var btn = Button.new()
 	btn.name = "ProfileButton%d" % slot
-	btn.custom_minimum_size = Vector2(180, 80)
+	btn.custom_minimum_size = Vector2(180, 60)
 	btn.add_theme_font_override("font", vcr_font)
 	btn.add_theme_font_size_override("font_size", 16)
 	
@@ -383,17 +423,39 @@ func _create_profile_button(slot: int) -> Button:
 
 ## _build_navigation_section(parent)
 ##
-## Builds the main navigation buttons (New Game, Settings, Quit).
+## Builds the main navigation buttons inside a PanelContainer.
+## A ContainerAnimator handles the staggered cascade entrance.
 func _build_navigation_section(parent: Control) -> void:
-	# Center container
-	var nav_center = CenterContainer.new()
-	nav_center.name = "NavigationCenter"
-	parent.add_child(nav_center)
+	# Wrapper Control — VBoxContainer does not expand children in the
+	# perpendicular (horizontal) axis, so CenterContainer ends up left-aligned.
+	# A plain Control wrapper with an explicitly centred panel avoids the
+	# container-width problem and the CenterContainer hidden-child skip.
+	var nav_wrapper = Control.new()
+	nav_wrapper.name = "NavWrapper"
+	parent.add_child(nav_wrapper)
+	
+	# Menu Panel — wraps the nav buttons
+	_menu_panel = PanelContainer.new()
+	_menu_panel.name = "MenuPanel"
+	_menu_panel.custom_minimum_size = Vector2(320, 0)
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.08, 0.06, 0.12, 0.0) #.85
+	panel_style.border_color = Color(0.3, 0.25, 0.4, 0.0) #.6
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(16)
+	panel_style.set_content_margin_all(12)
+	_menu_panel.add_theme_stylebox_override("panel", panel_style)
+	# Centre the panel within the 800 px main_container width
+	var main_container_width := parent.offset_right - parent.offset_left
+	var panel_x := (main_container_width - _menu_panel.custom_minimum_size.x) * 0.5
+	_menu_panel.position = Vector2(panel_x, 50.0)
+	nav_wrapper.add_child(_menu_panel)
 	
 	button_container = VBoxContainer.new()
 	button_container.name = "ButtonContainer"
+	button_container.alignment = BoxContainer.ALIGNMENT_CENTER
 	button_container.add_theme_constant_override("separation", 12)
-	nav_center.add_child(button_container)
+	_menu_panel.add_child(button_container)
 	
 	# New Game button
 	new_game_button = _create_nav_button("NEW GAME", Color(0.3, 0.7, 0.4, 1.0))
@@ -429,6 +491,16 @@ func _build_navigation_section(parent: Control) -> void:
 		btn.mouse_entered.connect(func(): _tfx.button_hover(btn))
 		btn.mouse_exited.connect(func(): _tfx.button_unhover(btn))
 		btn.pressed.connect(func(): _tfx.button_press(btn))
+	
+	# ContainerAnimator — staggered cascade entrance for nav buttons
+	_menu_animator = ContainerAnimator.new()
+	_menu_animator.name = "MenuAnimator"
+	_menu_animator.trigger_mode = ContainerAnimator.TriggerMode.MANUAL
+	_menu_animator.entrance_preset = "fly_in_down"
+	_menu_animator.stagger_pattern = ContainerAnimator.StaggerPattern.CASCADE
+	_menu_animator.stagger_delay = 0.1
+	_menu_animator.delay_before_start = 0.15
+	button_container.add_child(_menu_animator)
 
 
 ## _create_nav_button(text, accent_color)
@@ -1084,6 +1156,42 @@ func _process(delta: float) -> void:
 			var force_dir = mouse_vel.normalized()
 			var force = mouse_vel.length() * MOUSE_WIND_STRENGTH * (1.0 - dist / MOUSE_WIND_RADIUS) * delta
 			die.apply_central_impulse(force_dir * force)
+
+## _trigger_menu_entrance()
+##
+## Waits for the background dice to fall, then drops the menu panel
+## in from the top of the screen and cascades the nav buttons down
+## into their landing positions.
+## The profile panel follows slightly after the nav buttons begin cascading.
+func _trigger_menu_entrance() -> void:
+	# Allow dice ~0.8s to start falling before menu appears
+	await get_tree().create_timer(0.8).timeout
+	if not _menu_panel or not is_instance_valid(_menu_panel):
+		return
+	
+	# Drop the panel in from above the viewport
+	_menu_panel.visible = true
+	TweenFX.fly_in(_menu_panel, Vector2.DOWN, 500.0, 0.8)
+	
+	# Wait for panel to start landing, then cascade buttons
+	await get_tree().create_timer(0.25).timeout
+	
+	if _menu_animator and is_instance_valid(_menu_animator):
+		_menu_animator.trigger_entrance()
+		print("[MainMenu] Menu panel and buttons cascaded in after dice fall")
+	
+	# Profile panel drops in slightly after nav buttons start cascading
+	await get_tree().create_timer(0.5).timeout
+	if _profile_panel and is_instance_valid(_profile_panel):
+		_profile_panel.visible = true
+		TweenFX.fly_in(_profile_panel, Vector2.DOWN, 300.0, 0.6)
+		print("[MainMenu] Profile panel dropped in")
+	
+	await get_tree().create_timer(0.25).timeout
+	if _profile_animator and is_instance_valid(_profile_animator):
+		_profile_animator.trigger_entrance()
+		print("[MainMenu] Profile buttons cascaded in")
+
 
 func _update_continue_button_visibility() -> void:
 	if not continue_button:

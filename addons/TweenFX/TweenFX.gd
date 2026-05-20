@@ -651,19 +651,19 @@ func flash(node: CanvasItem, duration: float = 0.1, flashes: int = 3) -> Tween:
 	return tween
 
 ## Fades the node in from transparent.
-func fade_in(node: CanvasItem, duration: float = 0.5) -> Tween:
+func fade_in(node: CanvasItem, duration: float = 0.5, delay: float = 0.0) -> Tween:
 	TweenManager.stop(node, Animations.FADE_IN)
 	node.modulate.a = 0.0
 	var tween = node.get_tree().create_tween()
-	tween.tween_property(node, "modulate:a", 1.0, duration).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN)
+	tween.tween_property(node, "modulate:a", 1.0, duration).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN).set_delay(delay)
 	TweenManager.track(node, Animations.FADE_IN, tween)
 	return tween
 
 ## Fades the node out to transparent.
-func fade_out(node: CanvasItem, duration: float = 0.5) -> Tween:
+func fade_out(node: CanvasItem, duration: float = 0.5, delay: float = 0.0) -> Tween:
 	TweenManager.stop(node, Animations.FADE_OUT)
 	var tween = node.get_tree().create_tween()
-	tween.tween_property(node, "modulate:a", 0.0, duration).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_OUT)
+	tween.tween_property(node, "modulate:a", 0.0, duration).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_OUT).set_delay(delay)
 	TweenManager.track(node, Animations.FADE_OUT, tween)
 	return tween
 
@@ -730,25 +730,25 @@ func spin(node: CanvasItem, duration: float = 0.5, revolutions: float = 1.0) -> 
 	return tween
 
 ## Scales in from zero with a slight overshoot.
-func pop_in(node: CanvasItem, duration: float = 0.3, overshoot: float = 0.1) -> Tween:
+func pop_in(node: CanvasItem, duration: float = 0.3, overshoot: float = 0.1, delay: float = 0.0) -> Tween:
 	TweenManager.stop(node, Animations.POP_IN)
 	var original_scale: Vector2 = node.scale
 	var original_alpha := node.modulate.a
 	node.scale = Vector2.ZERO
 	node.modulate.a = 0.0
 	var tween = node.get_tree().create_tween()
-	tween.tween_property(node, "scale", original_scale * (1.0 + overshoot), duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(node, "scale", original_scale * (1.0 + overshoot), duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).set_delay(delay)
 	tween.tween_property(node, "scale", original_scale, duration * 0.33)
 	tween.parallel().tween_property(node, "modulate:a", original_alpha, duration * 0.66)
 	TweenManager.track(node, Animations.POP_IN, tween)
 	return tween
 
 ## Scales out to zero with a slight pull in before vanishing.
-func pop_out(node: CanvasItem, duration: float = 0.3, overshoot: float = 0.1) -> Tween:
+func pop_out(node: CanvasItem, duration: float = 0.3, overshoot: float = 0.1, delay: float = 0.0) -> Tween:
 	TweenManager.stop(node, Animations.POP_OUT)
 	var original_scale: Vector2 = node.scale
 	var tween = node.get_tree().create_tween()
-	tween.tween_property(node, "scale", original_scale * (1.0 + overshoot), duration * 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(node, "scale", original_scale * (1.0 + overshoot), duration * 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).set_delay(delay)
 	tween.tween_property(node, "scale", Vector2.ZERO, duration * 0.8).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 	tween.parallel().tween_property(node, "modulate:a", 0.0, duration * 0.8)
 	TweenManager.track(node, Animations.POP_OUT, tween)
@@ -889,32 +889,34 @@ func impact_land(node: CanvasItem, duration: float = 0.5) -> Tween:
 	return tween
 
 ## Flies the node in from a direction with fade.
-func fly_in(node: CanvasItem, direction: Vector2 = Vector2.LEFT, distance: float = 100.0, duration: float = 0.4) -> Tween:
+func fly_in(node: CanvasItem, direction: Vector2 = Vector2.LEFT, distance: float = 100.0, duration: float = 0.4, delay: float = 0.0) -> Tween:
 	TweenManager.stop(node, Animations.FLY_IN)
 	var original_pos: Vector2 = node.position
 	var original_alpha: float = node.modulate.a
-	node.position = original_pos - direction.normalized() * distance
+	var start_pos: Vector2 = original_pos - direction.normalized() * distance
 	node.modulate.a = 0.0
 	var tween = node.get_tree().create_tween()
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	tween.tween_property(node, "position", original_pos, duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.parallel().tween_property(node, "modulate:a", original_alpha, duration * 0.8)
+	tween.tween_property(node, "position", original_pos, duration).from(start_pos).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).set_delay(delay)
+	tween.parallel().tween_property(node, "modulate:a", original_alpha, duration * 0.8).from(0.0)
 	TweenManager.track(node, Animations.FLY_IN, tween)
 	return tween
 
 ## Flies the node out in a direction with fade.
-func fly_out(node: CanvasItem, direction: Vector2 = Vector2.RIGHT, distance: float = 100.0, duration: float = 0.35) -> Tween:
+func fly_out(node: CanvasItem, direction: Vector2 = Vector2.RIGHT, distance: float = 100.0, duration: float = 0.35, delay: float = 0.0) -> Tween:
 	TweenManager.stop(node, Animations.FLY_OUT)
 	var original_pos: Vector2 = node.position
+	var end_pos: Vector2 = original_pos + direction.normalized() * distance
+	var original_alpha: float = node.modulate.a
 	var tween = node.get_tree().create_tween()
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	tween.tween_property(node, "position", original_pos + direction.normalized() * distance, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tween.parallel().tween_property(node, "modulate:a", 0.0, duration * 0.7)
+	tween.tween_property(node, "position", end_pos, duration).from(original_pos).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN).set_delay(delay)
+	tween.parallel().tween_property(node, "modulate:a", 0.0, duration * 0.7).from(original_alpha)
 	TweenManager.track(node, Animations.FLY_OUT, tween)
 	return tween
 
 ## Scales in from 0.7 with a big overshoot, then elastic settle.
-func overshoot_pop_in(node: CanvasItem, duration: float = 0.4, overshoot: float = 0.15) -> Tween:
+func overshoot_pop_in(node: CanvasItem, duration: float = 0.4, overshoot: float = 0.15, delay: float = 0.0) -> Tween:
 	TweenManager.stop(node, Animations.OVERSHOOT_POP_IN)
 	var original_scale: Vector2 = node.scale
 	var original_alpha: float = node.modulate.a
@@ -922,34 +924,36 @@ func overshoot_pop_in(node: CanvasItem, duration: float = 0.4, overshoot: float 
 	node.modulate.a = 0.0
 	var tween = node.get_tree().create_tween()
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	tween.tween_property(node, "scale", original_scale * (1.0 + overshoot), duration * 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(node, "scale", original_scale * (1.0 + overshoot), duration * 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).set_delay(delay)
 	tween.tween_property(node, "scale", original_scale, duration * 0.4).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	tween.parallel().tween_property(node, "modulate:a", original_alpha, duration)
 	TweenManager.track(node, Animations.OVERSHOOT_POP_IN, tween)
 	return tween
 
 ## Slides in from a direction with a smooth fade. Softer than fly_in.
-func slide_and_fade_in(node: CanvasItem, direction: Vector2 = Vector2.LEFT, distance: float = 80.0, duration: float = 0.4) -> Tween:
+func slide_and_fade_in(node: CanvasItem, direction: Vector2 = Vector2.LEFT, distance: float = 80.0, duration: float = 0.4, delay: float = 0.0) -> Tween:
 	TweenManager.stop(node, Animations.SLIDE_AND_FADE_IN)
 	var original_pos: Vector2 = node.position
 	var original_alpha: float = node.modulate.a
-	node.position = original_pos - direction.normalized() * distance
+	var start_pos: Vector2 = original_pos - direction.normalized() * distance
 	node.modulate.a = 0.0
 	var tween = node.get_tree().create_tween()
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	tween.tween_property(node, "position", original_pos, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.parallel().tween_property(node, "modulate:a", original_alpha, duration * 0.7)
+	tween.tween_property(node, "position", original_pos, duration).from(start_pos).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT).set_delay(delay)
+	tween.parallel().tween_property(node, "modulate:a", original_alpha, duration * 0.7).from(0.0)
 	TweenManager.track(node, Animations.SLIDE_AND_FADE_IN, tween)
 	return tween
 
 ## Slides out in a direction with a smooth fade.
-func slide_and_fade_out(node: CanvasItem, direction: Vector2 = Vector2.RIGHT, distance: float = 80.0, duration: float = 0.35) -> Tween:
+func slide_and_fade_out(node: CanvasItem, direction: Vector2 = Vector2.RIGHT, distance: float = 80.0, duration: float = 0.35, delay: float = 0.0) -> Tween:
 	TweenManager.stop(node, Animations.SLIDE_AND_FADE_OUT)
 	var original_pos: Vector2 = node.position
+	var end_pos: Vector2 = original_pos + direction.normalized() * distance
+	var original_alpha: float = node.modulate.a
 	var tween = node.get_tree().create_tween()
 	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
-	tween.tween_property(node, "position", original_pos + direction.normalized() * distance, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tween.parallel().tween_property(node, "modulate:a", 0.0, duration * 0.8)
+	tween.tween_property(node, "position", end_pos, duration).from(original_pos).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN).set_delay(delay)
+	tween.parallel().tween_property(node, "modulate:a", 0.0, duration * 0.8).from(original_alpha)
 	TweenManager.track(node, Animations.SLIDE_AND_FADE_OUT, tween)
 	return tween
 	#endregion
