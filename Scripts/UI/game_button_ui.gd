@@ -41,6 +41,13 @@ var _is_shop_pulsing: bool = false
 var _input_cooldown: float = 0.0
 const INPUT_COOLDOWN_DURATION: float = 0.75  # 750ms between key presses
 
+## General button action cooldown to prevent mouse spam on all gameplay buttons
+var _button_action_cooldown: float = 0.0
+const BUTTON_ACTION_COOLDOWN: float = 0.35  # 350ms between button actions
+
+## Prevents roll from being triggered while a roll animation is already in progress
+var _roll_in_progress: bool = false
+
 
 func _ready():
 	print("ScoreCardUI ready: ", score_card_ui_path)
@@ -121,6 +128,10 @@ func _process(delta: float) -> void:
 		_input_cooldown -= delta
 		if _input_cooldown < 0.0:
 			_input_cooldown = 0.0
+	if _button_action_cooldown > 0.0:
+		_button_action_cooldown -= delta
+		if _button_action_cooldown < 0.0:
+			_button_action_cooldown = 0.0
 
 
 ## _unhandled_input(event)
@@ -333,6 +344,13 @@ func trigger_roll() -> void:
 
 
 func _on_roll_button_pressed() -> void:
+	# Spam guards: cooldown, in-progress lock, and immediate disable
+	if _button_action_cooldown > 0.0 or _roll_in_progress:
+		return
+	_button_action_cooldown = BUTTON_ACTION_COOLDOWN
+	_roll_in_progress = true
+	roll_button.disabled = true
+	
 	# Stop the pulse animation when roll button is pressed
 	_stop_roll_button_pulse()
 	
@@ -368,6 +386,11 @@ func _on_dice_roll_complete() -> void:
 	score_card_ui.turn_scored = false
 	turn_tracker.use_roll()
 	
+	# Clear roll lock and re-enable button if rolls remain
+	_roll_in_progress = false
+	if turn_tracker.rolls_left > 0:
+		roll_button.disabled = false
+	
 	# Now that dice have settled, get their values and emit signal
 	var dice_values = dice_hand.get_current_dice_values()
 	emit_signal("dice_rolled", dice_values)
@@ -377,6 +400,10 @@ func _on_dice_roll_complete() -> void:
 		score_card_ui.update_best_hand_preview(DiceResults.values)
 
 func _on_next_turn_button_pressed() -> void:
+	if _button_action_cooldown > 0.0:
+		return
+	_button_action_cooldown = BUTTON_ACTION_COOLDOWN
+	
 	# Notify tutorial manager of next turn action
 	var tutorial_manager = get_node_or_null("/root/TutorialManager")
 	if tutorial_manager and tutorial_manager.is_tutorial_active():
@@ -441,6 +468,10 @@ func _hand_scored_disable() -> void:
 	_stop_roll_button_pulse()
 
 func _on_shop_button_pressed() -> void:
+	if _button_action_cooldown > 0.0:
+		return
+	_button_action_cooldown = BUTTON_ACTION_COOLDOWN
+	
 	print("[GameButtonUI] Shop button pressed")
 	# Stop the pulse animation when shop button is pressed
 	_stop_shop_button_pulse()
@@ -536,6 +567,10 @@ func _on_challenge_completed(challenge_id: String) -> void:
 			print("[GameButtonUI] Challenge ID mismatch:", challenge_id, "vs", round_manager.current_challenge_id)
 
 func _on_next_round_button_pressed() -> void:
+	if _button_action_cooldown > 0.0:
+		return
+	_button_action_cooldown = BUTTON_ACTION_COOLDOWN
+	
 	print("[GameButtonUI] Next Round button pressed")
 	
 	# Close shop if currently open
@@ -624,6 +659,8 @@ func _on_rolls_updated(rolls_left: int) -> void:
 ##
 ## Handles feedback when player runs out of rolls.
 func _on_rolls_exhausted() -> void:
+	roll_button.disabled = true
+	_roll_in_progress = false
 	_hide_tension_vignette()
 	_tfx.stop_effect(roll_button)
 	

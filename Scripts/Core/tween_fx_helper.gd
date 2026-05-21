@@ -58,6 +58,9 @@ const GROUP_DESCRIPTIONS := {
 ## Which groups are currently enabled. All default to true.
 var _enabled_groups: Dictionary = {}
 
+## Tracks the original scale of each button to prevent compounding on rapid clicks.
+var _button_base_scales: Dictionary = {}
+
 ## Signal emitted when any group is toggled — settings UI can listen.
 signal group_toggled(group: int, enabled: bool)
 
@@ -144,6 +147,11 @@ func button_press(node: CanvasItem) -> Tween:
 	if node is BaseButton and (node as BaseButton).disabled:
 		return null
 	_center_pivot(node)
+	# Prevent scale compounding when spam-clicked
+	TweenFX.stop(node, TweenFX.Animations.PUNCH_IN)
+	if not _button_base_scales.has(node):
+		_button_base_scales[node] = node.scale
+	node.scale = _button_base_scales[node]
 	return TweenFX.punch_in(node, 0.12, 0.2)
 
 ## button_denied(node)
