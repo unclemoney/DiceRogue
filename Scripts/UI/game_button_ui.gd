@@ -60,9 +60,18 @@ func _ready():
 	roll_button.pressed.connect(_on_roll_button_pressed)
 	next_turn_button.pressed.connect(_on_next_turn_button_pressed)
 	dice_hand.roll_complete.connect(_on_dice_roll_complete)
-	turn_tracker.rolls_exhausted.connect(func(): roll_button.disabled = true; _stop_roll_button_pulse())
+	turn_tracker.rolls_exhausted.connect(_on_rolls_exhausted)
 	turn_tracker.turn_started.connect(func(): roll_button.disabled = false; _start_roll_button_pulse())
+	turn_tracker.rolls_updated.connect(_on_rolls_updated)
+	
+	# Juice: create screen-edge vignette for final roll tension
+	_create_tension_vignette()
 	turn_tracker.connect("game_over",Callable(self, "_on_game_over"))
+	
+	# Score streak popup connection
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller and game_controller.has_signal("score_streak_changed"):
+		game_controller.score_streak_changed.connect(_on_score_streak_changed)
 	score_card_ui.connect("hand_scored", Callable(self, "_hand_scored_disable"))
 	score_card_ui.connect("manual_score", Callable(self, "_scored_hand_setup_next_round"))
 	
@@ -465,6 +474,9 @@ func _on_round_started(_round_number: int) -> void:
 	# Start Roll button pulse to draw attention
 	_start_roll_button_pulse()
 	
+	# Show turn banner
+	_show_turn_banner(_round_number)
+	
 	# Always spawn dice when a round starts
 	if dice_hand:
 		# Since we've just cleared the dice, dice_list should be empty
@@ -555,3 +567,132 @@ func _on_next_round_button_pressed() -> void:
 		score_card_ui.update_all()
 	
 	emit_signal("next_round_pressed")
+
+
+## _create_tension_vignette()
+##
+## Creates a red screen-edge vignette for final roll tension.
+func _create_tension_vignette() -> void:
+	var vignette = ColorRect.new()
+	vignette.name = "TensionVignette"
+	vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vignette.color = Color(0.8, 0.1, 0.1, 0.0)
+	vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	vignette.visible = false
+	add_child(vignette)
+
+
+## _show_tension_vignette()
+##
+## Fades in the red vignette at screen edges.
+func _show_tension_vignette() -> void:
+	var vignette = get_node_or_null("TensionVignette")
+	if not vignette:
+		return
+	vignette.visible = true
+	var tween = create_tween()
+	tween.tween_property(vignette, "color:a", 0.15, 0.3)
+
+
+## _hide_tension_vignette()
+##
+## Fades out the red vignette.
+func _hide_tension_vignette() -> void:
+	var vignette = get_node_or_null("TensionVignette")
+	if not vignette:
+		return
+	var tween = create_tween()
+	tween.tween_property(vignette, "color:a", 0.0, 0.2)
+	tween.tween_callback(func(): vignette.visible = false)
+
+
+## _on_rolls_updated(rolls_left)
+##
+## Handles tension effects when rolls are running low.
+func _on_rolls_updated(rolls_left: int) -> void:
+	# Roll warning flash disabled — too extreme
+	#if rolls_left == 1 and not roll_button.disabled:
+	#   _show_tension_vignette()
+	#   _tfx.threat_alarm(roll_button)
+	#else:
+	#   _hide_tension_vignette()
+	#   _tfx.stop_effect(roll_button)
+	pass
+
+
+## _on_rolls_exhausted()
+##
+## Handles feedback when player runs out of rolls.
+func _on_rolls_exhausted() -> void:
+	_hide_tension_vignette()
+	_tfx.stop_effect(roll_button)
+	
+	# Dice sigh
+	if dice_hand:
+		for die in dice_hand.dice_list:
+			if is_instance_valid(die):
+				var t = get_tree().create_tween()
+				t.tween_property(die, "scale", Vector2(0.95, 0.95), 0.2)
+				t.tween_property(die, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_ELASTIC)
+	
+	# Button shake + red flash
+	_tfx.negative_hit(roll_button)
+	
+	# "OUT OF ROLLS" toast
+	var toast = Label.new()
+	toast.text = "OUT OF ROLLS"
+	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast.add_theme_font_override("font", preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf"))
+	toast.add_theme_font_size_override("font_size", 24)
+	toast.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+	toast.position = roll_button.global_position - Vector2(60, 40)
+	get_tree().current_scene.add_child(toast)
+	var t_tween = get_tree().create_tween()
+	t_tween.tween_property(toast, "position:y", toast.position.y - 30, 0.4).set_trans(Tween.TRANS_BACK)
+	t_tween.parallel().tween_property(toast, "modulate:a", 0.0, 0.8).set_delay(0.6)
+	t_tween.tween_callback(func(): if is_instance_valid(toast): toast.queue_free())
+
+
+## _on_score_streak_changed(multiplier)
+##
+## Spawns a floating popup when score streak changes.
+func _show_turn_banner(round_number: int) -> void:
+	var banner = Label.new()
+	banner.name = "TurnBanner"
+	banner.text = "TURN %d" % round_number
+	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	banner.add_theme_font_override("font", preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf"))
+	banner.add_theme_font_size_override("font_size", 32)
+	banner.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3, 1.0))
+	banner.add_theme_color_override("font_outline_color", Color(0.4, 0.2, 0.0, 1.0))
+	banner.add_theme_constant_override("outline_size", 2)
+	
+	var viewport_size = get_viewport_rect().size
+	banner.position = Vector2(viewport_size.x / 2 - 80, -50)
+	banner.custom_minimum_size = Vector2(160, 40)
+	get_tree().current_scene.add_child(banner)
+	
+	# drop_in animation
+	var tween = get_tree().create_tween()
+	tween.tween_property(banner, "position:y", 20, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	
+	# Swoosh sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.has_method("play_panel_swoosh"):
+		audio_mgr.play_panel_swoosh()
+	
+	# Hold then fade out
+	await get_tree().create_timer(1.5).timeout
+	if is_instance_valid(banner):
+		var fade = get_tree().create_tween()
+		fade.tween_property(banner, "modulate:a", 0.0, 0.3)
+		fade.tween_callback(func(): if is_instance_valid(banner): banner.queue_free())
+
+
+func _on_score_streak_changed(multiplier: float) -> void:
+	if multiplier <= 1.0:
+		return
+	var text = "%.1fx STREAK!" % multiplier
+	var ftx = get_node_or_null("/root/FloatingTextManager")
+	if ftx:
+		ftx.show_popup_at_position(get_tree().current_scene, roll_button.global_position + Vector2(0, -50), text, Color(1.0, 0.8, 0.2), 1.2)

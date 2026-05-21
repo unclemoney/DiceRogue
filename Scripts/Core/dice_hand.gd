@@ -50,6 +50,9 @@ var _pending_exit_count: int = 0
 # Roll tracking for audio pitch progression (resets after scoring)
 var current_roll_number: int = 0
 
+# Juice: consecutive good rolls tracking for streak escalation
+var consecutive_good_rolls: int = 0
+
 @onready var roll_audio_player: AudioStreamPlayer = AudioStreamPlayer.new()
 
 ## _ready()
@@ -146,6 +149,12 @@ func spawn_dice() -> void:
 
 	print("[DiceHand] Spawn complete. Total dice in scene:", get_child_count(), "Total dice in dice_list:", dice_list.size())
 	emit_signal("dice_spawned")
+	
+	# Juice: spawn sound + collective fanfare
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.has_method("play_panel_swoosh"):
+		audio_mgr.play_panel_swoosh()
+	_animate_spawn_fanfare()
 
 	# Set all dice to ROLLABLE state initially
 	set_all_dice_rollable()
@@ -250,6 +259,41 @@ func _calculate_centered_positions(count: int) -> Array[Vector2]:
 ##
 ## Returns a varied entry offset for the die at the given index.
 ## Creates visual variety with dice entering from different directions.
+## _animate_spawn_fanfare()
+##
+## Collective flash and shiver after all dice have spawned.
+func _animate_spawn_fanfare() -> void:
+	if dice_list.is_empty():
+		return
+	
+	# Brief white flash on all dice simultaneously
+	for die in dice_list:
+		if is_instance_valid(die) and die.dice_material:
+			die.dice_material.set_shader_parameter("flash_strength", 1.0)
+	
+	# Flash fade-out tween
+	var flash_tween = get_tree().create_tween()
+	flash_tween.tween_interval(0.1)
+	flash_tween.tween_callback(func():
+		for die in dice_list:
+			if is_instance_valid(die) and die.dice_material:
+				var fade = get_tree().create_tween()
+				fade.tween_method(
+					func(v): die.dice_material.set_shader_parameter("flash_strength", v),
+					1.0, 0.0, 0.15
+				)
+	)
+	
+	# Tiny collective shiver (scale pulses)
+	var shiver_tween = get_tree().create_tween()
+	for die in dice_list:
+		if is_instance_valid(die):
+			shiver_tween.parallel().tween_property(die, "scale", Vector2(1.03, 1.03), 0.05).set_trans(Tween.TRANS_SINE)
+			shiver_tween.parallel().tween_property(die, "scale", Vector2(0.98, 0.98), 0.05).set_trans(Tween.TRANS_SINE).set_delay(0.05)
+			shiver_tween.parallel().tween_property(die, "scale", Vector2(1.01, 1.01), 0.05).set_trans(Tween.TRANS_SINE).set_delay(0.1)
+			shiver_tween.parallel().tween_property(die, "scale", Vector2(1.0, 1.0), 0.05).set_trans(Tween.TRANS_SINE).set_delay(0.15)
+
+
 func _get_entry_offset(index: int, total_count: int) -> Vector2:
 	var distance = 400.0
 	
@@ -406,6 +450,7 @@ func roll_all() -> void:
 
 	print("[DiceHand] Rolled", rolled_count, "out of", dice_list.size(), "dice")
 	_update_results()
+	_update_good_roll_streak()
 	emit_signal("roll_complete")
 	
 	# Play dice land sound after a short delay for visual sync
@@ -425,6 +470,28 @@ func _on_child_die_locked(die: Dice) -> void:
 func _update_results() -> void:
 	# Direct call to the autoloaded singleton
 	DiceResults.update_from_dice(dice_list)
+
+
+## _update_good_roll_streak()
+##
+## Tracks consecutive rolls where average die value > 4.
+## Used by DiceAnimationIntensity for streak escalation.
+func _update_good_roll_streak() -> void:
+	if dice_list.is_empty():
+		return
+	var total = 0
+	var count = 0
+	for die in dice_list:
+		if is_instance_valid(die) and die.current_state != die.DiceState.ROLLABLE:
+			total += die.value
+			count += 1
+	if count > 0:
+		var avg = float(total) / count
+		if avg > 4.0:
+			consecutive_good_rolls += 1
+		else:
+			consecutive_good_rolls = 0
+		print("[DiceHand] Good roll streak: %d (avg=%.1f)" % [consecutive_good_rolls, avg])
 
 
 ## clear_dice()
@@ -494,10 +561,20 @@ func update_dice_count() -> void:
 			
 			dice_list.append(die)
 	else:
-		# Remove excess dice
+		# Remove excess dice with expiry animation
 		for i in range(dice_count, current_count):
 			var die = dice_list.pop_back()
-			die.queue_free()
+			if is_instance_valid(die):
+				# Juice: stack expiry animation
+				var tfx = get_node_or_null("/root/TweenFXHelper")
+				if tfx:
+					tfx.negative_hit(die)
+				var expire_tween = get_tree().create_tween()
+				expire_tween.tween_property(die, "scale", Vector2(0.5, 0.5), 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+				expire_tween.parallel().tween_property(die, "modulate:a", 0.0, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+				expire_tween.tween_callback(die.queue_free)
+			else:
+				die.queue_free()
 		
 		# Update positions for remaining dice
 		for i in range(dice_count):
@@ -581,7 +658,8 @@ func set_all_dice_rollable() -> void:
 ## to ensure pitch progression restarts for the next turn.
 func reset_roll_count() -> void:
 	current_roll_number = 0
-	print("[DiceHand] Roll count reset to 0")
+	consecutive_good_rolls = 0
+	print("[DiceHand] Roll count and good roll streak reset")
 
 
 ## set_all_dice_disabled()

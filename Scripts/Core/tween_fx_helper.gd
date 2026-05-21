@@ -66,13 +66,8 @@ func _ready() -> void:
 	# Enable all groups by default
 	for g in Group.values():
 		_enabled_groups[g] = true
-	# Disable IDLE animations by default
-	_enabled_groups[Group.IDLE] = false
-	_enabled_groups[Group.SPINES] = false
-
-
 ## Groups that are permanently off and cannot be re-enabled by settings or profiles.
-const PERMANENTLY_DISABLED_GROUPS: Array[int] = [Group.SPINES, Group.IDLE]
+const PERMANENTLY_DISABLED_GROUPS: Array[int] = []
 
 
 ## is_group_enabled(group)
@@ -186,8 +181,8 @@ func panel_show(panel: CanvasItem, overlay: CanvasItem = null) -> Tween:
 		TweenFX.fade_in(overlay, 0.25)
 	if panel and _valid(panel):
 		_center_pivot(panel)
-		panel.scale = Vector2(0.8, 0.8)
-		panel.modulate.a = 0.0
+		panel.scale = Vector2.ONE
+		panel.modulate.a = 1.0
 		panel.visible = true
 		tween = TweenFX.pop_in(panel, 0.35, 0.1)
 	return tween

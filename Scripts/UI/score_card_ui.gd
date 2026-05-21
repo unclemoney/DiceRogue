@@ -470,6 +470,20 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 	print("[ScoreCardUI] Double mode active:", is_double_mode)
 	print("[ScoreCardUI] Any score mode active:", any_score_active)
 	print("[ScoreCardUI] Go broke mode active:", go_broke_mode)
+	
+	# Juice: category button commit feedback
+	var btn = section_buttons.get(section, {}).get(category, null)
+	var tfx = get_node_or_null("/root/TweenFXHelper")
+	if btn and tfx:
+		tfx.button_press(btn)
+		# Gold glow before settling to used state
+		var glow_tween = create_tween()
+		glow_tween.tween_property(btn, "modulate", Color(1.5, 1.3, 0.8, 1.0), 0.15)
+		glow_tween.tween_property(btn, "modulate", Color.WHITE, 0.25).set_delay(0.15)
+		# Confirmation sound
+		var audio_mgr = get_node_or_null("/root/AudioManager")
+		if audio_mgr and audio_mgr.has_method("play_confirm_sound"):
+			audio_mgr.play_confirm_sound()
 	print("[ScoreCardUI] Reroll active:", reroll_active)
 	print("[ScoreCardUI] Turn scored:", turn_scored)
 	

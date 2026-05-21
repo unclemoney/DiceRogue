@@ -2280,7 +2280,8 @@ func _update_dice_animation_intensity() -> void:
 		var challenge = active_challenges[id]
 		if is_instance_valid(challenge) and challenge.has_method("get_progress"):
 			challenge_progress = maxf(challenge_progress, challenge.get_progress())
-	var params = DiceAnimationIntensity.calculate(challenge_progress, total_score)
+	var good_roll_streak = dice_hand.consecutive_good_rolls if dice_hand else 0
+	var params = DiceAnimationIntensity.calculate(challenge_progress, total_score, good_roll_streak)
 	for die in dice_hand.dice_list:
 		if is_instance_valid(die):
 			die.intensity_params = params
@@ -3277,10 +3278,35 @@ func _show_game_over_popup(final_score: int, target_score: int, challenge_comple
 	if _game_over_popup and is_instance_valid(_game_over_popup):
 		_game_over_popup.queue_free()
 	
+	# ── Juice: loss ceremony (CRT power-off + fade + music) ──
+	if not challenge_completed:
+		# Loss music sting
+		var audio_mgr = get_node_or_null("/root/AudioManager")
+		if audio_mgr and audio_mgr.has_method("play_denied_sound"):
+			audio_mgr.play_denied_sound()
+		# CRT power-off shader overlay
+		var crt_off = ColorRect.new()
+		crt_off.name = "CRTPowerOff"
+		crt_off.set_anchors_preset(Control.PRESET_FULL_RECT)
+		crt_off.z_index = 99
+		crt_off.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var off_mat = ShaderMaterial.new()
+		off_mat.shader = preload("res://Scripts/Shaders/tv_power_on.gdshader")
+		off_mat.set_shader_parameter("progress", 1.0)
+		off_mat.set_shader_parameter("beam_color", Color(1.0, 0.2, 0.2, 1.0))
+		crt_off.material = off_mat
+		get_tree().root.add_child(crt_off)
+		# Collapse to line then fade
+		var off_tween = create_tween()
+		off_tween.tween_method(func(v): off_mat.set_shader_parameter("progress", v), 1.0, 0.0, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		off_tween.tween_property(crt_off, "modulate:a", 0.0, 0.2)
+		off_tween.tween_callback(crt_off.queue_free)
+		await get_tree().create_timer(0.5).timeout
+	
 	# Create dark overlay
 	var overlay = ColorRect.new()
 	overlay.name = "GameOverOverlay"
-	overlay.color = Color(0, 0, 0, 0.7)
+	overlay.color = Color(0, 0, 0, 0.0)
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.z_index = 100
 	
@@ -3320,10 +3346,11 @@ func _show_game_over_popup(final_score: int, target_score: int, challenge_comple
 	title_label.add_theme_font_size_override("normal_font_size", 32)
 	vbox.add_child(title_label)
 	
-	# Score display
+	# Score display (will be animated)
 	var score_label = Label.new()
+	score_label.name = "FinalScoreLabel"
 	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	score_label.text = "Final Score: %d" % final_score
+	score_label.text = "Final Score: 0"
 	score_label.add_theme_font_size_override("font_size", 24)
 	score_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 	vbox.add_child(score_label)
@@ -3387,12 +3414,23 @@ func _show_game_over_popup(final_score: int, target_score: int, challenge_comple
 	var viewport_size = get_tree().root.get_viewport().get_visible_rect().size
 	popup.position = (viewport_size - popup.size) / 2.0
 	
+	# Slow fade in overlay
+	var fade_tween = create_tween()
+	fade_tween.tween_property(overlay, "color:a", 0.7, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	
 	# Animate popup in
 	popup.scale = Vector2(0.5, 0.5)
 	popup.modulate.a = 0
 	var tween = create_tween().set_parallel()
 	tween.tween_property(popup, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween.tween_property(popup, "modulate:a", 1.0, 0.2)
+	
+	# Juice: count up final score
+	await tween.finished
+	var count_tween = create_tween()
+	count_tween.tween_method(func(v: float):
+		score_label.text = "Final Score: %d" % int(v)
+	, 0.0, float(final_score), 1.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 ## _on_new_game_pressed()

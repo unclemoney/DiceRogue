@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=3 uid="uid://b2x ambient_particles"]
+
+[ext_resource type="Script" path="res://Scripts/Effects/ambient_particles.gd" id="1_ambient"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ambient"]
+emission_shape = 3
+emission_box_extents = Vector3(640, 360, 0)
+gravity = Vector3(-5, -2, 0)
+scale_min = 0.5
+scale_max = 1.5
+color = Color(0.7, 0.7, 0.6, 0.15)
+
+[node name="AmbientParticles" type="GPUParticles2D"]
+position = Vector2(640, 360)
+amount = 30
+process_material = SubResource("ParticleProcessMaterial_ambient")
+lifetime = 8.0
+preprocess = 8.0
+script = ExtResource("1_ambient")

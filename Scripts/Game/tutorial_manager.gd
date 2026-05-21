@@ -267,7 +267,7 @@ func complete_tutorial() -> void:
 	# Return to main menu after a short delay
 	await get_tree().create_timer(1.0).timeout
 	var main_menu_scene = preload("res://Scenes/UI/MainMenu.tscn")
-	get_tree().change_scene_to_packed(main_menu_scene)
+	await SceneTransitionManager.transition_to_scene_packed(main_menu_scene)
 
 
 ## advance_step()

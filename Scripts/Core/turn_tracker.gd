@@ -100,12 +100,20 @@ func start_new_turn():
 		print("[TurnTracker] Score streak turn %d, multiplier: %.2fx, turns remaining: %d" % [score_streak_current_turn, score_streak_multiplier, score_streak_turns_remaining])
 		emit_signal("score_streak_changed", score_streak_multiplier, score_streak_turns_remaining)
 		
+		# Juice: streak popup
+		var ftm = get_node_or_null("/root/FloatingTextManager")
+		if ftm:
+			ftm.show_streak_popup(self, score_streak_multiplier)
+		
 		if score_streak_turns_remaining <= 0:
 			_end_score_streak()
 	
 	emit_signal("turn_updated", current_turn)
 	emit_signal("rolls_updated", rolls_left)
 	emit_signal("turn_started")
+	
+	# Juice: turn start banner
+	_show_turn_banner(current_turn)
 
 ## use_roll()
 ##
@@ -118,6 +126,41 @@ func use_roll():
 		if rolls_left == 0:
 			#is_active = false  # Turn is no longer active when rolls are exhausted
 			emit_signal("rolls_exhausted")
+
+## _show_turn_banner(turn_number)
+##
+## Spawns a temporary "TURN X" banner at screen center.
+func _show_turn_banner(turn_number: int) -> void:
+	var banner = Label.new()
+	banner.text = "TURN %d" % turn_number
+	banner.set_anchors_preset(Control.PRESET_CENTER)
+	banner.z_index = 200
+	
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	if vcr_font:
+		banner.add_theme_font_override("font", vcr_font)
+	banner.add_theme_font_size_override("font_size", 48)
+	banner.add_theme_color_override("font_color", Color(1.0, 0.9, 0.6, 1.0))
+	
+	var tree = get_tree()
+	if not tree:
+		return
+	var root = tree.root
+	root.add_child(banner)
+	
+	var tfx = get_node_or_null("/root/TweenFXHelper")
+	if tfx:
+		tfx.play_preset(banner, "drop_in")
+	
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.has_method("play_round_start_sound"):
+		audio_mgr.play_round_start_sound()
+	
+	# Auto-remove after delay
+	await tree.create_timer(1.5).timeout
+	if is_instance_valid(banner):
+		banner.queue_free()
+
 
 ## reset_game()
 ##
@@ -228,6 +271,11 @@ func start_score_streak(turns: int) -> void:
 	score_streak_multiplier = 1.5  # Initial multiplier is 1.5x
 	print("[TurnTracker] Started score streak for %d turns (initial multiplier: 1.5x)" % turns)
 	emit_signal("score_streak_changed", score_streak_multiplier, score_streak_turns_remaining)
+	
+	# Juice: streak popup on start
+	var ftm = get_node_or_null("/root/FloatingTextManager")
+	if ftm:
+		ftm.show_streak_popup(self, score_streak_multiplier)
 
 
 ## break_score_streak()

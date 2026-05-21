@@ -402,6 +402,19 @@ func _create_debug_tabs() -> void:
 			{"text": "Spawn Extra Dice", "method": "_debug_menu_spawn_dice"},
 			{"text": "Clear All Dice", "method": "_debug_menu_clear_dice"},
 			{"text": "Show Dice Count", "method": "_debug_menu_show_dice_count"},
+		],
+		"Juice": [
+			{"text": "Test Hitstop", "method": "_debug_test_hitstop"},
+			{"text": "Test Camera Zoom", "method": "_debug_test_camera_zoom"},
+			{"text": "Test Celebration", "method": "_debug_test_celebration"},
+			{"text": "Test Floating Text", "method": "_debug_test_floating_text"},
+			{"text": "Test Negative Hit", "method": "_debug_test_negative_hit"},
+			{"text": "Test Positive Reward", "method": "_debug_test_positive_reward"},
+			{"text": "Test Spotlight", "method": "_debug_test_spotlight"},
+			{"text": "Test Threat Alarm", "method": "_debug_test_threat_alarm"},
+			{"text": "Test Score Count-Up", "method": "_debug_test_score_countup"},
+			{"text": "Test Crossfade Transition", "method": "_debug_test_crossfade"},
+			{"text": "Test CRT Wipe Transition", "method": "_debug_test_crt_wipe"},
 		]
 	}
 	
@@ -4235,3 +4248,153 @@ func _debug_wave_buttons() -> void:
 		log_debug("Button wave triggered.")
 	else:
 		log_debug("ERROR: animate_button_wave not found on GameButtonUI")
+
+
+# ============================================================================
+# Juice / FX Debug Commands
+# ============================================================================
+
+## _debug_test_hitstop()
+##
+## Triggers a 5-frame hitstop via HitstopController.
+func _debug_test_hitstop() -> void:
+	HitstopController.trigger_hitstop(5)
+	log_debug("Hitstop triggered (5 frames).")
+
+
+## _debug_test_camera_zoom()
+##
+## Triggers a celebrate zoom on the CameraDynamics node under CRTTV.
+func _debug_test_camera_zoom() -> void:
+	var crt_tv = get_tree().root.find_child("CRTTV", true, false)
+	if crt_tv and crt_tv.has_node("CameraDynamics"):
+		crt_tv.get_node("CameraDynamics").celebrate_zoom(0.6)
+		log_debug("Camera celebrate zoom triggered.")
+	else:
+		log_debug("ERROR: CameraDynamics not found under CRTTV.")
+
+
+## _debug_test_celebration()
+##
+## Spawns a challenge celebration firework at screen center.
+func _debug_test_celebration() -> void:
+	var celebration = load("res://Scripts/Effects/challenge_celebration.gd").new()
+	get_tree().root.add_child(celebration)
+	celebration.trigger_celebration(get_viewport().get_visible_rect().size / 2.0, get_tree().root)
+	log_debug("Celebration firework triggered at screen center.")
+
+
+## _debug_test_floating_text()
+##
+## Shows a test floating text popup at the roll button position.
+func _debug_test_floating_text() -> void:
+	var ftm = get_node_or_null("/root/FloatingTextManager")
+	if ftm:
+		var gc = get_tree().get_first_node_in_group("game_controller")
+		var btn = gc.game_button_ui.roll_button if gc and gc.game_button_ui else self
+		ftm.show_jackpot_popup(btn)
+		log_debug("Floating 'JACKPOT!' text triggered.")
+	else:
+		log_debug("ERROR: FloatingTextManager not found.")
+
+
+## _debug_test_negative_hit()
+##
+## Applies a negative hit flash to the roll button.
+func _debug_test_negative_hit() -> void:
+	var tfx = get_node_or_null("/root/TweenFXHelper")
+	var gc = get_tree().get_first_node_in_group("game_controller")
+	var btn = gc.game_button_ui.roll_button if gc and gc.game_button_ui else null
+	if tfx and btn:
+		tfx.negative_hit(btn)
+		log_debug("Negative hit flash on roll button.")
+	else:
+		log_debug("ERROR: Could not find TweenFXHelper or roll button.")
+
+
+## _debug_test_positive_reward()
+##
+## Applies a positive reward glow to the roll button.
+func _debug_test_positive_reward() -> void:
+	var tfx = get_node_or_null("/root/TweenFXHelper")
+	var gc = get_tree().get_first_node_in_group("game_controller")
+	var btn = gc.game_button_ui.roll_button if gc and gc.game_button_ui else null
+	if tfx and btn:
+		tfx.positive_reward(btn)
+		log_debug("Positive reward glow on roll button.")
+	else:
+		log_debug("ERROR: Could not find TweenFXHelper or roll button.")
+
+
+## _debug_test_spotlight()
+##
+## Briefly applies a spotlight glow to the roll button.
+func _debug_test_spotlight() -> void:
+	var tfx = get_node_or_null("/root/TweenFXHelper")
+	var gc = get_tree().get_first_node_in_group("game_controller")
+	var btn = gc.game_button_ui.roll_button if gc and gc.game_button_ui else null
+	if tfx and btn:
+		tfx.spotlight_enter(btn)
+		get_tree().create_timer(0.5).timeout.connect(func(): tfx.spotlight_exit(btn))
+		log_debug("Spotlight glow on roll button (0.5s).")
+	else:
+		log_debug("ERROR: Could not find TweenFXHelper or roll button.")
+
+
+## _debug_test_threat_alarm()
+##
+## Applies a 2-second threat alarm pulse to the roll button.
+func _debug_test_threat_alarm() -> void:
+	var tfx = get_node_or_null("/root/TweenFXHelper")
+	var gc = get_tree().get_first_node_in_group("game_controller")
+	var btn = gc.game_button_ui.roll_button if gc and gc.game_button_ui else null
+	if tfx and btn:
+		tfx.threat_alarm(btn)
+		get_tree().create_timer(2.0).timeout.connect(func(): tfx.stop_effect(btn))
+		log_debug("Threat alarm on roll button (2s).")
+	else:
+		log_debug("ERROR: Could not find TweenFXHelper or roll button.")
+
+
+## _debug_test_score_countup()
+##
+## Runs a 0→999 score count-up on a temporary label.
+func _debug_test_score_countup() -> void:
+	var tfx = get_node_or_null("/root/TweenFXHelper")
+	if not tfx:
+		log_debug("ERROR: TweenFXHelper not found.")
+		return
+	var label = Label.new()
+	label.text = "0"
+	label.set_anchors_preset(Control.PRESET_CENTER)
+	label.add_theme_font_size_override("font_size", 48)
+	get_tree().root.add_child(label)
+	tfx.score_count_up(label, 0, 999, 1.5)
+	log_debug("Score count-up 0→999 triggered (1.5s).")
+	await get_tree().create_timer(2.5).timeout
+	if is_instance_valid(label):
+		label.queue_free()
+
+
+## _debug_test_crossfade()
+##
+## Triggers a crossfade transition to the current scene (self-transition test).
+func _debug_test_crossfade() -> void:
+	var stm = get_node_or_null("/root/SceneTransitionManager")
+	if stm:
+		stm.transition_to_scene(get_tree().current_scene.scene_file_path, stm.Style.CROSSFADE, 1.0)
+		log_debug("Crossfade transition triggered.")
+	else:
+		log_debug("ERROR: SceneTransitionManager not found.")
+
+
+## _debug_test_crt_wipe()
+##
+## Triggers a CRT wipe transition to the current scene (self-transition test).
+func _debug_test_crt_wipe() -> void:
+	var stm = get_node_or_null("/root/SceneTransitionManager")
+	if stm:
+		stm.transition_to_scene(get_tree().current_scene.scene_file_path, stm.Style.CRT_WIPE, 1.0)
+		log_debug("CRT wipe transition triggered.")
+	else:
+		log_debug("ERROR: SceneTransitionManager not found.")

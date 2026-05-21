@@ -22,6 +22,7 @@ var active_mods: Dictionary = {}  # id -> Mod
 var home_position: Vector2 = Vector2.ZERO
 var _can_process_input := true
 var _lock_shader_enabled := true
+var _disable_visual_pending := false
 @export var is_locked: bool = false
 
 # State machine properties
@@ -190,8 +191,8 @@ func _update_state_visual() -> void:
 				dice_material.set_shader_parameter("disabled", false)
 				print("[Dice] Applied lock overlay visual feedback")
 		DiceState.DISABLED:
-			# Show disabled/grayed out appearance
-			if dice_material:
+			# Show disabled/grayed out appearance (delayed if bow animation is playing)
+			if dice_material and not _disable_visual_pending:
 				dice_material.set_shader_parameter("disabled", true)
 				dice_material.set_shader_parameter("lock_overlay_strength", 0.0)
 	
@@ -299,8 +300,9 @@ func animate_roll():
 	_roll_tween.parallel().tween_property(self, "rotation_degrees", 0.0, 0.12 * time_scale)\
 		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	
-	# Spawn shockwave after settle
+	# Spawn shockwave and impact particles after settle
 	_roll_tween.tween_callback(_spawn_shockwave)
+	_roll_tween.tween_callback(_spawn_impact_particles)
 	
 	# Start idle breathing after roll animation completes
 	_roll_tween.tween_callback(_start_idle_breathing)
@@ -570,6 +572,14 @@ func unlock() -> void:
 	else:
 		print("[Dice] Cannot unlock - current state:", DiceState.keys()[current_state])
 
+func shiver() -> void:
+	## Quick collective shiver — used for spawn fanfare and Surge effects.
+	var tween := get_tree().create_tween()
+	tween.tween_property(self, "scale", Vector2(1.03, 1.03), 0.05).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(self, "scale", Vector2(0.98, 0.98), 0.05).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(self, "scale", Vector2(1.01, 1.01), 0.05).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(self, "scale", Vector2(1.0, 1.0), 0.05).set_trans(Tween.TRANS_SINE)
+
 func shake_denied() -> void:
 	var original_x = position.x  # Store current x position
 	var tween := get_tree().create_tween()
@@ -624,6 +634,18 @@ func add_mod(mod_data: ModData) -> void:
 		mod_container.size.x - icon.size.x - 2,
 		mod_container.size.y - icon.size.y - 2
 	)
+	
+	# Juice: mod attachment effect
+	var tfx = get_node_or_null("/root/TweenFXHelper")
+	if tfx:
+		tfx.positive_reward(self)
+		if icon:
+			tfx.icon_appear(icon)
+			tfx.spotlight_enter(icon, Color(1.5, 1.5, 2.0, 1.0))
+	# Mod apply sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.has_method("play_scoring_sound"):
+		audio_mgr.play_scoring_sound(10)
 
 func remove_mod(id: String) -> void:
 	if active_mods.has(id):
@@ -914,7 +936,22 @@ func make_rollable_if_allowed() -> void:
 ##
 ## Sets dice to DISABLED state after scoring.
 func make_disabled() -> void:
+	_disable_visual_pending = true
 	set_state(DiceState.DISABLED)
+	_disable_visual_pending = false
+	
+	# Juice: scoring transition bow animation
+	_stop_idle_breathing()
+	var tween = get_tree().create_tween()
+	tween.tween_property(self, "rotation_degrees", -12.0, 0.08).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(self, "scale", Vector2(0.92, 0.92), 0.08).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "rotation_degrees", 0.0, 0.12).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(self, "scale", Vector2(1.0, 1.0), 0.12).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(func():
+		if dice_material:
+			dice_material.set_shader_parameter("disabled", true)
+			dice_material.set_shader_parameter("lock_overlay_strength", 0.0)
+	)
 
 ## get_state() -> DiceState
 ##
@@ -1051,6 +1088,54 @@ func _spawn_shockwave() -> void:
 	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	
 	tween.tween_callback(shockwave.queue_free)
+
+
+## _spawn_impact_particles()
+##
+## Spawns a brief dust-puff burst at the die's position when it lands after rolling.
+func _spawn_impact_particles() -> void:
+	if not is_instance_valid(self):
+		return
+	
+	var particles = GPUParticles2D.new()
+	particles.position = Vector2.ZERO
+	particles.emitting = true
+	particles.one_shot = true
+	particles.explosiveness = 0.8
+	
+	var sw_scale = intensity_params.get("shockwave_scale", 1.0)
+	particles.amount = int(clampf(8.0 * sw_scale, 6.0, 20.0))
+	
+	# Particle material
+	var pm = ParticleProcessMaterial.new()
+	pm.spread = 60.0
+	pm.initial_velocity_min = 20.0
+	pm.initial_velocity_max = 60.0
+	pm.scale_min = 1.5
+	pm.scale_max = 3.0
+	pm.color = Color(0.5, 0.45, 0.4, 0.6)
+	pm.color_ramp = _create_dust_gradient()
+	particles.process_material = pm
+	
+	# Short lifetime
+	pm.lifetime_randomness = 0.3
+	
+	add_child(particles)
+	
+	# Auto-cleanup
+	await get_tree().create_timer(0.5).timeout
+	if is_instance_valid(particles):
+		particles.queue_free()
+
+
+func _create_dust_gradient() -> GradientTexture1D:
+	var grad = Gradient.new()
+	grad.add_point(0.0, Color(0.6, 0.55, 0.5, 0.7))
+	grad.add_point(0.5, Color(0.5, 0.45, 0.4, 0.4))
+	grad.add_point(1.0, Color(0.4, 0.35, 0.3, 0.0))
+	var tex = GradientTexture1D.new()
+	tex.gradient = grad
+	return tex
 
 
 ## animate_anticipation()

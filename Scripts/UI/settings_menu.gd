@@ -824,26 +824,62 @@ func _on_reset_controller_pressed() -> void:
 		print("[SettingsMenu] Controller bindings reset to defaults")
 
 
+var _is_hiding: bool = false
+
+
 ## _on_close_pressed()
 ##
-## Handler for Close button.
+## Handler for Close button. Animates panel out before hiding.
 func _on_close_pressed() -> void:
-	print("[SettingsMenu] Closed")
-	closed.emit()
+	if _is_hiding:
+		return
+	_is_hiding = true
+	print("[SettingsMenu] Closing...")
+	
+	var panel = get_node_or_null("SettingsPanel")
+	var overlay = get_node_or_null("Overlay")
+	
+	if _tfx and panel:
+		var tween = _tfx.panel_hide(panel, overlay)
+		if tween:
+			await tween.finished
+	
 	visible = false
+	_is_hiding = false
+	closed.emit()
+	print("[SettingsMenu] Closed")
 
 
 ## show_menu()
 ##
-## Shows the settings menu.
+## Shows the settings menu with animated entrance.
 func show_menu() -> void:
 	_load_current_settings()
 	visible = true
+	
+	var panel = get_node_or_null("SettingsPanel")
+	var overlay = get_node_or_null("Overlay")
+	
+	if _tfx and panel:
+		_tfx.panel_show(panel, overlay)
 
 
 ## hide_menu()
 ##
-## Hides the settings menu.
+## Hides the settings menu with animated exit.
 func hide_menu() -> void:
+	if _is_hiding:
+		return
+	_is_hiding = true
+	
+	var panel = get_node_or_null("SettingsPanel")
+	var overlay = get_node_or_null("Overlay")
+	
+	if _tfx and panel:
+		var tween = _tfx.panel_hide(panel, overlay)
+		if tween:
+			await tween.finished
+	
 	visible = false
+	_is_hiding = false
 	closed.emit()

@@ -123,6 +123,9 @@ func add_challenge(data: ChallengeData, challenge: Challenge) -> ChallengeIcon:
 	icon.set_data(data)
 	icon.set_meta("last_pos", icon.position)
 	
+	# Juice: target score count-up animation
+	icon.animate_target_score_countup()
+	
 	_challenges[data.id] = icon
 	
 	# Connect challenge signals
@@ -135,7 +138,42 @@ func add_challenge(data: ChallengeData, challenge: Challenge) -> ChallengeIcon:
 		icon.challenge_selected.connect(_on_challenge_selected)
 	
 	print("[ChallengeUI] Added challenge:", data.id)
+	
+	# Juice: challenge reveal banner
+	_show_challenge_reveal_banner(data.display_name if data else "CHALLENGE")
+	
 	return icon
+
+func _show_challenge_reveal_banner(challenge_name: String) -> void:
+	var banner = Label.new()
+	banner.text = "CHALLENGE ACCEPTED\n%s" % challenge_name
+	banner.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	banner.position.y = 40
+	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	banner.z_index = 200
+	
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	if vcr_font:
+		banner.add_theme_font_override("font", vcr_font)
+	banner.add_theme_font_size_override("font_size", 28)
+	banner.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4, 1.0))
+	
+	get_tree().root.add_child(banner)
+	
+	var tfx = get_node_or_null("/root/TweenFXHelper")
+	if tfx:
+		tfx.play_preset(banner, "fly_in_down")
+	
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.has_method("play_panel_swoosh"):
+		audio_mgr.play_panel_swoosh()
+	
+	await get_tree().create_timer(2.0).timeout
+	if is_instance_valid(banner):
+		var fade = create_tween()
+		fade.tween_property(banner, "modulate:a", 0.0, 0.3)
+		fade.tween_callback(banner.queue_free)
+
 
 func _on_challenge_selected(id: String) -> void:
 	print("[ChallengeUI] Challenge selected:", id)
@@ -217,7 +255,45 @@ func _on_challenge_completed(id: String) -> void:
 func _on_challenge_failed(id: String) -> void:
 	var icon = get_challenge_icon(id)
 	if icon:
-		# Create a failure effect
+		# Juice: challenge failed effect
+		var tfx = get_node_or_null("/root/TweenFXHelper")
+		if tfx:
+			tfx.negative_hit(icon)
+		
+		# "FAILED" stamp
+		var stamp = Label.new()
+		stamp.text = "FAILED"
+		stamp.set_anchors_preset(Control.PRESET_CENTER)
+		stamp.z_index = 50
+		stamp.rotation_degrees = -15
+		var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+		if vcr_font:
+			stamp.add_theme_font_override("font", vcr_font)
+		stamp.add_theme_font_size_override("font_size", 28)
+		stamp.add_theme_color_override("font_color", Color(1.0, 0.1, 0.1, 1.0))
+		icon.add_child(stamp)
+		
+		if tfx:
+			tfx.play_preset(stamp, "impact_land")
+		
+		# Failure sound
+		var audio_mgr = get_node_or_null("/root/AudioManager")
+		if audio_mgr and audio_mgr.has_method("play_denied_sound"):
+			audio_mgr.play_denied_sound()
+		
+		# Red vignette pulse
+		var vignette = ColorRect.new()
+		vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
+		vignette.color = Color(0.8, 0.1, 0.1, 0.0)
+		vignette.z_index = 40
+		vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(vignette)
+		var vig_tween = create_tween()
+		vig_tween.tween_property(vignette, "color:a", 0.15, 0.2)
+		vig_tween.tween_property(vignette, "color:a", 0.0, 0.4)
+		vig_tween.tween_callback(vignette.queue_free)
+		
+		# Original failure color tween
 		var tween = create_tween()
 		tween.tween_property(icon, "modulate", Color(1.0, 0.2, 0.2), 0.5)
 		tween.tween_property(icon, "modulate", Color.WHITE, 0.5)

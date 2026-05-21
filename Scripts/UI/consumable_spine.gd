@@ -35,8 +35,8 @@ func _ready() -> void:
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
 	
-	# Idle personality animation
-	_tfx.idle_sway(self, 3.0)
+	# Idle personality animation (disabled — too distracting)
+	#_tfx.idle_sway(self, 3.0)
 
 
 func _initialize_base_position() -> void:

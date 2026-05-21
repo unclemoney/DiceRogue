@@ -34,6 +34,9 @@ TweenFX="*res://addons/TweenFX/TweenFX.gd"
 TweenFXHelper="*res://Scripts/Core/tween_fx_helper.gd"
 GameRNG="*res://Scripts/Managers/game_rng.gd"
 GameSaveManager="*res://Scripts/Managers/game_save_manager.gd"
+SceneTransitionManager="*res://Scripts/Core/scene_transition_manager.gd"
+FloatingTextManager="*res://Scripts/Effects/floating_text_manager.gd"
+HitstopController="*res://Scripts/Effects/hitstop_controller.gd"
 
 [display]
 

@@ -29,6 +29,19 @@ func _ready():
 	if not pu_ui:
 		print("Note: PowerUpUI not found - optional component")
 	
+	# Add Camera2D + CameraDynamics for juice zoom effects
+	var crt = get_node_or_null("CRTTV")
+	if crt and not crt.has_node("Camera2D"):
+		var cam = Camera2D.new()
+		cam.name = "Camera2D"
+		cam.anchor_mode = Camera2D.ANCHOR_MODE_DRAG_CENTER
+		cam.position = Vector2.ZERO
+		crt.add_child(cam)
+		var dyn = CameraDynamics.new()
+		dyn.name = "CameraDynamics"
+		cam.add_child(dyn)
+		print("[DebuffTest] Added Camera2D + CameraDynamics to CRTTV")
+	
 	print("Round Manager Test Scene")
 	
 	# Note: start_game() is called from GameController._on_game_start(),

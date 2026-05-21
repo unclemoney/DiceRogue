@@ -53,7 +53,7 @@ func _ready() -> void:
 		mouse_exited.connect(_on_mouse_exited)
 	
 	# Idle personality animation — post-it wiggle
-	_tfx.idle_wiggle(self)
+	#_tfx.idle_wiggle(self)
 
 
 func _exit_tree() -> void:

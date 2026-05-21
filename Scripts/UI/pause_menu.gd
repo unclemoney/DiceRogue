@@ -391,5 +391,5 @@ func _return_to_main_menu() -> void:
 	# Unpause before changing scene
 	get_tree().paused = false
 	
-	# Change to main menu scene
-	get_tree().change_scene_to_packed(MAIN_MENU_SCENE)
+	# Change to main menu scene with transition
+	await SceneTransitionManager.transition_to_scene_packed(MAIN_MENU_SCENE)

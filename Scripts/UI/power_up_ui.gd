@@ -184,6 +184,23 @@ func add_power_up(data: PowerUpData) -> Node:
 	_position_spines()
 	print("[PowerUpUI] Positioned spines")
 	
+	# Juice: powerup acquisition effect
+	var tfx = get_node_or_null("/root/TweenFXHelper")
+	if tfx and spine:
+		tfx.positive_reward(spine)
+		# Slide-in from off-screen effect
+		var orig_pos = spine.position
+		spine.position.x += 200
+		spine.modulate.a = 0.0
+		var slide_tween = create_tween()
+		slide_tween.tween_property(spine, "position", orig_pos, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		slide_tween.parallel().tween_property(spine, "modulate:a", 1.0, 0.3)
+	
+	# Acquisition sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.has_method("play_panel_swoosh"):
+		audio_mgr.play_panel_swoosh()
+	
 	# Update slots label
 	update_slots_label()
 	
@@ -699,7 +716,13 @@ func remove_power_up(power_up_id: String) -> void:
 	if _spines.has(power_up_id):
 		var spine: PowerUpSpine = _spines[power_up_id]
 		if spine:
-			spine.queue_free()
+			# Juice: removal animation
+			var tfx = get_node_or_null("/root/TweenFXHelper")
+			if tfx:
+				tfx.icon_remove(spine)
+				await get_tree().create_timer(0.3).timeout
+			if is_instance_valid(spine):
+				spine.queue_free()
 		_spines.erase(power_up_id)
 		
 		# Reposition remaining spines

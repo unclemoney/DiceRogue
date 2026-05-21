@@ -33,8 +33,8 @@ func _ready() -> void:
 	if not mouse_exited.is_connected(_on_mouse_exited):
 		mouse_exited.connect(_on_mouse_exited)
 	
-	# Idle personality animation
-	_tfx.idle_sway(self, 2.0)
+	# Idle personality animation (disabled — too distracting)
+	#_tfx.idle_sway(self, 2.0)
 
 func _exit_tree() -> void:
 	# Clean up any active tweens to prevent warnings

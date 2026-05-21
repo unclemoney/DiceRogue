@@ -45,6 +45,7 @@ var _default_position := Vector2.ZERO
 var _hover_card_tween: Tween
 
 var is_active := false
+var _almost_there_active := false
 
 func _ready() -> void:
 	print("[ChallengeIcon] Initializing...")
@@ -241,9 +242,24 @@ func _create_card_structure() -> void:
 	progress_bar.max_value = 100
 	progress_bar.value = 0
 	progress_bar.size_flags_vertical = SIZE_SHRINK_END
-	progress_bar.custom_minimum_size = Vector2(0, 10)
-	progress_bar.offset_bottom = -3
-	progress_bar.offset_top = -13
+	progress_bar.custom_minimum_size = Vector2(0, 12)
+	progress_bar.offset_bottom = -4
+	progress_bar.offset_top = -16
+	# Style the progress bar
+	var fg_style = StyleBoxFlat.new()
+	fg_style.bg_color = Color(0.9, 0.75, 0.2, 1.0)
+	fg_style.corner_radius_top_left = 4
+	fg_style.corner_radius_top_right = 4
+	fg_style.corner_radius_bottom_left = 4
+	fg_style.corner_radius_bottom_right = 4
+	progress_bar.add_theme_stylebox_override("fill", fg_style)
+	var bg_style = StyleBoxFlat.new()
+	bg_style.bg_color = Color(0.1, 0.1, 0.1, 0.5)
+	bg_style.corner_radius_top_left = 4
+	bg_style.corner_radius_top_right = 4
+	bg_style.corner_radius_bottom_left = 4
+	bg_style.corner_radius_bottom_right = 4
+	progress_bar.add_theme_stylebox_override("background", bg_style)
 	add_child(progress_bar)
 	
 	# Create CardInfo
@@ -473,6 +489,46 @@ func set_progress(value: float) -> void:
 		# Create a smooth tween for progress updates
 		var tween = create_tween()
 		tween.tween_property(progress_bar, "value", value * 100, 0.2)
+	
+	# Juice: "almost there" alarm when >= 80%
+	if value >= 0.8 and not _almost_there_active:
+		_almost_there_active = true
+		# Shader glow
+		if _shader_material:
+			_shader_material.set_shader_parameter("glow_color", Color(1.0, 0.8, 0.0, 1.0))
+			var glow_tween = create_tween()
+			glow_tween.tween_method(_set_shader_glow, 0.0, glow_intensity * 2.0, 0.3)
+			glow_tween.tween_method(_set_shader_glow, glow_intensity * 2.0, glow_intensity, 0.3).set_delay(0.3)
+		# Threat alarm pulse
+		var tfx = get_node_or_null("/root/TweenFXHelper")
+		if tfx:
+			tfx.threat_alarm(self)
+		# Screen-edge gold vignette
+		var vignette = ColorRect.new()
+		vignette.name = "AlmostThereVignette"
+		vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
+		vignette.color = Color(1.0, 0.8, 0.0, 0.0)
+		vignette.z_index = 30
+		vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		get_tree().root.add_child(vignette)
+		var vig_tween = create_tween()
+		vig_tween.tween_property(vignette, "color:a", 0.08, 0.4)
+		# Audio ramp-up (tick faster as progress increases)
+		var audio_mgr = get_node_or_null("/root/AudioManager")
+		if audio_mgr and audio_mgr.has_method("play_panel_swoosh"):
+			audio_mgr.play_panel_swoosh()
+	elif value < 0.8 and _almost_there_active:
+		_almost_there_active = false
+		# Stop threat alarm
+		var tfx = get_node_or_null("/root/TweenFXHelper")
+		if tfx:
+			tfx.stop_effect(self)
+		# Remove vignette
+		var vignette = get_tree().root.get_node_or_null("AlmostThereVignette")
+		if vignette:
+			var fade = create_tween()
+			fade.tween_property(vignette, "color:a", 0.0, 0.3)
+			fade.tween_callback(vignette.queue_free)
 
 func _on_mouse_entered() -> void:
 	print("[ChallengeIcon] Mouse entered:", data.id if data else "unknown")
@@ -605,6 +661,21 @@ func set_data_with_target_score(new_data: ChallengeData, target_score: int) -> v
 	data = new_data
 	# Store the actual target score for UI
 	data.target_score = target_score
+
+
+## animate_target_score_countup(duration)
+##
+## Animates the card title from "Goal: 0 pts" to the actual target score.
+func animate_target_score_countup(duration: float = 0.8) -> void:
+	if not card_title or not data:
+		return
+	var goal = data.target_score if data.target_score != null else 0
+	if goal <= 0:
+		return
+	var tween = create_tween()
+	tween.tween_method(func(v: float):
+		card_title.text = "Goal: %d pts" % int(v)
+	, 0.0, float(goal), duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 ## _apply_hover_tooltip_style(panel)
 ## Applies the hover tooltip styling directly to a PanelContainer

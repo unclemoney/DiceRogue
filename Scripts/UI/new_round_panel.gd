@@ -46,6 +46,10 @@ func setup(data: Dictionary) -> void:
 ## Animates position and fade only (no scale distortion on PanelContainer).
 func show_panel() -> void:
 	visible = true
+	# Juice: panel swoosh sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.has_method("play_panel_swoosh"):
+		audio_mgr.play_panel_swoosh()
 	# Wait one frame for layout so _panel.position reflects the centered position
 	await get_tree().process_frame
 	_panel_original_pos = _panel.position

@@ -68,6 +68,15 @@ func add_debuff(data: DebuffData, debuff_instance: Debuff = null) -> DebuffIcon:
 	# Store in dictionary
 	_icons[data.id] = icon
 	
+	# Juice: debuff acquisition effect
+	var tfx = get_node_or_null("/root/TweenFXHelper")
+	if tfx:
+		tfx.negative_hit(icon)
+	# Acquisition sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.has_method("play_denied_sound"):
+		audio_mgr.play_denied_sound()
+	
 	# Connect signals
 	if debuff_instance:
 		debuff_instance.debuff_started.connect(func(): 
@@ -95,7 +104,13 @@ func remove_debuff(id: String) -> void:
 		
 	var icon = _icons[id]
 	if icon:
-		icon.queue_free()
+		# Juice: removal animation
+		var tfx = get_node_or_null("/root/TweenFXHelper")
+		if tfx:
+			tfx.icon_remove(icon)
+			await get_tree().create_timer(0.3).timeout
+		if is_instance_valid(icon):
+			icon.queue_free()
 	_icons.erase(id)
 	print("[DebuffUI] Removed debuff icon:", id)
 	# Animate the remaining cards to their new positions

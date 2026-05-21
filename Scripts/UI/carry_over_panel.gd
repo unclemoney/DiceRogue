@@ -106,6 +106,10 @@ func show_panel(allowed_count: int, allowed_types: Array[String], next_channel: 
 			panel_container.position = (viewport_rect.size - panel_size) / 2.0
 	
 	visible = true
+	# Juice: panel swoosh sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.has_method("play_panel_swoosh"):
+		audio_mgr.play_panel_swoosh()
 	_animate_entrance()
 
 

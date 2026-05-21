@@ -201,7 +201,7 @@ func _calculate_speed_scale(score: int) -> float:
 ##
 ## Execute the complete animation sequence in proper order with dynamic speed.
 ## Plays progressive scoring sounds at each step (dice, consumables, powerups, final).
-func _execute_animation_sequence(score: int, _category: String, breakdown_info: Dictionary, intensity_scale: float, speed_scale: float) -> void:
+func _execute_animation_sequence(score: int, category: String, breakdown_info: Dictionary, intensity_scale: float, speed_scale: float) -> void:
 	# Reset scoring sequence for progressive pitch
 	var audio_mgr = get_node_or_null("/root/AudioManager")
 	if audio_mgr:
@@ -257,6 +257,40 @@ func _execute_animation_sequence(score: int, _category: String, breakdown_info: 
 		score_card_ui.animate_total_score_bounce(score)
 	
 	# Phase 7: Critical flash + screen shake + celebration cascade on high scores
+	var is_yahtzee = category.to_lower() == "yahtzee"
+	var is_jackpot = score >= 50 or is_yahtzee
+	
+	if is_jackpot and dice_hand:
+		# Juice: Yahtzee / Jackpot special celebration
+		HitstopController.trigger_hitstop(3)
+		# Full-screen white flash
+		var flash = ColorRect.new()
+		flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+		flash.color = Color.WHITE
+		flash.z_index = 500
+		flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		get_tree().root.add_child(flash)
+		var flash_tween = create_tween()
+		flash_tween.tween_property(flash, "modulate:a", 0.0, 0.3)
+		flash_tween.tween_callback(flash.queue_free)
+		# Jackpot floating text
+		var ftm = get_node_or_null("/root/FloatingTextManager")
+		if ftm:
+			ftm.show_jackpot_popup(self)
+		# Enhanced firework particles
+		var celebration = load("res://Scripts/Effects/challenge_celebration.gd").new()
+		get_tree().root.add_child(celebration)
+		celebration.trigger_celebration(get_viewport().get_visible_rect().size / 2.0, get_tree().root)
+		# Camera zoom
+		var cam = get_viewport().get_camera_2d()
+		if cam and cam.has_node("CameraDynamics"):
+			cam.get_node("CameraDynamics").celebrate_zoom(0.6)
+		else:
+			# Fallback: find CameraDynamics on CRTTV or other Node2D parent
+			var crt_tv = get_tree().root.find_child("CRTTV", true, false)
+			if crt_tv and crt_tv.has_node("CameraDynamics"):
+				crt_tv.get_node("CameraDynamics").celebrate_zoom(0.6)
+	
 	if intensity_scale >= 1.6 and dice_hand:
 		# Critical flash on all dice
 		for die in dice_hand.dice_list:
@@ -349,6 +383,15 @@ func _animate_single_die(die, die_index: int, intensity_scale: float, speed_scal
 	if not die_index in used_dice_indices:
 		print("[ScoringAnimationController] Skipping die %d - not used in scoring" % die_index)
 		return
+	
+	# Juice: spotlight glow on used dice
+	var tfx = get_node_or_null("/root/TweenFXHelper")
+	if tfx and die:
+		tfx.spotlight_enter(die, Color(1.5, 1.5, 1.2, 1.0))
+		get_tree().create_timer(0.4).timeout.connect(func():
+			if is_instance_valid(die):
+				tfx.spotlight_exit(die)
+		)
 	
 	print("[ScoringAnimationController] Animating die with value: %d" % die.value)
 	

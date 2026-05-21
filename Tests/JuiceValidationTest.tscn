@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=3 uid="uid://dstuj5mhqgt61"]
+
+[ext_resource type="Script" uid="uid://bpd78fjvc64o4" path="res://Tests/juice_validation_test.gd" id="1_jvt0"]
+[ext_resource type="Script" uid="uid://c4hqeuxxritc" path="res://Scripts/Effects/camera_dynamics.gd" id="2_camdyn"]
+
+[node name="JuiceValidationTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_jvt0")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+anchor_mode = 0
+
+[node name="CameraDynamics" type="Node" parent="Camera2D"]
+script = ExtResource("2_camdyn")

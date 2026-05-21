@@ -907,8 +907,8 @@ func _on_new_game_pressed() -> void:
 	print("[MainMenu] New Game pressed - transitioning to game scene")
 	new_game_pressed.emit()
 	
-	# Change to game scene
-	get_tree().change_scene_to_packed(GAME_SCENE)
+	# Change to game scene with transition
+	await SceneTransitionManager.transition_to_scene_packed(GAME_SCENE)
 
 
 ## _on_continue_pressed()
@@ -926,7 +926,7 @@ func _on_continue_pressed() -> void:
 		print("[MainMenu] Failed to load save for profile %d" % slot)
 		return
 	
-	get_tree().change_scene_to_packed(GAME_SCENE)
+	await SceneTransitionManager.transition_to_scene_packed(GAME_SCENE)
 
 
 ## _on_settings_pressed()
@@ -963,8 +963,8 @@ func _on_tutorial_pressed() -> void:
 	if tutorial_manager:
 		tutorial_manager.reset_tutorial()
 	
-	# Change to game scene (tutorial will auto-start)
-	get_tree().change_scene_to_packed(GAME_SCENE)
+	# Change to game scene with transition (tutorial will auto-start)
+	await SceneTransitionManager.transition_to_scene_packed(GAME_SCENE)
 
 
 ## _on_quit_pressed()

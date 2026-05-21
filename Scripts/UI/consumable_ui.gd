@@ -182,6 +182,23 @@ func add_consumable(data: ConsumableData) -> Node:
 	# Position spine on shelf
 	_position_spines()
 	
+	# Juice: consumable acquisition fanfare
+	var tfx = get_node_or_null("/root/TweenFXHelper")
+	if tfx and spine:
+		tfx.icon_appear(spine)
+		# Slide-in effect
+		var orig_pos = spine.position
+		spine.position.x += 200
+		spine.modulate.a = 0.0
+		var slide_tween = create_tween()
+		slide_tween.tween_property(spine, "position", orig_pos, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		slide_tween.parallel().tween_property(spine, "modulate:a", 1.0, 0.3)
+	
+	# Acquisition sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.has_method("play_panel_swoosh"):
+		audio_mgr.play_panel_swoosh()
+	
 	# Update slots label
 	update_slots_label()
 	
