@@ -404,6 +404,11 @@ func _on_next_turn_button_pressed() -> void:
 		return
 	_button_action_cooldown = BUTTON_ACTION_COOLDOWN
 	
+	# Next turn sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.has_method("play_next_turn_sound"):
+		audio_mgr.play_next_turn_sound()
+	
 	# Notify tutorial manager of next turn action
 	var tutorial_manager = get_node_or_null("/root/TutorialManager")
 	if tutorial_manager and tutorial_manager.is_tutorial_active():
@@ -471,6 +476,11 @@ func _on_shop_button_pressed() -> void:
 	if _button_action_cooldown > 0.0:
 		return
 	_button_action_cooldown = BUTTON_ACTION_COOLDOWN
+	
+	# Shop open sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.has_method("play_shop_open_sound"):
+		audio_mgr.play_shop_open_sound()
 	
 	print("[GameButtonUI] Shop button pressed")
 	# Stop the pulse animation when shop button is pressed

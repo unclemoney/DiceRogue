@@ -152,8 +152,8 @@ func spawn_dice() -> void:
 	
 	# Juice: spawn sound + collective fanfare
 	var audio_mgr = get_node_or_null("/root/AudioManager")
-	if audio_mgr and audio_mgr.has_method("play_panel_swoosh"):
-		audio_mgr.play_panel_swoosh()
+	if audio_mgr and audio_mgr.has_method("play_dice_spawn_sound"):
+		audio_mgr.play_dice_spawn_sound()
 	_animate_spawn_fanfare()
 
 	# Set all dice to ROLLABLE state initially

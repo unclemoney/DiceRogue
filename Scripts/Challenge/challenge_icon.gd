@@ -515,8 +515,8 @@ func set_progress(value: float) -> void:
 		vig_tween.tween_property(vignette, "color:a", 0.08, 0.4)
 		# Audio ramp-up (tick faster as progress increases)
 		var audio_mgr = get_node_or_null("/root/AudioManager")
-		if audio_mgr and audio_mgr.has_method("play_panel_swoosh"):
-			audio_mgr.play_panel_swoosh()
+		if audio_mgr and audio_mgr.has_method("play_threat_alarm_sound"):
+			audio_mgr.play_threat_alarm_sound()
 	elif value < 0.8 and _almost_there_active:
 		_almost_there_active = false
 		# Stop threat alarm

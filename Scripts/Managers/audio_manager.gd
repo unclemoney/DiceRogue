@@ -95,6 +95,17 @@ var dice_land_sound: AudioStream
 var sell_sound: AudioStream
 var round_start_sound: AudioStream
 var static_burst_sound: AudioStream
+var challenge_reveal_sound: AudioStream
+
+## NEW SOUNDS — drop files in Resources/Audio/UI/ as marked below
+var dice_spawn_sound: AudioStream           ## NEW: DICE_SPAWN_1.wav
+var jackpot_sound: AudioStream              ## NEW: JACKPOT_1.wav
+var streak_sound: AudioStream               ## NEW: STREAK_1.wav
+var next_turn_sound: AudioStream            ## NEW: NEXT_TURN_1.wav
+var shop_open_sound: AudioStream            ## NEW: SHOP_OPEN_1.wav
+var powerup_apply_sound: AudioStream        ## NEW: POWERUP_APPLY_1.wav
+var threat_alarm_sound: AudioStream         ## NEW: THREAT_ALARM_1.wav
+var victory_sound: AudioStream              ## NEW: VICTORY_1.wav
 
 # Audio players - pooled for dice (one per die), single for others
 var dice_players: Array[AudioStreamPlayer] = []
@@ -114,6 +125,17 @@ var dice_land_player: AudioStreamPlayer
 var sell_player: AudioStreamPlayer
 var round_start_player: AudioStreamPlayer
 var static_burst_player: AudioStreamPlayer
+var challenge_reveal_player: AudioStreamPlayer
+
+## NEW PLAYERS — paired with new sounds above
+var dice_spawn_player: AudioStreamPlayer
+var jackpot_player: AudioStreamPlayer
+var streak_player: AudioStreamPlayer
+var next_turn_player: AudioStreamPlayer
+var shop_open_player: AudioStreamPlayer
+var powerup_apply_player: AudioStreamPlayer
+var threat_alarm_player: AudioStreamPlayer
+var victory_player: AudioStreamPlayer
 
 # Roll tracking - reset after scoring
 var current_roll_number: int = 0
@@ -267,7 +289,7 @@ func _load_audio_resources() -> void:
 		push_warning("[AudioManager] Failed to load fan in sound")
 	
 	# Load tab switch sound (repurposed dice click)
-	tab_switch_sound = load("res://Resources/Audio/UI/DICE_CLICK.wav")
+	tab_switch_sound = load("res://Resources/Audio/UI/TAB_SWITCH_1.wav")
 	if tab_switch_sound:
 		print("[AudioManager] Loaded tab switch sound")
 	else:
@@ -321,6 +343,77 @@ func _load_audio_resources() -> void:
 		print("[AudioManager] Loaded static burst sound")
 	else:
 		push_warning("[AudioManager] Failed to load static burst sound")
+
+	challenge_reveal_sound = load("res://Resources/Audio/UI/CHALLENGE_REVEAL.wav")
+	if challenge_reveal_sound:
+		print("[AudioManager] Loaded challenge reveal sound")
+	else:
+		push_warning("[AudioManager] Failed to load challenge reveal sound")
+	
+	# ── NEW SOUNDS — drop files in Resources/Audio/UI/ as marked ──
+	# Dice spawn (was reusing panel swoosh)
+	dice_spawn_sound = load("res://Resources/Audio/UI/DICE_SPAWN_1.wav")
+	if dice_spawn_sound:
+		print("[AudioManager] Loaded dice spawn sound")
+	else:
+		push_warning("[AudioManager] Failed to load dice spawn sound (DICE_SPAWN_1.wav)")
+	
+	# Jackpot / Yahtzee celebration
+	jackpot_sound = load("res://Resources/Audio/UI/JACKPOT_1.wav")
+	if jackpot_sound:
+		print("[AudioManager] Loaded jackpot sound")
+	else:
+		push_warning("[AudioManager] Failed to load jackpot sound (JACKPOT_1.wav)")
+	
+	# Score streak popup
+	streak_sound = load("res://Resources/Audio/UI/STREAK_1.wav")
+	if streak_sound:
+		print("[AudioManager] Loaded streak sound")
+	else:
+		push_warning("[AudioManager] Failed to load streak sound (STREAK_1.wav)")
+	
+	# Next turn
+	next_turn_sound = load("res://Resources/Audio/UI/NEXT_TURN_1.wav")
+	if next_turn_sound:
+		print("[AudioManager] Loaded next turn sound")
+	else:
+		push_warning("[AudioManager] Failed to load next turn sound (NEXT_TURN_1.wav)")
+	
+	# Shop open / toggle
+	shop_open_sound = load("res://Resources/Audio/UI/SHOP_OPEN_1.wav")
+	if shop_open_sound:
+		print("[AudioManager] Loaded shop open sound")
+	else:
+		push_warning("[AudioManager] Failed to load shop open sound (SHOP_OPEN_1.wav)")
+	
+	# PowerUp / Mod apply
+	powerup_apply_sound = load("res://Resources/Audio/UI/POWERUP_APPLY_1.wav")
+	if powerup_apply_sound:
+		print("[AudioManager] Loaded powerup apply sound")
+	else:
+		push_warning("[AudioManager] Failed to load powerup apply sound (POWERUP_APPLY_1.wav)")
+	
+	# Threat alarm (challenge almost-there)
+	threat_alarm_sound = load("res://Resources/Audio/UI/THREAT_ALARM_1.wav")
+	if threat_alarm_sound:
+		print("[AudioManager] Loaded threat alarm sound")
+	else:
+		push_warning("[AudioManager] Failed to load threat alarm sound (THREAT_ALARM_1.wav)")
+	
+	# Victory (game over win)
+	victory_sound = load("res://Resources/Audio/UI/VICTORY_1.wav")
+	if victory_sound:
+		print("[AudioManager] Loaded victory sound")
+	else:
+		push_warning("[AudioManager] Failed to load victory sound (VICTORY_1.wav)")
+	
+	# Fix: dice land should use its own file instead of DENIED_1.wav
+	dice_land_sound = load("res://Resources/Audio/UI/DICE_LAND_1.wav")
+	if dice_land_sound:
+		print("[AudioManager] Loaded dice land sound")
+	else:
+		push_warning("[AudioManager] Failed to load dice land sound (DICE_LAND_1.wav)")
+	
 
 
 ## _create_audio_players()
@@ -430,6 +523,61 @@ func _create_audio_players() -> void:
 	static_burst_player.name = "StaticBurstPlayer"
 	static_burst_player.volume_db = master_volume_db
 	add_child(static_burst_player)
+
+	# Create challenge reveal player
+	challenge_reveal_player = AudioStreamPlayer.new()
+	challenge_reveal_player.name = "ChallengeRevealPlayer"
+	challenge_reveal_player.volume_db = master_volume_db
+	add_child(challenge_reveal_player)
+	
+	# ── NEW PLAYERS — paired with new sounds above ──
+	# Dice spawn player
+	dice_spawn_player = AudioStreamPlayer.new()
+	dice_spawn_player.name = "DiceSpawnPlayer"
+	dice_spawn_player.volume_db = master_volume_db
+	add_child(dice_spawn_player)
+	
+	# Jackpot player
+	jackpot_player = AudioStreamPlayer.new()
+	jackpot_player.name = "JackpotPlayer"
+	jackpot_player.volume_db = master_volume_db
+	add_child(jackpot_player)
+	
+	# Streak player
+	streak_player = AudioStreamPlayer.new()
+	streak_player.name = "StreakPlayer"
+	streak_player.volume_db = master_volume_db
+	add_child(streak_player)
+	
+	# Next turn player
+	next_turn_player = AudioStreamPlayer.new()
+	next_turn_player.name = "NextTurnPlayer"
+	next_turn_player.volume_db = master_volume_db
+	add_child(next_turn_player)
+	
+	# Shop open player
+	shop_open_player = AudioStreamPlayer.new()
+	shop_open_player.name = "ShopOpenPlayer"
+	shop_open_player.volume_db = master_volume_db
+	add_child(shop_open_player)
+	
+	# PowerUp apply player
+	powerup_apply_player = AudioStreamPlayer.new()
+	powerup_apply_player.name = "PowerUpApplyPlayer"
+	powerup_apply_player.volume_db = master_volume_db
+	add_child(powerup_apply_player)
+	
+	# Threat alarm player
+	threat_alarm_player = AudioStreamPlayer.new()
+	threat_alarm_player.name = "ThreatAlarmPlayer"
+	threat_alarm_player.volume_db = master_volume_db
+	add_child(threat_alarm_player)
+	
+	# Victory player
+	victory_player = AudioStreamPlayer.new()
+	victory_player.name = "VictoryPlayer"
+	victory_player.volume_db = master_volume_db
+	add_child(victory_player)
 
 
 ## play_dice_roll(die_index: int, roll_number: int)
@@ -604,6 +752,33 @@ func set_master_volume(volume_db: float) -> void:
 	
 	if static_burst_player:
 		static_burst_player.volume_db = volume_db
+	
+	if challenge_reveal_player:
+		challenge_reveal_player.volume_db = volume_db
+	
+	if dice_spawn_player:
+		dice_spawn_player.volume_db = volume_db
+	
+	if jackpot_player:
+		jackpot_player.volume_db = volume_db
+	
+	if streak_player:
+		streak_player.volume_db = volume_db
+	
+	if next_turn_player:
+		next_turn_player.volume_db = volume_db
+	
+	if shop_open_player:
+		shop_open_player.volume_db = volume_db
+	
+	if powerup_apply_player:
+		powerup_apply_player.volume_db = volume_db
+	
+	if threat_alarm_player:
+		threat_alarm_player.volume_db = volume_db
+	
+	if victory_player:
+		victory_player.volume_db = volume_db
 	
 	print("[AudioManager] Master volume set to: %.1f dB" % volume_db)
 
@@ -828,3 +1003,120 @@ func play_round_start_sound() -> void:
 	round_start_player.pitch_scale = ROUND_START_PITCH
 	round_start_player.volume_db = master_volume_db
 	round_start_player.play()
+
+## play_challenge_reveal_sound()
+## Play a sound when revealing a new challenge.
+func play_challenge_reveal_sound() -> void:
+	if not challenge_reveal_sound:
+		return
+	
+	challenge_reveal_player.stream = challenge_reveal_sound
+	challenge_reveal_player.pitch_scale = 1.0
+	challenge_reveal_player.volume_db = master_volume_db
+	challenge_reveal_player.play()
+
+## play_dice_spawn_sound()
+##
+## Play a sound when dice spawn into the hand.
+## Was previously reusing play_panel_swoosh().
+func play_dice_spawn_sound() -> void:
+	if not dice_spawn_sound:
+		return
+	
+	dice_spawn_player.stream = dice_spawn_sound
+	dice_spawn_player.pitch_scale = randf_range(0.95, 1.05)
+	dice_spawn_player.volume_db = master_volume_db
+	dice_spawn_player.play()
+
+
+## play_jackpot_sound()
+##
+## Play a celebration sound for Yahtzee / Jackpot (score >= 50).
+func play_jackpot_sound() -> void:
+	if not jackpot_sound:
+		return
+	
+	jackpot_player.stream = jackpot_sound
+	jackpot_player.pitch_scale = randf_range(0.95, 1.05)
+	jackpot_player.volume_db = master_volume_db
+	jackpot_player.play()
+
+
+## play_streak_sound()
+##
+## Play a sound when a score streak popup appears.
+func play_streak_sound() -> void:
+	if not streak_sound:
+		return
+	
+	streak_player.stream = streak_sound
+	streak_player.pitch_scale = randf_range(0.95, 1.05)
+	streak_player.volume_db = master_volume_db
+	streak_player.play()
+
+
+## play_next_turn_sound()
+##
+## Play a sound when advancing to the next turn.
+func play_next_turn_sound() -> void:
+	if not next_turn_sound:
+		return
+	
+	next_turn_player.stream = next_turn_sound
+	next_turn_player.pitch_scale = randf_range(0.95, 1.05)
+	next_turn_player.volume_db = master_volume_db
+	next_turn_player.play()
+
+
+## play_shop_open_sound()
+##
+## Play a sound when opening or closing the shop.
+func play_shop_open_sound() -> void:
+	if not shop_open_sound:
+		return
+	
+	shop_open_player.stream = shop_open_sound
+	shop_open_player.pitch_scale = randf_range(0.95, 1.05)
+	shop_open_player.volume_db = master_volume_db
+	shop_open_player.play()
+
+
+## play_powerup_apply_sound()
+##
+## Play a sound when a PowerUp or Mod is applied to dice.
+## Replaces the previous play_scoring_sound(10) reuse.
+func play_powerup_apply_sound() -> void:
+	if not powerup_apply_sound:
+		return
+	
+	powerup_apply_player.stream = powerup_apply_sound
+	powerup_apply_player.pitch_scale = randf_range(0.95, 1.05)
+	powerup_apply_player.volume_db = master_volume_db
+	powerup_apply_player.play()
+
+
+## play_threat_alarm_sound()
+##
+## Play an urgent alarm when challenge progress reaches >= 80%.
+## Replaces the previous play_panel_swoosh() reuse.
+func play_threat_alarm_sound() -> void:
+	if not threat_alarm_sound:
+		return
+	
+	threat_alarm_player.stream = threat_alarm_sound
+	threat_alarm_player.pitch_scale = randf_range(0.95, 1.05)
+	threat_alarm_player.volume_db = master_volume_db
+	threat_alarm_player.play()
+
+
+## play_victory_sound()
+##
+## Play a victory fanfare when the player wins (challenge completed).
+func play_victory_sound() -> void:
+	if not victory_sound:
+		return
+	
+	victory_player.stream = victory_sound
+	victory_player.pitch_scale = randf_range(0.95, 1.05)
+	victory_player.volume_db = master_volume_db
+	victory_player.play()

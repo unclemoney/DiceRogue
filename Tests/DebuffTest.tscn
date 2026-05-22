@@ -399,42 +399,7 @@ mod_manager_path = NodePath("../Managers/ModManager")
 gaming_console_manager_path = NodePath("../Managers/GamingConsoleManager")
 
 [node name="GameController" parent="." instance=ExtResource("15_aeiu6")]
-dice_hand_path = null
-turn_tracker_path = null
-power_up_manager_path = null
-power_up_ui_path = null
-power_up_container_path = null
-consumable_manager_path = null
-consumable_ui_path = null
-consumable_container_path = null
-score_card_ui_path = null
-debuff_ui_path = null
-debuff_container_path = null
-debuff_manager_path = null
-score_card_path = null
-mod_manager_path = null
-shop_ui_path = null
-game_button_ui_path = null
-challenge_manager_path = null
-challenge_ui_path = null
 challenge_container_path = NodePath("../ChallengeContainer")
-round_manager_path = null
-crt_manager_path = null
-statistics_panel_path = null
-scoring_animation_controller_path = null
-chores_manager_path = null
-chore_ui_path = null
-synergy_manager_path = null
-corkboard_ui_path = null
-end_of_round_stats_panel_path = null
-unlocked_item_panel_path = null
-channel_manager_path = null
-channel_manager_ui_path = null
-round_winner_panel_path = null
-carry_over_panel_path = null
-background_swirl_path = null
-gaming_console_manager_path = null
-gaming_console_ui_path = null
 
 [node name="Managers" type="Node" parent="."]
 

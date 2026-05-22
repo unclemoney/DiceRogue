@@ -165,8 +165,8 @@ func _show_challenge_reveal_banner(challenge_name: String) -> void:
 		tfx.play_preset(banner, "fly_in_down")
 	
 	var audio_mgr = get_node_or_null("/root/AudioManager")
-	if audio_mgr and audio_mgr.has_method("play_panel_swoosh"):
-		audio_mgr.play_panel_swoosh()
+	if audio_mgr and audio_mgr.has_method("play_challenge_reveal_sound"):
+		audio_mgr.play_challenge_reveal_sound()
 	
 	await get_tree().create_timer(2.0).timeout
 	if is_instance_valid(banner):

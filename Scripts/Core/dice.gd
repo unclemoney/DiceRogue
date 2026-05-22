@@ -644,8 +644,8 @@ func add_mod(mod_data: ModData) -> void:
 			tfx.spotlight_enter(icon, Color(1.5, 1.5, 2.0, 1.0))
 	# Mod apply sound
 	var audio_mgr = get_node_or_null("/root/AudioManager")
-	if audio_mgr and audio_mgr.has_method("play_scoring_sound"):
-		audio_mgr.play_scoring_sound(10)
+	if audio_mgr and audio_mgr.has_method("play_powerup_apply_sound"):
+		audio_mgr.play_powerup_apply_sound()
 
 func remove_mod(id: String) -> void:
 	if active_mods.has(id):

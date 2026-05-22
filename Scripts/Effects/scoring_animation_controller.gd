@@ -277,6 +277,10 @@ func _execute_animation_sequence(score: int, category: String, breakdown_info: D
 		var ftm = get_node_or_null("/root/FloatingTextManager")
 		if ftm:
 			ftm.show_jackpot_popup(self)
+		# Jackpot sound
+		var jackpot_audio = get_node_or_null("/root/AudioManager")
+		if jackpot_audio and jackpot_audio.has_method("play_jackpot_sound"):
+			jackpot_audio.play_jackpot_sound()
 		# Enhanced firework particles
 		var celebration = load("res://Scripts/Effects/challenge_celebration.gd").new()
 		get_tree().root.add_child(celebration)

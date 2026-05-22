@@ -50,15 +50,17 @@ var _is_enabled: bool = false
 var _current_intensity: int = 0
 var _pending_intensity: int = -1  # -1 means no pending change
 var _pending_transition_duration: float = 3.0
-var _active_layers: Dictionary = {}  # {layer_num: AudioStream}
+var _active_layers: Dictionary = {}  # {layer_num: true} (variant set at sync boundary)
 var _variant_history: Dictionary = {}  # {layer_num: [variant_letter, ...]}
 var _volume_tweens: Array[Tween] = []
+var _intensity_timer: Timer
 
 
 func _ready() -> void:
 	_log("Initializing...")
 	_load_audio_resources()
 	_create_audio_players()
+	_create_intensity_timer()
 	_connect_game_signals()
 	
 	if _is_enabled:
@@ -186,6 +188,18 @@ func _create_audio_players() -> void:
 	_log("Created %d audio players" % (1 + layer_players.size()))
 
 
+## _create_intensity_timer()
+##
+## One-shot timer for applying intensity changes after a short sync offset
+## instead of waiting for the full loop boundary.
+func _create_intensity_timer() -> void:
+	_intensity_timer = Timer.new()
+	_intensity_timer.name = "IntensityTimer"
+	_intensity_timer.one_shot = true
+	_intensity_timer.timeout.connect(_on_intensity_timer_timeout)
+	add_child(_intensity_timer)
+
+
 ## _connect_game_signals()
 ##
 ## Connect to game state signals for automatic intensity changes.
@@ -218,6 +232,8 @@ func _deferred_connect_signals() -> void:
 		if round_manager.has_signal("round_completed"):
 			round_manager.round_completed.connect(_on_round_completed)
 			_log("Connected to RoundManager.round_completed")
+	else:
+		_log("RoundManager not found - will retry on node_added")
 	
 	# Try to find and connect to ShopUI
 	var shop_ui = root.find_child("ShopUI", true, false)
@@ -225,6 +241,8 @@ func _deferred_connect_signals() -> void:
 		if shop_ui.has_signal("shop_button_opened"):
 			shop_ui.shop_button_opened.connect(_on_shop_opened)
 			_log("Connected to ShopUI.shop_button_opened")
+	else:
+		_log("ShopUI not found - will retry on node_added")
 	
 	# Try to find and connect to ChallengeManager
 	var challenge_manager = root.find_child("ChallengeManager", true, false)
@@ -232,6 +250,8 @@ func _deferred_connect_signals() -> void:
 		if challenge_manager.has_signal("challenge_completed"):
 			challenge_manager.challenge_completed.connect(_on_challenge_completed)
 			_log("Connected to ChallengeManager.challenge_completed")
+	else:
+		_log("ChallengeManager not found - will retry on node_added")
 	
 	# Try to find and connect to TurnTracker
 	var turn_tracker = root.find_child("TurnTracker", true, false)
@@ -239,6 +259,38 @@ func _deferred_connect_signals() -> void:
 		if turn_tracker.has_signal("game_over"):
 			turn_tracker.game_over.connect(_on_game_over)
 			_log("Connected to TurnTracker.game_over")
+	else:
+		_log("TurnTracker not found - will retry on node_added")
+	
+	# Watch for new nodes in case scene changes
+	if tree and not tree.is_connected("node_added", _on_node_added):
+		tree.node_added.connect(_on_node_added)
+		_log("Watching tree.node_added for scene changes")
+
+
+## _on_node_added(node: Node)
+##
+## Re-connect signals when relevant nodes are added to the tree (e.g. after a scene change).
+func _on_node_added(node: Node) -> void:
+	if node.name == "RoundManager" and node.has_signal("round_started"):
+		if not node.round_started.is_connected(_on_round_started):
+			node.round_started.connect(_on_round_started)
+			_log("Re-connected to RoundManager.round_started")
+		if not node.round_completed.is_connected(_on_round_completed):
+			node.round_completed.connect(_on_round_completed)
+			_log("Re-connected to RoundManager.round_completed")
+	elif node.name == "ShopUI" and node.has_signal("shop_button_opened"):
+		if not node.shop_button_opened.is_connected(_on_shop_opened):
+			node.shop_button_opened.connect(_on_shop_opened)
+			_log("Re-connected to ShopUI.shop_button_opened")
+	elif node.name == "ChallengeManager" and node.has_signal("challenge_completed"):
+		if not node.challenge_completed.is_connected(_on_challenge_completed):
+			node.challenge_completed.connect(_on_challenge_completed)
+			_log("Re-connected to ChallengeManager.challenge_completed")
+	elif node.name == "TurnTracker" and node.has_signal("game_over"):
+		if not node.game_over.is_connected(_on_game_over):
+			node.game_over.connect(_on_game_over)
+			_log("Re-connected to TurnTracker.game_over")
 
 
 ## _start_playback()
@@ -307,6 +359,8 @@ func _sync_all_layers() -> void:
 ## _apply_intensity_change()
 ##
 ## Apply the pending intensity change - select random layers and fade volumes.
+## Note: streams are NOT changed here; _sync_all_layers handles stream swaps
+## at loop boundaries so all players restart in perfect sync.
 func _apply_intensity_change() -> void:
 	var new_intensity = _pending_intensity
 	var transition_duration = _pending_transition_duration
@@ -329,17 +383,12 @@ func _apply_intensity_change() -> void:
 	var new_active_layers: Dictionary = {}
 	
 	for layer_num in layers_to_activate:
-		var variant = _get_random_variant(layer_num)
-		new_active_layers[layer_num] = variant
+		new_active_layers[layer_num] = true
 		
 		var player_index = layer_num - 1
 		var player = layer_players[player_index]
 		
-		# Set new stream if different
-		if player.stream != variant:
-			player.stream = variant
-		
-		# Fade in this layer
+		# Fade in this layer (stream is already playing muted from _start_playback)
 		_fade_player_volume(player, music_volume_db, transition_duration)
 	
 	# Fade out layers that are no longer active
@@ -440,14 +489,29 @@ func _fade_player_volume(player: AudioStreamPlayer, target_db: float, duration: 
 
 ## set_intensity(level: int, transition_duration: float = 3.0)
 ##
-## Queue an intensity change to be applied at the next loop boundary.
+## Queue an intensity change to be applied after a short sync offset.
 ## Level 0 = base only, level 1-6 = that many random layers active.
-## Multiple calls before loop boundary will overwrite - only latest is used.
+## Multiple calls before application will overwrite - only latest is used.
+## Streams are swapped and restarted at the next loop boundary to maintain sync.
 func set_intensity(level: int, transition_duration: float = 3.0) -> void:
 	level = clampi(level, 0, MAX_LAYERS)
 	_pending_intensity = level
 	_pending_transition_duration = transition_duration
-	_log("Intensity change queued: %d (will apply at next loop boundary)" % level)
+	
+	var delay := 0.1
+	if _intensity_timer:
+		_intensity_timer.start(delay)
+	
+	_log("Intensity change queued: %d (will apply in %.2fs)" % [level, delay])
+
+
+## _on_intensity_timer_timeout()
+##
+## Apply the pending intensity change after the short sync offset.
+## Volume fades begin immediately; streams are refreshed at the next loop boundary.
+func _on_intensity_timer_timeout() -> void:
+	if _pending_intensity >= 0:
+		_apply_intensity_change()
 
 
 ## set_custom_intensity(level: int, transition_duration: float = 3.0)

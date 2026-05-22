@@ -138,6 +138,7 @@ func _ready() -> void:
 
 func _on_visibility_changed() -> void:
 	if visible:
+		shop_button_opened.emit()
 		_animate_shop_open()
 
 ## _animate_shop_open()

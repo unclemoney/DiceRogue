@@ -3302,6 +3302,11 @@ func _show_game_over_popup(final_score: int, target_score: int, challenge_comple
 		off_tween.tween_property(crt_off, "modulate:a", 0.0, 0.2)
 		off_tween.tween_callback(crt_off.queue_free)
 		await get_tree().create_timer(0.5).timeout
+	else:
+		# Victory fanfare
+		var audio_mgr_win = get_node_or_null("/root/AudioManager")
+		if audio_mgr_win and audio_mgr_win.has_method("play_victory_sound"):
+			audio_mgr_win.play_victory_sound()
 	
 	# Create dark overlay
 	var overlay = ColorRect.new()

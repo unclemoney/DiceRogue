@@ -104,6 +104,9 @@ func start_new_turn():
 		var ftm = get_node_or_null("/root/FloatingTextManager")
 		if ftm:
 			ftm.show_streak_popup(self, score_streak_multiplier)
+		var audio_mgr = get_node_or_null("/root/AudioManager")
+		if audio_mgr and audio_mgr.has_method("play_streak_sound"):
+			audio_mgr.play_streak_sound()
 		
 		if score_streak_turns_remaining <= 0:
 			_end_score_streak()
@@ -276,6 +279,9 @@ func start_score_streak(turns: int) -> void:
 	var ftm = get_node_or_null("/root/FloatingTextManager")
 	if ftm:
 		ftm.show_streak_popup(self, score_streak_multiplier)
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.has_method("play_streak_sound"):
+		audio_mgr.play_streak_sound()
 
 
 ## break_score_streak()

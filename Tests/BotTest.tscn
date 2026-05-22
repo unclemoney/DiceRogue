@@ -373,42 +373,8 @@ consumable_manager_path = NodePath("../ConsumableManager")
 mod_manager_path = NodePath("../ModManager")
 
 [node name="GameController" parent="." instance=ExtResource("15_aeiu6")]
-dice_hand_path = null
-turn_tracker_path = null
-power_up_manager_path = null
-power_up_ui_path = null
-power_up_container_path = null
-consumable_manager_path = null
-consumable_ui_path = null
-consumable_container_path = null
-score_card_ui_path = null
-debuff_ui_path = null
-debuff_container_path = null
-debuff_manager_path = null
-score_card_path = null
-mod_manager_path = null
-shop_ui_path = null
-game_button_ui_path = null
-challenge_manager_path = null
-challenge_ui_path = null
 challenge_container_path = NodePath("../ChallengeContainer")
-round_manager_path = null
 crt_manager_path = NodePath("../Background/CRTManager")
-statistics_panel_path = null
-scoring_animation_controller_path = null
-chores_manager_path = null
-chore_ui_path = null
-synergy_manager_path = null
-corkboard_ui_path = null
-end_of_round_stats_panel_path = null
-unlocked_item_panel_path = null
-channel_manager_path = null
-channel_manager_ui_path = null
-round_winner_panel_path = null
-carry_over_panel_path = null
-background_swirl_path = null
-gaming_console_manager_path = null
-gaming_console_ui_path = null
 
 [node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
 power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc"), ExtResource("29_bonus_money"), ExtResource("29_money_multiplier"), ExtResource("30_8nt64"), ExtResource("30_2hxro"), ExtResource("31_sqb4o"), ExtResource("32_fullhouse"), ExtResource("33_stepbystep"), ExtResource("70_perfect_strangers"), ExtResource("83_green_monster"), ExtResource("39_hm8bq"), ExtResource("99_wild_dots"), ExtResource("100_pin_head"), ExtResource("101_money_well_spent"), ExtResource("102_highlighted_score"), ExtResource("103_the_consumer_is_always_right"), ExtResource("104_green_slime"), ExtResource("105_red_slime"), ExtResource("106_purple_slime"), ExtResource("107_blue_slime"), ExtResource("108_lower_ten"), ExtResource("109_different_straights"), ExtResource("110_plus_thelast"), ExtResource("111_allowance"), ExtResource("112_ungrounded"), ExtResource("113_shop_rerolls"), ExtResource("114_tango_and_cash"), ExtResource("115_even_higher"), ExtResource("116_money_bags"), ExtResource("117_failed_money"), ExtResource("59_7f4b6"), ExtResource("60_nxp7f"), ExtResource("61_oc53v"), ExtResource("62_3nuss"), ExtResource("63_ja73i"), ExtResource("1038_extra_coupons"), ExtResource("1040_purple_payout"), ExtResource("1041_mod_money"), ExtResource("1042_blue_safety_net"), ExtResource("1043_chore_sprint"), ExtResource("1044_straight_triplet_master"), ExtResource("1045_modded_dice_mastery"), ExtResource("1046_debuff_destroyer"), ExtResource("1047_challenge_easer"), ExtResource("1048_azure_perfection"), ExtResource("1049_rainbow_surge"), ExtResource("1050_the_replicator"), ExtResource("1051_the_piggy_bank"), ExtResource("1052_random_card_level"), ExtResource("1053_yahtzeed_dice"), ExtResource("1054_consumable_collector"), ExtResource("1055_daring_dice"), ExtResource("1056_great_exchange"), ExtResource("1057_extra_rainbow"), ExtResource("1059_melting_dice"), ExtResource("1060_hot_streak"), ExtResource("1061_one_roll_wonder"), ExtResource("1062_power_surge"), ExtResource("1063_snake_eyes")])
