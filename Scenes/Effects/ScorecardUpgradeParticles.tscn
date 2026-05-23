@@ -1,0 +1,52 @@
+[gd_scene load_steps=9 format=3 uid="uid://dx1q2y304w5v6"]
+
+[ext_resource type="Texture2D" uid="uid://bi43xp1vy4uvg" path="res://Resources/Art/Dice/WhiteSquare.png" id="1_sqpart"]
+
+[sub_resource type="Curve" id="Curve_sqpart_rot"]
+_limits = [-360.0, 360.0, 0.0, 1.0]
+_data = [Vector2(0, -360), 0.0, 0.0, 0, 0, Vector2(1, 360), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_sqpart_rot"]
+curve = SubResource("Curve_sqpart_rot")
+
+[sub_resource type="Gradient" id="Gradient_sqpart_color"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(1, 0.9, 0.2, 1, 1, 0.7, 0.1, 0.8, 1, 0.5, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_sqpart_color"]
+gradient = SubResource("Gradient_sqpart_color")
+
+[sub_resource type="Curve" id="Curve_sqpart_scale"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.2, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_sqpart_scale"]
+curve = SubResource("Curve_sqpart_scale")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_sqpart"]
+particle_flag_disable_z = true
+emission_shape = 1
+emission_sphere_radius = 6.0
+direction = Vector3(0, -1, 0)
+spread = 90.0
+initial_velocity_min = 60.0
+initial_velocity_max = 120.0
+angular_velocity_min = -1.60933e-05
+angular_velocity_max = 370.49
+angular_velocity_curve = SubResource("CurveTexture_sqpart_rot")
+gravity = Vector3(0, 80, 0)
+scale_min = 0.05
+scale_max = 0.15
+scale_curve = SubResource("CurveTexture_sqpart_scale")
+color_ramp = SubResource("GradientTexture1D_sqpart_color")
+
+[node name="ScorecardUpgradeParticles" type="GPUParticles2D"]
+z_index = 60
+emitting = false
+amount = 24
+process_material = SubResource("ParticleProcessMaterial_sqpart")
+texture = ExtResource("1_sqpart")
+one_shot = true
+explosiveness = 0.85
+lifetime = 0.6

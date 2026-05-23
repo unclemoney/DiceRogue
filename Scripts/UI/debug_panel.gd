@@ -232,6 +232,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Show Category Levels", "method": "_debug_show_category_levels"},
 			{"text": "Unlock All Upgrade Consumables", "method": "_debug_unlock_all_upgrade_consumables"},
 			{"text": "Lock All Upgrade Consumables", "method": "_debug_lock_all_upgrade_consumables"},
+			{"text": "Test Scorecard Upgrade Juice", "method": "_debug_test_scorecard_upgrade_juice"},
 		],
 		"Dice Control": [
 			{"text": "Roll All 6s", "method": "_debug_force_dice"},
@@ -2817,6 +2818,44 @@ func _debug_upgrade_all_categories() -> void:
 		scorecard.upgrade_category(Scorecard.Section.LOWER, cat)
 	
 	log_debug("Upgraded all 12 score card categories by 1 level")
+
+## _debug_test_scorecard_upgrade_juice()
+##
+## Tests the scorecard upgrade juice (bounce, flash, particles, sound) by upgrading
+## a random unscored category with juice enabled.
+func _debug_test_scorecard_upgrade_juice() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	var scorecard = game_controller.scorecard
+	if not scorecard:
+		log_debug("ERROR: Scorecard not available")
+		return
+	
+	var score_card_ui = game_controller.score_card_ui
+	if not score_card_ui:
+		log_debug("ERROR: ScoreCardUI not available")
+		return
+	
+	# Collect all unscored categories
+	var available := []
+	for cat in scorecard.upper_scores.keys():
+		if scorecard.upper_scores[cat] == null:
+			available.append({"section": Scorecard.Section.UPPER, "category": cat})
+	for cat in scorecard.lower_scores.keys():
+		if scorecard.lower_scores[cat] == null:
+			available.append({"section": Scorecard.Section.LOWER, "category": cat})
+	
+	if available.is_empty():
+		log_debug("No unscored categories available to test juice")
+		return
+	
+	var selected = available[GameRNG.random_index(available)]
+	score_card_ui.enable_upgrade_juice(1)
+	scorecard.upgrade_category(selected["section"], selected["category"])
+	log_debug("Tested upgrade juice on '%s'" % selected["category"])
+
 
 ## _debug_show_category_levels()
 ##

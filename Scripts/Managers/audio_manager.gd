@@ -106,6 +106,7 @@ var shop_open_sound: AudioStream            ## NEW: SHOP_OPEN_1.wav
 var powerup_apply_sound: AudioStream        ## NEW: POWERUP_APPLY_1.wav
 var threat_alarm_sound: AudioStream         ## NEW: THREAT_ALARM_1.wav
 var victory_sound: AudioStream              ## NEW: VICTORY_1.wav
+var scorecard_upgrade_sound: AudioStream    ## NEW: SCORECARD_UPGRADE_1.wav
 
 # Audio players - pooled for dice (one per die), single for others
 var dice_players: Array[AudioStreamPlayer] = []
@@ -136,6 +137,7 @@ var shop_open_player: AudioStreamPlayer
 var powerup_apply_player: AudioStreamPlayer
 var threat_alarm_player: AudioStreamPlayer
 var victory_player: AudioStreamPlayer
+var scorecard_upgrade_player: AudioStreamPlayer
 
 # Roll tracking - reset after scoring
 var current_roll_number: int = 0
@@ -407,6 +409,13 @@ func _load_audio_resources() -> void:
 	else:
 		push_warning("[AudioManager] Failed to load victory sound (VICTORY_1.wav)")
 	
+	# Scorecard upgrade (level up)
+	scorecard_upgrade_sound = load("res://Resources/Audio/UI/SCORECARD_UPGRADE_1.wav")
+	if scorecard_upgrade_sound:
+		print("[AudioManager] Loaded scorecard upgrade sound")
+	else:
+		push_warning("[AudioManager] Failed to load scorecard upgrade sound (SCORECARD_UPGRADE_1.wav)")
+	
 	# Fix: dice land should use its own file instead of DENIED_1.wav
 	dice_land_sound = load("res://Resources/Audio/UI/DICE_LAND_1.wav")
 	if dice_land_sound:
@@ -578,6 +587,12 @@ func _create_audio_players() -> void:
 	victory_player.name = "VictoryPlayer"
 	victory_player.volume_db = master_volume_db
 	add_child(victory_player)
+	
+	# Scorecard upgrade player
+	scorecard_upgrade_player = AudioStreamPlayer.new()
+	scorecard_upgrade_player.name = "ScorecardUpgradePlayer"
+	scorecard_upgrade_player.volume_db = master_volume_db
+	add_child(scorecard_upgrade_player)
 
 
 ## play_dice_roll(die_index: int, roll_number: int)
@@ -1120,3 +1135,16 @@ func play_victory_sound() -> void:
 	victory_player.pitch_scale = randf_range(0.95, 1.05)
 	victory_player.volume_db = master_volume_db
 	victory_player.play()
+
+
+## play_scorecard_upgrade_sound()
+##
+## Play a sound when a scorecard category levels up from a consumable.
+func play_scorecard_upgrade_sound() -> void:
+	if not scorecard_upgrade_sound:
+		return
+	
+	scorecard_upgrade_player.stream = scorecard_upgrade_sound
+	scorecard_upgrade_player.pitch_scale = randf_range(0.95, 1.05)
+	scorecard_upgrade_player.volume_db = master_volume_db
+	scorecard_upgrade_player.play()

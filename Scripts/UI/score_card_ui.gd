@@ -1,6 +1,8 @@
 extends Control
 class_name ScoreCardUI
 
+const UPGRADE_PARTICLES := preload("res://Scenes/Effects/ScorecardUpgradeParticles.tscn")
+
 var scorecard: Scorecard
 var category_buttons := {}
 var category_labels := {}
@@ -58,6 +60,10 @@ var current_base_additive_score := 0
 # Score tracking for counter roll-up and milestones
 var previous_total_score := 0
 var current_milestone_tier := 0
+
+# Upgrade juice tracking (consumable-triggered only)
+var _juice_remaining: int = 0
+var _juice_sound_played: bool = false
 var _highlight_tween: Tween
 var _highlighted_button: Button
 var _idle_float_tween: Tween
@@ -353,28 +359,77 @@ func _create_level_labels() -> void:
 	print("[ScoreCardUI] Referenced", category_level_labels.size(), "level labels total")
 
 
+## enable_upgrade_juice(count)
+##
+## Enables the enhanced juice (bounce, flash, particles, sound) for the next `count`
+## category upgrades. Called by GameController before applying a consumable that
+## upgrades scorecard levels.
+func enable_upgrade_juice(count: int) -> void:
+	_juice_remaining = count
+	_juice_sound_played = false
+
+
 ## _on_category_upgraded(section, category, new_level)
 ##
 ## Updates the level label when a category is upgraded.
 ## Shows "Lv.X" text for all levels (including level 1).
+## If upgrade juice is enabled, plays enhanced FX instead of the basic flash.
 func _on_category_upgraded(_section: Scorecard.Section, category: String, new_level: int) -> void:
 	print("[ScoreCardUI] Category upgraded:", category, "to level", new_level)
 	
 	var level_label = category_level_labels.get(category)
-	if level_label:
-		level_label.text = "Lv.%d" % new_level
-		
-		# Add a brief highlight animation when upgraded above level 1
-		if new_level > 1:
-			var tween = create_tween()
-			level_label.modulate = Color(1, 1, 0.5, 1)  # Bright yellow flash
-			tween.tween_property(level_label, "modulate", Color(1, 1, 1, 1), 0.4)
-			
-			# Scale bounce effect
-			level_label.scale = Vector2(1.3, 1.3)
-			tween.parallel().tween_property(level_label, "scale", Vector2(1, 1), 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
-	else:
+	if not level_label:
 		print("[ScoreCardUI] Warning: No level label found for category:", category)
+		return
+	
+	level_label.text = "Lv.%d" % new_level
+	
+	if _juice_remaining > 0:
+		_juice_remaining -= 1
+		_play_upgrade_juice(level_label)
+	elif new_level > 1:
+		# Basic flash for non-consumable upgrades (powerups, channel bonuses, etc.)
+		var tween = create_tween()
+		level_label.modulate = Color(1, 1, 0.5, 1)  # Bright yellow flash
+		tween.tween_property(level_label, "modulate", Color(1, 1, 1, 1), 0.4)
+		
+		# Scale bounce effect
+		level_label.scale = Vector2(1.3, 1.3)
+		tween.parallel().tween_property(level_label, "scale", Vector2(1, 1), 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+
+
+## _play_upgrade_juice(label)
+##
+## Plays the full consumable-upgrade juice suite on a level label:
+## elastic bounce, bright gold flash, particle burst, and sound (once per batch).
+func _play_upgrade_juice(level_label: Label) -> void:
+	# Bounce: bigger and more elastic than the basic flash
+	level_label.pivot_offset = level_label.size / 2
+	level_label.scale = Vector2(1.6, 1.6)
+	var bounce_tween = create_tween()
+	bounce_tween.tween_property(level_label, "scale", Vector2(1, 1), 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_ELASTIC)
+	
+	# Flash: bright gold → white
+	level_label.modulate = Color(1.6, 1.4, 0.6, 1)
+	bounce_tween.parallel().tween_property(level_label, "modulate", Color(1, 1, 1, 1), 0.5)
+	
+	# Particles
+	if UPGRADE_PARTICLES:
+		var particles = UPGRADE_PARTICLES.instantiate() as GPUParticles2D
+		get_tree().root.add_child(particles)
+		particles.global_position = level_label.global_position + level_label.size / 2
+		particles.emitting = true
+		get_tree().create_timer(1.0).timeout.connect(func():
+			if is_instance_valid(particles):
+				particles.queue_free()
+		)
+	
+	# Sound (once per batch)
+	if not _juice_sound_played:
+		_juice_sound_played = true
+		var audio_mgr = get_node_or_null("/root/AudioManager")
+		if audio_mgr and audio_mgr.has_method("play_scorecard_upgrade_sound"):
+			audio_mgr.play_scorecard_upgrade_sound()
 
 
 ## _on_upper_bonus_achieved(bonus)

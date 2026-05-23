@@ -2001,8 +2001,29 @@ func _on_consumable_used(consumable_id: String) -> void:
 		# Score card upgrade consumables
 		"ones_upgrade", "twos_upgrade", "threes_upgrade", "fours_upgrade", "fives_upgrade", "sixes_upgrade", \
 		"three_of_a_kind_upgrade", "four_of_a_kind_upgrade", "full_house_upgrade", \
-		"small_straight_upgrade", "large_straight_upgrade", "yahtzee_upgrade", "chance_upgrade", \
+		"small_straight_upgrade", "large_straight_upgrade", "yahtzee_upgrade", "chance_upgrade":
+			if score_card_ui:
+				score_card_ui.enable_upgrade_juice(1)
+			consumable.apply(self)
+			remove_consumable_instance.call()
 		"all_categories_upgrade":
+			if score_card_ui:
+				score_card_ui.enable_upgrade_juice(13)
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"upper_section_boost":
+			if score_card_ui:
+				score_card_ui.enable_upgrade_juice(6)
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"lower_section_boost":
+			if score_card_ui:
+				score_card_ui.enable_upgrade_juice(7)
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"lucky_upgrade":
+			if score_card_ui:
+				score_card_ui.enable_upgrade_juice(1)
 			consumable.apply(self)
 			remove_consumable_instance.call()
 		# Chore-related consumables
@@ -2023,12 +2044,6 @@ func _on_consumable_used(consumable_id: String) -> void:
 		"stat_cashout":
 			consumable.apply(self)
 			remove_consumable_instance.call()
-		"upper_section_boost":
-			consumable.apply(self)
-			remove_consumable_instance.call()
-		"lower_section_boost":
-			consumable.apply(self)
-			remove_consumable_instance.call()
 		"score_streak":
 			consumable.apply(self)
 			remove_consumable_instance.call()
@@ -2039,9 +2054,6 @@ func _on_consumable_used(consumable_id: String) -> void:
 			consumable.apply(self)
 			remove_consumable_instance.call()
 		"visit_the_shop":
-			consumable.apply(self)
-			remove_consumable_instance.call()
-		"lucky_upgrade":
 			consumable.apply(self)
 			remove_consumable_instance.call()
 		# Shop discount and utility consumables
