@@ -174,13 +174,16 @@ func _on_mouse_entered() -> void:
 		print("[PowerUpSpine] Killing existing tween")
 		_current_tween.kill()
 	
-	print("[PowerUpSpine] Creating hover tween to:", _base_position + _hover_offset)
-	_current_tween = create_tween()
-	_current_tween.tween_property(self, "position", _base_position + _hover_offset, 0.1)\
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	
-	# Jelly scale effect via TweenFXHelper
+	# Jelly scale effect via TweenFXHelper (this may change pivot_offset)
+	var old_pivot = pivot_offset
 	_tfx.spine_hover(self)
+	adjust_position_for_pivot_change(old_pivot)
+	
+	var tween_target = _base_position + _hover_offset + _get_current_pivot_compensation()
+	print("[PowerUpSpine] Creating hover tween to:", tween_target)
+	_current_tween = create_tween()
+	_current_tween.tween_property(self, "position", tween_target, 0.1)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	
 	# Emit hover signal with global mouse position
 	if data:
@@ -204,13 +207,26 @@ func _on_mouse_exited() -> void:
 		print("[PowerUpSpine] Killing existing tween")
 		_current_tween.kill()
 	
-	print("[PowerUpSpine] Creating exit tween to:", _base_position)
+	var tween_target = _base_position + _get_current_pivot_compensation()
+	print("[PowerUpSpine] Creating exit tween to:", tween_target)
 	_current_tween = create_tween()
-	_current_tween.tween_property(self, "position", _base_position, 0.1)\
+	_current_tween.tween_property(self, "position", tween_target, 0.1)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	
 	# Snap-back scale effect via TweenFXHelper
-	_tfx.spine_unhover(self)
+	var unhover_tween = _tfx.spine_unhover(self)
+	if unhover_tween:
+		unhover_tween.finished.connect(func():
+			var old_pivot = pivot_offset
+			pivot_offset = Vector2.ZERO
+			adjust_position_for_pivot_change(old_pivot)
+			scale = Vector2.ONE
+		)
+	else:
+		var old_pivot = pivot_offset
+		pivot_offset = Vector2.ZERO
+		adjust_position_for_pivot_change(old_pivot)
+		scale = Vector2.ONE
 	
 	# Emit unhover signal
 	if data:
@@ -222,8 +238,41 @@ func set_data(new_data: PowerUpData) -> void:
 
 func set_base_position(pos: Vector2) -> void:
 	print("[PowerUpSpine] Setting base position to:", pos, " for data:", data.id if data else "null")
+	var old_pivot = pivot_offset
+	pivot_offset = Vector2.ZERO
+	adjust_position_for_pivot_change(old_pivot)
 	_base_position = pos
 	position = pos
+	scale = Vector2.ONE
+
+func get_base_position() -> Vector2:
+	return _base_position
 
 func get_data() -> PowerUpData:
 	return data
+
+## _get_pivot_compensation(old_pivot, new_pivot)
+##
+## Calculates the position offset needed to keep the spine visually in the same place
+## when pivot_offset changes on a rotated Control.
+func _get_pivot_compensation(old_pivot: Vector2, new_pivot: Vector2) -> Vector2:
+	var diff = new_pivot - old_pivot
+	if diff == Vector2.ZERO:
+		return Vector2.ZERO
+	var angle = deg_to_rad(rotation_degrees)
+	var rot = Transform2D(angle, Vector2.ZERO)
+	return rot * diff - diff
+
+## adjust_position_for_pivot_change(old_pivot)
+##
+## Call this immediately after something externally changes pivot_offset.
+## Adjusts `position` so the spine does not visually jump.
+func adjust_position_for_pivot_change(old_pivot: Vector2) -> void:
+	position += _get_pivot_compensation(old_pivot, pivot_offset)
+
+## _get_current_pivot_compensation()
+##
+## Returns the position offset that must be added to `_base_position` to get the
+## correct tween target when the current pivot_offset is non-zero.
+func _get_current_pivot_compensation() -> Vector2:
+	return _get_pivot_compensation(Vector2.ZERO, pivot_offset)

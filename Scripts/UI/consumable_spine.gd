@@ -142,7 +142,11 @@ func set_data(new_data: ConsumableData) -> void:
 func set_base_position(pos: Vector2) -> void:
 	_base_position = pos
 	position = pos
+	scale = Vector2.ONE
 	_is_initialized = true  # Mark as initialized when base position is explicitly set
+
+func get_base_position() -> Vector2:
+	return _base_position
 
 func _on_mouse_entered() -> void:
 	if data:

@@ -9,6 +9,7 @@ extends Node
 ## - Smart variant selection avoiding recent repetition
 ## - Intensity-based layer activation (0-6 layers active)
 ## - Loop-boundary transitions for seamless sync
+## - CRASH layers triggered automatically after LAYER_3 loops
 ## - Strict duration validation (all layers must match base exactly)
 ## - Graceful degradation if files missing
 ##
@@ -17,11 +18,14 @@ extends Node
 ## - res://Resources/Audio/MUSIC/LAYER_1_A.wav, LAYER_1_B.wav, etc.
 ## - res://Resources/Audio/MUSIC/LAYER_2_A.wav, LAYER_2_B.wav, etc.
 ## - Layers 1-6, variants A-Z (max 26 per layer)
+## - res://Resources/Audio/MUSIC/CRASH_1.wav, CRASH_2.wav, etc.
+##   CRASH layers are triggered automatically whenever LAYER_3 is active.
 
 const MUSIC_PATH := "res://Resources/Audio/MUSIC/"
 const MAX_LAYERS := 6
 const MAX_VARIANTS := 26  # A-Z
 const MUTED_VOLUME_DB := -80.0
+
 
 # Configuration exports
 @export var music_volume_db: float = -6.0
@@ -40,10 +44,12 @@ var base_layer_stream: AudioStream
 var base_loop_duration: float = 0.0
 var layer_variants: Dictionary = {}  # {layer_num: [AudioStream, ...]}
 var valid_layer_numbers: Array[int] = []  # Layers with at least one valid variant
+var crash_variants: Array[AudioStream] = []
 
 # Audio players
 var base_player: AudioStreamPlayer
 var layer_players: Array[AudioStreamPlayer] = []
+var crash_player: AudioStreamPlayer
 
 # Playback state
 var _is_enabled: bool = false
@@ -54,6 +60,9 @@ var _active_layers: Dictionary = {}  # {layer_num: true} (variant set at sync bo
 var _variant_history: Dictionary = {}  # {layer_num: [variant_letter, ...]}
 var _volume_tweens: Array[Tween] = []
 var _intensity_timer: Timer
+var _crash_queued: bool = false
+var _crash_active: bool = false
+var _layer_3_was_active_this_loop: bool = false
 
 
 func _ready() -> void:
@@ -111,11 +120,15 @@ func _load_audio_resources() -> void:
 			valid_layer_numbers.append(layer_num)
 	valid_layer_numbers.sort()
 	
+	# Load CRASH variants
+	_load_crash_variants()
+	
 	# Log summary
 	_log("Layer loading complete:")
 	for layer_num in valid_layer_numbers:
 		var variants = layer_variants[layer_num] as Array
 		_log("  LAYER_%d: %d variants" % [layer_num, variants.size()])
+	_log("CRASH variants loaded: %d" % crash_variants.size())
 
 
 ## _try_load_layer_variant(file_name: String)
@@ -166,6 +179,39 @@ func _try_load_layer_variant(file_name: String) -> void:
 	_log("Loaded %s (duration: %.3fs)" % [file_name, duration])
 
 
+## _load_crash_variants()
+##
+## Scan MUSIC folder for CRASH_N.wav files and validate durations.
+func _load_crash_variants() -> void:
+	var dir = DirAccess.open(MUSIC_PATH)
+	if not dir:
+		return
+	
+	dir.list_dir_begin()
+	var file_name = dir.get_next()
+	var regex = RegEx.new()
+	regex.compile("^CRASH_(\\d+)\\.wav$")
+	
+	while file_name != "":
+		if not dir.current_is_dir() and file_name.ends_with(".wav"):
+			var result = regex.search(file_name)
+			if result:
+				var stream_path = MUSIC_PATH + file_name
+				var stream = load(stream_path) as AudioStream
+				if stream:
+					var duration = stream.get_length()
+					if is_equal_approx(duration, base_loop_duration):
+						crash_variants.append(stream)
+						_log("Loaded %s (duration: %.3fs)" % [file_name, duration])
+					else:
+						push_error("[MusicManager] Duration mismatch: %s is %.3fs, expected %.3fs - SKIPPED" % [file_name, duration, base_loop_duration])
+				else:
+					push_warning("[MusicManager] Failed to load: %s" % stream_path)
+		file_name = dir.get_next()
+	
+	dir.list_dir_end()
+
+
 ## _create_audio_players()
 ##
 ## Create pooled AudioStreamPlayer nodes for base and all layers.
@@ -185,7 +231,13 @@ func _create_audio_players() -> void:
 		add_child(player)
 		layer_players.append(player)
 	
-	_log("Created %d audio players" % (1 + layer_players.size()))
+	# Create crash layer player (starts muted)
+	crash_player = AudioStreamPlayer.new()
+	crash_player.name = "CrashPlayer"
+	crash_player.volume_db = MUTED_VOLUME_DB
+	add_child(crash_player)
+	
+	_log("Created %d audio players" % (2 + layer_players.size()))
 
 
 ## _create_intensity_timer()
@@ -312,6 +364,12 @@ func _start_playback() -> void:
 			layer_players[i].volume_db = MUTED_VOLUME_DB
 			layer_players[i].play()
 	
+	# Start crash player in sync but muted
+	if crash_variants.size() > 0:
+		crash_player.stream = crash_variants[randi() % crash_variants.size()]
+		crash_player.volume_db = MUTED_VOLUME_DB
+		crash_player.play()
+	
 	_current_intensity = 0
 	_log("Playback started at intensity 0")
 
@@ -328,6 +386,12 @@ func _on_base_loop_finished() -> void:
 	# Apply pending intensity change if queued
 	if _pending_intensity >= 0:
 		_apply_intensity_change()
+	
+	# Queue CRASH for next loop if LAYER_3 was active this loop
+	if _layer_3_was_active_this_loop:
+		_crash_queued = true
+		_log("LAYER_3 was active - CRASH queued for next loop")
+		_layer_3_was_active_this_loop = false
 	
 	# Restart all players in sync
 	_sync_all_layers()
@@ -351,8 +415,25 @@ func _sync_all_layers() -> void:
 				var new_variant = _get_random_variant(layer_num)
 				player.stream = new_variant
 				_active_layers[layer_num] = new_variant
+				if layer_num == 3:
+					_layer_3_was_active_this_loop = true
 			player.play()
 	
+	# Handle CRASH layer
+	if crash_variants.size() > 0:
+		if _crash_queued:
+			var crash_variant = crash_variants[randi() % crash_variants.size()]
+			crash_player.stream = crash_variant
+			crash_player.volume_db = music_volume_db
+			_crash_active = true
+			_crash_queued = false
+			_log("CRASH layer playing: %s" % crash_variant.resource_path)
+		elif _crash_active:
+			crash_player.volume_db = MUTED_VOLUME_DB
+			_crash_active = false
+			_log("CRASH layer muted")
+		crash_player.play()
+
 	_log("All layers synced and restarted")
 
 
@@ -384,6 +465,9 @@ func _apply_intensity_change() -> void:
 	
 	for layer_num in layers_to_activate:
 		new_active_layers[layer_num] = true
+		
+		if layer_num == 3:
+			_layer_3_was_active_this_loop = true
 		
 		var player_index = layer_num - 1
 		var player = layer_players[player_index]
@@ -550,8 +634,14 @@ func stop_music() -> void:
 	for player in layer_players:
 		player.stop()
 	
+	if crash_player:
+		crash_player.stop()
+	
 	_active_layers.clear()
 	_current_intensity = 0
+	_crash_queued = false
+	_crash_active = false
+	_layer_3_was_active_this_loop = false
 	_log("Music stopped")
 
 

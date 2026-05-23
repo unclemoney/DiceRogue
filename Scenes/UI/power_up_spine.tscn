@@ -6,17 +6,9 @@
 
 [node name="PowerUpSpine" type="Control"]
 custom_minimum_size = Vector2(16, 92)
-layout_mode = 3
-anchor_top = -0.053
-anchor_right = 0.023
-anchor_bottom = 0.075
-offset_top = 0.176003
-offset_right = 0.559998
-offset_bottom = 0.015995
-grow_horizontal = 2
-grow_vertical = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
+layout_mode = 0
+offset_right = 28.0
+offset_bottom = 170.0
 mouse_filter = 1
 script = ExtResource("1_spine")
 spine_texture = ExtResource("2_spine_tex")

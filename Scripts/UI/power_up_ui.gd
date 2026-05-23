@@ -186,8 +186,11 @@ func add_power_up(data: PowerUpData) -> Node:
 	
 	# Juice: powerup acquisition effect
 	var tfx = get_node_or_null("/root/TweenFXHelper")
+	var reward_tween = null
 	if tfx and spine:
-		tfx.positive_reward(spine)
+		var old_pivot = spine.pivot_offset
+		reward_tween = tfx.positive_reward(spine)
+		spine.adjust_position_for_pivot_change(old_pivot)
 		# Slide-in from off-screen effect
 		var orig_pos = spine.position
 		spine.position.x += 200
@@ -195,6 +198,21 @@ func add_power_up(data: PowerUpData) -> Node:
 		var slide_tween = create_tween()
 		slide_tween.tween_property(spine, "position", orig_pos, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		slide_tween.parallel().tween_property(spine, "modulate:a", 1.0, 0.3)
+		slide_tween.finished.connect(func():
+			if is_instance_valid(spine):
+				var restore_old_pivot = spine.pivot_offset
+				spine.pivot_offset = Vector2.ZERO
+				spine.adjust_position_for_pivot_change(restore_old_pivot)
+				spine.scale = Vector2.ONE
+		)
+		if reward_tween:
+			reward_tween.finished.connect(func():
+				if is_instance_valid(spine):
+					var restore_old_pivot = spine.pivot_offset
+					spine.pivot_offset = Vector2.ZERO
+					spine.adjust_position_for_pivot_change(restore_old_pivot)
+					spine.scale = Vector2.ONE
+			)
 	
 	# Acquisition sound
 	var audio_mgr = get_node_or_null("/root/AudioManager")
@@ -464,6 +482,9 @@ func _fold_back_cards() -> void:
 		if spine:
 			var tween: Tween = create_tween()
 			tween.tween_property(spine, "modulate:a", 1.0, 0.2)
+	
+	# Re-snap all spines to their correct base positions after fold back
+	_position_spines()
 	
 	_selected_spine_id = ""
 	_is_animating = false

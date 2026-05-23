@@ -980,6 +980,35 @@ func add_consumable(data: ConsumableData) -> Node:
 	spine.spine_hovered.connect(_on_consumable_spine_hovered)
 	spine.spine_unhovered.connect(_on_consumable_spine_unhovered)
 	
+	# Juice: consumable acquisition effect
+	var tfx = get_node_or_null("/root/TweenFXHelper")
+	var reward_tween = null
+	if tfx and spine:
+		reward_tween = tfx.positive_reward(spine)
+		# Slide-in from off-screen effect
+		var orig_pos = spine.position
+		spine.position.x += 200
+		spine.modulate.a = 0.0
+		var slide_tween = create_tween()
+		slide_tween.tween_property(spine, "position", orig_pos, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		slide_tween.parallel().tween_property(spine, "modulate:a", 1.0, 0.3)
+		slide_tween.finished.connect(func():
+			if is_instance_valid(spine):
+				spine.position = orig_pos
+				spine.scale = Vector2.ONE
+		)
+		if reward_tween:
+			reward_tween.finished.connect(func():
+				if is_instance_valid(spine):
+					spine.position = orig_pos
+					spine.scale = Vector2.ONE
+			)
+	
+	# Acquisition sound
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.has_method("play_panel_swoosh"):
+		audio_mgr.play_panel_swoosh()
+	
 	# Update the label to show new count
 	update_consumable_label()
 	
@@ -1459,6 +1488,9 @@ func _on_fold_complete() -> void:
 		var spine = _consumable_spines[id]
 		if is_instance_valid(spine):
 			spine.modulate.a = 1.0
+	
+	# Re-snap consumable spines to their correct base positions after fold back
+	_reposition_consumable_spines()
 	
 	_current_state = State.SPINES
 	_is_animating = false

@@ -184,8 +184,9 @@ func add_consumable(data: ConsumableData) -> Node:
 	
 	# Juice: consumable acquisition fanfare
 	var tfx = get_node_or_null("/root/TweenFXHelper")
+	var reward_tween = null
 	if tfx and spine:
-		tfx.icon_appear(spine)
+		reward_tween = tfx.positive_reward(spine)
 		# Slide-in effect
 		var orig_pos = spine.position
 		spine.position.x += 200
@@ -193,6 +194,17 @@ func add_consumable(data: ConsumableData) -> Node:
 		var slide_tween = create_tween()
 		slide_tween.tween_property(spine, "position", orig_pos, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		slide_tween.parallel().tween_property(spine, "modulate:a", 1.0, 0.3)
+		slide_tween.finished.connect(func():
+			if is_instance_valid(spine):
+				spine.position = orig_pos
+				spine.scale = Vector2.ONE
+		)
+		if reward_tween:
+			reward_tween.finished.connect(func():
+				if is_instance_valid(spine):
+					spine.position = orig_pos
+					spine.scale = Vector2.ONE
+			)
 	
 	# Acquisition sound
 	var audio_mgr = get_node_or_null("/root/AudioManager")
@@ -451,6 +463,9 @@ func _fold_back_cards() -> void:
 		if spine and is_instance_valid(spine):
 			var tween: Tween = create_tween()
 			tween.tween_property(spine, "modulate:a", 1.0, 0.2)
+	
+	# Re-snap all spines to their correct base positions after fold back
+	_position_spines()
 	
 	_selected_spine_id = ""
 	_is_animating = false
