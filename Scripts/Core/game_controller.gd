@@ -182,8 +182,15 @@ var _last_modded_die_index: int = -1  # Track which die received the last mod
 var pending_mods: Array[String] = []
 var mod_persistence_map: Dictionary = {}  # mod_id -> int tracking how many instances of each mod should persist
 var _shop_tween: Tween
-var _end_of_round_stats_shown: bool = false  # Track if stats panel was shown this round
-var _pending_end_of_round_stats: bool = false  # Deferred stats display waiting for chore popup to close
+var _end_of_round_stats_shown: bool = false  # Track if round-end sequence ran this round
+
+# Round-end event queue — processes UI panels sequentially to prevent overlapping
+enum RoundEndStep { CHORE_SELECTION, UNLOCK_NOTIFICATIONS, END_OF_ROUND_STATS, OPEN_SHOP }
+var _round_end_queue: Array[RoundEndStep] = []
+var _is_processing_round_end: bool = false
+
+# CanvasLayer wrapper for chore popup (renders above RoundTransitionOverlay)
+var _chore_selection_popup_layer: CanvasLayer = null
 var _challenge_reward_this_round: int = 0  # Track challenge reward for end-of-round stats
 var _challenge_reward_granted: bool = false  # Prevent double-granting challenge reward
 var _chores_reward_granted: bool = false  # Prevent double-granting chores reward
@@ -708,9 +715,10 @@ func _restart_game_for_new_channel(carried_types: Array[String] = []) -> void:
 		vcr_tracker.reset_for_new_channel()
 		print("[GameController] VCR turn tracker UI reset")
 	
-	# Reset end of round stats shown flag
+	# Reset end of round stats shown flag and queue state
 	_end_of_round_stats_shown = false
-	_pending_end_of_round_stats = false
+	_is_processing_round_end = false
+	_round_end_queue.clear()
 	# NOTE: Do NOT reset _pending_chore_selection here — it was just set by
 	# chores_manager.reset_for_new_game() above and needs to survive until
 	# the popup is actually shown after round_manager.start_game().
@@ -3603,11 +3611,64 @@ func _on_chore_task_selected(task: ChoreData) -> void:
 	else:
 		_active_lock_tracker = null
 
+## _build_round_end_queue() -> Array[RoundEndStep]
+##
+## Builds the ordered list of round-end UI steps based on current pending state.
+func _build_round_end_queue() -> Array[RoundEndStep]:
+	var queue: Array[RoundEndStep] = []
+	if _pending_chore_selection:
+		queue.append(RoundEndStep.CHORE_SELECTION)
+	if _pending_unlocked_items.size() > 0 and unlocked_item_panel:
+		queue.append(RoundEndStep.UNLOCK_NOTIFICATIONS)
+	queue.append(RoundEndStep.END_OF_ROUND_STATS)
+	queue.append(RoundEndStep.OPEN_SHOP)
+	return queue
+
+
+## _process_round_end_queue()
+##
+## Processes the next step in the round-end queue. Called after each panel's
+## dismissal signal fires. Pops the front step and shows the corresponding UI.
+func _process_round_end_queue() -> void:
+	if _round_end_queue.is_empty():
+		_is_processing_round_end = false
+		return
+	
+	_is_processing_round_end = true
+	var step = _round_end_queue.pop_front()
+	
+	match step:
+		RoundEndStep.CHORE_SELECTION:
+			if not chores_manager or not _pending_chore_selection:
+				_process_round_end_queue()
+				return
+			_show_chore_selection_popup()
+		
+		RoundEndStep.UNLOCK_NOTIFICATIONS:
+			if not unlocked_item_panel or _pending_unlocked_items.is_empty():
+				_process_round_end_queue()
+				return
+			_show_unlocked_items_panel()
+		
+		RoundEndStep.END_OF_ROUND_STATS:
+			_show_end_of_round_stats()
+		
+		RoundEndStep.OPEN_SHOP:
+			_finish_round_end_and_open_shop()
+
+
+## _finish_round_end_and_open_shop()
+##
+## Final step of the round-end queue. Opens the shop and clears processing flag.
+func _finish_round_end_and_open_shop() -> void:
+	_is_processing_round_end = false
+	_open_shop_ui()
+
+
 ## _on_shop_button_pressed()
 ##
-## Handles the shop button press. If challenge was completed, shows unlock panels
-## (if any items were unlocked), then shows End of Round Statistics Panel with 
-## bonus calculations, then opens the shop after player clicks "Head to Shop".
+## Handles the shop button press. If challenge was completed, starts the round-end
+## event queue to process chore selection, unlocks, stats, and shop sequentially.
 ## Otherwise toggles the shop directly.
 func _on_shop_button_pressed() -> void:
 	# Notify tutorial manager of shop action
@@ -3615,9 +3676,13 @@ func _on_shop_button_pressed() -> void:
 	if tutorial_manager and tutorial_manager.is_tutorial_active():
 		tutorial_manager.action_completed("click_shop")
 	
-	# Check if challenge was completed - show stats panel first (only once)
+	# If already processing round-end queue, ignore duplicate shop button press
+	if _is_processing_round_end:
+		return
+	
+	# Check if challenge was completed - start round-end sequence (only once)
 	if round_manager and round_manager.is_challenge_completed and not _end_of_round_stats_shown:
-		print("[GameController] Challenge completed - processing end of round sequence")
+		print("[GameController] Challenge completed - starting end of round sequence")
 		
 		# Save progress (this triggers unlock checks)
 		var progress_manager = get_node("/root/ProgressManager")
@@ -3626,20 +3691,10 @@ func _on_shop_button_pressed() -> void:
 			progress_manager.end_game_tracking(current_score, true)
 			print("[GameController] Progress saved with score: %d" % current_score)
 		
-		_end_of_round_stats_shown = true  # Mark as shown
-		
-		# Check if we have pending unlocked items to show first
-		if _pending_unlocked_items.size() > 0 and unlocked_item_panel:
-			print("[GameController] Showing unlock panels for %d items" % _pending_unlocked_items.size())
-			_show_unlocked_items_panel()
-			return
-		
-		# No pending unlocks - show stats panel directly if available
-		if end_of_round_stats_panel:
-			_show_end_of_round_stats()
-			return
-		else:
-			print("[GameController] No stats panel found - opening shop directly")
+		_end_of_round_stats_shown = true
+		_round_end_queue = _build_round_end_queue()
+		_process_round_end_queue()
+		return
 	
 	# If no stats panel or challenge not completed or already shown, open shop directly
 	_open_shop_ui()
@@ -3648,15 +3703,8 @@ func _on_shop_button_pressed() -> void:
 ## _show_end_of_round_stats()
 ##
 ## Shows the end of round statistics panel with bonus calculations.
-## Calculates and awards bonuses, then connects to panel signal to open shop after.
+## Queue guarantees no popup is open when this is called.
 func _show_end_of_round_stats() -> void:
-	# Defer if chore selection popup is currently open
-	if _chore_selection_popup and is_instance_valid(_chore_selection_popup) and _chore_selection_popup.visible:
-		print("[GameController] Chore popup open — deferring end of round stats")
-		_pending_end_of_round_stats = true
-		return
-	
-	_pending_end_of_round_stats = false
 	print("[GameController] Showing end of round stats panel")
 	
 	# Get current round data
@@ -3697,9 +3745,9 @@ func _show_end_of_round_stats() -> void:
 ## _on_stats_panel_continue()
 ##
 ## Called when player clicks "Head to Shop" on the stats panel.
-## Awards the calculated bonuses and opens the shop.
+## Awards the calculated bonuses and advances the round-end queue to OPEN_SHOP.
 func _on_stats_panel_continue() -> void:
-	print("[GameController] Stats panel continue pressed - awarding bonuses and opening shop")
+	print("[GameController] Stats panel continue pressed - awarding bonuses")
 	
 	# Award bonuses via PlayerEconomy
 	if end_of_round_stats_panel:
@@ -3723,8 +3771,8 @@ func _on_stats_panel_continue() -> void:
 	if round_manager:
 		round_manager.complete_round()
 	
-	# Open the shop
-	_open_shop_ui()
+	# Advance queue to OPEN_SHOP step
+	_process_round_end_queue()
 
 
 ## _open_shop_ui()
@@ -4096,16 +4144,9 @@ func _queue_round_transition_overlay(challenge_id: String) -> void:
 	var timer = get_tree().create_timer(1.6)
 	await timer.timeout
 
-	# Show the round transition overlay first
+	# Show the round transition overlay
 	_show_round_transition_overlay(challenge_id)
-
-	# If a chore selection is pending, show popup ON TOP of the overlay and wait
-	if _pending_chore_selection:
-		_show_chore_selection_popup()
-		# Wait until the popup is dismissed before the overlay becomes interactive
-		while _chore_selection_popup and is_instance_valid(_chore_selection_popup) and _chore_selection_popup.visible:
-			await get_tree().process_frame
-		print("[GameController] Chore selection done — overlay now interactive")
+	# Chore popup is handled by the round-end queue AFTER overlay dismisses
 
 
 ## _show_round_transition_overlay(challenge_id)
@@ -4217,14 +4258,13 @@ func _on_transition_keep_playing() -> void:
 ## _on_transition_enter_shop()
 ##
 ## Player chose to enter the shop from the transition overlay.
-## Dismisses overlay then triggers the existing shop flow
-## (unlock panels → stats panel → shop).
+## Dismisses overlay then triggers the round-end queue via _on_shop_button_pressed().
 func _on_transition_enter_shop() -> void:
 	print("[GameController] Player chose to enter shop from transition overlay")
 	if _round_transition_overlay and is_instance_valid(_round_transition_overlay):
 		_round_transition_overlay.queue_free()
 		_round_transition_overlay = null
-	# Trigger the existing shop flow
+	# Trigger the round-end queue flow (saves progress, builds queue, starts processing)
 	_on_shop_button_pressed()
 
 
@@ -4580,9 +4620,10 @@ func _on_round_started(round_number: int) -> void:
 		_goal_mode_locked = true
 		print("[GameController] Goal mode locked: %s" % ("RoundConfig Goals" if use_round_config_goals else "Challenge Goals"))
 	
-	# Reset end of round stats flag for new round
+	# Reset end of round stats flag and queue state for new round
 	_end_of_round_stats_shown = false
-	_pending_end_of_round_stats = false
+	_is_processing_round_end = false
+	_round_end_queue.clear()
 	# NOTE: Do NOT reset _pending_chore_selection here — it is cleared only
 	# when the popup is actually shown via _show_chore_selection_popup().
 	
@@ -4808,15 +4849,12 @@ func _on_items_unlocked(item_ids: Array[String]) -> void:
 ## _show_unlocked_items_panel()
 ##
 ## Shows the UnlockedItemPanel to display newly unlocked items sequentially.
-## After all items are acknowledged, proceeds to stats panel or shop.
+## After all items are acknowledged, advances the round-end queue.
 func _show_unlocked_items_panel() -> void:
 	if not unlocked_item_panel:
-		print("[GameController] UnlockedItemPanel not available - skipping to stats panel")
+		print("[GameController] UnlockedItemPanel not available - skipping")
 		_pending_unlocked_items.clear()
-		if end_of_round_stats_panel:
-			_show_end_of_round_stats()
-		else:
-			_open_shop_ui()
+		_process_round_end_queue()
 		return
 	
 	# Connect to the all_items_acknowledged signal (one-shot)
@@ -4831,14 +4869,18 @@ func _show_unlocked_items_panel() -> void:
 ## _on_all_unlocks_acknowledged()
 ##
 ## Called when player has acknowledged all unlocked items.
-## Proceeds to show the end of round stats panel or opens shop.
+## Advances the round-end queue if active; falls back for non-queue callers.
 func _on_all_unlocks_acknowledged() -> void:
-	print("[GameController] All unlocked items acknowledged - continuing to stats panel")
+	print("[GameController] All unlocked items acknowledged")
 	
-	if end_of_round_stats_panel:
-		_show_end_of_round_stats()
+	if _is_processing_round_end:
+		_process_round_end_queue()
 	else:
-		_open_shop_ui()
+		# Fallback for non-queue callers (channel win, game over)
+		if end_of_round_stats_panel:
+			_show_end_of_round_stats()
+		else:
+			_open_shop_ui()
 
 
 # Stored game over data for use after unlock panel closes
@@ -4991,8 +5033,12 @@ func _on_chore_selection_requested() -> void:
 ## _show_chore_selection_popup()
 ##
 ## Creates (if needed) and displays the ChoreSelectionPopup overlay.
+## Wraps the popup in a CanvasLayer (layer 20) so it renders above
+## RoundTransitionOverlay (layer 10).
 func _show_chore_selection_popup() -> void:
 	if not chores_manager:
+		if _is_processing_round_end:
+			_process_round_end_queue()
 		return
 	
 	print("[GameController] Showing chore selection popup")
@@ -5000,11 +5046,20 @@ func _show_chore_selection_popup() -> void:
 	
 	# Create popup if not already existing
 	if not _chore_selection_popup or not is_instance_valid(_chore_selection_popup):
+		if _chore_selection_popup_layer and is_instance_valid(_chore_selection_popup_layer):
+			_chore_selection_popup_layer.queue_free()
+		
+		_chore_selection_popup_layer = CanvasLayer.new()
+		_chore_selection_popup_layer.layer = 20
+		_chore_selection_popup_layer.name = "ChoreSelectionPopupLayer"
+		add_child(_chore_selection_popup_layer)
+		
 		_chore_selection_popup = ChoreSelectionPopup.new()
 		_chore_selection_popup.name = "ChoreSelectionPopup"
 		_chore_selection_popup.set_anchors_preset(Control.PRESET_FULL_RECT)
-		add_child(_chore_selection_popup)
+		_chore_selection_popup_layer.add_child(_chore_selection_popup)
 		_chore_selection_popup.chore_selected.connect(_on_chore_popup_selection_made)
+		_chore_selection_popup.popup_dismissed.connect(_on_chore_popup_dismissed)
 	
 	_chore_selection_popup.show_popup(chores_manager)
 
@@ -5018,12 +5073,24 @@ func _on_chore_popup_selection_made(is_hard: bool) -> void:
 	if chores_manager:
 		chores_manager.accept_chore_selection(is_hard)
 		print("[GameController] Chore selection forwarded: %s" % ("HARD" if is_hard else "EASY"))
+	# Queue advances via _on_chore_popup_dismissed() when popup fully closes
+
+
+## _on_chore_popup_dismissed()
+##
+## Called after ChoreSelectionPopup has fully animated out and cleaned up.
+## Advances the round-end queue if active, or cleans up the CanvasLayer wrapper.
+func _on_chore_popup_dismissed() -> void:
+	print("[GameController] Chore popup fully dismissed")
 	
-	# If end-of-round stats were deferred, show them after popup animates out
-	if _pending_end_of_round_stats:
-		# Wait for the popup's exit animation to finish (~0.2s)
-		await get_tree().create_timer(0.3).timeout
-		_show_end_of_round_stats()
+	# Clean up CanvasLayer wrapper
+	if _chore_selection_popup_layer and is_instance_valid(_chore_selection_popup_layer):
+		_chore_selection_popup_layer.queue_free()
+	_chore_selection_popup_layer = null
+	_chore_selection_popup = null
+	
+	if _is_processing_round_end:
+		_process_round_end_queue()
 
 
 ## _on_mom_triggered()

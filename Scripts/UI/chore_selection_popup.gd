@@ -9,6 +9,7 @@ class_name ChoreSelectionPopup
 ## Uses powerup_hover_theme for visual consistency.
 
 signal chore_selected(is_hard: bool)
+signal popup_dismissed  # Emitted after _animate_out() and _on_animation_finished() complete
 
 var _overlay: ColorRect
 var _panel: PanelContainer
@@ -382,6 +383,7 @@ func _on_animation_finished() -> void:
 	# Clean up children
 	for child in get_children():
 		child.queue_free()
+	popup_dismissed.emit()
 
 
 ## _apply_fallback_panel_style()

@@ -23,6 +23,36 @@ Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill s
 3. **Run in Editor**: Open project in Godot 4.4+, press F5
 4. **Testing**: Use scenes in `Tests/` folder for isolated component testing
 
+## End-of-Round Flow
+
+```mermaid
+flowchart TD
+    A[Player scores final category] --> B{Challenge met?}
+    B -->|No| C[Fail animation / Game Over]
+    B -->|Yes| D[Fireworks celebration]
+    D --> E[RoundTransitionOverlay shown]
+    E --> F{Player choice}
+    F -->|Keep Playing| G[Resume gameplay]
+    F -->|Enter Shop| H[Build round-end queue]
+    H --> I{Chore pending?}
+    I -->|Yes| J[Show ChoreSelectionPopup]
+    I -->|No| K{Unlocks pending?}
+    J --> J2[Player selects EASY/HARD]
+    J2 --> K
+    K -->|Yes| L[Show UnlockNotificationPanel]
+    K -->|No| M[Show EndOfRoundStatsPanel]
+    L --> L2[Player acknowledges]
+    L2 --> M
+    M --> N[Player clicks Head to Shop]
+    N --> O[Award bonuses]
+    O --> P[CRT TV turn off]
+    P --> Q[RoundManager.complete_round]
+    Q --> R{Final round?}
+    R -->|Yes| S[Show RoundWinnerPanel]
+    R -->|No| T[Open Shop UI]
+    T --> U[Player shops / Next Round]
+```
+
 ## Main Menu & Settings
 
 ### Main Menu
