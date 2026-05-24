@@ -735,7 +735,7 @@ func _create_overflow_label() -> void:
 ## Updates the overflow label text with current excess count.
 func _update_overflow_label() -> void:
 	if _overflow_label and is_instance_valid(_overflow_label):
-		_overflow_label.text = "Must Use or Sell %d Consumables" % _overflow_target_count
+		_overflow_label.text = "Must Use or Sell %s Consumables" % NumberFormatter.format_int(_overflow_target_count)
 		_overflow_label.visible = _overflow_mode
 
 ## _check_overflow_complete()
@@ -868,7 +868,7 @@ func _cleanup_empty_state() -> void:
 func update_slots_label() -> void:
 	# Update the slots label to show current/max consumables
 	var current: int = _active_consumable_count
-	slots_label.text = "%d/%d" % [current, max_consumables]
+	slots_label.text = "%s/%s" % [NumberFormatter.format_int(current), NumberFormatter.format_int(max_consumables)]
 	
 	# Ensure label has proper styling
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")

@@ -109,7 +109,7 @@ func _apply_data_to_ui() -> void:
 func _update_visual_state() -> void:
 	# Update count display
 	if count_label:
-		count_label.text = str(_debuff_count)
+		count_label.text = NumberFormatter.format_int(_debuff_count)
 		
 		# Change color based on count
 		if _debuff_count == 0:

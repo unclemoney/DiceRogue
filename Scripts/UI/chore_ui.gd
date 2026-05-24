@@ -266,15 +266,15 @@ func _update_details_with_progress() -> void:
 				else:
 					expiry_text = "\n[color=#888888]⏰ Expires in %d rolls[/color]" % rolls_left
 		
-		details_label.text = "[b]%s[/b]\n%s\n[color=#888888]Progress:[/color] %d / %d%s" % [
+		details_label.text = "[b]%s[/b]\n%s\n[color=#888888]Progress:[/color] %s / %s%s" % [
 			task.display_name,
 			task.description,
-			current_progress_val,
-			max_progress,
+			NumberFormatter.format_int(current_progress_val),
+			NumberFormatter.format_int(max_progress),
 			expiry_text
 		]
 	else:
-		details_label.text = "[color=#888888]Progress:[/color] %d / %d" % [current_progress_val, max_progress]
+		details_label.text = "[color=#888888]Progress:[/color] %s / %s" % [NumberFormatter.format_int(current_progress_val), NumberFormatter.format_int(max_progress)]
 
 
 func _update_progress_color(value: int) -> void:
@@ -620,7 +620,7 @@ func _create_completed_chore_card(chore) -> Control:
 
 	# Reward value
 	var reward_label = Label.new()
-	reward_label.text = "$%d" % (chore.reward_value if chore else 0)
+	reward_label.text = NumberFormatter.format_money(chore.reward_value if chore else 0)
 	reward_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	reward_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	reward_label.position = Vector2(-60, -50)

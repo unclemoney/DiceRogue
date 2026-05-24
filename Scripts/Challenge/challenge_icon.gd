@@ -368,7 +368,7 @@ func _apply_data_to_ui() -> void:
 		if data and data.target_score != null:
 			goal = data.target_score
 		#card_title.text = "%s\nGoal: %d pts" % [data.display_name, goal] # With original name
-		card_title.text = "Goal: %d pts" % [goal]
+		card_title.text = "Goal: %s pts" % NumberFormatter.format_score(goal)
 		card_title.add_theme_color_override("font_shadow_color", Color.BLACK)
 		card_title.add_theme_constant_override("shadow_offset_x", 1)
 		card_title.add_theme_constant_override("shadow_offset_y", 1)
@@ -674,7 +674,7 @@ func animate_target_score_countup(duration: float = 0.8) -> void:
 		return
 	var tween = create_tween()
 	tween.tween_method(func(v: float):
-		card_title.text = "Goal: %d pts" % int(v)
+		card_title.text = "Goal: %s pts" % NumberFormatter.format_score(int(v))
 	, 0.0, float(goal), duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 ## _apply_hover_tooltip_style(panel)

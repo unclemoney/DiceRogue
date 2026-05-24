@@ -124,11 +124,11 @@ func _create_core_tab():
 		_add_stat_label(core_tab, "Debug Info", "Press F10 to refresh")
 		return
 	
-	_add_stat_label(core_tab, "Total Turns", str(stats_node.total_turns))
-	_add_stat_label(core_tab, "Total Rolls", str(stats_node.total_rolls))
-	_add_stat_label(core_tab, "Total Rerolls", str(stats_node.total_rerolls))
-	_add_stat_label(core_tab, "Hands Completed", str(stats_node.hands_completed))
-	_add_stat_label(core_tab, "Failed Hands", str(stats_node.failed_hands))
+	_add_stat_label(core_tab, "Total Turns", NumberFormatter.format_int(stats_node.total_turns))
+	_add_stat_label(core_tab, "Total Rolls", NumberFormatter.format_int(stats_node.total_rolls))
+	_add_stat_label(core_tab, "Total Rerolls", NumberFormatter.format_int(stats_node.total_rerolls))
+	_add_stat_label(core_tab, "Hands Completed", NumberFormatter.format_int(stats_node.hands_completed))
+	_add_stat_label(core_tab, "Failed Hands", NumberFormatter.format_int(stats_node.failed_hands))
 	_add_stat_label(core_tab, "Scoring Percentage", "%.1f%%" % stats_node.get_scoring_percentage())
 
 ## _create_economic_tab()
@@ -152,12 +152,12 @@ func _create_economic_tab():
 		_add_stat_label(economic_tab, "Status", "Autoload not ready")
 		return
 	
-	_add_stat_label(economic_tab, "Current Money", str(stats_node.get_current_money()))
-	_add_stat_label(economic_tab, "Total Money Earned", str(stats_node.total_money_earned))
-	_add_stat_label(economic_tab, "Total Money Spent", str(stats_node.total_money_spent))
-	_add_stat_label(economic_tab, "Spent on Power-ups", str(stats_node.money_spent_on_powerups))
-	_add_stat_label(economic_tab, "Spent on Consumables", str(stats_node.money_spent_on_consumables))
-	_add_stat_label(economic_tab, "Spent on Mods", str(stats_node.money_spent_on_mods))
+	_add_stat_label(economic_tab, "Current Money", NumberFormatter.format_money(stats_node.get_current_money()))
+	_add_stat_label(economic_tab, "Total Money Earned", NumberFormatter.format_money(stats_node.total_money_earned))
+	_add_stat_label(economic_tab, "Total Money Spent", NumberFormatter.format_money(stats_node.total_money_spent))
+	_add_stat_label(economic_tab, "Spent on Power-ups", NumberFormatter.format_money(stats_node.money_spent_on_powerups))
+	_add_stat_label(economic_tab, "Spent on Consumables", NumberFormatter.format_money(stats_node.money_spent_on_consumables))
+	_add_stat_label(economic_tab, "Spent on Mods", NumberFormatter.format_money(stats_node.money_spent_on_mods))
 	_add_stat_label(economic_tab, "Money per Turn", "%.2f" % stats_node.get_money_efficiency())
 
 ## _create_dice_tab()

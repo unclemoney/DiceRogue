@@ -209,7 +209,7 @@ func update_all():
 		if label:
 			var value = scorecard.upper_scores[category]
 			var old_text = label.text
-			label.text = str(int(value)) if value != null else "-"
+			label.text = NumberFormatter.format_score(int(value)) if value != null else "-"
 			# Pop animation when score first set
 			if old_text == "-" and value != null:
 				pop_score_label(label)
@@ -221,7 +221,7 @@ func update_all():
 		if label:
 			var value = scorecard.lower_scores[category]
 			var old_text = label.text
-			label.text = str(int(value)) if value != null else "-"
+			label.text = NumberFormatter.format_score(int(value)) if value != null else "-"
 			# Pop animation when score first set
 			if old_text == "-" and value != null:
 				pop_score_label(label)
@@ -230,7 +230,7 @@ func update_all():
 	var upper_subtotal = scorecard.get_upper_section_total()
 	
 	if upper_total_label:
-		upper_total_label.text = str(int(upper_subtotal))
+		upper_total_label.text = NumberFormatter.format_score(int(upper_subtotal))
 	else:
 		push_error("upper_total_label not found!")
 		
@@ -245,14 +245,14 @@ func update_all():
 		
 		if scorecard.upper_bonus_awarded:
 			# Bonus already earned - show the bonus amount
-			upper_bonus_label.text = "+%d" % int(scaled_amount)
+			upper_bonus_label.text = "+%s" % NumberFormatter.format_int(int(scaled_amount))
 		elif upper_subtotal >= scaled_threshold:
 			# Threshold met but bonus not yet processed - show bonus amount
-			upper_bonus_label.text = "+%d" % int(scaled_amount)
+			upper_bonus_label.text = "+%s" % NumberFormatter.format_int(int(scaled_amount))
 		else:
 			# Show remaining points needed to reach threshold
 			var remaining = scaled_threshold - upper_subtotal
-			upper_bonus_label.text = str(int(remaining))
+			upper_bonus_label.text = NumberFormatter.format_int(int(remaining))
 
 	else:
 		push_error("upper_bonus_label not found!")
@@ -260,7 +260,7 @@ func update_all():
 	# Update final upper total (subtotal + bonus)
 	if upper_final_total_label:
 		var final_total = scorecard.get_upper_section_final_total()
-		upper_final_total_label.text = str(int(final_total))
+		upper_final_total_label.text = NumberFormatter.format_score(int(final_total))
 	else:
 		push_error("upper_final_total_label not found!")
 
@@ -269,7 +269,7 @@ func update_all():
 	lower_total += scorecard.yahtzee_bonus_points  # Add Yahtzee bonus to lower total
 	
 	if lower_total_label:
-		lower_total_label.text = str(int(lower_total))
+		lower_total_label.text = NumberFormatter.format_score(int(lower_total))
 	else:
 		push_error("lower_total_label not found!")
 	
@@ -286,7 +286,7 @@ func update_all():
 			previous_total_score = total_score
 		else:
 			# Just set text directly (no change)
-			var text = "[center]Total Score:\n%d[/center]" % total_score
+			var text = "[center]Total Score:\n%s[/center]" % NumberFormatter.format_score(total_score)
 			total_score_label.text = text
 		
 		# Adjust font size based on score - capped to prevent overflow
@@ -301,7 +301,7 @@ func update_all():
 	# Update Yahtzee bonus display
 	if yahtzee_bonus_label:
 		if scorecard.yahtzee_bonuses > 0:
-			yahtzee_bonus_label.text = str(int(scorecard.yahtzee_bonus_points))
+			yahtzee_bonus_label.text = NumberFormatter.format_score(int(scorecard.yahtzee_bonus_points))
 		else:
 			yahtzee_bonus_label.text = "-"
 
@@ -446,7 +446,7 @@ func _on_upper_bonus_achieved(_bonus: int) -> void:
 		if upper_final_total_label:
 			var final_total = scorecard.get_upper_section_final_total()
 			tween.tween_property(upper_final_total_label, "modulate", Color.YELLOW, 0.3)
-			upper_final_total_label.text = str(int(final_total))
+			upper_final_total_label.text = NumberFormatter.format_score(int(final_total))
 			tween.tween_property(upper_final_total_label, "modulate", Color.WHITE, 0.3)
 
 		# Optional: Add screen shake
@@ -1496,9 +1496,9 @@ func update_additive_score_panel(additive_value: int, animate: bool = true) -> v
 	
 	# Format with proper sign: negative values show as -XX, positive as +XX
 	if additive_value >= 0:
-		additive_score_label.text = "+%d" % additive_value
+		additive_score_label.text = "+%s" % NumberFormatter.format_int(additive_value)
 	else:
-		additive_score_label.text = "%d" % additive_value  # Negative already has - sign
+		additive_score_label.text = NumberFormatter.format_int(additive_value)  # Negative already has - sign
 	
 	# Drive shader effect
 	if additive_shader_bg and additive_shader_bg.material:
@@ -1706,7 +1706,7 @@ func animate_score_counter(old_score: int, new_score: int) -> void:
 	_counter_tween = create_tween()
 	_counter_tween.tween_method(func(v: float):
 		var display_val = int(v)
-		total_score_label.text = "[center]Total Score:\n%d[/center]" % display_val
+		total_score_label.text = "[center]Total Score:\n%s[/center]" % NumberFormatter.format_score(display_val)
 		# Flash white→gold during counting
 		var t = inverse_lerp(old_score, new_score, v)
 		var color = Color.WHITE.lerp(Color(1.0, 0.84, 0.0), t)

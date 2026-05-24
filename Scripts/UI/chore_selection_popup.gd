@@ -181,7 +181,7 @@ func _add_meter_display(parent: Control) -> void:
 	meter_vbox.add_child(progress)
 	
 	var value_label = Label.new()
-	value_label.text = "%d / %d" % [progress.value, max_val]
+	value_label.text = "%s / %s" % [NumberFormatter.format_int(progress.value), NumberFormatter.format_int(max_val)]
 	value_label.add_theme_font_size_override("font_size", 10)
 	value_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -214,7 +214,7 @@ func _add_mood_display(parent: Control) -> void:
 	
 	var mood_desc = Label.new()
 	if _chores_manager and _chores_manager.has_method("get_mood_description"):
-		mood_desc.text = "%s (%d/10)" % [_chores_manager.get_mood_description(), _chores_manager.mom_mood]
+		mood_desc.text = "%s (%s/10)" % [_chores_manager.get_mood_description(), NumberFormatter.format_int(_chores_manager.mom_mood)]
 	else:
 		mood_desc.text = "Neutral (5/10)"
 	mood_desc.add_theme_font_size_override("font_size", 10)
@@ -278,7 +278,7 @@ func _create_task_card(task, is_hard: bool) -> Control:
 	# Reward amount
 	var reward = task.reward_value if task else 0
 	var reward_label = Label.new()
-	reward_label.text = "Reward: $%d" % reward
+	reward_label.text = "Reward: $" + NumberFormatter.format_int(reward)
 	reward_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	reward_label.add_theme_font_size_override("font_size", 13)
 	reward_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
@@ -287,7 +287,7 @@ func _create_task_card(task, is_hard: bool) -> Control:
 	# Reduction amount
 	var reduction = HARD_REDUCTION if is_hard else EASY_REDUCTION
 	var reduction_label = Label.new()
-	reduction_label.text = "Meter -%d" % reduction
+	reduction_label.text = "Meter -%s" % NumberFormatter.format_int(reduction)
 	reduction_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	reduction_label.add_theme_font_size_override("font_size", 12)
 	reduction_label.add_theme_color_override("font_color", accent_color)

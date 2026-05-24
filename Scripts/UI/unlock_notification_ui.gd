@@ -286,7 +286,7 @@ func _show_panel() -> void:
 	if count == 1:
 		_count_label.text = "1 item unlocked"
 	else:
-		_count_label.text = "%d items unlocked" % count
+		_count_label.text = "%s items unlocked" % NumberFormatter.format_int(count)
 	
 	# Create rows (start hidden)
 	for i in range(_items.size()):

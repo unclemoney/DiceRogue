@@ -585,9 +585,9 @@ func _load_current_settings() -> void:
 	
 	# Audio
 	sfx_slider.value = _game_settings.sfx_volume * 100
-	sfx_value_label.text = "%d%%" % int(_game_settings.sfx_volume * 100)
+	sfx_value_label.text = "%s%%" % NumberFormatter.format_int(int(_game_settings.sfx_volume * 100))
 	music_slider.value = _game_settings.music_volume * 100
-	music_value_label.text = "%d%%" % int(_game_settings.music_volume * 100)
+	music_value_label.text = "%s%%" % NumberFormatter.format_int(int(_game_settings.music_volume * 100))
 	
 	# Video
 	var current_res = _game_settings.screen_resolution
@@ -695,7 +695,7 @@ func _validate_resolution_display() -> void:
 ##
 ## Handler for SFX volume slider change.
 func _on_sfx_volume_changed(value: float) -> void:
-	sfx_value_label.text = "%d%%" % int(value)
+	sfx_value_label.text = "%s%%" % NumberFormatter.format_int(int(value))
 	if _game_settings:
 		_game_settings.sfx_volume = value / 100.0
 		_game_settings.apply_audio_settings()
@@ -706,7 +706,7 @@ func _on_sfx_volume_changed(value: float) -> void:
 ##
 ## Handler for Music volume slider change.
 func _on_music_volume_changed(value: float) -> void:
-	music_value_label.text = "%d%%" % int(value)
+	music_value_label.text = "%s%%" % NumberFormatter.format_int(int(value))
 	if _game_settings:
 		_game_settings.music_volume = value / 100.0
 		_game_settings.apply_audio_settings()

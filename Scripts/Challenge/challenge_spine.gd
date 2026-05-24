@@ -152,7 +152,7 @@ func _apply_data_to_ui() -> void:
 		goal_label.text = _goal_text
 	
 	if points_label:
-		points_label.text = str(_points_goal) + " pts"
+		points_label.text = NumberFormatter.format_score(_points_goal) + " pts"
 
 
 ## _create_hover_tooltip()
@@ -221,7 +221,7 @@ func set_goal_text(text: String) -> void:
 func set_points_goal(points: int) -> void:
 	_points_goal = points
 	if points_label:
-		points_label.text = str(points) + " pts"
+		points_label.text = NumberFormatter.format_score(points) + " pts"
 
 
 ## set_current_progress(progress)

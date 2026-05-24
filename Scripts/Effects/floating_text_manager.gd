@@ -22,7 +22,7 @@ func show_currency_popup(source_node: Node, amount: int, is_positive: bool = tru
 	if not source_node or not is_instance_valid(source_node):
 		return
 	
-	var text := "+$%d" % amount if is_positive else "-$%d" % amount
+	var text := "+$" + NumberFormatter.format_int(amount) if is_positive else "-$" + NumberFormatter.format_int(amount)
 	var color := COLOR_MONEY_POSITIVE if is_positive else COLOR_MONEY_NEGATIVE
 	var font_scale := 1.0 + minf(amount / 100.0, 1.5)
 	

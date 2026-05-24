@@ -133,7 +133,7 @@ func _build_ui(data: Dictionary) -> void:
 	
 	## Title
 	_title_label = Label.new()
-	_title_label.text = "ROUND %d" % data.get("round_number", 1)
+	_title_label.text = "ROUND %s" % NumberFormatter.format_int(data.get("round_number", 1))
 	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_title_label.add_theme_font_size_override("font_size", 24)
 	_title_label.add_theme_color_override("font_color", Color(0.9, 0.85, 0.7))
@@ -144,7 +144,7 @@ func _build_ui(data: Dictionary) -> void:
 	
 	## Channel row
 	_channel_label = Label.new()
-	_channel_label.text = "Channel %d" % data.get("channel", 1)
+	_channel_label.text = "Channel %s" % NumberFormatter.format_int(data.get("channel", 1))
 	_channel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_channel_label.add_theme_font_size_override("font_size", 18)
 	_channel_label.add_theme_color_override("font_color", Color(0.5, 1.0, 0.5))

@@ -166,7 +166,7 @@ func setup(data: Resource, type: String) -> void:
 	if price == 0:
 		price_label.text = "FREE"
 	else:
-		price_label.text = "$%d" % price
+		price_label.text = NumberFormatter.format_money(price)
 	
 	# Apply shop item styling with border
 	_apply_shop_item_styling()
@@ -249,7 +249,7 @@ func refresh_price() -> void:
 		if price == 0:
 			price_label.text = "FREE"
 		else:
-			price_label.text = "$%d" % price
+			price_label.text = NumberFormatter.format_money(price)
 	_update_button_state()
 
 
@@ -701,7 +701,7 @@ func _update_colored_dice_display() -> void:
 			price_label.text = "MAX"
 			price_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.5, 1))  # Red
 		else:
-			price_label.text = "$%d" % current_cost
+			price_label.text = NumberFormatter.format_money(current_cost)
 			price_label.add_theme_color_override("font_color", Color(0.2, 1, 0.2, 1))  # Green
 	
 	# Update internal price for purchase validation

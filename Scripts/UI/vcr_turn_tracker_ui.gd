@@ -104,7 +104,7 @@ func _on_money_changed(new_amount: int, _change: int = 0) -> void:
 
 func _update_money_display() -> void:
 	if money_label:
-		money_label.text = "$%d" % PlayerEconomy.money
+		money_label.text = NumberFormatter.format_money(PlayerEconomy.money)
 
 func _animate_money_change(amount_gained: int) -> void:
 	if not money_label or amount_gained == 0:
@@ -157,14 +157,14 @@ func _on_turn_updated(turn: int) -> void:
 		return
 	
 	var max_turns := tracker.max_turns
-	turn_label.text = "TRN:%d/%d" % [turn, max_turns]
+	turn_label.text = "TRN:%s/%s" % [NumberFormatter.format_int(turn), NumberFormatter.format_int(max_turns)]
 	_animate_label_change(turn_label, turn_tween)
 
 func _on_rolls_updated(rolls: int) -> void:
 	if not tracker or not rolls_label:
 		return
 	
-	rolls_label.text = "RLL:%d/%d" % [rolls, tracker.MAX_ROLLS]
+	rolls_label.text = "RLL:%s/%s" % [NumberFormatter.format_int(rolls), NumberFormatter.format_int(tracker.MAX_ROLLS)]
 	
 	# Change color based on extra rolls
 	if tracker.MAX_ROLLS > 3:
@@ -179,7 +179,7 @@ func _on_round_changed(round_number: int) -> void:
 
 func _update_round_display(round_number: int) -> void:
 	if round_label:
-		round_label.text = "RND:%d" % round_number
+		round_label.text = "RND:%s" % NumberFormatter.format_int(round_number)
 		_animate_label_change(round_label, round_tween)
 
 ## bind_channel_manager(cm)

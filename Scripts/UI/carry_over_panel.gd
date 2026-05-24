@@ -362,9 +362,9 @@ func _update_display() -> void:
 		confirm_button.disabled = false
 	else:
 		title_label.text = "CHOOSE YOUR CARRY-OVERS"
-		subtitle_label.text = "Select up to %d items to keep for Channel %02d" % [_allowed_count, _next_channel]
+		subtitle_label.text = "Select up to %s items to keep for Channel %s" % [NumberFormatter.format_int(_allowed_count), NumberFormatter.format_int(_next_channel)]
 		counter_label.visible = true
-		counter_label.text = "%d / %d selected" % [_selected_types.size(), _allowed_count]
+		counter_label.text = "%s / %s selected" % [NumberFormatter.format_int(_selected_types.size()), NumberFormatter.format_int(_allowed_count)]
 		confirm_button.text = "CONFIRM"
 		confirm_button.disabled = false
 		

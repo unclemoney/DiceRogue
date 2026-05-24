@@ -212,7 +212,7 @@ func set_count(count: int) -> void:
 	_count = count
 	if count_label:
 		if count > 1:
-			count_label.text = str(count)
+			count_label.text = NumberFormatter.format_int(count)
 			count_label.visible = true
 		else:
 			count_label.visible = false

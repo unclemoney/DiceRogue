@@ -706,7 +706,7 @@ func _on_rolls_exhausted() -> void:
 func _show_turn_banner(round_number: int) -> void:
 	var banner = Label.new()
 	banner.name = "TurnBanner"
-	banner.text = "TURN %d" % round_number
+	banner.text = "TURN %s" % NumberFormatter.format_int(round_number)
 	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	banner.add_theme_font_override("font", preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf"))
 	banner.add_theme_font_size_override("font_size", 32)

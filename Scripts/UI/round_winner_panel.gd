@@ -283,19 +283,19 @@ func _update_display() -> void:
 	# Update stat values
 	var score_value = score_row.get_node("Value") as Label
 	if score_value:
-		score_value.text = str(_final_score)
+		score_value.text = NumberFormatter.format_score(_final_score)
 	
 	var target_value = target_row.get_node("Value") as Label
 	if target_value:
-		target_value.text = str(_target_score)
+		target_value.text = NumberFormatter.format_score(_target_score)
 	
 	var turns_value = turns_row.get_node("Value") as Label
 	if turns_value:
-		turns_value.text = str(_turns_used)
+		turns_value.text = NumberFormatter.format_int(_turns_used)
 	
 	var rounds_value = rounds_row.get_node("Value") as Label
 	if rounds_value:
-		rounds_value.text = "%d/6" % _rounds_completed
+		rounds_value.text = "%s/6" % NumberFormatter.format_int(_rounds_completed)
 	
 	# Update button text with next channel info
 	if channel_manager:

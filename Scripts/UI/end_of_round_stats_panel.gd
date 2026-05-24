@@ -378,13 +378,13 @@ func show_stats(data: Dictionary) -> void:
 	print("[EndOfRoundStatsPanel] Total bonus:", total_bonus)
 	
 	# Update static labels
-	round_label.text = "Round %d" % round_number
-	challenge_score_label.text = str(challenge_target_score)
-	final_score_label.text = str(final_score)
+	round_label.text = "Round %s" % NumberFormatter.format_int(round_number)
+	challenge_score_label.text = NumberFormatter.format_score(challenge_target_score)
+	final_score_label.text = NumberFormatter.format_score(final_score)
 	challenge_reward_label.text = "Challenge Reward:"
-	chore_reward_label.text = "Chore Rewards (%d chores):" % chores_completed_count
-	empty_categories_label.text = "Empty Categories (%d × $%d):" % [empty_category_count, EMPTY_CATEGORY_BONUS]
-	score_above_label.text = "Points Above Target (%d × $%d):" % [points_above_target, POINTS_ABOVE_TARGET_BONUS]
+	chore_reward_label.text = "Chore Rewards (%s chores):" % NumberFormatter.format_int(chores_completed_count)
+	empty_categories_label.text = "Empty Categories (%s × $%s):" % [NumberFormatter.format_int(empty_category_count), NumberFormatter.format_int(EMPTY_CATEGORY_BONUS)]
+	score_above_label.text = "Points Above Target (%s × $%s):" % [NumberFormatter.format_int(points_above_target), NumberFormatter.format_int(POINTS_ABOVE_TARGET_BONUS)]
 	
 	# Reset bonus labels for animation
 	challenge_reward_value_label.text = "$0"
@@ -550,7 +550,7 @@ func _animate_counter(label: Label, target_value: int, duration: float) -> void:
 	tween.parallel().tween_method(
 		func(val: float):
 			current_value.value = int(val)
-			label.text = "$%d" % current_value.value,
+			label.text = "$" + NumberFormatter.format_int(current_value.value),
 		0.0,
 		float(target_value),
 		duration

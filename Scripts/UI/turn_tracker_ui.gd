@@ -34,10 +34,10 @@ func bind_tracker(t: TurnTracker):
 
 func _on_turn_updated(turn: int):
 	var max_t = tracker.max_turns
-	turn_label.text = "Turn: %d / %d" % [turn, max_t]
+	turn_label.text = "Turn: %s / %s" % [NumberFormatter.format_int(turn), NumberFormatter.format_int(max_t)]
 
 func _on_rolls_updated(rolls: int):
-	rolls_label.text = "Rolls: %d/%d" % [rolls, tracker.MAX_ROLLS]
+	rolls_label.text = "Rolls: %s/%s" % [NumberFormatter.format_int(rolls), NumberFormatter.format_int(tracker.MAX_ROLLS)]
 	
 	# Optional: Add visual feedback for extra rolls
 	if tracker.MAX_ROLLS > 3:  # Base MAX_ROLLS is 3
@@ -47,7 +47,7 @@ func _on_rolls_updated(rolls: int):
 
 func _update_money_display() -> void:
 	if money_label:
-		money_label.text = "$%d" % PlayerEconomy.money
+		money_label.text = NumberFormatter.format_money(PlayerEconomy.money)
 
 func _on_money_changed(new_amount: int, change: int = 0) -> void:
 	_update_money_display()
@@ -61,7 +61,7 @@ func _on_money_changed(new_amount: int, change: int = 0) -> void:
 
 func _update_round_display(round_number: int) -> void:
 	if round_label:
-		round_label.text = "Round: " + str(round_number)
+		round_label.text = "Round: " + NumberFormatter.format_int(round_number)
 
 ## update_additive_display(additive)
 ##
@@ -70,7 +70,7 @@ func update_additive_display(additive: int) -> void:
 	_create_additive_label_if_needed()
 	
 	if additive > 0:
-		additive_label.text = "Red Ranger: +%d" % additive
+		additive_label.text = "Red Ranger: +%s" % NumberFormatter.format_int(additive)
 		additive_label.visible = true
 	else:
 		additive_label.visible = false

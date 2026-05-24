@@ -18,7 +18,7 @@ class_name ColoredDiceData
 ## Get formatted price string for display
 ## @return String formatted price with $ symbol
 func get_formatted_price() -> String:
-	return "$%d" % price
+	return NumberFormatter.format_money(price)
 
 ## Get color name for display
 ## @return String name of the dice color

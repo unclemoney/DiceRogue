@@ -248,7 +248,7 @@ func _update_challenge_spine_display() -> void:
 			else:
 				points_goal = data.target_score
 			if data.reward_money > 0:
-				reward_text = "$%d" % data.reward_money
+				reward_text = NumberFormatter.format_money(data.reward_money)
 			# Get current progress from challenge instance
 			if _challenge_instances.has(first_key):
 				var challenge_instance = _challenge_instances[first_key]
@@ -460,7 +460,7 @@ func _fan_out_challenges() -> void:
 		var progress_note = _create_challenge_post_it("PROGRESS", str(progress_pct) + "%", challenge_id)
 		
 		# Create reward note with special styling
-		var reward_text = "$%d" % data.reward_money
+		var reward_text = NumberFormatter.format_money(data.reward_money)
 		var reward_note = _create_challenge_post_it("REWARD", reward_text, challenge_id, true)
 		
 		all_notes.append(name_note)
@@ -1362,7 +1362,7 @@ func _create_consumable_label() -> void:
 ## Updates the consumable spine label to show current count and max.
 func update_consumable_label() -> void:
 	if spine_label:
-		spine_label.text = "COUPONS %d/%d" % [_active_consumable_count, max_consumables]
+		spine_label.text = "COUPONS %s/%s" % [NumberFormatter.format_int(_active_consumable_count), NumberFormatter.format_int(max_consumables)]
 #endregion
 
 

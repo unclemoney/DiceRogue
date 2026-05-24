@@ -753,7 +753,7 @@ func _update_reroll_cost_display() -> void:
 			if free_reroll:
 				tab_cost_label.text = "[center]FREE[/center]"
 			else:
-				tab_cost_label.text = "[center]$%d[/center]" % reroll_cost
+				tab_cost_label.text = "[center]$%s[/center]" % NumberFormatter.format_int(reroll_cost)
 
 ## _animate_reroll_cost_bounce()
 ## Animates the cost label with a bounce effect in the current tab
@@ -1421,7 +1421,7 @@ func _add_reroll_ui_to_tab(tab_node: Control) -> void:
 		cost_label.add_theme_font_override("normal_font", vcr_font)
 		cost_label.add_theme_font_size_override("normal_font_size", 16)
 		cost_label.add_theme_color_override("default_color", Color(0.2, 1, 0.2, 1))
-	cost_label.text = "[center]$%d[/center]" % reroll_cost
+	cost_label.text = "[center]$%s[/center]" % NumberFormatter.format_int(reroll_cost)
 	
 	# Create reroll button for this tab
 	var tab_reroll_button = Button.new()

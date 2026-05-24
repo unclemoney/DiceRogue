@@ -283,6 +283,25 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
 - Full House with one purple 5: Base score becomes 25 × 5 = 125 points
 - Five green dice (values 2,2,2,3,3): Money bonus = (2+2+2+3+3) × 2 = $24 (doubled)
 
+### NumberFormatter
+- **Location**: `Scripts/Core/number_formatter.gd` (autoload)
+- **Purpose**: Centralized integer formatting for all UI number displays
+- **Behavior**:
+  - All integers get comma separators (`1,115`)
+  - Values >= 100,000,000 switch to configurable large-number notation
+  - **Metric Suffixes** (default): `100.0M`, `1.5B`, `2.3T`
+  - **Scientific Notation**: `1.0e8`, `1.5e9`
+- **API**:
+  - `NumberFormatter.format_int(value: int)` — general integer formatting
+  - `NumberFormatter.format_money(value: int)` — prepends `$`
+  - `NumberFormatter.format_score(value: int)` — alias for `format_int`
+  - `NumberFormatter.format_with_commas(value: int)` — commas only, no large-number fallback
+- **Toggle mode at runtime**: `NumberFormatter.format_mode = NumberFormatter.FormatMode.METRIC_SUFFIXES` or `SCIENTIFIC_NOTATION`
+- **Debug commands** (F12 → Utilities tab):
+  - `Test Formatter` — runs edge-case validation
+  - `Notation: Metric` / `Notation: Scientific` — runtime mode switch
+- **Test Scene**: `Tests/NumberFormatterTest.tscn`
+
 ### Scoring
 - **Scorecard** (`Scenes/ScoreCard/score_card.gd`) - Yahtzee-style scoring
 - **ScoreEvaluator** (autoload) - Score calculation logic
