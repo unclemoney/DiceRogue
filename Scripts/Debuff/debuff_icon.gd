@@ -78,7 +78,7 @@ func _ready() -> void:
 		print("[DebuffIcon] WARNING: Shadow node missing")
 
 	# Setup card visuals
-	custom_minimum_size = Vector2(80, 120)  # Standard card ratio 2:3
+	custom_minimum_size = Vector2(64, 64)  # Square grid icon
 	size_flags_horizontal = SIZE_SHRINK_CENTER
 	size_flags_vertical = SIZE_SHRINK_CENTER
 	

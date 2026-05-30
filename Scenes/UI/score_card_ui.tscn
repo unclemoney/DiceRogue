@@ -1,10 +1,11 @@
 [gd_scene load_steps=9 format=3 uid="uid://sliaarrkymdo"]
 
 [ext_resource type="Script" uid="uid://6yelginq6gfe" path="res://Scripts/UI/score_card_ui.gd" id="1_3x83p"]
-[ext_resource type="Theme" uid="uid://yij15afv8bdr" path="res://Resources/UI/scorecard_theme.tres" id="1_pm5im"]
 [ext_resource type="FontFile" uid="uid://dl7ws7oxo8mno" path="res://Resources/Font/BRICK_SANS.ttf" id="3_r7ft4"]
 [ext_resource type="Shader" uid="uid://d7aimlj1biry" path="res://Scripts/Shaders/neon_energy.gdshader" id="4_neon"]
 [ext_resource type="Shader" uid="uid://7v4a84q7n0pk" path="res://Scripts/Shaders/score_panel_energy.gdshader" id="5_panel"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_1"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_additive"]
 shader = ExtResource("4_neon")
@@ -40,15 +41,17 @@ shader_parameter/edge_arc_strength = 0.3
 
 [node name="ScoreCardUI" type="Control"]
 layout_mode = 3
-anchors_preset = 0
-offset_left = -28.0
-offset_top = 23.0
-offset_right = 12.0
-offset_bottom = 63.0
-theme = ExtResource("1_pm5im")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 script = ExtResource("1_3x83p")
 
 [node name="ColorRect2" type="ColorRect" parent="."]
+visible = false
 layout_mode = 0
 offset_left = -8.0
 offset_top = -52.0
@@ -58,6 +61,7 @@ scale = Vector2(1.01, 1.01)
 color = Color(0, 0, 0, 1)
 
 [node name="ColorRect" type="ColorRect" parent="."]
+visible = false
 layout_mode = 0
 offset_left = -6.0
 offset_right = 383.0
@@ -65,6 +69,7 @@ offset_bottom = 294.0
 color = Color(1, 1, 0.980392, 1)
 
 [node name="ColorRect" type="ColorRect" parent="ColorRect"]
+visible = false
 layout_mode = 0
 offset_top = -50.0
 offset_right = 389.0
@@ -72,6 +77,7 @@ offset_bottom = -3.0
 color = Color(1, 1, 0.980392, 1)
 
 [node name="RichTextLabel" type="RichTextLabel" parent="ColorRect/ColorRect"]
+visible = false
 layout_mode = 0
 offset_top = 5.0
 offset_right = 389.0
@@ -82,391 +88,539 @@ bbcode_enabled = true
 text = "Guhtzee!"
 horizontal_alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
-layout_mode = 0
-offset_left = -6.0
-offset_right = 384.0
-offset_bottom = 296.0
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 alignment = 1
 
-[node name="UpperVBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
+[node name="UpperVBoxContainer" type="VBoxContainer" parent="VBoxContainer"]
 custom_minimum_size = Vector2(180, 0)
 layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 0
 
-[node name="UpperSectionLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer"]
-layout_mode = 2
-text = "UPPPER SECTION"
-horizontal_alignment = 1
-
-[node name="UpperGridContainer" type="GridContainer" parent="HBoxContainer/UpperVBoxContainer"]
-layout_mode = 2
-
-[node name="OnesContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
-layout_mode = 2
-
-[node name="OnesLevelLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/OnesContainer"]
-custom_minimum_size = Vector2(32, 20)
+[node name="UpperSectionLabel" type="Label" parent="VBoxContainer/UpperVBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 11
+text = "UPPER SECTION"
+horizontal_alignment = 1
+
+[node name="UpperGridContainer" type="GridContainer" parent="VBoxContainer/UpperVBoxContainer"]
+layout_mode = 2
+
+[node name="OnesContainer" type="HBoxContainer" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="OnesLevelLabel" type="Label" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/OnesContainer"]
+custom_minimum_size = Vector2(28, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
 text = "Lv.1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="OnesButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/OnesContainer"]
-custom_minimum_size = Vector2(80, 0)
+[node name="OnesButton" type="Button" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/OnesContainer"]
+custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Ones:"
 
-[node name="OnesLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/OnesContainer"]
-custom_minimum_size = Vector2(40, 25)
+[node name="OnesLabel" type="Label" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/OnesContainer"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="TwosContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+[node name="TwosContainer" type="HBoxContainer" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="TwosLevelLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/TwosContainer"]
-custom_minimum_size = Vector2(32, 20)
+[node name="TwosLevelLabel" type="Label" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/TwosContainer"]
+custom_minimum_size = Vector2(28, 16)
 layout_mode = 2
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "Lv.1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="TwosButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/TwosContainer"]
+[node name="TwosButton" type="Button" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/TwosContainer"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Twos:"
 
-[node name="TwosLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/TwosContainer"]
-custom_minimum_size = Vector2(40, 25)
+[node name="TwosLabel" type="Label" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/TwosContainer"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="ThreesContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+[node name="ThreesContainer" type="HBoxContainer" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="ThreesLevelLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/ThreesContainer"]
-custom_minimum_size = Vector2(32, 20)
+[node name="ThreesLevelLabel" type="Label" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/ThreesContainer"]
+custom_minimum_size = Vector2(28, 16)
 layout_mode = 2
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "Lv.1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ThreesButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/ThreesContainer"]
+[node name="ThreesButton" type="Button" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/ThreesContainer"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Threes:"
 
-[node name="ThreesLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/ThreesContainer"]
-custom_minimum_size = Vector2(40, 25)
+[node name="ThreesLabel" type="Label" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/ThreesContainer"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="FoursContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+[node name="FoursContainer" type="HBoxContainer" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="FoursLevelLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/FoursContainer"]
-custom_minimum_size = Vector2(32, 20)
+[node name="FoursLevelLabel" type="Label" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/FoursContainer"]
+custom_minimum_size = Vector2(28, 16)
 layout_mode = 2
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "Lv.1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="FoursButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/FoursContainer"]
+[node name="FoursButton" type="Button" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/FoursContainer"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Fours:"
 
-[node name="FoursLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/FoursContainer"]
-custom_minimum_size = Vector2(40, 25)
+[node name="FoursLabel" type="Label" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/FoursContainer"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="FivesContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+[node name="FivesContainer" type="HBoxContainer" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="FivesLevelLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/FivesContainer"]
-custom_minimum_size = Vector2(32, 20)
+[node name="FivesLevelLabel" type="Label" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/FivesContainer"]
+custom_minimum_size = Vector2(28, 16)
 layout_mode = 2
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "Lv.1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="FivesButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/FivesContainer"]
+[node name="FivesButton" type="Button" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/FivesContainer"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Fives:"
 
-[node name="FivesLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/FivesContainer"]
-custom_minimum_size = Vector2(40, 25)
+[node name="FivesLabel" type="Label" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/FivesContainer"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="SixesContainer" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+[node name="SixesContainer" type="HBoxContainer" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="SixesLevelLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/SixesContainer"]
-custom_minimum_size = Vector2(32, 20)
+[node name="SixesLevelLabel" type="Label" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/SixesContainer"]
+custom_minimum_size = Vector2(28, 16)
 layout_mode = 2
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "Lv.1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="SixesButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/SixesContainer"]
+[node name="SixesButton" type="Button" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/SixesContainer"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Sixes:"
 
-[node name="SixesLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/SixesContainer"]
-custom_minimum_size = Vector2(40, 25)
+[node name="SixesLabel" type="Label" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/SixesContainer"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="UpperSubTotal" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+[node name="UpperSubTotal" type="HBoxContainer" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="UppersubLabel" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal"]
+[node name="UppersubLabel" type="Button" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 10
 text = "Sub Ttl:"
 
-[node name="UppersubButton" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal"]
-custom_minimum_size = Vector2(40, 25)
+[node name="UppersubButton" type="Label" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="UpperBonus" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+[node name="UpperBonus" type="HBoxContainer" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="UpperBonus" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus"]
+[node name="UpperBonus" type="Button" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 10
 text = "Bonus:"
 
-[node name="UpperBonusLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus"]
-custom_minimum_size = Vector2(40, 25)
+[node name="UpperBonusLabel" type="Label" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="UpperTotal" type="HBoxContainer" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+[node name="UpperTotal" type="HBoxContainer" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="UpperTotalButton" type="Button" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperTotal"]
+[node name="UpperTotalButton" type="Button" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperTotal"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 10
 text = "Total:"
 
-[node name="UpperTotalLabel" type="Label" parent="HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperTotal"]
-custom_minimum_size = Vector2(40, 25)
+[node name="UpperTotalLabel" type="Label" parent="VBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperTotal"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="LowerVBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
+[node name="LowerVBoxContainer" type="VBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
 
-[node name="LowerSecionLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer"]
+[node name="LowerSectionLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 11
 text = "LOWER SECTION"
 horizontal_alignment = 1
 
-[node name="LowerGridContainer" type="GridContainer" parent="HBoxContainer/LowerVBoxContainer"]
+[node name="LowerGridContainer" type="GridContainer" parent="VBoxContainer/LowerVBoxContainer"]
 layout_mode = 2
 
-[node name="Threeofakind" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+[node name="Threeofakind" type="HBoxContainer" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="ThreeofakindLevelLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Threeofakind"]
-custom_minimum_size = Vector2(32, 20)
+[node name="ThreeofakindLevelLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Threeofakind"]
+custom_minimum_size = Vector2(28, 16)
 layout_mode = 2
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "Lv.1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ThreeofakindButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Threeofakind"]
+[node name="ThreeofakindButton" type="Button" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Threeofakind"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "3 of a kind:"
 
-[node name="ThreeofakindLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Threeofakind"]
-custom_minimum_size = Vector2(40, 25)
+[node name="ThreeofakindLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Threeofakind"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="Fourofakind" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+[node name="Fourofakind" type="HBoxContainer" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="FourofakindLevelLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fourofakind"]
-custom_minimum_size = Vector2(32, 20)
+[node name="FourofakindLevelLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Fourofakind"]
+custom_minimum_size = Vector2(28, 16)
 layout_mode = 2
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "Lv.1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="FourofakindButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fourofakind"]
+[node name="FourofakindButton" type="Button" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Fourofakind"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "4 of a kind:"
 
-[node name="FourofakindLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fourofakind"]
-custom_minimum_size = Vector2(40, 25)
+[node name="FourofakindLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Fourofakind"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="Fullhouse" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+[node name="Fullhouse" type="HBoxContainer" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="FullhouseLevelLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fullhouse"]
-custom_minimum_size = Vector2(32, 20)
+[node name="FullhouseLevelLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Fullhouse"]
+custom_minimum_size = Vector2(28, 16)
 layout_mode = 2
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "Lv.1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="FullhouseButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fullhouse"]
+[node name="FullhouseButton" type="Button" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Fullhouse"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Full House:"
 
-[node name="FullhouseLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Fullhouse"]
-custom_minimum_size = Vector2(40, 25)
+[node name="FullhouseLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Fullhouse"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="Smallstraight" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+[node name="Smallstraight" type="HBoxContainer" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="SmallstraightLevelLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Smallstraight"]
-custom_minimum_size = Vector2(32, 20)
+[node name="SmallstraightLevelLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Smallstraight"]
+custom_minimum_size = Vector2(28, 16)
 layout_mode = 2
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "Lv.1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="SmallstraightButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Smallstraight"]
+[node name="SmallstraightButton" type="Button" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Smallstraight"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "S Straight:"
 
-[node name="SmallstraightLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Smallstraight"]
-custom_minimum_size = Vector2(40, 25)
+[node name="SmallstraightLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Smallstraight"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="Largestraight" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+[node name="Largestraight" type="HBoxContainer" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="LargestraightLevelLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight"]
-custom_minimum_size = Vector2(32, 20)
+[node name="LargestraightLevelLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight"]
+custom_minimum_size = Vector2(28, 16)
 layout_mode = 2
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "Lv.1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="LargestraightButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight"]
+[node name="LargestraightButton" type="Button" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "L Straight:"
 
-[node name="LargestraightLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight"]
-custom_minimum_size = Vector2(40, 25)
+[node name="LargestraightLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="Chance" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+[node name="Chance" type="HBoxContainer" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="ChanceLevelLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Chance"]
-custom_minimum_size = Vector2(32, 20)
+[node name="ChanceLevelLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Chance"]
+custom_minimum_size = Vector2(28, 16)
 layout_mode = 2
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "Lv.1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ChanceButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Chance"]
+[node name="ChanceButton" type="Button" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Chance"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Chance:"
 
-[node name="ChanceLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Chance"]
-custom_minimum_size = Vector2(40, 25)
+[node name="ChanceLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Chance"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="Yahtzee" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+[node name="Yahtzee" type="HBoxContainer" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="YahtzeeLevelLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Yahtzee"]
-custom_minimum_size = Vector2(32, 20)
+[node name="YahtzeeLevelLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Yahtzee"]
+custom_minimum_size = Vector2(28, 16)
 layout_mode = 2
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "Lv.1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="YahtzeeButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Yahtzee"]
+[node name="YahtzeeButton" type="Button" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Yahtzee"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Yahtzee:"
 
-[node name="YahtzeeLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/Yahtzee"]
-custom_minimum_size = Vector2(40, 25)
+[node name="YahtzeeLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/Yahtzee"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="YahtzeeBonus" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+[node name="YahtzeeBonus" type="HBoxContainer" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="YahtzeeBonusButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
+[node name="YahtzeeBonusButton" type="Button" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 size_flags_horizontal = 10
 text = "Bonus:"
 
-[node name="YahtzeeBonusLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
-custom_minimum_size = Vector2(40, 25)
+[node name="YahtzeeBonusLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
 
-[node name="LowerTotal" type="HBoxContainer" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+[node name="LowerTotal" type="HBoxContainer" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
-[node name="LowerTotalButton" type="Button" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/LowerTotal"]
+[node name="LowerTotalButton" type="Button" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/LowerTotal"]
 custom_minimum_size = Vector2(94, 0)
 layout_mode = 2
 size_flags_horizontal = 10
 text = "Lower Total:"
 
-[node name="LowerTotalLabel" type="Label" parent="HBoxContainer/LowerVBoxContainer/LowerGridContainer/LowerTotal"]
-custom_minimum_size = Vector2(40, 25)
+[node name="LowerTotalLabel" type="Label" parent="VBoxContainer/LowerVBoxContainer/LowerGridContainer/LowerTotal"]
+custom_minimum_size = Vector2(36, 16)
 layout_mode = 2
 vertical_alignment = 1
+
+[node name="ScoreSummaryContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="BestHandPanel" type="PanelContainer" parent="VBoxContainer/ScoreSummaryContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxEmpty_1")
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="BestHandScore" type="RichTextLabel" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer"]
+clip_contents = false
+layout_mode = 2
+bbcode_enabled = true
+fit_content = true
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="ScoreBreakdownContainer" type="HBoxContainer" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AdditiveContainer" type="VBoxContainer" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AdditiveHeader" type="Label" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+text = "ADDITIVE"
+horizontal_alignment = 1
+
+[node name="AdditiveScoreLabel" type="Label" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer"]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "+0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="AdditiveShaderBG" type="ColorRect" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer/AdditiveScoreLabel"]
+show_behind_parent = true
+material = SubResource("ShaderMaterial_additive")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 1, 1, 0)
+
+[node name="MultiplierContainer" type="VBoxContainer" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MultiplierHeader" type="Label" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+text = "MULT"
+horizontal_alignment = 1
+
+[node name="MultiplierScoreLabel" type="Label" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer"]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "x1.0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MultiplierShaderBG" type="ColorRect" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer/MultiplierScoreLabel"]
+show_behind_parent = true
+material = SubResource("ShaderMaterial_multiplier")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TotalScorePanel" type="PanelContainer" parent="VBoxContainer/ScoreSummaryContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxEmpty_1")
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/ScoreSummaryContainer/TotalScorePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
+
+[node name="RichTextTotalScore" type="RichTextLabel" parent="VBoxContainer/ScoreSummaryContainer/TotalScorePanel/MarginContainer"]
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+vertical_alignment = 1
+
+[node name="WhiteBackground" type="ColorRect" parent="VBoxContainer/ScoreSummaryContainer/TotalScorePanel"]
+show_behind_parent = true
+layout_mode = 2
+
+[node name="ScorePanelShaderBG" type="ColorRect" parent="VBoxContainer/ScoreSummaryContainer/TotalScorePanel"]
+show_behind_parent = true
+material = SubResource("ShaderMaterial_score_panel")
+layout_mode = 2
+color = Color(1, 1, 1, 0)
 
 [node name="LogbookPanel" type="PanelContainer" parent="."]
 visible = false
@@ -488,121 +642,3 @@ clip_contents = false
 layout_mode = 2
 bbcode_enabled = true
 fit_content = true
-
-[node name="BestHandPanel" type="PanelContainer" parent="."]
-layout_mode = 0
-offset_left = -280.0
-offset_top = -55.0
-offset_right = -20.0
-offset_bottom = 85.0
-
-[node name="MarginContainer" type="MarginContainer" parent="BestHandPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 4
-
-[node name="VBoxContainer" type="VBoxContainer" parent="BestHandPanel/MarginContainer"]
-layout_mode = 2
-theme_override_constants/separation = 2
-
-[node name="BestHandScore" type="RichTextLabel" parent="BestHandPanel/MarginContainer/VBoxContainer"]
-clip_contents = false
-layout_mode = 2
-bbcode_enabled = true
-fit_content = true
-
-[node name="HSeparator" type="HSeparator" parent="BestHandPanel/MarginContainer/VBoxContainer"]
-layout_mode = 2
-
-[node name="ScoreBreakdownContainer" type="HBoxContainer" parent="BestHandPanel/MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="AdditiveContainer" type="VBoxContainer" parent="BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="AdditiveHeader" type="Label" parent="BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 10
-text = "ADDITIVE"
-horizontal_alignment = 1
-
-[node name="AdditiveScoreLabel" type="Label" parent="BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer"]
-custom_minimum_size = Vector2(0, 40)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "+0"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="AdditiveShaderBG" type="ColorRect" parent="BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer/AdditiveScoreLabel"]
-show_behind_parent = true
-material = SubResource("ShaderMaterial_additive")
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(1, 1, 1, 0)
-
-[node name="MultiplierContainer" type="VBoxContainer" parent="BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="MultiplierHeader" type="Label" parent="BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 10
-text = "MULTIPLIER"
-horizontal_alignment = 1
-
-[node name="MultiplierScoreLabel" type="Label" parent="BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer"]
-custom_minimum_size = Vector2(0, 40)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "x1.0"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="MultiplierShaderBG" type="ColorRect" parent="BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer/MultiplierScoreLabel"]
-show_behind_parent = true
-material = SubResource("ShaderMaterial_multiplier")
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="TotalScorePanel" type="PanelContainer" parent="."]
-layout_mode = 0
-offset_left = -280.0
-offset_top = 93.0
-offset_right = -20.0
-offset_bottom = 296.0
-
-[node name="MarginContainer" type="MarginContainer" parent="TotalScorePanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 4
-
-[node name="RichTextTotalScore" type="RichTextLabel" parent="TotalScorePanel/MarginContainer"]
-layout_mode = 2
-theme_override_font_sizes/normal_font_size = 45
-bbcode_enabled = true
-vertical_alignment = 1
-
-[node name="WhiteBackground" type="ColorRect" parent="TotalScorePanel"]
-show_behind_parent = true
-layout_mode = 2
-
-[node name="ScorePanelShaderBG" type="ColorRect" parent="TotalScorePanel"]
-show_behind_parent = true
-material = SubResource("ShaderMaterial_score_panel")
-layout_mode = 2
-color = Color(1, 1, 1, 0)

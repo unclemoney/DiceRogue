@@ -10,6 +10,7 @@ signal challenge_failed(id: String)
 @onready var _defs_by_id: Dictionary = {}
 
 func _ready() -> void:
+	add_to_group("challenge_manager")
 	print("ChallengeManager: loading definitions...")
 	_load_definitions()
 	

@@ -1149,17 +1149,17 @@ func _shake_node(node: Node, intensity: float) -> void:
 func animate_debuff_source(debuff_id: String, penalty_value: int, _intensity_scale: float, _speed_scale: float) -> void:
 	print("[ScoringAnimationController] Animating debuff: %s with penalty: %d" % [debuff_id, penalty_value])
 	
-	# Try to find the debuff in the CorkboardUI or DebuffUI
-	var corkboard_nodes = get_tree().get_nodes_in_group("corkboard_ui")
+	# Try to find the debuff in the DebuffUI
+	var debuff_ui_nodes = get_tree().get_nodes_in_group("debuff_ui")
 	var source_position = Vector2(100, 200)  # Default position
 	
-	if corkboard_nodes.size() > 0:
-		var corkboard = corkboard_nodes[0]
+	if debuff_ui_nodes.size() > 0:
+		var debuff_ui = debuff_ui_nodes[0]
 		# Use debuff spine position if available
-		if corkboard.has_method("get_debuff_spine_position"):
-			source_position = corkboard.get_debuff_spine_position()
+		if debuff_ui.has_method("get_debuff_spine_position"):
+			source_position = debuff_ui.get_debuff_spine_position()
 		else:
-			source_position = corkboard.global_position + Vector2(20, 150)
+			source_position = debuff_ui.global_position + Vector2(20, 150)
 	
 	# Animate the negative contribution
 	animate_negative_contribution(-penalty_value, source_position, debuff_id)

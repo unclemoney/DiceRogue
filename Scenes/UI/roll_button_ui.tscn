@@ -1,0 +1,29 @@
+[gd_scene load_steps=3 format=3 uid="uid://roll_button_ui_scene"]
+
+[ext_resource type="Theme" uid="uid://yij15afv8bdr" path="res://Resources/UI/scorecard_theme.tres" id="1_theme"]
+[ext_resource type="Script" path="res://Scripts/UI/roll_button_ui.gd" id="1_script"]
+
+[node name="RollButtonUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_theme")
+script = ExtResource("1_script")
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="RollButton" type="Button" parent="CenterContainer"]
+custom_minimum_size = Vector2(360, 50)
+layout_mode = 2
+text = "ROLL"
+
+[connection signal="pressed" from="CenterContainer/RollButton" to="." method="_on_roll_button_pressed"]

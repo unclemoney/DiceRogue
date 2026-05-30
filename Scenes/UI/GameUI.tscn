@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3 uid="uid://l0xxyji7bdjs"]
+
+[ext_resource type="Script" uid="uid://ea8wubf138ye" path="res://Scripts/UI/game_ui.gd" id="1_gameui"]
+
+[node name="GameUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_gameui")

@@ -7,7 +7,6 @@ signal challenge_selected(id: String)
 @export var round_manager_path: NodePath
 @export var max_challenges: int = 3
 
-@onready var dice_label: Label = $DiceLabel
 @onready var round_manager: RoundManager = get_node_or_null(round_manager_path)
 @onready var container: HBoxContainer
 
@@ -15,46 +14,29 @@ var _challenges: Dictionary = {}  # id -> ChallengeIcon
 
 func _ready() -> void:
 	print("[ChallengeUI] Initializing...")
-	print("[ChallengeUI] Children:", get_children())
 	print("[ChallengeUI] challenge_icon_scene set:", challenge_icon_scene != null)
 	
-	# Try to find Container under VBoxContainer first
-	if has_node("VBoxContainer/Container"):
-		container = $VBoxContainer/Container
-		print("[ChallengeUI] Found Container under VBoxContainer")
-		
-		# Apply correct container settings for proper layout
-		container.mouse_filter = Control.MOUSE_FILTER_PASS
-		container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		container.visible = true
-		container.anchor_right = 1.0
-		container.anchor_bottom = 0.0
-		container.offset_top = 0
-		container.offset_bottom = 64
-		container.add_theme_constant_override("separation", 40)
-		print("[ChallengeUI] Reconfigured existing Container")
+	# Ensure this UI layer receives input for fan-out clicks
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	
+	# Defensive cleanup: remove deprecated hardcoded nodes if editor cached an old scene
+	for old_name in ["Label", "TextureRect", "Area2D", "DiceLabel", "VBoxContainer"]:
+		var old_node = get_node_or_null(old_name)
+		if old_node:
+			old_node.queue_free()
+	
+	# Create Container as direct child (reuse if already present)
+	if has_node("Container"):
+		container = $Container
 	else:
-		# Check for direct child Container
-		if has_node("Container"):
-			container = $Container
-			print("[ChallengeUI] Found Container as direct child")
-			
-			# Apply correct container settings for proper layout
-			container.mouse_filter = Control.MOUSE_FILTER_PASS
-			container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			container.visible = true
-			container.add_theme_constant_override("separation", 40)
-			print("[ChallengeUI] Reconfigured existing Container")
-		else:
-			# Fallback: create Container at root if not found
-			print("[ChallengeUI] Creating Container")
-			container = HBoxContainer.new()
-			container.name = "Container"
-			container.mouse_filter = Control.MOUSE_FILTER_PASS
-			container.set_anchors_preset(Control.PRESET_TOP_WIDE)
-			container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			container.add_theme_constant_override("separation", 40)
-			add_child(container)
+		container = HBoxContainer.new()
+		container.name = "Container"
+		add_child(container)
+	
+	# Configure container to fill parent
+	container.mouse_filter = Control.MOUSE_FILTER_PASS
+	container.set_anchors_preset(Control.PRESET_FULL_RECT)
+	container.add_theme_constant_override("separation", 24)
 	
 	if not challenge_icon_scene:
 		push_error("[ChallengeUI] No challenge_icon_scene set!")
@@ -62,28 +44,10 @@ func _ready() -> void:
 		if not challenge_icon_scene:
 			push_error("[ChallengeUI] Failed to load default challenge_icon scene")
 	
-	# Connect to round_manager to update dice label each round
-	if round_manager:
-		round_manager.round_started.connect(_on_round_started)
-		_update_dice_label(round_manager.get_current_round_data())
-	else:
-		push_error("[ChallengeUI] round_manager_path not set or node missing")
-	
 	print("[ChallengeUI] Initialization complete")
-	# Debug container properties
 	print("[ChallengeUI] Container visible:", container.visible)
 	print("[ChallengeUI] Container rect size:", container.size)
 	print("[ChallengeUI] Container global position:", container.global_position)
-
-func _on_round_started(round_number: int) -> void:
-	if round_manager:
-		var round_data = round_manager.get_current_round_data()
-		_update_dice_label(round_data)
-
-func _update_dice_label(round_data: Dictionary) -> void:
-	if dice_label and round_data.has("dice_type"):
-		print("Updating dice label to:", round_data["dice_type"])
-		dice_label.text = "%s" % round_data["dice_type"]
 
 func add_challenge(data: ChallengeData, challenge: Challenge) -> ChallengeIcon:
 	print("[ChallengeUI] Adding challenge:", data.id if data else "null")
@@ -112,6 +76,10 @@ func add_challenge(data: ChallengeData, challenge: Challenge) -> ChallengeIcon:
 	
 	# Add icon to container instead of directly to the UI
 	container.add_child(icon)
+	
+	# Size up the icon and disable its own input so ChallengeUI gets the click
+	icon.custom_minimum_size = Vector2(110, 150)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	
 	# Debug node structure
 	print("[ChallengeUI] Icon child count:", icon.get_child_count())
@@ -297,3 +265,86 @@ func _on_challenge_failed(id: String) -> void:
 		var tween = create_tween()
 		tween.tween_property(icon, "modulate", Color(1.0, 0.2, 0.2), 0.5)
 		tween.tween_property(icon, "modulate", Color.WHITE, 0.5)
+
+
+# ---- Fan-out system ----
+enum State { NORMAL, FANNED_OUT }
+var _current_state: State = State.NORMAL
+var _background: ColorRect
+var _fanned_icons: Dictionary = {}
+var _icon_positions: Dictionary = {}
+
+func _get_fan_overlay() -> CanvasLayer:
+	return FanOverlayHelper.get_overlay(self)
+
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		if _current_state == State.FANNED_OUT:
+			_fold_back_challenges()
+			get_viewport().set_input_as_handled()
+		elif _current_state == State.NORMAL:
+			if not _challenges.is_empty():
+				_fan_out_challenges()
+				get_viewport().set_input_as_handled()
+
+func _fan_out_challenges() -> void:
+	if _current_state == State.FANNED_OUT:
+		return
+	_current_state = State.FANNED_OUT
+	
+	var overlay := _get_fan_overlay()
+	var viewport_size := get_viewport_rect().size
+	
+	# Create background
+	_background = FanOverlayHelper.create_background("ChallengeFanBackground")
+	overlay.add_child(_background)
+	_background.visible = true
+	_background.gui_input.connect(_on_background_clicked)
+	
+	_icon_positions.clear()
+	_fanned_icons.clear()
+	
+	var challenge_ids := _challenges.keys()
+	var count := challenge_ids.size()
+	var spacing := 120
+	var total_width := count * spacing
+	var start_x := (viewport_size.x - total_width) / 2.0 + spacing / 2.0
+	var center_y := viewport_size.y / 2.0
+	
+	for i in range(count):
+		var id: String = challenge_ids[i]
+		var icon: ChallengeIcon = _challenges[id]
+		if not icon:
+			continue
+		_icon_positions[id] = icon.position
+		_fanned_icons[id] = icon
+		if icon.get_parent() != overlay:
+			icon.reparent(overlay, false)
+		icon.position = Vector2(start_x + i * spacing - icon.size.x / 2.0, center_y - icon.size.y / 2.0)
+		icon.z_index = 200 + i
+
+func _fold_back_challenges() -> void:
+	if _current_state == State.NORMAL:
+		return
+	_current_state = State.NORMAL
+	
+	for id in _fanned_icons.keys():
+		var icon: ChallengeIcon = _fanned_icons[id]
+		if not is_instance_valid(icon):
+			continue
+		if icon.get_parent() != container:
+			icon.reparent(container, false)
+		if _icon_positions.has(id):
+			icon.position = _icon_positions[id]
+		icon.z_index = 0
+	
+	_fanned_icons.clear()
+	_icon_positions.clear()
+	
+	if _background:
+		_background.queue_free()
+		_background = null
+
+func _on_background_clicked(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		_fold_back_challenges()

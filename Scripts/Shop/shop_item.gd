@@ -329,27 +329,18 @@ func _find_power_up_ui() -> PowerUpUI:
 	
 	return null
 
-# Helper function to find the ConsumableUI node (or CorkboardUI which also manages consumables)
+# Helper function to find the ConsumableUI node
 func _find_consumable_ui():
-	# First try to find CorkboardUI (unified UI that manages consumables)
-	var corkboard_candidates = get_tree().get_nodes_in_group("corkboard_ui")
-	if corkboard_candidates.size() > 0:
-		return corkboard_candidates[0]
-	
-	# Then try to find legacy ConsumableUI
+	# Try to find ConsumableUI via group
 	var candidates = get_tree().get_nodes_in_group("consumable_ui")
 	if candidates.size() > 0:
 		return candidates[0]
 		
-	# Or navigate up to GameController and then down
+	# Or navigate up to GameController and then down via GameUI
 	var root = get_tree().get_root()
 	var game_controller = root.find_child("GameController", true, false)
 	if game_controller:
-		# Try CorkboardUI first
-		var corkboard = game_controller.get_node_or_null("CorkboardUI")
-		if corkboard:
-			return corkboard
-		return game_controller.get_node_or_null("ConsumableUI") as ConsumableUI
+		return game_controller.get_node_or_null("../GameUI/MarginContainer/MainVBox/MiddleSection/LeftColumn/ConsumableContainer/ContentVBox/ConsumableUI")
 	
 	return null
 

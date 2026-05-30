@@ -536,10 +536,10 @@ func _animate_purchase_out(item: ShopItem) -> void:
 
 # Helper function to find PowerUpUI
 func _find_power_up_ui() -> PowerUpUI:
-	# Try direct path first
+	# Try direct path first via GameUI
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	if game_controller:
-		var power_up_ui = game_controller.get_node_or_null("../PowerUpUI")
+		var power_up_ui = game_controller.get_node_or_null("../GameUI/MarginContainer/MainVBox/UpperSection/PowerUpContainer/ContentVBox/PowerUpUI")
 		if power_up_ui:
 			return power_up_ui
 	
@@ -548,10 +548,10 @@ func _find_power_up_ui() -> PowerUpUI:
 
 # Add helper function to find ConsumableUI
 func _find_consumable_ui() -> ConsumableUI:
-	# Try direct path first
+	# Try direct path first via GameUI
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	if game_controller:
-		var consumable_ui = game_controller.get_node_or_null("../ConsumableUI") as ConsumableUI
+		var consumable_ui = game_controller.get_node_or_null("../GameUI/MarginContainer/MainVBox/MiddleSection/LeftColumn/ConsumableContainer/ContentVBox/ConsumableUI") as ConsumableUI
 		if consumable_ui:
 			return consumable_ui
 	

@@ -20,26 +20,26 @@ signal score_doubled(section: Scorecard.Section, category: String, new_score: in
 signal about_to_score(section: Scorecard.Section, category: String, dice_values: Array[int])
 signal manual_score
 
-@onready var best_hand_label: RichTextLabel = $BestHandPanel/MarginContainer/VBoxContainer/BestHandScore
-@onready var upper_total_label: Label = $HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal/UppersubButton
-@onready var upper_bonus_label: Label = $HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus/UpperBonusLabel
-@onready var upper_bonus_button: Button = $HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus/UpperBonus
-@onready var upper_final_total_label: Label = $HBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperTotal/UpperTotalLabel
-@onready var lower_total_label: Label = $HBoxContainer/LowerVBoxContainer/LowerGridContainer/LowerTotal/LowerTotalLabel
-@onready var total_score_label: RichTextLabel = $TotalScorePanel/MarginContainer/RichTextTotalScore
-@onready var yahtzee_bonus_label: Label = $HBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus/YahtzeeBonusLabel
+@onready var best_hand_label: RichTextLabel = $VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/BestHandScore
+@onready var upper_total_label: Label = $VBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal/UppersubButton
+@onready var upper_bonus_label: Label = $VBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus/UpperBonusLabel
+@onready var upper_bonus_button: Button = $VBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus/UpperBonus
+@onready var upper_final_total_label: Label = $VBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperTotal/UpperTotalLabel
+@onready var lower_total_label: Label = $VBoxContainer/LowerVBoxContainer/LowerGridContainer/LowerTotal/LowerTotalLabel
+@onready var total_score_label: RichTextLabel = $VBoxContainer/ScoreSummaryContainer/TotalScorePanel/MarginContainer/RichTextTotalScore
+@onready var yahtzee_bonus_label: Label = $VBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus/YahtzeeBonusLabel
 @onready var extra_info_label: RichTextLabel = get_node_or_null("LogbookPanel/MarginContainer/ExtraInfo")
 
 # Score breakdown panel labels
-@onready var additive_score_label: Label = $BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer/AdditiveScoreLabel
-@onready var multiplier_score_label: Label = $BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer/MultiplierScoreLabel
-@onready var total_score_panel: PanelContainer = $TotalScorePanel
-@onready var best_hand_panel: PanelContainer = $BestHandPanel
+@onready var additive_score_label: Label = $VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer/AdditiveScoreLabel
+@onready var multiplier_score_label: Label = $VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer/MultiplierScoreLabel
+@onready var total_score_panel: PanelContainer = $VBoxContainer/ScoreSummaryContainer/TotalScorePanel
+@onready var best_hand_panel: PanelContainer = $VBoxContainer/ScoreSummaryContainer/BestHandPanel
 
 # Shader background ColorRects
-@onready var additive_shader_bg: ColorRect = $BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer/AdditiveScoreLabel/AdditiveShaderBG
-@onready var multiplier_shader_bg: ColorRect = $BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer/MultiplierScoreLabel/MultiplierShaderBG
-@onready var score_panel_shader_bg: ColorRect = $TotalScorePanel/ScorePanelShaderBG
+@onready var additive_shader_bg: ColorRect = $VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer/AdditiveScoreLabel/AdditiveShaderBG
+@onready var multiplier_shader_bg: ColorRect = $VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer/MultiplierScoreLabel/MultiplierShaderBG
+@onready var score_panel_shader_bg: ColorRect = $VBoxContainer/ScoreSummaryContainer/TotalScorePanel/ScorePanelShaderBG
 
 const LOWER_CATEGORY_NODE_NAMES := {
 	"three_of_a_kind": "Threeofakind",
@@ -75,16 +75,18 @@ var _counter_tween: Tween
 ##
 ## Initialize ScoreCard UI: apply theme, locate labels/buttons and prepare category mappings.
 func _ready():
+	# Hide extra panels and backgrounds that spill outside the container
+	var bg1 = get_node_or_null("ColorRect2")
+	if bg1:
+		bg1.visible = false
+	var bg2 = get_node_or_null("ColorRect")
+	if bg2:
+		bg2.visible = false
 	# Add to scorecard_ui group for PowerUps to find
 	add_to_group("scorecard_ui")
 	
 	# Load and apply custom theme
 	_apply_custom_theme()
-
-	# Add to existing _ready function
-	best_hand_label = get_node_or_null("BestHandPanel/MarginContainer/VBoxContainer/BestHandScore")
-	if not best_hand_label:
-		push_error("BestHandScore RichTextLabel not found!")
 
 	# Ensure ExtraInfo label is properly configured
 	extra_info_label = get_node_or_null("LogbookPanel/MarginContainer/ExtraInfo")
@@ -99,11 +101,14 @@ func _ready():
 	
 	# Apply custom theme to score breakdown labels
 	_apply_score_breakdown_theme()
+	
+	# Apply compact transparent button styles to fit within container
+	_apply_compact_button_styles()
 
 	for key in LOWER_CATEGORY_NODE_NAMES.keys():
 		var node_name = LOWER_CATEGORY_NODE_NAMES[key]
-		var button_path = "HBoxContainer/LowerVBoxContainer/LowerGridContainer/%s/%sButton" % [node_name, node_name]
-		var label_path = "HBoxContainer/LowerVBoxContainer/LowerGridContainer/%s/%sLabel" % [node_name, node_name]
+		var button_path = "VBoxContainer/LowerVBoxContainer/LowerGridContainer/%s/%sButton" % [node_name, node_name]
+		var label_path = "VBoxContainer/LowerVBoxContainer/LowerGridContainer/%s/%sLabel" % [node_name, node_name]
 
 		var button = get_node_or_null(button_path)
 		var label = get_node_or_null(label_path)
@@ -129,6 +134,12 @@ func _exit_tree() -> void:
 	if _highlight_tween and _highlight_tween.is_valid():
 		_highlight_tween.kill()
 		_highlight_tween = null
+	# Clean up highlighted button reference and its BestHandHighlight child
+	if _highlighted_button:
+		var bg = _highlighted_button.get_node_or_null("BestHandHighlight")
+		if bg and is_instance_valid(bg):
+			bg.free()
+		_highlighted_button = null
 	if _idle_float_tween and _idle_float_tween.is_valid():
 		_idle_float_tween.kill()
 		_idle_float_tween = null
@@ -151,6 +162,82 @@ func _apply_custom_theme():
 		print("[ScoreCardUI] Custom theme applied successfully")
 	else:
 		push_error("[ScoreCardUI] Failed to load custom theme from res://Resources/UI/scorecard_theme.tres")
+
+
+## _apply_compact_button_styles()
+##
+## Overrides button styles to be transparent with minimal margins so the scorecard
+## fits vertically inside its container. Also reduces container separations.
+func _apply_compact_button_styles() -> void:
+	# Build transparent style variants
+	var normal_style := StyleBoxFlat.new()
+	normal_style.bg_color = Color(0, 0, 0, 0)
+	normal_style.set_border_width_all(0)
+	normal_style.content_margin_left = 0.0
+	normal_style.content_margin_top = 0.0
+	normal_style.content_margin_right = 0.0
+	normal_style.content_margin_bottom = 0.0
+
+	var hover_style := StyleBoxFlat.new()
+	hover_style.bg_color = Color(1, 1, 1, 0.1)
+	hover_style.set_border_width_all(0)
+	hover_style.content_margin_left = 0.0
+	hover_style.content_margin_top = 0.0
+	hover_style.content_margin_right = 0.0
+	hover_style.content_margin_bottom = 0.0
+
+	var pressed_style := StyleBoxFlat.new()
+	pressed_style.bg_color = Color(1, 1, 1, 0.2)
+	pressed_style.set_border_width_all(0)
+	pressed_style.content_margin_left = 0.0
+	pressed_style.content_margin_top = 0.0
+	pressed_style.content_margin_right = 0.0
+	pressed_style.content_margin_bottom = 0.0
+
+	# Apply to all buttons recursively
+	var nodes: Array[Node] = get_children()
+	while not nodes.is_empty():
+		var node = nodes.pop_back()
+		if node is Button:
+			node.add_theme_stylebox_override("normal", normal_style)
+			node.add_theme_stylebox_override("hover", hover_style)
+			node.add_theme_stylebox_override("pressed", pressed_style)
+			node.add_theme_stylebox_override("disabled", normal_style)
+			node.add_theme_stylebox_override("focus", normal_style)
+		# Ensure uniform width so score labels align
+		if node is Button:
+			node.add_theme_font_size_override("font_size", 10)
+			if node.text.ends_with(":"):
+				node.custom_minimum_size.x = 80
+		nodes.append_array(node.get_children())
+
+	# Reduce container separations
+	var vbox = get_node_or_null("VBoxContainer")
+	if vbox:
+		vbox.add_theme_constant_override("separation", 0)
+	var upper_vbox = get_node_or_null("VBoxContainer/UpperVBoxContainer")
+	if upper_vbox:
+		upper_vbox.add_theme_constant_override("separation", 0)
+	var lower_vbox = get_node_or_null("VBoxContainer/LowerVBoxContainer")
+	if lower_vbox:
+		lower_vbox.add_theme_constant_override("separation", 0)
+	var upper_grid = get_node_or_null("VBoxContainer/UpperVBoxContainer/UpperGridContainer")
+	if upper_grid:
+		upper_grid.add_theme_constant_override("v_separation", 0)
+		upper_grid.add_theme_constant_override("h_separation", 1)
+	var lower_grid = get_node_or_null("VBoxContainer/LowerVBoxContainer/LowerGridContainer")
+	if lower_grid:
+		lower_grid.add_theme_constant_override("v_separation", 0)
+		lower_grid.add_theme_constant_override("h_separation", 1)
+
+	# Zero out MarginContainer padding inside panels
+	for margin_path in ["VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer", "VBoxContainer/ScoreSummaryContainer/TotalScorePanel/MarginContainer", "LogbookPanel/MarginContainer"]:
+		var margin = get_node_or_null(margin_path)
+		if margin:
+			margin.add_theme_constant_override("margin_left", 0)
+			margin.add_theme_constant_override("margin_right", 0)
+			margin.add_theme_constant_override("margin_top", 0)
+			margin.add_theme_constant_override("margin_bottom", 0)
 
 
 ## bind_scorecard(sc)
@@ -192,7 +279,7 @@ func update_sixth_slot_display() -> void:
 	if not scorecard:
 		return
 	var display_name = scorecard.get_sixth_slot_display_name()
-	var button_path = "HBoxContainer/UpperVBoxContainer/UpperGridContainer/SixesContainer/SixesButton"
+	var button_path = "VBoxContainer/UpperVBoxContainer/UpperGridContainer/SixesContainer/SixesButton"
 	var button = get_node_or_null(button_path)
 	if button:
 		button.text = display_name + ":"
@@ -204,7 +291,7 @@ func update_sixth_slot_display() -> void:
 ## Refreshes the UI labels and totals from the bound `scorecard` model.
 func update_all():
 	for category in scorecard.upper_scores.keys():
-		var label_path = "HBoxContainer/UpperVBoxContainer/UpperGridContainer/" + category.capitalize() + "Container/" + category.capitalize() + "Label"
+		var label_path = "VBoxContainer/UpperVBoxContainer/UpperGridContainer/" + category.capitalize() + "Container/" + category.capitalize() + "Label"
 		var label = get_node_or_null(label_path)
 		if label:
 			var value = scorecard.upper_scores[category]
@@ -216,7 +303,7 @@ func update_all():
 
 	for category in scorecard.lower_scores.keys():
 		var node_name = LOWER_CATEGORY_NODE_NAMES.get(category, category.capitalize())
-		var label_path = "HBoxContainer/LowerVBoxContainer/LowerGridContainer/" + node_name + "/" + node_name + "Label"
+		var label_path = "VBoxContainer/LowerVBoxContainer/LowerGridContainer/" + node_name + "/" + node_name + "Label"
 		var label = get_node_or_null(label_path)
 		if label:
 			var value = scorecard.lower_scores[category]
@@ -320,7 +407,7 @@ func _create_level_labels() -> void:
 	var upper_categories = ["ones", "twos", "threes", "fours", "fives", "sixes"]
 	for category in upper_categories:
 		var category_name = category.capitalize()
-		var label_path = "HBoxContainer/UpperVBoxContainer/UpperGridContainer/" + category_name + "Container/" + category_name + "LevelLabel"
+		var label_path = "VBoxContainer/UpperVBoxContainer/UpperGridContainer/" + category_name + "Container/" + category_name + "LevelLabel"
 		var level_label = get_node_or_null(label_path)
 		
 		if level_label:
@@ -340,7 +427,7 @@ func _create_level_labels() -> void:
 	var lower_categories_to_upgrade = ["three_of_a_kind", "four_of_a_kind", "full_house", "small_straight", "large_straight", "yahtzee", "chance"]
 	for category in lower_categories_to_upgrade:
 		var node_name = LOWER_CATEGORY_NODE_NAMES.get(category, category.capitalize())
-		var label_path = "HBoxContainer/LowerVBoxContainer/LowerGridContainer/" + node_name + "/" + node_name + "LevelLabel"
+		var label_path = "VBoxContainer/LowerVBoxContainer/LowerGridContainer/" + node_name + "/" + node_name + "LevelLabel"
 		var level_label = get_node_or_null(label_path)
 		
 		if level_label:
@@ -462,7 +549,7 @@ func _on_upper_bonus_achieved(_bonus: int) -> void:
 
 func _on_upper_section_completed() -> void:
 	# Optional: Visual feedback for section completion
-	var upper_section = $HBoxContainer/UpperVBoxContainer
+	var upper_section = $VBoxContainer/UpperVBoxContainer
 	if upper_section:
 		var tween = create_tween()
 		tween.tween_property(upper_section, "modulate", Color(1.2, 1.2, 1.2), 0.3)
@@ -471,7 +558,7 @@ func _on_upper_section_completed() -> void:
 
 func _on_lower_section_completed() -> void:
 	# Visual feedback for section completion
-	var lower_section = $HBoxContainer/LowerVBoxContainer
+	var lower_section = $VBoxContainer/LowerVBoxContainer
 	if lower_section:
 		var tween = create_tween()
 		tween.tween_property(lower_section, "modulate", Color(1.2, 1.2, 1.2), 0.3)
@@ -495,7 +582,7 @@ func connect_buttons():
 
 	# Upper section
 	for category in scorecard.upper_scores.keys():
-		var button_path = "HBoxContainer/UpperVBoxContainer/UpperGridContainer/" + category.capitalize() + "Container/" + category.capitalize() + "Button"
+		var button_path = "VBoxContainer/UpperVBoxContainer/UpperGridContainer/" + category.capitalize() + "Container/" + category.capitalize() + "Button"
 		var button = get_node_or_null(button_path)
 		if button:
 			button.pressed.connect(func(): on_category_selected(Scorecard.Section.UPPER, category))
@@ -505,7 +592,7 @@ func connect_buttons():
 	# Lower section
 	for category in scorecard.lower_scores.keys():
 		var node_name = LOWER_CATEGORY_NODE_NAMES.get(category, category.capitalize())
-		var button_path = "HBoxContainer/LowerVBoxContainer/LowerGridContainer/" + node_name + "/" + node_name + "Button"
+		var button_path = "VBoxContainer/LowerVBoxContainer/LowerGridContainer/" + node_name + "/" + node_name + "Button"
 		var button = get_node_or_null(button_path)
 		if button:
 			button.pressed.connect(func(): on_category_selected(Scorecard.Section.LOWER, category))
@@ -638,6 +725,7 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 	# Note: GameController will be notified via scorecard.score_assigned signal connection
 
 func disable_all_score_buttons():
+	clear_category_highlight()
 	for button in upper_section_buttons.values():
 		button.disabled = true
 		button.modulate = Color.WHITE  # Reset any special highlighting
@@ -656,7 +744,7 @@ func allow_extra_score():
 
 func show_invalid_score_feedback(category: String):
 	# Optional: flash button red
-	var button = get_node_or_null("HBoxContainer/.../" + category.capitalize() + "Button")
+	var button = get_node_or_null("VBoxContainer/.../" + category.capitalize() + "Button")
 	if button:
 		var tween := get_tree().create_tween()
 		tween.tween_property(button, "modulate", Color.RED, 0.2).set_trans(Tween.TRANS_SINE)
@@ -741,7 +829,25 @@ func update_best_hand_preview(dice_values: Array) -> void:
 
 	_screen_shaker(best_score, 50)
 
-		
+
+## auto_score_best_hand()
+##
+## Scores the category identified by the last update_best_hand_preview() call,
+## going through the full on_category_selected() UI flow (animations, signals,
+## score assignment). Called when the Next Turn button is pressed and the hand
+## has not yet been scored manually.
+##
+## No-op if the turn is already scored or no best-hand preview was calculated.
+func auto_score_best_hand() -> void:
+	if turn_scored:
+		return
+	if current_best_hand_category == "":
+		push_error("[ScoreCardUI] auto_score_best_hand: no best hand preview available -- cannot auto-score")
+		return
+	print("[ScoreCardUI] Auto-scoring best hand: %s (section: %s)" % [current_best_hand_category, current_best_hand_section])
+	on_category_selected(current_best_hand_section, current_best_hand_category)
+
+
 func _screen_shaker(best_score: int, max_clamp: int) -> void:
 	if best_score >= 100:
 		best_score = max_clamp
@@ -1794,21 +1900,54 @@ func highlight_best_hand_category() -> void:
 		return
 	
 	_highlighted_button = button
+	
+	# Add shader highlight background behind the button text
+	var bg = ColorRect.new()
+	bg.name = "BestHandHighlight"
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.show_behind_parent = true
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var mat = ShaderMaterial.new()
+	mat.shader = load("res://Scripts/Shaders/neon_energy.gdshader")
+	mat.set_shader_parameter("energy_color", Vector4(1.0, 0.84, 0.0, 1.0))
+	mat.set_shader_parameter("accent_color", Vector4(1.0, 0.5, 0.0, 1.0))
+	mat.set_shader_parameter("effect_strength", 0.0)
+	mat.set_shader_parameter("intensity", 1.0)
+	bg.material = mat
+	button.add_child(bg)
+	
 	_highlight_tween = create_tween().set_loops()
-	_highlight_tween.tween_property(button, "modulate", Color(1.0, 0.9, 0.5), 0.6).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
-	_highlight_tween.tween_property(button, "modulate", Color.WHITE, 0.6).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	_highlight_tween.tween_method(func(v): mat.set_shader_parameter("effect_strength", v), 0.3, 0.9, 0.6)
+	_highlight_tween.tween_method(func(v): mat.set_shader_parameter("effect_strength", v), 0.9, 0.3, 0.6)
 
 
 ## clear_category_highlight()
 ##
 ## Removes the gold pulse highlight from any previously highlighted category button.
+## Also performs a defensive sweep of all known buttons to catch any leaked
+## BestHandHighlight nodes that may have become orphaned from the tracked reference.
 func clear_category_highlight() -> void:
 	if _highlight_tween and _highlight_tween.is_valid():
 		_highlight_tween.kill()
 		_highlight_tween = null
 	if _highlighted_button:
 		_highlighted_button.modulate = Color.WHITE
+		var bg = _highlighted_button.get_node_or_null("BestHandHighlight")
+		if bg and is_instance_valid(bg):
+			bg.free()
 		_highlighted_button = null
+	# Defensive sweep: remove ALL BestHandHighlight children from every button.
+	# Uses get_children() + name check instead of get_node_or_null() so that
+	# auto-renamed duplicates (e.g. @BestHandHighlight@2 from queue_free race)
+	# are also caught and freed immediately.
+	for button in upper_section_buttons.values():
+		for child in button.get_children():
+			if "BestHandHighlight" in child.name and is_instance_valid(child):
+				child.free()
+	for button in lower_section_buttons.values():
+		for child in button.get_children():
+			if "BestHandHighlight" in child.name and is_instance_valid(child):
+				child.free()
 
 
 # ──────────────────────────────────────────────────────────

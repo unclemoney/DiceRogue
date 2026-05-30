@@ -396,6 +396,14 @@ func _create_debug_tabs() -> void:
 			{"text": "Stop Music", "method": "_debug_audio_stop_music"},
 			{"text": "Resume Music", "method": "_debug_audio_resume_music"},
 		],
+		"GameUI": [
+			{"text": "Show UI Layout Info", "method": "_debug_ui_layout_info"},
+			{"text": "Toggle Container Borders", "method": "_debug_ui_toggle_borders"},
+			{"text": "Dump GameUI Tree", "method": "_debug_ui_dump_tree"},
+			{"text": "Find Missing Nodes", "method": "_debug_ui_find_missing"},
+			{"text": "Highlight Containers", "method": "_debug_ui_highlight"},
+			{"text": "Reset UI Visibility", "method": "_debug_ui_reset_visibility"},
+		],
 		"Round Transitions": [
 			{"text": "TV On", "method": "_debug_tv_on"},
 			{"text": "TV Off", "method": "_debug_tv_off"},
@@ -2686,6 +2694,246 @@ func _debug_lock_all_colored_dice() -> void:
 			break
 	
 	log_debug("Locked %d colored dice features" % locked_count)
+
+# ============================================================================
+# GameUI Debug Functions
+# ============================================================================
+
+## _debug_ui_layout_info()
+##
+## Dumps size and position info for all GameUI containers.
+func _debug_ui_layout_info() -> void:
+	var game_ui = get_tree().get_first_node_in_group("game_ui")
+	if not game_ui:
+		log_debug("ERROR: GameUI not found in scene")
+		return
+	
+	log_debug("=== GameUI Layout Info ===")
+	log_debug("GameUI size: %s" % str(game_ui.size))
+	
+	var containers = [
+		"turn_info_container", "power_up_container", "money_container",
+		"challenge_container", "debuff_container", "consumable_container",
+		"console_container", "title_container", "dice_area_container",
+		"chore_meter_container", "scorecard_container"
+	]
+	
+	for container_name in containers:
+		var container = game_ui.get(container_name)
+		if container and is_instance_valid(container):
+			log_debug("%s: size=%s pos=%s" % [container_name, str(container.size), str(container.global_position)])
+		else:
+			log_debug("%s: MISSING" % container_name)
+
+
+## _debug_ui_toggle_borders()
+##
+## Toggles bright debug borders on all GameUI PanelContainers to visualize layout.
+func _debug_ui_toggle_borders() -> void:
+	var game_ui = get_tree().get_first_node_in_group("game_ui")
+	if not game_ui:
+		log_debug("ERROR: GameUI not found")
+		return
+	
+	var panels = [
+		game_ui.turn_info_container, game_ui.power_up_container, game_ui.money_container,
+		game_ui.challenge_container, game_ui.debuff_container, game_ui.consumable_container,
+		game_ui.console_container, game_ui.title_container, game_ui.dice_area_container,
+		game_ui.chore_meter_container, game_ui.scorecard_container
+	]
+	
+	var toggled = 0
+	for panel in panels:
+		if panel and is_instance_valid(panel):
+			var style = panel.get_theme_stylebox("panel") as StyleBoxFlat
+			if style:
+				if style.border_color == Color(1, 0, 0, 1):
+					style.border_color = Color(0.9, 0.9, 0.9, 0.6)
+					style.bg_color = Color(1.0, 0.839, 0.761, 0.25)
+				else:
+					style.border_color = Color(1, 0, 0, 1)
+					style.bg_color = Color(1, 0, 0, 0.1)
+				panel.add_theme_stylebox_override("panel", style)
+				toggled += 1
+	log_debug("Toggled debug borders on %d panels" % toggled)
+
+
+## _debug_ui_dump_tree()
+##
+## Prints the full node tree under GameUI for debugging node paths.
+func _debug_ui_dump_tree() -> void:
+	var game_ui = get_tree().get_first_node_in_group("game_ui")
+	if not game_ui:
+		log_debug("ERROR: GameUI not found")
+		return
+	
+	log_debug("=== GameUI Node Tree ===")
+	_dump_node_recursive(game_ui, 0)
+
+
+## _dump_node_recursive(node: Node, depth: int)
+##
+## Helper to recursively print node names and types.
+func _dump_node_recursive(node: Node, depth: int) -> void:
+	var indent = "  ".repeat(depth)
+	var info = "%s%s (%s)" % [indent, node.name, node.get_class()]
+	if node is Control:
+		info += " size=%s" % str(node.size)
+	log_debug(info)
+	for child in node.get_children():
+		_dump_node_recursive(child, depth + 1)
+
+
+## _debug_ui_find_missing()
+##
+## Checks if critical GameUI child nodes exist and reports missing ones.
+func _debug_ui_find_missing() -> void:
+	var game_ui = get_tree().get_first_node_in_group("game_ui")
+	if not game_ui:
+		log_debug("ERROR: GameUI not found")
+		return
+	
+	var critical_paths = [
+		"MarginContainer/MainVBox/UpperSection/TurnInfoContainer/VCRTurnTrackerUI",
+		"MarginContainer/MainVBox/UpperSection/PowerUpContainer/ContentVBox/PowerUpUI",
+		"MarginContainer/MainVBox/UpperSection/MoneyContainer/MoneyUI",
+		"MarginContainer/MainVBox/MiddleSection/LeftColumn/ChallengeContainer/ContentVBox/ChallengeUI",
+		"MarginContainer/MainVBox/MiddleSection/LeftColumn/DebuffContainer/ContentVBox/DebuffUI",
+		"MarginContainer/MainVBox/MiddleSection/LeftColumn/ConsumableContainer/ContentVBox/ConsumableUI",
+		"MarginContainer/MainVBox/MiddleSection/LeftColumn/ConsoleContainer/ContentVBox/GamingConsoleUI",
+		"MarginContainer/MainVBox/MiddleSection/CenterColumn/TitleContainer/ContentVBox/GlowingTitle",
+		"MarginContainer/MainVBox/MiddleSection/CenterColumn/DiceAreaContainer/DiceHand",
+		"MarginContainer/MainVBox/MiddleSection/CenterColumn/ChoreMeterContainer/ContentVBox/GlowingTitle",
+		"MarginContainer/MainVBox/MiddleSection/RightColumn/ScorecardContainer/ScoreCardUI",
+		"MarginContainer/MainVBox/MiddleSection/LeftColumn/GameButtonContainer/ContentVBox/GameButtonUI",
+	]
+	
+	var missing = 0
+	for path in critical_paths:
+		var node = game_ui.get_node_or_null(path)
+		if node and is_instance_valid(node):
+			log_debug("OK: %s" % path)
+		else:
+			log_debug("MISSING: %s" % path)
+			missing += 1
+	
+	if missing == 0:
+		log_debug("All critical GameUI nodes found!")
+	else:
+		log_debug("WARNING: %d critical nodes missing" % missing)
+
+
+## _debug_ui_highlight()
+##
+## Briefly flashes all GameUI containers to verify they are rendering.
+func _debug_ui_highlight() -> void:
+	var game_ui = get_tree().get_first_node_in_group("game_ui")
+	if not game_ui:
+		log_debug("ERROR: GameUI not found")
+		return
+	
+	var panels = [
+		game_ui.turn_info_container, game_ui.power_up_container, game_ui.money_container,
+		game_ui.challenge_container, game_ui.debuff_container, game_ui.consumable_container,
+		game_ui.console_container, game_ui.title_container, game_ui.dice_area_container,
+		game_ui.chore_meter_container, game_ui.scorecard_container
+	]
+	
+	for panel in panels:
+		if panel and is_instance_valid(panel):
+			var tween = create_tween()
+			var original_mod = panel.modulate
+			panel.modulate = Color(1, 0, 0, 1)
+			tween.tween_property(panel, "modulate", original_mod, 0.5)
+	log_debug("Flashed all GameUI containers")
+
+
+## _debug_ui_reset_visibility()
+##
+## Resets visibility of all GameUI containers to true.
+func _debug_ui_reset_visibility() -> void:
+	var game_ui = get_tree().get_first_node_in_group("game_ui")
+	if not game_ui:
+		log_debug("ERROR: GameUI not found")
+		return
+	
+	var nodes: Array[Node] = game_ui.get_children()
+	while not nodes.is_empty():
+		var node = nodes.pop_back()
+		if node is Control:
+			node.visible = true
+		nodes.append_array(node.get_children())
+	log_debug("Reset visibility for all GameUI controls")
+
+
+# ============================================================================
+# Round Transitions Debug Stubs
+# ============================================================================
+
+func _debug_tv_on() -> void:
+	log_debug("TV On: not implemented")
+
+func _debug_tv_off() -> void:
+	log_debug("TV Off: not implemented")
+
+func _debug_show_round_panel() -> void:
+	log_debug("Show Round Panel: not implemented")
+
+func _debug_wave_buttons() -> void:
+	log_debug("Wave Buttons: not implemented")
+
+
+# ============================================================================
+# Main Menu Debug Stubs
+# ============================================================================
+
+func _debug_menu_spawn_dice() -> void:
+	log_debug("Menu Spawn Dice: not implemented")
+
+func _debug_menu_clear_dice() -> void:
+	log_debug("Menu Clear Dice: not implemented")
+
+func _debug_menu_show_dice_count() -> void:
+	log_debug("Menu Show Dice Count: not implemented")
+
+
+# ============================================================================
+# Juice Debug Stubs
+# ============================================================================
+
+func _debug_test_hitstop() -> void:
+	log_debug("Test Hitstop: not implemented")
+
+func _debug_test_camera_zoom() -> void:
+	log_debug("Test Camera Zoom: not implemented")
+
+func _debug_test_celebration() -> void:
+	log_debug("Test Celebration: not implemented")
+
+func _debug_test_floating_text() -> void:
+	log_debug("Test Floating Text: not implemented")
+
+func _debug_test_negative_hit() -> void:
+	log_debug("Test Negative Hit: not implemented")
+
+func _debug_test_positive_reward() -> void:
+	log_debug("Test Positive Reward: not implemented")
+
+func _debug_test_spotlight() -> void:
+	log_debug("Test Spotlight: not implemented")
+
+func _debug_test_threat_alarm() -> void:
+	log_debug("Test Threat Alarm: not implemented")
+
+func _debug_test_score_countup() -> void:
+	log_debug("Test Score Count-Up: not implemented")
+
+func _debug_test_crossfade() -> void:
+	log_debug("Test Crossfade: not implemented")
+
+func _debug_test_crt_wipe() -> void:
+	log_debug("Test CRT Wipe: not implemented")
+
 
 # ============================================================================
 # Score Card Upgrade Debug Functions

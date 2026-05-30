@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://ci0em1fnllesh"]
+
+[ext_resource type="Script" uid="uid://bbhhv3sxximk0" path="res://Tests/SpineIntegrationTest.gd" id="1_spinetest"]
+
+[node name="SpineIntegrationTest" type="Node2D"]
+script = ExtResource("1_spinetest")

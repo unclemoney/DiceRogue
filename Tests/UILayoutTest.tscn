@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c0tchy14voymk"]
+
+[ext_resource type="Script" uid="uid://dm5qu8stfna1q" path="res://Tests/UILayoutTest.gd" id="1_layouttest"]
+
+[node name="UILayoutTest" type="Node2D"]
+script = ExtResource("1_layouttest")

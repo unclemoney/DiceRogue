@@ -45,6 +45,7 @@ window/size/viewport_width=1280
 window/size/viewport_height=720
 window/size/mode=3
 window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
 mouse_cursor/custom_image="uid://bout2l1c1wwv"
 
 [editor_plugins]
@@ -60,6 +61,10 @@ folder_colors={
 "res://Tests/": "blue",
 "res://addons/": "gray"
 }
+
+[gui]
+
+theme/default_font_multichannel_signed_distance_field=true
 
 [input]
 
@@ -77,5 +82,4 @@ debug_toggle={
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0
-renderer/rendering_method="gl_compatibility"
-renderer/rendering_method.mobile="gl_compatibility"
+renderer/rendering_method.mobile="forward_plus"

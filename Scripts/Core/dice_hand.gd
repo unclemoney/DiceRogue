@@ -64,9 +64,15 @@ func _ready() -> void:
 	print("[DiceHand] dice_area_size:", dice_area_size)
 	print("[DiceHand] start_position (legacy):", start_position)
 	
+	# Defer container size read until layout is finalized
+	call_deferred("_update_area_from_parent")
+	
 	# Add to group for easy finding
 	add_to_group("dice_hand")
 	print("[DiceHand] Added to 'dice_hand' group")
+	
+	# Ensure viewport physics picking is enabled so Area2D dice receive input
+	get_viewport().physics_object_picking = true
 
 	if not d6_dice_data:
 		push_error("[DiceHand] D6 dice data not assigned!")
@@ -96,9 +102,22 @@ func _ready() -> void:
 	switch_dice_type("d6")
 
 
-## spawn_dice()
+## _update_area_from_parent()
 ##
-## Spawns the configured number of dice with centered positioning and varied entry animations.
+## Derives dice_area_center and dice_area_size from the parent Control container.
+## Called deferred from _ready() so the container has its final layout size.
+## Also connects to the parent's resized signal to keep dice centered on resize.
+func _update_area_from_parent() -> void:
+	if get_parent() is Control:
+		var parent_size: Vector2 = get_parent().size
+		if parent_size.x > 0 and parent_size.y > 0:
+			dice_area_center = parent_size / 2.0
+			dice_area_size = parent_size
+			print("[DiceHand] Derived dice area from parent container:", dice_area_center, dice_area_size)
+			_update_dice_area_visual()
+			# If dice already exist, recenter them
+			if not dice_list.is_empty():
+				_recenter_existing_dice()
 ## Honors any active lock debuff by disabling input after spawn.
 func spawn_dice() -> void:
 	if not default_dice_data:
@@ -228,8 +247,17 @@ func _calculate_centered_positions(count: int) -> Array[Vector2]:
 		bottom_row_count = clamped_count - top_row_count
 		print("[DiceHand] Multi-row layout:", top_row_count, "top,", bottom_row_count, "bottom")
 	
-	var center_x = dice_area_center.x
-	var center_y = dice_area_center.y
+	# Dynamically derive area from parent if available, otherwise use cached values
+	var area_center: Vector2 = dice_area_center
+	var area_size: Vector2 = dice_area_size
+	if get_parent() is Control:
+		var parent_size: Vector2 = get_parent().size
+		if parent_size.x > 0 and parent_size.y > 0:
+			area_center = parent_size / 2.0
+			area_size = parent_size
+	
+	var center_x = area_center.x
+	var center_y = area_center.y
 	
 	# Calculate vertical offset for multi-row
 	var total_height = row_spacing if bottom_row_count > 0 else 0.0
@@ -253,6 +281,22 @@ func _calculate_centered_positions(count: int) -> Array[Vector2]:
 			positions.append(pos)
 	
 	return positions
+
+
+## _recenter_existing_dice()
+##
+## Repositions already-spawned dice to match the current container center.
+## Called when the parent container resizes after dice have been spawned.
+func _recenter_existing_dice() -> void:
+	if dice_list.is_empty():
+		return
+	var positions = _calculate_centered_positions(dice_list.size())
+	for i in range(dice_list.size()):
+		if i < positions.size() and is_instance_valid(dice_list[i]):
+			dice_list[i].home_position = positions[i]
+			# Animate to new position so the move is visible
+			var tween = get_tree().create_tween()
+			tween.tween_property(dice_list[i], "position", positions[i], 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
 ## _get_entry_offset(index: int, total_count: int) -> Vector2

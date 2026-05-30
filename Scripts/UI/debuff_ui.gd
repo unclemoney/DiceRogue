@@ -6,28 +6,50 @@ signal debuff_selected(id: String)
 # Set default path directly to fix the instantiation error
 @export var debuff_icon_scene: PackedScene = preload("res://Scenes/Debuff/DebuffIcon.tscn")
 @export var max_debuffs: int = 5
-@onready var container: HBoxContainer
+@onready var container: Container
 
 var _icons: Dictionary = {}  # id -> DebuffIcon
+
+# Fan-out state
+enum State { NORMAL, FANNED_OUT }
+var _current_state: State = State.NORMAL
+var _background: ColorRect
+var _fanned_icons: Dictionary = {}
+var _icon_positions: Dictionary = {}
 
 func _ready() -> void:
 	print("[DebuffUI] Initializing...")
 	
+	# Defensive cleanup: remove deprecated hardcoded nodes if editor cached an old scene
+	for old_name in ["Label", "VBoxContainer"]:
+		var old_node = get_node_or_null(old_name)
+		if old_node:
+			old_node.queue_free()
+	
 	# Try to find or create container
 	if has_node("Container"):
-		container = $Container
-		print("[DebuffUI] Found existing Container")
-	else:
-		print("[DebuffUI] Creating Container")
-		container = HBoxContainer.new()
+		var existing = $Container
+		if existing is GridContainer:
+			container = existing
+			print("[DebuffUI] Found existing GridContainer")
+		else:
+			print("[DebuffUI] Replacing existing container with GridContainer")
+			existing.queue_free()
+			container = null
+	if not container:
+		container = GridContainer.new()
 		container.name = "Container"
 		add_child(container)
 	
-	# Configure container
+	# Configure container to fill parent
 	container.mouse_filter = Control.MOUSE_FILTER_PASS
-	container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	container.visible = true
-	container.add_theme_constant_override("separation", 40)
+	container.set_anchors_preset(Control.PRESET_FULL_RECT)
+	if container is GridContainer:
+		container.columns = 2
+		container.add_theme_constant_override("h_separation", 16)
+		container.add_theme_constant_override("v_separation", 16)
+	elif container is BoxContainer:
+		container.add_theme_constant_override("separation", 40)
 	
 	# Safety check - load the scene if not set
 	if not debuff_icon_scene:
@@ -40,6 +62,84 @@ func _ready() -> void:
 		
 	print("[DebuffUI] Initialization complete")
 	print("[DebuffUI] debuff_icon_scene is set:", debuff_icon_scene != null)
+	
+	# Ensure this UI layer receives input for fan-out clicks
+	mouse_filter = Control.MOUSE_FILTER_STOP
+
+func _get_fan_overlay() -> CanvasLayer:
+	return FanOverlayHelper.get_overlay(self)
+
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		if _current_state == State.FANNED_OUT:
+			_fold_back_debuffs()
+			get_viewport().set_input_as_handled()
+		elif _current_state == State.NORMAL:
+			if not _icons.is_empty():
+				_fan_out_debuffs()
+				get_viewport().set_input_as_handled()
+
+func _fan_out_debuffs() -> void:
+	if _current_state == State.FANNED_OUT:
+		return
+	_current_state = State.FANNED_OUT
+	
+	var overlay := _get_fan_overlay()
+	var viewport_size := get_viewport_rect().size
+	
+	# Create background
+	_background = FanOverlayHelper.create_background("DebuffFanBackground")
+	overlay.add_child(_background)
+	_background.visible = true
+	_background.gui_input.connect(_on_background_clicked)
+	
+	_icon_positions.clear()
+	_fanned_icons.clear()
+	
+	var debuff_ids := _icons.keys()
+	var count := debuff_ids.size()
+	var spacing := 112
+	var total_width := count * spacing
+	var start_x := (viewport_size.x - total_width) / 2.0 + spacing / 2.0
+	var center_y := viewport_size.y / 2.0
+	
+	for i in range(count):
+		var id: String = debuff_ids[i]
+		var icon: DebuffIcon = _icons[id]
+		if not icon:
+			continue
+		_icon_positions[id] = icon.position
+		_fanned_icons[id] = icon
+		if icon.get_parent() != overlay:
+			icon.reparent(overlay, false)
+		icon.position = Vector2(start_x + i * spacing - icon.size.x / 2.0, center_y - icon.size.y / 2.0)
+		icon.z_index = 200 + i
+
+func _fold_back_debuffs() -> void:
+	if _current_state == State.NORMAL:
+		return
+	_current_state = State.NORMAL
+	
+	for id in _fanned_icons.keys():
+		var icon: DebuffIcon = _fanned_icons[id]
+		if not is_instance_valid(icon):
+			continue
+		if icon.get_parent() != container:
+			icon.reparent(container, false)
+		if _icon_positions.has(id):
+			icon.position = _icon_positions[id]
+		icon.z_index = 0
+	
+	_fanned_icons.clear()
+	_icon_positions.clear()
+	
+	if _background:
+		_background.queue_free()
+		_background = null
+
+func _on_background_clicked(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		_fold_back_debuffs()
 
 func add_debuff(data: DebuffData, debuff_instance: Debuff = null) -> DebuffIcon:
 	print("[DebuffUI] Adding debuff to UI:", data.id if data else "null")
@@ -60,6 +160,10 @@ func add_debuff(data: DebuffData, debuff_instance: Debuff = null) -> DebuffIcon:
 
 	# Add icon to container
 	container.add_child(icon)
+	
+	# Force smaller size and disable own input so DebuffUI gets the click
+	icon.custom_minimum_size = Vector2(64, 64)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	
 	# Set data after adding to tree
 	icon.set_data(data)

@@ -1,4 +1,5 @@
 extends Control
+class_name GameButtonUI
 
 @export var dice_hand_path:      NodePath
 @export var score_card_ui_path:  NodePath
@@ -10,20 +11,20 @@ extends Control
 @onready var challenge_manager: ChallengeManager = get_node_or_null(challenge_manager_path)
 @onready var scoring_animation_controller = get_node_or_null(scoring_animation_controller_path)
 
-@onready var shop_button: Button = $HBoxContainer/ShopButton
-@onready var next_round_button: Button = $HBoxContainer/NextRoundButton  
-@onready var roll_button: Button = $HBoxContainer/RollButton
-@onready var next_turn_button: Button = $HBoxContainer/NextTurnButton  
+@onready var shop_button: Button = $HBoxContainer/RightButtonArea/ShopButton
+@onready var next_round_button: Button = $HBoxContainer/RightButtonArea/NextRoundButton
+@onready var next_turn_button: Button = $HBoxContainer/RightButtonArea/NextTurnButton
 @onready var _tfx := get_node("/root/TweenFXHelper")
 
-# VCR Door Elements
-@onready var vcr_door: TextureRect = $VCRDoor
-var _door_is_animating: bool = false
-
+## Emitted when shop is opened so RollButtonUI can disable roll
+signal shop_opened
 signal shop_button_pressed
 signal next_round_pressed
+## Emitted when Next Turn is pressed; ScoreCardUI listens to auto-score the best hand
+signal next_turn_pressed
+## Re-emitted from RollButtonUI for backwards-compat with GameController
 signal dice_rolled(dice_values: Array)
-signal roll_pressed  # Emitted when roll button is pressed, before dice begin rolling
+signal roll_pressed
 
 var dice_hand
 var score_card_ui
@@ -31,79 +32,111 @@ var turn_tracker
 var round_manager: RoundManager
 var scorecard: Scorecard
 var is_shop_open: bool = true
-var first_roll_done: bool = false
 
-## Pulse animation state
-var _is_pulsing: bool = false
 var _is_shop_pulsing: bool = false
 
-## Keyboard input cooldown to prevent multiple rapid presses
 var _input_cooldown: float = 0.0
-const INPUT_COOLDOWN_DURATION: float = 0.75  # 750ms between key presses
+const INPUT_COOLDOWN_DURATION: float = 0.75
 
-## General button action cooldown to prevent mouse spam on all gameplay buttons
 var _button_action_cooldown: float = 0.0
-const BUTTON_ACTION_COOLDOWN: float = 0.35  # 350ms between button actions
-
-## Prevents roll from being triggered while a roll animation is already in progress
-var _roll_in_progress: bool = false
+const BUTTON_ACTION_COOLDOWN: float = 0.35
 
 
 func _ready():
-	print("ScoreCardUI ready: ", score_card_ui_path)
-	dice_hand      = get_node(dice_hand_path)
-	score_card_ui  = get_node(score_card_ui_path)
-	turn_tracker   = get_node(turn_tracker_path)
+	dice_hand      = get_node_or_null(dice_hand_path)
+	score_card_ui  = get_node_or_null(score_card_ui_path)
+	turn_tracker   = get_node_or_null(turn_tracker_path)
 	round_manager  = get_node_or_null(round_manager_path)
-	challenge_manager = get_node_or_null(challenge_manager_path)  # Initialize challenge_manager
-	
-	# Add to group for Dice Surge lookup
-	add_to_group("game_button_ui")
-	
-	if not score_card_ui:
-		print("Error")
-		push_error("GameButtonUI: score_card_ui_path not set or node missing")
+	challenge_manager = get_node_or_null(challenge_manager_path)
 
-	roll_button.pressed.connect(_on_roll_button_pressed)
-	next_turn_button.pressed.connect(_on_next_turn_button_pressed)
-	dice_hand.roll_complete.connect(_on_dice_roll_complete)
-	turn_tracker.rolls_exhausted.connect(_on_rolls_exhausted)
-	turn_tracker.turn_started.connect(func(): roll_button.disabled = false; _start_roll_button_pulse())
-	turn_tracker.rolls_updated.connect(_on_rolls_updated)
-	
-	# Juice: create screen-edge vignette for final roll tension
-	_create_tension_vignette()
-	turn_tracker.connect("game_over",Callable(self, "_on_game_over"))
-	
-	# Score streak popup connection
-	var game_controller = get_tree().get_first_node_in_group("game_controller")
-	if game_controller and game_controller.has_signal("score_streak_changed"):
-		game_controller.score_streak_changed.connect(_on_score_streak_changed)
-	score_card_ui.connect("hand_scored", Callable(self, "_hand_scored_disable"))
-	score_card_ui.connect("manual_score", Callable(self, "_scored_hand_setup_next_round"))
-	
-	# Shop button is already connected in the scene file, so just configure it
+	if turn_tracker and not turn_tracker is TurnTracker:
+		if turn_tracker.has("tracker"):
+			turn_tracker = turn_tracker.tracker
+			print("[GameButtonUI] Extracted TurnTracker from VCRTurnTrackerUI wrapper")
+		else:
+			turn_tracker = null
+
+	if not dice_hand:
+		dice_hand = get_tree().get_first_node_in_group("dice_hand")
+		if dice_hand:
+			print("[GameButtonUI] Found dice_hand via group fallback")
+
+	if not turn_tracker:
+		turn_tracker = get_tree().get_first_node_in_group("turn_tracker")
+		if turn_tracker:
+			print("[GameButtonUI] Found turn_tracker via turn_tracker group")
+		else:
+			var game_ui = get_tree().get_first_node_in_group("game_ui")
+			if game_ui and game_ui.has_node("MarginContainer/MainVBox/UpperSection/TurnInfoContainer/VCRTurnTrackerUI"):
+				var vcr_ui = game_ui.get_node("MarginContainer/MainVBox/UpperSection/TurnInfoContainer/VCRTurnTrackerUI")
+				if vcr_ui and vcr_ui.tracker:
+					turn_tracker = vcr_ui.tracker
+					print("[GameButtonUI] Found turn_tracker via VCRTurnTrackerUI.tracker")
+				else:
+					push_error("[GameButtonUI] VCRTurnTrackerUI found but tracker is null")
+			if not turn_tracker:
+				push_error("[GameButtonUI] turn_tracker could not be resolved -- gameplay will be broken")
+
+	if turn_tracker and not turn_tracker is TurnTracker:
+		if turn_tracker.has("tracker"):
+			turn_tracker = turn_tracker.tracker
+			print("[GameButtonUI] Final unwrap: extracted TurnTracker from wrapper")
+		else:
+			turn_tracker = null
+
+	if not score_card_ui:
+		var game_ui = get_tree().get_first_node_in_group("game_ui")
+		if game_ui and game_ui.has_node("MarginContainer/MainVBox/MiddleSection/RightColumn/ScorecardContainer/ScoreCardUI"):
+			score_card_ui = game_ui.get_node("MarginContainer/MainVBox/MiddleSection/RightColumn/ScorecardContainer/ScoreCardUI")
+		if score_card_ui:
+			print("[GameButtonUI] Found score_card_ui via GameUI fallback")
+
+	if not challenge_manager:
+		challenge_manager = get_tree().get_first_node_in_group("challenge_manager") as ChallengeManager
+		if challenge_manager:
+			print("[GameButtonUI] Found challenge_manager via group fallback")
+
+	if not round_manager:
+		round_manager = get_tree().get_first_node_in_group("round_manager") as RoundManager
+		if round_manager:
+			print("[GameButtonUI] Found round_manager via group fallback")
+
+	add_to_group("game_button_ui")
+
+	if not score_card_ui:
+		push_error("GameButtonUI: score_card_ui_path not set or node missing")
+	if not dice_hand:
+		push_error("GameButtonUI: dice_hand not found")
+	if not turn_tracker:
+		push_error("GameButtonUI: turn_tracker not found")
+
+	if next_turn_button and not next_turn_button.pressed.is_connected(_on_next_turn_button_pressed):
+		next_turn_button.pressed.connect(_on_next_turn_button_pressed)
+
+	if score_card_ui:
+		score_card_ui.connect("manual_score", Callable(self, "_scored_hand_setup_next_round"))
+
 	if shop_button:
-		shop_button.disabled = false  # Enabled at the very beginning
+		shop_button.disabled = false
 		print("Shop button status: ", shop_button.disabled)
-	
-	# Connect TweenFX hover/press effects to all game buttons
-	for btn in [roll_button, shop_button, next_turn_button, next_round_button]:
+
+	for btn in [shop_button, next_turn_button, next_round_button]:
 		if btn:
-			btn.mouse_entered.connect(_tfx.button_hover.bind(btn))
-			btn.mouse_exited.connect(_tfx.button_unhover.bind(btn))
-			btn.pressed.connect(_tfx.button_press.bind(btn))
-	
-	if next_round_button:
+			if not btn.mouse_entered.is_connected(_tfx.button_hover.bind(btn)):
+				btn.mouse_entered.connect(_tfx.button_hover.bind(btn))
+			if not btn.mouse_exited.is_connected(_tfx.button_unhover.bind(btn)):
+				btn.mouse_exited.connect(_tfx.button_unhover.bind(btn))
+			if not btn.pressed.is_connected(_tfx.button_press.bind(btn)):
+				btn.pressed.connect(_tfx.button_press.bind(btn))
+
+	if next_round_button and not next_round_button.pressed.is_connected(_on_next_round_button_pressed):
 		next_round_button.pressed.connect(_on_next_round_button_pressed)
-		# Start with Next Round button enabled to begin the game
 		next_round_button.disabled = false
-	
-	# Make sure both round_manager and challenge_manager exist before connecting signals
+
 	if round_manager:
 		round_manager.round_started.connect(_on_round_started)
 		round_manager.round_completed.connect(_on_round_completed)
-	
+
 	if challenge_manager:
 		challenge_manager.challenge_completed.connect(_on_challenge_completed)
 		print("[GameButtonUI] Connected to challenge_manager.challenge_completed signal")
@@ -111,18 +144,135 @@ func _ready():
 	else:
 		push_error("[GameButtonUI] challenge_manager reference is null - CANNOT CONNECT SIGNALS")
 
-	# Disable gameplay buttons initially
-	roll_button.disabled = true
+	if turn_tracker:
+		turn_tracker.connect("game_over", Callable(self, "_on_game_over"))
+
 	next_turn_button.disabled = true
 
-	# Connect VCR door click
-	if vcr_door:
-		vcr_door.gui_input.connect(_on_vcr_door_input)
+	call_deferred("_connect_roll_ui_signals")
 
 
-## _process(delta)
+## _connect_roll_ui_signals()
 ##
-## Handles keyboard input cooldown timer.
+## Deferred wiring so RollButtonUI and ScoreCardUI have had time to register.
+func _connect_roll_ui_signals() -> void:
+	var roll_ui = get_tree().get_first_node_in_group("roll_button_ui")
+	if roll_ui:
+		if roll_ui.has_signal("dice_rolled") and not roll_ui.dice_rolled.is_connected(_on_roll_ui_dice_rolled):
+			roll_ui.dice_rolled.connect(_on_roll_ui_dice_rolled)
+		if roll_ui.has_signal("roll_pressed") and not roll_ui.roll_pressed.is_connected(_on_roll_ui_roll_pressed):
+			roll_ui.roll_pressed.connect(_on_roll_ui_roll_pressed)
+	else:
+		push_error("[GameButtonUI] RollButtonUI not found in group -- signals will not be re-emitted")
+
+	# Resolve dice_hand via group if the _ready() path lookup missed it
+	# (game_ui.gd adds GameButtonUI before DiceHand, so group lookup fails in _ready())
+	if not dice_hand:
+		dice_hand = get_tree().get_first_node_in_group("dice_hand")
+		if dice_hand:
+			print("[GameButtonUI] Resolved dice_hand via group in _connect_roll_ui_signals")
+		else:
+			push_error("[GameButtonUI] dice_hand not found -- dice exit animation will not work")
+
+	# Resolve score_card_ui via group if the _ready() path lookup missed it
+	if not score_card_ui:
+		score_card_ui = get_tree().get_first_node_in_group("scorecard_ui")
+		if score_card_ui:
+			print("[GameButtonUI] Resolved score_card_ui via group in _connect_roll_ui_signals")
+
+	# Connect manual_score → _scored_hand_setup_next_round (dice exit animation on manual score)
+	if score_card_ui and score_card_ui.has_signal("manual_score"):
+		if not score_card_ui.manual_score.is_connected(_scored_hand_setup_next_round):
+			score_card_ui.manual_score.connect(_scored_hand_setup_next_round)
+			print("[GameButtonUI] Connected manual_score -> _scored_hand_setup_next_round")
+
+	# Connect next_turn_pressed → ScoreCardUI.auto_score_best_hand
+	if score_card_ui and score_card_ui.has_method("auto_score_best_hand"):
+		if not next_turn_pressed.is_connected(score_card_ui.auto_score_best_hand):
+			next_turn_pressed.connect(score_card_ui.auto_score_best_hand)
+			print("[GameButtonUI] Connected next_turn_pressed -> ScoreCardUI.auto_score_best_hand")
+	else:
+		push_error("[GameButtonUI] ScoreCardUI not found or missing auto_score_best_hand -- auto-score will not work")
+
+	# Lazy-resolve round_manager and reconnect its signals
+	if not round_manager:
+		round_manager = get_tree().get_first_node_in_group("round_manager") as RoundManager
+		if round_manager:
+			print("[GameButtonUI] Resolved round_manager via group in _connect_roll_ui_signals")
+	if round_manager:
+		if not round_manager.round_started.is_connected(_on_round_started):
+			round_manager.round_started.connect(_on_round_started)
+			print("[GameButtonUI] Connected round_manager.round_started")
+		if not round_manager.round_completed.is_connected(_on_round_completed):
+			round_manager.round_completed.connect(_on_round_completed)
+			print("[GameButtonUI] Connected round_manager.round_completed")
+	else:
+		push_error("[GameButtonUI] round_manager not found -- round signals will not fire")
+
+	# Lazy-resolve challenge_manager and reconnect its signals
+	if not challenge_manager:
+		challenge_manager = get_tree().get_first_node_in_group("challenge_manager") as ChallengeManager
+		if challenge_manager:
+			print("[GameButtonUI] Resolved challenge_manager via group in _connect_roll_ui_signals")
+	if challenge_manager:
+		if not challenge_manager.challenge_completed.is_connected(_on_challenge_completed):
+			challenge_manager.challenge_completed.connect(_on_challenge_completed)
+			print("[GameButtonUI] Connected challenge_manager.challenge_completed")
+	else:
+		push_error("[GameButtonUI] challenge_manager not found -- challenge_completed will not enable Next Round")
+
+
+func _on_roll_ui_dice_rolled(dice_values: Array) -> void:
+	emit_signal("dice_rolled", dice_values)
+
+
+func _on_roll_ui_roll_pressed() -> void:
+	emit_signal("roll_pressed")
+
+
+## on_roll_ui_pressed() -> void
+##
+## Called by RollButtonUI after roll button press. Enables Next Turn.
+func on_roll_ui_pressed() -> void:
+	next_turn_button.disabled = false
+
+
+## disable_shop_on_first_roll() -> void
+##
+## Called by RollButtonUI on the first roll of a round.
+func disable_shop_on_first_roll() -> void:
+	if shop_button:
+		shop_button.disabled = true
+
+
+## trigger_roll() -> void
+##
+## Pass-through for backwards-compat with consumables (e.g. DiceSurgeConsumable).
+func trigger_roll() -> void:
+	var roll_ui = get_tree().get_first_node_in_group("roll_button_ui")
+	if roll_ui and roll_ui.has_method("trigger_roll"):
+		roll_ui.trigger_roll()
+	else:
+		print("[GameButtonUI] trigger_roll() -- RollButtonUI not found")
+
+
+## reset_for_new_channel() -> void
+##
+## Resets button state for a new channel.
+func reset_for_new_channel() -> void:
+	print("[GameButtonUI] Resetting for new channel")
+	next_turn_button.disabled = true
+	if next_round_button:
+		next_round_button.disabled = false
+	if shop_button:
+		shop_button.disabled = false
+	_stop_shop_button_pulse()
+	var roll_ui = get_tree().get_first_node_in_group("roll_button_ui")
+	if roll_ui and roll_ui.has_method("reset_for_new_channel"):
+		roll_ui.reset_for_new_channel()
+	print("[GameButtonUI] Reset complete")
+
+
 func _process(delta: float) -> void:
 	if _input_cooldown > 0.0:
 		_input_cooldown -= delta
@@ -134,417 +284,149 @@ func _process(delta: float) -> void:
 			_button_action_cooldown = 0.0
 
 
-## _unhandled_input(event)
-##
-## Handles keyboard/controller shortcuts for game actions.
-## Uses InputMap actions configured in GameSettings.
-## Includes cooldown to prevent multiple rapid key presses.
 func _unhandled_input(event: InputEvent) -> void:
-	# Ignore echo events (key held down)
 	if event.is_echo():
 		return
-	
-	# Only handle pressed events (not released)
 	if not event.is_pressed():
 		return
-	
-	# Check cooldown to prevent rapid repeated inputs
 	if _input_cooldown > 0.0:
 		get_viewport().set_input_as_handled()
 		return
-	
-	# Roll action
-	if event.is_action_pressed("roll"):
-		if roll_button and not roll_button.disabled and roll_button.visible:
-			get_viewport().set_input_as_handled()
-			_input_cooldown = INPUT_COOLDOWN_DURATION
-			_on_roll_button_pressed()
-			return
-	
-	# Next Turn action
 	if event.is_action_pressed("next_turn"):
 		if next_turn_button and not next_turn_button.disabled and next_turn_button.visible:
 			get_viewport().set_input_as_handled()
 			_input_cooldown = INPUT_COOLDOWN_DURATION
 			_on_next_turn_button_pressed()
 			return
-	
-	# Shop action
 	if event.is_action_pressed("shop"):
 		if shop_button and not shop_button.disabled and shop_button.visible:
 			get_viewport().set_input_as_handled()
 			_input_cooldown = INPUT_COOLDOWN_DURATION
 			_on_shop_button_pressed()
 			return
-	
-	# Next Round action
 	if event.is_action_pressed("next_round"):
 		if next_round_button and not next_round_button.disabled and next_round_button.visible:
 			get_viewport().set_input_as_handled()
 			_input_cooldown = INPUT_COOLDOWN_DURATION
 			_on_next_round_button_pressed()
 			return
-	
-	# Dice lock actions (1-16)
-	_handle_dice_lock_input(event)
 
 
-## _handle_dice_lock_input(event)
-##
-## Handles dice lock keybindings (lock_dice_1 through lock_dice_16).
-## Toggles lock state on the corresponding die in the dice hand.
-func _handle_dice_lock_input(event: InputEvent) -> void:
-	if not dice_hand:
-		return
-	
-	# Check each lock action (1-16)
-	for i in range(1, 17):
-		var action_name = "lock_dice_%d" % i
-		if InputMap.has_action(action_name) and event.is_action_pressed(action_name):
-			_toggle_die_lock(i - 1)  # Convert to 0-based index
-			get_viewport().set_input_as_handled()
-			return
-
-
-## _toggle_die_lock(index)
-##
-## Toggles the lock state of the die at the given index (0-based).
-func _toggle_die_lock(index: int) -> void:
-	if not dice_hand:
-		return
-	
-	var dice_list = dice_hand.dice_list
-	if index < 0 or index >= dice_list.size():
-		return
-	
-	var die = dice_list[index]
-	if die and die.has_method("toggle_lock"):
-		die.toggle_lock()
-		print("[GameButtonUI] Toggled lock on die %d" % (index + 1))
-
-
-## _on_vcr_door_input(event)
-##
-## Plays a snappy "swing open" tween on the VCR door when clicked.
-## The door's pivot is at the top edge so it swings upward and away.
-## Resets automatically after 5 seconds.
-func _on_vcr_door_input(event: InputEvent) -> void:
-	if not event is InputEventMouseButton:
-		return
-	if not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
-		return
-	if _door_is_animating or not vcr_door:
-		return
-	_door_is_animating = true
-
-	# Hinge at the top center of the door
-	vcr_door.pivot_offset = Vector2(vcr_door.size.x / 2.0, 0.0)
-
-	var door_tween := create_tween()
-	door_tween.tween_property(vcr_door, "scale:y", 0.0, 0.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
-	door_tween.tween_callback(func(): vcr_door.visible = false)
-
-	# Wait then reset
-	await get_tree().create_timer(1.0).timeout
-	vcr_door.scale = Vector2.ONE
-	vcr_door.visible = true
-	_door_is_animating = false
-
-
-## reset_for_new_channel() -> void
-##
-## Resets button state for a new channel. Called after winning a channel.
-func reset_for_new_channel() -> void:
-	print("[GameButtonUI] Resetting for new channel")
-	first_roll_done = false
-	
-	# Reset button states
-	roll_button.disabled = true
-	next_turn_button.disabled = true
-	if next_round_button:
-		next_round_button.disabled = false
-	if shop_button:
-		shop_button.disabled = false
-	
-	# Stop any pulse animations
-	_stop_roll_button_pulse()
-	_stop_shop_button_pulse()
-	
-	print("[GameButtonUI] Reset complete - first_roll_done:", first_roll_done)
-
-
-## _start_roll_button_pulse()
-##
-## Starts the pulsing glow animation on the Roll button via TweenFXHelper.
-## Used when waiting for the first roll of a turn.
-func _start_roll_button_pulse() -> void:
-	if _is_pulsing or not roll_button:
-		return
-	
-	if roll_button.disabled:
-		return
-	
-	_is_pulsing = true
-
-	_tfx.idle_pulse(roll_button)
-	print("[GameButtonUI] Starting Roll button pulse animation")
-
-
-## _stop_roll_button_pulse()
-##
-## Stops the pulsing animation and resets the Roll button to normal.
-func _stop_roll_button_pulse() -> void:
-	if not _is_pulsing:
-		return
-	
-	_is_pulsing = false
-	_tfx.stop_effect(roll_button)
-	print("[GameButtonUI] Stopped Roll button pulse animation")
-
-
-## _start_shop_button_pulse()
-##
-## Starts the pulsing glow animation on the Shop button via TweenFXHelper.
-## Used when the shop becomes available between rounds.
 func _start_shop_button_pulse() -> void:
 	if _is_shop_pulsing or not shop_button:
 		return
-	
 	if shop_button.disabled:
 		return
-	
 	_is_shop_pulsing = true
 	_tfx.idle_pulse(shop_button)
-	print("[GameButtonUI] Starting Shop button pulse animation")
 
 
-## _stop_shop_button_pulse()
-##
-## Stops the pulsing animation and resets the Shop button to normal.
 func _stop_shop_button_pulse() -> void:
 	if not _is_shop_pulsing:
 		return
-	
 	_is_shop_pulsing = false
 	_tfx.stop_effect(shop_button)
-	print("[GameButtonUI] Stopped Shop button pulse animation")
 
-
-## trigger_roll()
-##
-## Public method to programmatically trigger a dice roll.
-## Used by consumables like Dice Surge to initiate a roll when no dice exist.
-## Only works if the roll button is enabled and visible.
-func trigger_roll() -> void:
-	if roll_button and not roll_button.disabled and roll_button.visible:
-		print("[GameButtonUI] trigger_roll() called by consumable")
-		_on_roll_button_pressed()
-	else:
-		print("[GameButtonUI] trigger_roll() ignored - roll button not available")
-
-
-func _on_roll_button_pressed() -> void:
-	# Spam guards: cooldown, in-progress lock, and immediate disable
-	if _button_action_cooldown > 0.0 or _roll_in_progress:
-		return
-	_button_action_cooldown = BUTTON_ACTION_COOLDOWN
-	_roll_in_progress = true
-	roll_button.disabled = true
-	
-	# Stop the pulse animation when roll button is pressed
-	_stop_roll_button_pulse()
-	
-	emit_signal("roll_pressed")
-	
-	print("[GameButtonUI] Roll button pressed. Dice list size:", dice_hand.dice_list.size())
-	
-	next_turn_button.disabled = false
-	if not first_roll_done:
-		first_roll_done = true
-		if shop_button:
-			shop_button.disabled = true  # Disable shop after first roll
-	if dice_hand.dice_list.is_empty():
-		print("[GameButtonUI] Dice list empty - spawning new dice")
-		await dice_hand.spawn_dice()
-		print("[GameButtonUI] Spawn complete, proceeding to roll")
-	else:
-		print("[GameButtonUI] Dice list not empty - updating dice count")
-		dice_hand.update_dice_count()
-	
-	# Prepare dice for rolling - set ROLLED dice to ROLLABLE, preserve LOCKED dice
-	dice_hand.prepare_dice_for_roll()
-	print("[GameButtonUI] Rolling dice (preserving locks)")
-	
-	dice_hand.roll_all()
-	print("▶ Roll pressed — using dice_count =", dice_hand.dice_count)
-	# Best hand preview now updates in _on_dice_roll_complete() after DiceResults are current
-
-
-func _on_dice_roll_complete() -> void:
-	# player may now pick a category…
-	# lock UI state for scoring
-	score_card_ui.turn_scored = false
-	turn_tracker.use_roll()
-	
-	# Clear roll lock and re-enable button if rolls remain
-	_roll_in_progress = false
-	if turn_tracker.rolls_left > 0:
-		roll_button.disabled = false
-	
-	# Now that dice have settled, get their values and emit signal
-	var dice_values = dice_hand.get_current_dice_values()
-	emit_signal("dice_rolled", dice_values)
-	
-	# Update best hand preview now that DiceResults are current
-	if score_card_ui:
-		score_card_ui.update_best_hand_preview(DiceResults.values)
 
 func _on_next_turn_button_pressed() -> void:
 	if _button_action_cooldown > 0.0:
 		return
 	_button_action_cooldown = BUTTON_ACTION_COOLDOWN
-	
-	# Next turn sound
 	var audio_mgr = get_node_or_null("/root/AudioManager")
 	if audio_mgr and audio_mgr.has_method("play_next_turn_sound"):
 		audio_mgr.play_next_turn_sound()
-	
-	# Notify tutorial manager of next turn action
 	var tutorial_manager = get_node_or_null("/root/TutorialManager")
 	if tutorial_manager and tutorial_manager.is_tutorial_active():
 		tutorial_manager.action_completed("click_next_turn")
-	
-	# 1) Auto-score if needed
-	if not score_card_ui.turn_scored:
-		print("[GameButtonUI] About to trigger autoscoring...")
-		score_card_ui.scorecard.auto_score_best(dice_hand.get_current_dice_values())
-		score_card_ui.turn_scored = true
-		print("[GameButtonUI] Autoscoring completed, calling update_all()...")
-		score_card_ui.update_all()
-		print("[GameButtonUI] Manual update_all() completed")
+	# Lazy-resolve score_card_ui in case _ready() path lookup failed
+	if not score_card_ui:
+		score_card_ui = get_tree().get_first_node_in_group("scorecard_ui")
+	if score_card_ui and not score_card_ui.turn_scored:
+		print("[GameButtonUI] Emitting next_turn_pressed for auto-score...")
+		emit_signal("next_turn_pressed")
 		_scored_hand_setup_next_round()
-
-	# If scorecard is complete, game_completed signal already fired — don't advance turn
-	if score_card_ui.scorecard.is_game_complete():
-		print("[GameButtonUI] Scorecard complete — skipping turn advancement")
+	if score_card_ui and score_card_ui.scorecard.is_game_complete():
+		print("[GameButtonUI] Scorecard complete -- skipping turn advancement")
 		return
+	print("[GameButtonUI] Starting new turn - enabling roll button")
+	if turn_tracker:
+		turn_tracker.start_new_turn()
+	if score_card_ui:
+		score_card_ui.turn_scored = false
+		score_card_ui.enable_all_score_buttons()
+	if dice_hand:
+		dice_hand.set_all_dice_rollable()
+	var roll_ui = get_tree().get_first_node_in_group("roll_button_ui")
+	if roll_ui:
+		roll_ui.enable_roll()
+		roll_ui.start_pulse()
+	next_turn_button.disabled = true
 
-	# 2) Proceed with turn advancement (after scoring is complete)
-	print("[GameButtonUI] Starting new turn - enabling roll button and setting dice to ROLLABLE")
-	turn_tracker.start_new_turn()
-	score_card_ui.turn_scored = false
-	score_card_ui.enable_all_score_buttons()
-	
-	# Set all dice to ROLLABLE state for new turn
-	dice_hand.set_all_dice_rollable()
-	
-	roll_button.disabled = false
-	next_turn_button.disabled = true	
 
 func _scored_hand_setup_next_round():
 	print("[GameButtonUI] Scored hand, setting up next round")
-	
-	# Animate dice exiting the screen
 	if dice_hand:
 		dice_hand.animate_all_dice_exit()
 		print("[GameButtonUI] Triggered dice exit animation")
-	
-	# Disable dice input after scoring
-	dice_hand.set_all_dice_disabled()
-	print("[GameButtonUI] Set all dice to DISABLED state after scoring")
+		dice_hand.set_all_dice_disabled()
+		print("[GameButtonUI] Set all dice to DISABLED state after scoring")
+
 
 func _on_auto_score_assigned(section, category, score):
 	print("Auto-assigned", category, "in", section, "for", score, "points")
-	# maybe flash the label or play a sound
+
 
 func _on_game_over() -> void:
-	# Disable all controls
-	roll_button.disabled = true
 	next_turn_button.disabled = true
 	if shop_button:
 		shop_button.disabled = true
-	
-	# Stop any pulse animation
-	_stop_roll_button_pulse()
+	_stop_shop_button_pulse()
 
-func _hand_scored_disable() -> void:
-	print("🏁 Hand scored—disabling Roll button")
-	roll_button.disabled = true
-	_stop_roll_button_pulse()
 
 func _on_shop_button_pressed() -> void:
 	if _button_action_cooldown > 0.0:
 		return
 	_button_action_cooldown = BUTTON_ACTION_COOLDOWN
-	
-	# Shop open sound
 	var audio_mgr = get_node_or_null("/root/AudioManager")
 	if audio_mgr and audio_mgr.has_method("play_shop_open_sound"):
 		audio_mgr.play_shop_open_sound()
-	
 	print("[GameButtonUI] Shop button pressed")
-	# Stop the pulse animation when shop button is pressed
 	_stop_shop_button_pulse()
-	is_shop_open = !is_shop_open  # Toggle shop state
+	is_shop_open = !is_shop_open
 	emit_signal("shop_button_pressed")
-	print("[GameButtonUI] Signal emitted")
-	next_turn_button.disabled = true  # Disable next turn while in shop
-	roll_button.disabled = true  # Disable roll while in shop
-	_stop_roll_button_pulse()  # Stop pulse when roll disabled
+	emit_signal("shop_opened")
+	print("[GameButtonUI] Signals emitted")
+	next_turn_button.disabled = true
+
 
 func _on_round_started(_round_number: int) -> void:
 	print("[GameButtonUI] === ROUND STARTED ===")
 	print("[GameButtonUI] Round", _round_number, "started")
-	
 	if next_round_button:
 		next_round_button.disabled = true
 		print("[GameButtonUI] NextRound button DISABLED on round start")
-	
 	if shop_button:
 		print("[GameButtonUI] Round started - disabling shop button")
-		_stop_shop_button_pulse()  # Stop pulse when shop disabled
-		shop_button.disabled = true  # Disable shop at the start of each round
-	
-	# Enable gameplay buttons when round starts
-	roll_button.disabled = false
+		_stop_shop_button_pulse()
+		shop_button.disabled = true
 	next_turn_button.disabled = false
-	
-	# Staggered bounce wave on all gameplay buttons
 	animate_button_wave()
-	
-	# Start Roll button pulse to draw attention
-	_start_roll_button_pulse()
-	
-	# Show turn banner
 	_show_turn_banner(_round_number)
-	
-	# Always spawn dice when a round starts
-	if dice_hand:
-		# Since we've just cleared the dice, dice_list should be empty
-		print("[GameButtonUI] Spawning dice for round", _round_number)
-		dice_hand.spawn_dice()
-		
-		# Wait a short moment for dice to appear and animate in
-		await get_tree().create_timer(0.3).timeout
-		
-		# Now trigger the roll
-		_on_roll_button_pressed()
+
 
 func _on_round_completed(_round_number: int) -> void:
 	if shop_button:
-		shop_button.disabled = false  # Enable shop after round is completed
-		_start_shop_button_pulse()  # Start pulse to attract attention
-	
-	if _round_number == 0:  # Initial game state - don't enable next round button yet
-		if next_round_button:
-			next_round_button.disabled = false
+		shop_button.disabled = false
+		_start_shop_button_pulse()
+	# Round is now officially done (stats panel dismissed, shop is opening).
+	# Enable Next Round so the player can advance after shopping.
+	if next_round_button:
+		next_round_button.disabled = false
+		print("[GameButtonUI] Next Round button enabled on round_completed")
+
 
 func animate_button_wave() -> void:
-	"""
-	Staggered bounce on all enabled gameplay buttons.
-	Called at round start after buttons are enabled.
-	"""
-	var buttons = [roll_button, next_turn_button, shop_button, next_round_button]
+	var buttons = [next_turn_button, shop_button, next_round_button]
 	for i in range(buttons.size()):
 		var btn = buttons[i]
 		if not btn or btn.disabled or not btn.visible:
@@ -555,154 +437,57 @@ func animate_button_wave() -> void:
 		tween.tween_property(btn, "scale", Vector2(0.95, 1.05), 0.08)
 		tween.tween_property(btn, "scale", Vector2.ONE, 0.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
+
 func _on_challenge_completed(challenge_id: String) -> void:
 	print("[GameButtonUI] === CHALLENGE COMPLETED ===")
 	print("[GameButtonUI] _on_challenge_completed received:", challenge_id)
 	print("[GameButtonUI] round_manager:", round_manager)
 	if round_manager:
 		print("[GameButtonUI] round_manager.current_challenge_id:", round_manager.current_challenge_id)
-	
 	if round_manager and challenge_id != "":
 		if round_manager.current_challenge_id == challenge_id or round_manager.current_challenge_id == "":
 			print("[GameButtonUI] Challenge ID match! Enabling Next Round button")
 			if next_round_button:
 				next_round_button.disabled = false
 				print("[GameButtonUI] Next Round button enabled: disabled=", next_round_button.disabled)
-			# Disable Next Turn so player doesn't skip end-of-round rewards
 			next_turn_button.disabled = true
 			if shop_button:
-				shop_button.disabled = false  # Enable shop when challenge is completed
-				_start_shop_button_pulse()  # Start pulse to attract attention
+				shop_button.disabled = false
+				_start_shop_button_pulse()
 		else:
 			print("[GameButtonUI] Challenge ID mismatch:", challenge_id, "vs", round_manager.current_challenge_id)
+
 
 func _on_next_round_button_pressed() -> void:
 	if _button_action_cooldown > 0.0:
 		return
 	_button_action_cooldown = BUTTON_ACTION_COOLDOWN
-	
+	if next_round_button:
+		next_round_button.disabled = true
 	print("[GameButtonUI] Next Round button pressed")
-	
-	# Close shop if currently open
 	var shop_ui_node = get_node_or_null("../ShopUI")
 	if shop_ui_node and shop_ui_node.visible:
 		shop_ui_node.hide()
 		is_shop_open = false
 		print("[GameButtonUI] Closed open shop on next round press")
-	
-	# Notify tutorial manager of next round action
 	var tutorial_manager = get_node_or_null("/root/TutorialManager")
 	if tutorial_manager and tutorial_manager.is_tutorial_active():
 		tutorial_manager.action_completed("click_next_round")
-	
 	if round_manager:
-		print("[GameButtonUI] Current round:", round_manager.get_current_round_number(), "first_roll_done:", first_roll_done)
-	
-	# Cancel any pending animations before clearing dice
+		print("[GameButtonUI] Current round:", round_manager.get_current_round_number())
 	if scoring_animation_controller:
 		scoring_animation_controller.cancel_all_animations()
-	
-	# Clear dice first
 	if dice_hand:
 		dice_hand.clear_dice()
-	
-	# Reset all scores on the scorecard but preserve levels (upgrades persist) and update UI
 	if score_card_ui and score_card_ui.scorecard:
 		score_card_ui.scorecard.reset_scores_preserve_levels()
 		score_card_ui.update_all()
-	
 	emit_signal("next_round_pressed")
 
 
-## _create_tension_vignette()
+## _show_turn_banner(round_number)
 ##
-## Creates a red screen-edge vignette for final roll tension.
-func _create_tension_vignette() -> void:
-	var vignette = ColorRect.new()
-	vignette.name = "TensionVignette"
-	vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
-	vignette.color = Color(0.8, 0.1, 0.1, 0.0)
-	vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vignette.visible = false
-	add_child(vignette)
-
-
-## _show_tension_vignette()
-##
-## Fades in the red vignette at screen edges.
-func _show_tension_vignette() -> void:
-	var vignette = get_node_or_null("TensionVignette")
-	if not vignette:
-		return
-	vignette.visible = true
-	var tween = create_tween()
-	tween.tween_property(vignette, "color:a", 0.15, 0.3)
-
-
-## _hide_tension_vignette()
-##
-## Fades out the red vignette.
-func _hide_tension_vignette() -> void:
-	var vignette = get_node_or_null("TensionVignette")
-	if not vignette:
-		return
-	var tween = create_tween()
-	tween.tween_property(vignette, "color:a", 0.0, 0.2)
-	tween.tween_callback(func(): vignette.visible = false)
-
-
-## _on_rolls_updated(rolls_left)
-##
-## Handles tension effects when rolls are running low.
-func _on_rolls_updated(rolls_left: int) -> void:
-	# Roll warning flash disabled — too extreme
-	#if rolls_left == 1 and not roll_button.disabled:
-	#   _show_tension_vignette()
-	#   _tfx.threat_alarm(roll_button)
-	#else:
-	#   _hide_tension_vignette()
-	#   _tfx.stop_effect(roll_button)
-	pass
-
-
-## _on_rolls_exhausted()
-##
-## Handles feedback when player runs out of rolls.
-func _on_rolls_exhausted() -> void:
-	roll_button.disabled = true
-	_roll_in_progress = false
-	_hide_tension_vignette()
-	_tfx.stop_effect(roll_button)
-	
-	# Dice sigh
-	if dice_hand:
-		for die in dice_hand.dice_list:
-			if is_instance_valid(die):
-				var t = get_tree().create_tween()
-				t.tween_property(die, "scale", Vector2(0.95, 0.95), 0.2)
-				t.tween_property(die, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_ELASTIC)
-	
-	# Button shake + red flash
-	_tfx.negative_hit(roll_button)
-	
-	# "OUT OF ROLLS" toast
-	var toast = Label.new()
-	toast.text = "OUT OF ROLLS"
-	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	toast.add_theme_font_override("font", preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf"))
-	toast.add_theme_font_size_override("font_size", 24)
-	toast.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
-	toast.position = roll_button.global_position - Vector2(60, 40)
-	get_tree().current_scene.add_child(toast)
-	var t_tween = get_tree().create_tween()
-	t_tween.tween_property(toast, "position:y", toast.position.y - 30, 0.4).set_trans(Tween.TRANS_BACK)
-	t_tween.parallel().tween_property(toast, "modulate:a", 0.0, 0.8).set_delay(0.6)
-	t_tween.tween_callback(func(): if is_instance_valid(toast): toast.queue_free())
-
-
-## _on_score_streak_changed(multiplier)
-##
-## Spawns a floating popup when score streak changes.
+## Drops in a "TURN N" label at the top of the screen.
 func _show_turn_banner(round_number: int) -> void:
 	var banner = Label.new()
 	banner.name = "TurnBanner"
@@ -713,33 +498,17 @@ func _show_turn_banner(round_number: int) -> void:
 	banner.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3, 1.0))
 	banner.add_theme_color_override("font_outline_color", Color(0.4, 0.2, 0.0, 1.0))
 	banner.add_theme_constant_override("outline_size", 2)
-	
 	var viewport_size = get_viewport_rect().size
 	banner.position = Vector2(viewport_size.x / 2 - 80, -50)
 	banner.custom_minimum_size = Vector2(160, 40)
 	get_tree().current_scene.add_child(banner)
-	
-	# drop_in animation
 	var tween = get_tree().create_tween()
 	tween.tween_property(banner, "position:y", 20, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	
-	# Swoosh sound
 	var audio_mgr = get_node_or_null("/root/AudioManager")
 	if audio_mgr and audio_mgr.has_method("play_panel_swoosh"):
 		audio_mgr.play_panel_swoosh()
-	
-	# Hold then fade out
 	await get_tree().create_timer(1.5).timeout
 	if is_instance_valid(banner):
 		var fade = get_tree().create_tween()
 		fade.tween_property(banner, "modulate:a", 0.0, 0.3)
 		fade.tween_callback(func(): if is_instance_valid(banner): banner.queue_free())
-
-
-func _on_score_streak_changed(multiplier: float) -> void:
-	if multiplier <= 1.0:
-		return
-	var text = "%.1fx STREAK!" % multiplier
-	var ftx = get_node_or_null("/root/FloatingTextManager")
-	if ftx:
-		ftx.show_popup_at_position(get_tree().current_scene, roll_button.global_position + Vector2(0, -50), text, Color(1.0, 0.8, 0.2), 1.2)

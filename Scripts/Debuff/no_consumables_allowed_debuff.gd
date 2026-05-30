@@ -6,31 +6,31 @@ class_name NoConsumablesAllowedDebuff
 ## Prevents the player from using any consumables during gameplay.
 ## The player can still sell consumables for money, but the USE button
 ## is disabled on all consumable icons. Works by setting a "consumables_blocked"
-## meta flag on the CorkboardUI node, which _can_use_consumable checks.
+## meta flag on the ConsumableUI node, which _can_use_consumable checks.
 
-var corkboard_ui: Node
+var _consumable_ui: Node
 
 ## apply(_target)
 ##
-## Sets the "consumables_blocked" meta flag on the CorkboardUI node,
+## Sets the "consumables_blocked" meta flag on the ConsumableUI node,
 ## which causes _can_use_consumable to always return false.
 ## Also immediately updates usability on any currently fanned icons.
 func apply(_target) -> void:
 	print("[NoConsumablesAllowed] Applied - All consumable usage blocked")
 	self.target = _target
 
-	corkboard_ui = get_tree().get_first_node_in_group("corkboard_ui")
-	if not corkboard_ui:
-		push_error("[NoConsumablesAllowed] Could not find CorkboardUI")
+	_consumable_ui = get_tree().get_first_node_in_group("consumable_ui")
+	if not _consumable_ui:
+		push_error("[NoConsumablesAllowed] Could not find ConsumableUI")
 		return
 
 	# Set the blocking flag
-	corkboard_ui.set_meta("consumables_blocked", true)
+	_consumable_ui.set_meta("consumables_blocked", true)
 	print("[NoConsumablesAllowed] Set consumables_blocked meta flag")
 
 	# Immediately update usability if icons are fanned out
-	if corkboard_ui.has_method("update_consumable_usability"):
-		corkboard_ui.update_consumable_usability()
+	if _consumable_ui.has_method("update_consumable_usability"):
+		_consumable_ui.update_consumable_usability()
 
 ## remove()
 ##
@@ -39,10 +39,10 @@ func apply(_target) -> void:
 func remove() -> void:
 	print("[NoConsumablesAllowed] Removed - Consumable usage restored")
 
-	if corkboard_ui and is_instance_valid(corkboard_ui):
-		corkboard_ui.set_meta("consumables_blocked", false)
+	if _consumable_ui and is_instance_valid(_consumable_ui):
+		_consumable_ui.set_meta("consumables_blocked", false)
 		print("[NoConsumablesAllowed] Cleared consumables_blocked meta flag")
 
 		# Refresh usability to re-enable buttons
-		if corkboard_ui.has_method("update_consumable_usability"):
-			corkboard_ui.update_consumable_usability()
+		if _consumable_ui.has_method("update_consumable_usability"):
+			_consumable_ui.update_consumable_usability()

@@ -177,6 +177,19 @@ Full documentation with parameters, recipes, and technical deep-dives: See `ARCA
 
 ## Core Architecture
 
+### GameUI
+- **GameUI** (`Scenes/UI/GameUI.tscn`, `Scripts/UI/game_ui.gd`) - Master UI container scene
+  - Builds a deterministic 13-container layout using nested Godot containers
+  - Root `Control` at 1280×720 with `MarginContainer` (8px margins)
+  - `VBoxContainer` with three sections: UpperSection (stretch 40), MiddleSection (stretch 135), BottomPanel (stretch 25)
+  - **UpperSection**: TurnInfoContainer (tracker), PowerUpContainer (power-up spine), MoneyContainer
+  - **MiddleSection**: LeftColumn (Challenge, Debuff, Consumable, Console), CenterColumn (Title, DiceArea, ChoreMeter), RightColumn (Scorecard)
+  - **BottomPanel**: LeftInfoArea, CenterRollArea, RightButtonArea (GameButtonUI)
+  - All `PanelContainer` nodes use translucent `StyleBoxFlat` styling (peach fill at 25% alpha, chrome border)
+  - Glowing titles via `GlowingTitle.tscn` (SubViewport + WorldEnvironment) in each panel
+  - Replaces the retired `CorkboardUI` and manual offset positioning
+  - **Test Scene**: `Tests/UILayoutTest.tscn`
+
 ### Game Flow
 - **GameController** (`Scripts/Core/game_controller.gd`) - Central coordination
 - **RoundManager** (`Scripts/Managers/round_manager.gd`) - Round progression  

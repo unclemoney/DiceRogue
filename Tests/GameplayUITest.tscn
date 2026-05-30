@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://buhnikajyqt38"]
+
+[ext_resource type="Script" uid="uid://dvystuqnu6d8p" path="res://Tests/GameplayUITest.gd" id="1_gplaytest"]
+
+[node name="GameplayUITest" type="Node2D"]
+script = ExtResource("1_gplaytest")

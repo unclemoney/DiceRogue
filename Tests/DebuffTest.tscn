@@ -1,28 +1,16 @@
-[gd_scene load_steps=201 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=187 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
-[ext_resource type="PackedScene" uid="uid://q27dsqs2pyd8" path="res://Scenes/UI/crt_overlay.tscn" id="3_f4xs4"]
 [ext_resource type="Shader" uid="uid://b0xapgpcexxb6" path="res://Scripts/Shaders/plasma_screen.gdshader" id="4_66wcx"]
 [ext_resource type="PackedScene" uid="uid://dqgkm7s8toq66" path="res://Scenes/Effects/CRTManager.tscn" id="5_6hkbr"]
-[ext_resource type="PackedScene" uid="uid://dugpl3du3i6xo" path="res://Scenes/Dice/dice_hand.tscn" id="5_gxabo"]
-[ext_resource type="Texture2D" uid="uid://cq6eysum1qfw8" path="res://Resources/Art/Background/Hutch.png" id="5_sqb4o"]
-[ext_resource type="Texture2D" uid="uid://kekn41dhsb0l" path="res://Resources/Art/Background/TV.png" id="5_w4iq5"]
 [ext_resource type="PackedScene" uid="uid://bsukvul4wop20" path="res://Scenes/ScoreCard/score_card.tscn" id="7_w6663"]
 [ext_resource type="PackedScene" uid="uid://b8limy63m2tlo" path="res://Scenes/Tracker/turn_tracker.tscn" id="8_8eqdw"]
-[ext_resource type="PackedScene" uid="uid://lc4xqvsxdnpy" path="res://Scenes/UI/game_button_ui.tscn" id="9_wtptv"]
-[ext_resource type="PackedScene" uid="uid://sliaarrkymdo" path="res://Scenes/UI/score_card_ui.tscn" id="11_oy5od"]
-[ext_resource type="PackedScene" uid="uid://dv0gypvmv4bb" path="res://Scenes/UI/consumable_ui.tscn" id="12_pdckl"]
-[ext_resource type="PackedScene" uid="uid://bxwr5njrkwahy" path="res://Scenes/UI/PowerUpIcon.tscn" id="14_geekk"]
-[ext_resource type="PackedScene" uid="uid://bhv7dyrckqhk6" path="res://Scenes/UI/power_up_ui.tscn" id="14_gtvla"]
-[ext_resource type="PackedScene" uid="uid://bmnx7dfjhn2d" path="res://Scenes/UI/debuff_ui.tscn" id="14_oxb5w"]
 [ext_resource type="PackedScene" uid="uid://cttyyy56pjat3" path="res://Scenes/Controller/game_controller.tscn" id="15_aeiu6"]
 [ext_resource type="PackedScene" uid="uid://b0h68l2hpjf3o" path="res://Scenes/PowerUp/power_up_manager.tscn" id="16_07va6"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="17_2uvn1"]
 [ext_resource type="Resource" uid="uid://b1kspojq1dh26" path="res://Scripts/PowerUps/ExtraDice.tres" id="18_3vaha"]
-[ext_resource type="PackedScene" uid="uid://ihwow3yfegbm" path="res://Scenes/UI/challenge_ui.tscn" id="19_1jk2k"]
 [ext_resource type="Resource" uid="uid://cgeradia34lyw" path="res://Scripts/PowerUps/ExtraRolls.tres" id="19_si81o"]
-[ext_resource type="PackedScene" uid="uid://dw7dok1tye5gg" path="res://Scenes/UI/vcr_turn_tracker_ui.tscn" id="19_w4iq5"]
 [ext_resource type="PackedScene" uid="uid://c2brbu8nl4tvq" path="res://Scenes/Managers/consumable_manager.tscn" id="20_1jk2k"]
 [ext_resource type="PackedScene" uid="uid://bgwcfpn53s26s" path="res://Scenes/Managers/mod_manager.tscn" id="23_8eqdw"]
 [ext_resource type="Script" uid="uid://uiuqwtxbh7m0" path="res://Scripts/Debuff/DebuffData.gd" id="24_4tiye"]
@@ -92,7 +80,6 @@
 [ext_resource type="Resource" uid="uid://dk8q4n7m1vbfs" path="res://Scripts/PowerUps/GreenWithEnvy.tres" id="83_green_monster"]
 [ext_resource type="Script" uid="uid://njvt03rpt35v" path="res://Scripts/Effects/scoring_animation_controller.gd" id="91_fjxkw"]
 [ext_resource type="PackedScene" uid="uid://banpa5fhdg13n" path="res://Scenes/UI/EndOfRoundStatsPanel.tscn" id="98_23y3a"]
-[ext_resource type="PackedScene" uid="uid://crkb0ardui001" path="res://Scenes/UI/CorkboardUI.tscn" id="98_ocuqv"]
 [ext_resource type="PackedScene" path="res://Scenes/Managers/synergy_manager.tscn" id="98_vch7i"]
 [ext_resource type="PackedScene" uid="uid://b8qm3rvhj4dnr" path="res://Scenes/Managers/ChannelManagerUI.tscn" id="99_ocuqv"]
 [ext_resource type="Resource" uid="uid://wvpnvey8q20j" path="res://Scripts/PowerUps/WildDotsPowerUp.tres" id="99_wild_dots"]
@@ -196,10 +183,8 @@
 [ext_resource type="Resource" uid="uid://cufue1iu5l55b" path="res://Scripts/PowerUps/PowerSurge.tres" id="1062_power_surge"]
 [ext_resource type="Resource" uid="uid://jr5kivctsb2h" path="res://Scripts/PowerUps/SnakeEyes.tres" id="1063_snake_eyes"]
 [ext_resource type="PackedScene" path="res://Scenes/Managers/gaming_console_manager.tscn" id="1064_gaming_console_mgr"]
-[ext_resource type="PackedScene" uid="uid://4srbudn4gald" path="res://Scenes/UI/gaming_console_ui.tscn" id="1065_gaming_console_ui"]
 [ext_resource type="Script" uid="uid://c4hqeuxxritc" path="res://Scripts/Effects/camera_dynamics.gd" id="1066_camera_dynamics"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_wtptv"]
+[ext_resource type="PackedScene" uid="uid://l0xxyji7bdjs" path="res://Scenes/UI/GameUI.tscn" id="gameui"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_w6663"]
 shader = ExtResource("4_66wcx")
@@ -217,11 +202,6 @@ shader_parameter/scanline_strength = 0.15
 [node name="Node2D" type="Node2D"]
 script = ExtResource("1_d3q3t")
 
-[node name="HutchBackground" type="Sprite2D" parent="."]
-material = SubResource("ShaderMaterial_wtptv")
-position = Vector2(641, 360)
-texture = ExtResource("5_sqb4o")
-
 [node name="CRTTV" type="Node2D" parent="."]
 position = Vector2(641, 360)
 
@@ -231,161 +211,26 @@ script = ExtResource("2_oxb5w")
 [node name="CameraDynamics" type="Node" parent="CRTTV"]
 script = ExtResource("1066_camera_dynamics")
 
-[node name="BackgroundSwirl" type="ColorRect" parent="CRTTV"]
-material = SubResource("ShaderMaterial_w6663")
-offset_left = -137.0
-offset_top = -276.0
-offset_right = 563.0
-offset_bottom = 284.0
-mouse_filter = 2
-
 [node name="CRTManager" parent="CRTTV" instance=ExtResource("5_6hkbr")]
 
-[node name="CRTOverlay" parent="CRTTV" instance=ExtResource("3_f4xs4")]
-offset = Vector2(580, 120)
-scale = Vector2(0.45, 0.65)
-transform = Transform2D(0.45, 0, 0, 0.65, 580, 120)
-
-[node name="DiceHand" parent="CRTTV" instance=ExtResource("5_gxabo")]
-dice_area_center = Vector2(209, 165)
-dice_area_size = Vector2(300, 250)
-
-[node name="DiceAreaVisual" type="ReferenceRect" parent="CRTTV/DiceHand"]
-visible = false
-offset_left = -141.0
-offset_top = -160.0
-offset_right = 459.0
-offset_bottom = 440.0
-mouse_filter = 2
-border_color = Color(1, 0, 0, 0.5)
-border_width = 2.0
-editor_only = false
-
 [node name="DiceContainer" type="Node2D" parent="CRTTV"]
-
-[node name="ScoreCardUI" parent="CRTTV" instance=ExtResource("11_oy5od")]
-offset_left = 169.0
-offset_top = -202.0
-offset_right = 169.0
-offset_bottom = -162.0
 
 [node name="ScoringAnimationController" type="Node2D" parent="CRTTV"]
 z_index = 11
 z_as_relative = false
 script = ExtResource("91_fjxkw")
 
-[node name="TVFrame" type="TextureRect" parent="."]
-offset_left = 468.0
-offset_top = 24.0
-offset_right = 1148.0
-offset_bottom = 704.0
-scale = Vector2(1.15, 1)
+[node name="BackgroundSwirl" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_w6663")
+offset_right = 1280.0
+offset_bottom = 720.0
 mouse_filter = 2
-texture = ExtResource("5_w4iq5")
-
-[node name="ChallengeContainer" type="Node2D" parent="."]
-
-[node name="PowerUpContainer" type="Node2D" parent="."]
 
 [node name="ScoreCard" parent="." instance=ExtResource("7_w6663")]
 
 [node name="TurnTracker" parent="." instance=ExtResource("8_8eqdw")]
 
-[node name="CorkboardUI" parent="." instance=ExtResource("98_ocuqv")]
-offset_left = 21.0
-offset_top = 21.0
-offset_right = 435.0
-offset_bottom = 213.0
-shop_ui_path = NodePath("../ShopUI")
-
-[node name="PowerUpUI" parent="." instance=ExtResource("14_gtvla")]
-anchors_preset = 0
-anchor_right = 0.0
-anchor_bottom = 0.0
-offset_left = -27.0
-offset_top = -111.0
-offset_right = 1252.0
-offset_bottom = 607.0
-grow_horizontal = 1
-grow_vertical = 1
-size_flags_horizontal = 3
-size_flags_vertical = 3
-mouse_filter = 2
-power_up_icon_scene = ExtResource("14_geekk")
-max_power_ups = 5
-shop_ui_path = NodePath("../ShopUI")
-
-[node name="ConsumableUI" parent="." instance=ExtResource("12_pdckl")]
-visible = false
-anchors_preset = 0
-anchor_right = 0.0
-anchor_bottom = 0.0
-offset_left = -45.0
-offset_top = 3.0
-offset_right = 1235.0
-offset_bottom = 723.0
-grow_horizontal = 1
-grow_vertical = 1
-size_flags_horizontal = 3
-size_flags_vertical = 3
-mouse_filter = 2
-
-[node name="ChallengeUI" parent="." instance=ExtResource("19_1jk2k")]
-visible = false
-z_index = 3
-anchors_preset = 0
-anchor_right = 0.0
-anchor_bottom = 0.0
-offset_left = 38.0
-offset_top = 77.0
-offset_right = 216.0
-offset_bottom = 224.0
-grow_horizontal = 1
-grow_vertical = 1
-round_manager_path = NodePath("../Managers/RoundManager")
-
-[node name="DebuffUI" parent="." instance=ExtResource("14_oxb5w")]
-visible = false
-z_index = 3
-anchors_preset = 0
-anchor_right = 0.0
-anchor_bottom = 0.0
-offset_left = 323.0
-offset_top = 135.0
-offset_right = 429.0
-offset_bottom = 224.0
-grow_horizontal = 1
-grow_vertical = 1
-
-[node name="GameButtonUI" parent="." instance=ExtResource("9_wtptv")]
-anchors_preset = 0
-anchor_right = 0.0
-anchor_bottom = 0.0
-offset_left = 47.0
-offset_top = 463.0
-offset_right = 47.0
-offset_bottom = 463.0
-grow_horizontal = 1
-grow_vertical = 1
-dice_hand_path = NodePath("../CRTTV/DiceHand")
-score_card_ui_path = NodePath("../CRTTV/ScoreCardUI")
-turn_tracker_path = NodePath("../TurnTracker")
-round_manager_path = NodePath("../Managers/RoundManager")
-challenge_manager_path = NodePath("../Managers/ChallengeManager")
-
-[node name="GamingConsoleUI" parent="." instance=ExtResource("1065_gaming_console_ui")]
-offset_left = 91.0
-offset_top = 339.0
-offset_right = 430.0
-offset_bottom = 497.0
-gaming_console_manager_path = NodePath("../Managers/GamingConsoleManager")
-
-[node name="VCRTurnTrackerUI" parent="." instance=ExtResource("19_w4iq5")]
-offset_left = 46.0
-offset_top = 608.0
-offset_right = 398.0
-offset_bottom = 663.0
-round_manager_path = NodePath("../Managers/RoundManager")
+[node name="GameUI" parent="." instance=ExtResource("gameui")]
 
 [node name="ShopUI" parent="." instance=ExtResource("32_oy5od")]
 visible = false
@@ -399,7 +244,6 @@ mod_manager_path = NodePath("../Managers/ModManager")
 gaming_console_manager_path = NodePath("../Managers/GamingConsoleManager")
 
 [node name="GameController" parent="." instance=ExtResource("15_aeiu6")]
-challenge_container_path = NodePath("../ChallengeContainer")
 
 [node name="Managers" type="Node" parent="."]
 
@@ -422,7 +266,7 @@ debuff_defs = Array[ExtResource("24_4tiye")]([ExtResource("25_gxabo"), ExtResour
 challenge_configs = Array[ExtResource("43_2fp2s")]([ExtResource("52_ghgbc"), ExtResource("44_2lvko"), ExtResource("50_ytf57"), ExtResource("47_ja7vv"), ExtResource("52_3ia8s"), ExtResource("45_o0xxd")])
 turn_tracker_path = NodePath("../../TurnTracker")
 challenge_manager_path = NodePath("../ChallengeManager")
-dice_hand_path = NodePath("../../CRTTV/DiceHand")
+dice_hand_path = NodePath("../../GameUI/MarginContainer/MainVBox/MiddleSection/CenterColumn/DiceAreaContainer/DiceHand")
 scorecard_path = NodePath("../../ScoreCard")
 
 [node name="ChoresManager" type="Node" parent="Managers"]

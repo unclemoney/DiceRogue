@@ -226,7 +226,7 @@ func clear_color_effects() -> void:
 ##
 ## Grants a random consumable when a yellow dice is scored.
 ## Checks if there is available space for a new consumable first.
-## Uses GameController to find ConsumableManager and CorkboardUI/ConsumableUI.
+## Uses GameController to find ConsumableManager and ConsumableUI.
 func _grant_yellow_dice_consumable() -> void:
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	if not game_controller:
@@ -235,10 +235,7 @@ func _grant_yellow_dice_consumable() -> void:
 	
 	# Check if consumable slots are full
 	var has_space = true
-	if game_controller.get("corkboard_ui") and game_controller.corkboard_ui:
-		if game_controller.corkboard_ui.has_method("has_max_consumables"):
-			has_space = not game_controller.corkboard_ui.has_max_consumables()
-	elif game_controller.get("consumable_ui") and game_controller.consumable_ui:
+	if game_controller.get("consumable_ui") and game_controller.consumable_ui:
 		if game_controller.consumable_ui.has_method("has_max_consumables"):
 			has_space = not game_controller.consumable_ui.has_max_consumables()
 	

@@ -32,7 +32,7 @@ func get_available_power_ups() -> Array[String]:
 	print("[PowerUpManager] Available power-ups:", available)
 	return available
 
-func spawn_power_up(id:String, parent:Node2D, pos:Vector2=Vector2.ZERO) -> PowerUp:
+func spawn_power_up(id: String, parent: Node, pos: Vector2 = Vector2.ZERO) -> PowerUp:
 	var def = _defs_by_id.get(id, null)
 	if def == null:
 		push_error("PowerUpManager.spawn_power_up(): no data found for id '%s'" % id)

@@ -45,6 +45,7 @@ var challenge_seed: int = 0  ## Seed used for random challenge selection
 ## and initializes internal rounds data. Does not auto-start the first round.
 
 func _ready() -> void:
+	add_to_group("round_manager")
 	print("[RoundManager] Initializing")
 	
 	# Ensure all required nodes are available

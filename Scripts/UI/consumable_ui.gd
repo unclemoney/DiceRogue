@@ -22,11 +22,11 @@ var _current_state: State = State.SPINES
 var _is_animating: bool = false
 
 # Layout properties
-var _spine_shelf_y: float = 263.0  # Y position of spine shelf
+var _spine_shelf_y: float = 0.0  # Filled by _adapt_layout() from container size
 var _spine_spacing: float = 30.0  # Horizontal spacing between spines
 var _fan_center: Vector2  # Center point for fanned cards
-var _fan_radius: float = 400.0  # How spread out the fan is
 var _selected_spine_id: String = ""
+var _spine_scale: float = 1.0  # Scale factor applied to fit container
 
 # Animation and background
 var _background: ColorRect
@@ -45,6 +45,13 @@ var _overflow_label: Label = null
 func _ready() -> void:
 	print("[ConsumableUI] Initializing new spine-based system...")
 	add_to_group("consumable_ui")
+	
+	# Hide hardcoded labels when inside a container (container provides glowing title)
+	var label_node = get_node_or_null("Label")
+	if label_node:
+		label_node.visible = false
+	if slots_label:
+		slots_label.visible = false
 	
 	# Calculate center position for fanned cards
 	_fan_center = get_viewport_rect().size / 2.0
@@ -82,7 +89,7 @@ func _ready() -> void:
 		container.visible = false
 		add_child(container)
 	
-	# Set up slots label
+	# Set up slots label (hidden in container mode)
 	if not has_node("SlotsLabel"):
 		slots_label = Label.new()
 		slots_label.name = "SlotsLabel"
@@ -90,11 +97,27 @@ func _ready() -> void:
 		add_child(slots_label)
 	else:
 		slots_label = $SlotsLabel
+	slots_label.visible = false
 	
 	# Initialize slots label
 	update_slots_label()
 	
+	# Defer layout until container size is known
+	resized.connect(_on_resized)
+	call_deferred("_adapt_layout")
+	
 	print("[ConsumableUI] New spine-based system initialized")
+
+
+func _on_resized() -> void:
+	_adapt_layout()
+	_position_spines()
+
+
+func _adapt_layout() -> void:
+	if size.x <= 0 or size.y <= 0:
+		return
+	_spine_shelf_y = size.y * 0.05
 
 func _create_background() -> void:
 	# Create semi-transparent background for when cards are fanned
@@ -189,7 +212,7 @@ func add_consumable(data: ConsumableData) -> Node:
 		reward_tween = tfx.positive_reward(spine)
 		# Slide-in effect
 		var orig_pos = spine.position
-		spine.position.x += 200
+		spine.position.x += min(200.0, size.x * 0.3)
 		spine.modulate.a = 0.0
 		var slide_tween = create_tween()
 		slide_tween.tween_property(spine, "position", orig_pos, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -197,13 +220,13 @@ func add_consumable(data: ConsumableData) -> Node:
 		slide_tween.finished.connect(func():
 			if is_instance_valid(spine):
 				spine.position = orig_pos
-				spine.scale = Vector2.ONE
+				spine.scale = Vector2(_spine_scale, _spine_scale)
 		)
 		if reward_tween:
 			reward_tween.finished.connect(func():
 				if is_instance_valid(spine):
 					spine.position = orig_pos
-					spine.scale = Vector2.ONE
+					spine.scale = Vector2(_spine_scale, _spine_scale)
 			)
 	
 	# Acquisition sound
@@ -224,16 +247,25 @@ func _position_spines() -> void:
 	if spine_count == 0:
 		return
 	
-	# Start at fixed position and space out to the right
-	var start_x: float = 65.0
+	if size.x <= 0 or size.y <= 0:
+		for spine_id in spine_ids:
+			var spine: ConsumableSpine = _consumable_spines[spine_id]
+			if spine:
+				spine.set_base_position(Vector2.ZERO)
+		return
 	
-	# Position each spine
+	_adapt_layout()
+	
+	var start_x: float = size.x * 0.02
+	var spacing: float = min(_spine_spacing, size.x / max(spine_count, 1))
+	
 	for i in range(spine_count):
 		var spine_id: String = spine_ids[i]
 		var spine: ConsumableSpine = _consumable_spines[spine_id]
 		if spine:
-			var pos: Vector2 = Vector2(start_x + i * _spine_spacing, _spine_shelf_y)
+			var pos: Vector2 = Vector2(start_x + i * spacing, _spine_shelf_y)
 			spine.set_base_position(pos)
+			spine.scale = Vector2(_spine_scale, _spine_scale)
 
 func _on_spine_clicked(consumable_id: String) -> void:
 	print("[ConsumableUI] Spine clicked:", consumable_id)
@@ -254,6 +286,17 @@ func _on_spine_clicked(consumable_id: String) -> void:
 			_selected_spine_id = consumable_id
 			_fan_out_cards()
 
+func _get_fan_overlay() -> CanvasLayer:
+	var root = get_tree().get_root()
+	var overlay = root.get_node_or_null("SpineFanOverlay")
+	if not overlay:
+		overlay = CanvasLayer.new()
+		overlay.name = "SpineFanOverlay"
+		overlay.layer = 10
+		root.add_child(overlay)
+	return overlay as CanvasLayer
+
+
 func _fan_out_cards() -> void:
 	print("[ConsumableUI] Fanning out cards")
 	_is_animating = true
@@ -263,6 +306,17 @@ func _fan_out_cards() -> void:
 	var audio_mgr = get_node_or_null("/root/AudioManager")
 	if audio_mgr:
 		audio_mgr.play_fan_out()
+	
+	# Use screen center for overlay positioning
+	_fan_center = get_viewport_rect().size / 2.0
+	
+	# Reparent background to full-screen overlay so it's not clipped
+	var overlay = _get_fan_overlay()
+	if _background.get_parent() != overlay:
+		_background.reparent(overlay, false)
+		_background.position = Vector2.ZERO
+		_background.size = get_viewport_rect().size
+		_background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	
 	# Show background
 	_background.visible = true
@@ -296,6 +350,8 @@ func _create_fanned_icons() -> void:
 	# Calculate horizontal positions for cards
 	var positions: Array[Vector2] = _calculate_fan_positions(count)
 	
+	var overlay = _get_fan_overlay()
+	
 	# Create and position icons
 	for i in range(count):
 		var consumable_id: String = consumable_ids[i]
@@ -307,7 +363,7 @@ func _create_fanned_icons() -> void:
 		if not icon:
 			continue
 		
-		add_child(icon)
+		overlay.add_child(icon)
 		icon.set_data(data)
 		icon.z_index = 10 + i  # Ensure cards are above background
 		
@@ -402,6 +458,12 @@ func fold_back() -> void:
 	if _background:
 		_background.visible = false
 		_background.modulate.a = 0.0
+		# Reparent back from overlay if needed
+		if _background.get_parent() != self:
+			_background.reparent(self, false)
+			_background.position = Vector2.ZERO
+			_background.size = Vector2.ZERO
+			_background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	
 	# If we're in fanned state, clean up
 	if _current_state == State.FANNED:
@@ -439,10 +501,17 @@ func _fold_back_cards() -> void:
 	# Stop idle animations
 	_stop_idle_animations()
 	
-	# Hide background
+	# Hide background and reparent back to self after fade
 	var bg_tween: Tween = create_tween()
 	bg_tween.tween_property(_background, "modulate:a", 0.0, 0.3)
-	bg_tween.tween_callback(func(): _background.visible = false)
+	bg_tween.tween_callback(func():
+		_background.visible = false
+		if _background.get_parent() != self:
+			_background.reparent(self, false)
+			_background.position = Vector2.ZERO
+			_background.size = Vector2.ZERO
+			_background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	)
 	
 	# Animate fanned icons away
 	for consumable_id in _fanned_icons.keys():

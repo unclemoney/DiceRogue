@@ -15,7 +15,7 @@ shader_parameter/y_rot = 0.0
 [node name="DebuffIcon" type="Control"]
 material = SubResource("ShaderMaterial_so752")
 use_parent_material = true
-custom_minimum_size = Vector2(80, 120)
+custom_minimum_size = Vector2(64, 64)
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

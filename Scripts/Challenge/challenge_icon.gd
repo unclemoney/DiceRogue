@@ -85,7 +85,7 @@ func _ready() -> void:
 		print("[ChallengeIcon] WARNING: ProgressBar node missing")
 
 	# Setup card visuals
-	custom_minimum_size = Vector2(80, 120)  # Standard card ratio 2:3
+	custom_minimum_size = Vector2(110, 150)  # Larger to fill container
 	size_flags_horizontal = SIZE_SHRINK_CENTER
 	size_flags_vertical = SIZE_SHRINK_CENTER
 	
@@ -490,45 +490,12 @@ func set_progress(value: float) -> void:
 		var tween = create_tween()
 		tween.tween_property(progress_bar, "value", value * 100, 0.2)
 	
-	# Juice: "almost there" alarm when >= 80%
-	if value >= 0.8 and not _almost_there_active:
-		_almost_there_active = true
-		# Shader glow
-		if _shader_material:
-			_shader_material.set_shader_parameter("glow_color", Color(1.0, 0.8, 0.0, 1.0))
-			var glow_tween = create_tween()
-			glow_tween.tween_method(_set_shader_glow, 0.0, glow_intensity * 2.0, 0.3)
-			glow_tween.tween_method(_set_shader_glow, glow_intensity * 2.0, glow_intensity, 0.3).set_delay(0.3)
-		# Threat alarm pulse
-		var tfx = get_node_or_null("/root/TweenFXHelper")
-		if tfx:
-			tfx.threat_alarm(self)
-		# Screen-edge gold vignette
-		var vignette = ColorRect.new()
-		vignette.name = "AlmostThereVignette"
-		vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
-		vignette.color = Color(1.0, 0.8, 0.0, 0.0)
-		vignette.z_index = 30
-		vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		get_tree().root.add_child(vignette)
-		var vig_tween = create_tween()
-		vig_tween.tween_property(vignette, "color:a", 0.08, 0.4)
-		# Audio ramp-up (tick faster as progress increases)
-		var audio_mgr = get_node_or_null("/root/AudioManager")
-		if audio_mgr and audio_mgr.has_method("play_threat_alarm_sound"):
-			audio_mgr.play_threat_alarm_sound()
-	elif value < 0.8 and _almost_there_active:
-		_almost_there_active = false
-		# Stop threat alarm
-		var tfx = get_node_or_null("/root/TweenFXHelper")
-		if tfx:
-			tfx.stop_effect(self)
-		# Remove vignette
-		var vignette = get_tree().root.get_node_or_null("AlmostThereVignette")
-		if vignette:
-			var fade = create_tween()
-			fade.tween_property(vignette, "color:a", 0.0, 0.3)
-			fade.tween_callback(vignette.queue_free)
+	# Juice: "almost there" alarm when >= 80% — DISABLED to prevent persistent overlay
+	# TODO: Re-enable once cleanup is guaranteed
+	#if value >= 0.8 and not _almost_there_active:
+	#	_almost_there_active = true
+	#elif value < 0.8 and _almost_there_active:
+	#	_almost_there_active = false
 
 func _on_mouse_entered() -> void:
 	print("[ChallengeIcon] Mouse entered:", data.id if data else "unknown")
@@ -546,27 +513,12 @@ func _on_mouse_entered() -> void:
 	
 	_current_tween = create_tween()
 	
-	# Show hover label
-	if label_bg:
-		label_bg.visible = true
-		label_bg.modulate.a = 0.0
-		label_bg.scale = Vector2(0.8, 0.8)
-		
-		# Animate label appearance
-		_current_tween.tween_property(
-			label_bg, "modulate:a", 1.0, transition_speed * 0.5
-		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		
-		_current_tween.tween_property(
-			label_bg, "scale", Vector2(1.1, 1.1), transition_speed * 0.5
-		).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		
-		_current_tween.tween_property(
-			label_bg, "scale", Vector2.ONE, transition_speed * 0.25
-		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	# Hover popup disabled — info now shown via container fan-out
+	# if label_bg:
+	#	label_bg.visible = true ...
 	
 	# Animate card hover effect with elastic spring effect
-	_current_tween.parallel().tween_property(
+	_current_tween.tween_property(
 		self, "scale", Vector2.ONE * hover_scale, 0.5
 	).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	

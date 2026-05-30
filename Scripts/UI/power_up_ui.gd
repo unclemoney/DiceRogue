@@ -24,15 +24,15 @@ var _current_state: State = State.SPINES
 var _is_animating: bool = false
 
 # Layout properties for vertical 3x3 grid (fills bottom-to-top, left-to-right)
-var _spine_start_x: float = 210.0  # X position for spine grid
-var _spine_start_y: float = 340.0  # Y position for top of grid
+var _spine_start_x: float = 170.0  # Min x to fit 170px rotated spine width
+var _spine_start_y: float = 0.0    # Filled by _adapt_layout() from container size
 var _spine_spacing_x: float = 170.0  # Horizontal spacing between columns (wide enough for rotated spines)
 var _spine_spacing_y: float = 30.0  # Vertical spacing between rows
 var _spines_per_column: int = 3  # Number of spines per column
 var _max_rows: int = 3  # Maximum rows in grid
 var _fan_center: Vector2  # Center point for fanned cards
-var _fan_radius: float = 400.0  # How spread out the fan is (increased for more space)
 var _selected_spine_id: String = ""
+var _spine_scale: float = 1.0  # Scale factor applied to fit container
 
 # Animation and background
 var _background: ColorRect
@@ -47,6 +47,13 @@ var _shop_was_visible_before_fan: bool = false
 func _ready() -> void:
 	print("[PowerUpUI] Initializing new spine-based system...")
 	add_to_group("power_up_ui")
+	
+	# Hide hardcoded labels when inside a container (container provides glowing title)
+	var label_node = get_node_or_null("Label")
+	if label_node:
+		label_node.visible = false
+	if slots_label:
+		slots_label.visible = false
 	
 	# Calculate center position for fanned cards
 	_fan_center = get_viewport_rect().size / 2.0
@@ -68,7 +75,7 @@ func _ready() -> void:
 	# Create spine tooltip
 	_create_spine_tooltip()
 	
-	# Set up slots label
+	# Set up slots label (hidden in container mode)
 	if not has_node("SlotsLabel"):
 		slots_label = Label.new()
 		slots_label.name = "SlotsLabel"
@@ -76,6 +83,7 @@ func _ready() -> void:
 		add_child(slots_label)
 	else:
 		slots_label = $SlotsLabel
+	slots_label.visible = false
 	
 	# Initialize slots label
 	update_slots_label()
@@ -86,7 +94,43 @@ func _ready() -> void:
 	if not _shop_ui:
 		_shop_ui = get_node_or_null("../ShopUI")
 	
+	# Defer layout until container size is known
+	resized.connect(_on_resized)
+	call_deferred("_adapt_layout")
+	
 	print("[PowerUpUI] New spine-based system initialized")
+
+
+func _on_resized() -> void:
+	_adapt_layout()
+	_position_spines()
+
+
+func _adapt_layout() -> void:
+	if size.x <= 0 or size.y <= 0:
+		return
+	# PowerUpSpine is 28x170; rotated 90° around top-left gives visual bounds
+	# of width=170, height=28. Position must account for this.
+	var spine_rot_w := 170.0
+	var spine_rot_h := 28.0
+	var margin_x := 8.0
+	var margin_y := 4.0
+
+	# Scale spines down if container is too small
+	_spine_scale = 1.0
+	var min_needed_w := spine_rot_w + margin_x * 2.0
+	var min_needed_h := spine_rot_h * _max_rows + margin_y * (_max_rows + 1)
+	if min_needed_w > size.x or min_needed_h > size.y:
+		_spine_scale = min(size.x / min_needed_w, size.y / min_needed_h, 1.0)
+
+	var sw := spine_rot_w * _spine_scale
+	var sh := spine_rot_h * _spine_scale
+
+	_spine_start_x = sw + margin_x
+	_spine_start_y = margin_y
+	var col_count: int = max(1, ceili(float(_spines.size()) / float(_spines_per_column)))
+	_spine_spacing_x = max(sw + margin_x, (size.x - margin_x * 2.0) / float(col_count))
+	_spine_spacing_y = max(sh + margin_y, (size.y - margin_y * 2.0) / float(_max_rows))
 
 func _exit_tree() -> void:
 	# Clean up all tracked tweens to prevent warnings
@@ -134,7 +178,9 @@ func _create_spine_tooltip() -> void:
 	_spine_tooltip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(_spine_tooltip_label)
 	
-	add_child(_spine_tooltip)
+	# Add tooltip to shared overlay so it isn't clipped by containers
+	var overlay := FanOverlayHelper.get_overlay(self)
+	overlay.add_child(_spine_tooltip)
 
 func add_power_up(data: PowerUpData) -> Node:
 	print("[PowerUpUI] Adding power up:", data.id if data else "null")
@@ -193,7 +239,7 @@ func add_power_up(data: PowerUpData) -> Node:
 		spine.adjust_position_for_pivot_change(old_pivot)
 		# Slide-in from off-screen effect
 		var orig_pos = spine.position
-		spine.position.x += 200
+		spine.position.x += min(200.0, size.x * 0.3)
 		spine.modulate.a = 0.0
 		var slide_tween = create_tween()
 		slide_tween.tween_property(spine, "position", orig_pos, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -203,7 +249,7 @@ func add_power_up(data: PowerUpData) -> Node:
 				var restore_old_pivot = spine.pivot_offset
 				spine.pivot_offset = Vector2.ZERO
 				spine.adjust_position_for_pivot_change(restore_old_pivot)
-				spine.scale = Vector2.ONE
+				spine.scale = Vector2(_spine_scale, _spine_scale)
 		)
 		if reward_tween:
 			reward_tween.finished.connect(func():
@@ -211,7 +257,7 @@ func add_power_up(data: PowerUpData) -> Node:
 					var restore_old_pivot = spine.pivot_offset
 					spine.pivot_offset = Vector2.ZERO
 					spine.adjust_position_for_pivot_change(restore_old_pivot)
-					spine.scale = Vector2.ONE
+					spine.scale = Vector2(_spine_scale, _spine_scale)
 			)
 	
 	# Acquisition sound
@@ -232,26 +278,33 @@ func _position_spines() -> void:
 	if spine_count == 0:
 		return
 	
-	# Position spines in a 3x3 grid (rotated 90 degrees)
-	# Fill order: bottom-to-top in each column, then left-to-right
-	# Column 1 Row 3, Column 1 Row 2, Column 1 Row 1, Column 2 Row 3, etc.
+	if size.x <= 0 or size.y <= 0:
+		# Container not sized yet; park at safe origin and let resize fix it
+		for spine_id in spine_ids:
+			var spine: PowerUpSpine = _spines[spine_id]
+			if spine:
+				spine.set_base_position(Vector2.ZERO)
+		return
+	
+	_adapt_layout()
+	
 	for i in range(spine_count):
 		var spine_id: String = spine_ids[i]
 		var spine: PowerUpSpine = _spines[spine_id]
-		if spine:
-			# Calculate column and row for bottom-to-top, left-to-right fill
-			var col: int = int(i / _spines_per_column)  # Column increases after filling 3 rows
-			var row_from_bottom: int = i % _spines_per_column  # 0, 1, 2 from bottom
-			var row: int = (_max_rows - 1) - row_from_bottom  # Convert to top-down row index (2, 1, 0)
-			
-			var pos: Vector2 = Vector2(
-				_spine_start_x + col * _spine_spacing_x,
-				_spine_start_y + row * _spine_spacing_y
-			)
-			spine.set_base_position(pos)
-			
-			# Rotate spine 90 degrees for vertical layout
-			spine.rotation_degrees = 90
+		if not spine:
+			continue
+		@warning_ignore("integer_division")
+		var col: int = i / _spines_per_column
+		var row_from_bottom: int = i % _spines_per_column
+		var row: int = (_max_rows - 1) - row_from_bottom
+		
+		var pos: Vector2 = Vector2(
+			_spine_start_x + col * _spine_spacing_x,
+			_spine_start_y + row * _spine_spacing_y
+		)
+		spine.set_base_position(pos)
+		spine.scale = Vector2(_spine_scale, _spine_scale)
+		spine.rotation_degrees = 90
 
 func _on_spine_clicked(power_up_id: String) -> void:
 	print("[PowerUpUI] Spine clicked:", power_up_id)
@@ -272,6 +325,17 @@ func _on_spine_clicked(power_up_id: String) -> void:
 			_selected_spine_id = power_up_id
 			_fan_out_cards()
 
+func _get_fan_overlay() -> CanvasLayer:
+	var root = get_tree().get_root()
+	var overlay = root.get_node_or_null("SpineFanOverlay")
+	if not overlay:
+		overlay = CanvasLayer.new()
+		overlay.name = "SpineFanOverlay"
+		overlay.layer = 10
+		root.add_child(overlay)
+	return overlay as CanvasLayer
+
+
 func _fan_out_cards() -> void:
 	print("[PowerUpUI] Fanning out cards")
 	_is_animating = true
@@ -286,12 +350,16 @@ func _fan_out_cards() -> void:
 	if not is_inside_tree():
 		return
 	
-	# Recalculate fan center in local coordinates to account for node's global position
-	_fan_center = get_viewport_rect().size / 2.0 - global_position
+	# Use screen center for overlay positioning
+	_fan_center = get_viewport_rect().size / 2.0
 	
-	# Reposition background to cover entire viewport
-	_background.position = -global_position
-	_background.size = get_viewport_rect().size
+	# Reparent background to full-screen overlay so it's not clipped
+	var overlay = _get_fan_overlay()
+	if _background.get_parent() != overlay:
+		_background.reparent(overlay, false)
+		_background.position = Vector2.ZERO
+		_background.size = get_viewport_rect().size
+		_background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	
 	# Auto-minimize shop if it's open
 	if _shop_ui and _shop_ui.visible:
@@ -333,6 +401,8 @@ func _create_fanned_icons() -> void:
 	# Calculate horizontal positions for cards
 	var positions: Array[Vector2] = _calculate_fan_positions(count)
 	
+	var overlay = _get_fan_overlay()
+	
 	# Create and position icons
 	for i in range(count):
 		var power_up_id: String = power_up_ids[i]
@@ -344,7 +414,7 @@ func _create_fanned_icons() -> void:
 		if not icon:
 			continue
 		
-		add_child(icon)
+		overlay.add_child(icon)
 		icon.set_data(data)
 		icon.z_index = 125 + i  # Ensure cards are above background and shop
 		
@@ -458,10 +528,17 @@ func _fold_back_cards() -> void:
 	# Stop idle animations
 	_stop_idle_animations()
 	
-	# Hide background
+	# Hide background and reparent back to self after fade
 	var bg_tween: Tween = create_tween()
 	bg_tween.tween_property(_background, "modulate:a", 0.0, 0.3)
-	bg_tween.tween_callback(func(): _background.visible = false)
+	bg_tween.tween_callback(func():
+		_background.visible = false
+		if _background.get_parent() != self:
+			_background.reparent(self, false)
+			_background.position = Vector2.ZERO
+			_background.size = Vector2.ZERO
+			_background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	)
 	
 	# Animate fanned icons away
 	for power_up_id in _fanned_icons.keys():
@@ -1115,6 +1192,17 @@ func _gui_input(event: InputEvent) -> void:
 			# If we didn't click on a card, fold back
 			if not clicked_on_card:
 				_fold_back_cards()
+				get_viewport().set_input_as_handled()
+		elif _current_state == State.SPINES and not _is_animating:
+			# Fan out when clicking empty space in the container
+			var clicked_on_spine: bool = false
+			for power_up_id in _spines.keys():
+				var spine = _spines[power_up_id]
+				if spine and spine.get_global_rect().has_point(event.global_position):
+					clicked_on_spine = true
+					break
+			if not clicked_on_spine:
+				_fan_out_cards()
 				get_viewport().set_input_as_handled()
 
 ## _apply_hover_tooltip_style(panel)
