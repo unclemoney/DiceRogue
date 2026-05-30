@@ -1109,6 +1109,27 @@ A cinematic full-screen overlay displayed after challenge celebration fireworks,
 - **Game Controller Integration**: `Scripts/Core/game_controller.gd` - Trigger, signal handling, cleanup
 - **Test Scene**: `Tests/RoundTransitionTest.tscn` - Manual test with Normal/Final/Early round buttons
 
+### Debuff Icon UI Refactor (Chip Style + Fan-out)
+
+`DebuffIcon` has been rebuilt as a compact chip-style widget (replacing the old shader/hover-card implementation). `DebuffUI` now shows a single HBox row with up to 3 chips and a `+N More` overflow chip. Clicking the row fans out all active debuffs as rich `DebuffDetailCard` overlays on a dim canvas.
+
+**Files:**
+- `Scripts/Debuff/debuff_icon.gd` — `DebuffIcon`: chip widget with icon, name, and difficulty stars. Tinted by `DIFFICULTY_TINTS[difficulty_rating]`.
+- `Scripts/Debuff/debuff_detail_card.gd` — `DebuffDetailCard`: full-detail card (220×280) shown during fan-out. Built in code, no .tscn.
+- `Scripts/UI/debuff_ui.gd` — `DebuffUI`: manages compact HBox row, overflow chip, fan-out/fold-back cycle.
+- `Scenes/Debuff/DebuffIcon.tscn` — stripped to minimal (Control + script only; all children built in code).
+
+**Fan-out interaction:**
+1. Click the `DebuffUI` panel → `_fan_out_debuffs()` creates a `DebuffDetailCard` per debuff on `SpineFanOverlay` with staggered TRANS_BACK drop-in animation.
+2. Click the dim background (or the panel again) → `_fold_back_debuffs()` frees cards and calls `_refresh_compact_view()`.
+
+**`DebuffUI` public API:**
+- `add_debuff(data, debuff_instance?)` → `DebuffIcon`
+- `remove_debuff(id)`
+- `clear_all_debuffs()`
+- `get_debuff_icon(id)` → `DebuffIcon`
+- `animate_debuff_removal(id, callable)`
+
 ### Debuff Animation System
 Negative score contributions now feature dramatic visual feedback:
 
