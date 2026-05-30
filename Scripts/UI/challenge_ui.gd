@@ -11,6 +11,8 @@ signal challenge_selected(id: String)
 @onready var container: HBoxContainer
 
 var _challenges: Dictionary = {}  # id -> ChallengeIcon
+var _progress: Dictionary = {}     # id -> float (0.0–1.0)
+var _detail_cards: Dictionary = {}  # id -> ChallengeDetailCard (active during fan-out)
 
 func _ready() -> void:
 	print("[ChallengeUI] Initializing...")
@@ -78,18 +80,12 @@ func add_challenge(data: ChallengeData, challenge: Challenge) -> ChallengeIcon:
 	container.add_child(icon)
 	
 	# Size up the icon and disable its own input so ChallengeUI gets the click
-	icon.custom_minimum_size = Vector2(110, 150)
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	
-	# Debug node structure
-	print("[ChallengeUI] Icon child count:", icon.get_child_count())
-	for child in icon.get_children():
-		print("[ChallengeUI] Child node:", child.name)
 	
 	# Set data after adding to tree
 	icon.set_data_with_target_score(data, actual_target_score)
-	icon.set_data(data)
 	icon.set_meta("last_pos", icon.position)
+	_progress[data.id] = 0.0
 	
 	# Juice: target score count-up animation
 	icon.animate_target_score_countup()
@@ -150,11 +146,12 @@ func _on_challenge_selected(id: String) -> void:
 func remove_challenge(id: String) -> void:
 	if not _challenges.has(id):
 		return
-		
-	var icon = _challenges[id]
+
+	var icon: ChallengeIcon = _challenges[id]
 	if icon:
 		icon.queue_free()
 	_challenges.erase(id)
+	_progress.erase(id)
 	print("[ChallengeUI] Removed challenge icon:", id)
 	# Animate the remaining cards to their new positions
 	await get_tree().process_frame # Wait for layout to update
@@ -206,9 +203,14 @@ func animate_challenge_removal(challenge_id: String, on_finished: Callable) -> v
 		on_finished.call()
 
 func _on_challenge_progress_updated(progress: float, id: String) -> void:
+	_progress[id] = progress
 	var icon = get_challenge_icon(id)
 	if icon:
 		icon.set_progress(progress)
+	if _current_state == State.FANNED_OUT and _detail_cards.has(id):
+		var card: ChallengeDetailCard = _detail_cards[id]
+		if is_instance_valid(card):
+			card.refresh_score_history()
 
 func _on_challenge_completed(id: String) -> void:
 	var icon = get_challenge_icon(id)
@@ -271,8 +273,6 @@ func _on_challenge_failed(id: String) -> void:
 enum State { NORMAL, FANNED_OUT }
 var _current_state: State = State.NORMAL
 var _background: ColorRect
-var _fanned_icons: Dictionary = {}
-var _icon_positions: Dictionary = {}
 
 func _get_fan_overlay() -> CanvasLayer:
 	return FanOverlayHelper.get_overlay(self)
@@ -291,56 +291,71 @@ func _fan_out_challenges() -> void:
 	if _current_state == State.FANNED_OUT:
 		return
 	_current_state = State.FANNED_OUT
-	
+
 	var overlay := _get_fan_overlay()
 	var viewport_size := get_viewport_rect().size
-	
-	# Create background
+
+	# Create dim background
 	_background = FanOverlayHelper.create_background("ChallengeFanBackground")
 	overlay.add_child(_background)
 	_background.visible = true
 	_background.gui_input.connect(_on_background_clicked)
-	
-	_icon_positions.clear()
-	_fanned_icons.clear()
-	
+
+	# Hide compact icons — detail cards take over
+	for icon in _challenges.values():
+		(icon as ChallengeIcon).visible = false
+
+	_detail_cards.clear()
+
 	var challenge_ids := _challenges.keys()
 	var count := challenge_ids.size()
-	var spacing := 120
-	var total_width := count * spacing
-	var start_x := (viewport_size.x - total_width) / 2.0 + spacing / 2.0
+	var card_width := 220.0
+	var spacing := 240.0
+	var total_width := count * spacing - (spacing - card_width)
+	var start_x := (viewport_size.x - total_width) / 2.0
 	var center_y := viewport_size.y / 2.0
-	
+
 	for i in range(count):
 		var id: String = challenge_ids[i]
 		var icon: ChallengeIcon = _challenges[id]
-		if not icon:
+		if not icon or not icon.data:
 			continue
-		_icon_positions[id] = icon.position
-		_fanned_icons[id] = icon
-		if icon.get_parent() != overlay:
-			icon.reparent(overlay, false)
-		icon.position = Vector2(start_x + i * spacing - icon.size.x / 2.0, center_y - icon.size.y / 2.0)
-		icon.z_index = 200 + i
+
+		var card := ChallengeDetailCard.new()
+		overlay.add_child(card)
+		card.z_index = 200 + i
+
+		var target_x := start_x + i * spacing
+		var target_y := center_y - 160.0  # 320px card height / 2
+		var target_pos := Vector2(target_x, target_y)
+
+		var prog: float = _progress.get(id, 0.0)
+		card.setup(icon.data, prog)
+
+		# Drop-in animation
+		card.position = target_pos - Vector2(0, 300)
+		card.modulate.a = 0.0
+		var tween := create_tween()
+		tween.tween_property(card, "position", target_pos, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.parallel().tween_property(card, "modulate:a", 1.0, 0.35)
+
+		_detail_cards[id] = card
 
 func _fold_back_challenges() -> void:
 	if _current_state == State.NORMAL:
 		return
 	_current_state = State.NORMAL
-	
-	for id in _fanned_icons.keys():
-		var icon: ChallengeIcon = _fanned_icons[id]
-		if not is_instance_valid(icon):
-			continue
-		if icon.get_parent() != container:
-			icon.reparent(container, false)
-		if _icon_positions.has(id):
-			icon.position = _icon_positions[id]
-		icon.z_index = 0
-	
-	_fanned_icons.clear()
-	_icon_positions.clear()
-	
+
+	# Free all detail cards
+	for card in _detail_cards.values():
+		if is_instance_valid(card):
+			(card as ChallengeDetailCard).queue_free()
+	_detail_cards.clear()
+
+	# Show compact icons again
+	for icon in _challenges.values():
+		(icon as ChallengeIcon).visible = true
+
 	if _background:
 		_background.queue_free()
 		_background = null

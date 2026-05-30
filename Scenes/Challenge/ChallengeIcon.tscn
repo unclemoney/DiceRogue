@@ -58,6 +58,7 @@ anchor_bottom = 1.0
 offset_top = -27.0
 grow_horizontal = 2
 grow_vertical = 0
+show_percentage = false
 
 [node name="CardInfo" type="VBoxContainer" parent="."]
 z_index = 1
