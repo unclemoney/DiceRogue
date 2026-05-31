@@ -7,7 +7,22 @@ class_name RollButtonUI
 ## keyboard roll input, and dice-lock shortcuts. Communicates with GameButtonUI
 ## via groups for cross-button state coordination (shop disable, next-turn enable).
 
-@onready var roll_button: Button = $CenterContainer/RollButton
+const ROLL_FONT := preload("res://Resources/Font/BALLOON1.ttf")
+const ROLL_HINT_FONT := preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+const ROLL_BUTTON_SHADER_PATH := "res://Scripts/Shaders/roll_button_glass.gdshader"
+const ROLL_BASE := Color(0.247059, 0.219608, 0.345098, 0.98)
+const ROLL_PLUM := Color(0.298039, 0.239216, 0.380392, 0.98)
+const ROLL_PINK := Color(0.713725, 0.301961, 0.478431, 1.0)
+const ROLL_TEAL := Color(0.137255, 0.411765, 0.415686, 1.0)
+const ROLL_TEXT := Color(0.968627, 0.941176, 1.0, 1.0)
+const ROLL_TEXT_SOFT := Color(0.780392, 0.733333, 0.866667, 1.0)
+const ROLL_TEXT_DISABLED := Color(0.592157, 0.572549, 0.65098, 0.95)
+
+@onready var roll_button_shell: Control = $CenterContainer/RollButtonShell
+@onready var roll_button_visual: ColorRect = $CenterContainer/RollButtonShell/ShaderRect
+@onready var roll_button_label: Label = $CenterContainer/RollButtonShell/ContentMargin/ContentVBox/RollLabel
+@onready var roll_button_hint_label: Label = $CenterContainer/RollButtonShell/ContentMargin/ContentVBox/HintLabel
+@onready var roll_button: Button = $CenterContainer/RollButtonShell/RollButton
 @onready var _tfx := get_node("/root/TweenFXHelper")
 
 signal roll_pressed
@@ -22,6 +37,14 @@ var first_roll_done: bool = false
 
 ## Pulse animation state
 var _is_pulsing: bool = false
+var _is_hovered: bool = false
+var _roll_shader_material: ShaderMaterial
+var _hover_strength: float = 0.0
+var _proximity_strength: float = 0.0
+var _motion_strength: float = 0.0
+var _mouse_uv: Vector2 = Vector2(0.5, 0.5)
+var _last_mouse_local: Vector2 = Vector2.ZERO
+var _press_flash_tween: Tween
 
 ## Keyboard input cooldown to prevent multiple rapid presses
 var _input_cooldown: float = 0.0
@@ -37,6 +60,7 @@ var _roll_in_progress: bool = false
 
 func _ready() -> void:
 	add_to_group("roll_button_ui")
+	_setup_roll_button_visuals()
 
 	# Resolve dice_hand
 	dice_hand = get_tree().get_first_node_in_group("dice_hand")
@@ -71,15 +95,19 @@ func _ready() -> void:
 	# Connect roll button
 	if roll_button and not roll_button.pressed.is_connected(_on_roll_button_pressed):
 		roll_button.pressed.connect(_on_roll_button_pressed)
+	if roll_button and not roll_button.mouse_entered.is_connected(_on_roll_mouse_entered):
+		roll_button.mouse_entered.connect(_on_roll_mouse_entered)
+	if roll_button and not roll_button.mouse_exited.is_connected(_on_roll_mouse_exited):
+		roll_button.mouse_exited.connect(_on_roll_mouse_exited)
 
 	# TweenFX hover / press effects
-	if roll_button:
-		if not roll_button.mouse_entered.is_connected(_tfx.button_hover.bind(roll_button)):
-			roll_button.mouse_entered.connect(_tfx.button_hover.bind(roll_button))
-		if not roll_button.mouse_exited.is_connected(_tfx.button_unhover.bind(roll_button)):
-			roll_button.mouse_exited.connect(_tfx.button_unhover.bind(roll_button))
-		if not roll_button.pressed.is_connected(_tfx.button_press.bind(roll_button)):
-			roll_button.pressed.connect(_tfx.button_press.bind(roll_button))
+	if roll_button_shell:
+		if not roll_button.mouse_entered.is_connected(_tfx.button_hover.bind(roll_button_shell)):
+			roll_button.mouse_entered.connect(_tfx.button_hover.bind(roll_button_shell))
+		if not roll_button.mouse_exited.is_connected(_tfx.button_unhover.bind(roll_button_shell)):
+			roll_button.mouse_exited.connect(_tfx.button_unhover.bind(roll_button_shell))
+		if not roll_button.pressed.is_connected(_tfx.button_press.bind(roll_button_shell)):
+			roll_button.pressed.connect(_tfx.button_press.bind(roll_button_shell))
 
 	# Connect to dice_hand
 	if dice_hand:
@@ -109,6 +137,7 @@ func _ready() -> void:
 
 	# Start disabled
 	roll_button.disabled = true
+	_refresh_roll_button_visual_state()
 
 	# Deferred cross-UI signal wiring — allows GameButtonUI time to add itself to its group
 	call_deferred("_connect_game_btn_signals")
@@ -130,6 +159,155 @@ func _connect_game_btn_signals() -> void:
 		score_card_ui.hand_scored.connect(_hand_scored_disable)
 
 
+func _setup_roll_button_visuals() -> void:
+	if not roll_button or not roll_button_visual:
+		return
+	var shader_resource := load(ROLL_BUTTON_SHADER_PATH) as Shader
+	if shader_resource == null:
+		push_error("[RollButtonUI] Failed to load roll button shader at %s" % ROLL_BUTTON_SHADER_PATH)
+		return
+
+	_roll_shader_material = ShaderMaterial.new()
+	_roll_shader_material.shader = shader_resource
+	roll_button_visual.material = _roll_shader_material
+	roll_button_visual.color = Color.WHITE
+	_roll_shader_material.set_shader_parameter("press_origin", Vector2(0.5, 0.5))
+	_roll_shader_material.set_shader_parameter("spark_strength", 0.0)
+
+	var empty_style := StyleBoxEmpty.new()
+	roll_button.text = ""
+	roll_button.flat = true
+	roll_button.focus_mode = Control.FOCUS_NONE
+	roll_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	roll_button.add_theme_stylebox_override("normal", empty_style)
+	roll_button.add_theme_stylebox_override("hover", empty_style)
+	roll_button.add_theme_stylebox_override("pressed", empty_style)
+	roll_button.add_theme_stylebox_override("disabled", empty_style)
+	roll_button.add_theme_stylebox_override("focus", empty_style)
+
+	if roll_button_label:
+		roll_button_label.add_theme_font_override("font", ROLL_FONT)
+		roll_button_label.add_theme_font_size_override("font_size", 34)
+		roll_button_label.add_theme_color_override("font_color", ROLL_TEXT)
+		roll_button_label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+		roll_button_label.add_theme_constant_override("outline_size", 2)
+
+	if roll_button_hint_label:
+		roll_button_hint_label.add_theme_font_override("font", ROLL_HINT_FONT)
+		roll_button_hint_label.add_theme_font_size_override("font_size", 12)
+		roll_button_hint_label.add_theme_color_override("font_color", ROLL_TEXT_SOFT)
+		roll_button_hint_label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 0.95))
+		roll_button_hint_label.add_theme_constant_override("outline_size", 1)
+
+	_refresh_roll_button_visual_state()
+
+
+func _on_roll_mouse_entered() -> void:
+	_is_hovered = true
+
+
+func _on_roll_mouse_exited() -> void:
+	_is_hovered = false
+
+
+func _refresh_roll_button_visual_state() -> void:
+	var is_disabled := roll_button == null or roll_button.disabled
+	if roll_button_label:
+		roll_button_label.modulate = ROLL_TEXT_DISABLED if is_disabled else Color.WHITE
+	if roll_button_hint_label:
+		roll_button_hint_label.modulate = Color(0.701961, 0.682353, 0.760784, 0.85) if is_disabled else Color.WHITE
+	if roll_button_shell:
+		roll_button_shell.modulate = Color(1.0, 1.0, 1.0, 0.88) if is_disabled else Color.WHITE
+	if _roll_shader_material:
+		_roll_shader_material.set_shader_parameter("base_color", ROLL_BASE)
+		_roll_shader_material.set_shader_parameter("mid_color", ROLL_PLUM)
+		_roll_shader_material.set_shader_parameter("glow_color", ROLL_PINK)
+		_roll_shader_material.set_shader_parameter("accent_color", ROLL_TEAL)
+		_roll_shader_material.set_shader_parameter("rim_color", ROLL_TEXT)
+		_roll_shader_material.set_shader_parameter("disabled_factor", 1.0 if is_disabled else 0.0)
+
+
+func _update_roll_button_visual_response(delta: float) -> void:
+	if not _roll_shader_material or not roll_button_shell:
+		return
+	if roll_button_shell.size.x <= 0.0 or roll_button_shell.size.y <= 0.0:
+		return
+
+	var mouse_pos := get_viewport().get_mouse_position()
+	var rect := Rect2(roll_button_shell.global_position, roll_button_shell.size)
+	var rect_end := rect.position + rect.size
+	var clamped_mouse := Vector2(
+		clampf(mouse_pos.x, rect.position.x, rect_end.x),
+		clampf(mouse_pos.y, rect.position.y, rect_end.y)
+	)
+	var local_mouse := clamped_mouse - rect.position
+	var target_uv := Vector2(
+		local_mouse.x / maxf(rect.size.x, 1.0),
+		local_mouse.y / maxf(rect.size.y, 1.0)
+	)
+	var distance := mouse_pos.distance_to(clamped_mouse)
+	var max_distance := maxf(rect.size.x, rect.size.y) * 1.22
+	var target_proximity := 1.0 - clampf(distance / max_distance, 0.0, 1.0)
+	target_proximity = pow(target_proximity, 0.85)
+	if roll_button.disabled:
+		target_proximity *= 0.18
+	var target_hover := 1.0 if (_is_hovered and not roll_button.disabled) else 0.0
+	var speed := local_mouse.distance_to(_last_mouse_local) / maxf(delta, 0.001)
+	var target_motion := clampf(speed / 950.0, 0.0, 1.0) * maxf(target_proximity, target_hover)
+
+	_mouse_uv = _mouse_uv.lerp(target_uv, clampf(delta * 12.0, 0.0, 1.0))
+	_hover_strength = lerpf(_hover_strength, target_hover, clampf(delta * 10.0, 0.0, 1.0))
+	_proximity_strength = lerpf(_proximity_strength, target_proximity, clampf(delta * 8.0, 0.0, 1.0))
+	_motion_strength = lerpf(_motion_strength, target_motion, clampf(delta * 10.0, 0.0, 1.0))
+	_last_mouse_local = local_mouse
+
+	_roll_shader_material.set_shader_parameter("aspect_ratio", rect.size.x / maxf(rect.size.y, 1.0))
+	_roll_shader_material.set_shader_parameter("mouse_uv", _mouse_uv)
+	_roll_shader_material.set_shader_parameter("hover_strength", _hover_strength)
+	_roll_shader_material.set_shader_parameter("proximity_strength", _proximity_strength)
+	_roll_shader_material.set_shader_parameter("motion_strength", _motion_strength)
+	_roll_shader_material.set_shader_parameter("pulse_strength", 1.0 if (_is_pulsing and not roll_button.disabled) else 0.0)
+
+
+func _flash_roll_button_shader(strength: float = 1.0, press_uv: Vector2 = Vector2(0.5, 0.5)) -> void:
+	if not _roll_shader_material:
+		return
+	if _press_flash_tween and _press_flash_tween.is_valid():
+		_press_flash_tween.kill()
+	_roll_shader_material.set_shader_parameter("press_origin", press_uv)
+	_roll_shader_material.set_shader_parameter("press_flash", strength)
+	_roll_shader_material.set_shader_parameter("spark_strength", strength)
+	_press_flash_tween = create_tween()
+	_press_flash_tween.tween_method(
+		func(value: float):
+			_roll_shader_material.set_shader_parameter("press_flash", value)
+			var normalized := value / maxf(strength, 0.001)
+			_roll_shader_material.set_shader_parameter("spark_strength", pow(normalized, 1.7) * strength),
+		strength,
+		0.0,
+		0.36
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+func _get_roll_button_center() -> Vector2:
+	if roll_button_shell:
+		return roll_button_shell.global_position + (roll_button_shell.size / 2.0)
+	return roll_button.global_position + (roll_button.size / 2.0)
+
+
+func _get_roll_button_press_uv() -> Vector2:
+	if not roll_button_shell:
+		return Vector2(0.5, 0.5)
+	var rect := Rect2(roll_button_shell.global_position, roll_button_shell.size)
+	var mouse_pos := get_viewport().get_mouse_position()
+	if not rect.has_point(mouse_pos) and _proximity_strength < 0.3:
+		return Vector2(0.5, 0.5)
+	return Vector2(
+		clampf((mouse_pos.x - rect.position.x) / maxf(rect.size.x, 1.0), 0.0, 1.0),
+		clampf((mouse_pos.y - rect.position.y) / maxf(rect.size.y, 1.0), 0.0, 1.0)
+	)
+
+
 ## _on_shop_opened()
 ##
 ## Called when the shop is opened. Disables roll until next turn.
@@ -144,6 +322,7 @@ func _on_shop_opened() -> void:
 func enable_roll() -> void:
 	if roll_button:
 		roll_button.disabled = false
+	_refresh_roll_button_visual_state()
 
 
 ## disable_roll() -> void
@@ -152,7 +331,9 @@ func enable_roll() -> void:
 func disable_roll() -> void:
 	if roll_button:
 		roll_button.disabled = true
+	_is_hovered = false
 	_roll_in_progress = false
+	_refresh_roll_button_visual_state()
 
 
 ## start_pulse() -> void
@@ -201,6 +382,7 @@ func _process(delta: float) -> void:
 		_button_action_cooldown -= delta
 		if _button_action_cooldown < 0.0:
 			_button_action_cooldown = 0.0
+	_update_roll_button_visual_response(delta)
 
 
 ## _unhandled_input(event)
@@ -258,7 +440,7 @@ func _start_roll_button_pulse() -> void:
 	if roll_button.disabled:
 		return
 	_is_pulsing = true
-	_tfx.idle_pulse(roll_button)
+	_tfx.idle_pulse(roll_button_shell, 0.055)
 	print("[RollButtonUI] Starting Roll button pulse animation")
 
 
@@ -266,7 +448,7 @@ func _stop_roll_button_pulse() -> void:
 	if not _is_pulsing:
 		return
 	_is_pulsing = false
-	_tfx.stop_effect(roll_button)
+	_tfx.stop_effect(roll_button_shell)
 	print("[RollButtonUI] Stopped Roll button pulse animation")
 
 
@@ -280,6 +462,9 @@ func _on_roll_button_pressed() -> void:
 	_button_action_cooldown = BUTTON_ACTION_COOLDOWN
 	_roll_in_progress = true
 	roll_button.disabled = true
+	_is_hovered = false
+	_refresh_roll_button_visual_state()
+	_flash_roll_button_shader(1.0, _get_roll_button_press_uv())
 	_stop_roll_button_pulse()
 
 	emit_signal("roll_pressed")
@@ -354,12 +539,13 @@ func _on_round_started(_round_number: int) -> void:
 	_start_roll_button_pulse()
 
 	# Bounce animation on the roll button
-	if roll_button and not roll_button.disabled:
-		roll_button.pivot_offset = roll_button.size / 2.0
+	if roll_button_shell and not roll_button.disabled:
+		roll_button_shell.pivot_offset = roll_button_shell.size / 2.0
 		var tween = create_tween()
-		tween.tween_property(roll_button, "scale", Vector2(1.15, 0.85), 0.08)
-		tween.tween_property(roll_button, "scale", Vector2(0.95, 1.05), 0.08)
-		tween.tween_property(roll_button, "scale", Vector2.ONE, 0.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.tween_property(roll_button_shell, "scale", Vector2(1.12, 0.9), 0.08)
+		tween.tween_property(roll_button_shell, "scale", Vector2(0.97, 1.04), 0.08)
+		tween.tween_property(roll_button_shell, "scale", Vector2.ONE, 0.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_flash_roll_button_shader(0.45, Vector2(0.5, 0.5))
 
 	# Spawn dice and auto-roll at round start
 	if dice_hand:
@@ -408,7 +594,7 @@ func _on_rolls_updated(_rolls_left: int) -> void:
 func _on_rolls_exhausted() -> void:
 	disable_roll()
 	_hide_tension_vignette()
-	_tfx.stop_effect(roll_button)
+	_tfx.stop_effect(roll_button_shell)
 
 	if dice_hand:
 		for die in dice_hand.dice_list:
@@ -417,7 +603,7 @@ func _on_rolls_exhausted() -> void:
 				t.tween_property(die, "scale", Vector2(0.95, 0.95), 0.2)
 				t.tween_property(die, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_ELASTIC)
 
-	_tfx.negative_hit(roll_button)
+	_tfx.negative_hit(roll_button_shell)
 
 	var toast = Label.new()
 	toast.text = "OUT OF ROLLS"
@@ -425,7 +611,7 @@ func _on_rolls_exhausted() -> void:
 	toast.add_theme_font_override("font", preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf"))
 	toast.add_theme_font_size_override("font_size", 24)
 	toast.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
-	toast.position = roll_button.global_position - Vector2(60, 40)
+	toast.position = _get_roll_button_center() - Vector2(86, 42)
 	get_tree().current_scene.add_child(toast)
 	var t_tween = get_tree().create_tween()
 	t_tween.tween_property(toast, "position:y", toast.position.y - 30, 0.4).set_trans(Tween.TRANS_BACK)
@@ -442,4 +628,4 @@ func _on_score_streak_changed(multiplier: float) -> void:
 	var text = "%.1fx STREAK!" % multiplier
 	var ftx = get_node_or_null("/root/FloatingTextManager")
 	if ftx:
-		ftx.show_popup_at_position(get_tree().current_scene, roll_button.global_position + Vector2(0, -50), text, Color(1.0, 0.8, 0.2), 1.2)
+		ftx.show_popup_at_position(get_tree().current_scene, _get_roll_button_center() + Vector2(0, -56), text, Color(1.0, 0.8, 0.2), 1.2)

@@ -100,6 +100,11 @@ class_name ChannelDifficultyData
 ## Color values should be stored as Color objects, floats as floats, ints as ints
 @export var background_shader_params: Dictionary = {}
 
+## Optional UI contrast override for scorecard/body chrome.
+## "auto" derives contrast from shader colors, while "dark" and "light"
+## force the corresponding scorecard row profile.
+@export_enum("auto", "dark", "light") var ui_contrast_mode: String = "auto"
+
 
 ## ============== METHODS ==============
 

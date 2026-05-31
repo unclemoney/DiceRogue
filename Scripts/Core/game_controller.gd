@@ -346,6 +346,10 @@ func _ready() -> void:
 			_vcr_tracker.bind_channel_manager(channel_manager)
 			print("[GameController] VCR tracker UI bound to ChannelManager")
 
+	if is_instance_valid(score_card_ui) and score_card_ui.has_method("bind_channel_manager") and is_instance_valid(channel_manager):
+		score_card_ui.bind_channel_manager(channel_manager)
+		print("[GameController] ScoreCardUI bound to ChannelManager")
+
 	# Register new consumables programmatically
 	if consumable_manager:
 		consumable_manager.register_consumable_def(RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF)

@@ -13,6 +13,8 @@ var any_score_active := false
 var upper_section_buttons := {}
 var lower_section_buttons := {}
 var section_buttons := {} # Add this line to declare the section_buttons dictionary
+var _bound_channel_manager: ChannelManager
+var _row_contrast_profile: String = "dark"
 
 signal hand_scored
 signal score_rerolled(section: Scorecard.Section, category: String, score: int)
@@ -85,6 +87,11 @@ const SUMMARY_POSITIVE := Color(0.47451, 0.886275, 0.890196, 1.0)
 const SUMMARY_NEGATIVE := Color(0.886275, 0.392157, 0.54902, 1.0)
 const SUMMARY_OUTLINE := Color(0.129412, 0.121569, 0.2, 1.0)
 const SUMMARY_BEST_HAND_PLACEHOLDER := "[center]--[/center]"
+const ROW_HEIGHT := 22.0
+const ROW_LEVEL_WIDTH := 40.0
+const ROW_SCORE_WIDTH := 72.0
+const ROW_CATEGORY_MIN_WIDTH := 88.0
+const ROW_SECTION_MIN_WIDTH := 104.0
 
 
 ## _ready()
@@ -182,71 +189,15 @@ func _apply_custom_theme():
 
 ## _apply_compact_button_styles()
 ##
-## Overrides button styles to be transparent with minimal margins so the scorecard
-## fits vertically inside its container. Also reduces container separations.
+## Applies channel-aware row spacing and row chrome so the scorecard stays legible
+## over both dark and bright channel shaders while preserving translucency.
 func _apply_compact_button_styles() -> void:
-	# Build transparent style variants
-	var normal_style := StyleBoxFlat.new()
-	normal_style.bg_color = Color(0, 0, 0, 0)
-	normal_style.set_border_width_all(0)
-	normal_style.content_margin_left = 0.0
-	normal_style.content_margin_top = 0.0
-	normal_style.content_margin_right = 0.0
-	normal_style.content_margin_bottom = 0.0
+	var profile := _get_row_visual_profile()
+	_apply_scorecard_spacing()
+	_apply_section_header_styles(profile)
+	_apply_row_styles_to_grid("VBoxContainer/UpperVBoxContainer/UpperGridContainer", profile)
+	_apply_row_styles_to_grid("VBoxContainer/LowerVBoxContainer/LowerGridContainer", profile)
 
-	var hover_style := StyleBoxFlat.new()
-	hover_style.bg_color = Color(1, 1, 1, 0.1)
-	hover_style.set_border_width_all(0)
-	hover_style.content_margin_left = 0.0
-	hover_style.content_margin_top = 0.0
-	hover_style.content_margin_right = 0.0
-	hover_style.content_margin_bottom = 0.0
-
-	var pressed_style := StyleBoxFlat.new()
-	pressed_style.bg_color = Color(1, 1, 1, 0.2)
-	pressed_style.set_border_width_all(0)
-	pressed_style.content_margin_left = 0.0
-	pressed_style.content_margin_top = 0.0
-	pressed_style.content_margin_right = 0.0
-	pressed_style.content_margin_bottom = 0.0
-
-	# Apply to all buttons recursively
-	var nodes: Array[Node] = get_children()
-	while not nodes.is_empty():
-		var node = nodes.pop_back()
-		if node is Button:
-			node.add_theme_stylebox_override("normal", normal_style)
-			node.add_theme_stylebox_override("hover", hover_style)
-			node.add_theme_stylebox_override("pressed", pressed_style)
-			node.add_theme_stylebox_override("disabled", normal_style)
-			node.add_theme_stylebox_override("focus", normal_style)
-		# Ensure uniform width so score labels align
-		if node is Button:
-			node.add_theme_font_size_override("font_size", 10)
-			if node.text.ends_with(":"):
-				node.custom_minimum_size.x = 80
-		nodes.append_array(node.get_children())
-
-	# Reduce container separations
-	var vbox = get_node_or_null("VBoxContainer")
-	if vbox:
-		vbox.add_theme_constant_override("separation", 0)
-	var upper_vbox = get_node_or_null("VBoxContainer/UpperVBoxContainer")
-	if upper_vbox:
-		upper_vbox.add_theme_constant_override("separation", 0)
-	var lower_vbox = get_node_or_null("VBoxContainer/LowerVBoxContainer")
-	if lower_vbox:
-		lower_vbox.add_theme_constant_override("separation", 0)
-	var upper_grid = get_node_or_null("VBoxContainer/UpperVBoxContainer/UpperGridContainer")
-	if upper_grid:
-		upper_grid.add_theme_constant_override("v_separation", 0)
-		upper_grid.add_theme_constant_override("h_separation", 1)
-	var lower_grid = get_node_or_null("VBoxContainer/LowerVBoxContainer/LowerGridContainer")
-	if lower_grid:
-		lower_grid.add_theme_constant_override("v_separation", 0)
-		lower_grid.add_theme_constant_override("h_separation", 1)
-
-	# Zero out MarginContainer padding inside panels
 	for margin_path in ["VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer", "VBoxContainer/ScoreSummaryContainer/TotalScorePanel/MarginContainer", "LogbookPanel/MarginContainer"]:
 		var margin = get_node_or_null(margin_path)
 		if margin:
@@ -254,6 +205,237 @@ func _apply_compact_button_styles() -> void:
 			margin.add_theme_constant_override("margin_right", 0)
 			margin.add_theme_constant_override("margin_top", 0)
 			margin.add_theme_constant_override("margin_bottom", 0)
+
+
+## bind_channel_manager(manager)
+##
+## Binds ChannelManager so scorecard row contrast can adapt to channel background styles.
+func bind_channel_manager(manager: ChannelManager) -> void:
+	if _bound_channel_manager == manager:
+		_apply_compact_button_styles()
+		return
+
+	if _bound_channel_manager and _bound_channel_manager.channel_changed.is_connected(_on_channel_changed):
+		_bound_channel_manager.channel_changed.disconnect(_on_channel_changed)
+
+	_bound_channel_manager = manager
+
+	if _bound_channel_manager and not _bound_channel_manager.channel_changed.is_connected(_on_channel_changed):
+		_bound_channel_manager.channel_changed.connect(_on_channel_changed)
+
+	_apply_compact_button_styles()
+
+
+## _on_channel_changed(_new_channel)
+##
+## Re-applies scorecard row styling whenever the channel changes.
+func _on_channel_changed(_new_channel: int) -> void:
+	_apply_compact_button_styles()
+
+
+func _apply_scorecard_spacing() -> void:
+	var vbox = get_node_or_null("VBoxContainer")
+	if vbox:
+		vbox.add_theme_constant_override("separation", 2)
+	var upper_vbox = get_node_or_null("VBoxContainer/UpperVBoxContainer")
+	if upper_vbox:
+		upper_vbox.add_theme_constant_override("separation", 1)
+	var lower_vbox = get_node_or_null("VBoxContainer/LowerVBoxContainer")
+	if lower_vbox:
+		lower_vbox.add_theme_constant_override("separation", 1)
+	var upper_grid = get_node_or_null("VBoxContainer/UpperVBoxContainer/UpperGridContainer")
+	if upper_grid:
+		upper_grid.add_theme_constant_override("v_separation", 1)
+		upper_grid.add_theme_constant_override("h_separation", 0)
+	var lower_grid = get_node_or_null("VBoxContainer/LowerVBoxContainer/LowerGridContainer")
+	if lower_grid:
+		lower_grid.add_theme_constant_override("v_separation", 1)
+		lower_grid.add_theme_constant_override("h_separation", 0)
+
+
+func _apply_section_header_styles(profile: Dictionary) -> void:
+	for header_path in ["VBoxContainer/UpperVBoxContainer/UpperSectionLabel", "VBoxContainer/LowerVBoxContainer/LowerSectionLabel"]:
+		var header = get_node_or_null(header_path) as Label
+		if header:
+			header.add_theme_font_size_override("font_size", 11)
+			header.add_theme_color_override("font_color", profile.section_text)
+			header.add_theme_color_override("font_outline_color", profile.outline)
+			header.add_theme_constant_override("outline_size", 1)
+
+
+func _apply_row_styles_to_grid(grid_path: String, profile: Dictionary) -> void:
+	var grid = get_node_or_null(grid_path)
+	if grid == null:
+		return
+
+	var button_styles = _build_row_button_styles(profile)
+	for child in grid.get_children():
+		var row = child as HBoxContainer
+		if row == null:
+			continue
+		row.custom_minimum_size.y = ROW_HEIGHT
+		row.add_theme_constant_override("separation", 3)
+
+		var is_summary_row = row.name in ["UpperSubTotal", "UpperBonus", "UpperTotal", "YahtzeeBonus", "LowerTotal"]
+		for row_child in row.get_children():
+			if row_child is Label:
+				if row_child.name.ends_with("LevelLabel"):
+					_style_row_level_label(row_child as Label, profile)
+				else:
+					_style_row_score_label(row_child as Label, profile, is_summary_row)
+			elif row_child is Button:
+				_style_row_button(row_child as Button, profile, button_styles, is_summary_row)
+
+
+func _style_row_level_label(level_label: Label, profile: Dictionary) -> void:
+	level_label.custom_minimum_size = Vector2(ROW_LEVEL_WIDTH, 16)
+	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	level_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	level_label.add_theme_font_size_override("font_size", 10)
+	level_label.add_theme_color_override("font_color", profile.level_text)
+	level_label.add_theme_color_override("font_outline_color", profile.outline)
+	level_label.add_theme_constant_override("outline_size", 1)
+	level_label.add_theme_color_override("font_shadow_color", profile.shadow)
+	level_label.add_theme_constant_override("shadow_offset_x", 1)
+	level_label.add_theme_constant_override("shadow_offset_y", 1)
+
+
+func _style_row_score_label(score_label: Label, profile: Dictionary, is_summary_row: bool) -> void:
+	var score_width = ROW_SCORE_WIDTH + (10.0 if is_summary_row else 0.0)
+	score_label.custom_minimum_size = Vector2(score_width, 16)
+	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	score_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	score_label.add_theme_font_size_override("font_size", 12)
+	score_label.add_theme_color_override("font_color", profile.value_text)
+	score_label.add_theme_color_override("font_outline_color", profile.outline)
+	score_label.add_theme_constant_override("outline_size", 1)
+	score_label.add_theme_color_override("font_shadow_color", profile.shadow)
+	score_label.add_theme_constant_override("shadow_offset_x", 1)
+	score_label.add_theme_constant_override("shadow_offset_y", 1)
+
+
+func _style_row_button(button: Button, profile: Dictionary, button_styles: Dictionary, is_summary_row: bool) -> void:
+	button.add_theme_stylebox_override("normal", button_styles.normal)
+	button.add_theme_stylebox_override("hover", button_styles.hover)
+	button.add_theme_stylebox_override("pressed", button_styles.pressed)
+	button.add_theme_stylebox_override("disabled", button_styles.disabled)
+	button.add_theme_stylebox_override("focus", button_styles.focus)
+	button.add_theme_font_size_override("font_size", 11)
+	button.add_theme_color_override("font_color", profile.primary_text)
+	button.add_theme_color_override("font_hover_color", profile.primary_text)
+	button.add_theme_color_override("font_pressed_color", profile.primary_text)
+	button.add_theme_color_override("font_focus_color", profile.primary_text)
+	button.add_theme_color_override("font_disabled_color", profile.disabled_text)
+	button.add_theme_color_override("font_outline_color", profile.outline)
+	button.add_theme_constant_override("outline_size", 1)
+	button.custom_minimum_size.x = ROW_SECTION_MIN_WIDTH if is_summary_row else ROW_CATEGORY_MIN_WIDTH
+	button.custom_minimum_size.y = ROW_HEIGHT
+
+
+func _build_row_button_styles(profile: Dictionary) -> Dictionary:
+	var normal_style = _make_row_button_style(profile.button_fill, profile.button_border, profile.shadow, 1)
+	var hover_style = _make_row_button_style(profile.button_hover_fill, profile.button_hover_border, profile.shadow, 2)
+	var pressed_style = _make_row_button_style(profile.button_pressed_fill, profile.button_hover_border, profile.shadow, 2)
+	var disabled_style = _make_row_button_style(profile.button_disabled_fill, profile.button_disabled_border, profile.shadow, 1)
+	var focus_style = hover_style.duplicate()
+	return {
+		"normal": normal_style,
+		"hover": hover_style,
+		"pressed": pressed_style,
+		"disabled": disabled_style,
+		"focus": focus_style
+	}
+
+
+func _make_row_button_style(fill_color: Color, border_color: Color, shadow_color: Color, border_width: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill_color
+	style.border_color = border_color
+	style.set_border_width_all(border_width)
+	style.set_corner_radius_all(10)
+	style.corner_detail = 6
+	style.content_margin_left = 6.0
+	style.content_margin_top = 2.0
+	style.content_margin_right = 6.0
+	style.content_margin_bottom = 2.0
+	style.shadow_color = shadow_color
+	style.shadow_size = 3
+	return style
+
+
+func _get_row_visual_profile() -> Dictionary:
+	_row_contrast_profile = _resolve_row_contrast_profile()
+	if _row_contrast_profile == "light":
+		return {
+			"button_fill": Color(0.101961, 0.090196, 0.14902, 0.72),
+			"button_hover_fill": Color(0.14902, 0.121569, 0.207843, 0.82),
+			"button_pressed_fill": Color(0.188235, 0.145098, 0.247059, 0.9),
+			"button_disabled_fill": Color(0.101961, 0.090196, 0.14902, 0.42),
+			"button_border": Color(0.137255, 0.411765, 0.415686, 0.72),
+			"button_hover_border": Color(0.886275, 0.560784, 0.72549, 0.88),
+			"button_disabled_border": Color(0.247059, 0.219608, 0.345098, 0.65),
+			"primary_text": Color(0.988235, 0.972549, 1.0, 1.0),
+			"section_text": Color(0.886275, 0.560784, 0.72549, 1.0),
+			"level_text": Color(0.513726, 0.917647, 0.921569, 1.0),
+			"value_text": Color(0.972549, 0.956863, 1.0, 1.0),
+			"disabled_text": Color(0.713726, 0.682353, 0.784314, 1.0),
+			"outline": Color(0.078431, 0.066667, 0.113725, 1.0),
+			"shadow": Color(0.058824, 0.047059, 0.082353, 0.88)
+		}
+
+	return {
+		"button_fill": Color(0.247059, 0.219608, 0.345098, 0.34),
+		"button_hover_fill": Color(0.247059, 0.219608, 0.345098, 0.48),
+		"button_pressed_fill": Color(0.247059, 0.219608, 0.345098, 0.62),
+		"button_disabled_fill": Color(0.247059, 0.219608, 0.345098, 0.18),
+		"button_border": Color(0.713725, 0.301961, 0.478431, 0.58),
+		"button_hover_border": Color(0.886275, 0.560784, 0.72549, 0.85),
+		"button_disabled_border": Color(0.247059, 0.219608, 0.345098, 0.42),
+		"primary_text": SUMMARY_TEXT,
+		"section_text": Color(0.886275, 0.560784, 0.72549, 1.0),
+		"level_text": Color(0.65098, 0.92549, 0.929412, 1.0),
+		"value_text": Color(0.980392, 0.956863, 1.0, 1.0),
+		"disabled_text": Color(0.678431, 0.639216, 0.741176, 1.0),
+		"outline": SUMMARY_OUTLINE,
+		"shadow": Color(0.070588, 0.062745, 0.101961, 0.82)
+	}
+
+
+func _resolve_row_contrast_profile() -> String:
+	var config = _get_active_channel_config()
+	if config == null:
+		return "dark"
+
+	var contrast_mode_value = config.get("ui_contrast_mode")
+	var contrast_mode = String(contrast_mode_value) if contrast_mode_value != null else "auto"
+	if contrast_mode == "light" or contrast_mode == "dark":
+		return contrast_mode
+
+	var estimated_luminance = _estimate_channel_luminance(config.background_shader_params)
+	return "light" if estimated_luminance >= 0.5 else "dark"
+
+
+func _get_active_channel_config() -> ChannelDifficultyData:
+	if _bound_channel_manager == null:
+		return null
+	return _bound_channel_manager.get_channel_config(_bound_channel_manager.current_channel)
+
+
+func _estimate_channel_luminance(shader_params: Dictionary) -> float:
+	var total_luminance := 0.0
+	var color_count := 0.0
+	for value in shader_params.values():
+		if value is Color:
+			var color := value as Color
+			total_luminance += color.r * 0.2126 + color.g * 0.7152 + color.b * 0.0722
+			color_count += 1.0
+
+	if color_count == 0.0:
+		return 0.25
+
+	var average_luminance := total_luminance / color_count
+	var lighting = float(shader_params.get("lighting", 0.0))
+	return clampf(average_luminance + (lighting * 0.15), 0.0, 1.0)
 
 
 ## bind_scorecard(sc)
@@ -268,21 +450,22 @@ func bind_scorecard(sc: Scorecard):
 	scorecard.upper_section_completed.connect(_on_upper_section_completed)
 	scorecard.lower_section_completed.connect(_on_lower_section_completed)
 	scorecard.yahtzee_bonus_achieved.connect(_on_yahtzee_bonus_achieved)
-	
+
 	# Connect to score assignment signals for autoscoring
 	scorecard.score_assigned.connect(_on_score_assigned_from_scorecard)
 	scorecard.score_auto_assigned.connect(_on_score_auto_assigned)
 	scorecard.score_changed.connect(_on_score_changed_from_scorecard)
-	
+
 	# Connect to category upgrade signal for level label updates
 	scorecard.category_upgraded.connect(_on_category_upgraded)
-	
+
 	# Create level labels for all categories
 	_create_level_labels()
+	_apply_compact_button_styles()
 
 	# Set scorecard in DiceResults
 	DiceResults.set_scorecard(scorecard)
-	
+
 	# Update 6th slot display for current dice type
 	update_sixth_slot_display()
 
@@ -313,7 +496,6 @@ func update_all():
 			var value = scorecard.upper_scores[category]
 			var old_text = label.text
 			label.text = NumberFormatter.format_score(int(value)) if value != null else "-"
-			# Pop animation when score first set
 			if old_text == "-" and value != null:
 				pop_score_label(label)
 
@@ -325,74 +507,60 @@ func update_all():
 			var value = scorecard.lower_scores[category]
 			var old_text = label.text
 			label.text = NumberFormatter.format_score(int(value)) if value != null else "-"
-			# Pop animation when score first set
 			if old_text == "-" and value != null:
 				pop_score_label(label)
 
-	# Update upper section totals with debug prints
 	var upper_subtotal = scorecard.get_upper_section_total()
-	
+
 	if upper_total_label:
 		upper_total_label.text = NumberFormatter.format_score(int(upper_subtotal))
 	else:
 		push_error("upper_total_label not found!")
-		
-	# Show progress towards bonus using scaled threshold
+
 	if upper_bonus_label:
 		var scaled_threshold = scorecard.get_scaled_upper_bonus_threshold()
 		var scaled_amount = scorecard.get_scaled_upper_bonus_amount()
-		
-		# Update the bonus button text to show threshold
+
 		if upper_bonus_button:
-			upper_bonus_button.text = "Bonus" #"Bonus(%d):" % scaled_threshold
-		
+			upper_bonus_button.text = "Bonus"
+
 		if scorecard.upper_bonus_awarded:
-			# Bonus already earned - show the bonus amount
 			upper_bonus_label.text = "+%s" % NumberFormatter.format_int(int(scaled_amount))
 		elif upper_subtotal >= scaled_threshold:
-			# Threshold met but bonus not yet processed - show bonus amount
 			upper_bonus_label.text = "+%s" % NumberFormatter.format_int(int(scaled_amount))
 		else:
-			# Show remaining points needed to reach threshold
 			var remaining = scaled_threshold - upper_subtotal
 			upper_bonus_label.text = NumberFormatter.format_int(int(remaining))
-
 	else:
 		push_error("upper_bonus_label not found!")
-	
-	# Update final upper total (subtotal + bonus)
+
 	if upper_final_total_label:
 		var final_total = scorecard.get_upper_section_final_total()
 		upper_final_total_label.text = NumberFormatter.format_score(int(final_total))
 	else:
 		push_error("upper_final_total_label not found!")
 
-	# Update lower section total - Add Yahtzee bonus points
 	var lower_total = scorecard.get_lower_section_total()
-	lower_total += scorecard.yahtzee_bonus_points  # Add Yahtzee bonus to lower total
-	
+	lower_total += scorecard.yahtzee_bonus_points
+
 	if lower_total_label:
 		lower_total_label.text = NumberFormatter.format_score(int(lower_total))
 	else:
 		push_error("lower_total_label not found!")
-	
-	# Update total score with dynamic effect (tornado disabled)
+
 	if total_score_label:
 		var upper_total = scorecard.get_upper_section_final_total()
-		var total_score = upper_total + lower_total  # lower_total already includes Yahtzee bonus
-		
-		# Counter roll-up animation if score changed
+		var total_score = upper_total + lower_total
+
 		if total_score != previous_total_score:
 			animate_score_counter(previous_total_score, total_score)
 			check_score_milestones(total_score)
 			_update_score_panel_shader(total_score)
 			previous_total_score = total_score
 		else:
-			# Just set text directly (no change)
 			var text = "[center]Total Score:\n%s[/center]" % NumberFormatter.format_score(total_score)
 			total_score_label.text = text
-		
-		# Adjust font size based on score - capped to prevent overflow
+
 		var base_size = 24
 		var max_size = 32
 		var size_scale = remap(total_score, 0, 500, 1.0, 1.3)
@@ -401,14 +569,11 @@ func update_all():
 			scaled_size = max_size
 		total_score_label.add_theme_font_size_override("normal_font_size", scaled_size)
 
-	# Update Yahtzee bonus display
 	if yahtzee_bonus_label:
 		if scorecard.yahtzee_bonuses > 0:
 			yahtzee_bonus_label.text = NumberFormatter.format_score(int(scorecard.yahtzee_bonus_points))
 		else:
 			yahtzee_bonus_label.text = "-"
-
-
 ## _create_level_labels()
 ##
 ## References level indicator labels from the scene for all scoring categories.
@@ -1523,7 +1688,7 @@ func _on_score_assigned_from_scorecard(section: Scorecard.Section, category: Str
 ##
 ## Called when the Scorecard emits score_auto_assigned signal (specifically for autoscoring)
 ## Creates logbook entries for automatically scored hands
-func _on_score_auto_assigned(section: Scorecard.Section, category: String, score: int, breakdown_info: Dictionary) -> void:
+func _on_score_auto_assigned(_section: Scorecard.Section, category: String, score: int, breakdown_info: Dictionary) -> void:
 	print("[ScoreCardUI] DEBUG: _on_score_auto_assigned called for", category, "with score", score)
 	print("[ScoreCardUI] DEBUG: Breakdown PowerUps:", breakdown_info.get("active_powerups", []))
 	print("[ScoreCardUI] DEBUG: Breakdown Consumables:", breakdown_info.get("active_consumables", []))

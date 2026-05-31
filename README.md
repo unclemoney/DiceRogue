@@ -185,6 +185,8 @@ Full documentation with parameters, recipes, and technical deep-dives: See `ARCA
   - **UpperSection**: TurnInfoContainer (`INFO` title with turns, rolls, round, channel), PowerUpContainer, MoneyContainer
   - **MiddleSection**: LeftColumn (Challenge, Debuff, Consumable, Console, GameButtonContainer), CenterColumn (Title, DiceArea, ChoreMeter, RollButtonContainer), RightColumn (Scorecard)
   - **GameButtonUI**: single-row action strip for Next Turn, Shop, and Next Round using the shared neon action-button theme
+  - **RollButtonUI**: enlarged glass-neon roll button with a custom shader, pointer-follow glow, proximity-based intensity, keyboard hint text, and shell-level TweenFX pulse/bounce feedback
+  - **ScoreCardUI**: score rows now use fixed score lanes, stronger outline/shadow contrast, and translucent mall-core glass button states that adapt by channel via `ChannelManager` and `ChannelDifficultyData.ui_contrast_mode`
   - All `PanelContainer` nodes use translucent `StyleBoxFlat` styling (peach fill at 25% alpha, chrome border)
   - Glowing titles via `GlowingTitle.tscn` (SubViewport + WorldEnvironment) in each panel
   - Replaces the retired `CorkboardUI` and manual offset positioning
@@ -515,6 +517,7 @@ Each round within a channel has:
 - **DiceColorManager**: Uses `get_colored_dice_cost_multiplier()` for dice costs
 - **ChoresManager**: Uses `get_goof_off_multiplier()` for meter threshold
 - **Scorecard**: Uses `get_yahtzee_bonus_multiplier()` for bonus Yahtzee points
+- **ScoreCardUI**: Binds `ChannelManager` to swap score-row contrast profiles based on active channel shader brightness
 - **DebuffManager**: Uses `get_debuff_intensity_multiplier()` for debuff scaling
 
 **Game Flow:**
@@ -530,6 +533,7 @@ Each round within a channel has:
 When advancing to the next channel, a **Carry-Over Selection Panel** lets the player choose what to keep. Each channel's `.tres` resource defines:
 - `allowed_carryover_count`: Maximum number of categories the player can carry over (0 = full reset)
 - `allowed_carryover_types`: Which carry-over categories are available for selection
+- `ui_contrast_mode`: Optional override for scorecard/UI contrast (`auto`, `dark`, `light`) when a channel shader needs a specific readability profile
 
 **Carry-Over Categories:**
 | Type Key | Description |
