@@ -7,14 +7,31 @@ signal power_up_deselected(power_up_id: String)
 signal power_up_sold(power_up_id: String)
 signal max_power_ups_reached
 
+const BASE_MAX_POWER_UPS: int = 5
+const ABSOLUTE_MAX_POWER_UPS: int = 7
+const COMPACT_VISIBLE_POWER_UPS: int = 5
+const COMPACT_SLOT_COUNT: int = 6
+const COMPACT_ROW_MARGIN_X: int = 8
+const COMPACT_ROW_MARGIN_Y: int = 6
+const COMPACT_ROW_SEPARATION: int = 6
+const COMPACT_SLOT_FILL: Color = Color(0.247059, 0.219608, 0.345098, 0.32)
+const COMPACT_SLOT_BORDER: Color = Color(0.713725, 0.301961, 0.478431, 0.55)
+const COMPACT_OVERFLOW_BORDER: Color = Color(0.137255, 0.411765, 0.415686, 0.7)
+const COMPACT_SLOT_SHADOW: Color = Color(0.070588, 0.062745, 0.101961, 0.28)
+const COMPACT_TEXT: Color = Color(0.968627, 0.941176, 1.0, 1.0)
+const COMPACT_OUTLINE: Color = Color(0.129412, 0.121569, 0.2, 1.0)
+const OVERFLOW_TEXT: String = "+MORE"
+const VCR_FONT = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+
 @export var power_up_icon_scene: PackedScene
 @export var power_up_spine_scene: PackedScene
-@export var max_power_ups: int = 10
+@export var max_power_ups: int = BASE_MAX_POWER_UPS
 @export var shop_ui_path: NodePath
 @onready var slots_label: Label = $SlotsLabel
 
 # Data storage
 var _power_up_data := {}  # power_up_id -> PowerUpData
+var _power_up_order: Array[String] = []
 var _spines := {}  # power_up_id -> PowerUpSpine
 var _fanned_icons := {}  # power_up_id -> PowerUpIcon
 
@@ -23,16 +40,14 @@ enum State { SPINES, FANNED }
 var _current_state: State = State.SPINES
 var _is_animating: bool = false
 
-# Layout properties for vertical 3x3 grid (fills bottom-to-top, left-to-right)
-var _spine_start_x: float = 170.0  # Min x to fit 170px rotated spine width
-var _spine_start_y: float = 0.0    # Filled by _adapt_layout() from container size
-var _spine_spacing_x: float = 170.0  # Horizontal spacing between columns (wide enough for rotated spines)
-var _spine_spacing_y: float = 30.0  # Vertical spacing between rows
-var _spines_per_column: int = 3  # Number of spines per column
-var _max_rows: int = 3  # Maximum rows in grid
+# Compact layout properties
 var _fan_center: Vector2  # Center point for fanned cards
 var _selected_spine_id: String = ""
-var _spine_scale: float = 1.0  # Scale factor applied to fit container
+var _compact_margin: MarginContainer
+var _compact_row: HBoxContainer
+var _slot_cells: Array[PanelContainer] = []
+var _slot_contents: Array[Control] = []
+var _overflow_label: Label
 
 # Animation and background
 var _background: ColorRect
@@ -47,6 +62,7 @@ var _shop_was_visible_before_fan: bool = false
 func _ready() -> void:
 	print("[PowerUpUI] Initializing new spine-based system...")
 	add_to_group("power_up_ui")
+	max_power_ups = clampi(max_power_ups, BASE_MAX_POWER_UPS, ABSOLUTE_MAX_POWER_UPS)
 	
 	# Hide hardcoded labels when inside a container (container provides glowing title)
 	var label_node = get_node_or_null("Label")
@@ -74,6 +90,7 @@ func _ready() -> void:
 	
 	# Create spine tooltip
 	_create_spine_tooltip()
+	_create_compact_row()
 	
 	# Set up slots label (hidden in container mode)
 	if not has_node("SlotsLabel"):
@@ -97,40 +114,20 @@ func _ready() -> void:
 	# Defer layout until container size is known
 	resized.connect(_on_resized)
 	call_deferred("_adapt_layout")
+	call_deferred("_position_spines")
 	
 	print("[PowerUpUI] New spine-based system initialized")
 
 
 func _on_resized() -> void:
 	_adapt_layout()
-	_position_spines()
+	call_deferred("_position_spines")
 
 
 func _adapt_layout() -> void:
 	if size.x <= 0 or size.y <= 0:
 		return
-	# PowerUpSpine is 28x170; rotated 90° around top-left gives visual bounds
-	# of width=170, height=28. Position must account for this.
-	var spine_rot_w := 170.0
-	var spine_rot_h := 28.0
-	var margin_x := 8.0
-	var margin_y := 4.0
-
-	# Scale spines down if container is too small
-	_spine_scale = 1.0
-	var min_needed_w := spine_rot_w + margin_x * 2.0
-	var min_needed_h := spine_rot_h * _max_rows + margin_y * (_max_rows + 1)
-	if min_needed_w > size.x or min_needed_h > size.y:
-		_spine_scale = min(size.x / min_needed_w, size.y / min_needed_h, 1.0)
-
-	var sw := spine_rot_w * _spine_scale
-	var sh := spine_rot_h * _spine_scale
-
-	_spine_start_x = sw + margin_x
-	_spine_start_y = margin_y
-	var col_count: int = max(1, ceili(float(_spines.size()) / float(_spines_per_column)))
-	_spine_spacing_x = max(sw + margin_x, (size.x - margin_x * 2.0) / float(col_count))
-	_spine_spacing_y = max(sh + margin_y, (size.y - margin_y * 2.0) / float(_max_rows))
+	_fan_center = get_viewport_rect().size / 2.0
 
 func _exit_tree() -> void:
 	# Clean up all tracked tweens to prevent warnings
@@ -152,6 +149,115 @@ func _create_background() -> void:
 	
 	# Connect background click to fold cards back
 	_background.gui_input.connect(_on_background_clicked)
+
+func _create_compact_row() -> void:
+	if _compact_margin and is_instance_valid(_compact_margin):
+		return
+
+	_compact_margin = MarginContainer.new()
+	_compact_margin.name = "CompactRowMargin"
+	_compact_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_compact_margin.mouse_filter = Control.MOUSE_FILTER_PASS
+	_compact_margin.add_theme_constant_override("margin_left", COMPACT_ROW_MARGIN_X)
+	_compact_margin.add_theme_constant_override("margin_top", COMPACT_ROW_MARGIN_Y)
+	_compact_margin.add_theme_constant_override("margin_right", COMPACT_ROW_MARGIN_X)
+	_compact_margin.add_theme_constant_override("margin_bottom", COMPACT_ROW_MARGIN_Y)
+	add_child(_compact_margin)
+
+	_compact_row = HBoxContainer.new()
+	_compact_row.name = "CompactRow"
+	_compact_row.mouse_filter = Control.MOUSE_FILTER_PASS
+	_compact_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_compact_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_compact_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_compact_row.add_theme_constant_override("separation", COMPACT_ROW_SEPARATION)
+	_compact_margin.add_child(_compact_row)
+
+	for slot_index in range(COMPACT_SLOT_COUNT):
+		var slot: PanelContainer = PanelContainer.new()
+		slot.name = "PowerUpSlot%d" % [slot_index + 1]
+		slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		slot.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		slot.size_flags_stretch_ratio = 1.0
+		slot.custom_minimum_size = Vector2(0.0, 74.0)
+		slot.mouse_filter = Control.MOUSE_FILTER_PASS
+		slot.clip_contents = false
+		slot.add_theme_stylebox_override("panel", _make_compact_slot_style(COMPACT_SLOT_BORDER))
+		_compact_row.add_child(slot)
+		_slot_cells.append(slot)
+
+		var slot_content: Control = Control.new()
+		slot_content.name = "SlotContent"
+		slot_content.set_anchors_preset(Control.PRESET_FULL_RECT)
+		slot_content.mouse_filter = Control.MOUSE_FILTER_PASS
+		slot_content.clip_contents = false
+		slot.add_child(slot_content)
+		_slot_contents.append(slot_content)
+
+	_overflow_label = Label.new()
+	_overflow_label.name = "OverflowLabel"
+	_overflow_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_overflow_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_overflow_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_overflow_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_overflow_label.add_theme_font_override("font", VCR_FONT)
+	_overflow_label.add_theme_font_size_override("font_size", 12)
+	_overflow_label.add_theme_color_override("font_color", COMPACT_TEXT)
+	_overflow_label.add_theme_color_override("font_outline_color", COMPACT_OUTLINE)
+	_overflow_label.add_theme_constant_override("outline_size", 1)
+	_overflow_label.visible = false
+	_slot_contents[COMPACT_SLOT_COUNT - 1].add_child(_overflow_label)
+
+func _make_compact_slot_style(accent_color: Color) -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = COMPACT_SLOT_FILL
+	style.border_color = accent_color
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(14)
+	style.corner_detail = 8
+	style.shadow_color = COMPACT_SLOT_SHADOW
+	style.shadow_size = 4
+	return style
+
+func _update_overflow_slot(total_count: int) -> void:
+	if _slot_cells.size() < COMPACT_SLOT_COUNT or not _overflow_label:
+		return
+
+	var has_overflow: bool = total_count > COMPACT_VISIBLE_POWER_UPS
+	var overflow_slot: PanelContainer = _slot_cells[COMPACT_SLOT_COUNT - 1]
+	if has_overflow:
+		overflow_slot.add_theme_stylebox_override("panel", _make_compact_slot_style(COMPACT_OVERFLOW_BORDER))
+		_overflow_label.text = OVERFLOW_TEXT
+		_overflow_label.visible = true
+	else:
+		overflow_slot.add_theme_stylebox_override("panel", _make_compact_slot_style(COMPACT_SLOT_BORDER))
+		_overflow_label.text = ""
+		_overflow_label.visible = false
+
+func _assign_spine_to_slot(spine: PowerUpSpine, slot_index: int, show_spine: bool) -> void:
+	if slot_index < 0 or slot_index >= _slot_contents.size():
+		return
+	if not spine:
+		return
+
+	var slot_content: Control = _slot_contents[slot_index]
+	if spine.get_parent() != slot_content:
+		spine.reparent(slot_content, false)
+
+	var compact_size: Vector2 = spine.get_compact_size()
+	var pos: Vector2 = Vector2(
+		floor((slot_content.size.x - compact_size.x) * 0.5),
+		floor((slot_content.size.y - compact_size.y) * 0.5)
+	)
+	spine.set_base_position(pos)
+	if show_spine:
+		spine.visible = true
+		spine.modulate.a = 1.0
+		spine.mouse_filter = Control.MOUSE_FILTER_PASS
+	else:
+		spine.visible = false
+		spine.modulate.a = 0.0
+		spine.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 func _create_spine_tooltip() -> void:
 	# Create tooltip for spine hover - shows detailed PowerUp info
@@ -179,7 +285,7 @@ func _create_spine_tooltip() -> void:
 	vbox.add_child(_spine_tooltip_label)
 	
 	# Add tooltip to shared overlay so it isn't clipped by containers
-	var overlay := FanOverlayHelper.get_overlay(self)
+	var overlay: CanvasLayer = FanOverlayHelper.get_overlay(self)
 	overlay.add_child(_spine_tooltip)
 
 func add_power_up(data: PowerUpData) -> Node:
@@ -201,6 +307,8 @@ func add_power_up(data: PowerUpData) -> Node:
 	
 	# Store the data
 	_power_up_data[data.id] = data
+	if not _power_up_order.has(data.id):
+		_power_up_order.append(data.id)
 	
 	# Create spine
 	var spine: PowerUpSpine = power_up_spine_scene.instantiate()
@@ -215,8 +323,6 @@ func add_power_up(data: PowerUpData) -> Node:
 	spine.set_data(data)
 	
 	# Connect spine signals
-	if not spine.is_connected("spine_clicked", _on_spine_clicked):
-		spine.spine_clicked.connect(_on_spine_clicked)
 	if not spine.is_connected("spine_hovered", _on_spine_hovered):
 		spine.spine_hovered.connect(_on_spine_hovered)
 	if not spine.is_connected("spine_unhovered", _on_spine_unhovered):
@@ -249,7 +355,7 @@ func add_power_up(data: PowerUpData) -> Node:
 				var restore_old_pivot = spine.pivot_offset
 				spine.pivot_offset = Vector2.ZERO
 				spine.adjust_position_for_pivot_change(restore_old_pivot)
-				spine.scale = Vector2(_spine_scale, _spine_scale)
+				spine.scale = Vector2.ONE
 		)
 		if reward_tween:
 			reward_tween.finished.connect(func():
@@ -257,7 +363,7 @@ func add_power_up(data: PowerUpData) -> Node:
 					var restore_old_pivot = spine.pivot_offset
 					spine.pivot_offset = Vector2.ZERO
 					spine.adjust_position_for_pivot_change(restore_old_pivot)
-					spine.scale = Vector2(_spine_scale, _spine_scale)
+					spine.scale = Vector2.ONE
 			)
 	
 	# Acquisition sound
@@ -272,58 +378,64 @@ func add_power_up(data: PowerUpData) -> Node:
 	return spine
 
 func _position_spines() -> void:
-	var spine_ids: Array = _spines.keys()
-	var spine_count: int = spine_ids.size()
-	
-	if spine_count == 0:
+	if _slot_contents.is_empty():
 		return
-	
 	if size.x <= 0 or size.y <= 0:
-		# Container not sized yet; park at safe origin and let resize fix it
-		for spine_id in spine_ids:
-			var spine: PowerUpSpine = _spines[spine_id]
-			if spine:
-				spine.set_base_position(Vector2.ZERO)
+		call_deferred("_position_spines")
 		return
-	
-	_adapt_layout()
-	
-	for i in range(spine_count):
-		var spine_id: String = spine_ids[i]
-		var spine: PowerUpSpine = _spines[spine_id]
-		if not spine:
+	if _slot_contents[0].size.x <= 0 or _slot_contents[0].size.y <= 0:
+		call_deferred("_position_spines")
+		return
+
+	var ordered_ids: Array[String] = _get_ordered_power_up_ids()
+	for spine_id in _spines.keys():
+		var parked_spine: PowerUpSpine = _spines[spine_id]
+		if not parked_spine:
 			continue
-		@warning_ignore("integer_division")
-		var col: int = i / _spines_per_column
-		var row_from_bottom: int = i % _spines_per_column
-		var row: int = (_max_rows - 1) - row_from_bottom
-		
-		var pos: Vector2 = Vector2(
-			_spine_start_x + col * _spine_spacing_x,
-			_spine_start_y + row * _spine_spacing_y
-		)
-		spine.set_base_position(pos)
-		spine.scale = Vector2(_spine_scale, _spine_scale)
-		spine.rotation_degrees = 90
+		if parked_spine.get_parent() != self:
+			parked_spine.reparent(self, false)
+		parked_spine.set_base_position(Vector2.ZERO)
+		parked_spine.visible = false
+		parked_spine.modulate.a = 0.0
+		parked_spine.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var visible_count: int = min(ordered_ids.size(), COMPACT_VISIBLE_POWER_UPS)
+	for i in range(visible_count):
+		var visible_spine: PowerUpSpine = _spines.get(ordered_ids[i])
+		if visible_spine:
+			_assign_spine_to_slot(visible_spine, i, true)
+
+	for i in range(visible_count, ordered_ids.size()):
+		var overflow_spine: PowerUpSpine = _spines.get(ordered_ids[i])
+		if overflow_spine:
+			_assign_spine_to_slot(overflow_spine, COMPACT_SLOT_COUNT - 1, false)
+
+	_update_overflow_slot(ordered_ids.size())
+
+func _get_ordered_power_up_ids() -> Array[String]:
+	var ordered: Array[String] = []
+	for power_up_id in _power_up_order:
+		if _power_up_data.has(power_up_id):
+			ordered.append(power_up_id)
+	for power_up_id in _power_up_data.keys():
+		if not ordered.has(power_up_id):
+			ordered.append(power_up_id)
+	return ordered
+
+func _open_fan_view() -> void:
+	if _is_animating or _current_state != State.SPINES:
+		return
+	if _power_up_data.is_empty():
+		return
+	var ordered_ids: Array[String] = _get_ordered_power_up_ids()
+	if ordered_ids.is_empty():
+		return
+	_selected_spine_id = ordered_ids[0]
+	_fan_out_cards()
 
 func _on_spine_clicked(power_up_id: String) -> void:
-	print("[PowerUpUI] Spine clicked:", power_up_id)
-	
-	if _is_animating:
-		print("[PowerUpUI] Animation in progress, ignoring click")
-		return
-	
-	if _current_state == State.SPINES:
-		_selected_spine_id = power_up_id
-		_fan_out_cards()
-	elif _current_state == State.FANNED:
-		# If clicking the same spine, fold back
-		if _selected_spine_id == power_up_id:
-			_fold_back_cards()
-		else:
-			# Switch to new spine
-			_selected_spine_id = power_up_id
-			_fan_out_cards()
+	_selected_spine_id = power_up_id
+	_open_fan_view()
 
 func _get_fan_overlay() -> CanvasLayer:
 	var root = get_tree().get_root()
@@ -374,16 +486,17 @@ func _fan_out_cards() -> void:
 	_background.modulate.a = 0.0
 	var bg_tween: Tween = create_tween()
 	bg_tween.tween_property(_background, "modulate:a", 1.0, 0.3)
-	
-	# Hide all spines first
-	for spine_id in _spines.keys():
-		var spine: PowerUpSpine = _spines[spine_id]
-		if spine:
-			var tween: Tween = create_tween()
-			tween.tween_property(spine, "modulate:a", 0.0, 0.2)
-	
-	# Wait a bit, then create and show fanned icons
-	await get_tree().create_timer(0.2).timeout
+
+	if _compact_margin:
+		_compact_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var compact_tween: Tween = create_tween()
+		compact_tween.tween_property(_compact_margin, "modulate:a", 0.0, 0.18)
+		compact_tween.tween_callback(func():
+			if _compact_margin:
+				_compact_margin.visible = false
+		)
+
+	await get_tree().create_timer(0.18).timeout
 	_create_fanned_icons()
 	
 	_is_animating = false
@@ -392,7 +505,7 @@ func _create_fanned_icons() -> void:
 	# Clear existing fanned icons
 	_clear_fanned_icons()
 	
-	var power_up_ids: Array = _power_up_data.keys()
+	var power_up_ids: Array[String] = _get_ordered_power_up_ids()
 	var count: int = power_up_ids.size()
 	
 	if count == 0:
@@ -552,16 +665,17 @@ func _fold_back_cards() -> void:
 	# Wait, then clear fanned icons and show spines
 	await get_tree().create_timer(0.3).timeout
 	_clear_fanned_icons()
-	
-	# Show spines again
-	for spine_id in _spines.keys():
-		var spine: PowerUpSpine = _spines[spine_id]
-		if spine:
-			var tween: Tween = create_tween()
-			tween.tween_property(spine, "modulate:a", 1.0, 0.2)
-	
-	# Re-snap all spines to their correct base positions after fold back
+
+	if _compact_margin:
+		_compact_margin.visible = true
+		_compact_margin.modulate.a = 0.0
+		_compact_margin.mouse_filter = Control.MOUSE_FILTER_PASS
+
 	_position_spines()
+
+	if _compact_margin:
+		var compact_tween: Tween = create_tween()
+		compact_tween.tween_property(_compact_margin, "modulate:a", 1.0, 0.2)
 	
 	_selected_spine_id = ""
 	_is_animating = false
@@ -596,7 +710,7 @@ func _start_idle_animations() -> void:
 		return
 	
 	# Get the calculated fan positions (not the current positions)
-	var power_up_ids: Array = _power_up_data.keys()
+	var power_up_ids: Array[String] = _get_ordered_power_up_ids()
 	var count: int = power_up_ids.size()
 	
 	if count == 0:
@@ -608,7 +722,7 @@ func _start_idle_animations() -> void:
 	print("[PowerUpUI] Starting idle animations for ", count, " power-ups")
 	
 	# Create gentle wave motion for fanned cards using their proper fan positions
-	var created_tweens := 0
+	var created_tweens: int = 0
 	for i in range(count):
 		var power_up_id: String = power_up_ids[i]
 		var icon: PowerUpIcon = _fanned_icons.get(power_up_id)
@@ -644,12 +758,11 @@ func _stop_idle_animations() -> void:
 			tween.kill()
 	_idle_tweens.clear()
 
-func _on_spine_hovered(_power_up_id: String, mouse_pos: Vector2) -> void:
+func _on_spine_hovered(power_up_id: String, mouse_pos: Vector2) -> void:
 	if _current_state != State.SPINES:
 		return
 	
-	# Build detailed tooltip with title, description, and rarity for each PowerUp
-	_build_detailed_spine_tooltip()
+	_build_detailed_spine_tooltip(power_up_id)
 	
 	# Position and show tooltip
 	await get_tree().process_frame  # Wait for tooltip to calculate its size
@@ -668,11 +781,11 @@ func _on_spine_unhovered(_power_up_id: String) -> void:
 	_spine_tooltip.visible = false
 
 
-## _build_detailed_spine_tooltip()
+## _build_detailed_spine_tooltip(power_up_id)
 ##
-## Builds a rich tooltip showing each PowerUp's title, description, and rarity.
+## Builds a rich tooltip for one hovered PowerUp.
 ## Clears and rebuilds the tooltip VBox content each time.
-func _build_detailed_spine_tooltip() -> void:
+func _build_detailed_spine_tooltip(power_up_id: String = "") -> void:
 	var vbox = _spine_tooltip.get_node_or_null("TooltipContent")
 	if not vbox:
 		return
@@ -683,10 +796,15 @@ func _build_detailed_spine_tooltip() -> void:
 			child.queue_free()
 	
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	var visible_ids: Array[String] = []
+	if power_up_id != "" and _power_up_data.has(power_up_id):
+		visible_ids.append(power_up_id)
+	else:
+		visible_ids = _get_ordered_power_up_ids()
 	
 	# Title header
 	var header = Label.new()
-	header.text = "VIDEOS"
+	header.text = "POWER-UP"
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if vcr_font:
@@ -701,9 +819,9 @@ func _build_detailed_spine_tooltip() -> void:
 	sep.add_theme_constant_override("separation", 4)
 	vbox.add_child(sep)
 	
-	if _power_up_data.is_empty():
+	if visible_ids.is_empty():
 		var empty_label = Label.new()
-		empty_label.text = "No videos owned"
+		empty_label.text = "No power-ups owned"
 		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		empty_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		if vcr_font:
@@ -713,7 +831,8 @@ func _build_detailed_spine_tooltip() -> void:
 		vbox.add_child(empty_label)
 		return
 	
-	for id in _power_up_data.keys():
+	for i in range(visible_ids.size()):
+		var id = visible_ids[i]
 		var data: PowerUpData = _power_up_data[id]
 		if not data:
 			continue
@@ -777,8 +896,7 @@ func _build_detailed_spine_tooltip() -> void:
 		vbox.add_child(entry)
 		
 		# Add separator between entries (not after last)
-		var keys = _power_up_data.keys()
-		if keys.find(id) < keys.size() - 1:
+		if i < visible_ids.size() - 1:
 			var entry_sep = HSeparator.new()
 			entry_sep.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			entry_sep.add_theme_constant_override("separation", 2)
@@ -809,6 +927,7 @@ func remove_power_up(power_up_id: String) -> void:
 	# Remove from data
 	if _power_up_data.has(power_up_id):
 		_power_up_data.erase(power_up_id)
+		_power_up_order.erase(power_up_id)
 	
 	# Remove spine if exists
 	if _spines.has(power_up_id):
@@ -849,6 +968,7 @@ func remove_power_up(power_up_id: String) -> void:
 		_cleanup_empty_state()
 	
 	update_slots_label()
+	_position_spines()
 	print("[PowerUpUI] Removed power-up:", power_up_id)
 
 ## _cleanup_empty_state()
@@ -888,7 +1008,13 @@ func _cleanup_empty_state() -> void:
 	# Clear all references
 	_spines.clear()
 	_power_up_data.clear()
+	_power_up_order.clear()
 	_selected_spine_id = ""
+	if _compact_margin:
+		_compact_margin.visible = true
+		_compact_margin.modulate.a = 1.0
+		_compact_margin.mouse_filter = Control.MOUSE_FILTER_PASS
+	_update_overflow_slot(0)
 
 func update_slots_label() -> void:
 	# Update the slots label to show current/max power-ups
@@ -918,10 +1044,7 @@ func fold_back() -> void:
 
 
 func get_owned_power_up_ids() -> Array[String]:
-	var result: Array[String] = []
-	for id in _power_up_data.keys():
-		result.append(id)
-	return result
+	return _get_ordered_power_up_ids()
 
 
 ## clear_all() -> void
@@ -949,9 +1072,16 @@ func clear_all() -> void:
 	
 	# Clear data
 	_power_up_data.clear()
+	_power_up_order.clear()
 	
 	# Reset to spines state
 	_current_state = State.SPINES
+	_selected_spine_id = ""
+	if _compact_margin:
+		_compact_margin.visible = true
+		_compact_margin.modulate.a = 1.0
+		_compact_margin.mouse_filter = Control.MOUSE_FILTER_PASS
+	_update_overflow_slot(0)
 	
 	# Update label
 	update_slots_label()
@@ -1194,15 +1324,8 @@ func _gui_input(event: InputEvent) -> void:
 				_fold_back_cards()
 				get_viewport().set_input_as_handled()
 		elif _current_state == State.SPINES and not _is_animating:
-			# Fan out when clicking empty space in the container
-			var clicked_on_spine: bool = false
-			for power_up_id in _spines.keys():
-				var spine = _spines[power_up_id]
-				if spine and spine.get_global_rect().has_point(event.global_position):
-					clicked_on_spine = true
-					break
-			if not clicked_on_spine:
-				_fan_out_cards()
+			if not _power_up_data.is_empty():
+				_open_fan_view()
 				get_viewport().set_input_as_handled()
 
 ## _apply_hover_tooltip_style(panel)

@@ -33,4 +33,4 @@ offset_top = 429.0
 offset_right = 194.0
 offset_bottom = 452.0
 theme_override_fonts/font = ExtResource("3_m0mdk")
-text = "0/10"
+text = "0/5"

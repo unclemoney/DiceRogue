@@ -4,7 +4,7 @@ class_name AddMaxPowerUpConsumable
 signal max_power_up_increased(new_max: int)
 
 # Maximum allowed power-up slots (hard cap)
-const ABSOLUTE_MAX_SLOTS := 7
+const ABSOLUTE_MAX_SLOTS := PowerUpUI.ABSOLUTE_MAX_POWER_UPS
 
 func _ready() -> void:
 	add_to_group("consumables")

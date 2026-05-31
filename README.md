@@ -1190,7 +1190,7 @@ The **Synergy System** rewards players for collecting PowerUps with matching rat
 **Core Mechanics:**
 - **Matching Set Bonus**: Collect 5 PowerUps of the same rating → +50 additive bonus per set
 - **Rainbow Bonus**: Collect one PowerUp of each rating (G, PG, PG-13, R, NC-17) → 5x multiplier
-- **Rating Display**: Each PowerUp spine shows its rating at the bottom (shortened: PG-13→"13", NC-17→"17")
+- **Rating Display**: Each compact PowerUp tile shows its rating badge (shortened: PG-13→"13", NC-17→"17")
 
 **Rating Tiers:**
 | Rating | Spine Display | Color | Description |
@@ -1203,7 +1203,7 @@ The **Synergy System** rewards players for collecting PowerUps with matching rat
 
 **Synergy Bonuses:**
 - **Set Bonus (Additive)**: For each complete set of 5 same-rated PowerUps, gain +50 additive points
-  - Example: 10 G-rated PowerUps = 2 sets = +100 additive bonus
+  - Current slot limits allow one full 5-card set at a time under normal play (base cap 5, upgradeable to 7)
 - **Rainbow Bonus (Multiplier)**: Having at least one of each rating (G, PG, PG-13, R, NC-17) grants 5x multiplier
   - Example: G, PG, 13, R, 17 = Rainbow bonus = 5x score multiplier
 - **Stacking**: Set bonuses stack additively, rainbow bonus is either active (5x) or inactive (1x)
@@ -1215,9 +1215,10 @@ The **Synergy System** rewards players for collecting PowerUps with matching rat
 - Bonuses automatically recalculate when PowerUps are granted or revoked
 
 **PowerUp Spine Display:**
-- Each spine shows abbreviated title at top and rating at bottom
-- Rating colors match tier (G=green, PG=yellow, 13=orange, R=red, 17=dark red)
-- Helps players visually track their rating collection at a glance
+- The collapsed PowerUp bar uses a fixed 6-column row: 5 visible PowerUp tiles plus a passive `+MORE` overflow slot
+- Clicking the PowerUp area only fans out when the player owns at least one PowerUp
+- Compact tiles show PowerUp icon art, abbreviated title, and rating badge color (G=green, PG=yellow, 13=orange, R=red, 17=magenta-red)
+- Helps players visually track their rating collection at a glance while preserving upper-bar space
 
 **Debug Commands (Synergies Tab):**
 - **Show Synergy Status**: Print complete status to console
@@ -1250,10 +1251,13 @@ var total_matching = synergy_manager.get_total_matching_bonus()
   - Atlas grid: 96×143px cells, formula `Rect2(8 + col*99, 7 + row*148, 96, 143)`
   - Assignment: interleaved across sheets by alphabetical order (`sheet = i % 5`, `slot = i / 5`)
 - **Card Size**: 120×180 pixels (PowerUpIcon scene and script)
-- **Fanout Layout**: ≤5 cards display as a single centered row; 6–10 cards display as 2 rows × 5 columns with 30px spacing
+- **Collapsed Bar Layout**: 6 equal-width columns in the gameplay upper bar, with 5 visible PowerUp tiles and a sixth overflow slot for `+MORE`
+- **Collapsed Icon Target**: Compact tile art currently fits a roughly 96×88 px slot; replacement icon exports should target 64×64 px with a safe motif around 56×56 px
+- **Fanout Layout**: ≤5 cards display as a single centered row; 6–7 cards display as 2 rows with the existing fanned-card view
 
 ### UI Architecture
-- **Spine/Fan System**: Cards can be displayed as compact spines or fanned out for interaction
+- **PowerUp Slot Rules**: Players start with 5 PowerUp slots and can upgrade to a hard cap of 7
+- **Spine/Fan System**: PowerUps collapse into compact upper-bar tiles and fan out into full cards for interaction
 - **PowerUpUI** (`Scripts/UI/power_up_ui.gd`) - Manages power-up display
 - **ConsumableUI** (`Scripts/UI/consumable_ui.gd`) - Manages consumable display
 - **ShopUI** (`Scripts/UI/shop_ui.gd`) - In-game purchasing with reroll functionality
