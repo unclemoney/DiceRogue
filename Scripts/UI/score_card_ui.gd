@@ -1734,27 +1734,46 @@ func _on_score_changed_from_scorecard(total_score: int) -> void:
 func _apply_score_breakdown_theme() -> void:
 	# Use transparent backgrounds on score labels so neon_energy shader shows through.
 	# The old score_breakdown_theme.tres used an opaque StyleBoxTexture that covered the shader.
-	var transparent_style = StyleBoxFlat.new()
-	transparent_style.bg_color = SUMMARY_PANEL_BG_SOFT
-	transparent_style.set_corner_radius_all(8)
-	transparent_style.border_color = SUMMARY_PANEL_BORDER
-	transparent_style.set_border_width_all(1)
-	transparent_style.shadow_color = Color(0.137255, 0.411765, 0.415686, 0.25)
-	transparent_style.shadow_size = 3
-	var panel_style = StyleBoxFlat.new()
-	panel_style.bg_color = SUMMARY_PANEL_BG
-	panel_style.border_color = SUMMARY_PANEL_BORDER
-	panel_style.set_border_width_all(2)
-	panel_style.set_corner_radius_all(12)
-	panel_style.corner_detail = 6
-	panel_style.shadow_color = Color(0.137255, 0.411765, 0.415686, 0.2)
-	panel_style.shadow_size = 6
+	var best_hand_panel_style = StyleBoxFlat.new()
+	best_hand_panel_style.bg_color = SUMMARY_PANEL_BG
+	best_hand_panel_style.border_color = SUMMARY_PANEL_BORDER
+	best_hand_panel_style.set_border_width_all(4)
+	best_hand_panel_style.set_corner_radius_all(18)
+	best_hand_panel_style.corner_detail = 8
+	best_hand_panel_style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.45)
+	best_hand_panel_style.shadow_size = 8
+
+	var total_score_panel_style = best_hand_panel_style.duplicate()
+	total_score_panel_style.border_color = SUMMARY_PANEL_ACCENT
+	total_score_panel_style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.55)
+	total_score_panel_style.shadow_size = 10
+
+	var additive_chip_style = StyleBoxFlat.new()
+	additive_chip_style.bg_color = Color(0.247059, 0.219608, 0.345098, 0.42)
+	additive_chip_style.border_color = SUMMARY_ADDITIVE
+	additive_chip_style.set_border_width_all(2)
+	additive_chip_style.set_corner_radius_all(12)
+	additive_chip_style.corner_detail = 8
+	additive_chip_style.content_margin_left = 6
+	additive_chip_style.content_margin_right = 6
+	additive_chip_style.content_margin_top = 3
+	additive_chip_style.content_margin_bottom = 3
+	additive_chip_style.shadow_color = Color(0.713725, 0.301961, 0.478431, 0.22)
+	additive_chip_style.shadow_size = 4
+
+	var multiplier_chip_style = additive_chip_style.duplicate()
+	multiplier_chip_style.border_color = SUMMARY_PANEL_ACCENT
+	multiplier_chip_style.shadow_color = Color(0.137255, 0.411765, 0.415686, 0.24)
+
 	if best_hand_panel:
-		best_hand_panel.add_theme_stylebox_override("panel", panel_style)
+		best_hand_panel.add_theme_stylebox_override("panel", best_hand_panel_style)
 	if total_score_panel:
-		total_score_panel.add_theme_stylebox_override("panel", panel_style.duplicate())
+		total_score_panel.add_theme_stylebox_override("panel", total_score_panel_style)
 	if total_score_white_background:
-		total_score_white_background.color = Color(0.247059, 0.219608, 0.345098, 0.08)
+		total_score_white_background.color = Color(0.137255, 0.411765, 0.415686, 0.08)
+	var best_hand_separator = get_node_or_null("VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/HSeparator") as HSeparator
+	if best_hand_separator:
+		best_hand_separator.modulate = Color(0.713725, 0.301961, 0.478431, 0.55)
 	if best_hand_header_label:
 		best_hand_header_label.add_theme_color_override("font_color", SUMMARY_TEXT_SOFT)
 		best_hand_header_label.add_theme_color_override("font_outline_color", SUMMARY_OUTLINE)
@@ -1767,30 +1786,38 @@ func _apply_score_breakdown_theme() -> void:
 		best_hand_label.custom_minimum_size = Vector2(0, 24)
 		best_hand_label.fit_content = false
 	if additive_header_label:
-		additive_header_label.add_theme_color_override("font_color", SUMMARY_TEXT_SOFT)
+		additive_header_label.add_theme_color_override("font_color", SUMMARY_ADDITIVE)
 		additive_header_label.add_theme_color_override("font_outline_color", SUMMARY_OUTLINE)
 		additive_header_label.add_theme_constant_override("outline_size", 1)
 	if multiplier_header_label:
-		multiplier_header_label.add_theme_color_override("font_color", SUMMARY_TEXT_SOFT)
+		multiplier_header_label.add_theme_color_override("font_color", SUMMARY_POSITIVE)
 		multiplier_header_label.add_theme_color_override("font_outline_color", SUMMARY_OUTLINE)
 		multiplier_header_label.add_theme_constant_override("outline_size", 1)
 	if additive_score_label:
-		additive_score_label.add_theme_stylebox_override("normal", transparent_style)
+		additive_score_label.add_theme_stylebox_override("normal", additive_chip_style)
 		additive_score_label.add_theme_color_override("font_color", SUMMARY_TEXT)
 		additive_score_label.add_theme_color_override("font_outline_color", SUMMARY_OUTLINE)
 		additive_score_label.add_theme_constant_override("outline_size", 1)
+		additive_score_label.add_theme_color_override("font_shadow_color", Color(0.070588, 0.062745, 0.101961, 0.85))
+		additive_score_label.add_theme_constant_override("shadow_offset_x", 1)
+		additive_score_label.add_theme_constant_override("shadow_offset_y", 1)
 		print("[ScoreCardUI] Applied transparent style to additive label for shader visibility")
 	if multiplier_score_label:
-		var mul_style = transparent_style.duplicate()
-		multiplier_score_label.add_theme_stylebox_override("normal", mul_style)
+		multiplier_score_label.add_theme_stylebox_override("normal", multiplier_chip_style)
 		multiplier_score_label.add_theme_color_override("font_color", SUMMARY_TEXT)
 		multiplier_score_label.add_theme_color_override("font_outline_color", SUMMARY_OUTLINE)
 		multiplier_score_label.add_theme_constant_override("outline_size", 1)
+		multiplier_score_label.add_theme_color_override("font_shadow_color", Color(0.070588, 0.062745, 0.101961, 0.85))
+		multiplier_score_label.add_theme_constant_override("shadow_offset_x", 1)
+		multiplier_score_label.add_theme_constant_override("shadow_offset_y", 1)
 		print("[ScoreCardUI] Applied transparent style to multiplier label for shader visibility")
 	if total_score_label:
 		total_score_label.add_theme_color_override("default_color", SUMMARY_TEXT)
 		total_score_label.add_theme_color_override("font_outline_color", SUMMARY_OUTLINE)
-		total_score_label.add_theme_constant_override("outline_size", 1)
+		total_score_label.add_theme_constant_override("outline_size", 2)
+		total_score_label.add_theme_color_override("font_shadow_color", Color(0.070588, 0.062745, 0.101961, 0.9))
+		total_score_label.add_theme_constant_override("shadow_offset_x", 1)
+		total_score_label.add_theme_constant_override("shadow_offset_y", 1)
 	if additive_shader_bg and additive_shader_bg.material:
 		var additive_mat = additive_shader_bg.material as ShaderMaterial
 		additive_mat.set_shader_parameter("energy_color", Vector4(0.713725, 0.301961, 0.478431, 1.0))
@@ -1802,7 +1829,7 @@ func _apply_score_breakdown_theme() -> void:
 	if score_panel_shader_bg and score_panel_shader_bg.material:
 		var score_panel_mat = score_panel_shader_bg.material as ShaderMaterial
 		score_panel_mat.set_shader_parameter("effect_strength", 0.0)
-		score_panel_mat.set_shader_parameter("intensity", 0.0)
+		score_panel_mat.set_shader_parameter("intensity", 0.12)
 	# TotalScorePanel uses the theme's panel_border.png StyleBoxTexture (same as BestHandPanel).
 	# WhiteBackground and ScorePanelShaderBG are direct children with show_behind_parent=true
 	# so they render before the StyleBox, letting the border frame show on top.

@@ -19,6 +19,7 @@ A comprehensive animation system that provides satisfying visual feedback when p
 ### 💫 Floating Numbers with VCR Font
 - All floating numbers use the VCR_OSD_MONO font for consistency
 - **Improved positioning**: Numbers appear above and centered on their source
+- Score popups now render inside mall-core glass chips with dark plum fill and magenta/teal neon borders
 - Numbers float upward and fade out (duration scaled by speed)
 - Different sizes and colors for different types of values
 - Configurable outline for visibility
@@ -69,6 +70,14 @@ A comprehensive animation system that provides satisfying visual feedback when p
 6. **Complete** (3.8s/speed): Animation sequence ends
 
 ## Technical Implementation
+
+### Score Breakdown Panel Theme
+- The score summary surfaces now use the shared mall-core shell language from the gameplay UI
+- **Best Hand panel**: dark plum glass shell with neon magenta border and outlined VCR text
+- **Additive chip**: magenta-accented score shell layered over the additive neon shader
+- **Multiplier chip**: teal-accented score shell layered over the multiplier neon shader
+- **Total score panel**: heavier teal-bordered shell with the score panel shader running underneath
+- Transient floating score chips spawned by `ScoringAnimationController` use the same shell language so the breakdown animation reads as one system
 
 ### Data-Driven Animations
 - Uses real `breakdown_info` from ScoreCard scoring calculations

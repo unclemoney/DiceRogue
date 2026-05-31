@@ -121,6 +121,9 @@ func button_hover(node: CanvasItem) -> Tween:
 	if node is BaseButton and (node as BaseButton).disabled:
 		return null
 	_center_pivot(node)
+	var base_scale := _get_button_base_scale(node)
+	TweenFX.stop(node, TweenFX.Animations.RUBBER_BAND)
+	node.scale = base_scale
 	return TweenFX.rubber_band(node, 0.3, 0.05) #2
 
 ## button_unhover(node)
@@ -133,8 +136,8 @@ func button_unhover(node: CanvasItem) -> void:
 		return
 	if node is BaseButton and (node as BaseButton).disabled:
 		return
-	TweenFX.stop(node, TweenFX.Animations.JELLY)
-	node.scale = Vector2.ONE
+	TweenFX.stop(node, TweenFX.Animations.RUBBER_BAND)
+	node.scale = _get_button_base_scale(node)
 
 ## button_press(node)
 ##
@@ -148,11 +151,18 @@ func button_press(node: CanvasItem) -> Tween:
 		return null
 	_center_pivot(node)
 	# Prevent scale compounding when spam-clicked
+	TweenFX.stop(node, TweenFX.Animations.RUBBER_BAND)
 	TweenFX.stop(node, TweenFX.Animations.PUNCH_IN)
+	node.scale = _get_button_base_scale(node)
+	return TweenFX.punch_in(node, 0.12, 0.2)
+
+## _get_button_base_scale(node)
+##
+## Captures the button's resting scale once so hover/press effects always restore the same shape.
+func _get_button_base_scale(node: CanvasItem) -> Vector2:
 	if not _button_base_scales.has(node):
 		_button_base_scales[node] = node.scale
-	node.scale = _button_base_scales[node]
-	return TweenFX.punch_in(node, 0.12, 0.2)
+	return _button_base_scales[node]
 
 ## button_denied(node)
 ##

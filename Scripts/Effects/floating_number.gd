@@ -22,6 +22,12 @@ signal animation_complete
 # Panel configuration
 @export var panel_padding: int = 8
 @export var panel_color: Color = Color(0, 0, 0, 1)
+@export var panel_border_color: Color = Color(0, 0, 0, 0)
+@export var panel_border_width: int = 0
+@export var panel_corner_radius: int = 0
+@export var panel_shadow_color: Color = Color(0, 0, 0, 0)
+@export var panel_shadow_size: int = 0
+@export var rotate_panel: bool = true
 
 # Dark color palette the panel randomly picks from
 const PANEL_DARK_COLORS: Array = [
@@ -38,17 +44,17 @@ const PANEL_DARK_COLORS: Array = [
 # VCR Font resource
 const VCR_FONT = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 
-var panel: ColorRect
+var panel: Panel
 var label: Label
 var animation_tween: Tween
+var _uses_custom_panel_style: bool = false
 
 ## _ready()
 ##
 ## Initialize the floating number component.
 func _ready() -> void:
 	# Create background panel (added first so it renders behind label)
-	panel = ColorRect.new()
-	panel.color = panel_color
+	panel = Panel.new()
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(panel)
 	
@@ -86,6 +92,25 @@ func setup(value: String, font_size_scale: float = 1.0, color: Color = default_c
 	# Size and position the background panel, apply random rotation
 	_setup_panel()
 
+## configure_panel_style(panel_style)
+##
+## Apply an explicit panel shell for callers that need a consistent visual language.
+func configure_panel_style(panel_style: Dictionary = {}) -> void:
+	_uses_custom_panel_style = not panel_style.is_empty()
+	if not _uses_custom_panel_style:
+		return
+
+	panel_color = panel_style.get("fill_color", panel_color)
+	panel_border_color = panel_style.get("border_color", panel_border_color)
+	panel_border_width = int(panel_style.get("border_width", panel_border_width))
+	panel_corner_radius = int(panel_style.get("corner_radius", panel_corner_radius))
+	panel_shadow_color = panel_style.get("shadow_color", panel_shadow_color)
+	panel_shadow_size = int(panel_style.get("shadow_size", panel_shadow_size))
+	rotate_panel = bool(panel_style.get("rotate_panel", rotate_panel))
+
+	if panel:
+		_apply_panel_style()
+
 ## _setup_panel()
 ##
 ## Size the background panel to a square based on label text size,
@@ -113,11 +138,39 @@ func _setup_panel() -> void:
 	label.rotation = 0.0
 	
 	# Randomly rotate ONLY the panel — the label is unaffected
-	var angles = [0.0, PI / 4.0]
-	panel.rotation = angles[randi() % 2]
+	if rotate_panel:
+		var angles = [0.0, PI / 4.0]
+		panel.rotation = angles[randi() % 2]
+	else:
+		panel.rotation = 0.0
 	
-	# Pick a random dark color from the palette
-	panel.color = PANEL_DARK_COLORS[randi() % PANEL_DARK_COLORS.size()]
+	if not _uses_custom_panel_style:
+		# Preserve the existing random dark chip behavior for generic callers.
+		panel_color = PANEL_DARK_COLORS[randi() % PANEL_DARK_COLORS.size()]
+		panel_border_color = Color(0, 0, 0, 0)
+		panel_border_width = 0
+		panel_corner_radius = 0
+		panel_shadow_color = Color(0, 0, 0, 0)
+		panel_shadow_size = 0
+
+	_apply_panel_style()
+
+## _apply_panel_style()
+##
+## Render the floating chip with the currently configured fill, border, and shadow.
+func _apply_panel_style() -> void:
+	if not panel:
+		return
+
+	var style_box = StyleBoxFlat.new()
+	style_box.bg_color = panel_color
+	style_box.border_color = panel_border_color
+	style_box.set_border_width_all(panel_border_width)
+	style_box.set_corner_radius_all(panel_corner_radius)
+	style_box.corner_detail = 8
+	style_box.shadow_color = panel_shadow_color
+	style_box.shadow_size = panel_shadow_size
+	panel.add_theme_stylebox_override("panel", style_box)
 
 ## start_animation()
 ##
@@ -152,12 +205,14 @@ func _on_animation_complete() -> void:
 ##
 ## Static utility function to create and start a floating number effect.
 static func create_floating_number(parent: Node, target_position: Vector2, value: String, 
-	font_scale: float = 1.0, color: Color = Color.YELLOW) -> FloatingNumber:
+	font_scale: float = 1.0, color: Color = Color.YELLOW, panel_style: Dictionary = {}) -> FloatingNumber:
 	
 	var floating_number = preload("res://Scripts/Effects/floating_number.gd").new()
 	parent.add_child(floating_number)
 	
 	floating_number.global_position = target_position
+	if not panel_style.is_empty():
+		floating_number.configure_panel_style(panel_style)
 	floating_number.setup(value, font_scale, color)
 	floating_number.start_animation()
 	

@@ -52,8 +52,8 @@ const SCORECARD_RATIO: float = 77.0
 const RIGHT_BUTTON_RATIO: float = 23.0
 
 # Visual theme colors
-const PANEL_BG: Color = Color(0.247059, 0.219608, 0.345098, 0.56)
-const PANEL_BORDER: Color = Color(0.713725, 0.301961, 0.478431, 0.92)
+const PANEL_BG: Color = Color(0.247059, 0.219608, 0.345098, 0.26)
+const PANEL_BORDER: Color = Color(0.713725, 0.301961, 0.478431, 0.02)
 const PANEL_BORDER_WIDTH: int = 2
 const PANEL_CORNER_RADIUS: int = 16
 const PANEL_SHADOW: Color = Color(0.070588, 0.062745, 0.101961, 0.34)

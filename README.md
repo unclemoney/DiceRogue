@@ -651,12 +651,14 @@ The **Score Breakdown UI** provides visual feedback during scoring animations, s
 - **LogbookPanel**: ~~Shows recent scoring history~~ **DEPRECATED** — hidden; kept in scene for future revival
 - **BestHandPanel**: Contains best hand name with score preview and score breakdown labels
   - **BestHandScore**: Shows the highest-scoring category for current dice with score preview (e.g. "Full House → 25")
-  - **AdditiveScoreLabel**: Displays cumulative additive bonuses ("+X") with **Neon Energy shader** (gold/yellow electric arcs)
-  - **MultiplierScoreLabel**: Displays combined multiplier effects ("×Y") with **Neon Energy shader** (cyan/blue electric arcs; red in division mode)
+  - Uses the shared mall-core glass shell with dark plum fill, neon magenta borders, and VCR-styled outlined text
+  - **AdditiveScoreLabel**: Displays cumulative additive bonuses ("+X") with a magenta-accented chip shell and **Neon Energy shader**
+  - **MultiplierScoreLabel**: Displays combined multiplier effects ("×Y") with a teal-accented chip shell and **Neon Energy shader** (red in division mode)
   - **Category Highlight**: The matching scorecard button pulses gold to guide the player
   - **Idle Float**: Best hand label gently bobs up/down for a "living" feel
 - **TotalScorePanel**: Contains the total score display with animated roll-up and milestone-driven shader background
-  - **Score Counter Roll-Up**: Total score counts up from old→new with gold flash
+  - Uses a heavier mall-core shell with teal primary border to mark the final score lane
+  - **Score Counter Roll-Up**: Total score counts up from old→new with theme-matched flash and pulse
   - **Score Panel Energy Shader**: Background energy field intensifies with score; color shifts at milestone tiers (100=gold, 250=blue, 500=purple, 1000=rainbow)
   - **Milestone Celebrations**: Screen shake + panel flash at 100/250/500/1000 point thresholds
 
@@ -680,15 +682,16 @@ The additive score starts with a **base value** calculated from the best hand:
 **Animation Integration:**
 The panels update in real-time during the `ScoringAnimationController` sequence:
 1. Dice bounce animation starts
-2. Additive panel shows base score (yellow dim) during preview, then updates with consumable animations (yellow bounce + shader ramp-up)
-3. Multiplier panel updates after powerup animations (cyan bounce + shader ramp-up on value > 1.0)
+2. Additive panel shows base score inside the magenta mall-core chip during preview, then updates with consumable animations and shader ramp-up
+3. Multiplier panel updates inside the teal mall-core chip after powerup animations and shader ramp-up on value > 1.0
 4. Final score floating number appears
-5. Total score counter rolls up from old→new with gold flash
+5. Total score counter rolls up from old→new with teal-accented flash and shell pulse
 6. Score panel shader intensity updates; milestone celebrations fire if threshold crossed
 7. Score label "pops" into existence (scale 0→1.2→1.0) when category first scored
 
 **UX Extras:**
 - **Score Label Pop**: When any category score is first set (null→value), plays a quick pop animation with gold flash
+- **Transient Score Chips**: Floating numbers spawned during scoring now use mall-core plum glass chips with magenta/teal borders so the animation language matches the score summary footer
 - **Best Hand Idle Float**: Subtle sin-wave bob (±2px) on the best hand label
 - **Button Hover Glow**: Warm highlight (Color 1.1, 1.1, 0.9) on hover over unscored category buttons
 - **Label Shimmer**: When additive/multiplier values are non-default, shader intensity gently oscillates
