@@ -1180,7 +1180,7 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5, 7)
 	_add_default_power_up("debuff_destroyer", "Debuff Destroyer", "Removes random debuff when sold", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 4, 7)
-	_add_default_power_up("extra_coupons", "Extra Coupons", "Hold 2 additional consumables (5 max)", 
+	_add_default_power_up("extra_coupons", "Extra Coupons", "Consumable slots are fixed at 4", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 20, 7, {"cumulative": true})
 	_add_default_power_up("power_surge", "Power Surge", "+0.15x multiplier per owned PowerUp", 
 		UnlockConditionClass.ConditionType.WIN_GAMES, 15, 7)

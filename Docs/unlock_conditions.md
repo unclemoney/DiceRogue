@@ -48,7 +48,7 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | chore_champion | Chore Champion | CHORE_COMPLETIONS | 5 | Chores are 2x more effective (cumulative) |
 | lock_and_load | Lock & Load | LOCK_CONSTRAINT | 75 | +$3 for each die locked (unlock: score 75+ over 3 turns, max 2 locks) |
 | pair_paradise | Pair Paradise | SCORE_POINTS | 100 | Pair bonuses based on pattern |
-| extra_coupons | Extra Coupons | CHORE_COMPLETIONS | 20 | Hold 2 additional consumables (5 max) (cumulative) |
+| extra_coupons | Extra Coupons | CHORE_COMPLETIONS | 20 | Consumable slots are fixed at 4 (cumulative) |
 | purple_payout | Purple Payout | EARN_MONEY | 75 | Earn $3 per purple die when scoring |
 | mod_money | Mod Money | COMPLETE_GAME | 2 | Earn $8 per modded die when scoring |
 | blue_safety_net | Blue Safety Net | EARN_MONEY | 150 | Halves blue dice penalties |

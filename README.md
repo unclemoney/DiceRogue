@@ -1257,7 +1257,8 @@ var total_matching = synergy_manager.get_total_matching_bonus()
 
 ### UI Architecture
 - **PowerUp Slot Rules**: Players start with 5 PowerUp slots and can upgrade to a hard cap of 7
-- **Spine/Fan System**: PowerUps collapse into compact upper-bar tiles and fan out into full cards for interaction
+- **Consumable Slot Rules**: Players have a fixed cap of 4 consumables. The compact row displays 3 visible consumable tiles and a fourth overflow slot that shows `+1` when all 4 slots are filled
+- **Spine/Fan System**: PowerUps and Consumables collapse into compact upper-bar tiles and fan out into full cards for interaction
 - **PowerUpUI** (`Scripts/UI/power_up_ui.gd`) - Manages power-up display
 - **ConsumableUI** (`Scripts/UI/consumable_ui.gd`) - Manages consumable display
 - **ShopUI** (`Scripts/UI/shop_ui.gd`) - In-game purchasing with reroll functionality
@@ -1475,11 +1476,9 @@ A read-only editor tool for viewing all game resources in one centralized interf
   - Synergizes excellently with consumable-heavy strategies
 
 ### Inventory PowerUps
-- **ExtraCouponsPowerUp**: Increases maximum consumable slots from 3 to 5 (Rare, $250, R-rated)
-  - Allows holding 2 additional consumables beyond the default 3
-  - When sold or removed, triggers overflow handling: if you have more than 3 consumables, the consumable UI opens in "overflow mode" forcing you to use or sell excess consumables before continuing
-  - The overflow UI displays "Must sell [X]" message and blocks closing until you're back within limit
-  - Great for consumable-heavy builds that rely on having multiple options available
+- **ExtraCouponsPowerUp**: Consumable slots are fixed at 4 (Rare, $250, R-rated)
+  - No longer increases consumable slots; kept for backward compatibility with existing saves
+  - When sold or removed, no overflow handling occurs since the cap is fixed
 
 ### PowerUp Ratings
 All PowerUps have content ratings that interact with the Mom system:

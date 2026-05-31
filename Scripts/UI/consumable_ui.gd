@@ -23,10 +23,8 @@ var _is_animating: bool = false
 
 # Layout properties
 var _spine_shelf_y: float = 0.0  # Filled by _adapt_layout() from container size
-var _spine_spacing: float = 30.0  # Horizontal spacing between spines
 var _fan_center: Vector2  # Center point for fanned cards
 var _selected_spine_id: String = ""
-var _spine_scale: float = 1.0  # Scale factor applied to fit container
 
 # Animation and background
 var _background: ColorRect
@@ -42,9 +40,29 @@ var _overflow_mode: bool = false
 var _overflow_target_count: int = 0
 var _overflow_label: Label = null
 
+# Compact row constants
+const BASE_MAX_CONSUMABLES: int = 4
+const ABSOLUTE_MAX_CONSUMABLES: int = 4
+const COMPACT_VISIBLE_CONSUMABLES: int = 3
+const COMPACT_SLOT_COUNT: int = 4
+const COMPACT_SLOT_SIZE: Vector2 = Vector2(72, 80)
+const COMPACT_SLOT_SPACING: int = 6
+const COMPACT_ROW_MARGIN: int = 8
+
+# Compact row state
+var _consumable_order: Array[String] = []
+var _compact_margin: MarginContainer = null
+var _compact_row: HBoxContainer = null
+var _slot_cells: Array[PanelContainer] = []
+var _slot_contents: Array[Control] = []
+var _compact_overflow_label: Label = null
+
 func _ready() -> void:
 	print("[ConsumableUI] Initializing new spine-based system...")
 	add_to_group("consumable_ui")
+	
+	# Clamp max_consumables to intended range
+	max_consumables = clampi(max_consumables, BASE_MAX_CONSUMABLES, ABSOLUTE_MAX_CONSUMABLES)
 	
 	# Hide hardcoded labels when inside a container (container provides glowing title)
 	var label_node = get_node_or_null("Label")
@@ -102,6 +120,9 @@ func _ready() -> void:
 	# Initialize slots label
 	update_slots_label()
 	
+	# Build compact row
+	_create_compact_row()
+	
 	# Defer layout until container size is known
 	resized.connect(_on_resized)
 	call_deferred("_adapt_layout")
@@ -118,6 +139,97 @@ func _adapt_layout() -> void:
 	if size.x <= 0 or size.y <= 0:
 		return
 	_spine_shelf_y = size.y * 0.05
+	
+	# Update fan center for modal positioning
+	_fan_center = get_viewport_rect().size / 2.0
+	
+	# Position compact row at bottom center
+	if _compact_row:
+		var row_width: float = COMPACT_SLOT_COUNT * (COMPACT_SLOT_SIZE.x + COMPACT_SLOT_SPACING) - COMPACT_SLOT_SPACING
+		_compact_row.position = Vector2((size.x - row_width) / 2.0, size.y - COMPACT_SLOT_SIZE.y - COMPACT_ROW_MARGIN)
+
+func _create_compact_row() -> void:
+	# Create margin container
+	_compact_margin = MarginContainer.new()
+	_compact_margin.name = "CompactMargin"
+	_compact_margin.mouse_filter = Control.MOUSE_FILTER_PASS
+	add_child(_compact_margin)
+	
+	# Create HBox for slots
+	_compact_row = HBoxContainer.new()
+	_compact_row.name = "CompactRow"
+	_compact_row.mouse_filter = Control.MOUSE_FILTER_PASS
+	_compact_row.add_theme_constant_override("separation", COMPACT_SLOT_SPACING)
+	_compact_margin.add_child(_compact_row)
+	
+	# Create slot cells
+	_slot_cells.clear()
+	_slot_contents.clear()
+	for i in range(COMPACT_SLOT_COUNT):
+		var cell: PanelContainer = PanelContainer.new()
+		cell.name = "Slot%d" % i
+		cell.custom_minimum_size = COMPACT_SLOT_SIZE
+		cell.mouse_filter = Control.MOUSE_FILTER_PASS
+		cell.add_theme_stylebox_override("panel", _make_compact_slot_style())
+		_compact_row.add_child(cell)
+		_slot_cells.append(cell)
+		_slot_contents.append(null)
+	
+	print("[ConsumableUI] Created compact row with %d slots" % COMPACT_SLOT_COUNT)
+
+func _make_compact_slot_style() -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.12, 0.10, 0.14, 0.6)
+	style.border_color = Color(0.3, 0.25, 0.35, 0.8)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	style.corner_detail = 6
+	return style
+
+func _update_overflow_slot(overflow_count: int) -> void:
+	var last_index: int = COMPACT_SLOT_COUNT - 1
+	var cell: PanelContainer = _slot_cells[last_index]
+	
+	# Clear existing content
+	for child in cell.get_children():
+		child.queue_free()
+	_slot_contents[last_index] = null
+	
+	if overflow_count > 0:
+		if not _compact_overflow_label:
+			_compact_overflow_label = Label.new()
+			_compact_overflow_label.name = "OverflowLabel"
+			_compact_overflow_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			_compact_overflow_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			_compact_overflow_label.add_theme_font_size_override("font_size", 14)
+			_compact_overflow_label.add_theme_color_override("font_color", Color(0.7, 0.3, 0.48, 1.0))
+		
+		_compact_overflow_label.text = "+%s" % NumberFormatter.format_int(overflow_count)
+		cell.add_child(_compact_overflow_label)
+		_slot_contents[last_index] = _compact_overflow_label
+
+func _assign_spine_to_slot(spine: ConsumableSpine, slot_index: int) -> void:
+	if slot_index < 0 or slot_index >= _slot_cells.size():
+		return
+	
+	var cell: PanelContainer = _slot_cells[slot_index]
+	
+	# Clear existing content
+	for child in cell.get_children():
+		child.queue_free()
+	
+	# Reparent spine to cell
+	if spine.get_parent():
+		spine.get_parent().remove_child(spine)
+	cell.add_child(spine)
+	
+	# Enable compact mode and center spine in cell
+	spine.set_compact_mode(true)
+	spine.set_anchors_preset(Control.PRESET_CENTER)
+	spine.position = Vector2.ZERO
+	spine.scale = Vector2.ONE
+	
+	_slot_contents[slot_index] = spine
 
 func _create_background() -> void:
 	# Create semi-transparent background for when cards are fanned
@@ -176,6 +288,7 @@ func add_consumable(data: ConsumableData) -> Node:
 	
 	# Store the data
 	_consumable_data[data.id] = data
+	_consumable_order.append(data.id)
 	_active_consumable_count += 1
 	
 	# Create spine
@@ -220,13 +333,13 @@ func add_consumable(data: ConsumableData) -> Node:
 		slide_tween.finished.connect(func():
 			if is_instance_valid(spine):
 				spine.position = orig_pos
-				spine.scale = Vector2(_spine_scale, _spine_scale)
+				spine.scale = Vector2.ONE
 		)
 		if reward_tween:
 			reward_tween.finished.connect(func():
 				if is_instance_valid(spine):
 					spine.position = orig_pos
-					spine.scale = Vector2(_spine_scale, _spine_scale)
+					spine.scale = Vector2.ONE
 			)
 	
 	# Acquisition sound
@@ -241,31 +354,52 @@ func add_consumable(data: ConsumableData) -> Node:
 	return spine
 
 func _position_spines() -> void:
-	var spine_ids: Array = _consumable_spines.keys()
-	var spine_count: int = spine_ids.size()
-	
-	if spine_count == 0:
-		return
-	
-	if size.x <= 0 or size.y <= 0:
-		for spine_id in spine_ids:
-			var spine: ConsumableSpine = _consumable_spines[spine_id]
-			if spine:
-				spine.set_base_position(Vector2.ZERO)
-		return
-	
-	_adapt_layout()
-	
-	var start_x: float = size.x * 0.02
-	var spacing: float = min(_spine_spacing, size.x / max(spine_count, 1))
-	
-	for i in range(spine_count):
-		var spine_id: String = spine_ids[i]
+	# Hide/reparent all spines first
+	for spine_id in _consumable_spines.keys():
 		var spine: ConsumableSpine = _consumable_spines[spine_id]
 		if spine:
-			var pos: Vector2 = Vector2(start_x + i * spacing, _spine_shelf_y)
-			spine.set_base_position(pos)
-			spine.scale = Vector2(_spine_scale, _spine_scale)
+			spine.visible = false
+			if spine.get_parent():
+				spine.get_parent().remove_child(spine)
+	
+	# Clear slot contents tracking
+	for i in range(_slot_contents.size()):
+		_slot_contents[i] = null
+	
+	var ordered_ids: Array[String] = _get_ordered_consumable_ids()
+	var visible_count: int = mini(ordered_ids.size(), COMPACT_VISIBLE_CONSUMABLES)
+	var overflow_count: int = ordered_ids.size() - COMPACT_VISIBLE_CONSUMABLES
+	
+	# Position visible spines in first slots
+	for i in range(visible_count):
+		var spine_id: String = ordered_ids[i]
+		var spine: ConsumableSpine = _consumable_spines.get(spine_id)
+		if spine:
+			_assign_spine_to_slot(spine, i)
+			spine.visible = true
+	
+	# Assign overflow spines to last slot (hidden)
+	if overflow_count > 0:
+		for i in range(COMPACT_VISIBLE_CONSUMABLES, ordered_ids.size()):
+			var spine_id: String = ordered_ids[i]
+			var spine: ConsumableSpine = _consumable_spines.get(spine_id)
+			if spine:
+				_assign_spine_to_slot(spine, COMPACT_SLOT_COUNT - 1)
+				spine.visible = false
+	
+	# Update overflow indicator
+	_update_overflow_slot(overflow_count)
+	
+	# Position compact row
+	_adapt_layout()
+
+func _get_ordered_consumable_ids() -> Array[String]:
+	var result: Array[String] = []
+	# Return IDs in acquisition order, filtering to only owned
+	for id in _consumable_order:
+		if _consumable_data.has(id):
+			result.append(id)
+	return result
 
 func _on_spine_clicked(consumable_id: String) -> void:
 	print("[ConsumableUI] Spine clicked:", consumable_id)
@@ -324,12 +458,11 @@ func _fan_out_cards() -> void:
 	var bg_tween: Tween = create_tween()
 	bg_tween.tween_property(_background, "modulate:a", 1.0, 0.3)
 	
-	# Hide all spines first
-	for spine_id in _consumable_spines.keys():
-		var spine: ConsumableSpine = _consumable_spines[spine_id]
-		if spine:
-			var tween: Tween = create_tween()
-			tween.tween_property(spine, "modulate:a", 0.0, 0.2)
+	# Hide compact row
+	if _compact_margin:
+		var compact_tween: Tween = create_tween()
+		compact_tween.tween_property(_compact_margin, "modulate:a", 0.0, 0.2)
+		compact_tween.tween_callback(func(): _compact_margin.visible = false)
 	
 	# Wait a bit, then create and show fanned icons
 	await get_tree().create_timer(0.2).timeout
@@ -476,11 +609,10 @@ func fold_back() -> void:
 				icon.queue_free()
 		_fanned_icons.clear()
 		
-		# Show spines again
-		for spine_id in _consumable_spines.keys():
-			var spine: ConsumableSpine = _consumable_spines[spine_id]
-			if spine and is_instance_valid(spine):
-				spine.modulate.a = 1.0
+		# Show compact row
+		if _compact_margin:
+			_compact_margin.visible = true
+			_compact_margin.modulate.a = 1.0
 		
 		_current_state = State.SPINES
 		_is_animating = false
@@ -522,22 +654,31 @@ func _fold_back_cards() -> void:
 			tween.tween_property(icon, "modulate:a", 0.0, 0.2)
 			tween.tween_property(icon, "position", _fan_center, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 	
-	# Wait, then clear fanned icons and show spines
+	# Wait, then clear fanned icons and show compact row
 	await get_tree().create_timer(0.3).timeout
 	_clear_fanned_icons()
 	
-	# Show spines again
-	for spine_id in _consumable_spines.keys():
-		var spine: ConsumableSpine = _consumable_spines[spine_id]
-		if spine and is_instance_valid(spine):
-			var tween: Tween = create_tween()
-			tween.tween_property(spine, "modulate:a", 1.0, 0.2)
+	# Show compact row
+	if _compact_margin:
+		_compact_margin.visible = true
+		_compact_margin.modulate.a = 0.0
+		var compact_tween: Tween = create_tween()
+		compact_tween.tween_property(_compact_margin, "modulate:a", 1.0, 0.2)
 	
 	# Re-snap all spines to their correct base positions after fold back
 	_position_spines()
 	
 	_selected_spine_id = ""
 	_is_animating = false
+
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		if _current_state == State.FANNED and not _is_animating:
+			_fold_back_cards()
+		elif _current_state == State.SPINES and not _is_animating:
+			# Only fan out if we own consumables
+			if _active_consumable_count > 0:
+				_fan_out_cards()
 
 func _clear_fanned_icons() -> void:
 	# Stop idle animations before freeing icons to prevent warnings
@@ -608,15 +749,9 @@ func _on_spine_hovered(consumable_id: String, mouse_pos: Vector2) -> void:
 	if not _spine_tooltip or not _consumable_data.has(consumable_id):
 		return
 	
-	# Create tooltip text showing all consumable names
-	var coupon_text: String = ""
-	for id in _consumable_data.keys():
-		var consumable_data: ConsumableData = _consumable_data[id]
-		if coupon_text != "":
-			coupon_text += "\n"
-		coupon_text += consumable_data.display_name
-	
-	_spine_tooltip_label.text = "Coupons:\n" + coupon_text
+	# Show per-consumable tooltip
+	var data: ConsumableData = _consumable_data[consumable_id]
+	_spine_tooltip_label.text = data.display_name
 	_spine_tooltip.position = mouse_pos + Vector2(-50, -_spine_tooltip.size.y * 2)
 	_spine_tooltip.visible = true
 
@@ -849,6 +984,11 @@ func remove_consumable(consumable_id: String) -> void:
 	# Remove from data storage
 	_consumable_data.erase(consumable_id)
 	
+	# Remove from order tracking
+	var order_index: int = _consumable_order.find(consumable_id)
+	if order_index != -1:
+		_consumable_order.remove_at(order_index)
+	
 	# Remove spine if it exists
 	if _consumable_spines.has(consumable_id):
 		var spine: ConsumableSpine = _consumable_spines[consumable_id]
@@ -931,6 +1071,7 @@ func _cleanup_empty_state() -> void:
 	# Clear all references
 	_consumable_spines.clear()
 	_consumable_data.clear()
+	_consumable_order.clear()
 	_active_consumable_count = 0
 	_selected_spine_id = ""
 

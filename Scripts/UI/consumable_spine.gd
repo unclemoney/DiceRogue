@@ -23,6 +23,15 @@ var _hover_offset: Vector2 = Vector2(0, -3)
 var _current_tween: Tween
 var _is_initialized: bool = false
 
+# Compact mode constants
+const COMPACT_SIZE: Vector2 = Vector2(64, 72)
+const ICON_MAX_SIZE: Vector2 = Vector2(48, 48)
+
+# Mall-core styling for compact mode
+const SHELL_BG: Color = Color(0.298039, 0.239216, 0.380392, 1.0)
+const SHELL_BORDER: Color = Color(0.713726, 0.301961, 0.478431, 1.0)
+const SHELL_INNER_GLOW: Color = Color(0.137255, 0.411765, 0.415686, 0.6)
+
 func _ready() -> void:
 	_create_spine_structure()
 	_apply_data_to_ui()
@@ -54,11 +63,26 @@ func _exit_tree() -> void:
 	_tfx.stop_effect(self)
 
 func _set_spine_size() -> void:
-	# Larger size for COUPON_NOTE texture (corkboard style)
+	# Default size for coupon (corkboard style)
 	custom_minimum_size = Vector2(80, 100)
 	set_deferred("size", Vector2(80, 100))
 	# Ensure we can receive mouse clicks
 	mouse_filter = Control.MOUSE_FILTER_STOP
+
+func get_compact_size() -> Vector2:
+	return COMPACT_SIZE
+
+func set_compact_mode(enabled: bool) -> void:
+	if enabled:
+		custom_minimum_size = COMPACT_SIZE
+		set_deferred("size", COMPACT_SIZE)
+		if spine_rect:
+			spine_rect.custom_minimum_size = ICON_MAX_SIZE
+	else:
+		custom_minimum_size = Vector2(80, 100)
+		set_deferred("size", Vector2(80, 100))
+		if spine_rect:
+			spine_rect.custom_minimum_size = Vector2.ZERO
 
 func _create_spine_structure() -> void:
 	# Create spine texture display

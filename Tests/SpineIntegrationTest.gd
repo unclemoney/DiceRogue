@@ -124,25 +124,81 @@ func _ready() -> void:
 			push_error("[SpineIntegrationTest] ✗ Fold-back did not restore compact row state")
 			all_passed = false
 
-	var consumable_ui = game_ui.find_child("ConsumableUI", true, false)
+	var consumable_ui = game_ui.find_child("ConsumableUI", true, false) as ConsumableUI
 	if consumable_ui:
-		var mock_con_data := ConsumableData.new()
-		mock_con_data.id = "test_consumable"
-		mock_con_data.display_name = "Test Consumable"
-		mock_con_data.description = "A test consumable"
-		var con_spine = consumable_ui.add_consumable(mock_con_data)
-		await get_tree().create_timer(0.6).timeout
-		if con_spine:
-			var spine_pos: Vector2 = con_spine.position
-			var container_size: Vector2 = consumable_ui.size
-			var in_bounds: bool = spine_pos.x >= 0 and spine_pos.y >= 0 and spine_pos.x + con_spine.size.x <= container_size.x and spine_pos.y + con_spine.size.y <= container_size.y
-			if in_bounds:
-				print("[SpineIntegrationTest] ✓ Consumable spine positioned inside container (pos: %s size: %s in %s)" % [spine_pos, con_spine.size, container_size])
-			else:
-				push_error("[SpineIntegrationTest] ✗ Consumable spine OUT OF BOUNDS: pos=%s size=%s container=%s" % [spine_pos, con_spine.size, container_size])
-				all_passed = false
+		var click_event := InputEventMouseButton.new()
+		click_event.button_index = MOUSE_BUTTON_LEFT
+		click_event.pressed = true
+		click_event.position = consumable_ui.size / 2.0
+		click_event.global_position = consumable_ui.get_global_rect().get_center()
+
+		# Test: empty consumable area does not fan out
+		consumable_ui._gui_input(click_event)
+		await get_tree().process_frame
+		if consumable_ui.get("_current_state") == ConsumableUI.State.SPINES:
+			print("[SpineIntegrationTest] ✓ Empty Consumable area does not fan out")
 		else:
-			push_error("[SpineIntegrationTest] ✗ Consumable spine not created")
+			push_error("[SpineIntegrationTest] ✗ Empty Consumable area incorrectly fanned out")
+			all_passed = false
+
+		# Test: add 4 consumables and verify compact row
+		for i in range(4):
+			var mock_con_data := ConsumableData.new()
+			mock_con_data.id = "test_consumable_%d" % i
+			mock_con_data.display_name = "Test Consumable %d" % i
+			mock_con_data.description = "A test consumable"
+			var con_spine = consumable_ui.add_consumable(mock_con_data)
+			if not con_spine:
+				push_error("[SpineIntegrationTest] ✗ Failed to create mock Consumable spine %d" % i)
+				all_passed = false
+
+		await get_tree().create_timer(0.8).timeout
+
+		var owned_ids: Array[String] = consumable_ui.get_all_consumable_ids()
+		if owned_ids.size() == 4:
+			print("[SpineIntegrationTest] ✓ ConsumableUI accepted 4 owned Consumables")
+		else:
+			push_error("[SpineIntegrationTest] ✗ Expected 4 owned Consumables, got %d" % owned_ids.size())
+			all_passed = false
+
+		var spines_dict = consumable_ui.get("_consumable_spines")
+		var visible_spines := 0
+		var hidden_spines := 0
+		for con_id in owned_ids:
+			var spine: ConsumableSpine = spines_dict.get(con_id)
+			if spine and spine.visible:
+				visible_spines += 1
+			elif spine:
+				hidden_spines += 1
+
+		if visible_spines == 3 and hidden_spines == 1:
+			print("[SpineIntegrationTest] ✓ Compact row shows 3 visible Consumables with overflow hidden behind slot 4")
+		else:
+			push_error("[SpineIntegrationTest] ✗ Unexpected compact row visibility counts: visible=%d hidden=%d" % [visible_spines, hidden_spines])
+			all_passed = false
+
+		var overflow_label = consumable_ui.find_child("OverflowLabel", true, false) as Label
+		if overflow_label and overflow_label.visible and overflow_label.text == "+1":
+			print("[SpineIntegrationTest] ✓ Overflow slot shows +1 when owned Consumables exceed 3")
+		else:
+			push_error("[SpineIntegrationTest] ✗ Overflow slot did not show +1 correctly")
+			all_passed = false
+
+		# Test: click fans out when owned
+		consumable_ui._gui_input(click_event)
+		await get_tree().create_timer(0.25).timeout
+		if consumable_ui.get("_current_state") == ConsumableUI.State.FANNED:
+			print("[SpineIntegrationTest] ✓ Owned Consumable area fans out on click")
+		else:
+			push_error("[SpineIntegrationTest] ✗ Owned Consumable area failed to fan out")
+			all_passed = false
+
+		consumable_ui.fold_back()
+		await get_tree().create_timer(0.4).timeout
+		if consumable_ui.get("_current_state") == ConsumableUI.State.SPINES:
+			print("[SpineIntegrationTest] ✓ Fold-back returned ConsumableUI to compact row state")
+		else:
+			push_error("[SpineIntegrationTest] ✗ Fold-back did not restore compact row state")
 			all_passed = false
 
 	if all_passed:

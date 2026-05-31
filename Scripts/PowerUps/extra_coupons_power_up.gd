@@ -3,12 +3,12 @@ class_name ExtraCouponsPowerUp
 
 ## ExtraCouponsPowerUp
 ## 
-## Allows the player to hold 2 additional consumables (increases max from 3 to 5).
-## When removed, triggers overflow handling if player has more than 3 consumables.
+## Consumable slots are fixed at 4. This powerup no longer adds slots.
+## Kept for backward compatibility with existing saves.
 ## Works with both ConsumableUI and CorkboardUI.
 
-const EXTRA_SLOTS: int = 2
-const DEFAULT_MAX: int = 3
+const EXTRA_SLOTS: int = 0
+const DEFAULT_MAX: int = 4
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -114,4 +114,4 @@ func remove(target) -> void:
 		print("[ExtraCouponsPowerUp] No overflow - current count %d <= max %d" % [current_count, DEFAULT_MAX])
 
 func get_current_description() -> String:
-	return "Hold 2 additional consumables (5 max)"
+	return "Consumable slots are fixed at 4"
