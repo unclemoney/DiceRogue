@@ -335,9 +335,16 @@ func _ready() -> void:
 
 	# Bind VCR tracker UI channel display
 	var _vcr_tracker = get_tree().get_first_node_in_group("turn_tracker_ui")
-	if is_instance_valid(_vcr_tracker) and _vcr_tracker.has_method("bind_channel_manager") and is_instance_valid(channel_manager):
-		_vcr_tracker.bind_channel_manager(channel_manager)
-		print("[GameController] VCR tracker UI bound to ChannelManager")
+	if is_instance_valid(_vcr_tracker):
+		if _vcr_tracker.has_method("bind_tracker") and is_instance_valid(turn_tracker):
+			_vcr_tracker.bind_tracker(turn_tracker)
+			print("[GameController] VCR tracker UI bound to TurnTracker")
+		if _vcr_tracker.has_method("bind_round_manager") and is_instance_valid(round_manager):
+			_vcr_tracker.bind_round_manager(round_manager)
+			print("[GameController] VCR tracker UI bound to RoundManager")
+		if _vcr_tracker.has_method("bind_channel_manager") and is_instance_valid(channel_manager):
+			_vcr_tracker.bind_channel_manager(channel_manager)
+			print("[GameController] VCR tracker UI bound to ChannelManager")
 
 	# Register new consumables programmatically
 	if consumable_manager:

@@ -16,7 +16,7 @@ extends Node2D
 @onready var debuff_manager: DebuffManager = $Managers/DebuffManager
 @onready var challenge_manager: ChallengeManager = $Managers/ChallengeManager
 @onready var challenge_ui_node: Control = $GameUI/MarginContainer/MainVBox/MiddleSection/LeftColumn/ChallengeContainer/ContentVBox/ChallengeUI
-@onready var vcr_ui: VCRTurnTrackerUI = $GameUI/MarginContainer/MainVBox/UpperSection/TurnInfoContainer/VCRTurnTrackerUI
+@onready var vcr_ui: VCRTurnTrackerUI = $GameUI/MarginContainer/MainVBox/UpperSection/TurnInfoContainer/ContentVBox/VCRTurnTrackerUI
 
 func _ready():
 	score_card_ui.bind_scorecard(score_card)

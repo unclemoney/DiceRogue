@@ -20,7 +20,8 @@ signal score_doubled(section: Scorecard.Section, category: String, new_score: in
 signal about_to_score(section: Scorecard.Section, category: String, dice_values: Array[int])
 signal manual_score
 
-@onready var best_hand_label: RichTextLabel = $VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/BestHandScore
+@onready var best_hand_header_label: Label = $VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/BestHandSlot/BestHandHeader
+@onready var best_hand_label: RichTextLabel = $VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/BestHandSlot/BestHandScore
 @onready var upper_total_label: Label = $VBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperSubTotal/UppersubButton
 @onready var upper_bonus_label: Label = $VBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus/UpperBonusLabel
 @onready var upper_bonus_button: Button = $VBoxContainer/UpperVBoxContainer/UpperGridContainer/UpperBonus/UpperBonus
@@ -29,12 +30,15 @@ signal manual_score
 @onready var total_score_label: RichTextLabel = $VBoxContainer/ScoreSummaryContainer/TotalScorePanel/MarginContainer/RichTextTotalScore
 @onready var yahtzee_bonus_label: Label = $VBoxContainer/LowerVBoxContainer/LowerGridContainer/YahtzeeBonus/YahtzeeBonusLabel
 @onready var extra_info_label: RichTextLabel = get_node_or_null("LogbookPanel/MarginContainer/ExtraInfo")
+@onready var additive_header_label: Label = $VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer/AdditiveHeader
+@onready var multiplier_header_label: Label = $VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer/MultiplierHeader
 
 # Score breakdown panel labels
 @onready var additive_score_label: Label = $VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer/AdditiveScoreLabel
 @onready var multiplier_score_label: Label = $VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/MultiplierContainer/MultiplierScoreLabel
 @onready var total_score_panel: PanelContainer = $VBoxContainer/ScoreSummaryContainer/TotalScorePanel
 @onready var best_hand_panel: PanelContainer = $VBoxContainer/ScoreSummaryContainer/BestHandPanel
+@onready var total_score_white_background: ColorRect = $VBoxContainer/ScoreSummaryContainer/TotalScorePanel/WhiteBackground
 
 # Shader background ColorRects
 @onready var additive_shader_bg: ColorRect = $VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer/AdditiveContainer/AdditiveScoreLabel/AdditiveShaderBG
@@ -69,6 +73,18 @@ var _highlighted_button: Button
 var _idle_float_tween: Tween
 var _shimmer_tween: Tween
 var _counter_tween: Tween
+
+const SUMMARY_PANEL_BG := Color(0.247059, 0.219608, 0.345098, 0.94)
+const SUMMARY_PANEL_BG_SOFT := Color(0.247059, 0.219608, 0.345098, 0.55)
+const SUMMARY_PANEL_BORDER := Color(0.713725, 0.301961, 0.478431, 0.95)
+const SUMMARY_PANEL_ACCENT := Color(0.137255, 0.411765, 0.415686, 1.0)
+const SUMMARY_ADDITIVE := Color(0.886275, 0.560784, 0.72549, 1.0)
+const SUMMARY_TEXT := Color(0.968627, 0.941176, 1.0, 1.0)
+const SUMMARY_TEXT_SOFT := Color(0.780392, 0.733333, 0.866667, 1.0)
+const SUMMARY_POSITIVE := Color(0.47451, 0.886275, 0.890196, 1.0)
+const SUMMARY_NEGATIVE := Color(0.886275, 0.392157, 0.54902, 1.0)
+const SUMMARY_OUTLINE := Color(0.129412, 0.121569, 0.2, 1.0)
+const SUMMARY_BEST_HAND_PLACEHOLDER := "[center]--[/center]"
 
 
 ## _ready()
@@ -544,7 +560,7 @@ func _on_upper_bonus_achieved(_bonus: int) -> void:
 			# Animate total score
 	if total_score_label:
 		var tween = create_tween()
-		tween.tween_property(total_score_label, "modulate", Color.YELLOW, 0.3)
+		tween.tween_property(total_score_label, "modulate", SUMMARY_POSITIVE, 0.3)
 		tween.tween_property(total_score_label, "modulate", Color.WHITE, 0.3)
 
 func _on_upper_section_completed() -> void:
@@ -793,10 +809,10 @@ func update_best_hand_preview(dice_values: Array) -> void:
 		var display_category = best_category.capitalize().replace("_", " ")
 		
 		# Show category name + score preview number
-		var score_color = "yellow" if best_score >= 25 else "white"
-		var format_text = "[center][b]Best Hand:[/b]\n%s → [color=%s]%d[/color][/center]" % [display_category, score_color, best_score]
+		var score_color = "#79e2e3" if best_score >= 25 else "#f7f0ff"
+		var format_text = "[center]%s\n[color=%s][b]%d[/b][/color][/center]" % [display_category, score_color, best_score]
 		
-		best_hand_label.add_theme_font_size_override("normal_font_size", 18)
+		best_hand_label.add_theme_font_size_override("normal_font_size", 13)
 		best_hand_label.text = format_text
 		animate_best_hand_label()
 		start_idle_float()
@@ -820,12 +836,14 @@ func update_best_hand_preview(dice_values: Array) -> void:
 		if additive_score_label:
 			if base_additive >= 0:
 				additive_score_label.text = "+%d" % base_additive
-				additive_score_label.modulate = Color(0.7, 0.7, 0.0) if base_additive > 0 else Color.WHITE
+				additive_score_label.modulate = SUMMARY_ADDITIVE if base_additive > 0 else Color.WHITE
 			else:
 				additive_score_label.text = "%d" % base_additive
-				additive_score_label.modulate = Color(0.8, 0.2, 0.2)  # Red for negative
+				additive_score_label.modulate = SUMMARY_NEGATIVE
 		
 		print("[ScoreCardUI] Best hand: %s (Lv.%d) RAW base: %d × %d = +%d base additive (no powerups)" % [best_category, category_level, raw_base_score, category_level, base_additive])
+	else:
+		_reset_score_breakdown_labels()
 
 	_screen_shaker(best_score, 50)
 
@@ -1552,17 +1570,74 @@ func _apply_score_breakdown_theme() -> void:
 	# Use transparent backgrounds on score labels so neon_energy shader shows through.
 	# The old score_breakdown_theme.tres used an opaque StyleBoxTexture that covered the shader.
 	var transparent_style = StyleBoxFlat.new()
-	transparent_style.bg_color = Color(0.0, 0.0, 0.0, 0.0) #Color(0.12, 0.12, 0.18, 0.45)
-	transparent_style.set_corner_radius_all(3)
-	transparent_style.border_color = Color(0.3, 0.3, 0.5, 0.3)
+	transparent_style.bg_color = SUMMARY_PANEL_BG_SOFT
+	transparent_style.set_corner_radius_all(8)
+	transparent_style.border_color = SUMMARY_PANEL_BORDER
 	transparent_style.set_border_width_all(1)
+	transparent_style.shadow_color = Color(0.137255, 0.411765, 0.415686, 0.25)
+	transparent_style.shadow_size = 3
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = SUMMARY_PANEL_BG
+	panel_style.border_color = SUMMARY_PANEL_BORDER
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(12)
+	panel_style.corner_detail = 6
+	panel_style.shadow_color = Color(0.137255, 0.411765, 0.415686, 0.2)
+	panel_style.shadow_size = 6
+	if best_hand_panel:
+		best_hand_panel.add_theme_stylebox_override("panel", panel_style)
+	if total_score_panel:
+		total_score_panel.add_theme_stylebox_override("panel", panel_style.duplicate())
+	if total_score_white_background:
+		total_score_white_background.color = Color(0.247059, 0.219608, 0.345098, 0.08)
+	if best_hand_header_label:
+		best_hand_header_label.add_theme_color_override("font_color", SUMMARY_TEXT_SOFT)
+		best_hand_header_label.add_theme_color_override("font_outline_color", SUMMARY_OUTLINE)
+		best_hand_header_label.add_theme_constant_override("outline_size", 1)
+	if best_hand_label:
+		best_hand_label.add_theme_font_size_override("normal_font_size", 13)
+		best_hand_label.add_theme_color_override("default_color", SUMMARY_TEXT)
+		best_hand_label.add_theme_color_override("font_outline_color", SUMMARY_OUTLINE)
+		best_hand_label.add_theme_constant_override("outline_size", 1)
+		best_hand_label.custom_minimum_size = Vector2(0, 24)
+		best_hand_label.fit_content = false
+	if additive_header_label:
+		additive_header_label.add_theme_color_override("font_color", SUMMARY_TEXT_SOFT)
+		additive_header_label.add_theme_color_override("font_outline_color", SUMMARY_OUTLINE)
+		additive_header_label.add_theme_constant_override("outline_size", 1)
+	if multiplier_header_label:
+		multiplier_header_label.add_theme_color_override("font_color", SUMMARY_TEXT_SOFT)
+		multiplier_header_label.add_theme_color_override("font_outline_color", SUMMARY_OUTLINE)
+		multiplier_header_label.add_theme_constant_override("outline_size", 1)
 	if additive_score_label:
 		additive_score_label.add_theme_stylebox_override("normal", transparent_style)
+		additive_score_label.add_theme_color_override("font_color", SUMMARY_TEXT)
+		additive_score_label.add_theme_color_override("font_outline_color", SUMMARY_OUTLINE)
+		additive_score_label.add_theme_constant_override("outline_size", 1)
 		print("[ScoreCardUI] Applied transparent style to additive label for shader visibility")
 	if multiplier_score_label:
 		var mul_style = transparent_style.duplicate()
 		multiplier_score_label.add_theme_stylebox_override("normal", mul_style)
+		multiplier_score_label.add_theme_color_override("font_color", SUMMARY_TEXT)
+		multiplier_score_label.add_theme_color_override("font_outline_color", SUMMARY_OUTLINE)
+		multiplier_score_label.add_theme_constant_override("outline_size", 1)
 		print("[ScoreCardUI] Applied transparent style to multiplier label for shader visibility")
+	if total_score_label:
+		total_score_label.add_theme_color_override("default_color", SUMMARY_TEXT)
+		total_score_label.add_theme_color_override("font_outline_color", SUMMARY_OUTLINE)
+		total_score_label.add_theme_constant_override("outline_size", 1)
+	if additive_shader_bg and additive_shader_bg.material:
+		var additive_mat = additive_shader_bg.material as ShaderMaterial
+		additive_mat.set_shader_parameter("energy_color", Vector4(0.713725, 0.301961, 0.478431, 1.0))
+		additive_mat.set_shader_parameter("accent_color", Vector4(0.886275, 0.560784, 0.72549, 1.0))
+	if multiplier_shader_bg and multiplier_shader_bg.material:
+		var multiplier_mat = multiplier_shader_bg.material as ShaderMaterial
+		multiplier_mat.set_shader_parameter("energy_color", Vector4(0.137255, 0.411765, 0.415686, 1.0))
+		multiplier_mat.set_shader_parameter("accent_color", Vector4(0.47451, 0.886275, 0.890196, 1.0))
+	if score_panel_shader_bg and score_panel_shader_bg.material:
+		var score_panel_mat = score_panel_shader_bg.material as ShaderMaterial
+		score_panel_mat.set_shader_parameter("effect_strength", 0.0)
+		score_panel_mat.set_shader_parameter("intensity", 0.0)
 	# TotalScorePanel uses the theme's panel_border.png StyleBoxTexture (same as BestHandPanel).
 	# WhiteBackground and ScorePanelShaderBG are direct children with show_behind_parent=true
 	# so they render before the StyleBox, letting the border frame show on top.
@@ -1572,6 +1647,12 @@ func _apply_score_breakdown_theme() -> void:
 ##
 ## Reset additive and multiplier labels to default values and turn off shaders
 func _reset_score_breakdown_labels() -> void:
+	current_best_hand_category = ""
+	current_best_hand_section = null
+	current_base_additive_score = 0
+	if best_hand_label:
+		best_hand_label.text = SUMMARY_BEST_HAND_PLACEHOLDER
+		best_hand_label.modulate = Color.WHITE
 	if additive_score_label:
 		additive_score_label.text = "+0"
 		additive_score_label.modulate = Color.WHITE
@@ -1623,19 +1704,19 @@ func update_additive_score_panel(additive_value: int, animate: bool = true) -> v
 				mat.set_shader_parameter("intensity", shader_intensity)
 			# Red tint for negative values
 			if additive_value < 0:
-				mat.set_shader_parameter("energy_color", Vector4(1.0, 0.2, 0.1, 1.0))
-				mat.set_shader_parameter("accent_color", Vector4(0.8, 0.0, 0.0, 1.0))
+				mat.set_shader_parameter("energy_color", Vector4(0.886275, 0.392157, 0.54902, 1.0))
+				mat.set_shader_parameter("accent_color", Vector4(0.713725, 0.301961, 0.478431, 1.0))
 			else:
-				mat.set_shader_parameter("energy_color", Vector4(1.0, 0.84, 0.0, 1.0))
-				mat.set_shader_parameter("accent_color", Vector4(1.0, 0.5, 0.0, 1.0))
+				mat.set_shader_parameter("energy_color", Vector4(0.713725, 0.301961, 0.478431, 1.0))
+				mat.set_shader_parameter("accent_color", Vector4(0.886275, 0.560784, 0.72549, 1.0))
 	
 	if animate:
 		# Use yellow for positive, red for negative, white for zero
 		var flash_color = Color.WHITE
 		if additive_value > 0:
-			flash_color = Color.YELLOW
+			flash_color = SUMMARY_ADDITIVE
 		elif additive_value < 0:
-			flash_color = Color(0.9, 0.3, 0.3)  # Red for negative
+			flash_color = SUMMARY_NEGATIVE
 		_bounce_label(additive_score_label, flash_color)
 
 
@@ -1664,8 +1745,8 @@ func update_multiplier_score_panel(multiplier_value: float, animate: bool = true
 		if multiplier_shader_bg and multiplier_shader_bg.material:
 			var mat = multiplier_shader_bg.material as ShaderMaterial
 			var strength = clampf(remap(multiplier_value, 1.0, 10.0, 0.5, 1.0), 0.0, 1.0)
-			mat.set_shader_parameter("energy_color", Vector4(1.0, 0.1, 0.0, 1.0))
-			mat.set_shader_parameter("accent_color", Vector4(0.8, 0.0, 0.0, 1.0))
+			mat.set_shader_parameter("energy_color", Vector4(0.886275, 0.392157, 0.54902, 1.0))
+			mat.set_shader_parameter("accent_color", Vector4(0.713725, 0.301961, 0.478431, 1.0))
 			if animate:
 				var shader_tween = create_tween()
 				shader_tween.tween_method(func(v): mat.set_shader_parameter("effect_strength", v), 0.0, strength, 0.3)
@@ -1673,7 +1754,7 @@ func update_multiplier_score_panel(multiplier_value: float, animate: bool = true
 				mat.set_shader_parameter("effect_strength", strength)
 		
 		if animate:
-			_bounce_label(multiplier_score_label, Color.RED)
+			_bounce_label(multiplier_score_label, SUMMARY_NEGATIVE)
 	else:
 		# Normal multiplier mode
 		print("[ScoreCardUI] Updating multiplier panel: %.1f (animate=%s)" % [multiplier_value, animate])
@@ -1688,8 +1769,8 @@ func update_multiplier_score_panel(multiplier_value: float, animate: bool = true
 				var strength = clampf(remap(multiplier_value, 1.0, 10.0, 0.7, 1.0), 0.0, 1.0)
 				var shader_intensity = clampf(remap(multiplier_value, 1.0, 10.0, 0.8, 1.4), 0.0, 1.4)
 				# Reset to default cyan/blue colors
-				mat.set_shader_parameter("energy_color", Vector4(0.2, 0.8, 1.0, 1.0))
-				mat.set_shader_parameter("accent_color", Vector4(0.1, 0.4, 1.0, 1.0))
+				mat.set_shader_parameter("energy_color", Vector4(0.137255, 0.411765, 0.415686, 1.0))
+				mat.set_shader_parameter("accent_color", Vector4(0.47451, 0.886275, 0.890196, 1.0))
 				if animate:
 					var shader_tween = create_tween()
 					shader_tween.tween_method(func(v): mat.set_shader_parameter("effect_strength", v), 0.0, strength, 0.3)
@@ -1699,7 +1780,7 @@ func update_multiplier_score_panel(multiplier_value: float, animate: bool = true
 					mat.set_shader_parameter("intensity", shader_intensity)
 		
 		if animate:
-			var flash_color = Color.CYAN if multiplier_value > 1.0 else Color.WHITE
+			var flash_color = SUMMARY_POSITIVE if multiplier_value > 1.0 else Color.WHITE
 			_bounce_label(multiplier_score_label, flash_color)
 
 
@@ -1739,8 +1820,8 @@ func animate_total_score_bounce(new_score: int) -> void:
 	var tween = create_tween()
 	var original_scale = total_score_label.scale
 	
-	# Flash gold color
-	total_score_label.modulate = Color(1.0, 0.84, 0.0)  # Gold
+	# Flash the neon summary accent
+	total_score_label.modulate = SUMMARY_POSITIVE
 	
 	# Scale up and down with bounce
 	tween.tween_property(total_score_label, "scale", original_scale * 1.2, 0.2).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
@@ -1813,9 +1894,9 @@ func animate_score_counter(old_score: int, new_score: int) -> void:
 	_counter_tween.tween_method(func(v: float):
 		var display_val = int(v)
 		total_score_label.text = "[center]Total Score:\n%s[/center]" % NumberFormatter.format_score(display_val)
-		# Flash white→gold during counting
+		# Flash summary text toward the neon accent during counting
 		var t = inverse_lerp(old_score, new_score, v)
-		var color = Color.WHITE.lerp(Color(1.0, 0.84, 0.0), t)
+		var color = Color.WHITE.lerp(SUMMARY_POSITIVE, t)
 		total_score_label.modulate = color
 	, float(old_score), float(new_score), duration).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
 	# Fade back to white after counting
@@ -1841,10 +1922,10 @@ func check_score_milestones(score: int) -> void:
 		current_milestone_tier = new_tier
 		print("[ScoreCardUI] 🎉 Milestone tier %d reached! Score: %d" % [new_tier, score])
 		_screen_shaker(50, 50)
-		# Flash the total score panel gold
+		# Flash the total score panel with the summary accent
 		if total_score_panel:
 			var flash_tween = create_tween()
-			total_score_panel.modulate = Color(1.0, 0.84, 0.0)
+			total_score_panel.modulate = SUMMARY_PANEL_ACCENT
 			flash_tween.tween_property(total_score_panel, "modulate", Color.WHITE, 0.6).set_ease(Tween.EASE_OUT)
 		animate_total_score_panel_bounce()
 

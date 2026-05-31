@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://lc4xqvsxdnpy"]
 
-[ext_resource type="Theme" uid="uid://yij15afv8bdr" path="res://Resources/UI/scorecard_theme.tres" id="1_6ljww"]
+[ext_resource type="Theme" uid="uid://bs4e5kj8qt7yg" path="res://Resources/UI/action_button_theme.tres" id="1_theme"]
 [ext_resource type="Script" uid="uid://bs540x55u5587" path="res://Scripts/UI/game_button_ui.gd" id="1_v70y2"]
 
 [node name="GameButtonUI" type="Control"]
@@ -10,7 +10,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme = ExtResource("1_6ljww")
+theme = ExtResource("1_theme")
 script = ExtResource("1_v70y2")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
@@ -18,43 +18,40 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 6.0
+offset_right = -4.0
+offset_bottom = -6.0
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="LeftInfoArea" type="VBoxContainer" parent="HBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-alignment = 1
-
-[node name="CurrentScoreTitle" type="Label" parent="HBoxContainer/LeftInfoArea"]
-layout_mode = 2
-text = "Current Score"
-horizontal_alignment = 1
-
-[node name="CurrentScore" type="Label" parent="HBoxContainer/LeftInfoArea"]
-layout_mode = 2
-text = "0"
-horizontal_alignment = 1
 
 [node name="RightButtonArea" type="HBoxContainer" parent="HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
 alignment = 1
 
 [node name="NextTurnButton" type="Button" parent="HBoxContainer/RightButtonArea"]
-custom_minimum_size = Vector2(80, 40)
+custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
-text = "NEXT\nTURN"
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "NEXT TURN"
 
 [node name="ShopButton" type="Button" parent="HBoxContainer/RightButtonArea"]
-custom_minimum_size = Vector2(80, 40)
+custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 text = "SHOP"
 
 [node name="NextRoundButton" type="Button" parent="HBoxContainer/RightButtonArea"]
-custom_minimum_size = Vector2(80, 40)
+custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
-text = "NEXT\nROUND"
+size_flags_horizontal = 3
+size_flags_vertical = 3
+text = "NEXT ROUND"
 
 [connection signal="pressed" from="HBoxContainer/RightButtonArea/NextTurnButton" to="." method="_on_next_turn_button_pressed"]
 [connection signal="pressed" from="HBoxContainer/RightButtonArea/ShopButton" to="." method="_on_shop_button_pressed"]

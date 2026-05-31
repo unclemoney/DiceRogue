@@ -2794,9 +2794,9 @@ func _debug_ui_find_missing() -> void:
 		return
 	
 	var critical_paths = [
-		"MarginContainer/MainVBox/UpperSection/TurnInfoContainer/VCRTurnTrackerUI",
+		"MarginContainer/MainVBox/UpperSection/TurnInfoContainer/ContentVBox/VCRTurnTrackerUI",
 		"MarginContainer/MainVBox/UpperSection/PowerUpContainer/ContentVBox/PowerUpUI",
-		"MarginContainer/MainVBox/UpperSection/MoneyContainer/MoneyUI",
+		"MarginContainer/MainVBox/UpperSection/MoneyContainer/ContentVBox/MoneyUI",
 		"MarginContainer/MainVBox/MiddleSection/LeftColumn/ChallengeContainer/ContentVBox/ChallengeUI",
 		"MarginContainer/MainVBox/MiddleSection/LeftColumn/DebuffContainer/ContentVBox/DebuffUI",
 		"MarginContainer/MainVBox/MiddleSection/LeftColumn/ConsumableContainer/ContentVBox/ConsumableUI",

@@ -67,8 +67,8 @@ func _ready():
 			print("[GameButtonUI] Found turn_tracker via turn_tracker group")
 		else:
 			var game_ui = get_tree().get_first_node_in_group("game_ui")
-			if game_ui and game_ui.has_node("MarginContainer/MainVBox/UpperSection/TurnInfoContainer/VCRTurnTrackerUI"):
-				var vcr_ui = game_ui.get_node("MarginContainer/MainVBox/UpperSection/TurnInfoContainer/VCRTurnTrackerUI")
+			if game_ui and game_ui.has_node("MarginContainer/MainVBox/UpperSection/TurnInfoContainer/ContentVBox/VCRTurnTrackerUI"):
+				var vcr_ui = game_ui.get_node("MarginContainer/MainVBox/UpperSection/TurnInfoContainer/ContentVBox/VCRTurnTrackerUI")
 				if vcr_ui and vcr_ui.tracker:
 					turn_tracker = vcr_ui.tracker
 					print("[GameButtonUI] Found turn_tracker via VCRTurnTrackerUI.tracker")

@@ -50,8 +50,8 @@ func _ready() -> void:
 			turn_tracker = null
 	if not turn_tracker:
 		var ui_root = get_tree().get_first_node_in_group("game_ui")
-		if ui_root and ui_root.has_node("MarginContainer/MainVBox/UpperSection/TurnInfoContainer/VCRTurnTrackerUI"):
-			var vcr_ui = ui_root.get_node("MarginContainer/MainVBox/UpperSection/TurnInfoContainer/VCRTurnTrackerUI")
+		if ui_root and ui_root.has_node("MarginContainer/MainVBox/UpperSection/TurnInfoContainer/ContentVBox/VCRTurnTrackerUI"):
+			var vcr_ui = ui_root.get_node("MarginContainer/MainVBox/UpperSection/TurnInfoContainer/ContentVBox/VCRTurnTrackerUI")
 			if vcr_ui and vcr_ui.tracker:
 				turn_tracker = vcr_ui.tracker
 	if turn_tracker and not turn_tracker is TurnTracker:

@@ -181,10 +181,10 @@ Full documentation with parameters, recipes, and technical deep-dives: See `ARCA
 - **GameUI** (`Scenes/UI/GameUI.tscn`, `Scripts/UI/game_ui.gd`) - Master UI container scene
   - Builds a deterministic 13-container layout using nested Godot containers
   - Root `Control` at 1280×720 with `MarginContainer` (8px margins)
-  - `VBoxContainer` with three sections: UpperSection (stretch 40), MiddleSection (stretch 135), BottomPanel (stretch 25)
-  - **UpperSection**: TurnInfoContainer (tracker), PowerUpContainer (power-up spine), MoneyContainer
-  - **MiddleSection**: LeftColumn (Challenge, Debuff, Consumable, Console), CenterColumn (Title, DiceArea, ChoreMeter), RightColumn (Scorecard)
-  - **BottomPanel**: LeftInfoArea, CenterRollArea, RightButtonArea (GameButtonUI)
+  - `VBoxContainer` with two live sections: UpperSection (stretch 40) and MiddleSection (stretch 160)
+  - **UpperSection**: TurnInfoContainer (`INFO` title with turns, rolls, round, channel), PowerUpContainer, MoneyContainer
+  - **MiddleSection**: LeftColumn (Challenge, Debuff, Consumable, Console, GameButtonContainer), CenterColumn (Title, DiceArea, ChoreMeter, RollButtonContainer), RightColumn (Scorecard)
+  - **GameButtonUI**: single-row action strip for Next Turn, Shop, and Next Round using the shared neon action-button theme
   - All `PanelContainer` nodes use translucent `StyleBoxFlat` styling (peach fill at 25% alpha, chrome border)
   - Glowing titles via `GlowingTitle.tscn` (SubViewport + WorldEnvironment) in each panel
   - Replaces the retired `CorkboardUI` and manual offset positioning

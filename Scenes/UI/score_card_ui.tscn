@@ -523,17 +523,34 @@ theme_override_constants/margin_bottom = 4
 layout_mode = 2
 theme_override_constants/separation = 2
 
-[node name="BestHandScore" type="RichTextLabel" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer"]
+[node name="BestHandSlot" type="VBoxContainer" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 2
+
+[node name="BestHandHeader" type="Label" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/BestHandSlot"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+text = "BEST HAND"
+horizontal_alignment = 1
+
+[node name="BestHandScore" type="RichTextLabel" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/BestHandSlot"]
 clip_contents = false
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 bbcode_enabled = true
-fit_content = true
+text = "[center]--[/center]"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="HSeparator" type="HSeparator" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 
 [node name="ScoreBreakdownContainer" type="HBoxContainer" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer"]
 layout_mode = 2
+size_flags_vertical = 3
 theme_override_constants/separation = 8
 
 [node name="AdditiveContainer" type="VBoxContainer" parent="VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer/VBoxContainer/ScoreBreakdownContainer"]

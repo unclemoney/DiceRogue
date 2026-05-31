@@ -6,11 +6,11 @@ shader_type canvas_item;
 uniform float intensity : hint_range(0.0, 2.0) = 0.3;
 uniform float energy_speed : hint_range(0.0, 3.0) = 0.8;
 uniform int milestone_tier : hint_range(0, 4) = 0;
-// Tier 0 (0-99): Dim warm white
-// Tier 1 (100-249): Soft gold
-// Tier 2 (250-499): Electric blue
-// Tier 3 (500-999): Purple/magenta
-// Tier 4 (1000+): Rainbow/prismatic cycling
+// Tier 0 (0-99): Soft plum
+// Tier 1 (100-249): Neon teal
+// Tier 2 (250-499): Hot pink
+// Tier 3 (500-999): Electric teal-pink blend
+// Tier 4 (1000+): Animated mall-core prism
 
 uniform float effect_strength : hint_range(0.0, 1.0) = 0.0;
 uniform float edge_arc_strength : hint_range(0.0, 1.0) = 0.3;
@@ -54,21 +54,26 @@ vec3 hsv2rgb(vec3 c) {
 // Get tier color based on milestone_tier
 vec3 get_tier_color(int tier, float time_val, vec2 uv) {
 	if (tier <= 0) {
-		// Dim warm white
-		return vec3(0.9, 0.85, 0.7);
+		// Soft plum base glow
+		return vec3(0.247059, 0.219608, 0.345098);
 	} else if (tier == 1) {
-		// Soft gold
-		return vec3(1.0, 0.84, 0.3);
+		// Neon teal accent
+		return vec3(0.137255, 0.411765, 0.415686);
 	} else if (tier == 2) {
-		// Electric blue
-		return vec3(0.2, 0.6, 1.0);
+		// Hot pink accent
+		return vec3(0.713725, 0.301961, 0.478431);
 	} else if (tier == 3) {
-		// Purple / magenta
-		return vec3(0.7, 0.2, 1.0);
+		// Electric blend between teal and pink
+		float blend = 0.35 + 0.15 * sin(time_val * 1.3 + uv.x * 8.0 + uv.y * 5.0);
+		return mix(vec3(0.713725, 0.301961, 0.478431), vec3(0.137255, 0.411765, 0.415686), blend);
 	} else {
-		// Rainbow / prismatic cycling
-		float hue = fract(time_val * 0.15 + uv.x * 0.3 + uv.y * 0.2);
-		return hsv2rgb(vec3(hue, 0.8, 1.0));
+		// Animated mall-core prism cycling within the panel palette
+		float pulse = 0.5 + 0.5 * sin(time_val * 1.4 + uv.x * 6.0 + uv.y * 4.0);
+		float depth = 0.25 + 0.15 * sin(time_val * 0.9 + uv.y * 3.0);
+		vec3 pink = vec3(0.713725, 0.301961, 0.478431);
+		vec3 teal = vec3(0.137255, 0.411765, 0.415686);
+		vec3 plum = vec3(0.298039, 0.239216, 0.380392);
+		return mix(mix(pink, teal, pulse), plum, depth);
 	}
 }
 

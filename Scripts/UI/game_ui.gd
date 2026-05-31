@@ -81,9 +81,10 @@ func _build_ui() -> void:
 	upper.add_child(turn_info_container)
 	var tracker_ui := preload("res://Scenes/UI/vcr_turn_tracker_ui.tscn").instantiate()
 	tracker_ui.name = "VCRTurnTrackerUI"
+	tracker_ui.clip_contents = true
 	tracker_ui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	tracker_ui.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	turn_info_container.add_child(tracker_ui)
+	_add_glowing_title(turn_info_container, "INFO", "res://Resources/Font/BALLOON1.ttf", tracker_ui, 14, Color(0.713725, 0.301961, 0.478431, 1.0))
 
 	power_up_container = _create_panel("PowerUpContainer", POWER_UP_RATIO)
 	upper.add_child(power_up_container)
@@ -96,9 +97,10 @@ func _build_ui() -> void:
 	upper.add_child(money_container)
 	var money_ui := preload("res://Scenes/UI/money_ui.tscn").instantiate()
 	money_ui.name = "MoneyUI"
+	money_ui.clip_contents = true
 	money_ui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	money_ui.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	money_container.add_child(money_ui)
+	_add_glowing_title(money_container, "MONEY", "res://Resources/Font/BALLOON1.ttf", money_ui, 14, Color(0.137255, 0.411765, 0.415686, 1.0))
 
 	var middle := _create_hbox("MiddleSection", MIDDLE_STRETCH)
 	main_vbox.add_child(middle)
@@ -237,7 +239,7 @@ func _create_panel(node_name: String, stretch: float) -> PanelContainer:
 	return panel
 
 
-func _add_glowing_title(parent: PanelContainer, title_text: String, font: String = "res://Resources/Font/BALLOON1.ttf", content: Control = null, text_font_size: int = TITLE_FONT_SIZE) -> void:
+func _add_glowing_title(parent: PanelContainer, title_text: String, font: String = "res://Resources/Font/BALLOON1.ttf", content: Control = null, text_font_size: int = TITLE_FONT_SIZE, title_color: Color = Color(0.8, 0.4, 1.0, 1.0)) -> void:
 	var vbox := VBoxContainer.new()
 	vbox.name = "ContentVBox"
 	vbox.alignment = BoxContainer.ALIGNMENT_BEGIN
@@ -249,8 +251,7 @@ func _add_glowing_title(parent: PanelContainer, title_text: String, font: String
 	glow_title.name = "GlowingTitle"
 	glow_title.text = title_text
 	glow_title.font_size = text_font_size
-	# Purple
-	glow_title.font_color = Color(0.8, 0.4, 1.0)
+	glow_title.font_color = title_color
 	glow_title.font_path = font
 	glow_title.glow_intensity = 0.0
 	glow_title.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
