@@ -52,10 +52,12 @@ const SCORECARD_RATIO: float = 77.0
 const RIGHT_BUTTON_RATIO: float = 23.0
 
 # Visual theme colors
-const PANEL_BG: Color = Color(1.0, 0.839, 0.761, 0.05)
-const PANEL_BORDER: Color = Color(0.9, 0.9, 0.9, 0.06)
-const PANEL_BORDER_WIDTH: int = 1
-const PANEL_CORNER_RADIUS: int = 8
+const PANEL_BG: Color = Color(0.247059, 0.219608, 0.345098, 0.56)
+const PANEL_BORDER: Color = Color(0.713725, 0.301961, 0.478431, 0.92)
+const PANEL_BORDER_WIDTH: int = 2
+const PANEL_CORNER_RADIUS: int = 16
+const PANEL_SHADOW: Color = Color(0.070588, 0.062745, 0.101961, 0.34)
+const PANEL_SHADOW_SIZE: int = 5
 const TITLE_FONT_SIZE: int = 12
 
 
@@ -162,7 +164,11 @@ func _build_ui() -> void:
 
 	chore_meter_container = _create_panel("ChoreMeterContainer", CHORE_METER_RATIO)
 	center_col.add_child(chore_meter_container)
-	_add_glowing_title(chore_meter_container, "Chore Meter")
+	var chore_ui := preload("res://Scenes/UI/chore_ui.tscn").instantiate()
+	chore_ui.name = "ChoreUI"
+	chore_ui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chore_ui.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_add_glowing_title(chore_meter_container, "Chore Meter", "res://Resources/Font/BALLOON1.ttf", chore_ui)
 
 	# Prominent roll button below chore meter
 	var roll_button_container := _create_panel("RollButtonContainer", CENTER_ROLL_RATIO)
@@ -233,7 +239,9 @@ func _create_panel(node_name: String, stretch: float) -> PanelContainer:
 	style.border_color = PANEL_BORDER
 	style.set_border_width_all(PANEL_BORDER_WIDTH)
 	style.set_corner_radius_all(PANEL_CORNER_RADIUS)
-	style.corner_detail = 4
+	style.corner_detail = 8
+	style.shadow_color = PANEL_SHADOW
+	style.shadow_size = PANEL_SHADOW_SIZE
 	panel.add_theme_stylebox_override("panel", style)
 
 	return panel

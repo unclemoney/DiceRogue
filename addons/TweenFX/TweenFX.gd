@@ -655,6 +655,7 @@ func fade_in(node: CanvasItem, duration: float = 0.5, delay: float = 0.0) -> Twe
 	TweenManager.stop(node, Animations.FADE_IN)
 	node.modulate.a = 0.0
 	var tween = node.get_tree().create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	tween.tween_property(node, "modulate:a", 1.0, duration).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN).set_delay(delay)
 	TweenManager.track(node, Animations.FADE_IN, tween)
 	return tween
@@ -663,6 +664,7 @@ func fade_in(node: CanvasItem, duration: float = 0.5, delay: float = 0.0) -> Twe
 func fade_out(node: CanvasItem, duration: float = 0.5, delay: float = 0.0) -> Tween:
 	TweenManager.stop(node, Animations.FADE_OUT)
 	var tween = node.get_tree().create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	tween.tween_property(node, "modulate:a", 0.0, duration).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_OUT).set_delay(delay)
 	TweenManager.track(node, Animations.FADE_OUT, tween)
 	return tween
@@ -737,6 +739,7 @@ func pop_in(node: CanvasItem, duration: float = 0.3, overshoot: float = 0.1, del
 	node.scale = Vector2.ZERO
 	node.modulate.a = 0.0
 	var tween = node.get_tree().create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	tween.tween_property(node, "scale", original_scale * (1.0 + overshoot), duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).set_delay(delay)
 	tween.tween_property(node, "scale", original_scale, duration * 0.33)
 	tween.parallel().tween_property(node, "modulate:a", original_alpha, duration * 0.66)
@@ -748,6 +751,7 @@ func pop_out(node: CanvasItem, duration: float = 0.3, overshoot: float = 0.1, de
 	TweenManager.stop(node, Animations.POP_OUT)
 	var original_scale: Vector2 = node.scale
 	var tween = node.get_tree().create_tween()
+	tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	tween.tween_property(node, "scale", original_scale * (1.0 + overshoot), duration * 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).set_delay(delay)
 	tween.tween_property(node, "scale", Vector2.ZERO, duration * 0.8).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 	tween.parallel().tween_property(node, "modulate:a", 0.0, duration * 0.8)

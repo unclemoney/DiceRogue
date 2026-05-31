@@ -117,10 +117,13 @@ func _build_ui() -> void:
 	
 	# Create custom StyleBox for winner panel
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.12, 0.08, 0.98)
-	style.border_color = Color(0.4, 0.8, 0.3, 1.0)
-	style.set_border_width_all(5)
-	style.set_corner_radius_all(16)
+	style.bg_color = Color(0.247059, 0.219608, 0.345098, 0.98)
+	style.border_color = Color(0.713725, 0.301961, 0.478431, 1.0)
+	style.set_border_width_all(4)
+	style.set_corner_radius_all(20)
+	style.corner_detail = 8
+	style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.45)
+	style.shadow_size = 8
 	panel_container.add_theme_stylebox_override("panel", style)
 	
 	overlay.add_child(panel_container)
@@ -150,7 +153,9 @@ func _build_ui() -> void:
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.add_theme_font_override("font", vcr_font)
 	title_label.add_theme_font_size_override("font_size", 42)
-	title_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
+	title_label.add_theme_color_override("font_color", Color(0.47451, 0.886275, 0.890196, 1.0))
+	title_label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	title_label.add_theme_constant_override("outline_size", 1)
 	content_vbox.add_child(title_label)
 	
 	# Channel label
@@ -161,6 +166,8 @@ func _build_ui() -> void:
 	channel_label.add_theme_font_override("font", vcr_font)
 	channel_label.add_theme_font_size_override("font_size", 22)
 	channel_label.add_theme_color_override("font_color", Color(0.9, 0.85, 0.6))
+	channel_label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	channel_label.add_theme_constant_override("outline_size", 1)
 	content_vbox.add_child(channel_label)
 	
 	# Separator
@@ -173,7 +180,9 @@ func _build_ui() -> void:
 	stats_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	stats_title.add_theme_font_override("font", vcr_font)
 	stats_title.add_theme_font_size_override("font_size", 20)
-	stats_title.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
+	stats_title.add_theme_color_override("font_color", Color(0.780392, 0.733333, 0.866667, 1.0))
+	stats_title.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	stats_title.add_theme_constant_override("outline_size", 1)
 	content_vbox.add_child(stats_title)
 	
 	stats_vbox = VBoxContainer.new()
@@ -206,7 +215,9 @@ func _build_ui() -> void:
 	next_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	next_info.add_theme_font_override("font", vcr_font)
 	next_info.add_theme_font_size_override("font_size", 16)
-	next_info.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	next_info.add_theme_color_override("font_color", Color(0.780392, 0.733333, 0.866667, 1.0))
+	next_info.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	next_info.add_theme_constant_override("outline_size", 1)
 	content_vbox.add_child(next_info)
 	
 	# Spacer
@@ -222,23 +233,29 @@ func _build_ui() -> void:
 	next_channel_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	next_channel_button.add_theme_font_override("font", vcr_font)
 	next_channel_button.add_theme_font_size_override("font_size", 22)
+	next_channel_button.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
+	next_channel_button.add_theme_color_override("font_hover_color", Color(0.968627, 0.941176, 1.0, 1.0))
+	next_channel_button.add_theme_color_override("font_pressed_color", Color(0.780392, 0.733333, 0.866667, 1.0))
+	next_channel_button.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	next_channel_button.add_theme_constant_override("outline_size", 1)
 	
 	# Create button style
 	var btn_style = StyleBoxFlat.new()
-	btn_style.bg_color = Color(0.2, 0.5, 0.25, 1.0)
-	btn_style.border_color = Color(0.3, 0.8, 0.35, 1.0)
-	btn_style.set_border_width_all(3)
+	btn_style.bg_color = Color(0.137255, 0.411765, 0.415686, 0.92)
+	btn_style.border_color = Color(0.47451, 0.886275, 0.890196, 1.0)
+	btn_style.set_border_width_all(2)
 	btn_style.set_corner_radius_all(12)
 	next_channel_button.add_theme_stylebox_override("normal", btn_style)
 	
 	var btn_hover = btn_style.duplicate()
-	btn_hover.bg_color = Color(0.25, 0.6, 0.3, 1.0)
-	btn_hover.border_color = Color(0.4, 1.0, 0.45, 1.0)
+	btn_hover.bg_color = Color(0.2, 0.56, 0.56, 0.96)
+	btn_hover.border_color = Color(0.6, 0.94, 0.96, 1.0)
 	next_channel_button.add_theme_stylebox_override("hover", btn_hover)
 	
 	var btn_pressed = btn_style.duplicate()
-	btn_pressed.bg_color = Color(0.15, 0.4, 0.2, 1.0)
+	btn_pressed.bg_color = Color(0.101961, 0.298039, 0.301961, 0.96)
 	next_channel_button.add_theme_stylebox_override("pressed", btn_pressed)
+	next_channel_button.add_theme_stylebox_override("focus", btn_hover)
 	
 	next_channel_button.pressed.connect(_on_next_channel_pressed)
 	next_channel_button.mouse_entered.connect(_tfx.button_hover.bind(next_channel_button))

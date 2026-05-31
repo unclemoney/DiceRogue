@@ -106,6 +106,16 @@ func _build_ui() -> void:
 	var panel_theme = load(theme_path) as Theme
 	if panel_theme:
 		panel_container.theme = panel_theme
+
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.247059, 0.219608, 0.345098, 0.98)
+	panel_style.border_color = Color(0.713725, 0.301961, 0.478431, 1.0)
+	panel_style.set_border_width_all(4)
+	panel_style.set_corner_radius_all(20)
+	panel_style.corner_detail = 8
+	panel_style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.45)
+	panel_style.shadow_size = 8
+	panel_container.add_theme_stylebox_override("panel", panel_style)
 	
 	overlay.add_child(panel_container)
 	
@@ -133,6 +143,9 @@ func _build_ui() -> void:
 	title_label.text = "ROUND COMPLETE!"
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.add_theme_font_size_override("font_size", 32)
+	title_label.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
+	title_label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	title_label.add_theme_constant_override("outline_size", 1)
 	content_vbox.add_child(title_label)
 	
 	# Separator
@@ -145,6 +158,9 @@ func _build_ui() -> void:
 	round_label.text = "Round 1"
 	round_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	round_label.add_theme_font_size_override("font_size", 24)
+	round_label.add_theme_color_override("font_color", Color(0.780392, 0.733333, 0.866667, 1.0))
+	round_label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	round_label.add_theme_constant_override("outline_size", 1)
 	content_vbox.add_child(round_label)
 	
 	# Challenge and final score section
@@ -187,7 +203,9 @@ func _build_ui() -> void:
 	final_score_label.text = "130"
 	final_score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	final_score_label.add_theme_font_size_override("font_size", 28)
-	final_score_label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
+	final_score_label.add_theme_color_override("font_color", Color(0.47451, 0.886275, 0.890196, 1.0))
+	final_score_label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	final_score_label.add_theme_constant_override("outline_size", 1)
 	final_vbox.add_child(final_score_label)
 	
 	# Separator
@@ -199,6 +217,9 @@ func _build_ui() -> void:
 	bonus_title.text = "ROUND BONUSES"
 	bonus_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bonus_title.add_theme_font_size_override("font_size", 20)
+	bonus_title.add_theme_color_override("font_color", Color(0.780392, 0.733333, 0.866667, 1.0))
+	bonus_title.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	bonus_title.add_theme_constant_override("outline_size", 1)
 	content_vbox.add_child(bonus_title)
 	
 	# Challenge reward row
@@ -301,7 +322,9 @@ func _build_ui() -> void:
 	total_bonus_label.text = "$0"
 	total_bonus_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	total_bonus_label.add_theme_font_size_override("font_size", 26)
-	total_bonus_label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
+	total_bonus_label.add_theme_color_override("font_color", Color(0.47451, 0.886275, 0.890196, 1.0))
+	total_bonus_label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	total_bonus_label.add_theme_constant_override("outline_size", 1)
 	total_hbox.add_child(total_bonus_label)
 	
 	# Spacer
@@ -316,6 +339,26 @@ func _build_ui() -> void:
 	continue_button.custom_minimum_size = Vector2(200, 50)
 	continue_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	continue_button.add_theme_font_size_override("font_size", 20)
+	continue_button.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
+	continue_button.add_theme_color_override("font_hover_color", Color(0.968627, 0.941176, 1.0, 1.0))
+	continue_button.add_theme_color_override("font_pressed_color", Color(0.780392, 0.733333, 0.866667, 1.0))
+	continue_button.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	continue_button.add_theme_constant_override("outline_size", 1)
+	var continue_style = StyleBoxFlat.new()
+	continue_style.bg_color = Color(0.137255, 0.411765, 0.415686, 0.92)
+	continue_style.border_color = Color(0.47451, 0.886275, 0.890196, 1.0)
+	continue_style.set_border_width_all(2)
+	continue_style.set_corner_radius_all(12)
+	continue_style.set_content_margin_all(8)
+	continue_button.add_theme_stylebox_override("normal", continue_style)
+	var continue_hover = continue_style.duplicate()
+	continue_hover.bg_color = Color(0.2, 0.56, 0.56, 0.96)
+	continue_hover.border_color = Color(0.6, 0.94, 0.96, 1.0)
+	continue_button.add_theme_stylebox_override("hover", continue_hover)
+	var continue_pressed = continue_style.duplicate()
+	continue_pressed.bg_color = Color(0.101961, 0.298039, 0.301961, 0.96)
+	continue_button.add_theme_stylebox_override("pressed", continue_pressed)
+	continue_button.add_theme_stylebox_override("focus", continue_hover)
 	content_vbox.add_child(continue_button)
 	
 	# Connect button signal

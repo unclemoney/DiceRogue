@@ -105,6 +105,16 @@ func _build_ui() -> void:
 	var theme_res = load("res://Resources/UI/powerup_hover_theme.tres") as Theme
 	if theme_res:
 		_panel.theme = theme_res
+
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.247059, 0.219608, 0.345098, 0.98)
+	panel_style.border_color = Color(0.713725, 0.301961, 0.478431, 1.0)
+	panel_style.set_border_width_all(4)
+	panel_style.set_corner_radius_all(20)
+	panel_style.corner_detail = 8
+	panel_style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.45)
+	panel_style.shadow_size = 8
+	_panel.add_theme_stylebox_override("panel", panel_style)
 	
 	_overlay.add_child(_panel)
 	
@@ -131,6 +141,8 @@ func _build_ui() -> void:
 	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_title_label.add_theme_font_size_override("font_size", 24)
 	_title_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
+	_title_label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	_title_label.add_theme_constant_override("outline_size", 1)
 	if vcr_font:
 		_title_label.add_theme_font_override("font", vcr_font)
 	vbox.add_child(_title_label)
@@ -141,7 +153,9 @@ func _build_ui() -> void:
 	_count_label.text = ""
 	_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_count_label.add_theme_font_size_override("font_size", 14)
-	_count_label.add_theme_color_override("font_color", Color(1.0, 0.98, 0.9, 0.8))
+	_count_label.add_theme_color_override("font_color", Color(0.780392, 0.733333, 0.866667, 0.92))
+	_count_label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	_count_label.add_theme_constant_override("outline_size", 1)
 	if vcr_font:
 		_count_label.add_theme_font_override("font", vcr_font)
 	vbox.add_child(_count_label)
@@ -184,12 +198,33 @@ func _build_ui() -> void:
 	_ok_button.custom_minimum_size = Vector2(120, 36)
 	_ok_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_ok_button.add_theme_font_size_override("font_size", 18)
+	_ok_button.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
+	_ok_button.add_theme_color_override("font_hover_color", Color(0.968627, 0.941176, 1.0, 1.0))
+	_ok_button.add_theme_color_override("font_pressed_color", Color(0.780392, 0.733333, 0.866667, 1.0))
+	_ok_button.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	_ok_button.add_theme_constant_override("outline_size", 1)
+	var ok_style = StyleBoxFlat.new()
+	ok_style.bg_color = Color(0.137255, 0.411765, 0.415686, 0.92)
+	ok_style.border_color = Color(0.47451, 0.886275, 0.890196, 1.0)
+	ok_style.set_border_width_all(2)
+	ok_style.set_corner_radius_all(10)
+	ok_style.set_content_margin_all(6)
+	_ok_button.add_theme_stylebox_override("normal", ok_style)
+	var ok_hover = ok_style.duplicate()
+	ok_hover.bg_color = Color(0.2, 0.56, 0.56, 0.96)
+	ok_hover.border_color = Color(0.6, 0.94, 0.96, 1.0)
+	_ok_button.add_theme_stylebox_override("hover", ok_hover)
+	var ok_pressed = ok_style.duplicate()
+	ok_pressed.bg_color = Color(0.101961, 0.298039, 0.301961, 0.96)
+	_ok_button.add_theme_stylebox_override("pressed", ok_pressed)
+	_ok_button.add_theme_stylebox_override("focus", ok_hover)
 	if vcr_font:
 		_ok_button.add_theme_font_override("font", vcr_font)
 	_ok_button.pressed.connect(_on_ok_pressed)
 	if _tfx_helper:
 		_ok_button.mouse_entered.connect(func(): _tfx_helper.button_hover(_ok_button))
 		_ok_button.mouse_exited.connect(func(): _tfx_helper.button_unhover(_ok_button))
+		_ok_button.pressed.connect(func(): _tfx_helper.button_press(_ok_button))
 	vbox.add_child(_ok_button)
 	
 	# Floating tooltip (child of self, above scroll clip)
@@ -209,22 +244,17 @@ func _build_tooltip() -> void:
 	
 	# Style the tooltip
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.06, 0.12, 0.98)
-	style.border_width_left = 3
-	style.border_width_right = 3
-	style.border_width_top = 3
-	style.border_width_bottom = 3
-	style.border_color = Color(1.0, 0.8, 0.2, 1.0)
-	style.corner_radius_top_left = 6
-	style.corner_radius_top_right = 6
-	style.corner_radius_bottom_left = 6
-	style.corner_radius_bottom_right = 6
+	style.bg_color = Color(0.247059, 0.219608, 0.345098, 0.98)
+	style.set_border_width_all(3)
+	style.border_color = Color(0.713725, 0.301961, 0.478431, 1.0)
+	style.set_corner_radius_all(14)
+	style.corner_detail = 8
 	style.content_margin_left = 12
 	style.content_margin_right = 12
 	style.content_margin_top = 10
 	style.content_margin_bottom = 10
-	style.shadow_color = Color(0, 0, 0, 0.5)
-	style.shadow_size = 3
+	style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.45)
+	style.shadow_size = 4
 	_tooltip.add_theme_stylebox_override("panel", style)
 	
 	var tip_vbox = VBoxContainer.new()
@@ -236,7 +266,9 @@ func _build_tooltip() -> void:
 	# Item name
 	_tooltip_name = Label.new()
 	_tooltip_name.add_theme_font_size_override("font_size", 15)
-	_tooltip_name.add_theme_color_override("font_color", Color(1.0, 0.98, 0.9))
+	_tooltip_name.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
+	_tooltip_name.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	_tooltip_name.add_theme_constant_override("outline_size", 1)
 	if vcr_font:
 		_tooltip_name.add_theme_font_override("font", vcr_font)
 	tip_vbox.add_child(_tooltip_name)
@@ -244,7 +276,9 @@ func _build_tooltip() -> void:
 	# Item type
 	_tooltip_type = Label.new()
 	_tooltip_type.add_theme_font_size_override("font_size", 11)
-	_tooltip_type.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	_tooltip_type.add_theme_color_override("font_color", Color(0.780392, 0.733333, 0.866667, 1.0))
+	_tooltip_type.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	_tooltip_type.add_theme_constant_override("outline_size", 1)
 	if vcr_font:
 		_tooltip_type.add_theme_font_override("font", vcr_font)
 	tip_vbox.add_child(_tooltip_type)
@@ -344,7 +378,9 @@ func _create_item_row(item, _index: int) -> PanelContainer:
 	var name_label = Label.new()
 	name_label.text = item.display_name
 	name_label.add_theme_font_size_override("font_size", 13)
-	name_label.add_theme_color_override("font_color", Color(1.0, 0.98, 0.9))
+	name_label.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
+	name_label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	name_label.add_theme_constant_override("outline_size", 1)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if vcr_font:
 		name_label.add_theme_font_override("font", vcr_font)
@@ -354,7 +390,9 @@ func _create_item_row(item, _index: int) -> PanelContainer:
 	var type_label = Label.new()
 	type_label.text = item.get_type_string()
 	type_label.add_theme_font_size_override("font_size", 10)
-	type_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6, 0.8))
+	type_label.add_theme_color_override("font_color", Color(0.780392, 0.733333, 0.866667, 0.9))
+	type_label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	type_label.add_theme_constant_override("outline_size", 1)
 	type_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	if vcr_font:
 		type_label.add_theme_font_override("font", vcr_font)
@@ -373,11 +411,8 @@ func _create_item_row(item, _index: int) -> PanelContainer:
 ## Returns the default row background style.
 func _create_row_style_normal() -> StyleBoxFlat:
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.12, 0.10, 0.18, 0.6)
-	style.corner_radius_top_left = 4
-	style.corner_radius_top_right = 4
-	style.corner_radius_bottom_left = 4
-	style.corner_radius_bottom_right = 4
+	style.bg_color = Color(0.247059, 0.219608, 0.345098, 0.48)
+	style.set_corner_radius_all(8)
 	style.content_margin_left = 8
 	style.content_margin_right = 8
 	style.content_margin_top = 3
@@ -390,16 +425,10 @@ func _create_row_style_normal() -> StyleBoxFlat:
 ## Returns the highlighted row background style for hover.
 func _create_row_style_hover() -> StyleBoxFlat:
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.2, 0.16, 0.3, 0.9)
-	style.border_width_left = 2
-	style.border_width_right = 2
-	style.border_width_top = 2
-	style.border_width_bottom = 2
-	style.border_color = Color(1.0, 0.8, 0.2, 0.6)
-	style.corner_radius_top_left = 4
-	style.corner_radius_top_right = 4
-	style.corner_radius_bottom_left = 4
-	style.corner_radius_bottom_right = 4
+	style.bg_color = Color(0.247059, 0.219608, 0.345098, 0.82)
+	style.set_border_width_all(2)
+	style.border_color = Color(0.137255, 0.411765, 0.415686, 0.9)
+	style.set_corner_radius_all(8)
 	style.content_margin_left = 8
 	style.content_margin_right = 8
 	style.content_margin_top = 3

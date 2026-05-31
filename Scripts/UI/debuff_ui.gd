@@ -182,14 +182,16 @@ func _create_plus_chip() -> Control:
 	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.15, 0.12, 0.18, 0.9)
-	style.border_color = Color(0.55, 0.55, 0.55, 0.6)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(6)
+	style.bg_color = Color(0.247059, 0.219608, 0.345098, 0.9)
+	style.border_color = Color(0.713725, 0.301961, 0.478431, 0.85)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(10)
 	style.content_margin_left = 4
 	style.content_margin_right = 4
 	style.content_margin_top = 4
 	style.content_margin_bottom = 4
+	style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.35)
+	style.shadow_size = 3
 	chip.add_theme_stylebox_override("panel", style)
 
 	var lbl := Label.new()
@@ -203,7 +205,9 @@ func _create_plus_chip() -> Control:
 	if vcr_font:
 		lbl.add_theme_font_override("font", vcr_font)
 	lbl.add_theme_font_size_override("font_size", 11)
-	lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
+	lbl.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
+	lbl.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	lbl.add_theme_constant_override("outline_size", 1)
 	chip.add_child(lbl)
 
 	return chip

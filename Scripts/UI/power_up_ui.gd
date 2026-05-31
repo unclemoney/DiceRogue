@@ -1209,22 +1209,17 @@ func _gui_input(event: InputEvent) -> void:
 ## Applies the hover tooltip styling directly to a PanelContainer
 func _apply_hover_tooltip_style(panel: PanelContainer) -> void:
 	var style_box = StyleBoxFlat.new()
-	style_box.bg_color = Color(0.08, 0.06, 0.12, 0.98)
-	style_box.border_width_left = 4
-	style_box.border_width_top = 4
-	style_box.border_width_right = 4
-	style_box.border_width_bottom = 4
-	style_box.border_color = Color(1, 0.8, 0.2, 1)
-	style_box.corner_radius_top_left = 6
-	style_box.corner_radius_top_right = 6
-	style_box.corner_radius_bottom_right = 6
-	style_box.corner_radius_bottom_left = 6
-	style_box.content_margin_left = 16.0
+	style_box.bg_color = Color(0.247059, 0.219608, 0.345098, 0.98)
+	style_box.border_color = Color(0.713725, 0.301961, 0.478431, 1.0)
+	style_box.set_border_width_all(3)
+	style_box.set_corner_radius_all(14)
+	style_box.corner_detail = 8
+	style_box.content_margin_left = 14.0
 	style_box.content_margin_top = 12.0
-	style_box.content_margin_right = 16.0
+	style_box.content_margin_right = 14.0
 	style_box.content_margin_bottom = 12.0
-	style_box.shadow_color = Color(0, 0, 0, 0.5)
-	style_box.shadow_size = 2
+	style_box.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.45)
+	style_box.shadow_size = 4
 	
 	panel.add_theme_stylebox_override("panel", style_box)
 	print("[PowerUpUI] Hover tooltip styling applied")
@@ -1236,7 +1231,7 @@ func _apply_hover_label_style(label: Label) -> void:
 	if vcr_font:
 		label.add_theme_font_override("font", vcr_font)
 		label.add_theme_font_size_override("font_size", 14)
-		label.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))
-		label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		label.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
+		label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
 		label.add_theme_constant_override("outline_size", 1)
 	print("[PowerUpUI] Hover label styling applied")

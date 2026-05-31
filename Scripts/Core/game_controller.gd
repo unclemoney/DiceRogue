@@ -93,7 +93,7 @@ const BONUS_COLLECTOR_CONSUMABLE_DEF := preload("res://Scripts/Consumable/BonusC
 @export var statistics_panel_path: NodePath     = ^"../StatisticsPanel"
 @export var scoring_animation_controller_path: NodePath = ^"../CRTTV/ScoringAnimationController"
 @export var chores_manager_path: NodePath       = ^"../Managers/ChoresManager"
-@export var chore_ui_path: NodePath             = ^"../ChoreUI"
+@export var chore_ui_path: NodePath             = ^"../GameUI/MarginContainer/MainVBox/MiddleSection/CenterColumn/ChoreMeterContainer/ContentVBox/ChoreUI"
 @export var synergy_manager_path: NodePath      = ^"../Managers/SynergyManager"
 @export var end_of_round_stats_panel_path: NodePath = ^"../EndOfRoundStatsPanel"
 @export var unlocked_item_panel_path: NodePath = ^"../UnlockedItemPanel"
@@ -308,6 +308,9 @@ func _ready() -> void:
 		chores_manager.mom_triggered.connect(_on_mom_triggered)
 		chores_manager.request_chore_selection.connect(_on_chore_selection_requested)
 		chores_manager.task_selected.connect(_on_chore_task_selected)
+		if chore_ui and chore_ui.has_method("set_chores_manager"):
+			chore_ui.set_chores_manager(chores_manager)
+			print("[GameController] Connected ChoreUI to ChoresManager")
 		print("[GameController] Connected to ChoresManager.mom_triggered")
 		print("[GameController] Connected to ChoresManager.request_chore_selection")
 		print("[GameController] Connected to ChoresManager.task_selected")

@@ -34,6 +34,12 @@ var vcr_font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 
 const VCR_GREEN := Color(0.2, 1.0, 0.3, 1.0)
 const VCR_GREEN_BRIGHT := Color(0.4, 1.0, 0.5, 1.0)
+const PANEL_BG := Color(0.247059, 0.219608, 0.345098, 0.56)
+const PANEL_SURFACE := Color(0.247059, 0.219608, 0.345098, 0.98)
+const PANEL_BORDER := Color(0.713725, 0.301961, 0.478431, 1.0)
+const PANEL_ACCENT := Color(0.137255, 0.411765, 0.415686, 1.0)
+const PANEL_TEXT := Color(0.968627, 0.941176, 1.0, 1.0)
+const PANEL_OUTLINE := Color(0.129412, 0.121569, 0.2, 1.0)
 
 
 func _ready() -> void:
@@ -48,17 +54,7 @@ func _ready() -> void:
 func _build_ui() -> void:
 	# Background panel
 	_bg_panel = PanelContainer.new()
-	var bg_style = StyleBoxFlat.new()
-	bg_style.bg_color = Color(0.08, 0.06, 0.12, 0.0)
-	bg_style.border_width_left = 2
-	bg_style.border_width_top = 2
-	bg_style.border_width_right = 2
-	bg_style.border_width_bottom = 2
-	bg_style.border_color = Color(0.9, 0.8, 0.3, 0.0)
-	bg_style.corner_radius_top_left = 4
-	bg_style.corner_radius_top_right = 4
-	bg_style.corner_radius_bottom_right = 4
-	bg_style.corner_radius_bottom_left = 4
+	var bg_style = _build_panel_style(PANEL_BORDER, PANEL_BG)
 	bg_style.content_margin_left = 8.0
 	bg_style.content_margin_top = 4.0
 	bg_style.content_margin_right = 8.0
@@ -75,8 +71,8 @@ func _build_ui() -> void:
 	_activate_button = Button.new()
 	_activate_button.text = "ACTIVATE"
 	_activate_button.add_theme_font_override("font", vcr_font)
-	_activate_button.add_theme_font_size_override("font_size", 12)
 	_activate_button.custom_minimum_size = Vector2(90, 20)
+	_apply_button_style(_activate_button, PANEL_ACCENT, 12)
 	_activate_button.pressed.connect(_on_activate_pressed)
 	_container.add_child(_activate_button)
 
@@ -115,28 +111,18 @@ func _build_tooltip() -> void:
 	_tooltip_panel.z_index = 140
 	_tooltip_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.06, 0.12, 0.98)
-	style.border_width_left = 4
-	style.border_width_top = 4
-	style.border_width_right = 4
-	style.border_width_bottom = 4
-	style.border_color = Color(1, 0.8, 0.2, 1)
-	style.corner_radius_top_left = 6
-	style.corner_radius_top_right = 6
-	style.corner_radius_bottom_right = 6
-	style.corner_radius_bottom_left = 6
-	style.content_margin_left = 16.0
+	var style = _build_panel_style(PANEL_BORDER, PANEL_SURFACE)
+	style.content_margin_left = 14.0
 	style.content_margin_top = 12.0
-	style.content_margin_right = 16.0
+	style.content_margin_right = 14.0
 	style.content_margin_bottom = 12.0
 	_tooltip_panel.add_theme_stylebox_override("panel", style)
 
 	_tooltip_label = Label.new()
 	_tooltip_label.add_theme_font_override("font", vcr_font)
 	_tooltip_label.add_theme_font_size_override("font_size", 14)
-	_tooltip_label.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))
-	_tooltip_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	_tooltip_label.add_theme_color_override("font_color", PANEL_TEXT)
+	_tooltip_label.add_theme_color_override("font_outline_color", PANEL_OUTLINE)
 	_tooltip_label.add_theme_constant_override("outline_size", 1)
 	_tooltip_panel.add_child(_tooltip_label)
 
@@ -359,17 +345,7 @@ func _spawn_nes_die_buttons() -> void:
 			var panel = PanelContainer.new()
 			panel.z_index = 150
 
-			var style = StyleBoxFlat.new()
-			style.bg_color = Color(0.08, 0.06, 0.12, 0.98)
-			style.border_width_left = 2
-			style.border_width_top = 2
-			style.border_width_right = 2
-			style.border_width_bottom = 2
-			style.border_color = Color(1, 0.8, 0.2, 1)
-			style.corner_radius_top_left = 4
-			style.corner_radius_top_right = 4
-			style.corner_radius_bottom_right = 4
-			style.corner_radius_bottom_left = 4
+			var style = _build_panel_style(PANEL_ACCENT, PANEL_SURFACE)
 			style.content_margin_left = 4.0
 			style.content_margin_top = 4.0
 			style.content_margin_right = 4.0
@@ -383,17 +359,25 @@ func _spawn_nes_die_buttons() -> void:
 			var plus_btn = Button.new()
 			plus_btn.text = "+1"
 			plus_btn.add_theme_font_override("font", vcr_font)
-			plus_btn.add_theme_font_size_override("font_size", 10)
 			plus_btn.custom_minimum_size = Vector2(26, 20)
+			_apply_button_style(plus_btn, PANEL_ACCENT, 10)
 			plus_btn.pressed.connect(_on_nes_die_adjust.bind(die, 1))
+			if _tfx:
+				plus_btn.mouse_entered.connect(_tfx.button_hover.bind(plus_btn))
+				plus_btn.mouse_exited.connect(_tfx.button_unhover.bind(plus_btn))
+				plus_btn.pressed.connect(_tfx.button_press.bind(plus_btn))
 			hbox.add_child(plus_btn)
 
 			var minus_btn = Button.new()
 			minus_btn.text = "-1"
 			minus_btn.add_theme_font_override("font", vcr_font)
-			minus_btn.add_theme_font_size_override("font_size", 10)
 			minus_btn.custom_minimum_size = Vector2(26, 20)
+			_apply_button_style(minus_btn, PANEL_BORDER, 10)
 			minus_btn.pressed.connect(_on_nes_die_adjust.bind(die, -1))
+			if _tfx:
+				minus_btn.mouse_entered.connect(_tfx.button_hover.bind(minus_btn))
+				minus_btn.mouse_exited.connect(_tfx.button_unhover.bind(minus_btn))
+				minus_btn.pressed.connect(_tfx.button_press.bind(minus_btn))
 			hbox.add_child(minus_btn)
 
 			# Position centered above the die
@@ -442,17 +426,7 @@ func _show_tilt_popup() -> void:
 	_tilt_popup = PanelContainer.new()
 	_tilt_popup.z_index = 150
 
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.06, 0.12, 0.98)
-	style.border_width_left = 3
-	style.border_width_top = 3
-	style.border_width_right = 3
-	style.border_width_bottom = 3
-	style.border_color = Color(1, 0.8, 0.2, 1)
-	style.corner_radius_top_left = 4
-	style.corner_radius_top_right = 4
-	style.corner_radius_bottom_right = 4
-	style.corner_radius_bottom_left = 4
+	var style = _build_panel_style(PANEL_BORDER, PANEL_SURFACE)
 	style.content_margin_left = 8.0
 	style.content_margin_top = 8.0
 	style.content_margin_right = 8.0
@@ -466,22 +440,76 @@ func _show_tilt_popup() -> void:
 	var plus_btn = Button.new()
 	plus_btn.text = "+1 ALL"
 	plus_btn.add_theme_font_override("font", vcr_font)
-	plus_btn.add_theme_font_size_override("font_size", 14)
 	plus_btn.custom_minimum_size = Vector2(70, 30)
+	_apply_button_style(plus_btn, PANEL_ACCENT, 14)
 	plus_btn.pressed.connect(_on_tilt_choice.bind(1))
+	if _tfx:
+		plus_btn.mouse_entered.connect(_tfx.button_hover.bind(plus_btn))
+		plus_btn.mouse_exited.connect(_tfx.button_unhover.bind(plus_btn))
+		plus_btn.pressed.connect(_tfx.button_press.bind(plus_btn))
 	hbox.add_child(plus_btn)
 
 	var minus_btn = Button.new()
 	minus_btn.text = "-1 ALL"
 	minus_btn.add_theme_font_override("font", vcr_font)
-	minus_btn.add_theme_font_size_override("font_size", 14)
 	minus_btn.custom_minimum_size = Vector2(70, 30)
+	_apply_button_style(minus_btn, PANEL_BORDER, 14)
 	minus_btn.pressed.connect(_on_tilt_choice.bind(-1))
+	if _tfx:
+		minus_btn.mouse_entered.connect(_tfx.button_hover.bind(minus_btn))
+		minus_btn.mouse_exited.connect(_tfx.button_unhover.bind(minus_btn))
+		minus_btn.pressed.connect(_tfx.button_press.bind(minus_btn))
 	hbox.add_child(minus_btn)
 
 	# Position above the console UI
 	_tilt_popup.position = global_position + Vector2(0, -50)
 	get_tree().root.add_child(_tilt_popup)
+
+
+func _build_panel_style(accent_color: Color, bg_color: Color) -> StyleBoxFlat:
+	var style = StyleBoxFlat.new()
+	style.bg_color = bg_color
+	style.border_color = accent_color
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	style.corner_detail = 6
+	style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.45)
+	style.shadow_size = 4
+	return style
+
+
+func _apply_button_style(button: Button, accent_color: Color, font_size: int = 12) -> void:
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_color", PANEL_TEXT)
+	button.add_theme_color_override("font_hover_color", PANEL_TEXT)
+	button.add_theme_color_override("font_pressed_color", PANEL_TEXT)
+	button.add_theme_color_override("font_outline_color", PANEL_OUTLINE)
+	button.add_theme_constant_override("outline_size", 1)
+
+	var normal = StyleBoxFlat.new()
+	normal.bg_color = accent_color.darkened(0.28)
+	normal.border_color = accent_color
+	normal.set_border_width_all(2)
+	normal.set_corner_radius_all(8)
+	normal.set_content_margin_all(4)
+	button.add_theme_stylebox_override("normal", normal)
+
+	var hover = StyleBoxFlat.new()
+	hover.bg_color = accent_color
+	hover.border_color = accent_color.lightened(0.1)
+	hover.set_border_width_all(2)
+	hover.set_corner_radius_all(8)
+	hover.set_content_margin_all(4)
+	button.add_theme_stylebox_override("hover", hover)
+
+	var pressed = StyleBoxFlat.new()
+	pressed.bg_color = accent_color.darkened(0.42)
+	pressed.border_color = accent_color.darkened(0.18)
+	pressed.set_border_width_all(2)
+	pressed.set_corner_radius_all(8)
+	pressed.set_content_margin_all(4)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("focus", hover)
 
 
 func _on_tilt_choice(amount: int) -> void:

@@ -187,7 +187,8 @@ Full documentation with parameters, recipes, and technical deep-dives: See `ARCA
   - **GameButtonUI**: single-row action strip for Next Turn, Shop, and Next Round using the shared neon action-button theme
   - **RollButtonUI**: enlarged glass-neon roll button with a custom shader, pointer-follow glow, proximity-based intensity, keyboard hint text, and shell-level TweenFX pulse/bounce feedback
   - **ScoreCardUI**: score rows now use fixed score lanes, stronger outline/shadow contrast, and translucent mall-core glass button states that adapt by channel via `ChannelManager` and `ChannelDifficultyData.ui_contrast_mode`
-  - All `PanelContainer` nodes use translucent `StyleBoxFlat` styling (peach fill at 25% alpha, chrome border)
+  - **ChoreUI**: panel-embedded chore meter with a horizontal neon progress bar, live task label, hover glow response, and click-expanded chore board that fans completed chores under a centered status panel
+  - Core gameplay panels now share a mall-core glass shell: dark plum fill, neon magenta borders, teal CTA accents, rounded corners, and VCR-styled outlined text
   - Glowing titles via `GlowingTitle.tscn` (SubViewport + WorldEnvironment) in each panel
   - Replaces the retired `CorkboardUI` and manual offset positioning
   - **Test Scene**: `Tests/UILayoutTest.tscn`
@@ -825,6 +826,7 @@ After completing a challenge and clicking the Shop button, an End of Round Stati
 **Panel Features:**
 - Shows round number, challenge target score, and final score
 - Displays animated bonus calculations
+- Uses the shared mall-core modal shell with teal call-to-action button styling
 - "Head to Shop" button to proceed after viewing stats
 
 **End of Round Bonuses:**
@@ -883,7 +885,7 @@ Power-ups register their bonuses with this manager, which emits signals when tot
 The **Chores System** adds a strategic tension mechanic where neglecting household duties brings parental consequences:
 
 **Core Mechanics:**
-- **Progress Bar**: Vertical progress bar (0-100) displayed in top-left corner
+- **Progress Bar**: Horizontal progress bar (0-100) displayed inside the centered Chore Meter panel
 - **Progress Increase**: +1 per dice roll (automatic)
 - **Progress Decrease**: Varies by chore difficulty (EASY: -10, HARD: -30)
 - **Mom Trigger**: At 100 progress, Mom appears to check your PowerUps
@@ -909,7 +911,8 @@ Tasks are randomly selected from a pool of 40+ options across different categori
 - **Challenge Tasks**: Roll Yahtzees or specific high-value combinations
 
 **Task Completion & Expiration:**
-- Hover over ChoreUI to see current task requirements and **expiration timer**
+- The collapsed Chore Meter always shows the live task label and progress state
+- Click the Chore Meter to open the detailed chore board with the current task requirements and **expiration timer**
 - Expiration timer shows "Expires in X rolls" (turns red when < 5 rolls remain)
 - Complete the task requirement during normal gameplay
 - Progress reduces by task difficulty (EASY: -10, HARD: -30)
@@ -945,9 +948,10 @@ When Mom appears (progress reaches 100):
 - **Pixel Art Sprites**: 48px character in top-down view style
 
 **ChoreUI Display:**
-- **Vertical Progress Bar**: Shows current progress (0-100) with color gradient
-- **Hover Details Panel**: Shows current task name, description, and progress
-- **Position**: Top-left corner, non-intrusive during gameplay
+- **Collapsed Meter**: Compact mall-core panel with a horizontal progress bar and current task label
+- **Expanded Chore Board**: Click opens a centered status panel with task description, progress, expiry, Mom mood, and completed chore count
+- **Fan-Out Cards**: Completed chores and Mom's mood still fan out beneath the status panel for the juiced summary state
+- **Position**: Built into the GameUI center column inside the `Chore Meter` panel
 
 **Debug Commands (Chores Tab):**
 - Add Progress +10/+50: Quickly advance progress for testing
@@ -964,7 +968,7 @@ When Mom appears (progress reaches 100):
 - **ChoreTasksLibrary**: `Scripts/Managers/chore_tasks_library.gd` - Task pool
 - **ChoresManager**: `Scripts/Managers/ChoresManager.gd` - Progress tracking
 - **MomLogicHandler**: `Scripts/Core/mom_logic_handler.gd` - Consequence logic
-- **ChoreUI**: `Scripts/UI/chore_ui.gd` - Progress bar display
+- **ChoreUI**: `Scripts/UI/chore_ui.gd` - Embedded chore meter plus expanded chore board overlay
 - **MomCharacter**: `Scripts/UI/mom_character.gd` - Dialog popup
 - **Mom Sprites**: `Resources/Art/Characters/Mom/` - Character art
 
@@ -979,6 +983,7 @@ Mom's mood tracks player behavior across a game session:
 
 **Chores Fan-Out UI:**
 Clicking the Goof-Off Meter displays a fan-out panel showing:
+- **Centered Status Panel**: Current task summary, progress/max, expiry state, Mom mood, and total completed chores
 - **Mom's Current Mood**: Emoji indicator (😊 to 😡) with mood description
 - **Completed Chores List**: Checkmark list of all chores completed this game
 - **Empty State**: Shows "No chores completed yet" message when starting fresh
@@ -1090,7 +1095,7 @@ A cinematic full-screen overlay displayed after challenge celebration fireworks,
 - Banners slide out opposite directions, buttons drop off-screen, overlay fades out
 
 **Visual Styling:**
-- Dark burgundy panels with gold borders (completion) and green borders (next challenge)
+- Dark mall-core banner panels with magenta completion borders, teal next-step borders, and outlined VCR text
 - VCR_OSD_MONO font throughout, matching game theme
 - CanvasLayer layer 10 renders above all game UI
 

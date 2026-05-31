@@ -46,6 +46,7 @@ var controller_bindings: Dictionary = {}  # action -> Button
 var _capturing_action: String = ""
 var _capturing_is_controller: bool = false
 var _capture_button: Button = null
+var _is_loading_settings: bool = false
 
 # Resolution options
 const RESOLUTIONS := [
@@ -57,10 +58,22 @@ const RESOLUTIONS := [
 	Vector2i(3840, 2160)
 ]
 
+const MENU_BG := Color(0.247059, 0.219608, 0.345098, 0.98)
+const MENU_BG_SOFT := Color(0.247059, 0.219608, 0.345098, 0.58)
+const MENU_SURFACE := Color(0.101961, 0.090196, 0.14902, 0.96)
+const MENU_BORDER := Color(0.713725, 0.301961, 0.478431, 1.0)
+const MENU_TEXT := Color(0.968627, 0.941176, 1.0, 1.0)
+const MENU_TEXT_SOFT := Color(0.780392, 0.733333, 0.866667, 1.0)
+const MENU_OUTLINE := Color(0.129412, 0.121569, 0.2, 1.0)
+const MENU_ACCENT := Color(0.137255, 0.411765, 0.415686, 1.0)
+const MENU_DANGER := Color(0.886275, 0.392157, 0.54902, 1.0)
+
 
 func _ready() -> void:
 	_game_settings = get_node_or_null("/root/GameSettings")
 	_tfx = get_node_or_null("/root/TweenFXHelper")
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	visible = false
 	_build_ui()
 	_load_current_settings()
 
@@ -85,11 +98,13 @@ func _input(event: InputEvent) -> void:
 ## Programmatically builds the settings menu UI.
 func _build_ui() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	z_index = 300
+	mouse_filter = Control.MOUSE_FILTER_STOP
 	
 	# Dark overlay background
 	var overlay = ColorRect.new()
 	overlay.name = "Overlay"
-	overlay.color = Color(0, 0, 0, 0.85)
+	overlay.color = Color(0, 0, 0, 0.74)
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(overlay)
@@ -102,19 +117,22 @@ func _build_ui() -> void:
 	panel.offset_top = -300
 	panel.offset_right = 400
 	panel.offset_bottom = 300
-	
-	var panel_style = StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.1, 0.08, 0.12, 0.98)
-	panel_style.border_color = Color(0.4, 0.35, 0.5, 1.0)
-	panel_style.set_border_width_all(3)
-	panel_style.set_corner_radius_all(12)
-	panel.add_theme_stylebox_override("panel", panel_style)
+	_apply_panel_style(panel)
 	add_child(panel)
+	
+	var margin = MarginContainer.new()
+	margin.name = "PanelMargin"
+	margin.add_theme_constant_override("margin_left", 20)
+	margin.add_theme_constant_override("margin_right", 20)
+	margin.add_theme_constant_override("margin_top", 18)
+	margin.add_theme_constant_override("margin_bottom", 18)
+	panel.add_child(margin)
 	
 	# Main vbox
 	var main_vbox = VBoxContainer.new()
-	main_vbox.add_theme_constant_override("separation", 10)
-	panel.add_child(main_vbox)
+	main_vbox.add_theme_constant_override("separation", 12)
+	main_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	margin.add_child(main_vbox)
 	
 	# Header with title and close button
 	var header = _build_header()
@@ -124,8 +142,10 @@ func _build_ui() -> void:
 	tab_container = TabContainer.new()
 	tab_container.name = "TabContainer"
 	tab_container.custom_minimum_size = Vector2(750, 500)
+	tab_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	tab_container.add_theme_font_override("font", vcr_font)
 	tab_container.add_theme_font_size_override("font_size", 16)
+	_apply_tab_container_style(tab_container)
 	main_vbox.add_child(tab_container)
 	
 	# Build tabs
@@ -143,12 +163,12 @@ func _build_ui() -> void:
 func _build_header() -> Control:
 	var header = HBoxContainer.new()
 	header.name = "Header"
+	header.add_theme_constant_override("separation", 12)
 	
 	var title = Label.new()
 	title.text = "SETTINGS"
 	title.add_theme_font_override("font", vcr_font)
-	title.add_theme_font_size_override("font_size", 32)
-	title.add_theme_color_override("font_color", Color(0.9, 0.85, 0.95, 1.0))
+	_style_label(title, 32)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 	
@@ -156,7 +176,7 @@ func _build_header() -> Control:
 	close_button.text = "X"
 	close_button.custom_minimum_size = Vector2(40, 40)
 	close_button.add_theme_font_override("font", vcr_font)
-	close_button.add_theme_font_size_override("font_size", 20)
+	_apply_button_style(close_button, MENU_DANGER)
 	close_button.pressed.connect(_on_close_pressed)
 	close_button.mouse_entered.connect(_tfx.button_hover.bind(close_button))
 	close_button.mouse_exited.connect(_tfx.button_unhover.bind(close_button))
@@ -200,8 +220,7 @@ func _build_audio_tab() -> void:
 	var info_label = Label.new()
 	info_label.text = "Audio changes apply immediately."
 	info_label.add_theme_font_override("font", vcr_font)
-	info_label.add_theme_font_size_override("font_size", 14)
-	info_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.65, 1.0))
+	_style_label(info_label, 14, MENU_TEXT_SOFT)
 	audio_tab.add_child(info_label)
 
 
@@ -228,13 +247,13 @@ func _build_video_tab() -> void:
 	res_label.text = "Resolution:"
 	res_label.custom_minimum_size = Vector2(200, 0)
 	res_label.add_theme_font_override("font", vcr_font)
-	res_label.add_theme_font_size_override("font_size", 18)
+	_style_label(res_label, 18)
 	res_row.add_child(res_label)
 	
 	resolution_option = OptionButton.new()
 	resolution_option.custom_minimum_size = Vector2(200, 40)
 	resolution_option.add_theme_font_override("font", vcr_font)
-	resolution_option.add_theme_font_size_override("font_size", 16)
+	_apply_button_style(resolution_option, MENU_ACCENT)
 	for res in RESOLUTIONS:
 		resolution_option.add_item("%d x %d" % [res.x, res.y])
 	res_row.add_child(resolution_option)
@@ -242,8 +261,7 @@ func _build_video_tab() -> void:
 	# Resolution warning
 	resolution_warning_label = Label.new()
 	resolution_warning_label.add_theme_font_override("font", vcr_font)
-	resolution_warning_label.add_theme_font_size_override("font_size", 14)
-	resolution_warning_label.add_theme_color_override("font_color", Color(1.0, 0.7, 0.3, 1.0))
+	_style_label(resolution_warning_label, 14, Color(1.0, 0.7, 0.3, 1.0))
 	resolution_warning_label.visible = false
 	video_tab.add_child(resolution_warning_label)
 	
@@ -256,11 +274,12 @@ func _build_video_tab() -> void:
 	fs_label.text = "Fullscreen:"
 	fs_label.custom_minimum_size = Vector2(200, 0)
 	fs_label.add_theme_font_override("font", vcr_font)
-	fs_label.add_theme_font_size_override("font_size", 18)
+	_style_label(fs_label, 18)
 	fs_row.add_child(fs_label)
 	
 	fullscreen_check = CheckButton.new()
 	fullscreen_check.add_theme_font_override("font", vcr_font)
+	_apply_button_style(fullscreen_check, MENU_ACCENT)
 	fs_row.add_child(fullscreen_check)
 	
 	# Apply button
@@ -271,7 +290,7 @@ func _build_video_tab() -> void:
 	apply_video_button.text = "APPLY"
 	apply_video_button.custom_minimum_size = Vector2(150, 45)
 	apply_video_button.add_theme_font_override("font", vcr_font)
-	apply_video_button.add_theme_font_size_override("font_size", 20)
+	_apply_button_style(apply_video_button, MENU_ACCENT, 20)
 	apply_video_button.pressed.connect(_on_apply_video_pressed)
 	apply_video_button.mouse_entered.connect(_tfx.button_hover.bind(apply_video_button))
 	apply_video_button.mouse_exited.connect(_tfx.button_unhover.bind(apply_video_button))
@@ -282,8 +301,7 @@ func _build_video_tab() -> void:
 	var info_label = Label.new()
 	info_label.text = "Click Apply to save video settings."
 	info_label.add_theme_font_override("font", vcr_font)
-	info_label.add_theme_font_size_override("font_size", 14)
-	info_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.65, 1.0))
+	_style_label(info_label, 14, MENU_TEXT_SOFT)
 	video_tab.add_child(info_label)
 
 
@@ -313,8 +331,7 @@ func _build_gameplay_tab() -> void:
 	var desc_label = Label.new()
 	desc_label.text = "0.5x = Slower (detailed), 2.0x = Faster (quick)"
 	desc_label.add_theme_font_override("font", vcr_font)
-	desc_label.add_theme_font_size_override("font_size", 14)
-	desc_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.65, 1.0))
+	_style_label(desc_label, 14, MENU_TEXT_SOFT)
 	gameplay_tab.add_child(desc_label)
 
 
@@ -348,7 +365,7 @@ func _build_keyboard_tab() -> void:
 	reset_btn.text = "Reset to Defaults"
 	reset_btn.custom_minimum_size = Vector2(180, 40)
 	reset_btn.add_theme_font_override("font", vcr_font)
-	reset_btn.add_theme_font_size_override("font_size", 16)
+	_apply_button_style(reset_btn, MENU_BORDER)
 	reset_btn.pressed.connect(_on_reset_keyboard_pressed)
 	reset_btn.mouse_entered.connect(_tfx.button_hover.bind(reset_btn))
 	reset_btn.mouse_exited.connect(_tfx.button_unhover.bind(reset_btn))
@@ -386,7 +403,7 @@ func _build_controller_tab() -> void:
 	reset_btn.text = "Reset to Defaults"
 	reset_btn.custom_minimum_size = Vector2(180, 40)
 	reset_btn.add_theme_font_override("font", vcr_font)
-	reset_btn.add_theme_font_size_override("font_size", 16)
+	_apply_button_style(reset_btn, MENU_BORDER)
 	reset_btn.pressed.connect(_on_reset_controller_pressed)
 	reset_btn.mouse_entered.connect(_tfx.button_hover.bind(reset_btn))
 	reset_btn.mouse_exited.connect(_tfx.button_unhover.bind(reset_btn))
@@ -413,8 +430,7 @@ func _build_fx_tab() -> void:
 	var desc_label = Label.new()
 	desc_label.text = "Toggle visual effect groups on or off."
 	desc_label.add_theme_font_override("font", vcr_font)
-	desc_label.add_theme_font_size_override("font_size", 14)
-	desc_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.75, 1.0))
+	_style_label(desc_label, 14, MENU_TEXT_SOFT)
 	fx_tab.add_child(desc_label)
 	
 	# Separator
@@ -436,7 +452,7 @@ func _build_fx_tab() -> void:
 		var err_label = Label.new()
 		err_label.text = "TweenFXHelper not found."
 		err_label.add_theme_font_override("font", vcr_font)
-		err_label.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
+		_style_label(err_label, 14, Color(1, 0.3, 0.3))
 		toggle_container.add_child(err_label)
 		return
 	
@@ -453,13 +469,14 @@ func _build_fx_tab() -> void:
 		name_label.text = _tfx.GROUP_NAMES.get(group_id, "Unknown") + ":"
 		name_label.custom_minimum_size = Vector2(180, 0)
 		name_label.add_theme_font_override("font", vcr_font)
-		name_label.add_theme_font_size_override("font_size", 16)
+		_style_label(name_label, 16)
 		row.add_child(name_label)
 		
 		# Toggle
 		var toggle = CheckButton.new()
 		toggle.button_pressed = _tfx.is_group_enabled(group_id)
 		toggle.add_theme_font_override("font", vcr_font)
+		_apply_button_style(toggle, MENU_ACCENT)
 		toggle.toggled.connect(_on_fx_group_toggled.bind(group_id))
 		toggle.mouse_entered.connect(func(): _tfx.button_hover(toggle))
 		toggle.mouse_exited.connect(func(): _tfx.button_unhover(toggle))
@@ -469,16 +486,14 @@ func _build_fx_tab() -> void:
 		var desc = Label.new()
 		desc.text = _tfx.GROUP_DESCRIPTIONS.get(group_id, "")
 		desc.add_theme_font_override("font", vcr_font)
-		desc.add_theme_font_size_override("font_size", 12)
-		desc.add_theme_color_override("font_color", Color(0.55, 0.55, 0.6, 1.0))
+		_style_label(desc, 12, MENU_TEXT_SOFT)
 		row.add_child(desc)
 	
 	# Info label
 	var info_label = Label.new()
 	info_label.text = "FX changes apply immediately and are saved."
 	info_label.add_theme_font_override("font", vcr_font)
-	info_label.add_theme_font_size_override("font_size", 14)
-	info_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.65, 1.0))
+	_style_label(info_label, 14, MENU_TEXT_SOFT)
 	fx_tab.add_child(info_label)
 
 
@@ -517,14 +532,14 @@ func _build_keybinding_rows(container: VBoxContainer, is_controller: bool) -> vo
 		action_label.text = action_names[action] + ":"
 		action_label.custom_minimum_size = Vector2(200, 0)
 		action_label.add_theme_font_override("font", vcr_font)
-		action_label.add_theme_font_size_override("font_size", 16)
+		_style_label(action_label, 16)
 		row.add_child(action_label)
 		
 		var bind_btn = Button.new()
 		bind_btn.name = action
 		bind_btn.custom_minimum_size = Vector2(200, 35)
 		bind_btn.add_theme_font_override("font", vcr_font)
-		bind_btn.add_theme_font_size_override("font_size", 14)
+		_apply_button_style(bind_btn, MENU_BORDER, 14)
 		bind_btn.pressed.connect(_on_keybind_button_pressed.bind(action, is_controller, bind_btn))
 		bind_btn.mouse_entered.connect(func(): _tfx.button_hover(bind_btn))
 		bind_btn.mouse_exited.connect(func(): _tfx.button_unhover(bind_btn))
@@ -550,7 +565,7 @@ func _create_slider_row(label_text: String, min_val: float, max_val: float, step
 	var label = Label.new()
 	label.text = label_text
 	label.add_theme_font_override("font", vcr_font)
-	label.add_theme_font_size_override("font_size", 18)
+	_style_label(label, 18)
 	container.add_child(label)
 	
 	var slider_row = HBoxContainer.new()
@@ -570,10 +585,108 @@ func _create_slider_row(label_text: String, min_val: float, max_val: float, step
 	value_label.name = "ValueLabel"
 	value_label.custom_minimum_size = Vector2(60, 0)
 	value_label.add_theme_font_override("font", vcr_font)
-	value_label.add_theme_font_size_override("font_size", 16)
+	_style_label(value_label, 16)
 	slider_row.add_child(value_label)
 	
 	return container
+
+
+func _apply_panel_style(panel: PanelContainer) -> void:
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = MENU_BG
+	panel_style.border_color = MENU_BORDER
+	panel_style.set_border_width_all(4)
+	panel_style.set_corner_radius_all(20)
+	panel_style.corner_detail = 8
+	panel_style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.45)
+	panel_style.shadow_size = 8
+	panel.add_theme_stylebox_override("panel", panel_style)
+
+
+func _apply_tab_container_style(tab: TabContainer) -> void:
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = MENU_BG_SOFT
+	panel_style.border_color = MENU_BORDER.darkened(0.15)
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(14)
+	panel_style.corner_detail = 6
+	tab.add_theme_stylebox_override("panel", panel_style)
+
+	var tab_unselected = StyleBoxFlat.new()
+	tab_unselected.bg_color = MENU_SURFACE
+	tab_unselected.border_color = MENU_BORDER.darkened(0.32)
+	tab_unselected.set_border_width_all(2)
+	tab_unselected.corner_radius_top_left = 10
+	tab_unselected.corner_radius_top_right = 10
+	tab_unselected.corner_radius_bottom_right = 0
+	tab_unselected.corner_radius_bottom_left = 0
+	tab.add_theme_stylebox_override("tab_unselected", tab_unselected)
+
+	var tab_selected = StyleBoxFlat.new()
+	tab_selected.bg_color = MENU_BG_SOFT
+	tab_selected.border_color = MENU_BORDER
+	tab_selected.set_border_width_all(2)
+	tab_selected.corner_radius_top_left = 10
+	tab_selected.corner_radius_top_right = 10
+	tab_selected.corner_radius_bottom_right = 0
+	tab_selected.corner_radius_bottom_left = 0
+	tab.add_theme_stylebox_override("tab_selected", tab_selected)
+
+	var tab_hovered = StyleBoxFlat.new()
+	tab_hovered.bg_color = MENU_ACCENT.darkened(0.18)
+	tab_hovered.border_color = MENU_ACCENT.lightened(0.1)
+	tab_hovered.set_border_width_all(2)
+	tab_hovered.corner_radius_top_left = 10
+	tab_hovered.corner_radius_top_right = 10
+	tab_hovered.corner_radius_bottom_right = 0
+	tab_hovered.corner_radius_bottom_left = 0
+	tab.add_theme_stylebox_override("tab_hovered", tab_hovered)
+
+	tab.add_theme_color_override("font_selected_color", MENU_TEXT)
+	tab.add_theme_color_override("font_unselected_color", MENU_TEXT_SOFT)
+	tab.add_theme_color_override("font_hovered_color", MENU_TEXT)
+	tab.add_theme_color_override("font_disabled_color", MENU_TEXT_SOFT.darkened(0.3))
+
+
+func _apply_button_style(button: Button, accent_color: Color, font_size: int = 16) -> void:
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_color", MENU_TEXT)
+	button.add_theme_color_override("font_hover_color", MENU_TEXT)
+	button.add_theme_color_override("font_pressed_color", MENU_TEXT_SOFT)
+	button.add_theme_color_override("font_outline_color", MENU_OUTLINE)
+	button.add_theme_constant_override("outline_size", 1)
+
+	var normal = StyleBoxFlat.new()
+	normal.bg_color = accent_color.darkened(0.28)
+	normal.border_color = accent_color
+	normal.set_border_width_all(2)
+	normal.set_corner_radius_all(10)
+	normal.set_content_margin_all(6)
+	button.add_theme_stylebox_override("normal", normal)
+
+	var hover = StyleBoxFlat.new()
+	hover.bg_color = accent_color
+	hover.border_color = accent_color.lightened(0.12)
+	hover.set_border_width_all(2)
+	hover.set_corner_radius_all(10)
+	hover.set_content_margin_all(6)
+	button.add_theme_stylebox_override("hover", hover)
+
+	var pressed = StyleBoxFlat.new()
+	pressed.bg_color = accent_color.darkened(0.42)
+	pressed.border_color = accent_color.darkened(0.18)
+	pressed.set_border_width_all(2)
+	pressed.set_corner_radius_all(10)
+	pressed.set_content_margin_all(6)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("focus", hover)
+
+
+func _style_label(label: Label, font_size: int, font_color: Color = MENU_TEXT) -> void:
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", font_color)
+	label.add_theme_color_override("font_outline_color", MENU_OUTLINE)
+	label.add_theme_constant_override("outline_size", 1)
 
 
 ## _load_current_settings()
@@ -582,6 +695,8 @@ func _create_slider_row(label_text: String, min_val: float, max_val: float, step
 func _load_current_settings() -> void:
 	if not _game_settings:
 		return
+
+	_is_loading_settings = true
 	
 	# Audio
 	sfx_slider.value = _game_settings.sfx_volume * 100
@@ -604,6 +719,7 @@ func _load_current_settings() -> void:
 	
 	# Keybindings
 	_update_all_keybind_buttons()
+	_is_loading_settings = false
 
 
 ## _update_all_keybind_buttons()
@@ -696,6 +812,8 @@ func _validate_resolution_display() -> void:
 ## Handler for SFX volume slider change.
 func _on_sfx_volume_changed(value: float) -> void:
 	sfx_value_label.text = "%s%%" % NumberFormatter.format_int(int(value))
+	if _is_loading_settings:
+		return
 	if _game_settings:
 		_game_settings.sfx_volume = value / 100.0
 		_game_settings.apply_audio_settings()
@@ -707,6 +825,8 @@ func _on_sfx_volume_changed(value: float) -> void:
 ## Handler for Music volume slider change.
 func _on_music_volume_changed(value: float) -> void:
 	music_value_label.text = "%s%%" % NumberFormatter.format_int(int(value))
+	if _is_loading_settings:
+		return
 	if _game_settings:
 		_game_settings.music_volume = value / 100.0
 		_game_settings.apply_audio_settings()
@@ -718,6 +838,8 @@ func _on_music_volume_changed(value: float) -> void:
 ## Handler for animation speed slider change.
 func _on_animation_speed_changed(value: float) -> void:
 	animation_speed_label.text = "%.1fx" % value
+	if _is_loading_settings:
+		return
 	if _game_settings:
 		_game_settings.scoring_animation_speed = value
 		_game_settings.save_settings()
@@ -855,6 +977,7 @@ func _on_close_pressed() -> void:
 ## Shows the settings menu with animated entrance.
 func show_menu() -> void:
 	_load_current_settings()
+	move_to_front()
 	visible = true
 	
 	var panel = get_node_or_null("SettingsPanel")

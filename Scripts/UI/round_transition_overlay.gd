@@ -29,14 +29,14 @@ const DISMISS_DURATION: float = 0.35
 
 # ── Styling Constants ─────────────────────────────────────────────────
 const OVERLAY_COLOR := Color(0, 0, 0, 0.78)
-const BANNER_BG_COLOR := Color(0.13, 0.10, 0.18, 0.96)
-const BANNER_BORDER_COLOR := Color(1.0, 0.82, 0.2, 1.0)
-const SHOP_BANNER_BORDER_COLOR := Color(0.3, 0.85, 0.4, 1.0)
-const TITLE_COLOR := Color(1.0, 0.9, 0.3, 1.0)
-const DETAIL_COLOR := Color(1.0, 0.98, 0.9, 1.0)
-const SUBTITLE_COLOR := Color(0.85, 0.82, 0.75, 1.0)
-const SHOP_BUTTON_BG := Color(0.12, 0.22, 0.12, 0.96)
-const SHOP_BUTTON_BORDER := Color(0.3, 0.9, 0.3, 1.0)
+const BANNER_BG_COLOR := Color(0.247059, 0.219608, 0.345098, 0.96)
+const BANNER_BORDER_COLOR := Color(0.713725, 0.301961, 0.478431, 1.0)
+const SHOP_BANNER_BORDER_COLOR := Color(0.47451, 0.886275, 0.890196, 1.0)
+const TITLE_COLOR := Color(0.968627, 0.941176, 1.0, 1.0)
+const DETAIL_COLOR := Color(0.968627, 0.941176, 1.0, 1.0)
+const SUBTITLE_COLOR := Color(0.780392, 0.733333, 0.866667, 1.0)
+const SHOP_BUTTON_BG := Color(0.137255, 0.411765, 0.415686, 0.92)
+const SHOP_BUTTON_BORDER := Color(0.47451, 0.886275, 0.890196, 1.0)
 
 const BANNER_BORDER_WIDTH: int = 3
 const BANNER_CORNER_RADIUS: int = 8
@@ -526,7 +526,7 @@ func _create_banner(banner_name: String, border_color: Color) -> Dictionary:
 	style.border_color = border_color
 	style.set_border_width_all(BANNER_BORDER_WIDTH)
 	style.set_corner_radius_all(BANNER_CORNER_RADIUS)
-	style.shadow_color = Color(0, 0, 0, 0.5)
+	style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.45)
 	style.shadow_size = 6
 	style.shadow_offset = Vector2(2, 3)
 	border.add_theme_stylebox_override("panel", style)
@@ -594,7 +594,7 @@ func _randomize_banner_shaders() -> void:
 
 ## _apply_shop_button_highlight(btn)
 ##
-## Applies a gold/green highlighted style to the Enter Shop button
+## Applies a teal-highlighted style to the Enter Shop button
 ## so it visually stands out as the primary action.
 func _apply_shop_button_highlight(btn: Button) -> void:
 	var normal_style = StyleBoxFlat.new()
@@ -606,20 +606,20 @@ func _apply_shop_button_highlight(btn: Button) -> void:
 	normal_style.content_margin_right = 12
 	normal_style.content_margin_top = 8
 	normal_style.content_margin_bottom = 8
-	normal_style.shadow_color = Color(0.1, 0.5, 0.1, 0.4)
+	normal_style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.4)
 	normal_style.shadow_size = 4
 
 	var hover_style = normal_style.duplicate()
-	hover_style.bg_color = Color(0.16, 0.28, 0.16, 0.98)
-	hover_style.border_color = Color(0.4, 1.0, 0.4, 1.0)
+	hover_style.bg_color = Color(0.2, 0.56, 0.56, 0.96)
+	hover_style.border_color = Color(0.6, 0.94, 0.96, 1.0)
 	hover_style.shadow_size = 6
 
 	var pressed_style = normal_style.duplicate()
-	pressed_style.bg_color = Color(0.20, 0.34, 0.20, 1.0)
-	pressed_style.border_color = Color(0.5, 1.0, 0.5, 1.0)
+	pressed_style.bg_color = Color(0.101961, 0.298039, 0.301961, 0.96)
+	pressed_style.border_color = Color(0.47451, 0.886275, 0.890196, 1.0)
 
 	btn.add_theme_stylebox_override("normal", normal_style)
 	btn.add_theme_stylebox_override("hover", hover_style)
 	btn.add_theme_stylebox_override("pressed", pressed_style)
-	btn.add_theme_color_override("font_color", Color(0.85, 1.0, 0.85, 1.0))
+	btn.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
 	btn.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))

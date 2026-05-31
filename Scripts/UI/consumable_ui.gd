@@ -1160,15 +1160,17 @@ func update_consumable_count(consumable_id: String, count: int) -> void:
 func _apply_hover_tooltip_style(tooltip: PanelContainer) -> void:
 	print("[ConsumableUI] Applying direct hover tooltip style")
 	var style_box = StyleBoxFlat.new()
-	style_box.bg_color = Color(0.1, 0.1, 0.1, 0.95)  # Dark background
-	style_box.border_color = Color(1, 0.8, 0.2, 1)   # Golden border
-	style_box.set_border_width_all(4)                # 4px border
-	style_box.content_margin_left = 16
-	style_box.content_margin_right = 16
-	style_box.content_margin_top = 16
-	style_box.content_margin_bottom = 16
-	style_box.shadow_color = Color(0, 0, 0, 0.5)
-	style_box.shadow_size = 2
+	style_box.bg_color = Color(0.247059, 0.219608, 0.345098, 0.98)
+	style_box.border_color = Color(0.137255, 0.411765, 0.415686, 1.0)
+	style_box.set_border_width_all(3)
+	style_box.set_corner_radius_all(14)
+	style_box.corner_detail = 8
+	style_box.content_margin_left = 14
+	style_box.content_margin_right = 14
+	style_box.content_margin_top = 12
+	style_box.content_margin_bottom = 12
+	style_box.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.45)
+	style_box.shadow_size = 4
 	tooltip.add_theme_stylebox_override("panel", style_box)
 
 func _apply_hover_label_style(label: Label) -> void:
@@ -1177,5 +1179,7 @@ func _apply_hover_label_style(label: Label) -> void:
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 	if vcr_font:
 		label.add_theme_font_override("font", vcr_font)
-	label.add_theme_font_size_override("font_size", 18)
-	label.add_theme_color_override("font_color", Color(1, 1, 1, 1))  # White text
+	label.add_theme_font_size_override("font_size", 16)
+	label.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
+	label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	label.add_theme_constant_override("outline_size", 1)

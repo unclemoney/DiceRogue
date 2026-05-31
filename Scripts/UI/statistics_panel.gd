@@ -65,7 +65,7 @@ func toggle_visibility():
 		var panel_child = get_node_or_null("Panel")
 		if panel_child:
 			# Ensure panel is properly positioned and sized
-			panel_child.modulate = Color(1, 1, 1, 0.95)  # Semi-transparent white
+			panel_child.modulate = Color(0.96, 0.94, 1.0, 0.98)
 			panel_child.position = Vector2(100, 100)  # Fixed position that works
 			panel_child.size = Vector2(1100, 500)  # Proper size
 			panel_child.visible = true
@@ -112,7 +112,9 @@ func _create_core_tab():
 	var title = Label.new()
 	title.text = "Core Game Metrics"
 	title.add_theme_font_size_override("font_size", 18)
-	title.add_theme_color_override("font_color", Color.YELLOW)
+	title.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
+	title.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	title.add_theme_constant_override("outline_size", 1)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	core_tab.add_child(title)
 	
@@ -140,7 +142,9 @@ func _create_economic_tab():
 	var title = Label.new()
 	title.text = "Economic Metrics"
 	title.add_theme_font_size_override("font_size", 18)
-	title.add_theme_color_override("font_color", Color.GREEN)
+	title.add_theme_color_override("font_color", Color(0.47451, 0.886275, 0.890196, 1.0))
+	title.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	title.add_theme_constant_override("outline_size", 1)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	economic_tab.add_child(title)
 	
@@ -169,7 +173,9 @@ func _create_dice_tab():
 	var title = Label.new()
 	title.text = "Dice Metrics"
 	title.add_theme_font_size_override("font_size", 18)
-	title.add_theme_color_override("font_color", Color.ORANGE)
+	title.add_theme_color_override("font_color", Color(0.713725, 0.301961, 0.478431, 1.0))
+	title.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	title.add_theme_constant_override("outline_size", 1)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	dice_tab.add_child(title)
 	
@@ -269,7 +275,9 @@ func _create_hands_tab():
 	var bonus_title = Label.new()
 	bonus_title.text = "Bonus Achievements:"
 	bonus_title.add_theme_font_size_override("font_size", 14)
-	bonus_title.add_theme_color_override("font_color", Color.GOLD)
+	bonus_title.add_theme_color_override("font_color", Color(0.780392, 0.733333, 0.866667, 1.0))
+	bonus_title.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	bonus_title.add_theme_constant_override("outline_size", 1)
 	hands_tab.add_child(bonus_title)
 	
 	_add_stat_label(hands_tab, "  Yahtzee Bonuses", str(stats_node.yahtzee_bonuses_earned))
@@ -383,14 +391,18 @@ func _add_stat_label(parent: Node, label_text: String, value_text: String):
 	label.custom_minimum_size.x = 200
 	label.custom_minimum_size.y = 20
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_color_override("font_color", Color.WHITE)
+	label.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
+	label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	label.add_theme_constant_override("outline_size", 1)
 	
 	var value = Label.new()
 	value.text = value_text
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	value.custom_minimum_size.y = 20
 	value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	value.add_theme_color_override("font_color", Color.CYAN)
+	value.add_theme_color_override("font_color", Color(0.47451, 0.886275, 0.890196, 1.0))
+	value.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	value.add_theme_constant_override("outline_size", 1)
 	
 	hbox.add_child(label)
 	hbox.add_child(value)
@@ -431,18 +443,18 @@ func _refresh_logbook_display():
 		return
 	
 	if not _is_statistics_available():
-		logbook_label.text = "[color=gray][i]Statistics Manager not available[/i][/color]"
+		logbook_label.text = "[color=#c7bbdd][i]Statistics Manager not available[/i][/color]"
 		return
 	
 	var logbook_entries = stats_node.get_logbook_entries()
 	
 	if logbook_entries.is_empty():
-		logbook_label.text = "[color=gray][i]No logbook entries yet. Start playing to see detailed scoring history![/i][/color]"
+		logbook_label.text = "[color=#c7bbdd][i]No logbook entries yet. Start playing to see detailed scoring history![/i][/color]"
 		return
 	
 	# Create formatted display of all logbook entries
 	var content_lines: Array[String] = []
-	content_lines.append("[b][color=yellow]Complete Scoring History[/color][/b]")
+	content_lines.append("[b][color=#f7f0ff]Complete Scoring History[/color][/b]")
 	content_lines.append("")
 	
 	# Reverse order to show most recent first
@@ -451,11 +463,11 @@ func _refresh_logbook_display():
 		
 		# Entry header with timestamp
 		var timestamp_str = entry.get_timestamp_string()
-		content_lines.append("[b][color=cyan]%s - %s[/color][/b]" % [timestamp_str, entry.formatted_log_line])
+		content_lines.append("[b][color=#79e2e3]%s - %s[/color][/b]" % [timestamp_str, entry.formatted_log_line])
 		
 		# Detailed breakdown if modifiers exist
 		if entry.has_modifiers():
-			content_lines.append("  [color=lightblue]Details:[/color]")
+			content_lines.append("  [color=#c7bbdd]Details:[/color]")
 			content_lines.append("    Dice: %s" % str(entry.dice_values))
 			if entry.dice_colors.size() > 0:
 				content_lines.append("    Colors: %s" % str(entry.dice_colors))

@@ -79,6 +79,16 @@ func _build_ui() -> void:
 	var panel_theme = load(theme_path) as Theme
 	if panel_theme:
 		panel_container.theme = panel_theme
+
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.247059, 0.219608, 0.345098, 0.98)
+	panel_style.border_color = Color(0.713725, 0.301961, 0.478431, 1.0)
+	panel_style.set_border_width_all(4)
+	panel_style.set_corner_radius_all(20)
+	panel_style.corner_detail = 8
+	panel_style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.45)
+	panel_style.shadow_size = 8
+	panel_container.add_theme_stylebox_override("panel", panel_style)
 	
 	overlay.add_child(panel_container)
 	
@@ -101,6 +111,8 @@ func _build_ui() -> void:
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.add_theme_font_size_override("font_size", 28)
 	title_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))  # Gold color
+	title_label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	title_label.add_theme_constant_override("outline_size", 1)
 	main_vbox.add_child(title_label)
 	
 	# Separator
@@ -134,9 +146,30 @@ func _build_ui() -> void:
 	ok_button.custom_minimum_size = Vector2(120, 40)
 	ok_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	ok_button.add_theme_font_size_override("font_size", 18)
+	ok_button.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
+	ok_button.add_theme_color_override("font_hover_color", Color(0.968627, 0.941176, 1.0, 1.0))
+	ok_button.add_theme_color_override("font_pressed_color", Color(0.780392, 0.733333, 0.866667, 1.0))
+	ok_button.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
+	ok_button.add_theme_constant_override("outline_size", 1)
+	var ok_style = StyleBoxFlat.new()
+	ok_style.bg_color = Color(0.137255, 0.411765, 0.415686, 0.92)
+	ok_style.border_color = Color(0.47451, 0.886275, 0.890196, 1.0)
+	ok_style.set_border_width_all(2)
+	ok_style.set_corner_radius_all(10)
+	ok_style.set_content_margin_all(6)
+	ok_button.add_theme_stylebox_override("normal", ok_style)
+	var ok_hover = ok_style.duplicate()
+	ok_hover.bg_color = Color(0.2, 0.56, 0.56, 0.96)
+	ok_hover.border_color = Color(0.6, 0.94, 0.96, 1.0)
+	ok_button.add_theme_stylebox_override("hover", ok_hover)
+	var ok_pressed = ok_style.duplicate()
+	ok_pressed.bg_color = Color(0.101961, 0.298039, 0.301961, 0.96)
+	ok_button.add_theme_stylebox_override("pressed", ok_pressed)
+	ok_button.add_theme_stylebox_override("focus", ok_hover)
 	ok_button.pressed.connect(_on_ok_pressed)
 	ok_button.mouse_entered.connect(func(): _tfx.button_hover(ok_button))
 	ok_button.mouse_exited.connect(func(): _tfx.button_unhover(ok_button))
+	ok_button.pressed.connect(func(): _tfx.button_press(ok_button))
 	ok_button.disabled = true  # Disabled until reveal completes
 	main_vbox.add_child(ok_button)
 

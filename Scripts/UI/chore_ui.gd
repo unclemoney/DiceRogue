@@ -3,10 +3,10 @@ class_name ChoreUI
 
 ## ChoreUI
 ##
-## Displays the chore progress bar and current task in the top-left corner.
+## Displays the chore meter and current task inside the GameUI center column.
 ## Progress increases by 1 each dice roll and decreases by 20 when tasks complete.
-## Shows a details panel on hover with the current task information.
-## Clicking on the meter fans out to show completed chores and Mom's mood.
+## Uses a compact neon meter in the collapsed state.
+## Clicking on the meter opens a centered chore board and fans out completed chore cards.
 
 signal task_clicked
 
@@ -17,6 +17,7 @@ var progress_bar: ProgressBar
 var task_label: Label
 var details_panel: PanelContainer
 var details_label: RichTextLabel
+var _compact_shell: PanelContainer
 var _chores_manager = null  # ChoresManager - duck typed to avoid class resolution issues
 
 # Fan-out state
@@ -26,19 +27,47 @@ var _background: ColorRect = null
 var _fanned_cards: Array[Control] = []
 var _is_animating: bool = false
 var _fan_center: Vector2
+var _compact_hover_tween: Tween
 
 # Visual settings
-const BAR_WIDTH: float = 120.0
-const BAR_HEIGHT: float = 20.0
+const BAR_WIDTH: float = 156.0
+const BAR_HEIGHT: float = 18.0
 const DANGER_THRESHOLD: float = 80.0
 const WARNING_THRESHOLD: float = 60.0
+const CHORE_BG: Color = Color(0.247059, 0.219608, 0.345098, 0.9)
+const CHORE_BG_SOFT: Color = Color(0.247059, 0.219608, 0.345098, 0.4)
+const CHORE_BORDER: Color = Color(0.713725, 0.301961, 0.478431, 0.95)
+const CHORE_ACCENT: Color = Color(0.137255, 0.411765, 0.415686, 1.0)
+const CHORE_TEXT: Color = Color(0.968627, 0.941176, 1.0, 1.0)
+const CHORE_TEXT_SOFT: Color = Color(0.780392, 0.733333, 0.866667, 1.0)
+const CHORE_OUTLINE: Color = Color(0.129412, 0.121569, 0.2, 1.0)
+const CHORE_DANGER: Color = Color(0.886275, 0.392157, 0.54902, 1.0)
+const CHORE_WARNING: Color = Color(0.886275, 0.67451, 0.356863, 1.0)
+const CHORE_SAFE: Color = Color(0.47451, 0.886275, 0.890196, 1.0)
+const DETAILS_PANEL_SIZE := Vector2(420, 250)
+const CARD_SIZE := Vector2(128, 92)
+const BAR_CORNER_RADIUS := 9
+const BAR_CONTENT_INSET := 2
+const CARD_ROW_GAP: float = 68.0
+const CARD_SPACING: float = 14.0
 
 func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_STOP
 	_create_ui_structure()
 	_create_background_overlay()
 	_setup_signals()
 	_fan_center = get_viewport_rect().size / 2.0
 	print("[ChoreUI] Initialized")
+
+
+func _exit_tree() -> void:
+	if _compact_hover_tween and _compact_hover_tween.is_valid():
+		_compact_hover_tween.kill()
+		_compact_hover_tween = null
+	if _background and is_instance_valid(_background):
+		_background.queue_free()
+	if details_panel and is_instance_valid(details_panel):
+		details_panel.queue_free()
 
 ## set_chores_manager()
 ##
@@ -91,117 +120,171 @@ func _disconnect_signals() -> void:
 			_chores_manager.task_rotated.disconnect(_on_task_rotated)
 
 func _create_ui_structure() -> void:
-	# Set size and position - wider and shorter layout
-	custom_minimum_size = Vector2(240, 100)
-	size = Vector2(240, 100)
-	
-	# Main container
-	var main_container = HBoxContainer.new()
+	custom_minimum_size = Vector2(0, 0)
+
+	var margin = MarginContainer.new()
+	margin.name = "MarginContainer"
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_top", 1)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_bottom", 2)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(margin)
+
+	var main_container = VBoxContainer.new()
 	main_container.name = "MainContainer"
-	main_container.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(main_container)
-	
-	# Title
-	var title_label = Label.new()
-	title_label.name = "TitleLabel"
-	title_label.text = "GOOF-OFF"
-	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_label.add_theme_font_size_override("font_size", 18)
-	title_label.add_theme_color_override("font_color", Color.BLACK)
-	main_container.add_child(title_label)
-	
-	# Subtitle
-	var subtitle_label = Label.new()
-	subtitle_label.name = "SubtitleLabel"
-	subtitle_label.text = "METER"
-	subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle_label.add_theme_font_size_override("font_size", 18)
-	subtitle_label.add_theme_color_override("font_color", Color.BLACK)
-	main_container.add_child(subtitle_label)
-	
-	# Spacer
-	var spacer = Control.new()
-	spacer.custom_minimum_size = Vector2(5, 0)
-	main_container.add_child(spacer)
-	
-	# Progress bar container (centered)
-	var bar_container = CenterContainer.new()
-	bar_container.name = "BarContainer"
-	bar_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	main_container.add_child(bar_container)
-	
-	# Progress bar (horizontal now)
+	main_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main_container.alignment = BoxContainer.ALIGNMENT_BEGIN
+	main_container.add_theme_constant_override("separation", 4)
+	main_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	margin.add_child(main_container)
+
+	_compact_shell = PanelContainer.new()
+	_compact_shell.name = "CompactShell"
+	_compact_shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_compact_shell.custom_minimum_size = Vector2(0, 50)
+	_compact_shell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	main_container.add_child(_compact_shell)
+	_apply_compact_shell_style()
+
+	var shell_margin = MarginContainer.new()
+	shell_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	shell_margin.add_theme_constant_override("margin_left", 8)
+	shell_margin.add_theme_constant_override("margin_top", 4)
+	shell_margin.add_theme_constant_override("margin_right", 8)
+	shell_margin.add_theme_constant_override("margin_bottom", 4)
+	shell_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_compact_shell.add_child(shell_margin)
+
+	var shell_content = VBoxContainer.new()
+	shell_content.add_theme_constant_override("separation", 2)
+	shell_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shell_margin.add_child(shell_content)
+
 	progress_bar = ProgressBar.new()
 	progress_bar.name = "ProgressBar"
 	progress_bar.min_value = 0
 	progress_bar.max_value = 100
 	progress_bar.value = 0
 	progress_bar.show_percentage = false
+	progress_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	progress_bar.custom_minimum_size = Vector2(BAR_WIDTH, BAR_HEIGHT)
-	progress_bar.size = Vector2(BAR_WIDTH, BAR_HEIGHT)
 	progress_bar.fill_mode = ProgressBar.FILL_BEGIN_TO_END
+	progress_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_apply_progress_bar_style()
-	bar_container.add_child(progress_bar)
-	
-	# Task label (short name)
+	shell_content.add_child(progress_bar)
+
 	task_label = Label.new()
 	task_label.name = "TaskLabel"
-	task_label.text = "..."
+	task_label.text = "No active chore"
 	task_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	task_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	task_label.add_theme_font_size_override("font_size", 10)
-	task_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
+	task_label.add_theme_color_override("font_color", CHORE_TEXT)
+	task_label.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	task_label.add_theme_constant_override("outline_size", 1)
 	task_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	task_label.custom_minimum_size = Vector2(80, 0)
-	#main_container.add_child(task_label)
-	
-	# Details panel (shown on hover)
+	task_label.custom_minimum_size = Vector2(0, 14)
+	task_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shell_content.add_child(task_label)
+
 	details_panel = PanelContainer.new()
 	details_panel.name = "DetailsPanel"
 	details_panel.visible = false
-	details_panel.position = Vector2(85, 0)  # Position to the right
-	details_panel.custom_minimum_size = Vector2(180, 80)
+	details_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	details_panel.z_index = 60
+	details_panel.custom_minimum_size = DETAILS_PANEL_SIZE
 	_apply_panel_style()
-	add_child(details_panel)
-	
-	# Details content
+
+	var panel_margin = MarginContainer.new()
+	panel_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel_margin.add_theme_constant_override("margin_left", 14)
+	panel_margin.add_theme_constant_override("margin_top", 12)
+	panel_margin.add_theme_constant_override("margin_right", 14)
+	panel_margin.add_theme_constant_override("margin_bottom", 12)
+	details_panel.add_child(panel_margin)
+
 	var details_vbox = VBoxContainer.new()
-	details_panel.add_child(details_vbox)
-	
+	details_vbox.add_theme_constant_override("separation", 8)
+	panel_margin.add_child(details_vbox)
+
 	var details_title = Label.new()
 	details_title.name = "DetailsTitle"
-	details_title.text = "Current Task"
-	details_title.add_theme_font_size_override("font_size", 14)
-	details_title.add_theme_color_override("font_color", Color.YELLOW)
+	details_title.text = "CHORE STATUS"
+	details_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	details_title.add_theme_font_size_override("font_size", 18)
+	details_title.add_theme_color_override("font_color", CHORE_TEXT)
+	details_title.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	details_title.add_theme_constant_override("outline_size", 1)
 	details_vbox.add_child(details_title)
-	
+
 	details_label = RichTextLabel.new()
 	details_label.name = "DetailsLabel"
 	details_label.bbcode_enabled = true
-	details_label.fit_content = true
-	details_label.custom_minimum_size = Vector2(170, 50)
-	details_label.add_theme_color_override("default_color", Color.WHITE)
+	details_label.fit_content = false
+	details_label.scroll_active = false
+	details_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	details_label.custom_minimum_size = Vector2(0, 150)
+	details_label.add_theme_color_override("default_color", CHORE_TEXT)
+	details_label.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	details_label.add_theme_constant_override("outline_size", 1)
 	details_vbox.add_child(details_label)
+
+	var hint_label = Label.new()
+	hint_label.name = "HintLabel"
+	hint_label.text = "Click outside to close"
+	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint_label.add_theme_font_size_override("font_size", 10)
+	hint_label.add_theme_color_override("font_color", CHORE_TEXT_SOFT)
+	hint_label.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	hint_label.add_theme_constant_override("outline_size", 1)
+	details_vbox.add_child(hint_label)
+
+	_update_details_with_progress()
+
+
+func _apply_compact_shell_style() -> void:
+	if _compact_shell == null:
+		return
+	var shell_style = StyleBoxFlat.new()
+	shell_style.bg_color = CHORE_BG_SOFT
+	shell_style.border_color = CHORE_BORDER
+	shell_style.set_border_width_all(2)
+	shell_style.set_corner_radius_all(12)
+	shell_style.corner_detail = 6
+	shell_style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.35)
+	shell_style.shadow_size = 4
+	_compact_shell.add_theme_stylebox_override("panel", shell_style)
 
 func _apply_progress_bar_style() -> void:
 	var bg_style = StyleBoxFlat.new()
-	bg_style.bg_color = Color(0.1, 0.1, 0.1, 0.8)
-	bg_style.border_color = Color(0.3, 0.3, 0.3)
-	bg_style.set_border_width_all(1)
-	bg_style.set_corner_radius_all(3)
+	bg_style.bg_color = Color(0.078431, 0.066667, 0.113725, 0.92)
+	bg_style.border_color = CHORE_BORDER.darkened(0.15)
+	bg_style.set_border_width_all(2)
+	bg_style.set_corner_radius_all(BAR_CORNER_RADIUS)
+	bg_style.set_content_margin_all(BAR_CONTENT_INSET)
 	progress_bar.add_theme_stylebox_override("background", bg_style)
 	
 	var fill_style = StyleBoxFlat.new()
-	fill_style.bg_color = Color(0.2, 0.7, 0.2)  # Green
-	fill_style.set_corner_radius_all(2)
+	fill_style.bg_color = CHORE_SAFE
+	fill_style.set_corner_radius_all(BAR_CORNER_RADIUS)
 	progress_bar.add_theme_stylebox_override("fill", fill_style)
 
 func _apply_panel_style() -> void:
+	var theme_res = load("res://Resources/UI/powerup_hover_theme.tres") as Theme
+	if theme_res:
+		details_panel.theme = theme_res
 	var panel_style = StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.1, 0.1, 0.15, 0.95)
-	panel_style.border_color = Color(0.4, 0.4, 0.5)
-	panel_style.set_border_width_all(2)
-	panel_style.set_corner_radius_all(5)
-	panel_style.set_content_margin_all(8)
+	panel_style.bg_color = CHORE_BG
+	panel_style.border_color = CHORE_BORDER
+	panel_style.set_border_width_all(3)
+	panel_style.set_corner_radius_all(18)
+	panel_style.corner_detail = 8
+	panel_style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.45)
+	panel_style.shadow_size = 8
+	panel_style.set_content_margin_all(10)
 	details_panel.add_theme_stylebox_override("panel", panel_style)
 
 func _setup_signals() -> void:
@@ -222,9 +305,9 @@ func _on_progress_changed(new_value: int) -> void:
 func _on_task_selected(task) -> void:  # ChoreData - duck typed
 	if task == null:
 		if task_label:
-			task_label.text = "..."
+			task_label.text = "No active chore"
 		if details_label:
-			details_label.text = "No task"
+			_update_details_with_progress()
 		return
 	
 	if task_label:
@@ -241,40 +324,63 @@ func _on_task_completed(_task) -> void:  # ChoreData - duck typed, unused
 
 ## _update_details_with_progress()
 ##
-## Updates the details tooltip with current task info, progress, and expiration timer.
+## Updates the expanded chore board with current task info, progress, and expiration timer.
 ## Shows scaled max progress threshold and rolls until chore expires.
 ## Expiration text turns red when fewer than 5 rolls remain.
 func _update_details_with_progress() -> void:
-	if not details_label or not _chores_manager:
+	if not details_label:
+		return
+	if not _chores_manager:
+		if task_label:
+			task_label.text = "No active chore"
+		details_label.text = "[center][b]No chore data available[/b][/center]"
 		return
 	
 	var task = _chores_manager.current_task
 	var current_progress_val = _chores_manager.current_progress
 	var max_progress = 100  # Default
+	var completed_count = _chores_manager.completed_chores.size()
+	var mood_desc = _chores_manager.get_mood_description() if _chores_manager.has_method("get_mood_description") else "Neutral"
+	var mood_emoji = _chores_manager.get_mood_emoji() if _chores_manager.has_method("get_mood_emoji") else "*"
 	
 	# Get scaled max progress if available
 	if _chores_manager.has_method("get_scaled_max_progress"):
 		max_progress = _chores_manager.get_scaled_max_progress()
 	
 	if task:
-		var expiry_text = ""
+		if task_label:
+			task_label.text = task.display_name
+		var expiry_text = "Stable"
 		if _chores_manager.has_method("get_rolls_until_expiry"):
 			var rolls_left = _chores_manager.get_rolls_until_expiry()
 			if rolls_left >= 0:
 				if rolls_left < 5:
-					expiry_text = "\n[color=#cc3333]⏰ Expires in %d rolls![/color]" % rolls_left
+					expiry_text = "[color=#ff7f9c]Expires in %d rolls[/color]" % rolls_left
 				else:
-					expiry_text = "\n[color=#888888]⏰ Expires in %d rolls[/color]" % rolls_left
-		
-		details_label.text = "[b]%s[/b]\n%s\n[color=#888888]Progress:[/color] %s / %s%s" % [
+					expiry_text = "Expires in %d rolls" % rolls_left
+
+		details_label.text = "[center][b]%s[/b][/center]\n%s\n\n[color=#c7bbdd]Progress:[/color] %s / %s\n[color=#c7bbdd]Expiry:[/color] %s\n[color=#c7bbdd]Mom Mood:[/color] %s %s (%d/10)\n[color=#c7bbdd]Completed:[/color] %d chore(s)" % [
 			task.display_name,
 			task.description,
 			NumberFormatter.format_int(current_progress_val),
 			NumberFormatter.format_int(max_progress),
-			expiry_text
+			expiry_text,
+			mood_emoji,
+			mood_desc,
+			_chores_manager.mom_mood,
+			completed_count
 		]
 	else:
-		details_label.text = "[color=#888888]Progress:[/color] %s / %s" % [NumberFormatter.format_int(current_progress_val), NumberFormatter.format_int(max_progress)]
+		if task_label:
+			task_label.text = "No active chore"
+		details_label.text = "[center][b]No active chore[/b][/center]\nTake a breather, but keep an eye on the meter.\n\n[color=#c7bbdd]Progress:[/color] %s / %s\n[color=#c7bbdd]Mom Mood:[/color] %s %s (%d/10)\n[color=#c7bbdd]Completed:[/color] %d chore(s)" % [
+			NumberFormatter.format_int(current_progress_val),
+			NumberFormatter.format_int(max_progress),
+			mood_emoji,
+			mood_desc,
+			_chores_manager.mom_mood,
+			completed_count
+		]
 
 
 func _update_progress_color(value: int) -> void:
@@ -284,14 +390,14 @@ func _update_progress_color(value: int) -> void:
 	
 	# Create a new stylebox to avoid modifying shared resource
 	var new_style = StyleBoxFlat.new()
-	new_style.set_corner_radius_all(2)
+	new_style.set_corner_radius_all(BAR_CORNER_RADIUS)
 	
 	if value >= DANGER_THRESHOLD:
-		new_style.bg_color = Color(0.8, 0.2, 0.2)  # Red
+		new_style.bg_color = CHORE_DANGER
 	elif value >= WARNING_THRESHOLD:
-		new_style.bg_color = Color(0.8, 0.6, 0.2)  # Orange
+		new_style.bg_color = CHORE_WARNING
 	else:
-		new_style.bg_color = Color(0.2, 0.7, 0.2)  # Green
+		new_style.bg_color = CHORE_SAFE
 	
 	progress_bar.add_theme_stylebox_override("fill", new_style)
 
@@ -358,50 +464,25 @@ func _play_meter_bounce() -> void:
 
 ## _update_details_position()
 ##
-## Calculates smart tooltip position to avoid going off-screen.
-## Shows tooltip on left side if it would extend beyond viewport right edge.
+## Keeps the expanded chore board centered inside the viewport.
 func _update_details_position() -> void:
 	if not details_panel:
 		return
-	
-	# Wait for size to be calculated
-	await get_tree().process_frame
-	
-	var viewport_size = get_viewport_rect().size
-	var panel_global_pos = global_position
-	var panel_size = details_panel.size
-	var self_size = size
-	
-	# Default position: to the right
-	var target_x = self_size.x + 5  # 5px gap
-	
-	# Check if tooltip extends beyond viewport right edge
-	var tooltip_right_edge = panel_global_pos.x + target_x + panel_size.x
-	if tooltip_right_edge > viewport_size.x:
-		# Flip to left side
-		target_x = -panel_size.x - 5
-	
-	# Check vertical positioning
-	var target_y = 0.0
-	var tooltip_bottom_edge = panel_global_pos.y + target_y + panel_size.y
-	if tooltip_bottom_edge > viewport_size.y:
-		target_y = viewport_size.y - panel_global_pos.y - panel_size.y - 10
-	
-	details_panel.position = Vector2(target_x, target_y)
+	_position_details_panel()
 
 func _on_mouse_entered() -> void:
 	if _current_state == State.SPINE:
-		details_panel.visible = true
-		_update_details_position()
+		_set_compact_hover(true)
 
 func _on_mouse_exited() -> void:
-	details_panel.visible = false
+	_set_compact_hover(false)
 
 func _on_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mouse_event = event as InputEventMouseButton
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
 			task_clicked.emit()
+			_play_meter_bounce()
 			_toggle_fan_state()
 
 
@@ -411,7 +492,7 @@ func _on_gui_input(event: InputEvent) -> void:
 func _create_background_overlay() -> void:
 	_background = ColorRect.new()
 	_background.name = "FanBackground"
-	_background.color = Color(0, 0, 0, 0.5)
+	_background.color = Color(0, 0, 0, 0.6)
 	_background.mouse_filter = Control.MOUSE_FILTER_STOP
 	_background.visible = false
 	_background.z_index = 50
@@ -422,10 +503,16 @@ func _create_background_overlay() -> void:
 
 func _add_background_to_scene() -> void:
 	var root = get_tree().current_scene
-	if root and is_instance_valid(_background):
+	if root == null:
+		return
+	if _background and is_instance_valid(_background) and _background.get_parent() == null:
 		root.add_child(_background)
+	if details_panel and is_instance_valid(details_panel) and details_panel.get_parent() == null:
+		root.add_child(details_panel)
+	if _background and not _background.gui_input.is_connected(_on_background_clicked):
 		_background.gui_input.connect(_on_background_clicked)
-		_position_background()
+	_position_background()
+	_position_details_panel()
 
 
 func _position_background() -> void:
@@ -433,8 +520,17 @@ func _position_background() -> void:
 		return
 	
 	var viewport_size = get_viewport_rect().size
+	_fan_center = viewport_size / 2.0
 	_background.position = Vector2.ZERO
 	_background.size = viewport_size
+
+
+func _position_details_panel() -> void:
+	if not details_panel or not is_instance_valid(details_panel):
+		return
+	var viewport_size = get_viewport_rect().size
+	details_panel.size = DETAILS_PANEL_SIZE
+	details_panel.position = (viewport_size - DETAILS_PANEL_SIZE) * 0.5
 
 
 func _on_background_clicked(event: InputEvent) -> void:
@@ -466,21 +562,30 @@ func _fan_out_completed_chores() -> void:
 	
 	_is_animating = true
 	_current_state = State.FANNED
+	_set_compact_hover(false)
 	
 	# Play fan out sound
 	var audio_mgr = get_node_or_null("/root/AudioManager")
 	if audio_mgr:
 		audio_mgr.play_fan_out()
 	
-	# Hide details panel
-	details_panel.visible = false
+	_update_details_with_progress()
 	
 	# Show and animate background
 	_position_background()
+	_position_details_panel()
 	_background.visible = true
 	_background.modulate.a = 0
 	var bg_tween = create_tween()
 	bg_tween.tween_property(_background, "modulate:a", 1.0, 0.2)
+
+	var panel_target = details_panel.position
+	details_panel.position = panel_target - Vector2(0, 70)
+	details_panel.modulate.a = 0.0
+	details_panel.visible = true
+	var panel_tween = create_tween()
+	panel_tween.tween_property(details_panel, "position", panel_target, 0.38).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	panel_tween.parallel().tween_property(details_panel, "modulate:a", 1.0, 0.22)
 	
 	# Create cards: Mom's mood card + completed chores
 	var cards_to_create: Array = []
@@ -507,10 +612,10 @@ func _fan_out_completed_chores() -> void:
 		var card = cards_to_create[i]
 		_background.add_child(card)
 		_fanned_cards.append(card)
-		_animate_card_fan_in(card, positions[i], i * 0.05)
+		_animate_card_fan_in(card, positions[i], 0.08 + i * 0.05)
 	
 	# Mark animation complete
-	await get_tree().create_timer(0.3 + cards_to_create.size() * 0.05).timeout
+	await get_tree().create_timer(0.45 + cards_to_create.size() * 0.05).timeout
 	_is_animating = false
 
 
@@ -518,58 +623,28 @@ func _fan_out_completed_chores() -> void:
 ##
 ## Creates a card displaying Mom's current mood.
 func _create_mood_card() -> Control:
-	var card = Control.new()
-	card.name = "MoodCard"
-	card.custom_minimum_size = Vector2(140, 160)
-	card.size = Vector2(140, 160)
-	card.mouse_filter = Control.MOUSE_FILTER_STOP
-	
-	# Background texture
-	var texture_rect = TextureRect.new()
-	var coupon_texture = load("res://Resources/Art/Background/COUPON_NOTE.png")
-	if coupon_texture:
-		texture_rect.texture = coupon_texture
-	texture_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(texture_rect)
-	
-	# Title label
+	var shell = _create_card_shell("MoodCard", CHORE_ACCENT)
+	var card = shell["card"] as PanelContainer
+	var content = shell["content"] as VBoxContainer
+
 	var title = Label.new()
 	title.text = "MOM'S MOOD"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	title.position = Vector2(-60, 20)
-	title.size = Vector2(120, 25)
-	title.add_theme_font_size_override("font_size", 12)
-	title.add_theme_color_override("font_color", Color(0.2, 0.2, 0.2))
-	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(title)
-	
-	# Emoji (big mood indicator)
+	_style_text_label(title, 11, CHORE_TEXT_SOFT)
+	content.add_child(title)
+
 	var emoji_label = Label.new()
-	emoji_label.text = _chores_manager.get_mood_emoji() if _chores_manager.has_method("get_mood_emoji") else "😐"
-	emoji_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	emoji_label.set_anchors_preset(Control.PRESET_CENTER)
-	emoji_label.position = Vector2(-60, -10)
-	emoji_label.size = Vector2(120, 50)
-	emoji_label.add_theme_font_size_override("font_size", 36)
-	emoji_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(emoji_label)
-	
-	# Mood text
+	emoji_label.text = _chores_manager.get_mood_emoji() if _chores_manager.has_method("get_mood_emoji") else "*"
+	_style_text_label(emoji_label, 22, CHORE_TEXT)
+	content.add_child(emoji_label)
+
 	var mood_text = Label.new()
 	var mood_desc = _chores_manager.get_mood_description() if _chores_manager.has_method("get_mood_description") else "Neutral"
 	mood_text.text = mood_desc + "\n" + str(_chores_manager.mom_mood) + "/10"
-	mood_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	mood_text.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	mood_text.position = Vector2(-60, -55)
-	mood_text.size = Vector2(120, 40)
-	mood_text.add_theme_font_size_override("font_size", 11)
-	mood_text.add_theme_color_override("font_color", Color(0.3, 0.3, 0.3))
-	mood_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(mood_text)
-	
+	mood_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	mood_text.custom_minimum_size = Vector2(0, 20)
+	_style_text_label(mood_text, 9, CHORE_TEXT)
+	content.add_child(mood_text)
+
 	return card
 
 
@@ -577,58 +652,27 @@ func _create_mood_card() -> Control:
 ##
 ## Creates a card for a completed chore with a checkmark.
 func _create_completed_chore_card(chore) -> Control:
-	var card = Control.new()
-	card.name = "ChoreCard_" + str(chore.id) if chore else "ChoreCard"
-	card.custom_minimum_size = Vector2(140, 160)
-	card.size = Vector2(140, 160)
-	card.mouse_filter = Control.MOUSE_FILTER_STOP
-	
-	# Background texture
-	var texture_rect = TextureRect.new()
-	var coupon_texture = load("res://Resources/Art/Background/COUPON_NOTE.png")
-	if coupon_texture:
-		texture_rect.texture = coupon_texture
-	texture_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(texture_rect)
-	
-	# Checkmark
+	var card_name = "ChoreCard_" + str(chore.id) if chore else "ChoreCard"
+	var shell = _create_card_shell(card_name, CHORE_BORDER)
+	var card = shell["card"] as PanelContainer
+	var content = shell["content"] as VBoxContainer
+
 	var checkmark = Label.new()
-	checkmark.text = "✓"
-	checkmark.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	checkmark.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	checkmark.position = Vector2(-60, 15)
-	checkmark.size = Vector2(120, 30)
-	checkmark.add_theme_font_size_override("font_size", 24)
-	checkmark.add_theme_color_override("font_color", Color(0.2, 0.7, 0.2))
-	checkmark.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(checkmark)
-	
-	# Chore name
+	checkmark.text = "COMPLETE"
+	_style_text_label(checkmark, 10, CHORE_SAFE)
+	content.add_child(checkmark)
+
 	var name_label = Label.new()
 	name_label.text = chore.display_name if chore else "Unknown"
-	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	name_label.set_anchors_preset(Control.PRESET_CENTER)
-	name_label.position = Vector2(-60, -10)
-	name_label.size = Vector2(120, 50)
-	name_label.add_theme_font_size_override("font_size", 11)
-	name_label.add_theme_color_override("font_color", Color(0.2, 0.2, 0.2))
-	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(name_label)
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_label.custom_minimum_size = Vector2(0, 28)
+	_style_text_label(name_label, 10, CHORE_TEXT)
+	content.add_child(name_label)
 
-	# Reward value
 	var reward_label = Label.new()
 	reward_label.text = NumberFormatter.format_money(chore.reward_value if chore else 0)
-	reward_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	reward_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	reward_label.position = Vector2(-60, -50)
-	reward_label.size = Vector2(120, 20)
-	reward_label.add_theme_font_size_override("font_size", 12)
-	reward_label.add_theme_color_override("font_color", Color(0.2, 0.6, 0.2))
-	reward_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(reward_label)
+	_style_text_label(reward_label, 11, CHORE_SAFE)
+	content.add_child(reward_label)
 
 	return card
 
@@ -637,35 +681,29 @@ func _create_completed_chore_card(chore) -> Control:
 ##
 ## Creates a card indicating no chores have been completed.
 func _create_no_chores_card() -> Control:
-	var card = Control.new()
-	card.name = "NoChoresCard"
-	card.custom_minimum_size = Vector2(140, 160)
-	card.size = Vector2(140, 160)
-	card.mouse_filter = Control.MOUSE_FILTER_STOP
-	
-	# Background texture
-	var texture_rect = TextureRect.new()
-	var coupon_texture = load("res://Resources/Art/Background/COUPON_NOTE.png")
-	if coupon_texture:
-		texture_rect.texture = coupon_texture
-	texture_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(texture_rect)
-	
-	# Message
+	var shell = _create_card_shell("NoChoresCard", CHORE_BORDER)
+	var card = shell["card"] as PanelContainer
+	var content = shell["content"] as VBoxContainer
+
+	var title = Label.new()
+	title.text = "COMPLETED CHORES"
+	_style_text_label(title, 10, CHORE_TEXT_SOFT)
+	content.add_child(title)
+
 	var message = Label.new()
-	message.text = "No Chores\nCompleted\nYet!"
-	message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	message.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	message.set_anchors_preset(Control.PRESET_CENTER)
-	message.position = Vector2(-60, -30)
-	message.size = Vector2(120, 80)
-	message.add_theme_font_size_override("font_size", 12)
-	message.add_theme_color_override("font_color", Color(0.5, 0.3, 0.3))
-	message.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(message)
-	
+	message.text = "NONE YET"
+	message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	message.custom_minimum_size = Vector2(0, 20)
+	_style_text_label(message, 12, CHORE_TEXT)
+	content.add_child(message)
+
+	var subtext = Label.new()
+	subtext.text = "Finish a chore to populate this board."
+	subtext.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	subtext.custom_minimum_size = Vector2(0, 24)
+	_style_text_label(subtext, 8, CHORE_TEXT_SOFT)
+	content.add_child(subtext)
+
 	return card
 
 
@@ -678,13 +716,15 @@ func _calculate_fan_positions(count: int) -> Array[Vector2]:
 	if count == 0:
 		return positions
 	
-	var card_width = 150.0
-	var total_width = count * card_width
-	var start_x = _fan_center.x - total_width / 2.0
+	var viewport_size = get_viewport_rect().size
+	var card_spacing = CARD_SIZE.x + CARD_SPACING
+	var total_width = maxf(CARD_SIZE.x, count * card_spacing - 12.0)
+	var start_x = clampf(_fan_center.x - total_width * 0.5, 24.0, maxf(24.0, viewport_size.x - total_width - 24.0))
+	var panel_bottom = details_panel.position.y + details_panel.size.y if details_panel and details_panel.visible else _fan_center.y + 96.0
+	var y = minf(viewport_size.y - CARD_SIZE.y - 24.0, panel_bottom + CARD_ROW_GAP)
 	
 	for i in range(count):
-		var x = start_x + (i * card_width)
-		var y = _fan_center.y - 80  # Slightly above center
+		var x = start_x + (i * card_spacing)
 		positions.append(Vector2(x, y))
 	
 	return positions
@@ -740,6 +780,12 @@ func _fold_back_cards() -> void:
 			tween.tween_property(card, "position", global_position, 0.2)
 			tween.tween_property(card, "modulate:a", 0.0, 0.2)
 			tween.tween_property(card, "scale", Vector2(0.5, 0.5), 0.2)
+
+	if details_panel and details_panel.visible:
+		var panel_tween = create_tween()
+		panel_tween.set_parallel()
+		panel_tween.tween_property(details_panel, "position", details_panel.position + Vector2(0, 50), 0.2)
+		panel_tween.tween_property(details_panel, "modulate:a", 0.0, 0.18)
 	
 	# Fade out background
 	if _background:
@@ -756,6 +802,71 @@ func _fold_back_cards() -> void:
 	
 	if _background:
 		_background.visible = false
+	if details_panel:
+		details_panel.visible = false
+		_position_details_panel()
 	
 	_current_state = State.SPINE
 	_is_animating = false
+
+
+func _set_compact_hover(is_hovered: bool) -> void:
+	if _compact_shell == null:
+		return
+	if _compact_hover_tween and _compact_hover_tween.is_valid():
+		_compact_hover_tween.kill()
+		_compact_hover_tween = null
+	_compact_hover_tween = create_tween()
+	var target_modulate = Color(1.08, 1.08, 1.12, 1.0) if is_hovered else Color.WHITE
+	_compact_hover_tween.tween_property(_compact_shell, "modulate", target_modulate, 0.18)
+	if task_label:
+		var task_color = CHORE_SAFE if is_hovered else CHORE_TEXT
+		task_label.add_theme_color_override("font_color", task_color)
+
+
+func _style_text_label(label: Label, font_size: int, font_color: Color) -> void:
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", font_color)
+	label.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	label.add_theme_constant_override("outline_size", 1)
+
+
+func _create_card_shell(card_name: String, accent_color: Color) -> Dictionary:
+	var card = PanelContainer.new()
+	card.name = card_name
+	card.custom_minimum_size = CARD_SIZE
+	card.size = CARD_SIZE
+	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	card.pivot_offset = CARD_SIZE * 0.5
+
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.101961, 0.090196, 0.14902, 0.96)
+	style.border_color = accent_color
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	style.corner_detail = 8
+	style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.45)
+	style.shadow_size = 4
+	card.add_theme_stylebox_override("panel", style)
+
+	var margin = MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 6)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_right", 6)
+	margin.add_theme_constant_override("margin_bottom", 6)
+	card.add_child(margin)
+
+	var content = VBoxContainer.new()
+	content.name = "ContentVBox"
+	content.alignment = BoxContainer.ALIGNMENT_CENTER
+	content.add_theme_constant_override("separation", 4)
+	margin.add_child(content)
+
+	return {
+		"card": card,
+		"content": content
+	}
