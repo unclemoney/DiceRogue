@@ -39,8 +39,8 @@ const MONEY_RATIO: float = 25.0
 
 const CHALLENGE_RATIO: float = 14.5 #19
 const DEBUFF_RATIO: float = 14.5
-const CONSUMABLE_RATIO: float = 42.0
-const CONSOLE_RATIO: float = 14.5
+const CONSUMABLE_RATIO: float = 37.8
+const CONSOLE_RATIO: float = 18.7
 const LEFT_INFO_RATIO: float = 14.5
 
 const TITLE_RATIO: float = 23.0
@@ -191,6 +191,11 @@ func _build_ui() -> void:
 	scorecard.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scorecard_container.add_child(scorecard)
 
+	# Wire GameButtonUI to the ScoreCard (dynamic scenes built in code)
+	if game_buttons:
+		var path_to_scorecard := game_buttons.get_path_to(scorecard)
+		game_buttons.score_card_ui_path = path_to_scorecard
+
 
 func _create_margin_container() -> MarginContainer:
 	var margin := MarginContainer.new()
@@ -264,9 +269,16 @@ func _add_glowing_title(parent: PanelContainer, title_text: String, font: String
 	glow_title.glow_intensity = 0.0
 	glow_title.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	glow_title.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	vbox.add_child(glow_title)
+	glow_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	#vbox.add_child(glow_title)
 	
 	if content:
 		content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		vbox.add_child(content)
+		# Forward input from title area to content so the whole panel is interactive
+		vbox.mouse_filter = Control.MOUSE_FILTER_STOP
+		vbox.gui_input.connect(func(event: InputEvent):
+			if content.has_method("_gui_input"):
+				content._gui_input.call(event)
+		)

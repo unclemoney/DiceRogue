@@ -111,8 +111,6 @@ func add_challenge(data: ChallengeData, challenge: Challenge) -> ChallengeIcon:
 func _show_challenge_reveal_banner(challenge_name: String) -> void:
 	var banner = Label.new()
 	banner.text = "CHALLENGE ACCEPTED\n%s" % challenge_name
-	banner.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	banner.position.y = 40
 	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	banner.z_index = 200
 	
@@ -121,6 +119,10 @@ func _show_challenge_reveal_banner(challenge_name: String) -> void:
 		banner.add_theme_font_override("font", vcr_font)
 	banner.add_theme_font_size_override("font_size", 28)
 	banner.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4, 1.0))
+	
+	var viewport_size = get_viewport_rect().size
+	banner.position = Vector2(viewport_size.x / 2 - 150, viewport_size.y / 2 - 60)
+	banner.custom_minimum_size = Vector2(300, 0)
 	
 	get_tree().root.add_child(banner)
 	

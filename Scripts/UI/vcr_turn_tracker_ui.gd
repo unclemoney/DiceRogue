@@ -306,11 +306,12 @@ func _animate_label_change(label: Label, tween_ref: Tween) -> Tween:
 	var highlight_target := TRACKER_FLASH
 	if label == channel_label:
 		highlight_target = Color(0.886275, 0.560784, 0.72549, 1.0)
-	var highlighted_color := original_color.lerp(highlight_target, 0.35)
+	var highlighted_color := original_color.lerp(highlight_target, 0.5)
 	
-	# Subtle pulse animation
-	next_tween.tween_method(func(s): label.scale = Vector2(s, s), 1.0, 1.08, 0.08)
-	next_tween.tween_method(func(s): label.scale = Vector2(s, s), 1.08, 1.0, 0.14)
+	# Punchy scale bounce
+	next_tween.tween_method(func(s): label.scale = Vector2(s, s), 1.0, 1.18, 0.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	next_tween.tween_method(func(s): label.scale = Vector2(s, s), 1.18, 1.0, 0.25).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	# Color flash
 	next_tween.tween_method(
 		func(color): label.add_theme_color_override("font_color", color),
 		original_color,
@@ -321,7 +322,7 @@ func _animate_label_change(label: Label, tween_ref: Tween) -> Tween:
 		func(color): label.add_theme_color_override("font_color", color),
 		highlighted_color,
 		original_color,
-		0.14
+		0.2
 	)
 
 	return next_tween

@@ -54,31 +54,37 @@ func _ready() -> void:
 func _build_ui() -> void:
 	# Background panel
 	_bg_panel = PanelContainer.new()
+	_bg_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	var bg_style = _build_panel_style(PANEL_BORDER, PANEL_BG)
-	bg_style.content_margin_left = 8.0
+	bg_style.content_margin_left = 6.0
 	bg_style.content_margin_top = 4.0
-	bg_style.content_margin_right = 8.0
+	bg_style.content_margin_right = 6.0
 	bg_style.content_margin_bottom = 4.0
 	_bg_panel.add_theme_stylebox_override("panel", bg_style)
 	add_child(_bg_panel)
 
-	# HBox layout: icon | name | button
+	# VBox layout centered
 	_container = VBoxContainer.new()
-	_container.add_theme_constant_override("separation", 8)
+	_container.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_container.alignment = BoxContainer.ALIGNMENT_CENTER
+	_container.add_theme_constant_override("separation", 4)
 	_bg_panel.add_child(_container)
 
 	# Activate button
 	_activate_button = Button.new()
 	_activate_button.text = "ACTIVATE"
 	_activate_button.add_theme_font_override("font", vcr_font)
-	_activate_button.custom_minimum_size = Vector2(90, 20)
-	_apply_button_style(_activate_button, PANEL_ACCENT, 12)
+	_activate_button.custom_minimum_size = Vector2(80, 18)
+	_activate_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_apply_button_style(_activate_button, PANEL_ACCENT, 10)
 	_activate_button.pressed.connect(_on_activate_pressed)
 	_container.add_child(_activate_button)
 
-	# Console icon
+	# Console icon — fill available space, centered
 	_icon_rect = TextureRect.new()
-	_icon_rect.custom_minimum_size = Vector2(40, 40)
+	_icon_rect.custom_minimum_size = Vector2(32, 32)
+	_icon_rect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_icon_rect.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_icon_rect.mouse_filter = Control.MOUSE_FILTER_PASS
 	_icon_rect.mouse_entered.connect(_show_tooltip)

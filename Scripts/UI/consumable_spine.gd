@@ -25,7 +25,7 @@ var _is_initialized: bool = false
 
 # Compact mode constants
 const COMPACT_SIZE: Vector2 = Vector2(64, 72)
-const ICON_MAX_SIZE: Vector2 = Vector2(48, 48)
+const ICON_MAX_SIZE: Vector2 = Vector2(32, 32)
 
 # Mall-core styling for compact mode
 const SHELL_BG: Color = Color(0.298039, 0.239216, 0.380392, 1.0)
@@ -64,8 +64,8 @@ func _exit_tree() -> void:
 
 func _set_spine_size() -> void:
 	# Default size for coupon (corkboard style)
-	custom_minimum_size = Vector2(80, 100)
-	set_deferred("size", Vector2(80, 100))
+	custom_minimum_size = Vector2(80, 40)
+	set_deferred("size", Vector2(80, 40))
 	# Ensure we can receive mouse clicks
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
@@ -85,13 +85,14 @@ func set_compact_mode(enabled: bool) -> void:
 			spine_rect.custom_minimum_size = Vector2.ZERO
 
 func _create_spine_structure() -> void:
-	# Create spine texture display
+	# Create spine texture display (deprecated — hidden by default)
 	spine_rect = TextureRect.new()
 	spine_rect.name = "SpineRect"
 	spine_rect.z_index = 15
 	spine_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	spine_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	spine_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	spine_rect.visible = false
 	add_child(spine_rect)
 	
 	# Create title label (visible on spine)
@@ -128,16 +129,13 @@ func _apply_data_to_ui() -> void:
 	if not data:
 		return
 	
-	# Set spine texture (COUPON_NOTE for corkboard style)
-	if not spine_texture:
-		spine_texture = load("res://Resources/Art/Background/COUPON_NOTE.png")
-		if not spine_texture:
-			push_error("[ConsumableSpine] Failed to load COUPON_NOTE texture")
-			# Use a fallback colored rectangle
+	# Set spine texture only if explicitly provided (COUPON_NOTE fallback deprecated)
+	if spine_rect:
+		if spine_texture:
+			spine_rect.texture = spine_texture
+			spine_rect.visible = true
+		else:
 			spine_rect.texture = null
-	
-	if spine_rect and spine_texture:
-		spine_rect.texture = spine_texture
 	
 	# Set title text (abbreviated for spine)
 	if title_label and data:
@@ -188,14 +186,14 @@ func _on_mouse_entered() -> void:
 	if not get_parent():
 		return
 	
-	# Animate hover effect - position lift
+	# Animate hover effect - gentle scale (no position movement)
 	if _current_tween and _current_tween.is_valid():
 		_current_tween.kill()
-	
+
 	_current_tween = create_tween()
-	_current_tween.tween_property(self, "position", _base_position + _hover_offset, 0.1)
-	
-	# Jelly scale effect via TweenFXHelper
+	_current_tween.tween_property(self, "scale", Vector2(1.04, 1.04), 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+	# Jelly scale effect via TweenFXHelper (keeps visual consistency)
 	_tfx.spine_hover(self)
 
 func _on_mouse_exited() -> void:
@@ -214,13 +212,13 @@ func _on_mouse_exited() -> void:
 	if not get_parent():
 		return
 	
-	# Animate back to base position
+	# Animate scale back to normal (no positional snap)
 	if _current_tween and _current_tween.is_valid():
 		_current_tween.kill()
-	
+
 	_current_tween = create_tween()
-	_current_tween.tween_property(self, "position", _base_position, 0.1)
-	
+	_current_tween.tween_property(self, "scale", Vector2.ONE, 0.12).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
 	# Snap-back scale effect via TweenFXHelper
 	_tfx.spine_unhover(self)
 

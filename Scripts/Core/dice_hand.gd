@@ -17,7 +17,7 @@ signal all_dice_exited
 @export var dice_count:      int     = 5
 @export var spacing:         float   = 80.0
 @export var row_spacing:     float   = 90.0
-@export var max_dice_per_row: int    = 8
+@export var max_dice_per_row: int    = 5
 
 ## Area configuration - dice will be centered in this area
 @export var dice_area_center: Vector2 = Vector2(640, 200)
@@ -224,60 +224,54 @@ func _animate_die_entry_delayed(die: Dice, from_pos: Vector2, delay: float) -> v
 ## _calculate_centered_positions(count: int) -> Array[Vector2]
 ##
 ## Calculates centered positions for dice based on count.
-## Supports up to 16 dice in 2 rows, with balanced distribution (9 → 5 top, 4 bottom).
+## Supports up to 15 dice in up to 3 rows, max 5 per row, balanced distribution.
 func _calculate_centered_positions(count: int) -> Array[Vector2]:
 	var positions: Array[Vector2] = []
 	
 	if count <= 0:
 		return positions
 	
-	var clamped_count = mini(count, max_dice_per_row * 2)
+	count = mini(count, 15)
 	
-	# Calculate row distribution (balanced: 9 dice → 5 top, 4 bottom)
-	var top_row_count: int = 0
-	var bottom_row_count: int = 0
-	
-	if clamped_count <= max_dice_per_row:
-		top_row_count = clamped_count
-		bottom_row_count = 0
-		print("[DiceHand] Single row layout:", top_row_count, "dice")
+	# Determine balanced row distribution
+	var rows: Array[int] = []
+	if count <= max_dice_per_row:
+		rows = [count]
+	elif count <= max_dice_per_row * 2:
+		var top = ceili(count / 2.0)
+		rows = [top, count - top]
 	else:
-		# Balanced distribution: larger half on top
-		top_row_count = ceili(clamped_count / 2.0)
-		bottom_row_count = clamped_count - top_row_count
-		print("[DiceHand] Multi-row layout:", top_row_count, "top,", bottom_row_count, "bottom")
+		var base = count / 3
+		var rem = count % 3
+		rows = [base, base, base]
+		for i in range(rem):
+			rows[i] += 1
 	
-	# Dynamically derive area from parent if available, otherwise use cached values
+	print("[DiceHand] Layout: ", rows, " dice")
+	
+	# Dynamically derive area from parent if available
 	var area_center: Vector2 = dice_area_center
-	var area_size: Vector2 = dice_area_size
 	if get_parent() is Control:
 		var parent_size: Vector2 = get_parent().size
 		if parent_size.x > 0 and parent_size.y > 0:
 			area_center = parent_size / 2.0
-			area_size = parent_size
 	
 	var center_x = area_center.x
 	var center_y = area_center.y
 	
-	# Calculate vertical offset for multi-row
-	var total_height = row_spacing if bottom_row_count > 0 else 0.0
+	# Calculate total grid height and starting Y
+	var total_height = (rows.size() - 1) * row_spacing
 	var start_y = center_y - (total_height / 2.0)
 	
-	# Generate top row positions (centered)
-	var top_row_width = (top_row_count - 1) * spacing
-	var top_start_x = center_x - (top_row_width / 2.0)
-	
-	for i in range(top_row_count):
-		var pos = Vector2(top_start_x + i * spacing, start_y)
-		positions.append(pos)
-	
-	# Generate bottom row positions (centered)
-	if bottom_row_count > 0:
-		var bottom_row_width = (bottom_row_count - 1) * spacing
-		var bottom_start_x = center_x - (bottom_row_width / 2.0)
+	# Generate positions for each row
+	for row_idx in range(rows.size()):
+		var row_count = rows[row_idx]
+		var row_width = (row_count - 1) * spacing
+		var start_x = center_x - (row_width / 2.0)
+		var y = start_y + row_idx * row_spacing
 		
-		for i in range(bottom_row_count):
-			var pos = Vector2(bottom_start_x + i * spacing, start_y + row_spacing)
+		for i in range(row_count):
+			var pos = Vector2(start_x + i * spacing, y)
 			positions.append(pos)
 	
 	return positions
@@ -341,35 +335,45 @@ func _animate_spawn_fanfare() -> void:
 func _get_entry_offset(index: int, total_count: int) -> Vector2:
 	var distance = 400.0
 	
-	# For small counts, use simpler patterns
-	if total_count <= 4:
-		match index % 4:
-			0: return Vector2(-distance * 0.707, -distance * 0.707)  # Top-left
-			1: return Vector2(distance * 0.707, -distance * 0.707)   # Top-right
-			2: return Vector2(-distance * 0.707, distance * 0.707)   # Bottom-left
-			3: return Vector2(distance * 0.707, distance * 0.707)    # Bottom-right
-	elif total_count <= 8:
-		# Single row: alternate directions
-		match index % 4:
-			0: return Vector2(-distance, 0)      # Left
-			1: return Vector2(distance, 0)       # Right
-			2: return Vector2(0, -distance)      # Top
-			3: return Vector2(0, distance)       # Bottom
+	# Determine row for this index
+	var rows: Array[int] = []
+	if total_count <= max_dice_per_row:
+		rows = [total_count]
+	elif total_count <= max_dice_per_row * 2:
+		var top = ceili(total_count / 2.0)
+		rows = [top, total_count - top]
 	else:
-		# Two rows: top row from top, bottom row from bottom
-		var top_row_count = ceili(total_count / 2.0)
-		if index < top_row_count:
-			# Top row dice - come from top
-			if index % 2 == 0:
-				return Vector2(-distance * 0.707, -distance * 0.707)  # Top-left
+		var base = total_count / 3
+		var rem = total_count % 3
+		rows = [base, base, base]
+		for i in range(rem):
+			rows[i] += 1
+	
+	var row_idx = 0
+	var idx_in_row = index
+	for i in range(rows.size()):
+		if idx_in_row < rows[i]:
+			row_idx = i
+			break
+		idx_in_row -= rows[i]
+	
+	# Entry direction based on row
+	match row_idx:
+		0:  # Top row - come from above
+			if idx_in_row % 2 == 0:
+				return Vector2(-distance * 0.707, -distance * 0.707)
 			else:
-				return Vector2(distance * 0.707, -distance * 0.707)   # Top-right
-		else:
-			# Bottom row dice - come from bottom
-			if index % 2 == 0:
-				return Vector2(-distance * 0.707, distance * 0.707)   # Bottom-left
+				return Vector2(distance * 0.707, -distance * 0.707)
+		1:  # Middle row - come from sides
+			if idx_in_row % 2 == 0:
+				return Vector2(-distance, 0)
 			else:
-				return Vector2(distance * 0.707, distance * 0.707)    # Bottom-right
+				return Vector2(distance, 0)
+		2:  # Bottom row - come from below
+			if idx_in_row % 2 == 0:
+				return Vector2(-distance * 0.707, distance * 0.707)
+			else:
+				return Vector2(distance * 0.707, distance * 0.707)
 	
 	return Vector2(-distance, 0)
 

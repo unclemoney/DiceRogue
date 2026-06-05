@@ -3,7 +3,7 @@ class_name DebuffUI
 
 ## DebuffUI
 ##
-## Compact HBox row showing up to 3 debuff chips + overflow "+N More" chip.
+## Compact fixed-slot row showing up to 3 debuff chips + overflow "+N" chip.
 ## Click the panel to fan-out all debuffs as DebuffDetailCard overlays.
 ## Fold-back by clicking the dim background.
 
@@ -12,12 +12,18 @@ signal debuff_selected(id: String)
 @export var debuff_icon_scene: PackedScene = preload("res://Scenes/Debuff/DebuffIcon.tscn")
 
 const MAX_COMPACT_VISIBLE: int = 3
+const SLOT_COUNT: int = 4
+const SLOT_SIZE: Vector2 = Vector2(64, 68)
 
 var container: HBoxContainer
 var _icons: Dictionary = {}             # id -> DebuffIcon
 var _sorted_debuff_ids: Array[String] = []
 var _plus_chip: Control = null
 var _detail_cards: Dictionary = {}      # id -> DebuffDetailCard
+
+# Fixed slots
+var _slot_cells: Array[PanelContainer] = []
+var _slot_contents: Array[Control] = []
 
 # Fan-out state
 enum State { NORMAL, FANNED_OUT }
@@ -38,8 +44,11 @@ func _ready() -> void:
 	container.name = "Container"
 	container.mouse_filter = Control.MOUSE_FILTER_PASS
 	container.set_anchors_preset(Control.PRESET_FULL_RECT)
+	container.alignment = BoxContainer.ALIGNMENT_CENTER
 	container.add_theme_constant_override("separation", 8)
 	add_child(container)
+
+	_create_compact_slots()
 
 	if not debuff_icon_scene:
 		debuff_icon_scene = load("res://Scenes/Debuff/DebuffIcon.tscn")
@@ -48,6 +57,29 @@ func _ready() -> void:
 
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	print("[DebuffUI] Initialization complete")
+
+
+func _create_compact_slots() -> void:
+	_slot_cells.clear()
+	_slot_contents.clear()
+	for i in range(SLOT_COUNT):
+		var slot := PanelContainer.new()
+		slot.name = "Slot%d" % i
+		slot.custom_minimum_size = SLOT_SIZE
+		slot.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		slot.mouse_filter = Control.MOUSE_FILTER_PASS
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color(0.12, 0.10, 0.14, 0.3)
+		style.border_color = Color(0.3, 0.25, 0.35, 0.15)
+		style.set_border_width_all(1)
+		style.set_corner_radius_all(10)
+		style.corner_detail = 6
+		slot.add_theme_stylebox_override("panel", style)
+		container.add_child(slot)
+		_slot_cells.append(slot)
+		_slot_contents.append(null)
+	print("[DebuffUI] Created %d fixed slots" % SLOT_COUNT)
 
 
 func _get_fan_overlay() -> CanvasLayer:
@@ -93,7 +125,10 @@ func _fan_out_debuffs() -> void:
 
 	var card_width := 220.0
 	var spacing := 240.0
-	var total_width := count * spacing - (spacing - card_width)
+	var total_width := (count - 1) * spacing + card_width
+	if count > 1 and total_width > viewport_size.x - 40:
+		spacing = (viewport_size.x - 40 - card_width) / (count - 1)
+		total_width = (count - 1) * spacing + card_width
 	var start_x := (viewport_size.x - total_width) / 2.0
 	var center_y := viewport_size.y / 2.0
 
@@ -148,26 +183,53 @@ func _on_background_clicked(event: InputEvent) -> void:
 
 ## _refresh_compact_view()
 ##
-## Sets icon visibility for the first MAX_COMPACT_VISIBLE entries and
-## manages the "+N More" overflow chip.
+## Assigns icons to fixed slots (first 3) and overflow chip (slot 3).
 func _refresh_compact_view() -> void:
+	# Clear all slots first (reparent children to self without freeing)
+	for i in range(SLOT_COUNT):
+		var slot: PanelContainer = _slot_cells[i]
+		if slot:
+			for child in slot.get_children():
+				if child.get_parent() == slot:
+					slot.remove_child(child)
+					add_child(child)
+		_slot_contents[i] = null
+
 	var count := _sorted_debuff_ids.size()
-	for i in range(count):
+	var visible_count := mini(count, MAX_COMPACT_VISIBLE)
+
+	# Assign visible icons to slots 0-2
+	for i in range(visible_count):
+		var id: String = _sorted_debuff_ids[i]
+		var icon: DebuffIcon = _icons.get(id)
+		if icon and is_instance_valid(icon):
+			icon.visible = true
+			if icon.get_parent():
+				icon.get_parent().remove_child(icon)
+			_slot_cells[i].add_child(icon)
+			_slot_contents[i] = icon
+
+	# Hide any icons not in visible slots
+	for i in range(visible_count, count):
 		var id: String = _sorted_debuff_ids[i]
 		var icon: DebuffIcon = _icons.get(id)
 		if icon:
-			icon.visible = (i < MAX_COMPACT_VISIBLE)
+			icon.visible = false
+			if icon.get_parent():
+				icon.get_parent().remove_child(icon)
+			add_child(icon)
 
+	# Overflow chip in slot 3
 	var overflow := count - MAX_COMPACT_VISIBLE
 	if overflow > 0:
 		if not is_instance_valid(_plus_chip):
 			_plus_chip = _create_plus_chip()
-			container.add_child(_plus_chip)
 		var chip_label: Label = _plus_chip.get_node_or_null("ChipLabel")
 		if chip_label:
 			chip_label.text = "+%d" % overflow
 		_plus_chip.visible = true
-		container.move_child(_plus_chip, container.get_child_count() - 1)
+		_slot_cells[MAX_COMPACT_VISIBLE].add_child(_plus_chip)
+		_slot_contents[MAX_COMPACT_VISIBLE] = _plus_chip
 	else:
 		if is_instance_valid(_plus_chip):
 			_plus_chip.queue_free()
@@ -177,8 +239,8 @@ func _refresh_compact_view() -> void:
 func _create_plus_chip() -> Control:
 	var chip := PanelContainer.new()
 	chip.name = "PlusChip"
-	chip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	chip.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	chip.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var style := StyleBoxFlat.new()
@@ -229,7 +291,8 @@ func add_debuff(data: DebuffData, debuff_instance: Debuff = null) -> DebuffIcon:
 		push_error("[DebuffUI] Failed to instantiate DebuffIcon")
 		return null
 
-	container.add_child(icon)
+	# Add to self (not container) so _refresh_compact_view can manage slot placement
+	add_child(icon)
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon.set_data(data)
 	icon.set_meta("last_pos", icon.position)
@@ -277,7 +340,14 @@ func remove_debuff(id: String) -> void:
 			tfx.icon_remove(icon)
 			await get_tree().create_timer(0.3).timeout
 		if is_instance_valid(icon):
+			# Remove from slot if present
+			if icon.get_parent():
+				icon.get_parent().remove_child(icon)
 			icon.queue_free()
+
+	_icons.erase(id)
+	_sorted_debuff_ids.erase(id)
+	_refresh_compact_view()
 
 	_icons.erase(id)
 	_sorted_debuff_ids.erase(id)

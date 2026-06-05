@@ -103,17 +103,25 @@ func _ready():
 
 	add_to_group("game_button_ui")
 
+	# Defer validation so GameUI has time to finish building the tree
+	call_deferred("_deferred_ready_validation")
+
+func _deferred_ready_validation() -> void:
+	# Re-attempt score_card fallback if still missing
+	if not score_card_ui:
+		var game_ui = get_tree().get_first_node_in_group("game_ui")
+		if game_ui and game_ui.has_node("MarginContainer/MainVBox/MiddleSection/RightColumn/ScorecardContainer/ScoreCardUI"):
+			score_card_ui = game_ui.get_node("MarginContainer/MainVBox/MiddleSection/RightColumn/ScorecardContainer/ScoreCardUI")
 	if not score_card_ui:
 		push_error("GameButtonUI: score_card_ui_path not set or node missing")
 	if not dice_hand:
 		push_error("GameButtonUI: dice_hand not found")
 	if not turn_tracker:
 		push_error("GameButtonUI: turn_tracker not found")
-
 	if next_turn_button and not next_turn_button.pressed.is_connected(_on_next_turn_button_pressed):
 		next_turn_button.pressed.connect(_on_next_turn_button_pressed)
 
-	if score_card_ui:
+	if score_card_ui and not score_card_ui.is_connected("manual_score", Callable(self, "_scored_hand_setup_next_round")):
 		score_card_ui.connect("manual_score", Callable(self, "_scored_hand_setup_next_round"))
 
 	if shop_button:
@@ -499,11 +507,11 @@ func _show_turn_banner(round_number: int) -> void:
 	banner.add_theme_color_override("font_outline_color", Color(0.4, 0.2, 0.0, 1.0))
 	banner.add_theme_constant_override("outline_size", 2)
 	var viewport_size = get_viewport_rect().size
-	banner.position = Vector2(viewport_size.x / 2 - 80, -50)
+	banner.position = Vector2(viewport_size.x / 2 - 80, viewport_size.y / 2 - 60)
 	banner.custom_minimum_size = Vector2(160, 40)
 	get_tree().current_scene.add_child(banner)
 	var tween = get_tree().create_tween()
-	tween.tween_property(banner, "position:y", 20, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(banner, "position:y", viewport_size.y / 2 - 20, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	var audio_mgr = get_node_or_null("/root/AudioManager")
 	if audio_mgr and audio_mgr.has_method("play_panel_swoosh"):
 		audio_mgr.play_panel_swoosh()

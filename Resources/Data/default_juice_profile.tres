@@ -1,0 +1,14 @@
+[ext_resource path="res://Scripts/Core/juice_profile.gd" type="Script" id=1]
+
+[gd_resource type="JuiceProfile" load_steps=1 format=2]
+script = ExtResource( 1 )
+default_duration = 0.4
+default_stagger = 0.08
+entrance_distance = 100.0
+overshoot_strength = 0.15
+bounce_strength = 0.3
+default_easing = 1
+default_transition = 2
+pop_in_scale = 0.8
+fade_in_duration = 0.35
+pause_mode = 1

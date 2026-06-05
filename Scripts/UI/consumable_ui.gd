@@ -45,14 +45,14 @@ const BASE_MAX_CONSUMABLES: int = 4
 const ABSOLUTE_MAX_CONSUMABLES: int = 4
 const COMPACT_VISIBLE_CONSUMABLES: int = 3
 const COMPACT_SLOT_COUNT: int = 4
-const COMPACT_SLOT_SIZE: Vector2 = Vector2(72, 80)
+const COMPACT_SLOT_SIZE: Vector2 = Vector2(72, 40)
 const COMPACT_SLOT_SPACING: int = 6
-const COMPACT_ROW_MARGIN: int = 8
+const COMPACT_ROW_MARGIN: int = 2
 
 # Compact row state
 var _consumable_order: Array[String] = []
 var _compact_margin: MarginContainer = null
-var _compact_row: HBoxContainer = null
+var _compact_row: VBoxContainer = null
 var _slot_cells: Array[PanelContainer] = []
 var _slot_contents: Array[Control] = []
 var _compact_overflow_label: Label = null
@@ -145,68 +145,199 @@ func _adapt_layout() -> void:
 	
 	# Position compact row at bottom center
 	if _compact_row:
-		var row_width: float = COMPACT_SLOT_COUNT * (COMPACT_SLOT_SIZE.x + COMPACT_SLOT_SPACING) - COMPACT_SLOT_SPACING
-		_compact_row.position = Vector2((size.x - row_width) / 2.0, size.y - COMPACT_SLOT_SIZE.y - COMPACT_ROW_MARGIN)
+		# For vertical list: make the margin full-rect and position the list at the top with a small margin
+		if _compact_margin:
+			_compact_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_compact_row.set_anchors_preset(Control.PRESET_TOP_WIDE)
+		_compact_row.position = Vector2(0, COMPACT_ROW_MARGIN)
+
+		# Ensure each row spans the container width
+		for row in _slot_cells:
+			if row:
+				row.custom_minimum_size.x = max(0, size.x - (COMPACT_ROW_MARGIN * 2))
 
 func _create_compact_row() -> void:
-	# Create margin container
+	# Create a vertical list (VBox) to replace the compact horizontal row
 	_compact_margin = MarginContainer.new()
 	_compact_margin.name = "CompactMargin"
 	_compact_margin.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(_compact_margin)
-	
-	# Create HBox for slots
-	_compact_row = HBoxContainer.new()
-	_compact_row.name = "CompactRow"
+
+	# Use a VBoxContainer for vertical rows that span the container width
+	_compact_row = VBoxContainer.new()
+	_compact_row.name = "CompactList"
 	_compact_row.mouse_filter = Control.MOUSE_FILTER_PASS
 	_compact_row.add_theme_constant_override("separation", COMPACT_SLOT_SPACING)
 	_compact_margin.add_child(_compact_row)
-	
-	# Create slot cells
+
+	# Create slot rows
 	_slot_cells.clear()
 	_slot_contents.clear()
 	for i in range(COMPACT_SLOT_COUNT):
-		var cell: PanelContainer = PanelContainer.new()
-		cell.name = "Slot%d" % i
-		cell.custom_minimum_size = COMPACT_SLOT_SIZE
-		cell.mouse_filter = Control.MOUSE_FILTER_PASS
-		cell.add_theme_stylebox_override("panel", _make_compact_slot_style())
-		_compact_row.add_child(cell)
-		_slot_cells.append(cell)
+		var row_panel: PanelContainer = PanelContainer.new()
+		row_panel.name = "Row%d" % i
+		row_panel.mouse_filter = Control.MOUSE_FILTER_PASS
+		row_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row_panel.custom_minimum_size = Vector2(0, COMPACT_SLOT_SIZE.y)
+		row_panel.add_theme_stylebox_override("panel", _make_compact_slot_style())
+
+		# Inside each row, create an HBox for icon + labels
+		var row_hbox: HBoxContainer = HBoxContainer.new()
+		row_hbox.name = "RowHBox"
+		row_hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row_hbox.add_theme_constant_override("separation", 1)
+		row_panel.add_child(row_hbox)
+
+		# Dedicated host for the spine node (keeps row layout intact)
+		var spine_host: Control = Control.new()
+		spine_host.name = "SpineHost"
+		spine_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		spine_host.set_anchors_preset(Control.PRESET_CENTER)
+		row_panel.add_child(spine_host)
+
+		# Icon placeholder container (left) — capped at 32x32
+		var icon_holder: TextureRect = TextureRect.new()
+		icon_holder.name = "IconHolder"
+		icon_holder.custom_minimum_size = Vector2(32, 32)
+		icon_holder.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		icon_holder.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		icon_holder.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon_holder.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon_holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row_hbox.add_child(icon_holder)
+
+		# Vertical labels container
+		var labels_vbox: VBoxContainer = VBoxContainer.new()
+		labels_vbox.name = "Labels"
+		labels_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		labels_vbox.add_theme_constant_override("separation", 2)
+		row_hbox.add_child(labels_vbox)
+
+		var title_lbl: Label = Label.new()
+		title_lbl.name = "Title"
+		title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		title_lbl.add_theme_font_size_override("font_size", 12)
+		title_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		labels_vbox.add_child(title_lbl)
+
+		var desc_lbl: Label = Label.new()
+		desc_lbl.name = "Desc"
+		desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		desc_lbl.add_theme_font_size_override("font_size", 10)
+		desc_lbl.add_theme_color_override("font_color", Color(0.8,0.8,0.8,1))
+		desc_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		labels_vbox.add_child(desc_lbl)
+
+		# Hover highlighting
+		row_panel.mouse_entered.connect(_on_row_mouse_entered.bind(i))
+		row_panel.mouse_exited.connect(_on_row_mouse_exited.bind(i))
+
+		_compact_row.add_child(row_panel)
+		_slot_cells.append(row_panel)
 		_slot_contents.append(null)
-	
-	print("[ConsumableUI] Created compact row with %d slots" % COMPACT_SLOT_COUNT)
+
+	print("[ConsumableUI] Created vertical list with %d rows" % COMPACT_SLOT_COUNT)
+
+func _on_row_mouse_entered(index: int) -> void:
+	if index >= 0 and index < _slot_cells.size():
+		var cell: PanelContainer = _slot_cells[index]
+		if not cell:
+			return
+		if _slot_contents[index] != null:
+			cell.add_theme_stylebox_override("panel", _make_compact_slot_hover_style())
+		else:
+			cell.add_theme_stylebox_override("panel", _make_compact_slot_style())
+
+func _on_row_mouse_exited(index: int) -> void:
+	if index >= 0 and index < _slot_cells.size():
+		var cell: PanelContainer = _slot_cells[index]
+		if not cell:
+			return
+		if _slot_contents[index] != null:
+			cell.add_theme_stylebox_override("panel", _make_compact_slot_occupied_style())
+		else:
+			cell.add_theme_stylebox_override("panel", _make_compact_slot_style())
 
 func _make_compact_slot_style() -> StyleBoxFlat:
+	# Empty slot — completely transparent
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.12, 0.10, 0.14, 0.0)
+	style.border_color = Color(0.3, 0.25, 0.35, 0.0)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(12)
+	style.corner_detail = 6
+	return style
+
+func _make_compact_slot_occupied_style() -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = Color(0.12, 0.10, 0.14, 0.6)
-	style.border_color = Color(0.3, 0.25, 0.35, 0.8)
+	style.border_color = Color(0.3, 0.25, 0.35, 0.08)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(12)
+	style.corner_detail = 6
+	return style
+
+func _make_compact_slot_hover_style() -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = Color(0.22, 0.18, 0.28, 0.75)
+	style.border_color = Color(0.5, 0.4, 0.6, 0.35)
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(12)
 	style.corner_detail = 6
 	return style
 
+func _set_slot_empty_style(index: int) -> void:
+	if index >= 0 and index < _slot_cells.size():
+		_slot_cells[index].add_theme_stylebox_override("panel", _make_compact_slot_style())
+
+func _set_slot_occupied_style(index: int) -> void:
+	if index >= 0 and index < _slot_cells.size():
+		_slot_cells[index].add_theme_stylebox_override("panel", _make_compact_slot_occupied_style())
+
 func _update_overflow_slot(overflow_count: int) -> void:
 	var last_index: int = COMPACT_SLOT_COUNT - 1
 	var cell: PanelContainer = _slot_cells[last_index]
 	
-	# Clear existing content
-	for child in cell.get_children():
-		child.queue_free()
+	_clear_slot_ui(last_index)
 	_slot_contents[last_index] = null
+	_set_slot_empty_style(last_index)
 	
 	if overflow_count > 0:
 		if not _compact_overflow_label:
 			_compact_overflow_label = Label.new()
 			_compact_overflow_label.name = "OverflowLabel"
-			_compact_overflow_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			_compact_overflow_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 			_compact_overflow_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			_compact_overflow_label.add_theme_font_size_override("font_size", 14)
-			_compact_overflow_label.add_theme_color_override("font_color", Color(0.7, 0.3, 0.48, 1.0))
+			_compact_overflow_label.add_theme_font_size_override("font_size", 12)
+			_compact_overflow_label.add_theme_color_override("font_color", Color(0.9, 0.6, 0.7, 1.0))
 		
-		_compact_overflow_label.text = "+%s" % NumberFormatter.format_int(overflow_count)
-		cell.add_child(_compact_overflow_label)
+		_compact_overflow_label.text = "+%s more" % NumberFormatter.format_int(overflow_count)
+		_compact_overflow_label.visible = true
+		# Place overflow label into the row's labels area
+		var labels_vbox: VBoxContainer = cell.get_node_or_null("RowHBox/Labels")
+		if labels_vbox:
+			if _compact_overflow_label.get_parent() != labels_vbox:
+				if _compact_overflow_label.get_parent():
+					_compact_overflow_label.get_parent().remove_child(_compact_overflow_label)
+				labels_vbox.add_child(_compact_overflow_label)
+		# Hide the static title/desc labels so overflow is readable
+		var title_lbl: Label = cell.get_node_or_null("RowHBox/Labels/Title")
+		var desc_lbl: Label = cell.get_node_or_null("RowHBox/Labels/Desc")
+		if title_lbl:
+			title_lbl.visible = false
+		if desc_lbl:
+			desc_lbl.visible = false
 		_slot_contents[last_index] = _compact_overflow_label
+		_set_slot_occupied_style(last_index)
+	else:
+		if _compact_overflow_label and _compact_overflow_label.get_parent():
+			_compact_overflow_label.get_parent().remove_child(_compact_overflow_label)
+		var title_lbl: Label = cell.get_node_or_null("RowHBox/Labels/Title")
+		var desc_lbl: Label = cell.get_node_or_null("RowHBox/Labels/Desc")
+		if title_lbl:
+			title_lbl.visible = true
+		if desc_lbl:
+			desc_lbl.visible = true
 
 func _assign_spine_to_slot(spine: ConsumableSpine, slot_index: int) -> void:
 	if slot_index < 0 or slot_index >= _slot_cells.size():
@@ -214,21 +345,44 @@ func _assign_spine_to_slot(spine: ConsumableSpine, slot_index: int) -> void:
 	
 	var cell: PanelContainer = _slot_cells[slot_index]
 	
-	# Clear existing content
-	for child in cell.get_children():
-		child.queue_free()
-	
-	# Reparent spine to cell
-	if spine.get_parent():
-		spine.get_parent().remove_child(spine)
-	cell.add_child(spine)
+	# Clear any previous spine placed in the dedicated SpineHost (preserve labels/layout)
+	var spine_host: Control = cell.get_node_or_null("SpineHost")
+	if spine_host:
+		for child in spine_host.get_children():
+			child.queue_free()
+		# Reparent spine to the SpineHost so the row layout stays intact
+		if spine.get_parent():
+			spine.get_parent().remove_child(spine)
+		spine_host.add_child(spine)
+	else:
+		# Fallback: add directly to cell (older layout)
+		if spine.get_parent():
+			spine.get_parent().remove_child(spine)
+		cell.add_child(spine)
 	
 	# Enable compact mode and center spine in cell
 	spine.set_compact_mode(true)
 	spine.set_anchors_preset(Control.PRESET_CENTER)
 	spine.position = Vector2.ZERO
 	spine.scale = Vector2.ONE
+	# Hide the spine visual — the row shows its own icon/labels
+	spine.visible = false
+
+	# Populate the row's icon and labels (vertical list layout)
+	var icon_holder: TextureRect = cell.get_node_or_null("RowHBox/IconHolder")
+	var title_lbl: Label = cell.get_node_or_null("RowHBox/Labels/Title")
+	var desc_lbl: Label = cell.get_node_or_null("RowHBox/Labels/Desc")
+	if spine and spine.data:
+		if icon_holder:
+			icon_holder.texture = spine.data.icon
+		if title_lbl:
+			title_lbl.text = spine.data.display_name
+			title_lbl.visible = true
+		if desc_lbl:
+			desc_lbl.text = spine.data.description
+			desc_lbl.visible = true
 	
+	_set_slot_occupied_style(slot_index)
 	_slot_contents[slot_index] = spine
 
 func _create_background() -> void:
@@ -361,10 +515,13 @@ func _position_spines() -> void:
 			spine.visible = false
 			if spine.get_parent():
 				spine.get_parent().remove_child(spine)
+			add_child(spine)
 	
-	# Clear slot contents tracking
+	# Clear slot UI and tracking
 	for i in range(_slot_contents.size()):
+		_clear_slot_ui(i)
 		_slot_contents[i] = null
+		_set_slot_empty_style(i)
 	
 	var ordered_ids: Array[String] = _get_ordered_consumable_ids()
 	var visible_count: int = mini(ordered_ids.size(), COMPACT_VISIBLE_CONSUMABLES)
@@ -679,6 +836,30 @@ func _gui_input(event: InputEvent) -> void:
 			# Only fan out if we own consumables
 			if _active_consumable_count > 0:
 				_fan_out_cards()
+
+func _clear_slot_ui(index: int) -> void:
+	if index < 0 or index >= _slot_cells.size():
+		return
+	var cell: PanelContainer = _slot_cells[index]
+	# Remove any spine from the SpineHost
+	var spine_host: Control = cell.get_node_or_null("SpineHost")
+	if spine_host:
+		for child in spine_host.get_children():
+			if child.get_parent() == spine_host:
+				spine_host.remove_child(child)
+	# Clear icon
+	var icon_holder: TextureRect = cell.get_node_or_null("RowHBox/IconHolder")
+	if icon_holder:
+		icon_holder.texture = null
+	# Reset labels
+	var title_lbl: Label = cell.get_node_or_null("RowHBox/Labels/Title")
+	var desc_lbl: Label = cell.get_node_or_null("RowHBox/Labels/Desc")
+	if title_lbl:
+		title_lbl.text = ""
+		title_lbl.visible = true
+	if desc_lbl:
+		desc_lbl.text = ""
+		desc_lbl.visible = true
 
 func _clear_fanned_icons() -> void:
 	# Stop idle animations before freeing icons to prevent warnings
