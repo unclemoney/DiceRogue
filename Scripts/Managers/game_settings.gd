@@ -46,6 +46,9 @@ var controller_bindings: Dictionary = {}
 # Keys match TweenFXHelper.Group enum values (ints)
 var fx_group_enabled: Dictionary = {}
 
+# UI settings
+var container_title_tooltips_enabled: bool = true
+
 # Default keyboard bindings - supports up to 16 dice locks
 const DEFAULT_KEYBINDINGS := {
 	"roll": KEY_SPACE,
@@ -157,7 +160,10 @@ func load_settings() -> void:
 		for g in fx_helper.Group.values():
 			var key = "group_%d" % g
 			fx_group_enabled[g] = config.get_value("fx", key, true)
-	
+
+	# Load UI settings
+	container_title_tooltips_enabled = config.get_value("ui", "container_title_tooltips_enabled", true)
+
 	# Apply loaded settings
 	_apply_audio_settings()
 	_apply_input_mappings()
@@ -200,7 +206,10 @@ func save_settings() -> void:
 	for g in fx_group_enabled.keys():
 		var key = "group_%d" % g
 		config.set_value("fx", key, fx_group_enabled[g])
-	
+
+	# Save UI settings
+	config.set_value("ui", "container_title_tooltips_enabled", container_title_tooltips_enabled)
+
 	var err = config.save(SETTINGS_FILE_PATH)
 	if err != OK:
 		push_error("[GameSettings] Failed to save settings file: %d" % err)

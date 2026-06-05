@@ -11,6 +11,8 @@ class_name GameUI
 
 # Container references — populated during _build_ui()
 var turn_info_container: PanelContainer
+
+@onready var _tfx := get_node("/root/TweenFXHelper")
 var power_up_container: PanelContainer
 var money_container: PanelContainer
 var challenge_container: PanelContainer
@@ -87,6 +89,7 @@ func _build_ui() -> void:
 	tracker_ui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	tracker_ui.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_add_glowing_title(turn_info_container, "INFO", "res://Resources/Font/BALLOON1.ttf", tracker_ui, 14, Color(0.713725, 0.301961, 0.478431, 1.0))
+	_add_container_hover_title(turn_info_container, "INFO")
 
 	power_up_container = _create_panel("PowerUpContainer", POWER_UP_RATIO)
 	upper.add_child(power_up_container)
@@ -94,6 +97,7 @@ func _build_ui() -> void:
 	power_up_ui.name = "PowerUpUI"
 	power_up_ui.clip_contents = true
 	_add_glowing_title(power_up_container, "PowerUps", "res://Resources/Font/BALLOON1.ttf", power_up_ui)
+	_add_container_hover_title(power_up_container, "PowerUps")
 
 	money_container = _create_panel("MoneyContainer", MONEY_RATIO)
 	upper.add_child(money_container)
@@ -103,6 +107,7 @@ func _build_ui() -> void:
 	money_ui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	money_ui.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_add_glowing_title(money_container, "MONEY", "res://Resources/Font/BALLOON1.ttf", money_ui, 14, Color(0.137255, 0.411765, 0.415686, 1.0))
+	_add_container_hover_title(money_container, "MONEY")
 
 	var middle := _create_hbox("MiddleSection", MIDDLE_STRETCH)
 	main_vbox.add_child(middle)
@@ -117,6 +122,7 @@ func _build_ui() -> void:
 	challenge_ui.name = "ChallengeUI"
 	challenge_ui.clip_contents = false
 	_add_glowing_title(challenge_container, "Challenges", "res://Resources/Font/BALLOON1.ttf", challenge_ui)
+	_add_container_hover_title(challenge_container, "Challenges")
 
 	debuff_container = _create_panel("DebuffContainer", DEBUFF_RATIO)
 	left_col.add_child(debuff_container)
@@ -124,6 +130,7 @@ func _build_ui() -> void:
 	debuff_ui.name = "DebuffUI"
 	debuff_ui.clip_contents = false
 	_add_glowing_title(debuff_container, "Debuffs", "res://Resources/Font/BALLOON1.ttf", debuff_ui)
+	_add_container_hover_title(debuff_container, "Debuffs")
 
 	consumable_container = _create_panel("ConsumableContainer", CONSUMABLE_RATIO)
 	left_col.add_child(consumable_container)
@@ -131,6 +138,7 @@ func _build_ui() -> void:
 	consumable_ui.name = "ConsumableUI"
 	consumable_ui.clip_contents = true
 	_add_glowing_title(consumable_container, "Consumables", "res://Resources/Font/BALLOON1.ttf", consumable_ui)
+	_add_container_hover_title(consumable_container, "Consumables")
 
 	console_container = _create_panel("ConsoleContainer", CONSOLE_RATIO)
 	left_col.add_child(console_container)
@@ -138,6 +146,7 @@ func _build_ui() -> void:
 	console_ui.name = "GamingConsoleUI"
 	console_ui.clip_contents = true
 	_add_glowing_title(console_container, "Consoles", "res://Resources/Font/BALLOON1.ttf", console_ui)
+	_add_container_hover_title(console_container, "Consoles")
 
 	# Action buttons moved from bottom panel to left column
 	var game_button_container := _create_panel("GameButtonContainer", LEFT_INFO_RATIO)
@@ -147,6 +156,7 @@ func _build_ui() -> void:
 	game_buttons.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	game_buttons.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_add_glowing_title(game_button_container, "Actions", "res://Resources/Font/BALLOON1.ttf", game_buttons)
+	_add_container_hover_title(game_button_container, "Actions")
 
 	# ── Center column ──
 	var center_col := _create_vbox("CenterColumn", 1.0)
@@ -155,12 +165,14 @@ func _build_ui() -> void:
 	title_container = _create_panel("TitleContainer", TITLE_RATIO)
 	center_col.add_child(title_container)
 	_add_glowing_title(title_container, "Guhtzee!", "res://Resources/Font/PumpDemiBoldPlain.otf", null, 72)
+	_add_container_hover_title(title_container, "Guhtzee!")
 
 	dice_area_container = _create_panel("DiceAreaContainer", DICE_AREA_RATIO)
 	center_col.add_child(dice_area_container)
 	var dice_hand := preload("res://Scenes/Dice/dice_hand.tscn").instantiate()
 	dice_hand.name = "DiceHand"
 	dice_area_container.add_child(dice_hand)
+	_add_container_hover_title(dice_area_container, "Dice Area")
 
 	chore_meter_container = _create_panel("ChoreMeterContainer", CHORE_METER_RATIO)
 	center_col.add_child(chore_meter_container)
@@ -169,6 +181,7 @@ func _build_ui() -> void:
 	chore_ui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	chore_ui.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_add_glowing_title(chore_meter_container, "Chore Meter", "res://Resources/Font/BALLOON1.ttf", chore_ui)
+	_add_container_hover_title(chore_meter_container, "Chore Meter")
 
 	# Prominent roll button below chore meter
 	var roll_button_container := _create_panel("RollButtonContainer", CENTER_ROLL_RATIO)
@@ -178,6 +191,7 @@ func _build_ui() -> void:
 	roll_button_ui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	roll_button_ui.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	roll_button_container.add_child(roll_button_ui)
+	_add_container_hover_title(roll_button_container, "Roll Button")
 
 	# ── Right column (scorecard) ──
 	var right_col := _create_vbox("RightColumn", 1.0)
@@ -190,12 +204,46 @@ func _build_ui() -> void:
 	scorecard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scorecard.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scorecard_container.add_child(scorecard)
+	_add_container_hover_title(scorecard_container, "Scorecard")
 
 	# Wire GameButtonUI to the ScoreCard (dynamic scenes built in code)
 	if game_buttons:
 		var path_to_scorecard := game_buttons.get_path_to(scorecard)
 		game_buttons.score_card_ui_path = path_to_scorecard
 
+
+## _add_container_hover_title(panel, title_text)
+##
+## Adds a lightweight hover tooltip to a panel that displays the container's title.
+## Respects the GameSettings.container_title_tooltips_enabled toggle.
+func _add_container_hover_title(panel: PanelContainer, title_text: String) -> void:
+	if not panel:
+		return
+	var tooltip := PanelContainer.new()
+	tooltip.name = "HoverTitleTooltip"
+	tooltip.z_index = 200
+	tooltip.top_level = true
+	tooltip.visible = false
+	tooltip.theme = load("res://Resources/UI/powerup_hover_theme.tres")
+	panel.add_child(tooltip)
+
+	var label := Label.new()
+	label.name = "TooltipLabel"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	tooltip.add_child(label)
+
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.mouse_entered.connect(func():
+		if not GameSettings.container_title_tooltips_enabled:
+			return
+		label.text = title_text
+		tooltip.visible = true
+		_tfx.place_tooltip(tooltip, panel.get_global_rect(), SIDE_TOP, true)
+	)
+	panel.mouse_exited.connect(func():
+		tooltip.visible = false
+	)
 
 func _create_margin_container() -> MarginContainer:
 	var margin := MarginContainer.new()

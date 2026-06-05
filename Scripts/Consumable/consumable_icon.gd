@@ -51,6 +51,8 @@ var is_useable := false  # Can the consumable be activated at all?
 var is_active := false   # Has the player clicked to activate it?
 var is_used := false     # Has the consumable been consumed?
 
+@onready var _tfx := get_node("/root/TweenFXHelper")
+
 func _ready() -> void:
 	print("[ConsumableIcon] Initializing...")
 	
@@ -92,7 +94,7 @@ func _ready() -> void:
 		print("[ConsumableIcon] WARNING: Shadow node missing")
 
 	# Setup card visuals
-	custom_minimum_size = Vector2(80, 120)  # Standard card ratio 2:3
+	custom_minimum_size = Vector2(120, 180)  # Match PowerUpIcon size
 	size_flags_horizontal = SIZE_SHRINK_CENTER
 	size_flags_vertical = SIZE_SHRINK_CENTER
 	
@@ -108,11 +110,23 @@ func _ready() -> void:
 		sell_button.text = "SELL"
 		if not sell_button.is_connected("pressed", _on_sell_button_pressed):
 			sell_button.pressed.connect(_on_sell_button_pressed)
+		if not sell_button.is_connected("mouse_entered", _tfx.button_hover.bind(sell_button)):
+			sell_button.mouse_entered.connect(_tfx.button_hover.bind(sell_button))
+		if not sell_button.is_connected("mouse_exited", _tfx.button_unhover.bind(sell_button)):
+			sell_button.mouse_exited.connect(_tfx.button_unhover.bind(sell_button))
+		if not sell_button.is_connected("pressed", _tfx.button_press.bind(sell_button)):
+			sell_button.pressed.connect(_tfx.button_press.bind(sell_button))
 	if use_button:
 		use_button.visible = false
 		use_button.text = "USE"
 		if not use_button.is_connected("pressed", _on_use_button_pressed):
 			use_button.pressed.connect(_on_use_button_pressed)
+		if not use_button.is_connected("mouse_entered", _tfx.button_hover.bind(use_button)):
+			use_button.mouse_entered.connect(_tfx.button_hover.bind(use_button))
+		if not use_button.is_connected("mouse_exited", _tfx.button_unhover.bind(use_button)):
+			use_button.mouse_exited.connect(_tfx.button_unhover.bind(use_button))
+		if not use_button.is_connected("pressed", _tfx.button_press.bind(use_button)):
+			use_button.pressed.connect(_tfx.button_press.bind(use_button))
 	if shadow:
 		shadow.modulate = Color(0.0, 0.0, 0.0, 0.5)
 		shadow.position = Vector2(5, 5)
@@ -298,6 +312,7 @@ func _create_card_structure() -> void:
 	card_title.add_theme_font_size_override("font_size", 16)
 	card_title.visible = true
 	card_info.add_child(card_title)
+	card_info.theme = load("res://Resources/UI/powerup_hover_theme.tres")
 	print("[DEBUG] card_info children: ", card_info.get_children())
 	
 	# Create SellButton
@@ -308,9 +323,13 @@ func _create_card_structure() -> void:
 	sell_button.z_index = 3
 	sell_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	sell_button.size = Vector2(44, 31)
-	sell_button.position = Vector2(36, 0)  # Position at top right
+	sell_button.position = Vector2(76, 0)  # Position at top right (120 - 44)
 	sell_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	sell_button.pressed.connect(_on_sell_button_pressed)
+	sell_button.mouse_entered.connect(func(): _tfx.button_hover(sell_button))
+	sell_button.mouse_exited.connect(func(): _tfx.button_unhover(sell_button))
+	sell_button.pressed.connect(func(): _tfx.button_press(sell_button))
+	sell_button.theme = load("res://Resources/UI/powerup_hover_theme.tres")
 	add_child(sell_button)
 	
 	# Create UseButton
@@ -321,13 +340,17 @@ func _create_card_structure() -> void:
 	use_button.z_index = 3
 	use_button.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	use_button.size = Vector2(44, 31)
-	use_button.position = Vector2(36, 41)  # Position at top left
+	use_button.position = Vector2(76, 41)  # Position at top left (120 - 44)
 	use_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	
 	# Apply button styling directly
 	_apply_action_button_style(use_button)
 	
 	use_button.pressed.connect(_on_use_button_pressed)
+	use_button.mouse_entered.connect(func(): _tfx.button_hover(use_button))
+	use_button.mouse_exited.connect(func(): _tfx.button_unhover(use_button))
+	use_button.pressed.connect(func(): _tfx.button_press(use_button))
+	use_button.theme = load("res://Resources/UI/powerup_hover_theme.tres")
 	add_child(use_button)
 	
 	# Create LabelBg
@@ -336,11 +359,12 @@ func _create_card_structure() -> void:
 	label_bg.visible = false
 	label_bg.z_index = 3
 	label_bg.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	label_bg.position.y = -55  # Raise by 5 pixels (was -60, now -55)
-	label_bg.position.x = -60
+	label_bg.position.y = -55  # Above the card
+	label_bg.position.x = -70  # Centered for 120px card with ~260px tooltip width
 	
 	# Apply hover styling directly
 	_apply_hover_tooltip_style(label_bg)
+	label_bg.theme = load("res://Resources/UI/powerup_hover_theme.tres")
 	add_child(label_bg)
 	
 	# Create HoverLabel
@@ -354,6 +378,7 @@ func _create_card_structure() -> void:
 	
 	# Apply label styling
 	_apply_hover_label_style(hover_label)
+	hover_label.theme = load("res://Resources/UI/powerup_hover_theme.tres")
 	label_bg.add_child(hover_label)
 
 func _setup_shader() -> void:
@@ -413,7 +438,7 @@ func _apply_data_to_ui() -> void:
 	if card_art:
 		if data.icon:
 			card_art.texture = data.icon
-			card_art.custom_minimum_size = Vector2(59, 93) # match atlas region size
+			card_art.custom_minimum_size = Vector2(96, 143) # match PowerUpIcon atlas region size
 			card_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		else:
 			card_art.texture = preload("res://icon.svg")
@@ -832,7 +857,8 @@ func _on_mouse_exited() -> void:
 		return
 	
 	_is_hovering = false
-	card_info.visible = false
+	if is_instance_valid(card_info) and card_info.is_inside_tree():
+		card_info.visible = false
 	
 	# Deactivate shimmer animation on title
 	_animate_title_shimmer(false)
@@ -844,7 +870,7 @@ func _on_mouse_exited() -> void:
 		_shader_material.set_shader_parameter("y_rot", 0.0)
 	
 	# Immediately hide the label regardless of state
-	if label_bg:
+	if is_instance_valid(label_bg) and label_bg.is_inside_tree():
 		label_bg.visible = false
 	
 	# If we're following the mouse, don't animate out yet
@@ -867,12 +893,15 @@ func _on_mouse_exited() -> void:
 	_current_tween = create_tween()
 	
 	# Hide hover label with animation - only if target is still valid
-	if label_bg and is_instance_valid(label_bg) and label_bg.is_inside_tree():
+	if is_instance_valid(label_bg) and label_bg.is_inside_tree():
 		_current_tween.tween_property(
 			label_bg, "modulate:a", 0.0, transition_speed
 		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		# Add a callback to ensure label is hidden after animation
-		_current_tween.tween_callback(func(): label_bg.visible = false)
+		_current_tween.tween_callback(func():
+			if is_instance_valid(label_bg):
+				label_bg.visible = false
+		)
 	
 	# Animate card back to normal with elastic effect
 	_current_tween.parallel().tween_property(
@@ -880,7 +909,7 @@ func _on_mouse_exited() -> void:
 	).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	
 	# Animate shadow back to normal
-	if shadow:
+	if is_instance_valid(shadow) and shadow.is_inside_tree():
 		_current_tween.parallel().tween_property(
 			shadow, "scale", Vector2.ONE, 0.55
 		).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
@@ -1040,10 +1069,15 @@ func _apply_card_info_style() -> void:
 		
 		# Position title so its CENTER aligns horizontally with card center
 		# and appears 5 pixels below the bottom of the card art
-		var title_center_x = card_center_x - (title_width + 0.1 / 2.0)
+		var title_center_x = card_center_x - (title_width / 2.0)
 		var title_center_y = size.y + 5  # 5 pixels below the bottom of the card
 		
-		card_info.position = Vector2(title_center_x, title_center_y)
+		# Clamp to viewport so title doesn't go off-screen
+		var global_pos = global_position + Vector2(title_center_x, title_center_y)
+		var viewport_size = get_viewport_rect().size
+		global_pos.x = clampf(global_pos.x, 10.0, viewport_size.x - title_width - 10.0)
+		global_pos.y = clampf(global_pos.y, 10.0, viewport_size.y - 50.0)
+		card_info.position = global_pos - global_position
 		
 		# Add background styling to CardInfo
 		var info_style_box = StyleBoxFlat.new()

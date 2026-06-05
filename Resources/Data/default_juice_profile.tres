@@ -1,7 +1,9 @@
-[ext_resource path="res://Scripts/Core/juice_profile.gd" type="Script" id=1]
+[gd_resource type="Resource" script_class="JuiceProfile" load_steps=2 format=3]
 
-[gd_resource type="JuiceProfile" load_steps=1 format=2]
-script = ExtResource( 1 )
+[ext_resource type="Script" uid="uid://5o2p5ecf1u2v" path="res://Scripts/Core/juice_profile.gd" id="1_juice"]
+
+[resource]
+script = ExtResource("1_juice")
 default_duration = 0.4
 default_stagger = 0.08
 entrance_distance = 100.0

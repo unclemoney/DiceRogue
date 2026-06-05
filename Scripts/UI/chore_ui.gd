@@ -579,14 +579,6 @@ func _fan_out_completed_chores() -> void:
 	var bg_tween = create_tween()
 	bg_tween.tween_property(_background, "modulate:a", 1.0, 0.2)
 
-	var panel_target = details_panel.position
-	details_panel.position = panel_target - Vector2(0, 70)
-	details_panel.modulate.a = 0.0
-	details_panel.visible = true
-	var panel_tween = create_tween()
-	panel_tween.tween_property(details_panel, "position", panel_target, 0.38).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	panel_tween.parallel().tween_property(details_panel, "modulate:a", 1.0, 0.22)
-	
 	# Create cards: Mom's mood card + completed chores
 	var cards_to_create: Array = []
 	
@@ -604,16 +596,38 @@ func _fan_out_completed_chores() -> void:
 		var no_chores_card = _create_no_chores_card()
 		cards_to_create.append(no_chores_card)
 	
-	# Calculate positions for fan layout
-	var positions = _calculate_fan_positions(cards_to_create.size())
-	
-	# Add cards to background and animate
+	# Calculate single-row layout: details panel + cards side by side, all vertically centered
+	var viewport_size = get_viewport_rect().size
+	var spacing: float = CARD_SPACING
+	var total_width: float = DETAILS_PANEL_SIZE.x + spacing
+	for _c in cards_to_create:
+		total_width += CARD_SIZE.x + spacing
+	total_width -= spacing  # remove trailing spacing
+
+	var start_x: float = clampf((viewport_size.x - total_width) * 0.5, 24.0, viewport_size.x - total_width - 24.0)
+	var row_center_y: float = viewport_size.y * 0.5
+	var details_target_y: float = row_center_y - DETAILS_PANEL_SIZE.y * 0.5
+	var cards_target_y: float = row_center_y - CARD_SIZE.y * 0.5
+
+	# Override details panel position for single-row layout
+	var panel_target = Vector2(start_x, details_target_y)
+	details_panel.position = panel_target - Vector2(0, 70)
+	details_panel.modulate.a = 0.0
+	details_panel.visible = true
+	var panel_tween = create_tween()
+	panel_tween.tween_property(details_panel, "position", panel_target, 0.38).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	panel_tween.parallel().tween_property(details_panel, "modulate:a", 1.0, 0.22)
+
+	# Position and animate cards to the right of the details panel
+	var current_x: float = start_x + DETAILS_PANEL_SIZE.x + spacing
 	for i in range(cards_to_create.size()):
 		var card = cards_to_create[i]
 		_background.add_child(card)
 		_fanned_cards.append(card)
-		_animate_card_fan_in(card, positions[i], 0.08 + i * 0.05)
-	
+		var target_pos = Vector2(current_x, cards_target_y)
+		_animate_card_fan_in(card, target_pos, 0.08 + i * 0.05)
+		current_x += CARD_SIZE.x + spacing
+
 	# Mark animation complete
 	await get_tree().create_timer(0.45 + cards_to_create.size() * 0.05).timeout
 	_is_animating = false

@@ -123,6 +123,15 @@ func _ready() -> void:
 	# Reset visual state
 	_reset_visual_state()
 	
+	# Apply styling to scene-based nodes if they exist
+	if label_bg and hover_label:
+		_apply_hover_tooltip_style(label_bg)
+		_apply_hover_label_style(hover_label)
+		label_bg.theme = load("res://Resources/UI/powerup_hover_theme.tres")
+	if sell_button:
+		_apply_action_button_style(sell_button)
+		sell_button.theme = load("res://Resources/UI/powerup_hover_theme.tres")
+	
 	# Call this at the end of ready to ensure the position is captured after layout
 	call_deferred("_update_default_position")
 	
@@ -233,6 +242,7 @@ func _create_card_structure() -> void:
 	card_title.custom_minimum_size = Vector2(160, 20)
 	card_title.add_theme_font_size_override("font_size", 16)
 	card_info.add_child(card_title)
+	card_info.theme = load("res://Resources/UI/powerup_hover_theme.tres")
 	
 	# Create SellButton
 	sell_button = Button.new()
@@ -249,6 +259,8 @@ func _create_card_structure() -> void:
 	sell_button.pressed.connect(_on_sell_button_pressed)
 	sell_button.mouse_entered.connect(func(): _tfx.button_hover(sell_button))
 	sell_button.mouse_exited.connect(func(): _tfx.button_unhover(sell_button))
+	sell_button.pressed.connect(func(): _tfx.button_press(sell_button))
+	sell_button.theme = load("res://Resources/UI/powerup_hover_theme.tres")
 	add_child(sell_button)
 	
 	# Create LabelBg
@@ -262,6 +274,7 @@ func _create_card_structure() -> void:
 	
 	# Apply hover styling directly
 	_apply_hover_tooltip_style(label_bg)
+	label_bg.theme = load("res://Resources/UI/powerup_hover_theme.tres")
 	add_child(label_bg)
 	
 	# Create HoverLabel
@@ -275,6 +288,7 @@ func _create_card_structure() -> void:
 	
 	# Apply label styling
 	_apply_hover_label_style(hover_label)
+	hover_label.theme = load("res://Resources/UI/powerup_hover_theme.tres")
 	label_bg.add_child(hover_label)
 	
 	# Create RarityIcon
@@ -507,6 +521,8 @@ func _stop_mouse_following() -> void:
 	_oscillator_velocity = 0.0
 
 func _on_mouse_entered() -> void:
+	if not is_instance_valid(self) or not is_inside_tree():
+		return
 	_is_hovering = true
 	update_hover_description()
 	
@@ -515,13 +531,14 @@ func _on_mouse_entered() -> void:
 		_current_tween.kill()
 	
 	_current_tween = create_tween()
-	card_info.visible = true  # Ensure card info is visible
+	if is_instance_valid(card_info) and card_info.is_inside_tree():
+		card_info.visible = true
 	
 	# Activate shimmer animation on title
 	_animate_title_shimmer(true)
 	
 	# Show hover label
-	if label_bg:
+	if is_instance_valid(label_bg) and label_bg.is_inside_tree():
 		label_bg.visible = true
 		label_bg.modulate.a = 0.0
 		label_bg.scale = Vector2(0.8, 0.8)
@@ -545,7 +562,7 @@ func _on_mouse_entered() -> void:
 	).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	
 	# Animate shadow to be slightly larger
-	if shadow:
+	if is_instance_valid(shadow) and shadow.is_inside_tree():
 		_current_tween.parallel().tween_property(
 			shadow, "scale", Vector2.ONE * 1.1, 0.5
 		).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
@@ -573,9 +590,10 @@ func _on_mouse_exited() -> void:
 		_shader_material.set_shader_parameter("x_rot", 0.0)
 		_shader_material.set_shader_parameter("y_rot", 0.0)
 	
-	card_info.visible = false  # Ensure card info is visible
+	if is_instance_valid(card_info) and card_info.is_inside_tree():
+		card_info.visible = false
 	# Immediately hide the label regardless of state
-	if label_bg:
+	if is_instance_valid(label_bg) and label_bg.is_inside_tree():
 		label_bg.visible = false
 	
 	# If we're following the mouse, don't animate out yet
@@ -593,12 +611,15 @@ func _on_mouse_exited() -> void:
 	_current_tween = create_tween()
 	
 	# Hide hover label with animation
-	if label_bg:
+	if is_instance_valid(label_bg) and label_bg.is_inside_tree():
 		_current_tween.tween_property(
 			label_bg, "modulate:a", 0.0, transition_speed
 		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		# Add a callback to ensure label is hidden after animation
-		_current_tween.tween_callback(func(): label_bg.visible = false)
+		_current_tween.tween_callback(func():
+			if is_instance_valid(label_bg):
+				label_bg.visible = false
+		)
 	
 	# Animate card back to normal with elastic effect
 	_current_tween.parallel().tween_property(
@@ -606,7 +627,7 @@ func _on_mouse_exited() -> void:
 	).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	
 	# Animate shadow back to normal
-	if shadow:
+	if is_instance_valid(shadow) and shadow.is_inside_tree():
 		_current_tween.parallel().tween_property(
 			shadow, "scale", Vector2.ONE, 0.55
 		).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
@@ -968,7 +989,12 @@ func _apply_card_info_style() -> void:
 		var title_center_x = card_center_x - (title_width  / 2.0)
 		var title_center_y = size.y + 5  # 5 pixels below the bottom of the card
 		
-		card_info.position = Vector2(title_center_x, title_center_y)
+		# Clamp to viewport so title doesn't go off-screen
+		var global_pos = global_position + Vector2(title_center_x, title_center_y)
+		var viewport_size = get_viewport_rect().size
+		global_pos.x = clampf(global_pos.x, 10.0, viewport_size.x - title_width - 10.0)
+		global_pos.y = clampf(global_pos.y, 10.0, viewport_size.y - 50.0)
+		card_info.position = global_pos - global_position
 		
 		# Add background styling to CardInfo
 		var info_style_box = StyleBoxFlat.new()

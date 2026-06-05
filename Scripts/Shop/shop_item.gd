@@ -26,6 +26,7 @@ var hover_tooltip_label: Label
 var is_hovered: bool = false
 var is_card_hovered: bool = false
 var is_button_hovered: bool = false
+var _hover_tween: Tween
 var _time: float = 0.0
 const RAINBOW_SPEED := 0.5
 const RAINBOW_COLORS := [
@@ -45,12 +46,21 @@ func _ready() -> void:
 		for child in get_children():
 			print("[ShopItem] Found child:", child.name)
 		return
+	# Apply theme and uniform card size
+	theme = load("res://Resources/UI/powerup_hover_theme.tres")
+	custom_minimum_size = Vector2(120, 180)
+
 	# Explicitly connect the button signal
 	if buy_button:
 		buy_button.pressed.connect(_on_buy_button_pressed)
 		buy_button.mouse_entered.connect(func(): _tfx.button_hover(buy_button))
 		buy_button.mouse_exited.connect(func(): _tfx.button_unhover(buy_button))
+		buy_button.pressed.connect(func(): _tfx.button_press(buy_button))
 		print("[ShopItem] Connected buy button signal")
+
+	# Card hover juice
+	mouse_entered.connect(_on_shop_item_mouse_entered)
+	mouse_exited.connect(_on_shop_item_mouse_exited)
 
 func _process(delta: float) -> void:
 	if not shop_label:
@@ -173,6 +183,10 @@ func setup(data: Resource, type: String) -> void:
 	
 	# Apply VCR font to labels and button
 	_apply_shop_item_fonts()
+	
+	# Enforce uniform card size and theme for all item types
+	custom_minimum_size = Vector2(120, 180)
+	theme = load("res://Resources/UI/powerup_hover_theme.tres")
 	
 	_setup_hover_tooltip()
 	
@@ -388,6 +402,7 @@ func _setup_hover_tooltip() -> void:
 	
 	# Apply the style directly
 	hover_tooltip.add_theme_stylebox_override("panel", style_box)
+	hover_tooltip.theme = load("res://Resources/UI/powerup_hover_theme.tres")
 	
 	# Create tooltip label
 	hover_tooltip_label = Label.new()
@@ -476,55 +491,38 @@ func _on_button_mouse_exited() -> void:
 		hover_tooltip.visible = false
 
 ## _update_tooltip_position()
-## Positions the tooltip relative to the shop item
+## Positions the tooltip relative to the shop item using the shared placement API.
 func _update_tooltip_position() -> void:
 	if not hover_tooltip or not hover_tooltip.visible:
 		return
-		
-	# Position tooltip to the right of the shop item
-	var shop_item_rect = get_global_rect()
-	var tooltip_pos = Vector2(
-		shop_item_rect.position.x + shop_item_rect.size.x + 10,
-		shop_item_rect.position.y
-	)
-	
-	# Ensure tooltip stays within screen bounds
-	var viewport_size = get_viewport().get_visible_rect().size
-	var tooltip_size = hover_tooltip.get_minimum_size()
-	
-	if tooltip_pos.x + tooltip_size.x > viewport_size.x:
-		# Position to the left instead
-		tooltip_pos.x = shop_item_rect.position.x - tooltip_size.x - 10
-	
-	if tooltip_pos.y + tooltip_size.y > viewport_size.y:
-		# Adjust vertical position
-		tooltip_pos.y = viewport_size.y - tooltip_size.y - 10
-	
-	hover_tooltip.global_position = tooltip_pos
+	_tfx.place_tooltip(hover_tooltip, get_global_rect())
+
+
+## _on_shop_item_mouse_entered()
+## Applies a subtle glow and slight lift to the shop item card.
+func _on_shop_item_mouse_entered() -> void:
+	_tfx.stop_effect(self)
+	if _hover_tween and _hover_tween.is_valid():
+		_hover_tween.kill()
+	_hover_tween = create_tween().set_parallel()
+	_hover_tween.tween_property(self, "self_modulate", Color(1.15, 1.15, 1.35, 1.0), 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_hover_tween.tween_property(self, "scale", Vector2.ONE * 1.03, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+## _on_shop_item_mouse_exited()
+## Removes the glow and returns the card to its resting state.
+func _on_shop_item_mouse_exited() -> void:
+	_tfx.stop_effect(self)
+	if _hover_tween and _hover_tween.is_valid():
+		_hover_tween.kill()
+	_hover_tween = create_tween().set_parallel()
+	_hover_tween.tween_property(self, "self_modulate", Color.WHITE, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_hover_tween.tween_property(self, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 ## _apply_shop_item_styling()
-## Applies border and background styling to the shop item panel
+## Background and border are handled by the theme; no override needed.
 func _apply_shop_item_styling() -> void:
-	print("[ShopItem] Applying shop item border styling")
-	
-	# Create shop item style with border
-	var style_box = StyleBoxFlat.new()
-	style_box.bg_color = Color(0.15, 0.15, 0.2, 0.95)  # Dark background
-	style_box.border_color = Color(1, 0.8, 0.2, 1)     # Golden border
-	style_box.set_border_width_all(3)                  # 3px border
-	style_box.corner_radius_top_left = 8
-	style_box.corner_radius_top_right = 8
-	style_box.corner_radius_bottom_right = 8
-	style_box.corner_radius_bottom_left = 8
-	style_box.content_margin_left = 12.0
-	style_box.content_margin_top = 12.0
-	style_box.content_margin_right = 12.0
-	style_box.content_margin_bottom = 12.0
-	style_box.shadow_color = Color(0, 0, 0, 0.4)
-	style_box.shadow_size = 3
-	
-	# Apply the style to this PanelContainer
-	add_theme_stylebox_override("panel", style_box)
+	print("[ShopItem] Theme styling applied via powerup_hover_theme.tres")
 
 ## _apply_shop_item_fonts()
 ## Applies VCR font to shop item labels and button

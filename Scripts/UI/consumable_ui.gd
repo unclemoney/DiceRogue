@@ -10,6 +10,7 @@ signal max_consumables_reached
 @export var max_consumables: int = 3
 @onready var container: HBoxContainer
 @onready var slots_label: Label = $SlotsLabel
+@onready var _tfx := get_node("/root/TweenFXHelper")
 
 # Data storage
 var _consumable_data := {}  # consumable_id -> ConsumableData
@@ -697,9 +698,9 @@ func _calculate_fan_positions(count: int) -> Array[Vector2]:
 	if count == 0:
 		return positions
 	
-	# Card dimensions (assuming standard card size)
-	var card_width: float = 80.0  # ConsumableIcon width
-	var spacing: float = 20.0  # Space between cards
+	# Card dimensions (match ConsumableIcon size)
+	var card_width: float = 120.0  # ConsumableIcon width
+	var spacing: float = 64.0  # Space between cards (prevents button overlap)
 	var card_spacing: float = card_width + spacing  # Total space per card
 	
 	# Screen center
@@ -933,8 +934,9 @@ func _on_spine_hovered(consumable_id: String, mouse_pos: Vector2) -> void:
 	# Show per-consumable tooltip
 	var data: ConsumableData = _consumable_data[consumable_id]
 	_spine_tooltip_label.text = data.display_name
-	_spine_tooltip.position = mouse_pos + Vector2(-50, -_spine_tooltip.size.y * 2)
 	_spine_tooltip.visible = true
+	var anchor_rect = Rect2(mouse_pos - Vector2(20, 20), Vector2(40, 40))
+	_tfx.place_tooltip(_spine_tooltip, anchor_rect, SIDE_RIGHT, true)
 
 func _on_spine_unhovered(consumable_id: String) -> void:
 	print("[ConsumableUI] Spine unhovered:", consumable_id)
@@ -1211,6 +1213,15 @@ func remove_consumable(consumable_id: String) -> void:
 				icon.get_parent().remove_child(icon)
 			icon.queue_free()
 		_fanned_icons.erase(consumable_id)
+		
+		# If we're in fanned state and have remaining consumables, recreate the fan layout
+		if _current_state == State.FANNED:
+			await get_tree().process_frame
+			if _active_consumable_count > 0:
+				_clear_fanned_icons()
+				_create_fanned_icons()
+			else:
+				_cleanup_empty_state()
 	
 	# Reposition remaining spines
 	_position_spines()

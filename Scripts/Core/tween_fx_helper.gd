@@ -685,3 +685,65 @@ func _valid(node: CanvasItem) -> bool:
 	if not node.is_inside_tree():
 		return false
 	return true
+
+
+## ─── TOOLTIP PLACEMENT ─────────────────────────────────────────────
+
+## place_tooltip(tooltip, anchor_rect, prefer_side, animate)
+##
+## Positions a tooltip off the anchor rect, clamps it to the viewport,
+## and optionally plays a fade-in juice. If the preferred side would place
+## the tooltip off-screen, it flips to the opposite side.
+## Returns the Tween if animated, else null.
+func place_tooltip(tooltip: Control, anchor_rect: Rect2, prefer_side: int = SIDE_RIGHT, animate: bool = true) -> Tween:
+	if not _valid(tooltip):
+		return null
+
+	const MARGIN: int = 10
+	var viewport_size: Vector2 = tooltip.get_viewport().get_visible_rect().size
+	var tooltip_size: Vector2 = tooltip.size
+	if tooltip_size == Vector2.ZERO:
+		tooltip_size = tooltip.get_minimum_size()
+
+	var pos: Vector2 = Vector2.ZERO
+
+	# Determine base position based on preferred side
+	match prefer_side:
+		SIDE_RIGHT:
+			pos = Vector2(anchor_rect.position.x + anchor_rect.size.x + MARGIN, anchor_rect.position.y)
+			# Flip to left if off-screen
+			if pos.x + tooltip_size.x > viewport_size.x:
+				pos.x = anchor_rect.position.x - tooltip_size.x - MARGIN
+		SIDE_LEFT:
+			pos = Vector2(anchor_rect.position.x - tooltip_size.x - MARGIN, anchor_rect.position.y)
+			# Flip to right if off-screen
+			if pos.x < 0:
+				pos.x = anchor_rect.position.x + anchor_rect.size.x + MARGIN
+		SIDE_BOTTOM:
+			pos = Vector2(anchor_rect.position.x, anchor_rect.position.y + anchor_rect.size.y + MARGIN)
+			# Flip to top if off-screen
+			if pos.y + tooltip_size.y > viewport_size.y:
+				pos.y = anchor_rect.position.y - tooltip_size.y - MARGIN
+		SIDE_TOP:
+			pos = Vector2(anchor_rect.position.x, anchor_rect.position.y - tooltip_size.y - MARGIN)
+			# Flip to bottom if off-screen
+			if pos.y < 0:
+				pos.y = anchor_rect.position.y + anchor_rect.size.y + MARGIN
+		_:
+			pos = Vector2(anchor_rect.position.x + anchor_rect.size.x + MARGIN, anchor_rect.position.y)
+
+	# Clamp to viewport bounds
+	pos.x = clampf(pos.x, MARGIN, viewport_size.x - tooltip_size.x - MARGIN)
+	pos.y = clampf(pos.y, MARGIN, viewport_size.y - tooltip_size.y - MARGIN)
+
+	tooltip.global_position = pos
+
+	if animate and is_group_enabled(Group.ICONS):
+		if not is_instance_valid(tooltip):
+			return null
+		tooltip.modulate.a = 0.0
+		return TweenFX.fade_in(tooltip, 0.15)
+	else:
+		if is_instance_valid(tooltip):
+			tooltip.modulate.a = 1.0
+		return null

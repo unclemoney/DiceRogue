@@ -115,7 +115,9 @@ func _deferred_ready_validation() -> void:
 	if not score_card_ui:
 		push_error("GameButtonUI: score_card_ui_path not set or node missing")
 	if not dice_hand:
-		push_error("GameButtonUI: dice_hand not found")
+		dice_hand = get_tree().get_first_node_in_group("dice_hand")
+	if not dice_hand:
+		push_warning("GameButtonUI: dice_hand not found (will retry in _connect_roll_ui_signals)")
 	if not turn_tracker:
 		push_error("GameButtonUI: turn_tracker not found")
 	if next_turn_button and not next_turn_button.pressed.is_connected(_on_next_turn_button_pressed):
@@ -145,12 +147,14 @@ func _deferred_ready_validation() -> void:
 		round_manager.round_started.connect(_on_round_started)
 		round_manager.round_completed.connect(_on_round_completed)
 
+	if not challenge_manager:
+		challenge_manager = get_tree().get_first_node_in_group("challenge_manager") as ChallengeManager
 	if challenge_manager:
 		challenge_manager.challenge_completed.connect(_on_challenge_completed)
 		print("[GameButtonUI] Connected to challenge_manager.challenge_completed signal")
 		print("[GameButtonUI] challenge_manager instance:", challenge_manager)
 	else:
-		push_error("[GameButtonUI] challenge_manager reference is null - CANNOT CONNECT SIGNALS")
+		push_warning("[GameButtonUI] challenge_manager reference is null - will retry in _connect_roll_ui_signals")
 
 	if turn_tracker:
 		turn_tracker.connect("game_over", Callable(self, "_on_game_over"))

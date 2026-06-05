@@ -32,6 +32,7 @@ signal max_consumables_reached
 @onready var panel: Panel = $Panel
 @onready var round_manager: RoundManager = get_node_or_null(round_manager_path)
 @onready var chore_ui = get_node_or_null(chore_ui_path)
+@onready var _tfx := get_node("/root/TweenFXHelper")
 
 # Challenge system data
 var _challenge_data := {}  # challenge_id -> ChallengeData
@@ -1555,20 +1556,9 @@ func _show_tooltip(text: String, near_pos: Vector2) -> void:
 	_spine_tooltip_label.text = text
 	_spine_tooltip.visible = true
 	
-	# Position tooltip to the right and below the hover position (not under mouse)
-	var tooltip_pos = near_pos + Vector2(100, 50)  # Offset to the right and below
-	var viewport_size = get_viewport_rect().size
-	
-	# Keep tooltip on screen
-	await get_tree().process_frame
-	var tooltip_size = _spine_tooltip.size
-	
-	if tooltip_pos.x + tooltip_size.x > viewport_size.x:
-		tooltip_pos.x = near_pos.x - tooltip_size.x - 10  # Show to the left instead
-	if tooltip_pos.y + tooltip_size.y > viewport_size.y:
-		tooltip_pos.y = viewport_size.y - tooltip_size.y - 10
-	
-	_spine_tooltip.global_position = tooltip_pos
+	# Use shared tooltip placement API
+	var anchor_rect = Rect2(near_pos - Vector2(20, 20), Vector2(40, 40))
+	_tfx.place_tooltip(_spine_tooltip, anchor_rect, SIDE_RIGHT, true)
 
 
 func _hide_tooltip() -> void:

@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://bgsxw8mkrirxb"]
+[gd_scene load_steps=6 format=3 uid="uid://bgsxw8mkrirxb"]
 
 [ext_resource type="Shader" uid="uid://b8j4hitdd17i1" path="res://Scripts/Shaders/card_perspective.gdshader" id="1_qs0d0"]
 [ext_resource type="Script" uid="uid://d0vv56bd757k2" path="res://Scripts/Challenge/challenge_icon.gd" id="2_6tt66"]
+[ext_resource type="Theme" uid="uid://bs4e5kj8qt7yg" path="res://Resources/UI/action_button_theme.tres" id="2_kkxqd"]
 [ext_resource type="Theme" uid="uid://busf5kj4jt6yf" path="res://Resources/UI/powerup_hover_theme.tres" id="3_hover_theme"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_6tt66"]
@@ -19,6 +20,7 @@ layout_mode = 3
 anchors_preset = 0
 offset_right = 80.0
 offset_bottom = 120.0
+theme = ExtResource("2_kkxqd")
 script = ExtResource("2_6tt66")
 
 [node name="Shadow" type="TextureRect" parent="."]

@@ -489,6 +489,36 @@ func _build_fx_tab() -> void:
 		_style_label(desc, 12, MENU_TEXT_SOFT)
 		row.add_child(desc)
 	
+	# Container title tooltips toggle
+	var title_tooltip_row = HBoxContainer.new()
+	title_tooltip_row.add_theme_constant_override("separation", 15)
+	toggle_container.add_child(title_tooltip_row)
+
+	var title_tooltip_label = Label.new()
+	title_tooltip_label.text = "Container Titles:"
+	title_tooltip_label.custom_minimum_size = Vector2(180, 0)
+	title_tooltip_label.add_theme_font_override("font", vcr_font)
+	_style_label(title_tooltip_label, 16)
+	title_tooltip_row.add_child(title_tooltip_label)
+
+	var title_tooltip_toggle = CheckButton.new()
+	title_tooltip_toggle.button_pressed = GameSettings.container_title_tooltips_enabled
+	title_tooltip_toggle.add_theme_font_override("font", vcr_font)
+	_apply_button_style(title_tooltip_toggle, MENU_ACCENT)
+	title_tooltip_toggle.toggled.connect(func(enabled: bool):
+		GameSettings.container_title_tooltips_enabled = enabled
+		GameSettings.save_settings()
+	)
+	title_tooltip_toggle.mouse_entered.connect(func(): _tfx.button_hover(title_tooltip_toggle))
+	title_tooltip_toggle.mouse_exited.connect(func(): _tfx.button_unhover(title_tooltip_toggle))
+	title_tooltip_row.add_child(title_tooltip_toggle)
+
+	var title_tooltip_desc = Label.new()
+	title_tooltip_desc.text = "Show title tooltips when hovering over UI panels"
+	title_tooltip_desc.add_theme_font_override("font", vcr_font)
+	_style_label(title_tooltip_desc, 12, MENU_TEXT_SOFT)
+	title_tooltip_row.add_child(title_tooltip_desc)
+
 	# Info label
 	var info_label = Label.new()
 	info_label.text = "FX changes apply immediately and are saved."

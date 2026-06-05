@@ -1,8 +1,10 @@
-[gd_scene load_steps=2 format=3 uid="uid://bxirylb1ylujp"]
+[gd_scene load_steps=3 format=3 uid="uid://bxirylb1ylujp"]
 
+[ext_resource type="Theme" uid="uid://bs4e5kj8qt7yg" path="res://Resources/UI/action_button_theme.tres" id="1_so752"]
 [ext_resource type="Script" uid="uid://cx5ckrdsliksj" path="res://Scripts/Debuff/debuff_icon.gd" id="2_so752"]
 
 [node name="DebuffIcon" type="Control"]
 layout_mode = 3
 anchors_preset = 0
+theme = ExtResource("1_so752")
 script = ExtResource("2_so752")
