@@ -6,12 +6,19 @@ var tracker: TurnTracker
 var _channel_manager = null
 var _bound_round_manager: RoundManager = null
 
+
+const COLOR_ORANGE: Color = Color(1.0, 0.729412, 0.490196, 1.0) # ffba7d
+const COLOR_MAGENTA: Color = Color(0.901961, 0.450980, 0.556863, 1.0) # e6738e
+const COLOR_PURPLE: Color = Color(0.431373, 0.317647, 0.611765, 1.0) # 6e519c
+const COLOR_BLUE: Color = Color(0.403922, 0.572549, 0.670588, 1.0) # 6792ab
+const COLOR_TEAL: Color = Color(0.549020, 0.729412, 0.662745, 1.0) # 8cbaa9
+
 # Mall-core display colors
 const TRACKER_TEXT := Color(0.968627, 0.941176, 1.0, 1.0)
 const TRACKER_TEXT_ACCENT := Color(0.917647, 1.0, 0.984314, 1.0)
 const TRACKER_TEXT_DIM := Color(0.713725, 0.301961, 0.478431, 0.75)
 const TRACKER_BG := Color(0.247059, 0.219608, 0.345098, 0.96)
-const TRACKER_BORDER := Color(0.713725, 0.301961, 0.478431, 0.9)
+const TRACKER_BORDER := Color(0.901961, 0.450980, 0.556863, 0.09)
 const TRACKER_SHADOW := Color(0.137255, 0.411765, 0.415686, 0.3)
 const TRACKER_FLASH := Color(0.47451, 0.886275, 0.890196, 1.0)
 
@@ -122,7 +129,9 @@ func _wrap_channel_panel(metric_grid: GridContainer) -> void:
 
 
 func _apply_metric_style(control: Control) -> void:
-	var style := StyleBoxFlat.new()
+	#var style := StyleBoxFlat.new()
+	var theme := preload("res://Resources/UI/action_button_theme.tres")
+	var style: StyleBoxFlat = theme.get_stylebox("panel", "Control").duplicate()
 	style.bg_color = TRACKER_BG
 	style.border_color = TRACKER_BORDER
 	style.set_border_width_all(2)

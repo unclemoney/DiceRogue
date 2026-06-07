@@ -38,6 +38,14 @@ const RAINBOW_COLORS := [
 	Color(0.5, 0, 1),  # Purple
 ]
 
+const PANEL_BG: Color = Color(0.247059, 0.219608, 0.345098, 0.26)
+const PANEL_BORDER: Color = Color(0.713725, 0.301961, 0.478431, 0.02)
+const PANEL_BORDER_WIDTH: int = 2
+const PANEL_CORNER_RADIUS: int = 16
+const PANEL_SHADOW: Color = Color(0.070588, 0.062745, 0.101961, 0.34)
+const PANEL_SHADOW_SIZE: int = 5
+const TITLE_FONT_SIZE: int = 12
+
 func _ready() -> void:
 	print("[ShopItem] Initializing:", name)
 	
@@ -47,8 +55,8 @@ func _ready() -> void:
 			print("[ShopItem] Found child:", child.name)
 		return
 	# Apply theme and uniform card size
-	theme = load("res://Resources/UI/powerup_hover_theme.tres")
-	custom_minimum_size = Vector2(120, 180)
+	theme = load("res://Resources/UI/action_button_theme.tres")
+	custom_minimum_size = Vector2(180, 180)
 
 	# Explicitly connect the button signal
 	if buy_button:
@@ -186,7 +194,7 @@ func setup(data: Resource, type: String) -> void:
 	
 	# Enforce uniform card size and theme for all item types
 	custom_minimum_size = Vector2(120, 180)
-	theme = load("res://Resources/UI/powerup_hover_theme.tres")
+	theme = load("res://Resources/UI/action_button_theme.tres")
 	
 	_setup_hover_tooltip()
 	
@@ -402,7 +410,7 @@ func _setup_hover_tooltip() -> void:
 	
 	# Apply the style directly
 	hover_tooltip.add_theme_stylebox_override("panel", style_box)
-	hover_tooltip.theme = load("res://Resources/UI/powerup_hover_theme.tres")
+	hover_tooltip.theme = load("res://Resources/UI/action_button_theme.tres")
 	
 	# Create tooltip label
 	hover_tooltip_label = Label.new()

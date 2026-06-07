@@ -54,13 +54,22 @@ const SCORECARD_RATIO: float = 77.0
 const RIGHT_BUTTON_RATIO: float = 23.0
 
 # Visual theme colors
-const PANEL_BG: Color = Color(0.247059, 0.219608, 0.345098, 0.26)
-const PANEL_BORDER: Color = Color(0.713725, 0.301961, 0.478431, 0.02)
+const PANEL_BG: Color = Color(0.431373, 0.317647, 0.611765, 0.26) # Dark Purple
+const PANEL_BORDER: Color = Color(0.901961, 0.450980, 0.556863, 0.02) #Magenta
 const PANEL_BORDER_WIDTH: int = 2
 const PANEL_CORNER_RADIUS: int = 16
 const PANEL_SHADOW: Color = Color(0.070588, 0.062745, 0.101961, 0.34)
 const PANEL_SHADOW_SIZE: int = 5
 const TITLE_FONT_SIZE: int = 12
+
+# New color pallete
+# 
+const COLOR_ORANGE: Color = Color(1.0, 0.729412, 0.490196, 1.0) # ffba7d
+const COLOR_MAGENTA: Color = Color(0.901961, 0.450980, 0.556863, 1.0) # e6738e
+const COLOR_PURPLE: Color = Color(0.431373, 0.317647, 0.611765, 1.0) # 6e519c
+const COLOR_BLUE: Color = Color(0.403922, 0.572549, 0.670588, 1.0) # 6792ab
+const COLOR_TEAL: Color = Color(0.549020, 0.729412, 0.662745, 1.0) # 8cbaa9
+
 
 
 func _ready() -> void:
@@ -165,14 +174,14 @@ func _build_ui() -> void:
 	title_container = _create_panel("TitleContainer", TITLE_RATIO)
 	center_col.add_child(title_container)
 	_add_glowing_title(title_container, "Guhtzee!", "res://Resources/Font/PumpDemiBoldPlain.otf", null, 72)
-	_add_container_hover_title(title_container, "Guhtzee!")
+	#_add_container_hover_title(title_container, "Guhtzee!")
 
 	dice_area_container = _create_panel("DiceAreaContainer", DICE_AREA_RATIO)
 	center_col.add_child(dice_area_container)
 	var dice_hand := preload("res://Scenes/Dice/dice_hand.tscn").instantiate()
 	dice_hand.name = "DiceHand"
 	dice_area_container.add_child(dice_hand)
-	_add_container_hover_title(dice_area_container, "Dice Area")
+	#_add_container_hover_title(dice_area_container, "Dice Area")
 
 	chore_meter_container = _create_panel("ChoreMeterContainer", CHORE_METER_RATIO)
 	center_col.add_child(chore_meter_container)

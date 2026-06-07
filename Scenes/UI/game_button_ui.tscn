@@ -32,12 +32,12 @@ size_flags_vertical = 3
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="NextTurnButton" type="Button" parent="HBoxContainer/RightButtonArea"]
+[node name="NextRoundButton" type="Button" parent="HBoxContainer/RightButtonArea"]
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "NEXT TURN"
+text = "NEXT ROUND"
 
 [node name="ShopButton" type="Button" parent="HBoxContainer/RightButtonArea"]
 custom_minimum_size = Vector2(0, 46)
@@ -46,13 +46,13 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 text = "SHOP"
 
-[node name="NextRoundButton" type="Button" parent="HBoxContainer/RightButtonArea"]
+[node name="NextTurnButton" type="Button" parent="HBoxContainer/RightButtonArea"]
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "NEXT ROUND"
+text = "NEXT TURN"
 
-[connection signal="pressed" from="HBoxContainer/RightButtonArea/NextTurnButton" to="." method="_on_next_turn_button_pressed"]
-[connection signal="pressed" from="HBoxContainer/RightButtonArea/ShopButton" to="." method="_on_shop_button_pressed"]
 [connection signal="pressed" from="HBoxContainer/RightButtonArea/NextRoundButton" to="." method="_on_next_round_button_pressed"]
+[connection signal="pressed" from="HBoxContainer/RightButtonArea/ShopButton" to="." method="_on_shop_button_pressed"]
+[connection signal="pressed" from="HBoxContainer/RightButtonArea/NextTurnButton" to="." method="_on_next_turn_button_pressed"]

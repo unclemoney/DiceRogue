@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://dw7dok1tye5gg"]
+[gd_scene load_steps=6 format=3 uid="uid://dw7dok1tye5gg"]
 
 [ext_resource type="Script" uid="uid://dj4tbffxvlrbb" path="res://Scripts/UI/vcr_turn_tracker_ui.gd" id="1_vcr_ui"]
+[ext_resource type="Theme" uid="uid://bs4e5kj8qt7yg" path="res://Resources/UI/action_button_theme.tres" id="1_w205n"]
 [ext_resource type="Theme" uid="uid://yij15afv8bdr" path="res://Resources/UI/scorecard_theme.tres" id="2_1lhlw"]
 [ext_resource type="Texture2D" uid="uid://dkmodd5s24gg" path="res://Resources/Art/Background/VCR_OPEN.png" id="2_1s3wn"]
 
@@ -17,6 +18,7 @@ layout_mode = 3
 anchors_preset = 0
 offset_right = 400.0
 offset_bottom = 200.0
+theme = ExtResource("1_w205n")
 script = ExtResource("1_vcr_ui")
 
 [node name="BACKGROUND" type="ColorRect" parent="."]
