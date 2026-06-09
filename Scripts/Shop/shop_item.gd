@@ -55,8 +55,8 @@ func _ready() -> void:
 			print("[ShopItem] Found child:", child.name)
 		return
 	# Apply theme and uniform card size
-	theme = load("res://Resources/UI/action_button_theme.tres")
-	custom_minimum_size = Vector2(180, 180)
+	#theme = load("res://Resources/UI/action_button_theme_no_panel.tres")
+	#custom_minimum_size = Vector2(180, 180)
 
 	# Explicitly connect the button signal
 	if buy_button:
@@ -186,15 +186,15 @@ func setup(data: Resource, type: String) -> void:
 	else:
 		price_label.text = NumberFormatter.format_money(price)
 	
-	# Apply shop item styling with border
+	# Apply shop item styling with border this is currently empty
 	_apply_shop_item_styling()
 	
 	# Apply VCR font to labels and button
 	_apply_shop_item_fonts()
 	
 	# Enforce uniform card size and theme for all item types
-	custom_minimum_size = Vector2(120, 180)
-	theme = load("res://Resources/UI/action_button_theme.tres")
+	#custom_minimum_size = Vector2(180, 180)
+	#theme = load("res://Resources/UI/action_button_theme_no_panel.tres")
 	
 	_setup_hover_tooltip()
 	
@@ -409,8 +409,8 @@ func _setup_hover_tooltip() -> void:
 	style_box.shadow_size = 2
 	
 	# Apply the style directly
-	hover_tooltip.add_theme_stylebox_override("panel", style_box)
-	hover_tooltip.theme = load("res://Resources/UI/action_button_theme.tres")
+	#hover_tooltip.add_theme_stylebox_override("panel", style_box)
+	#hover_tooltip.theme = load("res://Resources/UI/action_button_theme.tres")
 	
 	# Create tooltip label
 	hover_tooltip_label = Label.new()
@@ -567,62 +567,67 @@ func _apply_shop_item_fonts() -> void:
 ## Applies themed styling to shop buttons
 func _apply_shop_button_styling(button: Button) -> void:
 	print("[ShopItem] Applying shop button styling")
-	
+
 	# Load VCR font
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 	if vcr_font:
 		button.add_theme_font_override("font", vcr_font)
 		button.add_theme_font_size_override("font_size", 16)
 	
-	# Normal state style
-	var style_normal = StyleBoxFlat.new()
-	style_normal.bg_color = Color(0.2, 0.18, 0.25, 0.95)
-	style_normal.border_color = Color(1, 0.8, 0.2, 1)
-	style_normal.set_border_width_all(2)
-	style_normal.corner_radius_top_left = 6
-	style_normal.corner_radius_top_right = 6  
-	style_normal.corner_radius_bottom_right = 6
-	style_normal.corner_radius_bottom_left = 6
-	style_normal.content_margin_left = 12.0
-	style_normal.content_margin_top = 8.0
-	style_normal.content_margin_right = 12.0
-	style_normal.content_margin_bottom = 8.0
-	
-	# Hover state style
-	var style_hover = StyleBoxFlat.new()
-	style_hover.bg_color = Color(0.25, 0.22, 0.3, 0.98)
-	style_hover.border_color = Color(1, 0.9, 0.3, 1)
-	style_hover.set_border_width_all(3)
-	style_hover.corner_radius_top_left = 6
-	style_hover.corner_radius_top_right = 6
-	style_hover.corner_radius_bottom_right = 6
-	style_hover.corner_radius_bottom_left = 6
-	style_hover.content_margin_left = 12.0
-	style_hover.content_margin_top = 8.0
-	style_hover.content_margin_right = 12.0
-	style_hover.content_margin_bottom = 8.0
-	
-	# Pressed state style
-	var style_pressed = StyleBoxFlat.new()
-	style_pressed.bg_color = Color(0.3, 0.27, 0.35, 1)
-	style_pressed.border_color = Color(1, 1, 0.4, 1)
-	style_pressed.set_border_width_all(2)
-	style_pressed.corner_radius_top_left = 6
-	style_pressed.corner_radius_top_right = 6
-	style_pressed.corner_radius_bottom_right = 6
-	style_pressed.corner_radius_bottom_left = 6
-	style_pressed.content_margin_left = 10.0
-	style_pressed.content_margin_top = 6.0
-	style_pressed.content_margin_right = 10.0
-	style_pressed.content_margin_bottom = 6.0
-	
-	# Apply styles to button
-	button.add_theme_stylebox_override("normal", style_normal)
-	button.add_theme_stylebox_override("hover", style_hover)
-	button.add_theme_stylebox_override("pressed", style_pressed)
-	button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-	button.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
-	button.add_theme_constant_override("outline_size", 1)
+	if theme:
+		theme = load("res://Resources/UI/action_button_theme_no_panel.tres")
+		custom_minimum_size = Vector2(180, 180)
+
+	else:
+		# Normal state style
+		var style_normal = StyleBoxFlat.new()
+		style_normal.bg_color = Color(0.2, 0.18, 0.25, 0.95)
+		style_normal.border_color = Color(1, 0.8, 0.2, 1)
+		style_normal.set_border_width_all(2)
+		style_normal.corner_radius_top_left = 6
+		style_normal.corner_radius_top_right = 6  
+		style_normal.corner_radius_bottom_right = 6
+		style_normal.corner_radius_bottom_left = 6
+		style_normal.content_margin_left = 12.0
+		style_normal.content_margin_top = 8.0
+		style_normal.content_margin_right = 12.0
+		style_normal.content_margin_bottom = 8.0
+		
+		# Hover state style
+		var style_hover = StyleBoxFlat.new()
+		style_hover.bg_color = Color(0.25, 0.22, 0.3, 0.98)
+		style_hover.border_color = Color(1, 0.9, 0.3, 1)
+		style_hover.set_border_width_all(3)
+		style_hover.corner_radius_top_left = 6
+		style_hover.corner_radius_top_right = 6
+		style_hover.corner_radius_bottom_right = 6
+		style_hover.corner_radius_bottom_left = 6
+		style_hover.content_margin_left = 12.0
+		style_hover.content_margin_top = 8.0
+		style_hover.content_margin_right = 12.0
+		style_hover.content_margin_bottom = 8.0
+		
+		# Pressed state style
+		var style_pressed = StyleBoxFlat.new()
+		style_pressed.bg_color = Color(0.3, 0.27, 0.35, 1)
+		style_pressed.border_color = Color(1, 1, 0.4, 1)
+		style_pressed.set_border_width_all(2)
+		style_pressed.corner_radius_top_left = 6
+		style_pressed.corner_radius_top_right = 6
+		style_pressed.corner_radius_bottom_right = 6
+		style_pressed.corner_radius_bottom_left = 6
+		style_pressed.content_margin_left = 10.0
+		style_pressed.content_margin_top = 6.0
+		style_pressed.content_margin_right = 10.0
+		style_pressed.content_margin_bottom = 6.0
+		
+		# Apply styles to button
+		button.add_theme_stylebox_override("normal", style_normal)
+		button.add_theme_stylebox_override("hover", style_hover)
+		button.add_theme_stylebox_override("pressed", style_pressed)
+		button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+		button.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		button.add_theme_constant_override("outline_size", 1)
 
 
 ## _setup_colored_dice_icon()

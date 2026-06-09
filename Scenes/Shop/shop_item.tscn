@@ -1,10 +1,10 @@
 [gd_scene load_steps=3 format=3 uid="uid://c8e502cveltmu"]
 
-[ext_resource type="Theme" uid="uid://bs4e5kj8qt7yg" path="res://Resources/UI/action_button_theme.tres" id="1_15kmo"]
+[ext_resource type="Theme" uid="uid://dp4vxkkv0v8gg" path="res://Resources/UI/action_button_theme_no_panel.tres" id="1_15kmo"]
 [ext_resource type="Script" uid="uid://tcwgkjbbqnub" path="res://Scripts/Shop/shop_item.gd" id="1_xxxx"]
 
 [node name="ShopItem" type="PanelContainer"]
-custom_minimum_size = Vector2(120, 180)
+custom_minimum_size = Vector2(180, 180)
 theme = ExtResource("1_15kmo")
 script = ExtResource("1_xxxx")
 
