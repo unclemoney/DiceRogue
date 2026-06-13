@@ -480,59 +480,88 @@ func _on_item_purchased(item_id: String, item_type: String) -> void:
 				return
 	
 	print("[ShopUI] Purchase validation passed, proceeding with purchase")
-	
+
 	# Record that this item was purchased (for statistics)
 	if not purchased_items[item_type].has(item_id):
 		purchased_items[item_type].append(item_id)
 		print("[ShopUI] Added", item_id, "to purchased items list")
-	
-	# Remove the item from the shop after purchase
-	# For colored dice: removed this turn, but available again next turn (not tracked in purchased_items for filtering)
-	print("[ShopUI] Calling _remove_shop_item for:", item_id, "type:", item_type)
-	await _remove_shop_item(item_id, item_type)
-	
-	# If we got here, proceed with purchase
+
+	# Grant the purchase immediately. The removal animation runs independently
+	# so a killed tween cannot block the grant (see _remove_shop_item).
 	print("[ShopUI] Emitting item_purchased signal for:", item_id, "type:", item_type)
 	emit_signal("item_purchased", item_id, item_type)
 
+	# Remove the item from the shop after purchase.
+	# For colored dice: removed this turn, but available again next turn (not tracked in purchased_items for filtering)
+	print("[ShopUI] Removing shop item:", item_id, "type:", item_type)
+	_remove_shop_item(item_id, item_type)
+
 ## _remove_shop_item(item_id, item_type)
 ##
-## Finds the matching ShopItem and plays a purchase-out animation before freeing it.
+## Finds the matching ShopItem and starts a purchase-out animation.
+## The animation is fire-and-forget; the caller must already have emitted
+## item_purchased so the grant cannot be blocked by the tween.
 func _remove_shop_item(item_id: String, item_type: String) -> void:
 	var container = _get_container_for_type(item_type)
 	if not container:
 		push_error("[ShopUI] No container found for type:", item_type)
 		return
-		
+
 	# Find and remove the shop item with matching ID
 	for child in container.get_children():
 		if child is ShopItem and child.item_id == item_id:
-			await _animate_purchase_out(child)
-			print("[ShopUI] Removed shop item:", item_id, "from shop")
+			_animate_purchase_out(child)
+			print("[ShopUI] Started removal for shop item:", item_id)
 			break
 
 ## _animate_purchase_out(item)
 ##
 ## Flashes the item border gold, then slides it up and fades it out before freeing.
+## Uses a local tween (not TweenFX) so hover effects on the dying card cannot
+## kill the removal tween and leave an invisible, input-blocking node behind.
 func _animate_purchase_out(item: ShopItem) -> void:
-	# Disable the button to prevent double purchase
-	if item.buy_button:
-		item.buy_button.disabled = true
-	
-	# Flash gold border
+	if not is_instance_valid(item):
+		return
+
+	# Tell the card it is being removed: stops hover juice, hides tooltip, and
+	# blocks all mouse input on the card and its children.
+	item.mark_for_removal()
+
+	# Flash gold border.
 	var style := item.get_theme_stylebox("panel") as StyleBoxFlat
 	if style:
 		var flash_style := style.duplicate() as StyleBoxFlat
 		flash_style.border_color = Color(1.0, 0.85, 0.0, 1.0)
 		flash_style.set_border_width_all(5)
 		item.add_theme_stylebox_override("panel", flash_style)
-	
-	# Slide up and fade out
-	var tween := TweenFX.slide_and_fade_out(item, Vector2.UP, 40.0, 0.25)
-	if tween:
-		await tween.finished
-	
-	item.queue_free()
+
+	# Use a local tween so TweenFXHelper.stop_effect() cannot kill it.
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_QUAD)
+	tween.set_ease(Tween.EASE_IN)
+	tween.tween_property(item, "position", item.position + Vector2.UP * 40.0, 0.25)
+	tween.parallel().tween_property(item, "modulate:a", 0.0, 0.25)
+
+	# Capture the item ID and a weak reference before the tween starts so the
+	# finished callback never accesses a freed node.
+	var weak_item: WeakRef = weakref(item)
+	var captured_id: String = item.item_id
+
+	tween.finished.connect(func():
+		var target = weak_item.get_ref()
+		if is_instance_valid(target):
+			print("[ShopUI] Freed shop item:", captured_id)
+			target.queue_free()
+	)
+
+	# Safety timer: if the tween fails to finish, free the node anyway.
+	var fallback_timer := get_tree().create_timer(0.5)
+	fallback_timer.timeout.connect(func():
+		var target = weak_item.get_ref()
+		if is_instance_valid(target):
+			print("[ShopUI] Fallback free for shop item:", captured_id)
+			target.queue_free()
+	)
 
 # Helper function to find PowerUpUI
 func _find_power_up_ui() -> PowerUpUI:

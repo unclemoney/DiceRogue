@@ -1,11 +1,12 @@
 [gd_scene load_steps=3 format=3 uid="uid://bb8xhf4j3fkbf"]
 
-[ext_resource type="Script" path="res://Scripts/UI/power_up_spine.gd" id="1_spine"]
+[ext_resource type="Script" uid="uid://cvxioiytlhkhc" path="res://Scripts/UI/power_up_spine.gd" id="1_spine"]
 [ext_resource type="Texture2D" uid="uid://bda0jgw1sbmsv" path="res://Resources/Art/Powerups/powerup_spine.png" id="2_spine_tex"]
 
 [node name="PowerUpSpine" type="Control"]
 custom_minimum_size = Vector2(72, 80)
-layout_mode = 0
+layout_mode = 3
+anchors_preset = 0
 offset_right = 72.0
 offset_bottom = 80.0
 mouse_filter = 1

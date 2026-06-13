@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://bxwr5njrkwahy"]
 
 [ext_resource type="Script" uid="uid://bdul24ub8htns" path="res://Scripts/UI/power_up_icon.gd" id="1_8w4xw"]
-[ext_resource type="Theme" uid="uid://bs4e5kj8qt7yg" path="res://Resources/UI/action_button_theme.tres" id="1_apimv"]
+[ext_resource type="Theme" uid="uid://dp4vxkkv0v8gg" path="res://Resources/UI/action_button_theme_no_panel.tres" id="1_apimv"]
 
 [node name="PowerUpIcon" type="TextureButton"]
 offset_right = 40.0

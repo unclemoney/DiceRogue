@@ -36,7 +36,7 @@ const DANGER_THRESHOLD: float = 80.0
 const WARNING_THRESHOLD: float = 60.0
 const CHORE_BG: Color = Color(0.247059, 0.219608, 0.345098, 0.9)
 const CHORE_BG_SOFT: Color = Color(0.247059, 0.219608, 0.345098, 0.4)
-const CHORE_BORDER: Color = Color(0.713725, 0.301961, 0.478431, 0.95)
+const CHORE_BORDER: Color = Color(0.713725, 0.301961, 0.478431, 0.05)
 const CHORE_ACCENT: Color = Color(0.137255, 0.411765, 0.415686, 1.0)
 const CHORE_TEXT: Color = Color(0.968627, 0.941176, 1.0, 1.0)
 const CHORE_TEXT_SOFT: Color = Color(0.780392, 0.733333, 0.866667, 1.0)
@@ -258,6 +258,8 @@ func _apply_compact_shell_style() -> void:
 	shell_style.shadow_size = 4
 	_compact_shell.add_theme_stylebox_override("panel", shell_style)
 
+# we might want to switch this to a TextureProgressBar using textures instead of theme resources
+#
 func _apply_progress_bar_style() -> void:
 	var bg_style = StyleBoxFlat.new()
 	bg_style.bg_color = Color(0.078431, 0.066667, 0.113725, 0.92)

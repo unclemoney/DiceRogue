@@ -20,6 +20,11 @@ var price: int
 var item_data: Resource  # Store the data resource for tooltip access
 var color_type: DiceColor.Type = DiceColor.Type.NONE  # Track color type for colored dice
 
+# Purchase/removal guards to prevent race conditions between buy click,
+# hover tweens, and the removal animation started by ShopUI.
+var _is_purchasing: bool = false
+var _is_being_removed: bool = false
+
 # Hover tooltip variables
 var hover_tooltip: PanelContainer
 var hover_tooltip_label: Label
@@ -69,6 +74,9 @@ func _ready() -> void:
 	# Card hover juice
 	mouse_entered.connect(_on_shop_item_mouse_entered)
 	mouse_exited.connect(_on_shop_item_mouse_exited)
+
+	# Initialize tooltip references now so they are non-null during removal.
+	_setup_hover_tooltip()
 
 func _process(delta: float) -> void:
 	if not shop_label:
@@ -300,15 +308,22 @@ func _find_channel_manager():
 
 
 func _on_buy_button_pressed() -> void:
-	#print("[ShopItem] Buy button pressed for", item_id, "type:", item_type)
+	# Prevent double clicks / re-entry while a purchase is in flight.
+	if _is_purchasing:
+		return
+	_is_purchasing = true
+	if buy_button:
+		buy_button.disabled = true
+		buy_button.text = "BUYING..."
 	
 	# Pre-purchase validation for mods - check if mod limit is reached
 	if item_type == "mod":
 		var game_controller = get_tree().get_first_node_in_group("game_controller")
 		if game_controller and _has_reached_mod_limit(game_controller):
-			#print("[ShopItem] Mod purchase blocked - limit reached (all dice have mods)")
+			print("[ShopItem] Mod purchase blocked - limit reached (all dice have mods)")
 			buy_button.disabled = true
 			buy_button.text = "LIMIT REACHED"
+			_is_purchasing = false
 			# Play denied sound
 			var audio_mgr = get_node_or_null("/root/AudioManager")
 			if audio_mgr:
@@ -317,13 +332,16 @@ func _on_buy_button_pressed() -> void:
 	
 	if PlayerEconomy.can_afford(price):
 		if PlayerEconomy.remove_money(price, item_type):
-			#print("[ShopItem] Successfully purchased", item_id, "for", price)
-			#print("[ShopItem] Emitting purchase signal for:", item_id, "type:", item_type)
+			print("[ShopItem] Successfully purchased", item_id, "for", price)
+			print("[ShopItem] Emitting purchase signal for:", item_id, "type:", item_type)
 			emit_signal("purchased", item_id, item_type)
-			#print("[ShopItem] Purchase signal emitted")
-			_update_button_state() # <-- Add this line to update button after purchase
+			print("[ShopItem] Purchase signal emitted")
+			# Leave _is_purchasing set until the node is freed; this prevents
+			# hover tweens and further input from interfering with removal.
+			return
 		else:
 			print("[ShopItem] Failed to remove money for purchase")
+			_is_purchasing = false
 	else:
 		print("[ShopItem] Cannot afford", item_id, "(cost:", price, ", money:", PlayerEconomy.money, ")")
 		# Play denied sound
@@ -333,6 +351,7 @@ func _on_buy_button_pressed() -> void:
 		# Shake the buy button to indicate insufficient funds
 		if buy_button:
 			TweenFX.shake(buy_button, 0.2, 5.0, 3)
+		_is_purchasing = false
 	_update_button_state()
 
 
@@ -379,16 +398,22 @@ func _has_reached_mod_limit(game_controller: GameController) -> bool:
 	return current_mod_count >= expected_dice_count
 
 ## _setup_hover_tooltip()
-## Creates and configures the hover tooltip for shop items
+## Creates and configures the hover tooltip for shop items.
+## Called during setup() and, if setup() has not run yet, in _ready() so
+## mark_for_removal() always has a valid hover_tooltip reference.
 func _setup_hover_tooltip() -> void:
-	if not item_data:
+	# If this is called before setup() (e.g., from _ready()), item_data is not
+	# available yet. Create stub tooltip nodes so mark_for_removal() can hide
+	# them without crashes; setup() will rebuild the real tooltip later.
+	if hover_tooltip and is_instance_valid(hover_tooltip):
 		return
-		
+
 	# Create hover tooltip container
 	hover_tooltip = PanelContainer.new()
+	hover_tooltip.name = "HoverTooltip"
 	hover_tooltip.visible = false
 	hover_tooltip.z_index = 4000  # High z_index within valid range
-	
+
 	# Create custom StyleBoxFlat for the tooltip
 	var style_box = StyleBoxFlat.new()
 	style_box.bg_color = Color(0.08, 0.06, 0.12, 0.98)
@@ -407,17 +432,17 @@ func _setup_hover_tooltip() -> void:
 	style_box.content_margin_bottom = 12.0
 	style_box.shadow_color = Color(0, 0, 0, 0.5)
 	style_box.shadow_size = 2
-	
-	# Apply the style directly
-	#hover_tooltip.add_theme_stylebox_override("panel", style_box)
-	#hover_tooltip.theme = load("res://Resources/UI/action_button_theme.tres")
-	
+
 	# Create tooltip label
 	hover_tooltip_label = Label.new()
+	hover_tooltip_label.name = "HoverTooltipLabel"
 	hover_tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hover_tooltip_label.custom_minimum_size = Vector2(200, 0)
-	hover_tooltip_label.text = item_data.description
-	
+	if item_data:
+		hover_tooltip_label.text = item_data.description
+	else:
+		hover_tooltip_label.text = ""
+
 	# Apply font styling to label
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as FontFile
 	if vcr_font:
@@ -426,9 +451,9 @@ func _setup_hover_tooltip() -> void:
 		hover_tooltip_label.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))
 		hover_tooltip_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 		hover_tooltip_label.add_theme_constant_override("outline_size", 1)
-	
+
 	hover_tooltip.add_child(hover_tooltip_label)
-	
+
 	# Add tooltip to scene root to avoid grid constraints (deferred to avoid busy parent)
 	var scene_root = get_tree().current_scene
 	if scene_root:
@@ -437,31 +462,38 @@ func _setup_hover_tooltip() -> void:
 	else:
 		get_parent().add_child.call_deferred(hover_tooltip)
 		print("[ShopItem] Added tooltip to direct parent (deferred)")
-	
+
 	# Connect hover signals for the card itself
-	mouse_entered.connect(_on_mouse_entered)
-	mouse_exited.connect(_on_mouse_exited)
-	
+	if not mouse_entered.is_connected(_on_mouse_entered):
+		mouse_entered.connect(_on_mouse_entered)
+	if not mouse_exited.is_connected(_on_mouse_exited):
+		mouse_exited.connect(_on_mouse_exited)
+
 	# Connect hover signals for the buy button to maintain tooltip visibility
 	if buy_button:
-		buy_button.mouse_entered.connect(_on_button_mouse_entered)
-		buy_button.mouse_exited.connect(_on_button_mouse_exited)
-	
+		if not buy_button.mouse_entered.is_connected(_on_button_mouse_entered):
+			buy_button.mouse_entered.connect(_on_button_mouse_entered)
+		if not buy_button.mouse_exited.is_connected(_on_button_mouse_exited):
+			buy_button.mouse_exited.connect(_on_button_mouse_exited)
+
 	print("[ShopItem] Tooltip created with direct styling")
 
 ## _on_mouse_entered()
-## Shows the hover tooltip when mouse enters the shop item card
+## Shows the hover tooltip when mouse enters the shop item card.
 func _on_mouse_entered() -> void:
+	# Never show the tooltip while the card is being removed.
+	if _is_being_removed:
+		return
 	if not hover_tooltip or not item_data:
 		return
-	
+
 	# Update tooltip text - use enhanced version for colored dice
 	if hover_tooltip_label:
 		if item_type == "colored_dice":
 			hover_tooltip_label.text = _get_colored_dice_tooltip_text()
 		else:
 			hover_tooltip_label.text = item_data.description
-	
+
 	is_card_hovered = true
 	is_hovered = true
 	hover_tooltip.visible = true
@@ -472,7 +504,7 @@ func _on_mouse_entered() -> void:
 func _on_mouse_exited() -> void:
 	if not hover_tooltip:
 		return
-	
+
 	is_card_hovered = false
 	# Only hide if not hovering over the button either
 	if not is_button_hovered:
@@ -482,6 +514,8 @@ func _on_mouse_exited() -> void:
 ## _on_button_mouse_entered()
 ## Called when mouse enters the buy button - keeps tooltip visible
 func _on_button_mouse_entered() -> void:
+	if _is_being_removed:
+		return
 	is_button_hovered = true
 	# Show tooltip if it exists
 	if hover_tooltip and item_data:
@@ -509,6 +543,10 @@ func _update_tooltip_position() -> void:
 ## _on_shop_item_mouse_entered()
 ## Applies a subtle glow and slight lift to the shop item card.
 func _on_shop_item_mouse_entered() -> void:
+	# Ignore hover effects once the purchase has started; the card is about
+	# to be removed and hover tweens must not kill the removal animation.
+	if _is_purchasing or _is_being_removed:
+		return
 	_tfx.stop_effect(self)
 	if _hover_tween and _hover_tween.is_valid():
 		_hover_tween.kill()
@@ -520,12 +558,54 @@ func _on_shop_item_mouse_entered() -> void:
 ## _on_shop_item_mouse_exited()
 ## Removes the glow and returns the card to its resting state.
 func _on_shop_item_mouse_exited() -> void:
+	# Ignore hover effects once the purchase has started.
+	if _is_purchasing or _is_being_removed:
+		return
 	_tfx.stop_effect(self)
 	if _hover_tween and _hover_tween.is_valid():
 		_hover_tween.kill()
 	_hover_tween = create_tween().set_parallel()
 	_hover_tween.tween_property(self, "self_modulate", Color.WHITE, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_hover_tween.tween_property(self, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+## mark_for_removal()
+## Called by ShopUI before the purchase-out animation starts.
+## Kills any running hover tweens, hides the tooltip, blocks input,
+## and stops hover handlers from interrupting the removal animation.
+func mark_for_removal() -> void:
+	_is_being_removed = true
+	_is_purchasing = true
+
+	# Stop any hover juice so it cannot kill the removal tween.
+	_tfx.stop_effect(self)
+	if _hover_tween and _hover_tween.is_valid():
+		_hover_tween.kill()
+	_hover_tween = null
+
+	# Hide tooltip and reset hover state.
+	is_hovered = false
+	is_card_hovered = false
+	is_button_hovered = false
+	if hover_tooltip:
+		hover_tooltip.visible = false
+
+	# Block all input to this card and its children so the mouse cannot
+	# re-trigger hover or buy logic while it is being animated out.
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_propagate_mouse_filter(self, Control.MOUSE_FILTER_IGNORE)
+
+
+## _propagate_mouse_filter(node, filter)
+## Recursively sets mouse_filter on the given Control and all descendants.
+func _propagate_mouse_filter(node: Control, filter: Control.MouseFilter) -> void:
+	if not is_instance_valid(node):
+		return
+	node.mouse_filter = filter
+	for child in node.get_children():
+		if child is Control:
+			_propagate_mouse_filter(child, filter)
+
 
 ## _apply_shop_item_styling()
 ## Background and border are handled by the theme; no override needed.

@@ -2,7 +2,7 @@
 
 [ext_resource type="Shader" uid="uid://b8j4hitdd17i1" path="res://Scripts/Shaders/card_perspective.gdshader" id="1_qs0d0"]
 [ext_resource type="Script" uid="uid://d0vv56bd757k2" path="res://Scripts/Challenge/challenge_icon.gd" id="2_6tt66"]
-[ext_resource type="Theme" uid="uid://bs4e5kj8qt7yg" path="res://Resources/UI/action_button_theme.tres" id="2_kkxqd"]
+[ext_resource type="Theme" uid="uid://dp4vxkkv0v8gg" path="res://Resources/UI/action_button_theme_no_panel.tres" id="2_kkxqd"]
 [ext_resource type="Theme" uid="uid://busf5kj4jt6yf" path="res://Resources/UI/powerup_hover_theme.tres" id="3_hover_theme"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_6tt66"]
