@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3 uid="uid://d2xhqp4y1w7y2"]
+
+[ext_resource type="Script" path="res://Scripts/UI/sticker_badge.gd" id="1_sticker"]
+
+[node name="StickerBadge" type="Control"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 48.0
+offset_bottom = 48.0
+mouse_filter = 2
+script = ExtResource("1_sticker")

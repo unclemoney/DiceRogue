@@ -14,19 +14,20 @@ shader_parameter/x_rot = 0.0
 shader_parameter/y_rot = 0.0
 
 [node name="PowerUpIcon" type="Control"]
-material = SubResource("ShaderMaterial_hso7t")
-custom_minimum_size = Vector2(120, 180)
+custom_minimum_size = Vector2(160, 240)
 layout_mode = 3
-anchor_right = 0.09375
-anchor_bottom = 0.25
+anchor_right = 0.125
+anchor_bottom = 0.333333
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 mouse_filter = 1
 script = ExtResource("1_aef0c")
+use_kiosk_tile = true
 
 [node name="Shadow" type="TextureRect" parent="."]
+visible = false
 modulate = Color(0, 0, 0, 0.513726)
 z_index = -1
 layout_mode = 1
@@ -38,6 +39,7 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="CardArt" type="TextureRect" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -61,6 +63,7 @@ grow_horizontal = 0
 text = "SELL"
 
 [node name="CardFrame" type="TextureRect" parent="."]
+visible = false
 z_index = 1
 layout_mode = 1
 anchors_preset = 15
@@ -71,6 +74,7 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="RarityIcon" type="TextureRect" parent="."]
+visible = false
 z_index = 2
 layout_mode = 2
 offset_left = 96.0
@@ -91,6 +95,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="CardInfo" type="VBoxContainer" parent="."]
+visible = false
 z_index = 2
 layout_mode = 1
 anchors_preset = 12

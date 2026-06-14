@@ -245,6 +245,7 @@ All major UI popups use TweenFX-based bouncy entrance/exit animations for juicy 
 | **PowerUp Sell** | Jelly wobble → spin + shrink → fly toward money counter | — | Targets `MoneyLabel` global position |
 | **PowerUp Expiry** | Alarm flash highlight → fidget wild spin → fly to random screen edge + vanish | — | Orange alarm color |
 | **Mom Confiscation** | Auto-fan cards → red alarm flash on condemned → fidget + fly-to-Mom + vanish (staggered) | Folds cards back | Stagger: 0.2s (≤3 items) or 0.1s (>3) |
+| **PowerUp Kiosk Tile** | Glossy mall-core chrome tile with rarity neon glow, sticker badge, and always-visible SELL button | Hover lift + glow, click selection, fan-out slide/scale | 160×240 tile; 4-per-row fan-out |
 | **Consumable Sell** | Jelly wobble → spin + shrink → fly toward money counter | — | Same pattern as PowerUp sell |
 | **Consumable Use** | Fidget wild spin → fly to random edge → `ConsumableExplosion` at exit | — | Explosion effect at exit point |
 
@@ -340,6 +341,13 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - **Trade-off & Color PowerUps**:
     - **The Great Exchange** (Rare/$350): +2 dice, -1 roll per turn — more dice but fewer re-roll chances
     - **Extra Rainbow** (Rare/$300): +10 additive score per colored die scored — rewards color dice strategy
+- **PowerUp UI — Kiosk Tiles** (`Scripts/UI/kiosk_tile.gd`, `Scenes/PowerUp/kiosk_tile.tscn`)
+  - Mall-core glossy tile presentation for the fan-out PowerUp view
+  - 160×240 tile with chrome shader (`Scripts/Shaders/kiosk_tile.gdshader`), rarity-colored neon glow, and subtle sheen
+  - Parental Approval sticker badge (`Scripts/UI/sticker_badge.gd`) maps rating to mall-core labels:
+    - G → "Mom-Approved", PG → "Questionable Taste", PG-13 → "Parental Guidance", R → "Grounded Material", NC-17 → "Banned From The Mall"
+  - Always-visible SELL button; hover lift/glow; selection glow; fan-out preserved at 4 tiles per row
+  - `PowerUpIcon` (`Scripts/UI/power_up_icon.gd`) wraps `KioskTile` and keeps a `use_kiosk_tile` toggle for legacy fallback
 - **Consumables** (`Scripts/Consumable/`) - Single-use strategic items
   - **Lucky Upgrade** ($25): Randomly upgrades one unscored scorecard category by 1 level
   - **Half Price** ($25): Halves PowerUp prices in the shop. Stacks multiplicatively. Expires on first PowerUp purchase or new turn.

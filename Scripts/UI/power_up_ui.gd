@@ -566,16 +566,22 @@ func _create_fanned_icons() -> void:
 	await get_tree().create_timer(max_delay).timeout
 	_start_idle_animations()
 
+const FAN_CARD_WIDTH: float = 160.0
+const FAN_CARD_HEIGHT: float = 240.0
+const FAN_CARD_SPACING: float = 80.0
+const FAN_ROW_SPACING: float = 80.0
+const FAN_MAX_PER_ROW: int = 4
+
 func _calculate_fan_positions(count: int) -> Array[Vector2]:
 	var positions: Array[Vector2] = []
 	
-	# Card dimensions (from PowerUpIcon)
-	var card_width: float = 120.0  # PowerUpIcon minimum width
-	var card_height: float = 180.0  # PowerUpIcon minimum height
-	var spacing: float = 80.0      # Desired spacing between cards
-	var row_spacing: float = 80.0  # Vertical spacing between rows
-	var card_spacing: float = card_width + spacing  # Total space per card
-	var max_per_row: int = 5
+	# Card dimensions (from PowerUpIcon / KioskTile)
+	var card_width: float = FAN_CARD_WIDTH
+	var card_height: float = FAN_CARD_HEIGHT
+	var spacing: float = FAN_CARD_SPACING
+	var row_spacing: float = FAN_ROW_SPACING
+	var card_spacing: float = card_width + spacing
+	var max_per_row: int = FAN_MAX_PER_ROW
 	
 	# Screen center
 	var center_x: float = _fan_center.x

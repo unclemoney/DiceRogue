@@ -5,33 +5,38 @@ signal power_up_selected(power_up_id: String)
 signal power_up_deselected(power_up_id: String)
 signal power_up_sell_requested(power_up_id: String)
 
+const KioskTileScene = preload("res://Scenes/PowerUp/kiosk_tile.tscn")
+
 @export var data: PowerUpData
+@export var use_kiosk_tile: bool = true
+
 @export var glow_intensity: float = 0.25
 @export var hover_tilt: float = 0.05
 @export var hover_scale: float = 1.05
 @export var transition_speed: float = 0.05
 @export var max_offset_shadow: float = 20.0
 
-# Mouse movement variables
 @export var spring: float = 150.0
 @export var damp: float = 10.0
 @export var velocity_multiplier: float = 2.0
 
-# Add these properties near the top of your class
-@export var angle_x_max: float = 25.0  # Maximum X rotation angle in degrees
-@export var angle_y_max: float = 25.0  # Maximum Y rotation angle in degrees
+@export var angle_x_max: float = 25.0
+@export var angle_y_max: float = 25.0
 
-# Node references - initialized in _ready
+## Legacy node references
 var card_art: TextureRect
 var label_bg: PanelContainer
 var hover_label: Label
 var sell_button: Button
 var card_frame: TextureRect
-var card_info: Control  # Can be VBoxContainer initially, then PanelContainer after styling
+var card_info: Control
 var card_title: RichTextLabel
 var shadow: TextureRect
 var rarity_icon: TextureRect
 var rarity_label: Label
+
+## Mall-core kiosk tile wrapper
+var _kiosk_tile: KioskTile
 
 var _shader_material: ShaderMaterial
 var _is_hovering := false
@@ -46,14 +51,41 @@ var _oscillator_velocity := 0.0
 var _default_position := Vector2.ZERO
 var _hover_card_tween: Tween
 
-# Add these class variables near the top
 var _sell_mode_active := false
-var _sell_button_pressed := false  # Track when the sell button itself is clicked
+var _sell_button_pressed := false
 @onready var _tfx := get_node("/root/TweenFXHelper")
 
 func _ready() -> void:
 	print("[PowerUpIcon] Initializing...")
-	
+
+	if use_kiosk_tile:
+		_setup_kiosk_tile()
+	else:
+		_setup_legacy_card()
+
+	print("[PowerUpIcon] Initialization complete for:", data.id if data else "unknown")
+
+func _setup_kiosk_tile() -> void:
+	_kiosk_tile = get_node_or_null("KioskTile") as KioskTile
+	if not _kiosk_tile:
+		_kiosk_tile = KioskTileScene.instantiate()
+		_kiosk_tile.name = "KioskTile"
+		add_child(_kiosk_tile)
+
+	_kiosk_tile.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_kiosk_tile.custom_minimum_size = Vector2(160, 240)
+	_kiosk_tile.size = Vector2(160, 240)
+	custom_minimum_size = Vector2(160, 240)
+	size = Vector2(160, 240)
+	mouse_filter = Control.MOUSE_FILTER_PASS
+
+	_kiosk_tile.sell_requested.connect(_on_kiosk_sell_requested)
+	_kiosk_tile.tile_clicked.connect(_on_kiosk_tile_clicked)
+
+	if data:
+		_kiosk_tile.set_data(data)
+
+func _setup_legacy_card() -> void:
 	# If we have no children, create the full card structure
 	if get_child_count() == 0:
 		print("[PowerUpIcon] Creating card structure")
@@ -70,7 +102,7 @@ func _ready() -> void:
 		rarity_label = rarity_icon.get_node_or_null("RarityLabel") if rarity_icon else null
 		card_title = card_info.get_node_or_null("Title") if card_info else null
 		hover_label = label_bg.get_node_or_null("HoverLabel") if label_bg else null
-	
+
 	# Report missing nodes for debugging
 	if not card_art:
 		print("[PowerUpIcon] WARNING: CardArt node missing")
@@ -92,37 +124,36 @@ func _ready() -> void:
 		print("[PowerUpIcon] WARNING: RarityIcon node missing")
 	if not rarity_label:
 		print("[PowerUpIcon] WARNING: RarityLabel node missing")
-	
+
 	# Setup card visuals
-	custom_minimum_size = Vector2(120, 180)  # Updated card ratio for new atlas art
+	custom_minimum_size = Vector2(120, 180)
 	size_flags_horizontal = SIZE_SHRINK_CENTER
 	size_flags_vertical = SIZE_SHRINK_CENTER
-	
+
 	# Connect input signals if not already connected
 	if not is_connected("mouse_entered", _on_mouse_entered):
 		mouse_entered.connect(_on_mouse_entered)
 	if not is_connected("mouse_exited", _on_mouse_exited):
 		mouse_exited.connect(_on_mouse_exited)
-	
+
 	# Setup shader material
 	_setup_shader()
-	
+
 	# Apply enhanced CardInfo and Title styling
 	if card_info and card_title:
 		print("[PowerUpIcon] Applying direct styling to CardInfo and Title")
-		# Use deferred call to ensure sizing is calculated
 		call_deferred("_apply_card_info_style")
-	
+
 	# Convert angles to radians
 	angle_x_max = deg_to_rad(angle_x_max)
 	angle_y_max = deg_to_rad(angle_y_max)
-	
+
 	# Apply textures and text if we have data
 	_apply_data_to_ui()
-	
+
 	# Reset visual state
 	_reset_visual_state()
-	
+
 	# Apply styling to scene-based nodes if they exist
 	if label_bg and hover_label:
 		_apply_hover_tooltip_style(label_bg)
@@ -131,11 +162,17 @@ func _ready() -> void:
 	if sell_button:
 		_apply_action_button_style(sell_button)
 		sell_button.theme = load("res://Resources/UI/powerup_hover_theme.tres")
-	
+
 	# Call this at the end of ready to ensure the position is captured after layout
 	call_deferred("_update_default_position")
-	
-	print("[PowerUpIcon] Initialization complete for:", data.id if data else "unknown")
+
+func _on_kiosk_sell_requested(_id: String) -> void:
+	print("[PowerUpIcon] Kiosk sell requested for:", _id)
+	emit_signal("power_up_sell_requested", _id)
+
+func _on_kiosk_tile_clicked(_id: String) -> void:
+	print("[PowerUpIcon] Kiosk tile clicked:", _id)
+	_toggle_selection()
 
 func _exit_tree() -> void:
 	# Clean up stored tweens to prevent warnings
@@ -155,6 +192,8 @@ func _update_default_position() -> void:
 	print("[PowerUpIcon] Default position updated:", _default_position)
 
 func _process(delta: float) -> void:
+	if _kiosk_tile:
+		return
 	_update_shadow(delta)
 	_handle_mouse_following(delta)
 	_update_rotation(delta)
@@ -444,14 +483,18 @@ func _apply_data_to_ui() -> void:
 		hover_label.text = description_text + rating_suffix
 
 func _gui_input(event: InputEvent) -> void:
+	# In kiosk-tile mode the tile handles all input itself
+	if _kiosk_tile:
+		return
+
 	# Prevent card interaction if sell button was directly pressed
 	if _sell_button_pressed:
 		return
-	
+
 	# Handle mouse motion for card tilt
 	if event is InputEventMouseMotion and _is_hovering and not _following_mouse:
 		_handle_mouse_tilt(event.position)
-	
+
 	# Handle click events
 	if event is InputEventMouseButton:
 		var mouse_event = event as InputEventMouseButton
@@ -461,7 +504,7 @@ func _gui_input(event: InputEvent) -> void:
 				var local_point = mouse_event.position
 				if sell_button and sell_button.visible and sell_button.get_rect().has_point(local_point - sell_button.position):
 					return
-				
+
 				_on_pressed()
 				_start_mouse_following()
 			else:
@@ -523,73 +566,83 @@ func _stop_mouse_following() -> void:
 func _on_mouse_entered() -> void:
 	if not is_instance_valid(self) or not is_inside_tree():
 		return
+
+	# In kiosk-tile mode the tile owns all hover visuals
+	if _kiosk_tile:
+		return
+
 	_is_hovering = true
 	update_hover_description()
-	
+
 	# Cancel any existing tween
 	if _current_tween and _current_tween.is_valid():
 		_current_tween.kill()
-	
+
 	_current_tween = create_tween()
 	if is_instance_valid(card_info) and card_info.is_inside_tree():
 		card_info.visible = true
-	
+
 	# Activate shimmer animation on title
 	_animate_title_shimmer(true)
-	
+
 	# Show hover label
 	if is_instance_valid(label_bg) and label_bg.is_inside_tree():
 		label_bg.visible = true
 		label_bg.modulate.a = 0.0
 		label_bg.scale = Vector2(0.8, 0.8)
-		
+
 		# Animate label appearance
 		_current_tween.tween_property(
 			label_bg, "modulate:a", 1.0, transition_speed * 0.5
 		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		
+
 		_current_tween.tween_property(
 			label_bg, "scale", Vector2(1.1, 1.1), transition_speed * 0.5
 		).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		
+
 		_current_tween.tween_property(
 			label_bg, "scale", Vector2.ONE, transition_speed * 0.25
 		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	
+
 	# Animate card hover effect with elastic spring effect
 	_current_tween.parallel().tween_property(
 		self, "scale", Vector2.ONE * hover_scale, 0.5
 	).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	
+
 	# Animate shadow to be slightly larger
 	if is_instance_valid(shadow) and shadow.is_inside_tree():
 		_current_tween.parallel().tween_property(
 			shadow, "scale", Vector2.ONE * 1.1, 0.5
 		).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	
+
 	# Animate shader tilt
 	if _shader_material:
 		_current_tween.parallel().tween_method(
 			_set_shader_tilt, 0.0, hover_tilt, transition_speed
 		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		
+
 		_current_tween.parallel().tween_method(
 			_set_shader_glow, 0.0, glow_intensity, transition_speed
 		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 func _on_mouse_exited() -> void:
 	print("[PowerUpIcon] Mouse exited:", data.id if data else "unknown")
+
+	# In kiosk-tile mode the tile owns all hover visuals
+	if _kiosk_tile:
+		return
+
 	_is_hovering = false
-	
+
 	# Deactivate shimmer animation on title
 	_animate_title_shimmer(false)
-	
+
 	# Reset shader rotation parameters immediately at the start
 	if _shader_material:
 		print("[PowerUpIcon] Resetting shader rotation parameters")
 		_shader_material.set_shader_parameter("x_rot", 0.0)
 		_shader_material.set_shader_parameter("y_rot", 0.0)
-	
+
 	if is_instance_valid(card_info) and card_info.is_inside_tree():
 		card_info.visible = false
 	# Immediately hide the label regardless of state
@@ -666,16 +719,17 @@ func _on_pressed() -> void:
 
 func _toggle_selection() -> void:
 	_is_selected = !_is_selected
-	
+
+	if _kiosk_tile:
+		_kiosk_tile.set_selected(_is_selected)
+
 	if _is_selected:
 		emit_signal("power_up_selected", data.id)
-		
 		# Highlight effect for selected state
 		if _shader_material:
 			_shader_material.set_shader_parameter("glow_intensity", glow_intensity * 1.5)
 	else:
 		emit_signal("power_up_deselected", data.id)
-		
 		# Reset visual state
 	_reset_visual_state()
 
@@ -723,7 +777,10 @@ func _reset_visual_state() -> void:
 
 func set_data(new_data: PowerUpData) -> void:
 	data = new_data
-	_apply_data_to_ui()
+	if _kiosk_tile:
+		_kiosk_tile.set_data(data)
+	else:
+		_apply_data_to_ui()
 
 func _set_shader_tilt(value: float) -> void:
 	if _shader_material:
