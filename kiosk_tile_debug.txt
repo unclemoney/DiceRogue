@@ -1,0 +1,18 @@
+[KioskTile] === visual state for test_NC-17 ===
+[KioskTile] GlowUnderlay visible=true self_modulate=(1.0, 1.0, 1.0, 1.0) modulate=(1.0, 1.0, 1.0, 1.0) size=(184.0, 264.0) global_position=(1408.0, 578.0) material=true shader=res://Scripts/Shaders/kiosk_tile_glow.gdshader color=(1.0, 1.0, 1.0, 1.0)
+[KioskTile] ChromeFrame visible=true self_modulate=(1.0, 1.0, 1.0, 1.0) modulate=(1.0, 1.0, 1.0, 1.0) size=(180.0, 260.0) global_position=(1410.0, 580.0) material=true shader=res://Scripts/Shaders/kiosk_tile.gdshader color=(1.0, 1.0, 1.0, 1.0)
+[KioskTile] ChromeBackground visible=true self_modulate=(1.0, 1.0, 1.0, 1.0) modulate=(1.0, 1.0, 1.0, 1.0) size=(160.0, 240.0) global_position=(1420.0, 590.0) material=true shader=res://Scripts/Shaders/kiosk_tile.gdshader color=(1.0, 1.0, 1.0, 1.0)
+[KioskTile] ChromePanel visible=true self_modulate=(1.0, 1.0, 1.0, 1.0) modulate=(1.0, 1.0, 1.0, 1.0) size=(160.0, 240.0) global_position=(1420.0, 590.0) material=false shader= stylebox bg_color=(0.0, 0.0, 0.0, 0.0) draw_center=false border_width=0
+[KioskTile] root size=(160.0, 240.0) global_position=(1420.0, 590.0) visible=true modulate=(1.0, 1.0, 1.0, 1.0)
+[KioskTile] child count=5
+[KioskTile] child: GlowUnderlay visible=true modulate=(1.0, 1.0, 1.0, 1.0) z_index=0
+[KioskTile]   rect=[P: (-12.0, -12.0), S: (184.0, 264.0)] size=(184.0, 264.0)
+[KioskTile] child: ChromeFrame visible=true modulate=(1.0, 1.0, 1.0, 1.0) z_index=0
+[KioskTile]   rect=[P: (-10.0, -10.0), S: (180.0, 260.0)] size=(180.0, 260.0)
+[KioskTile] child: ChromeBackground visible=true modulate=(1.0, 1.0, 1.0, 1.0) z_index=0
+[KioskTile]   rect=[P: (0.0, 0.0), S: (160.0, 240.0)] size=(160.0, 240.0)
+[KioskTile] child: ChromePanel visible=true modulate=(1.0, 1.0, 1.0, 1.0) z_index=0
+[KioskTile]   rect=[P: (0.0, 0.0), S: (160.0, 240.0)] size=(160.0, 240.0)
+[KioskTile] child: StickerBadge visible=true modulate=(1.0, 1.0, 1.0, 1.0) z_index=10
+[KioskTile]   rect=[P: (92.0, -10.0), S: (64.0, 68.0)] size=(64.0, 68.0)
+[KioskTile] === end ===

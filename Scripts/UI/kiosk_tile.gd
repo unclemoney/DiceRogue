@@ -19,7 +19,7 @@ const REFLECTION_SHADER = preload("res://Scripts/Shaders/kiosk_tile_reflection.g
 @export var data: PowerUpData
 @export var hover_lift: float = 8.0
 @export var hover_scale: float = 1.02
-@export var glow_hover: float = 0.7
+@export var glow_hover: float = 0.9
 @export var glow_selected: float = 1.5
 
 var chrome_frame: ColorRect
@@ -46,7 +46,7 @@ var _is_hovering := false
 var _is_selected := false
 var _hover_tween: Tween
 var _base_position := Vector2.ZERO
-var _resting_border_glow := 0.15
+var _resting_border_glow := 0.25
 
 # Cached button style boxes for press depress tween.
 var _normal_button_style: StyleBoxFlat
@@ -68,9 +68,11 @@ func _ready() -> void:
 		_apply_data()
 	_connect_signals()
 	call_deferred("_store_artwork_rest_positions")
+	call_deferred("_debug_log_visual_state")
 
 func _ensure_structure() -> void:
-	mouse_filter = Control.MOUSE_FILTER_PASS
+	# Root owns hover/click detection for the entire tile.
+	mouse_filter = Control.MOUSE_FILTER_STOP
 	custom_minimum_size = TILE_SIZE
 	size = TILE_SIZE
 
@@ -91,9 +93,9 @@ func _ensure_structure() -> void:
 		glow_underlay.offset_top = -12.0
 		glow_underlay.offset_right = 12.0
 		glow_underlay.offset_bottom = 12.0
-		glow_underlay.color = Color(0.9, 0.35, 0.6, 0.0)
 		glow_underlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(glow_underlay)
+	glow_underlay.color = Color(1.0, 1.0, 1.0, 1.0)
 
 	chrome_frame = get_node_or_null("ChromeFrame") as ColorRect
 	if not chrome_frame:
@@ -124,7 +126,19 @@ func _ensure_structure() -> void:
 		chrome_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 		chrome_panel.set_offsets_preset(Control.PRESET_FULL_RECT)
 		add_child(chrome_panel)
-	chrome_panel.mouse_filter = Control.MOUSE_FILTER_PASS
+	chrome_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var hit_area := get_node_or_null("HitArea") as ColorRect
+	if not hit_area:
+		hit_area = ColorRect.new()
+		hit_area.name = "HitArea"
+		hit_area.set_anchors_preset(Control.PRESET_FULL_RECT)
+		hit_area.set_offsets_preset(Control.PRESET_FULL_RECT)
+		hit_area.color = Color(0.0, 0.0, 0.0, 0.0)
+		hit_area.mouse_filter = Control.MOUSE_FILTER_STOP
+		hit_area.z_index = 100
+		add_child(hit_area)
+		move_child(hit_area, 0)
 
 	var inner_margin := chrome_panel.get_node_or_null("InnerMargin") as MarginContainer
 	if not inner_margin:
@@ -152,7 +166,10 @@ func _ensure_structure() -> void:
 		title_bar = PanelContainer.new()
 		title_bar.name = "TitleBar"
 		title_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		title_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		content_vbox.add_child(title_bar)
+	else:
+		title_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	title_label = title_bar.get_node_or_null("TitleLabel") as Label
 	if not title_label:
@@ -161,7 +178,10 @@ func _ensure_structure() -> void:
 		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		title_label.clip_text = true
+		title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		title_bar.add_child(title_label)
+	else:
+		title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var art_panel := content_vbox.get_node_or_null("ArtPanel") as PanelContainer
 	if not art_panel:
@@ -170,7 +190,10 @@ func _ensure_structure() -> void:
 		art_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		art_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		art_panel.custom_minimum_size = Vector2(0, 110)
+		art_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		content_vbox.add_child(art_panel)
+	else:
+		art_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	artwork = art_panel.get_node_or_null("Artwork") as TextureRect
 	if not artwork:
@@ -210,7 +233,10 @@ func _ensure_structure() -> void:
 		description_panel.name = "DescriptionPanel"
 		description_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		description_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		description_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		content_vbox.add_child(description_panel)
+	else:
+		description_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	description_label = description_panel.get_node_or_null("DescriptionLabel") as Label
 	if not description_label:
@@ -220,7 +246,10 @@ func _ensure_structure() -> void:
 		description_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		description_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		description_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		description_panel.add_child(description_label)
+	else:
+		description_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	action_bar = content_vbox.get_node_or_null("ActionBar") as HBoxContainer
 	if not action_bar:
@@ -228,7 +257,10 @@ func _ensure_structure() -> void:
 		action_bar.name = "ActionBar"
 		action_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		action_bar.alignment = BoxContainer.ALIGNMENT_CENTER
+		action_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		content_vbox.add_child(action_bar)
+	else:
+		action_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	sell_button = action_bar.get_node_or_null("SellButton") as Button
 	if not sell_button:
@@ -236,7 +268,10 @@ func _ensure_structure() -> void:
 		sell_button.name = "SellButton"
 		sell_button.text = "SELL"
 		sell_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		sell_button.mouse_filter = Control.MOUSE_FILTER_PASS
 		action_bar.add_child(sell_button)
+	else:
+		sell_button.mouse_filter = Control.MOUSE_FILTER_PASS
 
 	sticker_badge = get_node_or_null("StickerBadge") as StickerBadge
 	if not sticker_badge:
@@ -445,6 +480,44 @@ func _dump_panel_styleboxes(root: Node, indent: String = "") -> void:
 				print(indent, "  stylebox=null")
 		_dump_panel_styleboxes(child, indent + "  ")
 
+func _debug_log_visual_state() -> void:
+	var label: String = data.id if data else String(name)
+	var lines: Array[String] = []
+	lines.append("[KioskTile] === visual state for " + label + " ===")
+	lines.append(_format_control("GlowUnderlay", glow_underlay))
+	lines.append(_format_control("ChromeFrame", chrome_frame))
+	lines.append(_format_control("ChromeBackground", chrome_background))
+	lines.append(_format_control("ChromePanel", chrome_panel))
+	lines.append("[KioskTile] root size=" + str(size) + " global_position=" + str(global_position) + " visible=" + str(visible) + " modulate=" + str(modulate))
+	lines.append("[KioskTile] child count=" + str(get_child_count()))
+	for child in get_children():
+		lines.append("[KioskTile] child: " + child.name + " visible=" + str(child.visible) + " modulate=" + str(child.modulate) + " z_index=" + str(child.z_index))
+		if child is Control:
+			lines.append("[KioskTile]   rect=" + str(child.get_rect()) + " size=" + str(child.size))
+	lines.append("[KioskTile] === end ===")
+	var text := "\n".join(lines)
+	print(text)
+
+func _format_control(tag: String, node: Control) -> String:
+	if not node:
+		return "[KioskTile] " + tag + " is NULL"
+	var mat := node.material as ShaderMaterial
+	var shader_path := ""
+	if mat and mat.shader:
+		shader_path = mat.shader.resource_path
+	var line := "[KioskTile] " + tag + " visible=" + str(node.visible) + " self_modulate=" + str(node.self_modulate) + " modulate=" + str(node.modulate) + " size=" + str(node.size) + " global_position=" + str(node.global_position) + " material=" + str(mat != null) + " shader=" + shader_path
+	if node is ColorRect:
+		var rect := node as ColorRect
+		line += " color=" + str(rect.color)
+	if node is PanelContainer:
+		var panel := node as PanelContainer
+		var style := panel.get_theme_stylebox("panel") as StyleBoxFlat
+		if style:
+			line += " stylebox bg_color=" + str(style.bg_color) + " draw_center=" + str(style.draw_center) + " border_width=" + str(style.get_border_width(Side.SIDE_TOP))
+		else:
+			line += " stylebox=null"
+	return line
+
 func _connect_signals() -> void:
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
@@ -454,6 +527,7 @@ func _connect_signals() -> void:
 		sell_button.pressed.connect(_on_sell_pressed)
 		sell_button.button_down.connect(_on_sell_button_down)
 		sell_button.button_up.connect(_on_sell_button_up)
+		# The tile root handles hover, but the button still needs hover audio.
 		if _tfx:
 			sell_button.mouse_entered.connect(func(): _tfx.button_hover(sell_button))
 			sell_button.mouse_exited.connect(func(): _tfx.button_unhover(sell_button))
@@ -465,8 +539,8 @@ func _setup_shader() -> void:
 	_frame_shader_material.shader = SHADER
 	_frame_shader_material.set_shader_parameter("border_glow", _resting_border_glow)
 	_frame_shader_material.set_shader_parameter("neon_color", _get_rarity_neon_color())
-	_frame_shader_material.set_shader_parameter("chrome_tint", Color(0.12, 0.10, 0.14, 0.98))
-	_frame_shader_material.set_shader_parameter("highlight_tint", Color(0.55, 0.62, 0.75, 1.0))
+	_frame_shader_material.set_shader_parameter("chrome_tint", Color(0.22, 0.20, 0.26, 0.98))
+	_frame_shader_material.set_shader_parameter("highlight_tint", Color(0.75, 0.82, 0.95, 1.0))
 	_frame_shader_material.set_shader_parameter("shadow_tint", Color(0.05, 0.04, 0.08, 1.0))
 	_frame_shader_material.set_shader_parameter("env_tint_a", Color(0.25, 0.45, 0.65, 1.0))
 	_frame_shader_material.set_shader_parameter("env_tint_b", Color(0.75, 0.30, 0.50, 1.0))
@@ -474,6 +548,7 @@ func _setup_shader() -> void:
 	_frame_shader_material.set_shader_parameter("corner_radius", 22.0)
 	_frame_shader_material.set_shader_parameter("bezel_width", 10.0)
 	_frame_shader_material.set_shader_parameter("draw_outer_bezel", true)
+	_frame_shader_material.set_shader_parameter("rect_size", Vector2(180.0, 260.0))
 	chrome_frame.material = _frame_shader_material
 
 	# Inner glossy panel shader (same shader, bezel off)
@@ -481,8 +556,8 @@ func _setup_shader() -> void:
 	_bg_shader_material.shader = SHADER
 	_bg_shader_material.set_shader_parameter("border_glow", _resting_border_glow * 0.5)
 	_bg_shader_material.set_shader_parameter("neon_color", _get_rarity_neon_color())
-	_bg_shader_material.set_shader_parameter("chrome_tint", Color(0.12, 0.10, 0.14, 0.98))
-	_bg_shader_material.set_shader_parameter("highlight_tint", Color(0.55, 0.62, 0.75, 1.0))
+	_bg_shader_material.set_shader_parameter("chrome_tint", Color(0.22, 0.20, 0.26, 0.98))
+	_bg_shader_material.set_shader_parameter("highlight_tint", Color(0.75, 0.82, 0.95, 1.0))
 	_bg_shader_material.set_shader_parameter("shadow_tint", Color(0.05, 0.04, 0.08, 1.0))
 	_bg_shader_material.set_shader_parameter("env_tint_a", Color(0.25, 0.45, 0.65, 1.0))
 	_bg_shader_material.set_shader_parameter("env_tint_b", Color(0.75, 0.30, 0.50, 1.0))
@@ -490,6 +565,7 @@ func _setup_shader() -> void:
 	_bg_shader_material.set_shader_parameter("corner_radius", 14.0)
 	_bg_shader_material.set_shader_parameter("bezel_width", 0.0)
 	_bg_shader_material.set_shader_parameter("draw_outer_bezel", false)
+	_bg_shader_material.set_shader_parameter("rect_size", Vector2(160.0, 240.0))
 	chrome_background.material = _bg_shader_material
 
 	# Additive glow underlay shader
@@ -499,6 +575,7 @@ func _setup_shader() -> void:
 	_glow_shader_material.set_shader_parameter("glow_color", _get_rarity_neon_color())
 	_glow_shader_material.set_shader_parameter("corner_radius", 24.0)
 	_glow_shader_material.set_shader_parameter("spread", 18.0)
+	_glow_shader_material.set_shader_parameter("rect_size", Vector2(184.0, 264.0))
 	glow_underlay.material = _glow_shader_material
 	glow_underlay.use_parent_material = false
 
@@ -646,6 +723,14 @@ func _store_artwork_rest_positions() -> void:
 		_artwork_rest_pos = artwork.position
 	if reflection_overlay:
 		_reflection_rest_pos = reflection_overlay.position
+
+func _process(_delta: float) -> void:
+	if _frame_shader_material:
+		_frame_shader_material.set_shader_parameter("rect_size", chrome_frame.get_global_rect().size)
+	if _bg_shader_material:
+		_bg_shader_material.set_shader_parameter("rect_size", chrome_background.get_global_rect().size)
+	if _glow_shader_material:
+		_glow_shader_material.set_shader_parameter("rect_size", glow_underlay.get_global_rect().size)
 
 func _on_sell_button_down() -> void:
 	if sell_button and _pressed_button_style:
