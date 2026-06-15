@@ -245,7 +245,7 @@ All major UI popups use TweenFX-based bouncy entrance/exit animations for juicy 
 | **PowerUp Sell** | Jelly wobble → spin + shrink → fly toward money counter | — | Targets `MoneyLabel` global position |
 | **PowerUp Expiry** | Alarm flash highlight → fidget wild spin → fly to random screen edge + vanish | — | Orange alarm color |
 | **Mom Confiscation** | Auto-fan cards → red alarm flash on condemned → fidget + fly-to-Mom + vanish (staggered) | Folds cards back | Stagger: 0.2s (≤3 items) or 0.1s (>3) |
-| **PowerUp Kiosk Tile** | Glossy mall-core chrome tile with rarity neon glow, additive glow underlay, in-shader artwork reflection, sticker badge, and always-visible SELL button | Hover lift + glow + parallax, click selection, fan-out slide/scale | 160×240 root; 180×260 visual footprint with bezel; 4-per-row fan-out |
+| **PowerUp Kiosk Tile** | Glossy mall-core chrome tile with rarity neon glow, additive glow underlay, in-shader artwork reflection, floating sticker badge, and always-visible SELL button | Hover lift + glow + parallax, click selection, fan-out slide/scale | 200×300 root; 224×324 visual footprint with bezel; 4-per-row fan-out |
 | **Consumable Sell** | Jelly wobble → spin + shrink → fly toward money counter | — | Same pattern as PowerUp sell |
 | **Consumable Use** | Fidget wild spin → fly to random edge → `ConsumableExplosion` at exit | — | Explosion effect at exit point |
 
@@ -343,15 +343,15 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
     - **Extra Rainbow** (Rare/$300): +10 additive score per colored die scored — rewards color dice strategy
 - **PowerUp UI — Kiosk Tiles** (`Scripts/UI/kiosk_tile.gd`, `Scenes/PowerUp/kiosk_tile.tscn`)
   - Mall-core glossy tile presentation for the fan-out PowerUp view
-  - 160×240 tile root; 8–12 px chrome bezel drawn outside the root via `ChromeFrame` (`Scripts/Shaders/kiosk_tile.gdshader`)
+  - 200×300 tile root; 10–14 px chrome bezel drawn outside the root via `ChromeFrame` (`Scripts/Shaders/kiosk_tile.gdshader`)
   - Chrome shader features bevel simulation, glossy plastic panel, fake diagonal blue/pink environment reflection, rarity neon rim glow, and animated sheen
   - Additive glow underlay (`GlowUnderlay` + `Scripts/Shaders/kiosk_tile_glow.gdshader`) fades from resting 0.15 through hover 0.7 to selected 1.5
   - Artwork reflection generated in-shader (`Scripts/Shaders/kiosk_tile_reflection.gdshader`) with flipped icon UVs, fade-out mask, and CRT scanlines
   - Hover parallax: artwork shifts 1–2 px opposite cursor; reflection shifts with cursor
   - Parental Approval sticker badge (`Scripts/UI/sticker_badge.gd`) maps rating to mall-core labels:
     - G → "Mom-Approved", PG → "Questionable", PG-13 → "Parental Guidance", R → "Grounded", NC-17 → "Banned"
-  - Enlarged 56×56 sticker badge with stronger drop shadow and a randomized -4° to +4° rotation; pulses on hover/selection
-  - Neon pink VCR title (18 px) and crisp white description (12 px) for strong hierarchy
+  - 70×70 floating sticker badge sits above the chrome frame and title band with a randomized -4° to +4° rotation, strong drop shadow, and a hover/selection pulse
+  - Neon yellow VCR title band spans the full tile width; font auto-shrinks from 20 px down to 12 px before truncating with ellipsis (hard cap 24 characters)
   - Always-visible glossy SELL button with hover brighten/scale and press depress effect
   - Hover lift/scale, selection glow/rotation, and fan-out transforms remain additive
   - `PowerUpIcon` (`Scripts/UI/power_up_icon.gd`) wraps `KioskTile` and keeps a `use_kiosk_tile` toggle for legacy fallback

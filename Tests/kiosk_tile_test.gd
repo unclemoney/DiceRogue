@@ -50,7 +50,17 @@ func _create_sample_icons() -> void:
 
 		var data: PowerUpData = ExtraRollsData.duplicate(true)
 		data.id = "test_%s" % ratings[i]
-		data.display_name = "Test %s" % ratings[i]
+		match i:
+			0:
+				data.display_name = "Short"
+			1:
+				data.display_name = "Medium Length"
+			2:
+				data.display_name = "A Much Longer Power Name"
+			3:
+				data.display_name = "Extremely Long Powerup Name That Should Truncate"
+			4:
+				data.display_name = "MaxedOutPowerupNameLengthTestForTruncationBehavior"
 		data.rating = ratings[i]
 		data.rarity = rarities[i]
 

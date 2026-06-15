@@ -5,6 +5,11 @@ class_name KioskTile
 ## Mall-core kiosk tile for displaying a power-up in the fan-out view.
 ## Glossy chrome background, neon rarity glow, artwork, description,
 ## always-visible SELL button, and a rating sticker badge.
+##
+## Title naming guidelines for designers:
+##   - Ideal length: 12-16 characters
+##   - Maximum before truncation: 20-22 characters
+##   - The title label auto-shrinks down to a minimum size, then truncates with ellipsis.
 
 signal sell_requested(power_up_id: String)
 signal tile_clicked(power_up_id: String)
@@ -57,6 +62,21 @@ var _pressed_button_style: StyleBoxFlat
 var _mouse_norm := Vector2(0.5, 0.5)
 var _artwork_rest_pos := Vector2.ZERO
 var _reflection_rest_pos := Vector2.ZERO
+
+# Title band constants
+const TITLE_BAND_HEIGHT_RATIO := 0.15
+const TITLE_HORIZONTAL_PADDING := 12.0
+const TITLE_FONT_SIZE_DEFAULT := 20
+const TITLE_FONT_SIZE_MIN := 12
+const TITLE_SAFE_MAX_CHARS := 24
+
+# Badge floats above the tile like a physical sticker, overlapping the chrome
+# frame and the empty space above the artwork without covering the title.
+const BADGE_OFFSET_LEFT := -40.0
+const BADGE_OFFSET_TOP := -40.0
+const BADGE_OFFSET_RIGHT := 30.0
+const BADGE_OFFSET_BOTTOM := 30.0
+const BADGE_Z_INDEX := 15
 
 func _ready() -> void:
 	_ensure_structure()
@@ -277,17 +297,17 @@ func _ensure_structure() -> void:
 	if not sticker_badge:
 		sticker_badge = STICKER_SCENE.instantiate()
 		sticker_badge.name = "StickerBadge"
-		sticker_badge.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-		sticker_badge.set_offsets_preset(Control.PRESET_TOP_RIGHT)
-		sticker_badge.offset_left = -92.0
-		sticker_badge.offset_top = -14.0
-		sticker_badge.offset_right = -20.0
-		sticker_badge.offset_bottom = 78.0
-		sticker_badge.z_index = 12
 		sticker_badge.rotation = deg_to_rad(randf_range(-4.0, 4.0))
 		add_child(sticker_badge)
 
 	if sticker_badge:
+		sticker_badge.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		sticker_badge.set_offsets_preset(Control.PRESET_TOP_RIGHT)
+		sticker_badge.offset_left = BADGE_OFFSET_LEFT
+		sticker_badge.offset_top = BADGE_OFFSET_TOP
+		sticker_badge.offset_right = BADGE_OFFSET_RIGHT
+		sticker_badge.offset_bottom = BADGE_OFFSET_BOTTOM
+		sticker_badge.z_index = BADGE_Z_INDEX
 		sticker_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		print("[KioskTile] StickerBadge configured size=", sticker_badge.size, " rect=", sticker_badge.get_rect(), " offsets=", sticker_badge.offset_left, sticker_badge.offset_top, sticker_badge.offset_right, sticker_badge.offset_bottom)
 
@@ -320,19 +340,30 @@ func _apply_static_style() -> void:
 	# Title styling: mall-core neon pink, bold VCR, dark outline
 	if VCR_FONT:
 		title_label.add_theme_font_override("font", VCR_FONT)
-	title_label.add_theme_font_size_override("font_size", 20)
-	title_label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.7, 1.0))
+	title_label.add_theme_font_size_override("font_size", TITLE_FONT_SIZE_DEFAULT)
+	title_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.25, 1.0))
 	title_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 	title_label.add_theme_constant_override("outline_size", 2)
-	# Reserve ~15% of tile height for the title bar and pad inward from the badge
-	title_bar.custom_minimum_size = Vector2(TILE_SIZE.x - 56.0, TILE_SIZE.y * 0.15)
-	var title_content_margin := 14.0
+	# Single-line with ellipsis fallback; autowrap disabled so text never wraps
+	# into the artwork area. The font size is dynamically adjusted in _fit_title().
+	title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	title_label.clip_text = true
+	title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+
+	# Title band: 15% of tile height, spanning the full content width.
+	# The badge floats above the tile, so the title can use the full width
+	# and is clipped/ellipsized automatically if it still overflows.
+	title_label.custom_minimum_size = Vector2(TILE_SIZE.x - (TITLE_HORIZONTAL_PADDING * 2.0), 0)
+	title_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+	title_bar.custom_minimum_size = Vector2(TILE_SIZE.x, TILE_SIZE.y * TITLE_BAND_HEIGHT_RATIO)
 	var title_style := StyleBoxFlat.new()
 	title_style.bg_color = Color(0.1, 0.08, 0.15, 0.85)
 	title_style.set_corner_radius_all(8)
 	title_style.corner_detail = 6
-	title_style.content_margin_left = title_content_margin
-	title_style.content_margin_right = title_content_margin + 20.0
+	title_style.content_margin_left = TITLE_HORIZONTAL_PADDING
+	title_style.content_margin_right = TITLE_HORIZONTAL_PADDING
 	title_bar.add_theme_stylebox_override("panel", title_style)
 
 	# Description styling: crisp white, slightly larger
@@ -421,7 +452,12 @@ func _apply_data() -> void:
 			_reflection_shader_material.set_shader_parameter("artwork_texture", artwork.texture)
 
 	if title_label:
-		title_label.text = data.display_name.to_upper() if data.display_name else "UNKNOWN"
+		var raw_name := data.display_name if data.display_name else "UNKNOWN"
+		# Enforce a hard cap so designers get predictable truncation behavior.
+		if raw_name.length() > TITLE_SAFE_MAX_CHARS:
+			raw_name = raw_name.substr(0, TITLE_SAFE_MAX_CHARS - 1) + "…"
+		title_label.text = raw_name.to_upper()
+		call_deferred("_fit_title")
 	if description_label:
 		description_label.text = data.description if data.description else "No description"
 	if sticker_badge:
@@ -430,6 +466,31 @@ func _apply_data() -> void:
 		sticker_badge.rotation = deg_to_rad(randf_range(-4.0, 4.0))
 	if _frame_shader_material:
 		_update_neon_color()
+
+## _fit_title()
+##
+## Shrinks the title font down to TITLE_FONT_SIZE_MIN to keep the text on one
+## line inside the safe title band. If it still overflows, clip_text/ellipsis
+## take over automatically.
+func _fit_title() -> void:
+	if not title_label:
+		return
+	title_label.add_theme_font_size_override("font_size", TITLE_FONT_SIZE_DEFAULT)
+	await get_tree().process_frame
+	var safe_width := title_label.custom_minimum_size.x
+	if safe_width <= 0:
+		safe_width = title_label.size.x
+	for font_size in range(TITLE_FONT_SIZE_DEFAULT, TITLE_FONT_SIZE_MIN - 1, -1):
+		title_label.add_theme_font_size_override("font_size", font_size)
+		await get_tree().process_frame
+		var text_width := title_label.get_theme_font("font").get_string_size(
+			title_label.text,
+			title_label.horizontal_alignment,
+			-1,
+			font_size
+		).x
+		if text_width <= safe_width:
+			break
 
 func _print_node_hierarchy() -> void:
 	var label := ""

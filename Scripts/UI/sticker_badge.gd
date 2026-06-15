@@ -7,7 +7,7 @@ class_name StickerBadge
 
 const VCR_FONT = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 
-const BADGE_SIZE := Vector2(60, 60)
+const BADGE_SIZE := Vector2(70, 70)
 
 @export var rating: String = "G"
 @export var rarity: String = "common"
@@ -64,7 +64,7 @@ func _apply_style() -> void:
 
 	if VCR_FONT:
 		_label.add_theme_font_override("font", VCR_FONT)
-	_label.add_theme_font_size_override("font_size", 7)
+	_label.add_theme_font_size_override("font_size", 8)
 	_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 	_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 	_label.add_theme_constant_override("outline_size", 1)
