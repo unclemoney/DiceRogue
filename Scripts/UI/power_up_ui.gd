@@ -569,9 +569,9 @@ func _create_fanned_icons() -> void:
 # KioskTile root stays 160x240, but the chrome bezel is drawn 10px outside
 # each edge, giving a visual footprint of 180x260. Add extra spacing so
 # fanned tiles do not overlap.
-const FAN_CARD_WIDTH: float = 180.0
-const FAN_CARD_HEIGHT: float = 260.0
-const FAN_CARD_SPACING: float = 92.0
+const FAN_CARD_WIDTH: float = 224.0
+const FAN_CARD_HEIGHT: float = 324.0
+const FAN_CARD_SPACING: float = 112.0
 const FAN_ROW_SPACING: float = 92.0
 const FAN_MAX_PER_ROW: int = 4
 

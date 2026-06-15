@@ -7,7 +7,7 @@ class_name StickerBadge
 
 const VCR_FONT = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 
-const BADGE_SIZE := Vector2(56, 56)
+const BADGE_SIZE := Vector2(60, 60)
 
 @export var rating: String = "G"
 @export var rarity: String = "common"
@@ -54,10 +54,12 @@ func _apply_style() -> void:
 	style.bg_color = Color(0.08, 0.06, 0.12, 0.95)
 	style.border_color = get_rarity_frame_color(rarity)
 	style.set_border_width_all(3)
-	style.set_corner_radius_all(8)
+	style.set_corner_radius_all(10)
 	style.corner_detail = 6
-	style.shadow_color = Color(0, 0, 0, 0.7)
-	style.shadow_size = 5
+	# Sticker "stuck on" drop shadow
+	style.shadow_color = Color(0, 0, 0, 0.4)
+	style.shadow_size = 6
+	style.shadow_offset = Vector2(2, 4)
 	_frame.add_theme_stylebox_override("panel", style)
 
 	if VCR_FONT:

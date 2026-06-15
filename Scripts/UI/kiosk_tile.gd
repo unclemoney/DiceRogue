@@ -9,7 +9,7 @@ class_name KioskTile
 signal sell_requested(power_up_id: String)
 signal tile_clicked(power_up_id: String)
 
-const TILE_SIZE := Vector2(160, 240)
+const TILE_SIZE := Vector2(200, 300)
 const VCR_FONT = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 const STICKER_SCENE = preload("res://Scenes/UI/sticker_badge.tscn")
 const SHADER = preload("res://Scripts/Shaders/kiosk_tile.gdshader")
@@ -89,10 +89,10 @@ func _ensure_structure() -> void:
 		glow_underlay.name = "GlowUnderlay"
 		glow_underlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 		glow_underlay.set_offsets_preset(Control.PRESET_FULL_RECT)
-		glow_underlay.offset_left = -12.0
-		glow_underlay.offset_top = -12.0
-		glow_underlay.offset_right = 12.0
-		glow_underlay.offset_bottom = 12.0
+		glow_underlay.offset_left = -14.0
+		glow_underlay.offset_top = -14.0
+		glow_underlay.offset_right = 14.0
+		glow_underlay.offset_bottom = 14.0
 		glow_underlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(glow_underlay)
 	glow_underlay.color = Color(1.0, 1.0, 1.0, 1.0)
@@ -103,10 +103,10 @@ func _ensure_structure() -> void:
 		chrome_frame.name = "ChromeFrame"
 		chrome_frame.set_anchors_preset(Control.PRESET_FULL_RECT)
 		chrome_frame.set_offsets_preset(Control.PRESET_FULL_RECT)
-		chrome_frame.offset_left = -10.0
-		chrome_frame.offset_top = -10.0
-		chrome_frame.offset_right = 10.0
-		chrome_frame.offset_bottom = 10.0
+		chrome_frame.offset_left = -12.0
+		chrome_frame.offset_top = -12.0
+		chrome_frame.offset_right = 12.0
+		chrome_frame.offset_bottom = 12.0
 		chrome_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(chrome_frame)
 
@@ -146,10 +146,10 @@ func _ensure_structure() -> void:
 		inner_margin.name = "InnerMargin"
 		inner_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 		inner_margin.set_offsets_preset(Control.PRESET_FULL_RECT)
-		inner_margin.add_theme_constant_override("margin_left", 14)
-		inner_margin.add_theme_constant_override("margin_top", 14)
-		inner_margin.add_theme_constant_override("margin_right", 14)
-		inner_margin.add_theme_constant_override("margin_bottom", 14)
+		inner_margin.add_theme_constant_override("margin_left", 16)
+		inner_margin.add_theme_constant_override("margin_top", 16)
+		inner_margin.add_theme_constant_override("margin_right", 16)
+		inner_margin.add_theme_constant_override("margin_bottom", 16)
 		chrome_panel.add_child(inner_margin)
 
 	var content_vbox := inner_margin.get_node_or_null("ContentVBox") as VBoxContainer
@@ -158,7 +158,7 @@ func _ensure_structure() -> void:
 		content_vbox.name = "ContentVBox"
 		content_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		content_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		content_vbox.add_theme_constant_override("separation", 8)
+		content_vbox.add_theme_constant_override("separation", 10)
 		inner_margin.add_child(content_vbox)
 
 	title_bar = content_vbox.get_node_or_null("TitleBar") as PanelContainer
@@ -189,7 +189,7 @@ func _ensure_structure() -> void:
 		art_panel.name = "ArtPanel"
 		art_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		art_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		art_panel.custom_minimum_size = Vector2(0, 110)
+		art_panel.custom_minimum_size = Vector2(0, 150)
 		art_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		content_vbox.add_child(art_panel)
 	else:
@@ -279,11 +279,11 @@ func _ensure_structure() -> void:
 		sticker_badge.name = "StickerBadge"
 		sticker_badge.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 		sticker_badge.set_offsets_preset(Control.PRESET_TOP_RIGHT)
-		sticker_badge.offset_left = -68.0
-		sticker_badge.offset_top = -10.0
-		sticker_badge.offset_right = -4.0
-		sticker_badge.offset_bottom = 58.0
-		sticker_badge.z_index = 10
+		sticker_badge.offset_left = -92.0
+		sticker_badge.offset_top = -14.0
+		sticker_badge.offset_right = -20.0
+		sticker_badge.offset_bottom = 78.0
+		sticker_badge.z_index = 12
 		sticker_badge.rotation = deg_to_rad(randf_range(-4.0, 4.0))
 		add_child(sticker_badge)
 
@@ -320,15 +320,19 @@ func _apply_static_style() -> void:
 	# Title styling: mall-core neon pink, bold VCR, dark outline
 	if VCR_FONT:
 		title_label.add_theme_font_override("font", VCR_FONT)
-	title_label.add_theme_font_size_override("font_size", 18)
+	title_label.add_theme_font_size_override("font_size", 20)
 	title_label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.7, 1.0))
 	title_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 	title_label.add_theme_constant_override("outline_size", 2)
-
+	# Reserve ~15% of tile height for the title bar and pad inward from the badge
+	title_bar.custom_minimum_size = Vector2(TILE_SIZE.x - 56.0, TILE_SIZE.y * 0.15)
+	var title_content_margin := 14.0
 	var title_style := StyleBoxFlat.new()
 	title_style.bg_color = Color(0.1, 0.08, 0.15, 0.85)
 	title_style.set_corner_radius_all(8)
 	title_style.corner_detail = 6
+	title_style.content_margin_left = title_content_margin
+	title_style.content_margin_right = title_content_margin + 20.0
 	title_bar.add_theme_stylebox_override("panel", title_style)
 
 	# Description styling: crisp white, slightly larger
@@ -534,6 +538,10 @@ func _connect_signals() -> void:
 			sell_button.pressed.connect(func(): _tfx.button_press(sell_button))
 
 func _setup_shader() -> void:
+	var frame_size := TILE_SIZE + Vector2(24.0, 24.0)
+	var bg_size := TILE_SIZE
+	var glow_size := TILE_SIZE + Vector2(28.0, 28.0)
+
 	# Outer chrome frame shader (draws the thick bezel)
 	_frame_shader_material = ShaderMaterial.new()
 	_frame_shader_material.shader = SHADER
@@ -545,10 +553,10 @@ func _setup_shader() -> void:
 	_frame_shader_material.set_shader_parameter("env_tint_a", Color(0.25, 0.45, 0.65, 1.0))
 	_frame_shader_material.set_shader_parameter("env_tint_b", Color(0.75, 0.30, 0.50, 1.0))
 	_frame_shader_material.set_shader_parameter("reflection_amount", 0.12)
-	_frame_shader_material.set_shader_parameter("corner_radius", 22.0)
-	_frame_shader_material.set_shader_parameter("bezel_width", 10.0)
+	_frame_shader_material.set_shader_parameter("corner_radius", 26.0)
+	_frame_shader_material.set_shader_parameter("bezel_width", 12.0)
 	_frame_shader_material.set_shader_parameter("draw_outer_bezel", true)
-	_frame_shader_material.set_shader_parameter("rect_size", Vector2(180.0, 260.0))
+	_frame_shader_material.set_shader_parameter("rect_size", frame_size)
 	chrome_frame.material = _frame_shader_material
 
 	# Inner glossy panel shader (same shader, bezel off)
@@ -562,10 +570,10 @@ func _setup_shader() -> void:
 	_bg_shader_material.set_shader_parameter("env_tint_a", Color(0.25, 0.45, 0.65, 1.0))
 	_bg_shader_material.set_shader_parameter("env_tint_b", Color(0.75, 0.30, 0.50, 1.0))
 	_bg_shader_material.set_shader_parameter("reflection_amount", 0.15)
-	_bg_shader_material.set_shader_parameter("corner_radius", 14.0)
+	_bg_shader_material.set_shader_parameter("corner_radius", 16.0)
 	_bg_shader_material.set_shader_parameter("bezel_width", 0.0)
 	_bg_shader_material.set_shader_parameter("draw_outer_bezel", false)
-	_bg_shader_material.set_shader_parameter("rect_size", Vector2(160.0, 240.0))
+	_bg_shader_material.set_shader_parameter("rect_size", bg_size)
 	chrome_background.material = _bg_shader_material
 
 	# Additive glow underlay shader
@@ -573,9 +581,9 @@ func _setup_shader() -> void:
 	_glow_shader_material.shader = GLOW_SHADER
 	_glow_shader_material.set_shader_parameter("glow_intensity", _resting_border_glow)
 	_glow_shader_material.set_shader_parameter("glow_color", _get_rarity_neon_color())
-	_glow_shader_material.set_shader_parameter("corner_radius", 24.0)
-	_glow_shader_material.set_shader_parameter("spread", 18.0)
-	_glow_shader_material.set_shader_parameter("rect_size", Vector2(184.0, 264.0))
+	_glow_shader_material.set_shader_parameter("corner_radius", 28.0)
+	_glow_shader_material.set_shader_parameter("spread", 20.0)
+	_glow_shader_material.set_shader_parameter("rect_size", glow_size)
 	glow_underlay.material = _glow_shader_material
 	glow_underlay.use_parent_material = false
 
