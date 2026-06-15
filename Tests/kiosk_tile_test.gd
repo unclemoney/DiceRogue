@@ -34,8 +34,10 @@ func _create_sample_icons() -> void:
 	var rarities := ["common", "uncommon", "rare", "epic", "legendary"]
 	var count := ratings.size()
 
-	var card_size := Vector2(160, 240)
-	var spacing := 100.0
+	# Tile root is 160x240 but the chrome bezel draws 10px outside, so the
+	# visual footprint is 180x260 and we space accordingly.
+	var card_size := Vector2(180, 260)
+	var spacing := 115.0
 	var total_width := (count - 1) * spacing + card_size.x
 	var start_x := (size.x - total_width) * 0.5
 	var pos_y := size.y * 0.5 - card_size.y * 0.5

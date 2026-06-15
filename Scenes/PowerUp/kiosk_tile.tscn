@@ -1,7 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://c5m1kxq8y2n7e"]
+[gd_scene load_steps=8 format=3 uid="uid://c5m1kxq8y2n7e"]
 
 [ext_resource type="Script" uid="uid://doyba63hii5ij" path="res://Scripts/UI/kiosk_tile.gd" id="1_kiosk"]
 [ext_resource type="Shader" uid="uid://b8j4hitdd17i1" path="res://Scripts/Shaders/kiosk_tile.gdshader" id="2_kiosk_shader"]
+[ext_resource type="Shader" uid="uid://dtf2qbqnkqg2h" path="res://Scripts/Shaders/kiosk_tile_glow.gdshader" id="2_qkrmo"]
+[ext_resource type="Shader" uid="uid://bm4eju7gtjwc" path="res://Scripts/Shaders/kiosk_tile_reflection.gdshader" id="4_2p0mi"]
 [ext_resource type="PackedScene" uid="uid://d2xhqp4y1w7y2" path="res://Scenes/UI/sticker_badge.tscn" id="3_sticker"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_kiosk"]
@@ -9,9 +11,43 @@ shader = ExtResource("2_kiosk_shader")
 shader_parameter/border_glow = 0.15
 shader_parameter/neon_color = Color(0.9, 0.35, 0.6, 1)
 shader_parameter/chrome_tint = Color(0.12, 0.1, 0.14, 0.98)
+shader_parameter/highlight_tint = Color(0.55, 0.62, 0.75, 1)
+shader_parameter/shadow_tint = Color(0.05, 0.04, 0.08, 1)
+shader_parameter/env_tint_a = Color(0.25, 0.45, 0.65, 1)
+shader_parameter/env_tint_b = Color(0.75, 0.3, 0.5, 1)
 shader_parameter/reflection_amount = 0.12
-shader_parameter/corner_radius = 18.0
+shader_parameter/corner_radius = 22.0
+shader_parameter/bezel_width = 10.0
 shader_parameter/time = 0.0
+shader_parameter/draw_outer_bezel = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bg"]
+shader = ExtResource("2_kiosk_shader")
+shader_parameter/border_glow = 0.0
+shader_parameter/neon_color = Color(0.9, 0.35, 0.6, 1)
+shader_parameter/chrome_tint = Color(0.12, 0.1, 0.14, 0.98)
+shader_parameter/highlight_tint = Color(0.55, 0.62, 0.75, 1)
+shader_parameter/shadow_tint = Color(0.05, 0.04, 0.08, 1)
+shader_parameter/env_tint_a = Color(0.25, 0.45, 0.65, 1)
+shader_parameter/env_tint_b = Color(0.75, 0.3, 0.5, 1)
+shader_parameter/reflection_amount = 0.15
+shader_parameter/corner_radius = 14.0
+shader_parameter/bezel_width = 0.0
+shader_parameter/time = 0.0
+shader_parameter/draw_outer_bezel = false
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_glow"]
+shader = ExtResource("2_qkrmo")
+shader_parameter/glow_intensity = 0.15
+shader_parameter/glow_color = Color(0.9, 0.35, 0.6, 1)
+shader_parameter/corner_radius = 22.0
+shader_parameter/spread = 16.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_reflection"]
+shader = ExtResource("4_2p0mi")
+shader_parameter/opacity = 0.0
+shader_parameter/scanline_opacity = 0.06
+shader_parameter/offset = Vector2(0, 0)
 
 [node name="KioskTile" type="Control"]
 custom_minimum_size = Vector2(160, 240)
@@ -27,13 +63,31 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = -12.0
+offset_top = -12.0
+offset_right = 12.0
+offset_bottom = 12.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0.9, 0.35, 0.6, 0)
 
-[node name="ChromeBackground" type="ColorRect" parent="."]
+[node name="ChromeFrame" type="ColorRect" parent="."]
 material = SubResource("ShaderMaterial_kiosk")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -10.0
+offset_top = -10.0
+offset_right = 10.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ChromeBackground" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_bg")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -55,39 +109,39 @@ mouse_filter = 0
 layout_mode = 2
 offset_right = 160.0
 offset_bottom = 240.0
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 14
 
 [node name="ContentVBox" type="VBoxContainer" parent="ChromePanel/InnerMargin"]
 layout_mode = 2
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 152.0
-offset_bottom = 232.0
+offset_left = 14.0
+offset_top = 14.0
+offset_right = 146.0
+offset_bottom = 226.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8
 
 [node name="TitleBar" type="PanelContainer" parent="ChromePanel/InnerMargin/ContentVBox"]
 layout_mode = 2
-offset_right = 144.0
-offset_bottom = 23.0
+offset_right = 132.0
+offset_bottom = 26.0
 size_flags_horizontal = 3
 
 [node name="TitleLabel" type="Label" parent="ChromePanel/InnerMargin/ContentVBox/TitleBar"]
 layout_mode = 2
-offset_right = 144.0
-offset_bottom = 23.0
+offset_right = 132.0
+offset_bottom = 26.0
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="ArtPanel" type="PanelContainer" parent="ChromePanel/InnerMargin/ContentVBox"]
 layout_mode = 2
-offset_top = 29.0
-offset_right = 144.0
-offset_bottom = 111.0
+offset_top = 34.0
+offset_right = 132.0
+offset_bottom = 144.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
@@ -103,7 +157,8 @@ expand_mode = 3
 stretch_mode = 5
 
 [node name="ReflectionOverlay" type="TextureRect" parent="ChromePanel/InnerMargin/ContentVBox/ArtPanel"]
-modulate = Color(1, 1, 1, 0)
+modulate = Color(1, 1, 1, 1)
+material = SubResource("ShaderMaterial_reflection")
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -114,15 +169,16 @@ mouse_filter = 2
 
 [node name="DescriptionPanel" type="PanelContainer" parent="ChromePanel/InnerMargin/ContentVBox"]
 layout_mode = 2
-offset_top = 117.0
-offset_right = 144.0
-offset_bottom = 154.0
+offset_top = 152.0
+offset_right = 132.0
+offset_bottom = 185.0
 size_flags_horizontal = 3
+size_flags_vertical = 3
 
 [node name="DescriptionLabel" type="Label" parent="ChromePanel/InnerMargin/ContentVBox/DescriptionPanel"]
 layout_mode = 2
-offset_right = 144.0
-offset_bottom = 37.0
+offset_right = 132.0
+offset_bottom = 33.0
 size_flags_vertical = 3
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -130,16 +186,16 @@ autowrap_mode = 3
 
 [node name="ActionBar" type="HBoxContainer" parent="ChromePanel/InnerMargin/ContentVBox"]
 layout_mode = 2
-offset_top = 160.0
-offset_right = 144.0
-offset_bottom = 224.0
+offset_top = 193.0
+offset_right = 132.0
+offset_bottom = 212.0
 alignment = 1
 
 [node name="SellButton" type="Button" parent="ChromePanel/InnerMargin/ContentVBox/ActionBar"]
 layout_mode = 2
-offset_left = 49.0
-offset_right = 95.0
-offset_bottom = 64.0
+offset_left = 6.0
+offset_right = 126.0
+offset_bottom = 19.0
 size_flags_horizontal = 4
 text = "SELL"
 
@@ -148,10 +204,10 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -52.0
-offset_top = 4.0
+offset_left = -68.0
+offset_top = -10.0
 offset_right = -4.0
-offset_bottom = 52.0
+offset_bottom = 58.0
 grow_horizontal = 0
 z_index = 10
 mouse_filter = 2

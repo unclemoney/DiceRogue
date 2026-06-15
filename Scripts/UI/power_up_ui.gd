@@ -566,10 +566,13 @@ func _create_fanned_icons() -> void:
 	await get_tree().create_timer(max_delay).timeout
 	_start_idle_animations()
 
-const FAN_CARD_WIDTH: float = 160.0
-const FAN_CARD_HEIGHT: float = 240.0
-const FAN_CARD_SPACING: float = 80.0
-const FAN_ROW_SPACING: float = 80.0
+# KioskTile root stays 160x240, but the chrome bezel is drawn 10px outside
+# each edge, giving a visual footprint of 180x260. Add extra spacing so
+# fanned tiles do not overlap.
+const FAN_CARD_WIDTH: float = 180.0
+const FAN_CARD_HEIGHT: float = 260.0
+const FAN_CARD_SPACING: float = 92.0
+const FAN_ROW_SPACING: float = 92.0
 const FAN_MAX_PER_ROW: int = 4
 
 func _calculate_fan_positions(count: int) -> Array[Vector2]:

@@ -4,27 +4,21 @@ class_name StickerBadge
 ## StickerBadge.gd
 ## Mall-core rating badge for power-up kiosk tiles.
 ## Displays a rating label and a rarity-colored frame.
-## Uses placeholder icon.svg until real sticker art is added.
 
-const PLACEHOLDER_ICON = preload("res://icon.svg")
 const VCR_FONT = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 
-const BADGE_SIZE := Vector2(48, 48)
-const ICON_SIZE := Vector2(24, 24)
+const BADGE_SIZE := Vector2(56, 56)
 
 @export var rating: String = "G"
 @export var rarity: String = "common"
 
 var _frame: PanelContainer
-var _icon: TextureRect
 var _label: Label
 
 func _ready() -> void:
-	print("[StickerBadge] _ready() size=", size, " custom_minimum_size=", custom_minimum_size, " offsets=", offset_left, offset_top, offset_right, offset_bottom)
 	_ensure_structure()
 	_apply_style()
 	_apply_data()
-	call_deferred("_report_layout")
 
 func _ensure_structure() -> void:
 	_frame = get_node_or_null("Frame") as PanelContainer
@@ -36,20 +30,6 @@ func _ensure_structure() -> void:
 		_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_frame.custom_minimum_size = BADGE_SIZE
 		add_child(_frame)
-
-	_icon = _frame.get_node_or_null("Icon") as TextureRect
-	if not _icon:
-		_icon = TextureRect.new()
-		_icon.name = "Icon"
-		_icon.set_anchors_preset(Control.PRESET_CENTER_TOP)
-		_icon.set_offsets_preset(Control.PRESET_CENTER_TOP)
-		_icon.size = ICON_SIZE
-		_icon.position = Vector2((BADGE_SIZE.x - ICON_SIZE.x) * 0.5, 2.0)
-		_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		_icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-		_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_icon.visible = false
-		_frame.add_child(_icon)
 
 	_label = _frame.get_node_or_null("Label") as Label
 	if not _label:
@@ -76,8 +56,8 @@ func _apply_style() -> void:
 	style.set_border_width_all(3)
 	style.set_corner_radius_all(8)
 	style.corner_detail = 6
-	style.shadow_color = Color(0, 0, 0, 0.4)
-	style.shadow_size = 3
+	style.shadow_color = Color(0, 0, 0, 0.7)
+	style.shadow_size = 5
 	_frame.add_theme_stylebox_override("panel", style)
 
 	if VCR_FONT:
@@ -88,9 +68,6 @@ func _apply_style() -> void:
 	_label.add_theme_constant_override("outline_size", 1)
 
 func _apply_data() -> void:
-	if _icon:
-		_icon.texture = PLACEHOLDER_ICON
-		_icon.visible = true
 	if _label:
 		_label.text = get_sticker_label(rating)
 	_apply_style()
@@ -136,9 +113,9 @@ func _dump_parent_constraints() -> void:
 
 static func get_rarity_frame_color(rarity_string: String) -> Color:
 	match rarity_string.to_lower():
-		"common": return Color.GRAY
-		"uncommon": return Color.GREEN
-		"rare": return Color.BLUE
-		"epic": return Color.PURPLE
-		"legendary": return Color.ORANGE
+		"common": return Color(0.62, 0.64, 0.67, 1.0)
+		"uncommon": return Color(0.35, 0.95, 0.45, 1.0)
+		"rare": return Color(0.35, 0.65, 1.0, 1.0)
+		"epic": return Color(0.85, 0.35, 1.0, 1.0)
+		"legendary": return Color(1.0, 0.65, 0.15, 1.0)
 		_: return Color.WHITE
