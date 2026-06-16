@@ -18,8 +18,28 @@ const TILE_SIZE := Vector2(200, 300)
 const VCR_FONT = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 const STICKER_SCENE = preload("res://Scenes/UI/sticker_badge.tscn")
 const SHADER = preload("res://Scripts/Shaders/kiosk_tile.gdshader")
+const GLASS_SHADER = preload("res://Scripts/Shaders/kiosk_tile_glass.gdshader")
 const GLOW_SHADER = preload("res://Scripts/Shaders/kiosk_tile_glow.gdshader")
 const REFLECTION_SHADER = preload("res://Scripts/Shaders/kiosk_tile_reflection.gdshader")
+
+const FRAME_OVERFLOW := 12.0
+const GLOW_OVERFLOW := 14.0
+const INTERIOR_INSET := 6.0
+const CONTENT_MARGIN := 16
+const CONTENT_SEPARATION := 8
+const TITLE_BAR_MIN_HEIGHT := 38.0
+const ART_PANEL_MIN_HEIGHT := 108.0
+const DESCRIPTION_PANEL_MIN_HEIGHT := 58.0
+const ACTION_BAR_MIN_HEIGHT := 36.0
+const DESCRIPTION_SAFE_MAX_CHARS := 150
+const DESCRIPTION_MAX_LINES := 4
+const GLASS_REST_STRENGTH := 0.18
+const GLASS_SELECTED_STRENGTH := 0.44
+const GLASS_HOVER_STRENGTH := 0.86
+const GLASS_SELECTED_HOVER_STRENGTH := 1.0
+const REFLECTION_SELECTED_OPACITY := 0.12
+const REFLECTION_HOVER_OPACITY := 0.24
+const REFLECTION_SELECTED_HOVER_OPACITY := 0.30
 
 @export var data: PowerUpData
 @export var hover_lift: float = 8.0
@@ -28,7 +48,7 @@ const REFLECTION_SHADER = preload("res://Scripts/Shaders/kiosk_tile_reflection.g
 @export var glow_selected: float = 1.5
 
 var chrome_frame: ColorRect
-var chrome_background: ColorRect
+var interior_panel: ColorRect
 var chrome_panel: PanelContainer
 var title_label: Label
 var title_bar: PanelContainer
@@ -44,7 +64,7 @@ var glow_underlay: ColorRect
 @onready var _tfx := get_node_or_null("/root/TweenFXHelper")
 
 var _frame_shader_material: ShaderMaterial
-var _bg_shader_material: ShaderMaterial
+var _glass_shader_material: ShaderMaterial
 var _glow_shader_material: ShaderMaterial
 var _reflection_shader_material: ShaderMaterial
 var _is_hovering := false
@@ -52,6 +72,7 @@ var _is_selected := false
 var _hover_tween: Tween
 var _base_position := Vector2.ZERO
 var _resting_border_glow := 0.25
+var _shader_time := 0.0
 
 # Cached button style boxes for press depress tween.
 var _normal_button_style: StyleBoxFlat
@@ -73,9 +94,9 @@ const TITLE_SAFE_MAX_CHARS := 24
 # Badge floats above the tile like a physical sticker, overlapping the chrome
 # frame and the empty space above the artwork without covering the title.
 const BADGE_OFFSET_LEFT := -40.0
-const BADGE_OFFSET_TOP := -40.0
+const BADGE_OFFSET_TOP := -50.0
 const BADGE_OFFSET_RIGHT := 30.0
-const BADGE_OFFSET_BOTTOM := 30.0
+const BADGE_OFFSET_BOTTOM := 20.0
 const BADGE_Z_INDEX := 15
 
 func _ready() -> void:
@@ -88,7 +109,6 @@ func _ready() -> void:
 		_apply_data()
 	_connect_signals()
 	call_deferred("_store_artwork_rest_positions")
-	call_deferred("_debug_log_visual_state")
 
 func _ensure_structure() -> void:
 	# Root owns hover/click detection for the entire tile.
@@ -109,10 +129,10 @@ func _ensure_structure() -> void:
 		glow_underlay.name = "GlowUnderlay"
 		glow_underlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 		glow_underlay.set_offsets_preset(Control.PRESET_FULL_RECT)
-		glow_underlay.offset_left = -14.0
-		glow_underlay.offset_top = -14.0
-		glow_underlay.offset_right = 14.0
-		glow_underlay.offset_bottom = 14.0
+		glow_underlay.offset_left = -GLOW_OVERFLOW
+		glow_underlay.offset_top = -GLOW_OVERFLOW
+		glow_underlay.offset_right = GLOW_OVERFLOW
+		glow_underlay.offset_bottom = GLOW_OVERFLOW
 		glow_underlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(glow_underlay)
 	glow_underlay.color = Color(1.0, 1.0, 1.0, 1.0)
@@ -123,21 +143,29 @@ func _ensure_structure() -> void:
 		chrome_frame.name = "ChromeFrame"
 		chrome_frame.set_anchors_preset(Control.PRESET_FULL_RECT)
 		chrome_frame.set_offsets_preset(Control.PRESET_FULL_RECT)
-		chrome_frame.offset_left = -12.0
-		chrome_frame.offset_top = -12.0
-		chrome_frame.offset_right = 12.0
-		chrome_frame.offset_bottom = 12.0
+		chrome_frame.offset_left = -FRAME_OVERFLOW
+		chrome_frame.offset_top = -FRAME_OVERFLOW
+		chrome_frame.offset_right = FRAME_OVERFLOW
+		chrome_frame.offset_bottom = FRAME_OVERFLOW
 		chrome_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(chrome_frame)
 
-	chrome_background = get_node_or_null("ChromeBackground") as ColorRect
-	if not chrome_background:
-		chrome_background = ColorRect.new()
-		chrome_background.name = "ChromeBackground"
-		chrome_background.set_anchors_preset(Control.PRESET_FULL_RECT)
-		chrome_background.set_offsets_preset(Control.PRESET_FULL_RECT)
-		chrome_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(chrome_background)
+	interior_panel = get_node_or_null("InteriorPanel") as ColorRect
+	if not interior_panel:
+		interior_panel = get_node_or_null("ChromeBackground") as ColorRect
+		if interior_panel:
+			interior_panel.name = "InteriorPanel"
+	if not interior_panel:
+		interior_panel = ColorRect.new()
+		interior_panel.name = "InteriorPanel"
+		add_child(interior_panel)
+	interior_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	interior_panel.set_offsets_preset(Control.PRESET_FULL_RECT)
+	interior_panel.offset_left = INTERIOR_INSET
+	interior_panel.offset_top = INTERIOR_INSET
+	interior_panel.offset_right = -INTERIOR_INSET
+	interior_panel.offset_bottom = -INTERIOR_INSET
+	interior_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	chrome_panel = get_node_or_null("ChromePanel") as PanelContainer
 	if not chrome_panel:
@@ -166,10 +194,10 @@ func _ensure_structure() -> void:
 		inner_margin.name = "InnerMargin"
 		inner_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 		inner_margin.set_offsets_preset(Control.PRESET_FULL_RECT)
-		inner_margin.add_theme_constant_override("margin_left", 16)
-		inner_margin.add_theme_constant_override("margin_top", 16)
-		inner_margin.add_theme_constant_override("margin_right", 16)
-		inner_margin.add_theme_constant_override("margin_bottom", 16)
+		inner_margin.add_theme_constant_override("margin_left", CONTENT_MARGIN)
+		inner_margin.add_theme_constant_override("margin_top", CONTENT_MARGIN)
+		inner_margin.add_theme_constant_override("margin_right", CONTENT_MARGIN)
+		inner_margin.add_theme_constant_override("margin_bottom", CONTENT_MARGIN)
 		chrome_panel.add_child(inner_margin)
 
 	var content_vbox := inner_margin.get_node_or_null("ContentVBox") as VBoxContainer
@@ -178,7 +206,7 @@ func _ensure_structure() -> void:
 		content_vbox.name = "ContentVBox"
 		content_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		content_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		content_vbox.add_theme_constant_override("separation", 10)
+		content_vbox.add_theme_constant_override("separation", CONTENT_SEPARATION)
 		inner_margin.add_child(content_vbox)
 
 	title_bar = content_vbox.get_node_or_null("TitleBar") as PanelContainer
@@ -209,11 +237,12 @@ func _ensure_structure() -> void:
 		art_panel.name = "ArtPanel"
 		art_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		art_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		art_panel.custom_minimum_size = Vector2(0, 150)
+		art_panel.custom_minimum_size = Vector2(0, ART_PANEL_MIN_HEIGHT)
 		art_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		content_vbox.add_child(art_panel)
 	else:
 		art_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	art_panel.clip_contents = true
 
 	artwork = art_panel.get_node_or_null("Artwork") as TextureRect
 	if not artwork:
@@ -245,30 +274,42 @@ func _ensure_structure() -> void:
 		artwork.modulate = Color.WHITE
 	if reflection_overlay:
 		reflection_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		reflection_overlay.visible = false
+		reflection_overlay.visible = true
 
 	description_panel = content_vbox.get_node_or_null("DescriptionPanel") as PanelContainer
 	if not description_panel:
 		description_panel = PanelContainer.new()
 		description_panel.name = "DescriptionPanel"
 		description_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		description_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		description_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		description_panel.custom_minimum_size = Vector2(0, DESCRIPTION_PANEL_MIN_HEIGHT)
 		description_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		content_vbox.add_child(description_panel)
 	else:
 		description_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		description_panel.custom_minimum_size = Vector2(0, DESCRIPTION_PANEL_MIN_HEIGHT)
+	description_panel.clip_contents = true
 
 	description_label = description_panel.get_node_or_null("DescriptionLabel") as Label
 	if not description_label:
 		description_label = Label.new()
 		description_label.name = "DescriptionLabel"
-		description_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		description_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		description_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		description_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 		description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		description_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		description_label.clip_text = true
+		description_label.max_lines_visible = DESCRIPTION_MAX_LINES
+		description_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		description_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		description_label.size_flags_vertical = Control.SIZE_FILL
 		description_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		description_panel.add_child(description_label)
 	else:
+		description_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		description_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+		description_label.clip_text = true
+		description_label.max_lines_visible = DESCRIPTION_MAX_LINES
+		description_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		description_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	action_bar = content_vbox.get_node_or_null("ActionBar") as HBoxContainer
@@ -276,10 +317,13 @@ func _ensure_structure() -> void:
 		action_bar = HBoxContainer.new()
 		action_bar.name = "ActionBar"
 		action_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		action_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		action_bar.custom_minimum_size = Vector2(0, ACTION_BAR_MIN_HEIGHT)
 		action_bar.alignment = BoxContainer.ALIGNMENT_CENTER
 		action_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		content_vbox.add_child(action_bar)
 	else:
+		action_bar.custom_minimum_size = Vector2(0, ACTION_BAR_MIN_HEIGHT)
 		action_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	sell_button = action_bar.get_node_or_null("SellButton") as Button
@@ -309,7 +353,6 @@ func _ensure_structure() -> void:
 		sticker_badge.offset_bottom = BADGE_OFFSET_BOTTOM
 		sticker_badge.z_index = BADGE_Z_INDEX
 		sticker_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		print("[KioskTile] StickerBadge configured size=", sticker_badge.size, " rect=", sticker_badge.get_rect(), " offsets=", sticker_badge.offset_left, sticker_badge.offset_top, sticker_badge.offset_right, sticker_badge.offset_bottom)
 
 func _find_first_node(root: Node, node_name: String) -> Node:
 	if root.name == node_name:
@@ -328,19 +371,25 @@ func _apply_static_style() -> void:
 	transparent_panel.set_border_width_all(0)
 	chrome_panel.add_theme_stylebox_override("panel", transparent_panel)
 
-	# Ensure ArtPanel panel style is transparent
+	# Give the artwork panel a faint framed pocket so the glass interior reads as layered.
 	var art_parent := artwork.get_parent() as PanelContainer
 	if art_parent:
-		var transparent_art := StyleBoxFlat.new()
-		transparent_art.bg_color = Color(0, 0, 0, 0)
-		transparent_art.draw_center = false
-		transparent_art.set_border_width_all(0)
-		art_parent.add_theme_stylebox_override("panel", transparent_art)
+		var art_style := StyleBoxFlat.new()
+		art_style.bg_color = Color(0.04, 0.06, 0.1, 0.16)
+		art_style.border_color = Color(0.84, 0.92, 1.0, 0.14)
+		art_style.set_border_width_all(1)
+		art_style.set_corner_radius_all(12)
+		art_style.corner_detail = 6
+		art_style.content_margin_left = 8.0
+		art_style.content_margin_top = 8.0
+		art_style.content_margin_right = 8.0
+		art_style.content_margin_bottom = 8.0
+		art_parent.add_theme_stylebox_override("panel", art_style)
 
 	# Title styling: mall-core neon pink, bold VCR, dark outline
 	if VCR_FONT:
 		title_label.add_theme_font_override("font", VCR_FONT)
-	title_label.add_theme_font_size_override("font_size", TITLE_FONT_SIZE_DEFAULT)
+	title_label.add_theme_font_size_override("font_size", 18)
 	title_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.25, 1.0))
 	title_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 	title_label.add_theme_constant_override("outline_size", 2)
@@ -350,34 +399,41 @@ func _apply_static_style() -> void:
 	title_label.clip_text = true
 	title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 
-	# Title band: 15% of tile height, spanning the full content width.
-	# The badge floats above the tile, so the title can use the full width
-	# and is clipped/ellipsized automatically if it still overflows.
-	title_label.custom_minimum_size = Vector2(TILE_SIZE.x - (TITLE_HORIZONTAL_PADDING * 2.0), 0)
-	title_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	title_label.custom_minimum_size = Vector2(0, TITLE_BAR_MIN_HEIGHT - 4.0)
+	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
-	title_bar.custom_minimum_size = Vector2(TILE_SIZE.x, TILE_SIZE.y * TITLE_BAND_HEIGHT_RATIO)
+	title_bar.custom_minimum_size = Vector2(0, TITLE_BAR_MIN_HEIGHT)
 	var title_style := StyleBoxFlat.new()
-	title_style.bg_color = Color(0.1, 0.08, 0.15, 0.85)
-	title_style.set_corner_radius_all(8)
+	title_style.bg_color = Color(0.12, 0.09, 0.16, 0.86)
+	title_style.border_color = Color(0.95, 0.82, 0.35, 0.18)
+	title_style.set_border_width_all(1)
+	title_style.set_corner_radius_all(10)
 	title_style.corner_detail = 6
 	title_style.content_margin_left = TITLE_HORIZONTAL_PADDING
+	title_style.content_margin_top = 6.0
 	title_style.content_margin_right = TITLE_HORIZONTAL_PADDING
+	title_style.content_margin_bottom = 6.0
 	title_bar.add_theme_stylebox_override("panel", title_style)
 
-	# Description styling: crisp white, slightly larger
+	# Description styling: readable at fan-out size and visually separated from art/button.
 	if VCR_FONT:
 		description_label.add_theme_font_override("font", VCR_FONT)
-	description_label.add_theme_font_size_override("font_size", 12)
+	description_label.add_theme_font_size_override("font_size", 13)
 	description_label.add_theme_color_override("font_color", Color(0.92, 0.92, 0.92, 1.0))
 	description_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 	description_label.add_theme_constant_override("outline_size", 1)
 
 	var desc_style := StyleBoxFlat.new()
-	desc_style.bg_color = Color(0.08, 0.06, 0.12, 0.8)
-	desc_style.set_corner_radius_all(6)
+	desc_style.bg_color = Color(0.05, 0.07, 0.11, 0.88)
+	desc_style.border_color = Color(0.86, 0.93, 1.0, 0.12)
+	desc_style.set_border_width_all(1)
+	desc_style.set_corner_radius_all(10)
 	desc_style.corner_detail = 6
+	desc_style.content_margin_left = 10.0
+	desc_style.content_margin_top = 8.0
+	desc_style.content_margin_right = 10.0
+	desc_style.content_margin_bottom = 8.0
 	description_panel.add_theme_stylebox_override("panel", desc_style)
 
 	# SELL button: glossy neon checkout-key styling
@@ -390,7 +446,7 @@ func _apply_static_style() -> void:
 	sell_button.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 	sell_button.add_theme_constant_override("outline_size", 1)
 
-	sell_button.custom_minimum_size = Vector2(120, 32)
+	sell_button.custom_minimum_size = Vector2(124, 34)
 	action_bar.alignment = BoxContainer.ALIGNMENT_CENTER
 
 	var normal := StyleBoxFlat.new()
@@ -445,11 +501,11 @@ func _apply_data() -> void:
 			artwork.visible = true
 		else:
 			artwork.texture = load("res://icon.svg")
+			artwork.visible = true
 
 	if reflection_overlay:
 		reflection_overlay.visible = true
-		if _reflection_shader_material:
-			_reflection_shader_material.set_shader_parameter("artwork_texture", artwork.texture)
+		_update_reflection_source()
 
 	if title_label:
 		var raw_name := data.display_name if data.display_name else "UNKNOWN"
@@ -459,13 +515,15 @@ func _apply_data() -> void:
 		title_label.text = raw_name.to_upper()
 		call_deferred("_fit_title")
 	if description_label:
-		description_label.text = data.description if data.description else "No description"
+		description_label.text = _format_description_text(data.description if data.description else "No description")
 	if sticker_badge:
 		sticker_badge.set_rating(data.rating)
 		sticker_badge.set_rarity(data.rarity)
 		sticker_badge.rotation = deg_to_rad(randf_range(-4.0, 4.0))
 	if _frame_shader_material:
 		_update_neon_color()
+	if description_panel:
+		description_panel.reset_size()
 
 ## _fit_title()
 ##
@@ -477,9 +535,9 @@ func _fit_title() -> void:
 		return
 	title_label.add_theme_font_size_override("font_size", TITLE_FONT_SIZE_DEFAULT)
 	await get_tree().process_frame
-	var safe_width := title_label.custom_minimum_size.x
+	var safe_width := title_bar.size.x - (TITLE_HORIZONTAL_PADDING * 2.0)
 	if safe_width <= 0:
-		safe_width = title_label.size.x
+		safe_width = TILE_SIZE.x - (CONTENT_MARGIN * 2.0) - (TITLE_HORIZONTAL_PADDING * 2.0)
 	for font_size in range(TITLE_FONT_SIZE_DEFAULT, TITLE_FONT_SIZE_MIN - 1, -1):
 		title_label.add_theme_font_size_override("font_size", font_size)
 		await get_tree().process_frame
@@ -551,7 +609,7 @@ func _debug_log_visual_state() -> void:
 	lines.append("[KioskTile] === visual state for " + label + " ===")
 	lines.append(_format_control("GlowUnderlay", glow_underlay))
 	lines.append(_format_control("ChromeFrame", chrome_frame))
-	lines.append(_format_control("ChromeBackground", chrome_background))
+	lines.append(_format_control("InteriorPanel", interior_panel))
 	lines.append(_format_control("ChromePanel", chrome_panel))
 	lines.append("[KioskTile] root size=" + str(size) + " global_position=" + str(global_position) + " visible=" + str(visible) + " modulate=" + str(modulate))
 	lines.append("[KioskTile] child count=" + str(get_child_count()))
@@ -599,43 +657,46 @@ func _connect_signals() -> void:
 			sell_button.pressed.connect(func(): _tfx.button_press(sell_button))
 
 func _setup_shader() -> void:
-	var frame_size := TILE_SIZE + Vector2(24.0, 24.0)
-	var bg_size := TILE_SIZE
-	var glow_size := TILE_SIZE + Vector2(28.0, 28.0)
+	var frame_size := TILE_SIZE + Vector2(FRAME_OVERFLOW * 2.0, FRAME_OVERFLOW * 2.0)
+	var glass_size := TILE_SIZE - Vector2(INTERIOR_INSET * 2.0, INTERIOR_INSET * 2.0)
+	var glow_size := TILE_SIZE + Vector2(GLOW_OVERFLOW * 2.0, GLOW_OVERFLOW * 2.0)
 
 	# Outer chrome frame shader (draws the thick bezel)
 	_frame_shader_material = ShaderMaterial.new()
 	_frame_shader_material.shader = SHADER
 	_frame_shader_material.set_shader_parameter("border_glow", _resting_border_glow)
 	_frame_shader_material.set_shader_parameter("neon_color", _get_rarity_neon_color())
-	_frame_shader_material.set_shader_parameter("chrome_tint", Color(0.22, 0.20, 0.26, 0.98))
-	_frame_shader_material.set_shader_parameter("highlight_tint", Color(0.75, 0.82, 0.95, 1.0))
+	_frame_shader_material.set_shader_parameter("chrome_tint", Color(0.30, 0.31, 0.34, 0.98))
+	_frame_shader_material.set_shader_parameter("highlight_tint", Color(0.92, 0.95, 1.0, 1.0))
 	_frame_shader_material.set_shader_parameter("shadow_tint", Color(0.05, 0.04, 0.08, 1.0))
-	_frame_shader_material.set_shader_parameter("env_tint_a", Color(0.25, 0.45, 0.65, 1.0))
-	_frame_shader_material.set_shader_parameter("env_tint_b", Color(0.75, 0.30, 0.50, 1.0))
-	_frame_shader_material.set_shader_parameter("reflection_amount", 0.12)
+	_frame_shader_material.set_shader_parameter("env_tint_a", Color(0.28, 0.56, 0.78, 1.0))
+	_frame_shader_material.set_shader_parameter("env_tint_b", Color(0.93, 0.42, 0.72, 1.0))
+	_frame_shader_material.set_shader_parameter("reflection_amount", 0.30)
 	_frame_shader_material.set_shader_parameter("corner_radius", 26.0)
 	_frame_shader_material.set_shader_parameter("bezel_width", 12.0)
+	_frame_shader_material.set_shader_parameter("inner_lip_width", 2.6)
 	_frame_shader_material.set_shader_parameter("draw_outer_bezel", true)
 	_frame_shader_material.set_shader_parameter("rect_size", frame_size)
 	chrome_frame.material = _frame_shader_material
 
-	# Inner glossy panel shader (same shader, bezel off)
-	_bg_shader_material = ShaderMaterial.new()
-	_bg_shader_material.shader = SHADER
-	_bg_shader_material.set_shader_parameter("border_glow", _resting_border_glow * 0.5)
-	_bg_shader_material.set_shader_parameter("neon_color", _get_rarity_neon_color())
-	_bg_shader_material.set_shader_parameter("chrome_tint", Color(0.22, 0.20, 0.26, 0.98))
-	_bg_shader_material.set_shader_parameter("highlight_tint", Color(0.75, 0.82, 0.95, 1.0))
-	_bg_shader_material.set_shader_parameter("shadow_tint", Color(0.05, 0.04, 0.08, 1.0))
-	_bg_shader_material.set_shader_parameter("env_tint_a", Color(0.25, 0.45, 0.65, 1.0))
-	_bg_shader_material.set_shader_parameter("env_tint_b", Color(0.75, 0.30, 0.50, 1.0))
-	_bg_shader_material.set_shader_parameter("reflection_amount", 0.15)
-	_bg_shader_material.set_shader_parameter("corner_radius", 16.0)
-	_bg_shader_material.set_shader_parameter("bezel_width", 0.0)
-	_bg_shader_material.set_shader_parameter("draw_outer_bezel", false)
-	_bg_shader_material.set_shader_parameter("rect_size", bg_size)
-	chrome_background.material = _bg_shader_material
+	# Dedicated interior glass shader derived from the roll button glass patterns.
+	_glass_shader_material = ShaderMaterial.new()
+	_glass_shader_material.shader = GLASS_SHADER
+	_glass_shader_material.set_shader_parameter("rect_size", glass_size)
+	_glass_shader_material.set_shader_parameter("corner_radius", 18.0)
+	_glass_shader_material.set_shader_parameter("mouse_uv", Vector2(0.5, 0.35))
+	_glass_shader_material.set_shader_parameter("parallax_offset", Vector2.ZERO)
+	_glass_shader_material.set_shader_parameter("hover_strength", GLASS_REST_STRENGTH)
+	_glass_shader_material.set_shader_parameter("motion_strength", 0.0)
+	_glass_shader_material.set_shader_parameter("pulse_strength", 0.0)
+	_glass_shader_material.set_shader_parameter("rim_strength", 0.76)
+	_glass_shader_material.set_shader_parameter("grain_strength", 0.07)
+	_glass_shader_material.set_shader_parameter("base_color", Color(0.08, 0.12, 0.18, 0.98))
+	_glass_shader_material.set_shader_parameter("mid_color", Color(0.15, 0.20, 0.27, 0.98))
+	_glass_shader_material.set_shader_parameter("accent_color", Color(0.14, 0.41, 0.44, 0.90))
+	_glass_shader_material.set_shader_parameter("neon_color", _get_rarity_neon_color())
+	_glass_shader_material.set_shader_parameter("specular_color", Color(0.96, 0.98, 1.0, 1.0))
+	interior_panel.material = _glass_shader_material
 
 	# Additive glow underlay shader
 	_glow_shader_material = ShaderMaterial.new()
@@ -644,6 +705,7 @@ func _setup_shader() -> void:
 	_glow_shader_material.set_shader_parameter("glow_color", _get_rarity_neon_color())
 	_glow_shader_material.set_shader_parameter("corner_radius", 28.0)
 	_glow_shader_material.set_shader_parameter("spread", 20.0)
+	_glow_shader_material.set_shader_parameter("pulse_strength", 0.0)
 	_glow_shader_material.set_shader_parameter("rect_size", glow_size)
 	glow_underlay.material = _glow_shader_material
 	glow_underlay.use_parent_material = false
@@ -651,10 +713,16 @@ func _setup_shader() -> void:
 	# Reflection overlay shader
 	_reflection_shader_material = ShaderMaterial.new()
 	_reflection_shader_material.shader = REFLECTION_SHADER
+	_reflection_shader_material.set_shader_parameter("use_artwork_texture", false)
+	_reflection_shader_material.set_shader_parameter("tint_color", Color(0.96, 0.98, 1.0, 1.0))
+	_reflection_shader_material.set_shader_parameter("sheen_color", Color(0.96, 0.98, 1.0, 1.0))
 	_reflection_shader_material.set_shader_parameter("opacity", 0.0)
 	_reflection_shader_material.set_shader_parameter("scanline_opacity", 0.06)
+	_reflection_shader_material.set_shader_parameter("sweep_strength", 0.40)
+	_reflection_shader_material.set_shader_parameter("texture_strength", 0.72)
 	_reflection_shader_material.set_shader_parameter("offset", Vector2.ZERO)
 	reflection_overlay.material = _reflection_shader_material
+	_update_reflection_source()
 
 func _get_rarity_neon_color() -> Color:
 	if data:
@@ -670,10 +738,12 @@ func _update_neon_color() -> void:
 	var color := _get_rarity_neon_color()
 	if _frame_shader_material:
 		_frame_shader_material.set_shader_parameter("neon_color", color)
-	if _bg_shader_material:
-		_bg_shader_material.set_shader_parameter("neon_color", color)
+	if _glass_shader_material:
+		_glass_shader_material.set_shader_parameter("neon_color", color)
 	if _glow_shader_material:
 		_glow_shader_material.set_shader_parameter("glow_color", color)
+	if _reflection_shader_material:
+		_reflection_shader_material.set_shader_parameter("tint_color", color.lerp(Color(0.98, 0.99, 1.0, 1.0), 0.60))
 
 func set_data(new_data: PowerUpData) -> void:
 	data = new_data
@@ -682,88 +752,141 @@ func set_data(new_data: PowerUpData) -> void:
 
 func set_selected(selected: bool) -> void:
 	_is_selected = selected
-	var target_glow := glow_selected if _is_selected else _resting_border_glow
-	var current_glow: float = _frame_shader_material.get_shader_parameter("border_glow") if _frame_shader_material else _resting_border_glow
-	if _frame_shader_material:
-		var tween := create_tween().set_parallel()
-		tween.tween_method(_set_border_glow, current_glow, target_glow, 0.25)
-		# Pulse the additive glow underlay
-		var glow_intensity: float = _glow_shader_material.get_shader_parameter("glow_intensity") if _glow_shader_material else _resting_border_glow
-		tween.tween_method(_set_glow_intensity, glow_intensity, target_glow, 0.25)
-		# Subtle 1-2 degree rotation when selected; restore when deselected
-		var target_rotation := deg_to_rad(randf_range(1.0, 2.0)) if _is_selected else 0.0
-		tween.tween_property(self, "rotation", target_rotation, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		# One-time sticker pulse
-		if sticker_badge:
-			sticker_badge.scale = Vector2.ONE
-			tween.tween_property(sticker_badge, "scale", Vector2.ONE * 1.08, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-			tween.chain().tween_property(sticker_badge, "scale", Vector2.ONE, 0.1)
+	_animate_visual_state(0.25, _is_selected)
 
 func _set_border_glow(value: float) -> void:
 	if _frame_shader_material:
 		_frame_shader_material.set_shader_parameter("border_glow", value)
-	if _bg_shader_material:
-		_bg_shader_material.set_shader_parameter("border_glow", value * 0.5)
 
 func _set_glow_intensity(value: float) -> void:
 	if _glow_shader_material:
 		_glow_shader_material.set_shader_parameter("glow_intensity", value)
 
-func _on_mouse_entered() -> void:
-	_is_hovering = true
+func _set_glow_pulse(value: float) -> void:
+	if _glow_shader_material:
+		_glow_shader_material.set_shader_parameter("pulse_strength", value)
+
+func _set_glass_hover(value: float) -> void:
+	if _glass_shader_material:
+		_glass_shader_material.set_shader_parameter("hover_strength", value)
+
+func _set_glass_motion(value: float) -> void:
+	if _glass_shader_material:
+		_glass_shader_material.set_shader_parameter("motion_strength", value)
+
+func _set_glass_pulse(value: float) -> void:
+	if _glass_shader_material:
+		_glass_shader_material.set_shader_parameter("pulse_strength", value)
+
+func _set_reflection_opacity(value: float) -> void:
+	if _reflection_shader_material:
+		_reflection_shader_material.set_shader_parameter("opacity", value)
+
+func _get_shader_float(shader_material: ShaderMaterial, parameter: String, fallback: float) -> float:
+	if not shader_material:
+		return fallback
+	var value = shader_material.get_shader_parameter(parameter)
+	if typeof(value) == TYPE_FLOAT:
+		return value
+	if typeof(value) == TYPE_INT:
+		return float(value)
+	return fallback
+
+func _update_reflection_source() -> void:
+	if not _reflection_shader_material:
+		return
+	var has_texture := artwork and artwork.texture != null
+	_reflection_shader_material.set_shader_parameter("use_artwork_texture", has_texture)
+	if has_texture:
+		_reflection_shader_material.set_shader_parameter("artwork_texture", artwork.texture)
+
+func _format_description_text(raw_text: String) -> String:
+	var normalized := raw_text.strip_edges()
+	if normalized.is_empty():
+		return "No description"
+	if normalized.length() > DESCRIPTION_SAFE_MAX_CHARS:
+		normalized = normalized.substr(0, DESCRIPTION_SAFE_MAX_CHARS - 1).rstrip(" ,.;:") + "..."
+	return normalized
+
+func _update_shader_mouse_state(normalized_offset: Vector2) -> void:
+	if _glass_shader_material:
+		_glass_shader_material.set_shader_parameter("mouse_uv", _mouse_norm)
+		_glass_shader_material.set_shader_parameter("parallax_offset", normalized_offset)
+	if _reflection_shader_material:
+		_reflection_shader_material.set_shader_parameter("offset", normalized_offset * 5.0)
+
+func _animate_visual_state(duration: float, pulse_badge: bool = false) -> void:
 	if _hover_tween and _hover_tween.is_valid():
 		_hover_tween.kill()
 
-	var current_glow: float = _frame_shader_material.get_shader_parameter("border_glow") if _frame_shader_material else _resting_border_glow
-	_hover_tween = create_tween().set_parallel()
-	_hover_tween.tween_property(self, "position", _base_position - Vector2(0, hover_lift), 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_hover_tween.tween_property(self, "scale", Vector2.ONE * hover_scale, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	var target_position := _base_position - Vector2(0, hover_lift) if _is_hovering else _base_position
+	var target_scale := Vector2.ONE * hover_scale if _is_hovering else Vector2.ONE
+	var target_rotation := deg_to_rad(1.35) if _is_selected else 0.0
+	var target_frame_glow := _resting_border_glow
+	var target_glow_intensity := _resting_border_glow
+	var target_glass_hover := GLASS_REST_STRENGTH
+	var target_glass_pulse := 0.0
+	var target_reflection_opacity := 0.0
 
-	var target_glow_intensity := glow_hover
 	if _is_selected:
+		target_frame_glow = glow_selected
 		target_glow_intensity = glow_selected
-	if _glow_shader_material:
-		var current_glow_intensity: float = _glow_shader_material.get_shader_parameter("glow_intensity")
-		_hover_tween.tween_method(_set_glow_intensity, current_glow_intensity, target_glow_intensity, 0.18)
-	if reflection_overlay and _reflection_shader_material:
-		_reflection_shader_material.set_shader_parameter("opacity", 0.25)
-		_hover_tween.tween_property(reflection_overlay, "position", _reflection_rest_pos + Vector2(2, 3), 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	if artwork:
-		_update_artwork_parallax()
+		target_glass_hover = GLASS_SELECTED_STRENGTH
+		target_glass_pulse = 0.45
+		target_reflection_opacity = REFLECTION_SELECTED_OPACITY
+	elif _is_hovering:
+		target_frame_glow = glow_hover
+		target_glow_intensity = glow_hover
 
-	if sticker_badge:
-		_hover_tween.tween_property(sticker_badge, "scale", Vector2.ONE * 1.08, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if _is_hovering and _is_selected:
+		target_glass_hover = GLASS_SELECTED_HOVER_STRENGTH
+		target_glass_pulse = 0.65
+		target_reflection_opacity = REFLECTION_SELECTED_HOVER_OPACITY
+	elif _is_hovering:
+		target_glass_hover = GLASS_HOVER_STRENGTH
+		target_reflection_opacity = REFLECTION_HOVER_OPACITY
+
+	var current_frame_glow := _get_shader_float(_frame_shader_material, "border_glow", _resting_border_glow)
+	var current_glow_intensity := _get_shader_float(_glow_shader_material, "glow_intensity", _resting_border_glow)
+	var current_glass_hover := _get_shader_float(_glass_shader_material, "hover_strength", GLASS_REST_STRENGTH)
+	var current_glass_pulse := _get_shader_float(_glass_shader_material, "pulse_strength", 0.0)
+	var current_reflection_opacity := _get_shader_float(_reflection_shader_material, "opacity", 0.0)
+	var current_glow_pulse := _get_shader_float(_glow_shader_material, "pulse_strength", 0.0)
+
+	_hover_tween = create_tween().set_parallel()
+	_hover_tween.tween_property(self, "position", target_position, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_hover_tween.tween_property(self, "scale", target_scale, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_hover_tween.tween_property(self, "rotation", target_rotation, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_hover_tween.tween_method(_set_border_glow, current_frame_glow, target_frame_glow, duration)
+	_hover_tween.tween_method(_set_glow_intensity, current_glow_intensity, target_glow_intensity, duration)
+	_hover_tween.tween_method(_set_glow_pulse, current_glow_pulse, target_glass_pulse, duration)
+	_hover_tween.tween_method(_set_glass_hover, current_glass_hover, target_glass_hover, duration)
+	_hover_tween.tween_method(_set_glass_pulse, current_glass_pulse, target_glass_pulse, duration)
+	_hover_tween.tween_method(_set_reflection_opacity, current_reflection_opacity, target_reflection_opacity, duration)
+
+	if _is_hovering:
+		_update_artwork_parallax()
+	else:
+		_mouse_norm = Vector2(0.5, 0.5)
+		_set_glass_motion(0.0)
+		_update_shader_mouse_state(Vector2.ZERO)
+		if artwork:
+			_hover_tween.tween_property(artwork, "position", _artwork_rest_pos, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		if reflection_overlay:
+			_hover_tween.tween_property(reflection_overlay, "position", _reflection_rest_pos, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+	if pulse_badge and sticker_badge:
+		sticker_badge.scale = Vector2.ONE
+		_hover_tween.tween_property(sticker_badge, "scale", Vector2.ONE * 1.08, min(duration, 0.12)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		_hover_tween.chain().tween_property(sticker_badge, "scale", Vector2.ONE, 0.1)
 
-	if _frame_shader_material:
-		var target_frame_glow := glow_selected if _is_selected else glow_hover
-		_hover_tween.tween_method(_set_border_glow, current_glow, target_frame_glow, 0.18)
+func _on_mouse_entered() -> void:
+	_is_hovering = true
+	_animate_visual_state(0.18, true)
 
 func _on_mouse_exited() -> void:
 	_is_hovering = false
-	if _hover_tween and _hover_tween.is_valid():
-		_hover_tween.kill()
-
-	var current_glow: float = _frame_shader_material.get_shader_parameter("border_glow") if _frame_shader_material else _resting_border_glow
-	var target_glow := glow_selected if _is_selected else _resting_border_glow
-	var target_glow_intensity := glow_selected if _is_selected else _resting_border_glow
-	_hover_tween = create_tween().set_parallel()
-	_hover_tween.tween_property(self, "position", _base_position, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_hover_tween.tween_property(self, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_hover_tween.tween_property(self, "rotation", 0.0 if not _is_selected else rotation, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	if _glow_shader_material:
-		var current_glow_intensity: float = _glow_shader_material.get_shader_parameter("glow_intensity")
-		_hover_tween.tween_method(_set_glow_intensity, current_glow_intensity, target_glow_intensity, 0.18)
-	if reflection_overlay and _reflection_shader_material:
-		_reflection_shader_material.set_shader_parameter("opacity", 0.0)
-		_hover_tween.tween_property(reflection_overlay, "position", _reflection_rest_pos, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	if artwork:
-		_hover_tween.tween_property(artwork, "position", _artwork_rest_pos, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	if sticker_badge:
-		_hover_tween.tween_property(sticker_badge, "scale", Vector2.ONE, 0.15)
-
-	if _frame_shader_material:
-		_hover_tween.tween_method(_set_border_glow, current_glow, target_glow, 0.18)
+	_animate_visual_state(0.18)
 
 func _on_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -782,10 +905,13 @@ func _on_gui_input(event: InputEvent) -> void:
 func _update_artwork_parallax() -> void:
 	if not artwork:
 		return
-	var offset := (_mouse_norm - Vector2(0.5, 0.5)) * -2.0
+	var normalized_offset := _mouse_norm - Vector2(0.5, 0.5)
+	var offset := normalized_offset * -3.5
 	artwork.position = _artwork_rest_pos + offset
-	if _reflection_shader_material:
-		_reflection_shader_material.set_shader_parameter("offset", (_mouse_norm - Vector2(0.5, 0.5)) * 4.0)
+	if reflection_overlay:
+		reflection_overlay.position = _reflection_rest_pos + offset * 0.65 + Vector2(2.0, 3.0)
+	_set_glass_motion(clampf(normalized_offset.length() * 2.2, 0.0, 1.0))
+	_update_shader_mouse_state(normalized_offset)
 
 func _store_artwork_rest_positions() -> void:
 	if artwork:
@@ -793,13 +919,19 @@ func _store_artwork_rest_positions() -> void:
 	if reflection_overlay:
 		_reflection_rest_pos = reflection_overlay.position
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_shader_time += delta
 	if _frame_shader_material:
 		_frame_shader_material.set_shader_parameter("rect_size", chrome_frame.get_global_rect().size)
-	if _bg_shader_material:
-		_bg_shader_material.set_shader_parameter("rect_size", chrome_background.get_global_rect().size)
+		_frame_shader_material.set_shader_parameter("time", _shader_time)
+	if _glass_shader_material:
+		_glass_shader_material.set_shader_parameter("rect_size", interior_panel.get_global_rect().size)
+		_glass_shader_material.set_shader_parameter("time", _shader_time)
 	if _glow_shader_material:
 		_glow_shader_material.set_shader_parameter("rect_size", glow_underlay.get_global_rect().size)
+		_glow_shader_material.set_shader_parameter("time", _shader_time)
+	if _reflection_shader_material:
+		_reflection_shader_material.set_shader_parameter("time", _shader_time)
 
 func _on_sell_button_down() -> void:
 	if sell_button and _pressed_button_style:

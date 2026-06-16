@@ -37,10 +37,10 @@ func _create_sample_icons() -> void:
 	# Tile root is 200x300 but the chrome bezel draws 12px outside, so the
 	# visual footprint is 224x324 and we space accordingly.
 	var card_size := Vector2(224, 324)
-	var spacing := 136.0
-	var total_width := (count - 1) * spacing + card_size.x
-	var start_x := (size.x - total_width) * 0.5
-	var pos_y := size.y * 0.5 - card_size.y * 0.5
+	var spacing := 236.0
+	var _total_width := (count - 1) * spacing + card_size.x
+	var start_x := 0 #(size.x - total_width) * 0.5
+	var pos_y := size.y * 0.25 - card_size.y * 0.5
 
 	for i in range(count):
 		var icon: PowerUpIcon = PowerUpIconScene.instantiate()
@@ -53,14 +53,19 @@ func _create_sample_icons() -> void:
 		match i:
 			0:
 				data.display_name = "Short"
+				data.description = "One-line control sample for spacing."
 			1:
 				data.display_name = "Medium Length"
+				data.description = "Two-line mall-core copy sample to verify wrap and contrast on the glass interior."
 			2:
 				data.display_name = "A Much Longer Power Name"
+				data.description = "This description is intentionally longer so the chrome tile has to maintain readable hierarchy between the artwork pocket and the SELL button."
 			3:
 				data.display_name = "Extremely Long Powerup Name That Should Truncate"
+				data.description = "A dense readability test. This should wrap cleanly, keep the button row clear, and avoid colliding with the artwork even when the title has already been forced to shrink."
 			4:
 				data.display_name = "MaxedOutPowerupNameLengthTestForTruncationBehavior"
+				data.description = "Legendary long-description sample with enough text to stress the new description panel padding, the improved contrast, and the final chrome border visibility around the interior pass."
 		data.rating = ratings[i]
 		data.rarity = rarities[i]
 

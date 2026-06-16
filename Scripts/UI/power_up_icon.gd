@@ -72,9 +72,11 @@ func _setup_kiosk_tile() -> void:
 		_kiosk_tile.name = "KioskTile"
 		add_child(_kiosk_tile)
 
-	_kiosk_tile.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_kiosk_tile.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_kiosk_tile.position = Vector2.ZERO
 	_kiosk_tile.custom_minimum_size = Vector2(200, 300)
 	_kiosk_tile.size = Vector2(200, 300)
+	set_anchors_preset(Control.PRESET_TOP_LEFT)
 	custom_minimum_size = Vector2(200, 300)
 	size = Vector2(200, 300)
 	mouse_filter = Control.MOUSE_FILTER_PASS

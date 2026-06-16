@@ -245,7 +245,7 @@ All major UI popups use TweenFX-based bouncy entrance/exit animations for juicy 
 | **PowerUp Sell** | Jelly wobble → spin + shrink → fly toward money counter | — | Targets `MoneyLabel` global position |
 | **PowerUp Expiry** | Alarm flash highlight → fidget wild spin → fly to random screen edge + vanish | — | Orange alarm color |
 | **Mom Confiscation** | Auto-fan cards → red alarm flash on condemned → fidget + fly-to-Mom + vanish (staggered) | Folds cards back | Stagger: 0.2s (≤3 items) or 0.1s (>3) |
-| **PowerUp Kiosk Tile** | Glossy mall-core chrome tile with rarity neon glow, additive glow underlay, in-shader artwork reflection, floating sticker badge, and always-visible SELL button | Hover lift + glow + parallax, click selection, fan-out slide/scale | 200×300 root; 224×324 visual footprint with bezel; 4-per-row fan-out |
+| **PowerUp Kiosk Tile** | Four-pass mall-core tile with reflective chrome bezel, dedicated interior glass shader, additive rarity glow, artwork-backed reflection overlay, floating sticker badge, and always-visible SELL button | Hover lift + synced glow/specular/reflection parallax, click selection, fan-out slide/scale | 200×300 root; 224×324 visual footprint with bezel; 4-per-row fan-out |
 | **Consumable Sell** | Jelly wobble → spin + shrink → fly toward money counter | — | Same pattern as PowerUp sell |
 | **Consumable Use** | Fidget wild spin → fly to random edge → `ConsumableExplosion` at exit | — | Explosion effect at exit point |
 

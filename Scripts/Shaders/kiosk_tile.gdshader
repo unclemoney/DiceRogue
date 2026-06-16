@@ -7,12 +7,19 @@ uniform vec4 highlight_tint : source_color = vec4(0.55, 0.62, 0.75, 1.0);
 uniform vec4 shadow_tint : source_color = vec4(0.05, 0.04, 0.08, 1.0);
 uniform vec4 env_tint_a : source_color = vec4(0.25, 0.45, 0.65, 1.0);
 uniform vec4 env_tint_b : source_color = vec4(0.75, 0.30, 0.50, 1.0);
-uniform float reflection_amount : hint_range(0.0, 1.0) = 0.12;
+uniform float reflection_amount : hint_range(0.0, 1.0) = 0.22;
 uniform float corner_radius : hint_range(0.0, 64.0) = 18.0;
-uniform float bezel_width : hint_range(0.0, 32.0) = 10.0;
+uniform float bezel_width : hint_range(8.0, 32.0) = 12.0;
+uniform float inner_lip_width : hint_range(0.0, 8.0) = 2.5;
 uniform float time : hint_range(0.0, 100000.0) = 0.0;
 uniform bool draw_outer_bezel = true;
-uniform vec2 rect_size = vec2(160.0, 240.0);
+uniform vec2 rect_size = vec2(224.0, 324.0);
+
+float hash21(vec2 p) {
+	p = fract(p * vec2(123.34, 456.21));
+	p += dot(p, p + 34.45);
+	return fract(p.x * p.y);
+}
 
 // Signed distance field rounded rectangle in pixel space.
 float sd_rounded_rect(vec2 p, vec2 half_size, float radius) {
@@ -20,64 +27,58 @@ float sd_rounded_rect(vec2 p, vec2 half_size, float radius) {
 	return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
 }
 
-// Smooth anti-aliased mask from an SDF value (distance in pixels).
-float aa_mask(float dist, float edge_width) {
-	return smoothstep(0.0, edge_width, dist);
-}
-
 void fragment() {
 	vec2 uv = UV;
 	vec2 size = max(rect_size, vec2(1.0));
 	vec2 half_size = size * 0.5;
 	vec2 pixel_pos = uv * size;
-	float edge_width = 1.0;
-
-	// Outer rounded rectangle (full tile footprint)
 	float outer_dist = sd_rounded_rect(pixel_pos, half_size, corner_radius);
-	float outer_mask = aa_mask(outer_dist, edge_width * 2.0);
+	float outer_fill = 1.0 - smoothstep(0.0, 1.6, outer_dist);
+	vec2 inner_half = max(half_size - vec2(bezel_width), vec2(1.0));
+	float inner_radius = max(corner_radius - bezel_width * 0.92, 0.0);
+	float inner_dist = sd_rounded_rect(pixel_pos, inner_half, inner_radius);
+	float inner_fill = 1.0 - smoothstep(0.0, 1.6, inner_dist);
+	float bezel_mask = clamp(outer_fill - inner_fill, 0.0, 1.0);
 
-	// Inner rounded rectangle (where the glossy panel begins inside the bezel)
-	float inner_dist = sd_rounded_rect(pixel_pos, half_size - vec2(bezel_width), max(corner_radius - bezel_width, 0.0));
-	float inner_mask = aa_mask(inner_dist, edge_width * 2.0);
+	float brushed = hash21((pixel_pos + vec2(time * 18.0, -time * 9.0)) * vec2(0.18, 0.05)) - 0.5;
+	float chrome_gradient = mix(0.26, 0.52, uv.y);
+	vec3 chrome = mix(shadow_tint.rgb, chrome_tint.rgb, chrome_gradient);
 
-	// Chrome vertical gradient
-	float grad = mix(0.25, 0.45, uv.y);
-	vec3 chrome = mix(chrome_tint.rgb, vec3(grad), 0.45);
+	float env_phase_a = fract(uv.x * 0.88 + uv.y * 0.28 + time * 0.045);
+	float env_phase_b = fract(uv.x * 0.45 - uv.y * 0.38 - time * 0.03);
+	float env_band_a = 1.0 - smoothstep(0.0, 0.22, abs(env_phase_a - 0.18));
+	float env_band_b = 1.0 - smoothstep(0.0, 0.28, abs(env_phase_b - 0.72));
+	vec3 env_reflection = env_tint_a.rgb * env_band_a * 0.24 + env_tint_b.rgb * env_band_b * 0.18;
 
-	// Bevel: top edge lighter, bottom edge darker (only in the bezel band)
-	float top_factor = smoothstep(0.0, 1.0, 1.0 - uv.y);
-	vec3 bevel = mix(
-		mix(shadow_tint.rgb, chrome, 0.45),
-		mix(highlight_tint.rgb, chrome, 0.55),
-		top_factor
-	);
+	float top_bevel = pow(1.0 - uv.y, 2.1) * bezel_mask;
+	float bottom_bevel = pow(uv.y, 1.75) * bezel_mask;
+	float left_sheen = pow(max(1.0 - abs(uv.x - 0.24) * 2.2, 0.0), 3.0) * bezel_mask;
+	float inner_line = (1.0 - smoothstep(inner_lip_width, inner_lip_width + 1.4, abs(inner_dist))) * outer_fill;
+	float outer_rim = (1.0 - smoothstep(0.0, 2.25, abs(outer_dist))) * outer_fill;
+	float neon_pulse = 0.74 + sin(time * 2.1 + uv.x * 8.0) * 0.08;
+	vec3 neon = neon_color.rgb * border_glow * (outer_rim * 1.1 + inner_line * 0.85) * neon_pulse;
 
-	// Fake environment reflection diagonal sweep
-	float env_diag = (uv.x + uv.y) * 0.5 + sin(time * 0.15) * 0.05;
-	vec3 env_reflection = mix(env_tint_a.rgb, env_tint_b.rgb, env_diag) * 0.12;
+	vec3 bezel_color = chrome;
+	bezel_color += env_reflection * reflection_amount;
+	bezel_color += highlight_tint.rgb * top_bevel * 0.78;
+	bezel_color += highlight_tint.rgb * left_sheen * 0.16;
+	bezel_color -= shadow_tint.rgb * bottom_bevel * 0.38;
+	bezel_color += highlight_tint.rgb * inner_line * 0.44;
+	bezel_color += vec3(brushed) * 0.05;
+	bezel_color += neon;
 
-	// Glossy plastic panel gradient (inner area)
-	float panel_grad = mix(0.30, 0.18, uv.y);
-	vec3 panel = mix(chrome_tint.rgb, vec3(panel_grad), 0.55) + env_reflection;
+	vec3 fill_color = mix(chrome_tint.rgb, highlight_tint.rgb, 0.18 + (1.0 - uv.y) * 0.35);
+	fill_color += env_reflection * reflection_amount * 0.7;
+	fill_color += highlight_tint.rgb * inner_line * 0.15;
+	fill_color += vec3(brushed) * 0.03;
+	fill_color += neon_color.rgb * border_glow * outer_rim * 0.25;
 
-	// Neon edge glow (stronger on the outer rim)
-	float edge = 1.0 - smoothstep(0.0, bezel_width * 3.0, outer_dist);
-	vec3 glow = neon_color.rgb * border_glow * edge * 2.5;
-
-	// Subtle sheen overlay across the panel
-	float scan = sin((uv.y + time * 0.05) * 60.0) * 0.5 + 0.5;
-	float sheen = reflection_amount * scan * (1.0 - edge);
-
-	// Compose layers
-	vec3 color = chrome;
-	if (draw_outer_bezel) {
-		// Blend bevel into the bezel band (inside outer, outside inner)
-		color = mix(color, bevel, inner_mask * (1.0 - outer_mask));
+	vec3 final_color = bezel_color;
+	float final_alpha = bezel_mask * outer_fill;
+	if (!draw_outer_bezel) {
+		final_color = fill_color;
+		final_alpha = outer_fill;
 	}
-	color = mix(color, panel, 1.0 - inner_mask);
-	color += glow + sheen;
 
-	float alpha = 1.0 - outer_mask;
-
-	COLOR = vec4(color, alpha);
+	COLOR = vec4(final_color, final_alpha);
 }
