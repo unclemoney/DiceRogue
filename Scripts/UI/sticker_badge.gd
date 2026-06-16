@@ -31,6 +31,20 @@ func _ensure_structure() -> void:
 		_frame.custom_minimum_size = BADGE_SIZE
 		add_child(_frame)
 
+# Sticker texture layer
+	var sticker_tex := _frame.get_node_or_null("StickerTexture") as TextureRect
+	if not sticker_tex:
+		sticker_tex = TextureRect.new()
+		sticker_tex.name = "StickerTexture"
+		sticker_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+		sticker_tex.set_offsets_preset(Control.PRESET_FULL_RECT)
+		sticker_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		sticker_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		sticker_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_frame.add_child(sticker_tex)
+		_frame.move_child(sticker_tex, 0) # Behind label
+
+
 	_label = _frame.get_node_or_null("Label") as Label
 	if not _label:
 		_label = Label.new()
@@ -46,14 +60,24 @@ func _ensure_structure() -> void:
 		_frame.add_child(_label)
 
 func _apply_style() -> void:
+
+	var sticker_tex := _frame.get_node("StickerTexture") as TextureRect
+	sticker_tex.texture = load("res://Resources/Art/UI/sticker_badge.png")
+
+	if sticker_tex:
+		var mat := ShaderMaterial.new()
+		mat.shader = preload("res://Scripts/Shaders/sticker_shader.gdshader")
+		sticker_tex.material = mat
+
+
 	custom_minimum_size = BADGE_SIZE
 	size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.06, 0.12, 0.95)
+	style.bg_color = Color(0.08, 0.06, 0.12, 0.35)
 	style.border_color = get_rarity_frame_color(rarity)
-	style.set_border_width_all(3)
+	style.set_border_width_all(2)
 	style.set_corner_radius_all(10)
 	style.corner_detail = 6
 	# Sticker "stuck on" drop shadow

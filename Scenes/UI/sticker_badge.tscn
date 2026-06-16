@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://d2xhqp4y1w7y2"]
 
-[ext_resource type="Script" path="res://Scripts/UI/sticker_badge.gd" id="1_sticker"]
+[ext_resource type="Script" uid="uid://biitkwbpg3hdr" path="res://Scripts/UI/sticker_badge.gd" id="1_sticker"]
 
 [node name="StickerBadge" type="Control"]
 custom_minimum_size = Vector2(48, 48)

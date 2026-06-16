@@ -1,27 +1,18 @@
 [gd_scene load_steps=9 format=3 uid="uid://c5m1kxq8y2n7e"]
 
 [ext_resource type="Script" uid="uid://doyba63hii5ij" path="res://Scripts/UI/kiosk_tile.gd" id="1_kiosk"]
-[ext_resource type="Shader" uid="uid://b8j4hitdd17i1" path="res://Scripts/Shaders/kiosk_tile.gdshader" id="2_kiosk_shader"]
-[ext_resource type="Shader" uid="uid://bx7pg5lx5a4l2" path="res://Scripts/Shaders/kiosk_tile_glow.gdshader" id="2_qkrmo"]
-[ext_resource type="Shader" uid="uid://dxw0i5l6m8f2c" path="res://Scripts/Shaders/kiosk_tile_glass.gdshader" id="3_glass_shader"]
-[ext_resource type="Shader" uid="uid://qg8igudgafc7" path="res://Scripts/Shaders/kiosk_tile_reflection.gdshader" id="4_2p0mi"]
+[ext_resource type="Shader" uid="uid://b8j4hitdd17i1" path="res://Scripts/Shaders/card_perspective.gdshader" id="2_kiosk_shader"]
+[ext_resource type="Shader" path="res://Scripts/Shaders/kiosk_tile_glass.gdshader" id="3_glass_shader"]
 [ext_resource type="PackedScene" uid="uid://d2xhqp4y1w7y2" path="res://Scenes/UI/sticker_badge.tscn" id="3_sticker"]
+[ext_resource type="Shader" uid="uid://qg8igudgafc7" path="res://Scripts/Shaders/kiosk_tile_reflection.gdshader" id="4_2p0mi"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_kiosk"]
 shader = ExtResource("2_kiosk_shader")
-shader_parameter/border_glow = 0.15
-shader_parameter/neon_color = Color(0.9, 0.35, 0.6, 1)
-shader_parameter/chrome_tint = Color(0.12, 0.1, 0.14, 0.98)
-shader_parameter/highlight_tint = Color(0.55, 0.62, 0.75, 1)
-shader_parameter/shadow_tint = Color(0.05, 0.04, 0.08, 1)
-shader_parameter/env_tint_a = Color(0.25, 0.45, 0.65, 1)
-shader_parameter/env_tint_b = Color(0.75, 0.3, 0.5, 1)
-shader_parameter/reflection_amount = 0.3
-shader_parameter/corner_radius = 22.0
-shader_parameter/bezel_width = 10.0
-shader_parameter/inner_lip_width = 2.6
-shader_parameter/time = 0.0
-shader_parameter/draw_outer_bezel = true
+shader_parameter/tilt = 0.0
+shader_parameter/glow_intensity = 0.0
+shader_parameter/glow_color = Color(1, 1, 0.4, 1)
+shader_parameter/x_rot = 0.0
+shader_parameter/y_rot = 0.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_glass"]
 shader = ExtResource("3_glass_shader")
@@ -40,15 +31,6 @@ shader_parameter/mid_color = Color(0.15, 0.2, 0.27, 0.98)
 shader_parameter/accent_color = Color(0.14, 0.41, 0.44, 0.9)
 shader_parameter/neon_color = Color(0.9, 0.35, 0.6, 1)
 shader_parameter/specular_color = Color(0.96, 0.98, 1, 1)
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_glow"]
-shader = ExtResource("2_qkrmo")
-shader_parameter/glow_intensity = 0.15
-shader_parameter/glow_color = Color(0.9, 0.35, 0.6, 1)
-shader_parameter/corner_radius = 22.0
-shader_parameter/spread = 16.0
-shader_parameter/pulse_strength = 0.0
-shader_parameter/time = 0.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_reflection"]
 shader = ExtResource("4_2p0mi")
@@ -98,6 +80,7 @@ offset_bottom = 10.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+color = Color(1, 1, 1, 0.1)
 
 [node name="InteriorPanel" type="ColorRect" parent="."]
 material = SubResource("ShaderMaterial_glass")
@@ -120,12 +103,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 0
 
 [node name="InnerMargin" type="MarginContainer" parent="ChromePanel"]
 layout_mode = 2
-offset_right = 160.0
-offset_bottom = 240.0
 theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 16
 theme_override_constants/margin_right = 16
@@ -133,70 +113,43 @@ theme_override_constants/margin_bottom = 16
 
 [node name="ContentVBox" type="VBoxContainer" parent="ChromePanel/InnerMargin"]
 layout_mode = 2
-offset_left = 14.0
-offset_top = 14.0
-offset_right = 146.0
-offset_bottom = 226.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
 [node name="TitleBar" type="PanelContainer" parent="ChromePanel/InnerMargin/ContentVBox"]
 layout_mode = 2
-offset_right = 132.0
-offset_bottom = 26.0
 size_flags_horizontal = 3
 
 [node name="TitleLabel" type="Label" parent="ChromePanel/InnerMargin/ContentVBox/TitleBar"]
 layout_mode = 2
-offset_right = 132.0
-offset_bottom = 26.0
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="ArtPanel" type="PanelContainer" parent="ChromePanel/InnerMargin/ContentVBox"]
+clip_contents = true
 layout_mode = 2
-offset_top = 34.0
-offset_right = 132.0
-offset_bottom = 144.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
-clip_contents = true
 
 [node name="Artwork" type="TextureRect" parent="ChromePanel/InnerMargin/ContentVBox/ArtPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 mouse_filter = 2
 expand_mode = 3
 stretch_mode = 5
 
 [node name="ReflectionOverlay" type="TextureRect" parent="ChromePanel/InnerMargin/ContentVBox/ArtPanel"]
-modulate = Color(1, 1, 1, 1)
 material = SubResource("ShaderMaterial_reflection")
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 mouse_filter = 2
 
 [node name="DescriptionPanel" type="PanelContainer" parent="ChromePanel/InnerMargin/ContentVBox"]
 layout_mode = 2
-offset_top = 152.0
-offset_right = 132.0
-offset_bottom = 185.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="DescriptionLabel" type="Label" parent="ChromePanel/InnerMargin/ContentVBox/DescriptionPanel"]
 layout_mode = 2
-offset_right = 132.0
-offset_bottom = 33.0
 size_flags_vertical = 3
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -204,20 +157,15 @@ autowrap_mode = 3
 
 [node name="ActionBar" type="HBoxContainer" parent="ChromePanel/InnerMargin/ContentVBox"]
 layout_mode = 2
-offset_top = 193.0
-offset_right = 132.0
-offset_bottom = 212.0
 alignment = 1
 
 [node name="SellButton" type="Button" parent="ChromePanel/InnerMargin/ContentVBox/ActionBar"]
 layout_mode = 2
-offset_left = 6.0
-offset_right = 126.0
-offset_bottom = 19.0
 size_flags_horizontal = 4
 text = "SELL"
 
 [node name="StickerBadge" parent="." instance=ExtResource("3_sticker")]
+z_index = 15
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -227,5 +175,3 @@ offset_top = -40.0
 offset_right = 30.0
 offset_bottom = 30.0
 grow_horizontal = 0
-z_index = 15
-mouse_filter = 2
