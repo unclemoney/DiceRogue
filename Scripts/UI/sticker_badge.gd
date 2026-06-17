@@ -7,18 +7,46 @@ class_name StickerBadge
 
 const VCR_FONT = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 
-const BADGE_SIZE := Vector2(70, 70)
+const BADGE_SIZE : Vector2 = Vector2(70, 70)
 
 @export var rating: String = "G"
 @export var rarity: String = "common"
 
 var _frame: PanelContainer
 var _label: Label
+var _target_uv := Vector2(0.5, 0.5)
+var _current_uv := Vector2(0.5, 0.5)
+
+func _process(delta):
+	_current_uv = _current_uv.lerp(_target_uv, 10.0 * delta)
+	_apply_holo_uv()
+
 
 func _ready() -> void:
+	print("[StickerBadge] _ready called")
+	mouse_filter = Control.MOUSE_FILTER_PASS
+	set_process_input(true)
 	_ensure_structure()
 	_apply_style()
 	_apply_data()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0,0,0,0) # fully transparent
+	add_theme_stylebox_override("panel", sb)
+
+	print("[StickerBadge] READY: parent = ", get_parent())
+	print("[StickerBadge] READY: parent mouse_filter = ", get_parent().mouse_filter)
+	var hit_area = get_parent().get_node_or_null("HitArea")
+	if hit_area:
+		print("[StickerBadge] HitArea mouse_filter = ", hit_area.mouse_filter)
+	else:
+		print("[StickerBadge] HitArea NOT FOUND")
+
+
+
+func _gui_input(event):
+	if event is InputEventMouseMotion:
+		print("[StickerBadge] MouseMotion event.position = ", event.position)
+		_update_holo_mouse(event.position)
 
 func _ensure_structure() -> void:
 	_frame = get_node_or_null("Frame") as PanelContainer
@@ -31,8 +59,9 @@ func _ensure_structure() -> void:
 		_frame.custom_minimum_size = BADGE_SIZE
 		add_child(_frame)
 
+
 # Sticker texture layer
-	var sticker_tex := _frame.get_node_or_null("StickerTexture") as TextureRect
+	var sticker_tex : TextureRect = _frame.get_node_or_null("StickerTexture") as TextureRect
 	if not sticker_tex:
 		sticker_tex = TextureRect.new()
 		sticker_tex.name = "StickerTexture"
@@ -42,8 +71,19 @@ func _ensure_structure() -> void:
 		sticker_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		sticker_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_frame.add_child(sticker_tex)
-		_frame.move_child(sticker_tex, 0) # Behind label
+		_frame.move_child(sticker_tex, 1) # Behind label
 
+	var holo : ColorRect = _frame.get_node_or_null("HoloLayer") as ColorRect
+	if not holo:
+		holo = ColorRect.new()
+		holo.name = "HoloLayer"
+		holo.set_anchors_preset(Control.PRESET_FULL_RECT)
+		holo.set_offsets_preset(Control.PRESET_FULL_RECT)
+		#holo.texture = preload("res://Resources/Art/UI/white_pixel.png") # 1x1 white
+		holo.modulate = Color(1,1,1,0.1) # fully transparent base
+		holo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_frame.add_child(holo)
+		_frame.move_child(holo, 0) # above StickerTexture, below Label
 
 	_label = _frame.get_node_or_null("Label") as Label
 	if not _label:
@@ -57,17 +97,25 @@ func _ensure_structure() -> void:
 		_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_label.clip_text = true
 		_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_frame.add_child(_label)
+		#_frame.add_child(_label)
 
 func _apply_style() -> void:
-
-	var sticker_tex := _frame.get_node("StickerTexture") as TextureRect
-	sticker_tex.texture = load("res://Resources/Art/UI/sticker_badge.png")
+	var sticker_tex : TextureRect = _frame.get_node("StickerTexture") as TextureRect
 
 	if sticker_tex:
-		var mat := ShaderMaterial.new()
+		sticker_tex.texture = load(get_symbol_path_for_rating(rating))
+		#sticker_tex.texture = load("res://Resources/Art/UI/sticker_badge_thumb.png")
+		var mat : ShaderMaterial = ShaderMaterial.new()
 		mat.shader = preload("res://Scripts/Shaders/sticker_shader.gdshader")
 		sticker_tex.material = mat
+
+	var holo : ColorRect = _frame.get_node("HoloLayer") as ColorRect
+	if holo:
+		var mat : ShaderMaterial = ShaderMaterial.new()
+		mat.shader = preload("res://Scripts/Shaders/sticker_holo.gdshader")
+		mat.set_shader_parameter("tint_color", get_rarity_frame_color(rarity))
+		holo.material = mat
+		print("Applied holo shader with tint color ", get_rarity_frame_color(rarity))
 
 
 	custom_minimum_size = BADGE_SIZE
@@ -75,9 +123,9 @@ func _apply_style() -> void:
 	size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.06, 0.12, 0.35)
+	style.bg_color = Color(0.08, 0.06, 0.12, 0.85)
 	style.border_color = get_rarity_frame_color(rarity)
-	style.set_border_width_all(2)
+	style.set_border_width_all(4)
 	style.set_corner_radius_all(10)
 	style.corner_detail = 6
 	# Sticker "stuck on" drop shadow
@@ -97,6 +145,8 @@ func _apply_data() -> void:
 	if _label:
 		_label.text = get_sticker_label(rating)
 	_apply_style()
+
+
 
 func set_rating(new_rating: String) -> void:
 	rating = new_rating
@@ -145,3 +195,43 @@ static func get_rarity_frame_color(rarity_string: String) -> Color:
 		"epic": return Color(0.85, 0.35, 1.0, 1.0)
 		"legendary": return Color(1.0, 0.65, 0.15, 1.0)
 		_: return Color.WHITE
+
+static func get_symbol_path_for_rating(rating_string: String) -> String:
+	match rating_string.to_upper():
+		"G": return "res://Resources/Art/UI/sticker_badge_thumb.png"
+		"PG": return "res://Resources/Art/UI/sticker_badge_question.png"
+		"PG-13": return "res://Resources/Art/UI/sticker_badge_eyes.png"
+		"R": return "res://Resources/Art/UI/sticker_badge_angry.png"
+		"NC-17": return "res://Resources/Art/UI/sticker_badge_no.png"
+		_: return "res://Resources/Art/UI/sticker_badge_thumb.png"
+
+func _update_holo_mouse(local_pos: Vector2) -> void:
+	print("[StickerBadge] _update_holo_mouse called with local_pos = ", local_pos)
+
+	var holo := _frame.get_node_or_null("HoloLayer") as ColorRect
+	if not holo:
+		print("[StickerBadge] HoloLayer NOT FOUND")
+		return
+
+	var mat := holo.material as ShaderMaterial
+	if not mat:
+		print("[StickerBadge] HoloLayer has NO MATERIAL")
+		return
+
+	var uv := (local_pos / size).clamp(Vector2.ZERO, Vector2.ONE)
+	print("[StickerBadge] Computed UV = ", uv)
+
+	_target_uv = uv
+	print("[StickerBadge] Updated _target_uv = ", _target_uv)
+
+
+func _apply_holo_uv():
+	var holo := _frame.get_node_or_null("HoloLayer") as ColorRect
+	if not holo:
+		return
+
+	var mat := holo.material as ShaderMaterial
+	if not mat:
+		return
+
+	mat.set_shader_parameter("mouse_pos", _current_uv)
