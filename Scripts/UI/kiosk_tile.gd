@@ -352,7 +352,7 @@ func _ensure_structure() -> void:
 		sticker_badge.offset_right = BADGE_OFFSET_RIGHT
 		sticker_badge.offset_bottom = BADGE_OFFSET_BOTTOM
 		sticker_badge.z_index = BADGE_Z_INDEX
-		sticker_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		sticker_badge.mouse_filter = Control.MOUSE_FILTER_PASS
 
 func _find_first_node(root: Node, node_name: String) -> Node:
 	if root.name == node_name:
@@ -883,10 +883,14 @@ func _animate_visual_state(duration: float, pulse_badge: bool = false) -> void:
 func _on_mouse_entered() -> void:
 	_is_hovering = true
 	_animate_visual_state(0.18, true)
+	if sticker_badge:
+		sticker_badge.set_pointer_global_position(get_global_mouse_position())
 
 func _on_mouse_exited() -> void:
 	_is_hovering = false
 	_animate_visual_state(0.18)
+	if sticker_badge:
+		sticker_badge.clear_host_pointer()
 
 func _on_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
@@ -899,6 +903,8 @@ func _on_gui_input(event: InputEvent) -> void:
 		_mouse_norm = event.position / size
 		_mouse_norm.x = clampf(_mouse_norm.x, 0.0, 1.0)
 		_mouse_norm.y = clampf(_mouse_norm.y, 0.0, 1.0)
+		if sticker_badge:
+			sticker_badge.set_pointer_global_position(get_global_mouse_position())
 		if _is_hovering:
 			_update_artwork_parallax()
 

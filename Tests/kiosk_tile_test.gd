@@ -12,12 +12,29 @@ const ExtraRollsData = preload("res://Scripts/PowerUps/ExtraRolls.tres")
 
 var _icons: Array[PowerUpIcon] = []
 var _log_label: Label
+var _profile_mode: int = 0
 
 func _ready() -> void:
 	print("[KioskTileTest] Starting...")
 	_create_log_label()
 	_create_sample_icons()
-	_log_label.text = "Hover tiles / click SELL / click tile to select.\nCheck Output for signals."
+	_apply_badge_profile_to_all(_profile_mode)
+	_log_label.text = "Hover tiles and badges. Click SELL or tile to verify input ownership.\nPress 1 default foil, 2 matching-set foil, 3 rainbow foil."
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		var key_event := event as InputEventKey
+		match key_event.keycode:
+			KEY_1:
+				_set_badge_profile_mode(0)
+				get_viewport().set_input_as_handled()
+			KEY_2:
+				_set_badge_profile_mode(1)
+				get_viewport().set_input_as_handled()
+			KEY_3:
+				_set_badge_profile_mode(2)
+				get_viewport().set_input_as_handled()
 
 func _create_log_label() -> void:
 	_log_label = Label.new()
@@ -89,3 +106,31 @@ func _on_power_up_deselected(id: String) -> void:
 func _on_power_up_sell_requested(id: String) -> void:
 	print("[KioskTileTest] Sell requested: ", id)
 	_log_label.text = "Sell requested: %s" % id
+
+
+func _set_badge_profile_mode(mode: int) -> void:
+	_profile_mode = mode
+	_apply_badge_profile_to_all(_profile_mode)
+	match _profile_mode:
+		0:
+			_log_label.text = "Badge foil: default subtle silver/pearl profile. Press 2 or 3 for stronger synergy previews."
+		1:
+			_log_label.text = "Badge foil: matching-set preview. Hover badges to inspect stronger gloss and iridescence."
+		2:
+			_log_label.text = "Badge foil: rainbow preview. Hover badges to inspect full-spectrum foil response."
+
+
+func _apply_badge_profile_to_all(mode: int) -> void:
+	for icon in _icons:
+		if not icon:
+			continue
+		var tile := icon.get_node_or_null("KioskTile") as KioskTile
+		if not tile or not tile.sticker_badge:
+			continue
+		match mode:
+			0:
+				tile.sticker_badge.reset_holo_profile()
+			1:
+				tile.sticker_badge.apply_matching_set_profile()
+			2:
+				tile.sticker_badge.apply_rainbow_profile()

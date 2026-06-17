@@ -351,10 +351,16 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - Parental Approval sticker badge (`Scripts/UI/sticker_badge.gd`) maps rating to mall-core labels:
     - G → "Mom-Approved", PG → "Questionable", PG-13 → "Parental Guidance", R → "Grounded", NC-17 → "Banned"
   - 70×70 floating sticker badge sits above the chrome frame and title band with a randomized -4° to +4° rotation, strong drop shadow, and a hover/selection pulse
+  - Badge composition is layered: a framed sticker body, symbol texture, and a full-surface reactive holo foil (`Scripts/Shaders/sticker_holo.gdshader`)
+  - Holo foil is mouse-reactive rather than TIME-driven: pointer motion updates a silver/pearl baseline foil with smooth UV lerp, while idle badges remain visually stable
+  - Badge hover shows a non-blocking tooltip above the sticker with the full rating label; tile click ownership stays on `KioskTile`, which forwards pointer state into the badge
+  - Synergy visuals are exposed through badge API methods instead of being hardwired into `SynergyManager`: `reset_holo_profile()`, `apply_matching_set_profile()`, `apply_rainbow_profile()`, `set_holo_profile(profile)`, and `set_holo_parameter(name, value)`
+  - Future UI integration should subscribe to `SynergyManager` from the host UI layer and map `synergy_activated`, `synergy_deactivated`, `synergies_updated`, `get_rating_counts()`, or `get_active_synergies()` onto the badge API rather than letting the manager manipulate materials directly
   - Neon yellow VCR title band spans the full tile width; font auto-shrinks from 20 px down to 12 px before truncating with ellipsis (hard cap 24 characters)
   - Always-visible glossy SELL button with hover brighten/scale and press depress effect
   - Hover lift/scale, selection glow/rotation, and fan-out transforms remain additive
   - `PowerUpIcon` (`Scripts/UI/power_up_icon.gd`) wraps `KioskTile` and keeps a `use_kiosk_tile` toggle for legacy fallback
+  - Focused validation scene: `Tests/KioskTileTest.tscn` with `1` = default foil, `2` = matching-set foil preview, `3` = rainbow foil preview
 - **Consumables** (`Scripts/Consumable/`) - Single-use strategic items
   - **Lucky Upgrade** ($25): Randomly upgrades one unscored scorecard category by 1 level
   - **Half Price** ($25): Halves PowerUp prices in the shop. Stacks multiplicatively. Expires on first PowerUp purchase or new turn.
