@@ -23,6 +23,10 @@ signal consumable_sell_requested(consumable_id: String)
 @export var coupon_mode: bool = false
 @export var coupon_minimum_size: Vector2 = Vector2(480, 192)
 
+const COUPON_TITLE_MAX_WIDTH: float = 190.0
+const COUPON_TITLE_BASE_FONT_SIZE: int = 30
+const COUPON_TITLE_MIN_FONT_SIZE: int = 18
+
 # Node references - initialized in _ready
 var card_art: TextureRect
 var label_bg: PanelContainer
@@ -510,7 +514,9 @@ func _apply_data_to_ui() -> void:
 	if hover_label:
 		hover_label.text = data.description
 	if coupon_title_label:
-		coupon_title_label.text = title_text.to_upper()
+		var coupon_title_text: String = title_text.to_upper()
+		coupon_title_label.text = coupon_title_text
+		_fit_coupon_title(coupon_title_text)
 	if coupon_description_label:
 		coupon_description_label.text = data.description if data.description else "No description"
 	if coupon_flavor_label:
@@ -544,6 +550,10 @@ func _configure_coupon_layout() -> void:
 		card_info.visible = false
 	if coupon_title_label:
 		coupon_title_label.theme_type_variation = &"CouponTitle"
+		coupon_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		coupon_title_label.clip_text = true
+		coupon_title_label.custom_minimum_size.x = COUPON_TITLE_MAX_WIDTH
+		coupon_title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if coupon_description_label:
 		coupon_description_label.theme_type_variation = &"CouponBody"
 	if coupon_flavor_label:
@@ -552,6 +562,24 @@ func _configure_coupon_layout() -> void:
 		use_button.theme_type_variation = &"CouponPrimaryButton"
 	if sell_button:
 		sell_button.theme_type_variation = &"CouponSecondaryButton"
+
+func _fit_coupon_title(title_text: String) -> void:
+	if not coupon_title_label:
+		return
+
+	var title_font: Font = coupon_title_label.get_theme_font("font")
+	if not title_font:
+		coupon_title_label.add_theme_font_size_override("font_size", COUPON_TITLE_BASE_FONT_SIZE)
+		return
+
+	var chosen_size: int = COUPON_TITLE_BASE_FONT_SIZE
+	for font_size in range(COUPON_TITLE_BASE_FONT_SIZE, COUPON_TITLE_MIN_FONT_SIZE - 1, -1):
+		var measured_width: float = title_font.get_string_size(title_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size).x
+		if measured_width <= COUPON_TITLE_MAX_WIDTH:
+			chosen_size = font_size
+			break
+
+	coupon_title_label.add_theme_font_size_override("font_size", chosen_size)
 
 func _start_mouse_following() -> void:
 	_default_position = position

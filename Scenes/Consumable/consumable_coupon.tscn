@@ -64,6 +64,7 @@ mouse_filter = 2
 theme_override_constants/separation = 12
 
 [node name="IllustrationColumn" type="MarginContainer" parent="ContentRoot/ContentZone/ContentHBox"]
+custom_minimum_size = Vector2(72, 0)
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/margin_top = 54
@@ -77,20 +78,24 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="TextBlock" type="VBoxContainer" parent="ContentRoot/ContentZone/ContentHBox"]
+custom_minimum_size = Vector2(190, 0)
 layout_mode = 2
-size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_constants/separation = 8
 
 [node name="TitleLabel" type="Label" parent="ContentRoot/ContentZone/ContentHBox/TextBlock"]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_type_variation = &"CouponTitle"
 theme_override_fonts/font = ExtResource("4_g7ife")
 theme_override_font_sizes/font_size = 30
 text = "COUPON"
+horizontal_alignment = 1
+clip_text = true
 
 [node name="DescriptionLabel" type="Label" parent="ContentRoot/ContentZone/ContentHBox/TextBlock"]
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_type_variation = &"CouponBody"
 theme_override_fonts/font = ExtResource("5_rn373")
@@ -99,6 +104,7 @@ autowrap_mode = 3
 
 [node name="FlavorLabel" type="Label" parent="ContentRoot/ContentZone/ContentHBox/TextBlock"]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_type_variation = &"CouponFlavor"
 text = "VALID THIS ROUND ONLY"
 
@@ -112,6 +118,7 @@ theme_override_constants/margin_right = 4
 theme_override_constants/margin_bottom = 24
 
 [node name="ButtonStack" type="VBoxContainer" parent="ContentRoot/StubZone"]
+custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
