@@ -149,6 +149,7 @@ func _ensure_structure() -> void:
 		chrome_frame.offset_bottom = FRAME_OVERFLOW
 		chrome_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(chrome_frame)
+		print("[KioskTile] ChromeFrame created and added to node tree.")
 
 	interior_panel = get_node_or_null("InteriorPanel") as ColorRect
 	if not interior_panel:
@@ -671,8 +672,8 @@ func _setup_shader() -> void:
 	_frame_shader_material.set_shader_parameter("shadow_tint", Color(0.05, 0.04, 0.08, 1.0))
 	_frame_shader_material.set_shader_parameter("env_tint_a", Color(0.28, 0.56, 0.78, 1.0))
 	_frame_shader_material.set_shader_parameter("env_tint_b", Color(0.93, 0.42, 0.72, 1.0))
-	_frame_shader_material.set_shader_parameter("reflection_amount", 0.30)
-	_frame_shader_material.set_shader_parameter("corner_radius", 26.0)
+	_frame_shader_material.set_shader_parameter("reflection_amount", 0.90)
+	_frame_shader_material.set_shader_parameter("corner_radius", 36.0) #26.0
 	_frame_shader_material.set_shader_parameter("bezel_width", 12.0)
 	_frame_shader_material.set_shader_parameter("inner_lip_width", 2.6)
 	_frame_shader_material.set_shader_parameter("draw_outer_bezel", true)

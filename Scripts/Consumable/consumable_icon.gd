@@ -7,7 +7,7 @@ signal consumable_sell_requested(consumable_id: String)
 
 @export var data: ConsumableData
 @export var glow_intensity: float = 0.25
-@export var hover_tilt: float = 0.05
+@export var hover_tilt: float = 0.25
 @export var hover_scale: float = 1.05
 @export var transition_speed: float = 0.05
 @export var max_offset_shadow: float = 20.0
@@ -20,6 +20,8 @@ signal consumable_sell_requested(consumable_id: String)
 
 @export var angle_x_max: float = 25.0  # Maximum X rotation angle in degrees
 @export var angle_y_max: float = 25.0  # Maximum Y rotation angle in degrees
+@export var coupon_mode: bool = false
+@export var coupon_minimum_size: Vector2 = Vector2(480, 192)
 
 # Node references - initialized in _ready
 var card_art: TextureRect
@@ -31,6 +33,9 @@ var card_frame: TextureRect
 var card_info: Control  # Can be VBoxContainer initially, then PanelContainer after styling
 var card_title: RichTextLabel
 var shadow: TextureRect
+var coupon_title_label: Label
+var coupon_description_label: Label
+var coupon_flavor_label: Label
 
 var _explosion_instance: GPUParticles2D
 var _shader_material: ShaderMaterial
@@ -62,16 +67,21 @@ func _ready() -> void:
 		_create_card_structure()
 	else:
 		print("[ConsumableIcon] Children present, skipping structure creation")
-		# Get references to existing nodes
-		card_art = get_node_or_null("CardArt")
-		label_bg = get_node_or_null("LabelBg")
-		sell_button = get_node_or_null("SellButton")
-		use_button = get_node_or_null("UseButton")
-		card_frame = get_node_or_null("CardFrame")
-		card_info = get_node_or_null("CardInfo")
-		shadow = get_node_or_null("Shadow")
-		card_title = card_info.get_node_or_null("Title") if card_info else null
-		hover_label = label_bg.get_node_or_null("HoverLabel") if label_bg else null
+
+	# Coupon scenes can nest their visual nodes inside layout containers, so resolve
+	# references by name rather than assuming every control is a direct child.
+	card_art = _find_named_node("CardArt") as TextureRect
+	label_bg = _find_named_node("LabelBg") as PanelContainer
+	sell_button = _find_named_node("SellButton") as Button
+	use_button = _find_named_node("UseButton") as Button
+	card_frame = _find_named_node("CardFrame") as TextureRect
+	card_info = _find_named_node("CardInfo") as Control
+	shadow = _find_named_node("Shadow") as TextureRect
+	card_title = _find_named_node("Title") as RichTextLabel
+	hover_label = _find_named_node("HoverLabel") as Label
+	coupon_title_label = _find_named_node("TitleLabel") as Label
+	coupon_description_label = _find_named_node("DescriptionLabel") as Label
+	coupon_flavor_label = _find_named_node("FlavorLabel") as Label
 			
 	# Report missing nodes for debugging
 	if not card_art:
@@ -92,11 +102,21 @@ func _ready() -> void:
 		print("[ConsumableIcon] WARNING: HoverLabel node missing")
 	if not shadow:
 		print("[ConsumableIcon] WARNING: Shadow node missing")
+	if coupon_mode and not coupon_title_label:
+		print("[ConsumableIcon] WARNING: TitleLabel node missing in coupon mode")
+	if coupon_mode and not coupon_description_label:
+		print("[ConsumableIcon] WARNING: DescriptionLabel node missing in coupon mode")
+	if coupon_mode and not coupon_flavor_label:
+		print("[ConsumableIcon] WARNING: FlavorLabel node missing in coupon mode")
 
 	# Setup card visuals
-	custom_minimum_size = Vector2(120, 180)  # Match PowerUpIcon size
+	if coupon_mode:
+		custom_minimum_size = Vector2(maxf(custom_minimum_size.x, coupon_minimum_size.x), maxf(custom_minimum_size.y, coupon_minimum_size.y))
+	else:
+		custom_minimum_size = Vector2(120, 180)  # Match PowerUpIcon size
 	size_flags_horizontal = SIZE_SHRINK_CENTER
 	size_flags_vertical = SIZE_SHRINK_CENTER
+	_configure_coupon_layout()
 	
 	# Store default position for returning after mouse following
 	_default_position = position
@@ -106,7 +126,8 @@ func _ready() -> void:
 	if label_bg:
 		label_bg.visible = false
 	if sell_button:
-		sell_button.visible = false
+		_sell_button_visible = coupon_mode
+		sell_button.visible = coupon_mode
 		sell_button.text = "SELL"
 		if not sell_button.is_connected("pressed", _on_sell_button_pressed):
 			sell_button.pressed.connect(_on_sell_button_pressed)
@@ -117,8 +138,10 @@ func _ready() -> void:
 		if not sell_button.is_connected("pressed", _tfx.button_press.bind(sell_button)):
 			sell_button.pressed.connect(_tfx.button_press.bind(sell_button))
 	if use_button:
-		use_button.visible = false
-		use_button.text = "USE"
+		_use_button_visible = coupon_mode
+		use_button.visible = coupon_mode
+		use_button.text = "USE COUPON" if coupon_mode else "USE"
+		use_button.disabled = coupon_mode and not is_useable
 		if not use_button.is_connected("pressed", _on_use_button_pressed):
 			use_button.pressed.connect(_on_use_button_pressed)
 		if not use_button.is_connected("mouse_entered", _tfx.button_hover.bind(use_button)):
@@ -146,7 +169,7 @@ func _ready() -> void:
 		_apply_action_button_style(use_button)
 		
 	# Apply direct styling to CardInfo and Title
-	if card_info and card_title:
+	if card_info and card_title and not coupon_mode:
 		print("[ConsumableIcon] Applying direct styling to CardInfo and Title")
 		_apply_card_info_style()
 		
@@ -182,9 +205,17 @@ func _exit_tree() -> void:
 		_hover_card_tween = null
 
 func _process(delta: float) -> void:
+	if coupon_mode:
+		return
 	_update_shadow(delta)
 	_handle_mouse_following(delta)
 	_update_rotation(delta)
+
+func _find_named_node(node_name: String) -> Node:
+	var direct_node: Node = get_node_or_null(node_name)
+	if direct_node:
+		return direct_node
+	return find_child(node_name, true, false)
 
 func _update_default_position() -> void:
 	# Wait for one frame to ensure layout is complete
@@ -233,6 +264,18 @@ func _update_rotation(delta: float) -> void:
 	rotation = _displacement * 0.1
 
 func _gui_input(event: InputEvent) -> void:	
+	if coupon_mode:
+		if event is InputEventMouseButton:
+			var coupon_mouse_event = event as InputEventMouseButton
+			if coupon_mouse_event.button_index == MOUSE_BUTTON_LEFT:
+				var coupon_point = coupon_mouse_event.position
+				if sell_button and sell_button.visible and sell_button.get_rect().has_point(coupon_point - sell_button.position):
+					return
+				if use_button and use_button.visible and use_button.get_rect().has_point(coupon_point - use_button.position):
+					return
+				get_viewport().set_input_as_handled()
+		return
+
 	# Handle mouse motion for card tilt
 	if event is InputEventMouseMotion and _is_hovering and not _following_mouse:
 		_handle_mouse_tilt(event.position)
@@ -309,10 +352,10 @@ func _create_card_structure() -> void:
 	card_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	card_title.fit_content = true
 	card_title.scroll_active = false
-	card_title.add_theme_font_size_override("font_size", 16)
+	card_title.add_theme_font_size_override("font_size", 26)
 	card_title.visible = true
 	card_info.add_child(card_title)
-	card_info.theme = load("res://Resources/UI/powerup_hover_theme.tres")
+	#card_info.theme = load("res://Resources/UI/powerup_hover_theme.tres")
 	print("[DEBUG] card_info children: ", card_info.get_children())
 	
 	# Create SellButton
@@ -329,7 +372,7 @@ func _create_card_structure() -> void:
 	sell_button.mouse_entered.connect(func(): _tfx.button_hover(sell_button))
 	sell_button.mouse_exited.connect(func(): _tfx.button_unhover(sell_button))
 	sell_button.pressed.connect(func(): _tfx.button_press(sell_button))
-	sell_button.theme = load("res://Resources/UI/powerup_hover_theme.tres")
+	#sell_button.theme = load("res://Resources/UI/powerup_hover_theme.tres")
 	add_child(sell_button)
 	
 	# Create UseButton
@@ -433,24 +476,28 @@ func _apply_color_bbcode(text: String) -> String:
 func _apply_data_to_ui() -> void:
 	if not data:
 		return
+
+	var title_text = _get_title_text()
 	
 	# Set card art texture
 	if card_art:
 		if data.icon:
+			print("[ConsumableIcon] Setting card art texture for:", data.id)
 			card_art.texture = data.icon
-			card_art.custom_minimum_size = Vector2(96, 143) # match PowerUpIcon atlas region size
+			card_art.custom_minimum_size = Vector2(64, 64) if coupon_mode else Vector2(96, 143) # match PowerUpIcon atlas region size
 			card_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		else:
 			card_art.texture = preload("res://icon.svg")
+			print("[ConsumableIcon] WARNING: No icon found for", data.id, "- using placeholder")
 			
 		# Apply same texture to shadow
 		if shadow:
 			shadow.texture = card_art.texture
+	else:
+		print("[ConsumableIcon] WARNING: card_art node not found, cannot set texture for:", data.id)
 	
 	# Set text fields
 	if card_title:
-		var title_text = data.display_name if (data.display_name and data.display_name != "") else data.id
-		
 		# Auto-wrap with color BBCode
 		card_title.text = _apply_color_bbcode(title_text)
 		
@@ -462,6 +509,49 @@ func _apply_data_to_ui() -> void:
 	
 	if hover_label:
 		hover_label.text = data.description
+	if coupon_title_label:
+		coupon_title_label.text = title_text.to_upper()
+	if coupon_description_label:
+		coupon_description_label.text = data.description if data.description else "No description"
+	if coupon_flavor_label:
+		coupon_flavor_label.text = _get_coupon_flavor_text()
+	if use_button and coupon_mode:
+		use_button.text = "USE COUPON"
+		use_button.disabled = !is_useable
+	if sell_button and coupon_mode:
+		sell_button.text = "SELL"
+
+func _get_title_text() -> String:
+	if not data:
+		return ""
+	if data.display_name and data.display_name != "":
+		return data.display_name
+	return data.id
+
+func _get_coupon_flavor_text() -> String:
+	return "VALID THIS ROUND ONLY"
+
+func _configure_coupon_layout() -> void:
+	if not coupon_mode:
+		return
+	if card_art:
+		card_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	if card_frame:
+		card_frame.visible = false
+	if shadow:
+		shadow.visible = false
+	if card_info:
+		card_info.visible = false
+	if coupon_title_label:
+		coupon_title_label.theme_type_variation = &"CouponTitle"
+	if coupon_description_label:
+		coupon_description_label.theme_type_variation = &"CouponBody"
+	if coupon_flavor_label:
+		coupon_flavor_label.theme_type_variation = &"CouponFlavor"
+	if use_button:
+		use_button.theme_type_variation = &"CouponPrimaryButton"
+	if sell_button:
+		sell_button.theme_type_variation = &"CouponSecondaryButton"
 
 func _start_mouse_following() -> void:
 	_default_position = position
@@ -501,6 +591,8 @@ func _stop_mouse_following() -> void:
 
 func _on_pressed() -> void:
 	print("[ConsumableIcon] Card pressed:", data.id if data else "unknown")
+	if coupon_mode:
+		return
 	
 	# Toggle buttons visibility
 	_sell_button_visible = !_sell_button_visible
@@ -546,9 +638,13 @@ func _reset_visual_state() -> void:
 		
 	# Reset buttons
 	if sell_button:
-		sell_button.visible = _sell_button_visible
+		sell_button.visible = coupon_mode or _sell_button_visible
 	if use_button:
-		use_button.visible = _use_button_visible && is_useable
+		if coupon_mode:
+			use_button.visible = true
+			use_button.disabled = !is_useable
+		else:
+			use_button.visible = _use_button_visible && is_useable
 	
 	# Reset shadow
 	if shadow:
@@ -579,7 +675,7 @@ func set_useable(useable: bool) -> void:
 		modulate = Color(0.5, 0.5, 0.5, 0.7)
 	
 	# Update use button state - keep visible but disable if not useable
-	if use_button and _use_button_visible:
+	if use_button and (_use_button_visible or coupon_mode):
 		use_button.disabled = !is_useable
 
 func play_destruction_effect() -> void:
@@ -802,7 +898,8 @@ func _on_mouse_entered() -> void:
 		return
 	
 	_current_tween = create_tween()
-	card_info.visible = true
+	if card_info and not coupon_mode:
+		card_info.visible = true
 	
 	# Activate shimmer animation on title
 	_animate_title_shimmer(true)
@@ -826,6 +923,12 @@ func _on_mouse_entered() -> void:
 			label_bg, "scale", Vector2.ONE, transition_speed * 0.25
 		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	
+	if coupon_mode:
+		_current_tween.parallel().tween_property(
+			self, "scale", Vector2.ONE * hover_scale, 0.5
+		).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+		return
+
 	# Animate card hover effect with elastic spring effect
 	_current_tween.parallel().tween_property(
 		self, "scale", Vector2.ONE * hover_scale, 0.5
@@ -902,6 +1005,12 @@ func _on_mouse_exited() -> void:
 			if is_instance_valid(label_bg):
 				label_bg.visible = false
 		)
+
+	if coupon_mode:
+		_current_tween.parallel().tween_property(
+			self, "scale", Vector2.ONE, 0.55
+		).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+		return
 	
 	# Animate card back to normal with elastic effect
 	_current_tween.parallel().tween_property(
@@ -1128,7 +1237,7 @@ func _apply_card_info_style() -> void:
 		
 		# Apply VCR font with larger size
 		card_title.add_theme_font_override("normal_font", vcr_font)
-		card_title.add_theme_font_size_override("normal_font_size", 18)  # Bigger than before (was 16)
+		card_title.add_theme_font_size_override("normal_font_size", 38)  # Bigger than before (was 16)
 		
 		# Enhanced text styling (default color, BBCode will override)
 		card_title.add_theme_color_override("default_color", Color(1, 0.98, 0.9, 1))  # Warm white

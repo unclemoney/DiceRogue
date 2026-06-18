@@ -37,8 +37,8 @@ const HOLO_PROFILE_KEYS := [
 
 const DEFAULT_HOLO_PROFILE := {
 	"foil_intensity": 0.28,
-	"gloss_strength": 0.24,
-	"iridescence_strength": 0.16,
+	"gloss_strength": 2.24,
+	"iridescence_strength": 1.16,
 	"rainbow_strength": 0.0,
 	"grain_strength": 0.08,
 	"rim_strength": 0.22,

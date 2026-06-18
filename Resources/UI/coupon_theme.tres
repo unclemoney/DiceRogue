@@ -1,0 +1,135 @@
+[gd_resource type="Theme" load_steps=11 format=3 uid="uid://d0frhdeqw74l8"]
+
+[ext_resource type="FontFile" uid="uid://dt411vwo8is1u" path="res://Resources/Font/GillSans Condensed.otf" id="1_font"]
+[ext_resource type="Texture2D" uid="uid://cahv8n0utep3y" path="res://Resources/Art/Background/coupon_atlas.png" id="2_yg24b"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_label"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_coupon_primary_hover"]
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+bg_color = Color(0.22, 0.22, 0.22, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_coupon_primary"]
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+bg_color = Color(0.165, 0.165, 0.165, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_coupon_primary_pressed"]
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+bg_color = Color(0.1, 0.1, 0.1, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_coupon_secondary_hover"]
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+bg_color = Color(0.165, 0.165, 0.165, 0.08)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.165, 0.165, 0.165, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_coupon_secondary"]
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.165, 0.165, 0.165, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_coupon_secondary_pressed"]
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+bg_color = Color(0.165, 0.165, 0.165, 0.15)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.165, 0.165, 0.165, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_coupon_panel"]
+texture = ExtResource("2_yg24b")
+texture_margin_left = 57.0
+texture_margin_top = 26.0
+texture_margin_right = 33.0
+texture_margin_bottom = 19.0
+region_rect = Rect2(30, 106, 542, 182)
+
+[resource]
+default_font = ExtResource("1_font")
+default_font_size = 12
+CouponBody/base_type = &"Label"
+CouponBody/colors/font_color = Color(0.227, 0.227, 0.227, 1)
+CouponBody/font_sizes/font_size = 12
+CouponBody/fonts/font = ExtResource("1_font")
+CouponBody/styles/normal = SubResource("StyleBoxEmpty_label")
+CouponFlavor/base_type = &"Label"
+CouponFlavor/colors/font_color = Color(0.478, 0.478, 0.478, 1)
+CouponFlavor/font_sizes/font_size = 10
+CouponFlavor/fonts/font = ExtResource("1_font")
+CouponFlavor/styles/normal = SubResource("StyleBoxEmpty_label")
+CouponPrimaryButton/base_type = &"Button"
+CouponPrimaryButton/colors/font_color = Color(1, 1, 1, 1)
+CouponPrimaryButton/colors/font_hover_color = Color(1, 1, 1, 1)
+CouponPrimaryButton/colors/font_pressed_color = Color(1, 1, 1, 1)
+CouponPrimaryButton/font_sizes/font_size = 12
+CouponPrimaryButton/fonts/font = ExtResource("1_font")
+CouponPrimaryButton/styles/focus = SubResource("StyleBoxFlat_coupon_primary_hover")
+CouponPrimaryButton/styles/hover = SubResource("StyleBoxFlat_coupon_primary_hover")
+CouponPrimaryButton/styles/normal = SubResource("StyleBoxFlat_coupon_primary")
+CouponPrimaryButton/styles/pressed = SubResource("StyleBoxFlat_coupon_primary_pressed")
+CouponSecondaryButton/base_type = &"Button"
+CouponSecondaryButton/colors/font_color = Color(0.165, 0.165, 0.165, 1)
+CouponSecondaryButton/colors/font_hover_color = Color(0.165, 0.165, 0.165, 1)
+CouponSecondaryButton/colors/font_pressed_color = Color(0.165, 0.165, 0.165, 1)
+CouponSecondaryButton/font_sizes/font_size = 12
+CouponSecondaryButton/fonts/font = ExtResource("1_font")
+CouponSecondaryButton/styles/focus = SubResource("StyleBoxFlat_coupon_secondary_hover")
+CouponSecondaryButton/styles/hover = SubResource("StyleBoxFlat_coupon_secondary_hover")
+CouponSecondaryButton/styles/normal = SubResource("StyleBoxFlat_coupon_secondary")
+CouponSecondaryButton/styles/pressed = SubResource("StyleBoxFlat_coupon_secondary_pressed")
+CouponTitle/base_type = &"Label"
+CouponTitle/colors/font_color = Color(0.102, 0.102, 0.102, 1)
+CouponTitle/font_sizes/font_size = 18
+CouponTitle/fonts/font = ExtResource("1_font")
+CouponTitle/styles/normal = SubResource("StyleBoxEmpty_label")
+Panel/styles/panel = SubResource("StyleBoxTexture_coupon_panel")

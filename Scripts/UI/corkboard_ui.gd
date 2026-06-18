@@ -135,7 +135,7 @@ func _load_default_scenes() -> void:
 	if not consumable_spine_scene:
 		consumable_spine_scene = load("res://Scenes/UI/consumable_spine.tscn")
 	if not consumable_icon_scene:
-		consumable_icon_scene = load("res://Scenes/Consumable/consumable_icon.tscn")
+		consumable_icon_scene = load("res://Scenes/Consumable/consumable_coupon.tscn")
 
 
 func _create_background() -> void:

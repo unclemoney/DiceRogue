@@ -1,0 +1,169 @@
+[gd_scene load_steps=6 format=3 uid="uid://cssel8bnx560o"]
+
+[ext_resource type="Script" uid="uid://wcpp0kx6asg5" path="res://Scripts/Consumable/consumable_icon.gd" id="1_script"]
+[ext_resource type="Theme" uid="uid://d0frhdeqw74l8" path="res://Resources/UI/coupon_theme.tres" id="2_theme"]
+[ext_resource type="PackedScene" uid="uid://bfditmacevklt" path="res://Scenes/Effects/ConsumableExplosion.tscn" id="3_explosion"]
+[ext_resource type="FontFile" uid="uid://dl7ws7oxo8mno" path="res://Resources/Font/BRICK_SANS.ttf" id="4_g7ife"]
+[ext_resource type="FontFile" uid="uid://d30iuqvbxs6im" path="res://Resources/Font/VCR_OSD_MONO_1.001.ttf" id="5_rn373"]
+
+[node name="ConsumableCoupon" type="Panel"]
+custom_minimum_size = Vector2(480, 192)
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_script")
+explosion_effect_scene = ExtResource("3_explosion")
+coupon_mode = true
+
+[node name="Shadow" type="TextureRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="CardFrame" type="TextureRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ContentRoot" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 16.0
+offset_right = -20.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 18
+
+[node name="ContentZone" type="MarginContainer" parent="ContentRoot"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 4
+
+[node name="ContentHBox" type="HBoxContainer" parent="ContentRoot/ContentZone"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="IllustrationColumn" type="MarginContainer" parent="ContentRoot/ContentZone/ContentHBox"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_top = 54
+theme_override_constants/margin_bottom = 4
+
+[node name="CardArt" type="TextureRect" parent="ContentRoot/ContentZone/ContentHBox/IllustrationColumn"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TextBlock" type="VBoxContainer" parent="ContentRoot/ContentZone/ContentHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="ContentRoot/ContentZone/ContentHBox/TextBlock"]
+layout_mode = 2
+theme_type_variation = &"CouponTitle"
+theme_override_fonts/font = ExtResource("4_g7ife")
+theme_override_font_sizes/font_size = 30
+text = "COUPON"
+
+[node name="DescriptionLabel" type="Label" parent="ContentRoot/ContentZone/ContentHBox/TextBlock"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_type_variation = &"CouponBody"
+theme_override_fonts/font = ExtResource("5_rn373")
+text = "Coupon description"
+autowrap_mode = 3
+
+[node name="FlavorLabel" type="Label" parent="ContentRoot/ContentZone/ContentHBox/TextBlock"]
+layout_mode = 2
+theme_type_variation = &"CouponFlavor"
+text = "VALID THIS ROUND ONLY"
+
+[node name="StubZone" type="MarginContainer" parent="ContentRoot"]
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 24
+
+[node name="ButtonStack" type="VBoxContainer" parent="ContentRoot/StubZone"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="UseButton" type="Button" parent="ContentRoot/StubZone/ButtonStack"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_type_variation = &"CouponPrimaryButton"
+text = "USE COUPON"
+
+[node name="SellButton" type="Button" parent="ContentRoot/StubZone/ButtonStack"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_type_variation = &"CouponSecondaryButton"
+text = "SELL"
+
+[node name="CardInfo" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 18.0
+offset_top = 152.0
+offset_right = 260.0
+offset_bottom = 182.0
+mouse_filter = 2
+
+[node name="Title" type="RichTextLabel" parent="CardInfo"]
+custom_minimum_size = Vector2(180, 24)
+layout_mode = 2
+mouse_filter = 2
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+
+[node name="LabelBg" type="PanelContainer" parent="."]
+visible = false
+z_index = 3
+layout_mode = 0
+offset_left = 34.0
+offset_top = -58.0
+offset_right = 288.0
+offset_bottom = 8.0
+mouse_filter = 2
+
+[node name="HoverLabel" type="Label" parent="LabelBg"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]
+[connection signal="pressed" from="ContentRoot/StubZone/ButtonStack/UseButton" to="." method="_on_use_button_pressed"]
+[connection signal="pressed" from="ContentRoot/StubZone/ButtonStack/SellButton" to="." method="_on_sell_button_pressed"]

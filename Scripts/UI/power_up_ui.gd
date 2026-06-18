@@ -572,7 +572,7 @@ func _create_fanned_icons() -> void:
 const FAN_CARD_WIDTH: float = 224.0
 const FAN_CARD_HEIGHT: float = 324.0
 const FAN_CARD_SPACING: float = 112.0
-const FAN_ROW_SPACING: float = 92.0
+const FAN_ROW_SPACING: float = 27.0
 const FAN_MAX_PER_ROW: int = 4
 
 func _calculate_fan_positions(count: int) -> Array[Vector2]:

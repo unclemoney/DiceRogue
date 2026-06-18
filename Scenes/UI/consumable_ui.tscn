@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://dv0gypvmv4bb"]
 
 [ext_resource type="Script" uid="uid://cjxupagn6l5ew" path="res://Scripts/UI/consumable_ui.gd" id="1_ske02"]
-[ext_resource type="PackedScene" uid="uid://dwa71k4xfaupc" path="res://Scenes/Consumable/consumable_icon.tscn" id="2_icon"]
+[ext_resource type="PackedScene" path="res://Scenes/Consumable/consumable_coupon.tscn" id="2_icon"]
 [ext_resource type="PackedScene" uid="uid://cvicvqokxv4rj" path="res://Scenes/UI/consumable_spine.tscn" id="3_spine"]
 
 [node name="ConsumableUI" type="Control" groups=["consumable_ui"]]

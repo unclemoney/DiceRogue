@@ -1280,6 +1280,7 @@ var total_matching = synergy_manager.get_total_matching_bonus()
 - **PowerUp Slot Rules**: Players start with 5 PowerUp slots and can upgrade to a hard cap of 7
 - **Consumable Slot Rules**: Players have a fixed cap of 4 consumables. The compact row displays 3 visible consumable tiles and a fourth overflow slot that shows `+1` when all 4 slots are filled
 - **Spine/Fan System**: PowerUps and Consumables collapse into compact upper-bar tiles and fan out into full cards for interaction
+- **Consumable Coupon Fanout**: Fanned consumables now render as horizontal newspaper-style coupons with visible body copy and always-visible `USE COUPON` / `SELL` stub buttons, while the compact spine row remains unchanged
 - **PowerUpUI** (`Scripts/UI/power_up_ui.gd`) - Manages power-up display
 - **ConsumableUI** (`Scripts/UI/consumable_ui.gd`) - Manages consumable display
 - **ShopUI** (`Scripts/UI/shop_ui.gd`) - In-game purchasing with reroll functionality
@@ -1322,7 +1323,7 @@ SELL and USE buttons throughout the game feature consistent themed styling:
   - Hover: Lighter background with brighter border (1, 0.9, 0.3, 1)
   - Pressed: Brightest background with yellow border (1, 1, 0.4, 1)
 - **PowerUp SELL Buttons**: Themed sell buttons with debug output for verification
-- **Consumable USE Buttons**: Themed use buttons with identical styling
+- **Consumable Coupon Buttons**: Coupon fanout uses a dedicated scoped theme (`Resources/UI/coupon_theme.tres`) for the visible `USE COUPON` and `SELL` stub actions without affecting global button defaults
 - **Mod SELL Buttons**: High z-index themed buttons for proper UI layering
 - **Reliable Implementation**: Direct theme override application ensures consistent appearance
 

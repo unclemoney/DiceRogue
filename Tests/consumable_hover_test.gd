@@ -6,7 +6,7 @@ extends Control
 
 func _ready() -> void:
 	test_label = Label.new()
-	test_label.text = "Testing Consumable Hover Tooltips - Hover over the consumable icon below"
+	test_label.text = "Testing Consumable Coupon Hover - Hover over the coupon below"
 	test_label.position = Vector2(10, 10)
 	add_child(test_label)
 	
@@ -17,8 +17,8 @@ func _create_test_consumable() -> void:
 	var test_consumable_data = load("res://Scripts/Consumable/QuickCashConsumable.tres") as ConsumableData
 	
 	if test_consumable_data:
-		var consumable_icon = preload("res://Scenes/Consumable/consumable_icon.tscn").instantiate() as ConsumableIcon
-		consumable_icon.position = Vector2(100, 100)
+		var consumable_icon = preload("res://Scenes/Consumable/consumable_coupon.tscn").instantiate() as ConsumableIcon
+		consumable_icon.position = Vector2(60, 100)
 		consumable_icon.data = test_consumable_data
 		add_child(consumable_icon)
 		print("[ConsumableHoverTest] Created consumable icon: ", test_consumable_data.display_name)

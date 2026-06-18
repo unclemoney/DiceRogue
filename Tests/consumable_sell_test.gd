@@ -26,7 +26,7 @@ func _ready() -> void:
 	_log("=== Consumable Sell Test Ready ===")
 	_log("Step 1: Click [color=yellow]Add 3 Consumables[/color]")
 	_log("Step 2: Click a spine to fan out cards")
-	_log("Step 3: Hover a card, then click SELL")
+	_log("Step 3: Use the coupon stub buttons to click SELL or USE COUPON")
 	_log("Watch the debug output below for every signal and state change.")
 
 

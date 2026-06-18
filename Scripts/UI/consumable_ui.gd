@@ -49,6 +49,8 @@ const COMPACT_SLOT_COUNT: int = 4
 const COMPACT_SLOT_SIZE: Vector2 = Vector2(72, 40)
 const COMPACT_SLOT_SPACING: int = 6
 const COMPACT_ROW_MARGIN: int = 2
+const COUPON_FAN_CARD_SIZE: Vector2 = Vector2(480, 192)
+const COUPON_FAN_CARD_MARGIN: float = 24.0
 
 # Compact row state
 var _consumable_order: Array[String] = []
@@ -77,7 +79,7 @@ func _ready() -> void:
 	
 	# Load scenes if not set
 	if not consumable_icon_scene:
-		consumable_icon_scene = load("res://Scenes/Consumable/consumable_icon.tscn")
+		consumable_icon_scene = load("res://Scenes/Consumable/consumable_coupon.tscn")
 		if not consumable_icon_scene:
 			push_error("[ConsumableUI] Failed to load consumable_icon scene")
 	
@@ -698,10 +700,9 @@ func _calculate_fan_positions(count: int) -> Array[Vector2]:
 	if count == 0:
 		return positions
 	
-	# Card dimensions (match ConsumableIcon size)
-	var card_width: float = 120.0  # ConsumableIcon width
-	var spacing: float = 64.0  # Space between cards (prevents button overlap)
-	var card_spacing: float = card_width + spacing  # Total space per card
+	var card_width: float = COUPON_FAN_CARD_SIZE.x
+	var card_height: float = COUPON_FAN_CARD_SIZE.y
+	var spacing: float = COUPON_FAN_CARD_MARGIN
 	
 	# Screen center
 	var center_x: float = _fan_center.x
@@ -709,31 +710,33 @@ func _calculate_fan_positions(count: int) -> Array[Vector2]:
 	
 	print("[ConsumableUI] Calculating fan positions for ", count, " cards")
 	print("[ConsumableUI] Center position: ", _fan_center)
-	print("[ConsumableUI] Card width: ", card_width, ", Spacing: ", spacing, ", Total per card: ", card_spacing)
+	print("[ConsumableUI] Card size: ", COUPON_FAN_CARD_SIZE, ", Spacing: ", spacing)
 	
-	if count == 1:
-		# Single card in center
-		var pos: Vector2 = Vector2(center_x - card_width / 2.0, center_y)
-		positions.append(pos)
-		print("[ConsumableUI] Single card position: ", pos)
-	elif count == 2:
-		# Two cards: left and right of center
-		var offset: float = card_spacing / 2.0
-		var left_pos: Vector2 = Vector2(center_x - offset - card_width / 2.0, center_y)
-		var right_pos: Vector2 = Vector2(center_x + offset - card_width / 2.0, center_y)
-		positions.append(left_pos)
-		positions.append(right_pos)
-		print("[ConsumableUI] Two cards - Left: ", left_pos, ", Right: ", right_pos)
-	else:
-		# Three or more cards: spread horizontally from center
-		var total_width: float = (count - 1) * card_spacing
-		var start_x: float = center_x - total_width / 2.0 - card_width / 2.0
-		
+	if count <= 3:
+		# Stack up to 3 coupons in a single centered column.
+		var total_height: float = count * card_height + (count - 1) * spacing
+		var start_x: float = center_x - card_width / 2.0
+		var start_y: float = center_y - total_height / 2.0
 		for i in range(count):
-			var pos_x: float = start_x + i * card_spacing
-			var pos: Vector2 = Vector2(pos_x, center_y)
+			var pos: Vector2 = Vector2(start_x, start_y + i * (card_height + spacing))
 			positions.append(pos)
-			print("[ConsumableUI] Card ", i, " position: ", pos)
+			print("[ConsumableUI] Column card ", i, " position: ", pos)
+	else:
+		# 4 coupons render as a centered 2x2 matrix.
+		var columns: int = 2
+		var rows: int = ceili(float(count) / float(columns))
+		var total_width: float = columns * card_width + (columns - 1) * spacing
+		var total_height: float = rows * card_height + (rows - 1) * spacing
+		var start_x: float = center_x - total_width / 2.0
+		var start_y: float = center_y - total_height / 2.0
+		for i in range(count):
+			var column: int = i % columns
+			var row: int = floori(float(i) / float(columns))
+			var pos_x: float = start_x + column * (card_width + spacing)
+			var pos_y: float = start_y + row * (card_height + spacing)
+			var pos: Vector2 = Vector2(pos_x, pos_y)
+			positions.append(pos)
+			print("[ConsumableUI] Grid card ", i, " position: ", pos)
 	
 	return positions
 
