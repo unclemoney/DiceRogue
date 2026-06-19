@@ -107,6 +107,8 @@ func _ready():
 		_apply_hover_tooltip_style(color_label_bg)
 		_apply_hover_label_style(color_hover_label)
 		
+	_configure_mod_container()
+		
 	set_dice_input_enabled(true)
 	set_lock_shader_enabled(true)
 
@@ -261,6 +263,11 @@ func set_lock_shader_enabled(enabled: bool) -> void:
 
 func animate_roll():
 	_stop_idle_breathing()
+	if TweenFX.is_playing(self, TweenFX.Animations.UPGRADE):
+		scale = Vector2.ONE
+		modulate = Color.WHITE
+	if _tfx:
+		_tfx.stop_specific(self, TweenFX.Animations.UPGRADE)
 	
 	if _roll_tween and _roll_tween.is_valid():
 		_roll_tween.kill()
@@ -437,7 +444,7 @@ func toggle_lock():
 ##
 ## Animates the die entering with multi-phase bouncy overshoot and elastic settle.
 ## Includes scale pop, rotation wobble, and fade-in for juicy feel.
-func animate_entry(from_position: Vector2, duration := 0.6) -> void:
+func animate_entry(from_position: Vector2, _duration := 0.6) -> void:
 	position = from_position
 	scale = Vector2(0.4, 0.4)
 	modulate.a = 0.0
@@ -492,7 +499,7 @@ signal exit_complete(die: Dice)
 ##
 ## Animates the die exiting with explosion effect: scale punch, spin,
 ## perpendicular scatter, alpha fade, and white flash on launch.
-func animate_exit(to_position: Vector2, duration := 0.5) -> void:
+func animate_exit(to_position: Vector2, _duration := 0.5) -> void:
 	_stop_idle_breathing()
 	
 	if _exit_tween and _exit_tween.is_valid():
@@ -596,6 +603,25 @@ func shake_denied() -> void:
 	# Ensure we end up at home position
 	tween.tween_property(self, "position", home_position, 0.1)
 
+
+func _get_die_bounds_size() -> Vector2:
+	var shape_node = get_node_or_null("CollisionShape2D")
+	if shape_node and shape_node.shape is RectangleShape2D:
+		return shape_node.shape.size
+	return Vector2(64, 64)
+
+
+func _configure_mod_container() -> void:
+	if not mod_container:
+		return
+
+	var bounds := _get_die_bounds_size()
+	mod_container.position = -bounds / 2.0
+	mod_container.custom_minimum_size = bounds
+	mod_container.size = bounds
+	mod_container.clip_contents = false
+	mod_container.mouse_filter = Control.MOUSE_FILTER_PASS
+
 func add_mod(mod_data: ModData) -> void:
 	if active_mods.has(mod_data.id):
 		print("[Dice] Mod already active:", mod_data.id)
@@ -627,12 +653,14 @@ func add_mod(mod_data: ModData) -> void:
 	if not icon.is_connected("mod_sell_requested", _on_mod_sell_requested):
 		icon.mod_sell_requested.connect(_on_mod_sell_requested)
 	
+	_configure_mod_container()
 	mod_container.add_child(icon)
 	
 	# Position icon in bottom right
+	var container_size := mod_container.size if mod_container.size != Vector2.ZERO else _get_die_bounds_size()
 	icon.position = Vector2(
-		mod_container.size.x - icon.size.x - 2,
-		mod_container.size.y - icon.size.y - 2
+		maxf(2.0, container_size.x - icon.size.x - 2.0),
+		maxf(2.0, container_size.y - icon.size.y - 2.0)
 	)
 	
 	# Juice: mod attachment effect
