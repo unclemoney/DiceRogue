@@ -2,6 +2,8 @@ extends Control
 class_name ScoreCardUI
 
 const UPGRADE_PARTICLES := preload("res://Scenes/Effects/ScorecardUpgradeParticles.tscn")
+const POWER_UP_HIGHLIGHT_SHADER := preload("res://Scripts/Shaders/scorecard_highlight_border.gdshader")
+const POWER_UP_TRIGGER_PARTICLES := preload("res://Scenes/Effects/ConsumableExplosion.tscn")
 
 var scorecard: Scorecard
 var category_buttons := {}
@@ -75,6 +77,8 @@ var _highlighted_button: Button
 var _idle_float_tween: Tween
 var _shimmer_tween: Tween
 var _counter_tween: Tween
+var _power_up_highlight_button: Button
+var _power_up_trigger_tween: Tween
 
 const SUMMARY_PANEL_BG := Color(0.247059, 0.219608, 0.345098, 0.94)
 const SUMMARY_PANEL_BG_SOFT := Color(0.247059, 0.219608, 0.345098, 0.55)
@@ -154,6 +158,9 @@ func _exit_tree() -> void:
 	if _extra_info_tween and _extra_info_tween.is_valid():
 		_extra_info_tween.kill()
 		_extra_info_tween = null
+	if _power_up_trigger_tween and _power_up_trigger_tween.is_valid():
+		_power_up_trigger_tween.kill()
+		_power_up_trigger_tween = null
 	if _highlight_tween and _highlight_tween.is_valid():
 		_highlight_tween.kill()
 		_highlight_tween = null
@@ -172,6 +179,7 @@ func _exit_tree() -> void:
 	if _counter_tween and _counter_tween.is_valid():
 		_counter_tween.kill()
 		_counter_tween = null
+	clear_power_up_highlight()
 
 
 ## _apply_custom_theme()
@@ -197,6 +205,7 @@ func _apply_compact_button_styles() -> void:
 	_apply_section_header_styles(profile)
 	_apply_row_styles_to_grid("VBoxContainer/UpperVBoxContainer/UpperGridContainer", profile)
 	_apply_row_styles_to_grid("VBoxContainer/LowerVBoxContainer/LowerGridContainer", profile)
+	_refresh_power_up_highlight_theme()
 
 	for margin_path in ["VBoxContainer/ScoreSummaryContainer/BestHandPanel/MarginContainer", "VBoxContainer/ScoreSummaryContainer/TotalScorePanel/MarginContainer", "LogbookPanel/MarginContainer"]:
 		var margin = get_node_or_null(margin_path)
@@ -330,6 +339,158 @@ func _style_row_button(button: Button, profile: Dictionary, button_styles: Dicti
 	button.add_theme_constant_override("outline_size", 1)
 	button.custom_minimum_size.x = ROW_SECTION_MIN_WIDTH if is_summary_row else ROW_CATEGORY_MIN_WIDTH
 	button.custom_minimum_size.y = ROW_HEIGHT
+
+
+## set_power_up_highlight(section, category)
+##
+## Applies the Highlighted Score power-up border shader to the requested score button.
+## Returns false if the target button is not currently available in the scorecard UI.
+func set_power_up_highlight(section: Scorecard.Section, category: String) -> bool:
+	clear_power_up_highlight()
+	var button = _get_scorecard_button(section, category)
+	if not button:
+		push_error("[ScoreCardUI] Could not find score button for Highlighted Score: %s" % category)
+		return false
+
+	var overlay = _ensure_power_up_highlight_overlay(button)
+	var shader_mat = overlay.material as ShaderMaterial
+	if shader_mat:
+		shader_mat.set_shader_parameter("effect_strength", 1.0)
+		shader_mat.set_shader_parameter("trigger_progress", 0.0)
+
+	_power_up_highlight_button = button
+	return true
+
+
+## clear_power_up_highlight()
+##
+## Removes the Highlighted Score power-up border overlay from all score buttons.
+func clear_power_up_highlight() -> void:
+	if _power_up_trigger_tween and _power_up_trigger_tween.is_valid():
+		_power_up_trigger_tween.kill()
+		_power_up_trigger_tween = null
+
+	_power_up_highlight_button = null
+	for button in upper_section_buttons.values():
+		_remove_power_up_highlight_overlay(button)
+	for button in lower_section_buttons.values():
+		_remove_power_up_highlight_overlay(button)
+
+
+## play_power_up_highlight_trigger(section, category)
+##
+## Plays the highlighted-score bonus burst on the scored category after the multiplier lands.
+func play_power_up_highlight_trigger(section: Scorecard.Section, category: String) -> void:
+	var button = _get_scorecard_button(section, category)
+	if not button:
+		return
+
+	var overlay = _ensure_power_up_highlight_overlay(button)
+	var shader_mat = overlay.material as ShaderMaterial
+	if _power_up_trigger_tween and _power_up_trigger_tween.is_valid():
+		_power_up_trigger_tween.kill()
+		_power_up_trigger_tween = null
+
+	if shader_mat:
+		shader_mat.set_shader_parameter("effect_strength", 1.0)
+		shader_mat.set_shader_parameter("trigger_progress", 0.0)
+
+	_power_up_trigger_tween = create_tween()
+	if shader_mat:
+		_power_up_trigger_tween.tween_method(func(v: float): shader_mat.set_shader_parameter("trigger_progress", v), 0.0, 1.0, 0.42)
+
+	_spawn_power_up_highlight_particles(button)
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.has_method("play_firework_sound"):
+		audio_mgr.play_firework_sound()
+
+
+func _get_scorecard_button(section: Scorecard.Section, category: String) -> Button:
+	if section == Scorecard.Section.UPPER:
+		return upper_section_buttons.get(category)
+	return lower_section_buttons.get(category)
+
+
+func _ensure_power_up_highlight_overlay(button: Button) -> ColorRect:
+	var overlay = button.get_node_or_null("HighlightedScoreBorder") as ColorRect
+	if overlay:
+		_configure_power_up_highlight_overlay(overlay)
+		return overlay
+
+	overlay = ColorRect.new()
+	overlay.name = "HighlightedScoreBorder"
+	overlay.color = Color.WHITE
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.offset_left = 0.0
+	overlay.offset_top = 0.0
+	overlay.offset_right = 0.0
+	overlay.offset_bottom = 0.0
+	overlay.z_index = 1
+	var shader_mat = ShaderMaterial.new()
+	shader_mat.shader = POWER_UP_HIGHLIGHT_SHADER
+	overlay.material = shader_mat
+	button.add_child(overlay)
+	_configure_power_up_highlight_overlay(overlay)
+	return overlay
+
+
+func _configure_power_up_highlight_overlay(overlay: ColorRect) -> void:
+	var shader_mat = overlay.material as ShaderMaterial
+	if not shader_mat:
+		return
+
+	var base = SUMMARY_ADDITIVE
+	var chase = SUMMARY_POSITIVE
+	if _row_contrast_profile == "light":
+		base = Color(1.0, 0.760784, 0.827451, 1.0)
+		chase = Color(0.513726, 0.917647, 0.921569, 1.0)
+
+	shader_mat.set_shader_parameter("base_color", base)
+	shader_mat.set_shader_parameter("chase_color", chase)
+	shader_mat.set_shader_parameter("burst_color", Color(1.0, 0.952941, 0.784314, 1.0))
+	shader_mat.set_shader_parameter("effect_strength", 1.0)
+
+
+func _remove_power_up_highlight_overlay(button: Button) -> void:
+	if not button:
+		return
+	for child in button.get_children():
+		if "HighlightedScoreBorder" in child.name and is_instance_valid(child):
+			child.queue_free()
+
+
+func _refresh_power_up_highlight_theme() -> void:
+	if not _power_up_highlight_button:
+		return
+	var overlay = _power_up_highlight_button.get_node_or_null("HighlightedScoreBorder") as ColorRect
+	if overlay:
+		_configure_power_up_highlight_overlay(overlay)
+
+
+func _spawn_power_up_highlight_particles(button: Button) -> void:
+	if not POWER_UP_TRIGGER_PARTICLES or not get_tree() or not get_tree().root:
+		return
+
+	var particles = POWER_UP_TRIGGER_PARTICLES.instantiate() as GPUParticles2D
+	if not particles:
+		return
+
+	get_tree().root.add_child(particles)
+	particles.global_position = button.get_global_transform_with_canvas().origin + (button.size / 2.0)
+	particles.scale = Vector2(0.35, 0.35)
+	particles.modulate = Color(1.0, 0.882353, 0.623529, 1.0)
+	particles.z_index = 120
+	if particles.has_method("restart"):
+		particles.restart()
+	else:
+		particles.emitting = true
+
+	var cleanup_delay = particles.lifetime + 0.5
+	get_tree().create_timer(cleanup_delay).timeout.connect(func():
+		if is_instance_valid(particles):
+			particles.queue_free()
+	)
 
 
 func _build_row_button_styles(profile: Dictionary) -> Dictionary:

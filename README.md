@@ -329,6 +329,7 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
 - **PlayerEconomy** (autoload) - Money and shop transactions
 - **PowerUps** (`Scripts/PowerUps/`) - Permanent scoring bonuses
   - **FullHousePowerUp**: Grants $7 × (total full houses rolled) for each new full house
+  - **Highlighted Score**: Marks one open scorecard category with a chasing neon border; scoring that category grants a 1.5× multiplier and triggers a burst celebration before the highlight moves.
   - **New Wave PowerUps** (10 total): Purple Payout, Mod Money, Blue Safety Net, Chore Sprint, Straight Triplet Master, Modded Dice Mastery, Debuff Destroyer, Challenge Easer, Azure Perfection, Rainbow Surge
     - Themes: dice color synergies, mod-powerup synergies, straight combos, economy/chores, debuff management, challenge easing
   - **Risk & Reward PowerUps** (6 total):

@@ -14,7 +14,7 @@ var scorecard_ui_ref: ScoreCardUI = null
 # Currently highlighted category
 var highlighted_section: Scorecard.Section = Scorecard.Section.UPPER
 var highlighted_category: String = ""
-var highlighted_button: Button = null
+var _trigger_feedback_pending: bool = false
 
 # Multiplier configuration
 var highlight_multiplier: float = 1.5
@@ -88,7 +88,7 @@ func remove(target) -> void:
 	
 	scorecard_ref = null
 	scorecard_ui_ref = null
-	highlighted_button = null
+	_trigger_feedback_pending = false
 
 func _on_about_to_score(section: Scorecard.Section, category: String, _dice_values: Array[int]) -> void:
 	print("[HighlightedScorePowerUp] About to score:", category, "in section:", section)
@@ -97,6 +97,7 @@ func _on_about_to_score(section: Scorecard.Section, category: String, _dice_valu
 	# Check if this is the highlighted category
 	if section == highlighted_section and category == highlighted_category:
 		print("[HighlightedScorePowerUp] Scoring highlighted category! Applying 1.5x multiplier")
+		_trigger_feedback_pending = true
 		
 		# Register the multiplier for this scoring
 		var modifier_manager = _get_modifier_manager()
@@ -106,39 +107,33 @@ func _on_about_to_score(section: Scorecard.Section, category: String, _dice_valu
 		else:
 			push_error("[HighlightedScorePowerUp] Could not find ScoreModifierManager")
 
-func _on_score_assigned(_section: Scorecard.Section, category: String, score: int) -> void:
+func _on_score_assigned(section: Scorecard.Section, category: String, score: int) -> void:
 	print("[HighlightedScorePowerUp] Score assigned:", category, "=", score)
+	var scored_highlighted_category = _trigger_feedback_pending and section == highlighted_section and category == highlighted_category
+	_trigger_feedback_pending = false
 	
 	# Clear the multiplier after scoring (only applied to one score)
 	var modifier_manager = _get_modifier_manager()
 	if modifier_manager and modifier_manager.has_multiplier(modifier_source_name):
 		modifier_manager.unregister_multiplier(modifier_source_name)
 		print("[HighlightedScorePowerUp] Cleared multiplier after scoring")
+
+	if scored_highlighted_category and scorecard_ui_ref:
+		scorecard_ui_ref.play_power_up_highlight_trigger(section, category)
+		if is_inside_tree() and get_tree():
+			get_tree().create_timer(0.42).timeout.connect(_advance_highlight_after_score)
+		else:
+			_advance_highlight_after_score()
+		return
 	
 	# Always clear current highlight and choose a new one after ANY score is assigned
 	print("[HighlightedScorePowerUp] Any category was scored, selecting new highlight")
-	_clear_highlight()
-	
-	# Delay highlighting to allow UI to update
-	call_deferred("_highlight_random_category")
+	_advance_highlight_after_score()
 
 func _clear_all_highlights() -> void:
 	if not scorecard_ui_ref:
 		return
-	
-	for btn in scorecard_ui_ref.upper_section_buttons.values():
-		if is_instance_valid(btn):
-			btn.remove_theme_stylebox_override("normal")
-			btn.remove_theme_stylebox_override("hover")
-			btn.remove_theme_stylebox_override("pressed")
-	
-	for btn in scorecard_ui_ref.lower_section_buttons.values():
-		if is_instance_valid(btn):
-			btn.remove_theme_stylebox_override("normal")
-			btn.remove_theme_stylebox_override("hover")
-			btn.remove_theme_stylebox_override("pressed")
-	
-	highlighted_button = null
+	scorecard_ui_ref.clear_power_up_highlight()
 
 func _highlight_random_category() -> void:
 	if not scorecard_ref or not scorecard_ui_ref:
@@ -198,49 +193,21 @@ func _get_unscored_categories() -> Array:
 func _apply_visual_highlight() -> void:
 	if not scorecard_ui_ref or highlighted_category == "":
 		return
-	
-	# Get the button for the highlighted category
-	var button: Button = null
-	
-	if highlighted_section == Scorecard.Section.UPPER:
-		button = scorecard_ui_ref.upper_section_buttons.get(highlighted_category)
-	else:
-		button = scorecard_ui_ref.lower_section_buttons.get(highlighted_category)
-	
-	if button:
-		highlighted_button = button
-		
-		# Apply highlight styling - golden glow effect
-		var style_box = StyleBoxFlat.new()
-		style_box.bg_color = Color(1.0, 0.8, 0.0, 0.3)  # Golden with transparency
-		style_box.border_width_left = 3
-		style_box.border_width_right = 3
-		style_box.border_width_top = 3
-		style_box.border_width_bottom = 3
-		style_box.border_color = Color(1.0, 0.8, 0.0, 0.8)  # Golden border
-		style_box.corner_radius_top_left = 8
-		style_box.corner_radius_top_right = 8
-		style_box.corner_radius_bottom_left = 8
-		style_box.corner_radius_bottom_right = 8
-		
-		# Apply the highlight style
-		button.add_theme_stylebox_override("normal", style_box)
-		button.add_theme_stylebox_override("hover", style_box)
-		button.add_theme_stylebox_override("pressed", style_box)
-		
-		print("[HighlightedScorePowerUp] Applied golden highlight to", highlighted_category, "button")
+	if scorecard_ui_ref.set_power_up_highlight(highlighted_section, highlighted_category):
+		print("[HighlightedScorePowerUp] Applied shader highlight to", highlighted_category, "button")
 	else:
 		push_error("[HighlightedScorePowerUp] Could not find button for category:", highlighted_category)
 
 func _clear_highlight() -> void:
-	if highlighted_button and is_instance_valid(highlighted_button):
-		# Remove theme overrides to restore original styling
-		highlighted_button.remove_theme_stylebox_override("normal")
-		highlighted_button.remove_theme_stylebox_override("hover") 
-		highlighted_button.remove_theme_stylebox_override("pressed")
-		
+	if scorecard_ui_ref:
+		scorecard_ui_ref.clear_power_up_highlight()
 		print("[HighlightedScorePowerUp] Cleared highlight from", highlighted_category, "button")
-		highlighted_button = null
+
+
+func _advance_highlight_after_score() -> void:
+	print("[HighlightedScorePowerUp] Any category was scored, selecting new highlight")
+	_clear_highlight()
+	call_deferred("_highlight_random_category")
 
 func _get_modifier_manager():
 	# ScoreModifierManager is a registered autoload — use direct reference
