@@ -1395,7 +1395,7 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 - `PowerUpTest.tscn` - Power-up functionality
 - `MultiplierManagerTest.tscn` - Score modifier system
 - `TutorialTest.tscn` - Tutorial system with mock UI elements
-- `GamingConsoleTest.tscn` - All 6 gaming consoles (Atari, NES, SNES, Sega, PlayStation, Sega Saturn): spawn, apply, activate, reset, UI show/hide
+- `GamingConsoleTest.tscn` - All 6 gaming consoles (Atari, NES, SNES, Sega, PlayStation, Sega Saturn): spawn, apply, activate, reset, compact spine rendering, VIP fan-out card open/close, and console UI state sync
 
 ## TweenFX Animation System
 
@@ -1774,17 +1774,34 @@ Gaming Consoles are a unique item class that provides powerful, specialized abil
 - **Shop Tab**: All consoles appear in the dedicated "Consoles" tab, filtered by unlock status and current ownership.
 - **Unlock Progression**: Consoles are locked behind ProgressManager milestones and unlock as the player advances.
 - **Round Reset**: Active-use consoles reset their remaining uses at the start of each round.
-- **UI Display**: The active console appears above the VCR area with an icon, name, and ACTIVATE button (for non-passive consoles).
-- **Hover Tooltip**: Hovering the console UI shows a gold-bordered tooltip with the console's power description.
+- **VIP Spine HUD**: The owned console now appears as a horizontal VIP spine in the console panel with preview art, title, state LED, and an Activate button.
+- **Fan-Out Card View**: Clicking the spine body opens a full VIP card overlay with larger art, live description text, and a second Activate button.
+- **Dual Activation Surfaces**: Active consoles can be triggered from either the compact spine button or the expanded VIP card button.
+- **State Feedback**: The spine and full card mirror runtime states such as `READY`, `RESTORE`, `USED`, `PICK DIE`, `CHOOSE...`, and `1.5x READY`.
+- **Context Popups Stay Separate**: NES die-adjust buttons and Sega Saturn tilt choices still appear as dedicated gameplay popups instead of being embedded into the VIP card.
+- **Placeholder VIP Art**: The default console resources currently point at `Resources/Art/Cards/card_1.png` through `card_6.png`; these are intended to be swapped with final artwork later.
+
+### VIP Card Shader Themes
+- **Oringius Julius**: Orange-juice refraction, bubble distortion, and liquid shimmer.
+- **Arcadia Arcade**: CRT scanlines, RGB drift, and neon edge glow.
+- **Walden Pond Books**: Paper grain, emboss lighting, and ink-softened matte finish.
+- **Hobby Have**: Paint splatter overlays with shifting glossy highlights.
+- **J-Mart**: Blue-light beacon pulse with halftone dot bloom.
+- **Downtown Video Rentals**: VHS drift, noise bands, and analog tracking flicker.
 
 ### Architecture & File Locations
 - **Data Resource**: `Scripts/GamingConsole/gaming_console_data.gd` — `GamingConsoleData` extends `Resource`
+- **VIP Resource Fields**: `vip_card_art` and `vip_card_shader_key` on `GamingConsoleData` define the large card art and art-panel shader used by the console UI.
 - **Base Class**: `Scripts/GamingConsole/gaming_console.gd` — `GamingConsole` extends `Node2D`
 - **Implementations**: `Scripts/GamingConsole/{atari,nes,snes,sega,playstation,sega_saturn}_console.gd`
 - **Scenes**: `Scenes/GamingConsole/{Atari,Nes,Snes,Sega,Playstation,SegaSaturn}Console.tscn`
 - **Resources**: `Resources/Data/GamingConsoles/{Atari,Nes,Snes,Sega,Playstation,SegaSaturn}Console.tres`
 - **Manager**: `Scripts/Managers/gaming_console_manager.gd` + `Scenes/Managers/gaming_console_manager.tscn`
 - **UI**: `Scripts/UI/gaming_console_ui.gd` + `Scenes/UI/gaming_console_ui.tscn`
+- **Compact Spine**: `Scripts/UI/gaming_console_spine.gd` + `Scenes/UI/gaming_console_spine.tscn`
+- **Expanded VIP Card**: `Scripts/UI/gaming_console_vip_card.gd` + `Scenes/UI/gaming_console_vip_card.tscn`
+- **Shader Helper**: `Scripts/UI/gaming_console_card_fx.gd`
+- **VIP Card Shaders**: `Scripts/Shaders/{oringius_julius,arcadia_arcade,walden_pond_books,hobby_have,j_mart,downtown_video_rentals}_vip_card.gdshader`
 - **Shop Integration**: Consoles tab added to `Scripts/UI/shop_ui.gd`
 - **Game Controller**: Purchase flow, activation, and reset logic in `Scripts/Core/game_controller.gd`
 

@@ -3,12 +3,16 @@ class_name GamingConsoleUI
 
 ## GamingConsoleUI
 ##
-## Displays the currently owned gaming console above the VCR.
-## Shows console icon, name, and an ACTIVATE button (or "ACTIVE" for passives).
-## Includes TweenFX breathe pulse on the button and a hover tooltip.
+## Coordinates the owned gaming console presentation.
+## Shows a compact horizontal VIP spine in the HUD and a single-card
+## fan-out view in an overlay while preserving the existing gameplay API.
 
 signal activate_pressed
 signal console_removed
+
+const GamingConsoleSpineScene := preload("res://Scenes/UI/gaming_console_spine.tscn")
+const GamingConsoleVIPCardScene := preload("res://Scenes/UI/gaming_console_vip_card.tscn")
+const FanOverlayHelperRef = preload("res://Scripts/UI/fan_overlay_helper.gd")
 
 @export var gaming_console_manager_path: NodePath
 
@@ -16,19 +20,19 @@ var _console_data: GamingConsoleData = null
 var _console_instance: GamingConsole = null
 var _tfx = null
 
-# UI nodes (created dynamically)
-var _icon_rect: TextureRect = null
-var _name_label: Label = null
-var _activate_button: Button = null
-var _tooltip_panel: PanelContainer = null
-var _tooltip_label: Label = null
-var _container: VBoxContainer = null
 var _bg_panel: PanelContainer = null
+var _compact_spine = null
+var _vip_card = null
+var _fan_background: ColorRect = null
+var _is_fanned: bool = false
 
 # Power Glove popup
 var _power_glove_popup: PanelContainer = null
 # Cartridge Tilt popup
 var _tilt_popup: PanelContainer = null
+
+var _blast_glow_active: bool = false
+var _nes_die_buttons: Array = []
 
 var vcr_font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 
@@ -40,99 +44,94 @@ const PANEL_BORDER := Color(0.713725, 0.301961, 0.478431, 1.0)
 const PANEL_ACCENT := Color(0.137255, 0.411765, 0.415686, 1.0)
 const PANEL_TEXT := Color(0.968627, 0.941176, 1.0, 1.0)
 const PANEL_OUTLINE := Color(0.129412, 0.121569, 0.2, 1.0)
+const READY_ACCENT := Color(0.984314, 0.839216, 0.294118, 1.0)
+const PASSIVE_ACCENT := Color(0.392157, 0.866667, 0.521569, 1.0)
+const USED_ACCENT := Color(0.713725, 0.301961, 0.478431, 1.0)
+const MUTED_STATUS := Color(0.745098, 0.721569, 0.819608, 1.0)
+const FAN_CARD_WIDTH_RATIO := 0.20
+const FAN_CARD_MIN_WIDTH := 220.0
+const FAN_CARD_MAX_WIDTH := 384.0
+const FAN_CARD_MAX_HEIGHT_RATIO := 0.60
 
 
 func _ready() -> void:
 	_tfx = get_node_or_null("/root/TweenFXHelper")
 	z_index = 100
 	visible = false
-	scale = Vector2(1.0, 1.0)
+	mouse_filter = Control.MOUSE_FILTER_PASS
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	custom_minimum_size = Vector2(0.0, 92.0)
+	scale = Vector2.ONE
 	_build_ui()
-	#visible = true
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _is_fanned and event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
+			if _vip_card and not _vip_card.get_global_rect().has_point(mouse_event.position):
+				_close_vip_card()
+				get_viewport().set_input_as_handled()
+				return
+	if _is_fanned and event.is_action_pressed("ui_cancel"):
+		_close_vip_card()
+		get_viewport().set_input_as_handled()
 
 
 func _build_ui() -> void:
-	# Background panel
 	_bg_panel = PanelContainer.new()
 	_bg_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_bg_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var bg_style = _build_panel_style(PANEL_BORDER, PANEL_BG)
-	bg_style.content_margin_left = 6.0
+	bg_style.content_margin_left = 4.0
 	bg_style.content_margin_top = 4.0
-	bg_style.content_margin_right = 6.0
+	bg_style.content_margin_right = 4.0
 	bg_style.content_margin_bottom = 4.0
 	_bg_panel.add_theme_stylebox_override("panel", bg_style)
 	add_child(_bg_panel)
 
-	# VBox layout centered
-	_container = VBoxContainer.new()
-	_container.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_container.alignment = BoxContainer.ALIGNMENT_CENTER
-	_container.add_theme_constant_override("separation", 4)
-	_bg_panel.add_child(_container)
+	var content_margin := MarginContainer.new()
+	content_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content_margin.add_theme_constant_override("margin_left", 2)
+	content_margin.add_theme_constant_override("margin_top", 2)
+	content_margin.add_theme_constant_override("margin_right", 2)
+	content_margin.add_theme_constant_override("margin_bottom", 2)
+	_bg_panel.add_child(content_margin)
 
-	# Activate button
-	_activate_button = Button.new()
-	_activate_button.text = "ACTIVATE"
-	_activate_button.add_theme_font_override("font", vcr_font)
-	_activate_button.custom_minimum_size = Vector2(80, 18)
-	_activate_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_apply_button_style(_activate_button, PANEL_ACCENT, 10)
-	_activate_button.pressed.connect(_on_activate_pressed)
-	_container.add_child(_activate_button)
+	_compact_spine = GamingConsoleSpineScene.instantiate()
+	_compact_spine.name = "GamingConsoleSpine"
+	_compact_spine.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_compact_spine.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_compact_spine.activate_pressed.connect(_on_activate_pressed)
+	_compact_spine.card_pressed.connect(_open_vip_card)
+	content_margin.add_child(_compact_spine)
 
-	# Console icon — fill available space, centered
-	_icon_rect = TextureRect.new()
-	_icon_rect.custom_minimum_size = Vector2(32, 32)
-	_icon_rect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_icon_rect.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_icon_rect.mouse_filter = Control.MOUSE_FILTER_PASS
-	_icon_rect.mouse_entered.connect(_show_tooltip)
-	_icon_rect.mouse_exited.connect(_hide_tooltip)
-	_container.add_child(_icon_rect)
+	_fan_background = FanOverlayHelperRef.create_background("GamingConsoleFanBackground")
+	_fan_background.color = Color(0.03, 0.02, 0.05, 0.92)
+	_fan_background.top_level = true
+	_fan_background.z_index = 180
+	_fan_background.gui_input.connect(_on_fan_background_input)
+	add_child(_fan_background)
 
-	# Console name
-	_name_label = Label.new()
-	_name_label.add_theme_font_override("font", vcr_font)
-	_name_label.add_theme_font_size_override("font_size", 14)
-	_name_label.add_theme_color_override("font_color", VCR_GREEN_BRIGHT)
-	_name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_name_label.text = ""
-	#_container.add_child(_name_label)
+	_vip_card = GamingConsoleVIPCardScene.instantiate()
+	_vip_card.name = "GamingConsoleVIPCard"
+	_vip_card.top_level = true
+	_vip_card.z_index = 181
+	_vip_card.visible = false
+	_vip_card.activate_pressed.connect(_on_activate_pressed)
+	add_child(_vip_card)
 
 
-
-	if _tfx:
-		_activate_button.mouse_entered.connect(_tfx.button_hover.bind(_activate_button))
-		_activate_button.mouse_exited.connect(_tfx.button_unhover.bind(_activate_button))
-		_activate_button.pressed.connect(_tfx.button_press.bind(_activate_button))
-
-	# Tooltip (hidden by default)
-	_build_tooltip()
-
-
-func _build_tooltip() -> void:
-	_tooltip_panel = PanelContainer.new()
-	_tooltip_panel.visible = false
-	_tooltip_panel.z_index = 140
-	_tooltip_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	var style = _build_panel_style(PANEL_BORDER, PANEL_SURFACE)
-	style.content_margin_left = 14.0
-	style.content_margin_top = 12.0
-	style.content_margin_right = 14.0
-	style.content_margin_bottom = 12.0
-	_tooltip_panel.add_theme_stylebox_override("panel", style)
-
-	_tooltip_label = Label.new()
-	_tooltip_label.add_theme_font_override("font", vcr_font)
-	_tooltip_label.add_theme_font_size_override("font_size", 14)
-	_tooltip_label.add_theme_color_override("font_color", PANEL_TEXT)
-	_tooltip_label.add_theme_color_override("font_outline_color", PANEL_OUTLINE)
-	_tooltip_label.add_theme_constant_override("outline_size", 1)
-	_tooltip_panel.add_child(_tooltip_label)
-
-	add_child(_tooltip_panel)
+func _gui_input(event: InputEvent) -> void:
+	if _is_fanned or not _console_instance or not _console_data:
+		return
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
+			_open_vip_card()
+			get_viewport().set_input_as_handled()
 
 
 ## show_console(data, instance)
@@ -141,51 +140,14 @@ func _build_tooltip() -> void:
 func show_console(data: GamingConsoleData, instance: GamingConsole) -> void:
 	_console_data = data
 	_console_instance = instance
+	_blast_glow_active = false
+	_connect_console_signals(instance)
 
-	if data.icon:
-		_icon_rect.texture = data.icon
-	_name_label.text = data.display_name
-
-	if instance.is_passive():
-		_activate_button.text = "ACTIVE"
-		_activate_button.disabled = true
-	else:
-		_activate_button.text = "ACTIVATE"
-		_activate_button.disabled = false
-		if _tfx:
-			_tfx.idle_pulse(_activate_button)
-
-	# Connect description updates
-	if instance.has_signal("description_updated"):
-		if not instance.is_connected("description_updated", _on_description_updated):
-			instance.description_updated.connect(_on_description_updated)
-
-	# Connect uses_changed for button state
-	if not instance.is_connected("uses_changed", _on_uses_changed):
-		instance.uses_changed.connect(_on_uses_changed)
-
-	# Connect Power Glove signals
-	if instance is NesConsole:
-		if not instance.is_connected("awaiting_die_click", _on_awaiting_die_click):
-			instance.awaiting_die_click.connect(_on_awaiting_die_click)
-		if not instance.is_connected("die_adjustment_complete", _on_die_adjustment_complete):
-			instance.die_adjustment_complete.connect(_on_die_adjustment_complete)
-
-	# Connect Cartridge Tilt signals
-	if instance is SegaSaturnConsole:
-		if not instance.is_connected("awaiting_tilt_choice", _on_awaiting_tilt_choice):
-			instance.awaiting_tilt_choice.connect(_on_awaiting_tilt_choice)
-		if not instance.is_connected("tilt_complete", _on_tilt_complete):
-			instance.tilt_complete.connect(_on_tilt_complete)
-
-	# Connect Blast Processing glow signals
-	if instance is SnesConsole:
-		if not instance.is_connected("blast_ready", _on_blast_ready):
-			instance.blast_ready.connect(_on_blast_ready)
-		if not instance.is_connected("blast_consumed", _on_blast_consumed):
-			instance.blast_consumed.connect(_on_blast_consumed)
-
+	_restore_fan_overlay_state()
+	_compact_spine.set_console(data, instance)
+	_vip_card.set_console(data, instance)
 	visible = true
+	_update_button_state()
 	print("[GamingConsoleUI] Showing console: %s" % data.display_name)
 
 
@@ -194,29 +156,19 @@ func show_console(data: GamingConsoleData, instance: GamingConsole) -> void:
 ## Hides the console UI.
 func hide_console() -> void:
 	if _console_instance:
-		if _console_instance.has_signal("description_updated"):
-			if _console_instance.is_connected("description_updated", _on_description_updated):
-				_console_instance.description_updated.disconnect(_on_description_updated)
-		if _console_instance.is_connected("uses_changed", _on_uses_changed):
-			_console_instance.uses_changed.disconnect(_on_uses_changed)
-		if _console_instance is SnesConsole:
-			if _console_instance.is_connected("blast_ready", _on_blast_ready):
-				_console_instance.blast_ready.disconnect(_on_blast_ready)
-			if _console_instance.is_connected("blast_consumed", _on_blast_consumed):
-				_console_instance.blast_consumed.disconnect(_on_blast_consumed)
-		if _console_instance is NesConsole:
-			var nes = _console_instance as NesConsole
-			if nes.dice_hand_ref and nes.dice_hand_ref.is_connected("roll_started", _clear_nes_die_buttons):
-				nes.dice_hand_ref.roll_started.disconnect(_clear_nes_die_buttons)
+		_disconnect_console_signals(_console_instance)
 	_blast_glow_active = false
-	if _activate_button:
-		_activate_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
 	_console_data = null
 	_console_instance = null
 	visible = false
+	_restore_fan_overlay_state()
 	_hide_power_glove_popup()
 	_hide_tilt_popup()
 	_clear_nes_die_buttons()
+	if _compact_spine:
+		_compact_spine.clear_console()
+	if _vip_card:
+		_vip_card.clear_console()
 	emit_signal("console_removed")
 
 
@@ -232,34 +184,120 @@ func _on_uses_changed(_remaining: int) -> void:
 
 
 func _on_description_updated(_new_desc: String) -> void:
-	# Update Atari console button to reflect its current save/load mode
-	if _console_instance is AtariConsole and _activate_button:
-		var atari := _console_instance as AtariConsole
-		if not atari.is_passive() and atari.uses_remaining > 0:
-			_activate_button.text = "READY" if atari.current_mode == AtariConsole.SaveMode.SAVE else "RESTORE"
+	_update_button_state()
 
 
 func _update_button_state() -> void:
-	if not _console_instance:
+	if not _console_instance or not _console_data:
 		return
-	if _console_instance.is_passive():
-		_activate_button.text = "ACTIVE"
-		_activate_button.disabled = true
-		return
-	if _console_instance.uses_remaining <= 0:
-		_activate_button.text = "USED"
-		_activate_button.disabled = true
-		if _tfx:
-			_tfx.stop_effect(_activate_button)
-	else:
-		if _console_instance.can_activate():
-			_activate_button.text = "ACTIVATE"
-			_activate_button.disabled = false
-			if _tfx:
-				_tfx.idle_pulse(_activate_button)
+
+	var button_text := "ACTIVATE"
+	var button_disabled := true
+	var accent_color := PANEL_ACCENT
+	var pulse := false
+	var status_text := "ROLL TO ENABLE"
+	var status_color := MUTED_STATUS
+	var led_color := PANEL_ACCENT
+
+	if _is_waiting_for_die():
+		button_text = "PICK DIE"
+		button_disabled = true
+		accent_color = READY_ACCENT
+		status_text = "SELECT A DIE TO ADJUST"
+		status_color = READY_ACCENT
+		led_color = READY_ACCENT
+	elif _is_waiting_for_tilt_choice():
+		button_text = "CHOOSE..."
+		button_disabled = true
+		accent_color = PANEL_BORDER
+		status_text = "SHIFT ALL UNLOCKED DICE"
+		status_color = PANEL_BORDER.lightened(0.15)
+		led_color = PANEL_BORDER.lightened(0.08)
+	elif _console_instance.is_passive():
+		button_disabled = true
+		accent_color = PASSIVE_ACCENT
+		status_text = "PASSIVE EFFECT ONLINE"
+		status_color = PASSIVE_ACCENT
+		led_color = PASSIVE_ACCENT
+		if _blast_glow_active:
+			button_text = "1.5x READY"
+			accent_color = READY_ACCENT
+			pulse = true
+			status_text = "BONUS MULTIPLIER ARMED"
+			status_color = READY_ACCENT
+			led_color = READY_ACCENT
 		else:
-			_activate_button.text = "ACTIVATE"
-			_activate_button.disabled = true
+			button_text = "ACTIVE"
+	elif _console_instance.uses_remaining <= 0:
+		button_text = "USED"
+		button_disabled = true
+		accent_color = USED_ACCENT
+		status_text = "ROUND SPENT"
+		status_color = USED_ACCENT.lightened(0.08)
+		led_color = USED_ACCENT
+	else:
+		button_text = _get_active_button_text()
+		button_disabled = not _console_instance.can_activate()
+		pulse = _console_instance.can_activate()
+		accent_color = PANEL_ACCENT if _console_instance.can_activate() else PANEL_BORDER
+		led_color = accent_color
+		if _console_instance is AtariConsole:
+			if button_text == "READY":
+				status_text = "SAVE CURRENT DICE STATE"
+			else:
+				status_text = "RESTORE SAVED DICE STATE"
+			status_color = accent_color.lightened(0.15)
+		elif _console_instance is NesConsole:
+			status_text = "ADJUST ONE DIE BY +/-1"
+			status_color = accent_color.lightened(0.15)
+		elif _console_instance is SegaSaturnConsole:
+			status_text = "SHIFT ALL UNLOCKED DICE"
+			status_color = accent_color.lightened(0.15)
+		elif _console_instance.can_activate():
+			status_text = "READY TO ACTIVATE"
+			status_color = accent_color.lightened(0.15)
+		else:
+			status_text = "ROLL TO ENABLE"
+			status_color = MUTED_STATUS
+
+	var description_text := _get_console_description()
+	_compact_spine.set_button_state(button_text, button_disabled, accent_color, pulse)
+	_compact_spine.set_status_text(status_text, status_color)
+	_compact_spine.set_led_color(led_color)
+
+	_vip_card.set_button_state(button_text, button_disabled, accent_color, pulse)
+	_vip_card.set_status_text(status_text, status_color)
+	_vip_card.set_description(description_text)
+
+
+func _get_active_button_text() -> String:
+	if _console_instance is AtariConsole:
+		var atari := _console_instance as AtariConsole
+		if atari.uses_remaining > 0:
+			return "READY" if atari.current_mode == AtariConsole.SaveMode.SAVE else "RESTORE"
+	return "ACTIVATE"
+
+
+func _get_console_description() -> String:
+	if _console_instance:
+		var runtime_description := _console_instance.get_power_description()
+		if runtime_description != "":
+			return runtime_description
+	if _console_data:
+		return _console_data.description
+	return ""
+
+
+func _is_waiting_for_die() -> bool:
+	if _console_instance is NesConsole:
+		return (_console_instance as NesConsole).is_waiting_for_die()
+	return false
+
+
+func _is_waiting_for_tilt_choice() -> bool:
+	if _console_instance is SegaSaturnConsole:
+		return (_console_instance as SegaSaturnConsole).is_waiting_for_choice()
+	return false
 
 
 ## reset_for_new_round()
@@ -267,9 +305,6 @@ func _update_button_state() -> void:
 ## Refreshes the button state after round reset.
 func reset_for_new_round() -> void:
 	_update_button_state()
-	if _console_instance and not _console_instance.is_passive():
-		if _tfx and _console_instance.uses_remaining > 0:
-			_tfx.idle_pulse(_activate_button)
 
 
 ## refresh_button_state()
@@ -279,50 +314,166 @@ func refresh_button_state() -> void:
 	_update_button_state()
 
 
-# ── Tooltip ──────────────────────────────────────────────
-
-func _show_tooltip() -> void:
-	if not _console_instance or not _tooltip_panel:
+func _connect_console_signals(instance: GamingConsole) -> void:
+	if not instance:
 		return
-	_tooltip_label.text = _console_instance.get_power_description()
-	_tooltip_panel.visible = true
-	_tooltip_panel.position = Vector2(0, -_tooltip_panel.size.y - 8)
+	if instance.has_signal("description_updated"):
+		if not instance.is_connected("description_updated", _on_description_updated):
+			instance.description_updated.connect(_on_description_updated)
+	if not instance.is_connected("uses_changed", _on_uses_changed):
+		instance.uses_changed.connect(_on_uses_changed)
+
+	if instance is NesConsole:
+		if not instance.is_connected("awaiting_die_click", _on_awaiting_die_click):
+			instance.awaiting_die_click.connect(_on_awaiting_die_click)
+		if not instance.is_connected("die_adjustment_complete", _on_die_adjustment_complete):
+			instance.die_adjustment_complete.connect(_on_die_adjustment_complete)
+
+	if instance is SegaSaturnConsole:
+		if not instance.is_connected("awaiting_tilt_choice", _on_awaiting_tilt_choice):
+			instance.awaiting_tilt_choice.connect(_on_awaiting_tilt_choice)
+		if not instance.is_connected("tilt_complete", _on_tilt_complete):
+			instance.tilt_complete.connect(_on_tilt_complete)
+
+	if instance is SnesConsole:
+		if not instance.is_connected("blast_ready", _on_blast_ready):
+			instance.blast_ready.connect(_on_blast_ready)
+		if not instance.is_connected("blast_consumed", _on_blast_consumed):
+			instance.blast_consumed.connect(_on_blast_consumed)
 
 
-func _hide_tooltip() -> void:
-	if _tooltip_panel:
-		_tooltip_panel.visible = false
+func _disconnect_console_signals(instance: GamingConsole) -> void:
+	if not instance:
+		return
+	if instance.has_signal("description_updated"):
+		if instance.is_connected("description_updated", _on_description_updated):
+			instance.description_updated.disconnect(_on_description_updated)
+	if instance.is_connected("uses_changed", _on_uses_changed):
+		instance.uses_changed.disconnect(_on_uses_changed)
+
+	if instance is SnesConsole:
+		if instance.is_connected("blast_ready", _on_blast_ready):
+			instance.blast_ready.disconnect(_on_blast_ready)
+		if instance.is_connected("blast_consumed", _on_blast_consumed):
+			instance.blast_consumed.disconnect(_on_blast_consumed)
+
+	if instance is SegaSaturnConsole:
+		if instance.is_connected("awaiting_tilt_choice", _on_awaiting_tilt_choice):
+			instance.awaiting_tilt_choice.disconnect(_on_awaiting_tilt_choice)
+		if instance.is_connected("tilt_complete", _on_tilt_complete):
+			instance.tilt_complete.disconnect(_on_tilt_complete)
+
+	if instance is NesConsole:
+		if instance.is_connected("awaiting_die_click", _on_awaiting_die_click):
+			instance.awaiting_die_click.disconnect(_on_awaiting_die_click)
+		if instance.is_connected("die_adjustment_complete", _on_die_adjustment_complete):
+			instance.die_adjustment_complete.disconnect(_on_die_adjustment_complete)
+		var nes := instance as NesConsole
+		if nes.dice_hand_ref and nes.dice_hand_ref.is_connected("roll_started", _clear_nes_die_buttons):
+			nes.dice_hand_ref.roll_started.disconnect(_clear_nes_die_buttons)
+
+
+# ── Fan Overlay ──────────────────────────────────────────
+
+func _open_vip_card() -> void:
+	if not _console_instance or not _console_data or _is_fanned:
+		return
+
+	var viewport_size := get_viewport_rect().size
+	var card_size := _get_vip_card_size(viewport_size)
+	_vip_card.set_card_size(card_size)
+	var target_position := _get_vip_card_target_position(viewport_size)
+	_fan_background.visible = true
+	_fan_background.modulate.a = 0.0
+	_fan_background.position = Vector2.ZERO
+	_fan_background.size = viewport_size
+	_fan_background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_vip_card.visible = true
+	_vip_card.position = target_position - Vector2(0.0, maxf(120.0, card_size.y * 0.38))
+	_vip_card.modulate.a = 0.0
+
+	var bg_tween := create_tween()
+	bg_tween.tween_property(_fan_background, "modulate:a", 1.0, 0.22)
+
+	var card_tween := create_tween().set_parallel()
+	card_tween.tween_property(_vip_card, "position", target_position, 0.42).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	card_tween.tween_property(_vip_card, "modulate:a", 1.0, 0.28)
+
+	_is_fanned = true
+
+
+func _close_vip_card() -> void:
+	if not _is_fanned:
+		return
+	_is_fanned = false
+
+	var bg_tween := create_tween()
+	bg_tween.tween_property(_fan_background, "modulate:a", 0.0, 0.18)
+
+	var card_tween := create_tween().set_parallel()
+	card_tween.tween_property(_vip_card, "position", _vip_card.position + Vector2(0.0, 180.0), 0.24).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	card_tween.tween_property(_vip_card, "modulate:a", 0.0, 0.18)
+	card_tween.finished.connect(_restore_fan_overlay_state)
+
+
+func _restore_fan_overlay_state() -> void:
+	_is_fanned = false
+	if _fan_background:
+		_fan_background.visible = false
+		_fan_background.modulate.a = 1.0
+	if _vip_card:
+		_vip_card.visible = false
+		_vip_card.modulate.a = 1.0
+		_vip_card.position = Vector2.ZERO
+
+
+func _get_vip_card_target_position(viewport_size: Vector2) -> Vector2:
+	var card_size: Vector2 = _vip_card.get_card_size()
+	if card_size == Vector2.ZERO:
+		card_size = _get_vip_card_size(viewport_size)
+	return Vector2(
+		floor((viewport_size.x - card_size.x) * 0.5),
+		floor((viewport_size.y - card_size.y) * 0.5)
+	)
+
+
+func _get_vip_card_size(viewport_size: Vector2) -> Vector2:
+	var base_size: Vector2 = _vip_card.get_card_size()
+	if base_size == Vector2.ZERO:
+		base_size = _vip_card.custom_minimum_size
+	var aspect: float = base_size.x / maxf(base_size.y, 1.0)
+	var width := clampf(viewport_size.x * FAN_CARD_WIDTH_RATIO, FAN_CARD_MIN_WIDTH, FAN_CARD_MAX_WIDTH)
+	var height := width / maxf(aspect, 0.001)
+	var max_height := viewport_size.y * FAN_CARD_MAX_HEIGHT_RATIO
+	if height > max_height:
+		height = max_height
+		width = height * aspect
+	return Vector2(roundf(width), roundf(height))
+
+
+func _on_fan_background_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
+			_close_vip_card()
 
 
 # ── Blast Processing Glow ────────────────────────────────
 
-var _blast_glow_active: bool = false
-
 func _on_blast_ready() -> void:
 	_blast_glow_active = true
-	if _activate_button and _console_instance and _console_instance.is_passive():
-		_activate_button.text = "1.5x READY"
-		_activate_button.modulate = Color(1.0, 0.9, 0.2, 1.0)
-		if _tfx:
-			_tfx.idle_pulse(_activate_button)
+	_update_button_state()
 
 
 func _on_blast_consumed() -> void:
 	_blast_glow_active = false
-	if _activate_button and _console_instance and _console_instance.is_passive():
-		_activate_button.text = "ACTIVE"
-		_activate_button.modulate = Color(1.0, 1.0, 1.0, 1.0)
-		if _tfx:
-			_tfx.stop_effect(_activate_button)
+	_update_button_state()
 
 
 # ── Power Glove Per-Die Buttons ──────────────────────────
 
-var _nes_die_buttons: Array = []
-
 func _on_awaiting_die_click() -> void:
-	_activate_button.text = "PICK DIE"
-	_activate_button.disabled = true
+	_update_button_state()
 	_spawn_nes_die_buttons()
 
 
@@ -341,7 +492,6 @@ func _spawn_nes_die_buttons() -> void:
 	if not nes or not nes.dice_hand_ref:
 		return
 
-	# Connect roll_started to clean up buttons when player rolls again
 	if not nes.dice_hand_ref.is_connected("roll_started", _clear_nes_die_buttons):
 		nes.dice_hand_ref.roll_started.connect(_clear_nes_die_buttons)
 
@@ -386,7 +536,6 @@ func _spawn_nes_die_buttons() -> void:
 				minus_btn.pressed.connect(_tfx.button_press.bind(minus_btn))
 			hbox.add_child(minus_btn)
 
-			# Position centered above the die
 			panel.position = die.global_position + Vector2(-20, -45)
 			get_tree().root.add_child(panel)
 			_nes_die_buttons.append(panel)
@@ -415,8 +564,7 @@ func _hide_power_glove_popup() -> void:
 # ── Cartridge Tilt Popup ─────────────────────────────────
 
 func _on_awaiting_tilt_choice() -> void:
-	_activate_button.text = "CHOOSE..."
-	_activate_button.disabled = true
+	_update_button_state()
 	_show_tilt_popup()
 
 
@@ -467,7 +615,6 @@ func _show_tilt_popup() -> void:
 		minus_btn.pressed.connect(_tfx.button_press.bind(minus_btn))
 	hbox.add_child(minus_btn)
 
-	# Position above the console UI
 	_tilt_popup.position = global_position + Vector2(0, -50)
 	get_tree().root.add_child(_tilt_popup)
 

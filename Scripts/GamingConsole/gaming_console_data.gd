@@ -5,5 +5,7 @@ class_name GamingConsoleData
 @export var display_name: String
 @export var description: String
 @export var icon: Texture2D
+@export var vip_card_art: Texture2D
+@export var vip_card_shader_key: String = ""
 @export var scene: PackedScene
 @export var price: int = 300
