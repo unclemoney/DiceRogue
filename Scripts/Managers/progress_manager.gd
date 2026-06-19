@@ -831,6 +831,14 @@ func get_locked_items(item_type: int) -> Array:
 	
 	return locked
 
+## get_unlockable_item(item_id)
+##
+## Returns the tracked UnlockableItem resource for the given ID.
+## @param item_id: String ID of the unlockable item
+## @return UnlockableItem or null if the ID is not tracked
+func get_unlockable_item(item_id: String):
+	return unlockable_items.get(item_id, null)
+
 
 ## get_condition_progress(item_id: String) -> Dictionary
 ##

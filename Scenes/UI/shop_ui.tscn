@@ -266,6 +266,40 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 columns = 3
 
+[node name="Unlocked" type="TabBar" parent="TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 6
+
+[node name="Panel6" type="Panel" parent="TabContainer/Unlocked"]
+material = SubResource("ShaderMaterial_3j5rp")
+layout_mode = 2
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("4_ocftj")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="TabContainer/Unlocked"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 175.0
+offset_top = 1.0
+offset_right = 183.0
+offset_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 2
+
+[node name="GridContainer" type="GridContainer" parent="TabContainer/Unlocked/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+columns = 3
+
 [node name="CloseButton" type="Button" parent="."]
 layout_mode = 0
 offset_left = 878.0

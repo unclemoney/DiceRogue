@@ -370,7 +370,7 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - **Loaded Dice** ($75): Randomly sets one of your dice to a random value (1-6).
 - **Mods** (`Scripts/Mods/`) - Dice behavior modifiers
 - **Gaming Consoles** (`Scripts/GamingConsole/`) - Unique console abilities (one active at a time)
-  - **Shop Layout**: Consoles displayed in a 3-column grid (2 rows of 3) to prevent overflow; consoles remain visible after purchase with "LIMIT (1)" on the buy button
+  - **Shop Layout**: Consoles now use the same single-row, 3-cards-per-page shop layout as the other purchasable tabs; footer arrows appear when more than 3 consoles are available, and purchased consoles disappear from the current shop pool while the one-console ownership limit remains in force
   - **NES / Power Glove**: After ACTIVATE, compact +1/-1 buttons spawn above each rolled/locked die; buttons clear on use or next roll. Dice value changes are synced to `DiceResults` so scoring reads updated values.
   - **SNES / Blast Processing**: ACTIVATE button glows yellow with "1.5x READY" text when the multiplier is primed; resets after consumption. Category counter tracks via `score_assigned` only (no double-counting on auto-scored categories).
   - **SEGA / Combo System**: Combo break detection uses the **base score** (before modifiers) so that Sega's own additive bonus cannot prevent zero-score resets. A pre-scoring hook (`about_to_score`) unregisters the combo additive **before** score calculation when the base score is 0, ensuring zero-base scores stay zero.
@@ -735,7 +735,7 @@ The **Progress Tracking System** enables persistent player progression across mu
 - **Persistent Progression**: Player progress saves across game sessions using JSON file storage
 - **Unlock Conditions**: 15 different achievement types trigger item unlocks (score points, roll yahtzees, complete channels, etc.)
 - **Item Locking**: PowerUps, Consumables, Mods, and Colored Dice can be locked behind progression requirements
-- **LOCKED Shop Tab**: Shop interface shows locked items with unlock requirements and progress bars
+- **LOCKED / UNLOCKED Shop Tabs**: Shop interface includes archive tabs for both locked items and already-unlocked items
 - **Unlock Panel**: Sequential card-flip animations display newly unlocked items at end of round
 - **Progress Tracking**: Visual progress bars show how close you are to unlocking items
 - **Debug Controls**: Full testing suite for unlock/lock functionality
@@ -745,7 +745,7 @@ The **Progress Tracking System** enables persistent player progression across mu
 - **UnlockableItem** (`Scripts/Core/unlockable_item.gd`) - Represents items that can be unlocked
 - **ProgressManager** (autoload) - Central progression tracking and persistence system
 - **UnlockedItemPanel** (`Scripts/UI/unlocked_item_panel.gd`) - End-of-round unlock display
-- **Shop UI Integration** - LOCKED tab with filtered item display and progress bars
+- **Shop UI Integration** - LOCKED tab with progress bars plus UNLOCKED archive tab for informational browsing
 
 **Unlock Condition Types:**
 
@@ -777,11 +777,12 @@ When items are unlocked at the end of a round, they're displayed sequentially in
 
 The unlock panel appears between game end and the End of Round Stats Panel, ensuring players see their achievements before viewing bonuses.
 
-**Progress Tracking in LOCKED Tab:**
+**Progress Tracking in Shop Archive Tabs:**
 - Progress bars show cumulative progress toward unlock conditions
 - Items ≥80% complete are highlighted with gold borders
 - Star icon (⭐) replaces lock icon for items close to unlocking
 - Progress displays "X/Y" format for trackable conditions
+- Unlocked entries move to a separate UNLOCKED tab with archival info and no progress bars
 
 **Implementation:**
 ```gdscript
@@ -1286,20 +1287,26 @@ var total_matching = synergy_manager.get_total_matching_bonus()
 - **ShopUI** (`Scripts/UI/shop_ui.gd`) - In-game purchasing with reroll functionality
 
 ### Shop UI Features
-- **Tab System**: Five tabs (PowerUps, Consumables, Mods, Colors, Locked)
-- **Reroll System**: Reroll button available on PowerUp and Consumable tabs
+- **Tab System**: Seven tabs (PowerUps, Consumables, Mods, Colors, Consoles, Locked, Unlocked)
+- **Single-Row Pagination**: All purchasable tabs render one horizontal row of up to 3 cards; left/right footer arrows appear only when a tab pool exceeds 3 items and advance by a full page
+- **Directional Page Motion**: Page changes reuse the shop fly-in/fly-out motion language so outgoing cards move with the pressed direction and incoming cards swoop in from the opposite side
+- **Reroll Footer**: PowerUp and Consumable tabs use a shader-backed reroll shell with the live cost embedded inside the button and pagination arrows flanking it
   - Base cost: $25, increases by $5 per reroll
   - 750ms cooldown between rerolls
   - Cost resets when starting a new game
   - Disabled when no items available or cannot afford
+  - Clearance Rack still makes rerolls free until the shop closes
+- **Archive Tabs**: LOCKED shows unlock requirements and progress bars; UNLOCKED shows informational archive cards for already-earned content
+- **Shop Pool Behavior**: Purchases remove the item from the current page pool and refill the visible row from overflow items when available
 
 **New Game Reset:**
 - The **New Game** button on the Game Over panel resets player economy (`PlayerEconomy.reset_to_starting_money()`) before reloading the scene, ensuring autoload state doesn't persist
-  - Cost label displays with bounce animation on each reroll
+- Inline reroll cost text pulses when the next reroll price increases
 - **Centered Item Layout**: Items automatically center horizontally and vertically regardless of count
 - **Backdrop Click-to-Close**: Clicking outside the shop panel closes it
 - **Improved Hover Tooltips**: Tooltip stays visible when moving from item card to purchase button
 - **Shelf Panel Theme**: Blockbuster-style shelf background (128x128 pixel art texture with edge borders)
+- **Focused Validation Scenes**: `Tests/ShopLockedTabTest.tscn`, `Tests/ShopPaginationTest.tscn`, and `Tests/ShopStylingTest.tscn`
 
 ### Hover Tooltip System
 All interactive game items feature consistent, themed hover tooltips:

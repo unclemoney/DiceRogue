@@ -1,11 +1,12 @@
 extends Control
 
-## Test script for verifying the LOCKED tab functionality in ShopUI
+## Test script for verifying the LOCKED and UNLOCKED archive tabs in ShopUI
 ##
 ## This test validates that:
 ## 1. The LOCKED tab appears in the shop
 ## 2. Locked items are filtered out from regular shop tabs
 ## 3. Locked items appear in the LOCKED tab with unlock requirements
+## 4. The UNLOCKED tab appears in the shop and can populate unlocked entries
 
 var shop_ui: ShopUI
 var progress_manager
@@ -78,8 +79,8 @@ func _run_tests():
 	var tab_count = tab_container.get_tab_count()
 	print("Total tabs found: %d" % tab_count)
 	
-	# Expected tabs: PowerUps, Consumables, Mods, Locked
-	var expected_tabs = ["PowerUps", "Consumables", "Mods", "Locked"]
+	# Expected archive tabs should be present in addition to purchasable tabs.
+	var _expected_tabs = ["PowerUps", "Consumables", "Mods", "Locked", "Unlocked"]
 	var found_tabs = []
 	
 	for i in range(tab_count):
@@ -94,13 +95,18 @@ func _run_tests():
 		print("✗ LOCKED tab not found")
 		print("Available tabs: %s" % str(found_tabs))
 	
-	# Test locked container access
-	print("\n--- Testing LOCKED Container ---")
-	var locked_container = shop_ui.get_node_or_null("TabContainer/Locked/GridContainer")
+	# Test locked/unlocked container access
+	print("\n--- Testing Archive Containers ---")
+	var locked_container = shop_ui.get_node_or_null("TabContainer/Locked/ScrollContainer/GridContainer")
+	var unlocked_container = shop_ui.get_node_or_null("TabContainer/Unlocked/ScrollContainer/GridContainer")
 	if locked_container:
 		print("✓ LOCKED container accessible")
 	else:
 		print("✗ LOCKED container not accessible")
+	if unlocked_container:
+		print("✓ UNLOCKED container accessible")
+	else:
+		print("✗ UNLOCKED container not accessible")
 	
 	# Test populate_locked_items function
 	print("\n--- Testing populate_locked_items() ---")
@@ -120,6 +126,17 @@ func _run_tests():
 			print("✗ Cannot check locked items - container not found")
 	else:
 		print("✗ populate_locked_items method not found")
+
+	print("\n--- Testing populate_unlocked_items() ---")
+	if shop_ui.has_method("populate_unlocked_items"):
+		print("✓ populate_unlocked_items method exists")
+		shop_ui.populate_unlocked_items()
+		if unlocked_container:
+			print("Unlocked items displayed: %d" % unlocked_container.get_child_count())
+		else:
+			print("✗ Cannot check unlocked items - container not found")
+	else:
+		print("✗ populate_unlocked_items method not found")
 	
 	# Test filtering functionality
 	print("\n--- Testing Item Filtering ---")
@@ -141,6 +158,8 @@ func _run_tests():
 	
 	print("\n=== Test Complete ===")
 	test_completed = true
+	await get_tree().create_timer(0.5).timeout
+	get_tree().quit()
 
 func _input(event):
 	if test_completed and event.is_action_pressed("ui_accept"):

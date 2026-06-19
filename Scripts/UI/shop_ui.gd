@@ -17,6 +17,7 @@ signal shop_closed
 @onready var colored_dice_container: Container = get_node_or_null("TabContainer/Colors/GridContainer")
 @onready var gaming_console_container: Container = get_node_or_null("TabContainer/Consoles/GridContainer")
 @onready var locked_container: Container = $TabContainer/Locked/ScrollContainer/GridContainer
+@onready var unlocked_container: Container = get_node_or_null("TabContainer/Unlocked/ScrollContainer/GridContainer")
 @onready var power_up_manager: PowerUpManager = get_node_or_null(power_up_manager_path)
 @onready var consumable_manager: ConsumableManager = get_node_or_null(consumable_manager_path)
 @onready var mod_manager: ModManager = get_node_or_null(mod_manager_path)
@@ -28,12 +29,13 @@ signal shop_closed
 
 # Reroll system
 var reroll_button: Button
-var reroll_cost_label: RichTextLabel
+var reroll_cost_label: Label
 var reroll_cost: int = 25
 var reroll_cooldown: float = 0.0
 const REROLL_BASE_COST: int = 25
 const REROLL_COST_INCREMENT: int = 5
 const REROLL_COOLDOWN_TIME: float = 0.5
+const REROLL_SHADER_PATH := "res://Scripts/Shaders/shop_reroll_button_glass.gdshader"
 
 var _managers_ready := 0
 const REQUIRED_MANAGERS := 3
@@ -45,11 +47,23 @@ const ShopItemScene := preload("res://Scenes/Shop/shop_item.tscn")
 
 var items_per_section := 2  # Number of items to display per section
 var power_up_items := 2     # Specific count for power-ups
-var consumable_items := 2   # Specific count for consumables  
+var consumable_items := 2   # Specific count for consumables
 var mod_items := 2          # Specific count for mods
 var colored_dice_items := 2 # Specific count for colored dice
 
 var purchased_items := {}  # Track purchased items by type: {"power_up": [], "consumable": [], "mod": [], "colored_dice": []}
+var _tab_item_pools := {}
+var _tab_page_indices := {}
+var _footer_controls := {}
+var _page_transitioning := {}
+var _reroll_shells := {}
+var _reroll_shader_materials := {}
+var _reroll_title_labels := {}
+var _reroll_price_labels := {}
+
+const PAGE_SIZE := 3
+const PAGED_ITEM_TYPES := ["power_up", "consumable", "mod", "colored_dice", "gaming_console"]
+const FOOTER_REROLL_TYPES := ["power_up", "consumable"]
 
 func _ready() -> void:
 	print("[ShopUI] Initializing...")
@@ -68,6 +82,7 @@ func _ready() -> void:
 		"colored_dice": [],
 		"gaming_console": []
 	}
+	_initialize_page_state()
 	
 	if not shop_label:
 		push_error("[ShopUI] ShopLabel not found!")
@@ -96,11 +111,14 @@ func _ready() -> void:
 		push_error("[ShopUI] ModManager not found at path:", mod_manager_path)
 		return
 		
+	# Set up reroll footer state
+	_setup_reroll_ui()
+	
 	# Style the tab container with VCR font and larger tabs
 	_style_tab_container()
 	
-	# Set up reroll UI
-	_setup_reroll_ui()
+	_update_reroll_cost_display()
+	_update_reroll_button_state()
 	
 	# Connect to tab changed signal for showing/hiding reroll button
 	if tab_container:
@@ -134,7 +152,6 @@ func _ready() -> void:
 	# Connect visibility for open animation
 	visibility_changed.connect(_on_visibility_changed)
 	hide()
-	#buy_button.pressed.connect(_on_buy_button_pressed)
 
 func _on_visibility_changed() -> void:
 	if visible:
@@ -178,7 +195,7 @@ func _start_title_animation() -> void:
 	if not shop_label:
 		return
 	_tfx.idle_float(shop_label, TITLE_FLOAT_AMOUNT)
-	
+
 func _on_manager_ready() -> void:
 	_managers_ready += 1
 	print("[ShopUI] Manager ready. Waiting for", REQUIRED_MANAGERS - _managers_ready, "more")
@@ -186,7 +203,8 @@ func _on_manager_ready() -> void:
 	if _managers_ready == REQUIRED_MANAGERS:
 		print("[ShopUI] All managers ready - populating shop")
 		_populate_shop_items()
-		populate_locked_items()  # Add locked items population
+		populate_locked_items()
+		populate_unlocked_items()
 
 ## _on_gaming_console_manager_ready()
 ##
@@ -198,6 +216,7 @@ func _on_gaming_console_manager_ready() -> void:
 		print("[ShopUI] Other managers already ready - repopulating to include consoles")
 		_populate_shop_items()
 		populate_locked_items()
+		populate_unlocked_items()
 
 ## _on_progress_changed()
 ##
@@ -207,89 +226,100 @@ func _on_progress_changed() -> void:
 	if _managers_ready == REQUIRED_MANAGERS:
 		_populate_shop_items()
 		populate_locked_items()
+		populate_unlocked_items()
 
 func _populate_shop_items() -> void:
 	print("\n=== Populating Shop Items ===")
 	
 	# Clear existing containers
 	_clear_shop_containers()
-	
-	# Populate PowerUps
+	_reset_page_indices()
+
+	_set_tab_item_pool("power_up", _build_power_up_pool())
+	_set_tab_item_pool("consumable", _build_consumable_pool())
+	_set_tab_item_pool("mod", _build_mod_pool())
+	_set_tab_item_pool("colored_dice", _build_colored_dice_pool())
+	_set_tab_item_pool("gaming_console", _build_gaming_console_pool())
+
+	for item_type in PAGED_ITEM_TYPES:
+		_render_current_page(item_type)
+
+func _build_power_up_pool() -> Array:
+	var power_up_page_items: Array = []
 	var power_ups = power_up_manager.get_available_power_ups()
 	var filtered_power_ups = _filter_out_purchased_items(power_ups, "power_up")
-	# Filter out locked items
 	filtered_power_ups = _filter_unlocked_items(filtered_power_ups, "power_up")
-	# Also filter out already owned power-ups
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	if game_controller:
 		filtered_power_ups = filtered_power_ups.filter(func(id): return not game_controller.active_power_ups.has(id))
 	var selected_power_ups = _select_random_items(filtered_power_ups, power_up_items)
-	
 	for id in selected_power_ups:
 		var data = power_up_manager.get_def(id)
 		if data:
-			_add_shop_item(data, "power_up")
+			power_up_page_items.append(data)
 		else:
 			push_error("[ShopUI] Failed to get PowerUpData for:", id)
-	
-	# Populate Consumables
+	return power_up_page_items
+
+func _build_consumable_pool() -> Array:
+	var consumable_page_items: Array = []
 	var consumables = consumable_manager._defs_by_id.keys()
 	var filtered_consumables = _filter_out_purchased_items(consumables, "consumable")
-	# Filter out locked items
 	filtered_consumables = _filter_unlocked_items(filtered_consumables, "consumable")
 	var selected_consumables = _select_random_items(filtered_consumables, consumable_items)
-	
 	for id in selected_consumables:
 		var data = consumable_manager.get_def(id)
 		if data:
-			_add_shop_item(data, "consumable")
+			consumable_page_items.append(data)
 		else:
 			push_error("[ShopUI] Failed to get ConsumableData for:", id)
-			
-	# Populate Mods
+	return consumable_page_items
+
+func _build_mod_pool() -> Array:
+	var mod_page_items: Array = []
 	var mods = mod_manager._defs_by_id.keys()
 	var filtered_mods = _filter_out_purchased_items(mods, "mod")
-	# Filter out locked items
 	filtered_mods = _filter_unlocked_items(filtered_mods, "mod")
 	var selected_mods = _select_random_items(filtered_mods, mod_items)
-	
 	for id in selected_mods:
 		var data = mod_manager.get_def(id)
 		if data:
-			_add_shop_item(data, "mod")
+			mod_page_items.append(data)
 		else:
 			push_error("[ShopUI] Failed to get ModData for:", id)
-	
-	# Populate Colored Dice
-	# Note: Colored dice can be purchased multiple times until they reach MAX odds
-	# We don't filter by purchased_items for colored dice - instead filter by MAX odds
+	return mod_page_items
+
+func _build_colored_dice_pool() -> Array:
+	var colored_dice_page_items: Array = []
 	var colored_dice = DiceColorManager.get_available_colored_dice()
-	var colored_dice_ids = []
+	var colored_dice_ids: Array = []
 	for data in colored_dice:
 		colored_dice_ids.append(data.id)
 	var filtered_colored_dice = _filter_out_max_odds_colored_dice(colored_dice_ids)
-	# Filter out locked items
 	filtered_colored_dice = _filter_unlocked_items(filtered_colored_dice, "colored_dice")
 	var selected_colored_dice = _select_random_items(filtered_colored_dice, colored_dice_items)
-	
 	for id in selected_colored_dice:
 		var data = DiceColorManager.get_colored_dice_data(id)
 		if data:
-			_add_shop_item(data, "colored_dice")
+			colored_dice_page_items.append(data)
 		else:
 			push_error("[ShopUI] Failed to get ColoredDiceData for:", id)
+	return colored_dice_page_items
 
-	# Populate Gaming Consoles — show ALL consoles (no random selection), filtered by unlock
-	if gaming_console_manager:
-		var consoles = gaming_console_manager.get_available_consoles()
-		var filtered_consoles = _filter_out_purchased_items(consoles, "gaming_console")
-		filtered_consoles = _filter_unlocked_items(filtered_consoles, "gaming_console")
-		for id in filtered_consoles:
-			var data = gaming_console_manager.get_def(id)
-			if data:
-				_add_shop_item(data, "gaming_console")
-			else:
-				push_error("[ShopUI] Failed to get GamingConsoleData for:", id)
+func _build_gaming_console_pool() -> Array:
+	var gaming_console_page_items: Array = []
+	if not gaming_console_manager:
+		return gaming_console_page_items
+	var consoles = gaming_console_manager.get_available_consoles()
+	var filtered_consoles = _filter_out_purchased_items(consoles, "gaming_console")
+	filtered_consoles = _filter_unlocked_items(filtered_consoles, "gaming_console")
+	for id in filtered_consoles:
+		var data = gaming_console_manager.get_def(id)
+		if data:
+			gaming_console_page_items.append(data)
+		else:
+			push_error("[ShopUI] Failed to get GamingConsoleData for:", id)
+	return gaming_console_page_items
 
 # Helper function to filter out already purchased items
 func _filter_out_purchased_items(items: Array, type: String) -> Array:
@@ -378,24 +408,173 @@ func _select_weighted_power_ups(power_up_ids: Array, count: int) -> Array:
 # Helper function to clear all shop containers
 func _clear_shop_containers() -> void:
 	if power_up_container:
-		for child in power_up_container.get_children():
-			child.queue_free()
+		_clear_item_container(power_up_container)
 	
 	if consumable_container:
-		for child in consumable_container.get_children():
-			child.queue_free()
+		_clear_item_container(consumable_container)
 	
 	if mod_container:
-		for child in mod_container.get_children():
-			child.queue_free()
+		_clear_item_container(mod_container)
 	
 	if colored_dice_container:
-		for child in colored_dice_container.get_children():
-			child.queue_free()
+		_clear_item_container(colored_dice_container)
 	
 	if gaming_console_container:
-		for child in gaming_console_container.get_children():
-			child.queue_free()
+		_clear_item_container(gaming_console_container)
+
+func _clear_item_container(container: Container) -> void:
+	if not container:
+		return
+	for child in container.get_children():
+		container.remove_child(child)
+		child.queue_free()
+
+func _initialize_page_state() -> void:
+	for item_type in PAGED_ITEM_TYPES:
+		_tab_item_pools[item_type] = []
+		_tab_page_indices[item_type] = 0
+		_page_transitioning[item_type] = false
+		_footer_controls[item_type] = {}
+
+func _reset_page_indices() -> void:
+	for item_type in PAGED_ITEM_TYPES:
+		_tab_page_indices[item_type] = 0
+
+func _set_tab_item_pool(item_type: String, items: Array) -> void:
+	_tab_item_pools[item_type] = items.duplicate()
+	_tab_page_indices[item_type] = clampi(_tab_page_indices.get(item_type, 0), 0, _get_max_page_index(item_type))
+
+func _get_tab_item_pool(item_type: String) -> Array:
+	return _tab_item_pools.get(item_type, [])
+
+func _get_page_count(item_type: String) -> int:
+	var items = _get_tab_item_pool(item_type)
+	if items.is_empty():
+		return 0
+	return int(ceil(float(items.size()) / float(PAGE_SIZE)))
+
+func _get_max_page_index(item_type: String) -> int:
+	return maxi(0, _get_page_count(item_type) - 1)
+
+func _get_page_items(item_type: String) -> Array:
+	var items = _get_tab_item_pool(item_type)
+	if items.is_empty():
+		return []
+	var page_index = clampi(_tab_page_indices.get(item_type, 0), 0, _get_max_page_index(item_type))
+	var start_index = page_index * PAGE_SIZE
+	var end_index = min(start_index + PAGE_SIZE, items.size())
+	var page_items: Array = []
+	for i in range(start_index, end_index):
+		page_items.append(items[i])
+	return page_items
+
+func _get_tab_name_for_type(item_type: String) -> String:
+	match item_type:
+		"power_up":
+			return "PowerUps"
+		"consumable":
+			return "Consumables"
+		"mod":
+			return "Mods"
+		"colored_dice":
+			return "Colors"
+		"gaming_console":
+			return "Consoles"
+	return ""
+
+func _get_type_for_tab_name(tab_name: String) -> String:
+	match tab_name:
+		"PowerUps":
+			return "power_up"
+		"Consumables":
+			return "consumable"
+		"Mods":
+			return "mod"
+		"Colors":
+			return "colored_dice"
+		"Consoles":
+			return "gaming_console"
+	return ""
+
+func _get_type_for_tab_index(tab_index: int) -> String:
+	match tab_index:
+		0:
+			return "power_up"
+		1:
+			return "consumable"
+		2:
+			return "mod"
+		3:
+			return "colored_dice"
+		4:
+			return "gaming_console"
+	return ""
+
+func _has_multiple_pages(item_type: String) -> bool:
+	return _get_page_count(item_type) > 1
+
+func _get_page_motion_vector(step: int) -> Vector2:
+	return Vector2.LEFT if step > 0 else Vector2.RIGHT
+
+func _set_page_index(item_type: String, page_index: int) -> void:
+	_tab_page_indices[item_type] = clampi(page_index, 0, _get_max_page_index(item_type))
+
+func _render_current_page(item_type: String) -> void:
+	var container = _get_container_for_type(item_type)
+	if not container:
+		return
+	_set_page_index(item_type, _tab_page_indices.get(item_type, 0))
+	_clear_item_container(container)
+	for data in _get_page_items(item_type):
+		_add_shop_item(data, item_type)
+	_update_footer_state(item_type)
+
+func _change_page(item_type: String, step: int) -> void:
+	if not PAGED_ITEM_TYPES.has(item_type):
+		return
+	if _page_transitioning.get(item_type, false):
+		return
+	var current_index = _tab_page_indices.get(item_type, 0)
+	var target_index = clampi(current_index + step, 0, _get_max_page_index(item_type))
+	if target_index == current_index:
+		return
+
+	_page_transitioning[item_type] = true
+	_update_footer_state(item_type)
+
+	var container := _get_container_for_type(item_type) as Container
+	var motion_vector := _get_page_motion_vector(step)
+	var items := _get_shop_items(container)
+	var last_tween := _animate_items_out(items, motion_vector)
+	if last_tween:
+		await last_tween.finished
+
+	_clear_item_container(container)
+	await get_tree().process_frame
+
+	_set_page_index(item_type, target_index)
+	_render_current_page(item_type)
+	await get_tree().process_frame
+
+	items = _get_shop_items(container)
+	_animate_items_in(items, motion_vector)
+	_page_transitioning[item_type] = false
+	_update_footer_state(item_type)
+
+func _on_page_arrow_pressed(item_type: String, step: int) -> void:
+	_change_page(item_type, step)
+
+func _remove_item_from_pool(item_id: String, item_type: String) -> void:
+	var filtered_items: Array = []
+	for data in _get_tab_item_pool(item_type):
+		if data and data.id != item_id:
+			filtered_items.append(data)
+	_set_tab_item_pool(item_type, filtered_items)
+
+func _refresh_page_after_purchase(item_type: String) -> void:
+	_set_page_index(item_type, _tab_page_indices.get(item_type, 0))
+	_render_current_page(item_type)
+	_update_reroll_button_state()
 
 # Add this function to reset purchased items for a new round
 func reset_for_new_round() -> void:
@@ -490,6 +669,7 @@ func _on_item_purchased(item_id: String, item_type: String) -> void:
 	# so a killed tween cannot block the grant (see _remove_shop_item).
 	print("[ShopUI] Emitting item_purchased signal for:", item_id, "type:", item_type)
 	emit_signal("item_purchased", item_id, item_type)
+	_remove_item_from_pool(item_id, item_type)
 
 	# Remove the item from the shop after purchase.
 	# For colored dice: removed this turn, but available again next turn (not tracked in purchased_items for filtering)
@@ -511,6 +691,8 @@ func _remove_shop_item(item_id: String, item_type: String) -> void:
 	for child in container.get_children():
 		if child is ShopItem and child.item_id == item_id:
 			_animate_purchase_out(child)
+			var refresh_timer := get_tree().create_timer(0.34)
+			refresh_timer.timeout.connect(func(): _refresh_page_after_purchase(item_type))
 			print("[ShopUI] Started removal for shop item:", item_id)
 			break
 
@@ -639,114 +821,62 @@ func _on_close_button_pressed() -> void:
 	hide()
 
 ## _setup_reroll_ui()
-## Creates the reroll button and cost label - these will be added to each tab's layout
-## Only visible on PowerUps and Consumables tabs
+## Prepares the state dictionaries used by the footer reroll shells.
 func _setup_reroll_ui() -> void:
-	print("[ShopUI] Setting up reroll UI")
-	
-	# Create reroll button - will be added to the shop panel, not inside tabs
-	reroll_button = Button.new()
-	reroll_button.name = "RerollButton"
-	reroll_button.text = "REROLL"
-	reroll_button.custom_minimum_size = Vector2(120, 40)
-	
-	# Apply button styling
-	_apply_reroll_button_styling(reroll_button)
-	
-	# Connect pressed signal
-	reroll_button.pressed.connect(_on_reroll_button_pressed)
-	
-	# TweenFX hover/press feedback
-	reroll_button.mouse_entered.connect(_tfx.button_hover.bind(reroll_button))
-	reroll_button.mouse_exited.connect(_tfx.button_unhover.bind(reroll_button))
-	reroll_button.pressed.connect(_tfx.button_press.bind(reroll_button))
-	
-	# Create cost label (RichTextLabel for BBCode bounce animation)
-	reroll_cost_label = RichTextLabel.new()
-	reroll_cost_label.name = "RerollCostLabel"
-	reroll_cost_label.bbcode_enabled = true
-	reroll_cost_label.fit_content = true
-	reroll_cost_label.scroll_active = false
-	reroll_cost_label.custom_minimum_size = Vector2(100, 25)
-	
-	# Apply font styling
-	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
-	if vcr_font:
-		reroll_cost_label.add_theme_font_override("normal_font", vcr_font)
-		reroll_cost_label.add_theme_font_size_override("normal_font_size", 16)
-		reroll_cost_label.add_theme_color_override("default_color", Color(0.2, 1, 0.2, 1))  # Green for money
-	
-	_update_reroll_cost_display()
-	
-	# Initially hide - will show based on current tab
-	reroll_button.visible = false
-	reroll_cost_label.visible = false
-	
-	# Don't add to tree yet - will be added when centered layout is created
-	print("[ShopUI] Reroll UI setup complete (will be positioned in _replace_grid_with_centered_layout)")
+	print("[ShopUI] Preparing reroll footer state")
+	reroll_button = null
+	reroll_cost_label = null
+	_reroll_shells.clear()
+	_reroll_shader_materials.clear()
+	_reroll_title_labels.clear()
+	_reroll_price_labels.clear()
 
-## _apply_reroll_button_styling(button)
-## Applies themed styling to the reroll button
-func _apply_reroll_button_styling(button: Button) -> void:
+## _apply_footer_arrow_button_styling(button)
+## Applies themed styling to the footer pagination arrows.
+func _apply_footer_arrow_button_styling(button: Button) -> void:
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 	if vcr_font:
 		button.add_theme_font_override("font", vcr_font)
-		button.add_theme_font_size_override("font_size", 18)
+		button.add_theme_font_size_override("font_size", 22)
 	
-	# Normal state style
 	var style_normal = StyleBoxFlat.new()
-	style_normal.bg_color = Color(0.15, 0.4, 0.15, 0.95)  # Dark green
-	style_normal.border_color = Color(0.3, 0.8, 0.3, 1)   # Bright green border
+	style_normal.bg_color = Color(0.1, 0.16, 0.28, 0.95)
+	style_normal.border_color = Color(0.85, 0.75, 0.28, 0.95)
 	style_normal.set_border_width_all(2)
-	style_normal.corner_radius_top_left = 8
-	style_normal.corner_radius_top_right = 8
-	style_normal.corner_radius_bottom_right = 8
-	style_normal.corner_radius_bottom_left = 8
-	style_normal.content_margin_left = 12.0
+	style_normal.set_corner_radius_all(12)
+	style_normal.content_margin_left = 10.0
 	style_normal.content_margin_top = 8.0
-	style_normal.content_margin_right = 12.0
+	style_normal.content_margin_right = 10.0
 	style_normal.content_margin_bottom = 8.0
 	
-	# Hover state style
 	var style_hover = StyleBoxFlat.new()
-	style_hover.bg_color = Color(0.2, 0.5, 0.2, 0.98)
-	style_hover.border_color = Color(0.4, 1.0, 0.4, 1)
+	style_hover.bg_color = Color(0.14, 0.24, 0.38, 0.98)
+	style_hover.border_color = Color(1.0, 0.86, 0.38, 1.0)
 	style_hover.set_border_width_all(3)
-	style_hover.corner_radius_top_left = 8
-	style_hover.corner_radius_top_right = 8
-	style_hover.corner_radius_bottom_right = 8
-	style_hover.corner_radius_bottom_left = 8
-	style_hover.content_margin_left = 12.0
+	style_hover.set_corner_radius_all(12)
+	style_hover.content_margin_left = 10.0
 	style_hover.content_margin_top = 8.0
-	style_hover.content_margin_right = 12.0
+	style_hover.content_margin_right = 10.0
 	style_hover.content_margin_bottom = 8.0
 	
-	# Pressed state style
 	var style_pressed = StyleBoxFlat.new()
-	style_pressed.bg_color = Color(0.25, 0.6, 0.25, 1)
-	style_pressed.border_color = Color(0.5, 1.0, 0.5, 1)
+	style_pressed.bg_color = Color(0.2, 0.28, 0.45, 1.0)
+	style_pressed.border_color = Color(1.0, 0.92, 0.55, 1.0)
 	style_pressed.set_border_width_all(2)
-	style_pressed.corner_radius_top_left = 8
-	style_pressed.corner_radius_top_right = 8
-	style_pressed.corner_radius_bottom_right = 8
-	style_pressed.corner_radius_bottom_left = 8
+	style_pressed.set_corner_radius_all(12)
 	style_pressed.content_margin_left = 10.0
 	style_pressed.content_margin_top = 6.0
 	style_pressed.content_margin_right = 10.0
 	style_pressed.content_margin_bottom = 6.0
 	
-	# Disabled state style
 	var style_disabled = StyleBoxFlat.new()
-	style_disabled.bg_color = Color(0.2, 0.2, 0.2, 0.7)
-	style_disabled.border_color = Color(0.4, 0.4, 0.4, 0.7)
+	style_disabled.bg_color = Color(0.12, 0.12, 0.16, 0.72)
+	style_disabled.border_color = Color(0.34, 0.34, 0.42, 0.72)
 	style_disabled.set_border_width_all(2)
-	style_disabled.corner_radius_top_left = 8
-	style_disabled.corner_radius_top_right = 8
-	style_disabled.corner_radius_bottom_right = 8
-	style_disabled.corner_radius_bottom_left = 8
-	style_disabled.content_margin_left = 12.0
+	style_disabled.set_corner_radius_all(12)
+	style_disabled.content_margin_left = 10.0
 	style_disabled.content_margin_top = 8.0
-	style_disabled.content_margin_right = 12.0
+	style_disabled.content_margin_right = 10.0
 	style_disabled.content_margin_bottom = 8.0
 	
 	button.add_theme_stylebox_override("normal", style_normal)
@@ -754,61 +884,60 @@ func _apply_reroll_button_styling(button: Button) -> void:
 	button.add_theme_stylebox_override("pressed", style_pressed)
 	button.add_theme_stylebox_override("disabled", style_disabled)
 	button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-	button.add_theme_color_override("font_disabled_color", Color(0.6, 0.6, 0.6, 1))
+	button.add_theme_color_override("font_disabled_color", Color(0.58, 0.58, 0.66, 1))
 	button.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 	button.add_theme_constant_override("outline_size", 1)
 
+func _update_footer_state(item_type: String) -> void:
+	var controls: Dictionary = _footer_controls.get(item_type, {})
+	if controls.is_empty():
+		return
+	var left_button = controls.get("left_button") as Button
+	var right_button = controls.get("right_button") as Button
+	var show_arrows = _has_multiple_pages(item_type)
+	var page_index = _tab_page_indices.get(item_type, 0)
+	var is_transitioning = _page_transitioning.get(item_type, false)
+	if left_button:
+		left_button.visible = show_arrows
+		left_button.disabled = not show_arrows or is_transitioning or page_index <= 0
+	if right_button:
+		right_button.visible = show_arrows
+		right_button.disabled = not show_arrows or is_transitioning or page_index >= _get_max_page_index(item_type)
+
 ## _update_reroll_cost_display()
-## Updates the cost label text with current reroll cost in all tabs
+## Updates the inline reroll footer labels for the PowerUps and Consumables tabs.
 func _update_reroll_cost_display() -> void:
-	# Check if Clearance Rack makes rerolls free
 	var game_controller = _find_game_controller()
 	var free_reroll = game_controller and game_controller.clearance_rack_active
-	
-	# Update cost labels in both PowerUps and Consumables tabs
-	var tab_names = ["PowerUps", "Consumables"]
-	for tab_name in tab_names:
-		var tab_node = tab_container.get_node_or_null(tab_name) if tab_container else null
-		if not tab_node:
-			continue
-		
-		var reroll_container = tab_node.get_node_or_null("RerollContainer_" + tab_name)
-		if not reroll_container:
-			continue
-		
-		var tab_cost_label = reroll_container.get_node_or_null("RerollCostLabel")
-		if tab_cost_label:
+	for item_type in FOOTER_REROLL_TYPES:
+		var title_label = _reroll_title_labels.get(item_type) as Label
+		var price_label = _reroll_price_labels.get(item_type) as Label
+		if title_label:
+			title_label.text = "REROLL"
+		if price_label:
 			if free_reroll:
-				tab_cost_label.text = "[center]FREE[/center]"
+				price_label.text = "FREE"
+				price_label.modulate = Color(0.92, 1.0, 0.64, 1.0)
 			else:
-				tab_cost_label.text = "[center]$%s[/center]" % NumberFormatter.format_int(reroll_cost)
+				price_label.text = "$%s" % NumberFormatter.format_int(reroll_cost)
+				price_label.modulate = Color(0.56, 1.0, 0.7, 1.0)
 
 ## _animate_reroll_cost_bounce()
-## Animates the cost label with a bounce effect in the current tab
+## Animates the inline cost label and shader flash for the currently selected reroll tab.
 func _animate_reroll_cost_bounce() -> void:
-	var current_tab = tab_container.current_tab if tab_container else -1
-	var tab_name = "PowerUps" if current_tab == 0 else "Consumables"
-	
-	var tab_node = tab_container.get_node_or_null(tab_name) if tab_container else null
-	if not tab_node:
+	var item_type = _get_type_for_tab_index(tab_container.current_tab if tab_container else -1)
+	if not FOOTER_REROLL_TYPES.has(item_type):
 		return
-	
-	var reroll_container = tab_node.get_node_or_null("RerollContainer_" + tab_name)
-	if not reroll_container:
+	var price_label = _reroll_price_labels.get(item_type) as Label
+	if not price_label:
 		return
-	
-	var tab_cost_label = reroll_container.get_node_or_null("RerollCostLabel")
-	if not tab_cost_label:
-		return
-	
-	var original_pos = tab_cost_label.position
+	var original_scale = price_label.scale
 	var tween = create_tween()
 	tween.set_trans(Tween.TRANS_ELASTIC)
 	tween.set_ease(Tween.EASE_OUT)
-	
-	# Bounce up 10px then back down
-	tween.tween_property(tab_cost_label, "position:y", original_pos.y - 10, 0.15)
-	tween.tween_property(tab_cost_label, "position:y", original_pos.y, 0.15)
+	tween.tween_property(price_label, "scale", original_scale * Vector2(1.18, 1.18), 0.12)
+	tween.tween_property(price_label, "scale", original_scale, 0.18)
+	_flash_reroll_shader(item_type, 0.95)
 
 ## _on_reroll_button_pressed()
 ## Handles reroll button press - rerolls items in current tab
@@ -861,38 +990,17 @@ func _on_reroll_button_pressed() -> void:
 func _reroll_power_ups() -> void:
 	print("[ShopUI] Rerolling power-up items")
 	
-	# 1. Animate existing items out
 	var items := _get_shop_items(power_up_container)
 	var last_tween := _animate_items_out(items, Vector2.LEFT)
 	if last_tween:
 		await last_tween.finished
 	
-	# 2. Clear existing power-up items
-	if power_up_container:
-		for child in power_up_container.get_children():
-			child.queue_free()
-	
-	# Wait a frame for children to be freed
+	_clear_item_container(power_up_container)
 	await get_tree().process_frame
 	
-	# 3. Repopulate power-ups
-	var power_ups = power_up_manager.get_available_power_ups()
-	var filtered_power_ups = _filter_out_purchased_items(power_ups, "power_up")
-	filtered_power_ups = _filter_unlocked_items(filtered_power_ups, "power_up")
-	
-	# Also filter out already owned power-ups
-	var game_controller = get_tree().get_first_node_in_group("game_controller")
-	if game_controller:
-		filtered_power_ups = filtered_power_ups.filter(func(id): return not game_controller.active_power_ups.has(id))
-	
-	var selected_power_ups = _select_random_items(filtered_power_ups, power_up_items)
-	
-	for id in selected_power_ups:
-		var data = power_up_manager.get_def(id)
-		if data:
-			_add_shop_item(data, "power_up")
-	
-	# 4. Animate new items in
+	_set_page_index("power_up", 0)
+	_set_tab_item_pool("power_up", _build_power_up_pool())
+	_render_current_page("power_up")
 	await get_tree().process_frame
 	items = _get_shop_items(power_up_container)
 	_animate_items_in(items, Vector2.RIGHT)
@@ -904,94 +1012,64 @@ func _reroll_power_ups() -> void:
 func _reroll_consumables() -> void:
 	print("[ShopUI] Rerolling consumable items")
 	
-	# 1. Animate existing items out
 	var items := _get_shop_items(consumable_container)
 	var last_tween := _animate_items_out(items, Vector2.LEFT)
 	if last_tween:
 		await last_tween.finished
 	
-	# 2. Clear existing consumable items
-	if consumable_container:
-		for child in consumable_container.get_children():
-			child.queue_free()
-	
-	# Wait a frame for children to be freed
+	_clear_item_container(consumable_container)
 	await get_tree().process_frame
 	
-	# 3. Repopulate consumables
-	var consumables = consumable_manager._defs_by_id.keys()
-	var filtered_consumables = _filter_out_purchased_items(consumables, "consumable")
-	filtered_consumables = _filter_unlocked_items(filtered_consumables, "consumable")
-	var selected_consumables = _select_random_items(filtered_consumables, consumable_items)
-	
-	for id in selected_consumables:
-		var data = consumable_manager.get_def(id)
-		if data:
-			_add_shop_item(data, "consumable")
-	
-	# 4. Animate new items in
+	_set_page_index("consumable", 0)
+	_set_tab_item_pool("consumable", _build_consumable_pool())
+	_render_current_page("consumable")
 	await get_tree().process_frame
 	items = _get_shop_items(consumable_container)
 	_animate_items_in(items, Vector2.RIGHT)
 	
 	_update_reroll_button_state()
 
+func _has_available_reroll_items(item_type: String) -> bool:
+	if item_type == "power_up":
+		var filtered = _filter_out_purchased_items(power_up_manager.get_available_power_ups(), "power_up")
+		filtered = _filter_unlocked_items(filtered, "power_up")
+		var game_controller = get_tree().get_first_node_in_group("game_controller")
+		if game_controller:
+			filtered = filtered.filter(func(id): return not game_controller.active_power_ups.has(id))
+		return filtered.size() > 0
+	if item_type == "consumable":
+		var filtered = _filter_out_purchased_items(consumable_manager._defs_by_id.keys(), "consumable")
+		filtered = _filter_unlocked_items(filtered, "consumable")
+		return filtered.size() > 0
+	return false
+
 ## _update_reroll_button_state()
 ## Updates the reroll button enabled/disabled state based on available items and money
 ## Now updates all reroll buttons across tabs
 func _update_reroll_button_state() -> void:
-	var _current_tab = tab_container.current_tab if tab_container else -1
-	
-	# Check if Clearance Rack makes rerolls free
+	_update_reroll_cost_display()
 	var game_controller_ref = _find_game_controller()
 	var free_reroll = game_controller_ref and game_controller_ref.clearance_rack_active
-	
-	# Update reroll UI in both PowerUps and Consumables tabs
-	var tab_names = ["PowerUps", "Consumables"]
-	for tab_name in tab_names:
-		var tab_node = tab_container.get_node_or_null(tab_name) if tab_container else null
-		if not tab_node:
+	for item_type in FOOTER_REROLL_TYPES:
+		var controls: Dictionary = _footer_controls.get(item_type, {})
+		var center_control = controls.get("center_control") as Control
+		if not center_control:
 			continue
-		
-		var reroll_container = tab_node.get_node_or_null("RerollContainer_" + tab_name)
-		if not reroll_container:
-			continue
-		
-		var tab_button = reroll_container.get_node_or_null("RerollButton")
-		
+		var tab_button = center_control.get_node_or_null("RerollButton") as Button
 		if not tab_button:
 			continue
-		
-		# Determine tab index for filtering
-		var tab_index = 0 if tab_name == "PowerUps" else 1
-		
-		# Check if on cooldown
+		var disabled = false
 		if reroll_cooldown > 0:
-			tab_button.disabled = true
-			continue
-		
-		# Check if can afford (skip if free reroll from Clearance Rack)
-		if not free_reroll and not PlayerEconomy.can_afford(reroll_cost):
-			tab_button.disabled = true
-			continue
-		
-		# Check if there are items available to reroll into
-		var has_available_items = false
-		if tab_index == 0:
-			var power_ups = power_up_manager.get_available_power_ups()
-			var filtered = _filter_out_purchased_items(power_ups, "power_up")
-			filtered = _filter_unlocked_items(filtered, "power_up")
-			var game_controller = get_tree().get_first_node_in_group("game_controller")
-			if game_controller:
-				filtered = filtered.filter(func(id): return not game_controller.active_power_ups.has(id))
-			has_available_items = filtered.size() > 0
+			disabled = true
+		elif not free_reroll and not PlayerEconomy.can_afford(reroll_cost):
+			disabled = true
 		else:
-			var consumables = consumable_manager._defs_by_id.keys()
-			var filtered = _filter_out_purchased_items(consumables, "consumable")
-			filtered = _filter_unlocked_items(filtered, "consumable")
-			has_available_items = filtered.size() > 0
-		
-		tab_button.disabled = not has_available_items
+			disabled = not _has_available_reroll_items(item_type)
+		tab_button.disabled = disabled
+		_set_reroll_disabled_visual(item_type, disabled)
+
+	for item_type in PAGED_ITEM_TYPES:
+		_update_footer_state(item_type)
 
 ## _on_tab_changed(tab_index: int)
 ## Called when the shop tab changes - shows/hides reroll button accordingly
@@ -1004,10 +1082,13 @@ func _on_tab_changed(tab_index: int) -> void:
 		audio_mgr.play_tab_switch()
 	
 	_update_reroll_button_state()
+	var item_type = _get_type_for_tab_index(tab_index)
+	if item_type != "":
+		_update_footer_state(item_type)
 	
-	# Animate items in the newly selected tab
+	# Animate items in the newly selected purchasable tab.
 	var container := _get_container_for_tab_index(tab_index)
-	if container:
+	if container and item_type != "":
 		# Wait one frame so the container finishes its sort pass
 		# (items in a freshly-visible tab share the same uncalculated position until sorted)
 		await get_tree().process_frame
@@ -1141,6 +1222,7 @@ func _get_container_for_tab_index(tab_index: int) -> Container:
 		3: return colored_dice_container
 		4: return gaming_console_container
 		5: return locked_container
+		6: return unlocked_container
 	return null
 
 ## _get_shop_items(container)
@@ -1183,6 +1265,7 @@ func _on_money_changed(_new_amount: int, _change: int = 0) -> void:
 			for child in container.get_children():
 				if child is ShopItem:
 					child._update_button_state()
+	_update_reroll_button_state()
 
 # Add method to increase the number of power-ups displayed in shop
 func increase_power_up_items(amount: int) -> void:
@@ -1232,7 +1315,7 @@ func _style_tab_container() -> void:
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 	if vcr_font:
 		tab_container.add_theme_font_override("font", vcr_font)
-		tab_container.add_theme_font_size_override("font_size", 28)  # Larger font size
+		tab_container.add_theme_font_size_override("font_size", 18)  # Larger font size
 		tab_container.add_theme_color_override("font_selected_color", Color(1, 0.8, 0.2, 1))  # Golden selected
 		tab_container.add_theme_color_override("font_unselected_color", Color(0.9, 0.9, 0.9, 1))  # Light gray unselected
 		tab_container.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
@@ -1296,6 +1379,8 @@ func _replace_grid_with_centered_layout() -> void:
 		var tab_node = tab_nodes[i]
 		if not tab_node:
 			continue
+		if tab_node.get_node_or_null("MarginContainer"):
+			continue
 			
 		var grid = tab_node.get_node_or_null("GridContainer")
 		if not grid:
@@ -1318,8 +1403,9 @@ func _replace_grid_with_centered_layout() -> void:
 		margin_container.add_theme_constant_override("margin_left", 50)
 		margin_container.add_theme_constant_override("margin_right", 50)
 		margin_container.add_theme_constant_override("margin_top", 30)
-		# Extra bottom margin for tabs with reroll button
-		var bottom_margin = 80 if is_reroll_tab else 30
+		# Reserve footer space for all paged tabs.
+		var item_type = _get_type_for_tab_name(tab_node.name)
+		var bottom_margin = 100 if item_type != "" else 30
 		margin_container.add_theme_constant_override("margin_bottom", bottom_margin)
 		
 		# Create a centered VBox container that centers content vertically
@@ -1329,27 +1415,13 @@ func _replace_grid_with_centered_layout() -> void:
 		main_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		main_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 		
-		# Create inner container for items
-		# Consoles tab uses GridContainer (3 columns, 2 rows) to avoid spilling off-screen
-		var item_container: Control
-		if tab_node.name == "Consoles":
-			var grid_item = GridContainer.new()
-			grid_item.name = "ItemContainer"
-			grid_item.columns = 3
-			grid_item.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-			grid_item.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			grid_item.add_theme_constant_override("h_separation", 30)
-			grid_item.add_theme_constant_override("v_separation", 16)
-			item_container = grid_item
-			print("[ShopUI] Using GridContainer for Consoles tab to fit more items")
-		else:
-			var hbox = HBoxContainer.new()
-			hbox.name = "ItemContainer"
-			hbox.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-			hbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-			hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-			hbox.add_theme_constant_override("separation", 40)
-			item_container = hbox
+		# Create a single-row container for the current page slice.
+		var item_container := HBoxContainer.new()
+		item_container.name = "ItemContainer"
+		item_container.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		item_container.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		item_container.alignment = BoxContainer.ALIGNMENT_CENTER
+		item_container.add_theme_constant_override("separation", 40)
 		
 		# Move children from grid to item_container
 		var children_to_move = []
@@ -1371,18 +1443,17 @@ func _replace_grid_with_centered_layout() -> void:
 		# Update container references
 		if tab_node.name == "PowerUps":
 			power_up_container = item_container
-			# Add reroll UI to PowerUps tab
-			_add_reroll_ui_to_tab(tab_node)
 		elif tab_node.name == "Consumables":
 			consumable_container = item_container
-			# Add reroll UI to Consumables tab (clone of the buttons)
-			_add_reroll_ui_to_tab(tab_node)
 		elif tab_node.name == "Mods":
 			mod_container = item_container
 		elif tab_node.name == "Colors":
 			colored_dice_container = item_container
 		elif tab_node.name == "Consoles":
 			gaming_console_container = item_container
+
+		if item_type != "":
+			_add_footer_ui_to_tab(tab_node, item_type)
 		
 		print("[ShopUI] Created centered layout for:", tab_node.name)
 
@@ -1414,67 +1485,211 @@ func _add_shelf_background_to_tab(tab_node: Control) -> void:
 	else:
 		print("[ShopUI] WARNING: Could not load shelf texture")
 
-## _add_reroll_ui_to_tab(tab_node)
-## Adds the reroll button and cost label to a specific tab
-func _add_reroll_ui_to_tab(tab_node: Control) -> void:
-	print("[ShopUI] Adding reroll UI to tab:", tab_node.name)
+## _add_footer_ui_to_tab(tab_node, item_type)
+## Adds the bottom footer row with pagination arrows and reroll shell when applicable.
+func _add_footer_ui_to_tab(tab_node: Control, item_type: String) -> void:
+	print("[ShopUI] Adding footer UI to tab:", tab_node.name)
+	var footer_container = MarginContainer.new()
+	footer_container.name = "Footer_" + tab_node.name
+	footer_container.anchor_left = 0.0
+	footer_container.anchor_right = 1.0
+	footer_container.anchor_top = 1.0
+	footer_container.anchor_bottom = 1.0
+	footer_container.offset_left = 44.0
+	footer_container.offset_right = -44.0
+	footer_container.offset_top = -86.0
+	footer_container.offset_bottom = -10.0
+	footer_container.mouse_filter = Control.MOUSE_FILTER_PASS
 	
-	# Create a container for the reroll UI at bottom center
-	var reroll_container = VBoxContainer.new()
-	reroll_container.name = "RerollContainer_" + tab_node.name
-	reroll_container.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	reroll_container.anchor_top = 1.0
-	reroll_container.anchor_bottom = 1.0
-	reroll_container.anchor_left = 0.5
-	reroll_container.anchor_right = 0.5
-	reroll_container.offset_left = -70
-	reroll_container.offset_right = 70
-	reroll_container.offset_top = -85
-	reroll_container.offset_bottom = -10
-	reroll_container.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	reroll_container.alignment = BoxContainer.ALIGNMENT_CENTER
-	reroll_container.add_theme_constant_override("separation", 5)
+	var footer_row = HBoxContainer.new()
+	footer_row.name = "FooterRow"
+	footer_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer_row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	footer_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	footer_row.add_theme_constant_override("separation", 18)
+	footer_container.add_child(footer_row)
 	
-	# Create cost label for this tab
-	var cost_label = RichTextLabel.new()
-	cost_label.name = "RerollCostLabel"
-	cost_label.bbcode_enabled = true
-	cost_label.fit_content = true
-	cost_label.scroll_active = false
-	cost_label.custom_minimum_size = Vector2(100, 20)
-	cost_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var left_button = _create_footer_arrow_button(item_type, -1, "LeftArrow", "<")
+	var right_button = _create_footer_arrow_button(item_type, 1, "RightArrow", ">")
+	footer_row.add_child(left_button)
+	
+	var center_control: Control
+	if FOOTER_REROLL_TYPES.has(item_type):
+		center_control = _create_reroll_center_control(item_type)
+	else:
+		var spacer = Control.new()
+		spacer.name = "FooterSpacer"
+		spacer.custom_minimum_size = Vector2(172, 64)
+		center_control = spacer
+	footer_row.add_child(center_control)
+	footer_row.add_child(right_button)
+	
+	tab_node.add_child(footer_container)
+	_footer_controls[item_type] = {
+		"footer_container": footer_container,
+		"left_button": left_button,
+		"right_button": right_button,
+		"center_control": center_control,
+	}
+	_update_footer_state(item_type)
+
+func _create_footer_arrow_button(item_type: String, step: int, button_name: String, button_text: String) -> Button:
+	var button = Button.new()
+	button.name = button_name
+	button.text = button_text
+	button.custom_minimum_size = Vector2(52, 52)
+	button.focus_mode = Control.FOCUS_NONE
+	_apply_footer_arrow_button_styling(button)
+	button.pressed.connect(_on_page_arrow_pressed.bind(item_type, step))
+	button.mouse_entered.connect(_tfx.button_hover.bind(button))
+	button.mouse_exited.connect(_tfx.button_unhover.bind(button))
+	button.pressed.connect(_tfx.button_press.bind(button))
+	return button
+
+func _create_reroll_center_control(item_type: String) -> Control:
+	var shell = Control.new()
+	shell.name = "RerollShell_" + _get_tab_name_for_type(item_type)
+	shell.custom_minimum_size = Vector2(172, 64)
+	shell.mouse_filter = Control.MOUSE_FILTER_PASS
+	
+	var shader_rect = ColorRect.new()
+	shader_rect.name = "ShaderRect"
+	shader_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	shader_rect.color = Color.WHITE
+	shell.add_child(shader_rect)
+	
+	var shader = load(REROLL_SHADER_PATH) as Shader
+	if shader:
+		var shader_material = ShaderMaterial.new()
+		shader_material.shader = shader
+		shader_material.set_shader_parameter("aspect_ratio", 172.0 / 64.0)
+		shader_material.set_shader_parameter("hover_strength", 0.0)
+		shader_material.set_shader_parameter("pulse_strength", 0.0)
+		shader_material.set_shader_parameter("press_flash", 0.0)
+		shader_material.set_shader_parameter("disabled_factor", 0.0)
+		shader_material.set_shader_parameter("accent_color", Color(0.16, 0.82, 0.48, 1.0))
+		shader_material.set_shader_parameter("glow_color", Color(0.95, 0.88, 0.34, 1.0))
+		shader_material.set_shader_parameter("base_color", Color(0.10, 0.22, 0.18, 0.98))
+		shader_material.set_shader_parameter("mid_color", Color(0.16, 0.32, 0.26, 0.98))
+		shader_material.set_shader_parameter("rim_color", Color(0.96, 0.97, 0.88, 1.0))
+		shader_rect.material = shader_material
+		_reroll_shader_materials[item_type] = shader_material
+	
+	var content_margin = MarginContainer.new()
+	content_margin.name = "ContentMargin"
+	content_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content_margin.add_theme_constant_override("margin_left", 16)
+	content_margin.add_theme_constant_override("margin_top", 8)
+	content_margin.add_theme_constant_override("margin_right", 16)
+	content_margin.add_theme_constant_override("margin_bottom", 8)
+	shell.add_child(content_margin)
+	
+	var content_vbox = VBoxContainer.new()
+	content_vbox.name = "ContentVBox"
+	content_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	content_vbox.add_theme_constant_override("separation", 1)
+	content_margin.add_child(content_vbox)
 	
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	var title_label = Label.new()
+	title_label.name = "RerollTitle"
+	title_label.text = "REROLL"
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if vcr_font:
-		cost_label.add_theme_font_override("normal_font", vcr_font)
-		cost_label.add_theme_font_size_override("normal_font_size", 16)
-		cost_label.add_theme_color_override("default_color", Color(0.2, 1, 0.2, 1))
-	cost_label.text = "[center]$%s[/center]" % NumberFormatter.format_int(reroll_cost)
+		title_label.add_theme_font_override("font", vcr_font)
+		title_label.add_theme_font_size_override("font_size", 18)
+	title_label.add_theme_color_override("font_color", Color(1.0, 0.97, 0.92, 1.0))
+	title_label.add_theme_color_override("font_outline_color", Color(0.04, 0.08, 0.08, 1.0))
+	title_label.add_theme_constant_override("outline_size", 1)
+	content_vbox.add_child(title_label)
 	
-	# Create reroll button for this tab
-	var tab_reroll_button = Button.new()
-	tab_reroll_button.name = "RerollButton"
-	tab_reroll_button.text = "REROLL"
-	tab_reroll_button.custom_minimum_size = Vector2(120, 40)
-	tab_reroll_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_apply_reroll_button_styling(tab_reroll_button)
-	tab_reroll_button.pressed.connect(_on_reroll_button_pressed)
-	tab_reroll_button.mouse_entered.connect(func(): _tfx.button_hover(tab_reroll_button))
-	tab_reroll_button.mouse_exited.connect(func(): _tfx.button_unhover(tab_reroll_button))
+	var price_label = Label.new()
+	price_label.name = "RerollPrice"
+	price_label.text = "$%s" % NumberFormatter.format_int(reroll_cost)
+	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	price_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	price_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if vcr_font:
+		price_label.add_theme_font_override("font", vcr_font)
+		price_label.add_theme_font_size_override("font_size", 16)
+	price_label.add_theme_color_override("font_color", Color(0.56, 1.0, 0.7, 1.0))
+	price_label.add_theme_color_override("font_outline_color", Color(0.03, 0.08, 0.06, 1.0))
+	price_label.add_theme_constant_override("outline_size", 1)
+	content_vbox.add_child(price_label)
 	
-	# Add to container
-	reroll_container.add_child(cost_label)
-	reroll_container.add_child(tab_reroll_button)
+	var overlay_button = Button.new()
+	overlay_button.name = "RerollButton"
+	overlay_button.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay_button.flat = true
+	overlay_button.text = ""
+	overlay_button.focus_mode = Control.FOCUS_NONE
+	overlay_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var empty_style = StyleBoxEmpty.new()
+	overlay_button.add_theme_stylebox_override("normal", empty_style)
+	overlay_button.add_theme_stylebox_override("hover", empty_style)
+	overlay_button.add_theme_stylebox_override("pressed", empty_style)
+	overlay_button.add_theme_stylebox_override("disabled", empty_style)
+	overlay_button.add_theme_stylebox_override("focus", empty_style)
+	overlay_button.pressed.connect(_on_reroll_button_pressed)
+	overlay_button.mouse_entered.connect(func(): _on_reroll_hover_changed(item_type, true))
+	overlay_button.mouse_exited.connect(func(): _on_reroll_hover_changed(item_type, false))
+	overlay_button.pressed.connect(func(): _on_reroll_pressed_visual(item_type))
+	shell.add_child(overlay_button)
 	
-	# Add container to tab
-	tab_node.add_child(reroll_container)
-	
-	# Store references for the first one (PowerUps)
-	if tab_node.name == "PowerUps":
-		reroll_button = tab_reroll_button
-		reroll_cost_label = cost_label
-	
-	print("[ShopUI] Reroll UI added to tab:", tab_node.name)
+	_reroll_shells[item_type] = shell
+	_reroll_title_labels[item_type] = title_label
+	_reroll_price_labels[item_type] = price_label
+	if item_type == "power_up":
+		reroll_button = overlay_button
+		reroll_cost_label = price_label
+	return shell
+
+func _on_reroll_hover_changed(item_type: String, hovered: bool) -> void:
+	var shell = _reroll_shells.get(item_type) as Control
+	var shader_material = _reroll_shader_materials.get(item_type) as ShaderMaterial
+	if shell:
+		if hovered:
+			_tfx.button_hover(shell)
+		else:
+			_tfx.button_unhover(shell)
+	if shader_material:
+		shader_material.set_shader_parameter("hover_strength", 1.0 if hovered else 0.0)
+		shader_material.set_shader_parameter("pulse_strength", 0.3 if hovered else 0.0)
+
+func _on_reroll_pressed_visual(item_type: String) -> void:
+	var shell = _reroll_shells.get(item_type) as Control
+	if shell:
+		_tfx.button_press(shell)
+	_flash_reroll_shader(item_type, 1.15)
+
+func _set_reroll_disabled_visual(item_type: String, disabled: bool) -> void:
+	var shell = _reroll_shells.get(item_type) as Control
+	var shader_material = _reroll_shader_materials.get(item_type) as ShaderMaterial
+	var title_label = _reroll_title_labels.get(item_type) as Label
+	var price_label = _reroll_price_labels.get(item_type) as Label
+	if shell:
+		shell.modulate = Color(1.0, 1.0, 1.0, 0.78) if disabled else Color.WHITE
+	if title_label:
+		title_label.modulate = Color(0.76, 0.76, 0.82, 0.92) if disabled else Color.WHITE
+	if price_label:
+		price_label.modulate = Color(0.58, 0.58, 0.64, 0.92) if disabled else price_label.modulate
+	if shader_material:
+		shader_material.set_shader_parameter("disabled_factor", 1.0 if disabled else 0.0)
+		if disabled:
+			shader_material.set_shader_parameter("hover_strength", 0.0)
+			shader_material.set_shader_parameter("pulse_strength", 0.0)
+
+func _flash_reroll_shader(item_type: String, flash_strength: float) -> void:
+	var shader_material = _reroll_shader_materials.get(item_type) as ShaderMaterial
+	if not shader_material:
+		return
+	shader_material.set_shader_parameter("press_flash", flash_strength)
+	var tween = create_tween()
+	tween.tween_method(func(value: float): shader_material.set_shader_parameter("press_flash", value), flash_strength, 0.0, 0.42).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 ## _style_shop_background()
 ## Applies an improved background to the shop UI
@@ -1644,9 +1859,7 @@ func populate_locked_items() -> void:
 		print("[ShopUI] No locked container found")
 		return
 	
-	# Clear existing locked items
-	for child in locked_container.get_children():
-		child.queue_free()
+	_clear_item_container(locked_container)
 	
 	# Get the ProgressManager autoload
 	var progress_manager = get_node("/root/ProgressManager")
@@ -1686,152 +1899,148 @@ func populate_locked_items() -> void:
 	
 	print("[ShopUI] Locked items populated")
 
+## populate_unlocked_items()
+##
+## Populates the UNLOCKED tab with items already unlocked in ProgressManager.
+func populate_unlocked_items() -> void:
+	if not unlocked_container:
+		print("[ShopUI] No unlocked container found")
+		return
+	_clear_item_container(unlocked_container)
+	var progress_manager = get_node("/root/ProgressManager")
+	if not progress_manager:
+		print("[ShopUI] ProgressManager not available")
+		return
+	print("[ShopUI] Populating unlocked items...")
+	const UnlockableItemClass = preload("res://Scripts/Core/unlockable_item.gd")
+	var item_types = [
+		UnlockableItemClass.ItemType.POWER_UP,
+		UnlockableItemClass.ItemType.CONSUMABLE,
+		UnlockableItemClass.ItemType.MOD,
+		UnlockableItemClass.ItemType.COLORED_DICE_FEATURE,
+		UnlockableItemClass.ItemType.GAMING_CONSOLE,
+	]
+	for item_type in item_types:
+		var unlocked_ids = progress_manager.get_unlocked_items(item_type)
+		for item_id in unlocked_ids:
+			var item = progress_manager.get_unlockable_item(item_id)
+			if item:
+				_create_unlocked_item_display(item)
+	print("[ShopUI] Unlocked items populated")
+
 ## _create_locked_item_display(item)
 ##
 ## Creates a display for a locked item showing what it is, unlock requirements,
 ## and current progress toward unlocking (for cumulative conditions).
 func _create_locked_item_display(item) -> void:
-	if not item or not locked_container:
+	_create_archive_item_display(item, locked_container, true)
+
+func _create_unlocked_item_display(item) -> void:
+	_create_archive_item_display(item, unlocked_container, false)
+
+func _create_archive_item_display(item, target_container: Container, is_locked: bool) -> void:
+	if not item or not target_container:
 		return
-	
-	# Load fonts
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 	var brick_font = load("res://Resources/Font/BRICK_SANS.ttf")
-	
-	# Get progress data from ProgressManager
 	var progress_manager = get_node("/root/ProgressManager")
 	var progress_data = {"current": 0, "target": 0, "percentage": 0.0}
-	if progress_manager and progress_manager.has_method("get_condition_progress"):
+	if is_locked and progress_manager and progress_manager.has_method("get_condition_progress"):
 		progress_data = progress_manager.get_condition_progress(item.id)
-	
-	# Determine if item is close to unlocking (>=80%)
-	var is_close_to_unlock = progress_data["percentage"] >= 80.0
-	
-	# Create a panel for the locked item with shader background
-	var locked_panel = PanelContainer.new()
-	var theme_path = "res://Resources/UI/powerup_hover_theme.tres"
-	var panel_theme = load(theme_path) as Theme
+	var is_close_to_unlock = is_locked and progress_data["percentage"] >= 80.0
+	var archive_panel = PanelContainer.new()
+	var panel_theme = load("res://Resources/UI/powerup_hover_theme.tres") as Theme
 	if panel_theme:
-		locked_panel.theme = panel_theme
-	locked_panel.custom_minimum_size = Vector2(200, 170)  # Slightly taller to fit progress
-	
-	# Create ColorRect for shader background
+		archive_panel.theme = panel_theme
+	archive_panel.custom_minimum_size = Vector2(200, 170)
 	var shader_bg = ColorRect.new()
 	shader_bg.color = Color.WHITE
 	shader_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	
-	# Load and apply the retro dither shader
 	var shader = load("res://Scripts/Shaders/marquee_lights.gdshader")
 	if shader:
 		var shader_mat = ShaderMaterial.new()
 		shader_mat.shader = shader
-		# Configure shader parameters for locked items
-		#shader_mat.set_shader_parameter("step_posterize", 8)
-		#shader_mat.set_shader_parameter("step_pixelated", 400)
-		#shader_mat.set_shader_parameter("dithering_bayer", true)
-		#shader_mat.set_shader_parameter("animated_dithering", true)
-		#shader_mat.set_shader_parameter("smooth_animate", false)
-		#shader_mat.set_shader_parameter("interval", 0.3)
-		
-		# Default colors: black and grey
-		#shader_mat.set_shader_parameter("color_A", Vector3(0.0, 0.0, 0.0))  # Black
-		#shader_mat.set_shader_parameter("color_B", Vector3(0.4, 0.4, 0.4))  # Grey
-		
+		if is_locked:
+			shader_mat.set_shader_parameter("color_A", Vector3(0.0, 0.0, 0.0))
+			shader_mat.set_shader_parameter("color_B", Vector3(0.4, 0.4, 0.4))
+		else:
+			shader_mat.set_shader_parameter("color_A", Vector3(0.0, 0.25, 0.18))
+			shader_mat.set_shader_parameter("color_B", Vector3(0.15, 0.45, 0.34))
 		shader_bg.material = shader_mat
-	
-	# Add a background style with border
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.2, 0.2, 0.2, 0.0)  # Transparent, shader handles color
+	style.bg_color = Color(0.2, 0.2, 0.2, 0.0)
 	style.border_width_left = 2
 	style.border_width_right = 2
 	style.border_width_top = 2
 	style.border_width_bottom = 2
-	
-	# Gold border for items close to unlocking, red for others
-	if is_close_to_unlock:
-		style.border_color = Color(1.0, 0.85, 0.0, 1.0)  # Gold border
+	if is_locked:
+		style.border_color = Color(1.0, 0.85, 0.0, 1.0) if is_close_to_unlock else Color(0.8, 0.4, 0.4, 1.0)
 	else:
-		style.border_color = Color(0.8, 0.4, 0.4, 1.0)  # Red border for locked items
-	
+		style.border_color = Color(0.45, 0.92, 0.62, 1.0)
 	style.corner_radius_top_left = 5
 	style.corner_radius_top_right = 5
 	style.corner_radius_bottom_left = 5
 	style.corner_radius_bottom_right = 5
-	locked_panel.add_theme_stylebox_override("panel", style)
-	
-	# Add shader background as first child (behind content)
-	locked_panel.add_child(shader_bg)
-	# Make it fill the panel
+	archive_panel.add_theme_stylebox_override("panel", style)
+	archive_panel.add_child(shader_bg)
 	shader_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	
-	# Connect mouse signals for hover effects
-	locked_panel.mouse_entered.connect(_on_locked_item_mouse_entered.bind(shader_bg))
-	locked_panel.mouse_exited.connect(_on_locked_item_mouse_exited.bind(shader_bg))
-	
-	# Create content container
+	archive_panel.mouse_entered.connect(_on_locked_item_mouse_entered.bind(shader_bg))
+	archive_panel.mouse_exited.connect(_on_locked_item_mouse_exited.bind(shader_bg))
 	var vbox = VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 3)
-	locked_panel.add_child(vbox)
-	
-	# Add item name with lock icon (or star for close to unlock) - Use BRICK_SANS font for title
+	archive_panel.add_child(vbox)
 	var name_label = RichTextLabel.new()
 	name_label.custom_minimum_size = Vector2(180, 30)
 	name_label.fit_content = true
 	name_label.scroll_active = false
-	name_label.bbcode_enabled = true  # Enable BBCode
-	name_label.add_theme_font_override("normal_font", brick_font)  # Use brick font for title
-	if is_close_to_unlock:
-		name_label.text = "[center]⭐ %s[/center]" % item.display_name
+	name_label.bbcode_enabled = true
+	name_label.add_theme_font_override("normal_font", brick_font)
+	if is_locked:
+		if is_close_to_unlock:
+			name_label.text = "[center]⭐ %s[/center]" % item.display_name
+		else:
+			name_label.text = "[center]🔒 %s[/center]" % item.display_name
 	else:
-		name_label.text = "[center]🔒 %s[/center]" % item.display_name
+		name_label.text = "[center]🔓 %s[/center]" % item.display_name
 	name_label.add_theme_font_size_override("normal_font_size", 11)
 	vbox.add_child(name_label)
-	
-	# Add item type - Use VCR font
 	var type_label = Label.new()
 	type_label.text = "Type: %s" % item.get_type_string()
-	type_label.add_theme_font_override("font", vcr_font)  # Use VCR font
+	type_label.add_theme_font_override("font", vcr_font)
 	type_label.add_theme_font_size_override("font_size", 10)
 	type_label.modulate = Color(0.8, 0.8, 0.8, 1.0)
 	type_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(type_label)
-	
-	# Add description - Use VCR font
 	var desc_label = RichTextLabel.new()
 	desc_label.custom_minimum_size = Vector2(180, 40)
 	desc_label.fit_content = true
 	desc_label.scroll_active = false
-	desc_label.bbcode_enabled = true  # Enable BBCode
-	desc_label.add_theme_font_override("normal_font", vcr_font)  # Use VCR font
+	desc_label.bbcode_enabled = true
+	desc_label.add_theme_font_override("normal_font", vcr_font)
 	desc_label.add_theme_font_size_override("normal_font_size", 9)
 	desc_label.text = "[center]%s[/center]" % item.description
 	vbox.add_child(desc_label)
-	
-	# Add unlock requirement - Use VCR font
-	var unlock_label = RichTextLabel.new()
-	unlock_label.custom_minimum_size = Vector2(180, 35)
-	unlock_label.fit_content = true
-	unlock_label.scroll_active = false
-	unlock_label.bbcode_enabled = true  # Enable BBCode
-	unlock_label.add_theme_font_override("normal_font", vcr_font)  # Use VCR font
-	unlock_label.add_theme_font_size_override("normal_font_size", 9)
-	unlock_label.text = "[center][color=yellow]Unlock: %s[/color][/center]" % item.get_unlock_description()
-	vbox.add_child(unlock_label)
-	
-	# Add progress display for trackable conditions
-	if progress_data["target"] > 0 and progress_data["current"] > 0:
+	var status_label = RichTextLabel.new()
+	status_label.custom_minimum_size = Vector2(180, 35)
+	status_label.fit_content = true
+	status_label.scroll_active = false
+	status_label.bbcode_enabled = true
+	status_label.add_theme_font_override("normal_font", vcr_font)
+	status_label.add_theme_font_size_override("normal_font_size", 9)
+	if is_locked:
+		status_label.text = "[center][color=yellow]Unlock: %s[/color][/center]" % item.get_unlock_description()
+	else:
+		status_label.text = "[center][color=#8dff8d]Status: Unlocked[/color][/center]"
+	vbox.add_child(status_label)
+	if is_locked and progress_data["target"] > 0 and progress_data["current"] > 0:
 		var progress_container = HBoxContainer.new()
 		progress_container.alignment = BoxContainer.ALIGNMENT_CENTER
 		vbox.add_child(progress_container)
-		
-		# Progress bar
 		var progress_bar = ProgressBar.new()
 		progress_bar.custom_minimum_size = Vector2(120, 12)
 		progress_bar.max_value = 100.0
 		progress_bar.value = progress_data["percentage"]
 		progress_bar.show_percentage = false
-		
-		# Style the progress bar
 		var bar_style = StyleBoxFlat.new()
 		bar_style.bg_color = Color(0.3, 0.3, 0.3, 1.0)
 		bar_style.corner_radius_top_left = 3
@@ -1839,29 +2048,21 @@ func _create_locked_item_display(item) -> void:
 		bar_style.corner_radius_bottom_left = 3
 		bar_style.corner_radius_bottom_right = 3
 		progress_bar.add_theme_stylebox_override("background", bar_style)
-		
 		var fill_style = StyleBoxFlat.new()
-		if is_close_to_unlock:
-			fill_style.bg_color = Color(1.0, 0.85, 0.0, 1.0)  # Gold when close
-		else:
-			fill_style.bg_color = Color(0.3, 0.7, 0.3, 1.0)  # Green normally
+		fill_style.bg_color = Color(1.0, 0.85, 0.0, 1.0) if is_close_to_unlock else Color(0.3, 0.7, 0.3, 1.0)
 		fill_style.corner_radius_top_left = 3
 		fill_style.corner_radius_top_right = 3
 		fill_style.corner_radius_bottom_left = 3
 		fill_style.corner_radius_bottom_right = 3
 		progress_bar.add_theme_stylebox_override("fill", fill_style)
-		
 		progress_container.add_child(progress_bar)
-		
-		# Progress text - Use VCR font
 		var progress_text = Label.new()
 		progress_text.text = " %d/%d" % [progress_data["current"], progress_data["target"]]
-		progress_text.add_theme_font_override("font", vcr_font)  # Use VCR font
+		progress_text.add_theme_font_override("font", vcr_font)
 		progress_text.add_theme_font_size_override("font_size", 9)
 		progress_text.modulate = Color(0.8, 0.8, 0.8, 1.0)
 		progress_container.add_child(progress_text)
-	
-	locked_container.add_child(locked_panel)
+	target_container.add_child(archive_panel)
 
 func _filter_unlocked_items(items: Array, item_type: String) -> Array:
 	# Get the ProgressManager autoload
