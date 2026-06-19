@@ -1,24 +1,47 @@
-extends PanelContainer
+extends Control
 class_name ShopItem
 
 signal purchased(item_id: String, item_type: String)
 
-@onready var icon: TextureRect = $MarginContainer/VBoxContainer/Icon
-@onready var name_label: Label = $MarginContainer/VBoxContainer/NameLabel
-@onready var price_label: Label = $MarginContainer/VBoxContainer/PriceLabel
-@onready var buy_button: Button = $MarginContainer/VBoxContainer/BuyButton
-@onready var shop_label: Label = $MarginContainer/ShopLabel
+@onready var card_panel: PanelContainer = $CardPanel
+@onready var icon: TextureRect = $CardPanel/MarginContainer/ContentVBox/Icon
+@onready var title_plate: PanelContainer = $CardPanel/MarginContainer/ContentVBox/TitlePlate
+@onready var name_label: Label = $CardPanel/MarginContainer/ContentVBox/TitlePlate/NameLabel
+@onready var buy_button: Button = $CardPanel/MarginContainer/ContentVBox/BuyButton
+@onready var rarity_badge: PanelContainer = $BadgeLayer/RarityBadge
+@onready var rarity_label: Label = $BadgeLayer/RarityBadge/RarityLabel
+@onready var price_badge: PanelContainer = $BadgeLayer/PriceBadge
+@onready var price_label: Label = $BadgeLayer/PriceBadge/PriceLabel
 @onready var _tfx := get_node("/root/TweenFXHelper")
 
 # Dice texture and shader for colored dice shop cards
 const DICE_TEXTURE_PATH := "res://Resources/Art/Dice/dieWhite1.png"
 const DICE_SHADER_PATH := "res://Scripts/Shaders/dice_combined_effects.gdshader"
+const SHOP_ITEM_THEME = preload("res://Resources/UI/shop_item_theme.tres")
+const VCR_FONT = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+const HANG_PIVOT_Y := 32.0
+const TITLE_FONT_SIZE_DEFAULT := 24
+const TITLE_FONT_SIZE_MIN := 16
+const TITLE_HORIZONTAL_PADDING := 8.0
+const BADGE_SIDE_MARGIN := 12.0
+const BADGE_TOP := 44.0
+const BADGE_HEIGHT := 28.0
+const RARITY_BADGE_MIN_WIDTH := 36.0
+const PRICE_BADGE_MIN_WIDTH := 72.0
+const SWING_HALF_DURATION := 0.055
+const SWING_SETTLE_DURATION := 0.11
+const SWING_ANGLE_MIN := 2.0
+const SWING_ANGLE_MAX := 5.0
+const SWING_COUNT_MIN := 2
+const SWING_COUNT_MAX := 5
 
 var item_id: String
 var item_type: String
 var price: int
 var item_data: Resource  # Store the data resource for tooltip access
 var color_type: DiceColor.Type = DiceColor.Type.NONE  # Track color type for colored dice
+var _base_title_text: String = ""
+var _rng := RandomNumberGenerator.new()
 
 # Purchase/removal guards to prevent race conditions between buy click,
 # hover tweens, and the removal animation started by ShopUI.
@@ -43,22 +66,21 @@ const RAINBOW_COLORS := [
 	Color(0.5, 0, 1),  # Purple
 ]
 
-const PANEL_BG: Color = Color(0.247059, 0.219608, 0.345098, 0.26)
-const PANEL_BORDER: Color = Color(0.713725, 0.301961, 0.478431, 0.02)
-const PANEL_BORDER_WIDTH: int = 2
-const PANEL_CORNER_RADIUS: int = 16
-const PANEL_SHADOW: Color = Color(0.070588, 0.062745, 0.101961, 0.34)
-const PANEL_SHADOW_SIZE: int = 5
-const TITLE_FONT_SIZE: int = 12
-
 func _ready() -> void:
 	print("[ShopItem] Initializing:", name)
 	
-	if not icon or not name_label or not price_label or not buy_button:
+	if not card_panel or not icon or not name_label or not price_label or not buy_button or not rarity_badge or not price_badge:
 		push_error("[ShopItem] Required nodes not found!")
 		for child in get_children():
 			print("[ShopItem] Found child:", child.name)
 		return
+	_rng.randomize()
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	rarity_badge.visible = false
+	rotation_degrees = 0.0
+	if not resized.is_connected(_on_shop_item_resized):
+		resized.connect(_on_shop_item_resized)
+	call_deferred("_on_shop_item_resized")
 	# Apply theme and uniform card size
 	#theme = load("res://Resources/UI/action_button_theme_no_panel.tres")
 	#custom_minimum_size = Vector2(180, 180)
@@ -77,9 +99,11 @@ func _ready() -> void:
 
 	# Initialize tooltip references now so they are non-null during removal.
 	_setup_hover_tooltip()
+	_apply_shop_item_styling()
+	_apply_shop_item_fonts()
 
 func _process(delta: float) -> void:
-	if not shop_label:
+	if not buy_button:
 		return
 	
 	_time += delta * RAINBOW_SPEED
@@ -165,6 +189,7 @@ func setup(data: Resource, type: String) -> void:
 	item_id = data.id
 	item_type = type
 	item_data = data  # Store the data for tooltip access
+	_base_title_text = data.display_name
 	
 	# Apply shop price multiplier from channel difficulty
 	var base_price = data.price
@@ -178,8 +203,9 @@ func setup(data: Resource, type: String) -> void:
 		return
 	
 	# Explicitly set icon size and expansion
-	icon.custom_minimum_size = Vector2(48, 48)
+	icon.custom_minimum_size = Vector2(68, 68)
 	icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	
 	# Handle colored dice icons specially - use dice texture with color shader
 	if type == "colored_dice" and data is ColoredDiceData:
@@ -188,11 +214,9 @@ func setup(data: Resource, type: String) -> void:
 	else:
 		icon.texture = data.icon
 	
-	name_label.text = data.display_name
-	if price == 0:
-		price_label.text = "FREE"
-	else:
-		price_label.text = NumberFormatter.format_money(price)
+	_set_title_text(_base_title_text)
+	_update_price_badge_from_price(price)
+	_update_rarity_badge()
 	
 	# Apply shop item styling with border this is currently empty
 	_apply_shop_item_styling()
@@ -209,6 +233,8 @@ func setup(data: Resource, type: String) -> void:
 	_update_button_state()
 	if not PlayerEconomy.is_connected("money_changed", _update_button_state):
 		PlayerEconomy.money_changed.connect(_update_button_state)
+	call_deferred("_fit_title")
+	call_deferred("_layout_badges")
 	#print("[ShopItem] Connected to PlayerEconomy.money_changed, Instance ID:", PlayerEconomy.get_instance_id())
 	#print("[ShopItem] Setup complete for:", data.id)
 
@@ -216,6 +242,11 @@ func _update_button_state(_new_amount := 0, _change := 0) -> void:
 	#print("[ShopItem] _update_button_state called")
 	#print("[ShopItem] Updating button state for", item_id, "- Player money:", PlayerEconomy.money, ", Price:", price)
 	if buy_button:
+		if _is_purchasing or _is_being_removed:
+			return
+		if buy_button.text in ["OWNED", "MAX REACHED", "LIMIT REACHED", "LIMIT (1)", "MAX ODDS"]:
+			buy_button.disabled = true
+			return
 		buy_button.disabled = not PlayerEconomy.can_afford(price)
 		#print("[ShopItem] Buy button state updated - disabled:", buy_button.disabled)
 
@@ -275,11 +306,7 @@ func refresh_price() -> void:
 	var base_price = item_data.price
 	price = _apply_price_multiplier(base_price, item_type)
 	price = _apply_consumable_discounts(price, item_type)
-	if price_label:
-		if price == 0:
-			price_label.text = "FREE"
-		else:
-			price_label.text = NumberFormatter.format_money(price)
+	_update_price_badge_from_price(price)
 	_update_button_state()
 
 
@@ -402,66 +429,38 @@ func _has_reached_mod_limit(game_controller: GameController) -> bool:
 ## Called during setup() and, if setup() has not run yet, in _ready() so
 ## mark_for_removal() always has a valid hover_tooltip reference.
 func _setup_hover_tooltip() -> void:
-	# If this is called before setup() (e.g., from _ready()), item_data is not
-	# available yet. Create stub tooltip nodes so mark_for_removal() can hide
-	# them without crashes; setup() will rebuild the real tooltip later.
-	if hover_tooltip and is_instance_valid(hover_tooltip):
-		return
+	var needs_create := not hover_tooltip or not is_instance_valid(hover_tooltip)
+	if needs_create:
+		hover_tooltip = PanelContainer.new()
+		hover_tooltip.name = "HoverTooltip"
+		hover_tooltip.visible = false
+		hover_tooltip.z_index = 4000
+		hover_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# Create hover tooltip container
-	hover_tooltip = PanelContainer.new()
-	hover_tooltip.name = "HoverTooltip"
-	hover_tooltip.visible = false
-	hover_tooltip.z_index = 4000  # High z_index within valid range
+	if not hover_tooltip_label or not is_instance_valid(hover_tooltip_label):
+		hover_tooltip_label = Label.new()
+		hover_tooltip_label.name = "HoverTooltipLabel"
+		hover_tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		hover_tooltip_label.custom_minimum_size = Vector2(220, 0)
+		hover_tooltip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# Create custom StyleBoxFlat for the tooltip
-	var style_box = StyleBoxFlat.new()
-	style_box.bg_color = Color(0.08, 0.06, 0.12, 0.98)
-	style_box.border_width_left = 4
-	style_box.border_width_top = 4
-	style_box.border_width_right = 4
-	style_box.border_width_bottom = 4
-	style_box.border_color = Color(1, 0.8, 0.2, 1)
-	style_box.corner_radius_top_left = 6
-	style_box.corner_radius_top_right = 6
-	style_box.corner_radius_bottom_right = 6
-	style_box.corner_radius_bottom_left = 6
-	style_box.content_margin_left = 16.0
-	style_box.content_margin_top = 12.0
-	style_box.content_margin_right = 16.0
-	style_box.content_margin_bottom = 12.0
-	style_box.shadow_color = Color(0, 0, 0, 0.5)
-	style_box.shadow_size = 2
+	hover_tooltip.theme = SHOP_ITEM_THEME
+	hover_tooltip.theme_type_variation = &"ShopTooltipPanel"
+	hover_tooltip_label.theme = SHOP_ITEM_THEME
+	hover_tooltip_label.theme_type_variation = &"ShopTooltipLabel"
+	hover_tooltip_label.text = _get_current_tooltip_text()
 
-	# Create tooltip label
-	hover_tooltip_label = Label.new()
-	hover_tooltip_label.name = "HoverTooltipLabel"
-	hover_tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hover_tooltip_label.custom_minimum_size = Vector2(200, 0)
-	if item_data:
-		hover_tooltip_label.text = item_data.description
-	else:
-		hover_tooltip_label.text = ""
+	if hover_tooltip_label.get_parent() != hover_tooltip:
+		hover_tooltip.add_child(hover_tooltip_label)
 
-	# Apply font styling to label
-	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as FontFile
-	if vcr_font:
-		hover_tooltip_label.add_theme_font_override("font", vcr_font)
-		hover_tooltip_label.add_theme_font_size_override("font_size", 14)
-		hover_tooltip_label.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))
-		hover_tooltip_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
-		hover_tooltip_label.add_theme_constant_override("outline_size", 1)
-
-	hover_tooltip.add_child(hover_tooltip_label)
-
-	# Add tooltip to scene root to avoid grid constraints (deferred to avoid busy parent)
-	var scene_root = get_tree().current_scene
-	if scene_root:
-		scene_root.add_child.call_deferred(hover_tooltip)
-		print("[ShopItem] Added tooltip to scene root (deferred)")
-	else:
-		get_parent().add_child.call_deferred(hover_tooltip)
-		print("[ShopItem] Added tooltip to direct parent (deferred)")
+	if needs_create:
+		var scene_root = get_tree().current_scene
+		if scene_root:
+			scene_root.add_child.call_deferred(hover_tooltip)
+			print("[ShopItem] Added tooltip to scene root (deferred)")
+		else:
+			get_parent().add_child.call_deferred(hover_tooltip)
+			print("[ShopItem] Added tooltip to direct parent (deferred)")
 
 	# Connect hover signals for the card itself
 	if not mouse_entered.is_connected(_on_mouse_entered):
@@ -487,12 +486,8 @@ func _on_mouse_entered() -> void:
 	if not hover_tooltip or not item_data:
 		return
 
-	# Update tooltip text - use enhanced version for colored dice
 	if hover_tooltip_label:
-		if item_type == "colored_dice":
-			hover_tooltip_label.text = _get_colored_dice_tooltip_text()
-		else:
-			hover_tooltip_label.text = item_data.description
+		hover_tooltip_label.text = _get_current_tooltip_text()
 
 	is_card_hovered = true
 	is_hovered = true
@@ -519,6 +514,8 @@ func _on_button_mouse_entered() -> void:
 	is_button_hovered = true
 	# Show tooltip if it exists
 	if hover_tooltip and item_data:
+		if hover_tooltip_label:
+			hover_tooltip_label.text = _get_current_tooltip_text()
 		is_hovered = true
 		hover_tooltip.visible = true
 		_update_tooltip_position()
@@ -541,32 +538,26 @@ func _update_tooltip_position() -> void:
 
 
 ## _on_shop_item_mouse_entered()
-## Applies a subtle glow and slight lift to the shop item card.
+## Plays a short hanging-sign swing around the hook pivot.
 func _on_shop_item_mouse_entered() -> void:
 	# Ignore hover effects once the purchase has started; the card is about
 	# to be removed and hover tweens must not kill the removal animation.
 	if _is_purchasing or _is_being_removed:
 		return
-	_tfx.stop_effect(self)
 	if _hover_tween and _hover_tween.is_valid():
 		_hover_tween.kill()
-	_hover_tween = create_tween().set_parallel()
-	_hover_tween.tween_property(self, "self_modulate", Color(1.15, 1.15, 1.35, 1.0), 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_hover_tween.tween_property(self, "scale", Vector2.ONE * 1.03, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_play_hang_swing()
 
 
 ## _on_shop_item_mouse_exited()
-## Removes the glow and returns the card to its resting state.
+## Returns the hanging sign to its neutral angle.
 func _on_shop_item_mouse_exited() -> void:
 	# Ignore hover effects once the purchase has started.
 	if _is_purchasing or _is_being_removed:
 		return
-	_tfx.stop_effect(self)
 	if _hover_tween and _hover_tween.is_valid():
 		_hover_tween.kill()
-	_hover_tween = create_tween().set_parallel()
-	_hover_tween.tween_property(self, "self_modulate", Color.WHITE, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_hover_tween.tween_property(self, "scale", Vector2.ONE, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_return_to_rest_rotation()
 
 
 ## mark_for_removal()
@@ -578,10 +569,10 @@ func mark_for_removal() -> void:
 	_is_purchasing = true
 
 	# Stop any hover juice so it cannot kill the removal tween.
-	_tfx.stop_effect(self)
 	if _hover_tween and _hover_tween.is_valid():
 		_hover_tween.kill()
 	_hover_tween = null
+	rotation_degrees = 0.0
 
 	# Hide tooltip and reset hover state.
 	is_hovered = false
@@ -610,104 +601,32 @@ func _propagate_mouse_filter(node: Control, filter: Control.MouseFilter) -> void
 ## _apply_shop_item_styling()
 ## Background and border are handled by the theme; no override needed.
 func _apply_shop_item_styling() -> void:
-	print("[ShopItem] Theme styling applied via powerup_hover_theme.tres")
+	card_panel.theme = SHOP_ITEM_THEME
+	title_plate.theme = SHOP_ITEM_THEME
+	rarity_badge.theme = SHOP_ITEM_THEME
+	price_badge.theme = SHOP_ITEM_THEME
+	print("[ShopItem] Theme styling applied via shop_item_theme.tres")
 
 ## _apply_shop_item_fonts()
 ## Applies VCR font to shop item labels and button
 func _apply_shop_item_fonts() -> void:
-	print("[ShopItem] Applying VCR font to shop item elements")
-	
-	# Load VCR font
-	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
-	if not vcr_font:
-		print("[ShopItem] WARNING: VCR font not found")
-		return
-	
-	# Apply font to name label
 	if name_label:
-		name_label.add_theme_font_override("font", vcr_font)
-		name_label.add_theme_font_size_override("font_size", 16)
-		name_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-		name_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
-		name_label.add_theme_constant_override("outline_size", 1)
-	
-	# Apply font to price label
+		name_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		name_label.clip_text = true
+		name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		name_label.custom_minimum_size = Vector2(0, 32)
 	if price_label:
-		price_label.add_theme_font_override("font", vcr_font)
-		price_label.add_theme_font_size_override("font_size", 14)
-		price_label.add_theme_color_override("font_color", Color(0.2, 1, 0.2, 1))  # Green for money
-		price_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
-		price_label.add_theme_constant_override("outline_size", 1)
-	
-	# Apply styled button
+		price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if rarity_label:
+		rarity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if buy_button:
 		_apply_shop_button_styling(buy_button)
 
 ## _apply_shop_button_styling(button)
 ## Applies themed styling to shop buttons
 func _apply_shop_button_styling(button: Button) -> void:
-	print("[ShopItem] Applying shop button styling")
-
-	# Load VCR font
-	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
-	if vcr_font:
-		button.add_theme_font_override("font", vcr_font)
-		button.add_theme_font_size_override("font_size", 16)
-	
-	if theme:
-		theme = load("res://Resources/UI/action_button_theme_no_panel.tres")
-		custom_minimum_size = Vector2(180, 180)
-
-	else:
-		# Normal state style
-		var style_normal = StyleBoxFlat.new()
-		style_normal.bg_color = Color(0.2, 0.18, 0.25, 0.95)
-		style_normal.border_color = Color(1, 0.8, 0.2, 1)
-		style_normal.set_border_width_all(2)
-		style_normal.corner_radius_top_left = 6
-		style_normal.corner_radius_top_right = 6  
-		style_normal.corner_radius_bottom_right = 6
-		style_normal.corner_radius_bottom_left = 6
-		style_normal.content_margin_left = 12.0
-		style_normal.content_margin_top = 8.0
-		style_normal.content_margin_right = 12.0
-		style_normal.content_margin_bottom = 8.0
-		
-		# Hover state style
-		var style_hover = StyleBoxFlat.new()
-		style_hover.bg_color = Color(0.25, 0.22, 0.3, 0.98)
-		style_hover.border_color = Color(1, 0.9, 0.3, 1)
-		style_hover.set_border_width_all(3)
-		style_hover.corner_radius_top_left = 6
-		style_hover.corner_radius_top_right = 6
-		style_hover.corner_radius_bottom_right = 6
-		style_hover.corner_radius_bottom_left = 6
-		style_hover.content_margin_left = 12.0
-		style_hover.content_margin_top = 8.0
-		style_hover.content_margin_right = 12.0
-		style_hover.content_margin_bottom = 8.0
-		
-		# Pressed state style
-		var style_pressed = StyleBoxFlat.new()
-		style_pressed.bg_color = Color(0.3, 0.27, 0.35, 1)
-		style_pressed.border_color = Color(1, 1, 0.4, 1)
-		style_pressed.set_border_width_all(2)
-		style_pressed.corner_radius_top_left = 6
-		style_pressed.corner_radius_top_right = 6
-		style_pressed.corner_radius_bottom_right = 6
-		style_pressed.corner_radius_bottom_left = 6
-		style_pressed.content_margin_left = 10.0
-		style_pressed.content_margin_top = 6.0
-		style_pressed.content_margin_right = 10.0
-		style_pressed.content_margin_bottom = 6.0
-		
-		# Apply styles to button
-		button.add_theme_stylebox_override("normal", style_normal)
-		button.add_theme_stylebox_override("hover", style_hover)
-		button.add_theme_stylebox_override("pressed", style_pressed)
-		button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-		button.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
-		button.add_theme_constant_override("outline_size", 1)
+	button.theme = SHOP_ITEM_THEME
+	button.custom_minimum_size = Vector2(0, 34)
 
 
 ## _setup_colored_dice_icon()
@@ -778,13 +697,10 @@ func _update_colored_dice_display() -> void:
 	var at_max = DiceColorManager.is_color_at_max_odds(dice_color)
 	
 	# Update price display
-	if price_label:
-		if at_max:
-			price_label.text = "MAX"
-			price_label.add_theme_color_override("font_color", Color(1.0, 0.5, 0.5, 1))  # Red
-		else:
-			price_label.text = NumberFormatter.format_money(current_cost)
-			price_label.add_theme_color_override("font_color", Color(0.2, 1, 0.2, 1))  # Green
+	if at_max:
+		_set_price_badge_text("MAX", "max")
+	else:
+		_set_price_badge_text(NumberFormatter.format_money(current_cost), "normal")
 	
 	# Update internal price for purchase validation
 	price = current_cost
@@ -802,9 +718,10 @@ func _update_colored_dice_display() -> void:
 			buy_button.text = "BUY"
 	
 	# Update name label to show ownership count
-	if name_label and purchase_count > 0:
-		var base_name = item_data.display_name
-		name_label.text = "%s (x%d)" % [base_name, purchase_count]
+	if purchase_count > 0:
+		_set_title_text("%s x%d" % [_base_title_text, purchase_count])
+	else:
+		_set_title_text(_base_title_text)
 
 
 ## _get_colored_dice_tooltip_text()
@@ -830,3 +747,190 @@ func _get_colored_dice_tooltip_text() -> String:
 	tooltip_lines.append(DiceColorManager.get_color_shop_tooltip(dice_color))
 	
 	return "\n".join(tooltip_lines)
+
+
+func _on_shop_item_resized() -> void:
+	_update_hang_pivot()
+	_layout_badges()
+	call_deferred("_fit_title")
+
+
+func _update_hang_pivot() -> void:
+	var card_width := size.x
+	if card_width <= 0.0:
+		card_width = custom_minimum_size.x
+	pivot_offset = Vector2(card_width * 0.5, HANG_PIVOT_Y)
+
+
+func _set_title_text(title_text: String) -> void:
+	if not name_label:
+		return
+	if name_label.text == title_text:
+		return
+	name_label.text = title_text
+	call_deferred("_fit_title")
+
+
+func _fit_title() -> void:
+	if not name_label or not is_inside_tree():
+		return
+	name_label.add_theme_font_size_override("font_size", TITLE_FONT_SIZE_DEFAULT)
+	await get_tree().process_frame
+	var safe_width := title_plate.size.x - TITLE_HORIZONTAL_PADDING
+	if safe_width <= 0.0:
+		var card_width := size.x
+		if card_width <= 0.0:
+			card_width = custom_minimum_size.x
+		safe_width = card_width - 48.0
+	var title_font: Font = name_label.get_theme_font("font")
+	if not title_font:
+		title_font = VCR_FONT
+	for font_size in range(TITLE_FONT_SIZE_DEFAULT, TITLE_FONT_SIZE_MIN - 1, -1):
+		name_label.add_theme_font_size_override("font_size", font_size)
+		await get_tree().process_frame
+		var measured_width := title_font.get_string_size(
+			name_label.text,
+			name_label.horizontal_alignment,
+			-1,
+			font_size
+		).x
+		if measured_width <= safe_width:
+			break
+
+
+func _update_rarity_badge() -> void:
+	if not rarity_badge or not rarity_label:
+		return
+	if item_type != "power_up" or not item_data or not (item_data is PowerUpData):
+		rarity_badge.visible = false
+		return
+	var rarity_key: String = item_data.rarity.to_lower()
+	rarity_badge.visible = true
+	rarity_label.text = _get_rarity_badge_text(rarity_key)
+	_apply_rarity_badge_palette(rarity_key)
+	_layout_badges()
+
+
+func _get_rarity_badge_text(rarity_key: String) -> String:
+	return PowerUpData.get_rarity_display_char(rarity_key)
+
+
+func _apply_rarity_badge_palette(rarity_key: String) -> void:
+	var bg_color := Color(0.301961, 0.180392, 0.286275, 0.96)
+	var border_color := Color(0.964706, 0.768627, 0.45098, 0.92)
+	var text_color := Color(0.984314, 0.952941, 0.878431, 1.0)
+	match rarity_key:
+		"common":
+			bg_color = Color(0.247059, 0.25098, 0.301961, 0.96)
+			border_color = Color(0.776471, 0.815686, 0.862745, 0.9)
+		"uncommon":
+			bg_color = Color(0.188235, 0.305882, 0.215686, 0.96)
+			border_color = Color(0.682353, 0.913725, 0.631373, 0.95)
+		"rare":
+			bg_color = Color(0.180392, 0.223529, 0.368627, 0.96)
+			border_color = Color(0.588235, 0.768627, 0.980392, 0.95)
+		"epic":
+			bg_color = Color(0.321569, 0.160784, 0.396078, 0.96)
+			border_color = Color(0.886275, 0.627451, 1.0, 0.95)
+		"legendary":
+			bg_color = Color(0.462745, 0.239216, 0.121569, 0.96)
+			border_color = Color(1.0, 0.862745, 0.490196, 1.0)
+	if rarity_badge:
+		var badge_style := rarity_badge.get_theme_stylebox("panel") as StyleBoxFlat
+		if badge_style:
+			var override_style := badge_style.duplicate() as StyleBoxFlat
+			override_style.bg_color = bg_color
+			override_style.border_color = border_color
+			rarity_badge.add_theme_stylebox_override("panel", override_style)
+	if rarity_label:
+		rarity_label.add_theme_color_override("font_color", text_color)
+		rarity_label.add_theme_font_size_override("font_size", 11)
+
+
+func _update_price_badge_from_price(current_price: int) -> void:
+	if current_price == 0:
+		_set_price_badge_text("FREE", "free")
+	else:
+		_set_price_badge_text(NumberFormatter.format_money(current_price), "normal")
+
+
+func _set_price_badge_text(text: String, palette: String) -> void:
+	if not price_badge or not price_label:
+		return
+	price_label.text = text
+	var bg_color := Color(0.164706, 0.321569, 0.262745, 0.96)
+	var border_color := Color(0.827451, 0.941176, 0.647059, 0.95)
+	var text_color := Color(0.984314, 0.952941, 0.878431, 1.0)
+	match palette:
+		"free":
+			bg_color = Color(0.329412, 0.25098, 0.117647, 0.96)
+			border_color = Color(0.988235, 0.882353, 0.509804, 1.0)
+		"max":
+			bg_color = Color(0.403922, 0.176471, 0.184314, 0.96)
+			border_color = Color(1.0, 0.643137, 0.643137, 0.98)
+			text_color = Color(1.0, 0.909804, 0.909804, 1.0)
+	var badge_style := price_badge.get_theme_stylebox("panel") as StyleBoxFlat
+	if badge_style:
+		var override_style := badge_style.duplicate() as StyleBoxFlat
+		override_style.bg_color = bg_color
+		override_style.border_color = border_color
+		price_badge.add_theme_stylebox_override("panel", override_style)
+	price_label.add_theme_color_override("font_color", text_color)
+	_layout_badges()
+
+
+func _layout_badges() -> void:
+	var card_width := size.x
+	if card_width <= 0.0:
+		card_width = custom_minimum_size.x
+	var badge_font: Font = price_label.get_theme_font("font") if price_label else VCR_FONT
+	if not badge_font:
+		badge_font = VCR_FONT
+	if rarity_badge and rarity_label:
+		var rarity_text_width := badge_font.get_string_size(rarity_label.text, HORIZONTAL_ALIGNMENT_CENTER, -1, 11).x
+		var rarity_width := maxf(RARITY_BADGE_MIN_WIDTH, rarity_text_width + 14.0)
+		rarity_badge.custom_minimum_size = Vector2(rarity_width, BADGE_HEIGHT)
+		rarity_badge.position = Vector2(BADGE_SIDE_MARGIN, BADGE_TOP)
+		rarity_badge.size = rarity_badge.custom_minimum_size
+	if price_badge and price_label:
+		var price_text_width := badge_font.get_string_size(price_label.text, HORIZONTAL_ALIGNMENT_CENTER, -1, 12).x
+		var price_width := maxf(PRICE_BADGE_MIN_WIDTH, price_text_width + 18.0)
+		price_badge.custom_minimum_size = Vector2(price_width, BADGE_HEIGHT)
+		price_badge.position = Vector2(card_width - price_width - BADGE_SIDE_MARGIN, BADGE_TOP)
+		price_badge.size = price_badge.custom_minimum_size
+
+
+func _get_current_tooltip_text() -> String:
+	if not item_data:
+		return ""
+	if item_type == "colored_dice":
+		return _get_colored_dice_tooltip_text()
+	return item_data.description
+
+
+func _play_hang_swing() -> void:
+	_update_hang_pivot()
+	rotation_degrees = 0.0
+	var base_angle := _rng.randf_range(SWING_ANGLE_MIN, SWING_ANGLE_MAX)
+	var swing_count := _rng.randi_range(SWING_COUNT_MIN, SWING_COUNT_MAX)
+	var direction := -1.0
+	if _rng.randi() % 2 == 0:
+		direction = 1.0
+	_hover_tween = create_tween()
+	_hover_tween.set_trans(Tween.TRANS_SINE)
+	_hover_tween.set_ease(Tween.EASE_IN_OUT)
+	for swing_index in range(swing_count):
+		var damping := 1.0 - (float(swing_index) * 0.14)
+		if damping < 0.5:
+			damping = 0.5
+		var swing_angle := base_angle * damping
+		_hover_tween.tween_property(self, "rotation_degrees", swing_angle * direction, SWING_HALF_DURATION)
+		_hover_tween.tween_property(self, "rotation_degrees", -swing_angle * direction, SWING_HALF_DURATION)
+	_hover_tween.tween_property(self, "rotation_degrees", 0.0, SWING_SETTLE_DURATION)
+
+
+func _return_to_rest_rotation(duration: float = SWING_SETTLE_DURATION) -> void:
+	_hover_tween = create_tween()
+	_hover_tween.set_trans(Tween.TRANS_SINE)
+	_hover_tween.set_ease(Tween.EASE_OUT)
+	_hover_tween.tween_property(self, "rotation_degrees", 0.0, duration)

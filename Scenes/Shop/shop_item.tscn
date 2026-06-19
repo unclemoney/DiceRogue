@@ -1,46 +1,116 @@
 [gd_scene load_steps=3 format=3 uid="uid://c8e502cveltmu"]
 
-[ext_resource type="Theme" uid="uid://dp4vxkkv0v8gg" path="res://Resources/UI/action_button_theme_no_panel.tres" id="1_15kmo"]
-[ext_resource type="Script" uid="uid://tcwgkjbbqnub" path="res://Scripts/Shop/shop_item.gd" id="1_xxxx"]
+[ext_resource type="Theme" uid="uid://ds7i8mk64qdbp" path="res://Resources/UI/shop_item_theme.tres" id="1_hu0y1"]
+[ext_resource type="Script" uid="uid://tcwgkjbbqnub" path="res://Scripts/Shop/shop_item.gd" id="2_iw2pt"]
 
-[node name="ShopItem" type="PanelContainer"]
-custom_minimum_size = Vector2(180, 180)
-theme = ExtResource("1_15kmo")
-script = ExtResource("1_xxxx")
+[node name="ShopItem" type="Control"]
+custom_minimum_size = Vector2(213, 275)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 213.0
+offset_bottom = 275.0
+mouse_filter = 1
+script = ExtResource("2_iw2pt")
 
-[node name="MarginContainer" type="MarginContainer" parent="."]
+[node name="CardPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("1_hu0y1")
+
+[node name="MarginContainer" type="MarginContainer" parent="CardPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 90
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 12
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+[node name="ContentVBox" type="VBoxContainer" parent="CardPanel/MarginContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="Icon" type="TextureRect" parent="MarginContainer/VBoxContainer"]
-custom_minimum_size = Vector2(48, 48)
+[node name="Icon" type="TextureRect" parent="CardPanel/MarginContainer/ContentVBox"]
+custom_minimum_size = Vector2(68, 68)
 layout_mode = 2
 size_flags_horizontal = 4
 expand_mode = 1
 stretch_mode = 5
 
-[node name="NameLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="TitlePlate" type="PanelContainer" parent="CardPanel/MarginContainer/ContentVBox"]
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"ShopTitlePlate"
+
+[node name="NameLabel" type="Label" parent="CardPanel/MarginContainer/ContentVBox/TitlePlate"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+theme_type_variation = &"ShopTitleLabel"
 horizontal_alignment = 1
 vertical_alignment = 1
+text_overrun_behavior = 3
 
-[node name="PriceLabel" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="BodySpacer" type="Control" parent="CardPanel/MarginContainer/ContentVBox"]
+custom_minimum_size = Vector2(0, 4)
 layout_mode = 2
-horizontal_alignment = 1
-vertical_alignment = 1
+size_flags_vertical = 3
+mouse_filter = 2
 
-[node name="BuyButton" type="Button" parent="MarginContainer/VBoxContainer"]
+[node name="BuyButton" type="Button" parent="CardPanel/MarginContainer/ContentVBox"]
+custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
-size_flags_vertical = 4
+size_flags_horizontal = 3
 text = "BUY"
 
-[node name="ShopLabel" type="Label" parent="MarginContainer"]
+[node name="BadgeLayer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 28.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="RarityBadge" type="PanelContainer" parent="BadgeLayer"]
+custom_minimum_size = Vector2(36, 28)
+layout_mode = 0
+offset_left = 12.0
+offset_top = 44.0
+offset_right = 48.0
+offset_bottom = 72.0
+mouse_filter = 2
+theme = ExtResource("1_hu0y1")
+theme_type_variation = &"ShopRarityBadge"
+
+[node name="RarityLabel" type="Label" parent="BadgeLayer/RarityBadge"]
 layout_mode = 2
+theme = ExtResource("1_hu0y1")
+theme_type_variation = &"ShopBadgeLabel"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PriceBadge" type="PanelContainer" parent="BadgeLayer"]
+custom_minimum_size = Vector2(74, 28)
+layout_mode = 0
+offset_left = 110.0
+offset_top = 44.0
+offset_right = 184.0
+offset_bottom = 72.0
+mouse_filter = 2
+theme = ExtResource("1_hu0y1")
+theme_type_variation = &"ShopPriceBadge"
+
+[node name="PriceLabel" type="Label" parent="BadgeLayer/PriceBadge"]
+layout_mode = 2
+theme = ExtResource("1_hu0y1")
+theme_type_variation = &"ShopBadgeLabel"
+horizontal_alignment = 1
+vertical_alignment = 1

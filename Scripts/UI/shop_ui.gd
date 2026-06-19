@@ -527,13 +527,12 @@ func _animate_purchase_out(item: ShopItem) -> void:
 	# blocks all mouse input on the card and its children.
 	item.mark_for_removal()
 
-	# Flash gold border.
-	var style := item.get_theme_stylebox("panel") as StyleBoxFlat
-	if style:
-		var flash_style := style.duplicate() as StyleBoxFlat
-		flash_style.border_color = Color(1.0, 0.85, 0.0, 1.0)
-		flash_style.set_border_width_all(5)
-		item.add_theme_stylebox_override("panel", flash_style)
+	# Flash the hanging panel briefly before it slides away.
+	if item.card_panel:
+		item.card_panel.self_modulate = Color.WHITE
+		var flash_tween := create_tween()
+		flash_tween.tween_property(item.card_panel, "self_modulate", Color(1.0, 0.92, 0.72, 1.0), 0.08)
+		flash_tween.tween_property(item.card_panel, "self_modulate", Color.WHITE, 0.12)
 
 	# Use a local tween so TweenFXHelper.stop_effect() cannot kill it.
 	var tween := create_tween()
