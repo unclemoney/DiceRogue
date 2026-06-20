@@ -1,7 +1,6 @@
-[gd_resource type="Resource" script_class="GamingConsoleData" load_steps=5 format=3 uid="uid://di8hrnx34aarf"]
+[gd_resource type="Resource" script_class="GamingConsoleData" load_steps=4 format=3 uid="uid://di8hrnx34aarf"]
 
 [ext_resource type="Script" uid="uid://ce1oea30e7i4q" path="res://Scripts/GamingConsole/gaming_console_data.gd" id="1_data"]
-[ext_resource type="Texture2D" uid="uid://35128qnylwrq" path="res://Resources/Art/Background/CONSOLE_SEGASATURN.png" id="1_icon"]
 [ext_resource type="PackedScene" path="res://Scenes/GamingConsole/SegaSaturnConsole.tscn" id="2_scene"]
 [ext_resource type="Texture2D" uid="uid://b30v64lu38yjy" path="res://Resources/Art/Cards/card_6.png" id="3_vip"]
 
@@ -10,7 +9,7 @@ script = ExtResource("1_data")
 id = "sega_saturn_console"
 display_name = "Cartridge Tilt"
 description = "Shift all unlocked dice by +1 or -1. 1 use per round."
-icon = ExtResource("1_icon")
+icon = ExtResource("3_vip")
 vip_card_art = ExtResource("3_vip")
 vip_card_shader_key = "downtown_video_rentals"
 scene = ExtResource("2_scene")

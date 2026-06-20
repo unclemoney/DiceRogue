@@ -167,7 +167,7 @@ func _build_ui() -> void:
 	_art_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_art_panel.custom_minimum_size = Vector2(0.0, 220.0)
 	_art_panel.clip_contents = true
-	_art_panel.add_theme_stylebox_override("panel", _build_panel_style(PANEL_ACCENT, Color(0.08, 0.07, 0.12, 0.96)))
+	_art_panel.add_theme_stylebox_override("panel", _build_panel_style(PANEL_ACCENT, Color(0.08, 0.07, 0.12, 0.0)))
 	content.add_child(_art_panel)
 
 	_artwork = TextureRect.new()

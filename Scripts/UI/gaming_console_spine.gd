@@ -6,14 +6,14 @@ const GamingConsoleCardFXRef = preload("res://Scripts/UI/gaming_console_card_fx.
 signal activate_pressed
 signal card_pressed
 
-const PREVIEW_SIZE := Vector2(104, 58)
-const PANEL_FILL := Color(0.247059, 0.219608, 0.345098, 0.82)
-const PANEL_BORDER := Color(0.713725, 0.301961, 0.478431, 0.9)
-const PANEL_ACCENT := Color(0.137255, 0.411765, 0.415686, 1.0)
-const PANEL_TEXT := Color(0.968627, 0.941176, 1.0, 1.0)
-const PANEL_OUTLINE := Color(0.129412, 0.121569, 0.2, 1.0)
-const PANEL_SHADOW := Color(0.070588, 0.062745, 0.101961, 0.36)
-const VCR_FONT := preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+const PREVIEW_SIZE : Vector2 = Vector2(104, 56)
+const PANEL_FILL : Color = Color(0.247059, 0.219608, 0.345098, 0.0)
+const PANEL_BORDER : Color = Color(0.713725, 0.301961, 0.478431, 0.0)
+const PANEL_ACCENT : Color = Color(0.137255, 0.411765, 0.415686, 1.0)
+const PANEL_TEXT : Color = Color(0.968627, 0.941176, 1.0, 1.0)
+const PANEL_OUTLINE : Color = Color(0.129412, 0.121569, 0.2, 0.0)
+const PANEL_SHADOW : Color = Color(0.070588, 0.062745, 0.101961, 0.36)
+const VCR_FONT : FontFile = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 
 @export var data: GamingConsoleData
 
@@ -35,7 +35,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	custom_minimum_size = Vector2(0.0, 84.0)
+	custom_minimum_size = Vector2(0.0, 78.0)
 	visible = false
 	_build_ui()
 	if data:
@@ -115,12 +115,12 @@ func _build_ui() -> void:
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.add_theme_constant_override("margin_left", 12)
-	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_top", 1)
 	margin.add_theme_constant_override("margin_right", 12)
-	margin.add_theme_constant_override("margin_bottom", 10)
+	margin.add_theme_constant_override("margin_bottom", 1)
 	_shell.add_child(margin)
 
-	var hbox := HBoxContainer.new()
+	var hbox : HBoxContainer = HBoxContainer.new()
 	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -131,9 +131,9 @@ func _build_ui() -> void:
 	_art_panel = PanelContainer.new()
 	_art_panel.custom_minimum_size = PREVIEW_SIZE
 	_art_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_art_panel.clip_contents = true
+	_art_panel.clip_contents = false
 	_art_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_art_panel.add_theme_stylebox_override("panel", _build_panel_style(PANEL_ACCENT, Color(0.09, 0.08, 0.14, 0.95)))
+	#_art_panel.add_theme_stylebox_override("panel", _build_panel_style(PANEL_ACCENT, Color(0.09, 0.08, 0.14, 0.95)))
 	hbox.add_child(_art_panel)
 
 	_artwork = TextureRect.new()
@@ -143,7 +143,7 @@ func _build_ui() -> void:
 	_artwork.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_art_panel.add_child(_artwork)
 
-	var text_vbox := VBoxContainer.new()
+	var text_vbox : VBoxContainer = VBoxContainer.new()
 	text_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	text_vbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	text_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -229,7 +229,7 @@ func _on_activate_button_pressed() -> void:
 
 
 func _build_panel_style(accent_color: Color, bg_color: Color) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
+	var style : StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = bg_color
 	style.border_color = accent_color
 	style.set_border_width_all(2)
@@ -248,7 +248,7 @@ func _apply_button_style(button: Button, accent_color: Color, font_size: int) ->
 	button.add_theme_color_override("font_outline_color", PANEL_OUTLINE)
 	button.add_theme_constant_override("outline_size", 1)
 
-	var normal := StyleBoxFlat.new()
+	var normal : StyleBoxFlat = StyleBoxFlat.new()
 	normal.bg_color = accent_color.darkened(0.28)
 	normal.border_color = accent_color
 	normal.set_border_width_all(2)
@@ -256,7 +256,7 @@ func _apply_button_style(button: Button, accent_color: Color, font_size: int) ->
 	normal.set_content_margin_all(4)
 	button.add_theme_stylebox_override("normal", normal)
 
-	var hover := StyleBoxFlat.new()
+	var hover : StyleBoxFlat = StyleBoxFlat.new()
 	hover.bg_color = accent_color
 	hover.border_color = accent_color.lightened(0.12)
 	hover.set_border_width_all(2)
@@ -264,7 +264,7 @@ func _apply_button_style(button: Button, accent_color: Color, font_size: int) ->
 	hover.set_content_margin_all(4)
 	button.add_theme_stylebox_override("hover", hover)
 
-	var pressed := StyleBoxFlat.new()
+	var pressed : StyleBoxFlat = StyleBoxFlat.new()
 	pressed.bg_color = accent_color.darkened(0.38)
 	pressed.border_color = accent_color.darkened(0.16)
 	pressed.set_border_width_all(2)

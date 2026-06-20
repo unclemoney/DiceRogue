@@ -379,10 +379,10 @@ func _open_vip_card() -> void:
 	if not _console_instance or not _console_data or _is_fanned:
 		return
 
-	var viewport_size := get_viewport_rect().size
-	var card_size := _get_vip_card_size(viewport_size)
+	var viewport_size : Vector2 = get_viewport_rect().size
+	var card_size : Vector2 = _get_vip_card_size(viewport_size)
 	_vip_card.set_card_size(card_size)
-	var target_position := _get_vip_card_target_position(viewport_size)
+	var target_position : Vector2 = _get_vip_card_target_position(viewport_size)
 	_fan_background.visible = true
 	_fan_background.modulate.a = 0.0
 	_fan_background.position = Vector2.ZERO
@@ -433,7 +433,7 @@ func _get_vip_card_target_position(viewport_size: Vector2) -> Vector2:
 		card_size = _get_vip_card_size(viewport_size)
 	return Vector2(
 		floor((viewport_size.x - card_size.x) * 0.5),
-		floor((viewport_size.y - card_size.y) * 0.5)
+		floor((viewport_size.y - card_size.y) * 0.25)
 	)
 
 
@@ -501,11 +501,11 @@ func _spawn_nes_die_buttons() -> void:
 			var panel = PanelContainer.new()
 			panel.z_index = 150
 
-			var style = _build_panel_style(PANEL_ACCENT, PANEL_SURFACE)
-			style.content_margin_left = 4.0
-			style.content_margin_top = 4.0
-			style.content_margin_right = 4.0
-			style.content_margin_bottom = 4.0
+			var style = _build_panel_style(PANEL_ACCENT, PANEL_SURFACE) # 4.0 margin
+			style.content_margin_left = 1.0
+			style.content_margin_top = 1.0
+			style.content_margin_right = 1.0
+			style.content_margin_bottom = 1.0
 			panel.add_theme_stylebox_override("panel", style)
 
 			var hbox = HBoxContainer.new()
@@ -515,7 +515,7 @@ func _spawn_nes_die_buttons() -> void:
 			var plus_btn = Button.new()
 			plus_btn.text = "+1"
 			plus_btn.add_theme_font_override("font", vcr_font)
-			plus_btn.custom_minimum_size = Vector2(26, 20)
+			plus_btn.custom_minimum_size = Vector2(28, 24)
 			_apply_button_style(plus_btn, PANEL_ACCENT, 10)
 			plus_btn.pressed.connect(_on_nes_die_adjust.bind(die, 1))
 			if _tfx:
@@ -527,7 +527,7 @@ func _spawn_nes_die_buttons() -> void:
 			var minus_btn = Button.new()
 			minus_btn.text = "-1"
 			minus_btn.add_theme_font_override("font", vcr_font)
-			minus_btn.custom_minimum_size = Vector2(26, 20)
+			minus_btn.custom_minimum_size = Vector2(28, 24)
 			_apply_button_style(minus_btn, PANEL_BORDER, 10)
 			minus_btn.pressed.connect(_on_nes_die_adjust.bind(die, -1))
 			if _tfx:
@@ -536,7 +536,7 @@ func _spawn_nes_die_buttons() -> void:
 				minus_btn.pressed.connect(_tfx.button_press.bind(minus_btn))
 			hbox.add_child(minus_btn)
 
-			panel.position = die.global_position + Vector2(-20, -45)
+			panel.position = die.global_position + Vector2(-30, -55) #-20, -45
 			get_tree().root.add_child(panel)
 			_nes_die_buttons.append(panel)
 

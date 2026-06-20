@@ -1315,7 +1315,7 @@ func _style_tab_container() -> void:
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 	if vcr_font:
 		tab_container.add_theme_font_override("font", vcr_font)
-		tab_container.add_theme_font_size_override("font_size", 18)  # Larger font size
+		tab_container.add_theme_font_size_override("font_size", 22)  # Larger font size
 		tab_container.add_theme_color_override("font_selected_color", Color(1, 0.8, 0.2, 1))  # Golden selected
 		tab_container.add_theme_color_override("font_unselected_color", Color(0.9, 0.9, 0.9, 1))  # Light gray unselected
 		tab_container.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))

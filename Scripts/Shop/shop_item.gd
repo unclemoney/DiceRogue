@@ -28,12 +28,12 @@ const BADGE_TOP := 44.0
 const BADGE_HEIGHT := 28.0
 const RARITY_BADGE_MIN_WIDTH := 36.0
 const PRICE_BADGE_MIN_WIDTH := 72.0
-const SWING_HALF_DURATION := 0.055
-const SWING_SETTLE_DURATION := 0.11
-const SWING_ANGLE_MIN := 2.0
-const SWING_ANGLE_MAX := 5.0
-const SWING_COUNT_MIN := 2
-const SWING_COUNT_MAX := 5
+const SWING_HALF_DURATION := 0.095
+const SWING_SETTLE_DURATION := 0.21
+const SWING_ANGLE_MIN := 1.0
+const SWING_ANGLE_MAX := 3.0
+const SWING_COUNT_MIN := 1
+const SWING_COUNT_MAX := 3
 
 var item_id: String
 var item_type: String
