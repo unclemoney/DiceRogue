@@ -427,6 +427,15 @@ func _create_debug_tabs() -> void:
 			{"text": "Test Score Count-Up", "method": "_debug_test_score_countup"},
 			{"text": "Test Crossfade Transition", "method": "_debug_test_crossfade"},
 			{"text": "Test CRT Wipe Transition", "method": "_debug_test_crt_wipe"},
+			{"text": "Title Preview Roll", "method": "_debug_title_preview_roll"},
+			{"text": "Title Preview Score", "method": "_debug_title_preview_score"},
+			{"text": "Title Preview Power", "method": "_debug_title_preview_power"},
+			{"text": "Title Preview Consumable", "method": "_debug_title_preview_consumable"},
+			{"text": "Title Preview Debuff", "method": "_debug_title_preview_debuff"},
+			{"text": "Title Preview Challenge", "method": "_debug_title_preview_challenge"},
+			{"text": "Title Challenge Win", "method": "_debug_title_preview_challenge_win"},
+			{"text": "Title Challenge Lose", "method": "_debug_title_preview_challenge_lose"},
+			{"text": "Title Preview Random", "method": "_debug_title_preview_random"},
 		]
 	}
 	
@@ -2801,7 +2810,7 @@ func _debug_ui_find_missing() -> void:
 		"MarginContainer/MainVBox/MiddleSection/LeftColumn/DebuffContainer/ContentVBox/DebuffUI",
 		"MarginContainer/MainVBox/MiddleSection/LeftColumn/ConsumableContainer/ContentVBox/ConsumableUI",
 		"MarginContainer/MainVBox/MiddleSection/LeftColumn/ConsoleContainer/ContentVBox/GamingConsoleUI",
-		"MarginContainer/MainVBox/MiddleSection/CenterColumn/TitleContainer/ContentVBox/GlowingTitle",
+		"MarginContainer/MainVBox/MiddleSection/CenterColumn/TitleContainer/InteractiveGameTitle",
 		"MarginContainer/MainVBox/MiddleSection/CenterColumn/DiceAreaContainer/DiceHand",
 		"MarginContainer/MainVBox/MiddleSection/CenterColumn/ChoreMeterContainer/ContentVBox/GlowingTitle",
 		"MarginContainer/MainVBox/MiddleSection/RightColumn/ScorecardContainer/ScoreCardUI",
@@ -2933,6 +2942,74 @@ func _debug_test_crossfade() -> void:
 
 func _debug_test_crt_wipe() -> void:
 	log_debug("Test CRT Wipe: not implemented")
+
+
+func _debug_title_preview_roll() -> void:
+	_debug_preview_game_title("roll", 0.34)
+
+
+func _debug_title_preview_score() -> void:
+	_debug_preview_game_title("score", 0.64)
+
+
+func _debug_title_preview_power() -> void:
+	_debug_preview_game_title("power", 0.58)
+
+
+func _debug_title_preview_consumable() -> void:
+	_debug_preview_game_title("consumable", 0.58)
+
+
+func _debug_title_preview_debuff() -> void:
+	_debug_preview_game_title("debuff", 0.62)
+
+
+func _debug_title_preview_challenge() -> void:
+	_debug_preview_game_title("challenge", 0.72)
+
+
+func _debug_title_preview_challenge_win() -> void:
+	_debug_preview_game_title("challenge_complete", 0.88)
+
+
+func _debug_title_preview_challenge_lose() -> void:
+	_debug_preview_game_title("challenge_fail", 0.78)
+
+
+func _debug_title_preview_random() -> void:
+	var title = _get_interactive_game_title()
+	if not title:
+		log_debug("ERROR: InteractiveGameTitle not found")
+		return
+	if title.has_method("debug_play_random_event"):
+		var event_name = title.debug_play_random_event(0.68)
+		log_debug("InteractiveGameTitle random preview: %s" % event_name)
+	else:
+		log_debug("ERROR: InteractiveGameTitle missing debug_play_random_event")
+
+
+func _debug_preview_game_title(event_name: String, intensity: float) -> void:
+	var title = _get_interactive_game_title()
+	if not title:
+		log_debug("ERROR: InteractiveGameTitle not found")
+		return
+	if not title.has_method("debug_preview_event"):
+		log_debug("ERROR: InteractiveGameTitle missing debug_preview_event")
+		return
+	title.debug_preview_event(event_name, intensity)
+	log_debug("InteractiveGameTitle preview: %s (%.2f)" % [event_name, intensity])
+
+
+func _get_interactive_game_title() -> Node:
+	var game_ui = get_tree().get_first_node_in_group("game_ui")
+	if not game_ui:
+		return null
+	var title_container = game_ui.get("title_container")
+	if title_container and is_instance_valid(title_container):
+		var title = title_container.get_node_or_null("InteractiveGameTitle")
+		if title and is_instance_valid(title):
+			return title
+	return game_ui.get_node_or_null("MarginContainer/MainVBox/MiddleSection/CenterColumn/TitleContainer/InteractiveGameTitle")
 
 
 # ============================================================================

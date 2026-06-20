@@ -173,7 +173,15 @@ func _build_ui() -> void:
 
 	title_container = _create_panel("TitleContainer", TITLE_RATIO)
 	center_col.add_child(title_container)
-	_add_glowing_title(title_container, "Guhtzee!", "res://Resources/Font/PumpDemiBoldPlain.otf", null, 72)
+	var interactive_game_title_scene = load("res://Scenes/UI/InteractiveGameTitle.tscn") as PackedScene
+	if interactive_game_title_scene:
+		var interactive_game_title = interactive_game_title_scene.instantiate()
+		interactive_game_title.name = "InteractiveGameTitle"
+		interactive_game_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		interactive_game_title.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		title_container.add_child(interactive_game_title)
+	else:
+		push_error("[GameUI] Failed to load InteractiveGameTitle scene")
 	#_add_container_hover_title(title_container, "Guhtzee!")
 
 	dice_area_container = _create_panel("DiceAreaContainer", DICE_AREA_RATIO)

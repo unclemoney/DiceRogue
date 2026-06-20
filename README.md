@@ -188,10 +188,11 @@ Full documentation with parameters, recipes, and technical deep-dives: See `ARCA
   - **RollButtonUI**: enlarged glass-neon roll button with a custom shader, pointer-follow glow, proximity-based intensity, keyboard hint text, and shell-level TweenFX pulse/bounce feedback
   - **ScoreCardUI**: score rows now use fixed score lanes, stronger outline/shadow contrast, and translucent mall-core glass button states that adapt by channel via `ChannelManager` and `ChannelDifficultyData.ui_contrast_mode`
   - **ChoreUI**: panel-embedded chore meter with a horizontal neon progress bar, live task label, hover glow response, and click-expanded chore board that fans completed chores under a centered status panel
+  - **InteractiveGameTitle** (`Scenes/UI/InteractiveGameTitle.tscn`, `Scripts/UI/interactive_game_title.gd`): bounded per-letter center title that keeps hover/click interactivity and reacts to rolls, scoring, consumables, power-ups, debuffs, and challenge events with intensity scaling driven by score, round, and turn context
   - Core gameplay panels now share a mall-core glass shell: dark plum fill, neon magenta borders, teal CTA accents, rounded corners, and VCR-styled outlined text
-  - Glowing titles via `GlowingTitle.tscn` (SubViewport + WorldEnvironment) in each panel
+  - Glowing titles via `GlowingTitle.tscn` (SubViewport + WorldEnvironment) remain on the supporting panels; the center title panel now hosts `InteractiveGameTitle`
   - Replaces the retired `CorkboardUI` and manual offset positioning
-  - **Test Scene**: `Tests/UILayoutTest.tscn`
+  - **Test Scenes**: `Tests/UILayoutTest.tscn`, `Tests/InteractiveGameTitleTest.tscn`
 
 ### Game Flow
 - **GameController** (`Scripts/Core/game_controller.gd`) - Central coordination
@@ -1825,6 +1826,7 @@ For rapid testing and verification of new features, DiceRogue includes a compreh
 - **System Testing**: Test score calculations, trigger signals, show states
 - **Debug State**: Save/load debug scenarios for quick testing
 - **Utilities**: Clear output, reset entire game state
+- **Juice / Title Preview**: Preview interactive title reactions for roll, score, power-up, consumable, debuff, challenge, and random burst paths without running full game flow
 
 ### Panel Controls
 - **Clear Output**: Remove all debug messages
@@ -1866,6 +1868,8 @@ For isolated testing:
 2. Add minimal UI with test buttons
 3. Print expected vs actual results
 4. Use debug panel for setup
+
+Example: `Tests/InteractiveGameTitleTest.tscn` hosts the bounded `InteractiveGameTitle` panel, an intensity slider, direct event-family preview buttons, and a burst stress test for overlap/cooldown validation.
 
 Example test structure:
 ```gdscript

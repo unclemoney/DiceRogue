@@ -6,6 +6,7 @@ signal power_up_granted(id: String, power_up: PowerUp)
 signal power_up_revoked(id: String)
 signal consumable_used(id: String, consumable: Consumable)
 signal debuff_blocked(debuff_id: String)  # Emitted when Ungrounded blocks a debuff
+signal debuff_applied(id: String, debuff: Debuff)
 #signal dice_rolled(dice_values: Array)
 
 # Active power-ups and consumables in the game dictionaries
@@ -2476,57 +2477,77 @@ func apply_debuff(id: String) -> void:
 	print("[GameController] Debuff icon added to UI:", id)
 
 	# Apply the debuff effect
+	var debuff_started := false
 	match id:
 		"lock_dice":
 			debuff.target = dice_hand
 			debuff.start()
+			debuff_started = true
 		"disabled_twos":
 			debuff.target = dice_hand
 			debuff.start()
+			debuff_started = true
 		"roll_score_minus_one":
 			debuff.target = self  
 			debuff.start()
+			debuff_started = true
 		"costly_roll":  
 			debuff.target = self  
 			debuff.start()
+			debuff_started = true
 		"the_division":
 			debuff.target = self  
 			debuff.start()
+			debuff_started = true
 		"faster_chores":
 			debuff.target = self
 			debuff.start()
+			debuff_started = true
 		"disabled_mods":
 			debuff.target = dice_hand
 			debuff.start()
+			debuff_started = true
 		"disabled_colors":
 			debuff.target = self
 			debuff.start()
+			debuff_started = true
 		"reduced_levels":
 			debuff.target = scorecard
 			debuff.start()
+			debuff_started = true
 		"half_additive":
 			debuff.target = self
 			debuff.start()
+			debuff_started = true
 		"too_greedy":
 			debuff.target = self
 			debuff.start()
+			debuff_started = true
 		"rotating_disabled_powerup":
 			debuff.target = self
 			debuff.start()
+			debuff_started = true
 		"no_consumables_allowed":
 			debuff.target = self
 			debuff.start()
+			debuff_started = true
 		"all_powerups_sold":
 			debuff.target = self
 			debuff.start()
+			debuff_started = true
 		"one_shot":
 			debuff.target = self
 			debuff.start()
+			debuff_started = true
 		"mixed_bag":
 			debuff.target = dice_hand
 			debuff.start()
+			debuff_started = true
 		_:
 			push_error("[GameController] Unknown debuff type: %s" % id)
+
+	if debuff_started:
+		emit_signal("debuff_applied", id, debuff)
 	
 	GameSaveManager.update_settled_snapshot()
 
@@ -3947,6 +3968,9 @@ func activate_challenge(id: String) -> void:
 			push_error("[GameController] Failed to create UI for challenge:", id)
 	else:
 		push_error("[GameController] No challenge_ui reference")
+
+	if challenge_manager:
+		challenge_manager.emit_signal("challenge_activated", id)
 	
 	GameSaveManager.update_settled_snapshot()
 
