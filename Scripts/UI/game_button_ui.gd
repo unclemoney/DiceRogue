@@ -421,7 +421,7 @@ func _on_round_started(_round_number: int) -> void:
 		print("[GameButtonUI] Round started - disabling shop button")
 		_stop_shop_button_pulse()
 		shop_button.disabled = true
-	next_turn_button.disabled = false
+	next_turn_button.disabled = true
 	animate_button_wave()
 	_show_turn_banner(_round_number)
 
