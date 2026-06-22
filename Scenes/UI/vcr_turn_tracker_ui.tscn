@@ -104,6 +104,6 @@ grow_vertical = 2
 theme = ExtResource("2_1lhlw")
 theme_override_colors/font_color = Color(0.4, 1, 0.5, 1)
 theme_override_font_sizes/font_size = 16
-text = "Channel: 01"
+text = "Mall Zone 01"
 horizontal_alignment = 1
 vertical_alignment = 1

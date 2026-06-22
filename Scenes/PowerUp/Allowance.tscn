@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://xqfvu2bfdiwk"]
 
-[ext_resource type="Script" path="res://Scripts/PowerUps/allowance_power_up.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://d24xk7s0u45vu" path="res://Scripts/PowerUps/allowance_power_up.gd" id="1_script"]
 
 [node name="Allowance" type="Node2D"]
 script = ExtResource("1_script")

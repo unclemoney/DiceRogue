@@ -136,7 +136,6 @@ func use_roll():
 func _show_turn_banner(turn_number: int) -> void:
 	var banner = Label.new()
 	banner.text = "TURN %d" % turn_number
-	banner.set_anchors_preset(Control.PRESET_CENTER)
 	banner.z_index = 200
 	
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
@@ -144,16 +143,30 @@ func _show_turn_banner(turn_number: int) -> void:
 		banner.add_theme_font_override("font", vcr_font)
 	banner.add_theme_font_size_override("font_size", 48)
 	banner.add_theme_color_override("font_color", Color(1.0, 0.9, 0.6, 1.0))
+	banner.add_theme_color_override("font_outline_color", Color(0.25, 0.12, 0.04, 1.0))
+	banner.add_theme_constant_override("outline_size", 2)
+	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	
 	var tree = get_tree()
 	if not tree:
 		return
 	var root = tree.root
 	root.add_child(banner)
+	banner.reset_size()
 	
-	var tfx = get_node_or_null("/root/TweenFXHelper")
-	if tfx:
-		tfx.play_preset(banner, "drop_in")
+	var viewport_rect = root.get_viewport().get_visible_rect()
+	var banner_size = banner.size
+	if banner_size == Vector2.ZERO:
+		banner_size = banner.get_combined_minimum_size()
+	var target_position = Vector2((viewport_rect.size.x - banner_size.x) * 0.5, viewport_rect.size.y * 0.22)
+	banner.position = target_position - Vector2(0, 60)
+	banner.modulate.a = 0.0
+	
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(banner, "position", target_position, 0.38).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(banner, "modulate:a", 1.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	
 	var audio_mgr = get_node_or_null("/root/AudioManager")
 	if audio_mgr and audio_mgr.has_method("play_round_start_sound"):
@@ -162,7 +175,13 @@ func _show_turn_banner(turn_number: int) -> void:
 	# Auto-remove after delay
 	await tree.create_timer(1.5).timeout
 	if is_instance_valid(banner):
-		banner.queue_free()
+		var fade_tween = create_tween()
+		fade_tween.set_parallel(true)
+		fade_tween.tween_property(banner, "modulate:a", 0.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		fade_tween.tween_property(banner, "position:y", banner.position.y - 16.0, 0.25).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+		await fade_tween.finished
+		if is_instance_valid(banner):
+			banner.queue_free()
 
 
 ## reset_game()

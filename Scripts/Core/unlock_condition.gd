@@ -239,9 +239,9 @@ func get_formatted_description() -> String:
 			else:
 				return "Roll %d Yahtzees (total across all games)" % target_value
 		ConditionType.COMPLETE_CHANNEL:
-			return "Complete Channel %d" % target_value
+			return "Complete Mall Zone %d" % target_value
 		ConditionType.REACH_CHANNEL:
-			return "Reach Channel %d" % target_value
+			return "Reach Mall Zone %d" % target_value
 		ConditionType.SCORE_THRESHOLD_CATEGORY:
 			var cat = additional_params.get("category", "unknown")
 			return "Score %d+ in %s" % [target_value, cat.replace("_", " ").capitalize()]

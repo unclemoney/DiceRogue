@@ -1,6 +1,8 @@
 extends Control
 class_name RoundWinnerPanel
 
+const GlassActionButtonClass = preload("res://Scripts/UI/glass_action_button.gd")
+
 ## RoundWinnerPanel
 ##
 ## Displays when the player completes all 6 rounds (wins the game).
@@ -23,7 +25,7 @@ var score_row: HBoxContainer
 var target_row: HBoxContainer
 var turns_row: HBoxContainer
 var rounds_row: HBoxContainer
-var next_channel_button: Button
+var next_channel_button = null
 
 # Stats data
 var _final_score: int = 0
@@ -37,9 +39,6 @@ var vcr_font: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 
 # Animation
 var _animation_tween: Tween
-
-@onready var _tfx := get_node("/root/TweenFXHelper")
-
 
 func _ready() -> void:
 	visible = false
@@ -161,7 +160,7 @@ func _build_ui() -> void:
 	# Channel label
 	channel_label = Label.new()
 	channel_label.name = "ChannelLabel"
-	channel_label.text = "Channel 01 Complete!"
+	channel_label.text = "Mall Zone 01 Complete!"
 	channel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	channel_label.add_theme_font_override("font", vcr_font)
 	channel_label.add_theme_font_size_override("font_size", 22)
@@ -226,41 +225,27 @@ func _build_ui() -> void:
 	content_vbox.add_child(spacer)
 	
 	# Next Channel button
-	next_channel_button = Button.new()
+	next_channel_button = GlassActionButtonClass.new()
 	next_channel_button.name = "NextChannelButton"
-	next_channel_button.text = "NEXT CHANNEL"
-	next_channel_button.custom_minimum_size = Vector2(250, 60)
+	next_channel_button.configure(
+		"NEXT MALL ZONE",
+		Vector2(320, 60),
+		{
+			"base_color": Color(0.137255, 0.411765, 0.415686, 0.92),
+			"mid_color": Color(0.2, 0.56, 0.56, 0.96),
+			"accent_color": Color(0.47451, 0.886275, 0.890196, 1.0),
+			"glow_color": Color(0.6, 0.94, 0.96, 1.0),
+			"rim_color": Color(0.968627, 0.941176, 1.0, 1.0),
+			"font_color": Color(0.968627, 0.941176, 1.0, 1.0),
+			"font_outline_color": Color(0.129412, 0.121569, 0.2, 1.0),
+			"outline_size": 1
+		},
+		22,
+		vcr_font
+	)
 	next_channel_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	next_channel_button.add_theme_font_override("font", vcr_font)
-	next_channel_button.add_theme_font_size_override("font_size", 22)
-	next_channel_button.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
-	next_channel_button.add_theme_color_override("font_hover_color", Color(0.968627, 0.941176, 1.0, 1.0))
-	next_channel_button.add_theme_color_override("font_pressed_color", Color(0.780392, 0.733333, 0.866667, 1.0))
-	next_channel_button.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
-	next_channel_button.add_theme_constant_override("outline_size", 1)
-	
-	# Create button style
-	var btn_style = StyleBoxFlat.new()
-	btn_style.bg_color = Color(0.137255, 0.411765, 0.415686, 0.92)
-	btn_style.border_color = Color(0.47451, 0.886275, 0.890196, 1.0)
-	btn_style.set_border_width_all(2)
-	btn_style.set_corner_radius_all(12)
-	next_channel_button.add_theme_stylebox_override("normal", btn_style)
-	
-	var btn_hover = btn_style.duplicate()
-	btn_hover.bg_color = Color(0.2, 0.56, 0.56, 0.96)
-	btn_hover.border_color = Color(0.6, 0.94, 0.96, 1.0)
-	next_channel_button.add_theme_stylebox_override("hover", btn_hover)
-	
-	var btn_pressed = btn_style.duplicate()
-	btn_pressed.bg_color = Color(0.101961, 0.298039, 0.301961, 0.96)
-	next_channel_button.add_theme_stylebox_override("pressed", btn_pressed)
-	next_channel_button.add_theme_stylebox_override("focus", btn_hover)
 	
 	next_channel_button.pressed.connect(_on_next_channel_pressed)
-	next_channel_button.mouse_entered.connect(_tfx.button_hover.bind(next_channel_button))
-	next_channel_button.mouse_exited.connect(_tfx.button_unhover.bind(next_channel_button))
-	next_channel_button.pressed.connect(_tfx.button_press.bind(next_channel_button))
 	content_vbox.add_child(next_channel_button)
 
 
@@ -295,7 +280,7 @@ func _create_stat_row(label_text: String, value_text: String) -> HBoxContainer:
 ##
 ## Updates all display elements with current stats.
 func _update_display() -> void:
-	channel_label.text = "Channel %02d Complete!" % _current_channel
+	channel_label.text = "Mall Zone %02d Complete!" % _current_channel
 	
 	# Update stat values
 	var score_value = score_row.get_node("Value") as Label
@@ -320,8 +305,7 @@ func _update_display() -> void:
 		if channel_manager.get("MAX_CHANNEL"):
 			max_channel = channel_manager.MAX_CHANNEL
 		var next_channel = mini(_current_channel + 1, max_channel)
-		var next_mult = channel_manager.get_difficulty_multiplier(next_channel)
-		next_channel_button.text = "NEXT: CH %02d (%.1fx)" % [next_channel, next_mult]
+		next_channel_button.set_button_text("NEXT: MALL ZONE %02d" % next_channel)
 
 
 ## _on_next_channel_pressed() -> void

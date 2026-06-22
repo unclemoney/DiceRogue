@@ -130,8 +130,8 @@ func _wrap_channel_panel(metric_grid: GridContainer) -> void:
 
 func _apply_metric_style(control: Control) -> void:
 	#var style := StyleBoxFlat.new()
-	var theme := preload("res://Resources/UI/action_button_theme.tres")
-	var style: StyleBoxFlat = theme.get_stylebox("panel", "Control").duplicate()
+	var action_theme := preload("res://Resources/UI/action_button_theme.tres")
+	var style: StyleBoxFlat = action_theme.get_stylebox("panel", "Control").duplicate()
 	style.bg_color = TRACKER_BG
 	style.border_color = TRACKER_BORDER
 	style.set_border_width_all(2)
@@ -299,7 +299,7 @@ func _on_channel_changed(channel: int) -> void:
 
 func _update_channel_display(channel: int) -> void:
 	if channel_label:
-		channel_label.text = "CH:%02d" % channel
+		channel_label.text = "Mall Zone %02d" % channel
 
 func _animate_label_change(label: Label, tween_ref: Tween) -> Tween:
 	if not label:

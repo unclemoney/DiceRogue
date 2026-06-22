@@ -159,8 +159,8 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | CUMULATIVE_SCORE | Score X total points across all games |
 | DICE_COMBINATIONS | Roll specific combinations |
 | CUMULATIVE_YAHTZEES | Roll X Yahtzees across all games |
-| COMPLETE_CHANNEL | Complete channel X |
-| REACH_CHANNEL | Alias for COMPLETE_CHANNEL |
+| COMPLETE_CHANNEL | Complete Mall Zone X |
+| REACH_CHANNEL | Reach Mall Zone X |
 | SCORE_THRESHOLD_CATEGORY | Score X+ in a specific category |
 | CHORE_COMPLETIONS | Complete X chores (single game or cumulative) |
 | WIN_WITHOUT_SCORING | Win without scoring in a category/section |

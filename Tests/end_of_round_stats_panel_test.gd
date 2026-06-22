@@ -5,8 +5,10 @@ extends Control
 ## Test scene for validating the End of Round Statistics Panel functionality.
 ## Tests bonus calculations, animations, and UI display.
 
-const EMPTY_CATEGORY_BONUS: int = 25
+const EMPTY_CATEGORY_BONUS: int = 10
 const POINTS_ABOVE_TARGET_BONUS: int = 1
+const SCORE_ABOVE_TARGET_CAP: int = 100
+const DEFAULT_POWER_UP_BONUS: int = 100
 
 @onready var stats_panel = $EndOfRoundStatsPanel
 @onready var output_label: RichTextLabel = $OutputLabel
@@ -42,8 +44,8 @@ var mock_scorecard: Dictionary = {
 func _ready() -> void:
 	_log("=== End of Round Stats Panel Test ===")
 	_log("Press keys to test:")
-	_log("  1 - Show stats panel with default values")
-	_log("  2 - Show stats panel with high bonuses")
+	_log("  1 - Show stats panel with Allowance bonus included")
+	_log("  2 - Show stats panel with score-above-target cap and PowerUp bonuses")
 	_log("  3 - Show stats panel with no bonuses")
 	_log("  4 - Show stats panel with many empty categories")
 	_log("  5 - Test bonus calculations only")
@@ -79,36 +81,44 @@ func _input(event: InputEvent) -> void:
 
 func _test_default_values() -> void:
 	_log("\n--- Test: Default Values ---")
-	_log("Round: 1, Target: 100, Final: 130, Empty: 3")
+	_log("Round: 1, Target: 100, Final: 130, Empty: 3, PowerUp Bonus: 100")
 	
 	var data = {
 		"round_number": 1,
 		"challenge_target": 100,
 		"final_score": 130,
-		"empty_categories": 3
+		"empty_categories": 3,
+		"empty_categories_bonus": 30,
+		"points_above_target": 30,
+		"score_above_bonus": 30,
+		"power_up_bonus": DEFAULT_POWER_UP_BONUS
 	}
 	
 	stats_panel.show_stats(data)
 	
-	# Expected: Empty bonus = 3 * $25 = $75, Score bonus = 30 * $1 = $30, Total = $105
-	_log("Expected bonuses: Empty=$75, Score=$30, Total=$105")
+	# Expected: Empty bonus = 3 * $10 = $30, Score bonus = 30 * $1 = $30, PowerUp = $100, Total = $160
+	_log("Expected bonuses: Empty=$30, Score=$30, PowerUps=$100, Total=$160")
 
 
 func _test_high_bonuses() -> void:
 	_log("\n--- Test: High Bonuses ---")
-	_log("Round: 3, Target: 150, Final: 280, Empty: 7")
+	_log("Round: 3, Target: 150, Final: 320, Empty: 7, PowerUp Bonus: 180")
 	
 	var data = {
 		"round_number": 3,
 		"challenge_target": 150,
-		"final_score": 280,
-		"empty_categories": 7
+		"final_score": 320,
+		"empty_categories": 7,
+		"empty_categories_bonus": 70,
+		"points_above_target": 170,
+		"score_above_bonus": SCORE_ABOVE_TARGET_CAP,
+		"power_up_bonus": 180
 	}
 	
 	stats_panel.show_stats(data)
 	
-	# Expected: Empty bonus = 7 * $25 = $175, Score bonus = 130 * $1 = $130, Total = $305
-	_log("Expected bonuses: Empty=$175, Score=$130, Total=$305")
+	# Expected: Empty bonus = 7 * $10 = $70, Score bonus = capped at $100, PowerUps = $180, Total = $350
+	_log("Expected bonuses: Empty=$70, Score=$100 (capped), PowerUps=$180, Total=$350")
 
 
 func _test_no_bonuses() -> void:
@@ -119,7 +129,11 @@ func _test_no_bonuses() -> void:
 		"round_number": 2,
 		"challenge_target": 200,
 		"final_score": 180,
-		"empty_categories": 0
+		"empty_categories": 0,
+		"empty_categories_bonus": 0,
+		"points_above_target": 0,
+		"score_above_bonus": 0,
+		"power_up_bonus": 0
 	}
 	
 	stats_panel.show_stats(data)
@@ -136,13 +150,17 @@ func _test_many_empty_categories() -> void:
 		"round_number": 1,
 		"challenge_target": 50,
 		"final_score": 50,
-		"empty_categories": 10
+		"empty_categories": 10,
+		"empty_categories_bonus": 100,
+		"points_above_target": 0,
+		"score_above_bonus": 0,
+		"power_up_bonus": 0
 	}
 	
 	stats_panel.show_stats(data)
 	
-	# Expected: Empty bonus = 10 * $25 = $250, Score bonus = 0, Total = $250
-	_log("Expected bonuses: Empty=$250, Score=$0, Total=$250")
+	# Expected: Empty bonus = 10 * $10 = $100, Score bonus = 0, Total = $100
+	_log("Expected bonuses: Empty=$100, Score=$0, PowerUps=$0, Total=$100")
 
 
 func _test_bonus_calculations() -> void:
@@ -155,17 +173,20 @@ func _test_bonus_calculations() -> void:
 	
 	# Test bonus formulas
 	var empty_bonus = empty_count * EMPTY_CATEGORY_BONUS
-	_log("Empty category bonus ($25 each): $%d" % empty_bonus)
+	_log("Empty category bonus ($10 each): $%d" % empty_bonus)
 	
 	var points_above = max(0, 130 - 100)
-	var score_bonus = points_above * POINTS_ABOVE_TARGET_BONUS
+	var score_bonus = min(SCORE_ABOVE_TARGET_CAP, points_above * POINTS_ABOVE_TARGET_BONUS)
 	_log("Points above target bonus (30 × $1): $%d" % score_bonus)
+
+	var power_up_bonus = DEFAULT_POWER_UP_BONUS
+	_log("PowerUp bonus preview: $%d" % power_up_bonus)
 	
-	var total = empty_bonus + score_bonus
+	var total = empty_bonus + score_bonus + power_up_bonus
 	_log("Total bonus: $%d" % total)
 	
 	# Verify
-	if empty_count == 3 and empty_bonus == 75 and score_bonus == 30 and total == 105:
+	if empty_count == 3 and empty_bonus == 30 and score_bonus == 30 and total == 160:
 		_log("[PASS] All calculations correct!")
 	else:
 		_log("[FAIL] Calculation mismatch!")
@@ -187,6 +208,7 @@ func _on_continue_pressed() -> void:
 	_log("Total bonus awarded: $%d" % stats_panel.get_total_bonus())
 	_log("  - Empty categories: $%d" % stats_panel.get_empty_categories_bonus())
 	_log("  - Score above target: $%d" % stats_panel.get_score_above_bonus())
+	_log("  - PowerUp bonuses: $%d" % stats_panel.get_power_up_bonus())
 
 
 func _on_panel_closed() -> void:

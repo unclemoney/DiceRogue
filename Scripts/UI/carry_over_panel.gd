@@ -1,6 +1,8 @@
 extends Control
 class_name CarryOverPanel
 
+const GlassActionButtonClass = preload("res://Scripts/UI/glass_action_button.gd")
+
 ## CarryOverPanel
 ##
 ## Displays after the RoundWinnerPanel when advancing to the next channel.
@@ -49,7 +51,7 @@ var title_label: Label
 var subtitle_label: Label
 var counter_label: Label
 var checkbox_container: VBoxContainer
-var confirm_button: Button
+var confirm_button = null
 var _checkbox_rows: Array[Control] = []
 
 # Font
@@ -212,40 +214,27 @@ func _build_ui() -> void:
 	content_vbox.add_child(sep2)
 	
 	# Confirm button
-	confirm_button = Button.new()
+	confirm_button = GlassActionButtonClass.new()
 	confirm_button.name = "ConfirmButton"
-	confirm_button.text = "CONFIRM"
-	confirm_button.custom_minimum_size = Vector2(250, 55)
+	confirm_button.configure(
+		"CONFIRM",
+		Vector2(250, 55),
+		{
+			"base_color": Color(0.3, 0.15, 0.5, 1.0),
+			"mid_color": Color(0.4, 0.2, 0.6, 1.0),
+			"accent_color": Color(0.6, 0.3, 0.9, 1.0),
+			"glow_color": Color(0.7, 0.4, 1.0, 1.0),
+			"rim_color": Color(0.968627, 0.941176, 1.0, 1.0),
+			"font_color": Color(0.968627, 0.941176, 1.0, 1.0),
+			"font_outline_color": Color(0.129412, 0.121569, 0.2, 1.0),
+			"outline_size": 1
+		},
+		22,
+		vcr_font
+	)
 	confirm_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	confirm_button.add_theme_font_override("font", vcr_font)
-	confirm_button.add_theme_font_size_override("font_size", 22)
-	
-	# Button style
-	var btn_style = StyleBoxFlat.new()
-	btn_style.bg_color = Color(0.3, 0.15, 0.5, 1.0)
-	btn_style.border_color = Color(0.6, 0.3, 0.9, 1.0)
-	btn_style.set_border_width_all(3)
-	btn_style.set_corner_radius_all(12)
-	confirm_button.add_theme_stylebox_override("normal", btn_style)
-	
-	var btn_hover = btn_style.duplicate()
-	btn_hover.bg_color = Color(0.4, 0.2, 0.6, 1.0)
-	btn_hover.border_color = Color(0.7, 0.4, 1.0, 1.0)
-	confirm_button.add_theme_stylebox_override("hover", btn_hover)
-	
-	var btn_pressed = btn_style.duplicate()
-	btn_pressed.bg_color = Color(0.2, 0.1, 0.35, 1.0)
-	confirm_button.add_theme_stylebox_override("pressed", btn_pressed)
-	
-	var btn_disabled = btn_style.duplicate()
-	btn_disabled.bg_color = Color(0.15, 0.1, 0.2, 0.6)
-	btn_disabled.border_color = Color(0.3, 0.2, 0.4, 0.6)
-	confirm_button.add_theme_stylebox_override("disabled", btn_disabled)
 	
 	confirm_button.pressed.connect(_on_confirm_pressed)
-	confirm_button.mouse_entered.connect(_tfx.button_hover.bind(confirm_button))
-	confirm_button.mouse_exited.connect(_tfx.button_unhover.bind(confirm_button))
-	confirm_button.pressed.connect(_tfx.button_press.bind(confirm_button))
 	content_vbox.add_child(confirm_button)
 
 
@@ -356,17 +345,17 @@ func _update_checkbox_states() -> void:
 func _update_display() -> void:
 	if _allowed_count <= 0:
 		title_label.text = "NO CARRY-OVERS ALLOWED"
-		subtitle_label.text = "Channel %02d requires a fresh start" % _next_channel
+		subtitle_label.text = "Mall Zone %02d requires a fresh start" % _next_channel
 		counter_label.visible = false
-		confirm_button.text = "CONTINUE"
-		confirm_button.disabled = false
+		confirm_button.set_button_text("CONTINUE")
+		confirm_button.set_button_disabled(false)
 	else:
 		title_label.text = "CHOOSE YOUR CARRY-OVERS"
-		subtitle_label.text = "Select up to %s items to keep for Channel %s" % [NumberFormatter.format_int(_allowed_count), NumberFormatter.format_int(_next_channel)]
+		subtitle_label.text = "Select up to %s items to keep for Mall Zone %s" % [NumberFormatter.format_int(_allowed_count), NumberFormatter.format_int(_next_channel)]
 		counter_label.visible = true
 		counter_label.text = "%s / %s selected" % [NumberFormatter.format_int(_selected_types.size()), NumberFormatter.format_int(_allowed_count)]
-		confirm_button.text = "CONFIRM"
-		confirm_button.disabled = false
+		confirm_button.set_button_text("CONFIRM")
+		confirm_button.set_button_disabled(false)
 		
 		# Color the counter based on how full it is
 		if _selected_types.size() >= _allowed_count:

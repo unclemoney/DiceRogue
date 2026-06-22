@@ -1,6 +1,8 @@
 extends Control
 class_name NewRoundPanel
 
+const GlassActionButtonClass = preload("res://Scripts/UI/glass_action_button.gd")
+
 ## NewRoundPanel
 ##
 ## Full-screen overlay that introduces a new round with channel, round number,
@@ -18,17 +20,13 @@ var _challenge_desc_label: Label
 var _debuffs_container: GridContainer
 var _chore_row: HBoxContainer
 var _chore_label: Label
-var _lets_play_button: Button
+var _lets_play_button = null
 
 var _panel_original_pos: Vector2
-var _tfx: TweenFXHelper
-
-
 func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	z_index = 100
-	_tfx = get_node_or_null("/root/TweenFXHelper")
 
 
 ## setup(data)
@@ -144,7 +142,7 @@ func _build_ui(data: Dictionary) -> void:
 	
 	## Channel row
 	_channel_label = Label.new()
-	_channel_label.text = "Channel %s" % NumberFormatter.format_int(data.get("channel", 1))
+	_channel_label.text = "Mall Zone %s" % NumberFormatter.format_int(data.get("channel", 1))
 	_channel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_channel_label.add_theme_font_size_override("font_size", 18)
 	_channel_label.add_theme_color_override("font_color", Color(0.5, 1.0, 0.5))
@@ -222,31 +220,23 @@ func _build_ui(data: Dictionary) -> void:
 	vbox.add_child(spacer)
 	
 	## Let's Play button
-	_lets_play_button = Button.new()
-	_lets_play_button.text = "Let's Play"
-	_lets_play_button.custom_minimum_size = Vector2(180, 50)
+	_lets_play_button = GlassActionButtonClass.new()
+	_lets_play_button.configure(
+		"Let's Play",
+		Vector2(180, 50),
+		{
+			"base_color": Color(0.2, 0.5, 0.2, 1.0),
+			"mid_color": Color(0.25, 0.6, 0.25, 1.0),
+			"accent_color": Color(0.3, 0.7, 0.3, 1.0),
+			"glow_color": Color(0.4, 0.9, 0.4, 1.0),
+			"rim_color": Color(0.9, 0.98, 0.9, 1.0),
+			"font_color": Color(0.968627, 0.941176, 1.0, 1.0),
+			"font_outline_color": Color(0.129412, 0.121569, 0.2, 1.0),
+			"outline_size": 1
+		},
+		20
+	)
 	_lets_play_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_lets_play_button.add_theme_font_size_override("font_size", 20)
-	
-	var btn_style = StyleBoxFlat.new()
-	btn_style.bg_color = Color(0.2, 0.5, 0.2, 1.0)
-	btn_style.border_color = Color(0.3, 0.7, 0.3, 1.0)
-	btn_style.set_border_width_all(3)
-	btn_style.set_corner_radius_all(12)
-	_lets_play_button.add_theme_stylebox_override("normal", btn_style)
-	
-	var btn_hover = btn_style.duplicate()
-	btn_hover.bg_color = Color(0.25, 0.6, 0.25, 1.0)
-	btn_hover.border_color = Color(0.4, 0.9, 0.4, 1.0)
-	_lets_play_button.add_theme_stylebox_override("hover", btn_hover)
-	
-	var btn_pressed = btn_style.duplicate()
-	btn_pressed.bg_color = Color(0.15, 0.4, 0.15, 1.0)
-	_lets_play_button.add_theme_stylebox_override("pressed", btn_pressed)
 	
 	_lets_play_button.pressed.connect(_on_lets_play_pressed)
-	if _tfx:
-		_lets_play_button.mouse_entered.connect(_tfx.button_hover.bind(_lets_play_button))
-		_lets_play_button.mouse_exited.connect(_tfx.button_unhover.bind(_lets_play_button))
-		_lets_play_button.pressed.connect(_tfx.button_press.bind(_lets_play_button))
 	vbox.add_child(_lets_play_button)

@@ -1,6 +1,8 @@
 extends Control
 class_name ChoreSelectionPopup
 
+const GlassActionButtonClass = preload("res://Scripts/UI/glass_action_button.gd")
+
 ## ChoreSelectionPopup
 ##
 ## Popup panel that lets the player choose between an EASY or HARD chore task.
@@ -27,9 +29,6 @@ const EASY_COLOR := Color(0.47451, 0.886275, 0.890196, 1.0)
 const HARD_COLOR := Color(0.886275, 0.392157, 0.54902, 1.0)
 const EASY_REDUCTION := 10
 const HARD_REDUCTION := 30
-
-@onready var _tfx := get_node("/root/TweenFXHelper")
-
 
 func _ready() -> void:
 	visible = false
@@ -385,47 +384,24 @@ func _create_task_card(task, is_hard: bool) -> Control:
 	card_vbox.add_child(spacer)
 	
 	# Select button
-	var button = Button.new()
-	button.text = "SELECT CHORE"
-	button.custom_minimum_size = Vector2(0, 34)
+	var button = GlassActionButtonClass.new()
+	button.configure(
+		"SELECT CHORE",
+		Vector2(0, 34),
+		{
+			"base_color": accent_color.darkened(0.28),
+			"mid_color": accent_color,
+			"accent_color": accent_color,
+			"glow_color": accent_color.lightened(0.15),
+			"rim_color": PANEL_TEXT,
+			"font_color": PANEL_TEXT,
+			"font_outline_color": PANEL_OUTLINE,
+			"outline_size": 1
+		},
+		14
+	)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.add_theme_font_size_override("font_size", 14)
-	button.add_theme_color_override("font_color", PANEL_TEXT)
-	button.add_theme_color_override("font_hover_color", PANEL_TEXT)
-	button.add_theme_color_override("font_pressed_color", PANEL_TEXT_SOFT)
-	button.add_theme_color_override("font_outline_color", PANEL_OUTLINE)
-	button.add_theme_constant_override("outline_size", 1)
 	button.pressed.connect(_on_task_selected.bind(is_hard))
-	if _tfx:
-		button.mouse_entered.connect(_tfx.button_hover.bind(button))
-		button.mouse_exited.connect(_tfx.button_unhover.bind(button))
-		button.pressed.connect(_tfx.button_press.bind(button))
-	
-	# Button style
-	var btn_style = StyleBoxFlat.new()
-	btn_style.bg_color = accent_color.darkened(0.28)
-	btn_style.border_color = accent_color
-	btn_style.set_border_width_all(2)
-	btn_style.set_corner_radius_all(9)
-	btn_style.set_content_margin_all(6)
-	button.add_theme_stylebox_override("normal", btn_style)
-	
-	var btn_hover = StyleBoxFlat.new()
-	btn_hover.bg_color = accent_color
-	btn_hover.border_color = accent_color.lightened(0.15)
-	btn_hover.set_border_width_all(2)
-	btn_hover.set_corner_radius_all(9)
-	btn_hover.set_content_margin_all(6)
-	button.add_theme_stylebox_override("hover", btn_hover)
-	
-	var btn_pressed = StyleBoxFlat.new()
-	btn_pressed.bg_color = accent_color.darkened(0.42)
-	btn_pressed.border_color = accent_color.darkened(0.2)
-	btn_pressed.set_border_width_all(2)
-	btn_pressed.set_corner_radius_all(9)
-	btn_pressed.set_content_margin_all(6)
-	button.add_theme_stylebox_override("pressed", btn_pressed)
-	button.add_theme_stylebox_override("focus", btn_hover)
 	
 	card_vbox.add_child(button)
 	

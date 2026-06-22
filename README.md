@@ -486,21 +486,21 @@ MusicManager.start_music()
 MusicManager.stop_music()
 ```
 
-### Channel System (Difficulty Scaling)
-The **Channel Manager** provides a resource-based difficulty progression system (Channels 1-20):
+### Mall Zone System (Difficulty Scaling)
+The **Channel Manager** drives the resource-based Mall Zone progression system (Mall Zones 1-20):
 
 **Features:**
-- **Mall Directory UI**: Select the starting channel from a runtime-generated mall map with hover tooltips, section colors, and a persistent side panel
-- **Resource-Based Configuration**: Each channel defined by a `.tres` file with manually tuned settings
-- **Unlock Pacing**: Higher channels require completing lower channels first
+- **Mall Directory UI**: Select the starting Mall Zone from a runtime-generated mall map with hover tooltips, section colors, and a persistent side panel
+- **Resource-Based Configuration**: Each Mall Zone is defined by a `.tres` file with manually tuned settings
+- **Unlock Pacing**: Higher Mall Zones require completing lower Mall Zones first
 - **Multiple Scaling Multipliers**: Goal scores, shop prices, goof-off meter, Yahtzee bonuses, debuff intensity
 - **Per-Round Difficulty**: Each round has its own challenge difficulty range
-- **Persistent Completion**: Completed channels are saved and display a checkmark when browsing
-- **Lock Feedback**: Locked channels show 🔒 icon and disable Start button
+- **Persistent Completion**: Completed Mall Zones are saved and display a checkmark when browsing
+- **Lock Feedback**: Locked Mall Zones show 🔒 icon and disable Start button
 - **Mall Metadata Layer**: Selector-only store names, directory labels, section buckets, and flavor text live alongside channel difficulty data
 
-**Channel Configuration Resources:**
-Each channel is configured via `Resources/Data/Channels/channel_XX.tres`:
+**Mall Zone Configuration Resources:**
+Each Mall Zone is configured via `Resources/Data/Channels/channel_XX.tres`:
 - `display_name`: Human-readable name (e.g., "Tutorial", "Expert", "ULTIMATE")
 - `mall_zone_name`: Selector-only store name shown on the mall map
 - `mall_directory_label`: Compact zone label used on the directory board
@@ -512,18 +512,18 @@ Each channel is configured via `Resources/Data/Channels/channel_XX.tres`:
 - `goof_off_multiplier`: Scales how fast the chore meter fills
 - `yahtzee_bonus_multiplier`: Scales bonus Yahtzee points (rewards skill)
 - `debuff_intensity_multiplier`: Scales debuff severity
-- `unlock_requirement`: Number of channels that must be completed to unlock
+- `unlock_requirement`: Number of Mall Zones that must be completed to unlock
 - `round_configs`: Array of 6 RoundDifficultyConfig resources
 
 **Round Difficulty Configuration:**
-Each round within a channel has:
+Each round within a Mall Zone has:
 - `challenge_difficulty_range`: Vector2i (min, max) for challenge tier selection
 - `max_debuffs`: Maximum debuffs allowed this round
 - `debuff_difficulty_cap`: Maximum difficulty of debuffs allowed
 - `bonus_multipliers`: Dictionary of category-specific scoring bonuses
 
-**Difficulty Progression (20 Channels):**
-| Channel | Name | Goal | Shop | Debuff | Unlock Req |
+**Difficulty Progression (20 Mall Zones):**
+| Mall Zone | Name | Goal | Shop | Debuff | Unlock Req |
 |---------|------|------|------|--------|------------|
 | 1 | Tutorial | 1.0x | 1.0x | 1.0x | 0 |
 | 5 | Moderate | 1.5x | 1.2x | 1.2x | 2 |
@@ -533,12 +533,12 @@ Each round within a channel has:
 
 **Implementation Files:**
 - **RoundDifficultyConfig** (`Scripts/Core/RoundDifficultyConfig.gd`) - Per-round settings resource
-- **ChannelDifficultyData** (`Scripts/Core/ChannelDifficultyData.gd`) - Channel-wide settings resource
-- **ChannelManager** (`Scripts/Managers/channel_manager.gd`) - Core difficulty logic, loads configs
+- **ChannelDifficultyData** (`Scripts/Core/ChannelDifficultyData.gd`) - Mall Zone settings resource
+- **ChannelManager** (`Scripts/Managers/channel_manager.gd`) - Core Mall Zone difficulty logic, loads configs
 - **ChannelManagerUI** (`Scripts/Managers/channel_manager_ui.gd`) - Mall directory selector shell, side panel, tooltip, and runtime map integration
 - **MallMapLayout** (`Scripts/Managers/mall_map_layout.gd`) - Shared hallway and store polygon layout data
 - **MallMapZone** (`Scripts/Managers/mall_map_zone.gd`) - Interactive runtime zone node for the selector
-- **CarryOverPanel** (`Scripts/UI/carry_over_panel.gd`) - Carry-over selection UI between channels
+- **CarryOverPanel** (`Scripts/UI/carry_over_panel.gd`) - Carry-over selection UI between Mall Zones
 - **Channel Resources** (`Resources/Data/Channels/channel_01.tres` to `channel_20.tres`)
 - **ChannelDifficultyValidator** (`Scripts/Editor/ChannelDifficultyValidator.gd`) - Editor validation tool
 - **Mall Selector Validation Scene** (`Tests/MallMapSelectorTest.tscn`) - Focused startup selector regression check
@@ -554,15 +554,15 @@ Each round within a channel has:
 
 **Game Flow:**
 1. Game starts → Mall directory selector appears (locked/completed status shown, side panel active, hover tooltip available)
-2. Player selects unlocked channel (1-20) and presses Start
+2. Player selects an unlocked Mall Zone (1-20) and presses Start
 3. Game progresses through 6 rounds with scaled difficulty
 4. After Round 6 completion → RoundWinnerPanel shows stats
-5. "Next Channel" marks channel complete, saves progress
-6. **Carry-Over Panel** appears — player selects which items to keep for the next channel
-7. Game advances to next channel with conditional resets based on selections
+5. "Next Mall Zone" marks the Mall Zone complete and saves progress
+6. **Carry-Over Panel** appears — player selects which items to keep for the next Mall Zone
+7. Game advances to the next Mall Zone with conditional resets based on selections
 
-**Channel Carry-Over System:**
-When advancing to the next channel, a **Carry-Over Selection Panel** lets the player choose what to keep. Each channel's `.tres` resource defines:
+**Mall Zone Carry-Over System:**
+When advancing to the next Mall Zone, a **Carry-Over Selection Panel** lets the player choose what to keep. Each Mall Zone's `.tres` resource defines:
 - `allowed_carryover_count`: Maximum number of categories the player can carry over (0 = full reset)
 - `allowed_carryover_types`: Which carry-over categories are available for selection
 - `ui_contrast_mode`: Optional override for scorecard/UI contrast (`auto`, `dark`, `light`) when a channel shader needs a specific readability profile
@@ -578,7 +578,7 @@ When advancing to the next channel, a **Carry-Over Selection Panel** lets the pl
 | `money` | Player's current money balance |
 | `scorecard_levels` | Scorecard category level progression (levels preserved, scores reset) |
 
-**Carry-Over Progression (by Channel):**
+**Carry-Over Progression (by Mall Zone):**
 | Channels | Max Selections | Available Types |
 |----------|---------------|-----------------|
 | 1 | 0 | None (tutorial, starting fresh) |
@@ -743,7 +743,7 @@ The **Progress Tracking System** enables persistent player progression across mu
 
 **Features:**
 - **Persistent Progression**: Player progress saves across game sessions using JSON file storage
-- **Unlock Conditions**: 15 different achievement types trigger item unlocks (score points, roll yahtzees, complete channels, etc.)
+- **Unlock Conditions**: 15 different achievement types trigger item unlocks (score points, roll yahtzees, complete Mall Zones, etc.)
 - **Item Locking**: PowerUps, Consumables, Mods, and Colored Dice can be locked behind progression requirements
 - **LOCKED / UNLOCKED Shop Tabs**: Shop interface includes archive tabs for both locked items and already-unlocked items
 - **Unlock Panel**: Sequential card-flip animations display newly unlocked items at end of round
@@ -774,8 +774,8 @@ The **Progress Tracking System** enables persistent player progression across mu
 | `CUMULATIVE_SCORE` | Achieve total score across all games | Score 5000 total |
 | `DICE_COMBINATIONS` | Roll specific dice combinations | Roll specific patterns |
 | `CUMULATIVE_YAHTZEES` | Roll X yahtzees across all games | Roll 10 total yahtzees |
-| `COMPLETE_CHANNEL` | Complete channel X | Complete Channel 5 |
-| `REACH_CHANNEL` | Reach channel X | Reach Channel 10 |
+| `COMPLETE_CHANNEL` | Complete Mall Zone X | Complete Mall Zone 5 |
+| `REACH_CHANNEL` | Reach Mall Zone X | Reach Mall Zone 10 |
 
 **End of Round Unlock Display:**
 When items are unlocked at the end of a round, they're displayed sequentially in modal panels with:
@@ -807,14 +807,14 @@ var progress = ProgressManager.get_condition_progress("item_id")
 # Returns: {current: 5, target: 10, percentage: 50.0}
 ```
 
-**Channel-Based Unlocks:**
-New items can be unlocked by completing channels, providing progression rewards:
-- **Channel 3**: Basic utility items (Lucky Streak, Channel Bonus)
-- **Channel 5**: Uncommon items (Steady Progress, Reroll Master)
-- **Channel 8**: Rare items (Combo King, Lucky Seven)
-- **Channel 12**: Advanced items (Channel Champion, Precision Roller)
-- **Channel 15**: Legendary items (Grand Master, Ultimate Reroll)
-- **Channel 20**: Ultimate items (Dice Lord)
+**Mall Zone-Based Unlocks:**
+New items can be unlocked by completing Mall Zones, providing progression rewards:
+- **Mall Zone 3**: Basic utility items (Lucky Streak, Channel Bonus)
+- **Mall Zone 5**: Uncommon items (Steady Progress, Reroll Master)
+- **Mall Zone 8**: Rare items (Combo King, Lucky Seven)
+- **Mall Zone 12**: Advanced items (Channel Champion, Precision Roller)
+- **Mall Zone 15**: Legendary items (Grand Master, Ultimate Reroll)
+- **Mall Zone 20**: Ultimate items (Dice Lord)
 
 **Progress Persistence:**
 - **JSON Storage**: Progress data saved to `user://progress.save`

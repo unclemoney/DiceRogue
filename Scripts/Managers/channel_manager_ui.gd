@@ -711,7 +711,7 @@ func _update_display() -> void:
 	var current_channel: int = channel_manager.current_channel
 	_selected_channel = current_channel
 
-	channel_label.text = channel_manager.get_channel_display_text()
+	channel_label.text = channel_manager.get_mall_zone_label()
 	zone_name_label.text = channel_manager.get_selector_zone_name(current_channel).to_upper()
 	section_chip.text = SECTION_LABELS.get(channel_manager.get_selector_section_id(current_channel), "DIRECTORY")
 	section_chip.add_theme_color_override("font_color", _get_section_color(channel_manager.get_selector_section_id(current_channel)))
@@ -1015,7 +1015,7 @@ func _show_zone_tooltip(channel: int) -> void:
 		return
 
 	var text_lines: Array[String] = []
-	text_lines.append("%s  %s" % [channel_manager.get_channel_display_text(channel), channel_manager.get_selector_zone_name(channel)])
+	text_lines.append("%s  %s" % [channel_manager.get_mall_zone_label(channel), channel_manager.get_selector_zone_name(channel)])
 	text_lines.append("Section: %s" % SECTION_LABELS.get(channel_manager.get_selector_section_id(channel), "DIRECTORY"))
 	text_lines.append("Difficulty: %s (%.2fx)" % [channel_manager.get_difficulty_description(channel), channel_manager.get_difficulty_multiplier(channel)])
 	var flavor: String = channel_manager.get_selector_tooltip_flavor(channel)

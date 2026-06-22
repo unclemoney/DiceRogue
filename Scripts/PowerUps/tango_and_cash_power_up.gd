@@ -10,6 +10,7 @@ class_name TangoAndCashPowerUp
 # Reference to round manager
 var round_manager_ref: Node = null
 var total_money_granted: int = 0
+var _last_consumed_round_number: int = 0
 
 const MONEY_PER_ODD_DIE: int = 10
 
@@ -45,45 +46,44 @@ func apply(target) -> void:
 		push_error("[TangoAndCashPowerUp] RoundManager not found")
 		return
 	
-	# Connect to round_completed signal (note: signal passes round_number: int)
-	if not round_manager_ref.is_connected("round_completed", _on_round_completed):
-		round_manager_ref.round_completed.connect(_on_round_completed)
-		print("[TangoAndCashPowerUp] Connected to round_completed signal")
-	
-	# Connect cleanup signal
-	if not is_connected("tree_exiting", _on_tree_exiting):
-		connect("tree_exiting", _on_tree_exiting)
-
-func _on_round_completed(_round_number: int) -> void:
-	# Skip round 0 which is an initialization signal, not actual gameplay
-	if _round_number < 1:
-		return
-	
-	# Get odd dice count from Statistics
-	var odd_count = Statistics.odd_dice_scored_this_round
-	var money_to_grant = odd_count * MONEY_PER_ODD_DIE
-	
-	if money_to_grant > 0:
-		PlayerEconomy.add_money(money_to_grant)
-		total_money_granted += money_to_grant
-		print("[TangoAndCashPowerUp] Granted $%d for %d odd dice scored this round" % [money_to_grant, odd_count])
-		
-		# Update description
-		emit_signal("description_updated", id, get_current_description())
-		
-		if is_inside_tree():
-			_update_power_up_icons()
-	else:
-		print("[TangoAndCashPowerUp] No odd dice scored this round")
+	print("[TangoAndCashPowerUp] Ready to contribute to the round-end PowerUp bonus payout")
 
 func get_current_description() -> String:
 	var base_desc = "+$%d for every odd die scored (at round end)" % MONEY_PER_ODD_DIE
+	base_desc += "\nOdd dice this round: %d" % Statistics.odd_dice_scored_this_round
 	
 	if total_money_granted > 0:
 		var progress_desc = "\nTotal earned: $%d" % total_money_granted
 		return base_desc + progress_desc
 	
 	return base_desc
+
+
+func get_pending_round_end_bonus() -> int:
+	var round_number = _get_current_round_number()
+	if round_number < 1 or round_number == _last_consumed_round_number:
+		return 0
+	return Statistics.odd_dice_scored_this_round * MONEY_PER_ODD_DIE
+
+
+func consume_pending_round_end_bonus() -> int:
+	var money_to_grant = get_pending_round_end_bonus()
+	if money_to_grant <= 0:
+		return 0
+
+	_last_consumed_round_number = _get_current_round_number()
+	total_money_granted += money_to_grant
+	print("[TangoAndCashPowerUp] Consumed $%d for %d odd dice scored this round" % [money_to_grant, Statistics.odd_dice_scored_this_round])
+	emit_signal("description_updated", id, get_current_description())
+	if is_inside_tree():
+		_update_power_up_icons()
+	return money_to_grant
+
+
+func _get_current_round_number() -> int:
+	if round_manager_ref and round_manager_ref.has_method("get_current_round_number"):
+		return int(round_manager_ref.get_current_round_number())
+	return -1
 
 func _update_power_up_icons() -> void:
 	if not is_inside_tree() or not get_tree():
@@ -97,23 +97,10 @@ func _update_power_up_icons() -> void:
 			if icon._is_hovering and icon.hover_label and icon.label_bg:
 				icon.label_bg.visible = true
 
-func remove(target) -> void:
+func remove(_target) -> void:
 	print("=== Removing TangoAndCashPowerUp ===")
-	
-	var round_mgr: Node = null
-	if target and target.is_in_group("round_manager"):
-		round_mgr = target
-	elif round_manager_ref:
-		round_mgr = round_manager_ref
-	
-	if round_mgr:
-		if round_mgr.is_connected("round_completed", _on_round_completed):
-			round_mgr.round_completed.disconnect(_on_round_completed)
-			print("[TangoAndCashPowerUp] Disconnected from round_completed signal")
 	
 	round_manager_ref = null
 
 func _on_tree_exiting() -> void:
-	if round_manager_ref:
-		if round_manager_ref.is_connected("round_completed", _on_round_completed):
-			round_manager_ref.round_completed.disconnect(_on_round_completed)
+	round_manager_ref = null

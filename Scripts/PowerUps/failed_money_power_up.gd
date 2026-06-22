@@ -3,13 +3,14 @@ class_name FailedMoneyPowerUp
 
 ## FailedMoneyPowerUp
 ##
-## Grants $25 for each failed hand (0 score category) at the end of each round.
-## Example: 4 failed hands = $100 at round end.
+## Grants $50 for each failed hand (0 score category) at the end of each round.
+## Example: 4 failed hands = $200 at round end.
 ## Common rarity, PG rating.
 
 # Reference to round manager
 var round_manager_ref: Node = null
 var total_money_granted: int = 0
+var _last_consumed_round_number: int = 0
 
 const MONEY_PER_FAILED_HAND: int = 50
 
@@ -45,46 +46,44 @@ func apply(target) -> void:
 		push_error("[FailedMoneyPowerUp] RoundManager not found")
 		return
 	
-	# Connect to round_completed signal (note: signal passes round_number: int)
-	if not round_manager_ref.is_connected("round_completed", _on_round_completed):
-		round_manager_ref.round_completed.connect(_on_round_completed)
-		print("[FailedMoneyPowerUp] Connected to round_completed signal")
-	
-	# Connect cleanup signal
-	if not is_connected("tree_exiting", _on_tree_exiting):
-		connect("tree_exiting", _on_tree_exiting)
-
-func _on_round_completed(_round_number: int) -> void:
-	# Skip round 0 which is an initialization signal, not actual gameplay
-	if _round_number < 1:
-		return
-	
-	# Get failed hands count from Statistics
-	var failed_count = Statistics.failed_hands
-	var money_to_grant = failed_count * MONEY_PER_FAILED_HAND
-	
-	if money_to_grant > 0:
-		PlayerEconomy.add_money(money_to_grant)
-		total_money_granted += money_to_grant
-		print("[FailedMoneyPowerUp] Granted $%d for %d failed hands" % [money_to_grant, failed_count])
-		
-		# Update description
-		emit_signal("description_updated", id, get_current_description())
-		
-		if is_inside_tree():
-			_update_power_up_icons()
-	else:
-		print("[FailedMoneyPowerUp] No failed hands to reward")
+	print("[FailedMoneyPowerUp] Ready to contribute to the round-end PowerUp bonus payout")
 
 func get_current_description() -> String:
-	var current_failed = Statistics.failed_hands
+	var current_failed = Statistics.failed_hands_this_round
 	var base_desc = "+$%d for each failed hand (at round end)" % MONEY_PER_FAILED_HAND
 	
-	var progress_desc = "\nFailed hands: %d" % current_failed
+	var progress_desc = "\nFailed hands this round: %d" % current_failed
 	if total_money_granted > 0:
 		progress_desc += " | Total earned: $%d" % total_money_granted
 	
 	return base_desc + progress_desc
+
+
+func get_pending_round_end_bonus() -> int:
+	var round_number = _get_current_round_number()
+	if round_number < 1 or round_number == _last_consumed_round_number:
+		return 0
+	return Statistics.failed_hands_this_round * MONEY_PER_FAILED_HAND
+
+
+func consume_pending_round_end_bonus() -> int:
+	var money_to_grant = get_pending_round_end_bonus()
+	if money_to_grant <= 0:
+		return 0
+
+	_last_consumed_round_number = _get_current_round_number()
+	total_money_granted += money_to_grant
+	print("[FailedMoneyPowerUp] Consumed $%d for %d failed hands this round" % [money_to_grant, Statistics.failed_hands_this_round])
+	emit_signal("description_updated", id, get_current_description())
+	if is_inside_tree():
+		_update_power_up_icons()
+	return money_to_grant
+
+
+func _get_current_round_number() -> int:
+	if round_manager_ref and round_manager_ref.has_method("get_current_round_number"):
+		return int(round_manager_ref.get_current_round_number())
+	return -1
 
 func _update_power_up_icons() -> void:
 	if not is_inside_tree() or not get_tree():
@@ -98,23 +97,10 @@ func _update_power_up_icons() -> void:
 			if icon._is_hovering and icon.hover_label and icon.label_bg:
 				icon.label_bg.visible = true
 
-func remove(target) -> void:
+func remove(_target) -> void:
 	print("=== Removing FailedMoneyPowerUp ===")
-	
-	var round_mgr: Node = null
-	if target and target.is_in_group("round_manager"):
-		round_mgr = target
-	elif round_manager_ref:
-		round_mgr = round_manager_ref
-	
-	if round_mgr:
-		if round_mgr.is_connected("round_completed", _on_round_completed):
-			round_mgr.round_completed.disconnect(_on_round_completed)
-			print("[FailedMoneyPowerUp] Disconnected from round_completed signal")
 	
 	round_manager_ref = null
 
 func _on_tree_exiting() -> void:
-	if round_manager_ref:
-		if round_manager_ref.is_connected("round_completed", _on_round_completed):
-			round_manager_ref.round_completed.disconnect(_on_round_completed)
+	round_manager_ref = null

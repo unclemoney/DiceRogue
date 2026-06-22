@@ -48,7 +48,7 @@ func _load_channel_configs() -> void:
 			# Create a fallback config
 			var fallback = ChannelDifficultyData.new()
 			fallback.channel_number = i
-			fallback.display_name = "Channel %02d" % i
+			fallback.display_name = "Mall Zone %02d" % i
 			fallback.goal_score_multiplier = 1.0 + (i - 1) * 0.5
 			channel_configs.append(fallback)
 
@@ -301,7 +301,7 @@ func set_channel(channel: int) -> void:
 	
 	if current_channel != old_channel:
 		var config = get_channel_config(current_channel)
-		var display_name = config.display_name if config else "Channel %02d" % current_channel
+		var display_name = config.display_name if config else get_mall_zone_label(current_channel)
 		print("[ChannelManager] Channel changed from", old_channel, "to", current_channel, "-", display_name)
 		print("[ChannelManager] Goal multiplier:", get_difficulty_multiplier())
 		emit_signal("channel_changed", current_channel)
@@ -351,7 +351,7 @@ func advance_to_next_channel() -> bool:
 ## Emits channel_selected signal to trigger game start.
 func select_channel() -> void:
 	var config = get_channel_config(current_channel)
-	var display_name = config.display_name if config else "Channel %02d" % current_channel
+	var display_name = config.display_name if config else get_mall_zone_label(current_channel)
 	print("[ChannelManager] Channel", current_channel, "selected! -", display_name)
 	print("[ChannelManager] Goal multiplier:", "%.2f" % get_difficulty_multiplier(), "x")
 	emit_signal("channel_selected", current_channel)
@@ -383,7 +383,16 @@ func get_channel_display_name() -> String:
 	var config = get_channel_config(current_channel)
 	if config and config.display_name:
 		return config.display_name
-	return "Channel %02d" % current_channel
+	return get_mall_zone_label(current_channel)
+
+
+## get_mall_zone_label() -> String
+##
+## Returns the player-facing Mall Zone label for the provided zone number.
+func get_mall_zone_label(channel: int = -1) -> String:
+	if channel < 0:
+		channel = current_channel
+	return "Mall Zone %02d" % clampi(channel, MIN_CHANNEL, MAX_CHANNEL)
 
 
 ## get_selector_zone_name(channel: int) -> String

@@ -266,7 +266,7 @@ func get_mall_zone_name() -> String:
 		return mall_zone_name
 	if not display_name.is_empty():
 		return display_name
-	return "Channel %02d" % channel_number
+	return "Mall Zone %02d" % channel_number
 
 
 ## get_mall_directory_label() -> String
@@ -285,7 +285,7 @@ func get_mall_directory_label() -> String:
 func get_summary() -> String:
 	var lines: Array[String] = []
 	
-	lines.append("=== Channel %d: %s ===" % [channel_number, display_name if display_name else "Unnamed"])
+	lines.append("=== Mall Zone %d: %s ===" % [channel_number, display_name if display_name else "Unnamed"])
 	lines.append("Mall Zone: %s [%s]" % [get_mall_zone_name(), mall_section_id])
 	
 	if description:

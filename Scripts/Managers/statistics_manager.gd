@@ -5,7 +5,7 @@ extends Node
 ## Singleton that tracks all game statistics and metrics.
 ## Accessible globally as "Statistics" autoload.
 
-const LogEntry = preload("res://Scripts/Core/LogEntry.gd")
+const LogEntryClass = preload("res://Scripts/Core/LogEntry.gd")
 
 signal milestone_reached(milestone_name: String, value: int)
 signal new_record_set(statistic_name: String, new_value)
@@ -80,6 +80,7 @@ var current_round_bonus_money: int = 0
 var current_round_empty_category_bonus: int = 0
 var current_round_score_above_bonus: int = 0
 var rounds_completed: int = 0
+var failed_hands_this_round: int = 0
 
 # Even/Odd dice tracking (resets each round)
 var even_dice_scored_this_round: int = 0
@@ -157,7 +158,7 @@ func track_dice_lock():
 ## track_dice_scored(color: String, value: int)
 ## 
 ## Track a dice that was scored by color and value.
-func track_dice_scored(color: String, value: int):
+func track_dice_scored(color: String, _value: int):
 	var normalized_color = color.to_lower()
 	
 	# Initialize the color if it doesn't exist
@@ -227,6 +228,7 @@ func record_hand_scored(hand_type: String, _score: int):
 ## Record a turn where no valid hand was scored.
 func record_failed_hand():
 	failed_hands += 1
+	failed_hands_this_round += 1
 	current_streak = 0
 
 ## track_yahtzee_bonus()
@@ -255,6 +257,7 @@ func start_new_round():
 	current_round_bonus_money = 0
 	current_round_empty_category_bonus = 0
 	current_round_score_above_bonus = 0
+	failed_hands_this_round = 0
 	even_dice_scored_this_round = 0
 	odd_dice_scored_this_round = 0
 	print("[Statistics] Round statistics reset for new round")
@@ -555,6 +558,7 @@ func reset_statistics():
 	total_rerolls = 0
 	hands_completed = 0
 	failed_hands = 0
+	failed_hands_this_round = 0
 	
 	total_money_earned = 0
 	total_money_spent = 0
@@ -621,7 +625,7 @@ func log_hand_scored(
 	if powerups.size() > 0 or consumables.size() > 0:
 		print("[Statistics] Logbook entry: %s (%d→%d pts) PowerUps:%s Consumables:%s" % [category, base_score, final_score, powerups, consumables])
 	
-	var entry = LogEntry.new(
+	var entry = LogEntryClass.new(
 		dice_values,
 		dice_colors,
 		dice_mods,
@@ -908,6 +912,7 @@ func get_state() -> Dictionary:
 		"current_round_empty_category_bonus": current_round_empty_category_bonus,
 		"current_round_score_above_bonus": current_round_score_above_bonus,
 		"rounds_completed": rounds_completed,
+		"failed_hands_this_round": failed_hands_this_round,
 		"even_dice_scored_this_round": even_dice_scored_this_round,
 		"odd_dice_scored_this_round": odd_dice_scored_this_round,
 		"logbook_size": logbook.size()
@@ -969,5 +974,6 @@ func load_state(state: Dictionary) -> void:
 	current_round_empty_category_bonus = state.get("current_round_empty_category_bonus", 0)
 	current_round_score_above_bonus = state.get("current_round_score_above_bonus", 0)
 	rounds_completed = state.get("rounds_completed", 0)
+	failed_hands_this_round = state.get("failed_hands_this_round", 0)
 	even_dice_scored_this_round = state.get("even_dice_scored_this_round", 0)
 	odd_dice_scored_this_round = state.get("odd_dice_scored_this_round", 0)

@@ -458,14 +458,15 @@ func calculate_empty_category_bonus(scorecard_ref) -> int:
 ## calculate_score_above_target_bonus(final_score: int, target_score: int) -> int
 ##
 ## Calculates the bonus for scoring above the challenge target.
-## Awards $1 per point above the target score.
+## Awards $1 per point above the target score, capped at $100.
 ## @param final_score: The player's final score for the round
 ## @param target_score: The challenge's target score to beat
 ## @return: Total bonus amount for points above target
 func calculate_score_above_target_bonus(final_score: int, target_score: int) -> int:
 	const POINTS_ABOVE_BONUS: int = 1
+	const MAX_POINTS_ABOVE_BONUS: int = 100
 	var points_above = max(0, final_score - target_score)
-	var bonus = points_above * POINTS_ABOVE_BONUS
+	var bonus = min(MAX_POINTS_ABOVE_BONUS, points_above * POINTS_ABOVE_BONUS)
 	print("[RoundManager] Final score:", final_score, "Target:", target_score, "Points above:", points_above, "Bonus:", bonus)
 	return bonus
 

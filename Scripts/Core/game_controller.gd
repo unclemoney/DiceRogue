@@ -3719,6 +3719,11 @@ func _show_end_of_round_stats() -> void:
 		chores_completed = chores_manager.get_chores_completed_this_round()
 		chore_reward_total = chores_manager.get_chore_rewards_this_round()
 
+	var empty_categories_bonus = round_manager.calculate_empty_category_bonus(scorecard) if round_manager and scorecard else 0
+	var points_above_target = max(0, final_score - target_score)
+	var score_above_bonus = round_manager.calculate_score_above_target_bonus(final_score, target_score) if round_manager else points_above_target
+	var power_up_bonus = _get_round_end_power_up_bonus_preview()
+
 	# Prepare data for the stats panel
 	var stats_data = {
 		"round_number": current_round_num,
@@ -3727,7 +3732,11 @@ func _show_end_of_round_stats() -> void:
 		"scorecard": scorecard,
 		"challenge_reward": _challenge_reward_this_round,
 		"chores_completed": chores_completed,
-		"chore_reward_total": chore_reward_total
+		"chore_reward_total": chore_reward_total,
+		"empty_categories_bonus": empty_categories_bonus,
+		"points_above_target": points_above_target,
+		"score_above_bonus": score_above_bonus,
+		"power_up_bonus": power_up_bonus
 	}
 	
 	# Connect to panel's continue signal (one-shot)
@@ -3754,10 +3763,14 @@ func _on_stats_panel_continue() -> void:
 		var total_bonus = end_of_round_stats_panel.get_total_bonus()
 		var empty_bonus = end_of_round_stats_panel.get_empty_categories_bonus()
 		var score_bonus = end_of_round_stats_panel.get_score_above_bonus()
+		var power_up_bonus = end_of_round_stats_panel.get_power_up_bonus()
+		var consumed_power_up_bonus = _consume_round_end_power_up_bonuses()
+		if consumed_power_up_bonus != power_up_bonus:
+			push_warning("[GameController] Round-end PowerUp bonus preview mismatch. Preview=$%d Consumed=$%d" % [power_up_bonus, consumed_power_up_bonus])
 		
 		if total_bonus > 0:
 			PlayerEconomy.add_money(total_bonus)
-			print("[GameController] Awarded end of round bonuses: $%d (empty: $%d, score: $%d)" % [total_bonus, empty_bonus, score_bonus])
+			print("[GameController] Awarded end of round bonuses: $%d (empty: $%d, score: $%d, powerups: $%d)" % [total_bonus, empty_bonus, score_bonus, power_up_bonus])
 			
 			# Track in statistics
 			Statistics.total_money_earned += total_bonus
@@ -3773,6 +3786,24 @@ func _on_stats_panel_continue() -> void:
 	
 	# Advance queue to OPEN_SHOP step
 	_process_round_end_queue()
+
+
+func _get_round_end_power_up_bonus_preview() -> int:
+	var total_bonus := 0
+	for power_up_id in active_power_ups.keys():
+		var powerup_node = active_power_ups[power_up_id]
+		if is_instance_valid(powerup_node) and powerup_node.has_method("get_pending_round_end_bonus"):
+			total_bonus += int(powerup_node.call("get_pending_round_end_bonus"))
+	return total_bonus
+
+
+func _consume_round_end_power_up_bonuses() -> int:
+	var total_bonus := 0
+	for power_up_id in active_power_ups.keys():
+		var powerup_node = active_power_ups[power_up_id]
+		if is_instance_valid(powerup_node) and powerup_node.has_method("consume_pending_round_end_bonus"):
+			total_bonus += int(powerup_node.call("consume_pending_round_end_bonus"))
+	return total_bonus
 
 
 ## _open_shop_ui()

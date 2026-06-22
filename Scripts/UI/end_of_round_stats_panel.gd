@@ -1,6 +1,8 @@
 extends Control
 class_name EndOfRoundStatsPanel
 
+const GlassActionButtonClass = preload("res://Scripts/UI/glass_action_button.gd")
+
 ## EndOfRoundStatsPanel
 ##
 ## Displays end-of-round statistics with animated bonus reveals.
@@ -35,8 +37,10 @@ var empty_categories_label: Label
 var empty_categories_bonus_label: Label
 var score_above_label: Label
 var score_above_bonus_label: Label
+var power_up_bonus_label: Label
+var power_up_bonus_value_label: Label
 var total_bonus_label: Label
-var continue_button: Button
+var continue_button = null
 
 # Round data
 var round_number: int = 0
@@ -53,14 +57,12 @@ var chore_reward_amount: int = 0
 # Calculated bonuses
 var empty_categories_bonus: int = 0
 var score_above_bonus: int = 0
+var power_up_bonus_amount: int = 0
 var total_bonus: int = 0
 
 # Animation state
 var _animation_tween: Tween
 var _is_animating: bool = false
-
-@onready var _tfx := get_node("/root/TweenFXHelper")
-
 
 func _ready() -> void:
 	# Hide by default
@@ -301,6 +303,26 @@ func _build_ui() -> void:
 	score_above_bonus_label.add_theme_font_size_override("font_size", 18)
 	score_above_bonus_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
 	score_hbox.add_child(score_above_bonus_label)
+
+	# PowerUp bonus row
+	var power_up_hbox = HBoxContainer.new()
+	power_up_hbox.add_theme_constant_override("separation", 10)
+	content_vbox.add_child(power_up_hbox)
+
+	power_up_bonus_label = Label.new()
+	power_up_bonus_label.name = "PowerUpBonusLabel"
+	power_up_bonus_label.text = "Bonuses from PowerUps:"
+	power_up_bonus_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	power_up_bonus_label.add_theme_font_size_override("font_size", 18)
+	power_up_hbox.add_child(power_up_bonus_label)
+
+	power_up_bonus_value_label = Label.new()
+	power_up_bonus_value_label.name = "PowerUpBonusValueLabel"
+	power_up_bonus_value_label.text = "$0"
+	power_up_bonus_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	power_up_bonus_value_label.add_theme_font_size_override("font_size", 18)
+	power_up_bonus_value_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
+	power_up_hbox.add_child(power_up_bonus_value_label)
 	
 	# Separator
 	var sep3 = HSeparator.new()
@@ -333,39 +355,28 @@ func _build_ui() -> void:
 	content_vbox.add_child(spacer)
 	
 	# Continue button
-	continue_button = Button.new()
+	continue_button = GlassActionButtonClass.new()
 	continue_button.name = "ContinueButton"
-	continue_button.text = "Head to Shop"
-	continue_button.custom_minimum_size = Vector2(200, 50)
+	continue_button.configure(
+		"Head to Shop",
+		Vector2(280, 50),
+		{
+			"base_color": Color(0.137255, 0.411765, 0.415686, 0.92),
+			"mid_color": Color(0.2, 0.56, 0.56, 0.96),
+			"accent_color": Color(0.47451, 0.886275, 0.890196, 1.0),
+			"glow_color": Color(0.6, 0.94, 0.96, 1.0),
+			"rim_color": Color(0.968627, 0.941176, 1.0, 1.0),
+			"font_color": Color(0.968627, 0.941176, 1.0, 1.0),
+			"font_outline_color": Color(0.129412, 0.121569, 0.2, 1.0),
+			"outline_size": 1
+		},
+		20
+	)
 	continue_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	continue_button.add_theme_font_size_override("font_size", 20)
-	continue_button.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
-	continue_button.add_theme_color_override("font_hover_color", Color(0.968627, 0.941176, 1.0, 1.0))
-	continue_button.add_theme_color_override("font_pressed_color", Color(0.780392, 0.733333, 0.866667, 1.0))
-	continue_button.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
-	continue_button.add_theme_constant_override("outline_size", 1)
-	var continue_style = StyleBoxFlat.new()
-	continue_style.bg_color = Color(0.137255, 0.411765, 0.415686, 0.92)
-	continue_style.border_color = Color(0.47451, 0.886275, 0.890196, 1.0)
-	continue_style.set_border_width_all(2)
-	continue_style.set_corner_radius_all(12)
-	continue_style.set_content_margin_all(8)
-	continue_button.add_theme_stylebox_override("normal", continue_style)
-	var continue_hover = continue_style.duplicate()
-	continue_hover.bg_color = Color(0.2, 0.56, 0.56, 0.96)
-	continue_hover.border_color = Color(0.6, 0.94, 0.96, 1.0)
-	continue_button.add_theme_stylebox_override("hover", continue_hover)
-	var continue_pressed = continue_style.duplicate()
-	continue_pressed.bg_color = Color(0.101961, 0.298039, 0.301961, 0.96)
-	continue_button.add_theme_stylebox_override("pressed", continue_pressed)
-	continue_button.add_theme_stylebox_override("focus", continue_hover)
 	content_vbox.add_child(continue_button)
 	
 	# Connect button signal
 	continue_button.pressed.connect(_on_continue_button_pressed)
-	continue_button.mouse_entered.connect(_tfx.button_hover.bind(continue_button))
-	continue_button.mouse_exited.connect(_tfx.button_unhover.bind(continue_button))
-	continue_button.pressed.connect(_tfx.button_press.bind(continue_button))
 
 
 ## show_stats(data: Dictionary)
@@ -381,7 +392,7 @@ func _build_ui() -> void:
 ## Call before show_stats() to ensure the correct label is visible.
 func set_final_round(is_final: bool) -> void:
 	if continue_button:
-		continue_button.text = "Head to Next Channel" if is_final else "Head to Shop"
+		continue_button.set_button_text("Head to Next Mall Zone" if is_final else "Head to Shop")
 
 ##   - empty_categories: int
 ##   - scorecard: Scorecard reference (for calculating empty categories)
@@ -400,24 +411,27 @@ func show_stats(data: Dictionary) -> void:
 	chores_completed_count = data.get("chores_completed", 0)
 	chore_reward_amount = data.get("chore_reward_total", 0)
 	
-	# Calculate empty categories if scorecard provided
-	if data.has("scorecard"):
+	# Read precomputed bonus data, falling back to local calculation when necessary.
+	if data.has("empty_categories"):
+		empty_category_count = data.get("empty_categories", 0)
+	elif data.has("scorecard"):
 		empty_category_count = _count_empty_categories(data.scorecard)
 	else:
-		empty_category_count = data.get("empty_categories", 0)
+		empty_category_count = 0
+
+	empty_categories_bonus = data.get("empty_categories_bonus", empty_category_count * EMPTY_CATEGORY_BONUS)
+	points_above_target = data.get("points_above_target", max(0, final_score - challenge_target_score))
+	score_above_bonus = data.get("score_above_bonus", points_above_target * POINTS_ABOVE_TARGET_BONUS)
+	power_up_bonus_amount = data.get("power_up_bonus", 0)
 	
-	# Calculate bonuses
-	empty_categories_bonus = empty_category_count * EMPTY_CATEGORY_BONUS
-	points_above_target = max(0, final_score - challenge_target_score)
-	score_above_bonus = points_above_target * POINTS_ABOVE_TARGET_BONUS
-	
-	# Total includes challenge reward, chore reward, empty categories, and score above target
-	total_bonus = challenge_reward_amount + chore_reward_amount + empty_categories_bonus + score_above_bonus
+	# Total includes challenge reward, chore reward, empty categories, score above target, and PowerUp bonuses.
+	total_bonus = challenge_reward_amount + chore_reward_amount + empty_categories_bonus + score_above_bonus + power_up_bonus_amount
 	
 	print("[EndOfRoundStatsPanel] Challenge reward:", challenge_reward_amount)
 	print("[EndOfRoundStatsPanel] Chores completed:", chores_completed_count, "Reward:", chore_reward_amount)
 	print("[EndOfRoundStatsPanel] Empty categories:", empty_category_count, "Bonus:", empty_categories_bonus)
 	print("[EndOfRoundStatsPanel] Points above target:", points_above_target, "Bonus:", score_above_bonus)
+	print("[EndOfRoundStatsPanel] PowerUp bonuses:", power_up_bonus_amount)
 	print("[EndOfRoundStatsPanel] Total bonus:", total_bonus)
 	
 	# Update static labels
@@ -427,13 +441,15 @@ func show_stats(data: Dictionary) -> void:
 	challenge_reward_label.text = "Challenge Reward:"
 	chore_reward_label.text = "Chore Rewards (%s chores):" % NumberFormatter.format_int(chores_completed_count)
 	empty_categories_label.text = "Empty Categories (%s × $%s):" % [NumberFormatter.format_int(empty_category_count), NumberFormatter.format_int(EMPTY_CATEGORY_BONUS)]
-	score_above_label.text = "Points Above Target (%s × $%s):" % [NumberFormatter.format_int(points_above_target), NumberFormatter.format_int(POINTS_ABOVE_TARGET_BONUS)]
+	score_above_label.text = "Points Above Target (%s pts, max $100):" % NumberFormatter.format_int(points_above_target)
+	power_up_bonus_label.text = "Bonuses from PowerUps:"
 	
 	# Reset bonus labels for animation
 	challenge_reward_value_label.text = "$0"
 	chore_reward_value_label.text = "$0"
 	empty_categories_bonus_label.text = "$0"
 	score_above_bonus_label.text = "$0"
+	power_up_bonus_value_label.text = "$0"
 	total_bonus_label.text = "$0"
 	
 	# Position and size this control to fill the viewport
@@ -550,6 +566,14 @@ func _animate_bonuses() -> void:
 	if not _is_animating:
 		return
 	
+	# Animate PowerUp bonuses (with zero-value handling)
+	await _animate_counter_with_zero_effect(power_up_bonus_value_label, power_up_bonus_amount, COUNTER_ANIMATION_DURATION * 0.6)
+	if not _is_animating:
+		return
+	await get_tree().create_timer(REVEAL_DELAY).timeout
+	if not _is_animating:
+		return
+
 	# Animate total with longer duration and celebration
 	await _animate_counter(total_bonus_label, total_bonus, COUNTER_ANIMATION_DURATION)
 	if not _is_animating:
@@ -754,3 +778,10 @@ func get_empty_categories_bonus() -> int:
 ## Returns the points-above-target bonus amount.
 func get_score_above_bonus() -> int:
 	return score_above_bonus
+
+
+## get_power_up_bonus() -> int
+##
+## Returns the aggregated round-end PowerUp bonus amount.
+func get_power_up_bonus() -> int:
+	return power_up_bonus_amount

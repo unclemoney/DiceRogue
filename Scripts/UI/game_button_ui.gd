@@ -423,7 +423,6 @@ func _on_round_started(_round_number: int) -> void:
 		shop_button.disabled = true
 	next_turn_button.disabled = true
 	animate_button_wave()
-	_show_turn_banner(_round_number)
 
 
 func _on_round_completed(_round_number: int) -> void:
