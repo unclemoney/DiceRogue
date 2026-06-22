@@ -8,6 +8,7 @@ extends Node2D
 
 const SCREEN_WIDTH: float = 1280.0
 const SCREEN_HEIGHT: float = 720.0
+const CONSUMABLE_UI_SCENE = preload("res://Scenes/UI/consumable_ui.tscn")
 
 
 func _ready() -> void:
@@ -200,6 +201,51 @@ func _ready() -> void:
 		else:
 			push_error("[SpineIntegrationTest] ✗ Fold-back did not restore compact row state")
 			all_passed = false
+
+		var regression_ui := CONSUMABLE_UI_SCENE.instantiate() as ConsumableUI
+		regression_ui.name = "ConsumableUIRegression"
+		regression_ui.position = Vector2(0, 0)
+		regression_ui.size = Vector2(800, 320)
+		canvas.add_child(regression_ui)
+		await get_tree().process_frame
+
+		var first_regression_data := ConsumableData.new()
+		first_regression_data.id = "regression_consumable_a"
+		first_regression_data.display_name = "Regression Consumable A"
+		first_regression_data.description = "Initial consumable for rebuy regression coverage"
+
+		var second_regression_data := ConsumableData.new()
+		second_regression_data.id = "regression_consumable_b"
+		second_regression_data.display_name = "Regression Consumable B"
+		second_regression_data.description = "Replacement consumable after the last item is used"
+
+		var first_regression_spine := regression_ui.add_consumable(first_regression_data)
+		if not first_regression_spine:
+			push_error("[SpineIntegrationTest] ✗ Failed to create regression consumable spine")
+			all_passed = false
+		else:
+			await get_tree().create_timer(0.45).timeout
+			regression_ui._selected_spine_id = first_regression_data.id
+			regression_ui._fan_out_cards()
+			await get_tree().create_timer(0.35).timeout
+			regression_ui.remove_consumable(first_regression_data.id)
+			await get_tree().process_frame
+
+			if regression_ui._compact_margin and regression_ui._compact_margin.visible and regression_ui._current_state == ConsumableUI.State.SPINES:
+				print("[SpineIntegrationTest] ✓ Removing the last fanned consumable restores the compact row")
+			else:
+				push_error("[SpineIntegrationTest] ✗ Last-consumable cleanup left ConsumableUI collapsed state hidden")
+				all_passed = false
+
+			var rebuy_spine := regression_ui.add_consumable(second_regression_data)
+			await get_tree().create_timer(0.45).timeout
+			if rebuy_spine and rebuy_spine.visible and regression_ui._compact_margin and regression_ui._compact_margin.visible:
+				print("[SpineIntegrationTest] ✓ Rebuy after using the last consumable shows the compact spine again")
+			else:
+				push_error("[SpineIntegrationTest] ✗ Rebuy after using the last consumable did not restore the compact spine view")
+				all_passed = false
+
+		regression_ui.queue_free()
 
 	if all_passed:
 		print("[SpineIntegrationTest] All spine UIs integrated successfully.")

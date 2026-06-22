@@ -740,6 +740,23 @@ func _calculate_fan_positions(count: int) -> Array[Vector2]:
 	
 	return positions
 
+func _restore_background_to_compact_parent() -> void:
+	if not _background:
+		return
+
+	_background.visible = false
+	_background.modulate.a = 0.0
+	if _background.get_parent() != self:
+		_background.reparent(self, false)
+		_background.position = Vector2.ZERO
+		_background.size = Vector2.ZERO
+		_background.set_anchors_preset(Control.PRESET_FULL_RECT)
+
+func _restore_compact_row_visibility() -> void:
+	if _compact_margin:
+		_compact_margin.visible = true
+		_compact_margin.modulate.a = 1.0
+
 ## fold_back()
 ##
 ## Public method to fold back the fan-out view and hide background.
@@ -749,15 +766,7 @@ func fold_back() -> void:
 	print("[ConsumableUI]   Stack: ", get_stack())
 	
 	# Immediately hide background regardless of state
-	if _background:
-		_background.visible = false
-		_background.modulate.a = 0.0
-		# Reparent back from overlay if needed
-		if _background.get_parent() != self:
-			_background.reparent(self, false)
-			_background.position = Vector2.ZERO
-			_background.size = Vector2.ZERO
-			_background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_restore_background_to_compact_parent()
 	
 	# If we're in fanned state, clean up
 	if _current_state == State.FANNED:
@@ -771,9 +780,7 @@ func fold_back() -> void:
 		_fanned_icons.clear()
 		
 		# Show compact row
-		if _compact_margin:
-			_compact_margin.visible = true
-			_compact_margin.modulate.a = 1.0
+		_restore_compact_row_visibility()
 		
 		_current_state = State.SPINES
 		_is_animating = false
@@ -1246,7 +1253,7 @@ func _cleanup_empty_state() -> void:
 	# Stop idle animations immediately
 	_stop_idle_animations()
 	
-	# If we're in fanned state, immediately hide everything without animation
+	# If we're in fanned state, immediately clear lingering fan visuals without animation.
 	if _current_state == State.FANNED:
 		# Clear fanned icons immediately
 		for consumable_id in _fanned_icons.keys():
@@ -1254,14 +1261,11 @@ func _cleanup_empty_state() -> void:
 			if icon and is_instance_valid(icon):
 				icon.queue_free()
 		_fanned_icons.clear()
-		
-		# Hide background immediately
-		_background.visible = false
-		_background.modulate.a = 0.0
-		
-		# Reset state
-		_current_state = State.SPINES
-		_is_animating = false
+
+	_restore_background_to_compact_parent()
+	_restore_compact_row_visibility()
+	_current_state = State.SPINES
+	_is_animating = false
 	
 	# Clear all references
 	_consumable_spines.clear()
