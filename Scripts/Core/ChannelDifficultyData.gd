@@ -16,6 +16,22 @@ class_name ChannelDifficultyData
 ## Optional description of this channel's theme or difficulty
 @export var description: String = ""
 
+## ============== MALL SELECTOR METADATA ==============
+
+## Selector-only store name used by the mall map UI.
+## This does not replace the channel display name elsewhere in the game.
+@export var mall_zone_name: String = ""
+
+## Short directory-friendly label shown in compact map callouts when needed.
+## Falls back to mall_zone_name when left empty.
+@export var mall_directory_label: String = ""
+
+## Optional flavor text shown in the mall selector tooltip.
+@export var mall_tooltip_flavor: String = ""
+
+## Section bucket used by the mall selector to drive color-coding and legend groups.
+@export_enum("eatery", "entertainment", "lifestyle", "specialty", "major_stores") var mall_section_id: String = "specialty"
+
 ## ============== UNLOCK SYSTEM ==============
 
 ## Number of total channel completions required to unlock this channel
@@ -242,6 +258,26 @@ func get_background_summary() -> String:
 	return "%s (%d params)" % [shader_name, param_count]
 
 
+## get_mall_zone_name() -> String
+##
+## Returns the selector-specific store name, falling back to display_name.
+func get_mall_zone_name() -> String:
+	if not mall_zone_name.is_empty():
+		return mall_zone_name
+	if not display_name.is_empty():
+		return display_name
+	return "Channel %02d" % channel_number
+
+
+## get_mall_directory_label() -> String
+##
+## Returns the compact label used by the mall directory view.
+func get_mall_directory_label() -> String:
+	if not mall_directory_label.is_empty():
+		return mall_directory_label
+	return get_mall_zone_name()
+
+
 ## get_summary() -> String
 ##
 ## Returns a human-readable summary of this channel's configuration.
@@ -250,9 +286,12 @@ func get_summary() -> String:
 	var lines: Array[String] = []
 	
 	lines.append("=== Channel %d: %s ===" % [channel_number, display_name if display_name else "Unnamed"])
+	lines.append("Mall Zone: %s [%s]" % [get_mall_zone_name(), mall_section_id])
 	
 	if description:
 		lines.append("Description: %s" % description)
+	if mall_tooltip_flavor:
+		lines.append("Mall Flavor: %s" % mall_tooltip_flavor)
 	
 	lines.append("Unlock Requirement: %d completions" % unlock_requirement)
 	lines.append("")
@@ -294,9 +333,19 @@ func get_summary() -> String:
 ## @return: Array of error messages (empty if valid)
 func validate() -> Array[String]:
 	var errors: Array[String] = []
+	var valid_mall_sections := ["eatery", "entertainment", "lifestyle", "specialty", "major_stores"]
 	
 	if channel_number < 1 or channel_number > 20:
 		errors.append("Invalid channel_number: %d (must be 1-20)" % channel_number)
+
+	if display_name.is_empty():
+		errors.append("display_name cannot be empty")
+
+	if mall_zone_name.is_empty():
+		errors.append("mall_zone_name cannot be empty")
+
+	if mall_section_id not in valid_mall_sections:
+		errors.append("Invalid mall_section_id: '%s' (valid: %s)" % [mall_section_id, str(valid_mall_sections)])
 	
 	if round_configs.size() != 6:
 		errors.append("Expected 6 round configs, found %d" % round_configs.size())

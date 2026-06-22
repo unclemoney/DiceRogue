@@ -1,0 +1,44 @@
+WARNING: res://Scenes/Managers/consumable_manager.tscn:5 - ext_resource, invalid UID: uid://bqhqnqbbgfrmo - using text path instead: res://Scripts/Consumable/add_max_power_up.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:9 - ext_resource, invalid UID: uid://dkw5ixfrhp3xm - using text path instead: res://Scripts/Consumable/EmptyShelvesConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:10 - ext_resource, invalid UID: uid://rttgw2m3y2in - using text path instead: res://Scripts/Consumable/GoBrokeOrGoHomeConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:11 - ext_resource, invalid UID: uid://bg8dqrhkvb81t - using text path instead: res://Scripts/Consumable/GreenEnvyConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:12 - ext_resource, invalid UID: uid://bepf8r1squvwv - using text path instead: res://Scripts/Consumable/OneExtraDiceConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:13 - ext_resource, invalid UID: uid://dj53rn3raq05w - using text path instead: res://Scripts/Consumable/PoorHouseConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:18 - ext_resource, invalid UID: uid://bg2r68x2b6iyj - using text path instead: res://Scripts/Consumable/ThePawnShopConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:19 - ext_resource, invalid UID: uid://bbbfbdvb6kdny - using text path instead: res://Scripts/Consumable/TheRaritiesConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:20 - ext_resource, invalid UID: uid://cywprylrby1js - using text path instead: res://Scripts/Consumable/ThreeMoreRollsConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:5 - ext_resource, invalid UID: uid://b43xvbhv8k1ag - using text path instead: res://Scripts/Mods/EvenOnlyMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:6 - ext_resource, invalid UID: uid://cctvo5jcpomxl - using text path instead: res://Scripts/Mods/FiveByOneMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:7 - ext_resource, invalid UID: uid://0sdbgfb8fmxd - using text path instead: res://Scripts/Mods/GoldSixMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:9 - ext_resource, invalid UID: uid://dmi2pfrb1vd52 - using text path instead: res://Scripts/Mods/OddOnlyMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:10 - ext_resource, invalid UID: uid://h85vddw7qhk1 - using text path instead: res://Scripts/Mods/ThreeButThreeMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:11 - ext_resource, invalid UID: uid://cmexdccb8puvp - using text path instead: res://Scripts/Mods/WildCardMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Challenge/GreedIsntGoodChallenge.tscn:3 - ext_resource, invalid UID: uid://cgr33d1sntg00d - using text path instead: res://Scripts/Challenge/greed_isnt_good_challenge.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Challenge/ToughAdditionChallenge.tscn:3 - ext_resource, invalid UID: uid://ct0ugh4dd1t10n - using text path instead: res://Scripts/Challenge/tough_addition_challenge.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/synergy_manager.tscn:3 - ext_resource, invalid UID: uid://synergy_manager_script - using text path instead: res://Scripts/Managers/SynergyManager.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Debuff/TooGreedyDebuff.tscn:3 - ext_resource, invalid UID: uid://ct00gr33dy5cn - using text path instead: res://Scripts/Debuff/too_greedy_debuff.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Debuff/HalfAdditiveDebuff.tscn:3 - ext_resource, invalid UID: uid://c3h4lf4dd1t1v - using text path instead: res://Scripts/Debuff/half_additive_debuff.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/UI/mom_dialog_popup.tscn:3 - ext_resource, invalid UID: uid://cp6xgqfr8qxvn - using text path instead: res://Scripts/UI/mom_character.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+ERROR: [MallMapSelectorTest] FAIL: Generated zones should not overlap
+   at: push_error (core/variant/variant_utility.cpp:1098)

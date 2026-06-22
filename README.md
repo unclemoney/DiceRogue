@@ -239,7 +239,7 @@ All major UI popups use TweenFX-based bouncy entrance/exit animations for juicy 
 
 | UI System | Entrance | Exit | Notes |
 |-----------|----------|------|-------|
-| **ChannelManagerUI** | VHS shader overlay fade → "CHOOSE YOUR CHANNEL" label drop-in → TV remote panel bounce | Panel flies down → shader fades → overlay fades | Uses `vhs_wave.gdshader` overlay |
+| **ChannelManagerUI** | VHS shader overlay fade → "MALL DIRECTORY" title drop-in → directory shell settle → corridor trace and zone reveal | Directory shell drops away → shader fades → overlay fades | Uses `vhs_wave.gdshader` overlay plus runtime Polygon2D mall zones |
 | **ChoreSelectionPopup** | Overlay fade + `TweenFX.drop_in` bounce from top + jelly settle | `TweenFX.drop_out` fly-off + overlay fade | — |
 | **PauseMenu** | Overlay fade + `TweenFX.drop_in` from top + jelly wobble | `TweenFX.drop_out` flies UP (negative height) + fade | Uses `_is_animating` guard |
 | **MomCharacter** | Overlay fade + `TweenFX.drop_in` bounce from below + jelly on panel & sprite | Hop on Mom sprite → `TweenFX.drop_out` fly down + fade | Dramatic personality wobble |
@@ -490,17 +490,22 @@ MusicManager.stop_music()
 The **Channel Manager** provides a resource-based difficulty progression system (Channels 1-20):
 
 **Features:**
-- **TV Remote UI**: Select starting channel at game start with Up/Down buttons
+- **Mall Directory UI**: Select the starting channel from a runtime-generated mall map with hover tooltips, section colors, and a persistent side panel
 - **Resource-Based Configuration**: Each channel defined by a `.tres` file with manually tuned settings
 - **Unlock Pacing**: Higher channels require completing lower channels first
 - **Multiple Scaling Multipliers**: Goal scores, shop prices, goof-off meter, Yahtzee bonuses, debuff intensity
 - **Per-Round Difficulty**: Each round has its own challenge difficulty range
 - **Persistent Completion**: Completed channels are saved and display a checkmark when browsing
 - **Lock Feedback**: Locked channels show 🔒 icon and disable Start button
+- **Mall Metadata Layer**: Selector-only store names, directory labels, section buckets, and flavor text live alongside channel difficulty data
 
 **Channel Configuration Resources:**
 Each channel is configured via `Resources/Data/Channels/channel_XX.tres`:
 - `display_name`: Human-readable name (e.g., "Tutorial", "Expert", "ULTIMATE")
+- `mall_zone_name`: Selector-only store name shown on the mall map
+- `mall_directory_label`: Compact zone label used on the directory board
+- `mall_tooltip_flavor`: Supplemental hover text for the selector tooltip
+- `mall_section_id`: Selector legend bucket (`eatery`, `entertainment`, `lifestyle`, `specialty`, `major_stores`)
 - `goal_score_multiplier`: Scales target scores for challenges
 - `shop_price_multiplier`: Scales shop item prices
 - `colored_dice_cost_multiplier`: Scales colored dice purchase costs
@@ -530,10 +535,13 @@ Each round within a channel has:
 - **RoundDifficultyConfig** (`Scripts/Core/RoundDifficultyConfig.gd`) - Per-round settings resource
 - **ChannelDifficultyData** (`Scripts/Core/ChannelDifficultyData.gd`) - Channel-wide settings resource
 - **ChannelManager** (`Scripts/Managers/channel_manager.gd`) - Core difficulty logic, loads configs
-- **ChannelManagerUI** (`Scripts/Managers/channel_manager_ui.gd`) - TV remote UI with lock/completion indicators
+- **ChannelManagerUI** (`Scripts/Managers/channel_manager_ui.gd`) - Mall directory selector shell, side panel, tooltip, and runtime map integration
+- **MallMapLayout** (`Scripts/Managers/mall_map_layout.gd`) - Shared hallway and store polygon layout data
+- **MallMapZone** (`Scripts/Managers/mall_map_zone.gd`) - Interactive runtime zone node for the selector
 - **CarryOverPanel** (`Scripts/UI/carry_over_panel.gd`) - Carry-over selection UI between channels
 - **Channel Resources** (`Resources/Data/Channels/channel_01.tres` to `channel_20.tres`)
 - **ChannelDifficultyValidator** (`Scripts/Editor/ChannelDifficultyValidator.gd`) - Editor validation tool
+- **Mall Selector Validation Scene** (`Tests/MallMapSelectorTest.tscn`) - Focused startup selector regression check
 
 **Integration Points:**
 - **RoundManager**: Uses `get_challenge_difficulty_range()` for challenge selection
@@ -545,7 +553,7 @@ Each round within a channel has:
 - **DebuffManager**: Uses `get_debuff_intensity_multiplier()` for debuff scaling
 
 **Game Flow:**
-1. Game starts → Channel selector appears (locked/completed status shown)
+1. Game starts → Mall directory selector appears (locked/completed status shown, side panel active, hover tooltip available)
 2. Player selects unlocked channel (1-20) and presses Start
 3. Game progresses through 6 rounds with scaled difficulty
 4. After Round 6 completion → RoundWinnerPanel shows stats

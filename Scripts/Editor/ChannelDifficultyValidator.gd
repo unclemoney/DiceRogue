@@ -70,6 +70,12 @@ func _validate_channel(channel_num: int, path: String, results: Dictionary) -> v
 	
 	if config.display_name.is_empty():
 		errors.append("display_name is empty")
+
+	if config.mall_zone_name.is_empty():
+		errors.append("mall_zone_name is empty")
+
+	if config.mall_section_id.is_empty():
+		errors.append("mall_section_id is empty")
 	
 	if config.round_configs.size() != 6:
 		errors.append("round_configs should have 6 entries (has %d)" % config.round_configs.size())
@@ -103,10 +109,9 @@ func _validate_channel(channel_num: int, path: String, results: Dictionary) -> v
 	
 	# Run validate() method if available
 	if config.has_method("validate"):
-		var validation_result = config.validate()
-		if not validation_result.valid:
-			for err in validation_result.errors:
-				errors.append("validate(): " + err)
+		var validation_errors: Array[String] = config.validate()
+		for err in validation_errors:
+			errors.append("validate(): " + err)
 	
 	# Store results
 	if errors.size() > 0:
@@ -126,6 +131,8 @@ func _validate_channel(channel_num: int, path: String, results: Dictionary) -> v
 	results.channel_data.append({
 		"channel": channel_num,
 		"name": config.display_name,
+		"mall_zone": config.mall_zone_name,
+		"mall_section": config.mall_section_id,
 		"goal_mult": config.goal_score_multiplier,
 		"shop_mult": config.shop_price_multiplier,
 		"goof_mult": config.goof_off_multiplier,

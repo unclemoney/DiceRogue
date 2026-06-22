@@ -370,8 +370,10 @@ func reset() -> void:
 ## get_channel_display_text() -> String
 ##
 ## Returns a zero-padded channel number string for display (e.g., "01", "20")
-func get_channel_display_text() -> String:
-	return "%02d" % current_channel
+func get_channel_display_text(channel: int = -1) -> String:
+	if channel < 0:
+		channel = current_channel
+	return "%02d" % clampi(channel, MIN_CHANNEL, MAX_CHANNEL)
 
 
 ## get_channel_display_name() -> String
@@ -384,11 +386,51 @@ func get_channel_display_name() -> String:
 	return "Channel %02d" % current_channel
 
 
+## get_selector_zone_name(channel: int) -> String
+##
+## Returns the mall-selector store name for the requested channel.
+func get_selector_zone_name(channel: int = -1) -> String:
+	var config = get_channel_config(channel)
+	if config:
+		return config.get_mall_zone_name()
+	return get_channel_display_name()
+
+
+## get_selector_directory_label(channel: int) -> String
+##
+## Returns the compact directory label used by the mall map.
+func get_selector_directory_label(channel: int = -1) -> String:
+	var config = get_channel_config(channel)
+	if config:
+		return config.get_mall_directory_label()
+	return get_selector_zone_name(channel)
+
+
+## get_selector_section_id(channel: int) -> String
+##
+## Returns the section bucket used by the mall selector legend and colors.
+func get_selector_section_id(channel: int = -1) -> String:
+	var config = get_channel_config(channel)
+	if config:
+		return config.mall_section_id
+	return "specialty"
+
+
+## get_selector_tooltip_flavor(channel: int) -> String
+##
+## Returns optional flavor text for the selector tooltip.
+func get_selector_tooltip_flavor(channel: int = -1) -> String:
+	var config = get_channel_config(channel)
+	if config:
+		return config.mall_tooltip_flavor
+	return ""
+
+
 ## get_difficulty_description() -> String
 ##
 ## Returns a human-readable description of the current difficulty.
-func get_difficulty_description() -> String:
-	var mult = get_difficulty_multiplier()
+func get_difficulty_description(channel: int = -1) -> String:
+	var mult = get_difficulty_multiplier(channel)
 	if mult < 1.2:
 		return "Easy"
 	elif mult < 2.0:
@@ -425,10 +467,10 @@ func get_channel_start_bonus(channel: int = -1) -> Dictionary:
 	
 	# Linear progression formulas
 	# Channel 2: $150, Channel 3: $300 + 1 PU, Channel 4: $450 + 1 PU + 1 Cons, etc.
-	var bonus_money = (channel - 1) * 150
-	var bonus_powerups = (channel - 1) / 2
-	var bonus_consumables = max(0, (channel - 2) / 2)
-	var bonus_level_boosts = max(0, (channel - 3) / 2)
+	var bonus_money: int = (channel - 1) * 150
+	var bonus_powerups: int = int((channel - 1) / 2.0)
+	var bonus_consumables: int = maxi(0, int((channel - 2) / 2.0))
+	var bonus_level_boosts: int = maxi(0, int((channel - 3) / 2.0))
 	
 	return {
 		"bonus_money": bonus_money,

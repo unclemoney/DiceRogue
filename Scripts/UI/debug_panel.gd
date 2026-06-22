@@ -378,6 +378,8 @@ func _create_debug_tabs() -> void:
 			{"text": "Clear Active Debuffs", "method": "_debug_difficulty_clear_debuffs"},
 			{"text": "Show Multiplier Breakdown", "method": "_debug_difficulty_show_multipliers"},
 			{"text": "Show Channel Bonuses", "method": "_debug_difficulty_show_channel_bonuses"},
+			{"text": "Show Mall Selector", "method": "_debug_difficulty_show_selector"},
+			{"text": "Show Mall Zone Info", "method": "_debug_difficulty_show_selector_zone"},
 			{"text": "Simulate Channel 5 Bonus", "method": "_debug_difficulty_simulate_ch5_bonus"},
 			{"text": "Simulate Channel 10 Bonus", "method": "_debug_difficulty_simulate_ch10_bonus"},
 			{"text": "Reset Scorecard Levels", "method": "_debug_difficulty_reset_levels"},
@@ -2890,6 +2892,39 @@ func _debug_show_round_panel() -> void:
 
 func _debug_wave_buttons() -> void:
 	log_debug("Wave Buttons: not implemented")
+
+
+func _debug_difficulty_show_selector() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	if not is_instance_valid(game_controller.channel_manager_ui):
+		log_debug("ERROR: ChannelManagerUI not available")
+		return
+	if is_instance_valid(game_controller.channel_manager):
+		game_controller.channel_manager_ui.set_channel_manager(game_controller.channel_manager)
+	game_controller.channel_manager_ui.show_channel_selector()
+	var zone_name := "UNKNOWN"
+	if is_instance_valid(game_controller.channel_manager):
+		zone_name = game_controller.channel_manager.get_selector_zone_name()
+	log_debug("Opened mall selector at %s" % zone_name)
+
+
+func _debug_difficulty_show_selector_zone() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	if not is_instance_valid(game_controller.channel_manager):
+		log_debug("ERROR: ChannelManager not available")
+		return
+	var channel_num: int = game_controller.channel_manager.current_channel
+	var zone_name: String = game_controller.channel_manager.get_selector_zone_name(channel_num)
+	var section_id: String = game_controller.channel_manager.get_selector_section_id(channel_num)
+	var flavor: String = game_controller.channel_manager.get_selector_tooltip_flavor(channel_num)
+	var unlock_text := "Unlocked"
+	if game_controller.channel_manager.has_method("is_channel_unlocked") and not game_controller.channel_manager.is_channel_unlocked(channel_num):
+		unlock_text = "Locked"
+	log_debug("Mall Zone %02d: %s | Section=%s | %s | %s" % [channel_num, zone_name, section_id, unlock_text, flavor])
 
 
 # ============================================================================

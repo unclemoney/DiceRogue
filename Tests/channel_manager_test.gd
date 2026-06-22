@@ -117,6 +117,9 @@ func _run_tests() -> void:
 	
 	# Test 4: Channel display text
 	_test_display_text()
+
+	# Test 5: Mall selector metadata
+	_test_mall_selector_metadata()
 	
 	# Summary
 	_log("\n[color=yellow]═══ Test Summary ═══[/color]")
@@ -227,6 +230,20 @@ func _test_display_text() -> void:
 	
 	# Reset
 	channel_manager.reset()
+
+
+func _test_mall_selector_metadata() -> void:
+	_log("\n[color=cyan]Test: Mall Selector Metadata[/color]")
+
+	var zone_name_1 = channel_manager.get_selector_zone_name(1)
+	var zone_passed_1 = zone_name_1 == "Food Court"
+	test_results.append("PASS" if zone_passed_1 else "FAIL")
+	_log("  Channel 1 zone: expected 'Food Court', got '%s' - %s" % [zone_name_1, _status(zone_passed_1)])
+
+	var section_12 = channel_manager.get_selector_section_id(12)
+	var section_passed_12 = section_12 == "entertainment"
+	test_results.append("PASS" if section_passed_12 else "FAIL")
+	_log("  Channel 12 section: expected 'entertainment', got '%s' - %s" % [section_12, _status(section_passed_12)])
 
 
 func _status(passed: bool) -> String:
