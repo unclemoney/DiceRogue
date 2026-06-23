@@ -33,6 +33,20 @@ var _visual_config = DebuffVisualConfigScript.new()
 var is_active := false
 var _current_tween: Tween
 
+
+func set_visual_config(visual_config) -> void:
+	if visual_config == null:
+		return
+	_visual_config = visual_config
+	if _icon_rect:
+		_icon_rect.custom_minimum_size = _visual_config.compact_icon_size
+	if data:
+		_apply_data_to_ui()
+	else:
+		_base_bg_color = _visual_config.compact_bg_base_color
+		_apply_shader_state()
+		_apply_background_state()
+
 func _ready() -> void:
 	custom_minimum_size = CHIP_SIZE
 	size_flags_horizontal = Control.SIZE_SHRINK_CENTER

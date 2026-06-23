@@ -28,6 +28,7 @@ var _name_label: Label
 var _diff_label: Label
 var _desc_label: Label
 var _separator: HSeparator
+var _content_vbox: VBoxContainer
 var _card_glow_material: ShaderMaterial
 var _icon_material: ShaderMaterial
 var _difficulty_tint: Color = Color(1.0, 1.0, 1.0)
@@ -45,11 +46,12 @@ static func get_card_size() -> Vector2:
 
 
 func _ready() -> void:
-	var card_size := get_card_size()
+	var card_size: Vector2 = _visual_config.detail_card_size
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	custom_minimum_size = card_size
 	size = card_size
 	_build_ui()
+	_apply_layout_from_config()
 	_apply_visual_state()
 
 
@@ -58,7 +60,7 @@ func _process(delta: float) -> void:
 
 
 func _build_ui() -> void:
-	var card_size := get_card_size()
+	var card_size: Vector2 = _visual_config.detail_card_size
 	_glow_rect = ColorRect.new()
 	_glow_rect.name = "GlowRect"
 	_glow_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -96,12 +98,12 @@ func _build_ui() -> void:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_panel.add_child(scroll)
 
-	var vbox := VBoxContainer.new()
-	vbox.name = "ContentVBox"
-	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	vbox.add_theme_constant_override("separation", _visual_config.detail_content_separation)
-	scroll.add_child(vbox)
+	_content_vbox = VBoxContainer.new()
+	_content_vbox.name = "ContentVBox"
+	_content_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content_vbox.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_content_vbox.add_theme_constant_override("separation", _visual_config.detail_content_separation)
+	scroll.add_child(_content_vbox)
 
 	var vcr_font := load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as FontFile
 
@@ -116,7 +118,7 @@ func _build_ui() -> void:
 	_icon_material = ShaderMaterial.new()
 	_icon_material.shader = LARGE_GLYPH_SHADER
 	_icon_rect.material = _icon_material
-	vbox.add_child(_icon_rect)
+	_content_vbox.add_child(_icon_rect)
 
 	# Name label
 	_name_label = Label.new()
@@ -128,9 +130,9 @@ func _build_ui() -> void:
 		_name_label.add_theme_font_override("font", vcr_font)
 	_name_label.add_theme_font_size_override("font_size", 16)
 	_name_label.add_theme_color_override("font_color", Color(1.0, 0.91, 0.44, 1.0))
-	vbox.add_child(_name_label)
+	_content_vbox.add_child(_name_label)
 
-	_add_separator(vbox)
+	_add_separator(_content_vbox)
 
 	# Difficulty label
 	_diff_label = Label.new()
@@ -141,7 +143,7 @@ func _build_ui() -> void:
 		_diff_label.add_theme_font_override("font", vcr_font)
 	_diff_label.add_theme_font_size_override("font_size", 11)
 	_diff_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.56, 1.0))
-	vbox.add_child(_diff_label)
+	_content_vbox.add_child(_diff_label)
 
 	# Description label
 	_desc_label = Label.new()
@@ -153,7 +155,39 @@ func _build_ui() -> void:
 		_desc_label.add_theme_font_override("font", vcr_font)
 	_desc_label.add_theme_font_size_override("font_size", 10)
 	_desc_label.add_theme_color_override("font_color", Color(0.90, 0.84, 0.78, 1.0))
-	vbox.add_child(_desc_label)
+	_content_vbox.add_child(_desc_label)
+
+
+func set_visual_config(visual_config) -> void:
+	if visual_config == null:
+		return
+	_visual_config = visual_config
+	if _data:
+		var tier: int = clamp(_data.difficulty_rating, 0, 5)
+		_difficulty_tint = _visual_config.difficulty_tints[tier]
+	if is_node_ready():
+		_apply_layout_from_config()
+		_apply_visual_state()
+
+
+func _apply_layout_from_config() -> void:
+	var card_size: Vector2 = _visual_config.detail_card_size
+	custom_minimum_size = card_size
+	size = card_size
+	if _panel:
+		_panel.custom_minimum_size = card_size
+		var panel_style := _panel.get_theme_stylebox("panel") as StyleBoxFlat
+		if panel_style:
+			panel_style.set_border_width_all(_visual_config.detail_panel_border_width)
+			panel_style.set_corner_radius_all(_visual_config.detail_panel_corner_radius)
+			panel_style.content_margin_left = _visual_config.detail_panel_margin_h
+			panel_style.content_margin_top = _visual_config.detail_panel_margin_v
+			panel_style.content_margin_right = _visual_config.detail_panel_margin_h
+			panel_style.content_margin_bottom = _visual_config.detail_panel_margin_v
+	if _content_vbox:
+		_content_vbox.add_theme_constant_override("separation", _visual_config.detail_content_separation)
+	if _icon_rect:
+		_icon_rect.custom_minimum_size = _visual_config.detail_icon_size
 
 
 func _add_separator(parent: VBoxContainer) -> void:
@@ -231,7 +265,7 @@ func _apply_visual_state() -> void:
 		_card_glow_material.set_shader_parameter("active_strength", _active_strength)
 		_card_glow_material.set_shader_parameter("pulse_strength", _pulse_strength)
 		_card_glow_material.set_shader_parameter("mouse_uv", _mouse_uv)
-		_card_glow_material.set_shader_parameter("rect_size", get_card_size())
+		_card_glow_material.set_shader_parameter("rect_size", _visual_config.detail_card_size)
 		_card_glow_material.set_shader_parameter("spread", _visual_config.detail_card_spread)
 		_card_glow_material.set_shader_parameter("corner_radius", _visual_config.detail_card_corner_radius)
 		_card_glow_material.set_shader_parameter("rim_width", _visual_config.detail_card_rim_width)

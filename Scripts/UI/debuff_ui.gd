@@ -37,6 +37,48 @@ var _screen_glow_layer: CanvasLayer
 var _screen_glow_rect: ColorRect
 
 
+func set_visual_config(visual_config) -> void:
+	if visual_config == null:
+		return
+	_visual_config = visual_config
+	refresh_visual_config()
+
+
+func refresh_visual_config() -> void:
+	if _slot_cells.is_empty():
+		return
+	if is_instance_valid(_background):
+		_background.color = Color(0.0, 0.0, 0.0, _visual_config.detail_overlay_dim_alpha)
+	for icon in _icons.values():
+		if is_instance_valid(icon):
+			(icon as DebuffIcon).set_visual_config(_visual_config)
+	for card in _detail_cards.values():
+		if is_instance_valid(card):
+			(card as DebuffDetailCard).set_visual_config(_visual_config)
+	_apply_screen_glow_config()
+	if _current_state == State.FANNED_OUT:
+		_relayout_fanned_cards()
+	else:
+		_refresh_compact_view()
+
+
+func show_fan_out() -> void:
+	if _current_state == State.NORMAL and not _icons.is_empty():
+		_fan_out_debuffs()
+
+
+func hide_fan_out() -> void:
+	if _current_state == State.FANNED_OUT:
+		_fold_back_debuffs()
+
+
+func toggle_fan_out() -> void:
+	if _current_state == State.FANNED_OUT:
+		hide_fan_out()
+	else:
+		show_fan_out()
+
+
 func _ready() -> void:
 	print("[DebuffUI] Initializing...")
 
@@ -130,7 +172,7 @@ func _fan_out_debuffs() -> void:
 	if count == 0:
 		return
 
-	var card_size: Vector2 = DebuffDetailCard.get_card_size()
+	var card_size: Vector2 = _visual_config.detail_card_size
 	var card_width: float = card_size.x
 	var spacing: float = _visual_config.detail_fan_spacing
 	var total_width := (count - 1) * spacing + card_width
@@ -147,6 +189,7 @@ func _fan_out_debuffs() -> void:
 			continue
 
 		var card := DebuffDetailCard.new()
+		card.set_visual_config(_visual_config)
 		overlay.add_child(card)
 		card.z_index = 200 + i
 
@@ -170,6 +213,7 @@ func _fan_out_debuffs() -> void:
 			card.trigger_visual_pulse(0.7, 0.52)
 
 	_ensure_screen_glow_layer(overlay.layer + 1)
+	_relayout_fanned_cards()
 
 
 func _fold_back_debuffs() -> void:
@@ -306,6 +350,7 @@ func add_debuff(data: DebuffData, debuff_instance: Debuff = null) -> DebuffIcon:
 		return null
 
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.set_visual_config(_visual_config)
 	icon.set_data(data)
 	icon.set_meta("last_pos", icon.position)
 
@@ -448,6 +493,32 @@ func animate_debuff_removal(debuff_id: String, on_finished: Callable) -> void:
 	else:
 		print("[DebuffUI] No icon found for debuff, skipping animation:", debuff_id)
 		on_finished.call()
+
+
+func _relayout_fanned_cards() -> void:
+	if _current_state != State.FANNED_OUT or _detail_cards.is_empty():
+		return
+	var viewport_size := get_viewport_rect().size
+	var count := _sorted_debuff_ids.size()
+	if count == 0:
+		return
+	var card_size: Vector2 = _visual_config.detail_card_size
+	var card_width: float = card_size.x
+	var spacing: float = _visual_config.detail_fan_spacing
+	var total_width := (count - 1) * spacing + card_width
+	if count > 1 and total_width > viewport_size.x - _visual_config.detail_viewport_padding:
+		spacing = (viewport_size.x - _visual_config.detail_viewport_padding - card_width) / (count - 1)
+		total_width = (count - 1) * spacing + card_width
+	var start_x := (viewport_size.x - total_width) / 2.0
+	var center_y := viewport_size.y / 2.0
+	for i in range(count):
+		var id: String = _sorted_debuff_ids[i]
+		var card := _detail_cards.get(id) as DebuffDetailCard
+		if not is_instance_valid(card):
+			continue
+		card.set_visual_config(_visual_config)
+		card.z_index = 200 + i
+		card.position = Vector2(start_x + i * spacing, center_y - card_size.y / 2.0)
 
 
 func _ensure_screen_glow_layer(layer_index: int) -> void:

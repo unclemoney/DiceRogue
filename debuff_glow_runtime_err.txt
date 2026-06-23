@@ -40,14 +40,17 @@ WARNING: res://Scenes/Debuff/HalfAdditiveDebuff.tscn:3 - ext_resource, invalid U
    at: load (scene/resources/resource_format_text.cpp:447)
 WARNING: res://Scenes/UI/mom_dialog_popup.tscn:3 - ext_resource, invalid UID: uid://cp6xgqfr8qxvn - using text path instead: res://Scripts/UI/mom_character.gd
    at: load (scene/resources/resource_format_text.cpp:447)
-ERROR: 1 RID allocations of type 'N10RendererRD14TextureStorage7TextureE' were leaked at exit.
+WARNING: 3 RIDs of type "CanvasItem" were leaked.
+   at: _free_rids (servers/rendering/renderer_canvas_cull.cpp:2679)
+ERROR: 3 RID allocations of type 'N10RendererRD14TextureStorage7TextureE' were leaked at exit.
 ERROR: Parameter "RenderingServer::get_singleton()" is null.
    at: ~CompressedTexture2D (scene/resources/compressed_texture.cpp:464)
-WARNING: 2 RIDs of type "Texture" were leaked.
+WARNING: 6 RIDs of type "Texture" were leaked.
    at: finalize (servers/rendering/rendering_device.cpp:7130)
+ERROR: 2 RID allocations of type 'PN18TextServerAdvanced12FontAdvancedE' were leaked at exit.
 ERROR: Capture not registered: 'gdaimcp'.
    at: unregister_message_capture (core/debugger/engine_debugger.cpp:69)
 WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
    at: cleanup (core/object/object.cpp:2378)
-ERROR: 4 resources still in use at exit (run with --verbose for details).
+ERROR: 5 resources still in use at exit (run with --verbose for details).
    at: clear (core/io/resource.cpp:614)

@@ -268,11 +268,11 @@ Statistics Manager initialized
 [MusicManager]   LAYER_5: 6 variants
 [MusicManager] CRASH variants loaded: 8
 [MusicManager] Created 8 audio players
-[MusicManager] Layer 1: chose variant index 1 (history: [1])
-[MusicManager] Layer 2: chose variant index 2 (history: [2])
+[MusicManager] Layer 1: chose variant index 0 (history: [0])
+[MusicManager] Layer 2: chose variant index 1 (history: [1])
 [MusicManager] Layer 3: chose variant index 1 (history: [1])
 [MusicManager] Layer 4: chose variant index 1 (history: [1])
-[MusicManager] Layer 5: chose variant index 1 (history: [1])
+[MusicManager] Layer 5: chose variant index 0 (history: [0])
 [MusicManager] Playback started at intensity 0
 [MusicManager] Ready - base loop duration: 12.000s, 5 layer groups loaded
 [GameSettings] Initializing...
@@ -289,9 +289,10 @@ Statistics Manager initialized
 [DebuffUI] Initializing...
 [DebuffUI] Created 4 fixed slots
 [DebuffUI] Initialization complete
-[AudioManager] Connected click sound to button: @Button@8
-[AudioManager] Connected click sound to button: @Button@9
-[AudioManager] Connected click sound to button: @Button@10
+[AudioManager] Connected click sound to button: @Button@14
+[AudioManager] Connected click sound to button: @Button@15
+[AudioManager] Connected click sound to button: @Button@16
+[AudioManager] Connected click sound to button: @Button@17
 [ProgressManager] WARNING: Scorecard not found - score tracking unavailable
 [ProgressManager] WARNING: GameController not found - consumable tracking unavailable
 [ProgressManager] WARNING: TurnTracker not found - game start detection unavailable
@@ -316,14 +317,17 @@ Statistics Manager initialized
 [MusicManager] Watching tree.node_added for scene changes
 [DebuffUI] Debuff pulse requested:the_division0.920.52
 [DebuffUI] Debuff pulse requested:too_greedy0.920.52
-ERROR: 1 RID allocations of type 'N10RendererRD14TextureStorage7TextureE' were leaked at exit.
+WARNING: 3 RIDs of type "CanvasItem" were leaked.
+   at: _free_rids (servers/rendering/renderer_canvas_cull.cpp:2679)
+ERROR: 3 RID allocations of type 'N10RendererRD14TextureStorage7TextureE' were leaked at exit.
 ERROR: Parameter "RenderingServer::get_singleton()" is null.
    at: ~CompressedTexture2D (scene/resources/compressed_texture.cpp:464)
-WARNING: 2 RIDs of type "Texture" were leaked.
+WARNING: 6 RIDs of type "Texture" were leaked.
    at: finalize (servers/rendering/rendering_device.cpp:7130)
+ERROR: 2 RID allocations of type 'PN18TextServerAdvanced12FontAdvancedE' were leaked at exit.
 ERROR: Capture not registered: 'gdaimcp'.
    at: unregister_message_capture (core/debugger/engine_debugger.cpp:69)
 WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
    at: cleanup (core/object/object.cpp:2378)
-ERROR: 4 resources still in use at exit (run with --verbose for details).
+ERROR: 5 resources still in use at exit (run with --verbose for details).
    at: clear (core/io/resource.cpp:614)
