@@ -18,6 +18,7 @@ var intensity: float = 1.0  ## Difficulty intensity multiplier (1.0 = normal, 2.
 
 signal debuff_started
 signal debuff_ended
+signal visual_pulse_requested(strength: float, duration: float)
 
 
 ## set_intensity(value)
@@ -27,6 +28,14 @@ signal debuff_ended
 ## @param value: The intensity multiplier (1.0 = normal)
 func set_intensity(value: float) -> void:
 	intensity = maxf(1.0, value)  # Minimum intensity is 1.0
+
+
+## request_visual_pulse(strength, duration)
+##
+## Emits a UI-facing pulse request so debuff-specific gameplay events can trigger
+## compact and fan-out neon feedback without the UI inferring gameplay semantics.
+func request_visual_pulse(strength: float = 1.0, duration: float = 0.42) -> void:
+	emit_signal("visual_pulse_requested", clampf(strength, 0.0, 1.4), maxf(duration, 0.05))
 
 
 func start() -> void:

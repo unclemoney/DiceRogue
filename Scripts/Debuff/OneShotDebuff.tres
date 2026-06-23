@@ -1,15 +1,19 @@
-[gd_resource type="Resource" script_class="DebuffData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="DebuffData" load_steps=5 format=3 uid="uid://dqdjgby564ahn"]
 
+[ext_resource type="Texture2D" uid="uid://u00xakyxlras" path="res://Resources/Art/Debuffs/wayfinder_icons.png" id="1_cjs7d"]
 [ext_resource type="Script" uid="uid://uiuqwtxbh7m0" path="res://Scripts/Debuff/DebuffData.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://betj5eeni1mpj" path="res://Resources/Art/Powerups/chore_chart.png" id="1_icon"]
 [ext_resource type="PackedScene" path="res://Scenes/Debuff/OneShotDebuff.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_r2laj"]
+atlas = ExtResource("1_cjs7d")
+region = Rect2(731, 480, 225, 216)
 
 [resource]
 script = ExtResource("1_script")
 id = "one_shot"
 display_name = "One Shot"
 description = "Only 1 roll per turn instead of 3"
-icon = ExtResource("1_icon")
+icon = SubResource("AtlasTexture_r2laj")
 scene = ExtResource("2_scene")
 difficulty_rating = 5
 metadata/_custom_type_script = "uid://uiuqwtxbh7m0"

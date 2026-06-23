@@ -1,0 +1,1633 @@
+Godot Engine v4.4.1.stable.official.49a5bc7b6 - https://godotengine.org
+Vulkan 1.4.329 - Forward+ - Using Device #0: NVIDIA - NVIDIA GeForce RTX 4070 Ti SUPER
+
+[ScoreModifierManager] Singleton initialized
+[PlayerEconomy] Ready - Starting money:100
+[RollStats] Singleton initialized
+[DiceColorManager] Loading colored dice data...
+[DiceColorManager] Loaded colored dice data: Green Dice
+[DiceColorManager] Loaded colored dice data: Red Dice
+[DiceColorManager] Loaded colored dice data: Purple Dice
+[DiceColorManager] Loaded colored dice data: Blue Dice
+[DiceColorManager] Loaded colored dice data: Yellow Dice
+[DiceColorManager] Loaded 5 colored dice types
+[DiceColorManager] Reset purchased colors for new game session
+[DiceColorManager] Initialized and added to dice_color_manager group
+Statistics Manager initialized
+[ProgressManager] Initializing progress tracking system
+[ProgressManager] Creating complete unlockable items for all game content
+[ProgressManager] Created 146 total unlockable items across all categories
+[ProgressManager] ===== LOAD PROFILE START =====
+[ProgressManager] Requested slot: 1
+[ProgressManager] Current slot before load: 1
+[ProgressManager] Current name before load: Player 1
+[ProgressManager] Loading from path: user://profile_1.save
+[ProgressManager] Updated current slot to: 1
+[ProgressManager] Updated current name to: Boston Stuggler
+[ProgressManager] Profile name from save_data: Boston Stuggler
+[UnlockableItem] Unlocked item: Step By Step
+[UnlockableItem] Unlocked item: Extra Rolls
+[UnlockableItem] Unlocked item: Allowance
+[UnlockableItem] Unlocked item: Plus A Dollar
+[UnlockableItem] Unlocked item: Roll Efficiency
+[UnlockableItem] Unlocked item: Extra Dice
+[UnlockableItem] Unlocked item: Evens No Odds
+[UnlockableItem] Unlocked item: Bonus Money
+[UnlockableItem] Unlocked item: Lock & Load
+[UnlockableItem] Unlocked item: Dice Diversity
+[UnlockableItem] Unlocked item: Melting Dice
+[UnlockableItem] Unlocked item: Foursome
+[UnlockableItem] Unlocked item: Chance 520
+[UnlockableItem] Unlocked item: Green Slime
+[UnlockableItem] Unlocked item: Chore Champion
+[UnlockableItem] Unlocked item: Pair Paradise
+[UnlockableItem] Unlocked item: Failed Money
+[UnlockableItem] Unlocked item: Full House Fortune
+[UnlockableItem] Unlocked item: Consumable Cash
+[UnlockableItem] Unlocked item: Red Slime
+[UnlockableItem] Unlocked item: Lower Ten
+[UnlockableItem] Unlocked item: Shop Rerolls
+[UnlockableItem] Unlocked item: Tango & Cash
+[UnlockableItem] Unlocked item: Purple Payout
+[UnlockableItem] Unlocked item: Chore Sprint
+[UnlockableItem] Unlocked item: Hot Streak
+[UnlockableItem] Unlocked item: Upper Bonus Multiplier
+[UnlockableItem] Unlocked item: Money Multiplier
+[UnlockableItem] Unlocked item: Purple Slime
+[UnlockableItem] Unlocked item: Even Higher
+[UnlockableItem] Unlocked item: Extra Rainbow
+[UnlockableItem] Unlocked item: One-Roll Wonder
+[UnlockableItem] Unlocked item: Money Well Spent
+[UnlockableItem] Unlocked item: Highlighted Score
+[UnlockableItem] Unlocked item: Yahtzee Bonus Multiplier
+[UnlockableItem] Unlocked item: Plus The Last
+[UnlockableItem] Unlocked item: Modded Dice Mastery
+[UnlockableItem] Unlocked item: Blue Safety Net
+[UnlockableItem] Unlocked item: The Great Exchange
+[UnlockableItem] Unlocked item: Green Monster
+[UnlockableItem] Unlocked item: Red Power Ranger
+[UnlockableItem] Unlocked item: Wild Dots
+[UnlockableItem] Unlocked item: Money Bags
+[UnlockableItem] Unlocked item: Debuff Destroyer
+[UnlockableItem] Unlocked item: Extra Coupons
+[UnlockableItem] Unlocked item: Power Surge
+[UnlockableItem] Unlocked item: Blue Slime
+[UnlockableItem] Unlocked item: Challenge Easer
+[UnlockableItem] Unlocked item: Azure Perfection
+[UnlockableItem] Unlocked item: The Piggy Bank
+[UnlockableItem] Unlocked item: Random Card Level
+[UnlockableItem] Unlocked item: The Replicator
+[UnlockableItem] Unlocked item: Yahtzeed Dice
+[UnlockableItem] Unlocked item: Lucky Streak
+[UnlockableItem] Unlocked item: Steady Progress
+[UnlockableItem] Unlocked item: Combo King
+[UnlockableItem] Unlocked item: Ones Avoider
+[UnlockableItem] Unlocked item: Upper Section Avoider
+[UnlockableItem] Unlocked item: Lower Section Avoider
+[UnlockableItem] Unlocked item: Quick Cash
+[UnlockableItem] Unlocked item: Any Score
+[UnlockableItem] Unlocked item: Free Chores
+[UnlockableItem] Unlocked item: Score Reroll
+[UnlockableItem] Unlocked item: Ones Upgrade
+[UnlockableItem] Unlocked item: Twos Upgrade
+[UnlockableItem] Unlocked item: Lucky Upgrade
+[UnlockableItem] Unlocked item: One Extra Dice
+[UnlockableItem] Unlocked item: Three More Rolls
+[UnlockableItem] Unlocked item: Power Up Shop Number
+[UnlockableItem] Unlocked item: Threes Upgrade
+[UnlockableItem] Unlocked item: Fours Upgrade
+[UnlockableItem] Unlocked item: All Chores
+[UnlockableItem] Unlocked item: Half Price
+[UnlockableItem] Unlocked item: Loss Leader
+[UnlockableItem] Unlocked item: Insurance Policy
+[UnlockableItem] Unlocked item: Clearance Rack
+[UnlockableItem] Unlocked item: Double Existing
+[UnlockableItem] Unlocked item: The Pawn Shop
+[UnlockableItem] Unlocked item: Empty Shelves
+[UnlockableItem] Unlocked item: Fives Upgrade
+[UnlockableItem] Unlocked item: Sixes Upgrade
+[UnlockableItem] Unlocked item: One Free Mod
+[UnlockableItem] Unlocked item: Dice Surge
+[UnlockableItem] Unlocked item: Double Or Nothing
+[UnlockableItem] Unlocked item: Three of a Kind Upgrade
+[UnlockableItem] Unlocked item: Four of a Kind Upgrade
+[UnlockableItem] Unlocked item: Chance Upgrade
+[UnlockableItem] Unlocked item: Stat Cashout
+[UnlockableItem] Unlocked item: Visit The Shop
+[UnlockableItem] Unlocked item: Loaded Dice
+[UnlockableItem] Unlocked item: Add Max Power Up
+[UnlockableItem] Unlocked item: Random Uncommon Power Up
+[UnlockableItem] Unlocked item: Green Envy
+[UnlockableItem] Unlocked item: Full House Upgrade
+[UnlockableItem] Unlocked item: Small Straight Upgrade
+[UnlockableItem] Unlocked item: Upper Section Boost
+[UnlockableItem] Unlocked item: Score Amplifier
+[UnlockableItem] Unlocked item: Go Broke Or Go Home
+[UnlockableItem] Unlocked item: Poor House
+[UnlockableItem] Unlocked item: Large Straight Upgrade
+[UnlockableItem] Unlocked item: Lower Section Boost
+[UnlockableItem] Unlocked item: Score Streak
+[UnlockableItem] Unlocked item: Channel Bonus
+[UnlockableItem] Unlocked item: Reroll Master
+[UnlockableItem] Unlocked item: Yahtzee Upgrade
+[UnlockableItem] Unlocked item: Bonus Collector
+[UnlockableItem] Unlocked item: Lucky Seven
+[UnlockableItem] Unlocked item: Even Only
+[UnlockableItem] Unlocked item: Odd Only
+[UnlockableItem] Unlocked item: Gold Six
+[UnlockableItem] Unlocked item: Five by One
+[UnlockableItem] Unlocked item: Wild Card
+[UnlockableItem] Unlocked item: High Roller
+[UnlockableItem] Unlocked item: Channel Veteran
+[UnlockableItem] Unlocked item: Green Dice
+[UnlockableItem] Unlocked item: Red Dice
+[UnlockableItem] Unlocked item: Purple Dice
+[UnlockableItem] Unlocked item: Blue Dice
+[UnlockableItem] Unlocked item: Atari
+[UnlockableItem] Unlocked item: NES
+[UnlockableItem] Unlocked item: SNES
+[UnlockableItem] Unlocked item: Sega
+[GameSettings] Settings saved successfully
+[ProgressManager] Loaded FX settings from profile
+[ProgressManager] Loaded profile 1: Boston Stuggler (122 unlocked items)
+[ProgressManager] Final state - slot: 1, name: Boston Stuggler
+[ProgressManager] ===== LOAD PROFILE END =====
+[AudioManager] Initializing...
+[AudioManager] Loaded: res://Resources/Audio/DICE/DICE_ROLL_1.wav
+[AudioManager] Loaded: res://Resources/Audio/DICE/DICE_ROLL_2.wav
+[AudioManager] Loaded: res://Resources/Audio/DICE/DICE_ROLL_3.wav
+[AudioManager] Loaded: res://Resources/Audio/DICE/DICE_ROLL_4.wav
+[AudioManager] Loaded: res://Resources/Audio/DICE/DICE_ROLL_5.wav
+[AudioManager] Loaded scoring sound
+[AudioManager] Loaded money sound
+[AudioManager] Loaded button click sound
+[AudioManager] Loaded firework sound
+[AudioManager] Loaded dice click sound
+[AudioManager] Loaded swoosh sound
+[AudioManager] Loaded fan out sound
+[AudioManager] Loaded fan in sound
+[AudioManager] Loaded tab switch sound
+[AudioManager] Loaded money tick sound
+[AudioManager] Loaded denied sound
+[AudioManager] Loaded confirm sound
+[AudioManager] Loaded dice land sound
+[AudioManager] Loaded sell sound
+[AudioManager] Loaded round start sound
+[AudioManager] Loaded static burst sound
+[AudioManager] Loaded challenge reveal sound
+[AudioManager] Loaded dice spawn sound
+[AudioManager] Loaded jackpot sound
+[AudioManager] Loaded streak sound
+[AudioManager] Loaded next turn sound
+[AudioManager] Loaded shop open sound
+[AudioManager] Loaded powerup apply sound
+[AudioManager] Loaded threat alarm sound
+[AudioManager] Loaded victory sound
+[AudioManager] Loaded scorecard upgrade sound
+[AudioManager] Loaded dice land sound
+[AudioManager] Ready with 5 dice sounds loaded
+[MusicManager] Initializing...
+[MusicManager] Loaded BOTTOM_LAYER.wav - duration: 12.000s
+[MusicManager] Loaded LAYER_1_A.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_1_B.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_2_A.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_2_B.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_2_C.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_A.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_B.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_C.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_D.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_E.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_F.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_G.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_H.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_I.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_4_A.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_4_B.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_A.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_B.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_C.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_D.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_E.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_F.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_1.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_2.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_3.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_4.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_5.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_6.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_7.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_8.wav (duration: 12.000s)
+[MusicManager] Layer loading complete:
+[MusicManager]   LAYER_1: 2 variants
+[MusicManager]   LAYER_2: 3 variants
+[MusicManager]   LAYER_3: 9 variants
+[MusicManager]   LAYER_4: 2 variants
+[MusicManager]   LAYER_5: 6 variants
+[MusicManager] CRASH variants loaded: 8
+[MusicManager] Created 8 audio players
+[MusicManager] Layer 1: chose variant index 0 (history: [0])
+[MusicManager] Layer 2: chose variant index 1 (history: [1])
+[MusicManager] Layer 3: chose variant index 5 (history: [5])
+[MusicManager] Layer 4: chose variant index 0 (history: [0])
+[MusicManager] Layer 5: chose variant index 0 (history: [0])
+[MusicManager] Playback started at intensity 0
+[MusicManager] Ready - base loop duration: 12.000s, 5 layer groups loaded
+[GameSettings] Initializing...
+[AudioManager] Master volume set to: -1.9 dB
+[MusicManager] Music volume set to: -4.4 dB
+[GameSettings] Settings loaded successfully
+[GameSettings] Ready - Active profile slot: 1
+[TutorialManager] Initializing tutorial system
+[TutorialManager] Step order: ["intro", "yahtzee_basics_1", "yahtzee_basics_2", "yahtzee_basics_3", "shop_button", "shop_overview", "start_first_round", "roll_button", "lock_dice", "next_turn_button", "scorecard_intro", "scorecard_levels", "scoring_system_1", "scoring_system_2", "scoring_system_3", "powerups_intro", "powerups_ratings", "consumables_intro", "challenges_intro", "debuffs_intro", "chores_intro", "chores_mood", "synergy_intro", "synergy_rainbow", "next_round_button", "tutorial_complete"]
+[TutorialManager] Loaded 26 tutorial steps
+[TutorialManager] Tutorial completed: false, In progress: true
+[GameRNG] Initialized
+[GameSaveManager] Initialized
+[CRTManager] Initialized with TV off state
+[ScoringAnimationController] Initializing...
+[Scorecard] Ready - Added to 'scorecard' group
+[PowerUpUI] Initializing new spine-based system...
+[PowerUpUI] Hover tooltip styling applied
+[PowerUpUI] New spine-based system initialized
+[ChallengeUI] Initializing...
+[ChallengeUI] challenge_icon_scene set:true
+[ChallengeUI] Initialization complete
+[ChallengeUI] Container visible:true
+[ChallengeUI] Container rect size:(0.0, 0.0)
+[ChallengeUI] Container global position:(0.0, 0.0)
+[DebuffUI] Initializing...
+[DebuffUI] Created 4 fixed slots
+[DebuffUI] Initialization complete
+[ConsumableUI] Initializing new spine-based system...
+[ConsumableUI] Creating background for fanned cards
+[ConsumableUI] Applying direct hover tooltip style
+[ConsumableUI] Applying direct hover label style
+[ConsumableUI] Found Container under VBoxContainer
+[ConsumableUI] Created vertical list with 4 rows
+[ConsumableUI] New spine-based system initialized
+[AudioManager] Connected click sound to button: @Button@18
+[AudioManager] Connected click sound to button: @Button@34
+[AudioManager] Connected click sound to button: NextRoundButton
+[AudioManager] Connected click sound to button: ShopButton
+[AudioManager] Connected click sound to button: NextTurnButton
+[GameButtonUI] Found turn_tracker via turn_tracker group
+
+=== DiceHand Initializing ===
+[DiceHand] dice_area_center:(640.0, 200.0)
+[DiceHand] dice_area_size:(680.0, 200.0)
+[DiceHand] start_position (legacy):(100.0, 200.0)
+[DiceHand] Added to 'dice_hand' group
+
+=== Switching toD6Dice ===
+[DiceHand] Successfully switched toD6dice
+[ChoreUI] Initialized
+[AudioManager] Connected click sound to button: RollButton
+[AudioManager] Connected click sound to button: OnesButton
+[AudioManager] Connected click sound to button: TwosButton
+[AudioManager] Connected click sound to button: ThreesButton
+[AudioManager] Connected click sound to button: FoursButton
+[AudioManager] Connected click sound to button: FivesButton
+[AudioManager] Connected click sound to button: SixesButton
+[AudioManager] Connected click sound to button: UppersubLabel
+[AudioManager] Connected click sound to button: UpperBonus
+[AudioManager] Connected click sound to button: UpperTotalButton
+[AudioManager] Connected click sound to button: ThreeofakindButton
+[AudioManager] Connected click sound to button: FourofakindButton
+[AudioManager] Connected click sound to button: FullhouseButton
+[AudioManager] Connected click sound to button: SmallstraightButton
+[AudioManager] Connected click sound to button: LargestraightButton
+[AudioManager] Connected click sound to button: ChanceButton
+[AudioManager] Connected click sound to button: YahtzeeButton
+[AudioManager] Connected click sound to button: YahtzeeBonusButton
+[AudioManager] Connected click sound to button: LowerTotalButton
+[ScoreCardUI] Custom theme applied successfully
+[ScoreCardUI] ExtraInfo RichTextLabel found and BBCode enabled
+[ScoreCardUI] Applied transparent style to additive label for shader visibility
+[ScoreCardUI] Applied transparent style to multiplier label for shader visibility
+[ShopUI] Initializing...
+PowerUpManager path:../Managers/PowerUpManager
+ConsumableManager path:../Managers/ConsumableManager
+ModManager path:../Managers/ModManager
+[ShopUI] Styling shop title
+[ShopUI] Shop title styling applied
+[ShopUI] Configuring mouse input for background elements...
+[ShopUI] Set PanelContainer mouse filter to IGNORE
+[ShopUI] Set TextureRect mouse filter to IGNORE
+[ShopUI] Set TabContainer mouse filter to PASS
+[ShopUI] Mouse input configuration complete
+[ShopUI] Preparing reroll footer state
+[ShopUI] Applying VCR font and styling to shop tabs
+[ShopUI] Styling containers for better centered layout
+[ShopUI] Attempting to improve container layout for centering
+[ShopUI] Creating centered layout for tab:PowerUps
+[ShopUI] Adding shelf background to tab:PowerUps
+[ShopUI] Shelf background added to:PowerUps
+[ShopUI] Adding footer UI to tab:PowerUps
+[AudioManager] Connected click sound to button: LeftArrow
+[AudioManager] Connected click sound to button: RerollButton
+[AudioManager] Connected click sound to button: RightArrow
+[ShopUI] Created centered layout for:PowerUps
+[ShopUI] Creating centered layout for tab:Consumables
+[ShopUI] Adding shelf background to tab:Consumables
+[ShopUI] Shelf background added to:Consumables
+[ShopUI] Adding footer UI to tab:Consumables
+[AudioManager] Connected click sound to button: LeftArrow
+[AudioManager] Connected click sound to button: RerollButton
+[AudioManager] Connected click sound to button: RightArrow
+[ShopUI] Created centered layout for:Consumables
+[ShopUI] Creating centered layout for tab:Mods
+[ShopUI] Adding footer UI to tab:Mods
+[AudioManager] Connected click sound to button: LeftArrow
+[AudioManager] Connected click sound to button: RightArrow
+[ShopUI] Created centered layout for:Mods
+[ShopUI] Creating centered layout for tab:Colors
+[ShopUI] Adding footer UI to tab:Colors
+[AudioManager] Connected click sound to button: LeftArrow
+[AudioManager] Connected click sound to button: RightArrow
+[ShopUI] Created centered layout for:Colors
+[ShopUI] Creating centered layout for tab:Consoles
+[ShopUI] Adding shelf background to tab:Consoles
+[ShopUI] Shelf background added to:Consoles
+[ShopUI] Adding footer UI to tab:Consoles
+[AudioManager] Connected click sound to button: LeftArrow
+[AudioManager] Connected click sound to button: RightArrow
+[ShopUI] Created centered layout for:Consoles
+[ShopUI] Styled grid container:ItemContainer
+[ShopUI] Styled grid container:ItemContainer
+[ShopUI] Styled grid container:ItemContainer
+[ShopUI] Styled grid container:ItemContainer
+[ShopUI] Styled grid container:ItemContainer
+[ShopUI] Applying improved shop background styling
+[ShopUI] Shop background styling applied
+[ShopUI] Tab container styling applied
+[PowerUpManager] Getting available power-ups
+[PowerUpManager] Definitions loaded:0
+[PowerUpManager] Available power-ups:[]
+[ShopUI] Backdrop click-to-close connected
+[ShopUI] Styling close button
+▶ GameController._ready()
+[DebugPanel] Setting as singleton instance: DebugPanel:<Control#307811586222>
+[AudioManager] Connected click sound to button: @Button@54
+[AudioManager] Connected click sound to button: @Button@55
+[AudioManager] Connected click sound to button: @Button@56
+[AudioManager] Connected click sound to button: @Button@62
+[AudioManager] Connected click sound to button: @Button@66
+[AudioManager] Connected click sound to button: @Button@69
+[AudioManager] Connected click sound to button: @Button@70
+[AudioManager] Connected click sound to button: @Button@71
+[AudioManager] Connected click sound to button: @Button@72
+[AudioManager] Connected click sound to button: @Button@73
+[AudioManager] Connected click sound to button: @Button@74
+[AudioManager] Connected click sound to button: @Button@75
+[AudioManager] Connected click sound to button: @Button@76
+[AudioManager] Connected click sound to button: @Button@77
+[AudioManager] Connected click sound to button: @Button@78
+[AudioManager] Connected click sound to button: @Button@79
+[AudioManager] Connected click sound to button: @Button@80
+[AudioManager] Connected click sound to button: @Button@81
+[AudioManager] Connected click sound to button: @Button@82
+[AudioManager] Connected click sound to button: @Button@83
+[AudioManager] Connected click sound to button: @Button@84
+[AudioManager] Connected click sound to button: @Button@85
+[AudioManager] Connected click sound to button: @Button@86
+[AudioManager] Connected click sound to button: @Button@87
+[AudioManager] Connected click sound to button: @Button@88
+[AudioManager] Connected click sound to button: @Button@89
+[AudioManager] Connected click sound to button: @Button@90
+[AudioManager] Connected click sound to button: @Button@91
+[AudioManager] Connected click sound to button: @Button@92
+[AudioManager] Connected click sound to button: @Button@93
+[AudioManager] Connected click sound to button: @Button@94
+[AudioManager] Connected click sound to button: @Button@95
+[AudioManager] Connected click sound to button: @Button@96
+[AudioManager] Connected click sound to button: @Button@97
+[AudioManager] Connected click sound to button: @Button@98
+[AudioManager] Connected click sound to button: @Button@99
+[AudioManager] Connected click sound to button: @Button@100
+[AudioManager] Connected click sound to button: @Button@101
+[AudioManager] Connected click sound to button: @Button@102
+[AudioManager] Connected click sound to button: @Button@103
+[AudioManager] Connected click sound to button: @Button@104
+[AudioManager] Connected click sound to button: @Button@105
+[AudioManager] Connected click sound to button: @Button@106
+[AudioManager] Connected click sound to button: @Button@107
+[AudioManager] Connected click sound to button: @Button@108
+[AudioManager] Connected click sound to button: @Button@109
+[AudioManager] Connected click sound to button: @Button@112
+[AudioManager] Connected click sound to button: @Button@113
+[AudioManager] Connected click sound to button: @Button@114
+[AudioManager] Connected click sound to button: @Button@115
+[AudioManager] Connected click sound to button: @Button@116
+[AudioManager] Connected click sound to button: @Button@117
+[AudioManager] Connected click sound to button: @Button@118
+[AudioManager] Connected click sound to button: @Button@119
+[AudioManager] Connected click sound to button: @Button@122
+[AudioManager] Connected click sound to button: @Button@123
+[AudioManager] Connected click sound to button: @Button@124
+[AudioManager] Connected click sound to button: @Button@125
+[AudioManager] Connected click sound to button: @Button@126
+[AudioManager] Connected click sound to button: @Button@129
+[AudioManager] Connected click sound to button: @Button@130
+[AudioManager] Connected click sound to button: @Button@131
+[AudioManager] Connected click sound to button: @Button@132
+[AudioManager] Connected click sound to button: @Button@133
+[AudioManager] Connected click sound to button: @Button@134
+[AudioManager] Connected click sound to button: @Button@135
+[AudioManager] Connected click sound to button: @Button@136
+[AudioManager] Connected click sound to button: @Button@137
+[AudioManager] Connected click sound to button: @Button@138
+[AudioManager] Connected click sound to button: @Button@139
+[AudioManager] Connected click sound to button: @Button@140
+[AudioManager] Connected click sound to button: @Button@141
+[AudioManager] Connected click sound to button: @Button@142
+[AudioManager] Connected click sound to button: @Button@143
+[AudioManager] Connected click sound to button: @Button@144
+[AudioManager] Connected click sound to button: @Button@147
+[AudioManager] Connected click sound to button: @Button@148
+[AudioManager] Connected click sound to button: @Button@149
+[AudioManager] Connected click sound to button: @Button@150
+[AudioManager] Connected click sound to button: @Button@151
+[AudioManager] Connected click sound to button: @Button@152
+[AudioManager] Connected click sound to button: @Button@153
+[AudioManager] Connected click sound to button: @Button@154
+[AudioManager] Connected click sound to button: @Button@155
+[AudioManager] Connected click sound to button: @Button@156
+[AudioManager] Connected click sound to button: @Button@157
+[AudioManager] Connected click sound to button: @Button@158
+[AudioManager] Connected click sound to button: @Button@159
+[AudioManager] Connected click sound to button: @Button@160
+[AudioManager] Connected click sound to button: @Button@161
+[AudioManager] Connected click sound to button: @Button@162
+[AudioManager] Connected click sound to button: @Button@163
+[AudioManager] Connected click sound to button: @Button@164
+[AudioManager] Connected click sound to button: @Button@165
+[AudioManager] Connected click sound to button: @Button@166
+[AudioManager] Connected click sound to button: @Button@167
+[AudioManager] Connected click sound to button: @Button@168
+[AudioManager] Connected click sound to button: @Button@169
+[AudioManager] Connected click sound to button: @Button@170
+[AudioManager] Connected click sound to button: @Button@171
+[AudioManager] Connected click sound to button: @Button@172
+[AudioManager] Connected click sound to button: @Button@173
+[AudioManager] Connected click sound to button: @Button@174
+[AudioManager] Connected click sound to button: @Button@175
+[AudioManager] Connected click sound to button: @Button@178
+[AudioManager] Connected click sound to button: @Button@179
+[AudioManager] Connected click sound to button: @Button@180
+[AudioManager] Connected click sound to button: @Button@181
+[AudioManager] Connected click sound to button: @Button@182
+[AudioManager] Connected click sound to button: @Button@183
+[AudioManager] Connected click sound to button: @Button@184
+[AudioManager] Connected click sound to button: @Button@185
+[AudioManager] Connected click sound to button: @Button@188
+[AudioManager] Connected click sound to button: @Button@189
+[AudioManager] Connected click sound to button: @Button@190
+[AudioManager] Connected click sound to button: @Button@191
+[AudioManager] Connected click sound to button: @Button@192
+[AudioManager] Connected click sound to button: @Button@193
+[AudioManager] Connected click sound to button: @Button@194
+[AudioManager] Connected click sound to button: @Button@195
+[AudioManager] Connected click sound to button: @Button@198
+[AudioManager] Connected click sound to button: @Button@199
+[AudioManager] Connected click sound to button: @Button@200
+[AudioManager] Connected click sound to button: @Button@201
+[AudioManager] Connected click sound to button: @Button@202
+[AudioManager] Connected click sound to button: @Button@203
+[AudioManager] Connected click sound to button: @Button@204
+[AudioManager] Connected click sound to button: @Button@205
+[AudioManager] Connected click sound to button: @Button@206
+[AudioManager] Connected click sound to button: @Button@207
+[AudioManager] Connected click sound to button: @Button@208
+[AudioManager] Connected click sound to button: @Button@209
+[AudioManager] Connected click sound to button: @Button@210
+[AudioManager] Connected click sound to button: @Button@211
+[AudioManager] Connected click sound to button: @Button@212
+[AudioManager] Connected click sound to button: @Button@215
+[AudioManager] Connected click sound to button: @Button@216
+[AudioManager] Connected click sound to button: @Button@217
+[AudioManager] Connected click sound to button: @Button@218
+[AudioManager] Connected click sound to button: @Button@219
+[AudioManager] Connected click sound to button: @Button@220
+[AudioManager] Connected click sound to button: @Button@221
+[AudioManager] Connected click sound to button: @Button@222
+[AudioManager] Connected click sound to button: @Button@223
+[AudioManager] Connected click sound to button: @Button@224
+[AudioManager] Connected click sound to button: @Button@225
+[AudioManager] Connected click sound to button: @Button@226
+[AudioManager] Connected click sound to button: @Button@227
+[AudioManager] Connected click sound to button: @Button@228
+[AudioManager] Connected click sound to button: @Button@229
+[AudioManager] Connected click sound to button: @Button@232
+[AudioManager] Connected click sound to button: @Button@233
+[AudioManager] Connected click sound to button: @Button@234
+[AudioManager] Connected click sound to button: @Button@235
+[AudioManager] Connected click sound to button: @Button@236
+[AudioManager] Connected click sound to button: @Button@237
+[AudioManager] Connected click sound to button: @Button@238
+[AudioManager] Connected click sound to button: @Button@239
+[AudioManager] Connected click sound to button: @Button@240
+[AudioManager] Connected click sound to button: @Button@241
+[AudioManager] Connected click sound to button: @Button@244
+[AudioManager] Connected click sound to button: @Button@245
+[AudioManager] Connected click sound to button: @Button@246
+[AudioManager] Connected click sound to button: @Button@247
+[AudioManager] Connected click sound to button: @Button@248
+[AudioManager] Connected click sound to button: @Button@249
+[AudioManager] Connected click sound to button: @Button@250
+[AudioManager] Connected click sound to button: @Button@251
+[AudioManager] Connected click sound to button: @Button@252
+[AudioManager] Connected click sound to button: @Button@253
+[AudioManager] Connected click sound to button: @Button@256
+[AudioManager] Connected click sound to button: @Button@257
+[AudioManager] Connected click sound to button: @Button@258
+[AudioManager] Connected click sound to button: @Button@259
+[AudioManager] Connected click sound to button: @Button@260
+[AudioManager] Connected click sound to button: @Button@261
+[AudioManager] Connected click sound to button: @Button@262
+[AudioManager] Connected click sound to button: @Button@263
+[AudioManager] Connected click sound to button: @Button@264
+[AudioManager] Connected click sound to button: @Button@265
+[AudioManager] Connected click sound to button: @Button@266
+[AudioManager] Connected click sound to button: @Button@267
+[AudioManager] Connected click sound to button: @Button@268
+[AudioManager] Connected click sound to button: @Button@269
+[AudioManager] Connected click sound to button: @Button@270
+[AudioManager] Connected click sound to button: @Button@273
+[AudioManager] Connected click sound to button: @Button@274
+[AudioManager] Connected click sound to button: @Button@275
+[AudioManager] Connected click sound to button: @Button@276
+[AudioManager] Connected click sound to button: @Button@277
+[AudioManager] Connected click sound to button: @Button@278
+[AudioManager] Connected click sound to button: @Button@279
+[AudioManager] Connected click sound to button: @Button@280
+[AudioManager] Connected click sound to button: @Button@281
+[AudioManager] Connected click sound to button: @Button@282
+[AudioManager] Connected click sound to button: @Button@283
+[AudioManager] Connected click sound to button: @Button@284
+[AudioManager] Connected click sound to button: @Button@287
+[AudioManager] Connected click sound to button: @Button@288
+[AudioManager] Connected click sound to button: @Button@289
+[AudioManager] Connected click sound to button: @Button@290
+[AudioManager] Connected click sound to button: @Button@291
+[AudioManager] Connected click sound to button: @Button@292
+[AudioManager] Connected click sound to button: @Button@295
+[AudioManager] Connected click sound to button: @Button@296
+[AudioManager] Connected click sound to button: @Button@297
+[AudioManager] Connected click sound to button: @Button@298
+[AudioManager] Connected click sound to button: @Button@301
+[AudioManager] Connected click sound to button: @Button@302
+[AudioManager] Connected click sound to button: @Button@303
+[AudioManager] Connected click sound to button: @Button@306
+[AudioManager] Connected click sound to button: @Button@307
+[AudioManager] Connected click sound to button: @Button@308
+[AudioManager] Connected click sound to button: @Button@309
+[AudioManager] Connected click sound to button: @Button@310
+[AudioManager] Connected click sound to button: @Button@311
+[AudioManager] Connected click sound to button: @Button@312
+[AudioManager] Connected click sound to button: @Button@313
+[AudioManager] Connected click sound to button: @Button@314
+[AudioManager] Connected click sound to button: @Button@315
+[AudioManager] Connected click sound to button: @Button@316
+[AudioManager] Connected click sound to button: @Button@317
+[AudioManager] Connected click sound to button: @Button@318
+[AudioManager] Connected click sound to button: @Button@319
+[AudioManager] Connected click sound to button: @Button@320
+[AudioManager] Connected click sound to button: @Button@321
+[AudioManager] Connected click sound to button: @Button@322
+[AudioManager] Connected click sound to button: @Button@323
+[AudioManager] Connected click sound to button: @Button@324
+[AudioManager] Connected click sound to button: @Button@325
+[AudioManager] Connected click sound to button: @Button@333
+[AudioManager] Connected click sound to button: @Button@334
+[DebugPanel] Hiding panel
+[AudioManager] Connected click sound to button: OKButton
+[ProgressManager] Connecting to game scene signals...
+[ProgressManager] Connected to scorecard signals
+[ProgressManager] Connected to game controller signals
+[ProgressManager] Connected to turn tracker signals
+[ProgressManager] Connected to player economy signals
+[ProgressManager] Connected to dice color manager signals
+[ProgressManager] Connected to roll stats signals
+[ProgressManager] Game signal connections complete (9 new connections)
+[GameController] Connected to ProgressManager unlock signals
+[GameController] Connected to dice_rolled signal from GameButtonUI
+[GameController] Connected to roll_pressed signal from GameButtonUI
+[GameController] Setting up shop UI
+[GameController] Connected to consumable_used signal from ConsumableUI via forwarding handler
+[GameController] Connected to consumable_sold signal from ConsumableUI
+[GameController] Connected power_up_revoked signal to UI handler
+[ChoreUI] Connected to ChoresManager
+[GameController] Connected ChoreUI to ChoresManager
+[GameController] Connected to ChoresManager.mom_triggered
+[GameController] Connected to ChoresManager.request_chore_selection
+[GameController] Connected to ChoresManager.task_selected
+[SynergyManager] Connected to GameController signals
+[GameController] Connected SynergyManager to GameController
+[GameController] Connected to ChannelManager.channel_selected
+[GameController] ChannelManagerUI connected to ChannelManager
+[GameController] RoundWinnerPanel connected
+[GameController] CarryOverPanel connected
+[GameController] VCR tracker UI bound to TurnTracker
+[GameController] VCR tracker UI bound to RoundManager
+[GameController] VCR tracker UI bound to ChannelManager
+[GameController] ScoreCardUI bound to ChannelManager
+[ConsumableManager] Programmatically registering consumable:random_power_up_uncommon
+[ConsumableManager] Total registered consumables:1
+[ConsumableManager] Programmatically registering consumable:green_envy
+[ConsumableManager] Total registered consumables:2
+[ConsumableManager] Programmatically registering consumable:poor_house
+[ConsumableManager] Total registered consumables:3
+[ConsumableManager] Programmatically registering consumable:empty_shelves
+[ConsumableManager] Total registered consumables:4
+[ConsumableManager] Programmatically registering consumable:the_rarities
+[ConsumableManager] Total registered consumables:5
+[ConsumableManager] Programmatically registering consumable:the_pawn_shop
+[ConsumableManager] Total registered consumables:6
+[ConsumableManager] Programmatically registering consumable:one_extra_dice
+[ConsumableManager] Total registered consumables:7
+[ConsumableManager] Programmatically registering consumable:go_broke_or_go_home
+[ConsumableManager] Total registered consumables:8
+[ConsumableManager] Programmatically registering consumable:ones_upgrade
+[ConsumableManager] Total registered consumables:9
+[ConsumableManager] Programmatically registering consumable:twos_upgrade
+[ConsumableManager] Total registered consumables:10
+[ConsumableManager] Programmatically registering consumable:threes_upgrade
+[ConsumableManager] Total registered consumables:11
+[ConsumableManager] Programmatically registering consumable:fours_upgrade
+[ConsumableManager] Total registered consumables:12
+[ConsumableManager] Programmatically registering consumable:fives_upgrade
+[ConsumableManager] Total registered consumables:13
+[ConsumableManager] Programmatically registering consumable:sixes_upgrade
+[ConsumableManager] Total registered consumables:14
+[ConsumableManager] Programmatically registering consumable:three_of_a_kind_upgrade
+[ConsumableManager] Total registered consumables:15
+[ConsumableManager] Programmatically registering consumable:four_of_a_kind_upgrade
+[ConsumableManager] Total registered consumables:16
+[ConsumableManager] Programmatically registering consumable:full_house_upgrade
+[ConsumableManager] Total registered consumables:17
+[ConsumableManager] Programmatically registering consumable:small_straight_upgrade
+[ConsumableManager] Total registered consumables:18
+[ConsumableManager] Programmatically registering consumable:large_straight_upgrade
+[ConsumableManager] Total registered consumables:19
+[ConsumableManager] Programmatically registering consumable:yahtzee_upgrade
+[ConsumableManager] Total registered consumables:20
+[ConsumableManager] Programmatically registering consumable:chance_upgrade
+[ConsumableManager] Total registered consumables:21
+[ConsumableManager] Programmatically registering consumable:all_categories_upgrade
+[ConsumableManager] Total registered consumables:22
+[ConsumableManager] Programmatically registering consumable:dice_surge
+[ConsumableManager] Total registered consumables:23
+[ConsumableManager] Programmatically registering consumable:stat_cashout
+[ConsumableManager] Total registered consumables:24
+[ConsumableManager] Programmatically registering consumable:upper_section_boost
+[ConsumableManager] Total registered consumables:25
+[ConsumableManager] Programmatically registering consumable:lower_section_boost
+[ConsumableManager] Total registered consumables:26
+[ConsumableManager] Programmatically registering consumable:score_streak
+[ConsumableManager] Total registered consumables:27
+[ConsumableManager] Programmatically registering consumable:score_amplifier
+[ConsumableManager] Total registered consumables:28
+[ConsumableManager] Programmatically registering consumable:bonus_collector
+[ConsumableManager] Total registered consumables:29
+[GameController] Handler expects args:1
+PowerUpManager: defs count =68
+  slot 0 → <Resource#-9223371941946063143> (id='extra_dice')
+  slot 1 → <Resource#-9223371941174311200> (id='extra_rolls')
+  slot 2 → <Resource#-9223371923491125487> (id='foursome')
+  slot 3 → <Resource#-9223371921142315166> (id='upper_bonus_mult')
+  slot 4 → <Resource#-9223371920387340440> (id='yahtzee_bonus_mult')
+  slot 5 → <Resource#-9223371918021752967> (id='chance520')
+  slot 6 → <Resource#-9223371918927722638> (id='bonus_money')
+  slot 7 → <Resource#-9223371916931233919> (id='money_multiplier')
+  slot 8 → <Resource#-9223371915337398387> (id='consumable_cash')
+  slot 9 → <Resource#-9223371915958155385> (id='randomizer')
+  slot 10 → <Resource#-9223371913189914722> (id='evens_no_odds')
+  slot 11 → <Resource#-9223371912351053915> (id='full_house_bonus')
+  slot 12 → <Resource#-9223371903761119262> (id='step_by_step')
+  slot 13 → <Resource#-9223371887973758906> (id='perfect_strangers')
+  slot 14 → <Resource#-9223371884584761244> (id='green_monster')
+  slot 15 → <Resource#-9223371902049843219> (id='red_power_ranger')
+  slot 16 → <Resource#-9223371880340125573> (id='wild_dots')
+  slot 17 → <Resource#-9223371878125533051> (id='pin_head')
+  slot 18 → <Resource#-9223371876347148145> (id='money_well_spent')
+  slot 19 → <Resource#-9223371875558618986> (id='highlighted_score')
+  slot 20 → <Resource#-9223371874535208804> (id='the_consumer_is_always_right')
+  slot 21 → <Resource#-9223371873948006238> (id='green_slime')
+  slot 22 → <Resource#-9223371873360803672> (id='red_slime')
+  slot 23 → <Resource#-9223371872773601106> (id='purple_slime')
+  slot 24 → <Resource#-9223371872186398540> (id='blue_slime')
+  slot 25 → <Resource#-9223371871498532678> (id='lower_ten')
+  slot 26 → <Resource#-9223371870944884544> (id='different_straights')
+  slot 27 → <Resource#-9223371870257018682> (id='plus_thelast')
+  slot 28 → <Resource#-9223371869703370548> (id='allowance')
+  slot 29 → <Resource#-9223371864217220874> (id='plus_a_dollar')
+  slot 30 → <Resource#-9223371863529355012> (id='sweet_sixteen')
+  slot 31 → <Resource#-9223371869149722414> (id='ungrounded')
+  slot 32 → <Resource#-9223371868596074280> (id='shop_rerolls')
+  slot 33 → <Resource#-9223371867841099554> (id='tango_and_cash')
+  slot 34 → <Resource#-9223371866817689372> (id='even_higher')
+  slot 35 → <Resource#-9223371865592952598> (id='money_bags')
+  slot 36 → <Resource#-9223371864837977872> (id='failed_money')
+  slot 37 → <Resource#-9223371898744731619> (id='dice_diversity')
+  slot 38 → <Resource#-9223371898107197404> (id='lock_and_load')
+  slot 39 → <Resource#-9223371897536772053> (id='chore_champion')
+  slot 40 → <Resource#-9223371896513361871> (id='roll_efficiency')
+  slot 41 → <Resource#-9223371895322179527> (id='pair_paradise')
+  slot 42 → <Resource#-9223371848194979431> (id='extra_coupons')
+  slot 43 → <Resource#-9223371847037351516> (id='purple_payout')
+  slot 44 → <Resource#-9223371846416594518> (id='mod_money')
+  slot 45 → <Resource#-9223371845862946384> (id='blue_safety_net')
+  slot 46 → <Resource#-9223371845309298250> (id='chore_sprint')
+  slot 47 → <Resource#-9223371844688541252> (id='straight_triplet_master')
+  slot 48 → <Resource#-9223371843530913342> (id='modded_dice_mastery')
+  slot 49 → <Resource#-9223371842826270264> (id='debuff_destroyer')
+  slot 50 → <Resource#-9223371842272622130> (id='challenge_easer')
+  slot 51 → <Resource#-9223371841718973996> (id='azure_perfection')
+  slot 52 → <Resource#-9223371840561346086> (id='rainbow_surge')
+  slot 53 → <Resource#-9223371839856703008> (id='the_replicator')
+  slot 54 → <Resource#-9223371839235946010> (id='the_piggy_bank')
+  slot 55 → <Resource#-9223371838397085204> (id='random_card_level')
+  slot 56 → <Resource#-9223371837239457294> (id='yahtzeed_dice')
+  slot 57 → <Resource#-9223371836417373704> (id='consumable_collector')
+  slot 58 → <Resource#-9223371835662398978> (id='daring_dice')
+  slot 59 → <Resource#-9223371835108750844> (id='great_exchange')
+  slot 60 → <Resource#-9223371833951122934> (id='extra_rainbow')
+  slot 61 → <Resource#-9223371832843826671> (id='melting_dice')
+  slot 62 → <Resource#-9223371831820416489> (id='hot_streak')
+  slot 63 → <Resource#-9223371830729897443> (id='one_roll_wonder')
+  slot 64 → <Resource#-9223371829706487261> (id='power_surge')
+  slot 65 → <Resource#-9223371828548859351> (id='snake_eyes')
+  slot 66 → <Resource#-9223371864217220874> (id='plus_a_dollar')
+  slot 67 → <Resource#-9223371863529355012> (id='sweet_sixteen')
+[ShopUI] Manager ready. Waiting for2more
+ChallengeManager: loading definitions...
+ChallengeManager: defs count =17
+ChallengeManager: Registered challenge:pts100_lock_dice
+ChallengeManager: Registered challenge:300pts_no_debuff
+ChallengeManager: Registered challenge:pts_100_no_debuff
+ChallengeManager: Registered challenge:pts_200_disabled_twos
+ChallengeManager: Registered challenge:pts_150_roll_score_minus_one
+ChallengeManager: Registered challenge:costly_roll
+ChallengeManager: Registered challenge:the_crossing_challenge
+ChallengeManager: Registered challenge:faster_chores_challenge
+ChallengeManager: Registered challenge:disabled_mods_challenge
+ChallengeManager: Registered challenge:disabled_colors_challenge
+ChallengeManager: Registered challenge:reduced_levels_challenge
+ChallengeManager: Registered challenge:wildcard_run_challenge
+ChallengeManager: Registered challenge:triple_threat_challenge
+ChallengeManager: Registered challenge:perfect_execution_challenge
+ChallengeManager: Registered challenge:chaos_theory_challenge
+ChallengeManager: Registered challenge:greed_isnt_good
+ChallengeManager: Registered challenge:tough_addition
+ModManager: defs count =7
+ModManager: Registering mod:even_only
+ModManager: Registering mod:five_by_one
+ModManager: Registering mod:gold_six
+ModManager: Registering mod:odd_only
+ModManager: Registering mod:three_but_three
+ModManager: Registering mod:wildcard
+ModManager: Registering mod:high_roller
+[ShopUI] Manager ready. Waiting for1more
+ConsumableManager: defs count =40
+  slot 0 → <Resource#-9223371935587498224> (id='score_reroll')
+  slot 1 → <Resource#-9223371939345594635> (id='double_existing')
+  slot 2 → <Resource#-9223371940486445333> (id='add_max_power_up')
+  slot 3 → <Resource#-9223371934815746281> (id='three_more_rolls')
+  slot 4 → <Resource#-9223371936761903356> (id='power_up_shop_num')
+  slot 5 → <Resource#-9223371936141146359> (id='quick_cash')
+  slot 6 → <Resource#-9223371939882465552> (id='any_score')
+  slot 7 → <Resource#-9223371992630032964> (id='random_power_up_uncommon')
+  slot 8 → <Resource#-9223371937718204678> (id='double_or_nothing')
+  slot 9 → <Resource#-9223371990046341699> (id='green_envy')
+  slot 10 → <Resource#-9223371989106817607> (id='poor_house')
+  slot 11 → <Resource#-9223371981892614716> (id='empty_shelves')
+  slot 12 → <Resource#-9223371981204748847> (id='the_rarities')
+  slot 13 → <Resource#-9223371980298779184> (id='the_pawn_shop')
+  slot 14 → <Resource#-9223371972178606645> (id='one_extra_dice')
+  slot 15 → <Resource#-9223371965450943010> (id='go_broke_or_go_home')
+  slot 16 → <Resource#-9223371964628859425> (id='ones_upgrade')
+  slot 17 → <Resource#-9223371964024879552> (id='twos_upgrade')
+  slot 18 → <Resource#-9223371963420899772> (id='threes_upgrade')
+  slot 19 → <Resource#-9223371962816919992> (id='fours_upgrade')
+  slot 20 → <Resource#-9223371962212940212> (id='fives_upgrade')
+  slot 21 → <Resource#-9223371961608960432> (id='sixes_upgrade')
+  slot 22 → <Resource#-9223371960786876889> (id='three_of_a_kind_upgrade')
+  slot 23 → <Resource#-9223371960182897063> (id='four_of_a_kind_upgrade')
+  slot 24 → <Resource#-9223371959578917283> (id='full_house_upgrade')
+  slot 25 → <Resource#-9223371958974937503> (id='small_straight_upgrade')
+  slot 26 → <Resource#-9223371958370957723> (id='large_straight_upgrade')
+  slot 27 → <Resource#-9223371957766977943> (id='yahtzee_upgrade')
+  slot 28 → <Resource#-9223371957162998163> (id='chance_upgrade')
+  slot 29 → <Resource#-9223371956559018383> (id='all_categories_upgrade')
+  slot 30 → <Resource#-9223371857086903992> (id='free_chores')
+  slot 31 → <Resource#-9223371856550033075> (id='all_chores')
+  slot 32 → <Resource#-9223371856013162158> (id='one_free_mod')
+  slot 33 → <Resource#-9223371847658108514> (id='visit_the_shop')
+  slot 34 → <Resource#-9223371934127880420> (id='lucky_upgrade')
+  slot 35 → <Resource#-9223371933591009503> (id='half_price')
+  slot 36 → <Resource#-9223371933054138586> (id='loss_leader')
+  slot 37 → <Resource#-9223371932517267669> (id='insurance_policy')
+  slot 38 → <Resource#-9223371931980396752> (id='clearance_rack')
+  slot 39 → <Resource#-9223371931225422027> (id='loaded_dice')
+[ShopUI] Manager ready. Waiting for0more
+[ShopUI] All managers ready - populating shop
+
+=== Populating Shop Items ===
+[PowerUpManager] Getting available power-ups
+[PowerUpManager] Definitions loaded:66
+[PowerUpManager] Found power-up:extra_dice
+[PowerUpManager] Found power-up:extra_rolls
+[PowerUpManager] Found power-up:foursome
+[PowerUpManager] Found power-up:upper_bonus_mult
+[PowerUpManager] Found power-up:yahtzee_bonus_mult
+[PowerUpManager] Found power-up:chance520
+[PowerUpManager] Found power-up:bonus_money
+[PowerUpManager] Found power-up:money_multiplier
+[PowerUpManager] Found power-up:consumable_cash
+[PowerUpManager] Found power-up:randomizer
+[PowerUpManager] Found power-up:evens_no_odds
+[PowerUpManager] Found power-up:full_house_bonus
+[PowerUpManager] Found power-up:step_by_step
+[PowerUpManager] Found power-up:perfect_strangers
+[PowerUpManager] Found power-up:green_monster
+[PowerUpManager] Found power-up:red_power_ranger
+[PowerUpManager] Found power-up:wild_dots
+[PowerUpManager] Found power-up:pin_head
+[PowerUpManager] Found power-up:money_well_spent
+[PowerUpManager] Found power-up:highlighted_score
+[PowerUpManager] Found power-up:the_consumer_is_always_right
+[PowerUpManager] Found power-up:green_slime
+[PowerUpManager] Found power-up:red_slime
+[PowerUpManager] Found power-up:purple_slime
+[PowerUpManager] Found power-up:blue_slime
+[PowerUpManager] Found power-up:lower_ten
+[PowerUpManager] Found power-up:different_straights
+[PowerUpManager] Found power-up:plus_thelast
+[PowerUpManager] Found power-up:allowance
+[PowerUpManager] Found power-up:plus_a_dollar
+[PowerUpManager] Found power-up:sweet_sixteen
+[PowerUpManager] Found power-up:ungrounded
+[PowerUpManager] Found power-up:shop_rerolls
+[PowerUpManager] Found power-up:tango_and_cash
+[PowerUpManager] Found power-up:even_higher
+[PowerUpManager] Found power-up:money_bags
+[PowerUpManager] Found power-up:failed_money
+[PowerUpManager] Found power-up:dice_diversity
+[PowerUpManager] Found power-up:lock_and_load
+[PowerUpManager] Found power-up:chore_champion
+[PowerUpManager] Found power-up:roll_efficiency
+[PowerUpManager] Found power-up:pair_paradise
+[PowerUpManager] Found power-up:extra_coupons
+[PowerUpManager] Found power-up:purple_payout
+[PowerUpManager] Found power-up:mod_money
+[PowerUpManager] Found power-up:blue_safety_net
+[PowerUpManager] Found power-up:chore_sprint
+[PowerUpManager] Found power-up:straight_triplet_master
+[PowerUpManager] Found power-up:modded_dice_mastery
+[PowerUpManager] Found power-up:debuff_destroyer
+[PowerUpManager] Found power-up:challenge_easer
+[PowerUpManager] Found power-up:azure_perfection
+[PowerUpManager] Found power-up:rainbow_surge
+[PowerUpManager] Found power-up:the_replicator
+[PowerUpManager] Found power-up:the_piggy_bank
+[PowerUpManager] Found power-up:random_card_level
+[PowerUpManager] Found power-up:yahtzeed_dice
+[PowerUpManager] Found power-up:consumable_collector
+[PowerUpManager] Found power-up:daring_dice
+[PowerUpManager] Found power-up:great_exchange
+[PowerUpManager] Found power-up:extra_rainbow
+[PowerUpManager] Found power-up:melting_dice
+[PowerUpManager] Found power-up:hot_streak
+[PowerUpManager] Found power-up:one_roll_wonder
+[PowerUpManager] Found power-up:power_surge
+[PowerUpManager] Found power-up:snake_eyes
+[PowerUpManager] Available power-ups:["extra_dice", "extra_rolls", "foursome", "upper_bonus_mult", "yahtzee_bonus_mult", "chance520", "bonus_money", "money_multiplier", "consumable_cash", "randomizer", "evens_no_odds", "full_house_bonus", "step_by_step", "perfect_strangers", "green_monster", "red_power_ranger", "wild_dots", "pin_head", "money_well_spent", "highlighted_score", "the_consumer_is_always_right", "green_slime", "red_slime", "purple_slime", "blue_slime", "lower_ten", "different_straights", "plus_thelast", "allowance", "plus_a_dollar", "sweet_sixteen", "ungrounded", "shop_rerolls", "tango_and_cash", "even_higher", "money_bags", "failed_money", "dice_diversity", "lock_and_load", "chore_champion", "roll_efficiency", "pair_paradise", "extra_coupons", "purple_payout", "mod_money", "blue_safety_net", "chore_sprint", "straight_triplet_master", "modded_dice_mastery", "debuff_destroyer", "challenge_easer", "azure_perfection", "rainbow_surge", "the_replicator", "the_piggy_bank", "random_card_level", "yahtzeed_dice", "consumable_collector", "daring_dice", "great_exchange", "extra_rainbow", "melting_dice", "hot_streak", "one_roll_wonder", "power_surge", "snake_eyes"]
+[ShopUI] Filtering out locked power_up: randomizer
+[ShopUI] Filtering out locked power_up: perfect_strangers
+[ShopUI] Filtering out locked power_up: pin_head
+[ShopUI] Filtering out locked power_up: the_consumer_is_always_right
+[ShopUI] Filtering out locked power_up: different_straights
+[ShopUI] Filtering out locked power_up: sweet_sixteen
+[ShopUI] Filtering out locked power_up: ungrounded
+[ShopUI] Filtering out locked power_up: mod_money
+[ShopUI] Filtering out locked power_up: straight_triplet_master
+[ShopUI] Filtering out locked power_up: rainbow_surge
+[ShopUI] Filtering out locked power_up: consumable_collector
+[ShopUI] Filtering out locked power_up: daring_dice
+[ShopUI] Filtering out locked power_up: snake_eyes
+
+[ShopUI] Building weighted power-up selection:
+  - Extra Dice (C): 60% chance
+  - Extra Rolls (C): 60% chance
+  - Foursome (E): 4% chance
+  - Bonus Mult (R): 10% chance
+  - Yahtzee Mult (L): 1% chance
+  - Chance 520 (U): 25% chance
+  - Bonus Money (U): 25% chance
+  - Money Multiplier (R): 10% chance
+  - Cash Flow (U): 25% chance
+  - Evens No Odds (C): 60% chance
+  - Full House Fortune (C): 60% chance
+  - Step by Step (C): 60% chance
+  - Green Monster (U): 25% chance
+  - Red Power Ranger (U): 25% chance
+  - Wild Dots (R): 10% chance
+  - Money Well Spent (C): 60% chance
+  - Highlighted Score (R): 10% chance
+  - Green Slime (C): 60% chance
+  - Red Slime (U): 25% chance
+  - Purple Slime (R): 10% chance
+  - Blue Slime (L): 1% chance
+  - Lower Ten (U): 25% chance
+  - Plus The Last (R): 10% chance
+  - Allowance (C): 60% chance
+  - Plus A Dollar (C): 60% chance
+  - Shop Rerolls (U): 25% chance
+  - Tango & Cash (U): 25% chance
+  - Even Higher (R): 10% chance
+  - Money Bags (E): 4% chance
+  - Failed Money (C): 60% chance
+  - Dice Diversity (C): 60% chance
+  - Lock & Load (C): 60% chance
+  - Chore Champion (C): 60% chance
+  - Roll Efficiency (C): 60% chance
+  - Pair Paradise (C): 60% chance
+  - Extra Coupons (R): 10% chance
+  - Purple Payout (C): 60% chance
+  - Blue Safety Net (U): 25% chance
+  - Chore Sprint (U): 25% chance
+  - Modded Dice Mastery (R): 10% chance
+  - Debuff Destroyer (E): 4% chance
+  - Challenge Easer (E): 4% chance
+  - Azure Perfection (L): 1% chance
+  - The Replicator (R): 10% chance
+  - The Piggy Bank (U): 25% chance
+  - Random Card Level (R): 10% chance
+  - Yahtzeed Dice (E): 4% chance
+  - The Great Exchange (R): 10% chance
+  - Extra Rainbow (R): 10% chance
+  - Melting Dice (C): 60% chance
+  - Hot Streak (U): 25% chance
+  - One-Roll Wonder (R): 10% chance
+  - Power Surge (E): 4% chance
+[ShopUI] Selecting 2 power-ups from weighted pool of 1512 entries
+  ✓ Selected: Extra Dice (C)
+  ✓ Selected: Green Monster (U)
+[ShopUI] Final selection: 2 power-ups
+[ShopUI] Filtering out locked consumable: the_rarities
+[ShopUI] Filtering out locked consumable: all_categories_upgrade
+[ShopUI] Filtering out locked mod: three_but_three
+[ShopUI] Filtering out locked mod: wildcard
+[ShopUI] Filtering out locked colored_dice: yellow_dice
+[ShopUI] Getting power-up container
+[ShopUI] Getting power-up container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:ShopItem
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:extra_dice
+[ShopItem] Setting up item:extra_dice
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:extra_dicetype:power_up
+[ShopUI] Getting power-up container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:@Control@348
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:green_monster
+[ShopItem] Setting up item:green_monster
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:green_monstertype:power_up
+[ShopUI] Getting consumable container
+[ShopUI] Getting consumable container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:ShopItem
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:one_free_mod
+[ShopItem] Setting up item:one_free_mod
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:one_free_modtype:consumable
+[ShopUI] Getting consumable container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:@Control@349
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:lucky_upgrade
+[ShopItem] Setting up item:lucky_upgrade
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:lucky_upgradetype:consumable
+[ShopUI] Getting mod container
+[ShopUI] Getting mod container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:ShopItem
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:high_roller
+[ShopItem] Setting up item:high_roller
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:high_rollertype:mod
+[ShopUI] Getting mod container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:@Control@350
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:odd_only
+[ShopItem] Setting up item:odd_only
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:odd_onlytype:mod
+[ShopUI] Getting colored dice container
+[ShopUI] Getting colored dice container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:ShopItem
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:blue_dice
+[ShopItem] Setting up item:blue_dice
+[ShopItem] Set up colored dice icon with shader for:Blue
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:blue_dicetype:colored_dice
+[ShopUI] Getting colored dice container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:@Control@351
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:purple_dice
+[ShopItem] Setting up item:purple_dice
+[ShopItem] Set up colored dice icon with shader for:Purple
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:purple_dicetype:colored_dice
+[ShopUI] Getting gaming console container
+[ShopUI] Populating locked items...
+[ShopUI] Locked items populated
+[ShopUI] Populating unlocked items...
+[ShopUI] Unlocked items populated
+[DebuffManager] Loading definitions...
+DebuffManager: defs count =15
+DebuffManager: loading definitions...[<Resource#-9223371922736150700>, <Resource#-9223371901328422920>, <Resource#-9223371900556670973>, <Resource#-9223371899818473460>, <Resource#-9223371886581249959>, <Resource#-9223371855459514024>, <Resource#-9223371854905865890>, <Resource#-9223371854352217756>, <Resource#-9223371853798569622>, <Resource#-9223371862891820798>, <Resource#-9223371862321395448>, <Resource#-9223371861616752370>, <Resource#-9223371861063104236>, <Resource#-9223371860442347238>, <Resource#-9223371859888699104>]
+  slot 0 → <Resource#-9223371922736150700> (id='lock_dice')
+  slot 1 → <Resource#-9223371901328422920> (id='disabled_twos')
+  slot 2 → <Resource#-9223371900556670973> (id='roll_score_minus_one')
+  slot 3 → <Resource#-9223371899818473460> (id='costly_roll')
+  slot 4 → <Resource#-9223371886581249959> (id='the_division')
+  slot 5 → <Resource#-9223371855459514024> (id='faster_chores')
+  slot 6 → <Resource#-9223371854905865890> (id='disabled_mods')
+  slot 7 → <Resource#-9223371854352217756> (id='disabled_colors')
+  slot 8 → <Resource#-9223371853798569622> (id='reduced_levels')
+  slot 9 → <Resource#-9223371862891820798> (id='too_greedy')
+  slot 10 → <Resource#-9223371862321395448> (id='half_additive')
+  slot 11 → <Resource#-9223371861616752370> (id='rotating_disabled_powerup')
+  slot 12 → <Resource#-9223371861063104236> (id='no_consumables_allowed')
+  slot 13 → <Resource#-9223371860442347238> (id='all_powerups_sold')
+  slot 14 → <Resource#-9223371859888699104> (id='one_shot')
+[DebuffManager] Registered debuff:lock_dice
+[DebuffManager] Registered debuff:disabled_twos
+[DebuffManager] Registered debuff:roll_score_minus_one
+[DebuffManager] Registered debuff:costly_roll
+[DebuffManager] Registered debuff:the_division
+[DebuffManager] Registered debuff:faster_chores
+[DebuffManager] Registered debuff:disabled_mods
+[DebuffManager] Registered debuff:disabled_colors
+[DebuffManager] Registered debuff:reduced_levels
+[DebuffManager] Registered debuff:too_greedy
+[DebuffManager] Registered debuff:half_additive
+[DebuffManager] Registered debuff:rotating_disabled_powerup
+[DebuffManager] Registered debuff:no_consumables_allowed
+[DebuffManager] Registered debuff:all_powerups_sold
+[DebuffManager] Registered debuff:one_shot
+[RoundManager] Initializing
+[RoundManager] Listing challenge config names:
+Challenge0:pts_100_no_debuff
+Challenge1:300pts_no_debuff
+Challenge2:pts_150_roll_score_minus_one
+Challenge3:pts_200_disabled_twos
+Challenge4:costly_roll
+Challenge5:pts100_lock_dice
+[RoundManager] Generating challenge sequence with seed:0
+[RoundManager] Challenge 'pts100_lock_dice' added to difficulty tier2
+[RoundManager] Challenge '300pts_no_debuff' added to difficulty tier1
+[RoundManager] Challenge 'pts_100_no_debuff' added to difficulty tier0
+[RoundManager] Challenge 'pts_200_disabled_twos' added to difficulty tier3
+[RoundManager] Challenge 'pts_150_roll_score_minus_one' added to difficulty tier2
+[RoundManager] Challenge 'costly_roll' added to difficulty tier2
+[RoundManager] Challenge 'the_crossing_challenge' added to difficulty tier5
+[RoundManager] Challenge 'faster_chores_challenge' added to difficulty tier3
+[RoundManager] Challenge 'disabled_mods_challenge' added to difficulty tier4
+[RoundManager] Challenge 'disabled_colors_challenge' added to difficulty tier4
+[RoundManager] Challenge 'reduced_levels_challenge' added to difficulty tier2
+[RoundManager] Challenge 'wildcard_run_challenge' added to difficulty tier3
+[RoundManager] Challenge 'triple_threat_challenge' added to difficulty tier4
+[RoundManager] Challenge 'perfect_execution_challenge' added to difficulty tier5
+[RoundManager] Challenge 'chaos_theory_challenge' added to difficulty tier5
+[RoundManager] Challenge 'greed_isnt_good' added to difficulty tier4
+[RoundManager] Challenge 'tough_addition' added to difficulty tier3
+[RoundManager] Round1selected challenge:pts_100_no_debuff(difficulty0, range:(0, 5))
+[RoundManager] Round2selected challenge:faster_chores_challenge(difficulty3, range:(0, 5))
+[RoundManager] Round3selected challenge:300pts_no_debuff(difficulty1, range:(0, 5))
+[RoundManager] Round4selected challenge:reduced_levels_challenge(difficulty2, range:(0, 5))
+[RoundManager] Round5selected challenge:faster_chores_challenge(difficulty3, range:(0, 5))
+[RoundManager] Round6selected challenge:triple_threat_challenge(difficulty4, range:(0, 5))
+[RoundManager] Round1using dice type from challenge:d6
+[RoundManager] Round1challenge:pts_100_no_debufftarget score:150difficulty:0
+[RoundManager] Round2using dice type from challenge:d6
+[RoundManager] Round2challenge:faster_chores_challengetarget score:350difficulty:3
+[RoundManager] Round3using dice type from challenge:d6
+[RoundManager] Round3challenge:300pts_no_debufftarget score:300difficulty:1
+[RoundManager] Round4using dice type from challenge:d6
+[RoundManager] Round4challenge:reduced_levels_challengetarget score:250difficulty:2
+[RoundManager] Round5using dice type from challenge:d6
+[RoundManager] Round5challenge:faster_chores_challengetarget score:350difficulty:3
+[RoundManager] Round6using dice type from challenge:d6
+[RoundManager] Round6challenge:triple_threat_challengetarget score:450difficulty:4
+[RoundManager] Initialized6rounds with seed:0
+[ChoresManager] Initialized with Mom mood: 5
+[ChoreUI] Task selected: Upper Score
+[ChoresManager] New task: Upper Score
+[SynergyManager] Initialized
+[ChannelManager] Loaded config for Channel1
+[ChannelManager] Loaded config for Channel2
+[ChannelManager] Loaded config for Channel3
+[ChannelManager] Loaded config for Channel4
+[ChannelManager] Loaded config for Channel5
+[ChannelManager] Loaded config for Channel6
+[ChannelManager] Loaded config for Channel7
+[ChannelManager] Loaded config for Channel8
+[ChannelManager] Loaded config for Channel9
+[ChannelManager] Loaded config for Channel10
+[ChannelManager] Loaded config for Channel11
+[ChannelManager] Loaded config for Channel12
+[ChannelManager] Loaded config for Channel13
+[ChannelManager] Loaded config for Channel14
+[ChannelManager] Loaded config for Channel15
+[ChannelManager] Loaded config for Channel16
+[ChannelManager] Loaded config for Channel17
+[ChannelManager] Loaded config for Channel18
+[ChannelManager] Loaded config for Channel19
+[ChannelManager] Loaded config for Channel20
+[ChannelManager] Initialized at Channel1with20configs loaded
+[GamingConsoleManager] Loaded 6 console definitions
+[ShopUI] GamingConsoleManager ready
+[ShopUI] Other managers already ready - repopulating to include consoles
+
+=== Populating Shop Items ===
+[PowerUpManager] Getting available power-ups
+[PowerUpManager] Definitions loaded:66
+[PowerUpManager] Found power-up:extra_dice
+[PowerUpManager] Found power-up:extra_rolls
+[PowerUpManager] Found power-up:foursome
+[PowerUpManager] Found power-up:upper_bonus_mult
+[PowerUpManager] Found power-up:yahtzee_bonus_mult
+[PowerUpManager] Found power-up:chance520
+[PowerUpManager] Found power-up:bonus_money
+[PowerUpManager] Found power-up:money_multiplier
+[PowerUpManager] Found power-up:consumable_cash
+[PowerUpManager] Found power-up:randomizer
+[PowerUpManager] Found power-up:evens_no_odds
+[PowerUpManager] Found power-up:full_house_bonus
+[PowerUpManager] Found power-up:step_by_step
+[PowerUpManager] Found power-up:perfect_strangers
+[PowerUpManager] Found power-up:green_monster
+[PowerUpManager] Found power-up:red_power_ranger
+[PowerUpManager] Found power-up:wild_dots
+[PowerUpManager] Found power-up:pin_head
+[PowerUpManager] Found power-up:money_well_spent
+[PowerUpManager] Found power-up:highlighted_score
+[PowerUpManager] Found power-up:the_consumer_is_always_right
+[PowerUpManager] Found power-up:green_slime
+[PowerUpManager] Found power-up:red_slime
+[PowerUpManager] Found power-up:purple_slime
+[PowerUpManager] Found power-up:blue_slime
+[PowerUpManager] Found power-up:lower_ten
+[PowerUpManager] Found power-up:different_straights
+[PowerUpManager] Found power-up:plus_thelast
+[PowerUpManager] Found power-up:allowance
+[PowerUpManager] Found power-up:plus_a_dollar
+[PowerUpManager] Found power-up:sweet_sixteen
+[PowerUpManager] Found power-up:ungrounded
+[PowerUpManager] Found power-up:shop_rerolls
+[PowerUpManager] Found power-up:tango_and_cash
+[PowerUpManager] Found power-up:even_higher
+[PowerUpManager] Found power-up:money_bags
+[PowerUpManager] Found power-up:failed_money
+[PowerUpManager] Found power-up:dice_diversity
+[PowerUpManager] Found power-up:lock_and_load
+[PowerUpManager] Found power-up:chore_champion
+[PowerUpManager] Found power-up:roll_efficiency
+[PowerUpManager] Found power-up:pair_paradise
+[PowerUpManager] Found power-up:extra_coupons
+[PowerUpManager] Found power-up:purple_payout
+[PowerUpManager] Found power-up:mod_money
+[PowerUpManager] Found power-up:blue_safety_net
+[PowerUpManager] Found power-up:chore_sprint
+[PowerUpManager] Found power-up:straight_triplet_master
+[PowerUpManager] Found power-up:modded_dice_mastery
+[PowerUpManager] Found power-up:debuff_destroyer
+[PowerUpManager] Found power-up:challenge_easer
+[PowerUpManager] Found power-up:azure_perfection
+[PowerUpManager] Found power-up:rainbow_surge
+[PowerUpManager] Found power-up:the_replicator
+[PowerUpManager] Found power-up:the_piggy_bank
+[PowerUpManager] Found power-up:random_card_level
+[PowerUpManager] Found power-up:yahtzeed_dice
+[PowerUpManager] Found power-up:consumable_collector
+[PowerUpManager] Found power-up:daring_dice
+[PowerUpManager] Found power-up:great_exchange
+[PowerUpManager] Found power-up:extra_rainbow
+[PowerUpManager] Found power-up:melting_dice
+[PowerUpManager] Found power-up:hot_streak
+[PowerUpManager] Found power-up:one_roll_wonder
+[PowerUpManager] Found power-up:power_surge
+[PowerUpManager] Found power-up:snake_eyes
+[PowerUpManager] Available power-ups:["extra_dice", "extra_rolls", "foursome", "upper_bonus_mult", "yahtzee_bonus_mult", "chance520", "bonus_money", "money_multiplier", "consumable_cash", "randomizer", "evens_no_odds", "full_house_bonus", "step_by_step", "perfect_strangers", "green_monster", "red_power_ranger", "wild_dots", "pin_head", "money_well_spent", "highlighted_score", "the_consumer_is_always_right", "green_slime", "red_slime", "purple_slime", "blue_slime", "lower_ten", "different_straights", "plus_thelast", "allowance", "plus_a_dollar", "sweet_sixteen", "ungrounded", "shop_rerolls", "tango_and_cash", "even_higher", "money_bags", "failed_money", "dice_diversity", "lock_and_load", "chore_champion", "roll_efficiency", "pair_paradise", "extra_coupons", "purple_payout", "mod_money", "blue_safety_net", "chore_sprint", "straight_triplet_master", "modded_dice_mastery", "debuff_destroyer", "challenge_easer", "azure_perfection", "rainbow_surge", "the_replicator", "the_piggy_bank", "random_card_level", "yahtzeed_dice", "consumable_collector", "daring_dice", "great_exchange", "extra_rainbow", "melting_dice", "hot_streak", "one_roll_wonder", "power_surge", "snake_eyes"]
+[ShopUI] Filtering out locked power_up: randomizer
+[ShopUI] Filtering out locked power_up: perfect_strangers
+[ShopUI] Filtering out locked power_up: pin_head
+[ShopUI] Filtering out locked power_up: the_consumer_is_always_right
+[ShopUI] Filtering out locked power_up: different_straights
+[ShopUI] Filtering out locked power_up: sweet_sixteen
+[ShopUI] Filtering out locked power_up: ungrounded
+[ShopUI] Filtering out locked power_up: mod_money
+[ShopUI] Filtering out locked power_up: straight_triplet_master
+[ShopUI] Filtering out locked power_up: rainbow_surge
+[ShopUI] Filtering out locked power_up: consumable_collector
+[ShopUI] Filtering out locked power_up: daring_dice
+[ShopUI] Filtering out locked power_up: snake_eyes
+
+[ShopUI] Building weighted power-up selection:
+  - Extra Dice (C): 60% chance
+  - Extra Rolls (C): 60% chance
+  - Foursome (E): 4% chance
+  - Bonus Mult (R): 10% chance
+  - Yahtzee Mult (L): 1% chance
+  - Chance 520 (U): 25% chance
+  - Bonus Money (U): 25% chance
+  - Money Multiplier (R): 10% chance
+  - Cash Flow (U): 25% chance
+  - Evens No Odds (C): 60% chance
+  - Full House Fortune (C): 60% chance
+  - Step by Step (C): 60% chance
+  - Green Monster (U): 25% chance
+  - Red Power Ranger (U): 25% chance
+  - Wild Dots (R): 10% chance
+  - Money Well Spent (C): 60% chance
+  - Highlighted Score (R): 10% chance
+  - Green Slime (C): 60% chance
+  - Red Slime (U): 25% chance
+  - Purple Slime (R): 10% chance
+  - Blue Slime (L): 1% chance
+  - Lower Ten (U): 25% chance
+  - Plus The Last (R): 10% chance
+  - Allowance (C): 60% chance
+  - Plus A Dollar (C): 60% chance
+  - Shop Rerolls (U): 25% chance
+  - Tango & Cash (U): 25% chance
+  - Even Higher (R): 10% chance
+  - Money Bags (E): 4% chance
+  - Failed Money (C): 60% chance
+  - Dice Diversity (C): 60% chance
+  - Lock & Load (C): 60% chance
+  - Chore Champion (C): 60% chance
+  - Roll Efficiency (C): 60% chance
+  - Pair Paradise (C): 60% chance
+  - Extra Coupons (R): 10% chance
+  - Purple Payout (C): 60% chance
+  - Blue Safety Net (U): 25% chance
+  - Chore Sprint (U): 25% chance
+  - Modded Dice Mastery (R): 10% chance
+  - Debuff Destroyer (E): 4% chance
+  - Challenge Easer (E): 4% chance
+  - Azure Perfection (L): 1% chance
+  - The Replicator (R): 10% chance
+  - The Piggy Bank (U): 25% chance
+  - Random Card Level (R): 10% chance
+  - Yahtzeed Dice (E): 4% chance
+  - The Great Exchange (R): 10% chance
+  - Extra Rainbow (R): 10% chance
+  - Melting Dice (C): 60% chance
+  - Hot Streak (U): 25% chance
+  - One-Roll Wonder (R): 10% chance
+  - Power Surge (E): 4% chance
+[ShopUI] Selecting 2 power-ups from weighted pool of 1512 entries
+  ✓ Selected: Pair Paradise (C)
+  ✓ Selected: Extra Dice (C)
+[ShopUI] Final selection: 2 power-ups
+[ShopUI] Filtering out locked consumable: the_rarities
+[ShopUI] Filtering out locked consumable: all_categories_upgrade
+[ShopUI] Filtering out locked mod: three_but_three
+[ShopUI] Filtering out locked mod: wildcard
+[ShopUI] Filtering out locked colored_dice: yellow_dice
+[ShopUI] Filtering out locked gaming_console: playstation_console
+[ShopUI] Filtering out locked gaming_console: sega_saturn_console
+[ShopUI] Getting power-up container
+[ShopUI] Getting power-up container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:ShopItem
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:pair_paradise
+[ShopItem] Setting up item:pair_paradise
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:pair_paradisetype:power_up
+[ShopUI] Getting power-up container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:@Control@1848
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:extra_dice
+[ShopItem] Setting up item:extra_dice
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:extra_dicetype:power_up
+[ShopUI] Getting consumable container
+[ShopUI] Getting consumable container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:ShopItem
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:clearance_rack
+[ShopItem] Setting up item:clearance_rack
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:clearance_racktype:consumable
+[ShopUI] Getting consumable container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:@Control@1849
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:threes_upgrade
+[ShopItem] Setting up item:threes_upgrade
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:threes_upgradetype:consumable
+[ShopUI] Getting mod container
+[ShopUI] Getting mod container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:ShopItem
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:gold_six
+[ShopItem] Setting up item:gold_six
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:gold_sixtype:mod
+[ShopUI] Getting mod container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:@Control@1850
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:odd_only
+[ShopItem] Setting up item:odd_only
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:odd_onlytype:mod
+[ShopUI] Getting colored dice container
+[ShopUI] Getting colored dice container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:ShopItem
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:blue_dice
+[ShopItem] Setting up item:blue_dice
+[ShopItem] Set up colored dice icon with shader for:Blue
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:blue_dicetype:colored_dice
+[ShopUI] Getting colored dice container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:@Control@1851
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:red_dice
+[ShopItem] Setting up item:red_dice
+[ShopItem] Set up colored dice icon with shader for:Red
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:red_dicetype:colored_dice
+[ShopUI] Getting gaming console container
+[ShopUI] Getting gaming console container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:ShopItem
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:atari_console
+[ShopItem] Setting up item:atari_console
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:atari_consoletype:gaming_console
+[ShopUI] Getting gaming console container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:@Control@1852
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:nes_console
+[ShopItem] Setting up item:nes_console
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:nes_consoletype:gaming_console
+[ShopUI] Getting gaming console container
+[AudioManager] Connected click sound to button: BuyButton
+[ShopItem] Initializing:@Control@1853
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:snes_console
+[ShopItem] Setting up item:snes_console
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:snes_consoletype:gaming_console
+[ShopUI] Populating locked items...
+[ShopUI] Locked items populated
+[ShopUI] Populating unlocked items...
+[ShopUI] Unlocked items populated
+[DebugPanel] Another debug panel already exists (DebugPanel:<Control#307811586222>), removing duplicate (DebugPanel:<Control#266673850429>)
+[AudioManager] Connected click sound to button: OverlayButton
+[AudioManager] Connected click sound to button: @Button@3398
+[AudioManager] Connected click sound to button: @Button@3399
+[AudioManager] Connected click sound to button: StartButton
+[AudioManager] Connected click sound to button: OverlayButton
+[AudioManager] Connected click sound to button: OverlayButton
+[AudioManager] Connected click sound to button: OverlayButton
+[ScoreCardUI] Referencing category level labels from scene
+[ScoreCardUI] Found level label for upper:ones
+[ScoreCardUI] Found level label for upper:twos
+[ScoreCardUI] Found level label for upper:threes
+[ScoreCardUI] Found level label for upper:fours
+[ScoreCardUI] Found level label for upper:fives
+[ScoreCardUI] Found level label for upper:sixes
+[ScoreCardUI] Found level label for lower:three_of_a_kind
+[ScoreCardUI] Found level label for lower:four_of_a_kind
+[ScoreCardUI] Found level label for lower:full_house
+[ScoreCardUI] Found level label for lower:small_straight
+[ScoreCardUI] Found level label for lower:large_straight
+[ScoreCardUI] Found level label for lower:yahtzee
+[ScoreCardUI] Found level label for lower:chance
+[ScoreCardUI] Referenced13level labels total
+[DiceResults] Scorecard reference set:ScoreCard
+[ScoreCardUI] Updated 6th slot button text to 'Sixes:'
+[DebuffTest] Added Camera2D + CameraDynamics to CRTTV
+Round Manager Test Scene
+[ProgressManager] Connected to scorecard signals
+[ProgressManager] Connected to game controller signals
+[ProgressManager] Connected to turn tracker signals
+[ProgressManager] Connected to roll stats signals
+[ProgressManager] Game signal connections complete (0 new connections)
+[AudioManager] Connected click sound to button: CloseButton
+[CRTManager] Auto-created TVPowerOverlay
+Shop button status: false
+[GameButtonUI] Connected to challenge_manager.challenge_completed signal
+[GameButtonUI] challenge_manager instance:ChallengeManager:<Node2D#266522855565>
+[DiceHand] Derived dice area from parent container:(208.0, 125.0)(416.0, 250.0)
+[ChoreUI] Progress updated: 0
+[ChoreUI] Task selected: Upper Score
+[ChoreUI] Initialized with task: Upper Score
+[GameRNG] Initialized with seed:3817
+[PowerUpManager] Getting available power-ups
+[PowerUpManager] Definitions loaded:66
+[PowerUpManager] Found power-up:extra_dice
+[PowerUpManager] Found power-up:extra_rolls
+[PowerUpManager] Found power-up:foursome
+[PowerUpManager] Found power-up:upper_bonus_mult
+[PowerUpManager] Found power-up:yahtzee_bonus_mult
+[PowerUpManager] Found power-up:chance520
+[PowerUpManager] Found power-up:bonus_money
+[PowerUpManager] Found power-up:money_multiplier
+[PowerUpManager] Found power-up:consumable_cash
+[PowerUpManager] Found power-up:randomizer
+[PowerUpManager] Found power-up:evens_no_odds
+[PowerUpManager] Found power-up:full_house_bonus
+[PowerUpManager] Found power-up:step_by_step
+[PowerUpManager] Found power-up:perfect_strangers
+[PowerUpManager] Found power-up:green_monster
+[PowerUpManager] Found power-up:red_power_ranger
+[PowerUpManager] Found power-up:wild_dots
+[PowerUpManager] Found power-up:pin_head
+[PowerUpManager] Found power-up:money_well_spent
+[PowerUpManager] Found power-up:highlighted_score
+[PowerUpManager] Found power-up:the_consumer_is_always_right
+[PowerUpManager] Found power-up:green_slime
+[PowerUpManager] Found power-up:red_slime
+[PowerUpManager] Found power-up:purple_slime
+[PowerUpManager] Found power-up:blue_slime
+[PowerUpManager] Found power-up:lower_ten
+[PowerUpManager] Found power-up:different_straights
+[PowerUpManager] Found power-up:plus_thelast
+[PowerUpManager] Found power-up:allowance
+[PowerUpManager] Found power-up:plus_a_dollar
+[PowerUpManager] Found power-up:sweet_sixteen
+[PowerUpManager] Found power-up:ungrounded
+[PowerUpManager] Found power-up:shop_rerolls
+[PowerUpManager] Found power-up:tango_and_cash
+[PowerUpManager] Found power-up:even_higher
+[PowerUpManager] Found power-up:money_bags
+[PowerUpManager] Found power-up:failed_money
+[PowerUpManager] Found power-up:dice_diversity
+[PowerUpManager] Found power-up:lock_and_load
+[PowerUpManager] Found power-up:chore_champion
+[PowerUpManager] Found power-up:roll_efficiency
+[PowerUpManager] Found power-up:pair_paradise
+[PowerUpManager] Found power-up:extra_coupons
+[PowerUpManager] Found power-up:purple_payout
+[PowerUpManager] Found power-up:mod_money
+[PowerUpManager] Found power-up:blue_safety_net
+[PowerUpManager] Found power-up:chore_sprint
+[PowerUpManager] Found power-up:straight_triplet_master
+[PowerUpManager] Found power-up:modded_dice_mastery
+[PowerUpManager] Found power-up:debuff_destroyer
+[PowerUpManager] Found power-up:challenge_easer
+[PowerUpManager] Found power-up:azure_perfection
+[PowerUpManager] Found power-up:rainbow_surge
+[PowerUpManager] Found power-up:the_replicator
+[PowerUpManager] Found power-up:the_piggy_bank
+[PowerUpManager] Found power-up:random_card_level
+[PowerUpManager] Found power-up:yahtzeed_dice
+[PowerUpManager] Found power-up:consumable_collector
+[PowerUpManager] Found power-up:daring_dice
+[PowerUpManager] Found power-up:great_exchange
+[PowerUpManager] Found power-up:extra_rainbow
+[PowerUpManager] Found power-up:melting_dice
+[PowerUpManager] Found power-up:hot_streak
+[PowerUpManager] Found power-up:one_roll_wonder
+[PowerUpManager] Found power-up:power_surge
+[PowerUpManager] Found power-up:snake_eyes
+[PowerUpManager] Available power-ups:["extra_dice", "extra_rolls", "foursome", "upper_bonus_mult", "yahtzee_bonus_mult", "chance520", "bonus_money", "money_multiplier", "consumable_cash", "randomizer", "evens_no_odds", "full_house_bonus", "step_by_step", "perfect_strangers", "green_monster", "red_power_ranger", "wild_dots", "pin_head", "money_well_spent", "highlighted_score", "the_consumer_is_always_right", "green_slime", "red_slime", "purple_slime", "blue_slime", "lower_ten", "different_straights", "plus_thelast", "allowance", "plus_a_dollar", "sweet_sixteen", "ungrounded", "shop_rerolls", "tango_and_cash", "even_higher", "money_bags", "failed_money", "dice_diversity", "lock_and_load", "chore_champion", "roll_efficiency", "pair_paradise", "extra_coupons", "purple_payout", "mod_money", "blue_safety_net", "chore_sprint", "straight_triplet_master", "modded_dice_mastery", "debuff_destroyer", "challenge_easer", "azure_perfection", "rainbow_surge", "the_replicator", "the_piggy_bank", "random_card_level", "yahtzeed_dice", "consumable_collector", "daring_dice", "great_exchange", "extra_rainbow", "melting_dice", "hot_streak", "one_roll_wonder", "power_surge", "snake_eyes"]
+[ShopUI] Filtering out locked power_up: randomizer
+[ShopUI] Filtering out locked power_up: perfect_strangers
+[ShopUI] Filtering out locked power_up: pin_head
+[ShopUI] Filtering out locked power_up: the_consumer_is_always_right
+[ShopUI] Filtering out locked power_up: different_straights
+[ShopUI] Filtering out locked power_up: sweet_sixteen
+[ShopUI] Filtering out locked power_up: ungrounded
+[ShopUI] Filtering out locked power_up: mod_money
+[ShopUI] Filtering out locked power_up: straight_triplet_master
+[ShopUI] Filtering out locked power_up: rainbow_surge
+[ShopUI] Filtering out locked power_up: consumable_collector
+[ShopUI] Filtering out locked power_up: daring_dice
+[ShopUI] Filtering out locked power_up: snake_eyes
+[ShopUI] Filtering out locked consumable: the_rarities
+[ShopUI] Filtering out locked consumable: all_categories_upgrade
+[ShopUI] Reroll cost reset to $25
+[ChannelManager] Reset to Channel 1
+[ChannelManagerUI] Showing channel selector
+[GameController] Showing channel selector - waiting for player to start
+[StatisticsPanel] Content successfully created - 8 elements in core tab
+[GameButtonUI] Connected next_turn_pressed -> ScoreCardUI.auto_score_best_hand
+[GameButtonUI] Resolved round_manager via group in _connect_roll_ui_signals
+[GameButtonUI] Connected round_manager.round_started
+[GameButtonUI] Connected round_manager.round_completed
+[ScoringAnimationController] Found DiceHand
+[ScoringAnimationController] Found ConsumableUI
+[ScoringAnimationController] Found PowerUpUI
+[ScoringAnimationController] Found ScoreCardUI
+[MusicManager] Connected to RoundManager.round_started
+[MusicManager] Connected to RoundManager.round_completed
+[MusicManager] Connected to ShopUI.shop_button_opened
+[MusicManager] Connected to ChallengeManager.challenge_completed
+[MusicManager] Connected to TurnTracker.game_over
+[MusicManager] Watching tree.node_added for scene changes

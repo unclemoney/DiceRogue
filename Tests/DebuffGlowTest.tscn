@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3 uid="uid://wnfg2ni6xbiw"]
+
+[ext_resource type="Script" uid="uid://cfohplwbu7u5y" path="res://Tests/debuff_glow_test.gd" id="1_5ynlc"]
+
+[node name="DebuffGlowTest" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_5ynlc")

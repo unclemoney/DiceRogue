@@ -10,10 +10,13 @@ class_name DebuffUI
 signal debuff_selected(id: String)
 
 @export var debuff_icon_scene: PackedScene = preload("res://Scenes/Debuff/DebuffIcon.tscn")
+const DebuffVisualConfigScript = preload("res://Scripts/Debuff/debuff_visual_config.gd")
+const SCREEN_GLOW_SHADER: Shader = preload("res://Scripts/Shaders/debuff_screen_glow.gdshader")
 
 const MAX_COMPACT_VISIBLE: int = 3
 const SLOT_COUNT: int = 4
 const SLOT_SIZE: Vector2 = Vector2(64, 68)
+const SCREEN_GLOW_LAYER_NAME := "DebuffScreenGlowOverlay"
 
 var container: HBoxContainer
 var _icons: Dictionary = {}             # id -> DebuffIcon
@@ -29,6 +32,9 @@ var _slot_contents: Array[Control] = []
 enum State { NORMAL, FANNED_OUT }
 var _current_state: State = State.NORMAL
 var _background: ColorRect
+var _visual_config = DebuffVisualConfigScript.new()
+var _screen_glow_layer: CanvasLayer
+var _screen_glow_rect: ColorRect
 
 
 func _ready() -> void:
@@ -107,6 +113,7 @@ func _fan_out_debuffs() -> void:
 
 	_background = FanOverlayHelper.create_background("DebuffFanBackground")
 	overlay.add_child(_background)
+	_background.color = Color(0.0, 0.0, 0.0, _visual_config.detail_overlay_dim_alpha)
 	_background.visible = true
 	_background.gui_input.connect(_on_background_clicked)
 
@@ -123,11 +130,12 @@ func _fan_out_debuffs() -> void:
 	if count == 0:
 		return
 
-	var card_width := 220.0
-	var spacing := 240.0
+	var card_size: Vector2 = DebuffDetailCard.get_card_size()
+	var card_width: float = card_size.x
+	var spacing: float = _visual_config.detail_fan_spacing
 	var total_width := (count - 1) * spacing + card_width
-	if count > 1 and total_width > viewport_size.x - 40:
-		spacing = (viewport_size.x - 40 - card_width) / (count - 1)
+	if count > 1 and total_width > viewport_size.x - _visual_config.detail_viewport_padding:
+		spacing = (viewport_size.x - _visual_config.detail_viewport_padding - card_width) / (count - 1)
 		total_width = (count - 1) * spacing + card_width
 	var start_x := (viewport_size.x - total_width) / 2.0
 	var center_y := viewport_size.y / 2.0
@@ -143,13 +151,14 @@ func _fan_out_debuffs() -> void:
 		card.z_index = 200 + i
 
 		var target_x := start_x + i * spacing
-		var target_y := center_y - DebuffDetailCard.CARD_SIZE.y / 2.0
+		var target_y := center_y - card_size.y / 2.0
 		var target_pos := Vector2(target_x, target_y)
 
 		card.setup(icon.data)
+		card.set_active_visual(icon.is_active)
 
 		# Staggered drop-in animation
-		card.position = target_pos - Vector2(0, 300)
+		card.position = target_pos - Vector2(0, _visual_config.detail_entry_offset_y)
 		card.modulate.a = 0.0
 		var tween := create_tween()
 		tween.tween_interval(i * 0.06)
@@ -157,6 +166,10 @@ func _fan_out_debuffs() -> void:
 		tween.parallel().tween_property(card, "modulate:a", 1.0, 0.35)
 
 		_detail_cards[id] = card
+		if icon.is_active:
+			card.trigger_visual_pulse(0.7, 0.52)
+
+	_ensure_screen_glow_layer(overlay.layer + 1)
 
 
 func _fold_back_debuffs() -> void:
@@ -172,6 +185,7 @@ func _fold_back_debuffs() -> void:
 	if _background:
 		_background.queue_free()
 		_background = null
+	_cleanup_screen_glow_layer()
 
 	_refresh_compact_view()
 
@@ -291,15 +305,13 @@ func add_debuff(data: DebuffData, debuff_instance: Debuff = null) -> DebuffIcon:
 		push_error("[DebuffUI] Failed to instantiate DebuffIcon")
 		return null
 
-	# Add to self (not container) so _refresh_compact_view can manage slot placement
-	add_child(icon)
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon.set_data(data)
 	icon.set_meta("last_pos", icon.position)
 
 	_icons[data.id] = icon
 	_sorted_debuff_ids.append(data.id)
-	_refresh_compact_view()
+	_attach_icon_when_ready(data.id)
 
 	# Juice: debuff acquisition effect
 	var tfx := get_node_or_null("/root/TweenFXHelper")
@@ -312,16 +324,52 @@ func add_debuff(data: DebuffData, debuff_instance: Debuff = null) -> DebuffIcon:
 	if debuff_instance:
 		debuff_instance.debuff_started.connect(func():
 			icon.set_active(true)
+			_set_detail_card_active(data.id, true)
+			trigger_debuff_visual_pulse(data.id, 0.95, 0.46, false, true)
 			print("[DebuffUI] Debuff started:", data.id))
 		debuff_instance.debuff_ended.connect(func():
 			icon.set_active(false)
+			_set_detail_card_active(data.id, false)
 			print("[DebuffUI] Debuff ended:", data.id))
+		debuff_instance.visual_pulse_requested.connect(func(strength: float, duration: float):
+			trigger_debuff_visual_pulse(data.id, strength, duration)
+			print("[DebuffUI] Debuff pulse requested:", data.id, strength, duration))
 
 	if not icon.is_connected("debuff_selected", _on_debuff_selected):
 		icon.debuff_selected.connect(_on_debuff_selected)
 
 	print("[DebuffUI] Added debuff icon:", data.id)
 	return icon
+
+
+func _attach_icon_when_ready(id: String) -> void:
+	if not is_node_ready():
+		call_deferred("_attach_icon_when_ready", id)
+		return
+
+	var icon := _icons.get(id) as DebuffIcon
+	if not is_instance_valid(icon):
+		return
+	if not icon.get_parent():
+		add_child(icon)
+	_refresh_compact_view()
+
+
+func trigger_debuff_visual_pulse(id: String, strength: float = 1.0, duration: float = 0.42, include_compact: bool = true, include_detail: bool = true) -> void:
+	if include_compact:
+		var icon := _icons.get(id) as DebuffIcon
+		if is_instance_valid(icon):
+			icon.trigger_visual_pulse(strength, duration)
+	if include_detail:
+		var card := _detail_cards.get(id) as DebuffDetailCard
+		if is_instance_valid(card):
+			card.trigger_visual_pulse(strength, maxf(duration, 0.48))
+
+
+func _set_detail_card_active(id: String, active: bool) -> void:
+	var card := _detail_cards.get(id) as DebuffDetailCard
+	if is_instance_valid(card):
+		card.set_active_visual(active)
 
 
 func _on_debuff_selected(id: String) -> void:
@@ -335,6 +383,10 @@ func remove_debuff(id: String) -> void:
 
 	var icon: DebuffIcon = _icons[id]
 	if icon:
+		var card := _detail_cards.get(id) as DebuffDetailCard
+		if is_instance_valid(card):
+			card.queue_free()
+			_detail_cards.erase(id)
 		var tfx := get_node_or_null("/root/TweenFXHelper")
 		if tfx:
 			tfx.icon_remove(icon)
@@ -370,9 +422,14 @@ func clear_all_debuffs() -> void:
 			icon.queue_free()
 	_icons.clear()
 	_sorted_debuff_ids.clear()
+	for card in _detail_cards.values():
+		if is_instance_valid(card):
+			(card as DebuffDetailCard).queue_free()
+	_detail_cards.clear()
 	if is_instance_valid(_plus_chip):
 		_plus_chip.queue_free()
 	_plus_chip = null
+	_cleanup_screen_glow_layer()
 	print("[DebuffUI] Cleared all debuffs")
 
 
@@ -391,3 +448,57 @@ func animate_debuff_removal(debuff_id: String, on_finished: Callable) -> void:
 	else:
 		print("[DebuffUI] No icon found for debuff, skipping animation:", debuff_id)
 		on_finished.call()
+
+
+func _ensure_screen_glow_layer(layer_index: int) -> void:
+	if is_instance_valid(_screen_glow_layer) and is_instance_valid(_screen_glow_rect):
+		_screen_glow_layer.layer = layer_index
+		_apply_screen_glow_config()
+		return
+
+	var tree_root = get_tree().get_root()
+	var existing_layer = tree_root.get_node_or_null(SCREEN_GLOW_LAYER_NAME) as CanvasLayer
+	if existing_layer:
+		_screen_glow_layer = existing_layer
+	else:
+		_screen_glow_layer = CanvasLayer.new()
+		_screen_glow_layer.name = SCREEN_GLOW_LAYER_NAME
+		_screen_glow_layer.layer = layer_index
+		tree_root.add_child(_screen_glow_layer)
+
+	var glow_rect := _screen_glow_layer.get_node_or_null("GlowPass") as ColorRect
+	if not glow_rect:
+		glow_rect = ColorRect.new()
+		glow_rect.name = "GlowPass"
+		glow_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+		glow_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		glow_rect.color = Color(0.0, 0.0, 0.0, 0.0)
+		var glow_material := ShaderMaterial.new()
+		glow_material.shader = SCREEN_GLOW_SHADER
+		glow_rect.material = glow_material
+		_screen_glow_layer.add_child(glow_rect)
+	_screen_glow_rect = glow_rect
+	_apply_screen_glow_config()
+
+
+func _apply_screen_glow_config() -> void:
+	if not is_instance_valid(_screen_glow_rect):
+		return
+	var glow_material := _screen_glow_rect.material as ShaderMaterial
+	if not glow_material:
+		return
+	glow_material.set_shader_parameter("glow_strength", _visual_config.detail_screen_glow_strength)
+	glow_material.set_shader_parameter("threshold", _visual_config.detail_screen_glow_threshold)
+	glow_material.set_shader_parameter("saturation_threshold", _visual_config.detail_screen_glow_saturation_threshold)
+	glow_material.set_shader_parameter("radius_steps", _visual_config.detail_screen_glow_radius_steps)
+	glow_material.set_shader_parameter("spread", _visual_config.detail_screen_glow_spread)
+	glow_material.set_shader_parameter("lod_bias_scale", _visual_config.detail_screen_glow_lod_bias_scale)
+	glow_material.set_shader_parameter("source_boost", _visual_config.detail_screen_glow_source_boost)
+	glow_material.set_shader_parameter("alpha_strength", _visual_config.detail_screen_glow_alpha_strength)
+
+
+func _cleanup_screen_glow_layer() -> void:
+	if is_instance_valid(_screen_glow_layer):
+		_screen_glow_layer.queue_free()
+	_screen_glow_layer = null
+	_screen_glow_rect = null

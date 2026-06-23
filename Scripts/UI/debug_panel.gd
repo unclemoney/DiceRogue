@@ -262,6 +262,7 @@ func _create_debug_tabs() -> void:
 		"Testing": [
 			{"text": "Apply The Division Debuff", "method": "_debug_apply_division_debuff"},
 			{"text": "Remove The Division Debuff", "method": "_debug_remove_division_debuff"},
+			{"text": "Pulse Costly Roll Debuff UI", "method": "_debug_pulse_costly_roll_debuff_ui"},
 			{"text": "Apply Half Additive Debuff", "method": "_debug_apply_half_additive_debuff"},
 			{"text": "Remove Half Additive Debuff", "method": "_debug_remove_half_additive_debuff"},
 			{"text": "Apply Too Greedy Debuff", "method": "_debug_apply_too_greedy_debuff"},
@@ -1844,6 +1845,34 @@ func _debug_activate_pts150_challenge() -> void:
 ## _debug_apply_half_additive_debuff()
 ##
 ## Applies the Half Additive debuff for testing
+func _debug_pulse_costly_roll_debuff_ui() -> void:
+	log_debug("=== PULSING COSTLY ROLL DEBUFF UI ===")
+	if not game_controller:
+		log_debug("ERROR: GameController not found")
+		return
+
+	if not game_controller.is_debuff_active("costly_roll"):
+		game_controller.apply_debuff("costly_roll")
+		log_debug("Applied Costly Roll debuff for glow preview")
+
+	var game_ui = get_tree().get_first_node_in_group("game_ui")
+	if not game_ui:
+		log_debug("ERROR: GameUI not found")
+		return
+
+	var debuff_ui = game_ui.get_node_or_null("MarginContainer/MainVBox/MiddleSection/LeftColumn/DebuffContainer/ContentVBox/DebuffUI") as DebuffUI
+	if not debuff_ui:
+		log_debug("ERROR: DebuffUI not found")
+		return
+
+	var active_debuff = game_controller.active_debuffs.get("costly_roll") as Debuff
+	if active_debuff:
+		active_debuff.request_visual_pulse(1.12, 0.6)
+	else:
+		debuff_ui.trigger_debuff_visual_pulse("costly_roll", 1.12, 0.6)
+	log_debug("Pulsed Costly Roll debuff UI")
+
+
 func _debug_apply_half_additive_debuff() -> void:
 	log_debug("=== APPLYING HALF ADDITIVE DEBUFF ===")
 	

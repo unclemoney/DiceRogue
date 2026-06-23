@@ -13,13 +13,13 @@ var dice_hand: DiceHand
 var _effective_roll_cost: int = 10  ## Actual cost after intensity scaling
 
 
-func apply(target) -> void:
+func apply(new_target) -> void:
 	# Calculate effective cost based on intensity
 	_effective_roll_cost = int(round(base_roll_cost * intensity))
 	print("[CostlyRollDebuff] Applied - Base cost:", base_roll_cost, "Intensity:", intensity, "Effective cost:", _effective_roll_cost)
 	
 	# Store the target
-	self.target = target
+	self.target = new_target
 	_find_dice_hand()
 	
 	# If we found the dice_hand, connect to roll_complete signal
@@ -55,11 +55,12 @@ func _find_dice_hand() -> void:
 
 func _on_roll_complete() -> void:
 	print("[CostlyRollDebuff] Roll complete, charging", _effective_roll_cost, "money")
+	request_visual_pulse(1.08, 0.58)
 	
 	# Display a notification about the cost
-	var notification = get_tree().get_first_node_in_group("notification_system")
-	if notification:
-		notification.show_notification("-$%d Roll Fee" % _effective_roll_cost)
+	var notification_system = get_tree().get_first_node_in_group("notification_system")
+	if notification_system:
+		notification_system.show_notification("-$%d Roll Fee" % _effective_roll_cost)
 	
 	# Apply the cost
 	PlayerEconomy.remove_money(_effective_roll_cost, "debuff")

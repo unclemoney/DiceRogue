@@ -1157,11 +1157,23 @@ A cinematic full-screen overlay displayed after challenge celebration fireworks,
 
 `DebuffIcon` has been rebuilt as a compact chip-style widget (replacing the old shader/hover-card implementation). `DebuffUI` now shows a single HBox row with up to 3 chips and a `+N More` overflow chip. Clicking the row fans out all active debuffs as rich `DebuffDetailCard` overlays on a dim canvas.
 
+The compact glyph and the large fan-out card now share a reactive neon treatment:
+- The debuff glyph stays mostly monochrome for readability, while difficulty color is carried by the halo, rim light, and pulse.
+- Mouse proximity raises glow intensity in both compact and fan-out views using the same smoothed cursor-distance pattern used by other shader-driven UI.
+- Active debuffs keep a low resting neon charge and pulse on gameplay events when the owning debuff requests it.
+- `CostlyRollDebuff` emits a visual pulse each time its roll fee fires, so the debuff flashes on every paid roll.
+- Fanned-out debuffs now spawn a dedicated higher-layer `CanvasLayer` post-process pass so the warm glow can bleed beyond the glyph itself instead of stopping at the icon bounds.
+
 **Files:**
-- `Scripts/Debuff/debuff_icon.gd` — `DebuffIcon`: chip widget with icon, name, and difficulty stars. Tinted by `DIFFICULTY_TINTS[difficulty_rating]`.
-- `Scripts/Debuff/debuff_detail_card.gd` — `DebuffDetailCard`: full-detail card (220×280) shown during fan-out. Built in code, no .tscn.
-- `Scripts/UI/debuff_ui.gd` — `DebuffUI`: manages compact HBox row, overflow chip, fan-out/fold-back cycle.
+- `Scripts/Debuff/debuff_icon.gd` — `DebuffIcon`: compact shader host with per-instance glyph glow, proximity response, and pulse support.
+- `Scripts/Debuff/debuff_detail_card.gd` — `DebuffDetailCard`: full-detail card (248×340) shown during fan-out, with large glyph glow and card-shell halo.
+- `Scripts/UI/debuff_ui.gd` — `DebuffUI`: manages compact HBox row, overflow chip, fan-out/fold-back cycle, and targeted visual pulse routing.
+- `Scripts/Debuff/Debuff.gd` — base debuff lifecycle plus `visual_pulse_requested(strength, duration)` for debuff-owned UI feedback.
+- `Scripts/Shaders/debuff_glyph_glow.gdshader` — monochrome glyph halo/rim shader for compact and large icon art.
+- `Scripts/Shaders/debuff_card_glow.gdshader` — rounded neon shell glow used behind the fan-out detail card.
+- `Scripts/Shaders/debuff_screen_glow.gdshader` — screen-space additive blur pass applied on a dedicated post-process `CanvasLayer` above `SpineFanOverlay` during debuff fan-out.
 - `Scenes/Debuff/DebuffIcon.tscn` — stripped to minimal (Control + script only; all children built in code).
+- `Tests/DebuffGlowTest.tscn` — isolated validation scene for the debuff neon system.
 
 **Fan-out interaction:**
 1. Click the `DebuffUI` panel → `_fan_out_debuffs()` creates a `DebuffDetailCard` per debuff on `SpineFanOverlay` with staggered TRANS_BACK drop-in animation.
@@ -1172,7 +1184,12 @@ A cinematic full-screen overlay displayed after challenge celebration fireworks,
 - `remove_debuff(id)`
 - `clear_all_debuffs()`
 - `get_debuff_icon(id)` → `DebuffIcon`
+- `trigger_debuff_visual_pulse(id, strength, duration, include_compact, include_detail)`
 - `animate_debuff_removal(id, callable)`
+
+**Validation / Usage:**
+- Open `Tests/DebuffGlowTest.tscn` for isolated glow testing. The scene auto-pulses debuffs, includes manual pulse buttons, and supports click-to-fan plus mouse proximity checks.
+- In the full game, press `F12` and use `Pulse Costly Roll Debuff UI` to preview the compact/fan-out pulse path without waiting for a full scoring flow.
 
 ### Debuff Animation System
 Negative score contributions now feature dramatic visual feedback:
@@ -1400,6 +1417,7 @@ The dice display system provides dynamic positioning and animations for dice:
 Test scenes in `Tests/` folder allow isolated testing of components:
 - `DiceTest.tscn` - Dice rolling and behavior
 - `DiceDisplayTest.tscn` - Dice positioning and animations
+- `DebuffGlowTest.tscn` - Compact debuff glow, fan-out glow, pulse routing, and mouse proximity response
 - `ScoreCardTest.tscn` - Scoring logic
 - `PowerUpTest.tscn` - Power-up functionality
 - `MultiplierManagerTest.tscn` - Score modifier system
@@ -1831,6 +1849,7 @@ For rapid testing and verification of new features, DiceRogue includes a compreh
 - **Economy**: Add money ($100/$1000), reset to default  
 - **Dice Control**: Force specific values (all 6s, 1s, Yahtzee)
 - **Game Flow**: Add extra rolls, force end turn, skip to shop
+- **Debuff Visuals**: `Pulse Costly Roll Debuff UI` applies the debuff if needed and fires the compact + fan-out neon pulse path
 - **System Testing**: Test score calculations, trigger signals, show states
 - **Debug State**: Save/load debug scenarios for quick testing
 - **Utilities**: Clear output, reset entire game state
