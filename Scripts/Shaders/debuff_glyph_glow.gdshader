@@ -488,24 +488,138 @@ float sdGlyphSoldOut(vec2 p) {
 
 
 // 9. No Locks — Open padlock
-float sdGlyphNoLocks(vec2 p) {
-    // Body
-    vec2 body_p = p + vec2(0.0, 0.25);
-    float d_body = abs(sdBox(body_p, vec2(0.45, 0.35))) - (line_thickness * 0.7);
 
-    // Shackle
-    vec2 sh = p + vec2(0.0, -0.1);
-    float d_outer = sdCircle(sh, 0.55);
-    float d_inner = sdCircle(sh, 0.35);
-    float d_shackle = max(d_outer, -d_inner);
+// Outline of a top half-circle
+float sdHalfCircleOutline(vec2 p, float r, float thickness) {
+    // Distance to circle ring
+    float d_ring = abs(length(p) - r) - thickness;
 
-    // Open gap on right side only in a small window
-    if (sh.x > 0.15 && sh.y > -0.25 && sh.y < 0.15) {
-        d_shackle = 1e5;
+    // Cut away the bottom half (keep only y > 0)
+    if (p.y < 0.0) {
+        d_ring = 1e5;
     }
 
-    return min(d_body, d_shackle);
+    return d_ring;
 }
+
+vec2 rot180(vec2 p) { 
+    return -p; 
+}
+
+
+float sdSquare(vec2 p, float s) {
+    vec2 d = abs(p) - vec2(s);
+    return max(d.x, d.y);
+}
+
+float sdShackleSquare(vec2 p, vec2 center, float halfW, float halfH) {
+    vec2 d = abs(p - center) - vec2(halfW, halfH);
+    return max(d.x, d.y);
+}
+float sdLeftSquare(vec2 p) {
+    float halfW = 0.05;
+    float h     = 0.20;
+    float halfH = h * 0.5;
+
+    float yLift = 0.03;   // bump upward
+
+    vec2 center = vec2(-0.6, -halfH + yLift);
+    return sdShackleSquare(p, center, halfW, halfH);
+}
+
+float sdRightSquare(vec2 p) {
+    float halfW = 0.05;
+    float h     = 0.20;
+    float halfH = h * 0.5;
+
+    float yLift = 0.03;   // bump upward
+
+    vec2 center = vec2(0.6, -halfH + yLift);
+    return sdShackleSquare(p, center, halfW, halfH);
+}
+
+float sdRoundedRect(vec2 p, vec2 halfSize, vec4 radii) {
+    // radii = (topLeft, topRight, bottomRight, bottomLeft)
+    vec2 q = p;
+
+    // Determine which corner radius applies
+    float rx = (q.x > 0.0) ? radii.y : radii.x;
+    float ry = (q.y > 0.0) ? radii.z : radii.w;
+
+    vec2 r = vec2(rx, ry);
+
+    // Signed distance to rounded rectangle
+    vec2 d = abs(q) - halfSize + r;
+    return max(max(d.x, d.y), 0.0) + length(max(d, 0.0)) - min(r.x, r.y);
+}
+
+float sdLockCircle(vec2 p, float r) {
+    return length(p) - r;
+}
+
+float sdLockCutout(vec2 p) {
+    float r = 0.20;      // tweakable radius
+    float yOffset = -0.65;  // tweakable vertical position
+
+    vec2 center = vec2(0.0, yOffset);
+    return sdLockCircle(p - center, r);
+}
+
+float sdLockSquareCutout(vec2 p) {
+    float r = 0.20;          // match your circle radius
+    float w = r * 0.8;       // half-width (slightly less than circle radius)
+    float h = r * 0.9;       // half-height (tweakable)
+
+    float yOffset = -0.85;   // place it below the circle (tweakable)
+
+    vec2 center = vec2(0.0, yOffset);
+
+    vec2 d = abs(p - center) - vec2(w, h);
+    return max(d.x, d.y);
+}
+
+float sdKeyhole(vec2 p) {
+    float d_circle = sdLockCutout(p);
+    float d_square = sdLockSquareCutout(p);
+    return min(d_circle, d_square);
+}
+
+
+float sdLockBody(vec2 p) {
+    vec2 halfSize = vec2(0.8, 0.5);   // width=1.6, height=1.0
+
+    float rTop    = 0.15;
+    float rBottom = 0.10;
+
+    // radii order: TL, TR, BR, BL
+    vec4 radii = vec4(rTop, rTop, rBottom, rBottom);
+
+    // Position the body so its top touches y = -0.20 (adjust as needed)
+    vec2 center = vec2(0.0, -0.8);
+
+    return sdRoundedRect(p - center, halfSize, radii);
+}
+
+
+float sdGlyphNoLocks(vec2 p) {
+    vec2 q = rot180(p);
+
+    float d_arc    = sdHalfCircleOutline(q, 0.6, 0.05);
+    float d_left   = sdLeftSquare(q);
+    float d_right  = sdRightSquare(q);
+
+    float d_body   = sdLockBody(q);
+    float d_keyhole = sdKeyhole(q);
+    float d_bodyWithHole = max(d_body, -d_keyhole);
+
+    return min(min(d_arc, min(d_left, d_right)), d_bodyWithHole);
+}
+
+
+
+
+
+
 
 
 // 10. D4 Swap — Triangle (hobo symbol)
