@@ -383,27 +383,85 @@ float sdGlyphNoTwos(vec2 p) {
 
 
 // 6. Chore Surge — Three upward arrows
+// One single filled triangle, nothing else.
+// Proper upright isosceles triangle, height = h, base centered on x=0
+float sdArrowTriangle(vec2 p) {
+    // Upright isosceles triangle with tip at y=+0.5 and base at y=-0.5
+    vec2 a = vec2( 0.0,  0.5);   // top
+    vec2 b = vec2(-0.5, -0.5);   // bottom-left
+    vec2 c = vec2( 0.5, -0.5);   // bottom-right
+
+    // Edges
+    vec2 e0 = b - a;
+    vec2 e1 = c - b;
+    vec2 e2 = a - c;
+
+    // Signed distances to each edge (positive outside)
+    float d0 = (e0.y)*(p.x - a.x) - (e0.x)*(p.y - a.y);
+    float d1 = (e1.y)*(p.x - b.x) - (e1.x)*(p.y - b.y);
+    float d2 = (e2.y)*(p.x - c.x) - (e2.x)*(p.y - c.y);
+
+    // Outside = max of edge distances
+    float outside = max(max(d0, d1), d2);
+
+    // This is a *mask-style* SDF: negative inside, positive outside
+    return outside;
+}
+vec2 rotate180(vec2 p) { return -p; }
+
+float sdArrowBox(vec2 p, vec2 b) {
+    vec2 d = abs(p) - b;
+    return max(d.x, d.y);
+}
+float sdArrowStem(vec2 p) {
+    float w = 0.20;
+    float h = w * 7.0;
+
+    // Center of the stem rectangle
+    // Top of stem touches triangle base at y = -0.5
+    // So center is at y = -0.5 - h/2
+    vec2 center = vec2(0.0, -0.5 - h * 0.45);
+
+    return sdArrowBox(p - center, vec2(w, h * 0.5));
+}
+
+float sdSingleArrow(vec2 p) {
+    vec2 q = rotate180(p);
+
+    float d_tri  = sdArrowTriangle(q);
+    float d_stem = sdArrowStem(q);
+
+    return min(d_tri, d_stem);
+}
+
+float sdArrowInstance(vec2 p, vec2 offset, float scale) {
+    vec2 q = (p - offset) / scale;
+    return sdSingleArrow(q) * scale;
+}
+
+
 float sdGlyphChoreSurge(vec2 p) {
+    float spacing = 0.85;   // horizontal spacing between arrows
+    float lift    = -0.45;  // middle arrow Y offset
+    float scale   = 0.7;   // global arrow scale
+
     float d = 1e5;
-    float t = line_thickness * 0.7;
 
-    // Helper: arrow at offset with given height
-    for (int i = 0; i < 3; i++) {
-        float x = float(i - 1) * 0.45; // -0.45, 0, 0.45
-        float h = (i == 1) ? 1.0 : 0.8;
+    // Left arrow
+    d = min(d, sdArrowInstance(p, vec2(-spacing, 0.0), scale));
 
-        vec2 head_p = p - vec2(x, 0.05);
-        float d_head = sdTriangle(head_p, h);
+    // Middle arrow (lifted by 5%)
+    d = min(d, sdArrowInstance(p, vec2(0.0, lift), scale));
 
-        vec2 stem_a = vec2(x, -0.7);
-        vec2 stem_b = vec2(x, -0.05);
-        float d_stem = sdLine(p, stem_a, stem_b, t);
-
-        d = min(d, min(d_head, d_stem));
-    }
+    // Right arrow
+    d = min(d, sdArrowInstance(p, vec2(spacing, 0.0), scale));
 
     return d;
 }
+
+
+
+
 
 
 // 7. Half Value — Half-filled circle
