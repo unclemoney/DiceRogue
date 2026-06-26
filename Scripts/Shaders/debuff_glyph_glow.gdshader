@@ -823,6 +823,61 @@ float sdGlyphLevelLoss(vec2 p) {
 }
 
 // 14. Roll Tax — Stack of lines with downward arrow
+// --- Arrow pieces (from your working #6 code) ---
+
+float sdArrowTriangleRedux(vec2 p) {
+    // Upright isosceles triangle with tip at y=+0.5 and base at y=-0.5
+    vec2 a = vec2( 0.0,  0.5);   // top
+    vec2 b = vec2(-0.5, -0.5);   // bottom-left
+    vec2 c = vec2( 0.5, -0.5);   // bottom-right
+
+    vec2 e0 = b - a;
+    vec2 e1 = c - b;
+    vec2 e2 = a - c;
+
+    float d0 = (e0.y)*(p.x - a.x) - (e0.x)*(p.y - a.y);
+    float d1 = (e1.y)*(p.x - b.x) - (e1.x)*(p.y - b.y);
+    float d2 = (e2.y)*(p.x - c.x) - (e2.x)*(p.y - c.y);
+
+    // Negative inside, positive outside (mask-style)
+    return max(max(d0, d1), d2);
+}
+
+vec2 rotate180Triangle(vec2 p) { return p; }
+
+float sdArrowBoxRedux(vec2 p, vec2 b) {
+    vec2 d = abs(p) - b;
+    return max(d.x, d.y);
+}
+
+float sdArrowStemRedux(vec2 p) {
+    float w = 0.20;
+    float h = w * 7.0;
+
+    // Center of the stem rectangle
+    // Top of stem touches triangle base at y = -0.5
+    vec2 center = vec2(0.0, -0.5 - h * 0.45);
+
+    return sdArrowBoxRedux(p - center, vec2(w, h * 0.5));
+}
+
+float sdSingleArrowRedux(vec2 p) {
+    // Rotate so the triangle points down
+    vec2 q = rotate180Triangle(p);
+
+    float d_tri  = sdArrowTriangleRedux(q);
+    float d_stem = sdArrowStemRedux(q);
+
+    return min(d_tri, d_stem);
+}
+
+float sdArrowInstanceRedux(vec2 p, vec2 offset, float scale) {
+    vec2 q = (p - offset) / scale;
+    return sdSingleArrowRedux(q) * scale;
+}
+
+// --- Final glyph: three lines + one down arrow under them ---
+
 float sdGlyphRollTax(vec2 p) {
     float t = line_thickness * 0.6;
     float d = 1e5;
@@ -834,13 +889,19 @@ float sdGlyphRollTax(vec2 p) {
         d = min(d, dl);
     }
 
-    // Down arrow clearly below stack
-    vec2 pa = p + vec2(0.0, -0.55);
-    float d_arrow = sdChevron(pa, 0.35, 0.3, t, -1.0);
+    // Single down arrow clearly below the stack
+    vec2 arrowOffset = vec2(0.0, 1.0);  // vertical placement
+    float arrowScale = 0.4;               // size
+
+    float d_arrow = sdArrowInstanceRedux(p, arrowOffset, arrowScale);
     d = min(d, d_arrow);
 
     return d;
 }
+
+
+
+
 
 
 // 15. Divide All — Broken circle
