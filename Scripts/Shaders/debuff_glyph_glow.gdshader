@@ -905,29 +905,72 @@ float sdGlyphRollTax(vec2 p) {
 
 
 // 15. Divide All — Broken circle
-float sdGlyphDivideAll(vec2 p) {
-    float d_ring = abs(sdCircle(p, 0.7)) - rim_thickness;
 
-    // Break left/right arcs
-    float ang = atan(p.y, p.x);
-    if (abs(ang) < 0.35 || abs(abs(ang) - 3.141592) < 0.35) {
-        d_ring = 1e5;
-    }
-
-    // Clip edge elements: short radial stubs at gap edges
-    float t = line_thickness * 0.7;
-    float d_clip = 1e5;
-
-    // Right gap stubs
-    d_clip = min(d_clip, sdLine(p, vec2(0.2, 0.55), vec2(0.6, 0.75), t));
-    d_clip = min(d_clip, sdLine(p, vec2(0.2, -0.55), vec2(0.6, -0.75), t));
-
-    // Left gap stubs
-    d_clip = min(d_clip, sdLine(p, vec2(-0.2, 0.55), vec2(-0.6, 0.75), t));
-    d_clip = min(d_clip, sdLine(p, vec2(-0.2, -0.55), vec2(-0.6, -0.75), t));
-
-    return min(d_ring, d_clip);
+vec2 rotate2D(vec2 p, float a) {
+    float c = cos(a), s = sin(a);
+    return vec2(c*p.x - s*p.y, s*p.x + c*p.y);
 }
+
+float sdDivisionBrokenCircle(vec2 p, float angle) {
+    // Rotate first
+    p = rotate2D(p, angle);
+
+    float radius = 0.82;
+    float d = abs(sdCircle(p, radius)) - rim_thickness;
+
+    float ang = atan(p.y, p.x);
+
+    // Three thin gaps
+    if (ang > 2.30 && ang < 2.45) d = 1e5;   // top-left
+    if (ang > 0.70 && ang < 0.90) d = 1e5;   // top-right
+    if (ang > -0.90 && ang < -0.70) d = 1e5; // bottom-right
+
+    return d;
+}
+
+float sdDivisionStem(vec2 p) {
+    float w = 0.10;
+    float h = w * 3.0;
+
+    vec2 center = vec2(0.0, -0.5 - h * 0.45);
+    return sdArrowBoxRedux(p - center, vec2(w, h * 0.5));
+}
+
+float sdDivisionStemInstance(vec2 p, vec2 offset, float angle, float scale) {
+    vec2 q = p - offset;
+    q = rotate2D(q, angle);
+    q /= scale;
+
+    return sdDivisionStem(q) * scale;
+}
+
+
+float sdGlyphDivideAll(vec2 p) {
+    float d = 1e5;
+
+    // --- Broken circle ---
+    float circleAngle = 90.0;   // rotate circle here
+    float d_circle = sdDivisionBrokenCircle(p, circleAngle);
+    d = min(d, d_circle);
+
+    // --- Two stems ---
+    vec2 stemOffset1 = vec2(-0.00, 0.02);
+    vec2 stemOffset2 = vec2(1.08, 0.65);
+
+    float stemAngle1 = 45.0;
+    float stemAngle2 = 45.0;
+
+    float stemScale = 1.0;
+
+    float d_stem1 = sdDivisionStemInstance(p, stemOffset1, stemAngle1, stemScale);
+    float d_stem2 = sdDivisionStemInstance(p, stemOffset2, stemAngle2, stemScale);
+
+    d = min(d, d_stem1);
+    d = min(d, d_stem2);
+
+    return d;
+}
+
 
 
 // 16. Wealth Drain — Dollar sign with downward chevron
