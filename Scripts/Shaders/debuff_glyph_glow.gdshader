@@ -623,28 +623,193 @@ float sdGlyphNoLocks(vec2 p) {
 
 
 // 10. D4 Swap — Triangle (hobo symbol)
-float sdGlyphD4Swap(vec2 p) {
-    // Outline triangle instead of solid
-    float d_tri = sdTriangle(p, 1.1);
-    return abs(d_tri) - (line_thickness * 0.7);
+vec2 TriangleRotate(vec2 p, float a) {
+    float c = cos(a);
+    float s = sin(a);
+    return vec2(
+        c*p.x - s*p.y,
+        s*p.x + c*p.y
+    );
 }
+
+float sdD4Triangle(vec2 p, float size, float angle) {
+    // Rotate first
+    p = TriangleRotate(p, angle);
+
+    // Scale space
+    p /= size;
+
+    // Move triangle so base is at y = -0.5 and tip at y = +0.5
+    p.y += 0.25;
+
+    // Triangle vertices
+    vec2 a = vec2(0.0,  0.5);
+    vec2 b = vec2(-0.5, -0.5);
+    vec2 c = vec2(0.5, -0.5);
+
+    // Edges
+    vec2 e0 = b - a;
+    vec2 e1 = c - b;
+    vec2 e2 = a - c;
+
+    float d0 = (e0.y)*(p.x - a.x) - (e0.x)*(p.y - a.y);
+    float d1 = (e1.y)*(p.x - b.x) - (e1.x)*(p.y - b.y);
+    float d2 = (e2.y)*(p.x - c.x) - (e2.x)*(p.y - c.y);
+
+    float outside = max(max(d0, d1), d2);
+
+    return outside * size;
+}
+
+
+float sdD4TriangleOutline(vec2 p, float size, float angle, float triangleline_thickness) {
+    float d = sdD4Triangle(p, size, angle);
+    return abs(d) - triangleline_thickness;
+}
+
+
+float sdGlyphD4Swap(vec2 p) {
+    float size          = 0.8;          // tweakable
+    float angle         = 3.14159265;   // 180 degrees
+    float lineThickness = 0.04;         // tweakable
+
+    return sdD4TriangleOutline(p, size, angle, lineThickness);
+}
+
+
 
 
 // 11. Power Cut — Lightning bolt with a slash
-float sdGlyphPowerCut(vec2 p) {
-    float t = line_thickness * 0.7;
+float sdTaperedQuad(vec2 p, float wTop, float wBottom, float h) {
+    // p is already in quad-local space
+    // y = 0 is top, y = h is bottom
 
-    // Zigzag lightning: three segments
-    float d1 = sdLine(p, vec2(-0.35, 0.6), vec2(-0.05, 0.1), t);
-    float d2 = sdLine(p, vec2(-0.05, 0.1), vec2(0.15, -0.2), t);
-    float d3 = sdLine(p, vec2(0.15, -0.2), vec2(0.4, -0.6), t);
-    float d_bolt = min(d1, min(d2, d3));
+    float t = clamp(p.y / h, 0.0, 1.0);
+    float halfW = mix(wTop * 0.5, wBottom * 0.5, t);
 
-    // Slash across
-    float d_slash = sdLine(p, vec2(0.6, -0.6), vec2(-0.5, 0.6), t * 0.9);
-
-    return min(d_bolt, d_slash);
+    vec2 d = abs(vec2(p.x, p.y - h * 0.5)) - vec2(halfW, h * 0.5);
+    return max(d.x, d.y);
 }
+
+float sdSegment(vec2 p, vec2 a, vec2 b, float thickness) {
+    vec2 pa = p - a;
+    vec2 ba = b - a;
+    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    return length(pa - ba * h) - thickness;
+}
+
+vec2 Boltrotate(vec2 p, float a) {
+    float c = cos(a), s = sin(a);
+    return vec2(c*p.x - s*p.y, s*p.x + c*p.y);
+}
+
+float sdBoltFoot(vec2 p) {
+    // Original segment direction (for orientation only)
+    vec2 C = vec2(-0.30,  0.25);
+    vec2 D = vec2( 0.65, -0.60);
+
+    vec2 CD = D - C;
+    float h = length(CD);
+
+    // Center of the quad BEFORE offset
+    vec2 mid = (C + D) * 0.5;
+
+    // Add your manual offset (this is what you wanted)
+    vec2 offset = vec2(-0.5, 0.25);   // move right + up
+    mid += offset;
+
+    // Transform p into local CD space
+    float angleCD = atan(CD.y, CD.x);
+    vec2 q = Boltrotate(p - mid, -angleCD);
+
+    // Now rotate the quad itself by 45 degrees
+    float angle45 = radians(105.0);
+    q = Boltrotate(q, angle45);
+
+    // Taper: top narrower, bottom wider
+    float wTop    = 0.20;
+    float wBottom = 0.45;
+
+    return sdTaperedQuad(q, wTop, wBottom, h);
+}
+float sdBoltHead(vec2 p) {
+    // Segment 1 direction (orientation only)
+    vec2 A = vec2(-0.30,  0.65);
+    vec2 B = vec2( 0.25,  0.05);
+
+    vec2 AB = B - A;
+    float h = length(AB * 1.5);
+
+    // Center BEFORE offset
+    vec2 mid = (A + B) * 0.5;
+
+    // Manual offset — tweak these freely
+    vec2 offset = vec2(-0.28, 0.66);   // move right/up/down/left
+    mid += offset;
+
+    // Transform p into local AB space
+    float angleAB = atan(AB.y, AB.x);
+    vec2 q = Boltrotate(p - mid, -angleAB);
+
+    // Rotate the quad itself (try 20–40 degrees)
+    float angle = radians(95.0);
+    q = Boltrotate(q, angle);
+
+    // Taper: top narrower, bottom wider
+    float wTop    = 0.0;
+    float wBottom = 0.40;
+
+    return sdTaperedQuad(q, wTop, wBottom, h);
+}
+
+float sdLightningBolt(vec2 p, float thickness) {
+    float d_head = sdBoltHead(p);   // NEW quadrilateral for segment 1
+    float d2     = sdSegment(p, vec2(0.48, 0.05), vec2(-0.26, 0.05), thickness * 3.2);
+    float d3     = sdBoltFoot(p);   // tapered quad for segment 3
+
+    return min(d_head, min(d2, d3));
+}
+struct SlashResult {
+    float carve;
+    float line;
+};
+
+SlashResult sdSlash(vec2 p, float thickness, float carve) {
+    vec2 A = vec2(-0.7,  0.8);
+    vec2 B = vec2( 0.7, -0.7);
+
+    float angle = radians(-15.0);   // tweakable
+    p = Boltrotate(p, angle);
+
+    SlashResult r;
+    r.carve = sdSegment(p, A, B, thickness + carve);
+    r.line  = sdSegment(p, A, B, thickness);
+    return r;
+}
+
+
+
+float sdGlyphPowerCut(vec2 p) {
+    float t = line_thickness * 0.9;
+
+    float d_bolt = sdLightningBolt(p, t);
+
+    float slashThickness = t * 2.1;
+    float carveAmount    = t * 3.4;
+
+    SlashResult slash = sdSlash(p, slashThickness, carveAmount);
+
+    // Step 1: carve slash out of bolt
+    float d_carved = max(d_bolt, -slash.carve);
+
+    // Step 2: add visible slash line
+    float d_final = min(d_carved, slash.line);
+
+    return d_final;
+}
+
+
+
 
 
 // 12. One Roll Only — Single vertical bar
