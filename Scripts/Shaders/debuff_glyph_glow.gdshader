@@ -974,32 +974,189 @@ float sdGlyphDivideAll(vec2 p) {
 
 
 // 16. Wealth Drain — Dollar sign with downward chevron
-float sdDollarShape(vec2 p) {
-    // Slightly taller
-    p *= vec2(0.9, 1.1);
+vec2 ccRotate(vec2 p, float a) {
+    float c = cos(a), s = sin(a);
+    return vec2(c*p.x - s*p.y, s*p.x + c*p.y);
+}
 
-    // Vertical bar
-    float d_bar = sdBox(p, vec2(line_thickness * 0.5, 0.7));
+vec2 ccMirrorY(vec2 p) {
+    return vec2(p.x, -p.y);
+}
+float sdCC_HalfCircle(vec2 p, float radius, float stroke, float extraArc) {
+    float d = abs(length(p) - radius) - stroke;
 
-    // Two circular lobes
-    float d_top = sdCircle(p + vec2(0.0, 0.28), 0.32);
-    float d_bot = sdCircle(p + vec2(0.0, -0.28), 0.32);
-    float d_lobes = min(d_top, d_bot);
+    float a = atan(p.y, p.x);   // [-PI, PI]
 
-    // Outline feel: ring around lobes
-    float d = min(d_bar, d_lobes);
+    // Extend arc on LEFT side (near +PI)
+    // Keep:
+    //   a <= 0  (bottom half)
+    //   a >= PI - extraArc  (top-left extension)
+    // Cut:
+    //   0 < a < PI - extraArc  (top-right + most top-left)
+    if (a > 0.0 && a < (3.14159265 - extraArc)) {
+        d = 1e5;
+    }
+
     return d;
 }
 
-float sdGlyphWealthDrain(vec2 p) {
-    float d_dollar = sdDollarShape(p * vec2(0.8, 1.0));
 
-    // Downward chevron below
-    vec2 pc = p + vec2(0.0, -0.75);
-    float d_chev = sdChevron(pc, 0.4, 0.3, line_thickness * 0.7, -1.0);
 
-    return min(d_dollar, d_chev);
+float sdCC_Line(vec2 p, float length, float stroke) {
+    vec2 a = vec2(0.50, 0.0);
+    vec2 b = vec2(0.50, length);
+
+    return sdLineSegment(p, a, b, stroke);
 }
+float sdCandyCaneModule(vec2 p, float radius, float stroke, float lineLen, float extraArc) {
+    float d_arc  = sdCC_HalfCircle(p, radius, stroke, extraArc);
+    float d_line = sdCC_Line(p, lineLen, stroke);
+    return min(d_arc, d_line);
+}
+
+
+float sdCandyCaneInstance(
+    vec2 p,
+    vec2 offset,
+    float angle,
+    bool mirrorY,
+    float scale,
+    float radius,
+    float stroke,
+    float lineLen,
+    float extraArc
+) {
+    vec2 q = p - offset;
+
+    if (mirrorY) q = ccMirrorY(q);
+
+    q = ccRotate(q, angle);
+    q /= scale;
+
+    float d = sdCandyCaneModule(q, radius, stroke, lineLen, extraArc);
+
+    return d * scale;
+}
+
+float sdSShape(vec2 p, vec2 offset, float angle, float scale) {
+    vec2 q = p - offset;
+    q = ccRotate(q, angle);
+    q /= scale;
+
+    float d = 1e5;
+
+    float radius = 0.50;
+    float stroke = 0.08;
+    float lineLen = 0.35;
+    float extraArc = radians(40.0);
+
+    float d_top = sdCandyCaneInstance(
+        q,
+        vec2(-0.3, 0.80),
+        radians(-50.0),
+        true,
+        1.0,
+        radius, stroke, lineLen, extraArc
+    );
+
+    float d_bot = sdCandyCaneInstance(
+        q,
+        vec2(-0.20, -0.40),
+        radians(128.0),
+        true,
+        1.0,
+        radius, stroke, lineLen, extraArc
+    );
+
+    d = min(d, d_top);
+    d = min(d, d_bot);
+
+    return d * scale;
+}
+
+
+float sdBoxInstance(vec2 p, vec2 offset, float angle, float scale, vec2 halfSize) {
+    vec2 q = p - offset;
+    q = ccRotate(q, angle);
+    q /= scale;
+
+    float d = sdBox(q, halfSize);
+    return d * scale;
+}
+
+float sdTriangleDown(vec2 p, float size) {
+    // Equilateral triangle pointing down
+    vec2 a = vec2(-size,  size);
+    vec2 b = vec2( size,  size);
+    vec2 c = vec2( 0.0,  -size);
+
+    // Signed distance to triangle
+    vec2 e0 = b - a,  v0 = p - a;
+    vec2 e1 = c - b,  v1 = p - b;
+    vec2 e2 = a - c,  v2 = p - c;
+
+    float d0 = (e0.y * v0.x - e0.x * v0.y);
+    float d1 = (e1.y * v1.x - e1.x * v1.y);
+    float d2 = (e2.y * v2.x - e2.x * v2.y);
+
+    float s = (d0 < 0.0 || d1 < 0.0 || d2 < 0.0) ? 1.0 : -1.0;
+
+    float d = min(
+        min(
+            dot(v0 - e0 * clamp(dot(v0, e0) / dot(e0, e0), 0.0, 1.0),
+                v0 - e0 * clamp(dot(v0, e0) / dot(e0, e0), 0.0, 1.0)),
+            dot(v1 - e1 * clamp(dot(v1, e1) / dot(e1, e1), 0.0, 1.0),
+                v1 - e1 * clamp(dot(v1, e1) / dot(e1, e1), 0.0, 1.0))
+        ),
+        dot(v2 - e2 * clamp(dot(v2, e2) / dot(e2, e2), 0.0, 1.0),
+            v2 - e2 * clamp(dot(v2, e2) / dot(e2, e2), 0.0, 1.0))
+    );
+
+    return s * sqrt(d);
+}
+float sdTriangleInstance(vec2 p, vec2 offset, float angle, float scale, float size) {
+    vec2 q = p - offset;
+    q = ccRotate(q, angle);
+    q /= scale;
+
+    float d = sdTriangleDown(q, size);
+    return d * scale;
+}
+
+
+float sdGlyphWealthDrain(vec2 p) {
+    float d = 1e5;
+
+    // --- S instance ---
+    vec2 sOffset = vec2(0.2, -0.40);
+    float sAngle = 0.0;
+    float sScale = 0.8;
+
+    float d_s = sdSShape(p, sOffset, sAngle, sScale);
+    d = min(d, d_s);
+
+    // --- Vertical bar instance ---
+    vec2 barOffset = vec2(0.0, -0.10);
+    float barAngle = 0.0;
+    float barScale = 0.8;
+    vec2 barHalfSize = vec2(line_thickness * 1.5, 1.45);
+
+    float d_bar = sdBoxInstance(p, barOffset, barAngle, barScale, barHalfSize);
+    d = min(d, d_bar);
+
+    // --- Triangle instance (new) ---
+    vec2 triOffset = vec2(0.0, 1.0);   // position under the S
+    float triAngle = 3.15;                // rotate if needed
+    float triScale = 0.90;                // scale triangle
+    float triSize  = 0.25;               // half-size of triangle
+
+    float d_tri = sdTriangleInstance(p, triOffset, triAngle, triScale, triSize);
+    d = min(d, d_tri);
+
+    return d;
+}
+
+
 
 
 

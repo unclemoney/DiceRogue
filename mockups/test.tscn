@@ -4,7 +4,7 @@
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_807ke"]
 shader = ExtResource("1_7d8ey")
-shader_parameter/glyph_id = 14
+shader_parameter/glyph_id = 15
 shader_parameter/glow_color = Color(1, 0.2, 0.6, 1)
 shader_parameter/glow_strength = 2.675
 shader_parameter/rim_thickness = 0.066
