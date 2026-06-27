@@ -19,6 +19,7 @@ const PANEL_BORDER := Color(0.42, 0.18, 0.16, 1.0)
 const PANEL_HIGHLIGHT := Color(1.0, 0.46, 0.14, 0.94)
 const LARGE_GLYPH_SHADER: Shader = preload("res://Scripts/Shaders/debuff_glyph_glow.gdshader")
 const CARD_GLOW_SHADER: Shader = preload("res://Scripts/Shaders/debuff_card_glow.gdshader")
+const PLACEHOLDER_TEXTURE: Texture2D = preload("res://Resources/Art/UI/white_pixel.png")
 
 var _data: DebuffData
 var _panel: PanelContainer
@@ -115,6 +116,7 @@ func _build_ui() -> void:
 	_icon_rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_icon_rect.custom_minimum_size = _visual_config.detail_icon_size
 	_icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_icon_rect.texture = PLACEHOLDER_TEXTURE
 	_icon_material = ShaderMaterial.new()
 	_icon_material.shader = LARGE_GLYPH_SHADER
 	_icon_rect.material = _icon_material
@@ -212,8 +214,8 @@ func setup(data: DebuffData) -> void:
 	var tier: int = clamp(data.difficulty_rating, 0, 5)
 	_difficulty_tint = _visual_config.difficulty_tints[tier]
 
-	if _icon_rect and data.icon:
-		_icon_rect.texture = data.icon
+	if _icon_rect:
+		_icon_rect.texture = PLACEHOLDER_TEXTURE
 
 	if _name_label:
 		_name_label.text = data.display_name if data.display_name else data.id
@@ -276,26 +278,20 @@ func _apply_visual_state() -> void:
 		_card_glow_material.set_shader_parameter("pulse_wobble", _visual_config.detail_card_pulse_wobble)
 
 	if _icon_material:
-		_icon_material.set_shader_parameter("glow_color", _difficulty_tint)
-		_icon_material.set_shader_parameter("glow_intensity", _visual_config.detail_glow_intensity_base + _get_tier_strength() * _visual_config.detail_glow_intensity_tier_gain)
-		_icon_material.set_shader_parameter("proximity_strength", minf(1.0, _proximity_strength * 1.15))
-		_icon_material.set_shader_parameter("active_strength", _active_strength)
-		_icon_material.set_shader_parameter("pulse_strength", _pulse_strength)
-		_icon_material.set_shader_parameter("fill_brightness", _visual_config.detail_fill_brightness)
-		_icon_material.set_shader_parameter("fill_expand_scale", _visual_config.detail_fill_expand_scale)
-		_icon_material.set_shader_parameter("spread_plateau_scale", _visual_config.detail_spread_plateau_scale)
-		_icon_material.set_shader_parameter("glyph_tint_strength", _visual_config.detail_glyph_tint_base + _get_tier_strength() * _visual_config.detail_glyph_tint_tier_gain)
-		_icon_material.set_shader_parameter("mouse_uv", _mouse_uv)
-		_icon_material.set_shader_parameter("inner_ring_radius", _visual_config.detail_glyph_inner_ring)
-		_icon_material.set_shader_parameter("mid_ring_radius", _visual_config.detail_glyph_mid_ring)
-		_icon_material.set_shader_parameter("outer_ring_radius", _visual_config.detail_glyph_outer_ring)
-		_icon_material.set_shader_parameter("outer_glow_scale", _visual_config.detail_glyph_outer_scale)
-		_icon_material.set_shader_parameter("rim_glow_scale", _visual_config.detail_glyph_rim_scale)
-		_icon_material.set_shader_parameter("pointer_focus_falloff", _visual_config.detail_glyph_pointer_falloff)
-		_icon_material.set_shader_parameter("pointer_glow_scale", _visual_config.detail_glyph_pointer_scale)
-		_icon_material.set_shader_parameter("pulse_speed", _visual_config.detail_glyph_pulse_speed)
-		_icon_material.set_shader_parameter("pulse_wobble", _visual_config.detail_glyph_pulse_wobble)
-		_icon_material.set_shader_parameter("final_alpha_scale", _visual_config.detail_glyph_final_alpha_scale)
+		if not _data:
+			return
+		var glyph_color := _data.glow_color
+		if glyph_color.a <= 0.0:
+			glyph_color = _difficulty_tint
+		_icon_material.set_shader_parameter("glyph_id", _data.glyph_id)
+		_icon_material.set_shader_parameter("glow_color", glyph_color)
+		_icon_material.set_shader_parameter("glow_strength", _data.glow_strength + _active_strength * 1.2 + _pulse_strength * 1.6)
+		_icon_material.set_shader_parameter("rim_thickness", _data.rim_thickness)
+		_icon_material.set_shader_parameter("line_thickness", _data.line_thickness)
+		_icon_material.set_shader_parameter("bloom_softness", _data.bloom_softness)
+		_icon_material.set_shader_parameter("wobble_strength", _data.wobble_strength)
+		_icon_material.set_shader_parameter("roughness_strength", _data.roughness_strength)
+		_icon_material.set_shader_parameter("glyph_scale", _data.glyph_scale)
 
 	if _panel:
 		var style := _panel.get_theme_stylebox("panel") as StyleBoxFlat

@@ -282,6 +282,8 @@ func _refresh_compact_view() -> void:
 	if overflow > 0:
 		if not is_instance_valid(_plus_chip):
 			_plus_chip = _create_plus_chip()
+		if _plus_chip.get_parent():
+			_plus_chip.get_parent().remove_child(_plus_chip)
 		var chip_label: Label = _plus_chip.get_node_or_null("ChipLabel")
 		if chip_label:
 			chip_label.text = "+%d" % overflow
@@ -290,6 +292,8 @@ func _refresh_compact_view() -> void:
 		_slot_contents[MAX_COMPACT_VISIBLE] = _plus_chip
 	else:
 		if is_instance_valid(_plus_chip):
+			if _plus_chip.get_parent():
+				_plus_chip.get_parent().remove_child(_plus_chip)
 			_plus_chip.queue_free()
 		_plus_chip = null
 

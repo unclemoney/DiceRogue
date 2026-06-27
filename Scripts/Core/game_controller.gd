@@ -5618,7 +5618,16 @@ func _build_round_panel_data(round_num: int) -> Dictionary:
 			if debuff_def:
 				data["debuffs"].append({
 					"name": debuff_def.display_name,
-					"icon": debuff_def.icon
+					"glyph_id": debuff_def.glyph_id,
+					"glow_color": debuff_def.glow_color,
+					"glow_strength": debuff_def.glow_strength,
+					"rim_thickness": debuff_def.rim_thickness,
+					"line_thickness": debuff_def.line_thickness,
+					"bloom_softness": debuff_def.bloom_softness,
+					"wobble_strength": debuff_def.wobble_strength,
+					"roughness_strength": debuff_def.roughness_strength,
+					"glyph_scale": debuff_def.glyph_scale,
+					"difficulty_rating": debuff_def.difficulty_rating
 				})
 	
 	if chores_manager and chores_manager.current_task:

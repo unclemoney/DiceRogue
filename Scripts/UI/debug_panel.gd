@@ -275,6 +275,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Remove Liquidation Sale", "method": "_debug_remove_liquidation_sale"},
 			{"text": "Apply One Shot", "method": "_debug_apply_one_shot"},
 			{"text": "Remove One Shot", "method": "_debug_remove_one_shot"},
+			{"text": "Cycle All Glyphs", "method": "_debug_cycle_all_debuff_glyphs"},
 			{"text": "Test Division vs Perfect Strangers", "method": "_debug_test_division_perfect_strangers"},
 			{"text": "Activate The Crossing Challenge", "method": "_debug_activate_crossing_challenge"},
 			{"text": "Activate 150pts Roll Minus One", "method": "_debug_activate_pts150_challenge"},
@@ -2045,6 +2046,42 @@ func _debug_remove_one_shot() -> void:
 		return
 	game_controller.disable_debuff("one_shot")
 	log_debug("Removed One Shot debuff - rolls restored")
+
+
+## _debug_cycle_all_debuff_glyphs()
+##
+## Applies every debuff briefly so the player can visually verify all 16 glyph IDs.
+func _debug_cycle_all_debuff_glyphs() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	if not game_controller.debuff_manager:
+		log_debug("ERROR: DebuffManager not available")
+		return
+
+	var all_defs: Array = game_controller.debuff_manager.debuff_defs
+	if all_defs.is_empty():
+		log_debug("ERROR: No debuff definitions found")
+		return
+
+	var report_lines: Array[String] = ["=== DEBUFF GLYPH ID REPORT ==="]
+	for debuff_def in all_defs:
+		if debuff_def is DebuffData:
+			report_lines.append("%s (id=%s) -> glyph_id=%d" % [debuff_def.display_name, debuff_def.id, debuff_def.glyph_id])
+	for line in report_lines:
+		log_debug(line)
+
+	for debuff_def in all_defs:
+		if not debuff_def is DebuffData:
+			continue
+		if game_controller.is_debuff_active(debuff_def.id):
+			continue
+		game_controller.apply_debuff(debuff_def.id)
+		await get_tree().create_timer(0.35).timeout
+		game_controller.disable_debuff(debuff_def.id)
+		await get_tree().create_timer(0.15).timeout
+
+	log_debug("Cycled through %d debuff glyphs" % all_defs.size())
 
 ## _debug_activate_tough_addition_challenge()
 ##

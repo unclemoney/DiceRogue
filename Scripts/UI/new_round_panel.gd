@@ -2,6 +2,8 @@ extends Control
 class_name NewRoundPanel
 
 const GlassActionButtonClass = preload("res://Scripts/UI/glass_action_button.gd")
+const GLYPH_SHADER: Shader = preload("res://Scripts/Shaders/debuff_glyph_glow.gdshader")
+const PLACEHOLDER_TEXTURE: Texture2D = preload("res://Resources/Art/UI/white_pixel.png")
 
 ## NewRoundPanel
 ##
@@ -27,6 +29,46 @@ func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	z_index = 100
+
+
+## _create_glyph_icon(debuff_data)
+##
+## Builds a small shader-driven SDF glyph icon for a round-intro debuff row.
+func _create_glyph_icon(debuff_data: Dictionary) -> TextureRect:
+	var icon := TextureRect.new()
+	icon.custom_minimum_size = Vector2(20, 20)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture = PLACEHOLDER_TEXTURE
+
+	var glyph_material := ShaderMaterial.new()
+	glyph_material.shader = GLYPH_SHADER
+	icon.material = glyph_material
+
+	var glyph_color: Color = debuff_data.get("glow_color", Color(0.0, 0.0, 0.0, 0.0))
+	if glyph_color.a <= 0.0:
+		var rating: int = clampi(debuff_data.get("difficulty_rating", 1), 0, 5)
+		var tints: Array[Color] = [
+			Color(1.0, 0.95, 0.86),
+			Color(1.0, 0.86, 0.20),
+			Color(1.0, 0.67, 0.14),
+			Color(1.0, 0.45, 0.08),
+			Color(1.0, 0.18, 0.12),
+			Color(1.0, 0.07, 0.28)
+		]
+		glyph_color = tints[rating]
+
+	glyph_material.set_shader_parameter("glyph_id", debuff_data.get("glyph_id", 0))
+	glyph_material.set_shader_parameter("glow_color", glyph_color)
+	glyph_material.set_shader_parameter("glow_strength", debuff_data.get("glow_strength", 1.4))
+	glyph_material.set_shader_parameter("rim_thickness", debuff_data.get("rim_thickness", 0.03))
+	glyph_material.set_shader_parameter("line_thickness", debuff_data.get("line_thickness", 0.10))
+	glyph_material.set_shader_parameter("bloom_softness", debuff_data.get("bloom_softness", 0.18))
+	glyph_material.set_shader_parameter("wobble_strength", debuff_data.get("wobble_strength", 0.4))
+	glyph_material.set_shader_parameter("roughness_strength", debuff_data.get("roughness_strength", 0.35))
+	glyph_material.set_shader_parameter("glyph_scale", debuff_data.get("glyph_scale", 1.0))
+
+	return icon
 
 
 ## setup(data)
@@ -179,15 +221,10 @@ func _build_ui(data: Dictionary) -> void:
 		for debuff_data in debuffs:
 			var row = HBoxContainer.new()
 			row.add_theme_constant_override("separation", 6)
-			
-			if debuff_data.get("icon"):
-				var icon = TextureRect.new()
-				icon.custom_minimum_size = Vector2(20, 20)
-				icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-				icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-				icon.texture = debuff_data["icon"]
-				row.add_child(icon)
-			
+
+			var icon := _create_glyph_icon(debuff_data)
+			row.add_child(icon)
+
 			var name_label = Label.new()
 			name_label.text = debuff_data.get("name", "Debuff")
 			name_label.add_theme_font_size_override("font_size", 13)

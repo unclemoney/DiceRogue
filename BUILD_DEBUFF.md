@@ -95,12 +95,11 @@ script = ExtResource("1_bequk")
 
 ### Step 3: Create the DebuffData Resource
 
-Create a new resource file in `Scripts/Debuff/` that defines the debuff's metadata:
+Create a new resource file in `Scripts/Debuff/` that defines the debuff's metadata and procedural glyph configuration:
 
 ```gdresource
-[gd_resource type="Resource" script_class="DebuffData" load_steps=4 format=3 uid="uid://your_unique_id"]
+[gd_resource type="Resource" script_class="DebuffData" load_steps=3 format=3 uid="uid://your_unique_id"]
 
-[ext_resource type="Texture2D" uid="uid://icon_uid" path="res://Resources/Art/Powerups/your_icon.png" id="1_j54ng"]
 [ext_resource type="Script" uid="uid://uiuqwtxbh7m0" path="res://Scripts/Debuff/DebuffData.gd" id="1_oh0j2"]
 [ext_resource type="PackedScene" uid="uid://scene_uid" path="res://Scenes/Debuff/YourDebuffName.tscn" id="2_ta17l"]
 
@@ -109,8 +108,17 @@ script = ExtResource("1_oh0j2")
 id = "your_debuff_id"
 display_name = "Your Debuff Display Name"
 description = "Brief description shown in UI"
-icon = ExtResource("1_j54ng")
 scene = ExtResource("2_ta17l")
+glyph_id = 0
+glow_color = Color(0, 0, 0, 0)
+glyph_scale = 1.0
+line_thickness = 0.1
+rim_thickness = 0.03
+bloom_softness = 0.18
+wobble_strength = 0.4
+roughness_strength = 0.35
+glow_strength = 1.4
+difficulty_rating = 1
 metadata/_custom_type_script = "uid://uiuqwtxbh7m0"
 ```
 
@@ -119,8 +127,40 @@ metadata/_custom_type_script = "uid://uiuqwtxbh7m0"
 - **id**: Unique string identifier (snake_case)
 - **display_name**: Human-readable name shown in UI
 - **description**: Brief explanation of the debuff's effect
-- **icon**: Texture2D resource for the UI icon
 - **scene**: PackedScene reference to your debuff scene
+- **glyph_id**: Integer `0-15` selecting the procedural SDF glyph rendered by `debuff_glyph_glow.gdshader`
+- **glow_color**: Optional glyph tint. Transparent (`Color(0,0,0,0)`) falls back to the difficulty tint
+- **glyph_scale**: Overall glyph size multiplier
+- **line_thickness**: Thickness of glyph line work
+- **rim_thickness**: Thickness of outer rim outlines
+- **bloom_softness**: Glow bloom softness
+- **wobble_strength**: Subtle positional wobble amount
+- **roughness_strength**: Subtle edge roughness amount
+- **glow_strength**: Base brightness of the glyph glow
+- **difficulty_rating**: `1-5` used for automatic selection and UI color tinting
+
+#### Glyph ID Reference
+
+The debuff shader exposes 16 procedural glyphs:
+
+| ID | Glyph Name       | Typical Meaning                  |
+|----|------------------|----------------------------------|
+| 0  | Coupon Block     | Blocked / not allowed            |
+| 1  | Paid Rerolls     | Money cost on rolling            |
+| 2  | Color Drain      | Disabled colors                  |
+| 3  | Mod Lockout      | Disabled mods                    |
+| 4  | No Twos          | Disabled twos                    |
+| 5  | Chore Surge      | Faster chores / rising pressure  |
+| 6  | Half Value       | Halved values                    |
+| 7  | Sold Out         | Emptied / liquidation            |
+| 8  | No Locks         | Locking disabled                 |
+| 9  | D4 Swap          | Dice swapped to d4s              |
+| 10 | Power Cut        | Power-up disabled                |
+| 11 | One Roll Only    | Single roll restriction          |
+| 12 | Level Loss       | Reduced levels                   |
+| 13 | Roll Tax         | Roll-count penalty               |
+| 14 | Divide All       | Multipliers become dividers      |
+| 15 | Wealth Drain     | Money-based penalty              |
 
 ### Step 4: Register the Debuff
 
@@ -205,15 +245,28 @@ func _get_total_divider_instead() -> float:
 
 ### Resource (`Scripts/Debuff/TheDivisionDebuff.tres`):
 ```gdresource
-[gd_resource type="Resource" script_class="DebuffData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="DebuffData" load_steps=3 format=3]
+
+[ext_resource type="Script" uid="uid://uiuqwtxbh7m0" path="res://Scripts/Debuff/DebuffData.gd" id="1_oh0j2"]
+[ext_resource type="PackedScene" uid="uid://scene_uid" path="res://Scenes/Debuff/TheDivisionDebuff.tscn" id="2_ta17l"]
 
 [resource]
-script = ExtResource("DebuffData.gd")
+script = ExtResource("1_oh0j2")
 id = "the_division"
 display_name = "The Division"
 description = "All multiplier powerups now divide scores instead"
-icon = ExtResource("chore_chart.png")
-scene = ExtResource("TheDivisionDebuff.tscn")
+scene = ExtResource("2_ta17l")
+glyph_id = 14
+glow_color = Color(0, 0, 0, 0)
+glyph_scale = 1.0
+line_thickness = 0.1
+rim_thickness = 0.03
+bloom_softness = 0.18
+wobble_strength = 0.4
+roughness_strength = 0.35
+glow_strength = 1.4
+difficulty_rating = 4
+metadata/_custom_type_script = "uid://uiuqwtxbh7m0"
 ```
 
 ## Best Practices
@@ -237,7 +290,8 @@ scene = ExtResource("TheDivisionDebuff.tscn")
 - Test debuff activation and deactivation thoroughly
 
 ### UI/UX Considerations:
-- Choose appropriate icons that communicate the debuff's effect
+- Choose a `glyph_id` that communicates the debuff's effect via the procedural SDF glyph shader
+- Tune per-debuff shader overrides (`glyph_scale`, `line_thickness`, `glow_strength`, etc.) if the default look is too thick/thin or dim
 - Write clear, concise descriptions
 - Ensure debuff effects are visible to the player
 - Consider animation or visual feedback for debuff application

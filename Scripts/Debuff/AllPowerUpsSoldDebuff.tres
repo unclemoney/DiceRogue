@@ -1,19 +1,22 @@
-[gd_resource type="Resource" script_class="DebuffData" load_steps=5 format=3 uid="uid://ifqseygrqwxa"]
+[gd_resource type="Resource" script_class="DebuffData" load_steps=3 format=3 uid="uid://ifqseygrqwxa"]
 
-[ext_resource type="Texture2D" uid="uid://u00xakyxlras" path="res://Resources/Art/Debuffs/wayfinder_icons.png" id="1_h2n6c"]
 [ext_resource type="Script" uid="uid://uiuqwtxbh7m0" path="res://Scripts/Debuff/DebuffData.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://Scenes/Debuff/AllPowerUpsSoldDebuff.tscn" id="2_scene"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_8y767"]
-atlas = ExtResource("1_h2n6c")
-region = Rect2(731, 264, 225, 213)
 
 [resource]
 script = ExtResource("1_script")
 id = "all_powerups_sold"
 display_name = "Liquidation Sale"
 description = "All your powerups are sold immediately"
-icon = SubResource("AtlasTexture_8y767")
 scene = ExtResource("2_scene")
+glyph_id = 7
+glow_color = Color(0, 0, 0, 0)
+glyph_scale = 1.0
+line_thickness = 0.1
+rim_thickness = 0.03
+bloom_softness = 0.18
+wobble_strength = 0.4
+roughness_strength = 0.35
+glow_strength = 1.4
 difficulty_rating = 4
 metadata/_custom_type_script = "uid://uiuqwtxbh7m0"

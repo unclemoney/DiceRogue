@@ -1153,27 +1153,31 @@ A cinematic full-screen overlay displayed after challenge celebration fireworks,
 - **Game Controller Integration**: `Scripts/Core/game_controller.gd` - Trigger, signal handling, cleanup
 - **Test Scene**: `Tests/RoundTransitionTest.tscn` - Manual test with Normal/Final/Early round buttons
 
-### Debuff Icon UI Refactor (Chip Style + Fan-out)
+### Debuff Icon UI Refactor (Chip Style + Fan-out + SDF Glyphs)
 
-`DebuffIcon` has been rebuilt as a compact chip-style widget (replacing the old shader/hover-card implementation). `DebuffUI` now shows a single HBox row with up to 3 chips and a `+N More` overflow chip. Clicking the row fans out all active debuffs as rich `DebuffDetailCard` overlays on a dim canvas.
+`DebuffIcon` has been rebuilt as a compact chip-style widget driven by the `debuff_glyph_glow.gdshader` SDF glyph shader. `DebuffUI` now shows a single HBox row with up to 3 chips and a `+N More` overflow chip. Clicking the row fans out all active debuffs as rich `DebuffDetailCard` overlays on a dim canvas.
 
-The compact glyph and the large fan-out card now share a reactive neon treatment:
+Debuffs no longer rely on static `Texture2D` icons. Instead, each `DebuffData` resource specifies a `glyph_id` (0-15) and per-debuff shader overrides (`glyph_scale`, `line_thickness`, `rim_thickness`, `bloom_softness`, `wobble_strength`, `roughness_strength`, `glow_strength`, and an optional `glow_color`). The compact glyph and the large fan-out card now share a reactive neon treatment:
 - The debuff glyph stays mostly monochrome for readability, while difficulty color is carried by the halo, rim light, and pulse.
-- Mouse proximity raises glow intensity in both compact and fan-out views using the same smoothed cursor-distance pattern used by other shader-driven UI.
+- Mouse proximity raises glow intensity in both compact and fan-out views.
 - Active debuffs keep a low resting neon charge and pulse on gameplay events when the owning debuff requests it.
 - `CostlyRollDebuff` emits a visual pulse each time its roll fee fires, so the debuff flashes on every paid roll.
 - Fanned-out debuffs now spawn a dedicated higher-layer `CanvasLayer` post-process pass so the warm glow can bleed beyond the glyph itself instead of stopping at the icon bounds.
 
 **Files:**
-- `Scripts/Debuff/debuff_icon.gd` — `DebuffIcon`: compact shader host with per-instance glyph glow, proximity response, and pulse support.
+- `Scripts/Debuff/DebuffData.gd` — `DebuffData`: resource schema with `glyph_id`, shader overrides, and difficulty metadata.
+- `Scripts/Debuff/debuff_icon.gd` — `DebuffIcon`: compact shader host with per-instance glyph glow and pulse support.
 - `Scripts/Debuff/debuff_detail_card.gd` — `DebuffDetailCard`: full-detail card (248×340) shown during fan-out, with large glyph glow and card-shell halo.
 - `Scripts/UI/debuff_ui.gd` — `DebuffUI`: manages compact HBox row, overflow chip, fan-out/fold-back cycle, and targeted visual pulse routing.
 - `Scripts/Debuff/Debuff.gd` — base debuff lifecycle plus `visual_pulse_requested(strength, duration)` for debuff-owned UI feedback.
-- `Scripts/Shaders/debuff_glyph_glow.gdshader` — monochrome glyph halo/rim shader for compact and large icon art.
+- `Scripts/Shaders/debuff_glyph_glow.gdshader` — SDF glyph shader for compact, detail, and round-intro debuff icons.
 - `Scripts/Shaders/debuff_card_glow.gdshader` — rounded neon shell glow used behind the fan-out detail card.
 - `Scripts/Shaders/debuff_screen_glow.gdshader` — screen-space additive blur pass applied on a dedicated post-process `CanvasLayer` above `SpineFanOverlay` during debuff fan-out.
 - `Scenes/Debuff/DebuffIcon.tscn` — stripped to minimal (Control + script only; all children built in code).
 - `Tests/DebuffGlowTest.tscn` — isolated validation scene for the debuff neon system.
+
+**Glyph ID Reference:**
+0 = Coupon Block, 1 = Paid Rerolls, 2 = Color Drain, 3 = Mod Lockout, 4 = No Twos, 5 = Chore Surge, 6 = Half Value, 7 = Sold Out, 8 = No Locks, 9 = D4 Swap, 10 = Power Cut, 11 = One Roll Only, 12 = Level Loss, 13 = Roll Tax, 14 = Divide All, 15 = Wealth Drain.
 
 **Fan-out interaction:**
 1. Click the `DebuffUI` panel → `_fan_out_debuffs()` creates a `DebuffDetailCard` per debuff on `SpineFanOverlay` with staggered TRANS_BACK drop-in animation.
@@ -1189,7 +1193,7 @@ The compact glyph and the large fan-out card now share a reactive neon treatment
 
 **Validation / Usage:**
 - Open `Tests/DebuffGlowTest.tscn` for isolated glow testing. The scene auto-pulses debuffs, includes manual pulse buttons, and supports click-to-fan plus mouse proximity checks.
-- In the full game, press `F12` and use `Pulse Costly Roll Debuff UI` to preview the compact/fan-out pulse path without waiting for a full scoring flow.
+- In the full game, press `F12` and use `Cycle All Glyphs` under Testing to preview every debuff glyph ID, or use `Pulse Costly Roll Debuff UI` to preview the compact/fan-out pulse path without waiting for a full scoring flow.
 
 ### Debuff Animation System
 Negative score contributions now feature dramatic visual feedback:

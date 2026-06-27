@@ -4,7 +4,7 @@ class_name DebuffIcon
 ## DebuffIcon
 ##
 ## Compact chip-style UI for a single debuff displayed inside debuff_container.
-## Shows: debuff icon art, name label, difficulty stars.
+## Shows: debuff SDF glyph art, name label, difficulty stars.
 ## All hover/shader/physics effects removed. mouse_filter = IGNORE so
 ## DebuffUI intercepts all input.
 
@@ -16,6 +16,7 @@ signal debuff_selected(id: String)
 const COMPACT_GLYPH_SHADER: Shader = preload("res://Scripts/Shaders/debuff_glyph_glow.gdshader")
 const DebuffVisualConfigScript = preload("res://Scripts/Debuff/debuff_visual_config.gd")
 const CHIP_SIZE := Vector2(60, 64)
+const PLACEHOLDER_TEXTURE: Texture2D = preload("res://Resources/Art/UI/white_pixel.png")
 
 var _bg_rect: ColorRect
 var _icon_rect: TextureRect
@@ -24,8 +25,6 @@ var _diff_label: Label
 var _icon_material: ShaderMaterial
 var _difficulty_tint: Color = Color(1.0, 1.0, 1.0)
 var _base_bg_color: Color = Color(0.14, 0.12, 0.18, 0.85)
-var _mouse_uv: Vector2 = Vector2(0.5, 0.5)
-var _proximity_strength: float = 0.0
 var _active_strength: float = 0.0
 var _pulse_strength: float = 0.0
 var _visual_config = DebuffVisualConfigScript.new()
@@ -59,8 +58,8 @@ func _ready() -> void:
 	_apply_background_state()
 
 
-func _process(delta: float) -> void:
-	_update_mouse_response(delta)
+func _process(_delta: float) -> void:
+	_update_hover_response()
 
 
 func _build_ui() -> void:
@@ -92,6 +91,7 @@ func _build_ui() -> void:
 	_icon_rect.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_icon_rect.custom_minimum_size = _visual_config.compact_icon_size
 	_icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_icon_rect.texture = PLACEHOLDER_TEXTURE
 	_icon_material = ShaderMaterial.new()
 	_icon_material.shader = COMPACT_GLYPH_SHADER
 	_icon_rect.material = _icon_material
@@ -136,10 +136,6 @@ func _apply_data_to_ui() -> void:
 
 	if _diff_label:
 		_diff_label.text = _build_star_string(data.difficulty_rating)
-
-	if _icon_rect:
-		if data.icon:
-			_icon_rect.texture = data.icon
 
 	if _bg_rect:
 		var tier: int = clamp(data.difficulty_rating, 0, 5)
@@ -215,35 +211,27 @@ func _set_pulse_strength(value: float) -> void:
 func _apply_shader_state() -> void:
 	if not _icon_material:
 		return
-	var tier_strength := _get_tier_strength()
-	_icon_material.set_shader_parameter("glow_color", _difficulty_tint)
-	_icon_material.set_shader_parameter("glow_intensity", _visual_config.compact_glow_intensity_base + tier_strength * _visual_config.compact_glow_intensity_tier_gain)
-	_icon_material.set_shader_parameter("proximity_strength", _proximity_strength)
-	_icon_material.set_shader_parameter("active_strength", _active_strength)
-	_icon_material.set_shader_parameter("pulse_strength", _pulse_strength)
-	_icon_material.set_shader_parameter("fill_brightness", _visual_config.compact_fill_brightness)
-	_icon_material.set_shader_parameter("fill_expand_scale", _visual_config.compact_fill_expand_scale)
-	_icon_material.set_shader_parameter("spread_plateau_scale", _visual_config.compact_spread_plateau_scale)
-	_icon_material.set_shader_parameter("glyph_tint_strength", _visual_config.compact_glyph_tint_base + tier_strength * _visual_config.compact_glyph_tint_tier_gain)
-	_icon_material.set_shader_parameter("mouse_uv", _mouse_uv)
-	_icon_material.set_shader_parameter("inner_ring_radius", _visual_config.compact_glyph_inner_ring)
-	_icon_material.set_shader_parameter("mid_ring_radius", _visual_config.compact_glyph_mid_ring)
-	_icon_material.set_shader_parameter("outer_ring_radius", _visual_config.compact_glyph_outer_ring)
-	_icon_material.set_shader_parameter("outer_glow_scale", _visual_config.compact_glyph_outer_scale)
-	_icon_material.set_shader_parameter("rim_glow_scale", _visual_config.compact_glyph_rim_scale)
-	_icon_material.set_shader_parameter("pointer_focus_falloff", _visual_config.compact_glyph_pointer_falloff)
-	_icon_material.set_shader_parameter("pointer_glow_scale", _visual_config.compact_glyph_pointer_scale)
-	_icon_material.set_shader_parameter("pulse_speed", _visual_config.compact_glyph_pulse_speed)
-	_icon_material.set_shader_parameter("pulse_wobble", _visual_config.compact_glyph_pulse_wobble)
-	_icon_material.set_shader_parameter("final_alpha_scale", _visual_config.compact_glyph_final_alpha_scale)
+	if not data:
+		return
+	var glyph_color := data.glow_color
+	if glyph_color.a <= 0.0:
+		glyph_color = _difficulty_tint
+	_icon_material.set_shader_parameter("glyph_id", data.glyph_id)
+	_icon_material.set_shader_parameter("glow_color", glyph_color)
+	_icon_material.set_shader_parameter("glow_strength", data.glow_strength + _active_strength * 1.2 + _pulse_strength * 1.6)
+	_icon_material.set_shader_parameter("rim_thickness", data.rim_thickness)
+	_icon_material.set_shader_parameter("line_thickness", data.line_thickness)
+	_icon_material.set_shader_parameter("bloom_softness", data.bloom_softness)
+	_icon_material.set_shader_parameter("wobble_strength", data.wobble_strength)
+	_icon_material.set_shader_parameter("roughness_strength", data.roughness_strength)
+	_icon_material.set_shader_parameter("glyph_scale", data.glyph_scale)
 
 
 func _apply_background_state() -> void:
 	if not _bg_rect:
 		return
 	var emphasis := clampf(
-		_proximity_strength * _visual_config.compact_bg_proximity_weight
-		+ _active_strength * _visual_config.compact_bg_active_weight
+		_active_strength * _visual_config.compact_bg_active_weight
 		+ _pulse_strength * _visual_config.compact_bg_pulse_weight,
 		0.0,
 		1.0
@@ -257,34 +245,19 @@ func _apply_background_state() -> void:
 	_bg_rect.color = _base_bg_color.lerp(glow_target, emphasis)
 
 
-func _update_mouse_response(delta: float) -> void:
+func _update_hover_response() -> void:
 	if not is_visible_in_tree() or size.x <= 0.0 or size.y <= 0.0:
-		_proximity_strength = lerpf(_proximity_strength, 0.0, clampf(delta * _visual_config.compact_proximity_lerp_speed, 0.0, 1.0))
-		_apply_shader_state()
-		_apply_background_state()
 		return
-
+	
 	var mouse_pos := get_viewport().get_mouse_position()
 	var rect := Rect2(global_position, size)
-	var rect_end := rect.position + rect.size
-	var clamped_mouse := Vector2(
-		clampf(mouse_pos.x, rect.position.x, rect_end.x),
-		clampf(mouse_pos.y, rect.position.y, rect_end.y)
-	)
-	var local_mouse := clamped_mouse - rect.position
-	var target_uv := Vector2(
-		local_mouse.x / maxf(rect.size.x, 1.0),
-		local_mouse.y / maxf(rect.size.y, 1.0)
-	)
-	var distance := mouse_pos.distance_to(clamped_mouse)
-	var max_distance: float = maxf(rect.size.x, rect.size.y) * _visual_config.compact_proximity_distance_multiplier
-	var target_proximity := 1.0 - clampf(distance / max_distance, 0.0, 1.0)
-	target_proximity = pow(target_proximity, 0.9)
-
-	_mouse_uv = _mouse_uv.lerp(target_uv, clampf(delta * _visual_config.compact_proximity_lerp_speed, 0.0, 1.0))
-	_proximity_strength = lerpf(_proximity_strength, target_proximity, clampf(delta * _visual_config.compact_proximity_lerp_speed, 0.0, 1.0))
-	_apply_shader_state()
-	_apply_background_state()
+	var is_hovered := rect.has_point(mouse_pos)
+	var target_active := _active_strength
+	if is_hovered:
+		target_active = maxf(target_active, 0.35)
+	
+	# Hover briefly boosts active strength to create a proximity-like response.
+	_icon_material.set_shader_parameter("glow_strength", data.glow_strength + target_active * 1.2 + _pulse_strength * 1.6)
 
 
 func _get_tier_strength() -> float:

@@ -5,6 +5,8 @@ const TEST_DEBUFF_PATHS: Array[String] = [
 	"res://Scripts/Debuff/CostlyRollDebuff.tres",
 	"res://Scripts/Debuff/TheDivisionDebuff.tres",
 	"res://Scripts/Debuff/TooGreedyDebuff.tres",
+	"res://Scripts/Debuff/DisabledTwosDebuff.tres",
+	"res://Scripts/Debuff/LockDice.tres",
 ]
 const DebuffVisualConfigScript = preload("res://Scripts/Debuff/debuff_visual_config.gd")
 
