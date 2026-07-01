@@ -502,8 +502,8 @@ float sdHalfCircleOutline(vec2 p, float r, float thickness) {
     return d_ring;
 }
 
-vec2 rot180(vec2 p) { 
-    return -p; 
+vec2 rot180(vec2 p) {
+    return -p;
 }
 
 

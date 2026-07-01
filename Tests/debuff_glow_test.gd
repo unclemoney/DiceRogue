@@ -2,11 +2,28 @@ extends Control
 class_name DebuffGlowTest
 
 const TEST_DEBUFF_PATHS: Array[String] = [
-	"res://Scripts/Debuff/CostlyRollDebuff.tres",
-	"res://Scripts/Debuff/TheDivisionDebuff.tres",
-	"res://Scripts/Debuff/TooGreedyDebuff.tres",
-	"res://Scripts/Debuff/DisabledTwosDebuff.tres",
+	"res://Scripts/Debuff/RollScoreMinusOneDebuff.tres",
+	"res://Scripts/Debuff/RotatingDisabledPowerUpDebuff.tres",
+
+
 	"res://Scripts/Debuff/LockDice.tres",
+	"res://Scripts/Debuff/MixedBagDebuff.tres",
+	"res://Scripts/Debuff/NoConsumablesAllowedDebuff.tres",
+	#"res://Scripts/Debuff/OneShotDebuff.tres",
+	#"res://Scripts/Debuff/ReducedLevelsDebuff.tres",	
+
+
+	#"res://Scripts/Debuff/AllPowerUpsSoldDebuff.tres",
+	#"res://Scripts/Debuff/DisabledColorsDebuff.tres",
+	#"res://Scripts/Debuff/DisabledModsDebuff.tres",
+	#"res://Scripts/Debuff/FasterChoresDebuff.tres",
+	#"res://Scripts/Debuff/HalfAdditiveDebuff.tres",
+
+	#"res://Scripts/Debuff/CostlyRollDebuff.tres",
+	#"res://Scripts/Debuff/TheDivisionDebuff.tres",
+	#"res://Scripts/Debuff/TooGreedyDebuff.tres",
+	#"res://Scripts/Debuff/DisabledTwosDebuff.tres",
+	#"res://Scripts/Debuff/LockDice.tres",
 ]
 const DebuffVisualConfigScript = preload("res://Scripts/Debuff/debuff_visual_config.gd")
 
