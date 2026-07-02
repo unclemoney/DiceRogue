@@ -148,7 +148,8 @@ func select_debuffs_for_round(max_count: int, difficulty_cap: int, allow_duplica
 	if max_count <= 0:
 		if _verbose_mode:
 			print("[DebuffManager] max_count is 0, no debuffs selected")
-		return []
+		var no_debuffs: Array[String] = []
+		return no_debuffs
 	
 	# Get eligible debuffs
 	var eligible = get_debuffs_by_difficulty(difficulty_cap)
@@ -170,7 +171,8 @@ func select_debuffs_for_round(max_count: int, difficulty_cap: int, allow_duplica
 	if filtered.is_empty():
 		if _verbose_mode:
 			print("[DebuffManager] No eligible debuffs available")
-		return []
+		var no_eligible_debuffs: Array[String] = []
+		return no_eligible_debuffs
 	
 	# Randomly select up to max_count
 	var selected: Array[String] = []
@@ -247,7 +249,9 @@ func clear_active_debuffs() -> void:
 ##
 ## Returns the list of currently active debuff IDs.
 func get_active_debuff_ids() -> Array[String]:
-	return _active_debuff_ids.duplicate()
+	var active_ids: Array[String] = []
+	active_ids.assign(_active_debuff_ids)
+	return active_ids
 
 
 ## get_all_debuff_info() -> Array[Dictionary]

@@ -287,8 +287,11 @@ func get_allowed_carryover_count(channel: int = -1) -> int:
 func get_allowed_carryover_types(channel: int = -1) -> Array[String]:
 	var config = get_channel_config(channel)
 	if config:
-		return config.allowed_carryover_types
-	return []
+		var allowed_types: Array[String] = []
+		allowed_types.assign(config.allowed_carryover_types)
+		return allowed_types
+	var empty_types: Array[String] = []
+	return empty_types
 
 
 ## set_channel(channel: int) -> void

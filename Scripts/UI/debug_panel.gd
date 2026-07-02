@@ -12,6 +12,16 @@ signal debug_command_executed(command: String, result: String)
 # Static variable to ensure singleton behavior
 static var instance: DebugPanel = null
 
+const DEBUG_MAX_DICE_COUNT := 16
+const SCORECARD_UPPER_CATEGORIES := ["ones", "twos", "threes", "fours", "fives", "sixes"]
+const SCORECARD_LOWER_CATEGORIES := ["three_of_a_kind", "four_of_a_kind", "full_house", "small_straight", "large_straight", "yahtzee", "chance"]
+const SCORECARD_UPGRADE_CONSUMABLE_IDS := [
+	"ones_upgrade", "twos_upgrade", "threes_upgrade", "fours_upgrade", "fives_upgrade", "sixes_upgrade",
+	"three_of_a_kind_upgrade", "four_of_a_kind_upgrade", "full_house_upgrade",
+	"small_straight_upgrade", "large_straight_upgrade", "yahtzee_upgrade", "chance_upgrade",
+	"all_categories_upgrade"
+]
+
 @onready var background: ColorRect
 @onready var main_container: VBoxContainer
 @onready var title_label: Label
@@ -23,6 +33,9 @@ static var instance: DebugPanel = null
 # Input fields for granting items by ID
 var powerup_id_input: LineEdit
 var consumable_id_input: LineEdit
+var powerup_selection_list: ItemList
+var consumable_selection_list: ItemList
+var challenge_selection_list: ItemList
 
 var game_controller: GameController
 var is_visible_debug := false
@@ -183,44 +196,9 @@ func _create_debug_tabs() -> void:
 		],
 		"Items": [
 			{"text": "Grant Random PowerUp", "method": "_debug_grant_powerup"},
-			{"text": "Grant PlusADollar", "method": "_debug_grant_plus_a_dollar"},
-			{"text": "Grant SweetSixteen", "method": "_debug_grant_sweet_sixteen"},
 			{"text": "Grant Random Consumable", "method": "_debug_grant_consumable"},
-			{"text": "Grant AnyScore", "method": "_debug_grant_any_score"},
-			{"text": "Grant Green Envy", "method": "_debug_grant_green_envy"},
-			{"text": "Grant Poor House", "method": "_debug_grant_poor_house"},
-			{"text": "Grant Empty Shelves", "method": "_debug_grant_empty_shelves"},
-			{"text": "Grant Double Or Nothing", "method": "_debug_grant_double_or_nothing"},
-			{"text": "Grant The Rarities", "method": "_debug_grant_the_rarities"},
-			{"text": "Grant The Pawn Shop", "method": "_debug_grant_the_pawn_shop"},
-			{"text": "Grant One Extra Dice", "method": "_debug_grant_one_extra_dice"},
-			{"text": "Grant Go Broke or Go Home", "method": "_debug_grant_go_broke_or_go_home"},
-			{"text": "Grant Free Chores", "method": "_debug_grant_free_chores"},
-			{"text": "Grant All Chores", "method": "_debug_grant_all_chores"},
-			{"text": "Grant One Free Mod", "method": "_debug_grant_one_free_mod"},
-			{"text": "Grant Random Uncommon PowerUp", "method": "_debug_grant_random_uncommon_powerup"},
-			{"text": "Grant Dice Surge", "method": "_debug_grant_dice_surge"},
-			{"text": "Grant Stat Cashout", "method": "_debug_grant_stat_cashout"},
-			{"text": "Grant Upper Section Boost", "method": "_debug_grant_upper_section_boost"},
-			{"text": "Grant Lower Section Boost", "method": "_debug_grant_lower_section_boost"},
-			{"text": "Grant Score Streak", "method": "_debug_grant_score_streak"},
-			{"text": "Grant Score Amplifier", "method": "_debug_grant_score_amplifier"},
-			{"text": "Grant Bonus Collector", "method": "_debug_grant_bonus_collector"},
-			{"text": "Grant Extra Coupons", "method": "_debug_grant_extra_coupons"},
-			{"text": "Grant Visit The Shop", "method": "_debug_grant_visit_the_shop"},
-			{"text": "Grant Half Price", "method": "_debug_grant_half_price"},
-			{"text": "Grant Loss Leader", "method": "_debug_grant_loss_leader"},
-			{"text": "Grant Insurance Policy", "method": "_debug_grant_insurance_policy"},
-			{"text": "Grant Clearance Rack", "method": "_debug_grant_clearance_rack"},
-			{"text": "Grant Loaded Dice", "method": "_debug_grant_loaded_dice"},
-			{"text": "Register AnyScore", "method": "_debug_register_any_score"},
 			{"text": "Grant Random Mod", "method": "_debug_grant_mod"},
-			{"text": "Test Consumer PowerUp", "method": "_debug_test_consumer_powerup"},
-			{"text": "Grant Lower Ten", "method": "_debug_grant_lower_ten"},
-			{"text": "Grant Different Straights", "method": "_debug_grant_different_straights"},
-			{"text": "Grant Plus The Last", "method": "_debug_grant_plus_thelast"},
-			{"text": "Grant Allowance", "method": "_debug_grant_allowance"},
-			{"text": "Grant Ungrounded", "method": "_debug_grant_ungrounded"},
+			{"text": "Register AnyScore", "method": "_debug_register_any_score"},
 			{"text": "Show All Items", "method": "_debug_show_items"},
 			{"text": "Clear All Items", "method": "_debug_clear_items"},
 		],
@@ -235,6 +213,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Test Scorecard Upgrade Juice", "method": "_debug_test_scorecard_upgrade_juice"},
 		],
 		"Dice Control": [
+			{"text": "Add Dice", "method": "_debug_add_dice"},
 			{"text": "Roll All 6s", "method": "_debug_force_dice"},
 			{"text": "Roll All 1s", "method": "_debug_force_ones"},
 			{"text": "Roll Yahtzee", "method": "_debug_force_yahtzee"},
@@ -277,14 +256,6 @@ func _create_debug_tabs() -> void:
 			{"text": "Remove One Shot", "method": "_debug_remove_one_shot"},
 			{"text": "Cycle All Glyphs", "method": "_debug_cycle_all_debuff_glyphs"},
 			{"text": "Test Division vs Perfect Strangers", "method": "_debug_test_division_perfect_strangers"},
-			{"text": "Activate The Crossing Challenge", "method": "_debug_activate_crossing_challenge"},
-			{"text": "Activate 150pts Roll Minus One", "method": "_debug_activate_pts150_challenge"},
-			{"text": "Activate Tough Addition Challenge", "method": "_debug_activate_tough_addition_challenge"},
-			{"text": "Activate Greed Isn't Good Challenge", "method": "_debug_activate_greed_isnt_good_challenge"},
-			{"text": "Activate Wildcard Run", "method": "_debug_activate_wildcard_run_challenge"},
-			{"text": "Activate Triple Threat", "method": "_debug_activate_triple_threat_challenge"},
-			{"text": "Activate Perfect Execution", "method": "_debug_activate_perfect_execution_challenge"},
-			{"text": "Activate Chaos Theory", "method": "_debug_activate_chaos_theory_challenge"},
 			{"text": "Show Active Challenges", "method": "_debug_show_active_challenges"},
 			{"text": "Show Mod/Dice Count", "method": "_debug_show_mod_dice_count"},
 			{"text": "Fill All Dice w/ Mods", "method": "_debug_fill_dice_with_mods"},
@@ -453,27 +424,69 @@ func _create_debug_tabs() -> void:
 		vbox.add_theme_constant_override("separation", 5)
 		scroll_container.add_child(vbox)
 		
-		# Add custom input sections for Items tab
 		if tab_name == "Items":
-			_create_item_input_section(vbox)
+			_create_items_tab(vbox, tab_definitions[tab_name])
+			continue
+
+		if tab_name == "Testing":
+			_create_testing_tab(vbox, tab_definitions[tab_name])
+			continue
 		
-		var button_grid = GridContainer.new()
-		button_grid.columns = 3  # 3 columns for better fit in tabs
-		button_grid.add_theme_constant_override("h_separation", 8)
-		button_grid.add_theme_constant_override("v_separation", 4)
-		vbox.add_child(button_grid)
-		
-		# Add buttons for this tab
-		for button_data in tab_definitions[tab_name]:
-			var button = Button.new()
-			button.text = button_data["text"]
-			button.custom_minimum_size = Vector2(160, 30)
-			button.add_theme_font_size_override("font_size", 10)
-			
-			# Connect using Callable
-			var method_name = button_data["method"]
-			button.pressed.connect(Callable(self, method_name))
-			button_grid.add_child(button)
+		var button_grid = _create_debug_button_grid(vbox)
+		_add_debug_buttons(button_grid, tab_definitions[tab_name])
+
+
+func _create_items_tab(parent: VBoxContainer, button_definitions: Array) -> void:
+	_create_item_input_section(parent)
+
+	var helper_label = Label.new()
+	helper_label.text = "Select a PowerUp or Consumable row to fill its ID field, then press Grant."
+	helper_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.7, 1.0))
+	parent.add_child(helper_label)
+
+	var lists_row = HBoxContainer.new()
+	lists_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lists_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	lists_row.add_theme_constant_override("separation", 12)
+	parent.add_child(lists_row)
+
+	powerup_selection_list = _create_selection_list_panel(lists_row, "PowerUps", Callable(self, "_on_powerup_list_item_selected"), 260.0)
+	consumable_selection_list = _create_selection_list_panel(lists_row, "Consumables", Callable(self, "_on_consumable_list_item_selected"), 260.0)
+	_ensure_debug_lists_populated()
+
+	var separator = HSeparator.new()
+	separator.custom_minimum_size = Vector2(0, 10)
+	parent.add_child(separator)
+
+	var button_grid = _create_debug_button_grid(parent, 3)
+	_add_debug_buttons(button_grid, button_definitions)
+
+
+func _create_testing_tab(parent: VBoxContainer, button_definitions: Array) -> void:
+	var helper_label = Label.new()
+	helper_label.text = "Select a challenge from the list, then apply it. Other diagnostics stay below."
+	helper_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.7, 1.0))
+	parent.add_child(helper_label)
+
+	challenge_selection_list = _create_selection_list_panel(parent, "Challenges", Callable(self, "_on_challenge_list_item_selected"), 180.0)
+	_ensure_debug_lists_populated()
+
+	var action_row = HBoxContainer.new()
+	action_row.add_theme_constant_override("separation", 10)
+	parent.add_child(action_row)
+
+	var activate_button = Button.new()
+	activate_button.text = "Activate Selected Challenge"
+	activate_button.custom_minimum_size = Vector2(220, 32)
+	activate_button.pressed.connect(_debug_activate_selected_challenge)
+	action_row.add_child(activate_button)
+
+	var separator = HSeparator.new()
+	separator.custom_minimum_size = Vector2(0, 10)
+	parent.add_child(separator)
+
+	var button_grid = _create_debug_button_grid(parent)
+	_add_debug_buttons(button_grid, button_definitions)
 
 ## _create_item_input_section(parent: VBoxContainer)
 ##
@@ -571,6 +584,7 @@ func _on_grant_powerup_by_id_pressed() -> void:
 		game_controller.grant_power_up(powerup_id)
 		log_debug("Granted PowerUp by ID: " + powerup_id)
 		powerup_id_input.clear()
+		_populate_powerup_selection_list()
 	else:
 		log_debug("ERROR: GameController missing grant_power_up method")
 
@@ -595,6 +609,7 @@ func _on_grant_consumable_by_id_pressed() -> void:
 		game_controller.grant_consumable(consumable_id)
 		log_debug("Granted Consumable by ID: " + consumable_id)
 		consumable_id_input.clear()
+		_populate_consumable_selection_list()
 	else:
 		log_debug("ERROR: GameController missing grant_consumable method")
 
@@ -610,6 +625,8 @@ func show_debug_panel() -> void:
 	visible = true
 	is_visible_debug = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	_refresh_game_controller_reference()
+	_ensure_debug_lists_populated()
 	
 	# Bring to front in case other UI was added after debug panel
 	if get_parent():
@@ -658,6 +675,226 @@ func log_debug(message: String) -> void:
 	
 	print("[DebugPanel] " + message)
 	debug_command_executed.emit("log", message)
+
+
+func _refresh_game_controller_reference() -> void:
+	if not is_instance_valid(game_controller):
+		game_controller = get_tree().get_first_node_in_group("game_controller")
+
+
+func _ensure_debug_lists_populated() -> void:
+	if powerup_selection_list and powerup_selection_list.get_item_count() == 0:
+		_populate_powerup_selection_list()
+	if consumable_selection_list and consumable_selection_list.get_item_count() == 0:
+		_populate_consumable_selection_list()
+	if challenge_selection_list and challenge_selection_list.get_item_count() == 0:
+		_populate_challenge_selection_list()
+
+
+func _get_power_up_manager():
+	_refresh_game_controller_reference()
+	if is_instance_valid(game_controller) and is_instance_valid(game_controller.pu_manager):
+		return game_controller.pu_manager
+	return get_tree().get_first_node_in_group("power_up_manager")
+
+
+func _get_consumable_manager():
+	_refresh_game_controller_reference()
+	if is_instance_valid(game_controller) and is_instance_valid(game_controller.consumable_manager):
+		return game_controller.consumable_manager
+	return get_tree().get_first_node_in_group("consumable_manager")
+
+
+func _get_challenge_manager():
+	_refresh_game_controller_reference()
+	if is_instance_valid(game_controller) and is_instance_valid(game_controller.challenge_manager):
+		return game_controller.challenge_manager
+	return get_tree().get_first_node_in_group("challenge_manager")
+
+
+func _get_chores_manager():
+	_refresh_game_controller_reference()
+	if is_instance_valid(game_controller) and is_instance_valid(game_controller.chores_manager):
+		return game_controller.chores_manager
+	return get_tree().get_first_node_in_group("chores_manager")
+
+
+func _get_synergy_manager():
+	_refresh_game_controller_reference()
+	if is_instance_valid(game_controller) and is_instance_valid(game_controller.synergy_manager):
+		return game_controller.synergy_manager
+	return get_tree().get_first_node_in_group("synergy_manager")
+
+
+func _create_debug_button_grid(parent: VBoxContainer, columns: int = 3) -> GridContainer:
+	var button_grid = GridContainer.new()
+	button_grid.columns = columns
+	button_grid.add_theme_constant_override("h_separation", 8)
+	button_grid.add_theme_constant_override("v_separation", 4)
+	parent.add_child(button_grid)
+	return button_grid
+
+
+func _add_debug_buttons(button_grid: GridContainer, button_definitions: Array) -> void:
+	for button_data in button_definitions:
+		button_grid.add_child(_create_debug_button(button_data))
+
+
+func _create_debug_button(button_data: Dictionary) -> Button:
+	var button = Button.new()
+	button.text = button_data.get("text", "Unnamed Action")
+	button.custom_minimum_size = Vector2(160, 30)
+	button.add_theme_font_size_override("font_size", 10)
+
+	var method_name := String(button_data.get("method", ""))
+	if method_name.is_empty():
+		button.disabled = true
+		button.tooltip_text = "Missing method binding"
+		return button
+
+	if has_method(method_name):
+		button.pressed.connect(Callable(self, method_name))
+	else:
+		button.disabled = true
+		button.tooltip_text = "Missing debug method: %s" % method_name
+
+	return button
+
+
+func _create_selection_list_panel(parent: Node, title: String, selection_handler: Callable, minimum_height: float) -> ItemList:
+	var section = VBoxContainer.new()
+	section.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	section.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	parent.add_child(section)
+
+	var label = Label.new()
+	label.text = title
+	label.add_theme_color_override("font_color", Color.WHITE)
+	section.add_child(label)
+
+	var item_list = ItemList.new()
+	item_list.custom_minimum_size = Vector2(0, minimum_height)
+	item_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	item_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	item_list.select_mode = ItemList.SELECT_SINGLE
+	item_list.item_selected.connect(selection_handler)
+	section.add_child(item_list)
+
+	return item_list
+
+
+func _populate_powerup_selection_list() -> void:
+	if not powerup_selection_list:
+		return
+
+	powerup_selection_list.clear()
+	var power_up_manager = _get_power_up_manager()
+	if not power_up_manager:
+		return
+
+	var available_ids = power_up_manager.get_available_power_ups()
+	available_ids.sort()
+	for powerup_id in available_ids:
+		var powerup_def = power_up_manager.get_def(powerup_id)
+		var display_name = powerup_id
+		if powerup_def and not powerup_def.display_name.is_empty():
+			display_name = powerup_def.display_name
+		var item_index = powerup_selection_list.get_item_count()
+		powerup_selection_list.add_item("%s - %s" % [powerup_id, display_name])
+		powerup_selection_list.set_item_metadata(item_index, powerup_id)
+
+
+func _populate_consumable_selection_list() -> void:
+	if not consumable_selection_list:
+		return
+
+	consumable_selection_list.clear()
+	var consumable_manager = _get_consumable_manager()
+	if not consumable_manager:
+		return
+
+	var available_ids = consumable_manager.get_available_consumables()
+	available_ids.sort()
+	for consumable_id in available_ids:
+		var consumable_def = consumable_manager.get_def(consumable_id)
+		var display_name = consumable_id
+		if consumable_def and not consumable_def.display_name.is_empty():
+			display_name = consumable_def.display_name
+		var item_index = consumable_selection_list.get_item_count()
+		consumable_selection_list.add_item("%s - %s" % [consumable_id, display_name])
+		consumable_selection_list.set_item_metadata(item_index, consumable_id)
+
+
+func _populate_challenge_selection_list() -> void:
+	if not challenge_selection_list:
+		return
+
+	challenge_selection_list.clear()
+	var challenge_manager = _get_challenge_manager()
+	if not challenge_manager:
+		return
+
+	var challenge_ids = challenge_manager.get_all_challenge_ids()
+	challenge_ids.sort()
+	for challenge_id in challenge_ids:
+		var challenge_def = challenge_manager.get_def(challenge_id)
+		var display_name = challenge_id
+		if challenge_def and not challenge_def.display_name.is_empty():
+			display_name = challenge_def.display_name
+		var item_index = challenge_selection_list.get_item_count()
+		challenge_selection_list.add_item("%s - %s" % [challenge_id, display_name])
+		challenge_selection_list.set_item_metadata(item_index, challenge_id)
+
+
+func _on_powerup_list_item_selected(index: int) -> void:
+	if not powerup_selection_list or not powerup_id_input:
+		return
+	powerup_id_input.text = str(powerup_selection_list.get_item_metadata(index))
+
+
+func _on_consumable_list_item_selected(index: int) -> void:
+	if not consumable_selection_list or not consumable_id_input:
+		return
+	consumable_id_input.text = str(consumable_selection_list.get_item_metadata(index))
+
+
+func _on_challenge_list_item_selected(index: int) -> void:
+	if not challenge_selection_list:
+		return
+	var challenge_id = str(challenge_selection_list.get_item_metadata(index))
+	log_debug("Selected challenge: " + challenge_id)
+
+
+func _debug_activate_selected_challenge() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	if not challenge_selection_list:
+		log_debug("ERROR: Challenge list not available")
+		return
+
+	var selected_items = challenge_selection_list.get_selected_items()
+	if selected_items.size() == 0:
+		log_debug("ERROR: Select a challenge from the list first")
+		return
+
+	var challenge_id = str(challenge_selection_list.get_item_metadata(selected_items[0]))
+	if challenge_id.is_empty():
+		log_debug("ERROR: Selected challenge ID is invalid")
+		return
+	if game_controller.active_challenges.has(challenge_id):
+		log_debug("Challenge already active: " + challenge_id)
+		return
+
+	game_controller.activate_challenge(challenge_id)
+	var challenge_manager = _get_challenge_manager()
+	var challenge_name = challenge_id
+	if challenge_manager:
+		var challenge_def = challenge_manager.get_def(challenge_id)
+		if challenge_def and not challenge_def.display_name.is_empty():
+			challenge_name = challenge_def.display_name
+	log_debug("Activated Challenge: %s (%s)" % [challenge_name, challenge_id])
 
 # Debug command implementations
 func _debug_grant_powerup() -> void:
@@ -1095,6 +1332,98 @@ func _debug_grant_ungrounded() -> void:
 	else:
 		log_debug("GameController missing grant_power_up method")
 
+func _debug_grant_master_upgrade() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	game_controller.grant_consumable("all_categories_upgrade")
+	log_debug("Granted Master Upgrade consumable")
+
+
+func _debug_grant_ones_upgrade() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	game_controller.grant_consumable("ones_upgrade")
+	log_debug("Granted Ones Upgrade consumable")
+
+
+func _debug_grant_yahtzee_upgrade() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	game_controller.grant_consumable("yahtzee_upgrade")
+	log_debug("Granted Yahtzee Upgrade consumable")
+
+
+func _debug_upgrade_all_categories() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller) or not is_instance_valid(game_controller.scorecard):
+		log_debug("ERROR: Scorecard not available")
+		return
+
+	if is_instance_valid(game_controller.score_card_ui):
+		game_controller.score_card_ui.enable_upgrade_juice(SCORECARD_UPPER_CATEGORIES.size() + SCORECARD_LOWER_CATEGORIES.size())
+
+	for category in SCORECARD_UPPER_CATEGORIES:
+		game_controller.scorecard.upgrade_category(Scorecard.Section.UPPER, category)
+	for category in SCORECARD_LOWER_CATEGORIES:
+		game_controller.scorecard.upgrade_category(Scorecard.Section.LOWER, category)
+
+	log_debug("Upgraded all scorecard categories directly")
+
+
+func _debug_show_category_levels() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller) or not is_instance_valid(game_controller.scorecard):
+		log_debug("ERROR: Scorecard not available")
+		return
+
+	var lines: Array[String] = ["=== SCORECARD CATEGORY LEVELS ===", "Upper Section:"]
+	for category in SCORECARD_UPPER_CATEGORIES:
+		lines.append("  %s: Lv.%d" % [category, game_controller.scorecard.get_category_level(Scorecard.Section.UPPER, category)])
+	lines.append("Lower Section:")
+	for category in SCORECARD_LOWER_CATEGORIES:
+		lines.append("  %s: Lv.%d" % [category, game_controller.scorecard.get_category_level(Scorecard.Section.LOWER, category)])
+	log_debug("\n".join(lines))
+
+
+func _debug_unlock_all_upgrade_consumables() -> void:
+	if not ProgressManager:
+		log_debug("ERROR: ProgressManager not available")
+		return
+
+	for item_id in SCORECARD_UPGRADE_CONSUMABLE_IDS:
+		ProgressManager.debug_unlock_item(item_id)
+	log_debug("Unlocked all scorecard upgrade consumables")
+
+
+func _debug_lock_all_upgrade_consumables() -> void:
+	if not ProgressManager:
+		log_debug("ERROR: ProgressManager not available")
+		return
+
+	for item_id in SCORECARD_UPGRADE_CONSUMABLE_IDS:
+		ProgressManager.debug_lock_item(item_id)
+	log_debug("Locked all scorecard upgrade consumables")
+
+
+func _debug_test_scorecard_upgrade_juice() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller) or not is_instance_valid(game_controller.scorecard):
+		log_debug("ERROR: Scorecard not available")
+		return
+	if not is_instance_valid(game_controller.score_card_ui):
+		log_debug("ERROR: ScoreCardUI not available")
+		return
+
+	game_controller.score_card_ui.enable_upgrade_juice(1)
+	game_controller.scorecard.upgrade_category(Scorecard.Section.UPPER, "ones")
+	log_debug("Triggered scorecard upgrade juice on Ones")
+
 func _debug_add_money() -> void:
 	if PlayerEconomy:
 		var old_money = PlayerEconomy.money
@@ -1102,6 +1431,26 @@ func _debug_add_money() -> void:
 		log_debug("Money: %d -> %d (+100)" % [old_money, PlayerEconomy.money])
 	else:
 		log_debug("ERROR: PlayerEconomy not available")
+
+func _debug_add_dice() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+
+	var dice_hand = game_controller.dice_hand
+	if not dice_hand:
+		log_debug("ERROR: DiceHand not found")
+		return
+
+	var current_count = dice_hand.dice_count
+	if current_count >= DEBUG_MAX_DICE_COUNT:
+		log_debug("Dice count already at max: %d" % DEBUG_MAX_DICE_COUNT)
+		return
+
+	dice_hand.dice_count = current_count + 1
+	dice_hand.update_dice_count()
+	log_debug("Dice count: %d -> %d" % [current_count, dice_hand.dice_count])
 
 func _debug_force_dice() -> void:
 	if not game_controller:
@@ -2488,6 +2837,303 @@ func _debug_test_color_scoring():
 			result.final_score,
 			result.breakdown_info.multiplier
 		])
+
+
+func _debug_reset_call_counter() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller) or not is_instance_valid(game_controller.scorecard):
+		log_debug("ERROR: Scorecard not available")
+		return
+
+	game_controller.scorecard.calculate_score_call_count = 0
+	if ScoreEvaluatorSingleton and ScoreEvaluatorSingleton.has_method("reset_evaluation_count"):
+		ScoreEvaluatorSingleton.reset_evaluation_count()
+	log_debug("Reset score calculation debug counters")
+
+
+func _debug_chores_add_progress() -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	chores_manager.increment_progress(10)
+	log_debug("Added +10 chore progress")
+
+
+func _debug_chores_add_big_progress() -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	chores_manager.increment_progress(50)
+	log_debug("Added +50 chore progress")
+
+
+func _debug_chores_complete_task() -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	if chores_manager.current_task == null:
+		log_debug("ERROR: No active chore to complete")
+		return
+	var completed_name = chores_manager.current_task.display_name
+	chores_manager.complete_current_task()
+	log_debug("Completed chore: " + completed_name)
+
+
+func _debug_chores_trigger_mom() -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	if chores_manager.has_method("set_progress"):
+		chores_manager.set_progress(chores_manager.get_scaled_max_progress())
+		log_debug("Triggered Mom immediately by filling the goof-off meter")
+	else:
+		log_debug("ERROR: ChoresManager missing set_progress")
+
+
+func _debug_chores_new_task() -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	chores_manager.select_new_task()
+	var task_name = chores_manager.current_task.display_name if chores_manager.current_task else "None"
+	log_debug("Selected new chore: " + task_name)
+
+
+func _debug_chores_reset() -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	chores_manager.reset_progress()
+	log_debug("Reset chore progress and Mom state")
+
+
+func _debug_chores_show_state() -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+
+	var task_name = chores_manager.current_task.display_name if chores_manager.current_task else "None"
+	var pending = chores_manager.get_pending_tasks() if chores_manager.has_method("get_pending_tasks") else {}
+	var easy_name = pending.get("easy").display_name if pending.get("easy") else "None"
+	var hard_name = pending.get("hard").display_name if pending.get("hard") else "None"
+	var lines: Array[String] = [
+		"=== CHORE STATE ===",
+		"Current Task: %s" % task_name,
+		"Progress: %d / %d" % [chores_manager.current_progress, chores_manager.get_scaled_max_progress()],
+		"Rolls Until Expiry: %d" % chores_manager.get_rolls_until_expiry(),
+		"Mom Mood: %d/10 (%s)" % [chores_manager.mom_mood, chores_manager.get_mood_description()],
+		"Tasks Completed This Cycle: %d" % chores_manager.tasks_completed,
+		"Completed Chores This Round: %d" % chores_manager.get_chores_completed_this_round(),
+		"Chore Rewards This Round: $%d" % chores_manager.get_chore_rewards_this_round(),
+		"Pending Selection: %s" % str(chores_manager.pending_chore_selection),
+		"Pending EASY Task: %s" % easy_name,
+		"Pending HARD Task: %s" % hard_name,
+	]
+	log_debug("\n".join(lines))
+
+
+func _debug_chores_show_ratings() -> void:
+	var tasks = ChoreTasksLibrary.get_all_tasks()
+	var lines: Array[String] = ["=== CHORE REWARD VALUES ==="]
+	for task in tasks:
+		lines.append("%s (%s) -> $%d" % [task.display_name, task.id, task.reward_value])
+	log_debug("\n".join(lines))
+
+
+func _debug_chores_list_rewards() -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+
+	var lines: Array[String] = ["=== COMPLETED CHORE REWARDS ==="]
+	if chores_manager.completed_chores.is_empty():
+		lines.append("No chores completed yet")
+	else:
+		for chore in chores_manager.completed_chores:
+			lines.append("%s -> $%d" % [chore.display_name, chore.reward_value])
+	lines.append("Round Total: $%d" % chores_manager.get_chore_rewards_this_round())
+	log_debug("\n".join(lines))
+
+
+func _debug_chores_mom_neutral() -> void:
+	_debug_set_mom_mood(5, "Neutral")
+
+
+func _debug_chores_mom_upset() -> void:
+	_debug_set_mom_mood(8, "Upset")
+
+
+func _debug_chores_mom_happy() -> void:
+	_debug_set_mom_mood(2, "Happy")
+
+
+func _debug_set_mom_mood(target_mood: int, label: String) -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	chores_manager.adjust_mood(target_mood - chores_manager.mom_mood)
+	log_debug("Set Mom mood to %s (%d/10)" % [label, chores_manager.mom_mood])
+
+
+func _debug_lock_tracker_show() -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	log_debug("Recent chore history: %s" % str(chores_manager._task_history))
+
+
+func _debug_lock_tracker_force() -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	if chores_manager.has_method("get_pending_tasks") and chores_manager.has_method("accept_chore_selection"):
+		var pending = chores_manager.get_pending_tasks()
+		if pending.get("hard"):
+			chores_manager.accept_chore_selection(true)
+			log_debug("Forced HARD chore selection from pending options")
+		elif pending.get("easy"):
+			chores_manager.accept_chore_selection(false)
+			log_debug("Forced EASY chore selection from pending options")
+		else:
+			log_debug("No pending chore selection to satisfy")
+	else:
+		log_debug("ERROR: ChoresManager missing pending selection API")
+
+
+func _debug_lock_tracker_history() -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	var lines: Array[String] = ["=== CHORE HISTORY ==="]
+	for task_id in chores_manager._task_history:
+		lines.append(task_id)
+	if lines.size() == 1:
+		lines.append("No recent chore history")
+	log_debug("\n".join(lines))
+
+
+func _debug_synergy_show_status() -> void:
+	var synergy_manager = _get_synergy_manager()
+	if not synergy_manager:
+		log_debug("ERROR: SynergyManager not available")
+		return
+
+	var counts = synergy_manager.get_rating_counts()
+	var active = synergy_manager.get_active_synergies()
+	var lines: Array[String] = [
+		"=== SYNERGY STATUS ===",
+		"Rating Counts: %s" % str(counts),
+		"Active Bonuses: %s" % str(active),
+		"Matching Bonus: +%d" % synergy_manager.get_total_matching_bonus(),
+		"Rainbow Active: %s" % str(synergy_manager.has_rainbow_bonus())
+	]
+	log_debug("\n".join(lines))
+
+
+func _debug_synergy_grant_5_g() -> void:
+	_debug_grant_powerups_for_rating("G", 5)
+
+
+func _debug_synergy_grant_5_pg() -> void:
+	_debug_grant_powerups_for_rating("PG", 5)
+
+
+func _debug_synergy_grant_5_pg13() -> void:
+	_debug_grant_powerups_for_rating("PG-13", 5)
+
+
+func _debug_synergy_grant_5_r() -> void:
+	_debug_grant_powerups_for_rating("R", 5)
+
+
+func _debug_synergy_grant_5_nc17() -> void:
+	_debug_grant_powerups_for_rating("NC-17", 5)
+
+
+func _debug_synergy_grant_rainbow() -> void:
+	for rating in ["G", "PG", "PG-13", "R", "NC-17"]:
+		_debug_grant_powerups_for_rating(rating, 1, false)
+	_debug_synergy_show_status()
+
+
+func _debug_synergy_clear_all() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+
+	var powerup_ids = game_controller.active_power_ups.keys().duplicate()
+	for powerup_id in powerup_ids:
+		game_controller.revoke_power_up(powerup_id)
+	log_debug("Cleared all active power-ups for synergy reset")
+
+
+func _debug_synergy_show_counts() -> void:
+	var synergy_manager = _get_synergy_manager()
+	if not synergy_manager:
+		log_debug("ERROR: SynergyManager not available")
+		return
+	log_debug("Synergy rating counts: %s" % str(synergy_manager.get_rating_counts()))
+
+
+func _debug_synergy_show_bonuses() -> void:
+	var synergy_manager = _get_synergy_manager()
+	if not synergy_manager:
+		log_debug("ERROR: SynergyManager not available")
+		return
+	log_debug("Active synergy bonuses: %s" % str(synergy_manager.get_active_synergies()))
+
+
+func _debug_grant_powerups_for_rating(rating: String, count: int, show_summary: bool = true) -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+
+	var power_up_manager = _get_power_up_manager()
+	if not power_up_manager:
+		log_debug("ERROR: PowerUpManager not available")
+		return
+
+	var matching_ids: Array[String] = []
+	var unsupported_ratings: Array[String] = []
+	for powerup_id in power_up_manager.get_available_power_ups():
+		var powerup_def = power_up_manager.get_def(powerup_id)
+		if not powerup_def:
+			continue
+		if ["G", "PG", "PG-13", "R", "NC-17"].has(powerup_def.rating):
+			if powerup_def.rating == rating:
+				matching_ids.append(powerup_id)
+		elif not unsupported_ratings.has(powerup_def.rating):
+			unsupported_ratings.append(powerup_def.rating)
+
+	matching_ids.sort()
+	var granted_ids: Array[String] = []
+	for powerup_id in matching_ids:
+		if granted_ids.size() >= count:
+			break
+		if game_controller.active_power_ups.has(powerup_id):
+			continue
+		game_controller.grant_power_up(powerup_id)
+		granted_ids.append(powerup_id)
+
+	if show_summary:
+		var summary = "Granted %d %s-rated PowerUps: %s" % [granted_ids.size(), rating, str(granted_ids)]
+		if not unsupported_ratings.is_empty():
+			summary += " | Unsupported rating values present in data: %s" % str(unsupported_ratings)
+		log_debug(summary)
 
 # ========================================
 # PROGRESS SYSTEM DEBUG FUNCTIONS

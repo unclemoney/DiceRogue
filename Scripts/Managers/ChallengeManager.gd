@@ -74,7 +74,9 @@ func _on_challenge_failed(id: String) -> void:
 	emit_signal("challenge_failed", id)
 
 func get_all_challenge_ids() -> Array[String]:
-	return _defs_by_id.keys()
+	var ids: Array[String] = []
+	ids.assign(_defs_by_id.keys())
+	return ids
 
 
 ## get_all_defs() -> Array[ChallengeData]

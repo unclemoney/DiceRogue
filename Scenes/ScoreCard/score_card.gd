@@ -1162,7 +1162,9 @@ func _calculate_base_score(category: String, dice_values: Array) -> int:
 			return 0
 	
 	# Use the ScoreEvaluator to calculate the base score
-	return ScoreEvaluatorSingleton.calculate_score_for_category(category, dice_values)
+	var typed_dice_values: Array[int] = []
+	typed_dice_values.assign(dice_values)
+	return ScoreEvaluatorSingleton.calculate_score_for_category(category, typed_dice_values)
 
 func evaluate_category(category: String, values: Array[int]) -> int:
 	# Additional safety check
