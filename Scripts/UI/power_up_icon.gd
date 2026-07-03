@@ -292,14 +292,11 @@ func _create_card_structure() -> void:
 	sell_button.visible = false
 	sell_button.z_index = 3
 	sell_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	sell_button.size = Vector2(50, 35)
-	
+	sell_button.size = Vector2(60, 45)
+
 	# Apply button styling directly
 	_apply_action_button_style(sell_button)
-	
-	sell_button.pressed.connect(_on_sell_button_pressed)
-	sell_button.mouse_entered.connect(func(): _tfx.button_hover(sell_button))
-	sell_button.mouse_exited.connect(func(): _tfx.button_unhover(sell_button))
+	_update_sell_button_text()
 	sell_button.pressed.connect(func(): _tfx.button_press(sell_button))
 	sell_button.theme = load("res://Resources/UI/powerup_hover_theme.tres")
 	add_child(sell_button)
@@ -483,6 +480,9 @@ func _apply_data_to_ui() -> void:
 		print("[PowerUpIcon] Final rating suffix: '%s'" % rating_suffix)
 		
 		hover_label.text = description_text + rating_suffix
+		print("[PowerUpIcon] Set hover_label.text to:", hover_label.text)
+
+	_update_sell_button_text()
 
 func _gui_input(event: InputEvent) -> void:
 	# In kiosk-tile mode the tile handles all input itself
@@ -1115,3 +1115,12 @@ func _apply_card_info_style() -> void:
 		card_title.add_theme_constant_override("outline_size", 1)
 	
 	print("[PowerUpIcon] CardInfo and Title styling applied")
+
+func _update_sell_button_text() -> void:
+	if not sell_button:
+		return
+	if data:
+		var sell_value = int(data.price / 2.0)
+		sell_button.text = "SELL\n$%d" % sell_value
+	else:
+		sell_button.text = "SELL\n$0"

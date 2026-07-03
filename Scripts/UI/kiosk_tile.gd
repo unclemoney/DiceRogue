@@ -30,7 +30,7 @@ const CONTENT_SEPARATION := 8
 const TITLE_BAR_MIN_HEIGHT := 38.0
 const ART_PANEL_MIN_HEIGHT := 108.0
 const DESCRIPTION_PANEL_MIN_HEIGHT := 72.0 #58
-const ACTION_BAR_MIN_HEIGHT := 36.0
+const ACTION_BAR_MIN_HEIGHT := 52.0
 const DESCRIPTION_SAFE_MAX_CHARS := 150
 const DESCRIPTION_MAX_LINES := 4
 const GLASS_REST_STRENGTH := 0.18
@@ -331,7 +331,7 @@ func _ensure_structure() -> void:
 	if not sell_button:
 		sell_button = Button.new()
 		sell_button.name = "SellButton"
-		sell_button.text = "SELL"
+		sell_button.text = "SELL\n$0"
 		sell_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		sell_button.mouse_filter = Control.MOUSE_FILTER_PASS
 		action_bar.add_child(sell_button)
@@ -447,7 +447,7 @@ func _apply_static_style() -> void:
 	sell_button.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 	sell_button.add_theme_constant_override("outline_size", 1)
 
-	sell_button.custom_minimum_size = Vector2(124, 34)
+	sell_button.custom_minimum_size = Vector2(124, 48)
 	action_bar.alignment = BoxContainer.ALIGNMENT_CENTER
 
 	var normal := StyleBoxFlat.new()
@@ -525,6 +525,10 @@ func _apply_data() -> void:
 		_update_neon_color()
 	if description_panel:
 		description_panel.reset_size()
+
+	if sell_button:
+		var sell_value := int(data.price / 2.0)
+		sell_button.text = "SELL\n$%d" % sell_value
 
 ## _fit_title()
 ##
