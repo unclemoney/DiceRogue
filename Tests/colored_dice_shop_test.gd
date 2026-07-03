@@ -5,6 +5,7 @@ extends Control
 ## Tests the new colored dice purchasing system, including:
 ## - Progress unlocking requirements
 ## - Shop display and purchasing
+## - Repeat purchases increasing owned count and odds
 ## - Dice spawning with purchased colors only
 ## - Color effect calculation
 
@@ -67,7 +68,10 @@ func _test_dice_color_manager() -> void:
 		"get_available_colored_dice",
 		"purchase_colored_dice", 
 		"is_color_purchased",
-		"clear_purchased_colors"
+		"clear_purchased_colors",
+		"get_color_purchase_count",
+		"get_current_color_chance",
+		"is_color_at_max_odds"
 	]
 	
 	for method in required_methods:
@@ -118,24 +122,41 @@ func _test_purchase_system() -> void:
 	# Reset for clean test
 	DiceColorManager.clear_purchased_colors()
 	_log_test("Cleared all purchased colors")
+	var green_type = DiceColor.Type.GREEN
+	var base_odds = DiceColorManager.get_current_color_chance(green_type)
+	_log_test("Starting green odds: 1/%d" % base_odds)
 	
-	# Test purchasing
-	var result = DiceColorManager.purchase_colored_dice("green_dice")
-	if result:
-		_log_test("✅ Successfully purchased green_dice")
+	# Test repeat purchasing and odds compression
+	var first_result = DiceColorManager.purchase_colored_dice("green_dice")
+	var second_result = DiceColorManager.purchase_colored_dice("green_dice")
+	if first_result and second_result:
+		_log_test("✅ Repeat purchases allowed before max odds")
 	else:
-		_log_test("❌ Failed to purchase green_dice")
-	
-	# Test duplicate purchase prevention
-	var duplicate_result = DiceColorManager.purchase_colored_dice("green_dice")
-	if not duplicate_result:
-		_log_test("✅ Correctly prevented duplicate purchase")
-	else:
-		_log_test("❌ Allowed duplicate purchase")
-	
-	# Check purchase status
-	var is_purchased = DiceColorManager.is_color_purchased(DiceColor.Type.GREEN)
+		_log_test("❌ Repeat purchases failed before max odds")
+
+	var purchase_count = DiceColorManager.get_color_purchase_count(green_type)
+	var current_odds = DiceColorManager.get_current_color_chance(green_type)
+	var is_purchased = DiceColorManager.is_color_purchased(green_type)
+	_log_test("Green dice purchase count: %d" % purchase_count)
+	_log_test("Green dice current odds: 1/%d" % current_odds)
 	_log_test("Green dice purchased status: %s" % ("purchased" if is_purchased else "not purchased"))
+	if purchase_count == 2:
+		_log_test("✅ Purchase count increments correctly")
+	else:
+		_log_test("❌ Purchase count incorrect after two purchases")
+	if current_odds < base_odds:
+		_log_test("✅ Odds improved after repeat purchases")
+	else:
+		_log_test("❌ Odds did not improve after repeat purchases")
+
+	var safety := 0
+	while not DiceColorManager.is_color_at_max_odds(green_type) and safety < 8:
+		DiceColorManager.purchase_colored_dice("green_dice")
+		safety += 1
+	if DiceColorManager.is_color_at_max_odds(green_type):
+		_log_test("✅ Green dice reaches max odds at 1/2")
+	else:
+		_log_test("❌ Green dice did not reach max odds in expected range")
 
 func _test_dice_spawning() -> void:
 	_log_test("\n--- Dice Spawning Test ---")

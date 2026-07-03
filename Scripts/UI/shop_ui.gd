@@ -44,8 +44,23 @@ const REQUIRED_MANAGERS := 3
 const TITLE_FLOAT_AMOUNT := 8.0
 
 const ShopItemScene := preload("res://Scenes/Shop/shop_item.tscn")
+const ShopOwnedItemsPanelClass := preload("res://Scripts/UI/shop_owned_items_panel.gd")
+const UnlockableItemScript := preload("res://Scripts/Core/unlockable_item.gd")
 const DEFAULT_SHOP_ITEMS: int = 2
 const MAX_POWER_UP_ITEMS: int = 6
+const OWNERSHIP_PANEL_TYPES := ["mod", "colored_dice"]
+const OWNERSHIP_PANEL_TITLES := {
+	"mod": "MOD STOCK",
+	"colored_dice": "COLOR STOCK",
+}
+const OWNERSHIP_PANEL_EMPTY_TEXT := {
+	"mod": "UNLOCK MODS TO STOCK THIS BOARD",
+	"colored_dice": "UNLOCK COLORS TO STOCK THIS BOARD",
+}
+const OWNERSHIP_PANEL_ACCENTS := {
+	"mod": Color(0.96, 0.79, 0.24, 1.0),
+	"colored_dice": Color(0.24, 0.88, 0.84, 1.0),
+}
 
 var items_per_section := DEFAULT_SHOP_ITEMS  # Number of items to display per section
 var power_up_items := DEFAULT_SHOP_ITEMS     # Specific count for power-ups
@@ -62,6 +77,7 @@ var _reroll_shells := {}
 var _reroll_shader_materials := {}
 var _reroll_title_labels := {}
 var _reroll_price_labels := {}
+var _ownership_panels := {}
 
 const PAGE_SIZE := 3
 const PAGED_ITEM_TYPES := ["power_up", "consumable", "mod", "colored_dice", "gaming_console"]
@@ -245,6 +261,7 @@ func _populate_shop_items() -> void:
 
 	for item_type in PAGED_ITEM_TYPES:
 		_render_current_page(item_type)
+	_refresh_all_ownership_panels()
 
 func _build_power_up_pool() -> Array:
 	var power_up_page_items: Array = []
@@ -437,6 +454,8 @@ func _initialize_page_state() -> void:
 		_tab_page_indices[item_type] = 0
 		_page_transitioning[item_type] = false
 		_footer_controls[item_type] = {}
+	for item_type in OWNERSHIP_PANEL_TYPES:
+		_ownership_panels[item_type] = null
 
 func _reset_page_indices() -> void:
 	for item_type in PAGED_ITEM_TYPES:
@@ -589,6 +608,7 @@ func reset_for_new_round() -> void:
 		"gaming_console": []
 	}
 	_populate_shop_items()
+	_refresh_all_ownership_panels()
 
 func _add_shop_item(data: Resource, type: String) -> void:
 	var container = _get_container_for_type(type)
@@ -604,13 +624,13 @@ func _add_shop_item(data: Resource, type: String) -> void:
 	item.purchased.connect(
 		func(id: String, itype: String):
 			print("[ShopUI] Purchase signal received from item:", id)
-			_on_item_purchased(id, itype)
+			_on_item_purchase_requested(item, id, itype)
 	)
 	
 	item.setup(data, type)
 	print("[ShopUI] Added and connected item:", data.id, "type:", type)
 
-func _on_item_purchased(item_id: String, item_type: String) -> void:
+func _on_item_purchase_requested(source_item: ShopItem, item_id: String, item_type: String) -> void:
 	print("[ShopUI] Processing purchase:", item_id, "type:", item_type)
 	
 	# Check if it's a power-up and if we're already at max
@@ -631,8 +651,8 @@ func _on_item_purchased(item_id: String, item_type: String) -> void:
 	# Check if it's a mod and if we're already at dice limit
 	elif item_type == "mod":
 		# Find GameController to check mod vs dice count limit
-		var game_controller = _find_game_controller()
-		if game_controller and _has_reached_mod_limit(game_controller):
+		var validation_controller = _find_game_controller()
+		if validation_controller and _has_reached_mod_limit(validation_controller):
 			print("[ShopUI] Mod limit reached (all dice have mods), purchase blocked")
 			return
 		else:
@@ -661,6 +681,31 @@ func _on_item_purchased(item_id: String, item_type: String) -> void:
 				return
 	
 	print("[ShopUI] Purchase validation passed, proceeding with purchase")
+	var purchase_price := source_item.price if source_item else 0
+	if purchase_price > 0 and not PlayerEconomy.can_afford(purchase_price):
+		print("[ShopUI] Purchase no longer affordable:", item_id, "cost:", purchase_price)
+		if source_item:
+			source_item.cancel_purchase_request()
+		return
+
+	var purchase_controller = _find_game_controller()
+	if not purchase_controller:
+		push_error("[ShopUI] GameController not found for purchase processing")
+		if source_item:
+			source_item.cancel_purchase_request()
+		return
+
+	if purchase_price > 0:
+		PlayerEconomy.remove_money(purchase_price, item_type)
+
+	var purchase_applied: bool = purchase_controller.process_shop_purchase(item_id, item_type)
+	if not purchase_applied:
+		print("[ShopUI] Purchase request failed during grant:", item_id, "type:", item_type)
+		if purchase_price > 0:
+			PlayerEconomy.add_money(purchase_price)
+		if source_item:
+			source_item.cancel_purchase_request()
+		return
 
 	# Record that this item was purchased (for statistics)
 	if not purchased_items[item_type].has(item_id):
@@ -672,6 +717,8 @@ func _on_item_purchased(item_id: String, item_type: String) -> void:
 	print("[ShopUI] Emitting item_purchased signal for:", item_id, "type:", item_type)
 	emit_signal("item_purchased", item_id, item_type)
 	_remove_item_from_pool(item_id, item_type)
+	if OWNERSHIP_PANEL_TYPES.has(item_type):
+		_refresh_ownership_panel(item_type)
 
 	# Remove the item from the shop after purchase.
 	# For colored dice: removed this turn, but available again next turn (not tracked in purchased_items for filtering)
@@ -771,8 +818,8 @@ func _find_consumable_ui() -> ConsumableUI:
 	return get_tree().get_first_node_in_group("consumable_ui") as ConsumableUI
 
 # Helper function to find GameController
-func _find_game_controller() -> GameController:
-	return get_tree().get_first_node_in_group("game_controller") as GameController
+func _find_game_controller():
+	return get_tree().get_first_node_in_group("game_controller")
 
 
 ## on_shop_opened()
@@ -783,6 +830,7 @@ func on_shop_opened() -> void:
 	refresh_all_prices()
 	_update_reroll_cost_display()
 	_update_reroll_button_state()
+	_refresh_all_ownership_panels()
 	tab_container.current_tab = 0  # Default to first tab
 
 ## refresh_all_prices()
@@ -798,7 +846,7 @@ func refresh_all_prices() -> void:
 				child.refresh_price()
 
 # Helper function to check if mod limit has been reached
-func _has_reached_mod_limit(game_controller: GameController) -> bool:
+func _has_reached_mod_limit(game_controller) -> bool:
 	if not game_controller:
 		return false
 	
@@ -1087,6 +1135,8 @@ func _on_tab_changed(tab_index: int) -> void:
 	var item_type = _get_type_for_tab_index(tab_index)
 	if item_type != "":
 		_update_footer_state(item_type)
+	if OWNERSHIP_PANEL_TYPES.has(item_type):
+		_refresh_ownership_panel(item_type)
 	
 	# Animate items in the newly selected purchasable tab.
 	var container := _get_container_for_tab_index(tab_index)
@@ -1427,7 +1477,6 @@ func _replace_grid_with_centered_layout() -> void:
 		main_vbox.name = "CenteredContainer"
 		main_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		main_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		main_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 		
 		# Create a single-row container for the current page slice.
 		var item_container := HBoxContainer.new()
@@ -1446,8 +1495,8 @@ func _replace_grid_with_centered_layout() -> void:
 			grid.remove_child(child)
 			item_container.add_child(child)
 		
-		# Build the hierarchy: tab -> margin -> main_vbox -> item_container -> items
-		main_vbox.add_child(item_container)
+		# Build the hierarchy: tab -> margin -> main_vbox -> content layout -> items
+		main_vbox.add_child(_create_tab_content_layout(item_type, item_container))
 		margin_container.add_child(main_vbox)
 		tab_node.add_child(margin_container)
 		
@@ -1468,8 +1517,132 @@ func _replace_grid_with_centered_layout() -> void:
 
 		if item_type != "":
 			_add_footer_ui_to_tab(tab_node, item_type)
+		if OWNERSHIP_PANEL_TYPES.has(item_type):
+			_refresh_ownership_panel(item_type)
 		
 		print("[ShopUI] Created centered layout for:", tab_node.name)
+
+func _create_tab_content_layout(item_type: String, item_container: HBoxContainer) -> Control:
+	if OWNERSHIP_PANEL_TYPES.has(item_type):
+		var content_row := HBoxContainer.new()
+		content_row.name = "ContentRow"
+		content_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		content_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		content_row.add_theme_constant_override("separation", 24)
+
+		var ownership_panel = ShopOwnedItemsPanelClass.new()
+		ownership_panel.name = "OwnershipPanel"
+		ownership_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		ownership_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		ownership_panel.size_flags_stretch_ratio = 1.0
+		ownership_panel.custom_minimum_size = Vector2(246, 0)
+		content_row.add_child(ownership_panel)
+		_ownership_panels[item_type] = ownership_panel
+
+		var right_content := CenterContainer.new()
+		right_content.name = "ItemCenter"
+		right_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		right_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		right_content.size_flags_stretch_ratio = 2.0
+		right_content.add_child(item_container)
+		content_row.add_child(right_content)
+		return content_row
+
+	var center_container := CenterContainer.new()
+	center_container.name = "ItemCenter"
+	center_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	center_container.add_child(item_container)
+	return center_container
+
+
+func _refresh_all_ownership_panels() -> void:
+	for item_type in OWNERSHIP_PANEL_TYPES:
+		_refresh_ownership_panel(item_type)
+
+
+func _refresh_ownership_panel(item_type: String) -> void:
+	if not OWNERSHIP_PANEL_TYPES.has(item_type):
+		return
+	var ownership_panel = _ownership_panels.get(item_type)
+	if not ownership_panel or not is_instance_valid(ownership_panel):
+		return
+	ownership_panel.set_panel_content(
+		OWNERSHIP_PANEL_TITLES.get(item_type, "STOCK"),
+		_build_ownership_rows(item_type),
+		OWNERSHIP_PANEL_ACCENTS.get(item_type, Color(0.92, 0.76, 0.24, 1.0)),
+		OWNERSHIP_PANEL_EMPTY_TEXT.get(item_type, "NO STOCK AVAILABLE")
+	)
+
+
+func _build_ownership_rows(item_type: String) -> Array:
+	match item_type:
+		"mod":
+			return _build_mod_ownership_rows()
+		"colored_dice":
+			return _build_colored_dice_ownership_rows()
+	return []
+
+
+func _build_mod_ownership_rows() -> Array:
+	var progress_manager = get_node_or_null("/root/ProgressManager")
+	if not progress_manager or not mod_manager:
+		return []
+
+	var game_controller = _find_game_controller()
+	var mod_counts: Dictionary = game_controller.mod_persistence_map if game_controller else {}
+	var rows: Array = []
+	var unlocked_ids = progress_manager.get_unlocked_items(UnlockableItemScript.ItemType.MOD)
+
+	for item_id in unlocked_ids:
+		var mod_def = mod_manager.get_def(item_id)
+		var item = progress_manager.get_unlockable_item(item_id)
+		var display_name = mod_def.display_name if mod_def else (item.display_name if item else item_id)
+		rows.append({
+			"item_id": item_id,
+			"display_name": display_name,
+			"count": int(mod_counts.get(item_id, 0)),
+		})
+
+	_sort_ownership_rows(rows)
+	return rows
+
+
+func _build_colored_dice_ownership_rows() -> Array:
+	var progress_manager = get_node_or_null("/root/ProgressManager")
+	if not progress_manager:
+		return []
+
+	var rows: Array = []
+	var unlocked_ids = progress_manager.get_unlocked_items(UnlockableItemScript.ItemType.COLORED_DICE_FEATURE)
+
+	for item_id in unlocked_ids:
+		var color_data = DiceColorManager.get_colored_dice_data(item_id)
+		var item = progress_manager.get_unlockable_item(item_id)
+		if not color_data and not item:
+			continue
+
+		var display_name = color_data.display_name if color_data else item.display_name
+		var count := 0
+		var detail := ""
+		if color_data:
+			count = DiceColorManager.get_color_purchase_count(color_data.color_type)
+			var odds = DiceColorManager.get_current_color_chance(color_data.color_type)
+			detail = "ODDS 1/2 MAX" if DiceColorManager.is_color_at_max_odds(color_data.color_type) else "ODDS 1/%d" % odds
+
+		rows.append({
+			"item_id": item_id,
+			"display_name": display_name,
+			"count": count,
+			"detail": detail,
+		})
+
+	_sort_ownership_rows(rows)
+	return rows
+
+
+func _sort_ownership_rows(rows: Array) -> void:
+	rows.sort_custom(func(a: Dictionary, b: Dictionary): return String(a.get("display_name", "")).nocasecmp_to(String(b.get("display_name", ""))) < 0)
 
 ## _add_shelf_background_to_tab(tab_node)
 ## Adds the Blockbuster shelf background to a tab

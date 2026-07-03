@@ -826,6 +826,7 @@ New items can be unlocked by completing Mall Zones, providing progression reward
 - **Unlock/Lock Controls**: Toggle any item's unlock status for testing
 - **Progress Simulation**: Simulate achieving any unlock condition
 - **Reset Functions**: Clear progress for testing scenarios
+- **Ownership Panel Seed**: `F12` → `Testing` → `Seed Shop Ownership Panel` unlocks sample Mod/Color rows, seeds owned counts, opens the shop on Mods, and lets you verify the Colors odds board immediately
 
 **File Locations:**
 - Core System: `Scripts/Core/unlock_condition.gd`, `Scripts/Core/unlockable_item.gd`
@@ -1321,6 +1322,10 @@ var total_matching = synergy_manager.get_total_matching_bonus()
 - **Tab System**: Seven tabs (PowerUps, Consumables, Mods, Colors, Consoles, Locked, Unlocked)
 - **Single-Row Pagination**: All purchasable tabs render one horizontal row of up to 3 cards; left/right footer arrows appear only when a tab pool exceeds 3 items and advance by a full page
 - **Directional Page Motion**: Page changes reuse the shop fly-in/fly-out motion language so outgoing cards move with the pressed direction and incoming cards swoop in from the opposite side
+- **Ownership Stock Board**: Mods and Colors tabs reserve the left third for a themed stock-board panel using `action_button_theme.tres`
+  - Shows every currently unlocked Mod or Color row, even when the owned count is `0`
+  - Mod rows show current-run ownership counts sourced from `GameController.mod_persistence_map`
+  - Color rows show current-run ownership counts plus live odds (`1/X`) sourced from `DiceColorManager`
 - **Reroll Footer**: PowerUp and Consumable tabs use a shader-backed reroll shell with the live cost embedded inside the button and pagination arrows flanking it
   - Base cost: $25, increases by $5 per reroll
   - 750ms cooldown between rerolls
@@ -1338,7 +1343,7 @@ var total_matching = synergy_manager.get_total_matching_bonus()
 - **Improved Hover Tooltips**: Tooltip stays visible when moving from item card to purchase button
 - **PowerUp Shop Expansion Cap**: Shop-expansion consumables can raise the PowerUps tab from 2 visible offers up to a hard cap of 6; footer arrows first appear at 4 offers and still page in groups of 3
 - **Shelf Panel Theme**: Blockbuster-style shelf background (128x128 pixel art texture with edge borders)
-- **Focused Validation Scenes**: `Tests/ShopLockedTabTest.tscn`, `Tests/ShopPaginationTest.tscn`, `Tests/ShopStylingTest.tscn`, and `Tests/ReplicaPowerUpTest.tscn`
+- **Focused Validation Scenes**: `Tests/ShopLockedTabTest.tscn`, `Tests/ShopPaginationTest.tscn`, `Tests/ShopStylingTest.tscn`, `Tests/ColoredDiceShopTest.tscn`, and `Tests/ReplicaPowerUpTest.tscn`
 
 ### Hover Tooltip System
 All interactive game items feature consistent, themed hover tooltips:

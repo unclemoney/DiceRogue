@@ -252,7 +252,6 @@ func _ready() -> void:
 	if shop_ui:
 		print("[GameController] Setting up shop UI")
 		shop_ui.hide()
-		shop_ui.connect("item_purchased", _on_shop_item_purchased)
 	if challenge_manager:
 		challenge_manager.challenge_completed.connect(_on_challenge_completed)
 		challenge_manager.challenge_failed.connect(_on_challenge_failed)
@@ -2761,7 +2760,7 @@ func _get_expected_dice_count() -> int:
 
 ## grant_colored_dice(id)
 ##
-## Processes the purchase of a colored dice type, making it available for the current game session.
+## Grants a colored dice type for the current run after ShopUI has already charged the player.
 func grant_colored_dice(id: String) -> void:
 	print("[GameController] Attempting to grant colored dice:", id)
 	
@@ -2771,15 +2770,6 @@ func grant_colored_dice(id: String) -> void:
 		push_error("[GameController] No ColoredDiceData found for:", id)
 		return
 	
-	# Check if player can afford it
-	if PlayerEconomy.money < colored_dice_data.price:
-		print("[GameController] Insufficient money for colored dice:", id, "Cost:", colored_dice_data.price, "Have:", PlayerEconomy.money)
-		return
-	
-	# Deduct the cost
-	PlayerEconomy.remove_money(colored_dice_data.price, "colored_dice")
-	print("[GameController] Spent $%d on %s" % [colored_dice_data.price, colored_dice_data.display_name])
-	
 	# Purchase the colored dice type through DiceColorManager
 	if DiceColorManager.purchase_colored_dice(id):
 		print("[GameController] Successfully purchased %s for this game session" % colored_dice_data.display_name)
@@ -2787,8 +2777,6 @@ func grant_colored_dice(id: String) -> void:
 		# Optional: Show a notification or effect
 		_show_colored_dice_purchase_notification(colored_dice_data)
 	else:
-		# Refund if purchase failed
-		PlayerEconomy.add_money(colored_dice_data.price)
 		push_error("[GameController] Failed to purchase colored dice:", id)
 
 ## _show_colored_dice_purchase_notification(data)
@@ -3918,39 +3906,64 @@ func _open_shop_ui() -> void:
 			crt_manager.enable_crt()
 
 
-## _on_shop_item_purchased(item_id, item_type)
+## process_shop_purchase(item_id, item_type) -> bool
 ##
-# Processes shop purchases by delegating to the appropriate grant_* helper.
-func _on_shop_item_purchased(item_id: String, item_type: String) -> void:
+## Applies a shop purchase after ShopUI has already validated and charged it.
+## Returns true only when the requested item was actually granted.
+func process_shop_purchase(item_id: String, item_type: String) -> bool:
 	print("[GameController] Processing purchase:", item_id, "type:", item_type)
 	match item_type:
 		"power_up":
+			var already_owned := active_power_ups.has(item_id)
 			print("[GameController] Granting power-up:", item_id)
 			grant_power_up(item_id)
+			var purchase_granted: bool = active_power_ups.has(item_id) and not already_owned
 			# Consume all half price stacks after a PowerUp purchase
-			if half_price_stacks > 0:
+			if purchase_granted and half_price_stacks > 0:
 				print("[GameController] Consuming half_price stacks after PowerUp purchase")
 				half_price_stacks = 0
 				_refresh_shop_prices()
+			return purchase_granted
 		"consumable":
+			var consumable_count_before: int = int(consumable_counts.get(item_id, 0))
 			print("[GameController] Granting consumable:", item_id)
 			grant_consumable(item_id)
+			var consumable_was_granted: bool = int(consumable_counts.get(item_id, 0)) > consumable_count_before
 			# Consume one loss leader stack after a consumable purchase
-			if loss_leader_stacks > 0:
+			if consumable_was_granted and loss_leader_stacks > 0:
 				loss_leader_stacks -= 1
 				print("[GameController] Consumed loss_leader stack, remaining: %d" % loss_leader_stacks)
 				_refresh_shop_prices()
+			return consumable_was_granted
 		"mod":
+			var mod_count_before := int(mod_persistence_map.get(item_id, 0))
 			print("[GameController] Granting mod:", item_id)
 			grant_mod(item_id)
+			return int(mod_persistence_map.get(item_id, 0)) > mod_count_before
 		"colored_dice":
+			var colored_dice_data = DiceColorManager.get_colored_dice_data(item_id)
+			if not colored_dice_data:
+				push_error("[GameController] No ColoredDiceData found for: %s" % item_id)
+				return false
+			var color_count_before := DiceColorManager.get_color_purchase_count(colored_dice_data.color_type)
 			print("[GameController] Granting colored dice:", item_id)
 			grant_colored_dice(item_id)
+			return DiceColorManager.get_color_purchase_count(colored_dice_data.color_type) > color_count_before
 		"gaming_console":
+			var had_console := not active_gaming_console.is_empty()
 			print("[GameController] Granting gaming console:", item_id)
 			grant_gaming_console(item_id)
+			return not had_console and active_gaming_console.has(item_id)
 		_:
 			push_error("[GameController] Unknown item type purchased:", item_type)
+	return false
+
+
+## _on_shop_item_purchased(item_id, item_type)
+##
+## Legacy wrapper kept for compatibility with any older callers.
+func _on_shop_item_purchased(item_id: String, item_type: String) -> void:
+	process_shop_purchase(item_id, item_type)
 
 
 ## get_half_price_multiplier() -> float
@@ -5265,24 +5278,18 @@ func check_chore_task_completion(context: Dictionary) -> void:
 
 ## _count_locked_dice()
 ##
-## Helper to count how many dice are currently locked.
-## Returns: int - number of locked dice
+## Returns the number of currently locked dice.
 func _count_locked_dice() -> int:
 	if not dice_hand:
 		return 0
-	var count = 0
+	var count := 0
 	for die in dice_hand.dice_list:
 		if not is_instance_valid(die):
 			continue
-		if die is Dice and die.is_locked:
+		if die.is_locked:
 			count += 1
 	return count
 
-
-## _check_lock_dice_chore()
-##
-## DEPRECATED: Replaced by the LockConstraintTracker system in _handle_post_scoring_effects().
-## LOCK_DICE tasks are no longer generated in the chore library.
 ## Kept for backward compatibility in case an old save still has an active LOCK_DICE chore.
 func _check_lock_dice_chore() -> void:
 	if not chores_manager:
@@ -5292,7 +5299,8 @@ func _check_lock_dice_chore() -> void:
 	if locked_count > 0:
 		print("[GameController] [DEPRECATED] Checking legacy lock dice chore: %d dice locked" % locked_count)
 		var context = {
-			"locked_count": locked_count
+			"locked_count": locked_count,
+			"lock_constraint_tracker": _active_lock_tracker,
 		}
 		chores_manager.check_task_completion(context)
 

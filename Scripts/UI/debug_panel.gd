@@ -260,6 +260,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Show Mod/Dice Count", "method": "_debug_show_mod_dice_count"},
 			{"text": "Fill All Dice w/ Mods", "method": "_debug_fill_dice_with_mods"},
 			{"text": "Test Mod Limit Block", "method": "_debug_test_mod_limit_block"},
+			{"text": "Seed Shop Ownership Panel", "method": "_debug_seed_shop_ownership_panel"},
 			{"text": "Test Shop Mod Purchase", "method": "_debug_test_shop_mod_purchase"},
 		],
 		"Game State": [
@@ -2151,6 +2152,55 @@ func _debug_test_shop_mod_purchase() -> void:
 	
 	# Check if the mod was applied to a die
 	_debug_show_mod_dice_count()
+
+
+func _debug_seed_shop_ownership_panel() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+
+	var progress_manager = get_node_or_null("/root/ProgressManager")
+	if not progress_manager:
+		log_debug("ERROR: ProgressManager not found")
+		return
+	if not is_instance_valid(game_controller.mod_manager):
+		log_debug("ERROR: ModManager not available")
+		return
+
+	PlayerEconomy.add_money(2500)
+	DiceColorManager.clear_purchased_colors()
+
+	var unlocked_mods := 0
+	for item_id in progress_manager.unlockable_items:
+		var unlockable = progress_manager.unlockable_items[item_id]
+		if unlockable.item_type == UnlockableItem.ItemType.MOD:
+			progress_manager.debug_unlock_item(item_id)
+			unlocked_mods += 1
+
+	var colored_dice_items = ["green_dice", "red_dice", "purple_dice", "blue_dice", "yellow_dice"]
+	for item_id in colored_dice_items:
+		progress_manager.debug_unlock_item(item_id)
+
+	var available_mods = game_controller.mod_manager.get_available_mods()
+	if available_mods.size() > 0:
+		game_controller.grant_mod(available_mods[0])
+		game_controller.grant_mod(available_mods[0])
+	if available_mods.size() > 1:
+		game_controller.grant_mod(available_mods[1])
+
+	DiceColorManager.purchase_colored_dice("green_dice")
+	DiceColorManager.purchase_colored_dice("green_dice")
+	DiceColorManager.purchase_colored_dice("purple_dice")
+
+	if game_controller.has_method("_open_shop_ui"):
+		game_controller._open_shop_ui()
+	if is_instance_valid(game_controller.shop_ui):
+		game_controller.shop_ui.tab_container.current_tab = 2
+		game_controller.shop_ui._refresh_all_ownership_panels()
+
+	log_debug("Seeded shop ownership panel with %d unlocked mods, 3 mod instances, and 3 color purchases" % unlocked_mods)
+	log_debug("Shop opened on Mods tab. Switch to Colors to verify count + odds rows.")
 
 ## _debug_activate_crossing_challenge()
 ##

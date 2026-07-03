@@ -358,17 +358,12 @@ func _on_buy_button_pressed() -> void:
 			return
 	
 	if PlayerEconomy.can_afford(price):
-		if PlayerEconomy.remove_money(price, item_type):
-			print("[ShopItem] Successfully purchased", item_id, "for", price)
-			print("[ShopItem] Emitting purchase signal for:", item_id, "type:", item_type)
-			emit_signal("purchased", item_id, item_type)
-			print("[ShopItem] Purchase signal emitted")
-			# Leave _is_purchasing set until the node is freed; this prevents
-			# hover tweens and further input from interfering with removal.
-			return
-		else:
-			print("[ShopItem] Failed to remove money for purchase")
-			_is_purchasing = false
+		print("[ShopItem] Purchase request ready for", item_id, "at", price)
+		print("[ShopItem] Emitting purchase signal for:", item_id, "type:", item_type)
+		emit_signal("purchased", item_id, item_type)
+		print("[ShopItem] Purchase signal emitted")
+		# Leave _is_purchasing set until ShopUI resolves the request.
+		return
 	else:
 		print("[ShopItem] Cannot afford", item_id, "(cost:", price, ", money:", PlayerEconomy.money, ")")
 		# Play denied sound
@@ -379,6 +374,18 @@ func _on_buy_button_pressed() -> void:
 		if buy_button:
 			TweenFX.shake(buy_button, 0.2, 5.0, 3)
 		_is_purchasing = false
+	_update_button_state()
+
+
+## cancel_purchase_request()
+##
+## Resets the temporary BUYING state when ShopUI rejects or rolls back a request.
+func cancel_purchase_request() -> void:
+	if _is_being_removed:
+		return
+	_is_purchasing = false
+	if buy_button and buy_button.text == "BUYING...":
+		buy_button.text = "BUY"
 	_update_button_state()
 
 
