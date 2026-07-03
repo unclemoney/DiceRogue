@@ -276,8 +276,9 @@ func _on_main_menu_pressed() -> void:
 		_show_tutorial_warning()
 		return
 	
-	hide_menu()
-	_return_to_main_menu()
+	if visible:
+		await hide_menu()
+	await _return_to_main_menu()
 
 
 ## _animate_in()
@@ -367,7 +368,9 @@ func _build_tutorial_warning_dialog() -> void:
 ##
 ## Called when player confirms leaving during tutorial.
 func _on_tutorial_warning_confirmed() -> void:
-	_return_to_main_menu()
+	if visible:
+		await hide_menu()
+	await _return_to_main_menu()
 
 
 ## _return_to_main_menu()

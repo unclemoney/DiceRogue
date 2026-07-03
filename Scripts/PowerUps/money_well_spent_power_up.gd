@@ -38,6 +38,10 @@ func _get_score_modifier_manager():
 	# ScoreModifierManager is a registered autoload — use direct reference
 	return ScoreModifierManager
 
+
+func _get_additive_source_name() -> String:
+	return get_runtime_modifier_source_name("money_well_spent")
+
 func apply(_target) -> void:
 	print("=== Applying MoneyWellSpentPowerUp ===")
 	
@@ -108,7 +112,7 @@ func _update_additive_manager() -> void:
 	var manager = _get_score_modifier_manager()
 	
 	if manager:
-		manager.register_additive("money_well_spent", additive)
+		manager.register_additive(_get_additive_source_name(), additive)
 		print("[MoneyWellSpentPowerUp] ScoreModifierManager updated with additive:", additive)
 	else:
 		push_error("[MoneyWellSpentPowerUp] Could not access ScoreModifierManager")
@@ -128,7 +132,7 @@ func _on_tree_exiting() -> void:
 	if _is_score_modifier_manager_available():
 		var manager = _get_score_modifier_manager()
 		if manager:
-			manager.unregister_additive("money_well_spent")
+			manager.unregister_additive(_get_additive_source_name())
 			print("[MoneyWellSpentPowerUp] Additive unregistered from ScoreModifierManager")
 
 func remove(_target) -> void:
@@ -138,7 +142,7 @@ func remove(_target) -> void:
 	if _is_score_modifier_manager_available():
 		var manager = _get_score_modifier_manager()
 		if manager:
-			manager.unregister_additive("money_well_spent")
+			manager.unregister_additive(_get_additive_source_name())
 			print("[MoneyWellSpentPowerUp] Additive unregistered from ScoreModifierManager")
 	
 	statistics_ref = null
@@ -166,7 +170,7 @@ func _update_power_up_icons() -> void:
 	var power_up_ui = get_tree().get_first_node_in_group("power_up_ui")
 	if power_up_ui:
 		# Get the icon for this power-up
-		var icon = power_up_ui.get_power_up_icon("money_well_spent")
+		var icon = power_up_ui.get_power_up_icon(get_runtime_power_up_id("money_well_spent"))
 		if icon:
 			# Update its description
 			icon.update_hover_description()

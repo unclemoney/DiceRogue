@@ -334,7 +334,7 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - **New Wave PowerUps** (10 total): Purple Payout, Mod Money, Blue Safety Net, Chore Sprint, Straight Triplet Master, Modded Dice Mastery, Debuff Destroyer, Challenge Easer, Azure Perfection, Rainbow Surge
     - Themes: dice color synergies, mod-powerup synergies, straight combos, economy/chores, debuff management, challenge easing
   - **Risk & Reward PowerUps** (6 total):
-    - **The Replicator** (Rare/$300): After 1 turn, duplicates a random PowerUp you own — with dramatic visual/audio effects
+    - **The Replicator** (Rare/$300): After 1 turn, duplicates a random PowerUp you own — with dramatic visual/audio effects and a fully independent replica instance that keeps its own runtime id/modifier source
     - **The Piggy Bank** (Uncommon/$125): Saves $3 per roll; sell to cash out accumulated savings with animated coin effects
     - **Random Card Level** (Rare/$300): 20% chance each turn to level up a random scorecard category
     - **Yahtzeed Dice** (Epic/$450): Gain +1 die every time you roll a Yahtzee (max 16 dice)
@@ -1336,8 +1336,9 @@ var total_matching = synergy_manager.get_total_matching_bonus()
 - **Centered Item Layout**: Items automatically center horizontally and vertically regardless of count
 - **Backdrop Click-to-Close**: Clicking outside the shop panel closes it
 - **Improved Hover Tooltips**: Tooltip stays visible when moving from item card to purchase button
+- **PowerUp Shop Expansion Cap**: Shop-expansion consumables can raise the PowerUps tab from 2 visible offers up to a hard cap of 6; footer arrows first appear at 4 offers and still page in groups of 3
 - **Shelf Panel Theme**: Blockbuster-style shelf background (128x128 pixel art texture with edge borders)
-- **Focused Validation Scenes**: `Tests/ShopLockedTabTest.tscn`, `Tests/ShopPaginationTest.tscn`, and `Tests/ShopStylingTest.tscn`
+- **Focused Validation Scenes**: `Tests/ShopLockedTabTest.tscn`, `Tests/ShopPaginationTest.tscn`, `Tests/ShopStylingTest.tscn`, and `Tests/ReplicaPowerUpTest.tscn`
 
 ### Hover Tooltip System
 All interactive game items feature consistent, themed hover tooltips:

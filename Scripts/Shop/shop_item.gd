@@ -774,8 +774,13 @@ func _set_title_text(title_text: String) -> void:
 func _fit_title() -> void:
 	if not name_label or not is_inside_tree():
 		return
+	var scene_tree := get_tree()
+	if scene_tree == null:
+		return
 	name_label.add_theme_font_size_override("font_size", TITLE_FONT_SIZE_DEFAULT)
-	await get_tree().process_frame
+	await scene_tree.process_frame
+	if not is_inside_tree() or get_tree() == null or not is_instance_valid(name_label):
+		return
 	var safe_width := title_plate.size.x - TITLE_HORIZONTAL_PADDING
 	if safe_width <= 0.0:
 		var card_width := size.x
@@ -787,7 +792,9 @@ func _fit_title() -> void:
 		title_font = VCR_FONT
 	for font_size in range(TITLE_FONT_SIZE_DEFAULT, TITLE_FONT_SIZE_MIN - 1, -1):
 		name_label.add_theme_font_size_override("font_size", font_size)
-		await get_tree().process_frame
+		await scene_tree.process_frame
+		if not is_inside_tree() or get_tree() == null or not is_instance_valid(name_label):
+			return
 		var measured_width := title_font.get_string_size(
 			name_label.text,
 			name_label.horizontal_alignment,

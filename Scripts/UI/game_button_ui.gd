@@ -34,6 +34,8 @@ var scorecard: Scorecard
 var is_shop_open: bool = true
 
 var _is_shop_pulsing: bool = false
+var _button_wave_tweens: Dictionary = {}
+var _button_base_scales: Dictionary = {}
 
 var _input_cooldown: float = 0.0
 const INPUT_COOLDOWN_DURATION: float = 0.75
@@ -127,11 +129,12 @@ func _deferred_ready_validation() -> void:
 		score_card_ui.connect("manual_score", Callable(self, "_scored_hand_setup_next_round"))
 
 	if shop_button:
-		shop_button.disabled = false
+		_set_button_disabled(shop_button, false)
 		print("Shop button status: ", shop_button.disabled)
 
 	for btn in [shop_button, next_turn_button, next_round_button]:
 		if btn:
+			_cache_button_base_scale(btn)
 			if not btn.mouse_entered.is_connected(_tfx.button_hover.bind(btn)):
 				btn.mouse_entered.connect(_tfx.button_hover.bind(btn))
 			if not btn.mouse_exited.is_connected(_tfx.button_unhover.bind(btn)):
@@ -141,7 +144,7 @@ func _deferred_ready_validation() -> void:
 
 	if next_round_button and not next_round_button.pressed.is_connected(_on_next_round_button_pressed):
 		next_round_button.pressed.connect(_on_next_round_button_pressed)
-		next_round_button.disabled = false
+		_set_button_disabled(next_round_button, false)
 
 	if round_manager:
 		round_manager.round_started.connect(_on_round_started)
@@ -159,7 +162,7 @@ func _deferred_ready_validation() -> void:
 	if turn_tracker:
 		turn_tracker.connect("game_over", Callable(self, "_on_game_over"))
 
-	next_turn_button.disabled = true
+	_set_button_disabled(next_turn_button, true)
 
 	call_deferred("_connect_roll_ui_signals")
 
@@ -234,6 +237,46 @@ func _connect_roll_ui_signals() -> void:
 		push_error("[GameButtonUI] challenge_manager not found -- challenge_completed will not enable Next Round")
 
 
+func _cache_button_base_scale(button: Button) -> void:
+	if not button:
+		return
+	if not _button_base_scales.has(button):
+		_button_base_scales[button] = button.scale
+
+
+func _get_button_base_scale(button: Button) -> Vector2:
+	if not button:
+		return Vector2.ONE
+	_cache_button_base_scale(button)
+	return _button_base_scales[button]
+
+
+func _stop_button_wave(button: Button) -> void:
+	if not button:
+		return
+	var wave_tween: Tween = _button_wave_tweens.get(button)
+	if wave_tween and wave_tween.is_valid():
+		wave_tween.kill()
+	_button_wave_tweens.erase(button)
+
+
+func _reset_button_visual(button: Button) -> void:
+	if not button:
+		return
+	_stop_button_wave(button)
+	if _tfx:
+		_tfx.stop_effect(button)
+	button.scale = _get_button_base_scale(button)
+	button.pivot_offset = button.size / 2.0
+
+
+func _set_button_disabled(button: Button, disabled: bool) -> void:
+	if not button:
+		return
+	_reset_button_visual(button)
+	button.disabled = disabled
+
+
 func _on_roll_ui_dice_rolled(dice_values: Array) -> void:
 	emit_signal("dice_rolled", dice_values)
 
@@ -246,7 +289,7 @@ func _on_roll_ui_roll_pressed() -> void:
 ##
 ## Called by RollButtonUI after roll button press. Enables Next Turn.
 func on_roll_ui_pressed() -> void:
-	next_turn_button.disabled = false
+	_set_button_disabled(next_turn_button, false)
 
 
 ## disable_shop_on_first_roll() -> void
@@ -254,7 +297,7 @@ func on_roll_ui_pressed() -> void:
 ## Called by RollButtonUI on the first roll of a round.
 func disable_shop_on_first_roll() -> void:
 	if shop_button:
-		shop_button.disabled = true
+		_set_button_disabled(shop_button, true)
 
 
 ## trigger_roll() -> void
@@ -273,11 +316,11 @@ func trigger_roll() -> void:
 ## Resets button state for a new channel.
 func reset_for_new_channel() -> void:
 	print("[GameButtonUI] Resetting for new channel")
-	next_turn_button.disabled = true
+	_set_button_disabled(next_turn_button, true)
 	if next_round_button:
-		next_round_button.disabled = false
+		_set_button_disabled(next_round_button, false)
 	if shop_button:
-		shop_button.disabled = false
+		_set_button_disabled(shop_button, false)
 	_stop_shop_button_pulse()
 	var roll_ui = get_tree().get_first_node_in_group("roll_button_ui")
 	if roll_ui and roll_ui.has_method("reset_for_new_channel"):
@@ -330,14 +373,15 @@ func _start_shop_button_pulse() -> void:
 	if shop_button.disabled:
 		return
 	_is_shop_pulsing = true
+	_reset_button_visual(shop_button)
 	_tfx.idle_pulse(shop_button)
 
 
 func _stop_shop_button_pulse() -> void:
-	if not _is_shop_pulsing:
+	if not shop_button:
 		return
 	_is_shop_pulsing = false
-	_tfx.stop_effect(shop_button)
+	_reset_button_visual(shop_button)
 
 
 func _on_next_turn_button_pressed() -> void:
@@ -372,7 +416,7 @@ func _on_next_turn_button_pressed() -> void:
 	if roll_ui:
 		roll_ui.enable_roll()
 		roll_ui.start_pulse()
-	next_turn_button.disabled = true
+	_set_button_disabled(next_turn_button, true)
 
 
 func _scored_hand_setup_next_round():
@@ -389,9 +433,9 @@ func _on_auto_score_assigned(section, category, score):
 
 
 func _on_game_over() -> void:
-	next_turn_button.disabled = true
+	_set_button_disabled(next_turn_button, true)
 	if shop_button:
-		shop_button.disabled = true
+		_set_button_disabled(shop_button, true)
 	_stop_shop_button_pulse()
 
 
@@ -408,31 +452,31 @@ func _on_shop_button_pressed() -> void:
 	emit_signal("shop_button_pressed")
 	emit_signal("shop_opened")
 	print("[GameButtonUI] Signals emitted")
-	next_turn_button.disabled = true
+	_set_button_disabled(next_turn_button, true)
 
 
 func _on_round_started(_round_number: int) -> void:
 	print("[GameButtonUI] === ROUND STARTED ===")
 	print("[GameButtonUI] Round", _round_number, "started")
 	if next_round_button:
-		next_round_button.disabled = true
+		_set_button_disabled(next_round_button, true)
 		print("[GameButtonUI] NextRound button DISABLED on round start")
 	if shop_button:
 		print("[GameButtonUI] Round started - disabling shop button")
 		_stop_shop_button_pulse()
-		shop_button.disabled = true
-	next_turn_button.disabled = true
+		_set_button_disabled(shop_button, true)
+	_set_button_disabled(next_turn_button, true)
 	animate_button_wave()
 
 
 func _on_round_completed(_round_number: int) -> void:
 	if shop_button:
-		shop_button.disabled = false
+		_set_button_disabled(shop_button, false)
 		_start_shop_button_pulse()
 	# Round is now officially done (stats panel dismissed, shop is opening).
 	# Enable Next Round so the player can advance after shopping.
 	if next_round_button:
-		next_round_button.disabled = false
+		_set_button_disabled(next_round_button, false)
 		print("[GameButtonUI] Next Round button enabled on round_completed")
 
 
@@ -440,13 +484,26 @@ func animate_button_wave() -> void:
 	var buttons = [next_turn_button, shop_button, next_round_button]
 	for i in range(buttons.size()):
 		var btn = buttons[i]
-		if not btn or btn.disabled or not btn.visible:
+		if not btn:
 			continue
-		btn.pivot_offset = btn.size / 2.0
+		_reset_button_visual(btn)
+		if btn.disabled or not btn.visible:
+			continue
+		var target_button: Button = btn
+		var base_scale := _get_button_base_scale(target_button)
+		target_button.pivot_offset = target_button.size / 2.0
 		var tween = create_tween()
-		tween.tween_property(btn, "scale", Vector2(1.15, 0.85), 0.08).set_delay(i * 0.06)
-		tween.tween_property(btn, "scale", Vector2(0.95, 1.05), 0.08)
-		tween.tween_property(btn, "scale", Vector2.ONE, 0.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_button_wave_tweens[target_button] = tween
+		tween.tween_property(target_button, "scale", base_scale * Vector2(1.15, 0.85), 0.08).set_delay(i * 0.06)
+		tween.tween_property(target_button, "scale", base_scale * Vector2(0.95, 1.05), 0.08)
+		tween.tween_property(target_button, "scale", base_scale, 0.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.finished.connect(func() -> void:
+			if _button_wave_tweens.get(target_button) == tween:
+				_button_wave_tweens.erase(target_button)
+			if is_instance_valid(target_button):
+				target_button.scale = base_scale
+				target_button.pivot_offset = target_button.size / 2.0
+		, CONNECT_ONE_SHOT)
 
 
 func _on_challenge_completed(challenge_id: String) -> void:
@@ -459,11 +516,11 @@ func _on_challenge_completed(challenge_id: String) -> void:
 		if round_manager.current_challenge_id == challenge_id or round_manager.current_challenge_id == "":
 			print("[GameButtonUI] Challenge ID match! Enabling Next Round button")
 			if next_round_button:
-				next_round_button.disabled = false
+				_set_button_disabled(next_round_button, false)
 				print("[GameButtonUI] Next Round button enabled: disabled=", next_round_button.disabled)
-			next_turn_button.disabled = true
+			_set_button_disabled(next_turn_button, true)
 			if shop_button:
-				shop_button.disabled = false
+				_set_button_disabled(shop_button, false)
 				_start_shop_button_pulse()
 		else:
 			print("[GameButtonUI] Challenge ID mismatch:", challenge_id, "vs", round_manager.current_challenge_id)
@@ -474,7 +531,7 @@ func _on_next_round_button_pressed() -> void:
 		return
 	_button_action_cooldown = BUTTON_ACTION_COOLDOWN
 	if next_round_button:
-		next_round_button.disabled = true
+		_set_button_disabled(next_round_button, true)
 	print("[GameButtonUI] Next Round button pressed")
 	var shop_ui_node = get_node_or_null("../ShopUI")
 	if shop_ui_node and shop_ui_node.visible:

@@ -27,6 +27,7 @@ var _activate_button: Button = null
 var _state_led: ColorRect = null
 var _art_shader_material: ShaderMaterial = null
 var _shader_time: float = 0.0
+var _activate_button_base_scale: Vector2 = Vector2.ONE
 
 @onready var _tfx := get_node_or_null("/root/TweenFXHelper")
 
@@ -75,8 +76,7 @@ func clear_console() -> void:
 	if _artwork:
 		_artwork.texture = null
 		_artwork.material = null
-	if _tfx and _activate_button:
-		_tfx.stop_effect(_activate_button)
+	_reset_activate_button_visual()
 
 
 func set_button_state(text: String, disabled: bool, accent_color: Color, pulse: bool) -> void:
@@ -85,11 +85,9 @@ func set_button_state(text: String, disabled: bool, accent_color: Color, pulse: 
 	_activate_button.text = text
 	_activate_button.disabled = disabled
 	_apply_button_style(_activate_button, accent_color, 11)
-	if _tfx:
-		if pulse and not disabled:
-			_tfx.idle_pulse(_activate_button)
-		else:
-			_tfx.stop_effect(_activate_button)
+	_reset_activate_button_visual()
+	if _tfx and pulse and not disabled:
+		_tfx.idle_pulse(_activate_button)
 
 
 func set_status_text(text: String, color: Color) -> void:
@@ -177,12 +175,13 @@ func _build_ui() -> void:
 
 	_activate_button = Button.new()
 	_activate_button.text = "ACTIVATE"
-	_activate_button.custom_minimum_size = Vector2(94.0, 34.0)
+	_activate_button.custom_minimum_size = Vector2(85.0, 31.0)
 	_activate_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_activate_button.add_theme_font_override("font", VCR_FONT)
 	_apply_button_style(_activate_button, PANEL_ACCENT, 11)
 	_activate_button.pressed.connect(_on_activate_button_pressed)
 	hbox.add_child(_activate_button)
+	_activate_button_base_scale = _activate_button.scale
 
 	_state_led = ColorRect.new()
 	_state_led.color = PANEL_ACCENT
@@ -202,6 +201,19 @@ func _build_ui() -> void:
 		_activate_button.mouse_entered.connect(_tfx.button_hover.bind(_activate_button))
 		_activate_button.mouse_exited.connect(_tfx.button_unhover.bind(_activate_button))
 		_activate_button.pressed.connect(_tfx.button_press.bind(_activate_button))
+
+
+func _exit_tree() -> void:
+	_reset_activate_button_visual()
+
+
+func _reset_activate_button_visual() -> void:
+	if not _activate_button:
+		return
+	if _tfx:
+		_tfx.stop_effect(_activate_button)
+	_activate_button.scale = _activate_button_base_scale
+	_activate_button.pivot_offset = _activate_button.size / 2.0
 
 
 func _apply_data() -> void:

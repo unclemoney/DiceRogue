@@ -431,31 +431,26 @@ func remove_debuff(id: String) -> void:
 		return
 
 	var icon: DebuffIcon = _icons[id]
-	if icon:
-		var card := _detail_cards.get(id) as DebuffDetailCard
-		if is_instance_valid(card):
-			card.queue_free()
-			_detail_cards.erase(id)
-		var tfx := get_node_or_null("/root/TweenFXHelper")
-		if tfx:
-			tfx.icon_remove(icon)
-			await get_tree().create_timer(0.3).timeout
-		if is_instance_valid(icon):
-			# Remove from slot if present
-			if icon.get_parent():
-				icon.get_parent().remove_child(icon)
-			icon.queue_free()
-
-	_icons.erase(id)
-	_sorted_debuff_ids.erase(id)
-	_refresh_compact_view()
+	var card := _detail_cards.get(id) as DebuffDetailCard
+	if is_instance_valid(card):
+		card.queue_free()
+	_detail_cards.erase(id)
+	if is_instance_valid(icon):
+		if icon.get_parent():
+			icon.get_parent().remove_child(icon)
+		icon.queue_free()
 
 	_icons.erase(id)
 	_sorted_debuff_ids.erase(id)
 	print("[DebuffUI] Removed debuff icon:", id)
 
-	await get_tree().process_frame
-	_refresh_compact_view()
+	if _current_state == State.FANNED_OUT:
+		if _sorted_debuff_ids.is_empty():
+			_fold_back_debuffs()
+		else:
+			_relayout_fanned_cards()
+	else:
+		_refresh_compact_view()
 
 
 func get_debuff_icon(id: String) -> DebuffIcon:

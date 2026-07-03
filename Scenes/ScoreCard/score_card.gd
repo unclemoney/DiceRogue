@@ -1012,12 +1012,16 @@ func _format_category_display_name(category: String) -> String:
 ## Categorize a modifier source name as powerup, consumable, or other
 func _categorize_modifier_source(source_name: String) -> String:
 	var lower_name = source_name.to_lower()
+	var normalized_name = lower_name
+	var replica_index := normalized_name.find("_replica")
+	if replica_index != -1:
+		normalized_name = normalized_name.substr(0, replica_index)
 	
-	if lower_name.contains("powerup") or lower_name.contains("power_up"):
+	if normalized_name.contains("powerup") or normalized_name.contains("power_up"):
 		return "powerup"
-	elif lower_name.contains("consumable"):
+	elif normalized_name.contains("consumable"):
 		return "consumable"
-	elif lower_name.contains("mod"):
+	elif normalized_name.contains("mod"):
 		return "mod"
 	else:
 		# Check for known PowerUp source names that don't contain "powerup"
@@ -1036,7 +1040,7 @@ func _categorize_modifier_source(source_name: String) -> String:
 			"melting_dice", "one_roll_wonder", "power_surge", "snake_eyes"
 		]
 		
-		if lower_name in powerup_sources:
+		if normalized_name in powerup_sources:
 			return "powerup"
 		
 		# Check for known Consumable source names that don't contain "consumable"
@@ -1046,7 +1050,7 @@ func _categorize_modifier_source(source_name: String) -> String:
 			"double_or_nothing_yahtzee"
 		]
 		
-		if lower_name in consumable_sources:
+		if normalized_name in consumable_sources:
 			return "consumable"
 		
 		return "other"

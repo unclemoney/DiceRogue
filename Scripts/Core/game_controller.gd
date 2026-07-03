@@ -923,6 +923,7 @@ func grant_power_up(id: String) -> void:
 	if pu == null:
 		push_error("[GameController] Failed to spawn PowerUp '%s'" % id)
 		return
+	_configure_power_up_runtime_identity(pu, id)
 
 	# Create and connect UI first
 	var def: PowerUpData = pu_manager.get_def(id)
@@ -947,20 +948,43 @@ func grant_power_up(id: String) -> void:
 	GameSaveManager.update_settled_snapshot()
 
 
+func _get_power_up_base_id(power_up_id: String) -> String:
+	var replica_index := power_up_id.find("_replica")
+	if replica_index == -1:
+		return power_up_id
+	return power_up_id.substr(0, replica_index)
+
+
+func _build_replica_power_up_id(original_id: String) -> String:
+	var attempt := 0
+	var replica_id := ""
+	while replica_id == "" or active_power_ups.has(replica_id):
+		replica_id = "%s_replica_%d" % [original_id, Time.get_ticks_msec() + attempt]
+		attempt += 1
+	return replica_id
+
+
+func _configure_power_up_runtime_identity(power_up: PowerUp, runtime_id: String) -> void:
+	if not power_up:
+		return
+	power_up.id = runtime_id
+	if runtime_id.find("_replica") == -1:
+		return
+	for property_info in power_up.get_property_list():
+		if property_info.get("name", "") == "modifier_source_name":
+			power_up.set("modifier_source_name", runtime_id)
+			break
+
+
 ## grant_replica_power_up(original_id)
 ##
 ## Spawns a fully independent replica of an existing PowerUp, registers it
 ## in active_power_ups with a "_replica" suffix, creates a UI spine/icon,
 ## and activates it using the same logic as the original. Called by
 ## TheReplicatorPowerUp when it is sold after being charged.
-func grant_replica_power_up(original_id: String) -> void:
-	var replica_id = original_id + "_replica"
+func grant_replica_power_up(original_id: String, replica_id_override: String = "") -> void:
+	var replica_id = replica_id_override if replica_id_override != "" else _build_replica_power_up_id(original_id)
 	print("\n=== Granting Replica Power-Up: ", replica_id, " ===")
-	
-	# Don't create if one already exists
-	if active_power_ups.has(replica_id):
-		print("[GameController] Replica '", replica_id, "' already exists. Skipping.")
-		return
 	
 	# Check max slots
 	if is_instance_valid(powerup_ui) and powerup_ui.has_max_power_ups():
@@ -972,11 +996,12 @@ func grant_replica_power_up(original_id: String) -> void:
 	if pu == null:
 		push_error("[GameController] Failed to spawn replica of '%s'" % original_id)
 		return
+	_configure_power_up_runtime_identity(pu, replica_id)
 	
 	# Create UI with replica-specific data
 	var def: PowerUpData = pu_manager.get_def(original_id)
 	if def:
-		var replica_data: PowerUpData = def.duplicate()
+		var replica_data: PowerUpData = def.duplicate(true)
 		replica_data.id = replica_id
 		replica_data.display_name = def.display_name + " (Replica)"
 		var icon = powerup_ui.add_power_up(replica_data)
@@ -1011,9 +1036,7 @@ func _activate_power_up(power_up_id: String) -> void:
 		return
 	
 	# For replica PowerUps, use the original (base) ID for matching
-	var match_id = power_up_id
-	if power_up_id.ends_with("_replica"):
-		match_id = power_up_id.substr(0, power_up_id.length() - "_replica".length())
+	var match_id = _get_power_up_base_id(power_up_id)
 	
 	# Connect to description_updated signal if the power-up has one
 	if pu.has_signal("description_updated"):
@@ -1367,9 +1390,7 @@ func _on_power_up_sold(power_up_id: String) -> void:
 		return
 
 	# For replica PowerUps, look up the original ID for the price definition
-	var lookup_id = power_up_id
-	if power_up_id.ends_with("_replica"):
-		lookup_id = power_up_id.substr(0, power_up_id.length() - "_replica".length())
+	var lookup_id = _get_power_up_base_id(power_up_id)
 	var def = pu_manager.get_def(lookup_id)
 	if def:
 		var refund = def.price / 2.0  # Half price
@@ -1415,9 +1436,7 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		return
 
 	# For replica PowerUps, use the original ID for the target match lookup
-	var match_id = power_up_id
-	if power_up_id.ends_with("_replica"):
-		match_id = power_up_id.substr(0, power_up_id.length() - "_replica".length())
+	var match_id = _get_power_up_base_id(power_up_id)
 
 	match match_id:
 		"extra_dice":
@@ -1625,9 +1644,7 @@ func revoke_power_up(power_up_id: String) -> void:
 	var pu := active_power_ups[power_up_id] as PowerUp
 	if pu:
 		# For replica PowerUps, use the original ID for the target match lookup
-		var match_id = power_up_id
-		if power_up_id.ends_with("_replica"):
-			match_id = power_up_id.substr(0, power_up_id.length() - "_replica".length())
+		var match_id = _get_power_up_base_id(power_up_id)
 		# Pass the correct target based on power-up type
 		match match_id:
 			"extra_dice":
@@ -2577,11 +2594,15 @@ func disable_debuff(id: String) -> void:
 			if debuff_ui:
 				debuff_ui.animate_debuff_removal(id, func():
 					# Remove after animation completes
+					if is_instance_valid(debuff_ui):
+						debuff_ui.remove_debuff(id)
 					active_debuffs.erase(id)
 					print("[GameController] Debuff removed after animation:", id)
 				)
 			else:
 				# No UI animation available, remove immediately
+				if is_instance_valid(debuff_ui):
+					debuff_ui.remove_debuff(id)
 				active_debuffs.erase(id)
 				print("[GameController] Debuff removed (no animation):", id)
 	else:
@@ -5422,7 +5443,11 @@ func load_game_state(save_data: Dictionary) -> void:
 	# Re-grant power-ups
 	for pu_id in gc_state.get("active_power_up_ids", []):
 		if not active_power_ups.has(pu_id):
-			grant_power_up(pu_id)
+			var base_id = _get_power_up_base_id(pu_id)
+			if base_id != pu_id:
+				grant_replica_power_up(base_id, pu_id)
+			else:
+				grant_power_up(pu_id)
 	
 	# Re-grant consumables
 	var saved_consumable_counts = gc_state.get("active_consumable_counts", {})

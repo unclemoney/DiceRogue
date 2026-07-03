@@ -129,7 +129,7 @@ func _build_ui() -> void:
 	left_col.add_child(challenge_container)
 	var challenge_ui := preload("res://Scenes/UI/challenge_ui.tscn").instantiate()
 	challenge_ui.name = "ChallengeUI"
-	challenge_ui.clip_contents = false
+	challenge_ui.clip_contents = true
 	_add_glowing_title(challenge_container, "Challenges", "res://Resources/Font/BALLOON1.ttf", challenge_ui)
 	_add_container_hover_title(challenge_container, "Challenges")
 

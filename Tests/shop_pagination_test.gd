@@ -6,7 +6,8 @@ extends Control
 ## 1. Footer arrows appear only when a tab pool exceeds 3 items.
 ## 2. Page navigation advances by full pages.
 ## 3. PowerUps footer includes the shader-backed reroll shell.
-## 4. Archive tabs still exist after the layout refactor.
+## 4. PowerUp shop expansions clamp at 6 items.
+## 5. Archive tabs still exist after the layout refactor.
 
 var shop_ui: ShopUI
 var test_completed := false
@@ -54,6 +55,20 @@ func _run_tests() -> void:
 	if power_pool.size() < 4:
 		print("! Not enough test power-up resources to force multi-page test; found %d" % power_pool.size())
 	else:
+		print("--- 3 item threshold check ---")
+		var threshold_pool = power_pool.duplicate()
+		threshold_pool.resize(3)
+		shop_ui._set_tab_item_pool("power_up", threshold_pool)
+		shop_ui._set_page_index("power_up", 0)
+		shop_ui._render_current_page("power_up")
+		await get_tree().process_frame
+		var threshold_footer = shop_ui._footer_controls.get("power_up", {})
+		var threshold_left = threshold_footer.get("left_button") as Button
+		var threshold_right = threshold_footer.get("right_button") as Button
+		print("3-item left arrow visible: %s" % str(threshold_left and threshold_left.visible))
+		print("3-item right arrow visible: %s" % str(threshold_right and threshold_right.visible))
+
+		print("--- 4 item pagination check ---")
 		shop_ui._set_tab_item_pool("power_up", power_pool)
 		shop_ui._set_page_index("power_up", 0)
 		shop_ui._render_current_page("power_up")
@@ -77,6 +92,14 @@ func _run_tests() -> void:
 			left_button.emit_signal("pressed")
 			await get_tree().create_timer(0.45).timeout
 			print("Current power-up page index after previous: %d" % shop_ui._tab_page_indices.get("power_up", -1))
+
+	print("--- Power-up expansion cap check ---")
+	shop_ui.reset_shop_expansions()
+	shop_ui.increase_power_up_items(1)
+	shop_ui.increase_power_up_items(1)
+	shop_ui.increase_power_up_items(2)
+	shop_ui.increase_power_up_items(3)
+	print("Power-up item count after cap test: %d" % shop_ui.power_up_items)
 	print("--- Archive tab presence ---")
 	var tab_container = shop_ui.get_node_or_null("TabContainer")
 	if tab_container:

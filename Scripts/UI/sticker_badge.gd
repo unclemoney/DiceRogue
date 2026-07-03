@@ -341,11 +341,9 @@ func _ensure_tooltip() -> void:
 	_tooltip_label.add_theme_constant_override("outline_size", 1)
 	_tooltip.add_child(_tooltip_label)
 
-	var parent_node := get_tree().current_scene if get_tree() else null
-	if parent_node == null and get_tree():
-		parent_node = get_tree().root
-	if parent_node:
-		parent_node.add_child.call_deferred(_tooltip)
+	var overlay_parent := FanOverlayHelper.get_overlay(self) if get_tree() else null
+	if overlay_parent:
+		overlay_parent.add_child.call_deferred(_tooltip)
 
 
 func _apply_data() -> void:

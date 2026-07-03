@@ -10,3 +10,19 @@ func apply(_target) -> void:
 
 func remove(_target) -> void:
 	pass
+
+
+func is_replica_instance() -> bool:
+	return id.find("_replica") != -1
+
+
+func get_runtime_modifier_source_name(default_source: String) -> String:
+	if id != "" and is_replica_instance():
+		return id
+	return default_source
+
+
+func get_runtime_power_up_id(default_id: String = "") -> String:
+	if id != "":
+		return id
+	return default_id

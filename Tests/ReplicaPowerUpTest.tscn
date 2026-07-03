@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://ck4wn2n4maylk"]
+
+[ext_resource type="Script" uid="uid://c3b0a02u27i3s" path="res://Tests/replica_power_up_test.gd" id="1_replica_test"]
+
+[node name="ReplicaPowerUpTest" type="Node"]
+script = ExtResource("1_replica_test")

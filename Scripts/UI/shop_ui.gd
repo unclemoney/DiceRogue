@@ -44,12 +44,14 @@ const REQUIRED_MANAGERS := 3
 const TITLE_FLOAT_AMOUNT := 8.0
 
 const ShopItemScene := preload("res://Scenes/Shop/shop_item.tscn")
+const DEFAULT_SHOP_ITEMS: int = 2
+const MAX_POWER_UP_ITEMS: int = 6
 
-var items_per_section := 2  # Number of items to display per section
-var power_up_items := 2     # Specific count for power-ups
-var consumable_items := 2   # Specific count for consumables
-var mod_items := 2          # Specific count for mods
-var colored_dice_items := 2 # Specific count for colored dice
+var items_per_section := DEFAULT_SHOP_ITEMS  # Number of items to display per section
+var power_up_items := DEFAULT_SHOP_ITEMS     # Specific count for power-ups
+var consumable_items := DEFAULT_SHOP_ITEMS   # Specific count for consumables
+var mod_items := DEFAULT_SHOP_ITEMS          # Specific count for mods
+var colored_dice_items := DEFAULT_SHOP_ITEMS # Specific count for colored dice
 
 var purchased_items := {}  # Track purchased items by type: {"power_up": [], "consumable": [], "mod": [], "colored_dice": []}
 var _tab_item_pools := {}
@@ -1109,11 +1111,11 @@ func reset_reroll_cost() -> void:
 ## reset_shop_expansions()
 ## Resets all shop expansion counts back to default values - called on new game/channel
 func reset_shop_expansions() -> void:
-	items_per_section = 2
-	power_up_items = 2
-	consumable_items = 2
-	mod_items = 2
-	colored_dice_items = 2
+	items_per_section = DEFAULT_SHOP_ITEMS
+	power_up_items = DEFAULT_SHOP_ITEMS
+	consumable_items = DEFAULT_SHOP_ITEMS
+	mod_items = DEFAULT_SHOP_ITEMS
+	colored_dice_items = DEFAULT_SHOP_ITEMS
 	print("[ShopUI] Shop expansions reset to default (2 items per section)")
 
 ## _setup_backdrop()
@@ -1269,10 +1271,22 @@ func _on_money_changed(_new_amount: int, _change: int = 0) -> void:
 
 # Add method to increase the number of power-ups displayed in shop
 func increase_power_up_items(amount: int) -> void:
-	power_up_items += amount
-	print("[ShopUI] Increased power-up items by", amount, "- new value:", power_up_items)
-	# Refresh the shop to show the new items
-	_populate_shop_items()
+	if amount <= 0:
+		return
+	var previous_count := power_up_items
+	power_up_items = clampi(power_up_items + amount, DEFAULT_SHOP_ITEMS, MAX_POWER_UP_ITEMS)
+	var added_count := power_up_items - previous_count
+	if added_count <= 0:
+		print("[ShopUI] Power-up items already at cap:", MAX_POWER_UP_ITEMS)
+		if _managers_ready == REQUIRED_MANAGERS:
+			_render_current_page("power_up")
+			_update_footer_state("power_up")
+		return
+	print("[ShopUI] Increased power-up items by", added_count, "- new value:", power_up_items)
+	if _managers_ready == REQUIRED_MANAGERS:
+		# Refresh the shop to show the expanded PowerUp pool and footer pagination.
+		_populate_shop_items()
+		_update_footer_state("power_up")
 
 # Add method to increase consumable items (for future use)
 func increase_consumable_items(amount: int) -> void:
@@ -1295,7 +1309,7 @@ func increase_colored_dice_items(amount: int) -> void:
 # Keep old method for backward compatibility but mark as deprecated
 func increase_items_per_section(amount: int) -> void:
 	items_per_section += amount
-	power_up_items = items_per_section
+	power_up_items = clampi(items_per_section, DEFAULT_SHOP_ITEMS, MAX_POWER_UP_ITEMS)
 	consumable_items = items_per_section
 	mod_items = items_per_section
 	colored_dice_items = items_per_section

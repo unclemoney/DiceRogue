@@ -84,7 +84,7 @@ func _choose_replication_target() -> void:
 	
 	var available_ids: Array = []
 	for pu_id in game_controller_ref.active_power_ups.keys():
-		if pu_id != "the_replicator" and not pu_id.ends_with("_replica"):
+		if pu_id != "the_replicator" and pu_id.find("_replica") == -1:
 			available_ids.append(pu_id)
 	
 	if available_ids.is_empty():
