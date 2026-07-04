@@ -143,6 +143,21 @@ text = "Show All Rewards"
 layout_mode = 2
 text = "Test Reward Accumulation"
 
+[node name="HSeparator6" type="HSeparator" parent="ControlPanel"]
+layout_mode = 2
+
+[node name="RatingLabel" type="Label" parent="ControlPanel"]
+layout_mode = 2
+text = "Rating Progress Tests:"
+
+[node name="TestRatingMappingButton" type="Button" parent="ControlPanel"]
+layout_mode = 2
+text = "Test Rating Mapping"
+
+[node name="TestProgressPerRollButton" type="Button" parent="ControlPanel"]
+layout_mode = 2
+text = "Test Progress Per Roll"
+
 [node name="OutputLabel" type="RichTextLabel" parent="."]
 layout_mode = 1
 anchors_preset = 10
@@ -168,3 +183,5 @@ text = "Test output will appear here..."
 [connection signal="pressed" from="ControlPanel/TestHappyButton" to="." method="_on_test_mom_happy_pressed"]
 [connection signal="pressed" from="ControlPanel/ShowRewardsButton" to="." method="_on_show_rewards_pressed"]
 [connection signal="pressed" from="ControlPanel/TestRewardsButton" to="." method="_on_test_rewards_pressed"]
+[connection signal="pressed" from="ControlPanel/TestRatingMappingButton" to="." method="_on_test_rating_mapping_pressed"]
+[connection signal="pressed" from="ControlPanel/TestProgressPerRollButton" to="." method="_on_test_progress_per_roll_pressed"]

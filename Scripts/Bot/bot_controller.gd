@@ -544,7 +544,7 @@ func _bot_roll() -> void:
 
 	# Increment chore progress on each roll (mirrors GameController behavior)
 	if is_instance_valid(chores_manager):
-		chores_manager.increment_progress(1)
+		chores_manager.increment_progress(chores_manager.get_progress_per_roll())
 
 
 ## _apply_locks(lock_indices, values)

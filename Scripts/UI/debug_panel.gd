@@ -310,6 +310,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Show Chore State", "method": "_debug_chores_show_state"},
 			{"text": "Show PowerUp Ratings", "method": "_debug_chores_show_ratings"},
 			{"text": "List Chore Rewards", "method": "_debug_chores_list_rewards"},
+			{"text": "Show Progress Per Roll", "method": "_debug_chores_show_progress_per_roll"},
 			{"text": "Test Mom Dialog (Neutral)", "method": "_debug_chores_mom_neutral"},
 			{"text": "Test Mom Dialog (Upset)", "method": "_debug_chores_mom_upset"},
 			{"text": "Test Mom Dialog (Happy)", "method": "_debug_chores_mom_happy"},
@@ -896,6 +897,7 @@ func _debug_activate_selected_challenge() -> void:
 		if challenge_def and not challenge_def.display_name.is_empty():
 			challenge_name = challenge_def.display_name
 	log_debug("Activated Challenge: %s (%s)" % [challenge_name, challenge_id])
+
 
 # Debug command implementations
 func _debug_grant_powerup() -> void:
@@ -3011,6 +3013,18 @@ func _debug_chores_list_rewards() -> void:
 			lines.append("%s -> $%d" % [chore.display_name, chore.reward_value])
 	lines.append("Round Total: $%d" % chores_manager.get_chore_rewards_this_round())
 	log_debug("\n".join(lines))
+
+
+func _debug_chores_show_progress_per_roll() -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	
+	var base = chores_manager.PROGRESS_PER_ROLL
+	var bonus = chores_manager.get_powerup_rating_progress_bonus()
+	var total = chores_manager.get_progress_per_roll()
+	log_debug("Progress per roll: base %d + PowerUp bonus %d = %d" % [base, bonus, total])
 
 
 func _debug_chores_mom_neutral() -> void:

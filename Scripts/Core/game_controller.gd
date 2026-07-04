@@ -414,7 +414,7 @@ func _notification(what: int) -> void:
 		get_tree().quit()
 
 
-## _on_game_start()
+## _on_game_start() -> void
 ##
 ## Deferred entry point for initializing gameplay state once the scene tree is ready.
 ##+ Grants a couple of starter consumables and a starting power-up.
@@ -1464,8 +1464,6 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"money_multiplier":
 			print("[GameController] Removing money_multiplier PowerUp")
 			pu.remove(scorecard)
-		"wild_dots":
-			pu.remove(dice_hand)
 		"full_house_bonus":
 			print("[GameController] Removing full_house_bonus PowerUp")
 			pu.remove(self)
@@ -2283,7 +2281,7 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 	GameSaveManager.update_settled_snapshot()
 
 
-## _update_dice_animation_intensity()
+## _update_dice_animation_intensity() -> void
 ##
 ## Recalculates dice animation intensity based on challenge progress and total score.
 ## Distributes updated intensity_params to all dice in the hand.
@@ -2559,6 +2557,14 @@ func apply_debuff(id: String) -> void:
 			debuff.target = dice_hand
 			debuff.start()
 			debuff_started = true
+		"grounded":
+			debuff.target = self
+			debuff.start()
+			debuff_started = true
+		"grounded_debuff":
+			debuff.target = self
+			debuff.start()
+			debuff_started = true
 		_:
 			push_error("[GameController] Unknown debuff type: %s" % id)
 
@@ -2620,6 +2626,20 @@ func is_debuff_active(id: String) -> bool:
 ## Returns true when a power-up with the given id is present in `active_power_ups`.
 func is_power_up_active(power_up_id: String) -> bool:
 	return active_power_ups.has(power_up_id)
+
+
+## get_powerup_rating_progress_bonus() -> int
+##
+## Returns the total chore-progress bonus contributed by all owned PowerUps.
+## Each PowerUp adds its rating bonus: G = 0, PG = 1, PG-13 = 2, R = 3, NC-17 = 4.
+func get_powerup_rating_progress_bonus() -> int:
+	var total_bonus: int = 0
+	for power_up_id in active_power_ups.keys():
+		var def = pu_manager.get_def(power_up_id)
+		if def != null:
+			total_bonus += PowerUpData.get_rating_progress_bonus(def.rating)
+	return total_bonus
+
 
 # Add this function after other consumable-related functions
 
@@ -2854,6 +2874,12 @@ func _activate_gaming_console(id: String) -> void:
 		"playstation_console":
 			console.apply(self)
 			print("[GameController] Console %s applied to GameController" % id)
+		"grounded":
+			console.apply(self)
+			print("[GameController] Console %s applied to DiceHand" % id)
+		"grounded_debuff":
+			console.apply(self)
+			print("[GameController] Console %s applied to DiceHand" % id)
 		_:
 			push_warning("[GameController] Unknown console type: %s" % id)
 
@@ -3206,7 +3232,10 @@ func _on_use_continue_pressed() -> void:
 	if dice_hand:
 		dice_hand.set_all_dice_rollable()
 	
-	print("[GameController] Continue activated — player has bonus rolls")
+	# Re-enable scoring so player can pick categories
+	if score_card_ui:
+		score_card_ui.turn_scored = false
+		score_card_ui.enable_all_score_buttons()
 
 
 ## _on_continue_quit_pressed()
@@ -3317,7 +3346,6 @@ func _show_game_over_popup(final_score: int, target_score: int, challenge_comple
 		var off_tween = create_tween()
 		off_tween.tween_method(func(v): off_mat.set_shader_parameter("progress", v), 1.0, 0.0, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		off_tween.tween_property(crt_off, "modulate:a", 0.0, 0.2)
-		off_tween.tween_callback(crt_off.queue_free)
 		await get_tree().create_timer(0.5).timeout
 	else:
 		# Victory fanfare
@@ -3482,7 +3510,7 @@ func _on_continue_after_game_over() -> void:
 	_on_shop_button_pressed()
 
 
-## _on_quit_game_pressed()
+## _on_quit_game_pressed() -> void
 ##
 ## Handler for Quit button - exits the game.
 func _on_quit_game_pressed() -> void:
@@ -3674,7 +3702,7 @@ func _finish_round_end_and_open_shop() -> void:
 	_open_shop_ui()
 
 
-## _on_shop_button_pressed()
+## _on_shop_button_pressed() -> void
 ##
 ## Handles the shop button press. If challenge was completed, starts the round-end
 ## event queue to process chore selection, unlocks, stats, and shop sequentially.
@@ -3873,7 +3901,7 @@ func _open_shop_ui() -> void:
 
 		# 4. Bounce scale (faster)
 		_shop_tween.tween_property(
-			shop_ui, "scale", Vector2(1.0, 1.0), 0.85
+			shop_ui, "scale", Vector2(0.001, 0.001), 0.55
 		).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 		# 5. Settle scale (faster)
@@ -3954,6 +3982,16 @@ func process_shop_purchase(item_id: String, item_type: String) -> bool:
 			print("[GameController] Granting gaming console:", item_id)
 			grant_gaming_console(item_id)
 			return not had_console and active_gaming_console.has(item_id)
+		"grounded":
+			var had_grounded := not active_debuffs.has("lock_dice")
+			print("[GameController] Granting grounded:", item_id)
+			apply_debuff("lock_dice")
+			return not had_grounded
+		"grounded_debuff":
+			var had_grounded := not active_debuffs.has("lock_dice")
+			print("[GameController] Granting grounded_debuff:", item_id)
+			apply_debuff("lock_dice")
+			return not had_grounded
 		_:
 			push_error("[GameController] Unknown item type purchased:", item_type)
 	return false
@@ -4044,7 +4082,7 @@ func activate_challenge(id: String) -> void:
 ##
 ## Validates and returns the target score for the current round.
 ## If use_round_config_goals is true, uses RoundDifficultyConfig.target_score_override.
-## Falls back to Challenge resource target_score if override is 0 or unavailable.
+## Falls back to Challenge resource target score if override is 0 or unavailable.
 ## Always applies channel scaling to the final value.
 func _validate_and_get_target_score(challenge_data: ChallengeData, round_number: int) -> int:
 	var base_target: int = 0
@@ -4199,7 +4237,7 @@ func _queue_round_transition_overlay(challenge_id: String) -> void:
 	# Chore popup is handled by the round-end queue AFTER overlay dismisses
 
 
-## _show_round_transition_overlay(challenge_id)
+## _show_round_transition_overlay(challenge_id: String) -> void
 ##
 ## Creates and displays the round transition overlay with current and next
 ## challenge information. Connects keep_playing/enter_shop signals.
@@ -4416,9 +4454,9 @@ func _on_game_button_dice_rolled(dice_values: Array) -> void:
 		# Use internal method which handles notification and proper cost calculation
 		active_debuffs["costly_roll"]._on_roll_complete()
 	
-	# Increment chores progress on each roll
+	# Increment chores progress on each roll (base + owned PowerUp rating bonus)
 	if chores_manager:
-		chores_manager.increment_progress(1)
+		chores_manager.increment_progress(chores_manager.get_progress_per_roll())
 	
 	# Update PowerUps that depend on dice values
 	_update_power_ups_for_dice(dice_values)
@@ -5008,8 +5046,8 @@ func _on_carryover_confirmed(selected_types: Array[String]) -> void:
 
 ## _proceed_to_next_channel_with_carryovers(selected_types: Array[String])
 ##
-## Advances to the next channel and restarts the game with conditional resets
-## based on the player's carry-over selections.
+## Advances to the next channel and restarts the game loop.
+## Legacy path: resets everything (no carry-overs).
 func _proceed_to_next_channel_with_carryovers(selected_types: Array[String]) -> void:
 	if channel_manager:
 		channel_manager.advance_to_next_channel()
@@ -5525,7 +5563,7 @@ func _clear_active_gaming_console() -> void:
 	print("[GameController] Cleared gaming console")
 
 
-## _on_next_round_pressed()
+## _on_next_round_pressed() -> void
 ##
 ## Handles the Next Round button press. Runs the full round intro sequence
 ## (TV turn-on, New Round Panel, Scorecard entrance, chore selection) before

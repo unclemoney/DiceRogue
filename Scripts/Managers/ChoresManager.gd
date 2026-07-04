@@ -80,6 +80,24 @@ func increment_progress(amount: int = PROGRESS_PER_ROLL) -> void:
 	if current_progress >= scaled_max:
 		_trigger_mom()
 
+## get_powerup_rating_progress_bonus() -> int
+##
+## Returns the total chore-progress bonus from all currently owned PowerUps.
+## Delegates to GameController, which owns the active PowerUp dictionary.
+## Returns 0 if GameController is unavailable.
+func get_powerup_rating_progress_bonus() -> int:
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller and game_controller.has_method("get_powerup_rating_progress_bonus"):
+		return game_controller.get_powerup_rating_progress_bonus()
+	return 0
+
+## get_progress_per_roll() -> int
+##
+## Returns the total chore progress gained from a single dice roll.
+## Base progress plus the sum of owned PowerUp rating bonuses.
+func get_progress_per_roll() -> int:
+	return PROGRESS_PER_ROLL + get_powerup_rating_progress_bonus()
+
 ## _rotate_current_task()
 ##
 ## Rotates to a new random chore task.

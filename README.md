@@ -922,7 +922,12 @@ The **Chores System** adds a strategic tension mechanic where neglecting househo
 
 **Core Mechanics:**
 - **Progress Bar**: Horizontal progress bar (0-100) displayed inside the centered Chore Meter panel
-- **Progress Increase**: +1 per dice roll (automatic)
+- **Progress Increase**: Base +1 per dice roll, plus an additive bonus for each owned PowerUp based on its content rating:
+  - **G**: +0
+  - **PG**: +1
+  - **PG-13**: +2
+  - **R**: +3
+  - **NC-17**: +4
 - **Progress Decrease**: Varies by chore difficulty (EASY: -10, HARD: -30)
 - **Mom Trigger**: At 100 progress, Mom appears to check your PowerUps
 

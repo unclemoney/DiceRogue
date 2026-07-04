@@ -22,6 +22,9 @@ func _ready() -> void:
 	_connect_signals()
 	_log("ChoresManager Test initialized")
 	_log("Current task: %s" % (chores_manager.current_task.display_name if chores_manager.current_task else "None"))
+	# Auto-run non-interactive validation tests on scene load
+	_on_test_rating_mapping_pressed()
+	_on_test_progress_per_roll_pressed()
 
 func _setup_ui() -> void:
 	# Populate task option button
@@ -134,7 +137,36 @@ func _find_task_by_id(tasks: Array, id: String):
 	return null
 
 func _log(message: String) -> void:
+	print(message)  # Also output to stdout for headless test runs
 	_output_lines.append("[%s] %s" % [Time.get_time_string_from_system(), message])
 	if _output_lines.size() > 20:
 		_output_lines.pop_front()
 	output_label.text = "\n".join(_output_lines)
+
+func _on_test_rating_mapping_pressed() -> void:
+	var ratings = ["G", "PG", "PG-13", "R", "NC-17"]
+	var expected = [0, 1, 2, 3, 4]
+	var lines: Array[String] = ["[color=yellow]Rating Mapping Test[/color]"]
+	var passed = true
+	for i in range(ratings.size()):
+		var actual = PowerUpData.get_rating_progress_bonus(ratings[i])
+		var ok = actual == expected[i]
+		passed = passed and ok
+		var status = "[color=green]PASS[/color]" if ok else "[color=red]FAIL[/color]"
+		lines.append("%s -> expected %d, got %d (%s)" % [ratings[i], expected[i], actual, status])
+	lines.append("Overall: %s" % ("[color=green]PASSED[/color]" if passed else "[color=red]FAILED[/color]"))
+	_log("\n".join(lines))
+
+func _on_test_progress_per_roll_pressed() -> void:
+	var base = chores_manager.PROGRESS_PER_ROLL
+	var bonus = chores_manager.get_powerup_rating_progress_bonus()
+	var total = chores_manager.get_progress_per_roll()
+	var lines: Array[String] = ["[color=yellow]Progress Per Roll Test[/color]"]
+	lines.append("Base progress: %d" % base)
+	lines.append("PowerUp rating bonus: %d" % bonus)
+	lines.append("Total per roll: %d" % total)
+	if total == base + bonus:
+		lines.append("[color=green]PASSED[/color]")
+	else:
+		lines.append("[color=red]FAILED: expected %d[/color]" % (base + bonus))
+	_log("\n".join(lines))
