@@ -4,7 +4,7 @@ class_name ChoresManager
 ## ChoresManager
 ##
 ## Manages the chore system that tracks player behavior via tasks.
-## Progress increases by 1 each dice roll and decreases by 20 when tasks are completed.
+## Progress increases by 1 each dice roll and decreases when tasks are completed.
 ## When progress reaches 100, Mom appears to check on the player.
 ## Mom's mood ranges from 1 (happy) to 10 (angry), starting at 5 (neutral).
 
@@ -14,14 +14,13 @@ const ChoreDataScript = preload("res://Scripts/Managers/ChoreData.gd")
 signal progress_changed(new_value: int)
 signal task_selected(task)
 signal task_completed(task)
-signal task_rotated(task)  # Emitted when chore auto-rotates every 20 rolls
+signal task_rotated(task)  # Emitted when the active chore expires and a new choice is required
 signal mom_triggered
 signal mom_mood_changed(new_mood: int)
 signal request_chore_selection  # Emitted when player needs to choose next chore (EASY/HARD)
 
 const MAX_PROGRESS: int = 100
 const PROGRESS_PER_ROLL: int = 1
-const ROLLS_PER_ROTATION: int = 20  # Chores rotate every 20 rolls
 var chore_rewards_this_round: int = 0  # Cumulative reward from chores completed this round
 
 # Mom's mood system: 1 = very happy, 5 = neutral, 10 = extremely angry
@@ -33,7 +32,6 @@ var current_progress: int = 0
 var chores_completed_this_round: int = 0  # Track chores completed in current round
 var current_task = null  # ChoreData instance
 var tasks_completed: int = 0
-var total_rolls_tracked: int = 0  # Track total rolls for chore rotation
 var is_mom_active: bool = false
 var _task_history: Array[String] = []  # Track recent tasks to avoid repetition
 var pending_chore_selection: bool = false  # True when waiting to show chore selection popup
@@ -58,7 +56,6 @@ func _ready() -> void:
 ## Increases the chore progress by the specified amount.
 ## Called when the player rolls dice.
 ## Triggers Mom appearance if progress reaches 100.
-## Rotates chores every 20 rolls regardless of completion.
 ##
 ## Parameters:
 ##   amount: int - the amount to increase (default: 1)
@@ -70,12 +67,6 @@ func increment_progress(amount: int = PROGRESS_PER_ROLL) -> void:
 	current_progress = mini(current_progress + amount, scaled_max)
 	progress_changed.emit(current_progress)
 	print("[ChoresManager] Progress: %d/%d" % [current_progress, scaled_max])
-	
-	# Track total rolls for chore rotation
-	total_rolls_tracked += amount
-	if total_rolls_tracked >= ROLLS_PER_ROTATION:
-		total_rolls_tracked = 0
-		_rotate_current_task()
 	
 	if current_progress >= scaled_max:
 		_trigger_mom()
@@ -98,15 +89,39 @@ func get_powerup_rating_progress_bonus() -> int:
 func get_progress_per_roll() -> int:
 	return PROGRESS_PER_ROLL + get_powerup_rating_progress_bonus()
 
+## expire_current_task(reason)
+##
+## Expires the current chore and queues a new selection popup.
+## Used by round boundaries and any task-specific failure conditions.
+##
+## Parameters:
+##   reason: String - debug label describing why the chore expired
+func expire_current_task(reason: String = "expired") -> void:
+	if current_task != null:
+		print("[ChoresManager] Chore expired (%s) - queuing selection popup" % reason)
+		task_rotated.emit(current_task)
+	else:
+		print("[ChoresManager] Chore selection queued (%s)" % reason)
+	_clear_current_task()
+	_queue_chore_selection()
+
+
+## queue_round_start_selection()
+##
+## Ensures a chore selection is pending for the start of a round.
+## Existing pending options are preserved so Round 1 setup can prequeue once.
+func queue_round_start_selection() -> void:
+	if pending_chore_selection and _pending_easy_task != null and _pending_hard_task != null:
+		return
+	expire_current_task("round boundary")
+
+
 ## _rotate_current_task()
 ##
-## Rotates to a new random chore task.
-## Called every 20 rolls regardless of completion status.
+## Compatibility wrapper for older call sites. Chores no longer rotate from a
+## roll counter; use expire_current_task() or queue_round_start_selection().
 func _rotate_current_task() -> void:
-	print("[ChoresManager] Chore expired (every %d rolls) - queuing selection popup" % ROLLS_PER_ROTATION)
-	task_rotated.emit(current_task)
-	# Queue chore selection popup instead of auto-selecting
-	_queue_chore_selection()
+	expire_current_task("legacy rotation")
 
 ## complete_current_task()
 ##
@@ -117,37 +132,36 @@ func complete_current_task() -> void:
 	if current_task == null:
 		return
 	
+	var completed_task = current_task
 	print("[ChoresManager] Task completed: %s (difficulty: %s)" % [
-		current_task.display_name,
-		"HARD" if current_task.difficulty == ChoreData.Difficulty.HARD else "EASY"
+		completed_task.display_name,
+		"HARD" if completed_task.difficulty == ChoreData.Difficulty.HARD else "EASY"
 	])
 	
 	# Track completed chore for display
-	completed_chores.append(current_task)
+	completed_chores.append(completed_task)
 	
 	# Track chores completed this round for end-of-round rewards
 	chores_completed_this_round += 1
-	chore_rewards_this_round += current_task.reward_value
+	chore_rewards_this_round += completed_task.reward_value
 	
-	task_completed.emit(current_task)
+	task_completed.emit(completed_task)
 	tasks_completed += 1
 	
 	# Track with ProgressManager for unlock conditions
 	var progress_manager = get_node_or_null("/root/ProgressManager")
 	if progress_manager and progress_manager.has_method("track_chore_completed"):
-		progress_manager.track_chore_completed(current_task.difficulty)
+		progress_manager.track_chore_completed(completed_task.difficulty)
 	
 	# Improve Mom's mood (lower = happier)
 	adjust_mood(-1)
 	
 	# Reduce progress using dynamic difficulty-based reduction
-	var reduction = current_task.get_progress_reduction()
+	var reduction = completed_task.get_progress_reduction()
 	current_progress = maxi(current_progress - reduction, 0)
 	progress_changed.emit(current_progress)
 	print("[ChoresManager] Progress reduced by %d to: %d" % [reduction, current_progress])
-	
-	# Reset roll tracking for expiry timer
-	total_rolls_tracked = 0
+	_clear_current_task()
 	
 	# Queue chore selection popup instead of auto-selecting
 	_queue_chore_selection()
@@ -217,9 +231,12 @@ func reset_for_new_game() -> void:
 	completed_chores.clear()
 	tasks_completed = 0
 	current_progress = 0
-	total_rolls_tracked = 0
 	is_mom_active = false
+	_clear_current_task()
 	_task_history.clear()
+	pending_chore_selection = false
+	_pending_easy_task = null
+	_pending_hard_task = null
 	current_round_number = 1  # Reset round scaling
 	chore_rewards_this_round = 0
 	reset_round_tracking()  # Reset round-specific tracking
@@ -279,7 +296,7 @@ func check_task_completion(context: Dictionary) -> bool:
 
 ## _queue_chore_selection()
 ##
-## Queues a chore selection popup to appear at the next turn end.
+## Queues a chore selection popup for the next valid selection point.
 ## Pre-generates one EASY and one HARD task option for the player to choose from.
 func _queue_chore_selection() -> void:
 	pending_chore_selection = true
@@ -320,10 +337,32 @@ func accept_chore_selection(is_hard: bool) -> void:
 	
 	_pending_easy_task = null
 	_pending_hard_task = null
-	total_rolls_tracked = 0  # Reset expiry timer for new task
+	_remember_task(current_task)
 	task_selected.emit(current_task)
 	print("[ChoresManager] Player selected %s chore: %s" % [
 		"HARD" if is_hard else "EASY", current_task.display_name])
+
+
+## _remember_task(task)
+##
+## Stores the selected chore ID in the recent-history buffer.
+func _remember_task(task) -> void:
+	if task == null:
+		return
+	_task_history.append(task.id)
+	if _task_history.size() > 5:
+		_task_history.pop_front()
+
+
+## _clear_current_task()
+##
+## Clears the active chore and notifies listeners so stale task details disappear
+## while the next selection is pending.
+func _clear_current_task() -> void:
+	if current_task == null:
+		return
+	current_task = null
+	task_selected.emit(current_task)
 
 
 ## _get_random_task_by_difficulty(difficulty: int)
@@ -353,12 +392,21 @@ func _get_random_task_by_difficulty(difficulty: int):
 	return selected_task
 
 
+## get_rounds_until_expiry() -> int
+##
+## Returns the number of round transitions remaining before the active chore expires.
+## Active chores always expire when the current round ends.
+## @return int: 1 if a chore is active, otherwise 0
+func get_rounds_until_expiry() -> int:
+	return 1 if current_task != null else 0
+
+
 ## get_rolls_until_expiry() -> int
 ##
-## Returns the number of rolls remaining before the current chore expires.
-## @return int: Rolls remaining (0 to ROLLS_PER_ROTATION)
+## Compatibility shim for older UI/debug callers. Roll-based expiry no longer exists.
+## @return int: Always 0
 func get_rolls_until_expiry() -> int:
-	return max(0, ROLLS_PER_ROTATION - total_rolls_tracked)
+	return 0
 
 
 ## select_new_task()
@@ -378,10 +426,11 @@ func select_new_task() -> void:
 	
 	# Update task history (keep last 5)
 	if new_task:
-		_task_history.append(new_task.id)
-		if _task_history.size() > 5:
-			_task_history.pop_front()
+		_remember_task(new_task)
 	
+	pending_chore_selection = false
+	_pending_easy_task = null
+	_pending_hard_task = null
 	current_task = new_task
 	task_selected.emit(current_task)
 	print("[ChoresManager] New task: %s" % (current_task.display_name if current_task else "None"))
@@ -393,7 +442,6 @@ func select_new_task() -> void:
 func reset_progress() -> void:
 	current_progress = 0
 	tasks_completed = 0
-	total_rolls_tracked = 0
 	is_mom_active = false
 	progress_changed.emit(current_progress)
 	print("[ChoresManager] Progress reset to 0, tasks_completed reset")
@@ -539,7 +587,6 @@ func get_state() -> Dictionary:
 		"chore_rewards_this_round": chore_rewards_this_round,
 		"current_task_id": task_id,
 		"tasks_completed": tasks_completed,
-		"total_rolls_tracked": total_rolls_tracked,
 		"is_mom_active": is_mom_active,
 		"_task_history": _task_history.duplicate(),
 		"pending_chore_selection": pending_chore_selection,
@@ -570,7 +617,6 @@ func load_state(state: Dictionary) -> void:
 	chores_completed_this_round = state.get("chores_completed_this_round", 0)
 	chore_rewards_this_round = state.get("chore_rewards_this_round", 0)
 	tasks_completed = state.get("tasks_completed", 0)
-	total_rolls_tracked = state.get("total_rolls_tracked", 0)
 	is_mom_active = state.get("is_mom_active", false)
 	var loaded_history = state.get("_task_history", [])
 	_task_history.assign(loaded_history)

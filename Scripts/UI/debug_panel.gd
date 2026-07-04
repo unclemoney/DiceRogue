@@ -2979,7 +2979,7 @@ func _debug_chores_show_state() -> void:
 		"=== CHORE STATE ===",
 		"Current Task: %s" % task_name,
 		"Progress: %d / %d" % [chores_manager.current_progress, chores_manager.get_scaled_max_progress()],
-		"Rolls Until Expiry: %d" % chores_manager.get_rolls_until_expiry(),
+		"Rounds Until Expiry: %d" % (chores_manager.get_rounds_until_expiry() if chores_manager.has_method("get_rounds_until_expiry") else 0),
 		"Mom Mood: %d/10 (%s)" % [chores_manager.mom_mood, chores_manager.get_mood_description()],
 		"Tasks Completed This Cycle: %d" % chores_manager.tasks_completed,
 		"Completed Chores This Round: %d" % chores_manager.get_chores_completed_this_round(),

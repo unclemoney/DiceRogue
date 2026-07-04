@@ -170,6 +170,8 @@ var _challenge_celebration = null
 # Chore selection popup (instantiated when needed)
 var _chore_selection_popup = null
 var _pending_chore_selection: bool = false  # True when chore selection is waiting to be shown
+var _defer_chore_selection_until_round_start: bool = false
+var _is_round_start_chore_gate_active: bool = false
 
 # Pending unlocked items to display before stats panel
 var _pending_unlocked_items: Array = []
@@ -454,10 +456,16 @@ func _on_game_start() -> void:
 	# Show channel selector UI at game start
 	if channel_manager_ui and channel_manager:
 		channel_manager.reset()  # Reset to Channel 1 on new game
+		if chores_manager:
+			_defer_chore_selection_until_round_start = true
+			chores_manager.reset_for_new_game()
 		channel_manager_ui.show_channel_selector()
 		print("[GameController] Showing channel selector - waiting for player to start")
 	elif round_manager:
 		# Fallback: start game immediately if no channel system
+		if chores_manager:
+			_defer_chore_selection_until_round_start = true
+			chores_manager.reset_for_new_game()
 		round_manager.start_game()
 
 
@@ -470,6 +478,9 @@ func _on_channel_selected(channel: int) -> void:
 	print("[GameController] Channel", channel, "selected, starting game...")
 	_apply_channel_background()
 	_apply_channel_starting_bonuses(channel)
+	if chores_manager:
+		_defer_chore_selection_until_round_start = true
+		chores_manager.reset_for_new_game()
 	if round_manager:
 		round_manager.start_game()
 	if crt_manager:
@@ -681,6 +692,7 @@ func _restart_game_for_new_channel(carried_types: Array[String] = []) -> void:
 	
 	# Reset the goof-off meter (ChoresManager) — always resets
 	if chores_manager:
+		_defer_chore_selection_until_round_start = true
 		chores_manager.reset_for_new_game()
 		print("[GameController] Goof-off meter reset")
 	
@@ -772,10 +784,6 @@ func _restart_game_for_new_channel(carried_types: Array[String] = []) -> void:
 	if round_manager:
 		round_manager.start_game()
 		print("[GameController] Game restarted for new channel")
-	
-	# Show chore selection popup for the new game (queued by reset_for_new_game)
-	if _pending_chore_selection:
-		_show_chore_selection_popup()
 
 
 ## _clear_active_challenges() -> void
@@ -2207,8 +2215,7 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 			elif _active_lock_tracker.is_expired(current_turn_num):
 				print("[GameController] Lock constraint chore expired unsatisfied")
 				_active_lock_tracker = null
-				# Optionally rotate the failed chore
-				chores_manager._rotate_current_task()
+				chores_manager.expire_current_task("lock constraint failed")
 		else:
 			chores_manager.check_task_completion(context)
 	
@@ -3637,6 +3644,13 @@ func _on_roll_pressed() -> void:
 ## Called when a new chore task is assigned. Initializes the lock constraint
 ## tracker if the selected task is a LOCK_CONSTRAINT type.
 func _on_chore_task_selected(task: ChoreData) -> void:
+	if chores_manager and not chores_manager.pending_chore_selection:
+		_pending_chore_selection = false
+
+	if task == null:
+		_active_lock_tracker = null
+		return
+
 	if task.task_type == ChoreData.TaskType.LOCK_CONSTRAINT:
 		_active_lock_tracker = LockConstraintTrackerScript.new()
 		var turn_window = task.additional_params.get("turn_window", 3)
@@ -3653,7 +3667,7 @@ func _on_chore_task_selected(task: ChoreData) -> void:
 ## Builds the ordered list of round-end UI steps based on current pending state.
 func _build_round_end_queue() -> Array[RoundEndStep]:
 	var queue: Array[RoundEndStep] = []
-	if _pending_chore_selection:
+	if _pending_chore_selection and not _defer_chore_selection_until_round_start:
 		queue.append(RoundEndStep.CHORE_SELECTION)
 	if _pending_unlocked_items.size() > 0 and unlocked_item_panel:
 		queue.append(RoundEndStep.UNLOCK_NOTIFICATIONS)
@@ -4709,11 +4723,6 @@ func _on_round_started(round_number: int) -> void:
 	Statistics.start_new_round()
 	
 	# Reset turn history for lock constraint sliding window checks
-	# If an active lock constraint chore survived to the next round, rotate it
-	if _active_lock_tracker and chores_manager and chores_manager.current_task:
-		if chores_manager.current_task.task_type == ChoreData.TaskType.LOCK_CONSTRAINT:
-			print("[GameController] Lock constraint chore expired at round boundary")
-			chores_manager._rotate_current_task()
 	_turn_history.clear()
 	_current_turn_max_locked = 0
 	_active_lock_tracker = null
@@ -4778,6 +4787,14 @@ func _on_round_started(round_number: int) -> void:
 	
 	# Reset gaming console uses for new round
 	_reset_gaming_console_for_round()
+
+	if _is_round_start_chore_gate_active:
+		if challenge_ui and challenge_ui.has_method("wait_for_reveal"):
+			await challenge_ui.wait_for_reveal()
+		if chores_manager and chores_manager.pending_chore_selection:
+			_show_chore_selection_popup()
+		else:
+			_release_round_start_chore_gate()
 
 
 ## _apply_automatic_debuffs(round_number: int) -> void
@@ -5081,6 +5098,23 @@ func get_active_power_up(id: String) -> PowerUp:
 	return null
 
 
+func is_round_start_chore_gate_active() -> bool:
+	return _is_round_start_chore_gate_active
+
+
+func _release_round_start_chore_gate() -> void:
+	if not _is_round_start_chore_gate_active:
+		_defer_chore_selection_until_round_start = false
+		return
+
+	_is_round_start_chore_gate_active = false
+	_defer_chore_selection_until_round_start = false
+
+	var roll_ui = get_tree().get_first_node_in_group("roll_button_ui")
+	if roll_ui and roll_ui.has_method("release_round_start_gate"):
+		roll_ui.release_round_start_gate()
+
+
 ## _on_chore_selection_requested()
 ##
 ## Handler for when ChoresManager needs the player to choose a new chore.
@@ -5089,12 +5123,18 @@ func get_active_power_up(id: String) -> PowerUp:
 func _on_chore_selection_requested() -> void:
 	if not chores_manager:
 		return
-	
-	# If a challenge was just completed, defer chore popup until the round
-	# transition overlay is ready (avoids stacking panels).
-	if round_manager and round_manager.is_challenge_completed:
-		print("[GameController] Chore selection deferred — challenge completing")
+
+	if _defer_chore_selection_until_round_start:
+		print("[GameController] Chore selection deferred - waiting for round intro")
 		_pending_chore_selection = true
+		return
+	
+	# If a challenge was just completed, defer the popup until the next round
+	# intro so it does not stack on round-end panels.
+	if round_manager and round_manager.is_challenge_completed:
+		print("[GameController] Chore selection deferred - challenge completing")
+		_pending_chore_selection = true
+		_defer_chore_selection_until_round_start = true
 		return
 	
 	_show_chore_selection_popup()
@@ -5107,6 +5147,8 @@ func _on_chore_selection_requested() -> void:
 ## RoundTransitionOverlay (layer 10).
 func _show_chore_selection_popup() -> void:
 	if not chores_manager:
+		if _is_round_start_chore_gate_active:
+			_release_round_start_chore_gate()
 		if _is_processing_round_end:
 			_process_round_end_queue()
 		return
@@ -5158,6 +5200,9 @@ func _on_chore_popup_dismissed() -> void:
 		_chore_selection_popup_layer.queue_free()
 	_chore_selection_popup_layer = null
 	_chore_selection_popup = null
+
+	if _is_round_start_chore_gate_active:
+		_release_round_start_chore_gate()
 	
 	if _is_processing_round_end:
 		_process_round_end_queue()
@@ -5566,8 +5611,8 @@ func _clear_active_gaming_console() -> void:
 ## _on_next_round_pressed() -> void
 ##
 ## Handles the Next Round button press. Runs the full round intro sequence
-## (TV turn-on, New Round Panel, Scorecard entrance, chore selection) before
-## actually starting the round.
+## (TV turn-on, New Round Panel, Scorecard entrance) before actually starting
+## the round. Chore selection is shown after Turn 1 and challenge reveal.
 func _on_next_round_pressed() -> void:
 	print("[GameController] Next Round pressed - starting intro sequence")
 	
@@ -5615,12 +5660,13 @@ func _continue_round_start() -> void:
 	if score_card_ui:
 		await score_card_ui.animate_entrance()
 	
-	# Chore Selection (Round 1 only, if no active chore)
-	if is_first_round and chores_manager:
-		if chores_manager.pending_chore_selection or chores_manager.current_task == null:
-			_show_chore_selection_popup()
-			while _chore_selection_popup and is_instance_valid(_chore_selection_popup) and _chore_selection_popup.visible:
-				await get_tree().process_frame
+	if chores_manager:
+		_defer_chore_selection_until_round_start = true
+		chores_manager.queue_round_start_selection()
+		_is_round_start_chore_gate_active = chores_manager.pending_chore_selection
+	else:
+		_defer_chore_selection_until_round_start = false
+		_is_round_start_chore_gate_active = false
 	
 	# Start Actual Round
 	if is_first_round:

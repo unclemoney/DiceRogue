@@ -6,7 +6,7 @@ const GlassActionButtonClass = preload("res://Scripts/UI/glass_action_button.gd"
 ## ChoreSelectionPopup
 ##
 ## Popup panel that lets the player choose between an EASY or HARD chore task.
-## Shown at turn end when a chore completes or expires.
+## Shown when a chore needs replacement, either mid-round or at round start.
 ## Displays current goof-off meter level, Mom's mood, and task previews.
 ## Uses powerup_hover_theme for visual consistency.
 

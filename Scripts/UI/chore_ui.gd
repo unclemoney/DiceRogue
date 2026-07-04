@@ -327,8 +327,7 @@ func _on_task_completed(_task) -> void:  # ChoreData - duck typed, unused
 ## _update_details_with_progress()
 ##
 ## Updates the expanded chore board with current task info, progress, and expiration timer.
-## Shows scaled max progress threshold and rolls until chore expires.
-## Expiration text turns red when fewer than 5 rolls remain.
+## Shows scaled max progress threshold and round-boundary chore expiry.
 func _update_details_with_progress() -> void:
 	if not details_label:
 		return
@@ -352,14 +351,9 @@ func _update_details_with_progress() -> void:
 	if task:
 		if task_label:
 			task_label.text = task.display_name
-		var expiry_text = "Stable"
-		if _chores_manager.has_method("get_rolls_until_expiry"):
-			var rolls_left = _chores_manager.get_rolls_until_expiry()
-			if rolls_left >= 0:
-				if rolls_left < 5:
-					expiry_text = "[color=#ff7f9c]Expires in %d rolls[/color]" % rolls_left
-				else:
-					expiry_text = "Expires in %d rolls" % rolls_left
+		var expiry_text = "Expires when this round ends"
+		if _chores_manager.has_method("get_rounds_until_expiry") and _chores_manager.get_rounds_until_expiry() <= 0:
+			expiry_text = "Awaiting replacement"
 
 		details_label.text = "[center][b]%s[/b][/center]\n%s\n\n[color=#c7bbdd]Progress:[/color] %s / %s\n[color=#c7bbdd]Expiry:[/color] %s\n[color=#c7bbdd]Mom Mood:[/color] %s %s (%d/10)\n[color=#c7bbdd]Completed:[/color] %d chore(s)" % [
 			task.display_name,
@@ -373,9 +367,12 @@ func _update_details_with_progress() -> void:
 			completed_count
 		]
 	else:
+		var waiting_for_selection = _chores_manager.pending_chore_selection if _chores_manager.has_method("get_pending_tasks") else false
 		if task_label:
-			task_label.text = "No active chore"
-		details_label.text = "[center][b]No active chore[/b][/center]\nTake a breather, but keep an eye on the meter.\n\n[color=#c7bbdd]Progress:[/color] %s / %s\n[color=#c7bbdd]Mom Mood:[/color] %s %s (%d/10)\n[color=#c7bbdd]Completed:[/color] %d chore(s)" % [
+			task_label.text = "Choose a chore" if waiting_for_selection else "No active chore"
+		var no_task_text = "[center][b]Choose a new chore[/b][/center]\nA fresh chore is required before play continues." if waiting_for_selection else "[center][b]No active chore[/b][/center]\nTake a breather, but keep an eye on the meter."
+		details_label.text = "%s\n\n[color=#c7bbdd]Progress:[/color] %s / %s\n[color=#c7bbdd]Mom Mood:[/color] %s %s (%d/10)\n[color=#c7bbdd]Completed:[/color] %d chore(s)" % [
+			no_task_text,
 			NumberFormatter.format_int(current_progress_val),
 			NumberFormatter.format_int(max_progress),
 			mood_emoji,
@@ -436,7 +433,7 @@ func _play_completion_flash() -> void:
 
 ## _on_task_rotated()
 ##
-## Handler for when chores auto-rotate every 20 rolls.
+## Handler for when the active chore expires and a new choice is required.
 ## Plays a bounce animation to indicate the change.
 func _on_task_rotated(_task) -> void:
 	print("[ChoreUI] Task rotated, playing bounce animation")

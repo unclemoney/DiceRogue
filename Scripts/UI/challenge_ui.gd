@@ -2,6 +2,7 @@ extends Control
 class_name ChallengeUI
 
 signal challenge_selected(id: String)
+signal challenge_reveal_finished
 
 @export var challenge_icon_scene: PackedScene = preload("res://Scenes/Challenge/ChallengeIcon.tscn")
 @export var round_manager_path: NodePath
@@ -13,6 +14,7 @@ signal challenge_selected(id: String)
 var _challenges: Dictionary = {}  # id -> ChallengeIcon
 var _progress: Dictionary = {}     # id -> float (0.0–1.0)
 var _detail_cards: Dictionary = {}  # id -> ChallengeDetailCard (active during fan-out)
+var _challenge_reveal_active: bool = false
 
 func _ready() -> void:
 	print("[ChallengeUI] Initializing...")
@@ -109,6 +111,7 @@ func add_challenge(data: ChallengeData, challenge: Challenge) -> ChallengeIcon:
 	return icon
 
 func _show_challenge_reveal_banner(challenge_name: String) -> void:
+	_challenge_reveal_active = true
 	var banner = Label.new()
 	banner.text = "CHALLENGE ACCEPTED\n%s" % challenge_name
 	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -139,6 +142,14 @@ func _show_challenge_reveal_banner(challenge_name: String) -> void:
 		var fade = create_tween()
 		fade.tween_property(banner, "modulate:a", 0.0, 0.3)
 		fade.tween_callback(banner.queue_free)
+		await fade.finished
+	_challenge_reveal_active = false
+	challenge_reveal_finished.emit()
+
+
+func wait_for_reveal() -> void:
+	if _challenge_reveal_active:
+		await challenge_reveal_finished
 
 
 func _on_challenge_selected(id: String) -> void:

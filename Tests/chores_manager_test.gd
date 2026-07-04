@@ -25,6 +25,7 @@ func _ready() -> void:
 	# Auto-run non-interactive validation tests on scene load
 	_on_test_rating_mapping_pressed()
 	_on_test_progress_per_roll_pressed()
+	_on_test_round_boundary_selection_pressed()
 
 func _setup_ui() -> void:
 	# Populate task option button
@@ -45,6 +46,9 @@ func _on_progress_changed(new_value: int) -> void:
 	_log("Progress changed: %d" % new_value)
 
 func _on_task_selected(task) -> void:  # ChoreData - duck typed
+	if task == null:
+		_log("Task cleared - awaiting selection")
+		return
 	_log("Task selected: %s" % task.display_name)
 
 func _on_task_completed(task) -> void:  # ChoreData - duck typed
@@ -170,3 +174,17 @@ func _on_test_progress_per_roll_pressed() -> void:
 	else:
 		lines.append("[color=red]FAILED: expected %d[/color]" % (base + bonus))
 	_log("\n".join(lines))
+
+
+func _on_test_round_boundary_selection_pressed() -> void:
+	chores_manager.select_new_task()
+	var previous_task = chores_manager.current_task
+	chores_manager.queue_round_start_selection()
+	var pending = chores_manager.get_pending_tasks()
+	var passed = previous_task != null
+	passed = passed and chores_manager.current_task == null
+	passed = passed and chores_manager.pending_chore_selection
+	passed = passed and pending.get("easy") != null
+	passed = passed and pending.get("hard") != null
+	var status = "[color=green]PASSED[/color]" if passed else "[color=red]FAILED[/color]"
+	_log("[color=yellow]Round Boundary Selection Test[/color]\n%s" % status)

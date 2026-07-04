@@ -937,11 +937,12 @@ Each chore has an EASY or HARD difficulty level:
 - **HARD** tasks (meter -30): Specific combos, Yahtzees, full house with specific triples, lock 4-5 dice
 
 **Chore Selection Popup:**
-When a chore completes or expires, a **ChoreSelectionPopup** appears at turn end:
+When a chore completes, or when a new round begins, a **ChoreSelectionPopup** appears:
 - Shows current goof-off meter progress bar with color-coded fill
 - Displays Mom's mood emoji and description (e.g., "😊 Content (3/10)")
 - Presents EASY and HARD task cards side-by-side with names, descriptions, and reduction values
-- Player must choose one before continuing — only one popup per turn
+- Mid-round chore completions replace immediately; round-boundary replacements appear after the challenge reveal and Turn 1 presentation
+- Player must choose one before continuing
 
 **Chore Tasks:**
 Tasks are randomly selected from a pool of 40+ options across different categories:
@@ -953,11 +954,11 @@ Tasks are randomly selected from a pool of 40+ options across different categori
 
 **Task Completion & Expiration:**
 - The collapsed Chore Meter always shows the live task label and progress state
-- Click the Chore Meter to open the detailed chore board with the current task requirements and **expiration timer**
-- Expiration timer shows "Expires in X rolls" (turns red when < 5 rolls remain)
+- Click the Chore Meter to open the detailed chore board with the current task requirements and round-end expiry status
+- Active chores now show that they expire when the current round ends
 - Complete the task requirement during normal gameplay
 - Progress reduces by task difficulty (EASY: -10, HARD: -30)
-- Chore selection popup appears for the player to pick their next chore
+- Completed chores immediately queue a replacement; unfinished chores are replaced at the start of the next round
 
 **Chore Tracking (ProgressManager):**
 - `total_chores_completed`: Cumulative across all games (per profile)
@@ -990,7 +991,7 @@ When Mom appears (progress reaches 100):
 
 **ChoreUI Display:**
 - **Collapsed Meter**: Compact mall-core panel with a horizontal progress bar and current task label
-- **Expanded Chore Board**: Click opens a centered status panel with task description, progress, expiry, Mom mood, and completed chore count
+- **Expanded Chore Board**: Click opens a centered status panel with task description, progress, round-end expiry state, Mom mood, and completed chore count
 - **Fan-Out Cards**: Completed chores and Mom's mood still fan out beneath the status panel for the juiced summary state
 - **Position**: Built into the GameUI center column inside the `Chore Meter` panel
 
@@ -1024,7 +1025,7 @@ Mom's mood tracks player behavior across a game session:
 
 **Chores Fan-Out UI:**
 Clicking the Goof-Off Meter displays a fan-out panel showing:
-- **Centered Status Panel**: Current task summary, progress/max, expiry state, Mom mood, and total completed chores
+- **Centered Status Panel**: Current task summary, progress/max, round-end expiry state, Mom mood, and total completed chores
 - **Mom's Current Mood**: Emoji indicator (😊 to 😡) with mood description
 - **Completed Chores List**: Checkmark list of all chores completed this game
 - **Empty State**: Shows "No chores completed yet" message when starting fresh

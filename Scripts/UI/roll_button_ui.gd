@@ -56,6 +56,7 @@ const BUTTON_ACTION_COOLDOWN: float = 0.35
 
 ## Prevents roll from being triggered while a roll animation is already in progress
 var _roll_in_progress: bool = false
+var _pending_round_start_number: int = -1
 
 
 func _ready() -> void:
@@ -117,7 +118,7 @@ func _ready() -> void:
 	# Connect to turn_tracker
 	if turn_tracker:
 		turn_tracker.rolls_exhausted.connect(_on_rolls_exhausted)
-		turn_tracker.turn_started.connect(func(): enable_roll(); start_pulse())
+		turn_tracker.turn_started.connect(_on_turn_started)
 		turn_tracker.rolls_updated.connect(_on_rolls_updated)
 		turn_tracker.connect("game_over", Callable(self, "_on_game_over"))
 
@@ -151,6 +152,14 @@ func _connect_game_btn_signals() -> void:
 	if game_btn and game_btn.has_signal("shop_opened"):
 		if not game_btn.shop_opened.is_connected(_on_shop_opened):
 			game_btn.shop_opened.connect(_on_shop_opened)
+
+	if not round_manager:
+		round_manager = get_tree().get_first_node_in_group("round_manager") as RoundManager
+		if round_manager:
+			print("[RollButtonUI] Resolved round_manager via group in _connect_game_btn_signals")
+	if round_manager and not round_manager.round_started.is_connected(_on_round_started):
+		round_manager.round_started.connect(_on_round_started)
+		print("[RollButtonUI] Connected round_manager.round_started")
 
 	# Resolve score_card_ui now that the full UI tree is built
 	if not score_card_ui:
@@ -434,6 +443,51 @@ func _toggle_die_lock(index: int) -> void:
 		print("[RollButtonUI] Toggled lock on die %d" % (index + 1))
 
 
+func _is_round_start_gate_active() -> bool:
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller and game_controller.has_method("is_round_start_chore_gate_active"):
+		return game_controller.is_round_start_chore_gate_active()
+	return false
+
+
+func _on_turn_started() -> void:
+	if _is_round_start_gate_active():
+		return
+	enable_roll()
+	start_pulse()
+
+
+func _activate_round_start(round_number: int) -> void:
+	enable_roll()
+	_start_roll_button_pulse()
+
+	# Bounce animation on the roll button
+	if roll_button_shell and not roll_button.disabled:
+		roll_button_shell.pivot_offset = roll_button_shell.size / 2.0
+		var tween = create_tween()
+		tween.tween_property(roll_button_shell, "scale", Vector2(1.12, 0.9), 0.08)
+		tween.tween_property(roll_button_shell, "scale", Vector2(0.97, 1.04), 0.08)
+		tween.tween_property(roll_button_shell, "scale", Vector2.ONE, 0.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_flash_roll_button_shader(0.45, Vector2(0.5, 0.5))
+
+	# Spawn dice and auto-roll at round start
+	if dice_hand:
+		print("[RollButtonUI] Spawning dice for round", round_number)
+		dice_hand.spawn_dice()
+		await get_tree().create_timer(0.3).timeout
+		_on_roll_button_pressed()
+
+
+func release_round_start_gate() -> void:
+	var round_number = _pending_round_start_number
+	if round_number < 0:
+		if not round_manager:
+			round_manager = get_tree().get_first_node_in_group("round_manager") as RoundManager
+		round_number = round_manager.get_current_round_number() if round_manager else 1
+	_pending_round_start_number = -1
+	_activate_round_start(round_number)
+
+
 func _start_roll_button_pulse() -> void:
 	if _is_pulsing or not roll_button:
 		return
@@ -535,24 +589,11 @@ func _hand_scored_disable() -> void:
 ##
 ## Side-effects: enables roll button, starts pulse, bounces button, spawns dice and auto-rolls.
 func _on_round_started(_round_number: int) -> void:
-	enable_roll()
-	_start_roll_button_pulse()
-
-	# Bounce animation on the roll button
-	if roll_button_shell and not roll_button.disabled:
-		roll_button_shell.pivot_offset = roll_button_shell.size / 2.0
-		var tween = create_tween()
-		tween.tween_property(roll_button_shell, "scale", Vector2(1.12, 0.9), 0.08)
-		tween.tween_property(roll_button_shell, "scale", Vector2(0.97, 1.04), 0.08)
-		tween.tween_property(roll_button_shell, "scale", Vector2.ONE, 0.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		_flash_roll_button_shader(0.45, Vector2(0.5, 0.5))
-
-	# Spawn dice and auto-roll at round start
-	if dice_hand:
-		print("[RollButtonUI] Spawning dice for round", _round_number)
-		dice_hand.spawn_dice()
-		await get_tree().create_timer(0.3).timeout
-		_on_roll_button_pressed()
+	if _is_round_start_gate_active():
+		_pending_round_start_number = _round_number
+		return
+	_pending_round_start_number = -1
+	_activate_round_start(_round_number)
 
 
 func _create_tension_vignette() -> void:
