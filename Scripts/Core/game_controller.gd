@@ -760,8 +760,8 @@ func _restart_game_for_new_channel(carried_types: Array[String] = []) -> void:
 		print("[GameController] Dice count reset to 5 for new channel")
 	
 	# Re-enable shop button for new game
-	if game_button_ui and game_button_ui.has_node("HBoxContainer/ShopButton"):
-		var shop_btn = game_button_ui.get_node("HBoxContainer/ShopButton")
+	if game_button_ui and game_button_ui.has_node("HBoxContainer/RightButtonArea/ShopButton"):
+		var shop_btn = game_button_ui.get_node("HBoxContainer/RightButtonArea/ShopButton")
 		if shop_btn:
 			shop_btn.disabled = false
 			print("[GameController] Shop button re-enabled for new channel")
@@ -3228,10 +3228,10 @@ func _on_use_continue_pressed() -> void:
 		var roll_btn = game_button_ui.get_node_or_null("HBoxContainer/RollButton")
 		if roll_btn:
 			roll_btn.disabled = false
-		var next_btn = game_button_ui.get_node_or_null("HBoxContainer/NextTurnButton")
+		var next_btn = game_button_ui.get_node_or_null("HBoxContainer/RightButtonArea/NextTurnButton")
 		if next_btn:
 			next_btn.disabled = true
-		var shop_btn = game_button_ui.get_node_or_null("HBoxContainer/ShopButton")
+		var shop_btn = game_button_ui.get_node_or_null("HBoxContainer/RightButtonArea/ShopButton")
 		if shop_btn:
 			shop_btn.disabled = true
 	
@@ -3280,8 +3280,8 @@ func _on_game_over() -> void:
 	_game_ended = true
 	
 	# Disable shop button - game has ended
-	if game_button_ui and game_button_ui.has_node("HBoxContainer/ShopButton"):
-		var shop_btn = game_button_ui.get_node("HBoxContainer/ShopButton")
+	if game_button_ui and game_button_ui.has_node("HBoxContainer/RightButtonArea/ShopButton"):
+		var shop_btn = game_button_ui.get_node("HBoxContainer/RightButtonArea/ShopButton")
 		if shop_btn:
 			shop_btn.disabled = true
 			print("[GameController] Shop button disabled - game over")
@@ -4340,10 +4340,10 @@ func _on_transition_keep_playing() -> void:
 		var roll_btn = game_button_ui.get_node_or_null("HBoxContainer/RollButton")
 		if roll_btn:
 			roll_btn.disabled = false
-		var next_btn = game_button_ui.get_node_or_null("HBoxContainer/NextTurnButton")
+		var next_btn = game_button_ui.get_node_or_null("HBoxContainer/RightButtonArea/NextTurnButton")
 		if next_btn:
 			next_btn.disabled = false
-		var shop_btn = game_button_ui.get_node_or_null("HBoxContainer/ShopButton")
+		var shop_btn = game_button_ui.get_node_or_null("HBoxContainer/RightButtonArea/ShopButton")
 		if shop_btn:
 			shop_btn.disabled = false
 	
@@ -4513,8 +4513,8 @@ func _on_all_rounds_completed() -> void:
 	_game_ended = true
 	
 	# Disable shop button - game has ended (won)
-	if game_button_ui and game_button_ui.has_node("HBoxContainer/ShopButton"):
-		var shop_btn = game_button_ui.get_node("HBoxContainer/ShopButton")
+	if game_button_ui and game_button_ui.has_node("HBoxContainer/RightButtonArea/ShopButton"):
+		var shop_btn = game_button_ui.get_node("HBoxContainer/RightButtonArea/ShopButton")
 		if shop_btn:
 			shop_btn.disabled = true
 			print("[GameController] Shop button disabled - all rounds completed")

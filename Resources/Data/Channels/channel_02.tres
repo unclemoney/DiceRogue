@@ -98,11 +98,11 @@ bonus_multipliers = {
 script = ExtResource("1_channel")
 channel_number = 2
 display_name = "Channel 02 - Getting Started"
+description = "Slightly harder challenges. Your first debuff may appear in round 6."
 mall_zone_name = "Arcade"
 mall_directory_label = "Arcade"
 mall_tooltip_flavor = "Cabinets hum and ticket counters flash under neon."
 mall_section_id = "entertainment"
-description = "Slightly harder challenges. Your first debuff may appear in round 6."
 unlock_requirement = 0
 round_configs = Array[ExtResource("2_round")]([SubResource("round_1"), SubResource("round_2"), SubResource("round_3"), SubResource("round_4"), SubResource("round_5"), SubResource("round_6")])
 goal_score_multiplier = 1.1
@@ -112,11 +112,11 @@ colored_dice_cost_multiplier = 1.0
 reroll_base_cost_multiplier = 1.0
 goof_off_multiplier = 1.0
 debuff_intensity_multiplier = 1.0
+allowed_carryover_count = 5
+allowed_carryover_types = Array[String](["power_ups", "consumables", "colored_dice", "mods", "consoles", "money", "scorecard_levels"])
 force_specific_challenges = Array[String]([])
 disabled_shop_items = Array[String]([])
 special_rules = {}
-allowed_carryover_count = 5
-allowed_carryover_types = Array[String](["power_ups", "consumables", "colored_dice", "mods", "consoles", "money", "scorecard_levels"])
 background_shader = ExtResource("1_a51o0")
 background_shader_params = {
 "colour_1": Color(0.15, 0.08, 0.25, 1),
@@ -128,3 +128,4 @@ background_shader_params = {
 "spin_amount": 0.3,
 "spin_speed": 0.5
 }
+ui_contrast_mode = "auto"

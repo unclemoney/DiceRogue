@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("3_axabn")
 id = "300pts_no_debuff"
-display_name = "Basic Bitch"
+display_name = "Mall Rats"
 description = "Vanilla rules but more points."
 icon = ExtResource("1_0pi0e")
 scene = ExtResource("2_aejb6")

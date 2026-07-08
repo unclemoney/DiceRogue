@@ -1,6 +1,42 @@
 extends Control
 class_name GameButtonUI
 
+const GAME_BUTTON_FONT_SIZE: int = 16
+const GAME_BUTTON_FONT_COLOR : Color = Color(0.968627, 0.941176, 1.0, 1.0)
+const GAME_BUTTON_FONT_OUTLINE : Color = Color(0.129412, 0.121569, 0.2, 0.0)
+const GAME_BUTTON_RIM : Color = Color(0.968627, 0.941176, 1.0, 1.0)
+const GAME_BUTTON_OUTLINE_SIZE: int = 0
+const NEXT_ROUND_BUTTON_PALETTE : Dictionary = {
+	"base_color": Color(0.309804, 0.14902, 0.25098, 0.92),
+	"mid_color": Color(0.443137, 0.203922, 0.360784, 0.96),
+	"accent_color": Color(0.886275, 0.392157, 0.54902, 1.0),
+	"glow_color": Color(0.952941, 0.584314, 0.72549, 1.0),
+	"rim_color": GAME_BUTTON_RIM,
+	"font_color": GAME_BUTTON_FONT_COLOR,
+	"font_outline_color": GAME_BUTTON_FONT_OUTLINE,
+	"outline_size": GAME_BUTTON_OUTLINE_SIZE
+}
+const SHOP_BUTTON_PALETTE : Dictionary = {
+	"base_color": Color(0.137255, 0.411765, 0.415686, 0.92),
+	"mid_color": Color(0.2, 0.56, 0.56, 0.96),
+	"accent_color": Color(0.47451, 0.886275, 0.890196, 1.0),
+	"glow_color": Color(0.6, 0.94, 0.96, 1.0),
+	"rim_color": GAME_BUTTON_RIM,
+	"font_color": GAME_BUTTON_FONT_COLOR,
+	"font_outline_color": GAME_BUTTON_FONT_OUTLINE,
+	"outline_size": GAME_BUTTON_OUTLINE_SIZE
+}
+const NEXT_TURN_BUTTON_PALETTE : Dictionary = {
+	"base_color": Color(0.192157, 0.431373, 0.203922, 0.92),
+	"mid_color": Color(0.278431, 0.603922, 0.294118, 0.96),
+	"accent_color": Color(0.47451, 0.886275, 0.521569, 1.0),
+	"glow_color": Color(0.623529, 0.968627, 0.678431, 1.0),
+	"rim_color": GAME_BUTTON_RIM,
+	"font_color": GAME_BUTTON_FONT_COLOR,
+	"font_outline_color": GAME_BUTTON_FONT_OUTLINE,
+	"outline_size": GAME_BUTTON_OUTLINE_SIZE
+}
+
 @export var dice_hand_path:      NodePath
 @export var score_card_ui_path:  NodePath
 @export var turn_tracker_path:   NodePath
@@ -11,9 +47,9 @@ class_name GameButtonUI
 @onready var challenge_manager: ChallengeManager = get_node_or_null(challenge_manager_path)
 @onready var scoring_animation_controller = get_node_or_null(scoring_animation_controller_path)
 
-@onready var shop_button: Button = $HBoxContainer/RightButtonArea/ShopButton
-@onready var next_round_button: Button = $HBoxContainer/RightButtonArea/NextRoundButton
-@onready var next_turn_button: Button = $HBoxContainer/RightButtonArea/NextTurnButton
+@onready var shop_button = $HBoxContainer/RightButtonArea/ShopButton
+@onready var next_round_button = $HBoxContainer/RightButtonArea/NextRoundButton
+@onready var next_turn_button = $HBoxContainer/RightButtonArea/NextTurnButton
 @onready var _tfx := get_node("/root/TweenFXHelper")
 
 ## Emitted when shop is opened so RollButtonUI can disable roll
@@ -103,6 +139,8 @@ func _ready():
 		if round_manager:
 			print("[GameButtonUI] Found round_manager via group fallback")
 
+	_configure_action_buttons()
+
 	add_to_group("game_button_ui")
 
 	# Defer validation so GameUI has time to finish building the tree
@@ -130,17 +168,11 @@ func _deferred_ready_validation() -> void:
 
 	if shop_button:
 		_set_button_disabled(shop_button, false)
-		print("Shop button status: ", shop_button.disabled)
+		print("Shop button status: ", _is_button_disabled(shop_button))
 
 	for btn in [shop_button, next_turn_button, next_round_button]:
 		if btn:
 			_cache_button_base_scale(btn)
-			if not btn.mouse_entered.is_connected(_tfx.button_hover.bind(btn)):
-				btn.mouse_entered.connect(_tfx.button_hover.bind(btn))
-			if not btn.mouse_exited.is_connected(_tfx.button_unhover.bind(btn)):
-				btn.mouse_exited.connect(_tfx.button_unhover.bind(btn))
-			if not btn.pressed.is_connected(_tfx.button_press.bind(btn)):
-				btn.pressed.connect(_tfx.button_press.bind(btn))
 
 	if next_round_button and not next_round_button.pressed.is_connected(_on_next_round_button_pressed):
 		next_round_button.pressed.connect(_on_next_round_button_pressed)
@@ -237,21 +269,44 @@ func _connect_roll_ui_signals() -> void:
 		push_error("[GameButtonUI] challenge_manager not found -- challenge_completed will not enable Next Round")
 
 
-func _cache_button_base_scale(button: Button) -> void:
+func _configure_action_buttons() -> void:
+	_configure_action_button(next_round_button, "NEXT ROUND", NEXT_ROUND_BUTTON_PALETTE)
+	_configure_action_button(shop_button, "SHOP", SHOP_BUTTON_PALETTE)
+	_configure_action_button(next_turn_button, "NEXT TURN", NEXT_TURN_BUTTON_PALETTE)
+
+
+func _configure_action_button(button: Control, label_text: String, palette: Dictionary) -> void:
+	if not button or not button.has_method("configure"):
+		return
+	var button_size : Vector2 = button.custom_minimum_size
+	if button_size == Vector2.ZERO:
+		button_size = Vector2(0, 46)
+	button.configure(label_text, button_size, palette, GAME_BUTTON_FONT_SIZE)
+
+
+func _is_button_disabled(button: Control) -> bool:
+	if not button:
+		return true
+	if button.has_method("is_button_disabled"):
+		return bool(button.is_button_disabled())
+	return bool(button.get("disabled"))
+
+
+func _cache_button_base_scale(button: Control) -> void:
 	if not button:
 		return
 	if not _button_base_scales.has(button):
 		_button_base_scales[button] = button.scale
 
 
-func _get_button_base_scale(button: Button) -> Vector2:
+func _get_button_base_scale(button: Control) -> Vector2:
 	if not button:
 		return Vector2.ONE
 	_cache_button_base_scale(button)
 	return _button_base_scales[button]
 
 
-func _stop_button_wave(button: Button) -> void:
+func _stop_button_wave(button: Control) -> void:
 	if not button:
 		return
 	var wave_tween: Tween = _button_wave_tweens.get(button)
@@ -260,21 +315,26 @@ func _stop_button_wave(button: Button) -> void:
 	_button_wave_tweens.erase(button)
 
 
-func _reset_button_visual(button: Button) -> void:
+func _reset_button_visual(button: Control) -> void:
 	if not button:
 		return
 	_stop_button_wave(button)
+	if button.has_method("clear_visual_state"):
+		button.clear_visual_state()
 	if _tfx:
 		_tfx.stop_effect(button)
 	button.scale = _get_button_base_scale(button)
 	button.pivot_offset = button.size / 2.0
 
 
-func _set_button_disabled(button: Button, disabled: bool) -> void:
+func _set_button_disabled(button: Control, disabled: bool) -> void:
 	if not button:
 		return
 	_reset_button_visual(button)
-	button.disabled = disabled
+	if button.has_method("set_button_disabled"):
+		button.set_button_disabled(disabled)
+	else:
+		button.set("disabled", disabled)
 
 
 func _on_roll_ui_dice_rolled(dice_values: Array) -> void:
@@ -348,19 +408,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("next_turn"):
-		if next_turn_button and not next_turn_button.disabled and next_turn_button.visible:
+		if next_turn_button and not _is_button_disabled(next_turn_button) and next_turn_button.visible:
 			get_viewport().set_input_as_handled()
 			_input_cooldown = INPUT_COOLDOWN_DURATION
 			_on_next_turn_button_pressed()
 			return
 	if event.is_action_pressed("shop"):
-		if shop_button and not shop_button.disabled and shop_button.visible:
+		if shop_button and not _is_button_disabled(shop_button) and shop_button.visible:
 			get_viewport().set_input_as_handled()
 			_input_cooldown = INPUT_COOLDOWN_DURATION
 			_on_shop_button_pressed()
 			return
 	if event.is_action_pressed("next_round"):
-		if next_round_button and not next_round_button.disabled and next_round_button.visible:
+		if next_round_button and not _is_button_disabled(next_round_button) and next_round_button.visible:
 			get_viewport().set_input_as_handled()
 			_input_cooldown = INPUT_COOLDOWN_DURATION
 			_on_next_round_button_pressed()
@@ -370,7 +430,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _start_shop_button_pulse() -> void:
 	if _is_shop_pulsing or not shop_button:
 		return
-	if shop_button.disabled:
+	if _is_button_disabled(shop_button):
 		return
 	_is_shop_pulsing = true
 	_reset_button_visual(shop_button)
@@ -487,9 +547,9 @@ func animate_button_wave() -> void:
 		if not btn:
 			continue
 		_reset_button_visual(btn)
-		if btn.disabled or not btn.visible:
+		if _is_button_disabled(btn) or not btn.visible:
 			continue
-		var target_button: Button = btn
+		var target_button: Control = btn
 		var base_scale := _get_button_base_scale(target_button)
 		target_button.pivot_offset = target_button.size / 2.0
 		var tween = create_tween()
@@ -517,7 +577,7 @@ func _on_challenge_completed(challenge_id: String) -> void:
 			print("[GameButtonUI] Challenge ID match! Enabling Next Round button")
 			if next_round_button:
 				_set_button_disabled(next_round_button, false)
-				print("[GameButtonUI] Next Round button enabled: disabled=", next_round_button.disabled)
+				print("[GameButtonUI] Next Round button enabled: disabled=", _is_button_disabled(next_round_button))
 			_set_button_disabled(next_turn_button, true)
 			if shop_button:
 				_set_button_disabled(shop_button, false)

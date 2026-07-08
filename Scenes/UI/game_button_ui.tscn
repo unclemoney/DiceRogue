@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://lc4xqvsxdnpy"]
+[gd_scene load_steps=4 format=3 uid="uid://lc4xqvsxdnpy"]
 
 [ext_resource type="Theme" uid="uid://bs4e5kj8qt7yg" path="res://Resources/UI/action_button_theme.tres" id="1_theme"]
 [ext_resource type="Script" uid="uid://bs540x55u5587" path="res://Scripts/UI/game_button_ui.gd" id="1_v70y2"]
+[ext_resource type="Script" uid="uid://bnr8pa3y2h8aa" path="res://Scripts/UI/glass_action_button.gd" id="2_glass"]
 
 [node name="GameButtonUI" type="Control"]
 layout_mode = 3
@@ -32,26 +33,26 @@ size_flags_vertical = 3
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="NextRoundButton" type="Button" parent="HBoxContainer/RightButtonArea"]
+[node name="NextRoundButton" type="Control" parent="HBoxContainer/RightButtonArea"]
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "NEXT ROUND"
+script = ExtResource("2_glass")
 
-[node name="ShopButton" type="Button" parent="HBoxContainer/RightButtonArea"]
+[node name="ShopButton" type="Control" parent="HBoxContainer/RightButtonArea"]
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "SHOP"
+script = ExtResource("2_glass")
 
-[node name="NextTurnButton" type="Button" parent="HBoxContainer/RightButtonArea"]
+[node name="NextTurnButton" type="Control" parent="HBoxContainer/RightButtonArea"]
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-text = "NEXT TURN"
+script = ExtResource("2_glass")
 
 [connection signal="pressed" from="HBoxContainer/RightButtonArea/NextRoundButton" to="." method="_on_next_round_button_pressed"]
 [connection signal="pressed" from="HBoxContainer/RightButtonArea/ShopButton" to="." method="_on_shop_button_pressed"]

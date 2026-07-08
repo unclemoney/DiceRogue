@@ -16,6 +16,19 @@ var shader_material: ShaderMaterial
 var _tfx: Node = null
 var _is_disabled: bool = false
 var _font_color: Color = DEFAULT_FONT_COLOR
+var _button_text: String = ""
+
+var disabled: bool:
+	get:
+		return _is_disabled
+	set(value):
+		set_button_disabled(value)
+
+var text: String:
+	get:
+		return _button_text
+	set(value):
+		set_button_text(value)
 
 
 func _ready() -> void:
@@ -44,6 +57,7 @@ func configure(label_text: String, button_size: Vector2, palette: Dictionary = {
 
 
 func set_button_text(label_text: String) -> void:
+	_button_text = label_text
 	if title_label:
 		title_label.text = label_text
 
@@ -51,7 +65,7 @@ func set_button_text(label_text: String) -> void:
 func get_button_text() -> String:
 	if title_label:
 		return title_label.text
-	return ""
+	return _button_text
 
 
 func set_font_size(font_size: int) -> void:
@@ -88,8 +102,8 @@ func set_palette(palette: Dictionary) -> void:
 
 func set_button_disabled(is_disabled: bool) -> void:
 	_is_disabled = is_disabled
-	if overlay_button:
-		overlay_button.disabled = is_disabled
+	if is_disabled:
+		clear_visual_state()
 	_update_disabled_visuals()
 
 
@@ -104,6 +118,13 @@ func set_button_focus_mode(new_focus_mode: Control.FocusMode) -> void:
 
 func get_overlay_button() -> Button:
 	return overlay_button
+
+
+func clear_visual_state() -> void:
+	if shader_material:
+		shader_material.set_shader_parameter("hover_strength", 0.0)
+		shader_material.set_shader_parameter("pulse_strength", 0.0)
+		shader_material.set_shader_parameter("press_flash", 0.0)
 
 
 func _build_ui() -> void:
@@ -138,9 +159,11 @@ func _build_ui() -> void:
 
 	title_label = Label.new()
 	title_label.name = "TitleLabel"
+	title_label.text = _button_text
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_label.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	title_label.add_theme_color_override("font_color", DEFAULT_FONT_COLOR)
 	title_label.add_theme_color_override("font_outline_color", DEFAULT_FONT_OUTLINE)
 	title_label.add_theme_constant_override("outline_size", 1)
@@ -159,6 +182,7 @@ func _build_ui() -> void:
 	overlay_button.add_theme_stylebox_override("pressed", empty_style)
 	overlay_button.add_theme_stylebox_override("disabled", empty_style)
 	overlay_button.add_theme_stylebox_override("focus", empty_style)
+	overlay_button.disabled = _is_disabled
 	overlay_button.pressed.connect(_on_overlay_pressed)
 	overlay_button.mouse_entered.connect(_on_overlay_mouse_entered)
 	overlay_button.mouse_exited.connect(_on_overlay_mouse_exited)
@@ -187,6 +211,8 @@ func _update_aspect_ratio() -> void:
 
 
 func _update_disabled_visuals() -> void:
+	if overlay_button:
+		overlay_button.disabled = _is_disabled
 	if shader_material:
 		shader_material.set_shader_parameter("disabled_factor", 1.0 if _is_disabled else 0.0)
 	if title_label:

@@ -98,11 +98,11 @@ bonus_multipliers = {
 script = ExtResource("1_channel")
 channel_number = 1
 display_name = "Channel 01 - Tutorial"
+description = "Welcome to DiceRogue! Learn the basics with easy challenges and no debuffs."
 mall_zone_name = "Food Court"
 mall_directory_label = "Food Court"
 mall_tooltip_flavor = "The smell of fries and fluorescent trays marks the soft-entry lane."
 mall_section_id = "eatery"
-description = "Welcome to DiceRogue! Learn the basics with easy challenges and no debuffs."
 unlock_requirement = 0
 round_configs = Array[ExtResource("2_round")]([SubResource("round_1"), SubResource("round_2"), SubResource("round_3"), SubResource("round_4"), SubResource("round_5"), SubResource("round_6")])
 goal_score_multiplier = 1.0
@@ -130,3 +130,4 @@ background_shader_params = {
 "scanline_strength": 0.15,
 "warp_intensity": 0.3
 }
+ui_contrast_mode = "auto"
