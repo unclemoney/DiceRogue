@@ -3729,6 +3729,12 @@ func _on_shop_button_pressed() -> void:
 	
 	# If already processing round-end queue, ignore duplicate shop button press
 	if _is_processing_round_end:
+		# If the stats panel is currently waiting, treat the shop press as "continue".
+		if is_instance_valid(end_of_round_stats_panel) and end_of_round_stats_panel.visible:
+			print("[GameController] Shop button pressed while end-of-round stats panel is open - continuing to shop")
+			_on_stats_panel_continue()
+		else:
+			print("[GameController] Shop button press ignored - round-end queue is processing (is_processing_round_end=true)")
 		return
 	
 	# Check if challenge was completed - start round-end sequence (only once)

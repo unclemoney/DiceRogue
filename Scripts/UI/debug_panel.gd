@@ -387,6 +387,13 @@ func _create_debug_tabs() -> void:
 			{"text": "Show Round Panel", "method": "_debug_show_round_panel"},
 			{"text": "Wave Buttons", "method": "_debug_wave_buttons"},
 		],
+		"Shop": [
+			{"text": "Trace Shop State", "method": "_debug_trace_shop_state"},
+			{"text": "Simulate Shop Button", "method": "_debug_simulate_shop_button"},
+			{"text": "Force Open Shop", "method": "_debug_force_open_shop"},
+			{"text": "Clear Round-End Queue", "method": "_debug_clear_round_end_queue"},
+			{"text": "Close Modal Overlays", "method": "_debug_close_modal_overlays"},
+		],
 		"Main Menu": [
 			{"text": "Spawn Extra Dice", "method": "_debug_menu_spawn_dice"},
 			{"text": "Clear All Dice", "method": "_debug_menu_clear_dice"},
@@ -1715,6 +1722,120 @@ func _debug_skip_shop() -> void:
 		log_debug("Skipped to shop phase")
 	else:
 		log_debug("RoundManager not found or skip method missing")
+
+
+func _debug_trace_shop_state() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	var lines: Array[String] = []
+	lines.append("=== Shop Signal Chain State ===")
+	lines.append("GameController:")
+	lines.append("  _game_ended=%s" % str(game_controller._game_ended))
+	lines.append("  _is_processing_round_end=%s" % str(game_controller._is_processing_round_end))
+	lines.append("  _end_of_round_stats_shown=%s" % str(game_controller._end_of_round_stats_shown))
+	
+	if game_controller.round_manager:
+		lines.append("  round_manager.is_challenge_completed=%s" % str(game_controller.round_manager.is_challenge_completed))
+		lines.append("  round_manager.current_round=%d" % game_controller.round_manager.current_round)
+	else:
+		lines.append("  round_manager=null")
+	
+	var gbu = get_tree().get_first_node_in_group("game_button_ui")
+	if gbu:
+		lines.append("GameButtonUI: found")
+		if game_controller.has_method("_on_shop_button_pressed"):
+			lines.append("  shop_button_pressed connected to GameController=%s" % str(gbu.shop_button_pressed.is_connected(game_controller._on_shop_button_pressed)))
+	else:
+		lines.append("GameButtonUI: NOT FOUND")
+	
+	var shop_ui = game_controller.shop_ui
+	if shop_ui:
+		lines.append("ShopUI:")
+		lines.append("  visible=%s" % str(shop_ui.visible))
+		lines.append("  modulate.a=%.3f" % shop_ui.modulate.a)
+		lines.append("  scale=%s" % str(shop_ui.scale))
+		lines.append("  global_position=%s" % str(shop_ui.global_position))
+		lines.append("  size=%s" % str(shop_ui.size))
+		lines.append("  z_index=%d (relative)" % shop_ui.z_index)
+	else:
+		lines.append("ShopUI: NOT FOUND")
+	
+	if game_controller.channel_manager_ui:
+		lines.append("ChannelManagerUI.visible=%s" % str(game_controller.channel_manager_ui.visible))
+	
+	var rt_overlay = get_tree().root.find_child("RoundTransitionOverlay", true, false)
+	lines.append("RoundTransitionOverlay present=%s" % str(rt_overlay != null and is_instance_valid(rt_overlay)))
+	
+	var end_stats = game_controller.end_of_round_stats_panel
+	if end_stats:
+		lines.append("EndOfRoundStatsPanel.visible=%s" % str(end_stats.visible))
+	else:
+		lines.append("EndOfRoundStatsPanel=null")
+	
+	log_debug("\n".join(lines))
+
+
+func _debug_simulate_shop_button() -> void:
+	var gbu = get_tree().get_first_node_in_group("game_button_ui")
+	if not gbu:
+		log_debug("ERROR: GameButtonUI not found in group 'game_button_ui'")
+		return
+	if not gbu.has_method("_on_shop_button_pressed"):
+		log_debug("ERROR: GameButtonUI missing _on_shop_button_pressed method")
+		return
+	
+	log_debug("Simulating ShopButton press...")
+	gbu._on_shop_button_pressed()
+
+
+func _debug_force_open_shop() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	game_controller._is_processing_round_end = false
+	if game_controller.has_method("_open_shop_ui"):
+		game_controller._open_shop_ui()
+		log_debug("Forced _open_shop_ui() (cleared _is_processing_round_end)")
+	else:
+		log_debug("ERROR: GameController missing _open_shop_ui method")
+
+
+func _debug_clear_round_end_queue() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	
+	game_controller._is_processing_round_end = false
+	game_controller._end_of_round_stats_shown = false
+	game_controller._round_end_queue.clear()
+	log_debug("Cleared round-end queue flags (_is_processing_round_end=false, _end_of_round_stats_shown=false)")
+
+
+func _debug_close_modal_overlays() -> void:
+	var closed: Array[String] = []
+	
+	if game_controller and is_instance_valid(game_controller.channel_manager_ui) and game_controller.channel_manager_ui.visible:
+		game_controller.channel_manager_ui.hide_channel_selector()
+		closed.append("ChannelManagerUI")
+	
+	var rt_overlay = get_tree().root.find_child("RoundTransitionOverlay", true, false)
+	if rt_overlay and is_instance_valid(rt_overlay):
+		rt_overlay.queue_free()
+		closed.append("RoundTransitionOverlay")
+	
+	var end_stats = game_controller.end_of_round_stats_panel if game_controller else null
+	if end_stats and end_stats.visible:
+		end_stats.visible = false
+		closed.append("EndOfRoundStatsPanel")
+	
+	if closed.is_empty():
+		log_debug("No known modal overlays were open")
+	else:
+		log_debug("Closed modal overlays: " + ", ".join(closed))
+
 
 func _debug_show_rng_seed() -> void:
 	var seed_val = GameRNG.get_initial_seed()
