@@ -81,13 +81,13 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	var margin := _create_margin_container()
+	var margin : MarginContainer = _create_margin_container()
 	add_child(margin)
 
-	var main_vbox := _create_vbox("MainVBox", 1.0)
+	var main_vbox : VBoxContainer = _create_vbox("MainVBox", 1.0)
 	margin.add_child(main_vbox)
 
-	var upper := _create_hbox("UpperSection", UPPER_STRETCH)
+	var upper : HBoxContainer = _create_hbox("UpperSection", UPPER_STRETCH)
 	main_vbox.add_child(upper)
 
 	turn_info_container = _create_panel("TurnInfoContainer", TURN_INFO_RATIO)
@@ -125,13 +125,15 @@ func _build_ui() -> void:
 	var left_col : VBoxContainer = _create_vbox("LeftColumn", 1.0)
 	middle.add_child(left_col)
 
-	challenge_container = _create_panel("ChallengeContainer", CHALLENGE_RATIO)
-	left_col.add_child(challenge_container)
-	var challenge_ui : Node = preload("res://Scenes/UI/challenge_ui.tscn").instantiate()
-	challenge_ui.name = "ChallengeUI"
-	challenge_ui.clip_contents = true
-	_add_glowing_title(challenge_container, "Challenges", "res://Resources/Font/BALLOON1.ttf", challenge_ui)
-	_add_container_hover_title(challenge_container, "Challenges")
+	#Chore Meter UI
+	chore_meter_container = _create_panel("ChoreMeterContainer", CHORE_METER_RATIO)
+	left_col.add_child(chore_meter_container)
+	var chore_ui := preload("res://Scenes/UI/chore_ui.tscn").instantiate()
+	chore_ui.name = "ChoreUI"
+	chore_ui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	chore_ui.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_add_glowing_title(chore_meter_container, "Chore Meter", "res://Resources/Font/BALLOON1.ttf", chore_ui)
+	_add_container_hover_title(chore_meter_container, "Chore Meter")
 
 	debuff_container = _create_panel("DebuffContainer", DEBUFF_RATIO)
 	left_col.add_child(debuff_container)
@@ -191,16 +193,16 @@ func _build_ui() -> void:
 	dice_area_container.add_child(dice_hand)
 	#_add_container_hover_title(dice_area_container, "Dice Area")
 
-	chore_meter_container = _create_panel("ChoreMeterContainer", CHORE_METER_RATIO)
-	center_col.add_child(chore_meter_container)
-	var chore_ui := preload("res://Scenes/UI/chore_ui.tscn").instantiate()
-	chore_ui.name = "ChoreUI"
-	chore_ui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	chore_ui.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_add_glowing_title(chore_meter_container, "Chore Meter", "res://Resources/Font/BALLOON1.ttf", chore_ui)
-	_add_container_hover_title(chore_meter_container, "Chore Meter")
+	#Challenge UI
+	challenge_container = _create_panel("ChallengeContainer", CHALLENGE_RATIO)
+	center_col.add_child(challenge_container)
+	var challenge_ui : Node = preload("res://Scenes/UI/challenge_ui.tscn").instantiate()
+	challenge_ui.name = "ChallengeUI"
+	challenge_ui.clip_contents = true
+	_add_glowing_title(challenge_container, "Challenges", "res://Resources/Font/BALLOON1.ttf", challenge_ui)
+	_add_container_hover_title(challenge_container, "Challenges")
 
-	# Prominent roll button below chore meter
+	# Prominent roll button below challenges
 	var roll_button_container := _create_panel("RollButtonContainer", CENTER_ROLL_RATIO)
 	center_col.add_child(roll_button_container)
 	var roll_button_ui := preload("res://Scenes/UI/roll_button_ui.tscn").instantiate()
