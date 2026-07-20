@@ -12,7 +12,7 @@ class_name GameUI
 # Container references — populated during _build_ui()
 var turn_info_container: PanelContainer
 
-@onready var _tfx := get_node("/root/TweenFXHelper")
+@onready var _tfx : Node = get_node("/root/TweenFXHelper")
 var power_up_container: PanelContainer
 var money_container: PanelContainer
 var challenge_container: PanelContainer
@@ -92,7 +92,7 @@ func _build_ui() -> void:
 
 	turn_info_container = _create_panel("TurnInfoContainer", TURN_INFO_RATIO)
 	upper.add_child(turn_info_container)
-	var tracker_ui := preload("res://Scenes/UI/vcr_turn_tracker_ui.tscn").instantiate()
+	var tracker_ui : Node = preload("res://Scenes/UI/vcr_turn_tracker_ui.tscn").instantiate()
 	tracker_ui.name = "VCRTurnTrackerUI"
 	tracker_ui.clip_contents = true
 	tracker_ui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -102,7 +102,7 @@ func _build_ui() -> void:
 
 	power_up_container = _create_panel("PowerUpContainer", POWER_UP_RATIO)
 	upper.add_child(power_up_container)
-	var power_up_ui := preload("res://Scenes/UI/power_up_ui.tscn").instantiate()
+	var power_up_ui : Node = preload("res://Scenes/UI/power_up_ui.tscn").instantiate()
 	power_up_ui.name = "PowerUpUI"
 	power_up_ui.clip_contents = true
 	_add_glowing_title(power_up_container, "PowerUps", "res://Resources/Font/BALLOON1.ttf", power_up_ui)
@@ -118,16 +118,16 @@ func _build_ui() -> void:
 	_add_glowing_title(money_container, "MONEY", "res://Resources/Font/BALLOON1.ttf", money_ui, 14, Color(0.137255, 0.411765, 0.415686, 1.0))
 	_add_container_hover_title(money_container, "MONEY")
 
-	var middle := _create_hbox("MiddleSection", MIDDLE_STRETCH)
+	var middle : HBoxContainer = _create_hbox("MiddleSection", MIDDLE_STRETCH)
 	main_vbox.add_child(middle)
 
 	# ── Left column ──
-	var left_col := _create_vbox("LeftColumn", 1.0)
+	var left_col : VBoxContainer = _create_vbox("LeftColumn", 1.0)
 	middle.add_child(left_col)
 
 	challenge_container = _create_panel("ChallengeContainer", CHALLENGE_RATIO)
 	left_col.add_child(challenge_container)
-	var challenge_ui := preload("res://Scenes/UI/challenge_ui.tscn").instantiate()
+	var challenge_ui : Node = preload("res://Scenes/UI/challenge_ui.tscn").instantiate()
 	challenge_ui.name = "ChallengeUI"
 	challenge_ui.clip_contents = true
 	_add_glowing_title(challenge_container, "Challenges", "res://Resources/Font/BALLOON1.ttf", challenge_ui)
@@ -135,7 +135,7 @@ func _build_ui() -> void:
 
 	debuff_container = _create_panel("DebuffContainer", DEBUFF_RATIO)
 	left_col.add_child(debuff_container)
-	var debuff_ui := preload("res://Scenes/UI/debuff_ui.tscn").instantiate()
+	var debuff_ui : Node = preload("res://Scenes/UI/debuff_ui.tscn").instantiate()
 	debuff_ui.name = "DebuffUI"
 	debuff_ui.clip_contents = false
 	_add_glowing_title(debuff_container, "Debuffs", "res://Resources/Font/BALLOON1.ttf", debuff_ui)
@@ -143,7 +143,7 @@ func _build_ui() -> void:
 
 	consumable_container = _create_panel("ConsumableContainer", CONSUMABLE_RATIO)
 	left_col.add_child(consumable_container)
-	var consumable_ui := preload("res://Scenes/UI/consumable_ui.tscn").instantiate()
+	var consumable_ui : Node = preload("res://Scenes/UI/consumable_ui.tscn").instantiate()
 	consumable_ui.name = "ConsumableUI"
 	consumable_ui.clip_contents = true
 	_add_glowing_title(consumable_container, "Consumables", "res://Resources/Font/BALLOON1.ttf", consumable_ui)
@@ -151,7 +151,7 @@ func _build_ui() -> void:
 
 	console_container = _create_panel("ConsoleContainer", CONSOLE_RATIO)
 	left_col.add_child(console_container)
-	var console_ui := preload("res://Scenes/UI/gaming_console_ui.tscn").instantiate()
+	var console_ui : Node = preload("res://Scenes/UI/gaming_console_ui.tscn").instantiate()
 	console_ui.name = "GamingConsoleUI"
 	console_ui.clip_contents = true
 	_add_glowing_title(console_container, "Consoles", "res://Resources/Font/BALLOON1.ttf", console_ui)
@@ -160,7 +160,7 @@ func _build_ui() -> void:
 	# Action buttons moved from bottom panel to left column
 	var game_button_container := _create_panel("GameButtonContainer", LEFT_INFO_RATIO)
 	left_col.add_child(game_button_container)
-	var game_buttons := preload("res://Scenes/UI/game_button_ui.tscn").instantiate()
+	var game_buttons : Node = preload("res://Scenes/UI/game_button_ui.tscn").instantiate()
 	game_buttons.name = "GameButtonUI"
 	game_buttons.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	game_buttons.size_flags_vertical = Control.SIZE_EXPAND_FILL

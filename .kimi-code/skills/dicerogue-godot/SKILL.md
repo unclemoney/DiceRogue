@@ -1,3 +1,8 @@
+---
+name: dicerogue-godot
+description: DiceRogue project conventions, Godot 4.4 GDScript standards, and architectural patterns
+---
+
 # Agent Instructions — Guhtzee (DiceRogue)
 
 This project is a pixel-art roguelite dice roller built in Godot 4.4, inspired by Yahtzee, Balatro, and Dicey Dungeons. Vanilla Yahtzee rules are modified with Power Ups, Consumables, Mods, Colored Dice, Challenges, and a progression system. Single-player only.

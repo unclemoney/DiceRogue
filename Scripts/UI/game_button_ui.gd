@@ -68,6 +68,7 @@ var turn_tracker
 var round_manager: RoundManager
 var scorecard: Scorecard
 var is_shop_open: bool = true
+var _shop_ui_cache: Node = null
 
 var _is_shop_pulsing: bool = false
 var _button_wave_tweens: Dictionary = {}
@@ -444,10 +445,37 @@ func _stop_shop_button_pulse() -> void:
 	_reset_button_visual(shop_button)
 
 
+## _get_shop_ui() -> Node
+##
+## Resolves the ShopUI node. GameButtonUI is nested inside GameUI containers
+## in the live scene, so "../ShopUI" only resolves in test scenes where they
+## are siblings. Falls back to a scene-wide search by name. Result is cached.
+func _get_shop_ui() -> Node:
+	if _shop_ui_cache and is_instance_valid(_shop_ui_cache):
+		return _shop_ui_cache
+	var node = get_node_or_null("../ShopUI")
+	if not node and get_tree() and get_tree().current_scene:
+		node = get_tree().current_scene.find_child("ShopUI", true, false)
+	if node:
+		_shop_ui_cache = node
+	return node
+
+
 func _on_next_turn_button_pressed() -> void:
 	if _button_action_cooldown > 0.0:
 		return
 	_button_action_cooldown = BUTTON_ACTION_COOLDOWN
+	# Close the shop if it is open so it doesn't persist into the new turn
+	var shop_ui_node = _get_shop_ui()
+	if shop_ui_node and shop_ui_node.visible:
+		shop_ui_node.hide()
+		is_shop_open = false
+		print("[GameButtonUI] Closed open shop on next turn press")
+		var crt_manager = get_node_or_null("../CRTTV/CRTManager")
+		if not crt_manager and get_tree() and get_tree().current_scene:
+			crt_manager = get_tree().current_scene.find_child("CRTManager", true, false)
+		if crt_manager and crt_manager.has_method("enable_crt"):
+			crt_manager.enable_crt()
 	var audio_mgr = get_node_or_null("/root/AudioManager")
 	if audio_mgr and audio_mgr.has_method("play_next_turn_sound"):
 		audio_mgr.play_next_turn_sound()
@@ -590,14 +618,15 @@ func _on_next_round_button_pressed() -> void:
 	if _button_action_cooldown > 0.0:
 		return
 	_button_action_cooldown = BUTTON_ACTION_COOLDOWN
-	if next_round_button:
-		_set_button_disabled(next_round_button, true)
-	print("[GameButtonUI] Next Round button pressed")
-	var shop_ui_node = get_node_or_null("../ShopUI")
+	# Close the shop FIRST so it doesn't persist into the round-start flow
+	var shop_ui_node = _get_shop_ui()
 	if shop_ui_node and shop_ui_node.visible:
 		shop_ui_node.hide()
 		is_shop_open = false
 		print("[GameButtonUI] Closed open shop on next round press")
+	if next_round_button:
+		_set_button_disabled(next_round_button, true)
+	print("[GameButtonUI] Next Round button pressed")
 	var tutorial_manager = get_node_or_null("/root/TutorialManager")
 	if tutorial_manager and tutorial_manager.is_tutorial_active():
 		tutorial_manager.action_completed("click_next_round")
