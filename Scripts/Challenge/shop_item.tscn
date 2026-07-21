@@ -1,8 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://dvae858wi8bfg"]
+[gd_scene load_steps=4 format=3 uid="uid://c8e502cveltmu"]
 
-[ext_resource type="Theme" uid="uid://ds7i8mk64qdbp" path="res://Resources/UI/shop_item_theme.tres" id="1_hu0y1"]
-[ext_resource type="Script" uid="uid://tcwgkjbbqnub" path="res://Scripts/Shop/shop_item.gd" id="2_iw2pt"]
-[ext_resource type="Script" uid="uid://bnr8pa3y2h8aa" path="res://Scripts/UI/glass_action_button.gd" id="3_glassbtn"]
+[ext_resource type="Script" uid="uid://tcwgkjbbqnub" path="res://Scripts/Shop/shop_item.gd" id="1_cwoby"]
+[ext_resource type="Theme" uid="uid://ds7i8mk64qdbp" path="res://Resources/UI/shop_item_theme.tres" id="2_2mhp0"]
+[ext_resource type="Script" uid="uid://bnr8pa3y2h8aa" path="res://Scripts/UI/glass_action_button.gd" id="3_wmqja"]
 
 [node name="ShopItem" type="Control"]
 custom_minimum_size = Vector2(213, 275)
@@ -11,7 +11,7 @@ anchors_preset = 0
 offset_right = 213.0
 offset_bottom = 275.0
 mouse_filter = 1
-script = ExtResource("2_iw2pt")
+script = ExtResource("1_cwoby")
 
 [node name="CardPanel" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -21,7 +21,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme = ExtResource("1_hu0y1")
+theme = ExtResource("2_2mhp0")
 
 [node name="MarginContainer" type="MarginContainer" parent="CardPanel"]
 layout_mode = 2
@@ -68,7 +68,7 @@ mouse_filter = 2
 custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
 size_flags_horizontal = 3
-script = ExtResource("3_glassbtn")
+script = ExtResource("3_wmqja")
 
 [node name="BadgeLayer" type="Control" parent="."]
 layout_mode = 1
@@ -92,7 +92,7 @@ theme_type_variation = &"ShopRarityBadge"
 
 [node name="RarityLabel" type="Label" parent="BadgeLayer/RarityBadge"]
 layout_mode = 2
-theme = ExtResource("1_hu0y1")
+theme = ExtResource("2_2mhp0")
 theme_type_variation = &"ShopBadgeLabel"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -109,7 +109,7 @@ theme_type_variation = &"ShopPriceBadge"
 
 [node name="PriceLabel" type="Label" parent="BadgeLayer/PriceBadge"]
 layout_mode = 2
-theme = ExtResource("1_hu0y1")
+theme = ExtResource("2_2mhp0")
 theme_type_variation = &"ShopBadgeLabel"
 horizontal_alignment = 1
 vertical_alignment = 1

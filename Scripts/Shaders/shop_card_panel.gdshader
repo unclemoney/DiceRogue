@@ -4,9 +4,12 @@ shader_type canvas_item;
 // deliberately quiet so card content stays legible.
 // Created for DiceRogue (Guhtzee)
 
-uniform float vignette_strength : hint_range(0.0, 1.0) = 0.35;
+uniform float vignette_strength : hint_range(0.0, 1.0) = 0.05;
 uniform float sheen_strength : hint_range(0.0, 1.0) = 0.12;
 uniform float grain_strength : hint_range(0.0, 1.0) = 0.5;
+uniform float vertical_start : hint_range(0.0, 1.0) = 0.2;
+uniform float vertical_feather : hint_range(0.0, 0.25) = 0.05;
+uniform float horizontal_feather : hint_range(0.0, 0.25) = 0.025;
 uniform vec2 rect_size = vec2(213.0, 275.0);
 uniform float corner_radius = 10.0;
 
@@ -45,6 +48,14 @@ void fragment() {
 	vec3 col = grad + vec3(grain) + vec3(1.0, 0.95, 0.8) * sheen * sheen_strength;
 	col = mix(col, vec3(0.01, 0.01, 0.03), vig);
 	float alpha = clamp(grad_alpha + vig * 0.5 + sheen * sheen_strength * 0.5, 0.0, 0.6);
+
+	// Fade in below the vertical_start point so the top strip stays clean.
+	float vertical_mask = smoothstep(vertical_start, vertical_start + vertical_feather, UV.y);
+	alpha *= vertical_mask;
+
+	// Feather the left and right edges by the horizontal_feather amount.
+	float horizontal_mask = smoothstep(0.0, horizontal_feather, UV.x) * smoothstep(0.0, horizontal_feather, 1.0 - UV.x);
+	alpha *= horizontal_mask;
 
 	COLOR = vec4(col, alpha * mask);
 }

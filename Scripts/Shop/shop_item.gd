@@ -643,6 +643,7 @@ func _apply_shop_item_styling() -> void:
 		(_price_fx_rect.material as ShaderMaterial).set_shader_parameter("corner_radius", BADGE_CORNER_RADIUS)
 	if _card_fx_rect and _card_fx_rect.material:
 		(_card_fx_rect.material as ShaderMaterial).set_shader_parameter("corner_radius", CARD_CORNER_RADIUS)
+		(_card_fx_rect.material as ShaderMaterial).set_shader_parameter("vertical_start", 0.2)
 	_update_fx_rect_sizes()
 	print("[ShopItem] Theme styling applied via shop_item_theme.tres")
 
