@@ -7,7 +7,7 @@ signal purchased(item_id: String, item_type: String)
 @onready var icon: TextureRect = $CardPanel/MarginContainer/ContentVBox/Icon
 @onready var title_plate: PanelContainer = $CardPanel/MarginContainer/ContentVBox/TitlePlate
 @onready var name_label: Label = $CardPanel/MarginContainer/ContentVBox/TitlePlate/NameLabel
-@onready var buy_button: Button = $CardPanel/MarginContainer/ContentVBox/BuyButton
+@onready var buy_button: GlassActionButton = $CardPanel/MarginContainer/ContentVBox/BuyButton
 @onready var rarity_badge: PanelContainer = $BadgeLayer/RarityBadge
 @onready var rarity_label: Label = $BadgeLayer/RarityBadge/RarityLabel
 @onready var price_badge: PanelContainer = $BadgeLayer/PriceBadge
@@ -17,8 +17,24 @@ signal purchased(item_id: String, item_type: String)
 # Dice texture and shader for colored dice shop cards
 const DICE_TEXTURE_PATH := "res://Resources/Art/Dice/dieWhite1.png"
 const DICE_SHADER_PATH := "res://Scripts/Shaders/dice_combined_effects.gdshader"
+const RARITY_BADGE_SHADER_PATH := "res://Scripts/Shaders/rarity_badge.gdshader"
+const PRICE_TAG_SHADER_PATH := "res://Scripts/Shaders/shop_price_tag.gdshader"
+const CARD_PANEL_SHADER_PATH := "res://Scripts/Shaders/shop_card_panel.gdshader"
 const SHOP_ITEM_THEME = preload("res://Resources/UI/shop_item_theme.tres")
 const VCR_FONT = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+const BADGE_CORNER_RADIUS := 12.0
+const CARD_CORNER_RADIUS := 10.0
+# Shop-exclusive amber/gold palette for the glass Buy button.
+const SHOP_BUY_BUTTON_PALETTE := {
+	"base_color": Color(0.321569, 0.203922, 0.070588, 0.92),
+	"mid_color": Color(0.478431, 0.32549, 0.117647, 0.96),
+	"accent_color": Color(0.964706, 0.760784, 0.360784, 1.0),
+	"glow_color": Color(1.0, 0.898039, 0.6, 1.0),
+	"rim_color": Color(1.0, 0.956863, 0.823529, 1.0),
+	"font_color": Color(1.0, 0.968627, 0.878431, 1.0),
+	"font_outline_color": Color(0.2, 0.12, 0.03, 0.0),
+	"outline_size": 0
+}
 const HANG_PIVOT_Y := 32.0
 const TITLE_FONT_SIZE_DEFAULT := 24
 const TITLE_FONT_SIZE_MIN := 16
@@ -42,6 +58,10 @@ var item_data: Resource  # Store the data resource for tooltip access
 var color_type: DiceColor.Type = DiceColor.Type.NONE  # Track color type for colored dice
 var _base_title_text: String = ""
 var _rng := RandomNumberGenerator.new()
+# Shader-backed overlay rects (created in _apply_shop_item_styling).
+var _card_fx_rect: ColorRect
+var _rarity_fx_rect: ColorRect
+var _price_fx_rect: ColorRect
 
 # Purchase/removal guards to prevent race conditions between buy click,
 # hover tweens, and the removal animation started by ShopUI.
@@ -85,12 +105,11 @@ func _ready() -> void:
 	#theme = load("res://Resources/UI/action_button_theme_no_panel.tres")
 	#custom_minimum_size = Vector2(180, 180)
 
-	# Explicitly connect the button signal
+	# Explicitly connect the button signal; GlassActionButton handles its own
+	# hover/press juice internally, so no TweenFX hookups are needed here.
 	if buy_button:
 		buy_button.pressed.connect(_on_buy_button_pressed)
-		buy_button.mouse_entered.connect(func(): _tfx.button_hover(buy_button))
-		buy_button.mouse_exited.connect(func(): _tfx.button_unhover(buy_button))
-		buy_button.pressed.connect(func(): _tfx.button_press(buy_button))
+		buy_button.configure("BUY", Vector2(0, 34), SHOP_BUY_BUTTON_PALETTE, 16, VCR_FONT)
 		print("[ShopItem] Connected buy button signal")
 
 	# Card hover juice
@@ -606,13 +625,62 @@ func _propagate_mouse_filter(node: Control, filter: Control.MouseFilter) -> void
 
 
 ## _apply_shop_item_styling()
-## Background and border are handled by the theme; no override needed.
+## Background and border are handled by the theme; shader overlays add depth.
 func _apply_shop_item_styling() -> void:
 	card_panel.theme = SHOP_ITEM_THEME
 	title_plate.theme = SHOP_ITEM_THEME
 	rarity_badge.theme = SHOP_ITEM_THEME
 	price_badge.theme = SHOP_ITEM_THEME
+	if not _card_fx_rect:
+		_card_fx_rect = _create_fx_rect(card_panel, CARD_PANEL_SHADER_PATH, "CardFxRect")
+	if not _rarity_fx_rect:
+		_rarity_fx_rect = _create_fx_rect(rarity_badge, RARITY_BADGE_SHADER_PATH, "RarityFxRect")
+	if not _price_fx_rect:
+		_price_fx_rect = _create_fx_rect(price_badge, PRICE_TAG_SHADER_PATH, "PriceFxRect")
+	if _rarity_fx_rect and _rarity_fx_rect.material:
+		(_rarity_fx_rect.material as ShaderMaterial).set_shader_parameter("corner_radius", BADGE_CORNER_RADIUS)
+	if _price_fx_rect and _price_fx_rect.material:
+		(_price_fx_rect.material as ShaderMaterial).set_shader_parameter("corner_radius", BADGE_CORNER_RADIUS)
+	if _card_fx_rect and _card_fx_rect.material:
+		(_card_fx_rect.material as ShaderMaterial).set_shader_parameter("corner_radius", CARD_CORNER_RADIUS)
+	_update_fx_rect_sizes()
 	print("[ShopItem] Theme styling applied via shop_item_theme.tres")
+
+
+## _create_fx_rect(parent, shader_path, rect_name) -> ColorRect
+## Builds a full-rect ColorRect overlay with the given shader and inserts it
+## behind the parent's other children so labels/content draw on top.
+func _create_fx_rect(parent: Control, shader_path: String, rect_name: String) -> ColorRect:
+	var fx_rect := ColorRect.new()
+	fx_rect.name = rect_name
+	fx_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fx_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fx_rect.color = Color.WHITE
+	var shader := load(shader_path) as Shader
+	if shader:
+		var fx_material := ShaderMaterial.new()
+		fx_material.shader = shader
+		fx_rect.material = fx_material
+	else:
+		push_error("[ShopItem] Failed to load shader: " + shader_path)
+	parent.add_child(fx_rect)
+	parent.move_child(fx_rect, 0)
+	return fx_rect
+
+
+## _update_fx_rect_sizes()
+## Pushes current control sizes into the shader overlays so their rounded
+## masks and gradients track layout. Called on resize and badge layout.
+func _update_fx_rect_sizes() -> void:
+	if _card_fx_rect and _card_fx_rect.material and card_panel:
+		var card_size := card_panel.size
+		if card_size.x <= 0.0 or card_size.y <= 0.0:
+			card_size = custom_minimum_size
+		(_card_fx_rect.material as ShaderMaterial).set_shader_parameter("rect_size", card_size)
+	if _rarity_fx_rect and _rarity_fx_rect.material and rarity_badge:
+		(_rarity_fx_rect.material as ShaderMaterial).set_shader_parameter("rect_size", rarity_badge.size)
+	if _price_fx_rect and _price_fx_rect.material and price_badge:
+		(_price_fx_rect.material as ShaderMaterial).set_shader_parameter("rect_size", price_badge.size)
 
 ## _apply_shop_item_fonts()
 ## Applies VCR font to shop item labels and button
@@ -626,15 +694,6 @@ func _apply_shop_item_fonts() -> void:
 		price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if rarity_label:
 		rarity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	if buy_button:
-		_apply_shop_button_styling(buy_button)
-
-## _apply_shop_button_styling(button)
-## Applies themed styling to shop buttons
-func _apply_shop_button_styling(button: Button) -> void:
-	button.theme = SHOP_ITEM_THEME
-	button.custom_minimum_size = Vector2(0, 34)
-
 
 ## _setup_colored_dice_icon()
 ##
@@ -759,6 +818,7 @@ func _get_colored_dice_tooltip_text() -> String:
 func _on_shop_item_resized() -> void:
 	_update_hang_pivot()
 	_layout_badges()
+	_update_fx_rect_sizes()
 	call_deferred("_fit_title")
 
 
@@ -853,12 +913,31 @@ func _apply_rarity_badge_palette(rarity_key: String) -> void:
 		var badge_style := rarity_badge.get_theme_stylebox("panel") as StyleBoxFlat
 		if badge_style:
 			var override_style := badge_style.duplicate() as StyleBoxFlat
-			override_style.bg_color = bg_color
-			override_style.border_color = border_color
+			# Fill and border hidden; the rarity shader overlay carries the visuals.
+			override_style.bg_color = Color(bg_color, 0.0)
+			override_style.border_color = Color(border_color, 0.0)
 			rarity_badge.add_theme_stylebox_override("panel", override_style)
 	if rarity_label:
 		rarity_label.add_theme_color_override("font_color", text_color)
 		rarity_label.add_theme_font_size_override("font_size", 11)
+	# Push rarity colors into the juice shader; rarer tiers get more energy.
+	if _rarity_fx_rect and _rarity_fx_rect.material:
+		var fx_material := _rarity_fx_rect.material as ShaderMaterial
+		fx_material.set_shader_parameter("rarity_color", border_color)
+		fx_material.set_shader_parameter("glow_color", text_color)
+		match rarity_key:
+			"legendary":
+				fx_material.set_shader_parameter("pulse_strength", 0.65)
+				fx_material.set_shader_parameter("sheen_speed", 1.4)
+			"epic":
+				fx_material.set_shader_parameter("pulse_strength", 0.5)
+				fx_material.set_shader_parameter("sheen_speed", 1.1)
+			"rare":
+				fx_material.set_shader_parameter("pulse_strength", 0.4)
+				fx_material.set_shader_parameter("sheen_speed", 1.0)
+			_:
+				fx_material.set_shader_parameter("pulse_strength", 0.3)
+				fx_material.set_shader_parameter("sheen_speed", 0.8)
 
 
 func _update_price_badge_from_price(current_price: int) -> void:
@@ -872,24 +951,40 @@ func _set_price_badge_text(text: String, palette: String) -> void:
 	if not price_badge or not price_label:
 		return
 	price_label.text = text
-	var bg_color := Color(0.164706, 0.321569, 0.262745, 0.96)
-	var border_color := Color(0.827451, 0.941176, 0.647059, 0.95)
-	var text_color := Color(0.984314, 0.952941, 0.878431, 1.0)
+	# Shop-exclusive amber/gold tag for normal prices; mint for FREE, red for MAX.
+	var bg_color := Color(0.38, 0.26, 0.09, 0.96)
+	var top_color := Color(0.58, 0.42, 0.15, 0.96)
+	var accent_color := Color(1.0, 0.85, 0.45, 1.0)
+	var border_color := Color(0.98, 0.8, 0.42, 0.95)
+	var text_color := Color(1.0, 0.956863, 0.823529, 1.0)
 	match palette:
 		"free":
-			bg_color = Color(0.329412, 0.25098, 0.117647, 0.96)
-			border_color = Color(0.988235, 0.882353, 0.509804, 1.0)
+			bg_color = Color(0.16, 0.38, 0.3, 0.96)
+			top_color = Color(0.24, 0.52, 0.42, 0.96)
+			accent_color = Color(0.75, 1.0, 0.85, 1.0)
+			border_color = Color(0.827451, 0.941176, 0.647059, 0.95)
+			text_color = Color(0.94902, 1.0, 0.929412, 1.0)
 		"max":
-			bg_color = Color(0.403922, 0.176471, 0.184314, 0.96)
+			bg_color = Color(0.42, 0.16, 0.16, 0.96)
+			top_color = Color(0.58, 0.24, 0.24, 0.96)
+			accent_color = Color(1.0, 0.65, 0.6, 1.0)
 			border_color = Color(1.0, 0.643137, 0.643137, 0.98)
 			text_color = Color(1.0, 0.909804, 0.909804, 1.0)
 	var badge_style := price_badge.get_theme_stylebox("panel") as StyleBoxFlat
 	if badge_style:
 		var override_style := badge_style.duplicate() as StyleBoxFlat
-		override_style.bg_color = bg_color
-		override_style.border_color = border_color
+		# Fill and border hidden; the price tag shader overlay carries the visuals.
+		override_style.bg_color = Color(bg_color, 0.0)
+		override_style.border_color = Color(border_color, 0.0)
 		price_badge.add_theme_stylebox_override("panel", override_style)
 	price_label.add_theme_color_override("font_color", text_color)
+	price_label.add_theme_color_override("font_outline_color", Color(0.15, 0.1, 0.03, 0.8))
+	price_label.add_theme_constant_override("outline_size", 2)
+	if _price_fx_rect and _price_fx_rect.material:
+		var fx_material := _price_fx_rect.material as ShaderMaterial
+		fx_material.set_shader_parameter("base_color", bg_color)
+		fx_material.set_shader_parameter("top_color", top_color)
+		fx_material.set_shader_parameter("accent_color", accent_color)
 	_layout_badges()
 
 
@@ -912,6 +1007,7 @@ func _layout_badges() -> void:
 		price_badge.custom_minimum_size = Vector2(price_width, BADGE_HEIGHT)
 		price_badge.position = Vector2(card_width - price_width - BADGE_SIDE_MARGIN, BADGE_TOP)
 		price_badge.size = price_badge.custom_minimum_size
+	_update_fx_rect_sizes()
 
 
 func _get_current_tooltip_text() -> String:
@@ -919,7 +1015,21 @@ func _get_current_tooltip_text() -> String:
 		return ""
 	if item_type == "colored_dice":
 		return _get_colored_dice_tooltip_text()
+	if item_type == "power_up" and item_data is PowerUpData:
+		return _get_power_up_tooltip_text()
 	return item_data.description
+
+
+## _get_power_up_tooltip_text()
+## Builds the PowerUp tooltip: description, then a footer with the
+## Mom approval rating label and the rarity, in that order.
+func _get_power_up_tooltip_text() -> String:
+	var tooltip_lines: Array = []
+	tooltip_lines.append(item_data.description)
+	tooltip_lines.append("")
+	tooltip_lines.append("Mom Approval: " + StickerBadge.get_sticker_label(item_data.rating))
+	tooltip_lines.append("Rarity: " + item_data.rarity.capitalize())
+	return "\n".join(tooltip_lines)
 
 
 func _play_hang_swing() -> void:

@@ -391,6 +391,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Trace Shop State", "method": "_debug_trace_shop_state"},
 			{"text": "Simulate Shop Button", "method": "_debug_simulate_shop_button"},
 			{"text": "Force Open Shop", "method": "_debug_force_open_shop"},
+			{"text": "Shop Item Visual Test", "method": "_debug_shop_item_visual_test"},
 			{"text": "Clear Round-End Queue", "method": "_debug_clear_round_end_queue"},
 			{"text": "Close Modal Overlays", "method": "_debug_close_modal_overlays"},
 		],
@@ -1801,6 +1802,14 @@ func _debug_force_open_shop() -> void:
 		log_debug("Forced _open_shop_ui() (cleared _is_processing_round_end)")
 	else:
 		log_debug("ERROR: GameController missing _open_shop_ui method")
+
+
+## _debug_shop_item_visual_test()
+## Loads the ShopItem visual test scene (glass BUY button, rarity badge
+## shader, price tag shader, card depth shader, tooltip footer).
+func _debug_shop_item_visual_test() -> void:
+	log_debug("Loading ShopItemVisualTest scene...")
+	get_tree().change_scene_to_file("res://Tests/ShopItemVisualTest.tscn")
 
 
 func _debug_clear_round_end_queue() -> void:

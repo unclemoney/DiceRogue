@@ -418,14 +418,14 @@ func _create_vbox(node_name: String, stretch: float) -> VBoxContainer:
 
 
 func _create_panel(node_name: String, stretch: float) -> PanelContainer:
-	var panel := PanelContainer.new()
+	var panel : PanelContainer = PanelContainer.new()
 	panel.name = node_name
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.size_flags_stretch_ratio = stretch
 	panel.mouse_filter = Control.MOUSE_FILTER_PASS
 
-	var style := StyleBoxFlat.new()
+	var style : StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = PANEL_BG
 	style.border_color = PANEL_BORDER
 	style.set_border_width_all(PANEL_BORDER_WIDTH)
@@ -439,14 +439,14 @@ func _create_panel(node_name: String, stretch: float) -> PanelContainer:
 
 
 func _add_glowing_title(parent: PanelContainer, title_text: String, font: String = "res://Resources/Font/BALLOON1.ttf", content: Control = null, text_font_size: int = TITLE_FONT_SIZE, title_color: Color = Color(0.8, 0.4, 1.0, 1.0)) -> void:
-	var vbox := VBoxContainer.new()
+	var vbox : VBoxContainer = VBoxContainer.new()
 	vbox.name = "ContentVBox"
 	vbox.alignment = BoxContainer.ALIGNMENT_BEGIN
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	parent.add_child(vbox)
 
-	var glow_title := preload("res://Scenes/UI/GlowingTitle.tscn").instantiate()
+	var glow_title : Node = preload("res://Scenes/UI/GlowingTitle.tscn").instantiate()
 	glow_title.name = "GlowingTitle"
 	glow_title.text = title_text
 	glow_title.font_size = text_font_size

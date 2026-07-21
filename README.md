@@ -1349,7 +1349,13 @@ var total_matching = synergy_manager.get_total_matching_bonus()
 - **Improved Hover Tooltips**: Tooltip stays visible when moving from item card to purchase button
 - **PowerUp Shop Expansion Cap**: Shop-expansion consumables can raise the PowerUps tab from 2 visible offers up to a hard cap of 6; footer arrows first appear at 4 offers and still page in groups of 3
 - **Shelf Panel Theme**: Blockbuster-style shelf background (128x128 pixel art texture with edge borders)
-- **Focused Validation Scenes**: `Tests/ShopLockedTabTest.tscn`, `Tests/ShopPaginationTest.tscn`, `Tests/ShopStylingTest.tscn`, `Tests/ColoredDiceShopTest.tscn`, and `Tests/ReplicaPowerUpTest.tscn`
+- **Shop Item Card Styling**: Shop item cards (`Scripts/Shop/shop_item.gd`) use layered shader treatments on top of `shop_item_theme.tres`:
+  - Glass Buy button (`GlassActionButton`) with a shop-exclusive amber/gold palette and VCR font
+  - Rarity badge juice shader (`Scripts/Shaders/rarity_badge.gdshader`): animated sheen sweep, pulsing rarity-tinted edge glow, and sparkle; pulse/sheen intensity scales with rarity tier
+  - Price tag shader (`Scripts/Shaders/shop_price_tag.gdshader`): vertical gradient, top-edge highlight, and gentle shine sweep; amber/gold for normal prices, mint for FREE, red for MAX
+  - Card panel depth shader (`Scripts/Shaders/shop_card_panel.gdshader`): subtle vertical gradient, soft vignette, faint grain, and a slow low-alpha sheen
+  - PowerUp hover tooltips end with a footer showing the Mom Approval label (`StickerBadge.get_sticker_label()`) above the item's Rarity
+- **Focused Validation Scenes**: `Tests/ShopLockedTabTest.tscn`, `Tests/ShopPaginationTest.tscn`, `Tests/ShopStylingTest.tscn`, `Tests/ColoredDiceShopTest.tscn`, `Tests/ReplicaPowerUpTest.tscn`, and `Tests/ShopItemVisualTest.tscn`
 
 ### Hover Tooltip System
 All interactive game items feature consistent, themed hover tooltips:

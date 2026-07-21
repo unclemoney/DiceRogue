@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://c8e502cveltmu"]
+[gd_scene load_steps=4 format=3 uid="uid://c8e502cveltmu"]
 
 [ext_resource type="Theme" uid="uid://ds7i8mk64qdbp" path="res://Resources/UI/shop_item_theme.tres" id="1_hu0y1"]
 [ext_resource type="Script" uid="uid://tcwgkjbbqnub" path="res://Scripts/Shop/shop_item.gd" id="2_iw2pt"]
+[ext_resource type="Script" uid="uid://bnr8pa3y2h8aa" path="res://Scripts/UI/glass_action_button.gd" id="3_glassbtn"]
 
 [node name="ShopItem" type="Control"]
 custom_minimum_size = Vector2(213, 275)
@@ -63,11 +64,11 @@ layout_mode = 2
 size_flags_vertical = 3
 mouse_filter = 2
 
-[node name="BuyButton" type="Button" parent="CardPanel/MarginContainer/ContentVBox"]
+[node name="BuyButton" type="Control" parent="CardPanel/MarginContainer/ContentVBox"]
 custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "BUY"
+script = ExtResource("3_glassbtn")
 
 [node name="BadgeLayer" type="Control" parent="."]
 layout_mode = 1
@@ -87,7 +88,6 @@ offset_top = 44.0
 offset_right = 48.0
 offset_bottom = 72.0
 mouse_filter = 2
-theme = ExtResource("1_hu0y1")
 theme_type_variation = &"ShopRarityBadge"
 
 [node name="RarityLabel" type="Label" parent="BadgeLayer/RarityBadge"]
@@ -105,7 +105,6 @@ offset_top = 44.0
 offset_right = 184.0
 offset_bottom = 72.0
 mouse_filter = 2
-theme = ExtResource("1_hu0y1")
 theme_type_variation = &"ShopPriceBadge"
 
 [node name="PriceLabel" type="Label" parent="BadgeLayer/PriceBadge"]
