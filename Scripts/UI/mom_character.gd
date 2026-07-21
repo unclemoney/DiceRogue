@@ -13,6 +13,20 @@ enum MomExpression { NEUTRAL, UPSET, HAPPY }
 
 const TWEEN_DURATION: float = 0.3
 const TEXT_DISPLAY_SPEED: float = 0.03  # Seconds per character
+const PANEL_BACKDROP_SHADER_PATH := "res://Scripts/Shaders/panel_backdrop.gdshader"
+
+## Pink/purple palette for the GlassActionButton close button,
+## matching the dialog border (0.6, 0.4, 0.7) and Mom label pink (1, 0.8, 0.9).
+const MOM_BUTTON_PALETTE := {
+	"base_color": Color(0.35, 0.15, 0.45, 1.0),
+	"mid_color": Color(0.5, 0.25, 0.55, 1.0),
+	"accent_color": Color(0.8, 0.4, 0.8, 1.0),
+	"glow_color": Color(1.0, 0.7, 0.9, 1.0),
+	"rim_color": Color(1.0, 0.85, 0.95, 1.0),
+	"font_color": Color(1.0, 0.9, 0.95, 1.0),
+	"font_outline_color": Color(0.15, 0.1, 0.2, 1.0),
+	"outline_size": 1
+}
 
 @export var neutral_texture: Texture2D
 @export var upset_texture: Texture2D
@@ -21,13 +35,13 @@ const TEXT_DISPLAY_SPEED: float = 0.03  # Seconds per character
 # Node references
 var background_overlay: ColorRect
 var dialog_panel: PanelContainer
+var backdrop_fx_rect: ColorRect
 var sprite_rect: TextureRect
 var dialog_label: RichTextLabel
-var close_button: Button
+var close_button: GlassActionButton
 var _current_expression: MomExpression = MomExpression.NEUTRAL
 var _is_animating: bool = false
 var _full_dialog_text: String = ""
-@onready var _tfx := get_node("/root/TweenFXHelper")
 
 func _ready() -> void:
 	_load_textures()
@@ -136,6 +150,9 @@ func _create_ui_structure() -> void:
 	_apply_panel_style()
 	add_child(dialog_panel)
 	
+	# Backdrop shader overlay (child index 0 so content draws on top)
+	backdrop_fx_rect = _create_backdrop_fx_rect()
+	
 	# Content container
 	var vbox = VBoxContainer.new()
 	vbox.name = "ContentVBox"
@@ -185,16 +202,12 @@ func _create_ui_structure() -> void:
 	dialog_label.add_theme_color_override("default_color", Color.WHITE)
 	dialog_container.add_child(dialog_label)
 	
-	# Close button
-	close_button = Button.new()
+	# Close button (GlassActionButton handles its own hover/press TweenFX)
+	close_button = GlassActionButton.new()
 	close_button.name = "CloseButton"
-	close_button.text = "OK"
-	close_button.custom_minimum_size = Vector2(100, 40)
+	close_button.configure("OK", Vector2(100, 40), MOM_BUTTON_PALETTE, 18)
 	close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_apply_button_style()
 	close_button.pressed.connect(_on_close_pressed)
-	close_button.mouse_entered.connect(func(): _tfx.button_hover(close_button))
-	close_button.mouse_exited.connect(func(): _tfx.button_unhover(close_button))
 	vbox.add_child(close_button)
 
 func _apply_panel_style() -> void:
@@ -203,6 +216,8 @@ func _apply_panel_style() -> void:
 	style.border_color = Color(0.6, 0.4, 0.7)
 	style.set_border_width_all(3)
 	style.set_corner_radius_all(10)
+	style.shadow_color = Color(0.6, 0.4, 0.7, 0.6)
+	style.shadow_size = 12
 	style.set_content_margin_all(20)
 	dialog_panel.add_theme_stylebox_override("panel", style)
 
@@ -215,27 +230,40 @@ func _apply_sprite_panel_style(panel: PanelContainer) -> void:
 	style.set_content_margin_all(4)
 	panel.add_theme_stylebox_override("panel", style)
 
-func _apply_button_style() -> void:
-	var normal = StyleBoxFlat.new()
-	normal.bg_color = Color(0.3, 0.2, 0.4)
-	normal.border_color = Color(0.5, 0.4, 0.6)
-	normal.set_border_width_all(2)
-	normal.set_corner_radius_all(5)
-	close_button.add_theme_stylebox_override("normal", normal)
-	
-	var hover = StyleBoxFlat.new()
-	hover.bg_color = Color(0.4, 0.3, 0.5)
-	hover.border_color = Color(0.7, 0.5, 0.8)
-	hover.set_border_width_all(2)
-	hover.set_corner_radius_all(5)
-	close_button.add_theme_stylebox_override("hover", hover)
-	
-	var pressed = StyleBoxFlat.new()
-	pressed.bg_color = Color(0.2, 0.15, 0.3)
-	pressed.border_color = Color(0.4, 0.3, 0.5)
-	pressed.set_border_width_all(2)
-	pressed.set_corner_radius_all(5)
-	close_button.add_theme_stylebox_override("pressed", pressed)
+## _create_backdrop_fx_rect() -> ColorRect
+## Builds a full-rect ColorRect with the panel backdrop shader and inserts it
+## behind the dialog panel's content so text/sprites draw on top.
+func _create_backdrop_fx_rect() -> ColorRect:
+	var fx_rect := ColorRect.new()
+	fx_rect.name = "BackdropFxRect"
+	fx_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fx_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fx_rect.color = Color.WHITE
+	var shader := load(PANEL_BACKDROP_SHADER_PATH) as Shader
+	if shader:
+		var fx_material := ShaderMaterial.new()
+		fx_material.shader = shader
+		fx_material.set_shader_parameter("corner_radius", 10.0)
+		fx_rect.material = fx_material
+	else:
+		push_error("[MomCharacter] Failed to load shader: " + PANEL_BACKDROP_SHADER_PATH)
+	dialog_panel.add_child(fx_rect)
+	dialog_panel.move_child(fx_rect, 0)
+	if not dialog_panel.resized.is_connected(_update_backdrop_rect_size):
+		dialog_panel.resized.connect(_update_backdrop_rect_size)
+	_update_backdrop_rect_size()
+	return fx_rect
+
+
+## _update_backdrop_rect_size()
+## Pushes the dialog panel's current size into the backdrop shader so its
+## rounded mask tracks layout. Called initially and on panel resize.
+func _update_backdrop_rect_size() -> void:
+	if backdrop_fx_rect and backdrop_fx_rect.material and dialog_panel:
+		var panel_size := dialog_panel.size
+		if panel_size.x <= 0.0 or panel_size.y <= 0.0:
+			panel_size = dialog_panel.custom_minimum_size
+		(backdrop_fx_rect.material as ShaderMaterial).set_shader_parameter("rect_size", panel_size)
 
 func _animate_in() -> void:
 	_is_animating = true

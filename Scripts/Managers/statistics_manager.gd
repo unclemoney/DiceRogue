@@ -86,6 +86,10 @@ var failed_hands_this_round: int = 0
 var even_dice_scored_this_round: int = 0
 var odd_dice_scored_this_round: int = 0
 
+# Zone-specific tracking (resets each zone; a zone is one Mall Zone / channel, i.e. all 6 rounds)
+var current_zone_rolls: int = 0
+var current_zone_consumables_used: int = 0
+
 # Internal tracking
 var _last_update_time: float = 0.0
 
@@ -128,6 +132,7 @@ func increment_turns():
 ## Increment the total rolls counter.
 func increment_rolls():
 	total_rolls += 1
+	current_zone_rolls += 1
 	_check_milestone("rolls", total_rolls)
 
 ## increment_rerolls()
@@ -263,6 +268,15 @@ func start_new_round():
 	print("[Statistics] Round statistics reset for new round")
 
 
+## start_new_zone()
+##
+## Reset zone-specific statistics for a new zone (one Mall Zone / channel).
+func start_new_zone() -> void:
+	current_zone_rolls = 0
+	current_zone_consumables_used = 0
+	print("[Statistics] Zone statistics reset for new zone")
+
+
 ## track_even_odd_dice(dice_values: Array, used_indices: Array)
 ##
 ## Track even and odd dice from the dice used in scoring.
@@ -357,6 +371,7 @@ func record_item_usage(item_type: String):
 		"consumable":
 			print("[Statistics] BEFORE: consumables_used = %d" % consumables_used)
 			consumables_used += 1
+			current_zone_consumables_used += 1
 			print("[Statistics] AFTER: consumables_used = %d" % consumables_used)
 
 ## update_slot_tracking()
@@ -915,6 +930,8 @@ func get_state() -> Dictionary:
 		"failed_hands_this_round": failed_hands_this_round,
 		"even_dice_scored_this_round": even_dice_scored_this_round,
 		"odd_dice_scored_this_round": odd_dice_scored_this_round,
+		"current_zone_rolls": current_zone_rolls,
+		"current_zone_consumables_used": current_zone_consumables_used,
 		"logbook_size": logbook.size()
 	}
 
@@ -977,3 +994,5 @@ func load_state(state: Dictionary) -> void:
 	failed_hands_this_round = state.get("failed_hands_this_round", 0)
 	even_dice_scored_this_round = state.get("even_dice_scored_this_round", 0)
 	odd_dice_scored_this_round = state.get("odd_dice_scored_this_round", 0)
+	current_zone_rolls = state.get("current_zone_rolls", 0)
+	current_zone_consumables_used = state.get("current_zone_consumables_used", 0)

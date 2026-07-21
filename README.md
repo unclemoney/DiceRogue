@@ -557,6 +557,7 @@ Each round within a Mall Zone has:
 2. Player selects an unlocked Mall Zone (1-20) and presses Start
 3. Game progresses through 6 rounds with scaled difficulty
 4. After Round 6 completion → RoundWinnerPanel shows stats
+   - The Round Winner Panel now also shows per-zone stats: **Total Points Scored**, **Rolls Used**, and **Consumables Used** — tracked per Mall Zone in Statistics as `current_zone_rolls` / `current_zone_consumables_used`, reset by `start_new_zone()`
 5. "Next Mall Zone" marks the Mall Zone complete and saves progress
 6. **Carry-Over Panel** appears — player selects which items to keep for the next Mall Zone
 7. Game advances to the next Mall Zone with conditional resets based on selections
@@ -1382,6 +1383,22 @@ SELL and USE buttons throughout the game feature consistent themed styling:
 - **Consumable Coupon Buttons**: Coupon fanout uses a dedicated scoped theme (`Resources/UI/coupon_theme.tres`) for the visible `USE COUPON` and `SELL` stub actions without affecting global button defaults
 - **Mod SELL Buttons**: High z-index themed buttons for proper UI layering
 - **Reliable Implementation**: Direct theme override application ensures consistent appearance
+
+### Button Standard (GlassActionButton)
+All interactive action and dialog buttons use **GlassActionButton** (`Scripts/UI/glass_action_button.gd`) instead of plain `Button`:
+- **What It Is**: A scene-less `Control` (`class_name GlassActionButton`) that composites a glass shader background (`Scripts/Shaders/shop_reroll_button_glass.gdshader`), a centered title `Label`, and a flat overlay `Button` that captures input and drives the visuals
+- **When to Use It**: Use it for every interactive action/dialog button (confirm, close, reroll, sell, next round). Reserve plain `Button` for internal plumbing only (e.g. GlassActionButton's own overlay) or non-action UI chrome
+- **Configuration API**: `configure(label_text, button_size, palette, font_size, font_resource)` — sets `custom_minimum_size`, label, font, and palette in one call
+- **Palette Keys** (Dictionary, all optional with defaults):
+  - `base_color` / `mid_color`: Glass body gradient colors
+  - `accent_color`: Shader accent tint
+  - `glow_color`: Hover/selected glow color
+  - `rim_color`: Rim highlight color
+  - `font_color` / `font_outline_color` / `outline_size`: Label typography
+  - Reference palettes: `NEXT_ROUND_BUTTON_PALETTE` etc. in `Scripts/UI/game_button_ui.gd`, purple palette in `Scripts/UI/carry_over_panel.gd`, `MOM_BUTTON_PALETTE` in `Scripts/UI/mom_character.gd`
+- **Built-in TweenFX**: Hover, unhover, and press effects (scale bounce + shader `hover_strength`/`press_flash`) are wired internally via `TweenFXHelper` — nothing extra to connect, just the `pressed` signal
+- **Toggle Mode**: Set `toggle_mode = true` for checkbox-style buttons; emits `toggled(is_toggled)` and supports `set_toggled(value, should_emit)`. Selected state holds a glow baseline on the shader. CarryOverPanel rows indicate selection by swapping to a brighter per-type palette (`set_palette`) and scaling the button up slightly — the row layout stays centered and never shifts
+- **Panel Backdrop Pattern**: Large panels layer `Scripts/Shaders/panel_backdrop.gdshader` behind their content via a full-rect `ColorRect` with a `ShaderMaterial`, inserted at child index 0 with `mouse_filter = MOUSE_FILTER_IGNORE`; the panel's size is pushed into the `rect_size` uniform initially and on `resized` (with `corner_radius` matched to the panel's StyleBox). Used by RoundWinnerPanel, CarryOverPanel, and the MomCharacter dialog
 
 ### Item Selling System
 All game items (PowerUps, Consumables, and Mods) support selling mechanics:

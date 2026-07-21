@@ -2,8 +2,11 @@ extends Control
 class_name GlassActionButton
 
 signal pressed
+signal toggled(is_toggled: bool)
 
 const SHADER_PATH := "res://Scripts/Shaders/shop_reroll_button_glass.gdshader"
+const SELECTED_PULSE_STRENGTH := 0.35
+const SELECTED_HOVER_STRENGTH := 0.5
 const DEFAULT_FONT_COLOR := Color(0.968627, 0.941176, 1.0, 1.0)
 const DEFAULT_FONT_OUTLINE := Color(0.129412, 0.121569, 0.2, 1.0)
 
@@ -17,6 +20,11 @@ var _tfx: Node = null
 var _is_disabled: bool = false
 var _font_color: Color = DEFAULT_FONT_COLOR
 var _button_text: String = ""
+
+## When true, the button acts as a toggle: presses emit `toggled` instead of
+## `pressed` and the button holds a lit "selected" shader baseline while on.
+var toggle_mode: bool = false
+var _is_toggled: bool = false
 
 var disabled: bool:
 	get:
@@ -125,6 +133,36 @@ func clear_visual_state() -> void:
 		shader_material.set_shader_parameter("hover_strength", 0.0)
 		shader_material.set_shader_parameter("pulse_strength", 0.0)
 		shader_material.set_shader_parameter("press_flash", 0.0)
+	# The toggled baseline is part of the button's state, not transient FX —
+	# re-apply it so a selected button stays visibly lit after clearing.
+	if _is_toggled:
+		_apply_selected_visual()
+
+
+## Sets the toggle state. Applies the selected visual baseline and only emits
+## `toggled` when should_emit is true.
+func set_toggled(value: bool, should_emit: bool = false) -> void:
+	_is_toggled = value
+	_apply_selected_visual()
+	if should_emit:
+		toggled.emit(_is_toggled)
+
+
+func is_toggled() -> bool:
+	return _is_toggled
+
+
+## Applies the shader baseline matching the current toggle state: selected
+## buttons stay visibly lit, unselected buttons go dark.
+func _apply_selected_visual() -> void:
+	if shader_material == null:
+		return
+	if _is_toggled:
+		shader_material.set_shader_parameter("pulse_strength", SELECTED_PULSE_STRENGTH)
+		shader_material.set_shader_parameter("hover_strength", SELECTED_HOVER_STRENGTH)
+	else:
+		shader_material.set_shader_parameter("pulse_strength", 0.0)
+		shader_material.set_shader_parameter("hover_strength", 0.0)
 
 
 func _build_ui() -> void:
@@ -234,8 +272,11 @@ func _on_overlay_mouse_exited() -> void:
 	if _tfx:
 		_tfx.button_unhover(self)
 	if shader_material:
-		shader_material.set_shader_parameter("hover_strength", 0.0)
-		shader_material.set_shader_parameter("pulse_strength", 0.0)
+		if _is_toggled:
+			_apply_selected_visual()
+		else:
+			shader_material.set_shader_parameter("hover_strength", 0.0)
+			shader_material.set_shader_parameter("pulse_strength", 0.0)
 
 
 func _on_overlay_pressed() -> void:
@@ -247,7 +288,12 @@ func _on_overlay_pressed() -> void:
 		shader_material.set_shader_parameter("press_flash", 1.0)
 		var tween = create_tween()
 		tween.tween_method(_set_press_flash, 1.0, 0.0, 0.42).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	pressed.emit()
+	if toggle_mode:
+		_is_toggled = not _is_toggled
+		_apply_selected_visual()
+		toggled.emit(_is_toggled)
+	else:
+		pressed.emit()
 
 
 func _set_press_flash(value: float) -> void:

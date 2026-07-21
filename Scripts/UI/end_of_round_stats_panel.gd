@@ -20,7 +20,7 @@ const POINTS_ABOVE_TARGET_BONUS: int = 1
 # Animation settings
 const COUNTER_ANIMATION_DURATION: float = 1.5
 const REVEAL_DELAY: float = 0.3
-const CELEBRATION_THRESHOLD: int = 50  # Bonus amount to trigger celebration
+const CELEBRATION_THRESHOLD: int = 100  # Bonus amount to trigger celebration
 
 # UI References (will be set up in _ready or via scene)
 var overlay: ColorRect

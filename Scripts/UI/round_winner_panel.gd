@@ -23,8 +23,11 @@ var channel_label: Label
 var stats_vbox: VBoxContainer
 var score_row: HBoxContainer
 var target_row: HBoxContainer
+var rolls_row: HBoxContainer
+var consumables_row: HBoxContainer
 var turns_row: HBoxContainer
 var rounds_row: HBoxContainer
+var backdrop_fx_rect: ColorRect
 var next_channel_button = null
 
 # Stats data
@@ -33,6 +36,8 @@ var _target_score: int = 0
 var _turns_used: int = 0
 var _current_channel: int = 1
 var _rounds_completed: int = 6
+var _rolls_used: int = 0
+var _consumables_used: int = 0
 
 # Font
 var vcr_font: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
@@ -61,6 +66,8 @@ func set_channel_manager(manager) -> void:
 ##   - turns_used: int - Number of turns used
 ##   - current_channel: int - Current channel number
 ##   - rounds_completed: int - Number of rounds completed (should be 6)
+##   - rolls_used: int - Rolls used across the zone's rounds
+##   - consumables_used: int - Consumables used across the zone's rounds
 func show_winner_panel(data: Dictionary) -> void:
 	print("[RoundWinnerPanel] Showing winner panel with data:", data)
 	
@@ -69,6 +76,8 @@ func show_winner_panel(data: Dictionary) -> void:
 	_turns_used = data.get("turns_used", 0)
 	_current_channel = data.get("current_channel", 1)
 	_rounds_completed = data.get("rounds_completed", 6)
+	_rolls_used = data.get("rolls_used", 0)
+	_consumables_used = data.get("consumables_used", 0)
 	
 	_update_display()
 	
@@ -121,11 +130,17 @@ func _build_ui() -> void:
 	style.set_border_width_all(4)
 	style.set_corner_radius_all(20)
 	style.corner_detail = 8
-	style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.45)
-	style.shadow_size = 8
+	style.shadow_color = Color(0.714, 0.302, 0.478, 0.6)
+	style.shadow_size = 14
 	panel_container.add_theme_stylebox_override("panel", style)
 	
 	overlay.add_child(panel_container)
+	
+	# Shader backdrop behind panel content (gradient/vignette/grain overlay)
+	backdrop_fx_rect = _create_backdrop_fx_rect()
+	if not panel_container.resized.is_connected(_update_backdrop_fx_rect_size):
+		panel_container.resized.connect(_update_backdrop_fx_rect_size)
+	call_deferred("_update_backdrop_fx_rect_size")
 	
 	# Main vertical container
 	var main_vbox = VBoxContainer.new()
@@ -189,12 +204,20 @@ func _build_ui() -> void:
 	content_vbox.add_child(stats_vbox)
 	
 	# Score achieved
-	score_row = _create_stat_row("Final Score:", "0")
+	score_row = _create_stat_row("Total Points Scored:", "0")
 	stats_vbox.add_child(score_row)
 	
 	# Target score
 	target_row = _create_stat_row("Target Score:", "0")
 	stats_vbox.add_child(target_row)
+	
+	# Rolls used across the zone
+	rolls_row = _create_stat_row("Rolls Used:", "0")
+	stats_vbox.add_child(rolls_row)
+	
+	# Consumables used across the zone
+	consumables_row = _create_stat_row("Consumables Used:", "0")
+	stats_vbox.add_child(consumables_row)
 	
 	# Turns used
 	turns_row = _create_stat_row("Turns Used:", "0")
@@ -276,6 +299,40 @@ func _create_stat_row(label_text: String, value_text: String) -> HBoxContainer:
 	return hbox
 
 
+## _create_backdrop_fx_rect() -> ColorRect
+## Builds a full-rect ColorRect with the panel backdrop shader and inserts it
+## behind the WinnerPanel's other children so content draws on top.
+func _create_backdrop_fx_rect() -> ColorRect:
+	var fx_rect = ColorRect.new()
+	fx_rect.name = "BackdropFxRect"
+	fx_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fx_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fx_rect.color = Color.WHITE
+	var shader_path = "res://Scripts/Shaders/panel_backdrop.gdshader"
+	var shader = load(shader_path) as Shader
+	if shader:
+		var fx_material = ShaderMaterial.new()
+		fx_material.shader = shader
+		fx_material.set_shader_parameter("corner_radius", 20.0)
+		fx_rect.material = fx_material
+	else:
+		push_error("[RoundWinnerPanel] Failed to load shader: " + shader_path)
+	panel_container.add_child(fx_rect)
+	panel_container.move_child(fx_rect, 0)
+	return fx_rect
+
+
+## _update_backdrop_fx_rect_size()
+## Pushes the panel's current size into the backdrop shader so its rounded
+## mask tracks layout. Called on build and whenever the panel resizes.
+func _update_backdrop_fx_rect_size() -> void:
+	if backdrop_fx_rect and backdrop_fx_rect.material and panel_container:
+		var panel_size = panel_container.size
+		if panel_size.x <= 0.0 or panel_size.y <= 0.0:
+			panel_size = panel_container.custom_minimum_size
+		(backdrop_fx_rect.material as ShaderMaterial).set_shader_parameter("rect_size", panel_size)
+
+
 ## _update_display() -> void
 ##
 ## Updates all display elements with current stats.
@@ -290,6 +347,14 @@ func _update_display() -> void:
 	var target_value = target_row.get_node("Value") as Label
 	if target_value:
 		target_value.text = NumberFormatter.format_score(_target_score)
+	
+	var rolls_value = rolls_row.get_node("Value") as Label
+	if rolls_value:
+		rolls_value.text = NumberFormatter.format_int(_rolls_used)
+	
+	var consumables_value = consumables_row.get_node("Value") as Label
+	if consumables_value:
+		consumables_value.text = NumberFormatter.format_int(_consumables_used)
 	
 	var turns_value = turns_row.get_node("Value") as Label
 	if turns_value:

@@ -478,6 +478,11 @@ func _on_channel_selected(channel: int) -> void:
 	print("[GameController] Channel", channel, "selected, starting game...")
 	_apply_channel_background()
 	_apply_channel_starting_bonuses(channel)
+	# Reset zone-scope statistics — a new zone (channel) begins here
+	var stats = get_node_or_null("/root/Statistics")
+	if stats:
+		stats.start_new_zone()
+		print("[GameController] Zone statistics reset for new zone")
 	if chores_manager:
 		_defer_chore_selection_until_round_start = true
 		chores_manager.reset_for_new_game()
@@ -4550,6 +4555,12 @@ func _on_all_rounds_completed() -> void:
 			"rounds_completed": 6
 		}
 		
+		# Add zone-scope statistics (rolls and consumables used across the zone's rounds)
+		var stats = get_node_or_null("/root/Statistics")
+		if stats:
+			winner_data["rolls_used"] = stats.current_zone_rolls
+			winner_data["consumables_used"] = stats.current_zone_consumables_used
+		
 		round_winner_panel.show_winner_panel(winner_data)
 		print("[GameController] Showing RoundWinnerPanel for Channel", current_channel)
 	else:
@@ -5076,6 +5087,12 @@ func _proceed_to_next_channel_with_carryovers(selected_types: Array[String]) -> 
 		channel_manager.advance_to_next_channel()
 		print("[GameController] Advanced to Channel", channel_manager.current_channel)
 	
+	# Reset zone-scope statistics — a new zone (channel) begins here
+	var stats = get_node_or_null("/root/Statistics")
+	if stats:
+		stats.start_new_zone()
+		print("[GameController] Zone statistics reset for new zone")
+	
 	_apply_channel_background()
 	
 	# Restart the game loop at Round 1 with carry-over info
@@ -5135,12 +5152,10 @@ func _on_chore_selection_requested() -> void:
 		_pending_chore_selection = true
 		return
 	
-	# If a challenge was just completed, defer the popup until the next round
-	# intro so it does not stack on round-end panels.
+	# If a challenge was just completed, skip chore selection entirely —
+	# a new chore will be requested at the next round start instead.
 	if round_manager and round_manager.is_challenge_completed:
-		print("[GameController] Chore selection deferred - challenge completing")
-		_pending_chore_selection = true
-		_defer_chore_selection_until_round_start = true
+		print("[GameController] Chore selection skipped - challenge completed, new chore at next round start")
 		return
 	
 	_show_chore_selection_popup()

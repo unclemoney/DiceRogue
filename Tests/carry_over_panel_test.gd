@@ -3,7 +3,7 @@ extends Control
 ## CarryOverPanel Test
 ##
 ## Standalone test scene for verifying CarryOverPanel display, animations,
-## checkbox selection logic, and signal emission.
+## GlassActionButton toggle selection logic, and signal emission.
 ## Run via: Godot editor or command line with this scene.
 
 var carry_over_panel: CarryOverPanel
@@ -89,6 +89,7 @@ func _build_test_ui() -> void:
 
 	_add_button_to("2 of 7 (All Types)", _test_two_of_all, Color(0.6, 0.4, 0.8), btn_container2)
 	_add_button_to("1 of 1 (Single)", _test_single_type, Color(0.4, 0.7, 0.7), btn_container2)
+	_add_button_to("Auto: Toggle Logic", _test_toggle_logic, Color(0.8, 0.5, 0.3), btn_container2)
 
 	# Output log
 	var log_margin = MarginContainer.new()
@@ -168,6 +169,77 @@ func _test_single_type() -> void:
 	_log("\n[color=white]TEST: Edge case — 1 of 1 type (money only)[/color]")
 	var types: Array[String] = ["money"]
 	carry_over_panel.show_panel(1, types, 20)
+
+
+func _test_toggle_logic() -> void:
+	_log("\n[color=white]AUTO TEST: toggle rows, max-count denial, selection visuals[/color]")
+	var types: Array[String] = ["power_ups", "consumables", "colored_dice"]
+	carry_over_panel.show_panel(2, types, 5)
+	
+	# Toggle two rows on
+	_set_row_toggled("power_ups", true)
+	_set_row_toggled("consumables", true)
+	_assert(carry_over_panel._selected_types == ["power_ups", "consumables"], "two rows selected")
+	_assert(_row_accent("power_ups") == _expected_accent("power_ups", true), "selected palette applied for power_ups")
+	_assert(_row_accent("colored_dice") == _expected_accent("colored_dice", false), "colored_dice still untoggled")
+	
+	# Selected rows enlarge (wait out the scale tween)
+	await get_tree().create_timer(0.3).timeout
+	_assert(_row_button("power_ups").scale.x > 1.05, "selected button enlarged")
+	
+	# Third toggle must be denied and reverted (panel is at max)
+	_set_row_toggled("colored_dice", true)
+	_assert(carry_over_panel._selected_types.size() == 2, "third selection denied at max")
+	_assert(not _row_button("colored_dice").is_toggled(), "denied toggle reverted")
+	_assert(_row_accent("colored_dice") == _expected_accent("colored_dice", false), "denied row keeps base palette")
+	_assert(_row_button("colored_dice").is_button_disabled(), "untoggled button disabled at max")
+	
+	# Un-toggle frees a slot, then the third row can be selected
+	_set_row_toggled("power_ups", false)
+	_assert(carry_over_panel._selected_types == ["consumables"], "un-toggle removes selection")
+	_assert(_row_accent("power_ups") == _expected_accent("power_ups", false), "base palette restored after un-toggle")
+	_assert(not _row_button("colored_dice").is_button_disabled(), "buttons re-enabled below max")
+	_set_row_toggled("colored_dice", true)
+	_assert(carry_over_panel._selected_types == ["consumables", "colored_dice"], "re-selection after free slot")
+	
+	# Confirm and verify the emitted payload — wait out the entrance animation
+	# first, since _on_confirm_pressed() is ignored while animating
+	while carry_over_panel._is_animating:
+		await get_tree().process_frame
+	carry_over_panel._on_confirm_pressed()
+	_log("[color=gray](expect CONFIRMED log above with [consumables, colored_dice])[/color]")
+
+
+## Drives a row's toggle button the way the panel handler expects.
+func _set_row_toggled(type_key: String, value: bool) -> void:
+	var button = _row_button(type_key)
+	if button:
+		button.set_toggled(value, true)
+	else:
+		_log("[color=red]FAIL: no toggle button for %s[/color]" % type_key)
+
+
+func _row_button(type_key: String) -> GlassActionButton:
+	return carry_over_panel._toggle_buttons.get(type_key)
+
+
+func _row_accent(type_key: String) -> Color:
+	var button = _row_button(type_key)
+	if button == null or button.shader_material == null:
+		return Color.TRANSPARENT
+	return button.shader_material.get_shader_parameter("accent_color")
+
+
+func _expected_accent(type_key: String, selected: bool) -> Color:
+	var accent: Color = carry_over_panel.TYPE_COLORS[type_key]
+	return accent.lightened(0.2) if selected else accent
+
+
+func _assert(condition: bool, label: String) -> void:
+	if condition:
+		_log("[color=green]PASS: %s[/color]" % label)
+	else:
+		_log("[color=red]FAIL: %s[/color]" % label)
 
 
 # ============ HELPERS ============
