@@ -24,6 +24,13 @@ var dice_area_container: PanelContainer
 var chore_meter_container: PanelContainer
 var scorecard_container: PanelContainer
 
+# Dedicated top-level layer hosting hover tooltips so they render above
+# all other UI and are never clipped by clip_contents panels.
+var _tooltip_layer: CanvasLayer
+
+# Panels registered for hover tooltips: [{panel, tooltip, timer, hovered}]
+var _hover_entries: Array[Dictionary] = []
+
 # Layout constants
 const SCREEN_WIDTH: float = 1280.0
 const SCREEN_HEIGHT: float = 720.0
@@ -61,6 +68,16 @@ const PANEL_CORNER_RADIUS: int = 16
 const PANEL_SHADOW: Color = Color(0.070588, 0.062745, 0.101961, 0.34)
 const PANEL_SHADOW_SIZE: int = 5
 const TITLE_FONT_SIZE: int = 12
+
+# Hover tooltip tuning
+const TOOLTIP_HOVER_DELAY: float = 1.0
+const TOOLTIP_FONT_SIZE: int = 20
+const TOOLTIP_LAYER_INDEX: int = 128
+const TOOLTIP_POP_DURATION: float = 0.35
+const TOOLTIP_POP_OVERSHOOT: float = 0.2
+
+# Verbose terminal logging for hover tooltip diagnostics
+const DEBUG_TOOLTIPS: bool = true
 
 # New color pallete
 # 
@@ -231,38 +248,140 @@ func _build_ui() -> void:
 		game_buttons.score_card_ui_path = path_to_scorecard
 
 
+## _ensure_tooltip_layer()
+##
+## Lazily creates the dedicated CanvasLayer that hosts hover tooltips.
+## layer = 128 keeps tooltips above every other UI layer.
+func _ensure_tooltip_layer() -> void:
+	if _tooltip_layer and is_instance_valid(_tooltip_layer):
+		return
+	_tooltip_layer = CanvasLayer.new()
+	_tooltip_layer.name = "TooltipLayer"
+	_tooltip_layer.layer = TOOLTIP_LAYER_INDEX
+	add_child(_tooltip_layer)
+
+
 ## _add_container_hover_title(panel, title_text)
 ##
-## Adds a lightweight hover tooltip to a panel that displays the container's title.
+## Adds a hover tooltip to a panel that displays the container's title.
+## The tooltip lives on a dedicated top-level CanvasLayer so it is always
+## visible on-screen, above all other layers, and never clipped by panels
+## with clip_contents. It appears after a short hover delay and pops in
+## with a bubble-grow bounce via TweenFX.
 ## Respects the GameSettings.container_title_tooltips_enabled toggle.
 func _add_container_hover_title(panel: PanelContainer, title_text: String) -> void:
 	if not panel:
 		return
+	_ensure_tooltip_layer()
+
 	var tooltip := PanelContainer.new()
 	tooltip.name = "HoverTitleTooltip"
-	tooltip.z_index = 200
+	tooltip.z_index = 4096
 	tooltip.top_level = true
 	tooltip.visible = false
-	tooltip.theme = load("res://Resources/UI/powerup_hover_theme.tres")
-	panel.add_child(tooltip)
+	tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	# High-contrast style: dark near-opaque background, bright accent border,
+	# rounded corners, and generous padding for a slightly larger panel.
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.05, 0.04, 0.10, 0.97)
+	style.border_color = COLOR_MAGENTA
+	style.set_border_width_all(3)
+	style.border_blend = true
+	style.set_corner_radius_all(10)
+	style.content_margin_left = 18
+	style.content_margin_right = 18
+	style.content_margin_top = 12
+	style.content_margin_bottom = 12
+	style.shadow_color = Color(0, 0, 0, 0.6)
+	style.shadow_size = 4
+	tooltip.add_theme_stylebox_override("panel", style)
+	_tooltip_layer.add_child(tooltip)
 
 	var label := Label.new()
 	label.name = "TooltipLabel"
+	label.text = title_text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_override("font", load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf"))
+	label.add_theme_font_size_override("font_size", TOOLTIP_FONT_SIZE)
+	label.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 6)
 	tooltip.add_child(label)
 
+	# Delay from mouse-enter before the tooltip is shown; cancelled on exit.
+	var delay_timer := Timer.new()
+	delay_timer.name = "TooltipDelayTimer"
+	delay_timer.one_shot = true
+	delay_timer.wait_time = TOOLTIP_HOVER_DELAY
+	panel.add_child(delay_timer)
+
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	panel.mouse_entered.connect(func():
+	_hover_entries.append({
+		"panel": panel,
+		"tooltip": tooltip,
+		"timer": delay_timer,
+		"hovered": false,
+	})
+	delay_timer.timeout.connect(func():
 		if not GameSettings.container_title_tooltips_enabled:
 			return
-		label.text = title_text
+		# Size to content, then place clamped on-screen above the panel.
+		tooltip.size = tooltip.get_combined_minimum_size()
 		tooltip.visible = true
-		_tfx.place_tooltip(tooltip, panel.get_global_rect(), SIDE_TOP, true)
+		_tfx.place_tooltip(tooltip, panel.get_global_rect(), SIDE_TOP, false)
+		tooltip.pivot_offset = tooltip.size / 2.0
+		TweenFX.overshoot_pop_in(tooltip, TOOLTIP_POP_DURATION, TOOLTIP_POP_OVERSHOOT)
+		if DEBUG_TOOLTIPS:
+			var vp := tooltip.get_viewport().get_visible_rect()
+			print("[GameUI:Tooltip] SHOW '%s' at %s size %s (viewport %s, inside=%s, layer=%d, z=%d)" % [
+				panel.name, tooltip.global_position, tooltip.size, vp.size,
+				vp.has_point(tooltip.global_position), TOOLTIP_LAYER_INDEX, tooltip.z_index])
 	)
-	panel.mouse_exited.connect(func():
-		tooltip.visible = false
-	)
+
+
+## _process(delta)
+##
+## Polls the hovered GUI control each frame to drive hover tooltips.
+## Signal-based mouse_entered/mouse_exited is unreliable here because the
+## child UIs inside each panel use MOUSE_FILTER_STOP and swallow hover.
+func _process(_delta: float) -> void:
+	if _hover_entries.is_empty() or not is_inside_tree():
+		return
+	var hovered_ctrl := get_viewport().gui_get_hovered_control()
+	for entry in _hover_entries:
+		var panel: PanelContainer = entry["panel"]
+		if not is_instance_valid(panel):
+			continue
+		var is_hovered: bool = hovered_ctrl != null \
+			and (hovered_ctrl == panel or panel.is_ancestor_of(hovered_ctrl)) \
+			and panel.is_visible_in_tree()
+		if is_hovered and not entry["hovered"]:
+			entry["hovered"] = true
+			_on_tooltip_hover_start(entry)
+		elif not is_hovered and entry["hovered"]:
+			entry["hovered"] = false
+			_on_tooltip_hover_end(entry)
+
+
+## Starts the hover delay timer for a panel (unless tooltips are disabled).
+func _on_tooltip_hover_start(entry: Dictionary) -> void:
+	var panel: PanelContainer = entry["panel"]
+	if DEBUG_TOOLTIPS:
+		print("[GameUI:Tooltip] hover START '%s' (setting=%s)" % [
+			panel.name, GameSettings.container_title_tooltips_enabled])
+	if not GameSettings.container_title_tooltips_enabled:
+		return
+	(entry["timer"] as Timer).start()
+
+
+## Cancels the pending tooltip and hides it when the hover ends.
+func _on_tooltip_hover_end(entry: Dictionary) -> void:
+	if DEBUG_TOOLTIPS:
+		print("[GameUI:Tooltip] hover END '%s'" % (entry["panel"] as PanelContainer).name)
+	(entry["timer"] as Timer).stop()
+	(entry["tooltip"] as PanelContainer).visible = false
 
 func _create_margin_container() -> MarginContainer:
 	var margin := MarginContainer.new()
