@@ -11,3 +11,4 @@ offset_right = 140.0
 offset_bottom = 100.0
 theme = ExtResource("1_5y3n3")
 script = ExtResource("1_chore_ui")
+texture_progress_offset = Vector2(36, 0)

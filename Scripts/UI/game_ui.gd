@@ -23,6 +23,7 @@ var title_container: PanelContainer
 var dice_area_container: PanelContainer
 var chore_meter_container: PanelContainer
 var scorecard_container: PanelContainer
+var chore_ui: ChoreUI
 
 # Dedicated top-level layer hosting hover tooltips so they render above
 # all other UI and are never clipped by clip_contents panels.
@@ -145,12 +146,12 @@ func _build_ui() -> void:
 	#Chore Meter UI
 	chore_meter_container = _create_panel("ChoreMeterContainer", CHORE_METER_RATIO)
 	left_col.add_child(chore_meter_container)
-	var chore_ui := preload("res://Scenes/UI/chore_ui.tscn").instantiate()
+	chore_ui = preload("res://Scenes/UI/chore_ui.tscn").instantiate()
 	chore_ui.name = "ChoreUI"
 	chore_ui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	chore_ui.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_add_glowing_title(chore_meter_container, "Chore Meter", "res://Resources/Font/BALLOON1.ttf", chore_ui)
-	_add_container_hover_title(chore_meter_container, "Chore Meter")
+	_add_container_hover_title(chore_meter_container, "Chore Meter", _get_chore_tooltip_suffix)
 
 	debuff_container = _create_panel("DebuffContainer", DEBUFF_RATIO)
 	left_col.add_child(debuff_container)
@@ -261,7 +262,7 @@ func _ensure_tooltip_layer() -> void:
 	add_child(_tooltip_layer)
 
 
-## _add_container_hover_title(panel, title_text)
+## _add_container_hover_title(panel, title_text, dynamic_suffix)
 ##
 ## Adds a hover tooltip to a panel that displays the container's title.
 ## The tooltip lives on a dedicated top-level CanvasLayer so it is always
@@ -269,7 +270,9 @@ func _ensure_tooltip_layer() -> void:
 ## with clip_contents. It appears after a short hover delay and pops in
 ## with a bubble-grow bounce via TweenFX.
 ## Respects the GameSettings.container_title_tooltips_enabled toggle.
-func _add_container_hover_title(panel: PanelContainer, title_text: String) -> void:
+## If dynamic_suffix is a valid Callable, its return value is appended to
+## the title each time the tooltip is shown (e.g. live progress %).
+func _add_container_hover_title(panel: PanelContainer, title_text: String, dynamic_suffix: Callable = Callable()) -> void:
 	if not panel:
 		return
 	_ensure_tooltip_layer()
@@ -327,6 +330,8 @@ func _add_container_hover_title(panel: PanelContainer, title_text: String) -> vo
 	delay_timer.timeout.connect(func():
 		if not GameSettings.container_title_tooltips_enabled:
 			return
+		if dynamic_suffix.is_valid():
+			label.text = "%s — %s" % [title_text, str(dynamic_suffix.call())]
 		# Size to content, then place clamped on-screen above the panel.
 		tooltip.size = tooltip.get_combined_minimum_size()
 		tooltip.visible = true
@@ -339,6 +344,15 @@ func _add_container_hover_title(panel: PanelContainer, title_text: String) -> vo
 				panel.name, tooltip.global_position, tooltip.size, vp.size,
 				vp.has_point(tooltip.global_position), TOOLTIP_LAYER_INDEX, tooltip.z_index])
 	)
+
+
+## _get_chore_tooltip_suffix() -> String
+##
+## Returns the live chore meter percentage for the Chore Meter hover tooltip.
+func _get_chore_tooltip_suffix() -> String:
+	if chore_ui and is_instance_valid(chore_ui):
+		return "%d%%" % chore_ui.get_progress_percent()
+	return "0%"
 
 
 ## _process(delta)
