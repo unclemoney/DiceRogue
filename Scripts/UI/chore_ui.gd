@@ -13,7 +13,7 @@ signal task_clicked
 
 @export var chores_manager_path: NodePath
 ## Pixel offset applied to the progress (fill) texture on the meter.
-@export var texture_progress_offset: Vector2 = Vector2.ZERO
+@export var texture_progress_offset: Vector2 = Vector2(67,0)
 
 # Node references
 var progress_bar: TextureProgressBar
@@ -32,7 +32,7 @@ var _fan_center: Vector2
 var _compact_hover_tween: Tween
 
 # Visual settings
-const BAR_WIDTH: float = 172.0
+const BAR_WIDTH: float = 172.0 #172
 const BAR_HEIGHT: float = 32.0
 const WARNING_THRESHOLD: float = 60.0
 const CHORE_BG_SOFT: Color = Color(0.247059, 0.219608, 0.345098, 0.4)
@@ -184,7 +184,7 @@ func _create_ui_structure() -> void:
 	progress_bar.texture_progress = BAR_TEXTURE_PROGRESS
 	progress_bar.texture_over = BAR_TEXTURE_OVER
 	progress_bar.texture_progress_offset = texture_progress_offset
-	progress_bar.nine_patch_stretch = true
+	progress_bar.nine_patch_stretch = false
 	progress_bar.stretch_margin_left = BAR_NINE_PATCH_MARGIN
 	progress_bar.stretch_margin_right = BAR_NINE_PATCH_MARGIN
 	progress_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -707,4 +707,3 @@ func _set_compact_hover(is_hovered: bool) -> void:
 	if task_label:
 		var task_color = CHORE_SAFE if is_hovered else CHORE_TEXT
 		task_label.add_theme_color_override("font_color", task_color)
-

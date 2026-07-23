@@ -2643,7 +2643,7 @@ func is_power_up_active(power_up_id: String) -> bool:
 ## get_powerup_rating_progress_bonus() -> int
 ##
 ## Returns the total chore-progress bonus contributed by all owned PowerUps.
-## Each PowerUp adds its rating bonus: G = 0, PG = 1, PG-13 = 2, R = 3, NC-17 = 4.
+## Each PowerUp adds its rating bonus: G = 0, PG = 0, PG-13 = 1, R = 2, NC-17 = 3.
 func get_powerup_rating_progress_bonus() -> int:
 	var total_bonus: int = 0
 	for power_up_id in active_power_ups.keys():

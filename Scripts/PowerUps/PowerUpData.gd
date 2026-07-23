@@ -66,12 +66,12 @@ static func is_rating_nc17(rating_string: String) -> bool:
 static func get_rating_progress_bonus(rating_string: String) -> int:
 	## Returns the chore-progress bonus associated with a PowerUp rating.
 	## Used by ChoresManager to scale goof-off meter progress per roll.
-	## G = 0, PG = 1, PG-13 = 2, R = 3, NC-17 = 4.
+	## G = 0, PG = 0, PG-13 = 1, R = 2, NC-17 = 3.
 	## Unknown ratings default to 0 (G).
 	match rating_string.to_upper():
 		"G": return 0
-		"PG": return 1
-		"PG-13": return 2
-		"R": return 3
-		"NC-17": return 4
+		"PG": return 0
+		"PG-13": return 1
+		"R": return 2
+		"NC-17": return 3
 		_: return 0
