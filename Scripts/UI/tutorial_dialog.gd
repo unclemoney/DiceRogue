@@ -16,6 +16,8 @@ const GOLDEN_COLOR := Color(1.0, 0.85, 0.32, 1.0)
 const DARK_PURPLE_BG := Color(0.08, 0.05, 0.15, 0.95)
 const TRANSITION_DURATION: float = 0.4  # Duration of show/hide animations
 const BOUNCE_OVERSHOOT: float = 1.1  # Overshoot for bounce effect
+const BACKDROP_SHADER_PATH := "res://Scripts/Shaders/panel_backdrop.gdshader"
+const PANEL_CORNER_RADIUS := 12.0
 
 # Fonts
 var brick_font: Font = preload("res://Resources/Font/BRICK_SANS.ttf")
@@ -28,6 +30,7 @@ var mom_upset_texture: Texture2D
 
 # UI Components
 var dialog_panel: PanelContainer
+var backdrop_fx_rect: ColorRect
 var mom_sprite: TextureRect
 var title_label: Label
 var step_counter_label: Label
@@ -97,6 +100,10 @@ func _build_ui() -> void:
 	panel_style.content_margin_bottom = 12
 	dialog_panel.add_theme_stylebox_override("panel", panel_style)
 	add_child(dialog_panel)
+	
+	# Shader backdrop behind all panel content (gradient, vignette, grain, sheen)
+	backdrop_fx_rect = _create_backdrop_fx_rect()
+	dialog_panel.resized.connect(_update_backdrop_fx_size)
 	
 	# Main horizontal container
 	var main_hbox = HBoxContainer.new()
@@ -582,3 +589,42 @@ func _input(event: InputEvent) -> void:
 		if event.keycode == KEY_SPACE or event.keycode == KEY_ENTER:
 			_on_next_pressed()
 			get_viewport().set_input_as_handled()
+
+
+
+## _create_backdrop_fx_rect() -> ColorRect
+##
+## Builds a full-rect ColorRect with the panel backdrop shader and inserts it
+## as the panel's first child so content draws on top.
+func _create_backdrop_fx_rect() -> ColorRect:
+	var fx_rect := ColorRect.new()
+	fx_rect.name = "BackdropFxRect"
+	fx_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fx_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fx_rect.color = Color.WHITE
+	var shader := load(BACKDROP_SHADER_PATH) as Shader
+	if shader:
+		var fx_material := ShaderMaterial.new()
+		fx_material.shader = shader
+		fx_material.set_shader_parameter("corner_radius", PANEL_CORNER_RADIUS)
+		fx_rect.material = fx_material
+	else:
+		push_error("[TutorialDialog] Failed to load shader: " + BACKDROP_SHADER_PATH)
+	dialog_panel.add_child(fx_rect)
+	dialog_panel.move_child(fx_rect, 0)
+	backdrop_fx_rect = fx_rect
+	_update_backdrop_fx_size()
+	return fx_rect
+
+
+## _update_backdrop_fx_size()
+##
+## Pushes the panel's current size into the backdrop shader so its rounded
+## mask tracks layout. Connected to the panel's resized signal.
+func _update_backdrop_fx_size() -> void:
+	if backdrop_fx_rect == null or backdrop_fx_rect.material == null or dialog_panel == null:
+		return
+	var panel_size := dialog_panel.size
+	if panel_size.x <= 0.0 or panel_size.y <= 0.0:
+		panel_size = dialog_panel.custom_minimum_size
+	(backdrop_fx_rect.material as ShaderMaterial).set_shader_parameter("rect_size", panel_size)

@@ -123,9 +123,12 @@ func show_panel(allowed_count: int, allowed_types: Array[String], next_channel: 
 		size = viewport_rect.size
 		z_index = 100
 		
-		# Re-center the panel container explicitly
+		# Re-center the panel container explicitly using its real content-fit
+		# size — the panel grows past its 550px minimum when many rows exist,
+		# so centering on custom_minimum_size pushes the bottom off screen.
 		if panel_container:
-			var panel_size = panel_container.custom_minimum_size
+			var panel_size = panel_container.get_combined_minimum_size()
+			panel_container.size = panel_size
 			panel_container.position = (viewport_rect.size - panel_size) / 2.0
 	
 	visible = true
@@ -175,20 +178,20 @@ func _build_ui() -> void:
 	# Main vertical container
 	var main_vbox = VBoxContainer.new()
 	main_vbox.name = "MainVBox"
-	main_vbox.add_theme_constant_override("separation", 12)
+	main_vbox.add_theme_constant_override("separation", 8)
 	panel_container.add_child(main_vbox)
 	
 	# Add margin container for padding
 	var margin = MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 30)
 	margin.add_theme_constant_override("margin_right", 30)
-	margin.add_theme_constant_override("margin_top", 25)
-	margin.add_theme_constant_override("margin_bottom", 25)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
 	main_vbox.add_child(margin)
 	
 	var content_vbox = VBoxContainer.new()
 	content_vbox.name = "ContentVBox"
-	content_vbox.add_theme_constant_override("separation", 12)
+	content_vbox.add_theme_constant_override("separation", 8)
 	margin.add_child(content_vbox)
 	
 	# Title
@@ -228,12 +231,12 @@ func _build_ui() -> void:
 	# Toggle button rows container (populated dynamically)
 	rows_container = VBoxContainer.new()
 	rows_container.name = "RowsContainer"
-	rows_container.add_theme_constant_override("separation", 8)
+	rows_container.add_theme_constant_override("separation", 6)
 	content_vbox.add_child(rows_container)
 	
 	# Spacer
 	var spacer = Control.new()
-	spacer.custom_minimum_size = Vector2(0, 8)
+	spacer.custom_minimum_size = Vector2(0, 4)
 	content_vbox.add_child(spacer)
 	
 	# Separator
@@ -245,7 +248,7 @@ func _build_ui() -> void:
 	confirm_button.name = "ConfirmButton"
 	confirm_button.configure(
 		"CONFIRM",
-		Vector2(250, 55),
+		Vector2(250, 50),
 		{
 			"base_color": Color(0.3, 0.15, 0.5, 1.0),
 			"mid_color": Color(0.4, 0.2, 0.6, 1.0),
@@ -343,7 +346,7 @@ func _create_type_row(type_key: String) -> HBoxContainer:
 	var hbox = HBoxContainer.new()
 	hbox.name = "Row_" + type_key
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.custom_minimum_size = Vector2(0, 48)
+	hbox.custom_minimum_size = Vector2(0, 44)
 	
 	# Toggle button — purple palette with a per-type accent color; the
 	# selected palette leans fully into the type color so selection is obvious
@@ -363,13 +366,13 @@ func _create_type_row(type_key: String) -> HBoxContainer:
 	button.toggle_mode = true
 	button.configure(
 		TYPE_DISPLAY_NAMES.get(type_key, type_key),
-		Vector2(300, 44),
+		Vector2(300, 40),
 		base_palette,
 		17,
 		vcr_font
 	)
 	# Center pivot so the selected scale-up grows evenly around the middle
-	button.pivot_offset = Vector2(150, 22)
+	button.pivot_offset = Vector2(150, 20)
 	button.toggled.connect(func(is_toggled: bool) -> void: _on_type_toggled(type_key, is_toggled))
 	hbox.add_child(button)
 	

@@ -4,24 +4,25 @@ class_name NewRoundPanel
 const GlassActionButtonClass = preload("res://Scripts/UI/glass_action_button.gd")
 const GLYPH_SHADER: Shader = preload("res://Scripts/Shaders/debuff_glyph_glow.gdshader")
 const PLACEHOLDER_TEXTURE: Texture2D = preload("res://Resources/Art/UI/white_pixel.png")
+const BACKDROP_SHADER_PATH := "res://Scripts/Shaders/panel_backdrop.gdshader"
+const PANEL_CORNER_RADIUS := 20.0
 
 ## NewRoundPanel
 ##
 ## Full-screen overlay that introduces a new round with channel, round number,
-## debuffs, challenge, and chore information. Follows the same construction pattern
+## debuffs, and challenge information. Follows the same construction pattern
 ## as ChoreSelectionPopup and ChannelManagerUI.
 
 signal panel_dismissed
 
 var _overlay: ColorRect
 var _panel: PanelContainer
+var _backdrop_fx_rect: ColorRect
 var _title_label: Label
 var _channel_label: Label
 var _challenge_label: Label
 var _challenge_desc_label: Label
 var _debuffs_container: GridContainer
-var _chore_row: HBoxContainer
-var _chore_label: Label
 var _lets_play_button = null
 
 var _panel_original_pos: Vector2
@@ -75,7 +76,7 @@ func _create_glyph_icon(debuff_data: Dictionary) -> TextureRect:
 ##
 ## Builds and populates the panel UI from a data dictionary.
 ## Keys: channel (int), round_number (int), challenge_name (String),
-## challenge_desc (String), debuffs (Array[Dictionary]), chore_name (String)
+## challenge_desc (String), debuffs (Array[Dictionary])
 func setup(data: Dictionary) -> void:
 	_build_ui(data)
 
@@ -159,6 +160,10 @@ func _build_ui(data: Dictionary) -> void:
 	
 	add_child(_panel)
 	
+	## Shader backdrop behind all panel content (gradient, vignette, grain, sheen)
+	_backdrop_fx_rect = _create_backdrop_fx_rect()
+	_panel.resized.connect(_update_backdrop_fx_size)
+	
 	## Content layout
 	var margin = MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 25)
@@ -232,25 +237,6 @@ func _build_ui(data: Dictionary) -> void:
 			row.add_child(name_label)
 			_debuffs_container.add_child(row)
 	
-	## Chore
-	var chore_name = data.get("chore_name", "")
-	if not chore_name.is_empty():
-		_chore_row = HBoxContainer.new()
-		_chore_row.alignment = BoxContainer.ALIGNMENT_CENTER
-		vbox.add_child(_chore_row)
-		
-		var chore_prefix = Label.new()
-		chore_prefix.text = "Chore: "
-		chore_prefix.add_theme_font_size_override("font_size", 14)
-		chore_prefix.add_theme_color_override("font_color", Color(0.8, 0.8, 0.4))
-		_chore_row.add_child(chore_prefix)
-		
-		_chore_label = Label.new()
-		_chore_label.text = chore_name
-		_chore_label.add_theme_font_size_override("font_size", 14)
-		_chore_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.5))
-		_chore_row.add_child(_chore_label)
-	
 	## Spacer
 	var spacer = Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND
@@ -277,3 +263,42 @@ func _build_ui(data: Dictionary) -> void:
 	
 	_lets_play_button.pressed.connect(_on_lets_play_pressed)
 	vbox.add_child(_lets_play_button)
+
+
+
+## _create_backdrop_fx_rect() -> ColorRect
+##
+## Builds a full-rect ColorRect with the panel backdrop shader and inserts it
+## as the panel's first child so content draws on top.
+func _create_backdrop_fx_rect() -> ColorRect:
+	var fx_rect := ColorRect.new()
+	fx_rect.name = "BackdropFxRect"
+	fx_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fx_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fx_rect.color = Color.WHITE
+	var shader := load(BACKDROP_SHADER_PATH) as Shader
+	if shader:
+		var fx_material := ShaderMaterial.new()
+		fx_material.shader = shader
+		fx_material.set_shader_parameter("corner_radius", PANEL_CORNER_RADIUS)
+		fx_rect.material = fx_material
+	else:
+		push_error("[NewRoundPanel] Failed to load shader: " + BACKDROP_SHADER_PATH)
+	_panel.add_child(fx_rect)
+	_panel.move_child(fx_rect, 0)
+	_backdrop_fx_rect = fx_rect
+	_update_backdrop_fx_size()
+	return fx_rect
+
+
+## _update_backdrop_fx_size()
+##
+## Pushes the panel's current size into the backdrop shader so its rounded
+## mask tracks layout. Connected to the panel's resized signal.
+func _update_backdrop_fx_size() -> void:
+	if _backdrop_fx_rect == null or _backdrop_fx_rect.material == null or _panel == null:
+		return
+	var panel_size := _panel.size
+	if panel_size.x <= 0.0 or panel_size.y <= 0.0:
+		panel_size = _panel.custom_minimum_size
+	(_backdrop_fx_rect.material as ShaderMaterial).set_shader_parameter("rect_size", panel_size)

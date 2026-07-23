@@ -7,8 +7,6 @@ class_name DebuffManager
 ## Applies channel difficulty intensity multiplier to debuffs when spawning.
 ## Supports automatic debuff selection based on round configuration.
 
-signal debuffs_applied(debuff_ids: Array)
-
 @export var debuff_defs: Array[DebuffData] = []
 var _defs_by_id := {}
 var _active_debuff_ids: Array[String] = []
@@ -191,51 +189,6 @@ func select_debuffs_for_round(max_count: int, difficulty_cap: int, allow_duplica
 	return selected
 
 
-## apply_round_debuffs(target, round_config, channel_number) -> Array[Debuff]
-##
-## Automatically selects and applies debuffs for a round based on config.
-## Called after challenge reveal so player knows what they're facing.
-## @param target: Node to attach debuffs to
-## @param round_config: RoundDifficultyConfig with max_debuffs and debuff_difficulty_cap
-## @param channel_number: Current channel (for intensity scaling)
-## @return Array of spawned Debuff instances
-func apply_round_debuffs(target: Node, round_config, channel_number: int) -> Array[Debuff]:
-	var spawned: Array[Debuff] = []
-	
-	if not round_config:
-		push_error("[DebuffManager] apply_round_debuffs called with null round_config")
-		return spawned
-	
-	var max_debuffs = round_config.max_debuffs if round_config.get("max_debuffs") != null else 0
-	var difficulty_cap = round_config.debuff_difficulty_cap if round_config.get("debuff_difficulty_cap") != null else 1
-	
-	# Check if channel allows duplicates (channels 16+ allow duplicates for brutality)
-	var allow_duplicates = channel_number >= 16
-	
-	if _verbose_mode:
-		print("[DebuffManager] Applying round debuffs:")
-		print("  Channel: %d, Max Debuffs: %d, Difficulty Cap: %d, Allow Duplicates: %s" % [
-			channel_number, max_debuffs, difficulty_cap, str(allow_duplicates)
-		])
-	
-	# Select debuffs
-	var selected_ids = select_debuffs_for_round(max_debuffs, difficulty_cap, allow_duplicates)
-	
-	# Spawn each selected debuff
-	for id in selected_ids:
-		var debuff = spawn_debuff(id, target)
-		if debuff:
-			spawned.append(debuff)
-			_active_debuff_ids.append(id)
-			print("[DebuffManager] Applied debuff: %s" % id)
-	
-	# Emit signal for UI/logging
-	if spawned.size() > 0:
-		emit_signal("debuffs_applied", selected_ids)
-	
-	return spawned
-
-
 ## clear_active_debuffs() -> void
 ##
 ## Clears the tracking of active debuffs. Call at round end.
@@ -243,6 +196,15 @@ func clear_active_debuffs() -> void:
 	if _verbose_mode:
 		print("[DebuffManager] Clearing %d active debuff IDs" % _active_debuff_ids.size())
 	_active_debuff_ids.clear()
+
+
+## register_active_debuff(id) -> void
+##
+## Registers a debuff id as active (used by GameController when it applies
+## automatic round debuffs through its own apply_debuff() path).
+func register_active_debuff(id: String) -> void:
+	if id not in _active_debuff_ids:
+		_active_debuff_ids.append(id)
 
 
 ## get_active_debuff_ids() -> Array[String]

@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://ciaye8yphgnf2"]
+
+[ext_resource type="Script" uid="uid://dj7qao4mum0g2" path="res://Tests/carry_over_panel_fit_test.gd" id="1_ddf2e"]
+
+[node name="CarryOverPanelFitTest" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_ddf2e")

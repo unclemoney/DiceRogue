@@ -22,9 +22,13 @@ const COUNTER_ANIMATION_DURATION: float = 1.5
 const REVEAL_DELAY: float = 0.3
 const CELEBRATION_THRESHOLD: int = 100  # Bonus amount to trigger celebration
 
+const BACKDROP_SHADER_PATH := "res://Scripts/Shaders/panel_backdrop.gdshader"
+const PANEL_CORNER_RADIUS := 20.0
+
 # UI References (will be set up in _ready or via scene)
 var overlay: ColorRect
 var panel_container: PanelContainer
+var backdrop_fx_rect: ColorRect
 var title_label: Label
 var round_label: Label
 var challenge_score_label: Label
@@ -120,6 +124,10 @@ func _build_ui() -> void:
 	panel_container.add_theme_stylebox_override("panel", panel_style)
 	
 	overlay.add_child(panel_container)
+	
+	# Shader backdrop behind all panel content (gradient, vignette, grain, sheen)
+	backdrop_fx_rect = _create_backdrop_fx_rect()
+	panel_container.resized.connect(_update_backdrop_fx_size)
 	
 	# Main vertical container
 	var main_vbox = VBoxContainer.new()
@@ -785,3 +793,42 @@ func get_score_above_bonus() -> int:
 ## Returns the aggregated round-end PowerUp bonus amount.
 func get_power_up_bonus() -> int:
 	return power_up_bonus_amount
+
+
+
+## _create_backdrop_fx_rect() -> ColorRect
+##
+## Builds a full-rect ColorRect with the panel backdrop shader and inserts it
+## as the panel's first child so content draws on top.
+func _create_backdrop_fx_rect() -> ColorRect:
+	var fx_rect := ColorRect.new()
+	fx_rect.name = "BackdropFxRect"
+	fx_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	fx_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fx_rect.color = Color.WHITE
+	var shader := load(BACKDROP_SHADER_PATH) as Shader
+	if shader:
+		var fx_material := ShaderMaterial.new()
+		fx_material.shader = shader
+		fx_material.set_shader_parameter("corner_radius", PANEL_CORNER_RADIUS)
+		fx_rect.material = fx_material
+	else:
+		push_error("[EndOfRoundStatsPanel] Failed to load shader: " + BACKDROP_SHADER_PATH)
+	panel_container.add_child(fx_rect)
+	panel_container.move_child(fx_rect, 0)
+	backdrop_fx_rect = fx_rect
+	_update_backdrop_fx_size()
+	return fx_rect
+
+
+## _update_backdrop_fx_size()
+##
+## Pushes the panel's current size into the backdrop shader so its rounded
+## mask tracks layout. Connected to the panel's resized signal.
+func _update_backdrop_fx_size() -> void:
+	if backdrop_fx_rect == null or backdrop_fx_rect.material == null or panel_container == null:
+		return
+	var panel_size := panel_container.size
+	if panel_size.x <= 0.0 or panel_size.y <= 0.0:
+		panel_size = panel_container.custom_minimum_size
+	(backdrop_fx_rect.material as ShaderMaterial).set_shader_parameter("rect_size", panel_size)

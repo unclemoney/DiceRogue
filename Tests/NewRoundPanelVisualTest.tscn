@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://bwfuirdwk7rcr"]
+
+[ext_resource type="Script" uid="uid://boptsu0frf37w" path="res://Tests/new_round_panel_visual_test.gd" id="1_tbmef"]
+
+[node name="NewRoundPanelVisualTest" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_tbmef")

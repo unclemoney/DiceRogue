@@ -171,6 +171,9 @@ var _challenge_celebration = null
 var _chore_selection_popup = null
 var _pending_chore_selection: bool = false  # True when chore selection is waiting to be shown
 var _defer_chore_selection_until_round_start: bool = false
+# Automatic debuffs pre-selected when the New Round Panel is built, so the
+# panel preview matches exactly what is applied when the round starts.
+var _pending_round_debuff_ids: Array[String] = []
 var _is_round_start_chore_gate_active: bool = false
 
 # Pending unlocked items to display before stats panel
@@ -820,6 +823,11 @@ func _clear_active_debuffs() -> void:
 			debuff.queue_free()
 	active_debuffs.clear()
 	_grounded_debuffs.clear()
+	_pending_round_debuff_ids.clear()
+	
+	# Clear DebuffManager tracking so stale ids don't leak across channels
+	if debuff_manager:
+		debuff_manager.clear_active_debuffs()
 	
 	# Clear UI
 	if is_instance_valid(debuff_ui) and debuff_ui.has_method("clear_all_debuffs"):
@@ -4824,32 +4832,44 @@ func _apply_automatic_debuffs(round_number: int) -> void:
 		print("[GameController] Cannot apply automatic debuffs - missing manager")
 		return
 	
-	# Clear previous round's debuffs (no persistence)
+	# Tear down previous round's automatic debuffs (no persistence across rounds).
+	# Done synchronously so re-selecting the same id this round can't race with
+	# an animated removal.
+	for prev_id in debuff_manager.get_active_debuff_ids():
+		if is_debuff_active(prev_id):
+			var prev_debuff = active_debuffs[prev_id]
+			prev_debuff.end()
+			if is_instance_valid(debuff_ui):
+				debuff_ui.remove_debuff(prev_id)
+			active_debuffs.erase(prev_id)
 	debuff_manager.clear_active_debuffs()
 	
-	# Get round config from channel manager
-	var round_config = channel_manager.get_round_config(channel_manager.current_channel, round_number)
-	if not round_config:
-		print("[GameController] No round config for round %d" % round_number)
-		return
+	# Use debuffs pre-selected when the New Round Panel was built so the panel
+	# preview matches what is actually applied; otherwise select fresh now.
+	var selected_ids: Array[String] = []
+	if _pending_round_debuff_ids.size() > 0:
+		selected_ids = _pending_round_debuff_ids.duplicate()
+		_pending_round_debuff_ids.clear()
+	else:
+		var round_config = channel_manager.get_round_config(channel_manager.current_channel, round_number)
+		if round_config:
+			var max_debuffs = round_config.max_debuffs if round_config.get("max_debuffs") != null else 0
+			var difficulty_cap = round_config.debuff_difficulty_cap if round_config.get("debuff_difficulty_cap") != null else 1
+			# Channels 16+ allow duplicates (brutality)
+			var allow_duplicates = channel_manager.current_channel >= 16
+			selected_ids = debuff_manager.select_debuffs_for_round(max_debuffs, difficulty_cap, allow_duplicates)
 	
 	var channel_number = channel_manager.current_channel
-	print("[GameController] Applying automatic debuffs for Channel %d Round %d" % [channel_number, round_number])
+	print("[GameController] Applying automatic debuffs for Channel %d Round %d: %s" % [channel_number, round_number, str(selected_ids)])
 	
-	# Apply debuffs using DebuffManager
-	var spawned = debuff_manager.apply_round_debuffs(debuff_container, round_config, channel_number)
+	# Apply via apply_debuff() so each debuff gets its target, is started,
+	# registered with the UI, and emits debuff_applied.
+	for id in selected_ids:
+		apply_debuff(id)
+		debuff_manager.register_active_debuff(id)
 	
-	# Track spawned debuffs in active_debuffs dict
-	for debuff in spawned:
-		if debuff and debuff.id:
-			active_debuffs[debuff.id] = debuff
-			# Update UI
-			var def = debuff_manager.get_def(debuff.id)
-			if def and debuff_ui:
-				debuff_ui.add_debuff(def, debuff)
-	
-	if spawned.size() > 0:
-		print("[GameController] Applied %d automatic debuffs" % spawned.size())
+	if selected_ids.size() > 0:
+		print("[GameController] Applied %d automatic debuffs" % selected_ids.size())
 	else:
 		print("[GameController] No automatic debuffs for this round")
 
@@ -5141,8 +5161,11 @@ func _release_round_start_chore_gate() -> void:
 ## _on_chore_selection_requested()
 ##
 ## Handler for when ChoresManager needs the player to choose a new chore.
-## Creates and displays the ChoreSelectionPopup overlay.
-## Only one popup is shown per turn to avoid spam.
+## Defers the show/skip decision to the end of the frame: this signal fires
+## from inside Scorecard.set_score()'s score_assigned handling, which runs
+## BEFORE score_changed → challenge_completed sets
+## round_manager.is_challenge_completed. Checking immediately would read a
+## stale flag and show a redundant popup on the round-ending score.
 func _on_chore_selection_requested() -> void:
 	if not chores_manager:
 		return
@@ -5152,10 +5175,26 @@ func _on_chore_selection_requested() -> void:
 		_pending_chore_selection = true
 		return
 	
+	call_deferred("_resolve_chore_selection_request")
+
+
+## _resolve_chore_selection_request()
+##
+## Deferred body of _on_chore_selection_requested(). Runs after the full
+## scoring signal chain, so round/game completion flags are accurate.
+func _resolve_chore_selection_request() -> void:
+	if not chores_manager:
+		return
+	
 	# If a challenge was just completed, skip chore selection entirely —
 	# a new chore will be requested at the next round start instead.
 	if round_manager and round_manager.is_challenge_completed:
 		print("[GameController] Chore selection skipped - challenge completed, new chore at next round start")
+		return
+	
+	# If the whole game (channel) just completed, skip as well.
+	if scorecard and scorecard.is_game_complete():
+		print("[GameController] Chore selection skipped - game completed")
 		return
 	
 	_show_chore_selection_popup()
@@ -5172,6 +5211,11 @@ func _show_chore_selection_popup() -> void:
 			_release_round_start_chore_gate()
 		if _is_processing_round_end:
 			_process_round_end_queue()
+		return
+	
+	# Guard against double-show (request may also be re-queued at round start)
+	if _chore_selection_popup and is_instance_valid(_chore_selection_popup) and _chore_selection_popup.visible:
+		print("[GameController] Chore selection popup already visible - skipping")
 		return
 	
 	print("[GameController] Showing chore selection popup")
@@ -5733,25 +5777,47 @@ func _build_round_panel_data(round_num: int) -> Dictionary:
 		"round_number": round_num,
 		"challenge_name": "",
 		"challenge_desc": "",
-		"debuffs": [],
-		"chore_name": ""
+		"debuffs": []
 	}
 	
 	if channel_manager:
 		data["channel"] = channel_manager.current_channel
 	
+	var challenge_def: ChallengeData = null
 	if round_manager and round_num >= 1 and round_num <= round_manager.rounds_data.size():
 		var round_data = round_manager.rounds_data[round_num - 1]
 		var challenge_id = round_data.get("challenge_id", "")
 		if challenge_manager and not challenge_id.is_empty():
-			var challenge_def = challenge_manager.get_def(challenge_id)
+			challenge_def = challenge_manager.get_def(challenge_id)
 			if challenge_def:
 				data["challenge_name"] = challenge_def.display_name
 				data["challenge_desc"] = challenge_def.description
 	
+	# Debuff preview: show what the upcoming round will actually apply —
+	# the challenge's declared debuffs plus automatic debuffs pre-selected
+	# from the channel round config. The automatic selection is stored and
+	# committed at round start (_apply_automatic_debuffs) so the panel
+	# always matches reality.
+	_pending_round_debuff_ids.clear()
 	if debuff_manager:
-		var active_ids = debuff_manager.get_active_debuff_ids()
-		for debuff_id in active_ids:
+		var preview_ids: Array[String] = []
+		if challenge_def:
+			for id in challenge_def.debuff_ids:
+				if id not in preview_ids:
+					preview_ids.append(id)
+		if channel_manager:
+			var round_config = channel_manager.get_round_config(channel_manager.current_channel, round_num)
+			if round_config:
+				var max_debuffs = round_config.max_debuffs if round_config.get("max_debuffs") != null else 0
+				var difficulty_cap = round_config.debuff_difficulty_cap if round_config.get("debuff_difficulty_cap") != null else 1
+				# Channels 16+ allow duplicates (brutality)
+				var allow_duplicates = channel_manager.current_channel >= 16
+				var auto_ids = debuff_manager.select_debuffs_for_round(max_debuffs, difficulty_cap, allow_duplicates, preview_ids)
+				for id in auto_ids:
+					if id not in preview_ids:
+						preview_ids.append(id)
+						_pending_round_debuff_ids.append(id)
+		for debuff_id in preview_ids:
 			var debuff_def = _find_debuff_def(debuff_id)
 			if debuff_def:
 				data["debuffs"].append({
@@ -5767,9 +5833,6 @@ func _build_round_panel_data(round_num: int) -> Dictionary:
 					"glyph_scale": debuff_def.glyph_scale,
 					"difficulty_rating": debuff_def.difficulty_rating
 				})
-	
-	if chores_manager and chores_manager.current_task:
-		data["chore_name"] = chores_manager.current_task.display_name
 	
 	return data
 
