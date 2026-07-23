@@ -23,6 +23,8 @@ var home_position: Vector2 = Vector2.ZERO
 var _can_process_input := true
 var _lock_shader_enabled := true
 var _disable_visual_pending := false
+var _state_disabled_visual_active := false
+var _debuff_disabled_face_active := false
 @export var is_locked: bool = false
 
 # State machine properties
@@ -62,8 +64,11 @@ var intensity_params: Dictionary = {
 signal die_locked(die: Dice)
 
 @onready var sprite: Sprite2D = $Sprite2D
+@onready var state_overlay: ColorRect = $StateOverlay
 @onready var dice_combined_shader := load("res://Scripts/Shaders/dice_combined_effects.gdshader")
 @onready var dice_material := ShaderMaterial.new()
+@onready var state_overlay_shader := load("res://Scripts/Shaders/dice_state_overlay.gdshader")
+@onready var state_overlay_material := ShaderMaterial.new()
 
 @onready var mod_container: Control = $ModContainer
 @onready var color_label_bg: PanelContainer = $ColorLabelBg
@@ -84,11 +89,14 @@ func _ready():
 	# Set up combined shader
 	dice_material.shader = dice_combined_shader
 	sprite.material = dice_material
+	state_overlay_material.shader = state_overlay_shader
+	state_overlay.material = state_overlay_material
+	state_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	dice_material.set_shader_parameter("glow_strength", 0.0)
-	dice_material.set_shader_parameter("lock_overlay_strength", 0.6 if is_locked else 0.0)
-	dice_material.set_shader_parameter("disabled", false)
 	dice_material.set_shader_parameter("x_rot", 0.0)
 	dice_material.set_shader_parameter("y_rot", 0.0)
+	_configure_state_overlay()
+	_refresh_combined_shader_state()
 	
 	# Randomize idle breathing phase so dice don't sync
 	_breathing_phase_offset = randf() * TAU
@@ -106,17 +114,17 @@ func _ready():
 	if color_label_bg and color_hover_label:
 		_apply_hover_tooltip_style(color_label_bg)
 		_apply_hover_label_style(color_hover_label)
+
+	var color_manager = _get_dice_color_manager()
+	if color_manager and color_manager.has_signal("colors_enabled_changed"):
+		var color_signal = Callable(self, "_on_colors_enabled_changed")
+		if not color_manager.is_connected("colors_enabled_changed", color_signal):
+			color_manager.colors_enabled_changed.connect(_on_colors_enabled_changed)
 		
 	_configure_mod_container()
 		
 	set_dice_input_enabled(true)
 	set_lock_shader_enabled(true)
-
-	# Create shader material if it doesn't exist
-	if not material:
-		material = ShaderMaterial.new()
-		material.shader = preload("res://Scripts/Shaders/disabled_dice.gdshader")
-		material.set_shader_parameter("disabled", false)
 
 ## State Machine Methods
 
@@ -177,27 +185,17 @@ func can_score() -> bool:
 func _update_state_visual() -> void:
 	match current_state:
 		DiceState.ROLLABLE:
-			# Reset to default appearance
-			if dice_material:
-				dice_material.set_shader_parameter("lock_overlay_strength", 0.0)
-				dice_material.set_shader_parameter("disabled", false)
+			_state_disabled_visual_active = false
 		DiceState.ROLLED:
-			# Available for interaction, no special visual
-			if dice_material:
-				dice_material.set_shader_parameter("lock_overlay_strength", 0.0)
-				dice_material.set_shader_parameter("disabled", false)
+			_state_disabled_visual_active = false
 		DiceState.LOCKED:
-			# Show lock overlay
+			_state_disabled_visual_active = false
 			if dice_material and _lock_shader_enabled:
-				dice_material.set_shader_parameter("lock_overlay_strength", 0.6)
-				dice_material.set_shader_parameter("disabled", false)
 				print("[Dice] Applied lock overlay visual feedback")
 		DiceState.DISABLED:
-			# Show disabled/grayed out appearance (delayed if bow animation is playing)
-			if dice_material and not _disable_visual_pending:
-				dice_material.set_shader_parameter("disabled", true)
-				dice_material.set_shader_parameter("lock_overlay_strength", 0.0)
+			_state_disabled_visual_active = not _disable_visual_pending
 	
+	_refresh_combined_shader_state()
 	# Update existing visual elements
 	update_visual()
 
@@ -252,14 +250,12 @@ func lock() -> void:
 
 func set_dice_input_enabled(enabled: bool) -> void:
 	_can_process_input = enabled
+	_refresh_combined_shader_state()
 
 
 func set_lock_shader_enabled(enabled: bool) -> void:
 	_lock_shader_enabled = enabled
-	# Update shader visibility based on both lock state and enabled state
-	if has_node("Sprite2D"):
-		dice_material.set_shader_parameter("lock_overlay_strength", 
-			0.6 if (is_locked && enabled) else 0.0)
+	_refresh_combined_shader_state()
 
 func animate_roll():
 	_stop_idle_breathing()
@@ -324,8 +320,52 @@ func update_visual():
 	else:
 		push_error("[Dice] Invalid value for current dice:", value)
 	
-	dice_material.set_shader_parameter("lock_overlay_strength", 
-		0.6 if (is_locked && _lock_shader_enabled) else 0.0)
+	_refresh_combined_shader_state()
+
+
+func _refresh_combined_shader_state() -> void:
+	if dice_material == null or dice_material.shader == null:
+		return
+
+	dice_material.set_shader_parameter("lock_overlay_strength", 0.6 if (is_locked and _lock_shader_enabled) else 0.0)
+	dice_material.set_shader_parameter("disabled", _state_disabled_visual_active)
+	dice_material.set_shader_parameter("debuff_disabled_strength", 1.0 if _debuff_disabled_face_active else 0.0)
+	_refresh_state_overlay()
+
+
+func _refresh_state_overlay() -> void:
+	if state_overlay == null or state_overlay_material == null or state_overlay_material.shader == null:
+		return
+
+	var overlay_mode := 0
+	var overlay_strength := 0.0
+
+	if current_state == DiceState.DISABLED:
+		overlay_mode = 3
+		overlay_strength = 1.0 if _state_disabled_visual_active else 0.0
+	elif not _can_process_input:
+		overlay_mode = 2
+		overlay_strength = 1.0
+	elif current_state == DiceState.LOCKED:
+		overlay_mode = 1
+		overlay_strength = 1.0 if _lock_shader_enabled else 0.0
+
+	state_overlay.visible = overlay_mode != 0 and overlay_strength > 0.0
+	state_overlay_material.set_shader_parameter("overlay_mode", overlay_mode)
+	state_overlay_material.set_shader_parameter("overlay_strength", overlay_strength)
+	state_overlay_material.set_shader_parameter("hover_boost", 1.0 if _is_hovering else 0.0)
+
+
+func _configure_state_overlay() -> void:
+	if not state_overlay:
+		return
+
+	var bounds := _get_die_bounds_size()
+	var overlay_margin := Vector2(20.0, 20.0)
+	var overlay_size := bounds + overlay_margin
+	state_overlay.position = -overlay_size / 2.0
+	state_overlay.custom_minimum_size = overlay_size
+	state_overlay.size = overlay_size
 
 
 func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
@@ -372,6 +412,8 @@ func _on_mouse_entered():
 	if current_state == DiceState.DISABLED:
 		shake_denied()
 		return  # Don't show hover effects if disabled
+
+	_refresh_state_overlay()
 	
 	if _hover_tween and _hover_tween.is_valid():
 		_hover_tween.kill()
@@ -399,6 +441,7 @@ func _on_mouse_entered():
 
 func _on_mouse_exited():
 	_is_hovering = false
+	_refresh_state_overlay()
 	
 	if current_state == DiceState.DISABLED:
 		return
@@ -616,6 +659,7 @@ func _configure_mod_container() -> void:
 		return
 
 	var bounds := _get_die_bounds_size()
+	_configure_state_overlay()
 	mod_container.position = -bounds / 2.0
 	mod_container.custom_minimum_size = bounds
 	mod_container.size = bounds
@@ -833,6 +877,35 @@ func _set_color(new_color: DiceColor.Type) -> void:
 	color = new_color
 	_update_color_shader()
 
+
+static func clear_color_shader_parameters(shader_material: ShaderMaterial) -> void:
+	if shader_material == null:
+		return
+
+	shader_material.set_shader_parameter("green_color_strength", 0.0)
+	shader_material.set_shader_parameter("red_color_strength", 0.0)
+	shader_material.set_shader_parameter("purple_color_strength", 0.0)
+	shader_material.set_shader_parameter("blue_color_strength", 0.0)
+	shader_material.set_shader_parameter("yellow_color_strength", 0.0)
+
+
+static func apply_color_shader_parameters(shader_material: ShaderMaterial, new_color: DiceColor.Type, strength: float = 0.8) -> void:
+	clear_color_shader_parameters(shader_material)
+	if shader_material == null:
+		return
+
+	match new_color:
+		DiceColor.Type.GREEN:
+			shader_material.set_shader_parameter("green_color_strength", strength)
+		DiceColor.Type.RED:
+			shader_material.set_shader_parameter("red_color_strength", strength)
+		DiceColor.Type.PURPLE:
+			shader_material.set_shader_parameter("purple_color_strength", strength)
+		DiceColor.Type.BLUE:
+			shader_material.set_shader_parameter("blue_color_strength", strength)
+		DiceColor.Type.YELLOW:
+			shader_material.set_shader_parameter("yellow_color_strength", strength)
+
 ## Update shader parameters based on current color
 func _update_color_shader() -> void:
 	if not dice_material:
@@ -840,35 +913,34 @@ func _update_color_shader() -> void:
 		return
 	
 	print("[Dice] Updating shader for color:", DiceColor.get_color_name(color))
-		
-	# Reset all color shader parameters
-	dice_material.set_shader_parameter("green_color_strength", 0.0)
-	dice_material.set_shader_parameter("red_color_strength", 0.0)
-	dice_material.set_shader_parameter("purple_color_strength", 0.0)
-	dice_material.set_shader_parameter("blue_color_strength", 0.0)
-	dice_material.set_shader_parameter("yellow_color_strength", 0.0)
+
+	var color_manager = _get_dice_color_manager()
+	if color_manager and color_manager.has_method("are_colors_enabled") and not color_manager.are_colors_enabled():
+		clear_color_shader_parameters(dice_material)
+		print("[Dice] Colors currently disabled - cleared color shader strengths")
+		return
 	
 	# Set appropriate color strength
+	apply_color_shader_parameters(dice_material, color)
 	match color:
 		DiceColor.Type.GREEN:
-			dice_material.set_shader_parameter("green_color_strength", 0.8)
 			print("[Dice] Set GREEN shader strength to 0.8")
 		DiceColor.Type.RED:
-			dice_material.set_shader_parameter("red_color_strength", 0.8)
 			print("[Dice] Set RED shader strength to 0.8")
 		DiceColor.Type.PURPLE:
-			dice_material.set_shader_parameter("purple_color_strength", 0.8)
 			print("[Dice] Set PURPLE shader strength to 0.8")
 		DiceColor.Type.BLUE:
-			dice_material.set_shader_parameter("blue_color_strength", 0.8)
 			print("[Dice] Set BLUE shader strength to 0.8")
 		DiceColor.Type.YELLOW:
-			dice_material.set_shader_parameter("yellow_color_strength", 0.8)
 			print("[Dice] Set YELLOW shader strength to 0.8")
 		DiceColor.Type.NONE:
 			print("[Dice] All color strengths set to 0.0 (NONE)")
 		_:
 			print("[Dice] WARNING: Unknown color type:", color)
+
+
+func _on_colors_enabled_changed(_enabled: bool) -> void:
+	_update_color_shader()
 
 ## Get current dice color
 ## @return DiceColor.Type current color of this die
@@ -892,6 +964,15 @@ func force_color(new_color: DiceColor.Type) -> void:
 ## Clear dice color back to none
 func clear_color() -> void:
 	force_color(DiceColor.Type.NONE)
+
+
+func set_debuff_disabled_face_enabled(enabled: bool) -> void:
+	_debuff_disabled_face_active = enabled
+	_refresh_combined_shader_state()
+
+
+func is_debuff_disabled_face_enabled() -> bool:
+	return _debuff_disabled_face_active
 
 ## Update the color tooltip text based on dice color and value
 func _update_color_tooltip() -> void:
@@ -965,6 +1046,7 @@ func make_rollable_if_allowed() -> void:
 ## Sets dice to DISABLED state after scoring.
 func make_disabled() -> void:
 	_disable_visual_pending = true
+	_state_disabled_visual_active = false
 	set_state(DiceState.DISABLED)
 	_disable_visual_pending = false
 	
@@ -976,9 +1058,8 @@ func make_disabled() -> void:
 	tween.tween_property(self, "rotation_degrees", 0.0, 0.12).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	tween.parallel().tween_property(self, "scale", Vector2(1.0, 1.0), 0.12).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(func():
-		if dice_material:
-			dice_material.set_shader_parameter("disabled", true)
-			dice_material.set_shader_parameter("lock_overlay_strength", 0.0)
+		_state_disabled_visual_active = true
+		_refresh_combined_shader_state()
 	)
 
 ## get_state() -> DiceState

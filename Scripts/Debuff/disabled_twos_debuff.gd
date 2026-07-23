@@ -5,9 +5,10 @@ func _ready() -> void:
 	add_to_group("debuffs")
 	print("[DisabledTwosDebuff] Ready")
 
-func apply(target) -> void:
-	print("[DisabledTwosDebuff] Applying to target:", target.name if target else "null")
-	var dice_hand = target as DiceHand
+func apply(_target) -> void:
+	self.target = _target
+	print("[DisabledTwosDebuff] Applying to target:", _target.name if _target else "null")
+	var dice_hand = _target as DiceHand
 	if dice_hand:
 		is_active = true
 		print("[DisabledTwosDebuff] Disabling twos in scoring")
@@ -34,16 +35,11 @@ func _on_roll_complete() -> void:
 
 func _apply_disabled_visual(die: Dice) -> void:
 	if die:
-		# Instead of directly setting a shader parameter, use the existing dice API
-		if die.dice_material:
-			die.dice_material.set_shader_parameter("disabled", true)
-		else:
-			print("[DisabledTwosDebuff] Dice shader material missing")
+		die.set_debuff_disabled_face_enabled(true)
 
 func _remove_disabled_visual(die: Dice) -> void:
 	if die:
-		if die.dice_material:
-			die.dice_material.set_shader_parameter("disabled", false)
+		die.set_debuff_disabled_face_enabled(false)
 
 func remove() -> void:
 	print("[DisabledTwosDebuff] Removing effect")

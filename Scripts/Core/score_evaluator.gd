@@ -118,7 +118,7 @@ func filter_disabled_values(values: Array[int]) -> Array[int]:
 		print("[ScoreEvaluator] No game controller found, checking for visual indicators")
 		for i in range(min(values.size(), DiceResults.dice_refs.size())):
 			var die = DiceResults.dice_refs[i]
-			if die and die.dice_material and die.dice_material.get_shader_parameter("disabled"):
+			if die and die.is_debuff_disabled_face_enabled():
 				if values[i] == 2:
 					disabled_twos_active = true
 					print("[ScoreEvaluator] Found visually disabled die with value 2")

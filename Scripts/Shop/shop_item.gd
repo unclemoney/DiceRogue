@@ -20,6 +20,7 @@ const DICE_SHADER_PATH := "res://Scripts/Shaders/dice_combined_effects.gdshader"
 const RARITY_BADGE_SHADER_PATH := "res://Scripts/Shaders/rarity_badge.gdshader"
 const PRICE_TAG_SHADER_PATH := "res://Scripts/Shaders/shop_price_tag.gdshader"
 const CARD_PANEL_SHADER_PATH := "res://Scripts/Shaders/shop_card_panel.gdshader"
+const DiceScript = preload("res://Scripts/Core/dice.gd")
 const SHOP_ITEM_THEME = preload("res://Resources/UI/shop_item_theme.tres")
 const VCR_FONT = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 const BADGE_CORNER_RADIUS := 12.0
@@ -725,25 +726,16 @@ func _setup_colored_dice_icon(dice_color_type: DiceColor.Type) -> void:
 	var shader_material = ShaderMaterial.new()
 	shader_material.shader = shader
 	
-	# Reset all color strengths
-	shader_material.set_shader_parameter("green_color_strength", 0.0)
-	shader_material.set_shader_parameter("red_color_strength", 0.0)
-	shader_material.set_shader_parameter("purple_color_strength", 0.0)
-	shader_material.set_shader_parameter("blue_color_strength", 0.0)
+	DiceScript.clear_color_shader_parameters(shader_material)
 	shader_material.set_shader_parameter("glow_strength", 0.0)
 	shader_material.set_shader_parameter("lock_overlay_strength", 0.0)
 	shader_material.set_shader_parameter("disabled", false)
+	shader_material.set_shader_parameter("debuff_disabled_strength", 0.0)
+	shader_material.set_shader_parameter("flash_strength", 0.0)
+	shader_material.set_shader_parameter("x_rot", 0.0)
+	shader_material.set_shader_parameter("y_rot", 0.0)
 	
-	# Set the appropriate color strength based on dice color type
-	match dice_color_type:
-		DiceColor.Type.GREEN:
-			shader_material.set_shader_parameter("green_color_strength", 0.8)
-		DiceColor.Type.RED:
-			shader_material.set_shader_parameter("red_color_strength", 0.8)
-		DiceColor.Type.PURPLE:
-			shader_material.set_shader_parameter("purple_color_strength", 0.8)
-		DiceColor.Type.BLUE:
-			shader_material.set_shader_parameter("blue_color_strength", 0.8)
+	DiceScript.apply_color_shader_parameters(shader_material, dice_color_type)
 	
 	icon.material = shader_material
 	print("[ShopItem] Set up colored dice icon with shader for:", DiceColor.get_color_name(dice_color_type))

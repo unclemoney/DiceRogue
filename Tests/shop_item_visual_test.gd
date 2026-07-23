@@ -97,10 +97,10 @@ func _run_assertions() -> void:
 			_failures.append(label + ": missing PriceFxRect shader overlay")
 
 		if shop_item.item_type == "power_up":
-			var tooltip_text: String = shop_item._get_current_tooltip_text()
-			if not tooltip_text.contains("Mom Approval:"):
+			var current_tooltip_text: String = shop_item._get_current_tooltip_text()
+			if not current_tooltip_text.contains("Mom Approval:"):
 				_failures.append(label + ": tooltip missing Mom Approval line")
-			if not tooltip_text.contains("Rarity: " + shop_item.item_data.rarity.capitalize()):
+			if not current_tooltip_text.contains("Rarity: " + shop_item.item_data.rarity.capitalize()):
 				_failures.append(label + ": tooltip missing Rarity line")
 			if not shop_item.get_node_or_null("BadgeLayer/RarityBadge/RarityFxRect"):
 				_failures.append(label + ": missing RarityFxRect shader overlay")
@@ -161,14 +161,14 @@ func _make_mod() -> ModData:
 
 
 func _make_colored_dice() -> ColoredDiceData:
-	var loaded = DiceColorManager.get_colored_dice_data("blue_dice") if DiceColorManager else null
+	var loaded = DiceColorManager.get_colored_dice_data("yellow_dice") if DiceColorManager else null
 	var data := loaded.duplicate(true) as ColoredDiceData if loaded else ColoredDiceData.new()
-	data.id = "blue_dice"
-	data.display_name = "Blue Dice"
+	data.id = "yellow_dice"
+	data.display_name = "Yellow Dice"
 	data.description = "Colored dice sample for dynamic pricing on the new price tag."
-	data.effect_description = "Used blue dice multiply score; unused blue dice divide it."
-	data.price = 150
-	data.color_type = DiceColor.Type.BLUE
+	data.effect_description = "Scored yellow dice grant consumables."
+	data.price = 100
+	data.color_type = DiceColor.Type.YELLOW
 	if not data.icon:
 		data.icon = FALLBACK_ICON
 	return data

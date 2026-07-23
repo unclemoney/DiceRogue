@@ -228,10 +228,13 @@ All dice use multi-phase tween animations with bounce easing, randomization, and
 **Intensity Scaling**: Animation parameters (bounce height, speed, rotation, shockwave size, idle amplitude) scale dynamically based on challenge progress (0-1) and total score milestone tier (0-4). Calculated by `DiceAnimationIntensity.calculate()` and distributed to dice via `intensity_params` dictionary.
 
 **Shaders**:
-- `dice_combined_effects.gdshader` — Glow, lock overlay, disabled pulse, 5 color effects, and perspective tilt (`x_rot`/`y_rot` vertex transforms)
+- `dice_combined_effects.gdshader` — Alpha-bound dice color treatment, hover glow, critical flash, debuff face marker, and perspective tilt (`x_rot`/`y_rot` vertex transforms). Color, flash, and tint effects now stay clipped to the dice silhouette instead of tinting transparent rounded corners.
+- `dice_state_overlay.gdshader` — Separate procedural overlay for locked, lockout, and disabled state glyphs plus halo treatment, rendered from the dedicated `StateOverlay` host on each die.
 - `dice_shockwave.gdshader` — Radial expanding ring with `progress`, `ring_width`, `ring_color`, `max_radius` uniforms
 
-**Test Scene**: `Tests/DiceAnimationTest.tscn` — Interactive test with Spawn/Roll/Exit/Celebrate/Shake/Flash buttons, score slider (0-1500), and challenge progress slider (0-100%).
+**Test Scenes**:
+- `Tests/DiceAnimationTest.tscn` — Interactive test with Spawn/Roll/Exit/Celebrate/Shake/Flash buttons, score slider (0-1500), and challenge progress slider (0-100%).
+- `Tests/DiceVisualSmokeTest.tscn` — Bounded runtime smoke test that instantiates dice and forces rolled, locked, lockout, disabled, and debuff-marked states for CLI validation.
 
 #### UI Popup Animations
 
