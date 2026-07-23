@@ -22,11 +22,18 @@ const DIFFICULTY_TINTS: Array[Color] = [
 	Color(0.75, 0.3, 1.0),
 ]
 
+# Rounded corner radius for the background panel. Matches GameUI's
+# PANEL_CORNER_RADIUS (16) minus PANEL_BORDER_WIDTH (2) so the tinted
+# background nests inside the parent panel's rounded border instead of
+# spilling past it (clip_contents clips to a rect, not rounded corners).
+const BG_CORNER_RADIUS: int = 14
+
 # Node references
 var _name_label: Label
 var _progress_bar: ProgressBar
 var _meta_label: Label
-var _bg_rect: ColorRect
+var _bg_panel: Panel
+var _bg_style: StyleBoxFlat
 
 var is_active := false
 var _current_tween: Tween
@@ -40,13 +47,18 @@ func _ready() -> void:
 	_apply_data_to_ui()
 
 func _build_ui() -> void:
-	# Background rect — tinted by difficulty
-	_bg_rect = ColorRect.new()
-	_bg_rect.name = "BgRect"
-	_bg_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_bg_rect.color = Color(0.10, 0.08, 0.14, 0.85)
-	_bg_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_bg_rect)
+	# Background panel — tinted by difficulty, with rounded corners that
+	# match the parent GameUI panel so it doesn't spill past the border.
+	_bg_panel = Panel.new()
+	_bg_panel.name = "BgPanel"
+	_bg_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_bg_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_bg_style = StyleBoxFlat.new()
+	_bg_style.bg_color = Color(0.10, 0.08, 0.14, 0.0)
+	_bg_style.set_corner_radius_all(BG_CORNER_RADIUS)
+	_bg_style.corner_detail = 8
+	_bg_panel.add_theme_stylebox_override("panel", _bg_style)
+	add_child(_bg_panel)
 
 	# Try to load chip art — falls back gracefully if not present
 	var chip_tex := TextureRect.new()
@@ -135,10 +147,10 @@ func _apply_data_to_ui() -> void:
 		_meta_label.text = "%s · %s" % [stars, pts_text]
 
 	# Tint background by difficulty
-	if _bg_rect:
+	if _bg_style:
 		var tier: int = clamp(data.difficulty, 0, 5)
 		var tint: Color = DIFFICULTY_TINTS[tier]
-		_bg_rect.color = Color(
+		_bg_style.bg_color = Color(
 			0.10 * tint.r + 0.04,
 			0.08 * tint.g + 0.04,
 			0.14 * tint.b + 0.04,

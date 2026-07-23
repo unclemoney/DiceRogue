@@ -96,8 +96,8 @@ func _test_default_values() -> void:
 	
 	stats_panel.show_stats(data)
 	
-	# Expected: Empty bonus = 3 * $10 = $30, Score bonus = 30 * $1 = $30, PowerUp = $100, Total = $160
-	_log("Expected bonuses: Empty=$30, Score=$30, PowerUps=$100, Total=$160")
+	# Expected: Empty bonus = 3 * $5 = $30, Score bonus = 30 * $1 = $30, PowerUp = $100, Total = $160
+	_log("Expected bonuses: Empty=$15, Score=$30, PowerUps=$100, Total=$145")
 
 
 func _test_high_bonuses() -> void:
@@ -117,8 +117,8 @@ func _test_high_bonuses() -> void:
 	
 	stats_panel.show_stats(data)
 	
-	# Expected: Empty bonus = 7 * $10 = $70, Score bonus = capped at $100, PowerUps = $180, Total = $350
-	_log("Expected bonuses: Empty=$70, Score=$100 (capped), PowerUps=$180, Total=$350")
+	# Expected: Empty bonus = 7 * $5 = $35, Score bonus = capped at $100, PowerUps = $180, Total = $315
+	_log("Expected bonuses: Empty=$35, Score=$100 (capped), PowerUps=$180, Total=$315")
 
 
 func _test_no_bonuses() -> void:
