@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://dxrl6nrwo0jhw"]
 
-[ext_resource type="Texture2D" uid="uid://4cdwvangyrkj" path="res://Resources/Art/Powerups/onscure_90s_500.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://bybdxd404djbf" path="res://Resources/Art/Powerups/parental_guidance_pg_pog_grid_5x5.png" id="1_l74pp"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/ModdedDiceMasteryPowerUp.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(110, 139, 93, 121)
+[sub_resource type="AtlasTexture" id="AtlasTexture_6mlbw"]
+atlas = ExtResource("1_l74pp")
+region = Rect2(612, 406, 179, 179)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "modded_dice_mastery"
 display_name = "Modded Dice Mastery"
 description = "+10 points per modded die when scoring"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_6mlbw")
 scene = ExtResource("2_scene")
 price = 300
 rarity = "rare"

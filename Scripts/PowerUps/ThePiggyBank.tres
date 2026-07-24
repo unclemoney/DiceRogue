@@ -1,21 +1,21 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://c4j0vl8msqabm"]
 
-[ext_resource type="Texture2D" uid="uid://4cdwvangyrkj" path="res://Resources/Art/Powerups/onscure_90s_500.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://c65f3br6a5kwf" path="res://Resources/Art/Powerups/mom_approved_pog_grid_5x5_revised.png" id="1_erpts"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" uid="uid://c4j0vl8msqa8h" path="res://Scenes/PowerUp/ThePiggyBankPowerUp.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(109, 264, 92, 121)
+[sub_resource type="AtlasTexture" id="AtlasTexture_5st3k"]
+atlas = ExtResource("1_erpts")
+region = Rect2(609, 402, 188, 181)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "the_piggy_bank"
 display_name = "The Piggy Bank"
 description = "Saves $3 per roll. Sell to cash out all savings!"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_5st3k")
 scene = ExtResource("2_scene")
 price = 125
 rarity = "uncommon"
-rating = "E"
+rating = "G"
 metadata/_custom_type_script = "uid://b4upm4dbvhukm"

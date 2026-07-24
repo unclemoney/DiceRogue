@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://bdr5jlk1b1fc"]
 
-[ext_resource type="Texture2D" uid="uid://c6e6a483j4vfn" path="res://Resources/Art/Powerups/regular_movies_500.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://c0y4n53xm2pgx" path="res://Resources/Art/Powerups/grounded_pog_grid_5x5.png" id="1_alykd"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" uid="uid://bdr5jlk1b0x6" path="res://Scenes/PowerUp/YahtzeedDicePowerUp.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(206, 285, 100, 132)
+[sub_resource type="AtlasTexture" id="AtlasTexture_n0788"]
+atlas = ExtResource("1_alykd")
+region = Rect2(21, 216, 182, 185)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "yahtzeed_dice"
 display_name = "Yahtzeed Dice"
 description = "Gain +1 die every time you roll a Yahtzee! (Excluding Bonus Yahtzees)"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_n0788")
 scene = ExtResource("2_scene")
 price = 450
 rarity = "epic"

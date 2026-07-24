@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://c881tuw711775"]
 
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_40cld"]
-[ext_resource type="Texture2D" uid="uid://ffjem017owqi" path="res://Resources/Art/Powerups/campy_80s_500.png" id="1_v3gco"]
+[ext_resource type="Texture2D" uid="uid://c65f3br6a5kwf" path="res://Resources/Art/Powerups/mom_approved_pog_grid_5x5_revised.png" id="1_v3gco"]
 [ext_resource type="PackedScene" uid="uid://c3x4v5n6m7b8" path="res://Scenes/PowerUp/EvensNoOddsPowerUp.tscn" id="2_awvan"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_30fkh"]
 atlas = ExtResource("1_v3gco")
-region = Rect2(297, 7, 91, 132)
+region = Rect2(419, 764, 187, 184)
 
 [resource]
 script = ExtResource("1_40cld")
 id = "evens_no_odds"
 display_name = "Evens No Odds"
 description = "Even dice add +1, odd dice add -1 to all scores"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_30fkh")
 scene = ExtResource("2_awvan")
 price = 50
 rarity = "common"

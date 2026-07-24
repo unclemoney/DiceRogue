@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://bgs14y1iw5sar"]
 
-[ext_resource type="Texture2D" uid="uid://divncawucf60p" path="res://Resources/Art/Powerups/teen_classics_500px.png" id="1_icon"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="Texture2D" uid="uid://dqct3k5i3x45l" path="res://Resources/Art/Powerups/questionable_pog_grid_5x5.png" id="1_snh7d"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/ExtraRainbowPowerUp.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(300, 7, 94, 143)
+[sub_resource type="AtlasTexture" id="AtlasTexture_jg5ld"]
+atlas = ExtResource("1_snh7d")
+region = Rect2(427, 770, 176, 175)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "extra_rainbow"
 display_name = "Extra Rainbow"
 description = "+10 per colored die scored"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_jg5ld")
 scene = ExtResource("2_scene")
 price = 300
 rarity = "rare"

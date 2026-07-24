@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://cfbxrx43vnu8j"]
 
-[ext_resource type="Texture2D" uid="uid://divncawucf60p" path="res://Resources/Art/Powerups/teen_classics_500px.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://dqct3k5i3x45l" path="res://Resources/Art/Powerups/questionable_pog_grid_5x5.png" id="1_bm2gu"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/DifferentStraights.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(206, 7, 93, 143)
+[sub_resource type="AtlasTexture" id="AtlasTexture_7tnh4"]
+atlas = ExtResource("1_bm2gu")
+region = Rect2(425, 214, 176, 173)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "different_straights"
 display_name = "Different Straights"
 description = "Straights can have one gap of 1"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_7tnh4")
 scene = ExtResource("2_scene")
 price = 300
 rarity = "rare"

@@ -1,0 +1,464 @@
+{
+  "allowance": {
+    "file": "Scripts/PowerUps/Allowance.tres",
+    "name": "Allowance",
+    "desc": "Grants a bonus $100 when completeing a challenge",
+    "rating": "G",
+    "rarity": "common"
+  },
+  "azure_perfection": {
+    "file": "Scripts/PowerUps/AzurePerfectionPowerUp.tres",
+    "name": "Azure Perfection",
+    "desc": "Blue dice ALWAYS count as used - no penalties, only multipliers!",
+    "rating": "R",
+    "rarity": "legendary"
+  },
+  "blue_safety_net": {
+    "file": "Scripts/PowerUps/BlueSafetyNetPowerUp.tres",
+    "name": "Blue Safety Net",
+    "desc": "Blue dice penalties reduced by 50%",
+    "rating": "PG",
+    "rarity": "uncommon"
+  },
+  "blue_slime": {
+    "file": "Scripts/PowerUps/BlueSlime.tres",
+    "name": "Blue Slime",
+    "desc": "Doubles the chance of rolling blue dice",
+    "rating": "PG-13",
+    "rarity": "legendary"
+  },
+  "bonus_money": {
+    "file": "Scripts/PowerUps/BonusMoneyPowerUp.tres",
+    "name": "Bonus Money",
+    "desc": "+$50 for each bonus achieved (Upper Section Bonus or Yahtzee Bonus)",
+    "rating": "G",
+    "rarity": "uncommon"
+  },
+  "challenge_easer": {
+    "file": "Scripts/PowerUps/ChallengeEaserPowerUp.tres",
+    "name": "Challenge Easer",
+    "desc": "All challenge score targets reduced by 20%",
+    "rating": "PG-13",
+    "rarity": "epic"
+  },
+  "chance520": {
+    "file": "Scripts/PowerUps/Chance520PowerUp.tres",
+    "name": "Chance 520",
+    "desc": "+5 to all scores for each Chance category scored with 20 or above",
+    "rating": "PG",
+    "rarity": "uncommon"
+  },
+  "chore_champion": {
+    "file": "Scripts/PowerUps/ChoreChampionPowerUp.tres",
+    "name": "Chore Champion",
+    "desc": "Chores are 2x more effective (Check to make sure since refactor)",
+    "rating": "G",
+    "rarity": "common"
+  },
+  "chore_sprint": {
+    "file": "Scripts/PowerUps/ChoreSprintPowerUp.tres",
+    "name": "Chore Sprint",
+    "desc": "Chores reduce goof-off meter by 30 instead of 20 (redundant)",
+    "rating": "PG",
+    "rarity": "uncommon"
+  },
+  "consumable_cash": {
+    "file": "Scripts/PowerUps/ConsumableCashPowerUp.tres",
+    "name": "Cash Flow",
+    "desc": "Grants 1 dollar per turn, +1 dollar per turn for every Consumable used",
+    "rating": "G",
+    "rarity": "uncommon"
+  },
+  "consumable_collector": {
+    "file": "Scripts/PowerUps/ConsumableCollector.tres",
+    "name": "Consumable Collector",
+    "desc": "+0.1x score multiplier for each consumable used",
+    "rating": "PG-13",
+    "rarity": "rare"
+  },
+  "daring_dice": {
+    "file": "Scripts/PowerUps/DaringDice.tres",
+    "name": "Daring Dice",
+    "desc": "Remove 2 dice but gain +50 additive",
+    "rating": "PG-13",
+    "rarity": "rare"
+  },
+  "debuff_destroyer": {
+    "file": "Scripts/PowerUps/DebuffDestroyerPowerUp.tres",
+    "name": "Debuff Destroyer",
+    "desc": "Removes 1 random debuff upon selling",
+    "rating": "PG-13",
+    "rarity": "epic"
+  },
+  "dice_diversity": {
+    "file": "Scripts/PowerUps/DiceDiversityPowerUp.tres",
+    "name": "Dice Diversity",
+    "desc": "+$5 for each unique dice value rolled upon scoring",
+    "rating": "G",
+    "rarity": "common"
+  },
+  "different_straights": {
+    "file": "Scripts/PowerUps/DifferentStraights.tres",
+    "name": "Different Straights",
+    "desc": "Straights can have one gap of 1",
+    "rating": "PG-13",
+    "rarity": "rare"
+  },
+  "even_higher": {
+    "file": "Scripts/PowerUps/EvenHigherPowerUp.tres",
+    "name": "Even Higher",
+    "desc": "+1 additive per even die scored (cumulative)",
+    "rating": "PG-13",
+    "rarity": "rare"
+  },
+  "evens_no_odds": {
+    "file": "Scripts/PowerUps/EvensNoOddsPowerUp.tres",
+    "name": "Evens No Odds",
+    "desc": "Even dice add +1, odd dice add -1 to all scores",
+    "rating": "G",
+    "rarity": "common"
+  },
+  "extra_coupons": {
+    "file": "Scripts/PowerUps/ExtraCoupons.tres",
+    "name": "Extra Coupons",
+    "desc": "Consumable slots are fixed at 4",
+    "rating": "R",
+    "rarity": "rare"
+  },
+  "extra_dice": {
+    "file": "Scripts/PowerUps/ExtraDice.tres",
+    "name": "Extra Dice",
+    "desc": "Grants one additional die",
+    "rating": "R",
+    "rarity": "common"
+  },
+  "extra_rainbow": {
+    "file": "Scripts/PowerUps/ExtraRainbow.tres",
+    "name": "Extra Rainbow",
+    "desc": "+10 per colored die scored",
+    "rating": "PG-13",
+    "rarity": "rare"
+  },
+  "extra_rolls": {
+    "file": "Scripts/PowerUps/ExtraRolls.tres",
+    "name": "Extra Rolls",
+    "desc": "Grants additional Rolls each turn",
+    "rating": "PG-13",
+    "rarity": "common"
+  },
+  "failed_money": {
+    "file": "Scripts/PowerUps/FailedMoneyPowerUp.tres",
+    "name": "Failed Money",
+    "desc": "+$50 for each failed hand (at round end)",
+    "rating": "PG",
+    "rarity": "common"
+  },
+  "foursome": {
+    "file": "Scripts/PowerUps/FoursomePowerUp.tres",
+    "name": "Foursome",
+    "desc": "If a 4 is scored, there is a 1:4 chance to multiply your score by 4",
+    "rating": "NC-17",
+    "rarity": "epic"
+  },
+  "full_house_bonus": {
+    "file": "Scripts/PowerUps/FullHousePowerUp.tres",
+    "name": "Full House Fortune",
+    "desc": "+$25 for each full house rolled (scaling with total rolled this game)",
+    "rating": "PG",
+    "rarity": "common"
+  },
+  "great_exchange": {
+    "file": "Scripts/PowerUps/GreatExchange.tres",
+    "name": "The Great Exchange",
+    "desc": "+2 dice, -1 roll per turn",
+    "rating": "R",
+    "rarity": "rare"
+  },
+  "green_slime": {
+    "file": "Scripts/PowerUps/GreenSlime.tres",
+    "name": "Green Slime",
+    "desc": "Doubles the chance of rolling green dice",
+    "rating": "G",
+    "rarity": "common"
+  },
+  "green_monster": {
+    "file": "Scripts/PowerUps/GreenWithEnvy.tres",
+    "name": "Green Monster",
+    "desc": "+0.05x green money multiplier per green dice scored. Stacks throughout the game! (Verify It works)",
+    "rating": "PG",
+    "rarity": "uncommon"
+  },
+  "highlighted_score": {
+    "file": "Scripts/PowerUps/HighlightedScorePowerUp.tres",
+    "name": "Highlighted Score",
+    "desc": "Highlights a random unscored category for 1.5x score",
+    "rating": "PG-13",
+    "rarity": "rare"
+  },
+  "hot_streak": {
+    "file": "Scripts/PowerUps/HotStreak.tres",
+    "name": "Hot Streak",
+    "desc": "+3 per consecutive turn scoring 15+",
+    "rating": "PG",
+    "rarity": "uncommon"
+  },
+  "lock_and_load": {
+    "file": "Scripts/PowerUps/LockAndLoadPowerUp.tres",
+    "name": "Lock & Load",
+    "desc": "+$3 for each die locked (Seems useless)",
+    "rating": "G",
+    "rarity": "common"
+  },
+  "lower_ten": {
+    "file": "Scripts/PowerUps/LowerTen.tres",
+    "name": "Lower Ten",
+    "desc": "Lower section scores get +10 points",
+    "rating": "PG-13",
+    "rarity": "uncommon"
+  },
+  "melting_dice": {
+    "file": "Scripts/PowerUps/MeltingDice.tres",
+    "name": "Melting Dice",
+    "desc": "Starts +80 additive, melts by 8 each score",
+    "rating": "PG",
+    "rarity": "common"
+  },
+  "mod_money": {
+    "file": "Scripts/PowerUps/ModMoneyPowerUp.tres",
+    "name": "Mod Money",
+    "desc": "Earn $8 per modded die when scoring ",
+    "rating": "G",
+    "rarity": "common"
+  },
+  "modded_dice_mastery": {
+    "file": "Scripts/PowerUps/ModdedDiceMasteryPowerUp.tres",
+    "name": "Modded Dice Mastery",
+    "desc": "+10 points per modded die when scoring",
+    "rating": "PG",
+    "rarity": "rare"
+  },
+  "money_bags": {
+    "file": "Scripts/PowerUps/MoneyBagsPowerUp.tres",
+    "name": "Money Bags",
+    "desc": "Score multiplier = ($Money / 100) + 1",
+    "rating": "R",
+    "rarity": "epic"
+  },
+  "money_multiplier": {
+    "file": "Scripts/PowerUps/MoneyMultiplierPowerUp.tres",
+    "name": "Money Multiplier",
+    "desc": "Immediately multiple your cash for every Yahtzee rolled (increases +.1 each Yahtzee)",
+    "rating": "PG",
+    "rarity": "rare"
+  },
+  "money_well_spent": {
+    "file": "Scripts/PowerUps/MoneyWellSpentPowerUp.tres",
+    "name": "Money Well Spent",
+    "desc": "+1 to all scores per $50 spent (during the game)",
+    "rating": "G",
+    "rarity": "common"
+  },
+  "one_roll_wonder": {
+    "file": "Scripts/PowerUps/OneRollWonder.tres",
+    "name": "One-Roll Wonder",
+    "desc": "Score on first roll = +40 additive",
+    "rating": "PG-13",
+    "rarity": "rare"
+  },
+  "pair_paradise": {
+    "file": "Scripts/PowerUps/PairParadisePowerUp.tres",
+    "name": "Pair Paradise",
+    "desc": "Pair bonuses: +3 (pair/3oak), +6 (2pair/4oak), +9 (FH/Yahtzee)",
+    "rating": "PG",
+    "rarity": "common"
+  },
+  "perfect_strangers": {
+    "file": "Scripts/PowerUps/PerfectStrangers.tres",
+    "name": "Perfect Strangers",
+    "desc": "When scoring CHANCE, gain a random 1.1x-1.5x multiplier for that score",
+    "rating": "PG-13",
+    "rarity": "rare"
+  },
+  "pin_head": {
+    "file": "Scripts/PowerUps/PinHeadPowerUp.tres",
+    "name": "Pin Head",
+    "desc": "When scoring, picks a random dice value as multiplier",
+    "rating": "NC-17",
+    "rarity": "epic"
+  },
+  "plus_a_dollar": {
+    "file": "Scripts/PowerUps/PlusADollar.tres",
+    "name": "Plus A Dollar",
+    "desc": "Grants $1 after each dice roll",
+    "rating": "G",
+    "rarity": "common"
+  },
+  "plus_thelast": {
+    "file": "Scripts/PowerUps/PlusTheLast.tres",
+    "name": "Plus The Last",
+    "desc": "Adds last score to current score",
+    "rating": "NC-17",
+    "rarity": "rare"
+  },
+  "power_surge": {
+    "file": "Scripts/PowerUps/PowerSurge.tres",
+    "name": "Power Surge",
+    "desc": "+0.15x multiplier per owned PowerUp",
+    "rating": "R",
+    "rarity": "epic"
+  },
+  "purple_payout": {
+    "file": "Scripts/PowerUps/PurplePayoutPowerUp.tres",
+    "name": "Purple Payout",
+    "desc": "Each purple die grants $25 when scoring",
+    "rating": "G",
+    "rarity": "common"
+  },
+  "purple_slime": {
+    "file": "Scripts/PowerUps/PurpleSlime.tres",
+    "name": "Purple Slime",
+    "desc": "Doubles the chance of rolling purple dice",
+    "rating": "PG",
+    "rarity": "rare"
+  },
+  "rainbow_surge": {
+    "file": "Scripts/PowerUps/RainbowSurgePowerUp.tres",
+    "name": "Rainbow Surge",
+    "desc": "2.0x score multiplier when 5 different dice colors are present!",
+    "rating": "R",
+    "rarity": "epic"
+  },
+  "random_card_level": {
+    "file": "Scripts/PowerUps/RandomCardLevel.tres",
+    "name": "Random Card Level",
+    "desc": "20% chance each turn to level up a random scorecard category",
+    "rating": "PG-13",
+    "rarity": "rare"
+  },
+  "randomizer": {
+    "file": "Scripts/PowerUps/RandomizerPowerUp.tres",
+    "name": "Chaos Dice",
+    "desc": "Each turn applies a random score modifier: 80% chance for additive bonus (-20 to +50), 20% chance for multiplier (\u00c3\u2014-1 to \u00c3\u20144)",
+    "rating": "PG-13",
+    "rarity": "uncommon"
+  },
+  "red_power_ranger": {
+    "file": "Scripts/PowerUps/RedPowerRanger.tres",
+    "name": "Red Power Ranger",
+    "desc": "Gain +1 additive score for each red dice scored. The additive is cumulative and applies to all future scores.",
+    "rating": "PG",
+    "rarity": "uncommon"
+  },
+  "red_slime": {
+    "file": "Scripts/PowerUps/RedSlime.tres",
+    "name": "Red Slime",
+    "desc": "Doubles the chance of rolling red dice",
+    "rating": "PG-13",
+    "rarity": "uncommon"
+  },
+  "roll_efficiency": {
+    "file": "Scripts/PowerUps/RollEfficiencyPowerUp.tres",
+    "name": "Roll Efficiency",
+    "desc": "+N to all scores (N = rolls used this turn)",
+    "rating": "PG",
+    "rarity": "common"
+  },
+  "shop_rerolls": {
+    "file": "Scripts/PowerUps/ShopRerollsPowerUp.tres",
+    "name": "Shop Rerolls",
+    "desc": "Shop rerolls always cost $25 - never increases unless sold",
+    "rating": "PG",
+    "rarity": "uncommon"
+  },
+  "snake_eyes": {
+    "file": "Scripts/PowerUps/SnakeEyes.tres",
+    "name": "Snake Eyes",
+    "desc": "Each 1 = +0.2x mult. All 1s = 3.0x!",
+    "rating": "NC-17",
+    "rarity": "legendary"
+  },
+  "step_by_step": {
+    "file": "Scripts/PowerUps/StepByStepPowerUp.tres",
+    "name": "Step by Step",
+    "desc": "All upper section scores get +6",
+    "rating": "PG",
+    "rarity": "common"
+  },
+  "straight_triplet_master": {
+    "file": "Scripts/PowerUps/StraightTripletMasterPowerUp.tres",
+    "name": "Straight Triplet Master",
+    "desc": "Score straights in Lg Straight, Sm Straight, AND Chance in 1 round for +$150 and +75pts",
+    "rating": "PG",
+    "rarity": "rare"
+  },
+  "sweet_sixteen": {
+    "file": "Scripts/PowerUps/SweetSixteen.tres",
+    "name": "Sweet Sixteen",
+    "desc": "Grants $16 per turn. Score above 0 on turn 16 for a $256 bonus!",
+    "rating": "PG-13",
+    "rarity": "uncommon"
+  },
+  "tango_and_cash": {
+    "file": "Scripts/PowerUps/TangoAndCashPowerUp.tres",
+    "name": "Tango & Cash",
+    "desc": "+$10 for every odd die scored (at round end)",
+    "rating": "PG-13",
+    "rarity": "uncommon"
+  },
+  "the_consumer_is_always_right": {
+    "file": "Scripts/PowerUps/TheConsumerIsAlwaysRight.tres",
+    "name": "The Consumer is Always Right",
+    "desc": "Score multiplier increases by 0.25x for each consumable used this session",
+    "rating": "NC-17",
+    "rarity": "legendary"
+  },
+  "the_piggy_bank": {
+    "file": "Scripts/PowerUps/ThePiggyBank.tres",
+    "name": "The Piggy Bank",
+    "desc": "Saves $3 per roll. Sell to cash out all savings!",
+    "rating": "E",
+    "rarity": "uncommon"
+  },
+  "the_replicator": {
+    "file": "Scripts/PowerUps/TheReplicator.tres",
+    "name": "The Replicator",
+    "desc": "After 1 turn, duplicates a random PowerUp you own",
+    "rating": "PG-13",
+    "rarity": "rare"
+  },
+  "ungrounded": {
+    "file": "Scripts/PowerUps/Ungrounded.tres",
+    "name": "Ungrounded",
+    "desc": "Prevents all debuffs",
+    "rating": "NC-17",
+    "rarity": "legendary"
+  },
+  "upper_bonus_mult": {
+    "file": "Scripts/PowerUps/UpperBonusMultPowerUp.tres",
+    "name": "Bonus Mult",
+    "desc": "Increases score multiplier by 1x for each Upper Section Bonus achieved",
+    "rating": "R",
+    "rarity": "rare"
+  },
+  "wild_dots": {
+    "file": "Scripts/PowerUps/WildDotsPowerUp.tres",
+    "name": "Wild Dots",
+    "desc": "For each locked dice of the same number, additional rolled dice have an increased odds of rolling the same number.",
+    "rating": "NC-17",
+    "rarity": "rare"
+  },
+  "yahtzee_bonus_mult": {
+    "file": "Scripts/PowerUps/YahtzeeBonusMultPowerUp.tres",
+    "name": "Yahtzee Mult",
+    "desc": "Increases score multiplier by 1x for each Yahtzee Bonus achieved",
+    "rating": "PG-13",
+    "rarity": "legendary"
+  },
+  "yahtzeed_dice": {
+    "file": "Scripts/PowerUps/YahtzeedDice.tres",
+    "name": "Yahtzeed Dice",
+    "desc": "Gain +1 die every time you roll a Yahtzee! (Excluding Bonus Yahtzees)",
+    "rating": "R",
+    "rarity": "epic"
+  }
+}

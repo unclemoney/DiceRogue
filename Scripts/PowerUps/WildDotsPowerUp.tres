@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://wvpnvey8q20j"]
 
-[ext_resource type="Texture2D" uid="uid://ffjem017owqi" path="res://Resources/Art/Powerups/campy_80s_500.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://dg5pg547mqu30" path="res://Resources/Art/Powerups/banned_pog_grid_5x5.png" id="1_m0tg5"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/WildDotsPowerUp.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(206, 267, 88, 124)
+[sub_resource type="AtlasTexture" id="AtlasTexture_21ucm"]
+atlas = ExtResource("1_m0tg5")
+region = Rect2(804, 31, 180, 180)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "wild_dots"
 display_name = "Wild Dots"
 description = "For each locked dice of the same number, additional rolled dice have an increased odds of rolling the same number."
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_21ucm")
 scene = ExtResource("2_scene")
 price = 250
 rarity = "rare"

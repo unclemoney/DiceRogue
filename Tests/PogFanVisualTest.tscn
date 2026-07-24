@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://bmil3t4ml6vy7"]
+
+[ext_resource type="Script" uid="uid://cnbt7lsydnnml" path="res://Tests/pog_fan_visual_test.gd" id="1_ty6uq"]
+
+[node name="PogFanVisualTest" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_ty6uq")

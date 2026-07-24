@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://dyjs1kwquanfh"]
 
-[ext_resource type="Texture2D" uid="uid://4cdwvangyrkj" path="res://Resources/Art/Powerups/onscure_90s_500.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://dqct3k5i3x45l" path="res://Resources/Art/Powerups/questionable_pog_grid_5x5.png" id="1_3x82o"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/OneRollWonderPowerUp.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(206, 140, 92, 120)
+[sub_resource type="AtlasTexture" id="AtlasTexture_wwmsy"]
+atlas = ExtResource("1_3x82o")
+region = Rect2(427, 398, 179, 174)
 
 [resource]
 script = ExtResource("1_script")
 id = "one_roll_wonder"
 display_name = "One-Roll Wonder"
 description = "Score on first roll = +40 additive"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_wwmsy")
 scene = ExtResource("2_scene")
 price = 250
 rarity = "rare"

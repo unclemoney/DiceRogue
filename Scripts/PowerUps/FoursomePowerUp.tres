@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://cus1yqqfy3tmd"]
 
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_ih5iy"]
-[ext_resource type="Texture2D" uid="uid://4cdwvangyrkj" path="res://Resources/Art/Powerups/onscure_90s_500.png" id="1_knce8"]
+[ext_resource type="Texture2D" uid="uid://dg5pg547mqu30" path="res://Resources/Art/Powerups/banned_pog_grid_5x5.png" id="1_knce8"]
 [ext_resource type="PackedScene" uid="uid://cnsq73d7e5iew" path="res://Scenes/PowerUp/FoursomePowerUp.tscn" id="2_nexa7"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_nexa7"]
 atlas = ExtResource("1_knce8")
-region = Rect2(398, 7, 93, 128)
+region = Rect2(609, 216, 183, 180)
 
 [resource]
 script = ExtResource("1_ih5iy")
 id = "foursome"
 display_name = "Foursome"
 description = "If a 4 is scored, there is a 1:4 chance to multiply your score by 4"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_nexa7")
 scene = ExtResource("2_nexa7")
 price = 175
 rarity = "epic"

@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://b8x1m3vq7n2k5"]
 
+[ext_resource type="Texture2D" uid="uid://bybdxd404djbf" path="res://Resources/Art/Powerups/parental_guidance_pg_pog_grid_5x5.png" id="1_ig46k"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
-[ext_resource type="Texture2D" uid="uid://c6e6a483j4vfn" path="res://Resources/Art/Powerups/regular_movies_500.png" id="1_step_icon"]
 [ext_resource type="PackedScene" uid="uid://bd5h2wotx7m7j" path="res://Scenes/PowerUp/StepByStepPowerUp.tscn" id="2_step_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_step_icon")
-region = Rect2(4, 284, 100, 132)
+[sub_resource type="AtlasTexture" id="AtlasTexture_m2q1u"]
+atlas = ExtResource("1_ig46k")
+region = Rect2(611, 595, 182, 175)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "step_by_step"
 display_name = "Step by Step"
 description = "All upper section scores get +6"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_m2q1u")
 scene = ExtResource("2_step_scene")
 price = 25
 rarity = "common"

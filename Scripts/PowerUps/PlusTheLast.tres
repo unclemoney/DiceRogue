@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://b1it65g0t8tjy"]
 
-[ext_resource type="Texture2D" uid="uid://ffjem017owqi" path="res://Resources/Art/Powerups/campy_80s_500.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://dg5pg547mqu30" path="res://Resources/Art/Powerups/banned_pog_grid_5x5.png" id="1_dpbht"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/PlusTheLast.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(296, 141, 91, 124)
+[sub_resource type="AtlasTexture" id="AtlasTexture_0370e"]
+atlas = ExtResource("1_dpbht")
+region = Rect2(607, 765, 189, 183)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "plus_thelast"
 display_name = "Plus The Last"
 description = "Adds last score to current score"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_0370e")
 scene = ExtResource("2_scene")
 price = 450
 rarity = "rare"

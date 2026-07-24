@@ -1,0 +1,424 @@
+Godot Engine v4.4.1.stable.official.49a5bc7b6 - https://godotengine.org
+Vulkan 1.4.329 - Forward+ - Using Device #0: NVIDIA - NVIDIA GeForce RTX 4070 Ti SUPER
+
+WARNING: res://Scenes/Managers/consumable_manager.tscn:5 - ext_resource, invalid UID: uid://bqhqnqbbgfrmo - using text path instead: res://Scripts/Consumable/add_max_power_up.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:9 - ext_resource, invalid UID: uid://dkw5ixfrhp3xm - using text path instead: res://Scripts/Consumable/EmptyShelvesConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:10 - ext_resource, invalid UID: uid://rttgw2m3y2in - using text path instead: res://Scripts/Consumable/GoBrokeOrGoHomeConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:11 - ext_resource, invalid UID: uid://bg8dqrhkvb81t - using text path instead: res://Scripts/Consumable/GreenEnvyConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:12 - ext_resource, invalid UID: uid://bepf8r1squvwv - using text path instead: res://Scripts/Consumable/OneExtraDiceConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:13 - ext_resource, invalid UID: uid://dj53rn3raq05w - using text path instead: res://Scripts/Consumable/PoorHouseConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:18 - ext_resource, invalid UID: uid://bg2r68x2b6iyj - using text path instead: res://Scripts/Consumable/ThePawnShopConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:19 - ext_resource, invalid UID: uid://bbbfbdvb6kdny - using text path instead: res://Scripts/Consumable/TheRaritiesConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:20 - ext_resource, invalid UID: uid://cywprylrby1js - using text path instead: res://Scripts/Consumable/ThreeMoreRollsConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:5 - ext_resource, invalid UID: uid://b43xvbhv8k1ag - using text path instead: res://Scripts/Mods/EvenOnlyMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:6 - ext_resource, invalid UID: uid://cctvo5jcpomxl - using text path instead: res://Scripts/Mods/FiveByOneMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:7 - ext_resource, invalid UID: uid://0sdbgfb8fmxd - using text path instead: res://Scripts/Mods/GoldSixMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:9 - ext_resource, invalid UID: uid://dmi2pfrb1vd52 - using text path instead: res://Scripts/Mods/OddOnlyMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:10 - ext_resource, invalid UID: uid://h85vddw7qhk1 - using text path instead: res://Scripts/Mods/ThreeButThreeMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:11 - ext_resource, invalid UID: uid://cmexdccb8puvp - using text path instead: res://Scripts/Mods/WildCardMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Challenge/GreedIsntGoodChallenge.tscn:3 - ext_resource, invalid UID: uid://cgr33d1sntg00d - using text path instead: res://Scripts/Challenge/greed_isnt_good_challenge.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Challenge/ToughAdditionChallenge.tscn:3 - ext_resource, invalid UID: uid://ct0ugh4dd1t10n - using text path instead: res://Scripts/Challenge/tough_addition_challenge.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/synergy_manager.tscn:3 - ext_resource, invalid UID: uid://synergy_manager_script - using text path instead: res://Scripts/Managers/SynergyManager.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Debuff/TooGreedyDebuff.tscn:3 - ext_resource, invalid UID: uid://ct00gr33dy5cn - using text path instead: res://Scripts/Debuff/too_greedy_debuff.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Debuff/HalfAdditiveDebuff.tscn:3 - ext_resource, invalid UID: uid://c3h4lf4dd1t1v - using text path instead: res://Scripts/Debuff/half_additive_debuff.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/UI/mom_dialog_popup.tscn:3 - ext_resource, invalid UID: uid://cp6xgqfr8qxvn - using text path instead: res://Scripts/UI/mom_character.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+[ScoreModifierManager] Singleton initialized
+[PlayerEconomy] Ready - Starting money:100
+[RollStats] Singleton initialized
+[DiceColorManager] Loading colored dice data...
+[DiceColorManager] Loaded colored dice data: Green Dice
+[DiceColorManager] Loaded colored dice data: Red Dice
+[DiceColorManager] Loaded colored dice data: Purple Dice
+[DiceColorManager] Loaded colored dice data: Blue Dice
+[DiceColorManager] Loaded colored dice data: Yellow Dice
+[DiceColorManager] Loaded 5 colored dice types
+[DiceColorManager] Reset purchased colors for new game session
+[DiceColorManager] Initialized and added to dice_color_manager group
+Statistics Manager initialized
+[ProgressManager] Initializing progress tracking system
+[ProgressManager] Creating complete unlockable items for all game content
+[ProgressManager] Created 146 total unlockable items across all categories
+[ProgressManager] ===== LOAD PROFILE START =====
+[ProgressManager] Requested slot: 1
+[ProgressManager] Current slot before load: 1
+[ProgressManager] Current name before load: Player 1
+[ProgressManager] Loading from path: user://profile_1.save
+[ProgressManager] Updated current slot to: 1
+[ProgressManager] Updated current name to: Boston Stuggler
+[ProgressManager] Profile name from save_data: Boston Stuggler
+[UnlockableItem] Unlocked item: Step By Step
+[UnlockableItem] Unlocked item: Extra Rolls
+[UnlockableItem] Unlocked item: Allowance
+[UnlockableItem] Unlocked item: Plus A Dollar
+[UnlockableItem] Unlocked item: Roll Efficiency
+[UnlockableItem] Unlocked item: Extra Dice
+[UnlockableItem] Unlocked item: Evens No Odds
+[UnlockableItem] Unlocked item: Bonus Money
+[UnlockableItem] Unlocked item: Lock & Load
+[UnlockableItem] Unlocked item: Dice Diversity
+[UnlockableItem] Unlocked item: Melting Dice
+[UnlockableItem] Unlocked item: Foursome
+[UnlockableItem] Unlocked item: Chance 520
+[UnlockableItem] Unlocked item: Green Slime
+[UnlockableItem] Unlocked item: Chore Champion
+[UnlockableItem] Unlocked item: Pair Paradise
+[UnlockableItem] Unlocked item: Failed Money
+[UnlockableItem] Unlocked item: Full House Fortune
+[UnlockableItem] Unlocked item: Consumable Cash
+[UnlockableItem] Unlocked item: Red Slime
+[UnlockableItem] Unlocked item: Lower Ten
+[UnlockableItem] Unlocked item: Shop Rerolls
+[UnlockableItem] Unlocked item: Tango & Cash
+[UnlockableItem] Unlocked item: Purple Payout
+[UnlockableItem] Unlocked item: Chore Sprint
+[UnlockableItem] Unlocked item: Hot Streak
+[UnlockableItem] Unlocked item: Upper Bonus Multiplier
+[UnlockableItem] Unlocked item: Money Multiplier
+[UnlockableItem] Unlocked item: Purple Slime
+[UnlockableItem] Unlocked item: Even Higher
+[UnlockableItem] Unlocked item: Extra Rainbow
+[UnlockableItem] Unlocked item: One-Roll Wonder
+[UnlockableItem] Unlocked item: Money Well Spent
+[UnlockableItem] Unlocked item: Highlighted Score
+[UnlockableItem] Unlocked item: Yahtzee Bonus Multiplier
+[UnlockableItem] Unlocked item: Plus The Last
+[UnlockableItem] Unlocked item: Modded Dice Mastery
+[UnlockableItem] Unlocked item: Blue Safety Net
+[UnlockableItem] Unlocked item: The Great Exchange
+[UnlockableItem] Unlocked item: Green Monster
+[UnlockableItem] Unlocked item: Red Power Ranger
+[UnlockableItem] Unlocked item: Wild Dots
+[UnlockableItem] Unlocked item: Money Bags
+[UnlockableItem] Unlocked item: Debuff Destroyer
+[UnlockableItem] Unlocked item: Extra Coupons
+[UnlockableItem] Unlocked item: Power Surge
+[UnlockableItem] Unlocked item: Blue Slime
+[UnlockableItem] Unlocked item: Challenge Easer
+[UnlockableItem] Unlocked item: Azure Perfection
+[UnlockableItem] Unlocked item: The Piggy Bank
+[UnlockableItem] Unlocked item: Random Card Level
+[UnlockableItem] Unlocked item: The Replicator
+[UnlockableItem] Unlocked item: Yahtzeed Dice
+[UnlockableItem] Unlocked item: Lucky Streak
+[UnlockableItem] Unlocked item: Steady Progress
+[UnlockableItem] Unlocked item: Combo King
+[UnlockableItem] Unlocked item: Ones Avoider
+[UnlockableItem] Unlocked item: Upper Section Avoider
+[UnlockableItem] Unlocked item: Lower Section Avoider
+[UnlockableItem] Unlocked item: Quick Cash
+[UnlockableItem] Unlocked item: Any Score
+[UnlockableItem] Unlocked item: Free Chores
+[UnlockableItem] Unlocked item: Score Reroll
+[UnlockableItem] Unlocked item: Ones Upgrade
+[UnlockableItem] Unlocked item: Twos Upgrade
+[UnlockableItem] Unlocked item: Lucky Upgrade
+[UnlockableItem] Unlocked item: One Extra Dice
+[UnlockableItem] Unlocked item: Three More Rolls
+[UnlockableItem] Unlocked item: Power Up Shop Number
+[UnlockableItem] Unlocked item: Threes Upgrade
+[UnlockableItem] Unlocked item: Fours Upgrade
+[UnlockableItem] Unlocked item: All Chores
+[UnlockableItem] Unlocked item: Half Price
+[UnlockableItem] Unlocked item: Loss Leader
+[UnlockableItem] Unlocked item: Insurance Policy
+[UnlockableItem] Unlocked item: Clearance Rack
+[UnlockableItem] Unlocked item: Double Existing
+[UnlockableItem] Unlocked item: The Pawn Shop
+[UnlockableItem] Unlocked item: Empty Shelves
+[UnlockableItem] Unlocked item: Fives Upgrade
+[UnlockableItem] Unlocked item: Sixes Upgrade
+[UnlockableItem] Unlocked item: One Free Mod
+[UnlockableItem] Unlocked item: Dice Surge
+[UnlockableItem] Unlocked item: Double Or Nothing
+[UnlockableItem] Unlocked item: Three of a Kind Upgrade
+[UnlockableItem] Unlocked item: Four of a Kind Upgrade
+[UnlockableItem] Unlocked item: Chance Upgrade
+[UnlockableItem] Unlocked item: Stat Cashout
+[UnlockableItem] Unlocked item: Visit The Shop
+[UnlockableItem] Unlocked item: Loaded Dice
+[UnlockableItem] Unlocked item: Add Max Power Up
+[UnlockableItem] Unlocked item: Random Uncommon Power Up
+[UnlockableItem] Unlocked item: Green Envy
+[UnlockableItem] Unlocked item: Full House Upgrade
+[UnlockableItem] Unlocked item: Small Straight Upgrade
+[UnlockableItem] Unlocked item: Upper Section Boost
+[UnlockableItem] Unlocked item: Score Amplifier
+[UnlockableItem] Unlocked item: Go Broke Or Go Home
+[UnlockableItem] Unlocked item: Poor House
+[UnlockableItem] Unlocked item: Large Straight Upgrade
+[UnlockableItem] Unlocked item: Lower Section Boost
+[UnlockableItem] Unlocked item: Score Streak
+[UnlockableItem] Unlocked item: Channel Bonus
+[UnlockableItem] Unlocked item: Reroll Master
+[UnlockableItem] Unlocked item: Yahtzee Upgrade
+[UnlockableItem] Unlocked item: Bonus Collector
+[UnlockableItem] Unlocked item: Lucky Seven
+[UnlockableItem] Unlocked item: Even Only
+[UnlockableItem] Unlocked item: Odd Only
+[UnlockableItem] Unlocked item: Gold Six
+[UnlockableItem] Unlocked item: Five by One
+[UnlockableItem] Unlocked item: Wild Card
+[UnlockableItem] Unlocked item: High Roller
+[UnlockableItem] Unlocked item: Channel Veteran
+[UnlockableItem] Unlocked item: Green Dice
+[UnlockableItem] Unlocked item: Red Dice
+[UnlockableItem] Unlocked item: Purple Dice
+[UnlockableItem] Unlocked item: Blue Dice
+[UnlockableItem] Unlocked item: Atari
+[UnlockableItem] Unlocked item: NES
+[UnlockableItem] Unlocked item: SNES
+[UnlockableItem] Unlocked item: Sega
+[GameSettings] Settings saved successfully
+[ProgressManager] Loaded FX settings from profile
+[ProgressManager] Loaded profile 1: Boston Stuggler (122 unlocked items)
+[ProgressManager] Final state - slot: 1, name: Boston Stuggler
+[ProgressManager] ===== LOAD PROFILE END =====
+[AudioManager] Initializing...
+[AudioManager] Loaded: res://Resources/Audio/DICE/DICE_ROLL_1.wav
+[AudioManager] Loaded: res://Resources/Audio/DICE/DICE_ROLL_2.wav
+[AudioManager] Loaded: res://Resources/Audio/DICE/DICE_ROLL_3.wav
+[AudioManager] Loaded: res://Resources/Audio/DICE/DICE_ROLL_4.wav
+[AudioManager] Loaded: res://Resources/Audio/DICE/DICE_ROLL_5.wav
+[AudioManager] Loaded scoring sound
+[AudioManager] Loaded money sound
+[AudioManager] Loaded button click sound
+[AudioManager] Loaded firework sound
+[AudioManager] Loaded dice click sound
+[AudioManager] Loaded swoosh sound
+[AudioManager] Loaded fan out sound
+[AudioManager] Loaded fan in sound
+[AudioManager] Loaded tab switch sound
+[AudioManager] Loaded money tick sound
+[AudioManager] Loaded denied sound
+[AudioManager] Loaded confirm sound
+[AudioManager] Loaded dice land sound
+[AudioManager] Loaded sell sound
+[AudioManager] Loaded round start sound
+[AudioManager] Loaded static burst sound
+[AudioManager] Loaded challenge reveal sound
+[AudioManager] Loaded dice spawn sound
+[AudioManager] Loaded jackpot sound
+[AudioManager] Loaded streak sound
+[AudioManager] Loaded next turn sound
+[AudioManager] Loaded shop open sound
+[AudioManager] Loaded powerup apply sound
+[AudioManager] Loaded threat alarm sound
+[AudioManager] Loaded victory sound
+[AudioManager] Loaded scorecard upgrade sound
+[AudioManager] Loaded dice land sound
+[AudioManager] Ready with 5 dice sounds loaded
+[MusicManager] Initializing...
+[MusicManager] Loaded BOTTOM_LAYER.wav - duration: 12.000s
+[MusicManager] Loaded LAYER_1_A.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_1_B.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_2_A.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_2_B.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_2_C.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_A.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_B.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_C.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_D.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_E.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_F.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_G.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_H.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_I.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_4_A.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_4_B.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_A.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_B.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_C.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_D.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_E.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_F.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_1.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_2.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_3.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_4.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_5.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_6.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_7.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_8.wav (duration: 12.000s)
+[MusicManager] Layer loading complete:
+[MusicManager]   LAYER_1: 2 variants
+[MusicManager]   LAYER_2: 3 variants
+[MusicManager]   LAYER_3: 9 variants
+[MusicManager]   LAYER_4: 2 variants
+[MusicManager]   LAYER_5: 6 variants
+[MusicManager] CRASH variants loaded: 8
+[MusicManager] Created 8 audio players
+[MusicManager] Layer 1: chose variant index 0 (history: [0])
+[MusicManager] Layer 2: chose variant index 2 (history: [2])
+[MusicManager] Layer 3: chose variant index 8 (history: [8])
+[MusicManager] Layer 4: chose variant index 1 (history: [1])
+[MusicManager] Layer 5: chose variant index 5 (history: [5])
+[MusicManager] Playback started at intensity 0
+[MusicManager] Ready - base loop duration: 12.000s, 5 layer groups loaded
+[GameSettings] Initializing...
+[AudioManager] Master volume set to: -1.9 dB
+[MusicManager] Music volume set to: -4.4 dB
+[GameSettings] Settings loaded successfully
+[GameSettings] Ready - Active profile slot: 1
+[TutorialManager] Initializing tutorial system
+[TutorialManager] Step order: ["intro", "yahtzee_basics_1", "yahtzee_basics_2", "yahtzee_basics_3", "shop_button", "shop_overview", "start_first_round", "roll_button", "lock_dice", "next_turn_button", "scorecard_intro", "scorecard_levels", "scoring_system_1", "scoring_system_2", "scoring_system_3", "powerups_intro", "powerups_ratings", "consumables_intro", "challenges_intro", "debuffs_intro", "chores_intro", "chores_mood", "synergy_intro", "synergy_rainbow", "next_round_button", "tutorial_complete"]
+[TutorialManager] Loaded 26 tutorial steps
+[TutorialManager] Tutorial completed: false, In progress: true
+[GameRNG] Initialized
+[GameSaveManager] Initialized
+[ProgressManager] WARNING: Scorecard not found - score tracking unavailable
+[ProgressManager] WARNING: GameController not found - consumable tracking unavailable
+[ProgressManager] WARNING: TurnTracker not found - game start detection unavailable
+[ProgressManager] Connected to player economy signals
+[ProgressManager] Connected to dice color manager signals
+[ProgressManager] Connected to roll stats signals
+[ProgressManager] Game signal connections complete (4 new connections)
+[MusicManager] RoundManager not found - will retry on node_added
+[MusicManager] ShopUI not found - will retry on node_added
+[MusicManager] ChallengeManager not found - will retry on node_added
+[MusicManager] TurnTracker not found - will retry on node_added
+[MusicManager] Watching tree.node_added for scene changes
+[PowerUpUI] Initializing new spine-based system...
+[PowerUpUI] Hover tooltip styling applied
+[PowerUpUI] New spine-based system initialized
+[PowerUpUI] Adding power up:allowance
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:allowance
+[PowerUpUI] Adding power up:the_piggy_bank
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:the_piggy_bank
+[PowerUpUI] Adding power up:melting_dice
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:melting_dice
+[PowerUpUI] Adding power up:hot_streak
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:hot_streak
+[PowerUpUI] Adding power up:extra_rainbow
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:extra_rainbow
+[PowerUpUI] Adding power up:extra_dice
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:extra_dice
+[PowerUpUI] Adding power up:snake_eyes
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:snake_eyes
+[PowerUpUI] Calculating fan positions for 7 cards
+[PowerUpUI] Center position: (640.0, 360.0)
+[PowerUpUI] Card size: 224.0x324.0, Spacing: 112.0
+[PowerUpUI] Row 0, Card 0 position: (24.0, 78.5)
+[PowerUpUI] Row 0, Card 1 position: (360.0, 78.5)
+[PowerUpUI] Row 0, Card 2 position: (696.0, 78.5)
+[PowerUpUI] Row 0, Card 3 position: (1032.0, 78.5)
+[PowerUpUI] Row 1, Card 0 position: (192.0, 417.5)
+[PowerUpUI] Row 1, Card 1 position: (528.0, 417.5)
+[PowerUpUI] Row 1, Card 2 position: (864.0, 417.5)
+[AudioManager] Connected click sound to button: SellButton
+[PowerUpIcon] Initializing...
+[AudioManager] Connected click sound to button: SellButton
+[PowerUpIcon] Initialization complete for:unknown
+[PowerUpUI] Card 0 (allowance) - Start pos: (640.0, 360.0), Target pos: (24.0, 78.5)
+[AudioManager] Connected click sound to button: SellButton
+[PowerUpIcon] Initializing...
+[AudioManager] Connected click sound to button: SellButton
+[PowerUpIcon] Initialization complete for:unknown
+[PowerUpUI] Card 1 (the_piggy_bank) - Start pos: (640.0, 360.0), Target pos: (360.0, 78.5)
+[AudioManager] Connected click sound to button: SellButton
+[PowerUpIcon] Initializing...
+[AudioManager] Connected click sound to button: SellButton
+[PowerUpIcon] Initialization complete for:unknown
+[PowerUpUI] Card 2 (melting_dice) - Start pos: (640.0, 360.0), Target pos: (696.0, 78.5)
+[AudioManager] Connected click sound to button: SellButton
+[PowerUpIcon] Initializing...
+[AudioManager] Connected click sound to button: SellButton
+[PowerUpIcon] Initialization complete for:unknown
+[PowerUpUI] Card 3 (hot_streak) - Start pos: (640.0, 360.0), Target pos: (1032.0, 78.5)
+[AudioManager] Connected click sound to button: SellButton
+[PowerUpIcon] Initializing...
+[AudioManager] Connected click sound to button: SellButton
+[PowerUpIcon] Initialization complete for:unknown
+[PowerUpUI] Card 4 (extra_rainbow) - Start pos: (640.0, 360.0), Target pos: (192.0, 417.5)
+[AudioManager] Connected click sound to button: SellButton
+[PowerUpIcon] Initializing...
+[AudioManager] Connected click sound to button: SellButton
+[PowerUpIcon] Initialization complete for:unknown
+[PowerUpUI] Card 5 (extra_dice) - Start pos: (640.0, 360.0), Target pos: (528.0, 417.5)
+[AudioManager] Connected click sound to button: SellButton
+[PowerUpIcon] Initializing...
+[AudioManager] Connected click sound to button: SellButton
+[PowerUpIcon] Initialization complete for:unknown
+[PowerUpUI] Card 6 (snake_eyes) - Start pos: (640.0, 360.0), Target pos: (864.0, 417.5)
+[PogFanTest] fanned icons created
+
+================================================================
+CrashHandlerException: Program crashed with signal 11
+Engine version: Godot Engine v4.4.1.stable.official (49a5bc7b616bd04689a2c89e89bda41f50241464)
+Dumping the backtrace. Please include this when reporting the bug to the project developer.
+[1] error(-1): no debug info in PE/COFF executable
+[2] error(-1): no debug info in PE/COFF executable
+[3] error(-1): no debug info in PE/COFF executable
+[4] error(-1): no debug info in PE/COFF executable
+[5] error(-1): no debug info in PE/COFF executable
+[6] error(-1): no debug info in PE/COFF executable
+[7] error(-1): no debug info in PE/COFF executable
+[8] error(-1): no debug info in PE/COFF executable
+[9] error(-1): no debug info in PE/COFF executable
+[10] error(-1): no debug info in PE/COFF executable
+[11] error(-1): no debug info in PE/COFF executable
+[12] error(-1): no debug info in PE/COFF executable
+[13] error(-1): no debug info in PE/COFF executable
+[14] error(-1): no debug info in PE/COFF executable
+[15] error(-1): no debug info in PE/COFF executable
+[16] error(-1): no debug info in PE/COFF executable
+[17] error(-1): no debug info in PE/COFF executable
+[18] error(-1): no debug info in PE/COFF executable
+[19] error(-1): no debug info in PE/COFF executable
+[20] error(-1): no debug info in PE/COFF executable
+[21] error(-1): no debug info in PE/COFF executable
+[22] error(-1): no debug info in PE/COFF executable
+[23] error(-1): no debug info in PE/COFF executable
+[24] error(-1): no debug info in PE/COFF executable
+[25] error(-1): no debug info in PE/COFF executable
+[26] error(-1): no debug info in PE/COFF executable
+-- END OF BACKTRACE --
+================================================================

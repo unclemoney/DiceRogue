@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://crfd4hv5t6upe"]
 
-[ext_resource type="Texture2D" uid="uid://divncawucf60p" path="res://Resources/Art/Powerups/teen_classics_500px.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://c0y4n53xm2pgx" path="res://Resources/Art/Powerups/grounded_pog_grid_5x5.png" id="1_lxoru"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/GreatExchangePowerUp.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(397, 7, 94, 143)
+[sub_resource type="AtlasTexture" id="AtlasTexture_ymbmp"]
+atlas = ExtResource("1_lxoru")
+region = Rect2(417, 599, 189, 186)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "great_exchange"
 display_name = "The Great Exchange"
 description = "+2 dice, -1 roll per turn"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_ymbmp")
 scene = ExtResource("2_scene")
 price = 350
 rarity = "rare"

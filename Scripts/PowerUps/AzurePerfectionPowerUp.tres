@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://uaj70qhmw4w0"]
 
-[ext_resource type="Texture2D" uid="uid://ffjem017owqi" path="res://Resources/Art/Powerups/campy_80s_500.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://c0y4n53xm2pgx" path="res://Resources/Art/Powerups/grounded_pog_grid_5x5.png" id="1_ftng8"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/AzurePerfectionPowerUp.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(10, 7, 101, 133)
+[sub_resource type="AtlasTexture" id="AtlasTexture_p3l21"]
+atlas = ExtResource("1_ftng8")
+region = Rect2(418, 20, 184, 187)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "azure_perfection"
 display_name = "Azure Perfection"
 description = "Blue dice ALWAYS count as used - no penalties, only multipliers!"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_p3l21")
 scene = ExtResource("2_scene")
 price = 600
 rarity = "legendary"

@@ -544,6 +544,13 @@ func _create_fanned_icons() -> void:
 		if not icon.is_connected("power_up_sell_requested", _on_power_up_sell_requested):
 			icon.power_up_sell_requested.connect(_on_power_up_sell_requested)
 		
+		# Connect hover on the kiosk tile for the detail tooltip.
+		# (Connections die with the tile when icons are freed in _clear_fanned_icons.)
+		var kiosk_tile: Control = icon.get_node_or_null("KioskTile")
+		if kiosk_tile:
+			kiosk_tile.mouse_entered.connect(_on_fan_icon_hovered.bind(power_up_id))
+			kiosk_tile.mouse_exited.connect(_on_fan_icon_unhovered.bind(power_up_id))
+		
 		# Store reference
 		_fanned_icons[power_up_id] = icon
 		
@@ -790,6 +797,51 @@ func _on_spine_unhovered(_power_up_id: String) -> void:
 	_spine_tooltip.visible = false
 
 
+func _on_fan_icon_hovered(power_up_id: String) -> void:
+	if _current_state != State.FANNED:
+		return
+	if not _fanned_icons.has(power_up_id):
+		return
+	
+	_build_detailed_spine_tooltip(power_up_id)
+	
+	# Position tooltip beside the hovered tile
+	await get_tree().process_frame  # Wait for tooltip to calculate its size
+	var icon: PowerUpIcon = _fanned_icons[power_up_id]
+	if not is_instance_valid(icon):
+		return
+	var tile_rect: Rect2 = icon.get_global_rect()
+	var pos: Vector2 = Vector2(tile_rect.position.x + tile_rect.size.x + 12, tile_rect.position.y)
+	
+	# Keep tooltip on screen
+	var viewport_size = get_viewport_rect().size
+	if pos.x + _spine_tooltip.size.x > viewport_size.x:
+		pos.x = tile_rect.position.x - _spine_tooltip.size.x - 12
+	if pos.y + _spine_tooltip.size.y > viewport_size.y:
+		pos.y = viewport_size.y - _spine_tooltip.size.y - 10
+	if pos.y < 0:
+		pos.y = 10
+	_spine_tooltip.position = pos
+	_spine_tooltip.visible = true
+
+func _on_fan_icon_unhovered(_power_up_id: String) -> void:
+	_spine_tooltip.visible = false
+
+
+## _get_live_description(power_up_id, data)
+##
+## Returns the PowerUp's current in-game description (with running totals,
+## e.g. Melting Dice's remaining value) when the active PowerUp node is
+## available; falls back to the static resource description.
+func _get_live_description(power_up_id: String, data: PowerUpData) -> String:
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller and game_controller.has_method("get_active_power_up"):
+		var power_up_node = game_controller.get_active_power_up(power_up_id)
+		if power_up_node and power_up_node.has_method("get_current_description"):
+			return power_up_node.get_current_description()
+	return data.description
+
+
 ## _build_detailed_spine_tooltip(power_up_id)
 ##
 ## Builds a rich tooltip for one hovered PowerUp.
@@ -880,9 +932,9 @@ func _build_detailed_spine_tooltip(power_up_id: String = "") -> void:
 		
 		entry.add_child(title_row)
 		
-		# Description
+		# Description (live values when the PowerUp is active in-game)
 		var desc_label = Label.new()
-		desc_label.text = data.description
+		desc_label.text = _get_live_description(id, data)
 		desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		desc_label.custom_minimum_size = Vector2(250, 0)
 		desc_label.mouse_filter = Control.MOUSE_FILTER_IGNORE

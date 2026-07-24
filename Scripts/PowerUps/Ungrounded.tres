@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://yxdm2yg82h0o"]
 
-[ext_resource type="Texture2D" uid="uid://divncawucf60p" path="res://Resources/Art/Powerups/teen_classics_500px.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://dg5pg547mqu30" path="res://Resources/Art/Powerups/banned_pog_grid_5x5.png" id="1_62gnv"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/Ungrounded.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(107, 290, 96, 128)
+[sub_resource type="AtlasTexture" id="AtlasTexture_ufogn"]
+atlas = ExtResource("1_62gnv")
+region = Rect2(801, 400, 192, 180)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "ungrounded"
 display_name = "Ungrounded"
 description = "Prevents all debuffs"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_ufogn")
 scene = ExtResource("2_scene")
 price = 600
 rarity = "legendary"

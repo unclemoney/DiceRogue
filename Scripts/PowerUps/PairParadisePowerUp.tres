@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://3yenkag7rt7k"]
 
-[ext_resource type="Texture2D" uid="uid://c6e6a483j4vfn" path="res://Resources/Art/Powerups/regular_movies_500.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://bybdxd404djbf" path="res://Resources/Art/Powerups/parental_guidance_pg_pog_grid_5x5.png" id="1_37qto"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" uid="uid://b3xib3gyisfhy" path="res://Scenes/PowerUp/PairParadisePowerUp.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(206, 149, 100, 131)
+[sub_resource type="AtlasTexture" id="AtlasTexture_nk2h3"]
+atlas = ExtResource("1_37qto")
+region = Rect2(611, 780, 181, 177)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "pair_paradise"
 display_name = "Pair Paradise"
 description = "Pair bonuses: +3 (pair/3oak), +6 (2pair/4oak), +9 (FH/Yahtzee)"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_nk2h3")
 scene = ExtResource("2_scene")
 price = 75
 rarity = "common"

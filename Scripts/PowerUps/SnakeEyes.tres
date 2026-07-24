@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://jr5kivctsb2h"]
 
-[ext_resource type="Texture2D" uid="uid://4cdwvangyrkj" path="res://Resources/Art/Powerups/onscure_90s_500.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://dg5pg547mqu30" path="res://Resources/Art/Powerups/banned_pog_grid_5x5.png" id="1_744c4"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/SnakeEyesPowerUp.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(8, 264, 96, 122)
+[sub_resource type="AtlasTexture" id="AtlasTexture_6cxax"]
+atlas = ExtResource("1_744c4")
+region = Rect2(802, 216, 184, 181)
 
 [resource]
 script = ExtResource("1_script")
 id = "snake_eyes"
 display_name = "Snake Eyes"
 description = "Each 1 = +0.2x mult. All 1s = 3.0x!"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_6cxax")
 scene = ExtResource("2_scene")
 price = 600
 rarity = "legendary"

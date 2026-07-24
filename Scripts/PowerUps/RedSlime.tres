@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://ddvs52v6c3mxi"]
 
-[ext_resource type="Texture2D" uid="uid://divncawucf60p" path="res://Resources/Art/Powerups/teen_classics_500px.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://dqct3k5i3x45l" path="res://Resources/Art/Powerups/questionable_pog_grid_5x5.png" id="1_4m2pv"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" uid="uid://dxt4x58kv5kl1" path="res://Scenes/PowerUp/RedSlime.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(396, 155, 95, 131)
+[sub_resource type="AtlasTexture" id="AtlasTexture_fqlwa"]
+atlas = ExtResource("1_4m2pv")
+region = Rect2(39, 30, 173, 171)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "red_slime"
 display_name = "Red Slime"
 description = "Doubles the chance of rolling red dice"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_fqlwa")
 scene = ExtResource("2_scene")
 price = 75
 rarity = "uncommon"

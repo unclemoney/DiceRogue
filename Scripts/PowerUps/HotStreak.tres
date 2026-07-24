@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://byykmd4emnxdx"]
 
-[ext_resource type="Texture2D" uid="uid://c6e6a483j4vfn" path="res://Resources/Art/Powerups/regular_movies_500.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://bybdxd404djbf" path="res://Resources/Art/Powerups/parental_guidance_pg_pog_grid_5x5.png" id="1_5kyt0"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/HotStreakPowerUp.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(4, 150, 100, 129)
+[sub_resource type="AtlasTexture" id="AtlasTexture_i50f0"]
+atlas = ExtResource("1_5kyt0")
+region = Rect2(612, 219, 182, 177)
 
 [resource]
 script = ExtResource("1_script")
 id = "hot_streak"
 display_name = "Hot Streak"
 description = "+3 per consecutive turn scoring 15+"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_i50f0")
 scene = ExtResource("2_scene")
 price = 125
 rarity = "uncommon"

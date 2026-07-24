@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://c02fdm4680d87"]
 
-[ext_resource type="Texture2D" uid="uid://4cdwvangyrkj" path="res://Resources/Art/Powerups/onscure_90s_500.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://c65f3br6a5kwf" path="res://Resources/Art/Powerups/mom_approved_pog_grid_5x5_revised.png" id="1_n2p4w"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" uid="uid://wc3rbwqg3bdv" path="res://Scenes/PowerUp/ChoreChampionPowerUp.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(109, 7, 94, 128)
+[sub_resource type="AtlasTexture" id="AtlasTexture_s6a4f"]
+atlas = ExtResource("1_n2p4w")
+region = Rect2(227, 39, 186, 181)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "chore_champion"
 display_name = "Chore Champion"
 description = "Chores are 2x more effective (Check to make sure since refactor)"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_s6a4f")
 scene = ExtResource("2_scene")
 price = 50
 rarity = "common"

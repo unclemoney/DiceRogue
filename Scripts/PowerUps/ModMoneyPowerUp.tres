@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://d3b4c0jmx35qm"]
 
-[ext_resource type="Texture2D" uid="uid://c6e6a483j4vfn" path="res://Resources/Art/Powerups/regular_movies_500.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://c65f3br6a5kwf" path="res://Resources/Art/Powerups/mom_approved_pog_grid_5x5_revised.png" id="1_6sq5i"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/ModMoneyPowerUp.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(105, 149, 98, 130)
+[sub_resource type="AtlasTexture" id="AtlasTexture_tp8uj"]
+atlas = ExtResource("1_6sq5i")
+region = Rect2(227, 402, 188, 181)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "mod_money"
 display_name = "Mod Money"
 description = "Earn $8 per modded die when scoring "
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_tp8uj")
 scene = ExtResource("2_scene")
 price = 75
 rarity = "common"

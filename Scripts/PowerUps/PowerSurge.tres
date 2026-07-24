@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://cufue1iu5l55b"]
 
-[ext_resource type="Texture2D" uid="uid://4cdwvangyrkj" path="res://Resources/Art/Powerups/onscure_90s_500.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://c0y4n53xm2pgx" path="res://Resources/Art/Powerups/grounded_pog_grid_5x5.png" id="1_gssdn"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/PowerSurgePowerUp.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(302, 139, 93, 121)
+[sub_resource type="AtlasTexture" id="AtlasTexture_krxbg"]
+atlas = ExtResource("1_gssdn")
+region = Rect2(418, 408, 186, 187)
 
 [resource]
 script = ExtResource("1_script")
 id = "power_surge"
 display_name = "Power Surge"
 description = "+0.15x multiplier per owned PowerUp"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_krxbg")
 scene = ExtResource("2_scene")
 price = 400
 rarity = "epic"

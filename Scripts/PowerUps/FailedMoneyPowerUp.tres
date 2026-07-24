@@ -1,19 +1,19 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://duqqnh13i0ndb"]
 
-[ext_resource type="Texture2D" uid="uid://ffjem017owqi" path="res://Resources/Art/Powerups/campy_80s_500.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://bybdxd404djbf" path="res://Resources/Art/Powerups/parental_guidance_pg_pog_grid_5x5.png" id="1_g7f2c"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" uid="uid://dupqnh13i0nda" path="res://Scenes/PowerUp/FailedMoneyPowerUp.tscn" id="2_scene"]
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
-atlas = ExtResource("1_icon")
-region = Rect2(390, 7, 99, 132)
+[sub_resource type="AtlasTexture" id="AtlasTexture_xoisd"]
+atlas = ExtResource("1_g7f2c")
+region = Rect2(805, 33, 179, 175)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "failed_money"
 display_name = "Failed Money"
 description = "+$50 for each failed hand (at round end)"
-icon = SubResource("AtlasTexture_icon")
+icon = SubResource("AtlasTexture_xoisd")
 scene = ExtResource("2_scene")
 price = 75
 rarity = "common"
