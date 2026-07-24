@@ -1367,13 +1367,15 @@ func animate_consumable_removal(consumable_id: String, on_finished: Callable) ->
 	if audio_mgr:
 		audio_mgr.play_sell_sound()
 	
-	# Find money label as fly target
+	# Find money display as fly target (MoneyContainer on GameUI; the old
+	# turn_tracker_ui/MoneyLabel lookup referenced a removed node and always
+	# fell back to a stale far-left position)
 	var fly_target: Vector2 = Vector2(100, 50)
-	var tracker_ui = get_tree().get_first_node_in_group("turn_tracker_ui")
-	if tracker_ui:
-		var money_lbl = tracker_ui.get_node_or_null("MoneyLabel")
-		if money_lbl:
-			fly_target = money_lbl.global_position + money_lbl.size * 0.5
+	var game_ui_node = get_tree().get_first_node_in_group("game_ui")
+	if game_ui_node:
+		var money_container = game_ui_node.get("money_container")
+		if money_container is Control:
+			fly_target = (money_container as Control).get_global_rect().get_center()
 	
 	print("[ConsumableUI]   Step 1: Jelly wobble starting...")
 	# Step 1: Jelly wobble — item shakes as if being grabbed

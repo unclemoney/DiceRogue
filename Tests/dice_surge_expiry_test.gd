@@ -11,6 +11,8 @@ extends Control
 @onready var status_label: Label = $UIPanel/VBoxContainer/StatusLabel
 
 var test_log: Array[String] = []
+var _autorun_layout_repro := false
+var _quit_after_run := false
 
 # Mock GameController for Dice Surge to use
 var mock_game_controller: Node = null
@@ -18,10 +20,27 @@ var mock_game_controller: Node = null
 
 func _ready() -> void:
 	print("\n=== DICE SURGE EXPIRY TEST ===")
+	_parse_cmdline_args()
 	_setup_mock_game_controller()
 	_connect_signals()
 	_update_status()
 	_log_message("[color=yellow]Test Ready - Use buttons to test Dice Surge expiry[/color]")
+	if _autorun_layout_repro:
+		call_deferred("_autorun_layout_repro_test")
+
+
+func _parse_cmdline_args() -> void:
+	var user_args := OS.get_cmdline_user_args()
+	_autorun_layout_repro = user_args.has("--layout-repro")
+	_quit_after_run = user_args.has("--quit-after")
+
+
+func _autorun_layout_repro_test() -> void:
+	var layout_passed = await _run_layout_repro_test()
+	var reset_passed = await _run_round_reset_expiry_test()
+	var passed = layout_passed and reset_passed
+	if _quit_after_run:
+		get_tree().quit(0 if passed else 1)
 
 
 func _setup_mock_game_controller() -> void:
@@ -163,6 +182,47 @@ func _on_grant_multiple_surges_pressed() -> void:
 	_update_status()
 
 
+func _on_run_layout_repro_pressed() -> void:
+	await _run_layout_repro_test()
+
+
+func _on_round_reset_expiry_pressed() -> void:
+	await _run_round_reset_expiry_test()
+
+
+## _run_round_reset_expiry_test() -> bool
+##
+## Regression test: DiceSurge used late in a round must not persist after the
+## round rolls over. RoundManager.start_round() calls TurnTracker.reset(),
+## which previously cleared dice_bonus_stacks silently, stranding the bonus
+## dice in the hand forever. Verifies reset() now expires the stack and the
+## hand returns to the base 5 dice.
+func _run_round_reset_expiry_test() -> bool:
+	_log_message("--- Running Round Reset Expiry Test ---")
+
+	# Simulate a Dice Surge applied on a late turn of the round
+	var stack_id = turn_tracker.add_dice_bonus_stack(2, 3)
+	dice_hand.dice_count = turn_tracker.get_total_dice_count()
+	dice_hand.update_dice_count()
+	_log_message("Applied stack #%d: +2 dice (total %d)" % [stack_id, dice_hand.dice_count])
+
+	# Round rollover: RoundManager calls turn_tracker.reset()
+	turn_tracker.reset()
+	await get_tree().create_timer(0.1).timeout
+
+	var stacks_cleared = turn_tracker.dice_bonus_stacks.is_empty()
+	var hand_reset = dice_hand.dice_count == 5
+	var passed = stacks_cleared and hand_reset
+
+	if passed:
+		_log_message("[color=green]✓ PASS: Round reset expired Dice Surge, hand back to 5[/color]")
+	else:
+		_log_message("[color=red]✗ FAIL: After reset, dice_count=%d (expected 5), active stacks=%d (expected 0)[/color]" % [dice_hand.dice_count, turn_tracker.dice_bonus_stacks.size()])
+
+	_update_status()
+	return passed
+
+
 func _on_rapid_advance_pressed() -> void:
 	_log_message("--- Rapid Turn Advance (5 turns) ---")
 	
@@ -234,3 +294,181 @@ func _on_verify_counts_pressed() -> void:
 			_log_message("[color=red]  - Logical (%d) != Tracker (%d)[/color]" % [logical, tracker])
 		if tracker != expected_total:
 			_log_message("[color=red]  - Tracker (%d) != Expected (%d)[/color]" % [tracker, expected_total])
+
+
+## _run_layout_repro_test() -> bool
+##
+## Reproduces mid-turn hand growth while dice are idling, then verifies that
+## the visible dice positions still match their assigned home positions.
+func _run_layout_repro_test() -> bool:
+	_log_message("--- Running Mid-Turn Layout Repro ---")
+	await get_tree().process_frame
+	await _reset_and_spawn_layout_repro_hand()
+
+	dice_hand.roll_all()
+	await dice_hand.roll_complete
+	await get_tree().create_timer(0.45).timeout
+
+	var first_pass = await _add_surge_and_verify_layout(2, 3, 7, "After first Dice Surge")
+	var second_pass = await _add_surge_and_verify_layout(2, 3, 9, "After stacked Dice Surge")
+
+	_expire_all_dice_bonus_stacks()
+	await get_tree().create_timer(0.45).timeout
+	var expiry_pass = _verify_layout_state(5, "After forced expiry")
+
+	var passed = first_pass and second_pass and expiry_pass
+	if passed:
+		_log_message("[color=green]✓ PASS: Mid-turn Dice Surge layout stayed stable[/color]")
+	else:
+		_log_message("[color=red]✗ FAIL: Mid-turn Dice Surge layout drifted or overlapped[/color]")
+	return passed
+
+
+func _reset_and_spawn_layout_repro_hand() -> void:
+	turn_tracker.reset()
+	turn_tracker.is_active = false
+	turn_tracker.current_turn = 0
+	turn_tracker.rolls_left = 0
+	dice_hand.reset_roll_count()
+	dice_hand.dice_count = 5
+	await dice_hand.spawn_dice()
+	var spawn_wait = dice_hand.entry_duration + dice_hand.animation_stagger * max(0, dice_hand.dice_count - 1) + 0.2
+	await get_tree().create_timer(spawn_wait).timeout
+	_update_status()
+
+
+func _add_surge_and_verify_layout(dice_to_add: int, turns: int, expected_count: int, label: String) -> bool:
+	var previous_count = dice_hand.dice_list.size()
+	var stack_id = turn_tracker.add_dice_bonus_stack(dice_to_add, turns)
+	var new_count = turn_tracker.get_total_dice_count()
+	dice_hand.dice_count = new_count
+	dice_hand.update_dice_count()
+	_log_message("Applied stack #%d: +%d dice (total %d)" % [stack_id, dice_to_add, new_count])
+	await get_tree().create_timer(0.1).timeout
+	await _roll_new_dice_from_index(previous_count)
+	await get_tree().create_timer(0.45).timeout
+	return _verify_layout_state(expected_count, label)
+
+
+func _roll_new_dice_from_index(start_index: int) -> void:
+	for i in range(start_index, dice_hand.dice_list.size()):
+		if i >= dice_hand.dice_list.size():
+			break
+		var die = dice_hand.dice_list[i]
+		if die is Dice:
+			die.roll()
+			await get_tree().create_timer(0.1).timeout
+
+
+func _expire_all_dice_bonus_stacks() -> void:
+	var stacks_to_expire = turn_tracker.dice_bonus_stacks.duplicate()
+	for stack in stacks_to_expire:
+		turn_tracker.dice_bonus_stacks.erase(stack)
+		turn_tracker.emit_signal("dice_stack_expired", stack.id, stack.dice)
+
+	if stacks_to_expire.size() > 0:
+		turn_tracker.emit_signal("dice_bonus_changed", 0)
+		turn_tracker.emit_signal("temporary_effect_expired", "dice_bonus")
+
+
+func _verify_layout_state(expected_count: int, label: String) -> bool:
+	var actual_count = dice_hand.dice_list.size()
+	var expected_rows = _expected_row_count(expected_count)
+	var visible_rows = _count_distinct_rows(false)
+	var home_rows = _count_distinct_rows(true)
+	var max_drift = _get_max_home_position_drift()
+	var min_spacing = _get_min_die_spacing()
+	var missing_data = _count_missing_dice_data()
+	var passed = true
+
+	if actual_count != expected_count:
+		passed = false
+		_log_message("[color=red]%s: expected %d dice, found %d[/color]" % [label, expected_count, actual_count])
+
+	if visible_rows != expected_rows:
+		passed = false
+		_log_message("[color=red]%s: expected %d visible rows, found %d[/color]" % [label, expected_rows, visible_rows])
+
+	if home_rows != expected_rows:
+		passed = false
+		_log_message("[color=red]%s: expected %d home rows, found %d[/color]" % [label, expected_rows, home_rows])
+
+	if max_drift > 8.0:
+		passed = false
+		_log_message("[color=red]%s: max home-position drift %.2fpx exceeds tolerance[/color]" % [label, max_drift])
+
+	if min_spacing < 40.0:
+		passed = false
+		_log_message("[color=red]%s: dice spacing collapsed to %.2fpx[/color]" % [label, min_spacing])
+
+	if missing_data > 0:
+		passed = false
+		_log_message("[color=red]%s: %d dice were missing dice_data[/color]" % [label, missing_data])
+
+	if passed:
+		_log_message("[color=green]✓ %s: rows=%d drift=%.2f spacing=%.2f[/color]" % [label, visible_rows, max_drift, min_spacing])
+
+	return passed
+
+
+func _expected_row_count(count: int) -> int:
+	if count <= dice_hand.max_dice_per_row:
+		return 1
+	if count <= dice_hand.max_dice_per_row * 2:
+		return 2
+	return 3
+
+
+func _count_distinct_rows(use_home_position: bool) -> int:
+	var row_values: Array[float] = []
+	for die in dice_hand.dice_list:
+		if not is_instance_valid(die):
+			continue
+		var sample_y = die.home_position.y if use_home_position else die.position.y
+		row_values.append(sample_y)
+
+	if row_values.is_empty():
+		return 0
+
+	row_values.sort()
+	var row_count = 1
+	var last_row_y = row_values[0]
+	for i in range(1, row_values.size()):
+		if absf(row_values[i] - last_row_y) > 10.0:
+			row_count += 1
+			last_row_y = row_values[i]
+	return row_count
+
+
+func _get_max_home_position_drift() -> float:
+	var max_drift = 0.0
+	for die in dice_hand.dice_list:
+		if not is_instance_valid(die):
+			continue
+		max_drift = maxf(max_drift, die.position.distance_to(die.home_position))
+	return max_drift
+
+
+func _get_min_die_spacing() -> float:
+	if dice_hand.dice_list.size() < 2:
+		return 9999.0
+
+	var min_spacing = 9999.0
+	for i in range(dice_hand.dice_list.size()):
+		var left_die = dice_hand.dice_list[i]
+		if not is_instance_valid(left_die):
+			continue
+		for j in range(i + 1, dice_hand.dice_list.size()):
+			var right_die = dice_hand.dice_list[j]
+			if not is_instance_valid(right_die):
+				continue
+			min_spacing = minf(min_spacing, left_die.position.distance_to(right_die.position))
+	return min_spacing
+
+
+func _count_missing_dice_data() -> int:
+	var missing_data = 0
+	for die in dice_hand.dice_list:
+		if is_instance_valid(die) and die.dice_data == null:
+			missing_data += 1
+	return missing_data

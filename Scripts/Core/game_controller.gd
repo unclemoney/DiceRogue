@@ -4240,13 +4240,19 @@ func _trigger_challenge_celebration() -> void:
 		_challenge_celebration = ChallengeCelebrationScript.new()
 		add_child(_challenge_celebration)
 	
-	# Get position from ChallengeUI
-	var celebration_position := Vector2(150, 100)  # Default fallback position
+	# Get position from ChallengeUI; default to the challenge container center
+	# on GameUI instead of a stale hardcoded layout position
+	var celebration_position := get_viewport().get_visible_rect().size / 2.0
+	var game_ui_node = get_tree().get_first_node_in_group("game_ui")
+	if game_ui_node:
+		var challenge_container = game_ui_node.get("challenge_container")
+		if challenge_container is Control:
+			celebration_position = (challenge_container as Control).get_global_rect().get_center()
 	if is_instance_valid(challenge_ui):
 		if challenge_ui.has_method("get_challenge_spine_position"):
 			celebration_position = challenge_ui.get_challenge_spine_position()
-		elif challenge_ui.get_child_count() > 0:
-			celebration_position = challenge_ui.global_position + Vector2(80, 80)
+		elif challenge_ui is Control:
+			celebration_position = (challenge_ui as Control).get_global_rect().get_center()
 	
 	print("[GameController] Triggering challenge celebration at: %s" % str(celebration_position))
 	_challenge_celebration.trigger_celebration(celebration_position, get_tree().current_scene)

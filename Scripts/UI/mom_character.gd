@@ -32,6 +32,9 @@ const MOM_BUTTON_PALETTE := {
 @export var upset_texture: Texture2D
 @export var happy_texture: Texture2D
 
+# Fonts
+var vcr_font: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+
 # Node references
 var background_overlay: ColorRect
 var dialog_panel: PanelContainer
@@ -186,6 +189,7 @@ func _create_ui_structure() -> void:
 	# "Mom" title
 	var title_label = Label.new()
 	title_label.text = "Mom"
+	title_label.add_theme_font_override("font", vcr_font)
 	title_label.add_theme_font_size_override("font_size", 20)
 	title_label.add_theme_color_override("font_color", Color(1, 0.8, 0.9))
 	dialog_container.add_child(title_label)
@@ -198,6 +202,7 @@ func _create_ui_structure() -> void:
 	dialog_label.custom_minimum_size = Vector2(300, 120)
 	dialog_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	dialog_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	dialog_label.add_theme_font_override("normal_font", vcr_font)
 	dialog_label.add_theme_font_size_override("normal_font_size", 16)
 	dialog_label.add_theme_color_override("default_color", Color.WHITE)
 	dialog_container.add_child(dialog_label)
@@ -205,7 +210,7 @@ func _create_ui_structure() -> void:
 	# Close button (GlassActionButton handles its own hover/press TweenFX)
 	close_button = GlassActionButton.new()
 	close_button.name = "CloseButton"
-	close_button.configure("OK", Vector2(100, 40), MOM_BUTTON_PALETTE, 18)
+	close_button.configure("OK", Vector2(100, 40), MOM_BUTTON_PALETTE, 18, vcr_font)
 	close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	close_button.pressed.connect(_on_close_pressed)
 	vbox.add_child(close_button)

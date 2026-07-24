@@ -287,10 +287,7 @@ func _recenter_existing_dice() -> void:
 	var positions = _calculate_centered_positions(dice_list.size())
 	for i in range(dice_list.size()):
 		if i < positions.size() and is_instance_valid(dice_list[i]):
-			dice_list[i].home_position = positions[i]
-			# Animate to new position so the move is visible
-			var tween = get_tree().create_tween()
-			tween.tween_property(dice_list[i], "position", positions[i], 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+			dice_list[i].relayout_to_home(positions[i], 0.3)
 
 
 ## _get_entry_offset(index: int, total_count: int) -> Vector2
@@ -580,16 +577,12 @@ func update_dice_count() -> void:
 	if current_count < dice_count:
 		# Update positions for existing dice first
 		for i in range(current_count):
-			dice_list[i].home_position = new_positions[i]
-			# Animate to new position
-			var tween = get_tree().create_tween()
-			tween.tween_property(dice_list[i], "position", new_positions[i], 0.3)\
-				.set_trans(Tween.TRANS_SINE)\
-				.set_ease(Tween.EASE_OUT)
+			dice_list[i].relayout_to_home(new_positions[i], 0.3)
 		
 		# Add more dice
 		for i in range(current_count, dice_count):
 			var die = dice_scene.instantiate() as Dice
+			die.dice_data = default_dice_data
 			add_child(die)
 			# Connect die lock signal
 			if not die.is_connected("die_locked", Callable(self, "_on_child_die_locked")):
@@ -626,11 +619,7 @@ func update_dice_count() -> void:
 		
 		# Update positions for remaining dice
 		for i in range(dice_count):
-			dice_list[i].home_position = new_positions[i]
-			var tween = get_tree().create_tween()
-			tween.tween_property(dice_list[i], "position", new_positions[i], 0.3)\
-				.set_trans(Tween.TRANS_SINE)\
-				.set_ease(Tween.EASE_OUT)
+			dice_list[i].relayout_to_home(new_positions[i], 0.3)
 
 func enable_all_dice() -> void:
 	print("[DiceHand] Enabling all dice (legacy method - state machine should handle this)")

@@ -100,10 +100,13 @@ func start_new_turn():
 		print("[TurnTracker] Score streak turn %d, multiplier: %.2fx, turns remaining: %d" % [score_streak_current_turn, score_streak_multiplier, score_streak_turns_remaining])
 		emit_signal("score_streak_changed", score_streak_multiplier, score_streak_turns_remaining)
 		
-		# Juice: streak popup
+		# Juice: streak popup (self is a plain Node - anchor to the tracker UI
+		# so the popup does not spawn at (0,0))
 		var ftm = get_node_or_null("/root/FloatingTextManager")
 		if ftm:
-			ftm.show_streak_popup(self, score_streak_multiplier)
+			var streak_anchor = get_tree().get_first_node_in_group("turn_tracker_ui")
+			if streak_anchor is CanvasItem:
+				ftm.show_streak_popup(streak_anchor, score_streak_multiplier)
 		var audio_mgr = get_node_or_null("/root/AudioManager")
 		if audio_mgr and audio_mgr.has_method("play_streak_sound"):
 			audio_mgr.play_streak_sound()
@@ -231,7 +234,19 @@ func reset() -> void:
 	rolls_left = MAX_ROLLS
 	is_active = true  # Turn 1 is active when round starts
 	# Reset temporary effects
+	# Emit expiry signals so listeners (e.g. GameController) can remove any
+	# physical bonus dice still in the hand. Without this, dice granted late
+	# in a round would persist indefinitely.
+	# Stacks are cleared BEFORE emitting so listeners reading
+	# get_total_dice_count() see the post-expiry total (same order as
+	# start_new_turn()).
+	var expired_stacks = dice_bonus_stacks.duplicate()
 	dice_bonus_stacks.clear()
+	for stack in expired_stacks:
+		emit_signal("dice_stack_expired", stack.id, stack.dice)
+	if expired_stacks.size() > 0:
+		emit_signal("dice_bonus_changed", 0)
+		emit_signal("temporary_effect_expired", "dice_bonus")
 	_next_stack_id = 0
 	score_streak_active = false
 	score_streak_turns_remaining = 0
@@ -294,10 +309,13 @@ func start_score_streak(turns: int) -> void:
 	print("[TurnTracker] Started score streak for %d turns (initial multiplier: 1.5x)" % turns)
 	emit_signal("score_streak_changed", score_streak_multiplier, score_streak_turns_remaining)
 	
-	# Juice: streak popup on start
+	# Juice: streak popup on start (self is a plain Node - anchor to the
+	# tracker UI so the popup does not spawn at (0,0))
 	var ftm = get_node_or_null("/root/FloatingTextManager")
 	if ftm:
-		ftm.show_streak_popup(self, score_streak_multiplier)
+		var streak_anchor = get_tree().get_first_node_in_group("turn_tracker_ui")
+		if streak_anchor is CanvasItem:
+			ftm.show_streak_popup(streak_anchor, score_streak_multiplier)
 	var audio_mgr = get_node_or_null("/root/AudioManager")
 	if audio_mgr and audio_mgr.has_method("play_streak_sound"):
 		audio_mgr.play_streak_sound()

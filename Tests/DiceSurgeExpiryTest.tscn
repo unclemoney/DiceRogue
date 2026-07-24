@@ -1,14 +1,16 @@
-[gd_scene load_steps=4 format=3 uid="uid://dice_surge_expiry_test"]
+[gd_scene load_steps=4 format=3 uid="uid://dlyo5o71u0xrm"]
 
 [ext_resource type="PackedScene" uid="uid://dugpl3du3i6xo" path="res://Scenes/Dice/dice_hand.tscn" id="1_dicehand"]
 [ext_resource type="PackedScene" uid="uid://b8limy63m2tlo" path="res://Scenes/Tracker/turn_tracker.tscn" id="2_turntracker"]
-[ext_resource type="Script" path="res://Tests/dice_surge_expiry_test.gd" id="3_script"]
+[ext_resource type="Script" uid="uid://che1vxjs748jr" path="res://Tests/dice_surge_expiry_test.gd" id="3_script"]
 
 [node name="DiceSurgeExpiryTest" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("3_script")
 
 [node name="Background" type="ColorRect" parent="."]
@@ -16,6 +18,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.12, 0.12, 0.15, 1)
 
 [node name="TurnTracker" parent="." instance=ExtResource("2_turntracker")]
@@ -32,6 +36,7 @@ offset_left = -400.0
 offset_top = 20.0
 offset_right = 400.0
 offset_bottom = 420.0
+grow_horizontal = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="UIPanel"]
 layout_mode = 2
@@ -83,6 +88,16 @@ custom_minimum_size = Vector2(180, 40)
 layout_mode = 2
 text = "Verify Counts"
 
+[node name="RunLayoutReproButton" type="Button" parent="UIPanel/VBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+text = "Run Layout Repro"
+
+[node name="RoundResetExpiryButton" type="Button" parent="UIPanel/VBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(180, 40)
+layout_mode = 2
+text = "Round Reset Expiry"
+
 [node name="ResetTestButton" type="Button" parent="UIPanel/VBoxContainer/ButtonGrid"]
 custom_minimum_size = Vector2(180, 40)
 layout_mode = 2
@@ -108,4 +123,6 @@ scroll_following = true
 [connection signal="pressed" from="UIPanel/VBoxContainer/ButtonGrid/RapidAdvanceButton" to="." method="_on_rapid_advance_pressed"]
 [connection signal="pressed" from="UIPanel/VBoxContainer/ButtonGrid/ForceExpireAllButton" to="." method="_on_force_expire_all_pressed"]
 [connection signal="pressed" from="UIPanel/VBoxContainer/ButtonGrid/VerifyCountsButton" to="." method="_on_verify_counts_pressed"]
+[connection signal="pressed" from="UIPanel/VBoxContainer/ButtonGrid/RunLayoutReproButton" to="." method="_on_run_layout_repro_pressed"]
+[connection signal="pressed" from="UIPanel/VBoxContainer/ButtonGrid/RoundResetExpiryButton" to="." method="_on_round_reset_expiry_pressed"]
 [connection signal="pressed" from="UIPanel/VBoxContainer/ButtonGrid/ResetTestButton" to="." method="_on_reset_test_pressed"]

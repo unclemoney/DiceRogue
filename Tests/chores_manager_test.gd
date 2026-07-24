@@ -26,6 +26,9 @@ func _ready() -> void:
 	_on_test_rating_mapping_pressed()
 	_on_test_progress_per_roll_pressed()
 	_on_test_round_boundary_selection_pressed()
+	if OS.get_cmdline_user_args().has("--quit-after"):
+		await get_tree().create_timer(0.2).timeout
+		get_tree().quit()
 
 func _setup_ui() -> void:
 	# Populate task option button

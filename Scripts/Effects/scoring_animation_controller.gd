@@ -283,10 +283,11 @@ func _execute_animation_sequence(score: int, category: String, breakdown_info: D
 		var flash_tween = create_tween()
 		flash_tween.tween_property(flash, "modulate:a", 0.0, 0.3)
 		flash_tween.tween_callback(flash.queue_free)
-		# Jackpot floating text
+		# Jackpot floating text (self is a plain Node, so anchor to screen center
+		# explicitly - passing self would spawn the popup at (0,0))
 		var ftm = get_node_or_null("/root/FloatingTextManager")
 		if ftm:
-			ftm.show_jackpot_popup(self)
+			ftm.show_popup_at_position(get_tree().root, get_viewport().get_visible_rect().size / 2.0, "JACKPOT!", Color(1.0, 0.8, 0.0, 1.0), 2.0)
 		# Jackpot sound
 		var jackpot_audio = get_node_or_null("/root/AudioManager")
 		if jackpot_audio and jackpot_audio.has_method("play_jackpot_sound"):
@@ -320,6 +321,23 @@ func _execute_animation_sequence(score: int, category: String, breakdown_info: D
 	await get_tree().create_timer(1.0 / speed_scale).timeout
 
 
+## _get_game_ui_container_center(container_property, fallback)
+##
+## Returns the screen-space center of a named container on GameUI
+## (e.g. "power_up_container", "debuff_container", "money_container").
+## Used as the origin for scoring animations so they start near the
+## relevant UI panel instead of stale hardcoded layout positions.
+## NOTE: never use GameController.power_up_container for this - that is a
+## Node2D logic container sitting at (0,0), not the visual panel.
+func _get_game_ui_container_center(container_property: StringName, fallback: Vector2) -> Vector2:
+	var game_ui = get_tree().get_first_node_in_group("game_ui")
+	if game_ui:
+		var container = game_ui.get(container_property)
+		if container is Control:
+			return (container as Control).get_global_rect().get_center()
+	return fallback
+
+
 ## _animate_negative_sources(breakdown_info, intensity_scale, speed_scale)
 ##
 ## Checks breakdown_info for negative values and animates them with debuff effects.
@@ -345,7 +363,8 @@ func _animate_negative_sources(breakdown_info: Dictionary, intensity_scale: floa
 			var penalty_display = int((1.0 - value) * 100)  # e.g., 0.5 = 50% reduction
 			print("[ScoringAnimationController] Found divisor: %s with x%.2f (-%d%%)" % [source_name, value, penalty_display])
 			# Use a smaller intensity for divisors
-			animate_negative_contribution(-penalty_display, Vector2(100, 200), source_name)
+			var divisor_origin = _get_game_ui_container_center(&"power_up_container", get_viewport().get_visible_rect().size / 2.0)
+			animate_negative_contribution(-penalty_display, divisor_origin, source_name)
 			await get_tree().create_timer(0.2 / speed_scale).timeout
 
 
@@ -1151,15 +1170,15 @@ func animate_debuff_source(debuff_id: String, penalty_value: int, _intensity_sca
 	
 	# Try to find the debuff in the DebuffUI
 	var debuff_ui_nodes = get_tree().get_nodes_in_group("debuff_ui")
-	var source_position = Vector2(100, 200)  # Default position
+	var source_position = _get_game_ui_container_center(&"debuff_container", get_viewport().get_visible_rect().size / 2.0)
 	
 	if debuff_ui_nodes.size() > 0:
 		var debuff_ui = debuff_ui_nodes[0]
 		# Use debuff spine position if available
 		if debuff_ui.has_method("get_debuff_spine_position"):
 			source_position = debuff_ui.get_debuff_spine_position()
-		else:
-			source_position = debuff_ui.global_position + Vector2(20, 150)
+		elif debuff_ui is Control:
+			source_position = (debuff_ui as Control).get_global_rect().get_center()
 	
 	# Animate the negative contribution
 	animate_negative_contribution(-penalty_value, source_position, debuff_id)

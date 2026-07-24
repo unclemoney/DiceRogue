@@ -52,6 +52,8 @@ const BAR_TEXTURE_UNDER := preload("res://Resources/Art/UI/under-export.png")
 const BAR_TEXTURE_PROGRESS := preload("res://Resources/Art/UI/progress-export.png")
 const BAR_TEXTURE_OVER := preload("res://Resources/Art/UI/over-export.png")
 const BAR_NINE_PATCH_MARGIN: int = 32
+# Standard UI font for text not covered by the panel theme (RichTextLabel).
+const VCR_FONT := preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 # Subtle alpha levels for the mood (frame) and difficulty (track) tints.
 const MOOD_TINT_ALPHA: float = 0.2
 const DIFFICULTY_TINT_ALPHA: float = 0.1
@@ -243,6 +245,7 @@ func _create_ui_structure() -> void:
 	details_label.scroll_active = false
 	details_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	details_label.custom_minimum_size = Vector2(0, 220)
+	details_label.add_theme_font_override("normal_font", VCR_FONT)
 	details_label.add_theme_color_override("default_color", CHORE_TEXT)
 	details_label.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
 	details_label.add_theme_constant_override("outline_size", 1)

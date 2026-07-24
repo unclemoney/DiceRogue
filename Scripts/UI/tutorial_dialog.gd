@@ -20,7 +20,6 @@ const BACKDROP_SHADER_PATH := "res://Scripts/Shaders/panel_backdrop.gdshader"
 const PANEL_CORNER_RADIUS := 12.0
 
 # Fonts
-var brick_font: Font = preload("res://Resources/Font/BRICK_SANS.ttf")
 var vcr_font: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 
 # Mom textures
@@ -148,7 +147,7 @@ func _build_ui() -> void:
 	title_label = Label.new()
 	title_label.name = "TitleLabel"
 	title_label.text = "MOM'S TIPS"
-	title_label.add_theme_font_override("font", brick_font)
+	title_label.add_theme_font_override("font", vcr_font)
 	title_label.add_theme_font_size_override("font_size", 24)
 	title_label.add_theme_color_override("font_color", GOLDEN_COLOR)
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL

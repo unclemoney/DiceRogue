@@ -654,6 +654,29 @@ func _get_die_bounds_size() -> Vector2:
 	return Vector2(64, 64)
 
 
+## relayout_to_home(new_home_position: Vector2, duration: float)
+##
+## Moves the die to a new home position without letting idle breathing pull it
+## back toward an outdated row while the layout is changing.
+func relayout_to_home(new_home_position: Vector2, duration: float = 0.3) -> void:
+	var should_resume_breathing = _is_breathing and current_state in [DiceState.ROLLED, DiceState.LOCKED]
+	_stop_idle_breathing()
+	home_position = new_home_position
+	_breathing_base_pos = new_home_position
+
+	if duration <= 0.0:
+		position = new_home_position
+		if should_resume_breathing:
+			_start_idle_breathing()
+		return
+
+	var tween = get_tree().create_tween()
+	tween.tween_property(self, "position", new_home_position, duration)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	if should_resume_breathing:
+		tween.finished.connect(_start_idle_breathing)
+
+
 func _configure_mod_container() -> void:
 	if not mod_container:
 		return

@@ -2,14 +2,15 @@ extends Control
 
 ## ScalingTest
 ##
-## Test scene for verifying round-based scaling for Upper Section Bonus
-## and Goof-Off Meter thresholds.
+## Test scene for verifying that the Upper Section Bonus and Goof-Off Meter
+## thresholds are FLAT across rounds (round-based scaling was removed).
 ##
 ## Tests:
-## 1. Upper Section Bonus scaling (10% per round)
-## 2. Goof-Off Meter scaling (5% decrease per round)
-## 3. Bonus trigger when threshold is met (not requiring completion)
-## 4. Progress clamping when round changes
+## 1. Upper Section Bonus threshold stays at base (63) every round
+## 2. Upper Section Bonus amount stays at base (35) every round
+## 3. Goof-Off Meter max progress stays at 100 every round
+## 4. Bonus trigger when threshold is met (not requiring completion)
+## 5. Progress clamping when round changes
 
 var _output_label: RichTextLabel
 var _round_label: Label
@@ -24,6 +25,9 @@ func _ready() -> void:
 	_create_ui()
 	_initialize_mocks()
 	_run_tests()
+	if OS.get_cmdline_user_args().has("--quit-after"):
+		await get_tree().create_timer(0.2).timeout
+		get_tree().quit()
 
 
 func _create_ui() -> void:
@@ -48,7 +52,7 @@ func _create_ui() -> void:
 	
 	# Title
 	var title = Label.new()
-	title.text = "Scaling Test - Round-Based Difficulty"
+	title.text = "Scaling Test - Flat Values (No Round Scaling)"
 	title.add_theme_font_size_override("font_size", 24)
 	title.add_theme_color_override("font_color", Color.YELLOW)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -137,10 +141,11 @@ func _update_display() -> void:
 
 func _run_tests() -> void:
 	_output_label.text = "[b]Running Scaling Tests...[/b]\n\n"
+	var results: Array[bool] = []
 	
-	# Test 1: Upper Bonus Scaling
-	_output_label.text += "[color=#ffcc00]Test 1: Upper Bonus Threshold Scaling (10% per round)[/color]\n"
-	var expected_thresholds = [63, 70, 77, 85, 93, 103, 113, 124, 137, 150]  # ceil values
+	# Test 1: Upper Bonus Threshold (flat)
+	_output_label.text += "[color=#ffcc00]Test 1: Upper Bonus Threshold (flat at 63, no round scaling)[/color]\n"
+	var expected_thresholds = [63, 63, 63, 63, 63, 63, 63, 63, 63, 63]
 	var all_passed = true
 	
 	for i in range(1, 11):
@@ -153,10 +158,11 @@ func _run_tests() -> void:
 		_output_label.text += "  Round %d: %d (expected: %d) %s\n" % [i, actual, expected, status]
 	
 	_output_label.text += "  Result: %s\n\n" % ("[color=green]PASSED[/color]" if all_passed else "[color=red]FAILED[/color]")
+	results.append(all_passed)
 	
-	# Test 2: Upper Bonus Amount Scaling
-	_output_label.text += "[color=#ffcc00]Test 2: Upper Bonus Amount Scaling (10% per round)[/color]\n"
-	var expected_amounts = [35, 39, 43, 47, 52, 57, 63, 69, 76, 84]  # ceil values
+	# Test 2: Upper Bonus Amount (flat)
+	_output_label.text += "[color=#ffcc00]Test 2: Upper Bonus Amount (flat at 35, no round scaling)[/color]\n"
+	var expected_amounts = [35, 35, 35, 35, 35, 35, 35, 35, 35, 35]
 	all_passed = true
 	
 	for i in range(1, 11):
@@ -169,10 +175,11 @@ func _run_tests() -> void:
 		_output_label.text += "  Round %d: %d (expected: %d) %s\n" % [i, actual, expected, status]
 	
 	_output_label.text += "  Result: %s\n\n" % ("[color=green]PASSED[/color]" if all_passed else "[color=red]FAILED[/color]")
+	results.append(all_passed)
 	
-	# Test 3: Goof-Off Meter Scaling
-	_output_label.text += "[color=#88ff88]Test 3: Goof-Off Meter Scaling (5% decrease per round)[/color]\n"
-	var expected_max_progress = [100, 95, 91, 86, 82, 78, 74, 71, 67, 64]  # ceil values
+	# Test 3: Goof-Off Meter Max (flat)
+	_output_label.text += "[color=#88ff88]Test 3: Goof-Off Meter Max Progress (flat at 100, no round scaling)[/color]\n"
+	var expected_max_progress = [100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
 	all_passed = true
 	
 	for i in range(1, 11):
@@ -185,8 +192,12 @@ func _run_tests() -> void:
 		_output_label.text += "  Round %d: %d (expected: %d) %s\n" % [i, actual, expected, status]
 	
 	_output_label.text += "  Result: %s\n\n" % ("[color=green]PASSED[/color]" if all_passed else "[color=red]FAILED[/color]")
+	results.append(all_passed)
 	
 	_output_label.text += "[b]All tests complete![/b]\n"
+	print("[ScalingTest] Test1 UpperBonusThreshold: %s" % ("PASS" if results[0] else "FAIL"))
+	print("[ScalingTest] Test2 UpperBonusAmount: %s" % ("PASS" if results[1] else "FAIL"))
+	print("[ScalingTest] Test3 GoofOffMeterMax: %s" % ("PASS" if results[2] else "FAIL"))
 
 
 func _test_bonus_trigger() -> void:
@@ -232,20 +243,20 @@ func _test_progress_clamping() -> void:
 	
 	_output_label.text += "Starting: Round 1, Progress = 90, Max = %d\n" % mock_chores_manager.get_scaled_max_progress()
 	
-	# Move to round 5 where max is 82
+	# Max is flat at 100, so 90 progress is untouched on round change
 	mock_chores_manager.update_round(5)
 	_output_label.text += "After Round 5: Progress = %d, Max = %d\n" % [mock_chores_manager.current_progress, mock_chores_manager.get_scaled_max_progress()]
-	_output_label.text += "  (Should be clamped to max-1 = 81)\n\n"
+	_output_label.text += "  (Should remain 90 since max is flat at 100)\n\n"
 	
-	# Reset and test edge case
+	# Edge case: progress at the cap gets clamped to max-1
 	mock_chores_manager.current_round_number = 1
-	mock_chores_manager.current_progress = 50
+	mock_chores_manager.current_progress = 100
 	
-	_output_label.text += "Starting: Round 1, Progress = 50, Max = %d\n" % mock_chores_manager.get_scaled_max_progress()
+	_output_label.text += "Starting: Round 1, Progress = 100, Max = %d\n" % mock_chores_manager.get_scaled_max_progress()
 	
 	mock_chores_manager.update_round(10)
 	_output_label.text += "After Round 10: Progress = %d, Max = %d\n" % [mock_chores_manager.current_progress, mock_chores_manager.get_scaled_max_progress()]
-	_output_label.text += "  (Should remain 50 since 50 < 64)\n"
+	_output_label.text += "  (Should be clamped to max-1 = 99)\n"
 
 
 # Mock classes for testing without actual game systems
@@ -262,12 +273,10 @@ class MockScorecard:
 		current_round_number = round_number
 	
 	func get_scaled_upper_bonus_threshold() -> int:
-		var scale_factor = pow(1.1, max(0, current_round_number - 1))
-		return int(ceil(UPPER_BONUS_THRESHOLD * scale_factor))
+		return UPPER_BONUS_THRESHOLD
 	
 	func get_scaled_upper_bonus_amount() -> int:
-		var scale_factor = pow(1.1, max(0, current_round_number - 1))
-		return int(ceil(UPPER_BONUS_AMOUNT * scale_factor))
+		return UPPER_BONUS_AMOUNT
 	
 	func check_upper_bonus() -> void:
 		var scaled_threshold = get_scaled_upper_bonus_threshold()
@@ -292,5 +301,4 @@ class MockChoresManager:
 			current_progress = max(0, new_threshold - 1)
 	
 	func get_scaled_max_progress() -> int:
-		var scale_factor = pow(0.95, max(0, current_round_number - 1))
-		return int(ceil(MAX_PROGRESS * scale_factor))
+		return MAX_PROGRESS

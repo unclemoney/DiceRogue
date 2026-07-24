@@ -46,3 +46,8 @@ func _ready():
 	
 	# Note: start_game() is called from GameController._on_game_start(),
 	# no need to call it manually here.
+
+	# Headless smoke run support: quit shortly after full scene load
+	if OS.get_cmdline_user_args().has("--quit-after"):
+		await get_tree().create_timer(3.0).timeout
+		get_tree().quit()

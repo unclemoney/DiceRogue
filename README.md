@@ -496,7 +496,7 @@ The **Channel Manager** drives the resource-based Mall Zone progression system (
 - **Mall Directory UI**: Select the starting Mall Zone from a runtime-generated mall map with hover tooltips, section colors, and a persistent side panel
 - **Resource-Based Configuration**: Each Mall Zone is defined by a `.tres` file with manually tuned settings
 - **Unlock Pacing**: Higher Mall Zones require completing lower Mall Zones first
-- **Multiple Scaling Multipliers**: Goal scores, shop prices, goof-off meter, Yahtzee bonuses, debuff intensity
+- **Multiple Scaling Multipliers**: Goal scores, shop prices, Yahtzee bonuses, debuff intensity
 - **Per-Round Difficulty**: Each round has its own challenge difficulty range
 - **Persistent Completion**: Completed Mall Zones are saved and display a checkmark when browsing
 - **Lock Feedback**: Locked Mall Zones show 🔒 icon and disable Start button
@@ -550,7 +550,6 @@ Each round within a Mall Zone has:
 - **RoundManager**: Uses `get_challenge_difficulty_range()` for challenge selection
 - **ShopItem**: Uses `get_shop_price_multiplier()` for price display
 - **DiceColorManager**: Uses `get_colored_dice_cost_multiplier()` for dice costs
-- **ChoresManager**: Uses `get_goof_off_multiplier()` for meter threshold
 - **Scorecard**: Uses `get_yahtzee_bonus_multiplier()` for bonus Yahtzee points
 - **ScoreCardUI**: Binds `ChannelManager` to swap score-row contrast profiles based on active channel shader brightness
 - **DebuffManager**: Uses `get_debuff_intensity_multiplier()` for debuff scaling
@@ -846,19 +845,15 @@ The `ScoreModifierManager` handles all score modifications:
 - **Order**: `(base_score + additives) × multipliers`
 
 ### Scaling Difficulty System
-The game features round-based difficulty scaling that increases challenge as players progress:
+Round-based difficulty scaling for the Upper Section Bonus and Goof-Off Meter was removed; both are now flat and consistent across all rounds.
 
-**Upper Section Bonus Scaling:**
-- **Base Values**: Threshold 63 points, Bonus 35 points
-- **Scaling**: Both threshold and bonus scale up 10% each round (starting round 2)
-- **Trigger**: Bonus now triggers as soon as upper section score meets threshold (no longer requires all categories to be filled)
-- **Example**: Round 1 = 63/35, Round 2 = 70/39, Round 5 = 93/52, Round 10 = 150/84
+**Upper Section Bonus:**
+- **Values**: Threshold 63 points (dice-type-aware base: 63 for d6, 69 for d8, 105 for d20), Bonus 35 points — flat every round
+- **Trigger**: Bonus triggers as soon as upper section score meets threshold (does not require all categories to be filled)
 
-**Goof-Off Meter Scaling:**
-- **Base Value**: Max progress 100 rolls before Mom triggers
-- **Scaling**: Threshold decreases by 5% each round (starting round 2)
-- **Clamping**: When round changes, if current progress exceeds new threshold, it's clamped to threshold - 1
-- **Example**: Round 1 = 100, Round 2 = 95, Round 5 = 82, Round 10 = 64
+**Goof-Off Meter:**
+- **Value**: Max progress is a flat 100 before Mom triggers, every round
+- **Clamping**: When round changes, if current progress meets or exceeds the threshold, it's clamped to threshold - 1
 
 ### End of Round Statistics & Bonuses
 After completing a challenge and clicking the Shop button, an End of Round Statistics Panel is displayed:
@@ -906,18 +901,18 @@ After completing a challenge and clicking the Shop button, an End of Round Stati
 - Reward shown in green text at bottom of challenge spine
 
 **UI Updates:**
-- ScoreCard bonus label shows current scaled threshold: "Bonus(70):" instead of static "Bonus:"
-- Chore UI hover tooltip shows progress as "X / Y" with scaled max value
-- Progress bar max_value updates to reflect scaled threshold
+- ScoreCard bonus label shows current threshold: "Bonus(63):"
+- Chore UI hover tooltip shows progress as "X / 100"
+- Progress bar max_value stays at 100 every round
 
 **Implementation:**
-- `Scorecard.update_round(n)`: Updates round and recalculates thresholds
-- `Scorecard.get_scaled_upper_bonus_threshold()`: Returns ceil(63 * 1.1^(round-1))
-- `Scorecard.get_scaled_upper_bonus_amount()`: Returns ceil(35 * 1.1^(round-1))
+- `Scorecard.update_round(n)`: Updates round number (logging/save state only; no scaling)
+- `Scorecard.get_scaled_upper_bonus_threshold()`: Returns the dice-type-aware base threshold (63 for d6)
+- `Scorecard.get_scaled_upper_bonus_amount()`: Returns 35 (flat)
 - `ChoresManager.update_round(n)`: Updates round with progress clamping
-- `ChoresManager.get_scaled_max_progress()`: Returns ceil(100 * 0.95^(round-1))
+- `ChoresManager.get_scaled_max_progress()`: Returns 100 (flat)
 
-**Test Scene**: `Tests/ScalingTest.tscn` - Verify scaling calculations and threshold triggers
+**Test Scene**: `Tests/ScalingTest.tscn` - Verify flat threshold values and bonus triggers
 
 Power-ups register their bonuses with this manager, which emits signals when totals change.
 

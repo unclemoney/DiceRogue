@@ -476,35 +476,30 @@ func check_lower_section() -> void:
 
 ## get_scaled_upper_bonus_threshold()
 ##
-## Returns the upper bonus threshold scaled by round number and dice type.
-## Uses dice-type-aware base threshold instead of hardcoded 63.
-## Round 1 uses base value, each subsequent round scales by 10%.
-## Uses ceil() to ensure whole numbers and slightly harder progression.
+## Returns the upper bonus threshold. Flat value: the dice-type-aware base
+## threshold (63 for standard d6). Round-based scaling was removed; the name
+## is kept for backwards compatibility with call sites.
 ##
-## Returns: int - scaled threshold
+## Returns: int - bonus threshold
 func get_scaled_upper_bonus_threshold() -> int:
-	var base = calculate_upper_bonus_base_threshold()
-	# Round 1 = base value, Round 2+ = 10% increase per round
-	var scale_factor = pow(1.1, max(0, current_round_number - 1))
-	return int(ceil(base * scale_factor))
+	return calculate_upper_bonus_base_threshold()
 
 
 ## get_scaled_upper_bonus_amount()
 ##
-## Returns the upper bonus amount scaled by round number.
-## Round 1 uses base value (35), each subsequent round scales by 10%.
-## Uses ceil() to ensure whole numbers.
+## Returns the upper bonus amount. Flat value: UPPER_BONUS_AMOUNT (35).
+## Round-based scaling was removed; the name is kept for backwards
+## compatibility with call sites.
 ##
-## Returns: int - scaled bonus amount
+## Returns: int - bonus amount
 func get_scaled_upper_bonus_amount() -> int:
-	# Round 1 = base value, Round 2+ = 10% increase per round
-	var scale_factor = pow(1.1, max(0, current_round_number - 1))
-	return int(ceil(UPPER_BONUS_AMOUNT * scale_factor))
+	return UPPER_BONUS_AMOUNT
 
 
 ## update_round(round_number)
 ##
-## Updates the current round number for scaling calculations.
+## Updates the current round number (kept for save state and logging; the
+## upper bonus threshold and amount are flat and no longer scale by round).
 ## Called by GameController when a new round starts.
 ##
 ## Parameters:

@@ -125,8 +125,13 @@ func _create_additive_notification(parent_node: Node) -> void:
 		additive_label = Label.new()
 		additive_label.name = "RedRangerAdditiveLabel"
 		additive_label.add_theme_color_override("font_color", Color.RED)
-		additive_label.position = Vector2(10, 60)  # Position near other UI elements
 		parent_node.add_child(additive_label)
+		# Position near the PowerUp container on GameUI (fallback: top-left)
+		additive_label.position = Vector2(10, 60)
+		var power_up_container = parent_node.get("power_up_container")
+		if power_up_container is Control:
+			var container_rect = (power_up_container as Control).get_global_rect()
+			additive_label.global_position = container_rect.position + Vector2(8, 8)
 	
 	if current_additive > 0:
 		additive_label.text = "Red Ranger: +%d" % current_additive
