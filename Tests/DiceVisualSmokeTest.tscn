@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://dc25jck62yuuk"]
 
-[ext_resource type="Script" path="res://Tests/dice_visual_smoke_test.gd" id="1_smoke"]
+[ext_resource type="Script" uid="uid://dllw3iw1y3njp" path="res://Tests/dice_visual_smoke_test.gd" id="1_smoke"]
 
 [node name="DiceVisualSmokeTest" type="Control"]
 layout_mode = 3

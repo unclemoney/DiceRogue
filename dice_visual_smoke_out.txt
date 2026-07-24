@@ -227,9 +227,9 @@ Statistics Manager initialized
 [MusicManager] CRASH variants loaded: 8
 [MusicManager] Created 8 audio players
 [MusicManager] Layer 1: chose variant index 1 (history: [1])
-[MusicManager] Layer 2: chose variant index 2 (history: [2])
-[MusicManager] Layer 3: chose variant index 6 (history: [6])
-[MusicManager] Layer 4: chose variant index 0 (history: [0])
+[MusicManager] Layer 2: chose variant index 0 (history: [0])
+[MusicManager] Layer 3: chose variant index 5 (history: [5])
+[MusicManager] Layer 4: chose variant index 1 (history: [1])
 [MusicManager] Layer 5: chose variant index 5 (history: [5])
 [MusicManager] Playback started at intensity 0
 [MusicManager] Ready - base loop duration: 12.000s, 5 layer groups loaded
