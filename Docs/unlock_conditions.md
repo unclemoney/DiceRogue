@@ -52,7 +52,7 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | purple_payout | Purple Payout | EARN_MONEY | 75 | Earn $3 per purple die when scoring |
 | mod_money | Mod Money | COMPLETE_GAME | 2 | Earn $8 per modded die when scoring |
 | blue_safety_net | Blue Safety Net | EARN_MONEY | 150 | Halves blue dice penalties |
-| chore_sprint | Chore Sprint | CHORE_COMPLETIONS | 8 | Chore completions reduce goof-off by 10 (cumulative) |
+| chore_sprint | Chore Sprint | CHORE_COMPLETIONS | 8 | Chore completions reduce goof-off by extra 10 (EASY) / 25 (HARD) (cumulative) |
 | straight_triplet_master | Straight Triplet Master | ROLL_STRAIGHT | 3 | Score large straight in 3 categories |
 | modded_dice_mastery | Modded Dice Mastery | USE_CONSUMABLES | 4 | +10 per modded die when scoring |
 | debuff_destroyer | Debuff Destroyer | ROLL_YAHTZEE | 2 | Removes random debuff when sold |

@@ -80,7 +80,7 @@ func _run_tests():
 	print("Total tabs found: %d" % tab_count)
 	
 	# Expected archive tabs should be present in addition to purchasable tabs.
-	var _expected_tabs = ["PowerUps", "Consumables", "Mods", "Locked", "Unlocked"]
+	var _expected_tabs = ["POGS", "COUPONS", "MODS", "COLORS", "VIP CARDS", "LOCKED", "UNLOCKED"]
 	var found_tabs = []
 	
 	for i in range(tab_count):
@@ -89,7 +89,7 @@ func _run_tests():
 		print("Tab %d: %s" % [i, tab_name])
 	
 	# Check if LOCKED tab exists
-	if "Locked" in found_tabs:
+	if "LOCKED" in found_tabs:
 		print("✓ LOCKED tab found")
 	else:
 		print("✗ LOCKED tab not found")

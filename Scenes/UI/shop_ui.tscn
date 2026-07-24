@@ -131,17 +131,17 @@ offset_bottom = 568.0
 tab_alignment = 1
 current_tab = 0
 
-[node name="PowerUps" type="TabBar" parent="TabContainer"]
+[node name="Pogs" type="TabBar" parent="TabContainer"]
 layout_mode = 2
 metadata/_tab_index = 0
 
-[node name="GridContainer" type="GridContainer" parent="TabContainer/PowerUps"]
+[node name="GridContainer" type="GridContainer" parent="TabContainer/Pogs"]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
 columns = 6
 
-[node name="Panel" type="Panel" parent="TabContainer/PowerUps"]
+[node name="Panel" type="Panel" parent="TabContainer/Pogs"]
 material = SubResource("ShaderMaterial_uc064")
 layout_mode = 1
 anchors_preset = 15
@@ -151,18 +151,18 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("4_ocftj")
 
-[node name="Consumables" type="TabBar" parent="TabContainer"]
+[node name="Coupons" type="TabBar" parent="TabContainer"]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
-[node name="GridContainer" type="GridContainer" parent="TabContainer/Consumables"]
+[node name="GridContainer" type="GridContainer" parent="TabContainer/Coupons"]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
 columns = 6
 
-[node name="Panel2" type="Panel" parent="TabContainer/Consumables"]
+[node name="Panel2" type="Panel" parent="TabContainer/Coupons"]
 material = SubResource("ShaderMaterial_je541")
 layout_mode = 1
 anchors_preset = 15
@@ -212,18 +212,18 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("4_ocftj")
 
-[node name="Consoles" type="TabBar" parent="TabContainer"]
+[node name="VIPCards" type="TabBar" parent="TabContainer"]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 4
 
-[node name="GridContainer" type="GridContainer" parent="TabContainer/Consoles"]
+[node name="GridContainer" type="GridContainer" parent="TabContainer/VIPCards"]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
 columns = 6
 
-[node name="Panel5" type="Panel" parent="TabContainer/Consoles"]
+[node name="Panel5" type="Panel" parent="TabContainer/VIPCards"]
 material = SubResource("ShaderMaterial_3j5rp")
 layout_mode = 2
 anchor_right = 1.0

@@ -660,7 +660,7 @@ _add_default_power_up("grand_master", "Grand Master", "All scoring categories ge
 | ID | Name | Effect |
 |----|------|--------|
 | `blue_safety_net` | Blue Safety Net | Halves blue dice penalties (divide factor reduced) |
-| `chore_sprint` | Chore Sprint | Chore completions reduce goof-off by extra 10 |
+| `chore_sprint` | Chore Sprint | Chore completions reduce goof-off by extra 10 (EASY) / 25 (HARD) |
 
 ### Rare ($275-$300)
 | ID | Name | Effect |

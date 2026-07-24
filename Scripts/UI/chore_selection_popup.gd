@@ -28,8 +28,6 @@ const PANEL_OUTLINE := Color(0.129412, 0.121569, 0.2, 1.0)
 const PANEL_ACCENT := Color(0.137255, 0.411765, 0.415686, 1.0)
 const EASY_COLOR := Color(0.47451, 0.886275, 0.890196, 1.0)
 const HARD_COLOR := Color(0.886275, 0.392157, 0.54902, 1.0)
-const EASY_REDUCTION := 10
-const HARD_REDUCTION := 30
 
 const BACKDROP_SHADER_PATH := "res://Scripts/Shaders/panel_backdrop.gdshader"
 const PANEL_CORNER_RADIUS := 20.0
@@ -376,8 +374,8 @@ func _create_task_card(task, is_hard: bool) -> Control:
 	reward_label.add_theme_constant_override("outline_size", 1)
 	card_vbox.add_child(reward_label)
 
-	# Reduction amount
-	var reduction = HARD_REDUCTION if is_hard else EASY_REDUCTION
+	# Reduction amount (per-chore value from the task itself)
+	var reduction = task.get_progress_reduction() if task else 0
 	var reduction_label = Label.new()
 	reduction_label.text = "Meter -%s" % NumberFormatter.format_int(reduction)
 	reduction_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

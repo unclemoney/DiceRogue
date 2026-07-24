@@ -18,12 +18,16 @@ enum TaskType {
 }
 
 enum Difficulty {
-	EASY,   # Reduces goof-off meter by 10
-	HARD,   # Reduces goof-off meter by 30
+	EASY,   # Reduces goof-off meter by 5-15 (per chore)
+	HARD,   # Reduces goof-off meter by 20-60 (per chore)
 }
 
-const EASY_REDUCTION: int = 10
-const HARD_REDUCTION: int = 30
+# Valid meter-reduction ranges per difficulty. Each chore sets its own
+# progress_reduction within its difficulty's range (like reward_value).
+const EASY_MIN_REDUCTION: int = 5
+const EASY_MAX_REDUCTION: int = 15
+const HARD_MIN_REDUCTION: int = 20
+const HARD_MAX_REDUCTION: int = 60
 
 @export var id: String
 @export var display_name: String
@@ -31,18 +35,16 @@ const HARD_REDUCTION: int = 30
 @export var icon: Texture2D
 @export var task_type: TaskType = TaskType.SCORE_UPPER
 @export var difficulty: Difficulty = Difficulty.EASY
-@export var progress_reduction: int = 10  # Default EASY reduction
+@export var progress_reduction: int = 10  # Per-chore meter reduction, within the difficulty range
 @export var reward_value: int = 50  # Money rewarded when completed
 
 ## get_progress_reduction()
 ##
-## Returns the goof-off meter reduction based on difficulty.
-## EASY = 10, HARD = 30.
+## Returns this chore's goof-off meter reduction. Each chore has its own
+## value within its difficulty range (EASY: 5-15, HARD: 20-60).
 ## @return int: The progress reduction amount
 func get_progress_reduction() -> int:
-	if difficulty == Difficulty.HARD:
-		return HARD_REDUCTION
-	return EASY_REDUCTION
+	return progress_reduction
 
 ## Optional parameters for specific task requirements
 @export var target_category: String = ""  # e.g., "ones", "full_house"

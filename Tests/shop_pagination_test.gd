@@ -5,7 +5,7 @@ extends Control
 ## Validates that:
 ## 1. Footer arrows appear only when a tab pool exceeds 3 items.
 ## 2. Page navigation advances by full pages.
-## 3. PowerUps footer includes the shader-backed reroll shell.
+## 3. POGS footer includes the shader-backed reroll shell.
 ## 4. PowerUp shop expansions clamp at 6 items.
 ## 5. Mods and Colors tabs get the embedded ownership stock board.
 ## 6. Archive tabs still exist after the layout refactor.
@@ -106,11 +106,11 @@ func _run_tests() -> void:
 	var color_panel = shop_ui._ownership_panels.get("colored_dice")
 	print("Mod ownership panel present: %s" % str(is_instance_valid(mod_panel)))
 	print("Color ownership panel present: %s" % str(is_instance_valid(color_panel)))
-	var powerup_panel = shop_ui.get_node_or_null("TabContainer/PowerUps/MarginContainer/CenteredContainer/ContentRow/OwnershipPanel")
+	var powerup_panel = shop_ui.get_node_or_null("TabContainer/Pogs/MarginContainer/CenteredContainer/ContentRow/OwnershipPanel")
 	if powerup_panel:
-		print("✗ PowerUps tab unexpectedly has an ownership panel")
+		print("✗ POGS tab unexpectedly has an ownership panel")
 	else:
-		print("✓ PowerUps tab remains full-width")
+		print("✓ POGS tab remains full-width")
 	print("--- Archive tab presence ---")
 	var tab_container = shop_ui.get_node_or_null("TabContainer")
 	if tab_container:
@@ -118,7 +118,7 @@ func _run_tests() -> void:
 		for i in range(tab_container.get_tab_count()):
 			titles.append(tab_container.get_tab_title(i))
 		print("Tabs: %s" % str(titles))
-		if "Unlocked" in titles:
+		if "UNLOCKED" in titles:
 			print("✓ Unlocked tab present")
 		else:
 			print("✗ Unlocked tab missing")

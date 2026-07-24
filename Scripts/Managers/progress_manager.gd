@@ -1126,7 +1126,7 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 3, 4)
 	_add_default_power_up("purple_payout", "Purple Payout", "Earn $3 per purple die when scoring", 
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 120, 4)
-	_add_default_power_up("chore_sprint", "Chore Sprint", "Chore completions reduce goof-off by extra 10", 
+	_add_default_power_up("chore_sprint", "Chore Sprint", "Chore completions reduce goof-off by extra 10 (EASY) / 25 (HARD)", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 8, 4, {"cumulative": true})
 	_add_default_power_up("hot_streak", "Hot Streak", "+3 per consecutive turn scoring 15+", 
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 125, 4)

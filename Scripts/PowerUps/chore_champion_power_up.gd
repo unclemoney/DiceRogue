@@ -4,8 +4,8 @@ class_name ChoreChampionPowerUp
 ## ChoreChampionPowerUp
 ##
 ## Doubles the effectiveness of chore completion for reducing goof-off meter.
-## When a chore is completed (normally -20 progress), applies an additional -20
-## for a total of -40 reduction.
+## When a chore is completed, applies an additional reduction equal to the
+## chore's own per-task reduction (EASY: 5-15, HARD: 20-60) for 2x total.
 ## Uses a multiplier approach to avoid conflicts with ChoresManager's internal logic.
 ## Common rarity, $50 price.
 
@@ -63,7 +63,7 @@ func _on_task_completed(task) -> void:
 		return
 	
 	# Calculate bonus reduction (the additional amount beyond the normal reduction)
-	# Base reduction depends on task difficulty: EASY=10, HARD=30
+	# Base reduction is the chore's per-task value (EASY: 5-15, HARD: 20-60)
 	# Multiplier 2.0 means we apply an additional 1.0x the base reduction
 	var base_reduction = task.get_progress_reduction() if task else 10
 	var bonus_reduction = int(base_reduction * (EFFECTIVENESS_MULTIPLIER - 1.0))
@@ -83,10 +83,13 @@ func _on_task_completed(task) -> void:
 			_update_power_up_icons()
 
 func get_current_description() -> String:
-	# Show example with EASY task (10 base reduction)
-	var example_base = 10
-	var example_total = int(example_base * EFFECTIVENESS_MULTIPLIER)
-	var base_desc = "Chores are %.0fx more effective (EASY: -%d, HARD: -%d)" % [EFFECTIVENESS_MULTIPLIER, example_total, int(30 * EFFECTIVENESS_MULTIPLIER)]
+	var base_desc = "Chores are %.0fx more effective (EASY: -%d to -%d, HARD: -%d to -%d)" % [
+		EFFECTIVENESS_MULTIPLIER,
+		int(ChoreData.EASY_MIN_REDUCTION * EFFECTIVENESS_MULTIPLIER),
+		int(ChoreData.EASY_MAX_REDUCTION * EFFECTIVENESS_MULTIPLIER),
+		int(ChoreData.HARD_MIN_REDUCTION * EFFECTIVENESS_MULTIPLIER),
+		int(ChoreData.HARD_MAX_REDUCTION * EFFECTIVENESS_MULTIPLIER)
+	]
 	
 	if total_bonus_reductions > 0:
 		base_desc += "\nBonus reduction applied: %d total" % total_bonus_reductions

@@ -6,8 +6,12 @@ All chore tasks available in the ChoreTasksLibrary, organized by difficulty and 
 
 | Difficulty | Meter Reduction | Description |
 |------------|----------------|-------------|
-| EASY       | -10            | Simple tasks — score in a category, use an item, lock 3 dice |
-| HARD       | -30            | Specific combos — full house with specific triples, specific yahtzees, lock 4-5 dice |
+| EASY       | -5 to -15      | Simple tasks — score in a category, use an item, lock 3 dice |
+| HARD       | -20 to -60     | Specific combos — full house with specific triples, specific yahtzees, lock 4-5 dice |
+
+Each chore has its own per-chore meter reduction within its difficulty range,
+scaled by actual task difficulty (like the reward money). Exact values are
+defined in `ChoreTasksLibrary` (`Scripts/Managers/chore_tasks_library.gd`).
 
 ## Reward Scale
 
@@ -23,7 +27,7 @@ Chores now pay variable rewards based on actual in-game difficulty:
 
 ---
 
-## Very Easy Tasks ($5, Meter -10)
+## Very Easy Tasks ($5, Meter -5)
 
 ### Upper Section Scoring
 | ID | Name | Description |
@@ -41,7 +45,7 @@ Chores now pay variable rewards based on actual in-game difficulty:
 
 ---
 
-## Easy Tasks ($15, Meter -10)
+## Easy Tasks ($15, Meter -5 to -10)
 
 ### Upper Section Scoring
 | ID | Name | Description |
@@ -61,7 +65,7 @@ Chores now pay variable rewards based on actual in-game difficulty:
 
 ---
 
-## Medium Tasks ($35, Meter -10 or -30)
+## Medium Tasks ($35, Meter -5 to -30)
 
 ### Lower Section (Specific)
 | ID | Name | Description |
@@ -94,7 +98,7 @@ Chores now pay variable rewards based on actual in-game difficulty:
 
 ---
 
-## Hard Tasks ($65, Meter -30)
+## Hard Tasks ($65, Meter -20 to -50)
 
 ### Yahtzee Tasks
 | ID | Name | Description |
@@ -115,7 +119,7 @@ Chores now pay variable rewards based on actual in-game difficulty:
 
 ---
 
-## Very Hard Tasks ($100, Meter -30)
+## Very Hard Tasks ($100, Meter -60)
 
 ### Specific Yahtzee Tasks
 | ID | Name | Description |
@@ -133,7 +137,7 @@ Chores now pay variable rewards based on actual in-game difficulty:
 
 1. Player scores → goof-off meter increments by 1
 2. When a chore completes or expires → **ChoreSelectionPopup** appears at turn end
-3. Player chooses EASY (meter -10) or HARD (meter -30) — each chore shows its reward
+3. Player chooses EASY (meter -5 to -15) or HARD (meter -20 to -60) — each chore shows its own reduction and reward
 4. New chore becomes active with 20-roll expiration timer
 5. If meter reaches max → Mom is triggered
 

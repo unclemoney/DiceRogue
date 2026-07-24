@@ -11,11 +11,11 @@ signal shop_closed
 @export var gaming_console_manager_path: NodePath
 
 @onready var tab_container: TabContainer = $TabContainer
-@onready var power_up_container: Container = $TabContainer/PowerUps/GridContainer
-@onready var consumable_container: Container = $TabContainer/Consumables/GridContainer
+@onready var power_up_container: Container = $TabContainer/Pogs/GridContainer
+@onready var consumable_container: Container = $TabContainer/Coupons/GridContainer
 @onready var mod_container: Container = $TabContainer/Mods/GridContainer
 @onready var colored_dice_container: Container = get_node_or_null("TabContainer/Colors/GridContainer")
-@onready var gaming_console_container: Container = get_node_or_null("TabContainer/Consoles/GridContainer")
+@onready var gaming_console_container: Container = get_node_or_null("TabContainer/VIPCards/GridContainer")
 @onready var locked_container: Container = $TabContainer/Locked/ScrollContainer/GridContainer
 @onready var unlocked_container: Container = get_node_or_null("TabContainer/Unlocked/ScrollContainer/GridContainer")
 @onready var power_up_manager: PowerUpManager = get_node_or_null(power_up_manager_path)
@@ -82,6 +82,12 @@ var _ownership_panels := {}
 const PAGE_SIZE := 3
 const PAGED_ITEM_TYPES := ["power_up", "consumable", "mod", "colored_dice", "gaming_console"]
 const FOOTER_REROLL_TYPES := ["power_up", "consumable"]
+const POWER_UP_TAB_NAME := "Pogs"
+const CONSUMABLE_TAB_NAME := "Coupons"
+const MOD_TAB_NAME := "Mods"
+const COLORED_DICE_TAB_NAME := "Colors"
+const GAMING_CONSOLE_TAB_NAME := "VIPCards"
+const SHOP_TAB_TITLES := ["POGS", "COUPONS", "MODS", "COLORS", "VIP CARDS", "LOCKED", "UNLOCKED"]
 
 func _ready() -> void:
 	print("[ShopUI] Initializing...")
@@ -119,8 +125,8 @@ func _ready() -> void:
 		print("[ShopUI] ColoredDiceContainer not found - creating programmatically")
 		_create_colors_tab()
 	if not gaming_console_container:
-		print("[ShopUI] GamingConsoleContainer not found - creating programmatically")
-		_create_consoles_tab()
+		print("[ShopUI] VIPCardsContainer not found - creating programmatically")
+		_create_vip_cards_tab()
 	if not power_up_manager:
 		push_error("[ShopUI] PowerUpManager not found at path:", power_up_manager_path)
 	if not consumable_manager:
@@ -134,6 +140,7 @@ func _ready() -> void:
 	
 	# Style the tab container with VCR font and larger tabs
 	_style_tab_container()
+	_apply_shop_tab_titles()
 	
 	_update_reroll_cost_display()
 	_update_reroll_button_state()
@@ -492,30 +499,37 @@ func _get_page_items(item_type: String) -> Array:
 func _get_tab_name_for_type(item_type: String) -> String:
 	match item_type:
 		"power_up":
-			return "PowerUps"
+			return POWER_UP_TAB_NAME
 		"consumable":
-			return "Consumables"
+			return CONSUMABLE_TAB_NAME
 		"mod":
-			return "Mods"
+			return MOD_TAB_NAME
 		"colored_dice":
-			return "Colors"
+			return COLORED_DICE_TAB_NAME
 		"gaming_console":
-			return "Consoles"
+			return GAMING_CONSOLE_TAB_NAME
 	return ""
 
 func _get_type_for_tab_name(tab_name: String) -> String:
 	match tab_name:
-		"PowerUps":
+		POWER_UP_TAB_NAME, "POGS":
 			return "power_up"
-		"Consumables":
+		CONSUMABLE_TAB_NAME, "COUPONS":
 			return "consumable"
-		"Mods":
+		MOD_TAB_NAME, "MODS":
 			return "mod"
-		"Colors":
+		COLORED_DICE_TAB_NAME, "COLORS":
 			return "colored_dice"
-		"Consoles":
+		GAMING_CONSOLE_TAB_NAME, "VIP CARDS":
 			return "gaming_console"
 	return ""
+
+func _apply_shop_tab_titles() -> void:
+	if not tab_container:
+		return
+	var title_count = mini(tab_container.get_tab_count(), SHOP_TAB_TITLES.size())
+	for i in range(title_count):
+		tab_container.set_tab_title(i, SHOP_TAB_TITLES[i])
 
 func _get_type_for_tab_index(tab_index: int) -> String:
 	match tab_index:
@@ -1432,11 +1446,11 @@ func _replace_grid_with_centered_layout() -> void:
 	print("[ShopUI] Attempting to improve container layout for centering")
 	
 	var tab_nodes = [
-		tab_container.get_node_or_null("PowerUps"),
-		tab_container.get_node_or_null("Consumables"), 
-		tab_container.get_node_or_null("Mods"),
-		tab_container.get_node_or_null("Colors"),
-		tab_container.get_node_or_null("Consoles")
+		tab_container.get_node_or_null(POWER_UP_TAB_NAME),
+		tab_container.get_node_or_null(CONSUMABLE_TAB_NAME), 
+		tab_container.get_node_or_null(MOD_TAB_NAME),
+		tab_container.get_node_or_null(COLORED_DICE_TAB_NAME),
+		tab_container.get_node_or_null(GAMING_CONSOLE_TAB_NAME)
 	]
 	
 	for i in range(tab_nodes.size()):
@@ -1453,8 +1467,8 @@ func _replace_grid_with_centered_layout() -> void:
 		print("[ShopUI] Creating centered layout for tab:", tab_node.name)
 		
 		# For PowerUps, Consumables, and Consoles tabs, add shelf background
-		var is_reroll_tab = tab_node.name == "PowerUps" or tab_node.name == "Consumables"
-		var needs_shelf = is_reroll_tab or tab_node.name == "Consoles"
+		var is_reroll_tab = tab_node.name == POWER_UP_TAB_NAME or tab_node.name == CONSUMABLE_TAB_NAME
+		var needs_shelf = is_reroll_tab or tab_node.name == GAMING_CONSOLE_TAB_NAME
 		if needs_shelf:
 			_add_shelf_background_to_tab(tab_node)
 		
@@ -1504,15 +1518,15 @@ func _replace_grid_with_centered_layout() -> void:
 		grid.visible = false
 		
 		# Update container references
-		if tab_node.name == "PowerUps":
+		if tab_node.name == POWER_UP_TAB_NAME:
 			power_up_container = item_container
-		elif tab_node.name == "Consumables":
+		elif tab_node.name == CONSUMABLE_TAB_NAME:
 			consumable_container = item_container
-		elif tab_node.name == "Mods":
+		elif tab_node.name == MOD_TAB_NAME:
 			mod_container = item_container
-		elif tab_node.name == "Colors":
+		elif tab_node.name == COLORED_DICE_TAB_NAME:
 			colored_dice_container = item_container
-		elif tab_node.name == "Consoles":
+		elif tab_node.name == GAMING_CONSOLE_TAB_NAME:
 			gaming_console_container = item_container
 
 		if item_type != "":
@@ -1974,7 +1988,7 @@ func _create_colors_tab() -> void:
 	
 	# Create the Colors tab
 	var colors_tab = Control.new()
-	colors_tab.name = "Colors"
+	colors_tab.name = COLORED_DICE_TAB_NAME
 	tab_container.add_child(colors_tab)
 	
 	# Create GridContainer for the colored dice items
@@ -1985,33 +1999,35 @@ func _create_colors_tab() -> void:
 	
 	# Set up the container reference
 	colored_dice_container = grid_container
+	_apply_shop_tab_titles()
 	
 	print("[ShopUI] COLORS tab created successfully")
 
-## _create_consoles_tab()
-## Creates the CONSOLES tab programmatically if it doesn't exist in the scene
-func _create_consoles_tab() -> void:
-	print("[ShopUI] Creating CONSOLES tab programmatically")
+## _create_vip_cards_tab()
+## Creates the VIP CARDS tab programmatically if it doesn't exist in the scene
+func _create_vip_cards_tab() -> void:
+	print("[ShopUI] Creating VIP CARDS tab programmatically")
 	
 	if not tab_container:
-		push_error("[ShopUI] TabContainer not found - cannot create CONSOLES tab")
+		push_error("[ShopUI] TabContainer not found - cannot create VIP CARDS tab")
 		return
 	
-	# Create the Consoles tab
-	var consoles_tab = Control.new()
-	consoles_tab.name = "Consoles"
-	tab_container.add_child(consoles_tab)
+	# Create the VIP Cards tab
+	var vip_cards_tab = Control.new()
+	vip_cards_tab.name = GAMING_CONSOLE_TAB_NAME
+	tab_container.add_child(vip_cards_tab)
 	
 	# Create GridContainer for the gaming console items
 	var grid_container = GridContainer.new()
 	grid_container.name = "GridContainer"
 	grid_container.columns = 3  # Show consoles in a 3-column grid
-	consoles_tab.add_child(grid_container)
+	vip_cards_tab.add_child(grid_container)
 	
 	# Set up the container reference
 	gaming_console_container = grid_container
+	_apply_shop_tab_titles()
 	
-	print("[ShopUI] CONSOLES tab created successfully")
+	print("[ShopUI] VIP CARDS tab created successfully")
 
 ## _configure_mouse_input()
 ## Configures mouse input filters to prevent background elements from blocking shop items
