@@ -11,7 +11,7 @@ region = Rect2(21, 216, 182, 185)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "yahtzeed_dice"
-display_name = "YahtzeeDice"
+display_name = "Yahtzeed Dice"
 description = "Gain +1 die every time you roll a Yahtzee! (Excluding Bonus Yahtzees)"
 icon = SubResource("AtlasTexture_n0788")
 scene = ExtResource("2_scene")

@@ -11,7 +11,7 @@ region = Rect2(611, 780, 181, 177)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "pair_paradise"
-display_name = "Pairadice"
+display_name = "Pair Paradise"
 description = "Pair bonuses: +3 (pair/3oak), +6 (2pair/4oak), +9 (FH/Yahtzee)"
 icon = SubResource("AtlasTexture_nk2h3")
 scene = ExtResource("2_scene")

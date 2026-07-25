@@ -11,7 +11,7 @@ region = Rect2(612, 406, 179, 179)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "modded_dice_mastery"
-display_name = "ModMaster"
+display_name = "Modded Dice Mastery"
 description = "+10 points per modded die when scoring"
 icon = SubResource("AtlasTexture_6mlbw")
 scene = ExtResource("2_scene")

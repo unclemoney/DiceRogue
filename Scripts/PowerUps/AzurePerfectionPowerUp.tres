@@ -11,7 +11,7 @@ region = Rect2(418, 20, 184, 187)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "azure_perfection"
-display_name = "Azure "
+display_name = "Azure Perfection"
 description = "Blue dice ALWAYS count as used - no penalties, only multipliers!"
 icon = SubResource("AtlasTexture_p3l21")
 scene = ExtResource("2_scene")

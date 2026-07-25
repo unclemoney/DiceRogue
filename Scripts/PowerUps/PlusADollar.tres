@@ -11,7 +11,7 @@ region = Rect2(418, 583, 188, 181)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "plus_a_dollar"
-display_name = "Plu$ A $"
+display_name = "Plus A Dollar"
 description = "Grants $1 after each dice roll"
 icon = SubResource("AtlasTexture_anvmc")
 scene = ExtResource("2_scene")

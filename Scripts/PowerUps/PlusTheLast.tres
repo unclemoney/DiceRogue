@@ -11,7 +11,7 @@ region = Rect2(607, 765, 189, 183)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "plus_thelast"
-display_name = "+The Last"
+display_name = "Plus The Last"
 description = "Adds last score to current score"
 icon = SubResource("AtlasTexture_0370e")
 scene = ExtResource("2_scene")

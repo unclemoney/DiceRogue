@@ -1,14 +1,18 @@
-[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3 uid="uid://cubsnfa7pq7yi"]
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://cubsnfa7pq7yi"]
 
 [ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_consumable_data"]
-[ext_resource type="Texture2D" uid="uid://da40sugvm8tf8" path="res://Resources/Art/Powerups/consumable_test7.png" id="2_icon"]
+[ext_resource type="Texture2D" uid="uid://dwlo8ieu7vgo0" path="res://Resources/Art/Consumables/Sunday_Coupon_Sheet_5x5_Hardware.png" id="2_icon"]
 [ext_resource type="PackedScene" path="res://Scenes/Consumable/VisitTheShopConsumable.tscn" id="3_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h00"]
+atlas = ExtResource("2_icon")
+region = Rect2(49, 30, 393, 385)
 
 [resource]
 script = ExtResource("1_consumable_data")
 id = "visit_the_shop"
 display_name = "Visit The Shop"
 description = "Open the shop during active play"
-icon = ExtResource("2_icon")
+icon = SubResource("AtlasTexture_h00")
 scene = ExtResource("3_scene")
 price = 125

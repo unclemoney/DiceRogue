@@ -6,12 +6,12 @@
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_xr11n"]
 atlas = ExtResource("1_1mx68")
-region = Rect2(229, 780, 183, 178)
+region = Rect2(419, 595, 183, 174)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "blue_safety_net"
-display_name = "Blue Safety"
+display_name = "Blue Safety Net"
 description = "Blue dice penalties reduced by 50%"
 icon = SubResource("AtlasTexture_xr11n")
 scene = ExtResource("2_scene")

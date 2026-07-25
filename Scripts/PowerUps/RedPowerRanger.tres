@@ -11,7 +11,7 @@ region = Rect2(421, 779, 178, 178)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "red_power_ranger"
-display_name = "Red Ranger"
+display_name = "Red Power Ranger"
 description = "Gain +1 additive score for each red dice scored. The additive is cumulative and applies to all future scores."
 icon = SubResource("AtlasTexture_mumju")
 scene = ExtResource("2_scene")

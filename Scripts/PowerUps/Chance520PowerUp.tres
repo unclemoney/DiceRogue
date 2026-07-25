@@ -11,7 +11,7 @@ region = Rect2(38, 220, 181, 177)
 [resource]
 script = ExtResource("1_40cld")
 id = "chance520"
-display_name = "520"
+display_name = "Chance 520"
 description = "+5 to all scores for each Chance category scored with 20 or above"
 icon = SubResource("AtlasTexture_kbdv8")
 scene = ExtResource("2_awvan")

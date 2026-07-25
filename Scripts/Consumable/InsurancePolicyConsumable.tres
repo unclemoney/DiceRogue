@@ -1,15 +1,19 @@
-[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://cchev87fimc0x"]
 
-[ext_resource type="Texture2D" path="res://Resources/Art/Powerups/consumable_test3.png" id="1_icon"]
-[ext_resource type="Script" path="res://Scripts/Consumable/ConsumableData.gd" id="1_data"]
+[ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_data"]
+[ext_resource type="Texture2D" uid="uid://dwlo8ieu7vgo0" path="res://Resources/Art/Consumables/Sunday_Coupon_Sheet_5x5_Hardware.png" id="1_icon"]
 [ext_resource type="PackedScene" path="res://Scenes/Consumable/InsurancePolicyConsumable.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h03"]
+atlas = ExtResource("1_icon")
+region = Rect2(1214, 30, 382, 387)
 
 [resource]
 script = ExtResource("1_data")
 id = "insurance_policy"
 display_name = "Insurance Policy"
 description = "If your next score is 0, receive $75 as consolation. Consumed after any scoring action."
-icon = ExtResource("1_icon")
+icon = SubResource("AtlasTexture_h03")
 scene = ExtResource("2_scene")
 price = 25
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

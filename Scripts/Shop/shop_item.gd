@@ -40,6 +40,18 @@ const HANG_PIVOT_Y := 32.0
 const TITLE_FONT_SIZE_DEFAULT := 24
 const TITLE_FONT_SIZE_MIN := 16
 const TITLE_HORIZONTAL_PADDING := 8.0
+# Consumable coupon title overlay: the coupon artwork has a blank band across
+# its top (measured from the sprite sheets, ~20% of the coupon height). The
+# display name is drawn there at one fixed size — no auto-shrink.
+const COUPON_TITLE_FONT_SIZE := 13
+const COUPON_TITLE_BAND_TOP := 0.04
+const COUPON_TITLE_BAND_BOTTOM := 0.20
+const COUPON_TITLE_SIDE_INSET := 2.0
+const COUPON_TITLE_INK := Color(0.11, 0.16, 0.35, 1.0)
+# Coupon artwork size on the card. Must stay inside the card panel's
+# StyleBoxTexture frame (the frame's top art needs the scene's 90px top
+# margin), so the coupon is smaller than the full content width.
+const COUPON_ICON_SIZE := Vector2(135, 131)
 const BADGE_SIDE_MARGIN := 12.0
 const BADGE_TOP := 44.0
 const BADGE_HEIGHT := 28.0
@@ -233,6 +245,10 @@ func setup(data: Resource, type: String) -> void:
 		_setup_colored_dice_icon(data.color_type)
 	else:
 		icon.texture = data.icon
+
+	# Consumables use coupon artwork: title goes on the coupon's blank band
+	if type == "consumable":
+		_setup_coupon_title()
 	
 	_set_title_text(_base_title_text)
 	_update_price_badge_from_price(price)
@@ -831,7 +847,44 @@ func _set_title_text(title_text: String) -> void:
 	call_deferred("_fit_title")
 
 
+## _setup_coupon_title()
+## Consumable icons are coupon artwork with a blank title band across the
+## top. Hides the bordered TitlePlate and overlays the display name directly
+## on the band at a single fixed font size (no auto-shrink, no panel).
+func _setup_coupon_title() -> void:
+	if title_plate:
+		title_plate.visible = false
+	if not icon:
+		return
+	# The card frame (StyleBoxTexture) has thick art borders, so the coupon
+	# stays small and centered inside the content area.
+	icon.custom_minimum_size = COUPON_ICON_SIZE
+	var coupon_title := Label.new()
+	coupon_title.name = "CouponTitleLabel"
+	coupon_title.anchor_left = 0.0
+	coupon_title.anchor_right = 1.0
+	coupon_title.anchor_top = COUPON_TITLE_BAND_TOP
+	coupon_title.anchor_bottom = COUPON_TITLE_BAND_BOTTOM
+	coupon_title.offset_left = COUPON_TITLE_SIDE_INSET
+	coupon_title.offset_right = -COUPON_TITLE_SIDE_INSET
+	coupon_title.offset_top = 0.0
+	coupon_title.offset_bottom = 0.0
+	coupon_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	coupon_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	coupon_title.clip_text = true
+	coupon_title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	coupon_title.add_theme_font_override("font", VCR_FONT)
+	coupon_title.add_theme_font_size_override("font_size", COUPON_TITLE_FONT_SIZE)
+	coupon_title.add_theme_color_override("font_color", COUPON_TITLE_INK)
+	coupon_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	coupon_title.text = _base_title_text
+	icon.add_child(coupon_title)
+
+
 func _fit_title() -> void:
+	if item_type == "consumable":
+		# Fixed-size coupon overlay title; nothing to auto-fit.
+		return
 	if not name_label or not is_inside_tree():
 		return
 	var scene_tree := get_tree()

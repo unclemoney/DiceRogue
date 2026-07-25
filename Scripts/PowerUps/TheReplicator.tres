@@ -11,7 +11,7 @@ region = Rect2(617, 214, 176, 175)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "the_replicator"
-display_name = "Replicator"
+display_name = "The Replicator"
 description = "After 1 turn, duplicates a random PowerUp you own"
 icon = SubResource("AtlasTexture_10r5u")
 scene = ExtResource("2_scene")

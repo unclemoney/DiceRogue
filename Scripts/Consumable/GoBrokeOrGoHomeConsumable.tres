@@ -1,14 +1,18 @@
-[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3 uid="uid://c5nrarx8m7tla"]
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://c5nrarx8m7tla"]
 
-[ext_resource type="Texture2D" uid="uid://da40sugvm8tf8" path="res://Resources/Art/Powerups/consumable_test7.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://dwlo8ieu7vgo0" path="res://Resources/Art/Consumables/Sunday_Coupon_Sheet_5x5_Hardware.png" id="1_icon"]
 [ext_resource type="PackedScene" uid="uid://d4nraryal6sna" path="res://Scenes/Consumable/GoBrokeOrGoHomeConsumable.tscn" id="2_scene"]
 [ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="3_script"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h23"]
+atlas = ExtResource("1_icon")
+region = Rect2(1214, 1587, 382, 359)
 
 [resource]
 script = ExtResource("3_script")
 id = "go_broke_or_go_home"
 display_name = "Go Broke or Go Home"
 description = "Use before your first roll and choose lower section category. Score > 0: double money. Score = 0: lose all money"
-icon = ExtResource("1_icon")
+icon = SubResource("AtlasTexture_h23")
 scene = ExtResource("2_scene")
 price = 75

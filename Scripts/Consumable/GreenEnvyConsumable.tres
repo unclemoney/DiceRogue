@@ -1,14 +1,18 @@
-[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3 uid="uid://e8rkerbapmpq"]
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://e8rkerbapmpq"]
 
-[ext_resource type="Texture2D" uid="uid://5mnk1hfpsv0k" path="res://Resources/Art/Powerups/consumable_test3.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://dwlo8ieu7vgo0" path="res://Resources/Art/Consumables/Sunday_Coupon_Sheet_5x5_Hardware.png" id="1_icon"]
 [ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://Scenes/Consumable/GreenEnvyConsumable.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h09"]
+atlas = ExtResource("1_icon")
+region = Rect2(1600, 430, 380, 388)
 
 [resource]
 script = ExtResource("1_script")
 id = "green_envy"
 display_name = "Green Envy"
 description = "10x bonus money for all green dice money scored this turn"
-icon = ExtResource("1_icon")
+icon = SubResource("AtlasTexture_h09")
 scene = ExtResource("2_scene")
 price = 25

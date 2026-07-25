@@ -11,7 +11,7 @@ region = Rect2(419, 764, 187, 184)
 [resource]
 script = ExtResource("1_40cld")
 id = "evens_no_odds"
-display_name = "Even/Odd"
+display_name = "Evens No Odds"
 description = "Even dice add +1, odd dice add -1 to all scores"
 icon = SubResource("AtlasTexture_30fkh")
 scene = ExtResource("2_awvan")

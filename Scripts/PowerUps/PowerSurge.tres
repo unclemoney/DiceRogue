@@ -11,7 +11,7 @@ region = Rect2(418, 408, 186, 187)
 [resource]
 script = ExtResource("1_script")
 id = "power_surge"
-display_name = "PowersUrge"
+display_name = "Power Surge"
 description = "+0.15x multiplier per owned PowerUp"
 icon = SubResource("AtlasTexture_krxbg")
 scene = ExtResource("2_scene")

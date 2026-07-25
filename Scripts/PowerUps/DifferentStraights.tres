@@ -11,7 +11,7 @@ region = Rect2(425, 214, 176, 173)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "different_straights"
-display_name = "Straight Gap"
+display_name = "Different Straights"
 description = "Straights can have one gap of 1"
 icon = SubResource("AtlasTexture_7tnh4")
 scene = ExtResource("2_scene")

@@ -1,14 +1,18 @@
-[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3 uid="uid://bf2p0ud2dx6hb"]
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://bf2p0ud2dx6hb"]
 
-[ext_resource type="Texture2D" uid="uid://dg031cncjie8e" path="res://Resources/Art/Powerups/consumable_test5.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://dwlo8ieu7vgo0" path="res://Resources/Art/Consumables/Sunday_Coupon_Sheet_5x5_Hardware.png" id="1_icon"]
 [ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://Scenes/Consumable/PoorHouseConsumable.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h06"]
+atlas = ExtResource("1_icon")
+region = Rect2(446, 427, 379, 388)
 
 [resource]
 script = ExtResource("1_script")
 id = "poor_house"
 display_name = "Poor House"
 description = "Convert all of your money into 50% points on your next score"
-icon = ExtResource("1_icon")
+icon = SubResource("AtlasTexture_h06")
 scene = ExtResource("2_scene")
 price = 100

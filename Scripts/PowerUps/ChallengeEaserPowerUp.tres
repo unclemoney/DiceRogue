@@ -11,7 +11,7 @@ region = Rect2(426, 583, 177, 175)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "challenge_easer"
-display_name = "ChallengeEz"
+display_name = "Challenge Easer"
 description = "All challenge score targets reduced by 20%"
 icon = SubResource("AtlasTexture_rs3vq")
 scene = ExtResource("2_scene")

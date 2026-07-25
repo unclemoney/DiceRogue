@@ -1,15 +1,19 @@
-[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3 uid="uid://bx3n7qkp2mfw1"]
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://bx3n7qkp2mfw1"]
 
-[ext_resource type="Texture2D" uid="uid://vju23ydk568k" path="res://Resources/Art/Powerups/consumable_test4.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://dwlo8ieu7vgo0" path="res://Resources/Art/Consumables/Sunday_Coupon_Sheet_5x5_Hardware.png" id="1_icon"]
 [ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_script"]
 [ext_resource type="PackedScene" uid="uid://bx3n7qkp2mfws" path="res://Scenes/Consumable/StatCashoutConsumable.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h21"]
+atlas = ExtResource("1_icon")
+region = Rect2(446, 1586, 379, 359)
 
 [resource]
 script = ExtResource("1_script")
 id = "stat_cashout"
 display_name = "Stat Cashout"
 description = "Grants $10 per Yahtzee scored + $5 per Full House scored this game"
-icon = ExtResource("1_icon")
+icon = SubResource("AtlasTexture_h21")
 scene = ExtResource("2_scene")
 price = 25
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

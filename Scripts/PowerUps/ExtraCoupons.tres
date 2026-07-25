@@ -11,7 +11,7 @@ region = Rect2(416, 790, 188, 188)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "extra_coupons"
-display_name = "xTra Coups"
+display_name = "Extra Coupons"
 description = "Consumable slots are fixed at 4"
 icon = SubResource("AtlasTexture_f782b")
 scene = ExtResource("3_scene")

@@ -11,7 +11,7 @@ region = Rect2(417, 599, 189, 186)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "great_exchange"
-display_name = "Exchanged"
+display_name = "The Great Exchange"
 description = "+2 dice, -1 roll per turn"
 icon = SubResource("AtlasTexture_ymbmp")
 scene = ExtResource("2_scene")

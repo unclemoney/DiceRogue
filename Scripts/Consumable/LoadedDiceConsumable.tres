@@ -1,15 +1,19 @@
-[gd_resource type="Resource" script_class="ConsumableData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://e6etk1spiv8y"]
 
-[ext_resource type="Texture2D" path="res://Resources/Art/Powerups/consumable_test6.png" id="1_icon"]
-[ext_resource type="Script" path="res://Scripts/Consumable/ConsumableData.gd" id="1_data"]
+[ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_data"]
+[ext_resource type="Texture2D" uid="uid://dwlo8ieu7vgo0" path="res://Resources/Art/Consumables/Sunday_Coupon_Sheet_5x5_Hardware.png" id="1_icon"]
 [ext_resource type="PackedScene" path="res://Scenes/Consumable/LoadedDiceConsumable.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h14"]
+atlas = ExtResource("1_icon")
+region = Rect2(1600, 827, 380, 375)
 
 [resource]
 script = ExtResource("1_data")
 id = "loaded_dice"
 display_name = "Loaded Dice"
 description = "Randomly sets one of your dice to a random value (1-6). Use strategically to hit scoring targets!"
-icon = ExtResource("1_icon")
+icon = SubResource("AtlasTexture_h14")
 scene = ExtResource("2_scene")
 price = 75
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"
