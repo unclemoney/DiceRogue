@@ -63,6 +63,11 @@ const CARRYOVER_BUTTON_PALETTE := {
 const BACKDROP_SHADER_PATH := "res://Scripts/Shaders/panel_backdrop.gdshader"
 const PANEL_CORNER_RADIUS := 16.0
 
+# Selection clarity: unselected toggle rows are dimmed, selected ones get a
+# check prefix in their label
+const UNSELECTED_ALPHA := 0.55
+const SELECTED_PREFIX := "✔ "
+
 # UI Components
 var overlay: ColorRect
 var panel_container: PanelContainer
@@ -310,8 +315,12 @@ func _update_backdrop_fx_size() -> void:
 ## Rebuilds the toggle button rows based on current allowed types.
 ## Clears existing rows and creates new ones.
 func _rebuild_type_rows() -> void:
-	# Clear existing rows
+	# Clear existing rows. remove_child() first so the stale rows stop counting
+	# toward get_combined_minimum_size() immediately — queue_free() alone defers
+	# removal to end of frame, and show_panel() measures the panel in the same
+	# frame, which doubled the row count on every show after the first.
 	for child in rows_container.get_children():
+		rows_container.remove_child(child)
 		child.queue_free()
 	_toggle_buttons.clear()
 	_row_palettes.clear()
@@ -340,8 +349,10 @@ func _rebuild_type_rows() -> void:
 ## _create_type_row(type_key: String) -> HBoxContainer
 ##
 ## Creates a single row with a centered toggle GlassActionButton for a
-## carry-over type. Selection is shown by enlarging the button and swapping
-## it to a brighter per-type palette — the layout never shifts.
+## carry-over type. Selection is shown by enlarging the button, restoring full
+## alpha, adding a "✔ " label prefix, and swapping it to a brighter per-type
+## palette — unselected rows stay dimmed at UNSELECTED_ALPHA. The layout never
+## shifts.
 func _create_type_row(type_key: String) -> HBoxContainer:
 	var hbox = HBoxContainer.new()
 	hbox.name = "Row_" + type_key
@@ -351,7 +362,7 @@ func _create_type_row(type_key: String) -> HBoxContainer:
 	# Toggle button — purple palette with a per-type accent color; the
 	# selected palette leans fully into the type color so selection is obvious
 	var accent: Color = TYPE_COLORS.get(type_key, Color(0.6, 0.3, 0.9))
-	var base_palette := CARRYOVER_BUTTON_PALETTE.duplicate()
+	var base_palette : Dictionary = CARRYOVER_BUTTON_PALETTE.duplicate()
 	base_palette["accent_color"] = accent
 	base_palette["glow_color"] = accent.lightened(0.2)
 	var selected_palette := CARRYOVER_BUTTON_PALETTE.duplicate()
@@ -373,6 +384,8 @@ func _create_type_row(type_key: String) -> HBoxContainer:
 	)
 	# Center pivot so the selected scale-up grows evenly around the middle
 	button.pivot_offset = Vector2(150, 20)
+	# Start dimmed — buttons brighten to full alpha when selected
+	button.modulate.a = UNSELECTED_ALPHA
 	button.toggled.connect(func(is_toggled: bool) -> void: _on_type_toggled(type_key, is_toggled))
 	hbox.add_child(button)
 	
@@ -385,10 +398,12 @@ func _create_type_row(type_key: String) -> HBoxContainer:
 ##
 ## Handles a row button being toggled. Updates selection state and enforces
 ## the max count, reverting (with a denied shake) when at the limit.
-## Selection is shown by enlarging the button and swapping to the selected
-## palette — the row layout stays centered and never shifts.
+## Selection is shown by enlarging the button, restoring full alpha, adding a
+## "✔ " label prefix, and swapping to the selected palette — the row layout
+## stays centered and never shifts.
 func _on_type_toggled(type_key: String, is_toggled: bool) -> void:
 	var button = _toggle_buttons.get(type_key)
+	var display_name: String = TYPE_DISPLAY_NAMES.get(type_key, type_key)
 	if is_toggled:
 		if _selected_types.size() >= _allowed_count:
 			# Can't select more — revert the toggle and shake the button
@@ -400,11 +415,15 @@ func _on_type_toggled(type_key: String, is_toggled: bool) -> void:
 		_selected_types.append(type_key)
 		if button:
 			button.set_palette(_row_palettes[type_key]["selected"])
+			button.set_button_text(SELECTED_PREFIX + display_name)
+			button.modulate.a = 1.0
 			_tween_button_scale(button, 1.12)
 	else:
 		_selected_types.erase(type_key)
 		if button:
 			button.set_palette(_row_palettes[type_key]["base"])
+			button.set_button_text(display_name)
+			button.modulate.a = UNSELECTED_ALPHA
 			_tween_button_scale(button, 1.0)
 	
 	_update_toggle_states()
