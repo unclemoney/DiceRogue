@@ -11,8 +11,8 @@ challenge_difficulty_range = Vector2i(1, 1)
 max_debuffs = 0
 debuff_difficulty_cap = 0
 goof_off_threshold_override = -1
-target_score_override = 50
-reward_money_override = 200
+target_score_override = 500
+reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
@@ -26,7 +26,7 @@ challenge_difficulty_range = Vector2i(1, 2)
 max_debuffs = 1
 debuff_difficulty_cap = 1
 goof_off_threshold_override = -1
-target_score_override = 0
+target_score_override = 525
 reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.0,
@@ -41,8 +41,8 @@ challenge_difficulty_range = Vector2i(2, 2)
 max_debuffs = 1
 debuff_difficulty_cap = 1
 goof_off_threshold_override = -1
-target_score_override = 0
-reward_money_override = 130
+target_score_override = 550
+reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
@@ -56,8 +56,8 @@ challenge_difficulty_range = Vector2i(2, 3)
 max_debuffs = 1
 debuff_difficulty_cap = 2
 goof_off_threshold_override = -1
-target_score_override = 0
-reward_money_override = 165
+target_score_override = 575
+reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.1,
@@ -71,8 +71,8 @@ challenge_difficulty_range = Vector2i(2, 3)
 max_debuffs = 1
 debuff_difficulty_cap = 2
 goof_off_threshold_override = -1
-target_score_override = 0
-reward_money_override = 200
+target_score_override = 600
+reward_money_override = 150
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.1,
@@ -86,8 +86,8 @@ challenge_difficulty_range = Vector2i(3, 3)
 max_debuffs = 2
 debuff_difficulty_cap = 2
 goof_off_threshold_override = -1
-target_score_override = 0
-reward_money_override = 250
+target_score_override = 625
+reward_money_override = 150
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.1,
@@ -98,25 +98,25 @@ bonus_multipliers = {
 script = ExtResource("1_channel")
 channel_number = 5
 display_name = "Channel 05 - Finding Your Rhythm"
+description = "No more easy rounds. Debuffs can stack in round 6."
 mall_zone_name = "Department Store"
 mall_directory_label = "Department Store"
 mall_tooltip_flavor = "An anchor store with endless aisles and sale banners."
 mall_section_id = "major_stores"
-description = "No more easy rounds. Debuffs can stack in round 6."
 unlock_requirement = 2
 round_configs = Array[ExtResource("2_round")]([SubResource("round_1"), SubResource("round_2"), SubResource("round_3"), SubResource("round_4"), SubResource("round_5"), SubResource("round_6")])
-goal_score_multiplier = 1.4
-yahtzee_bonus_multiplier = 1.2
-shop_price_multiplier = 1.1
-colored_dice_cost_multiplier = 1.1
+goal_score_multiplier = 1.0
+yahtzee_bonus_multiplier = 1.0
+shop_price_multiplier = 1.0
+colored_dice_cost_multiplier = 1.0
 reroll_base_cost_multiplier = 1.0
-goof_off_multiplier = 1.1
+goof_off_multiplier = 1.0
 debuff_intensity_multiplier = 1.0
+allowed_carryover_count = 4
+allowed_carryover_types = Array[String](["power_ups", "consumables", "colored_dice", "mods", "consoles", "money", "scorecard_levels"])
 force_specific_challenges = Array[String]([])
 disabled_shop_items = Array[String]([])
 special_rules = {}
-allowed_carryover_count = 4
-allowed_carryover_types = Array[String](["power_ups", "consumables", "colored_dice", "mods", "consoles", "money", "scorecard_levels"])
 background_shader = ExtResource("3_shader_bg")
 background_shader_params = {
 "colour_1": Color(0.95, 0.93, 0.88, 1),
@@ -131,3 +131,4 @@ background_shader_params = {
 "swoosh_scale": 1.0,
 "teal_opacity": 0.8
 }
+ui_contrast_mode = "auto"

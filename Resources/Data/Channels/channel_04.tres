@@ -11,8 +11,8 @@ challenge_difficulty_range = Vector2i(0, 1)
 max_debuffs = 0
 debuff_difficulty_cap = 0
 goof_off_threshold_override = -1
-target_score_override = 75
-reward_money_override = 150
+target_score_override = 400
+reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
@@ -26,7 +26,7 @@ challenge_difficulty_range = Vector2i(1, 2)
 max_debuffs = 0
 debuff_difficulty_cap = 1
 goof_off_threshold_override = -1
-target_score_override = 0
+target_score_override = 425
 reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.0,
@@ -41,7 +41,7 @@ challenge_difficulty_range = Vector2i(1, 2)
 max_debuffs = 0
 debuff_difficulty_cap = 0
 goof_off_threshold_override = -1
-target_score_override = 0
+target_score_override = 450
 reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.0,
@@ -56,7 +56,7 @@ challenge_difficulty_range = Vector2i(2, 2)
 max_debuffs = 1
 debuff_difficulty_cap = 2
 goof_off_threshold_override = -1
-target_score_override = 0
+target_score_override = 475
 reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.0,
@@ -71,7 +71,7 @@ challenge_difficulty_range = Vector2i(2, 3)
 max_debuffs = 1
 debuff_difficulty_cap = 2
 goof_off_threshold_override = -1
-target_score_override = 0
+target_score_override = 500
 reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.0,
@@ -86,7 +86,7 @@ challenge_difficulty_range = Vector2i(2, 3)
 max_debuffs = 2
 debuff_difficulty_cap = 2
 goof_off_threshold_override = -1
-target_score_override = 0
+target_score_override = 525
 reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.0,
@@ -98,25 +98,25 @@ bonus_multipliers = {
 script = ExtResource("1_channel")
 channel_number = 4
 display_name = "Channel 04 - The Grind Begins"
+description = "Tier 3 challenges appear. Debuffs now start at round 3."
 mall_zone_name = "Hobby Store"
 mall_directory_label = "Hobby Store"
 mall_tooltip_flavor = "Model kits, board games, and paint racks crowd the shelves."
 mall_section_id = "specialty"
-description = "Tier 3 challenges appear. Debuffs now start at round 3."
 unlock_requirement = 1
 round_configs = Array[ExtResource("2_round")]([SubResource("round_1"), SubResource("round_2"), SubResource("round_3"), SubResource("round_4"), SubResource("round_5"), SubResource("round_6")])
-goal_score_multiplier = 1.3
-yahtzee_bonus_multiplier = 1.1
-shop_price_multiplier = 1.1
+goal_score_multiplier = 1.0
+yahtzee_bonus_multiplier = 1.0
+shop_price_multiplier = 1.0
 colored_dice_cost_multiplier = 1.0
 reroll_base_cost_multiplier = 1.0
-goof_off_multiplier = 1.05
+goof_off_multiplier = 1.0
 debuff_intensity_multiplier = 1.0
+allowed_carryover_count = 4
+allowed_carryover_types = Array[String](["power_ups", "consumables", "colored_dice", "mods", "consoles", "money", "scorecard_levels"])
 force_specific_challenges = Array[String]([])
 disabled_shop_items = Array[String]([])
 special_rules = {}
-allowed_carryover_count = 4
-allowed_carryover_types = Array[String](["power_ups", "consumables", "colored_dice", "mods", "consoles", "money", "scorecard_levels"])
 background_shader = ExtResource("3_shader_bg")
 background_shader_params = {
 "color_cycle_speed": 1.0,
@@ -129,3 +129,4 @@ background_shader_params = {
 "star_speed": 0.2,
 "twinkle_speed": 2.0
 }
+ui_contrast_mode = "auto"

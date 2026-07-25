@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://ld1sb7uy0i6jm"]
+[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://dm71431hu4f03"]
 
 [ext_resource type="Script" uid="uid://cseqx1haydrh1" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
 [ext_resource type="Script" uid="uid://yuj6od6ypw1a" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
@@ -11,8 +11,13 @@ challenge_difficulty_range = Vector2i(3, 4)
 max_debuffs = 2
 debuff_difficulty_cap = 3
 goof_off_threshold_override = -1
-reward_money_override = 250
-bonus_multipliers = {"empty_category": 1.5, "points_above": 1.4, "chore_completion": 1.5}
+target_score_override = 8000
+reward_money_override = 0
+bonus_multipliers = {
+"chore_completion": 1.5,
+"empty_category": 1.5,
+"points_above": 1.4
+}
 
 [sub_resource type="Resource" id="round_2"]
 script = ExtResource("2_round")
@@ -21,8 +26,13 @@ challenge_difficulty_range = Vector2i(3, 4)
 max_debuffs = 2
 debuff_difficulty_cap = 3
 goof_off_threshold_override = -1
-reward_money_override = 300
-bonus_multipliers = {"empty_category": 1.6, "points_above": 1.4, "chore_completion": 1.5}
+target_score_override = 8800
+reward_money_override = 0
+bonus_multipliers = {
+"chore_completion": 1.5,
+"empty_category": 1.6,
+"points_above": 1.4
+}
 
 [sub_resource type="Resource" id="round_3"]
 script = ExtResource("2_round")
@@ -31,8 +41,13 @@ challenge_difficulty_range = Vector2i(4, 5)
 max_debuffs = 3
 debuff_difficulty_cap = 3
 goof_off_threshold_override = -1
-reward_money_override = 365
-bonus_multipliers = {"empty_category": 1.6, "points_above": 1.5, "chore_completion": 1.6}
+target_score_override = 9600
+reward_money_override = 0
+bonus_multipliers = {
+"chore_completion": 1.6,
+"empty_category": 1.6,
+"points_above": 1.5
+}
 
 [sub_resource type="Resource" id="round_4"]
 script = ExtResource("2_round")
@@ -41,8 +56,13 @@ challenge_difficulty_range = Vector2i(4, 5)
 max_debuffs = 3
 debuff_difficulty_cap = 4
 goof_off_threshold_override = -1
-reward_money_override = 440
-bonus_multipliers = {"empty_category": 1.7, "points_above": 1.5, "chore_completion": 1.7}
+target_score_override = 10400
+reward_money_override = 0
+bonus_multipliers = {
+"chore_completion": 1.7,
+"empty_category": 1.7,
+"points_above": 1.5
+}
 
 [sub_resource type="Resource" id="round_5"]
 script = ExtResource("2_round")
@@ -51,8 +71,13 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 3
 debuff_difficulty_cap = 4
 goof_off_threshold_override = -1
-reward_money_override = 525
-bonus_multipliers = {"empty_category": 1.8, "points_above": 1.6, "chore_completion": 1.8}
+target_score_override = 11200
+reward_money_override = 450
+bonus_multipliers = {
+"chore_completion": 1.8,
+"empty_category": 1.8,
+"points_above": 1.6
+}
 
 [sub_resource type="Resource" id="round_6"]
 script = ExtResource("2_round")
@@ -61,44 +86,50 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 3
 debuff_difficulty_cap = 5
 goof_off_threshold_override = -1
-reward_money_override = 625
-bonus_multipliers = {"empty_category": 1.9, "points_above": 1.7, "chore_completion": 1.8}
+target_score_override = 12000
+reward_money_override = 450
+bonus_multipliers = {
+"chore_completion": 1.8,
+"empty_category": 1.9,
+"points_above": 1.7
+}
 
 [resource]
 script = ExtResource("1_channel")
 channel_number = 14
 display_name = "Channel 14 - Expert Mode"
+description = "Late game territory. High tier challenges with powerful debuffs."
 mall_zone_name = "Sports Outlet"
 mall_directory_label = "Sports Outlet"
 mall_tooltip_flavor = "Sneaker walls and team-color windbreakers."
 mall_section_id = "lifestyle"
-description = "Late game territory. High tier challenges with powerful debuffs."
 unlock_requirement = 7
 round_configs = Array[ExtResource("2_round")]([SubResource("round_1"), SubResource("round_2"), SubResource("round_3"), SubResource("round_4"), SubResource("round_5"), SubResource("round_6")])
-goal_score_multiplier = 3.5
-yahtzee_bonus_multiplier = 2.8
-shop_price_multiplier = 2.0
-colored_dice_cost_multiplier = 1.6
-reroll_base_cost_multiplier = 1.7
-goof_off_multiplier = 1.6
-debuff_intensity_multiplier = 1.6
+goal_score_multiplier = 1.0
+yahtzee_bonus_multiplier = 1.0
+shop_price_multiplier = 1.0
+colored_dice_cost_multiplier = 1.0
+reroll_base_cost_multiplier = 1.0
+goof_off_multiplier = 1.0
+debuff_intensity_multiplier = 1.0
+allowed_carryover_count = 2
+allowed_carryover_types = Array[String](["power_ups", "consumables", "money"])
 force_specific_challenges = Array[String]([])
 disabled_shop_items = Array[String]([])
 special_rules = {}
-allowed_carryover_count = 2
-allowed_carryover_types = Array[String](["power_ups", "consumables", "money"])
 background_shader = ExtResource("3_shader_bg")
 background_shader_params = {
-"colour_1": Color(0.08, 0.06, 0.12, 1.0),
-"colour_2": Color(0.0, 1.0, 0.8, 1.0),
-"colour_3": Color(1.0, 0.15, 0.4, 1.0),
-"colour_4": Color(0.4, 0.0, 1.0, 1.0),
-"colour_5": Color(1.0, 0.8, 0.0, 1.0),
-"scroll_speed": 0.08,
-"pixel_filter": 500.0,
-"shape_density": 5.0,
-"shape_scale": 1.2,
+"colour_1": Color(0.08, 0.06, 0.12, 1),
+"colour_2": Color(0, 1, 0.8, 1),
+"colour_3": Color(1, 0.15, 0.4, 1),
+"colour_4": Color(0.4, 0, 1, 1),
+"colour_5": Color(1, 0.8, 0, 1),
 "glow_amount": 0.5,
+"pixel_filter": 500.0,
 "rotation_speed": 0.4,
-"scanline_strength": 0.15
+"scanline_strength": 0.15,
+"scroll_speed": 0.08,
+"shape_density": 5.0,
+"shape_scale": 1.2
 }
+ui_contrast_mode = "auto"

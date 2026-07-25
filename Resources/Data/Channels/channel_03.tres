@@ -11,8 +11,8 @@ challenge_difficulty_range = Vector2i(0, 1)
 max_debuffs = 0
 debuff_difficulty_cap = 0
 goof_off_threshold_override = -1
-target_score_override = 50
-reward_money_override = 150
+target_score_override = 300
+reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
@@ -26,8 +26,8 @@ challenge_difficulty_range = Vector2i(1, 1)
 max_debuffs = 0
 debuff_difficulty_cap = 1
 goof_off_threshold_override = -1
-target_score_override = 225
-reward_money_override = 150
+target_score_override = 325
+reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
@@ -41,8 +41,8 @@ challenge_difficulty_range = Vector2i(1, 2)
 max_debuffs = 0
 debuff_difficulty_cap = 1
 goof_off_threshold_override = -1
-target_score_override = 300
-reward_money_override = 100
+target_score_override = 350
+reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
@@ -56,8 +56,8 @@ challenge_difficulty_range = Vector2i(1, 2)
 max_debuffs = 0
 debuff_difficulty_cap = 0
 goof_off_threshold_override = -1
-target_score_override = 325
-reward_money_override = 125
+target_score_override = 375
+reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
@@ -71,8 +71,8 @@ challenge_difficulty_range = Vector2i(2, 2)
 max_debuffs = 1
 debuff_difficulty_cap = 1
 goof_off_threshold_override = -1
-target_score_override = 350
-reward_money_override = 150
+target_score_override = 400
+reward_money_override = 125
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
@@ -86,7 +86,7 @@ challenge_difficulty_range = Vector2i(2, 2)
 max_debuffs = 1
 debuff_difficulty_cap = 1
 goof_off_threshold_override = -1
-target_score_override = 375
+target_score_override = 425
 reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.0,
@@ -98,25 +98,25 @@ bonus_multipliers = {
 script = ExtResource("1_channel")
 channel_number = 3
 display_name = "Channel 03 - Warming Up"
+description = "Introducing tier 2 challenges. Debuffs can appear from round 4 onward."
 mall_zone_name = "Bookstore"
 mall_directory_label = "Bookstore"
 mall_tooltip_flavor = "Paperback stacks and mall atlases line the windows."
 mall_section_id = "specialty"
-description = "Introducing tier 2 challenges. Debuffs can appear from round 4 onward."
 unlock_requirement = 1
 round_configs = Array[ExtResource("2_round")]([SubResource("round_1"), SubResource("round_2"), SubResource("round_3"), SubResource("round_4"), SubResource("round_5"), SubResource("round_6")])
-goal_score_multiplier = 1.2
+goal_score_multiplier = 1.0
 yahtzee_bonus_multiplier = 1.0
 shop_price_multiplier = 1.0
 colored_dice_cost_multiplier = 1.0
 reroll_base_cost_multiplier = 1.0
 goof_off_multiplier = 1.0
 debuff_intensity_multiplier = 1.0
+allowed_carryover_count = 5
+allowed_carryover_types = Array[String](["power_ups", "consumables", "colored_dice", "mods", "consoles", "money", "scorecard_levels"])
 force_specific_challenges = Array[String]([])
 disabled_shop_items = Array[String]([])
 special_rules = {}
-allowed_carryover_count = 5
-allowed_carryover_types = Array[String](["power_ups", "consumables", "colored_dice", "mods", "consoles", "money", "scorecard_levels"])
 background_shader = ExtResource("3_shader_bg")
 background_shader_params = {
 "colour_1": Color(0.06, 0.02, 0.12, 1),
@@ -131,3 +131,4 @@ background_shader_params = {
 "scroll_speed": 0.15,
 "tile_size": 12.0
 }
+ui_contrast_mode = "auto"

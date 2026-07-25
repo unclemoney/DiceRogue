@@ -12,7 +12,7 @@ max_debuffs = 0
 debuff_difficulty_cap = 0
 goof_off_threshold_override = -1
 target_score_override = 50
-reward_money_override = 0
+reward_money_override = 50
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
@@ -27,7 +27,7 @@ max_debuffs = 0
 debuff_difficulty_cap = 0
 goof_off_threshold_override = -1
 target_score_override = 75
-reward_money_override = 0
+reward_money_override = 50
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
@@ -42,7 +42,7 @@ max_debuffs = 0
 debuff_difficulty_cap = 0
 goof_off_threshold_override = -1
 target_score_override = 105
-reward_money_override = 0
+reward_money_override = 50
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
@@ -57,7 +57,7 @@ max_debuffs = 0
 debuff_difficulty_cap = 0
 goof_off_threshold_override = -1
 target_score_override = 150
-reward_money_override = 0
+reward_money_override = 50
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
@@ -72,7 +72,7 @@ max_debuffs = 0
 debuff_difficulty_cap = 0
 goof_off_threshold_override = -1
 target_score_override = 200
-reward_money_override = 0
+reward_money_override = 50
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
@@ -87,7 +87,7 @@ max_debuffs = 1
 debuff_difficulty_cap = 1
 goof_off_threshold_override = -1
 target_score_override = 300
-reward_money_override = 0
+reward_money_override = 50
 bonus_multipliers = {
 "chore_completion": 1.0,
 "empty_category": 1.0,
