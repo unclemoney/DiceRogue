@@ -11,8 +11,8 @@ region = Rect2(229, 595, 182, 174)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "straight_triplet_master"
-display_name = "Straight Triplet Master"
-description = "Score straights in Lg Straight, Sm Straight, AND Chance in 1 round for +$150 and +75pts"
+display_name = "LgLgLgSt"
+description = "Score Large Straights in Lg Straight, Sm Straight, AND Chance in 1 round for +$333 and +333pts"
 icon = SubResource("AtlasTexture_wy10o")
 scene = ExtResource("2_scene")
 price = 275

@@ -11,7 +11,7 @@ region = Rect2(36, 765, 185, 183)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "the_consumer_is_always_right"
-display_name = "The Consumer is Always Right"
+display_name = "CoupCrush"
 description = "Score multiplier increases by 0.25x for each consumable used this session"
 icon = SubResource("AtlasTexture_5y8fc")
 scene = ExtResource("2_scene")

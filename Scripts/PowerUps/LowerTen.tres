@@ -11,7 +11,7 @@ region = Rect2(39, 397, 176, 174)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "lower_ten"
-display_name = "Lower Ten"
+display_name = "Lower10"
 description = "Lower section scores get +10 points"
 icon = SubResource("AtlasTexture_6giry")
 scene = ExtResource("2_scene")

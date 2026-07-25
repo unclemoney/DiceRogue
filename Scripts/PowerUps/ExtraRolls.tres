@@ -11,7 +11,7 @@ region = Rect2(39, 584, 178, 173)
 [resource]
 script = ExtResource("1_0fs0u")
 id = "extra_rolls"
-display_name = "Extra Rolls"
+display_name = "Rollerz"
 description = "Grants additional Rolls each turn"
 icon = SubResource("AtlasTexture_jvwcb")
 scene = ExtResource("2_jvwcb")

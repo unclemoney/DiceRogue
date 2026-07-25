@@ -11,7 +11,7 @@ region = Rect2(617, 584, 179, 174)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "random_card_level"
-display_name = "Random Card Level"
+display_name = "Card Level"
 description = "20% chance each turn to level up a random scorecard category"
 icon = SubResource("AtlasTexture_4fsps")
 scene = ExtResource("2_scene")

@@ -11,7 +11,7 @@ region = Rect2(238, 397, 176, 176)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "perfect_strangers"
-display_name = "Perfect Strangers"
+display_name = "Strangers"
 description = "When scoring CHANCE, gain a random 1.1x-1.5x multiplier for that score"
 icon = SubResource("AtlasTexture_4bslx")
 scene = ExtResource("2_perfect_strangers_scene")

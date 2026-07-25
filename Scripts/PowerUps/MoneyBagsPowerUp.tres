@@ -11,7 +11,7 @@ region = Rect2(615, 599, 186, 188)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "money_bags"
-display_name = "Money Bags"
+display_name = "UncleMoney"
 description = "Score multiplier = ($Money / 100) + 1"
 icon = SubResource("AtlasTexture_goljt")
 scene = ExtResource("2_scene")

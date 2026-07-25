@@ -11,7 +11,7 @@ region = Rect2(427, 398, 179, 174)
 [resource]
 script = ExtResource("1_script")
 id = "one_roll_wonder"
-display_name = "One-Roll Wonder"
+display_name = "1-Roll Wonder"
 description = "Score on first roll = +40 additive"
 icon = SubResource("AtlasTexture_wwmsy")
 scene = ExtResource("2_scene")

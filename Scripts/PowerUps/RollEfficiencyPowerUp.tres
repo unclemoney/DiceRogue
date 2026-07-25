@@ -6,7 +6,7 @@
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_sydvi"]
 atlas = ExtResource("1_l06yo")
-region = Rect2(230, 780, 181, 178)
+region = Rect2(39, 594, 180, 176)
 
 [resource]
 script = ExtResource("1_powerup_data")

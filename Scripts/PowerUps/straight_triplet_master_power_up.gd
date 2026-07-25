@@ -11,8 +11,8 @@ class_name StraightTripletMasterPowerUp
 ## Resets each round if not completed.
 ## Price: $275, Rarity: Rare
 
-const BONUS_MONEY: int = 150
-const BONUS_POINTS: int = 75
+const BONUS_MONEY: int = 333
+const BONUS_POINTS: int = 333
 
 var scorecard_ref: Scorecard = null
 var large_straight_in_large: bool = false

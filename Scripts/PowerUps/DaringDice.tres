@@ -11,7 +11,7 @@ region = Rect2(234, 770, 179, 176)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "daring_dice"
-display_name = "Daring Dice"
+display_name = "Daring D"
 description = "Remove 2 dice but gain +50 additive"
 icon = SubResource("AtlasTexture_h7t73")
 scene = ExtResource("2_scene")

@@ -11,7 +11,7 @@ region = Rect2(227, 402, 188, 181)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "mod_money"
-display_name = "Mod Money"
+display_name = "Mod$"
 description = "Earn $8 per modded die when scoring "
 icon = SubResource("AtlasTexture_tp8uj")
 scene = ExtResource("2_scene")

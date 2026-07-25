@@ -11,7 +11,7 @@ region = Rect2(227, 39, 186, 181)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "chore_champion"
-display_name = "Chore Champion"
+display_name = "Chore Champ"
 description = "Chores are 2x more effective (Check to make sure since refactor)"
 icon = SubResource("AtlasTexture_s6a4f")
 scene = ExtResource("2_scene")

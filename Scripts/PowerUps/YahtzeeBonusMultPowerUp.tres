@@ -11,7 +11,7 @@ region = Rect2(618, 29, 173, 173)
 [resource]
 script = ExtResource("1_40cld")
 id = "yahtzee_bonus_mult"
-display_name = "Yahtzee Mult"
+display_name = "Guthtzee Mult"
 description = "Increases score multiplier by 1x for each Yahtzee Bonus achieved"
 icon = SubResource("AtlasTexture_g1e50")
 scene = ExtResource("2_awvan")

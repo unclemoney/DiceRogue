@@ -11,7 +11,7 @@ region = Rect2(811, 583, 178, 176)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "debuff_destroyer"
-display_name = "Debuff Destroyer"
+display_name = "Destroyer"
 description = "Removes 1 random debuff upon selling"
 icon = SubResource("AtlasTexture_ct6np")
 scene = ExtResource("2_scene")

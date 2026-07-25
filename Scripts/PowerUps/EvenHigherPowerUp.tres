@@ -11,7 +11,7 @@ region = Rect2(811, 397, 178, 178)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "even_higher"
-display_name = "Even Higher"
+display_name = "Even Hi-er"
 description = "+1 additive per even die scored (cumulative)"
 icon = SubResource("AtlasTexture_t547h")
 scene = ExtResource("2_scene")

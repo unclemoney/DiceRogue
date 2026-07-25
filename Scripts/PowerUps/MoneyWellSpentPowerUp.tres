@@ -11,7 +11,7 @@ region = Rect2(227, 221, 186, 181)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "money_well_spent"
-display_name = "Money Well Spent"
+display_name = "Well Spent"
 description = "+1 to all scores per $50 spent (during the game)"
 icon = SubResource("AtlasTexture_y5rvh")
 scene = ExtResource("2_money_well_spent_scene")

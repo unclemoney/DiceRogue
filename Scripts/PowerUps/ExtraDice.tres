@@ -11,7 +11,7 @@ region = Rect2(418, 216, 185, 186)
 [resource]
 script = ExtResource("1_dtm2h")
 id = "extra_dice"
-display_name = "Extra Dice"
+display_name = "ddDice"
 description = "Grants one additional die"
 icon = SubResource("AtlasTexture_8vswu")
 scene = ExtResource("2_o2lnj")

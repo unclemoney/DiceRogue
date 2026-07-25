@@ -11,7 +11,7 @@ region = Rect2(227, 764, 187, 183)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "purple_payout"
-display_name = "Purple Payout"
+display_name = "PurplePay"
 description = "Each purple die grants $25 when scoring"
 icon = SubResource("AtlasTexture_5xqbk")
 scene = ExtResource("2_scene")

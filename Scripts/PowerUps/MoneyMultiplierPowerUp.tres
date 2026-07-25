@@ -11,8 +11,8 @@ region = Rect2(39, 780, 182, 177)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "money_multiplier"
-display_name = "Money Multiplier"
-description = "Immediately multiple your cash for every Yahtzee rolled (increases +.1 each Yahtzee)"
+display_name = "MoneyMult"
+description = "Immediately multiple your cash for every Yahtzee rolled (increases +.1 each Yahtzee)Yahtzee)"
 icon = SubResource("AtlasTexture_3qrdk")
 scene = ExtResource("2_money_multiplier_scene")
 price = 100

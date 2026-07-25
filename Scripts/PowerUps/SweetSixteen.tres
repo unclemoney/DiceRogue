@@ -11,7 +11,7 @@ region = Rect2(617, 770, 179, 176)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "sweet_sixteen"
-display_name = "Sweet Sixteen"
+display_name = "Sweet 16"
 description = "Grants $16 per turn. Score above 0 on turn 16 for a $256 bonus!"
 icon = SubResource("AtlasTexture_2hlso")
 scene = ExtResource("2_scene")

@@ -11,7 +11,7 @@ region = Rect2(427, 770, 176, 175)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "extra_rainbow"
-display_name = "Extra Rainbow"
+display_name = "Rainbows"
 description = "+10 per colored die scored"
 icon = SubResource("AtlasTexture_jg5ld")
 scene = ExtResource("2_scene")

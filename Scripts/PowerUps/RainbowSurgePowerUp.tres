@@ -1,12 +1,12 @@
 [gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://v4gtplart7n4"]
 
-[ext_resource type="Texture2D" uid="uid://c0y4n53xm2pgx" path="res://Resources/Art/Powerups/grounded_pog_grid_5x5.png" id="1_meg5b"]
+[ext_resource type="Texture2D" uid="uid://du5rije0h63iw" path="res://Resources/Art/Powerups/experimental_pog_grid_5x5.png" id="1_meg5b"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/RainbowSurgePowerUp.tscn" id="2_scene"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_58tnv"]
 atlas = ExtResource("1_meg5b")
-region = Rect2(19, 409, 185, 186)
+region = Rect2(30, 409, 181, 186)
 
 [resource]
 script = ExtResource("1_powerup_data")
