@@ -8,6 +8,7 @@ class_name MomCharacter
 ## Used by MomLogicHandler to display consequences to the player.
 
 signal dialog_closed
+signal response_selected(index: int)  # Emitted when the player picks a dialog response
 
 enum MomExpression { NEUTRAL, UPSET, HAPPY }
 
@@ -42,6 +43,9 @@ var backdrop_fx_rect: ColorRect
 var sprite_rect: TextureRect
 var dialog_label: RichTextLabel
 var close_button: GlassActionButton
+var response_row: VBoxContainer
+var response_buttons: Array[GlassActionButton] = []
+var _current_responses: Array = []  # MomDialogResponse resources for the current beat
 var _current_expression: MomExpression = MomExpression.NEUTRAL
 var _is_animating: bool = false
 var _full_dialog_text: String = ""
@@ -68,10 +72,11 @@ func _load_textures() -> void:
 		happy_texture != null
 	])
 
-## show_dialog()
+## show_dialog(expression_name, dialog_text)
 ##
-## Shows the Mom dialog with the specified expression and text.
-## Animates in from off-screen.
+## Legacy entry point: shows the dialog with just the OK button.
+## Used by the tutorial and any non-tree callers. For dialog trees,
+## use show_node() instead.
 ##
 ## Parameters:
 ##   expression_name: String - "neutral", "upset", or "happy"
@@ -79,13 +84,120 @@ func _load_textures() -> void:
 func show_dialog(expression_name: String, dialog_text: String) -> void:
 	set_expression(expression_name)
 	_full_dialog_text = dialog_text
-	dialog_label.text = ""
-	
+	_build_response_buttons([])
+	close_button.visible = true
+
 	visible = true
 	_animate_in()
-	
+
 	# Set dialog text
 	_type_dialog_text(dialog_text)
+
+## show_node(node)
+##
+## Shows a MomDialogNode: her line, expression, and response buttons.
+## Terminal nodes (no responses) show the OK button instead.
+## Re-animates in only when the dialog is currently hidden, so
+## follow-up beats swap content in place.
+##
+## Parameters:
+##   node: MomDialogNode - the dialog beat to display
+func show_node(node: MomDialogNode) -> void:
+	if node == null:
+		return
+	var was_hidden := not visible
+	set_expression(node.expression)
+	_full_dialog_text = node.mom_text
+	_type_dialog_text(node.mom_text)
+	_build_response_buttons(node.responses)
+	close_button.visible = node.is_terminal()
+
+	if was_hidden:
+		visible = true
+		_animate_in()
+
+## show_outcome_reply(text, expression)
+##
+## Shows Mom's reply line after an outcome resolves, with no responses
+## (OK button shown). Used when an outcome ends the visit with a parting
+## line instead of chaining to another node.
+func show_outcome_reply(text: String, expression: String) -> void:
+	if expression != "":
+		set_expression(expression)
+	_full_dialog_text = text
+	_type_dialog_text(text)
+	_build_response_buttons([])
+	close_button.visible = true
+
+## press_response(index)
+##
+## Programmatically picks a response. Used by the bot policy; the
+## response_selected signal flows through the same path as a real click.
+func press_response(index: int) -> void:
+	if index < 0 or index >= response_buttons.size():
+		return
+	_on_response_pressed(index)
+
+## has_pending_responses() -> bool
+##
+## Returns: bool - true while the dialog waits on a response button pick
+func has_pending_responses() -> bool:
+	return visible and response_row.visible and response_buttons.size() > 0
+
+## choose_response_weighted() -> bool
+##
+## Bot policy: picks a response by tone-weighted random (mostly polite,
+## sometimes neutral, rarely sassy) and presses it.
+##
+## Returns: bool - true if a response was pressed
+func choose_response_weighted() -> bool:
+	if not has_pending_responses():
+		return false
+	var weights: Array = []
+	for response in _current_responses:
+		var tone: String = response.tone if response else "neutral"
+		weights.append(float(MomLogicHandler.BOT_TONE_WEIGHTS.get(tone, 1.0)))
+	var index: int = MomLogicHandler._pick_weighted_index(weights)
+	press_response(index)
+	return true
+
+## _build_response_buttons(responses)
+##
+## Rebuilds the response button row from MomDialogResponse resources.
+## Empty array hides the row (terminal beat).
+func _build_response_buttons(responses: Array) -> void:
+	for button in response_buttons:
+		if is_instance_valid(button):
+			button.queue_free()
+	response_buttons.clear()
+
+	if responses.is_empty():
+		response_row.visible = false
+		_current_responses.clear()
+		return
+
+	response_row.visible = true
+	_current_responses = responses.duplicate()
+	for i in range(responses.size()):
+		var response: MomDialogResponse = responses[i]
+		if response == null:
+			continue
+		var button := GlassActionButton.new()
+		button.name = "ResponseButton%d" % i
+		button.configure(response.button_text, Vector2(420, 44), MOM_BUTTON_PALETTE, 15, vcr_font)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var index := i
+		button.pressed.connect(_on_response_pressed.bind(index))
+		response_row.add_child(button)
+		response_buttons.append(button)
+
+func _on_response_pressed(index: int) -> void:
+	# Prevent double-picks while the outcome resolves
+	for button in response_buttons:
+		if is_instance_valid(button):
+			button.disabled = true
+	print("[MomCharacter] Response %d selected" % index)
+	response_selected.emit(index)
 
 ## set_expression()
 ##
@@ -207,6 +319,16 @@ func _create_ui_structure() -> void:
 	dialog_label.add_theme_color_override("default_color", Color.WHITE)
 	dialog_container.add_child(dialog_label)
 	
+	# Response button column (hidden unless a dialog node has responses).
+	# Buttons stack vertically and span the dialog width - response texts
+	# are full sentences, too long for side-by-side buttons.
+	response_row = VBoxContainer.new()
+	response_row.name = "ResponseRow"
+	response_row.add_theme_constant_override("separation", 8)
+	response_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	response_row.visible = false
+	vbox.add_child(response_row)
+
 	# Close button (GlassActionButton handles its own hover/press TweenFX)
 	close_button = GlassActionButton.new()
 	close_button.name = "CloseButton"
@@ -343,7 +465,12 @@ func _on_close_pressed() -> void:
 func _input(event: InputEvent) -> void:
 	if not visible:
 		return
-	
+
+	# Enter/Space only closes terminal beats (OK button visible) -
+	# response beats must be answered with a button
+	if not close_button.visible:
+		return
+
 	# Allow closing with Enter or Space
 	if event is InputEventKey:
 		var key_event = event as InputEventKey

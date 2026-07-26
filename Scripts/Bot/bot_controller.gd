@@ -183,6 +183,7 @@ func _connect_signals() -> void:
 	if is_instance_valid(chores_manager):
 		chores_manager.request_chore_selection.connect(_on_bot_chore_selection_requested)
 		chores_manager.mom_triggered.connect(_on_bot_mom_triggered)
+		chores_manager.mom_checkin.connect(_on_bot_mom_triggered)
 
 
 ## _disconnect_signals()
@@ -215,6 +216,8 @@ func _disconnect_signals() -> void:
 			chores_manager.request_chore_selection.disconnect(_on_bot_chore_selection_requested)
 		if chores_manager.mom_triggered.is_connected(_on_bot_mom_triggered):
 			chores_manager.mom_triggered.disconnect(_on_bot_mom_triggered)
+		if chores_manager.mom_checkin.is_connected(_on_bot_mom_triggered):
+			chores_manager.mom_checkin.disconnect(_on_bot_mom_triggered)
 
 
 ## _begin_game()
@@ -371,25 +374,36 @@ func _on_bot_chore_selection_requested() -> void:
 
 ## _on_bot_mom_triggered()
 ##
-## Called when chore progress reaches the threshold and Mom appears.
-## Bot dismisses the dialog automatically after a brief delay.
+## Called on meter visits (mom_triggered) and random check-ins (mom_checkin).
+## The bot answers response beats with tone-weighted picks (mostly polite)
+## and closes terminal beats, until the dialog is gone.
 func _on_bot_mom_triggered() -> void:
 	var gen := _run_generation
 	_pending_mom_dialog = true
-	logger.log_info("Mom triggered — bot will dismiss dialog")
+	logger.log_info("Mom visit — bot will handle dialog")
 	statistics.record_mom_visit()
 	# Give the game controller time to show the dialog
 	await get_tree().create_timer(0.3).timeout
 	if _run_generation != gen:
 		_pending_mom_dialog = false
 		return
-	# Find and dismiss any Mom dialog popup in the scene tree
+	# Handle dialog beats until it closes
 	var mom_dialog = _find_mom_dialog()
-	if is_instance_valid(mom_dialog) and mom_dialog.has_method("close_dialog"):
-		mom_dialog.close_dialog()
-		logger.log_info("Mom dialog dismissed")
-	else:
-		logger.log_warning("Could not find Mom dialog to dismiss")
+	var safety := 0
+	while is_instance_valid(mom_dialog) and mom_dialog.visible and safety < 10:
+		safety += 1
+		if mom_dialog.has_method("has_pending_responses") and mom_dialog.has_pending_responses():
+			mom_dialog.choose_response_weighted()
+			logger.log_info("Mom dialog: bot picked a response")
+		elif mom_dialog.has_method("close_dialog"):
+			mom_dialog.close_dialog()
+			logger.log_info("Mom dialog dismissed")
+		await get_tree().create_timer(0.4).timeout
+		if _run_generation != gen:
+			_pending_mom_dialog = false
+			return
+	if safety >= 10:
+		logger.log_warning("Timed out handling Mom dialog")
 	_pending_mom_dialog = false
 
 

@@ -148,6 +148,7 @@ var active_gaming_console: Dictionary = {}  # id -> GamingConsole (max 1 entry)
 # Mom dialog popup (instantiated when needed)
 var _mom_dialog = null
 var _grounded_debuffs: Array[String] = []  # Debuffs from NC-17 that persist until round end
+var _mom_cosmetics_locked: bool = false  # Temporary dice-color lock from Mom; restored at round end
 
 # Lock constraint tracking
 var _turn_history: Array[Dictionary] = []  # Per-turn records for unlock sliding window checks
@@ -311,12 +312,14 @@ func _ready() -> void:
 	# Initialize ChoresManager and ChoreUI
 	if chores_manager:
 		chores_manager.mom_triggered.connect(_on_mom_triggered)
+		chores_manager.mom_checkin.connect(_on_mom_checkin)
 		chores_manager.request_chore_selection.connect(_on_chore_selection_requested)
 		chores_manager.task_selected.connect(_on_chore_task_selected)
 		if chore_ui and chore_ui.has_method("set_chores_manager"):
 			chore_ui.set_chores_manager(chores_manager)
 			print("[GameController] Connected ChoreUI to ChoresManager")
 		print("[GameController] Connected to ChoresManager.mom_triggered")
+		print("[GameController] Connected to ChoresManager.mom_checkin")
 		print("[GameController] Connected to ChoresManager.request_chore_selection")
 		print("[GameController] Connected to ChoresManager.task_selected")
 
@@ -4648,6 +4651,28 @@ func _on_mod_sold(mod_id: String, dice: Dice) -> void:
 			mod_persistence_map.erase(mod_id)
 		print("[GameController] Updated mod persistence map:", mod_persistence_map)
 
+## remove_mod_no_refund(mod_id)
+##
+## Removes a mod with no refund. Used by Mom confiscation.
+## Removes from the dice, active_mods dictionary, and mod_persistence_map.
+func remove_mod_no_refund(mod_id: String) -> void:
+	print("[GameController] Mom confiscated mod:", mod_id)
+
+	# Find and remove the mod from whichever die holds it
+	if dice_hand:
+		for die in dice_hand.dice_list:
+			if is_instance_valid(die) and die.has_mod(mod_id):
+				die.remove_mod(mod_id)
+				break
+
+	if active_mods.has(mod_id):
+		active_mods.erase(mod_id)
+
+	if mod_persistence_map.has(mod_id):
+		mod_persistence_map[mod_id] -= 1
+		if mod_persistence_map[mod_id] <= 0:
+			mod_persistence_map.erase(mod_id)
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_F10:
@@ -5282,145 +5307,161 @@ func _on_chore_popup_dismissed() -> void:
 ## _on_mom_triggered()
 ##
 ## Handler for when chores progress reaches 100 and Mom appears.
-## Checks for R and NC-17 rated PowerUps and applies consequences.
-## Also checks if player completed any chores (0 = $100 fine or debuff).
-## Mom's mood affects rewards (mood 1) or enhanced punishments (mood 10).
+## Severity comes from Mom's mood + grudge + escalation; the dialog tree
+## (visit_reward or visit_punishment) decides what actually happens.
 func _on_mom_triggered() -> void:
-	print("[GameController] Mom triggered!")
-	
-	# Get chores completed count and Mom's mood from ChoresManager
-	var chores_completed_count = 0
-	var mom_mood = 5  # Default neutral
+	print("[GameController] Mom triggered (meter full)!")
+
+	var severity := 1
+	var tree_id := "visit_punishment"
 	if chores_manager:
-		chores_completed_count = chores_manager.tasks_completed
-		mom_mood = chores_manager.mom_mood
-		print("[GameController] Chores completed this cycle: %d" % chores_completed_count)
-		print("[GameController] Mom's mood: %d/10" % mom_mood)
-	
-	# Check for special mood-based rewards/punishments
-	if mom_mood == 1:
-		# Mom is very happy - grant rewards!
-		print("[GameController] Mom is VERY HAPPY! Granting rewards!")
-		_grant_mom_reward()
-	elif mom_mood >= 10:
-		# Mom is furious - enhanced punishments
-		print("[GameController] Mom is FURIOUS! Enhanced punishments!")
-		_apply_enhanced_mom_punishment()
-	
-	# Perform the standard Mom check with chores info and active debuffs
-	var result = MomLogicHandlerScript.trigger_mom_check(self, chores_completed_count, active_debuffs)
-	
-	# Show Mom dialog
-	_show_mom_dialog(result)
+		severity = MomLogicHandlerScript.compute_severity(chores_manager)
+		tree_id = MomLogicHandlerScript.get_visit_tree_id(chores_manager.mom_mood)
+		# Silent treatment: rare replacement for low-severity visits
+		if tree_id == "visit_punishment" and MomLogicHandlerScript.should_silent_treatment(severity):
+			tree_id = "visit_silent_treatment"
+		print("[GameController] Mom mood: %d/10, severity: %d, tree: %s" % [
+			chores_manager.mom_mood, severity, tree_id])
+
+	await _run_mom_dialog_session(tree_id, severity, true)
 
 
-## _grant_mom_reward()
+## _on_mom_checkin()
 ##
-## Grants a random reward when Mom's mood reaches 1 (very happy).
-## Possible rewards: money ($50-150), consumable, or power-up.
-func _grant_mom_reward() -> void:
-	var reward_type = GameRNG.randi_mod(3)
-	match reward_type:
-		0:
-			# Grant money (allowance)
-			var amount = GameRNG.randi_range(50, 150)
-			PlayerEconomy.add_money(amount)
-			print("[GameController] Mom gave allowance: $%d" % amount)
-		1:
-			# Grant random consumable
-			var consumable_ids = ["random_power_up_uncommon", "green_envy", "the_rarities"]
-			var random_id = consumable_ids[GameRNG.random_index(consumable_ids)]
-			grant_consumable(random_id)
-			print("[GameController] Mom gave consumable: %s" % random_id)
-		2:
-			# Grant random power-up (from a safe list)
-			var powerup_ids = ["extra_rolls", "bonus_money", "full_house_bonus"]
-			var random_id = powerup_ids[GameRNG.random_index(powerup_ids)]
-			if not active_power_ups.has(random_id):
-				grant_power_up(random_id)
-				print("[GameController] Mom gave power-up: %s" % random_id)
-			else:
-				# Fallback to money if already have the power-up
-				var amount = GameRNG.randi_range(75, 125)
-				PlayerEconomy.add_money(amount)
-				print("[GameController] Mom gave allowance instead: $%d" % amount)
+## Handler for the random once-per-round check-in. Not a punishment visit
+## by default, but dialog outcomes can escalate it. Freezes the chore
+## meter while the dialog is up.
+func _on_mom_checkin() -> void:
+	print("[GameController] Mom check-in!")
+	var tree_id := "checkin_neutral"
+	var severity := 0
+	if chores_manager:
+		chores_manager.is_mom_active = true
+		tree_id = MomLogicHandlerScript.get_checkin_tree_id(self, chores_manager.mom_mood)
+		severity = MomLogicHandlerScript.get_checkin_severity(tree_id)
+		print("[GameController] Check-in tree: %s (severity %d)" % [tree_id, severity])
+	await _run_mom_dialog_session(tree_id, severity, false)
 
 
-## _apply_enhanced_mom_punishment()
+## _run_mom_dialog_session(root_node_id, severity, is_meter_visit)
 ##
-## Applies enhanced punishment when Mom's mood reaches 10 (furious).
-## Multiple debuffs and higher fines.
-func _apply_enhanced_mom_punishment() -> void:
-	# Apply 2-3 random debuffs
-	var debuff_ids = ["lock_dice", "costly_roll", "disabled_twos", "the_division"]
-	var num_debuffs = GameRNG.randi_range(2, 3)
-	var applied_debuffs: Array[String] = []
-	
-	for i in range(num_debuffs):
-		var random_id = debuff_ids[GameRNG.random_index(debuff_ids)]
-		if random_id not in applied_debuffs and not active_debuffs.has(random_id):
-			apply_debuff(random_id)
-			applied_debuffs.append(random_id)
-			_grounded_debuffs.append(random_id)
-			print("[GameController] Mom applied debuff: %s" % random_id)
-	
-	# Higher fine ($200-300)
-	var fine = GameRNG.randi_range(200, 300)
-	PlayerEconomy.remove_money(fine, "mom_fine")
-	print("[GameController] Mom imposed fine: $%d" % fine)
-
-## _show_mom_dialog(result)
+## Walks a Mom dialog tree: shows each node, waits for the player's
+## response, resolves the weighted outcome, and chains follow-up nodes.
+## Consequences are applied after the dialog closes.
 ##
-## Shows the Mom dialog popup with appropriate expression and text.
-## Waits for dialog to close before applying consequences.
-func _show_mom_dialog(result) -> void:
+## Parameters:
+##   root_node_id: String - id of the root MomDialogNode
+##   severity: int - visit severity (0 = reward, 1-5 = punishment tiers)
+##   is_meter_visit: bool - true for meter-full visits (resets progress after)
+func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit: bool) -> void:
 	# Create Mom dialog if needed
 	if _mom_dialog == null:
 		var mom_scene = preload("res://Scenes/UI/mom_dialog_popup.tscn")
 		_mom_dialog = mom_scene.instantiate()
 		add_child(_mom_dialog)
-	
-	# Show dialog with result
-	await _mom_dialog.show_dialog(result.expression, result.dialog_text)
-	
+
+	var node := MomLogicHandlerScript.get_dialog_node(root_node_id)
+	if node == null:
+		push_error("[GameController] Unknown Mom dialog node: " + root_node_id)
+		_end_mom_visit(is_meter_visit)
+		return
+
+	var result := MomLogicHandlerScript.MomCheckResult.new()
+
+	# Walk the tree until a terminal beat (guard against malformed loops)
+	var guard := 0
+	while node != null and not node.is_terminal() and guard < 10:
+		guard += 1
+		_mom_dialog.show_node(node)
+		var response_index: int = await _mom_dialog.response_selected
+		if response_index < 0 or response_index >= node.responses.size():
+			break
+
+		var response: MomDialogResponse = node.responses[response_index]
+		var outcome := MomLogicHandlerScript.resolve_response(response)
+		if outcome == null:
+			break
+		var outcome_result := MomLogicHandlerScript.apply_outcome(self, outcome, severity, active_debuffs)
+
+		# Accumulate consequences across the whole visit
+		result.mood_delta += outcome_result.mood_delta
+		result.grudge_delta += outcome_result.grudge_delta
+		result.storms_off = result.storms_off or outcome_result.storms_off
+		if outcome_result.tier_id >= 0:
+			result.tier_id = outcome_result.tier_id
+		MomLogicHandlerScript._merge_result(result, outcome_result)
+
+		# Chain: explicit follow-up node wins; otherwise show the parting
+		# reply (if any) and end the conversation
+		if outcome.has_followup():
+			var followup := MomLogicHandlerScript.get_dialog_node(outcome.followup_node_id)
+			if followup != null and followup.is_terminal():
+				_mom_dialog.show_node(followup)
+				node = null
+			else:
+				node = followup
+		else:
+			if outcome.result_text != "":
+				_mom_dialog.show_outcome_reply(outcome.result_text, outcome.result_expression)
+			node = null
+
+	# Terminal root node (no responses): just show it
+	if node != null and node.is_terminal():
+		_mom_dialog.show_node(node)
+
 	# Animate confiscation of power-ups BEFORE closing dialog
 	if result.removed_power_ups.size() > 0 and powerup_ui:
 		# Disable close button during confiscation to prevent premature dialog_closed
 		if _mom_dialog.close_button:
 			_mom_dialog.close_button.disabled = true
-		
+
 		# Get Mom sprite's global position as fly target
 		var fly_target: Vector2 = Vector2(640, 360)
 		if _mom_dialog and _mom_dialog.sprite_rect:
 			fly_target = _mom_dialog.sprite_rect.global_position + _mom_dialog.sprite_rect.size * 0.5
-		
+
 		var confiscation_state: Array = [false]
 		powerup_ui.animate_mom_confiscation(result.removed_power_ups, fly_target, func():
 			confiscation_state[0] = true
 		)
-		
+
 		# Wait for confiscation animation to complete
 		while not confiscation_state[0]:
 			await get_tree().process_frame
-		
+
 		# Re-enable close button
 		if _mom_dialog and _mom_dialog.close_button:
 			_mom_dialog.close_button.disabled = false
-	
+
 	# Wait for dialog to close
 	await _mom_dialog.dialog_closed
-	
+
 	# Apply consequences after dialog closes
 	MomLogicHandlerScript.apply_consequences(self, result)
-	
-	# Track grounded debuffs (NC-17) for removal at round end
+
+	# Track grounded debuffs for removal at round end
 	for debuff_id in result.applied_debuffs:
 		if debuff_id not in _grounded_debuffs:
 			_grounded_debuffs.append(debuff_id)
-	
-	# Reset chores progress
-	if chores_manager:
+
+	# Track temporary cosmetic lock for round-end restore
+	if result.cosmetics_locked and not result.cosmetics_lock_permanent:
+		_mom_cosmetics_locked = true
+
+	_end_mom_visit(is_meter_visit)
+
+
+## _end_mom_visit(is_meter_visit)
+##
+## Cleanup after a Mom visit. Meter visits reset the chore meter;
+## check-ins just unfreeze it.
+func _end_mom_visit(is_meter_visit: bool) -> void:
+	if not chores_manager:
+		return
+	if is_meter_visit:
 		chores_manager.reset_progress()
+	else:
+		chores_manager.is_mom_active = false
 
 ## check_chore_task_completion(context)
 ##
@@ -5462,12 +5503,18 @@ func _check_lock_dice_chore() -> void:
 ## _clear_grounded_debuffs()
 ##
 ## Removes all debuffs that were applied by Mom (NC-17 consequences).
+## Also restores dice colors after a temporary Mom cosmetic lock.
 ## Called at the start of a new round.
 func _clear_grounded_debuffs() -> void:
 	print("[GameController] Clearing grounded debuffs: %s" % [_grounded_debuffs])
 	for debuff_id in _grounded_debuffs:
 		disable_debuff(debuff_id)
 	_grounded_debuffs.clear()
+
+	if _mom_cosmetics_locked:
+		_mom_cosmetics_locked = false
+		DiceColorManager.set_colors_enabled(true)
+		print("[GameController] Mom's cosmetic lock expired - dice colors restored")
 
 
 ## get_save_state() -> Dictionary
@@ -5506,7 +5553,8 @@ func get_save_state() -> Dictionary:
 			"_goal_mode_locked": _goal_mode_locked,
 			"_challenge_reward_this_round": _challenge_reward_this_round,
 			"_challenge_reward_granted": _challenge_reward_granted,
-			"_grounded_debuffs": _grounded_debuffs.duplicate()
+			"_grounded_debuffs": _grounded_debuffs.duplicate(),
+			"_mom_cosmetics_locked": _mom_cosmetics_locked
 		}
 	}
 
@@ -5600,6 +5648,10 @@ func load_game_state(save_data: Dictionary) -> void:
 	_challenge_reward_granted = gc_state.get("_challenge_reward_granted", false)
 	var loaded_grounded = gc_state.get("_grounded_debuffs", [])
 	_grounded_debuffs.assign(loaded_grounded)
+	_mom_cosmetics_locked = gc_state.get("_mom_cosmetics_locked", false)
+	if _mom_cosmetics_locked:
+		# Re-apply a temporary Mom cosmetic lock saved mid-round
+		DiceColorManager.set_colors_enabled(false)
 	
 	# 9. Re-grant active items
 	# Re-grant power-ups

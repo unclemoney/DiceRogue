@@ -1,0 +1,121 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=14 format=3 uid="uid://lkppd0v8d81p"]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "apply_tier"
+magnitude = 0
+mood_delta = -1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=orange]Sorry doesn't fold the laundry.[/color] You know the rules."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_polite_2"]
+script = ExtResource("3_out")
+weight = 4.0
+effect = "none"
+magnitude = 0
+mood_delta = -2
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=green]*sigh* Apology accepted.[/color] This time. Don't make me come back here."
+result_expression = "neutral"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "Sorry, Mom. I'll do better."
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource("out_polite_2")])
+
+[sub_resource type="Resource" id="out_neutral_1"]
+script = ExtResource("3_out")
+weight = 7.0
+effect = "apply_tier"
+magnitude = 0
+mood_delta = 0
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=red]Don't you DARE blame the dice![/color]"
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_neutral_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "apply_tier"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=orange]Excuses, excuses.[/color] Every time with the excuses."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "The game made me do it!"
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
+
+[sub_resource type="Resource" id="out_sassy_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "apply_tier"
+magnitude = -1
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=red][wave amp=50 freq=3]WHAT did you say to me?![/wave][/color] Oh, it's worse for you now!"
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_sassy_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "apply_tier"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=red]Unbelievable.[/color] You know exactly what happens now."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_sassy_3"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "storms_off"
+magnitude = 0
+mood_delta = 2
+grudge_delta = 1
+permanent = false
+followup_node_id = "sass_storm_off"
+result_text = ""
+result_expression = ""
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "Whatever."
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2"), SubResource("out_sassy_3")])
+
+[resource]
+script = ExtResource("1_node")
+id = "visit_punishment"
+mom_text = "[color=red]The chore list is RIGHT THERE[/color] and look at this mess! Meter's full, chores undone. Explain yourself, young one."
+expression = "upset"
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

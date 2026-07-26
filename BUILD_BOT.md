@@ -89,7 +89,7 @@ The bot follows these rules (defined in `bot_strategy.gd`):
 - After every roll, increments goof-off progress via `chores_manager.increment_progress(1)`
 - After scoring, checks chore task completion with full context (category, dice values, score, etc.)
 - When `request_chore_selection` fires (task rotation every ~20 rolls), bot picks EASY or HARD at random (60% bias toward HARD since it reduces progress by 30 vs 10)
-- When `mom_triggered` fires (progress reaches threshold), bot auto-dismisses the Mom dialog popup
+- When `mom_triggered` fires (progress reaches threshold) or `mom_checkin` fires (once-per-round random visit), bot handles the Mom dialog: response beats are answered with tone-weighted random picks (mostly polite, rarely sassy — see `MomLogicHandler.BOT_TONE_WEIGHTS`), terminal beats are closed automatically
 - Chores manager is reset between runs via `reset_for_new_game()` and updated with round number each round
 
 ## Output Files
@@ -139,7 +139,7 @@ BotController connects to these signals per run:
 - `turn_tracker.game_over` / `rolls_exhausted`
 - `score_card.upper_bonus_achieved`
 - `dice_hand.roll_complete`
-- `chores_manager.request_chore_selection` / `mom_triggered`
+- `chores_manager.request_chore_selection` / `mom_triggered` / `mom_checkin`
 
 ### Game API Calls
 

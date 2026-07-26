@@ -1,0 +1,108 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=13 format=3 uid="uid://bunsu6xb1usjr"]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite_1"]
+script = ExtResource("3_out")
+weight = 8.0
+effect = "apply_tier"
+magnitude = 3
+mood_delta = -1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=orange]That's what I thought.[/color] Gone. All of it."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_polite_2"]
+script = ExtResource("3_out")
+weight = 2.0
+effect = "apply_tier"
+magnitude = 2
+mood_delta = -1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=orange]I'll let it slide. THIS time.[/color] Don't push it."
+result_expression = "neutral"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "Take it! I don't want it!"
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource("out_polite_2")])
+
+[sub_resource type="Resource" id="out_neutral_1"]
+script = ExtResource("3_out")
+weight = 7.0
+effect = "apply_tier"
+magnitude = 3
+mood_delta = 0
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=red]Save it.[/color] I know what I saw."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_neutral_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "apply_tier"
+magnitude = -1
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=red]Lying to my face?![/color] That just made it WORSE!"
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "It's not mine, I swear!"
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
+
+[sub_resource type="Resource" id="out_sassy_1"]
+script = ExtResource("3_out")
+weight = 8.0
+effect = "apply_tier"
+magnitude = -1
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=red][shake rate=20 level=10]I don't NEED proof![/shake][/color] I'm your MOTHER!"
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_sassy_2"]
+script = ExtResource("3_out")
+weight = 2.0
+effect = "storms_off"
+magnitude = 0
+mood_delta = 2
+grudge_delta = 1
+permanent = false
+followup_node_id = "sass_storm_off"
+result_text = ""
+result_expression = ""
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "You can't prove anything."
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2")])
+
+[resource]
+script = ExtResource("1_node")
+id = "checkin_caught_nc17"
+mom_text = "[color=red][shake rate=20 level=10]WHAT is THAT?![/shake][/color] You brought THAT into my house?!"
+expression = "upset"
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="MomPunishmentTier" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/mom_punishment_tier.gd" id="1_tier"]
+
+[resource]
+script = ExtResource("1_tier")
+tier_id = 4
+display_name = "No Fun"
+min_severity = 4
+picks = 2
+entries = Array[Dictionary]([{"effect": "lock_cosmetics", "weight": 3.0, "params": {}, "permanent": false}, {"effect": "remove_mod", "weight": 3.0, "params": {"count": 1}, "permanent": true}, {"effect": "debuff", "weight": 2.0, "params": {"count": 2}, "permanent": false}])

@@ -974,16 +974,48 @@ All PowerUps now have movie-style content ratings that affect Mom's reaction:
 - **R** (Restricted): Adult content - Mom removes the PowerUp
 - **NC-17** (Adults Only): Explicit content - Mom removes PowerUp AND applies stacking debuff
 
+**Mom Visits:**
+Mom appears in two ways:
+- **Meter Visit**: At 100 progress, Mom appears. Severity (0-5) is computed from her mood, grudge, and escalation, then a dialog tree plays out.
+- **Random Check-in**: Exactly once per round, at a random roll (target roll 2-5, picked each round), Mom pops in for a non-punishment chat. Dialog responses can still escalate it into a real punishment. Deferred while a meter visit is active.
+
+**Special Visit Types:**
+- **Silent Treatment** (10% of severity 1-2 meter visits): Mom just stares. "..." No punishment — but her mood worsens, and it's somehow worse than yelling.
+- **POG-Rating Reaction** (check-ins): Mom reacts to what's in your inventory. A PG-13 or R-rated PowerUp earns a warning; an NC-17 item converts the check-in into a full Confiscation-tier incident (severity 3).
+- **Cool Mom** (5% of check-ins at mood 1-3): Mom reveals she played back in her day and slips you a consumable or some secret allowance money.
+
+**Mom Dialog Trees:**
+Mom's conversations are branching trees stored as data (`Resources/Data/Mom/Dialog/*.tres`):
+- Mom speaks, the player picks from 2-3 responses (polite / neutral / sassy)
+- Each response has **weighted random outcomes** — sassing usually backfires, but rarely Mom storms off angry (no punishment this visit)
+- Outcomes can chain to follow-up dialog nodes, shift mood/grudge, apply a punishment tier, or end the visit
+
+**Grudge System:**
+Unresolved anger carries forward. If Mom storms off (or an outcome adds grudge), the next visit's severity floor rises by the grudge level (0-3). Grudge is consumed when applied and saved with run state.
+
+**Escalation:**
+Each visit that resolves at severity 3+ increments a run counter that adds to later visits' severity — repeat low-mood visits unlock harsher tiers.
+
+**Punishment Tiers (data-driven, `Resources/Data/Mom/Punishments/*.tres`):**
+- **Tier 0 - Proud Mom**: Rewards — money ($50-150), consumable, or safe power-up
+- **Tier 1 - Disappointed** (mood 4-6): Small fine ($50), scolding, or mood warning
+- **Tier 2 - Grounded Lite** (mood 7): Fine ($100-150), 1 debuff, or R-rated confiscation
+- **Tier 3 - Confiscation** (mood 8): R + NC-17 confiscation with stacking grounded debuffs, debuff, or fine ($150)
+- **Tier 4 - No Fun** (mood 9): Locks dice colors for the round, removes a mod permanently, or 2 debuffs
+- **Tier 5 - Furious** (mood 10): NC-17 sweep + stacking debuffs, fine ($200-300), or 2 mods removed
+- Lighter tiers are temporary (round-scoped debuffs, cosmetic locks); harsher tiers are permanent (confiscation, mod removal)
+
 **Mom Consequences:**
-When Mom appears (progress reaches 100):
-1. Mom checks all active PowerUps for restricted ratings
-2. **R-rated PowerUps**: Confiscated (removed from inventory)
-3. **NC-17 PowerUps**: Confiscated + "Grounded" debuff applied per item
-4. **Grounded Debuff**: Stacks for each NC-17 item found, persists until round end
-5. **No Restricted Items**: Mom is happy and leaves without consequence
+- **R-rated PowerUps**: Confiscated (removed from inventory)
+- **NC-17 PowerUps**: Confiscated + "Grounded" debuff per item, persists until round end
+- **Mods**: Permanently removed (no refund) at higher tiers
+- **Dice Colors**: Locked until round end at tier 4
+- **Fines**: Deducted from money; substituted with a debuff when the player can't pay
+- **Grounded Debuffs**: Cleared at the start of the next round
 
 **Mom Character:**
 - **Three Expressions**: Neutral (checking), Upset (found restricted items), Happy (clean slate)
+- **Response Buttons**: Up to 3 weighted-choice buttons per dialog beat (tone-colored)
 - **Tween Animations**: Smooth entrance/exit with bounce effects
 - **BBCode Dialog**: Colored text with personality-driven messages
 - **Pixel Art Sprites**: 48px character in top-down view style
@@ -997,7 +1029,9 @@ When Mom appears (progress reaches 100):
 **Debug Commands (Chores Tab):**
 - Add Progress +10/+50: Quickly advance progress for testing
 - Complete Current Task: Force task completion
-- Trigger Mom Immediately: Bypass progress threshold
+- Trigger Mom Immediately: Bypass progress threshold (meter visit)
+- Trigger Mom Check-in: Fire the random check-in dialog on demand
+- Add Mom Grudge +1: Raise Mom's grudge level for testing severity floors
 - Select New Task: Force new random task selection
 - Reset Progress: Set progress to 0
 - Show Chore State: Display current system status
@@ -1007,19 +1041,21 @@ When Mom appears (progress reaches 100):
 **Implementation Files:**
 - **ChoreData**: `Scripts/Managers/ChoreData.gd` - Task resource class
 - **ChoreTasksLibrary**: `Scripts/Managers/chore_tasks_library.gd` - Task pool
-- **ChoresManager**: `Scripts/Managers/ChoresManager.gd` - Progress tracking
-- **MomLogicHandler**: `Scripts/Core/mom_logic_handler.gd` - Consequence logic
+- **ChoresManager**: `Scripts/Managers/ChoresManager.gd` - Progress, mood, grudge, check-in scheduling
+- **MomLogicHandler**: `Scripts/Core/mom_logic_handler.gd` - Severity, tier resolution, outcome logic
+- **MomDialogNode/Response/Outcome**: `Scripts/Data/mom_dialog_*.gd` - Dialog tree resources
+- **MomPunishmentTier**: `Scripts/Data/mom_punishment_tier.gd` - Punishment tier resource
+- **Mom Data**: `Resources/Data/Mom/` - Dialog trees and punishment tier .tres files
 - **ChoreUI**: `Scripts/UI/chore_ui.gd` - Embedded chore meter plus expanded chore board overlay
-- **MomCharacter**: `Scripts/UI/mom_character.gd` - Dialog popup
+- **MomCharacter**: `Scripts/UI/mom_character.gd` - Dialog popup with response buttons
 - **Mom Sprites**: `Resources/Art/Characters/Mom/` - Character art
 
 **Mom's Mood System:**
 Mom's mood tracks player behavior across a game session:
 - **Mood Scale**: 1 (Very Happy) to 10 (Extremely Angry), default 5 (Neutral)
-- **Mood Adjustment**: +2 when finding restricted PowerUps, -1 when player completes chores
+- **Mood Adjustment**: -1 per completed chore, +2 when the meter fills with no chores done, plus dialog outcome deltas
 - **Mood Reset**: Resets to neutral (5) at the start of each new game
-- **Very Happy Reward (1)**: Mom grants a reward item when very happy
-- **Extremely Angry Punishment (10)**: Mom applies an enhanced debuff when extremely angry
+- **Mood to Severity**: 1-3 = reward visit, 4-6 = tier 1, 7 = tier 2, 8 = tier 3, 9 = tier 4, 10 = tier 5
 - **Mood Display**: Available in the Chores UI fan-out view with emoji indicator
 
 **Chores Fan-Out UI:**

@@ -305,6 +305,8 @@ func _create_debug_tabs() -> void:
 			{"text": "Add Progress +50", "method": "_debug_chores_add_big_progress"},
 			{"text": "Complete Current Task", "method": "_debug_chores_complete_task"},
 			{"text": "Trigger Mom Immediately", "method": "_debug_chores_trigger_mom"},
+			{"text": "Trigger Mom Check-in", "method": "_debug_chores_trigger_checkin"},
+			{"text": "Add Mom Grudge +1", "method": "_debug_chores_add_grudge"},
 			{"text": "Select New Task", "method": "_debug_chores_new_task"},
 			{"text": "Reset Progress", "method": "_debug_chores_reset"},
 			{"text": "Show Chore State", "method": "_debug_chores_show_state"},
@@ -3074,6 +3076,24 @@ func _debug_chores_trigger_mom() -> void:
 		log_debug("Triggered Mom immediately by filling the goof-off meter")
 	else:
 		log_debug("ERROR: ChoresManager missing set_progress")
+
+
+func _debug_chores_trigger_checkin() -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	chores_manager.mom_checkin.emit()
+	log_debug("Triggered Mom check-in dialog")
+
+
+func _debug_chores_add_grudge() -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	chores_manager.add_grudge(1)
+	log_debug("Mom grudge now: %d/3" % chores_manager.grudge)
 
 
 func _debug_chores_new_task() -> void:

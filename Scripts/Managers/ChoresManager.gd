@@ -17,6 +17,8 @@ signal task_completed(task)
 signal task_rotated(task)  # Emitted when the active chore expires and a new choice is required
 signal mom_triggered
 signal mom_mood_changed(new_mood: int)
+signal mom_checkin  # Emitted once per round at a random roll for a non-punishment visit
+signal grudge_changed(new_grudge: int)  # Emitted when Mom's grudge level changes
 signal request_chore_selection  # Emitted when player needs to choose next chore (EASY/HARD)
 
 const MAX_PROGRESS: int = 100
@@ -46,9 +48,26 @@ var current_round_number: int = 1
 var mom_mood: int = DEFAULT_MOOD
 var completed_chores: Array = []  # List of completed ChoreData for display
 
+# Grudge system: unresolved anger carries into the next visit's severity floor
+const MAX_GRUDGE: int = 3
+var grudge: int = 0
+
+# Escalation: repeat low-mood visits within a run unlock harsher tiers
+var low_mood_visits_this_run: int = 0
+
+# Random check-in: exactly one non-punishment Mom visit per round, at a
+# random roll. Target range 2-5 so it nearly always fires even on the
+# shortest rounds (min 6 rolls/round); long rounds just get it earlier.
+const CHECKIN_TARGET_MIN: int = 2
+const CHECKIN_TARGET_MAX: int = 5
+var _rolls_this_round: int = 0
+var _checkin_roll_target: int = -1
+var _checkin_done_this_round: bool = false
+
 func _ready() -> void:
 	add_to_group("chores_manager")
 	print("[ChoresManager] Initialized with Mom mood: %d" % mom_mood)
+	_schedule_checkin()
 	select_new_task()
 
 ## increment_progress()
@@ -60,14 +79,19 @@ func _ready() -> void:
 ## Parameters:
 ##   amount: int - the amount to increase (default: 1)
 func increment_progress(amount: int = PROGRESS_PER_ROLL) -> void:
+	# Rolls count even while Mom is active so a deferred check-in can
+	# fire as soon as the visit ends; the meter itself stays frozen.
+	_rolls_this_round += 1
+	_check_checkin_trigger()
+
 	if is_mom_active:
 		return
-	
+
 	var scaled_max = get_scaled_max_progress()
 	current_progress = mini(current_progress + amount, scaled_max)
 	progress_changed.emit(current_progress)
 	print("[ChoresManager] Progress: %d/%d" % [current_progress, scaled_max])
-	
+
 	if current_progress >= scaled_max:
 		_trigger_mom()
 
@@ -239,9 +263,15 @@ func reset_for_new_game() -> void:
 	_pending_hard_task = null
 	current_round_number = 1  # Reset round scaling
 	chore_rewards_this_round = 0
+	grudge = 0
+	low_mood_visits_this_run = 0
+	_rolls_this_round = 0
+	_checkin_done_this_round = false
+	_schedule_checkin()
 	reset_round_tracking()  # Reset round-specific tracking
 	progress_changed.emit(current_progress)
 	mom_mood_changed.emit(mom_mood)
+	grudge_changed.emit(grudge)
 	# Queue chore selection popup so the player picks their first chore
 	_queue_chore_selection()
 	print("[ChoresManager] Reset for new game - mood: %d, round: %d" % [mom_mood, current_round_number])
@@ -469,6 +499,12 @@ func get_scaled_max_progress() -> int:
 ##   round_number: int - the current round number (1-based)
 func update_round(round_number: int) -> void:
 	current_round_number = round_number
+
+	# Reset per-round check-in state and pick a new target roll
+	_rolls_this_round = 0
+	_checkin_done_this_round = false
+	_schedule_checkin()
+
 	var new_threshold = get_scaled_max_progress()
 	
 	# Clamp progress if it exceeds or equals the new threshold
@@ -503,6 +539,67 @@ func set_progress(value: int) -> void:
 	
 	if current_progress >= scaled_max and not is_mom_active:
 		_trigger_mom()
+
+## _schedule_checkin()
+##
+## Picks the roll within this round on which Mom's random check-in fires.
+## Called at game start and on each round transition.
+func _schedule_checkin() -> void:
+	_checkin_roll_target = GameRNG.randi_range(CHECKIN_TARGET_MIN, CHECKIN_TARGET_MAX)
+	print("[ChoresManager] Check-in scheduled for roll %d this round" % _checkin_roll_target)
+
+
+## _check_checkin_trigger()
+##
+## Fires the mom_checkin signal when the roll count reaches the target.
+## Exactly once per round. Deferred one roll at a time while Mom is
+## already active (meter visit in progress), dropped if the round ends.
+func _check_checkin_trigger() -> void:
+	if _checkin_done_this_round:
+		return
+	if _checkin_roll_target < 0:
+		return
+	if _rolls_this_round < _checkin_roll_target:
+		return
+	if is_mom_active:
+		return  # Defer until the meter visit is over
+	_checkin_done_this_round = true
+	print("[ChoresManager] Mom check-in triggered at roll %d" % _rolls_this_round)
+	mom_checkin.emit()
+
+
+## add_grudge(amount)
+##
+## Raises Mom's grudge level (clamped to MAX_GRUDGE). Grudge raises the
+## severity floor of her next visit. Emits grudge_changed.
+func add_grudge(amount: int = 1) -> void:
+	var old_grudge = grudge
+	grudge = clampi(grudge + amount, 0, MAX_GRUDGE)
+	if grudge != old_grudge:
+		print("[ChoresManager] Mom's grudge changed: %d -> %d" % [old_grudge, grudge])
+		grudge_changed.emit(grudge)
+
+
+## consume_grudge() -> int
+##
+## Returns the current grudge for severity computation and decays it by 1.
+## Called by MomLogicHandler when a visit's severity is computed, so an
+## old grudge spends itself on the next visit instead of lasting forever.
+func consume_grudge() -> int:
+	var current = grudge
+	if grudge > 0:
+		add_grudge(-1)
+	return current
+
+
+## register_low_mood_visit()
+##
+## Records that a visit resolved at high severity. Repeat low-mood visits
+## within a run escalate later punishments.
+func register_low_mood_visit() -> void:
+	low_mood_visits_this_run += 1
+	print("[ChoresManager] Low-mood visits this run: %d" % low_mood_visits_this_run)
+
 
 ## _trigger_mom()
 ##
@@ -550,6 +647,11 @@ func get_state() -> Dictionary:
 		"_pending_hard_task_id": hard_id,
 		"current_round_number": current_round_number,
 		"mom_mood": mom_mood,
+		"grudge": grudge,
+		"low_mood_visits_this_run": low_mood_visits_this_run,
+		"_rolls_this_round": _rolls_this_round,
+		"_checkin_roll_target": _checkin_roll_target,
+		"_checkin_done_this_round": _checkin_done_this_round,
 		"completed_chores_ids": _get_completed_chores_ids()
 	}
 
@@ -579,6 +681,14 @@ func load_state(state: Dictionary) -> void:
 	pending_chore_selection = state.get("pending_chore_selection", false)
 	current_round_number = state.get("current_round_number", 1)
 	mom_mood = state.get("mom_mood", DEFAULT_MOOD)
+	grudge = state.get("grudge", 0)
+	low_mood_visits_this_run = state.get("low_mood_visits_this_run", 0)
+	_rolls_this_round = state.get("_rolls_this_round", 0)
+	_checkin_roll_target = state.get("_checkin_roll_target", -1)
+	_checkin_done_this_round = state.get("_checkin_done_this_round", false)
+	# Older saves have no check-in target; schedule one so the system still works
+	if _checkin_roll_target < 0 and not _checkin_done_this_round:
+		_schedule_checkin()
 	
 	# Restore current task by ID
 	var task_id = state.get("current_task_id", "")

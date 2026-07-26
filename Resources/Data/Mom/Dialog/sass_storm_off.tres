@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+
+[resource]
+script = ExtResource("1_node")
+id = "sass_storm_off"
+mom_text = "[color=red][wave amp=50 freq=3]FINE.[/wave][/color] We'll talk LATER, young one. And you will [shake rate=15 level=8]NOT[/shake] like it."
+expression = "upset"
+responses = Array[Resource]([])

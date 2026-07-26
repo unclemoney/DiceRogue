@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="MomPunishmentTier" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/mom_punishment_tier.gd" id="1_tier"]
+
+[resource]
+script = ExtResource("1_tier")
+tier_id = 5
+display_name = "Furious"
+min_severity = 5
+picks = 2
+entries = Array[Dictionary]([{"effect": "confiscate_powerups", "weight": 3.0, "params": {"max_rating": "NC-17", "stack_debuffs": true}, "permanent": true}, {"effect": "fine", "weight": 2.0, "params": {"min": 200, "max": 300}, "permanent": false}, {"effect": "remove_mod", "weight": 1.0, "params": {"count": 2}, "permanent": true}])
