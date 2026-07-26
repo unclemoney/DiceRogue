@@ -184,6 +184,12 @@ func _connect_signals() -> void:
 		chores_manager.request_chore_selection.connect(_on_bot_chore_selection_requested)
 		chores_manager.mom_triggered.connect(_on_bot_mom_triggered)
 		chores_manager.mom_checkin.connect(_on_bot_mom_triggered)
+	# Mom's World: story/sighting stats
+	var cast_manager = get_tree().get_first_node_in_group("cast_manager")
+	if is_instance_valid(cast_manager):
+		cast_manager.story_beat_started.connect(func(_arc_id, _beat): statistics.record_story_beat())
+		cast_manager.patterson_sighting.connect(func(_is_true): statistics.record_patterson_sighting())
+		cast_manager.patterson_contest_resolved.connect(func(won): statistics.record_patterson_contest(won))
 
 
 ## _disconnect_signals()
@@ -389,12 +395,17 @@ func _on_bot_mom_triggered() -> void:
 		return
 	# Handle dialog beats until it closes
 	var mom_dialog = _find_mom_dialog()
+	var policy: String = config.mom_policy if config else "tone_weighted"
 	var safety := 0
 	while is_instance_valid(mom_dialog) and mom_dialog.visible and safety < 10:
 		safety += 1
 		if mom_dialog.has_method("has_pending_responses") and mom_dialog.has_pending_responses():
-			mom_dialog.choose_response_weighted()
-			logger.log_info("Mom dialog: bot picked a response")
+			if policy == "tactical":
+				if not _tactical_story_pick(mom_dialog):
+					mom_dialog.choose_response_by_tone(_tactical_mom_tone())
+			else:
+				mom_dialog.choose_response_weighted(policy)
+			logger.log_info("Mom dialog: bot picked a response (policy: %s)" % policy)
 		elif mom_dialog.has_method("close_dialog"):
 			mom_dialog.close_dialog()
 			logger.log_info("Mom dialog dismissed")
@@ -405,6 +416,54 @@ func _on_bot_mom_triggered() -> void:
 	if safety >= 10:
 		logger.log_warning("Timed out handling Mom dialog")
 	_pending_mom_dialog = false
+
+
+## _tactical_mom_tone() -> String
+##
+## Tactical sass policy: sass only when the downside is contained —
+## no restricted (R/NC-17) inventory to confiscate, no mods at risk,
+## Mom not yet furious, and the defer streak is not maxed out.
+## Returns "sassy" or "polite".
+func _tactical_mom_tone() -> String:
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if not game_controller:
+		return "polite"
+	var chores_manager = game_controller.get("chores_manager")
+	if chores_manager:
+		if int(chores_manager.get("mom_mood")) > 7:
+			return "polite"
+		if int(chores_manager.get("defer_streak")) >= 2:
+			return "polite"
+	var ratings: Dictionary = MomLogicHandler.scan_inventory_ratings(game_controller)
+	if int(ratings.get("nc17", 0)) > 0 or int(ratings.get("r", 0)) > 0:
+		return "polite"
+	var active_mods: Dictionary = game_controller.get("active_mods") if game_controller.get("active_mods") != null else {}
+	if not active_mods.is_empty():
+		return "polite"
+	return "sassy"
+
+
+## _tactical_story_pick(mom_dialog) -> bool
+##
+## Tactical policy branch for Mom's World story beats. The bot models a
+## player with a good memory: it contests Patterson sightings it knows
+## are false (the tree variant encodes truth), admits true ones, and
+## never sasses the Dad call. Returns true when the beat was handled.
+func _tactical_story_pick(mom_dialog: Node) -> bool:
+	var node_id: String = mom_dialog.get("current_node_id")
+	if node_id == "":
+		return false
+	if node_id.begins_with("sighting_"):
+		if node_id == "sighting_true":
+			mom_dialog.choose_response_by_tone("polite")
+		else:
+			# False accusation - the bot remembers where it's been
+			mom_dialog.choose_response_by_button_text("lie")
+		return true
+	if node_id == "story_dad_call":
+		mom_dialog.choose_response_by_tone("polite")
+		return true
+	return false
 
 
 ## _find_mom_dialog() -> Node

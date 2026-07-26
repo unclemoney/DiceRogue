@@ -42,6 +42,21 @@ const PROFILE_NAME_MAX_LENGTH := 30
 const CURRENT_SAVE_VERSION := 2
 
 signal profile_migration_needed(slot: int)  # Emitted when old profile detected
+signal rep_changed(new_rep: int)  # Emitted when the Rebellion Rep stat changes
+
+## Rebellion Rep: persistent meta stat (0-100) earned by sassing Mom.
+## Tier thresholds gate which POG rating bands appear in the kiosk:
+##   tier 0 (Rep 0+):   G          ("Mom-Approved")
+##   tier 1 (Rep 10+):  + PG       ("Questionable")
+##   tier 2 (Rep 25+):  + PG-13    ("Parental Guidance")
+##   tier 3 (Rep 45+):  + R        ("Grounded")
+##   tier 4 (Rep 70+):  + NC-17    ("Banned")
+const MAX_REP: int = 100
+const REP_TIER_THRESHOLDS: Array[int] = [0, 10, 25, 45, 70]
+const REP_TIER_NAMES: Array[String] = ["Mom-Approved", "Questionable", "Parental Guidance", "Grounded", "Banned"]
+## Visual stage thresholds (4 stages) for the rebel-mode UI.
+const REP_STAGE_THRESHOLDS: Array[int] = [0, 10, 25, 45]
+const REP_STAGE_NAMES: Array[String] = ["Teacher's Pet", "Attitude Problem", "Mall Rat", "Banned from the Mall"]
 
 # Current active profile slot (1-3)
 var current_profile_slot: int = 1
@@ -290,6 +305,8 @@ func load_profile(slot: int) -> bool:
 		cumulative_stats = save_data["cumulative_stats"]
 		if not cumulative_stats.has("highest_channel_completed"):
 			cumulative_stats["highest_channel_completed"] = 0
+		if not cumulative_stats.has("rep"):
+			cumulative_stats["rep"] = 0
 	else:
 		# IMPORTANT: Reset to defaults if not in save file
 		cumulative_stats = _get_default_cumulative_stats()
@@ -355,7 +372,8 @@ func _get_default_cumulative_stats() -> Dictionary:
 		"highest_channel_completed": 0,
 		"total_chores_completed": 0,
 		"total_chores_completed_easy": 0,
-		"total_chores_completed_hard": 0
+		"total_chores_completed_hard": 0,
+		"rep": 0
 	}
 
 
@@ -738,6 +756,80 @@ func track_chore_completed(difficulty: int) -> void:
 		current_game_stats["chores_completed_hard"] += 1
 	print("[ProgressManager] Chore completed! (difficulty: %s, total this game: %d)" % [
 		"EASY" if difficulty == 0 else "HARD", current_game_stats["chores_completed"]])
+
+
+## adjust_rep(delta: int)
+##
+## Changes the persistent Rebellion Rep stat (clamped 0-MAX_REP) and saves
+## immediately - Rep is meta progression and must survive an abandoned run.
+## Positive delta from successful sass, negative from bootlicking compliance
+## (deltas are computed by GameController during Mom dialog sessions).
+func adjust_rep(delta: int) -> void:
+	if delta == 0:
+		return
+	var old_rep := get_rep()
+	var new_rep: int = clampi(old_rep + delta, 0, MAX_REP)
+	if new_rep == old_rep:
+		return
+	cumulative_stats["rep"] = new_rep
+	print("[ProgressManager] Rep changed: %d -> %d (%+d) [tier %d: %s]" % [
+		old_rep, new_rep, delta, get_rep_tier(), get_rep_tier_name()])
+	rep_changed.emit(new_rep)
+	save_progress()
+
+
+## get_rep() -> int
+##
+## Returns the current Rebellion Rep (0-100).
+func get_rep() -> int:
+	return int(cumulative_stats.get("rep", 0))
+
+
+## get_rep_tier() -> int
+##
+## Returns the highest unlocked POG rating tier (0=G .. 4=NC-17).
+## The kiosk only stocks ratings with rating_rank <= this tier.
+func get_rep_tier() -> int:
+	var rep := get_rep()
+	var tier := 0
+	for i in range(REP_TIER_THRESHOLDS.size()):
+		if rep >= REP_TIER_THRESHOLDS[i]:
+			tier = i
+	return tier
+
+
+## get_rep_tier_name() -> String
+##
+## Returns the display name of the highest unlocked POG tier.
+func get_rep_tier_name() -> String:
+	return REP_TIER_NAMES[get_rep_tier()]
+
+
+## get_rep_threshold_for_tier(tier: int) -> int
+##
+## Returns the Rep required to unlock the given POG tier (for lock labels).
+func get_rep_threshold_for_tier(tier: int) -> int:
+	return REP_TIER_THRESHOLDS[clampi(tier, 0, REP_TIER_THRESHOLDS.size() - 1)]
+
+
+## get_rep_stage() -> int
+##
+## Returns the visual rebel-mode stage (0-3) for UI styling.
+func get_rep_stage() -> int:
+	var rep := get_rep()
+	var stage := 0
+	for i in range(REP_STAGE_THRESHOLDS.size()):
+		if rep >= REP_STAGE_THRESHOLDS[i]:
+			stage = i
+	return stage
+
+
+## get_rep_stage_name() -> String
+##
+## Returns the display name of the current rebel-mode stage.
+func get_rep_stage_name() -> String:
+	return REP_STAGE_NAMES[get_rep_stage()]
+
 
 ## track_turn(turn_record: Dictionary)
 ##

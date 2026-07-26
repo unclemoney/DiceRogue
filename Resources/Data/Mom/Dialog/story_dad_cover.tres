@@ -1,0 +1,84 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=10 format=3]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite_1"]
+script = ExtResource("3_out")
+weight = 7.0
+effect = "rep_delta"
+magnitude = 3
+mood_delta = -2
+result_text = "[color=green]You're welcome, baby.[/color] Don't make me regret it. He'd never let me hear the end of it."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_polite_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "rep_delta"
+magnitude = 3
+mood_delta = -2
+result_text = "I know you are. Now go be worth covering for."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "Thanks, Mom. Really."
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource("out_polite_2")])
+
+[sub_resource type="Resource" id="out_neutral_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "rep_delta"
+magnitude = 3
+mood_delta = -1
+result_text = "Because everyone deserves one save. ONE. Don't spend it twice."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_neutral_2"]
+script = ExtResource("3_out")
+weight = 4.0
+effect = "rep_delta"
+magnitude = 3
+mood_delta = -1
+result_text = "He had a long week. Honestly? So did I. This stays between us."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "...Why'd you do that?"
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
+
+[sub_resource type="Resource" id="out_sassy_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "rep_delta"
+magnitude = 1
+mood_delta = 1
+result_text = "[color=orange]HA. Sure you did.[/color] The offer stands - don't waste it."
+result_expression = "upset"
+
+[sub_resource type="Resource" id="out_sassy_2"]
+script = ExtResource("3_out")
+weight = 4.0
+effect = "rep_delta"
+magnitude = 3
+mood_delta = -1
+result_text = "...You're just like him, you know. That's exactly why I covered for you."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "I had it handled!"
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2")])
+
+[resource]
+script = ExtResource("1_node")
+id = "story_dad_cover"
+mom_text = "That was your father on the phone. I told him you were home doing homework. ...I covered for you. You owe me, and we both know it."
+expression = "neutral"
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

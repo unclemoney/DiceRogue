@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MomDialogNode" load_steps=14 format=3 uid="uid://cjjbt8vx1qiux"]
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=15 format=3 uid="uid://cjjbt8vx1qiux"]
 
 [ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
 [ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
@@ -62,11 +62,24 @@ result_text = "[color=orange]Too busy for your mother?[/color]"
 result_expression = "upset"
 ends_visit = true
 
+[sub_resource type="Resource" id="out_neutral_3"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "none"
+magnitude = 0
+mood_delta = 0
+grudge_delta = 0
+permanent = false
+followup_node_id = "checkin_zone_flavor"
+result_text = ""
+result_expression = ""
+ends_visit = true
+
 [sub_resource type="Resource" id="resp_neutral"]
 script = ExtResource("2_resp")
 button_text = "I'm kinda busy..."
 tone = "neutral"
-outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2"), SubResource("out_neutral_3")])
 
 [sub_resource type="Resource" id="out_sassy_1"]
 script = ExtResource("3_out")
@@ -118,4 +131,6 @@ script = ExtResource("1_node")
 id = "checkin_neutral"
 mom_text = "Just checking in, sweetie! Everything going okay in here?"
 expression = "neutral"
+speaker_name = "Mom"
+speaker_tint = Color(1, 1, 1, 1)
 responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

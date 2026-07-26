@@ -1,0 +1,75 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=10 format=3]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite_1"]
+script = ExtResource("3_out")
+weight = 7.0
+effect = "mood_delta"
+mood_delta = -2
+result_text = "[color=green]See? That's all it takes.[/color] Page forgotten. Pen capped. We're good."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_polite_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "You're lucky you clean up nice, kid."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "I'll do better. Watch me."
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource("out_polite_2")])
+
+[sub_resource type="Resource" id="out_neutral_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "That's the deal. The mall stays fun as long as home stays easy."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_neutral_2"]
+script = ExtResource("3_out")
+weight = 4.0
+result_text = "Your father thinks you're here 'learning independence.' Don't make a liar out of me."
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "So... don't mess up again."
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
+
+[sub_resource type="Resource" id="out_sassy_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "mood_delta"
+mood_delta = 1
+result_text = "[color=orange]Keep pushing and the page number comes back, mister.[/color]"
+result_expression = "upset"
+
+[sub_resource type="Resource" id="out_sassy_2"]
+script = ExtResource("3_out")
+weight = 4.0
+effect = "grudge_delta"
+grudge_delta = 1
+result_text = "Tempting. Very tempting. The pen is RIGHT there."
+result_expression = "upset"
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "Or you could just tell him."
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2")])
+
+[resource]
+script = ExtResource("1_node")
+id = "story_dad_almost"
+mom_text = "I haven't told your father about the {zone} thing. Yet. There's still time for you to change my mind - keep this up and maybe I forget the page number."
+expression = "neutral"
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

@@ -229,11 +229,14 @@ func setup(data: Resource, type: String) -> void:
 	
 	# Apply consumable-based discounts (Half Price, Loss Leader)
 	price = _apply_consumable_discounts(price, type)
-	
+
+	# Apply Mom-Approved discount (low Rep + happy Mom, G-rated POGs only)
+	price = _apply_mom_approved_discount(price, type)
+
 	if not icon or not name_label or not price_label:
 		push_error("[ShopItem] One or more required nodes not found!")
 		return
-	
+
 	# Explicitly set icon size and expansion
 	icon.custom_minimum_size = Vector2(68, 68)
 	icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
@@ -332,6 +335,32 @@ func _apply_consumable_discounts(current_price: int, type_str: String) -> int:
 	return current_price
 
 
+## Mom-Approved discount rate (mirrors ShopUI.MOM_APPROVED_DISCOUNT).
+const MOM_APPROVED_DISCOUNT: float = 0.10
+
+
+## _apply_mom_approved_discount(current_price, type_str) -> int
+##
+## Compliance-path perk: when the player has low Rep and Mom is happy,
+## G-rated (Mom-Approved) POGs are discounted at the kiosk.
+## Called during setup() and refresh_price().
+func _apply_mom_approved_discount(current_price: int, type_str: String) -> int:
+	if type_str != "power_up" or not (item_data is PowerUpData):
+		return current_price
+	if PowerUpData.rating_rank(item_data.rating) != 0:
+		return current_price
+	var pm = get_node_or_null("/root/ProgressManager")
+	if not pm or not pm.has_method("get_rep"):
+		return current_price
+	if pm.get_rep() >= pm.REP_TIER_THRESHOLDS[1]:
+		return current_price
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	var chores_manager = game_controller.get("chores_manager") if game_controller else null
+	if chores_manager and int(chores_manager.get("mom_mood")) <= 3:
+		return maxi(1, int(round(current_price * (1.0 - MOM_APPROVED_DISCOUNT))))
+	return current_price
+
+
 ## refresh_price()
 ##
 ## Recalculates price with channel multiplier + consumable discounts and updates the label.
@@ -342,6 +371,7 @@ func refresh_price() -> void:
 	var base_price = item_data.price
 	price = _apply_price_multiplier(base_price, item_type)
 	price = _apply_consumable_discounts(price, item_type)
+	price = _apply_mom_approved_discount(price, item_type)
 	_update_price_badge_from_price(price)
 	_update_button_state()
 

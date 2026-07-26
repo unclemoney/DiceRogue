@@ -40,6 +40,10 @@ func start_run(run_id: int, channel: int) -> void:
 		"chores_selected_easy": 0,
 		"chores_selected_hard": 0,
 		"mom_visits": 0,
+		"story_beats_seen": 0,
+		"patterson_sightings": 0,
+		"patterson_contests_won": 0,
+		"patterson_contests_lost": 0,
 		"loss_round": -1,
 		"round_failed": 7,
 		"highest_channel_reached": channel,
@@ -214,6 +218,30 @@ func record_mom_visit() -> void:
 	_current_run.mom_visits += 1
 
 
+## record_story_beat()
+##
+## Tracks Mom's World story beats shown during the run.
+func record_story_beat() -> void:
+	_current_run.story_beats_seen += 1
+
+
+## record_patterson_sighting()
+##
+## Tracks Patterson sighting dialogs during the run.
+func record_patterson_sighting() -> void:
+	_current_run.patterson_sightings += 1
+
+
+## record_patterson_contest(won)
+##
+## Tracks contest outcomes against Patterson reports.
+func record_patterson_contest(won: bool) -> void:
+	if won:
+		_current_run.patterson_contests_won += 1
+	else:
+		_current_run.patterson_contests_lost += 1
+
+
 ## end_run(outcome, final_score)
 ##
 ## Finalizes the current run. outcome is "win" or "loss".
@@ -253,6 +281,10 @@ func get_aggregate() -> Dictionary:
 	var total_yahtzees := 0
 	var total_upper_bonuses := 0
 	var total_mom_visits := 0
+	var total_story_beats := 0
+	var total_patterson_sightings := 0
+	var total_patterson_contests_won := 0
+	var total_patterson_contests_lost := 0
 	var total_chores_easy := 0
 	var total_chores_hard := 0
 	var total_power_ups_purchased := 0
@@ -288,6 +320,10 @@ func get_aggregate() -> Dictionary:
 		total_yahtzees += run.yahtzees_rolled
 		total_upper_bonuses += run.upper_bonuses
 		total_mom_visits += run.get("mom_visits", 0)
+		total_story_beats += run.get("story_beats_seen", 0)
+		total_patterson_sightings += run.get("patterson_sightings", 0)
+		total_patterson_contests_won += run.get("patterson_contests_won", 0)
+		total_patterson_contests_lost += run.get("patterson_contests_lost", 0)
 		total_chores_easy += run.get("chores_selected_easy", 0)
 		total_chores_hard += run.get("chores_selected_hard", 0)
 		total_power_ups_purchased += run.get("power_ups_purchased", 0)
@@ -352,6 +388,10 @@ func get_aggregate() -> Dictionary:
 		"total_yahtzees": total_yahtzees,
 		"total_upper_bonuses": total_upper_bonuses,
 		"total_mom_visits": total_mom_visits,
+		"total_story_beats": total_story_beats,
+		"total_patterson_sightings": total_patterson_sightings,
+		"total_patterson_contests_won": total_patterson_contests_won,
+		"total_patterson_contests_lost": total_patterson_contests_lost,
 		"total_chores_easy": total_chores_easy,
 		"total_chores_hard": total_chores_hard,
 		"highest_channel_reached": overall_highest_channel,

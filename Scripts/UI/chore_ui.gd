@@ -372,6 +372,11 @@ func _update_details_with_progress() -> void:
 		mood_desc,
 		_chores_manager.mom_mood
 	]
+	var rep_text := ""
+	var pm := get_node_or_null("/root/ProgressManager")
+	if pm and pm.has_method("get_rep"):
+		rep_text = "\n[color=#ff4080]Rep:[/color] %d/100 — %s (POGs up to %s)" % [
+			pm.get_rep(), pm.get_rep_stage_name(), pm.get_rep_tier_name()]
 	
 	if task:
 		if task_label:
@@ -380,24 +385,26 @@ func _update_details_with_progress() -> void:
 		if _chores_manager.has_method("get_rounds_until_expiry") and _chores_manager.get_rounds_until_expiry() <= 0:
 			expiry_text = "Awaiting replacement"
 
-		details_label.text = "[center][b]%s[/b][/center]\n%s\n\n%s\n[color=#c7bbdd]Expiry:[/color] %s\n%s\n%s" % [
+		details_label.text = "[center][b]%s[/b][/center]\n%s\n\n%s\n[color=#c7bbdd]Expiry:[/color] %s\n%s\n%s%s" % [
 			task.display_name,
 			task.description,
 			progress_text,
 			expiry_text,
 			mood_text,
-			completed_text
+			completed_text,
+			rep_text
 		]
 	else:
 		var waiting_for_selection = _chores_manager.pending_chore_selection if _chores_manager.has_method("get_pending_tasks") else false
 		if task_label:
 			task_label.text = "Choose a chore" if waiting_for_selection else "No active chore"
 		var no_task_text = "[center][b]Choose a new chore[/b][/center]\nA fresh chore is required before play continues." if waiting_for_selection else "[center][b]No active chore[/b][/center]\nTake a breather, but keep an eye on the meter."
-		details_label.text = "%s\n\n%s\n%s\n%s" % [
+		details_label.text = "%s\n\n%s\n%s\n%s%s" % [
 			no_task_text,
 			progress_text,
 			mood_text,
-			completed_text
+			completed_text,
+			rep_text
 		]
 
 

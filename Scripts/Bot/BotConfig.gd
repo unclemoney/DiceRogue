@@ -39,6 +39,14 @@ class_name BotConfig
 ## Strategy preset name (for future expansion)
 @export var strategy_preset: String = "default"
 
+## Mom dialog policy: how the bot answers Mom.
+##   "tone_weighted" - mostly polite, rarely sassy (default, legacy behavior)
+##   "always_comply" - always picks polite responses (compliance path test)
+##   "always_sass"   - always picks sassy responses (full-rebel path test)
+##   "tactical"      - sass only when safe: no restricted (R/NC-17) inventory,
+##                     no mods at risk, mood <= 7, defer streak < 2
+@export_enum("tone_weighted", "always_comply", "always_sass", "tactical") var mom_policy: String = "tone_weighted"
+
 ## If true, mute the Master audio bus while the bot is running.
 ## Set to false to hear SFX and music during visual bot runs.
 @export var mute_audio: bool = true

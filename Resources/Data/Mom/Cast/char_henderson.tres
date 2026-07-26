@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CastCharacter" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/cast_character.gd" id="1_char"]
+
+[resource]
+script = ExtResource("1_char")
+id = "henderson"
+display_name = "Mrs. Henderson"
+role_description = "The teacher. Homework authority. 'If Mrs. Henderson calls this house one more time...' She has called. She will call again. Ties into the chore system: chores done count as homework done."
+portrait_tint = Color(0.55, 0.7, 0.6, 1)
+zone_affinity = Array[String](["Bookstore"])
+line_pools = {
+"gossip": [
+"If Mrs. Henderson calls this house one more time...",
+"Mrs. Henderson called. During DINNER.",
+"Mrs. Henderson says you're 'creative with your time.' I'm choosing to hear that as a compliment.",
+"Mrs. Henderson says hi. Teachers never just say hi.",
+"Is there homework I should know about? Mrs. Henderson implied there is homework I should know about.",
+"Mrs. Henderson saw your report card before I did. She CC'd me. Teachers can DO that now?"
+]
+}

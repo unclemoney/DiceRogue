@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="MomStoryArc" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/story_arc.gd" id="1_arc"]
+[ext_resource type="Script" path="res://Scripts/Data/story_beat.gd" id="2_beat"]
+
+[sub_resource type="Resource" id="beat_0"]
+script = ExtResource("2_beat")
+beat_index = 0
+dialog_node_id = "story_dad_longweek"
+min_channel = 2
+
+[sub_resource type="Resource" id="beat_1"]
+script = ExtResource("2_beat")
+beat_index = 1
+dialog_node_id = "story_dad_writing_down"
+min_channel = 6
+min_grudge = 1
+sets_flag = "dad_written_down"
+
+[sub_resource type="Resource" id="beat_2"]
+script = ExtResource("2_beat")
+beat_index = 2
+dialog_node_id = "story_dad_almost"
+min_channel = 10
+requires_flag = "dad_written_down"
+reward_mood = -1
+reward_rep = 2
+
+[resource]
+script = ExtResource("1_arc")
+id = "dads_long_week"
+character_id = "dad"
+display_name = "Dad's Long Week"
+priority = 5
+beats = Array[ExtResource("2_beat")]([SubResource("beat_0"), SubResource("beat_1"), SubResource("beat_2")])

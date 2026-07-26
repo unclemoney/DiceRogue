@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="MomStoryArc" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/story_arc.gd" id="1_arc"]
+[ext_resource type="Script" path="res://Scripts/Data/story_beat.gd" id="2_beat"]
+
+[sub_resource type="Resource" id="beat_0"]
+script = ExtResource("2_beat")
+beat_index = 0
+dialog_node_id = "story_derek_comparison"
+min_channel = 3
+sets_flag = "derek_intro_done"
+
+[sub_resource type="Resource" id="beat_1"]
+script = ExtResource("2_beat")
+beat_index = 1
+dialog_node_id = "story_derek_resentment"
+min_channel = 8
+min_grudge = 1
+requires_flag = "derek_intro_done"
+sets_flag = "resented_derek"
+
+[sub_resource type="Resource" id="beat_2"]
+script = ExtResource("2_beat")
+beat_index = 2
+dialog_node_id = "story_derek_twist"
+min_channel = 12
+requires_flag = "resented_derek"
+sets_flag = "derek_quiet_pending"
+
+[resource]
+script = ExtResource("1_arc")
+id = "golden_child"
+character_id = "derek"
+display_name = "The Golden Child"
+priority = 20
+beats = Array[ExtResource("2_beat")]([SubResource("beat_0"), SubResource("beat_1"), SubResource("beat_2")])

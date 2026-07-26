@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CastCharacter" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/cast_character.gd" id="1_char"]
+
+[resource]
+script = ExtResource("1_char")
+id = "dad"
+display_name = "Dad"
+role_description = "The unseen threat. Never appears on screen - exists only through Mom's lines. 'Wait till your father hears about this' marks high-severity visits; a rare Dad call makes punishment worse, and a rare cover-up is the warmest moment in the game."
+portrait_tint = Color(0.35, 0.4, 0.55, 1)
+zone_affinity = Array[String]([])
+line_pools = {
+"gossip": [
+"Wait till your father hears about this.",
+"Your father is going to hear about this the MINUTE he walks in.",
+"I am writing this down for your father. In the good pen.",
+"You are SO lucky your father is working late tonight.",
+"When your father gets home, you and he are going to have a talk. Not me. HIM.",
+"Your father sat in traffic forty minutes today. Do NOT make me add this to his evening.",
+"I haven't told your father about the {zone} thing. Yet.",
+"Your father thinks you're at the mall 'learning independence.' Don't make a liar out of me.",
+"Your father asked how you've been. I said 'fine.' I want to keep saying 'fine.'",
+"If your father finds out from MRS. PATTERSON before he finds out from me, we are BOTH in trouble.",
+"I didn't tell him. He had a long week and honestly? So did I. This stays between us.",
+"That was your father on the phone. I covered for you. You owe me, and we both know it."
+]
+}

@@ -1,0 +1,80 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=11 format=3]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "[color=green]See? That's all I ask.[/color] Derek's not better than you, he just STARTS earlier."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_polite_2"]
+script = ExtResource("3_out")
+weight = 4.0
+result_text = "Good. Maybe SOME of it rubs off."
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "I'll do mine right after this."
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource("out_polite_2")])
+
+[sub_resource type="Resource" id="out_neutral_1"]
+script = ExtResource("3_out")
+weight = 6.0
+result_text = "Aunt Linda asked if you're 'still doing the dice thing.' I said yes. She made a FACE."
+
+[sub_resource type="Resource" id="out_neutral_2"]
+script = ExtResource("3_out")
+weight = 4.0
+effect = "mood_delta"
+mood_delta = 1
+result_text = "[color=orange]Don't take that tone about Derek. He makes his bed AND gets A's.[/color]"
+result_expression = "upset"
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "Good for Derek, I guess."
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
+
+[sub_resource type="Resource" id="out_sassy_1"]
+script = ExtResource("3_out")
+weight = 5.0
+effect = "mood_delta"
+mood_delta = 2
+result_text = "[color=orange]Maybe I WILL call Aunt Linda and trade.[/color] Think about THAT."
+result_expression = "upset"
+
+[sub_resource type="Resource" id="out_sassy_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "apply_tier"
+magnitude = 2
+result_text = "[color=red][shake rate=20 level=10]EXCUSE me?![/shake][/color] Derek would NEVER speak to his mother like that!"
+result_expression = "upset"
+
+[sub_resource type="Resource" id="out_sassy_3"]
+script = ExtResource("3_out")
+weight = 2.0
+effect = "storms_off"
+mood_delta = 2
+grudge_delta = 1
+followup_node_id = "sass_storm_off"
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "Then go adopt Derek."
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2"), SubResource("out_sassy_3")])
+
+[resource]
+script = ExtResource("1_node")
+id = "story_derek_comparison"
+mom_text = "Derek already finished HIS chores, you know. All of them. Just thought I'd mention that while you sit here rolling dice."
+expression = "neutral"
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

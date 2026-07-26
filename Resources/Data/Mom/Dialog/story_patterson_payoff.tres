@@ -1,0 +1,78 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=11 format=3]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "A casserole, yes. ...Okay. Okay, maybe she's losing it. [color=green]Don't tell her I said that.[/color]"
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_polite_2"]
+script = ExtResource("3_out")
+weight = 4.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "That's the correct answer. Also the only sane one. Casseroles are innocent."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "...A casserole?"
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource("out_polite_2")])
+
+[sub_resource type="Resource" id="out_neutral_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "mood_delta"
+mood_delta = -2
+result_text = "I know, baby. I KNOW. ...Between us? I think the bingo hall is getting to her."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_neutral_2"]
+script = ExtResource("3_out")
+weight = 4.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "Of course it didn't. I'm going to pretend this conversation never happened, for her sake."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "That never happened."
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
+
+[sub_resource type="Resource" id="out_sassy_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "Do NOT make me laugh while I'm scolding you. ...The casserole thing IS strange though."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_sassy_2"]
+script = ExtResource("3_out")
+weight = 4.0
+effect = "mood_delta"
+mood_delta = 1
+result_text = "[color=orange]Don't push it.[/color] You're not wrong, but don't push it."
+result_expression = "upset"
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "Busted. I hate casseroles."
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2")])
+
+[resource]
+script = ExtResource("1_node")
+id = "story_patterson_payoff"
+mom_text = "Mrs. Patterson told me she saw you [shake rate=15 level=5]frowning at a casserole[/shake] in the Department Store window. A casserole. What did it ever do to you?"
+expression = "neutral"
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

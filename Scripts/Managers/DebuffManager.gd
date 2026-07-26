@@ -12,6 +12,10 @@ var _defs_by_id := {}
 var _active_debuff_ids: Array[String] = []
 var _verbose_mode: bool = false
 
+## Debuffs that are granted explicitly (e.g. "rebellion" from successful
+## sass) and must never be rolled by the automatic round selection.
+const GRANTED_ONLY_IDS: Array[String] = ["rebellion"]
+
 
 func _ready() -> void:
 	print("[DebuffManager] Loading definitions...")
@@ -127,7 +131,7 @@ func get_debuffs_by_difficulty(max_difficulty: int) -> Array[DebuffData]:
 	var result: Array[DebuffData] = []
 	for id in _defs_by_id:
 		var def = _defs_by_id[id] as DebuffData
-		if def and def.difficulty_rating <= max_difficulty:
+		if def and def.difficulty_rating <= max_difficulty and def.id not in GRANTED_ONLY_IDS:
 			result.append(def)
 	if _verbose_mode:
 		print("[DebuffManager] Found %d debuffs with difficulty <= %d" % [result.size(), max_difficulty])

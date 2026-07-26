@@ -1,0 +1,76 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=10 format=3]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "reward_consumable"
+mood_delta = -1
+result_text = "[color=green]Attaboy.[/color] Here - champion's snack. Don't spend it all on one reroll."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_polite_2"]
+script = ExtResource("3_out")
+weight = 4.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "Smart kid. The bank-it-early rule has saved more runs than luck ever did."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "Noted. Bank the full house."
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource("out_polite_2")])
+
+[sub_resource type="Resource" id="out_neutral_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "reward_consumable"
+result_text = "Multitudes, yes. Here - for the road. Mom's treat."
+
+[sub_resource type="Resource" id="out_neutral_2"]
+script = ExtResource("3_out")
+weight = 4.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "Thirty years of math homework and casseroles, sweetie. The dice stayed in my blood."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "You contain multitudes?"
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
+
+[sub_resource type="Resource" id="out_sassy_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "[color=green]HA! There's my champion.[/color] Fine - learn it the hard way, like I did."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_sassy_2"]
+script = ExtResource("3_out")
+weight = 4.0
+effect = "mood_delta"
+mood_delta = 1
+result_text = "[color=orange]Ignore the champ's advice then. The trophy will comfort ME tonight.[/color]"
+result_expression = "upset"
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "I chase inside straights."
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2")])
+
+[resource]
+script = ExtResource("1_node")
+id = "story_mom_tips"
+mom_text = "Alright, leaning in - don't tell your father. Never chase the inside straight on the last roll. And always bank the full house early. ...What? I contain multitudes."
+expression = "happy"
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://ddgh7rebe110n"]
+
+[ext_resource type="Script" uid="uid://bsgh7rebe110n" path="res://Scripts/Debuff/rebellion_buff.gd" id="1_rebel"]
+
+[node name="RebellionBuff" type="Node"]
+script = ExtResource("1_rebel")

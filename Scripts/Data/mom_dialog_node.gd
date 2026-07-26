@@ -18,6 +18,15 @@ class_name MomDialogNode
 ## Mom's expression for this beat. Maps to the 3 existing sprites.
 @export_enum("happy", "neutral", "upset") var expression: String = "neutral"
 
+## Speaker label shown in the dialog title. Default "Mom"; cast story
+## beats use variants like "Mom (on the phone with Dad)" - Mom still
+## delivers every line, the cast never speaks directly.
+@export var speaker_name: String = "Mom"
+
+## Tint applied to the portrait for this beat (dark silhouette for
+## phone beats, etc.). White = no tint.
+@export var speaker_tint: Color = Color.WHITE
+
 ## Player response options (2-3 recommended). Empty = terminal node.
 @export var responses: Array[MomDialogResponse] = []
 

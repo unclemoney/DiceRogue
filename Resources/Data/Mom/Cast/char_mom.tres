@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CastCharacter" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/cast_character.gd" id="1_char"]
+
+[resource]
+script = ExtResource("1_char")
+id = "mom"
+display_name = "Mom"
+role_description = "Mom herself, for her own story arc: she was a Guhtzee champ back in the day and slowly reveals it once the kid has enough Rep to impress her."
+portrait_tint = Color(1, 1, 1, 1)
+zone_affinity = Array[String]([])
+line_pools = {
+"gossip": [
+"I used to be pretty good at this game back in my day.",
+"I told you I played. I didn't tell you I was GOOD.",
+"Your mother once cleared a whole Yahtzee column in one sitting. At a TOURNAMENT.",
+"You get the dice hands from me, you know. Your father rolls like a confused golden retriever.",
+"Maybe next round Mom shows you how it's done."
+]
+}

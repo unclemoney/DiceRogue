@@ -51,6 +51,7 @@ func _ready() -> void:
 	_test_severity_bands(cm)
 	_test_grudge_floor(cm)
 	_test_escalation(cm)
+	_test_defer_system(cm, gc)
 	_test_apply_tier_semantics(gc)
 	_test_storms_off(gc)
 	_test_direct_effects(gc)
@@ -123,8 +124,50 @@ func _test_escalation(cm) -> void:
 	_check("severity 1 visit not registered", cm.low_mood_visits_this_run == 0)
 
 
-func _test_apply_tier_semantics(gc) -> void:
-	# magnitude 0 = computed severity
+func _test_defer_system(cm, gc) -> void:
+	gc.chores_manager = cm
+
+	# Defer streak compounds onto severity
+	cm.mom_mood = 5  # base severity 1
+	cm.grudge = 0
+	cm.low_mood_visits_this_run = 0
+	cm.defer_streak = 2
+	var severity: int = Handler.compute_severity(cm)
+	_check("defer streak 2 compounds severity 1 -> 3", severity == 3)
+
+	# Defer streak clamps at 5
+	cm.mom_mood = 9  # base severity 4
+	severity = Handler.compute_severity(cm)
+	_check("defer streak clamps severity at 5", severity == 5)
+	cm.defer_streak = 0
+
+	# defer_punishment outcome: no punishment, deferred flag, grudge +1
+	var outcome := _make_outcome("defer_punishment")
+	var result = Handler.apply_outcome(gc, outcome, 3)
+	_check("defer_punishment flagged", result.deferred)
+	_check("defer_punishment applies no tier", result.tier_id == -1)
+	_check("defer_punishment adds grudge +1", result.grudge_delta == 1)
+	_check("defer_punishment applies no punishment", result.fine_amount == 0 and result.applied_debuffs.is_empty() and result.removed_power_ups.is_empty())
+
+	# apply_consequences registers the defer
+	cm.defer_streak = 0
+	Handler.apply_consequences(gc, result)
+	_check("defer registered on ChoresManager", cm.defer_streak == 1)
+
+	# Applying a real punishment tier resets the streak
+	var tier_result = Handler.MomCheckResult.new()
+	tier_result.tier_id = 2
+	Handler.apply_consequences(gc, tier_result)
+	_check("defer streak resets when tier applied", cm.defer_streak == 0)
+
+	# Defer streak clamps at MAX_DEFER_STREAK
+	for i in range(5):
+		cm.register_defer()
+	_check("defer streak clamps at max", cm.defer_streak == ChoresManagerScript.MAX_DEFER_STREAK)
+	cm.defer_streak = 0
+
+
+func _test_apply_tier_semantics(gc) -> void:	# magnitude 0 = computed severity
 	var outcome := _make_outcome("apply_tier", 0)
 	var result = Handler.apply_outcome(gc, outcome, 3)
 	_check("apply_tier 0 uses visit severity", result.tier_id == 3)

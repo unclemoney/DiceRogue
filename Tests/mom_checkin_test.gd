@@ -124,13 +124,16 @@ func _test_grudge(cm) -> void:
 func _test_save_load_roundtrip(cm) -> void:
 	cm.grudge = 2
 	cm.low_mood_visits_this_run = 1
+	cm.defer_streak = 2
 	var state: Dictionary = cm.get_state()
 
 	var cm2 = ChoresManagerScript.new()
 	add_child(cm2)
 	cm2.load_state(state)
 	_check("grudge survives save/load", cm2.grudge == 2)
+	_check("defer streak survives save/load", cm2.defer_streak == 2)
 	_check("escalation counter survives save/load", cm2.low_mood_visits_this_run == 1)
 	_check("check-in target survives save/load", cm2._checkin_roll_target == cm._checkin_roll_target)
 	_check("check-in done flag survives save/load", cm2._checkin_done_this_round == cm._checkin_done_this_round)
 	cm2.queue_free()
+	cm.defer_streak = 0

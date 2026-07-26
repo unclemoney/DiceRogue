@@ -1,0 +1,72 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=10 format=3]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite_1"]
+script = ExtResource("3_out")
+weight = 7.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "[color=green]That's all I ask.[/color] He works hard. We keep the peace."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_polite_2"]
+script = ExtResource("3_out")
+weight = 3.0
+result_text = "Good. Maybe tonight he gets to just sit. We all just... sit."
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "I'll be good, promise."
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource("out_polite_2")])
+
+[sub_resource type="Resource" id="out_neutral_1"]
+script = ExtResource("3_out")
+weight = 7.0
+result_text = "Rush hour on the interstate. Forty minutes of brake lights and talk radio. Remember that."
+
+[sub_resource type="Resource" id="out_neutral_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "mood_delta"
+mood_delta = 1
+result_text = "[color=orange]Don't get smart about the commute.[/color]"
+result_expression = "upset"
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "Forty minutes? Yikes."
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
+
+[sub_resource type="Resource" id="out_sassy_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "mood_delta"
+mood_delta = 2
+result_text = "[color=orange]He sits in traffic so YOU can loiter in a mall.[/color] Perspective, young one."
+result_expression = "upset"
+
+[sub_resource type="Resource" id="out_sassy_2"]
+script = ExtResource("3_out")
+weight = 4.0
+effect = "apply_tier"
+magnitude = 2
+result_text = "[color=red][shake rate=20 level=10]EXCUSE me?![/shake][/color] Wait till he hears THIS one!"
+result_expression = "upset"
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "Tell him to take the back roads."
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2")])
+
+[resource]
+script = ExtResource("1_node")
+id = "story_dad_longweek"
+mom_text = "Your father sat in traffic forty minutes today. FORTY. So whatever you're doing in here, keep it quiet and keep it clean - for HIS sake."
+expression = "neutral"
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

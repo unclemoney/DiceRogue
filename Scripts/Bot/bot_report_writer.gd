@@ -50,5 +50,6 @@ func _serialize_config(config: BotConfig) -> Dictionary:
 		"speed_multiplier": config.speed_multiplier,
 		"reset_between_runs": config.reset_between_runs,
 		"turn_delay": config.turn_delay,
-		"strategy_preset": config.strategy_preset
+		"strategy_preset": config.strategy_preset,
+		"mom_policy": config.mom_policy
 	}

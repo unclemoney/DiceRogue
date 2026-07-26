@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CastCharacter" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/cast_character.gd" id="1_char"]
+
+[resource]
+script = ExtResource("1_char")
+id = "derek"
+display_name = "Cousin Derek"
+role_description = "The golden child. Exists to be compared against. Comparison lines scale with grudge; late-run he gets caught sneaking into the R-rated section at Video Rentals and Mom goes quiet for one visit."
+portrait_tint = Color(0.95, 0.85, 0.5, 1)
+zone_affinity = Array[String](["Video Rentals"])
+line_pools = {
+"comparison": [
+"Derek already finished HIS chores.",
+"Derek's mother never has to call the mall.",
+"Derek gets A's AND makes his bed.",
+"Aunt Linda asked if you're 'still doing the dice thing.'",
+"Derek would never make me come down here.",
+"Derek mowed the WHOLE lawn without being asked. Just saying."
+]
+}

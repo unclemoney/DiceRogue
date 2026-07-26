@@ -307,6 +307,11 @@ func _create_debug_tabs() -> void:
 			{"text": "Trigger Mom Immediately", "method": "_debug_chores_trigger_mom"},
 			{"text": "Trigger Mom Check-in", "method": "_debug_chores_trigger_checkin"},
 			{"text": "Add Mom Grudge +1", "method": "_debug_chores_add_grudge"},
+			{"text": "Add Defer Streak +1", "method": "_debug_chores_add_defer"},
+			{"text": "Rep +10", "method": "_debug_rep_add"},
+			{"text": "Rep -10", "method": "_debug_rep_sub"},
+			{"text": "Show Rep State", "method": "_debug_rep_show"},
+			{"text": "Grant Rebellion Buff", "method": "_debug_rebellion_grant"},
 			{"text": "Select New Task", "method": "_debug_chores_new_task"},
 			{"text": "Reset Progress", "method": "_debug_chores_reset"},
 			{"text": "Show Chore State", "method": "_debug_chores_show_state"},
@@ -316,6 +321,12 @@ func _create_debug_tabs() -> void:
 			{"text": "Test Mom Dialog (Neutral)", "method": "_debug_chores_mom_neutral"},
 			{"text": "Test Mom Dialog (Upset)", "method": "_debug_chores_mom_upset"},
 			{"text": "Test Mom Dialog (Happy)", "method": "_debug_chores_mom_happy"},
+			{"text": "Patterson Sighting (True)", "method": "_debug_cast_sighting_true"},
+			{"text": "Patterson Sighting (False)", "method": "_debug_cast_sighting_false"},
+			{"text": "Advance Next Arc Beat", "method": "_debug_cast_advance_beat"},
+			{"text": "Force Derek Twist", "method": "_debug_cast_derek_twist"},
+			{"text": "Force Dad Call", "method": "_debug_cast_dad_call"},
+			{"text": "Show Cast State", "method": "_debug_cast_show_state"},
 			{"text": "Show Lock Tracker", "method": "_debug_lock_tracker_show"},
 			{"text": "Force Satisfy Tracker", "method": "_debug_lock_tracker_force"},
 			{"text": "Show Turn History", "method": "_debug_lock_tracker_history"},
@@ -3094,6 +3105,150 @@ func _debug_chores_add_grudge() -> void:
 		return
 	chores_manager.add_grudge(1)
 	log_debug("Mom grudge now: %d/3" % chores_manager.grudge)
+
+
+func _debug_chores_add_defer() -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	chores_manager.register_defer()
+	log_debug("Defer streak now: %d/%d" % [chores_manager.defer_streak, ChoresManager.MAX_DEFER_STREAK])
+
+
+func _debug_rep_add() -> void:
+	var pm = get_node_or_null("/root/ProgressManager")
+	if not pm:
+		log_debug("ERROR: ProgressManager not available")
+		return
+	pm.adjust_rep(10)
+	log_debug("Rep now: %d/100 (tier %d: %s)" % [pm.get_rep(), pm.get_rep_tier(), pm.get_rep_tier_name()])
+
+
+func _debug_rep_sub() -> void:
+	var pm = get_node_or_null("/root/ProgressManager")
+	if not pm:
+		log_debug("ERROR: ProgressManager not available")
+		return
+	pm.adjust_rep(-10)
+	log_debug("Rep now: %d/100 (tier %d: %s)" % [pm.get_rep(), pm.get_rep_tier(), pm.get_rep_tier_name()])
+
+
+func _debug_rep_show() -> void:
+	var pm = get_node_or_null("/root/ProgressManager")
+	if not pm:
+		log_debug("ERROR: ProgressManager not available")
+		return
+	log_debug("Rep: %d/100 | Tier %d (%s) | Stage %d (%s)" % [
+		pm.get_rep(), pm.get_rep_tier(), pm.get_rep_tier_name(),
+		pm.get_rep_stage(), pm.get_rep_stage_name()])
+	var chores_manager = _get_chores_manager()
+	if chores_manager:
+		log_debug("Grudge: %d/%d | Defer streak: %d/%d" % [
+			chores_manager.grudge, ChoresManager.MAX_GRUDGE,
+			chores_manager.defer_streak, ChoresManager.MAX_DEFER_STREAK])
+
+
+# ─── Mom's World (cast & story) ───
+
+func _get_cast_manager() -> CastManager:
+	return get_tree().get_first_node_in_group("cast_manager")
+
+
+## _debug_cast_force_claim(claim)
+##
+## Arms a forced cast claim and fires the check-in that consumes it.
+func _debug_cast_force_claim(claim: Dictionary) -> void:
+	var cast_manager = _get_cast_manager()
+	var chores_manager = _get_chores_manager()
+	if not cast_manager or not chores_manager:
+		log_debug("ERROR: CastManager or ChoresManager not available")
+		return
+	if claim.get("tree_id", "") == "":
+		log_debug("ERROR: forced claim has no tree (missing zones/flags?)")
+		return
+	cast_manager.debug_forced_claim = claim
+	chores_manager.mom_checkin.emit()
+	log_debug("Forced Mom dialog tree: %s" % claim["tree_id"])
+
+
+func _debug_cast_sighting_true() -> void:
+	var cast_manager = _get_cast_manager()
+	if not cast_manager:
+		log_debug("ERROR: CastManager not available")
+		return
+	var channel := _current_debug_channel()
+	_debug_cast_force_claim(cast_manager.debug_force_sighting(true, channel))
+
+
+func _debug_cast_sighting_false() -> void:
+	var cast_manager = _get_cast_manager()
+	if not cast_manager:
+		log_debug("ERROR: CastManager not available")
+		return
+	var channel := _current_debug_channel()
+	_debug_cast_force_claim(cast_manager.debug_force_sighting(false, channel))
+
+
+func _debug_cast_advance_beat() -> void:
+	var cast_manager = _get_cast_manager()
+	if not cast_manager:
+		log_debug("ERROR: CastManager not available")
+		return
+	# Force the next unplayed beat of the first incomplete arc (ignores
+	# trigger conditions - this is a debug shortcut)
+	for arc_id in cast_manager._arcs.keys():
+		if arc_id in cast_manager.completed_arcs:
+			continue
+		var arc: MomStoryArc = cast_manager._arcs[arc_id]
+		var next_index: int = cast_manager.arc_progress.get(arc_id, 0)
+		if next_index >= arc.beats.size():
+			continue
+		_debug_cast_force_claim({"tree_id": arc.beats[next_index].dialog_node_id, "context": {}})
+		return
+	log_debug("All story arcs already completed")
+
+
+func _debug_cast_derek_twist() -> void:
+	var cast_manager = _get_cast_manager()
+	if not cast_manager:
+		log_debug("ERROR: CastManager not available")
+		return
+	# Arm the arc flags so the twist plays and the quiet visit follows
+	cast_manager.flags["derek_intro_done"] = true
+	cast_manager.flags["resented_derek"] = true
+	cast_manager.arc_progress["golden_child"] = 2
+	_debug_cast_force_claim({"tree_id": "story_derek_twist", "context": {}})
+
+
+func _debug_cast_dad_call() -> void:
+	_debug_cast_force_claim({"tree_id": "story_dad_call", "context": {}})
+
+
+func _debug_cast_show_state() -> void:
+	var cast_manager = _get_cast_manager()
+	if not cast_manager:
+		log_debug("ERROR: CastManager not available")
+		return
+	for line in cast_manager.debug_get_state_summary().split("\n"):
+		log_debug(line)
+
+
+func _current_debug_channel() -> int:
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller:
+		var channel_manager = game_controller.get("channel_manager")
+		if channel_manager:
+			return int(channel_manager.get("current_channel"))
+	return 1
+
+
+func _debug_rebellion_grant() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	game_controller._grant_rebellion_buff(1)
+	log_debug("Rebellion buff granted (check DebuffUI icon row)")
 
 
 func _debug_chores_new_task() -> void:

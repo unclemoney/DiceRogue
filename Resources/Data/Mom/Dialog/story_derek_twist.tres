@@ -1,0 +1,78 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=11 format=3]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite_1"]
+script = ExtResource("3_out")
+weight = 7.0
+effect = "mood_delta"
+mood_delta = -2
+result_text = "...That's very gracious of you. [color=green]More gracious than I've been, honestly.[/color]"
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_polite_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "You're a good kid. Don't tell Derek I said that."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "I'm sure he had a reason."
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource("out_polite_2")])
+
+[sub_resource type="Resource" id="out_neutral_1"]
+script = ExtResource("3_out")
+weight = 7.0
+effect = "mood_delta"
+mood_delta = -2
+result_text = "...You knew? [color=green]Of course you knew.[/color] Kids always know before the mothers do."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_neutral_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "Aunt Linda is BESIDE herself. I am trying very hard not to enjoy that. I am failing a little."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "Knew it."
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
+
+[sub_resource type="Resource" id="out_sassy_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "Do NOT gloat. ...Okay. Gloat a little. Internally. Where I can't see it."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_sassy_2"]
+script = ExtResource("3_out")
+weight = 4.0
+effect = "mood_delta"
+mood_delta = 1
+result_text = "[color=orange]I said don't gloat![/color] ...He IS grounded for a month though. A MONTH."
+result_expression = "upset"
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "HA! Golden child, huh?!"
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2")])
+
+[resource]
+script = ExtResource("1_node")
+id = "story_derek_twist"
+mom_text = "...So. Derek got caught sneaking into the R-rated section at Video Rentals. Aunt Linda is BESIDE herself. I don't want to talk about it."
+expression = "neutral"
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

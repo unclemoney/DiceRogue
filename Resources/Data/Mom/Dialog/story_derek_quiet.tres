@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=6 format=3]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_quiet_1"]
+script = ExtResource("3_out")
+weight = 7.0
+effect = "rep_delta"
+magnitude = 3
+mood_delta = -3
+result_text = "...Thanks for not saying 'I told you so.' [color=green]You're a good kid. Don't tell Aunt Linda I said anything.[/color]"
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_quiet_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "rep_delta"
+magnitude = 3
+mood_delta = -2
+result_text = "...You're alright, you know that? Alright. Back to your dice."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="resp_quiet"]
+script = ExtResource("2_resp")
+button_text = "(...say nothing)"
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_quiet_1"), SubResource("out_quiet_2")])
+
+[resource]
+script = ExtResource("1_node")
+id = "story_derek_quiet"
+mom_text = "..."
+expression = "neutral"
+responses = Array[ExtResource("2_resp")]([SubResource("resp_quiet")])

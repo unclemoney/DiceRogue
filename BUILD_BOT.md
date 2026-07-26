@@ -55,6 +55,8 @@ Edit `default_bot_config.tres` in the Inspector or create a new `BotConfig` reso
 | `open_report_on_finish` | true | Open report file location when done |
 | `strategy_preset` | "default" | Strategy name (for future expansion) |
 | `max_rerolls_per_shop` | 5 | Max shop rerolls per visit (0 = no rerolling) |
+| `mom_policy` | "tone_weighted" | How the bot answers Mom dialogs: `tone_weighted`, `always_comply`, `always_sass`, `tactical` |
+| `mute_audio` | true | Mute game audio during bot runs |
 
 ## Bot Strategy
 
@@ -89,7 +91,9 @@ The bot follows these rules (defined in `bot_strategy.gd`):
 - After every roll, increments goof-off progress via `chores_manager.increment_progress(1)`
 - After scoring, checks chore task completion with full context (category, dice values, score, etc.)
 - When `request_chore_selection` fires (task rotation every ~20 rolls), bot picks EASY or HARD at random (60% bias toward HARD since it reduces progress by 30 vs 10)
-- When `mom_triggered` fires (progress reaches threshold) or `mom_checkin` fires (once-per-round random visit), bot handles the Mom dialog: response beats are answered with tone-weighted random picks (mostly polite, rarely sassy — see `MomLogicHandler.BOT_TONE_WEIGHTS`), terminal beats are closed automatically
+- When `mom_triggered` fires (progress reaches threshold) or `mom_checkin` fires (once-per-round random visit), bot handles the Mom dialog: response beats are answered per `BotConfig.mom_policy` (`tone_weighted` default — mostly polite, rarely sassy, see `MomLogicHandler.BOT_TONE_WEIGHTS`; also `always_comply`, `always_sass`, `tactical`), terminal beats are closed automatically
+- The `tactical` policy sasses only when safe (no R/NC-17 inventory, no mods, mood ≤ 7, defer streak < 2) and handles Mom's World story beats with perfect memory: it contests Patterson sightings it knows are false, admits true ones, and never sasses the Dad call
+- Mom's World stats are recorded per run (`story_beats_seen`, `patterson_sightings`, `patterson_contests_won/lost`) and aggregated in the report for A/B/C policy comparison
 - Chores manager is reset between runs via `reset_for_new_game()` and updated with round number each round
 
 ## Output Files

@@ -1,0 +1,102 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=13 format=3]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_admit_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "mood_delta"
+mood_delta = 1
+result_text = "[color=orange]So you WERE somewhere you shouldn't be.[/color] The notebook never lies."
+result_expression = "upset"
+
+[sub_resource type="Resource" id="out_admit_2"]
+script = ExtResource("3_out")
+weight = 4.0
+result_text = "Hm. At least you own it. This once."
+
+[sub_resource type="Resource" id="resp_admit"]
+script = ExtResource("2_resp")
+button_text = "Okay, maybe I was around."
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_admit_1"), SubResource("out_admit_2")])
+
+[sub_resource type="Resource" id="out_silent_1"]
+script = ExtResource("3_out")
+weight = 7.0
+result_text = "...Nothing to say for yourself? The notebook stays open."
+
+[sub_resource type="Resource" id="out_silent_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "grudge_delta"
+grudge_delta = 1
+result_text = "[color=orange]Silence says a lot, you know.[/color]"
+result_expression = "upset"
+
+[sub_resource type="Resource" id="resp_silent"]
+script = ExtResource("2_resp")
+button_text = "(say nothing)"
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_silent_1"), SubResource("out_silent_2")])
+
+[sub_resource type="Resource" id="out_contest_win"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "mood_delta"
+mood_delta = -1
+followup_node_id = "flag_patterson_doubted"
+
+[sub_resource type="Resource" id="out_contest_fail"]
+script = ExtResource("3_out")
+weight = 4.0
+effect = "grudge_delta"
+mood_delta = 1
+grudge_delta = 1
+followup_node_id = "patterson_contest_failed"
+
+[sub_resource type="Resource" id="resp_contest"]
+script = ExtResource("2_resp")
+button_text = "Her notebook is WRONG!"
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_contest_win"), SubResource("out_contest_fail")])
+
+[sub_resource type="Resource" id="out_sassy_1"]
+script = ExtResource("3_out")
+weight = 5.0
+effect = "apply_tier"
+magnitude = 2
+mood_delta = 1
+result_text = "[color=red][shake rate=20 level=10]EXCUSE me?![/shake][/color] That mouth just earned you a punishment!"
+result_expression = "upset"
+
+[sub_resource type="Resource" id="out_sassy_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "mood_delta"
+mood_delta = 2
+result_text = "[color=orange]Watch that tone.[/color] We're not done here."
+result_expression = "upset"
+
+[sub_resource type="Resource" id="out_sassy_3"]
+script = ExtResource("3_out")
+weight = 2.0
+effect = "storms_off"
+mood_delta = 2
+grudge_delta = 1
+followup_node_id = "sass_storm_off"
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "Arrest me, Patterson."
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2"), SubResource("out_sassy_3")])
+
+[resource]
+script = ExtResource("1_node")
+id = "story_patterson_escalation"
+mom_text = "Mrs. Patterson showed me her little notebook. You're IN it, mister - she says she saw you at the {zone}. But you were never near the {zone}! ...Were you?"
+expression = "upset"
+responses = Array[ExtResource("2_resp")]([SubResource("resp_admit"), SubResource("resp_silent"), SubResource("resp_contest"), SubResource("resp_sassy")])

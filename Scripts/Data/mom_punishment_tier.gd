@@ -24,6 +24,10 @@ class_name MomPunishmentTier
 ##       "reward_powerup":     {"pool": Array[String]}  (safe power-up ids)
 ##   permanent: bool   - false = lasts until round end (lighter tiers),
 ##                       true = permanent loss (harsher tiers)
+##
+## NOTE: "defer_punishment" is a dialog-only effect (see MomDialogOutcome)
+## and must never appear in tier entries - deferral is a player choice,
+## not a drawn punishment.
 
 ## Canonical list of punishment/reward effect types.
 ## MomDialogOutcome reuses these for direct effects from dialog responses.

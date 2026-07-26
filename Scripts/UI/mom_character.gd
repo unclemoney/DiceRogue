@@ -16,6 +16,19 @@ const TWEEN_DURATION: float = 0.3
 const TEXT_DISPLAY_SPEED: float = 0.03  # Seconds per character
 const PANEL_BACKDROP_SHADER_PATH := "res://Scripts/Shaders/panel_backdrop.gdshader"
 
+## Rep meter (rebel mode): cloned from ChoreUI's meter pattern.
+const REP_BAR_TEXTURE_UNDER := preload("res://Resources/Art/UI/under-export.png")
+const REP_BAR_TEXTURE_PROGRESS := preload("res://Resources/Art/UI/progress-export.png")
+const REP_BAR_TEXTURE_OVER := preload("res://Resources/Art/UI/over-export.png")
+const REP_BAR_NINE_PATCH_MARGIN: int = 32
+## Escalating rebel-stage tints (Teacher's Pet -> Banned from the Mall).
+const REP_STAGE_COLORS: Array[Color] = [
+	Color(0.47, 0.89, 0.89),  # teal
+	Color(1.0, 0.73, 0.49),   # amber
+	Color(0.9, 0.45, 0.56),   # magenta
+	Color(1.0, 0.25, 0.5),    # hot pink
+]
+
 ## Pink/purple palette for the GlassActionButton close button,
 ## matching the dialog border (0.6, 0.4, 0.7) and Mom label pink (1, 0.8, 0.9).
 const MOM_BUTTON_PALETTE := {
@@ -44,17 +57,58 @@ var sprite_rect: TextureRect
 var dialog_label: RichTextLabel
 var close_button: GlassActionButton
 var response_row: VBoxContainer
+var rep_row: HBoxContainer
+var rep_meter: TextureProgressBar
+var rep_stage_label: Label
 var response_buttons: Array[GlassActionButton] = []
 var _current_responses: Array = []  # MomDialogResponse resources for the current beat
 var _current_expression: MomExpression = MomExpression.NEUTRAL
 var _is_animating: bool = false
 var _full_dialog_text: String = ""
+var title_label: Label
+## Node id of the beat currently shown (bot policy reads this for
+## story-aware choices, e.g. contesting false Patterson sightings).
+var current_node_id: String = ""
 
 func _ready() -> void:
 	_load_textures()
 	_create_ui_structure()
 	visible = false
+	var pm := get_node_or_null("/root/ProgressManager")
+	if pm and pm.has_signal("rep_changed"):
+		if not pm.is_connected("rep_changed", _on_rep_changed):
+			pm.rep_changed.connect(_on_rep_changed)
+		_update_rep_display()
 	print("[MomCharacter] Initialized")
+
+
+## _on_rep_changed(new_rep)
+##
+## ProgressManager rep_changed handler: refreshes the rebel meter.
+func _on_rep_changed(new_rep: int) -> void:
+	_update_rep_display()
+	# Juice the meter on change so the player notices the payoff
+	if rep_meter:
+		var tween := create_tween()
+		tween.tween_property(rep_meter, "scale", Vector2(1.04, 1.3), 0.12)
+		tween.tween_property(rep_meter, "scale", Vector2.ONE, 0.18)
+
+
+## _update_rep_display()
+##
+## Refreshes the Rep meter value and stage styling from ProgressManager.
+## Visual identity escalates with Rep: tint + stage name (4 stages).
+func _update_rep_display() -> void:
+	var pm := get_node_or_null("/root/ProgressManager")
+	if not pm or not pm.has_method("get_rep") or not rep_meter:
+		return
+	rep_meter.value = pm.get_rep()
+	var stage: int = pm.get_rep_stage()
+	var color: Color = REP_STAGE_COLORS[clampi(stage, 0, REP_STAGE_COLORS.size() - 1)]
+	rep_meter.tint_progress = color
+	if rep_stage_label:
+		rep_stage_label.text = pm.get_rep_stage_name().to_upper()
+		rep_stage_label.add_theme_color_override("font_color", color)
 
 ## _load_textures()
 ##
@@ -83,6 +137,10 @@ func _load_textures() -> void:
 ##   dialog_text: String - the BBCode-formatted dialog text
 func show_dialog(expression_name: String, dialog_text: String) -> void:
 	set_expression(expression_name)
+	if title_label:
+		title_label.text = "Mom"
+	if sprite_rect:
+		sprite_rect.modulate = Color.WHITE
 	_full_dialog_text = dialog_text
 	_build_response_buttons([])
 	close_button.visible = true
@@ -106,7 +164,14 @@ func show_node(node: MomDialogNode) -> void:
 	if node == null:
 		return
 	var was_hidden := not visible
+	current_node_id = node.id
 	set_expression(node.expression)
+	# Speaker label + portrait tint (cast story beats, e.g. phone calls).
+	# Mom still delivers every line; the cast never speaks directly.
+	if title_label:
+		title_label.text = node.speaker_name
+	if sprite_rect:
+		sprite_rect.modulate = node.speaker_tint
 	_full_dialog_text = node.mom_text
 	_type_dialog_text(node.mom_text)
 	_build_response_buttons(node.responses)
@@ -144,15 +209,22 @@ func press_response(index: int) -> void:
 func has_pending_responses() -> bool:
 	return visible and response_row.visible and response_buttons.size() > 0
 
-## choose_response_weighted() -> bool
+## choose_response_weighted(policy) -> bool
 ##
-## Bot policy: picks a response by tone-weighted random (mostly polite,
-## sometimes neutral, rarely sassy) and presses it.
+## Bot policy: picks a response and presses it. With the default
+## "tone_weighted" policy this is a tone-weighted random pick (mostly
+## polite, sometimes neutral, rarely sassy). "always_comply"/"always_sass"
+## pin the pick to that tone (falling back to weighted when absent).
 ##
 ## Returns: bool - true if a response was pressed
-func choose_response_weighted() -> bool:
+func choose_response_weighted(policy: String = "tone_weighted") -> bool:
 	if not has_pending_responses():
 		return false
+	match policy:
+		"always_comply":
+			return choose_response_by_tone("polite")
+		"always_sass":
+			return choose_response_by_tone("sassy")
 	var weights: Array = []
 	for response in _current_responses:
 		var tone: String = response.tone if response else "neutral"
@@ -160,6 +232,45 @@ func choose_response_weighted() -> bool:
 	var index: int = MomLogicHandler._pick_weighted_index(weights)
 	press_response(index)
 	return true
+
+## choose_response_by_tone(tone) -> bool
+##
+## Bot policy helper: picks a random response of the given tone and
+## presses it. Falls back to the tone-weighted pick when no response of
+## that tone exists on this beat.
+##
+## Returns: bool - true if a response was pressed
+func choose_response_by_tone(tone: String) -> bool:
+	if not has_pending_responses():
+		return false
+	var matching: Array[int] = []
+	for i in range(_current_responses.size()):
+		var response = _current_responses[i]
+		if response and response.tone == tone:
+			matching.append(i)
+	if matching.is_empty():
+		return choose_response_weighted("tone_weighted")
+	press_response(matching[GameRNG.randi_range(0, matching.size() - 1)])
+	return true
+
+## choose_response_by_button_text(fragment) -> bool
+##
+## Bot policy helper: presses the first response whose button text
+## contains the fragment (case-insensitive). Used by the tactical bot to
+## contest Patterson sightings it knows are false. Falls back to the
+## tone-weighted pick when nothing matches.
+##
+## Returns: bool - true if a response was pressed
+func choose_response_by_button_text(fragment: String) -> bool:
+	if not has_pending_responses():
+		return false
+	var needle := fragment.to_lower()
+	for i in range(_current_responses.size()):
+		var response = _current_responses[i]
+		if response and response.button_text.to_lower().contains(needle):
+			press_response(i)
+			return true
+	return choose_response_weighted("tone_weighted")
 
 ## _build_response_buttons(responses)
 ##
@@ -299,7 +410,7 @@ func _create_ui_structure() -> void:
 	hbox.add_child(dialog_container)
 	
 	# "Mom" title
-	var title_label = Label.new()
+	title_label = Label.new()
 	title_label.text = "Mom"
 	title_label.add_theme_font_override("font", vcr_font)
 	title_label.add_theme_font_size_override("font_size", 20)
@@ -318,6 +429,43 @@ func _create_ui_structure() -> void:
 	dialog_label.add_theme_font_size_override("normal_font_size", 16)
 	dialog_label.add_theme_color_override("default_color", Color.WHITE)
 	dialog_container.add_child(dialog_label)
+	
+	# Rep meter (rebel mode): persistent Rebellion stat feedback, shown
+	# between Mom's line and the response buttons where sass happens.
+	rep_row = HBoxContainer.new()
+	rep_row.name = "RepRow"
+	rep_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(rep_row)
+	
+	var rep_title = Label.new()
+	rep_title.text = "REP"
+	rep_title.add_theme_font_override("font", vcr_font)
+	rep_title.add_theme_font_size_override("font_size", 14)
+	rep_title.add_theme_color_override("font_color", Color(1, 0.8, 0.9))
+	rep_row.add_child(rep_title)
+	
+	rep_meter = TextureProgressBar.new()
+	rep_meter.name = "RepMeter"
+	rep_meter.min_value = 0
+	rep_meter.max_value = 100
+	rep_meter.value = 0
+	rep_meter.fill_mode = TextureProgressBar.FILL_LEFT_TO_RIGHT
+	rep_meter.texture_under = REP_BAR_TEXTURE_UNDER
+	rep_meter.texture_progress = REP_BAR_TEXTURE_PROGRESS
+	rep_meter.texture_over = REP_BAR_TEXTURE_OVER
+	rep_meter.nine_patch_stretch = false
+	rep_meter.stretch_margin_left = REP_BAR_NINE_PATCH_MARGIN
+	rep_meter.stretch_margin_right = REP_BAR_NINE_PATCH_MARGIN
+	rep_meter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rep_meter.custom_minimum_size = Vector2(0, 24)
+	rep_meter.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rep_row.add_child(rep_meter)
+	
+	rep_stage_label = Label.new()
+	rep_stage_label.name = "RepStageLabel"
+	rep_stage_label.add_theme_font_override("font", vcr_font)
+	rep_stage_label.add_theme_font_size_override("font_size", 12)
+	rep_row.add_child(rep_stage_label)
 	
 	# Response button column (hidden unless a dialog node has responses).
 	# Buttons stack vertically and span the dialog width - response texts

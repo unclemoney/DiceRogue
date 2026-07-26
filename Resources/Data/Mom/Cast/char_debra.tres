@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CastCharacter" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/cast_character.gd" id="1_char"]
+
+[resource]
+script = ExtResource("1_char")
+id = "debra"
+display_name = "Aunt Debra"
+role_description = "The perfume cloud. Haunts the lifestyle zones, relays unsolicited opinions about Mom's parenting secondhand. Minor cast: flavor lines, no mechanics of her own."
+portrait_tint = Color(0.85, 0.55, 0.75, 1)
+zone_affinity = Array[String](["Fashion Boutique", "Jewelry", "Perfume Shop", "Furniture"])
+line_pools = {
+"gossip": [
+"Your Aunt Debra says kids today have no discipline. She said it through a cloud of White Diamonds.",
+"Debra cornered me at the perfume counter. TWENTY minutes.",
+"Debra says hi. She also said your hair looks 'mall-adjacent.'",
+"Debra has OPINIONS about how I raise you. She has a cat.",
+"I need you to be extra good - Debra is watching and she takes NOTES.",
+"Your Aunt Debra was at the {zone} today. Of course she was. She lives there."
+]
+}

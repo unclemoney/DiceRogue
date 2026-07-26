@@ -993,6 +993,60 @@ Mom's conversations are branching trees stored as data (`Resources/Data/Mom/Dial
 **Grudge System:**
 Unresolved anger carries forward. If Mom storms off (or an outcome adds grudge), the next visit's severity floor rises by the grudge level (0-3). Grudge is consumed when applied and saved with run state.
 
+**Rebellion Systems (Sass Incentives):**
+Sass is the high-variance path; compliance is the safe path. Three interlocking systems make rebellion a real strategy:
+- **Rebellion Buff**: A *successful* sass (sassy response that draws no tangible punishment: storms off, defer, or a pure flavor outcome) grants the round-scoped **Rebellion** buff — +15% score and +1 roll per turn per stack, up to 3 stacks (one per successful sass in the visit). Cleared at the start of the next round. Implemented as a positive effect riding the Debuff pipeline (`Scripts/Debuff/rebellion_buff.gd`), so it shows in the DebuffUI icon row.
+- **Punishment Delay**: The "Not now, Mom." response (punishment visits) can defer the pending punishment to a later visit. Counterweight: each defer adds +1 grudge and raises the **defer streak** (max 3, run-scoped, saved), which compounds onto the severity of the *eventual* resolution — and grudge can convert future reward visits into punishment visits. The streak resets when a punishment tier is actually applied.
+- **Rep Stat**: A persistent meta stat (0-100, saved in the profile) that grows with successful sass (+3, defer +2, storm off +4) and shrinks with bootlicking compliance (polite on punishment visits -2, polite on check-ins -1). Rep gates kiosk inventory by POG tier: 10+ unlocks PG ("Questionable"), 25+ PG-13 ("Parental Guidance"), 45+ R ("Grounded"), 70+ NC-17 ("Banned"). Below Rep 10 with a happy Mom (mood ≤ 3), the Mom-Approved (G) pool gets 1.5x shelf weight and a 10% discount instead — two playstyles, two item pools. Rep-gated items appear greyed in the shop's LOCKED tab with their Rep requirement.
+
+**Rebel Mode UI:**
+- **Rep Meter** (Mom dialog): A meter between Mom's line and the response buttons, cloned from the ChoreUI meter pattern. Visual identity escalates through 4 stages: Teacher's Pet (teal, 0-9) → Attitude Problem (amber, 10-24) → Mall Rat (magenta, 25-44) → Banned from the Mall (hot pink, 45+).
+- **Rep Chip** (kiosk POGS tab): Shows Rep, stage, highest unlocked POG tier, and the next unlock threshold.
+- **Chore Board**: The expanded chore panel shows a Rep summary line.
+
+**Bot Mom Policy:**
+`BotConfig.mom_policy` selects how the build bot answers Mom: `tone_weighted` (default), `always_comply`, `always_sass`, or `tactical` (sass only when safe: no R/NC-17 inventory, no mods, mood ≤ 7, defer streak < 2). The policy is recorded in bot run reports for A/B/C balance testing.
+
+### Mom's World (Cast & Story System)
+
+A recurring cast lives inside Mom's check-in dialogues. They never speak directly — Mom relays everything ("Mrs. Patterson saw you near the arcade", "Wait till your father hears about this") — but they tell small ongoing stories across a playthrough, making the mall feel like a town.
+
+**The Cast** (`Resources/Data/Mom/Cast/char_*.tres`):
+- **Mrs. Patterson** — church gossip and neighborhood surveillance network. Her sightings drive the true/false accusation mechanic.
+- **Dad** — the unseen threat. Never appears; escalation markers plus a rare off-screen Dad call and a rare cover-up.
+- **Cousin Derek** — the golden child. Comparison lines scale with grudge; late-run he gets caught at Video Rentals.
+- **Aunt Debra** — the perfume cloud. Lifestyle-zone flavor and secondhand parenting opinions.
+- **Mrs. Henderson** — the teacher. Homework pressure that ties into the chore system.
+
+**CastManager** (`Scripts/Managers/cast_manager.gd`): owns all cast state for the whole playthrough (zones visited, arc progress, story flags, pending Patterson reports). Cast state survives zone transitions and resets only on a genuinely new game — Patterson remembers every zone you've been to. Saved/loaded with the run (`cast_manager` key in the save state).
+
+**Check-in precedence**: when the once-per-round check-in fires, the cast gets first claim on the slot — Derek's quiet visit > Dad cover > due story beat > due pending Patterson report > fresh sighting roll > the normal check-in trees. Meter visits are unaffected except the Dad call.
+
+**Patterson Sightings**: a check-in may open with a report about a specific zone. True reports name a zone the player actually visited (never the current one); false accusations name a zone they've never been to — the player must judge truth from memory. False rate is mood-weighted (25% at mood 8+, 40% base, 60% at mood ≤ 4), and at mood ≤ 4 a false accusation uses the "believed" tree where contesting usually fails (injustice as gameplay). Responses: admit (polite), stay silent, contest, or sass. Contesting a false report successfully sets the `flag_patterson_doubted` story flag (feeds the Patterson arc payoff). Entering a zone with R/NC-17 loot or grudge ≥ 2 queues a TRUE report that surfaces 2+ zones later — delayed consequences. Tuning: `PATTERSON_SIGHTING_CHANCE 0.30` (0.15 after the truce), one sighting per zone, never two zones in a row, `PATTERSON_REPORT_DELAY_ZONES 2`.
+
+**Story Arcs** (`Resources/Data/Mom/Cast/arc_*.tres`): small 3-beat structures (setup → escalation → payoff) delivered across check-ins in different zones. Beats gate on channel, grudge, Rep, story flags, and chores done; the highest-priority due beat takes the slot. Completion pays small real rewards (money, mood, Rep). The six arcs:
+1. **The Patterson File** — nosy intro → false-accusation escalation → the absurd casserole report and a truce (sightings halve, never false again).
+2. **The Golden Child** — Derek comparisons → grudge-scaled resentment → Derek caught at Video Rentals, then one silent, warm check-in (forces a cool-mom visit next).
+3. **Dad's Long Week** — traffic commiseration → the good pen → "I haven't told your father… yet."
+4. **The Perfume Cloud** — Debra's opinions → the perfume-counter ambush → Mom tells her off ($25 gift card, "I'm keeping half").
+5. **Mrs. Henderson Has Called** — homework warning → the dinner phone call → "creative with your time" (needs chores done = homework done; pays a consumable).
+6. **Mom's Secret Past** — regional finals 1987 → champion's tips (free consumable) → Mom takes the cabinet high score (Rep-gated, pays $75).
+
+**Dad mechanics**: at severity ≥ 4 with grudge ≥ 2, a meter visit has a 20% chance to become a Dad call (once per playthrough) — Mom relays Dad's verdict off-screen and the punishment lands one tier worse. Counterpoint: if grudge climbs to 2+ and later returns to 0, the next check-in becomes the Dad cover beat ("I didn't tell him. You owe me.") — big mood/Rep gain, no punishment.
+
+**Dialog plumbing**: story trees are ordinary `MomDialogNode` resources in `Resources/Data/Mom/Dialog/` — `MomLogicHandler` directory-scans that folder at load, so new trees need no code. Nodes support `speaker_name` (dialog title, e.g. "Mom (on the phone with Dad)") and `speaker_tint` (portrait silhouette), and a `{zone}` placeholder in mom_text (substituted at display time on a duplicate — shared resources are never mutated). A new dialog-only outcome effect `rep_delta` shifts Rep by magnitude. Terminal nodes whose id starts with `flag_` set story flags when visited. Zone-flavored check-ins: `checkin_neutral` can chain to `checkin_zone_flavor`, which names the current zone.
+
+**Bot story policy**: the tactical bot treats story beats like a player with a good memory — it contests sightings it knows are false, admits true ones, and never sasses the Dad call. Bot reports track `story_beats_seen`, `patterson_sightings`, and `patterson_contests_won/lost` per run for A/B testing.
+
+**Debug Commands (Chores Tab):**
+- Patterson Sighting (True/False): force a sighting about a visited/unvisited zone
+- Advance Next Arc Beat: force the next unplayed story beat (ignores trigger conditions)
+- Force Derek Twist: play the Video Rentals twist + quiet visit
+- Force Dad Call: play the Dad call dialog
+- Show Cast State: dump zones, arcs, flags, pending reports
+
+**Tests**: `Tests/CastManagerTest.tscn` (zone logging, sighting truth, mood bands, report delay, arc gating/completion, precedence, save/load, reset). `Tests/mom_data_validation_test.gd` also validates `Resources/Data/Mom/Cast/` (characters, arcs, zone affinities, beat/flag cross-references, BBCode whitelist).
+
 **Escalation:**
 Each visit that resolves at severity 3+ increments a run counter that adds to later visits' severity — repeat low-mood visits unlock harsher tiers.
 
@@ -1032,6 +1086,9 @@ Each visit that resolves at severity 3+ increments a run counter that adds to la
 - Trigger Mom Immediately: Bypass progress threshold (meter visit)
 - Trigger Mom Check-in: Fire the random check-in dialog on demand
 - Add Mom Grudge +1: Raise Mom's grudge level for testing severity floors
+- Add Defer Streak +1: Raise the defer streak for testing compounded severity
+- Rep +10 / Rep -10 / Show Rep State: Adjust and inspect the persistent Rep stat
+- Grant Rebellion Buff: Apply the sass-reward buff directly
 - Select New Task: Force new random task selection
 - Reset Progress: Set progress to 0
 - Show Chore State: Display current system status

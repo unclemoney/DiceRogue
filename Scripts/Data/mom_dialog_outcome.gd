@@ -17,6 +17,12 @@ class_name MomDialogOutcome
 ##   "storms_off"  - Mom leaves angry: NO punishment this visit, but the
 ##                   grudge_delta (usually +1) raises next visit's severity
 ##                   floor. Should always set ends_visit = true.
+##   "defer_punishment" - successful sass pushes the pending punishment to a
+##                   later visit: NO punishment now, but grudge +1 and the
+##                   ChoresManager defer_streak rises, compounding the
+##                   severity of the eventual resolution. Must end the visit.
+##   "rep_delta"   - shifts Rebellion Rep by `magnitude` (story-beat
+##                   rewards/penalties; applied via ProgressManager).
 ##
 ## NOTE: the @export_enum literal below must stay in sync with
 ## MomPunishmentTier.VALID_EFFECTS plus the dialog-only effects above.
@@ -28,13 +34,15 @@ class_name MomDialogOutcome
 @export_enum("none", "fine", "debuff", "confiscate_powerups", "remove_mod",
 	"lock_cosmetics", "mood_delta", "reward_money", "reward_consumable",
 	"reward_powerup",
-	"apply_tier", "storms_off", "grudge_delta") var effect: String = "none"
+	"apply_tier", "storms_off", "grudge_delta", "defer_punishment",
+	"rep_delta") var effect: String = "none"
 
 ## Effect-specific magnitude. Meaning depends on `effect`:
 ##   "fine"/"reward_money": exact dollar amount (0 = random $50-150)
 ##   "debuff"/"remove_mod": count (0 = 1)
 ##   "apply_tier":          >= 1 exact tier_id, 0 = computed severity,
 ##                          -1 = computed severity + 1
+##   "rep_delta":           rep change (signed)
 @export var magnitude: int = 0
 
 ## Mood shift applied to Mom (positive = angrier, negative = happier).
@@ -82,7 +90,7 @@ func validate() -> bool:
 		all_valid = false
 
 	var valid_effects: Array[String] = MomPunishmentTier.VALID_EFFECTS.duplicate()
-	valid_effects.append_array(["apply_tier", "storms_off", "mood_delta", "grudge_delta"])
+	valid_effects.append_array(["apply_tier", "storms_off", "mood_delta", "grudge_delta", "defer_punishment", "rep_delta"])
 	if effect not in valid_effects:
 		push_error("[MomDialogOutcome] invalid effect: '%s'" % effect)
 		all_valid = false
@@ -93,6 +101,10 @@ func validate() -> bool:
 
 	if effect == "storms_off" and not ends_visit:
 		push_error("[MomDialogOutcome] storms_off must end the visit (ends_visit = true)")
+		all_valid = false
+
+	if effect == "defer_punishment" and not ends_visit:
+		push_error("[MomDialogOutcome] defer_punishment must end the visit (ends_visit = true)")
 		all_valid = false
 
 	if not ends_visit and followup_node_id.is_empty() and result_text.is_empty():

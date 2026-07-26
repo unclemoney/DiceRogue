@@ -19,6 +19,7 @@ signal mom_triggered
 signal mom_mood_changed(new_mood: int)
 signal mom_checkin  # Emitted once per round at a random roll for a non-punishment visit
 signal grudge_changed(new_grudge: int)  # Emitted when Mom's grudge level changes
+signal defer_streak_changed(new_streak: int)  # Emitted when the defer streak changes
 signal request_chore_selection  # Emitted when player needs to choose next chore (EASY/HARD)
 
 const MAX_PROGRESS: int = 100
@@ -51,6 +52,12 @@ var completed_chores: Array = []  # List of completed ChoreData for display
 # Grudge system: unresolved anger carries into the next visit's severity floor
 const MAX_GRUDGE: int = 3
 var grudge: int = 0
+
+# Defer streak: each time the player sasses their way out of a punishment
+# (defer_punishment outcome), the streak rises and compounds the severity of
+# the eventual resolution. Resets when a punishment tier is actually applied.
+const MAX_DEFER_STREAK: int = 3
+var defer_streak: int = 0
 
 # Escalation: repeat low-mood visits within a run unlock harsher tiers
 var low_mood_visits_this_run: int = 0
@@ -264,6 +271,7 @@ func reset_for_new_game() -> void:
 	current_round_number = 1  # Reset round scaling
 	chore_rewards_this_round = 0
 	grudge = 0
+	defer_streak = 0
 	low_mood_visits_this_run = 0
 	_rolls_this_round = 0
 	_checkin_done_this_round = false
@@ -272,6 +280,7 @@ func reset_for_new_game() -> void:
 	progress_changed.emit(current_progress)
 	mom_mood_changed.emit(mom_mood)
 	grudge_changed.emit(grudge)
+	defer_streak_changed.emit(defer_streak)
 	# Queue chore selection popup so the player picks their first chore
 	_queue_chore_selection()
 	print("[ChoresManager] Reset for new game - mood: %d, round: %d" % [mom_mood, current_round_number])
@@ -592,6 +601,30 @@ func consume_grudge() -> int:
 	return current
 
 
+## register_defer()
+##
+## Records a successful defer_punishment outcome. The streak compounds the
+## severity of the eventual resolution (see MomLogicHandler.compute_severity).
+func register_defer() -> void:
+	var old_streak = defer_streak
+	defer_streak = clampi(defer_streak + 1, 0, MAX_DEFER_STREAK)
+	if defer_streak != old_streak:
+		print("[ChoresManager] Defer streak: %d -> %d" % [old_streak, defer_streak])
+		defer_streak_changed.emit(defer_streak)
+
+
+## reset_defer_streak()
+##
+## Clears the defer streak. Called when a punishment tier is actually
+## applied, so the "bill" is considered paid.
+func reset_defer_streak() -> void:
+	if defer_streak == 0:
+		return
+	print("[ChoresManager] Defer streak reset (was %d)" % defer_streak)
+	defer_streak = 0
+	defer_streak_changed.emit(defer_streak)
+
+
 ## register_low_mood_visit()
 ##
 ## Records that a visit resolved at high severity. Repeat low-mood visits
@@ -648,6 +681,7 @@ func get_state() -> Dictionary:
 		"current_round_number": current_round_number,
 		"mom_mood": mom_mood,
 		"grudge": grudge,
+		"defer_streak": defer_streak,
 		"low_mood_visits_this_run": low_mood_visits_this_run,
 		"_rolls_this_round": _rolls_this_round,
 		"_checkin_roll_target": _checkin_roll_target,
@@ -682,6 +716,7 @@ func load_state(state: Dictionary) -> void:
 	current_round_number = state.get("current_round_number", 1)
 	mom_mood = state.get("mom_mood", DEFAULT_MOOD)
 	grudge = state.get("grudge", 0)
+	defer_streak = state.get("defer_streak", 0)
 	low_mood_visits_this_run = state.get("low_mood_visits_this_run", 0)
 	_rolls_this_round = state.get("_rolls_this_round", 0)
 	_checkin_roll_target = state.get("_checkin_roll_target", -1)

@@ -94,6 +94,7 @@ const BONUS_COLLECTOR_CONSUMABLE_DEF := preload("res://Scripts/Consumable/BonusC
 @export var statistics_panel_path: NodePath     = ^"../StatisticsPanel"
 @export var scoring_animation_controller_path: NodePath = ^"../CRTTV/ScoringAnimationController"
 @export var chores_manager_path: NodePath       = ^"../Managers/ChoresManager"
+@export var cast_manager_path: NodePath         = ^"../Managers/CastManager"
 @export var chore_ui_path: NodePath             = ^"../GameUI/MarginContainer/MainVBox/MiddleSection/LeftColumn/ChoreMeterContainer/ContentVBox/ChoreUI"
 @export var synergy_manager_path: NodePath      = ^"../Managers/SynergyManager"
 @export var end_of_round_stats_panel_path: NodePath = ^"../EndOfRoundStatsPanel"
@@ -130,6 +131,7 @@ const BONUS_COLLECTOR_CONSUMABLE_DEF := preload("res://Scripts/Consumable/BonusC
 @onready var statistics_panel: Control = get_node_or_null(statistics_panel_path)
 @onready var scoring_animation_controller = get_node_or_null(scoring_animation_controller_path)
 @onready var chores_manager = get_node_or_null(chores_manager_path)
+@onready var cast_manager: CastManager = get_node_or_null(cast_manager_path)
 @onready var chore_ui = get_node_or_null(chore_ui_path)
 @onready var synergy_manager = get_node_or_null(synergy_manager_path)
 @onready var end_of_round_stats_panel = get_node_or_null(end_of_round_stats_panel_path)
@@ -323,6 +325,14 @@ func _ready() -> void:
 		print("[GameController] Connected to ChoresManager.request_chore_selection")
 		print("[GameController] Connected to ChoresManager.task_selected")
 
+	# CastManager (Mom's World): scenes without a CastManager node get one
+	# created programmatically so every game scene has cast/story support
+	if cast_manager == null:
+		cast_manager = CastManager.new()
+		cast_manager.name = "CastManager"
+		add_child(cast_manager)
+		print("[GameController] CastManager created programmatically")
+
 	# Initialize SynergyManager
 	if is_instance_valid(synergy_manager):
 		synergy_manager.connect_to_game_controller(self)
@@ -484,6 +494,12 @@ func _on_channel_selected(channel: int) -> void:
 	print("[GameController] Channel", channel, "selected, starting game...")
 	_apply_channel_background()
 	_apply_channel_starting_bonuses(channel)
+	# Mom's World: a new playthrough begins - reset cast state and log the
+	# first zone (Patterson sightings reference zones visited this run)
+	if cast_manager:
+		cast_manager.reset_for_new_game()
+		if channel_manager:
+			cast_manager.record_zone_visit(channel_manager.get_channel_config(channel), self)
 	# Reset zone-scope statistics — a new zone (channel) begins here
 	var stats = get_node_or_null("/root/Statistics")
 	if stats:
@@ -2476,11 +2492,13 @@ func _get_used_dice_for_category_manual(category: String, dice_values: Array, _d
 ## apply_debuff(id)
 ##
 ## Spawns and applies a debuff effect to the appropriate target. Also registers the debuff with UI.
-func apply_debuff(id: String) -> void:
+func apply_debuff(id: String, ignore_ungrounded: bool = false) -> void:
 	print("[GameController] Attempting to apply debuff:", id)
 
-	# Check if Ungrounded powerup is active - block all debuffs
-	if is_power_up_active("ungrounded"):
+	# Check if Ungrounded powerup is active - block all debuffs.
+	# Granted buffs (e.g. "rebellion") bypass this: they are rewards,
+	# not punishments, and must never be silently eaten.
+	if not ignore_ungrounded and is_power_up_active("ungrounded"):
 		print("[GameController] Debuff '%s' blocked by Ungrounded PowerUp" % id)
 		emit_signal("debuff_blocked", id)
 		return
@@ -2586,6 +2604,13 @@ func apply_debuff(id: String) -> void:
 			debuff_started = true
 		"grounded_debuff":
 			debuff.target = self
+			debuff.start()
+			debuff_started = true
+		"rebellion":
+			debuff.target = self
+			# Stacks are managed by _grant_rebellion_buff; always start at 1
+			# (DebuffManager may have applied a channel intensity multiplier)
+			debuff.set_intensity(1.0)
 			debuff.start()
 			debuff_started = true
 		_:
@@ -5137,6 +5162,9 @@ func _proceed_to_next_channel_with_carryovers(selected_types: Array[String]) -> 
 	if channel_manager:
 		channel_manager.advance_to_next_channel()
 		print("[GameController] Advanced to Channel", channel_manager.current_channel)
+		# Mom's World: log the new zone (cast state persists across zones)
+		if cast_manager:
+			cast_manager.record_zone_visit(channel_manager.get_channel_config(channel_manager.current_channel), self)
 	
 	# Reset zone-scope statistics — a new zone (channel) begins here
 	var stats = get_node_or_null("/root/Statistics")
@@ -5158,6 +5186,9 @@ func _proceed_to_next_channel() -> void:
 	if channel_manager:
 		channel_manager.advance_to_next_channel()
 		print("[GameController] Advanced to Channel", channel_manager.current_channel)
+		# Mom's World: log the new zone (cast state persists across zones)
+		if cast_manager:
+			cast_manager.record_zone_visit(channel_manager.get_channel_config(channel_manager.current_channel), self)
 	
 	_apply_channel_background()
 	
@@ -5315,10 +5346,16 @@ func _on_mom_triggered() -> void:
 	var severity := 1
 	var tree_id := "visit_punishment"
 	if chores_manager:
+		# Read grudge BEFORE compute_severity consumes it (Dad call check)
+		var pre_visit_grudge: int = chores_manager.grudge
 		severity = MomLogicHandlerScript.compute_severity(chores_manager)
 		tree_id = MomLogicHandlerScript.get_visit_tree_id(chores_manager.mom_mood)
-		# Silent treatment: rare replacement for low-severity visits
-		if tree_id == "visit_punishment" and MomLogicHandlerScript.should_silent_treatment(severity):
+		if tree_id == "visit_punishment" and cast_manager \
+				and cast_manager.should_dad_call(severity, pre_visit_grudge):
+			# Rare high-heat escalation: Mom phones Dad, punishment +1 tier
+			tree_id = "story_dad_call"
+		elif tree_id == "visit_punishment" and MomLogicHandlerScript.should_silent_treatment(severity):
+			# Silent treatment: rare replacement for low-severity visits
 			tree_id = "visit_silent_treatment"
 		print("[GameController] Mom mood: %d/10, severity: %d, tree: %s" % [
 			chores_manager.mom_mood, severity, tree_id])
@@ -5331,19 +5368,56 @@ func _on_mom_triggered() -> void:
 ## Handler for the random once-per-round check-in. Not a punishment visit
 ## by default, but dialog outcomes can escalate it. Freezes the chore
 ## meter while the dialog is up.
+## Defers the show/skip decision to the end of the frame: the signal can
+## fire inside the scoring signal chain, BEFORE challenge_completed sets
+## round_manager.is_challenge_completed - checking immediately would read
+## a stale flag and show a Mom dialog on the round-winning score (same
+## stale-flag hazard as _on_chore_selection_requested).
 func _on_mom_checkin() -> void:
 	print("[GameController] Mom check-in!")
+	call_deferred("_resolve_mom_checkin")
+
+
+## _resolve_mom_checkin()
+##
+## Deferred body of _on_mom_checkin(). Runs after the full scoring signal
+## chain, so round/game completion flags are accurate.
+func _resolve_mom_checkin() -> void:
+	if not chores_manager:
+		return
+
+	# If a challenge was just completed, skip the check-in entirely -
+	# a fresh one is scheduled at the next round start instead.
+	if round_manager and round_manager.is_challenge_completed:
+		print("[GameController] Mom check-in skipped - challenge completed")
+		return
+
+	# If the whole game (channel) just completed, skip as well.
+	if scorecard and scorecard.is_game_complete():
+		print("[GameController] Mom check-in skipped - game completed")
+		return
+
 	var tree_id := "checkin_neutral"
 	var severity := 0
-	if chores_manager:
-		chores_manager.is_mom_active = true
-		tree_id = MomLogicHandlerScript.get_checkin_tree_id(self, chores_manager.mom_mood)
-		severity = MomLogicHandlerScript.get_checkin_severity(tree_id)
-		print("[GameController] Check-in tree: %s (severity %d)" % [tree_id, severity])
-	await _run_mom_dialog_session(tree_id, severity, false)
+	var context: Dictionary = {}
+	chores_manager.is_mom_active = true
+	# Mom's World: the cast gets first claim on the check-in slot
+	# (story beats > Patterson sightings > normal trees)
+	if cast_manager:
+		var claim: Dictionary = cast_manager.decide_checkin(self)
+		tree_id = claim.get("tree_id", "")
+		context = claim.get("context", {})
+	if tree_id == "":
+		if cast_manager and cast_manager.consume_flag("force_cool_mom"):
+			tree_id = "checkin_cool_mom"
+		else:
+			tree_id = MomLogicHandlerScript.get_checkin_tree_id(self, chores_manager.mom_mood)
+	severity = MomLogicHandlerScript.get_checkin_severity(tree_id)
+	print("[GameController] Check-in tree: %s (severity %d)" % [tree_id, severity])
+	await _run_mom_dialog_session(tree_id, severity, false, context)
 
 
-## _run_mom_dialog_session(root_node_id, severity, is_meter_visit)
+## _run_mom_dialog_session(root_node_id, severity, is_meter_visit, context)
 ##
 ## Walks a Mom dialog tree: shows each node, waits for the player's
 ## response, resolves the weighted outcome, and chains follow-up nodes.
@@ -5353,7 +5427,9 @@ func _on_mom_checkin() -> void:
 ##   root_node_id: String - id of the root MomDialogNode
 ##   severity: int - visit severity (0 = reward, 1-5 = punishment tiers)
 ##   is_meter_visit: bool - true for meter-full visits (resets progress after)
-func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit: bool) -> void:
+##   context: Dictionary - cast/story data; "zone" overrides the {zone}
+##     placeholder target (Patterson sightings name a specific zone)
+func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit: bool, context: Dictionary = {}) -> void:
 	# Create Mom dialog if needed
 	if _mom_dialog == null:
 		var mom_scene = preload("res://Scenes/UI/mom_dialog_popup.tscn")
@@ -5367,12 +5443,14 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 		return
 
 	var result := MomLogicHandlerScript.MomCheckResult.new()
+	var sass_stacks := 0  # successful sass responses this visit -> Rebellion buff stacks
+	var visited_node_ids: Array = [root_node_id]  # CastManager flag nodes ("flag_*")
 
 	# Walk the tree until a terminal beat (guard against malformed loops)
 	var guard := 0
 	while node != null and not node.is_terminal() and guard < 10:
 		guard += 1
-		_mom_dialog.show_node(node)
+		_mom_dialog.show_node(_prepare_mom_node(node, context))
 		var response_index: int = await _mom_dialog.response_selected
 		if response_index < 0 or response_index >= node.responses.size():
 			break
@@ -5382,6 +5460,11 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 		if outcome == null:
 			break
 		var outcome_result := MomLogicHandlerScript.apply_outcome(self, outcome, severity, active_debuffs)
+
+		# Rebellion systems: score this response for Rep and buff stacks
+		if _is_successful_sass(response, outcome):
+			sass_stacks += 1
+		result.rep_delta += _compute_rep_delta(response, outcome_result, is_meter_visit, severity)
 
 		# Accumulate consequences across the whole visit
 		result.mood_delta += outcome_result.mood_delta
@@ -5395,8 +5478,10 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 		# reply (if any) and end the conversation
 		if outcome.has_followup():
 			var followup := MomLogicHandlerScript.get_dialog_node(outcome.followup_node_id)
+			if followup != null:
+				visited_node_ids.append(followup.id)
 			if followup != null and followup.is_terminal():
-				_mom_dialog.show_node(followup)
+				_mom_dialog.show_node(_prepare_mom_node(followup, context))
 				node = null
 			else:
 				node = followup
@@ -5407,7 +5492,7 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 
 	# Terminal root node (no responses): just show it
 	if node != null and node.is_terminal():
-		_mom_dialog.show_node(node)
+		_mom_dialog.show_node(_prepare_mom_node(node, context))
 
 	# Animate confiscation of power-ups BEFORE closing dialog
 	if result.removed_power_ups.size() > 0 and powerup_ui:
@@ -5439,6 +5524,14 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 	# Apply consequences after dialog closes
 	MomLogicHandlerScript.apply_consequences(self, result)
 
+	# Rebellion systems: Rep is a persistent meta stat; the Rebellion buff
+	# is the immediate payoff for successful sass (one stack per success).
+	if result.rep_delta != 0:
+		ProgressManager.adjust_rep(result.rep_delta)
+	if sass_stacks > 0:
+		_grant_rebellion_buff(sass_stacks)
+		result.rebellion_granted = true
+
 	# Track grounded debuffs for removal at round end
 	for debuff_id in result.applied_debuffs:
 		if debuff_id not in _grounded_debuffs:
@@ -5448,7 +5541,29 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 	if result.cosmetics_locked and not result.cosmetics_lock_permanent:
 		_mom_cosmetics_locked = true
 
+	# Mom's World: advance story arcs, set flag nodes, pay beat rewards
+	if cast_manager:
+		cast_manager.on_session_finished(root_node_id, visited_node_ids)
+
 	_end_mom_visit(is_meter_visit)
+
+
+## _prepare_mom_node(node, context) -> MomDialogNode
+##
+## Substitutes the {zone} placeholder in mom_text. Returns the node
+## unchanged when there is no placeholder; otherwise a DUPLICATE - the
+## registered dialog resources are shared and must never be mutated.
+## context["zone"] wins (Patterson sightings name a specific zone);
+## otherwise the current zone is used.
+func _prepare_mom_node(node: MomDialogNode, context: Dictionary) -> MomDialogNode:
+	if node == null or not node.mom_text.contains("{zone}"):
+		return node
+	var zone_name: String = context.get("zone", "")
+	if zone_name == "" and channel_manager and channel_manager.has_method("get_selector_zone_name"):
+		zone_name = channel_manager.get_selector_zone_name()
+	var shown: MomDialogNode = node.duplicate()
+	shown.mom_text = shown.mom_text.replace("{zone}", zone_name)
+	return shown
 
 
 ## _end_mom_visit(is_meter_visit)
@@ -5503,7 +5618,8 @@ func _check_lock_dice_chore() -> void:
 ## _clear_grounded_debuffs()
 ##
 ## Removes all debuffs that were applied by Mom (NC-17 consequences).
-## Also restores dice colors after a temporary Mom cosmetic lock.
+## Also clears the round-scoped Rebellion buff and restores dice colors
+## after a temporary Mom cosmetic lock.
 ## Called at the start of a new round.
 func _clear_grounded_debuffs() -> void:
 	print("[GameController] Clearing grounded debuffs: %s" % [_grounded_debuffs])
@@ -5511,10 +5627,79 @@ func _clear_grounded_debuffs() -> void:
 		disable_debuff(debuff_id)
 	_grounded_debuffs.clear()
 
+	# The Rebellion buff lasts until the round ends
+	if is_debuff_active("rebellion"):
+		disable_debuff("rebellion")
+		print("[GameController] Rebellion buff expired at round end")
+
 	if _mom_cosmetics_locked:
 		_mom_cosmetics_locked = false
 		DiceColorManager.set_colors_enabled(true)
 		print("[GameController] Mom's cosmetic lock expired - dice colors restored")
+
+
+# ─── Rebellion systems (sass incentives) ───
+
+## Rep deltas per Mom dialog response (see PLAN: Sass Incentives).
+const REP_SASS_SUCCESS: int = 3
+const REP_DEFER_SUCCESS: int = 2
+const REP_STORM_OFF: int = 4
+const REP_POLITE_PUNISHMENT: int = -2
+const REP_POLITE_CHECKIN: int = -1
+
+
+## _is_successful_sass(response, outcome) -> bool
+##
+## A sass is "successful" when a sassy-tone response draws an outcome with
+## no tangible punishment: escape (storms_off / defer_punishment) or pure
+## flavor (none / mood_delta / grudge_delta).
+func _is_successful_sass(response: MomDialogResponse, outcome: MomDialogOutcome) -> bool:
+	if response == null or outcome == null or response.tone != "sassy":
+		return false
+	return outcome.effect in ["none", "mood_delta", "grudge_delta", "storms_off", "defer_punishment"]
+
+
+## _compute_rep_delta(response, outcome_result, is_meter_visit, severity) -> int
+##
+## Maps a Mom dialog response + its resolved outcome to a Rep change.
+## Sass rewards drama; bootlicking compliance slowly erodes Rep.
+func _compute_rep_delta(response: MomDialogResponse, outcome_result, is_meter_visit: bool, severity: int) -> int:
+	if response == null or outcome_result == null:
+		return 0
+	match response.tone:
+		"sassy":
+			if outcome_result.deferred:
+				return REP_DEFER_SUCCESS
+			if outcome_result.storms_off:
+				return REP_STORM_OFF
+			var punished: bool = outcome_result.tier_id >= 0 \
+				or outcome_result.fine_amount > 0 \
+				or not outcome_result.applied_debuffs.is_empty() \
+				or not outcome_result.removed_power_ups.is_empty() \
+				or not outcome_result.removed_mods.is_empty()
+			return 0 if punished else REP_SASS_SUCCESS
+		"polite":
+			if is_meter_visit and severity >= 1:
+				return REP_POLITE_PUNISHMENT
+			if not is_meter_visit:
+				return REP_POLITE_CHECKIN
+	return 0
+
+
+## _grant_rebellion_buff(stacks)
+##
+## Grants (or stacks) the round-scoped Rebellion buff for successful sass.
+## Bypasses the Ungrounded debuff-block: it is a reward, not a punishment.
+func _grant_rebellion_buff(stacks: int = 1) -> void:
+	if stacks <= 0:
+		return
+	if is_debuff_active("rebellion"):
+		var buff: Debuff = active_debuffs["rebellion"]
+		buff.set_intensity(buff.intensity + stacks)
+	else:
+		apply_debuff("rebellion", true)
+		if stacks > 1 and active_debuffs.has("rebellion"):
+			active_debuffs["rebellion"].set_intensity(float(stacks))
 
 
 ## get_save_state() -> Dictionary
@@ -5534,6 +5719,7 @@ func get_save_state() -> Dictionary:
 		"statistics": Statistics.get_state(),
 		"roll_stats": RollStats.get_state(),
 		"chores_manager": chores_manager.get_state() if chores_manager else {},
+		"cast_manager": cast_manager.get_state() if cast_manager else {},
 		"game_controller": {
 			"active_power_up_ids": active_power_ups.keys(),
 			"active_consumable_counts": consumable_counts.duplicate(),
@@ -5554,6 +5740,7 @@ func get_save_state() -> Dictionary:
 			"_challenge_reward_this_round": _challenge_reward_this_round,
 			"_challenge_reward_granted": _challenge_reward_granted,
 			"_grounded_debuffs": _grounded_debuffs.duplicate(),
+			"rebellion_stacks": int(active_debuffs["rebellion"].intensity) if active_debuffs.has("rebellion") else 1,
 			"_mom_cosmetics_locked": _mom_cosmetics_locked
 		}
 	}
@@ -5610,6 +5797,10 @@ func load_game_state(save_data: Dictionary) -> void:
 		# Re-initialize lock constraint tracker if the loaded chore requires it
 		if chores_manager.current_task and chores_manager.current_task.task_type == ChoreData.TaskType.LOCK_CONSTRAINT:
 			_on_chore_task_selected(chores_manager.current_task)
+
+	var cast_state = save_data.get("cast_manager", {})
+	if not cast_state.is_empty() and cast_manager:
+		cast_manager.load_state(cast_state)
 	
 	# 4. Restore RoundManager
 	var round_state = save_data.get("round_manager", {})
@@ -5700,6 +5891,11 @@ func load_game_state(save_data: Dictionary) -> void:
 	for debuff_id in gc_state.get("active_debuff_ids", []):
 		if not active_debuffs.has(debuff_id):
 			apply_debuff(debuff_id)
+
+	# Restore Rebellion buff stacks (apply_debuff always starts it at 1)
+	var rebellion_stacks := int(gc_state.get("rebellion_stacks", 1))
+	if rebellion_stacks > 1 and active_debuffs.has("rebellion"):
+		active_debuffs["rebellion"].set_intensity(float(rebellion_stacks))
 	
 	# 10. Sync UI state
 	if dice_hand:

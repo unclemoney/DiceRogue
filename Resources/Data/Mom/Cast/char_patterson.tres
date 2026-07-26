@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CastCharacter" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/cast_character.gd" id="1_char"]
+
+[resource]
+script = ExtResource("1_char")
+id = "patterson"
+display_name = "Mrs. Patterson"
+role_description = "The church gossip and neighborhood surveillance network. She is EVERYWHERE. Her sightings drive the true/false accusation mechanic; over a run her reports escalate from nosy to absurd."
+portrait_tint = Color(0.75, 0.72, 0.78, 1)
+zone_affinity = Array[String](["Food Court", "Department Store", "Sears"])
+line_pools = {
+"sighting": [
+"Mrs. Patterson saw you near the {zone} today. Interesting.",
+"I ran into Mrs. Patterson at bingo. She had [shake]questions[/shake] about you.",
+"Mrs. Patterson says hello. She also says she saw you at the {zone}. She sees everything, that woman.",
+"Funny thing - Mrs. Patterson waved at me across the Food Court and mouthed your name. Why would she do that?",
+"Mrs. Patterson's binoculars are pointed at the mall again. Guess whose name came up.",
+"According to Mrs. Patterson you were 'up to something' near the {zone}. Her words.",
+"Mrs. Patterson called. Not to chat. To [color=#FF6B9D]report[/color].",
+"You know Mrs. Patterson has a little notebook? You're in it. Twice this week.",
+"She saw you at the {zone} 'looking suspicious.' Her evidence? 'He had that look.'",
+"Mrs. Patterson says the {zone} is 'no place for a child unattended.' She'd know. She's there every day.",
+"Three zones over and Mrs. Patterson STILL saw you. I don't know how she does it.",
+"Mrs. Patterson saw you near the {zone}. Last Tuesday. She's telling me NOW."
+]
+}

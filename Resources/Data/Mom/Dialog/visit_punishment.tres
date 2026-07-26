@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MomDialogNode" load_steps=14 format=3 uid="uid://lkppd0v8d81p"]
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=18 format=3 uid="uid://lkppd0v8d81p"]
 
 [ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
 [ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
@@ -113,9 +113,54 @@ button_text = "Whatever."
 tone = "sassy"
 outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2"), SubResource("out_sassy_3")])
 
+[sub_resource type="Resource" id="out_defer_1"]
+script = ExtResource("3_out")
+weight = 5.0
+effect = "defer_punishment"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=orange]Oh, we'll talk ALRIGHT.[/color] Later. When you least expect it."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_defer_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "apply_tier"
+magnitude = -1
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=red]Not now? NOT NOW?![/color] How about RIGHT NOW, and worse!"
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_defer_3"]
+script = ExtResource("3_out")
+weight = 2.0
+effect = "storms_off"
+magnitude = 0
+mood_delta = 2
+grudge_delta = 1
+permanent = false
+followup_node_id = "sass_storm_off"
+result_text = ""
+result_expression = ""
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_defer"]
+script = ExtResource("2_resp")
+button_text = "Not now, Mom."
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_defer_1"), SubResource("out_defer_2"), SubResource("out_defer_3")])
+
 [resource]
 script = ExtResource("1_node")
 id = "visit_punishment"
 mom_text = "[color=red]The chore list is RIGHT THERE[/color] and look at this mess! Meter's full, chores undone. Explain yourself, young one."
 expression = "upset"
-responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy"), SubResource("resp_defer")])

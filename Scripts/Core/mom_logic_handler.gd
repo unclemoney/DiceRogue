@@ -68,6 +68,9 @@ class MomCheckResult:
 	var mood_delta: int = 0
 	var grudge_delta: int = 0
 	var storms_off: bool = false
+	var deferred: bool = false  # defer_punishment: no tier now, compounds via defer_streak
+	var rep_delta: int = 0  # Rebellion Rep change (applied by GameController via ProgressManager)
+	var rebellion_granted: bool = false  # successful sass -> Rebellion buff next round
 	var tier_id: int = -1
 	var mom_is_upset: bool = false
 	var mom_is_furious: bool = false  # NC-17 found
@@ -87,6 +90,26 @@ static func _ensure_data_loaded() -> void:
 			NODE_VISIT_PUNISHMENT, NODE_VISIT_REWARD, NODE_VISIT_SILENT,
 			NODE_CHECKIN_CAUGHT, NODE_CHECKIN_WARNING, NODE_CHECKIN_COOL]:
 		_nodes[node.id] = node
+	_scan_dialog_dir()
+
+
+## _scan_dialog_dir()
+##
+## Registers every MomDialogNode found in Resources/Data/Mom/Dialog/
+## that wasn't already preloaded above. Cast/story trees (sightings,
+## story beats, flag nodes) live there as data - no new preloads needed.
+## The data validation test scans the same directory, so the loader and
+## the test can never drift apart.
+static func _scan_dialog_dir() -> void:
+	var dir := DirAccess.open("res://Resources/Data/Mom/Dialog/")
+	if dir == null:
+		return
+	for file_name in dir.get_files():
+		if not file_name.ends_with(".tres"):
+			continue
+		var res := load("res://Resources/Data/Mom/Dialog/" + file_name)
+		if res is MomDialogNode and not _nodes.has(res.id):
+			_nodes[res.id] = res
 
 
 ## get_tier(tier_id) -> MomPunishmentTier
@@ -197,6 +220,8 @@ static func scan_inventory_ratings(game_controller: Node) -> Dictionary:
 ## Maps Mom's mood to a severity (0 = reward, 1-5 = punishment tiers):
 ##   mood 1-3 -> 0, 4-6 -> 1, 7 -> 2, 8 -> 3, 9 -> 4, 10 -> 5
 ## Grudge raises the severity floor (and is consumed/decayed here).
+## The defer streak (successful defer_punishment outcomes) compounds on
+## top of that floor, so deferred punishments come back harsher.
 ## Severity >= 3 visits also add the run's low-mood-visit count and
 ## register themselves for future escalation.
 ##
@@ -219,6 +244,12 @@ static func compute_severity(chores_manager) -> int:
 		var grudge: int = chores_manager.consume_grudge()
 		if grudge > 0:
 			severity = maxi(severity, grudge)
+
+	# Deferred punishments compound: each successful defer raises the
+	# severity of the eventual resolution.
+	var defer_streak := int(chores_manager.get("defer_streak")) if chores_manager.get("defer_streak") != null else 0
+	if defer_streak > 0:
+		severity = mini(severity + defer_streak, 5)
 
 	if severity >= 3:
 		severity += int(chores_manager.get("low_mood_visits_this_run"))
@@ -318,9 +349,21 @@ static func apply_outcome(game_controller: Node, outcome: MomDialogOutcome, seve
 		result.mom_is_upset = true
 		return result
 
+	if outcome.effect == "defer_punishment":
+		# Successful sass pushes the pending punishment to a later visit.
+		# No tier now; grudge +1 and ChoresManager.register_defer() (called
+		# from apply_consequences) compound the eventual severity.
+		result.deferred = true
+		result.mom_is_upset = true
+		result.grudge_delta += 1
+		return result
+
 	match outcome.effect:
 		"none", "mood_delta", "grudge_delta":
 			pass  # Field deltas already recorded above
+		"rep_delta":
+			# Story-beat Rep shift (applied via ProgressManager downstream)
+			result.rep_delta += outcome.magnitude
 		"apply_tier":
 			var tier_id := outcome.magnitude
 			if tier_id == 0:
@@ -541,6 +584,8 @@ static func _merge_result(target: MomCheckResult, source: MomCheckResult) -> voi
 	target.cosmetics_lock_permanent = target.cosmetics_lock_permanent or source.cosmetics_lock_permanent
 	target.mom_is_upset = target.mom_is_upset or source.mom_is_upset
 	target.mom_is_furious = target.mom_is_furious or source.mom_is_furious
+	target.deferred = target.deferred or source.deferred
+	target.rep_delta += source.rep_delta
 
 
 # ─── Consequence application ───
@@ -610,6 +655,13 @@ static func apply_consequences(game_controller: Node, result: MomCheckResult) ->
 		if result.grudge_delta != 0 and chores_manager.has_method("add_grudge"):
 			chores_manager.add_grudge(result.grudge_delta)
 			print("[MomLogicHandler] Grudge delta applied: %+d" % result.grudge_delta)
+
+		# Defer streak bookkeeping: a successful defer compounds; actually
+		# applying a punishment tier pays the bill and clears the streak.
+		if result.deferred and chores_manager.has_method("register_defer"):
+			chores_manager.register_defer()
+		elif result.tier_id >= 1 and chores_manager.has_method("reset_defer_streak"):
+			chores_manager.reset_defer_streak()
 
 
 # ─── Helpers ───

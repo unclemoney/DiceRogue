@@ -48,6 +48,17 @@ const ShopOwnedItemsPanelClass := preload("res://Scripts/UI/shop_owned_items_pan
 const UnlockableItemScript := preload("res://Scripts/Core/unlockable_item.gd")
 const DEFAULT_SHOP_ITEMS: int = 2
 const MAX_POWER_UP_ITEMS: int = 6
+## Mom-Approved mode (low Rep + happy Mom): G-rated POGs get weighted
+## shelf presence and a price discount (discount applied in ShopItem).
+const MOM_APPROVED_WEIGHT_MULT: float = 1.5
+const MOM_APPROVED_DISCOUNT: float = 0.10
+## Rebel-mode stage colors for the Rep chip (Teacher's Pet -> Banned).
+const REP_STAGE_COLORS: Array[Color] = [
+	Color(0.47, 0.89, 0.89),  # teal
+	Color(1.0, 0.73, 0.49),   # amber
+	Color(0.9, 0.45, 0.56),   # magenta
+	Color(1.0, 0.25, 0.5),    # hot pink
+]
 const OWNERSHIP_PANEL_TYPES := ["mod", "colored_dice"]
 const OWNERSHIP_PANEL_TITLES := {
 	"mod": "MOD STOCK",
@@ -69,6 +80,7 @@ var mod_items := DEFAULT_SHOP_ITEMS          # Specific count for mods
 var colored_dice_items := DEFAULT_SHOP_ITEMS # Specific count for colored dice
 
 var purchased_items := {}  # Track purchased items by type: {"power_up": [], "consumable": [], "mod": [], "colored_dice": []}
+var _rep_chip_label: Label = null  # Rep indicator chip in the POGS tab corner
 var _tab_item_pools := {}
 var _tab_page_indices := {}
 var _footer_controls := {}
@@ -269,12 +281,14 @@ func _populate_shop_items() -> void:
 	for item_type in PAGED_ITEM_TYPES:
 		_render_current_page(item_type)
 	_refresh_all_ownership_panels()
+	_update_rep_chip()
 
 func _build_power_up_pool() -> Array:
 	var power_up_page_items: Array = []
 	var power_ups = power_up_manager.get_available_power_ups()
 	var filtered_power_ups = _filter_out_purchased_items(power_ups, "power_up")
 	filtered_power_ups = _filter_unlocked_items(filtered_power_ups, "power_up")
+	filtered_power_ups = _filter_by_rep_tier(filtered_power_ups)
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	if game_controller:
 		filtered_power_ups = filtered_power_ups.filter(func(id): return not game_controller.active_power_ups.has(id))
@@ -286,6 +300,45 @@ func _build_power_up_pool() -> Array:
 		else:
 			push_error("[ShopUI] Failed to get PowerUpData for:", id)
 	return power_up_page_items
+
+
+## _filter_by_rep_tier(items) -> Array
+##
+## Gates POG rating bands behind the persistent Rep stat: only ratings with
+## rating_rank <= ProgressManager.get_rep_tier() may appear in the kiosk.
+## Above-tier items surface in the LOCKED tab via _create_rep_locked_section().
+func _filter_by_rep_tier(items: Array) -> Array:
+	var pm = get_node_or_null("/root/ProgressManager")
+	if not pm or not pm.has_method("get_rep_tier"):
+		return items
+	var max_rank: int = pm.get_rep_tier()
+	var result: Array = []
+	var hidden: Array = []
+	for id in items:
+		var data = power_up_manager.get_def(id)
+		if data and PowerUpData.rating_rank(data.rating) > max_rank:
+			hidden.append(id)
+		else:
+			result.append(id)
+	if not hidden.is_empty():
+		print("[ShopUI] Rep tier %d (%s) hides %d POGs: %s" % [
+			max_rank, pm.get_rep_tier_name(), hidden.size(), hidden])
+	return result
+
+
+## _is_mom_approved_mode() -> bool
+##
+## The compliance playstyle bonus: low Rep AND a happy Mom means the
+## Mom-Approved (G) pool gets weight/discount perks in the kiosk.
+func _is_mom_approved_mode() -> bool:
+	var pm = get_node_or_null("/root/ProgressManager")
+	if not pm or not pm.has_method("get_rep"):
+		return false
+	if pm.get_rep() >= pm.REP_TIER_THRESHOLDS[1]:
+		return false
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	var chores_manager = game_controller.get("chores_manager") if game_controller else null
+	return chores_manager != null and int(chores_manager.get("mom_mood")) <= 3
 
 func _build_consumable_pool() -> Array:
 	var consumable_page_items: Array = []
@@ -400,6 +453,9 @@ func _select_weighted_power_ups(power_up_ids: Array, count: int) -> Array:
 		var data = power_up_manager.get_def(id)
 		if data and data is PowerUpData:
 			var weight = PowerUpData.get_rarity_weight(data.rarity)
+			# Mom-Approved mode: G-rated POGs get bonus shelf presence
+			if _is_mom_approved_mode() and PowerUpData.rating_rank(data.rating) == 0:
+				weight = roundi(weight * MOM_APPROVED_WEIGHT_MULT)
 			var rarity_char = PowerUpData.get_rarity_display_char(data.rarity)
 			print("  - %s (%s): %s%% chance" % [data.display_name, rarity_char, str(weight)])
 			
@@ -2099,8 +2155,113 @@ func populate_locked_items() -> void:
 	var locked_consoles = progress_manager.get_locked_items(UnlockableItemClass.ItemType.GAMING_CONSOLE)
 	for item in locked_consoles:
 		_create_locked_item_display(item)
-	
+
+	# Rep-gated POG tiers: unlocked in ProgressManager but above the player's
+	# Rep tier (see _filter_by_rep_tier). Shown greyed with the Rep requirement.
+	_create_rep_locked_section()
+
 	print("[ShopUI] Locked items populated")
+
+
+## _update_rep_chip()
+##
+## Creates/refreshes the Rep indicator chip in the corner of the POGS tab:
+## current Rep, rebel stage, highest unlocked POG tier, and the next unlock.
+func _update_rep_chip() -> void:
+	var pm = get_node_or_null("/root/ProgressManager")
+	var pogs_tab = get_node_or_null("TabContainer/Pogs")
+	if not pm or not pm.has_method("get_rep") or not pogs_tab:
+		return
+	if _rep_chip_label == null:
+		_rep_chip_label = Label.new()
+		_rep_chip_label.name = "RepChip"
+		_rep_chip_label.add_theme_font_override("font", load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf"))
+		_rep_chip_label.add_theme_font_size_override("font_size", 14)
+		_rep_chip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_rep_chip_label.anchor_left = 1.0
+		_rep_chip_label.anchor_right = 1.0
+		_rep_chip_label.offset_left = -560.0
+		_rep_chip_label.offset_right = -12.0
+		_rep_chip_label.offset_top = 6.0
+		_rep_chip_label.offset_bottom = 28.0
+		_rep_chip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pogs_tab.add_child(_rep_chip_label)
+	var tier: int = pm.get_rep_tier()
+	var stage: int = pm.get_rep_stage()
+	var text := "REP %d/%d · %s  |  POGs up to: %s" % [
+		pm.get_rep(), pm.MAX_REP, pm.get_rep_stage_name(), pm.get_rep_tier_name()]
+	if tier < pm.REP_TIER_THRESHOLDS.size() - 1:
+		text += "  (next: %s @ %d)" % [
+			pm.REP_TIER_NAMES[tier + 1], pm.REP_TIER_THRESHOLDS[tier + 1]]
+	_rep_chip_label.text = text
+	_rep_chip_label.add_theme_color_override("font_color", REP_STAGE_COLORS[clampi(stage, 0, REP_STAGE_COLORS.size() - 1)])
+
+
+## _create_rep_locked_section()
+##
+## Adds greyed POG cards to the LOCKED tab for items that are unlocked in
+## ProgressManager but gated behind a higher Rep tier.
+func _create_rep_locked_section() -> void:
+	var pm = get_node_or_null("/root/ProgressManager")
+	if not pm or not pm.has_method("get_rep_tier") or not locked_container:
+		return
+	var max_rank: int = pm.get_rep_tier()
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	for id in power_up_manager.get_available_power_ups():
+		var data = power_up_manager.get_def(id)
+		if not data:
+			continue
+		var rank := PowerUpData.rating_rank(data.rating)
+		if rank <= max_rank:
+			continue
+		# Only advertise what the player could otherwise buy (unlocked, unowned)
+		if not pm.is_item_unlocked(id):
+			continue
+		if game_controller and game_controller.active_power_ups.has(id):
+			continue
+		var needed: int = pm.get_rep_threshold_for_tier(rank)
+		_create_rep_locked_item_display(data, needed, pm.REP_TIER_NAMES[rank])
+
+
+## _create_rep_locked_item_display(data, rep_needed, tier_label)
+##
+## One greyed POG card showing the Rep requirement to unlock its tier.
+func _create_rep_locked_item_display(data: PowerUpData, rep_needed: int, tier_label: String) -> void:
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(200, 170)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.08, 0.06, 0.1, 0.9)
+	style.border_color = Color(0.5, 0.2, 0.3, 0.8)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
+	panel.add_theme_stylebox_override("panel", style)
+	var vbox := VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 6)
+	panel.add_child(vbox)
+	var icon := TextureRect.new()
+	icon.texture = data.icon
+	icon.custom_minimum_size = Vector2(64, 64)
+	icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.modulate = Color(0.35, 0.35, 0.35)
+	vbox.add_child(icon)
+	var name_label := Label.new()
+	name_label.text = data.display_name
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.add_theme_font_override("font", vcr_font)
+	name_label.add_theme_font_size_override("font_size", 12)
+	name_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	vbox.add_child(name_label)
+	var req_label := Label.new()
+	req_label.text = "REP %d — %s" % [rep_needed, tier_label.to_upper()]
+	req_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	req_label.add_theme_font_override("font", vcr_font)
+	req_label.add_theme_font_size_override("font_size", 12)
+	req_label.add_theme_color_override("font_color", Color(1.0, 0.25, 0.5))
+	vbox.add_child(req_label)
+	locked_container.add_child(panel)
 
 ## populate_unlocked_items()
 ##
