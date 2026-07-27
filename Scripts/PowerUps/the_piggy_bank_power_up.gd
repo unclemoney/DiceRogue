@@ -7,6 +7,9 @@ class_name ThePiggyBankPowerUp
 ## When sold, the player receives the accumulated savings as a bonus
 ## on top of the normal half-price sell refund.
 ## Shows an animated coin effect each time money is banked.
+## Savings persist across mall zone changes via
+## `PlayerEconomy.piggy_bank_savings` — re-buying the Piggy Bank in a new
+## zone restores the stored amount. Selling pays out and clears them.
 ## Price: $125, Rarity: Uncommon, Rating: E
 ##
 ## Visual: Animated coin particle flies upward each roll to show saving.
@@ -28,7 +31,8 @@ func apply(target) -> void:
 		return
 	
 	dice_hand_ref = target
-	accumulated_savings = 0
+	# Restore savings persisted across mall zone changes (0 on a fresh run).
+	accumulated_savings = PlayerEconomy.piggy_bank_savings
 	
 	game_controller_ref = get_tree().get_first_node_in_group("game_controller")
 	
@@ -50,6 +54,7 @@ func apply(target) -> void:
 
 func _on_roll_complete() -> void:
 	accumulated_savings += SAVINGS_PER_ROLL
+	PlayerEconomy.piggy_bank_savings = accumulated_savings
 	print("[ThePiggyBankPowerUp] Saved $%d this roll. Total savings: $%d" % [SAVINGS_PER_ROLL, accumulated_savings])
 	
 	_play_coin_animation()
@@ -68,6 +73,7 @@ func _on_power_up_sold(sold_id: String) -> void:
 	if accumulated_savings > 0:
 		print("[ThePiggyBankPowerUp] SOLD! Paying out $%d in savings!" % accumulated_savings)
 		PlayerEconomy.add_money(accumulated_savings)
+		PlayerEconomy.piggy_bank_savings = 0
 		
 		# Show big payout effect
 		_play_payout_effect()

@@ -20,6 +20,13 @@ class_name MomLogicHandler
 
 const AVAILABLE_DEBUFFS: Array[String] = ["lock_dice", "costly_roll", "disabled_twos", "roll_score_minus_one", "the_division"]
 
+## Sass-failure escalation (Rebellion): punished SASSY responses scale with
+## the player's persistent Rep tier (0-4). Every SASS_REP_TIER_STEP Rep
+## tiers add +1 punishment tier; at SASS_REP_EXTRA_DEBUFF_MIN_TIER or
+## higher, debuff entries apply one extra debuff.
+const SASS_REP_TIER_STEP: int = 2
+const SASS_REP_EXTRA_DEBUFF_MIN_TIER: int = 3
+
 ## Default dollar range when a reward_money outcome/effect has no amount.
 const DEFAULT_REWARD_MIN: int = 50
 const DEFAULT_REWARD_MAX: int = 150
@@ -326,7 +333,7 @@ static func pick_response_index(node: MomDialogNode) -> int:
 
 # ─── Result building ───
 
-## apply_outcome(game_controller, outcome, severity, active_debuffs) -> MomCheckResult
+## apply_outcome(game_controller, outcome, severity, active_debuffs, is_sass) -> MomCheckResult
 ##
 ## Converts a drawn dialog outcome into consequences. Dialog-only deltas
 ## (mood/grudge) ride on the result; "apply_tier" resolves a full
@@ -334,7 +341,9 @@ static func pick_response_index(node: MomDialogNode) -> int:
 ##
 ## Parameters:
 ##   severity: int - the visit's computed severity (for apply_tier 0 / -1)
-static func apply_outcome(game_controller: Node, outcome: MomDialogOutcome, severity: int, active_debuffs: Dictionary = {}) -> MomCheckResult:
+##   is_sass: bool - true for sassy-tone responses; punished outcomes then
+##     escalate with the player's Rep tier (SASS_REP_* consts)
+static func apply_outcome(game_controller: Node, outcome: MomDialogOutcome, severity: int, active_debuffs: Dictionary = {}, is_sass: bool = false) -> MomCheckResult:
 	var result := MomCheckResult.new()
 	if outcome == null:
 		return result
@@ -370,15 +379,19 @@ static func apply_outcome(game_controller: Node, outcome: MomDialogOutcome, seve
 				tier_id = severity
 			elif tier_id == -1:
 				tier_id = mini(severity + 1, 5)
+			if is_sass:
+				# Sass escalation: every SASS_REP_TIER_STEP Rep tiers add
+				# +1 punishment tier (clamped to the valid 0-5 range).
+				tier_id = mini(tier_id + ProgressManager.get_rep_tier() / SASS_REP_TIER_STEP, 5)
 			var tier := get_tier(tier_id)
 			if tier:
 				result.tier_id = tier_id
-				var entry_result := build_result_from_entries(game_controller, draw_entries(tier), active_debuffs)
+				var entry_result := build_result_from_entries(game_controller, draw_entries(tier), active_debuffs, is_sass)
 				_merge_result(result, entry_result)
 		_:
 			# Direct punishment/reward effect on the outcome itself
 			var pseudo_entry := _outcome_to_entry(outcome)
-			var entry_result := build_result_from_entries(game_controller, [pseudo_entry], active_debuffs)
+			var entry_result := build_result_from_entries(game_controller, [pseudo_entry], active_debuffs, is_sass)
 			_merge_result(result, entry_result)
 
 	return result
@@ -414,18 +427,18 @@ static func _outcome_to_entry(outcome: MomDialogOutcome) -> Dictionary:
 	}
 
 
-## build_result_from_entries(game_controller, entries, active_debuffs) -> MomCheckResult
+## build_result_from_entries(game_controller, entries, active_debuffs, is_sass) -> MomCheckResult
 ##
 ## Resolves drawn tier entries into a MomCheckResult. This is the only
 ## place effect strings are interpreted.
-static func build_result_from_entries(game_controller: Node, entries: Array, active_debuffs: Dictionary = {}) -> MomCheckResult:
+static func build_result_from_entries(game_controller: Node, entries: Array, active_debuffs: Dictionary = {}, is_sass: bool = false) -> MomCheckResult:
 	var result := MomCheckResult.new()
 	for entry in entries:
-		_resolve_entry(game_controller, entry, active_debuffs, result)
+		_resolve_entry(game_controller, entry, active_debuffs, result, is_sass)
 	return result
 
 
-static func _resolve_entry(game_controller: Node, entry: Dictionary, active_debuffs: Dictionary, result: MomCheckResult) -> void:
+static func _resolve_entry(game_controller: Node, entry: Dictionary, active_debuffs: Dictionary, result: MomCheckResult, is_sass: bool = false) -> void:
 	var effect: String = entry.get("effect", "none")
 	var params: Dictionary = entry.get("params", {})
 	var permanent: bool = entry.get("permanent", false)
@@ -437,6 +450,8 @@ static func _resolve_entry(game_controller: Node, entry: Dictionary, active_debu
 			_resolve_fine(int(params.get("min", 0)), int(params.get("max", 0)), active_debuffs, result)
 		"debuff":
 			var count := int(params.get("count", 1))
+			if is_sass and ProgressManager.get_rep_tier() >= SASS_REP_EXTRA_DEBUFF_MIN_TIER:
+				count += 1
 			for i in range(count):
 				var debuff := _get_random_non_active_debuff(active_debuffs, result.applied_debuffs)
 				if debuff != "":

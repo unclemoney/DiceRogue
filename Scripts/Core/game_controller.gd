@@ -851,6 +851,8 @@ func _clear_active_debuffs() -> void:
 	# Clear UI
 	if is_instance_valid(debuff_ui) and debuff_ui.has_method("clear_all_debuffs"):
 		debuff_ui.clear_all_debuffs()
+	if is_instance_valid(chore_ui) and chore_ui.has_method("clear_buff_icons"):
+		chore_ui.clear_buff_icons()
 	
 	print("[GameController] Cleared all active debuffs")
 
@@ -2522,7 +2524,11 @@ func apply_debuff(id: String, ignore_ungrounded: bool = false) -> void:
 		return
 
 	var icon = null
-	if debuff_ui:
+	if id == "rebellion":
+		# The Rebellion buff icon lives in the Chore UI, not the Debuff UI
+		if chore_ui and chore_ui.has_method("add_buff_icon"):
+			icon = chore_ui.add_buff_icon(def, debuff)
+	elif debuff_ui:
 		icon = debuff_ui.add_debuff(def, debuff)
 	
 	if not icon:
@@ -2643,8 +2649,14 @@ func disable_debuff(id: String) -> void:
 		if debuff:
 			debuff.end()
 
-			# Animate the debuff removal
-			if debuff_ui:
+			# Animate the debuff removal (Rebellion's icon lives in the
+			# Chore UI, so it is removed there without a Debuff UI animation)
+			if id == "rebellion":
+				if is_instance_valid(chore_ui) and chore_ui.has_method("remove_buff_icon"):
+					chore_ui.remove_buff_icon(id)
+				active_debuffs.erase(id)
+				print("[GameController] Rebellion buff removed from Chore UI:", id)
+			elif debuff_ui:
 				debuff_ui.animate_debuff_removal(id, func():
 					# Remove after animation completes
 					if is_instance_valid(debuff_ui):
@@ -3542,6 +3554,7 @@ func _on_new_game_pressed() -> void:
 	# Reset autoloads that persist across scene reloads
 	if PlayerEconomy:
 		PlayerEconomy.reset_to_starting_money()
+		PlayerEconomy.reset_piggy_bank_savings()
 	get_tree().reload_current_scene()
 
 
@@ -3754,6 +3767,9 @@ func _process_round_end_queue() -> void:
 ## Final step of the round-end queue. Opens the shop and clears processing flag.
 func _finish_round_end_and_open_shop() -> void:
 	_is_processing_round_end = false
+	# Round is over: expire Mom's grounded debuffs and the Rebellion buff
+	# (round-scoped). _on_round_started() clears again as a safety net.
+	_clear_grounded_debuffs()
 	_open_shop_ui()
 
 
@@ -3969,6 +3985,10 @@ func _open_shop_ui() -> void:
 		_shop_tween.tween_property(
 			shop_ui, "scale", Vector2.ONE, 0.05
 		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+		# Fallback Mom check-in: short rounds often never reach the random
+		# roll target (2-30), so shop entry gets a 50% chance to catch up.
+		_maybe_shop_mom_checkin()
 	else:
 		shop_ui.scale = Vector2(1.0, 1.0)
 		# Cancel any existing tween
@@ -4895,7 +4915,10 @@ func _apply_automatic_debuffs(round_number: int) -> void:
 		if is_debuff_active(prev_id):
 			var prev_debuff = active_debuffs[prev_id]
 			prev_debuff.end()
-			if is_instance_valid(debuff_ui):
+			if prev_id == "rebellion":
+				if is_instance_valid(chore_ui) and chore_ui.has_method("remove_buff_icon"):
+					chore_ui.remove_buff_icon(prev_id)
+			elif is_instance_valid(debuff_ui):
 				debuff_ui.remove_debuff(prev_id)
 			active_debuffs.erase(prev_id)
 	debuff_manager.clear_active_debuffs()
@@ -5373,22 +5396,43 @@ func _on_mom_triggered() -> void:
 ## round_manager.is_challenge_completed - checking immediately would read
 ## a stale flag and show a Mom dialog on the round-winning score (same
 ## stale-flag hazard as _on_chore_selection_requested).
+## _maybe_shop_mom_checkin()
+##
+## Shop-entry fallback for the random check-in: rounds that ended before
+## the roll target (2-30) get a 50% chance of the check-in firing here.
+## Marks the round's check-in consumed so a later roll can't double-fire.
+## The dialog session manages its own overlay and unfreezes the meter on
+## close via _end_mom_visit(), same as an in-round check-in.
+func _maybe_shop_mom_checkin() -> void:
+	if not chores_manager:
+		return
+	if chores_manager.had_checkin_this_round():
+		return
+	if GameRNG.randf() >= ChoresManager.SHOP_CHECKIN_CHANCE:
+		return
+	print("[GameController] Shop-entry Mom check-in fallback triggered")
+	chores_manager.mark_checkin_done()
+	call_deferred("_resolve_mom_checkin", true)
+
+
 func _on_mom_checkin() -> void:
 	print("[GameController] Mom check-in!")
 	call_deferred("_resolve_mom_checkin")
 
 
-## _resolve_mom_checkin()
+## _resolve_mom_checkin(from_shop)
 ##
 ## Deferred body of _on_mom_checkin(). Runs after the full scoring signal
 ## chain, so round/game completion flags are accurate.
-func _resolve_mom_checkin() -> void:
+## from_shop: true when fired as the shop-entry fallback - skips the
+## challenge-completed guard (the flag is always set at shop time).
+func _resolve_mom_checkin(from_shop: bool = false) -> void:
 	if not chores_manager:
 		return
 
 	# If a challenge was just completed, skip the check-in entirely -
 	# a fresh one is scheduled at the next round start instead.
-	if round_manager and round_manager.is_challenge_completed:
+	if not from_shop and round_manager and round_manager.is_challenge_completed:
 		print("[GameController] Mom check-in skipped - challenge completed")
 		return
 
@@ -5459,7 +5503,7 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 		var outcome := MomLogicHandlerScript.resolve_response(response)
 		if outcome == null:
 			break
-		var outcome_result := MomLogicHandlerScript.apply_outcome(self, outcome, severity, active_debuffs)
+		var outcome_result := MomLogicHandlerScript.apply_outcome(self, outcome, severity, active_debuffs, response.tone == "sassy")
 
 		# Rebellion systems: score this response for Rep and buff stacks
 		if _is_successful_sass(response, outcome):

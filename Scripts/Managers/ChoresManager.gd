@@ -63,10 +63,11 @@ var defer_streak: int = 0
 var low_mood_visits_this_run: int = 0
 
 # Random check-in: exactly one non-punishment Mom visit per round, at a
-# random roll. Target range 2-5 so it nearly always fires even on the
-# shortest rounds (min 6 rolls/round); long rounds just get it earlier.
+# random roll. Target range 2-30 so short rounds often never reach it;
+# a 50% fallback at shop entry covers rounds that end before the target.
 const CHECKIN_TARGET_MIN: int = 2
-const CHECKIN_TARGET_MAX: int = 5
+const CHECKIN_TARGET_MAX: int = 30
+const SHOP_CHECKIN_CHANCE: float = 0.5
 var _rolls_this_round: int = 0
 var _checkin_roll_target: int = -1
 var _checkin_done_this_round: bool = false
@@ -575,6 +576,22 @@ func _check_checkin_trigger() -> void:
 	_checkin_done_this_round = true
 	print("[ChoresManager] Mom check-in triggered at roll %d" % _rolls_this_round)
 	mom_checkin.emit()
+
+
+## had_checkin_this_round() -> bool
+##
+## Returns true if Mom's check-in already happened (or was consumed) this
+## round. Used by the shop-entry fallback check-in.
+func had_checkin_this_round() -> bool:
+	return _checkin_done_this_round
+
+
+## mark_checkin_done()
+##
+## Marks this round's check-in as consumed without firing the signal.
+## Used by the shop-entry fallback so a later roll can't double-fire it.
+func mark_checkin_done() -> void:
+	_checkin_done_this_round = true
 
 
 ## add_grudge(amount)

@@ -11,6 +11,11 @@ signal money_changed(new_amount: int, change: int)
 ## Current money balance (int). Mutated by add_money/remove_money.
 var money: int = 100
 
+## Piggy Bank savings that persist across mall zone changes (the PowerUp
+## node is freed on zone change; this value is not). Reset only on a full
+## new game via reset_piggy_bank_savings().
+var piggy_bank_savings: int = 0
+
 ## _ready()
 ##
 ## Lifecycle: logs starting money to the console.
@@ -24,12 +29,12 @@ func _ready() -> void:
 func add_money(amount: int) -> void:
 	#print("[PlayerEconomy] Adding money:", amount)
 	money += amount
-	
+
 	# Track the earning in statistics
 	var stats = get_node_or_null("/root/Statistics")
 	if stats:
 		stats.add_money_earned(amount)
-	
+
 	#print("[PlayerEconomy] Emitting money_changed:", money)
 	#print("[PlayerEconomy] Instance ID:", self.get_instance_id())
 	emit_signal("money_changed", money, amount)
@@ -42,12 +47,12 @@ func add_money(amount: int) -> void:
 func remove_money(amount: int, category: String = "") -> bool:
 	print("[PlayerEconomy] Removing money:", amount, "category:", category)
 	money -= amount
-	
+
 	# Track the spending in statistics
 	var stats = get_node_or_null("/root/Statistics")
 	if stats:
 		stats.spend_money(amount, category)
-	
+
 	print("[PlayerEconomy] Emitting money_changed:", money)
 	print("[PlayerEconomy] Instance ID:", self.get_instance_id())
 	emit_signal("money_changed", money, -amount)
@@ -70,6 +75,7 @@ func get_money() -> int:
 ## reset_to_starting_money() -> void
 ##
 ## Resets money to the starting amount (100). Called on new channel start.
+## Does NOT touch piggy_bank_savings — those persist across zone changes.
 func reset_to_starting_money() -> void:
 	var starting_money := 100
 	var change := starting_money - money
@@ -77,11 +83,18 @@ func reset_to_starting_money() -> void:
 	print("[PlayerEconomy] Reset to starting money:", money)
 	emit_signal("money_changed", money, change)
 
+## reset_piggy_bank_savings() -> void
+##
+## Clears persisted Piggy Bank savings. Called on a full new game.
+func reset_piggy_bank_savings() -> void:
+	piggy_bank_savings = 0
+	print("[PlayerEconomy] Piggy Bank savings reset")
+
 ## get_state() -> Dictionary
 ##
 ## Returns the current economy state for saving.
 func get_state() -> Dictionary:
-	return {"money": money}
+	return {"money": money, "piggy_bank_savings": piggy_bank_savings}
 
 
 ## load_state(state)
@@ -89,4 +102,5 @@ func get_state() -> Dictionary:
 ## Restores the economy state from a saved dictionary.
 func load_state(state: Dictionary) -> void:
 	money = state.get("money", 100)
+	piggy_bank_savings = state.get("piggy_bank_savings", 0)
 	emit_signal("money_changed", money, 0)

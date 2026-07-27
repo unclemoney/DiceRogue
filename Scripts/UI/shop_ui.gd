@@ -52,13 +52,6 @@ const MAX_POWER_UP_ITEMS: int = 6
 ## shelf presence and a price discount (discount applied in ShopItem).
 const MOM_APPROVED_WEIGHT_MULT: float = 1.5
 const MOM_APPROVED_DISCOUNT: float = 0.10
-## Rebel-mode stage colors for the Rep chip (Teacher's Pet -> Banned).
-const REP_STAGE_COLORS: Array[Color] = [
-	Color(0.47, 0.89, 0.89),  # teal
-	Color(1.0, 0.73, 0.49),   # amber
-	Color(0.9, 0.45, 0.56),   # magenta
-	Color(1.0, 0.25, 0.5),    # hot pink
-]
 const OWNERSHIP_PANEL_TYPES := ["mod", "colored_dice"]
 const OWNERSHIP_PANEL_TITLES := {
 	"mod": "MOD STOCK",
@@ -80,7 +73,6 @@ var mod_items := DEFAULT_SHOP_ITEMS          # Specific count for mods
 var colored_dice_items := DEFAULT_SHOP_ITEMS # Specific count for colored dice
 
 var purchased_items := {}  # Track purchased items by type: {"power_up": [], "consumable": [], "mod": [], "colored_dice": []}
-var _rep_chip_label: Label = null  # Rep indicator chip in the POGS tab corner
 var _tab_item_pools := {}
 var _tab_page_indices := {}
 var _footer_controls := {}
@@ -193,6 +185,7 @@ func _ready() -> void:
 func _on_visibility_changed() -> void:
 	if visible:
 		shop_button_opened.emit()
+		_update_shop_title_text()
 		_animate_shop_open()
 
 ## _animate_shop_open()
@@ -281,7 +274,6 @@ func _populate_shop_items() -> void:
 	for item_type in PAGED_ITEM_TYPES:
 		_render_current_page(item_type)
 	_refresh_all_ownership_panels()
-	_update_rep_chip()
 
 func _build_power_up_pool() -> Array:
 	var power_up_page_items: Array = []
@@ -334,7 +326,8 @@ func _is_mom_approved_mode() -> bool:
 	var pm = get_node_or_null("/root/ProgressManager")
 	if not pm or not pm.has_method("get_rep"):
 		return false
-	if pm.get_rep() >= pm.REP_TIER_THRESHOLDS[1]:
+	# Low Rep means below the PG-13 threshold (index 2; G/PG share tier index 0/1 at 0 Rep).
+	if pm.get_rep() >= pm.REP_TIER_THRESHOLDS[2]:
 		return false
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	var chores_manager = game_controller.get("chores_manager") if game_controller else null
@@ -2028,10 +2021,26 @@ func _style_shop_title() -> void:
 	shop_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	shop_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	
-	# Set simple text (no BBCode)
-	shop_label.text = "SHOP"
+	# Set title text (includes the current mall zone name)
+	_update_shop_title_text()
 	
 	print("[ShopUI] Shop title styling applied")
+
+## _update_shop_title_text()
+## Sets the shop title to "SHOP - <MALL ZONE>" using the ChannelManager
+## display name. Falls back to plain "SHOP" when unavailable.
+func _update_shop_title_text() -> void:
+	if not shop_label:
+		return
+	var title := "SHOP"
+	var channel_manager = get_node_or_null("/root/ChannelManager")
+	if not channel_manager and get_tree().current_scene:
+		channel_manager = get_tree().current_scene.get_node_or_null("ChannelManager")
+	if channel_manager and channel_manager.has_method("get_channel_display_name"):
+		var zone_name: String = channel_manager.get_channel_display_name()
+		if zone_name != "":
+			title = "SHOP - " + zone_name.to_upper()
+	shop_label.text = title
 
 ## _create_colors_tab()
 ## Creates the COLORS tab programmatically if it doesn't exist in the scene
@@ -2111,90 +2120,21 @@ func _configure_mouse_input() -> void:
 	print("[ShopUI] Mouse input configuration complete")
 
 ## populate_locked_items()
-## 
-## Populates the LOCKED tab with items that haven't been unlocked yet
+##
+## Populates the LOCKED tab with REP-locked POGs only. Progression-locked
+## items live in the UNLOCKED tab (see populate_unlocked_items).
 func populate_locked_items() -> void:
 	if not locked_container:
 		print("[ShopUI] No locked container found")
 		return
-	
+
 	_clear_item_container(locked_container)
-	
-	# Get the ProgressManager autoload
-	var progress_manager = get_node("/root/ProgressManager")
-	if not progress_manager:
-		print("[ShopUI] ProgressManager not available")
-		return
-	
-	print("[ShopUI] Populating locked items...")
-	
-	# Load the UnlockableItem class to access ItemType enum
-	const UnlockableItemClass = preload("res://Scripts/Core/unlockable_item.gd")
-	
-	# Get locked PowerUps
-	var locked_power_ups = progress_manager.get_locked_items(UnlockableItemClass.ItemType.POWER_UP)
-	for item in locked_power_ups:
-		_create_locked_item_display(item)
-	
-	# Get locked Consumables
-	var locked_consumables = progress_manager.get_locked_items(UnlockableItemClass.ItemType.CONSUMABLE)
-	for item in locked_consumables:
-		_create_locked_item_display(item)
-	
-	# Get locked Mods
-	var locked_mods = progress_manager.get_locked_items(UnlockableItemClass.ItemType.MOD)
-	for item in locked_mods:
-		_create_locked_item_display(item)
-	
-	# Get locked Colored Dice features
-	var locked_dice_features = progress_manager.get_locked_items(UnlockableItemClass.ItemType.COLORED_DICE_FEATURE)
-	for item in locked_dice_features:
-		_create_locked_item_display(item)
-	
-	# Get locked Gaming Consoles
-	var locked_consoles = progress_manager.get_locked_items(UnlockableItemClass.ItemType.GAMING_CONSOLE)
-	for item in locked_consoles:
-		_create_locked_item_display(item)
 
 	# Rep-gated POG tiers: unlocked in ProgressManager but above the player's
 	# Rep tier (see _filter_by_rep_tier). Shown greyed with the Rep requirement.
 	_create_rep_locked_section()
 
 	print("[ShopUI] Locked items populated")
-
-
-## _update_rep_chip()
-##
-## Creates/refreshes the Rep indicator chip in the corner of the POGS tab:
-## current Rep, rebel stage, highest unlocked POG tier, and the next unlock.
-func _update_rep_chip() -> void:
-	var pm = get_node_or_null("/root/ProgressManager")
-	var pogs_tab = get_node_or_null("TabContainer/Pogs")
-	if not pm or not pm.has_method("get_rep") or not pogs_tab:
-		return
-	if _rep_chip_label == null:
-		_rep_chip_label = Label.new()
-		_rep_chip_label.name = "RepChip"
-		_rep_chip_label.add_theme_font_override("font", load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf"))
-		_rep_chip_label.add_theme_font_size_override("font_size", 14)
-		_rep_chip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		_rep_chip_label.anchor_left = 1.0
-		_rep_chip_label.anchor_right = 1.0
-		_rep_chip_label.offset_left = -560.0
-		_rep_chip_label.offset_right = -12.0
-		_rep_chip_label.offset_top = 6.0
-		_rep_chip_label.offset_bottom = 28.0
-		_rep_chip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		pogs_tab.add_child(_rep_chip_label)
-	var tier: int = pm.get_rep_tier()
-	var stage: int = pm.get_rep_stage()
-	var text := "REP %d/%d · %s  |  POGs up to: %s" % [
-		pm.get_rep(), pm.MAX_REP, pm.get_rep_stage_name(), pm.get_rep_tier_name()]
-	if tier < pm.REP_TIER_THRESHOLDS.size() - 1:
-		text += "  (next: %s @ %d)" % [
-			pm.REP_TIER_NAMES[tier + 1], pm.REP_TIER_THRESHOLDS[tier + 1]]
-	_rep_chip_label.text = text
-	_rep_chip_label.add_theme_color_override("font_color", REP_STAGE_COLORS[clampi(stage, 0, REP_STAGE_COLORS.size() - 1)])
 
 
 ## _create_rep_locked_section()
@@ -2265,7 +2205,9 @@ func _create_rep_locked_item_display(data: PowerUpData, rep_needed: int, tier_la
 
 ## populate_unlocked_items()
 ##
-## Populates the UNLOCKED tab with items already unlocked in ProgressManager.
+## Populates the UNLOCKED tab with all progression-tracked items: unlocked
+## ones get the green "unlocked" marquee shader, progression-locked ones the
+## black/grey "locked" shader (see _create_archive_item_display).
 func populate_unlocked_items() -> void:
 	if not unlocked_container:
 		print("[ShopUI] No unlocked container found")
@@ -2290,14 +2232,10 @@ func populate_unlocked_items() -> void:
 			var item = progress_manager.get_unlockable_item(item_id)
 			if item:
 				_create_unlocked_item_display(item)
+		var locked_items = progress_manager.get_locked_items(item_type)
+		for item in locked_items:
+			_create_archive_item_display(item, unlocked_container, true)
 	print("[ShopUI] Unlocked items populated")
-
-## _create_locked_item_display(item)
-##
-## Creates a display for a locked item showing what it is, unlock requirements,
-## and current progress toward unlocking (for cumulative conditions).
-func _create_locked_item_display(item) -> void:
-	_create_archive_item_display(item, locked_container, true)
 
 func _create_unlocked_item_display(item) -> void:
 	_create_archive_item_display(item, unlocked_container, false)

@@ -338,7 +338,7 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
     - Themes: dice color synergies, mod-powerup synergies, straight combos, economy/chores, debuff management, challenge easing
   - **Risk & Reward PowerUps** (6 total):
     - **The Replicator** (Rare/$300): After 1 turn, duplicates a random PowerUp you own — with dramatic visual/audio effects and a fully independent replica instance that keeps its own runtime id/modifier source
-    - **The Piggy Bank** (Uncommon/$125): Saves $3 per roll; sell to cash out accumulated savings with animated coin effects
+    - **The Piggy Bank** (Uncommon/$125): Saves $3 per roll; sell to cash out accumulated savings with animated coin effects. Savings persist across mall zone changes via `PlayerEconomy.piggy_bank_savings` — re-buying the Piggy Bank in a new zone restores the stored amount; selling pays out and clears it; starting a new game resets it
     - **Random Card Level** (Rare/$300): 20% chance each turn to level up a random scorecard category
     - **Yahtzeed Dice** (Epic/$450): Gain +1 die every time you roll a Yahtzee (max 16 dice)
     - **Consumable Collector** (Rare/$275): +0.1× score multiplier for each consumable used during the game
@@ -748,7 +748,7 @@ The **Progress Tracking System** enables persistent player progression across mu
 - **Persistent Progression**: Player progress saves across game sessions using JSON file storage
 - **Unlock Conditions**: 15 different achievement types trigger item unlocks (score points, roll yahtzees, complete Mall Zones, etc.)
 - **Item Locking**: PowerUps, Consumables, Mods, and Colored Dice can be locked behind progression requirements
-- **LOCKED / UNLOCKED Shop Tabs**: Shop interface includes archive tabs for both locked items and already-unlocked items
+- **LOCKED / UNLOCKED Shop Tabs**: The LOCKED tab shows REP-locked POGs (items unlocked in ProgressManager but above the player's Rep tier); the UNLOCKED tab archives all progression-tracked items — unlocked ones in the green marquee variant, progression-locked ones in the black/grey locked variant
 - **Unlock Panel**: Sequential card-flip animations display newly unlocked items at end of round
 - **Progress Tracking**: Visual progress bars show how close you are to unlocking items
 - **Debug Controls**: Full testing suite for unlock/lock functionality
@@ -758,7 +758,7 @@ The **Progress Tracking System** enables persistent player progression across mu
 - **UnlockableItem** (`Scripts/Core/unlockable_item.gd`) - Represents items that can be unlocked
 - **ProgressManager** (autoload) - Central progression tracking and persistence system
 - **UnlockedItemPanel** (`Scripts/UI/unlocked_item_panel.gd`) - End-of-round unlock display
-- **Shop UI Integration** - LOCKED tab with progress bars plus UNLOCKED archive tab for informational browsing
+- **Shop UI Integration** - LOCKED tab for REP-locked POGs plus UNLOCKED archive tab holding both unlocked items (green marquee) and progression-locked items (grey marquee) with progress bars
 
 **Unlock Condition Types:**
 
@@ -795,7 +795,7 @@ The unlock panel appears between game end and the End of Round Stats Panel, ensu
 - Items ≥80% complete are highlighted with gold borders
 - Star icon (⭐) replaces lock icon for items close to unlocking
 - Progress displays "X/Y" format for trackable conditions
-- Unlocked entries move to a separate UNLOCKED tab with archival info and no progress bars
+- Progression-locked entries live in the UNLOCKED tab, rendered with the black/grey locked `marquee_lights.gdshader` variant; earned entries show the green unlocked variant
 
 **Implementation:**
 ```gdscript
@@ -977,7 +977,7 @@ All PowerUps now have movie-style content ratings that affect Mom's reaction:
 **Mom Visits:**
 Mom appears in two ways:
 - **Meter Visit**: At 100 progress, Mom appears. Severity (0-5) is computed from her mood, grudge, and escalation, then a dialog tree plays out.
-- **Random Check-in**: Exactly once per round, at a random roll (target roll 2-5, picked each round), Mom pops in for a non-punishment chat. Dialog responses can still escalate it into a real punishment. Deferred while a meter visit is active.
+- **Random Check-in**: At most once per round, at a random roll (target roll 2-30, picked each round), Mom pops in for a non-punishment chat. Short rounds often end before the target — those get a 50% fallback check-in roll when the shop opens. Dialog responses can still escalate it into a real punishment. Deferred while a meter visit is active.
 
 **Special Visit Types:**
 - **Silent Treatment** (10% of severity 1-2 meter visits): Mom just stares. "..." No punishment — but her mood worsens, and it's somehow worse than yelling.
@@ -995,13 +995,13 @@ Unresolved anger carries forward. If Mom storms off (or an outcome adds grudge),
 
 **Rebellion Systems (Sass Incentives):**
 Sass is the high-variance path; compliance is the safe path. Three interlocking systems make rebellion a real strategy:
-- **Rebellion Buff**: A *successful* sass (sassy response that draws no tangible punishment: storms off, defer, or a pure flavor outcome) grants the round-scoped **Rebellion** buff — +15% score and +1 roll per turn per stack, up to 3 stacks (one per successful sass in the visit). Cleared at the start of the next round. Implemented as a positive effect riding the Debuff pipeline (`Scripts/Debuff/rebellion_buff.gd`), so it shows in the DebuffUI icon row.
+- **Rebellion Buff**: A *successful* sass (sassy response that draws no tangible punishment: storms off, defer, or a pure flavor outcome) grants the round-scoped **Rebellion** buff — +15% score and +1 roll per turn per stack, up to 3 stacks (one per successful sass in the visit). Cleared at round end when the shop opens. Implemented as a positive effect riding the Debuff pipeline (`Scripts/Debuff/rebellion_buff.gd`); its icon chip lives in the Chore UI buff row (compact meter + fan-out details panel), not the Debuff UI.
 - **Punishment Delay**: The "Not now, Mom." response (punishment visits) can defer the pending punishment to a later visit. Counterweight: each defer adds +1 grudge and raises the **defer streak** (max 3, run-scoped, saved), which compounds onto the severity of the *eventual* resolution — and grudge can convert future reward visits into punishment visits. The streak resets when a punishment tier is actually applied.
-- **Rep Stat**: A persistent meta stat (0-100, saved in the profile) that grows with successful sass (+3, defer +2, storm off +4) and shrinks with bootlicking compliance (polite on punishment visits -2, polite on check-ins -1). Rep gates kiosk inventory by POG tier: 10+ unlocks PG ("Questionable"), 25+ PG-13 ("Parental Guidance"), 45+ R ("Grounded"), 70+ NC-17 ("Banned"). Below Rep 10 with a happy Mom (mood ≤ 3), the Mom-Approved (G) pool gets 1.5x shelf weight and a 10% discount instead — two playstyles, two item pools. Rep-gated items appear greyed in the shop's LOCKED tab with their Rep requirement.
+- **Rep Stat**: A persistent meta stat (0-100, saved in the profile) that grows with successful sass (+3, defer +2, storm off +4) and shrinks with bootlicking compliance (polite on punishment visits -2, polite on check-ins -1). Rep gates kiosk inventory by POG tier (`REP_TIER_THRESHOLDS = [0, 0, 25, 50, 75]`): G and PG are always open, 25+ unlocks PG-13 ("Parental Guidance"), 50+ R ("Grounded"), 75+ NC-17 ("Banned"). Below Rep 25 with a happy Mom (mood ≤ 3), the Mom-Approved (G) pool gets 1.5x shelf weight and a 10% discount instead — two playstyles, two item pools. Rep-gated items appear greyed in the shop's LOCKED tab with their Rep requirement.
+- **Sass Escalation**: Sassy responses that draw a punishment scale with Rep — every 2 Rep tiers adds +1 punishment tier (clamped at tier 5), and at Rep tier 3+ (Rep 50+) debuff punishments apply +1 extra debuff.
 
 **Rebel Mode UI:**
 - **Rep Meter** (Mom dialog): A meter between Mom's line and the response buttons, cloned from the ChoreUI meter pattern. Visual identity escalates through 4 stages: Teacher's Pet (teal, 0-9) → Attitude Problem (amber, 10-24) → Mall Rat (magenta, 25-44) → Banned from the Mall (hot pink, 45+).
-- **Rep Chip** (kiosk POGS tab): Shows Rep, stage, highest unlocked POG tier, and the next unlock threshold.
 - **Chore Board**: The expanded chore panel shows a Rep summary line.
 
 **Bot Mom Policy:**
@@ -1065,7 +1065,7 @@ Each visit that resolves at severity 3+ increments a run counter that adds to la
 - **Mods**: Permanently removed (no refund) at higher tiers
 - **Dice Colors**: Locked until round end at tier 4
 - **Fines**: Deducted from money; substituted with a debuff when the player can't pay
-- **Grounded Debuffs**: Cleared at the start of the next round
+- **Grounded Debuffs**: Cleared at round end when the shop opens (Mom debuffs and the Rebellion buff are stripped together)
 
 **Mom Character:**
 - **Three Expressions**: Neutral (checking), Upset (found restricted items), Happy (clean slate)
@@ -1085,15 +1085,24 @@ Each visit that resolves at severity 3+ increments a run counter that adds to la
 - Complete Current Task: Force task completion
 - Trigger Mom Immediately: Bypass progress threshold (meter visit)
 - Trigger Mom Check-in: Fire the random check-in dialog on demand
+- Check-in: Reroll Target: Force ChoresManager to reroll this round's check-in roll target
+- Check-in: Target Roll 2 / 15 / 30: Set this round's check-in roll target to an exact value
+- Force Shop Check-in Roll: Run the shop-entry check-in fallback roll (50% chance when no check-in happened this round) without opening the shop
 - Add Mom Grudge +1: Raise Mom's grudge level for testing severity floors
 - Add Defer Streak +1: Raise the defer streak for testing compounded severity
 - Rep +10 / Rep -10 / Show Rep State: Adjust and inspect the persistent Rep stat
-- Grant Rebellion Buff: Apply the sass-reward buff directly
+- Set Rep 0 (G) / 25 (PG-13) / 50 (R) / 75 (NC-17): Jump Rep to an exact POG tier threshold
+- Grant Rebellion Buff: Apply the sass-reward buff directly (icon appears in the Chore UI buff row)
+- Clear Rebellion Buff: Remove the active Rebellion buff and its Chore UI icon
 - Select New Task: Force new random task selection
 - Reset Progress: Set progress to 0
 - Show Chore State: Display current system status
 - Show PowerUp Ratings: List all active PowerUp ratings
 - Test Mom Dialog: Preview Mom's expressions and dialog
+
+**Debug Commands (Economy Tab):**
+- Piggy Bank: Set $0 / $100 / $500: Set the persisted `PlayerEconomy.piggy_bank_savings` restored on the next Piggy Bank purchase
+- Piggy Bank: Show Savings: Log the persisted Piggy Bank savings and wallet balance
 
 **Implementation Files:**
 - **ChoreData**: `Scripts/Managers/ChoreData.gd` - Task resource class
@@ -1116,11 +1125,12 @@ Mom's mood tracks player behavior across a game session:
 - **Mood Display**: Available in the Chores UI fan-out view with emoji indicator
 
 **Chores Fan-Out UI:**
-Clicking the Goof-Off Meter displays a fan-out panel showing:
-- **Centered Status Panel**: Current task summary, progress/max, round-end expiry state, Mom mood, and total completed chores
-- **Mom's Current Mood**: Emoji indicator (😊 to 😡) with mood description
-- **Completed Chores List**: Checkmark list of all chores completed this game
-- **Empty State**: Shows "No chores completed yet" message when starting fresh
+Clicking the Goof-Off Meter displays a centered status panel organized into BBCode sections with `[table=2]` label/value alignment:
+- **CHORE**: Current task name (with difficulty) and description
+- **PROGRESS**: Progress/max with percentage and round-end expiry state
+- **STATUS**: Mom's current mood (emoji + description), completed chore counts by difficulty, and a Rep summary line
+- **BUFF** (only while a buff is active): Rebellion stack count and live effect numbers (score multiplier, bonus rolls)
+- **Buff Rows**: Active buffs (e.g. Rebellion) also render a compact chip row under the task label in the collapsed meter and a fan-out chip + name/stacks row above the details text
 
 ### Tutorial System
 An interactive, action-gated tutorial system that teaches new players the game mechanics with Mom's friendly guidance.
@@ -1417,6 +1427,7 @@ var total_matching = synergy_manager.get_total_matching_bonus()
 - **ShopUI** (`Scripts/UI/shop_ui.gd`) - In-game purchasing with reroll functionality
 
 ### Shop UI Features
+- **Zone Title**: The shop title reads `SHOP - <MALL ZONE>` from the ChannelManager display name (plain `SHOP` fallback)
 - **Tab System**: Seven tabs (PowerUps, Consumables, Mods, Colors, Consoles, Locked, Unlocked)
 - **Single-Row Pagination**: All purchasable tabs render one horizontal row of up to 3 cards; left/right footer arrows appear only when a tab pool exceeds 3 items and advance by a full page
 - **Directional Page Motion**: Page changes reuse the shop fly-in/fly-out motion language so outgoing cards move with the pressed direction and incoming cards swoop in from the opposite side
@@ -1430,7 +1441,7 @@ var total_matching = synergy_manager.get_total_matching_bonus()
   - Cost resets when starting a new game
   - Disabled when no items available or cannot afford
   - Clearance Rack still makes rerolls free until the shop closes
-- **Archive Tabs**: LOCKED shows unlock requirements and progress bars; UNLOCKED shows informational archive cards for already-earned content
+- **Archive Tabs**: LOCKED shows only REP-locked POGs (greyed cards with their Rep requirement); UNLOCKED shows archive cards for all progression-tracked items — green marquee for unlocked, black/grey marquee for progression-locked with unlock progress bars
 - **Shop Pool Behavior**: Purchases remove the item from the current page pool and refill the visible row from overflow items when available
 
 **New Game Reset:**

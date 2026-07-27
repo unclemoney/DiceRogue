@@ -55,7 +55,7 @@ const LEFT_INFO_RATIO: float = 14.5
 
 const TITLE_RATIO: float = 23.0
 const DICE_AREA_RATIO: float = 61.0
-const CHORE_METER_RATIO: float = 23.0
+const CHORE_METER_RATIO: float = 25.0
 const CENTER_ROLL_RATIO: float = 23.0
 
 const SCORECARD_RATIO: float = 77.0
@@ -140,7 +140,9 @@ func _build_ui() -> void:
 	main_vbox.add_child(middle)
 
 	# ── Left column ──
-	var left_col : VBoxContainer = _create_vbox("LeftColumn", 1.0)
+	# Slightly wider than the other columns (1.05) so the Chore Meter panel
+	# has room for the buff icon row below the Goof-off bar.
+	var left_col : VBoxContainer = _create_vbox("LeftColumn", 1.05)
 	middle.add_child(left_col)
 
 	#Chore Meter UI

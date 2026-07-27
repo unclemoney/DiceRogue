@@ -20,8 +20,18 @@ var progress_bar: TextureProgressBar
 var task_label: Label
 var details_panel: PanelContainer
 var details_label: RichTextLabel
+var buff_icon_row: HBoxContainer
+var buff_detail_row: HBoxContainer
 var _compact_shell: PanelContainer
 var _chores_manager = null  # ChoresManager - duck typed to avoid class resolution issues
+
+# Buff icon state (e.g. the Rebellion buff lives here, not in the Debuff UI)
+var _buff_icons: Dictionary = {}         # id -> DebuffIcon (compact chip)
+var _buff_instances: Dictionary = {}     # id -> Debuff (live buff instance)
+var _buff_detail_icons: Dictionary = {}  # id -> DebuffIcon (fan-out chip)
+var _buff_detail_labels: Dictionary = {} # id -> Label (fan-out name/stacks)
+var _buff_chip_config = null             # DebuffVisualConfig for compact chips
+var _buff_detail_config = null           # DebuffVisualConfig for fan-out chips
 
 # Fan-out state
 enum State { SPINE, FANNED }
@@ -33,7 +43,7 @@ var _compact_hover_tween: Tween
 
 # Visual settings
 const BAR_WIDTH: float = 172.0 #172
-const BAR_HEIGHT: float = 32.0
+const BAR_HEIGHT: float = 26.0
 const WARNING_THRESHOLD: float = 60.0
 const CHORE_BG_SOFT: Color = Color(0.247059, 0.219608, 0.345098, 0.4)
 const CHORE_BORDER: Color = Color(0.713725, 0.301961, 0.478431, 0.05)
@@ -54,6 +64,13 @@ const BAR_TEXTURE_OVER := preload("res://Resources/Art/UI/over-export.png")
 const BAR_NINE_PATCH_MARGIN: int = 32
 # Standard UI font for text not covered by the panel theme (RichTextLabel).
 const VCR_FONT := preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+# Buff chips reuse the DebuffIcon scene so the SDF glyph shader renders
+# identically to the Debuff UI.
+const DEBUFF_ICON_SCENE: PackedScene = preload("res://Scenes/Debuff/DebuffIcon.tscn")
+const DebuffVisualConfigScript = preload("res://Scripts/Debuff/debuff_visual_config.gd")
+# Buff chip sizing (smaller than the Debuff UI slots).
+const BUFF_CHIP_SIZE := Vector2(22, 26)
+const BUFF_DETAIL_CHIP_SIZE := Vector2(44, 48)
 # Subtle alpha levels for the mood (frame) and difficulty (track) tints.
 const MOOD_TINT_ALPHA: float = 0.2
 const DIFFICULTY_TINT_ALPHA: float = 0.1
@@ -157,7 +174,7 @@ func _create_ui_structure() -> void:
 	_compact_shell = PanelContainer.new()
 	_compact_shell.name = "CompactShell"
 	_compact_shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_compact_shell.custom_minimum_size = Vector2(0, 62)
+	_compact_shell.custom_minimum_size = Vector2(0, 84)
 	_compact_shell.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	main_container.add_child(_compact_shell)
 	_apply_compact_shell_style()
@@ -208,6 +225,19 @@ func _create_ui_structure() -> void:
 	task_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shell_content.add_child(task_label)
 
+	_buff_chip_config = DebuffVisualConfigScript.new()
+	_buff_chip_config.compact_icon_size = Vector2(14, 14)
+	_buff_detail_config = DebuffVisualConfigScript.new()
+	_buff_detail_config.compact_icon_size = Vector2(30, 30)
+
+	buff_icon_row = HBoxContainer.new()
+	buff_icon_row.name = "BuffIconRow"
+	buff_icon_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	buff_icon_row.add_theme_constant_override("separation", 4)
+	buff_icon_row.visible = false
+	buff_icon_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shell_content.add_child(buff_icon_row)
+
 	details_panel = PanelContainer.new()
 	details_panel.name = "DetailsPanel"
 	details_panel.visible = false
@@ -237,6 +267,14 @@ func _create_ui_structure() -> void:
 	details_title.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
 	details_title.add_theme_constant_override("outline_size", 1)
 	details_vbox.add_child(details_title)
+
+	buff_detail_row = HBoxContainer.new()
+	buff_detail_row.name = "BuffDetailRow"
+	buff_detail_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	buff_detail_row.add_theme_constant_override("separation", 10)
+	buff_detail_row.visible = false
+	buff_detail_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	details_vbox.add_child(buff_detail_row)
 
 	details_label = RichTextLabel.new()
 	details_label.name = "DetailsLabel"
@@ -331,8 +369,9 @@ func _on_task_completed(_task) -> void:  # ChoreData - duck typed, unused
 
 ## _update_details_with_progress()
 ##
-## Updates the chore status panel with current task info, progress percentage,
-## Mom's mood, and counts of completed easy/hard chores.
+## Rebuilds the chore status panel as organized BBCode sections (CHORE,
+## PROGRESS, STATUS, and BUFF when Rebellion is active) with section
+## headers in the panel palette and [table=2] label/value pairs.
 func _update_details_with_progress() -> void:
 	if not details_label:
 		return
@@ -341,18 +380,18 @@ func _update_details_with_progress() -> void:
 			task_label.text = "No active chore"
 		details_label.text = "[center][b]No chore data available[/b][/center]"
 		return
-	
+
 	var task = _chores_manager.current_task
 	var current_progress_val = _chores_manager.current_progress
 	var max_progress = 100  # Default
 	var mood_desc = _chores_manager.get_mood_description() if _chores_manager.has_method("get_mood_description") else "Neutral"
 	var mood_emoji = _chores_manager.get_mood_emoji() if _chores_manager.has_method("get_mood_emoji") else "*"
-	
+
 	# Get scaled max progress if available
 	if _chores_manager.has_method("get_scaled_max_progress"):
 		max_progress = _chores_manager.get_scaled_max_progress()
 	var percent := roundi(100.0 * float(current_progress_val) / maxf(float(max_progress), 1.0))
-	
+
 	# Count completed chores by difficulty instead of listing names
 	var easy_count := 0
 	var hard_count := 0
@@ -361,51 +400,91 @@ func _update_details_with_progress() -> void:
 			hard_count += 1
 		else:
 			easy_count += 1
-	var completed_text = "[color=#c7bbdd]Completed:[/color] %d easy, %d hard" % [easy_count, hard_count]
-	var progress_text = "[color=#c7bbdd]Progress:[/color] %s / %s (%d%%)" % [
-		NumberFormatter.format_int(current_progress_val),
-		NumberFormatter.format_int(max_progress),
-		percent
-	]
-	var mood_text = "[color=#c7bbdd]Mom Mood:[/color] %s %s (%d/10)" % [
-		mood_emoji,
-		mood_desc,
-		_chores_manager.mom_mood
-	]
-	var rep_text := ""
-	var pm := get_node_or_null("/root/ProgressManager")
-	if pm and pm.has_method("get_rep"):
-		rep_text = "\n[color=#ff4080]Rep:[/color] %d/100 — %s (POGs up to %s)" % [
-			pm.get_rep(), pm.get_rep_stage_name(), pm.get_rep_tier_name()]
-	
+
+	var sections: Array[String] = []
+
+	# 1. CHORE — name, description, difficulty
+	var chore_section := "[color=#79e2e3][b]CHORE[/b][/color]\n"
 	if task:
 		if task_label:
 			task_label.text = task.display_name
-		var expiry_text = "Expires when this round ends"
-		if _chores_manager.has_method("get_rounds_until_expiry") and _chores_manager.get_rounds_until_expiry() <= 0:
-			expiry_text = "Awaiting replacement"
-
-		details_label.text = "[center][b]%s[/b][/center]\n%s\n\n%s\n[color=#c7bbdd]Expiry:[/color] %s\n%s\n%s%s" % [
-			task.display_name,
-			task.description,
-			progress_text,
-			expiry_text,
-			mood_text,
-			completed_text,
-			rep_text
-		]
+		var difficulty_text := "Easy"
+		var difficulty_color := "#79e2e3"
+		if "difficulty" in task and task.difficulty == ChoreData.Difficulty.HARD:
+			difficulty_text = "Hard"
+			difficulty_color = "#e2648c"
+		chore_section += "[table=2]"
+		chore_section += "[cell][color=#c7bbdd]Name[/color][/cell][cell]%s [color=%s](%s)[/color][/cell]" % [
+			task.display_name, difficulty_color, difficulty_text]
+		chore_section += "[cell][color=#c7bbdd]Task[/color][/cell][cell]%s[/cell]" % task.description
+		chore_section += "[/table]"
 	else:
 		var waiting_for_selection = _chores_manager.pending_chore_selection if _chores_manager.has_method("get_pending_tasks") else false
 		if task_label:
 			task_label.text = "Choose a chore" if waiting_for_selection else "No active chore"
-		var no_task_text = "[center][b]Choose a new chore[/b][/center]\nA fresh chore is required before play continues." if waiting_for_selection else "[center][b]No active chore[/b][/center]\nTake a breather, but keep an eye on the meter."
-		details_label.text = "%s\n\n%s\n%s\n%s%s" % [
-			no_task_text,
-			progress_text,
-			mood_text,
-			completed_text,
-			rep_text
-		]
+		if waiting_for_selection:
+			chore_section += "[b]Choose a new chore[/b] — a fresh chore is required before play continues."
+		else:
+			chore_section += "[b]No active chore[/b] — take a breather, but keep an eye on the meter."
+	sections.append(chore_section)
+
+	# 2. PROGRESS — x / max (pct), expiry
+	var expiry_text := "Expires when this round ends"
+	if _chores_manager.has_method("get_rounds_until_expiry") and _chores_manager.get_rounds_until_expiry() <= 0:
+		expiry_text = "Awaiting replacement"
+	var progress_section := "[color=#79e2e3][b]PROGRESS[/b][/color]\n"
+	progress_section += "[table=2]"
+	progress_section += "[cell][color=#c7bbdd]Progress[/color][/cell][cell]%s / %s (%d%%)[/cell]" % [
+		NumberFormatter.format_int(current_progress_val),
+		NumberFormatter.format_int(max_progress),
+		percent
+	]
+	progress_section += "[cell][color=#c7bbdd]Expiry[/color][/cell][cell]%s[/cell]" % expiry_text
+	progress_section += "[/table]"
+	sections.append(progress_section)
+
+	# 3. STATUS — Mom mood, completed counts, Rep
+	var status_section := "[color=#79e2e3][b]STATUS[/b][/color]\n"
+	status_section += "[table=2]"
+	status_section += "[cell][color=#c7bbdd]Mom Mood[/color][/cell][cell]%s %s (%d/10)[/cell]" % [
+		mood_emoji, mood_desc, _chores_manager.mom_mood]
+	status_section += "[cell][color=#c7bbdd]Completed[/color][/cell][cell]%d easy, %d hard[/cell]" % [
+		easy_count, hard_count]
+	var pm := get_node_or_null("/root/ProgressManager")
+	if pm and pm.has_method("get_rep"):
+		status_section += "[cell][color=#ff4080]Rep[/color][/cell][cell]%d/100 — %s (POGs up to %s)[/cell]" % [
+			pm.get_rep(), pm.get_rep_stage_name(), pm.get_rep_tier_name()]
+	status_section += "[/table]"
+	sections.append(status_section)
+
+	# 4. BUFF — only while a buff (e.g. Rebellion) is active
+	if not _buff_icons.is_empty():
+		var buff_section := "[color=#ff6d9e][b]BUFF[/b][/color]\n"
+		buff_section += "[table=2]"
+		for id in _buff_icons.keys():
+			var icon = _buff_icons[id] as DebuffIcon
+			if not is_instance_valid(icon) or icon.data == null:
+				continue
+			var stacks := _get_buff_stacks(id)
+			# Effect numbers come from rebellion_buff.gd (BASE_SCORE_BONUS,
+			# MAX_BONUS_ROLLS) computed from the live stack count.
+			var mult := 1.0 + RebellionBuff.BASE_SCORE_BONUS * stacks
+			var rolls := mini(stacks, RebellionBuff.MAX_BONUS_ROLLS)
+			buff_section += "[cell][color=#c7bbdd]%s[/color][/cell][cell]x%d stack(s)[/cell]" % [
+				icon.data.display_name, stacks]
+			buff_section += "[cell][color=#c7bbdd]Effect[/color][/cell][cell]x%.2f score, +%d bonus roll(s)/turn[/cell]" % [
+				mult, rolls]
+		buff_section += "[/table]"
+		sections.append(buff_section)
+
+	details_label.text = "\n".join(sections)
+
+	# Keep the fan-out buff labels in sync with live stack counts
+	for id in _buff_detail_labels.keys():
+		var lbl = _buff_detail_labels[id] as Label
+		var icon = _buff_icons.get(id) as DebuffIcon
+		if is_instance_valid(lbl) and is_instance_valid(icon) and icon.data:
+			lbl.text = "%s  x%d" % [icon.data.display_name, _get_buff_stacks(id)]
 
 
 ## _update_progress_tint(value)
@@ -473,6 +552,136 @@ func get_progress_percent() -> int:
 	if not progress_bar or progress_bar.max_value <= 0:
 		return 0
 	return roundi(100.0 * progress_bar.value / progress_bar.max_value)
+
+
+## add_buff_icon(data, buff_instance) -> Control
+##
+## Adds a compact buff chip (e.g. the Rebellion buff) to the row under the
+## task label, reusing the DebuffIcon chip so the SDF glyph shader renders
+## identically to the Debuff UI. Also registers the buff for the fan-out
+## details panel. Mirrors DebuffUI.add_debuff().
+func add_buff_icon(data: DebuffData, buff_instance = null) -> Control:
+	if data == null:
+		return null
+	if _buff_icons.has(data.id):
+		return _buff_icons[data.id]
+
+	var icon := DEBUFF_ICON_SCENE.instantiate() as DebuffIcon
+	if not icon:
+		push_error("[ChoreUI] Failed to instantiate buff icon")
+		return null
+
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.set_visual_config(_buff_chip_config)
+	icon.set_data(data)
+	buff_icon_row.add_child(icon)
+	icon.custom_minimum_size = BUFF_CHIP_SIZE
+
+	_buff_icons[data.id] = icon
+	if buff_instance:
+		_buff_instances[data.id] = buff_instance
+		buff_instance.debuff_started.connect(func():
+			icon.set_active(true)
+			print("[ChoreUI] Buff started:", data.id))
+		buff_instance.debuff_ended.connect(func():
+			icon.set_active(false)
+			print("[ChoreUI] Buff ended:", data.id))
+		buff_instance.visual_pulse_requested.connect(func(strength: float, duration: float):
+			icon.trigger_visual_pulse(strength, duration))
+
+	buff_icon_row.visible = true
+	_rebuild_buff_detail_row()
+	_update_details_with_progress()
+	print("[ChoreUI] Added buff icon:", data.id)
+	return icon
+
+
+## remove_buff_icon(id)
+##
+## Removes a buff chip by id and hides the row when no buffs remain.
+func remove_buff_icon(id: String) -> void:
+	if not _buff_icons.has(id):
+		return
+	var icon = _buff_icons[id] as DebuffIcon
+	if is_instance_valid(icon):
+		icon.queue_free()
+	_buff_icons.erase(id)
+	_buff_instances.erase(id)
+	if buff_icon_row and _buff_icons.is_empty():
+		buff_icon_row.visible = false
+	_rebuild_buff_detail_row()
+	_update_details_with_progress()
+	print("[ChoreUI] Removed buff icon:", id)
+
+
+## clear_buff_icons()
+##
+## Frees all buff chips and resets buff state. Called by GameController on
+## channel start, mirroring DebuffUI.clear_all_debuffs().
+func clear_buff_icons() -> void:
+	for icon in _buff_icons.values():
+		if is_instance_valid(icon):
+			icon.queue_free()
+	_buff_icons.clear()
+	_buff_instances.clear()
+	if buff_icon_row:
+		buff_icon_row.visible = false
+	_rebuild_buff_detail_row()
+	_update_details_with_progress()
+	print("[ChoreUI] Cleared all buff icons")
+
+
+## _get_buff_stacks(id) -> int
+##
+## Live stack count for a buff, read from its instance (intensity) when
+## available; falls back to 1.
+func _get_buff_stacks(id: String) -> int:
+	var inst = _buff_instances.get(id)
+	if is_instance_valid(inst) and "intensity" in inst:
+		return maxi(int(inst.intensity), 1)
+	return 1
+
+
+## _rebuild_buff_detail_row()
+##
+## Rebuilds the fan-out buff row (chip + name/stacks label) above the
+## details RichTextLabel from the currently registered buffs.
+func _rebuild_buff_detail_row() -> void:
+	if not buff_detail_row:
+		return
+	for child in buff_detail_row.get_children():
+		child.queue_free()
+	_buff_detail_icons.clear()
+	_buff_detail_labels.clear()
+	buff_detail_row.visible = not _buff_icons.is_empty()
+	if details_label:
+		if buff_detail_row.visible:
+			details_label.custom_minimum_size = Vector2(0, 170)
+		else:
+			details_label.custom_minimum_size = Vector2(0, 220)
+	for id in _buff_icons.keys():
+		var source = _buff_icons[id] as DebuffIcon
+		if not is_instance_valid(source) or source.data == null:
+			continue
+		var chip := DEBUFF_ICON_SCENE.instantiate() as DebuffIcon
+		chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		chip.set_visual_config(_buff_detail_config)
+		chip.set_data(source.data)
+		buff_detail_row.add_child(chip)
+		chip.custom_minimum_size = BUFF_DETAIL_CHIP_SIZE
+		_buff_detail_icons[id] = chip
+
+		var lbl := Label.new()
+		lbl.name = "BuffLabel"
+		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		lbl.add_theme_font_size_override("font_size", 12)
+		lbl.add_theme_color_override("font_color", CHORE_TEXT)
+		lbl.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+		lbl.add_theme_constant_override("outline_size", 1)
+		lbl.text = "%s  x%d" % [source.data.display_name, _get_buff_stacks(id)]
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		buff_detail_row.add_child(lbl)
+		_buff_detail_labels[id] = lbl
 
 func _play_completion_flash() -> void:
 	# Play completion sound effect

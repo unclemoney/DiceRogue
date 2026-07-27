@@ -193,6 +193,10 @@ func _create_debug_tabs() -> void:
 			{"text": "Add $100", "method": "_debug_add_money"},
 			{"text": "Add $1000", "method": "_debug_add_big_money"},
 			{"text": "Reset Money", "method": "_debug_reset_money"},
+			{"text": "Piggy Bank: Set $0", "method": "_debug_piggy_set_0"},
+			{"text": "Piggy Bank: Set $100", "method": "_debug_piggy_set_100"},
+			{"text": "Piggy Bank: Set $500", "method": "_debug_piggy_set_500"},
+			{"text": "Piggy Bank: Show Savings", "method": "_debug_piggy_show"},
 		],
 		"Items": [
 			{"text": "Grant Random PowerUp", "method": "_debug_grant_powerup"},
@@ -306,12 +310,22 @@ func _create_debug_tabs() -> void:
 			{"text": "Complete Current Task", "method": "_debug_chores_complete_task"},
 			{"text": "Trigger Mom Immediately", "method": "_debug_chores_trigger_mom"},
 			{"text": "Trigger Mom Check-in", "method": "_debug_chores_trigger_checkin"},
+			{"text": "Check-in: Reroll Target", "method": "_debug_checkin_reroll"},
+			{"text": "Check-in: Target Roll 2", "method": "_debug_checkin_target_min"},
+			{"text": "Check-in: Target Roll 15", "method": "_debug_checkin_target_mid"},
+			{"text": "Check-in: Target Roll 30", "method": "_debug_checkin_target_max"},
+			{"text": "Force Shop Check-in Roll", "method": "_debug_force_shop_checkin"},
 			{"text": "Add Mom Grudge +1", "method": "_debug_chores_add_grudge"},
 			{"text": "Add Defer Streak +1", "method": "_debug_chores_add_defer"},
 			{"text": "Rep +10", "method": "_debug_rep_add"},
 			{"text": "Rep -10", "method": "_debug_rep_sub"},
+			{"text": "Set Rep 0 (G)", "method": "_debug_rep_set_0"},
+			{"text": "Set Rep 25 (PG-13)", "method": "_debug_rep_set_25"},
+			{"text": "Set Rep 50 (R)", "method": "_debug_rep_set_50"},
+			{"text": "Set Rep 75 (NC-17)", "method": "_debug_rep_set_75"},
 			{"text": "Show Rep State", "method": "_debug_rep_show"},
 			{"text": "Grant Rebellion Buff", "method": "_debug_rebellion_grant"},
+			{"text": "Clear Rebellion Buff", "method": "_debug_rebellion_clear"},
 			{"text": "Select New Task", "method": "_debug_chores_new_task"},
 			{"text": "Reset Progress", "method": "_debug_chores_reset"},
 			{"text": "Show Chore State", "method": "_debug_chores_show_state"},
@@ -3248,7 +3262,149 @@ func _debug_rebellion_grant() -> void:
 		log_debug("ERROR: GameController not available")
 		return
 	game_controller._grant_rebellion_buff(1)
-	log_debug("Rebellion buff granted (check DebuffUI icon row)")
+	log_debug("Rebellion buff granted (check Chore UI buff icon row)")
+
+
+## _debug_rebellion_clear()
+##
+## Removes the active Rebellion buff (and its Chore UI icon).
+func _debug_rebellion_clear() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	if not game_controller.is_debuff_active("rebellion"):
+		log_debug("No active Rebellion buff to clear")
+		return
+	game_controller.disable_debuff("rebellion")
+	log_debug("Rebellion buff cleared")
+
+
+## _debug_checkin_reroll()
+##
+## Forces ChoresManager to reroll this round's Mom check-in roll target.
+func _debug_checkin_reroll() -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	chores_manager._schedule_checkin()
+	log_debug("Check-in target rerolled: roll %d (range %d-%d)" % [
+		chores_manager._checkin_roll_target,
+		ChoresManager.CHECKIN_TARGET_MIN, ChoresManager.CHECKIN_TARGET_MAX])
+
+
+func _debug_checkin_target_min() -> void:
+	_debug_set_checkin_target(ChoresManager.CHECKIN_TARGET_MIN)
+
+
+func _debug_checkin_target_mid() -> void:
+	_debug_set_checkin_target(15)
+
+
+func _debug_checkin_target_max() -> void:
+	_debug_set_checkin_target(ChoresManager.CHECKIN_TARGET_MAX)
+
+
+## _debug_set_checkin_target(target)
+##
+## Sets this round's Mom check-in roll target to an exact value (clamped to
+## the CHECKIN_TARGET_MIN..CHECKIN_TARGET_MAX range).
+func _debug_set_checkin_target(target: int) -> void:
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	chores_manager._checkin_roll_target = clampi(target, ChoresManager.CHECKIN_TARGET_MIN, ChoresManager.CHECKIN_TARGET_MAX)
+	log_debug("Check-in target set to roll %d (done this round: %s)" % [
+		chores_manager._checkin_roll_target, str(chores_manager.had_checkin_this_round())])
+
+
+## _debug_force_shop_checkin()
+##
+## Runs the shop-entry Mom check-in fallback roll (50% chance when no
+## check-in happened this round) without opening the shop.
+func _debug_force_shop_checkin() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	if chores_manager.had_checkin_this_round():
+		log_debug("Check-in already happened this round - shop fallback will not fire")
+		return
+	game_controller._maybe_shop_mom_checkin()
+	if chores_manager.had_checkin_this_round():
+		log_debug("Shop check-in fallback triggered (roll succeeded)")
+	else:
+		log_debug("Shop check-in fallback roll failed (50% chance) - press again to reroll")
+
+
+func _debug_rep_set_0() -> void:
+	_debug_set_rep(0)
+
+
+func _debug_rep_set_25() -> void:
+	_debug_set_rep(25)
+
+
+func _debug_rep_set_50() -> void:
+	_debug_set_rep(50)
+
+
+func _debug_rep_set_75() -> void:
+	_debug_set_rep(75)
+
+
+## _debug_set_rep(target)
+##
+## Sets Rep to an exact value via a computed adjust_rep() delta.
+func _debug_set_rep(target: int) -> void:
+	var pm = get_node_or_null("/root/ProgressManager")
+	if not pm:
+		log_debug("ERROR: ProgressManager not available")
+		return
+	pm.adjust_rep(target - pm.get_rep())
+	log_debug("Rep set to %d/100 (tier %d: %s)" % [pm.get_rep(), pm.get_rep_tier(), pm.get_rep_tier_name()])
+
+
+func _debug_piggy_set_0() -> void:
+	_debug_set_piggy_savings(0)
+
+
+func _debug_piggy_set_100() -> void:
+	_debug_set_piggy_savings(100)
+
+
+func _debug_piggy_set_500() -> void:
+	_debug_set_piggy_savings(500)
+
+
+## _debug_set_piggy_savings(amount)
+##
+## Sets the persisted Piggy Bank savings; a future Piggy Bank purchase
+## restores this amount via ThePiggyBankPowerUp.apply().
+func _debug_set_piggy_savings(amount: int) -> void:
+	var pe = get_node_or_null("/root/PlayerEconomy")
+	if not pe:
+		log_debug("ERROR: PlayerEconomy not available")
+		return
+	pe.piggy_bank_savings = amount
+	log_debug("Piggy Bank savings set to $%d (restored on next Piggy Bank purchase)" % pe.piggy_bank_savings)
+
+
+## _debug_piggy_show()
+##
+## Logs the persisted Piggy Bank savings state.
+func _debug_piggy_show() -> void:
+	var pe = get_node_or_null("/root/PlayerEconomy")
+	if not pe:
+		log_debug("ERROR: PlayerEconomy not available")
+		return
+	log_debug("Piggy Bank savings: $%d | Wallet: $%d" % [pe.piggy_bank_savings, pe.money])
 
 
 func _debug_chores_new_task() -> void:
