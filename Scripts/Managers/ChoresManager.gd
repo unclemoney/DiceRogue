@@ -594,6 +594,15 @@ func mark_checkin_done() -> void:
 	_checkin_done_this_round = true
 
 
+## unmark_checkin_done()
+##
+## Releases this round's consumed check-in without firing it. Used when a
+## triggered check-in is skipped (challenge completed before the dialog
+## could show) so the shop-entry fallback can still catch the missed visit.
+func unmark_checkin_done() -> void:
+	_checkin_done_this_round = false
+
+
 ## add_grudge(amount)
 ##
 ## Raises Mom's grudge level (clamped to MAX_GRUDGE). Grudge raises the

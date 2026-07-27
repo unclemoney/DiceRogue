@@ -1247,6 +1247,67 @@ func remove_consumable(consumable_id: String) -> void:
 	if _active_consumable_count <= 0:
 		_cleanup_empty_state()
 
+## clear_all_consumables() -> void
+##
+## Removes all consumables from the UI at once. Called on new channel start
+## when consumables are not carried over.
+func clear_all_consumables() -> void:
+	print("[ConsumableUI] Clearing all consumables")
+
+	# Stop idle animations immediately
+	_stop_idle_animations()
+
+	# Clear spines
+	for id in _consumable_spines.keys():
+		var spine: ConsumableSpine = _consumable_spines[id]
+		if spine and is_instance_valid(spine):
+			if spine.get_parent():
+				spine.get_parent().remove_child(spine)
+			spine.queue_free()
+	_consumable_spines.clear()
+
+	# Clear fanned icons
+	for id in _fanned_icons.keys():
+		var icon: ConsumableIcon = _fanned_icons[id]
+		if icon and is_instance_valid(icon):
+			if icon.get_parent():
+				icon.get_parent().remove_child(icon)
+			icon.queue_free()
+	_fanned_icons.clear()
+
+	# Clear data
+	_consumable_data.clear()
+	_consumable_order.clear()
+	_active_consumable_count = 0
+	_selected_spine_id = ""
+
+	# Exit overflow mode if active
+	_overflow_mode = false
+	_overflow_target_count = 0
+	if _overflow_label and is_instance_valid(_overflow_label):
+		_overflow_label.queue_free()
+		_overflow_label = null
+
+	# Restore compact state if the fan was open
+	if _current_state == State.FANNED:
+		_restore_background_to_compact_parent()
+		_restore_compact_row_visibility()
+		_current_state = State.SPINES
+		_is_animating = false
+
+	# Clear compact slot UI and overflow indicator
+	for i in range(_slot_contents.size()):
+		_clear_slot_ui(i)
+		_slot_contents[i] = null
+		_set_slot_empty_style(i)
+	_update_overflow_slot(0)
+
+	# Update slots label
+	update_slots_label()
+
+	print("[ConsumableUI] Cleared all consumables")
+
+
 func _cleanup_empty_state() -> void:
 	print("[ConsumableUI] Cleaning up empty state")
 	

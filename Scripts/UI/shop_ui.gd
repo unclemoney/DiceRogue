@@ -2028,16 +2028,28 @@ func _style_shop_title() -> void:
 
 ## _update_shop_title_text()
 ## Sets the shop title to "SHOP - <MALL ZONE>" using the ChannelManager
-## display name. Falls back to plain "SHOP" when unavailable.
+## mall zone name. Falls back to plain "SHOP" when unavailable.
 func _update_shop_title_text() -> void:
 	if not shop_label:
 		return
 	var title := "SHOP"
-	var channel_manager = get_node_or_null("/root/ChannelManager")
+	# ChannelManager is not an autoload — it lives in the game scene under
+	# Managers/ChannelManager and is exposed on GameController (which is
+	# registered in the "game_controller" group).
+	var channel_manager = null
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller:
+		channel_manager = game_controller.get("channel_manager")
+	if not channel_manager:
+		channel_manager = get_node_or_null("/root/ChannelManager")
 	if not channel_manager and get_tree().current_scene:
-		channel_manager = get_tree().current_scene.get_node_or_null("ChannelManager")
-	if channel_manager and channel_manager.has_method("get_channel_display_name"):
-		var zone_name: String = channel_manager.get_channel_display_name()
+		channel_manager = get_tree().current_scene.get_node_or_null("Managers/ChannelManager")
+	if channel_manager:
+		var zone_name := ""
+		if channel_manager.has_method("get_selector_zone_name"):
+			zone_name = channel_manager.get_selector_zone_name()
+		elif channel_manager.has_method("get_channel_display_name"):
+			zone_name = channel_manager.get_channel_display_name()
 		if zone_name != "":
 			title = "SHOP - " + zone_name.to_upper()
 	shop_label.text = title
@@ -2206,8 +2218,8 @@ func _create_rep_locked_item_display(data: PowerUpData, rep_needed: int, tier_la
 ## populate_unlocked_items()
 ##
 ## Populates the UNLOCKED tab with all progression-tracked items: unlocked
-## ones get the green "unlocked" marquee shader, progression-locked ones the
-## black/grey "locked" shader (see _create_archive_item_display).
+## ones get the green "unlocked" marquee shader, progression-locked ones a
+## flat dark "LOCKED" card (see _create_archive_item_display).
 func populate_unlocked_items() -> void:
 	if not unlocked_container:
 		print("[ShopUI] No unlocked container found")
@@ -2255,39 +2267,45 @@ func _create_archive_item_display(item, target_container: Container, is_locked: 
 	if panel_theme:
 		archive_panel.theme = panel_theme
 	archive_panel.custom_minimum_size = Vector2(200, 170)
-	var shader_bg = ColorRect.new()
-	shader_bg.color = Color.WHITE
-	shader_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var shader = load("res://Scripts/Shaders/marquee_lights.gdshader")
-	if shader:
-		var shader_mat = ShaderMaterial.new()
-		shader_mat.shader = shader
-		if is_locked:
-			shader_mat.set_shader_parameter("color_A", Vector3(0.0, 0.0, 0.0))
-			shader_mat.set_shader_parameter("color_B", Vector3(0.4, 0.4, 0.4))
-		else:
-			shader_mat.set_shader_parameter("color_A", Vector3(0.0, 0.25, 0.18))
-			shader_mat.set_shader_parameter("color_B", Vector3(0.15, 0.45, 0.34))
-		shader_bg.material = shader_mat
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.2, 0.2, 0.2, 0.0)
 	style.border_width_left = 2
 	style.border_width_right = 2
 	style.border_width_top = 2
 	style.border_width_bottom = 2
 	if is_locked:
-		style.border_color = Color(1.0, 0.85, 0.0, 1.0) if is_close_to_unlock else Color(0.8, 0.4, 0.4, 1.0)
+		# Locked cards: flat, dark, desaturated panel — clearly readable and
+		# instantly distinguishable from the green "unlocked" marquee cards.
+		style.bg_color = Color(0.09, 0.09, 0.11, 1.0)
+		style.border_color = Color(1.0, 0.85, 0.0, 1.0) if is_close_to_unlock else Color(0.55, 0.35, 0.4, 1.0)
 	else:
+		style.bg_color = Color(0.2, 0.2, 0.2, 0.0)
 		style.border_color = Color(0.45, 0.92, 0.62, 1.0)
 	style.corner_radius_top_left = 5
 	style.corner_radius_top_right = 5
 	style.corner_radius_bottom_left = 5
 	style.corner_radius_bottom_right = 5
 	archive_panel.add_theme_stylebox_override("panel", style)
-	archive_panel.add_child(shader_bg)
-	shader_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	archive_panel.mouse_entered.connect(_on_locked_item_mouse_entered.bind(shader_bg))
-	archive_panel.mouse_exited.connect(_on_locked_item_mouse_exited.bind(shader_bg))
+	if not is_locked:
+		# Unlocked cards keep the green marquee shader background. Base
+		# colors are stored as metadata so hover can restore them.
+		var shader_bg = ColorRect.new()
+		shader_bg.color = Color.WHITE
+		shader_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var shader = load("res://Scripts/Shaders/marquee_lights.gdshader")
+		if shader:
+			var shader_mat = ShaderMaterial.new()
+			shader_mat.shader = shader
+			var base_a := Vector3(0.0, 0.25, 0.18)
+			var base_b := Vector3(0.15, 0.45, 0.34)
+			shader_mat.set_shader_parameter("color_A", base_a)
+			shader_mat.set_shader_parameter("color_B", base_b)
+			shader_bg.material = shader_mat
+			shader_bg.set_meta("base_color_a", base_a)
+			shader_bg.set_meta("base_color_b", base_b)
+		archive_panel.add_child(shader_bg)
+		shader_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		archive_panel.mouse_entered.connect(_on_unlocked_item_mouse_entered.bind(shader_bg))
+		archive_panel.mouse_exited.connect(_on_unlocked_item_mouse_exited.bind(shader_bg))
 	var vbox = VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 3)
 	archive_panel.add_child(vbox)
@@ -2302,6 +2320,7 @@ func _create_archive_item_display(item, target_container: Container, is_locked: 
 			name_label.text = "[center]⭐ %s[/center]" % item.display_name
 		else:
 			name_label.text = "[center]🔒 %s[/center]" % item.display_name
+		name_label.modulate = Color(0.75, 0.75, 0.8, 1.0)
 	else:
 		name_label.text = "[center]🔓 %s[/center]" % item.display_name
 	name_label.add_theme_font_size_override("normal_font_size", 11)
@@ -2310,7 +2329,10 @@ func _create_archive_item_display(item, target_container: Container, is_locked: 
 	type_label.text = "Type: %s" % item.get_type_string()
 	type_label.add_theme_font_override("font", vcr_font)
 	type_label.add_theme_font_size_override("font_size", 10)
-	type_label.modulate = Color(0.8, 0.8, 0.8, 1.0)
+	if is_locked:
+		type_label.modulate = Color(0.55, 0.55, 0.6, 1.0)
+	else:
+		type_label.modulate = Color(0.8, 0.8, 0.8, 1.0)
 	type_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(type_label)
 	var desc_label = RichTextLabel.new()
@@ -2321,6 +2343,8 @@ func _create_archive_item_display(item, target_container: Container, is_locked: 
 	desc_label.add_theme_font_override("normal_font", vcr_font)
 	desc_label.add_theme_font_size_override("normal_font_size", 9)
 	desc_label.text = "[center]%s[/center]" % item.description
+	if is_locked:
+		desc_label.modulate = Color(0.65, 0.65, 0.7, 1.0)
 	vbox.add_child(desc_label)
 	var status_label = RichTextLabel.new()
 	status_label.custom_minimum_size = Vector2(180, 35)
@@ -2330,7 +2354,7 @@ func _create_archive_item_display(item, target_container: Container, is_locked: 
 	status_label.add_theme_font_override("normal_font", vcr_font)
 	status_label.add_theme_font_size_override("normal_font_size", 9)
 	if is_locked:
-		status_label.text = "[center][color=yellow]Unlock: %s[/color][/center]" % item.get_unlock_description()
+		status_label.text = "[center][color=#ff5b6e][b]LOCKED[/b][/color]  [color=#ffd266]Unlock: %s[/color][/center]" % item.get_unlock_description()
 	else:
 		status_label.text = "[center][color=#8dff8d]Status: Unlocked[/color][/center]"
 	vbox.add_child(status_label)
@@ -2384,29 +2408,29 @@ func _filter_unlocked_items(items: Array, item_type: String) -> Array:
 	
 	return filtered_items
 
-## _on_locked_item_mouse_entered(shader_bg)
+## _on_unlocked_item_mouse_entered(shader_bg)
 ##
-## Called when mouse enters a locked item - changes shader colors to teal and purple
-func _on_locked_item_mouse_entered(shader_bg: ColorRect) -> void:
+## Called when mouse enters an unlocked item card - brightens the green marquee
+func _on_unlocked_item_mouse_entered(shader_bg: ColorRect) -> void:
 	if not shader_bg or not shader_bg.material:
 		return
-	
-	var shader_mat = shader_bg.material as ShaderMaterial
-	if shader_mat:
-		shader_mat.set_shader_parameter("color_A", Vector3(0.0, 0.8, 0.8))  # Teal
-		shader_mat.set_shader_parameter("color_B", Vector3(0.5, 0.0, 0.5))  # Purple
 
-## _on_locked_item_mouse_exited(shader_bg)
-##
-## Called when mouse exits a locked item - returns shader colors to black and grey
-func _on_locked_item_mouse_exited(shader_bg: ColorRect) -> void:
-	if not shader_bg or not shader_bg.material:
-		return
-	
 	var shader_mat = shader_bg.material as ShaderMaterial
 	if shader_mat:
-		shader_mat.set_shader_parameter("color_A", Vector3(0.0, 0.0, 0.0))  # Black
-		shader_mat.set_shader_parameter("color_B", Vector3(0.4, 0.4, 0.4))  # Grey
+		shader_mat.set_shader_parameter("color_A", Vector3(0.05, 0.5, 0.36))  # Brighter green
+		shader_mat.set_shader_parameter("color_B", Vector3(0.35, 0.85, 0.6))
+
+## _on_unlocked_item_mouse_exited(shader_bg)
+##
+## Called when mouse exits an unlocked item card - restores the base green marquee colors
+func _on_unlocked_item_mouse_exited(shader_bg: ColorRect) -> void:
+	if not shader_bg or not shader_bg.material:
+		return
+
+	var shader_mat = shader_bg.material as ShaderMaterial
+	if shader_mat and shader_bg.has_meta("base_color_a"):
+		shader_mat.set_shader_parameter("color_A", shader_bg.get_meta("base_color_a"))
+		shader_mat.set_shader_parameter("color_B", shader_bg.get_meta("base_color_b"))
 
 
 ## temporarily_minimize()

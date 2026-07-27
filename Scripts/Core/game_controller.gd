@@ -455,6 +455,12 @@ func _on_game_start() -> void:
 	
 	# Delete any existing run save for fresh start
 	GameSaveManager.delete_current_save()
+
+	# Reset run-scoped Rebellion Rep for the new game (saved-run loads go
+	# through load_game_state() instead and keep their Rep)
+	var progress_manager = get_node_or_null("/root/ProgressManager")
+	if progress_manager:
+		progress_manager.reset_rep()
 	
 	# Reset shop reroll cost for new game
 	if shop_ui:
@@ -893,6 +899,7 @@ func _clear_all_consumables() -> void:
 		if is_instance_valid(consumable):
 			consumable.queue_free()
 	active_consumables.clear()
+	consumable_counts.clear()
 	
 	# Clear UI
 	if is_instance_valid(consumable_ui) and consumable_ui.has_method("clear_all_consumables"):
@@ -5430,10 +5437,13 @@ func _resolve_mom_checkin(from_shop: bool = false) -> void:
 	if not chores_manager:
 		return
 
-	# If a challenge was just completed, skip the check-in entirely -
-	# a fresh one is scheduled at the next round start instead.
+	# If a challenge was just completed, skip the check-in entirely.
+	# The trigger already consumed this round's check-in slot, so release
+	# it: the shop-entry fallback can then catch the missed visit instead
+	# of the round silently getting no check-in at all.
 	if not from_shop and round_manager and round_manager.is_challenge_completed:
 		print("[GameController] Mom check-in skipped - challenge completed")
+		chores_manager.unmark_checkin_done()
 		return
 
 	# If the whole game (channel) just completed, skip as well.
@@ -5562,16 +5572,21 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 		if _mom_dialog and _mom_dialog.close_button:
 			_mom_dialog.close_button.disabled = false
 
+	# Rebellion systems: Rep is a persistent meta stat. Apply it BEFORE the
+	# dialog closes so the in-dialog rep meter visibly updates (and juices)
+	# while the player is still looking at it - applied after close, the
+	# meter only ever changed off-screen.
+	if result.rep_delta != 0:
+		ProgressManager.adjust_rep(result.rep_delta)
+
 	# Wait for dialog to close
 	await _mom_dialog.dialog_closed
 
 	# Apply consequences after dialog closes
 	MomLogicHandlerScript.apply_consequences(self, result)
 
-	# Rebellion systems: Rep is a persistent meta stat; the Rebellion buff
-	# is the immediate payoff for successful sass (one stack per success).
-	if result.rep_delta != 0:
-		ProgressManager.adjust_rep(result.rep_delta)
+	# The Rebellion buff is the immediate payoff for successful sass
+	# (one stack per success).
 	if sass_stacks > 0:
 		_grant_rebellion_buff(sass_stacks)
 		result.rebellion_granted = true

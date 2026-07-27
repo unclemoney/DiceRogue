@@ -72,6 +72,9 @@ func _test_done_flag(cm) -> void:
 	_check("fresh round: had_checkin_this_round() is false", not cm.had_checkin_this_round())
 	cm.mark_checkin_done()
 	_check("mark_checkin_done() sets the flag", cm.had_checkin_this_round())
+	cm.unmark_checkin_done()
+	_check("unmark_checkin_done() releases the flag", not cm.had_checkin_this_round())
+	cm.mark_checkin_done()
 	cm._checkin_done_this_round = false
 	_check("flag resets for a new round", not cm.had_checkin_this_round())
 

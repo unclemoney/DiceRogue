@@ -44,7 +44,9 @@ const CURRENT_SAVE_VERSION := 2
 signal profile_migration_needed(slot: int)  # Emitted when old profile detected
 signal rep_changed(new_rep: int)  # Emitted when the Rebellion Rep stat changes
 
-## Rebellion Rep: persistent meta stat (0-100) earned by sassing Mom.
+## Rebellion Rep: run-scoped stat (0-100) earned by sassing Mom.
+## Resets to 0 when a new game starts (see reset_rep()); kept across mall
+## zone changes within a run.
 ## Tier thresholds gate which POG rating bands appear in the kiosk:
 ##   tier 0 (Rep 0+):   G          ("Mom-Approved")
 ##   tier 1 (Rep 0+):   + PG       ("Questionable")
@@ -761,8 +763,8 @@ func track_chore_completed(difficulty: int) -> void:
 
 ## adjust_rep(delta: int)
 ##
-## Changes the persistent Rebellion Rep stat (clamped 0-MAX_REP) and saves
-## immediately - Rep is meta progression and must survive an abandoned run.
+## Changes the run-scoped Rebellion Rep stat (clamped 0-MAX_REP) and saves
+## immediately so a mid-run quit/continue keeps the current value.
 ## Positive delta from successful sass, negative from bootlicking compliance
 ## (deltas are computed by GameController during Mom dialog sessions).
 func adjust_rep(delta: int) -> void:
@@ -776,6 +778,20 @@ func adjust_rep(delta: int) -> void:
 	print("[ProgressManager] Rep changed: %d -> %d (%+d) [tier %d: %s]" % [
 		old_rep, new_rep, delta, get_rep_tier(), get_rep_tier_name()])
 	rep_changed.emit(new_rep)
+	save_progress()
+
+
+## reset_rep() -> void
+##
+## Resets Rebellion Rep to 0 for a new game. Rep is run-scoped: it keeps its
+## value across mall zone changes within a run, but a fresh run starts at 0.
+## Emits rep_changed and saves so the reset survives a session restart.
+func reset_rep() -> void:
+	if get_rep() == 0:
+		return
+	cumulative_stats["rep"] = 0
+	print("[ProgressManager] Rep reset to 0 for new game")
+	rep_changed.emit(0)
 	save_progress()
 
 

@@ -46,7 +46,6 @@ const BAR_WIDTH: float = 172.0 #172
 const BAR_HEIGHT: float = 26.0
 const WARNING_THRESHOLD: float = 60.0
 const CHORE_BG_SOFT: Color = Color(0.247059, 0.219608, 0.345098, 0.4)
-const CHORE_BORDER: Color = Color(0.713725, 0.301961, 0.478431, 0.05)
 const CHORE_ACCENT: Color = Color(0.137255, 0.411765, 0.415686, 1.0)
 const CHORE_TEXT: Color = Color(0.968627, 0.941176, 1.0, 1.0)
 const CHORE_TEXT_SOFT: Color = Color(0.780392, 0.733333, 0.866667, 1.0)
@@ -155,10 +154,12 @@ func _create_ui_structure() -> void:
 	var margin = MarginContainer.new()
 	margin.name = "MarginContainer"
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_top", 1)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_bottom", 2)
+	# No outer margins: the compact shell fills the parent ChoreMeterContainer
+	# edge to edge (the container's own purple border is the frame).
+	margin.add_theme_constant_override("margin_left", 0)
+	margin.add_theme_constant_override("margin_top", 0)
+	margin.add_theme_constant_override("margin_right", 0)
+	margin.add_theme_constant_override("margin_bottom", 0)
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(margin)
 
@@ -174,6 +175,7 @@ func _create_ui_structure() -> void:
 	_compact_shell = PanelContainer.new()
 	_compact_shell.name = "CompactShell"
 	_compact_shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_compact_shell.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_compact_shell.custom_minimum_size = Vector2(0, 84)
 	_compact_shell.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	main_container.add_child(_compact_shell)
@@ -190,6 +192,8 @@ func _create_ui_structure() -> void:
 
 	var shell_content = VBoxContainer.new()
 	shell_content.add_theme_constant_override("separation", 2)
+	shell_content.alignment = BoxContainer.ALIGNMENT_CENTER
+	shell_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	shell_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shell_margin.add_child(shell_content)
 
@@ -211,6 +215,22 @@ func _create_ui_structure() -> void:
 	progress_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shell_content.add_child(progress_bar)
 
+	# Task row: the label expands between a left spacer and the buff chip
+	# slot on the far right. The slot is permanently reserved (never hidden),
+	# so the compact shell keeps one stable size whether or not a buff is
+	# active. The spacer matches the slot width to keep the label centered.
+	var task_row = HBoxContainer.new()
+	task_row.name = "TaskRow"
+	task_row.add_theme_constant_override("separation", 4)
+	task_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shell_content.add_child(task_row)
+
+	var buff_slot_spacer = Control.new()
+	buff_slot_spacer.name = "BuffSlotSpacer"
+	buff_slot_spacer.custom_minimum_size = BUFF_CHIP_SIZE
+	buff_slot_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	task_row.add_child(buff_slot_spacer)
+
 	task_label = Label.new()
 	task_label.name = "TaskLabel"
 	task_label.text = "No active chore"
@@ -222,21 +242,24 @@ func _create_ui_structure() -> void:
 	task_label.add_theme_constant_override("outline_size", 1)
 	task_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	task_label.custom_minimum_size = Vector2(0, 14)
+	task_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	task_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	shell_content.add_child(task_label)
+	task_row.add_child(task_label)
 
 	_buff_chip_config = DebuffVisualConfigScript.new()
 	_buff_chip_config.compact_icon_size = Vector2(14, 14)
 	_buff_detail_config = DebuffVisualConfigScript.new()
 	_buff_detail_config.compact_icon_size = Vector2(30, 30)
 
+	# Reserved buff chip slot at the far right of the task row. Sized for
+	# one chip; always visible so the shell layout never jumps.
 	buff_icon_row = HBoxContainer.new()
 	buff_icon_row.name = "BuffIconRow"
-	buff_icon_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	buff_icon_row.alignment = BoxContainer.ALIGNMENT_END
 	buff_icon_row.add_theme_constant_override("separation", 4)
-	buff_icon_row.visible = false
+	buff_icon_row.custom_minimum_size = BUFF_CHIP_SIZE
 	buff_icon_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	shell_content.add_child(buff_icon_row)
+	task_row.add_child(buff_icon_row)
 
 	details_panel = PanelContainer.new()
 	details_panel.name = "DetailsPanel"
@@ -305,14 +328,13 @@ func _create_ui_structure() -> void:
 func _apply_compact_shell_style() -> void:
 	if _compact_shell == null:
 		return
+	# Flat dark fill, no border/shadow: the shell spans the parent container
+	# edge to edge, so the container's own border is the only frame.
 	var shell_style = StyleBoxFlat.new()
 	shell_style.bg_color = CHORE_BG_SOFT
-	shell_style.border_color = CHORE_BORDER
-	shell_style.set_border_width_all(2)
-	shell_style.set_corner_radius_all(12)
+	shell_style.set_border_width_all(0)
+	shell_style.set_corner_radius_all(6)
 	shell_style.corner_detail = 6
-	shell_style.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.35)
-	shell_style.shadow_size = 4
 	_compact_shell.add_theme_stylebox_override("panel", shell_style)
 
 func _apply_panel_style() -> void:
@@ -556,10 +578,10 @@ func get_progress_percent() -> int:
 
 ## add_buff_icon(data, buff_instance) -> Control
 ##
-## Adds a compact buff chip (e.g. the Rebellion buff) to the row under the
-## task label, reusing the DebuffIcon chip so the SDF glyph shader renders
-## identically to the Debuff UI. Also registers the buff for the fan-out
-## details panel. Mirrors DebuffUI.add_debuff().
+## Adds a compact buff chip (e.g. the Rebellion buff) to the reserved slot
+## at the far right of the task row, reusing the DebuffIcon chip so the SDF
+## glyph shader renders identically to the Debuff UI. Also registers the
+## buff for the fan-out details panel. Mirrors DebuffUI.add_debuff().
 func add_buff_icon(data: DebuffData, buff_instance = null) -> Control:
 	if data == null:
 		return null
@@ -589,7 +611,6 @@ func add_buff_icon(data: DebuffData, buff_instance = null) -> Control:
 		buff_instance.visual_pulse_requested.connect(func(strength: float, duration: float):
 			icon.trigger_visual_pulse(strength, duration))
 
-	buff_icon_row.visible = true
 	_rebuild_buff_detail_row()
 	_update_details_with_progress()
 	print("[ChoreUI] Added buff icon:", data.id)
@@ -598,17 +619,17 @@ func add_buff_icon(data: DebuffData, buff_instance = null) -> Control:
 
 ## remove_buff_icon(id)
 ##
-## Removes a buff chip by id and hides the row when no buffs remain.
+## Removes a buff chip by id. The reserved slot stays in place (it never
+## hides), so the compact shell size is unaffected.
 func remove_buff_icon(id: String) -> void:
 	if not _buff_icons.has(id):
 		return
 	var icon = _buff_icons[id] as DebuffIcon
 	if is_instance_valid(icon):
+		buff_icon_row.remove_child(icon)
 		icon.queue_free()
 	_buff_icons.erase(id)
 	_buff_instances.erase(id)
-	if buff_icon_row and _buff_icons.is_empty():
-		buff_icon_row.visible = false
 	_rebuild_buff_detail_row()
 	_update_details_with_progress()
 	print("[ChoreUI] Removed buff icon:", id)
@@ -621,11 +642,10 @@ func remove_buff_icon(id: String) -> void:
 func clear_buff_icons() -> void:
 	for icon in _buff_icons.values():
 		if is_instance_valid(icon):
+			buff_icon_row.remove_child(icon)
 			icon.queue_free()
 	_buff_icons.clear()
 	_buff_instances.clear()
-	if buff_icon_row:
-		buff_icon_row.visible = false
 	_rebuild_buff_detail_row()
 	_update_details_with_progress()
 	print("[ChoreUI] Cleared all buff icons")
@@ -644,8 +664,8 @@ func _get_buff_stacks(id: String) -> int:
 
 ## _rebuild_buff_detail_row()
 ##
-## Rebuilds the fan-out buff row (chip + name/stacks label) above the
-## details RichTextLabel from the currently registered buffs.
+## Rebuilds the fan-out buff row (chip + name/stacks label + effect summary)
+## above the details RichTextLabel from the currently registered buffs.
 func _rebuild_buff_detail_row() -> void:
 	if not buff_detail_row:
 		return
@@ -671,6 +691,13 @@ func _rebuild_buff_detail_row() -> void:
 		chip.custom_minimum_size = BUFF_DETAIL_CHIP_SIZE
 		_buff_detail_icons[id] = chip
 
+		var text_vbox := VBoxContainer.new()
+		text_vbox.name = "BuffText"
+		text_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		text_vbox.add_theme_constant_override("separation", 2)
+		text_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		buff_detail_row.add_child(text_vbox)
+
 		var lbl := Label.new()
 		lbl.name = "BuffLabel"
 		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -680,8 +707,29 @@ func _rebuild_buff_detail_row() -> void:
 		lbl.add_theme_constant_override("outline_size", 1)
 		lbl.text = "%s  x%d" % [source.data.display_name, _get_buff_stacks(id)]
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		buff_detail_row.add_child(lbl)
+		text_vbox.add_child(lbl)
 		_buff_detail_labels[id] = lbl
+
+		var desc := Label.new()
+		desc.name = "BuffDesc"
+		desc.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		desc.add_theme_font_size_override("font_size", 9)
+		desc.add_theme_color_override("font_color", CHORE_TEXT_SOFT)
+		desc.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+		desc.add_theme_constant_override("outline_size", 1)
+		desc.text = _get_buff_effect_summary()
+		desc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		text_vbox.add_child(desc)
+
+
+## _get_buff_effect_summary() -> String
+##
+## One-line per-stack effect summary for the fan-out buff chip, computed
+## from the Rebellion buff constants (same numbers as the BUFF BBCode
+## section in the details panel).
+func _get_buff_effect_summary() -> String:
+	return "x%.2f score per stack, +1 roll per stack (max %d)" % [
+		1.0 + RebellionBuff.BASE_SCORE_BONUS, RebellionBuff.MAX_BONUS_ROLLS]
 
 func _play_completion_flash() -> void:
 	# Play completion sound effect
