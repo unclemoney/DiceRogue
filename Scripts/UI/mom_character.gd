@@ -17,9 +17,9 @@ const TEXT_DISPLAY_SPEED: float = 0.03  # Seconds per character
 const PANEL_BACKDROP_SHADER_PATH := "res://Scripts/Shaders/panel_backdrop.gdshader"
 
 ## Rep meter (rebel mode): cloned from ChoreUI's meter pattern.
-const REP_BAR_TEXTURE_UNDER := preload("res://Resources/Art/UI/under-export.png")
-const REP_BAR_TEXTURE_PROGRESS := preload("res://Resources/Art/UI/progress-export.png")
-const REP_BAR_TEXTURE_OVER := preload("res://Resources/Art/UI/over-export.png")
+const REP_BAR_TEXTURE_UNDER : CompressedTexture2D = preload("res://Resources/Art/UI/rep_meter_under.png")
+const REP_BAR_TEXTURE_PROGRESS : CompressedTexture2D = preload("res://Resources/Art/UI/rep_meter_progress.png")
+const REP_BAR_TEXTURE_OVER : CompressedTexture2D = preload("res://Resources/Art/UI/rep_meter_over.png")
 const REP_BAR_NINE_PATCH_MARGIN: int = 32
 ## Escalating rebel-stage tints (Teacher's Pet -> Banned from the Mall).
 const REP_STAGE_COLORS: Array[Color] = [
