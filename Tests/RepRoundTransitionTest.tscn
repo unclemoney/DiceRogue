@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://u56wio68mfrf"]
+
+[ext_resource type="Script" uid="uid://cv3vl132sfm6o" path="res://Tests/rep_round_transition_test.gd" id="1"]
+
+[node name="RepRoundTransitionTest" type="Node"]
+script = ExtResource("1")

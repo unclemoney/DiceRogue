@@ -112,8 +112,29 @@ func _ready() -> void:
 	# Load the active profile
 	load_profile(current_profile_slot)
 	
+	# GameSettings autoloads AFTER ProgressManager, so the read above almost
+	# always finds nothing and slot 1 gets loaded. Re-check once the first
+	# frame ends (all autoloads ready) and load the real active profile.
+	# Without this, a slot 2/3 player runs with the wrong profile and the
+	# mismatch guard in save_current_profile() reloads from disk on their
+	# first save, silently wiping unsaved progress (e.g. a Rebellion Rep
+	# gain from sassing Mom, which saves inside adjust_rep()).
+	call_deferred("_sync_active_profile_slot")
+	
 	# Connect to game events
 	_connect_to_game_systems()
+
+
+## _sync_active_profile_slot()
+##
+## Deferred from _ready(): once GameSettings exists, load the actually
+## active profile when the boot-time load picked the wrong slot.
+func _sync_active_profile_slot() -> void:
+	var game_settings = get_node_or_null("/root/GameSettings")
+	if game_settings and game_settings.active_profile_slot != current_profile_slot:
+		print("[ProgressManager] Active profile is slot %d, but slot %d was loaded at boot - syncing" % [
+			game_settings.active_profile_slot, current_profile_slot])
+		load_profile(game_settings.active_profile_slot)
 
 ## _check_and_migrate_legacy_save()
 ##
@@ -252,7 +273,11 @@ func load_profile(slot: int) -> bool:
 	if not FileAccess.file_exists(save_path):
 		print("[ProgressManager] Profile slot %d not found, creating default" % slot)
 		_create_default_profile(slot)
-	
+
+	# Remember the live Rep so a mid-run load that changes it can notify
+	# listeners (meters) instead of leaving them silently stale.
+	var rep_before_load := get_rep()
+
 	# Reset unlockable items to locked state before loading
 	_reset_all_unlocks()
 	
@@ -354,6 +379,11 @@ func load_profile(slot: int) -> bool:
 	print("[ProgressManager] Loaded profile %d: %s (%d unlocked items)" % [slot, current_profile_name, unlocked_count])
 	print("[ProgressManager] Final state - slot: %d, name: %s" % [current_profile_slot, current_profile_name])
 	print("[ProgressManager] ===== LOAD PROFILE END =====")
+	# A load that changes Rep must notify listeners: without this, a mid-run
+	# reload (e.g. the slot-mismatch guard in save_current_profile()) silently
+	# zeroed the stat while every Rep meter kept showing the stale value.
+	if get_rep() != rep_before_load:
+		rep_changed.emit(get_rep())
 	profile_loaded.emit(slot)
 	progress_loaded.emit()
 	return true

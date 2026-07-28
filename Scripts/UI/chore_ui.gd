@@ -43,7 +43,7 @@ var _fan_center: Vector2
 var _compact_hover_tween: Tween
 
 # Visual settings
-const BAR_WIDTH: float = 172.0 #172
+const BAR_WIDTH: float = 118.0 # narrowed so the 84px buff slot fits the panel
 const BAR_HEIGHT: float = 26.0
 const WARNING_THRESHOLD: float = 60.0
 const CHORE_BG_SOFT: Color = Color(0.247059, 0.219608, 0.345098, 0.4)
@@ -69,11 +69,12 @@ const VCR_FONT := preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 const DEBUFF_ICON_SCENE: PackedScene = preload("res://Scenes/Debuff/DebuffIcon.tscn")
 const DebuffVisualConfigScript = preload("res://Scripts/Debuff/debuff_visual_config.gd")
 # Buff chip sizing (smaller than the Debuff UI slots).
-const BUFF_CHIP_SIZE := Vector2(22, 26)
+const BUFF_CHIP_SIZE := Vector2(82, 86)
 const BUFF_DETAIL_CHIP_SIZE := Vector2(44, 48)
 # Reserved slot around the buff chip; matches the Debuff UI's translucent
 # empty-slot look (bg 0.12/0.10/0.14 @ 0.3, border 0.3/0.25/0.35 @ 0.15).
-const BUFF_SLOT_SIZE := Vector2(26, 30)
+# It expands vertically to fill the shell, so this is only the minimum.
+const BUFF_SLOT_SIZE := Vector2(84, 44)
 # Subtle alpha levels for the mood (frame) and difficulty (track) tints.
 const MOOD_TINT_ALPHA: float = 0.2
 const DIFFICULTY_TINT_ALPHA: float = 0.1
@@ -194,12 +195,24 @@ func _create_ui_structure() -> void:
 	shell_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_compact_shell.add_child(shell_margin)
 
-	var shell_content = VBoxContainer.new()
-	shell_content.add_theme_constant_override("separation", 2)
-	shell_content.alignment = BoxContainer.ALIGNMENT_CENTER
+	# Shell row: meter column (bar + task label) on the left, buff slot on
+	# the far right. The slot stretches the full shell height so it reads as
+	# a proper icon square rather than a sliver under the bar.
+	var shell_content = HBoxContainer.new()
+	shell_content.name = "ShellRow"
+	shell_content.add_theme_constant_override("separation", 4)
 	shell_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	shell_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shell_margin.add_child(shell_content)
+
+	var meter_column = VBoxContainer.new()
+	meter_column.name = "MeterColumn"
+	meter_column.add_theme_constant_override("separation", 2)
+	meter_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	meter_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	meter_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	meter_column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shell_content.add_child(meter_column)
 
 	progress_bar = TextureProgressBar.new()
 	progress_bar.name = "ProgressBar"
@@ -211,29 +224,17 @@ func _create_ui_structure() -> void:
 	progress_bar.texture_progress = BAR_TEXTURE_PROGRESS
 	progress_bar.texture_over = BAR_TEXTURE_OVER
 	progress_bar.texture_progress_offset = texture_progress_offset
-	progress_bar.nine_patch_stretch = false
+	# Nine-patch on: the 344px-wide bar textures otherwise become the bar's
+	# minimum size, forcing the shell ~23px past the ChoreMeterContainer's
+	# right edge. With the 32px end caps preserved, the bar shrinks to its
+	# BAR_WIDTH x BAR_HEIGHT minimum and stretches to fit instead.
+	progress_bar.nine_patch_stretch = true
 	progress_bar.stretch_margin_left = BAR_NINE_PATCH_MARGIN
 	progress_bar.stretch_margin_right = BAR_NINE_PATCH_MARGIN
 	progress_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	progress_bar.custom_minimum_size = Vector2(BAR_WIDTH, BAR_HEIGHT)
 	progress_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	shell_content.add_child(progress_bar)
-
-	# Task row: the label expands between a left spacer and the buff chip
-	# slot on the far right. The slot is permanently reserved (never hidden),
-	# so the compact shell keeps one stable size whether or not a buff is
-	# active. The spacer matches the slot width to keep the label centered.
-	var task_row = HBoxContainer.new()
-	task_row.name = "TaskRow"
-	task_row.add_theme_constant_override("separation", 4)
-	task_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	shell_content.add_child(task_row)
-
-	var buff_slot_spacer = Control.new()
-	buff_slot_spacer.name = "BuffSlotSpacer"
-	buff_slot_spacer.custom_minimum_size = BUFF_SLOT_SIZE
-	buff_slot_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	task_row.add_child(buff_slot_spacer)
+	meter_column.add_child(progress_bar)
 
 	task_label = Label.new()
 	task_label.name = "TaskLabel"
@@ -248,19 +249,21 @@ func _create_ui_structure() -> void:
 	task_label.custom_minimum_size = Vector2(0, 14)
 	task_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	task_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	task_row.add_child(task_label)
+	meter_column.add_child(task_label)
 
 	_buff_chip_config = DebuffVisualConfigScript.new()
-	_buff_chip_config.compact_icon_size = Vector2(14, 14)
+	_buff_chip_config.compact_icon_size = Vector2(20, 20)
 	_buff_detail_config = DebuffVisualConfigScript.new()
 	_buff_detail_config.compact_icon_size = Vector2(30, 30)
 
-	# Reserved buff slot at the far right of the task row, styled like the
-	# Debuff UI's translucent empty slots. Always visible so the shell
-	# layout never jumps.
+	# Reserved buff slot on the far right of the shell row, styled like the
+	# Debuff UI's translucent empty slots. It stretches the full shell
+	# height and is always visible so the layout never jumps; the chip is
+	# centered inside it on both axes.
 	buff_icon_row = PanelContainer.new()
 	buff_icon_row.name = "BuffIconRow"
 	buff_icon_row.custom_minimum_size = BUFF_SLOT_SIZE
+	buff_icon_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	buff_icon_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var slot_style := StyleBoxFlat.new()
 	slot_style.bg_color = Color(0.12, 0.10, 0.14, 0.3)
@@ -269,7 +272,7 @@ func _create_ui_structure() -> void:
 	slot_style.set_corner_radius_all(10)
 	slot_style.corner_detail = 6
 	buff_icon_row.add_theme_stylebox_override("panel", slot_style)
-	task_row.add_child(buff_icon_row)
+	shell_content.add_child(buff_icon_row)
 
 	_buff_icon_box = HBoxContainer.new()
 	_buff_icon_box.name = "BuffIconBox"
@@ -615,6 +618,9 @@ func add_buff_icon(data: DebuffData, buff_instance = null) -> Control:
 	icon.set_data(data)
 	_buff_icon_box.add_child(icon)
 	icon.custom_minimum_size = BUFF_CHIP_SIZE
+	# Center the chip inside the slot on both axes.
+	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
 	_buff_icons[data.id] = icon
 	if buff_instance:

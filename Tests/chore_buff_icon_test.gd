@@ -59,9 +59,12 @@ func _test_add_buff_icon(ui) -> void:
 	_check("chip registered by id", ui._buff_icons.has("rebellion"))
 	_check("chip added to reserved slot", ui._buff_icon_box.get_child_count() == 1)
 	_check("slot styled like a Debuff empty slot", ui.buff_icon_row.get_theme_stylebox("panel") is StyleBoxFlat)
-	_check("slot sits far right of the task row", ui.buff_icon_row.get_parent().name == "TaskRow")
-	_check("slot is the last child of the task row",
+	_check("slot sits far right of the shell row", ui.buff_icon_row.get_parent().name == "ShellRow")
+	_check("slot is the last child of the shell row",
 		ui.buff_icon_row.get_index() == ui.buff_icon_row.get_parent().get_child_count() - 1)
+	_check("slot expands vertically", ui.buff_icon_row.size_flags_vertical == Control.SIZE_EXPAND_FILL)
+	_check("chip centered in the slot",
+		icon.size_flags_horizontal == Control.SIZE_SHRINK_CENTER and icon.size_flags_vertical == Control.SIZE_SHRINK_CENTER)
 	_check("fan-out row shown", ui.buff_detail_row.visible)
 	_check("fan-out chip built", ui._buff_detail_icons.has("rebellion"))
 	_check("fan-out label shows name and stacks",
