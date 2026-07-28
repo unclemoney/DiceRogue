@@ -3992,10 +3992,6 @@ func _open_shop_ui() -> void:
 		_shop_tween.tween_property(
 			shop_ui, "scale", Vector2.ONE, 0.05
 		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-
-		# Fallback Mom check-in: short rounds often never reach the random
-		# roll target (2-30), so shop entry gets a 50% chance to catch up.
-		_maybe_shop_mom_checkin()
 	else:
 		shop_ui.scale = Vector2(1.0, 1.0)
 		# Cancel any existing tween
@@ -5403,47 +5399,23 @@ func _on_mom_triggered() -> void:
 ## round_manager.is_challenge_completed - checking immediately would read
 ## a stale flag and show a Mom dialog on the round-winning score (same
 ## stale-flag hazard as _on_chore_selection_requested).
-## _maybe_shop_mom_checkin()
-##
-## Shop-entry fallback for the random check-in: rounds that ended before
-## the roll target (2-30) get a 50% chance of the check-in firing here.
-## Marks the round's check-in consumed so a later roll can't double-fire.
-## The dialog session manages its own overlay and unfreezes the meter on
-## close via _end_mom_visit(), same as an in-round check-in.
-func _maybe_shop_mom_checkin() -> void:
-	if not chores_manager:
-		return
-	if chores_manager.had_checkin_this_round():
-		return
-	if GameRNG.randf() >= ChoresManager.SHOP_CHECKIN_CHANCE:
-		return
-	print("[GameController] Shop-entry Mom check-in fallback triggered")
-	chores_manager.mark_checkin_done()
-	call_deferred("_resolve_mom_checkin", true)
-
-
 func _on_mom_checkin() -> void:
 	print("[GameController] Mom check-in!")
 	call_deferred("_resolve_mom_checkin")
 
 
-## _resolve_mom_checkin(from_shop)
+## _resolve_mom_checkin()
 ##
 ## Deferred body of _on_mom_checkin(). Runs after the full scoring signal
 ## chain, so round/game completion flags are accurate.
-## from_shop: true when fired as the shop-entry fallback - skips the
-## challenge-completed guard (the flag is always set at shop time).
-func _resolve_mom_checkin(from_shop: bool = false) -> void:
+func _resolve_mom_checkin() -> void:
 	if not chores_manager:
 		return
 
 	# If a challenge was just completed, skip the check-in entirely.
-	# The trigger already consumed this round's check-in slot, so release
-	# it: the shop-entry fallback can then catch the missed visit instead
-	# of the round silently getting no check-in at all.
-	if not from_shop and round_manager and round_manager.is_challenge_completed:
+	# Mom never visits between rounds - the round simply gets no check-in.
+	if round_manager and round_manager.is_challenge_completed:
 		print("[GameController] Mom check-in skipped - challenge completed")
-		chores_manager.unmark_checkin_done()
 		return
 
 	# If the whole game (channel) just completed, skip as well.

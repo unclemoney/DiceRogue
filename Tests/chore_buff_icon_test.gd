@@ -52,12 +52,13 @@ func _check(label: String, condition: bool) -> void:
 
 
 func _test_add_buff_icon(ui) -> void:
-	_check("compact slot starts empty (always visible)", ui.buff_icon_row.visible and ui.buff_icon_row.get_child_count() == 0)
+	_check("compact slot starts empty (always visible)", ui.buff_icon_row.visible and ui._buff_icon_box.get_child_count() == 0)
 	_check("fan-out row starts hidden", not ui.buff_detail_row.visible)
 	var icon = ui.add_buff_icon(REBELLION_DATA)
 	_check("add_buff_icon() returns a chip", icon != null)
 	_check("chip registered by id", ui._buff_icons.has("rebellion"))
-	_check("chip added to reserved slot", ui.buff_icon_row.get_child_count() == 1)
+	_check("chip added to reserved slot", ui._buff_icon_box.get_child_count() == 1)
+	_check("slot styled like a Debuff empty slot", ui.buff_icon_row.get_theme_stylebox("panel") is StyleBoxFlat)
 	_check("slot sits far right of the task row", ui.buff_icon_row.get_parent().name == "TaskRow")
 	_check("slot is the last child of the task row",
 		ui.buff_icon_row.get_index() == ui.buff_icon_row.get_parent().get_child_count() - 1)
@@ -79,7 +80,7 @@ func _test_remove_buff_icon(ui) -> void:
 	_check("removing an unknown id is a no-op", ui._buff_icons.size() == 1)
 	ui.remove_buff_icon("rebellion")
 	_check("remove_buff_icon() unregisters the chip", not ui._buff_icons.has("rebellion"))
-	_check("compact slot emptied (still visible)", ui.buff_icon_row.visible and ui.buff_icon_row.get_child_count() == 0)
+	_check("compact slot emptied (still visible)", ui.buff_icon_row.visible and ui._buff_icon_box.get_child_count() == 0)
 	_check("fan-out row hides when empty", not ui.buff_detail_row.visible)
 	_check("fan-out entries cleared", ui._buff_detail_icons.is_empty() and ui._buff_detail_labels.is_empty())
 
@@ -89,5 +90,5 @@ func _test_clear_buff_icons(ui) -> void:
 	_check("chip re-added for clear test", ui._buff_icons.size() == 1)
 	ui.clear_buff_icons()
 	_check("clear_buff_icons() empties the registry", ui._buff_icons.is_empty())
-	_check("compact slot empty after clear", ui.buff_icon_row.get_child_count() == 0)
+	_check("compact slot empty after clear", ui._buff_icon_box.get_child_count() == 0)
 	_check("fan-out row hidden after clear", not ui.buff_detail_row.visible)

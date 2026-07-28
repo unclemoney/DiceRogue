@@ -977,7 +977,7 @@ All PowerUps now have movie-style content ratings that affect Mom's reaction:
 **Mom Visits:**
 Mom appears in two ways:
 - **Meter Visit**: At 100 progress, Mom appears. Severity (0-5) is computed from her mood, grudge, and escalation, then a dialog tree plays out.
-- **Random Check-in**: At most once per round, at a random roll (target roll 2-30, picked each round), Mom pops in for a non-punishment chat. Short rounds often end before the target — those get a 50% fallback check-in roll when the shop opens. Dialog responses can still escalate it into a real punishment. Deferred while a meter visit is active.
+- **Random Check-in**: At most once per round, at a random roll (base target roll 2-10 plus the current mall zone number — zone 4 means 2-14 — picked each round), Mom pops in for a non-punishment chat. Later zones see fewer check-ins, and rounds that end before the target simply get none — Mom never visits between rounds. Dialog responses can still escalate it into a real punishment. Deferred while a meter visit is active.
 
 **Special Visit Types:**
 - **Silent Treatment** (10% of severity 1-2 meter visits): Mom just stares. "..." No punishment — but her mood worsens, and it's somehow worse than yelling.
@@ -1086,8 +1086,7 @@ Each visit that resolves at severity 3+ increments a run counter that adds to la
 - Trigger Mom Immediately: Bypass progress threshold (meter visit)
 - Trigger Mom Check-in: Fire the random check-in dialog on demand
 - Check-in: Reroll Target: Force ChoresManager to reroll this round's check-in roll target
-- Check-in: Target Roll 2 / 15 / 30: Set this round's check-in roll target to an exact value
-- Force Shop Check-in Roll: Run the shop-entry check-in fallback roll (50% chance when no check-in happened this round) without opening the shop
+- Check-in: Target Roll 2 / 6 / Max: Set this round's check-in roll target to an exact value (Max = 10 + current mall zone)
 - Add Mom Grudge +1: Raise Mom's grudge level for testing severity floors
 - Add Defer Streak +1: Raise the defer streak for testing compounded severity
 - Rep +10 / Rep -10 / Show Rep State: Adjust and inspect the persistent Rep stat

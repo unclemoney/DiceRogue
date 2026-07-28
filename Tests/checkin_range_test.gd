@@ -3,8 +3,9 @@ extends Node
 ## checkin_range_test.gd
 ##
 ## Exercises the ChoresManager random check-in scheduling:
-##   1. _schedule_checkin() roll targets always fall within 2-30.
-##   2. had_checkin_this_round() / mark_checkin_done() flag behavior.
+##   1. _schedule_checkin() roll targets always fall within 2-10 (base max;
+##      no game_controller in this test, so no mall-zone bonus applies).
+##   2. get_checkin_max() falls back to CHECKIN_TARGET_MAX without a zone.
 ##   3. The mom_checkin signal fires exactly once when the roll target is hit.
 ##
 ## Scene-based test (autoloads must be compiled first).
@@ -27,7 +28,6 @@ func _ready() -> void:
 	cm.mom_checkin.connect(_on_mom_checkin)
 
 	_test_target_range(cm)
-	_test_done_flag(cm)
 	_test_trigger_fires_once(cm)
 
 	if _failures == 0:
@@ -52,6 +52,8 @@ func _check(label: String, condition: bool) -> void:
 
 
 func _test_target_range(cm) -> void:
+	_check("get_checkin_max() falls back to base max without a zone",
+		cm.get_checkin_max() == ChoresManagerScript.CHECKIN_TARGET_MAX)
 	var lowest: int = ChoresManagerScript.CHECKIN_TARGET_MAX
 	var highest: int = ChoresManagerScript.CHECKIN_TARGET_MIN
 	var in_range := true
@@ -64,19 +66,7 @@ func _test_target_range(cm) -> void:
 		highest = maxi(highest, target)
 	_check("%d scheduled targets all within %d-%d" % [ITERATIONS, ChoresManagerScript.CHECKIN_TARGET_MIN, ChoresManagerScript.CHECKIN_TARGET_MAX], in_range)
 	_check("targets spread across the range (min %d, max %d)" % [lowest, highest],
-		lowest <= 5 and highest >= 26)
-
-
-func _test_done_flag(cm) -> void:
-	cm._checkin_done_this_round = false
-	_check("fresh round: had_checkin_this_round() is false", not cm.had_checkin_this_round())
-	cm.mark_checkin_done()
-	_check("mark_checkin_done() sets the flag", cm.had_checkin_this_round())
-	cm.unmark_checkin_done()
-	_check("unmark_checkin_done() releases the flag", not cm.had_checkin_this_round())
-	cm.mark_checkin_done()
-	cm._checkin_done_this_round = false
-	_check("flag resets for a new round", not cm.had_checkin_this_round())
+		lowest <= 3 and highest >= 9)
 
 
 func _test_trigger_fires_once(cm) -> void:
@@ -85,10 +75,10 @@ func _test_trigger_fires_once(cm) -> void:
 	cm._checkin_done_this_round = false
 	cm._checkin_roll_target = 2
 	cm.increment_progress(1)
-	_check("no check-in before the target roll", _checkin_signals == 0 and not cm.had_checkin_this_round())
+	_check("no check-in before the target roll", _checkin_signals == 0 and not cm._checkin_done_this_round)
 	cm.increment_progress(1)
 	_check("check-in fires at the target roll", _checkin_signals == 1)
-	_check("flag set after the signal", cm.had_checkin_this_round())
+	_check("flag set after the signal", cm._checkin_done_this_round)
 	cm.increment_progress(1)
 	cm.increment_progress(1)
 	_check("check-in does not fire twice in one round", _checkin_signals == 1)

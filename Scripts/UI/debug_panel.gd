@@ -312,9 +312,8 @@ func _create_debug_tabs() -> void:
 			{"text": "Trigger Mom Check-in", "method": "_debug_chores_trigger_checkin"},
 			{"text": "Check-in: Reroll Target", "method": "_debug_checkin_reroll"},
 			{"text": "Check-in: Target Roll 2", "method": "_debug_checkin_target_min"},
-			{"text": "Check-in: Target Roll 15", "method": "_debug_checkin_target_mid"},
-			{"text": "Check-in: Target Roll 30", "method": "_debug_checkin_target_max"},
-			{"text": "Force Shop Check-in Roll", "method": "_debug_force_shop_checkin"},
+			{"text": "Check-in: Target Roll 6", "method": "_debug_checkin_target_mid"},
+			{"text": "Check-in: Target Roll Max", "method": "_debug_checkin_target_max"},
 			{"text": "Add Mom Grudge +1", "method": "_debug_chores_add_grudge"},
 			{"text": "Add Defer Streak +1", "method": "_debug_chores_add_defer"},
 			{"text": "Rep +10", "method": "_debug_rep_add"},
@@ -3291,7 +3290,7 @@ func _debug_checkin_reroll() -> void:
 	chores_manager._schedule_checkin()
 	log_debug("Check-in target rerolled: roll %d (range %d-%d)" % [
 		chores_manager._checkin_roll_target,
-		ChoresManager.CHECKIN_TARGET_MIN, ChoresManager.CHECKIN_TARGET_MAX])
+		ChoresManager.CHECKIN_TARGET_MIN, chores_manager.get_checkin_max()])
 
 
 func _debug_checkin_target_min() -> void:
@@ -3299,48 +3298,28 @@ func _debug_checkin_target_min() -> void:
 
 
 func _debug_checkin_target_mid() -> void:
-	_debug_set_checkin_target(15)
+	_debug_set_checkin_target(6)
 
 
 func _debug_checkin_target_max() -> void:
-	_debug_set_checkin_target(ChoresManager.CHECKIN_TARGET_MAX)
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	_debug_set_checkin_target(chores_manager.get_checkin_max())
 
 
 ## _debug_set_checkin_target(target)
 ##
 ## Sets this round's Mom check-in roll target to an exact value (clamped to
-## the CHECKIN_TARGET_MIN..CHECKIN_TARGET_MAX range).
+## the CHECKIN_TARGET_MIN..get_checkin_max() range, i.e. 10 + mall zone).
 func _debug_set_checkin_target(target: int) -> void:
 	var chores_manager = _get_chores_manager()
 	if not chores_manager:
 		log_debug("ERROR: ChoresManager not available")
 		return
-	chores_manager._checkin_roll_target = clampi(target, ChoresManager.CHECKIN_TARGET_MIN, ChoresManager.CHECKIN_TARGET_MAX)
-	log_debug("Check-in target set to roll %d (done this round: %s)" % [
-		chores_manager._checkin_roll_target, str(chores_manager.had_checkin_this_round())])
-
-
-## _debug_force_shop_checkin()
-##
-## Runs the shop-entry Mom check-in fallback roll (50% chance when no
-## check-in happened this round) without opening the shop.
-func _debug_force_shop_checkin() -> void:
-	_refresh_game_controller_reference()
-	if not is_instance_valid(game_controller):
-		log_debug("ERROR: GameController not available")
-		return
-	var chores_manager = _get_chores_manager()
-	if not chores_manager:
-		log_debug("ERROR: ChoresManager not available")
-		return
-	if chores_manager.had_checkin_this_round():
-		log_debug("Check-in already happened this round - shop fallback will not fire")
-		return
-	game_controller._maybe_shop_mom_checkin()
-	if chores_manager.had_checkin_this_round():
-		log_debug("Shop check-in fallback triggered (roll succeeded)")
-	else:
-		log_debug("Shop check-in fallback roll failed (50% chance) - press again to reroll")
+	chores_manager._checkin_roll_target = clampi(target, ChoresManager.CHECKIN_TARGET_MIN, chores_manager.get_checkin_max())
+	log_debug("Check-in target set to roll %d" % chores_manager._checkin_roll_target)
 
 
 func _debug_rep_set_0() -> void:

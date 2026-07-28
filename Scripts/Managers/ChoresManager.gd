@@ -63,11 +63,10 @@ var defer_streak: int = 0
 var low_mood_visits_this_run: int = 0
 
 # Random check-in: exactly one non-punishment Mom visit per round, at a
-# random roll. Target range 2-30 so short rounds often never reach it;
-# a 50% fallback at shop entry covers rounds that end before the target.
+# random roll. Base target range 2-10; the current mall zone number is
+# added to the max (zone 4 -> 2-14), so later zones see fewer check-ins.
 const CHECKIN_TARGET_MIN: int = 2
-const CHECKIN_TARGET_MAX: int = 30
-const SHOP_CHECKIN_CHANCE: float = 0.5
+const CHECKIN_TARGET_MAX: int = 10
 var _rolls_this_round: int = 0
 var _checkin_roll_target: int = -1
 var _checkin_done_this_round: bool = false
@@ -555,8 +554,22 @@ func set_progress(value: int) -> void:
 ## Picks the roll within this round on which Mom's random check-in fires.
 ## Called at game start and on each round transition.
 func _schedule_checkin() -> void:
-	_checkin_roll_target = GameRNG.randi_range(CHECKIN_TARGET_MIN, CHECKIN_TARGET_MAX)
+	_checkin_roll_target = GameRNG.randi_range(CHECKIN_TARGET_MIN, get_checkin_max())
 	print("[ChoresManager] Check-in scheduled for roll %d this round" % _checkin_roll_target)
+
+
+## get_checkin_max() -> int
+##
+## Returns this round's maximum check-in roll target: CHECKIN_TARGET_MAX
+## plus the current mall zone number (zone 4 -> 10 + 4 = 14). Falls back
+## to the base max when the channel manager isn't available (e.g. tests).
+func get_checkin_max() -> int:
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller:
+		var channel_manager = game_controller.get("channel_manager")
+		if channel_manager:
+			return CHECKIN_TARGET_MAX + channel_manager.current_channel
+	return CHECKIN_TARGET_MAX
 
 
 ## _check_checkin_trigger()
@@ -576,31 +589,6 @@ func _check_checkin_trigger() -> void:
 	_checkin_done_this_round = true
 	print("[ChoresManager] Mom check-in triggered at roll %d" % _rolls_this_round)
 	mom_checkin.emit()
-
-
-## had_checkin_this_round() -> bool
-##
-## Returns true if Mom's check-in already happened (or was consumed) this
-## round. Used by the shop-entry fallback check-in.
-func had_checkin_this_round() -> bool:
-	return _checkin_done_this_round
-
-
-## mark_checkin_done()
-##
-## Marks this round's check-in as consumed without firing the signal.
-## Used by the shop-entry fallback so a later roll can't double-fire it.
-func mark_checkin_done() -> void:
-	_checkin_done_this_round = true
-
-
-## unmark_checkin_done()
-##
-## Releases this round's consumed check-in without firing it. Used when a
-## triggered check-in is skipped (challenge completed before the dialog
-## could show) so the shop-entry fallback can still catch the missed visit.
-func unmark_checkin_done() -> void:
-	_checkin_done_this_round = false
 
 
 ## add_grudge(amount)

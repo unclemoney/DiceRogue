@@ -20,8 +20,9 @@ var progress_bar: TextureProgressBar
 var task_label: Label
 var details_panel: PanelContainer
 var details_label: RichTextLabel
-var buff_icon_row: HBoxContainer
+var buff_icon_row: PanelContainer
 var buff_detail_row: HBoxContainer
+var _buff_icon_box: HBoxContainer
 var _compact_shell: PanelContainer
 var _chores_manager = null  # ChoresManager - duck typed to avoid class resolution issues
 
@@ -70,6 +71,9 @@ const DebuffVisualConfigScript = preload("res://Scripts/Debuff/debuff_visual_con
 # Buff chip sizing (smaller than the Debuff UI slots).
 const BUFF_CHIP_SIZE := Vector2(22, 26)
 const BUFF_DETAIL_CHIP_SIZE := Vector2(44, 48)
+# Reserved slot around the buff chip; matches the Debuff UI's translucent
+# empty-slot look (bg 0.12/0.10/0.14 @ 0.3, border 0.3/0.25/0.35 @ 0.15).
+const BUFF_SLOT_SIZE := Vector2(26, 30)
 # Subtle alpha levels for the mood (frame) and difficulty (track) tints.
 const MOOD_TINT_ALPHA: float = 0.2
 const DIFFICULTY_TINT_ALPHA: float = 0.1
@@ -227,7 +231,7 @@ func _create_ui_structure() -> void:
 
 	var buff_slot_spacer = Control.new()
 	buff_slot_spacer.name = "BuffSlotSpacer"
-	buff_slot_spacer.custom_minimum_size = BUFF_CHIP_SIZE
+	buff_slot_spacer.custom_minimum_size = BUFF_SLOT_SIZE
 	buff_slot_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	task_row.add_child(buff_slot_spacer)
 
@@ -251,15 +255,28 @@ func _create_ui_structure() -> void:
 	_buff_detail_config = DebuffVisualConfigScript.new()
 	_buff_detail_config.compact_icon_size = Vector2(30, 30)
 
-	# Reserved buff chip slot at the far right of the task row. Sized for
-	# one chip; always visible so the shell layout never jumps.
-	buff_icon_row = HBoxContainer.new()
+	# Reserved buff slot at the far right of the task row, styled like the
+	# Debuff UI's translucent empty slots. Always visible so the shell
+	# layout never jumps.
+	buff_icon_row = PanelContainer.new()
 	buff_icon_row.name = "BuffIconRow"
-	buff_icon_row.alignment = BoxContainer.ALIGNMENT_END
-	buff_icon_row.add_theme_constant_override("separation", 4)
-	buff_icon_row.custom_minimum_size = BUFF_CHIP_SIZE
+	buff_icon_row.custom_minimum_size = BUFF_SLOT_SIZE
 	buff_icon_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var slot_style := StyleBoxFlat.new()
+	slot_style.bg_color = Color(0.12, 0.10, 0.14, 0.3)
+	slot_style.border_color = Color(0.3, 0.25, 0.35, 0.15)
+	slot_style.set_border_width_all(1)
+	slot_style.set_corner_radius_all(10)
+	slot_style.corner_detail = 6
+	buff_icon_row.add_theme_stylebox_override("panel", slot_style)
 	task_row.add_child(buff_icon_row)
+
+	_buff_icon_box = HBoxContainer.new()
+	_buff_icon_box.name = "BuffIconBox"
+	_buff_icon_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	_buff_icon_box.add_theme_constant_override("separation", 2)
+	_buff_icon_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	buff_icon_row.add_child(_buff_icon_box)
 
 	details_panel = PanelContainer.new()
 	details_panel.name = "DetailsPanel"
@@ -596,7 +613,7 @@ func add_buff_icon(data: DebuffData, buff_instance = null) -> Control:
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon.set_visual_config(_buff_chip_config)
 	icon.set_data(data)
-	buff_icon_row.add_child(icon)
+	_buff_icon_box.add_child(icon)
 	icon.custom_minimum_size = BUFF_CHIP_SIZE
 
 	_buff_icons[data.id] = icon
@@ -626,7 +643,7 @@ func remove_buff_icon(id: String) -> void:
 		return
 	var icon = _buff_icons[id] as DebuffIcon
 	if is_instance_valid(icon):
-		buff_icon_row.remove_child(icon)
+		_buff_icon_box.remove_child(icon)
 		icon.queue_free()
 	_buff_icons.erase(id)
 	_buff_instances.erase(id)
@@ -642,7 +659,7 @@ func remove_buff_icon(id: String) -> void:
 func clear_buff_icons() -> void:
 	for icon in _buff_icons.values():
 		if is_instance_valid(icon):
-			buff_icon_row.remove_child(icon)
+			_buff_icon_box.remove_child(icon)
 			icon.queue_free()
 	_buff_icons.clear()
 	_buff_instances.clear()
