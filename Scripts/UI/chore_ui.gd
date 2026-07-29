@@ -58,9 +58,9 @@ const MOOD_ANGRY: Color = Color(0.886275, 0.301961, 0.34902, 1.0)
 const DETAILS_PANEL_SIZE := Vector2(460, 340)
 # Bar textures (generated pixel art, 344x64). Tints multiply these, so the
 # tintable regions are drawn in light/neutral tones.
-const BAR_TEXTURE_UNDER := preload("res://Resources/Art/UI/under-export.png")
-const BAR_TEXTURE_PROGRESS := preload("res://Resources/Art/UI/progress-export.png")
-const BAR_TEXTURE_OVER := preload("res://Resources/Art/UI/over-export.png")
+const BAR_TEXTURE_UNDER : CompressedTexture2D = preload("res://Resources/Art/UI/under-export.png")
+const BAR_TEXTURE_PROGRESS : CompressedTexture2D = preload("res://Resources/Art/UI/progress-export.png")
+const BAR_TEXTURE_OVER : CompressedTexture2D = preload("res://Resources/Art/UI/over-export.png")
 const BAR_NINE_PATCH_MARGIN: int = 32
 # Standard UI font for text not covered by the panel theme (RichTextLabel).
 const VCR_FONT := preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")

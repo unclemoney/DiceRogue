@@ -990,6 +990,16 @@ Mom's conversations are branching trees stored as data (`Resources/Data/Mom/Dial
 - Each response has **weighted random outcomes** — sassing usually backfires, but rarely Mom storms off angry (no punishment this visit)
 - Outcomes can chain to follow-up dialog nodes, shift mood/grudge, apply a punishment tier, or end the visit
 
+**Mom Animated Portrait:**
+Mom's dialog portrait is animated (`Scripts/UI/mom_portrait_animator.gd`, an AnimatedSprite2D inside `MomCharacter`). Ten 8-frame clips are sliced from the sheets in `Resources/Art/Characters/Mom/NEW/` into `mom_portrait_frames.tres` by a tool script:
+- Regenerate after art updates: run `Scripts/Editor/build_mom_spriteframes.gd` in the Script editor, or headless: `godot --headless --path . --script res://Scripts/Editor/_run_mom_spriteframes_build.gd`
+- **Priority**: reaction one-shots > speech loops > idle. Reactions interrupt speech and resume it on finish; a reaction requested during a reaction is queued (depth 1); idle fidgets during speech/reactions are dropped.
+- **Mood mapping** (0-10 → 5 states): 0-4 happy, 5 neutral, 6-7 annoyed, 8-9 angry, 10 furious. Speech clip: happy/normal/angry per state. Available reactions per state: laugh (happy), eyeroll/shakehead (neutral/annoyed), glare/shakehead (angry), angryshake/glare (furious). A sarcastic `laugh` at high mood is only reachable via a FORCED request from dialog content.
+- **Idle life**: a blink Timer (random 2-6s) fires blinks while idle; 10% of ticks substitute a mood-appropriate fidget.
+- **Talking sync**: dialog text reveals via typewriter (`TEXT_DISPLAY_SPEED = 0.03`s/char, brief pauses on punctuation); the speech loop runs exactly for the reveal duration. Mood changes mid-dialogue swap the speech clip instantly (all sheets share frame 0 as the base pose, so swaps are pop-free).
+- Response tone drives reactions: sassy draws a mood-appropriate negative reaction (never a genuine laugh), polite gets a laugh from a happy Mom.
+- Test scene: `Tests/MomAnimationTest.tscn`. Debug panel (F12): "Mom Anim: Laugh/Glare/Angry Shake" force reactions on the open dialog.
+
 **Grudge System:**
 Unresolved anger carries forward. If Mom storms off (or an outcome adds grudge), the next visit's severity floor rises by the grudge level (0-3). Grudge is consumed when applied and saved with run state.
 

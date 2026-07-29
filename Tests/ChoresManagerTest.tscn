@@ -1,10 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://bemhyeya1rd5c"]
+[gd_scene load_steps=5 format=3 uid="uid://bemhyeya1rd5c"]
 
 [ext_resource type="Script" uid="uid://daxr04aofidgi" path="res://Tests/chores_manager_test.gd" id="1_test"]
 [ext_resource type="Script" uid="uid://du88ajtcwgupi" path="res://Scripts/Managers/ChoresManager.gd" id="2_chores_manager"]
 [ext_resource type="Script" uid="uid://8dxuy401oevs" path="res://Scripts/UI/chore_ui.gd" id="3_chore_ui"]
 [ext_resource type="Script" uid="uid://cgiysl3kol05g" path="res://Scripts/UI/mom_character.gd" id="4_mom_character"]
-[ext_resource type="Texture2D" uid="uid://g6jluccxn0nl" path="res://Resources/Art/Characters/Mom/mom_neutral.png" id="5_mom_neutral"]
 
 [node name="ChoresManagerTest" type="Control"]
 layout_mode = 3
@@ -36,7 +35,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("4_mom_character")
-neutral_texture = ExtResource("5_mom_neutral")
 
 [node name="ControlPanel" type="VBoxContainer" parent="."]
 layout_mode = 1

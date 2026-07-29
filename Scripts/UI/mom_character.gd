@@ -4,7 +4,9 @@ class_name MomCharacter
 ## MomCharacter
 ##
 ## Dialog popup for Mom character that appears when chore progress reaches 100.
-## Features tween animations, 3 expression sprites, and RichTextLabel dialog with BBCode.
+## Features tween animations, an animated portrait (MomPortraitAnimator with
+## mood-scaled speech loops and one-shot reactions), typewriter dialog text,
+## and RichTextLabel dialog with BBCode.
 ## Used by MomLogicHandler to display consequences to the player.
 
 signal dialog_closed
@@ -14,7 +16,13 @@ enum MomExpression { NEUTRAL, UPSET, HAPPY }
 
 const TWEEN_DURATION: float = 0.3
 const TEXT_DISPLAY_SPEED: float = 0.03  # Seconds per character
+## Extra reveal ticks paused on sentence punctuation (speech keeps looping).
+const PUNCTUATION_CHARS := ",.!?;:—"
+const PUNCTUATION_PAUSE_TICKS: int = 2
 const PANEL_BACKDROP_SHADER_PATH := "res://Scripts/Shaders/panel_backdrop.gdshader"
+## Preloaded (not the class_name) so parsing doesn't depend on the editor's
+## class cache being fresh.
+const MomPortraitAnimatorScript := preload("res://Scripts/UI/mom_portrait_animator.gd")
 
 ## Rep meter (rebel mode): cloned from ChoreUI's meter pattern.
 const REP_BAR_TEXTURE_UNDER : CompressedTexture2D = preload("res://Resources/Art/UI/rep_meter_under.png")
@@ -42,10 +50,6 @@ const MOM_BUTTON_PALETTE := {
 	"outline_size": 1
 }
 
-@export var neutral_texture: Texture2D
-@export var upset_texture: Texture2D
-@export var happy_texture: Texture2D
-
 # Fonts
 var vcr_font: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 
@@ -53,7 +57,7 @@ var vcr_font: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 var background_overlay: ColorRect
 var dialog_panel: PanelContainer
 var backdrop_fx_rect: ColorRect
-var sprite_rect: TextureRect
+var portrait: MomPortraitAnimatorScript
 var dialog_label: RichTextLabel
 var close_button: GlassActionButton
 var response_row: VBoxContainer
@@ -65,21 +69,57 @@ var _current_responses: Array = []  # MomDialogResponse resources for the curren
 var _current_expression: MomExpression = MomExpression.NEUTRAL
 var _is_animating: bool = false
 var _full_dialog_text: String = ""
+var _char_timer: Timer
+var _total_chars: int = 0
+var _punct_ticks: int = 0
 var title_label: Label
 ## Node id of the beat currently shown (bot policy reads this for
 ## story-aware choices, e.g. contesting false Patterson sightings).
 var current_node_id: String = ""
 
 func _ready() -> void:
-	_load_textures()
 	_create_ui_structure()
+	_create_char_timer()
 	visible = false
+	_connect_mood_signal()
 	var pm := get_node_or_null("/root/ProgressManager")
 	if pm and pm.has_signal("rep_changed"):
 		if not pm.is_connected("rep_changed", _on_rep_changed):
 			pm.rep_changed.connect(_on_rep_changed)
 		_update_rep_display()
 	print("[MomCharacter] Initialized")
+
+
+## _create_char_timer()
+##
+## Builds the typewriter timer that reveals dialog text one character at a
+## time and gates the portrait's speech loop.
+func _create_char_timer() -> void:
+	_char_timer = Timer.new()
+	_char_timer.name = "CharTimer"
+	_char_timer.wait_time = TEXT_DISPLAY_SPEED
+	_char_timer.timeout.connect(_on_char_timer_timeout)
+	add_child(_char_timer)
+
+
+## _connect_mood_signal()
+##
+## Feeds ChoresManager.mom_mood into the portrait (initial seed + live
+## updates) so speech clips and reaction availability track mood changes,
+## including mid-dialogue. No-op outside a game scene (e.g. isolated tests
+## can call portrait.set_mood() directly).
+func _connect_mood_signal() -> void:
+	if portrait == null:
+		return
+	var gc := get_tree().get_first_node_in_group("game_controller")
+	if gc == null:
+		return
+	var cm = gc.get("chores_manager")
+	if cm == null or not cm.has_signal("mom_mood_changed"):
+		return
+	if not cm.is_connected("mom_mood_changed", portrait.set_mood):
+		cm.mom_mood_changed.connect(portrait.set_mood)
+	portrait.set_mood(int(cm.get("mom_mood")))
 
 
 ## _on_rep_changed(new_rep)
@@ -110,22 +150,6 @@ func _update_rep_display() -> void:
 		rep_stage_label.text = pm.get_rep_stage_name().to_upper()
 		rep_stage_label.add_theme_color_override("font_color", color)
 
-## _load_textures()
-##
-## Loads the Mom expression textures from Resources.
-func _load_textures() -> void:
-	if not neutral_texture:
-		neutral_texture = load("res://Resources/Art/Characters/Mom/mom_neutral.png")
-	if not upset_texture:
-		upset_texture = load("res://Resources/Art/Characters/Mom/mom_upset.png")
-	if not happy_texture:
-		happy_texture = load("res://Resources/Art/Characters/Mom/mom_happy.png")
-	print("[MomCharacter] Textures loaded: neutral=%s, upset=%s, happy=%s" % [
-		neutral_texture != null,
-		upset_texture != null,
-		happy_texture != null
-	])
-
 ## show_dialog(expression_name, dialog_text)
 ##
 ## Legacy entry point: shows the dialog with just the OK button.
@@ -139,8 +163,9 @@ func show_dialog(expression_name: String, dialog_text: String) -> void:
 	set_expression(expression_name)
 	if title_label:
 		title_label.text = "Mom"
-	if sprite_rect:
-		sprite_rect.modulate = Color.WHITE
+	if portrait:
+		portrait.modulate = Color.WHITE
+		portrait.set_paused(false)
 	_full_dialog_text = dialog_text
 	_build_response_buttons([])
 	close_button.visible = true
@@ -170,8 +195,9 @@ func show_node(node: MomDialogNode) -> void:
 	# Mom still delivers every line; the cast never speaks directly.
 	if title_label:
 		title_label.text = node.speaker_name
-	if sprite_rect:
-		sprite_rect.modulate = node.speaker_tint
+	if portrait:
+		portrait.modulate = node.speaker_tint
+		portrait.set_paused(false)
 	_full_dialog_text = node.mom_text
 	_type_dialog_text(node.mom_text)
 	_build_response_buttons(node.responses)
@@ -307,34 +333,33 @@ func _on_response_pressed(index: int) -> void:
 	for button in response_buttons:
 		if is_instance_valid(button):
 			button.disabled = true
+	# Mom reacts to the player's tone (sassy draws a glare, polite a laugh
+	# from a happy Mom) - the reaction interrupts speech, then resumes it.
+	if portrait and index >= 0 and index < _current_responses.size():
+		var response = _current_responses[index]
+		if response:
+			portrait.react_to_tone(response.tone)
 	print("[MomCharacter] Response %d selected" % index)
 	response_selected.emit(index)
 
 ## set_expression()
 ##
-## Sets the Mom sprite to the specified expression.
+## Sets the dialog's expression hint. The portrait uses it (blended with the
+## live mood) to pick speech clips; no static textures are swapped anymore.
 ##
 ## Parameters:
 ##   expression_name: String - "neutral", "upset", or "happy"
 func set_expression(expression_name: String) -> void:
 	match expression_name.to_lower():
-		"neutral":
-			_current_expression = MomExpression.NEUTRAL
-			if neutral_texture:
-				sprite_rect.texture = neutral_texture
-		"upset":
-			_current_expression = MomExpression.UPSET
-			if upset_texture:
-				sprite_rect.texture = upset_texture
 		"happy":
 			_current_expression = MomExpression.HAPPY
-			if happy_texture:
-				sprite_rect.texture = happy_texture
+		"upset":
+			_current_expression = MomExpression.UPSET
 		_:
 			_current_expression = MomExpression.NEUTRAL
-			if neutral_texture:
-				sprite_rect.texture = neutral_texture
-	
+	if portrait:
+		portrait.set_expression_hint(expression_name)
+
 	print("[MomCharacter] Expression set to: %s" % expression_name)
 
 ## close_dialog()
@@ -344,10 +369,25 @@ func set_expression(expression_name: String) -> void:
 func close_dialog() -> void:
 	if _is_animating:
 		return
-	
+
+	# Stop the typewriter and freeze the portrait while hidden
+	_stop_typing()
+	if portrait:
+		portrait.stop_talking()
+		portrait.set_paused(true)
+
 	await _animate_out()
 	visible = false
 	dialog_closed.emit()
+
+
+## get_portrait_center() -> Vector2
+##
+## Global center of Mom's portrait - fly target for confiscation animations.
+func get_portrait_center() -> Vector2:
+	if portrait:
+		return portrait.global_position
+	return Vector2.ZERO
 
 func _create_ui_structure() -> void:
 	# Set to fill screen
@@ -397,12 +437,14 @@ func _create_ui_structure() -> void:
 	_apply_sprite_panel_style(sprite_container)
 	hbox.add_child(sprite_container)
 	
-	sprite_rect = TextureRect.new()
-	sprite_rect.name = "SpriteRect"
-	sprite_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	sprite_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	sprite_rect.custom_minimum_size = Vector2(120, 120)
-	sprite_container.add_child(sprite_rect)
+	# Animated portrait (Node2D child of a Control draws at an explicit
+	# position; containers only lay out Control children). Scaled to fit
+	# the 120px inner frame of the 128px panel.
+	portrait = MomPortraitAnimatorScript.new()
+	portrait.name = "Portrait"
+	portrait.position = Vector2(64, 64)
+	portrait.scale = Vector2.ONE * 0.9
+	sprite_container.add_child(portrait)
 	
 	# Dialog text container
 	var dialog_container = VBoxContainer.new()
@@ -575,8 +617,8 @@ func _animate_in() -> void:
 	# Jelly settle wobble on landing
 	TweenFX.jelly(dialog_panel, 0.3, 0.15, 2)
 	
-	# Wobble Mom sprite for extra personality
-	TweenFX.jelly(sprite_rect, 0.4, 0.1, 2)
+	# Wobble Mom portrait for extra personality
+	TweenFX.jelly(portrait, 0.4, 0.1, 2)
 	
 	await get_tree().create_timer(0.4).timeout
 	_is_animating = false
@@ -584,8 +626,8 @@ func _animate_in() -> void:
 func _animate_out() -> void:
 	_is_animating = true
 	
-	# Quick hop on Mom sprite before exit
-	TweenFX.hop(sprite_rect, 0.2, 20.0)
+	# Quick hop on Mom portrait before exit
+	TweenFX.hop(portrait, 0.2, 20.0)
 	await get_tree().create_timer(0.2).timeout
 	
 	# Panel flies out downward using offset tweening
@@ -603,9 +645,59 @@ func _animate_out() -> void:
 	await panel_tween.finished
 	_is_animating = false
 
+## _type_dialog_text(text)
+##
+## Reveals dialog text one character at a time (TEXT_DISPLAY_SPEED per char,
+## brief pauses on sentence punctuation). The portrait's speech loop runs
+## for exactly the duration of the reveal - start/stop is the whole sync
+## contract, no frame-perfect mouth matching.
 func _type_dialog_text(text: String) -> void:
-	# Simple approach: set text immediately (BBCode makes typewriter complex)
 	dialog_label.text = text
+	if portrait:
+		portrait.set_paused(false)
+	if _char_timer == null:
+		dialog_label.visible_characters = -1
+		return
+	dialog_label.visible_characters = 0
+	_punct_ticks = 0
+	_total_chars = dialog_label.get_total_character_count()
+	if _total_chars <= 0:
+		_stop_typing()
+		return
+	_char_timer.start()
+	if portrait:
+		portrait.start_talking()
+
+
+func _on_char_timer_timeout() -> void:
+	if not visible:
+		_stop_typing()
+		return
+	if _punct_ticks > 0:
+		_punct_ticks -= 1
+		return
+	dialog_label.visible_characters += 1
+	if dialog_label.visible_characters >= _total_chars:
+		_stop_typing()
+		return
+	# Pause briefly after sentence punctuation (speech keeps looping)
+	var revealed := dialog_label.get_parsed_text()
+	var idx := dialog_label.visible_characters - 1
+	if idx >= 0 and idx < revealed.length():
+		if revealed.substr(idx, 1) in PUNCTUATION_CHARS:
+			_punct_ticks = PUNCTUATION_PAUSE_TICKS
+
+
+## _stop_typing()
+##
+## Completes the reveal instantly and stops the portrait's speech loop.
+func _stop_typing() -> void:
+	if _char_timer:
+		_char_timer.stop()
+	if dialog_label:
+		dialog_label.visible_characters = -1
+	if portrait:
+		portrait.stop_talking()
 
 func _on_close_pressed() -> void:
 	close_dialog()

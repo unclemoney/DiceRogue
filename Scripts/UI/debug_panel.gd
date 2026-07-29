@@ -13,6 +13,9 @@ signal debug_command_executed(command: String, result: String)
 static var instance: DebugPanel = null
 
 const DEBUG_MAX_DICE_COUNT := 16
+## Preloaded (not the class_name) so parsing doesn't depend on the editor's
+## class cache being fresh.
+const MomPortraitAnimatorScript := preload("res://Scripts/UI/mom_portrait_animator.gd")
 const SCORECARD_UPPER_CATEGORIES := ["ones", "twos", "threes", "fours", "fives", "sixes"]
 const SCORECARD_LOWER_CATEGORIES := ["three_of_a_kind", "four_of_a_kind", "full_house", "small_straight", "large_straight", "yahtzee", "chance"]
 const SCORECARD_UPGRADE_CONSUMABLE_IDS := [
@@ -334,6 +337,9 @@ func _create_debug_tabs() -> void:
 			{"text": "Test Mom Dialog (Neutral)", "method": "_debug_chores_mom_neutral"},
 			{"text": "Test Mom Dialog (Upset)", "method": "_debug_chores_mom_upset"},
 			{"text": "Test Mom Dialog (Happy)", "method": "_debug_chores_mom_happy"},
+			{"text": "Mom Anim: Laugh", "method": "_debug_mom_anim_laugh"},
+			{"text": "Mom Anim: Glare", "method": "_debug_mom_anim_glare"},
+			{"text": "Mom Anim: Angry Shake", "method": "_debug_mom_anim_angryshake"},
 			{"text": "Patterson Sighting (True)", "method": "_debug_cast_sighting_true"},
 			{"text": "Patterson Sighting (False)", "method": "_debug_cast_sighting_false"},
 			{"text": "Advance Next Arc Beat", "method": "_debug_cast_advance_beat"},
@@ -3486,6 +3492,35 @@ func _debug_set_mom_mood(target_mood: int, label: String) -> void:
 		return
 	chores_manager.adjust_mood(target_mood - chores_manager.mom_mood)
 	log_debug("Set Mom mood to %s (%d/10)" % [label, chores_manager.mom_mood])
+
+
+func _debug_mom_anim_laugh() -> void:
+	_debug_mom_anim_play(&"laugh")
+
+
+func _debug_mom_anim_glare() -> void:
+	_debug_mom_anim_play(&"glare")
+
+
+func _debug_mom_anim_angryshake() -> void:
+	_debug_mom_anim_play(&"angryshake")
+
+
+## Plays a one-shot reaction on the open Mom dialog's portrait (FORCED, so
+## it bypasses mood availability). Requires the dialog to be open - use
+## "Trigger Mom Check-in" first.
+func _debug_mom_anim_play(clip: StringName) -> void:
+	_refresh_game_controller_reference()
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	var dialog = game_controller.get("_mom_dialog")
+	if dialog == null or not dialog.visible:
+		log_debug("ERROR: Mom dialog not open - trigger a check-in first")
+		return
+	if dialog.portrait:
+		dialog.portrait.play_reaction(clip, MomPortraitAnimatorScript.ReactionPriority.FORCED)
+		log_debug("Mom reaction forced: %s" % clip)
 
 
 func _debug_lock_tracker_show() -> void:

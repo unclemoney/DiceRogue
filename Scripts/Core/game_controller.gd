@@ -5526,10 +5526,10 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 		if _mom_dialog.close_button:
 			_mom_dialog.close_button.disabled = true
 
-		# Get Mom sprite's global position as fly target
+		# Get Mom portrait's global position as fly target
 		var fly_target: Vector2 = Vector2(640, 360)
-		if _mom_dialog and _mom_dialog.sprite_rect:
-			fly_target = _mom_dialog.sprite_rect.global_position + _mom_dialog.sprite_rect.size * 0.5
+		if _mom_dialog and _mom_dialog.has_method("get_portrait_center"):
+			fly_target = _mom_dialog.get_portrait_center()
 
 		var confiscation_state: Array = [false]
 		powerup_ui.animate_mom_confiscation(result.removed_power_ups, fly_target, func():
