@@ -39,6 +39,8 @@ var consumable_id_input: LineEdit
 var powerup_selection_list: ItemList
 var consumable_selection_list: ItemList
 var challenge_selection_list: ItemList
+var mod_selection_list: ItemList
+var mod_die_spinbox: SpinBox
 
 var game_controller: GameController
 var is_visible_debug := false
@@ -208,6 +210,14 @@ func _create_debug_tabs() -> void:
 			{"text": "Register AnyScore", "method": "_debug_register_any_score"},
 			{"text": "Show All Items", "method": "_debug_show_items"},
 			{"text": "Clear All Items", "method": "_debug_clear_items"},
+		],
+		"Mods": [
+			{"text": "Apply Mod to Die", "method": "_debug_mod_apply_to_selected_die"},
+			{"text": "Remove Mod from Die", "method": "_debug_mod_remove_from_selected_die"},
+			{"text": "Clear All Mods", "method": "_debug_mod_clear_all"},
+			{"text": "Show Active Mods", "method": "_debug_mod_show_active"},
+			{"text": "Show High Roller State", "method": "_debug_mod_show_high_roller_state"},
+			{"text": "Show Mod/Dice Count", "method": "_debug_show_mod_dice_count"},
 		],
 		"Score Card Upgrades": [
 			{"text": "Grant Master Upgrade", "method": "_debug_grant_master_upgrade"},
@@ -470,6 +480,10 @@ func _create_debug_tabs() -> void:
 			_create_items_tab(vbox, tab_definitions[tab_name])
 			continue
 
+		if tab_name == "Mods":
+			_create_mods_tab(vbox, tab_definitions[tab_name])
+			continue
+
 		if tab_name == "Testing":
 			_create_testing_tab(vbox, tab_definitions[tab_name])
 			continue
@@ -501,6 +515,49 @@ func _create_items_tab(parent: VBoxContainer, button_definitions: Array) -> void
 	parent.add_child(separator)
 
 	var button_grid = _create_debug_button_grid(parent, 3)
+	_add_debug_buttons(button_grid, button_definitions)
+
+
+## _create_mods_tab(parent: VBoxContainer, button_definitions: Array)
+##
+## Creates the Mods tab: a mod selection list plus a die selector so any mod
+## can be applied to / removed from a specific die.
+func _create_mods_tab(parent: VBoxContainer, button_definitions: Array) -> void:
+	var helper_label = Label.new()
+	helper_label.text = "Select a mod, pick a die number, then apply or remove it."
+	helper_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.7, 1.0))
+	parent.add_child(helper_label)
+
+	var content_row = HBoxContainer.new()
+	content_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_row.add_theme_constant_override("separation", 12)
+	parent.add_child(content_row)
+
+	mod_selection_list = _create_selection_list_panel(content_row, "Mods", Callable(self, "_on_mod_list_item_selected"), 180.0)
+
+	var die_section = VBoxContainer.new()
+	die_section.add_theme_constant_override("separation", 6)
+	content_row.add_child(die_section)
+
+	var die_label = Label.new()
+	die_label.text = "Target Die #"
+	die_label.add_theme_color_override("font_color", Color.WHITE)
+	die_section.add_child(die_label)
+
+	mod_die_spinbox = SpinBox.new()
+	mod_die_spinbox.min_value = 1
+	mod_die_spinbox.max_value = DEBUG_MAX_DICE_COUNT
+	mod_die_spinbox.step = 1
+	mod_die_spinbox.custom_minimum_size = Vector2(120, 30)
+	die_section.add_child(mod_die_spinbox)
+
+	_ensure_debug_lists_populated()
+
+	var separator = HSeparator.new()
+	separator.custom_minimum_size = Vector2(0, 10)
+	parent.add_child(separator)
+
+	var button_grid = _create_debug_button_grid(parent)
 	_add_debug_buttons(button_grid, button_definitions)
 
 
@@ -731,6 +788,8 @@ func _ensure_debug_lists_populated() -> void:
 		_populate_consumable_selection_list()
 	if challenge_selection_list and challenge_selection_list.get_item_count() == 0:
 		_populate_challenge_selection_list()
+	if mod_selection_list and mod_selection_list.get_item_count() == 0:
+		_populate_mod_selection_list()
 
 
 func _get_power_up_manager():
@@ -905,6 +964,156 @@ func _on_challenge_list_item_selected(index: int) -> void:
 		return
 	var challenge_id = str(challenge_selection_list.get_item_metadata(index))
 	log_debug("Selected challenge: " + challenge_id)
+
+
+func _get_mod_manager():
+	_refresh_game_controller_reference()
+	if is_instance_valid(game_controller) and is_instance_valid(game_controller.mod_manager):
+		return game_controller.mod_manager
+	return get_tree().get_first_node_in_group("mod_manager")
+
+
+func _populate_mod_selection_list() -> void:
+	if not mod_selection_list:
+		return
+
+	mod_selection_list.clear()
+	var mod_manager = _get_mod_manager()
+	if not mod_manager:
+		return
+
+	var available_ids = mod_manager.get_available_mods()
+	available_ids.sort()
+	for mod_id in available_ids:
+		var mod_def = mod_manager.get_def(mod_id)
+		var display_name = mod_id
+		if mod_def and not mod_def.display_name.is_empty():
+			display_name = mod_def.display_name
+		var item_index = mod_selection_list.get_item_count()
+		mod_selection_list.add_item("%s - %s" % [mod_id, display_name])
+		mod_selection_list.set_item_metadata(item_index, mod_id)
+
+
+func _on_mod_list_item_selected(index: int) -> void:
+	if not mod_selection_list:
+		return
+	var mod_id = str(mod_selection_list.get_item_metadata(index))
+	log_debug("Selected mod: " + mod_id)
+
+
+## _debug_mod_get_target_die() -> Dice
+##
+## Returns the die selected in the Mods tab spinbox, or null with a log message.
+func _debug_mod_get_target_die() -> Dice:
+	_refresh_game_controller_reference()
+	if not game_controller or not game_controller.dice_hand:
+		log_debug("ERROR: DiceHand not available")
+		return null
+
+	var dice_list = game_controller.dice_hand.dice_list
+	if dice_list.is_empty():
+		log_debug("ERROR: No dice spawned")
+		return null
+
+	var die_index = int(mod_die_spinbox.value) - 1 if mod_die_spinbox else 0
+	if die_index < 0 or die_index >= dice_list.size():
+		log_debug("ERROR: Die #%d out of range (%d dice)" % [die_index + 1, dice_list.size()])
+		return null
+
+	return dice_list[die_index]
+
+
+func _debug_mod_apply_to_selected_die() -> void:
+	if not mod_selection_list or mod_selection_list.get_selected_items().is_empty():
+		log_debug("ERROR: Select a mod from the list first")
+		return
+
+	var mod_id = str(mod_selection_list.get_item_metadata(mod_selection_list.get_selected_items()[0]))
+	var mod_manager = _get_mod_manager()
+	if not mod_manager:
+		log_debug("ERROR: ModManager not available")
+		return
+
+	var die = _debug_mod_get_target_die()
+	if not die:
+		return
+
+	var mod_def = mod_manager.get_def(mod_id)
+	if not mod_def:
+		log_debug("ERROR: No ModData found for: " + mod_id)
+		return
+
+	die.add_mod(mod_def)
+	log_debug("Applied mod '%s' to die #%d" % [mod_id, int(mod_die_spinbox.value)])
+
+
+func _debug_mod_remove_from_selected_die() -> void:
+	if not mod_selection_list or mod_selection_list.get_selected_items().is_empty():
+		log_debug("ERROR: Select a mod from the list first")
+		return
+
+	var mod_id = str(mod_selection_list.get_item_metadata(mod_selection_list.get_selected_items()[0]))
+	var die = _debug_mod_get_target_die()
+	if not die:
+		return
+
+	if die.has_mod(mod_id):
+		die.remove_mod(mod_id)
+		log_debug("Removed mod '%s' from die #%d" % [mod_id, int(mod_die_spinbox.value)])
+	else:
+		log_debug("Die #%d does not have mod '%s'" % [int(mod_die_spinbox.value), mod_id])
+
+
+func _debug_mod_clear_all() -> void:
+	_refresh_game_controller_reference()
+	if not game_controller or not game_controller.dice_hand:
+		log_debug("ERROR: DiceHand not available")
+		return
+
+	var removed = 0
+	for die in game_controller.dice_hand.dice_list:
+		for mod_id in die.active_mods.keys():
+			die.remove_mod(mod_id)
+			removed += 1
+	log_debug("Removed %d mods from all dice" % removed)
+
+
+func _debug_mod_show_active() -> void:
+	_refresh_game_controller_reference()
+	if not game_controller or not game_controller.dice_hand:
+		log_debug("ERROR: DiceHand not available")
+		return
+
+	log_debug("=== ACTIVE MODS ===")
+	var any_mods = false
+	for i in range(game_controller.dice_hand.dice_list.size()):
+		var die = game_controller.dice_hand.dice_list[i]
+		if die.active_mods.size() > 0:
+			any_mods = true
+			log_debug("Die #%d (%s): %s" % [i + 1, die.get_state_name(), ", ".join(die.active_mods.keys())])
+	if not any_mods:
+		log_debug("No mods currently applied to any die")
+
+
+func _debug_mod_show_high_roller_state() -> void:
+	_refresh_game_controller_reference()
+	if not game_controller or not game_controller.dice_hand:
+		log_debug("ERROR: DiceHand not available")
+		return
+
+	log_debug("=== HIGH ROLLER STATE ===")
+	var found = false
+	for i in range(game_controller.dice_hand.dice_list.size()):
+		var die = game_controller.dice_hand.dice_list[i]
+		var mod = die.get_mod("high_roller")
+		if mod:
+			found = true
+			log_debug("Die #%d: state=%s, locking_disabled=%s, excluded_from_normal_rolls=%s" % [
+				i + 1, die.get_state_name(), die.locking_disabled, die.excluded_from_normal_rolls])
+			if mod.has_method("get_current_cost_display"):
+				log_debug("  Cost: " + mod.get_current_cost_display())
+	if not found:
+		log_debug("High Roller mod not applied to any die")
 
 
 func _debug_activate_selected_challenge() -> void:

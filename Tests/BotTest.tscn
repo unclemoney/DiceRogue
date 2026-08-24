@@ -1,7 +1,7 @@
 [gd_scene load_steps=195 format=3 uid="uid://cxmuo2t1grbxy"]
 
 [ext_resource type="Script" uid="uid://bl81cx362nw8h" path="res://Tests/bot_test.gd" id="1_bot_test"]
-[ext_resource type="Resource" uid="uid://h4x8v0sjo44p" path="res://Resources/Data/default_bot_config.tres" id="2_5xelv"]
+[ext_resource type="Resource" path="res://Resources/Data/BotConfigs/smoke_test.tres" id="2_5xelv"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
 [ext_resource type="PackedScene" uid="uid://q27dsqs2pyd8" path="res://Scenes/UI/crt_overlay.tscn" id="3_f4xs4"]
 [ext_resource type="Shader" uid="uid://b0xapgpcexxb6" path="res://Scripts/Shaders/plasma_screen.gdshader" id="4_66wcx"]
@@ -120,10 +120,10 @@
 [ext_resource type="Resource" uid="uid://duqqnh13i0ndb" path="res://Scripts/PowerUps/FailedMoneyPowerUp.tres" id="117_failed_money"]
 [ext_resource type="Resource" uid="uid://ct00gr33dy5c4" path="res://Scripts/Debuff/TooGreedyDebuff.tres" id="138_ja73i"]
 [ext_resource type="Resource" uid="uid://ch4lf4dd1t1v4" path="res://Scripts/Debuff/HalfAdditiveDebuff.tres" id="139_tmun7"]
-[ext_resource type="Resource" path="res://Scripts/Debuff/RotatingDisabledPowerUpDebuff.tres" id="142_keu41"]
-[ext_resource type="Resource" path="res://Scripts/Debuff/NoConsumablesAllowedDebuff.tres" id="143_qm380"]
-[ext_resource type="Resource" path="res://Scripts/Debuff/AllPowerUpsSoldDebuff.tres" id="144_my83g"]
-[ext_resource type="Resource" path="res://Scripts/Debuff/OneShotDebuff.tres" id="145_w4xk6"]
+[ext_resource type="Resource" uid="uid://fpxwm4gkrqb1" path="res://Scripts/Debuff/RotatingDisabledPowerUpDebuff.tres" id="142_keu41"]
+[ext_resource type="Resource" uid="uid://betl543xbhw1p" path="res://Scripts/Debuff/NoConsumablesAllowedDebuff.tres" id="143_qm380"]
+[ext_resource type="Resource" uid="uid://ifqseygrqwxa" path="res://Scripts/Debuff/AllPowerUpsSoldDebuff.tres" id="144_my83g"]
+[ext_resource type="Resource" uid="uid://dqdjgby564ahn" path="res://Scripts/Debuff/OneShotDebuff.tres" id="145_w4xk6"]
 [ext_resource type="Resource" uid="uid://cdgh7rebe110n" path="res://Scripts/Debuff/RebellionBuff.tres" id="146_rebellion"]
 [ext_resource type="PackedScene" uid="uid://ccn3jkgrhqwqe" path="res://Scenes/UI/StatisticsPanel.tscn" id="999_stats"]
 [ext_resource type="Script" uid="uid://du88ajtcwgupi" path="res://Scripts/Managers/ChoresManager.gd" id="1000_chores_mgr"]
@@ -149,9 +149,9 @@
 [ext_resource type="Resource" uid="uid://cr5rlhh3xl787" path="res://Scripts/Consumable/YahtzeeUpgradeConsumable.tres" id="1020_yahtzee"]
 [ext_resource type="Resource" uid="uid://bsf1ib8ctprea" path="res://Scripts/Consumable/ChanceUpgradeConsumable.tres" id="1021_chance"]
 [ext_resource type="Resource" uid="uid://cpvkkr88omm5b" path="res://Scripts/Consumable/AllCategoriesUpgradeConsumable.tres" id="1022_all_categories"]
-[ext_resource type="Resource" path="res://Scripts/Consumable/FreeChoresConsumable.tres" id="1023_free_chores"]
-[ext_resource type="Resource" path="res://Scripts/Consumable/AllChoresConsumable.tres" id="1024_all_chores"]
-[ext_resource type="Resource" path="res://Scripts/Consumable/OneFreeModConsumable.tres" id="1025_one_free_mod"]
+[ext_resource type="Resource" uid="uid://c7qlkvlwte7h2" path="res://Scripts/Consumable/FreeChoresConsumable.tres" id="1023_free_chores"]
+[ext_resource type="Resource" uid="uid://dreyhv8x67cvr" path="res://Scripts/Consumable/AllChoresConsumable.tres" id="1024_all_chores"]
+[ext_resource type="Resource" uid="uid://s0upi0vrxkl4" path="res://Scripts/Consumable/OneFreeModConsumable.tres" id="1025_one_free_mod"]
 [ext_resource type="Resource" uid="uid://biwn13dx6kwi4" path="res://Scripts/Debuff/FasterChoresDebuff.tres" id="1026_faster_chores"]
 [ext_resource type="Resource" uid="uid://dcvib1xw4rwnd" path="res://Scripts/Debuff/DisabledModsDebuff.tres" id="1027_disabled_mods"]
 [ext_resource type="Resource" uid="uid://dcvib1xm40sfd" path="res://Scripts/Debuff/DisabledColorsDebuff.tres" id="1028_disabled_colors"]
@@ -184,7 +184,7 @@
 [ext_resource type="Resource" uid="uid://ch3ocw278laxw" path="res://Scripts/PowerUps/DaringDice.tres" id="1055_daring_dice"]
 [ext_resource type="Resource" uid="uid://crfd4hv5t6upe" path="res://Scripts/PowerUps/GreatExchange.tres" id="1056_great_exchange"]
 [ext_resource type="Resource" uid="uid://bgs14y1iw5sar" path="res://Scripts/PowerUps/ExtraRainbow.tres" id="1057_extra_rainbow"]
-[ext_resource type="Resource" path="res://Scripts/Consumable/LuckyUpgradeConsumable.tres" id="1058_lucky_upgrade"]
+[ext_resource type="Resource" uid="uid://ce52pdc31ge0e" path="res://Scripts/Consumable/LuckyUpgradeConsumable.tres" id="1058_lucky_upgrade"]
 [ext_resource type="Resource" uid="uid://b35c4e3am05ds" path="res://Scripts/PowerUps/MeltingDice.tres" id="1059_melting_dice"]
 [ext_resource type="Resource" uid="uid://byykmd4emnxdx" path="res://Scripts/PowerUps/HotStreak.tres" id="1060_hot_streak"]
 [ext_resource type="Resource" uid="uid://dyjs1kwquanfh" path="res://Scripts/PowerUps/OneRollWonder.tres" id="1061_one_roll_wonder"]
@@ -295,7 +295,6 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 mouse_filter = 2
 power_up_icon_scene = ExtResource("14_geekk")
-max_power_ups = 5
 shop_ui_path = NodePath("../ShopUI")
 
 [node name="ConsumableUI" parent="." instance=ExtResource("12_pdckl")]
@@ -374,8 +373,38 @@ consumable_manager_path = NodePath("../ConsumableManager")
 mod_manager_path = NodePath("../ModManager")
 
 [node name="GameController" parent="." instance=ExtResource("15_aeiu6")]
+power_up_manager_path = NodePath("../PowerUpManager")
+power_up_ui_path = NodePath("../PowerUpUI")
+power_up_container_path = NodePath("../PowerUpContainer")
+consumable_manager_path = NodePath("../ConsumableManager")
+consumable_ui_path = NodePath("../ConsumableUI")
+consumable_container_path = NodePath("../ConsumableContainer")
+score_card_ui_path = NodePath("../ScoreCardUI")
+debuff_ui_path = NodePath("../DebuffUI")
+debuff_container_path = NodePath("../DebuffContainer")
+debuff_manager_path = NodePath("../DebuffManager")
+mod_manager_path = NodePath("../ModManager")
+game_button_ui_path = NodePath("../GameButtonUI")
+challenge_manager_path = NodePath("../ChallengeManager")
+challenge_ui_path = NodePath("../ChallengeUI")
 challenge_container_path = NodePath("../ChallengeContainer")
+round_manager_path = NodePath("../RoundManager")
 crt_manager_path = NodePath("../Background/CRTManager")
+statistics_panel_path = NodePath("../StatisticsPanel")
+scoring_animation_controller_path = NodePath("../ScoringAnimationController")
+chores_manager_path = NodePath("../ChoresManager")
+synergy_manager_path = NodePath("../SynergyManager")
+end_of_round_stats_panel_path = NodePath("../EndOfRoundStatsPanel")
+unlocked_item_panel_path = NodePath("../UnlockedItemPanel")
+channel_manager_path = NodePath("../ChannelManager")
+channel_manager_ui_path = NodePath("../ChannelManagerUI")
+round_winner_panel_path = NodePath("../RoundWinnerPanel")
+carry_over_panel_path = NodePath("../CarryOverPanel")
+background_swirl_path = NodePath("../Background/BackgroundSwirl")
+
+[node name="ConsumableContainer" type="Node2D" parent="."]
+
+[node name="DebuffContainer" type="Node2D" parent="."]
 
 [node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
 power_up_defs = Array[ExtResource("17_2uvn1")]([ExtResource("18_3vaha"), ExtResource("19_si81o"), ExtResource("24_aeiu6"), ExtResource("27_cr2lp"), ExtResource("28_ybnmt"), ExtResource("29_cjjtc"), ExtResource("29_bonus_money"), ExtResource("29_money_multiplier"), ExtResource("30_8nt64"), ExtResource("30_2hxro"), ExtResource("31_sqb4o"), ExtResource("32_fullhouse"), ExtResource("33_stepbystep"), ExtResource("70_perfect_strangers"), ExtResource("83_green_monster"), ExtResource("39_hm8bq"), ExtResource("99_wild_dots"), ExtResource("100_pin_head"), ExtResource("101_money_well_spent"), ExtResource("102_highlighted_score"), ExtResource("103_the_consumer_is_always_right"), ExtResource("104_green_slime"), ExtResource("105_red_slime"), ExtResource("106_purple_slime"), ExtResource("107_blue_slime"), ExtResource("108_lower_ten"), ExtResource("109_different_straights"), ExtResource("110_plus_thelast"), ExtResource("111_allowance"), ExtResource("112_ungrounded"), ExtResource("113_shop_rerolls"), ExtResource("114_tango_and_cash"), ExtResource("115_even_higher"), ExtResource("116_money_bags"), ExtResource("117_failed_money"), ExtResource("59_7f4b6"), ExtResource("60_nxp7f"), ExtResource("61_oc53v"), ExtResource("62_3nuss"), ExtResource("63_ja73i"), ExtResource("1038_extra_coupons"), ExtResource("1040_purple_payout"), ExtResource("1041_mod_money"), ExtResource("1042_blue_safety_net"), ExtResource("1043_chore_sprint"), ExtResource("1044_straight_triplet_master"), ExtResource("1045_modded_dice_mastery"), ExtResource("1046_debuff_destroyer"), ExtResource("1047_challenge_easer"), ExtResource("1048_azure_perfection"), ExtResource("1049_rainbow_surge"), ExtResource("1050_the_replicator"), ExtResource("1051_the_piggy_bank"), ExtResource("1052_random_card_level"), ExtResource("1053_yahtzeed_dice"), ExtResource("1054_consumable_collector"), ExtResource("1055_daring_dice"), ExtResource("1056_great_exchange"), ExtResource("1057_extra_rainbow"), ExtResource("1059_melting_dice"), ExtResource("1060_hot_streak"), ExtResource("1061_one_roll_wonder"), ExtResource("1062_power_surge"), ExtResource("1063_snake_eyes")])

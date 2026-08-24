@@ -187,13 +187,15 @@ func _test_target_score_scaling() -> void:
 	_log("\n[color=cyan]Test: Target Score Scaling[/color]")
 	
 	var base_score = 100
-	
-	# Values based on goal_score_multiplier in channel resources
+
+	# Phase 1 (PLAN_BALANCE.md): goal_score_multiplier normalized to 1.0 on
+	# every channel — the per-round target_score_override IS the target.
+	# Rep tier 1 (default) means rebel premium 0, so scaled == base.
 	var test_cases = [
 		[1, 100],     # Channel 1: 100 * 1.0 = 100
-		[5, 120],     # Channel 5: 100 * 1.2 = 120
-		[10, 150],    # Channel 10: 100 * 1.5 = 150
-		[20, 500]     # Channel 20: 100 * 5.0 = 500
+		[5, 100],     # Channel 5: 100 * 1.0 = 100
+		[10, 100],    # Channel 10: 100 * 1.0 = 100
+		[20, 100]     # Channel 20: 100 * 1.0 = 100
 	]
 	
 	for test in test_cases:

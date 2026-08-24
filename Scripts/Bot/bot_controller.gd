@@ -76,6 +76,7 @@ var _waiting_for_shop: bool = false
 var _budget_pressure: String = "low"
 var _pending_chore_selection: bool = false
 var _pending_mom_dialog: bool = false
+var _roll_completed: bool = false
 var _challenge_completed_this_round: bool = false
 var _chose_early_shop: bool = false
 var _audio_was_muted: bool = false
@@ -98,6 +99,8 @@ func start(bot_config: BotConfig) -> void:
 	config = bot_config
 	logger.verbose = config.log_verbose
 	_action_delay = config.turn_delay if config.visual_mode else 0.05
+	# Per-arm profile file so parallel baseline runs don't share state
+	profile.profile_path = "user://bot_profiles/bot_profile_%s.json" % config.mom_policy
 
 	# Load or reset profile
 	if config.reset_between_runs:
@@ -111,9 +114,23 @@ func start(bot_config: BotConfig) -> void:
 	statistics.clear()
 	logger.clear()
 
+	# Balance harness: pool size for unlock-drip measurement; back up the real
+	# player profiles before natural-progression modes deliberately mutate
+	# ProgressManager (restored in _finalize).
+	statistics.total_pool_size = ProgressManager.unlockable_items.size() if ProgressManager else 0
+	if not config.unlock_all_items:
+		_backup_profiles()
+		# Natural modes model a fresh player from attempt 1 — don't inherit
+		# whatever the real profile had unlocked.
+		_reset_progression()
+
 	# Mute all audio during bot runs (if configured)
 	if config.mute_audio:
 		_mute_audio()
+
+	# Apply the configured time scale for headless/non-visual runs
+	if not config.visual_mode:
+		Engine.time_scale = config.speed_multiplier
 
 	emit_signal("bot_status_changed", "Bot starting %d attempt(s)..." % config.attempts)
 	_start_next_run()
@@ -190,6 +207,11 @@ func _connect_signals() -> void:
 		cast_manager.story_beat_started.connect(func(_arc_id, _beat): statistics.record_story_beat())
 		cast_manager.patterson_sighting.connect(func(_is_true): statistics.record_patterson_sighting())
 		cast_manager.patterson_contest_resolved.connect(func(won): statistics.record_patterson_contest(won))
+	# Balance harness: natural unlock drip + Mom punishment events
+	if ProgressManager and not ProgressManager.item_unlocked.is_connected(_on_item_unlocked):
+		ProgressManager.item_unlocked.connect(_on_item_unlocked)
+	if is_instance_valid(game_controller) and not game_controller.mom_consequences_applied.is_connected(_on_mom_consequences):
+		game_controller.mom_consequences_applied.connect(_on_mom_consequences)
 
 
 ## _disconnect_signals()
@@ -224,6 +246,10 @@ func _disconnect_signals() -> void:
 			chores_manager.mom_triggered.disconnect(_on_bot_mom_triggered)
 		if chores_manager.mom_checkin.is_connected(_on_bot_mom_triggered):
 			chores_manager.mom_checkin.disconnect(_on_bot_mom_triggered)
+	if ProgressManager and ProgressManager.item_unlocked.is_connected(_on_item_unlocked):
+		ProgressManager.item_unlocked.disconnect(_on_item_unlocked)
+	if is_instance_valid(game_controller) and game_controller.mom_consequences_applied.is_connected(_on_mom_consequences):
+		game_controller.mom_consequences_applied.disconnect(_on_mom_consequences)
 
 
 ## _begin_game()
@@ -232,8 +258,13 @@ func _disconnect_signals() -> void:
 ## Also unlocks all items so the bot has access to everything in the shop.
 func _begin_game() -> void:
 	var gen := _run_generation
-	# Unlock all items in ProgressManager so the shop is fully stocked
-	unlock_all_items()
+	# Unlock policy: legacy (unlock_all_items=true) stocks the full shop for
+	# ceiling measurement. Natural modes earn progression through play; floor
+	# mode additionally re-locks everything each run.
+	if config.unlock_all_items:
+		unlock_all_items()
+	elif config.reset_between_runs:
+		lock_all_items()
 
 	# Set channel
 	if is_instance_valid(channel_manager) and channel_manager.has_method("set_channel"):
@@ -288,6 +319,7 @@ func _on_round_started(round_number: int) -> void:
 	_challenge_completed_this_round = false
 	_chose_early_shop = false
 	statistics.record_round_completed()
+	statistics.record_round_context(round_number, ProgressManager.get_rep_tier() if ProgressManager else 0)
 
 	# Update chores manager with current round info
 	if is_instance_valid(chores_manager):
@@ -306,7 +338,9 @@ func _on_round_completed(round_number: int) -> void:
 		return  # Initial game setup signal
 	logger.log_info("Round %d completed" % round_number)
 	_is_round_active = false
-	statistics.record_round_score(round_number, score_card.get_total_score() if is_instance_valid(score_card) else 0)
+	# NOTE: no score recording here — this signal fires from complete_round()
+	# AFTER the scorecard was already reset for the next round. The accurate
+	# per-round score is recorded in _handle_post_round before advancing.
 
 
 func _on_round_failed(round_number: int) -> void:
@@ -341,8 +375,8 @@ func _on_rolls_exhausted() -> void:
 
 
 func _on_roll_complete() -> void:
-	# Dice finished rolling — used to know animation is done
-	pass
+	# Dice finished rolling — unblocks _bot_roll's wait
+	_roll_completed = true
 
 
 func _on_upper_bonus(_bonus: int) -> void:
@@ -518,9 +552,9 @@ func _play_turn_loop() -> void:
 		if _run_generation != gen:
 			return
 
-		# After challenge is done, 50/50 chance to stop and go to shop
+		# After challenge is done, chance to stop and go to shop (0 for measurement)
 		if _challenge_completed_this_round and turn_num > 1:
-			var go_to_shop := randf() < 0.5
+			var go_to_shop := randf() < (config.early_shop_chance if config else 0.5)
 			if go_to_shop:
 				logger.log_info("Challenge done — bot chose to leave early at turn %d" % turn_num)
 				_chose_early_shop = true
@@ -557,6 +591,12 @@ func _play_turn_loop() -> void:
 ## Executes one complete turn: roll → (optional lock + reroll) → score.
 func _play_single_turn(turn_num: int) -> void:
 	_set_state(State.ROLLING)
+
+	# ScoreEvaluator's anti-runaway counter is process-global and only reset
+	# by UI flows the bot doesn't drive. Reset per turn so bot-scale
+	# evaluation volume (~1000+/game) can't trip it into all-zero scores.
+	if ScoreEvaluatorSingleton and ScoreEvaluatorSingleton.has_method("reset_evaluation_count"):
+		ScoreEvaluatorSingleton.reset_evaluation_count()
 
 	# First roll
 	await _bot_roll()
@@ -602,6 +642,7 @@ func _bot_roll() -> void:
 		await dice_hand.spawn_dice()
 		await get_tree().create_timer(0.1).timeout
 
+	_roll_completed = false
 	dice_hand.prepare_dice_for_roll()
 	dice_hand.roll_all()
 
@@ -609,8 +650,12 @@ func _bot_roll() -> void:
 	if is_instance_valid(turn_tracker):
 		turn_tracker.use_roll()
 
-	# Give signals time to propagate
-	await get_tree().create_timer(0.1).timeout
+	# Wait until DiceHand finishes the staggered roll — per-die values are
+	# only set as each die lands, so a fixed short wait reads phantom 1s.
+	var roll_wait := 0.0
+	while not _roll_completed and roll_wait < 3.0:
+		await get_tree().create_timer(0.05).timeout
+		roll_wait += 0.05
 
 	var values = _get_dice_values()
 	logger.log_info("Rolled: %s (rolls left: %d)" % [str(values), turn_tracker.rolls_left if is_instance_valid(turn_tracker) else -1])
@@ -713,7 +758,14 @@ func _handle_post_round() -> void:
 	var gen := _run_generation
 	var round_num := round_manager.get_current_round_number() if is_instance_valid(round_manager) else 0
 	var total_score := score_card.get_total_score() if is_instance_valid(score_card) else 0
-	statistics.record_round_score(round_num, total_score)
+	var target := round_manager.get_current_challenge_target_score() if is_instance_valid(round_manager) else 0
+	statistics.record_round_score(round_num, total_score, target)
+
+	# Rebellion buff stacks live at round end (uptime measurement)
+	var buff_stacks := 0
+	if is_instance_valid(game_controller) and game_controller.active_debuffs.has("rebellion"):
+		buff_stacks = int(game_controller.active_debuffs["rebellion"].intensity)
+	statistics.record_buff_state(round_num, buff_stacks)
 
 	logger.log_info("Round %d ended — score: %d" % [round_num, total_score])
 
@@ -973,6 +1025,15 @@ func _end_current_run(outcome: String) -> void:
 	profile.data["last_played"] = Time.get_datetime_string_from_system()
 	profile.save_profile()
 
+	# Natural progression modes: mirror the player-facing win/loss flow so
+	# ProgressManager marks channels, fires unlock conditions, and accumulates
+	# stats. Must run BEFORE statistics.end_run so item_unlocked signals are
+	# recorded into this run. (Legacy unlock-all mode skips this.)
+	if not config.unlock_all_items and ProgressManager:
+		if outcome == "win":
+			ProgressManager.mark_channel_completed(current_channel)
+		ProgressManager.end_game_tracking(final_score, outcome == "win")
+
 	statistics.end_run(outcome, final_score)
 	_runs_completed += 1
 
@@ -983,10 +1044,13 @@ func _end_current_run(outcome: String) -> void:
 	_disconnect_signals()
 
 	# Determine next action based on outcome
-	if outcome == "win" and current_channel < config.channel_max:
-		# Channel won but more channels remain — advance channel, continue attempt
+	if (outcome == "win" or config.advance_on_loss) and current_channel < config.channel_max:
+		# Channel beaten (or advance_on_loss measurement mode) — advance
+		# channel, continue attempt. Losses are still recorded as losses.
+		if outcome != "win":
+			logger.log_info("Channel lost — advance_on_loss: continuing to channel %d" % (current_channel + 1))
 		current_channel += 1
-		logger.log_info("Channel won — advancing to channel %d" % current_channel)
+		logger.log_info("Advancing to channel %d" % current_channel)
 		await _delay()
 		await _reset_game_state()
 		await _delay()
@@ -996,6 +1060,11 @@ func _end_current_run(outcome: String) -> void:
 		var attempt_outcome := "full_win" if outcome == "win" else "loss"
 		statistics.end_attempt(attempt_outcome, current_channel)
 		_attempts_completed += 1
+
+		# Natural progression modes model one fresh player per attempt:
+		# wipe ProgressManager unlocks/stats/channels before the next climb.
+		if not config.unlock_all_items:
+			_reset_progression()
 
 		if attempt_outcome == "full_win":
 			logger.log_info("Attempt %d COMPLETE — all channels beaten!" % _attempts_completed)
@@ -1019,6 +1088,17 @@ func _reset_game_state() -> void:
 	# Reset economy
 	if PlayerEconomy:
 		PlayerEconomy.reset_to_starting_money()
+		# Piggy savings persist across games by design (real new-game flow
+		# resets them); bot runs are always new games, so reset here too.
+		# Without this, savings/money inflation contaminated baselines #2-3.
+		PlayerEconomy.reset_piggy_bank_savings()
+
+	# Session-global consumable counter feeds TheConsumerIsAlwaysRight's
+	# multiplier; it never resets anywhere, which inflates scores across
+	# hundreds of bot games. Zero it per run for honest measurement.
+	if Statistics:
+		Statistics.consumables_used = 0
+		Statistics.current_zone_consumables_used = 0
 
 	# Clear dice
 	if is_instance_valid(dice_hand):
@@ -1040,6 +1120,12 @@ func _reset_game_state() -> void:
 	if is_instance_valid(game_controller):
 		game_controller._clear_active_debuffs()
 
+	# Clear equipped gaming console (combo counters persist otherwise;
+	# mirrors _restart_game_for_new_channel). Insurance: no console
+	# purchases seen in baselines so far, but the leak shape matches.
+	if is_instance_valid(game_controller):
+		game_controller._clear_gaming_console()
+
 	# Also clear grounded debuffs
 	if is_instance_valid(game_controller):
 		game_controller._grounded_debuffs.clear()
@@ -1047,11 +1133,35 @@ func _reset_game_state() -> void:
 	# Clear remaining dictionaries the game_controller may not have emptied
 	if is_instance_valid(game_controller):
 		game_controller.consumable_counts.clear()
-		game_controller.active_mods.clear()
+		# Full mod teardown: active_mods, pending_mods AND mod_persistence_map.
+		# Without _clear_all_mods(), bought mods re-apply to newly spawned dice
+		# in every later game (_on_dice_spawned) — the inflation that
+		# contaminated baselines #2-3 across attempts.
+		game_controller._clear_all_mods()
 
 	# Reset ScoreModifierManager
 	if ScoreModifierManager:
 		ScoreModifierManager.reset()
+
+	# Reset synergy additives: SynergyManager rating counts accumulate across
+	# games (synergy_G_sets/PG_sets additives grow with every powerup ever
+	# bought) — the dominant inflation in baselines #2-3.
+	var synergy_manager = get_tree().get_first_node_in_group("synergy_manager")
+	if not synergy_manager and is_instance_valid(game_controller):
+		synergy_manager = game_controller.get("synergy_manager")
+	if synergy_manager and synergy_manager.has_method("reset"):
+		synergy_manager.reset()
+
+	# Clear colored dice purchases (mirrors _restart_game_for_new_channel).
+	# Without this, bought colors (purple multipliers!) leak across runs and
+	# attempts — this contaminated the first Phase 0 baseline.
+	if DiceColorManager and DiceColorManager.has_method("clear_purchased_colors"):
+		DiceColorManager.clear_purchased_colors()
+
+	# Reset run-scoped Rebellion Rep (mirrors new-game flow; bot bypasses it).
+	# Without this, Rep accumulates across the 20 games of a climb attempt.
+	if ProgressManager and ProgressManager.has_method("reset_rep"):
+		ProgressManager.reset_rep()
 
 	# Reset scorecard completely (including levels)
 	if is_instance_valid(score_card):
@@ -1061,6 +1171,12 @@ func _reset_game_state() -> void:
 	if is_instance_valid(turn_tracker):
 		turn_tracker.MAX_ROLLS = 3
 		turn_tracker.reset()
+
+	# Reset dice count to default (mirrors game_controller's new-game flow).
+	# PowerUps like yahtzeed_dice/great_exchange/extra_dice raise it during a
+	# game; without a hard reset the extra dice persist into later games.
+	if is_instance_valid(dice_hand):
+		dice_hand.dice_count = 5
 
 	# Reset shop reroll cost and expansions
 	if is_instance_valid(shop_ui):
@@ -1112,6 +1228,10 @@ func _finalize() -> void:
 	var report_path = report_writer.write_report(statistics, config)
 	var log_path = logger.save_log()
 
+	# Restore real player profiles mutated by natural-progression modes
+	if not config.unlock_all_items:
+		_restore_profiles()
+
 	var agg = statistics.get_aggregate()
 	var summary = "Bot completed %d attempts — Full clears: %d/%d (%.1f%%) — Highest ch: %d" % [
 		agg.total_attempts,
@@ -1128,6 +1248,14 @@ func _finalize() -> void:
 	# Restore audio
 	if config.mute_audio:
 		_unmute_audio()
+
+	# Restore time scale
+	Engine.time_scale = 1.0
+
+	# Headless automation: quit once the report is written
+	if DisplayServer.get_name() == "headless":
+		print("[BotController] Headless run complete — quitting")
+		get_tree().quit()
 
 	print("[BotController] === FINAL REPORT ===")
 	print("[BotController] %s" % summary)
@@ -1353,3 +1481,97 @@ func unlock_all_items() -> void:
 			count += 1
 	if count > 0:
 		logger.log_info("Unlocked %d items in ProgressManager" % count)
+
+
+## lock_all_items()
+##
+## Re-locks every item (floor measurement: fresh-profile runs).
+func lock_all_items() -> void:
+	if not ProgressManager:
+		return
+	ProgressManager._reset_all_unlocks()
+	logger.log_info("Locked all items in ProgressManager (floor mode)")
+
+
+## _reset_progression()
+##
+## Wipes ProgressManager progression so the next attempt models a fresh
+## player: all items locked, cumulative stats zeroed, no channels completed.
+func _reset_progression() -> void:
+	if not ProgressManager:
+		return
+	ProgressManager._reset_all_unlocks()
+	ProgressManager.cumulative_stats = ProgressManager._get_default_cumulative_stats()
+	ProgressManager.completed_channels.clear()
+	# Skip the scripted tutorial: the bot can't play it, and it zeroed out
+	# ch1-2 median measurements during the Phase 0 baseline.
+	ProgressManager.tutorial_completed = true
+	ProgressManager.save_progress()
+	logger.log_info("ProgressManager progression reset for next attempt")
+
+
+## _backup_profiles() / _restore_profiles()
+##
+## Natural-progression modes deliberately mutate the real player profile
+## saves (unlocks, channel completions). Back them up before the session and
+## restore afterwards so bot runs never clobber actual player progress.
+func _backup_profiles() -> void:
+	if not ProgressManager:
+		return
+	DirAccess.make_dir_recursive_absolute("user://bot_profiles/")
+	for slot in ProgressManager.PROFILE_SAVE_PATHS:
+		var src: String = ProgressManager.PROFILE_SAVE_PATHS[slot]
+		if not FileAccess.file_exists(src):
+			continue
+		var f := FileAccess.open(src, FileAccess.READ)
+		if not f:
+			continue
+		var text := f.get_as_text()
+		f.close()
+		var out := FileAccess.open("user://bot_profiles/profile_backup_%s_slot_%d.json" % [config.mom_policy, slot], FileAccess.WRITE)
+		if out:
+			out.store_string(text)
+			out.close()
+	logger.log_info("Player profiles backed up")
+
+
+func _restore_profiles() -> void:
+	if not ProgressManager:
+		return
+	for slot in ProgressManager.PROFILE_SAVE_PATHS:
+		var src := "user://bot_profiles/profile_backup_%s_slot_%d.json" % [config.mom_policy, slot]
+		if not FileAccess.file_exists(src):
+			continue
+		var f := FileAccess.open(src, FileAccess.READ)
+		if not f:
+			continue
+		var text := f.get_as_text()
+		f.close()
+		var out := FileAccess.open(ProgressManager.PROFILE_SAVE_PATHS[slot], FileAccess.WRITE)
+		if out:
+			out.store_string(text)
+			out.close()
+	# Reload so in-memory state matches the restored disk state
+	ProgressManager.load_profile(ProgressManager.current_profile_slot)
+	logger.log_info("Player profiles restored")
+
+
+# ─── Balance Harness Signal Handlers ───
+
+## _on_item_unlocked(item_id, item_type)
+##
+## Records natural ProgressManager unlocks with climb context.
+func _on_item_unlocked(item_id: String, item_type: String) -> void:
+	statistics.record_unlock(item_id, item_type, current_channel, current_run_id)
+	logger.log_info("Unlock fired: %s (%s) on channel %d" % [item_id, item_type, current_channel])
+
+
+## _on_mom_consequences(summary)
+##
+## Records Mom visit consequences (punishment/reward events) with context.
+func _on_mom_consequences(summary: Dictionary) -> void:
+	var round_num := round_manager.get_current_round_number() if is_instance_valid(round_manager) else 0
+	statistics.record_mom_event(summary, current_channel, round_num)
+	logger.log_info("Mom consequences: tier %d, removed PUs: %s, debuffs: %s, fine: $%d" % [
+		summary.get("tier_id", -1), str(summary.get("removed_power_ups", [])),
+		str(summary.get("applied_debuffs", [])), summary.get("fine_amount", 0)])

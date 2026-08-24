@@ -150,4 +150,6 @@ script = ExtResource("1_node")
 id = "checkin_caught_nc17"
 mom_text = "[color=red][shake rate=20 level=10]WHAT is THAT?![/shake][/color] You brought THAT into my house?!"
 expression = "upset"
+speaker_name = "Mom"
+speaker_tint = Color(1, 1, 1, 1)
 responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy"), SubResource("resp_defer")])

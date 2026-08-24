@@ -6,26 +6,26 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Ch | Name | Unlock | Goal× | Yahtzee× | Shop× | Dice× | Reroll× | Goof× | Debuff× | Carryover |
 |----|------|--------|-------|----------|-------|-------|---------|-------|---------|-----------|
-| 1 | Ch01 - Tutorial | 0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | - |
-| 2 | Ch02 - Getting Started | 0 | 1.1 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 5 |
-| 3 | Ch03 - Warming Up | 1 | 1.2 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 5 |
-| 4 | Ch04 - The Grind Begins | 1 | 1.3 | 1.1 | 1.1 | 1.0 | 1.0 | 1.05 | 1.0 | 4 |
-| 5 | Ch05 - Finding Your Rhythm | 2 | 1.4 | 1.2 | 1.1 | 1.1 | 1.0 | 1.1 | 1.0 | 4 |
-| 6 | Ch06 - Mid-Game | 2 | 1.5 | 1.3 | 1.2 | 1.1 | 1.1 | 1.15 | 1.0 | 4 |
-| 7 | Ch07 - Rising Stakes | 3 | 1.6 | 1.4 | 1.2 | 1.2 | 1.1 | 1.2 | 1.1 | 3 |
-| 8 | Ch08 - Pushing Limits | 3 | 1.8 | 1.5 | 1.3 | 1.2 | 1.2 | 1.25 | 1.1 | 3 |
-| 9 | Ch09 - No Easy Days | 4 | 2.0 | 1.6 | 1.4 | 1.3 | 1.2 | 1.3 | 1.2 | 3 |
-| 10 | Ch10 - Double Digits | 4 | 2.2 | 1.8 | 1.5 | 1.3 | 1.3 | 1.35 | 1.2 | 3 |
-| 11 | Ch11 - Veteran Territory | 5 | 2.5 | 2.0 | 1.6 | 1.4 | 1.4 | 1.4 | 1.3 | 2 |
-| 12 | Ch12 - The Crucible | 5 | 2.8 | 2.2 | 1.7 | 1.5 | 1.5 | 1.45 | 1.4 | 2 |
-| 13 | Ch13 - Unlucky for Some | 6 | 3.0 | 2.5 | 1.8 | 1.5 | 1.6 | 1.5 | 1.5 | 2 |
-| 14 | Ch14 - Expert Mode | 7 | 3.5 | 2.8 | 2.0 | 1.6 | 1.7 | 1.6 | 1.6 | 2 |
-| 15 | Ch15 - Master Class | 8 | 4.0 | 3.0 | 2.2 | 1.7 | 1.8 | 1.7 | 1.8 | 1 |
-| 16 | Ch16 - Trial by Fire | 8 | 4.5 | 3.5 | 2.5 | 1.8 | 2.0 | 1.8 | 2.0 | 1 |
-| 17 | Ch17 - Hardened | 9 | 5.0 | 4.0 | 2.8 | 1.9 | 2.2 | 1.9 | 2.2 | 1 |
-| 18 | Ch18 - Legendary | 9 | 6.0 | 4.5 | 3.0 | 2.0 | 2.5 | 2.0 | 2.5 | - |
-| 19 | Ch19 - The Gauntlet | 10 | 7.0 | 5.0 | 3.5 | 2.2 | 2.8 | 2.2 | 3.0 | - |
-| 20 | Ch20 - ULTIMATE | 10 | 8.0 | 5.0 | 4.0 | 2.5 | 3.0 | 2.5 | 4.0 | - |
+| 1 | Ch01 - Tutorial | 0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 0 |
+| 2 | Ch02 - Getting Started | 0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 5 |
+| 3 | Ch03 - Warming Up | 1 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 5 |
+| 4 | Ch04 - The Grind Begins | 1 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 4 |
+| 5 | Ch05 - Finding Your Rhythm | 2 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 4 |
+| 6 | Ch06 - Mid-Game | 2 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 4 |
+| 7 | Ch07 - Rising Stakes | 3 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 3 |
+| 8 | Ch08 - Pushing Limits | 3 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 3 |
+| 9 | Ch09 - No Easy Days | 4 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 3 |
+| 10 | Ch10 - Double Digits | 4 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 3 |
+| 11 | Ch11 - Veteran Territory | 5 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 2 |
+| 12 | Ch12 - The Crucible | 5 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 2 |
+| 13 | Ch13 - Unlucky for Some | 6 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 2 |
+| 14 | Ch14 - Expert Mode | 7 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 2 |
+| 15 | Ch15 - Master Class | 8 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1 |
+| 16 | Ch16 - Trial by Fire | 8 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1 |
+| 17 | Ch17 - Hardened | 9 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1 |
+| 18 | Ch18 - Legendary | 9 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 0 |
+| 19 | Ch19 - The Gauntlet | 10 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 0 |
+| 20 | Ch20 - ULTIMATE | 10 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 | 0 |
 
 ## Channel 1 — Channel 01 - Tutorial
 
@@ -37,12 +37,12 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 0, 0 | 0 | 0 | 50 | Default |  |
-| 2 | 0, 0 | 0 | 0 | 75 | Default |  |
-| 3 | 0, 0 | 0 | 0 | 105 | Default |  |
-| 4 | 0, 1 | 0 | 0 | 150 | Default |  |
-| 5 | 0, 1 | 0 | 0 | 200 | Default |  |
-| 6 | 1, 1 | 1 | 1 | 300 | Default |  |
+| 1 | 0, 0 | 0 | 0 | 50 | 50 |  |
+| 2 | 0, 0 | 0 | 0 | 75 | 50 |  |
+| 3 | 0, 0 | 0 | 0 | 105 | 50 |  |
+| 4 | 0, 1 | 0 | 0 | 150 | 50 |  |
+| 5 | 0, 1 | 0 | 0 | 200 | 50 |  |
+| 6 | 1, 1 | 1 | 1 | 300 | 50 |  |
 
 ### Channel Multipliers
 
@@ -53,6 +53,9 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 - **Reroll Base Cost:** 1.0
 - **Goof-Off:** 1.0
 - **Debuff Intensity:** 1.0
+
+**Carryover:** 0 items
+- Types: 
 
 **Background Shader:** `nick_splat`
 
@@ -68,16 +71,16 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 0, 1 | 0 | 0 | 50 | Default |  |
-| 2 | 0, 1 | 0 | 0 | 225 | Default |  |
-| 3 | 1, 1 | 0 | 1 | 250 | Default |  |
-| 4 | 1, 2 | 0 | 1 | 275 | Default |  |
-| 5 | 1, 2 | 1 | 1 | 300 | Default |  |
+| 1 | 0, 1 | 0 | 0 | 75 | Default |  |
+| 2 | 0, 1 | 0 | 0 | 100 | Default |  |
+| 3 | 1, 1 | 0 | 1 | 150 | Default |  |
+| 4 | 1, 2 | 0 | 1 | 200 | Default |  |
+| 5 | 1, 2 | 1 | 1 | 250 | Default |  |
 | 6 | 1, 2 | 1 | 1 | 350 | Default |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 1.1
+- **Goal Score:** 1.0
 - **Yahtzee Bonus:** 1.0
 - **Shop Prices:** 1.0
 - **Colored Dice Cost:** 1.0
@@ -102,16 +105,16 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 0, 1 | 0 | 0 | 50 | 150 |  |
-| 2 | 1, 1 | 0 | 1 | 225 | 150 |  |
-| 3 | 1, 2 | 0 | 1 | 300 | 100 |  |
-| 4 | 1, 2 | 0 | 0 | 325 | 125 |  |
-| 5 | 2, 2 | 1 | 1 | 350 | 150 |  |
-| 6 | 2, 2 | 1 | 1 | 375 | Default |  |
+| 1 | 0, 1 | 0 | 0 | 108 | Default |  |
+| 2 | 1, 1 | 0 | 1 | 177 | Default |  |
+| 3 | 1, 2 | 0 | 1 | 12902 | Default |  |
+| 4 | 1, 2 | 0 | 0 | 15091 | Default |  |
+| 5 | 2, 2 | 1 | 1 | 13125 | 125 |  |
+| 6 | 2, 2 | 1 | 1 | 12901 | Default |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 1.2
+- **Goal Score:** 1.0
 - **Yahtzee Bonus:** 1.0
 - **Shop Prices:** 1.0
 - **Colored Dice Cost:** 1.0
@@ -136,21 +139,21 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 0, 1 | 0 | 0 | 75 | 150 |  |
-| 2 | 1, 2 | 0 | 1 | Default | Default |  |
-| 3 | 1, 2 | 0 | 0 | Default | Default |  |
-| 4 | 2, 2 | 1 | 2 | Default | Default |  |
-| 5 | 2, 3 | 1 | 2 | Default | Default |  |
-| 6 | 2, 3 | 2 | 2 | Default | Default |  |
+| 1 | 0, 1 | 0 | 0 | 111 | Default |  |
+| 2 | 1, 2 | 0 | 1 | 9289 | Default |  |
+| 3 | 1, 2 | 0 | 0 | 13318 | Default |  |
+| 4 | 2, 2 | 1 | 2 | 15578 | Default |  |
+| 5 | 2, 3 | 1 | 2 | 13549 | Default |  |
+| 6 | 2, 3 | 2 | 2 | 13318 | Default |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 1.3
-- **Yahtzee Bonus:** 1.1
-- **Shop Prices:** 1.1
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
 - **Colored Dice Cost:** 1.0
 - **Reroll Base Cost:** 1.0
-- **Goof-Off:** 1.05
+- **Goof-Off:** 1.0
 - **Debuff Intensity:** 1.0
 
 **Carryover:** 4 items
@@ -170,21 +173,21 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 1, 1 | 0 | 0 | 50 | 200 |  |
-| 2 | 1, 2 | 1 | 1 | Default | Default |  |
-| 3 | 2, 2 | 1 | 1 | Default | 130 |  |
-| 4 | 2, 3 | 1 | 2 | Default | 165 |  |
-| 5 | 2, 3 | 1 | 2 | Default | 200 |  |
-| 6 | 3, 3 | 2 | 2 | Default | 250 |  |
+| 1 | 1, 1 | 0 | 0 | 137 | Default |  |
+| 2 | 1, 2 | 1 | 1 | 11466 | Default |  |
+| 3 | 2, 2 | 1 | 1 | 16439 | Default |  |
+| 4 | 2, 3 | 1 | 2 | 19228 | Default |  |
+| 5 | 2, 3 | 1 | 2 | 16723 | 150 |  |
+| 6 | 3, 3 | 2 | 2 | 16438 | 150 |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 1.4
-- **Yahtzee Bonus:** 1.2
-- **Shop Prices:** 1.1
-- **Colored Dice Cost:** 1.1
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
+- **Colored Dice Cost:** 1.0
 - **Reroll Base Cost:** 1.0
-- **Goof-Off:** 1.1
+- **Goof-Off:** 1.0
 - **Debuff Intensity:** 1.0
 
 **Carryover:** 4 items
@@ -204,21 +207,21 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 1, 2 | 0 | 1 | 50 | 150 |  |
-| 2 | 2, 2 | 1 | 1 | 75 | 150 |  |
-| 3 | 2, 3 | 1 | 2 | 100 | 150 |  |
-| 4 | 2, 3 | 1 | 2 | Default | 185 |  |
-| 5 | 3, 3 | 2 | 2 | Default | 225 |  |
-| 6 | 3, 4 | 2 | 2 | Default | 275 |  |
+| 1 | 1, 2 | 0 | 1 | 129 | Default |  |
+| 2 | 2, 2 | 1 | 1 | 10782 | Default |  |
+| 3 | 2, 3 | 1 | 2 | 15458 | Default |  |
+| 4 | 2, 3 | 1 | 2 | 18081 | Default |  |
+| 5 | 3, 3 | 2 | 2 | 15726 | 175 |  |
+| 6 | 3, 4 | 2 | 2 | 15458 | 175 |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 1.5
-- **Yahtzee Bonus:** 1.3
-- **Shop Prices:** 1.2
-- **Colored Dice Cost:** 1.1
-- **Reroll Base Cost:** 1.1
-- **Goof-Off:** 1.15
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
+- **Colored Dice Cost:** 1.0
+- **Reroll Base Cost:** 1.0
+- **Goof-Off:** 1.0
 - **Debuff Intensity:** 1.0
 
 **Carryover:** 4 items
@@ -238,22 +241,22 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 1, 2 | 1 | 1 | Default | 110 | empty_category=1.1, points_above=1.0, chore_completion=1.0 |
-| 2 | 2, 2 | 1 | 2 | Default | 135 | empty_category=1.1, points_above=1.0, chore_completion=1.0 |
-| 3 | 2, 3 | 1 | 2 | Default | 165 | empty_category=1.2, points_above=1.0, chore_completion=1.1 |
-| 4 | 3, 3 | 2 | 2 | Default | 200 | empty_category=1.2, points_above=1.1, chore_completion=1.1 |
-| 5 | 3, 4 | 2 | 2 | Default | 250 | empty_category=1.2, points_above=1.1, chore_completion=1.2 |
-| 6 | 3, 4 | 2 | 3 | Default | 300 | empty_category=1.3, points_above=1.1, chore_completion=1.2 |
+| 1 | 1, 2 | 1 | 1 | 161 | 700 |  |
+| 2 | 2, 2 | 1 | 2 | 13451 | Default |  |
+| 3 | 2, 3 | 1 | 2 | 19285 | Default |  |
+| 4 | 3, 3 | 2 | 2 | 22557 | Default |  |
+| 5 | 3, 4 | 2 | 2 | 19618 | 200 |  |
+| 6 | 3, 4 | 2 | 3 | 19284 | 200 |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 1.6
-- **Yahtzee Bonus:** 1.4
-- **Shop Prices:** 1.2
-- **Colored Dice Cost:** 1.2
-- **Reroll Base Cost:** 1.1
-- **Goof-Off:** 1.2
-- **Debuff Intensity:** 1.1
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
+- **Colored Dice Cost:** 1.0
+- **Reroll Base Cost:** 1.0
+- **Goof-Off:** 1.0
+- **Debuff Intensity:** 1.0
 
 **Carryover:** 3 items
 - Types: power_ups, consumables, colored_dice, mods, money, scorecard_levels
@@ -272,22 +275,22 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 1, 2 | 1 | 1 | Default | 125 | empty_category=1.2, points_above=1.0, chore_completion=1.1 |
-| 2 | 2, 3 | 1 | 2 | Default | 150 | empty_category=1.2, points_above=1.0, chore_completion=1.1 |
-| 3 | 2, 3 | 2 | 2 | Default | 185 | empty_category=1.2, points_above=1.1, chore_completion=1.2 |
-| 4 | 3, 4 | 2 | 2 | Default | 225 | empty_category=1.3, points_above=1.1, chore_completion=1.2 |
-| 5 | 3, 4 | 2 | 3 | Default | 275 | empty_category=1.3, points_above=1.2, chore_completion=1.2 |
-| 6 | 4, 4 | 2 | 3 | Default | 325 | empty_category=1.3, points_above=1.2, chore_completion=1.3 |
+| 1 | 1, 2 | 1 | 1 | 164 | Default |  |
+| 2 | 2, 3 | 1 | 2 | 13694 | Default |  |
+| 3 | 2, 3 | 2 | 2 | 19633 | Default |  |
+| 4 | 3, 4 | 2 | 2 | 22964 | Default |  |
+| 5 | 3, 4 | 2 | 3 | 19972 | 250 |  |
+| 6 | 4, 4 | 2 | 3 | 19632 | 250 |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 1.8
-- **Yahtzee Bonus:** 1.5
-- **Shop Prices:** 1.3
-- **Colored Dice Cost:** 1.2
-- **Reroll Base Cost:** 1.2
-- **Goof-Off:** 1.25
-- **Debuff Intensity:** 1.1
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
+- **Colored Dice Cost:** 1.0
+- **Reroll Base Cost:** 1.0
+- **Goof-Off:** 1.0
+- **Debuff Intensity:** 1.0
 
 **Carryover:** 3 items
 - Types: power_ups, consumables, colored_dice, mods, money, scorecard_levels
@@ -306,22 +309,22 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 2, 2 | 1 | 2 | Default | 140 | empty_category=1.2, points_above=1.1, chore_completion=1.1 |
-| 2 | 2, 3 | 1 | 2 | Default | 170 | empty_category=1.2, points_above=1.1, chore_completion=1.2 |
-| 3 | 3, 3 | 2 | 2 | Default | 210 | empty_category=1.3, points_above=1.1, chore_completion=1.2 |
-| 4 | 3, 4 | 2 | 3 | Default | 250 | empty_category=1.3, points_above=1.2, chore_completion=1.3 |
-| 5 | 4, 4 | 2 | 3 | Default | 300 | empty_category=1.4, points_above=1.2, chore_completion=1.3 |
-| 6 | 4, 5 | 2 | 3 | Default | 375 | empty_category=1.4, points_above=1.3, chore_completion=1.4 |
+| 1 | 2, 2 | 1 | 2 | 253 | Default |  |
+| 2 | 2, 3 | 1 | 2 | 4273 | Default |  |
+| 3 | 3, 3 | 2 | 2 | 30356 | Default |  |
+| 4 | 3, 4 | 2 | 3 | 35507 | Default |  |
+| 5 | 4, 4 | 2 | 3 | 30882 | 300 |  |
+| 6 | 4, 5 | 2 | 3 | 30355 | 300 |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 2.0
-- **Yahtzee Bonus:** 1.6
-- **Shop Prices:** 1.4
-- **Colored Dice Cost:** 1.3
-- **Reroll Base Cost:** 1.2
-- **Goof-Off:** 1.3
-- **Debuff Intensity:** 1.2
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
+- **Colored Dice Cost:** 1.0
+- **Reroll Base Cost:** 1.0
+- **Goof-Off:** 1.0
+- **Debuff Intensity:** 1.0
 
 **Carryover:** 3 items
 - Types: power_ups, consumables, colored_dice, mods, money
@@ -340,22 +343,22 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 2, 3 | 1 | 2 | Default | 150 | empty_category=1.3, points_above=1.1, chore_completion=1.2 |
-| 2 | 2, 3 | 2 | 2 | Default | 185 | empty_category=1.3, points_above=1.1, chore_completion=1.2 |
-| 3 | 3, 4 | 2 | 3 | Default | 230 | empty_category=1.3, points_above=1.2, chore_completion=1.3 |
-| 4 | 3, 4 | 2 | 3 | Default | 275 | empty_category=1.4, points_above=1.2, chore_completion=1.3 |
-| 5 | 4, 5 | 2 | 3 | Default | 325 | empty_category=1.4, points_above=1.3, chore_completion=1.4 |
-| 6 | 4, 5 | 3 | 3 | Default | 400 | empty_category=1.5, points_above=1.3, chore_completion=1.5 |
+| 1 | 2, 3 | 1 | 2 | 222 | Default |  |
+| 2 | 2, 3 | 2 | 2 | 28968 | Default |  |
+| 3 | 3, 4 | 2 | 3 | 26644 | Default |  |
+| 4 | 3, 4 | 2 | 3 | 31165 | 1300 |  |
+| 5 | 4, 5 | 2 | 3 | 27105 | 300 |  |
+| 6 | 4, 5 | 3 | 3 | 26643 | 300 |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 2.2
-- **Yahtzee Bonus:** 1.8
-- **Shop Prices:** 1.5
-- **Colored Dice Cost:** 1.3
-- **Reroll Base Cost:** 1.3
-- **Goof-Off:** 1.35
-- **Debuff Intensity:** 1.2
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
+- **Colored Dice Cost:** 1.0
+- **Reroll Base Cost:** 1.0
+- **Goof-Off:** 1.0
+- **Debuff Intensity:** 1.0
 
 **Carryover:** 3 items
 - Types: power_ups, consumables, colored_dice, mods, money
@@ -374,22 +377,22 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 2, 3 | 1 | 2 | Default | 175 | empty_category=1.3, points_above=1.2, chore_completion=1.2 |
-| 2 | 3, 3 | 2 | 2 | Default | 210 | empty_category=1.4, points_above=1.2, chore_completion=1.3 |
-| 3 | 3, 4 | 2 | 3 | Default | 260 | empty_category=1.4, points_above=1.2, chore_completion=1.3 |
-| 4 | 4, 4 | 2 | 3 | Default | 310 | empty_category=1.5, points_above=1.3, chore_completion=1.4 |
-| 5 | 4, 5 | 2 | 3 | Default | 375 | empty_category=1.5, points_above=1.3, chore_completion=1.5 |
-| 6 | 4, 5 | 3 | 4 | Default | 450 | empty_category=1.6, points_above=1.4, chore_completion=1.5 |
+| 1 | 2, 3 | 1 | 2 | 234 | Default |  |
+| 2 | 3, 3 | 2 | 2 | 19622 | Default |  |
+| 3 | 3, 4 | 2 | 3 | 28132 | Default |  |
+| 4 | 4, 4 | 2 | 3 | 32905 | Default |  |
+| 5 | 4, 5 | 2 | 3 | 28619 | 350 |  |
+| 6 | 4, 5 | 3 | 4 | 28131 | 350 |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 2.5
-- **Yahtzee Bonus:** 2.0
-- **Shop Prices:** 1.6
-- **Colored Dice Cost:** 1.4
-- **Reroll Base Cost:** 1.4
-- **Goof-Off:** 1.4
-- **Debuff Intensity:** 1.3
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
+- **Colored Dice Cost:** 1.0
+- **Reroll Base Cost:** 1.0
+- **Goof-Off:** 1.0
+- **Debuff Intensity:** 1.0
 
 **Carryover:** 2 items
 - Types: power_ups, consumables, colored_dice, mods, money
@@ -408,22 +411,22 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 2, 3 | 2 | 2 | Default | 200 | empty_category=1.4, points_above=1.2, chore_completion=1.3 |
-| 2 | 3, 4 | 2 | 3 | Default | 240 | empty_category=1.4, points_above=1.3, chore_completion=1.3 |
-| 3 | 3, 4 | 2 | 3 | Default | 290 | empty_category=1.5, points_above=1.3, chore_completion=1.4 |
-| 4 | 4, 5 | 2 | 3 | Default | 350 | empty_category=1.5, points_above=1.4, chore_completion=1.5 |
-| 5 | 4, 5 | 3 | 4 | Default | 425 | empty_category=1.6, points_above=1.4, chore_completion=1.5 |
-| 6 | 5, 5 | 3 | 4 | Default | 500 | empty_category=1.7, points_above=1.5, chore_completion=1.6 |
+| 1 | 2, 3 | 2 | 2 | 225 | Default |  |
+| 2 | 3, 4 | 2 | 3 | 19221 | Default |  |
+| 3 | 3, 4 | 2 | 3 | 12307 | Default |  |
+| 4 | 4, 5 | 2 | 3 | 31507 | Default |  |
+| 5 | 4, 5 | 3 | 4 | 27403 | 400 |  |
+| 6 | 5, 5 | 3 | 4 | 26936 | Default |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 2.8
-- **Yahtzee Bonus:** 2.2
-- **Shop Prices:** 1.7
-- **Colored Dice Cost:** 1.5
-- **Reroll Base Cost:** 1.5
-- **Goof-Off:** 1.45
-- **Debuff Intensity:** 1.4
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
+- **Colored Dice Cost:** 1.0
+- **Reroll Base Cost:** 1.0
+- **Goof-Off:** 1.0
+- **Debuff Intensity:** 1.0
 
 **Carryover:** 2 items
 - Types: power_ups, consumables, colored_dice, money
@@ -442,22 +445,22 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 3, 3 | 2 | 2 | Default | 225 | empty_category=1.5, points_above=1.3, chore_completion=1.4 |
-| 2 | 3, 4 | 2 | 3 | Default | 270 | empty_category=1.5, points_above=1.3, chore_completion=1.4 |
-| 3 | 4, 4 | 2 | 3 | Default | 325 | empty_category=1.6, points_above=1.4, chore_completion=1.5 |
-| 4 | 4, 5 | 3 | 4 | Default | 400 | empty_category=1.6, points_above=1.5, chore_completion=1.6 |
-| 5 | 4, 5 | 3 | 4 | Default | 475 | empty_category=1.7, points_above=1.5, chore_completion=1.6 |
-| 6 | 5, 5 | 3 | 4 | Default | 575 | empty_category=1.8, points_above=1.6, chore_completion=1.7 |
+| 1 | 3, 3 | 2 | 2 | 266 | Default |  |
+| 2 | 3, 4 | 2 | 3 | 22243 | Default |  |
+| 3 | 4, 4 | 2 | 3 | 31890 | Default |  |
+| 4 | 4, 5 | 3 | 4 | 37301 | Default |  |
+| 5 | 4, 5 | 3 | 4 | 32442 | 400 |  |
+| 6 | 5, 5 | 3 | 4 | 31889 | 400 |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 3.0
-- **Yahtzee Bonus:** 2.5
-- **Shop Prices:** 1.8
-- **Colored Dice Cost:** 1.5
-- **Reroll Base Cost:** 1.6
-- **Goof-Off:** 1.5
-- **Debuff Intensity:** 1.5
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
+- **Colored Dice Cost:** 1.0
+- **Reroll Base Cost:** 1.0
+- **Goof-Off:** 1.0
+- **Debuff Intensity:** 1.0
 
 **Carryover:** 2 items
 - Types: power_ups, consumables, colored_dice, money
@@ -476,22 +479,22 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 3, 4 | 2 | 3 | Default | 250 | empty_category=1.5, points_above=1.4, chore_completion=1.5 |
-| 2 | 3, 4 | 2 | 3 | Default | 300 | empty_category=1.6, points_above=1.4, chore_completion=1.5 |
-| 3 | 4, 5 | 3 | 3 | Default | 365 | empty_category=1.6, points_above=1.5, chore_completion=1.6 |
-| 4 | 4, 5 | 3 | 4 | Default | 440 | empty_category=1.7, points_above=1.5, chore_completion=1.7 |
-| 5 | 5, 5 | 3 | 4 | Default | 525 | empty_category=1.8, points_above=1.6, chore_completion=1.8 |
-| 6 | 5, 5 | 3 | 5 | Default | 625 | empty_category=1.9, points_above=1.7, chore_completion=1.8 |
+| 1 | 3, 4 | 2 | 3 | 242 | Default |  |
+| 2 | 3, 4 | 2 | 3 | 20269 | Default |  |
+| 3 | 4, 5 | 3 | 3 | 29060 | Default |  |
+| 4 | 4, 5 | 3 | 4 | 33991 | Default |  |
+| 5 | 5, 5 | 3 | 4 | 29563 | 450 |  |
+| 6 | 5, 5 | 3 | 5 | 29059 | 450 |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 3.5
-- **Yahtzee Bonus:** 2.8
-- **Shop Prices:** 2.0
-- **Colored Dice Cost:** 1.6
-- **Reroll Base Cost:** 1.7
-- **Goof-Off:** 1.6
-- **Debuff Intensity:** 1.6
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
+- **Colored Dice Cost:** 1.0
+- **Reroll Base Cost:** 1.0
+- **Goof-Off:** 1.0
+- **Debuff Intensity:** 1.0
 
 **Carryover:** 2 items
 - Types: power_ups, consumables, money
@@ -510,22 +513,22 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 3, 4 | 2 | 3 | Default | 275 | empty_category=1.6, points_above=1.5, chore_completion=1.6 |
-| 2 | 4, 4 | 2 | 3 | Default | 330 | empty_category=1.7, points_above=1.5, chore_completion=1.6 |
-| 3 | 4, 5 | 3 | 4 | Default | 400 | empty_category=1.7, points_above=1.6, chore_completion=1.7 |
-| 4 | 4, 5 | 3 | 4 | Default | 475 | empty_category=1.8, points_above=1.6, chore_completion=1.8 |
-| 5 | 5, 5 | 3 | 5 | Default | 575 | empty_category=1.9, points_above=1.7, chore_completion=1.9 |
-| 6 | 5, 5 | 4 | 5 | Default | 700 | empty_category=2.0, points_above=1.8, chore_completion=2.0 |
+| 1 | 3, 4 | 2 | 3 | 241 | Default |  |
+| 2 | 4, 4 | 2 | 3 | 20175 | Default |  |
+| 3 | 4, 5 | 3 | 4 | 28925 | Default |  |
+| 4 | 4, 5 | 3 | 4 | 33833 | Default |  |
+| 5 | 5, 5 | 3 | 5 | 29426 | 500 |  |
+| 6 | 5, 5 | 4 | 5 | 28924 | 500 |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 4.0
-- **Yahtzee Bonus:** 3.0
-- **Shop Prices:** 2.2
-- **Colored Dice Cost:** 1.7
-- **Reroll Base Cost:** 1.8
-- **Goof-Off:** 1.7
-- **Debuff Intensity:** 1.8
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
+- **Colored Dice Cost:** 1.0
+- **Reroll Base Cost:** 1.0
+- **Goof-Off:** 1.0
+- **Debuff Intensity:** 1.0
 
 **Carryover:** 1 item
 - Types: power_ups, consumables, money
@@ -544,22 +547,22 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 4, 4 | 2 | 3 | Default | 300 | empty_category=1.7, points_above=1.5, chore_completion=1.7 |
-| 2 | 4, 5 | 3 | 4 | Default | 360 | empty_category=1.8, points_above=1.6, chore_completion=1.8 |
-| 3 | 4, 5 | 3 | 4 | Default | 435 | empty_category=1.9, points_above=1.7, chore_completion=1.9 |
-| 4 | 5, 5 | 3 | 5 | Default | 525 | empty_category=2.0, points_above=1.8, chore_completion=2.0 |
-| 5 | 5, 5 | 4 | 5 | Default | 625 | empty_category=2.1, points_above=1.9, chore_completion=2.1 |
-| 6 | 5, 5 | 4 | 5 | Default | 750 | empty_category=2.2, points_above=2.0, chore_completion=2.2 |
+| 1 | 4, 4 | 2 | 3 | 410 | Default |  |
+| 2 | 4, 5 | 3 | 4 | 34286 | Default |  |
+| 3 | 4, 5 | 3 | 4 | 49156 | Default |  |
+| 4 | 5, 5 | 3 | 5 | 57496 | Default |  |
+| 5 | 5, 5 | 4 | 5 | 50006 | 550 |  |
+| 6 | 5, 5 | 4 | 5 | 49154 | 550 |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 4.5
-- **Yahtzee Bonus:** 3.5
-- **Shop Prices:** 2.5
-- **Colored Dice Cost:** 1.8
-- **Reroll Base Cost:** 2.0
-- **Goof-Off:** 1.8
-- **Debuff Intensity:** 2.0
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
+- **Colored Dice Cost:** 1.0
+- **Reroll Base Cost:** 1.0
+- **Goof-Off:** 1.0
+- **Debuff Intensity:** 1.0
 
 **Carryover:** 1 item
 - Types: power_ups, consumables, money
@@ -578,22 +581,22 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 4, 5 | 2 | 4 | Default | 350 | empty_category=1.8, points_above=1.6, chore_completion=1.8 |
-| 2 | 4, 5 | 3 | 4 | Default | 410 | empty_category=1.9, points_above=1.7, chore_completion=1.9 |
-| 3 | 5, 5 | 3 | 5 | Default | 500 | empty_category=2.0, points_above=1.8, chore_completion=2.0 |
-| 4 | 5, 5 | 4 | 5 | Default | 600 | empty_category=2.2, points_above=2.0, chore_completion=2.2 |
-| 5 | 5, 5 | 4 | 5 | Default | 700 | empty_category=2.4, points_above=2.2, chore_completion=2.4 |
-| 6 | 5, 5 | 4 | 5 | Default | 850 | empty_category=2.5, points_above=2.3, chore_completion=2.5 |
+| 1 | 4, 5 | 2 | 4 | 347 | Default |  |
+| 2 | 4, 5 | 3 | 4 | 29021 | Default |  |
+| 3 | 5, 5 | 3 | 5 | 41608 | Default |  |
+| 4 | 5, 5 | 4 | 5 | 48667 | Default |  |
+| 5 | 5, 5 | 4 | 5 | 42328 | 600 |  |
+| 6 | 5, 5 | 4 | 5 | 41606 | 600 |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 5.0
-- **Yahtzee Bonus:** 4.0
-- **Shop Prices:** 2.8
-- **Colored Dice Cost:** 1.9
-- **Reroll Base Cost:** 2.2
-- **Goof-Off:** 1.9
-- **Debuff Intensity:** 2.2
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
+- **Colored Dice Cost:** 1.0
+- **Reroll Base Cost:** 1.0
+- **Goof-Off:** 1.0
+- **Debuff Intensity:** 1.0
 
 **Carryover:** 1 item
 - Types: power_ups, money
@@ -612,22 +615,25 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 4, 5 | 3 | 4 | Default | 400 | empty_category=2.0, points_above=1.8, chore_completion=2.0 |
-| 2 | 5, 5 | 3 | 5 | Default | 475 | empty_category=2.2, points_above=2.0, chore_completion=2.2 |
-| 3 | 5, 5 | 4 | 5 | Default | 575 | empty_category=2.4, points_above=2.2, chore_completion=2.4 |
-| 4 | 5, 5 | 4 | 5 | Default | 675 | empty_category=2.6, points_above=2.4, chore_completion=2.6 |
-| 5 | 5, 5 | 4 | 5 | Default | 800 | empty_category=2.8, points_above=2.6, chore_completion=2.8 |
-| 6 | 5, 5 | 5 | 5 | Default | 950 | empty_category=3.0, points_above=2.8, chore_completion=3.0 |
+| 1 | 4, 5 | 3 | 4 | 290 | Default |  |
+| 2 | 5, 5 | 3 | 5 | 24237 | Default |  |
+| 3 | 5, 5 | 4 | 5 | 34749 | Default |  |
+| 4 | 5, 5 | 4 | 5 | 40645 | Default |  |
+| 5 | 5, 5 | 4 | 5 | 35350 | 650 |  |
+| 6 | 5, 5 | 5 | 5 | 34748 | 650 |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 6.0
-- **Yahtzee Bonus:** 4.5
-- **Shop Prices:** 3.0
-- **Colored Dice Cost:** 2.0
-- **Reroll Base Cost:** 2.5
-- **Goof-Off:** 2.0
-- **Debuff Intensity:** 2.5
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
+- **Colored Dice Cost:** 1.0
+- **Reroll Base Cost:** 1.0
+- **Goof-Off:** 1.0
+- **Debuff Intensity:** 1.0
+
+**Carryover:** 0 items
+- Types: 
 
 **Background Shader:** `plasma_screen`
 
@@ -643,22 +649,25 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 5, 5 | 3 | 5 | Default | 450 | empty_category=2.2, points_above=2.0, chore_completion=2.2 |
-| 2 | 5, 5 | 4 | 5 | Default | 525 | empty_category=2.5, points_above=2.3, chore_completion=2.5 |
-| 3 | 5, 5 | 4 | 5 | Default | 650 | empty_category=2.8, points_above=2.6, chore_completion=2.8 |
-| 4 | 5, 5 | 4 | 5 | Default | 775 | empty_category=3.0, points_above=2.8, chore_completion=3.0 |
-| 5 | 5, 5 | 5 | 5 | Default | 900 | empty_category=3.5, points_above=3.2, chore_completion=3.5 |
-| 6 | 5, 5 | 5 | 5 | Default | 1050 | empty_category=4.0, points_above=3.5, chore_completion=4.0 |
+| 1 | 5, 5 | 3 | 5 | 317 | Default |  |
+| 2 | 5, 5 | 4 | 5 | 26569 | Default |  |
+| 3 | 5, 5 | 4 | 5 | 38092 | Default |  |
+| 4 | 5, 5 | 4 | 5 | 44555 | Default |  |
+| 5 | 5, 5 | 5 | 5 | 38751 | 800 |  |
+| 6 | 5, 5 | 5 | 5 | 38090 | Default |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 7.0
-- **Yahtzee Bonus:** 5.0
-- **Shop Prices:** 3.5
-- **Colored Dice Cost:** 2.2
-- **Reroll Base Cost:** 2.8
-- **Goof-Off:** 2.2
-- **Debuff Intensity:** 3.0
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
+- **Colored Dice Cost:** 1.0
+- **Reroll Base Cost:** 1.0
+- **Goof-Off:** 1.0
+- **Debuff Intensity:** 1.0
+
+**Carryover:** 0 items
+- Types: 
 
 **Background Shader:** `arcade_starfield`
 
@@ -674,22 +683,25 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 | Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |
 |----|----------------|-------------|------------|--------------|----------|-------------------|
-| 1 | 5, 5 | 4 | 5 | Default | 500 |  |
-| 2 | 5, 5 | 4 | 5 | Default | 600 |  |
-| 3 | 5, 5 | 5 | 5 | Default | 725 |  |
-| 4 | 5, 5 | 5 | 5 | Default | 875 |  |
-| 5 | 5, 5 | 5 | 5 | Default | 1000 |  |
-| 6 | 5, 5 | 5 | 5 | Default | 1200 |  |
+| 1 | 5, 5 | 4 | 5 | 290 | 500 |  |
+| 2 | 5, 5 | 4 | 5 | 24290 | 600 |  |
+| 3 | 5, 5 | 5 | 5 | 34824 | 700 |  |
+| 4 | 5, 5 | 5 | 5 | 40732 | 800 |  |
+| 5 | 5, 5 | 5 | 5 | 35427 | 1000 |  |
+| 6 | 5, 5 | 5 | 5 | 34822 | Default |  |
 
 ### Channel Multipliers
 
-- **Goal Score:** 8.0
-- **Yahtzee Bonus:** 5.0
-- **Shop Prices:** 4.0
-- **Colored Dice Cost:** 2.5
-- **Reroll Base Cost:** 3.0
-- **Goof-Off:** 2.5
-- **Debuff Intensity:** 4.0
+- **Goal Score:** 1.0
+- **Yahtzee Bonus:** 1.0
+- **Shop Prices:** 1.0
+- **Colored Dice Cost:** 1.0
+- **Reroll Base Cost:** 1.0
+- **Goof-Off:** 1.0
+- **Debuff Intensity:** 1.0
+
+**Carryover:** 0 items
+- Types: 
 
 **Background Shader:** `backgground_swirl`
 

@@ -8,7 +8,7 @@
 script = ExtResource("1_moddata")
 id = "high_roller"
 display_name = "High Roller"
-description = "Cannot lock. Click to reroll for increasing Fibonacci costs."
+description = "Cannot lock. Holds its value; click to reroll for increasing Fibonacci costs."
 icon = ExtResource("1_wild")
 scene = ExtResource("2_scene")
 price = 150

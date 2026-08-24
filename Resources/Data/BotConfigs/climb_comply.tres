@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="BotConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Bot/BotConfig.gd" id="1_config"]
+
+[resource]
+script = ExtResource("1_config")
+attempts = 30
+channel_min = 1
+channel_max = 20
+visual_mode = false
+speed_multiplier = 10.0
+reset_between_runs = false
+turn_delay = 0.1
+log_verbose = false
+open_report_on_finish = false
+max_rerolls_per_shop = 5
+strategy_preset = "default"
+mom_policy = "always_comply"
+mute_audio = true
+unlock_all_items = false
+advance_on_loss = true
+early_shop_chance = 0.0

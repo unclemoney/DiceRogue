@@ -66,6 +66,18 @@ func _ready() -> void:
 	if not bot_config:
 		bot_config = BotConfigScript.new()
 
+	# CLI override for automated/parallel runs:
+	#   godot ... Tests/BotTest.tscn -- --bot-config=res://path/to/config.tres
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--bot-config="):
+			var cfg_path := arg.trim_prefix("--bot-config=")
+			var res = load(cfg_path)
+			if res is BotConfig:
+				bot_config = res
+				print("[BotTest] Config overridden via CLI: %s" % cfg_path)
+			else:
+				push_error("[BotTest] --bot-config path did not load a BotConfig: %s" % cfg_path)
+
 	print("[BotTest] Scene ready — starting bot after scene tree settles")
 
 	# IMPORTANT: Override GameController's normal _on_game_start so we control the flow

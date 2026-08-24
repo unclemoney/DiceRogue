@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://twakrmwwi1g5"]
+[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3]
 
-[ext_resource type="Script" uid="uid://cseqx1haydrh1" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
-[ext_resource type="Shader" uid="uid://bxovwegnu5mob" path="res://Scripts/Shaders/nick_splat.gdshader" id="1_qgqi3"]
-[ext_resource type="Script" uid="uid://yuj6od6ypw1a" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
+[ext_resource type="Script" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
+[ext_resource type="Shader" path="res://Scripts/Shaders/nick_splat.gdshader" id="1_qgqi3"]
+[ext_resource type="Script" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
 
 [sub_resource type="Resource" id="round_1"]
 script = ExtResource("2_round")

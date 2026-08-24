@@ -87,6 +87,15 @@ func add_challenge(data: ChallengeData, challenge: Challenge) -> ChallengeIcon:
 	# Set data after adding to tree
 	icon.set_data_with_target_score(data, actual_target_score)
 	icon.set_meta("last_pos", icon.position)
+
+	# Rebel premium indicator (Branch 5b, PLAN_BALANCE.md): when the player's
+	# Rep tier raises targets, mark the icon so the premium isn't invisible.
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller and game_controller.get("channel_manager"):
+		var premium: float = game_controller.channel_manager.get_rebel_target_premium()
+		if premium > 0.0:
+			icon.modulate = Color(1.0, 0.8, 0.8)
+			icon.tooltip_text = "Mom is watching you harder: target +%d%% (Rebellion Rep)" % int(round(premium * 100.0))
 	_progress[data.id] = 0.0
 	
 	# Juice: target score count-up animation

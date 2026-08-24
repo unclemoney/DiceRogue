@@ -27,6 +27,14 @@ var _state_disabled_visual_active := false
 var _debuff_disabled_face_active := false
 @export var is_locked: bool = false
 
+## When true, the built-in click lock/unlock toggle is skipped so mods can
+## intercept clicks for their own behavior (e.g. HighRollerMod click-to-reroll).
+var locking_disabled: bool = false
+
+## When true, the die is excluded from normal ROLL-button rolls
+## (DiceHand.roll_all() and prepare_dice_for_roll() skip it).
+var excluded_from_normal_rolls: bool = false
+
 # State machine properties
 var current_state: DiceState = DiceState.ROLLABLE
 var _previous_state: DiceState = DiceState.ROLLABLE
@@ -391,7 +399,10 @@ func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 		emit_signal("selected", self)
 		emit_signal("clicked")
 		
-		if current_state == DiceState.ROLLED:
+		# Mods can disable the built-in lock toggle to intercept clicks themselves
+		if locking_disabled:
+			print("[Dice] Locking disabled by mod - skipping built-in lock toggle")
+		elif current_state == DiceState.ROLLED:
 			print("[Dice] Attempting to lock dice")
 			lock()
 		elif current_state == DiceState.LOCKED:

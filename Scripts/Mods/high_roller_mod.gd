@@ -38,8 +38,14 @@ func apply(dice_target) -> void:
 			if not _game_button_ui.is_connected("dice_rolled", _on_normal_dice_rolled):
 				_game_button_ui.connect("dice_rolled", _on_normal_dice_rolled)
 		
-		# Disable locking functionality on this die
+		# Disable locking and normal-roll participation on this die
 		_disable_die_locking()
+		
+		# If the die hasn't rolled yet (e.g. mod applied at turn start), give it
+		# an initial roll so it holds a value and stays scoreable. This initial
+		# roll is free — only manual click rerolls charge the Fibonacci cost.
+		if _attached_die.current_state == Dice.DiceState.ROLLABLE:
+			_attached_die.roll()
 		
 		emit_signal("mod_applied")
 	else:
@@ -85,16 +91,25 @@ func _find_game_button_ui() -> void:
 
 ## _disable_die_locking()
 ##
-## Prevents the attached die from being locked and ensures it stays unlocked.
+## Prevents the attached die from being locked via the Dice.locking_disabled
+## flag, and excludes it from normal ROLL-button rolls via
+## Dice.excluded_from_normal_rolls. Manual clicks still emit signals, which
+## this mod intercepts for paid rerolls.
 func _disable_die_locking() -> void:
 	if not _attached_die:
 		return
-		
-	# Force unlock if currently locked
-	_attached_die.is_locked = false
+	
+	# Suppress the built-in lock/unlock toggle and exclude from normal rolls
+	_attached_die.locking_disabled = true
+	_attached_die.excluded_from_normal_rolls = true
+	
+	# If currently locked, move back to ROLLED so the die stays scoreable
+	if _attached_die.current_state == Dice.DiceState.LOCKED:
+		_attached_die.set_state(Dice.DiceState.ROLLED)
+	
 	_attached_die.update_visual()
 	
-	print("[HighRollerMod] Locking disabled for die: %s" % _attached_die.name)
+	print("[HighRollerMod] Locking and normal rolls disabled for die: %s" % _attached_die.name)
 
 ## _restore_die_locking()
 ##
@@ -102,22 +117,21 @@ func _disable_die_locking() -> void:
 func _restore_die_locking() -> void:
 	if not _attached_die:
 		return
-		
+	
+	_attached_die.locking_disabled = false
+	_attached_die.excluded_from_normal_rolls = false
+	
 	print("[HighRollerMod] Locking functionality restored for die: %s" % _attached_die.name)
 
 ## _on_die_selected(dice: Dice)
 ##
-## Intercepts the die selection to prevent normal lock/unlock behavior and handle rerolling.
-## This is connected with CONNECT_DEFERRED so it runs after the original dice handler.
+## Handles die clicks as paid manual rerolls. Connected with CONNECT_DEFERRED so
+## it runs after the dice's built-in click handler (which is a no-op for this die
+## because locking_disabled is set).
 func _on_die_selected(dice: Dice) -> void:
-	print("[HighRollerMod] Die selected for manual reroll")
-	
-	# First, immediately force unlock since this die cannot be locked
-	if dice.is_locked:
-		dice.is_locked = false
-		dice.update_visual()
-	
-	# Now handle the reroll with cost
+	if dice != _attached_die:
+		return
+	print("[HighRollerMod] Die clicked for manual reroll")
 	_handle_manual_reroll()
 
 ## _on_die_clicked()
@@ -150,7 +164,9 @@ func _handle_manual_reroll() -> void:
 	else:
 		print("[HighRollerMod] Free reroll (cost: $0)")
 	
-	# Perform the reroll
+	# Perform the reroll. Dice.roll() only works from the ROLLABLE state, so
+	# force the state first (the die is usually ROLLED after the initial roll).
+	_attached_die.make_rollable()
 	_attached_die.roll()
 	
 	# Increment cost for next reroll
@@ -158,7 +174,8 @@ func _handle_manual_reroll() -> void:
 
 ## _on_die_rolled(value: int)
 ##
-## Called whenever the die rolls (either manually or from normal game rolls).
+## Called whenever the die rolls (the free initial roll or a paid manual
+## reroll — the die is excluded from normal ROLL-button rolls).
 ## We use this to track the die's behavior but don't charge money here.
 func _on_die_rolled(value: int) -> void:
 	print("[HighRollerMod] Die rolled value: %d" % value)

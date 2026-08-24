@@ -118,4 +118,6 @@ script = ExtResource("1_node")
 id = "checkin_warning"
 mom_text = "[color=orange]I saw what you've been buying at that shop.[/color] You know you're not old enough for some of that."
 expression = "neutral"
+speaker_name = "Mom"
+speaker_tint = Color(1, 1, 1, 1)
 responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

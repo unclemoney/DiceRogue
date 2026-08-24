@@ -50,3 +50,22 @@ class_name BotConfig
 ## If true, mute the Master audio bus while the bot is running.
 ## Set to false to hear SFX and music during visual bot runs.
 @export var mute_audio: bool = true
+
+## If true (default, legacy behavior), unlock all ProgressManager items at the
+## start of every run so the shop is fully stocked ("ceiling" measurement).
+## If false, items are earned through natural progression. Combine with
+## reset_between_runs=false for a realistic climb (unlocks carry forward),
+## or reset_between_runs=true for a "floor" run (everything re-locked).
+@export var unlock_all_items: bool = true
+
+## If true, a lost channel does NOT end the attempt: the bot advances to the
+## next channel anyway (loss recorded honestly) so baseline measurement can
+## sample scoring capability on all 20 channels in one climb. The realistic
+## difficulty read (win rate per channel) stays intact via per-run outcomes.
+@export var advance_on_loss: bool = false
+
+## Chance (0-1) per turn, after the challenge is completed, to leave the
+## round early for the shop. Legacy default 0.5. Set to 0.0 for balance
+## measurement so the bot always plays all 13 turns — the per-round score
+## then reflects achievable capability, not an early exit.
+@export_range(0.0, 1.0) var early_shop_chance: float = 0.5

@@ -463,6 +463,9 @@ func roll_all() -> void:
 	# Phase 1: Anticipation tremble on all rollable dice simultaneously
 	var rollable_dice: Array[Dice] = []
 	for die in dice_list:
+		if die.excluded_from_normal_rolls:
+			print("[DiceHand] Die", die.name, "excluded from normal rolls (mod)")
+			continue
 		if die.can_roll():
 			rollable_dice.append(die)
 			die.animate_anticipation()
@@ -479,6 +482,9 @@ func roll_all() -> void:
 		if i >= dice_list.size():
 			break
 		var die = dice_list[i]
+		if die.excluded_from_normal_rolls:
+			print("[DiceHand] Die", i + 1, "skipped (excluded from normal rolls)")
+			continue
 		if die.can_roll():
 			# Play per-die roll sound via AudioManager
 			var audio_mgr = get_node_or_null("/root/AudioManager")
@@ -680,12 +686,17 @@ func disable_all_dice() -> void:
 ## set_all_dice_rollable()
 ##
 ## Sets all dice to ROLLABLE state for the start of a new turn.
+## Dice excluded from normal rolls (e.g. HighRollerMod) keep a held ROLLED
+## value; they are only recovered to ROLLABLE from other states.
 func set_all_dice_rollable() -> void:
 	print("[DiceHand] Setting all dice to ROLLABLE state")
 	for die in dice_list:
 		if not is_instance_valid(die):
 			continue
 		if die is Dice:
+			if die.excluded_from_normal_rolls and die.current_state == Dice.DiceState.ROLLED:
+				print("[DiceHand] Preserving excluded die's held value (state: ROLLED)")
+				continue
 			die.make_rollable()
 
 
@@ -720,6 +731,9 @@ func prepare_dice_for_roll() -> void:
 		if not is_instance_valid(die):
 			continue
 		if die is Dice:
+			if die.excluded_from_normal_rolls:
+				print("[DiceHand] Preserving die excluded from normal rolls (state:", die.get_state_name(), ")")
+				continue
 			if die.current_state == Dice.DiceState.ROLLED:
 				die.make_rollable()
 				print("[DiceHand] Set die to rollable (was ROLLED)")

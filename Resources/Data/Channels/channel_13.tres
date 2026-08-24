@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://cl60320g43ey2"]
+[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3]
 
-[ext_resource type="Script" uid="uid://cseqx1haydrh1" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
-[ext_resource type="Script" uid="uid://yuj6od6ypw1a" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
-[ext_resource type="Shader" uid="uid://byvg6lrasr1i0" path="res://Scripts/Shaders/jazz_cup.gdshader" id="3_shader_bg"]
+[ext_resource type="Script" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
+[ext_resource type="Script" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
+[ext_resource type="Shader" path="res://Scripts/Shaders/jazz_cup.gdshader" id="3_shader_bg"]
 
 [sub_resource type="Resource" id="round_1"]
 script = ExtResource("2_round")
@@ -11,7 +11,7 @@ challenge_difficulty_range = Vector2i(3, 3)
 max_debuffs = 2
 debuff_difficulty_cap = 2
 goof_off_threshold_override = -1
-target_score_override = 5000
+target_score_override = 266
 reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.4,
@@ -26,7 +26,7 @@ challenge_difficulty_range = Vector2i(3, 4)
 max_debuffs = 2
 debuff_difficulty_cap = 3
 goof_off_threshold_override = -1
-target_score_override = 5500
+target_score_override = 22243
 reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.4,
@@ -41,7 +41,7 @@ challenge_difficulty_range = Vector2i(4, 4)
 max_debuffs = 2
 debuff_difficulty_cap = 3
 goof_off_threshold_override = -1
-target_score_override = 6000
+target_score_override = 31890
 reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.5,
@@ -56,7 +56,7 @@ challenge_difficulty_range = Vector2i(4, 5)
 max_debuffs = 3
 debuff_difficulty_cap = 4
 goof_off_threshold_override = -1
-target_score_override = 6500
+target_score_override = 37301
 reward_money_override = 0
 bonus_multipliers = {
 "chore_completion": 1.6,
@@ -71,7 +71,7 @@ challenge_difficulty_range = Vector2i(4, 5)
 max_debuffs = 3
 debuff_difficulty_cap = 4
 goof_off_threshold_override = -1
-target_score_override = 7000
+target_score_override = 32442
 reward_money_override = 400
 bonus_multipliers = {
 "chore_completion": 1.6,
@@ -86,7 +86,7 @@ challenge_difficulty_range = Vector2i(5, 5)
 max_debuffs = 3
 debuff_difficulty_cap = 4
 goof_off_threshold_override = -1
-target_score_override = 7500
+target_score_override = 31889
 reward_money_override = 400
 bonus_multipliers = {
 "chore_completion": 1.7,

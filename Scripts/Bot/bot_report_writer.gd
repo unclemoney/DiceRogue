@@ -20,7 +20,8 @@ func write_report(statistics: BotStatistics, config: BotConfig) -> String:
 	DirAccess.make_dir_recursive_absolute(REPORT_DIR)
 
 	var timestamp = Time.get_datetime_string_from_system().replace(":", "-")
-	var path = REPORT_DIR + "bot_report_" + timestamp + ".json"
+	# Arm tag keeps parallel baseline runs from colliding on filename
+	var path = REPORT_DIR + "bot_report_%s_%s.json" % [config.mom_policy, timestamp]
 
 	var report := {
 		"generated_at": Time.get_datetime_string_from_system(),
@@ -51,5 +52,8 @@ func _serialize_config(config: BotConfig) -> Dictionary:
 		"reset_between_runs": config.reset_between_runs,
 		"turn_delay": config.turn_delay,
 		"strategy_preset": config.strategy_preset,
-		"mom_policy": config.mom_policy
+		"mom_policy": config.mom_policy,
+		"unlock_all_items": config.unlock_all_items,
+		"advance_on_loss": config.advance_on_loss,
+		"early_shop_chance": config.early_shop_chance
 	}

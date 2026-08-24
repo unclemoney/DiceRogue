@@ -9,6 +9,10 @@ class_name BotProfile
 const PROFILE_DIR := "user://bot_profiles/"
 const PROFILE_PATH := "user://bot_profiles/bot_profile.json"
 
+## Active profile file path. Defaults to PROFILE_PATH; BotController
+## overrides it per arm (mom_policy) so parallel runs don't share a file.
+var profile_path: String = PROFILE_PATH
+
 var data: Dictionary = {}
 
 
@@ -24,7 +28,7 @@ func reset() -> void:
 ## Writes the current profile data to disk as JSON.
 func save_profile() -> void:
 	DirAccess.make_dir_recursive_absolute(PROFILE_DIR)
-	var file = FileAccess.open(PROFILE_PATH, FileAccess.WRITE)
+	var file = FileAccess.open(profile_path, FileAccess.WRITE)
 	if file:
 		file.store_string(JSON.stringify(data, "\t"))
 		file.close()
@@ -35,10 +39,10 @@ func save_profile() -> void:
 ## Loads profile from disk. Returns true if loaded successfully, false if
 ## no profile existed (a fresh default is created in that case).
 func load_profile() -> bool:
-	if not FileAccess.file_exists(PROFILE_PATH):
+	if not FileAccess.file_exists(profile_path):
 		reset()
 		return false
-	var file = FileAccess.open(PROFILE_PATH, FileAccess.READ)
+	var file = FileAccess.open(profile_path, FileAccess.READ)
 	if not file:
 		reset()
 		return false
@@ -57,7 +61,7 @@ func load_profile() -> bool:
 ##
 ## Returns true if a saved profile file exists on disk.
 func exists() -> bool:
-	return FileAccess.file_exists(PROFILE_PATH)
+	return FileAccess.file_exists(profile_path)
 
 
 ## get_total_games() -> int

@@ -41,4 +41,6 @@ script = ExtResource("1_node")
 id = "visit_silent_treatment"
 mom_text = "..."
 expression = "upset"
+speaker_name = "Mom"
+speaker_tint = Color(1, 1, 1, 1)
 responses = Array[ExtResource("2_resp")]([SubResource("resp_silent")])

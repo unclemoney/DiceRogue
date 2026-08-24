@@ -118,4 +118,6 @@ script = ExtResource("1_node")
 id = "checkin_suspicious"
 mom_text = "[color=orange]Hmm.[/color] Why so quick to answer? What are you hiding in here?"
 expression = "neutral"
+speaker_name = "Mom"
+speaker_tint = Color(1, 1, 1, 1)
 responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

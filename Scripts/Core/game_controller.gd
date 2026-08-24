@@ -7,6 +7,10 @@ signal power_up_revoked(id: String)
 signal consumable_used(id: String, consumable: Consumable)
 signal debuff_blocked(debuff_id: String)  # Emitted when Ungrounded blocks a debuff
 signal debuff_applied(id: String, debuff: Debuff)
+## Emitted after Mom's visit consequences are applied. Summary is a plain
+## Dictionary (see _run_mom_dialog_session) so measurement tools (bot) can
+## log punishment events without touching MomLogicHandler internals.
+signal mom_consequences_applied(summary: Dictionary)
 #signal dice_rolled(dice_values: Array)
 
 # Active power-ups and consumables in the game dictionaries
@@ -5562,6 +5566,26 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 	if sass_stacks > 0:
 		_grant_rebellion_buff(sass_stacks)
 		result.rebellion_granted = true
+
+	# Notify listeners (bot harness, analytics) with a plain-data summary
+	mom_consequences_applied.emit({
+		"tier_id": result.tier_id,
+		"is_meter_visit": is_meter_visit,
+		"removed_power_ups": result.removed_power_ups.duplicate(),
+		"removed_mods": result.removed_mods.duplicate(),
+		"applied_debuffs": result.applied_debuffs.duplicate(),
+		"fine_amount": result.fine_amount,
+		"reward_money": result.reward_money,
+		"reward_consumable_id": result.reward_consumable_id,
+		"reward_powerup_id": result.reward_powerup_id,
+		"cosmetics_locked": result.cosmetics_locked,
+		"cosmetics_lock_permanent": result.cosmetics_lock_permanent,
+		"rep_delta": result.rep_delta,
+		"sass_stacks": sass_stacks,
+		"rebellion_granted": result.rebellion_granted,
+		"deferred": result.deferred,
+		"rep_tier_after": ProgressManager.get_rep_tier() if ProgressManager else 0,
+	})
 
 	# Track grounded debuffs for removal at round end
 	for debuff_id in result.applied_debuffs:

@@ -19,14 +19,21 @@ signal channel_locked(channel: int, required_completions: int)
 
 const MIN_CHANNEL: int = 1
 const MAX_CHANNEL: int = 20
+const BALANCE_TUNING_PATH := "res://Resources/Data/Balance/balance_tuning.tres"
 
 ## Preloaded channel difficulty resources
 var channel_configs: Array[ChannelDifficultyData] = []
+
+## Balance knobs (margin curve, rebel premium) from bot baseline measurement.
+## Untyped on purpose: the global class cache may not know BalanceTuning yet
+## (headless runs before an editor rescan). Loaded from BALANCE_TUNING_PATH.
+var balance_tuning = null
 
 var current_channel: int = 1
 
 
 func _ready() -> void:
+	balance_tuning = load(BALANCE_TUNING_PATH)
 	_load_channel_configs()
 	print("[ChannelManager] Initialized at Channel", current_channel, "with", channel_configs.size(), "configs loaded")
 
@@ -98,14 +105,32 @@ func get_difficulty_multiplier(channel: int = -1) -> float:
 
 ## get_scaled_target_score(base_score: int, channel: int) -> int
 ##
-## Returns the target score scaled by the channel's goal_score_multiplier.
+## Returns the target score scaled by the channel's goal_score_multiplier,
+## then adjusted by the rebel premium for the player's current Rep tier
+## (Branch 5b: rebel target curve — comply players always get premium 0).
 ## @param base_score: The original target score from ChallengeData
 ## @param channel: The channel number (defaults to current_channel if -1)
 ## @return: The scaled target score (rounded to nearest integer)
 func get_scaled_target_score(base_score: int, channel: int = -1) -> int:
 	var multiplier = get_difficulty_multiplier(channel)
 	var scaled = int(round(base_score * multiplier))
+	var premium := get_rebel_target_premium()
+	if premium > 0.0:
+		scaled = int(round(scaled * (1.0 + premium)))
 	return scaled
+
+
+## get_rebel_target_premium() -> float
+##
+## Returns the current rebel target premium (0.0 for comply players).
+## Reads the player's live Rep tier via ProgressManager.
+func get_rebel_target_premium() -> float:
+	if not balance_tuning:
+		return 0.0
+	var progress_manager = get_node_or_null("/root/ProgressManager")
+	if not progress_manager or not progress_manager.has_method("get_rep_tier"):
+		return 0.0
+	return balance_tuning.premium_for_rep_tier(progress_manager.get_rep_tier())
 
 
 ## get_shop_price_multiplier(channel: int) -> float

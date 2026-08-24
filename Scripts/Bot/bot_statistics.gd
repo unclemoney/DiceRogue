@@ -11,6 +11,10 @@ var attempts: Array[Dictionary] = []
 var _current_run: Dictionary = {}
 var _current_attempt: Dictionary = {}
 
+## Total unlockable content pool size, set by BotController at start.
+## Used to compute the unlocked-fraction drip schedule.
+var total_pool_size: int = 0
+
 
 ## start_run(run_id, channel)
 ##
@@ -57,6 +61,11 @@ func start_run(run_id: int, channel: int) -> void:
 		"end_of_round_bonuses": 0,
 		"shop_rerolls": 0,
 		"budget_estimates": [],
+		"round_contexts": [],
+		"rebellion_buff_per_round": [],
+		"mom_events": [],
+		"unlocks_fired": [],
+		"rep_tier_at_run_start": 0,
 		"start_time": Time.get_ticks_msec()
 	}
 
@@ -87,11 +96,65 @@ func end_attempt(outcome: String, final_channel: int) -> void:
 	_current_attempt = {}
 
 
-## record_round_score(round_number, score)
-func record_round_score(round_number: int, score: int) -> void:
+## record_round_score(round_number, score, target)
+##
+## Records the round's final score and the target it was measured against.
+## De-dupes by round number (keep last): both _on_round_completed and
+## _handle_post_round report the same round.
+func record_round_score(round_number: int, score: int, target: int = 0) -> void:
+	for entry in _current_run.total_score_per_round:
+		if entry.round == round_number:
+			entry.score = score
+			entry.target = target
+			return
 	_current_run.total_score_per_round.append({
 		"round": round_number,
-		"score": score
+		"score": score,
+		"target": target
+	})
+
+
+## record_round_context(round_number, rep_tier)
+##
+## Snapshots balance-relevant state at round start (Rep tier drives the
+## rebel target premium; recorded per round for premium derivation).
+func record_round_context(round_number: int, rep_tier: int) -> void:
+	_current_run.round_contexts.append({
+		"round": round_number,
+		"rep_tier": rep_tier
+	})
+
+
+## record_buff_state(round_number, stacks)
+##
+## Records Rebellion buff stacks live at round end (uptime measurement).
+func record_buff_state(round_number: int, stacks: int) -> void:
+	_current_run.rebellion_buff_per_round.append({
+		"round": round_number,
+		"stacks": stacks
+	})
+
+
+## record_mom_event(summary, channel, round_number)
+##
+## Logs a Mom visit consequence summary (from GameController's
+## mom_consequences_applied signal) with channel/round context.
+func record_mom_event(summary: Dictionary, channel: int, round_number: int) -> void:
+	var event := summary.duplicate()
+	event["channel"] = channel
+	event["round"] = round_number
+	_current_run.mom_events.append(event)
+
+
+## record_unlock(item_id, item_type, channel, run_id)
+##
+## Logs a natural ProgressManager unlock firing (drip measurement).
+func record_unlock(item_id: String, item_type: String, channel: int, run_id: int) -> void:
+	_current_run.unlocks_fired.append({
+		"item_id": item_id,
+		"item_type": item_type,
+		"channel": channel,
+		"run_id": run_id
 	})
 
 
@@ -408,7 +471,8 @@ func get_aggregate() -> Dictionary:
 		"total_shop_rerolls": total_shop_rerolls,
 		"most_common_loss_round": most_common_loss_round,
 		"loss_round_distribution": loss_round_counts,
-		"channel_results": channel_results
+		"channel_results": channel_results,
+		"balance": _build_balance_aggregates()
 	}
 
 
@@ -449,3 +513,141 @@ func _channel_reached_distribution() -> Dictionary:
 		var ch_key := str(ch)
 		dist[ch_key] = dist.get(ch_key, 0) + 1
 	return dist
+
+
+# ─── Balance measurement aggregates (Phase 0) ───
+
+## _median(values) -> float
+func _median(values: Array) -> float:
+	if values.is_empty():
+		return 0.0
+	var sorted := values.duplicate()
+	sorted.sort()
+	var n: int = sorted.size()
+	if n % 2 == 1:
+		return float(sorted[n / 2])
+	return (float(sorted[n / 2 - 1]) + float(sorted[n / 2])) / 2.0
+
+
+## _build_balance_aggregates() -> Dictionary
+##
+## Balance-harness aggregations across all runs in this report (one arm):
+## - per-channel median final score + win rate
+## - per-channel per-round median score and median target (target curve source)
+## - rep-tier → channel → final score samples (rebel premium derivation)
+## - unlock firing schedule + cumulative unlock drip by channel
+## - mom punishment event log summary
+func _build_balance_aggregates() -> Dictionary:
+	var channel_scores := {}       # ch -> [final scores]
+	var channel_wins := {}         # ch -> {wins, runs}
+	var round_scores := {}         # ch -> round -> [scores]
+	var round_targets := {}        # ch -> round -> [targets]
+	var rep_samples := {}          # tier -> ch -> [final scores]
+	var rep_tier_rounds := {}      # tier -> count of round starts
+	var unlock_schedule := {}      # item_id -> {fire_channels, first_channel}
+	var unlocked_by_channel := {}  # ch -> cumulative distinct item count
+	var mom_event_count := 0
+	var mom_tier_counts := {}
+	var buff_stack_samples: Array = []
+
+	for run in runs:
+		var ch: int = run.get("channel", 0)
+		var ch_key := str(ch)
+		if not channel_scores.has(ch_key):
+			channel_scores[ch_key] = []
+			channel_wins[ch_key] = {"wins": 0, "runs": 0}
+		channel_scores[ch_key].append(run.get("final_score", 0))
+		channel_wins[ch_key].runs += 1
+		if run.get("outcome") == "win":
+			channel_wins[ch_key].wins += 1
+
+		for entry in run.get("total_score_per_round", []):
+			var r_key := str(entry.get("round", 0))
+			if not round_scores.has(ch_key):
+				round_scores[ch_key] = {}
+				round_targets[ch_key] = {}
+			if not round_scores[ch_key].has(r_key):
+				round_scores[ch_key][r_key] = []
+				round_targets[ch_key][r_key] = []
+			round_scores[ch_key][r_key].append(entry.get("score", 0))
+			if entry.get("target", 0) > 0:
+				round_targets[ch_key][r_key].append(entry.target)
+
+		for ctx in run.get("round_contexts", []):
+			var tier_key := str(ctx.get("rep_tier", 0))
+			rep_tier_rounds[tier_key] = rep_tier_rounds.get(tier_key, 0) + 1
+			if not rep_samples.has(tier_key):
+				rep_samples[tier_key] = {}
+			if not rep_samples[tier_key].has(ch_key):
+				rep_samples[tier_key][ch_key] = []
+			# Attribute the run's final score to the tier seen at its rounds
+			if ctx.get("round", 0) == 6:
+				rep_samples[tier_key][ch_key].append(run.get("final_score", 0))
+
+		for buff in run.get("rebellion_buff_per_round", []):
+			buff_stack_samples.append(buff.get("stacks", 0))
+
+		for unlock in run.get("unlocks_fired", []):
+			var item_id: String = unlock.get("item_id", "")
+			if item_id == "":
+				continue
+			if not unlock_schedule.has(item_id):
+				unlock_schedule[item_id] = {"fire_channels": [], "first_channel": 99}
+			var u_ch: int = unlock.get("channel", 0)
+			unlock_schedule[item_id].fire_channels.append(u_ch)
+			if u_ch < unlock_schedule[item_id].first_channel:
+				unlock_schedule[item_id].first_channel = u_ch
+
+		mom_event_count += run.get("mom_events", []).size()
+		for event in run.get("mom_events", []):
+			var t_key := str(event.get("tier_id", -1))
+			mom_tier_counts[t_key] = mom_tier_counts.get(t_key, 0) + 1
+
+	# Drip: cumulative distinct items first-fired at or before each channel
+	var first_channels: Array = []
+	for item_id in unlock_schedule:
+		first_channels.append(unlock_schedule[item_id].first_channel)
+	for c in range(1, 21):
+		var count := 0
+		for fc in first_channels:
+			if fc <= c:
+				count += 1
+		unlocked_by_channel[str(c)] = {
+			"items": count,
+			"fraction": float(count) / total_pool_size if total_pool_size > 0 else 0.0
+		}
+
+	# Per-channel summary
+	var per_channel := {}
+	for ch_key in channel_scores:
+		var wins: int = channel_wins[ch_key].wins
+		var run_count: int = channel_wins[ch_key].runs
+		var per_round := {}
+		if round_scores.has(ch_key):
+			for r_key in round_scores[ch_key]:
+				per_round[r_key] = {
+					"median_score": _median(round_scores[ch_key][r_key]),
+					"median_target": _median(round_targets[ch_key].get(r_key, [])),
+					"samples": round_scores[ch_key][r_key].size()
+				}
+		per_channel[ch_key] = {
+			"runs": run_count,
+			"win_rate": float(wins) / run_count if run_count > 0 else 0.0,
+			"median_final_score": _median(channel_scores[ch_key]),
+			"per_round": per_round
+		}
+
+	return {
+		"per_channel": per_channel,
+		"rep_tier_score_samples": rep_samples,
+		"rep_tier_round_counts": rep_tier_rounds,
+		"unlock_schedule": unlock_schedule,
+		"unlocked_by_channel": unlocked_by_channel,
+		"total_pool_size": total_pool_size,
+		"mom_event_count": mom_event_count,
+		"mom_tier_counts": mom_tier_counts,
+		"rebellion_buff": {
+			"rounds_measured": buff_stack_samples.size(),
+			"median_stacks": _median(buff_stack_samples)
+		}
+	}

@@ -15,4 +15,5 @@ log_verbose = true
 open_report_on_finish = true
 max_rerolls_per_shop = 5
 strategy_preset = "default"
+mom_policy = "tone_weighted"
 mute_audio = true

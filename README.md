@@ -1996,6 +1996,7 @@ For rapid testing and verification of new features, DiceRogue includes a compreh
 
 ### Available Debug Commands
 - **Items**: Grant random PowerUps/Consumables/Mods, show all active items, clear all
+- **Mods**: Apply/remove any mod on a specific die (mod list + die selector), clear all mods, show active mods, inspect High Roller cost state
 - **Economy**: Add money ($100/$1000), reset to default  
 - **Dice Control**: Force specific values (all 6s, 1s, Yahtzee)
 - **Game Flow**: Add extra rolls, force end turn, skip to shop
@@ -2047,6 +2048,8 @@ For isolated testing:
 4. Use debug panel for setup
 
 Example: `Tests/InteractiveGameTitleTest.tscn` hosts the bounded `InteractiveGameTitle` panel, an intensity slider, direct event-family preview buttons, and a burst stress test for overlap/cooldown validation.
+
+Example: `Tests/HighRollerModTest.tscn` verifies the HighRollerMod contract against the dice state machine — exclusion from normal ROLL-button rolls, paid click-to-reroll with Fibonacci costs, and lock-toggle restoration on removal. Keys 1-5 drive manual scenarios; key 5 runs an automated PASS/FAIL suite (22 checks). CLI: `godot --path . Tests/HighRollerModTest.tscn -- --auto-test`.
 
 Example test structure:
 ```gdscript

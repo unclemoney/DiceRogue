@@ -57,6 +57,14 @@ Edit `default_bot_config.tres` in the Inspector or create a new `BotConfig` reso
 | `max_rerolls_per_shop` | 5 | Max shop rerolls per visit (0 = no rerolling) |
 | `mom_policy` | "tone_weighted" | How the bot answers Mom dialogs: `tone_weighted`, `always_comply`, `always_sass`, `tactical` |
 | `mute_audio` | true | Mute game audio during bot runs |
+| `unlock_all_items` | true | Unlock all ProgressManager items each run ("ceiling" measurement). Set false for natural progression: combine with `reset_between_runs=false` for a realistic climb (unlocks carry forward), or `reset_between_runs=true` for a "floor" run. **Note:** natural-progression modes deliberately mutate the real profile saves; the bot backs them up at start and restores them at finalize. |
+| `advance_on_loss` | false | If true, a lost channel does not end the attempt — the bot advances anyway (loss recorded) so baseline climbs sample all 20 channels |
+
+Ready-made balance configs live in `Resources/Data/BotConfigs/`: `climb_tone_weighted.tres`, `climb_comply.tres`, `climb_sass.tres` (30-climb realistic arms), `floor_fresh.tres`, `ceiling_unlocked.tres` (sanity bounds), `smoke_test.tres` (quick 1-attempt check).
+
+Runtime notes:
+- `speed_multiplier` is applied to `Engine.time_scale` when `visual_mode` is false.
+- When running `--headless`, the bot writes its report and then quits automatically.
 
 ## Bot Strategy
 
@@ -123,6 +131,26 @@ All output goes to `user://bot_reports/`:
   "config": {...}
 }
 ```
+
+### Balance Block (Phase 0 baseline harness)
+
+`aggregate.balance` is written for every report and feeds the balance plan
+(`PLAN_BALANCE.md`). Per run, the report also records
+`total_score_per_round` (with `target`), `round_contexts` (Rep tier at each
+round start), `rebellion_buff_per_round`, `mom_events` (tier, removals,
+debuffs, fines, Rep delta), and `unlocks_fired` (item, channel, run).
+
+The balance block aggregates:
+
+| Field | Contents |
+|-------|----------|
+| `per_channel` | runs, win rate, median final score, and per-round median score/target/sample count per channel |
+| `rep_tier_score_samples` | final scores grouped by Rep tier → channel (rebel premium derivation) |
+| `rep_tier_round_counts` | round starts observed per Rep tier |
+| `unlock_schedule` | per item: channels where its unlock fired + first firing channel |
+| `unlocked_by_channel` | cumulative distinct unlocks (count + pool fraction) at each channel — the 80%-by-15 drip check |
+| `mom_event_count` / `mom_tier_counts` | Mom visit count and punishment tier distribution |
+| `rebellion_buff` | rounds measured and median buff stacks |
 
 ## Architecture
 
