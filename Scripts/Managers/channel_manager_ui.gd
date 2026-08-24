@@ -33,6 +33,15 @@ const SECTION_LABELS := {
 	"major_stores": "DEPARTMENT STORES",
 }
 
+## Selectable dice sets, in carousel order. d6 is the default and has no unlock.
+const DICE_SETS: Array = [
+	preload("res://Scripts/Dice/d4_dice.tres"),
+	preload("res://Scripts/Dice/d6_dice.tres"),
+	preload("res://Scripts/Dice/d8_dice.tres"),
+	preload("res://Scripts/Dice/d12_dice.tres"),
+	preload("res://Scripts/Dice/d20_dice.tres"),
+]
+
 # References
 var channel_manager = null
 
@@ -69,6 +78,15 @@ var section_chip: Label
 var up_button: Button
 var down_button: Button
 var start_button: Button
+
+# Dice set selector
+var _dice_prev_button: Button
+var _dice_next_button: Button
+var _dice_display: PanelContainer
+var _dice_icon: TextureRect
+var _dice_name_label: Label
+var _dice_lock_label: Label
+var _dice_set_index: int = 1  # d6 default
 
 # Tooltip
 var _tooltip_panel: PanelContainer
@@ -119,6 +137,7 @@ func show_channel_selector() -> void:
 		_hovered_channel = -1
 		_sync_selection_from_manager(false)
 		_update_display()
+	_sync_dice_set_from_manager()
 	_animate_entrance()
 
 
@@ -422,6 +441,68 @@ func _build_ui() -> void:
 	bonus_label.add_theme_color_override("font_color", Color(1.0, 0.84, 0.36))
 	side_vbox.add_child(bonus_label)
 
+	var dice_title := Label.new()
+	dice_title.text = "DICE SET"
+	dice_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	dice_title.add_theme_font_override("font", VCR_FONT)
+	dice_title.add_theme_font_size_override("font_size", 13)
+	dice_title.add_theme_color_override("font_color", Color(0.95, 0.90, 0.74))
+	side_vbox.add_child(dice_title)
+
+	var dice_hbox := HBoxContainer.new()
+	dice_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	dice_hbox.add_theme_constant_override("separation", 8)
+	side_vbox.add_child(dice_hbox)
+
+	_dice_prev_button = _create_dice_arrow_button("<")
+	_dice_prev_button.pressed.connect(_cycle_dice_set.bind(-1))
+	dice_hbox.add_child(_dice_prev_button)
+
+	_dice_display = PanelContainer.new()
+	_dice_display.name = "DiceSetDisplay"
+	# Wide enough for the longest label ("D20  •  20 SIDES") plus the LOCK tag,
+	# so the panel never shifts size while cycling sets.
+	_dice_display.custom_minimum_size = Vector2(220, 44)
+	var dice_display_style := StyleBoxFlat.new()
+	dice_display_style.bg_color = Color(0.10, 0.08, 0.13, 0.98)
+	dice_display_style.border_color = Color(0.55, 0.48, 0.62, 1.0)
+	dice_display_style.set_border_width_all(2)
+	dice_display_style.set_corner_radius_all(8)
+	_dice_display.add_theme_stylebox_override("panel", dice_display_style)
+	_dice_display.mouse_entered.connect(_on_dice_display_hover)
+	_dice_display.mouse_exited.connect(_on_dice_display_unhover)
+	dice_hbox.add_child(_dice_display)
+
+	var dice_display_hbox := HBoxContainer.new()
+	dice_display_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	dice_display_hbox.add_theme_constant_override("separation", 8)
+	_dice_display.add_child(dice_display_hbox)
+
+	_dice_icon = TextureRect.new()
+	_dice_icon.custom_minimum_size = Vector2(30, 30)
+	_dice_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_dice_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	dice_display_hbox.add_child(_dice_icon)
+
+	_dice_name_label = Label.new()
+	_dice_name_label.add_theme_font_override("font", VCR_FONT)
+	_dice_name_label.add_theme_font_size_override("font_size", 14)
+	dice_display_hbox.add_child(_dice_name_label)
+
+	_dice_lock_label = Label.new()
+	_dice_lock_label.text = "LOCK"
+	_dice_lock_label.visible = false
+	_dice_lock_label.add_theme_font_override("font", VCR_FONT)
+	_dice_lock_label.add_theme_font_size_override("font_size", 10)
+	_dice_lock_label.add_theme_color_override("font_color", Color(1.0, 0.45, 0.40))
+	dice_display_hbox.add_child(_dice_lock_label)
+
+	_dice_next_button = _create_dice_arrow_button(">")
+	_dice_next_button.pressed.connect(_cycle_dice_set.bind(1))
+	dice_hbox.add_child(_dice_next_button)
+
+	_update_dice_set_display()
+
 	_keyboard_hint_label = Label.new()
 	_keyboard_hint_label.text = "ARROWS MOVE  •  ENTER START"
 	_keyboard_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -699,6 +780,113 @@ func _connect_button_fx(button: BaseButton) -> void:
 	button.pressed.connect(_tfx.button_press.bind(button))
 
 
+func _create_dice_arrow_button(text: String) -> Button:
+	var button := Button.new()
+	button.theme = ACTION_THEME
+	button.text = text
+	button.custom_minimum_size = Vector2(36, 38)
+	button.focus_mode = Control.FOCUS_NONE
+	button.add_theme_font_override("font", VCR_FONT)
+	button.add_theme_font_size_override("font_size", 16)
+	_connect_button_fx(button)
+	return button
+
+
+## _cycle_dice_set(step: int) -> void
+##
+## Scrolls the dice set carousel. Locked sets stay browsable but only
+## unlocked sets commit to channel_manager.selected_dice_type.
+func _cycle_dice_set(step: int) -> void:
+	_dice_set_index = wrapi(_dice_set_index + step, 0, DICE_SETS.size())
+	_update_dice_set_display()
+	var data: DiceData = DICE_SETS[_dice_set_index]
+	if channel_manager and _is_dice_set_unlocked(data):
+		channel_manager.set_selected_dice_type(data.id)
+
+
+## _is_dice_set_unlocked(data: DiceData) -> bool
+##
+## d6 (empty unlock_item_id) is always available; other sets check ProgressManager.
+func _is_dice_set_unlocked(data: DiceData) -> bool:
+	if data.unlock_item_id.is_empty():
+		return true
+	var progress_manager = get_node_or_null("/root/ProgressManager")
+	if progress_manager == null:
+		return false
+	return progress_manager.is_item_unlocked(data.unlock_item_id)
+
+
+## _update_dice_set_display() -> void
+##
+## Refreshes the carousel display: icon, name, and locked dimming.
+func _update_dice_set_display() -> void:
+	if _dice_display == null:
+		return
+	var data: DiceData = DICE_SETS[_dice_set_index]
+	_dice_name_label.text = "%s  •  %d SIDES" % [data.display_name, data.sides]
+	if data.textures.size() > 0:
+		_dice_icon.texture = data.textures[0]
+	var unlocked := _is_dice_set_unlocked(data)
+	_dice_display.modulate = Color.WHITE if unlocked else Color(0.55, 0.55, 0.60)
+	_dice_lock_label.visible = not unlocked
+	_update_start_button_state()
+
+
+## _sync_dice_set_from_manager() -> void
+##
+## Points the carousel at the dice set currently committed on ChannelManager.
+func _sync_dice_set_from_manager() -> void:
+	var selected := "d6"
+	if channel_manager:
+		selected = channel_manager.selected_dice_type
+	for i in range(DICE_SETS.size()):
+		if DICE_SETS[i].id == selected:
+			_dice_set_index = i
+			break
+	_update_dice_set_display()
+
+
+func _on_dice_display_hover() -> void:
+	_show_dice_set_tooltip()
+
+
+func _on_dice_display_unhover() -> void:
+	_hide_tooltip(true)
+
+
+## _show_dice_set_tooltip() -> void
+##
+## Shows name, sides, scoring rules, and unlock status for the browsed set.
+func _show_dice_set_tooltip() -> void:
+	if _tooltip_panel == null or _dice_display == null:
+		return
+	var data: DiceData = DICE_SETS[_dice_set_index]
+	var text_lines: Array[String] = []
+	text_lines.append("%s Dice Set  •  %d sides" % [data.display_name, data.sides])
+	if not data.description.is_empty():
+		text_lines.append("")
+		text_lines.append(data.description)
+	if _is_dice_set_unlocked(data):
+		if channel_manager and channel_manager.selected_dice_type == data.id:
+			text_lines.append("")
+			text_lines.append("SELECTED")
+	else:
+		text_lines.append("")
+		text_lines.append("LOCKED")
+		var progress_manager = get_node_or_null("/root/ProgressManager")
+		if progress_manager:
+			var item = progress_manager.get_unlockable_item(data.unlock_item_id)
+			if item:
+				text_lines.append("Unlock: %s" % item.get_unlock_description())
+	_tooltip_label.text = "\n".join(text_lines)
+	_tooltip_panel.visible = true
+	_tooltip_panel.reset_size()
+	if _tfx:
+		_tfx.place_tooltip(_tooltip_panel, _dice_display.get_global_rect(), SIDE_LEFT, true)
+	else:
+		_tooltip_panel.global_position = _dice_display.get_global_rect().position - Vector2(_tooltip_panel.size.x + 12, 0)
+
+
 ## _update_display() -> void
 ##
 ## Updates labels, button state, and selector visuals for the active channel.
@@ -729,8 +917,9 @@ func _update_display() -> void:
 
 	_update_completion_status()
 	_update_bonus_preview()
-	_update_start_button_state(is_locked)
+	_update_start_button_state()
 	_update_difficulty_color(mult, is_locked)
+	_update_dice_set_display()
 	_sync_selection_from_manager(true)
 
 
@@ -817,12 +1006,20 @@ func _update_bonus_preview() -> void:
 		bonus_label.text = "BONUS: " + ", ".join(parts)
 
 
-## _update_start_button_state(is_locked) -> void
+## _update_start_button_state() -> void
 ##
-## Updates the start button appearance based on lock status.
-func _update_start_button_state(is_locked: bool) -> void:
+## Enables/disables START. Disabled when the current channel is locked or
+## when the currently browsed dice set is locked.
+func _update_start_button_state() -> void:
 	if not start_button:
 		return
+	var channel_locked := false
+	if channel_manager and channel_manager.has_method("is_channel_unlocked"):
+		channel_locked = not channel_manager.is_channel_unlocked(channel_manager.current_channel)
+	var dice_set_locked := false
+	if _dice_display != null and _dice_set_index >= 0 and _dice_set_index < DICE_SETS.size():
+		dice_set_locked = not _is_dice_set_unlocked(DICE_SETS[_dice_set_index])
+	var is_locked: bool = channel_locked or dice_set_locked
 	if is_locked:
 		start_button.text = "LOCKED"
 		start_button.disabled = true
@@ -873,6 +1070,9 @@ func _on_start_pressed() -> void:
 			if not channel_manager.is_channel_unlocked(channel_manager.current_channel):
 				_show_locked_feedback()
 				return
+		if _dice_display != null and not _is_dice_set_unlocked(DICE_SETS[_dice_set_index]):
+			_show_locked_feedback()
+			return
 		channel_manager.select_channel()
 		emit_signal("start_pressed", channel_manager.current_channel)
 	hide_channel_selector()

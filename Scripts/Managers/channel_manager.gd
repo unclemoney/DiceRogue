@@ -31,6 +31,24 @@ var balance_tuning = null
 
 var current_channel: int = 1
 
+## Dice set chosen in the Mall Zone Selection for the current run.
+## Applies to every round; reset to "d6" on new game.
+var selected_dice_type: String = "d6"
+
+
+## set_selected_dice_type(type: String) -> void
+##
+## Commits the run's dice set. Ignores sets whose unlock item is still locked
+## (d6 has no unlock item and is always allowed).
+func set_selected_dice_type(type: String) -> void:
+	if type != "d6":
+		var progress_manager = get_node_or_null("/root/ProgressManager")
+		if progress_manager and not progress_manager.is_item_unlocked("dice_set_" + type):
+			print("[ChannelManager] Dice set %s is locked; keeping %s" % [type, selected_dice_type])
+			return
+	selected_dice_type = type
+	print("[ChannelManager] Selected dice set: %s" % selected_dice_type)
+
 
 func _ready() -> void:
 	balance_tuning = load(BALANCE_TUNING_PATH)
@@ -390,6 +408,7 @@ func select_channel() -> void:
 ## Resets channel to 1. Called on new game.
 func reset() -> void:
 	current_channel = 1
+	selected_dice_type = "d6"
 	print("[ChannelManager] Reset to Channel 1")
 	emit_signal("channel_changed", current_channel)
 	emit_signal("difficulty_multiplier_changed", get_difficulty_multiplier())

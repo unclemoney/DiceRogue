@@ -474,6 +474,8 @@ func _on_game_start() -> void:
 	var tutorial_manager = get_node_or_null("/root/TutorialManager")
 	if tutorial_manager and tutorial_manager.should_auto_start():
 		print("[GameController] First-time player detected - starting tutorial")
+		if round_manager:
+			round_manager.run_dice_type = "d6"  # Tutorial always uses the default set
 		# Delay tutorial start slightly to let UI settle
 		await get_tree().create_timer(0.5).timeout
 		tutorial_manager.start_tutorial()
@@ -519,6 +521,8 @@ func _on_channel_selected(channel: int) -> void:
 		_defer_chore_selection_until_round_start = true
 		chores_manager.reset_for_new_game()
 	if round_manager:
+		if channel_manager:
+			round_manager.set_run_dice_type(channel_manager.selected_dice_type)
 		round_manager.start_game()
 	if crt_manager:
 		crt_manager.snap_tv_off()

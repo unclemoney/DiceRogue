@@ -2237,6 +2237,7 @@ func populate_unlocked_items() -> void:
 		UnlockableItemClass.ItemType.MOD,
 		UnlockableItemClass.ItemType.COLORED_DICE_FEATURE,
 		UnlockableItemClass.ItemType.GAMING_CONSOLE,
+		UnlockableItemClass.ItemType.DICE_SET,
 	]
 	for item_type in item_types:
 		var unlocked_ids = progress_manager.get_unlocked_items(item_type)

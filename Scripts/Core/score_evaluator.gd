@@ -156,9 +156,14 @@ func evaluate_normal(values: Array[int]) -> Dictionary:
 	
 	# Determine what value the 6th upper slot targets
 	# For d6: targets 6 (standard). For d8+: targets dice_sides (e.g., 8, 10, 12, 20)
+	# For d4: "Fours+" — targets 4 and scores double
 	var sixth_target = 6
+	var sixth_multiplier = 1
 	if current_dice_sides > 6:
 		sixth_target = current_dice_sides
+	elif current_dice_sides == 4:
+		sixth_target = 4
+		sixth_multiplier = 2
 	
 	return {
 		"ones": calculate_number_score(filtered_values, 1),
@@ -166,7 +171,7 @@ func evaluate_normal(values: Array[int]) -> Dictionary:
 		"threes": calculate_number_score(filtered_values, 3),
 		"fours": calculate_number_score(filtered_values, 4),
 		"fives": calculate_number_score(filtered_values, 5),
-		"sixes": calculate_number_score(filtered_values, sixth_target),
+		"sixes": calculate_number_score(filtered_values, sixth_target) * sixth_multiplier,
 		"three_of_a_kind": calculate_of_a_kind_score(filtered_values, 3),
 		"four_of_a_kind": calculate_of_a_kind_score(filtered_values, 4),
 		"full_house": calculate_full_house_score(filtered_values),

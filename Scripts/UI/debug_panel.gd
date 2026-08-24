@@ -236,6 +236,9 @@ func _create_debug_tabs() -> void:
 			{"text": "Roll Yahtzee", "method": "_debug_force_yahtzee"},
 			{"text": "Roll Large Straight", "method": "_debug_force_large_straight"},
 			{"text": "Activate Perfect Strangers", "method": "_debug_activate_perfect_strangers"},
+			{"text": "Cycle Dice Set", "method": "_debug_cycle_dice_set"},
+			{"text": "Unlock All Dice Sets", "method": "_debug_unlock_all_dice_sets"},
+			{"text": "Lock All Dice Sets", "method": "_debug_lock_all_dice_sets"},
 		],
 		"Dice Colors": [
 			{"text": "Toggle Dice Colors", "method": "_debug_toggle_dice_colors"},
@@ -4165,6 +4168,56 @@ func _debug_lock_all_colored_dice() -> void:
 			break
 	
 	log_debug("Locked %d colored dice features" % locked_count)
+
+## _debug_cycle_dice_set()
+##
+## Cycles the run's dice set (d4/d6/d8/d12/d20) and applies it immediately,
+## mirroring RoundManager's round-start propagation.
+func _debug_cycle_dice_set() -> void:
+	const DEBUG_DICE_SETS := ["d4", "d6", "d8", "d12", "d20"]
+	if not is_instance_valid(game_controller) or not game_controller.dice_hand:
+		log_debug("ERROR: DiceHand not available")
+		return
+	var current := "d6"
+	if game_controller.round_manager:
+		current = game_controller.round_manager.run_dice_type
+	var index := DEBUG_DICE_SETS.find(current)
+	var next_type: String = DEBUG_DICE_SETS[(index + 1) % DEBUG_DICE_SETS.size()]
+	if game_controller.round_manager:
+		game_controller.round_manager.set_run_dice_type(next_type)
+	game_controller.dice_hand.switch_dice_type(next_type)
+	var sides: int = game_controller.dice_hand.default_dice_data.sides
+	if game_controller.scorecard:
+		game_controller.scorecard.set_dice_type(sides)
+	ScoreEvaluatorSingleton.set_dice_sides(sides)
+	var score_card_ui = get_tree().get_first_node_in_group("scorecard_ui")
+	if is_instance_valid(score_card_ui) and score_card_ui.has_method("update_sixth_slot_display"):
+		score_card_ui.update_sixth_slot_display()
+	log_debug("Dice set switched to %s (%d sides)" % [next_type, sides])
+
+## _debug_unlock_all_dice_sets()
+##
+## Unlocks all selectable dice sets for testing the Mall Zone selector
+func _debug_unlock_all_dice_sets() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if not progress_manager:
+		log_debug("ProgressManager not found")
+		return
+	for item_id in ["dice_set_d4", "dice_set_d8", "dice_set_d12", "dice_set_d20"]:
+		progress_manager.debug_unlock_item(item_id)
+		log_debug("Unlocked dice set: %s" % item_id)
+
+## _debug_lock_all_dice_sets()
+##
+## Locks all selectable dice sets for testing progression
+func _debug_lock_all_dice_sets() -> void:
+	var progress_manager = get_node("/root/ProgressManager")
+	if not progress_manager:
+		log_debug("ProgressManager not found")
+		return
+	for item_id in ["dice_set_d4", "dice_set_d8", "dice_set_d12", "dice_set_d20"]:
+		progress_manager.debug_lock_item(item_id)
+		log_debug("Locked dice set: %s" % item_id)
 
 # ============================================================================
 # GameUI Debug Functions

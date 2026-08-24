@@ -1577,6 +1577,19 @@ func _create_default_unlockable_items() -> void:
 	_add_default_gaming_console("sega_saturn_console", "Sega Saturn", "Cartridge Tilt: Once per round, shift ALL unlocked dice by +1 or -1 after rolling.",
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 10, 9)
 	
+	# ==========================================================================
+	# ALL DICE SETS - Selectable at game start in the Mall Zone Selection
+	# ==========================================================================
+	
+	_add_default_dice_set("dice_set_d4", "D4 Dice Set", "Start the game with four-sided dice (Sixes becomes Fours+)",
+		UnlockConditionClass.ConditionType.COMPLETE_GAME, 1, 2)
+	_add_default_dice_set("dice_set_d8", "D8 Dice Set", "Start the game with eight-sided dice (Sixes becomes Eights)",
+		UnlockConditionClass.ConditionType.SCORE_UPPER_BONUS, 1, 3)
+	_add_default_dice_set("dice_set_d12", "D12 Dice Set", "Start the game with twelve-sided dice (Sixes becomes Twelves)",
+		UnlockConditionClass.ConditionType.ROLL_YAHTZEE, 1, 5)
+	_add_default_dice_set("dice_set_d20", "D20 Dice Set", "Start the game with twenty-sided dice (Sixes becomes Twenties)",
+		UnlockConditionClass.ConditionType.WIN_GAMES, 1, 6)
+	
 	print("[ProgressManager] Created %d total unlockable items across all categories" % unlockable_items.size())
 
 ## Helper function to create unlockable items with consistent structure
@@ -1666,6 +1679,23 @@ func _add_default_gaming_console(id: String, item_name: String, desc: String, co
 	var item = UnlockableItemClass.new()
 	item.id = id
 	item.item_type = UnlockableItemClass.ItemType.GAMING_CONSOLE
+	item.display_name = item_name
+	item.description = desc
+	item.unlock_condition = condition
+	item.difficulty_rating = difficulty
+	
+	unlockable_items[id] = item
+
+func _add_default_dice_set(id: String, item_name: String, desc: String, condition_type: int, target: int, difficulty: int = 1, extra_params: Dictionary = {}) -> void:
+	var condition = UnlockConditionClass.new()
+	condition.id = id + "_condition"
+	condition.condition_type = condition_type
+	condition.target_value = target
+	condition.additional_params = extra_params
+	
+	var item = UnlockableItemClass.new()
+	item.id = id
+	item.item_type = UnlockableItemClass.ItemType.DICE_SET
 	item.display_name = item_name
 	item.description = desc
 	item.unlock_condition = condition

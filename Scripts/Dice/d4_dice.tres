@@ -12,4 +12,6 @@ id = "d4"
 display_name = "D4"
 sides = 4
 textures = Array[Texture2D]([ExtResource("2_q8d1g"), ExtResource("3_kmlsq"), ExtResource("4_35jsc"), ExtResource("5_7fhj7")])
+description = "Four-sided chaos. Sixes becomes Fours+ (4s score double). Upper bonus at 30."
+unlock_item_id = "dice_set_d4"
 metadata/_custom_type_script = "uid://cfvqx1x72koke"

@@ -28,8 +28,10 @@ var current_round_number: int = 1
 
 # Dice type tracking for dynamic 6th upper section slot
 # When dice_sides > 6, the 6th upper row scores for that value instead of 6
+# For d4, the 6th slot becomes "Fours+" (targets 4 with a score multiplier)
 var current_dice_sides: int = 6
 var sixth_slot_target: int = 6
+var sixth_slot_multiplier: int = 1
 
 # Debug counter for calculate_score calls
 var calculate_score_call_count := 0
@@ -94,14 +96,19 @@ func _ready() -> void:
 ##
 ## Updates the scorecard to reflect the active dice type.
 ## For d8+, the 6th upper section slot targets the max face value.
-## For d4/d6, the 6th slot remains standard Sixes.
+## For d4, the 6th slot becomes "Fours+" (targets 4, scores double).
+## For d6, the 6th slot remains standard Sixes.
 ##
 ## Parameters:
 ##   sides: int - number of faces on the active dice (4, 6, 8, 10, 12, 20)
 func set_dice_type(sides: int) -> void:
 	current_dice_sides = sides
+	sixth_slot_multiplier = 1
 	if sides > 6:
 		sixth_slot_target = sides
+	elif sides == 4:
+		sixth_slot_target = 4
+		sixth_slot_multiplier = 2
 	else:
 		sixth_slot_target = 6
 	print("[Scorecard] Dice type set to d%d - 6th slot targets: %d (%s)" % [sides, sixth_slot_target, get_sixth_slot_display_name()])
@@ -110,10 +117,10 @@ func set_dice_type(sides: int) -> void:
 ## get_sixth_slot_display_name()
 ##
 ## Returns the human-readable display name for the 6th upper section category.
-## Examples: "Sixes" (d6), "Eights" (d8), "Tens" (d10), "Twenties" (d20).
+## Examples: "Sixes" (d6), "Fours+" (d4), "Eights" (d8), "Twenties" (d20).
 func get_sixth_slot_display_name() -> String:
 	match sixth_slot_target:
-		4: return "Fours"
+		4: return "Fours+" if sixth_slot_multiplier > 1 else "Fours"
 		6: return "Sixes"
 		8: return "Eights"
 		10: return "Tens"
@@ -642,6 +649,7 @@ func reset_scores() -> void:
 	# Reset dice type tracking
 	current_dice_sides = 6
 	sixth_slot_target = 6
+	sixth_slot_multiplier = 1
 	
 	# Note: Multipliers are now handled by ScoreModifierManager
 	# PowerUps should manage their own multiplier lifecycle
@@ -1290,6 +1298,7 @@ func get_state() -> Dictionary:
 		"current_round_number": current_round_number,
 		"current_dice_sides": current_dice_sides,
 		"sixth_slot_target": sixth_slot_target,
+		"sixth_slot_multiplier": sixth_slot_multiplier,
 		"allow_gap_straights": allow_gap_straights,
 		"last_base_score": last_base_score
 	}
@@ -1311,6 +1320,7 @@ func load_state(state: Dictionary) -> void:
 	current_round_number = state.get("current_round_number", 1)
 	current_dice_sides = state.get("current_dice_sides", 6)
 	sixth_slot_target = state.get("sixth_slot_target", 6)
+	sixth_slot_multiplier = state.get("sixth_slot_multiplier", 1)
 	allow_gap_straights = state.get("allow_gap_straights", false)
 	last_base_score = state.get("last_base_score", 0)
 	emit_signal("score_changed", get_total_score())

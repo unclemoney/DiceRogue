@@ -5,6 +5,10 @@ class_name DiceData
 @export var display_name: String = "D6"
 @export var sides: int = 6
 @export var textures: Array[Texture2D]
+## Tooltip flavor + scoring-rule text shown in the dice set selector.
+@export var description: String = ""
+## ProgressManager unlockable item id gating this set; empty = always available.
+@export var unlock_item_id: String = ""
 
 func _init() -> void:
 	if textures.is_empty():

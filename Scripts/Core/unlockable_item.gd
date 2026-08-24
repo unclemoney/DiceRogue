@@ -11,7 +11,8 @@ enum ItemType {
 	CONSUMABLE,
 	MOD,
 	COLORED_DICE_FEATURE,
-	GAMING_CONSOLE
+	GAMING_CONSOLE,
+	DICE_SET
 }
 
 @export var id: String = ""
@@ -69,5 +70,7 @@ func get_type_string() -> String:
 			return "Colored Dice"
 		ItemType.GAMING_CONSOLE:
 			return "Gaming Console"
+		ItemType.DICE_SET:
+			return "Dice Set"
 		_:
 			return "Unknown"

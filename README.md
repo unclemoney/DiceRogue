@@ -256,18 +256,20 @@ All major UI popups use TweenFX-based bouncy entrance/exit animations for juicy 
 #### Dice Types
 DiceRogue supports multiple dice types, each with their own face textures and value ranges:
 
-| Type | Sides | Resource | Status |
-|------|-------|----------|--------|
-| d4   | 4     | `Scripts/Dice/d4_dice.tres` | Active |
-| d6   | 6     | `Scripts/Dice/d6_dice.tres` | Active (default) |
-| d8   | 8     | `Scripts/Dice/d8_dice.tres` | Scoring active |
-| d10  | 10    | `Scripts/Dice/d10_dice.tres` | Scoring active |
-| d12  | 12    | `Scripts/Dice/d12_dice.tres` | Scoring active |
-| d20  | 20    | `Scripts/Dice/d20_dice.tres` | Scoring active |
+| Type | Sides | Resource | Status | Unlock |
+|------|-------|----------|--------|--------|
+| d4   | 4     | `Scripts/Dice/d4_dice.tres` | Selectable | Complete a game |
+| d6   | 6     | `Scripts/Dice/d6_dice.tres` | Selectable (default) | Always available |
+| d8   | 8     | `Scripts/Dice/d8_dice.tres` | Selectable | Achieve upper section bonus |
+| d10  | 10    | `Scripts/Dice/d10_dice.tres` | Scoring active | Not selectable |
+| d12  | 12    | `Scripts/Dice/d12_dice.tres` | Selectable | Roll a Yahtzee |
+| d20  | 20    | `Scripts/Dice/d20_dice.tres` | Selectable | Win a game |
 
-Dice types are assigned per-round via `ChallengeData.dice_type` and applied through `DiceHand.switch_dice_type()`. When a non-d6 dice type is active, the scoring system adapts automatically:
-- **Dynamic 6th slot**: The upper section's 6th row changes to match the dice's max value (e.g., "Eights" for d8, "Twenties" for d20)
-- **Upper bonus scaling**: The bonus threshold adjusts per dice type (63 for d6, 69 for d8, 105 for d20)
+**Dice Set Selection:** At game start, the Mall Zone Selection screen (`ChannelManagerUI`) shows a dice set carousel on the right side of the panel. Use the `<` / `>` buttons to browse sets; locked sets are dimmed with a lock tag and can be browsed but not selected. Hovering the display shows a tooltip with the set's scoring rules and unlock requirement. The chosen set applies to **every round of the run** (overriding per-round `ChallengeData.dice_type`) and resets to d6 on a new game. Selection flows: `ChannelManagerUI` → `ChannelManager.selected_dice_type` → `GameController._on_channel_selected()` → `RoundManager.run_dice_type` → `DiceHand.switch_dice_type()`.
+
+When a non-d6 dice type is active, the scoring system adapts automatically:
+- **Dynamic 6th slot**: The upper section's 6th row changes to match the dice's max value (e.g., "Eights" for d8, "Twenties" for d20). For d4 it becomes **"Fours+"**: 4s count double (`count of 4s × 4 × 2`).
+- **Upper bonus scaling**: The bonus threshold adjusts per dice type (30 for d4, 63 for d6, 69 for d8, 105 for d20)
 - **Generalized straights**: Small and large straight detection works with any dice size
 - See `BUILD_DICE.md` for full design rules and balance considerations.
 

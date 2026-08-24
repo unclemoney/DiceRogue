@@ -13,19 +13,21 @@ DiceRogue supports multiple dice types through the `DiceData` resource system. E
 - **display_name** — Human-readable name (`"D4"`, `"D6"`, `"D8"`, etc.)
 - **sides** — Number of faces (4, 6, 8, 10, 12, 20)
 - **textures** — Array of `Texture2D` for each face value (1 through N)
+- **description** — Tooltip flavor + scoring-rule text shown in the dice set selector
+- **unlock_item_id** — ProgressManager unlockable item id gating the set; empty = always available
 
-Dice types are assigned per-round via `ChallengeData.dice_type` and applied through `DiceHand.switch_dice_type()`.
+**Dice Set Selection (implemented):** The player picks a dice set at game start in the Mall Zone Selection screen (`ChannelManagerUI`, right-side carousel). The choice is stored on `ChannelManager.selected_dice_type`, pushed to `RoundManager.run_dice_type` by `GameController._on_channel_selected()`, and applies to **every round of the run**, overriding per-round `ChallengeData.dice_type`. d6 is the default; d4/d8/d12/d20 are unlocked via ProgressManager (`UnlockableItem.ItemType.DICE_SET`, ids `dice_set_dN`). Legacy per-round assignment via `ChallengeData.dice_type` + `DiceHand.switch_dice_type()` still exists but is overridden by the run selection.
 
 ### Currently Implemented Dice
 
 | Type | Sides | Status | Resource File |
 |------|-------|--------|---------------|
-| d4   | 4     | Active | `Scripts/Dice/d4_dice.tres` |
-| d6   | 6     | Active (default) | `Scripts/Dice/d6_dice.tres` |
-| d8   | 8     | Scoring active | `Scripts/Dice/d8_dice.tres` |
-| d10  | 10    | Scoring active | `Scripts/Dice/d10_dice.tres` |
-| d12  | 12    | Scoring active | `Scripts/Dice/d12_dice.tres` |
-| d20  | 20    | Scoring active | `Scripts/Dice/d20_dice.tres` |
+| d4   | 4     | Selectable (unlock: complete a game) | `Scripts/Dice/d4_dice.tres` |
+| d6   | 6     | Selectable (default, always available) | `Scripts/Dice/d6_dice.tres` |
+| d8   | 8     | Selectable (unlock: upper section bonus) | `Scripts/Dice/d8_dice.tres` |
+| d10  | 10    | Scoring active (not selectable) | `Scripts/Dice/d10_dice.tres` |
+| d12  | 12    | Selectable (unlock: roll a Yahtzee) | `Scripts/Dice/d12_dice.tres` |
+| d20  | 20    | Selectable (unlock: win a game) | `Scripts/Dice/d20_dice.tres` |
 
 ### Art Assets
 
@@ -89,6 +91,15 @@ In `Scripts/Core/dice_hand.gd`:
 
 Set `dice_type = "dN"` on any `ChallengeData` resource. The `RoundManager` will call `dice_hand.switch_dice_type()` at round start.
 
+> **Note:** The dice set selected at game start (`RoundManager.run_dice_type`) currently **overrides** all per-round challenge dice types for the whole run.
+
+### Step 5: Make It Selectable at Game Start (optional)
+
+1. Add `description` and `unlock_item_id = "dice_set_dN"` to the `.tres` resource.
+2. Add the resource to `ChannelManagerUI.DICE_SETS` in `Scripts/Managers/channel_manager_ui.gd` (carousel order).
+3. Register a matching unlock item in `ProgressManager._create_default_unlockable_items()` via `_add_default_dice_set(...)`.
+4. If the side count needs a scoring rule beyond the dynamic 6th slot, extend `Scorecard.set_dice_type()` and `ScoreEvaluator.evaluate_normal()`.
+
 ---
 
 ## Scoring Rules for Non-Standard Dice
@@ -109,18 +120,18 @@ The standard Yahtzee scorecard has 13 categories:
 
 | Dice Type | Upper Section Categories | 6th Slot |
 |-----------|-------------------------|----------|
-| d4        | Ones, Twos, Threes, Fours, —, — | **Fours** (Fives/Sixes impossible) |
+| d4        | Ones, Twos, Threes, Fours, Fives, Fours+ | **Fours+** (4s score double) |
 | d6        | Ones, Twos, Threes, Fours, Fives, Sixes | **Sixes** (standard) |
 | d8        | Ones, Twos, Threes, Fours, Fives, Eights | **Eights** |
 | d10       | Ones, Twos, Threes, Fours, Fives, Tens | **Tens** |
 | d12       | Ones, Twos, Threes, Fours, Fives, Twelves | **Twelves** |
 | d20       | Ones, Twos, Threes, Fours, Fives, Twenties | **Twenties** |
 
-#### d4 Special Case
+#### d4 Special Case — RESOLVED (Fours+)
 
-With a d4, values 5 and 6 are impossible to roll. The 6th slot becomes Fours (already covered by the 4th row). Effectively only 4 upper categories are usable — the Fives and Sixes rows would need to be **disabled or hidden**. This makes d4 rounds significantly harder for upper section scoring.
+With a d4, values 5 and 6 are impossible to roll. **Implemented decision**: the 6th slot becomes **"Fours+"** — it targets 4s and scores double (`count of 4s × 4 × 2`), giving the d4 set a distinct identity instead of a dead row. The Fives row remains on the card but is unrollable, acting as a zero-scoring dump category.
 
-**Open question**: Should d4 disable the 5th and 6th rows entirely, or should they remain as scratch-only (-0) rows that the player must waste?
+Implementation: `Scorecard.set_dice_type(4)` sets `sixth_slot_target = 4` and `sixth_slot_multiplier = 2` (persisted via `get_state()`/`load_state()`); `ScoreEvaluator.evaluate_normal()` multiplies the "sixes" result by 2 when `current_dice_sides == 4`; `get_sixth_slot_display_name()` returns "Fours+". Upper bonus threshold for d4 is 30 (`3 × (1+2+3+4)`).
 
 #### Higher Dice (d8–d20) Risk/Reward
 

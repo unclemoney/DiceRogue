@@ -38,6 +38,17 @@ var is_challenge_completed: bool = false
 var rounds_data: Array[Dictionary] = []
 var game_started: bool = false
 var challenge_seed: int = 0  ## Seed used for random challenge selection
+## Dice set used for every round of the current run, chosen in the Mall Zone
+## Selection. Overrides per-round challenge dice_type. Set by GameController.
+var run_dice_type: String = "d6"
+
+
+## set_run_dice_type(type: String) -> void
+##
+## Sets the dice set for the whole run; applied to all rounds.
+func set_run_dice_type(type: String) -> void:
+	run_dice_type = type
+	print("[RoundManager] Run dice type set to:", run_dice_type)
 
 ## _ready()
 ##
@@ -115,6 +126,9 @@ func _initialize_rounds_data() -> void:
 		elif round_index < dice_configs.size():
 			# Fall back to dice_configs if no challenge
 			dice_type = dice_configs[round_index]
+		
+		# The dice set selected at game start overrides all per-round configs
+		dice_type = run_dice_type
 		
 		var round_data = {
 			"round_number": round_number,
