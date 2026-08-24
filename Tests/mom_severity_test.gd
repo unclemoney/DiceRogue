@@ -257,14 +257,16 @@ func _test_checkin_tree_selection(gc) -> void:
 	add_child(pu)
 	gc.pu_manager = pu
 
-	# Empty inventory -> neutral check-in
+	# Empty inventory -> weighted pick from the flavor check-in pool
 	gc.active_power_ups = {}
-	_check("empty inventory -> neutral check-in", Handler.get_checkin_tree_id(gc, 5) == "checkin_neutral")
+	var empty_tree := Handler.get_checkin_tree_id(gc, 5)
+	_check("empty inventory -> flavor pool check-in", Handler.CHECKIN_FLAVOR_POOL.has(empty_tree))
 
 	# G-rated items are safe
 	pu.defs = {"pu_g": _make_pu("G"), "pu_pg": _make_pu("PG")}
 	gc.active_power_ups = {"pu_g": {}, "pu_pg": {}}
-	_check("G/PG inventory -> neutral check-in", Handler.get_checkin_tree_id(gc, 5) == "checkin_neutral")
+	var safe_tree := Handler.get_checkin_tree_id(gc, 5)
+	_check("G/PG inventory -> flavor pool check-in", Handler.CHECKIN_FLAVOR_POOL.has(safe_tree))
 
 	# PG-13 -> warning
 	pu.defs["pu_pg13"] = _make_pu("PG-13")
@@ -304,8 +306,8 @@ func _test_checkin_tree_selection(gc) -> void:
 	gc.active_power_ups = {}
 	pu.defs = {}
 	var cool_tree := Handler.get_checkin_tree_id(gc, 2)
-	_check("happy mood clean inventory -> cool or neutral",
-		cool_tree == "checkin_cool_mom" or cool_tree == "checkin_neutral")
+	_check("happy mood clean inventory -> cool mom or flavor pool",
+		cool_tree == "checkin_cool_mom" or Handler.CHECKIN_FLAVOR_POOL.has(cool_tree))
 
 
 func _test_silent_treatment() -> void:

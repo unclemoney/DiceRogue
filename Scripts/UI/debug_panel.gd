@@ -330,14 +330,18 @@ func _create_debug_tabs() -> void:
 			{"text": "Check-in: Target Roll 2", "method": "_debug_checkin_target_min"},
 			{"text": "Check-in: Target Roll 6", "method": "_debug_checkin_target_mid"},
 			{"text": "Check-in: Target Roll Max", "method": "_debug_checkin_target_max"},
+			{"text": "Check-in Flavor: Nostalgia", "method": "_debug_checkin_nostalgia"},
+			{"text": "Check-in Flavor: Gossip", "method": "_debug_checkin_gossip"},
+			{"text": "Check-in Flavor: Bargain", "method": "_debug_checkin_bargain"},
+			{"text": "Mom Dialog: Preview 4-Response", "method": "_debug_checkin_preview_wide"},
 			{"text": "Add Mom Grudge +1", "method": "_debug_chores_add_grudge"},
 			{"text": "Add Defer Streak +1", "method": "_debug_chores_add_defer"},
 			{"text": "Rep +10", "method": "_debug_rep_add"},
 			{"text": "Rep -10", "method": "_debug_rep_sub"},
 			{"text": "Set Rep 0 (G)", "method": "_debug_rep_set_0"},
-			{"text": "Set Rep 25 (PG-13)", "method": "_debug_rep_set_25"},
-			{"text": "Set Rep 50 (R)", "method": "_debug_rep_set_50"},
-			{"text": "Set Rep 75 (NC-17)", "method": "_debug_rep_set_75"},
+			{"text": "Set Rep 15 (PG-13)", "method": "_debug_rep_set_15"},
+			{"text": "Set Rep 35 (R)", "method": "_debug_rep_set_35"},
+			{"text": "Set Rep 60 (NC-17)", "method": "_debug_rep_set_60"},
 			{"text": "Show Rep State", "method": "_debug_rep_show"},
 			{"text": "Grant Rebellion Buff", "method": "_debug_rebellion_grant"},
 			{"text": "Clear Rebellion Buff", "method": "_debug_rebellion_clear"},
@@ -3329,6 +3333,41 @@ func _debug_chores_trigger_checkin() -> void:
 	log_debug("Triggered Mom check-in dialog")
 
 
+## _debug_mom_force_tree(tree_id)
+##
+## Arms a forced cast claim for the given dialog tree and fires the
+## check-in that consumes it. Works for flavor check-ins and previews.
+func _debug_mom_force_tree(tree_id: String) -> void:
+	var cast_manager = _get_cast_manager()
+	var chores_manager = _get_chores_manager()
+	if not cast_manager or not chores_manager:
+		log_debug("ERROR: CastManager or ChoresManager not available")
+		return
+	cast_manager.debug_forced_claim = {"tree_id": tree_id, "context": {}}
+	chores_manager.mom_checkin.emit()
+	log_debug("Forced Mom dialog tree: %s" % tree_id)
+
+
+func _debug_checkin_nostalgia() -> void:
+	_debug_mom_force_tree("checkin_nostalgia")
+
+
+func _debug_checkin_gossip() -> void:
+	_debug_mom_force_tree("checkin_gossip")
+
+
+func _debug_checkin_bargain() -> void:
+	_debug_mom_force_tree("checkin_bargain")
+
+
+## _debug_checkin_preview_wide()
+##
+## Previews the widest/tallest fixed-size panel case: checkin_neutral now
+## carries 4 responses (the MAX_RESPONSES cap).
+func _debug_checkin_preview_wide() -> void:
+	_debug_mom_force_tree("checkin_neutral")
+
+
 func _debug_chores_add_grudge() -> void:
 	var chores_manager = _get_chores_manager()
 	if not chores_manager:
@@ -3544,16 +3583,16 @@ func _debug_rep_set_0() -> void:
 	_debug_set_rep(0)
 
 
-func _debug_rep_set_25() -> void:
-	_debug_set_rep(25)
+func _debug_rep_set_15() -> void:
+	_debug_set_rep(15)
 
 
-func _debug_rep_set_50() -> void:
-	_debug_set_rep(50)
+func _debug_rep_set_35() -> void:
+	_debug_set_rep(35)
 
 
-func _debug_rep_set_75() -> void:
-	_debug_set_rep(75)
+func _debug_rep_set_60() -> void:
+	_debug_set_rep(60)
 
 
 ## _debug_set_rep(target)

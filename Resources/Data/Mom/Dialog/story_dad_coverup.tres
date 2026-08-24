@@ -1,0 +1,78 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=10 format=3]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_help_1"]
+script = ExtResource("3_out")
+weight = 7.0
+effect = "rep_delta"
+magnitude = 2
+mood_delta = -1
+grudge_delta = 0
+permanent = false
+followup_node_id = "story_dad_list_burned"
+result_text = "[color=green]...You're serious.[/color] Alright. The fireplace. NOW, before he finishes his coffee."
+result_expression = "happy"
+ends_visit = false
+
+[sub_resource type="Resource" id="out_help_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = -1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "Tempting. But no. I want to see his FACE when he reads item seven out loud."
+result_expression = "neutral"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_help"]
+script = ExtResource("2_resp")
+button_text = "Help Dad destroy the list."
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_help_1"), SubResource("out_help_2")])
+
+[sub_resource type="Resource" id="out_watch_1"]
+script = ExtResource("3_out")
+weight = 7.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = 0
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "Fine. Popcorn's in the pantry. Your father does the voices when he's angry - you'll enjoy it."
+result_expression = "neutral"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_watch_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "grudge_delta"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 1
+permanent = false
+followup_node_id = ""
+result_text = "[color=orange]Enjoying this, are we?[/color] Remember that smirk when YOUR name comes up at dinner, champ."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_watch"]
+script = ExtResource("2_resp")
+button_text = "Let it play out."
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_watch_1"), SubResource("out_watch_2")])
+
+[resource]
+script = ExtResource("1_node")
+id = "story_dad_coverup"
+mom_text = "Your father is in the garage practicing his 'disappointed voice.' The list is RIGHT here on the counter, sweetie. Whatever happens next... is between you and your conscience."
+expression = "neutral"
+speaker_name = "Mom"
+speaker_tint = Color(1, 1, 1, 1)
+responses = Array[ExtResource("2_resp")]([SubResource("resp_help"), SubResource("resp_watch")])

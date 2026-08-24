@@ -56,6 +56,17 @@ const SILENT_TREATMENT_CHANCE: float = 0.10
 ## Chance a check-in at mood <= 3 becomes a "cool mom" event.
 const COOL_MOM_CHANCE: float = 0.05
 
+## Flavor check-in pool: when no priority trigger fires (restricted loot,
+## cool-mom event), the check-in root is a weighted pick from these small
+## talk trees. Weights are relative draw chances.
+const CHECKIN_FLAVOR_POOL: Dictionary = {
+	"checkin_neutral": 4.0,
+	"checkin_nostalgia": 2.0,
+	"checkin_gossip": 2.0,
+	"checkin_bargain": 2.0,
+	"checkin_zone_flavor": 1.0,
+}
+
 static var _tiers: Dictionary = {}  # tier_id -> MomPunishmentTier
 static var _nodes: Dictionary = {}  # node id -> MomDialogNode
 
@@ -162,7 +173,7 @@ static func should_silent_treatment(severity: int) -> bool:
 ##   - NC-17 item in inventory -> caught red-handed (confiscation visit)
 ##   - R or PG-13 item in inventory -> warning
 ##   - mood <= 3 with a lucky roll -> rare "cool mom" event
-##   - otherwise -> neutral chat
+##   - otherwise -> weighted pick from CHECKIN_FLAVOR_POOL
 static func get_checkin_tree_id(game_controller: Node, mom_mood: int) -> String:
 	var ratings := scan_inventory_ratings(game_controller)
 	if ratings["nc17"] > 0:
@@ -171,6 +182,28 @@ static func get_checkin_tree_id(game_controller: Node, mom_mood: int) -> String:
 		return "checkin_warning"
 	if mom_mood <= 3 and GameRNG.randf() < COOL_MOM_CHANCE:
 		return "checkin_cool_mom"
+	return _pick_flavor_checkin()
+
+
+## _pick_flavor_checkin() -> String
+##
+## Weighted random pick over CHECKIN_FLAVOR_POOL. Unknown ids (missing
+## data) are skipped; falls back to "checkin_neutral".
+static func _pick_flavor_checkin() -> String:
+	_ensure_data_loaded()
+	var total := 0.0
+	for node_id in CHECKIN_FLAVOR_POOL:
+		if _nodes.has(node_id):
+			total += CHECKIN_FLAVOR_POOL[node_id]
+	if total <= 0.0:
+		return "checkin_neutral"
+	var roll := GameRNG.randf() * total
+	for node_id in CHECKIN_FLAVOR_POOL:
+		if not _nodes.has(node_id):
+			continue
+		roll -= CHECKIN_FLAVOR_POOL[node_id]
+		if roll <= 0.0:
+			return node_id
 	return "checkin_neutral"
 
 

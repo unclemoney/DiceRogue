@@ -50,15 +50,16 @@ signal rep_changed(new_rep: int)  # Emitted when the Rebellion Rep stat changes
 ## Tier thresholds gate which POG rating bands appear in the kiosk:
 ##   tier 0 (Rep 0+):   G          ("Mom-Approved")
 ##   tier 1 (Rep 0+):   + PG       ("Questionable")
-##   tier 2 (Rep 25+):  + PG-13    ("Parental Guidance")
-##   tier 3 (Rep 50+):  + R        ("Grounded")
-##   tier 4 (Rep 75+):  + NC-17    ("Banned")
+##   tier 2 (Rep 15+):  + PG-13    ("Parental Guidance")
+##   tier 3 (Rep 35+):  + R        ("Grounded")
+##   tier 4 (Rep 60+):  + NC-17    ("Banned")
 const MAX_REP: int = 100
 ## G and PG are both available at 0 Rep; get_rep_tier() resolves Rep 0 to tier 1.
-const REP_TIER_THRESHOLDS: Array[int] = [0, 0, 25, 50, 75]
+const REP_TIER_THRESHOLDS: Array[int] = [0, 0, 15, 35, 60]
 const REP_TIER_NAMES: Array[String] = ["Mom-Approved", "Questionable", "Parental Guidance", "Grounded", "Banned"]
-## Visual stage thresholds (4 stages) for the rebel-mode UI.
-const REP_STAGE_THRESHOLDS: Array[int] = [0, 10, 25, 45]
+## Visual stage thresholds (4 stages) for the rebel-mode UI. The final stage
+## aligns with the tier 4 (NC-17) gate at 60.
+const REP_STAGE_THRESHOLDS: Array[int] = [0, 10, 30, 60]
 const REP_STAGE_NAMES: Array[String] = ["Teacher's Pet", "Attitude Problem", "Mall Rat", "Banned from the Mall"]
 
 # Current active profile slot (1-3)

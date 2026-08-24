@@ -189,6 +189,13 @@ func _test_dialog_and_animator() -> void:
 	# ─── Portrait center accessor (confiscation fly target) ───
 	_check("get_portrait_center matches portrait", dialog.get_portrait_center() == portrait.global_position)
 
+	# ─── Portrait sits flush with the frame's inner bottom edge ───
+	await get_tree().process_frame
+	var frame_panel: PanelContainer = portrait.get_parent()
+	var portrait_bottom := portrait.position.y + (MomCharacter.PORTRAIT_FRAME_SIZE * portrait.scale.y) / 2.0
+	var frame_inner_bottom := frame_panel.size.y - MomCharacter.PORTRAIT_BORDER_WIDTH
+	_check("portrait feet flush with inner bottom border", is_equal_approx(portrait_bottom, frame_inner_bottom))
+
 	dialog.queue_free()
 	await get_tree().process_frame
 

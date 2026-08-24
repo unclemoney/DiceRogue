@@ -27,7 +27,7 @@ func _ready() -> void:
 
 	_check("response row is a VBoxContainer", dialog.response_row is VBoxContainer)
 	_check("response row visible with responses", dialog.response_row.visible)
-	_check("3 response buttons built", dialog.response_buttons.size() == 3)
+	_check("4 response buttons built", dialog.response_buttons.size() == 4)
 	if dialog.response_buttons.size() > 0:
 		var button = dialog.response_buttons[0]
 		_check("buttons are wide (>= 400px min)", button.custom_minimum_size.x >= 400.0)
@@ -38,6 +38,32 @@ func _ready() -> void:
 	dialog.show_node(Handler.get_dialog_node("sass_storm_off"))
 	_check("response row hidden on terminal beat", not dialog.response_row.visible)
 	_check("close button visible on terminal beat", dialog.close_button.visible)
+
+	# Fixed panel size: identical for response beats and terminal beats
+	await dialog.get_tree().process_frame
+	await dialog.get_tree().process_frame
+	_check("panel is fixed PANEL_SIZE on response beat", dialog.dialog_panel.size == MomCharacter.PANEL_SIZE)
+	dialog.show_node(Handler.get_dialog_node("sass_storm_off"))
+	await dialog.get_tree().process_frame
+	await dialog.get_tree().process_frame
+	_check("panel is fixed PANEL_SIZE on terminal beat", dialog.dialog_panel.size == MomCharacter.PANEL_SIZE)
+
+	# Response cap: a node with more than MAX_RESPONSES shows only MAX_RESPONSES
+	var crowded := MomDialogNode.new()
+	crowded.id = "test_crowded"
+	crowded.mom_text = "Too many options."
+	for i in range(MomCharacter.MAX_RESPONSES + 1):
+		var response := MomDialogResponse.new()
+		response.button_text = "Option %d" % i
+		response.tone = "neutral"
+		var outcome := MomDialogOutcome.new()
+		outcome.weight = 1.0
+		outcome.effect = "none"
+		outcome.result_text = "Fine."
+		response.outcomes = [outcome]
+		crowded.responses.append(response)
+	dialog.show_node(crowded)
+	_check("responses capped at MAX_RESPONSES", dialog.response_buttons.size() == MomCharacter.MAX_RESPONSES)
 
 	# press_response routes through response_selected
 	var picked: Array = [-1]

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MomStoryArc" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="MomStoryArc" load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Scripts/Data/story_arc.gd" id="1_arc"]
 [ext_resource type="Script" path="res://Scripts/Data/story_beat.gd" id="2_beat"]
@@ -28,10 +28,19 @@ reward_money = 40
 reward_mood = -2
 reward_rep = 4
 
+[sub_resource type="Resource" id="beat_3"]
+script = ExtResource("2_beat")
+beat_index = 3
+dialog_node_id = "story_patterson_informant"
+min_channel = 14
+requires_flag = "patterson_truce"
+sets_flag = "patterson_informant"
+reward_rep = 2
+
 [resource]
 script = ExtResource("1_arc")
 id = "patterson_file"
 character_id = "patterson"
 display_name = "The Patterson File"
 priority = 10
-beats = Array[ExtResource("2_beat")]([SubResource("beat_0"), SubResource("beat_1"), SubResource("beat_2")])
+beats = Array[ExtResource("2_beat")]([SubResource("beat_0"), SubResource("beat_1"), SubResource("beat_2"), SubResource("beat_3")])

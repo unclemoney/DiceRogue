@@ -979,7 +979,7 @@ All PowerUps now have movie-style content ratings that affect Mom's reaction:
 **Mom Visits:**
 Mom appears in two ways:
 - **Meter Visit**: At 100 progress, Mom appears. Severity (0-5) is computed from her mood, grudge, and escalation, then a dialog tree plays out.
-- **Random Check-in**: At most once per round, at a random roll (base target roll 2-10 plus the current mall zone number — zone 4 means 2-14 — picked each round), Mom pops in for a non-punishment chat. Later zones see fewer check-ins, and rounds that end before the target simply get none — Mom never visits between rounds. Dialog responses can still escalate it into a real punishment. Deferred while a meter visit is active.
+- **Random Check-in**: At most once per round, at a random roll (base target roll 2-10 plus the current mall zone number — zone 4 means 2-14 — picked each round), Mom pops in for a non-punishment chat. Later zones see fewer check-ins, and rounds that end before the target simply get none — Mom never visits between rounds. Dialog responses can still escalate it into a real punishment. Deferred while a meter visit is active. When no priority trigger fires, the check-in is a weighted pick from the flavor pool (`MomLogicHandler.CHECKIN_FLAVOR_POOL`): neutral chat, nostalgia, gossip, a chore bargain, or zone flavor.
 
 **Special Visit Types:**
 - **Silent Treatment** (10% of severity 1-2 meter visits): Mom just stares. "..." No punishment — but her mood worsens, and it's somehow worse than yelling.
@@ -988,9 +988,10 @@ Mom appears in two ways:
 
 **Mom Dialog Trees:**
 Mom's conversations are branching trees stored as data (`Resources/Data/Mom/Dialog/*.tres`):
-- Mom speaks, the player picks from 2-3 responses (polite / neutral / sassy)
+- Mom speaks, the player picks from 2-4 responses (polite / neutral / sassy)
 - Each response has **weighted random outcomes** — sassing usually backfires, but rarely Mom storms off angry (no punishment this visit)
 - Outcomes can chain to follow-up dialog nodes, shift mood/grudge, apply a punishment tier, or end the visit
+- The dialog panel is one fixed size (`MomCharacter.PANEL_SIZE`, 560x500) for every beat — long text scrolls instead of resizing the popup, and responses cap at 4 (`MAX_RESPONSES`).
 
 **Mom Animated Portrait:**
 Mom's dialog portrait is animated (`Scripts/UI/mom_portrait_animator.gd`, an AnimatedSprite2D inside `MomCharacter`). Ten 8-frame clips are sliced from the sheets in `Resources/Art/Characters/Mom/NEW/` into `mom_portrait_frames.tres` by a tool script:
@@ -1001,6 +1002,7 @@ Mom's dialog portrait is animated (`Scripts/UI/mom_portrait_animator.gd`, an Ani
 - **Talking sync**: dialog text reveals via typewriter (`TEXT_DISPLAY_SPEED = 0.03`s/char, brief pauses on punctuation); the speech loop runs exactly for the reveal duration. Mood changes mid-dialogue swap the speech clip instantly (all sheets share frame 0 as the base pose, so swaps are pop-free).
 - Response tone drives reactions: sassy draws a mood-appropriate negative reaction (never a genuine laugh), polite gets a laugh from a happy Mom.
 - Test scene: `Tests/MomAnimationTest.tscn`. Debug panel (F12): "Mom Anim: Laugh/Glare/Angry Shake" force reactions on the open dialog.
+- **Framing**: the portrait is bottom-aligned so Mom sits flush with the frame's inner bottom edge (like a framed portrait); the square frame never stretches when the panel is tall.
 
 **Grudge System:**
 Unresolved anger carries forward. If Mom storms off (or an outcome adds grudge), the next visit's severity floor rises by the grudge level (0-3). Grudge is consumed when applied and saved with run state.
@@ -1009,11 +1011,11 @@ Unresolved anger carries forward. If Mom storms off (or an outcome adds grudge),
 Sass is the high-variance path; compliance is the safe path. Three interlocking systems make rebellion a real strategy:
 - **Rebellion Buff**: A *successful* sass (sassy response that draws no tangible punishment: storms off, defer, or a pure flavor outcome) grants the round-scoped **Rebellion** buff — +15% score and +1 roll per turn per stack, up to 3 stacks (one per successful sass in the visit). Cleared at round end when the shop opens. Implemented as a positive effect riding the Debuff pipeline (`Scripts/Debuff/rebellion_buff.gd`); its icon chip lives in the Chore UI buff row (compact meter + fan-out details panel), not the Debuff UI.
 - **Punishment Delay**: The "Not now, Mom." response (punishment visits) can defer the pending punishment to a later visit. Counterweight: each defer adds +1 grudge and raises the **defer streak** (max 3, run-scoped, saved), which compounds onto the severity of the *eventual* resolution — and grudge can convert future reward visits into punishment visits. The streak resets when a punishment tier is actually applied.
-- **Rep Stat**: A persistent meta stat (0-100, saved in the profile) that grows with successful sass (+3, defer +2, storm off +4) and shrinks with bootlicking compliance (polite on punishment visits -2, polite on check-ins -1). Rep gates kiosk inventory by POG tier (`REP_TIER_THRESHOLDS = [0, 0, 25, 50, 75]`): G and PG are always open, 25+ unlocks PG-13 ("Parental Guidance"), 50+ R ("Grounded"), 75+ NC-17 ("Banned"). Below Rep 25 with a happy Mom (mood ≤ 3), the Mom-Approved (G) pool gets 1.5x shelf weight and a 10% discount instead — two playstyles, two item pools. Rep-gated items appear greyed in the shop's LOCKED tab with their Rep requirement.
-- **Sass Escalation**: Sassy responses that draw a punishment scale with Rep — every 2 Rep tiers adds +1 punishment tier (clamped at tier 5), and at Rep tier 3+ (Rep 50+) debuff punishments apply +1 extra debuff.
+- **Rep Stat**: A persistent meta stat (0-100, saved in the profile) that grows with successful sass (+5, defer +4, storm off +6) and shrinks with bootlicking compliance (polite on punishment visits -2, polite on check-ins -1). Rep gates kiosk inventory by POG tier (`REP_TIER_THRESHOLDS = [0, 0, 15, 35, 60]`): G and PG are always open, 15+ unlocks PG-13 ("Parental Guidance"), 35+ R ("Grounded"), 60+ NC-17 ("Banned"). Below Rep 15 with a happy Mom (mood ≤ 3), the Mom-Approved (G) pool gets 1.5x shelf weight and a 10% discount instead — two playstyles, two item pools. Rep-gated items appear greyed in the shop's LOCKED tab with their Rep requirement.
+- **Sass Escalation**: Sassy responses that draw a punishment scale with Rep — every 2 Rep tiers adds +1 punishment tier (clamped at tier 5), and at Rep tier 3+ (Rep 35+) debuff punishments apply +1 extra debuff.
 
 **Rebel Mode UI:**
-- **Rep Meter** (Mom dialog): A meter between Mom's line and the response buttons, cloned from the ChoreUI meter pattern. Visual identity escalates through 4 stages: Teacher's Pet (teal, 0-9) → Attitude Problem (amber, 10-24) → Mall Rat (magenta, 25-44) → Banned from the Mall (hot pink, 45+).
+- **Rep Meter** (Mom dialog): A meter between Mom's line and the response buttons, cloned from the ChoreUI meter pattern. Visual identity escalates through 4 stages: Teacher's Pet (teal, 0-9) → Attitude Problem (amber, 10-29) → Mall Rat (magenta, 30-59) → Banned from the Mall (hot pink, 60+, aligned with the NC-17 gate).
 - **Chore Board**: The expanded chore panel shows a Rep summary line.
 
 **Bot Mom Policy:**
@@ -1036,13 +1038,13 @@ A recurring cast lives inside Mom's check-in dialogues. They never speak directl
 
 **Patterson Sightings**: a check-in may open with a report about a specific zone. True reports name a zone the player actually visited (never the current one); false accusations name a zone they've never been to — the player must judge truth from memory. False rate is mood-weighted (25% at mood 8+, 40% base, 60% at mood ≤ 4), and at mood ≤ 4 a false accusation uses the "believed" tree where contesting usually fails (injustice as gameplay). Responses: admit (polite), stay silent, contest, or sass. Contesting a false report successfully sets the `flag_patterson_doubted` story flag (feeds the Patterson arc payoff). Entering a zone with R/NC-17 loot or grudge ≥ 2 queues a TRUE report that surfaces 2+ zones later — delayed consequences. Tuning: `PATTERSON_SIGHTING_CHANCE 0.30` (0.15 after the truce), one sighting per zone, never two zones in a row, `PATTERSON_REPORT_DELAY_ZONES 2`.
 
-**Story Arcs** (`Resources/Data/Mom/Cast/arc_*.tres`): small 3-beat structures (setup → escalation → payoff) delivered across check-ins in different zones. Beats gate on channel, grudge, Rep, story flags, and chores done; the highest-priority due beat takes the slot. Completion pays small real rewards (money, mood, Rep). The six arcs:
-1. **The Patterson File** — nosy intro → false-accusation escalation → the absurd casserole report and a truce (sightings halve, never false again).
-2. **The Golden Child** — Derek comparisons → grudge-scaled resentment → Derek caught at Video Rentals, then one silent, warm check-in (forces a cool-mom visit next).
-3. **Dad's Long Week** — traffic commiseration → the good pen → "I haven't told your father… yet."
-4. **The Perfume Cloud** — Debra's opinions → the perfume-counter ambush → Mom tells her off ($25 gift card, "I'm keeping half").
-5. **Mrs. Henderson Has Called** — homework warning → the dinner phone call → "creative with your time" (needs chores done = homework done; pays a consumable).
-6. **Mom's Secret Past** — regional finals 1987 → champion's tips (free consumable) → Mom takes the cabinet high score (Rep-gated, pays $75).
+**Story Arcs** (`Resources/Data/Mom/Cast/arc_*.tres`): small 3-5 beat structures (setup → escalation → payoff, some with epilogues) delivered across check-ins in different zones. Beats gate on channel, grudge, Rep, story flags, and chores done; the highest-priority due beat takes the slot. Completion pays small real rewards (money, mood, Rep). The six arcs:
+1. **The Patterson File** — nosy intro → false-accusation escalation → the absurd casserole report and a truce (sightings halve, never false again) → post-truce, Patterson becomes Mom's reluctant informant.
+2. **The Golden Child** — Derek comparisons → grudge-scaled resentment → Derek caught at Video Rentals, then one silent, warm check-in (forces a cool-mom visit next) → Derek quietly covers for you once; the rivalry softens.
+3. **Dad's Long Week** — traffic commiseration → the good pen → "I haven't told your father… yet." → Mom finds Dad's list of your excuses → the cover-up choice (help destroy it or let it play out).
+4. **The Perfume Cloud** — Debra's opinions → the perfume-counter ambush → Mom tells her off ($25 gift card, "I'm keeping half") → Debra's revenge gossip backfires at the neighborhood watch meeting.
+5. **Mrs. Henderson Has Called** — homework warning → the dinner phone call → "creative with your time" (needs chores done = homework done; pays a consumable) → Henderson phones back with "photographic evidence"; Mom humors him while mouthing the truth to you.
+6. **Mom's Secret Past** — regional finals 1987 → champion's tips (free consumable) → Mom takes the cabinet high score (Rep-gated, pays $75) → the trophy comes out of the closet, with a rematch offer.
 
 **Dad mechanics**: at severity ≥ 4 with grudge ≥ 2, a meter visit has a 20% chance to become a Dad call (once per playthrough) — Mom relays Dad's verdict off-screen and the punishment lands one tier worse. Counterpoint: if grudge climbs to 2+ and later returns to 0, the next check-in becomes the Dad cover beat ("I didn't tell him. You owe me.") — big mood/Rep gain, no punishment.
 
@@ -1056,6 +1058,8 @@ A recurring cast lives inside Mom's check-in dialogues. They never speak directl
 - Force Derek Twist: play the Video Rentals twist + quiet visit
 - Force Dad Call: play the Dad call dialog
 - Show Cast State: dump zones, arcs, flags, pending reports
+- Check-in Flavor (Nostalgia/Gossip/Bargain): force a specific flavor check-in tree
+- Mom Dialog: Preview 4-Response: open the widest/tallest fixed-panel case (checkin_neutral, 4 responses)
 
 **Tests**: `Tests/CastManagerTest.tscn` (zone logging, sighting truth, mood bands, report delay, arc gating/completion, precedence, save/load, reset). `Tests/mom_data_validation_test.gd` also validates `Resources/Data/Mom/Cast/` (characters, arcs, zone affinities, beat/flag cross-references, BBCode whitelist).
 

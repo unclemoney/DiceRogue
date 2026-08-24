@@ -179,6 +179,22 @@ Note: the d6 set is the default and is always available (no unlock item).
 
 > **Note:** This document is partially stale. Several entries were corrected during the Lock Constraint refactor (May 2026). A full audit against `Scripts/Managers/progress_manager.gd` is recommended for complete accuracy.
 
+## REP-Gated POG Tiers (run-scoped)
+
+Separate from the meta unlocks above, the kiosk also gates PowerUps by their POG rating against the player's run-scoped Rep stat (0-100, reset each new game, earned mainly by sassing Mom). Source of truth: `REP_TIER_THRESHOLDS` in `Scripts/Managers/progress_manager.gd`.
+
+| Tier | Name | Rep required | POG ratings opened |
+|---|---|---:|---|
+| 0 | Mom-Approved | 0 | G |
+| 1 | Questionable | 0 | + PG |
+| 2 | Parental Guidance | 15 | + PG-13 |
+| 3 | Grounded | 35 | + R |
+| 4 | Banned | 60 | + NC-17 |
+
+Rep economy (`Scripts/Core/game_controller.gd`): successful sass +5, deferred punishment +4, Mom storms off +6, polite on a punished visit -2, polite on a check-in -1, punished sass 0. Story beats and cast arcs also pay small `rep_delta`/`reward_rep` amounts. Below Rep 15 with Mom at mood <= 3, G-rated POGs get bonus shelf weight and a discount.
+
+The visual meter stages (`REP_STAGE_THRESHOLDS = [0, 10, 30, 60]`): Teacher's Pet -> Attitude Problem -> Mall Rat -> Banned from the Mall.
+
 If you'd like, I can also:
 
 -+- Save a CSV copy at `Docs/unlock_conditions.csv`.

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MomDialogNode" load_steps=14 format=3 uid="uid://vh7dr0oi1u31"]
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=17 format=3 uid="uid://vh7dr0oi1u31"]
 
 [ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
 [ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
@@ -45,7 +45,7 @@ mood_delta = 1
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=orange]Games have rules too, young one.[/color]"
+result_text = "[color=orange]Games have rules too, buster.[/color]"
 result_expression = "neutral"
 ends_visit = true
 
@@ -90,7 +90,7 @@ mood_delta = 2
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=red]Thin ice, young one. THIN. ICE.[/color]"
+result_text = "[color=red]Thin ice, little delinquent. THIN. ICE.[/color]"
 result_expression = "upset"
 ends_visit = true
 
@@ -113,6 +113,38 @@ button_text = "So what?"
 tone = "sassy"
 outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2"), SubResource("out_sassy_3")])
 
+[sub_resource type="Resource" id="out_backpedal_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = -2
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=green]Oh. Well.[/color] That's very grown-up of you, sweetie. Return it and we'll say no more."
+result_expression = "happy"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_backpedal_2"]
+script = ExtResource("3_out")
+weight = 4.0
+effect = "apply_tier"
+magnitude = 1
+mood_delta = 0
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "Too late for returns, champ. [color=orange]Receipts or not, it's coming with ME.[/color]"
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_backpedal"]
+script = ExtResource("2_resp")
+button_text = "I can return it, no big deal."
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_backpedal_1"), SubResource("out_backpedal_2")])
+
 [resource]
 script = ExtResource("1_node")
 id = "checkin_warning"
@@ -120,4 +152,4 @@ mom_text = "[color=orange]I saw what you've been buying at that shop.[/color] Yo
 expression = "neutral"
 speaker_name = "Mom"
 speaker_tint = Color(1, 1, 1, 1)
-responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy"), SubResource("resp_backpedal")])

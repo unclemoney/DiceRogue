@@ -154,12 +154,22 @@ func _test_arc_gating_and_completion(cm: CastManager) -> void:
 	claim = cm._find_due_beat(gc12, 12)
 	_check("payoff due after escalation at channel 12", claim.get("tree_id", "") == "story_patterson_payoff")
 	cm.on_session_finished("story_patterson_payoff", [])
-	_check("arc completed after payoff", "patterson_file" in cm.completed_arcs)
 	_check("truce flag set by payoff", cm.flags.get("patterson_truce", false))
+	_check("arc not complete before informant epilogue", "patterson_file" not in cm.completed_arcs)
+
+	# Beat 3 (informant epilogue) requires channel 14 and the truce flag
 	claim = cm._find_due_beat(gc12, 12)
+	_check("informant beat not due at channel 12", claim.get("tree_id", "") != "story_patterson_informant")
+	var gc14 := _fake_gc(14)
+	claim = cm._find_due_beat(gc14, 14)
+	_check("informant beat due at channel 14", claim.get("tree_id", "") == "story_patterson_informant")
+	cm.on_session_finished("story_patterson_informant", [])
+	_check("arc completed after informant epilogue", "patterson_file" in cm.completed_arcs)
+	claim = cm._find_due_beat(gc14, 14)
 	_check("completed arc never fires again", claim.get("arc_id", "") != "patterson_file")
 	gc2.queue_free()
 	gc12.queue_free()
+	gc14.queue_free()
 
 
 func _test_flag_nodes(cm: CastManager) -> void:
@@ -210,7 +220,7 @@ func _test_save_load_roundtrip(cm: CastManager) -> void:
 	_check("flags round-trip", cm2.flags.get("flag_roundtrip", false))
 	_check("pending reports round-trip", cm2.patterson_pending.size() == 1)
 	_check("sighting counters round-trip", cm2.patterson_sightings_this_run == 4 and cm2.last_sighting_channel == 3)
-	_check("arc progress round-trip", int(cm2.arc_progress.get("patterson_file", -1)) == 3)
+	_check("arc progress round-trip", int(cm2.arc_progress.get("patterson_file", -1)) == 4)
 	_check("completed arcs round-trip", "patterson_file" in cm2.completed_arcs)
 	_check("max grudge round-trip", cm2.max_grudge_seen == 2)
 

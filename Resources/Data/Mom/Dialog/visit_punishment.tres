@@ -161,7 +161,7 @@ outcomes = Array[ExtResource("3_out")]([SubResource("out_defer_1"), SubResource(
 [resource]
 script = ExtResource("1_node")
 id = "visit_punishment"
-mom_text = "[color=red]The chore list is RIGHT THERE[/color] and look at this mess! Meter's full, chores undone. Explain yourself, young one."
+mom_text = "[color=red]The chore list is RIGHT THERE[/color] and look at this mess! Meter's full, chores undone. Explain yourself, you little hooligan."
 expression = "upset"
 speaker_name = "Mom"
 speaker_tint = Color(1, 1, 1, 1)

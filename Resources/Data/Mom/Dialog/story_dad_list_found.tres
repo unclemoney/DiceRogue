@@ -1,0 +1,78 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=10 format=3]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_calm_1"]
+script = ExtResource("3_out")
+weight = 7.0
+effect = "rep_delta"
+magnitude = 1
+mood_delta = 0
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=green]Smart answer.[/color] Item four, though - 'the dog ate my bus pass'? We don't OWN a dog."
+result_expression = "neutral"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_calm_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "none"
+magnitude = 0
+mood_delta = 0
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "Relax. I'm just admiring his penmanship. The man's excuses are neater than his taxes."
+result_expression = "neutral"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_calm"]
+script = ExtResource("2_resp")
+button_text = "(say absolutely nothing)"
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_calm_1"), SubResource("out_calm_2")])
+
+[sub_resource type="Resource" id="out_sweat_1"]
+script = ExtResource("3_out")
+weight = 7.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=orange]Nothing?[/color] Sweetie, there are ELEVEN items here. Two are dated. One has a MAP."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_sweat_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "grudge_delta"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 1
+permanent = false
+followup_node_id = ""
+result_text = "[color=red]You're sweating through your shirt, kiddo.[/color] That's item twelve, right there."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_sweat"]
+script = ExtResource("2_resp")
+button_text = "It's nothing! Probably!"
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sweat_1"), SubResource("out_sweat_2")])
+
+[resource]
+script = ExtResource("1_node")
+id = "story_dad_list_found"
+mom_text = "Don't mind me. Your father left his little LIST lying around - every excuse you've ever given him, written down, cross-referenced. [color=orange]I'm studying it like game film.[/color]"
+expression = "neutral"
+speaker_name = "Mom"
+speaker_tint = Color(1, 1, 1, 1)
+responses = Array[ExtResource("2_resp")]([SubResource("resp_calm"), SubResource("resp_sweat")])

@@ -97,7 +97,7 @@ func _on_test_mom_upset_pressed() -> void:
 	mom_dialog.show_dialog("upset", "[color=orange]Hmm...[/color] What's this? You know you're not old enough for this kind of thing. I'm taking it away.")
 
 func _on_test_mom_furious_pressed() -> void:
-	mom_dialog.show_dialog("upset", "[wave amp=50 freq=3][color=red]WHAT IS THIS?![/color][/wave] You are [shake rate=20 level=10]GROUNDED[/shake] young one!")
+	mom_dialog.show_dialog("upset", "[wave amp=50 freq=3][color=red]WHAT IS THIS?![/color][/wave] You are [shake rate=20 level=10]GROUNDED[/shake], little delinquent!")
 
 func _on_test_mom_happy_pressed() -> void:
 	mom_dialog.show_dialog("happy", "[color=green]Great job![/color] You're being so responsible. Keep it up!")

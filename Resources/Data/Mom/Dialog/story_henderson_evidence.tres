@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MomDialogNode" load_steps=14 format=3 uid="uid://dnirxmvllcdb6"]
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=13 format=3]
 
 [ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
 [ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
@@ -7,81 +7,49 @@
 [sub_resource type="Resource" id="out_polite_1"]
 script = ExtResource("3_out")
 weight = 7.0
-effect = "reward_money"
-magnitude = 0
+effect = "rep_delta"
+magnitude = 2
 mood_delta = 0
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=green]Here's a little something for your trouble.[/color]"
+result_text = "[color=green]Smart.[/color] Between us? The 'photos' are a squirrel and a mail truck. Stay out of frame anyway."
 result_expression = "happy"
 ends_visit = true
 
 [sub_resource type="Resource" id="out_polite_2"]
 script = ExtResource("3_out")
 weight = 3.0
-effect = "reward_powerup"
+effect = "mood_delta"
 magnitude = 0
-mood_delta = 0
+mood_delta = -1
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=green]And I picked up a little gift for you at the store![/color]"
+result_text = "Good. He likes feeling consulted. It keeps the bird-feeder briefings SHORT."
 result_expression = "happy"
 ends_visit = true
 
 [sub_resource type="Resource" id="resp_polite"]
 script = ExtResource("2_resp")
-button_text = "Thanks, Mom!"
+button_text = "(nod along quietly)"
 tone = "polite"
 outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource("out_polite_2")])
 
 [sub_resource type="Resource" id="out_neutral_1"]
 script = ExtResource("3_out")
-weight = 9.0
-effect = "reward_money"
-magnitude = 0
+weight = 7.0
+effect = "rep_delta"
+magnitude = 1
 mood_delta = 0
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=green]So humble! Here's your allowance, plus a little extra.[/color]"
-result_expression = "happy"
+result_text = "Mm-hm. That's what I said. HENDERSON. ...Yes, the telephoto lens. No, that's a sprinkler."
+result_expression = "neutral"
 ends_visit = true
 
 [sub_resource type="Resource" id="out_neutral_2"]
-script = ExtResource("3_out")
-weight = 1.0
-effect = "none"
-magnitude = 0
-mood_delta = 0
-grudge_delta = 0
-permanent = false
-followup_node_id = ""
-result_text = "[color=green]Alright, superstar.[/color] Keep it up!"
-result_expression = "happy"
-ends_visit = true
-
-[sub_resource type="Resource" id="resp_neutral"]
-script = ExtResource("2_resp")
-button_text = "It was nothing."
-tone = "neutral"
-outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
-
-[sub_resource type="Resource" id="out_sassy_1"]
-script = ExtResource("3_out")
-weight = 6.0
-effect = "reward_money"
-magnitude = 0
-mood_delta = 0
-grudge_delta = 0
-permanent = false
-followup_node_id = ""
-result_text = "[color=green]Cheeky.[/color] Fine, here — don't spend it all in one shop."
-result_expression = "happy"
-ends_visit = true
-
-[sub_resource type="Resource" id="out_sassy_2"]
 script = ExtResource("3_out")
 weight = 3.0
 effect = "none"
@@ -90,34 +58,53 @@ mood_delta = 0
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=orange]Your reward is a mother's love.[/color] It's priceless, you know."
+result_text = "He's printing them at the drugstore kiosk as we speak. An hour each way. Let him have this."
 result_expression = "neutral"
 ends_visit = true
 
-[sub_resource type="Resource" id="out_sassy_3"]
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "Is he for real?"
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
+
+[sub_resource type="Resource" id="out_sassy_1"]
 script = ExtResource("3_out")
-weight = 1.0
+weight = 7.0
 effect = "mood_delta"
 magnitude = 0
 mood_delta = 1
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=orange]Don't push your luck, small fry.[/color]"
-result_expression = "neutral"
+result_text = "[color=orange]Cover your mouth![/color] He can HEAR smirking. It's his one talent."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_sassy_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "apply_tier"
+magnitude = 1
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=red]He heard that![/color] Now I have to agree with him for TEN minutes. This is on you, smart mouth."
+result_expression = "upset"
 ends_visit = true
 
 [sub_resource type="Resource" id="resp_sassy"]
 script = ExtResource("2_resp")
-button_text = "Do I get a reward?"
+button_text = "(laugh out loud)"
 tone = "sassy"
-outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2"), SubResource("out_sassy_3")])
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2")])
 
 [resource]
 script = ExtResource("1_node")
-id = "visit_reward"
-mom_text = "[color=green]Look at you[/color] — chores done, dice rolling, room spotless. I'm proud of you, sweetie!"
-expression = "happy"
-speaker_name = "Mom"
-speaker_tint = Color(1, 1, 1, 1)
+id = "story_henderson_evidence"
+mom_text = "Yes, Henderson. PHOTOGRAPHIC evidence. Of my child. 'Loitering.' ...Mm-hm. At a MALL. [color=orange](She covers the receiver and mouths: he's lost it.)[/color]"
+expression = "neutral"
+speaker_name = "Mom (on the phone with Henderson)"
+speaker_tint = Color(0.45, 0.5, 0.65, 1)
 responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

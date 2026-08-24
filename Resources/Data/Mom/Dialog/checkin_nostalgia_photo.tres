@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+
+[resource]
+script = ExtResource("1_node")
+id = "checkin_nostalgia_photo"
+mom_text = "[color=green]Ta-daaa![/color] Your fourth birthday. Spaghetti ALL over your face, wearing the bowl as a hat. I'm getting copies made for Debra."
+expression = "happy"
+speaker_name = "Mom"
+speaker_tint = Color(1, 1, 1, 1)
+responses = Array[Resource]([])

@@ -154,14 +154,14 @@ func _test_rep_stat() -> void:
 
 	pm.cumulative_stats["rep"] = 0
 	_check("tier 1 at rep 0 (G+PG open)", pm.get_rep_tier() == 1)
-	pm.cumulative_stats["rep"] = 24
-	_check("tier 1 below 25", pm.get_rep_tier() == 1)
-	pm.cumulative_stats["rep"] = 25
-	_check("tier 2 at rep 25", pm.get_rep_tier() == 2)
-	pm.cumulative_stats["rep"] = 50
-	_check("tier 3 at rep 50", pm.get_rep_tier() == 3)
-	pm.cumulative_stats["rep"] = 75
-	_check("tier 4 at rep 75", pm.get_rep_tier() == 4)
+	pm.cumulative_stats["rep"] = 14
+	_check("tier 1 below 15", pm.get_rep_tier() == 1)
+	pm.cumulative_stats["rep"] = 15
+	_check("tier 2 at rep 15", pm.get_rep_tier() == 2)
+	pm.cumulative_stats["rep"] = 35
+	_check("tier 3 at rep 35", pm.get_rep_tier() == 3)
+	pm.cumulative_stats["rep"] = 60
+	_check("tier 4 at rep 60", pm.get_rep_tier() == 4)
 	_check("stage names progress", pm.get_rep_stage_name() == "Banned from the Mall")
 
 	pm.cumulative_stats["rep"] = 0

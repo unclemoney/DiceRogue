@@ -5700,9 +5700,9 @@ func _clear_grounded_debuffs() -> void:
 # ─── Rebellion systems (sass incentives) ───
 
 ## Rep deltas per Mom dialog response (see PLAN: Sass Incentives).
-const REP_SASS_SUCCESS: int = 3
-const REP_DEFER_SUCCESS: int = 2
-const REP_STORM_OFF: int = 4
+const REP_SASS_SUCCESS: int = 5
+const REP_DEFER_SUCCESS: int = 4
+const REP_STORM_OFF: int = 6
 const REP_POLITE_PUNISHMENT: int = -2
 const REP_POLITE_CHECKIN: int = -1
 

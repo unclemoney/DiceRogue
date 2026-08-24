@@ -1,10 +1,13 @@
-[gd_resource type="Resource" script_class="MomDialogNode" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=3 format=3 uid="uid://dggqyoi8tjjkb"]
 
-[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="1_nq2ce"]
 
 [resource]
 script = ExtResource("1_node")
 id = "sass_storm_off"
-mom_text = "[color=red][wave amp=50 freq=3]FINE.[/wave][/color] We'll talk LATER, young one. And you will [shake rate=15 level=8]NOT[/shake] like it."
+mom_text = "[color=red][wave amp=50 freq=3]FINE.[/wave][/color] We'll talk LATER, you ungrateful so-and-so. And you will [shake rate=15 level=8]NOT[/shake] like it."
 expression = "upset"
-responses = Array[Resource]([])
+speaker_name = "Mom"
+speaker_tint = Color(1, 1, 1, 1)
+responses = Array[ExtResource("1_nq2ce")]([])

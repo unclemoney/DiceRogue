@@ -24,6 +24,17 @@ const PANEL_BACKDROP_SHADER_PATH := "res://Scripts/Shaders/panel_backdrop.gdshad
 ## class cache being fresh.
 const MomPortraitAnimatorScript := preload("res://Scripts/UI/mom_portrait_animator.gd")
 
+## One fixed panel size for every dialog beat so the popup never resizes
+## between lines. Fits the worst case: long text + MAX_RESPONSES buttons.
+const PANEL_SIZE := Vector2(560, 500)
+## Response buttons beyond this are dropped with a warning (panel won't grow).
+const MAX_RESPONSES: int = 4
+## Portrait frame geometry: 128px panel with a 2px border. The portrait is
+## bottom-aligned flush with the inner bottom edge, like a framed portrait.
+const PORTRAIT_FRAME_SIZE: float = 128.0
+const PORTRAIT_BORDER_WIDTH: float = 2.0
+const PORTRAIT_SCALE: float = 0.9
+
 ## Rep meter (rebel mode): cloned from ChoreUI's meter pattern.
 const REP_BAR_TEXTURE_UNDER : CompressedTexture2D = preload("res://Resources/Art/UI/rep_meter_under.png")
 const REP_BAR_TEXTURE_PROGRESS : CompressedTexture2D = preload("res://Resources/Art/UI/rep_meter_progress.png")
@@ -315,8 +326,11 @@ func _build_response_buttons(responses: Array) -> void:
 
 	response_row.visible = true
 	_current_responses = responses.duplicate()
-	for i in range(responses.size()):
-		var response: MomDialogResponse = responses[i]
+	if responses.size() > MAX_RESPONSES:
+		push_warning("[MomCharacter] Dialog node has %d responses; showing first %d (panel is fixed-size)" % [responses.size(), MAX_RESPONSES])
+		_current_responses.resize(MAX_RESPONSES)
+	for i in range(_current_responses.size()):
+		var response: MomDialogResponse = _current_responses[i]
 		if response == null:
 			continue
 		var button := GlassActionButton.new()
@@ -402,15 +416,17 @@ func _create_ui_structure() -> void:
 	background_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(background_overlay)
 	
-	# Main dialog panel — centered via anchors (NOT CenterContainer, which fights tweens)
+	# Main dialog panel — centered via anchors (NOT CenterContainer, which fights tweens).
+	# Fixed size: anchors + offsets + min size all agree, so content can never
+	# grow or shrink the panel between beats.
 	dialog_panel = PanelContainer.new()
 	dialog_panel.name = "DialogPanel"
-	dialog_panel.custom_minimum_size = Vector2(500, 300)
+	dialog_panel.custom_minimum_size = PANEL_SIZE
 	dialog_panel.set_anchors_preset(Control.PRESET_CENTER)
-	dialog_panel.offset_left = -250
-	dialog_panel.offset_top = -150
-	dialog_panel.offset_right = 250
-	dialog_panel.offset_bottom = 150
+	dialog_panel.offset_left = -PANEL_SIZE.x / 2.0
+	dialog_panel.offset_top = -PANEL_SIZE.y / 2.0
+	dialog_panel.offset_right = PANEL_SIZE.x / 2.0
+	dialog_panel.offset_bottom = PANEL_SIZE.y / 2.0
 	dialog_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	dialog_panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 	_apply_panel_style()
@@ -431,19 +447,26 @@ func _create_ui_structure() -> void:
 	hbox.add_theme_constant_override("separation", 20)
 	vbox.add_child(hbox)
 	
-	# Sprite container
+	# Sprite container: pinned to a square at the top of the row so the tall
+	# fixed panel can't stretch the frame away from the bottom-aligned
+	# portrait (the text column takes the extra height instead).
 	var sprite_container = PanelContainer.new()
-	sprite_container.custom_minimum_size = Vector2(128, 128)
+	sprite_container.custom_minimum_size = Vector2(PORTRAIT_FRAME_SIZE, PORTRAIT_FRAME_SIZE)
+	sprite_container.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_apply_sprite_panel_style(sprite_container)
 	hbox.add_child(sprite_container)
 	
 	# Animated portrait (Node2D child of a Control draws at an explicit
-	# position; containers only lay out Control children). Scaled to fit
-	# the 120px inner frame of the 128px panel.
+	# position; containers only lay out Control children). Bottom-aligned so
+	# Mom's feet sit flush with the frame's inner bottom edge, like a
+	# portrait: center y = (frame - border) - half the scaled sprite height.
 	portrait = MomPortraitAnimatorScript.new()
 	portrait.name = "Portrait"
-	portrait.position = Vector2(64, 64)
-	portrait.scale = Vector2.ONE * 0.9
+	portrait.position = Vector2(
+		PORTRAIT_FRAME_SIZE / 2.0,
+		(PORTRAIT_FRAME_SIZE - PORTRAIT_BORDER_WIDTH) - (PORTRAIT_FRAME_SIZE * PORTRAIT_SCALE) / 2.0
+	)
+	portrait.scale = Vector2.ONE * PORTRAIT_SCALE
 	sprite_container.add_child(portrait)
 	
 	# Dialog text container
@@ -463,7 +486,9 @@ func _create_ui_structure() -> void:
 	dialog_label = RichTextLabel.new()
 	dialog_label.name = "DialogLabel"
 	dialog_label.bbcode_enabled = true
-	dialog_label.fit_content = true
+	# No fit_content: long text scrolls inside the fixed panel instead of
+	# growing it.
+	dialog_label.fit_content = false
 	dialog_label.custom_minimum_size = Vector2(300, 120)
 	dialog_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	dialog_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -591,10 +616,10 @@ func _animate_in() -> void:
 	bg_tween.tween_property(background_overlay, "modulate:a", 1.0, 0.3)
 	
 	# Reset panel to home offsets in case of a previous _animate_out
-	dialog_panel.offset_left = -250
-	dialog_panel.offset_top = -150
-	dialog_panel.offset_right = 250
-	dialog_panel.offset_bottom = 150
+	dialog_panel.offset_left = -PANEL_SIZE.x / 2.0
+	dialog_panel.offset_top = -PANEL_SIZE.y / 2.0
+	dialog_panel.offset_right = PANEL_SIZE.x / 2.0
+	dialog_panel.offset_bottom = PANEL_SIZE.y / 2.0
 	dialog_panel.scale = Vector2.ONE
 	dialog_panel.modulate.a = 1.0
 	dialog_panel.pivot_offset = dialog_panel.size / 2.0

@@ -47,7 +47,7 @@ script = ExtResource("3_out")
 weight = 6.0
 effect = "mood_delta"
 mood_delta = 2
-result_text = "[color=orange]He sits in traffic so YOU can loiter in a mall.[/color] Perspective, young one."
+result_text = "[color=orange]He sits in traffic so YOU can loiter in a mall.[/color] Perspective, smart mouth."
 result_expression = "upset"
 
 [sub_resource type="Resource" id="out_sassy_2"]

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MomDialogNode" load_steps=15 format=3 uid="uid://cjjbt8vx1qiux"]
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=18 format=3 uid="uid://cjjbt8vx1qiux"]
 
 [ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
 [ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
@@ -90,7 +90,7 @@ mood_delta = 1
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=red][shake rate=20 level=10]EXCUSE me?![/shake][/color] That attitude just earned you a punishment, young one!"
+result_text = "[color=red][shake rate=20 level=10]EXCUSE me?![/shake][/color] That attitude just earned you a punishment, you indolent child!"
 result_expression = "upset"
 ends_visit = true
 
@@ -126,6 +126,38 @@ button_text = "Go away, I'm on a streak!"
 tone = "sassy"
 outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2"), SubResource("out_sassy_3")])
 
+[sub_resource type="Resource" id="out_deflect_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = -1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=green]Ha![/color] Nice try, kiddo. For the record: yes, all of them, before your father even woke up."
+result_expression = "happy"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_deflect_2"]
+script = ExtResource("3_out")
+weight = 4.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=orange]Don't answer a question with a question, smart mouth.[/color] MY chores are done. Are yours?"
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_deflect"]
+script = ExtResource("2_resp")
+button_text = "Did YOU do YOUR chores?"
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_deflect_1"), SubResource("out_deflect_2")])
+
 [resource]
 script = ExtResource("1_node")
 id = "checkin_neutral"
@@ -133,4 +165,4 @@ mom_text = "Just checking in, sweetie! Everything going okay in here?"
 expression = "neutral"
 speaker_name = "Mom"
 speaker_tint = Color(1, 1, 1, 1)
-responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy"), SubResource("resp_deflect")])

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MomDialogNode" load_steps=14 format=3 uid="uid://dnirxmvllcdb6"]
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=13 format=3]
 
 [ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
 [ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
@@ -8,115 +8,102 @@
 script = ExtResource("3_out")
 weight = 7.0
 effect = "reward_money"
-magnitude = 0
-mood_delta = 0
+magnitude = 25
+mood_delta = -1
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=green]Here's a little something for your trouble.[/color]"
+result_text = "[color=green]Pleasure doing business.[/color] Sparkling dishes, and here's your five... plus a little something for the attitude."
 result_expression = "happy"
 ends_visit = true
 
 [sub_resource type="Resource" id="out_polite_2"]
 script = ExtResource("3_out")
 weight = 3.0
-effect = "reward_powerup"
+effect = "mood_delta"
 magnitude = 0
-mood_delta = 0
+mood_delta = -1
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=green]And I picked up a little gift for you at the store![/color]"
-result_expression = "happy"
+result_text = "Deal. Oh - and 'dishes' means the PANS too, champ. Fine print. No, I will not be paying extra."
+result_expression = "neutral"
 ends_visit = true
 
 [sub_resource type="Resource" id="resp_polite"]
 script = ExtResource("2_resp")
-button_text = "Thanks, Mom!"
+button_text = "Deal."
 tone = "polite"
 outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource("out_polite_2")])
 
 [sub_resource type="Resource" id="out_neutral_1"]
 script = ExtResource("3_out")
-weight = 9.0
+weight = 6.0
 effect = "reward_money"
-magnitude = 0
+magnitude = 10
 mood_delta = 0
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=green]So humble! Here's your allowance, plus a little extra.[/color]"
-result_expression = "happy"
+result_text = "[color=green]Ten?! ...Fine. Seven-fifty, and you dry too.[/color] Don't push your luck, negotiator."
+result_expression = "neutral"
 ends_visit = true
 
 [sub_resource type="Resource" id="out_neutral_2"]
 script = ExtResource("3_out")
-weight = 1.0
-effect = "none"
-magnitude = 0
-mood_delta = 0
-grudge_delta = 0
-permanent = false
-followup_node_id = ""
-result_text = "[color=green]Alright, superstar.[/color] Keep it up!"
-result_expression = "happy"
-ends_visit = true
-
-[sub_resource type="Resource" id="resp_neutral"]
-script = ExtResource("2_resp")
-button_text = "It was nothing."
-tone = "neutral"
-outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
-
-[sub_resource type="Resource" id="out_sassy_1"]
-script = ExtResource("3_out")
-weight = 6.0
-effect = "reward_money"
-magnitude = 0
-mood_delta = 0
-grudge_delta = 0
-permanent = false
-followup_node_id = ""
-result_text = "[color=green]Cheeky.[/color] Fine, here — don't spend it all in one shop."
-result_expression = "happy"
-ends_visit = true
-
-[sub_resource type="Resource" id="out_sassy_2"]
-script = ExtResource("3_out")
-weight = 3.0
-effect = "none"
-magnitude = 0
-mood_delta = 0
-grudge_delta = 0
-permanent = false
-followup_node_id = ""
-result_text = "[color=orange]Your reward is a mother's love.[/color] It's priceless, you know."
-result_expression = "neutral"
-ends_visit = true
-
-[sub_resource type="Resource" id="out_sassy_3"]
-script = ExtResource("3_out")
-weight = 1.0
+weight = 4.0
 effect = "mood_delta"
 magnitude = 0
 mood_delta = 1
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=orange]Don't push your luck, small fry.[/color]"
-result_expression = "neutral"
+result_text = "[color=orange]Haggling? With your MOTHER?[/color] Offer withdrawn. Now they're free AND mandatory."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "Make it ten."
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
+
+[sub_resource type="Resource" id="out_sassy_1"]
+script = ExtResource("3_out")
+weight = 7.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = 2
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=red]Your TIME?! Your time is worth exactly one roof and three meals a day, buster.[/color]"
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_sassy_2"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "storms_off"
+magnitude = 0
+mood_delta = 2
+grudge_delta = 1
+permanent = false
+followup_node_id = "sass_storm_off"
+result_text = ""
+result_expression = ""
 ends_visit = true
 
 [sub_resource type="Resource" id="resp_sassy"]
 script = ExtResource("2_resp")
-button_text = "Do I get a reward?"
+button_text = "My time is worth more."
 tone = "sassy"
-outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2"), SubResource("out_sassy_3")])
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2")])
 
 [resource]
 script = ExtResource("1_node")
-id = "visit_reward"
-mom_text = "[color=green]Look at you[/color] — chores done, dice rolling, room spotless. I'm proud of you, sweetie!"
+id = "checkin_bargain"
+mom_text = "Alright, sweetie, Mom has a proposition. Do the dishes tonight without being asked - WITHOUT the sighing - and there's five bucks in it for you."
 expression = "happy"
 speaker_name = "Mom"
 speaker_tint = Color(1, 1, 1, 1)

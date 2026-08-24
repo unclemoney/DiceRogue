@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MomDialogNode" load_steps=14 format=3 uid="uid://dnirxmvllcdb6"]
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=13 format=3]
 
 [ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
 [ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
@@ -7,81 +7,49 @@
 [sub_resource type="Resource" id="out_polite_1"]
 script = ExtResource("3_out")
 weight = 7.0
-effect = "reward_money"
-magnitude = 0
+effect = "rep_delta"
+magnitude = 2
 mood_delta = 0
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=green]Here's a little something for your trouble.[/color]"
+result_text = "[color=green]That's my kid.[/color] Fair warning - the old muscle memory is still THERE."
 result_expression = "happy"
 ends_visit = true
 
 [sub_resource type="Resource" id="out_polite_2"]
 script = ExtResource("3_out")
 weight = 3.0
-effect = "reward_powerup"
+effect = "mood_delta"
 magnitude = 0
-mood_delta = 0
+mood_delta = -2
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=green]And I picked up a little gift for you at the store![/color]"
+result_text = "I'll even bake. Winner picks the casserole. Bring your lucky dice, you'll need them."
 result_expression = "happy"
 ends_visit = true
 
 [sub_resource type="Resource" id="resp_polite"]
 script = ExtResource("2_resp")
-button_text = "Thanks, Mom!"
+button_text = "You're on. Name the day."
 tone = "polite"
 outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource("out_polite_2")])
 
 [sub_resource type="Resource" id="out_neutral_1"]
 script = ExtResource("3_out")
-weight = 9.0
-effect = "reward_money"
-magnitude = 0
+weight = 7.0
+effect = "rep_delta"
+magnitude = 1
 mood_delta = 0
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=green]So humble! Here's your allowance, plus a little extra.[/color]"
-result_expression = "happy"
+result_text = "Varsity regionals, 1983. The trophy's heavier than it looks - like your mother's poker face."
+result_expression = "neutral"
 ends_visit = true
 
 [sub_resource type="Resource" id="out_neutral_2"]
-script = ExtResource("3_out")
-weight = 1.0
-effect = "none"
-magnitude = 0
-mood_delta = 0
-grudge_delta = 0
-permanent = false
-followup_node_id = ""
-result_text = "[color=green]Alright, superstar.[/color] Keep it up!"
-result_expression = "happy"
-ends_visit = true
-
-[sub_resource type="Resource" id="resp_neutral"]
-script = ExtResource("2_resp")
-button_text = "It was nothing."
-tone = "neutral"
-outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
-
-[sub_resource type="Resource" id="out_sassy_1"]
-script = ExtResource("3_out")
-weight = 6.0
-effect = "reward_money"
-magnitude = 0
-mood_delta = 0
-grudge_delta = 0
-permanent = false
-followup_node_id = ""
-result_text = "[color=green]Cheeky.[/color] Fine, here — don't spend it all in one shop."
-result_expression = "happy"
-ends_visit = true
-
-[sub_resource type="Resource" id="out_sassy_2"]
 script = ExtResource("3_out")
 weight = 3.0
 effect = "none"
@@ -90,33 +58,52 @@ mood_delta = 0
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=orange]Your reward is a mother's love.[/color] It's priceless, you know."
+result_text = "Dust it off, put it on the mantel... or don't. It knows what it did."
 result_expression = "neutral"
 ends_visit = true
 
-[sub_resource type="Resource" id="out_sassy_3"]
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "So where'd you win it?"
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
+
+[sub_resource type="Resource" id="out_sassy_1"]
 script = ExtResource("3_out")
-weight = 1.0
+weight = 7.0
 effect = "mood_delta"
 magnitude = 0
 mood_delta = 1
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=orange]Don't push your luck, small fry.[/color]"
-result_expression = "neutral"
+result_text = "[color=orange]Vintage?! VINTAGE?! It's a CLASSIC.[/color] Like your mother's right hook at the finals table."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_sassy_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = 2
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=red]Careful, champ.[/color] The last person who mocked this trophy ate frozen dinners for a week."
+result_expression = "upset"
 ends_visit = true
 
 [sub_resource type="Resource" id="resp_sassy"]
 script = ExtResource("2_resp")
-button_text = "Do I get a reward?"
+button_text = "Cute little vintage trophy."
 tone = "sassy"
-outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2"), SubResource("out_sassy_3")])
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2")])
 
 [resource]
 script = ExtResource("1_node")
-id = "visit_reward"
-mom_text = "[color=green]Look at you[/color] — chores done, dice rolling, room spotless. I'm proud of you, sweetie!"
+id = "story_mom_trophy"
+mom_text = "Look what was behind the winter coats. [color=green]My old Yahtzee trophy.[/color] State runner-up, thank you very much. Someday, sweetie, you and I have a rematch coming."
 expression = "happy"
 speaker_name = "Mom"
 speaker_tint = Color(1, 1, 1, 1)
