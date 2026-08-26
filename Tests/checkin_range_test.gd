@@ -3,9 +3,9 @@ extends Node
 ## checkin_range_test.gd
 ##
 ## Exercises the ChoresManager random check-in scheduling:
-##   1. _schedule_checkin() roll targets always fall within 2-10 (base max;
-##      no game_controller in this test, so no mall-zone bonus applies).
-##   2. get_checkin_max() falls back to CHECKIN_TARGET_MAX without a zone.
+##   1. _schedule_checkin() roll targets always fall within 2-7 (zone-1 max;
+##      no game_controller in this test, so the fallback applies).
+##   2. get_checkin_max() falls back to 7 without a zone.
 ##   3. The mom_checkin signal fires exactly once when the roll target is hit.
 ##
 ## Scene-based test (autoloads must be compiled first).
@@ -52,21 +52,21 @@ func _check(label: String, condition: bool) -> void:
 
 
 func _test_target_range(cm) -> void:
-	_check("get_checkin_max() falls back to base max without a zone",
-		cm.get_checkin_max() == ChoresManagerScript.CHECKIN_TARGET_MAX)
-	var lowest: int = ChoresManagerScript.CHECKIN_TARGET_MAX
+	_check("get_checkin_max() falls back to zone-1 max without a zone",
+		cm.get_checkin_max() == 7)
+	var lowest: int = 7
 	var highest: int = ChoresManagerScript.CHECKIN_TARGET_MIN
 	var in_range := true
 	for i in range(ITERATIONS):
 		cm._schedule_checkin()
 		var target: int = cm._checkin_roll_target
-		if target < ChoresManagerScript.CHECKIN_TARGET_MIN or target > ChoresManagerScript.CHECKIN_TARGET_MAX:
+		if target < ChoresManagerScript.CHECKIN_TARGET_MIN or target > 7:
 			in_range = false
 		lowest = mini(lowest, target)
 		highest = maxi(highest, target)
-	_check("%d scheduled targets all within %d-%d" % [ITERATIONS, ChoresManagerScript.CHECKIN_TARGET_MIN, ChoresManagerScript.CHECKIN_TARGET_MAX], in_range)
+	_check("%d scheduled targets all within %d-%d" % [ITERATIONS, ChoresManagerScript.CHECKIN_TARGET_MIN, 7], in_range)
 	_check("targets spread across the range (min %d, max %d)" % [lowest, highest],
-		lowest <= 3 and highest >= 9)
+		lowest <= 3 and highest >= 6)
 
 
 func _test_trigger_fires_once(cm) -> void:

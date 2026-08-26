@@ -25,6 +25,8 @@ var challenge_score_modifier: float = 1.0  # Multiplier applied to challenge tar
 # Consumable discount state
 var half_price_stacks: int = 0  # Each stack halves PowerUp prices multiplicatively
 var loss_leader_stacks: int = 0  # Each stack makes one consumable purchase free
+var window_shopping_stacks: int = 0  # Each stack marks up shop prices (Window Shopping debuff)
+var docked_allowance_active: bool = false  # Docked Allowance grounding: withhold end-of-round award
 var insurance_policy_active: bool = false  # If true, next 0-score grants $75
 var clearance_rack_active: bool = false  # If true, shop rerolls are free this visit
 
@@ -181,6 +183,8 @@ var _defer_chore_selection_until_round_start: bool = false
 # Automatic debuffs pre-selected when the New Round Panel is built, so the
 # panel preview matches exactly what is applied when the round starts.
 var _pending_round_debuff_ids: Array[String] = []
+var _pending_round_grounding_id: String = ""  # Grounding pre-selected with the round preview
+var _current_round_target: int = 0  # Scaled target score for the current store round
 var _is_round_start_chore_gate_active: bool = false
 
 # Pending unlocked items to display before stats panel
@@ -252,6 +256,9 @@ func _ready() -> void:
 		scorecard.score_auto_assigned.connect(update_double_existing_usability)
 		#scorecard.score_added.connect(update_double_existing_usability)
 		scorecard.game_completed.connect(_on_scorecard_complete)
+		# Target-score round completion (challenges deprecated)
+		if not scorecard.is_connected("score_changed", _on_round_score_changed):
+			scorecard.score_changed.connect(_on_round_score_changed)
 	if game_button_ui:
 		game_button_ui.connect("shop_button_pressed", _on_shop_button_pressed)
 		game_button_ui.connect("next_round_pressed", _on_next_round_pressed)
@@ -504,6 +511,11 @@ func _on_game_start() -> void:
 ## before RoundManager begins the first round.
 func _on_channel_selected(channel: int) -> void:
 	print("[GameController] Channel", channel, "selected, starting game...")
+	# New run: deal the 24 stores across the zones and reset the debuff pool
+	if channel_manager:
+		channel_manager.assign_stores_to_zones()
+	if debuff_manager:
+		debuff_manager.reset_zone_pool()
 	_apply_channel_background()
 	_apply_channel_starting_bonuses(channel)
 	# Mom's World: a new playthrough begins - reset cast state and log the
@@ -656,7 +668,7 @@ func _on_channel_start_pressed(channel: int) -> void:
 ## If items were unlocked, shows unlock panel first, then advances to next channel.
 func _on_next_channel_pressed() -> void:
 	print("[GameController] Next channel requested")
-	
+
 	# Mark current channel as completed and save progress (this may trigger unlocks)
 	if channel_manager:
 		var progress_manager = get_node_or_null("/root/ProgressManager")
@@ -666,7 +678,13 @@ func _on_next_channel_pressed() -> void:
 			var final_score = scorecard.get_total_score() if scorecard else 0
 			progress_manager.end_game_tracking(final_score, true)
 			print("[GameController] Channel %d completed and progress saved" % channel_manager.current_channel)
-	
+
+	# Final zone cleared: the run is won — no next zone exists
+	if channel_manager and channel_manager.current_channel >= ChannelManager.MAX_CHANNEL:
+		print("[GameController] Final zone cleared - run victory!")
+		_on_game_over()
+		return
+
 	# Check if we have pending unlocked items to show first
 	if _pending_unlocked_items.size() > 0 and unlocked_item_panel:
 		print("[GameController] Showing unlock panels after channel win for %d items" % _pending_unlocked_items.size())
@@ -710,6 +728,10 @@ func _restart_game_for_new_channel(carried_types: Array[String] = []) -> void:
 	# Clear active challenges and debuffs (always reset)
 	_clear_active_challenges()
 	_clear_active_debuffs()
+
+	# New zone: the draw-once debuff pool refills
+	if debuff_manager:
+		debuff_manager.reset_zone_pool()
 	
 	# Clear gaming console (unless carried over)
 	if not carried_types.has("consoles"):
@@ -857,6 +879,7 @@ func _clear_active_debuffs() -> void:
 	active_debuffs.clear()
 	_grounded_debuffs.clear()
 	_pending_round_debuff_ids.clear()
+	_pending_round_grounding_id = ""
 	
 	# Clear DebuffManager tracking so stale ids don't leak across channels
 	if debuff_manager:
@@ -2619,6 +2642,22 @@ func apply_debuff(id: String, ignore_ungrounded: bool = false) -> void:
 			debuff.target = dice_hand
 			debuff.start()
 			debuff_started = true
+		"window_shopping":
+			debuff.target = self
+			debuff.start()
+			debuff_started = true
+		"docked_allowance":
+			debuff.target = self
+			debuff.start()
+			debuff_started = true
+		"coupons_revoked":
+			debuff.target = self
+			debuff.start()
+			debuff_started = true
+		"pogs_confiscated":
+			debuff.target = self
+			debuff.start()
+			debuff_started = true
 		"grounded":
 			debuff.target = self
 			debuff.start()
@@ -3141,7 +3180,9 @@ func _on_scorecard_complete(final_score: int) -> void:
 		_on_shop_button_pressed()
 		return
 	
-	# Challenge not completed — proceed to game over
+	# Target not met — emit failure through the hub, then proceed to game over
+	if challenge_manager:
+		challenge_manager.emit_signal("challenge_failed", _current_store_id())
 	_on_game_over()
 
 
@@ -3865,7 +3906,8 @@ func _show_end_of_round_stats() -> void:
 		"empty_categories_bonus": empty_categories_bonus,
 		"points_above_target": points_above_target,
 		"score_above_bonus": score_above_bonus,
-		"power_up_bonus": power_up_bonus
+		"power_up_bonus": power_up_bonus,
+		"docked_allowance": docked_allowance_active
 	}
 	
 	# Connect to panel's continue signal (one-shot)
@@ -3893,16 +3935,20 @@ func _on_stats_panel_continue() -> void:
 		var empty_bonus = end_of_round_stats_panel.get_empty_categories_bonus()
 		var score_bonus = end_of_round_stats_panel.get_score_above_bonus()
 		var power_up_bonus = end_of_round_stats_panel.get_power_up_bonus()
-		var consumed_power_up_bonus = _consume_round_end_power_up_bonuses()
-		if consumed_power_up_bonus != power_up_bonus:
-			push_warning("[GameController] Round-end PowerUp bonus preview mismatch. Preview=$%d Consumed=$%d" % [power_up_bonus, consumed_power_up_bonus])
-		
-		if total_bonus > 0:
-			PlayerEconomy.add_money(total_bonus)
-			print("[GameController] Awarded end of round bonuses: $%d (empty: $%d, score: $%d, powerups: $%d)" % [total_bonus, empty_bonus, score_bonus, power_up_bonus])
-			
-			# Track in statistics
-			Statistics.total_money_earned += total_bonus
+		if docked_allowance_active:
+			# Docked Allowance grounding: withhold the entire end-of-round award.
+			print("[GameController] Docked Allowance active - withholding $%d end of round award" % total_bonus)
+		else:
+			var consumed_power_up_bonus = _consume_round_end_power_up_bonuses()
+			if consumed_power_up_bonus != power_up_bonus:
+				push_warning("[GameController] Round-end PowerUp bonus preview mismatch. Preview=$%d Consumed=$%d" % [power_up_bonus, consumed_power_up_bonus])
+
+			if total_bonus > 0:
+				PlayerEconomy.add_money(total_bonus)
+				print("[GameController] Awarded end of round bonuses: $%d (empty: $%d, score: $%d, powerups: $%d)" % [total_bonus, empty_bonus, score_bonus, power_up_bonus])
+
+				# Track in statistics
+				Statistics.total_money_earned += total_bonus
 	
 	# Turn off TV before opening shop
 	_round_transition_tv_off = true
@@ -4106,6 +4152,20 @@ func get_half_price_multiplier() -> float:
 	return pow(0.5, half_price_stacks)
 
 
+## Window Shopping debuff: shop price markup per stack
+const WINDOW_SHOPPING_MARKUP: float = 0.25
+
+
+## get_window_shopping_multiplier() -> float
+##
+## Returns the shop price multiplier from active Window Shopping debuff stacks.
+## 0 stacks = 1.0 (no markup), each stack adds WINDOW_SHOPPING_MARKUP.
+func get_window_shopping_multiplier() -> float:
+	if window_shopping_stacks <= 0:
+		return 1.0
+	return 1.0 + WINDOW_SHOPPING_MARKUP * window_shopping_stacks
+
+
 ## _refresh_shop_prices()
 ##
 ## Tells the ShopUI to refresh all item prices after a discount state change.
@@ -4114,142 +4174,136 @@ func _refresh_shop_prices() -> void:
 		shop_ui.refresh_all_prices()
 
 
-## activate_challenge(id)
+## _current_store_id() -> String
 ##
-# Spawns and activates a challenge for the current round. Sets the challenge target to the
-# GameController so challenges can interact with central systems. Registers the challenge in UI.
-func activate_challenge(id: String) -> void:
-	print("[GameController] Activating challenge:", id)
-
-	if active_challenges.has(id):
-		print("[GameController] Challenge already active:", id)
-		return
-
-	var challenge = challenge_manager.spawn_challenge(id, challenge_container) as Challenge
-	if challenge == null:
-		push_error("[GameController] Failed to spawn challenge:", id)
-		return
-
-	active_challenges[id] = challenge
-
-	# Get challenge data
-	var def = challenge_manager.get_def(id)
-	if not def:
-		push_error("[GameController] No challenge data for:", id)
-		return
-
-	var round_data = round_manager.get_current_round_data()
-	var round_number = round_data.get("round_number", 1)
-
-	if challenge and def and challenge.has_method("set_target_score_from_resource"):
-		# Use validation method to determine and apply target score
-		var final_target = _validate_and_get_target_score(def, round_number)
-		challenge._target_score = final_target
-		
-		# Also update rounds_data to keep in sync
-		if round_manager:
-			round_manager.set_current_challenge_target_score(final_target)
-
-	# Apply to game controller to access all needed systems
-	challenge.target = self
-	challenge.start()
-
-	# Add to UI with properly connected signals
-	if challenge_ui:
-		var icon = challenge_ui.add_challenge(def, challenge)
-		if icon:
-			print("[GameController] Challenge UI created for:", id)
-		else:
-			push_error("[GameController] Failed to create UI for challenge:", id)
-	else:
-		push_error("[GameController] No challenge_ui reference")
-
-	if challenge_manager:
-		challenge_manager.emit_signal("challenge_activated", id)
-	
-	GameSaveManager.update_settled_snapshot()
+## Returns the current zone/round's store name, used as the id payload when
+## emitting challenge_completed/challenge_failed through the signal hub.
+func _current_store_id() -> String:
+	if channel_manager and round_manager:
+		return channel_manager.get_store_name(channel_manager.current_channel, round_manager.get_current_round_number())
+	return ""
 
 
-## _validate_and_get_target_score(challenge_data: ChallengeData, round_number: int) -> int
+## _on_round_score_changed(total_score: int) -> void
 ##
-## Validates and returns the target score for the current round.
-## If use_round_config_goals is true, uses RoundDifficultyConfig.target_score_override.
-## Falls back to Challenge resource target score if override is 0 or unavailable.
-## Always applies channel scaling to the final value.
-func _validate_and_get_target_score(challenge_data: ChallengeData, round_number: int) -> int:
+## Target-score win condition (challenges deprecated): when the scorecard
+## total reaches the round target, emit challenge_completed through the
+## ChallengeManager signal hub. This sets RoundManager.is_challenge_completed
+## and triggers the celebration/transition flow in _on_challenge_completed.
+func _on_round_score_changed(total_score: int) -> void:
+	if _game_ended or not round_manager or not challenge_manager:
+		return
+	# Keep the store icon's progress bar in sync with the scorecard total
+	if _current_round_target > 0 and is_instance_valid(challenge_ui) and challenge_ui.has_method("set_store_progress"):
+		challenge_ui.set_store_progress(float(total_score) / float(_current_round_target))
+	if round_manager.is_challenge_completed:
+		return
+	if _current_round_target > 0 and total_score >= _current_round_target:
+		print("[GameController] Round target met: %d/%d" % [total_score, _current_round_target])
+		challenge_manager.emit_signal("challenge_completed", _current_store_id())
+
+
+## _compute_round_target(round_number: int) -> int
+##
+## Computes the round's target score from the channel's RoundDifficultyConfig
+## (target_score_override), applies channel scaling and the ChallengeEaser
+## modifier. Falls back to 100 with a warning when no override is set.
+func _compute_round_target(round_number: int) -> int:
 	var base_target: int = 0
-	var goal_source: String = "Challenge"
-	
-	# Determine base target based on goal mode
-	if use_round_config_goals and channel_manager:
-		# Try to get target from round config
+	if channel_manager:
 		var round_config = channel_manager.get_round_config(channel_manager.current_channel, round_number)
 		if round_config and round_config.target_score_override > 0:
 			base_target = round_config.target_score_override
-			goal_source = "RoundConfig"
-		else:
-			# Fallback to challenge data with warning
-			base_target = challenge_data.target_score
-			goal_source = "Challenge (fallback)"
-			if use_round_config_goals:
-				push_warning("[GameController] Round config has no target_score_override, using Challenge goal")
-	else:
-		# Use challenge resource target score (default behavior)
-		base_target = challenge_data.target_score
-		goal_source = "Challenge"
-	
-	# Apply channel scaling
+	if base_target <= 0:
+		base_target = 100
+		push_warning("[GameController] Round %d has no target_score_override, falling back to %d" % [round_number, base_target])
+
 	var scaled_target: int = base_target
 	if channel_manager:
 		scaled_target = channel_manager.get_scaled_target_score(base_target)
-		print("[GameController] Goal from %s: %d -> %d (%.2fx channel scaling)" % [
-			goal_source, base_target, scaled_target, channel_manager.get_difficulty_multiplier()
+		print("[GameController] Target: %d -> %d (%.2fx channel scaling)" % [
+			base_target, scaled_target, channel_manager.get_difficulty_multiplier()
 		])
-	else:
-		print("[GameController] Goal from %s: %d (no channel scaling)" % [goal_source, base_target])
-	
-	# Apply challenge score modifier (e.g., from ChallengeEaserPowerUp)
+
+	# Apply target modifier (e.g., from ChallengeEaserPowerUp)
 	if challenge_score_modifier != 1.0:
 		var modified_target = int(scaled_target * challenge_score_modifier)
-		print("[GameController] Challenge score modifier applied: %d -> %d (%.2fx)" % [scaled_target, modified_target, challenge_score_modifier])
+		print("[GameController] Target modifier applied: %d -> %d (%.2fx)" % [scaled_target, modified_target, challenge_score_modifier])
 		scaled_target = modified_target
-	
+
 	return scaled_target
+
+
+## _setup_round_target(round_number: int) -> void
+##
+## Store rounds (challenges deprecated): sets the scaled target score on the
+## RoundManager and shows the store reveal banner. Completion fires when the
+## scorecard total reaches the target (see _on_round_score_changed); filling
+## the scorecard below target is game over (see _on_scorecard_complete).
+func _setup_round_target(round_number: int) -> void:
+	if not round_manager:
+		push_error("[GameController] round_manager is null!")
+		return
+	_current_round_target = _compute_round_target(round_number)
+	round_manager.set_current_challenge_target_score(_current_round_target)
+
+	var store_name: String = ""
+	if channel_manager:
+		store_name = channel_manager.get_store_name(channel_manager.current_channel, round_number)
+	print("[GameController] Round %d store: '%s', target: %d" % [round_number, store_name, _current_round_target])
+
+	# Store reveal banner (reuses the old challenge reveal banner)
+	if challenge_ui and challenge_ui.has_method("show_store_reveal_banner"):
+		challenge_ui.show_store_reveal_banner(store_name)
+
+	# ChallengeUI slot: store icon with progress bar toward the round target.
+	# Stars show the zone number (5 on boss rounds).
+	if challenge_ui and challenge_ui.has_method("show_store"):
+		var store_reward: int = 0
+		var store_difficulty: int = 0
+		if channel_manager:
+			var rc = channel_manager.get_round_config(channel_manager.current_channel, round_number)
+			if rc:
+				if rc.reward_money_override > 0:
+					store_reward = rc.reward_money_override
+				store_difficulty = channel_manager.current_channel
+				if rc.get("is_boss_round") == true:
+					store_difficulty = 5
+		challenge_ui.show_store(store_name, _current_round_target, store_reward, store_difficulty)
+
+	GameSaveManager.update_settled_snapshot()
 
 
 ## _on_challenge_completed(id)
 ##
-## Handles the successful completion of a challenge: stores reward for end-of-round stats,
-## triggers celebration animation, animates UI removal, and frees the challenge instance.
+## Handles a round target being met (emitted through the ChallengeManager
+## signal hub by _on_round_score_changed; the id is the store name).
+## Stores the round reward for end-of-round stats, triggers the celebration,
+## and queues the round transition overlay.
 ## Note: Reward money is no longer granted immediately - it's shown and granted in the
 ## end-of-round stats panel to provide better feedback to the player.
 func _on_challenge_completed(id: String) -> void:
-	print("[GameController] Challenge completed:", id)
+	print("[GameController] Round target met:", id)
 
 	# Store reward for end-of-round stats (don't grant immediately)
-	# Priority: RoundDifficultyConfig.reward_money_override > ChallengeData.reward_money
-	var def = challenge_manager.get_def(id)
-	if def and not _challenge_reward_granted:
+	if not _challenge_reward_granted:
 		var reward: int = 0
-		var reward_source: String = ""
-		# Check round config override first
 		if channel_manager and round_manager:
 			var round_number = round_manager.get_current_round_number()
 			var round_config = channel_manager.get_round_config(channel_manager.current_channel, round_number)
 			if round_config and round_config.reward_money_override > 0:
 				reward = round_config.reward_money_override
-				reward_source = "RoundConfig"
-		# Fallback to ChallengeData.reward_money
-		if reward == 0 and def.reward_money > 0:
-			reward = def.reward_money
-			reward_source = "ChallengeData"
 		if reward > 0:
-			print("[GameController] Storing challenge reward for end-of-round: $%d (source: %s)" % [reward, reward_source])
+			print("[GameController] Storing round reward for end-of-round: $%d" % reward)
 			_challenge_reward_this_round = reward
 			_challenge_reward_granted = true  # Prevent double-granting
 
 	# Trigger celebration fireworks
 	_trigger_challenge_celebration()
+
+	# Flash the store icon green in the ChallengeUI slot
+	if is_instance_valid(challenge_ui) and challenge_ui.has_method("notify_store_completed"):
+		challenge_ui.notify_store_completed()
 
 	# Clear the best-hand highlight immediately when the round ends
 	if score_card_ui:
@@ -4258,28 +4312,6 @@ func _on_challenge_completed(id: String) -> void:
 	# Queue the round transition overlay after fireworks finish (~1.5s)
 	_queue_round_transition_overlay(id)
 
-	# Animate challenge completion before removing
-	if challenge_ui:
-		challenge_ui.animate_challenge_removal(id, func():
-			# Clean up challenge after animation
-			if active_challenges.has(id):
-				var challenge = active_challenges[id]
-				if challenge:
-					challenge.queue_free()
-				active_challenges.erase(id)
-				challenge_ui.remove_challenge(id)
-		)
-	else:
-		# Clean up challenge immediately if no UI
-		if active_challenges.has(id):
-			var challenge = active_challenges[id]
-			if challenge:
-				challenge.queue_free()
-			active_challenges.erase(id)
-
-	# Show notification
-	# NotificationSystem.show_notification("Challenge Completed: " + def.display_name)
-	
 	GameSaveManager.update_settled_snapshot()
 
 
@@ -4335,55 +4367,37 @@ func _queue_round_transition_overlay(challenge_id: String) -> void:
 	# Chore popup is handled by the round-end queue AFTER overlay dismisses
 
 
-## _show_round_transition_overlay(challenge_id: String) -> void
+## _show_round_transition_overlay(store_id: String) -> void
 ##
 ## Creates and displays the round transition overlay with current and next
-## challenge information. Connects keep_playing/enter_shop signals.
-func _show_round_transition_overlay(challenge_id: String) -> void:
+## store information. Connects keep_playing/enter_shop signals.
+func _show_round_transition_overlay(store_id: String) -> void:
 	# Gather current round data
 	var round_number: int = round_manager.get_current_round_number() if round_manager else 1
-	var challenge_name: String = ""
-	var def = challenge_manager.get_def(challenge_id) if challenge_manager else null
-	if def:
-		challenge_name = def.display_name
+	var store_name: String = store_id
 
 	# Determine if this is the final round
 	var is_final: bool = false
 	if round_manager:
 		is_final = round_number >= round_manager.max_rounds
 
-	# Gather next challenge data
+	# Gather next store data
 	var next_name: String = ""
 	var next_target: int = 0
 	if not is_final and round_manager:
 		var next_index: int = round_manager.current_round + 1
 		if next_index < round_manager.rounds_data.size():
 			var next_data: Dictionary = round_manager.rounds_data[next_index]
-			var next_id: String = next_data.get("challenge_id", "")
-			if next_id and challenge_manager:
-				var next_def = challenge_manager.get_def(next_id)
-				if next_def:
-					next_name = next_def.display_name
-					# Determine base target: check round config override first
-					var next_round_number: int = next_index + 1
-					var base_target: int = next_def.target_score
-					if use_round_config_goals and channel_manager:
-						var next_round_config = channel_manager.get_round_config(channel_manager.current_channel, next_round_number)
-						if next_round_config and next_round_config.target_score_override > 0:
-							base_target = next_round_config.target_score_override
-					# Apply channel scaling
-					if channel_manager:
-						next_target = channel_manager.get_scaled_target_score(base_target)
-					else:
-						next_target = base_target
-					# Apply challenge score modifier (same as live gameplay)
-					if challenge_score_modifier != 1.0:
-						next_target = int(next_target * challenge_score_modifier)
+			next_name = next_data.get("store_name", "")
+			# Base target from the round config, with channel scaling and
+			# the ChallengeEaser modifier, matching live gameplay
+			var next_round_number: int = next_index + 1
+			next_target = _compute_round_target(next_round_number)
 
 	# Build data dictionary
 	var data := {
 		"round_number": round_number,
-		"challenge_name": challenge_name,
+		"challenge_name": store_name,
 		"next_challenge_name": next_name,
 		"next_challenge_target": next_target,
 		"is_final_round": is_final,
@@ -4456,66 +4470,31 @@ func _on_transition_enter_shop() -> void:
 
 ## _on_challenge_failed(id)
 ##
-# Handles failure of a challenge: animates removal and frees the instance. Optionally posts a
-# notification (currently commented out).
+## Signal hub handler for a failed round. RoundManager's own hub handler
+## performs fail_round(); this handler only logs and snapshots.
 func _on_challenge_failed(id: String) -> void:
-	print("[GameController] Challenge failed:", id)
-
-	# Notify round_manager so consoles like PlayStation can respond
-	if round_manager:
-		round_manager.fail_round()
-
-	# Get challenge data for notification
-	var def = challenge_manager.get_def(id)
-	var _display_name = def.display_name if def else id
-
-	# Animate challenge failure before removing
-	if challenge_ui:
-		challenge_ui.animate_challenge_removal(id, func():
-			# Clean up challenge after animation
-			if active_challenges.has(id):
-				var challenge = active_challenges[id]
-				if challenge:
-					challenge.queue_free()
-				active_challenges.erase(id)
-				challenge_ui.remove_challenge(id)
-		)
-	else:
-		# Clean up challenge immediately if no UI
-		if active_challenges.has(id):
-			var challenge = active_challenges[id]
-			if challenge:
-				challenge.queue_free()
-			active_challenges.erase(id)
-
-	# Show notification
-	# NotificationSystem.show_notification("Challenge Failed: " + _display_name)
-	
+	print("[GameController] Round failed:", id)
+	# Stamp the store icon FAILED in the ChallengeUI slot
+	if is_instance_valid(challenge_ui) and challenge_ui.has_method("notify_store_failed"):
+		challenge_ui.notify_store_failed()
 	GameSaveManager.update_settled_snapshot()
 
 
 ## _on_challenge_selected(id)
 ##
-# Called when a player selects a challenge in the UI. Currently highlights the challenge icon briefly.
+# Called when a player selects an icon in the ChallengeUI slot. With store
+# rounds the id is the store name; highlight the icon briefly.
 func _on_challenge_selected(id: String) -> void:
 	print("[GameController] Challenge selected:", id)
 
-	# Handle challenge selection - could show details, focus the challenge, etc.
-	var challenge = active_challenges.get(id)
-	if challenge:
-		# You could potentially focus on this challenge or show details
-		print("[GameController] Found challenge:", id)
+	var icon = challenge_ui.get_challenge_icon(id) as ChallengeIcon
+	if icon:
+		icon.set_active(true)
 
-		# Example: Highlight the challenge icon
-		var icon = challenge_ui.get_challenge_icon(id) as ChallengeIcon
-		if icon:
-			icon.set_active(true)
-
-			# Reset after a short delay
-			await get_tree().create_timer(0.5).timeout
+		# Reset after a short delay
+		await get_tree().create_timer(0.5).timeout
+		if is_instance_valid(icon):
 			icon.set_active(false)
-	else:
-		push_error("[GameController] Challenge not found:", id)
 
 # Add this method to handle the dice_rolled signal from GameButtonUI
 func _on_game_button_dice_rolled(dice_values: Array) -> void:
@@ -4871,26 +4850,12 @@ func _on_round_started(round_number: int) -> void:
 	# Clear grounded debuffs from previous round (NC-17 consequences)
 	_clear_grounded_debuffs()
 	
-	# Activate this round's challenge
-	print("[GameController] Checking for challenge activation...")
-	print("[GameController] round_manager:", round_manager)
-	if round_manager:
-		var round_data = round_manager.get_current_round_data()
-		print("[GameController] round_data:", round_data)
-		print("[GameController] round_data has challenge_id:", round_data.has("challenge_id"))
-		if round_data.has("challenge_id"):
-			print("[GameController] challenge_id value:", round_data.challenge_id)
-			print("[GameController] challenge_id is_empty:", round_data.challenge_id.is_empty())
-		if round_data.has("challenge_id") and not round_data.challenge_id.is_empty():
-			activate_challenge(round_data.challenge_id)
-			print("[GameController] Activated challenge:", round_data.challenge_id)
-			
-			# Apply automatic debuffs AFTER challenge reveal
-			_apply_automatic_debuffs(round_number)
-		else:
-			push_warning("[GameController] No challenge_id in round_data!")
-	else:
-		push_error("[GameController] round_manager is null!")
+	# Set up this round's store target (challenges deprecated: the win
+	# condition is reaching the target score for this store)
+	_setup_round_target(round_number)
+
+	# Apply automatic debuffs after the target is set
+	_apply_automatic_debuffs(round_number)
 	
 	# Reset shop for new round
 	if shop_ui:
@@ -4943,11 +4908,14 @@ func _apply_automatic_debuffs(round_number: int) -> void:
 	else:
 		var round_config = channel_manager.get_round_config(channel_manager.current_channel, round_number)
 		if round_config:
-			var max_debuffs = round_config.max_debuffs if round_config.get("max_debuffs") != null else 0
-			var difficulty_cap = round_config.debuff_difficulty_cap if round_config.get("debuff_difficulty_cap") != null else 1
-			# Channels 16+ allow duplicates (brutality)
-			var allow_duplicates = channel_manager.current_channel >= 16
-			selected_ids = debuff_manager.select_debuffs_for_round(max_debuffs, difficulty_cap, allow_duplicates)
+			if round_config.get("is_boss_round") == true:
+				var boss_id = debuff_manager.select_boss_debuff(round_config.boss_debuff_level)
+				if not boss_id.is_empty():
+					selected_ids.append(boss_id)
+			else:
+				var max_debuffs = round_config.max_debuffs if round_config.get("max_debuffs") != null else 0
+				var difficulty_cap = round_config.debuff_difficulty_cap if round_config.get("debuff_difficulty_cap") != null else 1
+				selected_ids = debuff_manager.select_debuffs_for_round(max_debuffs, difficulty_cap, false)
 	
 	var channel_number = channel_manager.current_channel
 	print("[GameController] Applying automatic debuffs for Channel %d Round %d: %s" % [channel_number, round_number, str(selected_ids)])
@@ -4957,6 +4925,19 @@ func _apply_automatic_debuffs(round_number: int) -> void:
 	for id in selected_ids:
 		apply_debuff(id)
 		debuff_manager.register_active_debuff(id)
+
+	# Apply the grounding pre-selected with the round preview, if any.
+	if not _pending_round_grounding_id.is_empty():
+		var grounding_id = _pending_round_grounding_id
+		_pending_round_grounding_id = ""
+		apply_debuff(grounding_id)
+		debuff_manager.register_active_debuff(grounding_id)
+		selected_ids.append(grounding_id)
+		print("[GameController] Applied grounding: %s" % grounding_id)
+
+	# Tag the store icon's detail card with this round's debuffs/groundings
+	if is_instance_valid(challenge_ui) and challenge_ui.has_method("set_store_debuffs"):
+		challenge_ui.set_store_debuffs(selected_ids)
 	
 	if selected_ids.size() > 0:
 		print("[GameController] Applied %d automatic debuffs" % selected_ids.size())
@@ -5700,9 +5681,11 @@ func _clear_grounded_debuffs() -> void:
 # ─── Rebellion systems (sass incentives) ───
 
 ## Rep deltas per Mom dialog response (see PLAN: Sass Incentives).
-const REP_SASS_SUCCESS: int = 5
-const REP_DEFER_SUCCESS: int = 4
-const REP_STORM_OFF: int = 6
+## Tuned for the 4-zone run: a steadily sassing player should reach
+## REP 60 (tier 4, NC-17 POGs) by Zone 4 (~18 check-ins) but not before Zone 2.
+const REP_SASS_SUCCESS: int = 6
+const REP_DEFER_SUCCESS: int = 5
+const REP_STORM_OFF: int = 7
 const REP_POLITE_PUNISHMENT: int = -2
 const REP_POLITE_CHECKIN: int = -1
 
@@ -5789,6 +5772,7 @@ func get_save_state() -> Dictionary:
 			"challenge_score_modifier": challenge_score_modifier,
 			"half_price_stacks": half_price_stacks,
 			"loss_leader_stacks": loss_leader_stacks,
+			"window_shopping_stacks": window_shopping_stacks,
 			"insurance_policy_active": insurance_policy_active,
 			"clearance_rack_active": clearance_rack_active,
 			"active_gaming_console_ids": active_gaming_console.keys(),
@@ -5865,6 +5849,9 @@ func load_game_state(save_data: Dictionary) -> void:
 	var round_state = save_data.get("round_manager", {})
 	if not round_state.is_empty() and round_manager:
 		round_manager.load_state(round_state)
+		# Restore the live target for the in-progress round (target-score
+		# win condition is checked against _current_round_target)
+		_current_round_target = round_manager.get_current_challenge_target_score()
 	
 	# 5. Restore TurnTracker
 	var turn_state = save_data.get("turn_tracker", {})
@@ -5886,6 +5873,7 @@ func load_game_state(save_data: Dictionary) -> void:
 	challenge_score_modifier = gc_state.get("challenge_score_modifier", 1.0)
 	half_price_stacks = gc_state.get("half_price_stacks", 0)
 	loss_leader_stacks = gc_state.get("loss_leader_stacks", 0)
+	window_shopping_stacks = gc_state.get("window_shopping_stacks", 0)
 	insurance_policy_active = gc_state.get("insurance_policy_active", false)
 	clearance_rack_active = gc_state.get("clearance_rack_active", false)
 	var loaded_pending = gc_state.get("pending_mods", [])
@@ -5941,11 +5929,9 @@ func load_game_state(save_data: Dictionary) -> void:
 		if not active_gaming_console.has(console_id):
 			grant_gaming_console(console_id)
 	
-	# Re-activate challenge for current round
-	for challenge_id in gc_state.get("active_challenge_ids", []):
-		if not active_challenges.has(challenge_id):
-			activate_challenge(challenge_id)
-	
+	# Challenges are deprecated: nothing to re-activate. The round target is
+	# recomputed from the round config when the round (re)starts.
+
 	# Re-apply debuffs
 	for debuff_id in gc_state.get("active_debuff_ids", []):
 		if not active_debuffs.has(debuff_id):
@@ -6084,6 +6070,8 @@ func _on_new_round_panel_dismissed() -> void:
 ## _build_round_panel_data(round_num)
 ##
 ## Gathers round intro data from managers for the New Round Panel.
+## The store name (per-run assignment) is shown where the challenge name
+## used to be.
 func _build_round_panel_data(round_num: int) -> Dictionary:
 	var data = {
 		"channel": 1,
@@ -6092,44 +6080,44 @@ func _build_round_panel_data(round_num: int) -> Dictionary:
 		"challenge_desc": "",
 		"debuffs": []
 	}
-	
+
 	if channel_manager:
 		data["channel"] = channel_manager.current_channel
-	
-	var challenge_def: ChallengeData = null
-	if round_manager and round_num >= 1 and round_num <= round_manager.rounds_data.size():
-		var round_data = round_manager.rounds_data[round_num - 1]
-		var challenge_id = round_data.get("challenge_id", "")
-		if challenge_manager and not challenge_id.is_empty():
-			challenge_def = challenge_manager.get_def(challenge_id)
-			if challenge_def:
-				data["challenge_name"] = challenge_def.display_name
-				data["challenge_desc"] = challenge_def.description
-	
+		data["challenge_name"] = channel_manager.get_store_name(channel_manager.current_channel, round_num)
+		data["challenge_desc"] = ""
+
 	# Debuff preview: show what the upcoming round will actually apply —
-	# the challenge's declared debuffs plus automatic debuffs pre-selected
-	# from the channel round config. The automatic selection is stored and
-	# committed at round start (_apply_automatic_debuffs) so the panel
-	# always matches reality.
+	# automatic debuffs (and a possible grounding) pre-selected from the
+	# channel round config. The selection is stored and committed at round
+	# start (_apply_automatic_debuffs) so the panel always matches reality.
 	_pending_round_debuff_ids.clear()
+	_pending_round_grounding_id = ""
 	if debuff_manager:
 		var preview_ids: Array[String] = []
-		if challenge_def:
-			for id in challenge_def.debuff_ids:
-				if id not in preview_ids:
-					preview_ids.append(id)
 		if channel_manager:
 			var round_config = channel_manager.get_round_config(channel_manager.current_channel, round_num)
 			if round_config:
 				var max_debuffs = round_config.max_debuffs if round_config.get("max_debuffs") != null else 0
 				var difficulty_cap = round_config.debuff_difficulty_cap if round_config.get("debuff_difficulty_cap") != null else 1
-				# Channels 16+ allow duplicates (brutality)
-				var allow_duplicates = channel_manager.current_channel >= 16
-				var auto_ids = debuff_manager.select_debuffs_for_round(max_debuffs, difficulty_cap, allow_duplicates, preview_ids)
+				var auto_ids: Array[String] = []
+				if round_config.get("is_boss_round") == true:
+					# Boss round: exactly one debuff of the configured level
+					var boss_id = debuff_manager.select_boss_debuff(round_config.boss_debuff_level, preview_ids)
+					if not boss_id.is_empty():
+						auto_ids.append(boss_id)
+				else:
+					auto_ids = debuff_manager.select_debuffs_for_round(max_debuffs, difficulty_cap, false, preview_ids)
 				for id in auto_ids:
 					if id not in preview_ids:
 						preview_ids.append(id)
 						_pending_round_debuff_ids.append(id)
+				# Grounding draw: separate pool, shares the debuff UI slots.
+				var grounding_chance = round_config.grounding_chance if round_config.get("grounding_chance") != null else 0.0
+				if grounding_chance > 0.0 and randf() < grounding_chance:
+					var grounding_id = debuff_manager.select_grounding_for_round(preview_ids)
+					if not grounding_id.is_empty():
+						_pending_round_grounding_id = grounding_id
+						preview_ids.append(grounding_id)
 		for debuff_id in preview_ids:
 			var debuff_def = _find_debuff_def(debuff_id)
 			if debuff_def:

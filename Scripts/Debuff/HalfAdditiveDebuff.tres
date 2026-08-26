@@ -18,5 +18,6 @@ bloom_softness = 0.236
 wobble_strength = 0.1
 roughness_strength = 0.1
 glow_strength = 0.381
-difficulty_rating = 3
+difficulty_rating = 2
+is_grounding = false
 metadata/_custom_type_script = "uid://uiuqwtxbh7m0"

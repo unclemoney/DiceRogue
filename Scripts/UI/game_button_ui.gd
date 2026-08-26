@@ -598,20 +598,15 @@ func _on_challenge_completed(challenge_id: String) -> void:
 	print("[GameButtonUI] === CHALLENGE COMPLETED ===")
 	print("[GameButtonUI] _on_challenge_completed received:", challenge_id)
 	print("[GameButtonUI] round_manager:", round_manager)
-	if round_manager:
-		print("[GameButtonUI] round_manager.current_challenge_id:", round_manager.current_challenge_id)
-	if round_manager and challenge_id != "":
-		if round_manager.current_challenge_id == challenge_id or round_manager.current_challenge_id == "":
-			print("[GameButtonUI] Challenge ID match! Enabling Next Round button")
-			if next_round_button:
-				_set_button_disabled(next_round_button, false)
-				print("[GameButtonUI] Next Round button enabled: disabled=", _is_button_disabled(next_round_button))
-			_set_button_disabled(next_turn_button, true)
-			if shop_button:
-				_set_button_disabled(shop_button, false)
-				_start_shop_button_pulse()
-		else:
-			print("[GameButtonUI] Challenge ID mismatch:", challenge_id, "vs", round_manager.current_challenge_id)
+	if challenge_id != "":
+		print("[GameButtonUI] Enabling Next Round button")
+		if next_round_button:
+			_set_button_disabled(next_round_button, false)
+			print("[GameButtonUI] Next Round button enabled: disabled=", _is_button_disabled(next_round_button))
+		_set_button_disabled(next_turn_button, true)
+		if shop_button:
+			_set_button_disabled(shop_button, false)
+			_start_shop_button_pulse()
 
 
 func _on_next_round_button_pressed() -> void:

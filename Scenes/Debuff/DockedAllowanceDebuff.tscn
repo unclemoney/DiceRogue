@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b5ohum608n0wg"]
+
+[ext_resource type="Script" uid="uid://d4d0ck3d4ll0w1gd" path="res://Scripts/Debuff/docked_allowance_debuff.gd" id="1_bequk"]
+
+[node name="DockedAllowanceDebuff" type="Node"]
+script = ExtResource("1_bequk")

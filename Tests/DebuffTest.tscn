@@ -1,4 +1,4 @@
-[gd_scene load_steps=188 format=3 uid="uid://b46sathbx2q60"]
+[gd_scene load_steps=185 format=3 uid="uid://b46sathbx2q60"]
 
 [ext_resource type="Script" uid="uid://dlxsgiq12hbjq" path="res://Tests/debuff_test.gd" id="1_d3q3t"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -42,20 +42,13 @@
 [ext_resource type="Resource" uid="uid://b8kfm2yanw7eb" path="res://Scripts/PowerUps/RedPowerRanger.tres" id="39_hm8bq"]
 [ext_resource type="Resource" uid="uid://cv824ebb6gv2w" path="res://Scripts/Consumable/DoubleExistingConsumable.tres" id="41_5k370"]
 [ext_resource type="PackedScene" uid="uid://bi8x6vmpd88l6" path="res://Scenes/Managers/RoundManager.tscn" id="42_o2qgl"]
-[ext_resource type="Script" uid="uid://b41v75rm14duq" path="res://Scripts/Round/round_challenge_config.gd" id="43_2fp2s"]
 [ext_resource type="Resource" uid="uid://cc8puewgbdape" path="res://Scripts/Debuff/DisabledTwosDebuff.tres" id="43_4tv4b"]
-[ext_resource type="Resource" uid="uid://bvlm6v2nrey7x" path="res://Scripts/Round/300pts_no_debuff.tres" id="44_2lvko"]
 [ext_resource type="Resource" uid="uid://bj6uointddqef" path="res://Scripts/Consumable/add_max_power_up.tres" id="45_i7xol"]
-[ext_resource type="Resource" uid="uid://bojb26srdkd81" path="res://Scripts/Round/pts100_lock_dice.tres" id="45_o0xxd"]
 [ext_resource type="Resource" uid="uid://d1ii1htx1it71" path="res://Scripts/Debuff/RollScoreMinusOneDebuff.tres" id="46_0fq3x"]
 [ext_resource type="Resource" uid="uid://dnob3dg2ahgr1" path="res://Scripts/Consumable/ThreeMoreRollsConsumable.tres" id="46_nkw3w"]
-[ext_resource type="Resource" uid="uid://bak3w77f47saj" path="res://Scripts/Round/pts200_disabled_twos.tres" id="47_ja7vv"]
 [ext_resource type="Resource" uid="uid://c7xwey38elhic" path="res://Scripts/Debuff/CostlyRollDebuff.tres" id="49_ghgbc"]
 [ext_resource type="Resource" uid="uid://ckwgku73oppl3" path="res://Scripts/Consumable/PowerUpShopNumConsumable.tres" id="50_cs0p4"]
-[ext_resource type="Resource" uid="uid://cok1qslsfb3r3" path="res://Scripts/Round/pts150_roll_minus_one.tres" id="50_ytf57"]
 [ext_resource type="Resource" uid="uid://b8m7k4n2qaqwx" path="res://Scripts/Consumable/QuickCashConsumable.tres" id="51_8nt64"]
-[ext_resource type="Resource" uid="uid://b8pdl6weyahle" path="res://Scripts/Round/costly_roll_challenge.tres" id="52_3ia8s"]
-[ext_resource type="Resource" uid="uid://3ctxmrk81fwo" path="res://Scripts/Round/pts_100_no_debuff_challenge.tres" id="52_ghgbc"]
 [ext_resource type="Resource" uid="uid://bqk5w8x2m7maf" path="res://Scripts/Consumable/AnyScoreConsumable.tres" id="55_7m4k5"]
 [ext_resource type="Resource" uid="uid://hvwoniny5w2p" path="res://Scripts/Consumable/RandomPowerUpUncommonConsumable.tres" id="56_qv1fg"]
 [ext_resource type="Resource" uid="uid://bwp8ng5k6ln7a" path="res://Scripts/Consumable/DoubleOrNothingConsumable.tres" id="57_double_or_nothing"]
@@ -118,6 +111,10 @@
 [ext_resource type="Resource" uid="uid://cchev87fimc0x" path="res://Scripts/Consumable/InsurancePolicyConsumable.tres" id="155_um873"]
 [ext_resource type="Resource" uid="uid://rvgbkpkdiwvi" path="res://Scripts/Consumable/ClearanceRackConsumable.tres" id="156_4u56d"]
 [ext_resource type="Resource" uid="uid://e6etk1spiv8y" path="res://Scripts/Consumable/LoadedDiceConsumable.tres" id="157_j87a4"]
+[ext_resource type="Resource" uid="uid://dqw1xupe7updo" path="res://Scripts/Debuff/WindowShoppingDebuff.tres" id="159_window_shopping"]
+[ext_resource type="Resource" uid="uid://p4hinanex7u6" path="res://Scripts/Debuff/DockedAllowanceDebuff.tres" id="160_docked_allowance"]
+[ext_resource type="Resource" uid="uid://b1w73tqfdvvnc" path="res://Scripts/Debuff/CouponsRevokedDebuff.tres" id="161_coupons_revoked"]
+[ext_resource type="Resource" uid="uid://c1ic68lmvm2i5" path="res://Scripts/Debuff/PogsConfiscatedDebuff.tres" id="162_pogs_confiscated"]
 [ext_resource type="PackedScene" uid="uid://ccn3jkgrhqwqe" path="res://Scenes/UI/StatisticsPanel.tscn" id="999_stats"]
 [ext_resource type="Script" uid="uid://du88ajtcwgupi" path="res://Scripts/Managers/ChoresManager.gd" id="1000_chores_mgr"]
 [ext_resource type="PackedScene" uid="uid://crlykvmh3v2xq" path="res://Scenes/UI/UnlockedItemPanel.tscn" id="1001_unlocked_panel"]
@@ -261,10 +258,9 @@ mod_defs = Array[ExtResource("60_moddata")]([ExtResource("61_evenonly"), ExtReso
 consumable_defs = Array[ExtResource("31_gtvla")]([ExtResource("32_aeiu6"), ExtResource("41_5k370"), ExtResource("45_i7xol"), ExtResource("46_nkw3w"), ExtResource("50_cs0p4"), ExtResource("51_8nt64"), ExtResource("55_7m4k5"), ExtResource("56_qv1fg"), ExtResource("57_double_or_nothing"), ExtResource("1002_green_envy"), ExtResource("1003_poor_house"), ExtResource("1004_empty_shelves"), ExtResource("1005_the_rarities"), ExtResource("1006_the_pawn_shop"), ExtResource("1007_one_extra_dice"), ExtResource("1008_go_broke"), ExtResource("1009_ones_upgrade"), ExtResource("1010_twos_upgrade"), ExtResource("1011_threes_upgrade"), ExtResource("1012_fours_upgrade"), ExtResource("1013_fives_upgrade"), ExtResource("1014_sixes_upgrade"), ExtResource("1015_three_of_a_kind"), ExtResource("1016_four_of_a_kind"), ExtResource("1017_full_house"), ExtResource("1018_small_straight"), ExtResource("1019_large_straight"), ExtResource("1020_yahtzee"), ExtResource("1021_chance"), ExtResource("1022_all_categories"), ExtResource("1023_free_chores"), ExtResource("1024_all_chores"), ExtResource("1025_one_free_mod"), ExtResource("1039_visit_the_shop"), ExtResource("1058_lucky_upgrade"), ExtResource("153_01vi1"), ExtResource("154_0gdhi"), ExtResource("155_um873"), ExtResource("156_4u56d"), ExtResource("157_j87a4")])
 
 [node name="DebuffManager" parent="Managers" instance=ExtResource("24_f4xs4")]
-debuff_defs = Array[ExtResource("24_4tiye")]([ExtResource("25_gxabo"), ExtResource("43_4tv4b"), ExtResource("46_0fq3x"), ExtResource("49_ghgbc"), ExtResource("82_division"), ExtResource("1026_faster_chores"), ExtResource("1027_disabled_mods"), ExtResource("1028_disabled_colors"), ExtResource("1029_reduced_levels"), ExtResource("138_ja73i"), ExtResource("139_tmun7"), ExtResource("142_keu41"), ExtResource("143_qm380"), ExtResource("144_my83g"), ExtResource("145_w4xk6"), ExtResource("146_rebellion")])
+debuff_defs = Array[ExtResource("24_4tiye")]([ExtResource("25_gxabo"), ExtResource("43_4tv4b"), ExtResource("46_0fq3x"), ExtResource("49_ghgbc"), ExtResource("82_division"), ExtResource("1026_faster_chores"), ExtResource("1027_disabled_mods"), ExtResource("1028_disabled_colors"), ExtResource("1029_reduced_levels"), ExtResource("138_ja73i"), ExtResource("139_tmun7"), ExtResource("142_keu41"), ExtResource("143_qm380"), ExtResource("144_my83g"), ExtResource("145_w4xk6"), ExtResource("146_rebellion"), ExtResource("159_window_shopping"), ExtResource("160_docked_allowance"), ExtResource("161_coupons_revoked"), ExtResource("162_pogs_confiscated")])
 
 [node name="RoundManager" parent="Managers" instance=ExtResource("42_o2qgl")]
-challenge_configs = Array[ExtResource("43_2fp2s")]([ExtResource("52_ghgbc"), ExtResource("44_2lvko"), ExtResource("50_ytf57"), ExtResource("47_ja7vv"), ExtResource("52_3ia8s"), ExtResource("45_o0xxd")])
 turn_tracker_path = NodePath("../../TurnTracker")
 challenge_manager_path = NodePath("../ChallengeManager")
 dice_hand_path = NodePath("../../GameUI/MarginContainer/MainVBox/MiddleSection/CenterColumn/DiceAreaContainer/DiceHand")

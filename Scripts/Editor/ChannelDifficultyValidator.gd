@@ -13,7 +13,7 @@ extends EditorScript
 ## - Simulates unlock progression
 
 const CHANNELS_PATH := "res://Resources/Data/Channels/"
-const CHANNEL_COUNT := 20
+const CHANNEL_COUNT := 4
 
 
 func _run() -> void:
@@ -96,12 +96,9 @@ func _validate_channel(channel_num: int, path: String, results: Dictionary) -> v
 		if round_config == null:
 			errors.append("round_configs[%d] is null" % i)
 			continue
-		
-		var range_check = round_config.challenge_difficulty_range
-		if range_check.x > range_check.y:
-			errors.append("round_configs[%d] has invalid difficulty range (min > max)" % i)
-		if range_check.x < 0 or range_check.y > 5:
-			warnings.append("round_configs[%d] difficulty range %s is outside [0, 5]" % [i, range_check])
+
+		if round_config.is_boss_round and (round_config.boss_debuff_level < 1 or round_config.boss_debuff_level > 5):
+			errors.append("round_configs[%d] has invalid boss_debuff_level %d" % [i, round_config.boss_debuff_level])
 	
 	# Check unlock requirement progression
 	if channel_num > 1 and config.unlock_requirement <= 0:

@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="StoreDirectoryData" load_steps=2 format=3 uid="uid://b5st0r3d1r3ct0ry"]
+
+[ext_resource type="Script" uid="uid://d5st0r3d1r3ct0ry" path="res://Scripts/Core/store_directory_data.gd" id="1_sdd"]
+
+[resource]
+script = ExtResource("1_sdd")
+store_names = Array[String](["Food Court", "Arcade", "Bookstore", "Hobby Store", "Department Store", "Video Rentals", "Coffee Corner", "Toy Store", "Electronics", "Fashion Boutique", "Jewelry", "Cinema", "Music Shop", "Sports Outlet", "Pet Store", "Perfume Shop", "Furniture", "Photo Studio", "Sears", "J-Mart", "Candy Store", "Comic Book Store", "Shoe Store", "Skate Shop"])

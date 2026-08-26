@@ -75,8 +75,6 @@ var difficulty_label: Label
 var bonus_label: Label
 var description_label: Label
 var section_chip: Label
-var up_button: Button
-var down_button: Button
 var start_button: Button
 
 # Dice set selector
@@ -335,7 +333,7 @@ func _build_ui() -> void:
 	directory_list_vbox.add_child(directory_list_title)
 
 	_directory_grid = GridContainer.new()
-	_directory_grid.columns = 5
+	_directory_grid.columns = 2
 	_directory_grid.add_theme_constant_override("h_separation", 6)
 	_directory_grid.add_theme_constant_override("v_separation", 2)
 	directory_list_vbox.add_child(_directory_grid)
@@ -504,7 +502,7 @@ func _build_ui() -> void:
 	_update_dice_set_display()
 
 	_keyboard_hint_label = Label.new()
-	_keyboard_hint_label.text = "ARROWS MOVE  •  ENTER START"
+	_keyboard_hint_label.text = "ENTER START"
 	_keyboard_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_keyboard_hint_label.add_theme_font_override("font", VCR_FONT)
 	_keyboard_hint_label.add_theme_font_size_override("font_size", 11)
@@ -514,21 +512,6 @@ func _build_ui() -> void:
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	side_vbox.add_child(spacer)
-
-	var buttons_hbox := HBoxContainer.new()
-	buttons_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	buttons_hbox.add_theme_constant_override("separation", 12)
-	side_vbox.add_child(buttons_hbox)
-
-	down_button = _create_action_button("PREV")
-	down_button.pressed.connect(_on_down_pressed)
-	_connect_button_fx(down_button)
-	buttons_hbox.add_child(down_button)
-
-	up_button = _create_action_button("NEXT")
-	up_button.pressed.connect(_on_up_pressed)
-	_connect_button_fx(up_button)
-	buttons_hbox.add_child(up_button)
 
 	start_button = Button.new()
 	start_button.name = "StartButton"
@@ -704,7 +687,6 @@ func _build_zones() -> void:
 		zone.configure(zone_data, accent)
 		zone.zone_hovered.connect(_on_zone_hovered)
 		zone.zone_unhovered.connect(_on_zone_unhovered)
-		zone.zone_pressed.connect(_on_zone_pressed)
 		_map_root.add_child(zone)
 		_zones_by_channel[channel] = zone
 		_zone_order.append(channel)
@@ -760,16 +742,6 @@ func _build_legend() -> void:
 		label.add_theme_font_size_override("font_size", 12)
 		label.add_theme_color_override("font_color", Color(0.90, 0.90, 0.94))
 		row.add_child(label)
-
-
-func _create_action_button(text: String) -> Button:
-	var button := Button.new()
-	button.theme = ACTION_THEME
-	button.text = text
-	button.custom_minimum_size = Vector2(90, 38)
-	button.add_theme_font_override("font", VCR_FONT)
-	button.add_theme_font_size_override("font_size", 14)
-	return button
 
 
 func _connect_button_fx(button: BaseButton) -> void:
@@ -1043,29 +1015,12 @@ func _show_locked_feedback() -> void:
 	tween.tween_property(start_button, "modulate", Color(0.62, 0.62, 0.66), 0.18)
 
 
-## _on_up_pressed() -> void
-##
-## Advances to the next mall zone.
-func _on_up_pressed() -> void:
-	if channel_manager:
-		channel_manager.increment_channel()
-		_trigger_channel_glitch(+1)
-
-
-## _on_down_pressed() -> void
-##
-## Moves to the previous mall zone.
-func _on_down_pressed() -> void:
-	if channel_manager:
-		channel_manager.decrement_channel()
-		_trigger_channel_glitch(-1)
-
-
 ## _on_start_pressed() -> void
 ##
-## Confirms the current zone selection and starts the run.
+## Starts the run at zone 1; zone selection is no longer player-controlled.
 func _on_start_pressed() -> void:
 	if channel_manager:
+		channel_manager.set_channel(1)
 		if channel_manager.has_method("is_channel_unlocked"):
 			if not channel_manager.is_channel_unlocked(channel_manager.current_channel):
 				_show_locked_feedback()
@@ -1096,46 +1051,16 @@ func _on_zone_unhovered(channel: int) -> void:
 	_hide_tooltip(true)
 
 
-func _on_zone_pressed(channel: int) -> void:
-	if not channel_manager:
-		return
-	if channel_manager.has_method("is_channel_unlocked") and not channel_manager.is_channel_unlocked(channel):
-		channel_manager.set_channel(channel)
-		_trigger_channel_glitch(1)
-		_show_locked_feedback()
-		return
-	channel_manager.set_channel(channel)
-	_trigger_channel_glitch(1)
-
-
 func _on_map_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		var motion := event as InputEventMouseMotion
 		_update_hover_from_point(motion.position)
-	elif event is InputEventMouseButton:
-		var button_event := event as InputEventMouseButton
-		if button_event.button_index == MOUSE_BUTTON_LEFT and button_event.pressed:
-			var channel := _find_zone_at_point(button_event.position)
-			if channel > 0:
-				_on_zone_pressed(channel)
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible or channel_manager == null:
 		return
-	if event.is_action_pressed("ui_left"):
-		_keyboard_select(Vector2.LEFT, -1)
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_right"):
-		_keyboard_select(Vector2.RIGHT, 1)
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_up"):
-		_keyboard_select(Vector2.UP, -1)
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_down"):
-		_keyboard_select(Vector2.DOWN, 1)
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("ui_accept"):
+	if event.is_action_pressed("ui_accept"):
 		_on_start_pressed()
 		get_viewport().set_input_as_handled()
 
@@ -1161,50 +1086,6 @@ func _find_zone_at_point(board_point: Vector2) -> int:
 		if zone and zone.contains_local_point(board_point):
 			return channel
 	return -1
-
-
-func _keyboard_select(direction: Vector2, fallback_step: int) -> void:
-	var next_channel := _find_neighbor_channel(direction)
-	if next_channel <= 0:
-		next_channel = _get_fallback_channel(fallback_step)
-	if next_channel <= 0 or next_channel == channel_manager.current_channel:
-		return
-	channel_manager.set_channel(next_channel)
-	_trigger_channel_glitch(1 if fallback_step >= 0 else -1)
-
-
-func _find_neighbor_channel(direction: Vector2) -> int:
-	var current_zone = _zones_by_channel.get(channel_manager.current_channel)
-	if current_zone == null:
-		return -1
-	var current_center: Vector2 = current_zone.get_center_point()
-	var best_channel := -1
-	var best_score := INF
-	var perpendicular := Vector2(-direction.y, direction.x)
-	for channel in _zone_order:
-		if channel == channel_manager.current_channel:
-			continue
-		var zone = _zones_by_channel.get(channel)
-		if zone == null:
-			continue
-		var offset: Vector2 = zone.get_center_point() - current_center
-		var forward := offset.dot(direction)
-		if forward <= 2.0:
-			continue
-		var lateral: float = absf(offset.dot(perpendicular))
-		var score: float = offset.length() + lateral * 1.4
-		if score < best_score:
-			best_score = score
-			best_channel = channel
-	return best_channel
-
-
-func _get_fallback_channel(step: int) -> int:
-	var current_index := _zone_order.find(channel_manager.current_channel)
-	if current_index < 0:
-		return -1
-	var next_index := clampi(current_index + step, 0, _zone_order.size() - 1)
-	return _zone_order[next_index]
 
 
 func _show_zone_tooltip(channel: int) -> void:
@@ -1277,50 +1158,6 @@ func _apply_progress_state(animate: bool) -> void:
 
 func _sync_selection_from_manager(animate: bool) -> void:
 	_apply_progress_state(animate)
-
-
-## _trigger_channel_glitch(direction: int) -> void
-##
-## Triggers a brief static hit and wakes the selected map zone.
-func _trigger_channel_glitch(direction: int) -> void:
-	if _shader_material:
-		_shader_material.set_shader_parameter("glitch_intensity", 0.55)
-		_shader_material.set_shader_parameter("horizontal_tear", 0.18)
-		_shader_material.set_shader_parameter("brightness_spike", 0.28)
-		_shader_material.set_shader_parameter("rgb_split", 0.03)
-		var shader_tween = create_tween().set_parallel()
-		shader_tween.tween_property(_shader_material, "shader_parameter/glitch_intensity", 0.0, 0.25).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-		shader_tween.tween_property(_shader_material, "shader_parameter/horizontal_tear", 0.0, 0.18)
-		shader_tween.tween_property(_shader_material, "shader_parameter/brightness_spike", 0.0, 0.14)
-		shader_tween.tween_property(_shader_material, "shader_parameter/rgb_split", 0.0, 0.18)
-
-	_shake_panel(0.12, 4.0)
-	var zone = _zones_by_channel.get(channel_manager.current_channel)
-	if zone:
-		zone.set_selected(true, true)
-		if direction > 0:
-			zone.rotation_degrees = 1.0
-		else:
-			zone.rotation_degrees = -1.0
-		var zone_tween := create_tween()
-		zone_tween.tween_property(zone, "rotation_degrees", 0.0, 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-
-	var audio_manager = get_node_or_null("/root/AudioManager")
-	if audio_manager and audio_manager.has_method("play_static_burst"):
-		audio_manager.play_static_burst()
-
-
-## _shake_panel(duration: float, intensity: float) -> void
-##
-## Brief shell shake for the selection board.
-func _shake_panel(duration: float, intensity: float) -> void:
-	if not panel_container:
-		return
-	var original_pos = panel_container.position
-	var shake_tween = create_tween()
-	shake_tween.tween_property(panel_container, "position:x", original_pos.x + intensity, duration * 0.25).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	shake_tween.tween_property(panel_container, "position:x", original_pos.x - intensity * 0.6, duration * 0.25).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	shake_tween.tween_property(panel_container, "position:x", original_pos.x, duration * 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 ## _animate_entrance() -> void

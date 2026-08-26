@@ -36,7 +36,7 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | lower_ten | Lower Ten | SCORE_POINTS | 150 | Lower section scores get +10 points |
 | different_straights | Different Straights | ROLL_STRAIGHT | 2 | Straights can have one gap of 1 |
 | plus_thelast | Plus The Last | SCORE_POINTS | 250 | Adds last score to current score |
-| allowance | Allowance | COMPLETE_GAME | 1 | Grants $100 when challenge completes |
+| allowance | Allowance | COMPLETE_GAME | 1 | Grants $100 when the round target is met |
 | ungrounded | Ungrounded | CUMULATIVE_YAHTZEES | 15 | Prevents all debuffs |
 | shop_rerolls | Shop Rerolls | EARN_MONEY | 75 | Shop rerolls always cost $25 |
 | tango_and_cash | Tango & Cash | CHORE_COMPLETIONS | 3 | +$10 for every odd die scored |
@@ -56,15 +56,15 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | straight_triplet_master | Straight Triplet Master | ROLL_STRAIGHT | 3 | Score large straight in 3 categories |
 | modded_dice_mastery | Modded Dice Mastery | USE_CONSUMABLES | 4 | +10 per modded die when scoring |
 | debuff_destroyer | Debuff Destroyer | ROLL_YAHTZEE | 2 | Removes random debuff when sold |
-| challenge_easer | Challenge Easer | COMPLETE_CHANNEL | 5 | All challenge targets reduced by 20% |
+| challenge_easer | Challenge Easer | COMPLETE_CHANNEL | 2 | All round targets reduced by 20% |
 | azure_perfection | Azure Perfection | CUMULATIVE_YAHTZEES | 3 | Blue dice always multiply |
-| rainbow_surge | Rainbow Surge | COMPLETE_CHANNEL | 10 | 2x multiplier when 4+ dice colors present |
-| lucky_streak | Lucky Streak | COMPLETE_CHANNEL | 3 | Increased chance of rolling pairs (NOT IMPLEMENTED) |
-| steady_progress | Steady Progress | COMPLETE_CHANNEL | 5 | +5 points to all lower section scores (NOT IMPLEMENTED) |
-| combo_king | Combo King | COMPLETE_CHANNEL | 8 | Bonus multiplier for consecutive scoring (NOT IMPLEMENTED) |
-| channel_champion | Channel Champion | COMPLETE_CHANNEL | 12 | Double points in favorite category (NOT IMPLEMENTED) |
-| grand_master | Grand Master | COMPLETE_CHANNEL | 15 | All scoring categories get +10% (NOT IMPLEMENTED) |
-| dice_lord | Dice Lord | COMPLETE_CHANNEL | 20 | Start each round with one guaranteed Yahtzee (NOT IMPLEMENTED) |
+| rainbow_surge | Rainbow Surge | COMPLETE_CHANNEL | 2 | 2x multiplier when 4+ dice colors present |
+| lucky_streak | Lucky Streak | COMPLETE_CHANNEL | 1 | Increased chance of rolling pairs (NOT IMPLEMENTED) |
+| steady_progress | Steady Progress | COMPLETE_CHANNEL | 1 | +5 points to all lower section scores (NOT IMPLEMENTED) |
+| combo_king | Combo King | COMPLETE_CHANNEL | 2 | Bonus multiplier for consecutive scoring (NOT IMPLEMENTED) |
+| channel_champion | Channel Champion | COMPLETE_CHANNEL | 3 | Double points in favorite category (NOT IMPLEMENTED) |
+| grand_master | Grand Master | COMPLETE_CHANNEL | 3 | All scoring categories get +10% (NOT IMPLEMENTED) |
+| dice_lord | Dice Lord | COMPLETE_CHANNEL | 4 | Start each round with one guaranteed Yahtzee (NOT IMPLEMENTED) |
 
 ## Consumables
 
@@ -81,7 +81,7 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | the_pawn_shop | The Pawn Shop | EARN_MONEY | 100 | Trade items for money |
 | empty_shelves | Empty Shelves | USE_CONSUMABLES | 3 | Clear shop for new items |
 | the_rarities | The Rarities | USE_CONSUMABLES | 5 | Access to rare items |
-| visit_the_shop | Visit The Shop | COMPLETE_CHANNEL | 3 | Open the shop during active play |
+| visit_the_shop | Visit The Shop | COMPLETE_CHANNEL | 1 | Open the shop during active play |
 | add_max_power_up | Add Max Power Up | USE_CONSUMABLES | 7 | Increase PowerUp limit |
 | random_power_up_uncommon | Random Uncommon Power Up | USE_CONSUMABLES | 8 | Get random uncommon PowerUp |
 | green_envy | Green Envy | EARN_MONEY | 150 | Green dice effects |
@@ -90,10 +90,10 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | free_chores | Free Chores | COMPLETE_GAME | 1 | Reduces goof-off meter by 30 points |
 | all_chores | All Chores | COMPLETE_GAME | 3 | Clears goof-off meter completely |
 | one_free_mod | One Free Mod | USE_CONSUMABLES | 5 | Grants 1 free random dice mod |
-| dice_surge | Dice Surge | COMPLETE_CHANNEL | 2 | Grants +2 temporary dice for 3 turns |
+| dice_surge | Dice Surge | COMPLETE_CHANNEL | 1 | Grants +2 temporary dice for 3 turns |
 | stat_cashout | Stat Cashout | CUMULATIVE_YAHTZEES | 3 | Earn $10/yahtzee and $5/full house this run |
-| upper_section_boost | Upper Section Boost | COMPLETE_CHANNEL | 3 | Upgrades all 6 upper categories by one level |
-| lower_section_boost | Lower Section Boost | COMPLETE_CHANNEL | 4 | Upgrades all 7 lower categories by one level |
+| upper_section_boost | Upper Section Boost | COMPLETE_CHANNEL | 1 | Upgrades all 6 upper categories by one level |
+| lower_section_boost | Lower Section Boost | COMPLETE_CHANNEL | 1 | Upgrades all 7 lower categories by one level |
 | score_streak | Score Streak | SCORE_POINTS | 500 | Score multiplier grows over 3 turns |
 | score_amplifier | Score Amplifier | SCORE_POINTS | 400 | Doubles your next category score |
 | bonus_collector | Bonus Collector | EARN_MONEY | 500 | Grants $35 if upper bonus achieved |
@@ -110,11 +110,11 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | large_straight_upgrade | Large Straight Upgrade | ROLL_STRAIGHT | 5 | Upgrade Large Straight category level |
 | yahtzee_upgrade | Yahtzee Upgrade | CUMULATIVE_YAHTZEES | 8 | Upgrade Yahtzee category level |
 | chance_upgrade | Chance Upgrade | SCORE_POINTS | 350 | Upgrade Chance category level |
-| all_categories_upgrade | Master Upgrade | COMPLETE_CHANNEL | 10 | Upgrade ALL categories by one level |
-| channel_bonus | Channel Bonus | COMPLETE_CHANNEL | 3 | Gain $50 per completed channel |
-| reroll_master | Reroll Master | COMPLETE_CHANNEL | 5 | Gain 2 extra rerolls this round |
-| lucky_seven | Lucky Seven | COMPLETE_CHANNEL | 8 | All dice become 1-7 range this round |
-| ultimate_reroll | Ultimate Reroll | COMPLETE_CHANNEL | 15 | Reroll all dice up to 5 times |
+| all_categories_upgrade | Master Upgrade | COMPLETE_CHANNEL | 2 | Upgrade ALL categories by one level |
+| channel_bonus | Channel Bonus | COMPLETE_CHANNEL | 1 | Gain $50 per completed channel |
+| reroll_master | Reroll Master | COMPLETE_CHANNEL | 1 | Gain 2 extra rerolls this round |
+| lucky_seven | Lucky Seven | COMPLETE_CHANNEL | 2 | All dice become 1-7 range this round |
+| ultimate_reroll | Ultimate Reroll | COMPLETE_CHANNEL | 3 | Reroll all dice up to 5 times |
 
 ## Mods
 
@@ -127,8 +127,8 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | three_but_three | Three But Three | ROLL_STRAIGHT | 4 | Dice avoid rolling 3s |
 | wild_card | Wild Card | USE_CONSUMABLES | 10 | Random special effects on each roll |
 | high_roller | High Roller | LOCK_CONSTRAINT | 100 | Dice tend toward high values (unlock: score 100+ over 4 turns, no locks) |
-| channel_veteran | Channel Veteran | COMPLETE_CHANNEL | 5 | Start with +$25 per channel completed (NOT IMPLEMENTED) |
-| precision_roller | Precision Roller | COMPLETE_CHANNEL | 12 | First roll each turn is always 4+ (NOT IMPLEMENTED) |
+| channel_veteran | Channel Veteran | COMPLETE_CHANNEL | 1 | Start with +$25 per channel completed (NOT IMPLEMENTED) |
+| precision_roller | Precision Roller | COMPLETE_CHANNEL | 3 | First roll each turn is always 4+ (NOT IMPLEMENTED) |
 
 ## Colored Dice Features
 
@@ -137,7 +137,7 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | green_dice | Green Dice | CHORE_COMPLETIONS | 3 | Unlocks green colored dice (earn money) |
 | red_dice | Red Dice | SCORE_THRESHOLD_CATEGORY | 18 | Unlocks red colored dice (score bonus) |
 | purple_dice | Purple Dice | CUMULATIVE_YAHTZEES | 2 | Unlocks purple colored dice (score multiplier) |
-| blue_dice | Blue Dice | COMPLETE_CHANNEL | 3 | Unlocks blue colored dice (complex effects) |
+| blue_dice | Blue Dice | COMPLETE_CHANNEL | 1 | Unlocks blue colored dice (complex effects) |
 | yellow_dice | Yellow Dice | USE_CONSUMABLES | 8 | Unlocks yellow colored dice (grants consumables when scored) |
 
 ## Dice Sets (selected at game start in the Mall Zone Selection)
@@ -170,8 +170,8 @@ Note: the d6 set is the default and is always available (no unlock item).
 | CUMULATIVE_SCORE | Score X total points across all games |
 | DICE_COMBINATIONS | Roll specific combinations |
 | CUMULATIVE_YAHTZEES | Roll X Yahtzees across all games |
-| COMPLETE_CHANNEL | Complete Mall Zone X |
-| REACH_CHANNEL | Reach Mall Zone X |
+| COMPLETE_CHANNEL | Complete Mall Zone X (zones are numbered 1-4; thresholds were rescaled from the old 1-20 channels) |
+| REACH_CHANNEL | Reach Mall Zone X (zones are numbered 1-4) |
 | SCORE_THRESHOLD_CATEGORY | Score X+ in a specific category |
 | CHORE_COMPLETIONS | Complete X chores (single game or cumulative) |
 | WIN_WITHOUT_SCORING | Win without scoring in a category/section |
@@ -191,7 +191,9 @@ Separate from the meta unlocks above, the kiosk also gates PowerUps by their POG
 | 3 | Grounded | 35 | + R |
 | 4 | Banned | 60 | + NC-17 |
 
-Rep economy (`Scripts/Core/game_controller.gd`): successful sass +5, deferred punishment +4, Mom storms off +6, polite on a punished visit -2, polite on a check-in -1, punished sass 0. Story beats and cast arcs also pay small `rep_delta`/`reward_rep` amounts. Below Rep 15 with Mom at mood <= 3, G-rated POGs get bonus shelf weight and a discount.
+Rep economy (`Scripts/Core/game_controller.gd`): successful sass +6, deferred punishment +5, Mom storms off +7, polite on a punished visit -2, polite on a check-in -1, punished sass 0. Story beats and cast arcs also pay small `rep_delta`/`reward_rep` amounts. Below Rep 15 with Mom at mood <= 3, G-rated POGs get bonus shelf weight and a discount.
+
+Pacing goal: Rep 60 (tier 4, NC-17 POGs) should be reachable by Zone 4. To support that, the Mom check-in window was tightened to rolls 2 through `6 + zone` (`ChoresManager.get_checkin_max()`) so check-ins don't get dropped by fast rounds.
 
 The visual meter stages (`REP_STAGE_THRESHOLDS = [0, 10, 30, 60]`): Teacher's Pet -> Attitude Problem -> Mall Rat -> Banned from the Mall.
 

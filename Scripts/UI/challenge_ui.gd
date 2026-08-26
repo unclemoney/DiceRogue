@@ -53,7 +53,7 @@ func _ready() -> void:
 	print("[ChallengeUI] Container rect size:", container.size)
 	print("[ChallengeUI] Container global position:", container.global_position)
 
-func add_challenge(data: ChallengeData, challenge: Challenge) -> ChallengeIcon:
+func add_challenge(data: ChallengeData, challenge: Challenge = null) -> ChallengeIcon:
 	print("[ChallengeUI] Adding challenge:", data.id if data else "null")
 	
 	if not challenge_icon_scene:
@@ -102,27 +102,38 @@ func add_challenge(data: ChallengeData, challenge: Challenge) -> ChallengeIcon:
 	icon.animate_target_score_countup()
 	
 	_challenges[data.id] = icon
-	
-	# Connect challenge signals
-	challenge.challenge_updated.connect(_on_challenge_progress_updated.bind(data.id))
-	challenge.challenge_completed.connect(_on_challenge_completed.bind(data.id))
-	challenge.challenge_failed.connect(_on_challenge_failed.bind(data.id))
-	
+
+	# Connect challenge signals (store rounds have no Challenge instance — the
+	# GameController drives progress/completion through the store API below)
+	if challenge:
+		challenge.challenge_updated.connect(_on_challenge_progress_updated.bind(data.id))
+		challenge.challenge_completed.connect(_on_challenge_completed.bind(data.id))
+		challenge.challenge_failed.connect(_on_challenge_failed.bind(data.id))
+
 	# Connect icon signal
 	if not icon.is_connected("challenge_selected", _on_challenge_selected):
 		icon.challenge_selected.connect(_on_challenge_selected)
-	
+
 	print("[ChallengeUI] Added challenge:", data.id)
-	
-	# Juice: challenge reveal banner
-	_show_challenge_reveal_banner(data.display_name if data else "CHALLENGE")
-	
+
 	return icon
 
 func _show_challenge_reveal_banner(challenge_name: String) -> void:
+	_show_reveal_banner("CHALLENGE ACCEPTED\n%s" % challenge_name)
+
+
+## show_store_reveal_banner(store_name)
+##
+## Round-start banner for a store round (challenges deprecated: each round
+## is a store). Uses the same reveal animation and gate as challenge reveals.
+func show_store_reveal_banner(store_name: String) -> void:
+	_show_reveal_banner("NOW ENTERING\n%s" % store_name.to_upper())
+
+
+func _show_reveal_banner(banner_text: String) -> void:
 	_challenge_reveal_active = true
 	var banner = Label.new()
-	banner.text = "CHALLENGE ACCEPTED\n%s" % challenge_name
+	banner.text = banner_text
 	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	banner.z_index = 200
 	
@@ -159,6 +170,85 @@ func _show_challenge_reveal_banner(challenge_name: String) -> void:
 func wait_for_reveal() -> void:
 	if _challenge_reveal_active:
 		await challenge_reveal_finished
+
+
+# ---- Store rounds (challenges deprecated) ----
+## Each round is a store: the ChallengeUI slot shows a single icon with the
+## store name as its title and a progress bar toward the round target score.
+## GameController drives this API directly (no Challenge instance exists).
+
+var _store_id: String = ""
+
+
+## show_store(store_name, target_score, reward_money, difficulty) -> ChallengeIcon
+##
+## Clears any previous entry and adds one icon for the current store round.
+## difficulty drives the star display/background tint (zone number, or 5 on
+## boss rounds). Clicking the icon fans out the detail card as before.
+func show_store(store_name: String, target_score: int, reward_money: int, difficulty: int = 0) -> ChallengeIcon:
+	clear_all_challenges()
+	_store_id = store_name
+
+	var data := ChallengeData.new()
+	data.id = store_name
+	data.display_name = store_name
+	data.description = "Reach the target score before your scorecard fills up."
+	data.target_score = target_score
+	data.reward_money = reward_money
+	data.difficulty = clampi(difficulty, 0, 5)
+
+	return add_challenge(data)
+
+
+## set_store_progress(progress) -> void
+##
+## Updates the store icon's progress bar (and the fanned-out detail card).
+## progress is 0.0–1.0 (current score / round target).
+func set_store_progress(progress: float) -> void:
+	if _store_id.is_empty():
+		return
+	_on_challenge_progress_updated(clampf(progress, 0.0, 1.0), _store_id)
+
+
+## set_store_debuffs(debuff_ids) -> void
+##
+## Tags the store's detail card with this round's active debuffs/groundings.
+func set_store_debuffs(debuff_ids: Array) -> void:
+	if _store_id.is_empty() or not _challenges.has(_store_id):
+		return
+	var icon: ChallengeIcon = _challenges[_store_id]
+	if icon and icon.data:
+		var ids: Array[String] = []
+		ids.assign(debuff_ids)
+		icon.data.debuff_ids = ids
+
+
+## notify_store_completed() / notify_store_failed() -> void
+##
+## Plays the completion flash / FAILED stamp effects on the store icon.
+func notify_store_completed() -> void:
+	if not _store_id.is_empty():
+		_on_challenge_completed(_store_id)
+
+
+func notify_store_failed() -> void:
+	if not _store_id.is_empty():
+		_on_challenge_failed(_store_id)
+
+
+## clear_all_challenges() -> void
+##
+## Removes every icon (used between store rounds and on game reset).
+func clear_all_challenges() -> void:
+	if _current_state == State.FANNED_OUT:
+		_fold_back_challenges()
+	for id in _challenges.keys():
+		var icon: ChallengeIcon = _challenges[id]
+		if is_instance_valid(icon):
+			icon.queue_free()
+	_challenges.clear()
+	_progress.clear()
+	_store_id = ""
 
 
 func _on_challenge_selected(id: String) -> void:

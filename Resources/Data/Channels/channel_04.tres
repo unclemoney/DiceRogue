@@ -2,108 +2,110 @@
 
 [ext_resource type="Script" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
 [ext_resource type="Script" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
-[ext_resource type="Shader" path="res://Scripts/Shaders/arcade_starfield.gdshader" id="3_shader_bg"]
+[ext_resource type="Shader" path="res://Scripts/Shaders/backgground_swirl.gdshader" id="3_shader_bg"]
 
 [sub_resource type="Resource" id="round_1"]
 script = ExtResource("2_round")
 round_number = 1
-challenge_difficulty_range = Vector2i(0, 1)
-max_debuffs = 0
-debuff_difficulty_cap = 0
+max_debuffs = 1
+debuff_difficulty_cap = 4
+grounding_chance = 0.25
 goof_off_threshold_override = -1
-target_score_override = 111
-reward_money_override = 0
+target_score_override = 290
+reward_money_override = 500
 bonus_multipliers = {
-"chore_completion": 1.0,
-"empty_category": 1.0,
-"points_above": 1.0
+"chore_completion": 2.5,
+"empty_category": 2.5,
+"points_above": 2.5
 }
 
 [sub_resource type="Resource" id="round_2"]
 script = ExtResource("2_round")
 round_number = 2
-challenge_difficulty_range = Vector2i(1, 2)
-max_debuffs = 0
-debuff_difficulty_cap = 1
+max_debuffs = 1
+debuff_difficulty_cap = 4
+grounding_chance = 0.25
 goof_off_threshold_override = -1
-target_score_override = 9289
-reward_money_override = 0
+target_score_override = 24290
+reward_money_override = 600
 bonus_multipliers = {
-"chore_completion": 1.0,
-"empty_category": 1.0,
-"points_above": 1.0
+"chore_completion": 3.0,
+"empty_category": 3.0,
+"points_above": 3.0
 }
 
 [sub_resource type="Resource" id="round_3"]
 script = ExtResource("2_round")
 round_number = 3
-challenge_difficulty_range = Vector2i(1, 2)
-max_debuffs = 0
-debuff_difficulty_cap = 0
+max_debuffs = 1
+debuff_difficulty_cap = 4
+grounding_chance = 0.25
 goof_off_threshold_override = -1
-target_score_override = 13318
-reward_money_override = 0
+target_score_override = 34824
+reward_money_override = 700
 bonus_multipliers = {
-"chore_completion": 1.0,
-"empty_category": 1.0,
-"points_above": 1.0
+"chore_completion": 3.5,
+"empty_category": 3.5,
+"points_above": 3.5
 }
 
 [sub_resource type="Resource" id="round_4"]
 script = ExtResource("2_round")
 round_number = 4
-challenge_difficulty_range = Vector2i(2, 2)
 max_debuffs = 1
-debuff_difficulty_cap = 2
+debuff_difficulty_cap = 4
+grounding_chance = 0.25
 goof_off_threshold_override = -1
-target_score_override = 15578
-reward_money_override = 0
+target_score_override = 40732
+reward_money_override = 800
 bonus_multipliers = {
-"chore_completion": 1.0,
-"empty_category": 1.0,
-"points_above": 1.0
+"chore_completion": 4.0,
+"empty_category": 4.0,
+"points_above": 4.0
 }
 
 [sub_resource type="Resource" id="round_5"]
 script = ExtResource("2_round")
 round_number = 5
-challenge_difficulty_range = Vector2i(2, 3)
 max_debuffs = 1
-debuff_difficulty_cap = 2
+debuff_difficulty_cap = 4
+grounding_chance = 0.25
 goof_off_threshold_override = -1
-target_score_override = 13549
-reward_money_override = 0
+target_score_override = 35427
+reward_money_override = 1000
 bonus_multipliers = {
-"chore_completion": 1.0,
-"empty_category": 1.0,
-"points_above": 1.0
+"chore_completion": 4.5,
+"empty_category": 4.5,
+"points_above": 4.5
 }
 
 [sub_resource type="Resource" id="round_6"]
 script = ExtResource("2_round")
 round_number = 6
-challenge_difficulty_range = Vector2i(2, 3)
-max_debuffs = 2
-debuff_difficulty_cap = 2
+max_debuffs = 0
+debuff_difficulty_cap = 0
+grounding_chance = 0.0
+is_boss_round = true
+boss_debuff_level = 5
 goof_off_threshold_override = -1
-target_score_override = 13318
+target_score_override = 34822
 reward_money_override = 0
 bonus_multipliers = {
-"chore_completion": 1.0,
-"empty_category": 1.0,
-"points_above": 1.0
+"chore_completion": 5.0,
+"empty_category": 5.0,
+"points_above": 5.0
 }
 
 [resource]
 script = ExtResource("1_channel")
 channel_number = 4
-display_name = "Channel 04 - The Grind Begins"
-description = "Tier 3 challenges appear. Debuffs now start at round 3."
-mall_zone_name = "Hobby Store"
-mall_directory_label = "Hobby Store"
-mall_tooltip_flavor = "Model kits, board games, and paint racks crowd the shelves."
-mall_section_id = "specialty"
-unlock_requirement = 1
+display_name = "Mall Zone 04"
+description = "Zone 4 of the mall."
+mall_zone_name = "South Wing"
+mall_directory_label = "04"
+mall_tooltip_flavor = "The anchor wing. Everything is on the line."
+mall_section_id = "major_stores"
+unlock_requirement = 3
 round_configs = Array[ExtResource("2_round")]([SubResource("round_1"), SubResource("round_2"), SubResource("round_3"), SubResource("round_4"), SubResource("round_5"), SubResource("round_6")])
 goal_score_multiplier = 1.0
 yahtzee_bonus_multiplier = 1.0
@@ -112,21 +114,19 @@ colored_dice_cost_multiplier = 1.0
 reroll_base_cost_multiplier = 1.0
 goof_off_multiplier = 1.0
 debuff_intensity_multiplier = 1.0
-allowed_carryover_count = 4
+allowed_carryover_count = 1
 allowed_carryover_types = Array[String](["power_ups", "consumables", "colored_dice", "mods", "consoles", "money", "scorecard_levels"])
-force_specific_challenges = Array[String]([])
 disabled_shop_items = Array[String]([])
 special_rules = {}
 background_shader = ExtResource("3_shader_bg")
 background_shader_params = {
-"color_cycle_speed": 1.0,
-"colour_1": Color(0.08, 0.04, 0.15, 1),
-"colour_2": Color(0.8, 0, 1, 1),
-"colour_3": Color(0, 0.8, 0.8, 1),
-"comet_trails": 0.3,
+"colour_1": Color(0.6, 0.15, 0, 1),
+"colour_2": Color(0.95, 0.3, 0, 1),
+"colour_3": Color(0.2, 0.02, 0, 1),
+"contrast": 1.8,
+"lighting": 0.6,
 "pixel_filter": 500.0,
-"star_density": 200.0,
-"star_speed": 0.2,
-"twinkle_speed": 2.0
+"spin_amount": 0.4,
+"spin_speed": 0.7
 }
 ui_contrast_mode = "auto"

@@ -92,11 +92,6 @@ class_name ChannelDifficultyData
 
 ## ============== SPECIAL OVERRIDES ==============
 
-## Force specific challenge IDs for certain rounds (optional)
-## If specified, these challenge IDs are used instead of random selection
-## Array of challenge_id strings, indexed by round (0-5)
-@export var force_specific_challenges: Array[String] = []
-
 ## Shop item IDs to exclude from appearing in this channel
 ## Useful for restricting powerful items in early channels
 @export var disabled_shop_items: Array[String] = []
@@ -134,19 +129,6 @@ func get_round_config(round_number: int) -> RoundDifficultyConfig:
 	if index >= 0 and index < round_configs.size():
 		return round_configs[index]
 	return null
-
-
-## get_challenge_difficulty_range(round_number: int) -> Vector2i
-##
-## Returns the allowed challenge difficulty tier range for a round.
-## @param round_number: 1-based round number
-## @return: Vector2i with x=min_tier, y=max_tier
-func get_challenge_difficulty_range(round_number: int) -> Vector2i:
-	var config = get_round_config(round_number)
-	if config:
-		return config.challenge_difficulty_range
-	# Default fallback: tier equals round number - 1
-	return Vector2i(round_number - 1, round_number - 1)
 
 
 ## get_max_debuffs(round_number: int) -> int
@@ -193,20 +175,6 @@ func get_bonus_multiplier(round_number: int, bonus_type: String) -> float:
 ## @return: True if the item should not appear in shop
 func is_shop_item_disabled(item_id: String) -> bool:
 	return disabled_shop_items.has(item_id)
-
-
-## get_forced_challenge(round_number: int) -> String
-##
-## Returns the forced challenge ID for a round, if any.
-## @param round_number: 1-based round number
-## @return: Challenge ID or empty string if no override
-func get_forced_challenge(round_number: int) -> String:
-	var index = round_number - 1
-	if index >= 0 and index < force_specific_challenges.size():
-		var challenge_id = force_specific_challenges[index]
-		if challenge_id and not challenge_id.is_empty():
-			return challenge_id
-	return ""
 
 
 ## has_special_rule(rule_key: String) -> bool
@@ -311,10 +279,6 @@ func get_summary() -> String:
 		if round_config:
 			lines.append("  " + round_config.get_summary())
 	
-	if force_specific_challenges.size() > 0:
-		lines.append("")
-		lines.append("Forced Challenges: %s" % str(force_specific_challenges))
-	
 	if disabled_shop_items.size() > 0:
 		lines.append("Disabled Items: %s" % str(disabled_shop_items))
 	
@@ -335,8 +299,8 @@ func validate() -> Array[String]:
 	var errors: Array[String] = []
 	var valid_mall_sections := ["eatery", "entertainment", "lifestyle", "specialty", "major_stores"]
 	
-	if channel_number < 1 or channel_number > 20:
-		errors.append("Invalid channel_number: %d (must be 1-20)" % channel_number)
+	if channel_number < 1 or channel_number > 4:
+		errors.append("Invalid channel_number: %d (must be 1-4)" % channel_number)
 
 	if display_name.is_empty():
 		errors.append("display_name cannot be empty")

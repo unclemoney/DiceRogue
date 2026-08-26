@@ -9,11 +9,11 @@ class_name BotConfig
 ## Number of full game runs the bot will attempt
 @export var attempts: int = 10
 
-## Minimum channel to test (1-20)
-@export_range(1, 20) var channel_min: int = 1
+## Minimum channel to test (1-4)
+@export_range(1, 4) var channel_min: int = 1
 
-## Maximum channel to test (1-20)
-@export_range(1, 20) var channel_max: int = 1
+## Maximum channel to test (1-4)
+@export_range(1, 4) var channel_max: int = 1
 
 ## If true, the bot plays visually with animations. If false, runs at max speed.
 @export var visual_mode: bool = false
@@ -60,7 +60,7 @@ class_name BotConfig
 
 ## If true, a lost channel does NOT end the attempt: the bot advances to the
 ## next channel anyway (loss recorded honestly) so baseline measurement can
-## sample scoring capability on all 20 channels in one climb. The realistic
+## sample scoring capability on all 4 channels in one climb. The realistic
 ## difficulty read (win rate per channel) stays intact via per-run outcomes.
 @export var advance_on_loss: bool = false
 

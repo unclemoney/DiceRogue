@@ -215,7 +215,7 @@ func show_transition(data: Dictionary) -> void:
 	else:
 		var next_name: String = data.get("next_challenge_name", "???")
 		var next_target: int = data.get("next_challenge_target", 0)
-		next_title.text = "NEXT CHALLENGE"
+		next_title.text = "NEXT STORE"
 		next_detail.text = "%s — Goal: %d pts" % [next_name, next_target]
 
 	visible = true

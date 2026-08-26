@@ -10,10 +10,6 @@ class_name RoundDifficultyConfig
 ## The round number this config applies to (1-6)
 @export var round_number: int = 1
 
-## Challenge difficulty tier range for random selection
-## x = minimum tier, y = maximum tier (inclusive, 0-5)
-@export var challenge_difficulty_range: Vector2i = Vector2i(0, 0)
-
 ## Maximum number of debuffs that can be applied this round
 ## 0 = no debuffs, -1 = no limit
 @export var max_debuffs: int = 0
@@ -30,6 +26,18 @@ class_name RoundDifficultyConfig
 ## 0 = use Challenge resource target_score (default)
 ## > 0 = use this value as the base target (before channel scaling)
 @export var target_score_override: int = 0
+
+## Chance (0.0-1.0) that a grounding is drawn for this round.
+## Groundings come from their own pool (DebuffData.is_grounding) and share
+## the debuff UI slots. 0 = no groundings this round.
+@export_range(0.0, 1.0) var grounding_chance: float = 0.0
+
+## Boss round flag (final round of a zone). Boss rounds draw exactly one
+## debuff of boss_debuff_level instead of the regular pool draw.
+@export var is_boss_round: bool = false
+
+## Exact difficulty level for the boss debuff draw when is_boss_round.
+@export_range(1, 5) var boss_debuff_level: int = 5
 
 ## Optional reward money override for this round
 ## 0 = use ChallengeData.reward_money as fallback
@@ -56,15 +64,6 @@ func get_bonus_multiplier(bonus_type: String) -> float:
 	return bonus_multipliers.get(bonus_type, 1.0)
 
 
-## is_challenge_tier_valid(tier: int) -> bool
-##
-## Checks if a challenge tier falls within the allowed range for this round.
-## @param tier: The challenge difficulty tier (0-5)
-## @return: True if the tier is within range
-func is_challenge_tier_valid(tier: int) -> bool:
-	return tier >= challenge_difficulty_range.x and tier <= challenge_difficulty_range.y
-
-
 ## can_apply_debuff(current_count: int, debuff_difficulty: int) -> bool
 ##
 ## Checks if another debuff can be applied based on count and difficulty limits.
@@ -88,18 +87,22 @@ func can_apply_debuff(current_count: int, debuff_difficulty: int) -> bool:
 ## Returns a human-readable summary of this round's configuration.
 ## Useful for debugging and the channel editor tool.
 func get_summary() -> String:
-	var summary = "Round %d: Tiers %d-%d, Max Debuffs: %s, Debuff Cap: %d" % [
+	var summary = "Round %d: Max Debuffs: %s, Debuff Cap: %d" % [
 		round_number,
-		challenge_difficulty_range.x,
-		challenge_difficulty_range.y,
 		str(max_debuffs) if max_debuffs >= 0 else "unlimited",
 		debuff_difficulty_cap
 	]
-	
+
+	if is_boss_round:
+		summary += ", BOSS (debuff level %d)" % boss_debuff_level
+
+	if grounding_chance > 0.0:
+		summary += ", Grounding: %.0f%%" % (grounding_chance * 100.0)
+
 	if goof_off_threshold_override >= 0:
 		summary += ", Goof-off: %d" % goof_off_threshold_override
-	
+
 	if reward_money_override > 0:
 		summary += ", Reward: $%d" % reward_money_override
-	
+
 	return summary

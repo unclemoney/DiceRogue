@@ -44,6 +44,7 @@ var score_above_bonus_label: Label
 var power_up_bonus_label: Label
 var power_up_bonus_value_label: Label
 var total_bonus_label: Label
+var total_text_label: Label
 var continue_button = null
 
 # Round data
@@ -341,11 +342,12 @@ func _build_ui() -> void:
 	total_hbox.add_theme_constant_override("separation", 10)
 	content_vbox.add_child(total_hbox)
 	
-	var total_text_label = Label.new()
-	total_text_label.text = "TOTAL BONUS:"
-	total_text_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	total_text_label.add_theme_font_size_override("font_size", 22)
-	total_hbox.add_child(total_text_label)
+	var total_text_label_node = Label.new()
+	total_text_label_node.text = "TOTAL BONUS:"
+	total_text_label_node.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	total_text_label_node.add_theme_font_size_override("font_size", 22)
+	total_hbox.add_child(total_text_label_node)
+	total_text_label = total_text_label_node
 	
 	total_bonus_label = Label.new()
 	total_bonus_label.name = "TotalBonusLabel"
@@ -431,9 +433,15 @@ func show_stats(data: Dictionary) -> void:
 	points_above_target = data.get("points_above_target", max(0, final_score - challenge_target_score))
 	score_above_bonus = data.get("score_above_bonus", points_above_target * POINTS_ABOVE_TARGET_BONUS)
 	power_up_bonus_amount = data.get("power_up_bonus", 0)
-	
+
 	# Total includes challenge reward, chore reward, empty categories, score above target, and PowerUp bonuses.
 	total_bonus = challenge_reward_amount + chore_reward_amount + empty_categories_bonus + score_above_bonus + power_up_bonus_amount
+
+	# Docked Allowance grounding: the whole award is withheld.
+	var allowance_docked: bool = data.get("docked_allowance", false)
+	if allowance_docked:
+		print("[EndOfRoundStatsPanel] Allowance docked - withholding $%d" % total_bonus)
+		total_bonus = 0
 	
 	print("[EndOfRoundStatsPanel] Challenge reward:", challenge_reward_amount)
 	print("[EndOfRoundStatsPanel] Chores completed:", chores_completed_count, "Reward:", chore_reward_amount)
@@ -451,6 +459,13 @@ func show_stats(data: Dictionary) -> void:
 	empty_categories_label.text = "Empty Categories (%s × $%s):" % [NumberFormatter.format_int(empty_category_count), NumberFormatter.format_int(EMPTY_CATEGORY_BONUS)]
 	score_above_label.text = "Points Above Target (%s pts, max $100):" % NumberFormatter.format_int(points_above_target)
 	power_up_bonus_label.text = "Bonuses from PowerUps:"
+	if total_text_label:
+		if allowance_docked:
+			total_text_label.text = "ALLOWANCE DOCKED:"
+			total_text_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
+		else:
+			total_text_label.text = "TOTAL BONUS:"
+			total_text_label.remove_theme_color_override("font_color")
 	
 	# Reset bonus labels for animation
 	challenge_reward_value_label.text = "$0"

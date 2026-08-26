@@ -84,7 +84,9 @@ func _test_zone_logging(cm: CastManager) -> void:
 	_check("Food Court visited", cm.has_visited_zone("Food Court"))
 	_check("J-Mart not visited", not cm.has_visited_zone("J-Mart"))
 	_check("unvisited pool excludes logged zones", "Arcade" not in cm.get_unvisited_zones())
-	_check("unvisited pool still has other zones", cm.get_unvisited_zones().size() >= 17)
+	# Pool is built from the 4 mall-zone channel configs; fictional test zones
+	# never enter it, so all 4 wings remain unvisited.
+	_check("unvisited pool still has other zones", cm.get_unvisited_zones().size() == 4)
 
 
 func _test_sighting_truth(cm: CastManager) -> void:
@@ -123,6 +125,16 @@ func _test_pending_report_delay(cm: CastManager) -> void:
 
 
 func _test_arc_gating_and_completion(cm: CastManager) -> void:
+	# Pin Rep to 0 so a persisted save can't leak a rep-gated beat
+	# (story_mom_played needs min_rep 10) into the channel-gating checks.
+	var progress_manager := cm.get_node_or_null("/root/ProgressManager")
+	var saved_rep := 0
+	var rep_pinned := false
+	if progress_manager and progress_manager.has_method("get_rep") and progress_manager.has_method("reset_rep"):
+		saved_rep = progress_manager.get_rep()
+		progress_manager.reset_rep()
+		rep_pinned = true
+
 	var gc1 := _fake_gc(1)
 	_check("no beat due at channel 1", cm._find_due_beat(gc1, 1).is_empty())
 	gc1.queue_free()
@@ -170,6 +182,10 @@ func _test_arc_gating_and_completion(cm: CastManager) -> void:
 	gc2.queue_free()
 	gc12.queue_free()
 	gc14.queue_free()
+
+	# Restore the persisted Rep so later runs see the save as it was.
+	if rep_pinned:
+		progress_manager.adjust_rep(saved_rep - progress_manager.get_rep())
 
 
 func _test_flag_nodes(cm: CastManager) -> void:

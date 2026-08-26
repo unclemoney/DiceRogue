@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://lnhx6lq53jt3"]
+
+[ext_resource type="Script" uid="uid://d4p0gsc0nf1sgd11" path="res://Scripts/Debuff/pogs_confiscated_debuff.gd" id="1_bequk"]
+
+[node name="PogsConfiscatedDebuff" type="Node"]
+script = ExtResource("1_bequk")

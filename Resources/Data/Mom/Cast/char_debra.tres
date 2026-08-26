@@ -8,7 +8,7 @@ id = "debra"
 display_name = "Aunt Debra"
 role_description = "The perfume cloud. Haunts the lifestyle zones, relays unsolicited opinions about Mom's parenting secondhand. Minor cast: flavor lines, no mechanics of her own."
 portrait_tint = Color(0.85, 0.55, 0.75, 1)
-zone_affinity = Array[String](["Fashion Boutique", "Jewelry", "Perfume Shop", "Furniture"])
+zone_affinity = Array[String](["East Wing", "South Wing"])
 line_pools = {
 "gossip": [
 "Your Aunt Debra says kids today have no discipline. She said it through a cloud of White Diamonds.",

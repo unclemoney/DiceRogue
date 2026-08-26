@@ -80,7 +80,7 @@ for p in sorted(Path('Resources/Data/Channels').glob('channel_*.tres')):
     d = parse_tres(p)
     channels.append(d)
     ch = d.get('channel_number', '?')
-    name = strip_quotes(d.get('display_name', '')).replace('Channel ', 'Ch')
+    name = strip_quotes(d.get('mall_zone_name', '') or d.get('display_name', '')).replace('Channel ', 'Ch')
     unlock = d.get('unlock_requirement', '0')
     goal = d.get('goal_score_multiplier', '1.0')
     yaht = d.get('yahtzee_bonus_multiplier', '1.0')
@@ -98,26 +98,39 @@ output.append("")
 for d in channels:
     ch = d.get('channel_number', '?')
     name = strip_quotes(d.get('display_name', 'Unknown'))
+    wing = strip_quotes(d.get('mall_zone_name', ''))
     desc = strip_quotes(d.get('description', ''))
+    flavor = strip_quotes(d.get('mall_tooltip_flavor', ''))
     unlock = d.get('unlock_requirement', '0')
-    
-    output.append(f"## Channel {ch} — {name}")
+
+    heading = f"## Channel {ch} — {name}"
+    if wing:
+        heading += f" ({wing})"
+    output.append(heading)
     output.append("")
     output.append(f"**Description:** {desc}")
     output.append("")
+    if flavor:
+        output.append(f"**Selector Flavor:** {flavor}")
+        output.append("")
     output.append(f"**Unlock Requirement:** {unlock}")
     output.append("")
     
     # Round table
     output.append("### Round Configuration")
     output.append("")
-    output.append("| Rd | Challenge Diff | Max Debuffs | Debuff Cap | Target Score | Reward $ | Bonus Multipliers |")
-    output.append("|----|----------------|-------------|------------|--------------|----------|-------------------|")
+    output.append("| Rd | Max Debuffs | Debuff Cap | Grounding % | Boss Debuff Lv | Target Score | Reward $ | Bonus Multipliers |")
+    output.append("|----|-------------|------------|-------------|----------------|--------------|----------|-------------------|")
     for r in d['rounds']:
         rd_num = r.get('round_number', '?')
-        diff = fmt(r.get('challenge_difficulty_range', '-'))
         max_d = r.get('max_debuffs', '-')
         cap = r.get('debuff_difficulty_cap', '-')
+        grounding = r.get('grounding_chance', '0.0')
+        try:
+            grounding = "%d%%" % int(float(grounding) * 100)
+        except ValueError:
+            pass
+        boss = r.get('boss_debuff_level', '-') if r.get('is_boss_round', 'false') == 'true' else '-'
         tgt = r.get('target_score_override', '-')
         if tgt == '-1' or tgt == '0' or tgt == '-':
             tgt = 'Default'
@@ -125,7 +138,7 @@ for d in channels:
         if rew == '0':
             rew = 'Default'
         bonus = bonus_str(r.get('bonus_multipliers', '{}'))
-        output.append(f"| {rd_num} | {diff} | {max_d} | {cap} | {tgt} | {rew} | {bonus} |")
+        output.append(f"| {rd_num} | {max_d} | {cap} | {grounding} | {boss} | {tgt} | {rew} | {bonus} |")
     output.append("")
     
     # Multipliers
@@ -151,15 +164,12 @@ for d in channels:
             output.append(f"- Types: {types}")
         output.append("")
     
-    # Special rules / forced challenges / disabled items
-    force = d.get('force_specific_challenges', '[]')
+    # Special rules / disabled items (force_specific_challenges was removed
+    # with the challenge system)
     disabled = d.get('disabled_shop_items', '[]')
     rules = d.get('special_rules', '{}')
-    
+
     has_extras = False
-    if force and force != 'Array[String]([])' and force != '[]':
-        output.append(f"**Forced Challenges:** {force}")
-        has_extras = True
     if disabled and disabled != 'Array[String]([])' and disabled != '[]':
         output.append(f"**Disabled Shop Items:** {disabled}")
         has_extras = True

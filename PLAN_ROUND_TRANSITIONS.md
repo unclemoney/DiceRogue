@@ -137,7 +137,7 @@ NewRoundPanel (CanvasLayer)
         └── VBoxContainer
             ├── TitleLabel — "ROUND X"
             ├── ChannelRow — HBox with channel icon + "Channel Y"
-            ├── ChallengeRow — challenge name + description
+            ├── ChallengeRow — store name + description (see note in §5 below)
             ├── DebuffsContainer — GridContainer for debuff icons + names
             ├── ChoreRow — current chore (hidden if none)
             └── Let'sPlayButton (Button)
@@ -176,12 +176,19 @@ func _on_lets_play_pressed() -> void:
 - Exit: `TweenFX.drop_out(panel_container, 0.4, 300.0)`, fade out overlay, hide CanvasLayer.
 
 ### Data Population (`GameController` passes this)
+
+> **Note (store refactor):** challenges are deprecated — each round is a store. The
+> `challenge_name` / `challenge_desc` keys below (and `next_challenge_name` in the
+> RoundTransitionOverlay data) now carry the **store name** and round description from
+> `ChannelManager.get_store_name(zone, round)`; there is no `ChallengeData` resource
+> behind them anymore. The keys were kept so the panel code is unchanged.
+
 ```gdscript
 var panel_data = {
     "channel": channel_manager.current_channel,
     "round_number": round_num,
-    "challenge_name": challenge_data.display_name,
-    "challenge_desc": challenge_data.description,
+    "challenge_name": challenge_data.display_name,   # now the store name
+    "challenge_desc": challenge_data.description,    # now the round/store description
     "debuffs": debuff_manager.get_active_debuff_ids(),  # fetch names/icons from DebuffData
     "chore_name": chores_manager.current_task.display_name if chores_manager.current_task else ""
 }

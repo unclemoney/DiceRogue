@@ -49,6 +49,7 @@ func _ready() -> void:
 	_log("  3 - Show stats panel with no bonuses")
 	_log("  4 - Show stats panel with many empty categories")
 	_log("  5 - Test bonus calculations only")
+	_log("  6 - Show stats panel with docked allowance (grounding)")
 	_log("  ESC - Close panel")
 	_log("")
 	
@@ -59,6 +60,10 @@ func _ready() -> void:
 		_log("[OK] Stats panel found and signals connected")
 	else:
 		_log("[ERROR] Stats panel not found!")
+
+	# Headless runs can't press keys; exercise the grounding case directly.
+	if DisplayServer.get_name() == "headless" and stats_panel:
+		_test_docked_allowance()
 
 
 func _input(event: InputEvent) -> void:
@@ -74,6 +79,8 @@ func _input(event: InputEvent) -> void:
 				_test_many_empty_categories()
 			KEY_5:
 				_test_bonus_calculations()
+			KEY_6:
+				_test_docked_allowance()
 			KEY_ESCAPE:
 				if stats_panel and stats_panel.visible:
 					stats_panel._hide_panel()
@@ -190,6 +197,28 @@ func _test_bonus_calculations() -> void:
 		_log("[PASS] All calculations correct!")
 	else:
 		_log("[FAIL] Calculation mismatch!")
+
+
+func _test_docked_allowance() -> void:
+	_log("\n--- Test: Docked Allowance (Grounding) ---")
+	_log("Round: 1, Reward: 100, allowance docked")
+
+	var data = {
+		"round_number": 1,
+		"challenge_reward": 100,
+		"challenge_target": 100,
+		"final_score": 130,
+		"docked_allowance": true
+	}
+
+	stats_panel.show_stats(data)
+
+	# Grounding: the whole end-of-round award is withheld
+	_log("Expected: 'ALLOWANCE DOCKED:' label, total $0")
+	if stats_panel.get_total_bonus() == 0:
+		_log("[PASS] Docked allowance zeroes the total")
+	else:
+		_log("[FAIL] Expected total $0, got $%d" % stats_panel.get_total_bonus())
 
 
 func _count_mock_empty_categories() -> int:

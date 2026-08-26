@@ -1,6 +1,6 @@
 # DiceRogue
 
-A pixel-art roguelite dice game inspired by Yahtzee, built in Godot 4.4. Roll dice, collect power-ups, and beat challenges in this strategic dice-based adventure.
+A pixel-art roguelite dice game inspired by Yahtzee, built in Godot 4.4. Roll dice, collect power-ups, and beat each store's target score in this strategic dice-based adventure.
 
 ## Game Concept
 
@@ -14,7 +14,7 @@ Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill s
   - **Empty Shelves**: Multiply next score by the number of empty PowerUp slots (only during active rounds)
   - **Double or Nothing**: Use after Next Turn, before manual roll. Yahtzee = 2x score, No Yahtzee = next score becomes 0
 - **Mods**: Dice modifiers that change how individual dice behave
-- **Challenges**: Goals that unlock rewards and progression
+- **Stores**: Each round is a store with a target score to beat for rewards and progression
 
 ## Quick Start
 
@@ -27,7 +27,7 @@ Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill s
 
 ```mermaid
 flowchart TD
-    A[Player scores final category] --> B{Challenge met?}
+    A[Player scores final category] --> B{Target met?}
     B -->|No| C[Fail animation / Game Over]
     B -->|Yes| D[Fireworks celebration]
     D --> E[RoundTransitionOverlay shown]
@@ -142,6 +142,7 @@ Full documentation with parameters, recipes, and technical deep-dives: See `ARCA
 - Legacy save migration: Old `user://save.json` auto-migrates to slot 1
 - **Save Version 2**: Current format tracks chore completions, category scores, and difficulty stats
   - Old v1 profiles are auto-detected on load, user is notified, then deleted and recreated
+- **Save Incompatibility (Mall Zone refactor)**: Saves from before the 4-zone/store refactor are incompatible (channel data changed, round data shape changed, challenges removed) — there is no migration; old run saves are discarded
 - Profile names limited to 30 characters
 - Statistics tracked per-profile: games completed, games won, highest channel, chores completed, category scores, etc.
 - **IMPORTANT**: GameSettings must be loaded BEFORE ProgressManager in autoload order
@@ -265,7 +266,7 @@ DiceRogue supports multiple dice types, each with their own face textures and va
 | d12  | 12    | `Scripts/Dice/d12_dice.tres` | Selectable | Roll a Yahtzee |
 | d20  | 20    | `Scripts/Dice/d20_dice.tres` | Selectable | Win a game |
 
-**Dice Set Selection:** At game start, the Mall Zone Selection screen (`ChannelManagerUI`) shows a dice set carousel on the right side of the panel. Use the `<` / `>` buttons to browse sets; locked sets are dimmed with a lock tag and can be browsed but not selected. Hovering the display shows a tooltip with the set's scoring rules and unlock requirement. The chosen set applies to **every round of the run** (overriding per-round `ChallengeData.dice_type`) and resets to d6 on a new game. Selection flows: `ChannelManagerUI` → `ChannelManager.selected_dice_type` → `GameController._on_channel_selected()` → `RoundManager.run_dice_type` → `DiceHand.switch_dice_type()`.
+**Dice Set Selection:** At game start, the Mall Zone Selection screen (`ChannelManagerUI`) shows a dice set carousel on the right side of the panel. Use the `<` / `>` buttons to browse sets; locked sets are dimmed with a lock tag and can be browsed but not selected. Hovering the display shows a tooltip with the set's scoring rules and unlock requirement. The chosen set applies to **every round of the run** and resets to d6 on a new game. Selection flows: `ChannelManagerUI` → `ChannelManager.selected_dice_type` → `GameController._on_channel_selected()` → `RoundManager.run_dice_type` → `DiceHand.switch_dice_type()`.
 
 When a non-d6 dice type is active, the scoring system adapts automatically:
 - **Dynamic 6th slot**: The upper section's 6th row changes to match the dice's max value (e.g., "Eights" for d8, "Twenties" for d20). For d4 it becomes **"Fours+"**: 4s count double (`count of 4s × 4 × 2`).
@@ -337,7 +338,7 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - **FullHousePowerUp**: Grants $7 × (total full houses rolled) for each new full house
   - **Highlighted Score**: Marks one open scorecard category with a chasing neon border; scoring that category grants a 1.5× multiplier and triggers a burst celebration before the highlight moves.
   - **New Wave PowerUps** (10 total): Purple Payout, Mod Money, Blue Safety Net, Chore Sprint, Straight Triplet Master, Modded Dice Mastery, Debuff Destroyer, Challenge Easer, Azure Perfection, Rainbow Surge
-    - Themes: dice color synergies, mod-powerup synergies, straight combos, economy/chores, debuff management, challenge easing
+    - Themes: dice color synergies, mod-powerup synergies, straight combos, economy/chores, debuff management, round-target easing
   - **Risk & Reward PowerUps** (6 total):
     - **The Replicator** (Rare/$300): After 1 turn, duplicates a random PowerUp you own — with dramatic visual/audio effects and a fully independent replica instance that keeps its own runtime id/modifier source
     - **The Piggy Bank** (Uncommon/$125): Saves $3 per roll; sell to cash out accumulated savings with animated coin effects. Savings persist across mall zone changes via `PlayerEconomy.piggy_bank_savings` — re-buying the Piggy Bank in a new zone restores the stored amount; selling pays out and clears it; starting a new game resets it
@@ -413,7 +414,7 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - **Button Click Sound**: `BUTTON_CLICK_1.wav` with slight random pitch variation (0.95-1.05)
     - Automatically connected to ALL buttons in the game via scene tree monitoring
   - **Firework Sound**: `FIREWORK_1.wav` for celebratory effects
-    - Plays on challenge completion (first burst only)
+    - Plays when a round's target is met (first burst only)
     - Plays on consumable use (destruction effect)
   - **Dice Lock Sound**: `DICE_CLICK.wav` for dice selection feedback
     - Plays when dice are locked or unlocked
@@ -448,7 +449,7 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
 | Game Start | 0 | Minimal music during setup |
 | Shop Opened | 1 | Light background during shopping |
 | Round Started | 3 | Moderate energy for active gameplay |
-| Challenge Complete | 6 | Full intensity celebration |
+| Round Target Met (`challenge_completed`) | 6 | Full intensity celebration |
 | Round Complete | 2 | Calming down after success |
 | Game Over | 0 | Return to minimal music |
 
@@ -492,26 +493,28 @@ MusicManager.stop_music()
 ```
 
 ### Mall Zone System (Difficulty Scaling)
-The **Channel Manager** drives the resource-based Mall Zone progression system (Mall Zones 1-20):
+The **Channel Manager** drives the resource-based Mall Zone progression system (4 fixed Mall Zones):
 
 **Features:**
-- **Mall Directory UI**: Select the starting Mall Zone from a runtime-generated mall map with hover tooltips, section colors, and a persistent side panel
+- **Mall Directory UI**: Shows the fixed mall map — 4 T-shaped zones around the center diamond courtyard, connected by 4 corridors, with zone numbers rendered inside each zone (`Scripts/Managers/mall_map_layout.gd`). Runs always start at Zone 1; there is no PREV/NEXT or click/keyboard zone selection. The dice-set carousel on the side panel remains for picking the run's dice set
+- **Store Assignment**: Each round is a store. At run start `ChannelManager.assign_stores_to_zones()` shuffles the 24-store directory (`Resources/Data/Stores/store_directory.tres`, `StoreDirectoryData`) and deals 6 stores per zone, seeded via `GameRNG`; the assignment is saved/loaded with the run
 - **Resource-Based Configuration**: Each Mall Zone is defined by a `.tres` file with manually tuned settings
 - **Unlock Pacing**: Higher Mall Zones require completing lower Mall Zones first
 - **Multiple Scaling Multipliers**: Goal scores, shop prices, Yahtzee bonuses, debuff intensity
-- **Per-Round Difficulty**: Each round has its own challenge difficulty range
+- **Per-Round Difficulty**: Each round has its own target score, debuff cap, grounding chance, and boss flag
 - **Persistent Completion**: Completed Mall Zones are saved and display a checkmark when browsing
-- **Lock Feedback**: Locked Mall Zones show 🔒 icon and disable Start button
-- **Mall Metadata Layer**: Selector-only store names, directory labels, section buckets, and flavor text live alongside channel difficulty data
+- **Mall Metadata Layer**: Selector-only wing names, directory labels, section buckets, and flavor text live alongside channel difficulty data
+
+**Win Condition (per round):** Fill the scorecard with a total score >= the round's target score (`RoundDifficultyConfig.target_score_override` × channel `goal_score_multiplier`). Filling the scorecard below the target is game over. The deprecated **ChallengeManager** survives only as a signal hub — it emits `challenge_completed`/`challenge_failed` with the store name as payload so power-ups, UI, music, and the bot keep working; challenge scripts/resources remain on disk but are never spawned.
 
 **Mall Zone Configuration Resources:**
-Each Mall Zone is configured via `Resources/Data/Channels/channel_XX.tres`:
-- `display_name`: Human-readable name (e.g., "Tutorial", "Expert", "ULTIMATE")
-- `mall_zone_name`: Selector-only store name shown on the mall map
+Each Mall Zone is configured via `Resources/Data/Channels/channel_01.tres` to `channel_04.tres`:
+- `display_name`: Human-readable name ("Mall Zone 01" … "Mall Zone 04")
+- `mall_zone_name`: Wing name shown on the mall map (North Wing, East Wing, West Wing, South Wing)
 - `mall_directory_label`: Compact zone label used on the directory board
 - `mall_tooltip_flavor`: Supplemental hover text for the selector tooltip
 - `mall_section_id`: Selector legend bucket (`eatery`, `entertainment`, `lifestyle`, `specialty`, `major_stores`)
-- `goal_score_multiplier`: Scales target scores for challenges
+- `goal_score_multiplier`: Scales round target scores
 - `shop_price_multiplier`: Scales shop item prices
 - `colored_dice_cost_multiplier`: Scales colored dice purchase costs
 - `goof_off_multiplier`: Scales how fast the chore meter fills
@@ -522,45 +525,50 @@ Each Mall Zone is configured via `Resources/Data/Channels/channel_XX.tres`:
 
 **Round Difficulty Configuration:**
 Each round within a Mall Zone has:
-- `challenge_difficulty_range`: Vector2i (min, max) for challenge tier selection
+- `target_score_override`: Target score for the round (before channel scaling)
 - `max_debuffs`: Maximum debuffs allowed this round
 - `debuff_difficulty_cap`: Maximum difficulty of debuffs allowed
+- `grounding_chance`: Chance (0-1) of drawing a grounding this round
+- `is_boss_round` / `boss_debuff_level`: Boss rounds draw exactly one debuff of that exact level via `DebuffManager.select_boss_debuff()`
 - `bonus_multipliers`: Dictionary of category-specific scoring bonuses
 
-**Difficulty Progression (20 Mall Zones):**
-| Mall Zone | Name | Goal | Shop | Debuff | Unlock Req |
-|---------|------|------|------|--------|------------|
-| 1 | Tutorial | 1.0x | 1.0x | 1.0x | 0 |
-| 5 | Moderate | 1.5x | 1.2x | 1.2x | 2 |
-| 10 | Expert | 3.0x | 1.8x | 2.0x | 5 |
-| 15 | Master | 5.0x | 2.5x | 3.0x | 10 |
-| 20 | ULTIMATE | 8.0x | 3.5x | 4.0x | 18 |
+**Zone / Debuff / Boss Schedule (4 Mall Zones):**
+| Zone | Wing | Rounds 1-5 Debuffs | Round 6 (Boss) | Grounding Chance (r1-5) | Unlock Req |
+|------|------|--------------------|----------------|--------------------------|------------|
+| 1 | North Wing | None | Boss debuff, exactly level 4 | 0% | 0 |
+| 2 | East Wing | One debuff, difficulty cap 2 | Boss debuff, exactly level 5 | 25% | 1 |
+| 3 | West Wing | One debuff, difficulty cap 3 | Boss debuff, exactly level 5 | 25% | 2 |
+| 4 | South Wing | One debuff, difficulty cap 4 | Boss debuff, exactly level 5 | 25% | 3 |
+
+Debuff draws come from a **per-zone draw-once pool** (`DebuffManager._drawn_this_zone`, reset by `reset_zone_pool()` on zone change) — the same debuff never repeats within a zone. Boss rounds draw no regular debuffs (`max_debuffs = 0`) and instead pull exactly one debuff of the boss level. See `CHANNELS_REFERENCE.md` for per-round target scores and rewards.
 
 **Implementation Files:**
 - **RoundDifficultyConfig** (`Scripts/Core/RoundDifficultyConfig.gd`) - Per-round settings resource
 - **ChannelDifficultyData** (`Scripts/Core/ChannelDifficultyData.gd`) - Mall Zone settings resource
-- **ChannelManager** (`Scripts/Managers/channel_manager.gd`) - Core Mall Zone difficulty logic, loads configs
-- **ChannelManagerUI** (`Scripts/Managers/channel_manager_ui.gd`) - Mall directory selector shell, side panel, tooltip, and runtime map integration
-- **MallMapLayout** (`Scripts/Managers/mall_map_layout.gd`) - Shared hallway and store polygon layout data
-- **MallMapZone** (`Scripts/Managers/mall_map_zone.gd`) - Interactive runtime zone node for the selector
+- **ChannelManager** (`Scripts/Managers/channel_manager.gd`) - Core Mall Zone difficulty logic (`MAX_CHANNEL = 4`), loads configs, assigns stores
+- **StoreDirectoryData** (`Scripts/Core/store_directory_data.gd` + `Resources/Data/Stores/store_directory.tres`) - The 24 store names dealt across zones
+- **ChannelManagerUI** (`Scripts/Managers/channel_manager_ui.gd`) - Mall directory shell, side panel, tooltip, dice-set carousel, and runtime map integration
+- **MallMapLayout** (`Scripts/Managers/mall_map_layout.gd`) - Fixed mall geometry: 4 T-shaped zones around the center diamond courtyard with 4 corridors
+- **MallMapZone** (`Scripts/Managers/mall_map_zone.gd`) - Runtime zone node for the selector
 - **CarryOverPanel** (`Scripts/UI/carry_over_panel.gd`) - Carry-over selection UI between Mall Zones
-- **Channel Resources** (`Resources/Data/Channels/channel_01.tres` to `channel_20.tres`)
+- **Channel Resources** (`Resources/Data/Channels/channel_01.tres` to `channel_04.tres`)
 - **ChannelDifficultyValidator** (`Scripts/Editor/ChannelDifficultyValidator.gd`) - Editor validation tool
 - **Mall Selector Validation Scene** (`Tests/MallMapSelectorTest.tscn`) - Focused startup selector regression check
 
 **Integration Points:**
-- **RoundManager**: Uses `get_challenge_difficulty_range()` for challenge selection
+- **RoundManager**: Applies `target_score_override` × channel scaling as the round's win condition
 - **ShopItem**: Uses `get_shop_price_multiplier()` for price display
 - **DiceColorManager**: Uses `get_colored_dice_cost_multiplier()` for dice costs
 - **Scorecard**: Uses `get_yahtzee_bonus_multiplier()` for bonus Yahtzee points
 - **ScoreCardUI**: Binds `ChannelManager` to swap score-row contrast profiles based on active channel shader brightness
-- **DebuffManager**: Uses `get_debuff_intensity_multiplier()` for debuff scaling
+- **DebuffManager**: Uses `get_debuff_intensity_multiplier()` for debuff scaling; draws from the per-zone pool and boss schedule
+- **ChallengeManager (deprecated)**: Signal hub only — re-emits `challenge_completed`/`challenge_failed` carrying the store name
 
 **Game Flow:**
-1. Game starts → Mall directory selector appears (locked/completed status shown, side panel active, hover tooltip available)
-2. Player selects an unlocked Mall Zone (1-20) and presses Start
-3. Game progresses through 6 rounds with scaled difficulty
-4. After Round 6 completion → RoundWinnerPanel shows stats
+1. Game starts → Mall directory appears (locked/completed status shown, side panel active, hover tooltip available). The player picks a dice set from the carousel and presses Start — runs always begin at Zone 1 (North Wing)
+2. `ChannelManager.assign_stores_to_zones()` deals 6 stores per zone; each round is the next store in the zone
+3. Each round is won by scoring >= the round target; a full scorecard below target is game over
+4. After Round 6 (the zone's boss round) → RoundWinnerPanel shows stats
    - The Round Winner Panel now also shows per-zone stats: **Total Points Scored**, **Rolls Used**, and **Consumables Used** — tracked per Mall Zone in Statistics as `current_zone_rolls` / `current_zone_consumables_used`, reset by `start_new_zone()`
 5. "Next Mall Zone" marks the Mall Zone complete and saves progress
 6. **Carry-Over Panel** appears — player selects which items to keep for the next Mall Zone
@@ -577,37 +585,26 @@ When advancing to the next Mall Zone, a **Carry-Over Selection Panel** lets the 
 |----------|-------------|
 | `power_ups` | Active PowerUps (Extra Dice, Loaded Dice, etc.) |
 | `consumables` | Active Consumables (Reroll Tokens, Score Doublers, etc.) |
-| `colored_dice` | Purchased dice color boosts |
 | `mods` | Dice Mods attached to dice |
-| `consoles` | Active Gaming Console |
 | `money` | Player's current money balance |
-| `scorecard_levels` | Scorecard category level progression (levels preserved, scores reset) |
 
-**Carry-Over Progression (by Mall Zone):**
-| Channels | Max Selections | Available Types |
-|----------|---------------|-----------------|
-| 1 | 0 | None (tutorial, starting fresh) |
-| 2-3 | 5 | All 7 types |
-| 4-5 | 4 | All 7 types |
-| 6 | 4 | 6 types (no consoles) |
-| 7-8 | 3 | 6 types |
-| 9-10 | 3 | 5 types (no scorecard_levels) |
-| 11 | 2 | 5 types |
-| 12-13 | 2 | 4 types (no mods, no scorecard_levels) |
-| 14 | 2 | 3 types (power_ups, consumables, money) |
-| 15-16 | 1 | 3 types |
-| 17 | 1 | 2 types (power_ups, money) |
-| 18-20 | 0 | None (hardest channels, full reset) |
+**Carry-Over Progression (by destination Mall Zone):**
+| Zone | Max Selections | Available Types |
+|------|---------------|-----------------|
+| 1 | 0 | None (starting fresh) |
+| 2 | 3 | power_ups, consumables, mods, money |
+| 3 | 2 | power_ups, consumables, mods, money |
+| 4 | 1 | power_ups, consumables, mods, money |
 
 **Items that ALWAYS reset (never carry-over):**
 - Round Counter (resets to Round 1)
 - Scorecard Scores (all categories available for scoring)
-- Active Challenges and Debuffs
+- Active Debuffs and Groundings
 - Goof-Off Meter
 - Shop Reroll Costs and Expansions
 - ScoreModifierManager state
 
-> **Design Note**: The carry-over system creates strategic tension — players must decide which investments to protect as options narrow in harder channels. At channels 18-20, everything resets, requiring mastery of fresh starts.
+> **Design Note**: The carry-over system creates strategic tension — players must decide which investments to protect as options narrow in harder zones (3 → 2 → 1 selections heading into Zones 2-4).
 
 ## Key Systems
 
@@ -779,8 +776,8 @@ The **Progress Tracking System** enables persistent player progression across mu
 | `CUMULATIVE_SCORE` | Achieve total score across all games | Score 5000 total |
 | `DICE_COMBINATIONS` | Roll specific dice combinations | Roll specific patterns |
 | `CUMULATIVE_YAHTZEES` | Roll X yahtzees across all games | Roll 10 total yahtzees |
-| `COMPLETE_CHANNEL` | Complete Mall Zone X | Complete Mall Zone 5 |
-| `REACH_CHANNEL` | Reach Mall Zone X | Reach Mall Zone 10 |
+| `COMPLETE_CHANNEL` | Complete Mall Zone X | Complete Mall Zone 3 |
+| `REACH_CHANNEL` | Reach Mall Zone X | Reach Mall Zone 4 |
 
 **End of Round Unlock Display:**
 When items are unlocked at the end of a round, they're displayed sequentially in modal panels with:
@@ -813,13 +810,11 @@ var progress = ProgressManager.get_condition_progress("item_id")
 ```
 
 **Mall Zone-Based Unlocks:**
-New items can be unlocked by completing Mall Zones, providing progression rewards:
-- **Mall Zone 3**: Basic utility items (Lucky Streak, Channel Bonus)
-- **Mall Zone 5**: Uncommon items (Steady Progress, Reroll Master)
-- **Mall Zone 8**: Rare items (Combo King, Lucky Seven)
-- **Mall Zone 12**: Advanced items (Channel Champion, Precision Roller)
-- **Mall Zone 15**: Legendary items (Grand Master, Ultimate Reroll)
-- **Mall Zone 20**: Ultimate items (Dice Lord)
+New items can be unlocked by completing Mall Zones, providing progression rewards (`COMPLETE_CHANNEL`/`REACH_CHANNEL` thresholds were rescaled from the old 1-20 channels to the 4 zones):
+- **Mall Zone 1**: Utility items (Lucky Streak, Channel Bonus, Steady Progress, Reroll Master, Visit The Shop, Blue Dice, Atari/NES/SNES consoles)
+- **Mall Zone 2**: Advanced items (Challenge Easer, Combo King, Rainbow Surge, Lucky Seven, Master Upgrade, Sega/PlayStation/Sega Saturn consoles; Sweet Sixteen at `REACH_CHANNEL` 2)
+- **Mall Zone 3**: Legendary items (Ungrounded, Grand Master, Channel Champion, Precision Roller, Ultimate Reroll)
+- **Mall Zone 4**: Ultimate items (Dice Lord)
 
 **Progress Persistence:**
 - **JSON Storage**: Progress data saved to `user://progress.save`
@@ -858,24 +853,24 @@ Round-based difficulty scaling for the Upper Section Bonus and Goof-Off Meter wa
 - **Clamping**: When round changes, if current progress meets or exceeds the threshold, it's clamped to threshold - 1
 
 ### End of Round Statistics & Bonuses
-After completing a challenge and clicking the Shop button, an End of Round Statistics Panel is displayed:
+After beating the round target and clicking the Shop button, an End of Round Statistics Panel is displayed:
 
 **Panel Features:**
-- Shows round number, challenge target score, and final score
+- Shows round number, round target score, and final score
 - Displays animated bonus calculations
 - Uses the shared mall-core modal shell with teal call-to-action button styling
 - "Head to Shop" button to proceed after viewing stats
 
 **End of Round Bonuses:**
 - **Empty Category Bonus**: $10 for each unscored category on the scorecard
-  - Rewards efficient play and early challenge completion
+  - Rewards efficient play and early target completion
   - Max possible: 13 categories × $10 = $130 (if completed without scoring anything)
-- **Points Above Target Bonus**: $1 for each point above the challenge target score
-  - Rewards exceeding the challenge requirements
-  - Example: Challenge target 100, final score 130 = $30 bonus
+- **Points Above Target Bonus**: $1 for each point above the round target score
+  - Rewards exceeding the round target
+  - Example: Round target 100, final score 130 = $30 bonus
 
 **Bonus Calculation Example:**
-- Round 1, Challenge target: 100 points
+- Round 1, target: 100 points
 - Player finishes with score: 130 points
 - Empty categories: 3 (didn't need to fill them)
 - Empty category bonus: 3 × $25 = $75
@@ -889,18 +884,18 @@ After completing a challenge and clicking the Shop button, an End of Round Stati
 - Bonuses awarded via `PlayerEconomy.add_money()` when "Head to Shop" is clicked
 
 **End-of-Round Button Behavior:**
-- When a challenge is completed, the **Next Turn** button is disabled to prevent skipping end-of-round rewards
+- When the round target is met, the **Next Turn** button is disabled to prevent skipping end-of-round rewards
 - The **Shop** button pulses to guide the player toward the end-of-round stats flow
 - When entering the Shop, the **Roll** button is disabled and the scorecard display is cleared (scores, additive/multiplier labels, Best Hand label, and category highlight) for visual closure
 
-**PlayStation Reroll & Challenge Check:**
+**PlayStation Reroll & Target Check:**
 - After using the PlayStation Continue, the Shop button is disabled during bonus rolls
-- When the rerolled category is scored and the scorecard completes again, the game checks if the challenge was completed — if so, it routes to the normal end-of-round flow (stats panel → shop) instead of game over
-- **Fallback Detection**: Because the challenge self-destructs (disconnects from all scorecard signals) when the first `game_completed` fires with an insufficient score, a manual score-vs-target check in `_on_scorecard_complete` ensures challenge completion is detected after a PlayStation reroll
+- When the rerolled category is scored and the scorecard completes again, the game checks if the round target was met — if so, it routes to the normal end-of-round flow (stats panel → shop) instead of game over
+- **Fallback Detection**: Because the round-end signal flow self-destructs (disconnects from all scorecard signals) when the first `game_completed` fires with an insufficient score, a manual score-vs-target check in `_on_scorecard_complete` ensures target completion is detected after a PlayStation reroll
 
-**Challenge Reward Display:**
-- Challenge UI now displays reward amount on the post-it note
-- Reward shown in green text at bottom of challenge spine
+**Store Target Display:**
+- The round UI shows the current store name, target score, and reward amount on the post-it note
+- Reward shown in green text at bottom of the store spine
 
 **UI Updates:**
 - ScoreCard bonus label shows current threshold: "Bonus(63):"
@@ -942,7 +937,7 @@ When a chore completes, or when a new round begins, a **ChoreSelectionPopup** ap
 - Shows current goof-off meter progress bar with color-coded fill
 - Displays Mom's mood emoji and description (e.g., "😊 Content (3/10)")
 - Presents EASY and HARD task cards side-by-side with names, descriptions, and reduction values
-- Mid-round chore completions replace immediately; round-boundary replacements appear after the challenge reveal and Turn 1 presentation
+- Mid-round chore completions replace immediately; round-boundary replacements appear after the store reveal ("NOW ENTERING <store>") and Turn 1 presentation
 - Player must choose one before continuing
 
 **Chore Tasks:**
@@ -979,7 +974,7 @@ All PowerUps now have movie-style content ratings that affect Mom's reaction:
 **Mom Visits:**
 Mom appears in two ways:
 - **Meter Visit**: At 100 progress, Mom appears. Severity (0-5) is computed from her mood, grudge, and escalation, then a dialog tree plays out.
-- **Random Check-in**: At most once per round, at a random roll (base target roll 2-10 plus the current mall zone number — zone 4 means 2-14 — picked each round), Mom pops in for a non-punishment chat. Later zones see fewer check-ins, and rounds that end before the target simply get none — Mom never visits between rounds. Dialog responses can still escalate it into a real punishment. Deferred while a meter visit is active. When no priority trigger fires, the check-in is a weighted pick from the flavor pool (`MomLogicHandler.CHECKIN_FLAVOR_POOL`): neutral chat, nostalgia, gossip, a chore bargain, or zone flavor.
+- **Random Check-in**: At most once per round, at a random roll (target roll 2 to 6 + the current mall zone number — zone 4 means 2-10 — picked each round via `get_checkin_max()`), Mom pops in for a non-punishment chat. Later zones see fewer check-ins, and rounds that end before the target simply get none — Mom never visits between rounds. Dialog responses can still escalate it into a real punishment. Deferred while a meter visit is active. When no priority trigger fires, the check-in is a weighted pick from the flavor pool (`MomLogicHandler.CHECKIN_FLAVOR_POOL`): neutral chat, nostalgia, gossip, a chore bargain, or zone flavor.
 
 **Special Visit Types:**
 - **Silent Treatment** (10% of severity 1-2 meter visits): Mom just stares. "..." No punishment — but her mood worsens, and it's somehow worse than yelling.
@@ -1011,7 +1006,7 @@ Unresolved anger carries forward. If Mom storms off (or an outcome adds grudge),
 Sass is the high-variance path; compliance is the safe path. Three interlocking systems make rebellion a real strategy:
 - **Rebellion Buff**: A *successful* sass (sassy response that draws no tangible punishment: storms off, defer, or a pure flavor outcome) grants the round-scoped **Rebellion** buff — +15% score and +1 roll per turn per stack, up to 3 stacks (one per successful sass in the visit). Cleared at round end when the shop opens. Implemented as a positive effect riding the Debuff pipeline (`Scripts/Debuff/rebellion_buff.gd`); its icon chip lives in the Chore UI buff row (compact meter + fan-out details panel), not the Debuff UI.
 - **Punishment Delay**: The "Not now, Mom." response (punishment visits) can defer the pending punishment to a later visit. Counterweight: each defer adds +1 grudge and raises the **defer streak** (max 3, run-scoped, saved), which compounds onto the severity of the *eventual* resolution — and grudge can convert future reward visits into punishment visits. The streak resets when a punishment tier is actually applied.
-- **Rep Stat**: A persistent meta stat (0-100, saved in the profile) that grows with successful sass (+5, defer +4, storm off +6) and shrinks with bootlicking compliance (polite on punishment visits -2, polite on check-ins -1). Rep gates kiosk inventory by POG tier (`REP_TIER_THRESHOLDS = [0, 0, 15, 35, 60]`): G and PG are always open, 15+ unlocks PG-13 ("Parental Guidance"), 35+ R ("Grounded"), 60+ NC-17 ("Banned"). Below Rep 15 with a happy Mom (mood ≤ 3), the Mom-Approved (G) pool gets 1.5x shelf weight and a 10% discount instead — two playstyles, two item pools. Rep-gated items appear greyed in the shop's LOCKED tab with their Rep requirement.
+- **Rep Stat**: A persistent meta stat (0-100, saved in the profile) that grows with successful sass (+6, defer +5, storm off +7) and shrinks with bootlicking compliance (polite on punishment visits -2, polite on check-ins -1). Rep gates kiosk inventory by POG tier (`REP_TIER_THRESHOLDS = [0, 0, 15, 35, 60]`): G and PG are always open, 15+ unlocks PG-13 ("Parental Guidance"), 35+ R ("Grounded"), 60+ NC-17 ("Banned"). Pacing is tuned so Rep 60 (tier 4, NC-17 POGs) is reachable by Zone 4 — the tightened check-in window (2 to 6 + zone) keeps check-ins from being dropped by fast rounds. Below Rep 15 with a happy Mom (mood ≤ 3), the Mom-Approved (G) pool gets 1.5x shelf weight and a 10% discount instead — two playstyles, two item pools. Rep-gated items appear greyed in the shop's LOCKED tab with their Rep requirement.
 - **Sass Escalation**: Sassy responses that draw a punishment scale with Rep — every 2 Rep tiers adds +1 punishment tier (clamped at tier 5), and at Rep tier 3+ (Rep 35+) debuff punishments apply +1 extra debuff.
 
 **Rebel Mode UI:**
@@ -1102,7 +1097,7 @@ Each visit that resolves at severity 3+ increments a run counter that adds to la
 - Trigger Mom Immediately: Bypass progress threshold (meter visit)
 - Trigger Mom Check-in: Fire the random check-in dialog on demand
 - Check-in: Reroll Target: Force ChoresManager to reroll this round's check-in roll target
-- Check-in: Target Roll 2 / 6 / Max: Set this round's check-in roll target to an exact value (Max = 10 + current mall zone)
+- Check-in: Target Roll 2 / 6 / Max: Set this round's check-in roll target to an exact value (Max = 6 + current mall zone)
 - Add Mom Grudge +1: Raise Mom's grudge level for testing severity floors
 - Add Defer Streak +1: Raise the defer streak for testing compounded severity
 - Rep +10 / Rep -10 / Show Rep State: Adjust and inspect the persistent Rep stat
@@ -1221,20 +1216,20 @@ An interactive, action-gated tutorial system that teaches new players the game m
 **Test Scene**: `Tests/TutorialTest.tscn` - Isolated tutorial testing with mock UI
 
 ### Challenge Celebration System
-When challenges are completed, celebratory GPU particle effects are displayed:
+When a round's target score is met, celebratory GPU particle effects are displayed:
 
 **Firework Effects:**
 - **GPUParticles2D**: Hardware-accelerated particle system for smooth performance
 - **Multiple Bursts**: 4 staggered explosions with 0.15s delay between each
-- **Burst Spread**: Random positions within 60px radius of challenge spine
+- **Burst Spread**: Random positions within 60px radius of the store spine
 - **Particle Count**: 75 particles per burst for full visual impact
 - **Color Gradient**: Gold to white gradient (champagne celebration colors)
 - **Physics**: Upward velocity with gravity for realistic firework arc
 - **Duration**: 1.5 second particle lifetime, bursts auto-cleanup
 
 **Trigger Conditions:**
-- Challenge completion via challenge manager signals
-- Position anchored to challenge spine on corkboard
+- Round target met via the ChallengeManager signal hub (`challenge_completed`, payload = store name)
+- Position anchored to the store spine on the corkboard
 - Automatic cleanup of particle nodes after animation
 
 **Implementation Files:**
@@ -1247,7 +1242,7 @@ A cinematic full-screen overlay displayed after challenge celebration fireworks,
 **Entrance Animations (sequenced):**
 1. **Background Fade**: Dark overlay fades in over 0.3s
 2. **Completion Banner**: Slides in from the LEFT with `TRANS_BACK` overshoot, then `TweenFX.tada()` flourish
-3. **Next Challenge Banner**: Slides in from the RIGHT with `TRANS_BACK`, then `TweenFX.pop_in()`
+3. **Next Store Banner** ("NEXT STORE"): Slides in from the RIGHT with `TRANS_BACK`, then `TweenFX.pop_in()`
 4. **Action Buttons**: Fly up from below with `TRANS_ELASTIC`, then idle loops (`breathe` + `float_bob`)
 
 **Dismiss Animations:**
@@ -1267,7 +1262,7 @@ A cinematic full-screen overlay displayed after challenge celebration fireworks,
 - **Enter Shop**: Dismisses overlay, opens shop via `_on_shop_button_pressed()`
 
 **Trigger Flow:**
-1. Challenge completed → fireworks fire
+1. Round target met → fireworks fire
 2. After 1.6s delay → overlay appears with transition data
 3. Player chooses action → overlay dismisses with exit animation
 
@@ -1347,14 +1342,14 @@ The shop button now glows when available, matching the roll button behavior:
 - **0.5s Duration**: Smooth loop timing
 - **Auto-Activate**: Starts when shop is available and player has money
 
-### Challenge Hover Tooltip
-Hovering over the Challenge Spine displays detailed challenge information:
+### Store Hover Tooltip
+Hovering over the Store Spine (formerly the Challenge Spine) displays the current round's store information:
 
 **Tooltip Content:**
-- **Challenge Name**: Bold title at top
-- **Target Score**: Points required to complete
+- **Store Name**: Bold title at top
+- **Target Score**: Points required to beat the round
 - **Current Progress**: Live progress vs target
-- **Reward**: Money reward for completion (if applicable)
+- **Reward**: Money reward for beating the round (if applicable)
 
 **Hover Behavior:**
 - **0.3s Delay**: Matches other tooltip delays in the game
@@ -1481,7 +1476,7 @@ All interactive game items feature consistent, themed hover tooltips:
 - **Thick Visible Borders**: 4px golden border (Color: 1, 0.8, 0.2, 1) with shadow effects for visibility
 - **Generous Padding**: 16px horizontal, 12px vertical padding for comfortable text spacing
 - **VCR Font Integration**: Retro gaming font with outline for better readability
-- **Item Icons**: PowerUps, Consumables, Debuffs, Challenges, and Mods show descriptions on hover
+- **Item Icons**: PowerUps, Consumables, Debuffs, Stores, and Mods show descriptions on hover
 - **Colored Dice**: Display effect descriptions (Green=$money, Red=+points, Purple/Blue=×multiplier)
 - **Shop Items**: Show detailed descriptions when hovering over purchasable items with custom styling
 - **Spine Tooltips**: Hover over spine UI elements to see complete item lists
@@ -1594,7 +1589,7 @@ DiceRogue uses the **TweenFX** addon (v1.2) for standardized micro-animations ac
 - **Game button pulse** — Roll/Shop buttons breathe with `idle_pulse` when actionable
 - **Dice lock/unlock** — Jelly feedback on locking/unlocking dice
 - **Debuff feedback** — `negative_hit` red flash when debuff count increases
-- **Challenge celebration** — `celebration` tada when challenge goal is met
+- **Challenge celebration** — `celebration` tada when the round target is met
 - **Tutorial highlight** — Pulse + bounce replaced with `idle_pulse` and `idle_float`
 - **FX Group Toggles** — 11 groups (Buttons, Spines, Idle, Panels, Icons, Events, Threats, Reveals, Dialogue, Shaders, Counters) can be toggled on/off in Settings > FX tab; persisted to `user://settings.cfg` and per-profile via `progress_manager.gd`
 - **Typewriter dialogs** — `dialogue_typewriter` for tutorial and NPC text reveals with punctuation pauses
@@ -1848,7 +1843,7 @@ Mods are special attachments that can be applied to individual dice to change th
 
 ## Available Debuffs
 
-Debuffs are negative effects that hinder the player's progress and add challenge to the gameplay. They are typically applied as part of challenges or by Mom when caught.
+Debuffs are negative effects that hinder the player's progress and add challenge to the gameplay. They are drawn on the per-zone schedule (including boss rounds), or applied by Mom when caught. See the Mall Zone System section for the zone/debuff/boss schedule and the per-zone draw-once pool.
 
 ### Dice Control Debuffs
 - **Lock Dice**: Prevents the player from locking any dice during their turn
@@ -1864,6 +1859,7 @@ Debuffs are negative effects that hinder the player's progress and add challenge
 
 ### Economy Debuffs
 - **Costly Roll**: Charges $10 per dice roll
+- **Window Shopping**: Shop prices increased by 25% while active (difficulty 1)
 
 ### System Debuffs
 - **Faster Chores**: Chore meter increases 3 points per roll instead of 1
@@ -1899,6 +1895,15 @@ Debuffs are negative effects that hinder the player's progress and add challenge
   - Reduces MAX_ROLLS to 1 for the duration of the debuff
   - Player must score with whatever they roll on their first attempt
   - Original roll count is restored when the debuff is removed
+
+### Groundings
+Groundings are Mom-themed punishments drawn from a **separate pool** from debuffs (`DebuffData.is_grounding = true`), sharing the debuff UI slots. Each round in zones 2-4 (rounds 1-5) has a 25% `grounding_chance` of drawing one; zone 1 never draws groundings. They share the per-zone draw-once pool, so the same grounding never repeats within a zone.
+
+- **Docked Allowance** (`docked_allowance`): The end-of-round award is withheld; the stats panel shows "ALLOWANCE DOCKED:" with a $0 total
+- **Coupons Revoked** (`coupons_revoked`): Removes all held coupons (consumables) at round start
+- **POGS Confiscated** (`pogs_confiscated`): Revokes N random power-ups, where N scales with REP tier (tiers 0-1 → 1, 2-3 → 2, 4 → 3)
+
+See `BUILD_DEBUFF.md` for the full debuff/grounding creation recipe.
 
 ### Coding Standards
 - Use GDScript 4.4 syntax
@@ -2105,7 +2110,6 @@ This prevents the need for complex manual testing setups and keeps development v
 - ✅ Progress tracking system - Persistent player progression with unlock conditions (implemented)
 - ✅ Chores & Mom system - Strategic tension mechanic with parental consequences (implemented)
 - Additional power-up variety
-- Challenge progression system
 - Balance pass on economy
 
 ### Long-term
@@ -2179,15 +2183,15 @@ An automated bot player that runs full game sessions for stress-testing and bala
 - Error/crash/edge-case logging with severity levels
 - JSON report output to `user://bot_reports/`
 - In-game results panel with live status updates
-- **50/50 early shop exit**: After completing a challenge mid-round, the bot has a 50% chance each subsequent turn to stop early and visit the shop instead of playing all 13 turns
+- **50/50 early shop exit**: After hitting the round target mid-round, the bot has a 50% chance each subsequent turn to stop early and visit the shop instead of playing all 13 turns
 - **Consumable management**: Bot scans `active_consumables` at the start of each turn and auto-uses "fire and forget" consumables (upgrades, cash, rolls, chores, etc.); interactive consumables requiring UI (score_reroll, double_existing, any_score) are sold for half price
 - **Mod & color dice purchasing**: 25% chance per shop visit to purchase a random mod or color dice
 - **Auto-dismiss UI panels**: Chore Selection Popup and You Win panel are automatically dismissed so they don't block the bot
 - **Item unlock management**: Bot profile defaults to `unlock_all_items: true`, which unlocks everything in ProgressManager at run start so the shop is fully stocked
 - **Results panel fix**: All overlay panels (winner panel, chore popup, shop) are dismissed before showing the final results panel at z_index 200
-- **End-of-round bonus awards**: Bot calculates and awards challenge reward, chore reward (×$50), empty categories bonus (×$10), and score-above-target bonus (×$1) — matching the stats panel logic the player sees
-- **Full game reset between runs**: Properly frees power-ups, consumables, challenges, debuffs via game_controller methods; resets ScoreModifierManager, MAX_ROLLS, shop reroll cost/expansions, and round_manager
-- **Expanded statistics**: Tracks highest channel reached, power-ups/consumables/mods/color dice purchased, consumables used vs sold, total money earned/spent, challenge rewards, end-of-round bonuses
+- **End-of-round bonus awards**: Bot calculates and awards the round reward, chore reward (×$50), empty categories bonus (×$10), and score-above-target bonus (×$1) — matching the stats panel logic the player sees
+- **Full game reset between runs**: Properly frees power-ups, consumables, and debuffs via game_controller methods; resets ScoreModifierManager, MAX_ROLLS, shop reroll cost/expansions, and round_manager
+- **Expanded statistics**: Tracks highest channel reached, power-ups/consumables/mods/color dice purchased, consumables used vs sold, total money earned/spent, round rewards, end-of-round bonuses
 - **Smart shop rerolling**: Rerolls the shop when no powerup outranks the bot's worst owned powerup and the reroll cost is ≤10% of current money (configurable max rerolls per shop visit)
 - **Economy estimation**: Before each shop visit, estimates remaining budget pressure (low/medium/high/critical) based on projected income vs remaining targets, and filters purchases accordingly
 - **Budget-aware purchasing**: Under high/critical budget pressure, skips common/uncommon items to conserve money for harder rounds ahead

@@ -8,7 +8,7 @@ id = "henderson"
 display_name = "Mrs. Henderson"
 role_description = "The teacher. Homework authority. 'If Mrs. Henderson calls this house one more time...' She has called. She will call again. Ties into the chore system: chores done count as homework done."
 portrait_tint = Color(0.55, 0.7, 0.6, 1)
-zone_affinity = Array[String](["Bookstore"])
+zone_affinity = Array[String](["East Wing"])
 line_pools = {
 "gossip": [
 "If Mrs. Henderson calls this house one more time...",

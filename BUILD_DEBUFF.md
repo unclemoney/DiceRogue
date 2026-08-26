@@ -119,6 +119,7 @@ wobble_strength = 0.4
 roughness_strength = 0.35
 glow_strength = 1.4
 difficulty_rating = 1
+is_grounding = false
 metadata/_custom_type_script = "uid://uiuqwtxbh7m0"
 ```
 
@@ -138,6 +139,7 @@ metadata/_custom_type_script = "uid://uiuqwtxbh7m0"
 - **roughness_strength**: Subtle edge roughness amount
 - **glow_strength**: Base brightness of the glyph glow
 - **difficulty_rating**: `1-5` used for automatic selection and UI color tinting
+- **is_grounding**: `false` for normal debuffs. Set `true` to move the entry into the **grounding pool** — groundings are drawn by per-round `grounding_chance` instead of the regular debuff schedule, and are excluded from normal and boss debuff draws (see "Groundings" below)
 
 #### Glyph ID Reference
 
@@ -268,6 +270,58 @@ glow_strength = 1.4
 difficulty_rating = 4
 metadata/_custom_type_script = "uid://uiuqwtxbh7m0"
 ```
+
+## Debuff Selection: Per-Zone Pool and Boss Rounds
+
+Debuffs are drawn per round from the `RoundDifficultyConfig` of the active channel (`max_debuffs`, `debuff_difficulty_cap`):
+
+- **Per-zone draw-once pool**: `DebuffManager` tracks `_drawn_this_zone`; once a debuff is drawn it cannot repeat within the same zone. The pool resets on zone change via `reset_zone_pool()` (also exposed through `get_drawn_this_zone()` / `set_drawn_this_zone()` for save/load).
+- **Boss rounds**: Round 6 of each zone sets `is_boss_round = true` and `boss_debuff_level` (zone 1 = level 4, zones 2-4 = level 5). A boss round draws exactly one debuff of that exact level via `DebuffManager.select_boss_debuff(level)` and draws no regular debuffs (`max_debuffs = 0`).
+- **Zone schedule**: Zone 1 rounds 1-5 have no debuffs; zones 2-4 draw one debuff per round with difficulty caps 2 / 3 / 4 respectively.
+- **Grant-only debuffs**: IDs in `DebuffManager.GRANTED_ONLY_IDS` (e.g. `rebellion`) are never drawn — they are only applied explicitly by other systems.
+
+## Difficulty Ratings (1-5, retuned)
+
+| Debuff | ID | Rating |
+|--------|----|--------|
+| Too Greedy | `too_greedy` | 5 |
+| The Division | `the_division` | 5 |
+| Murphy's Law | `rotating_disabled_powerup` | 4 |
+| Reduced Levels | `reduced_levels` | 4 |
+| Disabled Colors | `disabled_colors` | 4 |
+| One Shot | `one_shot` | 3 |
+| Costly Roll | `costly_roll` | 3 |
+| Rolling Penalty | `roll_score_minus_one` | 2 |
+| Locked Dice | `lock_dice` | 2 |
+| Half Additive | `half_additive` | 2 |
+| Disabled 2s | `disabled_twos` | 2 |
+| Abstinence | `no_consumables_allowed` | 1 |
+| Mixed Bag | `mixed_bag` | 1 |
+| Faster Chores | `faster_chores` | 1 |
+| Disabled Mods | `disabled_mods` | 1 |
+| Window Shopping | `window_shopping` | 1 |
+| Liquidation Sale | `all_powerups_sold` | 5 |
+
+**Window Shopping** (new): `window_shopping`, difficulty 1, glyph 15 (Wealth Drain) — all shop prices increased by 25% while active. It is a normal debuff (not a grounding).
+
+**Rebellion** (`rebellion`) is the sass-reward buff riding the debuff pipeline; it stays grant-only and is excluded from every draw pool.
+
+## Groundings
+
+Groundings are Mom-themed punishments in a **separate pool** from debuffs (`DebuffData.is_grounding = true`). They share the debuff UI slots and the per-zone draw-once pool, but they are drawn by `RoundDifficultyConfig.grounding_chance` (zones 2-4 rounds 1-5 = 0.25, zone 1 = 0) instead of `max_debuffs`, and are excluded from normal and boss debuff draws.
+
+The three groundings:
+
+| Grounding | ID | Effect |
+|-----------|----|--------|
+| Docked Allowance | `docked_allowance` | End-of-round award withheld; the stats panel shows "ALLOWANCE DOCKED:" with a $0 total |
+| Coupons Revoked | `coupons_revoked` | Removes all held coupons (consumables) at round start |
+| POGS Confiscated | `pogs_confiscated` | Revokes N random power-ups; N scales with REP tier (tiers 0-1 → 1, 2-3 → 2, 4 → 3) |
+
+**Adding a grounding** is the same recipe as a debuff, plus two extra steps:
+1. Create the script, scene, and `DebuffData` resource as usual, and set `is_grounding = true` on the resource.
+2. Add the grounding's ID to the `match` arm in `GameController` (`game_controller.gd`, alongside `docked_allowance` / `coupons_revoked` / `pogs_confiscated`) so it gets the right target and startup behavior.
+3. Test with `Tests/GroundingTest.tscn`.
 
 ## Best Practices
 

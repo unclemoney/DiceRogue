@@ -274,6 +274,11 @@ func _create_debug_tabs() -> void:
 			{"text": "Remove Liquidation Sale", "method": "_debug_remove_liquidation_sale"},
 			{"text": "Apply One Shot", "method": "_debug_apply_one_shot"},
 			{"text": "Remove One Shot", "method": "_debug_remove_one_shot"},
+			{"text": "Apply Window Shopping", "method": "_debug_apply_window_shopping"},
+			{"text": "Remove Window Shopping", "method": "_debug_remove_window_shopping"},
+			{"text": "Apply Docked Allowance", "method": "_debug_apply_docked_allowance"},
+			{"text": "Apply Coupons Revoked", "method": "_debug_apply_coupons_revoked"},
+			{"text": "Apply POGS Confiscated", "method": "_debug_apply_pogs_confiscated"},
 			{"text": "Cycle All Glyphs", "method": "_debug_cycle_all_debuff_glyphs"},
 			{"text": "Test Division vs Perfect Strangers", "method": "_debug_test_division_perfect_strangers"},
 			{"text": "Show Active Challenges", "method": "_debug_show_active_challenges"},
@@ -2827,6 +2832,67 @@ func _debug_remove_one_shot() -> void:
 	log_debug("Removed One Shot debuff - rolls restored")
 
 
+## _debug_apply_window_shopping()
+##
+## Applies the Window Shopping debuff (+25% shop prices)
+func _debug_apply_window_shopping() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	if game_controller.is_debuff_active("window_shopping"):
+		log_debug("Window Shopping debuff is already active")
+		return
+	game_controller.apply_debuff("window_shopping")
+	log_debug("Applied Window Shopping - shop prices marked up 25%")
+
+
+## _debug_remove_window_shopping()
+##
+## Removes the Window Shopping debuff
+func _debug_remove_window_shopping() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	if not game_controller.is_debuff_active("window_shopping"):
+		log_debug("Window Shopping debuff is not active")
+		return
+	game_controller.disable_debuff("window_shopping")
+	log_debug("Removed Window Shopping debuff - prices restored")
+
+
+## _debug_apply_docked_allowance()
+##
+## Applies the Docked Allowance grounding (no end of round award)
+func _debug_apply_docked_allowance() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	game_controller.apply_debuff("docked_allowance")
+	log_debug("Applied Docked Allowance - end of round award withheld")
+
+
+## _debug_apply_coupons_revoked()
+##
+## Applies the Coupons Revoked grounding (removes held coupons)
+func _debug_apply_coupons_revoked() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	game_controller.apply_debuff("coupons_revoked")
+	log_debug("Applied Coupons Revoked - held coupons removed")
+
+
+## _debug_apply_pogs_confiscated()
+##
+## Applies the POGS Confiscated grounding (removes POGs based on REP tier)
+func _debug_apply_pogs_confiscated() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	game_controller.apply_debuff("pogs_confiscated")
+	log_debug("Applied POGS Confiscated - POGs removed based on REP tier")
+
+
 ## _debug_cycle_all_debuff_glyphs()
 ##
 ## Applies every debuff briefly so the player can visually verify all 16 glyph IDs.
@@ -3569,7 +3635,7 @@ func _debug_checkin_target_max() -> void:
 ## _debug_set_checkin_target(target)
 ##
 ## Sets this round's Mom check-in roll target to an exact value (clamped to
-## the CHECKIN_TARGET_MIN..get_checkin_max() range, i.e. 10 + mall zone).
+## the CHECKIN_TARGET_MIN..get_checkin_max() range, i.e. 6 + mall zone).
 func _debug_set_checkin_target(target: int) -> void:
 	var chores_manager = _get_chores_manager()
 	if not chores_manager:

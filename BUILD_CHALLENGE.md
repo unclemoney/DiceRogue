@@ -1,5 +1,9 @@
 # BUILD_CHALLENGE.md
 
+> **⚠️ DEPRECATED — Challenges are no longer part of gameplay.**
+>
+> Each round is now a **store** with a target score (see `README.md` → Mall Zone System). Challenges are never spawned: `ChallengeManager` survives only as a **signal hub** that re-emits `challenge_completed`/`challenge_failed` (payload = store name) so power-ups, UI, music, and the bot keep working. All challenge scripts, scenes, and resources remain on disk for reference only — do not build new challenges from this guide.
+
 This guide provides step-by-step instructions for creating new challenges in DiceRogue. Challenges are gameplay objectives that players must complete under specific conditions, often with debuffs active.
 
 ## Overview

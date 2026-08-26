@@ -154,10 +154,12 @@ func _test_rep_survives_zone_change() -> void:
 	var rep_before_zone: int = _pm.get_rep()
 	_gc._on_next_channel_pressed()
 	var advanced := await _wait_for("zone advance", func():
-		# Drive the panels the real flow may show
-		if _gc._pending_unlocked_items.size() > 0 and _gc.unlocked_item_panel \
-				and _gc.unlocked_item_panel.has_signal("all_items_acknowledged"):
-			_gc.unlocked_item_panel.all_items_acknowledged.emit()
+		# Drive the panels the real flow may show. The unlock panel owns the
+		# items once queued (_pending_unlocked_items is cleared immediately),
+		# so key off panel visibility and click through one item at a time.
+		if _gc.unlocked_item_panel and is_instance_valid(_gc.unlocked_item_panel) \
+				and _gc.unlocked_item_panel.visible:
+			_gc.unlocked_item_panel._on_ok_pressed()
 		if _gc.carry_over_panel and is_instance_valid(_gc.carry_over_panel) \
 				and _gc.carry_over_panel.visible:
 			_gc.carry_over_panel._on_confirm_pressed()

@@ -19,48 +19,16 @@ const SECTION_COLORS := {
 
 const STORE_SECTIONS := {
 	1: "eatery",
-	2: "entertainment",
-	3: "specialty",
-	4: "specialty",
-	5: "major_stores",
-	6: "entertainment",
-	7: "eatery",
-	8: "specialty",
-	9: "specialty",
-	10: "lifestyle",
-	11: "lifestyle",
-	12: "entertainment",
-	13: "entertainment",
-	14: "lifestyle",
-	15: "specialty",
-	16: "lifestyle",
-	17: "lifestyle",
-	18: "specialty",
-	19: "major_stores",
-	20: "major_stores",
+	2: "lifestyle",
+	3: "entertainment",
+	4: "major_stores",
 }
 
 const STORE_NAMES := {
-	1: "FOOD COURT",
-	2: "ARCADE",
-	3: "BOOKSTORE",
-	4: "HOBBY STORE",
-	5: "DEPARTMENT STORE",
-	6: "VIDEO RENTALS",
-	7: "COFFEE CORNER",
-	8: "TOY STORE",
-	9: "ELECTRONICS",
-	10: "FASHION BOUTIQUE",
-	11: "JEWELRY",
-	12: "CINEMA",
-	13: "MUSIC SHOP",
-	14: "SPORTS OUTLET",
-	15: "PET STORE",
-	16: "PERFUME SHOP",
-	17: "FURNITURE",
-	18: "PHOTO STUDIO",
-	19: "SEARS",
-	20: "J-MART",
+	1: "NORTH WING",
+	2: "EAST WING",
+	3: "WEST WING",
+	4: "SOUTH WING",
 }
 
 var _board_root: Control
@@ -79,6 +47,29 @@ func _ready() -> void:
 	_build_ui()
 	_steps = _mall_map_layout_script.get_debug_build_steps()
 	_render_stage(0)
+	if DisplayServer.get_name() != "headless":
+		call_deferred("_capture_layout_shot")
+
+
+## _capture_layout_shot() -> void
+##
+## Renders the full layout stage and saves a screenshot to
+## Tests/_layout_shots/ so the fixed 4-zone layout can be eyeballed.
+## Requires a real rendering driver (skipped under --headless).
+func _capture_layout_shot() -> void:
+	_render_stage(_steps.size() - 1)
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	var image := _map_viewport.get_texture().get_image()
+	if image == null:
+		push_error("[MallLayoutDebugTest] Screenshot capture failed: no viewport image")
+		return
+	DirAccess.make_dir_recursive_absolute("res://Tests/_layout_shots")
+	var err := image.save_png("res://Tests/_layout_shots/mall_layout_debug.png")
+	if err != OK:
+		push_error("[MallLayoutDebugTest] Failed to save screenshot: %s" % err)
+	else:
+		print("[MallLayoutDebugTest] Saved Tests/_layout_shots/mall_layout_debug.png")
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -243,13 +234,13 @@ func _describe_stage(step: Dictionary) -> String:
 		"frame":
 			return "Map frame and directory split only. Use this to confirm the mall bounds and vertical budget."
 		"intersection":
-			return "Intersection only. Verify the rotated square sits inside the frame and leaves enough room for the four large corner stores."
+			return "Intersection only. Verify the rotated square sits at the frame center and leaves enough room for the four wing zones."
 		"walkway":
 			return "Corridors only. Verify the mall uses a simple plus-shaped network with four straight arms meeting the rotated square."
-		"corner_stores":
-			return "Corner stores only. Check the four large stores wrap the diamond and each uses one 45-degree cut edge facing the intersection."
+		"zones":
+			return "Wing zones only. Check the four wings (01 North-West, 02 North-East, 03 South-West, 04 South-East) wrap the diamond with a stub pointing at the courtyard."
 		_:
-			return "Full layout. Inspect corridor clearance, board fit, and store adjacency before opening the full selector."
+			return "Full layout. Inspect corridor clearance, board fit, and wing adjacency before opening the full selector."
 
 
 func _closed_points(points: PackedVector2Array) -> PackedVector2Array:

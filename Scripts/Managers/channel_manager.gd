@@ -18,11 +18,20 @@ signal difficulty_multiplier_changed(multiplier: float)
 signal channel_locked(channel: int, required_completions: int)
 
 const MIN_CHANNEL: int = 1
-const MAX_CHANNEL: int = 20
+const MAX_CHANNEL: int = 4
 const BALANCE_TUNING_PATH := "res://Resources/Data/Balance/balance_tuning.tres"
+const STORE_DIRECTORY_PATH := "res://Resources/Data/Stores/store_directory.tres"
+const STORES_PER_ZONE: int = 6
 
 ## Preloaded channel difficulty resources
 var channel_configs: Array[ChannelDifficultyData] = []
+
+## Store names assigned to each zone for the current run.
+## zone number (1-MAX_CHANNEL) -> Array[String] of STORES_PER_ZONE names.
+var zone_store_names: Dictionary = {}
+
+## Seed used for the current run's store assignment (for save/load).
+var store_assignment_seed: int = 0
 
 ## Balance knobs (margin curve, rebel premium) from bot baseline measurement.
 ## Untyped on purpose: the global class cache may not know BalanceTuning yet
@@ -234,16 +243,6 @@ func is_shop_item_disabled(item_id: String, channel: int = -1) -> bool:
 	return false
 
 
-## get_challenge_difficulty_range(channel: int, round_number: int) -> Vector2i
-##
-## Returns the allowed challenge difficulty tier range for a round.
-func get_challenge_difficulty_range(channel: int = -1, round_number: int = 1) -> Vector2i:
-	var config = get_channel_config(channel)
-	if config:
-		return config.get_challenge_difficulty_range(round_number)
-	return Vector2i(0, 5)  # Fallback: allow all tiers
-
-
 ## get_max_debuffs(channel: int, round_number: int) -> int
 ##
 ## Returns the maximum debuff count for a round.
@@ -262,16 +261,6 @@ func get_debuff_difficulty_cap(channel: int = -1, round_number: int = 1) -> int:
 	if config:
 		return config.get_debuff_difficulty_cap(round_number)
 	return 1
-
-
-## get_forced_challenge(channel: int, round_number: int) -> String
-##
-## Returns a forced challenge ID if one is configured for the round.
-func get_forced_challenge(channel: int = -1, round_number: int = 1) -> String:
-	var config = get_channel_config(channel)
-	if config:
-		return config.get_forced_challenge(round_number)
-	return ""
 
 
 ## is_channel_unlocked(channel: int) -> bool
@@ -556,7 +545,11 @@ func validate_all_configs() -> Array[String]:
 ##
 ## Returns the current channel state for saving.
 func get_state() -> Dictionary:
-	return {"current_channel": current_channel}
+	return {
+		"current_channel": current_channel,
+		"zone_store_names": zone_store_names.duplicate(true),
+		"store_assignment_seed": store_assignment_seed
+	}
 
 
 ## load_state(state)
@@ -565,3 +558,64 @@ func get_state() -> Dictionary:
 func load_state(state: Dictionary) -> void:
 	var new_channel = state.get("current_channel", 1)
 	set_channel(new_channel)
+	store_assignment_seed = state.get("store_assignment_seed", 0)
+	# JSON round-trips turn int keys into strings; convert back.
+	zone_store_names.clear()
+	var saved_stores: Dictionary = state.get("zone_store_names", {})
+	for key in saved_stores:
+		var zone_names: Array[String] = []
+		for store_name in saved_stores[key]:
+			zone_names.append(str(store_name))
+		zone_store_names[int(key)] = zone_names
+
+
+## assign_stores_to_zones(seed_value)
+##
+## Shuffles the 24-store directory and deals STORES_PER_ZONE stores to each
+## zone. Called once per run at game start. With seed_value 0 the run's
+## GameRNG initial seed is used so the assignment is reproducible.
+func assign_stores_to_zones(seed_value: int = 0) -> void:
+	zone_store_names.clear()
+	var directory: StoreDirectoryData = load(STORE_DIRECTORY_PATH)
+	if not directory or directory.store_names.is_empty():
+		push_error("[ChannelManager] Failed to load store directory:", STORE_DIRECTORY_PATH)
+		return
+
+	if seed_value == 0:
+		seed_value = GameRNG.get_initial_seed()
+	store_assignment_seed = seed_value
+
+	var names: Array[String] = directory.store_names.duplicate()
+	var zone_count: int = mini(MAX_CHANNEL, names.size() / STORES_PER_ZONE)
+	if zone_count < 1:
+		push_error("[ChannelManager] Store directory has %d stores, need at least %d" % [names.size(), STORES_PER_ZONE])
+		return
+
+	# Fisher-Yates shuffle with the run seed
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	for i in range(names.size() - 1, 0, -1):
+		var j: int = rng.randi_range(0, i)
+		var tmp: String = names[i]
+		names[i] = names[j]
+		names[j] = tmp
+
+	for zone in range(1, zone_count + 1):
+		var zone_names: Array[String] = []
+		for r in range(STORES_PER_ZONE):
+			zone_names.append(names[(zone - 1) * STORES_PER_ZONE + r])
+		zone_store_names[zone] = zone_names
+	print("[ChannelManager] Stores assigned to %d zones (seed %d)" % [zone_store_names.size(), seed_value])
+
+
+## get_store_name(zone, round_number) -> String
+##
+## Returns the store name for a zone's round (1-based). Falls back to a
+## generic label when no assignment exists (e.g. before game start).
+func get_store_name(zone: int, round_number: int) -> String:
+	if zone_store_names.has(zone):
+		var names: Array = zone_store_names[zone]
+		var index: int = round_number - 1
+		if index >= 0 and index < names.size():
+			return names[index]
+	return "Store %d-%d" % [zone, round_number]

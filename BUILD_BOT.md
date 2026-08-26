@@ -58,7 +58,7 @@ Edit `default_bot_config.tres` in the Inspector or create a new `BotConfig` reso
 | `mom_policy` | "tone_weighted" | How the bot answers Mom dialogs: `tone_weighted`, `always_comply`, `always_sass`, `tactical` |
 | `mute_audio` | true | Mute game audio during bot runs |
 | `unlock_all_items` | true | Unlock all ProgressManager items each run ("ceiling" measurement). Set false for natural progression: combine with `reset_between_runs=false` for a realistic climb (unlocks carry forward), or `reset_between_runs=true` for a "floor" run. **Note:** natural-progression modes deliberately mutate the real profile saves; the bot backs them up at start and restores them at finalize. |
-| `advance_on_loss` | false | If true, a lost channel does not end the attempt — the bot advances anyway (loss recorded) so baseline climbs sample all 20 channels |
+| `advance_on_loss` | false | If true, a lost channel does not end the attempt — the bot advances anyway (loss recorded) so baseline climbs sample all 4 channels |
 
 Ready-made balance configs live in `Resources/Data/BotConfigs/`: `climb_tone_weighted.tres`, `climb_comply.tres`, `climb_sass.tres` (30-climb realistic arms), `floor_fresh.tres`, `ceiling_unlocked.tres` (sanity bounds), `smoke_test.tres` (quick 1-attempt check).
 

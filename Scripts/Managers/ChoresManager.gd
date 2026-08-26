@@ -560,16 +560,17 @@ func _schedule_checkin() -> void:
 
 ## get_checkin_max() -> int
 ##
-## Returns this round's maximum check-in roll target: CHECKIN_TARGET_MAX
-## plus the current mall zone number (zone 4 -> 10 + 4 = 14). Falls back
-## to the base max when the channel manager isn't available (e.g. tests).
+## Returns this round's maximum check-in roll target: 6 plus the current
+## mall zone number (zone 4 -> 6 + 4 = 10). Tightened so check-ins land
+## before fast rounds end — REP pacing depends on check-ins not dropping.
+## Falls back to the base max when the channel manager isn't available (e.g. tests).
 func get_checkin_max() -> int:
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	if game_controller:
 		var channel_manager = game_controller.get("channel_manager")
 		if channel_manager:
-			return CHECKIN_TARGET_MAX + channel_manager.current_channel
-	return CHECKIN_TARGET_MAX
+			return 6 + channel_manager.current_channel
+	return 7  # Fallback: zone 1 value when no channel manager (e.g. tests)
 
 
 ## _check_checkin_trigger()

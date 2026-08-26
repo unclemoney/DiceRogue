@@ -1216,7 +1216,7 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.COMPLETE_GAME, 1, 1)
 	_add_default_power_up("extra_rolls", "Extra Rolls", "Get additional roll attempts", 
 		UnlockConditionClass.ConditionType.COMPLETE_GAME, 1, 1)
-	_add_default_power_up("allowance", "Allowance", "Grants $100 when challenge completes", 
+	_add_default_power_up("allowance", "Allowance", "Grants $100 when a round's target is met", 
 		UnlockConditionClass.ConditionType.COMPLETE_GAME, 1, 1)
 	_add_default_power_up("plus_a_dollar", "Plus A Dollar", "Grants $1 after each dice roll",
 		UnlockConditionClass.ConditionType.COMPLETE_GAME, 1, 1)
@@ -1287,11 +1287,11 @@ func _create_default_unlockable_items() -> void:
 	_add_default_power_up("even_higher", "Even Higher", "+1 additive per even die scored (cumulative)", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 20, 5, {"category": "fives"})
 	_add_default_power_up("extra_rainbow", "Extra Rainbow", "+10 per colored die scored", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5, 5)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 5)
 	_add_default_power_up("one_roll_wonder", "One-Roll Wonder", "Score on first roll = +40 additive", 
 		UnlockConditionClass.ConditionType.WIN_GAMES, 5, 5)
 	_add_default_power_up("sweet_sixteen", "Sweet Sixteen", "Grants $16 per turn. Turn 16 score bonus: $256",
-		UnlockConditionClass.ConditionType.REACH_CHANNEL, 10, 5)
+		UnlockConditionClass.ConditionType.REACH_CHANNEL, 2, 5)
 	
 	# --- Difficulty 6: Rare PowerUps ---
 	_add_default_power_up("money_well_spent", "Money Well Spent", "Convert money to score", 
@@ -1311,9 +1311,9 @@ func _create_default_unlockable_items() -> void:
 	_add_default_power_up("modded_dice_mastery", "Modded Dice Mastery", "+10 per modded die when scoring", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 15, 6, {"cumulative": true})
 	_add_default_power_up("blue_safety_net", "Blue Safety Net", "Halves blue dice penalties", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 6)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 6)
 	_add_default_power_up("great_exchange", "The Great Exchange", "+2 dice, -1 roll per turn", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 6, 6)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 6)
 	
 	# --- Difficulty 7: Epic PowerUps ---
 	_add_default_power_up("the_consumer_is_always_right", "The Consumer Is Always Right", "Consumable synergies", 
@@ -1325,7 +1325,7 @@ func _create_default_unlockable_items() -> void:
 	_add_default_power_up("wild_dots", "Wild Dots", "Special die face effects", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 5, 7)
 	_add_default_power_up("money_bags", "Money Bags", "Score multiplier based on current money", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5, 7)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 7)
 	_add_default_power_up("debuff_destroyer", "Debuff Destroyer", "Removes random debuff when sold", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 4, 7)
 	_add_default_power_up("extra_coupons", "Extra Coupons", "Consumable slots are fixed at 4", 
@@ -1337,23 +1337,23 @@ func _create_default_unlockable_items() -> void:
 	_add_default_power_up("blue_slime", "Blue Slime", "Doubles blue dice probability", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 8, 8)
 	_add_default_power_up("challenge_easer", "Challenge Easer", "All challenge targets reduced by 20%", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 8, 8)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 8)
 	_add_default_power_up("azure_perfection", "Azure Perfection", "Blue dice always multiply (never divide)", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 10, 8)
 	
 	# --- Difficulty 9: Legendary PowerUps ---
 	_add_default_power_up("ungrounded", "Ungrounded", "Prevents all debuffs", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 12, 9)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 9)
 	_add_default_power_up("rainbow_surge", "Rainbow Surge", "2x multiplier when 4+ dice colors present", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 10, 9)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 9)
 	_add_default_power_up("grand_master", "Grand Master", "All scoring categories get +10%", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 15, 9)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 9)
 	_add_default_power_up("snake_eyes", "Snake Eyes", "Each 1 = +0.2x mult. All 1s = 3.0x!", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 10, 9)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 9)
 	
 	# --- Difficulty 10: Mythic PowerUps ---
 	_add_default_power_up("dice_lord", "Dice Lord", "Start each round with one guaranteed Yahtzee", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 20, 10)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 4, 10)
 	
 	# --- New Wave PowerUps ---
 	_add_default_power_up("the_piggy_bank", "The Piggy Bank", "Saves $3 per roll. Sell to cash out!", 
@@ -1365,19 +1365,19 @@ func _create_default_unlockable_items() -> void:
 	_add_default_power_up("random_card_level", "Random Card Level", "20% chance each turn to level up a category", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 4, 6)
 	_add_default_power_up("the_replicator", "The Replicator", "Duplicates a random PowerUp you own after 1 turn", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 4, 7)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 7)
 	_add_default_power_up("yahtzeed_dice", "Yahtzeed Dice", "Gain +1 die per Yahtzee (max 16)", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 6, 8)
 	
 	# --- Channel-based PowerUps (NOT IMPLEMENTED - preserved) ---
 	_add_default_power_up("lucky_streak", "Lucky Streak", "Increased chance of rolling pairs", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 5)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 5)
 	_add_default_power_up("steady_progress", "Steady Progress", "+5 points to all lower section scores", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5, 6)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 6)
 	_add_default_power_up("combo_king", "Combo King", "Bonus multiplier for consecutive scoring", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 8, 7)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 7)
 	_add_default_power_up("channel_champion", "Channel Champion", "Double points in favorite category", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 12, 8)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 8)
 	
 	# ==========================================================================
 	# AVOIDANCE CHALLENGES - Win without scoring in specific categories/sections
@@ -1453,7 +1453,7 @@ func _create_default_unlockable_items() -> void:
 	_add_default_consumable("one_free_mod", "One Free Mod", "Grants 1 free random dice mod", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 4, 4)
 	_add_default_consumable("dice_surge", "Dice Surge", "Grants +2 temporary dice for 3 turns", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 4)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 4)
 	
 	# --- Difficulty 5: Mid-tier consumables ---
 	_add_default_consumable("double_or_nothing", "Double Or Nothing", "Risk/reward scoring", 
@@ -1469,7 +1469,7 @@ func _create_default_unlockable_items() -> void:
 	_add_default_consumable("stat_cashout", "Stat Cashout", "Earn $10/yahtzee and $5/full house scored this run", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 3, 5)
 	_add_default_consumable("visit_the_shop", "Visit The Shop", "Open the shop during active play", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 5)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 5)
 	_add_default_consumable("loaded_dice", "Loaded Dice", "Randomly set one die to a random value (1-6).", 
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 200, 5)
 	
@@ -1485,7 +1485,7 @@ func _create_default_unlockable_items() -> void:
 	_add_default_consumable("small_straight_upgrade", "Small Straight Upgrade", "Upgrade Small Straight category level", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 35, 6, {"category": "small_straight"})
 	_add_default_consumable("upper_section_boost", "Upper Section Boost", "Upgrades all 6 upper section categories by one level", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 6)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 6)
 	_add_default_consumable("score_amplifier", "Score Amplifier", "Doubles your next category score", 
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 400, 6)
 	
@@ -1497,31 +1497,31 @@ func _create_default_unlockable_items() -> void:
 	_add_default_consumable("large_straight_upgrade", "Large Straight Upgrade", "Upgrade Large Straight category level", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 45, 7, {"category": "large_straight"})
 	_add_default_consumable("lower_section_boost", "Lower Section Boost", "Upgrades all 7 lower section categories by one level", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5, 7)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 7)
 	_add_default_consumable("score_streak", "Score Streak", "Score multiplier grows: 1x -> 1.5x -> 2x over 3 turns", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 4, 7)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 7)
 	_add_default_consumable("channel_bonus", "Channel Bonus", "Gain $50 per completed channel", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 7)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 7)
 	_add_default_consumable("reroll_master", "Reroll Master", "Gain 2 extra rerolls this round", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5, 7)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 7)
 	
 	# --- Difficulty 8: Legendary consumables ---
 	_add_default_consumable("yahtzee_upgrade", "Yahtzee Upgrade", "Upgrade Yahtzee category level", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 8, 8)
 	_add_default_consumable("bonus_collector", "Bonus Collector", "Grants $35 if upper section bonus achieved", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 6, 8)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 8)
 	_add_default_consumable("lucky_seven", "Lucky Seven", "All dice become 1-7 range this round", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 8, 8)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 8)
 	
 	# --- Difficulty 9: Mythic consumables ---
 	_add_default_consumable("all_categories_upgrade", "Master Upgrade", "Upgrade ALL categories by one level", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 10, 9)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 9)
 	_add_default_consumable("lower_section_boost", "Lower Section Boost", "Upgrades all lower section categories by one level", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 8, 9)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 9)
 	
 	# --- Difficulty 10: Ultimate consumables ---
 	_add_default_consumable("ultimate_reroll", "Ultimate Reroll", "Reroll all dice up to 5 times", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 15, 10)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 10)
 	
 	# ==========================================================================
 	# ALL MODS - Difficulty 4-9, specialized unlock conditions
@@ -1542,9 +1542,9 @@ func _create_default_unlockable_items() -> void:
 	_add_default_mod("high_roller", "High Roller", "Dice tend toward high values", 
 		UnlockConditionClass.ConditionType.LOCK_CONSTRAINT, 100, 7, {"turn_window": 4, "max_locked_dice": 0})
 	_add_default_mod("channel_veteran", "Channel Veteran", "Start with +$25 per channel completed", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5, 6)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 6)
 	_add_default_mod("precision_roller", "Precision Roller", "First roll each turn is always 4+", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 12, 9)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 9)
 	
 	# ==========================================================================
 	# ALL COLORED DICE FEATURES - Difficulty 3-6, score-based progression
@@ -1557,7 +1557,7 @@ func _create_default_unlockable_items() -> void:
 	_add_default_colored_dice("purple_dice", "Purple Dice", "Unlocks purple colored dice (score multiplier)", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 2, 5)
 	_add_default_colored_dice("blue_dice", "Blue Dice", "Unlocks blue colored dice (complex effects)", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 6)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 6)
 	_add_default_colored_dice("yellow_dice", "Yellow Dice", "Unlocks yellow colored dice (grants consumables when scored)", 
 		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 8, 5)
 	
@@ -1568,15 +1568,15 @@ func _create_default_unlockable_items() -> void:
 	_add_default_gaming_console("atari_console", "Atari", "Save State: Once per round, save your dice values and reload them on a later turn.",
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 2)
 	_add_default_gaming_console("nes_console", "NES", "Power Glove: Once per round, adjust one die by +1 or -1 after rolling.",
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 4)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 4)
 	_add_default_gaming_console("snes_console", "SNES", "Blast Processing: Every 3rd category scored in a round gets a 1.5x multiplier.",
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5, 5)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 5)
 	_add_default_gaming_console("sega_console", "Sega", "Combo System: Each consecutive non-zero score adds +3 to a running combo bonus. Resets on 0.",
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 7, 6)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 6)
 	_add_default_gaming_console("playstation_console", "PlayStation", "Continue?: Auto-grants one bonus turn when a challenge fails.",
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 9, 8)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 8)
 	_add_default_gaming_console("sega_saturn_console", "Sega Saturn", "Cartridge Tilt: Once per round, shift ALL unlocked dice by +1 or -1 after rolling.",
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 10, 9)
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 9)
 	
 	# ==========================================================================
 	# ALL DICE SETS - Selectable at game start in the Mall Zone Selection

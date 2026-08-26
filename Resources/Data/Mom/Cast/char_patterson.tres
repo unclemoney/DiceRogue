@@ -8,7 +8,7 @@ id = "patterson"
 display_name = "Mrs. Patterson"
 role_description = "The church gossip and neighborhood surveillance network. She is EVERYWHERE. Her sightings drive the true/false accusation mechanic; over a run her reports escalate from nosy to absurd."
 portrait_tint = Color(0.75, 0.72, 0.78, 1)
-zone_affinity = Array[String](["Food Court", "Department Store", "Sears"])
+zone_affinity = Array[String](["North Wing", "South Wing"])
 line_pools = {
 "sighting": [
 "Mrs. Patterson saw you near the {zone} today. Interesting.",

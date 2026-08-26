@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dhh8gtnr7lna1"]
+
+[ext_resource type="Script" uid="uid://d4c0up0nsr3v1gd1" path="res://Scripts/Debuff/coupons_revoked_debuff.gd" id="1_bequk"]
+
+[node name="CouponsRevokedDebuff" type="Node"]
+script = ExtResource("1_bequk")

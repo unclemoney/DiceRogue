@@ -5,20 +5,14 @@ class_name ChannelStartBonusTest
 ##
 ## Verifies the channel starting bonus system.
 ## Tests bonus formula accuracy, item granting, and scorecard level boosts.
+## Channels are the 4 mall zones (1-4); higher numbers are unreachable.
 ## Run this scene standalone in the Godot editor (F6).
 
 const EXPECTED_BONUSES = {
 	1: {"bonus_money": 0, "bonus_powerup_count": 0, "bonus_consumable_count": 0, "bonus_level_boost_count": 0},
 	2: {"bonus_money": 150, "bonus_powerup_count": 0, "bonus_consumable_count": 0, "bonus_level_boost_count": 0},
 	3: {"bonus_money": 300, "bonus_powerup_count": 1, "bonus_consumable_count": 0, "bonus_level_boost_count": 0},
-	4: {"bonus_money": 450, "bonus_powerup_count": 1, "bonus_consumable_count": 1, "bonus_level_boost_count": 0},
-	5: {"bonus_money": 600, "bonus_powerup_count": 2, "bonus_consumable_count": 1, "bonus_level_boost_count": 1},
-	6: {"bonus_money": 750, "bonus_powerup_count": 2, "bonus_consumable_count": 2, "bonus_level_boost_count": 1},
-	7: {"bonus_money": 900, "bonus_powerup_count": 3, "bonus_consumable_count": 2, "bonus_level_boost_count": 2},
-	8: {"bonus_money": 1050, "bonus_powerup_count": 3, "bonus_consumable_count": 3, "bonus_level_boost_count": 2},
-	9: {"bonus_money": 1200, "bonus_powerup_count": 4, "bonus_consumable_count": 3, "bonus_level_boost_count": 3},
-	10: {"bonus_money": 1350, "bonus_powerup_count": 4, "bonus_consumable_count": 4, "bonus_level_boost_count": 3},
-	20: {"bonus_money": 2850, "bonus_powerup_count": 9, "bonus_consumable_count": 9, "bonus_level_boost_count": 8}
+	4: {"bonus_money": 450, "bonus_powerup_count": 1, "bonus_consumable_count": 1, "bonus_level_boost_count": 0}
 }
 
 var _test_results: Array[String] = []

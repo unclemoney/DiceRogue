@@ -10,7 +10,7 @@ class_name ItemValueConfig
 @export_range(10, 1000) var simulations_per_item: int = 100
 
 ## Channel to simulate on (affects target score scaling)
-@export_range(1, 20) var target_channel: int = 2
+@export_range(1, 4) var target_channel: int = 2
 
 ## If true, test all powerups found in Scripts/PowerUps/*.tres
 @export var test_all_powerups: bool = true

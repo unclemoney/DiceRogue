@@ -186,7 +186,7 @@ func _build_ui(data: Dictionary) -> void:
 	
 	## Separator
 	vbox.add_child(HSeparator.new())
-	
+
 	## Channel row
 	_channel_label = Label.new()
 	_channel_label.text = "Mall Zone %s" % NumberFormatter.format_int(data.get("channel", 1))
@@ -194,8 +194,8 @@ func _build_ui(data: Dictionary) -> void:
 	_channel_label.add_theme_font_size_override("font_size", 18)
 	_channel_label.add_theme_color_override("font_color", Color(0.5, 1.0, 0.5))
 	vbox.add_child(_channel_label)
-	
-	## Challenge name
+
+	## Store name (challenge name slot — challenges deprecated)
 	_challenge_label = Label.new()
 	_challenge_label.text = data.get("challenge_name", "")
 	_challenge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

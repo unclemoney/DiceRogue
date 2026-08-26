@@ -125,17 +125,123 @@ func set_verbose_mode(enabled: bool) -> void:
 ## get_debuffs_by_difficulty(max_difficulty: int) -> Array[DebuffData]
 ##
 ## Returns all registered debuffs with difficulty_rating <= max_difficulty.
+## Groundings are excluded: they live in a separate pool (see get_groundings).
 ## @param max_difficulty: Maximum difficulty rating (1-5)
 ## @return Array of DebuffData that meet the criteria
 func get_debuffs_by_difficulty(max_difficulty: int) -> Array[DebuffData]:
 	var result: Array[DebuffData] = []
 	for id in _defs_by_id:
 		var def = _defs_by_id[id] as DebuffData
-		if def and def.difficulty_rating <= max_difficulty and def.id not in GRANTED_ONLY_IDS:
+		if def and def.difficulty_rating <= max_difficulty and def.id not in GRANTED_ONLY_IDS and not def.is_grounding:
 			result.append(def)
 	if _verbose_mode:
 		print("[DebuffManager] Found %d debuffs with difficulty <= %d" % [result.size(), max_difficulty])
 	return result
+
+
+## ============== GROUNDING POOL ==============
+##
+## Groundings (Docked Allowance, Coupons Revoked, POGS Confiscated) are a
+## separate pool from debuffs. They are drawn by per-round grounding_chance
+## (see RoundDifficultyConfig) and share the debuff UI slots.
+
+
+## get_groundings() -> Array[DebuffData]
+##
+## Returns all registered defs flagged is_grounding.
+func get_groundings() -> Array[DebuffData]:
+	var result: Array[DebuffData] = []
+	for id in _defs_by_id:
+		var def = _defs_by_id[id] as DebuffData
+		if def and def.is_grounding:
+			result.append(def)
+	return result
+
+
+## select_grounding_for_round(exclude_ids) -> String
+##
+## Randomly selects one grounding id, excluding the given ids and any
+## grounding already active. Returns "" when nothing is eligible.
+func select_grounding_for_round(exclude_ids: Array = []) -> String:
+	var pool: Array[DebuffData] = []
+	for def in get_groundings():
+		if def.id in exclude_ids:
+			continue
+		if def.id in _active_debuff_ids:
+			continue
+		pool.append(def)
+	if pool.is_empty():
+		return ""
+	var rng = RandomNumberGenerator.new()
+	rng.randomize()
+	var chosen = pool[rng.randi_range(0, pool.size() - 1)]
+	if _verbose_mode:
+		print("[DebuffManager] Selected grounding: %s" % chosen.id)
+	return chosen.id
+
+
+## ============== PER-ZONE DRAW-ONCE POOL ==============
+##
+## Debuffs drawn for a zone are remembered so they cannot repeat within the
+## same zone. The pool resets when a new zone starts (reset_zone_pool).
+
+var _drawn_this_zone: Array[String] = []
+
+
+## reset_zone_pool() -> void
+##
+## Clears the draw-once record. Called when a new zone/channel starts.
+func reset_zone_pool() -> void:
+	_drawn_this_zone.clear()
+	if _verbose_mode:
+		print("[DebuffManager] Zone debuff pool reset")
+
+
+## get_drawn_this_zone() -> Array[String]
+##
+## Returns the ids drawn so far this zone (for save/load persistence).
+func get_drawn_this_zone() -> Array[String]:
+	var drawn: Array[String] = []
+	drawn.assign(_drawn_this_zone)
+	return drawn
+
+
+## set_drawn_this_zone(ids) -> void
+##
+## Restores the draw-once record (save/load).
+func set_drawn_this_zone(ids: Array) -> void:
+	_drawn_this_zone.clear()
+	for id in ids:
+		_drawn_this_zone.append(str(id))
+
+
+## select_boss_debuff(exact_level, exclude_ids) -> String
+##
+## Draws one debuff whose difficulty_rating equals exact_level (boss rounds
+## use an exact level, not a cap). Excludes groundings, granted-only ids,
+## ids already drawn this zone, and the given exclude list.
+## Returns "" when nothing is eligible.
+func select_boss_debuff(exact_level: int, exclude_ids: Array = []) -> String:
+	var pool: Array[DebuffData] = []
+	for id in _defs_by_id:
+		var def = _defs_by_id[id] as DebuffData
+		if not def or def.is_grounding or def.id in GRANTED_ONLY_IDS:
+			continue
+		if def.difficulty_rating != exact_level:
+			continue
+		if def.id in _drawn_this_zone or def.id in exclude_ids:
+			continue
+		pool.append(def)
+	if pool.is_empty():
+		push_warning("[DebuffManager] No boss debuff available at exact level %d" % exact_level)
+		return ""
+	var rng = RandomNumberGenerator.new()
+	rng.randomize()
+	var chosen = pool[rng.randi_range(0, pool.size() - 1)]
+	_drawn_this_zone.append(chosen.id)
+	if _verbose_mode:
+		print("[DebuffManager] Boss debuff (level %d): %s" % [exact_level, chosen.id])
+	return chosen.id
 
 
 ## select_debuffs_for_round(max_count, difficulty_cap, allow_duplicates, exclude_ids) -> Array[String]
@@ -156,10 +262,12 @@ func select_debuffs_for_round(max_count: int, difficulty_cap: int, allow_duplica
 	# Get eligible debuffs
 	var eligible = get_debuffs_by_difficulty(difficulty_cap)
 	
-	# Filter out excluded and already active (if not allowing duplicates)
+	# Filter out excluded, already-drawn-this-zone, and already active (if not allowing duplicates)
 	var filtered: Array[DebuffData] = []
 	for def in eligible:
 		if def.id in exclude_ids:
+			continue
+		if def.id in _drawn_this_zone:
 			continue
 		if not allow_duplicates and def.id in _active_debuff_ids:
 			continue
@@ -187,6 +295,8 @@ func select_debuffs_for_round(max_count: int, difficulty_cap: int, allow_duplica
 		var chosen = pool[index]
 		selected.append(chosen.id)
 		pool.remove_at(index)
+		if chosen.id not in _drawn_this_zone:
+			_drawn_this_zone.append(chosen.id)
 		if _verbose_mode:
 			print("[DebuffManager] Selected: %s" % chosen.id)
 	

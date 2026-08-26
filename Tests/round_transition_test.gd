@@ -29,8 +29,8 @@ func _on_show_panel() -> void:
 	panel.setup({
 		"channel": 3,
 		"round_number": 2,
-		"challenge_name": "Test Challenge",
-		"challenge_desc": "This is a test challenge for the round panel.",
+		"challenge_name": "Test Store",
+		"challenge_desc": "This is a test store for the round panel.",
 		"debuffs": [],
 		"chore_name": "Test Chore"
 	})

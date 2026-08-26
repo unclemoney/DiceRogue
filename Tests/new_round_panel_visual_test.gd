@@ -2,7 +2,7 @@ extends Control
 
 ## NewRoundPanel Visual Test
 ##
-## Auto-opens the NewRoundPanel with sample data (challenge + 2 debuffs) so
+## Auto-opens the NewRoundPanel with sample data (store + 2 debuffs) so
 ## the backdrop shader and debuff rows can be visually verified.
 
 const NEW_ROUND_SCENE = preload("res://Scenes/UI/new_round_panel.tscn")
@@ -16,7 +16,7 @@ func _ready() -> void:
 	panel.setup({
 		"channel": 2,
 		"round_number": 3,
-		"challenge_name": "Triple Threat",
+		"challenge_name": "Comic Book Store",
 		"challenge_desc": "Score 300 points while battling multiple debuffs.",
 		"debuffs": [
 			{"name": "Lock Dice", "glyph_id": 0, "difficulty_rating": 2},

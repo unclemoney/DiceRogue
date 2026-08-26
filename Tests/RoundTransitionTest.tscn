@@ -5,6 +5,9 @@
 [ext_resource type="Script" path="res://Scripts/Effects/tv_power_controller.gd" id="3_tv"]
 [ext_resource type="Shader" path="res://Scripts/Shaders/tv_power_on.gdshader" id="4_shader"]
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tv"]
+shader = ExtResource("4_shader")
+
 [node name="RoundTransitionTest" type="Node2D"]
 script = ExtResource("1_test")
 
@@ -19,9 +22,6 @@ offset_bottom = 200.0
 color = Color(0.1, 0.2, 0.3, 1)
 
 [node name="CRTManager" parent="CRTTV" instance=ExtResource("2_crt")]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_tv"]
-shader = ExtResource("4_shader")
 
 [node name="TVPowerOverlay" type="ColorRect" parent="CRTTV"]
 offset_left = -300.0

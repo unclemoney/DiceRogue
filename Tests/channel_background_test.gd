@@ -2,14 +2,13 @@ extends Control
 
 ## ChannelBackgroundTest
 ##
-## Test scene to preview all 20 channel background shaders.
+## Test scene to preview all 4 channel background shaders.
 ## Loads ChannelDifficultyData resources and applies their background_shader
 ## to a full-screen ColorRect, simulating what GameController does at runtime.
 ##
 ## Controls:
 ## - Left/Right arrows or A/D: Navigate channels
-## - 1-9, 0: Jump to channel 1-10
-## - Shift+1-0: Jump to channel 11-20
+## - 1-4: Jump to channel 1-4
 ## - Space: Toggle auto-cycle (3s per channel)
 ## - ESC: Quit
 ##
@@ -21,7 +20,7 @@ var current_channel: int = 1
 var auto_cycle: bool = false
 var auto_timer: float = 0.0
 const AUTO_CYCLE_INTERVAL: float = 3.0
-const TOTAL_CHANNELS: int = 20
+const TOTAL_CHANNELS: int = 4
 var channel_configs: Array = []
 
 
@@ -101,55 +100,13 @@ func _input(event: InputEvent) -> void:
 				auto_timer = 0.0
 				_update_label()
 			KEY_1:
-				if event.shift_pressed:
-					_apply_channel(11)
-				else:
-					_apply_channel(1)
+				_apply_channel(1)
 			KEY_2:
-				if event.shift_pressed:
-					_apply_channel(12)
-				else:
-					_apply_channel(2)
+				_apply_channel(2)
 			KEY_3:
-				if event.shift_pressed:
-					_apply_channel(13)
-				else:
-					_apply_channel(3)
+				_apply_channel(3)
 			KEY_4:
-				if event.shift_pressed:
-					_apply_channel(14)
-				else:
-					_apply_channel(4)
-			KEY_5:
-				if event.shift_pressed:
-					_apply_channel(15)
-				else:
-					_apply_channel(5)
-			KEY_6:
-				if event.shift_pressed:
-					_apply_channel(16)
-				else:
-					_apply_channel(6)
-			KEY_7:
-				if event.shift_pressed:
-					_apply_channel(17)
-				else:
-					_apply_channel(7)
-			KEY_8:
-				if event.shift_pressed:
-					_apply_channel(18)
-				else:
-					_apply_channel(8)
-			KEY_9:
-				if event.shift_pressed:
-					_apply_channel(19)
-				else:
-					_apply_channel(9)
-			KEY_0:
-				if event.shift_pressed:
-					_apply_channel(20)
-				else:
-					_apply_channel(10)
+				_apply_channel(4)
 			KEY_ESCAPE:
 				get_tree().quit()
 
@@ -215,8 +172,7 @@ func _update_label() -> void:
 
 	text += "\n[color=gray]── Controls ──[/color]\n"
 	text += "Left/Right or A/D: Navigate\n"
-	text += "1-9, 0: Channels 1-10\n"
-	text += "Shift+1-0: Channels 11-20\n"
+	text += "1-4: Channels 1-4\n"
 
 	var cycle_status = "[color=green]ON[/color]" if auto_cycle else "[color=red]OFF[/color]"
 	text += "Space: Auto-cycle (%s)\n" % cycle_status

@@ -15,7 +15,9 @@ extends Node2D
 @onready var mod_manager: ModManager = $Managers/ModManager
 @onready var debuff_manager: DebuffManager = $Managers/DebuffManager
 @onready var challenge_manager: ChallengeManager = $Managers/ChallengeManager
-@onready var challenge_ui_node: Control = $GameUI/MarginContainer/MainVBox/MiddleSection/LeftColumn/ChallengeContainer/ContentVBox/ChallengeUI
+# ChallengeUI node no longer exists in this scene (challenges deprecated;
+# stores/target-score rounds replaced them). challenge_manager stays as the
+# signal hub for challenge_completed/challenge_failed.
 @onready var vcr_ui: VCRTurnTrackerUI = $GameUI/MarginContainer/MainVBox/UpperSection/TurnInfoContainer/ContentVBox/VCRTurnTrackerUI
 
 func _ready():

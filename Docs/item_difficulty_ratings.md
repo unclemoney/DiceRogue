@@ -9,14 +9,14 @@ Difficulty scales with item power level — stronger items require harder unlock
 |--------|------|-----------------------------|
 | 1 | Starter | Play 1 game, reach round 1 |
 | 2 | Beginner | Play 3 games, score 50+ |
-| 3 | Novice | Win 1 game, complete 3 challenges |
-| 4 | Intermediate | Win 3 games, complete 5 challenges, category thresholds |
+| 3 | Novice | Win 1 game, complete Mall Zone 1 |
+| 4 | Intermediate | Win 3 games, complete Mall Zone 1-2, category thresholds |
 | 5 | Skilled | Score 200+, play 15 games, chore completions |
 | 6 | Advanced | Category score thresholds, win 10 games |
-| 7 | Expert | Win 15+ games, complete 20+ challenges |
-| 8 | Master | Complete 8+ channels, 50+ chore completions |
-| 9 | Mythic | Complete 10+ channels, advanced thresholds |
-| 10 | Ultimate | Complete 15+ channels, high category scores |
+| 7 | Expert | Win 15+ games, complete Mall Zone 3 |
+| 8 | Master | Complete Mall Zone 2+, 50+ chore completions |
+| 9 | Mythic | Complete Mall Zone 3+, advanced thresholds |
+| 10 | Ultimate | Complete Mall Zone 4, high category scores |
 
 ---
 
@@ -28,12 +28,13 @@ Difficulty scales with item power level — stronger items require harder unlock
 | `GAMES_WON` | Total games won |
 | `HIGH_SCORE` | Achieve a score ≥ threshold in a single game |
 | `TOTAL_SCORE` | Cumulative score across all games |
-| `CHALLENGES_COMPLETED` | Total challenges completed |
 | `ROUNDS_SURVIVED` | Survive N rounds in a single game |
 | `REACH_ROUND` | Reach a specific round number |
-| `COMPLETE_CHANNEL` | Complete N different TV channels |
+| `COMPLETE_CHANNEL` | Complete Mall Zone N (zones are numbered 1-4; thresholds were rescaled from the old 1-20 channels) |
 | `SCORE_THRESHOLD_CATEGORY` | **NEW** — Score ≥ threshold in a specific Yahtzee category |
 | `CHORE_COMPLETIONS` | **NEW** — Complete N chores total (cumulative or single-game) |
+
+> Note: `CHALLENGES_COMPLETED` was removed with the challenge system — rounds are now stores with target scores, and no items key off challenge completions.
 
 ---
 

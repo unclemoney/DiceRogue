@@ -366,11 +366,14 @@ func _update_display() -> void:
 	
 	# Update button text with next channel info
 	if channel_manager:
-		var max_channel = 20
+		var max_channel = 4
 		if channel_manager.get("MAX_CHANNEL"):
 			max_channel = channel_manager.MAX_CHANNEL
 		var next_channel = mini(_current_channel + 1, max_channel)
-		next_channel_button.set_button_text("NEXT: MALL ZONE %02d" % next_channel)
+		if _current_channel >= max_channel:
+			next_channel_button.set_button_text("YOU BEAT THE MALL!")
+		else:
+			next_channel_button.set_button_text("NEXT: MALL ZONE %02d" % next_channel)
 
 
 ## _on_next_channel_pressed() -> void

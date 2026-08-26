@@ -8,7 +8,7 @@ id = "derek"
 display_name = "Cousin Derek"
 role_description = "The golden child. Exists to be compared against. Comparison lines scale with grudge; late-run he gets caught sneaking into the R-rated section at Video Rentals and Mom goes quiet for one visit."
 portrait_tint = Color(0.95, 0.85, 0.5, 1)
-zone_affinity = Array[String](["Video Rentals"])
+zone_affinity = Array[String](["West Wing"])
 line_pools = {
 "comparison": [
 "Derek already finished HIS chores.",
