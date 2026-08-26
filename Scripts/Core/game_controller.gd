@@ -63,6 +63,9 @@ const FOUR_OF_A_KIND_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable
 const FULL_HOUSE_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/FullHouseUpgradeConsumable.tres")
 const SMALL_STRAIGHT_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/SmallStraightUpgradeConsumable.tres")
 const LARGE_STRAIGHT_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/LargeStraightUpgradeConsumable.tres")
+const EVENS_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/EvensUpgradeConsumable.tres")
+const ODDS_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/OddsUpgradeConsumable.tres")
+const EVEN_ODD_FULL_HOUSE_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/EvenOddFullHouseUpgradeConsumable.tres")
 const YAHTZEE_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/YahtzeeUpgradeConsumable.tres")
 const CHANCE_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/ChanceUpgradeConsumable.tres")
 const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/AllCategoriesUpgradeConsumable.tres")
@@ -223,6 +226,9 @@ var _pending_is_first_round: bool = false
 var use_round_config_goals: bool = true
 var _goal_mode_locked: bool = false  # Prevents changing goal mode mid-game
 
+## In-game mall map popup, opened from the VCR tracker's Mall Zone label.
+var mall_map_popup: MallMapPopup = null
+
 
 func _ready() -> void:
 	add_to_group("game_controller")
@@ -377,6 +383,7 @@ func _ready() -> void:
 		if _vcr_tracker.has_method("bind_channel_manager") and is_instance_valid(channel_manager):
 			_vcr_tracker.bind_channel_manager(channel_manager)
 			print("[GameController] VCR tracker UI bound to ChannelManager")
+		_setup_mall_map_popup(_vcr_tracker)
 
 	if is_instance_valid(score_card_ui) and score_card_ui.has_method("bind_channel_manager") and is_instance_valid(channel_manager):
 		score_card_ui.bind_channel_manager(channel_manager)
@@ -404,6 +411,10 @@ func _ready() -> void:
 		consumable_manager.register_consumable_def(FULL_HOUSE_UPGRADE_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(SMALL_STRAIGHT_UPGRADE_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(LARGE_STRAIGHT_UPGRADE_CONSUMABLE_DEF)
+		# d4 dice set re-purposed category upgrades (shop-gated by required_dice_sides)
+		consumable_manager.register_consumable_def(EVENS_UPGRADE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(ODDS_UPGRADE_CONSUMABLE_DEF)
+		consumable_manager.register_consumable_def(EVEN_ODD_FULL_HOUSE_UPGRADE_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(YAHTZEE_UPGRADE_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(CHANCE_UPGRADE_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF)
@@ -2075,7 +2086,8 @@ func _on_consumable_used(consumable_id: String) -> void:
 		# Score card upgrade consumables
 		"ones_upgrade", "twos_upgrade", "threes_upgrade", "fours_upgrade", "fives_upgrade", "sixes_upgrade", \
 		"three_of_a_kind_upgrade", "four_of_a_kind_upgrade", "full_house_upgrade", \
-		"small_straight_upgrade", "large_straight_upgrade", "yahtzee_upgrade", "chance_upgrade":
+		"small_straight_upgrade", "large_straight_upgrade", "yahtzee_upgrade", "chance_upgrade", \
+		"evens_upgrade", "odds_upgrade", "even_odd_full_house_upgrade":
 			if score_card_ui:
 				score_card_ui.enable_upgrade_juice(1)
 			consumable.apply(self)
@@ -6087,14 +6099,24 @@ func _build_round_panel_data(round_num: int) -> Dictionary:
 		data["challenge_desc"] = ""
 
 	# Debuff preview: show what the upcoming round will actually apply —
-	# automatic debuffs (and a possible grounding) pre-selected from the
-	# channel round config. The selection is stored and committed at round
-	# start (_apply_automatic_debuffs) so the panel always matches reality.
+	# automatic debuffs (and a possible grounding). The selection was made
+	# when the zone's rounds were generated (RoundManager.rounds_data) and
+	# is committed at round start (_apply_automatic_debuffs) so the panel
+	# always matches reality. Old saves lack the stored keys, so fall back
+	# to drawing fresh from the round config when they are absent.
 	_pending_round_debuff_ids.clear()
 	_pending_round_grounding_id = ""
 	if debuff_manager:
 		var preview_ids: Array[String] = []
-		if channel_manager:
+		var stored = _get_preselected_round_debuffs(round_num)
+		if not stored.is_empty():
+			for id in stored["debuff_ids"]:
+				preview_ids.append(id)
+				_pending_round_debuff_ids.append(id)
+			if not stored["grounding_id"].is_empty():
+				_pending_round_grounding_id = stored["grounding_id"]
+				preview_ids.append(stored["grounding_id"])
+		elif channel_manager:
 			var round_config = channel_manager.get_round_config(channel_manager.current_channel, round_num)
 			if round_config:
 				var max_debuffs = round_config.max_debuffs if round_config.get("max_debuffs") != null else 0
@@ -6148,3 +6170,50 @@ func _find_debuff_def(debuff_id: String) -> DebuffData:
 		if def and def.id == debuff_id:
 			return def
 	return null
+
+
+## _get_preselected_round_debuffs(round_num) -> Dictionary
+##
+## Returns the debuffs/grounding pre-selected for the round when the zone's
+## rounds were generated (RoundManager.rounds_data, index = round_num - 1).
+## Returns an empty Dictionary when the stored keys are absent (old saves)
+## or out of bounds, so callers fall back to drawing fresh.
+func _get_preselected_round_debuffs(round_num: int) -> Dictionary:
+	if not round_manager:
+		return {}
+	var index = round_num - 1
+	if index < 0 or index >= round_manager.rounds_data.size():
+		return {}
+	var round_data = round_manager.rounds_data[index]
+	if not round_data.has("debuff_ids"):
+		return {}
+	var debuff_ids: Array[String] = []
+	for id in round_data["debuff_ids"]:
+		debuff_ids.append(str(id))
+	return {
+		"debuff_ids": debuff_ids,
+		"grounding_id": str(round_data.get("grounding_id", ""))
+	}
+
+
+## _setup_mall_map_popup(vcr_tracker) -> void
+##
+## Creates the in-game mall map popup (hidden by default) and wires the VCR
+## tracker's Mall Zone label click to open it.
+func _setup_mall_map_popup(vcr_tracker) -> void:
+	if mall_map_popup == null:
+		mall_map_popup = preload("res://Scenes/UI/MallMapPopup.tscn").instantiate()
+		add_child(mall_map_popup)
+	mall_map_popup.setup(channel_manager, round_manager, debuff_manager)
+	if vcr_tracker.has_signal("mall_map_requested"):
+		if not vcr_tracker.mall_map_requested.is_connected(_on_mall_map_requested):
+			vcr_tracker.mall_map_requested.connect(_on_mall_map_requested)
+			print("[GameController] Mall map popup wired to VCR tracker")
+
+
+## _on_mall_map_requested() -> void
+##
+## Opens the mall map popup from the VCR tracker's Mall Zone label.
+func _on_mall_map_requested() -> void:
+	if mall_map_popup:
+		mall_map_popup.open()

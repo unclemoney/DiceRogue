@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://c0jfgiv4ms376"]
+
+[ext_resource type="Texture2D" uid="uid://dg6pm7i6if501" path="res://Resources/Art/Consumables/Sunday_Coupon_Sheet_5x5_Generic.png" id="1_icon"]
+[ext_resource type="PackedScene" path="res://Scenes/Consumable/EvensUpgradeConsumable.tscn" id="2_scene"]
+[ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="3_script"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_evens"]
+atlas = ExtResource("1_icon")
+region = Rect2(48, 1585, 387, 382)
+
+[resource]
+script = ExtResource("3_script")
+id = "evens_upgrade"
+display_name = "Upgrade Evens"
+description = "Upgrade the Evens category by 1 level (d4 dice set only). Scored values multiply by level."
+icon = SubResource("AtlasTexture_evens")
+scene = ExtResource("2_scene")
+price = 75
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])

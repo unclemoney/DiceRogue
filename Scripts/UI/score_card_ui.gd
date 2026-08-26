@@ -627,23 +627,52 @@ func bind_scorecard(sc: Scorecard):
 	# Set scorecard in DiceResults
 	DiceResults.set_scorecard(scorecard)
 
-	# Update 6th slot display for current dice type
-	update_sixth_slot_display()
+	# Update category labels for current dice type
+	update_dice_set_category_labels()
+
+
+## update_dice_set_category_labels()
+##
+## Updates category button labels for the active dice type.
+## d4: "Fives:" -> "Evens:", "Sixes:" -> "Odds:", "L Straight:" -> "EO Full House:".
+## d6: restores the default labels. d8+: 6th row uses the sixth-slot name
+## ("Eights:", "Twenties:", etc.).
+func update_dice_set_category_labels() -> void:
+	if not scorecard:
+		return
+
+	var is_d4 := scorecard.current_dice_sides == 4
+
+	var fives_text := "Fives:"
+	var sixes_text := scorecard.get_sixth_slot_display_name() + ":"
+	var large_straight_text := "L Straight:"
+	if is_d4:
+		fives_text = "Evens:"
+		sixes_text = "Odds:"
+		large_straight_text = "EO Full House:"
+
+	var fives_button = get_node_or_null("VBoxContainer/UpperVBoxContainer/UpperGridContainer/FivesContainer/FivesButton")
+	if fives_button:
+		fives_button.text = fives_text
+
+	var sixes_button = get_node_or_null("VBoxContainer/UpperVBoxContainer/UpperGridContainer/SixesContainer/SixesButton")
+	if sixes_button:
+		sixes_button.text = sixes_text
+
+	var large_straight_button = get_node_or_null("VBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight/LargestraightButton")
+	if large_straight_button:
+		large_straight_button.text = large_straight_text
+
+	print("[ScoreCardUI] Updated category labels for d%d (Fives='%s', Sixes='%s', L Straight='%s')" % [
+		scorecard.current_dice_sides, fives_text, sixes_text, large_straight_text
+	])
 
 
 ## update_sixth_slot_display()
 ##
-## Updates the 6th upper section row (SixesContainer) to show the correct
-## category name for the active dice type. For d6: "Sixes:", for d8: "Eights:", etc.
+## Deprecated alias for update_dice_set_category_labels().
 func update_sixth_slot_display() -> void:
-	if not scorecard:
-		return
-	var display_name = scorecard.get_sixth_slot_display_name()
-	var button_path = "VBoxContainer/UpperVBoxContainer/UpperGridContainer/SixesContainer/SixesButton"
-	var button = get_node_or_null(button_path)
-	if button:
-		button.text = display_name + ":"
-		print("[ScoreCardUI] Updated 6th slot button text to '%s:'" % display_name)
+	update_dice_set_category_labels()
 
 
 ## update_all()
@@ -1132,7 +1161,7 @@ func update_best_hand_preview(dice_values: Array) -> void:
 				best_category = category
 
 	if best_category != "":
-		var display_category = best_category.capitalize().replace("_", " ")
+		var display_category = scorecard.get_category_display_name(best_category)
 		
 		# Show category name + score preview number
 		var score_color = "#79e2e3" if best_score >= 25 else "#f7f0ff"

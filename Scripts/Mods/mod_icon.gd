@@ -52,8 +52,10 @@ func _ready() -> void:
 	if data:
 		# Set up the Sprite2D
 		modicon.texture = data.icon
-		modicon.scale = Vector2(32, 32) / data.icon.get_size()  # Keep icon at 32x32 
-		modicon.position = Vector2(25, 45)  # Position in lower part of expanded area
+		modicon.scale = Vector2(28, 28) / data.icon.get_size()  # Keep icon at 28x28
+		# Anchor the sprite to the bottom-right of the icon rect so it hangs
+		# off the die corner instead of covering the rolled number
+		modicon.position = icon_size - Vector2(14, 14)
 		
 		# Clear the TextureRect texture since we're using Sprite2D
 		texture = null
@@ -73,8 +75,9 @@ func _ready() -> void:
 		push_error("[ModIcon] No ModData assigned")
 		return
 	
-	# Set up mouse interactions - only connect if not already connected from scene  
-	mouse_filter = Control.MOUSE_FILTER_PASS  # Allow clicks to pass through to children
+	# PASS so the icon's tooltip/click handlers still work while unhandled
+	# clicks propagate through to the die's Area2D physics picking
+	mouse_filter = Control.MOUSE_FILTER_PASS
 	
 	print("[ModIcon] ModIcon mouse_filter set to PASS")
 	print("[ModIcon] ModIcon z_index:", z_index)

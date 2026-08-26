@@ -269,8 +269,9 @@ DiceRogue supports multiple dice types, each with their own face textures and va
 **Dice Set Selection:** At game start, the Mall Zone Selection screen (`ChannelManagerUI`) shows a dice set carousel on the right side of the panel. Use the `<` / `>` buttons to browse sets; locked sets are dimmed with a lock tag and can be browsed but not selected. Hovering the display shows a tooltip with the set's scoring rules and unlock requirement. The chosen set applies to **every round of the run** and resets to d6 on a new game. Selection flows: `ChannelManagerUI` → `ChannelManager.selected_dice_type` → `GameController._on_channel_selected()` → `RoundManager.run_dice_type` → `DiceHand.switch_dice_type()`.
 
 When a non-d6 dice type is active, the scoring system adapts automatically:
-- **Dynamic 6th slot**: The upper section's 6th row changes to match the dice's max value (e.g., "Eights" for d8, "Twenties" for d20). For d4 it becomes **"Fours+"**: 4s count double (`count of 4s × 4 × 2`).
-- **Upper bonus scaling**: The bonus threshold adjusts per dice type (30 for d4, 63 for d6, 69 for d8, 105 for d20)
+- **Dynamic 6th slot**: The upper section's 6th row changes to match the dice's max value (e.g., "Eights" for d8, "Twenties" for d20).
+- **d4 parity rules**: With d4, three unachievable categories are replaced — Fives becomes **Evens** (sum of all even dice), Sixes becomes **Odds** (sum of all odd dice), and Large Straight becomes **Even Odd Full House** (pair of one even value + triple of one odd value, 40 pts).
+- **Upper bonus scaling**: The bonus threshold adjusts per dice type (42 for d4, 63 for d6, 69 for d8, 105 for d20)
 - **Generalized straights**: Small and large straight detection works with any dice size
 - See `BUILD_DICE.md` for full design rules and balance considerations.
 
@@ -1356,6 +1357,14 @@ Hovering over the Store Spine (formerly the Challenge Spine) displays the curren
 - **Smart Positioning**: Adjusts to avoid screen edges
 - **Auto-Hide**: Disappears immediately on mouse exit
 
+### Mall Map Popup
+Clicking the VCR turn tracker's "Mall Zone 0X" label (`vcr_turn_tracker_ui.gd` `mall_map_requested` signal) opens a full mall map popup mid-run (`Scripts/UI/mall_map_popup.gd`, `Scenes/UI/MallMapPopup.tscn`), rendered by the shared `MallMapRenderer` (`Scripts/Managers/mall_map_renderer.gd`):
+
+- **Per-Store Markers**: All 24 dealt stores (6 per zone) are drawn on the map; the current store is highlighted and pulsing
+- **Hover Tooltips**: Hovering a store marker shows its name, scaled target score, and the exact debuffs pre-selected for that round
+- **Debug Command**: "Show Mall Map Popup" in the debug panel opens it directly
+- **Test Scene**: `Tests/MallMapPopupTest.tscn`
+
 ### Synergy System
 The **Synergy System** rewards players for collecting PowerUps with matching ratings, creating strategic depth in PowerUp selection:
 
@@ -1734,6 +1743,13 @@ Score Card Upgrade consumables permanently increase the level of specific scorin
 **Master Upgrade** (Price: $500)
 - **All Categories Upgrade**: Upgrades ALL 12 scoring categories by one level at once
 
+**d4-Exclusive Upgrades** (Price: $75 each)
+- **Evens Upgrade**: Upgrade the Evens category (+1 level)
+- **Odds Upgrade**: Upgrade the Odds category (+1 level)
+- **Even Odd Full House Upgrade**: Upgrade the Even Odd Full House category (+1 level)
+
+**Dice Set Gating:** The shop only offers upgrade consumables that match the run's dice set. The three d4-exclusive upgrades above require the d4 dice set (`required_dice_sides = 4`), while the Fives, Sixes, and Large Straight upgrades are hidden for d4 runs (`excluded_dice_sides = [4]`). Filtering is handled by `ShopUI._filter_by_dice_set()`.
+
 **Example:**
 - Ones at Level 3: Roll three 1s → Base 3 × Level 3 = 9 points (before additives/multipliers)
 - Yahtzee at Level 2: Roll five 6s → Base 50 × Level 2 = 100 points
@@ -1819,10 +1835,10 @@ Score Card Upgrade consumables permanently increase the level of specific scorin
 Mods are special attachments that can be applied to individual dice to change their behavior. Each die can have one mod at a time, and mods persist until sold or the game ends.
 
 ### Dice Value Modifiers
-- **EvenOnlyMod**: Forces die to only roll even numbers (2, 4, 6)
-- **OddOnlyMod**: Forces die to only roll odd numbers (1, 3, 5)
+- **EvenOnlyMod**: Forces die to only roll even values; the valid parity list is built from the die's side count (e.g. 2,4 for d4; 2,4,6 for d6; 2,4,6,8,10,12 for d12)
+- **OddOnlyMod**: Forces die to only roll odd values; valid parity list is built from the die's side count (e.g. 1,3 for d4; 1,3,5 for d6)
 - **ThreeButThreeMod**: Always rolls 3 and grants $3 per roll
-- **FiveByOneMod**: Always rolls 1 but grants $5 per roll
+- **FiveByOneMod**: Always rolls 1 (clamped to the die's valid range) but grants $5 per roll
 
 ### Special Behaviors
 - **GoldSixMod**: When rolling a 6, grants additional money based on game state

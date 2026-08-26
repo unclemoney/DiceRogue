@@ -10,8 +10,10 @@ var current_dice_sides: int = 6
 
 ## set_dice_sides(sides)
 ##
-## Updates the evaluator to score the 6th upper category for the given dice type.
+## Updates the evaluator to score for the given dice type.
 ## For d8+, the "sixes" key evaluates count(sides) × sides instead of count(6) × 6.
+## For d4, "fives"/"sixes"/"large_straight" evaluate as Evens / Odds /
+## Even Odd Full House respectively.
 func set_dice_sides(sides: int) -> void:
 	current_dice_sides = sides
 	print("[ScoreEvaluator] Dice sides set to %d" % sides)
@@ -156,27 +158,34 @@ func evaluate_normal(values: Array[int]) -> Dictionary:
 	
 	# Determine what value the 6th upper slot targets
 	# For d6: targets 6 (standard). For d8+: targets dice_sides (e.g., 8, 10, 12, 20)
-	# For d4: "Fours+" — targets 4 and scores double
 	var sixth_target = 6
-	var sixth_multiplier = 1
 	if current_dice_sides > 6:
 		sixth_target = current_dice_sides
-	elif current_dice_sides == 4:
-		sixth_target = 4
-		sixth_multiplier = 2
+	
+	var fives_score := calculate_number_score(filtered_values, 5)
+	var sixes_score := calculate_number_score(filtered_values, sixth_target)
+	var large_straight_score := calculate_large_straight_score(filtered_values)
+	
+	# d4 dice set: replace the three unachievable categories with parity-based rules
+	# "fives" -> Evens (sum of even dice), "sixes" -> Odds (sum of odd dice),
+	# "large_straight" -> Even Odd Full House (40 pts)
+	if current_dice_sides == 4:
+		fives_score = calculate_evens_score(filtered_values)
+		sixes_score = calculate_odds_score(filtered_values)
+		large_straight_score = calculate_even_odd_full_house_score(filtered_values)
 	
 	return {
 		"ones": calculate_number_score(filtered_values, 1),
 		"twos": calculate_number_score(filtered_values, 2),
 		"threes": calculate_number_score(filtered_values, 3),
 		"fours": calculate_number_score(filtered_values, 4),
-		"fives": calculate_number_score(filtered_values, 5),
-		"sixes": calculate_number_score(filtered_values, sixth_target) * sixth_multiplier,
+		"fives": fives_score,
+		"sixes": sixes_score,
 		"three_of_a_kind": calculate_of_a_kind_score(filtered_values, 3),
 		"four_of_a_kind": calculate_of_a_kind_score(filtered_values, 4),
 		"full_house": calculate_full_house_score(filtered_values),
 		"small_straight": calculate_small_straight_score(filtered_values),
-		"large_straight": calculate_large_straight_score(filtered_values),
+		"large_straight": large_straight_score,
 		"yahtzee": yahtzee_score,
 		"chance": calculate_chance_score(filtered_values)
 	}
@@ -191,6 +200,70 @@ func calculate_of_a_kind_score(values: Array[int], required: int) -> int:
 
 func calculate_number_score(values: Array[int], number: int) -> int:
 	return values.count(number) * number
+
+
+## calculate_evens_score(values)
+##
+## d4 dice set "Evens" category (replaces "fives"): sum of all even-valued dice.
+## Example: [2, 4, 1, 3, 2] -> 8
+func calculate_evens_score(values: Array[int]) -> int:
+	var total := 0
+	for v in values:
+		if v % 2 == 0:
+			total += v
+	return total
+
+
+## calculate_odds_score(values)
+##
+## d4 dice set "Odds" category (replaces "sixes"): sum of all odd-valued dice.
+## Example: [2, 4, 1, 3, 2] -> 4
+func calculate_odds_score(values: Array[int]) -> int:
+	var total := 0
+	for v in values:
+		if v % 2 != 0:
+			total += v
+	return total
+
+
+## is_even_odd_full_house(values)
+##
+## d4 dice set "Even Odd Full House" pattern (replaces "large_straight"):
+## exactly 5 dice forming a pair of one even value and a triple of one odd value.
+## Example: [2, 2, 3, 3, 3] is valid; [2, 2, 2, 3, 3] is not (triple is even).
+func is_even_odd_full_house(values: Array[int]) -> bool:
+	if values.size() != 5:
+		return false
+
+	var counts := {}
+	for v in values:
+		counts[v] = counts.get(v, 0) + 1
+
+	if counts.size() != 2:
+		return false
+
+	var even_value := -1
+	var odd_value := -1
+	for value in counts:
+		if value % 2 == 0:
+			even_value = value
+		else:
+			odd_value = value
+
+	if even_value == -1 or odd_value == -1:
+		return false
+
+	return counts[even_value] == 2 and counts[odd_value] == 3
+
+
+## calculate_even_odd_full_house_score(values)
+##
+## Scores the d4 "Even Odd Full House" category: 40 base points when the
+## pattern qualifies, 0 otherwise.
+func calculate_even_odd_full_house_score(values: Array[int]) -> int:
+	if is_even_odd_full_house(values):
+		return 40
+	return 0
 
 
 func calculate_full_house_score(values: Array[int]) -> int:

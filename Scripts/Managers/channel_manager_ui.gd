@@ -12,18 +12,10 @@ signal start_pressed(channel: int)
 const VCR_FONT: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 const ACTION_THEME: Theme = preload("res://Resources/UI/action_button_theme.tres")
 const MallMapLayoutScript = preload("res://Scripts/Managers/mall_map_layout.gd")
-const MallMapZoneScript = preload("res://Scripts/Managers/mall_map_zone.gd")
+const MallMapRendererScript = preload("res://Scripts/Managers/mall_map_renderer.gd")
 const SHELL_VIEWPORT_MARGIN := Vector2(34, 26)
 const SHELL_MAX_SIZE := Vector2(1180, 680)
 const SHELL_MIN_SIZE := Vector2(980, 600)
-
-const SECTION_COLORS := {
-	"eatery": Color(0.96, 0.76, 0.18, 1.0),
-	"entertainment": Color(0.86, 0.25, 0.46, 1.0),
-	"lifestyle": Color(0.29, 0.78, 0.95, 1.0),
-	"specialty": Color(0.30, 0.82, 0.45, 1.0),
-	"major_stores": Color(0.97, 0.46, 0.16, 1.0),
-}
 
 const SECTION_LABELS := {
 	"eatery": "EATERY",
@@ -125,6 +117,10 @@ func set_channel_manager(manager) -> void:
 ## Shows the mall directory selector at game start.
 func show_channel_selector() -> void:
 	print("[ChannelManagerUI] Showing channel selector")
+	# Defensive: stores are normally dealt in GameController._on_channel_selected,
+	# but the selector needs them for the directory list and zone tooltips.
+	if channel_manager and channel_manager.zone_store_names.is_empty():
+		channel_manager.assign_stores_to_zones()
 	_position_to_viewport()
 	_build_map_if_needed()
 	visible = true
@@ -576,124 +572,33 @@ func _build_map_if_needed() -> void:
 
 
 func _build_directory_backdrop() -> void:
-	var paper := Polygon2D.new()
-	paper.polygon = PackedVector2Array([
-		Vector2(0, 0),
-		Vector2(MallMapLayoutScript.get_board_size().x, 0),
-		MallMapLayoutScript.get_board_size(),
-		Vector2(0, MallMapLayoutScript.get_board_size().y),
-	])
-	paper.color = Color(0.96, 0.91, 0.80, 0.98)
-	_map_root.add_child(paper)
-
-	var mall_frame_rect: Rect2 = MallMapLayoutScript.get_map_frame()
-	var frame := Line2D.new()
-	frame.width = 6.0
-	frame.default_color = Color(0.72, 0.60, 0.40, 1.0)
-	frame.points = PackedVector2Array([
-		mall_frame_rect.position,
-		Vector2(mall_frame_rect.end.x, mall_frame_rect.position.y),
-		mall_frame_rect.end,
-		Vector2(mall_frame_rect.position.x, mall_frame_rect.end.y),
-		mall_frame_rect.position,
-	])
-	_map_root.add_child(frame)
-
-	var directory_separator := Line2D.new()
-	directory_separator.width = 2.0
-	directory_separator.default_color = Color(0.62, 0.52, 0.34, 0.82)
-	directory_separator.points = PackedVector2Array([
-		Vector2(mall_frame_rect.position.x + 8.0, MallMapLayoutScript.get_directory_top()),
-		Vector2(mall_frame_rect.end.x - 8.0, MallMapLayoutScript.get_directory_top())
-	])
-	_map_root.add_child(directory_separator)
-
-	var intersection_data := MallMapLayoutScript.get_intersection_shape()
-	if not intersection_data.is_empty():
-		var intersection_poly := Polygon2D.new()
-		intersection_poly.polygon = intersection_data.get("points", PackedVector2Array())
-		intersection_poly.color = Color(0.89, 0.80, 0.58, 0.98)
-		_map_root.add_child(intersection_poly)
-
-		var intersection_outline := Line2D.new()
-		intersection_outline.width = 3.0
-		intersection_outline.default_color = Color(0.64, 0.54, 0.34, 1.0)
-		intersection_outline.points = _closed_points(intersection_data.get("points", PackedVector2Array()))
-		_map_root.add_child(intersection_outline)
+	MallMapRendererScript.build_directory_backdrop(_map_root)
 
 
 func _build_corridors() -> void:
-	for path in MallMapLayoutScript.get_corridor_paths():
-		var corridor := Line2D.new()
-		corridor.width = MallMapLayoutScript.get_corridor_width()
-		corridor.default_color = Color(0.82, 0.68, 0.42, 0.95)
-		corridor.joint_mode = Line2D.LINE_JOINT_ROUND
-		corridor.begin_cap_mode = Line2D.LINE_CAP_ROUND
-		corridor.end_cap_mode = Line2D.LINE_CAP_ROUND
-		corridor.points = path
-		corridor.modulate.a = 0.0
-		_map_root.add_child(corridor)
-		_corridor_lines.append(corridor)
+	_corridor_lines.append_array(MallMapRendererScript.build_corridors(_map_root))
 
 
 func _build_wayfinding_blocks() -> void:
-	for block in MallMapLayoutScript.get_wayfinding_blocks():
-		var root := Node2D.new()
-		root.modulate.a = 0.0
-		_map_root.add_child(root)
-
-		var poly := Polygon2D.new()
-		poly.polygon = block.get("points", PackedVector2Array())
-		poly.color = Color(0.90, 0.85, 0.74, 1.0)
-		root.add_child(poly)
-
-		var outline := Line2D.new()
-		outline.width = 3.0
-		outline.default_color = Color(0.62, 0.52, 0.34, 1.0)
-		outline.points = _closed_points(block.get("points", PackedVector2Array()))
-		root.add_child(outline)
-
-		var label := Label.new()
-		label.text = block.get("label", "")
-		label.position = block.get("label_pos", Vector2.ZERO) - Vector2(50, 10)
-		label.size = Vector2(100, 20)
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.add_theme_font_override("font", VCR_FONT)
-		label.add_theme_font_size_override("font_size", 10)
-		label.add_theme_color_override("font_color", Color(0.32, 0.24, 0.12))
-		root.add_child(label)
-
-		_wayfinding_nodes.append(root)
+	_wayfinding_nodes.append_array(MallMapRendererScript.build_wayfinding_blocks(_map_root))
 
 
 func _build_zones() -> void:
 	if channel_manager == null:
 		return
 
-	for layout in MallMapLayoutScript.get_zone_layouts():
-		var channel: int = int(layout.get("channel", 1))
-		var zone = MallMapZoneScript.new()
-		var accent := _get_section_color(channel_manager.get_selector_section_id(channel))
-		var zone_data := {
-			"channel": channel,
-			"label_text": channel_manager.get_channel_display_text(channel),
-			"zone_name": channel_manager.get_selector_zone_name(channel),
-			"directory_label": channel_manager.get_selector_directory_label(channel),
-			"section_id": channel_manager.get_selector_section_id(channel),
-			"tooltip_flavor": channel_manager.get_selector_tooltip_flavor(channel),
-			"points": layout.get("points", PackedVector2Array()),
-			"label_pos": layout.get("label_pos", Vector2.ZERO),
-		}
-		zone.configure(zone_data, accent)
-		zone.zone_hovered.connect(_on_zone_hovered)
-		zone.zone_unhovered.connect(_on_zone_unhovered)
-		_map_root.add_child(zone)
-		_zones_by_channel[channel] = zone
+	var zones := MallMapRendererScript.build_zones(_map_root, channel_manager, _on_zone_hovered, _on_zone_unhovered)
+	for channel in zones:
+		_zones_by_channel[channel] = zones[channel]
 		_zone_order.append(channel)
 
 	_zone_order.sort()
 
 
+## _build_directory_index() -> void
+##
+## Lists every zone in the STORE DIRECTORY grid: channel number, directory
+## label, and the zone's dealt store names (fallback labels before assignment).
 func _build_directory_index() -> void:
 	if _directory_grid == null or channel_manager == null:
 		return
@@ -702,6 +607,7 @@ func _build_directory_index() -> void:
 	for channel in _zone_order:
 		var entry := HBoxContainer.new()
 		entry.custom_minimum_size = Vector2(118, 22)
+		entry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		entry.add_theme_constant_override("separation", 4)
 		_directory_grid.add_child(entry)
 
@@ -712,6 +618,11 @@ func _build_directory_index() -> void:
 		number_label.add_theme_color_override("font_color", _get_section_color(channel_manager.get_selector_section_id(channel)))
 		entry.add_child(number_label)
 
+		var text_vbox := VBoxContainer.new()
+		text_vbox.add_theme_constant_override("separation", 0)
+		text_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		entry.add_child(text_vbox)
+
 		var name_label := Label.new()
 		name_label.text = channel_manager.get_selector_directory_label(channel).to_upper()
 		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -720,7 +631,18 @@ func _build_directory_index() -> void:
 		name_label.add_theme_font_override("font", VCR_FONT)
 		name_label.add_theme_font_size_override("font_size", 10)
 		name_label.add_theme_color_override("font_color", Color(0.24, 0.18, 0.10))
-		entry.add_child(name_label)
+		text_vbox.add_child(name_label)
+
+		var store_names: Array[String] = []
+		for round_number in range(1, channel_manager.STORES_PER_ZONE + 1):
+			store_names.append(channel_manager.get_store_name(channel, round_number))
+		var stores_label := Label.new()
+		stores_label.text = ", ".join(store_names)
+		stores_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		stores_label.add_theme_font_override("font", VCR_FONT)
+		stores_label.add_theme_font_size_override("font_size", 8)
+		stores_label.add_theme_color_override("font_color", Color(0.44, 0.35, 0.22))
+		text_vbox.add_child(stores_label)
 
 
 func _build_legend() -> void:
@@ -1088,6 +1010,10 @@ func _find_zone_at_point(board_point: Vector2) -> int:
 	return -1
 
 
+## _show_zone_tooltip(channel: int) -> void
+##
+## Shows the zone summary (name, section, difficulty, flavor) plus the zone's
+## dealt store list next to the hovered zone.
 func _show_zone_tooltip(channel: int) -> void:
 	if _tooltip_panel == null or channel_manager == null:
 		return
@@ -1103,6 +1029,10 @@ func _show_zone_tooltip(channel: int) -> void:
 	if not flavor.is_empty():
 		text_lines.append("")
 		text_lines.append(flavor)
+	text_lines.append("")
+	text_lines.append("Stores:")
+	for round_number in range(1, channel_manager.STORES_PER_ZONE + 1):
+		text_lines.append("%d. %s" % [round_number, channel_manager.get_store_name(channel, round_number)])
 	_tooltip_label.text = "\n".join(text_lines)
 	_tooltip_panel.visible = true
 	_tooltip_panel.reset_size()
@@ -1250,7 +1180,7 @@ func _animate_exit() -> void:
 
 
 func _get_section_color(section_id: String) -> Color:
-	return SECTION_COLORS.get(section_id, Color(0.30, 0.82, 0.45, 1.0))
+	return MallMapRendererScript.get_section_color(section_id)
 
 
 func _fit_shell_to_viewport() -> void:
@@ -1293,9 +1223,3 @@ func _get_zone_screen_rect(zone) -> Rect2:
 	var rect_size := Vector2(board_rect.size.x * scale_x, board_rect.size.y * scale_y)
 	return Rect2(rect_position, rect_size)
 
-
-func _closed_points(points: PackedVector2Array) -> PackedVector2Array:
-	var closed := PackedVector2Array(points)
-	if not closed.is_empty():
-		closed.append(closed[0])
-	return closed

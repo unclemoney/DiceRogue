@@ -280,6 +280,12 @@ Debuffs are drawn per round from the `RoundDifficultyConfig` of the active chann
 - **Zone schedule**: Zone 1 rounds 1-5 have no debuffs; zones 2-4 draw one debuff per round with difficulty caps 2 / 3 / 4 respectively.
 - **Grant-only debuffs**: IDs in `DebuffManager.GRANTED_ONLY_IDS` (e.g. `rebellion`) are never drawn — they are only applied explicitly by other systems.
 
+### Per-Round Pre-Selection
+
+At run start, `RoundManager._initialize_rounds_data()` pre-selects the debuffs and grounding for every round and stores them on each round's data dict as `debuff_ids` (Array) and `grounding_id` (String, empty when none). Draws go through `DebuffManager` using the round's `RoundDifficultyConfig`, so the per-zone draw-once pool and boss rules are fully decided before Round 1 begins. `RoundManager` exposes the selection source via the `debuff_manager_path` export.
+
+`GameController._build_round_panel_data()` consumes these stored ids when building the round panel (store list, targets, debuff previews). For old saves that predate pre-selection, it falls back to a fresh draw. Test scene: `Tests/RoundPreselectTest.tscn`.
+
 ## Difficulty Ratings (1-5, retuned)
 
 | Debuff | ID | Rating |

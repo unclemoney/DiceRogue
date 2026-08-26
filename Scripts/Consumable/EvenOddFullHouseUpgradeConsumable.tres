@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://ceimdq24acamc"]
+
+[ext_resource type="Texture2D" uid="uid://dwlo8ieu7vgo0" path="res://Resources/Art/Consumables/Sunday_Coupon_Sheet_5x5_Hardware.png" id="1_icon"]
+[ext_resource type="PackedScene" path="res://Scenes/Consumable/EvenOddFullHouseUpgradeConsumable.tscn" id="2_scene"]
+[ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="3_script"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_eofh"]
+atlas = ExtResource("1_icon")
+region = Rect2(1214, 1210, 382, 367)
+
+[resource]
+script = ExtResource("3_script")
+id = "even_odd_full_house_upgrade"
+display_name = "Upgrade EO Full House"
+description = "Upgrade Even Odd Full House by 1 level (d4 dice set only). Scored values multiply by level."
+icon = SubResource("AtlasTexture_eofh")
+scene = ExtResource("2_scene")
+price = 75
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])

@@ -1450,6 +1450,10 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 20, 4, {"category": "fives"})
 	_add_default_consumable("sixes_upgrade", "Sixes Upgrade", "Upgrade Sixes category level", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 24, 4, {"category": "sixes"})
+	_add_default_consumable("evens_upgrade", "Evens Upgrade", "Upgrade Evens category level (d4 dice set only)", 
+		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 20, 4, {"category": "fives"})
+	_add_default_consumable("odds_upgrade", "Odds Upgrade", "Upgrade Odds category level (d4 dice set only)", 
+		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 24, 4, {"category": "sixes"})
 	_add_default_consumable("one_free_mod", "One Free Mod", "Grants 1 free random dice mod", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 4, 4)
 	_add_default_consumable("dice_surge", "Dice Surge", "Grants +2 temporary dice for 3 turns", 
@@ -1496,6 +1500,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 25, 7, {"cumulative": true})
 	_add_default_consumable("large_straight_upgrade", "Large Straight Upgrade", "Upgrade Large Straight category level", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 45, 7, {"category": "large_straight"})
+	_add_default_consumable("even_odd_full_house_upgrade", "Even Odd Full House Upgrade", "Upgrade Even Odd Full House category level (d4 dice set only)", 
+		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 40, 7, {"category": "large_straight"})
 	_add_default_consumable("lower_section_boost", "Lower Section Boost", "Upgrades all 7 lower section categories by one level", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 7)
 	_add_default_consumable("score_streak", "Score Streak", "Score multiplier grows: 1x -> 1.5x -> 2x over 3 turns", 
@@ -1582,7 +1588,7 @@ func _create_default_unlockable_items() -> void:
 	# ALL DICE SETS - Selectable at game start in the Mall Zone Selection
 	# ==========================================================================
 	
-	_add_default_dice_set("dice_set_d4", "D4 Dice Set", "Start the game with four-sided dice (Sixes becomes Fours+)",
+	_add_default_dice_set("dice_set_d4", "D4 Dice Set", "Start the game with four-sided dice (Fives becomes Evens, Sixes becomes Odds)",
 		UnlockConditionClass.ConditionType.COMPLETE_GAME, 1, 2)
 	_add_default_dice_set("dice_set_d8", "D8 Dice Set", "Start the game with eight-sided dice (Sixes becomes Eights)",
 		UnlockConditionClass.ConditionType.SCORE_UPPER_BONUS, 1, 3)

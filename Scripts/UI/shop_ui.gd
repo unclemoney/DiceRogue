@@ -338,6 +338,7 @@ func _build_consumable_pool() -> Array:
 	var consumables = consumable_manager._defs_by_id.keys()
 	var filtered_consumables = _filter_out_purchased_items(consumables, "consumable")
 	filtered_consumables = _filter_unlocked_items(filtered_consumables, "consumable")
+	filtered_consumables = _filter_by_dice_set(filtered_consumables)
 	var selected_consumables = _select_random_items(filtered_consumables, consumable_items)
 	for id in selected_consumables:
 		var data = consumable_manager.get_def(id)
@@ -346,6 +347,61 @@ func _build_consumable_pool() -> Array:
 		else:
 			push_error("[ShopUI] Failed to get ConsumableData for:", id)
 	return consumable_page_items
+
+## _get_current_dice_sides() -> int
+##
+## Resolves the side count of the run's active dice set. Prefers
+## RoundManager.run_dice_type (set from ChannelManager.selected_dice_type at
+## run start), then ChannelManager via the game controller, then the dice
+## hand's default dice data. Defaults to 6 (standard set) when nothing is
+## available, e.g. before a run starts.
+func _get_current_dice_sides() -> int:
+	var round_manager = get_tree().get_first_node_in_group("round_manager")
+	if round_manager:
+		var run_type = round_manager.get("run_dice_type")
+		if run_type is String and run_type != "":
+			return _dice_type_to_sides(run_type)
+	var game_controller = _find_game_controller()
+	if game_controller:
+		var channel_manager = game_controller.get("channel_manager")
+		if channel_manager:
+			var selected_type = channel_manager.get("selected_dice_type")
+			if selected_type is String and selected_type != "":
+				return _dice_type_to_sides(selected_type)
+		var dice_hand = game_controller.get("dice_hand")
+		if dice_hand:
+			var dice_data = dice_hand.get("default_dice_data")
+			if dice_data and dice_data.get("sides") != null:
+				return int(dice_data.sides)
+	return 6
+
+## _dice_type_to_sides(dice_type: String) -> int
+##
+## Parses a dice type string like "d4"/"d6" into its side count.
+## Returns 6 for anything unparseable.
+func _dice_type_to_sides(dice_type: String) -> int:
+	var digits := dice_type.trim_prefix("d")
+	if digits.is_valid_int():
+		return int(digits)
+	return 6
+
+## _filter_by_dice_set(items) -> Array
+##
+## Gates consumables on the run's dice set: defs with required_dice_sides only
+## appear on matching sets (e.g. the d4-only Evens/Odds/Even Odd Full House
+## upgrades), and defs listing the current set in excluded_dice_sides are
+## hidden (e.g. Fives/Sixes/Large Straight upgrades on d4 runs, where those
+## scorecard categories are re-purposed).
+func _filter_by_dice_set(items: Array) -> Array:
+	var current_sides := _get_current_dice_sides()
+	var result: Array = []
+	for id in items:
+		var data = consumable_manager.get_def(id)
+		if data and data.is_available_for_dice_sides(current_sides):
+			result.append(id)
+		elif data:
+			print("[ShopUI] Filtering out %s: not available for d%d dice set" % [id, current_sides])
+	return result
 
 func _build_mod_pool() -> Array:
 	var mod_page_items: Array = []
@@ -1153,6 +1209,7 @@ func _has_available_reroll_items(item_type: String) -> bool:
 	if item_type == "consumable":
 		var filtered = _filter_out_purchased_items(consumable_manager._defs_by_id.keys(), "consumable")
 		filtered = _filter_unlocked_items(filtered, "consumable")
+		filtered = _filter_by_dice_set(filtered)
 		return filtered.size() > 0
 	return false
 

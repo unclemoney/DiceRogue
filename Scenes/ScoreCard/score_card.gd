@@ -28,7 +28,9 @@ var current_round_number: int = 1
 
 # Dice type tracking for dynamic 6th upper section slot
 # When dice_sides > 6, the 6th upper row scores for that value instead of 6
-# For d4, the 6th slot becomes "Fours+" (targets 4 with a score multiplier)
+# For d4, three unachievable categories are replaced instead:
+#   "fives" -> Evens (sum of even dice), "sixes" -> Odds (sum of odd dice),
+#   "large_straight" -> Even Odd Full House (pair of one even + triple of one odd, 40 pts)
 var current_dice_sides: int = 6
 var sixth_slot_target: int = 6
 var sixth_slot_multiplier: int = 1
@@ -96,7 +98,8 @@ func _ready() -> void:
 ##
 ## Updates the scorecard to reflect the active dice type.
 ## For d8+, the 6th upper section slot targets the max face value.
-## For d4, the 6th slot becomes "Fours+" (targets 4, scores double).
+## For d4, the "fives"/"sixes"/"large_straight" keys are replaced by
+## Evens / Odds / Even Odd Full House (see get_category_display_name()).
 ## For d6, the 6th slot remains standard Sixes.
 ##
 ## Parameters:
@@ -106,9 +109,6 @@ func set_dice_type(sides: int) -> void:
 	sixth_slot_multiplier = 1
 	if sides > 6:
 		sixth_slot_target = sides
-	elif sides == 4:
-		sixth_slot_target = 4
-		sixth_slot_multiplier = 2
 	else:
 		sixth_slot_target = 6
 	print("[Scorecard] Dice type set to d%d - 6th slot targets: %d (%s)" % [sides, sixth_slot_target, get_sixth_slot_display_name()])
@@ -117,10 +117,11 @@ func set_dice_type(sides: int) -> void:
 ## get_sixth_slot_display_name()
 ##
 ## Returns the human-readable display name for the 6th upper section category.
-## Examples: "Sixes" (d6), "Fours+" (d4), "Eights" (d8), "Twenties" (d20).
+## Only meaningful for d6/d8+; on d4 the "sixes" row is "Odds" instead
+## (see get_category_display_name()).
+## Examples: "Sixes" (d6), "Eights" (d8), "Twenties" (d20).
 func get_sixth_slot_display_name() -> String:
 	match sixth_slot_target:
-		4: return "Fours+" if sixth_slot_multiplier > 1 else "Fours"
 		6: return "Sixes"
 		8: return "Eights"
 		10: return "Tens"
@@ -133,10 +134,14 @@ func get_sixth_slot_display_name() -> String:
 ##
 ## Returns the base upper bonus threshold for the current dice type.
 ## Formula: 3 × (1 + 2 + 3 + 4 + 5 + sixth_slot_target) for d6+
-## For d4: 3 × (1 + 2 + 3 + 4) = 30
+## For d4: the vanilla d6 threshold (63) scaled proportionally to the max
+## face value — round(63 × 4 / 6) = 42. This keeps the upper bonus at a
+## comparable challenge level to d6 despite Evens/Odds replacing Fives/Sixes.
 ## Standard d6: 3 × (1 + 2 + 3 + 4 + 5 + 6) = 63
 func calculate_upper_bonus_base_threshold() -> int:
-	if current_dice_sides <= 5:
+	if current_dice_sides == 4:
+		return int(round(63.0 * 4.0 / 6.0))
+	elif current_dice_sides <= 5:
 		var total := 0
 		for i in range(1, current_dice_sides + 1):
 			total += i
@@ -938,7 +943,31 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 ## @return Array[int] indices of dice that are used in this category
 func _get_used_dice_for_category(category: String, dice_values: Array, _dice_list: Array) -> Array[int]:
 	var used_indices: Array[int] = []
-	
+
+	# d4 dice set replaces three categories with parity-based rules
+	if current_dice_sides == 4:
+		match category.to_lower():
+			"fives":
+				# Evens: only even-valued dice are used
+				for i in range(dice_values.size()):
+					if dice_values[i] % 2 == 0:
+						used_indices.append(i)
+				return used_indices
+			"sixes":
+				# Odds: only odd-valued dice are used
+				for i in range(dice_values.size()):
+					if dice_values[i] % 2 != 0:
+						used_indices.append(i)
+				return used_indices
+			"large_straight":
+				# Even Odd Full House: all dice are used when the pattern qualifies
+				var typed_values: Array[int] = []
+				typed_values.assign(dice_values)
+				if ScoreEvaluatorSingleton.is_even_odd_full_house(typed_values):
+					for i in range(dice_values.size()):
+						used_indices.append(i)
+				return used_indices
+
 	# For most categories, all dice contribute to the score
 	# Special cases where only some dice are used:
 	match category.to_lower():
@@ -992,8 +1021,18 @@ func _get_used_dice_for_category(category: String, dice_values: Array, _dice_lis
 	
 	return used_indices
 
-## Format category name for display in breakdown
-func _format_category_display_name(category: String) -> String:
+## get_category_display_name(category)
+##
+## Returns the human-readable display name for a scoring category,
+## respecting the active dice type. On the d4 dice set, "fives" displays
+## as "Evens", "sixes" as "Odds", and "large_straight" as "Even Odd Full House".
+## Public API — used by ScoreCardUI for the Best Hand preview and row labels.
+func get_category_display_name(category: String) -> String:
+	if current_dice_sides == 4:
+		match category.to_lower():
+			"fives": return "Evens"
+			"sixes": return "Odds"
+			"large_straight": return "Even Odd Full House"
 	match category.to_lower():
 		"ones": return "Ones"
 		"twos": return "Twos"
@@ -1009,6 +1048,10 @@ func _format_category_display_name(category: String) -> String:
 		"yahtzee": return "Yahtzee"
 		"chance": return "Chance"
 		_: return category.capitalize()
+
+## Format category name for display in breakdown (thin wrapper for get_category_display_name)
+func _format_category_display_name(category: String) -> String:
+	return get_category_display_name(category)
 
 ## _categorize_modifier_source()
 ##
@@ -1158,7 +1201,8 @@ func _is_straight_with_gap(values: Array, length: int) -> bool:
 # Helper function to calculate the base score
 func _calculate_base_score(category: String, dice_values: Array) -> int:
 	# Special handling for straights when allow_gap_straights is enabled
-	if allow_gap_straights:
+	# Skipped on d4: "large_straight" is the Even Odd Full House category there
+	if allow_gap_straights and current_dice_sides != 4:
 		if category == "small_straight":
 			if _is_straight_with_gap(dice_values, 4):
 				return 30

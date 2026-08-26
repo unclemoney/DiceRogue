@@ -22,6 +22,7 @@ const SCORECARD_UPGRADE_CONSUMABLE_IDS := [
 	"ones_upgrade", "twos_upgrade", "threes_upgrade", "fours_upgrade", "fives_upgrade", "sixes_upgrade",
 	"three_of_a_kind_upgrade", "four_of_a_kind_upgrade", "full_house_upgrade",
 	"small_straight_upgrade", "large_straight_upgrade", "yahtzee_upgrade", "chance_upgrade",
+	"evens_upgrade", "odds_upgrade", "even_odd_full_house_upgrade",
 	"all_categories_upgrade"
 ]
 
@@ -215,6 +216,8 @@ func _create_debug_tabs() -> void:
 			{"text": "Apply Mod to Die", "method": "_debug_mod_apply_to_selected_die"},
 			{"text": "Remove Mod from Die", "method": "_debug_mod_remove_from_selected_die"},
 			{"text": "Clear All Mods", "method": "_debug_mod_clear_all"},
+			{"text": "Odds Only: All Dice", "method": "_debug_apply_odd_only_all_dice"},
+			{"text": "Evens Only: All Dice", "method": "_debug_apply_even_only_all_dice"},
 			{"text": "Show Active Mods", "method": "_debug_mod_show_active"},
 			{"text": "Show High Roller State", "method": "_debug_mod_show_high_roller_state"},
 			{"text": "Show Mod/Dice Count", "method": "_debug_show_mod_dice_count"},
@@ -223,6 +226,9 @@ func _create_debug_tabs() -> void:
 			{"text": "Grant Master Upgrade", "method": "_debug_grant_master_upgrade"},
 			{"text": "Grant Ones Upgrade", "method": "_debug_grant_ones_upgrade"},
 			{"text": "Grant Yahtzee Upgrade", "method": "_debug_grant_yahtzee_upgrade"},
+			{"text": "Grant Evens Upgrade (d4)", "method": "_debug_grant_evens_upgrade"},
+			{"text": "Grant Odds Upgrade (d4)", "method": "_debug_grant_odds_upgrade"},
+			{"text": "Grant EO Full House Upgrade (d4)", "method": "_debug_grant_even_odd_full_house_upgrade"},
 			{"text": "Upgrade All Categories (Direct)", "method": "_debug_upgrade_all_categories"},
 			{"text": "Show Category Levels", "method": "_debug_show_category_levels"},
 			{"text": "Unlock All Upgrade Consumables", "method": "_debug_unlock_all_upgrade_consumables"},
@@ -235,6 +241,9 @@ func _create_debug_tabs() -> void:
 			{"text": "Roll All 1s", "method": "_debug_force_ones"},
 			{"text": "Roll Yahtzee", "method": "_debug_force_yahtzee"},
 			{"text": "Roll Large Straight", "method": "_debug_force_large_straight"},
+			{"text": "d4: Force Evens Hand", "method": "_debug_force_d4_evens_hand"},
+			{"text": "d4: Force Odds Hand", "method": "_debug_force_d4_odds_hand"},
+			{"text": "d4: Force EO Full House", "method": "_debug_force_d4_even_odd_full_house"},
 			{"text": "Activate Perfect Strangers", "method": "_debug_activate_perfect_strangers"},
 			{"text": "Cycle Dice Set", "method": "_debug_cycle_dice_set"},
 			{"text": "Unlock All Dice Sets", "method": "_debug_unlock_all_dice_sets"},
@@ -408,6 +417,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Show Multiplier Breakdown", "method": "_debug_difficulty_show_multipliers"},
 			{"text": "Show Channel Bonuses", "method": "_debug_difficulty_show_channel_bonuses"},
 			{"text": "Show Mall Selector", "method": "_debug_difficulty_show_selector"},
+			{"text": "Show Mall Map Popup", "method": "_debug_mall_map_popup"},
 			{"text": "Show Mall Zone Info", "method": "_debug_difficulty_show_selector_zone"},
 			{"text": "Simulate Channel 5 Bonus", "method": "_debug_difficulty_simulate_ch5_bonus"},
 			{"text": "Simulate Channel 10 Bonus", "method": "_debug_difficulty_simulate_ch10_bonus"},
@@ -1090,6 +1100,47 @@ func _debug_mod_clear_all() -> void:
 	log_debug("Removed %d mods from all dice" % removed)
 
 
+## _debug_apply_odd_only_all_dice()
+##
+## Applies the Odd Only mod to every die in the hand.
+func _debug_apply_odd_only_all_dice() -> void:
+	_debug_apply_mod_to_all_dice("odd_only")
+
+
+## _debug_apply_even_only_all_dice()
+##
+## Applies the Evens Only mod to every die in the hand.
+func _debug_apply_even_only_all_dice() -> void:
+	_debug_apply_mod_to_all_dice("even_only")
+
+
+## _debug_apply_mod_to_all_dice(mod_id: String)
+##
+## Applies the given mod to every die in the hand that doesn't already have it.
+func _debug_apply_mod_to_all_dice(mod_id: String) -> void:
+	_refresh_game_controller_reference()
+	if not game_controller or not game_controller.dice_hand:
+		log_debug("ERROR: DiceHand not available")
+		return
+
+	var mod_manager = _get_mod_manager()
+	if not mod_manager:
+		log_debug("ERROR: ModManager not available")
+		return
+
+	var mod_def = mod_manager.get_def(mod_id)
+	if not mod_def:
+		log_debug("ERROR: No ModData found for: " + mod_id)
+		return
+
+	var applied = 0
+	for die in game_controller.dice_hand.dice_list:
+		if is_instance_valid(die) and not die.has_mod(mod_id):
+			die.add_mod(mod_def)
+			applied += 1
+	log_debug("Applied mod '%s' to %d dice" % [mod_id, applied])
+
+
 func _debug_mod_show_active() -> void:
 	_refresh_game_controller_reference()
 	if not game_controller or not game_controller.dice_hand:
@@ -1623,6 +1674,40 @@ func _debug_grant_yahtzee_upgrade() -> void:
 	log_debug("Granted Yahtzee Upgrade consumable")
 
 
+## _debug_grant_evens_upgrade()
+## Grants the d4-only Evens upgrade consumable (re-purposed "fives" category).
+func _debug_grant_evens_upgrade() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	game_controller.grant_consumable("evens_upgrade")
+	log_debug("Granted Evens Upgrade consumable")
+
+
+## _debug_grant_odds_upgrade()
+## Grants the d4-only Odds upgrade consumable (re-purposed "sixes" category).
+func _debug_grant_odds_upgrade() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	game_controller.grant_consumable("odds_upgrade")
+	log_debug("Granted Odds Upgrade consumable")
+
+
+## _debug_grant_even_odd_full_house_upgrade()
+## Grants the d4-only Even Odd Full House upgrade consumable
+## (re-purposed "large_straight" category).
+func _debug_grant_even_odd_full_house_upgrade() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	game_controller.grant_consumable("even_odd_full_house_upgrade")
+	log_debug("Granted Even Odd Full House Upgrade consumable")
+
+
 func _debug_upgrade_all_categories() -> void:
 	_refresh_game_controller_reference()
 	if not is_instance_valid(game_controller) or not is_instance_valid(game_controller.scorecard):
@@ -1852,6 +1937,49 @@ func _debug_force_large_straight() -> void:
 			dice_hand.dice_list[i].update_visual()  # Update visual to match new value
 		dice_hand._update_results()  # Update DiceResults singleton
 		log_debug("Set dice to 1,2,3,4,5 (Large Straight) - perfect for Perfect Strangers PowerUp test!")
+	else:
+		log_debug("DiceHand not found or no dice available")
+
+
+## _debug_force_d4_evens_hand()
+##
+## Sets dice to [2, 4, 2, 4, 2] so the d4 "Evens" category (fives slot) scores 14.
+func _debug_force_d4_evens_hand() -> void:
+	_debug_force_d4_hand([2, 4, 2, 4, 2], "Evens")
+
+
+## _debug_force_d4_odds_hand()
+##
+## Sets dice to [1, 3, 1, 3, 1] so the d4 "Odds" category (sixes slot) scores 5.
+func _debug_force_d4_odds_hand() -> void:
+	_debug_force_d4_hand([1, 3, 1, 3, 1], "Odds")
+
+
+## _debug_force_d4_even_odd_full_house()
+##
+## Sets dice to [2, 2, 3, 3, 3] so the d4 "Even Odd Full House" category
+## (large_straight slot) scores 40.
+func _debug_force_d4_even_odd_full_house() -> void:
+	_debug_force_d4_hand([2, 2, 3, 3, 3], "Even Odd Full House")
+
+
+## _debug_force_d4_hand(values, label)
+##
+## Shared helper: forces the first dice to the given d4-legal values so the
+## named d4 category can be scored. Requires the d4 dice set to be active
+## (use "Cycle Dice Set" first) for the replaced categories to apply.
+func _debug_force_d4_hand(values: Array, label: String) -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+
+	var dice_hand = game_controller.dice_hand
+	if dice_hand and dice_hand.dice_list.size() > 0:
+		for i in range(min(dice_hand.dice_list.size(), values.size())):
+			dice_hand.dice_list[i].value = values[i]
+			dice_hand.dice_list[i].update_visual()
+		dice_hand._update_results()
+		log_debug("Set dice to %s (%s hand) - score it on d4 with Cycle Dice Set" % [str(values), label])
 	else:
 		log_debug("DiceHand not found or no dice available")
 
@@ -4296,8 +4424,8 @@ func _debug_cycle_dice_set() -> void:
 		game_controller.scorecard.set_dice_type(sides)
 	ScoreEvaluatorSingleton.set_dice_sides(sides)
 	var score_card_ui = get_tree().get_first_node_in_group("scorecard_ui")
-	if is_instance_valid(score_card_ui) and score_card_ui.has_method("update_sixth_slot_display"):
-		score_card_ui.update_sixth_slot_display()
+	if is_instance_valid(score_card_ui) and score_card_ui.has_method("update_dice_set_category_labels"):
+		score_card_ui.update_dice_set_category_labels()
 	log_debug("Dice set switched to %s (%d sides)" % [next_type, sides])
 
 ## _debug_unlock_all_dice_sets()
@@ -4526,6 +4654,22 @@ func _debug_difficulty_show_selector() -> void:
 	if is_instance_valid(game_controller.channel_manager):
 		zone_name = game_controller.channel_manager.get_selector_zone_name()
 	log_debug("Opened mall selector at %s" % zone_name)
+
+
+## _debug_mall_map_popup() -> void
+##
+## Opens the in-game mall map popup (the one bound to the VCR tracker's
+## Mall Zone label).
+func _debug_mall_map_popup() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	if not is_instance_valid(game_controller.mall_map_popup):
+		log_debug("ERROR: MallMapPopup not available")
+		return
+	game_controller.mall_map_popup.open()
+	log_debug("Opened mall map popup")
 
 
 func _debug_difficulty_show_selector_zone() -> void:

@@ -238,7 +238,7 @@ func _describe_stage(step: Dictionary) -> String:
 		"walkway":
 			return "Corridors only. Verify the mall uses a simple plus-shaped network with four straight arms meeting the rotated square."
 		"zones":
-			return "Wing zones only. Check the four wings (01 North-West, 02 North-East, 03 South-West, 04 South-East) wrap the diamond with a stub pointing at the courtyard."
+			return "Wing zones only. Check the four wings (01 North-West, 02 North-East, 03 South-West, 04 South-East) form L shapes whose short legs start at the diamond and point at the courtyard."
 		_:
 			return "Full layout. Inspect corridor clearance, board fit, and wing adjacency before opening the full selector."
 

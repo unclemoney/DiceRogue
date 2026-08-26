@@ -7,10 +7,11 @@ extends Control
 ## - Carousel default is d6; locked sets don't commit; unlocked sets do
 ## - ChannelManager.set_selected_dice_type guards locked sets
 ## - RoundManager.run_dice_type overrides per-round dice_type
-## - d4 "Fours+" scoring rule in Scorecard and ScoreEvaluator
+## - d4 parity rules in Scorecard and ScoreEvaluator (Evens / Odds / Even Odd Full House)
 ## - d8/d12/d20 dynamic sixth slot still works
 ##
 ## Restores ProgressManager dice-set unlock state when finished.
+## CLI mode: run with `-- --quit-after` to quit after the suite (exit code = failures).
 
 const ChannelManagerScript = preload("res://Scripts/Managers/channel_manager.gd")
 const RoundManagerScript = preload("res://Scripts/Managers/round_manager.gd")
@@ -22,6 +23,7 @@ var channel_manager: Node
 var channel_manager_ui: Control
 var output_label: RichTextLabel
 var test_results: Array[String] = []
+var _failures := 0
 var _saved_unlock_state: Dictionary = {}
 
 
@@ -32,6 +34,9 @@ func _ready() -> void:
 	_create_managers()
 	_run_tests()
 	_restore_unlock_state()
+	if OS.get_cmdline_user_args().has("--quit-after"):
+		print("[DiceSetSelectionTest] Quitting with %d failure(s)" % _failures)
+		get_tree().quit(_failures)
 
 
 func _build_test_ui() -> void:
@@ -120,6 +125,8 @@ func _log_result(passed: bool, message: String) -> void:
 	var line := ("[color=green]PASS[/color] " if passed else "[color=red]FAIL[/color] ") + message
 	test_results.append(line)
 	output_label.text = "\n".join(test_results)
+	if not passed:
+		_failures += 1
 	print("[DiceSetSelectionTest] " + ("PASS " if passed else "FAIL ") + message)
 
 
@@ -131,7 +138,8 @@ func _run_tests() -> void:
 	_test_carousel_wraps()
 	_test_manager_guards_locked_set()
 	_test_run_dice_type_overrides_rounds()
-	_test_fours_plus_scoring()
+	_test_d4_evens_odds_scoring()
+	_test_d4_even_odd_full_house()
 	_test_dynamic_sixth_slot()
 
 
@@ -219,22 +227,43 @@ func _test_run_dice_type_overrides_rounds() -> void:
 	round_manager.free()
 
 
-func _test_fours_plus_scoring() -> void:
+func _test_d4_evens_odds_scoring() -> void:
 	ScoreEvaluatorSingleton.set_dice_sides(4)
-	var results: Dictionary = ScoreEvaluatorSingleton.evaluate_normal([4, 4, 4, 2, 1])
-	_log_result(results["sixes"] == 24, "Fours+ scores 3x4x2=24 (got %d)" % results["sixes"])
-	_log_result(results["fours"] == 12, "Fours row unaffected (got %d)" % results["fours"])
+	var results: Dictionary = ScoreEvaluatorSingleton.evaluate_normal([2, 4, 1, 3, 2])
+	_log_result(results["fives"] == 8, "d4 Evens sums even dice 2+4+2=8 (got %d)" % results["fives"])
+	_log_result(results["sixes"] == 4, "d4 Odds sums odd dice 1+3=4 (got %d)" % results["sixes"])
+	_log_result(results["fours"] == 4, "d4 Fours row unaffected (got %d)" % results["fours"])
 	ScoreEvaluatorSingleton.set_dice_sides(6)
 	var d6_results: Dictionary = ScoreEvaluatorSingleton.evaluate_normal([6, 6, 6, 2, 1])
 	_log_result(d6_results["sixes"] == 18, "d6 Sixes unchanged (got %d)" % d6_results["sixes"])
+	var d6_fives: Dictionary = ScoreEvaluatorSingleton.evaluate_normal([5, 5, 5, 2, 1])
+	_log_result(d6_fives["fives"] == 15, "d6 Fives unchanged (got %d)" % d6_fives["fives"])
+
+
+func _test_d4_even_odd_full_house() -> void:
+	ScoreEvaluatorSingleton.set_dice_sides(4)
+	var valid: Dictionary = ScoreEvaluatorSingleton.evaluate_normal([2, 2, 3, 3, 3])
+	_log_result(valid["large_straight"] == 40, "d4 EO Full House scores 40 for [2,2,3,3,3] (got %d)" % valid["large_straight"])
+	var triple_even: Dictionary = ScoreEvaluatorSingleton.evaluate_normal([2, 2, 2, 3, 3])
+	_log_result(triple_even["large_straight"] == 0, "d4 EO Full House rejects triple-even [2,2,2,3,3] (got %d)" % triple_even["large_straight"])
+	var mixed: Dictionary = ScoreEvaluatorSingleton.evaluate_normal([2, 4, 1, 3, 2])
+	_log_result(mixed["large_straight"] == 0, "d4 EO Full House rejects [2,4,1,3,2] (got %d)" % mixed["large_straight"])
+	ScoreEvaluatorSingleton.set_dice_sides(6)
+	var d6_straight: Dictionary = ScoreEvaluatorSingleton.evaluate_normal([1, 2, 3, 4, 5])
+	_log_result(d6_straight["large_straight"] == 40, "d6 Large Straight unchanged (got %d)" % d6_straight["large_straight"])
+	var d6_not_straight: Dictionary = ScoreEvaluatorSingleton.evaluate_normal([2, 2, 3, 3, 3])
+	_log_result(d6_not_straight["large_straight"] == 0, "d6 [2,2,3,3,3] is not a Large Straight (got %d)" % d6_not_straight["large_straight"])
+	ScoreEvaluatorSingleton.set_dice_sides(6)
 
 
 func _test_dynamic_sixth_slot() -> void:
 	var scorecard = ScorecardScript.new()
 	scorecard.set_dice_type(4)
-	_log_result(scorecard.get_sixth_slot_display_name() == "Fours+", "d4 sixth slot named Fours+")
-	_log_result(scorecard.sixth_slot_multiplier == 2, "d4 sixth slot multiplier is 2")
-	_log_result(scorecard.calculate_upper_bonus_base_threshold() == 30, "d4 upper bonus threshold is 30")
+	_log_result(scorecard.get_category_display_name("fives") == "Evens", "d4 fives slot named Evens")
+	_log_result(scorecard.get_category_display_name("sixes") == "Odds", "d4 sixes slot named Odds")
+	_log_result(scorecard.get_category_display_name("large_straight") == "Even Odd Full House", "d4 large_straight slot named Even Odd Full House")
+	_log_result(scorecard.sixth_slot_multiplier == 1, "d4 sixth slot multiplier is 1 (no Fours+ doubling)")
+	_log_result(scorecard.calculate_upper_bonus_base_threshold() == 42, "d4 upper bonus threshold is 42")
 	scorecard.set_dice_type(8)
 	_log_result(scorecard.get_sixth_slot_display_name() == "Eights", "d8 sixth slot named Eights")
 	scorecard.set_dice_type(12)
@@ -244,10 +273,12 @@ func _test_dynamic_sixth_slot() -> void:
 	_log_result(scorecard.calculate_upper_bonus_base_threshold() == 105, "d20 upper bonus threshold is 105")
 	scorecard.set_dice_type(6)
 	_log_result(scorecard.get_sixth_slot_display_name() == "Sixes", "d6 sixth slot named Sixes")
-	# Save/load round-trip preserves the multiplier
+	_log_result(scorecard.get_category_display_name("large_straight") == "Large Straight", "d6 large_straight slot named Large Straight")
+	# Save/load round-trip preserves the dice type state
 	scorecard.set_dice_type(4)
 	var state: Dictionary = scorecard.get_state()
 	scorecard.set_dice_type(6)
 	scorecard.load_state(state)
-	_log_result(scorecard.sixth_slot_multiplier == 2, "sixth_slot_multiplier survives save/load")
+	_log_result(scorecard.current_dice_sides == 4, "current_dice_sides survives save/load")
+	_log_result(scorecard.sixth_slot_multiplier == 1, "sixth_slot_multiplier stays 1 after save/load")
 	scorecard.free()

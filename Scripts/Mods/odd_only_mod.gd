@@ -24,8 +24,23 @@ func remove() -> void:
 		_attached_die = null
 	emit_signal("mod_removed")
 
+## _on_die_roll_completed(value: int)
+##
+## Converts even rolls to a random odd face valid for the die's actual side
+## count (d4 odds = [1,3], d6 odds = [1,3,5], etc.), then refreshes the visual
+## so the displayed face always matches die.value.
 func _on_die_roll_completed(value: int) -> void:
 	if value % 2 == 0:  # If even number
-		# Force reroll to odd number
-		_attached_die.value = (GameRNG.randi_mod(3)) * 2 + 1  # Will give 1, 3, or 5
+		var odd_values: Array[int] = []
+		if not _attached_die.dice_data:
+			push_error("[OddOnlyMod] Attached die has no DiceData")
+			return
+		for i in range(1, _attached_die.dice_data.sides + 1):
+			if i % 2 != 0:
+				odd_values.append(i)
+		if odd_values.is_empty():
+			push_error("[OddOnlyMod] No odd faces available on die: ", _attached_die.name)
+			return
+		_attached_die.value = odd_values[GameRNG.randi_mod(odd_values.size())]
+		_attached_die.update_visual()
 		print("[OddOnlyMod] Converted even roll to odd:", _attached_die.value)

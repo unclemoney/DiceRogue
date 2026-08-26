@@ -27,12 +27,14 @@ signal round_failed(round_number: int)
 @export var dice_hand_path: NodePath
 @export var scorecard_path: NodePath
 @export var channel_manager_path: NodePath = ^"../ChannelManager"
+@export var debuff_manager_path: NodePath = ^"../DebuffManager"
 
 @onready var turn_tracker: TurnTracker = get_node_or_null(turn_tracker_path)
 @onready var challenge_manager: ChallengeManager = get_node_or_null(challenge_manager_path)
 @onready var dice_hand: DiceHand = get_node_or_null(dice_hand_path)
 @onready var scorecard: Scorecard = get_node_or_null(scorecard_path)
 @onready var channel_manager = get_node_or_null(channel_manager_path)
+@onready var debuff_manager: DebuffManager = get_node_or_null(debuff_manager_path)
 
 var current_round: int = 0
 ## True once the current round's target score has been reached.
@@ -94,6 +96,9 @@ func _ready() -> void:
 ## Prepares the `rounds_data` array for the current zone: one store per round.
 ## Store names come from ChannelManager's per-run assignment; target scores
 ## come from the channel's RoundDifficultyConfig.target_score_override.
+## Each round's debuffs (and possible grounding) are pre-selected here from
+## the round config so the New Round Panel preview — and the later mall map
+## popup — can show exactly what the round will apply.
 func _initialize_rounds_data() -> void:
 	rounds_data.clear()
 
@@ -106,11 +111,17 @@ func _initialize_rounds_data() -> void:
 
 		var store_name: String = "Store %d-%d" % [zone, round_number]
 		var target_score: int = 0
+		var debuff_ids: Array[String] = []
+		var grounding_id: String = ""
 		if is_instance_valid(channel_manager):
 			store_name = channel_manager.get_store_name(zone, round_number)
 			var round_config = channel_manager.get_round_config(zone, round_number)
-			if round_config and round_config.target_score_override > 0:
-				target_score = round_config.target_score_override
+			if round_config:
+				if round_config.target_score_override > 0:
+					target_score = round_config.target_score_override
+				var preselected = _preselect_round_debuffs(round_config)
+				debuff_ids = preselected["debuff_ids"]
+				grounding_id = preselected["grounding_id"]
 
 		var round_data = {
 			"round_number": round_number,
@@ -118,13 +129,56 @@ func _initialize_rounds_data() -> void:
 			"dice_type": run_dice_type,
 			"target_score": target_score,
 			"completed": false,
-			"failed": false
+			"failed": false,
+			"debuff_ids": debuff_ids,
+			"grounding_id": grounding_id
 		}
 
 		rounds_data.append(round_data)
 		print("[RoundManager] Round %d: store '%s', target %d" % [round_number, store_name, target_score])
 
 	print("[RoundManager] Initialized", rounds_data.size(), "rounds for zone", zone)
+
+## _preselect_round_debuffs(round_config) -> Dictionary
+##
+## Draws the round's debuffs and grounding from its RoundDifficultyConfig,
+## mirroring the selection rules GameController uses at round start:
+## boss rounds draw exactly one debuff of boss_debuff_level; other rounds
+## draw up to max_debuffs within debuff_difficulty_cap; a grounding is
+## rolled separately against grounding_chance. Ids drawn within this round
+## exclude each other via used_ids. Returns {"debuff_ids": Array[String],
+## "grounding_id": String}; both empty when the debuff manager is missing
+## (matches the zero-debuff fallback used when managers are unavailable).
+func _preselect_round_debuffs(round_config: RoundDifficultyConfig) -> Dictionary:
+	var result = {
+		"debuff_ids": [] as Array[String],
+		"grounding_id": ""
+	}
+	if not is_instance_valid(debuff_manager):
+		return result
+
+	var used_ids: Array[String] = []
+	if round_config.get("is_boss_round") == true:
+		# Boss round: exactly one debuff of the configured level
+		var boss_id = debuff_manager.select_boss_debuff(round_config.boss_debuff_level, used_ids)
+		if not boss_id.is_empty():
+			result["debuff_ids"].append(boss_id)
+	else:
+		var max_debuffs = round_config.max_debuffs if round_config.get("max_debuffs") != null else 0
+		var difficulty_cap = round_config.debuff_difficulty_cap if round_config.get("debuff_difficulty_cap") != null else 1
+		result["debuff_ids"] = debuff_manager.select_debuffs_for_round(max_debuffs, difficulty_cap, false, used_ids)
+	for id in result["debuff_ids"]:
+		if id not in used_ids:
+			used_ids.append(id)
+
+	# Grounding draw: separate pool, shares the debuff UI slots.
+	var grounding_chance = round_config.grounding_chance if round_config.get("grounding_chance") != null else 0.0
+	if grounding_chance > 0.0 and randf() < grounding_chance:
+		var grounding_id = debuff_manager.select_grounding_for_round(used_ids)
+		if not grounding_id.is_empty():
+			result["grounding_id"] = grounding_id
+
+	return result
 
 ## start_game()
 ##
@@ -192,10 +246,10 @@ func start_round(round_number: int) -> void:
 			scorecard.set_dice_type(dice_sides)
 		ScoreEvaluatorSingleton.set_dice_sides(dice_sides)
 
-		# Update ScoreCardUI 6th slot display
+		# Update ScoreCardUI category labels for the active dice set
 		var score_card_ui = get_tree().get_first_node_in_group("scorecard_ui")
-		if is_instance_valid(score_card_ui) and score_card_ui.has_method("update_sixth_slot_display"):
-			score_card_ui.update_sixth_slot_display()
+		if is_instance_valid(score_card_ui) and score_card_ui.has_method("update_dice_set_category_labels"):
+			score_card_ui.update_dice_set_category_labels()
 
 		print("[RoundManager] Propagated dice sides (%d) to scorecard and evaluator" % dice_sides)
 

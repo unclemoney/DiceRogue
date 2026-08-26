@@ -700,6 +700,12 @@ func _configure_mod_container() -> void:
 	mod_container.clip_contents = false
 	mod_container.mouse_filter = Control.MOUSE_FILTER_PASS
 
+## add_mod(mod_data: ModData)
+##
+## Instantiates the mod, applies it to this die, and adds a ModIcon to the
+## ModContainer. The icon straddles the bottom-right die corner (roughly half
+## of it hangs outside the die bounds) so the rolled number stays visible.
+## Multiple mod icons stack by shifting each subsequent icon up and left.
 func add_mod(mod_data: ModData) -> void:
 	if active_mods.has(mod_data.id):
 		print("[Dice] Mod already active:", mod_data.id)
@@ -734,12 +740,17 @@ func add_mod(mod_data: ModData) -> void:
 	_configure_mod_container()
 	mod_container.add_child(icon)
 	
-	# Position icon in bottom right
+	# Straddle the bottom-right die corner: roughly half the icon hangs outside
+	# the die bounds so the rolled number stays visible (overlap ~25% of icon area)
 	var container_size := mod_container.size if mod_container.size != Vector2.ZERO else _get_die_bounds_size()
-	icon.position = Vector2(
-		maxf(2.0, container_size.x - icon.size.x - 2.0),
-		maxf(2.0, container_size.y - icon.size.y - 2.0)
-	)
+	var icon_rect_size: Vector2 = icon.size if icon.size != Vector2.ZERO else icon.icon_size
+	# Stack multiple mod icons by shifting each subsequent one up and left
+	var icon_index := 0
+	for child in mod_container.get_children():
+		if child is ModIcon and child != icon:
+			icon_index += 1
+	var stack_offset := Vector2(12.0, 12.0) * float(icon_index)
+	icon.position = container_size - icon_rect_size * 0.5 - stack_offset
 	
 	# Juice: mod attachment effect
 	var tfx = get_node_or_null("/root/TweenFXHelper")

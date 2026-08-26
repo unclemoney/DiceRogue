@@ -144,7 +144,7 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 
 | ID | Name | Condition | Target | Description |
 |---|---:|---|---:|---|
-| dice_set_d4 | D4 Dice Set | COMPLETE_GAME | 1 | Start with four-sided dice (Sixes becomes Fours+) |
+| dice_set_d4 | D4 Dice Set | COMPLETE_GAME | 1 | Start with four-sided dice (Fives becomes Evens, Sixes becomes Odds) |
 | dice_set_d8 | D8 Dice Set | SCORE_UPPER_BONUS | 1 | Start with eight-sided dice (Sixes becomes Eights) |
 | dice_set_d12 | D12 Dice Set | ROLL_YAHTZEE | 1 | Start with twelve-sided dice (Sixes becomes Twelves) |
 | dice_set_d20 | D20 Dice Set | WIN_GAMES | 1 | Start with twenty-sided dice (Sixes becomes Twenties) |

@@ -66,8 +66,19 @@ func _run_test() -> void:
 	_assert_true(_zone_in_quadrant(layout_data, 2, frame_center, 1.0, -1.0), "Zone 2 should occupy the north-east quadrant")
 	_assert_true(_zone_in_quadrant(layout_data, 3, frame_center, -1.0, 1.0), "Zone 3 should occupy the south-west quadrant")
 	_assert_true(_zone_in_quadrant(layout_data, 4, frame_center, 1.0, 1.0), "Zone 4 should occupy the south-east quadrant")
+	_assert_true(_stub_at_courtyard_end(layout_data, 1), "Zone 1 stub should anchor to the bar's right edge (courtyard side)")
+	_assert_true(_stub_at_courtyard_end(layout_data, 2), "Zone 2 stub should anchor to the bar's left edge (courtyard side)")
+	_assert_true(_stub_at_courtyard_end(layout_data, 3), "Zone 3 stub should anchor to the bar's right edge (courtyard side)")
+	_assert_true(_stub_at_courtyard_end(layout_data, 4), "Zone 4 stub should anchor to the bar's left edge (courtyard side)")
 	print("[MallMapSelectorTest] viewport=%s shell_rect=%s" % [str(get_viewport_rect().size), str(_channel_manager_ui.panel_container.get_global_rect())])
 	_assert_true(_channel_manager_ui.panel_container.get_global_rect().end.y <= get_viewport_rect().size.y, "Selector shell should fit within the viewport height")
+
+	# show_channel_selector defensively deals the store directory when empty.
+	_assert_true(not _channel_manager.zone_store_names.is_empty(), "Selector should deal stores when zone_store_names is empty")
+	var zone_one_store: String = _channel_manager.get_store_name(1, 1)
+	_assert_true(zone_one_store != "Store 1-1", "Zone 1 round 1 should have a real store name, not the fallback")
+	var directory_text := _collect_label_text(_channel_manager_ui._directory_grid)
+	_assert_true(directory_text.contains(zone_one_store), "Store directory should list zone 1's first store")
 
 	_channel_manager.set_channel(2)
 	await get_tree().process_frame
@@ -84,8 +95,22 @@ func _run_test() -> void:
 	_channel_manager_ui._show_zone_tooltip(1)
 	await get_tree().process_frame
 	_assert_true(_channel_manager_ui._tooltip_panel.visible, "Hover tooltip should still show for zones")
+	_assert_true(_channel_manager_ui._tooltip_label.text.contains(zone_one_store), "Zone tooltip should list the zone's stores")
 
 	_finish()
+
+
+## _collect_label_text(root: Node) -> String
+##
+## Concatenates every Label text under root so directory content assertions
+## don't depend on the exact container nesting.
+func _collect_label_text(root: Node) -> String:
+	var texts: Array[String] = []
+	if root is Label:
+		texts.append(root.text)
+	for child in root.get_children():
+		texts.append(_collect_label_text(child))
+	return "\n".join(texts)
 
 
 func _assert_true(condition: bool, message: String) -> void:
@@ -154,6 +179,35 @@ func _zone_in_quadrant(layout_data: Dictionary, channel_num: int, center: Vector
 	if side_y > 0.0 and zone_center.y <= center.y:
 		return false
 	return true
+
+
+## _stub_at_courtyard_end(layout_data, channel_num) -> bool
+##
+## Verifies the zone's L shape: the stub tip corners must sit at the bar end
+## nearest the courtyard (right edge for west channels 1/3, left edge for
+## east channels 2/4). The stub tip is the polygon edge farthest from the
+## bar (max y for north wings, min y for south wings).
+func _stub_at_courtyard_end(layout_data: Dictionary, channel_num: int) -> bool:
+	for zone in layout_data.get("zones", []):
+		if zone.get("channel", -1) != channel_num:
+			continue
+		var points: PackedVector2Array = zone.get("points", PackedVector2Array())
+		if points.size() < 8:
+			return false
+		var rect := _points_bounds(points)
+		var tip_y := rect.position.y
+		if channel_num == 1 or channel_num == 2:
+			tip_y = rect.end.y
+		var tip_xs: Array[float] = []
+		for point in points:
+			if absf(point.y - tip_y) < 0.01:
+				tip_xs.append(point.x)
+		if tip_xs.size() != 2:
+			return false
+		if channel_num == 1 or channel_num == 3:
+			return absf(tip_xs.max() - rect.end.x) < 0.01
+		return absf(tip_xs.min() - rect.position.x) < 0.01
+	return false
 
 
 func _points_bounds(points: PackedVector2Array) -> Rect2:

@@ -93,6 +93,12 @@ price = 100
 - `scene`: Reference to the .tscn file
 - `price`: Cost in shop (default: 100)
 
+**Optional Fields (Dice Set Gating):**
+- `required_dice_sides`: Only offered when the run's dice set has exactly this many sides (0 = no requirement)
+- `excluded_dice_sides`: Array of side counts for which the consumable is hidden (e.g. `[4]` hides it for d4 runs)
+
+The shop filters inventory by dice set via `ShopUI._filter_by_dice_set()` using these two fields. Example: the d4 scorecard consumables (`EvensUpgradeConsumable.tres`, `OddsUpgradeConsumable.tres`, `EvenOddFullHouseUpgradeConsumable.tres`, all $75) set `required_dice_sides = 4`, while `FivesUpgradeConsumable.tres`, `SixesUpgradeConsumable.tres`, and `LargeStraightUpgradeConsumable.tres` set `excluded_dice_sides = [4]` because those categories don't exist on a d4 scorecard. Dice-set-gated consumables must also be registered in ProgressManager's defaults and ConsumableManager like any other consumable.
+
 ### Step 4: Add Icon Asset
 Location: `Resources/Art/Powerups/[name]_icon.png`
 

@@ -52,11 +52,17 @@ func remove() -> void:
 
 ## _on_die_roll_completed(value)
 ##
-## Callback when the attached die completes a roll. Forces the value to 5,
-## increments roll count, and updates the score bonus.
+## Callback when the attached die completes a roll. Forces the value to 5
+## (clamped to the highest face on smaller dice, e.g. 4 on a d4, so the value
+## never exceeds the available faces), increments roll count, and updates the
+## score bonus.
 func _on_die_roll_completed(value: int) -> void:
-	# Force the die to show 5
-	_attached_die.value = 5
+	# Force the die to show 5, clamped to the die's actual side count
+	var forced_value: int = 5
+	if _attached_die.dice_data:
+		forced_value = mini(5, _attached_die.dice_data.sides)
+	_attached_die.value = forced_value
+	_attached_die.update_visual()
 	
 	# Increment roll count
 	roll_count += 1

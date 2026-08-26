@@ -7,8 +7,9 @@ class_name MallMapLayout
 ## - MAP_FRAME bounds the mall; the courtyard is a rotated square at its center.
 ## - Four corridor arms radiate from the courtyard to the frame edges (N/S/E/W).
 ## - Exactly four wing zones (channels 1-4): north-west, north-east,
-##   south-west, south-east. Each zone is a long horizontal bar with a short
-##   vertical stub near its center pointing toward the courtyard.
+##   south-west, south-east. Each zone is an L: a long horizontal bar with a
+##   short vertical stub at its courtyard-side end, the short leg of the L
+##   reaching toward the center diamond.
 
 const BOARD_SIZE := Vector2(900, 640)
 const MAP_FRAME := Rect2(20, 20,760, 380)
@@ -162,14 +163,20 @@ static func _build_layout() -> Dictionary:
 
 ## _build_wing_zone(channel, bar_rect, stub_below) -> Dictionary
 ##
-## Builds one wing zone: a horizontal bar plus a centered vertical stub
-## pointing toward the courtyard (down for north wings, up for south wings).
+## Builds one wing zone: a horizontal bar plus a short vertical stub at the
+## bar end nearest the courtyard, forming an L whose short leg points at the
+## center diamond (down for north wings, up for south wings). West-side
+## channels (1, 3) anchor the stub to the bar's right edge; east-side
+## channels (2, 4) anchor it to the left edge.
 static func _build_wing_zone(channel: int, bar_rect: Rect2, stub_below: bool) -> Dictionary:
 	var left := bar_rect.position.x
 	var top := bar_rect.position.y
 	var right := bar_rect.end.x
 	var bottom := bar_rect.end.y
-	var stub_left := left + (bar_rect.size.x - ZONE_STUB_WIDTH) * 0.5
+	var stub_at_right := channel == 1 or channel == 3
+	var stub_left := left
+	if stub_at_right:
+		stub_left = right - ZONE_STUB_WIDTH
 	var stub_right := stub_left + ZONE_STUB_WIDTH
 
 	var points: PackedVector2Array
@@ -198,12 +205,15 @@ static func _build_wing_zone(channel: int, bar_rect: Rect2, stub_below: bool) ->
 			Vector2(left, bottom),
 		])
 
-	return _zone(channel, points, bar_rect.position + bar_rect.size * 0.5)
+	return _zone(channel, points, bar_rect.position + bar_rect.size * 0.5, bar_rect)
 
 
-static func _zone(channel: int, points: PackedVector2Array, label_pos: Vector2) -> Dictionary:
+static func _zone(channel: int, points: PackedVector2Array, label_pos: Vector2, bar_rect: Rect2 = Rect2()) -> Dictionary:
 	return {
 		"channel": channel,
 		"points": points,
 		"label_pos": label_pos,
+		# The horizontal bar area of the L (stub excluded). Read-only layout
+		# data; consumers like MallMapPopup use it to place store markers.
+		"bar_rect": bar_rect,
 	}

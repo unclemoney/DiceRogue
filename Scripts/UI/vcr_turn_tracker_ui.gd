@@ -2,6 +2,8 @@ extends Control
 class_name VCRTurnTrackerUI
 
 # VCR-style Turn Tracker with dynamic animations
+signal mall_map_requested
+
 var tracker: TurnTracker
 var _channel_manager = null
 var _bound_round_manager: RoundManager = null
@@ -47,6 +49,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	_build_compact_layout()
 	_setup_vcr_styling()
+	_setup_channel_label_click()
 	_connect_signals()
 	_initialize_display()
 
@@ -357,3 +360,38 @@ func reset_for_new_channel() -> void:
 	# NOTE: Do NOT reset channel_label here — it was already updated
 	# correctly by the channel_changed signal before this function is called.
 	# Blanking it would overwrite the correct "Channel: XX" text.
+
+
+## _setup_channel_label_click() -> void
+##
+## Makes the Mall Zone label clickable: left-click emits mall_map_requested,
+## hover brightens the label. The label node survives the compact-layout
+## reparent, so wiring on the node itself is safe.
+func _setup_channel_label_click() -> void:
+	if not is_instance_valid(channel_label):
+		return
+	channel_label.mouse_filter = Control.MOUSE_FILTER_STOP
+	channel_label.tooltip_text = "Click to view mall map"
+	if not channel_label.gui_input.is_connected(_on_channel_label_gui_input):
+		channel_label.gui_input.connect(_on_channel_label_gui_input)
+	if not channel_label.mouse_entered.is_connected(_on_channel_label_mouse_entered):
+		channel_label.mouse_entered.connect(_on_channel_label_mouse_entered)
+	if not channel_label.mouse_exited.is_connected(_on_channel_label_mouse_exited):
+		channel_label.mouse_exited.connect(_on_channel_label_mouse_exited)
+
+
+func _on_channel_label_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
+			emit_signal("mall_map_requested")
+
+
+func _on_channel_label_mouse_entered() -> void:
+	if is_instance_valid(channel_label):
+		channel_label.modulate = Color(1.25, 1.25, 1.25, 1.0)
+
+
+func _on_channel_label_mouse_exited() -> void:
+	if is_instance_valid(channel_label):
+		channel_label.modulate = Color.WHITE

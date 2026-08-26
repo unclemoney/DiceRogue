@@ -178,6 +178,28 @@ func _on_die_roll_completed(value: int) -> void:
 	_attached_die.value = 3  # Force specific value
 ```
 
+### Sides-Aware Value Correction
+
+Mods that force or correct dice values must respect the active dice type (d4, d6, d8, d12, d20) — never hardcode a d6 range. The shipped value-correcting mods follow these rules:
+
+- **OddOnlyMod / EvenOnlyMod**: Build the valid parity list from `_attached_die.dice_data.sides` (odd: 1,3,5,... up to sides; even: 2,4,6,... up to sides). If the rolled value misses the parity list, the mod picks the nearest valid value, sets `_attached_die.value`, and calls `_attached_die.update_visual()` so the face refreshes after correction.
+- **FiveByOneMod**: Clamps its forced value into the 1..sides range so it stays valid on any dice set.
+
+**Pattern:**
+```gdscript
+func _on_die_roll_completed(value: int) -> void:
+	var sides: int = _attached_die.dice_data.sides
+	var valid: Array[int] = []
+	for v in range(1, sides + 1):
+		if v % 2 == 0:  # even; use == 1 for odd
+			valid.append(v)
+	if not value in valid:
+		_attached_die.value = valid[randi() % valid.size()]
+		_attached_die.update_visual()  # refresh the face after correction
+```
+
+**Test Scene:** `Tests/OddEvenOnlyModTest.tscn` covers parity correction across dice types.
+
 ### Money-Granting Mods
 ```gdscript
 func _on_die_roll_completed(value: int) -> void:

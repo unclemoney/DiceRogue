@@ -120,18 +120,24 @@ The standard Yahtzee scorecard has 13 categories:
 
 | Dice Type | Upper Section Categories | 6th Slot |
 |-----------|-------------------------|----------|
-| d4        | Ones, Twos, Threes, Fours, Fives, Fours+ | **Fours+** (4s score double) |
+| d4        | Ones, Twos, Threes, Fours, Evens, Odds | **Evens/Odds** (see below) |
 | d6        | Ones, Twos, Threes, Fours, Fives, Sixes | **Sixes** (standard) |
 | d8        | Ones, Twos, Threes, Fours, Fives, Eights | **Eights** |
 | d10       | Ones, Twos, Threes, Fours, Fives, Tens | **Tens** |
 | d12       | Ones, Twos, Threes, Fours, Fives, Twelves | **Twelves** |
 | d20       | Ones, Twos, Threes, Fours, Fives, Twenties | **Twenties** |
 
-#### d4 Special Case — RESOLVED (Fours+)
+#### d4 Special Case — RESOLVED (Evens / Odds / Even Odd Full House)
 
-With a d4, values 5 and 6 are impossible to roll. **Implemented decision**: the 6th slot becomes **"Fours+"** — it targets 4s and scores double (`count of 4s × 4 × 2`), giving the d4 set a distinct identity instead of a dead row. The Fives row remains on the card but is unrollable, acting as a zero-scoring dump category.
+With a d4, values 5 and 6 are impossible to roll. **Implemented decision**: the three unachievable categories are replaced by parity-based rules —
 
-Implementation: `Scorecard.set_dice_type(4)` sets `sixth_slot_target = 4` and `sixth_slot_multiplier = 2` (persisted via `get_state()`/`load_state()`); `ScoreEvaluator.evaluate_normal()` multiplies the "sixes" result by 2 when `current_dice_sides == 4`; `get_sixth_slot_display_name()` returns "Fours+". Upper bonus threshold for d4 is 30 (`3 × (1+2+3+4)`).
+- **Fives → Evens**: scores the sum of all even-valued dice (e.g. [2,4,1,3,2] → 8)
+- **Sixes → Odds**: scores the sum of all odd-valued dice (e.g. [2,4,1,3,2] → 4)
+- **Large Straight → Even Odd Full House**: exactly a pair of one even value + triple of one odd value (e.g. [2,2,3,3,3]) → 40 base points, else 0
+
+The keys remain `"fives"`, `"sixes"`, and `"large_straight"` internally to avoid breaking node path references and save data.
+
+Implementation: `ScoreEvaluator.evaluate_normal()` branches the three keys when `current_dice_sides == 4` via `calculate_evens_score()`, `calculate_odds_score()`, and `calculate_even_odd_full_house_score()` (`is_even_odd_full_house()` checks the pattern). `Scorecard.get_category_display_name()` returns the d4 display names; `ScoreCardUI.update_dice_set_category_labels()` renames the Fives/Sixes/L Straight buttons. Upper bonus threshold for d4 is 42 (`round(63 × 4 / 6)`, scaling the vanilla d6 threshold proportionally to the max face).
 
 #### Higher Dice (d8–d20) Risk/Reward
 
@@ -150,9 +156,9 @@ The risk/reward increases with dice size — higher ceiling on the 6th slot, but
    - Added `current_dice_sides`, `sixth_slot_target` variables
    - Added `set_dice_type(sides)` to update the 6th slot target at runtime
    - Added `get_sixth_slot_display_name()` for UI text ("Sixes", "Eights", etc.)
+   - Added `get_category_display_name()` for dice-type-aware category names (d4: Evens / Odds / Even Odd Full House)
    - Added `calculate_upper_bonus_base_threshold()` for dice-type-aware bonus threshold
-   - `_get_used_dice_for_category()` uses `sixth_slot_target` for the "sixes" category
-   - `_format_category_display_name()` returns the dynamic name
+   - `_get_used_dice_for_category()` uses `sixth_slot_target` for the "sixes" category (parity-based dice on d4)
    - The key remains `"sixes"` internally to avoid breaking node path references
 
 2. **`Scripts/Core/score_evaluator.gd`**:
@@ -162,12 +168,12 @@ The risk/reward increases with dice size — higher ceiling on the 6th slot, but
    - `generate_wildcard_combinations()` uses `current_dice_sides` instead of hardcoded 6
 
 3. **`Scripts/UI/score_card_ui.gd`**:
-   - Added `update_sixth_slot_display()` — updates SixesButton text dynamically
+   - Added `update_dice_set_category_labels()` — updates Fives/Sixes/L Straight button text per dice set (`update_sixth_slot_display()` kept as an alias)
    - Called from `bind_scorecard()` and by RoundManager after dice type changes
 
 4. **`Scripts/Managers/round_manager.gd`**:
    - After `switch_dice_type()`, propagates dice sides to Scorecard and ScoreEvaluator
-   - Also triggers `update_sixth_slot_display()` on the UI
+   - Also triggers `update_dice_set_category_labels()` on the UI
 
 ### Upper Bonus Threshold Rebalancing
 
