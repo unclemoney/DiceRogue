@@ -1,17 +1,19 @@
-[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="ChannelDifficultyData" load_steps=10 format=3 uid="uid://dquymbdau2il5"]
 
-[ext_resource type="Script" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
-[ext_resource type="Shader" path="res://Scripts/Shaders/nick_splat.gdshader" id="1_qgqi3"]
-[ext_resource type="Script" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
+[ext_resource type="Script" uid="uid://cseqx1haydrh1" path="res://Scripts/Core/ChannelDifficultyData.gd" id="1_channel"]
+[ext_resource type="Shader" uid="uid://bxovwegnu5mob" path="res://Scripts/Shaders/nick_splat.gdshader" id="1_qgqi3"]
+[ext_resource type="Script" uid="uid://yuj6od6ypw1a" path="res://Scripts/Core/RoundDifficultyConfig.gd" id="2_round"]
 
 [sub_resource type="Resource" id="round_1"]
 script = ExtResource("2_round")
 round_number = 1
 max_debuffs = 0
 debuff_difficulty_cap = 0
-grounding_chance = 0.0
 goof_off_threshold_override = -1
 target_score_override = 50
+grounding_chance = 0.0
+is_boss_round = false
+boss_debuff_level = 5
 reward_money_override = 50
 bonus_multipliers = {
 "chore_completion": 1.0,
@@ -24,9 +26,11 @@ script = ExtResource("2_round")
 round_number = 2
 max_debuffs = 0
 debuff_difficulty_cap = 0
-grounding_chance = 0.0
 goof_off_threshold_override = -1
 target_score_override = 75
+grounding_chance = 0.0
+is_boss_round = false
+boss_debuff_level = 5
 reward_money_override = 50
 bonus_multipliers = {
 "chore_completion": 1.0,
@@ -39,9 +43,11 @@ script = ExtResource("2_round")
 round_number = 3
 max_debuffs = 0
 debuff_difficulty_cap = 0
-grounding_chance = 0.0
 goof_off_threshold_override = -1
 target_score_override = 105
+grounding_chance = 0.0
+is_boss_round = false
+boss_debuff_level = 5
 reward_money_override = 50
 bonus_multipliers = {
 "chore_completion": 1.0,
@@ -54,9 +60,11 @@ script = ExtResource("2_round")
 round_number = 4
 max_debuffs = 0
 debuff_difficulty_cap = 0
-grounding_chance = 0.0
 goof_off_threshold_override = -1
 target_score_override = 150
+grounding_chance = 0.0
+is_boss_round = false
+boss_debuff_level = 5
 reward_money_override = 50
 bonus_multipliers = {
 "chore_completion": 1.0,
@@ -69,9 +77,11 @@ script = ExtResource("2_round")
 round_number = 5
 max_debuffs = 0
 debuff_difficulty_cap = 0
-grounding_chance = 0.0
 goof_off_threshold_override = -1
 target_score_override = 200
+grounding_chance = 0.0
+is_boss_round = false
+boss_debuff_level = 5
 reward_money_override = 50
 bonus_multipliers = {
 "chore_completion": 1.0,
@@ -84,11 +94,11 @@ script = ExtResource("2_round")
 round_number = 6
 max_debuffs = 0
 debuff_difficulty_cap = 0
+goof_off_threshold_override = -1
+target_score_override = 300
 grounding_chance = 0.0
 is_boss_round = true
 boss_debuff_level = 4
-goof_off_threshold_override = -1
-target_score_override = 300
 reward_money_override = 50
 bonus_multipliers = {
 "chore_completion": 1.0,
