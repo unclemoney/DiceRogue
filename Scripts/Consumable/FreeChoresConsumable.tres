@@ -16,3 +16,5 @@ description = "Reduces goof-off meter by 30 points"
 icon = SubResource("AtlasTexture_h08")
 scene = ExtResource("2_scene")
 price = 25
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])

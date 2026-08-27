@@ -296,8 +296,8 @@ func _build_base_color(accent_color: Color) -> Color:
 
 
 func _build_uvs(points: PackedVector2Array) -> PackedVector2Array:
-	var bounds := _get_bounds_for_points(points)
-	var uvs := PackedVector2Array()
+	var bounds : Rect2 = _get_bounds_for_points(points)
+	var uvs : PackedVector2Array = PackedVector2Array()
 	if bounds.size.x <= 0.0 or bounds.size.y <= 0.0:
 		for _point in points:
 			uvs.append(Vector2.ZERO)

@@ -16,4 +16,6 @@ description = "Score current dice in any category, ignoring normal rules."
 icon = SubResource("AtlasTexture_c16")
 scene = ExtResource("2_bbh3k")
 price = 50
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

@@ -16,4 +16,6 @@ description = "Adds 3 more dice rolls for the current turn only"
 icon = SubResource("AtlasTexture_h19")
 scene = ExtResource("2_bfh4v")
 price = 25
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

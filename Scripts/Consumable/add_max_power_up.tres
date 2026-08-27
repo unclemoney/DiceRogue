@@ -16,4 +16,6 @@ description = "Increases your maximum power-up slots by 1 (up to 9 slots)"
 icon = SubResource("AtlasTexture_h16")
 scene = ExtResource("2_vans2")
 price = 25
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

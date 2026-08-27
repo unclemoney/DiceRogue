@@ -67,7 +67,7 @@ static func build_directory_backdrop(map_root: Node2D) -> void:
 
 	var directory_separator := Line2D.new()
 	directory_separator.width = 2.0
-	directory_separator.default_color = Color(0.62, 0.52, 0.34, 0.82)
+	directory_separator.default_color = Color(0.62, 0.52, 0.34, 0.0)
 	directory_separator.points = PackedVector2Array([
 		Vector2(mall_frame_rect.position.x + 8.0, MallMapLayoutScript.get_directory_top()),
 		Vector2(mall_frame_rect.end.x - 8.0, MallMapLayoutScript.get_directory_top())
@@ -97,10 +97,10 @@ static func build_corridors(map_root: Node2D, initial_alpha: float = 0.0) -> Arr
 	for path in MallMapLayoutScript.get_corridor_paths():
 		var corridor := Line2D.new()
 		corridor.width = MallMapLayoutScript.get_corridor_width()
-		corridor.default_color = Color(0.82, 0.68, 0.42, 0.95)
-		corridor.joint_mode = Line2D.LINE_JOINT_ROUND
-		corridor.begin_cap_mode = Line2D.LINE_CAP_ROUND
-		corridor.end_cap_mode = Line2D.LINE_CAP_ROUND
+		corridor.default_color = Color(0.82, 0.68, 0.42, 0.55)
+		corridor.joint_mode = Line2D.LINE_JOINT_SHARP
+		corridor.begin_cap_mode = Line2D.LINE_CAP_BOX
+		corridor.end_cap_mode = Line2D.LINE_CAP_BOX
 		corridor.points = path
 		corridor.modulate.a = initial_alpha
 		map_root.add_child(corridor)

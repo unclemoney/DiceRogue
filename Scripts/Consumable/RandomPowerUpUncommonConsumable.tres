@@ -16,3 +16,5 @@ description = "Grants a random uncommon rarity power-up"
 icon = SubResource("AtlasTexture_h20")
 scene = ExtResource("2_scene")
 price = 100
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])

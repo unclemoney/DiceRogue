@@ -16,4 +16,6 @@ description = "Grants $150 instantly if upper section total >= 63"
 icon = SubResource("AtlasTexture_c15")
 scene = ExtResource("2_scene")
 price = 75
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

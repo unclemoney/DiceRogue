@@ -16,3 +16,5 @@ description = "Upgrade ALL scoring categories by 1 level. The ultimate enhanceme
 icon = SubResource("AtlasTexture_h15")
 scene = ExtResource("2_scene")
 price = 550
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])

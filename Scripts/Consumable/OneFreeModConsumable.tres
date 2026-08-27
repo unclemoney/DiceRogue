@@ -16,3 +16,5 @@ description = "Grants 1 free random dice mod"
 icon = SubResource("AtlasTexture_h10")
 scene = ExtResource("2_scene")
 price = 50
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])

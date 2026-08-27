@@ -16,3 +16,5 @@ description = "Multiply next score by the number of empty PowerUp slots. Only us
 icon = SubResource("AtlasTexture_h07")
 scene = ExtResource("2_scene")
 price = 75
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])

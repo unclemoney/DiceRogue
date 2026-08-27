@@ -12,11 +12,11 @@ class_name MallMapLayout
 ##   reaching toward the center diamond.
 
 const BOARD_SIZE := Vector2(900, 640)
-const MAP_FRAME := Rect2(20, 20,760, 380)
+const MAP_FRAME := Rect2(20, 20,700, 340)
 const DIRECTORY_LIST_TOP := 348.0
 
-const MAIN_CORRIDOR_WIDTH := 20.0
-const INTERSECTION_RADIUS := 45.0
+const MAIN_CORRIDOR_WIDTH := 85.0
+const INTERSECTION_RADIUS := 85.0
 
 const ZONE_EDGE_MARGIN := 14.0
 const ZONE_BAR_WIDTH := 320.0
@@ -128,25 +128,28 @@ static func _build_layout() -> Dictionary:
 		]),
 	}
 
+	# +/- 50/60 adjustments to the corridor endpoints to avoid overlapping with the frame edges
 	var corridors: Array[PackedVector2Array] = [
-		PackedVector2Array([Vector2(frame.position.x, cross_y), Vector2(cross_x - INTERSECTION_RADIUS, cross_y)]),
-		PackedVector2Array([Vector2(cross_x + INTERSECTION_RADIUS, cross_y), Vector2(frame.end.x, cross_y)]),
-		PackedVector2Array([Vector2(cross_x, frame.position.y), Vector2(cross_x, cross_y - INTERSECTION_RADIUS)]),
-		PackedVector2Array([Vector2(cross_x, cross_y + INTERSECTION_RADIUS), Vector2(cross_x, frame.end.y)]),
+		PackedVector2Array([Vector2(frame.position.x + 50, cross_y), Vector2(cross_x - INTERSECTION_RADIUS, cross_y)]),
+		PackedVector2Array([Vector2(cross_x + INTERSECTION_RADIUS, cross_y), Vector2(frame.end.x -50 , cross_y)]),
+		PackedVector2Array([Vector2(cross_x, frame.position.y +60), Vector2(cross_x, cross_y - INTERSECTION_RADIUS)]),
+		PackedVector2Array([Vector2(cross_x, cross_y + INTERSECTION_RADIUS), Vector2(cross_x, frame.end.y -60)]),
 	]
 
 	var bar_w := ZONE_BAR_WIDTH
 	var bar_h := ZONE_BAR_HEIGHT
-	var north_bar_y := frame.position.y + ZONE_EDGE_MARGIN
-	var south_bar_y := frame.end.y - ZONE_EDGE_MARGIN - bar_h
+	# bar_h was removed and +70 and -160 are manual adjustments to the north and south bar positions
+	var north_bar_y := frame.position.y + ZONE_EDGE_MARGIN + 50
+	var south_bar_y := frame.end.y - ZONE_EDGE_MARGIN - 140
 	var west_bar_x := frame.position.x + ZONE_EDGE_MARGIN
 	var east_bar_x := frame.end.x - ZONE_EDGE_MARGIN - bar_w
 
+	# stub bools were flipped to make them fit correctly
 	var zones: Array[Dictionary] = [
-		_build_wing_zone(1, Rect2(west_bar_x, north_bar_y, bar_w, bar_h), true),
-		_build_wing_zone(2, Rect2(east_bar_x, north_bar_y, bar_w, bar_h), true),
-		_build_wing_zone(3, Rect2(west_bar_x, south_bar_y, bar_w, bar_h), false),
-		_build_wing_zone(4, Rect2(east_bar_x, south_bar_y, bar_w, bar_h), false),
+		_build_wing_zone(1, Rect2(west_bar_x, north_bar_y, bar_w, bar_h), false),
+		_build_wing_zone(2, Rect2(east_bar_x, north_bar_y, bar_w, bar_h), false),
+		_build_wing_zone(3, Rect2(west_bar_x, south_bar_y, bar_w, bar_h), true),
+		_build_wing_zone(4, Rect2(east_bar_x, south_bar_y, bar_w, bar_h), true),
 	]
 	var wayfinding_blocks: Array[Dictionary] = []
 

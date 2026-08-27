@@ -16,3 +16,5 @@ description = "Convert all of your money into 50% points on your next score"
 icon = SubResource("AtlasTexture_h06")
 scene = ExtResource("2_scene")
 price = 100
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])

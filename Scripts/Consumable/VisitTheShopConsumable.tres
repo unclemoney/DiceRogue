@@ -16,3 +16,5 @@ description = "Open the shop during active play"
 icon = SubResource("AtlasTexture_h00")
 scene = ExtResource("3_scene")
 price = 125
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])

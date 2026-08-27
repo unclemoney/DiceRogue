@@ -185,7 +185,7 @@ func _build_ui() -> void:
 
 	_intro_label = Label.new()
 	_intro_label.name = "IntroLabel"
-	_intro_label.text = "MALL DIRECTORY"
+	_intro_label.text = "HERITAGE MALL"
 	_intro_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_intro_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_intro_label.add_theme_font_override("font", VCR_FONT)
@@ -276,8 +276,9 @@ func _build_ui() -> void:
 	map_vbox.add_child(_directory_title)
 
 	_map_view = SubViewportContainer.new()
+	_map_view.name = "MapView"
 	_map_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_map_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_map_view.size_flags_vertical = Control.SIZE_FILL
 	_map_view.custom_minimum_size = Vector2(0, 360)
 	_map_view.stretch = true
 	_map_view.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -289,7 +290,7 @@ func _build_ui() -> void:
 	_map_viewport.transparent_bg = true
 	_map_viewport.handle_input_locally = true
 	_map_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	_map_viewport.size = MallMapLayoutScript.get_board_size()
+	_map_viewport.size = Vector2(MallMapLayoutScript.get_board_size().x, 360)
 	_map_viewport.physics_object_picking = true
 	_map_view.add_child(_map_viewport)
 
@@ -324,12 +325,12 @@ func _build_ui() -> void:
 	directory_list_title.text = "STORE DIRECTORY"
 	directory_list_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	directory_list_title.add_theme_font_override("font", VCR_FONT)
-	directory_list_title.add_theme_font_size_override("font_size", 14)
+	directory_list_title.add_theme_font_size_override("font_size", 24)
 	directory_list_title.add_theme_color_override("font_color", Color(0.30, 0.22, 0.10))
 	directory_list_vbox.add_child(directory_list_title)
 
 	_directory_grid = GridContainer.new()
-	_directory_grid.columns = 2
+	_directory_grid.columns = 4
 	_directory_grid.add_theme_constant_override("h_separation", 6)
 	_directory_grid.add_theme_constant_override("v_separation", 2)
 	directory_list_vbox.add_child(_directory_grid)
@@ -604,6 +605,7 @@ func _build_directory_index() -> void:
 		return
 	for child in _directory_grid.get_children():
 		child.queue_free()
+	var row_index := 0
 	for channel in _zone_order:
 		var entry := HBoxContainer.new()
 		entry.custom_minimum_size = Vector2(118, 22)
@@ -614,7 +616,7 @@ func _build_directory_index() -> void:
 		var number_label := Label.new()
 		number_label.text = channel_manager.get_channel_display_text(channel)
 		number_label.add_theme_font_override("font", VCR_FONT)
-		number_label.add_theme_font_size_override("font_size", 10)
+		number_label.add_theme_font_size_override("font_size", 16)
 		number_label.add_theme_color_override("font_color", _get_section_color(channel_manager.get_selector_section_id(channel)))
 		entry.add_child(number_label)
 
@@ -629,20 +631,35 @@ func _build_directory_index() -> void:
 		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		name_label.custom_minimum_size = Vector2(88, 0)
 		name_label.add_theme_font_override("font", VCR_FONT)
-		name_label.add_theme_font_size_override("font_size", 10)
+		name_label.add_theme_font_size_override("font_size", 16)
 		name_label.add_theme_color_override("font_color", Color(0.24, 0.18, 0.10))
 		text_vbox.add_child(name_label)
+
 
 		var store_names: Array[String] = []
 		for round_number in range(1, channel_manager.STORES_PER_ZONE + 1):
 			store_names.append(channel_manager.get_store_name(channel, round_number))
-		var stores_label := Label.new()
-		stores_label.text = ", ".join(store_names)
-		stores_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		stores_label.add_theme_font_override("font", VCR_FONT)
-		stores_label.add_theme_font_size_override("font_size", 8)
-		stores_label.add_theme_color_override("font_color", Color(0.44, 0.35, 0.22))
-		text_vbox.add_child(stores_label)
+
+		var store_line_index := 0
+		for store_name in store_names:
+			var store_line_label := Label.new()
+			store_line_label.text = store_name
+			store_line_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			store_line_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			store_line_label.add_theme_font_override("font", VCR_FONT)
+			store_line_label.add_theme_font_size_override("font_size", 14)
+
+			var channel_color: Color = _get_section_color(channel_manager.get_selector_section_id(channel))
+			var alternate_tint: float = 0.10 if store_line_index % 2 == 0 else -0.10
+			var varied_color: Color = Color(
+				clampf(channel_color.r + alternate_tint, 0.0, 1.0),
+				clampf(channel_color.g + alternate_tint, 0.0, 1.0),
+				clampf(channel_color.b + alternate_tint, 0.0, 1.0),
+				channel_color.a
+			)
+			store_line_label.add_theme_color_override("font_color", varied_color)
+			text_vbox.add_child(store_line_label)
+			store_line_index += 1
 
 
 func _build_legend() -> void:
@@ -1222,4 +1239,3 @@ func _get_zone_screen_rect(zone) -> Rect2:
 	var rect_position := view_rect.position + Vector2(board_rect.position.x * scale_x, board_rect.position.y * scale_y)
 	var rect_size := Vector2(board_rect.size.x * scale_x, board_rect.size.y * scale_y)
 	return Rect2(rect_position, rect_size)
-

@@ -16,3 +16,5 @@ description = "Sells ALL owned Power-Ups for 1.25x their purchase price. WARNING
 icon = SubResource("AtlasTexture_h12")
 scene = ExtResource("2_scene")
 price = 25
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])

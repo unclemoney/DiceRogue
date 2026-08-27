@@ -16,3 +16,5 @@ description = "Upgrade the Twos category by 1 level. Scored values multiply by l
 icon = SubResource("AtlasTexture_c01")
 scene = ExtResource("2_scene")
 price = 75
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])

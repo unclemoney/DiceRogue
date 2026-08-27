@@ -16,3 +16,5 @@ description = "Use before your first roll and choose lower section category. Sco
 icon = SubResource("AtlasTexture_h23")
 scene = ExtResource("2_scene")
 price = 75
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])

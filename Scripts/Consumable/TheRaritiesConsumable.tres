@@ -16,3 +16,5 @@ description = "Pays $20-$150 for each owned Power-Up based on rarity: Common ($2
 icon = SubResource("AtlasTexture_h02")
 scene = ExtResource("2_scene")
 price = 50
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])

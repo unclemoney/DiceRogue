@@ -16,3 +16,5 @@ description = "Randomly upgrade one category by 1 level"
 icon = SubResource("AtlasTexture_h01")
 scene = ExtResource("2_scene")
 price = 25
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])

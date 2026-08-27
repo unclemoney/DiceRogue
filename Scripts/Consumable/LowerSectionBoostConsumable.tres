@@ -16,4 +16,6 @@ description = "Upgrades all 7 lower section categories by one level"
 icon = SubResource("AtlasTexture_c24")
 scene = ExtResource("2_scene")
 price = 450
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

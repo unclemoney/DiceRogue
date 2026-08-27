@@ -16,4 +16,6 @@ description = "All shop rerolls are free until you close the shop. Use before sh
 icon = SubResource("AtlasTexture_h05")
 scene = ExtResource("2_scene")
 price = 25
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

@@ -178,7 +178,7 @@ func _render_stage(stage_index: int) -> void:
 
 	var separator := Line2D.new()
 	separator.width = 2.0
-	separator.default_color = Color(0.62, 0.52, 0.34, 0.82)
+	separator.default_color = Color(0.62, 0.52, 0.34, 0.0)
 	separator.points = PackedVector2Array([
 		Vector2(mall_frame.position.x + 8.0, _mall_map_layout_script.get_directory_top()),
 		Vector2(mall_frame.end.x - 8.0, _mall_map_layout_script.get_directory_top()),
@@ -203,9 +203,9 @@ func _render_stage(stage_index: int) -> void:
 		var corridor := Line2D.new()
 		corridor.width = _mall_map_layout_script.get_corridor_width()
 		corridor.default_color = Color(0.82, 0.68, 0.42, 0.95)
-		corridor.joint_mode = Line2D.LINE_JOINT_ROUND
-		corridor.begin_cap_mode = Line2D.LINE_CAP_ROUND
-		corridor.end_cap_mode = Line2D.LINE_CAP_ROUND
+		corridor.joint_mode = Line2D.LINE_JOINT_SHARP
+		corridor.begin_cap_mode = Line2D.LINE_CAP_BOX
+		corridor.end_cap_mode = Line2D.LINE_CAP_BOX
 		corridor.points = path
 		_map_root.add_child(corridor)
 
