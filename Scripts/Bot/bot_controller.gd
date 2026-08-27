@@ -761,10 +761,14 @@ func _handle_post_round() -> void:
 	var target := round_manager.get_current_challenge_target_score() if is_instance_valid(round_manager) else 0
 	statistics.record_round_score(round_num, total_score, target)
 
-	# Rebellion buff stacks live at round end (uptime measurement)
+	# Rebellion buff stacks are cached on challenge completion because the
+	# buff is now cleared before the between-round phase begins.
 	var buff_stacks := 0
-	if is_instance_valid(game_controller) and game_controller.active_debuffs.has("rebellion"):
-		buff_stacks = int(game_controller.active_debuffs["rebellion"].intensity)
+	if is_instance_valid(game_controller):
+		if game_controller.active_debuffs.has("rebellion"):
+			buff_stacks = int(game_controller.active_debuffs["rebellion"].intensity)
+		elif game_controller.has_method("get_last_completed_round_rebellion_stacks"):
+			buff_stacks = int(game_controller.get_last_completed_round_rebellion_stacks())
 	statistics.record_buff_state(round_num, buff_stacks)
 
 	logger.log_info("Round %d ended — score: %d" % [round_num, total_score])

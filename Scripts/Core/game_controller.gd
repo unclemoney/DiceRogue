@@ -218,6 +218,8 @@ var _challenge_celebration_shown: bool = false  # Prevent repeated celebration a
 var _round_transition_overlay: CanvasLayer = null
 var _round_transition_shown: bool = false  # Prevent repeated transition overlay
 var _round_transition_tv_off: bool = false  # True when TV is off between rounds
+var _round_status_cleanup_scheduled: bool = false
+var _last_completed_round_rebellion_stacks: int = 0
 var _new_round_panel: NewRoundPanel = null
 var _pending_round_num: int = -1
 var _pending_is_first_round: bool = false
@@ -893,6 +895,8 @@ func _clear_active_debuffs() -> void:
 	_grounded_debuffs.clear()
 	_pending_round_debuff_ids.clear()
 	_pending_round_grounding_id = ""
+	_round_status_cleanup_scheduled = false
+	_last_completed_round_rebellion_stacks = 0
 	
 	# Clear DebuffManager tracking so stale ids don't leak across channels
 	if debuff_manager:
@@ -2721,10 +2725,12 @@ func enable_debuff(id: String) -> void:
 
 ## disable_debuff(id)
 ##
-## Deactivates a debuff, optionally animating removal via the UI. Ensures cleanup of stored references.
-func disable_debuff(id: String) -> void:
+## Deactivates a debuff, optionally animating removal via the UI. When
+## clear_runtime_state_immediately is true, the debuff is removed from
+## active state before any UI animation finishes.
+func disable_debuff(id: String, clear_runtime_state_immediately: bool = false) -> void:
 	if is_debuff_active(id):
-		var debuff = active_debuffs[id]
+		var debuff = active_debuffs[id] as Debuff
 		if debuff:
 			debuff.end()
 
@@ -2734,13 +2740,22 @@ func disable_debuff(id: String) -> void:
 				if is_instance_valid(chore_ui) and chore_ui.has_method("remove_buff_icon"):
 					chore_ui.remove_buff_icon(id)
 				active_debuffs.erase(id)
+				if is_instance_valid(debuff):
+					debuff.queue_free()
 				print("[GameController] Rebellion buff removed from Chore UI:", id)
-			elif debuff_ui:
+			elif is_instance_valid(debuff_ui):
+				if clear_runtime_state_immediately:
+					active_debuffs.erase(id)
+					if is_instance_valid(debuff):
+						debuff.queue_free()
 				debuff_ui.animate_debuff_removal(id, func():
 					# Remove after animation completes
 					if is_instance_valid(debuff_ui):
 						debuff_ui.remove_debuff(id)
-					active_debuffs.erase(id)
+					if not clear_runtime_state_immediately:
+						active_debuffs.erase(id)
+						if is_instance_valid(debuff):
+							debuff.queue_free()
 					print("[GameController] Debuff removed after animation:", id)
 				)
 			else:
@@ -2748,6 +2763,8 @@ func disable_debuff(id: String) -> void:
 				if is_instance_valid(debuff_ui):
 					debuff_ui.remove_debuff(id)
 				active_debuffs.erase(id)
+				if is_instance_valid(debuff):
+					debuff.queue_free()
 				print("[GameController] Debuff removed (no animation):", id)
 	else:
 		print("[GameController] No active debuff to disable with ID:", id)
@@ -4334,8 +4351,61 @@ func _on_challenge_completed(id: String) -> void:
 	if score_card_ui:
 		score_card_ui.clear_category_highlight()
 
+	# Clear round-scoped debuffs and buffs on the next idle tick so every
+	# challenge_completed listener observes the completion before teardown.
+	_schedule_completed_round_status_cleanup()
+
 	# Queue the round transition overlay after fireworks finish (~1.5s)
 	_queue_round_transition_overlay(id)
+
+
+## _schedule_completed_round_status_cleanup() -> void
+##
+## Defers round-scoped status teardown until after the full
+## challenge_completed signal fan-out completes.
+func _schedule_completed_round_status_cleanup() -> void:
+	if _round_status_cleanup_scheduled:
+		return
+	_round_status_cleanup_scheduled = true
+	call_deferred("_expire_completed_round_statuses")
+
+
+## _expire_completed_round_statuses() -> void
+##
+## Removes automatic round debuffs, Mom-applied debuffs, and the Rebellion
+## buff immediately after a completed round so between-round state is clean.
+func _expire_completed_round_statuses() -> void:
+	_round_status_cleanup_scheduled = false
+
+	var round_scoped_debuff_ids: Array[String] = []
+	if debuff_manager:
+		round_scoped_debuff_ids = debuff_manager.get_active_debuff_ids()
+	for debuff_id in round_scoped_debuff_ids:
+		if is_debuff_active(debuff_id):
+			disable_debuff(debuff_id, true)
+	if debuff_manager:
+		debuff_manager.clear_active_debuffs()
+
+	for debuff_id in _grounded_debuffs.duplicate():
+		if is_debuff_active(debuff_id):
+			disable_debuff(debuff_id, true)
+	_grounded_debuffs.clear()
+
+	_last_completed_round_rebellion_stacks = 0
+	if is_debuff_active("rebellion"):
+		var rebellion = active_debuffs["rebellion"] as Debuff
+		if is_instance_valid(rebellion):
+			_last_completed_round_rebellion_stacks = maxi(int(rebellion.intensity), 1)
+		disable_debuff("rebellion", true)
+		print("[GameController] Rebellion buff expired at round end")
+
+	if is_instance_valid(challenge_ui) and challenge_ui.has_method("set_store_debuffs"):
+		challenge_ui.set_store_debuffs([])
+
+	if _mom_cosmetics_locked:
+		_mom_cosmetics_locked = false
+		DiceColorManager.set_colors_enabled(true)
+		print("[GameController] Mom's cosmetic lock expired - dice colors restored")
 
 	GameSaveManager.update_settled_snapshot()
 
@@ -4834,6 +4904,8 @@ func _on_round_started(round_number: int) -> void:
 	_chores_reward_granted = false
 	_challenge_celebration_shown = false
 	_round_transition_shown = false
+	_round_status_cleanup_scheduled = false
+	_last_completed_round_rebellion_stacks = 0
 	
 	# Reset round-specific statistics (even/odd dice tracking, etc.)
 	Statistics.start_new_round()
@@ -5701,6 +5773,14 @@ func _clear_grounded_debuffs() -> void:
 		_mom_cosmetics_locked = false
 		DiceColorManager.set_colors_enabled(true)
 		print("[GameController] Mom's cosmetic lock expired - dice colors restored")
+
+
+## get_last_completed_round_rebellion_stacks() -> int
+##
+## Returns the Rebellion stack count captured at challenge completion before
+## round-end cleanup removed the buff.
+func get_last_completed_round_rebellion_stacks() -> int:
+	return _last_completed_round_rebellion_stacks
 
 
 # ─── Rebellion systems (sass incentives) ───
