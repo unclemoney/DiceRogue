@@ -95,10 +95,16 @@ func _generate_detailed_calculation_summary() -> String:
 	
 	# Build detailed breakdown with modifiers
 	var calculation_parts = []
-	var current_value = base
 	
 	# Start with base score
 	calculation_parts.append(str(base))
+
+	# Add the category level factor before additives.
+	var effective_category_level_factor = float(breakdown_info.get("effective_category_level_factor", breakdown_info.get("category_level", 1)))
+	if not is_equal_approx(effective_category_level_factor, 1.0):
+		var category_operator = str(breakdown_info.get("category_level_display_operator", "×"))
+		var category_value = float(breakdown_info.get("category_level_display_value", effective_category_level_factor))
+		calculation_parts.append(_format_multiplier_term(category_operator, category_value, "level"))
 	
 	# Add additives section if any
 	var total_additive = breakdown_info.get("total_additive", 0)
@@ -137,23 +143,29 @@ func _generate_detailed_calculation_summary() -> String:
 		
 		if additive_details.size() > 0:
 			calculation_parts.append("+" + "+".join(additive_details))
-		
-		current_value = breakdown_info.get("score_after_additives", current_value)
 	
 	# Add multipliers section if any
 	var total_multiplier = breakdown_info.get("total_multiplier", 1.0)
-	if total_multiplier != 1.0:
+	var blue_multiplier = breakdown_info.get("blue_score_multiplier", 1.0)
+	if not is_equal_approx(total_multiplier, 1.0) or not is_equal_approx(blue_multiplier, 1.0):
 		var multiplier_details = []
 		
 		# Use specific multiplier sources if available
 		if breakdown_info.has("multiplier_sources") and breakdown_info.multiplier_sources.size() > 0:
 			for source_info in breakdown_info.multiplier_sources:
+				var source_value = float(source_info.get("value", 1.0))
+				if is_equal_approx(source_value, 1.0):
+					continue
 				var source_name = _format_modifier_name(source_info.name)
-				multiplier_details.append("×%.1f %s" % [source_info.value, source_name])
+				var source_operator = str(source_info.get("display_operator", "×"))
+				var source_display_value = float(source_info.get("display_value", source_value))
+				multiplier_details.append(_format_multiplier_term(source_operator, source_display_value, source_name))
 		else:
 			# Fallback to old logic if specific sources not available
 			var regular_multiplier = breakdown_info.get("regular_multiplier", 1.0)
-			if regular_multiplier != 1.0:
+			if not is_equal_approx(regular_multiplier, 1.0):
+				var regular_operator = str(breakdown_info.get("regular_multiplier_display_operator", "×"))
+				var regular_display_value = float(breakdown_info.get("regular_multiplier_display_value", regular_multiplier))
 				var powerups = breakdown_info.get("active_powerups", [])
 				var consumables = breakdown_info.get("active_consumables", [])
 				
@@ -161,19 +173,27 @@ func _generate_detailed_calculation_summary() -> String:
 					var powerup_names = []
 					for powerup in powerups:
 						powerup_names.append(_format_modifier_name(powerup))
-					multiplier_details.append("×%.1f %s" % [regular_multiplier, ", ".join(powerup_names)])
+					multiplier_details.append(_format_multiplier_term(regular_operator, regular_display_value, ", ".join(powerup_names)))
 				elif consumables.size() > 0:
 					var consumable_names = []
 					for consumable in consumables:
 						consumable_names.append(_format_modifier_name(consumable))
-					multiplier_details.append("×%.1f %s" % [regular_multiplier, ", ".join(consumable_names)])
+					multiplier_details.append(_format_multiplier_term(regular_operator, regular_display_value, ", ".join(consumable_names)))
 				else:
-					multiplier_details.append("×%.1f" % regular_multiplier)
+					multiplier_details.append(_format_multiplier_term(regular_operator, regular_display_value))
 		
 		# Purple dice multipliers
 		var purple_multiplier = breakdown_info.get("dice_color_multiplier", 1.0)
-		if purple_multiplier != 1.0:
-			multiplier_details.append("×%.1f purple dice" % purple_multiplier)
+		if not is_equal_approx(purple_multiplier, 1.0):
+			var purple_operator = str(breakdown_info.get("dice_color_multiplier_display_operator", "×"))
+			var purple_display_value = float(breakdown_info.get("dice_color_multiplier_display_value", purple_multiplier))
+			multiplier_details.append(_format_multiplier_term(purple_operator, purple_display_value, "purple dice"))
+
+		# Blue score factors can now invert under The Division, so render them explicitly.
+		if not is_equal_approx(blue_multiplier, 1.0):
+			var blue_operator = str(breakdown_info.get("blue_score_multiplier_display_operator", "×"))
+			var blue_display_value = float(breakdown_info.get("blue_score_multiplier_display_value", blue_multiplier))
+			multiplier_details.append(_format_multiplier_term(blue_operator, blue_display_value, "blue dice"))
 		
 		if multiplier_details.size() > 0:
 			# If we have both additives and multipliers, wrap the additive part in parentheses
@@ -186,6 +206,15 @@ func _generate_detailed_calculation_summary() -> String:
 	# Format the final calculation
 	var calculation_str = " ".join(calculation_parts)
 	return "%s: %s = %d pts" % [category_display, calculation_str, final]
+
+## _format_multiplier_term(operator, value, label)
+##
+## Formats a multiplier/divisor term for calculation summaries.
+func _format_multiplier_term(operator: String, value: float, label: String = "") -> String:
+	var term = "%s%.1f" % [operator, value]
+	if label != "":
+		term += " " + label
+	return term
 
 ## _format_modifier_name()
 ##

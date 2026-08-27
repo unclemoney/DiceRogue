@@ -687,7 +687,7 @@ The **Score Breakdown UI** provides visual feedback during scoring animations, s
   - **BestHandScore**: Shows the highest-scoring category for current dice with score preview (e.g. "Full House → 25")
   - Uses the shared mall-core glass shell with dark plum fill, neon magenta borders, and VCR-styled outlined text
   - **AdditiveScoreLabel**: Displays cumulative additive bonuses ("+X") with a magenta-accented chip shell and **Neon Energy shader**
-  - **MultiplierScoreLabel**: Displays combined multiplier effects ("×Y") with a teal-accented chip shell and **Neon Energy shader** (red in division mode)
+  - **MultiplierScoreLabel**: Displays the effective combined multiplier or divisor with a teal-accented chip shell and **Neon Energy shader** (red for divisor displays)
   - **Category Highlight**: The matching scorecard button pulses gold to guide the player
   - **Idle Float**: Best hand label gently bobs up/down for a "living" feel
 - **TotalScorePanel**: Contains the total score display with animated roll-up and milestone-driven shader background
@@ -1867,7 +1867,7 @@ Debuffs are negative effects that hinder the player's progress and add challenge
 
 ### Scoring Debuffs
 - **Roll Score Minus One**: Reduces all scores by 1 point per roll made
-- **The Division**: All multiplier powerups now divide scores instead of multiplying
+- **The Division**: Inverts every multiplicative score factor. Multipliers become divisors, and existing divisors invert into multipliers.
 - **Reduced Levels**: Reduces the scored category's level by 1 before each score (minimum level 1)
   - Example: Full House at level 4 → scores at level 3 (then level stays at 3)
   - This is a permanent effect - levels are NOT restored when the debuff is removed

@@ -409,11 +409,9 @@ func auto_score_best(values: Array[int]) -> void:
 	if best_category != "":
 		print("[Scorecard] Auto-scoring category:", best_category, "with score:", best_score)
 		
-		# Calculate color effects NOW before dice state changes
-		var dice_hand = get_tree().get_first_node_in_group("dice_hand")
-		var color_effects = {}
-		if is_instance_valid(dice_hand) and dice_hand.has_method("get_color_effects"):
-			color_effects = dice_hand.get_color_effects()
+		# Capture used-dice-aware color effects NOW before dice state changes.
+		var color_capture = _capture_color_effects_for_score(best_category, values, true)
+		var color_effects = color_capture.get("effects", {})
 		
 		# Emit about_to_score signal for PowerUps BEFORE calculating final score
 		var game_controller = get_tree().get_first_node_in_group("game_controller")
@@ -720,41 +718,10 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 	if apply_money_effects:
 		last_base_score = base_score
 	
-	# Get dice hand to calculate color effects
-	var dice_hand = get_tree().get_first_node_in_group("dice_hand")
-	var color_effects = {}
-	var used_dice_indices: Array[int] = []
-	
-	if dice_hand and DiceColorManager:
-		# Calculate color effects directly with DiceColorManager to handle Blue dice properly
-		# For Blue dice, we need to know which dice are actually used in the scoring category
-		
-		# Determine which dice are used for this category
-		used_dice_indices = _get_used_dice_for_category(category, dice_values, dice_hand.get_all_dice())
-		print("[Scorecard] DEBUG: Category:", category, "Used dice indices:", used_dice_indices)
-		
-		# Calculate color effects with used dice information for Blue dice
-		# Enable side effects (consumable grants) only when apply_money_effects is true (actual scoring, not preview)
-		color_effects = DiceColorManager.calculate_color_effects(dice_hand.get_all_dice(), used_dice_indices, apply_money_effects)
-		print("[Scorecard] DEBUG: Got color effects from DiceColorManager:", color_effects)
-	elif dice_hand and dice_hand.has_method("get_color_effects"):
-		# Fallback to dice_hand method (won't handle Blue dice correctly)
-		# For fallback, assume all dice are used
-		for i in range(dice_values.size()):
-			used_dice_indices.append(i)
-		color_effects = dice_hand.get_color_effects()
-		print("[Scorecard] DEBUG: Got color effects from dice_hand (fallback):", color_effects)
-	else:
-		print("[Scorecard] DEBUG: No dice_hand found or no DiceColorManager")
-		# For no dice hand, assume all dice are used
-		for i in range(dice_values.size()):
-			used_dice_indices.append(i)
-		color_effects = {
-			"green_money": 0,
-			"red_additive": 0,
-			"purple_multiplier": 1.0,
-			"blue_score_multiplier": 1.0
-		}
+	# Get dice hand color effects with the same used-dice-aware rules as autoscoring.
+	var color_capture = _capture_color_effects_for_score(category, dice_values, apply_money_effects)
+	var color_effects = color_capture.get("effects", {})
+	var used_dice_indices: Array[int] = color_capture.get("used_dice_indices", [])
 	
 	# Get modifiers from ScoreModifierManager (fallback for compatibility)
 	var modifier_manager = null
@@ -767,6 +734,7 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 			modifier_manager = get_tree().get_first_node_in_group("multiplier_manager")
 	
 	var total_additive = 0
+	var raw_total_multiplier = 1.0
 	var total_multiplier = 1.0
 	var active_powerup_sources: Array[String] = []
 	var active_consumable_sources: Array[String] = []
@@ -774,6 +742,8 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 	if is_instance_valid(modifier_manager):
 		if modifier_manager.has_method("get_total_additive"):
 			total_additive = modifier_manager.get_total_additive()
+		if modifier_manager.has_method("get_raw_multiplier_total"):
+			raw_total_multiplier = modifier_manager.get_raw_multiplier_total()
 		total_multiplier = modifier_manager.get_total_multiplier()
 		if modifier_manager.has_method("get_active_sources"):
 			var sources = modifier_manager.get_active_sources()
@@ -791,10 +761,15 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 			var multiplier_sources = modifier_manager.get_active_sources()
 			for source in multiplier_sources:
 				var multiplier_value = modifier_manager.get_multiplier(source) if modifier_manager.has_method("get_multiplier") else 1.0
+				var multiplier_component = _create_multiplier_component(multiplier_value, modifier_manager)
 				var source_category = _categorize_modifier_source(source)
 				all_modifier_sources[source] = {
 					"type": "multiplier",
-					"value": multiplier_value,
+					"value": multiplier_component.effective_factor,
+					"raw_value": multiplier_value,
+					"display_mode": multiplier_component.display_mode,
+					"display_operator": multiplier_component.display_operator,
+					"display_value": multiplier_component.display_value,
 					"category": source_category
 				}
 				
@@ -832,40 +807,71 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 	
 	# Add dice color effects
 	var dice_color_additive = color_effects.get("red_additive", 0)
-	var dice_color_multiplier = color_effects.get("purple_multiplier", 1.0)
+	var raw_dice_color_multiplier = color_effects.get("purple_multiplier", 1.0)
 	var dice_color_money = color_effects.get("green_money", 0)
-	var blue_score_multiplier = color_effects.get("blue_score_multiplier", 1.0)
+	var raw_blue_score_multiplier = color_effects.get("blue_score_multiplier", 1.0)
 	
-	print("[Scorecard] DEBUG: Extracted color effects - Green money:", dice_color_money, "Red additive:", dice_color_additive, "Purple mult:", dice_color_multiplier, "Blue mult:", blue_score_multiplier)
+	print("[Scorecard] DEBUG: Extracted color effects - Green money:", dice_color_money, "Red additive:", dice_color_additive, "Purple mult:", raw_dice_color_multiplier, "Blue mult:", raw_blue_score_multiplier)
 	
-	# Get category level for level multiplier (applied FIRST before other modifiers)
+	# Get category level for the first score factor before additives.
 	var category_level = get_category_level_by_name(category)
-	var score_after_level = base_score * category_level
-	
 	if category_level > 1:
-		print("[Scorecard] DEBUG: Category level multiplier - base:", base_score, "× level:", category_level, "=", score_after_level)
+		print("[Scorecard] DEBUG: Category level factor - base:", base_score, "raw factor:", category_level)
 	
-	# Apply calculation order: ((base * level + additives (regular + red dice)) * multipliers (regular + purple dice)) * blue multiplier
-	var total_additive_bonus = total_additive + dice_color_additive
-	var total_multiplier_bonus = total_multiplier * dice_color_multiplier
-	var score_with_additive = score_after_level + total_additive_bonus
-	var score_with_colors = int(score_with_additive * total_multiplier_bonus)
-	var final_score = int(score_with_colors * blue_score_multiplier)
+	# Apply calculation order: ((base * category factor) + additives) * (regular modifiers * purple dice) * blue factor
+	var score_components = _calculate_score_from_components(
+		base_score,
+		category_level,
+		total_additive,
+		dice_color_additive,
+		raw_total_multiplier,
+		raw_dice_color_multiplier,
+		raw_blue_score_multiplier,
+		modifier_manager
+	)
+	var total_additive_bonus = score_components.total_additive
+	var total_multiplier_bonus = score_components.total_multiplier
+	var score_after_level = score_components.score_after_level
+	var score_with_additive = score_components.score_after_additives
+	var score_with_colors = score_components.score_after_colors
+	var final_score = score_components.final_score
 	
-	print("[Scorecard] DEBUG: Blue dice calculation - base:", base_score, "→ after_level:", score_after_level, "→ with_colors:", score_with_colors, "→ final:", final_score, "(blue_mult:", blue_score_multiplier, ")")
+	print("[Scorecard] DEBUG: Factor calculation - base:", base_score, "→ after_level:", score_after_level, "→ with_colors:", score_with_colors, "→ final:", final_score, "(regular:", score_components.regular_multiplier, " purple:", score_components.dice_color_multiplier, " blue:", score_components.blue_score_multiplier, ")")
 	
 	# Create detailed breakdown information
 	var breakdown_info = {
 		"base_score": base_score,
 		"category_level": category_level,
+		"raw_category_level_factor": score_components.raw_category_level_factor,
+		"effective_category_level_factor": score_components.effective_category_level_factor,
+		"category_level_display_mode": score_components.category_level_display_mode,
+		"category_level_display_operator": score_components.category_level_display_operator,
+		"category_level_display_value": score_components.category_level_display_value,
 		"score_after_level": score_after_level,
 		"regular_additive": total_additive,
 		"dice_color_additive": dice_color_additive,
 		"total_additive": total_additive_bonus,
-		"regular_multiplier": total_multiplier,
-		"dice_color_multiplier": dice_color_multiplier,
-		"blue_score_multiplier": blue_score_multiplier,
+		"raw_regular_multiplier": score_components.raw_regular_multiplier,
+		"regular_multiplier": score_components.regular_multiplier,
+		"effective_regular_multiplier": score_components.regular_multiplier,
+		"regular_multiplier_display_mode": score_components.regular_multiplier_display_mode,
+		"regular_multiplier_display_operator": score_components.regular_multiplier_display_operator,
+		"regular_multiplier_display_value": score_components.regular_multiplier_display_value,
+		"raw_dice_color_multiplier": score_components.raw_dice_color_multiplier,
+		"dice_color_multiplier": score_components.dice_color_multiplier,
+		"effective_dice_color_multiplier": score_components.dice_color_multiplier,
+		"dice_color_multiplier_display_mode": score_components.dice_color_multiplier_display_mode,
+		"dice_color_multiplier_display_operator": score_components.dice_color_multiplier_display_operator,
+		"dice_color_multiplier_display_value": score_components.dice_color_multiplier_display_value,
+		"raw_blue_score_multiplier": score_components.raw_blue_score_multiplier,
+		"blue_score_multiplier": score_components.blue_score_multiplier,
+		"effective_blue_score_multiplier": score_components.blue_score_multiplier,
+		"blue_score_multiplier_display_mode": score_components.blue_score_multiplier_display_mode,
+		"blue_score_multiplier_display_operator": score_components.blue_score_multiplier_display_operator,
+		"blue_score_multiplier_display_value": score_components.blue_score_multiplier_display_value,
 		"total_multiplier": total_multiplier_bonus,
+		"overall_effective_multiplier": score_components.overall_effective_multiplier,
+		"division_mode_active": score_components.division_mode_active,
 		"score_after_additives": score_with_additive,
 		"score_after_colors": score_with_colors,
 		"final_score": final_score,
@@ -873,7 +879,7 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 		"active_powerups": active_powerup_sources.duplicate(),
 		"active_consumables": active_consumable_sources.duplicate(),
 		"dice_color_money": dice_color_money,
-		"has_modifiers": (category_level > 1 or total_additive_bonus > 0 or total_multiplier_bonus != 1.0 or blue_score_multiplier != 1.0 or dice_color_money > 0),
+		"has_modifiers": (not is_equal_approx(score_components.effective_category_level_factor, 1.0) or total_additive_bonus != 0 or not is_equal_approx(total_multiplier_bonus, 1.0) or not is_equal_approx(score_components.blue_score_multiplier, 1.0) or dice_color_money > 0),
 		# Add dice information for animation system
 		"used_dice_indices": used_dice_indices.duplicate(),
 		"dice_values": dice_values.duplicate(),
@@ -900,10 +906,16 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 			var multiplier_sources = modifier_manager.get_active_sources()
 			for source in multiplier_sources:
 				var source_category = _categorize_modifier_source(source)
+				var raw_source_value = modifier_manager.get_multiplier(source) if modifier_manager.has_method("get_multiplier") else 1.0
+				var source_component = _create_multiplier_component(raw_source_value, modifier_manager)
 				breakdown_info.multiplier_sources.append({
 					"name": source,
 					"category": source_category,
-					"value": modifier_manager.get_multiplier(source) if modifier_manager.has_method("get_multiplier") else 1.0
+					"value": source_component.effective_factor,
+					"raw_value": raw_source_value,
+					"display_mode": source_component.display_mode,
+					"display_operator": source_component.display_operator,
+					"display_value": source_component.display_value
 				})
 	
 
@@ -911,12 +923,12 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 	# Only print detailed calculation if there are modifiers applied
 	if apply_money_effects and breakdown_info.has_modifiers:
 		print("[Scorecard] Scoring calculation for", category, ": Base:", base_score, "→ Final:", final_score)
-		if category_level > 1:
-			print("  Category Level: ×", category_level, " (", base_score, "→", score_after_level, ")")
-		if total_additive_bonus > 0:
+		if not is_equal_approx(score_components.effective_category_level_factor, 1.0):
+			print("  Category Level: ", score_components.category_level_display_operator, score_components.category_level_display_value, " (", base_score, "→", score_after_level, ")")
+		if total_additive_bonus != 0:
 			print("  Additives: +", total_additive_bonus, " (Regular:", total_additive, " + Red:", dice_color_additive, ")")
 		if total_multiplier_bonus != 1.0:
-			print("  Multipliers: x", total_multiplier_bonus, " (Regular:", total_multiplier, " × Purple:", dice_color_multiplier, ")")
+			print("  Multipliers: x", total_multiplier_bonus, " (Regular:", score_components.regular_multiplier, " × Purple:", score_components.dice_color_multiplier, ")")
 	
 	# Apply money bonus from green dice ONLY if requested
 	if apply_money_effects and dice_color_money > 0:
@@ -1123,39 +1135,47 @@ func _calculate_score_with_preserved_effects(category: String, dice_values: Arra
 			modifier_manager = get_tree().get_first_node_in_group("multiplier_manager")
 	
 	var total_additive = 0
-	var total_multiplier = 1.0
+	var raw_total_multiplier = 1.0
 	
 	if is_instance_valid(modifier_manager):
 		if modifier_manager.has_method("get_total_additive"):
 			total_additive = modifier_manager.get_total_additive()
-		total_multiplier = modifier_manager.get_total_multiplier()
+		if modifier_manager.has_method("get_raw_multiplier_total"):
+			raw_total_multiplier = modifier_manager.get_raw_multiplier_total()
 	else:
 		push_warning("[Scorecard] No ScoreModifierManager found")
 	
 	# Add dice color effects (preserved from when autoscoring was triggered)
 	var dice_color_additive = color_effects.get("red_additive", 0)
-	var dice_color_multiplier = color_effects.get("purple_multiplier", 1.0)
+	var raw_dice_color_multiplier = color_effects.get("purple_multiplier", 1.0)
 	var dice_color_money = color_effects.get("green_money", 0)
+	var raw_blue_score_multiplier = color_effects.get("blue_score_multiplier", 1.0)
 	
-	# Get category level for level multiplier (applied FIRST before other modifiers)
+	# Get category level for the first score factor before additives.
 	var category_level = get_category_level_by_name(category)
-	var score_after_level = base_score * category_level
-	
-	# Apply calculation order: ((base * level) + additives) * multipliers
-	var total_additive_bonus = total_additive + dice_color_additive
-	var total_multiplier_bonus = total_multiplier * dice_color_multiplier
-	var score_with_additive = score_after_level + total_additive_bonus
-	var final_score = int(score_with_additive * total_multiplier_bonus)
+	var score_components = _calculate_score_from_components(
+		base_score,
+		category_level,
+		total_additive,
+		dice_color_additive,
+		raw_total_multiplier,
+		raw_dice_color_multiplier,
+		raw_blue_score_multiplier,
+		modifier_manager
+	)
+	var score_after_level = score_components.score_after_level
+	var final_score = score_components.final_score
 	
 	# Print debug info for autoscoring
 	print("[Scorecard] Preserved effects calculation:")
 	print("  Base score: ", base_score)
-	if category_level > 1:
-		print("  Category level: ×", category_level, " (", base_score, " → ", score_after_level, ")")
+	if not is_equal_approx(score_components.effective_category_level_factor, 1.0):
+		print("  Category level: ", score_components.category_level_display_operator, score_components.category_level_display_value, " (", base_score, " → ", score_after_level, ")")
 	print("  Regular additive: ", total_additive)
 	print("  Dice color additive: ", dice_color_additive, " (preserved)")
-	print("  Regular multiplier: ", total_multiplier)
-	print("  Dice color multiplier: ", dice_color_multiplier, " (preserved)")
+	print("  Regular multiplier: ", score_components.regular_multiplier)
+	print("  Dice color multiplier: ", score_components.dice_color_multiplier, " (preserved)")
+	print("  Blue score multiplier: ", score_components.blue_score_multiplier, " (preserved)")
 	print("  Final score: ", final_score)
 	
 	# Apply money bonus from green dice (preserved)
@@ -1164,6 +1184,125 @@ func _calculate_score_with_preserved_effects(category: String, dice_values: Arra
 		print("[Scorecard] Applied preserved green money bonus: +$", dice_color_money)
 	
 	return final_score
+
+## _capture_color_effects_for_score(category, dice_values, apply_side_effects)
+##
+## Captures dice-color scoring effects with used-dice awareness so manual and
+## auto-scoring stay in sync, especially for Blue dice and division mode.
+func _capture_color_effects_for_score(category: String, dice_values: Array, apply_side_effects: bool) -> Dictionary:
+	var dice_hand = get_tree().get_first_node_in_group("dice_hand")
+	var color_effects = {}
+	var used_dice_indices: Array[int] = []
+
+	if dice_hand and DiceColorManager:
+		used_dice_indices = _get_used_dice_for_category(category, dice_values, dice_hand.get_all_dice())
+		print("[Scorecard] DEBUG: Category:", category, "Used dice indices:", used_dice_indices)
+		color_effects = DiceColorManager.calculate_color_effects(dice_hand.get_all_dice(), used_dice_indices, apply_side_effects)
+		print("[Scorecard] DEBUG: Got color effects from DiceColorManager:", color_effects)
+	elif dice_hand and dice_hand.has_method("get_color_effects"):
+		for i in range(dice_values.size()):
+			used_dice_indices.append(i)
+		color_effects = dice_hand.get_color_effects()
+		print("[Scorecard] DEBUG: Got color effects from dice_hand (fallback):", color_effects)
+	else:
+		print("[Scorecard] DEBUG: No dice_hand found or no DiceColorManager")
+		for i in range(dice_values.size()):
+			used_dice_indices.append(i)
+		color_effects = {
+			"green_money": 0,
+			"red_additive": 0,
+			"purple_multiplier": 1.0,
+			"blue_score_multiplier": 1.0
+		}
+
+	return {
+		"effects": color_effects,
+		"used_dice_indices": used_dice_indices
+	}
+
+## _create_multiplier_component(raw_factor, modifier_manager)
+##
+## Builds raw/effective/display metadata for a multiplicative score factor.
+func _create_multiplier_component(raw_factor: float, modifier_manager) -> Dictionary:
+	var effective_factor = raw_factor
+	var division_mode_active = false
+
+	if is_instance_valid(modifier_manager):
+		if modifier_manager.has_method("is_division_mode"):
+			division_mode_active = modifier_manager.is_division_mode()
+		if modifier_manager.has_method("get_effective_multiplier_factor"):
+			effective_factor = modifier_manager.get_effective_multiplier_factor(raw_factor)
+
+	var display_mode = "multiply"
+	var display_operator = "×"
+	var display_value = effective_factor
+
+	if is_equal_approx(effective_factor, 1.0):
+		display_mode = "neutral"
+		display_operator = "×"
+		display_value = 1.0
+	elif effective_factor > 0.0 and effective_factor < 1.0:
+		display_mode = "divide"
+		display_operator = "÷"
+		display_value = 1.0 / effective_factor
+
+	return {
+		"raw_factor": raw_factor,
+		"effective_factor": effective_factor,
+		"display_mode": display_mode,
+		"display_operator": display_operator,
+		"display_value": display_value,
+		"division_mode_active": division_mode_active
+	}
+
+## _calculate_score_from_components(...)
+##
+## Applies the full score pipeline using raw multiplier factors and the active
+## division-mode policy from ScoreModifierManager.
+func _calculate_score_from_components(base_score: int, category_level: int, regular_additive: int, dice_color_additive: int, raw_regular_multiplier: float, raw_dice_color_multiplier: float, raw_blue_score_multiplier: float, modifier_manager) -> Dictionary:
+	var category_component = _create_multiplier_component(float(category_level), modifier_manager)
+	var regular_component = _create_multiplier_component(raw_regular_multiplier, modifier_manager)
+	var dice_color_component = _create_multiplier_component(raw_dice_color_multiplier, modifier_manager)
+	var blue_component = _create_multiplier_component(raw_blue_score_multiplier, modifier_manager)
+
+	var total_additive_bonus = regular_additive + dice_color_additive
+	var score_after_level = float(base_score) * category_component.effective_factor
+	var score_after_additives = score_after_level + total_additive_bonus
+	var total_multiplier_bonus = regular_component.effective_factor * dice_color_component.effective_factor
+	var score_after_colors = score_after_additives * total_multiplier_bonus
+	var final_score = int(score_after_colors * blue_component.effective_factor)
+	var overall_effective_multiplier = category_component.effective_factor * regular_component.effective_factor * dice_color_component.effective_factor * blue_component.effective_factor
+
+	return {
+		"total_additive": total_additive_bonus,
+		"total_multiplier": total_multiplier_bonus,
+		"score_after_level": score_after_level,
+		"score_after_additives": score_after_additives,
+		"score_after_colors": score_after_colors,
+		"final_score": final_score,
+		"raw_category_level_factor": category_component.raw_factor,
+		"effective_category_level_factor": category_component.effective_factor,
+		"category_level_display_mode": category_component.display_mode,
+		"category_level_display_operator": category_component.display_operator,
+		"category_level_display_value": category_component.display_value,
+		"raw_regular_multiplier": regular_component.raw_factor,
+		"regular_multiplier": regular_component.effective_factor,
+		"regular_multiplier_display_mode": regular_component.display_mode,
+		"regular_multiplier_display_operator": regular_component.display_operator,
+		"regular_multiplier_display_value": regular_component.display_value,
+		"raw_dice_color_multiplier": dice_color_component.raw_factor,
+		"dice_color_multiplier": dice_color_component.effective_factor,
+		"dice_color_multiplier_display_mode": dice_color_component.display_mode,
+		"dice_color_multiplier_display_operator": dice_color_component.display_operator,
+		"dice_color_multiplier_display_value": dice_color_component.display_value,
+		"raw_blue_score_multiplier": blue_component.raw_factor,
+		"blue_score_multiplier": blue_component.effective_factor,
+		"blue_score_multiplier_display_mode": blue_component.display_mode,
+		"blue_score_multiplier_display_operator": blue_component.display_operator,
+		"blue_score_multiplier_display_value": blue_component.display_value,
+		"overall_effective_multiplier": overall_effective_multiplier,
+		"division_mode_active": category_component.division_mode_active
+	}
 
 ## _is_straight_with_gap(values, length)
 ##

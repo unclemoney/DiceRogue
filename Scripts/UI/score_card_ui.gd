@@ -1634,35 +1634,50 @@ func _create_logbook_entry_with_breakdown(section: Scorecard.Section, category: 
 		# Add multiplier effects
 		var total_multiplier = breakdown_info.get("total_multiplier", 1.0)
 		var blue_multiplier = breakdown_info.get("blue_score_multiplier", 1.0)
-		if total_multiplier != 1.0 or blue_multiplier != 1.0:
+		if not is_equal_approx(total_multiplier, 1.0) or not is_equal_approx(blue_multiplier, 1.0):
 			var regular_multiplier = breakdown_info.get("regular_multiplier", 1.0)
 			var purple_multiplier = breakdown_info.get("dice_color_multiplier", 1.0)
 			
-			if regular_multiplier != 1.0:
+			if not is_equal_approx(regular_multiplier, 1.0):
+				var regular_display = _build_multiplier_display_info(regular_multiplier, {
+					"display_mode": breakdown_info.get("regular_multiplier_display_mode", ""),
+					"display_operator": breakdown_info.get("regular_multiplier_display_operator", ""),
+					"display_value": breakdown_info.get("regular_multiplier_display_value", regular_multiplier)
+				})
 				modifier_effects.append({
 					"type": "multiplier",
 					"value": regular_multiplier,
 					"source": "powerups/consumables", 
-					"description": "×%.1f from modifiers" % regular_multiplier,
-					"short_description": "×%.1f" % regular_multiplier
+					"description": "%s%.1f from modifiers" % [regular_display.operator, regular_display.value],
+					"short_description": "%s%.1f" % [regular_display.operator, regular_display.value]
 				})
 			
-			if purple_multiplier != 1.0:
+			if not is_equal_approx(purple_multiplier, 1.0):
+				var purple_display = _build_multiplier_display_info(purple_multiplier, {
+					"display_mode": breakdown_info.get("dice_color_multiplier_display_mode", ""),
+					"display_operator": breakdown_info.get("dice_color_multiplier_display_operator", ""),
+					"display_value": breakdown_info.get("dice_color_multiplier_display_value", purple_multiplier)
+				})
 				modifier_effects.append({
 					"type": "multiplier",
 					"value": purple_multiplier,
 					"source": "purple_dice",
-					"description": "×%.1f from purple dice" % purple_multiplier,
-					"short_description": "purple×%.1f" % purple_multiplier
+					"description": "%s%.1f from purple dice" % [purple_display.operator, purple_display.value],
+					"short_description": "purple%s%.1f" % [purple_display.operator, purple_display.value]
 				})
 			
-			if blue_multiplier != 1.0:
+			if not is_equal_approx(blue_multiplier, 1.0):
+				var blue_display = _build_multiplier_display_info(blue_multiplier, {
+					"display_mode": breakdown_info.get("blue_score_multiplier_display_mode", ""),
+					"display_operator": breakdown_info.get("blue_score_multiplier_display_operator", ""),
+					"display_value": breakdown_info.get("blue_score_multiplier_display_value", blue_multiplier)
+				})
 				modifier_effects.append({
 					"type": "multiplier",
 					"value": blue_multiplier,
 					"source": "blue_dice",
-					"description": "×%.1f from blue dice" % blue_multiplier,
-					"short_description": "blue×%.1f" % blue_multiplier
+					"description": "%s%.1f from blue dice" % [blue_display.operator, blue_display.value],
+					"short_description": "blue%s%.1f" % [blue_display.operator, blue_display.value]
 				})
 	
 	# Convert section enum to string
@@ -2106,64 +2121,82 @@ func update_additive_score_panel(additive_value: int, animate: bool = true) -> v
 ##
 ## Update the multiplier score panel label with optional bounce animation.
 ## Called by ScoringAnimationController during animation sequence.
-## Supports division mode from The Division debuff - displays ÷ symbol in RED.
+## Formats the effective multiplier as a multiply or divide display.
 ## Also drives the neon_energy shader effect behind the label.
-func update_multiplier_score_panel(multiplier_value: float, animate: bool = true) -> void:
+func update_multiplier_score_panel(multiplier_value: float, animate: bool = true, display_info: Dictionary = {}) -> void:
 	if not multiplier_score_label:
 		return
 	
-	# Check if division mode is active via ScoreModifierManager
-	var is_division_mode := false
-	var score_modifier_manager = get_tree().get_first_node_in_group("score_modifier_manager")
-	if score_modifier_manager and score_modifier_manager.has_method("is_division_mode"):
-		is_division_mode = score_modifier_manager.is_division_mode()
+	var resolved_display = _build_multiplier_display_info(multiplier_value, display_info)
+	print("[ScoreCardUI] Updating multiplier panel: %s%.1f (animate=%s)" % [resolved_display.operator, resolved_display.value, animate])
+	multiplier_score_label.text = "%s%.1f" % [resolved_display.operator, resolved_display.value]
 	
-	if is_division_mode:
-		# Division mode: show ÷ symbol with the multiplier value directly
-		print("[ScoreCardUI] Updating multiplier panel (DIVISION MODE): ÷%.1f (animate=%s)" % [multiplier_value, animate])
-		multiplier_score_label.text = "÷%.1f" % multiplier_value
-		
-		# Drive shader with red danger colors for division mode
-		if multiplier_shader_bg and multiplier_shader_bg.material:
-			var mat = multiplier_shader_bg.material as ShaderMaterial
-			var strength = clampf(remap(multiplier_value, 1.0, 10.0, 0.5, 1.0), 0.0, 1.0)
+	if multiplier_shader_bg and multiplier_shader_bg.material:
+		var mat = multiplier_shader_bg.material as ShaderMaterial
+		if resolved_display.mode == "divide":
+			var divide_strength = clampf(remap(resolved_display.value, 1.0, 10.0, 0.5, 1.0), 0.0, 1.0)
 			mat.set_shader_parameter("energy_color", Vector4(0.886275, 0.392157, 0.54902, 1.0))
 			mat.set_shader_parameter("accent_color", Vector4(0.713725, 0.301961, 0.478431, 1.0))
 			if animate:
-				var shader_tween = create_tween()
-				shader_tween.tween_method(func(v): mat.set_shader_parameter("effect_strength", v), 0.0, strength, 0.3)
+				var divide_tween = create_tween()
+				divide_tween.tween_method(func(v): mat.set_shader_parameter("effect_strength", v), 0.0, divide_strength, 0.3)
 			else:
-				mat.set_shader_parameter("effect_strength", strength)
-		
-		if animate:
-			_bounce_label(multiplier_score_label, SUMMARY_NEGATIVE)
-	else:
-		# Normal multiplier mode
-		print("[ScoreCardUI] Updating multiplier panel: %.1f (animate=%s)" % [multiplier_value, animate])
-		multiplier_score_label.text = "x%.1f" % multiplier_value
-		
-		# Drive shader effect
-		if multiplier_shader_bg and multiplier_shader_bg.material:
-			var mat = multiplier_shader_bg.material as ShaderMaterial
-			if multiplier_value <= 1.0:
+				mat.set_shader_parameter("effect_strength", divide_strength)
+				mat.set_shader_parameter("intensity", 0.0)
+		else:
+			mat.set_shader_parameter("energy_color", Vector4(0.137255, 0.411765, 0.415686, 1.0))
+			mat.set_shader_parameter("accent_color", Vector4(0.47451, 0.886275, 0.890196, 1.0))
+			if resolved_display.mode == "neutral":
 				mat.set_shader_parameter("effect_strength", 0.0)
+				mat.set_shader_parameter("intensity", 0.0)
 			else:
-				var strength = clampf(remap(multiplier_value, 1.0, 10.0, 0.7, 1.0), 0.0, 1.0)
-				var shader_intensity = clampf(remap(multiplier_value, 1.0, 10.0, 0.8, 1.4), 0.0, 1.4)
-				# Reset to default cyan/blue colors
-				mat.set_shader_parameter("energy_color", Vector4(0.137255, 0.411765, 0.415686, 1.0))
-				mat.set_shader_parameter("accent_color", Vector4(0.47451, 0.886275, 0.890196, 1.0))
+				var multiply_strength = clampf(remap(resolved_display.value, 1.0, 10.0, 0.7, 1.0), 0.0, 1.0)
+				var shader_intensity = clampf(remap(resolved_display.value, 1.0, 10.0, 0.8, 1.4), 0.0, 1.4)
 				if animate:
-					var shader_tween = create_tween()
-					shader_tween.tween_method(func(v): mat.set_shader_parameter("effect_strength", v), 0.0, strength, 0.3)
-					shader_tween.parallel().tween_method(func(v): mat.set_shader_parameter("intensity", v), 0.0, shader_intensity, 0.3)
+					var multiply_tween = create_tween()
+					multiply_tween.tween_method(func(v): mat.set_shader_parameter("effect_strength", v), 0.0, multiply_strength, 0.3)
+					multiply_tween.parallel().tween_method(func(v): mat.set_shader_parameter("intensity", v), 0.0, shader_intensity, 0.3)
 				else:
-					mat.set_shader_parameter("effect_strength", strength)
+					mat.set_shader_parameter("effect_strength", multiply_strength)
 					mat.set_shader_parameter("intensity", shader_intensity)
-		
-		if animate:
-			var flash_color = SUMMARY_POSITIVE if multiplier_value > 1.0 else Color.WHITE
-			_bounce_label(multiplier_score_label, flash_color)
+	
+	if animate:
+		_bounce_label(multiplier_score_label, resolved_display.flash_color)
+
+## _build_multiplier_display_info(multiplier_value, display_info)
+##
+## Normalizes multiplier display so effective factors below 1 show as divisors.
+func _build_multiplier_display_info(multiplier_value: float, display_info: Dictionary = {}) -> Dictionary:
+	var display_mode = str(display_info.get("display_mode", display_info.get("mode", "")))
+	var display_operator = str(display_info.get("display_operator", display_info.get("operator", "")))
+	var display_value = float(display_info.get("display_value", multiplier_value))
+
+	if display_mode == "" or display_operator == "":
+		if is_equal_approx(multiplier_value, 1.0):
+			display_mode = "neutral"
+			display_operator = "×"
+			display_value = 1.0
+		elif multiplier_value > 0.0 and multiplier_value < 1.0:
+			display_mode = "divide"
+			display_operator = "÷"
+			display_value = 1.0 / multiplier_value
+		else:
+			display_mode = "multiply"
+			display_operator = "×"
+			display_value = multiplier_value
+
+	var flash_color = Color.WHITE
+	if display_mode == "divide":
+		flash_color = SUMMARY_NEGATIVE
+	elif display_mode == "multiply" and display_value > 1.0:
+		flash_color = SUMMARY_POSITIVE
+
+	return {
+		"mode": display_mode,
+		"operator": display_operator,
+		"value": display_value,
+		"flash_color": flash_color
+	}
 
 
 ## _bounce_label(label, flash_color)

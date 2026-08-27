@@ -188,14 +188,22 @@ func get_total_multiplier() -> float:
 
 	var total: float = 1.0
 	for multiplier in _active_multipliers.values():
-		if _division_mode and multiplier > 0:
-			# Convert multiplier to divider (reciprocal)
-			total *= (1.0 / multiplier)
-		else:
-			# Normal multiplication
-			total *= multiplier
+		total *= get_effective_multiplier_factor(multiplier)
 
 	return total
+
+## get_effective_multiplier_factor(multiplier)
+##
+## Returns the effective score factor for a raw multiplier.
+## When division mode is active, every non-zero multiplicative factor is inverted.
+func get_effective_multiplier_factor(multiplier: float) -> float:
+	if not _division_mode:
+		return multiplier
+
+	if is_zero_approx(multiplier):
+		return 0.0
+
+	return 1.0 / multiplier
 
 ## has_multiplier(source_name)
 ##
@@ -302,8 +310,7 @@ func get_raw_multiplier_total() -> float:
 func _validate_state() -> bool:
 	var calculated_total = 1.0
 	for multiplier in _active_multipliers.values():
-		# Remove the <= 0 check to allow negative multipliers
-		calculated_total *= multiplier
+		calculated_total *= get_effective_multiplier_factor(multiplier)
 
 	var stored_total = get_total_multiplier()
 	if abs(calculated_total - stored_total) > 0.001:  # Allow for floating point precision

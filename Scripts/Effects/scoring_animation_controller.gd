@@ -220,9 +220,9 @@ func _execute_animation_sequence(score: int, category: String, breakdown_info: D
 	# Phase 1: Dice bounce animation with individual scores (plays sound per die)
 	await _animate_dice_bounce_with_scores(intensity_scale, speed_scale)
 	
-	# Phase 1.5: Show category level multiplier if > 1
-	var category_level = breakdown_info.get("category_level", 1)
-	if category_level > 1:
+	# Phase 1.5: Show the effective category-level factor if it changes score.
+	var category_level_factor = float(breakdown_info.get("effective_category_level_factor", breakdown_info.get("category_level", 1)))
+	if not is_equal_approx(category_level_factor, 1.0):
 		var level_delay = 0.05 / speed_scale
 		await get_tree().create_timer(level_delay).timeout
 		_animate_category_level_multiplier(breakdown_info, intensity_scale, speed_scale)
@@ -252,9 +252,10 @@ func _execute_animation_sequence(score: int, category: String, breakdown_info: D
 		await _animate_contributing_powerups(breakdown_info, intensity_scale, speed_scale)
 	else:
 		print("[ScoringAnimationController] No powerups to animate")
-		# Still update the panel to show 1.0 if no powerups (with animation to show multiplication step)
+		# Still update the panel to show the effective dice-color multiplier state.
 		if score_card_ui:
-			score_card_ui.update_multiplier_score_panel(1.0, true)
+			var combined_multiplier = breakdown_info.get("total_multiplier", 1.0) * breakdown_info.get("blue_score_multiplier", 1.0)
+			score_card_ui.update_multiplier_score_panel(combined_multiplier, true)
 	
 	# Phase 5: Show final score floating number with sound
 	var final_delay = 0.05 / speed_scale
@@ -474,7 +475,7 @@ func _animate_single_die(die, die_index: int, intensity_scale: float, speed_scal
 	
 	# Add separate floating number for colored dice effects
 	if die.color != DiceColor.Type.NONE:
-		_show_colored_dice_effect(die, die_center, speed_scale)
+		_show_colored_dice_effect(die, die_center, speed_scale, die_index)
 
 ## _bounce_die(die, original_position, bounce_height, progress)
 ##
@@ -590,8 +591,11 @@ func _animate_contributing_powerups(breakdown_info: Dictionary, intensity_scale:
 	print("[ScoringAnimationController] Multiplier sources: " + str(multiplier_sources))
 	var stagger_delay = 0.15 / speed_scale
 	var animated_any_powerups = false
+	var multiplier_panel_updated = false
 	var running_additive = breakdown_info.get("regular_additive", 0) - breakdown_info.get("dice_color_additive", 0)
 	var running_multiplier = 1.0
+	var purple_multiplier = breakdown_info.get("dice_color_multiplier", 1.0)
+	var blue_multiplier = breakdown_info.get("blue_score_multiplier", 1.0)
 	
 	# Animate additive powerups
 	for source_info in additive_sources:
@@ -619,14 +623,14 @@ func _animate_contributing_powerups(breakdown_info: Dictionary, intensity_scale:
 		
 		if source_info.get("category", "") == "powerup" or source_name in active_powerups:
 			# Animate the powerup
-			_animate_powerup_multiplier(source_name, source_value, intensity_scale, speed_scale)
+			_animate_powerup_multiplier(source_name, source_value, intensity_scale, speed_scale, source_info)
 			
 			# Update running multiplier
 			running_multiplier *= source_value
-			var blue_multiplier = breakdown_info.get("blue_score_multiplier", 1.0)
-			var combined = running_multiplier * blue_multiplier
+			var combined = running_multiplier * purple_multiplier * blue_multiplier
 			if score_card_ui:
 				score_card_ui.update_multiplier_score_panel(combined, true)
+				multiplier_panel_updated = true
 			
 			await get_tree().create_timer(stagger_delay).timeout
 			animated_any_powerups = true
@@ -643,6 +647,11 @@ func _animate_contributing_powerups(breakdown_info: Dictionary, intensity_scale:
 				await get_tree().create_timer(stagger_delay).timeout
 			else:
 				print("[ScoringAnimationController] Skipping powerup %s - not applicable for this scoring context" % powerup_id)
+
+	if score_card_ui and not multiplier_panel_updated:
+		var combined_multiplier = breakdown_info.get("total_multiplier", 1.0) * blue_multiplier
+		if not is_equal_approx(combined_multiplier, 1.0):
+			score_card_ui.update_multiplier_score_panel(combined_multiplier, true)
 
 ## _animate_consumable_contribution(consumable_id, contribution, intensity_scale, speed_scale)
 ##
@@ -725,12 +734,15 @@ func _animate_powerup_additive(powerup_id: String, additive_value: int, intensit
 ##
 ## Animate a powerup's multiplier contribution.
 ## Plays progressive scoring sound.
-func _animate_powerup_multiplier(powerup_id: String, multiplier_value: float, intensity_scale: float, speed_scale: float) -> void:
+func _animate_powerup_multiplier(powerup_id: String, multiplier_value: float, intensity_scale: float, speed_scale: float, display_info: Dictionary = {}) -> void:
 	if not power_up_ui:
 		return
 	
+	var resolved_display = _resolve_multiplier_display(multiplier_value, display_info)
+	var pitch_value = maxf(absf(resolved_display.value), 1.0)
+	
 	# Play scoring sound for multiplier (progressive pitch)
-	_play_scoring_audio(int(multiplier_value * 10))  # Scale multiplier for meaningful pitch
+	_play_scoring_audio(int(pitch_value * 10))  # Scale display factor for meaningful pitch
 	
 	var spine_dict = power_up_ui.get("_spines")
 	if not spine_dict or not spine_dict.has(powerup_id):
@@ -741,7 +753,7 @@ func _animate_powerup_multiplier(powerup_id: String, multiplier_value: float, in
 	if not spine:
 		return
 	
-	print("[ScoringAnimationController] Animating powerup multiplier: %s with x%.1f" % [powerup_id, multiplier_value])
+	print("[ScoringAnimationController] Animating powerup multiplier: %s with %s%.1f" % [powerup_id, resolved_display.operator, resolved_display.value])
 	
 	# Create bounce animation
 	var bounce_height = CONSUMABLE_BOUNCE_HEIGHT * intensity_scale * 1.2
@@ -754,11 +766,44 @@ func _animate_powerup_multiplier(powerup_id: String, multiplier_value: float, in
 	# Show floating multiplier value above and center of the spine
 	var spine_bounds = spine.get_rect()
 	var spine_center = spine.global_position + Vector2(spine_bounds.size.x / 2, 0)
-	var multiplier_text = "x%.1f" % multiplier_value
-	var floating_number = _create_scoring_floating_number(spine_center, multiplier_text, 1.5, SCORING_TEXT_MULTIPLIER, SCORING_ACCENT_TEAL)
+	var multiplier_text = "%s%.1f" % [resolved_display.operator, resolved_display.value]
+	var multiplier_color = SCORING_TEXT_MULTIPLIER
+	var multiplier_accent = SCORING_ACCENT_TEAL
+	if resolved_display.mode == "divide":
+		multiplier_color = SCORING_TEXT_NEGATIVE
+		multiplier_accent = SCORING_ACCENT_MAGENTA
+	var floating_number = _create_scoring_floating_number(spine_center, multiplier_text, 1.5, multiplier_color, multiplier_accent)
 	if floating_number:
 		floating_number.float_duration = floating_number.float_duration / speed_scale
 		floating_number.float_speed = FLOAT_NUMBER_SPEED * speed_scale
+
+## _resolve_multiplier_display(multiplier_value, display_info)
+##
+## Normalizes effective multiplier display for animation text and panel updates.
+func _resolve_multiplier_display(multiplier_value: float, display_info: Dictionary = {}) -> Dictionary:
+	var display_mode = str(display_info.get("display_mode", display_info.get("mode", "")))
+	var display_operator = str(display_info.get("display_operator", display_info.get("operator", "")))
+	var display_value = float(display_info.get("display_value", multiplier_value))
+
+	if display_mode == "" or display_operator == "":
+		if is_equal_approx(multiplier_value, 1.0):
+			display_mode = "neutral"
+			display_operator = "×"
+			display_value = 1.0
+		elif multiplier_value > 0.0 and multiplier_value < 1.0:
+			display_mode = "divide"
+			display_operator = "÷"
+			display_value = 1.0 / multiplier_value
+		else:
+			display_mode = "multiply"
+			display_operator = "×"
+			display_value = multiplier_value
+
+	return {
+		"mode": display_mode,
+		"operator": display_operator,
+		"value": display_value
+	}
 
 ## _animate_powerup_generic(powerup_id, intensity_scale, speed_scale)
 ##
@@ -886,25 +931,33 @@ func _show_final_score_number(score: int, _intensity_scale: float) -> void:
 
 ## _animate_category_level_multiplier(breakdown_info, intensity_scale, speed_scale)
 ##
-## Animate the category level multiplier as a floating "×N" text.
+## Animate the effective category-level factor as floating multiplier/divisor text.
 ## Shows above the dice area after dice animations complete.
 func _animate_category_level_multiplier(breakdown_info: Dictionary, intensity_scale: float, speed_scale: float) -> void:
-	var category_level = breakdown_info.get("category_level", 1)
-	if category_level <= 1:
+	var effective_category_level = float(breakdown_info.get("effective_category_level_factor", breakdown_info.get("category_level", 1)))
+	if is_equal_approx(effective_category_level, 1.0):
 		return  # No animation needed for level 1
 	
 	var base_score = breakdown_info.get("base_score", 0)
 	var score_after_level = breakdown_info.get("score_after_level", base_score)
+	var level_display = _resolve_multiplier_display(effective_category_level, {
+		"display_mode": breakdown_info.get("category_level_display_mode", ""),
+		"display_operator": breakdown_info.get("category_level_display_operator", ""),
+		"display_value": breakdown_info.get("category_level_display_value", effective_category_level)
+	})
 	
-	print("[ScoringAnimationController] Animating category level multiplier: ×%d (base %d → %d)" % [category_level, base_score, score_after_level])
+	print("[ScoringAnimationController] Animating category level factor: %s%.1f (base %d → %s)" % [level_display.operator, level_display.value, base_score, str(score_after_level)])
 	
 	# Position above the dice area - centered horizontally
 	var screen_size = get_viewport().get_visible_rect().size
 	var level_position = Vector2(screen_size.x / 2, screen_size.y * 0.35)  # Upper third of screen
 	
-	# Create the level multiplier text with gold color
-	var level_text = "×%d" % category_level
-	var floating_number = _create_scoring_floating_number(level_position, level_text, 1.8 * intensity_scale, SCORING_TEXT_ADDITIVE, SCORING_ACCENT_MAGENTA, false)
+	# Create the level factor text with positive or negative styling based on direction.
+	var level_text = "%s%.1f" % [level_display.operator, level_display.value]
+	var level_color = SCORING_TEXT_ADDITIVE
+	if level_display.mode == "divide":
+		level_color = SCORING_TEXT_NEGATIVE
+	var floating_number = _create_scoring_floating_number(level_position, level_text, 1.8 * intensity_scale, level_color, SCORING_ACCENT_MAGENTA, false)
 	
 	if floating_number:
 		floating_number.float_duration = floating_number.float_duration / speed_scale
@@ -946,13 +999,16 @@ func create_floating_number(position: Vector2, value: String, scale_factor: floa
 		floating_number.float_duration = FLOAT_NUMBER_DURATION
 		floating_number.float_speed = FLOAT_NUMBER_SPEED
 
-## _show_colored_dice_effect(die, die_center, speed_scale)
+## _show_colored_dice_effect(die, die_center, speed_scale, die_index)
 ##
 ## Show additional floating effect for colored dice based on their color type.
-func _show_colored_dice_effect(die: Dice, die_center: Vector2, speed_scale: float) -> void:
+func _show_colored_dice_effect(die: Dice, die_center: Vector2, speed_scale: float, die_index: int) -> void:
 	var effect_text = ""
 	var effect_color = Color.WHITE
 	var accent_color = SCORING_ACCENT_MAGENTA
+	var used_dice_indices = current_breakdown_info.get("used_dice_indices", [])
+	var is_used = die_index in used_dice_indices
+	var score_modifier_manager = get_node_or_null("/root/ScoreModifierManager")
 	
 	# Determine effect text and color based on die color
 	match die.color:
@@ -963,13 +1019,33 @@ func _show_colored_dice_effect(die: Dice, die_center: Vector2, speed_scale: floa
 			effect_text = "+" + str(die.value)  # Red dice give additive bonus
 			effect_color = Color(1.0, 0.470588, 0.576471, 1.0)
 		DiceColor.Type.PURPLE:
-			effect_text = "x" + str(die.value)  # Purple dice give multiplier
+			var purple_factor = 2.0 if is_used else 1.0
+			var purple_effective = purple_factor
+			if score_modifier_manager and score_modifier_manager.has_method("get_effective_multiplier_factor"):
+				purple_effective = score_modifier_manager.get_effective_multiplier_factor(purple_factor)
+			var purple_display = _resolve_multiplier_display(purple_effective)
+			effect_text = "%s%.1f" % [purple_display.operator, purple_display.value]
 			effect_color = Color(0.886275, 0.560784, 0.72549, 1.0)
 			accent_color = SCORING_ACCENT_TEAL
+			if purple_display.mode == "divide":
+				effect_color = SCORING_TEXT_NEGATIVE
+				accent_color = SCORING_ACCENT_MAGENTA
 		DiceColor.Type.BLUE:
-			effect_text = "x" + str(die.value)  # Blue dice give multiplier (could also be "/" for division)
+			var blue_factor = 1.0
+			if is_used:
+				blue_factor = float(die.value)
+			elif die.value > 0:
+				blue_factor = 1.0 / float(die.value)
+			var blue_effective = blue_factor
+			if score_modifier_manager and score_modifier_manager.has_method("get_effective_multiplier_factor"):
+				blue_effective = score_modifier_manager.get_effective_multiplier_factor(blue_factor)
+			var blue_display = _resolve_multiplier_display(blue_effective)
+			effect_text = "%s%.1f" % [blue_display.operator, blue_display.value]
 			effect_color = SCORING_TEXT_MULTIPLIER
 			accent_color = SCORING_ACCENT_TEAL
+			if blue_display.mode == "divide":
+				effect_color = SCORING_TEXT_NEGATIVE
+				accent_color = SCORING_ACCENT_MAGENTA
 		_:
 			return  # No effect for NONE color
 	

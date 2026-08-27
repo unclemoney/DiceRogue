@@ -256,7 +256,7 @@ func _get_total_divider_instead() -> float:
 script = ExtResource("1_oh0j2")
 id = "the_division"
 display_name = "The Division"
-description = "All multiplier powerups now divide scores instead"
+description = "All multiplicative score factors now invert between multiply and divide"
 scene = ExtResource("2_ta17l")
 glyph_id = 14
 glow_color = Color(0, 0, 0, 0)

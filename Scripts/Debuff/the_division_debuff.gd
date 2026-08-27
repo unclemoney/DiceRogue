@@ -3,16 +3,16 @@ class_name TheDivisionDebuff
 
 ## TheDivisionDebuff
 ##
-## Converts all multiplier power-ups to work as dividers instead.
-## When active, any power-up that would normally multiply scores will instead divide them.
+## Inverts every multiplicative score factor.
+## When active, score bonuses that multiply now divide, and existing divisors invert into multipliers.
 ## Example: A 2.0 multiplier becomes 1/2.0 = 0.5 (dividing score by 2)
 
 var score_modifier_manager: Node
 
 ## apply(_target)
 ##
-## Enables division mode in the ScoreModifierManager to convert 
-## multipliers to dividers.
+## Enables division mode in the ScoreModifierManager so all score factors
+## use the inverted multiply/divide policy.
 func apply(_target) -> void:
 	print("[TheDivisionDebuff] Applied - Converting multipliers to dividers")
 	

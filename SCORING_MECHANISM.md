@@ -40,8 +40,8 @@ total_multiplier = regular_multipliers * dice_color_multipliers
 final_score = ceil(score_after_additives * total_multiplier)
 ```
 - **Regular Multipliers**: From PowerUps (PinHead, etc.) via ScoreModifierManager
-- **Dice Color Multipliers**: Purple dice multiply
-- **Division Mode**: If active, multipliers become dividers (1/multiplier)
+- **Dice Color Multipliers**: Purple and Blue dice contribute multiplicative score factors
+- **Division Mode**: If active, every non-zero multiplicative score factor is inverted. Bonuses become divisors, and existing divisors become multipliers.
 
 ### 6. Money Effects Phase
 ```gdscript
@@ -144,7 +144,7 @@ Calculation: ceil((25 + 5) × 6 × 2) = ceil(360) = 360
 ### Example 3: With Division Debuff
 ```
 Base Score: 30
-PowerUp wants ×4 multiplier
+Raw score factor: ×4
 Division mode active: 4 becomes ÷4 = ×0.25
 Final Score: ceil(30 × 0.25) = 8
 ```
