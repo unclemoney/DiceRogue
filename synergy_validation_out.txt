@@ -1,0 +1,1393 @@
+Godot Engine v4.4.1.stable.official.49a5bc7b6 - https://godotengine.org
+
+[ScoreModifierManager] Singleton initialized
+[PlayerEconomy] Ready - Starting money:100
+[RollStats] Singleton initialized
+[DiceColorManager] Loading colored dice data...
+[DiceColorManager] Loaded colored dice data: Green Dice
+[DiceColorManager] Loaded colored dice data: Red Dice
+[DiceColorManager] Loaded colored dice data: Purple Dice
+[DiceColorManager] Loaded colored dice data: Blue Dice
+[DiceColorManager] Loaded colored dice data: Yellow Dice
+[DiceColorManager] Loaded 5 colored dice types
+[DiceColorManager] Reset purchased colors for new game session
+[DiceColorManager] Initialized and added to dice_color_manager group
+Statistics Manager initialized
+[ProgressManager] Initializing progress tracking system
+[ProgressManager] Creating complete unlockable items for all game content
+[ProgressManager] Created 153 total unlockable items across all categories
+[ProgressManager] ===== LOAD PROFILE START =====
+[ProgressManager] Requested slot: 1
+[ProgressManager] Current slot before load: 1
+[ProgressManager] Current name before load: Player 1
+[ProgressManager] Loading from path: user://profile_1.save
+[ProgressManager] Updated current slot to: 1
+[ProgressManager] Updated current name to: Boston Stuggler
+[ProgressManager] Profile name from save_data: Boston Stuggler
+[UnlockableItem] Unlocked item: Step By Step
+[UnlockableItem] Unlocked item: Extra Rolls
+[UnlockableItem] Unlocked item: Allowance
+[UnlockableItem] Unlocked item: Plus A Dollar
+[UnlockableItem] Unlocked item: Roll Efficiency
+[UnlockableItem] Unlocked item: Extra Dice
+[UnlockableItem] Unlocked item: Evens No Odds
+[UnlockableItem] Unlocked item: Bonus Money
+[UnlockableItem] Unlocked item: Lock & Load
+[UnlockableItem] Unlocked item: Dice Diversity
+[UnlockableItem] Unlocked item: Melting Dice
+[UnlockableItem] Unlocked item: Foursome
+[UnlockableItem] Unlocked item: Chance 520
+[UnlockableItem] Unlocked item: Green Slime
+[UnlockableItem] Unlocked item: Chore Champion
+[UnlockableItem] Unlocked item: Pair Paradise
+[UnlockableItem] Unlocked item: Failed Money
+[UnlockableItem] Unlocked item: Full House Fortune
+[UnlockableItem] Unlocked item: Red Slime
+[UnlockableItem] Unlocked item: Lower Ten
+[UnlockableItem] Unlocked item: Purple Payout
+[UnlockableItem] Unlocked item: Chore Sprint
+[UnlockableItem] Unlocked item: Hot Streak
+[UnlockableItem] Unlocked item: Upper Bonus Multiplier
+[UnlockableItem] Unlocked item: Purple Slime
+[UnlockableItem] Unlocked item: Even Higher
+[UnlockableItem] Unlocked item: Extra Rainbow
+[UnlockableItem] Unlocked item: One-Roll Wonder
+[UnlockableItem] Unlocked item: Sweet Sixteen
+[UnlockableItem] Unlocked item: Highlighted Score
+[UnlockableItem] Unlocked item: Yahtzee Bonus Multiplier
+[UnlockableItem] Unlocked item: Plus The Last
+[UnlockableItem] Unlocked item: Modded Dice Mastery
+[UnlockableItem] Unlocked item: Blue Safety Net
+[UnlockableItem] Unlocked item: The Great Exchange
+[UnlockableItem] Unlocked item: Red Power Ranger
+[UnlockableItem] Unlocked item: Wild Dots
+[UnlockableItem] Unlocked item: Money Bags
+[UnlockableItem] Unlocked item: Debuff Destroyer
+[UnlockableItem] Unlocked item: Power Surge
+[UnlockableItem] Unlocked item: Challenge Easer
+[UnlockableItem] Unlocked item: Ungrounded
+[UnlockableItem] Unlocked item: Rainbow Surge
+[UnlockableItem] Unlocked item: Grand Master
+[UnlockableItem] Unlocked item: Snake Eyes
+[UnlockableItem] Unlocked item: The Piggy Bank
+[UnlockableItem] Unlocked item: Random Card Level
+[UnlockableItem] Unlocked item: The Replicator
+[UnlockableItem] Unlocked item: Yahtzeed Dice
+[UnlockableItem] Unlocked item: Lucky Streak
+[UnlockableItem] Unlocked item: Steady Progress
+[UnlockableItem] Unlocked item: Combo King
+[UnlockableItem] Unlocked item: Channel Champion
+[UnlockableItem] Unlocked item: Ones Avoider
+[UnlockableItem] Unlocked item: Upper Section Avoider
+[UnlockableItem] Unlocked item: Lower Section Avoider
+[UnlockableItem] Unlocked item: Quick Cash
+[UnlockableItem] Unlocked item: Any Score
+[UnlockableItem] Unlocked item: Free Chores
+[UnlockableItem] Unlocked item: Score Reroll
+[UnlockableItem] Unlocked item: Ones Upgrade
+[UnlockableItem] Unlocked item: Twos Upgrade
+[UnlockableItem] Unlocked item: Lucky Upgrade
+[UnlockableItem] Unlocked item: One Extra Dice
+[UnlockableItem] Unlocked item: Power Up Shop Number
+[UnlockableItem] Unlocked item: Threes Upgrade
+[UnlockableItem] Unlocked item: Fours Upgrade
+[UnlockableItem] Unlocked item: All Chores
+[UnlockableItem] Unlocked item: Half Price
+[UnlockableItem] Unlocked item: Loss Leader
+[UnlockableItem] Unlocked item: Insurance Policy
+[UnlockableItem] Unlocked item: Clearance Rack
+[UnlockableItem] Unlocked item: Double Existing
+[UnlockableItem] Unlocked item: Fives Upgrade
+[UnlockableItem] Unlocked item: Sixes Upgrade
+[UnlockableItem] Unlocked item: Evens Upgrade
+[UnlockableItem] Unlocked item: Odds Upgrade
+[UnlockableItem] Unlocked item: Dice Surge
+[UnlockableItem] Unlocked item: Double Or Nothing
+[UnlockableItem] Unlocked item: Three of a Kind Upgrade
+[UnlockableItem] Unlocked item: Four of a Kind Upgrade
+[UnlockableItem] Unlocked item: Chance Upgrade
+[UnlockableItem] Unlocked item: Stat Cashout
+[UnlockableItem] Unlocked item: Visit The Shop
+[UnlockableItem] Unlocked item: Loaded Dice
+[UnlockableItem] Unlocked item: Add Max Power Up
+[UnlockableItem] Unlocked item: Random Uncommon Power Up
+[UnlockableItem] Unlocked item: Full House Upgrade
+[UnlockableItem] Unlocked item: Small Straight Upgrade
+[UnlockableItem] Unlocked item: Upper Section Boost
+[UnlockableItem] Unlocked item: Score Amplifier
+[UnlockableItem] Unlocked item: Large Straight Upgrade
+[UnlockableItem] Unlocked item: Even Odd Full House Upgrade
+[UnlockableItem] Unlocked item: Lower Section Boost
+[UnlockableItem] Unlocked item: Score Streak
+[UnlockableItem] Unlocked item: Channel Bonus
+[UnlockableItem] Unlocked item: Reroll Master
+[UnlockableItem] Unlocked item: Bonus Collector
+[UnlockableItem] Unlocked item: Lucky Seven
+[UnlockableItem] Unlocked item: Master Upgrade
+[UnlockableItem] Unlocked item: Ultimate Reroll
+[UnlockableItem] Unlocked item: Even Only
+[UnlockableItem] Unlocked item: Odd Only
+[UnlockableItem] Unlocked item: Gold Six
+[UnlockableItem] Unlocked item: High Roller
+[UnlockableItem] Unlocked item: Channel Veteran
+[UnlockableItem] Unlocked item: Precision Roller
+[UnlockableItem] Unlocked item: Green Dice
+[UnlockableItem] Unlocked item: Red Dice
+[UnlockableItem] Unlocked item: Purple Dice
+[UnlockableItem] Unlocked item: Blue Dice
+[UnlockableItem] Unlocked item: Atari
+[UnlockableItem] Unlocked item: NES
+[UnlockableItem] Unlocked item: SNES
+[UnlockableItem] Unlocked item: Sega
+[UnlockableItem] Unlocked item: PlayStation
+[UnlockableItem] Unlocked item: Sega Saturn
+[UnlockableItem] Unlocked item: D4 Dice Set
+[UnlockableItem] Unlocked item: D8 Dice Set
+[UnlockableItem] Unlocked item: D12 Dice Set
+[UnlockableItem] Unlocked item: D20 Dice Set
+[GameSettings] Settings saved successfully
+[ProgressManager] Loaded FX settings from profile
+[ProgressManager] Loaded profile 1: Boston Stuggler (121 unlocked items)
+[ProgressManager] Final state - slot: 1, name: Boston Stuggler
+[ProgressManager] ===== LOAD PROFILE END =====
+[AudioManager] Initializing...
+[AudioManager] Loaded: res://Resources/Audio/DICE/DICE_ROLL_1.wav
+[AudioManager] Loaded: res://Resources/Audio/DICE/DICE_ROLL_2.wav
+[AudioManager] Loaded: res://Resources/Audio/DICE/DICE_ROLL_3.wav
+[AudioManager] Loaded: res://Resources/Audio/DICE/DICE_ROLL_4.wav
+[AudioManager] Loaded: res://Resources/Audio/DICE/DICE_ROLL_5.wav
+[AudioManager] Loaded scoring sound
+[AudioManager] Loaded money sound
+[AudioManager] Loaded button click sound
+[AudioManager] Loaded firework sound
+[AudioManager] Loaded dice click sound
+[AudioManager] Loaded swoosh sound
+[AudioManager] Loaded fan out sound
+[AudioManager] Loaded fan in sound
+[AudioManager] Loaded tab switch sound
+[AudioManager] Loaded money tick sound
+[AudioManager] Loaded denied sound
+[AudioManager] Loaded confirm sound
+[AudioManager] Loaded dice land sound
+[AudioManager] Loaded sell sound
+[AudioManager] Loaded round start sound
+[AudioManager] Loaded static burst sound
+[AudioManager] Loaded challenge reveal sound
+[AudioManager] Loaded dice spawn sound
+[AudioManager] Loaded jackpot sound
+[AudioManager] Loaded streak sound
+[AudioManager] Loaded next turn sound
+[AudioManager] Loaded shop open sound
+[AudioManager] Loaded powerup apply sound
+[AudioManager] Loaded threat alarm sound
+[AudioManager] Loaded victory sound
+[AudioManager] Loaded scorecard upgrade sound
+[AudioManager] Loaded dice land sound
+[AudioManager] Ready with 5 dice sounds loaded
+[MusicManager] Initializing...
+[MusicManager] Loaded BOTTOM_LAYER.wav - duration: 12.000s
+[MusicManager] Loaded LAYER_1_A.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_1_B.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_2_A.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_2_B.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_2_C.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_A.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_B.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_C.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_D.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_E.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_F.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_G.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_H.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_3_I.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_4_A.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_4_B.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_A.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_B.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_C.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_D.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_E.wav (duration: 12.000s)
+[MusicManager] Loaded LAYER_5_F.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_1.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_2.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_3.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_4.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_5.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_6.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_7.wav (duration: 12.000s)
+[MusicManager] Loaded CRASH_8.wav (duration: 12.000s)
+[MusicManager] Layer loading complete:
+[MusicManager]   LAYER_1: 2 variants
+[MusicManager]   LAYER_2: 3 variants
+[MusicManager]   LAYER_3: 9 variants
+[MusicManager]   LAYER_4: 2 variants
+[MusicManager]   LAYER_5: 6 variants
+[MusicManager] CRASH variants loaded: 8
+[MusicManager] Created 8 audio players
+[MusicManager] Layer 1: chose variant index 1 (history: [1])
+[MusicManager] Layer 2: chose variant index 0 (history: [0])
+[MusicManager] Layer 3: chose variant index 5 (history: [5])
+[MusicManager] Layer 4: chose variant index 0 (history: [0])
+[MusicManager] Layer 5: chose variant index 4 (history: [4])
+[MusicManager] Playback started at intensity 0
+[MusicManager] Ready - base loop duration: 12.000s, 5 layer groups loaded
+[GameSettings] Initializing...
+[AudioManager] Master volume set to: -1.9 dB
+[MusicManager] Music volume set to: -4.4 dB
+[GameSettings] Settings loaded successfully
+[GameSettings] Ready - Active profile slot: 1
+[TutorialManager] Initializing tutorial system
+[TutorialManager] Step order: ["intro", "yahtzee_basics_1", "yahtzee_basics_2", "yahtzee_basics_3", "shop_button", "shop_overview", "start_first_round", "roll_button", "lock_dice", "next_turn_button", "scorecard_intro", "scorecard_levels", "scoring_system_1", "scoring_system_2", "scoring_system_3", "powerups_intro", "powerups_ratings", "consumables_intro", "challenges_intro", "debuffs_intro", "chores_intro", "chores_mood", "synergy_intro", "synergy_rainbow", "next_round_button", "tutorial_complete"]
+[TutorialManager] Loaded 26 tutorial steps
+[TutorialManager] Tutorial completed: true, In progress: true
+[GameRNG] Initialized
+[GameSaveManager] Initialized
+[CRTManager] Initialized with TV off state
+
+=== DiceHand Initializing ===
+[DiceHand] dice_area_center:(640.0, 200.0)
+[DiceHand] dice_area_size:(680.0, 200.0)
+[DiceHand] start_position (legacy):(640.0, 530.0)
+[DiceHand] Added to 'dice_hand' group
+
+=== Switching toD6Dice ===
+[DiceHand] Successfully switched toD6dice
+[Scorecard] Ready - Added to 'scorecard' group
+[ScoreCardUI] Custom theme applied successfully
+[ScoreCardUI] ExtraInfo RichTextLabel found and BBCode enabled
+[ScoreCardUI] Applied transparent style to additive label for shader visibility
+[ScoreCardUI] Applied transparent style to multiplier label for shader visibility
+[PowerUpUI] Initializing new spine-based system...
+[PowerUpUI] Hover tooltip styling applied
+[PowerUpUI] New spine-based system initialized
+[ConsumableUI] Initializing new spine-based system...
+[ConsumableUI] Creating background for fanned cards
+[ConsumableUI] Applying direct hover tooltip style
+[ConsumableUI] Applying direct hover label style
+[ConsumableUI] Found Container under VBoxContainer
+[ConsumableUI] Created vertical list with 4 rows
+[ConsumableUI] New spine-based system initialized
+[ChallengeUI] Initializing...
+[ChallengeUI] challenge_icon_scene set:true
+[ChallengeUI] Initialization complete
+[ChallengeUI] Container visible:true
+[ChallengeUI] Container rect size:(0.0, 0.0)
+[ChallengeUI] Container global position:(38.0, 77.0)
+[DebuffUI] Initializing...
+[DebuffUI] Created 4 fixed slots
+[DebuffUI] Initialization complete
+[AudioManager] Connected click sound to button: OverlayButton
+[AudioManager] Connected click sound to button: OverlayButton
+[AudioManager] Connected click sound to button: OverlayButton
+[ShopUI] Initializing...
+PowerUpManager path:../PowerUpManager
+ConsumableManager path:../ConsumableManager
+ModManager path:../ModManager
+[ShopUI] Styling shop title
+[ShopUI] Shop title styling applied
+[ShopUI] Configuring mouse input for background elements...
+[ShopUI] Set PanelContainer mouse filter to IGNORE
+[ShopUI] Set TextureRect mouse filter to IGNORE
+[ShopUI] Set TabContainer mouse filter to PASS
+[ShopUI] Mouse input configuration complete
+[ShopUI] Preparing reroll footer state
+[ShopUI] Applying VCR font and styling to shop tabs
+[ShopUI] Styling containers for better centered layout
+[ShopUI] Attempting to improve container layout for centering
+[ShopUI] Creating centered layout for tab:Pogs
+[ShopUI] Adding shelf background to tab:Pogs
+[ShopUI] Shelf background added to:Pogs
+[ShopUI] Adding footer UI to tab:Pogs
+[AudioManager] Connected click sound to button: LeftArrow
+[AudioManager] Connected click sound to button: RerollButton
+[AudioManager] Connected click sound to button: RightArrow
+[ShopUI] Created centered layout for:Pogs
+[ShopUI] Creating centered layout for tab:Coupons
+[ShopUI] Adding shelf background to tab:Coupons
+[ShopUI] Shelf background added to:Coupons
+[ShopUI] Adding footer UI to tab:Coupons
+[AudioManager] Connected click sound to button: LeftArrow
+[AudioManager] Connected click sound to button: RerollButton
+[AudioManager] Connected click sound to button: RightArrow
+[ShopUI] Created centered layout for:Coupons
+[ShopUI] Creating centered layout for tab:Mods
+[ShopUI] Adding footer UI to tab:Mods
+[AudioManager] Connected click sound to button: LeftArrow
+[AudioManager] Connected click sound to button: RightArrow
+[ShopUI] Created centered layout for:Mods
+[ShopUI] Creating centered layout for tab:Colors
+[ShopUI] Adding footer UI to tab:Colors
+[AudioManager] Connected click sound to button: LeftArrow
+[AudioManager] Connected click sound to button: RightArrow
+[ShopUI] Created centered layout for:Colors
+[ShopUI] Creating centered layout for tab:VIPCards
+[ShopUI] Adding shelf background to tab:VIPCards
+[ShopUI] Shelf background added to:VIPCards
+[ShopUI] Adding footer UI to tab:VIPCards
+[AudioManager] Connected click sound to button: LeftArrow
+[AudioManager] Connected click sound to button: RightArrow
+[ShopUI] Created centered layout for:VIPCards
+[ShopUI] Styled grid container:ItemContainer
+[ShopUI] Styled grid container:ItemContainer
+[ShopUI] Styled grid container:ItemContainer
+[ShopUI] Styled grid container:ItemContainer
+[ShopUI] Styled grid container:ItemContainer
+[ShopUI] Applying improved shop background styling
+[ShopUI] Shop background styling applied
+[ShopUI] Tab container styling applied
+[PowerUpManager] Getting available power-ups
+[PowerUpManager] Definitions loaded:0
+[PowerUpManager] Available power-ups:[]
+[ShopUI] Backdrop click-to-close connected
+[ShopUI] Styling close button
+▶ GameController._ready()
+[DebugPanel] Setting as singleton instance: DebugPanel:<Control#323196293374>
+[AudioManager] Connected click sound to button: @Button@23
+[AudioManager] Connected click sound to button: @Button@24
+[AudioManager] Connected click sound to button: @Button@25
+[AudioManager] Connected click sound to button: @Button@26
+[AudioManager] Connected click sound to button: @Button@27
+[AudioManager] Connected click sound to button: @Button@28
+[AudioManager] Connected click sound to button: @Button@29
+[AudioManager] Connected click sound to button: @Button@35
+[AudioManager] Connected click sound to button: @Button@39
+[PowerUpManager] Getting available power-ups
+[PowerUpManager] Definitions loaded:0
+[PowerUpManager] Available power-ups:[]
+[ConsumableManager] Getting available consumables
+Available consumables:[]
+[AudioManager] Connected click sound to button: @Button@55
+[AudioManager] Connected click sound to button: @Button@56
+[AudioManager] Connected click sound to button: @Button@57
+[AudioManager] Connected click sound to button: @Button@58
+[AudioManager] Connected click sound to button: @Button@59
+[AudioManager] Connected click sound to button: @Button@60
+[PowerUpManager] Getting available power-ups
+[PowerUpManager] Definitions loaded:0
+[PowerUpManager] Available power-ups:[]
+[ConsumableManager] Getting available consumables
+Available consumables:[]
+[ModManager] Getting available mods
+Available mods:[]
+[AudioManager] Connected click sound to button: @Button@94
+[AudioManager] Connected click sound to button: @Button@95
+[AudioManager] Connected click sound to button: @Button@96
+[AudioManager] Connected click sound to button: @Button@97
+[AudioManager] Connected click sound to button: @Button@98
+[AudioManager] Connected click sound to button: @Button@99
+[AudioManager] Connected click sound to button: @Button@100
+[AudioManager] Connected click sound to button: @Button@101
+[AudioManager] Connected click sound to button: @Button@104
+[AudioManager] Connected click sound to button: @Button@105
+[AudioManager] Connected click sound to button: @Button@106
+[AudioManager] Connected click sound to button: @Button@107
+[AudioManager] Connected click sound to button: @Button@108
+[AudioManager] Connected click sound to button: @Button@109
+[AudioManager] Connected click sound to button: @Button@110
+[AudioManager] Connected click sound to button: @Button@111
+[AudioManager] Connected click sound to button: @Button@112
+[AudioManager] Connected click sound to button: @Button@113
+[AudioManager] Connected click sound to button: @Button@114
+[AudioManager] Connected click sound to button: @Button@117
+[AudioManager] Connected click sound to button: @Button@118
+[AudioManager] Connected click sound to button: @Button@119
+[AudioManager] Connected click sound to button: @Button@120
+[AudioManager] Connected click sound to button: @Button@121
+[AudioManager] Connected click sound to button: @Button@122
+[AudioManager] Connected click sound to button: @Button@123
+[AudioManager] Connected click sound to button: @Button@124
+[AudioManager] Connected click sound to button: @Button@125
+[AudioManager] Connected click sound to button: @Button@126
+[AudioManager] Connected click sound to button: @Button@127
+[AudioManager] Connected click sound to button: @Button@128
+[AudioManager] Connected click sound to button: @Button@131
+[AudioManager] Connected click sound to button: @Button@132
+[AudioManager] Connected click sound to button: @Button@133
+[AudioManager] Connected click sound to button: @Button@134
+[AudioManager] Connected click sound to button: @Button@135
+[AudioManager] Connected click sound to button: @Button@136
+[AudioManager] Connected click sound to button: @Button@137
+[AudioManager] Connected click sound to button: @Button@138
+[AudioManager] Connected click sound to button: @Button@139
+[AudioManager] Connected click sound to button: @Button@140
+[AudioManager] Connected click sound to button: @Button@141
+[AudioManager] Connected click sound to button: @Button@142
+[AudioManager] Connected click sound to button: @Button@143
+[AudioManager] Connected click sound to button: @Button@144
+[AudioManager] Connected click sound to button: @Button@145
+[AudioManager] Connected click sound to button: @Button@146
+[PowerUpManager] Getting available power-ups
+[PowerUpManager] Definitions loaded:0
+[PowerUpManager] Available power-ups:[]
+[ConsumableManager] Getting available consumables
+Available consumables:[]
+[ModManager] Getting available mods
+Available mods:[]
+[AudioManager] Connected click sound to button: @Button@155
+[AudioManager] Connected click sound to button: @Button@158
+[AudioManager] Connected click sound to button: @Button@159
+[AudioManager] Connected click sound to button: @Button@160
+[AudioManager] Connected click sound to button: @Button@161
+[AudioManager] Connected click sound to button: @Button@162
+[AudioManager] Connected click sound to button: @Button@163
+[AudioManager] Connected click sound to button: @Button@164
+[AudioManager] Connected click sound to button: @Button@165
+[AudioManager] Connected click sound to button: @Button@166
+[AudioManager] Connected click sound to button: @Button@167
+[AudioManager] Connected click sound to button: @Button@168
+[AudioManager] Connected click sound to button: @Button@169
+[AudioManager] Connected click sound to button: @Button@170
+[AudioManager] Connected click sound to button: @Button@171
+[AudioManager] Connected click sound to button: @Button@172
+[AudioManager] Connected click sound to button: @Button@173
+[AudioManager] Connected click sound to button: @Button@174
+[AudioManager] Connected click sound to button: @Button@175
+[AudioManager] Connected click sound to button: @Button@176
+[AudioManager] Connected click sound to button: @Button@177
+[AudioManager] Connected click sound to button: @Button@178
+[AudioManager] Connected click sound to button: @Button@179
+[AudioManager] Connected click sound to button: @Button@180
+[AudioManager] Connected click sound to button: @Button@181
+[AudioManager] Connected click sound to button: @Button@182
+[AudioManager] Connected click sound to button: @Button@183
+[AudioManager] Connected click sound to button: @Button@184
+[AudioManager] Connected click sound to button: @Button@185
+[AudioManager] Connected click sound to button: @Button@188
+[AudioManager] Connected click sound to button: @Button@189
+[AudioManager] Connected click sound to button: @Button@190
+[AudioManager] Connected click sound to button: @Button@191
+[AudioManager] Connected click sound to button: @Button@192
+[AudioManager] Connected click sound to button: @Button@193
+[AudioManager] Connected click sound to button: @Button@194
+[AudioManager] Connected click sound to button: @Button@195
+[AudioManager] Connected click sound to button: @Button@198
+[AudioManager] Connected click sound to button: @Button@199
+[AudioManager] Connected click sound to button: @Button@200
+[AudioManager] Connected click sound to button: @Button@201
+[AudioManager] Connected click sound to button: @Button@202
+[AudioManager] Connected click sound to button: @Button@203
+[AudioManager] Connected click sound to button: @Button@204
+[AudioManager] Connected click sound to button: @Button@205
+[AudioManager] Connected click sound to button: @Button@208
+[AudioManager] Connected click sound to button: @Button@209
+[AudioManager] Connected click sound to button: @Button@210
+[AudioManager] Connected click sound to button: @Button@211
+[AudioManager] Connected click sound to button: @Button@212
+[AudioManager] Connected click sound to button: @Button@213
+[AudioManager] Connected click sound to button: @Button@214
+[AudioManager] Connected click sound to button: @Button@215
+[AudioManager] Connected click sound to button: @Button@216
+[AudioManager] Connected click sound to button: @Button@217
+[AudioManager] Connected click sound to button: @Button@218
+[AudioManager] Connected click sound to button: @Button@219
+[AudioManager] Connected click sound to button: @Button@220
+[AudioManager] Connected click sound to button: @Button@221
+[AudioManager] Connected click sound to button: @Button@222
+[AudioManager] Connected click sound to button: @Button@225
+[AudioManager] Connected click sound to button: @Button@226
+[AudioManager] Connected click sound to button: @Button@227
+[AudioManager] Connected click sound to button: @Button@228
+[AudioManager] Connected click sound to button: @Button@229
+[AudioManager] Connected click sound to button: @Button@230
+[AudioManager] Connected click sound to button: @Button@231
+[AudioManager] Connected click sound to button: @Button@232
+[AudioManager] Connected click sound to button: @Button@233
+[AudioManager] Connected click sound to button: @Button@234
+[AudioManager] Connected click sound to button: @Button@235
+[AudioManager] Connected click sound to button: @Button@236
+[AudioManager] Connected click sound to button: @Button@237
+[AudioManager] Connected click sound to button: @Button@238
+[AudioManager] Connected click sound to button: @Button@239
+[AudioManager] Connected click sound to button: @Button@240
+[AudioManager] Connected click sound to button: @Button@241
+[AudioManager] Connected click sound to button: @Button@242
+[AudioManager] Connected click sound to button: @Button@243
+[AudioManager] Connected click sound to button: @Button@244
+[AudioManager] Connected click sound to button: @Button@245
+[AudioManager] Connected click sound to button: @Button@246
+[AudioManager] Connected click sound to button: @Button@247
+[AudioManager] Connected click sound to button: @Button@248
+[AudioManager] Connected click sound to button: @Button@249
+[AudioManager] Connected click sound to button: @Button@250
+[AudioManager] Connected click sound to button: @Button@251
+[AudioManager] Connected click sound to button: @Button@252
+[AudioManager] Connected click sound to button: @Button@253
+[AudioManager] Connected click sound to button: @Button@254
+[AudioManager] Connected click sound to button: @Button@255
+[AudioManager] Connected click sound to button: @Button@256
+[AudioManager] Connected click sound to button: @Button@257
+[AudioManager] Connected click sound to button: @Button@258
+[AudioManager] Connected click sound to button: @Button@259
+[AudioManager] Connected click sound to button: @Button@260
+[AudioManager] Connected click sound to button: @Button@261
+[AudioManager] Connected click sound to button: @Button@262
+[AudioManager] Connected click sound to button: @Button@263
+[AudioManager] Connected click sound to button: @Button@264
+[AudioManager] Connected click sound to button: @Button@265
+[AudioManager] Connected click sound to button: @Button@266
+[AudioManager] Connected click sound to button: @Button@267
+[AudioManager] Connected click sound to button: @Button@268
+[AudioManager] Connected click sound to button: @Button@269
+[AudioManager] Connected click sound to button: @Button@272
+[AudioManager] Connected click sound to button: @Button@273
+[AudioManager] Connected click sound to button: @Button@274
+[AudioManager] Connected click sound to button: @Button@275
+[AudioManager] Connected click sound to button: @Button@276
+[AudioManager] Connected click sound to button: @Button@277
+[AudioManager] Connected click sound to button: @Button@278
+[AudioManager] Connected click sound to button: @Button@279
+[AudioManager] Connected click sound to button: @Button@280
+[AudioManager] Connected click sound to button: @Button@281
+[AudioManager] Connected click sound to button: @Button@284
+[AudioManager] Connected click sound to button: @Button@285
+[AudioManager] Connected click sound to button: @Button@286
+[AudioManager] Connected click sound to button: @Button@287
+[AudioManager] Connected click sound to button: @Button@288
+[AudioManager] Connected click sound to button: @Button@289
+[AudioManager] Connected click sound to button: @Button@290
+[AudioManager] Connected click sound to button: @Button@291
+[AudioManager] Connected click sound to button: @Button@292
+[AudioManager] Connected click sound to button: @Button@293
+[AudioManager] Connected click sound to button: @Button@296
+[AudioManager] Connected click sound to button: @Button@297
+[AudioManager] Connected click sound to button: @Button@298
+[AudioManager] Connected click sound to button: @Button@299
+[AudioManager] Connected click sound to button: @Button@300
+[AudioManager] Connected click sound to button: @Button@301
+[AudioManager] Connected click sound to button: @Button@302
+[AudioManager] Connected click sound to button: @Button@303
+[AudioManager] Connected click sound to button: @Button@304
+[AudioManager] Connected click sound to button: @Button@305
+[AudioManager] Connected click sound to button: @Button@306
+[AudioManager] Connected click sound to button: @Button@307
+[AudioManager] Connected click sound to button: @Button@308
+[AudioManager] Connected click sound to button: @Button@309
+[AudioManager] Connected click sound to button: @Button@310
+[AudioManager] Connected click sound to button: @Button@311
+[AudioManager] Connected click sound to button: @Button@314
+[AudioManager] Connected click sound to button: @Button@315
+[AudioManager] Connected click sound to button: @Button@316
+[AudioManager] Connected click sound to button: @Button@317
+[AudioManager] Connected click sound to button: @Button@318
+[AudioManager] Connected click sound to button: @Button@319
+[AudioManager] Connected click sound to button: @Button@320
+[AudioManager] Connected click sound to button: @Button@321
+[AudioManager] Connected click sound to button: @Button@322
+[AudioManager] Connected click sound to button: @Button@323
+[AudioManager] Connected click sound to button: @Button@324
+[AudioManager] Connected click sound to button: @Button@325
+[AudioManager] Connected click sound to button: @Button@328
+[AudioManager] Connected click sound to button: @Button@329
+[AudioManager] Connected click sound to button: @Button@330
+[AudioManager] Connected click sound to button: @Button@331
+[AudioManager] Connected click sound to button: @Button@332
+[AudioManager] Connected click sound to button: @Button@333
+[AudioManager] Connected click sound to button: @Button@336
+[AudioManager] Connected click sound to button: @Button@337
+[AudioManager] Connected click sound to button: @Button@338
+[AudioManager] Connected click sound to button: @Button@339
+[AudioManager] Connected click sound to button: @Button@342
+[AudioManager] Connected click sound to button: @Button@343
+[AudioManager] Connected click sound to button: @Button@344
+[AudioManager] Connected click sound to button: @Button@345
+[AudioManager] Connected click sound to button: @Button@346
+[AudioManager] Connected click sound to button: @Button@347
+[AudioManager] Connected click sound to button: @Button@350
+[AudioManager] Connected click sound to button: @Button@351
+[AudioManager] Connected click sound to button: @Button@352
+[AudioManager] Connected click sound to button: @Button@355
+[AudioManager] Connected click sound to button: @Button@356
+[AudioManager] Connected click sound to button: @Button@357
+[AudioManager] Connected click sound to button: @Button@358
+[AudioManager] Connected click sound to button: @Button@359
+[AudioManager] Connected click sound to button: @Button@360
+[AudioManager] Connected click sound to button: @Button@361
+[AudioManager] Connected click sound to button: @Button@362
+[AudioManager] Connected click sound to button: @Button@363
+[AudioManager] Connected click sound to button: @Button@364
+[AudioManager] Connected click sound to button: @Button@365
+[AudioManager] Connected click sound to button: @Button@366
+[AudioManager] Connected click sound to button: @Button@367
+[AudioManager] Connected click sound to button: @Button@368
+[AudioManager] Connected click sound to button: @Button@369
+[AudioManager] Connected click sound to button: @Button@370
+[AudioManager] Connected click sound to button: @Button@371
+[AudioManager] Connected click sound to button: @Button@372
+[AudioManager] Connected click sound to button: @Button@373
+[AudioManager] Connected click sound to button: @Button@374
+[AudioManager] Connected click sound to button: @Button@382
+[AudioManager] Connected click sound to button: @Button@383
+[DebugPanel] Hiding panel
+[AudioManager] Connected click sound to button: OKButton
+[ProgressManager] Connecting to game scene signals...
+[ProgressManager] Connected to scorecard signals
+[ProgressManager] Connected to game controller signals
+[ProgressManager] Connected to turn tracker signals
+[ProgressManager] Connected to player economy signals
+[ProgressManager] Connected to dice color manager signals
+[ProgressManager] Connected to roll stats signals
+[ProgressManager] Game signal connections complete (9 new connections)
+[GameController] Connected to ProgressManager unlock signals
+[GameController] Connected to dice_rolled signal from GameButtonUI
+[GameController] Connected to roll_pressed signal from GameButtonUI
+[GameController] Setting up shop UI
+[GameController] Connected to consumable_used signal from ConsumableUI via forwarding handler
+[GameController] Connected to consumable_sold signal from ConsumableUI
+[GameController] Connected power_up_revoked signal to UI handler
+[ChoreUI] Connected to ChoresManager
+[GameController] Connected ChoreUI to ChoresManager
+[GameController] Connected to ChoresManager.mom_triggered
+[GameController] Connected to ChoresManager.mom_checkin
+[GameController] Connected to ChoresManager.request_chore_selection
+[GameController] Connected to ChoresManager.task_selected
+[CastManager] Loaded 6 characters, 6 story arcs
+[GameController] CastManager created programmatically
+[SynergyManager] Connected to GameController signals
+[GameController] Connected SynergyManager to GameController
+[GameController] VCR tracker UI bound to TurnTracker
+[GameController] VCR tracker UI bound to RoundManager
+[AudioManager] Connected click sound to button: CloseButton
+[GameController] Mall map popup wired to VCR tracker
+[ConsumableManager] Programmatically registering consumable:random_power_up_uncommon
+[ConsumableManager] Total registered consumables:1
+[ConsumableManager] Programmatically registering consumable:green_envy
+[ConsumableManager] Total registered consumables:2
+[ConsumableManager] Programmatically registering consumable:poor_house
+[ConsumableManager] Total registered consumables:3
+[ConsumableManager] Programmatically registering consumable:empty_shelves
+[ConsumableManager] Total registered consumables:4
+[ConsumableManager] Programmatically registering consumable:the_rarities
+[ConsumableManager] Total registered consumables:5
+[ConsumableManager] Programmatically registering consumable:the_pawn_shop
+[ConsumableManager] Total registered consumables:6
+[ConsumableManager] Programmatically registering consumable:one_extra_dice
+[ConsumableManager] Total registered consumables:7
+[ConsumableManager] Programmatically registering consumable:go_broke_or_go_home
+[ConsumableManager] Total registered consumables:8
+[ConsumableManager] Programmatically registering consumable:ones_upgrade
+[ConsumableManager] Total registered consumables:9
+[ConsumableManager] Programmatically registering consumable:twos_upgrade
+[ConsumableManager] Total registered consumables:10
+[ConsumableManager] Programmatically registering consumable:threes_upgrade
+[ConsumableManager] Total registered consumables:11
+[ConsumableManager] Programmatically registering consumable:fours_upgrade
+[ConsumableManager] Total registered consumables:12
+[ConsumableManager] Programmatically registering consumable:fives_upgrade
+[ConsumableManager] Total registered consumables:13
+[ConsumableManager] Programmatically registering consumable:sixes_upgrade
+[ConsumableManager] Total registered consumables:14
+[ConsumableManager] Programmatically registering consumable:three_of_a_kind_upgrade
+[ConsumableManager] Total registered consumables:15
+[ConsumableManager] Programmatically registering consumable:four_of_a_kind_upgrade
+[ConsumableManager] Total registered consumables:16
+[ConsumableManager] Programmatically registering consumable:full_house_upgrade
+[ConsumableManager] Total registered consumables:17
+[ConsumableManager] Programmatically registering consumable:small_straight_upgrade
+[ConsumableManager] Total registered consumables:18
+[ConsumableManager] Programmatically registering consumable:large_straight_upgrade
+[ConsumableManager] Total registered consumables:19
+[ConsumableManager] Programmatically registering consumable:evens_upgrade
+[ConsumableManager] Total registered consumables:20
+[ConsumableManager] Programmatically registering consumable:odds_upgrade
+[ConsumableManager] Total registered consumables:21
+[ConsumableManager] Programmatically registering consumable:even_odd_full_house_upgrade
+[ConsumableManager] Total registered consumables:22
+[ConsumableManager] Programmatically registering consumable:yahtzee_upgrade
+[ConsumableManager] Total registered consumables:23
+[ConsumableManager] Programmatically registering consumable:chance_upgrade
+[ConsumableManager] Total registered consumables:24
+[ConsumableManager] Programmatically registering consumable:all_categories_upgrade
+[ConsumableManager] Total registered consumables:25
+[ConsumableManager] Programmatically registering consumable:dice_surge
+[ConsumableManager] Total registered consumables:26
+[ConsumableManager] Programmatically registering consumable:stat_cashout
+[ConsumableManager] Total registered consumables:27
+[ConsumableManager] Programmatically registering consumable:upper_section_boost
+[ConsumableManager] Total registered consumables:28
+[ConsumableManager] Programmatically registering consumable:lower_section_boost
+[ConsumableManager] Total registered consumables:29
+[ConsumableManager] Programmatically registering consumable:score_streak
+[ConsumableManager] Total registered consumables:30
+[ConsumableManager] Programmatically registering consumable:score_amplifier
+[ConsumableManager] Total registered consumables:31
+[ConsumableManager] Programmatically registering consumable:bonus_collector
+[ConsumableManager] Total registered consumables:32
+[GameController] Handler expects args:1
+PowerUpManager: defs count =7
+  slot 0 → <Resource#-9223371943607007377> (id='extra_dice')
+  slot 1 → <Resource#-9223371942852032649> (id='extra_rolls')
+  slot 2 → <Resource#-9223371920488003556> (id='bonus_money')
+  slot 3 → <Resource#-9223371903442351983> (id='step_by_step')
+  slot 4 → <Resource#-9223371854486435352> (id='allowance')
+  slot 5 → <Resource#-9223371828666299694> (id='purple_payout')
+  slot 6 → <Resource#-9223371896614025007> (id='roll_efficiency')
+[ShopUI] Manager ready. Waiting for2more
+ChallengeManager: loading definitions...
+ChallengeManager: defs count =0
+ModManager: defs count =7
+ModManager: Registering mod:even_only
+ModManager: Registering mod:five_by_one
+ModManager: Registering mod:gold_six
+ModManager: Registering mod:high_roller
+ModManager: Registering mod:odd_only
+ModManager: Registering mod:three_but_three
+ModManager: Registering mod:wildcard
+[ShopUI] Manager ready. Waiting for1more
+ConsumableManager: defs count =22
+  slot 0 → <Resource#-9223371942147389567> (id='add_max_power_up')
+  slot 1 → <Resource#-9223371941526632569> (id='any_score')
+  slot 2 → <Resource#-9223371940972984435> (id='double_existing')
+  slot 3 → <Resource#-9223371939328817261> (id='double_or_nothing')
+  slot 4 → <Resource#-9223371984895736290> (id='empty_shelves')
+  slot 5 → <Resource#-9223371968789608823> (id='go_broke_or_go_home')
+  slot 6 → <Resource#-9223371992646810094> (id='green_envy')
+  slot 7 → <Resource#-9223371975550826929> (id='one_extra_dice')
+  slot 8 → <Resource#-9223371991891835368> (id='poor_house')
+  slot 9 → <Resource#-9223371938355738722> (id='power_up_shop_num')
+  slot 10 → <Resource#-9223371937718204508> (id='quick_cash')
+  slot 11 → <Resource#-9223371995029174774> (id='random_power_up_uncommon')
+  slot 12 → <Resource#-9223371937147779156> (id='score_reroll')
+  slot 13 → <Resource#-9223371983486450110> (id='the_pawn_shop')
+  slot 14 → <Resource#-9223371984191093210> (id='the_rarities')
+  slot 15 → <Resource#-9223371936359249996> (id='three_more_rolls')
+  slot 16 → <Resource#-9223371935654606918> (id='lucky_upgrade')
+  slot 17 → <Resource#-9223371935100958784> (id='half_price')
+  slot 18 → <Resource#-9223371934547310650> (id='loss_leader')
+  slot 19 → <Resource#-9223371933993662516> (id='insurance_policy')
+  slot 20 → <Resource#-9223371933440014382> (id='clearance_rack')
+  slot 21 → <Resource#-9223371932668262440> (id='loaded_dice')
+[ShopUI] Manager ready. Waiting for0more
+[ShopUI] All managers ready - populating shop
+
+=== Populating Shop Items ===
+[PowerUpManager] Getting available power-ups
+[PowerUpManager] Definitions loaded:7
+[PowerUpManager] Found power-up:extra_dice
+[PowerUpManager] Found power-up:extra_rolls
+[PowerUpManager] Found power-up:bonus_money
+[PowerUpManager] Found power-up:step_by_step
+[PowerUpManager] Found power-up:allowance
+[PowerUpManager] Found power-up:purple_payout
+[PowerUpManager] Found power-up:roll_efficiency
+[PowerUpManager] Available power-ups:["extra_dice", "extra_rolls", "bonus_money", "step_by_step", "allowance", "purple_payout", "roll_efficiency"]
+[ShopUI] Rep tier 1 (Questionable) hides 2 POGs: ["extra_dice", "extra_rolls"]
+
+[ShopUI] Building weighted power-up selection:
+  - Bonus Money (U): 25% chance
+  - Step by Step (C): 60% chance
+  - Allowance (C): 60% chance
+  - Purple Payout (C): 60% chance
+  - Roll Efficiency (C): 60% chance
+[ShopUI] Selecting 2 power-ups from weighted pool of 265 entries
+  ✓ Selected: Roll Efficiency (C)
+  ✓ Selected: Bonus Money (U)
+[ShopUI] Final selection: 2 power-ups
+[ShopUI] Filtering out locked consumable: green_envy
+[ShopUI] Filtering out locked consumable: poor_house
+[ShopUI] Filtering out locked consumable: empty_shelves
+[ShopUI] Filtering out locked consumable: the_rarities
+[ShopUI] Filtering out locked consumable: the_pawn_shop
+[ShopUI] Filtering out locked consumable: go_broke_or_go_home
+[ShopUI] Filtering out locked consumable: yahtzee_upgrade
+[ShopUI] Filtering out locked consumable: three_more_rolls
+[ShopUI] Filtering out locked mod: five_by_one
+[ShopUI] Filtering out locked mod: three_but_three
+[ShopUI] Filtering out locked mod: wildcard
+[ShopUI] Filtering out locked colored_dice: yellow_dice
+[ShopUI] Getting power-up container
+[ShopUI] Getting power-up container
+[AudioManager] Connected click sound to button: OverlayButton
+[ShopItem] Initializing:ShopItem
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:roll_efficiency
+[ShopItem] Setting up item:roll_efficiency
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:roll_efficiencytype:power_up
+[ShopUI] Getting power-up container
+[AudioManager] Connected click sound to button: OverlayButton
+[ShopItem] Initializing:@Control@406
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:bonus_money
+[ShopItem] Setting up item:bonus_money
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:bonus_moneytype:power_up
+[ShopUI] Getting consumable container
+[ShopUI] Getting consumable container
+[AudioManager] Connected click sound to button: OverlayButton
+[ShopItem] Initializing:ShopItem
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:sixes_upgrade
+[ShopItem] Setting up item:sixes_upgrade
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:sixes_upgradetype:consumable
+[ShopUI] Getting consumable container
+[AudioManager] Connected click sound to button: OverlayButton
+[ShopItem] Initializing:@Control@409
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:all_categories_upgrade
+[ShopItem] Setting up item:all_categories_upgrade
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:all_categories_upgradetype:consumable
+[ShopUI] Getting mod container
+[ShopUI] Getting mod container
+[AudioManager] Connected click sound to button: OverlayButton
+[ShopItem] Initializing:ShopItem
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:odd_only
+[ShopItem] Setting up item:odd_only
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:odd_onlytype:mod
+[ShopUI] Getting mod container
+[AudioManager] Connected click sound to button: OverlayButton
+[ShopItem] Initializing:@Control@412
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:even_only
+[ShopItem] Setting up item:even_only
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:even_onlytype:mod
+[ShopUI] Getting colored dice container
+[ShopUI] Getting colored dice container
+[AudioManager] Connected click sound to button: OverlayButton
+[ShopItem] Initializing:ShopItem
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:blue_dice
+[ShopItem] Setting up item:blue_dice
+[ShopItem] Set up colored dice icon with shader for:Blue
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:blue_dicetype:colored_dice
+[ShopUI] Getting colored dice container
+[AudioManager] Connected click sound to button: OverlayButton
+[ShopItem] Initializing:@Control@415
+[ShopItem] Connected buy button signal
+[ShopItem] Added tooltip to scene root (deferred)
+[ShopItem] Tooltip created with direct styling
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopUI] Created shop item instance for:purple_dice
+[ShopItem] Setting up item:purple_dice
+[ShopItem] Set up colored dice icon with shader for:Purple
+[ShopItem] Theme styling applied via shop_item_theme.tres
+[ShopItem] Tooltip created with direct styling
+[ShopUI] Added and connected item:purple_dicetype:colored_dice
+[ShopUI] Getting gaming console container
+[PowerUpManager] Getting available power-ups
+[PowerUpManager] Definitions loaded:7
+[PowerUpManager] Found power-up:extra_dice
+[PowerUpManager] Found power-up:extra_rolls
+[PowerUpManager] Found power-up:bonus_money
+[PowerUpManager] Found power-up:step_by_step
+[PowerUpManager] Found power-up:allowance
+[PowerUpManager] Found power-up:purple_payout
+[PowerUpManager] Found power-up:roll_efficiency
+[PowerUpManager] Available power-ups:["extra_dice", "extra_rolls", "bonus_money", "step_by_step", "allowance", "purple_payout", "roll_efficiency"]
+[ShopUI] Locked items populated
+[ShopUI] Populating unlocked items...
+[ShopUI] Unlocked items populated
+[DebuffManager] Loading definitions...
+DebuffManager: defs count =0
+DebuffManager: loading definitions...[]
+[RoundManager] Initializing
+[RoundManager] Round 1: store 'Store 1-1', target 0
+[RoundManager] Round 2: store 'Store 1-2', target 0
+[RoundManager] Round 3: store 'Store 1-3', target 0
+[RoundManager] Round 4: store 'Store 1-4', target 0
+[RoundManager] Round 5: store 'Store 1-5', target 0
+[RoundManager] Round 6: store 'Store 1-6', target 0
+[RoundManager] Initialized6rounds for zone1
+[DebugPanel] Another debug panel already exists (DebugPanel:<Control#323196293374>), removing duplicate (DebugPanel:<Control#293215407353>)
+[ScoringAnimationController] Initializing...
+[ChoresManager] Initialized with Mom mood: 5
+[ChoresManager] Check-in scheduled for roll 2 this round
+[ChoreUI] Task selected: Yahtzee of Fours
+[ChoresManager] New task: Yahtzee of Fours
+[ChoreUI] Initialized
+[SynergyManager] Initialized
+=== Synergy Test Scene Ready ===
+Press F12 to open debug panel and use Synergies tab
+Or wait for auto-tests to complete
+================================
+[ProgressManager] Connected to scorecard signals
+[ProgressManager] Connected to game controller signals
+[ProgressManager] Connected to turn tracker signals
+[ProgressManager] Connected to roll stats signals
+[ProgressManager] Game signal connections complete (0 new connections)
+[AudioManager] Connected click sound to button: OnesButton
+[AudioManager] Connected click sound to button: TwosButton
+[AudioManager] Connected click sound to button: ThreesButton
+[AudioManager] Connected click sound to button: FoursButton
+[AudioManager] Connected click sound to button: FivesButton
+[AudioManager] Connected click sound to button: SixesButton
+[AudioManager] Connected click sound to button: UppersubLabel
+[AudioManager] Connected click sound to button: UpperBonus
+[AudioManager] Connected click sound to button: UpperTotalButton
+[AudioManager] Connected click sound to button: ThreeofakindButton
+[AudioManager] Connected click sound to button: FourofakindButton
+[AudioManager] Connected click sound to button: FullhouseButton
+[AudioManager] Connected click sound to button: SmallstraightButton
+[AudioManager] Connected click sound to button: LargestraightButton
+[AudioManager] Connected click sound to button: ChanceButton
+[AudioManager] Connected click sound to button: YahtzeeButton
+[AudioManager] Connected click sound to button: YahtzeeBonusButton
+[AudioManager] Connected click sound to button: LowerTotalButton
+[AudioManager] Connected click sound to button: CloseButton
+[CRTManager] Auto-created TVPowerOverlay
+Shop button status: false
+[GameButtonUI] Connected to challenge_manager.challenge_completed signal
+[GameButtonUI] challenge_manager instance:ChallengeManager:<Node2D#293131521268>
+[ChoreUI] Progress updated: 0
+[ChoreUI] Task selected: Yahtzee of Fours
+[ChoreUI] Initialized with task: Yahtzee of Fours
+[GameRNG] Initialized with seed:3494
+[PowerUpManager] Getting available power-ups
+[PowerUpManager] Definitions loaded:7
+[PowerUpManager] Found power-up:extra_dice
+[PowerUpManager] Found power-up:extra_rolls
+[PowerUpManager] Found power-up:bonus_money
+[PowerUpManager] Found power-up:step_by_step
+[PowerUpManager] Found power-up:allowance
+[PowerUpManager] Found power-up:purple_payout
+[PowerUpManager] Found power-up:roll_efficiency
+[PowerUpManager] Available power-ups:["extra_dice", "extra_rolls", "bonus_money", "step_by_step", "allowance", "purple_payout", "roll_efficiency"]
+[ShopUI] Filtering out locked consumable: green_envy
+[ShopUI] Filtering out locked consumable: poor_house
+[ShopUI] Filtering out locked consumable: empty_shelves
+[ShopUI] Filtering out locked consumable: the_rarities
+[ShopUI] Filtering out locked consumable: the_pawn_shop
+[ShopUI] Filtering out locked consumable: go_broke_or_go_home
+[ShopUI] Filtering out locked consumable: yahtzee_upgrade
+[ShopUI] Filtering out locked consumable: three_more_rolls
+[ShopUI] Reroll cost reset to $25
+[ChoresManager] Check-in scheduled for roll 6 this round
+[ChoresManager] Round tracking reset - chores_completed_this_round: 0, chore_rewards_this_round: 0
+[ChoreUI] Progress updated: 0
+[ChoresManager] Chore selection queued: EASY=Lower Score, HARD=Yahtzee of Twos
+[GameController] Chore selection deferred - waiting for round intro
+[ChoresManager] Reset for new game - mood: 5, round: 1
+[RoundManager] Game starting. Initializing rounds for selected channel...
+[RoundManager] Round 1: store 'Store 1-1', target 0
+[RoundManager] Round 2: store 'Store 1-2', target 0
+[RoundManager] Round 3: store 'Store 1-3', target 0
+[RoundManager] Round 4: store 'Store 1-4', target 0
+[RoundManager] Round 5: store 'Store 1-5', target 0
+[RoundManager] Round 6: store 'Store 1-6', target 0
+[RoundManager] Initialized6rounds for zone1
+[RoundManager] Rounds data initialized for channel:unknown
+[RoundManager] Cleared colored dice purchases for new game has been disabled here
+[GameController] No three more rolls consumable found
+[GameController] No double or nothing consumable found
+[GameController] Round0completed successfully
+[GameButtonUI] Next Round button enabled on round_completed
+[StatisticsPanel] Content successfully created - 8 elements in core tab
+[GameButtonUI] Connected next_turn_pressed -> ScoreCardUI.auto_score_best_hand
+[ScoringAnimationController] Found DiceHand
+[ScoringAnimationController] Found GameController
+[ScoringAnimationController] Found ConsumableUI
+[ScoringAnimationController] Found PowerUpUI
+[ScoringAnimationController] Found ScoreCardUI
+[MusicManager] Connected to RoundManager.round_started
+[MusicManager] Connected to RoundManager.round_completed
+[MusicManager] Connected to ShopUI.shop_button_opened
+[MusicManager] Connected to ChallengeManager.challenge_completed
+[MusicManager] Connected to TurnTracker.game_over
+[MusicManager] Watching tree.node_added for scene changes
+
+
+╔══════════════════════════════════════════════════╗
+║          SYNERGY MANAGER TEST SUITE              ║
+╚══════════════════════════════════════════════════╝
+
+[TEST 1] Manager availability check...
+  ✓ SynergyManager found
+  ✓ PowerUpManager found
+  ✓ GameController found
+  ✓ ScoreModifierManager found
+[PowerUpUI] Clearing all power-ups
+[PowerUpUI] Cleared0power-ups
+[GameController] Cleared all power-ups
+
+[TEST 2] Initial state check...
+  ✓ All rating counts start at 0
+
+[TEST 3] PowerUp rating lookup...
+  ✓ extra_dice -> rating: R
+  ✓ extra_rolls -> rating: PG-13
+  ✓ bonus_money -> rating: G
+
+[TEST 4] PowerUp grant tracking...
+[PowerUpManager] Getting available power-ups
+[PowerUpManager] Definitions loaded:7
+[PowerUpManager] Found power-up:extra_dice
+[PowerUpManager] Found power-up:extra_rolls
+[PowerUpManager] Found power-up:bonus_money
+[PowerUpManager] Found power-up:step_by_step
+[PowerUpManager] Found power-up:allowance
+[PowerUpManager] Found power-up:purple_payout
+[PowerUpManager] Found power-up:roll_efficiency
+[PowerUpManager] Available power-ups:["extra_dice", "extra_rolls", "bonus_money", "step_by_step", "allowance", "purple_payout", "roll_efficiency"]
+  Granting: extra_dice (rating: R)
+
+=== Granting Power-Up: extra_dice ===
+[PowerUpUI] Adding power up:extra_dice
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:extra_dice
+[GameController] Connecting power-up signals for:extra_dice
+[SynergyManager] PowerUp granted: extra_dice (rating: R)
+[SynergyManager] Rating counts: { "G": 0, "PG": 0, "PG-13": 0, "R": 1, "NC-17": 0 }
+[GameController] Power-up granted and ready:extra_dice
+
+=== Power-up Auto-Activated ===
+[GameController] Activating power-up:extra_dice
+[GameSaveManager] Settled snapshot updated
+  ✓ Rating count increased correctly: R = 1
+
+[TEST 5] Available PowerUps by rating...
+  G: 3 PowerUps ["bonus_money", "allowance", "purple_payout"]
+  PG: 2 PowerUps ["step_by_step", "roll_efficiency"]
+  PG-13: 1 PowerUps ["extra_rolls"]
+  R: 1 PowerUps ["extra_dice"]
+  NC-17: 0 PowerUps []
+
+[TEST 6] ScoreModifierManager integration...
+  Current additive: 0
+  Current multiplier: 1.00x
+
+[TEST 7] Mixed-rating grant does not trigger matching-set bonus...
+[SynergyManager] PowerUp revoked: extra_dice (rating: R)
+[SynergyManager] Rating counts: { "G": 0, "PG": 0, "PG-13": 0, "R": 0, "NC-17": 0 }
+[PowerUpUI] Clearing all power-ups
+[PowerUpUI] Cleared1power-ups
+[GameController] Cleared all power-ups
+
+=== Granting Power-Up: bonus_money ===
+[PowerUpUI] Adding power up:bonus_money
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:bonus_money
+[GameController] Connecting power-up signals for:bonus_money
+[SynergyManager] PowerUp granted: bonus_money (rating: G)
+[SynergyManager] Rating counts: { "G": 1, "PG": 0, "PG-13": 0, "R": 0, "NC-17": 0 }
+[GameController] Power-up granted and ready:bonus_money
+
+=== Power-up Auto-Activated ===
+[GameController] Activating power-up:bonus_money
+[GameController] Connected to description_updated signal
+[GameController] Applied BonusMoneyPowerUp to scorecard
+[GameSaveManager] Settled snapshot updated
+
+=== Granting Power-Up: allowance ===
+[AllowancePowerUp] Added to 'power_ups' group
+[PowerUpUI] Adding power up:allowance
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:allowance
+[GameController] Connecting power-up signals for:allowance
+[SynergyManager] PowerUp granted: allowance (rating: G)
+[SynergyManager] Rating counts: { "G": 2, "PG": 0, "PG-13": 0, "R": 0, "NC-17": 0 }
+[GameController] Power-up granted and ready:allowance
+
+=== Power-up Auto-Activated ===
+[GameController] Activating power-up:allowance
+[GameController] Connected to description_updated signal
+=== Applying AllowancePowerUp ===
+[AllowancePowerUp] Connected to challenge_completed signal
+[AllowancePowerUp] Applied successfully - will add $100 to the round-end PowerUp bonus when a challenge completes
+[GameController] Applied AllowancePowerUp to scorecard
+[GameSaveManager] Settled snapshot updated
+
+=== Granting Power-Up: purple_payout ===
+[PowerUpUI] Adding power up:purple_payout
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:purple_payout
+[GameController] Connecting power-up signals for:purple_payout
+[SynergyManager] PowerUp granted: purple_payout (rating: G)
+[SynergyManager] Rating counts: { "G": 3, "PG": 0, "PG-13": 0, "R": 0, "NC-17": 0 }
+[GameController] Power-up granted and ready:purple_payout
+
+=== Power-up Auto-Activated ===
+[GameController] Activating power-up:purple_payout
+[GameController] Connected to description_updated signal
+=== Applying PurplePayoutPowerUp ===
+[GameController] Applied PurplePayoutPowerUp to scorecard
+[GameSaveManager] Settled snapshot updated
+
+=== Granting Power-Up: step_by_step ===
+[StepByStepPowerUp] Added to 'power_ups' group
+[StepByStepPowerUp] Connected to ScoreModifierManager signals
+[PowerUpUI] Adding power up:step_by_step
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:step_by_step
+[GameController] Connecting power-up signals for:step_by_step
+[SynergyManager] PowerUp granted: step_by_step (rating: PG)
+[SynergyManager] Rating counts: { "G": 3, "PG": 1, "PG-13": 0, "R": 0, "NC-17": 0 }
+[GameController] Power-up granted and ready:step_by_step
+
+=== Power-up Auto-Activated ===
+[GameController] Activating power-up:step_by_step
+[GameController] Connected to description_updated signal
+=== Applying StepByStepPowerUp ===
+[StepByStepPowerUp] Connected to score_assigned signal for tracking
+[StepByStepPowerUp] Applied successfully - will add +6 to upper section scores only
+[GameController] Applied StepByStepPowerUp to scorecard
+[GameSaveManager] Settled snapshot updated
+
+=== Granting Power-Up: roll_efficiency ===
+[PowerUpUI] Adding power up:roll_efficiency
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:roll_efficiency
+[GameController] Connecting power-up signals for:roll_efficiency
+[SynergyManager] PowerUp granted: roll_efficiency (rating: PG)
+[SynergyManager] Rating counts: { "G": 3, "PG": 2, "PG-13": 0, "R": 0, "NC-17": 0 }
+[GameController] Power-up granted and ready:roll_efficiency
+
+=== Power-up Auto-Activated ===
+[GameController] Activating power-up:roll_efficiency
+[GameController] Connected to description_updated signal
+=== Applying RollEfficiencyPowerUp ===
+[RollEfficiencyPowerUp] Connected to about_to_score signal
+[RollEfficiencyPowerUp] Connected to score_assigned signal
+[GameController] Applied RollEfficiencyPowerUp to scorecard
+[GameSaveManager] Settled snapshot updated
+  ✓ G count is 3 during mixed-rating grant
+  ✓ PG count is 2 during mixed-rating grant
+  ✓ 3x G and 2x PG produced no matching-set bonus
+
+[TEST 8] Bulk clear resets synergy counts and bonuses...
+[SynergyManager] PowerUp revoked: bonus_money (rating: G)
+[SynergyManager] Rating counts: { "G": 2, "PG": 2, "PG-13": 0, "R": 0, "NC-17": 0 }
+=== Removing AllowancePowerUp ===
+[AllowancePowerUp] Disconnected from challenge_completed signal
+[SynergyManager] PowerUp revoked: allowance (rating: G)
+[SynergyManager] Rating counts: { "G": 1, "PG": 2, "PG-13": 0, "R": 0, "NC-17": 0 }
+=== Removing PurplePayoutPowerUp ===
+[SynergyManager] PowerUp revoked: purple_payout (rating: G)
+[SynergyManager] Rating counts: { "G": 0, "PG": 2, "PG-13": 0, "R": 0, "NC-17": 0 }
+=== Removing StepByStepPowerUp ===
+[ScoreModifierManager] Warning: Attempted to unregister non-existent additive: step_by_step
+[SynergyManager] PowerUp revoked: step_by_step (rating: PG)
+[SynergyManager] Rating counts: { "G": 0, "PG": 1, "PG-13": 0, "R": 0, "NC-17": 0 }
+=== Removing RollEfficiencyPowerUp ===
+[RollEfficiencyPowerUp] Disconnected from about_to_score signal
+[RollEfficiencyPowerUp] Disconnected from score_assigned signal
+[SynergyManager] PowerUp revoked: roll_efficiency (rating: PG)
+[SynergyManager] Rating counts: { "G": 0, "PG": 0, "PG-13": 0, "R": 0, "NC-17": 0 }
+[PowerUpUI] Clearing all power-ups
+[PowerUpUI] Cleared5power-ups
+[GameController] Cleared all power-ups
+[ScoreModifierManager] Warning: Attempted to unregister non-existent additive: step_by_step
+[StepByStepPowerUp] Cleanup: Unregistered additive from ScoreModifierManager
+  ✓ bulk clear left all rating counts at 0
+  ✓ Bulk clear removed all synergy state
+
+[TEST 9] Mixed-rating grant stays clean after bulk clear...
+
+=== Granting Power-Up: bonus_money ===
+[PowerUpUI] Adding power up:bonus_money
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:bonus_money
+[GameController] Connecting power-up signals for:bonus_money
+[SynergyManager] PowerUp granted: bonus_money (rating: G)
+[SynergyManager] Rating counts: { "G": 1, "PG": 0, "PG-13": 0, "R": 0, "NC-17": 0 }
+[GameController] Power-up granted and ready:bonus_money
+
+=== Power-up Auto-Activated ===
+[GameController] Activating power-up:bonus_money
+[GameController] Connected to description_updated signal
+[GameController] Applied BonusMoneyPowerUp to scorecard
+[GameSaveManager] Settled snapshot updated
+
+=== Granting Power-Up: allowance ===
+[AllowancePowerUp] Added to 'power_ups' group
+[PowerUpUI] Adding power up:allowance
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:allowance
+[GameController] Connecting power-up signals for:allowance
+[SynergyManager] PowerUp granted: allowance (rating: G)
+[SynergyManager] Rating counts: { "G": 2, "PG": 0, "PG-13": 0, "R": 0, "NC-17": 0 }
+[GameController] Power-up granted and ready:allowance
+
+=== Power-up Auto-Activated ===
+[GameController] Activating power-up:allowance
+[GameController] Connected to description_updated signal
+=== Applying AllowancePowerUp ===
+[AllowancePowerUp] Connected to challenge_completed signal
+[AllowancePowerUp] Applied successfully - will add $100 to the round-end PowerUp bonus when a challenge completes
+[GameController] Applied AllowancePowerUp to scorecard
+[GameSaveManager] Settled snapshot updated
+
+=== Granting Power-Up: purple_payout ===
+[PowerUpUI] Adding power up:purple_payout
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:purple_payout
+[GameController] Connecting power-up signals for:purple_payout
+[SynergyManager] PowerUp granted: purple_payout (rating: G)
+[SynergyManager] Rating counts: { "G": 3, "PG": 0, "PG-13": 0, "R": 0, "NC-17": 0 }
+[GameController] Power-up granted and ready:purple_payout
+
+=== Power-up Auto-Activated ===
+[GameController] Activating power-up:purple_payout
+[GameController] Connected to description_updated signal
+=== Applying PurplePayoutPowerUp ===
+[GameController] Applied PurplePayoutPowerUp to scorecard
+[GameSaveManager] Settled snapshot updated
+
+=== Granting Power-Up: step_by_step ===
+[StepByStepPowerUp] Added to 'power_ups' group
+[StepByStepPowerUp] Connected to ScoreModifierManager signals
+[PowerUpUI] Adding power up:step_by_step
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:step_by_step
+[GameController] Connecting power-up signals for:step_by_step
+[SynergyManager] PowerUp granted: step_by_step (rating: PG)
+[SynergyManager] Rating counts: { "G": 3, "PG": 1, "PG-13": 0, "R": 0, "NC-17": 0 }
+[GameController] Power-up granted and ready:step_by_step
+
+=== Power-up Auto-Activated ===
+[GameController] Activating power-up:step_by_step
+[GameController] Connected to description_updated signal
+=== Applying StepByStepPowerUp ===
+[StepByStepPowerUp] Connected to score_assigned signal for tracking
+[StepByStepPowerUp] Applied successfully - will add +6 to upper section scores only
+[GameController] Applied StepByStepPowerUp to scorecard
+[GameSaveManager] Settled snapshot updated
+
+=== Granting Power-Up: roll_efficiency ===
+[PowerUpUI] Adding power up:roll_efficiency
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:roll_efficiency
+[GameController] Connecting power-up signals for:roll_efficiency
+[SynergyManager] PowerUp granted: roll_efficiency (rating: PG)
+[SynergyManager] Rating counts: { "G": 3, "PG": 2, "PG-13": 0, "R": 0, "NC-17": 0 }
+[GameController] Power-up granted and ready:roll_efficiency
+
+=== Power-up Auto-Activated ===
+[GameController] Activating power-up:roll_efficiency
+[GameController] Connected to description_updated signal
+=== Applying RollEfficiencyPowerUp ===
+[RollEfficiencyPowerUp] Connected to about_to_score signal
+[RollEfficiencyPowerUp] Connected to score_assigned signal
+[GameController] Applied RollEfficiencyPowerUp to scorecard
+[GameSaveManager] Settled snapshot updated
+  ✓ Repeated mixed grant stayed free of matching-set bonuses
+
+[TEST 10] Replica rating lookup normalization...
+[SynergyManager] PowerUp revoked: bonus_money (rating: G)
+[SynergyManager] Rating counts: { "G": 2, "PG": 2, "PG-13": 0, "R": 0, "NC-17": 0 }
+=== Removing AllowancePowerUp ===
+[AllowancePowerUp] Disconnected from challenge_completed signal
+[SynergyManager] PowerUp revoked: allowance (rating: G)
+[SynergyManager] Rating counts: { "G": 1, "PG": 2, "PG-13": 0, "R": 0, "NC-17": 0 }
+=== Removing PurplePayoutPowerUp ===
+[SynergyManager] PowerUp revoked: purple_payout (rating: G)
+[SynergyManager] Rating counts: { "G": 0, "PG": 2, "PG-13": 0, "R": 0, "NC-17": 0 }
+=== Removing StepByStepPowerUp ===
+[ScoreModifierManager] Warning: Attempted to unregister non-existent additive: step_by_step
+[SynergyManager] PowerUp revoked: step_by_step (rating: PG)
+[SynergyManager] Rating counts: { "G": 0, "PG": 1, "PG-13": 0, "R": 0, "NC-17": 0 }
+=== Removing RollEfficiencyPowerUp ===
+[RollEfficiencyPowerUp] Disconnected from about_to_score signal
+[RollEfficiencyPowerUp] Disconnected from score_assigned signal
+[SynergyManager] PowerUp revoked: roll_efficiency (rating: PG)
+[SynergyManager] Rating counts: { "G": 0, "PG": 0, "PG-13": 0, "R": 0, "NC-17": 0 }
+[PowerUpUI] Clearing all power-ups
+[PowerUpUI] Cleared5power-ups
+[GameController] Cleared all power-ups
+[ScoreModifierManager] Warning: Attempted to unregister non-existent additive: step_by_step
+[StepByStepPowerUp] Cleanup: Unregistered additive from ScoreModifierManager
+
+=== Granting Replica Power-Up: extra_dice_replica_5825 ===
+[PowerUpUI] Adding power up:extra_dice_replica_5825
+[PowerUpUI] Created spine, about to add_child
+[PowerUpUI] Added spine to tree, setting data
+[PowerUpUI] About to position spines
+[PowerUpUI] Positioned spines
+[PowerUpUI] Added power up spine:extra_dice_replica_5825
+[GameController] Created UI for replica:extra_dice_replica_5825
+[SynergyManager] PowerUp granted: extra_dice_replica_5825 (rating: R)
+[SynergyManager] Rating counts: { "G": 0, "PG": 0, "PG-13": 0, "R": 1, "NC-17": 0 }
+
+=== Power-up Auto-Activated ===
+[GameController] Activating power-up:extra_dice_replica_5825
+[GameController] Replica power-up granted and activated:extra_dice_replica_5825
+  ✓ R count is 1 during replica grant
+
+
+╔══════════════════════════════════════════════════╗
+║                TEST SUMMARY                      ║
+╠══════════════════════════════════════════════════╣
+║  Use Debug Panel (F12) -> Synergies tab to:      ║
+║  • Grant 5 same-rated PowerUps for +50 bonus     ║
+║  • Grant rainbow set for 5x multiplier           ║
+║  • View current synergy status                   ║
+╚══════════════════════════════════════════════════╝
+
+ALL SYNERGY TESTS PASSED
+=== SynergyManager Status ===
+Rating Counts:
+  G: 0 (sets: 0)
+  PG: 0 (sets: 0)
+  PG-13: 0 (sets: 0)
+  R: 1 (sets: 0)
+  NC-17: 0 (sets: 0)
+Active Synergies:
+Total Matching Bonus: +0
+Rainbow Active: false
+=============================
+[SynergyTest] Quitting with 0 failure(s)

@@ -130,12 +130,20 @@ func _get_power_up_rating(id: String) -> String:
 		push_error("[SynergyManager] PowerUpManager not found")
 		return ""
 	
-	var data: PowerUpData = _power_up_manager.get_def(id)
+	var lookup_id := _normalize_power_up_lookup_id(id)
+	var data: PowerUpData = _power_up_manager.get_def(lookup_id)
 	if data == null:
 		push_error("[SynergyManager] PowerUpData not found for id: %s" % id)
 		return ""
 	
 	return data.rating
+
+
+func _normalize_power_up_lookup_id(id: String) -> String:
+	var replica_index := id.find("_replica")
+	if replica_index == -1:
+		return id
+	return id.substr(0, replica_index)
 
 
 ## _recalculate_synergies()

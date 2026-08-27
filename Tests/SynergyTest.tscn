@@ -1,4 +1,4 @@
-[gd_scene load_steps=101 format=3 uid="uid://synergy_test_scene01"]
+[gd_scene load_steps=109 format=3 uid="uid://synergy_test_scene01"]
 
 [ext_resource type="Script" path="res://Tests/synergy_test.gd" id="1_syntest"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -19,6 +19,14 @@
 [ext_resource type="PackedScene" uid="uid://bmnx7dfjhn2d" path="res://Scenes/UI/debuff_ui.tscn" id="14_oxb5w"]
 [ext_resource type="PackedScene" uid="uid://cttyyy56pjat3" path="res://Scenes/Controller/game_controller.tscn" id="15_aeiu6"]
 [ext_resource type="PackedScene" uid="uid://b0h68l2hpjf3o" path="res://Scenes/PowerUp/power_up_manager.tscn" id="16_07va6"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1100_powerup_data"]
+[ext_resource type="Resource" uid="uid://b1kspojq1dh26" path="res://Scripts/PowerUps/ExtraDice.tres" id="1101_extra_dice"]
+[ext_resource type="Resource" uid="uid://cgeradia34lyw" path="res://Scripts/PowerUps/ExtraRolls.tres" id="1102_extra_rolls"]
+[ext_resource type="Resource" uid="uid://bd58nakq7j3n2" path="res://Scripts/PowerUps/BonusMoneyPowerUp.tres" id="1103_bonus_money"]
+[ext_resource type="Resource" uid="uid://b8x1m3vq7n2k5" path="res://Scripts/PowerUps/StepByStepPowerUp.tres" id="1104_step_by_step"]
+[ext_resource type="Resource" uid="uid://iao8jgjikc8m" path="res://Scripts/PowerUps/Allowance.tres" id="1105_allowance"]
+[ext_resource type="Resource" uid="uid://ofk1qti27od0" path="res://Scripts/PowerUps/PurplePayoutPowerUp.tres" id="1106_purple_payout"]
+[ext_resource type="Resource" uid="uid://nmge567ydrn5" path="res://Scripts/PowerUps/RollEfficiencyPowerUp.tres" id="1107_roll_efficiency"]
 [ext_resource type="PackedScene" uid="uid://ihwow3yfegbm" path="res://Scenes/UI/challenge_ui.tscn" id="19_1jk2k"]
 [ext_resource type="PackedScene" uid="uid://dw7dok1tye5gg" path="res://Scenes/UI/vcr_turn_tracker_ui.tscn" id="19_w4iq5"]
 [ext_resource type="PackedScene" uid="uid://c2brbu8nl4tvq" path="res://Scenes/Managers/consumable_manager.tscn" id="20_1jk2k"]
@@ -196,11 +204,37 @@ consumable_manager_path = NodePath("../ConsumableManager")
 mod_manager_path = NodePath("../ModManager")
 
 [node name="GameController" parent="." instance=ExtResource("15_aeiu6")]
+dice_hand_path = NodePath("../DiceHand")
+power_up_manager_path = NodePath("../PowerUpManager")
+power_up_ui_path = NodePath("../PowerUpUI")
+power_up_container_path = NodePath("../PowerUpContainer")
+consumable_manager_path = NodePath("../ConsumableManager")
+consumable_ui_path = NodePath("../ConsumableUI")
+consumable_container_path = NodePath("../ConsumableContainer")
+score_card_ui_path = NodePath("../ScoreCardUI")
+debuff_ui_path = NodePath("../DebuffUI")
+debuff_container_path = NodePath("../DebuffContainer")
+debuff_manager_path = NodePath("../DebuffManager")
+mod_manager_path = NodePath("../ModManager")
+game_button_ui_path = NodePath("../GameButtonUI")
+challenge_manager_path = NodePath("../ChallengeManager")
+challenge_ui_path = NodePath("../ChallengeUI")
 challenge_container_path = NodePath("../ChallengeContainer")
+round_manager_path = NodePath("../RoundManager")
 crt_manager_path = NodePath("../Background/CRTManager")
+statistics_panel_path = NodePath("../StatisticsPanel")
+scoring_animation_controller_path = NodePath("../ScoringAnimationController")
+chores_manager_path = NodePath("../ChoresManager")
+chore_ui_path = NodePath("../ChoreUI")
 synergy_manager_path = NodePath("../SynergyManager")
+background_swirl_path = NodePath("../Background/BackgroundSwirl")
+
+[node name="ConsumableContainer" type="Node2D" parent="."]
+
+[node name="DebuffContainer" type="Node2D" parent="."]
 
 [node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
+power_up_defs = Array[ExtResource("1100_powerup_data")]([ExtResource("1101_extra_dice"), ExtResource("1102_extra_rolls"), ExtResource("1103_bonus_money"), ExtResource("1104_step_by_step"), ExtResource("1105_allowance"), ExtResource("1106_purple_payout"), ExtResource("1107_roll_efficiency")])
 
 [node name="ChallengeManager" parent="." instance=ExtResource("25_3vaha")]
 

@@ -20,6 +20,7 @@ var consumable_counts: Dictionary = {}  # id -> int (count of instances)
 var active_debuffs: Dictionary = {}  # id -> Debuff
 var active_mods: Dictionary = {}  # id -> Mod
 var active_challenges: Dictionary = {}  # id -> Challenge
+var _suppress_power_up_revoked_ui: bool = false
 var challenge_score_modifier: float = 1.0  # Multiplier applied to challenge target scores (e.g., 0.8 for 20% reduction)
 
 # Consumable discount state
@@ -727,6 +728,7 @@ func _restart_game_for_new_channel(carried_types: Array[String] = []) -> void:
 	# Clear all power-ups (unless carried over)
 	if not carried_types.has("power_ups"):
 		_clear_all_power_ups()
+		_reset_synergy_manager_state()
 	else:
 		print("[GameController] Power-ups CARRIED OVER")
 	
@@ -910,24 +912,33 @@ func _clear_active_debuffs() -> void:
 ## Removes all active power-ups for new channel start.
 ## Clears both runtime instances and UI.
 func _clear_all_power_ups() -> void:
-	# Deactivate all power-ups first (calls remove() to revert side effects)
-	for id in active_power_ups.keys():
-		var pu = active_power_ups[id]
-		if pu and is_instance_valid(pu):
-			_deactivate_power_up(id)
-			pu.queue_free()
-	active_power_ups.clear()
+	# Route bulk teardown through revoke_power_up() so listeners such as
+	# SynergyManager stay in sync with ownership changes.
+	var ids_to_clear: Array = active_power_ups.keys().duplicate()
+	_suppress_power_up_revoked_ui = true
+	for id in ids_to_clear:
+		revoke_power_up(id)
+	_suppress_power_up_revoked_ui = false
 	
 	# Clear UI if available
 	if is_instance_valid(powerup_ui) and powerup_ui.has_method("clear_all"):
 		powerup_ui.clear_all()
 	elif is_instance_valid(powerup_ui):
 		# Fallback: remove each power-up from UI individually
-		for id in active_power_ups.keys():
+		for id in ids_to_clear:
 			if powerup_ui.has_method("remove_power_up"):
 				powerup_ui.remove_power_up(id)
 	
 	print("[GameController] Cleared all power-ups")
+
+
+func _reset_synergy_manager_state() -> void:
+	var manager = synergy_manager
+	if not is_instance_valid(manager):
+		manager = get_tree().get_first_node_in_group("synergy_manager")
+	if manager and manager.has_method("reset"):
+		manager.reset()
+		print("[GameController] SynergyManager reset")
 
 
 ## _clear_all_consumables() -> void
@@ -1506,6 +1517,8 @@ func _on_power_up_sold(power_up_id: String) -> void:
 ##
 ## Handler for power_up_revoked signal - animates expiry then removes PowerUp from UI.
 func _on_power_up_revoked(power_up_id: String) -> void:
+	if _suppress_power_up_revoked_ui:
+		return
 	print("[GameController] PowerUp revoked, animating expiry:", power_up_id)
 	if powerup_ui:
 		powerup_ui.animate_power_up_expiry(power_up_id, func():
@@ -5810,6 +5823,7 @@ func load_game_state(save_data: Dictionary) -> void:
 	
 	# 1. Clear all existing runtime instances
 	_clear_all_power_ups()
+	_reset_synergy_manager_state()
 	_clear_all_consumables()
 	_clear_active_debuffs()
 	_clear_all_mods()
