@@ -633,17 +633,17 @@ func _animate_in() -> void:
 	dialog_panel.modulate.a = 0.0
 	
 	var panel_tween: Tween = create_tween()
-	panel_tween.tween_property(dialog_panel, "offset_top", target_top, 0.5).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
-	panel_tween.parallel().tween_property(dialog_panel, "offset_bottom", target_bottom, 0.5).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	panel_tween.tween_property(dialog_panel, "offset_top", target_top, 0.75).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	panel_tween.parallel().tween_property(dialog_panel, "offset_bottom", target_bottom, 0.75).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 	panel_tween.parallel().tween_property(dialog_panel, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	panel_tween.parallel().tween_property(dialog_panel, "modulate:a", 1.0, 0.2)
 	await panel_tween.finished
 	
 	# Jelly settle wobble on landing
-	TweenFX.jelly(dialog_panel, 0.3, 0.15, 2)
+	TweenFX.jelly(dialog_panel, 1.2, 0.05, 2)
 	
 	# Wobble Mom portrait for extra personality
-	TweenFX.jelly(portrait, 0.4, 0.1, 2)
+	TweenFX.jelly(portrait, 0.8, 0.05, 2)
 	
 	await get_tree().create_timer(0.4).timeout
 	_is_animating = false

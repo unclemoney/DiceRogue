@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MomDialogNode" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=13 format=3 uid="uid://basek1ibvxeru"]
 
 [ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
 [ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
@@ -103,7 +103,7 @@ outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource(
 [resource]
 script = ExtResource("1_node")
 id = "checkin_bargain"
-mom_text = "Alright, sweetie, Mom has a proposition. Do the dishes tonight without being asked - WITHOUT the sighing - and there's five bucks in it for you."
+mom_text = "Alright, sweetie, Mom has a proposition. Do the dishes tonight without being asked - WITHOUT the sighing - and there's twenty-five bucks in it for you."
 expression = "happy"
 speaker_name = "Mom"
 speaker_tint = Color(1, 1, 1, 1)

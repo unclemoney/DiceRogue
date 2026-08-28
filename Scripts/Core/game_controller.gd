@@ -220,6 +220,10 @@ var _round_transition_shown: bool = false  # Prevent repeated transition overlay
 var _round_transition_tv_off: bool = false  # True when TV is off between rounds
 var _round_status_cleanup_scheduled: bool = false
 var _last_completed_round_rebellion_stacks: int = 0
+const MOM_GRANTED_BUFF_IDS: Array[String] = ["rebellion", "teacher_pet"]
+const TEACHER_PET_TIER_1_CHANCE: float = 0.20
+const TEACHER_PET_TIER_2_CHANCE: float = 0.45
+const TEACHER_PET_TIER_3_CHANCE: float = 0.75
 var _new_round_panel: NewRoundPanel = null
 var _pending_round_num: int = -1
 var _pending_is_first_round: bool = false
@@ -890,6 +894,8 @@ func _clear_active_debuffs() -> void:
 	for id in active_debuffs.keys():
 		var debuff = active_debuffs[id]
 		if is_instance_valid(debuff):
+			if debuff is Debuff and debuff.is_active:
+				(debuff as Debuff).end()
 			debuff.queue_free()
 	active_debuffs.clear()
 	_grounded_debuffs.clear()
@@ -2572,6 +2578,11 @@ func apply_debuff(id: String, ignore_ungrounded: bool = false) -> void:
 		emit_signal("debuff_blocked", id)
 		return
 
+	# Mom-granted buffs are mutually exclusive: applying one should evict the
+	# other before this instance is spawned or restored from a save.
+	if _is_mom_granted_buff(id):
+		_remove_other_mom_granted_buffs(id)
+
 	# Check if this debuff is already active
 	if active_debuffs.has(id) and active_debuffs[id] != null:
 		print("[GameController] Debuff already active:", id)
@@ -2591,8 +2602,8 @@ func apply_debuff(id: String, ignore_ungrounded: bool = false) -> void:
 		return
 
 	var icon = null
-	if id == "rebellion":
-		# The Rebellion buff icon lives in the Chore UI, not the Debuff UI
+	if _is_mom_granted_buff(id):
+		# Mom-granted buffs live in the Chore UI, not the Debuff UI.
 		if chore_ui and chore_ui.has_method("add_buff_icon"):
 			icon = chore_ui.add_buff_icon(def, debuff)
 	elif debuff_ui:
@@ -2702,6 +2713,13 @@ func apply_debuff(id: String, ignore_ungrounded: bool = false) -> void:
 			debuff.set_intensity(1.0)
 			debuff.start()
 			debuff_started = true
+		"teacher_pet":
+			debuff.target = self
+			# Tiers are managed by _grant_teacher_pet_buff; always start at 1
+			# before an upgrade applies the saved or granted tier.
+			debuff.set_intensity(1.0)
+			debuff.start()
+			debuff_started = true
 		_:
 			push_error("[GameController] Unknown debuff type: %s" % id)
 
@@ -2734,15 +2752,15 @@ func disable_debuff(id: String, clear_runtime_state_immediately: bool = false) -
 		if debuff:
 			debuff.end()
 
-			# Animate the debuff removal (Rebellion's icon lives in the
-			# Chore UI, so it is removed there without a Debuff UI animation)
-			if id == "rebellion":
+			# Mom-granted buffs live in the Chore UI, so they are removed there
+			# without a Debuff UI animation.
+			if _is_mom_granted_buff(id):
 				if is_instance_valid(chore_ui) and chore_ui.has_method("remove_buff_icon"):
 					chore_ui.remove_buff_icon(id)
 				active_debuffs.erase(id)
 				if is_instance_valid(debuff):
 					debuff.queue_free()
-				print("[GameController] Rebellion buff removed from Chore UI:", id)
+				print("[GameController] Mom-granted buff removed from Chore UI:", id)
 			elif is_instance_valid(debuff_ui):
 				if clear_runtime_state_immediately:
 					active_debuffs.erase(id)
@@ -3935,6 +3953,7 @@ func _show_end_of_round_stats() -> void:
 	var points_above_target = max(0, final_score - target_score)
 	var score_above_bonus = round_manager.calculate_score_above_target_bonus(final_score, target_score) if round_manager else points_above_target
 	var power_up_bonus = _get_round_end_power_up_bonus_preview()
+	var buff_bonus = _get_round_end_buff_bonus_preview()
 
 	# Prepare data for the stats panel
 	var stats_data = {
@@ -3948,6 +3967,7 @@ func _show_end_of_round_stats() -> void:
 		"empty_categories_bonus": empty_categories_bonus,
 		"points_above_target": points_above_target,
 		"score_above_bonus": score_above_bonus,
+		"buff_bonus": buff_bonus,
 		"power_up_bonus": power_up_bonus,
 		"docked_allowance": docked_allowance_active
 	}
@@ -3976,18 +3996,22 @@ func _on_stats_panel_continue() -> void:
 		var total_bonus = end_of_round_stats_panel.get_total_bonus()
 		var empty_bonus = end_of_round_stats_panel.get_empty_categories_bonus()
 		var score_bonus = end_of_round_stats_panel.get_score_above_bonus()
+		var buff_bonus = end_of_round_stats_panel.get_buff_bonus()
 		var power_up_bonus = end_of_round_stats_panel.get_power_up_bonus()
 		if docked_allowance_active:
 			# Docked Allowance grounding: withhold the entire end-of-round award.
 			print("[GameController] Docked Allowance active - withholding $%d end of round award" % total_bonus)
 		else:
+			var consumed_buff_bonus = _consume_round_end_buff_bonuses()
+			if consumed_buff_bonus != buff_bonus:
+				push_warning("[GameController] Round-end buff bonus preview mismatch. Preview=$%d Consumed=$%d" % [buff_bonus, consumed_buff_bonus])
 			var consumed_power_up_bonus = _consume_round_end_power_up_bonuses()
 			if consumed_power_up_bonus != power_up_bonus:
 				push_warning("[GameController] Round-end PowerUp bonus preview mismatch. Preview=$%d Consumed=$%d" % [power_up_bonus, consumed_power_up_bonus])
 
 			if total_bonus > 0:
 				PlayerEconomy.add_money(total_bonus)
-				print("[GameController] Awarded end of round bonuses: $%d (empty: $%d, score: $%d, powerups: $%d)" % [total_bonus, empty_bonus, score_bonus, power_up_bonus])
+				print("[GameController] Awarded end of round bonuses: $%d (empty: $%d, score: $%d, buffs: $%d, powerups: $%d)" % [total_bonus, empty_bonus, score_bonus, buff_bonus, power_up_bonus])
 
 				# Track in statistics
 				Statistics.total_money_earned += total_bonus
@@ -4014,12 +4038,30 @@ func _get_round_end_power_up_bonus_preview() -> int:
 	return total_bonus
 
 
+func _get_round_end_buff_bonus_preview() -> int:
+	var total_bonus := 0
+	for buff_id in MOM_GRANTED_BUFF_IDS:
+		var buff_node = active_debuffs.get(buff_id)
+		if is_instance_valid(buff_node) and buff_node.has_method("get_pending_round_end_bonus"):
+			total_bonus += int(buff_node.call("get_pending_round_end_bonus"))
+	return total_bonus
+
+
 func _consume_round_end_power_up_bonuses() -> int:
 	var total_bonus := 0
 	for power_up_id in active_power_ups.keys():
 		var powerup_node = active_power_ups[power_up_id]
 		if is_instance_valid(powerup_node) and powerup_node.has_method("consume_pending_round_end_bonus"):
 			total_bonus += int(powerup_node.call("consume_pending_round_end_bonus"))
+	return total_bonus
+
+
+func _consume_round_end_buff_bonuses() -> int:
+	var total_bonus := 0
+	for buff_id in MOM_GRANTED_BUFF_IDS:
+		var buff_node = active_debuffs.get(buff_id)
+		if is_instance_valid(buff_node) and buff_node.has_method("consume_pending_round_end_bonus"):
+			total_bonus += int(buff_node.call("consume_pending_round_end_bonus"))
 	return total_bonus
 
 
@@ -4392,12 +4434,15 @@ func _expire_completed_round_statuses() -> void:
 	_grounded_debuffs.clear()
 
 	_last_completed_round_rebellion_stacks = 0
-	if is_debuff_active("rebellion"):
-		var rebellion = active_debuffs["rebellion"] as Debuff
-		if is_instance_valid(rebellion):
-			_last_completed_round_rebellion_stacks = maxi(int(rebellion.intensity), 1)
-		disable_debuff("rebellion", true)
-		print("[GameController] Rebellion buff expired at round end")
+	for buff_id in MOM_GRANTED_BUFF_IDS:
+		if not is_debuff_active(buff_id):
+			continue
+		if buff_id == "rebellion":
+			var rebellion = active_debuffs["rebellion"] as Debuff
+			if is_instance_valid(rebellion):
+				_last_completed_round_rebellion_stacks = maxi(int(rebellion.intensity), 1)
+		disable_debuff(buff_id, true)
+		print("[GameController] %s expired at round end" % buff_id)
 
 	if is_instance_valid(challenge_ui) and challenge_ui.has_method("set_store_debuffs"):
 		challenge_ui.set_store_debuffs([])
@@ -4431,9 +4476,9 @@ func _trigger_challenge_celebration() -> void:
 	var celebration_position := get_viewport().get_visible_rect().size / 2.0
 	var game_ui_node = get_tree().get_first_node_in_group("game_ui")
 	if game_ui_node:
-		var challenge_container = game_ui_node.get("challenge_container")
-		if challenge_container is Control:
-			celebration_position = (challenge_container as Control).get_global_rect().get_center()
+		var challenge_container_node = game_ui_node.get("challenge_container")
+		if challenge_container_node is Control:
+			celebration_position = (challenge_container_node as Control).get_global_rect().get_center()
 	if is_instance_valid(challenge_ui):
 		if challenge_ui.has_method("get_challenge_spine_position"):
 			celebration_position = challenge_ui.get_challenge_spine_position()
@@ -5556,6 +5601,12 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 
 	var result := MomLogicHandlerScript.MomCheckResult.new()
 	var sass_stacks := 0  # successful sass responses this visit -> Rebellion buff stacks
+	var pre_dialog_mood := 10
+	if chores_manager:
+		pre_dialog_mood = chores_manager.mom_mood
+	var teacher_pet_candidate_tier := _get_teacher_pet_tier_for_mood(pre_dialog_mood)
+	var teacher_pet_candidate := false
+	var last_qualifying_mom_buff_id := ""
 	var visited_node_ids: Array = [root_node_id]  # CastManager flag nodes ("flag_*")
 
 	# Walk the tree until a terminal beat (guard against malformed loops)
@@ -5573,9 +5624,14 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 			break
 		var outcome_result := MomLogicHandlerScript.apply_outcome(self, outcome, severity, active_debuffs, response.tone == "sassy")
 
-		# Rebellion systems: score this response for Rep and buff stacks
+		# Mom-granted buffs: successful sass builds Rebellion stacks; qualifying
+		# non-sassy positive beats can instead queue a Teacher's Pet roll.
 		if _is_successful_sass(response, outcome):
 			sass_stacks += 1
+			last_qualifying_mom_buff_id = "rebellion"
+		elif teacher_pet_candidate_tier > 0 and _is_teacher_pet_positive_response(response, outcome_result):
+			teacher_pet_candidate = true
+			last_qualifying_mom_buff_id = "teacher_pet"
 		result.rep_delta += _compute_rep_delta(response, outcome_result, is_meter_visit, severity)
 
 		# Accumulate consequences across the whole visit
@@ -5643,11 +5699,17 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 	# Apply consequences after dialog closes
 	MomLogicHandlerScript.apply_consequences(self, result)
 
-	# The Rebellion buff is the immediate payoff for successful sass
-	# (one stack per success).
-	if sass_stacks > 0:
-		_grant_rebellion_buff(sass_stacks)
-		result.rebellion_granted = true
+	# Resolve the winning Mom-granted buff once per session. If the final
+	# qualifying beat was Teacher's Pet, its chance roll overrides earlier sass.
+	var teacher_pet_granted := false
+	if last_qualifying_mom_buff_id == "teacher_pet":
+		if teacher_pet_candidate and _roll_teacher_pet_activation(teacher_pet_candidate_tier):
+			_grant_teacher_pet_buff(teacher_pet_candidate_tier)
+			teacher_pet_granted = true
+	elif last_qualifying_mom_buff_id == "rebellion":
+		if sass_stacks > 0:
+			_grant_rebellion_buff(sass_stacks)
+			result.rebellion_granted = true
 
 	# Notify listeners (bot harness, analytics) with a plain-data summary
 	mom_consequences_applied.emit({
@@ -5665,6 +5727,9 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 		"rep_delta": result.rep_delta,
 		"sass_stacks": sass_stacks,
 		"rebellion_granted": result.rebellion_granted,
+		"teacher_pet_candidate_tier": teacher_pet_candidate_tier,
+		"teacher_pet_granted": teacher_pet_granted,
+		"winning_mom_buff_id": last_qualifying_mom_buff_id,
 		"deferred": result.deferred,
 		"rep_tier_after": ProgressManager.get_rep_tier() if ProgressManager else 0,
 	})
@@ -5755,7 +5820,7 @@ func _check_lock_dice_chore() -> void:
 ## _clear_grounded_debuffs()
 ##
 ## Removes all debuffs that were applied by Mom (NC-17 consequences).
-## Also clears the round-scoped Rebellion buff and restores dice colors
+## Also clears round-scoped Mom-granted buffs and restores dice colors
 ## after a temporary Mom cosmetic lock.
 ## Called at the start of a new round.
 func _clear_grounded_debuffs() -> void:
@@ -5764,10 +5829,11 @@ func _clear_grounded_debuffs() -> void:
 		disable_debuff(debuff_id)
 	_grounded_debuffs.clear()
 
-	# The Rebellion buff lasts until the round ends
-	if is_debuff_active("rebellion"):
-		disable_debuff("rebellion")
-		print("[GameController] Rebellion buff expired at round end")
+	# Mom-granted buffs last only until the round ends.
+	for buff_id in MOM_GRANTED_BUFF_IDS:
+		if is_debuff_active(buff_id):
+			disable_debuff(buff_id)
+			print("[GameController] %s expired at round end" % buff_id)
 
 	if _mom_cosmetics_locked:
 		_mom_cosmetics_locked = false
@@ -5783,7 +5849,7 @@ func get_last_completed_round_rebellion_stacks() -> int:
 	return _last_completed_round_rebellion_stacks
 
 
-# ─── Rebellion systems (sass incentives) ───
+# ─── Mom-granted buff systems ───
 
 ## Rep deltas per Mom dialog response (see PLAN: Sass Incentives).
 ## Tuned for the 4-zone run: a steadily sassing player should reach
@@ -5806,6 +5872,101 @@ func _is_successful_sass(response: MomDialogResponse, outcome: MomDialogOutcome)
 	return outcome.effect in ["none", "mood_delta", "grudge_delta", "storms_off", "defer_punishment"]
 
 
+## _has_mom_punishment(outcome_result) -> bool
+##
+## Returns true when a resolved Mom outcome imposed a tangible penalty or a
+## deferred punishment state. Teacher's Pet excludes these outcomes.
+func _has_mom_punishment(outcome_result) -> bool:
+	if outcome_result == null:
+		return false
+	return outcome_result.tier_id >= 0 \
+		or outcome_result.fine_amount > 0 \
+		or not outcome_result.applied_debuffs.is_empty() \
+		or not outcome_result.removed_power_ups.is_empty() \
+		or not outcome_result.removed_mods.is_empty() \
+		or outcome_result.cosmetics_locked \
+		or outcome_result.cosmetics_lock_permanent \
+		or outcome_result.deferred
+
+
+## _is_teacher_pet_positive_response(response, outcome_result) -> bool
+##
+## A response qualifies for Teacher's Pet when it is non-sassy, avoids any
+## punishment, does not worsen mood/grudge, and does not end in a storm-off.
+func _is_teacher_pet_positive_response(response: MomDialogResponse, outcome_result) -> bool:
+	if response == null or outcome_result == null or response.tone == "sassy":
+		return false
+	if _has_mom_punishment(outcome_result) or outcome_result.storms_off:
+		return false
+	return outcome_result.mood_delta <= 0 and outcome_result.grudge_delta <= 0
+
+
+## _get_teacher_pet_tier_for_mood(mom_mood) -> int
+##
+## Maps Mom's pre-dialog mood snapshot (1 = happiest) to the approved
+## Teacher's Pet tier bands. Returns 0 when the session is ineligible.
+func _get_teacher_pet_tier_for_mood(mom_mood: int) -> int:
+	if mom_mood <= 2:
+		return 3
+	if mom_mood == 3:
+		return 2
+	if mom_mood == 4:
+		return 1
+	return 0
+
+
+## _get_teacher_pet_activation_chance(tier) -> float
+##
+## Returns the activation odds for the given Teacher's Pet tier.
+func _get_teacher_pet_activation_chance(tier: int) -> float:
+	match tier:
+		1:
+			return TEACHER_PET_TIER_1_CHANCE
+		2:
+			return TEACHER_PET_TIER_2_CHANCE
+		3:
+			return TEACHER_PET_TIER_3_CHANCE
+	return 0.0
+
+
+## _roll_teacher_pet_activation(tier) -> bool
+##
+## Executes the once-per-session Teacher's Pet grant roll.
+func _roll_teacher_pet_activation(tier: int) -> bool:
+	if tier <= 0:
+		return false
+	return GameRNG.randf() < _get_teacher_pet_activation_chance(tier)
+
+
+## _is_mom_granted_buff(id) -> bool
+##
+## Returns true when the debuff id is actually a positive Mom-granted buff
+## displayed through Chore UI.
+func _is_mom_granted_buff(id: String) -> bool:
+	return id in MOM_GRANTED_BUFF_IDS
+
+
+## _get_active_mom_granted_buff_id() -> String
+##
+## Returns the currently active Mom-granted buff id, or "" when none are live.
+func _get_active_mom_granted_buff_id() -> String:
+	for buff_id in MOM_GRANTED_BUFF_IDS:
+		if is_debuff_active(buff_id):
+			return buff_id
+	return ""
+
+
+## _remove_other_mom_granted_buffs(next_buff_id) -> void
+##
+## Enforces mutual exclusion for Mom-granted buffs.
+func _remove_other_mom_granted_buffs(next_buff_id: String) -> void:
+	for buff_id in MOM_GRANTED_BUFF_IDS:
+		if buff_id == next_buff_id:
+			continue
+		if is_debuff_active(buff_id):
+			disable_debuff(buff_id, true)
+
+
 ## _compute_rep_delta(response, outcome_result, is_meter_visit, severity) -> int
 ##
 ## Maps a Mom dialog response + its resolved outcome to a Rep change.
@@ -5819,11 +5980,7 @@ func _compute_rep_delta(response: MomDialogResponse, outcome_result, is_meter_vi
 				return REP_DEFER_SUCCESS
 			if outcome_result.storms_off:
 				return REP_STORM_OFF
-			var punished: bool = outcome_result.tier_id >= 0 \
-				or outcome_result.fine_amount > 0 \
-				or not outcome_result.applied_debuffs.is_empty() \
-				or not outcome_result.removed_power_ups.is_empty() \
-				or not outcome_result.removed_mods.is_empty()
+			var punished: bool = _has_mom_punishment(outcome_result)
 			return 0 if punished else REP_SASS_SUCCESS
 		"polite":
 			if is_meter_visit and severity >= 1:
@@ -5840,6 +5997,7 @@ func _compute_rep_delta(response: MomDialogResponse, outcome_result, is_meter_vi
 func _grant_rebellion_buff(stacks: int = 1) -> void:
 	if stacks <= 0:
 		return
+	_remove_other_mom_granted_buffs("rebellion")
 	if is_debuff_active("rebellion"):
 		var buff: Debuff = active_debuffs["rebellion"]
 		buff.set_intensity(buff.intensity + stacks)
@@ -5847,6 +6005,54 @@ func _grant_rebellion_buff(stacks: int = 1) -> void:
 		apply_debuff("rebellion", true)
 		if stacks > 1 and active_debuffs.has("rebellion"):
 			active_debuffs["rebellion"].set_intensity(float(stacks))
+
+
+## _grant_teacher_pet_buff(tier)
+##
+## Grants or upgrades the round-scoped Teacher's Pet buff. Regrants keep the
+## higher tier already earned this round.
+func _grant_teacher_pet_buff(tier: int) -> void:
+	if tier <= 0:
+		return
+	_remove_other_mom_granted_buffs("teacher_pet")
+	if is_debuff_active("teacher_pet"):
+		var buff: Debuff = active_debuffs["teacher_pet"]
+		buff.set_intensity(maxf(buff.intensity, float(tier)))
+	else:
+		apply_debuff("teacher_pet", true)
+		if active_debuffs.has("teacher_pet"):
+			active_debuffs["teacher_pet"].set_intensity(float(tier))
+
+
+## _get_mom_granted_buff_intensities() -> Dictionary
+##
+## Saves the live intensity/tier for all active Mom-granted buffs.
+func _get_mom_granted_buff_intensities() -> Dictionary:
+	var intensities: Dictionary = {}
+	for buff_id in MOM_GRANTED_BUFF_IDS:
+		if active_debuffs.has(buff_id) and is_instance_valid(active_debuffs[buff_id]):
+			intensities[buff_id] = maxi(int(active_debuffs[buff_id].intensity), 1)
+	return intensities
+
+
+## _restore_mom_granted_buff_intensities(gc_state) -> void
+##
+## Restores saved Mom-granted buff intensity data after debuff instances are
+## re-applied. Falls back to the legacy `rebellion_stacks` key for old saves.
+func _restore_mom_granted_buff_intensities(gc_state: Dictionary) -> void:
+	var saved_intensities: Dictionary = gc_state.get("granted_buff_intensities", {})
+	if saved_intensities.is_empty():
+		var rebellion_stacks := int(gc_state.get("rebellion_stacks", 1))
+		if rebellion_stacks > 1 and active_debuffs.has("rebellion"):
+			active_debuffs["rebellion"].set_intensity(float(rebellion_stacks))
+		return
+
+	for buff_id in saved_intensities.keys():
+		if not active_debuffs.has(buff_id):
+			continue
+		var saved_value := int(saved_intensities.get(buff_id, 1))
+		if saved_value > 1:
+			active_debuffs[buff_id].set_intensity(float(saved_value))
 
 
 ## get_save_state() -> Dictionary
@@ -5888,6 +6094,7 @@ func get_save_state() -> Dictionary:
 			"_challenge_reward_this_round": _challenge_reward_this_round,
 			"_challenge_reward_granted": _challenge_reward_granted,
 			"_grounded_debuffs": _grounded_debuffs.duplicate(),
+			"granted_buff_intensities": _get_mom_granted_buff_intensities(),
 			"rebellion_stacks": int(active_debuffs["rebellion"].intensity) if active_debuffs.has("rebellion") else 1,
 			"_mom_cosmetics_locked": _mom_cosmetics_locked
 		}
@@ -6041,12 +6248,9 @@ func load_game_state(save_data: Dictionary) -> void:
 	# Re-apply debuffs
 	for debuff_id in gc_state.get("active_debuff_ids", []):
 		if not active_debuffs.has(debuff_id):
-			apply_debuff(debuff_id)
+			apply_debuff(debuff_id, _is_mom_granted_buff(debuff_id))
 
-	# Restore Rebellion buff stacks (apply_debuff always starts it at 1)
-	var rebellion_stacks := int(gc_state.get("rebellion_stacks", 1))
-	if rebellion_stacks > 1 and active_debuffs.has("rebellion"):
-		active_debuffs["rebellion"].set_intensity(float(rebellion_stacks))
+	_restore_mom_granted_buff_intensities(gc_state)
 	
 	# 10. Sync UI state
 	if dice_hand:

@@ -18,6 +18,7 @@ const RebellionBuffScript := preload("res://Scripts/Debuff/rebellion_buff.gd")
 const DebuffManagerScript := preload("res://Scripts/Managers/DebuffManager.gd")
 const TurnTrackerScript := preload("res://Scripts/Core/turn_tracker.gd")
 const RebellionDef := preload("res://Scripts/Debuff/RebellionBuff.tres")
+const TeacherPetDef := preload("res://Scripts/Debuff/TeacherPetBuff.tres")
 const HalfAdditiveDef := preload("res://Scripts/Debuff/HalfAdditiveDebuff.tres")
 
 var _failures: int = 0
@@ -122,15 +123,17 @@ func _test_buff_cleanup() -> void:
 
 func _test_granted_only_exclusion() -> void:
 	var manager := DebuffManagerScript.new()
-	manager.debuff_defs = [RebellionDef, HalfAdditiveDef]
+	manager.debuff_defs = [RebellionDef, TeacherPetDef, HalfAdditiveDef]
 	add_child(manager)  # triggers _ready -> _load_definitions
 
 	_check("rebellion def registered", manager.get_def("rebellion") != null)
+	_check("teacher_pet def registered", manager.get_def("teacher_pet") != null)
 	var eligible := manager.get_debuffs_by_difficulty(5)
 	var ids: Array = []
 	for def in eligible:
 		ids.append(def.id)
 	_check("rebellion excluded from auto-selection", "rebellion" not in ids)
+	_check("teacher_pet excluded from auto-selection", "teacher_pet" not in ids)
 	_check("normal debuffs still eligible", "half_additive" in ids)
 
 	# The buff scene must instantiate through the DebuffManager spawn path

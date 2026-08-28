@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="DebuffData" load_steps=3 format=3 uid="uid://upcpnl66xl8v"]
+
+[ext_resource type="Script" uid="uid://uiuqwtxbh7m0" path="res://Scripts/Debuff/DebuffData.gd" id="1_data"]
+[ext_resource type="PackedScene" uid="uid://d0v3r9tch3rp" path="res://Scenes/Debuff/TeacherPetBuff.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_data")
+id = "teacher_pet"
+display_name = "Teacher's Pet"
+description = "Positive interaction while Mom is happy may grant one tier until round end: Tier 1 +$100 at round end, Tier 2 +25 additive score/hand, Tier 3 x2.0 score/hand."
+scene = ExtResource("2_scene")
+glyph_id = 5
+glow_color = Color(1, 0.843137, 0.329412, 1)
+glyph_scale = 1.0
+line_thickness = 0.0
+rim_thickness = 0.022
+bloom_softness = 0.236
+wobble_strength = 0.08
+roughness_strength = 0.08
+glow_strength = 0.42
+difficulty_rating = 1
+metadata/_custom_type_script = "uid://uiuqwtxbh7m0"

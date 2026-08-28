@@ -1006,6 +1006,7 @@ Unresolved anger carries forward. If Mom storms off (or an outcome adds grudge),
 **Rebellion Systems (Sass Incentives):**
 Sass is the high-variance path; compliance is the safe path. Three interlocking systems make rebellion a real strategy:
 - **Rebellion Buff**: A *successful* sass (sassy response that draws no tangible punishment: storms off, defer, or a pure flavor outcome) grants the round-scoped **Rebellion** buff — +15% score and +1 roll per turn per stack, up to 3 stacks (one per successful sass in the visit). Cleared at round end when the shop opens. Implemented as a positive effect riding the Debuff pipeline (`Scripts/Debuff/rebellion_buff.gd`); its icon chip lives in the Chore UI buff row (compact meter + fan-out details panel), not the Debuff UI.
+- **Teacher's Pet Buff**: A non-sassy positive interaction during a Mom session can instead grant the round-scoped **Teacher's Pet** buff, evaluated once per session from Mom's *pre-dialog* mood. It does not coexist with Rebellion; whichever qualifying response wins last in dialog order decides the active Mom-granted buff, and later grants in the round replace the earlier buff. Mood bands and odds: mood 4 → Tier 1 at 20% (`+$100` at round end), mood 3 → Tier 2 at 45% (`+25` additive score per hand), mood 1-2 → Tier 3 at 75% (`x2.0` score per hand). Regrants keep the highest Teacher's Pet tier already earned that round. Implemented in `Scripts/Debuff/teacher_pet_buff.gd` and shown in the same Chore UI buff row as Rebellion.
 - **Punishment Delay**: The "Not now, Mom." response (punishment visits) can defer the pending punishment to a later visit. Counterweight: each defer adds +1 grudge and raises the **defer streak** (max 3, run-scoped, saved), which compounds onto the severity of the *eventual* resolution — and grudge can convert future reward visits into punishment visits. The streak resets when a punishment tier is actually applied.
 - **Rep Stat**: A persistent meta stat (0-100, saved in the profile) that grows with successful sass (+6, defer +5, storm off +7) and shrinks with bootlicking compliance (polite on punishment visits -2, polite on check-ins -1). Rep gates kiosk inventory by POG tier (`REP_TIER_THRESHOLDS = [0, 0, 15, 35, 60]`): G and PG are always open, 15+ unlocks PG-13 ("Parental Guidance"), 35+ R ("Grounded"), 60+ NC-17 ("Banned"). Pacing is tuned so Rep 60 (tier 4, NC-17 POGs) is reachable by Zone 4 — the tightened check-in window (2 to 6 + zone) keeps check-ins from being dropped by fast rounds. Below Rep 15 with a happy Mom (mood ≤ 3), the Mom-Approved (G) pool gets 1.5x shelf weight and a 10% discount instead — two playstyles, two item pools. Rep-gated items appear greyed in the shop's LOCKED tab with their Rep requirement.
 - **Sass Escalation**: Sassy responses that draw a punishment scale with Rep — every 2 Rep tiers adds +1 punishment tier (clamped at tier 5), and at Rep tier 3+ (Rep 35+) debuff punishments apply +1 extra debuff.
@@ -1077,7 +1078,7 @@ Each visit that resolves at severity 3+ increments a run counter that adds to la
 - **Mods**: Permanently removed (no refund) at higher tiers
 - **Dice Colors**: Locked until round end at tier 4
 - **Fines**: Deducted from money; substituted with a debuff when the player can't pay
-- **Grounded Debuffs**: Cleared at round end when the shop opens (Mom debuffs and the Rebellion buff are stripped together)
+- **Grounded Debuffs**: Cleared at round end when the shop opens (Mom debuffs and all Mom-granted buffs, including Rebellion and Teacher's Pet, are stripped together)
 
 **Mom Character:**
 - **Three Expressions**: Neutral (checking), Upset (found restricted items), Happy (clean slate)
@@ -1104,7 +1105,9 @@ Each visit that resolves at severity 3+ increments a run counter that adds to la
 - Rep +10 / Rep -10 / Show Rep State: Adjust and inspect the persistent Rep stat
 - Set Rep 0 (G) / 25 (PG-13) / 50 (R) / 75 (NC-17): Jump Rep to an exact POG tier threshold
 - Grant Rebellion Buff: Apply the sass-reward buff directly (icon appears in the Chore UI buff row)
+- Grant Teacher's Pet T1/T2/T3: Apply the positive-interaction buff directly at a specific tier for validation (`+$100` round-end buff bonus, `+25` additive, or `x2.0` multiplier)
 - Clear Rebellion Buff: Remove the active Rebellion buff and its Chore UI icon
+- Clear Active Mom Buff: Remove whichever Mom-granted buff is currently active in the Chore UI row
 - Select New Task: Force new random task selection
 - Reset Progress: Set progress to 0
 - Show Chore State: Display current system status

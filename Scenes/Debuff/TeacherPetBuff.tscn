@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://d0v3satch3rp"]
+
+[ext_resource type="Script" uid="uid://c6n5v1wq3a7tp" path="res://Scripts/Debuff/teacher_pet_buff.gd" id="1_teacher_pet"]
+
+[node name="TeacherPetBuff" type="Node"]
+script = ExtResource("1_teacher_pet")

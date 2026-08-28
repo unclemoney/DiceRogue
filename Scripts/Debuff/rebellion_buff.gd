@@ -68,6 +68,20 @@ func set_intensity(value: float) -> void:
 			int(intensity), _score_multiplier(), _bonus_rolls()])
 
 
+## get_buff_display_suffix() -> String
+##
+## Returns the compact Chore UI suffix for the current stack count.
+func get_buff_display_suffix() -> String:
+	return "x%d" % maxi(int(intensity), 1)
+
+
+## get_buff_effect_summary() -> String
+##
+## Returns the live Rebellion effect summary for Chore UI and debug views.
+func get_buff_effect_summary() -> String:
+	return "x%.2f score, +%d bonus roll(s)/turn" % [_score_multiplier(), _bonus_rolls()]
+
+
 func _score_multiplier() -> float:
 	return 1.0 + BASE_SCORE_BONUS * intensity
 

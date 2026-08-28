@@ -12,9 +12,9 @@ var _defs_by_id := {}
 var _active_debuff_ids: Array[String] = []
 var _verbose_mode: bool = false
 
-## Debuffs that are granted explicitly (e.g. "rebellion" from successful
-## sass) and must never be rolled by the automatic round selection.
-const GRANTED_ONLY_IDS: Array[String] = ["rebellion"]
+## Debuffs that are granted explicitly (e.g. Mom-granted buffs) and must
+## never be rolled by the automatic round selection.
+const GRANTED_ONLY_IDS: Array[String] = ["rebellion", "teacher_pet"]
 
 
 func _ready() -> void:

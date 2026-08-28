@@ -507,15 +507,9 @@ func _update_details_with_progress() -> void:
 			var icon = _buff_icons[id] as DebuffIcon
 			if not is_instance_valid(icon) or icon.data == null:
 				continue
-			var stacks := _get_buff_stacks(id)
-			# Effect numbers come from rebellion_buff.gd (BASE_SCORE_BONUS,
-			# MAX_BONUS_ROLLS) computed from the live stack count.
-			var mult := 1.0 + RebellionBuff.BASE_SCORE_BONUS * stacks
-			var rolls := mini(stacks, RebellionBuff.MAX_BONUS_ROLLS)
-			buff_section += "[cell][color=#c7bbdd]%s[/color][/cell][cell]x%d stack(s)[/cell]" % [
-				icon.data.display_name, stacks]
-			buff_section += "[cell][color=#c7bbdd]Effect[/color][/cell][cell]x%.2f score, +%d bonus roll(s)/turn[/cell]" % [
-				mult, rolls]
+			buff_section += "[cell][color=#c7bbdd]%s[/color][/cell][cell]%s[/cell]" % [
+				icon.data.display_name, _get_buff_display_suffix(id)]
+			buff_section += "[cell][color=#c7bbdd]Effect[/color][/cell][cell]%s[/cell]" % _get_buff_effect_summary(id)
 		buff_section += "[/table]"
 		sections.append(buff_section)
 
@@ -526,7 +520,7 @@ func _update_details_with_progress() -> void:
 		var lbl = _buff_detail_labels[id] as Label
 		var icon = _buff_icons.get(id) as DebuffIcon
 		if is_instance_valid(lbl) and is_instance_valid(icon) and icon.data:
-			lbl.text = "%s  x%d" % [icon.data.display_name, _get_buff_stacks(id)]
+			lbl.text = "%s  %s" % [icon.data.display_name, _get_buff_display_suffix(id)]
 
 
 ## _update_progress_tint(value)
@@ -685,6 +679,29 @@ func _get_buff_stacks(id: String) -> int:
 	return 1
 
 
+## _get_buff_display_suffix(id) -> String
+##
+## Returns the compact suffix shown beside a buff's display name.
+func _get_buff_display_suffix(id: String) -> String:
+	var inst = _buff_instances.get(id)
+	if is_instance_valid(inst) and inst.has_method("get_buff_display_suffix"):
+		return str(inst.call("get_buff_display_suffix"))
+	return "x%d" % _get_buff_stacks(id)
+
+
+## _get_buff_effect_summary(id) -> String
+##
+## Returns a one-line effect summary for the details panel and fan-out row.
+func _get_buff_effect_summary(id: String) -> String:
+	var inst = _buff_instances.get(id)
+	if is_instance_valid(inst) and inst.has_method("get_buff_effect_summary"):
+		return str(inst.call("get_buff_effect_summary"))
+	var icon = _buff_icons.get(id) as DebuffIcon
+	if is_instance_valid(icon) and icon.data != null:
+		return icon.data.description
+	return "Buff active"
+
+
 ## _rebuild_buff_detail_row()
 ##
 ## Rebuilds the fan-out buff row (chip + name/stacks label + effect summary)
@@ -728,7 +745,7 @@ func _rebuild_buff_detail_row() -> void:
 		lbl.add_theme_color_override("font_color", CHORE_TEXT)
 		lbl.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
 		lbl.add_theme_constant_override("outline_size", 1)
-		lbl.text = "%s  x%d" % [source.data.display_name, _get_buff_stacks(id)]
+		lbl.text = "%s  %s" % [source.data.display_name, _get_buff_display_suffix(id)]
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		text_vbox.add_child(lbl)
 		_buff_detail_labels[id] = lbl
@@ -740,19 +757,9 @@ func _rebuild_buff_detail_row() -> void:
 		desc.add_theme_color_override("font_color", CHORE_TEXT_SOFT)
 		desc.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
 		desc.add_theme_constant_override("outline_size", 1)
-		desc.text = _get_buff_effect_summary()
+		desc.text = _get_buff_effect_summary(id)
 		desc.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		text_vbox.add_child(desc)
-
-
-## _get_buff_effect_summary() -> String
-##
-## One-line per-stack effect summary for the fan-out buff chip, computed
-## from the Rebellion buff constants (same numbers as the BUFF BBCode
-## section in the details panel).
-func _get_buff_effect_summary() -> String:
-	return "x%.2f score per stack, +1 roll per stack (max %d)" % [
-		1.0 + RebellionBuff.BASE_SCORE_BONUS, RebellionBuff.MAX_BONUS_ROLLS]
 
 func _play_completion_flash() -> void:
 	# Play completion sound effect

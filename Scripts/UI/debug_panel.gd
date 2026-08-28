@@ -358,7 +358,11 @@ func _create_debug_tabs() -> void:
 			{"text": "Set Rep 60 (NC-17)", "method": "_debug_rep_set_60"},
 			{"text": "Show Rep State", "method": "_debug_rep_show"},
 			{"text": "Grant Rebellion Buff", "method": "_debug_rebellion_grant"},
+			{"text": "Grant Teacher's Pet T1", "method": "_debug_teacher_pet_tier_1"},
+			{"text": "Grant Teacher's Pet T2", "method": "_debug_teacher_pet_tier_2"},
+			{"text": "Grant Teacher's Pet T3", "method": "_debug_teacher_pet_tier_3"},
 			{"text": "Clear Rebellion Buff", "method": "_debug_rebellion_clear"},
+			{"text": "Clear Active Mom Buff", "method": "_debug_clear_active_mom_buff"},
 			{"text": "Select New Task", "method": "_debug_chores_new_task"},
 			{"text": "Reset Progress", "method": "_debug_chores_reset"},
 			{"text": "Show Chore State", "method": "_debug_chores_show_state"},
@@ -3699,9 +3703,9 @@ func _debug_cast_show_state() -> void:
 
 
 func _current_debug_channel() -> int:
-	var game_controller = get_tree().get_first_node_in_group("game_controller")
-	if game_controller:
-		var channel_manager = game_controller.get("channel_manager")
+	var gc = get_tree().get_first_node_in_group("game_controller")
+	if gc:
+		var channel_manager = gc.get("channel_manager")
 		if channel_manager:
 			return int(channel_manager.get("current_channel"))
 	return 1
@@ -3713,6 +3717,33 @@ func _debug_rebellion_grant() -> void:
 		return
 	game_controller._grant_rebellion_buff(1)
 	log_debug("Rebellion buff granted (check Chore UI buff icon row)")
+
+
+func _debug_teacher_pet_tier_1() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	game_controller._grant_teacher_pet_buff(1)
+	log_debug("Teacher's Pet granted at Tier 1 (+$100 round end)")
+
+
+func _debug_teacher_pet_tier_2() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	game_controller._grant_teacher_pet_buff(2)
+	log_debug("Teacher's Pet granted at Tier 2 (+25 additive/hand)")
+
+
+func _debug_teacher_pet_tier_3() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	game_controller._grant_teacher_pet_buff(3)
+	log_debug("Teacher's Pet granted at Tier 3 (x2.0 score/hand)")
 
 
 ## _debug_rebellion_clear()
@@ -3728,6 +3759,19 @@ func _debug_rebellion_clear() -> void:
 		return
 	game_controller.disable_debuff("rebellion")
 	log_debug("Rebellion buff cleared")
+
+
+func _debug_clear_active_mom_buff() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	for buff_id in ["teacher_pet", "rebellion"]:
+		if game_controller.is_debuff_active(buff_id):
+			game_controller.disable_debuff(buff_id)
+			log_debug("Cleared active Mom-granted buff: %s" % buff_id)
+			return
+	log_debug("No active Mom-granted buff to clear")
 
 
 ## _debug_checkin_reroll()

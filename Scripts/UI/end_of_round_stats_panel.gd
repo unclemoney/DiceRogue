@@ -41,6 +41,8 @@ var empty_categories_label: Label
 var empty_categories_bonus_label: Label
 var score_above_label: Label
 var score_above_bonus_label: Label
+var buff_bonus_label: Label
+var buff_bonus_value_label: Label
 var power_up_bonus_label: Label
 var power_up_bonus_value_label: Label
 var total_bonus_label: Label
@@ -62,6 +64,7 @@ var chore_reward_amount: int = 0
 # Calculated bonuses
 var empty_categories_bonus: int = 0
 var score_above_bonus: int = 0
+var buff_bonus_amount: int = 0
 var power_up_bonus_amount: int = 0
 var total_bonus: int = 0
 
@@ -98,7 +101,7 @@ func _build_ui() -> void:
 	# Create centered panel container
 	panel_container = PanelContainer.new()
 	panel_container.name = "PanelContainer"
-	panel_container.custom_minimum_size = Vector2(500, 450)
+	panel_container.custom_minimum_size = Vector2(500, 490)
 	# Center the panel using anchors preset
 	panel_container.set_anchors_preset(Control.PRESET_CENTER)
 	panel_container.offset_left = -250  # Half of width
@@ -313,6 +316,26 @@ func _build_ui() -> void:
 	score_above_bonus_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
 	score_hbox.add_child(score_above_bonus_label)
 
+	# Buff bonus row
+	var buff_hbox = HBoxContainer.new()
+	buff_hbox.add_theme_constant_override("separation", 10)
+	content_vbox.add_child(buff_hbox)
+
+	buff_bonus_label = Label.new()
+	buff_bonus_label.name = "BuffBonusLabel"
+	buff_bonus_label.text = "Bonuses from Buffs:"
+	buff_bonus_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	buff_bonus_label.add_theme_font_size_override("font_size", 18)
+	buff_hbox.add_child(buff_bonus_label)
+
+	buff_bonus_value_label = Label.new()
+	buff_bonus_value_label.name = "BuffBonusValueLabel"
+	buff_bonus_value_label.text = "$0"
+	buff_bonus_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	buff_bonus_value_label.add_theme_font_size_override("font_size", 18)
+	buff_bonus_value_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
+	buff_hbox.add_child(buff_bonus_value_label)
+
 	# PowerUp bonus row
 	var power_up_hbox = HBoxContainer.new()
 	power_up_hbox.add_theme_constant_override("separation", 10)
@@ -432,10 +455,11 @@ func show_stats(data: Dictionary) -> void:
 	empty_categories_bonus = data.get("empty_categories_bonus", empty_category_count * EMPTY_CATEGORY_BONUS)
 	points_above_target = data.get("points_above_target", max(0, final_score - challenge_target_score))
 	score_above_bonus = data.get("score_above_bonus", points_above_target * POINTS_ABOVE_TARGET_BONUS)
+	buff_bonus_amount = data.get("buff_bonus", 0)
 	power_up_bonus_amount = data.get("power_up_bonus", 0)
 
-	# Total includes challenge reward, chore reward, empty categories, score above target, and PowerUp bonuses.
-	total_bonus = challenge_reward_amount + chore_reward_amount + empty_categories_bonus + score_above_bonus + power_up_bonus_amount
+	# Total includes challenge reward, chore reward, empty categories, score above target, buff bonuses, and PowerUp bonuses.
+	total_bonus = challenge_reward_amount + chore_reward_amount + empty_categories_bonus + score_above_bonus + buff_bonus_amount + power_up_bonus_amount
 
 	# Docked Allowance grounding: the whole award is withheld.
 	var allowance_docked: bool = data.get("docked_allowance", false)
@@ -447,6 +471,7 @@ func show_stats(data: Dictionary) -> void:
 	print("[EndOfRoundStatsPanel] Chores completed:", chores_completed_count, "Reward:", chore_reward_amount)
 	print("[EndOfRoundStatsPanel] Empty categories:", empty_category_count, "Bonus:", empty_categories_bonus)
 	print("[EndOfRoundStatsPanel] Points above target:", points_above_target, "Bonus:", score_above_bonus)
+	print("[EndOfRoundStatsPanel] Buff bonuses:", buff_bonus_amount)
 	print("[EndOfRoundStatsPanel] PowerUp bonuses:", power_up_bonus_amount)
 	print("[EndOfRoundStatsPanel] Total bonus:", total_bonus)
 	
@@ -458,6 +483,7 @@ func show_stats(data: Dictionary) -> void:
 	chore_reward_label.text = "Chore Rewards (%s chores):" % NumberFormatter.format_int(chores_completed_count)
 	empty_categories_label.text = "Empty Categories (%s × $%s):" % [NumberFormatter.format_int(empty_category_count), NumberFormatter.format_int(EMPTY_CATEGORY_BONUS)]
 	score_above_label.text = "Points Above Target (%s pts, max $100):" % NumberFormatter.format_int(points_above_target)
+	buff_bonus_label.text = "Bonuses from Buffs:"
 	power_up_bonus_label.text = "Bonuses from PowerUps:"
 	if total_text_label:
 		if allowance_docked:
@@ -472,6 +498,7 @@ func show_stats(data: Dictionary) -> void:
 	chore_reward_value_label.text = "$0"
 	empty_categories_bonus_label.text = "$0"
 	score_above_bonus_label.text = "$0"
+	buff_bonus_value_label.text = "$0"
 	power_up_bonus_value_label.text = "$0"
 	total_bonus_label.text = "$0"
 	
@@ -589,6 +616,14 @@ func _animate_bonuses() -> void:
 	if not _is_animating:
 		return
 	
+	# Animate buff bonuses (with zero-value handling)
+	await _animate_counter_with_zero_effect(buff_bonus_value_label, buff_bonus_amount, COUNTER_ANIMATION_DURATION * 0.6)
+	if not _is_animating:
+		return
+	await get_tree().create_timer(REVEAL_DELAY).timeout
+	if not _is_animating:
+		return
+
 	# Animate PowerUp bonuses (with zero-value handling)
 	await _animate_counter_with_zero_effect(power_up_bonus_value_label, power_up_bonus_amount, COUNTER_ANIMATION_DURATION * 0.6)
 	if not _is_animating:
@@ -808,6 +843,13 @@ func get_score_above_bonus() -> int:
 ## Returns the aggregated round-end PowerUp bonus amount.
 func get_power_up_bonus() -> int:
 	return power_up_bonus_amount
+
+
+## get_buff_bonus() -> int
+##
+## Returns the aggregated round-end buff bonus amount.
+func get_buff_bonus() -> int:
+	return buff_bonus_amount
 
 
 

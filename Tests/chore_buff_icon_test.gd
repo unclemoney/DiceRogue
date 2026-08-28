@@ -18,6 +18,8 @@ extends Node
 
 const CHORE_UI_SCENE: PackedScene = preload("res://Scenes/UI/chore_ui.tscn")
 const REBELLION_DATA: DebuffData = preload("res://Scripts/Debuff/RebellionBuff.tres")
+const TEACHER_PET_DATA: DebuffData = preload("res://Scripts/Debuff/TeacherPetBuff.tres")
+const TeacherPetBuffScript := preload("res://Scripts/Debuff/teacher_pet_buff.gd")
 
 var _failures: int = 0
 
@@ -31,6 +33,7 @@ func _ready() -> void:
 	_test_duplicate_add(ui)
 	_test_remove_buff_icon(ui)
 	_test_clear_buff_icons(ui)
+	_test_teacher_pet_label_and_summary(ui)
 
 	ui.queue_free()
 
@@ -95,3 +98,17 @@ func _test_clear_buff_icons(ui) -> void:
 	_check("clear_buff_icons() empties the registry", ui._buff_icons.is_empty())
 	_check("compact slot empty after clear", ui._buff_icon_box.get_child_count() == 0)
 	_check("fan-out row hidden after clear", not ui.buff_detail_row.visible)
+
+
+func _test_teacher_pet_label_and_summary(ui) -> void:
+	var buff := TeacherPetBuffScript.new()
+	add_child(buff)
+	buff.set_intensity(3.0)
+	var icon = ui.add_buff_icon(TEACHER_PET_DATA, buff)
+	_check("Teacher's Pet chip added", icon != null and ui._buff_icons.has("teacher_pet"))
+	_check("Teacher's Pet fan-out label shows tier",
+		ui._buff_detail_labels.has("teacher_pet") and ui._buff_detail_labels["teacher_pet"].text == "Teacher's Pet  Tier 3")
+	_check("Teacher's Pet uses live effect summary",
+		ui._get_buff_effect_summary("teacher_pet") == "x2.00 score per hand")
+	ui.remove_buff_icon("teacher_pet")
+	buff.queue_free()
