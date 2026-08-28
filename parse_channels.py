@@ -119,17 +119,12 @@ for d in channels:
     # Round table
     output.append("### Round Configuration")
     output.append("")
-    output.append("| Rd | Max Debuffs | Debuff Cap | Grounding % | Boss Debuff Lv | Target Score | Reward $ | Bonus Multipliers |")
-    output.append("|----|-------------|------------|-------------|----------------|--------------|----------|-------------------|")
+    output.append("| Rd | Max Debuffs | Debuff Cap | Boss Debuff Lv | Target Score | Reward $ | Bonus Multipliers |")
+    output.append("|----|-------------|------------|----------------|--------------|----------|-------------------|")
     for r in d['rounds']:
         rd_num = r.get('round_number', '?')
         max_d = r.get('max_debuffs', '-')
         cap = r.get('debuff_difficulty_cap', '-')
-        grounding = r.get('grounding_chance', '0.0')
-        try:
-            grounding = "%d%%" % int(float(grounding) * 100)
-        except ValueError:
-            pass
         boss = r.get('boss_debuff_level', '-') if r.get('is_boss_round', 'false') == 'true' else '-'
         tgt = r.get('target_score_override', '-')
         if tgt == '-1' or tgt == '0' or tgt == '-':
@@ -138,7 +133,7 @@ for d in channels:
         if rew == '0':
             rew = 'Default'
         bonus = bonus_str(r.get('bonus_multipliers', '{}'))
-        output.append(f"| {rd_num} | {max_d} | {cap} | {grounding} | {boss} | {tgt} | {rew} | {bonus} |")
+        output.append(f"| {rd_num} | {max_d} | {cap} | {boss} | {tgt} | {rew} | {bonus} |")
     output.append("")
     
     # Multipliers

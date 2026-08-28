@@ -96,9 +96,9 @@ func _ready() -> void:
 ## Prepares the `rounds_data` array for the current zone: one store per round.
 ## Store names come from ChannelManager's per-run assignment; target scores
 ## come from the channel's RoundDifficultyConfig.target_score_override.
-## Each round's debuffs (and possible grounding) are pre-selected here from
-## the round config so the New Round Panel preview — and the later mall map
-## popup — can show exactly what the round will apply.
+## Each round's debuffs are pre-selected here from the round config so the
+## New Round Panel preview — and the later mall map popup — can show exactly
+## what the round will apply.
 func _initialize_rounds_data() -> void:
 	rounds_data.clear()
 
@@ -112,7 +112,6 @@ func _initialize_rounds_data() -> void:
 		var store_name: String = "Store %d-%d" % [zone, round_number]
 		var target_score: int = 0
 		var debuff_ids: Array[String] = []
-		var grounding_id: String = ""
 		if is_instance_valid(channel_manager):
 			store_name = channel_manager.get_store_name(zone, round_number)
 			var round_config = channel_manager.get_round_config(zone, round_number)
@@ -121,7 +120,6 @@ func _initialize_rounds_data() -> void:
 					target_score = round_config.target_score_override
 				var preselected = _preselect_round_debuffs(round_config)
 				debuff_ids = preselected["debuff_ids"]
-				grounding_id = preselected["grounding_id"]
 
 		var round_data = {
 			"round_number": round_number,
@@ -130,8 +128,7 @@ func _initialize_rounds_data() -> void:
 			"target_score": target_score,
 			"completed": false,
 			"failed": false,
-			"debuff_ids": debuff_ids,
-			"grounding_id": grounding_id
+			"debuff_ids": debuff_ids
 		}
 
 		rounds_data.append(round_data)
@@ -141,19 +138,12 @@ func _initialize_rounds_data() -> void:
 
 ## _preselect_round_debuffs(round_config) -> Dictionary
 ##
-## Draws the round's debuffs and grounding from its RoundDifficultyConfig,
-## mirroring the selection rules GameController uses at round start:
-## boss rounds draw exactly one debuff of boss_debuff_level; other rounds
-## draw up to max_debuffs within debuff_difficulty_cap; a grounding is
-## rolled separately against grounding_chance. Ids drawn within this round
-## exclude each other via used_ids. Returns {"debuff_ids": Array[String],
-## "grounding_id": String}; both empty when the debuff manager is missing
-## (matches the zero-debuff fallback used when managers are unavailable).
+## Draws the round's debuffs from its RoundDifficultyConfig, mirroring the
+## selection rules GameController uses at round start: boss rounds draw
+## exactly one debuff of boss_debuff_level; other rounds draw up to
+## max_debuffs within debuff_difficulty_cap.
 func _preselect_round_debuffs(round_config: RoundDifficultyConfig) -> Dictionary:
-	var result = {
-		"debuff_ids": [] as Array[String],
-		"grounding_id": ""
-	}
+	var result = {"debuff_ids": [] as Array[String]}
 	if not is_instance_valid(debuff_manager):
 		return result
 
@@ -167,16 +157,6 @@ func _preselect_round_debuffs(round_config: RoundDifficultyConfig) -> Dictionary
 		var max_debuffs = round_config.max_debuffs if round_config.get("max_debuffs") != null else 0
 		var difficulty_cap = round_config.debuff_difficulty_cap if round_config.get("debuff_difficulty_cap") != null else 1
 		result["debuff_ids"] = debuff_manager.select_debuffs_for_round(max_debuffs, difficulty_cap, false, used_ids)
-	for id in result["debuff_ids"]:
-		if id not in used_ids:
-			used_ids.append(id)
-
-	# Grounding draw: separate pool, shares the debuff UI slots.
-	var grounding_chance = round_config.grounding_chance if round_config.get("grounding_chance") != null else 0.0
-	if grounding_chance > 0.0 and randf() < grounding_chance:
-		var grounding_id = debuff_manager.select_grounding_for_round(used_ids)
-		if not grounding_id.is_empty():
-			result["grounding_id"] = grounding_id
 
 	return result
 
@@ -422,5 +402,11 @@ func load_state(state: Dictionary) -> void:
 	game_started = state.get("game_started", false)
 	max_rounds = state.get("max_rounds", 6)
 	var loaded_rounds = state.get("rounds_data", [])
-	rounds_data.assign(loaded_rounds)
+	var sanitized_rounds: Array[Dictionary] = []
+	for loaded_round in loaded_rounds:
+		if loaded_round is Dictionary:
+			var round_data: Dictionary = loaded_round.duplicate(true)
+			round_data.erase("grounding_id")
+			sanitized_rounds.append(round_data)
+	rounds_data.assign(sanitized_rounds)
 	print("[RoundManager] State loaded - round:", current_round)

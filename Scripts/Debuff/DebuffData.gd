@@ -39,5 +39,5 @@ class_name DebuffData
 @export_range(1, 5) var difficulty_rating: int = 1
 
 ## Groundings are a separate pool from debuffs: they are never drawn by
-## difficulty-based debuff selection, but share the same UI slots.
+## difficulty-based round debuff selection, but share the same UI slots.
 @export var is_grounding: bool = false

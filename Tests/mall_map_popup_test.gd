@@ -103,7 +103,6 @@ func _setup_managers() -> void:
 
 	_debuff_manager = StubDebuffManager.new()
 	_debuff_manager.defs["window_shopping"] = StubDebuffDef.new("Window Shopping")
-	_debuff_manager.defs["faster_chores"] = StubDebuffDef.new("Faster Chores")
 
 	# Real RoundManager, not added to the tree: references assigned directly,
 	# rounds_data filled by hand so the test controls completed/debuffs.
@@ -111,11 +110,8 @@ func _setup_managers() -> void:
 	_round_manager.channel_manager = _channel_manager
 	for i in range(6):
 		var debuff_ids: Array[String] = []
-		var grounding_id := ""
 		if i == 2:
 			debuff_ids.append("window_shopping")
-		if i == 1:
-			grounding_id = "faster_chores"
 		_round_manager.rounds_data.append({
 			"round_number": i + 1,
 			"store_name": _channel_manager.get_store_name(2, i + 1),
@@ -124,7 +120,6 @@ func _setup_managers() -> void:
 			"completed": i == 0,
 			"failed": false,
 			"debuff_ids": debuff_ids,
-			"grounding_id": grounding_id,
 		})
 	_round_manager.current_round = 2  # third store is the live one
 
@@ -167,13 +162,13 @@ func _run_tests() -> void:
 	_assert_equals(str(_popup._store_markers[1][0].get_meta("state")), "upcoming", "other zone markers stay neutral")
 
 	print("--- Tooltip ---")
-	var tooltip_text := _popup._build_store_tooltip_text(2, 2)
-	_assert(tooltip_text.contains("Stub Store 2-3"), "tooltip contains store name")
-	_assert(tooltip_text.contains("Window Shopping"), "tooltip contains pre-selected debuff display name")
-	_assert(tooltip_text.contains("YOU ARE HERE"), "tooltip marks current store")
+	var current_store_tooltip := _popup._build_store_tooltip_text(2, 2)
+	_assert(current_store_tooltip.contains("Stub Store 2-3"), "tooltip contains store name")
+	_assert(current_store_tooltip.contains("Window Shopping"), "tooltip contains pre-selected debuff display name")
+	_assert(current_store_tooltip.contains("YOU ARE HERE"), "tooltip marks current store")
 
 	var upcoming_text := _popup._build_store_tooltip_text(2, 1)
-	_assert(upcoming_text.contains("Faster Chores"), "grounding tooltip contains grounding display name")
+	_assert(not upcoming_text.contains("Grounding:"), "tooltip no longer shows a grounding line")
 
 	var other_zone_text := _popup._build_store_tooltip_text(1, 0)
 	_assert(other_zone_text.contains("unknown until reached"), "other zones show debuffs as unknown")

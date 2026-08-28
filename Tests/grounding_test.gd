@@ -2,10 +2,10 @@ extends Control
 
 ## grounding_test.gd
 ##
-## Verifies the grounding system: pool separation from debuffs, per-round
-## grounding selection, per-zone draw-once pool, boss exact-level draw,
-## and the three grounding behaviors (Docked Allowance, Coupons Revoked,
-## POGS Confiscated).
+## Verifies the grounding system: pool separation from debuffs, grounding
+## helper selection, the debuff draw-once and boss helpers used by round
+## debuff selection, and the three grounding behaviors (Docked Allowance,
+## Coupons Revoked, POGS Confiscated).
 
 @onready var results_label: RichTextLabel = $VBoxContainer/ResultsLabel
 
@@ -88,7 +88,7 @@ func _run_tests() -> void:
 	_check("window_shopping" in debuff_ids, "window_shopping present in debuff pool")
 	_check("too_greedy" in debuff_ids, "too_greedy present in debuff pool")
 
-	# 3. Grounding selection
+	# 3. Grounding helper selection
 	var g1 := manager.select_grounding_for_round()
 	_check(g1 in ["docked_allowance", "coupons_revoked", "pogs_confiscated"], "select_grounding_for_round returns a grounding")
 	var g2 := manager.select_grounding_for_round(["docked_allowance", "coupons_revoked"])

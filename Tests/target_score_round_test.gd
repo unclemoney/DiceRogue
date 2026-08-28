@@ -10,8 +10,8 @@ extends Control
 ##      is_challenge_completed — the flag name is kept for existing callers.
 ##   3. Round 6 of every zone is a boss round (levels 4/5/5/5).
 ##   4. Zone rounds 1-5 match the difficulty spec:
-##      z1 max_debuffs 0 / cap 0, z2 cap 2, z3 cap 3, z4 cap 4,
-##      grounding_chance 0 / 0.25 / 0.25 / 0.25.
+##      z1 max_debuffs 0 / cap 0, z2 cap 2, z3 cap 3, z4 cap 4, and
+##      the legacy grounding_chance field is neutralized to 0.0.
 
 @onready var results_label: RichTextLabel = $VBoxContainer/ResultsLabel
 
@@ -122,11 +122,12 @@ func _test_boss_rounds(cm: ChannelManager) -> void:
 ## _test_zone_round_specs(cm)
 ##
 ## Rounds 1-5 per zone: z1 max_debuffs 0 / cap 0, z2 cap 2, z3 cap 3,
-## z4 cap 4; grounding_chance 0 / 0.25 / 0.25 / 0.25.
+## z4 cap 4; grounding_chance stays at 0.0 because rounds no longer own
+## Groundings.
 func _test_zone_round_specs(cm: ChannelManager) -> void:
 	var expected_max_debuffs: Array[int] = [0, 1, 1, 1]
 	var expected_caps: Array[int] = [0, 2, 3, 4]
-	var expected_grounding: Array[float] = [0.0, 0.25, 0.25, 0.25]
+	var expected_grounding: Array[float] = [0.0, 0.0, 0.0, 0.0]
 	for zone in range(1, ChannelManager.MAX_CHANNEL + 1):
 		var max_ok := true
 		var cap_ok := true

@@ -187,7 +187,6 @@ var _defer_chore_selection_until_round_start: bool = false
 # Automatic debuffs pre-selected when the New Round Panel is built, so the
 # panel preview matches exactly what is applied when the round starts.
 var _pending_round_debuff_ids: Array[String] = []
-var _pending_round_grounding_id: String = ""  # Grounding pre-selected with the round preview
 var _current_round_target: int = 0  # Scaled target score for the current store round
 var _is_round_start_chore_gate_active: bool = false
 
@@ -900,7 +899,6 @@ func _clear_active_debuffs() -> void:
 	active_debuffs.clear()
 	_grounded_debuffs.clear()
 	_pending_round_debuff_ids.clear()
-	_pending_round_grounding_id = ""
 	_round_status_cleanup_scheduled = false
 	_last_completed_round_rebellion_stacks = 0
 	
@@ -5068,16 +5066,7 @@ func _apply_automatic_debuffs(round_number: int) -> void:
 		apply_debuff(id)
 		debuff_manager.register_active_debuff(id)
 
-	# Apply the grounding pre-selected with the round preview, if any.
-	if not _pending_round_grounding_id.is_empty():
-		var grounding_id = _pending_round_grounding_id
-		_pending_round_grounding_id = ""
-		apply_debuff(grounding_id)
-		debuff_manager.register_active_debuff(grounding_id)
-		selected_ids.append(grounding_id)
-		print("[GameController] Applied grounding: %s" % grounding_id)
-
-	# Tag the store icon's detail card with this round's debuffs/groundings
+	# Tag the store icon's detail card with this round's debuffs.
 	if is_instance_valid(challenge_ui) and challenge_ui.has_method("set_store_debuffs"):
 		challenge_ui.set_store_debuffs(selected_ids)
 	
@@ -6396,14 +6385,13 @@ func _build_round_panel_data(round_num: int) -> Dictionary:
 		data["challenge_name"] = channel_manager.get_store_name(channel_manager.current_channel, round_num)
 		data["challenge_desc"] = ""
 
-	# Debuff preview: show what the upcoming round will actually apply —
-	# automatic debuffs (and a possible grounding). The selection was made
-	# when the zone's rounds were generated (RoundManager.rounds_data) and
-	# is committed at round start (_apply_automatic_debuffs) so the panel
-	# always matches reality. Old saves lack the stored keys, so fall back
-	# to drawing fresh from the round config when they are absent.
+	# Debuff preview: show what the upcoming round will actually apply. The
+	# selection was made when the zone's rounds were generated
+	# (RoundManager.rounds_data) and is committed at round start
+	# (_apply_automatic_debuffs) so the panel always matches reality. Old
+	# saves lack the stored keys, so fall back to drawing fresh from the
+	# round config when they are absent.
 	_pending_round_debuff_ids.clear()
-	_pending_round_grounding_id = ""
 	if debuff_manager:
 		var preview_ids: Array[String] = []
 		var stored = _get_preselected_round_debuffs(round_num)
@@ -6411,9 +6399,6 @@ func _build_round_panel_data(round_num: int) -> Dictionary:
 			for id in stored["debuff_ids"]:
 				preview_ids.append(id)
 				_pending_round_debuff_ids.append(id)
-			if not stored["grounding_id"].is_empty():
-				_pending_round_grounding_id = stored["grounding_id"]
-				preview_ids.append(stored["grounding_id"])
 		elif channel_manager:
 			var round_config = channel_manager.get_round_config(channel_manager.current_channel, round_num)
 			if round_config:
@@ -6431,13 +6416,6 @@ func _build_round_panel_data(round_num: int) -> Dictionary:
 					if id not in preview_ids:
 						preview_ids.append(id)
 						_pending_round_debuff_ids.append(id)
-				# Grounding draw: separate pool, shares the debuff UI slots.
-				var grounding_chance = round_config.grounding_chance if round_config.get("grounding_chance") != null else 0.0
-				if grounding_chance > 0.0 and randf() < grounding_chance:
-					var grounding_id = debuff_manager.select_grounding_for_round(preview_ids)
-					if not grounding_id.is_empty():
-						_pending_round_grounding_id = grounding_id
-						preview_ids.append(grounding_id)
 		for debuff_id in preview_ids:
 			var debuff_def = _find_debuff_def(debuff_id)
 			if debuff_def:
@@ -6472,8 +6450,8 @@ func _find_debuff_def(debuff_id: String) -> DebuffData:
 
 ## _get_preselected_round_debuffs(round_num) -> Dictionary
 ##
-## Returns the debuffs/grounding pre-selected for the round when the zone's
-## rounds were generated (RoundManager.rounds_data, index = round_num - 1).
+## Returns the debuffs pre-selected for the round when the zone's rounds
+## were generated (RoundManager.rounds_data, index = round_num - 1).
 ## Returns an empty Dictionary when the stored keys are absent (old saves)
 ## or out of bounds, so callers fall back to drawing fresh.
 func _get_preselected_round_debuffs(round_num: int) -> Dictionary:
@@ -6489,8 +6467,7 @@ func _get_preselected_round_debuffs(round_num: int) -> Dictionary:
 	for id in round_data["debuff_ids"]:
 		debuff_ids.append(str(id))
 	return {
-		"debuff_ids": debuff_ids,
-		"grounding_id": str(round_data.get("grounding_id", ""))
+		"debuff_ids": debuff_ids
 	}
 
 

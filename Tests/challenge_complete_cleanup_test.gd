@@ -71,6 +71,20 @@ class StubChoreUI extends Node:
 		removed_buff_ids.append(id)
 
 
+class TestGameController extends GameController:
+	func seed_round_end_cleanup_state(grounded_ids: Array[String], mom_cosmetics_locked: bool) -> void:
+		_grounded_debuffs.assign(grounded_ids)
+		_mom_cosmetics_locked = mom_cosmetics_locked
+
+	func get_grounded_debuff_ids_for_test() -> Array[String]:
+		var ids: Array[String] = []
+		ids.assign(_grounded_debuffs)
+		return ids
+
+	func is_mom_cosmetics_locked_for_test() -> bool:
+		return _mom_cosmetics_locked
+
+
 func _ready() -> void:
 	print("\n=== CHALLENGE COMPLETE CLEANUP TEST ===")
 	await get_tree().process_frame
@@ -88,7 +102,7 @@ func _check(condition: bool, label: String) -> void:
 
 
 func _run_tests() -> void:
-	var gc = GAME_CONTROLLER_SCRIPT.new()
+	var gc := TestGameController.new()
 	var debuff_manager := StubDebuffManager.new()
 	var debuff_ui := StubDebuffUI.new()
 	var challenge_ui := StubChallengeUI.new()
@@ -101,8 +115,6 @@ func _run_tests() -> void:
 
 	var auto_debuff := StubDebuff.new()
 	auto_debuff.id = "window_shopping"
-	var auto_grounding := StubDebuff.new()
-	auto_grounding.id = "docked_allowance"
 	var grounded_debuff := StubDebuff.new()
 	grounded_debuff.id = "lock_dice"
 	var rebellion := StubDebuff.new()
@@ -111,13 +123,11 @@ func _run_tests() -> void:
 
 	gc.active_debuffs = {
 		"window_shopping": auto_debuff,
-		"docked_allowance": auto_grounding,
 		"lock_dice": grounded_debuff,
 		"rebellion": rebellion,
 	}
-	gc._grounded_debuffs = ["lock_dice"]
-	gc._mom_cosmetics_locked = true
-	debuff_manager.test_active_ids = ["window_shopping", "docked_allowance"]
+	gc.seed_round_end_cleanup_state(["lock_dice"], true)
+	debuff_manager.test_active_ids = ["window_shopping"]
 
 	var original_colors_enabled := DiceColorManager.are_colors_enabled()
 	DiceColorManager.set_colors_enabled(false)
@@ -125,22 +135,20 @@ func _run_tests() -> void:
 	gc._expire_completed_round_statuses()
 
 	_check(not gc.is_debuff_active("window_shopping"), "automatic debuff removed from runtime state")
-	_check(not gc.is_debuff_active("docked_allowance"), "automatic grounding removed from runtime state")
 	_check(not gc.is_debuff_active("lock_dice"), "grounded Mom debuff removed from runtime state")
 	_check(not gc.is_debuff_active("rebellion"), "rebellion buff removed from runtime state")
 	_check(auto_debuff.removed, "automatic debuff end() called remove()")
-	_check(auto_grounding.removed, "automatic grounding end() called remove()")
 	_check(grounded_debuff.removed, "grounded debuff end() called remove()")
 	_check(rebellion.removed, "rebellion end() called remove()")
 	_check(debuff_manager.test_active_ids.is_empty(), "DebuffManager active ids cleared")
-	_check(debuff_ui.animated_ids.has("window_shopping") and debuff_ui.animated_ids.has("docked_allowance") and debuff_ui.animated_ids.has("lock_dice"),
+	_check(debuff_ui.animated_ids.has("window_shopping") and debuff_ui.animated_ids.has("lock_dice"),
 		"DebuffUI animated regular and grounded debuff removals")
-	_check(debuff_ui.removed_ids.has("window_shopping") and debuff_ui.removed_ids.has("docked_allowance") and debuff_ui.removed_ids.has("lock_dice"),
+	_check(debuff_ui.removed_ids.has("window_shopping") and debuff_ui.removed_ids.has("lock_dice"),
 		"DebuffUI removed regular and grounded debuff icons")
 	_check(chore_ui.removed_buff_ids == ["rebellion"], "ChoreUI removed the Rebellion buff chip")
-	_check(gc._grounded_debuffs.is_empty(), "grounded debuff registry cleared")
+	_check(gc.get_grounded_debuff_ids_for_test().is_empty(), "grounded debuff registry cleared")
 	_check(gc.get_last_completed_round_rebellion_stacks() == 3, "rebellion stacks cached before cleanup")
-	_check(not gc._mom_cosmetics_locked, "temporary Mom cosmetic lock cleared")
+	_check(not gc.is_mom_cosmetics_locked_for_test(), "temporary Mom cosmetic lock cleared")
 	_check(DiceColorManager.are_colors_enabled(), "dice colors restored after Mom cosmetic lock")
 	_check(not challenge_ui.store_debuff_updates.is_empty() and challenge_ui.store_debuff_updates.back().is_empty(),
 		"ChallengeUI debuff tags cleared for the between-round state")

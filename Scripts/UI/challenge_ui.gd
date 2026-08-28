@@ -212,7 +212,7 @@ func set_store_progress(progress: float) -> void:
 
 ## set_store_debuffs(debuff_ids) -> void
 ##
-## Tags the store's detail card with this round's active debuffs/groundings.
+## Tags the store's detail card with this round's active debuffs.
 func set_store_debuffs(debuff_ids: Array) -> void:
 	if _store_id.is_empty() or not _challenges.has(_store_id):
 		return

@@ -2,12 +2,11 @@ extends Control
 
 ## round_preselect_test.gd
 ##
-## Verifies that RoundManager pre-selects each round's debuffs and grounding
-## when the zone's rounds are generated (_initialize_rounds_data):
-## every round_data gains "debuff_ids" (Array) and "grounding_id" (String)
-## keys, boss rounds draw exactly one debuff of the configured level, the
-## per-zone draw-once pool prevents repeats, and the manager-less fallback
-## stores empty selections.
+## Verifies that RoundManager pre-selects each round's debuffs when the
+## zone's rounds are generated (_initialize_rounds_data): every round_data
+## gains a "debuff_ids" Array, boss rounds draw exactly one debuff of the
+## configured level, the per-zone draw-once pool prevents repeats, and the
+## manager-less fallback stores empty selections.
 
 @onready var results_label: RichTextLabel = $VBoxContainer/ResultsLabel
 
@@ -64,8 +63,9 @@ func _make_debuff_manager() -> DebuffManager:
 	return manager
 
 
-## Builds a stub channel whose rounds 1-5 draw one L1 debuff (round 1 also
-## always draws a grounding) and round 6 is a boss round at exact level 5.
+## Builds a stub channel whose rounds 1-5 draw one L1 debuff and round 6 is
+## a boss round at exact level 5. grounding_chance stays populated to verify
+## RoundManager ignores it.
 func _make_channel() -> StubChannelManager:
 	var stub := StubChannelManager.new()
 	for i in range(6):
@@ -98,11 +98,11 @@ func _run_tests() -> void:
 	var rm := _make_round_manager(_make_channel(), manager)
 	rm._initialize_rounds_data()
 	_check(rm.rounds_data.size() == 6, "rounds_data has 6 rounds")
-	var all_have_keys := true
+	var debuff_only_data := true
 	for round_data in rm.rounds_data:
-		if not round_data.has("debuff_ids") or not round_data.has("grounding_id"):
-			all_have_keys = false
-	_check(all_have_keys, "every round_data has debuff_ids and grounding_id keys")
+		if not round_data.has("debuff_ids") or round_data.has("grounding_id"):
+			debuff_only_data = false
+	_check(debuff_only_data, "every round_data stores only debuff_ids for round modifiers")
 	var boss_data: Dictionary = rm.rounds_data[5]
 	_check(boss_data["debuff_ids"] is Array, "boss debuff_ids is an Array")
 	_check(boss_data["debuff_ids"].size() == 1, "boss round has exactly one debuff id")
@@ -122,10 +122,10 @@ func _run_tests() -> void:
 	for i in range(2, 5):
 		_check(rm.rounds_data[i]["debuff_ids"].is_empty(), "round %d empty after L1 pool exhausted" % (i + 1))
 
-	# 3. Grounding roll: chance 1.0 on round 1, 0.0 elsewhere
-	_check(rm.rounds_data[0]["grounding_id"] in ["docked_allowance", "coupons_revoked", "pogs_confiscated"], "round 1 (chance 1.0) drew a grounding")
-	for i in range(1, 6):
-		_check(rm.rounds_data[i]["grounding_id"] == "", "round %d (chance 0.0) has no grounding" % (i + 1))
+	# 3. Groundings are no longer pre-selected into round data, even when the
+	# round config still carries grounding_chance from older authored content.
+	for i in range(6):
+		_check(not rm.rounds_data[i].has("grounding_id"), "round %d has no grounding_id key" % (i + 1))
 
 	# 4. Pool state survives a state round-trip (save/load keys preserved)
 	var state: Dictionary = rm.get_state()
@@ -133,6 +133,7 @@ func _run_tests() -> void:
 	rm2.load_state(state)
 	_check(rm2.rounds_data.size() == 6, "loaded rounds_data has 6 rounds")
 	_check(rm2.rounds_data[5]["debuff_ids"] == boss_data["debuff_ids"], "boss debuff ids survive save/load")
+	_check(not rm2.rounds_data[0].has("grounding_id"), "load_state scrubs legacy grounding_id data")
 	rm2.free()
 
 	# 5. Manager-less fallback stores empty selections (zero-debuff fallback)
@@ -141,7 +142,7 @@ func _run_tests() -> void:
 	rm3._initialize_rounds_data()
 	_check(rm3.rounds_data.size() == 6, "manager-less init still builds 6 rounds")
 	_check(rm3.rounds_data[0]["debuff_ids"].is_empty(), "manager-less round has empty debuff_ids")
-	_check(rm3.rounds_data[0]["grounding_id"] == "", "manager-less round has empty grounding_id")
+	_check(not rm3.rounds_data[0].has("grounding_id"), "manager-less round has no grounding_id key")
 	rm3.free()
 
 	rm.free()

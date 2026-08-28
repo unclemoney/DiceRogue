@@ -446,9 +446,9 @@ func _show_store_tooltip(marker: Area2D) -> void:
 func _get_marker_screen_rect(marker: Area2D) -> Rect2:
 	var view_rect := _map_view.get_global_rect()
 	var board_size: Vector2 = MallMapLayoutScript.get_board_size()
-	var scale := view_rect.size / board_size
+	var board_scale := view_rect.size / board_size
 	var board_rect := Rect2(marker.position - MARKER_SIZE * 0.5, MARKER_SIZE)
-	return Rect2(view_rect.position + board_rect.position * scale, board_rect.size * scale)
+	return Rect2(view_rect.position + board_rect.position * board_scale, board_rect.size * board_scale)
 
 
 func _hide_tooltip(animate: bool) -> void:
@@ -485,9 +485,6 @@ func _build_store_tooltip_text(channel: int, store_index: int) -> String:
 		var debuff_ids: Array = round_data.get("debuff_ids", [])
 		for debuff_id in debuff_ids:
 			text_lines.append("Debuff: %s" % _get_debuff_display_name(str(debuff_id)))
-		var grounding_id := str(round_data.get("grounding_id", ""))
-		if not grounding_id.is_empty():
-			text_lines.append("Grounding: %s" % _get_debuff_display_name(grounding_id))
 		text_lines.append("Status: %s" % _get_store_status_text(store_index))
 	else:
 		if channel_manager:

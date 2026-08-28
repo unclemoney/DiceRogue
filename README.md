@@ -502,7 +502,7 @@ The **Channel Manager** drives the resource-based Mall Zone progression system (
 - **Resource-Based Configuration**: Each Mall Zone is defined by a `.tres` file with manually tuned settings
 - **Unlock Pacing**: Higher Mall Zones require completing lower Mall Zones first
 - **Multiple Scaling Multipliers**: Goal scores, shop prices, Yahtzee bonuses, debuff intensity
-- **Per-Round Difficulty**: Each round has its own target score, debuff cap, grounding chance, and boss flag
+- **Per-Round Difficulty**: Each round has its own target score, debuff cap, and boss flag
 - **Persistent Completion**: Completed Mall Zones are saved and display a checkmark when browsing
 - **Mall Metadata Layer**: Selector-only wing names, directory labels, section buckets, and flavor text live alongside channel difficulty data
 
@@ -529,17 +529,16 @@ Each round within a Mall Zone has:
 - `target_score_override`: Target score for the round (before channel scaling)
 - `max_debuffs`: Maximum debuffs allowed this round
 - `debuff_difficulty_cap`: Maximum difficulty of debuffs allowed
-- `grounding_chance`: Chance (0-1) of drawing a grounding this round
 - `is_boss_round` / `boss_debuff_level`: Boss rounds draw exactly one debuff of that exact level via `DebuffManager.select_boss_debuff()`
 - `bonus_multipliers`: Dictionary of category-specific scoring bonuses
 
 **Zone / Debuff / Boss Schedule (4 Mall Zones):**
-| Zone | Wing | Rounds 1-5 Debuffs | Round 6 (Boss) | Grounding Chance (r1-5) | Unlock Req |
-|------|------|--------------------|----------------|--------------------------|------------|
-| 1 | North Wing | None | Boss debuff, exactly level 4 | 0% | 0 |
-| 2 | East Wing | One debuff, difficulty cap 2 | Boss debuff, exactly level 5 | 25% | 1 |
-| 3 | West Wing | One debuff, difficulty cap 3 | Boss debuff, exactly level 5 | 25% | 2 |
-| 4 | South Wing | One debuff, difficulty cap 4 | Boss debuff, exactly level 5 | 25% | 3 |
+| Zone | Wing | Rounds 1-5 Debuffs | Round 6 (Boss) | Unlock Req |
+|------|------|--------------------|----------------|------------|
+| 1 | North Wing | None | Boss debuff, exactly level 4 | 0 |
+| 2 | East Wing | One debuff, difficulty cap 2 | Boss debuff, exactly level 5 | 1 |
+| 3 | West Wing | One debuff, difficulty cap 3 | Boss debuff, exactly level 5 | 2 |
+| 4 | South Wing | One debuff, difficulty cap 4 | Boss debuff, exactly level 5 | 3 |
 
 Debuff draws come from a **per-zone draw-once pool** (`DebuffManager._drawn_this_zone`, reset by `reset_zone_pool()` on zone change) — the same debuff never repeats within a zone. Boss rounds draw no regular debuffs (`max_debuffs = 0`) and instead pull exactly one debuff of the boss level. See `CHANNELS_REFERENCE.md` for per-round target scores and rewards.
 
@@ -1916,7 +1915,7 @@ Debuffs are negative effects that hinder the player's progress and add challenge
   - Original roll count is restored when the debuff is removed
 
 ### Groundings
-Groundings are Mom-themed punishments drawn from a **separate pool** from debuffs (`DebuffData.is_grounding = true`), sharing the debuff UI slots. Each round in zones 2-4 (rounds 1-5) has a 25% `grounding_chance` of drawing one; zone 1 never draws groundings. They share the per-zone draw-once pool, so the same grounding never repeats within a zone.
+Groundings are Mom-themed punishments drawn from a **separate pool** from debuffs (`DebuffData.is_grounding = true`), sharing the debuff UI slots. They are not scheduled by rounds and do not appear in the New Round panel or Mall Map tooltips.
 
 - **Docked Allowance** (`docked_allowance`): The end-of-round award is withheld; the stats panel shows "ALLOWANCE DOCKED:" with a $0 total
 - **Coupons Revoked** (`coupons_revoked`): Removes all held coupons (consumables) at round start

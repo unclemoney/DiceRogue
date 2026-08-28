@@ -139,7 +139,7 @@ metadata/_custom_type_script = "uid://uiuqwtxbh7m0"
 - **roughness_strength**: Subtle edge roughness amount
 - **glow_strength**: Base brightness of the glyph glow
 - **difficulty_rating**: `1-5` used for automatic selection and UI color tinting
-- **is_grounding**: `false` for normal debuffs. Set `true` to move the entry into the **grounding pool** — groundings are drawn by per-round `grounding_chance` instead of the regular debuff schedule, and are excluded from normal and boss debuff draws (see "Groundings" below)
+- **is_grounding**: `false` for normal debuffs. Set `true` to move the entry into the **grounding pool** — groundings stay out of the regular round debuff schedule and are reserved for Mom-owned punishment flows (see "Groundings" below)
 
 #### Glyph ID Reference
 
@@ -282,7 +282,7 @@ Debuffs are drawn per round from the `RoundDifficultyConfig` of the active chann
 
 ### Per-Round Pre-Selection
 
-At run start, `RoundManager._initialize_rounds_data()` pre-selects the debuffs and grounding for every round and stores them on each round's data dict as `debuff_ids` (Array) and `grounding_id` (String, empty when none). Draws go through `DebuffManager` using the round's `RoundDifficultyConfig`, so the per-zone draw-once pool and boss rules are fully decided before Round 1 begins. `RoundManager` exposes the selection source via the `debuff_manager_path` export.
+At run start, `RoundManager._initialize_rounds_data()` pre-selects the debuffs for every round and stores them on each round's data dict as `debuff_ids` (Array). Draws go through `DebuffManager` using the round's `RoundDifficultyConfig`, so the per-zone draw-once pool and boss rules are fully decided before Round 1 begins. `RoundManager` exposes the selection source via the `debuff_manager_path` export.
 
 `GameController._build_round_panel_data()` consumes these stored ids when building the round panel (store list, targets, debuff previews). For old saves that predate pre-selection, it falls back to a fresh draw. Test scene: `Tests/RoundPreselectTest.tscn`.
 
@@ -314,7 +314,7 @@ At run start, `RoundManager._initialize_rounds_data()` pre-selects the debuffs a
 
 ## Groundings
 
-Groundings are Mom-themed punishments in a **separate pool** from debuffs (`DebuffData.is_grounding = true`). They share the debuff UI slots and the per-zone draw-once pool, but they are drawn by `RoundDifficultyConfig.grounding_chance` (zones 2-4 rounds 1-5 = 0.25, zone 1 = 0) instead of `max_debuffs`, and are excluded from normal and boss debuff draws.
+Groundings are Mom-themed punishments in a **separate pool** from debuffs (`DebuffData.is_grounding = true`). They share the debuff UI slots, but they are not scheduled by rounds, not shown in Mall/store previews, and not drawn by `RoundDifficultyConfig`.
 
 The three groundings:
 

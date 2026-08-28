@@ -142,8 +142,9 @@ func get_debuffs_by_difficulty(max_difficulty: int) -> Array[DebuffData]:
 ## ============== GROUNDING POOL ==============
 ##
 ## Groundings (Docked Allowance, Coupons Revoked, POGS Confiscated) are a
-## separate pool from debuffs. They are drawn by per-round grounding_chance
-## (see RoundDifficultyConfig) and share the debuff UI slots.
+## separate pool from debuffs. Round-owned Groundings were removed, so this
+## pool is reserved for Mom-owned punishment flows while still sharing the
+## debuff UI slots.
 
 
 ## get_groundings() -> Array[DebuffData]
@@ -161,7 +162,8 @@ func get_groundings() -> Array[DebuffData]:
 ## select_grounding_for_round(exclude_ids) -> String
 ##
 ## Randomly selects one grounding id, excluding the given ids and any
-## grounding already active. Returns "" when nothing is eligible.
+## grounding already active. Returns "" when nothing is eligible. The
+## helper name is kept for compatibility with existing tooling and tests.
 func select_grounding_for_round(exclude_ids: Array = []) -> String:
 	var pool: Array[DebuffData] = []
 	for def in get_groundings():

@@ -27,9 +27,8 @@ class_name RoundDifficultyConfig
 ## > 0 = use this value as the base target (before channel scaling)
 @export var target_score_override: int = 0
 
-## Chance (0.0-1.0) that a grounding is drawn for this round.
-## Groundings come from their own pool (DebuffData.is_grounding) and share
-## the debuff UI slots. 0 = no groundings this round.
+## Legacy compatibility field retained for existing channel resources.
+## Round-owned Groundings were removed, so runtime ignores this value.
 @export_range(0.0, 1.0) var grounding_chance: float = 0.0
 
 ## Boss round flag (final round of a zone). Boss rounds draw exactly one
@@ -95,9 +94,6 @@ func get_summary() -> String:
 
 	if is_boss_round:
 		summary += ", BOSS (debuff level %d)" % boss_debuff_level
-
-	if grounding_chance > 0.0:
-		summary += ", Grounding: %.0f%%" % (grounding_chance * 100.0)
 
 	if goof_off_threshold_override >= 0:
 		summary += ", Goof-off: %d" % goof_off_threshold_override

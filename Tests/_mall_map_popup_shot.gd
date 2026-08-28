@@ -84,7 +84,6 @@ func _run() -> void:
 			"completed": i == 0,
 			"failed": false,
 			"debuff_ids": debuff_ids,
-			"grounding_id": "",
 		})
 	round_manager.current_round = 1
 

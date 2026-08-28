@@ -21,14 +21,14 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 ### Round Configuration
 
-| Rd | Max Debuffs | Debuff Cap | Grounding % | Boss Debuff Lv | Target Score | Reward $ | Bonus Multipliers |
-|----|-------------|------------|-------------|----------------|--------------|----------|-------------------|
-| 1 | 0 | 0 | 0% | - | 50 | 50 |  |
-| 2 | 0 | 0 | 0% | - | 75 | 50 |  |
-| 3 | 0 | 0 | 0% | - | 105 | 50 |  |
-| 4 | 0 | 0 | 0% | - | 150 | 50 |  |
-| 5 | 0 | 0 | 0% | - | 200 | 50 |  |
-| 6 | 0 | 0 | 0% | 4 | 300 | 50 |  |
+| Rd | Max Debuffs | Debuff Cap | Boss Debuff Lv | Target Score | Reward $ | Bonus Multipliers |
+|----|-------------|------------|----------------|--------------|----------|-------------------|
+| 1 | 0 | 0 | - | 50 | 50 |  |
+| 2 | 0 | 0 | - | 75 | 50 |  |
+| 3 | 0 | 0 | - | 105 | 50 |  |
+| 4 | 0 | 0 | - | 150 | 50 |  |
+| 5 | 0 | 0 | - | 200 | 50 |  |
+| 6 | 0 | 0 | 4 | 300 | 50 |  |
 
 ### Channel Multipliers
 
@@ -57,14 +57,14 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 ### Round Configuration
 
-| Rd | Max Debuffs | Debuff Cap | Grounding % | Boss Debuff Lv | Target Score | Reward $ | Bonus Multipliers |
-|----|-------------|------------|-------------|----------------|--------------|----------|-------------------|
-| 1 | 1 | 2 | 25% | - | 161 | 700 |  |
-| 2 | 1 | 2 | 25% | - | 13451 | Default |  |
-| 3 | 1 | 2 | 25% | - | 19285 | Default |  |
-| 4 | 1 | 2 | 25% | - | 22557 | Default |  |
-| 5 | 1 | 2 | 25% | - | 19618 | 200 |  |
-| 6 | 0 | 0 | 0% | 5 | 19284 | 200 |  |
+| Rd | Max Debuffs | Debuff Cap | Boss Debuff Lv | Target Score | Reward $ | Bonus Multipliers |
+|----|-------------|------------|----------------|--------------|----------|-------------------|
+| 1 | 1 | 2 | - | 150 | 125 |  |
+| 2 | 1 | 2 | - | 200 | 125 |  |
+| 3 | 1 | 2 | - | 250 | 125 |  |
+| 4 | 1 | 2 | - | 300 | 125 |  |
+| 5 | 1 | 2 | - | 350 | 125 |  |
+| 6 | 0 | 0 | 5 | 500 | 125 |  |
 
 ### Channel Multipliers
 
@@ -77,7 +77,7 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 - **Debuff Intensity:** 1.0
 
 **Carryover:** 3 items
-- Types: power_ups, consumables, mods, money
+- Types: power_ups, consumables, colored_dice, mods, consoles, money, scorecard_levels
 
 **Background Shader:** `zigzag_bolts`
 
@@ -93,14 +93,14 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 ### Round Configuration
 
-| Rd | Max Debuffs | Debuff Cap | Grounding % | Boss Debuff Lv | Target Score | Reward $ | Bonus Multipliers |
-|----|-------------|------------|-------------|----------------|--------------|----------|-------------------|
-| 1 | 1 | 3 | 25% | - | 266 | Default |  |
-| 2 | 1 | 3 | 25% | - | 22243 | Default |  |
-| 3 | 1 | 3 | 25% | - | 31890 | Default |  |
-| 4 | 1 | 3 | 25% | - | 37301 | Default |  |
-| 5 | 1 | 3 | 25% | - | 32442 | 400 |  |
-| 6 | 0 | 0 | 0% | 5 | 31889 | 400 |  |
+| Rd | Max Debuffs | Debuff Cap | Boss Debuff Lv | Target Score | Reward $ | Bonus Multipliers |
+|----|-------------|------------|----------------|--------------|----------|-------------------|
+| 1 | 1 | 3 | - | 300 | 150 |  |
+| 2 | 1 | 3 | - | 500 | 150 |  |
+| 3 | 1 | 3 | - | 800 | 150 |  |
+| 4 | 1 | 3 | - | 1200 | 150 |  |
+| 5 | 1 | 3 | - | 2000 | 150 |  |
+| 6 | 0 | 0 | 5 | 3200 | 150 |  |
 
 ### Channel Multipliers
 
@@ -113,7 +113,7 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 - **Debuff Intensity:** 1.0
 
 **Carryover:** 2 items
-- Types: power_ups, consumables, mods, money
+- Types: power_ups, consumables, colored_dice, mods, consoles, money, scorecard_levels
 
 **Background Shader:** `jazz_cup`
 
@@ -129,14 +129,14 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 
 ### Round Configuration
 
-| Rd | Max Debuffs | Debuff Cap | Grounding % | Boss Debuff Lv | Target Score | Reward $ | Bonus Multipliers |
-|----|-------------|------------|-------------|----------------|--------------|----------|-------------------|
-| 1 | 1 | 4 | 25% | - | 290 | 500 |  |
-| 2 | 1 | 4 | 25% | - | 24290 | 600 |  |
-| 3 | 1 | 4 | 25% | - | 34824 | 700 |  |
-| 4 | 1 | 4 | 25% | - | 40732 | 800 |  |
-| 5 | 1 | 4 | 25% | - | 35427 | 1000 |  |
-| 6 | 0 | 0 | 0% | 5 | 34822 | Default |  |
+| Rd | Max Debuffs | Debuff Cap | Boss Debuff Lv | Target Score | Reward $ | Bonus Multipliers |
+|----|-------------|------------|----------------|--------------|----------|-------------------|
+| 1 | 1 | 4 | - | 2000 | 200 |  |
+| 2 | 1 | 4 | - | 4000 | 200 |  |
+| 3 | 1 | 4 | - | 6000 | 200 |  |
+| 4 | 1 | 4 | - | 10000 | 200 |  |
+| 5 | 1 | 4 | - | 16000 | 200 |  |
+| 6 | 0 | 0 | 5 | 26000 | Default |  |
 
 ### Channel Multipliers
 
@@ -149,7 +149,7 @@ Auto-generated from `Resources/Data/Channels/channel_*.tres`.
 - **Debuff Intensity:** 1.0
 
 **Carryover:** 1 item
-- Types: power_ups, consumables, mods, money
+- Types: power_ups, consumables, colored_dice, mods, consoles, money, scorecard_levels
 
 **Background Shader:** `backgground_swirl`
 
