@@ -115,7 +115,7 @@
 [ext_resource type="Resource" uid="uid://p4hinanex7u6" path="res://Scripts/Debuff/DockedAllowanceDebuff.tres" id="160_docked_allowance"]
 [ext_resource type="Resource" uid="uid://b1w73tqfdvvnc" path="res://Scripts/Debuff/CouponsRevokedDebuff.tres" id="161_coupons_revoked"]
 [ext_resource type="Resource" uid="uid://c1ic68lmvm2i5" path="res://Scripts/Debuff/PogsConfiscatedDebuff.tres" id="162_pogs_confiscated"]
-[ext_resource type="Resource" path="res://Scripts/Debuff/TeacherPetBuff.tres" id="163_teacher_pet"]
+[ext_resource type="Resource" uid="uid://upcpnl66xl8v" path="res://Scripts/Debuff/TeacherPetBuff.tres" id="163_teacher_pet"]
 [ext_resource type="PackedScene" uid="uid://ccn3jkgrhqwqe" path="res://Scenes/UI/StatisticsPanel.tscn" id="999_stats"]
 [ext_resource type="Script" uid="uid://du88ajtcwgupi" path="res://Scripts/Managers/ChoresManager.gd" id="1000_chores_mgr"]
 [ext_resource type="PackedScene" uid="uid://crlykvmh3v2xq" path="res://Scenes/UI/UnlockedItemPanel.tscn" id="1001_unlocked_panel"]
