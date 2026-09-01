@@ -5,7 +5,7 @@ class_name SegaSaturnConsole
 ##
 ## After activating, a popup appears with "+1 ALL" and "-1 ALL" buttons.
 ## Selecting one shifts ALL unlocked dice by that amount (clamped 1-6).
-## Uses per round: 1.
+## Locked dice are never modified. Uses per round: 1.
 
 signal awaiting_tilt_choice
 signal tilt_complete
@@ -42,7 +42,7 @@ func can_activate() -> bool:
 		return false
 	var dice_list = dice_hand_ref.get_all_dice()
 	for die in dice_list:
-		if die.get_state() == Dice.DiceState.ROLLED or die.get_state() == Dice.DiceState.LOCKED:
+		if die.get_state() == Dice.DiceState.ROLLED:
 			return true
 	return false
 
@@ -59,7 +59,8 @@ func activate() -> void:
 ## apply_tilt(amount)
 ##
 ## Called by the UI when the player selects +1 or -1.
-## Shifts all unlocked (ROLLED or LOCKED) dice by amount, clamped to valid range.
+## Shifts all unlocked (ROLLED) dice by amount, clamped to valid range.
+## Locked dice are left untouched.
 func apply_tilt(amount: int) -> void:
 	if not _waiting_for_choice:
 		return
@@ -69,7 +70,7 @@ func apply_tilt(amount: int) -> void:
 	var dice_list = dice_hand_ref.get_all_dice()
 	var adjusted_count = 0
 	for die in dice_list:
-		if die.get_state() == Dice.DiceState.ROLLED or die.get_state() == Dice.DiceState.LOCKED:
+		if die.get_state() == Dice.DiceState.ROLLED:
 			var new_value = clampi(die.value + amount, 1, die.dice_data.sides)
 			die.value = new_value
 			die.update_visual()

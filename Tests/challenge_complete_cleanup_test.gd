@@ -114,7 +114,7 @@ func _run_tests() -> void:
 	gc.chore_ui = chore_ui
 
 	var auto_debuff := StubDebuff.new()
-	auto_debuff.id = "window_shopping"
+	auto_debuff.id = "hail_satan"
 	var grounded_debuff := StubDebuff.new()
 	grounded_debuff.id = "lock_dice"
 	var rebellion := StubDebuff.new()
@@ -122,28 +122,28 @@ func _run_tests() -> void:
 	rebellion.intensity = 3.0
 
 	gc.active_debuffs = {
-		"window_shopping": auto_debuff,
+		"hail_satan": auto_debuff,
 		"lock_dice": grounded_debuff,
 		"rebellion": rebellion,
 	}
 	gc.seed_round_end_cleanup_state(["lock_dice"], true)
-	debuff_manager.test_active_ids = ["window_shopping"]
+	debuff_manager.test_active_ids = ["hail_satan"]
 
 	var original_colors_enabled := DiceColorManager.are_colors_enabled()
 	DiceColorManager.set_colors_enabled(false)
 
 	gc._expire_completed_round_statuses()
 
-	_check(not gc.is_debuff_active("window_shopping"), "automatic debuff removed from runtime state")
+	_check(not gc.is_debuff_active("hail_satan"), "automatic debuff removed from runtime state")
 	_check(not gc.is_debuff_active("lock_dice"), "grounded Mom debuff removed from runtime state")
 	_check(not gc.is_debuff_active("rebellion"), "rebellion buff removed from runtime state")
 	_check(auto_debuff.removed, "automatic debuff end() called remove()")
 	_check(grounded_debuff.removed, "grounded debuff end() called remove()")
 	_check(rebellion.removed, "rebellion end() called remove()")
 	_check(debuff_manager.test_active_ids.is_empty(), "DebuffManager active ids cleared")
-	_check(debuff_ui.animated_ids.has("window_shopping") and debuff_ui.animated_ids.has("lock_dice"),
+	_check(debuff_ui.animated_ids.has("hail_satan") and debuff_ui.animated_ids.has("lock_dice"),
 		"DebuffUI animated regular and grounded debuff removals")
-	_check(debuff_ui.removed_ids.has("window_shopping") and debuff_ui.removed_ids.has("lock_dice"),
+	_check(debuff_ui.removed_ids.has("hail_satan") and debuff_ui.removed_ids.has("lock_dice"),
 		"DebuffUI removed regular and grounded debuff icons")
 	_check(chore_ui.removed_buff_ids == ["rebellion"], "ChoreUI removed the Rebellion buff chip")
 	_check(gc.get_grounded_debuff_ids_for_test().is_empty(), "grounded debuff registry cleared")

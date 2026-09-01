@@ -52,7 +52,7 @@ func _make_manager() -> DebuffManager:
 		load("res://Scripts/Debuff/DockedAllowanceDebuff.tres"),
 		load("res://Scripts/Debuff/CouponsRevokedDebuff.tres"),
 		load("res://Scripts/Debuff/PogsConfiscatedDebuff.tres"),
-		load("res://Scripts/Debuff/WindowShoppingDebuff.tres"),
+		load("res://Scripts/Debuff/MixedBagDebuff.tres"),
 		load("res://Scripts/Debuff/TooGreedyDebuff.tres"),
 		load("res://Scripts/Debuff/FasterChoresDebuff.tres"),
 		load("res://Scripts/Debuff/RebellionBuff.tres"),
@@ -67,11 +67,11 @@ func _run_tests() -> void:
 	var docked: DebuffData = load("res://Scripts/Debuff/DockedAllowanceDebuff.tres")
 	var coupons: DebuffData = load("res://Scripts/Debuff/CouponsRevokedDebuff.tres")
 	var pogs: DebuffData = load("res://Scripts/Debuff/PogsConfiscatedDebuff.tres")
-	var window: DebuffData = load("res://Scripts/Debuff/WindowShoppingDebuff.tres")
+	var mixed: DebuffData = load("res://Scripts/Debuff/MixedBagDebuff.tres")
 	_check(docked and docked.is_grounding, "Docked Allowance flagged is_grounding")
 	_check(coupons and coupons.is_grounding, "Coupons Revoked flagged is_grounding")
 	_check(pogs and pogs.is_grounding, "POGS Confiscated flagged is_grounding")
-	_check(window and not window.is_grounding, "Window Shopping is NOT a grounding")
+	_check(mixed and not mixed.is_grounding, "Mixed Bag is NOT a grounding")
 
 	# 2. Pool separation
 	var manager := _make_manager()
@@ -85,7 +85,7 @@ func _run_tests() -> void:
 	_check("coupons_revoked" not in debuff_ids, "groundings excluded from debuff pool (coupons)")
 	_check("pogs_confiscated" not in debuff_ids, "groundings excluded from debuff pool (pogs)")
 	_check("rebellion" not in debuff_ids, "rebellion still excluded from debuff pool")
-	_check("window_shopping" in debuff_ids, "window_shopping present in debuff pool")
+	_check("mixed_bag" in debuff_ids, "mixed_bag present in debuff pool")
 	_check("too_greedy" in debuff_ids, "too_greedy present in debuff pool")
 
 	# 3. Grounding helper selection
@@ -96,7 +96,7 @@ func _run_tests() -> void:
 	var g3 := manager.select_grounding_for_round(["docked_allowance", "coupons_revoked", "pogs_confiscated"])
 	_check(g3 == "", "returns empty when all groundings excluded")
 
-	# 4. Per-zone draw-once pool (level cap 1 -> window_shopping + faster_chores only)
+	# 4. Per-zone draw-once pool (level cap 1 -> mixed_bag + faster_chores only)
 	var draw1 := manager.select_debuffs_for_round(1, 1)
 	_check(draw1.size() == 1, "first draw returns 1 debuff")
 	var draw2 := manager.select_debuffs_for_round(1, 1)

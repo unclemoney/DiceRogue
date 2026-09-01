@@ -1,0 +1,299 @@
+ERROR: Failed to open 'c:/Users/danie/Documents/dicerogue/DiceRogue/addons/gdai-mcp-plugin-godot/bin/windows/~libgdai-mcp-plugin-godot.windows.template_release.x86_64.dll'.
+   at: copy (core/io/dir_access.cpp:425)
+ERROR: Error copying library: c:/Users/danie/Documents/dicerogue/DiceRogue/addons/gdai-mcp-plugin-godot/bin/windows/libgdai-mcp-plugin-godot.windows.template_release.x86_64.dll
+   at: open_dynamic_library (platform/windows/os_windows.cpp:486)
+ERROR: Can't open GDExtension dynamic library: 'res://addons/gdai-mcp-plugin-godot/gdai_mcp_plugin.gdextension'.
+   at: open_library (core/extension/gdextension.cpp:702)
+ERROR: Error loading extension: 'res://addons/gdai-mcp-plugin-godot/gdai_mcp_plugin.gdextension'.
+   at: load_extensions (core/extension/gdextension_manager.cpp:291)
+Godot Engine v4.4.1.stable.official.49a5bc7b6 - https://godotengine.org
+
+first_scan_filesystem: begin: Project initialization steps: 5
+	first_scan_filesystem: step 0: Scanning file structure...
+	first_scan_filesystem: step 1: Loading global class names...
+	first_scan_filesystem: step 2: Verifying GDExtensions...
+[91mERR[39m [15:01:42] [MCPServer] MCP server failed to start: Port 3571 is already in use.[0m
+	first_scan_filesystem: step 3: Creating autoload scripts...
+WARNING: res://Scenes/Managers/consumable_manager.tscn:5 - ext_resource, invalid UID: uid://bqhqnqbbgfrmo - using text path instead: res://Scripts/Consumable/add_max_power_up.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:9 - ext_resource, invalid UID: uid://dkw5ixfrhp3xm - using text path instead: res://Scripts/Consumable/EmptyShelvesConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:10 - ext_resource, invalid UID: uid://rttgw2m3y2in - using text path instead: res://Scripts/Consumable/GoBrokeOrGoHomeConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:11 - ext_resource, invalid UID: uid://bg8dqrhkvb81t - using text path instead: res://Scripts/Consumable/GreenEnvyConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:12 - ext_resource, invalid UID: uid://bepf8r1squvwv - using text path instead: res://Scripts/Consumable/OneExtraDiceConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:13 - ext_resource, invalid UID: uid://dj53rn3raq05w - using text path instead: res://Scripts/Consumable/PoorHouseConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:18 - ext_resource, invalid UID: uid://bg2r68x2b6iyj - using text path instead: res://Scripts/Consumable/ThePawnShopConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:19 - ext_resource, invalid UID: uid://bbbfbdvb6kdny - using text path instead: res://Scripts/Consumable/TheRaritiesConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/consumable_manager.tscn:20 - ext_resource, invalid UID: uid://cywprylrby1js - using text path instead: res://Scripts/Consumable/ThreeMoreRollsConsumable.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:5 - ext_resource, invalid UID: uid://b43xvbhv8k1ag - using text path instead: res://Scripts/Mods/EvenOnlyMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:6 - ext_resource, invalid UID: uid://cctvo5jcpomxl - using text path instead: res://Scripts/Mods/FiveByOneMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:7 - ext_resource, invalid UID: uid://0sdbgfb8fmxd - using text path instead: res://Scripts/Mods/GoldSixMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:9 - ext_resource, invalid UID: uid://dmi2pfrb1vd52 - using text path instead: res://Scripts/Mods/OddOnlyMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:10 - ext_resource, invalid UID: uid://h85vddw7qhk1 - using text path instead: res://Scripts/Mods/ThreeButThreeMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/mod_manager.tscn:11 - ext_resource, invalid UID: uid://cmexdccb8puvp - using text path instead: res://Scripts/Mods/WildCardMod.tres
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Challenge/GreedIsntGoodChallenge.tscn:3 - ext_resource, invalid UID: uid://cgr33d1sntg00d - using text path instead: res://Scripts/Challenge/greed_isnt_good_challenge.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Challenge/ToughAdditionChallenge.tscn:3 - ext_resource, invalid UID: uid://ct0ugh4dd1t10n - using text path instead: res://Scripts/Challenge/tough_addition_challenge.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Managers/synergy_manager.tscn:3 - ext_resource, invalid UID: uid://synergy_manager_script - using text path instead: res://Scripts/Managers/SynergyManager.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Debuff/TooGreedyDebuff.tscn:3 - ext_resource, invalid UID: uid://ct00gr33dy5cn - using text path instead: res://Scripts/Debuff/too_greedy_debuff.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/Debuff/HalfAdditiveDebuff.tscn:3 - ext_resource, invalid UID: uid://c3h4lf4dd1t1v - using text path instead: res://Scripts/Debuff/half_additive_debuff.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+WARNING: res://Scenes/UI/mom_dialog_popup.tscn:3 - ext_resource, invalid UID: uid://cp6xgqfr8qxvn - using text path instead: res://Scripts/UI/mom_character.gd
+   at: load (scene/resources/resource_format_text.cpp:447)
+	first_scan_filesystem: step 4: Initializing plugins...
+[ResourceViewer] Plugin entering tree...
+[ResourceViewer] UI initializing...
+[ResourceViewer] Registered UI for tab: power_up
+[ResourceViewer] Registered UI for tab: consumable
+[ResourceViewer] Registered UI for tab: mod
+[ResourceViewer] Registered UI for tab: colored_dice
+[ResourceViewer] Registered UI for tab: challenge
+[ResourceViewer] Registered UI for tab: debuff
+[ResourceViewer] Scanning resource folders...
+[ResourceViewer] Loaded: res://Scripts/PowerUps/Allowance.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/AzurePerfectionPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/BlueSafetyNetPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/BlueSlime.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/BonusMoneyPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/ChallengeEaserPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/Chance520PowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/ChoreChampionPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/ChoreSprintPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/ConsumableCashPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/ConsumableCollector.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/DaringDice.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/DebuffDestroyerPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/DiceDiversityPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/DifferentStraights.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/EvenHigherPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/EvensNoOddsPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/ExtraCoupons.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/ExtraDice.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/ExtraRainbow.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/ExtraRolls.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/FailedMoneyPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/FoursomePowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/FullHousePowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/GreatExchange.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/GreenSlime.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/GreenWithEnvy.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/HighlightedScorePowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/HotStreak.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/LockAndLoadPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/LowerTen.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/MeltingDice.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/ModdedDiceMasteryPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/ModMoneyPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/MoneyBagsPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/MoneyMultiplierPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/MoneyWellSpentPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/OneRollWonder.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/PairParadisePowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/PerfectStrangers.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/PinHeadPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/PlusADollar.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/PlusTheLast.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/PowerSurge.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/PurplePayoutPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/PurpleSlime.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/RainbowSurgePowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/RandomCardLevel.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/RandomizerPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/RedPowerRanger.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/RedSlime.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/RollEfficiencyPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/ShopRerollsPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/SnakeEyes.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/StepByStepPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/StraightTripletMasterPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/SweetSixteen.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/TangoAndCashPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/TheConsumerIsAlwaysRight.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/ThePiggyBank.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/TheReplicator.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/Ungrounded.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/UpperBonusMultPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/WildDotsPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/YahtzeeBonusMultPowerUp.tres
+[ResourceViewer] Loaded: res://Scripts/PowerUps/YahtzeedDice.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/add_max_power_up.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/AllCategoriesUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/AllChoresConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/AnyScoreConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/BonusCollectorConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/ChanceUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/ClearanceRackConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/DiceSurgeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/DoubleExistingConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/DoubleOrNothingConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/EmptyShelvesConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/EvenOddFullHouseUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/EvensUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/FivesUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/FourOfAKindUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/FoursUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/FreeChoresConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/FullHouseUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/GoBrokeOrGoHomeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/GreenEnvyConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/HalfPriceConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/InsurancePolicyConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/LargeStraightUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/LoadedDiceConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/LossLeaderConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/LowerSectionBoostConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/LuckyUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/OddsUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/OneExtraDiceConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/OneFreeModConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/OnesUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/PoorHouseConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/PowerUpShopNumConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/QuickCashConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/RandomPowerUpUncommonConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/ScoreAmplifierConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/ScoreReroll.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/ScoreStreakConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/SixesUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/SmallStraightUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/StatCashoutConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/ThePawnShopConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/TheRaritiesConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/ThreeMoreRollsConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/ThreeOfAKindUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/ThreesUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/TwosUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/UpperSectionBoostConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/VisitTheShopConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Consumable/YahtzeeUpgradeConsumable.tres
+[ResourceViewer] Loaded: res://Scripts/Mods/EvenOnlyMod.tres
+[ResourceViewer] Loaded: res://Scripts/Mods/FiveByOneMod.tres
+[ResourceViewer] Loaded: res://Scripts/Mods/GoldSixMod.tres
+[ResourceViewer] Loaded: res://Scripts/Mods/HighRollerMod.tres
+[ResourceViewer] Loaded: res://Scripts/Mods/OddOnlyMod.tres
+[ResourceViewer] Loaded: res://Scripts/Mods/ThreeButThreeMod.tres
+[ResourceViewer] Loaded: res://Scripts/Mods/WildCardMod.tres
+[ResourceViewer] Loaded: res://Resources/Data/ColoredDice/BlueDice.tres
+[ResourceViewer] Loaded: res://Resources/Data/ColoredDice/GreenDice.tres
+[ResourceViewer] Loaded: res://Resources/Data/ColoredDice/PurpleDice.tres
+[ResourceViewer] Loaded: res://Resources/Data/ColoredDice/RedDice.tres
+[ResourceViewer] Loaded: res://Resources/Data/ColoredDice/YellowDice.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/chaos_theory_challenge.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/costly_roll_challenge.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/disabled_colors_challenge.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/disabled_mods_challenge.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/faster_chores_challenge.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/greed_isnt_good_challenge.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/perfect_execution_challenge.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/pts100_lock_dice_resource.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/pts300_no_debuff_resource.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/pts_100_no_debuff_challenge.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/pts_150_roll_score_minus_one.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/pts_200_disable_two_debuff_resource.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/reduced_levels_challenge.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/the_crossing_challenge.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/tough_addition_challenge.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/triple_threat_challenge.tres
+[ResourceViewer] Loaded: res://Scripts/Challenge/wildcard_run_challenge.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/AllPowerUpsSoldDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/CostlyRollDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/CouponsRevokedDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/DisabledColorsDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/DisabledModsDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/DisabledTwosDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/DockedAllowanceDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/FasterChoresDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/HailSatanDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/HalfAdditiveDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/LockDice.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/MixedBagDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/NoConsumablesAllowedDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/OneShotDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/PogsConfiscatedDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/RebellionBuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/ReducedLevelsDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/RollScoreMinusOneDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/RotatingDisabledPowerUpDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/TeacherPetBuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/TheDivisionDebuff.tres
+[ResourceViewer] Loaded: res://Scripts/Debuff/TooGreedyDebuff.tres
+[ResourceViewer] Found: 66 PowerUps, 50 Consumables, 7 Mods, 5 Colored Dice, 17 Challenges, 22 Debuffs
+[ResourceViewer] UI ready
+[ResourceViewer] Plugin initialized successfully
+	first_scan_filesystem: step 5: Starting file scan...
+first_scan_filesystem: end
+WARNING: UID duplicate detected between res://Tests/blue_dice_test.gd and res://Tests/BlueDiceTest.tscn.
+   at: _process_file_system (editor/editor_file_system.cpp:1358)
+WARNING: UID duplicate detected between res://Tests/MainMenuVisualTest.tscn and res://Scenes/UI/menu_dice.tscn.
+   at: _process_file_system (editor/editor_file_system.cpp:1358)
+update_scripts_classes: begin: Registering global classes... steps: 14
+	update_scripts_classes: step 0: GameController
+	update_scripts_classes: step 1: HailSatanDebuff
+	update_scripts_classes: step 2: SegaSaturnConsole
+	update_scripts_classes: step 3: RedPowerRangerPowerUp
+	update_scripts_classes: step 4: ShopItem
+	update_scripts_classes: step 5: 
+	update_scripts_classes: step 6: 
+	update_scripts_classes: step 7: 
+	update_scripts_classes: step 8: 
+	update_scripts_classes: step 9: 
+	update_scripts_classes: step 10: MallMapPopupTest
+	update_scripts_classes: step 11: 
+	update_scripts_classes: step 12: 
+	update_scripts_classes: step 13: 
+update_scripts_classes: end
+update_script_paths_documentation: begin: Updating scripts documentation steps: 16
+	update_script_paths_documentation: step 0: game_controller.gd
+	update_script_paths_documentation: step 1: hail_satan_debuff.gd
+	update_script_paths_documentation: step 2: sega_saturn_console.gd
+	update_script_paths_documentation: step 3: red_power_ranger_power_up.gd
+	update_script_paths_documentation: step 4: shop_item.gd
+	update_script_paths_documentation: step 5: _mall_map_popup_shot.gd
+	update_script_paths_documentation: step 6: challenge_complete_cleanup_test.gd
+	update_script_paths_documentation: step 7: gaming_console_test.gd
+	update_script_paths_documentation: step 8: grounding_test.gd
+	update_script_paths_documentation: step 9: hail_satan_test.gd
+	update_script_paths_documentation: step 10: mall_map_popup_test.gd
+	update_script_paths_documentation: step 11: red_power_ranger_test.gd
+	update_script_paths_documentation: step 12: round_panel_data_test.gd
+	update_script_paths_documentation: step 13: round_preselect_test.gd
+update_script_paths_documentation: end
+loading_editor_layout: begin: Loading editor steps: 5
+	loading_editor_layout: step 0: Loading editor layout...
+	loading_editor_layout: step 1: Loading docks...
+	loading_editor_layout: step 2: Reopening scenes...
+	loading_editor_layout: step 3: Loading central editor layout...
+	loading_editor_layout: step 4: Loading plugin window layout...
+	loading_editor_layout: step 5: Editor layout ready.
+loading_editor_layout: end
+[ResourceViewer] Plugin exiting tree...
+[ResourceViewer] Plugin cleaned up
+
+================================================================
+CrashHandlerException: Program crashed with signal 11
+Engine version: Godot Engine v4.4.1.stable.official (49a5bc7b616bd04689a2c89e89bda41f50241464)
+Dumping the backtrace. 
+[1] error(-1): no debug info in PE/COFF executable
+[2] error(-1): no debug info in PE/COFF executable
+[3] error(-1): no debug info in PE/COFF executable
+[4] error(-1): no debug info in PE/COFF executable
+[5] error(-1): no debug info in PE/COFF executable
+[6] error(-1): no debug info in PE/COFF executable
+-- END OF BACKTRACE --
+================================================================

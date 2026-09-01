@@ -711,6 +711,42 @@ func _test_sega_saturn() -> void:
 			all_shifted_down = false
 			_log("  [color=red]Die %d: expected %d, got %d[/color]" % [i, expected, values_after_minus[i]])
 	_assert(all_shifted_down, "Saturn: -1 tilt correct on all dice")
+
+	# Locked dice must be untouched by tilt
+	saturn.reset_for_new_round()
+	dice_hand.set_all_dice_rollable()
+	dice_hand.roll_all()
+	await get_tree().create_timer(0.6).timeout
+
+	var dice_list3 = dice_hand.get_all_dice()
+	var locked_indices = [0, 1]
+	for i in locked_indices:
+		dice_list3[i].lock()
+	var values_before3 = _get_dice_values()
+	_assert(saturn.can_activate(), "Saturn: can_activate true with some dice unlocked")
+
+	saturn.activate()
+	saturn.apply_tilt(1)
+	var values_after_locked_tilt = _get_dice_values()
+	_log("  Dice values before tilt with locks: %s" % str(values_before3))
+	_log("  Dice values after +1 tilt with locks: %s" % str(values_after_locked_tilt))
+
+	var locked_respected = true
+	for i in range(values_before3.size()):
+		var max_val = dice_list3[i].dice_data.sides
+		var expected = values_before3[i]
+		if not i in locked_indices:
+			expected = clampi(values_before3[i] + 1, 1, max_val)
+		if values_after_locked_tilt[i] != expected:
+			locked_respected = false
+			_log("  [color=red]Die %d: expected %d, got %d[/color]" % [i, expected, values_after_locked_tilt[i]])
+	_assert(locked_respected, "Saturn: locked dice untouched, unlocked dice shifted")
+
+	# can_activate is false when every die is locked
+	for die in dice_list3:
+		die.lock()
+	_assert(not saturn.can_activate(), "Saturn: can_activate false when all dice locked")
+
 	console_ui.hide_console()
 	_assert(not console_ui.visible, "Saturn: UI hidden after hide_console")
 

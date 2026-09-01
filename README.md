@@ -1877,7 +1877,6 @@ Debuffs are negative effects that hinder the player's progress and add challenge
 
 ### Economy Debuffs
 - **Costly Roll**: Charges $10 per dice roll
-- **Window Shopping**: Shop prices increased by 25% while active (difficulty 1)
 
 ### System Debuffs
 - **Faster Chores**: Chore meter increases 3 points per roll instead of 1
@@ -1913,6 +1912,11 @@ Debuffs are negative effects that hinder the player's progress and add challenge
   - Reduces MAX_ROLLS to 1 for the duration of the debuff
   - Player must score with whatever they roll on their first attempt
   - Original roll count is restored when the debuff is removed
+- **Hail Satan**: Rolling 3 sixes ends the turn instantly (difficulty 4)
+  - Counts sixes across the full hand, including locked dice
+  - A 0 is immediately scored in a random unscored category, bypassing all power-ups
+  - The turn ends and the game advances to the next turn
+  - Debug commands (F12): "Apply Hail Satan" / "Remove Hail Satan"
 
 ### Groundings
 Groundings are Mom-themed punishments drawn from a **separate pool** from debuffs (`DebuffData.is_grounding = true`), sharing the debuff UI slots. They are not scheduled by rounds and do not appear in the New Round panel or Mall Map tooltips.

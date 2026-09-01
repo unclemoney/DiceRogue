@@ -31,13 +31,13 @@
 - [X] `P0-Critical` The Division debuff is not dividing scores. Missing signal.
 - [X] `P0-Critical` The Division debuff is not dividing scores when it's a different category.  Example: division works on 6s if there is a Blue 6, but if I score in the 1's category it multiplies.  This violates the Blue Dice Rules and the Division rule.
 - [X] `P0-Critical` Red Power Ranger not adding unless there is a red dice present.
-- [ ] `P0-Critical` Odds only mod rolled a 2. That should never happen.
+- [ ] `P0-Critical` Odds only mod rolled a 2. Can't reproduce at the moment.
 - [X] `P1-Major` Groundings occur in Mall Zone 2 at the start of every round. They should only trigger on Sass or Chore failures.
 - [X] `P1-Major` Add a Powerful Teachers Pet BUFF. Add extra money rewards.
 - [X] `P1-Major` Remove Debuffs and Buffs on challenge complete.
-- [ ] `P1-Major` Window Shopping Debuff is useless. Redesign or remove.
+- [X] `P1-Major` Window Shopping Debuff is useless. Redesign or remove. (Removed; replaced by Hail Satan — 3 sixes ends the turn with a 0 scratch in a random category.)
 - [ ] `P1-Major` Best Hand calculated 426 for Chance. Player selected small straight and still got 426. Hand logic is wrong.
-- [ ] `P1-Major` Cartridge Tilt ignores the locked dice part of the increase dice.
+- [X] `P1-Major` Cartridge Tilt ignores the locked dice part of the increase dice. (Fixed: tilt now only shifts unlocked/ROLLED dice.)
 - [ ] `P1-Major` Abstinance debuff needs to be checked. Verify it works as designed.
 - [ ] `P1-Major` Upgrade 5's still showing in d4. d4 should not show 5's upgrades.
 - [ ] `P1-Major` On a d4 Run, unlisted categories appear in best hand. Hide them.
@@ -81,7 +81,8 @@
 
 ## SYS:Debug — Debug & Testing Tools
 
-- [ ] `P1-Major` Add a current dice state to the debug panel. Something weird happens and 2 dice are disabled after a Mom check-in in Mall Zone 2.
+- [X] `P1-Major` Add a current dice state to the debug panel. 
+- [ ] `P1-Major`Something weird happens and 2 dice are disabled after a Mom check-in in Mall Zone 2.
 
 ## Plan Prompts
 > Clear this section and use it for design documents, zone plans, and balance spreadsheets.

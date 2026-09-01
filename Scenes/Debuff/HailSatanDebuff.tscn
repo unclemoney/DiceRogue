@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Debuff/hail_satan_debuff.gd" id="1_hsltn"]
+
+[node name="HailSatanDebuff" type="Node"]
+script = ExtResource("1_hsltn")

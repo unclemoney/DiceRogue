@@ -233,9 +233,6 @@ func setup(data: Resource, type: String) -> void:
 	# Apply Mom-Approved discount (low Rep + happy Mom, G-rated POGs only)
 	price = _apply_mom_approved_discount(price, type)
 
-	# Apply Window Shopping debuff markup
-	price = _apply_window_shopping_markup(price)
-
 	if not icon or not name_label or not price_label:
 		push_error("[ShopItem] One or more required nodes not found!")
 		return
@@ -365,19 +362,6 @@ func _apply_mom_approved_discount(current_price: int, type_str: String) -> int:
 	return current_price
 
 
-## _apply_window_shopping_markup(current_price) -> int
-##
-## Applies the Window Shopping debuff markup to any item type.
-## Called during setup() and refresh_price().
-func _apply_window_shopping_markup(current_price: int) -> int:
-	var game_controller = get_tree().get_first_node_in_group("game_controller")
-	if game_controller and game_controller.has_method("get_window_shopping_multiplier"):
-		var multiplier: float = game_controller.get_window_shopping_multiplier()
-		if multiplier != 1.0:
-			return maxi(1, int(round(current_price * multiplier)))
-	return current_price
-
-
 ## refresh_price()
 ##
 ## Recalculates price with channel multiplier + consumable discounts and updates the label.
@@ -389,7 +373,6 @@ func refresh_price() -> void:
 	price = _apply_price_multiplier(base_price, item_type)
 	price = _apply_consumable_discounts(price, item_type)
 	price = _apply_mom_approved_discount(price, item_type)
-	price = _apply_window_shopping_markup(price)
 	_update_price_badge_from_price(price)
 	_update_button_state()
 

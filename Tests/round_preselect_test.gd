@@ -53,7 +53,7 @@ func _make_debuff_manager() -> DebuffManager:
 		load("res://Scripts/Debuff/DockedAllowanceDebuff.tres"),
 		load("res://Scripts/Debuff/CouponsRevokedDebuff.tres"),
 		load("res://Scripts/Debuff/PogsConfiscatedDebuff.tres"),
-		load("res://Scripts/Debuff/WindowShoppingDebuff.tres"),
+		load("res://Scripts/Debuff/MixedBagDebuff.tres"),
 		load("res://Scripts/Debuff/TooGreedyDebuff.tres"),
 		load("res://Scripts/Debuff/FasterChoresDebuff.tres"),
 		load("res://Scripts/Debuff/RebellionBuff.tres"),
@@ -116,7 +116,7 @@ func _run_tests() -> void:
 		var ids: Array = rm.rounds_data[i]["debuff_ids"]
 		_check(ids.size() == 1, "round %d drew one debuff" % (i + 1))
 		for id in ids:
-			_check(id in ["window_shopping", "faster_chores"], "round %d debuff within cap 1" % (i + 1))
+			_check(id in ["mixed_bag", "faster_chores"], "round %d debuff within cap 1" % (i + 1))
 			_check(id not in drawn, "round %d debuff not repeated this zone" % (i + 1))
 			drawn.append(id)
 	for i in range(2, 5):

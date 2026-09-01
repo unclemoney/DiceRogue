@@ -286,8 +286,8 @@ func _create_debug_tabs() -> void:
 			{"text": "Remove Liquidation Sale", "method": "_debug_remove_liquidation_sale"},
 			{"text": "Apply One Shot", "method": "_debug_apply_one_shot"},
 			{"text": "Remove One Shot", "method": "_debug_remove_one_shot"},
-			{"text": "Apply Window Shopping", "method": "_debug_apply_window_shopping"},
-			{"text": "Remove Window Shopping", "method": "_debug_remove_window_shopping"},
+			{"text": "Apply Hail Satan", "method": "_debug_apply_hail_satan"},
+			{"text": "Remove Hail Satan", "method": "_debug_remove_hail_satan"},
 			{"text": "Apply Docked Allowance", "method": "_debug_apply_docked_allowance"},
 			{"text": "Apply Coupons Revoked", "method": "_debug_apply_coupons_revoked"},
 			{"text": "Apply POGS Confiscated", "method": "_debug_apply_pogs_confiscated"},
@@ -3030,32 +3030,32 @@ func _debug_remove_one_shot() -> void:
 	log_debug("Removed One Shot debuff - rolls restored")
 
 
-## _debug_apply_window_shopping()
+## _debug_apply_hail_satan()
 ##
-## Applies the Window Shopping debuff (+25% shop prices)
-func _debug_apply_window_shopping() -> void:
+## Applies the Hail Satan debuff (3 sixes ends the turn with a 0 scratch)
+func _debug_apply_hail_satan() -> void:
 	if not game_controller:
 		log_debug("ERROR: GameController not available")
 		return
-	if game_controller.is_debuff_active("window_shopping"):
-		log_debug("Window Shopping debuff is already active")
+	if game_controller.is_debuff_active("hail_satan"):
+		log_debug("Hail Satan debuff is already active")
 		return
-	game_controller.apply_debuff("window_shopping")
-	log_debug("Applied Window Shopping - shop prices marked up 25%")
+	game_controller.apply_debuff("hail_satan")
+	log_debug("Applied Hail Satan - rolling 3 sixes forfeits the turn")
 
 
-## _debug_remove_window_shopping()
+## _debug_remove_hail_satan()
 ##
-## Removes the Window Shopping debuff
-func _debug_remove_window_shopping() -> void:
+## Removes the Hail Satan debuff
+func _debug_remove_hail_satan() -> void:
 	if not game_controller:
 		log_debug("ERROR: GameController not available")
 		return
-	if not game_controller.is_debuff_active("window_shopping"):
-		log_debug("Window Shopping debuff is not active")
+	if not game_controller.is_debuff_active("hail_satan"):
+		log_debug("Hail Satan debuff is not active")
 		return
-	game_controller.disable_debuff("window_shopping")
-	log_debug("Removed Window Shopping debuff - prices restored")
+	game_controller.disable_debuff("hail_satan")
+	log_debug("Removed Hail Satan debuff")
 
 
 ## _debug_apply_docked_allowance()

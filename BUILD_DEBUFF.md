@@ -305,10 +305,10 @@ At run start, `RoundManager._initialize_rounds_data()` pre-selects the debuffs f
 | Mixed Bag | `mixed_bag` | 1 |
 | Faster Chores | `faster_chores` | 1 |
 | Disabled Mods | `disabled_mods` | 1 |
-| Window Shopping | `window_shopping` | 1 |
+| Hail Satan | `hail_satan` | 4 |
 | Liquidation Sale | `all_powerups_sold` | 5 |
 
-**Window Shopping** (new): `window_shopping`, difficulty 1, glyph 15 (Wealth Drain) — all shop prices increased by 25% while active. It is a normal debuff (not a grounding).
+**Hail Satan** (new): `hail_satan`, difficulty 4, glyph 15 (Wealth Drain, red tint) — when a roll leaves 3 or more sixes showing (locked dice included), the turn ends instantly and a 0 is scored in a random unscored category, bypassing all power-ups. It is a normal debuff (not a grounding).
 
 **Rebellion** (`rebellion`) is the sass-reward buff riding the debuff pipeline; it stays grant-only and is excluded from every draw pool.
 

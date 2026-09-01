@@ -102,7 +102,7 @@ func _setup_managers() -> void:
 	_channel_manager.current_channel = 2
 
 	_debuff_manager = StubDebuffManager.new()
-	_debuff_manager.defs["window_shopping"] = StubDebuffDef.new("Window Shopping")
+	_debuff_manager.defs["hail_satan"] = StubDebuffDef.new("Hail Satan")
 
 	# Real RoundManager, not added to the tree: references assigned directly,
 	# rounds_data filled by hand so the test controls completed/debuffs.
@@ -111,7 +111,7 @@ func _setup_managers() -> void:
 	for i in range(6):
 		var debuff_ids: Array[String] = []
 		if i == 2:
-			debuff_ids.append("window_shopping")
+			debuff_ids.append("hail_satan")
 		_round_manager.rounds_data.append({
 			"round_number": i + 1,
 			"store_name": _channel_manager.get_store_name(2, i + 1),
@@ -164,7 +164,7 @@ func _run_tests() -> void:
 	print("--- Tooltip ---")
 	var current_store_tooltip := _popup._build_store_tooltip_text(2, 2)
 	_assert(current_store_tooltip.contains("Stub Store 2-3"), "tooltip contains store name")
-	_assert(current_store_tooltip.contains("Window Shopping"), "tooltip contains pre-selected debuff display name")
+	_assert(current_store_tooltip.contains("Hail Satan"), "tooltip contains pre-selected debuff display name")
 	_assert(current_store_tooltip.contains("YOU ARE HERE"), "tooltip marks current store")
 
 	var upcoming_text := _popup._build_store_tooltip_text(2, 1)

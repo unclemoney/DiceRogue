@@ -7,6 +7,12 @@ class_name RedPowerRangerPowerUp
 ## Example: First hand with 1 red five scores +5 additive.
 ## After several hands, total additive becomes cumulative for all future scores.
 ## Additive is applied when scoring manually or through Next Turn.
+##
+## Persistence: the accumulated additive is re-registered with
+## ScoreModifierManager in apply() so it survives channel transitions
+## (ScoreModifierManager.reset() wipes registrations even when power-ups
+## carry over). As self-healing, _on_score_assigned re-registers the
+## accumulated additive on every scored hand, red dice or not.
 
 # Reference to the scorecard to listen for score assignments
 var scorecard_ref: Scorecard = null
@@ -36,30 +42,39 @@ func apply(target) -> void:
 	if not is_connected("tree_exiting", _on_tree_exiting):
 		connect("tree_exiting", _on_tree_exiting)
 
+	# Restore any accumulated additive (e.g. after ScoreModifierManager.reset()
+	# on channel transitions when this power-up carries over)
+	if current_additive > 0:
+		ScoreModifierManager.register_additive("red_power_ranger", current_additive)
+
 func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 	# Get current dice from DiceResults to count red dice
 	var red_dice_count = _count_red_dice_in_current_hand()
-	
+
 	if red_dice_count > 0:
 		# Each red die adds its value to the total additive
 		var red_dice_value_sum = _get_red_dice_value_sum()
 		total_red_dice_scored += red_dice_count
 		current_additive += red_dice_value_sum
-		
+
 		print("[RedPowerRangerPowerUp] Scored %d red dice with total value %d. New additive: +%d" % [red_dice_count, red_dice_value_sum, current_additive])
-		
-		# Update ScoreModifierManager with our new additive
-		ScoreModifierManager.register_additive("red_power_ranger", current_additive)
-		
+
 		# Update the description to show current progress
 		emit_signal("description_updated", id, get_current_description())
-		
+
 		# Update any power-up icons if we're still in the tree
 		if is_inside_tree():
 			_update_power_up_icons()
-		
+
 		# Update the notification UI
 		_update_notification_ui()
+
+	# Keep the accumulated additive registered on every scored hand so the
+	# bonus applies even to hands with no red dice, and self-heal if the
+	# ScoreModifierManager was reset (e.g. channel transition) without a
+	# re-apply.
+	if current_additive > 0:
+		ScoreModifierManager.register_additive("red_power_ranger", current_additive)
 
 func _count_red_dice_in_current_hand() -> int:
 	var red_count = 0

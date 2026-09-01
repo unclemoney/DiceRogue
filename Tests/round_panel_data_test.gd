@@ -45,8 +45,8 @@ func _run_tests() -> void:
 	var debuff_manager := DebuffManager.new()
 
 	var round_debuff := DebuffData.new()
-	round_debuff.id = "window_shopping"
-	round_debuff.display_name = "Window Shopping"
+	round_debuff.id = "hail_satan"
+	round_debuff.display_name = "Hail Satan"
 
 	var grounding := DebuffData.new()
 	grounding.id = "docked_allowance"
@@ -62,7 +62,7 @@ func _run_tests() -> void:
 		"target_score": 150,
 		"completed": false,
 		"failed": false,
-		"debuff_ids": ["window_shopping"],
+		"debuff_ids": ["hail_satan"],
 		"grounding_id": "docked_allowance",
 	}]
 
@@ -75,7 +75,7 @@ func _run_tests() -> void:
 	_check(data.get("challenge_name", "") == "Stub Store 2-1", "round panel data uses the store name")
 	_check(debuffs.size() == 1, "round panel data includes only one debuff preview")
 	if debuffs.size() > 0:
-		_check(debuffs[0].get("name", "") == "Window Shopping", "round panel preview keeps the round debuff")
+		_check(debuffs[0].get("name", "") == "Hail Satan", "round panel preview keeps the round debuff")
 
 	var has_grounding := false
 	for debuff_data in debuffs:

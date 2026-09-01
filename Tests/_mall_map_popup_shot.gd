@@ -68,14 +68,14 @@ func _run() -> void:
 	channel_manager.current_channel = 1
 
 	var debuff_manager := StubDebuffManager.new()
-	debuff_manager.defs["window_shopping"] = StubDebuffDef.new("Window Shopping")
+	debuff_manager.defs["hail_satan"] = StubDebuffDef.new("Hail Satan")
 
 	var round_manager := RoundManager.new()
 	round_manager.channel_manager = channel_manager
 	for i in range(6):
 		var debuff_ids: Array[String] = []
 		if i == 1:
-			debuff_ids.append("window_shopping")
+			debuff_ids.append("hail_satan")
 		round_manager.rounds_data.append({
 			"round_number": i + 1,
 			"store_name": channel_manager.get_store_name(1, i + 1),

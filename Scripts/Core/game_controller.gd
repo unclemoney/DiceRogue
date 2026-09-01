@@ -26,7 +26,6 @@ var challenge_score_modifier: float = 1.0  # Multiplier applied to challenge tar
 # Consumable discount state
 var half_price_stacks: int = 0  # Each stack halves PowerUp prices multiplicatively
 var loss_leader_stacks: int = 0  # Each stack makes one consumable purchase free
-var window_shopping_stacks: int = 0  # Each stack marks up shop prices (Window Shopping debuff)
 var docked_allowance_active: bool = false  # Docked Allowance grounding: withhold end-of-round award
 var insurance_policy_active: bool = false  # If true, next 0-score grants $75
 var clearance_rack_active: bool = false  # If true, shop rerolls are free this visit
@@ -2680,7 +2679,7 @@ func apply_debuff(id: String, ignore_ungrounded: bool = false) -> void:
 			debuff.target = dice_hand
 			debuff.start()
 			debuff_started = true
-		"window_shopping":
+		"hail_satan":
 			debuff.target = self
 			debuff.start()
 			debuff_started = true
@@ -4232,20 +4231,6 @@ func get_half_price_multiplier() -> float:
 	if half_price_stacks <= 0:
 		return 1.0
 	return pow(0.5, half_price_stacks)
-
-
-## Window Shopping debuff: shop price markup per stack
-const WINDOW_SHOPPING_MARKUP: float = 0.25
-
-
-## get_window_shopping_multiplier() -> float
-##
-## Returns the shop price multiplier from active Window Shopping debuff stacks.
-## 0 stacks = 1.0 (no markup), each stack adds WINDOW_SHOPPING_MARKUP.
-func get_window_shopping_multiplier() -> float:
-	if window_shopping_stacks <= 0:
-		return 1.0
-	return 1.0 + WINDOW_SHOPPING_MARKUP * window_shopping_stacks
 
 
 ## _refresh_shop_prices()
@@ -6072,7 +6057,6 @@ func get_save_state() -> Dictionary:
 			"challenge_score_modifier": challenge_score_modifier,
 			"half_price_stacks": half_price_stacks,
 			"loss_leader_stacks": loss_leader_stacks,
-			"window_shopping_stacks": window_shopping_stacks,
 			"insurance_policy_active": insurance_policy_active,
 			"clearance_rack_active": clearance_rack_active,
 			"active_gaming_console_ids": active_gaming_console.keys(),
@@ -6175,7 +6159,6 @@ func load_game_state(save_data: Dictionary) -> void:
 	challenge_score_modifier = gc_state.get("challenge_score_modifier", 1.0)
 	half_price_stacks = gc_state.get("half_price_stacks", 0)
 	loss_leader_stacks = gc_state.get("loss_leader_stacks", 0)
-	window_shopping_stacks = gc_state.get("window_shopping_stacks", 0)
 	insurance_policy_active = gc_state.get("insurance_policy_active", false)
 	clearance_rack_active = gc_state.get("clearance_rack_active", false)
 	var loaded_pending = gc_state.get("pending_mods", [])

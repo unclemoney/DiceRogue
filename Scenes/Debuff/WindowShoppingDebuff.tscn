@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://jxywxtr63la"]
-
-[ext_resource type="Script" uid="uid://d5w1nd0wsh0pgd1" path="res://Scripts/Debuff/window_shopping_debuff.gd" id="1_bequk"]
-
-[node name="WindowShoppingDebuff" type="Node"]
-script = ExtResource("1_bequk")
