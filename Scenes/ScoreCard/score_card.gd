@@ -11,6 +11,7 @@ signal upper_section_completed
 signal lower_section_completed
 signal score_auto_assigned(section: Section, category: String, score: int, breakdown_info: Dictionary)
 signal score_assigned(section: Section, category: String, score: int)  # New signal for all score assignments
+signal score_snapshot_recorded(snapshot: Dictionary)
 signal yahtzee_bonus_achieved(points: int)
 signal score_changed(total_score: int)  # Add this signal
 signal game_completed(final_score: int) # Add this signal
@@ -41,6 +42,7 @@ var calculate_score_call_count := 0
 # Stores the base score (before any modifiers) from the most recent actual scoring
 # Used by SEGA combo system to detect true zero scores
 var last_base_score: int = 0
+var last_scored_hand_snapshot: Dictionary = {}
 
 var upper_scores := {
 	"ones": null,
@@ -225,7 +227,7 @@ func get_category_level_by_name(category: String) -> int:
 	return 1  # Default level
 
 
-func set_score(section: int, category: String, score: int) -> void:
+func set_score(section: int, category: String, score: int, score_snapshot: Dictionary = {}) -> void:
 	print("\n=== Setting Score ===")
 	print("[Scorecard] Setting", category, "to", score)
 	print("[Scorecard] Current total before change:", get_total_score())
@@ -266,6 +268,9 @@ func set_score(section: int, category: String, score: int) -> void:
 	
 	var new_total = get_total_score()
 	print("[Scorecard] New total score:", new_total)
+
+	if not score_snapshot.is_empty():
+		_store_scored_hand_snapshot(score_snapshot)
 	
 	# Emit the score_assigned signal for tracking purposes
 	emit_signal("score_assigned", section, category, final_score)
@@ -357,8 +362,11 @@ func on_category_selected(section: Section, category: String):
 		var _temp_breakdown = game_controller._create_manual_breakdown_info(category)
 		print("[Scorecard] Powerup registration completed, proceeding with score calculation")
 	
-	var score = calculate_score_internal(category, values, true)  # Apply money effects when actually scoring
-	set_score(section, category, score)
+	var scoring_result = calculate_score_with_breakdown(category, values, true)
+	var score = int(scoring_result.get("final_score", 0))
+	var breakdown_info: Dictionary = scoring_result.get("breakdown_info", {}).duplicate(true)
+	var score_snapshot = _build_scored_hand_snapshot(section, category, score, values, breakdown_info, "manual")
+	set_score(section, category, score, score_snapshot)
 
 func auto_score_best(values: Array[int]) -> void:
 	print("\n=== Auto-Scoring Best Hand ===")
@@ -429,7 +437,8 @@ func auto_score_best(values: Array[int]) -> void:
 		var captured_breakdown_info = scoring_breakdown.get("breakdown_info", {})
 		
 		# Set score immediately so other systems see the category as filled
-		set_score(best_section, best_category, final_score_with_money)
+		var score_snapshot = _build_scored_hand_snapshot(best_section, best_category, final_score_with_money, values, captured_breakdown_info, "auto")
+		set_score(best_section, best_category, final_score_with_money, score_snapshot)
 		
 		# Defer only the bonus checks and signal emission to avoid timing issues
 		call_deferred("_complete_auto_scoring_finalization", best_section, best_category, final_score_with_money, values, captured_breakdown_info)
@@ -944,6 +953,374 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 		"base_score": base_score,
 		"breakdown_info": breakdown_info
 	}
+
+
+## get_last_scored_hand_snapshot()
+##
+## Returns a deep copy of the most recent score-time snapshot captured before
+## post-score handlers disable or mutate the dice.
+func get_last_scored_hand_snapshot() -> Dictionary:
+	return last_scored_hand_snapshot.duplicate(true)
+
+
+## create_score_snapshot(section, category, final_score, dice_values, breakdown_info, scoring_source)
+##
+## Public helper for callers that need to persist a score trace while using a
+## non-standard scoring path.
+func create_score_snapshot(section: Section, category: String, final_score: int, dice_values: Array[int], breakdown_info: Dictionary = {}, scoring_source: String = "manual") -> Dictionary:
+	return _build_scored_hand_snapshot(section, category, final_score, dice_values, breakdown_info, scoring_source)
+
+
+## create_direct_score_snapshot(section, category, final_score, dice_values, scoring_source, breakdown_overrides)
+##
+## Builds a minimal score trace for special score paths that set a final score
+## directly instead of going through calculate_score_with_breakdown().
+func create_direct_score_snapshot(section: Section, category: String, final_score: int, dice_values: Array[int], scoring_source: String, breakdown_overrides: Dictionary = {}) -> Dictionary:
+	var used_dice_indices: Array[int] = _get_used_dice_for_category(category, dice_values, DiceResults.dice_refs)
+	var breakdown_info := {
+		"base_score": final_score,
+		"category_level": 1,
+		"raw_category_level_factor": 1.0,
+		"effective_category_level_factor": 1.0,
+		"category_level_display_mode": "multiply",
+		"category_level_display_operator": "×",
+		"category_level_display_value": 1.0,
+		"score_after_level": final_score,
+		"regular_additive": 0,
+		"dice_color_additive": 0,
+		"total_additive": 0,
+		"raw_regular_multiplier": 1.0,
+		"regular_multiplier": 1.0,
+		"effective_regular_multiplier": 1.0,
+		"regular_multiplier_display_mode": "multiply",
+		"regular_multiplier_display_operator": "×",
+		"regular_multiplier_display_value": 1.0,
+		"raw_dice_color_multiplier": 1.0,
+		"dice_color_multiplier": 1.0,
+		"effective_dice_color_multiplier": 1.0,
+		"dice_color_multiplier_display_mode": "multiply",
+		"dice_color_multiplier_display_operator": "×",
+		"dice_color_multiplier_display_value": 1.0,
+		"raw_blue_score_multiplier": 1.0,
+		"blue_score_multiplier": 1.0,
+		"effective_blue_score_multiplier": 1.0,
+		"blue_score_multiplier_display_mode": "multiply",
+		"blue_score_multiplier_display_operator": "×",
+		"blue_score_multiplier_display_value": 1.0,
+		"total_multiplier": 1.0,
+		"overall_effective_multiplier": 1.0,
+		"division_mode_active": false,
+		"score_after_additives": final_score,
+		"score_after_colors": final_score,
+		"final_score": final_score,
+		"category_display": _format_category_display_name(category),
+		"active_powerups": [],
+		"active_consumables": [],
+		"dice_color_money": 0,
+		"has_modifiers": false,
+		"used_dice_indices": used_dice_indices.duplicate(),
+		"dice_values": dice_values.duplicate(),
+		"additive_sources": [],
+		"multiplier_sources": []
+	}
+	for key in breakdown_overrides.keys():
+		breakdown_info[key] = breakdown_overrides[key]
+	return _build_scored_hand_snapshot(section, category, final_score, dice_values, breakdown_info, scoring_source)
+
+
+## _build_scored_hand_snapshot(section, category, final_score, dice_values, breakdown_info, scoring_source)
+##
+## Packages the authoritative score-time state for debug panels and logbook history.
+func _build_scored_hand_snapshot(section: Section, category: String, final_score: int, dice_values: Array[int], breakdown_info: Dictionary, scoring_source: String) -> Dictionary:
+	var breakdown_copy: Dictionary = breakdown_info.duplicate(true)
+	var used_dice_indices: Array[int] = _variant_array_to_int_array(breakdown_copy.get("used_dice_indices", []))
+	var dice_snapshot = _capture_score_time_dice_snapshot(dice_values, used_dice_indices)
+	var dice_colors: Array[String] = []
+	var dice_mods: Array[String] = []
+	var used_dice_total_value := 0
+	var total_mod_count := 0
+	for die_info in dice_snapshot:
+		dice_colors.append(str(die_info.get("color_name", "none")))
+		var mod_ids: Array[String] = _variant_array_to_string_array(die_info.get("mods", []))
+		var mods_text := ""
+		if not mod_ids.is_empty():
+			mods_text = ", ".join(mod_ids)
+		dice_mods.append(mods_text)
+		total_mod_count += mod_ids.size()
+		if bool(die_info.get("used_in_score", false)):
+			used_dice_total_value += int(die_info.get("value", 0))
+
+	var section_name := "upper"
+	if section == Section.LOWER:
+		section_name = "lower"
+
+	var active_powerups: Array[String] = _variant_array_to_string_array(breakdown_copy.get("active_powerups", []))
+	var active_consumables: Array[String] = _variant_array_to_string_array(breakdown_copy.get("active_consumables", []))
+	var active_debuffs: Array[String] = []
+	var active_challenges: Array[String] = []
+	var turn_number := -1
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if is_instance_valid(game_controller):
+		active_debuffs = _variant_array_to_string_array(game_controller.active_debuffs.keys())
+		active_challenges = _variant_array_to_string_array(game_controller.active_challenges.keys())
+		active_debuffs.sort()
+		active_challenges.sort()
+		if is_instance_valid(game_controller.turn_tracker):
+			turn_number = int(game_controller.turn_tracker.current_turn)
+
+	breakdown_copy["section"] = section_name
+	breakdown_copy["scoring_source"] = scoring_source
+	breakdown_copy["round_number"] = current_round_number
+	breakdown_copy["turn_number"] = turn_number
+	breakdown_copy["dice_set"] = "d%d" % current_dice_sides
+	breakdown_copy["dice_sides"] = current_dice_sides
+	breakdown_copy["dice_snapshot"] = dice_snapshot.duplicate(true)
+	breakdown_copy["dice_colors"] = dice_colors.duplicate()
+	breakdown_copy["dice_mods"] = dice_mods.duplicate()
+	breakdown_copy["active_debuffs"] = active_debuffs.duplicate()
+	breakdown_copy["active_challenges"] = active_challenges.duplicate()
+	breakdown_copy["total_dice_value"] = _sum_int_values(dice_values)
+	breakdown_copy["used_dice_total_value"] = used_dice_total_value
+	breakdown_copy["total_mod_count"] = total_mod_count
+
+	return {
+		"section": section_name,
+		"section_index": int(section),
+		"category": category,
+		"category_display": str(breakdown_copy.get("category_display", _format_category_display_name(category))),
+		"scoring_source": scoring_source,
+		"round_number": current_round_number,
+		"turn_number": turn_number,
+		"dice_sides": current_dice_sides,
+		"dice_set": "d%d" % current_dice_sides,
+		"dice_values": dice_values.duplicate(),
+		"dice_colors": dice_colors,
+		"dice_mods": dice_mods,
+		"dice_snapshot": dice_snapshot,
+		"used_dice_indices": used_dice_indices,
+		"active_powerups": active_powerups,
+		"active_consumables": active_consumables,
+		"active_debuffs": active_debuffs,
+		"active_challenges": active_challenges,
+		"total_dice_value": _sum_int_values(dice_values),
+		"used_dice_total_value": used_dice_total_value,
+		"final_score": final_score,
+		"breakdown_info": breakdown_copy
+	}
+
+
+## _capture_score_time_dice_snapshot(dice_values, used_dice_indices)
+##
+## Captures a deterministic per-die snapshot before post-score handlers disable dice.
+func _capture_score_time_dice_snapshot(dice_values: Array[int], used_dice_indices: Array[int]) -> Array[Dictionary]:
+	var dice_snapshot: Array[Dictionary] = []
+	var used_lookup: Dictionary = {}
+	for used_index in used_dice_indices:
+		used_lookup[int(used_index)] = true
+
+	var dice_ref_count := DiceResults.dice_refs.size()
+	var total_dice := maxi(dice_values.size(), dice_ref_count)
+	for i in range(total_dice):
+		var die = null
+		if i < dice_ref_count:
+			die = DiceResults.dice_refs[i]
+
+		var snapshot_value := 0
+		if i < dice_values.size():
+			snapshot_value = dice_values[i]
+
+		var mod_ids: Array[String] = []
+		var color_type := int(DiceColor.Type.NONE)
+		var color_name := "none"
+		var state_int := -1
+		var state_name := "UNKNOWN"
+		var is_locked := false
+		var locking_disabled := false
+		var excluded_from_normal_rolls := false
+		var debuff_disabled_face := false
+
+		if is_instance_valid(die) and die is Dice:
+			if i >= dice_values.size():
+				snapshot_value = die.value
+			color_type = int(die.get_color())
+			color_name = DiceColor.get_color_name(die.get_color()).to_lower()
+			state_int = int(die.get_state())
+			state_name = die.get_state_name()
+			is_locked = die.is_locked
+			locking_disabled = die.locking_disabled
+			excluded_from_normal_rolls = die.excluded_from_normal_rolls
+			if die.has_method("is_debuff_disabled_face_enabled"):
+				debuff_disabled_face = die.is_debuff_disabled_face_enabled()
+			for mod_id in die.active_mods.keys():
+				mod_ids.append(str(mod_id))
+			mod_ids.sort()
+
+		dice_snapshot.append({
+			"index": i,
+			"display_index": i + 1,
+			"value": snapshot_value,
+			"color_type": color_type,
+			"color_name": color_name,
+			"mods": mod_ids,
+			"state": state_int,
+			"state_name": state_name,
+			"is_locked": is_locked,
+			"locking_disabled": locking_disabled,
+			"excluded_from_normal_rolls": excluded_from_normal_rolls,
+			"debuff_disabled_face": debuff_disabled_face,
+			"used_in_score": used_lookup.has(i)
+		})
+
+	return dice_snapshot
+
+
+## _store_scored_hand_snapshot(score_snapshot)
+##
+## Persists the captured snapshot for later debug inspection and short history.
+func _store_scored_hand_snapshot(score_snapshot: Dictionary) -> void:
+	last_scored_hand_snapshot = score_snapshot.duplicate(true)
+
+	var breakdown_info: Dictionary = last_scored_hand_snapshot.get("breakdown_info", {}).duplicate(true)
+	var modifier_effects = _build_modifier_effects_from_breakdown(breakdown_info)
+	if Statistics:
+		Statistics.log_hand_scored(
+			_variant_array_to_int_array(last_scored_hand_snapshot.get("dice_values", [])),
+			_variant_array_to_string_array(last_scored_hand_snapshot.get("dice_colors", [])),
+			_variant_array_to_string_array(last_scored_hand_snapshot.get("dice_mods", [])),
+			str(last_scored_hand_snapshot.get("category", "")),
+			str(last_scored_hand_snapshot.get("section", "")),
+			_variant_array_to_string_array(last_scored_hand_snapshot.get("active_consumables", [])),
+			_variant_array_to_string_array(last_scored_hand_snapshot.get("active_powerups", [])),
+			int(breakdown_info.get("base_score", 0)),
+			modifier_effects,
+			int(last_scored_hand_snapshot.get("final_score", 0)),
+			breakdown_info
+		)
+
+	emit_signal("score_snapshot_recorded", last_scored_hand_snapshot.duplicate(true))
+
+
+func _build_modifier_effects_from_breakdown(breakdown_info: Dictionary) -> Array[Dictionary]:
+	var modifier_effects: Array[Dictionary] = []
+	var additive_sources = breakdown_info.get("additive_sources", [])
+	if additive_sources is Array and additive_sources.size() > 0:
+		for source_info in additive_sources:
+			if typeof(source_info) != TYPE_DICTIONARY:
+				continue
+			var additive_value := int(source_info.get("value", 0))
+			if additive_value == 0:
+				continue
+			var source_name = str(source_info.get("name", "modifier"))
+			modifier_effects.append({
+				"type": "additive",
+				"value": additive_value,
+				"source": source_name,
+				"description": "+%d from %s" % [additive_value, _format_modifier_source_name(source_name)],
+				"short_description": "+%d" % additive_value
+			})
+	else:
+		var regular_additive := int(breakdown_info.get("regular_additive", 0))
+		if regular_additive != 0:
+			modifier_effects.append({
+				"type": "additive",
+				"value": regular_additive,
+				"source": "modifiers",
+				"description": "+%d from modifiers" % regular_additive,
+				"short_description": "+%d" % regular_additive
+			})
+
+	var red_additive := int(breakdown_info.get("dice_color_additive", 0))
+	if red_additive != 0:
+		modifier_effects.append({
+			"type": "additive",
+			"value": red_additive,
+			"source": "red_dice",
+			"description": "+%d from red dice" % red_additive,
+			"short_description": "red+%d" % red_additive
+		})
+
+	var multiplier_sources = breakdown_info.get("multiplier_sources", [])
+	if multiplier_sources is Array and multiplier_sources.size() > 0:
+		for source_info in multiplier_sources:
+			if typeof(source_info) != TYPE_DICTIONARY:
+				continue
+			var source_name = str(source_info.get("name", "modifier"))
+			var display_operator = str(source_info.get("display_operator", "×"))
+			var display_value := float(source_info.get("display_value", source_info.get("raw_value", 1.0)))
+			if is_equal_approx(display_value, 1.0):
+				continue
+			modifier_effects.append({
+				"type": "multiplier",
+				"value": float(source_info.get("value", 1.0)),
+				"source": source_name,
+				"description": "%s%.2f from %s" % [display_operator, display_value, _format_modifier_source_name(source_name)],
+				"short_description": "%s%.2f" % [display_operator, display_value]
+			})
+	else:
+		var regular_multiplier := float(breakdown_info.get("regular_multiplier", 1.0))
+		if not is_equal_approx(regular_multiplier, 1.0):
+			var display_operator = str(breakdown_info.get("regular_multiplier_display_operator", "×"))
+			var display_value := float(breakdown_info.get("regular_multiplier_display_value", regular_multiplier))
+			modifier_effects.append({
+				"type": "multiplier",
+				"value": regular_multiplier,
+				"source": "modifiers",
+				"description": "%s%.2f from modifiers" % [display_operator, display_value],
+				"short_description": "%s%.2f" % [display_operator, display_value]
+			})
+
+	var purple_multiplier := float(breakdown_info.get("dice_color_multiplier", 1.0))
+	if not is_equal_approx(purple_multiplier, 1.0):
+		var purple_operator = str(breakdown_info.get("dice_color_multiplier_display_operator", "×"))
+		var purple_value := float(breakdown_info.get("dice_color_multiplier_display_value", purple_multiplier))
+		modifier_effects.append({
+			"type": "multiplier",
+			"value": purple_multiplier,
+			"source": "purple_dice",
+			"description": "%s%.2f from purple dice" % [purple_operator, purple_value],
+			"short_description": "purple%s%.2f" % [purple_operator, purple_value]
+		})
+
+	var blue_multiplier := float(breakdown_info.get("blue_score_multiplier", 1.0))
+	if not is_equal_approx(blue_multiplier, 1.0):
+		var blue_operator = str(breakdown_info.get("blue_score_multiplier_display_operator", "×"))
+		var blue_value := float(breakdown_info.get("blue_score_multiplier_display_value", blue_multiplier))
+		modifier_effects.append({
+			"type": "multiplier",
+			"value": blue_multiplier,
+			"source": "blue_dice",
+			"description": "%s%.2f from blue dice" % [blue_operator, blue_value],
+			"short_description": "blue%s%.2f" % [blue_operator, blue_value]
+		})
+
+	return modifier_effects
+
+
+func _format_modifier_source_name(source_name: String) -> String:
+	return source_name.replace("_", " ")
+
+
+func _sum_int_values(values: Array[int]) -> int:
+	var total := 0
+	for value in values:
+		total += value
+	return total
+
+
+func _variant_array_to_string_array(values: Variant) -> Array[String]:
+	var result: Array[String] = []
+	if values is Array:
+		for value in values:
+			result.append(str(value))
+	return result
+
+
+func _variant_array_to_int_array(values: Variant) -> Array[int]:
+	var result: Array[int] = []
+	if values is Array:
+		for value in values:
+			result.append(int(value))
+	return result
 
 ## _get_used_dice_for_category(category, dice_values, dice_list)
 ##

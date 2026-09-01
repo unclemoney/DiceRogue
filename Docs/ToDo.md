@@ -71,8 +71,8 @@
 - [ ] `P2-Minor` Shockwave animations can also be applied to buttons that need to be pressed or chosen.
 - [ ] `P2-Minor` Click on the Mall Zone upper left to bring up the mall map. Show coming challenges.
 - [ ] `P2-Minor` Texture Progress Bars need to be reworked. Make them consistent across the game.
-- [ ] `P2-Minor` Add commas for scores. Use e-notation for higher numbers.
-- [ ] `P2-Minor` Mom Panel bounce-in is too harsh. Soften the animation.
+- [X] `P2-Minor` Add commas for scores. Use e-notation for higher numbers.
+- [X] `P2-Minor` Mom Panel bounce-in is too harsh. Soften the animation.
 
 ## SYS:Save — Save, Load & State Management
 

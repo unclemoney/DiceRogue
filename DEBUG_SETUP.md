@@ -71,6 +71,7 @@ The debug panel handles F12 input automatically. No additional input map setup r
 - Navigate between tabs to find the appropriate debug tools
 - Use quick action buttons for common testing scenarios  
 - View debug output in the panel's text area
+- Use the **Diagnostics** tab for dedicated live dice and scored-hand trace panels
 - All debug actions are logged with timestamps
 
 ## Debug Panel Organization
@@ -116,6 +117,12 @@ Game flow and state management:
 - Debug multiplier system
 - Trigger signal tests
 
+### **Diagnostics Tab**
+Dedicated trace views for scoring bugs:
+- **Refresh Live Dice State**: Lists every die, its value, color, state, lock/exclusion flags, current mods, and the last scored-hand comparison row
+- **Refresh Score Trace**: Shows the most recent scored hand with dice snapshot, used-dice markers, additive and multiplier sources, and a short recent-history list
+- **Refresh All Diagnostics**: Rebuilds both panels after rolls, manual scoring, or auto-scoring
+
 ### **Utilities Tab**
 Development and debugging utilities:
 - Save/Load debug states
@@ -152,6 +159,7 @@ When adding new debug commands:
 - **Dice Colors**: Color system features and testing
 - **Testing**: Cross-system tests, complex feature validation
 - **Game State**: Game flow, state inspection, scoring
+- **Diagnostics**: Dice-state drift checks and scored-hand trace reports
 - **Utilities**: Development tools, save/load, reset functions
 
 ## Design Principles

@@ -42,6 +42,8 @@ var consumable_selection_list: ItemList
 var challenge_selection_list: ItemList
 var mod_selection_list: ItemList
 var mod_die_spinbox: SpinBox
+var dice_state_report_text: TextEdit
+var score_trace_report_text: TextEdit
 
 var game_controller: GameController
 var is_visible_debug := false
@@ -65,7 +67,8 @@ func _ready() -> void:
 	hide_debug_panel()
 	
 	# Try to find GameController
-	game_controller = get_tree().get_first_node_in_group("game_controller")
+	var controller_node = get_tree().get_first_node_in_group("game_controller")
+	game_controller = controller_node as GameController
 	if not game_controller:
 		log_debug("Warning: GameController not found - some debug functions may not work")
 	
@@ -307,6 +310,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Debug Multiplier System", "method": "_debug_multiplier_system"},
 			{"text": "Trigger All Signals", "method": "_debug_test_signals"},
 		],
+		"Diagnostics": [],
 		"Utilities": [
 			{"text": "Save Debug State", "method": "_debug_save_state"},
 			{"text": "Load Debug State", "method": "_debug_load_state"},
@@ -513,6 +517,10 @@ func _create_debug_tabs() -> void:
 		if tab_name == "Testing":
 			_create_testing_tab(vbox, tab_definitions[tab_name])
 			continue
+
+		if tab_name == "Diagnostics":
+			_create_diagnostics_tab(vbox)
+			continue
 		
 		var button_grid = _create_debug_button_grid(vbox)
 		_add_debug_buttons(button_grid, tab_definitions[tab_name])
@@ -612,6 +620,62 @@ func _create_testing_tab(parent: VBoxContainer, button_definitions: Array) -> vo
 
 	var button_grid = _create_debug_button_grid(parent)
 	_add_debug_buttons(button_grid, button_definitions)
+
+
+func _create_diagnostics_tab(parent: VBoxContainer) -> void:
+	var helper_label = Label.new()
+	helper_label.text = "Refresh the panels below to inspect live dice state and the most recent scoring snapshot."
+	helper_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.7, 1.0))
+	parent.add_child(helper_label)
+
+	var action_row = HBoxContainer.new()
+	action_row.add_theme_constant_override("separation", 10)
+	parent.add_child(action_row)
+
+	var refresh_all_button = Button.new()
+	refresh_all_button.text = "Refresh All Diagnostics"
+	refresh_all_button.custom_minimum_size = Vector2(220, 32)
+	refresh_all_button.pressed.connect(_debug_refresh_all_diagnostics)
+	action_row.add_child(refresh_all_button)
+
+	var refresh_dice_button = Button.new()
+	refresh_dice_button.text = "Refresh Live Dice State"
+	refresh_dice_button.custom_minimum_size = Vector2(210, 32)
+	refresh_dice_button.pressed.connect(_debug_refresh_dice_state_report)
+	action_row.add_child(refresh_dice_button)
+
+	var refresh_score_button = Button.new()
+	refresh_score_button.text = "Refresh Score Trace"
+	refresh_score_button.custom_minimum_size = Vector2(190, 32)
+	refresh_score_button.pressed.connect(_debug_refresh_score_trace_report)
+	action_row.add_child(refresh_score_button)
+
+	var dice_label = Label.new()
+	dice_label.text = "Live Dice State"
+	dice_label.add_theme_color_override("font_color", Color.WHITE)
+	parent.add_child(dice_label)
+
+	dice_state_report_text = _create_report_text_edit(parent, Vector2(1040, 180), "Live dice state will appear here...")
+
+	var score_label = Label.new()
+	score_label.text = "Last Scored Hand / Recent History"
+	score_label.add_theme_color_override("font_color", Color.WHITE)
+	parent.add_child(score_label)
+
+	score_trace_report_text = _create_report_text_edit(parent, Vector2(1040, 240), "Scored-hand trace will appear here once a hand is scored...")
+
+
+func _create_report_text_edit(parent: VBoxContainer, minimum_size: Vector2, placeholder: String) -> TextEdit:
+	var report_text = TextEdit.new()
+	report_text.custom_minimum_size = minimum_size
+	report_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	report_text.editable = false
+	report_text.placeholder_text = placeholder
+	report_text.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	report_text.add_theme_color_override("font_color", Color.WHITE)
+	report_text.add_theme_color_override("background_color", Color(0.08, 0.08, 0.08, 1.0))
+	parent.add_child(report_text)
+	return report_text
 
 ## _create_item_input_section(parent: VBoxContainer)
 ##
@@ -752,6 +816,7 @@ func show_debug_panel() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_refresh_game_controller_reference()
 	_ensure_debug_lists_populated()
+	_refresh_diagnostics_reports(false)
 	
 	# Bring to front in case other UI was added after debug panel
 	if get_parent():
@@ -804,7 +869,8 @@ func log_debug(message: String) -> void:
 
 func _refresh_game_controller_reference() -> void:
 	if not is_instance_valid(game_controller):
-		game_controller = get_tree().get_first_node_in_group("game_controller")
+		var controller_node = get_tree().get_first_node_in_group("game_controller")
+		game_controller = controller_node as GameController
 
 
 func _ensure_debug_lists_populated() -> void:
@@ -3360,6 +3426,237 @@ func _debug_force_rainbow() -> void:
 	
 	log_debug("Forced rainbow set: Green, Red, Purple, Blue, Yellow")
 
+
+func _debug_refresh_all_diagnostics() -> void:
+	_refresh_diagnostics_reports(true)
+
+
+func _debug_refresh_dice_state_report(log_action: bool = true) -> void:
+	if dice_state_report_text:
+		_set_report_text(dice_state_report_text, _build_live_dice_state_report())
+	if log_action:
+		log_debug("Refreshed live dice state report")
+
+
+func _debug_refresh_score_trace_report(log_action: bool = true) -> void:
+	if score_trace_report_text:
+		_set_report_text(score_trace_report_text, _build_score_trace_report())
+	if log_action:
+		log_debug("Refreshed scored-hand trace report")
+
+
+func _refresh_diagnostics_reports(log_action: bool = true) -> void:
+	var refreshed_sections: Array[String] = []
+	if dice_state_report_text:
+		_set_report_text(dice_state_report_text, _build_live_dice_state_report())
+		refreshed_sections.append("dice state")
+	if score_trace_report_text:
+		_set_report_text(score_trace_report_text, _build_score_trace_report())
+		refreshed_sections.append("score trace")
+	if log_action and not refreshed_sections.is_empty():
+		log_debug("Refreshed diagnostics: " + ", ".join(refreshed_sections))
+
+
+func _set_report_text(report_text: TextEdit, text: String) -> void:
+	report_text.text = text
+	report_text.scroll_vertical = 0
+
+
+func _build_live_dice_state_report() -> String:
+	var dice_hand = _get_dice_hand()
+	if not dice_hand:
+		return "Dice hand not available."
+
+	var live_values: Array[int] = []
+	if dice_hand.has_method("get_current_dice_values"):
+		live_values = dice_hand.get_current_dice_values()
+
+	var lines: Array[String] = []
+	lines.append("LIVE DICE STATE")
+	lines.append("Dice set: %s | Spawned: %d | Hand total: %d" % [dice_hand.current_dice_type.to_upper(), dice_hand.dice_list.size(), _sum_int_array(live_values)])
+	lines.append("DiceResults.values: %s" % str(DiceResults.values))
+	lines.append("DiceResults.locked: %s" % str(DiceResults.locked))
+
+	if dice_hand.has_method("get_color_effects"):
+		var color_effects = dice_hand.get_color_effects()
+		lines.append("Color preview: green=$%d | red=%s | purple=%s | blue=%s | yellow_scored=%s | same_color=%s | rainbow=%s" % [
+			int(color_effects.get("green_money", 0)),
+			_format_signed_int(int(color_effects.get("red_additive", 0))),
+			_format_float_value(float(color_effects.get("purple_multiplier", 1.0))),
+			_format_float_value(float(color_effects.get("blue_score_multiplier", 1.0))),
+			str(color_effects.get("yellow_scored", false)),
+			str(color_effects.get("same_color_bonus", false)),
+			str(color_effects.get("rainbow_bonus", false))
+		])
+
+	var last_snapshot = _get_last_scored_hand_snapshot()
+	var last_snapshot_dice = []
+	if last_snapshot.is_empty():
+		lines.append("Last scored hand: none recorded yet")
+	else:
+		last_snapshot_dice = last_snapshot.get("dice_snapshot", [])
+		lines.append("Last scored hand: %s / %s | Round %d Turn %d | Source=%s | Score=%d" % [
+			str(last_snapshot.get("category_display", last_snapshot.get("category", "?"))),
+			str(last_snapshot.get("section", "?")),
+			int(last_snapshot.get("round_number", -1)),
+			int(last_snapshot.get("turn_number", -1)),
+			str(last_snapshot.get("scoring_source", "unknown")),
+			int(last_snapshot.get("final_score", 0))
+		])
+
+	lines.append("")
+	for i in range(dice_hand.dice_list.size()):
+		var die = dice_hand.dice_list[i]
+		if not is_instance_valid(die):
+			lines.append("Die %d | invalid" % [i + 1])
+			continue
+
+		var mod_ids: Array[String] = []
+		for mod_id in die.active_mods.keys():
+			mod_ids.append(str(mod_id))
+		mod_ids.sort()
+
+		var live_line = "Die %d | value=%d | color=%s | state=%s | locked=%s | lock_block=%s | excluded=%s | debuff_disabled_face=%s | mods=%s" % [
+			i + 1,
+			die.value,
+			DiceColor.get_color_name(die.get_color()).to_lower(),
+			die.get_state_name(),
+			str(die.is_locked),
+			str(die.locking_disabled),
+			str(die.excluded_from_normal_rolls),
+			str(die.is_debuff_disabled_face_enabled()),
+			_join_or_none(mod_ids)
+		]
+		if i < DiceResults.values.size() and int(DiceResults.values[i]) != die.value:
+			live_line += " | results_value=%d" % int(DiceResults.values[i])
+		lines.append(live_line)
+
+		if last_snapshot_dice is Array and i < last_snapshot_dice.size() and typeof(last_snapshot_dice[i]) == TYPE_DICTIONARY:
+			var score_die: Dictionary = last_snapshot_dice[i]
+			var score_mods: Array[String] = _variant_to_string_array(score_die.get("mods", []))
+			var drift_fields: Array[String] = []
+			if int(score_die.get("value", die.value)) != die.value:
+				drift_fields.append("value")
+			if str(score_die.get("color_name", "none")) != DiceColor.get_color_name(die.get_color()).to_lower():
+				drift_fields.append("color")
+			if ",".join(score_mods) != ",".join(mod_ids):
+				drift_fields.append("mods")
+
+			var score_line = "  Last score | value=%d | color=%s | used=%s | mods=%s" % [
+				int(score_die.get("value", 0)),
+				str(score_die.get("color_name", "none")),
+				str(score_die.get("used_in_score", false)),
+				_join_or_none(score_mods)
+			]
+			if not drift_fields.is_empty():
+				score_line += " | drift=" + ", ".join(drift_fields)
+			lines.append(score_line)
+
+	return "\n".join(lines)
+
+
+func _build_score_trace_report() -> String:
+	var statistics = _get_statistics_manager()
+	if not statistics:
+		return "Statistics manager not available."
+	if not statistics.has_method("get_latest_log_entry"):
+		return "Statistics manager does not expose score history helpers."
+
+	var latest_entry = statistics.get_latest_log_entry()
+	if latest_entry == null:
+		return "No scored-hand history recorded yet. Score a hand, then refresh this panel."
+
+	var breakdown_info: Dictionary = latest_entry.breakdown_info.duplicate(true)
+	var lines: Array[String] = []
+	lines.append("LAST SCORED HAND")
+	lines.append("Category: %s | Section: %s | Source: %s | Final score: %d" % [
+		str(breakdown_info.get("category_display", latest_entry.scorecard_category)),
+		latest_entry.scorecard_section,
+		str(breakdown_info.get("scoring_source", "unknown")),
+		latest_entry.final_score
+	])
+	lines.append("Round: %d | Turn: %d | Dice set: %s | Dice total: %d | Used total: %d" % [
+		int(breakdown_info.get("round_number", -1)),
+		latest_entry.turn_number,
+		str(breakdown_info.get("dice_set", "unknown")),
+		int(breakdown_info.get("total_dice_value", _sum_int_array(latest_entry.dice_values))),
+		int(breakdown_info.get("used_dice_total_value", 0))
+	])
+	lines.append("Dice values: %s" % str(latest_entry.dice_values))
+
+	var dice_snapshot = breakdown_info.get("dice_snapshot", [])
+	if dice_snapshot is Array and not dice_snapshot.is_empty():
+		lines.append("")
+		lines.append("Per-die snapshot:")
+		for die_info in dice_snapshot:
+			if typeof(die_info) != TYPE_DICTIONARY:
+				continue
+			var die_dict: Dictionary = die_info
+			var used_label := "[idle]"
+			if bool(die_dict.get("used_in_score", false)):
+				used_label = "[used]"
+			lines.append("  %s Die %d | value=%d | color=%s | state=%s | mods=%s" % [
+				used_label,
+				int(die_dict.get("display_index", 0)),
+				int(die_dict.get("value", 0)),
+				str(die_dict.get("color_name", "none")),
+				str(die_dict.get("state_name", "UNKNOWN")),
+				_join_or_none(_variant_to_string_array(die_dict.get("mods", [])))
+			])
+
+	var base_score = int(breakdown_info.get("base_score", latest_entry.base_score))
+	var score_after_level = int(breakdown_info.get("score_after_level", base_score))
+	var level_operator = str(breakdown_info.get("category_level_display_operator", "×"))
+	var level_value = float(breakdown_info.get("category_level_display_value", breakdown_info.get("effective_category_level_factor", breakdown_info.get("category_level", 1))))
+	var regular_additive = int(breakdown_info.get("regular_additive", 0))
+	var color_additive = int(breakdown_info.get("dice_color_additive", 0))
+	var score_after_additives = int(breakdown_info.get("score_after_additives", score_after_level + regular_additive + color_additive))
+	var regular_multiplier_operator = str(breakdown_info.get("regular_multiplier_display_operator", "×"))
+	var regular_multiplier_value = float(breakdown_info.get("regular_multiplier_display_value", breakdown_info.get("regular_multiplier", 1.0)))
+	var purple_multiplier_operator = str(breakdown_info.get("dice_color_multiplier_display_operator", "×"))
+	var purple_multiplier_value = float(breakdown_info.get("dice_color_multiplier_display_value", breakdown_info.get("dice_color_multiplier", 1.0)))
+	var blue_multiplier_operator = str(breakdown_info.get("blue_score_multiplier_display_operator", "×"))
+	var blue_multiplier_value = float(breakdown_info.get("blue_score_multiplier_display_value", breakdown_info.get("blue_score_multiplier", 1.0)))
+
+	lines.append("")
+	lines.append("Calculation:")
+	lines.append("  Base score: %d" % base_score)
+	if is_equal_approx(level_value, 1.0):
+		lines.append("  Category level: no change")
+	else:
+		lines.append("  Category level: %d %s %s = %d" % [base_score, level_operator, _format_float_value(level_value), score_after_level])
+	lines.append("  Additives: regular %s | red dice %s => %d" % [
+		_format_signed_int(regular_additive),
+		_format_signed_int(color_additive),
+		score_after_additives
+	])
+	lines.append("  Regular multiplier: %s%s" % [regular_multiplier_operator, _format_float_value(regular_multiplier_value)])
+	lines.append("  Purple multiplier: %s%s" % [purple_multiplier_operator, _format_float_value(purple_multiplier_value)])
+	lines.append("  Blue factor: %s%s" % [blue_multiplier_operator, _format_float_value(blue_multiplier_value)])
+	lines.append("  Final score: %d" % latest_entry.final_score)
+	lines.append("  Green money side effect: +$%d" % int(breakdown_info.get("dice_color_money", 0)))
+	if breakdown_info.has("any_score_source_display"):
+		lines.append("  AnyScore best-category source: %s" % str(breakdown_info.get("any_score_source_display", breakdown_info.get("any_score_source_category", ""))))
+	lines.append("  Applied powerups: %s" % _join_or_none(latest_entry.powerups_applied))
+	lines.append("  Applied consumables: %s" % _join_or_none(latest_entry.consumables_applied))
+	lines.append("  Active debuffs: %s" % _join_or_none(_variant_to_string_array(breakdown_info.get("active_debuffs", []))))
+	lines.append("  Active challenges: %s" % _join_or_none(_variant_to_string_array(breakdown_info.get("active_challenges", []))))
+
+	var additive_sources_text = _format_modifier_sources(breakdown_info.get("additive_sources", []), false)
+	if additive_sources_text != "none":
+		lines.append("  Additive sources: %s" % additive_sources_text)
+	var multiplier_sources_text = _format_modifier_sources(breakdown_info.get("multiplier_sources", []), true)
+	if multiplier_sources_text != "none":
+		lines.append("  Multiplier sources: %s" % multiplier_sources_text)
+
+	lines.append("")
+	lines.append("Recent history:")
+	var recent_entries = statistics.get_recent_log_entries(5)
+	for entry in recent_entries:
+		lines.append("  - " + _format_score_history_entry(entry))
+
+	return "\n".join(lines)
+
 func _debug_clear_all_colors() -> void:
 	var dice_hand = _get_dice_hand()
 	if not dice_hand:
@@ -3405,6 +3702,105 @@ func _get_dice_hand():
 		log_debug("ERROR: Could not find dice hand")
 		return null
 	return dice_hand
+
+
+func _get_scorecard_for_debug():
+	_refresh_game_controller_reference()
+	if is_instance_valid(game_controller) and is_instance_valid(game_controller.scorecard):
+		return game_controller.scorecard
+	return get_tree().get_first_node_in_group("scorecard")
+
+
+func _get_last_scored_hand_snapshot() -> Dictionary:
+	var scorecard = _get_scorecard_for_debug()
+	if scorecard and scorecard.has_method("get_last_scored_hand_snapshot"):
+		return scorecard.get_last_scored_hand_snapshot()
+	return {}
+
+
+func _get_statistics_manager():
+	if Statistics:
+		return Statistics
+	return get_node_or_null("/root/Statistics")
+
+
+func _variant_to_string_array(values: Variant) -> Array[String]:
+	var result: Array[String] = []
+	if values is Array:
+		for value in values:
+			result.append(str(value))
+	return result
+
+
+func _sum_int_array(values: Array[int]) -> int:
+	var total := 0
+	for value in values:
+		total += value
+	return total
+
+
+func _format_signed_int(value: int) -> String:
+	if value > 0:
+		return "+%d" % value
+	if value < 0:
+		return "%d" % value
+	return "0"
+
+
+func _format_float_value(value: float) -> String:
+	return "%.2f" % value
+
+
+func _join_or_none(values: Array[String]) -> String:
+	if values.is_empty():
+		return "none"
+	return ", ".join(values)
+
+
+func _format_modifier_sources(values: Variant, is_multiplier: bool) -> String:
+	if not values is Array:
+		return "none"
+
+	var formatted_sources: Array[String] = []
+	for source_info in values:
+		if typeof(source_info) != TYPE_DICTIONARY:
+			continue
+		var source_dict: Dictionary = source_info
+		var source_name = str(source_dict.get("name", source_dict.get("source", "modifier")))
+		if is_multiplier:
+			var operator = str(source_dict.get("display_operator", "×"))
+			var display_value = float(source_dict.get("display_value", source_dict.get("raw_value", source_dict.get("value", 1.0))))
+			formatted_sources.append("%s %s%s" % [source_name, operator, _format_float_value(display_value)])
+		else:
+			formatted_sources.append("%s %s" % [source_name, _format_signed_int(int(source_dict.get("value", 0)))])
+
+	if formatted_sources.is_empty():
+		return "none"
+	return ", ".join(formatted_sources)
+
+
+func _format_score_history_entry(entry) -> String:
+	if entry == null:
+		return "invalid history entry"
+
+	var source := "unknown"
+	var round_number := -1
+	if entry.breakdown_info is Dictionary:
+		source = str(entry.breakdown_info.get("scoring_source", "unknown"))
+		round_number = int(entry.breakdown_info.get("round_number", -1))
+
+	var category_display = entry.scorecard_category
+	if entry.breakdown_info is Dictionary:
+		category_display = str(entry.breakdown_info.get("category_display", category_display))
+
+	return "R%d T%d | %s | %s | dice=%s | final=%d" % [
+		round_number,
+		entry.turn_number,
+		source,
+		category_display,
+		str(entry.dice_values),
+		entry.final_score
+	]
 
 func _get_dice_color_manager():
 	# Try to get the DiceColorManager autoload via tree search

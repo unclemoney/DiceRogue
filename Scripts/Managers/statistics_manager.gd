@@ -639,6 +639,12 @@ func log_hand_scored(
 	# Log entry creation for debugging
 	if powerups.size() > 0 or consumables.size() > 0:
 		print("[Statistics] Logbook entry: %s (%d→%d pts) PowerUps:%s Consumables:%s" % [category, base_score, final_score, powerups, consumables])
+
+	var recorded_turn = total_turns
+	if breakdown_info.has("turn_number"):
+		var breakdown_turn = int(breakdown_info.get("turn_number", -1))
+		if breakdown_turn >= 0:
+			recorded_turn = breakdown_turn
 	
 	var entry = LogEntryClass.new(
 		dice_values,
@@ -651,7 +657,7 @@ func log_hand_scored(
 		base_score,
 		effects,
 		final_score,
-		total_turns,
+		recorded_turn,
 		breakdown_info
 	)
 	
@@ -683,6 +689,15 @@ func get_recent_log_entries(count: int = -1) -> Array[LogEntry]:
 		result.append(logbook[index])
 	
 	return result
+
+
+## get_latest_log_entry()
+##
+## Returns the most recent scored-hand log entry, or null when none exist.
+func get_latest_log_entry() -> LogEntry:
+	if logbook.is_empty():
+		return null
+	return logbook[logbook.size() - 1]
 
 ## get_logbook_entries()
 ## 

@@ -2021,6 +2021,7 @@ For rapid testing and verification of new features, DiceRogue includes a compreh
 - **Solid black background** for easy reading
 - **Live system info**: FPS, process ID, node count
 - **Timestamped output** with auto-scroll
+- **Dedicated diagnostics panels** for live dice state and scored-hand tracing
 - **Quick Actions**: 18+ debug commands organized by category
 
 ### Available Debug Commands
@@ -2030,10 +2031,16 @@ For rapid testing and verification of new features, DiceRogue includes a compreh
 - **Dice Control**: Force specific values (all 6s, 1s, Yahtzee)
 - **Game Flow**: Add extra rolls, force end turn, skip to shop
 - **Debuff Visuals**: `Pulse Costly Roll Debuff UI` applies the debuff if needed and fires the compact + fan-out neon pulse path
+- **Diagnostics**: Refresh live dice state, inspect the last scored hand, and review recent scored-hand history without mixing those reports into the generic debug log
 - **System Testing**: Test score calculations, trigger signals, show states
 - **Debug State**: Save/load debug scenarios for quick testing
 - **Utilities**: Clear output, reset entire game state
 - **Juice / Title Preview**: Preview interactive title reactions for roll, score, power-up, consumable, debuff, challenge, and random burst paths without running full game flow
+
+### Diagnostics Tab
+- **Live Dice State**: Lists every die with current value, color, mods, state, lock flags, exclusion flags, and the last scored-hand snapshot for quick drift detection
+- **Last Scored Hand / Recent History**: Shows the most recent scoring calculation as staged math (`base -> level -> additives -> multipliers -> blue factor -> final`) plus recent scored hands pulled from the Statistics logbook
+- **History Source**: Manual and auto-scored hands now capture a stable score-time snapshot before post-score handlers disable or mutate dice, so the report reflects the actual scoring inputs instead of a later reconstruction
 
 ### Panel Controls
 - **Clear Output**: Remove all debug messages

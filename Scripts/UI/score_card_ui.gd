@@ -1290,7 +1290,11 @@ func handle_score_reroll(section: Scorecard.Section, category: String) -> void:
 		
 	# Replace the old score with the multiplied value
 	print("[ScoreCardUI] Setting rerolled score for", category, "to:", score)
-	scorecard.set_score(section, category, score)
+	var reroll_snapshot = scorecard.create_direct_score_snapshot(section, category, score, values, "score_reroll", {
+		"active_consumables": ["score_reroll"],
+		"has_modifiers": true
+	})
+	scorecard.set_score(section, category, score, reroll_snapshot)
 	update_all()
 	
 	# Reset reroll state
@@ -1773,7 +1777,9 @@ func handle_any_score(section: Scorecard.Section, category: String) -> void:
 	
 	# Calculate the score using the highest-scoring interpretation of current dice
 	# This allows the player to score their dice in the most advantageous way
-	var score = _calculate_best_score_for_dice(dice_values)
+	var best_score_result = _calculate_best_score_for_dice(dice_values)
+	var score = int(best_score_result.get("score", 0))
+	var source_category = str(best_score_result.get("category", ""))
 	
 	print("[ScoreCardUI] AnyScore calculated best score:", score, "for category:", category)
 	
@@ -1784,7 +1790,15 @@ func handle_any_score(section: Scorecard.Section, category: String) -> void:
 		
 	# Set the selected category's score to the best possible score
 	print("[ScoreCardUI] Setting AnyScore for", category, "to:", score)
-	scorecard.set_score(section, category, score)
+	var any_score_breakdown := {
+		"active_consumables": ["any_score"],
+		"has_modifiers": true
+	}
+	if source_category != "":
+		any_score_breakdown["any_score_source_category"] = source_category
+		any_score_breakdown["any_score_source_display"] = scorecard.get_category_display_name(source_category)
+	var any_score_snapshot = scorecard.create_direct_score_snapshot(section, category, score, dice_values, "any_score", any_score_breakdown)
+	scorecard.set_score(section, category, score, any_score_snapshot)
 	
 	# Check for bonus Yahtzee (must be after scoring, before UI update)
 	scorecard.check_bonus_yahtzee(dice_values, category)
@@ -1857,10 +1871,12 @@ func handle_go_broke_score(section: Scorecard.Section, category: String) -> void
 
 ## _calculate_best_score_for_dice(dice_values)
 ##
-## Calculates the highest possible score for the current dice across all categories
-func _calculate_best_score_for_dice(dice_values: Array[int]) -> int:
+## Calculates the highest possible score for the current dice across all categories.
+## Returns both the score and the category that produced it for debug tracing.
+func _calculate_best_score_for_dice(dice_values: Array[int]) -> Dictionary:
 	print("[ScoreCardUI] DEBUG: _calculate_best_score_for_dice() called - SPECIAL MODE USAGE TRACKING")
 	var best_score = 0
+	var best_category := ""
 	
 	# Check all possible categories and find the highest score
 	var all_categories = []
@@ -1871,9 +1887,13 @@ func _calculate_best_score_for_dice(dice_values: Array[int]) -> int:
 		var category_score = scorecard.evaluate_category(category, dice_values)
 		if category_score > best_score:
 			best_score = category_score
+			best_category = category
 			
-	print("[ScoreCardUI] Best possible score for dice", dice_values, "is:", best_score)
-	return best_score
+	print("[ScoreCardUI] Best possible score for dice", dice_values, "is:", best_score, "via", best_category)
+	return {
+		"score": best_score,
+		"category": best_category
+	}
 
 ## _on_score_assigned_from_scorecard(section, category, score)
 ##
