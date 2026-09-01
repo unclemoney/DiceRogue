@@ -33,16 +33,51 @@ func register_consumable_def(data: ConsumableData) -> void:
 	print("[ConsumableManager] Total registered consumables:", _defs_by_id.size())
 
 
+## get_available_consumables() -> Array[String]
+##
+## Returns registered consumable ids that are usable with the run's active
+## dice set. Defs with required_dice_sides only appear on matching sets and
+## defs listing the current set in excluded_dice_sides are hidden.
 func get_available_consumables() -> Array[String]:
 	print("[ConsumableManager] Getting available consumables")
 	var available: Array[String] = []
-	
+	var sides := get_current_dice_sides()
+
 	for id in _defs_by_id.keys():
-		print("Found consumable:", id)
-		available.append(id)
-		
+		var def: ConsumableData = _defs_by_id[id]
+		if def and def.is_available_for_dice_sides(sides):
+			print("Found consumable:", id)
+			available.append(id)
+		elif def:
+			print("[ConsumableManager] Filtering out %s: not available for d%d dice set" % [id, sides])
+
 	print("Available consumables:", available)
 	return available
+
+## get_current_dice_sides() -> int
+##
+## Resolves the side count of the run's active dice set from RoundManager
+## (set from ChannelManager.selected_dice_type at run start). Defaults to 6
+## when no round manager is available, e.g. before a run starts.
+func get_current_dice_sides() -> int:
+	if not is_inside_tree():
+		return 6
+	var round_manager = get_tree().get_first_node_in_group("round_manager")
+	if round_manager:
+		var run_type = round_manager.get("run_dice_type")
+		if run_type is String and run_type != "":
+			return dice_type_to_sides(run_type)
+	return 6
+
+## dice_type_to_sides(dice_type: String) -> int
+##
+## Parses a dice type string like "d4"/"d6" into its side count.
+## Returns 6 for anything unparseable.
+static func dice_type_to_sides(dice_type: String) -> int:
+	var digits := dice_type.trim_prefix("d")
+	if digits.is_valid_int():
+		return int(digits)
+	return 6
 
 func spawn_consumable(id: String, parent: Node) -> Consumable:
 	print("ConsumableManager.spawn_consumable(): id='%s', parent='%s'" % [id, parent.name])

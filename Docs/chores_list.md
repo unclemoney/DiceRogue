@@ -13,6 +13,25 @@ Each chore has its own per-chore meter reduction within its difficulty range,
 scaled by actual task difficulty (like the reward money). Exact values are
 defined in `ChoreTasksLibrary` (`Scripts/Managers/chore_tasks_library.gd`).
 
+## Dice Set Adaptation
+
+`ChoreTasksLibrary.get_all_tasks(dice_sides)` (and the other accessors) adapt
+the library to the run's active dice set; task IDs stay stable for save/load:
+
+- **d4**: value-5/6 chores are impossible and dropped (`yahtzee_fives/sixes`,
+  `full_house_fives/sixes`, `three_kind_fives/sixes`, `four_kind_fives/sixes`).
+  `score_fives`/`score_sixes` become **Score Evens** / **Score Odds** and the
+  Large Straight chore becomes **Even Odd Full House** — they still complete
+  on the re-purposed `fives`/`sixes`/`large_straight` scorecard keys.
+- **d8/d10/d12/d20**: value-6 chores are remapped to the set's max face value
+  (e.g. `yahtzee_sixes` → **Yahtzee of Twenties** targeting 20 on d20) and
+  `score_sixes` uses the sixth-slot name (**Score Eights/Tens/Twelves/Twenties**).
+- **d6**: unchanged.
+
+`ChoresManager` resolves the set from `RoundManager.run_dice_type` when
+generating chores, and `readapt_to_dice_set()` re-resolves (or clears) the
+active chore after a mid-run dice-set switch (debug panel).
+
 ## Reward Scale
 
 Chores now pay variable rewards based on actual in-game difficulty:

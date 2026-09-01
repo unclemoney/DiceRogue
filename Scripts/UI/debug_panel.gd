@@ -4323,8 +4323,12 @@ func _debug_chores_show_state() -> void:
 
 
 func _debug_chores_show_ratings() -> void:
-	var tasks = ChoreTasksLibrary.get_all_tasks()
-	var lines: Array[String] = ["=== CHORE REWARD VALUES ==="]
+	var sides := 6
+	var chores_manager = _get_chores_manager()
+	if chores_manager and chores_manager.has_method("_get_current_dice_sides"):
+		sides = chores_manager._get_current_dice_sides()
+	var tasks = ChoreTasksLibrary.get_all_tasks(sides)
+	var lines: Array[String] = ["=== CHORE REWARD VALUES (d%d) ===" % sides]
 	for task in tasks:
 		lines.append("%s (%s) -> $%d" % [task.display_name, task.id, task.reward_value])
 	log_debug("\n".join(lines))
@@ -4866,6 +4870,9 @@ func _debug_cycle_dice_set() -> void:
 	var score_card_ui = get_tree().get_first_node_in_group("scorecard_ui")
 	if is_instance_valid(score_card_ui) and score_card_ui.has_method("update_dice_set_category_labels"):
 		score_card_ui.update_dice_set_category_labels()
+	var chores_manager = get_tree().get_first_node_in_group("chores_manager")
+	if is_instance_valid(chores_manager) and chores_manager.has_method("readapt_to_dice_set"):
+		chores_manager.readapt_to_dice_set()
 	log_debug("Dice set switched to %s (%d sides)" % [next_type, sides])
 
 ## _debug_unlock_all_dice_sets()

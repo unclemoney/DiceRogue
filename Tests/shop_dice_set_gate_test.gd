@@ -128,6 +128,23 @@ func _run_tests() -> void:
 	_assert(SIXES_UPGRADE_DEF.excluded_dice_sides.has(4), "sixes_upgrade excludes d4")
 	_assert(LARGE_STRAIGHT_UPGRADE_DEF.excluded_dice_sides.has(4), "large_straight_upgrade excludes d4")
 
+	print("--- ConsumableManager grant-path gating ---")
+	# Non-shop grants (yellow dice, bonus items, debug) route through
+	# ConsumableManager.get_available_consumables(), which must obey the set.
+	_stub_round_manager.run_dice_type = "d4"
+	_assert_equals(consumable_manager.get_current_dice_sides(), 4, "manager resolves d4")
+	var d4_available := consumable_manager.get_available_consumables()
+	for id in D4_ONLY_IDS:
+		_assert(d4_available.has(id), "d4 grants include %s" % id)
+	for id in NON_D4_IDS:
+		_assert(not d4_available.has(id), "d4 grants exclude %s" % id)
+	_stub_round_manager.run_dice_type = "d6"
+	var d6_available := consumable_manager.get_available_consumables()
+	for id in D4_ONLY_IDS:
+		_assert(not d6_available.has(id), "d6 grants exclude %s" % id)
+	for id in NON_D4_IDS:
+		_assert(d6_available.has(id), "d6 grants include %s" % id)
+
 	print("--- Scorecard re-purposed key upgrades ---")
 	var scorecard := Scorecard.new()
 	scorecard.upgrade_category(Scorecard.Section.UPPER, "fives")

@@ -633,22 +633,21 @@ func bind_scorecard(sc: Scorecard):
 
 ## update_dice_set_category_labels()
 ##
-## Updates category button labels for the active dice type.
-## d4: "Fives:" -> "Evens:", "Sixes:" -> "Odds:", "L Straight:" -> "EO Full House:".
-## d6: restores the default labels. d8+: 6th row uses the sixth-slot name
-## ("Eights:", "Twenties:", etc.).
+## Updates category button labels for the active dice type, routed through
+## Scorecard.get_category_display_name() so rows, the Best Hand preview and
+## power-up descriptions cannot diverge. The large_straight row keeps its
+## compact form ("L Straight:"/"EO Full House:") because the full display
+## name does not fit the button.
+## Side-effects: clears any stale Best Hand preview, since the previous
+## set's labels/scores no longer apply after a switch.
 func update_dice_set_category_labels() -> void:
 	if not scorecard:
 		return
 
-	var is_d4 := scorecard.current_dice_sides == 4
-
-	var fives_text := "Fives:"
-	var sixes_text := scorecard.get_sixth_slot_display_name() + ":"
+	var fives_text := scorecard.get_category_display_name("fives") + ":"
+	var sixes_text := scorecard.get_category_display_name("sixes") + ":"
 	var large_straight_text := "L Straight:"
-	if is_d4:
-		fives_text = "Evens:"
-		sixes_text = "Odds:"
+	if scorecard.current_dice_sides == 4:
 		large_straight_text = "EO Full House:"
 
 	var fives_button = get_node_or_null("VBoxContainer/UpperVBoxContainer/UpperGridContainer/FivesContainer/FivesButton")
@@ -662,6 +661,11 @@ func update_dice_set_category_labels() -> void:
 	var large_straight_button = get_node_or_null("VBoxContainer/LowerVBoxContainer/LowerGridContainer/Largestraight/LargestraightButton")
 	if large_straight_button:
 		large_straight_button.text = large_straight_text
+
+	# The dice set changed: the last preview was computed under the old
+	# set's categories/labels, so reset the Best Hand panel until the
+	# next roll produces a fresh preview.
+	_reset_score_breakdown_labels()
 
 	print("[ScoreCardUI] Updated category labels for d%d (Fives='%s', Sixes='%s', L Straight='%s')" % [
 		scorecard.current_dice_sides, fives_text, sixes_text, large_straight_text
@@ -1138,7 +1142,7 @@ func update_best_hand_preview(dice_values: Array) -> void:
 	
 	# Check upper section
 	for category in scorecard.upper_scores.keys():
-		if scorecard.upper_scores[category] == null:
+		if scorecard.upper_scores[category] == null and scorecard.is_category_available_for_dice_set(category):
 			var score = scorecard.evaluate_category(category, dice_values)
 			if score > best_score:
 				best_score = score
@@ -1153,7 +1157,7 @@ func update_best_hand_preview(dice_values: Array) -> void:
 	
 	# Check lower section in specific order
 	for category in lower_evaluation_order:
-		if scorecard.lower_scores[category] == null:
+		if scorecard.lower_scores[category] == null and scorecard.is_category_available_for_dice_set(category):
 			var score = scorecard.evaluate_category(category, dice_values)
 			if score > best_score:
 				best_score = score

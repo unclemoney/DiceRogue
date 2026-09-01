@@ -273,6 +273,9 @@ When a non-d6 dice type is active, the scoring system adapts automatically:
 - **d4 parity rules**: With d4, three unachievable categories are replaced — Fives becomes **Evens** (sum of all even dice), Sixes becomes **Odds** (sum of all odd dice), and Large Straight becomes **Even Odd Full House** (pair of one even value + triple of one odd value, 40 pts).
 - **Upper bonus scaling**: The bonus threshold adjusts per dice type (42 for d4, 63 for d6, 69 for d8, 105 for d20)
 - **Generalized straights**: Small and large straight detection works with any dice size
+- **Consumable gating**: Category-upgrade consumables only appear when usable with the active set — Upgrade Evens/Odds/EO Full House are d4-only, and Upgrade Fives/Sixes/Large Straight are hidden on d4. Gating covers the shop and all grant paths (bonus items, yellow dice rewards) via `ConsumableData.is_available_for_dice_sides()`.
+- **Best Hand panel**: The preview and all category labels (scorecard rows, Highlighted Score power-up, logbook) share the scorecard's dice-set-aware name map (`Scorecard.get_category_display_name()`), and the preview is cleared when the set changes.
+- **Chores adapt**: Chore generation drops chores impossible on the active set (e.g. "Yahtzee of Fives" on d4), renames category chores to match the scorecard (Score Evens/Odds on d4, Score Twenties on d20), and remaps top-face chores to the set's max value. See `Docs/chores_list.md`.
 - See `BUILD_DICE.md` for full design rules and balance considerations.
 
 #### Dice Color System

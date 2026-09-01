@@ -608,6 +608,18 @@ func _grant_random_bonus_items(count: int, item_type: int) -> void:
 		return
 	
 	var unlocked_items = progress_manager.get_unlocked_items(item_type)
+	if item_type == UnlockableItem.ItemType.CONSUMABLE and consumable_manager:
+		# Gate bonus consumables on the run's dice set so unusable items
+		# (e.g. Upgrade Fives on d4, Upgrade Evens on d6) are never granted.
+		var sides := consumable_manager.get_current_dice_sides()
+		var usable_items: Array = []
+		for item_id in unlocked_items:
+			var def = consumable_manager.get_def(item_id)
+			if def == null or def.is_available_for_dice_sides(sides):
+				usable_items.append(item_id)
+			else:
+				print("[GameController] Bonus grant filtering out %s: not available for d%d dice set" % [item_id, sides])
+		unlocked_items = usable_items
 	if unlocked_items.is_empty():
 		print("[GameController] No unlocked items of type %d available for bonus. Converting to money." % item_type)
 		if PlayerEconomy:

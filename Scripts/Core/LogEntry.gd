@@ -22,6 +22,10 @@ class_name LogEntry
 @export var calculation_summary: String
 @export var formatted_log_line: String
 @export var breakdown_info: Dictionary = {}
+## Dice-set-aware display name for the category, resolved by the creator
+## (StatisticsManager) from the live Scorecard. Empty means "derive from
+## scorecard_category" (legacy d6 names).
+@export var category_display_name: String = ""
 
 ## _init()
 ##
@@ -38,7 +42,8 @@ func _init(
 	p_effects: Array[Dictionary] = [],
 	p_final_score: int = 0,
 	p_turn: int = 0,
-	p_breakdown_info: Dictionary = {}
+	p_breakdown_info: Dictionary = {},
+	p_category_display_name: String = ""
 ):
 	timestamp = Time.get_unix_time_from_system()
 	turn_number = p_turn
@@ -53,6 +58,7 @@ func _init(
 	modifier_effects = p_effects.duplicate()
 	final_score = p_final_score
 	breakdown_info = p_breakdown_info.duplicate()
+	category_display_name = p_category_display_name
 	calculation_summary = _generate_calculation_summary()
 	formatted_log_line = _generate_formatted_log_line()
 
@@ -285,8 +291,12 @@ func _generate_formatted_log_line() -> String:
 
 ## _format_category_name()
 ##
-## Convert internal category names to display-friendly names.
+## Convert internal category names to display-friendly names. Prefers the
+## dice-set-aware name resolved at entry creation (Evens/Odds/Twenties...);
+## falls back to the legacy d6 map for old/override-less entries.
 func _format_category_name(category: String) -> String:
+	if category.to_lower() == scorecard_category.to_lower() and category_display_name != "":
+		return category_display_name
 	match category.to_lower():
 		"ones": return "Ones"
 		"twos": return "Twos"
@@ -367,6 +377,7 @@ func to_dictionary() -> Dictionary:
 		"dice_mods": dice_mods,
 		"scorecard_category": scorecard_category,
 		"scorecard_section": scorecard_section,
+		"category_display_name": category_display_name,
 		"consumables_applied": consumables_applied,
 		"powerups_applied": powerups_applied,
 		"base_score": base_score,
@@ -388,6 +399,7 @@ static func from_dictionary(dict: Dictionary) -> LogEntry:
 	entry.dice_mods = dict.get("dice_mods", [])
 	entry.scorecard_category = dict.get("scorecard_category", "")
 	entry.scorecard_section = dict.get("scorecard_section", "")
+	entry.category_display_name = dict.get("category_display_name", "")
 	entry.consumables_applied = dict.get("consumables_applied", [])
 	entry.powerups_applied = dict.get("powerups_applied", [])
 	entry.base_score = dict.get("base_score", 0)

@@ -225,21 +225,11 @@ func get_current_description() -> String:
 		return base_desc + "\nNo categories available to highlight"
 
 func _format_category_display_name(category: String) -> String:
-	match category.to_lower():
-		"ones": return "Ones"
-		"twos": return "Twos" 
-		"threes": return "Threes"
-		"fours": return "Fours"
-		"fives": return "Fives"
-		"sixes": return "Sixes"
-		"three_of_a_kind": return "Three of a Kind"
-		"four_of_a_kind": return "Four of a Kind"
-		"full_house": return "Full House"
-		"small_straight": return "Small Straight"
-		"large_straight": return "Large Straight"
-		"yahtzee": return "Yahtzee"
-		"chance": return "Chance"
-		_: return category.capitalize()
+	# Delegate to the scorecard's dice-set-aware name map so d4/d8+ runs
+	# show the same names as the scorecard rows (Evens/Odds/Twenties...).
+	if scorecard_ref:
+		return scorecard_ref.get_category_display_name(category)
+	return category.capitalize()
 
 func _update_description() -> void:
 	# Update the description to show current progress

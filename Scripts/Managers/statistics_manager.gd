@@ -646,6 +646,14 @@ func log_hand_scored(
 		if breakdown_turn >= 0:
 			recorded_turn = breakdown_turn
 	
+	# Resolve the dice-set-aware category name from the live scorecard so
+	# log entries match the scorecard labels on d4/d8+ runs (Evens/Odds/...).
+	var category_display_name := ""
+	if category != "" and is_inside_tree():
+		var scorecard = get_tree().get_first_node_in_group("scorecard")
+		if scorecard and scorecard.has_method("get_category_display_name"):
+			category_display_name = scorecard.get_category_display_name(category)
+
 	var entry = LogEntryClass.new(
 		dice_values,
 		dice_colors,
@@ -658,7 +666,8 @@ func log_hand_scored(
 		effects,
 		final_score,
 		recorded_turn,
-		breakdown_info
+		breakdown_info,
+		category_display_name
 	)
 	
 	print("[Statistics] Entry created - PowerUps Applied:", entry.powerups_applied.size(), entry.powerups_applied)

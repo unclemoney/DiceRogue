@@ -151,6 +151,21 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 
 Note: the d6 set is the default and is always available (no unlock item).
 
+### Consumable gating by dice set
+
+Category-upgrade consumables are gated on the active dice set via
+`ConsumableData.required_dice_sides` / `excluded_dice_sides`
+(`is_available_for_dice_sides()`). The gating applies to the shop pool
+(`ShopUI._filter_by_dice_set()`) and to every grant path
+(`ConsumableManager.get_available_consumables()`, channel-start bonus items,
+yellow-dice rewards):
+
+- `evens_upgrade`, `odds_upgrade`, `even_odd_full_house_upgrade` require the
+  **d4** set (they upgrade the re-purposed Evens/Odds/Even Odd Full House
+  categories).
+- `fives_upgrade`, `sixes_upgrade`, `large_straight_upgrade` are excluded on
+  **d4** runs.
+
 ---
 
 ## Condition Types

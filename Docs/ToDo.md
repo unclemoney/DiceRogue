@@ -35,16 +35,16 @@
 - [X] `P1-Major` Groundings occur in Mall Zone 2 at the start of every round. They should only trigger on Sass or Chore failures.
 - [X] `P1-Major` Add a Powerful Teachers Pet BUFF. Add extra money rewards.
 - [X] `P1-Major` Remove Debuffs and Buffs on challenge complete.
-- [X] `P1-Major` Window Shopping Debuff is useless. Redesign or remove. (Removed; replaced by Hail Satan — 3 sixes ends the turn with a 0 scratch in a random category.)
+- [X] `P1-Major` Window Shopping Debuff is useless. Redesign to Hail Satan
 - [ ] `P1-Major` Best Hand calculated 426 for Chance. Player selected small straight and still got 426. Hand logic is wrong.
-- [X] `P1-Major` Cartridge Tilt ignores the locked dice part of the increase dice. (Fixed: tilt now only shifts unlocked/ROLLED dice.)
+- [X] `P1-Major` Cartridge Tilt ignores the locked dice part of the increase dice.
 - [ ] `P1-Major` Abstinance debuff needs to be checked. Verify it works as designed.
-- [ ] `P1-Major` Upgrade 5's still showing in d4. d4 should not show 5's upgrades.
-- [ ] `P1-Major` On a d4 Run, unlisted categories appear in best hand. Hide them.
+- [X] `P1-Major` Upgrade 5's still showing in d4. d4 should not show 5's upgrades.
+- [X] `P1-Major` On a d4 Run, unlisted categories appear in best hand. Hide them.
 - [X] `P1-Major` d4 needs to replace 5's and Large Straight with Even, Odd, Full House, and Fours+. These need upgrade coupons. Only offer them during a d4 run.
 - [X] `P1-Major` No limit on available items to carry over. Enforce only the number limit.
 - [X] `P1-Major` Mods are blocking dice face. Dice faces are not readable.
-- [ ] `P2-Minor` Red Power Ranger PowerUp adding an extra label to the top of the screen, this needs to be removed.
+- [X] `P2-Minor` Red Power Ranger PowerUp adding an extra label to the top of the screen, this needs to be removed.
 - [ ] `P2-Minor` Need an indicator for Synergies. Players cannot see when synergies trigger.
 - [ ] `P2-Minor` Challenge or Debuff that makes powerups expire after 3 rounds.
 - [ ] `NEEDS-DETAIL` Better score balance for each round needed. Test this.
@@ -55,7 +55,7 @@
 ## SYS:Chore — Chore System & Mom
 
 - [ ] `P1-Major` Mom Dialog and reward should match. They currently do not align.
-- [ ] `P1-Major` Chores should be filtered by the dice set being used. d4 runs should not show d6 chores.
+- [X] `P1-Major` Chores should be filtered by the dice set being used. d4 runs should not show d6 chores.
 - [ ] `P1-Major` Chore Champion should also update rewards.
 - [X] `P2-Minor` Mom Panel bounce-in is too harsh. Soften the animation.
 

@@ -1410,6 +1410,17 @@ func _get_used_dice_for_category(category: String, dice_values: Array, _dice_lis
 	
 	return used_indices
 
+## is_category_available_for_dice_set(category) -> bool
+##
+## Whether a category is listed and scoreable for the active dice set.
+## All 13 categories stay available on every supported set — d4 re-purposes
+## fives/sixes/large_straight as Evens/Odds/Even Odd Full House rather than
+## removing them. Centralizes the rule so the Best Hand preview and any
+## future dice set that drops categories share one source of truth.
+func is_category_available_for_dice_set(category: String) -> bool:
+	return upper_scores.has(category) or lower_scores.has(category)
+
+
 ## get_category_display_name(category)
 ##
 ## Returns the human-readable display name for a scoring category,

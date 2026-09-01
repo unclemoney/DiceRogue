@@ -10,6 +10,9 @@ class_name ChoreTasksLibrary
 
 # Preload ChoreData to ensure it's available in static context
 const ChoreDataScript = preload("res://Scripts/Managers/ChoreData.gd")
+# Scorecard is the source of truth for dice-set-aware category names
+# (d4: Evens/Odds/Even Odd Full House; d8+: sixth-slot names like Twenties).
+const ScorecardScript = preload("res://Scenes/ScoreCard/score_card.gd")
 
 # Task type constants (mirrors ChoreData.TaskType enum)
 const TASK_SCORE_UPPER = 0
@@ -23,13 +26,26 @@ const TASK_LOCK_CONSTRAINT = 7
 
 ## get_all_tasks()
 ##
-## Returns an array of all predefined ChoreData tasks.
-## Tasks range from simple EASY tasks (score upper section) to complex HARD tasks (specific Yahtzees).
-## Each task has an assigned Difficulty (EASY or HARD) and a per-chore meter reduction
-## within its difficulty range (EASY: 5-15, HARD: 20-60).
+## Returns an array of all predefined ChoreData tasks, adapted to the
+## active dice set. Tasks range from simple EASY tasks (score upper section)
+## to complex HARD tasks (specific Yahtzees). Each task has an assigned
+## Difficulty (EASY or HARD) and a per-chore meter reduction within its
+## difficulty range (EASY: 5-15, HARD: 20-60).
+##
+## Dice-set adaptation (see _adapt_tasks_to_dice_set):
+## - d4: value-5/6 tasks are impossible and dropped; "Score Fives/Sixes"
+##   become "Score Evens/Odds"; the Large Straight chore is renamed to
+##   Even Odd Full House.
+## - d8+: value-6 tasks are remapped to the max face value ("Yahtzee of
+##   Sixes" -> "Yahtzee of Twenties" on d20); "Score Sixes" uses the
+##   sixth-slot name.
+## Task IDs are stable across sets so save/load keeps working.
+##
+## Parameters:
+##   dice_sides: int - faces on the active dice set (4, 6, 8, 10, 12, 20)
 ##
 ## Returns: Array
-static func get_all_tasks() -> Array:
+static func get_all_tasks(dice_sides: int = 6) -> Array:
 	var tasks: Array = []
 	
 	# Upper Section - Basic scoring tasks (EASY)
@@ -150,27 +166,124 @@ static func get_all_tasks() -> Array:
 	free_agent.additional_params = {"turn_window": 6, "max_locked_dice": 0}
 	tasks.append(free_agent)
 	
-	return tasks
+	return _adapt_tasks_to_dice_set(tasks, dice_sides)
+
+
+## _adapt_tasks_to_dice_set(tasks, dice_sides) -> Array
+##
+## Drops or remaps tasks that don't fit the active dice set. Keeps task IDs
+## stable so save/load by ID keeps working. d6 returns tasks unchanged.
+static func _adapt_tasks_to_dice_set(tasks: Array, dice_sides: int) -> Array:
+	if dice_sides == 6:
+		return tasks
+	# Scorecard instance resolves dice-set-aware display names (pure data
+	# lookups; never added to the scene tree).
+	var names_scorecard = ScorecardScript.new()
+	names_scorecard.set_dice_type(dice_sides)
+	var adapted: Array = []
+	for task in tasks:
+		var adapted_task = _adapt_task_to_dice_set(task, dice_sides, names_scorecard)
+		if adapted_task:
+			adapted.append(adapted_task)
+	names_scorecard.free()
+	return adapted
+
+
+## _adapt_task_to_dice_set(task, dice_sides, names_scorecard)
+##
+## Adapts a single task. Returns the task (possibly renamed/remapped), or
+## null when the task is impossible on the active dice set.
+static func _adapt_task_to_dice_set(task, dice_sides: int, names_scorecard):
+	# Value-specific chores (Yahtzee of Xs, Full House (X), Triple/Quad X)
+	if task.task_type == TASK_SCORE_SPECIFIC and task.target_value > 0:
+		if task.target_value > dice_sides:
+			# Impossible on this set (e.g. any 5s/6s chore on d4)
+			return null
+		if dice_sides > 6 and task.target_value == 6:
+			# The top-face chore should target the set's max value
+			task.target_value = dice_sides
+			_rename_value_task(task, dice_sides, names_scorecard)
+		return task
+
+	# Category chores that changed meaning on this set
+	if task.id == "score_fives" and dice_sides == 4:
+		task.display_name = "Score Evens"
+		task.description = "Score in the Evens category"
+	elif task.id == "score_sixes":
+		if dice_sides == 4:
+			task.display_name = "Score Odds"
+			task.description = "Score in the Odds category"
+		elif dice_sides > 6:
+			var slot_name: String = names_scorecard.get_sixth_slot_display_name()
+			task.display_name = "Score %s" % slot_name
+			task.description = "Score in the %s category" % slot_name
+	elif task.id == "score_large_straight" and dice_sides == 4:
+		var eo_name: String = names_scorecard.get_category_display_name("large_straight")
+		task.display_name = eo_name
+		task.description = "Score an %s" % eo_name
+	return task
+
+
+## _rename_value_task(task, dice_sides, names_scorecard)
+##
+## Renames a value-specific chore after its target_value was remapped to the
+## set's max face value (d8+), e.g. "Yahtzee of Sixes" -> "Yahtzee of
+## Twenties" on d20. Called after target_value is updated.
+static func _rename_value_task(task, dice_sides: int, names_scorecard) -> void:
+	var value_name := _value_display_name(task.target_value, names_scorecard)
+	if task.id.begins_with("yahtzee_"):
+		task.display_name = "Yahtzee of %s" % value_name
+		task.description = "Roll a Yahtzee with all %ds" % task.target_value
+	elif task.id.begins_with("full_house_"):
+		task.display_name = "Full House (%s)" % value_name
+		task.description = "Score Full House with three %ds" % task.target_value
+	elif task.id.begins_with("three_kind_"):
+		task.display_name = "Triple %s" % value_name
+		task.description = "Score Three of a Kind with %ds" % task.target_value
+	elif task.id.begins_with("four_kind_"):
+		task.display_name = "Quad %s" % value_name
+		task.description = "Score Four of a Kind with %ds" % task.target_value
+
+
+## _value_display_name(value, names_scorecard) -> String
+##
+## Human-readable plural for a die face value on the active set. Values 1-5
+## are fixed; higher values use the scorecard's sixth-slot name (d20 -> 20
+## becomes "Twenties").
+static func _value_display_name(value: int, names_scorecard) -> String:
+	match value:
+		1: return "Ones"
+		2: return "Twos"
+		3: return "Threes"
+		4: return "Fours"
+		5: return "Fives"
+		_: return names_scorecard.get_sixth_slot_display_name()
 
 ## get_random_task()
 ##
-## Returns a random task from the library.
+## Returns a random task from the library, adapted to the active dice set.
+##
+## Parameters:
+##   dice_sides: int - faces on the active dice set
 ##
 ## Returns: ChoreData
-static func get_random_task():
-	var tasks = get_all_tasks()
+static func get_random_task(dice_sides: int = 6):
+	var tasks = get_all_tasks(dice_sides)
 	return tasks[GameRNG.random_index(tasks)]
 
 ## get_task_by_id()
 ##
-## Returns a specific task by its ID.
+## Returns a specific task by its ID, adapted to the active dice set.
+## Returns null for IDs dropped by the set (e.g. yahtzee_sixes on d4) —
+## callers should treat that as an expired/invalid chore and re-select.
 ##
 ## Parameters:
 ##   id: String - the task ID to find
+##   dice_sides: int - faces on the active dice set
 ##
 ## Returns: ChoreData or null if not found
-static func get_task_by_id(id: String):
-	var tasks = get_all_tasks()
+static func get_task_by_id(id: String, dice_sides: int = 6):
+	var tasks = get_all_tasks(dice_sides)
 	for task in tasks:
 		if task.id == id:
 			return task
@@ -178,14 +291,15 @@ static func get_task_by_id(id: String):
 
 ## get_tasks_by_type()
 ##
-## Returns all tasks of a specific type.
+## Returns all tasks of a specific type, adapted to the active dice set.
 ##
 ## Parameters:
 ##   task_type: int - the type of tasks to filter (use TASK_* constants)
+##   dice_sides: int - faces on the active dice set
 ##
 ## Returns: Array
-static func get_tasks_by_type(task_type: int) -> Array:
-	var tasks = get_all_tasks()
+static func get_tasks_by_type(task_type: int, dice_sides: int = 6) -> Array:
+	var tasks = get_all_tasks(dice_sides)
 	var filtered: Array = []
 	for task in tasks:
 		if task.task_type == task_type:
@@ -194,12 +308,16 @@ static func get_tasks_by_type(task_type: int) -> Array:
 
 ## get_easy_tasks()
 ##
-## Returns tasks with EASY difficulty (upper section, generic lower, utility).
+## Returns tasks with EASY difficulty (upper section, generic lower, utility),
+## adapted to the active dice set.
 ## Filters by the ChoreData.Difficulty.EASY enum value.
 ##
+## Parameters:
+##   dice_sides: int - faces on the active dice set
+##
 ## Returns: Array
-static func get_easy_tasks() -> Array:
-	var tasks = get_all_tasks()
+static func get_easy_tasks(dice_sides: int = 6) -> Array:
+	var tasks = get_all_tasks(dice_sides)
 	var filtered: Array = []
 	for task in tasks:
 		if task.difficulty == ChoreData.Difficulty.EASY:
@@ -208,12 +326,16 @@ static func get_easy_tasks() -> Array:
 
 ## get_hard_tasks()
 ##
-## Returns tasks with HARD difficulty (specific combos, yahtzees, lock constraints).
+## Returns tasks with HARD difficulty (specific combos, yahtzees, lock
+## constraints), adapted to the active dice set.
 ## Filters by the ChoreData.Difficulty.HARD enum value.
 ##
+## Parameters:
+##   dice_sides: int - faces on the active dice set
+##
 ## Returns: Array
-static func get_hard_tasks() -> Array:
-	var tasks = get_all_tasks()
+static func get_hard_tasks(dice_sides: int = 6) -> Array:
+	var tasks = get_all_tasks(dice_sides)
 	var filtered: Array = []
 	for task in tasks:
 		if task.difficulty == ChoreData.Difficulty.HARD:

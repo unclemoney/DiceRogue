@@ -404,20 +404,44 @@ func _clear_current_task() -> void:
 	task_selected.emit(current_task)
 
 
+## readapt_to_dice_set()
+##
+## Re-resolves the active and pending chores against the run's current dice
+## set. Called after a mid-run dice-set switch (debug panel). A chore that is
+## impossible on the new set (e.g. "Yahtzee of Sixes" on d4) is cleared; a
+## valid one is refreshed so its labels match the scorecard.
+func readapt_to_dice_set() -> void:
+	var sides := _get_current_dice_sides()
+	if current_task:
+		var refreshed = ChoreTasksLibrary.get_task_by_id(current_task.id, sides)
+		if refreshed:
+			current_task = refreshed
+			task_selected.emit(current_task)
+		else:
+			print("[ChoresManager] Active chore '%s' impossible on d%d; clearing" % [current_task.id, sides])
+			_clear_current_task()
+	if _pending_easy_task:
+		_pending_easy_task = ChoreTasksLibrary.get_task_by_id(_pending_easy_task.id, sides)
+	if _pending_hard_task:
+		_pending_hard_task = ChoreTasksLibrary.get_task_by_id(_pending_hard_task.id, sides)
+
+
 ## _get_random_task_by_difficulty(difficulty: int)
 ##
-## Gets a random task from the library filtered by difficulty.
+## Gets a random task from the library filtered by difficulty, adapted to
+## the run's active dice set (impossible chores are excluded by the library).
 ## @param difficulty: 0 = EASY, 1 = HARD
 ## @return ChoreData: A random task of the specified difficulty
 func _get_random_task_by_difficulty(difficulty: int):
+	var sides := _get_current_dice_sides()
 	var tasks: Array
 	if difficulty == 1:
-		tasks = ChoreTasksLibrary.get_hard_tasks()
+		tasks = ChoreTasksLibrary.get_hard_tasks(sides)
 	else:
-		tasks = ChoreTasksLibrary.get_easy_tasks()
-	
+		tasks = ChoreTasksLibrary.get_easy_tasks(sides)
+
 	if tasks.is_empty():
-		return ChoreTasksLibrary.get_random_task()
+		return ChoreTasksLibrary.get_random_task(sides)
 	
 	# Try to avoid recent tasks
 	var attempts = 0
@@ -429,6 +453,27 @@ func _get_random_task_by_difficulty(difficulty: int):
 		attempts += 1
 	
 	return selected_task
+
+
+## _get_current_dice_sides() -> int
+##
+## Resolves the side count of the run's active dice set from RoundManager,
+## falling back to the live Scorecard. Defaults to 6 (standard set) when
+## neither is available, e.g. before a run starts.
+func _get_current_dice_sides() -> int:
+	if not is_inside_tree():
+		return 6
+	var round_manager = get_tree().get_first_node_in_group("round_manager")
+	if round_manager:
+		var run_type = round_manager.get("run_dice_type")
+		if run_type is String and run_type != "":
+			return ConsumableManager.dice_type_to_sides(run_type)
+	var scorecard = get_tree().get_first_node_in_group("scorecard")
+	if scorecard:
+		var sides = scorecard.get("current_dice_sides")
+		if sides is int and sides > 0:
+			return sides
+	return 6
 
 
 ## get_rounds_until_expiry() -> int
@@ -457,8 +502,9 @@ func select_new_task() -> void:
 	var new_task = null
 	
 	# Try to get a task we haven't used recently
+	var sides := _get_current_dice_sides()
 	while attempts < 5:
-		new_task = ChoreTasksLibrary.get_random_task()
+		new_task = ChoreTasksLibrary.get_random_task(sides)
 		if new_task.id not in _task_history:
 			break
 		attempts += 1
@@ -740,29 +786,36 @@ func load_state(state: Dictionary) -> void:
 	if _checkin_roll_target < 0 and not _checkin_done_this_round:
 		_schedule_checkin()
 	
+	# Restore tasks by ID, adapted to the current run's dice set. A saved
+	# chore that is impossible on this set (e.g. "Yahtzee of Sixes" on d4)
+	# resolves to null and is treated as expired.
+	var sides := _get_current_dice_sides()
+
 	# Restore current task by ID
 	var task_id = state.get("current_task_id", "")
 	if not task_id.is_empty():
-		current_task = ChoreTasksLibrary.get_task_by_id(task_id)
+		current_task = ChoreTasksLibrary.get_task_by_id(task_id, sides)
+		if current_task == null:
+			print("[ChoresManager] Saved chore '%s' not valid for d%d; clearing" % [task_id, sides])
 	else:
 		current_task = null
-	
+
 	# Restore pending tasks by ID
 	var easy_id = state.get("_pending_easy_task_id", "")
 	var hard_id = state.get("_pending_hard_task_id", "")
 	if not easy_id.is_empty():
-		_pending_easy_task = ChoreTasksLibrary.get_task_by_id(easy_id)
+		_pending_easy_task = ChoreTasksLibrary.get_task_by_id(easy_id, sides)
 	else:
 		_pending_easy_task = null
 	if not hard_id.is_empty():
-		_pending_hard_task = ChoreTasksLibrary.get_task_by_id(hard_id)
+		_pending_hard_task = ChoreTasksLibrary.get_task_by_id(hard_id, sides)
 	else:
 		_pending_hard_task = null
-	
+
 	# Restore completed chores by ID
 	completed_chores.clear()
 	for chore_id in state.get("completed_chores_ids", []):
-		var chore = ChoreTasksLibrary.get_task_by_id(chore_id)
+		var chore = ChoreTasksLibrary.get_task_by_id(chore_id, sides)
 		if chore != null:
 			completed_chores.append(chore)
 	
