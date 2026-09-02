@@ -164,19 +164,7 @@ func _get_short_rating(rating: String) -> String:
 			return rating
 
 func _get_rating_color(rating: String) -> Color:
-	match rating:
-		"G":
-			return Color(0.65098, 0.941176, 0.745098, 1.0)
-		"PG":
-			return Color(1.0, 0.854902, 0.631373, 1.0)
-		"PG-13":
-			return Color(1.0, 0.662745, 0.34902, 1.0)
-		"R":
-			return Color(1.0, 0.470588, 0.576471, 1.0)
-		"NC-17":
-			return Color(0.886275, 0.560784, 0.72549, 1.0)
-		_:
-			return TEXT_COLOR
+	return PowerUpData.get_rating_color(rating)
 
 func _get_abbreviated_name(full_name: String) -> String:
 	var words: PackedStringArray = full_name.split(" ", false)

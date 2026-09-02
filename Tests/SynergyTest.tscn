@@ -1,6 +1,6 @@
-[gd_scene load_steps=109 format=3 uid="uid://synergy_test_scene01"]
+[gd_scene load_steps=43 format=3 uid="uid://ditxgcxy7okvd"]
 
-[ext_resource type="Script" path="res://Tests/synergy_test.gd" id="1_syntest"]
+[ext_resource type="Script" uid="uid://uqisubii0vt3" path="res://Tests/synergy_test.gd" id="1_syntest"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
 [ext_resource type="PackedScene" uid="uid://q27dsqs2pyd8" path="res://Scenes/UI/crt_overlay.tscn" id="3_f4xs4"]
 [ext_resource type="Shader" uid="uid://buwv6htlmlig8" path="res://Scripts/Shaders/backgground_swirl.gdshader" id="3_w6663"]
@@ -8,7 +8,6 @@
 [ext_resource type="PackedScene" uid="uid://dugpl3du3i6xo" path="res://Scenes/Dice/dice_hand.tscn" id="5_gxabo"]
 [ext_resource type="Texture2D" uid="uid://cq6eysum1qfw8" path="res://Resources/Art/Background/Hutch.png" id="5_sqb4o"]
 [ext_resource type="Texture2D" uid="uid://kekn41dhsb0l" path="res://Resources/Art/Background/TV.png" id="5_w4iq5"]
-[ext_resource type="PackedScene" uid="uid://c6k045mexxkyd" path="res://Scenes/Dice/dice.tscn" id="6_o8wpr"]
 [ext_resource type="PackedScene" uid="uid://bsukvul4wop20" path="res://Scenes/ScoreCard/score_card.tscn" id="7_w6663"]
 [ext_resource type="PackedScene" uid="uid://b8limy63m2tlo" path="res://Scenes/Tracker/turn_tracker.tscn" id="8_8eqdw"]
 [ext_resource type="PackedScene" uid="uid://lc4xqvsxdnpy" path="res://Scenes/UI/game_button_ui.tscn" id="9_wtptv"]
@@ -19,14 +18,6 @@
 [ext_resource type="PackedScene" uid="uid://bmnx7dfjhn2d" path="res://Scenes/UI/debuff_ui.tscn" id="14_oxb5w"]
 [ext_resource type="PackedScene" uid="uid://cttyyy56pjat3" path="res://Scenes/Controller/game_controller.tscn" id="15_aeiu6"]
 [ext_resource type="PackedScene" uid="uid://b0h68l2hpjf3o" path="res://Scenes/PowerUp/power_up_manager.tscn" id="16_07va6"]
-[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1100_powerup_data"]
-[ext_resource type="Resource" uid="uid://b1kspojq1dh26" path="res://Scripts/PowerUps/ExtraDice.tres" id="1101_extra_dice"]
-[ext_resource type="Resource" uid="uid://cgeradia34lyw" path="res://Scripts/PowerUps/ExtraRolls.tres" id="1102_extra_rolls"]
-[ext_resource type="Resource" uid="uid://bd58nakq7j3n2" path="res://Scripts/PowerUps/BonusMoneyPowerUp.tres" id="1103_bonus_money"]
-[ext_resource type="Resource" uid="uid://b8x1m3vq7n2k5" path="res://Scripts/PowerUps/StepByStepPowerUp.tres" id="1104_step_by_step"]
-[ext_resource type="Resource" uid="uid://iao8jgjikc8m" path="res://Scripts/PowerUps/Allowance.tres" id="1105_allowance"]
-[ext_resource type="Resource" uid="uid://ofk1qti27od0" path="res://Scripts/PowerUps/PurplePayoutPowerUp.tres" id="1106_purple_payout"]
-[ext_resource type="Resource" uid="uid://nmge567ydrn5" path="res://Scripts/PowerUps/RollEfficiencyPowerUp.tres" id="1107_roll_efficiency"]
 [ext_resource type="PackedScene" uid="uid://ihwow3yfegbm" path="res://Scenes/UI/challenge_ui.tscn" id="19_1jk2k"]
 [ext_resource type="PackedScene" uid="uid://dw7dok1tye5gg" path="res://Scenes/UI/vcr_turn_tracker_ui.tscn" id="19_w4iq5"]
 [ext_resource type="PackedScene" uid="uid://c2brbu8nl4tvq" path="res://Scenes/Managers/consumable_manager.tscn" id="20_1jk2k"]
@@ -40,7 +31,15 @@
 [ext_resource type="PackedScene" uid="uid://ccn3jkgrhqwqe" path="res://Scenes/UI/StatisticsPanel.tscn" id="999_stats"]
 [ext_resource type="Script" uid="uid://du88ajtcwgupi" path="res://Scripts/Managers/ChoresManager.gd" id="1000_chores_mgr"]
 [ext_resource type="PackedScene" uid="uid://bbafg0xpunx5e" path="res://Scenes/UI/chore_ui.tscn" id="1001_chore_ui"]
-[ext_resource type="Script" path="res://Scripts/Managers/SynergyManager.gd" id="1002_synergy_mgr"]
+[ext_resource type="Script" uid="uid://b1swreyh37fte" path="res://Scripts/Managers/SynergyManager.gd" id="1002_synergy_mgr"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1100_powerup_data"]
+[ext_resource type="Resource" uid="uid://b1kspojq1dh26" path="res://Scripts/PowerUps/ExtraDice.tres" id="1101_extra_dice"]
+[ext_resource type="Resource" uid="uid://cgeradia34lyw" path="res://Scripts/PowerUps/ExtraRolls.tres" id="1102_extra_rolls"]
+[ext_resource type="Resource" uid="uid://bd58nakq7j3n2" path="res://Scripts/PowerUps/BonusMoneyPowerUp.tres" id="1103_bonus_money"]
+[ext_resource type="Resource" uid="uid://b8x1m3vq7n2k5" path="res://Scripts/PowerUps/StepByStepPowerUp.tres" id="1104_step_by_step"]
+[ext_resource type="Resource" uid="uid://iao8jgjikc8m" path="res://Scripts/PowerUps/Allowance.tres" id="1105_allowance"]
+[ext_resource type="Resource" uid="uid://ofk1qti27od0" path="res://Scripts/PowerUps/PurplePayoutPowerUp.tres" id="1106_purple_payout"]
+[ext_resource type="Resource" uid="uid://nmge567ydrn5" path="res://Scripts/PowerUps/RollEfficiencyPowerUp.tres" id="1107_roll_efficiency"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wtptv"]
 
@@ -96,7 +95,6 @@ scale = Vector2(1.15, 1)
 texture = ExtResource("5_w4iq5")
 
 [node name="DiceHand" parent="." instance=ExtResource("5_gxabo")]
-dice_scene = ExtResource("6_o8wpr")
 start_position = Vector2(640, 530)
 
 [node name="DiceContainer" type="Node2D" parent="."]
@@ -129,7 +127,6 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 mouse_filter = 2
 power_up_icon_scene = ExtResource("14_geekk")
-max_power_ups = 5
 
 [node name="ConsumableUI" parent="." instance=ExtResource("12_pdckl")]
 anchors_preset = 0
@@ -144,7 +141,6 @@ grow_vertical = 1
 size_flags_horizontal = 3
 size_flags_vertical = 3
 mouse_filter = 2
-max_consumables = 3
 
 [node name="ChallengeUI" parent="." instance=ExtResource("19_1jk2k")]
 z_index = 3
@@ -222,7 +218,6 @@ challenge_ui_path = NodePath("../ChallengeUI")
 challenge_container_path = NodePath("../ChallengeContainer")
 round_manager_path = NodePath("../RoundManager")
 crt_manager_path = NodePath("../Background/CRTManager")
-statistics_panel_path = NodePath("../StatisticsPanel")
 scoring_animation_controller_path = NodePath("../ScoringAnimationController")
 chores_manager_path = NodePath("../ChoresManager")
 chore_ui_path = NodePath("../ChoreUI")

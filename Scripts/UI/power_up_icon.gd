@@ -87,6 +87,13 @@ func _setup_kiosk_tile() -> void:
 	if data:
 		_kiosk_tile.set_data(data)
 
+## set_synergy_halo(mode, color)
+##
+## Pass-through to the KioskTile synergy halo. No-op in legacy card mode.
+func set_synergy_halo(mode: int, color: Color = Color.WHITE) -> void:
+	if _kiosk_tile:
+		_kiosk_tile.set_synergy_halo(mode, color)
+
 func _setup_legacy_card() -> void:
 	# If we have no children, create the full card structure
 	if get_child_count() == 0:

@@ -167,6 +167,7 @@
 - [X] Console UI Upgrade — change over to VIP cards.
 
 ## Features — Completed
+- [X] Synergy visual indicators — translucent background glow on compact PowerUp slots and halo ring on fan-out cards (rating color for matching sets, animated rainbow for Rainbow Bonus), fan-view synergy summary banner, and "SYNERGY!" popup on activation.
 - [X] Update music so that if layers with drum solos and fills get followed by a crash layer automatically. Add a crash layer.
 - [X] New round needs to visually show what the debuffs are going to be.
 - [X] Beginning game setup: remote control splash, tv turns on with the background, chore setup, then Next Round or Shop buttons fly up in its own panel, then when the round starts, the score cards come bouncing in.

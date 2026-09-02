@@ -1406,6 +1406,16 @@ The **Synergy System** rewards players for collecting PowerUps with matching rat
 - Compact tiles show PowerUp icon art, abbreviated title, and rating badge color (G=green, PG=yellow, 13=orange, R=red, 17=magenta-red)
 - Helps players visually track their rating collection at a glance while preserving upper-bar space
 
+**Synergy Visual Indicators:**
+- Active synergies glow via `Scripts/Shaders/synergy_halo.gdshader`
+- **Matching set active**: compact slots glow with a translucent rating-color background and border (slot stylebox tint — the icon is never touched), and fanned cards get a halo ring in the rating color
+- **Rainbow active**: compact slots pulse through a hue-cycled background/border tint, and fanned cards get an animated rainbow ring; overrides per-rating set visuals
+- Halos appear only while the synergy bonus is actually active (no partial-progress visuals)
+- The overflow slot glows if any hidden PowerUp participates
+- The fan-out view shows a top banner summarizing active synergies (e.g. `SYNERGY: PG-13 SET +50 • RAINBOW x5`)
+- `PowerUpUI` subscribes to `SynergyManager.synergies_updated` / `synergy_activated` and maps state onto slot stylebox tints (`_set_slot_synergy_halo()` / `_refresh_slot_style()`) and `KioskTile.set_synergy_halo()` (`PowerUpData.SynergyHaloMode`: NONE / SET / RAINBOW)
+- A "SYNERGY!" floating text popup (`FloatingTextManager.show_synergy_popup()`) fires from the PowerUp container when a synergy activates or upgrades
+
 **Debug Commands (Synergies Tab):**
 - **Show Synergy Status**: Print complete status to console
 - **Grant 5 X-Rated**: Grant 5 PowerUps of specific rating for testing
@@ -1418,8 +1428,12 @@ The **Synergy System** rewards players for collecting PowerUps with matching rat
 - **SynergyManager**: `Scripts/Managers/SynergyManager.gd` - Synergy tracking and calculation
 - **SynergyManager Scene**: `Scenes/Managers/synergy_manager.tscn` - Manager node
 - **PowerUpSpine Updates**: `Scripts/UI/power_up_spine.gd` - Rating display on spines
-- **PowerUpData Rating**: `Scripts/PowerUps/PowerUpData.gd` - Rating property on data resources
+- **PowerUpData Rating**: `Scripts/PowerUps/PowerUpData.gd` - Rating property on data resources, `get_rating_color()`, `SynergyHaloMode` enum
+- **Synergy Halo Shader**: `Scripts/Shaders/synergy_halo.gdshader` - Rating-color / rainbow halo ring
+- **KioskTile Halo**: `Scripts/UI/kiosk_tile.gd` - `set_synergy_halo()` for fanned cards
+- **PowerUpUI Wiring**: `Scripts/UI/power_up_ui.gd` - SynergyManager subscription, halo updates, fan-view banner
 - **Test Scene**: `Tests/SynergyTest.tscn` - Synergy system validation
+- **Halo Test Scene**: `Tests/SynergyHaloTest.tscn` - Synergy halo visual validation
 
 **Usage Example:**
 ```gdscript

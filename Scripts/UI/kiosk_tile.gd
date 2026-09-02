@@ -21,9 +21,11 @@ const SHADER = preload("res://Scripts/Shaders/kiosk_tile.gdshader")
 const GLASS_SHADER = preload("res://Scripts/Shaders/kiosk_tile_glass.gdshader")
 const GLOW_SHADER = preload("res://Scripts/Shaders/kiosk_tile_glow.gdshader")
 const REFLECTION_SHADER = preload("res://Scripts/Shaders/kiosk_tile_reflection.gdshader")
+const SYNERGY_HALO_SHADER = preload("res://Scripts/Shaders/synergy_halo.gdshader")
 
 const FRAME_OVERFLOW := 16.0
 const GLOW_OVERFLOW := 14.0
+const HALO_OVERFLOW := 22.0
 const INTERIOR_INSET := 8.0
 const CONTENT_MARGIN := 16
 const CONTENT_SEPARATION := 8
@@ -60,6 +62,8 @@ var sell_button: Button
 var action_bar: HBoxContainer
 var sticker_badge: StickerBadge
 var glow_underlay: ColorRect
+var synergy_halo: ColorRect
+var synergy_halo_mode: int = PowerUpData.SynergyHaloMode.NONE
 
 @onready var _tfx := get_node_or_null("/root/TweenFXHelper")
 
@@ -117,11 +121,33 @@ func _ensure_structure() -> void:
 	size = TILE_SIZE
 
 	# Render-order (back to front):
+	# 0. SynergyHalo (additive synergy halo behind everything, hidden by default)
 	# 1. GlowUnderlay (additive bloom behind everything)
 	# 2. ChromeFrame (outer chrome bezel)
 	# 3. ChromeBackground (inner glossy panel)
 	# 4. ChromePanel (content)
 	# 5. StickerBadge (top-right)
+
+	synergy_halo = get_node_or_null("SynergyHalo") as ColorRect
+	if not synergy_halo:
+		synergy_halo = ColorRect.new()
+		synergy_halo.name = "SynergyHalo"
+		synergy_halo.set_anchors_preset(Control.PRESET_FULL_RECT)
+		synergy_halo.set_offsets_preset(Control.PRESET_FULL_RECT)
+		synergy_halo.offset_left = -HALO_OVERFLOW
+		synergy_halo.offset_top = -HALO_OVERFLOW
+		synergy_halo.offset_right = HALO_OVERFLOW
+		synergy_halo.offset_bottom = HALO_OVERFLOW
+		synergy_halo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		synergy_halo.visible = false
+		var halo_material := ShaderMaterial.new()
+		halo_material.shader = SYNERGY_HALO_SHADER
+		halo_material.set_shader_parameter("rect_size", TILE_SIZE + Vector2(HALO_OVERFLOW * 2.0, HALO_OVERFLOW * 2.0))
+		halo_material.set_shader_parameter("corner_radius", 32.0)
+		halo_material.set_shader_parameter("spread", 18.0)
+		synergy_halo.material = halo_material
+		add_child(synergy_halo)
+		move_child(synergy_halo, 0)
 
 	glow_underlay = get_node_or_null("GlowUnderlay") as ColorRect
 	if not glow_underlay:
@@ -758,6 +784,30 @@ func set_data(new_data: PowerUpData) -> void:
 func set_selected(selected: bool) -> void:
 	_is_selected = selected
 	_animate_visual_state(0.25, _is_selected)
+
+## set_synergy_halo(mode, color)
+##
+## Shows or hides the synergy halo behind the tile.
+## mode: PowerUpData.SynergyHaloMode (NONE hides, SET uses the flat rating
+## color, RAINBOW animates a hue cycle). color is only used for SET mode.
+func set_synergy_halo(mode: int, color: Color = Color.WHITE) -> void:
+	synergy_halo_mode = mode
+	if not synergy_halo:
+		return
+	if mode == PowerUpData.SynergyHaloMode.NONE:
+		synergy_halo.visible = false
+		return
+	synergy_halo.visible = true
+	var halo_material := synergy_halo.material as ShaderMaterial
+	if not halo_material:
+		return
+	halo_material.set_shader_parameter("glow_color", color)
+	if mode == PowerUpData.SynergyHaloMode.RAINBOW:
+		halo_material.set_shader_parameter("rainbow_mode", 1.0)
+		halo_material.set_shader_parameter("glow_intensity", 1.2)
+	else:
+		halo_material.set_shader_parameter("rainbow_mode", 0.0)
+		halo_material.set_shader_parameter("glow_intensity", 1.4)
 
 func _set_border_glow(value: float) -> void:
 	if _frame_shader_material:

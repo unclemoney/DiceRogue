@@ -1094,6 +1094,41 @@ background.material = shader_mat
 
 ---
 
+### 23. Synergy Halo (`synergy_halo.gdshader`)
+
+Additive rounded-rect SDF effect used to mark active PowerUp rating synergies. Two shapes: ring mode (`fill_mode = 0`) draws a bright rim + outer glow for card borders; fill mode (`fill_mode = 1`) draws a soft translucent background fill that sits behind icons (compact slot backgrounds). Two color modes: flat rating color (matching-set synergy, 5+ PowerUps of one rating) and an animated hue-cycling rainbow (Rainbow Bonus, one of each rating).
+
+Driven by the built-in `TIME` — no per-frame script updates needed.
+
+#### Parameters
+
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `glow_color` | Color | - | Orange | Effect color (SET mode rating color) |
+| `glow_intensity` | Float | 0.0 - 2.0 | 0.9 | Master brightness |
+| `corner_radius` | Float | 0.0 - 64.0 | 16.0 | Corner radius (px) |
+| `spread` | Float | 0.0 - 64.0 | 10.0 | Outer glow falloff (px, ring mode) |
+| `pulse_strength` | Float | 0.0 - 1.0 | 0.6 | Breathing pulse amount |
+| `rainbow_mode` | Float | 0.0 - 1.0 | 0.0 | 1.0 = hue-cycling rainbow |
+| `rainbow_speed` | Float | 0.0 - 2.0 | 0.35 | Hue cycle speed |
+| `fill_mode` | Float | 0.0 - 1.0 | 0.0 | 1.0 = translucent background fill instead of ring |
+| `fill_strength` | Float | 0.0 - 1.0 | 0.35 | Fill opacity (fill mode) |
+| `rect_size` | Vector2 | - | (88, 96) | Pixel size of the effect rect |
+
+#### Usage Example
+```gdscript
+# KioskTile exposes set_synergy_halo(mode, color) for fanned cards.
+# mode is PowerUpData.SynergyHaloMode (NONE / SET / RAINBOW).
+# (Compact PowerUp slots use a StyleBoxFlat tint instead — see
+# PowerUpUI._refresh_slot_style() — so the glow fills the slot
+# background behind the icon.)
+kiosk_tile.set_synergy_halo(PowerUpData.SynergyHaloMode.SET, PowerUpData.get_rating_color("PG-13"))
+kiosk_tile.set_synergy_halo(PowerUpData.SynergyHaloMode.RAINBOW)
+kiosk_tile.set_synergy_halo(PowerUpData.SynergyHaloMode.NONE)
+```
+
+---
+
 ## Color Palette Reference
 
 ### Standard 3-Color System (Background Shaders)

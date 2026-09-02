@@ -47,6 +47,8 @@ var _compact_margin: MarginContainer
 var _compact_row: HBoxContainer
 var _slot_cells: Array[PanelContainer] = []
 var _slot_contents: Array[Control] = []
+var _slot_halo_modes: Array[int] = []
+var _slot_halo_colors: Array[Color] = []
 var _overflow_label: Label
 
 # Animation and background
@@ -58,6 +60,11 @@ var _spine_tooltip_label: Label
 # Shop auto-minimize state
 var _shop_ui: Control = null
 var _shop_was_visible_before_fan: bool = false
+
+# Synergy visuals state
+var _synergy_manager: SynergyManager = null
+var _synergy_banner: PanelContainer = null
+var _synergy_banner_label: Label = null
 
 func _ready() -> void:
 	print("[PowerUpUI] Initializing new spine-based system...")
@@ -115,6 +122,7 @@ func _ready() -> void:
 	resized.connect(_on_resized)
 	call_deferred("_adapt_layout")
 	call_deferred("_position_spines")
+	call_deferred("_connect_synergy_manager")
 	
 	print("[PowerUpUI] New spine-based system initialized")
 
@@ -135,6 +143,167 @@ func _exit_tree() -> void:
 		if tween and tween.is_valid():
 			tween.kill()
 	_idle_tweens.clear()
+	if _synergy_manager and is_instance_valid(_synergy_manager):
+		if _synergy_manager.synergies_updated.is_connected(_update_synergy_halos):
+			_synergy_manager.synergies_updated.disconnect(_update_synergy_halos)
+		if _synergy_manager.synergy_activated.is_connected(_on_synergy_activated):
+			_synergy_manager.synergy_activated.disconnect(_on_synergy_activated)
+
+## _connect_synergy_manager()
+##
+## Finds the SynergyManager (group "synergy_manager") and subscribes to its
+## signals so halos and the fan banner track live synergy state.
+func _connect_synergy_manager() -> void:
+	_synergy_manager = get_tree().get_first_node_in_group("synergy_manager") as SynergyManager
+	if not _synergy_manager:
+		return
+	if not _synergy_manager.synergies_updated.is_connected(_update_synergy_halos):
+		_synergy_manager.synergies_updated.connect(_update_synergy_halos)
+	if not _synergy_manager.synergy_activated.is_connected(_on_synergy_activated):
+		_synergy_manager.synergy_activated.connect(_on_synergy_activated)
+	_update_synergy_halos()
+
+## _on_synergy_activated(synergy_type, bonus_value)
+##
+## Shows a "SYNERGY!" floating popup when a synergy activates or upgrades.
+func _on_synergy_activated(_synergy_type: String, _bonus_value: float) -> void:
+	var ftm = get_node_or_null("/root/FloatingTextManager")
+	if ftm:
+		ftm.show_synergy_popup(self)
+
+## _update_synergy_halos()
+##
+## Applies synergy halo state to compact slot borders and fanned icons.
+## Rainbow (all 5 ratings owned) overrides per-rating set halos.
+func _update_synergy_halos() -> void:
+	var rainbow := false
+	var active_sets := {}
+	if _synergy_manager:
+		rainbow = _synergy_manager.has_rainbow_bonus()
+		var counts: Dictionary = _synergy_manager.get_rating_counts()
+		for rating in SynergyManager.ALL_RATINGS:
+			if counts.get(rating, 0) >= SynergyManager.MATCHING_SET_SIZE:
+				active_sets[rating] = true
+	
+	# Compact slots: slot i shows ordered_ids[i]; the last slot is overflow.
+	var ordered_ids: Array[String] = _get_ordered_power_up_ids()
+	var visible_count: int = min(ordered_ids.size(), COMPACT_VISIBLE_POWER_UPS)
+	for slot_index in range(_slot_halo_modes.size()):
+		var mode := PowerUpData.SynergyHaloMode.NONE
+		var color := Color.WHITE
+		if slot_index < visible_count:
+			var state := _compute_halo_state(ordered_ids[slot_index], rainbow, active_sets)
+			mode = state[0]
+			color = state[1]
+		elif slot_index == COMPACT_SLOT_COUNT - 1 and ordered_ids.size() > COMPACT_VISIBLE_POWER_UPS:
+			# Overflow slot: highlight if any hidden PowerUp participates.
+			for i in range(visible_count, ordered_ids.size()):
+				var state := _compute_halo_state(ordered_ids[i], rainbow, active_sets)
+				if state[0] != PowerUpData.SynergyHaloMode.NONE:
+					mode = state[0]
+					color = state[1]
+					break
+		_set_slot_synergy_halo(slot_index, mode, color)
+	
+	# Fanned cards keep per-icon halos (full card border, no overlap there).
+	for power_up_id in _fanned_icons.keys():
+		var icon: PowerUpIcon = _fanned_icons[power_up_id]
+		if not icon or not is_instance_valid(icon):
+			continue
+		var state := _compute_halo_state(power_up_id, rainbow, active_sets)
+		icon.set_synergy_halo(state[0], state[1])
+	
+	_update_synergy_banner()
+
+## _compute_halo_state(power_up_id, rainbow, active_sets)
+##
+## Returns [mode, color] for a PowerUp: RAINBOW if the rainbow bonus is
+## active, SET with the rating color if its rating has a matching set,
+## otherwise NONE.
+func _compute_halo_state(power_up_id: String, rainbow: bool, active_sets: Dictionary) -> Array:
+	if rainbow:
+		return [PowerUpData.SynergyHaloMode.RAINBOW, Color.WHITE]
+	var pu_data: PowerUpData = _power_up_data.get(power_up_id)
+	if pu_data and active_sets.has(pu_data.rating):
+		return [PowerUpData.SynergyHaloMode.SET, PowerUpData.get_rating_color(pu_data.rating)]
+	return [PowerUpData.SynergyHaloMode.NONE, Color.WHITE]
+
+## _set_slot_synergy_halo(slot_index, mode, color)
+##
+## Sets the synergy background glow on a compact slot. The slot's own
+## stylebox is tinted, so the whole slot glows behind the icon.
+func _set_slot_synergy_halo(slot_index: int, mode: int, color: Color = Color.WHITE) -> void:
+	if slot_index < 0 or slot_index >= _slot_halo_modes.size():
+		return
+	_slot_halo_modes[slot_index] = mode
+	_slot_halo_colors[slot_index] = color
+	_refresh_slot_style(slot_index)
+
+## _ensure_synergy_banner()
+##
+## Lazily builds the fan-view synergy summary banner (hidden by default).
+func _ensure_synergy_banner() -> void:
+	if _synergy_banner and is_instance_valid(_synergy_banner):
+		return
+	_synergy_banner = PanelContainer.new()
+	_synergy_banner.name = "SynergyBanner"
+	_synergy_banner.z_index = 200  # Above fanned cards and their sticker badges
+	_synergy_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_synergy_banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_synergy_banner.offset_left = -320.0
+	_synergy_banner.offset_right = 320.0
+	_synergy_banner.offset_top = 24.0
+	_synergy_banner.offset_bottom = 64.0
+	_synergy_banner.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.12, 0.10, 0.14, 0.92)
+	style.border_color = Color(1.0, 0.5, 0.0, 0.8)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	style.corner_detail = 8
+	_synergy_banner.add_theme_stylebox_override("panel", style)
+	
+	_synergy_banner_label = Label.new()
+	_synergy_banner_label.name = "Label"
+	_synergy_banner_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_synergy_banner_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_synergy_banner_label.add_theme_font_override("font", VCR_FONT)
+	_synergy_banner_label.add_theme_font_size_override("font_size", 18)
+	_synergy_banner_label.add_theme_color_override("font_color", Color(1.0, 0.7, 0.3, 1.0))
+	_synergy_banner.add_child(_synergy_banner_label)
+	_synergy_banner.visible = false
+
+## _update_synergy_banner()
+##
+## Shows a summary strip of active synergies at the top of the fan view.
+## Hidden when not fanned or when no synergy is active.
+func _update_synergy_banner() -> void:
+	if _current_state != State.FANNED or not _synergy_manager:
+		if _synergy_banner and is_instance_valid(_synergy_banner):
+			_synergy_banner.visible = false
+		return
+	
+	var active: Dictionary = _synergy_manager.get_active_synergies()
+	if active.is_empty():
+		if _synergy_banner and is_instance_valid(_synergy_banner):
+			_synergy_banner.visible = false
+		return
+	
+	var parts: Array[String] = []
+	for rating in SynergyManager.ALL_RATINGS:
+		var source := "synergy_%s_sets" % rating.replace("-", "_")
+		if active.has(source):
+			parts.append("%s SET +%d" % [rating, int(active[source])])
+	if active.has("synergy_rainbow"):
+		parts.append("RAINBOW x%d" % int(active["synergy_rainbow"]))
+	
+	_ensure_synergy_banner()
+	if not _synergy_banner.get_parent():
+		var overlay: CanvasLayer = FanOverlayHelper.get_overlay(self)
+		overlay.add_child(_synergy_banner)
+	_synergy_banner_label.text = "SYNERGY: " + "  •  ".join(parts)
+	_synergy_banner.visible = true
 
 func _create_background() -> void:
 	# Create semi-transparent background for when cards are fanned
@@ -185,6 +354,8 @@ func _create_compact_row() -> void:
 		slot.add_theme_stylebox_override("panel", _make_compact_slot_style(COMPACT_SLOT_BORDER))
 		_compact_row.add_child(slot)
 		_slot_cells.append(slot)
+		_slot_halo_modes.append(PowerUpData.SynergyHaloMode.NONE)
+		_slot_halo_colors.append(Color.WHITE)
 
 		var slot_content: Control = Control.new()
 		slot_content.name = "SlotContent"
@@ -219,20 +390,65 @@ func _make_compact_slot_style(accent_color: Color) -> StyleBoxFlat:
 	style.shadow_size = 4
 	return style
 
+## _make_compact_slot_synergy_style(synergy_color)
+##
+## Slot style for an active synergy: translucent rating-color background
+## fill with a matching border, so the whole slot glows behind the icon.
+func _make_compact_slot_synergy_style(synergy_color: Color) -> StyleBoxFlat:
+	var style: StyleBoxFlat = _make_compact_slot_style(synergy_color)
+	style.bg_color = Color(synergy_color.r, synergy_color.g, synergy_color.b, 0.35)
+	return style
+
+## _refresh_slot_style(slot_index)
+##
+## Rebuilds a slot's stylebox from its current synergy state, composing with
+## the overflow accent on the last slot when no synergy is active.
+func _refresh_slot_style(slot_index: int) -> void:
+	if slot_index < 0 or slot_index >= _slot_cells.size():
+		return
+	var slot: PanelContainer = _slot_cells[slot_index]
+	var mode: int = _slot_halo_modes[slot_index]
+	if mode == PowerUpData.SynergyHaloMode.SET:
+		slot.add_theme_stylebox_override("panel", _make_compact_slot_synergy_style(_slot_halo_colors[slot_index]))
+	elif mode == PowerUpData.SynergyHaloMode.RAINBOW:
+		slot.add_theme_stylebox_override("panel", _make_compact_slot_synergy_style(_rainbow_halo_color()))
+	else:
+		var base_accent := COMPACT_SLOT_BORDER
+		if slot_index == COMPACT_SLOT_COUNT - 1 and _overflow_label and _overflow_label.visible:
+			base_accent = COMPACT_OVERFLOW_BORDER
+		slot.add_theme_stylebox_override("panel", _make_compact_slot_style(base_accent))
+
+## _rainbow_halo_color()
+##
+## Current hue-cycled rainbow color for synergy slot glows.
+func _rainbow_halo_color() -> Color:
+	var hue: float = fposmod(Time.get_ticks_msec() * 0.00035, 1.0)
+	return Color.from_hsv(hue, 0.65, 1.0)
+
+func _process(_delta: float) -> void:
+	# Animate rainbow synergy slots; cheap no-op when no rainbow is active.
+	for slot_index in range(_slot_halo_modes.size()):
+		if _slot_halo_modes[slot_index] != PowerUpData.SynergyHaloMode.RAINBOW:
+			continue
+		var style := _slot_cells[slot_index].get_theme_stylebox("panel") as StyleBoxFlat
+		if not style:
+			continue
+		var color := _rainbow_halo_color()
+		style.border_color = color
+		style.bg_color = Color(color.r, color.g, color.b, 0.35)
+
 func _update_overflow_slot(total_count: int) -> void:
 	if _slot_cells.size() < COMPACT_SLOT_COUNT or not _overflow_label:
 		return
 
 	var has_overflow: bool = total_count > COMPACT_VISIBLE_POWER_UPS
-	var overflow_slot: PanelContainer = _slot_cells[COMPACT_SLOT_COUNT - 1]
 	if has_overflow:
-		overflow_slot.add_theme_stylebox_override("panel", _make_compact_slot_style(COMPACT_OVERFLOW_BORDER))
 		_overflow_label.text = OVERFLOW_TEXT
 		_overflow_label.visible = true
 	else:
-		overflow_slot.add_theme_stylebox_override("panel", _make_compact_slot_style(COMPACT_SLOT_BORDER))
 		_overflow_label.text = ""
 		_overflow_label.visible = false
+	_refresh_slot_style(COMPACT_SLOT_COUNT - 1)
 
 func _assign_spine_to_slot(spine: PowerUpSpine, slot_index: int, show_spine: bool) -> void:
 	if slot_index < 0 or slot_index >= _slot_contents.size():
@@ -373,6 +589,7 @@ func add_power_up(data: PowerUpData) -> Node:
 	
 	# Update slots label
 	update_slots_label()
+	_update_synergy_halos()
 	
 	print("[PowerUpUI] Added power up spine:", data.id)
 	return spine
@@ -570,6 +787,7 @@ func _create_fanned_icons() -> void:
 	
 	# Wait for all cards to reach their final positions, then start idle animations
 	var max_delay: float = (count - 1) * 0.05 + 0.5  # Last card delay + animation duration
+	_update_synergy_halos()
 	await get_tree().create_timer(max_delay).timeout
 	_start_idle_animations()
 
@@ -712,6 +930,9 @@ func _clear_fanned_icons() -> void:
 		if icon:
 			icon.queue_free()
 	_fanned_icons.clear()
+	
+	if _synergy_banner and is_instance_valid(_synergy_banner):
+		_synergy_banner.visible = false
 
 func _on_background_clicked(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
@@ -1030,6 +1251,7 @@ func remove_power_up(power_up_id: String) -> void:
 	
 	update_slots_label()
 	_position_spines()
+	_update_synergy_halos()
 	print("[PowerUpUI] Removed power-up:", power_up_id)
 
 ## _cleanup_empty_state()

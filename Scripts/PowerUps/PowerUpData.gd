@@ -9,6 +9,13 @@ enum Rarity {
 	LEGENDARY
 }
 
+## Visual halo states for active synergies (see SynergyManager / synergy_halo.gdshader).
+enum SynergyHaloMode {
+	NONE,
+	SET,
+	RAINBOW
+}
+
 enum Rating {
 	G,
 	PG,
@@ -61,6 +68,18 @@ static func is_rating_restricted(rating_string: String) -> bool:
 static func is_rating_nc17(rating_string: String) -> bool:
 	## Returns true if the rating is NC-17
 	return rating_string.to_upper() == "NC-17"
+
+
+static func get_rating_color(rating_string: String) -> Color:
+	## Returns the UI display color for a PowerUp rating.
+	## Used for rating labels and synergy halos. Unknown ratings default to white.
+	match rating_string.to_upper():
+		"G": return Color(0.65098, 0.941176, 0.745098, 1.0)
+		"PG": return Color(1.0, 0.854902, 0.631373, 1.0)
+		"PG-13": return Color(1.0, 0.662745, 0.34902, 1.0)
+		"R": return Color(1.0, 0.470588, 0.576471, 1.0)
+		"NC-17": return Color(0.886275, 0.560784, 0.72549, 1.0)
+		_: return Color.WHITE
 
 
 static func get_rating_progress_bonus(rating_string: String) -> int:
