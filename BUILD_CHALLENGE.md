@@ -3,6 +3,8 @@
 > **⚠️ DEPRECATED — Challenges are no longer part of gameplay.**
 >
 > Each round is now a **store** with a target score (see `README.md` → Mall Zone System). Challenges are never spawned: `ChallengeManager` survives only as a **signal hub** that re-emits `challenge_completed`/`challenge_failed` (payload = store name) so power-ups, UI, music, and the bot keep working. All challenge scripts, scenes, and resources remain on disk for reference only — do not build new challenges from this guide.
+>
+> **UI note (UI polish pass):** the `ChallengeUI` slot no longer renders the `ChallengeIcon` strip (star ratings, chip art, and the click-to-fan detail cards are gone). It is now a goalpost panel: zone name, a dominant teal `GameProgressBar`, "current / target" progress and the per-round total. `GameController` drives it via `show_store(...)` and `set_store_score(current, target)`.
 
 This guide provides step-by-step instructions for creating new challenges in DiceRogue. Challenges are gameplay objectives that players must complete under specific conditions, often with debuffs active.
 

@@ -55,30 +55,21 @@ func _on_about_to_score(section, category: String, _dice_values) -> void:
 		return
 	
 	var current_level: int = 1
-	var new_level: int = 1
-	var levels_dict: Dictionary
-	
-	# Get the appropriate levels dictionary based on section
+
+	# Get the current level from the appropriate levels dictionary
 	match section:
 		scorecard.Section.UPPER:
 			if "upper_levels" in scorecard and scorecard.upper_levels.has(category):
-				levels_dict = scorecard.upper_levels
-				current_level = levels_dict[category]
+				current_level = scorecard.upper_levels[category]
 		scorecard.Section.LOWER:
 			if "lower_levels" in scorecard and scorecard.lower_levels.has(category):
-				levels_dict = scorecard.lower_levels
-				current_level = levels_dict[category]
+				current_level = scorecard.lower_levels[category]
 	
-	# Reduce level by 1, minimum 1
-	new_level = maxi(current_level - 1, 1)
-	
-	if new_level != current_level:
-		levels_dict[category] = new_level
-		print("[ReducedLevelsDebuff] Reduced %s from level %d to %d before scoring" % [category, current_level, new_level])
-		
-		# Emit signal for UI update
-		if scorecard.has_signal("category_upgraded"):
-			scorecard.emit_signal("category_upgraded", section, category, new_level)
+	# Reduce level by 1, minimum 1. Routed through the model's
+	# downgrade_category() so the UI plays the downgrade animation
+	# (replaces the old direct mutation + category_upgraded emit).
+	if current_level > 1:
+		scorecard.downgrade_category(section, category)
 	else:
 		print("[ReducedLevelsDebuff] %s already at minimum level 1" % category)
 

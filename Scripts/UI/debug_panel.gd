@@ -452,6 +452,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Find Missing Nodes", "method": "_debug_ui_find_missing"},
 			{"text": "Highlight Containers", "method": "_debug_ui_highlight"},
 			{"text": "Reset UI Visibility", "method": "_debug_ui_reset_visibility"},
+			{"text": "Progress Bar Showcase", "method": "_debug_progress_bar_showcase"},
 		],
 		"Round Transitions": [
 			{"text": "TV On", "method": "_debug_tv_on"},
@@ -4928,6 +4929,54 @@ func _debug_ui_layout_info() -> void:
 			log_debug("%s: size=%s pos=%s" % [container_name, str(container.size), str(container.global_position)])
 		else:
 			log_debug("%s: MISSING" % container_name)
+
+
+## _debug_progress_bar_showcase()
+##
+## Spawns a temporary overlay with the three GameProgressBar color schemes
+## (Challenge teal / Bonus pink / resources gold) sweeping to 75, then the
+## teal bar pushing to 120 to demo the overflow layer. Auto-frees.
+func _debug_progress_bar_showcase() -> void:
+	var overlay := PanelContainer.new()
+	overlay.name = "ProgressBarShowcase"
+	overlay.z_index = 200
+	overlay.set_anchors_preset(Control.PRESET_CENTER)
+	overlay.custom_minimum_size = Vector2(560, 0)
+	overlay.position = -Vector2(280, 100)
+	add_child(overlay)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	overlay.add_child(column)
+
+	var bars: Array[GameProgressBar] = []
+	var schemes := [
+		["CHALLENGE", Color(0.549020, 0.729412, 0.662745, 1.0)],
+		["BONUS", Color(0.901961, 0.450980, 0.556863, 1.0)],
+		["RESOURCES", Color(0.95, 0.78, 0.3, 1.0)],
+	]
+	for scheme in schemes:
+		var label := Label.new()
+		label.text = scheme[0]
+		column.add_child(label)
+		var bar := GameProgressBar.new()
+		bar.max_value = 100.0
+		bar.fill_color = scheme[1]
+		bar.show_ticks = true
+		bar.custom_minimum_size = Vector2(0, 20)
+		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		column.add_child(bar)
+		bars.append(bar)
+
+	for bar in bars:
+		bar.value = 75.0
+	await get_tree().create_timer(0.8).timeout
+	if is_instance_valid(bars[0]):
+		bars[0].value = 120.0
+	await get_tree().create_timer(2.5).timeout
+	if is_instance_valid(overlay):
+		overlay.queue_free()
+	log_debug("Progress bar showcase done")
 
 
 ## _debug_ui_toggle_borders()

@@ -35,11 +35,7 @@ const PORTRAIT_FRAME_SIZE: float = 128.0
 const PORTRAIT_BORDER_WIDTH: float = 2.0
 const PORTRAIT_SCALE: float = 0.9
 
-## Rep meter (rebel mode): cloned from ChoreUI's meter pattern.
-const REP_BAR_TEXTURE_UNDER : CompressedTexture2D = preload("res://Resources/Art/UI/rep_meter_under.png")
-const REP_BAR_TEXTURE_PROGRESS : CompressedTexture2D = preload("res://Resources/Art/UI/rep_meter_progress.png")
-const REP_BAR_TEXTURE_OVER : CompressedTexture2D = preload("res://Resources/Art/UI/rep_meter_over.png")
-const REP_BAR_NINE_PATCH_MARGIN: int = 32
+## Rep meter (rebel mode): GameProgressBar, resources = gold scheme.
 ## Escalating rebel-stage tints (Teacher's Pet -> Banned from the Mall).
 const REP_STAGE_COLORS: Array[Color] = [
 	Color(0.47, 0.89, 0.89),  # teal
@@ -73,7 +69,7 @@ var dialog_label: RichTextLabel
 var close_button: GlassActionButton
 var response_row: VBoxContainer
 var rep_row: HBoxContainer
-var rep_meter: TextureProgressBar
+var rep_meter: GameProgressBar
 var rep_stage_label: Label
 var response_buttons: Array[GlassActionButton] = []
 var _current_responses: Array = []  # MomDialogResponse resources for the current beat
@@ -511,18 +507,12 @@ func _create_ui_structure() -> void:
 	rep_title.add_theme_color_override("font_color", Color(1, 0.8, 0.9))
 	rep_row.add_child(rep_title)
 	
-	rep_meter = TextureProgressBar.new()
+	rep_meter = GameProgressBar.new()
 	rep_meter.name = "RepMeter"
 	rep_meter.min_value = 0
 	rep_meter.max_value = 100
 	rep_meter.value = 0
-	rep_meter.fill_mode = TextureProgressBar.FILL_LEFT_TO_RIGHT
-	rep_meter.texture_under = REP_BAR_TEXTURE_UNDER
-	rep_meter.texture_progress = REP_BAR_TEXTURE_PROGRESS
-	rep_meter.texture_over = REP_BAR_TEXTURE_OVER
-	rep_meter.nine_patch_stretch = false
-	rep_meter.stretch_margin_left = REP_BAR_NINE_PATCH_MARGIN
-	rep_meter.stretch_margin_right = REP_BAR_NINE_PATCH_MARGIN
+	rep_meter.fill_color = Color(0.95, 0.78, 0.3, 1.0)  # resources = gold
 	rep_meter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	rep_meter.custom_minimum_size = Vector2(0, 24)
 	rep_meter.mouse_filter = Control.MOUSE_FILTER_IGNORE

@@ -1,125 +1,281 @@
 extends Control
 class_name ChallengeUI
 
+## ChallengeUI
+##
+## The goalpost panel in the GameUI center column (challenges deprecated:
+## each round is a store). Shows the zone/store name, a dominant teal
+## GameProgressBar toward the round target, the challenge progress
+## "21 / 75" (left) and the current ROUND total "TOTAL 21" (right).
+## GameController drives this API directly (no Challenge instance exists).
+
 signal challenge_selected(id: String)
 signal challenge_reveal_finished
 
-@export var challenge_icon_scene: PackedScene = preload("res://Scenes/Challenge/ChallengeIcon.tscn")
 @export var round_manager_path: NodePath
-@export var max_challenges: int = 3
 
-@onready var round_manager: RoundManager = get_node_or_null(round_manager_path)
-@onready var container: HBoxContainer
+const VCR_FONT := preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+# Scorecard-family translucent panel treatment
+const PANEL_BG: Color = Color(0.12, 0.1, 0.17, 0.65)
+const PANEL_CORNER_RADIUS: int = 12
+const ZONE_COLOR: Color = Color(1.0, 0.95, 0.87, 1.0)
+const NUM_COLOR: Color = Color(1.0, 0.98, 0.92, 1.0)
+const OUTLINE_COLOR: Color = Color(0.08, 0.07, 0.11, 1.0)
+const TEAL: Color = Color(0.549020, 0.729412, 0.662745, 1.0)
+const TEAL_OVERFLOW: Color = Color(0.75, 1.0, 0.9, 1.0)
+const ZONE_FONT_SIZE: int = 16
+const NUM_FONT_SIZE: int = 20
 
-var _challenges: Dictionary = {}  # id -> ChallengeIcon
-var _progress: Dictionary = {}     # id -> float (0.0–1.0)
-var _detail_cards: Dictionary = {}  # id -> ChallengeDetailCard (active during fan-out)
+var _store_id: String = ""
+var _store_target: int = 0
+var _store_score: int = 0
+var _store_debuff_ids: Array[String] = []
 var _challenge_reveal_active: bool = false
 
+var _panel: PanelContainer
+var _zone_label: Label
+var _bar: GameProgressBar
+var _progress_label: Label
+var _total_label: Label
+var _punch_tween: Tween
+
+
 func _ready() -> void:
-	print("[ChallengeUI] Initializing...")
-	print("[ChallengeUI] challenge_icon_scene set:", challenge_icon_scene != null)
-	
-	# Ensure this UI layer receives input for fan-out clicks
-	mouse_filter = Control.MOUSE_FILTER_STOP
-	
-	# Defensive cleanup: remove deprecated hardcoded nodes if editor cached an old scene
-	for old_name in ["Label", "TextureRect", "Area2D", "DiceLabel", "VBoxContainer"]:
-		var old_node = get_node_or_null(old_name)
-		if old_node:
-			old_node.queue_free()
-	
-	# Create Container as direct child (reuse if already present)
-	if has_node("Container"):
-		container = $Container
-	else:
-		container = HBoxContainer.new()
-		container.name = "Container"
-		add_child(container)
-	
-	# Configure container to fill parent
-	container.mouse_filter = Control.MOUSE_FILTER_PASS
-	container.set_anchors_preset(Control.PRESET_FULL_RECT)
-	container.add_theme_constant_override("separation", 24)
-	
-	if not challenge_icon_scene:
-		push_error("[ChallengeUI] No challenge_icon_scene set!")
-		challenge_icon_scene = load("res://Scenes/Challenge/challenge_icon.tscn")
-		if not challenge_icon_scene:
-			push_error("[ChallengeUI] Failed to load default challenge_icon scene")
-	
-	print("[ChallengeUI] Initialization complete")
-	print("[ChallengeUI] Container visible:", container.visible)
-	print("[ChallengeUI] Container rect size:", container.size)
-	print("[ChallengeUI] Container global position:", container.global_position)
+	mouse_filter = Control.MOUSE_FILTER_PASS
+	_build_panel()
 
-func add_challenge(data: ChallengeData, challenge: Challenge = null) -> ChallengeIcon:
-	print("[ChallengeUI] Adding challenge:", data.id if data else "null")
-	
-	if not challenge_icon_scene:
-		push_error("[ChallengeUI] Cannot add challenge - no icon scene!")
-		return null
-		
-	# Check if this challenge is already added
-	if _challenges.has(data.id):
-		print("[ChallengeUI] Challenge already exists:", data.id)
-		return _challenges[data.id]
-		
-	if not container:
-		push_error("[ChallengeUI] Container is null, trying to create it")
-		container = HBoxContainer.new()
-		container.name = "Container"
-		add_child(container)
-	
-	var icon = challenge_icon_scene.instantiate() as ChallengeIcon
-	if not icon:
-		push_error("[ChallengeUI] Failed to instantiate challenge icon!")
-		return null
-	
-	var actual_target_score = challenge.get_target_score() if challenge and challenge.has_method("get_target_score") else data.target_score	
-	
-	# Add icon to container instead of directly to the UI
-	container.add_child(icon)
-	
-	# Size up the icon and disable its own input so ChallengeUI gets the click
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	
-	# Set data after adding to tree
-	icon.set_data_with_target_score(data, actual_target_score)
-	icon.set_meta("last_pos", icon.position)
 
-	# Rebel premium indicator (Branch 5b, PLAN_BALANCE.md): when the player's
-	# Rep tier raises targets, mark the icon so the premium isn't invisible.
-	var game_controller = get_tree().get_first_node_in_group("game_controller")
-	if game_controller and game_controller.get("channel_manager"):
-		var premium: float = game_controller.channel_manager.get_rebel_target_premium()
-		if premium > 0.0:
-			icon.modulate = Color(1.0, 0.8, 0.8)
-			icon.tooltip_text = "Mom is watching you harder: target +%d%% (Rebellion Rep)" % int(round(premium * 100.0))
-	_progress[data.id] = 0.0
-	
-	# Juice: target score count-up animation
-	icon.animate_target_score_countup()
-	
-	_challenges[data.id] = icon
+func _build_panel() -> void:
+	if _panel and is_instance_valid(_panel):
+		_panel.queue_free()
 
-	# Connect challenge signals (store rounds have no Challenge instance — the
-	# GameController drives progress/completion through the store API below)
-	if challenge:
-		challenge.challenge_updated.connect(_on_challenge_progress_updated.bind(data.id))
-		challenge.challenge_completed.connect(_on_challenge_completed.bind(data.id))
-		challenge.challenge_failed.connect(_on_challenge_failed.bind(data.id))
+	_panel = PanelContainer.new()
+	_panel.name = "Panel"
+	_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_panel.mouse_filter = Control.MOUSE_FILTER_PASS
+	var style := StyleBoxFlat.new()
+	style.bg_color = PANEL_BG
+	style.set_corner_radius_all(PANEL_CORNER_RADIUS)
+	style.corner_detail = 8
+	_panel.add_theme_stylebox_override("panel", style)
+	add_child(_panel)
 
-	# Connect icon signal
-	if not icon.is_connected("challenge_selected", _on_challenge_selected):
-		icon.challenge_selected.connect(_on_challenge_selected)
+	var margin := MarginContainer.new()
+	margin.name = "Margin"
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_top", 5)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_bottom", 5)
+	margin.mouse_filter = Control.MOUSE_FILTER_PASS
+	_panel.add_child(margin)
 
-	print("[ChallengeUI] Added challenge:", data.id)
+	var vbox := VBoxContainer.new()
+	vbox.name = "ContentVBox"
+	vbox.add_theme_constant_override("separation", 2)
+	vbox.mouse_filter = Control.MOUSE_FILTER_PASS
+	margin.add_child(vbox)
 
-	return icon
+	# Top row: zone / store name, large warm-white, left
+	_zone_label = Label.new()
+	_zone_label.name = "ZoneLabel"
+	_zone_label.text = ""
+	_zone_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_zone_label.clip_text = true
+	_zone_label.add_theme_font_override("font", VCR_FONT)
+	_zone_label.add_theme_font_size_override("font_size", ZONE_FONT_SIZE)
+	_zone_label.add_theme_color_override("font_color", ZONE_COLOR)
+	_zone_label.add_theme_color_override("font_outline_color", OUTLINE_COLOR)
+	_zone_label.add_theme_constant_override("outline_size", 2)
+	_zone_label.mouse_filter = Control.MOUSE_FILTER_PASS
+	vbox.add_child(_zone_label)
 
-func _show_challenge_reveal_banner(challenge_name: String) -> void:
-	_show_reveal_banner("CHALLENGE ACCEPTED\n%s" % challenge_name)
+	# Middle: the bar is the dominant element
+	_bar = GameProgressBar.new()
+	_bar.name = "ChallengeBar"
+	_bar.fill_color = TEAL
+	_bar.overflow_color = TEAL_OVERFLOW
+	_bar.show_ticks = true
+	_bar.min_value = 0
+	_bar.max_value = 100
+	_bar.custom_minimum_size = Vector2(0, 18)
+	_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_bar.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_bar.mouse_filter = Control.MOUSE_FILTER_PASS
+	vbox.add_child(_bar)
+
+	# Bottom row: challenge progress (left), round total (right)
+	var bottom := HBoxContainer.new()
+	bottom.name = "BottomRow"
+	bottom.mouse_filter = Control.MOUSE_FILTER_PASS
+	vbox.add_child(bottom)
+
+	_progress_label = _make_num_label("ProgressLabel", "0 / 0", HORIZONTAL_ALIGNMENT_LEFT)
+	_progress_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bottom.add_child(_progress_label)
+
+	_total_label = _make_num_label("RoundTotalLabel", "TOTAL 0", HORIZONTAL_ALIGNMENT_RIGHT)
+	_total_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_total_label.resized.connect(_recenter_total_pivot)
+	bottom.add_child(_total_label)
+
+
+func _make_num_label(label_name: String, text: String, align: HorizontalAlignment) -> Label:
+	var label := Label.new()
+	label.name = label_name
+	label.text = text
+	label.horizontal_alignment = align
+	label.add_theme_font_override("font", VCR_FONT)
+	label.add_theme_font_size_override("font_size", NUM_FONT_SIZE)
+	label.add_theme_color_override("font_color", NUM_COLOR)
+	label.add_theme_color_override("font_outline_color", OUTLINE_COLOR)
+	label.add_theme_constant_override("outline_size", 3)
+	label.mouse_filter = Control.MOUSE_FILTER_PASS
+	return label
+
+
+func _recenter_total_pivot() -> void:
+	_total_label.pivot_offset = _total_label.size * 0.5
+
+
+## _punch_total()
+##
+## Subtle scale-punch on the round total when it increases.
+func _punch_total() -> void:
+	if not _total_label:
+		return
+	if _punch_tween and _punch_tween.is_valid():
+		_punch_tween.kill()
+	_recenter_total_pivot()
+	_total_label.scale = Vector2.ONE
+	_punch_tween = create_tween()
+	_punch_tween.tween_property(_total_label, "scale", Vector2(1.15, 1.15), 0.1) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_punch_tween.tween_property(_total_label, "scale", Vector2.ONE, 0.12) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+# ---- Store rounds (challenges deprecated) ----
+
+
+## show_store(store_name, target_score, reward_money, difficulty) -> void
+##
+## Sets the zone name and round target, resets progress. difficulty is kept
+## for API compatibility (star rating is deprecated and gone).
+func show_store(store_name: String, target_score: int, _reward_money: int, _difficulty: int = 0) -> void:
+	_store_id = store_name
+	_store_target = maxi(target_score, 1)
+	_store_score = 0
+	_store_debuff_ids.clear()
+	_zone_label.text = store_name.to_upper()
+	_bar.max_value = float(_store_target)
+	_bar.set_value_instant(0.0)
+	_progress_label.text = "0 / %s" % NumberFormatter.format_int(_store_target)
+	_total_label.text = "TOTAL 0"
+
+
+## set_store_progress(progress) -> void
+##
+## Ratio-based update (0.0–1.0). Kept for compatibility; prefer
+## set_store_score so the labels can show real numbers.
+func set_store_progress(progress: float) -> void:
+	if _store_id.is_empty():
+		return
+	set_store_score(roundi(clampf(progress, 0.0, 1.0) * _store_target), _store_target)
+
+
+## set_store_score(current, target) -> void
+##
+## Drives the bar (tweened, overflow past target) and both numeral labels.
+## The total is the scorecard's per-round total — it resets each round.
+func set_store_score(current: int, target: int) -> void:
+	_store_target = maxi(target, 1)
+	var previous := _store_score
+	_store_score = current
+	_bar.max_value = float(_store_target)
+	_bar.value = float(current)
+	_progress_label.text = "%s / %s" % [
+		NumberFormatter.format_int(current), NumberFormatter.format_int(_store_target)]
+	_total_label.text = "TOTAL %s" % NumberFormatter.format_int(current)
+	if current > previous:
+		_punch_total()
+
+
+## set_store_debuffs(debuff_ids) -> void
+##
+## Stores this round's active debuff ids (detail fan-out is gone; kept for
+## future tooltip use).
+func set_store_debuffs(debuff_ids: Array) -> void:
+	_store_debuff_ids.assign(debuff_ids)
+
+
+## notify_store_completed() / notify_store_failed() -> void
+##
+## Completion flash / FAILED stamp effects on the panel.
+func notify_store_completed() -> void:
+	if _store_id.is_empty() or not _panel:
+		return
+	_bar.value = float(_store_target)
+	var tween := create_tween()
+	tween.tween_property(_panel, "modulate", Color(0.6, 1.4, 0.8), 0.25)
+	tween.tween_property(_panel, "modulate", Color.WHITE, 0.4)
+
+
+func notify_store_failed() -> void:
+	if _store_id.is_empty() or not _panel:
+		return
+	var tfx = get_node_or_null("/root/TweenFXHelper")
+	if tfx:
+		tfx.negative_hit(_panel)
+
+	var stamp := Label.new()
+	stamp.text = "FAILED"
+	stamp.set_anchors_preset(Control.PRESET_CENTER)
+	stamp.z_index = 50
+	stamp.rotation_degrees = -15
+	stamp.add_theme_font_override("font", VCR_FONT)
+	stamp.add_theme_font_size_override("font_size", 28)
+	stamp.add_theme_color_override("font_color", Color(1.0, 0.1, 0.1, 1.0))
+	_panel.add_child(stamp)
+	if tfx:
+		tfx.play_preset(stamp, "impact_land")
+
+	var audio_mgr = get_node_or_null("/root/AudioManager")
+	if audio_mgr and audio_mgr.has_method("play_denied_sound"):
+		audio_mgr.play_denied_sound()
+
+	var vignette := ColorRect.new()
+	vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vignette.color = Color(0.8, 0.1, 0.1, 0.0)
+	vignette.z_index = 40
+	vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(vignette)
+	var vig_tween := create_tween()
+	vig_tween.tween_property(vignette, "color:a", 0.15, 0.2)
+	vig_tween.tween_property(vignette, "color:a", 0.0, 0.4)
+	vig_tween.tween_callback(vignette.queue_free)
+
+	var tween := create_tween()
+	tween.tween_property(_panel, "modulate", Color(1.4, 0.5, 0.5), 0.25)
+	tween.tween_property(_panel, "modulate", Color.WHITE, 0.4)
+
+
+## clear_all_challenges() -> void
+##
+## Resets the panel (used between store rounds and on game reset).
+func clear_all_challenges() -> void:
+	_store_id = ""
+	_store_target = 0
+	_store_score = 0
+	_store_debuff_ids.clear()
+	if not _panel:
+		return
+	_zone_label.text = ""
+	_bar.set_value_instant(0.0)
+	_progress_label.text = "0 / 0"
+	_total_label.text = "TOTAL 0"
+
+
+# ---- Round-start reveal banner ----
 
 
 ## show_store_reveal_banner(store_name)
@@ -136,27 +292,25 @@ func _show_reveal_banner(banner_text: String) -> void:
 	banner.text = banner_text
 	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	banner.z_index = 200
-	
-	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
-	if vcr_font:
-		banner.add_theme_font_override("font", vcr_font)
+
+	banner.add_theme_font_override("font", VCR_FONT)
 	banner.add_theme_font_size_override("font_size", 28)
 	banner.add_theme_color_override("font_color", Color(1.0, 0.85, 0.4, 1.0))
-	
+
 	var viewport_size = get_viewport_rect().size
 	banner.position = Vector2(viewport_size.x / 2 - 150, viewport_size.y / 2 - 60)
 	banner.custom_minimum_size = Vector2(300, 0)
-	
+
 	get_tree().root.add_child(banner)
-	
+
 	var tfx = get_node_or_null("/root/TweenFXHelper")
 	if tfx:
 		tfx.play_preset(banner, "fly_in_down")
-	
+
 	var audio_mgr = get_node_or_null("/root/AudioManager")
 	if audio_mgr and audio_mgr.has_method("play_challenge_reveal_sound"):
 		audio_mgr.play_challenge_reveal_sound()
-	
+
 	await get_tree().create_timer(2.0).timeout
 	if is_instance_valid(banner):
 		var fade = create_tween()
@@ -170,308 +324,3 @@ func _show_reveal_banner(banner_text: String) -> void:
 func wait_for_reveal() -> void:
 	if _challenge_reveal_active:
 		await challenge_reveal_finished
-
-
-# ---- Store rounds (challenges deprecated) ----
-## Each round is a store: the ChallengeUI slot shows a single icon with the
-## store name as its title and a progress bar toward the round target score.
-## GameController drives this API directly (no Challenge instance exists).
-
-var _store_id: String = ""
-
-
-## show_store(store_name, target_score, reward_money, difficulty) -> ChallengeIcon
-##
-## Clears any previous entry and adds one icon for the current store round.
-## difficulty drives the star display/background tint (zone number, or 5 on
-## boss rounds). Clicking the icon fans out the detail card as before.
-func show_store(store_name: String, target_score: int, reward_money: int, difficulty: int = 0) -> ChallengeIcon:
-	clear_all_challenges()
-	_store_id = store_name
-
-	var data := ChallengeData.new()
-	data.id = store_name
-	data.display_name = store_name
-	data.description = "Reach the target score before your scorecard fills up."
-	data.target_score = target_score
-	data.reward_money = reward_money
-	data.difficulty = clampi(difficulty, 0, 5)
-
-	return add_challenge(data)
-
-
-## set_store_progress(progress) -> void
-##
-## Updates the store icon's progress bar (and the fanned-out detail card).
-## progress is 0.0–1.0 (current score / round target).
-func set_store_progress(progress: float) -> void:
-	if _store_id.is_empty():
-		return
-	_on_challenge_progress_updated(clampf(progress, 0.0, 1.0), _store_id)
-
-
-## set_store_debuffs(debuff_ids) -> void
-##
-## Tags the store's detail card with this round's active debuffs.
-func set_store_debuffs(debuff_ids: Array) -> void:
-	if _store_id.is_empty() or not _challenges.has(_store_id):
-		return
-	var icon: ChallengeIcon = _challenges[_store_id]
-	if icon and icon.data:
-		var ids: Array[String] = []
-		ids.assign(debuff_ids)
-		icon.data.debuff_ids = ids
-
-
-## notify_store_completed() / notify_store_failed() -> void
-##
-## Plays the completion flash / FAILED stamp effects on the store icon.
-func notify_store_completed() -> void:
-	if not _store_id.is_empty():
-		_on_challenge_completed(_store_id)
-
-
-func notify_store_failed() -> void:
-	if not _store_id.is_empty():
-		_on_challenge_failed(_store_id)
-
-
-## clear_all_challenges() -> void
-##
-## Removes every icon (used between store rounds and on game reset).
-func clear_all_challenges() -> void:
-	if _current_state == State.FANNED_OUT:
-		_fold_back_challenges()
-	for id in _challenges.keys():
-		var icon: ChallengeIcon = _challenges[id]
-		if is_instance_valid(icon):
-			icon.queue_free()
-	_challenges.clear()
-	_progress.clear()
-	_store_id = ""
-
-
-func _on_challenge_selected(id: String) -> void:
-	print("[ChallengeUI] Challenge selected:", id)
-	emit_signal("challenge_selected", id)
-
-func remove_challenge(id: String) -> void:
-	if not _challenges.has(id):
-		return
-
-	var icon: ChallengeIcon = _challenges[id]
-	if icon:
-		icon.queue_free()
-	_challenges.erase(id)
-	_progress.erase(id)
-	print("[ChallengeUI] Removed challenge icon:", id)
-	# Animate the remaining cards to their new positions
-	await get_tree().process_frame # Wait for layout to update
-	animate_challenge_shift()
-
-func get_challenge_icon(id: String) -> ChallengeIcon:
-	if container:
-		for child in container.get_children():
-			if child is ChallengeIcon and child.data and child.data.id == id:
-				return child
-	return null
-
-func animate_challenge_shift() -> void:
-	# Animate all ChallengeIcons to their new positions after a layout change
-	print("[ChallengeUI] Animating challenge icons to new positions")
-	for child in container.get_children():
-		if child is ChallengeIcon:
-			var icon := child as ChallengeIcon
-			var target_pos := icon.position
-			if not icon.has_meta("last_pos"):
-				icon.set_meta("last_pos", target_pos)
-			var last_pos: Vector2 = icon.get_meta("last_pos")
-			# Move icon to last known position before tweening to new position
-			icon.position = last_pos
-			# Tween to new position
-			print("[ChallengeUI] Tweening icon", icon.data.id if icon.data else "unknown", "from", last_pos, "to", target_pos)
-			var tween := create_tween()
-			tween.tween_property(icon, "position", target_pos, 0.75).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-			icon.set_meta("last_pos", target_pos)
-
-func animate_challenge_removal(challenge_id: String, on_finished: Callable) -> void:
-	var icon = get_challenge_icon(challenge_id)
-	if icon:
-		print("[ChallengeUI] Animating challenge icon for removal:", challenge_id)
-		var tween := create_tween()
-		# 1. Squish down
-		tween.tween_property(icon, "scale", Vector2(1.2, 0.2), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		# 2. Stretch up
-		tween.tween_property(icon, "scale", Vector2(0.8, 1.6), 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		# 3. Move up and fade out
-		var start_pos = icon.position
-		var end_pos = start_pos + Vector2(0, -icon.size.y * 8)
-		tween.tween_property(icon, "position", end_pos, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-		tween.tween_property(icon, "modulate:a", 0.0, 0.35).set_trans(Tween.TRANS_LINEAR)
-		# 4. When finished, call the provided callback
-		tween.finished.connect(on_finished)
-	else:
-		print("[ChallengeUI] No icon found for challenge, skipping animation:", challenge_id)
-		on_finished.call()
-
-func _on_challenge_progress_updated(progress: float, id: String) -> void:
-	_progress[id] = progress
-	var icon = get_challenge_icon(id)
-	if icon:
-		icon.set_progress(progress)
-	if _current_state == State.FANNED_OUT and _detail_cards.has(id):
-		var card: ChallengeDetailCard = _detail_cards[id]
-		if is_instance_valid(card):
-			card.refresh_score_history()
-
-func _on_challenge_completed(id: String) -> void:
-	var icon = get_challenge_icon(id)
-	if icon:
-		icon.set_progress(1.0)
-		
-		# Create a success effect
-		var tween = create_tween()
-		tween.tween_property(icon, "modulate", Color(0.2, 1.0, 0.2), 0.5)
-		tween.tween_property(icon, "modulate", Color.WHITE, 0.5)
-
-func _on_challenge_failed(id: String) -> void:
-	var icon = get_challenge_icon(id)
-	if icon:
-		# Juice: challenge failed effect
-		var tfx = get_node_or_null("/root/TweenFXHelper")
-		if tfx:
-			tfx.negative_hit(icon)
-		
-		# "FAILED" stamp
-		var stamp = Label.new()
-		stamp.text = "FAILED"
-		stamp.set_anchors_preset(Control.PRESET_CENTER)
-		stamp.z_index = 50
-		stamp.rotation_degrees = -15
-		var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
-		if vcr_font:
-			stamp.add_theme_font_override("font", vcr_font)
-		stamp.add_theme_font_size_override("font_size", 28)
-		stamp.add_theme_color_override("font_color", Color(1.0, 0.1, 0.1, 1.0))
-		icon.add_child(stamp)
-		
-		if tfx:
-			tfx.play_preset(stamp, "impact_land")
-		
-		# Failure sound
-		var audio_mgr = get_node_or_null("/root/AudioManager")
-		if audio_mgr and audio_mgr.has_method("play_denied_sound"):
-			audio_mgr.play_denied_sound()
-		
-		# Red vignette pulse
-		var vignette = ColorRect.new()
-		vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
-		vignette.color = Color(0.8, 0.1, 0.1, 0.0)
-		vignette.z_index = 40
-		vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(vignette)
-		var vig_tween = create_tween()
-		vig_tween.tween_property(vignette, "color:a", 0.15, 0.2)
-		vig_tween.tween_property(vignette, "color:a", 0.0, 0.4)
-		vig_tween.tween_callback(vignette.queue_free)
-		
-		# Original failure color tween
-		var tween = create_tween()
-		tween.tween_property(icon, "modulate", Color(1.0, 0.2, 0.2), 0.5)
-		tween.tween_property(icon, "modulate", Color.WHITE, 0.5)
-
-
-# ---- Fan-out system ----
-enum State { NORMAL, FANNED_OUT }
-var _current_state: State = State.NORMAL
-var _background: ColorRect
-
-func _get_fan_overlay() -> CanvasLayer:
-	return FanOverlayHelper.get_overlay(self)
-
-func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		if _current_state == State.FANNED_OUT:
-			_fold_back_challenges()
-			get_viewport().set_input_as_handled()
-		elif _current_state == State.NORMAL:
-			if not _challenges.is_empty():
-				_fan_out_challenges()
-				get_viewport().set_input_as_handled()
-
-func _fan_out_challenges() -> void:
-	if _current_state == State.FANNED_OUT:
-		return
-	_current_state = State.FANNED_OUT
-
-	var overlay := _get_fan_overlay()
-	var viewport_size := get_viewport_rect().size
-
-	# Create dim background
-	_background = FanOverlayHelper.create_background("ChallengeFanBackground")
-	overlay.add_child(_background)
-	_background.visible = true
-	_background.gui_input.connect(_on_background_clicked)
-
-	# Hide compact icons — detail cards take over
-	for icon in _challenges.values():
-		(icon as ChallengeIcon).visible = false
-
-	_detail_cards.clear()
-
-	var challenge_ids := _challenges.keys()
-	var count := challenge_ids.size()
-	var card_width := 220.0
-	var spacing := 240.0
-	var total_width := count * spacing - (spacing - card_width)
-	var start_x := (viewport_size.x - total_width) / 2.0
-	var center_y := viewport_size.y / 2.0
-
-	for i in range(count):
-		var id: String = challenge_ids[i]
-		var icon: ChallengeIcon = _challenges[id]
-		if not icon or not icon.data:
-			continue
-
-		var card := ChallengeDetailCard.new()
-		overlay.add_child(card)
-		card.z_index = 200 + i
-
-		var target_x := start_x + i * spacing
-		var target_y := center_y - 160.0  # 320px card height / 2
-		var target_pos := Vector2(target_x, target_y)
-
-		var prog: float = _progress.get(id, 0.0)
-		card.setup(icon.data, prog)
-
-		# Drop-in animation
-		card.position = target_pos - Vector2(0, 300)
-		card.modulate.a = 0.0
-		var tween := create_tween()
-		tween.tween_property(card, "position", target_pos, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tween.parallel().tween_property(card, "modulate:a", 1.0, 0.35)
-
-		_detail_cards[id] = card
-
-func _fold_back_challenges() -> void:
-	if _current_state == State.NORMAL:
-		return
-	_current_state = State.NORMAL
-
-	# Free all detail cards
-	for card in _detail_cards.values():
-		if is_instance_valid(card):
-			(card as ChallengeDetailCard).queue_free()
-	_detail_cards.clear()
-
-	# Show compact icons again
-	for icon in _challenges.values():
-		(icon as ChallengeIcon).visible = true
-
-	if _background:
-		_background.queue_free()
-		_background = null
-
-func _on_background_clicked(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		_fold_back_challenges()

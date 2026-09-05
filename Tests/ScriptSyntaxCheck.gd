@@ -6,7 +6,7 @@ func _init():
 		"res://Scripts/Effects/tv_power_controller.gd",
 		"res://Scripts/Effects/CRTManager.gd",
 		"res://Scripts/UI/new_round_panel.gd",
-		"res://Scripts/UI/score_card_ui.gd",
+		"res://Scripts/UI/Scorecard/scorecard_ui.gd",
 		"res://Scripts/UI/game_button_ui.gd",
 		"res://Scripts/Core/game_controller.gd",
 		"res://Scripts/UI/debug_panel.gd",

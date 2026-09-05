@@ -57,24 +57,36 @@ func _ensure_structure() -> void:
 		shell.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(shell)
 
-	spine_rect = shell.get_node_or_null("IconRect") as TextureRect
+	var content: Control = shell.get_node_or_null("Content") as Control
+	if not content:
+		# Plain Control layer: Shell is a PanelContainer and would force every
+		# direct child to full-rect, breaking anchored icon/title regions
+		content = Control.new()
+		content.name = "Content"
+		content.set_anchors_preset(Control.PRESET_FULL_RECT)
+		content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		shell.add_child(content)
+
+	spine_rect = content.get_node_or_null("IconRect") as TextureRect
 	if not spine_rect:
 		spine_rect = TextureRect.new()
 		spine_rect.name = "IconRect"
-		spine_rect.anchor_left = 0.5
+		# Anchored region (bottom strip reserved for the title) + centered
+		# stretch: any icon size centers on both axes inside the slot
+		spine_rect.anchor_left = 0.0
 		spine_rect.anchor_top = 0.0
-		spine_rect.anchor_right = 0.5
-		spine_rect.anchor_bottom = 0.0
-		spine_rect.offset_left = -ICON_MAX_SIZE.x * 0.5
-		spine_rect.offset_top = 6.0
-		spine_rect.offset_right = ICON_MAX_SIZE.x * 0.5
-		spine_rect.offset_bottom = 6.0 + ICON_MAX_SIZE.y
-		spine_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		spine_rect.anchor_right = 1.0
+		spine_rect.anchor_bottom = 1.0
+		spine_rect.offset_left = 4.0
+		spine_rect.offset_top = 4.0
+		spine_rect.offset_right = -4.0
+		spine_rect.offset_bottom = -20.0
+		spine_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		spine_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		spine_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		shell.add_child(spine_rect)
+		content.add_child(spine_rect)
 
-	title_label = shell.get_node_or_null("TitleLabel") as Label
+	title_label = content.get_node_or_null("TitleLabel") as Label
 	if not title_label:
 		title_label = Label.new()
 		title_label.name = "TitleLabel"
@@ -90,9 +102,9 @@ func _ensure_structure() -> void:
 		title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		title_label.clip_text = true
 		title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		shell.add_child(title_label)
+		content.add_child(title_label)
 
-	rating_label = shell.get_node_or_null("RatingLabel") as Label
+	rating_label = content.get_node_or_null("RatingLabel") as Label
 	if not rating_label:
 		rating_label = Label.new()
 		rating_label.name = "RatingLabel"
@@ -107,7 +119,7 @@ func _ensure_structure() -> void:
 		rating_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		rating_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		rating_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		shell.add_child(rating_label)
+		content.add_child(rating_label)
 
 func _apply_shell_style() -> void:
 	var style := StyleBoxFlat.new()

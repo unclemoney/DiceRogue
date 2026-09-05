@@ -188,7 +188,9 @@ Full documentation with parameters, recipes, and technical deep-dives: See `ARCA
   - **GameButtonUI**: single-row action strip for Next Turn, Shop, and Next Round using the shared neon action-button theme
   - **RollButtonUI**: enlarged glass-neon roll button with a custom shader, pointer-follow glow, proximity-based intensity, keyboard hint text, and shell-level TweenFX pulse/bounce feedback
   - **ScoreCardUI**: score rows now use fixed score lanes, stronger outline/shadow contrast, and translucent mall-core glass button states that adapt by channel via `ChannelManager` and `ChannelDifficultyData.ui_contrast_mode`
-  - **ChoreUI**: panel-embedded chore meter with a horizontal neon progress bar, live task label, hover glow response, and click-expanded chore board that fans completed chores under a centered status panel
+  - **ChoreUI**: panel-embedded chore meter with a GameProgressBar (Bonus = pink family), live task label, hover glow response, and click-expanded chore board that fans completed chores under a centered status panel
+  - **ChallengeUI** (`Scripts/UI/challenge_ui.gd`): the round goalpost panel — zone/store name (large warm-white, left), a dominant teal GameProgressBar toward the round target, challenge progress "21 / 75" (left) and the per-round "TOTAL 21" (right, scale-punches on increase). Star ratings and the ChallengeIcon fan-out are retired
+  - **GameProgressBar** (`Scenes/UI/game_progress_bar.tscn`, `Scripts/UI/game_progress_bar.gd`): the single custom bar for all contexts (Challenge = teal, Bonus = pink, resources = gold). The parent draws the rounded near-black track and clips the fill children to that drawn shape via `clip_children = CLIP_CHILDREN_AND_DRAW` (no fill-corner bleed at low percentages). The fill runs `Scripts/Shaders/progress_bar_fill.gdshader` (vertical glass gradient + one diagonal sheen band per value change that freezes after ~2s; overflow past max_value renders a hotter, ~1.5x-faster layer). Optional 10% tick notches + threshold marker; ~250ms ease-out sweeps, never snaps. TextureProgressBar is retired; tint_progress/tint_under/tint_over compat props remain. Test: `Tests/GameProgressBarTest.tscn`, debug: F12 → GameUI → "Progress Bar Showcase"
   - **InteractiveGameTitle** (`Scenes/UI/InteractiveGameTitle.tscn`, `Scripts/UI/interactive_game_title.gd`): bounded per-letter center title that keeps hover/click interactivity and reacts to rolls, scoring, consumables, power-ups, debuffs, and challenge events with intensity scaling driven by score, round, and turn context
   - Core gameplay panels now share a mall-core glass shell: dark plum fill, neon magenta borders, teal CTA accents, rounded corners, and VCR-styled outlined text
   - Glowing titles via `GlowingTitle.tscn` (SubViewport + WorldEnvironment) remain on the supporting panels; the center title panel now hosts `InteractiveGameTitle`
@@ -336,11 +338,18 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
 - **ScoreModifierManager** (autoload, file: `Scripts/Managers/MultiplierManager.gd`) - Handles all score bonuses and multipliers
 - **Autoscoring Priority**: When "Next Turn" button auto-selects scoring category, uses priority system to prefer more specific categories when scores are tied (e.g., Four of a Kind over Three of a Kind)
 
+#### Scorecard UI (row list)
+- **Scene/Script**: `Scenes/UI/Scorecard/scorecard.tscn` + `Scripts/UI/Scorecard/scorecard_ui.gd` (`class_name ScoreCardUI`) — flat row list replacing the old pill-button grid: `[level chip] [category name] ... [score]` per category, plus summary rows (Sub Total, Bonus progress, totals, Yahtzee Bonus)
+- **Components**: `Scenes/UI/Scorecard/level_chip.tscn` (upgrade-level chip), `Scenes/UI/Scorecard/scorecard_row.tscn` (`ScorecardRow` button row); shaders `Scripts/Shaders/row_highlight_pulse.gdshader` (power-up highlight wash) and `Scripts/Shaders/row_blinds.gdshader` (round-start/end stripe wipe)
+- **Behavior**: ghost previews (teal, projected base × level) refresh off dice rolls/locks; hover shows "+N"; scoring locks the row; mode gates (double / reroll / any-score / go-broke) preserved; upgrade/downgrade chip animations driven by `Scorecard.category_upgraded` / `category_downgraded`
+- **Round lifecycle**: rows start covered; `animate_entrance()` (awaited by GameController at round start) plays the populate wipe, `play_depopulate()` wipes out at round/game end
+- **Test scene**: `Tests/ScorecardV2Test.tscn` — run with `-- --auto-test` for the headless assertion suite
+
 ### Economy & Items
 - **PlayerEconomy** (autoload) - Money and shop transactions
 - **PowerUps** (`Scripts/PowerUps/`) - Permanent scoring bonuses
   - **FullHousePowerUp**: Grants $7 × (total full houses rolled) for each new full house
-  - **Highlighted Score**: Marks one open scorecard category with a chasing neon border; scoring that category grants a 1.5× multiplier and triggers a burst celebration before the highlight moves.
+  - **Highlighted Score**: Marks one open scorecard category with a pulsing teal wash; scoring that category grants a 1.5× multiplier and triggers a burst celebration before the highlight moves.
   - **New Wave PowerUps** (10 total): Purple Payout, Mod Money, Blue Safety Net, Chore Sprint, Straight Triplet Master, Modded Dice Mastery, Debuff Destroyer, Challenge Easer, Azure Perfection, Rainbow Surge
     - Themes: dice color synergies, mod-powerup synergies, straight combos, economy/chores, debuff management, round-target easing
   - **Risk & Reward PowerUps** (6 total):

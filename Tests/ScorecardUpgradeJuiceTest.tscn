@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://Tests/scorecard_upgrade_juice_test.gd" id="1_testscript"]
 [ext_resource type="PackedScene" uid="uid://bsukvul4wop20" path="res://Scenes/ScoreCard/score_card.tscn" id="2_scorecard"]
-[ext_resource type="PackedScene" uid="uid://sliaarrkymdo" path="res://Scenes/UI/score_card_ui.tscn" id="3_scorecardui"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/Scorecard/scorecard.tscn" id="3_scorecardui"]
 
 [node name="ScorecardUpgradeJuiceTest" type="Control"]
 layout_mode = 3

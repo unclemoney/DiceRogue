@@ -30,7 +30,6 @@ var docked_allowance_active: bool = false  # Docked Allowance grounding: withhol
 var insurance_policy_active: bool = false  # If true, next 0-score grants $75
 var clearance_rack_active: bool = false  # If true, shop rerolls are free this visit
 
-const SCORE_CARD_UI_SCRIPT := preload("res://Scripts/UI/score_card_ui.gd")
 const DEBUFF_MANAGER_SCRIPT := preload("res://Scripts/Managers/DebuffManager.gd")
 const DEBUFF_UI_SCRIPT := preload("res://Scripts/UI/debuff_ui.gd")
 const ScoreCard := preload("res://Scenes/ScoreCard/score_card.gd")
@@ -4272,9 +4271,12 @@ func _current_store_id() -> String:
 func _on_round_score_changed(total_score: int) -> void:
 	if _game_ended or not round_manager or not challenge_manager:
 		return
-	# Keep the store icon's progress bar in sync with the scorecard total
-	if _current_round_target > 0 and is_instance_valid(challenge_ui) and challenge_ui.has_method("set_store_progress"):
-		challenge_ui.set_store_progress(float(total_score) / float(_current_round_target))
+	# Keep the store progress panel in sync with the scorecard round total
+	if _current_round_target > 0 and is_instance_valid(challenge_ui):
+		if challenge_ui.has_method("set_store_score"):
+			challenge_ui.set_store_score(total_score, _current_round_target)
+		elif challenge_ui.has_method("set_store_progress"):
+			challenge_ui.set_store_progress(float(total_score) / float(_current_round_target))
 	if round_manager.is_challenge_completed:
 		return
 	if _current_round_target > 0 and total_score >= _current_round_target:
@@ -4622,6 +4624,10 @@ func _on_challenge_failed(id: String) -> void:
 func _on_challenge_selected(id: String) -> void:
 	print("[GameController] Challenge selected:", id)
 
+	# Icon highlight belonged to the deprecated ChallengeIcon strip; the new
+	# progress panel has no per-challenge icons.
+	if not challenge_ui.has_method("get_challenge_icon"):
+		return
 	var icon = challenge_ui.get_challenge_icon(id) as ChallengeIcon
 	if icon:
 		icon.set_active(true)
@@ -4690,6 +4696,12 @@ func _update_power_ups_for_dice(dice_values: Array) -> void:
 
 func _on_round_completed(round_number: int) -> void:
 	print("[GameController] Round", round_number, "completed successfully")
+
+	# Wipe ghost projections before the blinds wipe so stale dice state
+	# cannot repaint ghosts during or after the depopulate animation
+	if score_card_ui and round_number > 0:
+		score_card_ui.clear_projections()
+		score_card_ui.play_depopulate()
 	
 	# Award round completion bonus
 	if round_manager:
@@ -4706,6 +4718,11 @@ func _on_round_failed(round_number: int) -> void:
 
 func _on_all_rounds_completed() -> void:
 	print("[GameController] All rounds completed! Game win condition reached.")
+
+	# Scorecard blinds wipe out on game completion; not awaited
+	if score_card_ui:
+		score_card_ui.clear_projections()
+		score_card_ui.play_depopulate()
 	
 	# Mark game as ended - blocks shop access
 	_game_ended = true
@@ -4972,6 +4989,9 @@ func _on_round_started(round_number: int) -> void:
 	# Reset scorecard state for new round - ensure buttons are unlocked
 	if score_card_ui:
 		score_card_ui.turn_scored = false
+		# Close the ghost gate before update_all so last round's dice
+		# cannot repaint projections; ghosts return on the first roll
+		score_card_ui.clear_projections()
 		score_card_ui.enable_all_score_buttons()
 		# Remove any lingering best-hand highlight from the previous round
 		score_card_ui.clear_category_highlight()

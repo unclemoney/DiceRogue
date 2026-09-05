@@ -47,13 +47,13 @@ const TURN_INFO_RATIO: float = 25.0
 const POWER_UP_RATIO: float = 50.0
 const MONEY_RATIO: float = 25.0
 
-const CHALLENGE_RATIO: float = 14.5 #19
+const CHALLENGE_RATIO: float = 20.25 # was 14.5; reclaimed from title
 const DEBUFF_RATIO: float = 14.5
 const CONSUMABLE_RATIO: float = 37.8
 const CONSOLE_RATIO: float = 18.7
 const LEFT_INFO_RATIO: float = 14.5
 
-const TITLE_RATIO: float = 23.0
+const TITLE_RATIO: float = 17.25 # was 23.0; shrunk 25% to feed Challenge
 const DICE_AREA_RATIO: float = 61.0
 const CHORE_METER_RATIO: float = 25.0
 const CENTER_ROLL_RATIO: float = 23.0
@@ -62,7 +62,7 @@ const SCORECARD_RATIO: float = 77.0
 const RIGHT_BUTTON_RATIO: float = 23.0
 
 # Visual theme colors
-const PANEL_BG: Color = Color(0.431373, 0.317647, 0.611765, 0.26) # Dark Purple
+const PANEL_BG: Color = Color(0.431373, 0.317647, 0.611765, 0.06) # Dark Purple
 const PANEL_BORDER: Color = Color(0.901961, 0.450980, 0.556863, 0.02) #Magenta
 const PANEL_BORDER_WIDTH: int = 2
 const PANEL_CORNER_RADIUS: int = 16
@@ -238,7 +238,7 @@ func _build_ui() -> void:
 
 	scorecard_container = _create_panel("ScorecardContainer", 1.0)
 	right_col.add_child(scorecard_container)
-	var scorecard := preload("res://Scenes/UI/score_card_ui.tscn").instantiate()
+	var scorecard := preload("res://Scenes/UI/Scorecard/scorecard.tscn").instantiate()
 	scorecard.name = "ScoreCardUI"
 	scorecard.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scorecard.size_flags_vertical = Control.SIZE_EXPAND_FILL

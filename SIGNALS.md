@@ -15,7 +15,7 @@ This document lists all signals in the DiceRogue codebase and explains their pur
 - `signal score_changed(total_score: int)` - Emitted whenever total score changes
 - `signal game_completed(final_score: int)` - Emitted when game ends (UNUSED)
 
-### ScoreCardUI Signals (`Scripts/UI/score_card_ui.gd`)
+### ScoreCardUI Signals (`Scripts/UI/Scorecard/scorecard_ui.gd`)
 - `signal hand_scored` - Emitted when player manually scores a hand
 - `signal score_rerolled(section: Scorecard.Section, category: String, score: int)` - Used by Score Reroll consumable
 - `signal score_doubled(section: Scorecard.Section, category: String, new_score: int)` - Used by Double Existing consumable

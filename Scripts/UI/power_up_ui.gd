@@ -121,7 +121,7 @@ func _ready() -> void:
 	# Defer layout until container size is known
 	resized.connect(_on_resized)
 	call_deferred("_adapt_layout")
-	call_deferred("_position_spines")
+	call_deferred("_initial_layout")
 	call_deferred("_connect_synergy_manager")
 	
 	print("[PowerUpUI] New spine-based system initialized")
@@ -130,6 +130,35 @@ func _ready() -> void:
 func _on_resized() -> void:
 	_adapt_layout()
 	call_deferred("_position_spines")
+
+
+## _initial_layout()
+##
+## First spine placement. A single call_deferred can still land before the
+## parent containers run their first sort (slot size 0), which was the
+## off-center-at-round-start bug — so wait out the sort here, once.
+func _initial_layout() -> void:
+	await _await_slot_layout()
+	_position_spines()
+
+
+func _on_slot_content_resized() -> void:
+	call_deferred("_position_spines")
+
+
+## _await_slot_layout() -> bool
+##
+## Waits (bounded) until this control and the first slot have real sizes,
+## i.e. until the container chain has sorted at least once.
+func _await_slot_layout() -> bool:
+	var frames := 0
+	while frames < 10:
+		if size.x > 0 and size.y > 0:
+			if not _slot_contents.is_empty() and _slot_contents[0].size.x > 0 and _slot_contents[0].size.y > 0:
+				return true
+		await get_tree().process_frame
+		frames += 1
+	return false
 
 
 func _adapt_layout() -> void:
@@ -364,6 +393,8 @@ func _create_compact_row() -> void:
 		slot_content.clip_contents = false
 		slot.add_child(slot_content)
 		_slot_contents.append(slot_content)
+		# Late container sorts must re-center the spine, not leave it stranded
+		slot_content.resized.connect(_on_slot_content_resized)
 
 	_overflow_label = Label.new()
 	_overflow_label.name = "OverflowLabel"
@@ -597,11 +628,9 @@ func add_power_up(data: PowerUpData) -> Node:
 func _position_spines() -> void:
 	if _slot_contents.is_empty():
 		return
-	if size.x <= 0 or size.y <= 0:
-		call_deferred("_position_spines")
-		return
-	if _slot_contents[0].size.x <= 0 or _slot_contents[0].size.y <= 0:
-		call_deferred("_position_spines")
+	# Sizes are zero until the container chain sorts; wait it out instead of
+	# centering against stale geometry (a single call_deferred was not enough)
+	if not await _await_slot_layout():
 		return
 
 	var ordered_ids: Array[String] = _get_ordered_power_up_ids()

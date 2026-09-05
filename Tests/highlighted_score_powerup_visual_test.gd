@@ -1,11 +1,11 @@
 extends Node2D
 
-const SCORECARD_UI_SCENE := preload("res://Scenes/UI/score_card_ui.tscn")
+const SCORECARD_UI_SCENE := preload("res://Scenes/UI/Scorecard/scorecard.tscn")
 
 
 ## _ready()
 ##
-## Runtime smoke test for the Highlighted Score shader overlay and trigger burst.
+## Runtime smoke test for the Highlighted Score pulse overlay and trigger burst.
 ## Instantiates the scorecard UI, binds a fresh Scorecard, plays the highlight,
 ## then triggers the burst animation before quitting.
 func _ready() -> void:
@@ -29,6 +29,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 
 	var scorecard := Scorecard.new()
+	add_child(scorecard)
 	scorecard_ui.bind_scorecard(scorecard)
 
 	await get_tree().process_frame
@@ -39,13 +40,13 @@ func _ready() -> void:
 		get_tree().quit(1)
 		return
 
-	var ones_button = scorecard_ui.upper_section_buttons.get("ones") as Button
-	if not ones_button or not ones_button.get_node_or_null("HighlightedScoreBorder"):
-		push_error("[HighlightedScorePowerUpVisualTest] Highlight overlay missing from Ones button")
+	var ones_row = scorecard_ui.rows.get(&"ones") as ScorecardRow
+	if not ones_row or not ones_row.highlight_active or not ones_row.get_node_or_null("HighlightPulse"):
+		push_error("[HighlightedScorePowerUpVisualTest] Highlight pulse missing from Ones row")
 		get_tree().quit(1)
 		return
 
-	print("[HighlightedScorePowerUpVisualTest] Highlight overlay applied")
+	print("[HighlightedScorePowerUpVisualTest] Highlight pulse applied")
 
 	await get_tree().create_timer(0.2).timeout
 	scorecard_ui.play_power_up_highlight_trigger(Scorecard.Section.UPPER, "ones")

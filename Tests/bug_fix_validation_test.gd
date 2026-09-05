@@ -121,12 +121,12 @@ func _test_bug2_large_straight_detection() -> void:
 
 # ─── Bug 4: Double mode check runs before dice validation ───
 func _test_bug4_double_mode_before_dice_check() -> void:
-	_log("\n[color=cyan]Bug 4: Double mode check ordering in score_card_ui[/color]")
+	_log("\n[color=cyan]Bug 4: Double mode check ordering in scorecard_ui[/color]")
 
-	var source = FileAccess.get_file_as_string("res://Scripts/UI/score_card_ui.gd")
+	var source = FileAccess.get_file_as_string("res://Scripts/UI/Scorecard/scorecard_ui.gd")
 
 	var double_check_pos = source.find("if is_double_mode:")
-	var dice_check_pos = source.find("if dice_hand and not dice_hand.can_any_dice_score():")
+	var dice_check_pos = source.find("if not dice_hand.can_any_dice_score():")
 
 	# Both should exist
 	var both_exist = double_check_pos != -1 and dice_check_pos != -1

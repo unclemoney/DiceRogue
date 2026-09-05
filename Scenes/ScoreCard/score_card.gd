@@ -16,6 +16,7 @@ signal yahtzee_bonus_achieved(points: int)
 signal score_changed(total_score: int)  # Add this signal
 signal game_completed(final_score: int) # Add this signal
 signal category_upgraded(section: Section, category: String, new_level: int)  # For score card upgrades
+signal category_downgraded(section: Section, category: String, new_level: int)  # For score card downgrades
 
 var upper_bonus := 0  # Add this to track the bonus
 var upper_bonus_awarded := false  # Track if bonus has been awarded
@@ -194,6 +195,46 @@ func upgrade_category(section: Section, category: String) -> void:
 				return
 	
 	emit_signal("category_upgraded", section, category, new_level)
+
+
+## downgrade_category(section, category)
+##
+## Downgrades a scoring category by one level (minimum 1).
+## Mirrors upgrade_category; emits category_downgraded so the UI can animate.
+## No-op (no signal) when the category is already at level 1.
+## @param section: Section enum (UPPER or LOWER)
+## @param category: String category name (e.g., "ones", "yahtzee")
+func downgrade_category(section: Section, category: String) -> void:
+	var current_level := 1
+	var new_level := 1
+
+	match section:
+		Section.UPPER:
+			if upper_levels.has(category):
+				current_level = upper_levels[category]
+			else:
+				push_error("[Scorecard] Invalid upper category for downgrade: " + category)
+				return
+		Section.LOWER:
+			if lower_levels.has(category):
+				current_level = lower_levels[category]
+			else:
+				push_error("[Scorecard] Invalid lower category for downgrade: " + category)
+				return
+
+	if current_level <= 1:
+		print("[Scorecard] Category '%s' already at minimum level 1 - no downgrade" % category)
+		return
+
+	new_level = current_level - 1
+	match section:
+		Section.UPPER:
+			upper_levels[category] = new_level
+		Section.LOWER:
+			lower_levels[category] = new_level
+	print("[Scorecard] Downgraded category '%s' from level %d to level %d" % [category, current_level, new_level])
+
+	emit_signal("category_downgraded", section, category, new_level)
 
 
 ## get_category_level(section, category)
@@ -1743,6 +1784,24 @@ func _calculate_base_score(category: String, dice_values: Array) -> int:
 	var typed_dice_values: Array[int] = []
 	typed_dice_values.assign(dice_values)
 	return ScoreEvaluatorSingleton.calculate_score_for_category(category, typed_dice_values)
+
+
+## preview_base_score(category, values) -> int
+##
+## Returns the unmodified base score for a category against the given dice
+## values. Wraps _calculate_base_score (gap-straight aware); no modifiers, no
+## money effects, no side effects. Used by ScoreCardUI ghost previews.
+func preview_base_score(category: String, values: Array[int]) -> int:
+	return _calculate_base_score(category, values)
+
+
+## qualifies_for_preview(category, values) -> bool
+##
+## True when a ghost preview should show for this category: dice values are
+## present and the base score is positive. Non-qualifying categories score 0,
+## so they show no ghost and no placeholder.
+func qualifies_for_preview(category: String, values: Array[int]) -> bool:
+	return values.size() > 0 and preview_base_score(category, values) > 0
 
 func evaluate_category(category: String, values: Array[int]) -> int:
 	# Additional safety check

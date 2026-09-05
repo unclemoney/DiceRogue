@@ -1,0 +1,98 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Tests/scorecard_v2_test.gd" id="1_testscript"]
+[ext_resource type="PackedScene" uid="uid://bsukvul4wop20" path="res://Scenes/ScoreCard/score_card.tscn" id="2_scorecard"]
+[ext_resource type="PackedScene" path="res://Scenes/UI/Scorecard/scorecard.tscn" id="3_scorecardui"]
+
+[node name="ScorecardV2Test" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_testscript")
+
+[node name="ScoreCard" parent="." instance=ExtResource("2_scorecard")]
+
+[node name="ScoreCardUI" parent="." instance=ExtResource("3_scorecardui")]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -340.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 680.0
+grow_horizontal = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 280.0
+offset_bottom = 400.0
+
+[node name="Label" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Scorecard V2 Test"
+horizontal_alignment = 1
+
+[node name="RollFakeDice" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Roll Fake Dice"
+
+[node name="ScoreRandom" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Score Random Category"
+
+[node name="UpgradeYahtzee" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Upgrade Yahtzee"
+
+[node name="ResetScores" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Reset (preserve levels)"
+
+[node name="Repopulate" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Populate"
+
+[node name="Depopulate" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Depopulate"
+
+[node name="DowngradeYahtzee" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Downgrade Yahtzee"
+
+[node name="HighlightYahtzee" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Highlight Yahtzee"
+
+[node name="HighlightTrigger" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Highlight Trigger Burst"
+
+[node name="ClearHighlight" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Clear Highlight"
+
+[node name="TestOutput" type="RichTextLabel" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+text = ""
+
+[connection signal="pressed" from="VBoxContainer/RollFakeDice" to="." method="_on_roll_fake_dice_pressed"]
+[connection signal="pressed" from="VBoxContainer/ScoreRandom" to="." method="_on_score_random_pressed"]
+[connection signal="pressed" from="VBoxContainer/UpgradeYahtzee" to="." method="_on_upgrade_yahtzee_pressed"]
+[connection signal="pressed" from="VBoxContainer/ResetScores" to="." method="_on_reset_pressed"]
+[connection signal="pressed" from="VBoxContainer/Repopulate" to="." method="_on_repopulate_pressed"]
+[connection signal="pressed" from="VBoxContainer/Depopulate" to="." method="_on_depopulate_pressed"]
+[connection signal="pressed" from="VBoxContainer/DowngradeYahtzee" to="." method="_on_downgrade_yahtzee_pressed"]
+[connection signal="pressed" from="VBoxContainer/HighlightYahtzee" to="." method="_on_highlight_yahtzee_pressed"]
+[connection signal="pressed" from="VBoxContainer/HighlightTrigger" to="." method="_on_highlight_trigger_pressed"]
+[connection signal="pressed" from="VBoxContainer/ClearHighlight" to="." method="_on_clear_highlight_pressed"]

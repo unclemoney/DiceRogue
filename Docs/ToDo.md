@@ -194,6 +194,7 @@
 - [X] What about removing your blockbuster card to stop you from buying more powerups as a grounding/debuff?
 - [X] Update Debuff, with a different background .png.
 - [X] Update Score Card UI by increasing the size of everything slightly, and create a proper border and title.
+- [X] Rebuild the scorecard as a flat row list (level chip + name + ghost preview + score) with blinds wipe populate/depopulate, upgrade/downgrade chip animations, and power-up highlight pulse. Replaces the pill-button grid (`Scenes/UI/Scorecard/`, old `score_card_ui.*` deleted).
 - [X] Create new challenges that are 1/2/3 difficulty, and then randomly pick challenges in a 1/1/2/2/3/3 fashion, and better scale the ever increasing scores.
 - [X] Make the chore complete more obvious.
 - [X] Right click to unlock all dice quickly.

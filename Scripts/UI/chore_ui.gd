@@ -5,18 +5,16 @@ class_name ChoreUI
 ##
 ## Displays the chore meter and current task inside the GameUI center column.
 ## Progress increases by 1 each dice roll and decreases by 20 when tasks complete.
-## Uses a TextureProgressBar with generated textures; tints shift with
-## progress (fill), Mom's mood (frame), and chore difficulty (track).
+## Uses a GameProgressBar; colors shift with progress (fill), Mom's mood
+## (overflow layer), and chore difficulty (track).
 ## Clicking on the meter opens a centered chore status panel.
 
 signal task_clicked
 
 @export var chores_manager_path: NodePath
-## Pixel offset applied to the progress (fill) texture on the meter.
-@export var texture_progress_offset: Vector2 = Vector2(67,0)
 
 # Node references
-var progress_bar: TextureProgressBar
+var progress_bar: GameProgressBar
 var task_label: Label
 var details_panel: PanelContainer
 var details_label: RichTextLabel
@@ -56,12 +54,6 @@ const CHORE_WARNING: Color = Color(0.886275, 0.67451, 0.356863, 1.0)
 const CHORE_SAFE: Color = Color(0.47451, 0.886275, 0.890196, 1.0)
 const MOOD_ANGRY: Color = Color(0.886275, 0.301961, 0.34902, 1.0)
 const DETAILS_PANEL_SIZE := Vector2(460, 340)
-# Bar textures (generated pixel art, 344x64). Tints multiply these, so the
-# tintable regions are drawn in light/neutral tones.
-const BAR_TEXTURE_UNDER : CompressedTexture2D = preload("res://Resources/Art/UI/under-export.png")
-const BAR_TEXTURE_PROGRESS : CompressedTexture2D = preload("res://Resources/Art/UI/progress-export.png")
-const BAR_TEXTURE_OVER : CompressedTexture2D = preload("res://Resources/Art/UI/over-export.png")
-const BAR_NINE_PATCH_MARGIN: int = 32
 # Standard UI font for text not covered by the panel theme (RichTextLabel).
 const VCR_FONT := preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 # Buff chips reuse the DebuffIcon scene so the SDF glyph shader renders
@@ -214,23 +206,13 @@ func _create_ui_structure() -> void:
 	meter_column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shell_content.add_child(meter_column)
 
-	progress_bar = TextureProgressBar.new()
+	progress_bar = GameProgressBar.new()
 	progress_bar.name = "ProgressBar"
 	progress_bar.min_value = 0
 	progress_bar.max_value = 100
 	progress_bar.value = 0
-	progress_bar.fill_mode = TextureProgressBar.FILL_LEFT_TO_RIGHT
-	progress_bar.texture_under = BAR_TEXTURE_UNDER
-	progress_bar.texture_progress = BAR_TEXTURE_PROGRESS
-	progress_bar.texture_over = BAR_TEXTURE_OVER
-	progress_bar.texture_progress_offset = texture_progress_offset
-	# Nine-patch on: the 344px-wide bar textures otherwise become the bar's
-	# minimum size, forcing the shell ~23px past the ChoreMeterContainer's
-	# right edge. With the 32px end caps preserved, the bar shrinks to its
-	# BAR_WIDTH x BAR_HEIGHT minimum and stretches to fit instead.
-	progress_bar.nine_patch_stretch = true
-	progress_bar.stretch_margin_left = BAR_NINE_PATCH_MARGIN
-	progress_bar.stretch_margin_right = BAR_NINE_PATCH_MARGIN
+	progress_bar.fill_color = CHORE_SAFE
+	progress_bar.show_ticks = true
 	progress_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	progress_bar.custom_minimum_size = Vector2(BAR_WIDTH, BAR_HEIGHT)
 	progress_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
