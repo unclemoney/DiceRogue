@@ -630,7 +630,7 @@ func _animate_in() -> void:
 	await panel_tween.finished
 	
 	# Jelly settle wobble on landing
-	TweenFX.jelly(dialog_panel, 1.2, 0.05, 2)
+	#TweenFX.jelly(dialog_panel, 1.2, 0.05, 2)
 	
 	# Wobble Mom portrait for extra personality
 	TweenFX.jelly(portrait, 0.8, 0.05, 2)

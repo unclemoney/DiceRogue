@@ -52,6 +52,13 @@ const MAX_POWER_UP_ITEMS: int = 6
 ## shelf presence and a price discount (discount applied in ShopItem).
 const MOM_APPROVED_WEIGHT_MULT: float = 1.5
 const MOM_APPROVED_DISCOUNT: float = 0.10
+## Rebel-mode stage colors for the Rep chip (Teacher's Pet -> Banned).
+const REP_STAGE_COLORS: Array[Color] = [
+	Color(0.47, 0.89, 0.89),  # teal
+	Color(1.0, 0.73, 0.49),   # amber
+	Color(0.9, 0.45, 0.56),   # magenta
+	Color(1.0, 0.25, 0.5),    # hot pink
+]
 const OWNERSHIP_PANEL_TYPES := ["mod", "colored_dice"]
 const OWNERSHIP_PANEL_TITLES := {
 	"mod": "MOD STOCK",
@@ -73,6 +80,7 @@ var mod_items := DEFAULT_SHOP_ITEMS          # Specific count for mods
 var colored_dice_items := DEFAULT_SHOP_ITEMS # Specific count for colored dice
 
 var purchased_items := {}  # Track purchased items by type: {"power_up": [], "consumable": [], "mod": [], "colored_dice": []}
+var _rep_chip_label: Label = null  # Rep indicator chip in the POGS tab corner
 var _tab_item_pools := {}
 var _tab_page_indices := {}
 var _footer_controls := {}
@@ -274,6 +282,7 @@ func _populate_shop_items() -> void:
 	for item_type in PAGED_ITEM_TYPES:
 		_render_current_page(item_type)
 	_refresh_all_ownership_panels()
+	_update_rep_chip()
 
 func _build_power_up_pool() -> Array:
 	var power_up_page_items: Array = []
@@ -2187,6 +2196,43 @@ func _configure_mouse_input() -> void:
 		print("[ShopUI] Set TabContainer mouse filter to PASS")
 	
 	print("[ShopUI] Mouse input configuration complete")
+
+
+## _update_rep_chip()
+##
+## Creates/refreshes the Rep indicator chip in the corner of the POGS tab:
+## current Rep, rebel stage, highest unlocked POG tier, and the next unlock.
+func _update_rep_chip() -> void:
+	var pm = get_node_or_null("/root/ProgressManager")
+	var pogs_tab = get_node_or_null("TabContainer/Pogs")
+	if not pm or not pm.has_method("get_rep") or not pogs_tab:
+		return
+	if _rep_chip_label == null:
+		_rep_chip_label = Label.new()
+		_rep_chip_label.name = "RepChip"
+		_rep_chip_label.add_theme_font_override("font", load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf"))
+		_rep_chip_label.add_theme_font_size_override("font_size", 14)
+		_rep_chip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_rep_chip_label.anchor_left = 1.0
+		_rep_chip_label.anchor_right = 1.0
+		_rep_chip_label.offset_left = -560.0
+		_rep_chip_label.offset_right = -12.0
+		_rep_chip_label.offset_top = 6.0
+		_rep_chip_label.offset_bottom = 28.0
+		_rep_chip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pogs_tab.add_child(_rep_chip_label)
+	var tier: int = pm.get_rep_tier()
+	var stage: int = pm.get_rep_stage()
+	#var text : String = "REP %d/%d · %s  |  POGs up to: %s" % [
+	#	pm.get_rep(), pm.MAX_REP, pm.get_rep_stage_name(), pm.get_rep_tier_name()]
+	var text : String = "REP %d" % [
+		pm.get_rep()]
+	if tier < pm.REP_TIER_THRESHOLDS.size() - 1:
+		text += "  (next: %s @ %d)" % [
+			pm.REP_TIER_NAMES[tier + 1], pm.REP_TIER_THRESHOLDS[tier + 1]]
+	_rep_chip_label.text = text
+	_rep_chip_label.add_theme_color_override("font_color", REP_STAGE_COLORS[clampi(stage, 0, REP_STAGE_COLORS.size() - 1)])
+
 
 ## populate_locked_items()
 ##
