@@ -54,7 +54,7 @@
 
 ## SYS:Chore — Chore System & Mom
 
-- [ ] `P1-Major`Teacher's Pet BUFF did not apply the +100 dollars
+- [X] `P1-Major`Teacher's Pet BUFF did not apply the +100 dollars
 - [ ] `P1-Major` Mom Dialog and reward should match. They currently do not align.
 - [X] `P1-Major` Chores should be filtered by the dice set being used. d4 runs should not show d6 chores.
 - [ ] `P1-Major` Chore Champion should also update rewards.
@@ -71,7 +71,7 @@
 - [ ] `P2-Minor` Update Challenge Icons.
 - [ ] `P2-Minor` Shockwave animations can also be applied to buttons that need to be pressed or chosen.
 - [ ] `P2-Minor` Click on the Mall Zone upper left to bring up the mall map. Show coming challenges.
-- [ ] `P2-Minor` Texture Progress Bars need to be reworked. Make them consistent across the game.
+- [X] `P2-Minor` Texture Progress Bars need to be reworked. Make them consistent across the game.
 - [X] `P2-Minor` Add commas for scores. Use e-notation for higher numbers.
 - [X] `P2-Minor` Mom Panel bounce-in is too harsh. Soften the animation.
 
