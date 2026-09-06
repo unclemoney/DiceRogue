@@ -32,6 +32,7 @@ func _ready() -> void:
 	_test_live_tier_upgrade()
 	_test_granted_only_exclusion()
 	await _test_game_controller_replacement_and_upgrade()
+	await _test_completed_round_cleanup_preserves_teacher_pet_payout()
 	await _test_save_load_restore()
 
 	if _failures == 0:
@@ -224,6 +225,30 @@ func _test_game_controller_replacement_and_upgrade() -> void:
 	_check("Teacher's Pet keeps highest granted tier", gc.is_debuff_active("teacher_pet") and int(gc.active_debuffs["teacher_pet"].intensity) == 2)
 	_check("Teacher's Pet tier 2 registers +25 additive", smm != null and smm.get_total_additive() == 25)
 	_check("Teacher's Pet tier 2 keeps multiplier neutral", smm != null and is_equal_approx(smm.get_total_multiplier(), 1.0))
+
+	await _cleanup_harness(gc, harness)
+
+
+func _test_completed_round_cleanup_preserves_teacher_pet_payout() -> void:
+	var harness = await _spawn_harness()
+	var gc = harness.get("game_controller") if not harness.is_empty() else null
+	_check("cleanup harness exposes GameController", gc != null)
+	if not is_instance_valid(gc):
+		await _cleanup_harness(gc, harness)
+		return
+
+	gc._clear_active_debuffs()
+	_reset_score_modifiers()
+	gc._grant_teacher_pet_buff(1)
+	_check("Teacher's Pet tier 1 preview exists before cleanup", gc._get_round_end_buff_bonus_preview() == 100)
+
+	gc._expire_completed_round_statuses()
+	_check("completed-round cleanup keeps Teacher's Pet active", gc.is_debuff_active("teacher_pet"))
+	_check("completed-round cleanup preserves Teacher's Pet preview", gc._get_round_end_buff_bonus_preview() == 100)
+
+	gc._clear_grounded_debuffs()
+	_check("shop transition clears Teacher's Pet after payout window", not gc.is_debuff_active("teacher_pet"))
+	_check("shop transition clears Teacher's Pet preview", gc._get_round_end_buff_bonus_preview() == 0)
 
 	await _cleanup_harness(gc, harness)
 

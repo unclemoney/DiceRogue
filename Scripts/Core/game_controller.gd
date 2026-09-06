@@ -4390,8 +4390,9 @@ func _on_challenge_completed(id: String) -> void:
 	if score_card_ui:
 		score_card_ui.clear_category_highlight()
 
-	# Clear round-scoped debuffs and buffs on the next idle tick so every
-	# challenge_completed listener observes the completion before teardown.
+	# Clear automatic round debuffs and Mom punishments on the next idle tick
+	# so every challenge_completed listener observes the completion before
+	# teardown. Mom-granted buffs persist until the round-end payout path.
 	_schedule_completed_round_status_cleanup()
 
 	# Queue the round transition overlay after fireworks finish (~1.5s)
@@ -4411,8 +4412,9 @@ func _schedule_completed_round_status_cleanup() -> void:
 
 ## _expire_completed_round_statuses() -> void
 ##
-## Removes automatic round debuffs, Mom-applied debuffs, and the Rebellion
-## buff immediately after a completed round so between-round state is clean.
+## Removes automatic round debuffs and Mom-applied punishments immediately
+## after a completed round so between-round state is clean. Mom-granted buffs
+## persist until the end-of-round payout/shop transition.
 func _expire_completed_round_statuses() -> void:
 	_round_status_cleanup_scheduled = false
 
@@ -4429,17 +4431,6 @@ func _expire_completed_round_statuses() -> void:
 		if is_debuff_active(debuff_id):
 			disable_debuff(debuff_id, true)
 	_grounded_debuffs.clear()
-
-	_last_completed_round_rebellion_stacks = 0
-	for buff_id in MOM_GRANTED_BUFF_IDS:
-		if not is_debuff_active(buff_id):
-			continue
-		if buff_id == "rebellion":
-			var rebellion = active_debuffs["rebellion"] as Debuff
-			if is_instance_valid(rebellion):
-				_last_completed_round_rebellion_stacks = maxi(int(rebellion.intensity), 1)
-		disable_debuff(buff_id, true)
-		print("[GameController] %s expired at round end" % buff_id)
 
 	if is_instance_valid(challenge_ui) and challenge_ui.has_method("set_store_debuffs"):
 		challenge_ui.set_store_debuffs([])
@@ -5828,7 +5819,7 @@ func _check_lock_dice_chore() -> void:
 ## Removes all debuffs that were applied by Mom (NC-17 consequences).
 ## Also clears round-scoped Mom-granted buffs and restores dice colors
 ## after a temporary Mom cosmetic lock.
-## Called at the start of a new round.
+## Called at the shop transition and again at the start of a new round.
 func _clear_grounded_debuffs() -> void:
 	print("[GameController] Clearing grounded debuffs: %s" % [_grounded_debuffs])
 	for debuff_id in _grounded_debuffs:
@@ -5838,6 +5829,10 @@ func _clear_grounded_debuffs() -> void:
 	# Mom-granted buffs last only until the round ends.
 	for buff_id in MOM_GRANTED_BUFF_IDS:
 		if is_debuff_active(buff_id):
+			if buff_id == "rebellion":
+				var rebellion = active_debuffs["rebellion"] as Debuff
+				if is_instance_valid(rebellion):
+					_last_completed_round_rebellion_stacks = maxi(int(rebellion.intensity), 1)
 			disable_debuff(buff_id)
 			print("[GameController] %s expired at round end" % buff_id)
 
