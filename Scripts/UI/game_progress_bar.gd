@@ -23,7 +23,8 @@ class_name GameProgressBar
 ## Overflow (value > max) runs the sheen ~1.5x faster on a hotter base.
 ##
 ## TextureProgressBar-compat props (tint_progress / tint_under / tint_over)
-## are kept so existing callers drop in without changes.
+## are kept so existing callers drop in without changes. fill_ramp mode lerps
+## the fill calm -> warm -> hot toward max; frame_color tints a track border.
 
 const TWEEN_DURATION := 0.25
 const TICK_ALPHA := 0.12
@@ -72,6 +73,24 @@ const FILL_SHADER := preload("res://Scripts/Shaders/progress_bar_fill.gdshader")
 	set(v):
 		threshold = v
 		_redraw_overlay()
+## Ramp mode: the fill color lerps calm -> warm -> hot as value approaches
+## max (for meters that fill toward failure). Ignored while tint_progress
+## is set to a non-white color (that compat slot still wins).
+@export var fill_ramp: bool = false:
+	set(v):
+		fill_ramp = v
+		_update_fills()
+@export var ramp_calm: Color = Color(0.29, 0.85, 0.75)
+@export var ramp_warm: Color = Color(0.95, 0.70, 0.30)
+@export var ramp_hot: Color = Color(0.90, 0.28, 0.33)
+## Frame (track border) tint; TRANSPARENT = no border (default, zero impact).
+@export var frame_color: Color = Color.TRANSPARENT:
+	set(v):
+		frame_color = v
+		if _track_style:
+			_track_style.border_color = v
+			_track_style.set_border_width_all(0 if v.a == 0.0 else 2)
+			queue_redraw()
 
 # TextureProgressBar-compat tints. tint_under = WHITE restores the default
 # track (texture bars treated white as "no tint"). tint_over is a translucent
@@ -209,6 +228,11 @@ func _update_fills() -> void:
 	var excess := clampf((_display_value - max_value) / span, 0.0, 1.0)
 	_overflow_rect.anchor_right = excess
 	_overflow_rect.visible = excess > 0.0
+	if fill_ramp and tint_progress == Color.WHITE:
+		var r := clampf((_display_value - min_value) / span, 0.0, 1.0)
+		_fill_draw_color = ramp_calm.lerp(ramp_warm, r * 2.0) if r < 0.5 \
+			else ramp_warm.lerp(ramp_hot, (r - 0.5) * 2.0)
+		_apply_fill_colors()
 
 
 ## _sweep_to(target, hot)

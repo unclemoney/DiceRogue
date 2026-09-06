@@ -3,26 +3,49 @@ class_name ChoreUI
 
 ## ChoreUI
 ##
-## Displays the chore meter and current task inside the GameUI center column.
-## Progress increases by 1 each dice roll and decreases by 20 when tasks complete.
-## Uses a GameProgressBar; colors shift with progress (fill), Mom's mood
-## (overflow layer), and chore difficulty (track).
-## Clicking on the meter opens a centered chore status panel.
+## Displays the chore task, goof-off meter, and one buff slot inside the
+## GameUI center column. The meter fills toward failure using the
+## GameProgressBar fill_ramp mode; Mom's mood tints the meter frame and the
+## GOOF-OFF label. Clicking opens a centered chore status fan-out panel.
 
 signal task_clicked
 
 @export var chores_manager_path: NodePath
+## Optional Mom portrait for the fan-out panel; a placeholder shows when unset.
+@export var portrait_texture: Texture2D
 
 # Node references
 var progress_bar: GameProgressBar
 var task_label: Label
 var details_panel: PanelContainer
-var details_label: RichTextLabel
-var buff_icon_row: PanelContainer
+var buff_icon_row: Panel
 var buff_detail_row: HBoxContainer
 var _buff_icon_box: HBoxContainer
 var _compact_shell: PanelContainer
+var _goof_off_label: Label
+var _buff_slot_style: StyleBoxFlat
+var _buff_slot_overlay: Control
+var _empty_glyph: Label
+var _duration_bar: ColorRect
 var _chores_manager = null  # ChoresManager - duck typed to avoid class resolution issues
+
+# Fan-out node references
+var _title_label: Label
+var _difficulty_tag: Label
+var _desc_label: Label
+var _mom_portrait: TextureRect
+var _mom_placeholder: Label
+var _mood_label: Label
+var _fan_progress_bar: GameProgressBar
+var _progress_numeral: Label
+var _expiry_label: Label
+var _rep_separator: HSeparator
+var _rep_block: VBoxContainer
+var _rep_tier_label: Label
+var _rep_bar: GameProgressBar
+var _rep_quote_label: Label
+var _easy_badge_panel: PanelContainer
+var _hard_badge_panel: PanelContainer
 
 # Buff icon state (e.g. the Rebellion buff lives here, not in the Debuff UI)
 var _buff_icons: Dictionary = {}         # id -> DebuffIcon (compact chip)
@@ -43,7 +66,6 @@ var _compact_hover_tween: Tween
 # Visual settings
 const BAR_WIDTH: float = 118.0 # narrowed so the 84px buff slot fits the panel
 const BAR_HEIGHT: float = 26.0
-const WARNING_THRESHOLD: float = 60.0
 const CHORE_BG_SOFT: Color = Color(0.247059, 0.219608, 0.345098, 0.4)
 const CHORE_ACCENT: Color = Color(0.137255, 0.411765, 0.415686, 1.0)
 const CHORE_TEXT: Color = Color(0.968627, 0.941176, 1.0, 1.0)
@@ -52,10 +74,10 @@ const CHORE_OUTLINE: Color = Color(0.129412, 0.121569, 0.2, 1.0)
 const CHORE_DANGER: Color = Color(0.886275, 0.392157, 0.54902, 1.0)
 const CHORE_WARNING: Color = Color(0.886275, 0.67451, 0.356863, 1.0)
 const CHORE_SAFE: Color = Color(0.47451, 0.886275, 0.890196, 1.0)
+const CHORE_PINK: Color = Color(1.0, 0.427451, 0.619608, 1.0)  # #ff6d9e section-header pink
 const MOOD_ANGRY: Color = Color(0.886275, 0.301961, 0.34902, 1.0)
-const DETAILS_PANEL_SIZE := Vector2(460, 340)
-# Standard UI font for text not covered by the panel theme (RichTextLabel).
-const VCR_FONT := preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+const DETAILS_PANEL_SIZE := Vector2(480, 420)
+# (VCR_FONT retired with the RichTextLabel fan-out; labels use the panel theme.)
 # Buff chips reuse the DebuffIcon scene so the SDF glyph shader renders
 # identically to the Debuff UI.
 const DEBUFF_ICON_SCENE: PackedScene = preload("res://Scenes/Debuff/DebuffIcon.tscn")
@@ -67,8 +89,7 @@ const BUFF_DETAIL_CHIP_SIZE := Vector2(44, 48)
 # empty-slot look (bg 0.12/0.10/0.14 @ 0.3, border 0.3/0.25/0.35 @ 0.15).
 # It expands vertically to fill the shell, so this is only the minimum.
 const BUFF_SLOT_SIZE := Vector2(84, 44)
-# Subtle alpha levels for the mood (frame) and difficulty (track) tints.
-const MOOD_TINT_ALPHA: float = 0.2
+# Subtle alpha for the difficulty (track) tint.
 const DIFFICULTY_TINT_ALPHA: float = 0.1
 
 func _ready() -> void:
@@ -187,15 +208,50 @@ func _create_ui_structure() -> void:
 	shell_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_compact_shell.add_child(shell_margin)
 
-	# Shell row: meter column (bar + task label) on the left, buff slot on
-	# the far right. The slot stretches the full shell height so it reads as
-	# a proper icon square rather than a sliver under the bar.
+	# Shell row, left to right: chore text block, goof-off meter (fills the
+	# remaining width), then the single buff slot on the far right. The slot
+	# stretches the full shell height so it reads as a proper icon square.
 	var shell_content = HBoxContainer.new()
 	shell_content.name = "ShellRow"
-	shell_content.add_theme_constant_override("separation", 4)
+	shell_content.add_theme_constant_override("separation", 8)
 	shell_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	shell_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shell_margin.add_child(shell_content)
+
+	var chore_block = VBoxContainer.new()
+	chore_block.name = "ChoreBlock"
+	chore_block.add_theme_constant_override("separation", 2)
+	chore_block.alignment = BoxContainer.ALIGNMENT_CENTER
+	chore_block.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	chore_block.custom_minimum_size = Vector2(150, 0)
+	chore_block.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shell_content.add_child(chore_block)
+
+	var chore_micro = Label.new()
+	chore_micro.name = "ChoreMicroLabel"
+	chore_micro.text = "CHORE"
+	chore_micro.add_theme_font_size_override("font_size", 9)
+	chore_micro.add_theme_color_override("font_color", CHORE_PINK)
+	chore_micro.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	chore_micro.add_theme_constant_override("outline_size", 1)
+	chore_micro.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chore_block.add_child(chore_micro)
+
+	task_label = Label.new()
+	task_label.name = "TaskLabel"
+	task_label.text = "No active chore"
+	task_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	task_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	task_label.add_theme_font_size_override("font_size", 10)
+	task_label.add_theme_color_override("font_color", CHORE_TEXT)
+	task_label.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	task_label.add_theme_constant_override("outline_size", 1)
+	task_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	task_label.max_lines_visible = 2
+	task_label.custom_minimum_size = Vector2(0, 28)
+	task_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	task_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chore_block.add_child(task_label)
 
 	var meter_column = VBoxContainer.new()
 	meter_column.name = "MeterColumn"
@@ -206,32 +262,28 @@ func _create_ui_structure() -> void:
 	meter_column.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shell_content.add_child(meter_column)
 
+	_goof_off_label = Label.new()
+	_goof_off_label.name = "GoofOffLabel"
+	_goof_off_label.text = "GOOF-OFF"
+	_goof_off_label.add_theme_font_size_override("font_size", 9)
+	_goof_off_label.add_theme_color_override("font_color", CHORE_SAFE)
+	_goof_off_label.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	_goof_off_label.add_theme_constant_override("outline_size", 1)
+	_goof_off_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	meter_column.add_child(_goof_off_label)
+
 	progress_bar = GameProgressBar.new()
 	progress_bar.name = "ProgressBar"
 	progress_bar.min_value = 0
 	progress_bar.max_value = 100
 	progress_bar.value = 0
 	progress_bar.fill_color = CHORE_SAFE
+	progress_bar.fill_ramp = true
 	progress_bar.show_ticks = true
 	progress_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	progress_bar.custom_minimum_size = Vector2(BAR_WIDTH, BAR_HEIGHT)
 	progress_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	meter_column.add_child(progress_bar)
-
-	task_label = Label.new()
-	task_label.name = "TaskLabel"
-	task_label.text = "No active chore"
-	task_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	task_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	task_label.add_theme_font_size_override("font_size", 10)
-	task_label.add_theme_color_override("font_color", CHORE_TEXT)
-	task_label.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
-	task_label.add_theme_constant_override("outline_size", 1)
-	task_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	task_label.custom_minimum_size = Vector2(0, 14)
-	task_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	task_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	meter_column.add_child(task_label)
 
 	_buff_chip_config = DebuffVisualConfigScript.new()
 	_buff_chip_config.compact_icon_size = Vector2(20, 20)
@@ -241,27 +293,64 @@ func _create_ui_structure() -> void:
 	# Reserved buff slot on the far right of the shell row, styled like the
 	# Debuff UI's translucent empty slots. It stretches the full shell
 	# height and is always visible so the layout never jumps; the chip is
-	# centered inside it on both axes.
-	buff_icon_row = PanelContainer.new()
+	# centered inside it on both axes. Empty state: dashed border (drawn by
+	# the overlay) plus a faint "+" glyph; filled state: solid border tinted
+	# to the buff's effect color, with a draining duration underline.
+	buff_icon_row = Panel.new()
 	buff_icon_row.name = "BuffIconRow"
 	buff_icon_row.custom_minimum_size = BUFF_SLOT_SIZE
 	buff_icon_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	buff_icon_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var slot_style := StyleBoxFlat.new()
-	slot_style.bg_color = Color(0.12, 0.10, 0.14, 0.3)
-	slot_style.border_color = Color(0.3, 0.25, 0.35, 0.15)
-	slot_style.set_border_width_all(1)
-	slot_style.set_corner_radius_all(10)
-	slot_style.corner_detail = 6
-	buff_icon_row.add_theme_stylebox_override("panel", slot_style)
+	_buff_slot_style = StyleBoxFlat.new()
+	_buff_slot_style.bg_color = Color(0.12, 0.10, 0.14, 0.3)
+	_buff_slot_style.set_border_width_all(0)  # empty state uses drawn dashes
+	_buff_slot_style.set_corner_radius_all(10)
+	_buff_slot_style.corner_detail = 6
+	buff_icon_row.add_theme_stylebox_override("panel", _buff_slot_style)
 	shell_content.add_child(buff_icon_row)
 
 	_buff_icon_box = HBoxContainer.new()
 	_buff_icon_box.name = "BuffIconBox"
+	_buff_icon_box.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_buff_icon_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	_buff_icon_box.add_theme_constant_override("separation", 2)
 	_buff_icon_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	buff_icon_row.add_child(_buff_icon_box)
+
+	_empty_glyph = Label.new()
+	_empty_glyph.name = "EmptyGlyph"
+	_empty_glyph.text = "+"
+	_empty_glyph.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_empty_glyph.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_empty_glyph.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_empty_glyph.add_theme_font_size_override("font_size", 28)
+	_empty_glyph.add_theme_color_override("font_color", CHORE_TEXT_SOFT)
+	_empty_glyph.modulate.a = 0.2
+	_empty_glyph.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	buff_icon_row.add_child(_empty_glyph)
+
+	_duration_bar = ColorRect.new()
+	_duration_bar.name = "DurationBar"
+	_duration_bar.color = CHORE_PINK
+	_duration_bar.anchor_left = 0.06
+	_duration_bar.anchor_top = 1.0
+	_duration_bar.anchor_bottom = 1.0
+	_duration_bar.anchor_right = 0.94
+	_duration_bar.offset_top = -4.0
+	_duration_bar.offset_bottom = -2.0
+	_duration_bar.offset_left = 0.0
+	_duration_bar.offset_right = 0.0
+	_duration_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_duration_bar.visible = false
+	buff_icon_row.add_child(_duration_bar)
+
+	_buff_slot_overlay = Control.new()
+	_buff_slot_overlay.name = "BuffSlotOverlay"
+	_buff_slot_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_buff_slot_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	buff_icon_row.add_child(_buff_slot_overlay)
+	_buff_slot_overlay.draw.connect(_draw_buff_slot_overlay)
+	_buff_slot_overlay.resized.connect(_buff_slot_overlay.queue_redraw)
 
 	details_panel = PanelContainer.new()
 	details_panel.name = "DetailsPanel"
@@ -280,18 +369,145 @@ func _create_ui_structure() -> void:
 	details_panel.add_child(panel_margin)
 
 	var details_vbox = VBoxContainer.new()
+	details_vbox.name = "DetailsVBox"
 	details_vbox.add_theme_constant_override("separation", 8)
 	panel_margin.add_child(details_vbox)
 
-	var details_title = Label.new()
-	details_title.name = "DetailsTitle"
-	details_title.text = "CHORE STATUS"
-	details_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	details_title.add_theme_font_size_override("font_size", 18)
-	details_title.add_theme_color_override("font_color", CHORE_TEXT)
-	details_title.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
-	details_title.add_theme_constant_override("outline_size", 1)
-	details_vbox.add_child(details_title)
+	# Header: chore title + difficulty tag, one-line description beneath.
+	var header_block = VBoxContainer.new()
+	header_block.name = "HeaderBlock"
+	header_block.add_theme_constant_override("separation", 2)
+	header_block.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	details_vbox.add_child(header_block)
+
+	var title_row = HBoxContainer.new()
+	title_row.name = "TitleRow"
+	title_row.add_theme_constant_override("separation", 8)
+	title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	header_block.add_child(title_row)
+
+	_title_label = Label.new()
+	_title_label.name = "TitleLabel"
+	_title_label.text = "NO ACTIVE CHORE"
+	_title_label.add_theme_font_size_override("font_size", 16)
+	_title_label.add_theme_color_override("font_color", CHORE_TEXT)
+	_title_label.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	_title_label.add_theme_constant_override("outline_size", 1)
+	_title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_row.add_child(_title_label)
+
+	_difficulty_tag = Label.new()
+	_difficulty_tag.name = "DifficultyTag"
+	_difficulty_tag.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_difficulty_tag.add_theme_font_size_override("font_size", 12)
+	_difficulty_tag.add_theme_color_override("font_color", CHORE_SAFE)
+	_difficulty_tag.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	_difficulty_tag.add_theme_constant_override("outline_size", 1)
+	_difficulty_tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	title_row.add_child(_difficulty_tag)
+
+	_desc_label = Label.new()
+	_desc_label.name = "DescLabel"
+	_desc_label.add_theme_font_size_override("font_size", 10)
+	_desc_label.add_theme_color_override("font_color", CHORE_TEXT_SOFT)
+	_desc_label.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	_desc_label.add_theme_constant_override("outline_size", 1)
+	_desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_desc_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	header_block.add_child(_desc_label)
+
+	# Mom row: portrait on the left, mood label beside it (color = mood band).
+	var mom_row = HBoxContainer.new()
+	mom_row.name = "MomRow"
+	mom_row.add_theme_constant_override("separation", 10)
+	mom_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	details_vbox.add_child(mom_row)
+
+	var portrait_slot = PanelContainer.new()
+	portrait_slot.name = "MomPortraitSlot"
+	portrait_slot.custom_minimum_size = Vector2(80, 80)
+	portrait_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var portrait_style := StyleBoxFlat.new()
+	portrait_style.bg_color = Color(0.713725, 0.301961, 0.478431, 0.15)
+	portrait_style.border_color = Color(0.713725, 0.301961, 0.478431, 0.4)
+	portrait_style.set_border_width_all(2)
+	portrait_style.set_corner_radius_all(12)
+	portrait_style.corner_detail = 6
+	portrait_slot.add_theme_stylebox_override("panel", portrait_style)
+	mom_row.add_child(portrait_slot)
+
+	_mom_placeholder = Label.new()
+	_mom_placeholder.name = "MomPlaceholder"
+	_mom_placeholder.text = "MOM"
+	_mom_placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_mom_placeholder.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_mom_placeholder.add_theme_font_size_override("font_size", 14)
+	_mom_placeholder.add_theme_color_override("font_color", CHORE_PINK)
+	_mom_placeholder.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	_mom_placeholder.add_theme_constant_override("outline_size", 1)
+	_mom_placeholder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait_slot.add_child(_mom_placeholder)
+
+	_mom_portrait = TextureRect.new()
+	_mom_portrait.name = "MomPortrait"
+	_mom_portrait.custom_minimum_size = Vector2(80, 80)
+	_mom_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_mom_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_mom_portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if portrait_texture:
+		_mom_portrait.texture = portrait_texture
+	_mom_portrait.visible = portrait_texture != null
+	_mom_placeholder.visible = portrait_texture == null
+	portrait_slot.add_child(_mom_portrait)
+
+	_mood_label = Label.new()
+	_mood_label.name = "MoodLabel"
+	_mood_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_mood_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_mood_label.add_theme_font_size_override("font_size", 14)
+	_mood_label.add_theme_color_override("font_color", CHORE_SAFE)
+	_mood_label.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	_mood_label.add_theme_constant_override("outline_size", 1)
+	_mood_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mom_row.add_child(_mood_label)
+
+	# Progress: pink bar + numeral (no percentage), small expiry beneath.
+	var progress_block = VBoxContainer.new()
+	progress_block.name = "ProgressBlock"
+	progress_block.add_theme_constant_override("separation", 3)
+	progress_block.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	details_vbox.add_child(progress_block)
+
+	_fan_progress_bar = GameProgressBar.new()
+	_fan_progress_bar.name = "ProgressBar"
+	_fan_progress_bar.min_value = 0
+	_fan_progress_bar.max_value = 100
+	_fan_progress_bar.value = 0
+	_fan_progress_bar.fill_color = CHORE_DANGER
+	_fan_progress_bar.custom_minimum_size = Vector2(0, 18)
+	_fan_progress_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_fan_progress_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	progress_block.add_child(_fan_progress_bar)
+
+	_progress_numeral = Label.new()
+	_progress_numeral.name = "ProgressNumeral"
+	_progress_numeral.text = "0 / 100"
+	_progress_numeral.add_theme_font_size_override("font_size", 12)
+	_progress_numeral.add_theme_color_override("font_color", CHORE_TEXT)
+	_progress_numeral.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	_progress_numeral.add_theme_constant_override("outline_size", 1)
+	_progress_numeral.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	progress_block.add_child(_progress_numeral)
+
+	_expiry_label = Label.new()
+	_expiry_label.name = "ExpiryLabel"
+	_expiry_label.text = "Expires when this round ends"
+	_expiry_label.add_theme_font_size_override("font_size", 9)
+	_expiry_label.add_theme_color_override("font_color", CHORE_TEXT_SOFT)
+	_expiry_label.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	_expiry_label.add_theme_constant_override("outline_size", 1)
+	_expiry_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	progress_block.add_child(_expiry_label)
 
 	buff_detail_row = HBoxContainer.new()
 	buff_detail_row.name = "BuffDetailRow"
@@ -301,18 +517,63 @@ func _create_ui_structure() -> void:
 	buff_detail_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	details_vbox.add_child(buff_detail_row)
 
-	details_label = RichTextLabel.new()
-	details_label.name = "DetailsLabel"
-	details_label.bbcode_enabled = true
-	details_label.fit_content = false
-	details_label.scroll_active = false
-	details_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	details_label.custom_minimum_size = Vector2(0, 220)
-	details_label.add_theme_font_override("normal_font", VCR_FONT)
-	details_label.add_theme_color_override("default_color", CHORE_TEXT)
-	details_label.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
-	details_label.add_theme_constant_override("outline_size", 1)
-	details_vbox.add_child(details_label)
+	# Rep band: hairline separator, large tier name, small bar, effect quote.
+	_rep_separator = HSeparator.new()
+	_rep_separator.name = "RepSeparator"
+	var sep_style := StyleBoxLine.new()
+	sep_style.color = Color(0.780392, 0.733333, 0.866667, 0.35)
+	sep_style.thickness = 1
+	_rep_separator.add_theme_stylebox_override("separator", sep_style)
+	_rep_separator.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	details_vbox.add_child(_rep_separator)
+
+	_rep_block = VBoxContainer.new()
+	_rep_block.name = "RepBlock"
+	_rep_block.add_theme_constant_override("separation", 3)
+	_rep_block.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	details_vbox.add_child(_rep_block)
+
+	_rep_tier_label = Label.new()
+	_rep_tier_label.name = "RepTierLabel"
+	_rep_tier_label.add_theme_font_size_override("font_size", 18)
+	_rep_tier_label.add_theme_color_override("font_color", CHORE_TEXT)
+	_rep_tier_label.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	_rep_tier_label.add_theme_constant_override("outline_size", 1)
+	_rep_tier_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_rep_block.add_child(_rep_tier_label)
+
+	_rep_bar = GameProgressBar.new()
+	_rep_bar.name = "RepBar"
+	_rep_bar.min_value = 0
+	_rep_bar.max_value = 100
+	_rep_bar.value = 0
+	_rep_bar.fill_color = CHORE_DANGER
+	_rep_bar.custom_minimum_size = Vector2(0, 8)
+	_rep_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_rep_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_rep_block.add_child(_rep_bar)
+
+	_rep_quote_label = Label.new()
+	_rep_quote_label.name = "RepQuoteLabel"
+	_rep_quote_label.add_theme_font_size_override("font_size", 10)
+	_rep_quote_label.add_theme_color_override("font_color", CHORE_TEXT_SOFT)
+	_rep_quote_label.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
+	_rep_quote_label.add_theme_constant_override("outline_size", 1)
+	_rep_quote_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_rep_block.add_child(_rep_quote_label)
+
+	# Completed counts: two badges, loud when nonzero.
+	var completed_row = HBoxContainer.new()
+	completed_row.name = "CompletedRow"
+	completed_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	completed_row.add_theme_constant_override("separation", 10)
+	completed_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	details_vbox.add_child(completed_row)
+
+	_easy_badge_panel = _make_badge()
+	completed_row.add_child(_easy_badge_panel)
+	_hard_badge_panel = _make_badge()
+	completed_row.add_child(_hard_badge_panel)
 
 	var hint_label = Label.new()
 	hint_label.name = "HintLabel"
@@ -365,7 +626,6 @@ func _on_progress_changed(new_value: int) -> void:
 		if _chores_manager and _chores_manager.has_method("get_scaled_max_progress"):
 			progress_bar.max_value = _chores_manager.get_scaled_max_progress()
 		progress_bar.value = new_value
-		_update_progress_tint(new_value)
 		_update_details_with_progress()
 	print("[ChoreUI] Progress updated: %d" % new_value)
 
@@ -374,8 +634,7 @@ func _on_task_selected(task) -> void:  # ChoreData - duck typed
 		if task_label:
 			task_label.text = "No active chore"
 		_update_difficulty_tint(null)
-		if details_label:
-			_update_details_with_progress()
+		_update_details_with_progress()
 		return
 	
 	if task_label:
@@ -393,109 +652,77 @@ func _on_task_completed(_task) -> void:  # ChoreData - duck typed, unused
 
 ## _update_details_with_progress()
 ##
-## Rebuilds the chore status panel as organized BBCode sections (CHORE,
-## PROGRESS, STATUS, and BUFF when Rebellion is active) with section
-## headers in the panel palette and [table=2] label/value pairs.
+## Pushes live manager state into the fan-out's structured nodes: header
+## (title/tag/description), Mom portrait + mood label, progress bar +
+## numeral + expiry, rep band, and the EASY/HARD completed badges.
 func _update_details_with_progress() -> void:
-	if not details_label:
-		return
-	if not _chores_manager:
-		if task_label:
-			task_label.text = "No active chore"
-		details_label.text = "[center][b]No chore data available[/b][/center]"
+	if _title_label == null:
 		return
 
-	var task = _chores_manager.current_task
-	var current_progress_val = _chores_manager.current_progress
-	var max_progress = 100  # Default
-	var mood_desc = _chores_manager.get_mood_description() if _chores_manager.has_method("get_mood_description") else "Neutral"
-	var mood_emoji = _chores_manager.get_mood_emoji() if _chores_manager.has_method("get_mood_emoji") else "*"
-
-	# Get scaled max progress if available
-	if _chores_manager.has_method("get_scaled_max_progress"):
+	var task = _chores_manager.current_task if _chores_manager else null
+	var progress_val: int = _chores_manager.current_progress if _chores_manager else 0
+	var max_progress: int = 100
+	var mood: int = _chores_manager.mom_mood if _chores_manager else 5
+	if _chores_manager and _chores_manager.has_method("get_scaled_max_progress"):
 		max_progress = _chores_manager.get_scaled_max_progress()
-	var percent := roundi(100.0 * float(current_progress_val) / maxf(float(max_progress), 1.0))
 
-	# Count completed chores by difficulty instead of listing names
-	var easy_count := 0
-	var hard_count := 0
-	for chore in _chores_manager.completed_chores:
-		if chore and "difficulty" in chore and chore.difficulty == ChoreData.Difficulty.HARD:
-			hard_count += 1
-		else:
-			easy_count += 1
-
-	var sections: Array[String] = []
-
-	# 1. CHORE — name, description, difficulty
-	var chore_section := "[color=#79e2e3][b]CHORE[/b][/color]\n"
+	# Header — stated once; no Name/Task label pair.
 	if task:
+		_title_label.text = task.display_name.to_upper()
+		var hard: bool = "difficulty" in task and task.difficulty == ChoreData.Difficulty.HARD
+		_difficulty_tag.text = "(Hard)" if hard else "(Easy)"
+		_difficulty_tag.add_theme_color_override("font_color", CHORE_DANGER if hard else CHORE_SAFE)
+		_desc_label.text = task.description
 		if task_label:
 			task_label.text = task.display_name
-		var difficulty_text := "Easy"
-		var difficulty_color := "#79e2e3"
-		if "difficulty" in task and task.difficulty == ChoreData.Difficulty.HARD:
-			difficulty_text = "Hard"
-			difficulty_color = "#e2648c"
-		chore_section += "[table=2]"
-		chore_section += "[cell][color=#c7bbdd]Name[/color][/cell][cell]%s [color=%s](%s)[/color][/cell]" % [
-			task.display_name, difficulty_color, difficulty_text]
-		chore_section += "[cell][color=#c7bbdd]Task[/color][/cell][cell]%s[/cell]" % task.description
-		chore_section += "[/table]"
 	else:
-		var waiting_for_selection = _chores_manager.pending_chore_selection if _chores_manager.has_method("get_pending_tasks") else false
+		var waiting: bool = _chores_manager != null and _chores_manager.get("pending_chore_selection") == true
+		_title_label.text = "CHOOSE A CHORE" if waiting else "NO ACTIVE CHORE"
+		_difficulty_tag.text = ""
+		_desc_label.text = "A fresh chore is required before play continues." if waiting \
+			else "Take a breather, but keep an eye on the meter."
 		if task_label:
-			task_label.text = "Choose a chore" if waiting_for_selection else "No active chore"
-		if waiting_for_selection:
-			chore_section += "[b]Choose a new chore[/b] — a fresh chore is required before play continues."
-		else:
-			chore_section += "[b]No active chore[/b] — take a breather, but keep an eye on the meter."
-	sections.append(chore_section)
+			task_label.text = "Choose a chore" if waiting else "No active chore"
 
-	# 2. PROGRESS — x / max (pct), expiry
+	# Mom mood — text here, color from the same band scale as the meter frame.
+	var mood_desc: String = _chores_manager.get_mood_description() \
+		if _chores_manager and _chores_manager.has_method("get_mood_description") else "Neutral"
+	_mood_label.text = "%s %d/10" % [mood_desc, mood]
+	_mood_label.add_theme_color_override("font_color", _mood_color(mood))
+
+	# Progress — numeral only, no percentage.
+	_fan_progress_bar.max_value = max_progress
+	_fan_progress_bar.set_value_instant(progress_val)
+	_progress_numeral.text = "%s / %s" % [
+		NumberFormatter.format_int(progress_val),
+		NumberFormatter.format_int(max_progress)]
 	var expiry_text := "Expires when this round ends"
-	if _chores_manager.has_method("get_rounds_until_expiry") and _chores_manager.get_rounds_until_expiry() <= 0:
+	if _chores_manager and _chores_manager.has_method("get_rounds_until_expiry") \
+			and _chores_manager.get_rounds_until_expiry() <= 0:
 		expiry_text = "Awaiting replacement"
-	var progress_section := "[color=#79e2e3][b]PROGRESS[/b][/color]\n"
-	progress_section += "[table=2]"
-	progress_section += "[cell][color=#c7bbdd]Progress[/color][/cell][cell]%s / %s (%d%%)[/cell]" % [
-		NumberFormatter.format_int(current_progress_val),
-		NumberFormatter.format_int(max_progress),
-		percent
-	]
-	progress_section += "[cell][color=#c7bbdd]Expiry[/color][/cell][cell]%s[/cell]" % expiry_text
-	progress_section += "[/table]"
-	sections.append(progress_section)
+	_expiry_label.text = expiry_text
 
-	# 3. STATUS — Mom mood, completed counts, Rep
-	var status_section := "[color=#79e2e3][b]STATUS[/b][/color]\n"
-	status_section += "[table=2]"
-	status_section += "[cell][color=#c7bbdd]Mom Mood[/color][/cell][cell]%s %s (%d/10)[/cell]" % [
-		mood_emoji, mood_desc, _chores_manager.mom_mood]
-	status_section += "[cell][color=#c7bbdd]Completed[/color][/cell][cell]%d easy, %d hard[/cell]" % [
-		easy_count, hard_count]
+	# Rep band — hidden entirely when ProgressManager is unavailable.
 	var pm := get_node_or_null("/root/ProgressManager")
-	if pm and pm.has_method("get_rep"):
-		status_section += "[cell][color=#ff4080]Rep[/color][/cell][cell]%d/100 — %s (POGs up to %s)[/cell]" % [
-			pm.get_rep(), pm.get_rep_stage_name(), pm.get_rep_tier_name()]
-	status_section += "[/table]"
-	sections.append(status_section)
+	var rep_visible: bool = pm != null and pm.has_method("get_rep")
+	_rep_block.visible = rep_visible
+	_rep_separator.visible = rep_visible
+	if rep_visible:
+		_rep_tier_label.text = str(pm.get_rep_stage_name())
+		_rep_bar.set_value_instant(pm.get_rep())
+		_rep_quote_label.text = "POGs up to %s" % str(pm.get_rep_tier_name())
 
-	# 4. BUFF — only while a buff (e.g. Rebellion) is active
-	if not _buff_icons.is_empty():
-		var buff_section := "[color=#ff6d9e][b]BUFF[/b][/color]\n"
-		buff_section += "[table=2]"
-		for id in _buff_icons.keys():
-			var icon = _buff_icons[id] as DebuffIcon
-			if not is_instance_valid(icon) or icon.data == null:
-				continue
-			buff_section += "[cell][color=#c7bbdd]%s[/color][/cell][cell]%s[/cell]" % [
-				icon.data.display_name, _get_buff_display_suffix(id)]
-			buff_section += "[cell][color=#c7bbdd]Effect[/color][/cell][cell]%s[/cell]" % _get_buff_effect_summary(id)
-		buff_section += "[/table]"
-		sections.append(buff_section)
-
-	details_label.text = "\n".join(sections)
+	# Completed badges
+	var easy_count := 0
+	var hard_count := 0
+	if _chores_manager:
+		for chore in _chores_manager.completed_chores:
+			if chore and "difficulty" in chore and chore.difficulty == ChoreData.Difficulty.HARD:
+				hard_count += 1
+			else:
+				easy_count += 1
+	_style_badge(_easy_badge_panel, "EASY", easy_count, CHORE_SAFE)
+	_style_badge(_hard_badge_panel, "HARD", hard_count, CHORE_DANGER)
 
 	# Keep the fan-out buff labels in sync with live stack counts
 	for id in _buff_detail_labels.keys():
@@ -505,44 +732,73 @@ func _update_details_with_progress() -> void:
 			lbl.text = "%s  %s" % [icon.data.display_name, _get_buff_display_suffix(id)]
 
 
-## _update_progress_tint(value)
+## _make_badge() -> PanelContainer
 ##
-## Shifts tint_progress from safe teal to danger pink as the meter fills.
-## Colors are blended toward white so the neon fill texture still reads.
-func _update_progress_tint(value: int) -> void:
-	if not progress_bar:
-		return
-	var ratio := clampf(float(value) / maxf(progress_bar.max_value, 1.0), 0.0, 1.0)
-	var warn_ratio: float = WARNING_THRESHOLD / 100.0
-	var color: Color
-	if ratio <= warn_ratio:
-		color = CHORE_SAFE.lerp(CHORE_WARNING, ratio / warn_ratio)
+## Creates one completed-count badge (panel + "BadgeLabel" child).
+func _make_badge() -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := StyleBoxFlat.new()
+	style.set_corner_radius_all(8)
+	style.corner_detail = 6
+	style.set_content_margin_all(6)
+	style.content_margin_top = 3
+	style.content_margin_bottom = 3
+	panel.add_theme_stylebox_override("panel", style)
+	var lbl := Label.new()
+	lbl.name = "BadgeLabel"
+	lbl.add_theme_font_size_override("font_size", 12)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(lbl)
+	return panel
+
+
+## _style_badge(panel, name_text, count, accent)
+##
+## Loud (solid accent fill, dark text) when count > 0, quiet when zero.
+func _style_badge(panel: PanelContainer, name_text: String, count: int, accent: Color) -> void:
+	var lbl := panel.get_node("BadgeLabel") as Label
+	var style := panel.get_theme_stylebox("panel") as StyleBoxFlat
+	lbl.text = "%s %d" % [name_text, count]
+	if count > 0:
+		style.bg_color = accent
+		lbl.add_theme_color_override("font_color", Color(0.1, 0.08, 0.12, 1.0))
 	else:
-		color = CHORE_WARNING.lerp(CHORE_DANGER, (ratio - warn_ratio) / (1.0 - warn_ratio))
-	progress_bar.tint_progress = Color.WHITE.lerp(color, 0.75)
+		style.bg_color = Color(0.12, 0.10, 0.14, 0.3)
+		lbl.add_theme_color_override("font_color", CHORE_TEXT_SOFT)
+
+
+## _mood_color(mood) -> Color
+##
+## Banded mood scale shared by the meter frame, the GOOF-OFF label, and the
+## fan-out mood label: 0-3 calm (cool), 4-6 tense (amber), 7-10 angry (red).
+func _mood_color(mood: int) -> Color:
+	if mood <= 3:
+		return CHORE_SAFE
+	elif mood <= 6:
+		return CHORE_WARNING
+	return MOOD_ANGRY
 
 ## _on_mom_mood_changed(new_mood)
 ##
-## Signal handler: retints the bar frame to hint at Mom's mood.
+## Signal handler: retints the meter frame and labels to Mom's mood.
 func _on_mom_mood_changed(new_mood: int) -> void:
 	_update_mood_tint(new_mood)
+	_update_details_with_progress()
 
 ## _update_mood_tint(mood)
 ##
-## Tints texture_over (the frame) from angry red (mood 0) through neutral
-## white (5) to content teal (10). Applied with a very subtle alpha so the
-## frame art still reads.
+## Mom's mood rides on the meter FRAME (track border) and the GOOF-OFF
+## micro-label — one banded color, merged meaning. Matches ChoresManager's
+## scale where low = happy and high = angry.
 func _update_mood_tint(mood: int) -> void:
-	if not progress_bar:
-		return
-	var color: Color
-	if mood <= 5:
-		color = MOOD_ANGRY.lerp(Color.WHITE, float(mood) / 5.0)
-	else:
-		color = Color.WHITE.lerp(CHORE_SAFE, float(mood - 5) / 5.0)
-	color = Color.WHITE.lerp(color, 0.7)
-	color.a = MOOD_TINT_ALPHA
-	progress_bar.tint_over = color
+	var color := _mood_color(mood)
+	if progress_bar:
+		progress_bar.frame_color = color
+	if _goof_off_label:
+		_goof_off_label.add_theme_color_override("font_color", color)
+	if _mood_label:
+		_mood_label.add_theme_color_override("font_color", color)
 
 ## _update_difficulty_tint(task)
 ##
@@ -575,14 +831,17 @@ func get_progress_percent() -> int:
 ## add_buff_icon(data, buff_instance) -> Control
 ##
 ## Adds a compact buff chip (e.g. the Rebellion buff) to the reserved slot
-## at the far right of the task row, reusing the DebuffIcon chip so the SDF
-## glyph shader renders identically to the Debuff UI. Also registers the
-## buff for the fan-out details panel. Mirrors DebuffUI.add_debuff().
+## at the far right of the shell, reusing the DebuffIcon chip so the SDF
+## glyph shader renders identically to the Debuff UI. ONE chip max: a new
+## buff replaces the current one. Also registers the buff for the fan-out
+## details panel. Mirrors DebuffUI.add_debuff().
 func add_buff_icon(data: DebuffData, buff_instance = null) -> Control:
 	if data == null:
 		return null
 	if _buff_icons.has(data.id):
 		return _buff_icons[data.id]
+	if not _buff_icons.is_empty():
+		clear_buff_icons()
 
 	var icon := DEBUFF_ICON_SCENE.instantiate() as DebuffIcon
 	if not icon:
@@ -611,6 +870,7 @@ func add_buff_icon(data: DebuffData, buff_instance = null) -> Control:
 			icon.trigger_visual_pulse(strength, duration))
 
 	_rebuild_buff_detail_row()
+	_update_buff_slot_state()
 	_update_details_with_progress()
 	print("[ChoreUI] Added buff icon:", data.id)
 	return icon
@@ -630,6 +890,7 @@ func remove_buff_icon(id: String) -> void:
 	_buff_icons.erase(id)
 	_buff_instances.erase(id)
 	_rebuild_buff_detail_row()
+	_update_buff_slot_state()
 	_update_details_with_progress()
 	print("[ChoreUI] Removed buff icon:", id)
 
@@ -646,6 +907,7 @@ func clear_buff_icons() -> void:
 	_buff_icons.clear()
 	_buff_instances.clear()
 	_rebuild_buff_detail_row()
+	_update_buff_slot_state()
 	_update_details_with_progress()
 	print("[ChoreUI] Cleared all buff icons")
 
@@ -696,11 +958,6 @@ func _rebuild_buff_detail_row() -> void:
 	_buff_detail_icons.clear()
 	_buff_detail_labels.clear()
 	buff_detail_row.visible = not _buff_icons.is_empty()
-	if details_label:
-		if buff_detail_row.visible:
-			details_label.custom_minimum_size = Vector2(0, 170)
-		else:
-			details_label.custom_minimum_size = Vector2(0, 220)
 	for id in _buff_icons.keys():
 		var source = _buff_icons[id] as DebuffIcon
 		if not is_instance_valid(source) or source.data == null:
@@ -717,6 +974,7 @@ func _rebuild_buff_detail_row() -> void:
 		text_vbox.name = "BuffText"
 		text_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 		text_vbox.add_theme_constant_override("separation", 2)
+		text_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		text_vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		buff_detail_row.add_child(text_vbox)
 
@@ -740,8 +998,120 @@ func _rebuild_buff_detail_row() -> void:
 		desc.add_theme_color_override("font_outline_color", CHORE_OUTLINE)
 		desc.add_theme_constant_override("outline_size", 1)
 		desc.text = _get_buff_effect_summary(id)
+		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		desc.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		text_vbox.add_child(desc)
+
+
+## _update_buff_slot_state()
+##
+## Syncs the compact buff slot's chrome to empty/filled: dashed drawn border
+## + faint glyph when empty, solid border tinted to the buff's effect color
+## when filled. The duration underline is re-evaluated every frame in
+## _process and starts hidden.
+func _update_buff_slot_state() -> void:
+	var filled := not _buff_icons.is_empty()
+	if _empty_glyph:
+		_empty_glyph.visible = not filled
+	if _buff_slot_style:
+		if filled:
+			_buff_slot_style.border_color = _get_buff_effect_color()
+			_buff_slot_style.set_border_width_all(2)
+		else:
+			_buff_slot_style.set_border_width_all(0)
+	if _buff_slot_overlay:
+		_buff_slot_overlay.queue_redraw()
+	if _duration_bar:
+		_duration_bar.visible = false
+
+
+## _get_buff_effect_color() -> Color
+##
+## Border tint for the filled buff slot. Duck-types a color off the buff's
+## DebuffData (effect_color / color / accent_color); falls back to pink.
+func _get_buff_effect_color() -> Color:
+	for id in _buff_icons.keys():
+		var icon = _buff_icons[id] as DebuffIcon
+		if is_instance_valid(icon) and icon.data != null:
+			for key in ["effect_color", "color", "accent_color"]:
+				var v = icon.data.get(key)
+				if v is Color:
+					return v
+	return CHORE_PINK
+
+
+## _get_buff_duration_ratio() -> float
+##
+## Remaining/total duration ratio for the active buff, duck-typed off the
+## live instance. Returns -1 when no duration properties exist, which keeps
+## the underline hidden.
+func _get_buff_duration_ratio() -> float:
+	for id in _buff_instances.keys():
+		var inst = _buff_instances[id]
+		if not is_instance_valid(inst):
+			continue
+		var total := 0.0
+		for key in ["duration", "max_duration", "total_duration", "rounds_total"]:
+			var v = inst.get(key)
+			if v != null and float(v) > 0.0:
+				total = float(v)
+				break
+		var left := -1.0
+		for key in ["time_left", "duration_left", "rounds_left", "turns_remaining", "remaining"]:
+			var v = inst.get(key)
+			if v != null:
+				left = float(v)
+				break
+		if total > 0.0 and left >= 0.0:
+			return clampf(left / total, 0.0, 1.0)
+	return -1.0
+
+
+func _process(_delta: float) -> void:
+	if _duration_bar == null:
+		return
+	var ratio := _get_buff_duration_ratio()
+	_duration_bar.visible = ratio >= 0.0
+	if ratio >= 0.0:
+		_duration_bar.anchor_right = 0.06 + 0.88 * ratio
+
+
+## _draw_buff_slot_overlay()
+##
+## Runs on the BuffSlotOverlay draw signal: the dashed empty-state border.
+## The filled state uses the slot stylebox border instead.
+func _draw_buff_slot_overlay() -> void:
+	if not _buff_icons.is_empty():
+		return
+	var w := _buff_slot_overlay.size.x
+	var h := _buff_slot_overlay.size.y
+	if w <= 4.0 or h <= 4.0:
+		return
+	var rect := Rect2(2.0, 2.0, w - 4.0, h - 4.0)
+	var col := Color(0.780392, 0.733333, 0.866667, 0.35)
+	var corners := [
+		rect.position,
+		Vector2(rect.end.x, rect.position.y),
+		rect.end,
+		Vector2(rect.position.x, rect.end.y),
+		rect.position,
+	]
+	for i in range(4):
+		_draw_dashed_line(corners[i], corners[i + 1], col)
+
+
+func _draw_dashed_line(a: Vector2, b: Vector2, col: Color, dash: float = 5.0, gap: float = 3.0) -> void:
+	var length := a.distance_to(b)
+	if length <= 0.0:
+		return
+	var dir := (b - a) / length
+	var d := 0.0
+	while d < length:
+		var e := minf(d + dash, length)
+		_buff_slot_overlay.draw_line(a + dir * d, a + dir * e, col, 1.0)
+		d += dash + gap
+
 
 func _play_completion_flash() -> void:
 	# Play completion sound effect
@@ -834,7 +1204,7 @@ func _on_gui_input(event: InputEvent) -> void:
 func _create_background_overlay() -> void:
 	_background = ColorRect.new()
 	_background.name = "FanBackground"
-	_background.color = Color(0, 0, 0, 0.6)
+	_background.color = Color(0, 0, 0, 0.75)
 	_background.mouse_filter = Control.MOUSE_FILTER_STOP
 	_background.visible = false
 	_background.z_index = 50
@@ -923,10 +1293,15 @@ func _open_details_panel() -> void:
 	# Drop the status panel in from above center
 	var viewport_size = get_viewport_rect().size
 	var panel_target: Vector2 = (viewport_size - DETAILS_PANEL_SIZE) * 0.5
-	details_panel.size = DETAILS_PANEL_SIZE
 	details_panel.position = panel_target - Vector2(0, 70)
 	details_panel.modulate.a = 0.0
 	details_panel.visible = true
+	# A hidden panel never sorts, so autowrap labels keep a stale width-0
+	# minimum size and clamp any size assignment upward. Re-assert the size
+	# after the first visible layout pass.
+	await get_tree().process_frame
+	details_panel.size = DETAILS_PANEL_SIZE
+	details_panel.position = panel_target - Vector2(0, 70)
 	var panel_tween = create_tween()
 	panel_tween.tween_property(details_panel, "position", panel_target, 0.38).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	panel_tween.parallel().tween_property(details_panel, "modulate:a", 1.0, 0.22)

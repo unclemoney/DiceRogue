@@ -45,7 +45,7 @@
 - [X] `P1-Major` No limit on available items to carry over. Enforce only the number limit.
 - [X] `P1-Major` Mods are blocking dice face. Dice faces are not readable.
 - [X] `P2-Minor` Red Power Ranger PowerUp adding an extra label to the top of the screen, this needs to be removed.
-- [ ] `P2-Minor` Need an indicator for Synergies. Players cannot see when synergies trigger.
+- [X] `P2-Minor` Need an indicator for Synergies. Players cannot see when synergies trigger.
 - [ ] `P2-Minor` Challenge or Debuff that makes powerups expire after 3 rounds.
 - [ ] `NEEDS-DETAIL` Better score balance for each round needed. Test this.
   - Clarify: Which rounds feel wrong? Higher or lower scores? What is the target?
@@ -54,6 +54,7 @@
 
 ## SYS:Chore — Chore System & Mom
 
+- [ ] `P1-Major`Teacher's Pet BUFF did not apply the +100 dollars
 - [ ] `P1-Major` Mom Dialog and reward should match. They currently do not align.
 - [X] `P1-Major` Chores should be filtered by the dice set being used. d4 runs should not show d6 chores.
 - [ ] `P1-Major` Chore Champion should also update rewards.
