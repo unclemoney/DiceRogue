@@ -47,7 +47,15 @@
 - [X] `P2-Minor` Red Power Ranger PowerUp adding an extra label to the top of the screen, this needs to be removed.
 - [X] `P2-Minor` Need an indicator for Synergies. Players cannot see when synergies trigger.
 - [ ] `P2-Minor` Challenge or Debuff that makes powerups expire after 3 rounds.
-- [ ] `NEEDS-DETAIL` Better score balance for each round needed. Test this.
+- [ ] `P2-Minor` Clarify MODS are only applied to one dice at a time
+- [ ] `P2-Minor`When All Dice have MODS make it MAX REACHED
+- [ ] `P2-Minor`Clarify Evens Only PowerUP
+- [ ] `P2-Minor`Better way to SELL Mods?
+- [ ] `P2-Minor`Free coupon didn’t register until next round, check on that, Once Coupon is USED it should be immediately availabe.
+- [ ] `P2-Minor`Make mods disabled obvious. During Disabled Mods Debuff, we should add a shader to the MOD icon
+- [ ] `P2-Minor`Upper bonus multiplier power up. Add a new PowerUp that will multiply Upper Section Bonus.
+- [ ] `P2-Minor`Bonus Yahtzee category? That’s gone.  We can add that to the YAHTZEE line.
+- [ ] `P2-Minor`Chore pressure is not enough, needs more balance? Or are we still increasing with more powerful powerups?
   - Clarify: Which rounds feel wrong? Higher or lower scores? What is the target?
 - [ ] `NEEDS-DETAIL` Play PowerUp for double acting feature for one turn per round?
   - Clarify: Is this a new powerup idea or a change to an existing one? Which powerup?
