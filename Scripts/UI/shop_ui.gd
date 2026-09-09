@@ -1023,12 +1023,7 @@ func refresh_all_prices() -> void:
 func _has_reached_mod_limit(game_controller) -> bool:
 	if not game_controller:
 		return false
-	
-	var current_mod_count = game_controller._get_total_active_mod_count()
-	# Use expected dice count instead of current dice list size to handle pre-spawn scenario
-	var expected_dice_count = game_controller._get_expected_dice_count()
-	
-	return current_mod_count >= expected_dice_count
+	return game_controller.has_reached_mod_limit()
 
 func _on_close_button_pressed() -> void:
 	# Reset Clearance Rack on shop close

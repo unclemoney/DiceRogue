@@ -203,14 +203,14 @@ func _process(delta: float) -> void:
 		# Find the GameController to check mod vs dice count limit
 		var game_controller = get_tree().get_first_node_in_group("game_controller")
 		if game_controller and _has_reached_mod_limit(game_controller):
-			# Disable the buy button and show "LIMIT REACHED" text
+			# Disable the buy button and show the shared max-state text.
 			buy_button.disabled = true
-			buy_button.text = "LIMIT REACHED"
+			buy_button.text = "MAX REACHED"
 		else:
 			# Re-enable the button if previously disabled
-			if buy_button.disabled and buy_button.text == "LIMIT REACHED":
-				buy_button.disabled = false
+			if buy_button.disabled and (buy_button.text == "LIMIT REACHED" or buy_button.text == "MAX REACHED"):
 				buy_button.text = "BUY"
+				_update_button_state()
 	
 	# Check if this is a colored dice item - update price and status dynamically
 	elif item_type == "colored_dice":
@@ -431,7 +431,7 @@ func _on_buy_button_pressed() -> void:
 		if game_controller and _has_reached_mod_limit(game_controller):
 			print("[ShopItem] Mod purchase blocked - limit reached (all dice have mods)")
 			buy_button.disabled = true
-			buy_button.text = "LIMIT REACHED"
+			buy_button.text = "MAX REACHED"
 			_is_purchasing = false
 			# Play denied sound
 			var audio_mgr = get_node_or_null("/root/AudioManager")
@@ -505,13 +505,7 @@ func _find_consumable_ui():
 func _has_reached_mod_limit(game_controller: GameController) -> bool:
 	if not game_controller:
 		return false
-	
-	var current_mod_count = game_controller._get_total_active_mod_count()
-	# Use expected dice count instead of current dice list size to handle pre-spawn scenario
-	var expected_dice_count = game_controller._get_expected_dice_count()
-	
-	#print("[ShopItem] Mod limit check - Current mods:", current_mod_count, "Expected dice count:", expected_dice_count)
-	return current_mod_count >= expected_dice_count
+	return game_controller.has_reached_mod_limit()
 
 ## _setup_hover_tooltip()
 ## Creates and configures the hover tooltip for shop items.

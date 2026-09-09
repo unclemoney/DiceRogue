@@ -3211,14 +3211,12 @@ func grant_mod(id: String) -> void:
 		print("[GameController] Attempting to grant mod:", id)
 
 	# Check if we have reached the dice count limit for mods
-	if dice_hand and dice_hand.dice_list.size() > 0:
+	var current_dice_count := get_current_dice_hand_count()
+	if current_dice_count > 0 and has_reached_mod_limit():
 		var current_mod_count = _get_total_active_mod_count()
-		var dice_count = dice_hand.dice_list.size()
-		
-		if current_mod_count >= dice_count:
-			if _debug_enabled:
-				print("[GameController] Cannot grant mod - limit reached! (%d mods applied to %d dice)" % [current_mod_count, dice_count])
-			return
+		if _debug_enabled:
+			print("[GameController] Cannot grant mod - limit reached! (%d mods applied to %d dice)" % [current_mod_count, current_dice_count])
+		return
 
 	# Get the mod definition
 	var def: ModData = mod_manager.get_def(id)
@@ -3305,6 +3303,26 @@ func _get_total_active_mod_count() -> int:
 		total_count += die.active_mods.size()
 	
 	return total_count
+
+
+## get_current_dice_hand_count() -> int
+##
+## Returns the number of dice currently spawned in the player's hand.
+func get_current_dice_hand_count() -> int:
+	if not dice_hand:
+		return 0
+	return dice_hand.dice_list.size()
+
+
+## has_reached_mod_limit() -> bool
+##
+## Returns true once the live hand has at least one MOD applied per die.
+## Returns false before dice are spawned.
+func has_reached_mod_limit() -> bool:
+	var current_dice_count := get_current_dice_hand_count()
+	if current_dice_count <= 0:
+		return false
+	return _get_total_active_mod_count() >= current_dice_count
 
 
 ## _get_expected_dice_count() -> int
