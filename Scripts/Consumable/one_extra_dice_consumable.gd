@@ -42,7 +42,7 @@ func apply(target) -> void:
 		push_error("[OneExtraDiceConsumable] No scorecard found")
 		return
 	
-	# Apply the extra dice effect (increase dice count from 5 to 6)
+	# Apply the extra dice effect (adds +1 die relative to the current count)
 	var original_count = dice_hand_ref.dice_count
 	dice_hand_ref.dice_count = original_count + 1
 	print("[OneExtraDiceConsumable] Increased dice count from %d to %d" % [original_count, dice_hand_ref.dice_count])
@@ -84,7 +84,7 @@ func _remove_extra_dice() -> void:
 		return
 	
 	if dice_hand_ref:
-		# Remove the extra dice (decrease dice count from 6 to 5)
+		# Remove the extra dice (subtracts 1 die relative to the current count)
 		var current_count = dice_hand_ref.dice_count
 		dice_hand_ref.dice_count = current_count - 1
 		print("[OneExtraDiceConsumable] Reduced dice count from %d to %d" % [current_count, dice_hand_ref.dice_count])

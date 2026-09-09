@@ -12,6 +12,8 @@ signal color_effects_calculated(green_money: int, red_additive: int, purple_mult
 
 var colors_enabled: bool = true
 
+var _debug_enabled: bool = OS.is_debug_build()
+
 # Purchased colored dice tracking (only for current game session)
 # Now tracks purchase COUNT instead of just bool - allows repeat purchases
 var purchased_colors: Dictionary = {}  # DiceColor.Type -> int (purchase count)
@@ -23,15 +25,6 @@ var color_chance_modifiers: Dictionary = {}  # DiceColor.Type -> float
 # Blue dice modifiers (set by PowerUps)
 var blue_always_used: bool = false  # When true, blue dice always count as "used" (Azure Perfection)
 var blue_penalty_reduction_factor: float = 1.0  # Multiplier for blue penalty (1.0 = full, 0.5 = half) (Blue Safety Net)
-
-# Base costs per rarity tier (exponential scaling: cost = base * 2^purchase_count)
-const BASE_COSTS: Dictionary = {
-	DiceColorClass.Type.GREEN: 50,   # Common: $50 base
-	DiceColorClass.Type.RED: 75,     # Uncommon: $75 base
-	DiceColorClass.Type.PURPLE: 125, # Rare: $100 base
-	DiceColorClass.Type.BLUE: 150,   # Very Rare: $125 base
-	DiceColorClass.Type.YELLOW: 100   # Uncommon-Rare: $85 base
-}
 
 func _ready() -> void:
 	add_to_group("dice_color_manager")
@@ -53,11 +46,13 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = [], app
 	var purple_count := 0
 	var blue_count := 0
 	var yellow_count := 0
+	var orange_count := 0
 	var green_money := 0
 	var red_additive := 0
 	var purple_multiplier := 1.0
 	var blue_score_multiplier := 1.0
 	var yellow_scored := false
+	var orange_scored := false
 	
 	# Count colored dice and calculate base effects
 	for i in range(dice_array.size()):
@@ -108,12 +103,18 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = [], app
 				var is_yellow_used = used_dice_array.size() == 0 or i in used_dice_array
 				if is_yellow_used:
 					yellow_scored = true
+			DiceColorClass.Type.ORANGE:
+				orange_count += 1
+				# Orange dice effect: grant +1 roll next turn per Orange die scored
+				var is_orange_used = used_dice_array.size() == 0 or i in used_dice_array
+				if is_orange_used:
+					orange_scored = true
 			DiceColorClass.Type.NONE:
 				pass  # No effect
 	
 	# Check for same color bonus (5+ of any color gets 2x)
 	var same_color_bonus := false
-	if green_count >= 5 or red_count >= 5 or purple_count >= 5 or blue_count >= 5 or yellow_count >= 5:
+	if green_count >= 5 or red_count >= 5 or purple_count >= 5 or blue_count >= 5 or yellow_count >= 5 or orange_count >= 5:
 		same_color_bonus = true
 		
 		# Only apply bonus to the colors that actually exist
@@ -126,17 +127,38 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = [], app
 		if blue_count >= 5:
 			blue_score_multiplier *= 2
 		# Yellow 5+ bonus: grant an extra consumable (handled in _grant_yellow_dice_consumable)
+		# Orange 5+ bonus: double the roll grant (handled in _grant_orange_dice_rolls)
 	
-	# Check for rainbow bonus (1+ of each color type)
+	# Check for rainbow bonus (5+ unique colors out of all available colors)
 	var rainbow_bonus := false
-	if green_count >= 1 and red_count >= 1 and purple_count >= 1 and blue_count >= 1 and yellow_count >= 1:
+	var unique_color_count := 0
+	var all_color_counts = {
+		DiceColorClass.Type.GREEN: green_count,
+		DiceColorClass.Type.RED: red_count,
+		DiceColorClass.Type.PURPLE: purple_count,
+		DiceColorClass.Type.BLUE: blue_count,
+		DiceColorClass.Type.YELLOW: yellow_count,
+		DiceColorClass.Type.ORANGE: orange_count
+	}
+	for color_type in DiceColorClass.get_all_colors():
+		if all_color_counts.get(color_type, 0) > 0:
+			unique_color_count += 1
+	if unique_color_count >= 5:
 		rainbow_bonus = true
 		# Rainbow bonus: +50% to all color effects
 		green_money = int(green_money * 1.5)
 		red_additive = int(red_additive * 1.5)
 		purple_multiplier *= 1.5
 		blue_score_multiplier *= 1.5	
-		print("[DiceColorManager] RAINBOW BONUS! All 5 colors present - effects boosted by 50%!")
+		print("[DiceColorManager] RAINBOW BONUS! %d unique colors present (5+ of %d) - effects boosted by 50%!" % [unique_color_count, DiceColorClass.get_all_colors().size()])
+	
+	# Compute orange roll grant (+1 roll next turn per Orange die scored, doubled on same-color bonus)
+	var orange_rolls := 0
+	if orange_scored:
+		orange_rolls = orange_count
+		# Orange same-color bonus: double the rolls
+		if same_color_bonus and orange_count >= 5:
+			orange_rolls = orange_count * 2
 	
 	var effects = {
 		"green_money": green_money,
@@ -147,6 +169,9 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = [], app
 		"rainbow_bonus": rainbow_bonus,
 		"yellow_scored": yellow_scored,
 		"yellow_count": yellow_count,
+		"orange_scored": orange_scored,
+		"orange_count": orange_count,
+		"orange_rolls": orange_rolls,
 		"green_count": green_count,
 		"red_count": red_count, 
 		"purple_count": purple_count,
@@ -154,8 +179,8 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = [], app
 	}
 	
 	# Only print summary if there are actual effects
-	if green_count > 0 or red_count > 0 or purple_count > 0 or blue_count > 0 or yellow_count > 0:
-		print("[DiceColorManager] Effects: Green(", green_count, "):$", green_money, " Red(", red_count, "):+", red_additive, " Purple(", purple_count, "):x", purple_multiplier, " Blue(", blue_count, "):x", blue_score_multiplier, " Yellow(", yellow_count, ")")
+	if green_count > 0 or red_count > 0 or purple_count > 0 or blue_count > 0 or yellow_count > 0 or orange_count > 0:
+		print("[DiceColorManager] Effects: Green(", green_count, "):$", green_money, " Red(", red_count, "):+", red_additive, " Purple(", purple_count, "):x", purple_multiplier, " Blue(", blue_count, "):x", blue_score_multiplier, " Yellow(", yellow_count, ") Orange(", orange_count, "):+", orange_rolls, " rolls")
 		if same_color_bonus:
 			print("[DiceColorManager] Same color bonus applied!")
 		if rainbow_bonus:
@@ -170,6 +195,11 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = [], app
 			grant_count = yellow_count * 2
 		for _i in range(grant_count):
 			_grant_yellow_dice_consumable()
+	
+	# Grant orange dice rolls if orange was scored (only if side effects enabled)
+	# Grants +1 roll for the next turn per Orange die scored (doubled on same-color bonus)
+	if orange_scored and apply_side_effects and orange_rolls > 0:
+		_grant_orange_dice_rolls(orange_rolls)
 	
 	# NOTE: Do NOT register effects with ScoreModifierManager to prevent double-application
 	# score_card.gd manually applies these effects from the returned dictionary
@@ -266,6 +296,21 @@ func _grant_yellow_dice_consumable() -> void:
 	else:
 		print("[DiceColorManager] Yellow dice: GameController missing grant_consumable method")
 
+## _grant_orange_dice_rolls(amount)
+##
+## Grants extra rolls when Orange dice are scored.
+## The rolls apply to the NEXT turn only (queued via
+## TurnTracker.add_temporary_rolls_next_turn), not the current turn.
+func _grant_orange_dice_rolls(amount: int) -> void:
+	var turn_tracker = get_tree().get_first_node_in_group("turn_tracker")
+	if not turn_tracker or not turn_tracker.has_method("add_temporary_rolls_next_turn"):
+		print("[DiceColorManager] Orange dice: No TurnTracker found, cannot grant rolls")
+		return
+
+	turn_tracker.add_temporary_rolls_next_turn(amount)
+	if _debug_enabled:
+		print("[DiceColorManager] Orange dice granted +%d rolls for next turn (pending: %d)" % [amount, turn_tracker.orange_rolls_pending])
+
 ## Enable or disable the dice color system globally
 ## @param enabled: bool whether to enable dice colors
 func set_colors_enabled(enabled: bool) -> void:
@@ -291,6 +336,9 @@ func _get_empty_effects() -> Dictionary:
 		"rainbow_bonus": false,
 		"yellow_scored": false,
 		"yellow_count": 0,
+		"orange_scored": false,
+		"orange_count": 0,
+		"orange_rolls": 0,
 		"green_count": 0,
 		"red_count": 0,
 		"purple_count": 0,
@@ -379,9 +427,16 @@ func get_current_effects_description(dice_array: Array, used_dice_array: Array =
 		else:
 			descriptions.append("Yellow Dice: %d (not scored)" % effects.yellow_count)
 	
+	# Add orange dice effect info
+	if effects.get("orange_count", 0) > 0:
+		if effects.get("orange_scored", false):
+			descriptions.append("Orange Dice: +%d rolls next turn!" % effects.get("orange_rolls", 0))
+		else:
+			descriptions.append("Orange Dice: %d (not scored)" % effects.orange_count)
+	
 	# Add rainbow bonus info
 	if effects.get("rainbow_bonus", false):
-		descriptions.append("Rainbow Bonus: +50% all effects (all 5 colors)")
+		descriptions.append("Rainbow Bonus: +50% all effects (5+ unique colors)")
 	
 	# Return combined description
 	if descriptions.size() == 0:
@@ -409,7 +464,8 @@ func _load_colored_dice_data() -> void:
 		"res://Resources/Data/ColoredDice/RedDice.tres", 
 		"res://Resources/Data/ColoredDice/PurpleDice.tres",
 		"res://Resources/Data/ColoredDice/BlueDice.tres",
-		"res://Resources/Data/ColoredDice/YellowDice.tres"
+		"res://Resources/Data/ColoredDice/YellowDice.tres",
+		"res://Resources/Data/ColoredDice/OrangeDice.tres"
 	]
 	
 	for file_path in data_files:
@@ -425,7 +481,7 @@ func _load_colored_dice_data() -> void:
 ## Reset purchased colors for new game session
 func _reset_purchased_colors() -> void:
 	purchased_colors.clear()
-	for color_type in [DiceColorClass.Type.GREEN, DiceColorClass.Type.RED, DiceColorClass.Type.PURPLE, DiceColorClass.Type.BLUE, DiceColorClass.Type.YELLOW]:
+	for color_type in [DiceColorClass.Type.GREEN, DiceColorClass.Type.RED, DiceColorClass.Type.PURPLE, DiceColorClass.Type.BLUE, DiceColorClass.Type.YELLOW, DiceColorClass.Type.ORANGE]:
 		purchased_colors[color_type] = 0  # Changed from false to 0 (purchase count)
 	print("[DiceColorManager] Reset purchased colors for new game session")
 
@@ -471,11 +527,19 @@ func get_color_purchase_count(color_type: DiceColorClass.Type) -> int:
 
 ## Get the current cost for purchasing a colored dice (exponential scaling)
 ## Formula: (base_cost * 2^purchase_count) * colored_dice_multiplier
+## Base cost comes from the ColoredDiceData resource's price field.
 ## Applies channel difficulty multiplier if ChannelManager is available.
 ## @param color_type: DiceColor.Type to get cost for
 ## @return int: Current cost in dollars
 func get_current_color_cost(color_type: DiceColorClass.Type) -> int:
-	var base_cost = BASE_COSTS.get(color_type, 50)
+	var base_cost := 0
+	for data in colored_dice_data.values():
+		if data and data.get("color_type") == color_type:
+			base_cost = data.price
+			break
+	if base_cost <= 0:
+		push_error("[DiceColorManager] No ColoredDiceData price found for color_type %s, defaulting to $50" % color_type)
+		base_cost = 50
 	var purchase_count = purchased_colors.get(color_type, 0)
 	var exponential_cost = base_cost * int(pow(2, purchase_count))
 	

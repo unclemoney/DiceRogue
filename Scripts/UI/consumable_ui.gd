@@ -60,8 +60,18 @@ var _slot_cells: Array[PanelContainer] = []
 var _slot_contents: Array[Control] = []
 var _compact_overflow_label: Label = null
 
+# Debug logging
+var _debug_enabled: bool = OS.is_debug_build()
+
+## set_debug_enabled(enabled: bool)
+##
+## Toggles verbose debug logging for this script.
+func set_debug_enabled(enabled: bool) -> void:
+	_debug_enabled = enabled
+
 func _ready() -> void:
-	print("[ConsumableUI] Initializing new spine-based system...")
+	if _debug_enabled:
+		print("[ConsumableUI] Initializing new spine-based system...")
 	add_to_group("consumable_ui")
 	
 	# Clamp max_consumables to intended range
@@ -97,7 +107,8 @@ func _ready() -> void:
 	# Keep existing container for backward compatibility but hide it initially
 	if has_node("VBoxContainer/Container"):
 		container = $VBoxContainer/Container
-		print("[ConsumableUI] Found Container under VBoxContainer")
+		if _debug_enabled:
+			print("[ConsumableUI] Found Container under VBoxContainer")
 		container.visible = false  # Hidden by default in spine mode
 	else:
 		# Fallback: create Container if not found
@@ -130,7 +141,8 @@ func _ready() -> void:
 	resized.connect(_on_resized)
 	call_deferred("_adapt_layout")
 	
-	print("[ConsumableUI] New spine-based system initialized")
+	if _debug_enabled:
+		print("[ConsumableUI] New spine-based system initialized")
 
 
 func _on_resized() -> void:
@@ -239,7 +251,8 @@ func _create_compact_row() -> void:
 		_slot_cells.append(row_panel)
 		_slot_contents.append(null)
 
-	print("[ConsumableUI] Created vertical list with %d rows" % COMPACT_SLOT_COUNT)
+	if _debug_enabled:
+		print("[ConsumableUI] Created vertical list with %d rows" % COMPACT_SLOT_COUNT)
 
 func _on_row_mouse_entered(index: int) -> void:
 	if index >= 0 and index < _slot_cells.size():
@@ -390,7 +403,8 @@ func _assign_spine_to_slot(spine: ConsumableSpine, slot_index: int) -> void:
 
 func _create_background() -> void:
 	# Create semi-transparent background for when cards are fanned
-	print("[ConsumableUI] Creating background for fanned cards")
+	if _debug_enabled:
+		print("[ConsumableUI] Creating background for fanned cards")
 	_background = ColorRect.new()
 	_background.name = "Background"
 	_background.color = Color(0, 0, 0, 0.5)
@@ -427,11 +441,13 @@ func _create_spine_tooltip() -> void:
 	add_child(_spine_tooltip)
 
 func add_consumable(data: ConsumableData) -> Node:
-	print("[ConsumableUI] Adding consumable:", data.id if data else "null")
+	if _debug_enabled:
+		print("[ConsumableUI] Adding consumable:", data.id if data else "null")
 	
 	# Check if we've reached the max number of consumables
 	if _consumable_data.size() >= max_consumables:
-		print("[ConsumableUI] Maximum number of consumables reached!")
+		if _debug_enabled:
+			print("[ConsumableUI] Maximum number of consumables reached!")
 		emit_signal("max_consumables_reached")
 		return null
 		
@@ -507,7 +523,8 @@ func add_consumable(data: ConsumableData) -> Node:
 	# Update slots label
 	update_slots_label()
 	
-	print("[ConsumableUI] Added consumable spine:", data.id)
+	if _debug_enabled:
+		print("[ConsumableUI] Added consumable spine:", data.id)
 	return spine
 
 func _position_spines() -> void:
@@ -562,10 +579,12 @@ func _get_ordered_consumable_ids() -> Array[String]:
 	return result
 
 func _on_spine_clicked(consumable_id: String) -> void:
-	print("[ConsumableUI] Spine clicked:", consumable_id)
+	if _debug_enabled:
+		print("[ConsumableUI] Spine clicked:", consumable_id)
 	
 	if _is_animating:
-		print("[ConsumableUI] Animation in progress, ignoring click")
+		if _debug_enabled:
+			print("[ConsumableUI] Animation in progress, ignoring click")
 		return
 	
 	if _current_state == State.SPINES:
@@ -592,7 +611,8 @@ func _get_fan_overlay() -> CanvasLayer:
 
 
 func _fan_out_cards() -> void:
-	print("[ConsumableUI] Fanning out cards")
+	if _debug_enabled:
+		print("[ConsumableUI] Fanning out cards")
 	_is_animating = true
 	_current_state = State.FANNED
 	
@@ -679,7 +699,8 @@ func _create_fanned_icons() -> void:
 		icon.modulate.a = 0.0
 		icon.scale = Vector2(0.5, 0.5)
 		
-		print("[ConsumableUI] Card ", i, " (", consumable_id, ") - Start pos: ", icon.position, ", Target pos: ", fan_pos)
+		if _debug_enabled:
+			print("[ConsumableUI] Card ", i, " (", consumable_id, ") - Start pos: ", icon.position, ", Target pos: ", fan_pos)
 		
 		# Animate to final position
 		var tween: Tween = create_tween().set_parallel()
@@ -708,9 +729,10 @@ func _calculate_fan_positions(count: int) -> Array[Vector2]:
 	var center_x: float = _fan_center.x
 	var center_y: float = _fan_center.y
 	
-	print("[ConsumableUI] Calculating fan positions for ", count, " cards")
-	print("[ConsumableUI] Center position: ", _fan_center)
-	print("[ConsumableUI] Card size: ", COUPON_FAN_CARD_SIZE, ", Spacing: ", spacing)
+	if _debug_enabled:
+		print("[ConsumableUI] Calculating fan positions for ", count, " cards")
+		print("[ConsumableUI] Center position: ", _fan_center)
+		print("[ConsumableUI] Card size: ", COUPON_FAN_CARD_SIZE, ", Spacing: ", spacing)
 	
 	if count <= 3:
 		# Stack up to 3 coupons in a single centered column.
@@ -720,7 +742,8 @@ func _calculate_fan_positions(count: int) -> Array[Vector2]:
 		for i in range(count):
 			var pos: Vector2 = Vector2(start_x, start_y + i * (card_height + spacing))
 			positions.append(pos)
-			print("[ConsumableUI] Column card ", i, " position: ", pos)
+			if _debug_enabled:
+				print("[ConsumableUI] Column card ", i, " position: ", pos)
 	else:
 		# 4 coupons render as a centered 2x2 matrix.
 		var columns: int = 2
@@ -736,7 +759,8 @@ func _calculate_fan_positions(count: int) -> Array[Vector2]:
 			var pos_y: float = start_y + row * (card_height + spacing)
 			var pos: Vector2 = Vector2(pos_x, pos_y)
 			positions.append(pos)
-			print("[ConsumableUI] Grid card ", i, " position: ", pos)
+			if _debug_enabled:
+				print("[ConsumableUI] Grid card ", i, " position: ", pos)
 	
 	return positions
 
@@ -762,8 +786,9 @@ func _restore_compact_row_visibility() -> void:
 ## Public method to fold back the fan-out view and hide background.
 ## Called when shop opens or other UI needs to dismiss the consumable fan.
 func fold_back() -> void:
-	print("[ConsumableUI] *** fold_back() CALLED — state=%s, _is_animating=%s ***" % [State.keys()[_current_state], _is_animating])
-	print("[ConsumableUI]   Stack: ", get_stack())
+	if _debug_enabled:
+		print("[ConsumableUI] *** fold_back() CALLED — state=%s, _is_animating=%s ***" % [State.keys()[_current_state], _is_animating])
+		print("[ConsumableUI]   Stack: ", get_stack())
 	
 	# Immediately hide background regardless of state
 	_restore_background_to_compact_parent()
@@ -785,11 +810,13 @@ func fold_back() -> void:
 		_current_state = State.SPINES
 		_is_animating = false
 	
-	print("[ConsumableUI] fold_back() complete")
+	if _debug_enabled:
+		print("[ConsumableUI] fold_back() complete")
 
 func _fold_back_cards() -> void:
-	print("[ConsumableUI] *** _fold_back_cards() CALLED — state=%s, _is_animating=%s ***" % [State.keys()[_current_state], _is_animating])
-	print("[ConsumableUI]   Stack: ", get_stack())
+	if _debug_enabled:
+		print("[ConsumableUI] *** _fold_back_cards() CALLED — state=%s, _is_animating=%s ***" % [State.keys()[_current_state], _is_animating])
+		print("[ConsumableUI]   Stack: ", get_stack())
 	_is_animating = true
 	_current_state = State.SPINES
 	
@@ -884,10 +911,12 @@ func _clear_fanned_icons() -> void:
 
 func _on_background_clicked(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		print("[ConsumableUI] *** BACKGROUND CLICK — state=%s, _is_animating=%s, _overflow=%s ***" % [State.keys()[_current_state], _is_animating, _overflow_mode])
+		if _debug_enabled:
+			print("[ConsumableUI] *** BACKGROUND CLICK — state=%s, _is_animating=%s, _overflow=%s ***" % [State.keys()[_current_state], _is_animating, _overflow_mode])
 		# Block folding if in overflow mode
 		if _overflow_mode:
-			print("[ConsumableUI] Cannot close - must use or sell %d consumables first" % _overflow_target_count)
+			if _debug_enabled:
+				print("[ConsumableUI] Cannot close - must use or sell %d consumables first" % _overflow_target_count)
 			return
 		if _current_state == State.FANNED and not _is_animating:
 			_fold_back_cards()
@@ -923,7 +952,8 @@ func _start_idle_animations() -> void:
 		_idle_tweens.append(icon_tween)
 
 func _on_consumable_used(consumable_id: String) -> void:
-	print("[ConsumableUI] Consumable used:", consumable_id)
+	if _debug_enabled:
+		print("[ConsumableUI] Consumable used:", consumable_id)
 	
 	# Safe removal with count tracking
 	if _has_consumables() and _consumable_data.has(consumable_id):
@@ -933,10 +963,12 @@ func _on_consumable_used(consumable_id: String) -> void:
 		# Re-emit signal for game controller to handle
 		emit_signal("consumable_used", consumable_id)
 	else:
-		print("[ConsumableUI] WARNING: Tried to use non-existent consumable:", consumable_id)
+		if _debug_enabled:
+			print("[ConsumableUI] WARNING: Tried to use non-existent consumable:", consumable_id)
 
 func _on_spine_hovered(consumable_id: String, mouse_pos: Vector2) -> void:
-	print("[ConsumableUI] Spine hovered:", consumable_id)
+	if _debug_enabled:
+		print("[ConsumableUI] Spine hovered:", consumable_id)
 	
 	if not _spine_tooltip or not _consumable_data.has(consumable_id):
 		return
@@ -949,20 +981,23 @@ func _on_spine_hovered(consumable_id: String, mouse_pos: Vector2) -> void:
 	_tfx.place_tooltip(_spine_tooltip, anchor_rect, SIDE_RIGHT, true)
 
 func _on_spine_unhovered(consumable_id: String) -> void:
-	print("[ConsumableUI] Spine unhovered:", consumable_id)
+	if _debug_enabled:
+		print("[ConsumableUI] Spine unhovered:", consumable_id)
 	
 	if _spine_tooltip:
 		_spine_tooltip.visible = false
 
 func _on_consumable_sell_requested(consumable_id: String) -> void:
-	print("[ConsumableUI] Consumable sell requested:", consumable_id)
+	if _debug_enabled:
+		print("[ConsumableUI] Consumable sell requested:", consumable_id)
 	
 	if _has_consumables() and _consumable_data.has(consumable_id):
 		# Do NOT remove here — let GameController animate then remove via callback
 		emit_signal("consumable_sold", consumable_id)
 
 func update_consumable_usability() -> void:
-	print("[ConsumableUI] Updating consumable usability for fanned icons")
+	if _debug_enabled:
+		print("[ConsumableUI] Updating consumable usability for fanned icons")
 	
 	# Only update usability when cards are fanned out
 	if _current_state != State.FANNED:
@@ -1025,9 +1060,40 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 				# No PowerUpUI available, assume unusable
 				return false
 		"green_envy":
-			# Green Envy requires dice to be rolled (to have values for scoring)
+			# Raining Green requires dice to be rolled (to have values for scoring)
 			var dice_values = DiceResults.values
 			return not dice_values.is_empty()
+		"mulligan":
+			# Mulligan requires at least one placed score and dice currently rolled
+			var dice_values = DiceResults.values
+			if dice_values.is_empty():
+				return false
+			if game_controller and game_controller.scorecard:
+				return game_controller.scorecard.has_any_scores()
+			return false
+		"scratch_ticket":
+			# Scratch Ticket requires the last score to be a true zero (base score)
+			if game_controller and game_controller.scorecard:
+				if game_controller.scorecard.has_any_scores():
+					return game_controller.scorecard.last_base_score == 0
+			return false
+		"loaded_dice":
+			# Loaded Dice sets a die's value directly, so it requires rolled dice
+			var dice_values = DiceResults.values
+			return not dice_values.is_empty()
+		"paint_job":
+			# Paint Job recolors the current hand, meaningful only after a roll
+			var dice_values = DiceResults.values
+			return not dice_values.is_empty()
+		"spite", "antidote":
+			# Spite and Antidote require at least one active debuff
+			# (Mom-granted buffs like rebellion are rewards, not debuffs)
+			if game_controller:
+				for debuff_id in game_controller.active_debuffs.keys():
+					if not debuff_id in DebuffManager.GRANTED_ONLY_IDS:
+						return true
+				return false
+			return false
 		"empty_shelves":
 			# Empty Shelves requires dice to be rolled (to have values for scoring)
 			var dice_values = DiceResults.values
@@ -1073,31 +1139,38 @@ func _stop_idle_animations() -> void:
 ## Forces the fan-out view open and displays a message requiring the player to use or sell
 ## consumables until count is at or below max_consumables.
 func handle_consumable_overflow(excess_count: int) -> void:
-	print("[ConsumableUI] handle_consumable_overflow called with excess_count: %d" % excess_count)
-	print("[ConsumableUI] Current state: %s, Active count: %d, Max: %d" % [State.keys()[_current_state], _active_consumable_count, max_consumables])
+	if _debug_enabled:
+		print("[ConsumableUI] handle_consumable_overflow called with excess_count: %d" % excess_count)
+		print("[ConsumableUI] Current state: %s, Active count: %d, Max: %d" % [State.keys()[_current_state], _active_consumable_count, max_consumables])
 	
 	if excess_count <= 0:
-		print("[ConsumableUI] No overflow needed (excess <= 0)")
+		if _debug_enabled:
+			print("[ConsumableUI] No overflow needed (excess <= 0)")
 		return
 	
-	print("[ConsumableUI] Entering overflow mode - must reduce by %d consumables" % excess_count)
+	if _debug_enabled:
+		print("[ConsumableUI] Entering overflow mode - must reduce by %d consumables" % excess_count)
 	_overflow_mode = true
 	_overflow_target_count = excess_count
 	
 	# Force fan out if not already
 	if _current_state == State.SPINES:
-		print("[ConsumableUI] Currently in SPINES state, forcing fan out")
+		if _debug_enabled:
+			print("[ConsumableUI] Currently in SPINES state, forcing fan out")
 		_fan_out_cards()
 		# Wait for fan out animation to complete
 		await get_tree().create_timer(0.7).timeout
-		print("[ConsumableUI] Fan out animation completed")
+		if _debug_enabled:
+			print("[ConsumableUI] Fan out animation completed")
 	else:
-		print("[ConsumableUI] Already in FANNED state")
+		if _debug_enabled:
+			print("[ConsumableUI] Already in FANNED state")
 	
 	# Create overflow label if it doesn't exist
 	_create_overflow_label()
 	_update_overflow_label()
-	print("[ConsumableUI] Overflow label created and updated")
+	if _debug_enabled:
+		print("[ConsumableUI] Overflow label created and updated")
 
 ## _create_overflow_label()
 ##
@@ -1144,7 +1217,8 @@ func _check_overflow_complete() -> void:
 	
 	var excess: int = _active_consumable_count - max_consumables
 	if excess <= 0:
-		print("[ConsumableUI] Overflow resolved - exiting overflow mode")
+		if _debug_enabled:
+			print("[ConsumableUI] Overflow resolved - exiting overflow mode")
 		_overflow_mode = false
 		_overflow_target_count = 0
 		
@@ -1159,16 +1233,19 @@ func _check_overflow_complete() -> void:
 		# Update remaining count
 		_overflow_target_count = excess
 		_update_overflow_label()
-		print("[ConsumableUI] Still in overflow mode - %d excess remaining" % excess)
+		if _debug_enabled:
+			print("[ConsumableUI] Still in overflow mode - %d excess remaining" % excess)
 
 func _has_consumables() -> bool:
 	return _active_consumable_count > 0
 
 func remove_consumable(consumable_id: String) -> void:
-	print("[ConsumableUI] Removing consumable:", consumable_id)
+	if _debug_enabled:
+		print("[ConsumableUI] Removing consumable:", consumable_id)
 	
 	if not _consumable_data.has(consumable_id):
-		print("[ConsumableUI] WARNING: Tried to remove non-existent consumable:", consumable_id)
+		if _debug_enabled:
+			print("[ConsumableUI] WARNING: Tried to remove non-existent consumable:", consumable_id)
 		return
 	
 	# Update count first
@@ -1252,7 +1329,8 @@ func remove_consumable(consumable_id: String) -> void:
 ## Removes all consumables from the UI at once. Called on new channel start
 ## when consumables are not carried over.
 func clear_all_consumables() -> void:
-	print("[ConsumableUI] Clearing all consumables")
+	if _debug_enabled:
+		print("[ConsumableUI] Clearing all consumables")
 
 	# Stop idle animations immediately
 	_stop_idle_animations()
@@ -1305,11 +1383,13 @@ func clear_all_consumables() -> void:
 	# Update slots label
 	update_slots_label()
 
-	print("[ConsumableUI] Cleared all consumables")
+	if _debug_enabled:
+		print("[ConsumableUI] Cleared all consumables")
 
 
 func _cleanup_empty_state() -> void:
-	print("[ConsumableUI] Cleaning up empty state")
+	if _debug_enabled:
+		print("[ConsumableUI] Cleaning up empty state")
 	
 	# Stop idle animations immediately
 	_stop_idle_animations()
@@ -1393,9 +1473,10 @@ func get_all_consumable_ids() -> Array[String]:
 func animate_consumable_removal(consumable_id: String, on_finished: Callable) -> void:
 	# DEBUG: Log full state at entry
 	var state_name: String = "SPINES" if _current_state == State.SPINES else "FANNED"
-	print("[ConsumableUI] animate_consumable_removal('%s') — state=%s, _is_animating=%s" % [consumable_id, state_name, _is_animating])
-	print("[ConsumableUI]   _fanned_icons keys: ", _fanned_icons.keys())
-	print("[ConsumableUI]   _consumable_spines keys: ", _consumable_spines.keys())
+	if _debug_enabled:
+		print("[ConsumableUI] animate_consumable_removal('%s') — state=%s, _is_animating=%s" % [consumable_id, state_name, _is_animating])
+		print("[ConsumableUI]   _fanned_icons keys: ", _fanned_icons.keys())
+		print("[ConsumableUI]   _consumable_spines keys: ", _consumable_spines.keys())
 	
 	# Find target node to animate — prefer the VISIBLE representation
 	# When fanned, the fanned icon is visible; when collapsed, the spine is visible
@@ -1411,14 +1492,17 @@ func animate_consumable_removal(consumable_id: String, on_finished: Callable) ->
 		node = _fanned_icons[consumable_id]
 		node_source = "fanned_icon (fallback)"
 	
-	print("[ConsumableUI]   Node source: %s, node=%s" % [node_source, node])
+	if _debug_enabled:
+		print("[ConsumableUI]   Node source: %s, node=%s" % [node_source, node])
 	
 	if not node:
-		print("[ConsumableUI] *** NO NODE FOUND — calling on_finished immediately ***")
+		if _debug_enabled:
+			print("[ConsumableUI] *** NO NODE FOUND — calling on_finished immediately ***")
 		on_finished.call()
 		return
 	
-	print("[ConsumableUI]   Node valid=%s, in_tree=%s, visible=%s, pos=%s" % [is_instance_valid(node), node.is_inside_tree(), node.visible, node.global_position])
+	if _debug_enabled:
+		print("[ConsumableUI]   Node valid=%s, in_tree=%s, visible=%s, pos=%s" % [is_instance_valid(node), node.is_inside_tree(), node.visible, node.global_position])
 	
 	# Lock animating flag so fold_back doesn't fire during animation
 	_is_animating = true
@@ -1438,7 +1522,8 @@ func animate_consumable_removal(consumable_id: String, on_finished: Callable) ->
 		if money_container is Control:
 			fly_target = (money_container as Control).get_global_rect().get_center()
 	
-	print("[ConsumableUI]   Step 1: Jelly wobble starting...")
+	if _debug_enabled:
+		print("[ConsumableUI]   Step 1: Jelly wobble starting...")
 	# Step 1: Jelly wobble — item shakes as if being grabbed
 	TweenFX.jelly(node, 0.25, 0.2, 2)
 	await get_tree().create_timer(0.25).timeout
@@ -1447,15 +1532,18 @@ func animate_consumable_removal(consumable_id: String, on_finished: Callable) ->
 	var still_valid: bool = is_instance_valid(node)
 	var still_in_tree: bool = still_valid and node.is_inside_tree()
 	var state_after: String = "SPINES" if _current_state == State.SPINES else "FANNED"
-	print("[ConsumableUI]   After await: node_valid=%s, in_tree=%s, state=%s" % [still_valid, still_in_tree, state_after])
+	if _debug_enabled:
+		print("[ConsumableUI]   After await: node_valid=%s, in_tree=%s, state=%s" % [still_valid, still_in_tree, state_after])
 	
 	if not still_valid:
-		print("[ConsumableUI] *** NODE FREED DURING AWAIT — animation aborted ***")
+		if _debug_enabled:
+			print("[ConsumableUI] *** NODE FREED DURING AWAIT — animation aborted ***")
 		_is_animating = false
 		on_finished.call()
 		return
 	
-	print("[ConsumableUI]   Step 2: Fly tween starting → target=%s" % fly_target)
+	if _debug_enabled:
+		print("[ConsumableUI]   Step 2: Fly tween starting → target=%s" % fly_target)
 	# Step 2: Spin + shrink + fly toward money display
 	var fly_tween: Tween = create_tween()
 	fly_tween.set_parallel(true)
@@ -1465,7 +1553,8 @@ func animate_consumable_removal(consumable_id: String, on_finished: Callable) ->
 	TweenFX.spin(node, 0.35, 1.0)
 	
 	fly_tween.finished.connect(func():
-		print("[ConsumableUI]   Fly tween FINISHED — calling on_finished callback")
+		if _debug_enabled:
+			print("[ConsumableUI]   Fly tween FINISHED — calling on_finished callback")
 		_is_animating = false
 		on_finished.call()
 	)
@@ -1487,11 +1576,13 @@ func animate_consumable_use(consumable_id: String, on_finished: Callable) -> voi
 		node = _fanned_icons[consumable_id]
 	
 	if not node:
-		print("[ConsumableUI] No visual for use animation:", consumable_id)
+		if _debug_enabled:
+			print("[ConsumableUI] No visual for use animation:", consumable_id)
 		on_finished.call()
 		return
 	
-	print("[ConsumableUI] Animating consumable use for:", consumable_id)
+	if _debug_enabled:
+		print("[ConsumableUI] Animating consumable use for:", consumable_id)
 	
 	# Wild fidget spin — "thrown" feeling
 	TweenFX.fidget(node, 0.4, 6)
@@ -1525,15 +1616,17 @@ func animate_consumable_use(consumable_id: String, on_finished: Callable) -> voi
 		if explosion.has_method("restart"):
 			explosion.restart()
 	
-	print("[ConsumableUI] Consumable use animation complete:", consumable_id)
+	if _debug_enabled:
+		print("[ConsumableUI] Consumable use animation complete:", consumable_id)
 	on_finished.call()
 
 # Deprecated method for backward compatibility - logs warning and returns null
 func get_consumable_icon(consumable_id: String):
 	push_warning("[ConsumableUI] get_consumable_icon() is deprecated. Use get_consumable_spine() or get_fanned_icon() instead.")
-	print("[ConsumableUI] DEPRECATED: get_consumable_icon called for ID: ", consumable_id)
-	print("[ConsumableUI] Current state: ", _current_state)
-	print("[ConsumableUI] Available methods: get_consumable_spine(), get_fanned_icon(), has_consumable(), get_consumable_data()")
+	if _debug_enabled:
+		print("[ConsumableUI] DEPRECATED: get_consumable_icon called for ID: ", consumable_id)
+		print("[ConsumableUI] Current state: ", _current_state)
+		print("[ConsumableUI] Available methods: get_consumable_spine(), get_fanned_icon(), has_consumable(), get_consumable_data()")
 	
 	# For temporary compatibility, return fanned icon if available
 	if _current_state == State.FANNED:
@@ -1546,7 +1639,8 @@ func get_consumable_icon(consumable_id: String):
 ## Updates the display count for a consumable type. This allows showing multiple instances
 ## of the same consumable without creating separate spines.
 func update_consumable_count(consumable_id: String, count: int) -> void:
-	print("[ConsumableUI] Updating consumable count for '%s' to %d" % [consumable_id, count])
+	if _debug_enabled:
+		print("[ConsumableUI] Updating consumable count for '%s' to %d" % [consumable_id, count])
 	
 	if _consumable_spines.has(consumable_id):
 		var spine: ConsumableSpine = _consumable_spines[consumable_id]
@@ -1561,7 +1655,8 @@ func update_consumable_count(consumable_id: String, count: int) -> void:
 
 ## Helper functions for consistent styling
 func _apply_hover_tooltip_style(tooltip: PanelContainer) -> void:
-	print("[ConsumableUI] Applying direct hover tooltip style")
+	if _debug_enabled:
+		print("[ConsumableUI] Applying direct hover tooltip style")
 	var style_box = StyleBoxFlat.new()
 	style_box.bg_color = Color(0.247059, 0.219608, 0.345098, 0.98)
 	style_box.border_color = Color(0.137255, 0.411765, 0.415686, 1.0)
@@ -1577,7 +1672,8 @@ func _apply_hover_tooltip_style(tooltip: PanelContainer) -> void:
 	tooltip.add_theme_stylebox_override("panel", style_box)
 
 func _apply_hover_label_style(label: Label) -> void:
-	print("[ConsumableUI] Applying direct hover label style")
+	if _debug_enabled:
+		print("[ConsumableUI] Applying direct hover label style")
 	# Load and apply VCR font
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 	if vcr_font:

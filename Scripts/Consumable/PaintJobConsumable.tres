@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://dt03o4yi3vuob"]
+
+[ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_data"]
+[ext_resource type="Texture2D" uid="uid://dwlo8ieu7vgo0" path="res://Resources/Art/Consumables/Sunday_Coupon_Sheet_5x5_Hardware.png" id="1_icon"]
+[ext_resource type="PackedScene" path="res://Scenes/Consumable/PaintJobConsumable.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_paint"]
+atlas = ExtResource("1_icon")
+region = Rect2(1214, 1210, 382, 367)
+
+[resource]
+script = ExtResource("1_data")
+id = "paint_job"
+display_name = "Paint Job"
+description = "All dice gain a random color for the next roll, then revert to their prior colors."
+icon = SubResource("AtlasTexture_paint")
+scene = ExtResource("2_scene")
+price = 60
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])
+metadata/_custom_type_script = "uid://wx2i3vixf1m5"

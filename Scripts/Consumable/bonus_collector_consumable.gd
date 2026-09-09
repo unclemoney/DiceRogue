@@ -3,7 +3,7 @@ class_name BonusCollectorConsumable
 
 ## BonusCollectorConsumable
 ##
-## Grants $35 instantly if the upper section total is >= 63 (bonus threshold).
+## Grants $150 instantly if the upper section total is >= 63 (bonus threshold).
 ## If not eligible, shows feedback message but does nothing.
 
 const BONUS_AMOUNT := 150

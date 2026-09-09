@@ -44,7 +44,7 @@ func _on_turn_started() -> void:
 	if not scorecard_ref:
 		return
 	
-	var roll = randf()
+	var roll = GameRNG.randf()
 	if roll <= UPGRADE_CHANCE:
 		_upgrade_random_category()
 	else:

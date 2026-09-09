@@ -1,5 +1,5 @@
 {
-  "_comment": "consumable id -> [sheet_file, cell_index row-major 0-24]. Generic=grocery/household, Hardware=tools/garden. Unused cells: none — Generic 18 (Ketchup) = evens_upgrade, Generic 23 (All-Purpose Cleaner) = odds_upgrade, Hardware 17 (Latex Paint) = even_odd_full_house_upgrade. Swap cells freely to re-theme.",
+  "_comment": "consumable id -> [sheet_file, cell_index row-major 0-24]. Generic=grocery/household, Hardware=tools/garden. Unused cells: none — Generic 18 = mulligan, Generic 23 = scratch_ticket, Hardware 17 (Latex Paint) = even_odd_full_house_upgrade. NOTE: evens_upgrade actually ships on Generic 20 and odds_upgrade on Generic 24 in their .tres files (duplicates of upper/lower_section_boost); corrected here. bonus_sprint ships on Generic 6 (Premium Coffee, duplicate of three_of_a_kind_upgrade — sheet is full; swap to re-theme). Swap cells freely to re-theme.",
   "ones_upgrade": ["Sunday_Coupon_Sheet_5x5_Generic.png", 0],
   "twos_upgrade": ["Sunday_Coupon_Sheet_5x5_Generic.png", 1],
   "threes_upgrade": ["Sunday_Coupon_Sheet_5x5_Generic.png", 2],
@@ -23,9 +23,12 @@
   "double_existing": ["Sunday_Coupon_Sheet_5x5_Generic.png", 21],
   "score_amplifier": ["Sunday_Coupon_Sheet_5x5_Generic.png", 22],
   "lower_section_boost": ["Sunday_Coupon_Sheet_5x5_Generic.png", 24],
-  "evens_upgrade": ["Sunday_Coupon_Sheet_5x5_Generic.png", 18],
-  "odds_upgrade": ["Sunday_Coupon_Sheet_5x5_Generic.png", 23],
+  "evens_upgrade": ["Sunday_Coupon_Sheet_5x5_Generic.png", 20],
+  "odds_upgrade": ["Sunday_Coupon_Sheet_5x5_Generic.png", 24],
+  "mulligan": ["Sunday_Coupon_Sheet_5x5_Generic.png", 18],
+  "scratch_ticket": ["Sunday_Coupon_Sheet_5x5_Generic.png", 23],
   "even_odd_full_house_upgrade": ["Sunday_Coupon_Sheet_5x5_Hardware.png", 17],
+  "bonus_sprint": ["Sunday_Coupon_Sheet_5x5_Generic.png", 6],
 
   "visit_the_shop": ["Sunday_Coupon_Sheet_5x5_Hardware.png", 0],
   "lucky_upgrade": ["Sunday_Coupon_Sheet_5x5_Hardware.png", 1],

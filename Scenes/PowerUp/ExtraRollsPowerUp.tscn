@@ -4,5 +4,5 @@
 
 [node name="ExtraRollsPowerUp" type="Node2D"]
 script = ExtResource("1_jcfws")
-extra_rolls = null
+extra_rolls = 1
 id = "extra_rolls"

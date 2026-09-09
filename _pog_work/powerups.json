@@ -51,14 +51,14 @@
   "chore_champion": {
     "file": "Scripts/PowerUps/ChoreChampionPowerUp.tres",
     "name": "Chore Champion",
-    "desc": "Chores are 2x more effective (Check to make sure since refactor)",
+    "desc": "Chores are 2x more effective",
     "rating": "G",
     "rarity": "common"
   },
   "chore_sprint": {
     "file": "Scripts/PowerUps/ChoreSprintPowerUp.tres",
     "name": "Chore Sprint",
-    "desc": "Chores reduce goof-off meter by 30 instead of 20 (redundant)",
+    "desc": "Chores reduce goof-off meter by 30 instead of 20",
     "rating": "PG",
     "rarity": "uncommon"
   },
@@ -182,9 +182,9 @@
     "rarity": "common"
   },
   "green_monster": {
-    "file": "Scripts/PowerUps/GreenWithEnvy.tres",
+    "file": "Scripts/PowerUps/GreenMonster.tres",
     "name": "Green Monster",
-    "desc": "+0.05x green money multiplier per green dice scored. Stacks throughout the game! (Verify It works)",
+    "desc": "+0.05x green money multiplier per green dice scored. Stacks throughout the game!",
     "rating": "PG",
     "rarity": "uncommon"
   },
@@ -205,7 +205,7 @@
   "lock_and_load": {
     "file": "Scripts/PowerUps/LockAndLoadPowerUp.tres",
     "name": "Lock & Load",
-    "desc": "+$3 for each die locked (Seems useless)",
+    "desc": "+$3 for each die locked",
     "rating": "G",
     "rarity": "common"
   },

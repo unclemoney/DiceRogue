@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://dua1qk14hfmqg"]
+
+[ext_resource type="Texture2D" uid="uid://dg6pm7i6if501" path="res://Resources/Art/Consumables/Sunday_Coupon_Sheet_5x5_Generic.png" id="1_atlas"]
+[ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://Scenes/Consumable/AntidoteConsumable.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_antidote"]
+atlas = ExtResource("1_atlas")
+region = Rect2(1588, 1587, 412, 382)
+
+[resource]
+script = ExtResource("1_script")
+id = "antidote"
+display_name = "Antidote"
+description = "Cleanses your highest-intensity active debuff"
+icon = SubResource("AtlasTexture_antidote")
+scene = ExtResource("2_scene")
+price = 40
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])

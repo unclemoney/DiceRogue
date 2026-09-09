@@ -92,9 +92,20 @@ var cumulative_stats: Dictionary = {
 var current_game_stats: Dictionary = {}
 var is_tracking_game: bool = false
 
+var _debug_enabled: bool = OS.is_debug_build()
+
+
+## set_debug_enabled(enabled: bool)
+##
+## Toggles verbose debug logging for this script.
+func set_debug_enabled(enabled: bool) -> void:
+	_debug_enabled = enabled
+
+
 func _ready() -> void:
 	add_to_group("progress_manager")
-	print("[ProgressManager] Initializing progress tracking system")
+	if _debug_enabled:
+		print("[ProgressManager] Initializing progress tracking system")
 	
 	# Initialize default unlockable items FIRST (so they exist for loading)
 	_create_default_unlockable_items()
@@ -133,8 +144,9 @@ func _ready() -> void:
 func _sync_active_profile_slot() -> void:
 	var game_settings = get_node_or_null("/root/GameSettings")
 	if game_settings and game_settings.active_profile_slot != current_profile_slot:
-		print("[ProgressManager] Active profile is slot %d, but slot %d was loaded at boot - syncing" % [
-			game_settings.active_profile_slot, current_profile_slot])
+		if _debug_enabled:
+			print("[ProgressManager] Active profile is slot %d, but slot %d was loaded at boot - syncing" % [
+				game_settings.active_profile_slot, current_profile_slot])
 		load_profile(game_settings.active_profile_slot)
 
 ## _check_and_migrate_legacy_save()
@@ -152,10 +164,12 @@ func _check_and_migrate_legacy_save() -> void:
 			break
 	
 	if any_profile_exists:
-		print("[ProgressManager] Profile files already exist, skipping migration")
+		if _debug_enabled:
+			print("[ProgressManager] Profile files already exist, skipping migration")
 		return
 	
-	print("[ProgressManager] Found legacy save file, migrating to profile slot 1...")
+	if _debug_enabled:
+		print("[ProgressManager] Found legacy save file, migrating to profile slot 1...")
 	
 	# Read legacy save
 	var file = FileAccess.open(LEGACY_SAVE_FILE_PATH, FileAccess.READ)
@@ -184,11 +198,13 @@ func _check_and_migrate_legacy_save() -> void:
 	if new_file:
 		new_file.store_string(new_json_string)
 		new_file.close()
-		print("[ProgressManager] Successfully migrated to profile_1.save")
+		if _debug_enabled:
+			print("[ProgressManager] Successfully migrated to profile_1.save")
 		
 		# Delete legacy file after successful migration
 		DirAccess.remove_absolute(LEGACY_SAVE_FILE_PATH)
-		print("[ProgressManager] Deleted legacy progress.save file")
+		if _debug_enabled:
+			print("[ProgressManager] Deleted legacy progress.save file")
 	else:
 		push_error("[ProgressManager] Failed to create profile_1.save during migration")
 
@@ -248,7 +264,8 @@ func _create_default_profile(slot: int) -> void:
 	if file:
 		file.store_string(json_string)
 		file.close()
-		print("[ProgressManager] Created default profile for slot %d: %s" % [slot, DEFAULT_PROFILE_NAMES[slot]])
+		if _debug_enabled:
+			print("[ProgressManager] Created default profile for slot %d: %s" % [slot, DEFAULT_PROFILE_NAMES[slot]])
 	else:
 		push_error("[ProgressManager] Failed to create default profile for slot %d" % slot)
 
@@ -260,19 +277,22 @@ func _create_default_profile(slot: int) -> void:
 ## @param slot: Profile slot number (1-3)
 ## @return bool: True if successful
 func load_profile(slot: int) -> bool:
-	print("[ProgressManager] ===== LOAD PROFILE START =====")
-	print("[ProgressManager] Requested slot: %d" % slot)
-	print("[ProgressManager] Current slot before load: %d" % current_profile_slot)
-	print("[ProgressManager] Current name before load: %s" % current_profile_name)
+	if _debug_enabled:
+		print("[ProgressManager] ===== LOAD PROFILE START =====")
+		print("[ProgressManager] Requested slot: %d" % slot)
+		print("[ProgressManager] Current slot before load: %d" % current_profile_slot)
+		print("[ProgressManager] Current name before load: %s" % current_profile_name)
 	
 	if slot < 1 or slot > 3:
 		push_error("[ProgressManager] Invalid profile slot: %d" % slot)
 		return false
 	
 	var save_path = PROFILE_SAVE_PATHS[slot]
-	print("[ProgressManager] Loading from path: %s" % save_path)
+	if _debug_enabled:
+		print("[ProgressManager] Loading from path: %s" % save_path)
 	if not FileAccess.file_exists(save_path):
-		print("[ProgressManager] Profile slot %d not found, creating default" % slot)
+		if _debug_enabled:
+			print("[ProgressManager] Profile slot %d not found, creating default" % slot)
 		_create_default_profile(slot)
 
 	# Remember the live Rep so a mid-run load that changes it can notify
@@ -301,8 +321,9 @@ func load_profile(slot: int) -> bool:
 	# Check save version - delete outdated profiles and create fresh defaults
 	var save_version = save_data.get("save_version", 1)
 	if save_version < CURRENT_SAVE_VERSION:
-		print("[ProgressManager] Outdated profile detected (v%d < v%d) in slot %d" % [save_version, CURRENT_SAVE_VERSION, slot])
-		print("[ProgressManager] Deleting outdated profile and creating fresh default")
+		if _debug_enabled:
+			print("[ProgressManager] Outdated profile detected (v%d < v%d) in slot %d" % [save_version, CURRENT_SAVE_VERSION, slot])
+			print("[ProgressManager] Deleting outdated profile and creating fresh default")
 		profile_migration_needed.emit(slot)
 		_create_default_profile(slot)
 		# Re-read the fresh profile
@@ -321,9 +342,10 @@ func load_profile(slot: int) -> bool:
 	# Update current profile info
 	current_profile_slot = slot
 	current_profile_name = save_data.get("profile_name", DEFAULT_PROFILE_NAMES[slot])
-	print("[ProgressManager] Updated current slot to: %d" % current_profile_slot)
-	print("[ProgressManager] Updated current name to: %s" % current_profile_name)
-	print("[ProgressManager] Profile name from save_data: %s" % save_data.get("profile_name", "NOT FOUND"))
+	if _debug_enabled:
+		print("[ProgressManager] Updated current slot to: %d" % current_profile_slot)
+		print("[ProgressManager] Updated current name to: %s" % current_profile_name)
+		print("[ProgressManager] Profile name from save_data: %s" % save_data.get("profile_name", "NOT FOUND"))
 	
 	# Load tutorial flags
 	tutorial_completed = save_data.get("tutorial_completed", false)
@@ -339,7 +361,8 @@ func load_profile(slot: int) -> bool:
 	else:
 		# IMPORTANT: Reset to defaults if not in save file
 		cumulative_stats = _get_default_cumulative_stats()
-		print("[ProgressManager] WARNING: No cumulative_stats in save, using defaults")
+		if _debug_enabled:
+			print("[ProgressManager] WARNING: No cumulative_stats in save, using defaults")
 	
 	# Load completed channels
 	if save_data.has("completed_channels"):
@@ -375,11 +398,13 @@ func load_profile(slot: int) -> bool:
 		# Persist to settings.cfg so GameSettings stays in sync
 		if game_settings_node and game_settings_node.has_method("save_settings"):
 			game_settings_node.save_settings()
-		print("[ProgressManager] Loaded FX settings from profile")
+		if _debug_enabled:
+			print("[ProgressManager] Loaded FX settings from profile")
 	
-	print("[ProgressManager] Loaded profile %d: %s (%d unlocked items)" % [slot, current_profile_name, unlocked_count])
-	print("[ProgressManager] Final state - slot: %d, name: %s" % [current_profile_slot, current_profile_name])
-	print("[ProgressManager] ===== LOAD PROFILE END =====")
+	if _debug_enabled:
+		print("[ProgressManager] Loaded profile %d: %s (%d unlocked items)" % [slot, current_profile_name, unlocked_count])
+		print("[ProgressManager] Final state - slot: %d, name: %s" % [current_profile_slot, current_profile_name])
+		print("[ProgressManager] ===== LOAD PROFILE END =====")
 	# A load that changes Rep must notify listeners: without this, a mid-run
 	# reload (e.g. the slot-mismatch guard in save_current_profile()) silently
 	# zeroed the stat while every Rep meter kept showing the stale value.
@@ -426,25 +451,31 @@ func _reset_all_unlocks() -> void:
 ## Save the current profile's progress to its save file.
 ## Includes safeguards against profile slot mismatch.
 func save_current_profile() -> void:
-	print("[ProgressManager] ===== SAVE PROFILE START =====")
-	print("[ProgressManager] Saving - current slot: %d, name: %s" % [current_profile_slot, current_profile_name])
+	if _debug_enabled:
+		print("[ProgressManager] ===== SAVE PROFILE START =====")
+		print("[ProgressManager] Saving - current slot: %d, name: %s" % [current_profile_slot, current_profile_name])
 	
 	# Ensure we're using the correct profile slot from GameSettings
 	var game_settings = get_node_or_null("/root/GameSettings")
 	if game_settings:
-		print("[ProgressManager] GameSettings active slot: %d" % game_settings.active_profile_slot)
+		if _debug_enabled:
+			print("[ProgressManager] GameSettings active slot: %d" % game_settings.active_profile_slot)
 		if game_settings.active_profile_slot != current_profile_slot:
-			print("[ProgressManager] WARNING: Profile mismatch detected!")
-			print("  ProgressManager slot: %d, GameSettings slot: %d" % [current_profile_slot, game_settings.active_profile_slot])
-			print("  Syncing to GameSettings slot: %d" % game_settings.active_profile_slot)
+			if _debug_enabled:
+				print("[ProgressManager] WARNING: Profile mismatch detected!")
+				print("  ProgressManager slot: %d, GameSettings slot: %d" % [current_profile_slot, game_settings.active_profile_slot])
+				print("  Syncing to GameSettings slot: %d" % game_settings.active_profile_slot)
 			# Reload the correct profile before saving to avoid data corruption
-			print("[ProgressManager] CRITICAL: Loading correct profile before save to prevent name crossover")
+			if _debug_enabled:
+				print("[ProgressManager] CRITICAL: Loading correct profile before save to prevent name crossover")
 			load_profile(game_settings.active_profile_slot)
 	else:
-		print("[ProgressManager] WARNING: GameSettings not found during save!")
+		if _debug_enabled:
+			print("[ProgressManager] WARNING: GameSettings not found during save!")
 	
 	var save_path = PROFILE_SAVE_PATHS[current_profile_slot]
-	print("[ProgressManager] Saving to path: %s" % save_path)
+	if _debug_enabled:
+		print("[ProgressManager] Saving to path: %s" % save_path)
 	
 	var save_data = {
 		"save_version": CURRENT_SAVE_VERSION,
@@ -488,7 +519,8 @@ func save_current_profile() -> void:
 	file.store_string(json_string)
 	file.close()
 	
-	print("[ProgressManager] Profile %d saved: %s" % [current_profile_slot, current_profile_name])
+	if _debug_enabled:
+		print("[ProgressManager] Profile %d saved: %s" % [current_profile_slot, current_profile_name])
 	progress_saved.emit()
 
 
@@ -539,7 +571,8 @@ func rename_profile(slot: int, new_name: String) -> bool:
 		if slot == current_profile_slot:
 			current_profile_name = new_name
 		
-		print("[ProgressManager] Profile %d renamed to: %s" % [slot, new_name])
+		if _debug_enabled:
+			print("[ProgressManager] Profile %d renamed to: %s" % [slot, new_name])
 		profile_renamed.emit(slot, new_name)
 		return true
 	
@@ -643,17 +676,20 @@ func start_game_tracking() -> void:
 		"turn_history": []
 	}
 	is_tracking_game = true
-	print("[ProgressManager] Started tracking new game")
+	if _debug_enabled:
+		print("[ProgressManager] Started tracking new game")
 
 ## End game tracking and check for unlocks
 func end_game_tracking(final_score: int, did_win: bool = false) -> void:
 	if not is_tracking_game:
-		print("[ProgressManager] WARNING: No game being tracked when end_game_tracking called")
-		print("[ProgressManager] current_game_stats: %s" % current_game_stats)
+		if _debug_enabled:
+			print("[ProgressManager] WARNING: No game being tracked when end_game_tracking called")
+			print("[ProgressManager] current_game_stats: %s" % current_game_stats)
 		return
 	
-	print("[ProgressManager] Ending game tracking - Final score: %d, Win: %s" % [final_score, did_win])
-	print("[ProgressManager] Current game stats: %s" % current_game_stats)
+	if _debug_enabled:
+		print("[ProgressManager] Ending game tracking - Final score: %d, Win: %s" % [final_score, did_win])
+		print("[ProgressManager] Current game stats: %s" % current_game_stats)
 	
 	# Update current game stats
 	current_game_stats["final_score"] = final_score
@@ -669,7 +705,8 @@ func end_game_tracking(final_score: int, did_win: bool = false) -> void:
 		if cat not in current_game_stats["categories_scored"]:
 			unscored.append(cat)
 	current_game_stats["unscored_categories"] = unscored
-	print("[ProgressManager] Unscored categories: %s" % [str(unscored)])
+	if _debug_enabled:
+		print("[ProgressManager] Unscored categories: %s" % [str(unscored)])
 	
 	# Update cumulative stats
 	cumulative_stats["games_completed"] += 1
@@ -685,7 +722,8 @@ func end_game_tracking(final_score: int, did_win: bool = false) -> void:
 	cumulative_stats["total_chores_completed_easy"] += current_game_stats.get("chores_completed_easy", 0)
 	cumulative_stats["total_chores_completed_hard"] += current_game_stats.get("chores_completed_hard", 0)
 	
-	print("[ProgressManager] Updated cumulative stats: %s" % cumulative_stats)
+	if _debug_enabled:
+		print("[ProgressManager] Updated cumulative stats: %s" % cumulative_stats)
 	
 	# Check for new unlocks
 	check_all_unlock_conditions()
@@ -694,11 +732,13 @@ func end_game_tracking(final_score: int, did_win: bool = false) -> void:
 	save_progress()
 	
 	is_tracking_game = false
-	print("[ProgressManager] Game tracking ended. Final score: %d" % final_score)
+	if _debug_enabled:
+		print("[ProgressManager] Game tracking ended. Final score: %d" % final_score)
 
 ## Check all unlock conditions and unlock eligible items
 func check_all_unlock_conditions() -> void:
-	print("[ProgressManager] Checking unlock conditions for profile %d (%s)" % [current_profile_slot, current_profile_name])
+	if _debug_enabled:
+		print("[ProgressManager] Checking unlock conditions for profile %d (%s)" % [current_profile_slot, current_profile_name])
 	
 	var newly_unlocked: Array[String] = []
 	
@@ -712,22 +752,26 @@ func check_all_unlock_conditions() -> void:
 			should_unlock = item.check_unlock(current_game_stats, cumulative_stats)
 		
 		if should_unlock:
-			print("[ProgressManager] Unlocking item: %s" % item_id)
+			if _debug_enabled:
+				print("[ProgressManager] Unlocking item: %s" % item_id)
 			if item.has_method("unlock_item"):
 				item.unlock_item()
 			newly_unlocked.append(item_id)
 			item_unlocked.emit(item_id, item.get_type_string())
 	
 	if newly_unlocked.size() > 0:
-		print("[ProgressManager] Newly unlocked items: %s" % [str(newly_unlocked)])
+		if _debug_enabled:
+			print("[ProgressManager] Newly unlocked items: %s" % [str(newly_unlocked)])
 		items_unlocked_batch.emit(newly_unlocked)  # Emit batch signal for UI
 	else:
-		print("[ProgressManager] No new items unlocked")
+		if _debug_enabled:
+			print("[ProgressManager] No new items unlocked")
 
 ## Track game events
 func track_score_assigned(category: String, score: int) -> void:
 	if not is_tracking_game:
-		print("[ProgressManager] WARNING: track_score_assigned called but game tracking not started! Category: %s, Score: %d" % [category, score])
+		if _debug_enabled:
+			print("[ProgressManager] WARNING: track_score_assigned called but game tracking not started! Category: %s, Score: %d" % [category, score])
 		return
 	
 	var old_max = current_game_stats["max_category_score"]
@@ -736,14 +780,17 @@ func track_score_assigned(category: String, score: int) -> void:
 		current_game_stats["categories_scored"].append(category)
 	# Track per-category scores for SCORE_THRESHOLD_CATEGORY unlock conditions
 	current_game_stats["category_scores"][category] = score
-	print("[ProgressManager] Score tracked: %s = %d pts (max score: %d -> %d)" % [category, score, old_max, current_game_stats["max_category_score"]])
+	if _debug_enabled:
+		print("[ProgressManager] Score tracked: %s = %d pts (max score: %d -> %d)" % [category, score, old_max, current_game_stats["max_category_score"]])
 
 func track_yahtzee_rolled() -> void:
 	if not is_tracking_game:
-		print("[ProgressManager] WARNING: track_yahtzee_rolled called but game tracking not started!")
+		if _debug_enabled:
+			print("[ProgressManager] WARNING: track_yahtzee_rolled called but game tracking not started!")
 		return
 	current_game_stats["yahtzees_rolled"] += 1
-	print("[ProgressManager] Yahtzee rolled! Game yahtzees: %d" % current_game_stats["yahtzees_rolled"])
+	if _debug_enabled:
+		print("[ProgressManager] Yahtzee rolled! Game yahtzees: %d" % current_game_stats["yahtzees_rolled"])
 
 func track_straight_rolled(straight_type: String) -> void:
 	if not is_tracking_game:
@@ -759,10 +806,12 @@ func track_consumable_used() -> void:
 
 func track_money_earned(amount: int) -> void:
 	if not is_tracking_game:
-		print("[ProgressManager] WARNING: track_money_earned called but game tracking not started! Amount: $%d" % amount)
+		if _debug_enabled:
+			print("[ProgressManager] WARNING: track_money_earned called but game tracking not started! Amount: $%d" % amount)
 		return
 	current_game_stats["money_earned"] += amount
-	print("[ProgressManager] Money earned: $%d (total this game: $%d)" % [amount, current_game_stats["money_earned"]])
+	if _debug_enabled:
+		print("[ProgressManager] Money earned: $%d (total this game: $%d)" % [amount, current_game_stats["money_earned"]])
 
 func track_color_bonus() -> void:
 	if not is_tracking_game:
@@ -781,15 +830,17 @@ func track_upper_bonus_achieved() -> void:
 ## @param difficulty: ChoreData.Difficulty enum value (0=EASY, 1=HARD)
 func track_chore_completed(difficulty: int) -> void:
 	if not is_tracking_game:
-		print("[ProgressManager] WARNING: track_chore_completed called but game tracking not started!")
+		if _debug_enabled:
+			print("[ProgressManager] WARNING: track_chore_completed called but game tracking not started!")
 		return
 	current_game_stats["chores_completed"] += 1
 	if difficulty == 0:  # EASY
 		current_game_stats["chores_completed_easy"] += 1
 	else:  # HARD
 		current_game_stats["chores_completed_hard"] += 1
-	print("[ProgressManager] Chore completed! (difficulty: %s, total this game: %d)" % [
-		"EASY" if difficulty == 0 else "HARD", current_game_stats["chores_completed"]])
+	if _debug_enabled:
+		print("[ProgressManager] Chore completed! (difficulty: %s, total this game: %d)" % [
+			"EASY" if difficulty == 0 else "HARD", current_game_stats["chores_completed"]])
 
 
 ## adjust_rep(delta: int)
@@ -806,8 +857,9 @@ func adjust_rep(delta: int) -> void:
 	if new_rep == old_rep:
 		return
 	cumulative_stats["rep"] = new_rep
-	print("[ProgressManager] Rep changed: %d -> %d (%+d) [tier %d: %s]" % [
-		old_rep, new_rep, delta, get_rep_tier(), get_rep_tier_name()])
+	if _debug_enabled:
+		print("[ProgressManager] Rep changed: %d -> %d (%+d) [tier %d: %s]" % [
+			old_rep, new_rep, delta, get_rep_tier(), get_rep_tier_name()])
 	rep_changed.emit(new_rep)
 	save_progress()
 
@@ -821,7 +873,8 @@ func reset_rep() -> void:
 	if get_rep() == 0:
 		return
 	cumulative_stats["rep"] = 0
-	print("[ProgressManager] Rep reset to 0 for new game")
+	if _debug_enabled:
+		print("[ProgressManager] Rep reset to 0 for new game")
 	rep_changed.emit(0)
 	save_progress()
 
@@ -899,12 +952,14 @@ func mark_channel_completed(channel_num: int) -> void:
 	# Add to completed channels if not already there
 	if channel_num not in completed_channels:
 		completed_channels.append(channel_num)
-		print("[ProgressManager] Channel %d marked as completed" % channel_num)
+		if _debug_enabled:
+			print("[ProgressManager] Channel %d marked as completed" % channel_num)
 	
 	# Update highest channel completed stat
 	if channel_num > cumulative_stats["highest_channel_completed"]:
 		cumulative_stats["highest_channel_completed"] = channel_num
-		print("[ProgressManager] New highest channel completed: %d" % channel_num)
+		if _debug_enabled:
+			print("[ProgressManager] New highest channel completed: %d" % channel_num)
 	
 	# Save progress immediately
 	save_progress()
@@ -1066,13 +1121,15 @@ func get_condition_progress(item_id: String) -> Dictionary:
 ## Debug functions for manual unlock/lock
 func debug_unlock_item(item_id: String) -> void:
 	if not unlockable_items.has(item_id):
-		print("[ProgressManager] Item not found: %s" % item_id)
+		if _debug_enabled:
+			print("[ProgressManager] Item not found: %s" % item_id)
 		return
 	
 	var item = unlockable_items[item_id]
 	if item.has_method("unlock_item"):
 		item.unlock_item()
-	print("[ProgressManager] DEBUG: Manually unlocked %s" % item_id)
+	if _debug_enabled:
+		print("[ProgressManager] DEBUG: Manually unlocked %s" % item_id)
 	
 	# Emit signals to notify UI components
 	item_unlocked.emit(item_id, item.get_type_string())
@@ -1080,13 +1137,15 @@ func debug_unlock_item(item_id: String) -> void:
 
 func debug_lock_item(item_id: String) -> void:
 	if not unlockable_items.has(item_id):
-		print("[ProgressManager] Item not found: %s" % item_id)
+		if _debug_enabled:
+			print("[ProgressManager] Item not found: %s" % item_id)
 		return
 	
 	var item = unlockable_items[item_id]
 	item.is_unlocked = false
 	item.unlock_timestamp = 0
-	print("[ProgressManager] DEBUG: Manually locked %s" % item_id)
+	if _debug_enabled:
+		print("[ProgressManager] DEBUG: Manually locked %s" % item_id)
 	
 	# Emit signals to notify UI components
 	item_locked.emit(item_id, item.get_type_string())
@@ -1097,7 +1156,8 @@ func debug_lock_item(item_id: String) -> void:
 ## Public method to (re)connect to game scene signals. Called by GameController
 ## when a game scene loads to ensure ProgressManager can track game events.
 func connect_to_game_scene() -> void:
-	print("[ProgressManager] Connecting to game scene signals...")
+	if _debug_enabled:
+		print("[ProgressManager] Connecting to game scene signals...")
 	_connect_game_signals()
 
 ## Connect to game systems for automatic tracking
@@ -1120,9 +1180,11 @@ func _connect_game_signals() -> void:
 		if not scorecard.is_connected("upper_bonus_achieved", _on_upper_bonus_achieved):
 			scorecard.upper_bonus_achieved.connect(_on_upper_bonus_achieved)
 			connections_made += 1
-		print("[ProgressManager] Connected to scorecard signals")
+		if _debug_enabled:
+			print("[ProgressManager] Connected to scorecard signals")
 	else:
-		print("[ProgressManager] WARNING: Scorecard not found - score tracking unavailable")
+		if _debug_enabled:
+			print("[ProgressManager] WARNING: Scorecard not found - score tracking unavailable")
 	
 	# Connect to game controller signals
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
@@ -1130,9 +1192,11 @@ func _connect_game_signals() -> void:
 		if not game_controller.is_connected("consumable_used", _on_consumable_used):
 			game_controller.consumable_used.connect(_on_consumable_used)
 			connections_made += 1
-		print("[ProgressManager] Connected to game controller signals")
+		if _debug_enabled:
+			print("[ProgressManager] Connected to game controller signals")
 	else:
-		print("[ProgressManager] WARNING: GameController not found - consumable tracking unavailable")
+		if _debug_enabled:
+			print("[ProgressManager] WARNING: GameController not found - consumable tracking unavailable")
 	
 	# Connect to turn tracker for new game detection
 	var turn_tracker = get_tree().get_first_node_in_group("turn_tracker")
@@ -1140,21 +1204,25 @@ func _connect_game_signals() -> void:
 		if not turn_tracker.is_connected("turn_started", _on_turn_started):
 			turn_tracker.turn_started.connect(_on_turn_started)
 			connections_made += 1
-		print("[ProgressManager] Connected to turn tracker signals")
+		if _debug_enabled:
+			print("[ProgressManager] Connected to turn tracker signals")
 	else:
-		print("[ProgressManager] WARNING: TurnTracker not found - game start detection unavailable")
+		if _debug_enabled:
+			print("[ProgressManager] WARNING: TurnTracker not found - game start detection unavailable")
 	
 	# Connect to player economy for money tracking
 	if PlayerEconomy and not PlayerEconomy.is_connected("money_changed", _on_money_changed):
 		PlayerEconomy.money_changed.connect(_on_money_changed)
 		connections_made += 1
-		print("[ProgressManager] Connected to player economy signals")
+		if _debug_enabled:
+			print("[ProgressManager] Connected to player economy signals")
 	
 	# Connect to DiceColorManager for color bonus tracking
 	if DiceColorManager and not DiceColorManager.is_connected("color_effects_calculated", _on_color_effects_calculated):
 		DiceColorManager.color_effects_calculated.connect(_on_color_effects_calculated)
 		connections_made += 1
-		print("[ProgressManager] Connected to dice color manager signals")
+		if _debug_enabled:
+			print("[ProgressManager] Connected to dice color manager signals")
 	
 	# Connect to RollStats for yahtzee and straight tracking  
 	if RollStats:
@@ -1164,13 +1232,16 @@ func _connect_game_signals() -> void:
 		if not RollStats.is_connected("combination_achieved", _on_combination_achieved):
 			RollStats.combination_achieved.connect(_on_combination_achieved)
 			connections_made += 1
-		print("[ProgressManager] Connected to roll stats signals")
+		if _debug_enabled:
+			print("[ProgressManager] Connected to roll stats signals")
 	
-	print("[ProgressManager] Game signal connections complete (%d new connections)" % connections_made)
+	if _debug_enabled:
+		print("[ProgressManager] Game signal connections complete (%d new connections)" % connections_made)
 
 ## Signal handlers for game events
 func _on_score_assigned(_section: int, category: String, score: int) -> void:
-	print("[ProgressManager] Score assigned: %s = %d pts" % [category, score])
+	if _debug_enabled:
+		print("[ProgressManager] Score assigned: %s = %d pts" % [category, score])
 	track_score_assigned(category, score)
 
 func _on_game_completed(final_score: int) -> void:
@@ -1205,7 +1276,8 @@ func _on_combination_achieved(combination_type: String) -> void:
 
 ## Create default unlockable items for all game content
 func _create_default_unlockable_items() -> void:
-	print("[ProgressManager] Creating complete unlockable items for all game content")
+	if _debug_enabled:
+		print("[ProgressManager] Creating complete unlockable items for all game content")
 	
 	# ==========================================================================
 	# ALL POWERUPS - Difficulty 1-10, diversified unlock conditions
@@ -1254,7 +1326,7 @@ func _create_default_unlockable_items() -> void:
 	# --- Difficulty 4: Uncommon PowerUps ---
 	_add_default_power_up("full_house_bonus", "Full House Fortune", "Full house scoring bonus", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 28, 4, {"category": "full_house"})
-	_add_default_power_up("consumable_cash", "Consumable Cash", "Gain money from PowerUps", 
+	_add_default_power_up("consumable_cash", "Cash Flow", "Gain money from PowerUps", 
 		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 5, 4)
 	_add_default_power_up("red_slime", "Red Slime", "Doubles red dice probability", 
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 100, 4)
@@ -1272,7 +1344,7 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 125, 4)
 	
 	# --- Difficulty 5: Mid-tier PowerUps ---
-	_add_default_power_up("upper_bonus_mult", "Upper Bonus Multiplier", "Multiplies upper bonus", 
+	_add_default_power_up("upper_bonus_mult", "Bonus Mult", "Multiplies upper bonus", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 24, 5, {"category": "sixes"})
 	_add_default_power_up("money_multiplier", "Money Multiplier", "Multiplies money earned", 
 		UnlockConditionClass.ConditionType.EARN_MONEY, 200, 5)
@@ -1298,11 +1370,11 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.EARN_MONEY, 250, 6)
 	_add_default_power_up("highlighted_score", "Highlighted Score", "Bonus for highlighted categories", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 45, 6, {"category": "large_straight"})
-	_add_default_power_up("yahtzee_bonus_mult", "Yahtzee Bonus Multiplier", "Multiplies Yahtzee bonuses", 
+	_add_default_power_up("yahtzee_bonus_mult", "Yahtzee Mult", "Multiplies Yahtzee bonuses", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 3, 6)
 	_add_default_power_up("perfect_strangers", "Perfect Strangers", "Bonus for diverse dice", 
 		UnlockConditionClass.ConditionType.ROLL_STRAIGHT, 5, 6)
-	_add_default_power_up("randomizer", "Randomizer", "Random bonus effects", 
+	_add_default_power_up("randomizer", "Chaos Dice", "Random bonus effects", 
 		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 8, 6)
 	_add_default_power_up("plus_thelast", "Plus The Last", "Adds last score to current score", 
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 250, 6)
@@ -1346,54 +1418,36 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 9)
 	_add_default_power_up("rainbow_surge", "Rainbow Surge", "2x multiplier when 4+ dice colors present", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 9)
-	_add_default_power_up("grand_master", "Grand Master", "All scoring categories get +10%", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 9)
 	_add_default_power_up("snake_eyes", "Snake Eyes", "Each 1 = +0.2x mult. All 1s = 3.0x!", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 9)
-	
-	# --- Difficulty 10: Mythic PowerUps ---
-	_add_default_power_up("dice_lord", "Dice Lord", "Start each round with one guaranteed Yahtzee", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 4, 10)
 	
 	# --- New Wave PowerUps ---
 	_add_default_power_up("the_piggy_bank", "The Piggy Bank", "Saves $3 per roll. Sell to cash out!", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 6, 4, {"cumulative": true})
-	_add_default_power_up("daring_dice", "Daring Dice", "Remove 2 dice but gain +50 score bonus", 
+	_add_default_power_up("daring_dice", "Daring Dice", "Remove 2 dice but gain +50 score bonus",
 		UnlockConditionClass.ConditionType.ROLL_STRAIGHT, 4, 5)
-	_add_default_power_up("consumable_collector", "Consumable Collector", "+0.1x multiplier per consumable used", 
-		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 8, 5)
-	_add_default_power_up("random_card_level", "Random Card Level", "20% chance each turn to level up a category", 
+	_add_default_power_up("random_card_level", "Random Card Level", "20% chance each turn to level up a category",
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 4, 6)
 	_add_default_power_up("the_replicator", "The Replicator", "Duplicates a random PowerUp you own after 1 turn", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 7)
 	_add_default_power_up("yahtzeed_dice", "Yahtzeed Dice", "Gain +1 die per Yahtzee (max 16)", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 6, 8)
 	
-	# --- Channel-based PowerUps (NOT IMPLEMENTED - preserved) ---
-	_add_default_power_up("lucky_streak", "Lucky Streak", "Increased chance of rolling pairs", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 5)
-	_add_default_power_up("steady_progress", "Steady Progress", "+5 points to all lower section scores", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 6)
-	_add_default_power_up("combo_king", "Combo King", "Bonus multiplier for consecutive scoring", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 7)
-	_add_default_power_up("channel_champion", "Channel Champion", "Double points in favorite category", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 8)
-	
-	# ==========================================================================
-	# AVOIDANCE CHALLENGES - Win without scoring in specific categories/sections
-	# ==========================================================================
-	
-	# --- Difficulty 1: Win without scoring in a single number category ---
-	_add_default_power_up("avoidance_ones", "Ones Avoider", "Win without scoring in Ones", 
-		UnlockConditionClass.ConditionType.WIN_WITHOUT_SCORING, 1, 1, {"category": "ones"})
-	
-	# --- Difficulty 6: Win without scoring in the entire Upper Section ---
-	_add_default_power_up("avoidance_upper", "Upper Section Avoider", "Win without scoring in Upper Section", 
-		UnlockConditionClass.ConditionType.WIN_WITHOUT_SCORING, 1, 6, {"section": "upper"})
-	
-	# --- Difficulty 10: Win without scoring in the entire Lower Section ---
-	_add_default_power_up("avoidance_lower", "Lower Section Avoider", "Win without scoring in Lower Section", 
-		UnlockConditionClass.ConditionType.WIN_WITHOUT_SCORING, 1, 10, {"section": "lower"})
+	# --- Second Wave PowerUps ---
+	_add_default_power_up("yellow_slime", "Yellow Slime", "Doubles yellow dice probability", 
+		UnlockConditionClass.ConditionType.COLORED_DICE_BONUS, 1, 6)
+	_add_default_power_up("extreme_couponing", "Extreme Couponing", "+5 score per consumable granted this run", 
+		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 10, 4)
+	_add_default_power_up("defiance", "Defiance", "+0.25x multiplier per active debuff", 
+		UnlockConditionClass.ConditionType.COMPLETE_GAME, 2, 6)
+	_add_default_power_up("comeback_kid", "Comeback Kid", "+5 score for each category sitting at 0", 
+		UnlockConditionClass.ConditionType.COMPLETE_GAME, 2, 4)
+	_add_default_power_up("upper_crust", "Upper Crust", "Upper section scores get x1.5", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 150, 5)
+	_add_default_power_up("two_pair_house", "Two Pair House", "Two pair counts as a Full House (25 points)", 
+		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 25, 6, {"category": "full_house"})
+	_add_default_power_up("four_of_a_kind_yahtzee", "Four-Kind Yahtzee", "Four-of-a-kind counts as a Yahtzee for 25 points", 
+		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 25, 7, {"category": "four_of_a_kind"})
 	
 	# ==========================================================================
 	# ALL CONSUMABLES - Difficulty 1-10, diversified unlock conditions
@@ -1422,7 +1476,7 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 12, 3, {"category": "threes"})
 	_add_default_consumable("three_more_rolls", "Three More Rolls", "Get three extra rolls", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 3, 3)
-	_add_default_consumable("power_up_shop_num", "Power Up Shop Number", "More PowerUps in shop", 
+	_add_default_consumable("power_up_shop_num", "Shop Expansion", "More PowerUps in shop", 
 		UnlockConditionClass.ConditionType.EARN_MONEY, 75, 3)
 	_add_default_consumable("threes_upgrade", "Threes Upgrade", "Upgrade Threes category level", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 12, 3, {"category": "threes"})
@@ -1440,7 +1494,7 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.COMPLETE_GAME, 2, 3)
 	
 	# --- Difficulty 4: Uncommon consumables ---
-	_add_default_consumable("double_existing", "Double Existing", "Double a scored category", 
+	_add_default_consumable("double_existing", "Double Score", "Double a scored category", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 16, 4, {"category": "fours"})
 	_add_default_consumable("the_pawn_shop", "The Pawn Shop", "Trade items for money", 
 		UnlockConditionClass.ConditionType.EARN_MONEY, 150, 4)
@@ -1474,15 +1528,15 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 3, 5)
 	_add_default_consumable("visit_the_shop", "Visit The Shop", "Open the shop during active play", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 5)
-	_add_default_consumable("loaded_dice", "Loaded Dice", "Randomly set one die to a random value (1-6).", 
+	_add_default_consumable("loaded_dice", "Loaded Dice", "Pick one die and set it to an exact value", 
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 200, 5)
 	
 	# --- Difficulty 6: Rare consumables ---
-	_add_default_consumable("add_max_power_up", "Add Max Power Up", "Increase PowerUp limit", 
+	_add_default_consumable("add_max_power_up", "Add Power Up Slot", "Increase PowerUp limit", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 10, 6, {"cumulative": true})
 	_add_default_consumable("random_power_up_uncommon", "Random Uncommon Power Up", "Get random uncommon PowerUp", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 4, 6)
-	_add_default_consumable("green_envy", "Green Envy", "Green dice effects", 
+	_add_default_consumable("green_envy", "Raining Green", "Green dice effects", 
 		UnlockConditionClass.ConditionType.EARN_MONEY, 200, 6)
 	_add_default_consumable("full_house_upgrade", "Full House Upgrade", "Upgrade Full House category level", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 28, 6, {"category": "full_house"})
@@ -1506,15 +1560,11 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 7)
 	_add_default_consumable("score_streak", "Score Streak", "Score multiplier grows: 1x -> 1.5x -> 2x over 3 turns", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 7)
-	_add_default_consumable("channel_bonus", "Channel Bonus", "Gain $50 per completed channel", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 7)
-	_add_default_consumable("reroll_master", "Reroll Master", "Gain 2 extra rerolls this round", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 7)
 	
 	# --- Difficulty 8: Legendary consumables ---
 	_add_default_consumable("yahtzee_upgrade", "Yahtzee Upgrade", "Upgrade Yahtzee category level", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 8, 8)
-	_add_default_consumable("bonus_collector", "Bonus Collector", "Grants $35 if upper section bonus achieved", 
+	_add_default_consumable("bonus_collector", "Bonus Collector", "Grants $150 if upper section total >= 63", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 8)
 	_add_default_consumable("lucky_seven", "Lucky Seven", "All dice become 1-7 range this round", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 8)
@@ -1522,12 +1572,22 @@ func _create_default_unlockable_items() -> void:
 	# --- Difficulty 9: Mythic consumables ---
 	_add_default_consumable("all_categories_upgrade", "Master Upgrade", "Upgrade ALL categories by one level", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 9)
-	_add_default_consumable("lower_section_boost", "Lower Section Boost", "Upgrades all lower section categories by one level", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 9)
 	
-	# --- Difficulty 10: Ultimate consumables ---
-	_add_default_consumable("ultimate_reroll", "Ultimate Reroll", "Reroll all dice up to 5 times", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 10)
+	# --- Second Wave consumables ---
+	_add_default_consumable("spite", "Spite", "Next score gets +0.5x per active debuff", 
+		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 5, 5)
+	_add_default_consumable("antidote", "Antidote", "Cleanse your highest-intensity debuff", 
+		UnlockConditionClass.ConditionType.COMPLETE_GAME, 1, 5)
+	_add_default_consumable("immunity", "Immunity", "No debuffs next round", 
+		UnlockConditionClass.ConditionType.COMPLETE_GAME, 1, 5)
+	_add_default_consumable("mulligan", "Mulligan", "Reroll your worst placed score", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 150, 5)
+	_add_default_consumable("scratch_ticket", "Scratch Ticket", "If your last score was 0, your next score is doubled", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 150, 5)
+	_add_default_consumable("paint_job", "Paint Job", "All dice gain a random color for the next roll, then revert.", 
+		UnlockConditionClass.ConditionType.COLORED_DICE_BONUS, 1, 5)
+	_add_default_consumable("bonus_sprint", "Bonus Sprint", "Upper scores count double toward the upper bonus this round", 
+		UnlockConditionClass.ConditionType.SCORE_POINTS, 100, 4)
 	
 	# ==========================================================================
 	# ALL MODS - Difficulty 4-9, specialized unlock conditions
@@ -1543,7 +1603,7 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 8, 8)
 	_add_default_mod("three_but_three", "Three But Three", "Dice avoid rolling 3s", 
 		UnlockConditionClass.ConditionType.ROLL_STRAIGHT, 5, 5)
-	_add_default_mod("wild_card", "Wild Card", "Random special effects on each roll", 
+	_add_default_mod("wildcard", "Wild Card", "Random special effects on each roll", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 30, 7, {"cumulative": true})
 	_add_default_mod("high_roller", "High Roller", "Dice tend toward high values", 
 		UnlockConditionClass.ConditionType.LOCK_CONSTRAINT, 100, 7, {"turn_window": 4, "max_locked_dice": 0})
@@ -1551,6 +1611,10 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 6)
 	_add_default_mod("precision_roller", "Precision Roller", "First roll each turn is always 4+", 
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 3, 9)
+	_add_default_mod("painted_die", "Painted Die", "This die always counts as a random color", 
+		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 4, 4)
+	_add_default_mod("cursed_six", "Cursed Six", "Always rolls 6, but costs $5 per roll", 
+		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 3)
 	
 	# ==========================================================================
 	# ALL COLORED DICE FEATURES - Difficulty 3-6, score-based progression
@@ -1566,6 +1630,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 6)
 	_add_default_colored_dice("yellow_dice", "Yellow Dice", "Unlocks yellow colored dice (grants consumables when scored)", 
 		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 8, 5)
+	_add_default_colored_dice("orange_dice", "Orange Dice", "Unlocks orange colored dice (grants +1 roll next turn per Orange die scored)", 
+		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 12, 6)
 	
 	# ==========================================================================
 	# ALL GAMING CONSOLES - Unlocked by completing specific channels
@@ -1597,7 +1663,8 @@ func _create_default_unlockable_items() -> void:
 	_add_default_dice_set("dice_set_d20", "D20 Dice Set", "Start the game with twenty-sided dice (Sixes becomes Twenties)",
 		UnlockConditionClass.ConditionType.WIN_GAMES, 1, 6)
 	
-	print("[ProgressManager] Created %d total unlockable items across all categories" % unlockable_items.size())
+	if _debug_enabled:
+		print("[ProgressManager] Created %d total unlockable items across all categories" % unlockable_items.size())
 
 ## Helper function to create unlockable items with consistent structure
 ## Parameters:

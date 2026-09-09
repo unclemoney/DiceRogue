@@ -15,11 +15,6 @@ class_name ColoredDiceData
 @export var effect_description: String = ""
 @export var rarity_description: String = ""
 
-## Get formatted price string for display
-## @return String formatted price with $ symbol
-func get_formatted_price() -> String:
-	return NumberFormatter.format_money(price)
-
 ## Get color name for display
 ## @return String name of the dice color
 func get_color_name() -> String:

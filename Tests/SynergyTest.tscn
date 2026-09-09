@@ -1,4 +1,4 @@
-[gd_scene load_steps=43 format=3 uid="uid://ditxgcxy7okvd"]
+[gd_scene load_steps=50 format=3 uid="uid://ditxgcxy7okvd"]
 
 [ext_resource type="Script" uid="uid://uqisubii0vt3" path="res://Tests/synergy_test.gd" id="1_syntest"]
 [ext_resource type="Script" uid="uid://brlw2wv0mihdu" path="res://Scripts/Effects/ScreenShake.gd" id="2_oxb5w"]
@@ -40,6 +40,13 @@
 [ext_resource type="Resource" uid="uid://iao8jgjikc8m" path="res://Scripts/PowerUps/Allowance.tres" id="1105_allowance"]
 [ext_resource type="Resource" uid="uid://ofk1qti27od0" path="res://Scripts/PowerUps/PurplePayoutPowerUp.tres" id="1106_purple_payout"]
 [ext_resource type="Resource" uid="uid://nmge567ydrn5" path="res://Scripts/PowerUps/RollEfficiencyPowerUp.tres" id="1107_roll_efficiency"]
+[ext_resource type="Resource" path="res://Scripts/PowerUps/YellowSlime.tres" id="1110_yellow_slime"]
+[ext_resource type="Resource" path="res://Scripts/PowerUps/ExtremeCouponing.tres" id="1111_extreme_couponing"]
+[ext_resource type="Resource" path="res://Scripts/PowerUps/DefiancePowerUp.tres" id="1112_defiance"]
+[ext_resource type="Resource" path="res://Scripts/PowerUps/ComebackKid.tres" id="1113_comeback_kid"]
+[ext_resource type="Resource" path="res://Scripts/PowerUps/UpperCrust.tres" id="1114_upper_crust"]
+[ext_resource type="Resource" path="res://Scripts/PowerUps/FourOfAKindYahtzee.tres" id="1115_four_of_a_kind_yahtzee"]
+[ext_resource type="Resource" path="res://Scripts/PowerUps/TwoPairHouse.tres" id="1116_two_pair_house"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wtptv"]
 
@@ -229,7 +236,7 @@ background_swirl_path = NodePath("../Background/BackgroundSwirl")
 [node name="DebuffContainer" type="Node2D" parent="."]
 
 [node name="PowerUpManager" parent="." instance=ExtResource("16_07va6")]
-power_up_defs = Array[ExtResource("1100_powerup_data")]([ExtResource("1101_extra_dice"), ExtResource("1102_extra_rolls"), ExtResource("1103_bonus_money"), ExtResource("1104_step_by_step"), ExtResource("1105_allowance"), ExtResource("1106_purple_payout"), ExtResource("1107_roll_efficiency")])
+power_up_defs = Array[ExtResource("1100_powerup_data")]([ExtResource("1101_extra_dice"), ExtResource("1102_extra_rolls"), ExtResource("1103_bonus_money"), ExtResource("1104_step_by_step"), ExtResource("1105_allowance"), ExtResource("1106_purple_payout"), ExtResource("1107_roll_efficiency"), ExtResource("1110_yellow_slime"), ExtResource("1111_extreme_couponing"), ExtResource("1112_defiance"), ExtResource("1113_comeback_kid"), ExtResource("1114_upper_crust"), ExtResource("1115_four_of_a_kind_yahtzee"), ExtResource("1116_two_pair_house")])
 
 [node name="ChallengeManager" parent="." instance=ExtResource("25_3vaha")]
 

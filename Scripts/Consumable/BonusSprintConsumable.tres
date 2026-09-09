@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=5 format=3 uid="uid://5uy7smjjlo60"]
+
+[ext_resource type="Texture2D" uid="uid://dg6pm7i6if501" path="res://Resources/Art/Consumables/Sunday_Coupon_Sheet_5x5_Generic.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://wx2i3vixf1m5" path="res://Scripts/Consumable/ConsumableData.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://Scenes/Consumable/BonusSprintConsumable.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bonus_sprint"]
+atlas = ExtResource("1_icon")
+region = Rect2(438, 439, 379, 378)
+
+[resource]
+script = ExtResource("1_script")
+id = "bonus_sprint"
+display_name = "Bonus Sprint"
+description = "This round, upper section scores count double toward the upper bonus threshold"
+icon = SubResource("AtlasTexture_bonus_sprint")
+scene = ExtResource("2_scene")
+price = 65
+required_dice_sides = 0
+excluded_dice_sides = Array[int]([])
+metadata/_custom_type_script = "uid://wx2i3vixf1m5"

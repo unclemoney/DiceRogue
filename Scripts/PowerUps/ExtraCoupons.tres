@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="Texture2D" uid="uid://c0y4n53xm2pgx" path="res://Resources/Art/Powerups/grounded_pog_grid_5x5.png" id="1_uws1n"]
-[ext_resource type="PackedScene" path="res://Scenes/PowerUp/ExtraCouponsPowerUp.tscn" id="3_scene"]
+[ext_resource type="PackedScene" uid="uid://vmk62s7y5bo4" path="res://Scenes/PowerUp/ExtraCouponsPowerUp.tscn" id="3_scene"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_f782b"]
 atlas = ExtResource("1_uws1n")

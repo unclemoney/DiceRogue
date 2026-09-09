@@ -1309,9 +1309,18 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 			else:
 				return false
 		"green_envy":
-			# Green Envy requires dice to be rolled
+			# Raining Green requires dice to be rolled
 			var dice_values = DiceResults.values
 			return not dice_values.is_empty()
+		"spite", "antidote":
+			# Spite and Antidote require at least one active debuff
+			# (Mom-granted buffs like rebellion are rewards, not debuffs)
+			if game_controller:
+				for debuff_id in game_controller.active_debuffs.keys():
+					if not debuff_id in DebuffManager.GRANTED_ONLY_IDS:
+						return true
+				return false
+			return false
 		"empty_shelves":
 			# Empty Shelves requires dice to be rolled
 			var dice_values = DiceResults.values

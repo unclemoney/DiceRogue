@@ -11,7 +11,7 @@ region = Rect2(1600, 430, 380, 388)
 [resource]
 script = ExtResource("1_script")
 id = "green_envy"
-display_name = "Green Envy"
+display_name = "Raining Green"
 description = "10x bonus money for all green dice money scored this turn"
 icon = SubResource("AtlasTexture_h09")
 scene = ExtResource("2_scene")

@@ -1,13 +1,13 @@
-[gd_resource type="Resource" script_class="ColoredDiceData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ColoredDiceData" load_steps=2 format=3 uid="uid://cdjpcyxdy104x"]
 
-[ext_resource type="Script" path="res://Scripts/Core/colored_dice_data.gd" id="1_1a2b3c"]
+[ext_resource type="Script" uid="uid://d01jd2eh5modj" path="res://Scripts/Core/colored_dice_data.gd" id="1_1a2b3c"]
 
 [resource]
 script = ExtResource("1_1a2b3c")
 id = "yellow_dice"
 display_name = "Yellow Dice"
 description = "Lucky dice that conjure random consumables when they contribute to scoring."
-price = 85
+price = 100
 color_type = 5
 effect_description = "Grants a random consumable when scored (if space available)"
-rarity_description = "1 in 60 chance to appear on rolled dice"
+rarity_description = "1 in 120 chance to appear on rolled dice"

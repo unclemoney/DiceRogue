@@ -20,7 +20,7 @@ func apply(target) -> void:
 		return
 		
 	# Check if there are any scores to reroll
-	var scorecard = game_controller.get_node_or_null("ScoreCard") as Scorecard
+	var scorecard = game_controller.scorecard
 	if not scorecard or not scorecard.has_any_scores():
 		print("[ScoreReroll] No scores available to reroll")
 		emit_signal("reroll_denied")

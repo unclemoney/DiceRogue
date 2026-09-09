@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://bgwcfpn53s26s"]
+[gd_scene load_steps=12 format=3 uid="uid://bgwcfpn53s26s"]
 
 [ext_resource type="Script" uid="uid://demjgrnbj0ybq" path="res://Scripts/Managers/ModManager.gd" id="1_m3tkl"]
 [ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="2_mod_data"]
@@ -9,8 +9,10 @@
 [ext_resource type="Resource" uid="uid://dmi2pfrb1vd52" path="res://Scripts/Mods/OddOnlyMod.tres" id="7_odd_only"]
 [ext_resource type="Resource" uid="uid://h85vddw7qhk1" path="res://Scripts/Mods/ThreeButThreeMod.tres" id="8_three_but_three"]
 [ext_resource type="Resource" uid="uid://cmexdccb8puvp" path="res://Scripts/Mods/WildCardMod.tres" id="9_wild_card"]
+[ext_resource type="Resource" path="res://Scripts/Mods/PaintedDieMod.tres" id="10_painted_die"]
+[ext_resource type="Resource" path="res://Scripts/Mods/CursedSixMod.tres" id="11_cursed_six"]
 
 [node name="ModManager" type="Node"]
 script = ExtResource("1_m3tkl")
 metadata/_custom_type_script = "uid://demjgrnbj0ybq"
-mod_defs = Array[ExtResource("2_mod_data")]([ExtResource("3_even_only"), ExtResource("4_five_by_one"), ExtResource("5_gold_six"), ExtResource("6_high_roller"), ExtResource("7_odd_only"), ExtResource("8_three_but_three"), ExtResource("9_wild_card")])
+mod_defs = Array[ExtResource("2_mod_data")]([ExtResource("3_even_only"), ExtResource("4_five_by_one"), ExtResource("5_gold_six"), ExtResource("6_high_roller"), ExtResource("7_odd_only"), ExtResource("8_three_but_three"), ExtResource("9_wild_card"), ExtResource("10_painted_die"), ExtResource("11_cursed_six")])

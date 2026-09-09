@@ -14,7 +14,7 @@ func test_green_monster_powerup():
 	print("\n--- Testing GreenMonster PowerUp ---")
 	
 	# Check if PowerUp loads correctly
-	var green_monster_scene = preload("res://Scenes/PowerUp/GreenWithEnvy.tscn")
+	var green_monster_scene = preload("res://Scenes/PowerUp/GreenMonster.tscn")
 	if green_monster_scene:
 		print("✓ GreenMonster PowerUp scene loads correctly")
 		

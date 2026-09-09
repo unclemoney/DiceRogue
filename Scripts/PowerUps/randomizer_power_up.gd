@@ -45,7 +45,7 @@ func _randomize_effect() -> void:
 	_clear_current_effect()
 	
 	# 80% chance additive, 20% chance multiplier
-	var effect_roll = randf()
+	var effect_roll = GameRNG.randf()
 	
 	if effect_roll < 0.8:
 		_apply_additive_effect()
@@ -71,7 +71,7 @@ func _apply_multiplier_effect() -> void:
 	current_effect_type = "multiplier"
 	
 	# Weighted random selection for multiplier
-	var roll = randf() * 100.0
+	var roll = GameRNG.randf() * 100.0
 	
 	if roll < 5.0:  # 5% chance
 		current_multiplier_value = -1.0

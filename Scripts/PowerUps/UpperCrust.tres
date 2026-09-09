@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://yxqimk675f0"]
+
+[ext_resource type="Texture2D" uid="uid://dqct3k5i3x45l" path="res://Resources/Art/Powerups/questionable_pog_grid_5x5.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" path="res://Scenes/PowerUp/UpperCrust.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_upper_crust"]
+atlas = ExtResource("1_icon")
+region = Rect2(234, 582, 180, 177)
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "upper_crust"
+display_name = "Upper Crust"
+description = "Upper section scores get x1.5"
+icon = SubResource("AtlasTexture_upper_crust")
+scene = ExtResource("2_scene")
+price = 250
+rarity = "rare"
+rating = "PG-13"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

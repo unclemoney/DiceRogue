@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://d2nlnfi56sbub"]
+
+[ext_resource type="Texture2D" uid="uid://dqct3k5i3x45l" path="res://Resources/Art/Powerups/questionable_pog_grid_5x5.png" id="1_atlas"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" path="res://Scenes/PowerUp/DefiancePowerUp.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_defiance"]
+atlas = ExtResource("1_atlas")
+region = Rect2(619, 398, 175, 176)
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "defiance"
+display_name = "Defiance"
+description = "+0.25x score multiplier for each active debuff"
+icon = SubResource("AtlasTexture_defiance")
+scene = ExtResource("2_scene")
+price = 400
+rarity = "epic"
+rating = "PG-13"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

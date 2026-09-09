@@ -75,7 +75,7 @@ Used by `SCORE_THRESHOLD_CATEGORY` condition. Values based on category averages:
 | PowerUp | `full_house_bonus` | Full House Bonus |
 | PowerUp | `straight_bonus` | Straight Bonus |
 | PowerUp | `bonus_money` | Bonus Money |
-| Consumable | `green_envy` | Green Envy |
+| Consumable | `green_envy` | Raining Green |
 | Consumable | `the_rarities` | The Rarities |
 
 ### Difficulty 3 — Novice

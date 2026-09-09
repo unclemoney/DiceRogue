@@ -92,6 +92,19 @@ var score_multiplier: float = 1.0  # DEPRECATED: Use ScoreModifierManager instea
 # DifferentStraights PowerUp: allows straights with one gap of 1
 var allow_gap_straights: bool = false
 
+# FourKindYahtzee PowerUp: four-of-a-kind counts as a Yahtzee (25 pts)
+# for the CATEGORY SCORE ONLY - does not affect is_yahtzee() bonus detection
+var allow_four_kind_yahtzee: bool = false
+
+# TwoPairHouse PowerUp: two pair counts as a Full House (25 pts)
+var allow_two_pair_full_house: bool = false
+
+# Bonus Sprint consumable: upper section scores count this much toward the
+# upper bonus threshold (actual scored values unchanged). One-round duration;
+# both fields reset in reset_scores() / reset_scores_preserve_levels().
+var upper_bonus_progress_multiplier: float = 1.0
+var upper_bonus_progress_extra: int = 0
+
 func _ready() -> void:
 	add_to_group("scorecard")
 	print("[Scorecard] Ready - Added to 'scorecard' group")
@@ -324,6 +337,13 @@ func set_score(section: int, category: String, score: int, score_snapshot: Dicti
 	# Track statistics with RollStats singleton
 	_track_combination_stats(category, final_score)
 	
+	# Bonus Sprint consumable: upper section scores count extra toward the
+	# upper bonus threshold while upper_bonus_progress_multiplier is above 1.0
+	if section == Section.UPPER and upper_bonus_progress_multiplier > 1.0:
+		var extra_progress := int(round(final_score * (upper_bonus_progress_multiplier - 1.0)))
+		upper_bonus_progress_extra += extra_progress
+		print("[Scorecard] Bonus Sprint: +%d extra upper bonus progress (x%.1f active, total extra: %d)" % [extra_progress, upper_bonus_progress_multiplier, upper_bonus_progress_extra])
+	
 	# Check for upper bonus after updating scores
 	check_upper_bonus()
 	
@@ -513,7 +533,9 @@ func _complete_auto_scoring(_section: Section, category: String, _original_score
 func get_upper_section_final_total() -> int:
 	var subtotal = get_upper_section_total()
 	# Use scaled threshold and amount based on current round
-	if subtotal >= get_scaled_upper_bonus_threshold():
+	# upper_bonus_awarded covers bonus progress boosted past the threshold by
+	# the Bonus Sprint consumable while the raw subtotal is still below it
+	if subtotal >= get_scaled_upper_bonus_threshold() or upper_bonus_awarded:
 		return subtotal + get_scaled_upper_bonus_amount()
 	return subtotal
 
@@ -573,9 +595,19 @@ func update_round(round_number: int) -> void:
 	])
 
 
+## get_upper_bonus_progress()
+##
+## Returns effective progress toward the upper bonus threshold: the raw upper
+## section total plus extra progress granted by the Bonus Sprint consumable
+## (upper_bonus_progress_extra). Actual scored values are unchanged.
+func get_upper_bonus_progress() -> int:
+	return get_upper_section_total() + upper_bonus_progress_extra
+
+
 func check_upper_bonus() -> void:
 	# Check for upper bonus - triggers when threshold is met (not requiring completion)
-	var total = get_upper_section_total()
+	# Progress includes Bonus Sprint extra so boosted scores count double
+	var total = get_upper_bonus_progress()
 	var scaled_threshold = get_scaled_upper_bonus_threshold()
 	var scaled_amount = get_scaled_upper_bonus_amount()
 	
@@ -696,6 +728,10 @@ func reset_scores() -> void:
 	yahtzee_bonus_points = 0
 	upper_bonus_awarded = false
 	
+	# Reset Bonus Sprint consumable state
+	upper_bonus_progress_multiplier = 1.0
+	upper_bonus_progress_extra = 0
+	
 	# Reset round scaling
 	current_round_number = 1
 	
@@ -735,6 +771,10 @@ func reset_scores_preserve_levels() -> void:
 	yahtzee_bonuses = 0
 	yahtzee_bonus_points = 0
 	upper_bonus_awarded = false
+	
+	# Reset Bonus Sprint consumable state (one-round duration)
+	upper_bonus_progress_multiplier = 1.0
+	upper_bonus_progress_extra = 0
 	
 	# Log current levels for debugging
 	print("[Scorecard] Preserved upper levels:", upper_levels)
@@ -1522,9 +1562,10 @@ func _categorize_modifier_source(source_name: String) -> String:
 			"shop_rerolls", "tango_and_cash", "even_higher", "money_bags", "failed_money",
 			"roll_efficiency", "pair_paradise",
 			"modded_dice_mastery", "rainbow_surge",
-			"consumable_collector", "daring_dice",
+			"daring_dice",
 			"extra_rainbow",
-			"melting_dice", "one_roll_wonder", "power_surge", "snake_eyes"
+			"melting_dice", "one_roll_wonder", "power_surge", "snake_eyes",
+			"upper_crust", "defiance", "extreme_couponing", "comeback_kid"
 		]
 		
 		if normalized_name in powerup_sources:
@@ -1534,7 +1575,7 @@ func _categorize_modifier_source(source_name: String) -> String:
 		var consumable_sources = [
 			"score_reroll", "any_score", "duplicate",
 			"poor_house_bonus", "double_or_nothing_zero", 
-			"double_or_nothing_yahtzee"
+			"double_or_nothing_yahtzee", "scratch_ticket", "spite"
 		]
 		
 		if normalized_name in consumable_sources:
@@ -1783,7 +1824,39 @@ func _calculate_base_score(category: String, dice_values: Array) -> int:
 	# Use the ScoreEvaluator to calculate the base score
 	var typed_dice_values: Array[int] = []
 	typed_dice_values.assign(dice_values)
-	return ScoreEvaluatorSingleton.calculate_score_for_category(category, typed_dice_values)
+	var base_score: int = ScoreEvaluatorSingleton.calculate_score_for_category(category, typed_dice_values)
+	
+	# FourKindYahtzee PowerUp: four-of-a-kind counts as a Yahtzee for a reduced
+	# 25 points. Category score only - is_yahtzee() and the bonus Yahtzee /
+	# joker logic are deliberately untouched.
+	if category == "yahtzee" and allow_four_kind_yahtzee and base_score == 0:
+		if ScoreEvaluatorSingleton.get_n_of_a_kind(typed_dice_values, 4) > 0:
+			return 25
+	
+	# TwoPairHouse PowerUp: two pair counts as a Full House for 25 points
+	if category == "full_house" and allow_two_pair_full_house and base_score == 0:
+		if _is_two_pair(typed_dice_values):
+			return 25
+	
+	return base_score
+
+
+## _is_two_pair(values)
+##
+## Checks if values contain two pair: two DIFFERENT values each appearing
+## at least twice. Example: [3,3,5,5,1] is two pair; [4,4,4,4,2] is not
+## (only one distinct paired value).
+func _is_two_pair(values: Array) -> bool:
+	var counts := {}
+	for v in values:
+		counts[v] = counts.get(v, 0) + 1
+	
+	var pair_values := 0
+	for value in counts:
+		if counts[value] >= 2:
+			pair_values += 1
+	
+	return pair_values >= 2
 
 
 ## preview_base_score(category, values) -> int
@@ -1930,6 +2003,8 @@ func get_state() -> Dictionary:
 		"sixth_slot_target": sixth_slot_target,
 		"sixth_slot_multiplier": sixth_slot_multiplier,
 		"allow_gap_straights": allow_gap_straights,
+		"allow_four_kind_yahtzee": allow_four_kind_yahtzee,
+		"allow_two_pair_full_house": allow_two_pair_full_house,
 		"last_base_score": last_base_score
 	}
 
@@ -1952,6 +2027,8 @@ func load_state(state: Dictionary) -> void:
 	sixth_slot_target = state.get("sixth_slot_target", 6)
 	sixth_slot_multiplier = state.get("sixth_slot_multiplier", 1)
 	allow_gap_straights = state.get("allow_gap_straights", false)
+	allow_four_kind_yahtzee = state.get("allow_four_kind_yahtzee", false)
+	allow_two_pair_full_house = state.get("allow_two_pair_full_house", false)
 	last_base_score = state.get("last_base_score", 0)
 	emit_signal("score_changed", get_total_score())
 	print("[Scorecard] State loaded")

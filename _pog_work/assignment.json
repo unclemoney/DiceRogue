@@ -34,6 +34,7 @@
 
   "blue_slime": ["questionable_pog_grid_5x5.png", 6],
   "challenge_easer": ["questionable_pog_grid_5x5.png", 17],
+  "comeback_kid": ["questionable_pog_grid_5x5.png", 5],
   "consumable_collector": ["questionable_pog_grid_5x5.png", 1],
   "daring_dice": ["questionable_pog_grid_5x5.png", 21],
   "debuff_destroyer": ["questionable_pog_grid_5x5.png", 19],
@@ -52,6 +53,9 @@
   "tango_and_cash": ["questionable_pog_grid_5x5.png", 24],
   "the_replicator": ["questionable_pog_grid_5x5.png", 8],
   "yahtzee_bonus_mult": ["questionable_pog_grid_5x5.png", 3],
+  "defiance": ["questionable_pog_grid_5x5.png", 13],
+  "upper_crust": ["questionable_pog_grid_5x5.png", 16],
+  "two_pair_house": ["questionable_pog_grid_5x5.png", 20],
 
   "azure_perfection": ["grounded_pog_grid_5x5.png", 2],
   "extra_coupons": ["grounded_pog_grid_5x5.png", 22],
@@ -62,6 +66,7 @@
   "rainbow_surge": ["grounded_pog_grid_5x5.png", 10],
   "upper_bonus_mult": ["grounded_pog_grid_5x5.png", 23],
   "yahtzeed_dice": ["grounded_pog_grid_5x5.png", 5],
+  "four_of_a_kind_yahtzee": ["grounded_pog_grid_5x5.png", 11],
 
   "foursome": ["banned_pog_grid_5x5.png", 8],
   "pin_head": ["banned_pog_grid_5x5.png", 18],

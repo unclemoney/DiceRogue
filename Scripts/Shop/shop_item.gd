@@ -63,6 +63,14 @@ const SWING_ANGLE_MIN := 1.0
 const SWING_ANGLE_MAX := 3.0
 const SWING_COUNT_MIN := 1
 const SWING_COUNT_MAX := 3
+# HighRoller disables locking on its die, which silently neuters lock-scaling
+# POGs. Buying either side of this pairing surfaces a conflict warning.
+const HIGH_ROLLER_MOD_ID := "high_roller"
+const HIGH_ROLLER_CONFLICT_POWER_UPS := ["lock_and_load", "wild_dots"]
+const HIGH_ROLLER_CONFLICT_POWER_UP_NAMES := {
+	"lock_and_load": "Lock And Load",
+	"wild_dots": "Wild Dots",
+}
 
 var item_id: String
 var item_type: String
@@ -89,6 +97,10 @@ var is_card_hovered: bool = false
 var is_button_hovered: bool = false
 var _hover_tween: Tween
 var _time: float = 0.0
+var _debug_enabled: bool = OS.is_debug_build()
+# Conflict warning badge ("!" marker) shown when this item conflicts with
+# something the player already owns (e.g. High Roller vs lock-scaling POGs).
+var _warning_badge: Label = null
 const RAINBOW_SPEED := 0.5
 const RAINBOW_COLORS := [
 	Color(1, 0, 0),    # Red
@@ -215,6 +227,9 @@ func _process(delta: float) -> void:
 				if buy_button.disabled and buy_button.text == "LIMIT (1)":
 					buy_button.disabled = false
 					buy_button.text = "BUY"
+
+	# Surface purchase conflicts (e.g. High Roller vs lock-scaling POGs)
+	_update_conflict_warning()
 
 func setup(data: Resource, type: String) -> void:
 	print("[ShopItem] Setting up item:", data.id)
@@ -1090,11 +1105,104 @@ func _layout_badges() -> void:
 func _get_current_tooltip_text() -> String:
 	if not item_data:
 		return ""
+	var text: String
 	if item_type == "colored_dice":
-		return _get_colored_dice_tooltip_text()
-	if item_type == "power_up" and item_data is PowerUpData:
-		return _get_power_up_tooltip_text()
-	return item_data.description
+		text = _get_colored_dice_tooltip_text()
+	elif item_type == "power_up" and item_data is PowerUpData:
+		text = _get_power_up_tooltip_text()
+	else:
+		text = item_data.description
+	var conflict_warning := _get_conflict_warning_text()
+	if not conflict_warning.is_empty():
+		text += "\n\n" + conflict_warning
+	return text
+
+
+## _get_conflict_warning_text() -> String
+##
+## Returns a warning string when buying this item conflicts with something
+## the player already owns, in either direction:
+## - buying the High Roller mod while owning lock-scaling POGs
+##   (Lock And Load / Wild Dots), or
+## - buying those POGs while a High Roller mod is in play.
+## HighRollerMod sets Dice.locking_disabled, so its die never emits
+## die_locked and lock-scaling POGs lose value. Empty when no conflict.
+func _get_conflict_warning_text() -> String:
+	if item_id == "":
+		return ""
+	if item_type == "mod" and item_id == HIGH_ROLLER_MOD_ID:
+		var conflicting_names: Array = []
+		for power_up_id in _get_owned_conflicting_power_ups():
+			conflicting_names.append(HIGH_ROLLER_CONFLICT_POWER_UP_NAMES.get(power_up_id, power_up_id))
+		if not conflicting_names.is_empty():
+			return "WARNING: High Roller dice cannot be locked. Owned POGs lose value: " + ", ".join(conflicting_names)
+	elif item_type == "power_up" and HIGH_ROLLER_CONFLICT_POWER_UPS.has(item_id):
+		if _has_high_roller_mod_in_play():
+			return "WARNING: a High Roller die is in play and cannot be locked, so %s gets less value." % _base_title_text
+	return ""
+
+
+## _get_owned_conflicting_power_ups() -> Array
+##
+## Returns the ids of owned power-ups that conflict with High Roller.
+func _get_owned_conflicting_power_ups() -> Array:
+	var owned: Array = []
+	if not get_tree():
+		return owned
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if not game_controller:
+		return owned
+	for power_up_id in HIGH_ROLLER_CONFLICT_POWER_UPS:
+		if game_controller.active_power_ups.has(power_up_id):
+			owned.append(power_up_id)
+	return owned
+
+
+## _has_high_roller_mod_in_play() -> bool
+##
+## Returns true when any live die currently carries the High Roller mod.
+func _has_high_roller_mod_in_play() -> bool:
+	if not get_tree():
+		return false
+	for die in get_tree().get_nodes_in_group("dice"):
+		if die is Dice and die.has_mod(HIGH_ROLLER_MOD_ID):
+			return true
+	return false
+
+
+## _update_conflict_warning()
+##
+## Shows/hides the "!" conflict badge on the card based on the current
+## conflict state. The full warning text rides on the hover tooltip.
+func _update_conflict_warning() -> void:
+	var has_conflict := not _get_conflict_warning_text().is_empty()
+	if not has_conflict:
+		if _warning_badge and _warning_badge.visible:
+			_warning_badge.visible = false
+		return
+	if not _warning_badge:
+		_warning_badge = Label.new()
+		_warning_badge.name = "ConflictWarningBadge"
+		_warning_badge.text = "!"
+		_warning_badge.add_theme_font_override("font", VCR_FONT)
+		_warning_badge.add_theme_font_size_override("font_size", 22)
+		_warning_badge.add_theme_color_override("font_color", Color(1.0, 0.35, 0.25, 1.0))
+		_warning_badge.add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.02, 1.0))
+		_warning_badge.add_theme_constant_override("outline_size", 3)
+		_warning_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var badge_layer := get_node_or_null("BadgeLayer")
+		if badge_layer:
+			badge_layer.add_child(_warning_badge)
+		else:
+			add_child(_warning_badge)
+		# Top-center of the card, beside the hanging hook
+		var card_width := size.x
+		if card_width <= 0.0:
+			card_width = custom_minimum_size.x
+		_warning_badge.position = Vector2(card_width * 0.5 - 8.0, BADGE_TOP)
+		if _debug_enabled:
+			print("[ShopItem] Conflict warning shown for:", item_id)
+	_warning_badge.visible = true
 
 
 ## _get_power_up_tooltip_text()

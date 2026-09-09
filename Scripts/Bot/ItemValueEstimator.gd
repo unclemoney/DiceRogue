@@ -104,7 +104,6 @@ var KNOWN_EFFECTS: Dictionary = {
 	"the_piggy_bank": {"type": EffectType.ECONOMY_FLAT, "value": 300, "desc": "Saves money over time"},
 	"random_card_level": {"type": EffectType.CATEGORY_UPGRADE, "value": 1.5, "desc": "Random category level up"},
 	"yahtzeed_dice": {"type": EffectType.UTILITY, "value": 15, "desc": "Yahtzee die lock bonus"},
-	"consumable_collector": {"type": EffectType.ECONOMY_FLAT, "value": 50, "desc": "Bonus from consumable collection"},
 	"daring_dice": {"type": EffectType.SCORE_ADDITIVE, "value": 10, "desc": "Risk/reward dice bonus"},
 	"great_exchange": {"type": EffectType.UTILITY, "value": 20, "desc": "Item exchange mechanic"},
 	"extra_rainbow": {"type": EffectType.SCORE_ADDITIVE, "value": 8, "desc": "Extra rainbow die bonus"},

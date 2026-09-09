@@ -17,6 +17,7 @@ uniform float red_color_strength = 0.0;
 uniform float purple_color_strength = 0.0;
 uniform float blue_color_strength = 0.0;
 uniform float yellow_color_strength = 0.0;
+uniform float orange_color_strength = 0.0;
 
 void vertex() {
 	// Perspective tilt based on mouse position
@@ -61,7 +62,7 @@ void fragment() {
     }
 
     // Apply dice color effects, bound to the dice silhouette instead of the UV rectangle.
-    if (green_color_strength > 0.0 || red_color_strength > 0.0 || purple_color_strength > 0.0 || blue_color_strength > 0.0 || yellow_color_strength > 0.0) {
+    if (green_color_strength > 0.0 || red_color_strength > 0.0 || purple_color_strength > 0.0 || blue_color_strength > 0.0 || yellow_color_strength > 0.0 || orange_color_strength > 0.0) {
         // Apply green color effect
         if (green_color_strength > 0.0) {
             vec3 green_color = vec3(0.0, 1.0, 0.0);
@@ -100,6 +101,14 @@ void fragment() {
             float yellow_pulse = 0.8 + 0.2 * sin(TIME * 4.5);
             float yellow_mix = yellow_color_strength * (color_rim * yellow_pulse * 0.75 + interior_pulse);
             result.rgb = mix(result.rgb, yellow_color, yellow_mix);
+        }
+
+        // Apply orange color effect
+        if (orange_color_strength > 0.0) {
+            vec3 orange_color = vec3(1.0, 0.45, 0.0);
+            float orange_pulse = 0.8 + 0.2 * sin(TIME * 5.5);
+            float orange_mix = orange_color_strength * (color_rim * orange_pulse * 0.75 + interior_pulse);
+            result.rgb = mix(result.rgb, orange_color, orange_mix);
         }
     }
 

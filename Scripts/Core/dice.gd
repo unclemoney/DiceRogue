@@ -865,6 +865,8 @@ func _assign_random_color() -> void:
 			available_colors.append(DiceColor.Type.BLUE)
 		if progress_manager.is_item_unlocked("yellow_dice") and color_manager.is_color_purchased(DiceColor.Type.YELLOW):
 			available_colors.append(DiceColor.Type.YELLOW)
+		if progress_manager.is_item_unlocked("orange_dice") and color_manager.is_color_purchased(DiceColor.Type.ORANGE):
+			available_colors.append(DiceColor.Type.ORANGE)
 	
 	if available_colors.size() == 0:
 		#print("[Dice] No colored dice purchased for this session - setting to NONE")
@@ -932,6 +934,7 @@ static func clear_color_shader_parameters(shader_material: ShaderMaterial) -> vo
 	shader_material.set_shader_parameter("purple_color_strength", 0.0)
 	shader_material.set_shader_parameter("blue_color_strength", 0.0)
 	shader_material.set_shader_parameter("yellow_color_strength", 0.0)
+	shader_material.set_shader_parameter("orange_color_strength", 0.0)
 
 
 static func apply_color_shader_parameters(shader_material: ShaderMaterial, new_color: DiceColor.Type, strength: float = 0.8) -> void:
@@ -950,6 +953,8 @@ static func apply_color_shader_parameters(shader_material: ShaderMaterial, new_c
 			shader_material.set_shader_parameter("blue_color_strength", strength)
 		DiceColor.Type.YELLOW:
 			shader_material.set_shader_parameter("yellow_color_strength", strength)
+		DiceColor.Type.ORANGE:
+			shader_material.set_shader_parameter("orange_color_strength", strength)
 
 ## Update shader parameters based on current color
 func _update_color_shader() -> void:
@@ -978,6 +983,8 @@ func _update_color_shader() -> void:
 			print("[Dice] Set BLUE shader strength to 0.8")
 		DiceColor.Type.YELLOW:
 			print("[Dice] Set YELLOW shader strength to 0.8")
+		DiceColor.Type.ORANGE:
+			print("[Dice] Set ORANGE shader strength to 0.8")
 		DiceColor.Type.NONE:
 			print("[Dice] All color strengths set to 0.0 (NONE)")
 		_:
@@ -1032,6 +1039,8 @@ func _update_color_tooltip() -> void:
 			tooltip_text = "%s Die\nGrants $%d money" % [color_name, value]
 		DiceColor.Type.YELLOW:
 			tooltip_text = "%s Die\nGrants a Coupon" % [color_name, value]
+		DiceColor.Type.ORANGE:
+			tooltip_text = "%s Die\nGrants +1 roll next turn when scored" % [color_name, value]
 		DiceColor.Type.RED:
 			tooltip_text = "%s Die\nAdds +%d points" % [color_name, value]
 		DiceColor.Type.PURPLE:

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://oym8ar41kq6k"]
+
+[ext_resource type="Texture2D" uid="uid://dqct3k5i3x45l" path="res://Resources/Art/Powerups/questionable_pog_grid_5x5.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" path="res://Scenes/PowerUp/ComebackKid.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_comeback_kid"]
+atlas = ExtResource("1_icon")
+region = Rect2(43, 213, 172, 174)
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "comeback_kid"
+display_name = "Comeback Kid"
+description = "+5 score for each category sitting at 0"
+icon = SubResource("AtlasTexture_comeback_kid")
+scene = ExtResource("2_scene")
+price = 150
+rarity = "rare"
+rating = "PG-13"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

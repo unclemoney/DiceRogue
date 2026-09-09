@@ -9,7 +9,7 @@ Classic Yahtzee scoring meets roguelite progression. Players roll dice to fill s
 - **Consumables**: Single-use items for strategic advantages
   - **AnyScore**: Score current dice in any open category, ignoring normal scoring requirements
   - **Random Uncommon Power-Up**: Grants a random uncommon rarity power-up
-  - **Green Envy**: 10x multiplier for all green dice money scored this turn
+  - **Raining Green**: 10x multiplier for all green dice money scored this turn
   - **Poor House**: Transfer all your money to add bonus points to the next scored hand
   - **Empty Shelves**: Multiply next score by the number of empty PowerUp slots (only during active rounds)
   - **Double or Nothing**: Use after Next Turn, before manual roll. Yahtzee = 2x score, No Yahtzee = next score becomes 0
@@ -288,12 +288,19 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
 - **Red Dice**: Add bonus points equal to dice value to final score  
 - **Purple Dice**: Multiply final score by dice value
 - **Blue Dice**: Conditional multiplier/divisor - multiply score by dice value if used in scoring, divide if not used (very rare)
+- **Yellow Dice**: Grant a random consumable (coupon) when scored (if space available)
+- **Orange Dice**: Grant +1 roll per Orange die scored, applied to the NEXT turn only (doubled on a 5+ same-color bonus). Pending rolls carry across round boundaries but reset on a Mall Zone change
 
 **Color Assignment:**
 - **Green**: 1 in 25 chance per roll (4%)
 - **Red**: 1 in 50 chance per roll (2%)
 - **Purple**: 1 in 88 chance per roll (~1.1%)
 - **Blue**: 1 in 100 chance per roll (1%) - Very rare
+- **Yellow**: 1 in 120 chance per roll (~0.8%)
+- **Orange**: 1 in 150 chance per roll (~0.67%) - Rarest color
+
+**Shop Prices (base cost, doubles per purchase):**
+- Green: $50, Red: $75, Purple: $125, Blue: $150, Yellow: $100, Orange: $175
 
 **Blue Dice Special Mechanics:**
 - **Used in Scoring**: If the blue die contributes to the category score, multiply final score by the die value
@@ -304,6 +311,7 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
 
 **Bonus Mechanics:**
 - **5+ Same Color Bonus**: When 5 or more dice of the same color are scored, all bonuses of that color are doubled
+- **Rainbow Bonus**: When 5 or more unique colors (of the 6 available) are present in the scored hand, all color effects are boosted by 50%
 - **Calculation Order**: Money awarded first, then additives applied, then multipliers, then blue dice effects
 - **Toggle System**: Colors can be disabled globally (useful for challenges/debuffs)
 
@@ -357,7 +365,6 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
     - **The Piggy Bank** (Uncommon/$125): Saves $3 per roll; sell to cash out accumulated savings with animated coin effects. Savings persist across mall zone changes via `PlayerEconomy.piggy_bank_savings` — re-buying the Piggy Bank in a new zone restores the stored amount; selling pays out and clears it; starting a new game resets it
     - **Random Card Level** (Rare/$300): 20% chance each turn to level up a random scorecard category
     - **Yahtzeed Dice** (Epic/$450): Gain +1 die every time you roll a Yahtzee (max 16 dice)
-    - **Consumable Collector** (Rare/$275): +0.1× score multiplier for each consumable used during the game
     - **Daring Dice** (Rare/$300): Remove 2 dice but gain permanent +50 score bonus per category
   - **Trade-off & Color PowerUps**:
     - **The Great Exchange** (Rare/$350): +2 dice, -1 roll per turn — more dice but fewer re-roll chances
@@ -388,7 +395,7 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - **Loss Leader** ($25): Next consumable purchase is free. Stacks — each use grants one additional free purchase. Persists across turns.
   - **Insurance Policy** ($25): If your next score is 0, receive $75 as consolation. Consumed after any scoring action.
   - **Clearance Rack** ($25): All shop rerolls are free until you close the shop.
-  - **Loaded Dice** ($75): Randomly sets one of your dice to a random value (1-6).
+  - **Loaded Dice** ($75): Pick one die and set it to an exact value.
 - **Mods** (`Scripts/Mods/`) - Dice behavior modifiers
 - **Gaming Consoles** (`Scripts/GamingConsole/`) - Unique console abilities (one active at a time)
   - **Shop Layout**: Consoles now use the same single-row, 3-cards-per-page shop layout as the other purchasable tabs; footer arrows appear when more than 3 consoles are available, and purchased consoles disappear from the current shop pool while the one-console ownership limit remains in force
@@ -1700,6 +1707,33 @@ A read-only editor tool for viewing all game resources in one centralized interf
 3. Add data entry in `ModManager`
 4. Selling mechanics are automatically handled by `ModIcon`
 
+## New Content
+
+Latest content wave additions and system changes:
+
+- **Orange Dice**: New 7th dice color. Grants +1 roll per Orange die scored for the NEXT turn only (no permanent stacking); pending rolls carry across rounds but reset on a Mall Zone change. Rarest color (1 in 150 per roll); sells for $175. See the Dice Color System section.
+- **Rainbow rule change**: The Rainbow color bonus now triggers at 5 unique colors of the 6 available (previously stricter); when active, all color effects are boosted by 50%.
+- **Yellow Slime** (PowerUp, $300): Doubles yellow dice probability. Shares the unified `slime_power_up.gd` script with the green/red/blue/purple slimes.
+- **Extreme Couponing** (PowerUp, $140): +5 score per consumable granted this run. Listens to the GameController's `consumable_granted` signal.
+- **Defiance** (PowerUp, $400): +0.25x multiplier per active debuff.
+- **Comeback Kid** (PowerUp, $150): +5 score for each category sitting at 0.
+- **Upper Crust** (PowerUp, $250): Upper section scores get x1.5.
+- **Four-Kind Yahtzee** (PowerUp, $450): Four-of-a-kind counts as a Yahtzee for 25 points.
+- **Two Pair House** (PowerUp, $300): Two pair counts as a Full House (25 points).
+- **Spite** (Consumable, $50): Next score gets +0.5x per active debuff.
+- **Antidote** (Consumable, $40): Cleanse your highest-intensity debuff.
+- **Immunity** (Consumable, $50): No debuffs next round. Sets `DebuffManager.immunity_next_round`, which skips the automatic debuff assignment and the New Round Panel debuff preview for that round.
+- **Mulligan** (Consumable, $25): Reroll your worst placed score.
+- **Scratch Ticket** (Consumable, $50): If your last score was 0, your next score is doubled.
+- **Paint Job** (Consumable, $60): All dice gain a random color for the next roll, then revert.
+- **Bonus Sprint** (Consumable, $65): Upper scores count double toward the upper bonus this round.
+- **Painted Die** (Mod, $100): This die always counts as a random color.
+- **Cursed Six** (Mod, $25): Always rolls 6, but costs $5 per roll. Sells for $0 via the new `ModData.sell_price` override (-1 keeps the legacy half-price refund).
+- **High Roller conflict warning**: Shop cards now show a red "!" badge (and a tooltip warning) when buying the High Roller mod while owning lock-scaling PowerUps (Lock And Load / Wild Dots), or vice versa — High Roller dice cannot be locked.
+- **Loaded Dice upgrade**: Now lets you pick one die and set it to an exact value instead of randomizing a random die.
+- **WildCardMod semantics fix**: The unlock registry now uses the shop id `wildcard` (it previously registered `wild_card`, so the mod could never be unlocked through progression).
+- **ConsumableCollector removal**: The Consumable Collector PowerUp was removed from the game.
+
 ## Available PowerUps
 
 ### Score Modifiers
@@ -1710,6 +1744,13 @@ A read-only editor tool for viewing all game resources in one centralized interf
 - **RedPowerRangerPowerUp**: Gain +additive score for each red dice scored (cumulative across all hands)
 - **PinHeadPowerUp**: When scoring, picks a random dice value as multiplier (e.g., score 30 with random dice 3 = 90 points)
 - **HighlightedScorePowerUp**: Highlights one random unscored category with golden border; highlighted category gets 1.5x multiplier when scored (Rare, $300)
+- **YellowSlimePowerUp**: Doubles yellow dice probability ($300)
+- **ExtremeCouponingPowerUp**: +5 score per consumable granted this run ($140)
+- **DefiancePowerUp**: +0.25x multiplier per active debuff ($400)
+- **ComebackKidPowerUp**: +5 score for each category sitting at 0 ($150)
+- **UpperCrustPowerUp**: Upper section scores get x1.5 ($250)
+- **FourOfAKindYahtzeePowerUp**: Four-of-a-kind counts as a Yahtzee for 25 points ($450)
+- **TwoPairHousePowerUp**: Two pair counts as a Full House (25 points) ($300)
 
 ### Economy PowerUps
 - **BonusMoneyPowerUp**: +$50 for each bonus achieved (Upper Section or Yahtzee bonuses)
@@ -1796,6 +1837,13 @@ Score Card Upgrade consumables permanently increase the level of specific scorin
 ### Scoring Aids
 - **AnyScore**: Score current dice in any open category, ignoring normal requirements
 - **ScoreReroll**: Reroll all dice, then auto-score best category
+- **Mulligan**: Reroll your worst placed score (Price: $25)
+- **Scratch Ticket**: If your last score was 0, your next score is doubled (Price: $50)
+- **Spite**: Next score gets +0.5x per active debuff (Price: $50)
+- **Antidote**: Cleanse your highest-intensity debuff (Price: $40)
+- **Immunity**: No debuffs next round (Price: $50)
+- **Paint Job**: All dice gain a random color for the next roll, then revert (Price: $60)
+- **Bonus Sprint**: Upper scores count double toward the upper bonus this round (Price: $65)
 - **One Extra Dice**: Add +1 dice to the next hand only, removed after scoring (Price: $50)
   - Temporarily increases dice count from 5 to 6 for the next turn
   - Extra dice is automatically removed when any score is assigned (manual or auto)
@@ -1803,7 +1851,7 @@ Score Card Upgrade consumables permanently increase the level of specific scorin
   - Useful for difficult hands that need one more dice for a good score
 
 ### Economy
-- **Green Envy**: 10x multiplier for all green dice money scored this turn (Price: $50)
+- **Raining Green**: 10x multiplier for all green dice money scored this turn (Price: $50)
 - **Poor House**: Transfer all your money to add bonus points to the next scored hand (Price: $100)
 
 ### Strategic Multipliers
@@ -1847,7 +1895,7 @@ Score Card Upgrade consumables permanently increase the level of specific scorin
 ### Usage Notes
 - Consumables are single-use items
 - AnyScore is particularly useful for filling difficult categories
-- Green Envy is most effective when you have multiple green dice
+- Raining Green is most effective when you have multiple green dice
 - Random PowerUps provide strategic risk/reward decisions
 
 ### Shop & Inventory
@@ -1870,7 +1918,9 @@ Mods are special attachments that can be applied to individual dice to change th
 
 ### Special Behaviors
 - **GoldSixMod**: When rolling a 6, grants additional money based on game state
-- **WildCardMod**: Provides random special effects on each roll
+- **WildCardMod**: Provides random special effects on each roll. Registered in the unlock system under its shop id `wildcard` (previously mismatched as `wild_card`, which made it impossible to unlock)
+- **PaintedDieMod**: This die always counts as a random color (Price: $100)
+- **CursedSixMod**: Always rolls 6, but costs $5 per roll (Price: $25). Sells for $0 — its `ModData.sell_price` override bypasses the default half-price refund
 - **HighRollerMod**: Cannot be locked; click to reroll for increasing Fibonacci costs (0,1,1,2,3,5,8...)
   - Prevents the die from being locked/unlocked
   - Click the die to perform a manual reroll
@@ -2160,7 +2210,7 @@ This prevents the need for complex manual testing setups and keeps development v
 ### Short-term
 - ✅ Mod selling mechanics (implemented)
 - ✅ AnyScore consumable - Score dice in any category ignoring requirements (implemented)
-- ✅ Green Envy consumable - 10x multiplier for green dice money (implemented)
+- ✅ Raining Green consumable - 10x multiplier for green dice money (implemented)
 - ✅ Poor House consumable - Transfer money to next scored hand bonus (implemented)
 - ✅ Progress tracking system - Persistent player progression with unlock conditions (implemented)
 - ✅ Chores & Mom system - Strategic tension mechanic with parental consequences (implemented)

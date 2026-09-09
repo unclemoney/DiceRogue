@@ -211,6 +211,22 @@ func _create_debug_tabs() -> void:
 			{"text": "Grant Random PowerUp", "method": "_debug_grant_powerup"},
 			{"text": "Grant Random Consumable", "method": "_debug_grant_consumable"},
 			{"text": "Grant Random Mod", "method": "_debug_grant_mod"},
+			{"text": "Grant Yellow Slime", "method": "_debug_grant_yellow_slime"},
+			{"text": "Grant Extreme Couponing", "method": "_debug_grant_extreme_couponing"},
+			{"text": "Grant Defiance", "method": "_debug_grant_defiance"},
+			{"text": "Grant Comeback Kid", "method": "_debug_grant_comeback_kid"},
+			{"text": "Grant Upper Crust", "method": "_debug_grant_upper_crust"},
+			{"text": "Grant Four-Kind Yahtzee", "method": "_debug_grant_four_of_a_kind_yahtzee"},
+			{"text": "Grant Two Pair House", "method": "_debug_grant_two_pair_house"},
+			{"text": "Grant Spite", "method": "_debug_grant_spite"},
+			{"text": "Grant Antidote", "method": "_debug_grant_antidote"},
+			{"text": "Grant Immunity", "method": "_debug_grant_immunity"},
+			{"text": "Grant Mulligan", "method": "_debug_grant_mulligan"},
+			{"text": "Grant Scratch Ticket", "method": "_debug_grant_scratch_ticket"},
+			{"text": "Grant Paint Job", "method": "_debug_grant_paint_job"},
+			{"text": "Grant Bonus Sprint", "method": "_debug_grant_bonus_sprint"},
+			{"text": "Grant Painted Die Mod", "method": "_debug_grant_painted_die"},
+			{"text": "Grant Cursed Six Mod", "method": "_debug_grant_cursed_six"},
 			{"text": "Register AnyScore", "method": "_debug_register_any_score"},
 			{"text": "Show All Items", "method": "_debug_show_items"},
 			{"text": "Clear All Items", "method": "_debug_clear_items"},
@@ -259,11 +275,13 @@ func _create_debug_tabs() -> void:
 			{"text": "Force All Purple", "method": "_debug_force_all_purple"},
 			{"text": "Force All Blue", "method": "_debug_force_all_blue"},
 			{"text": "Force All Yellow", "method": "_debug_force_all_yellow"},
+			{"text": "Force All Orange", "method": "_debug_force_all_orange"},
 			{"text": "Force One Green", "method": "_debug_force_one_green"},
 			{"text": "Force One Red", "method": "_debug_force_one_red"},
 			{"text": "Force One Purple", "method": "_debug_force_one_purple"},
 			{"text": "Force One Blue", "method": "_debug_force_one_blue"},
 			{"text": "Force One Yellow", "method": "_debug_force_one_yellow"},
+			{"text": "Force One Orange", "method": "_debug_force_one_orange"},
 			{"text": "Force Rainbow Set", "method": "_debug_force_rainbow"},
 			{"text": "Clear All Colors", "method": "_debug_clear_all_colors"},
 			{"text": "Show Color Effects", "method": "_debug_show_color_effects"},
@@ -1371,7 +1389,7 @@ func _debug_grant_green_envy() -> void:
 	
 	if game_controller.has_method("grant_consumable"):
 		game_controller.grant_consumable("green_envy")
-		log_debug("Granted Green Envy consumable")
+		log_debug("Granted Raining Green consumable")
 	else:
 		log_debug("GameController missing grant_consumable method")
 
@@ -1717,6 +1735,198 @@ func _debug_grant_ungrounded() -> void:
 		log_debug("Granted Ungrounded PowerUp")
 	else:
 		log_debug("GameController missing grant_power_up method")
+
+## Grant the Yellow Slime powerup - doubles yellow dice probability
+func _debug_grant_yellow_slime() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_power_up"):
+		game_controller.grant_power_up("yellow_slime")
+		log_debug("Granted Yellow Slime PowerUp")
+	else:
+		log_debug("GameController missing grant_power_up method")
+
+## Grant the Extreme Couponing powerup - +5 score per consumable granted
+func _debug_grant_extreme_couponing() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_power_up"):
+		game_controller.grant_power_up("extreme_couponing")
+		log_debug("Granted Extreme Couponing PowerUp")
+	else:
+		log_debug("GameController missing grant_power_up method")
+
+## Grant the Defiance powerup - +0.25x multiplier per active debuff
+func _debug_grant_defiance() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_power_up"):
+		game_controller.grant_power_up("defiance")
+		log_debug("Granted Defiance PowerUp")
+	else:
+		log_debug("GameController missing grant_power_up method")
+
+## Grant the Comeback Kid powerup - +5 score per category at 0
+func _debug_grant_comeback_kid() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_power_up"):
+		game_controller.grant_power_up("comeback_kid")
+		log_debug("Granted Comeback Kid PowerUp")
+	else:
+		log_debug("GameController missing grant_power_up method")
+
+## Grant the Upper Crust powerup - upper section scores get x1.5
+func _debug_grant_upper_crust() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_power_up"):
+		game_controller.grant_power_up("upper_crust")
+		log_debug("Granted Upper Crust PowerUp")
+	else:
+		log_debug("GameController missing grant_power_up method")
+
+## Grant the Four-Kind Yahtzee powerup - four-of-a-kind counts as a Yahtzee for 25 points
+func _debug_grant_four_of_a_kind_yahtzee() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_power_up"):
+		game_controller.grant_power_up("four_of_a_kind_yahtzee")
+		log_debug("Granted Four-Kind Yahtzee PowerUp")
+	else:
+		log_debug("GameController missing grant_power_up method")
+
+## Grant the Two Pair House powerup - two pair counts as a Full House (25 points)
+func _debug_grant_two_pair_house() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_power_up"):
+		game_controller.grant_power_up("two_pair_house")
+		log_debug("Granted Two Pair House PowerUp")
+	else:
+		log_debug("GameController missing grant_power_up method")
+
+## Grant the Spite consumable - next score gets +0.5x per active debuff
+func _debug_grant_spite() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("spite")
+		log_debug("Granted Spite consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+## Grant the Antidote consumable - cleanses the highest-intensity debuff
+func _debug_grant_antidote() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("antidote")
+		log_debug("Granted Antidote consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+## Grant the Immunity consumable - no debuffs next round
+func _debug_grant_immunity() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("immunity")
+		log_debug("Granted Immunity consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+## Grant the Mulligan consumable - reroll your worst placed score
+func _debug_grant_mulligan() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("mulligan")
+		log_debug("Granted Mulligan consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+## Grant the Scratch Ticket consumable - next score doubled if last score was 0
+func _debug_grant_scratch_ticket() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("scratch_ticket")
+		log_debug("Granted Scratch Ticket consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+## Grant the Paint Job consumable - all dice gain a random color for the next roll
+func _debug_grant_paint_job() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("paint_job")
+		log_debug("Granted Paint Job consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+## Grant the Bonus Sprint consumable - upper scores count double toward the upper bonus
+func _debug_grant_bonus_sprint() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_consumable"):
+		game_controller.grant_consumable("bonus_sprint")
+		log_debug("Granted Bonus Sprint consumable")
+	else:
+		log_debug("GameController missing grant_consumable method")
+
+## Grant the Painted Die mod - die always counts as a random color
+func _debug_grant_painted_die() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_mod"):
+		game_controller.grant_mod("painted_die")
+		log_debug("Granted Painted Die mod")
+	else:
+		log_debug("GameController missing grant_mod method")
+
+## Grant the Cursed Six mod - always rolls 6, costs $5 per roll
+func _debug_grant_cursed_six() -> void:
+	if not game_controller:
+		log_debug("No GameController found")
+		return
+	
+	if game_controller.has_method("grant_mod"):
+		game_controller.grant_mod("cursed_six")
+		log_debug("Granted Cursed Six mod")
+	else:
+		log_debug("GameController missing grant_mod method")
 
 func _debug_grant_master_upgrade() -> void:
 	_refresh_game_controller_reference()
@@ -2762,7 +2972,7 @@ func _debug_seed_shop_ownership_panel() -> void:
 			progress_manager.debug_unlock_item(item_id)
 			unlocked_mods += 1
 
-	var colored_dice_items = ["green_dice", "red_dice", "purple_dice", "blue_dice", "yellow_dice"]
+	var colored_dice_items = ["green_dice", "red_dice", "purple_dice", "blue_dice", "yellow_dice", "orange_dice"]
 	for item_id in colored_dice_items:
 		progress_manager.debug_unlock_item(item_id)
 
@@ -3336,6 +3546,14 @@ func _debug_force_all_yellow() -> void:
 	dice_hand.debug_force_all_colors(preload("res://Scripts/Core/dice_color.gd").Type.YELLOW)
 	log_debug("Forced all dice to YELLOW color")
 
+func _debug_force_all_orange() -> void:
+	var dice_hand = _get_dice_hand()
+	if not dice_hand:
+		return
+		
+	dice_hand.debug_force_all_colors(preload("res://Scripts/Core/dice_color.gd").Type.ORANGE)
+	log_debug("Forced all dice to ORANGE color")
+
 ## _debug_force_one_green()
 ##
 ## Forces the first dice to green color.
@@ -3366,6 +3584,12 @@ func _debug_force_one_blue() -> void:
 func _debug_force_one_yellow() -> void:
 	_debug_force_one_color(preload("res://Scripts/Core/dice_color.gd").Type.YELLOW, "YELLOW")
 
+## _debug_force_one_orange()
+##
+## Forces the first dice to orange color.
+func _debug_force_one_orange() -> void:
+	_debug_force_one_color(preload("res://Scripts/Core/dice_color.gd").Type.ORANGE, "ORANGE")
+
 ## _debug_force_one_color(color_type, color_name)
 ##
 ## Forces the first available uncolored dice to the specified color.
@@ -3395,7 +3619,8 @@ func _debug_force_one_color(color_type, color_name: String) -> void:
 
 ## _debug_force_rainbow()
 ##
-## Forces dice[0-4] to Green, Red, Purple, Blue, Yellow respectively.
+## Forces dice[0-4] to Green, Red, Purple, Blue, Yellow respectively,
+## and dice[5] to Orange if a sixth die exists.
 ## Creates a rainbow set for testing the rainbow bonus.
 func _debug_force_rainbow() -> void:
 	var dice_hand = _get_dice_hand()
@@ -3413,19 +3638,21 @@ func _debug_force_rainbow() -> void:
 		DiceColorScript.Type.RED,
 		DiceColorScript.Type.PURPLE,
 		DiceColorScript.Type.BLUE,
-		DiceColorScript.Type.YELLOW
+		DiceColorScript.Type.YELLOW,
+		DiceColorScript.Type.ORANGE
 	]
 	
-	for i in range(5):
+	var color_count = min(colors.size(), dice_list.size())
+	for i in range(color_count):
 		if dice_list[i] is Dice:
 			dice_list[i].force_color(colors[i])
 	
 	# Set remaining dice to NONE
-	for i in range(5, dice_list.size()):
+	for i in range(color_count, dice_list.size()):
 		if dice_list[i] is Dice:
 			dice_list[i].clear_color()
 	
-	log_debug("Forced rainbow set: Green, Red, Purple, Blue, Yellow")
+	log_debug("Forced rainbow set: Green, Red, Purple, Blue, Yellow, Orange")
 
 
 func _debug_refresh_all_diagnostics() -> void:
@@ -3480,12 +3707,13 @@ func _build_live_dice_state_report() -> String:
 
 	if dice_hand.has_method("get_color_effects"):
 		var color_effects = dice_hand.get_color_effects()
-		lines.append("Color preview: green=$%d | red=%s | purple=%s | blue=%s | yellow_scored=%s | same_color=%s | rainbow=%s" % [
+		lines.append("Color preview: green=$%d | red=%s | purple=%s | blue=%s | yellow_scored=%s | orange_rolls=%d | same_color=%s | rainbow=%s" % [
 			int(color_effects.get("green_money", 0)),
 			_format_signed_int(int(color_effects.get("red_additive", 0))),
 			_format_float_value(float(color_effects.get("purple_multiplier", 1.0))),
 			_format_float_value(float(color_effects.get("blue_score_multiplier", 1.0))),
 			str(color_effects.get("yellow_scored", false)),
+			int(color_effects.get("orange_rolls", 0)),
 			str(color_effects.get("same_color_bonus", false)),
 			str(color_effects.get("rainbow_bonus", false))
 		])
@@ -3686,6 +3914,7 @@ func _debug_show_color_effects() -> void:
 	log_debug("  Purple: " + str(counts.purple))
 	log_debug("  Blue: " + str(counts.get("blue", 0)))
 	log_debug("  Yellow: " + str(counts.get("yellow", 0)))
+	log_debug("  Orange: " + str(counts.get("orange", 0)))
 	log_debug("  None: " + str(counts.none))
 	
 	log_debug("Color effects:")
@@ -3694,8 +3923,9 @@ func _debug_show_color_effects() -> void:
 	log_debug("  Purple multiplier: x" + str(effects.purple_multiplier))
 	log_debug("  Blue multiplier: x" + str(effects.get("blue_score_multiplier", 1.0)))
 	log_debug("  Yellow scored: " + str(effects.get("yellow_scored", false)))
+	log_debug("  Orange rolls granted: +" + str(effects.get("orange_rolls", 0)))
 	log_debug("  Same color bonus (5+): " + str(effects.same_color_bonus))
-	log_debug("  Rainbow bonus (all 5): " + str(effects.get("rainbow_bonus", false)))
+	log_debug("  Rainbow bonus (5+ unique colors): " + str(effects.get("rainbow_bonus", false)))
 
 func _get_dice_hand():
 	var dice_hand = get_tree().get_first_node_in_group("dice_hand")
@@ -4810,7 +5040,7 @@ func _debug_unlock_all_colored_dice() -> void:
 		log_debug("ProgressManager not found")
 		return
 	
-	var colored_dice_items = ["green_dice", "red_dice", "purple_dice", "blue_dice", "yellow_dice"]
+	var colored_dice_items = ["green_dice", "red_dice", "purple_dice", "blue_dice", "yellow_dice", "orange_dice"]
 	var unlocked_count = 0
 	
 	for item_id in colored_dice_items:
@@ -4833,7 +5063,7 @@ func _debug_lock_all_colored_dice() -> void:
 		log_debug("ProgressManager not found")
 		return
 	
-	var colored_dice_items = ["green_dice", "red_dice", "purple_dice", "blue_dice", "yellow_dice"]
+	var colored_dice_items = ["green_dice", "red_dice", "purple_dice", "blue_dice", "yellow_dice", "orange_dice"]
 	var locked_count = 0
 	
 	for item_id in colored_dice_items:

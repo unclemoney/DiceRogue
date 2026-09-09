@@ -47,6 +47,9 @@ var current_dice_type: String = "d6"
 var dice_list: Array[Dice] = []
 var _pending_exit_count: int = 0
 
+## Debug logging flag (auto-enabled in debug builds)
+var _debug_enabled: bool = OS.is_debug_build()
+
 # Roll tracking for audio pitch progression (resets after scoring)
 var current_roll_number: int = 0
 
@@ -55,21 +58,31 @@ var consecutive_good_rolls: int = 0
 
 @onready var roll_audio_player: AudioStreamPlayer = AudioStreamPlayer.new()
 
+
+## set_debug_enabled(enabled: bool)
+##
+## Toggles verbose debug logging for this script.
+func set_debug_enabled(enabled: bool) -> void:
+	_debug_enabled = enabled
+
+
 ## _ready()
 ##
 ## Initialize the DiceHand scene, validate DiceData assets, and prepare audio player.
 func _ready() -> void:
-	print("\n=== DiceHand Initializing ===")
-	print("[DiceHand] dice_area_center:", dice_area_center)
-	print("[DiceHand] dice_area_size:", dice_area_size)
-	print("[DiceHand] start_position (legacy):", start_position)
+	if _debug_enabled:
+		print("\n=== DiceHand Initializing ===")
+		print("[DiceHand] dice_area_center:", dice_area_center)
+		print("[DiceHand] dice_area_size:", dice_area_size)
+		print("[DiceHand] start_position (legacy):", start_position)
 	
 	# Defer container size read until layout is finalized
 	call_deferred("_update_area_from_parent")
 	
 	# Add to group for easy finding
 	add_to_group("dice_hand")
-	print("[DiceHand] Added to 'dice_hand' group")
+	if _debug_enabled:
+		print("[DiceHand] Added to 'dice_hand' group")
 	
 	# Ensure viewport physics picking is enabled so Area2D dice receive input
 	get_viewport().physics_object_picking = true
@@ -113,7 +126,8 @@ func _update_area_from_parent() -> void:
 		if parent_size.x > 0 and parent_size.y > 0:
 			dice_area_center = parent_size / 2.0
 			dice_area_size = parent_size
-			print("[DiceHand] Derived dice area from parent container:", dice_area_center, dice_area_size)
+			if _debug_enabled:
+				print("[DiceHand] Derived dice area from parent container:", dice_area_center, dice_area_size)
 			_update_dice_area_visual()
 			# If dice already exist, recenter them
 			if not dice_list.is_empty():
@@ -125,20 +139,24 @@ func spawn_dice() -> void:
 		return
 
 	# Clear existing dice first
-	print("[DiceHand] Clearing existing dice before spawn. Current count:", dice_list.size())
+	if _debug_enabled:
+		print("[DiceHand] Clearing existing dice before spawn. Current count:", dice_list.size())
 	clear_dice()
 	await get_tree().process_frame  # Wait for dice to be fully removed
 
-	print("[DiceHand] Spawning", dice_count, "dice of type:", current_dice_type)
-	print("[DiceHand] max_dice_per_row:", max_dice_per_row)
-	print("[DiceHand] dice_area_center:", dice_area_center)
-	print("[DiceHand] dice_area_size:", dice_area_size)
+	if _debug_enabled:
+		print("[DiceHand] Spawning", dice_count, "dice of type:", current_dice_type)
+		print("[DiceHand] max_dice_per_row:", max_dice_per_row)
+		print("[DiceHand] dice_area_center:", dice_area_center)
+		print("[DiceHand] dice_area_size:", dice_area_size)
 
 	# Calculate centered positions for all dice
 	var positions = _calculate_centered_positions(dice_count)
-	print("[DiceHand] Calculated", positions.size(), "positions for", dice_count, "dice")
+	if _debug_enabled:
+		print("[DiceHand] Calculated", positions.size(), "positions for", dice_count, "dice")
 	if positions.size() > 0:
-		print("[DiceHand] First position:", positions[0], "Last position:", positions[positions.size()-1])
+		if _debug_enabled:
+			print("[DiceHand] First position:", positions[0], "Last position:", positions[positions.size()-1])
 
 	for i in range(dice_count):
 		var die = dice_scene.instantiate() as Dice
@@ -164,9 +182,11 @@ func spawn_dice() -> void:
 			_animate_die_entry_delayed(die, start_pos, stagger_delay)
 			
 			dice_list.append(die)
-			print("[DiceHand] Spawned die", i + 1, "- home_position:", die.home_position, "start_pos:", start_pos, "current position:", die.position)
+			if _debug_enabled:
+				print("[DiceHand] Spawned die", i + 1, "- home_position:", die.home_position, "start_pos:", start_pos, "current position:", die.position)
 
-	print("[DiceHand] Spawn complete. Total dice in scene:", get_child_count(), "Total dice in dice_list:", dice_list.size())
+	if _debug_enabled:
+		print("[DiceHand] Spawn complete. Total dice in scene:", get_child_count(), "Total dice in dice_list:", dice_list.size())
 	emit_signal("dice_spawned")
 	
 	# Juice: spawn sound + collective fanfare
@@ -184,10 +204,12 @@ func spawn_dice() -> void:
 	# Only disable dice if lock debuff is active
 	var lock_debuff = get_tree().get_first_node_in_group("debuffs") as LockDiceDebuff
 	if lock_debuff and lock_debuff.is_active:
-		print("[DiceHand] Found active lock debuff - disabling all dice input")
+		if _debug_enabled:
+			print("[DiceHand] Found active lock debuff - disabling all dice input")
 		disable_all_dice()
 	else:
-		print("[DiceHand] No active lock debuff - enabling all dice input")
+		if _debug_enabled:
+			print("[DiceHand] No active lock debuff - enabling all dice input")
 		enable_all_dice()
 
 
@@ -206,7 +228,8 @@ func _update_dice_area_visual() -> void:
 		visual.offset_right = dice_area_center.x + half_width
 		visual.offset_bottom = dice_area_center.y + half_height
 		
-		print("[DiceHand] Updated DiceAreaVisual to bounds: (", visual.offset_left, ",", visual.offset_top, ") to (", visual.offset_right, ",", visual.offset_bottom, ")")
+		if _debug_enabled:
+			print("[DiceHand] Updated DiceAreaVisual to bounds: (", visual.offset_left, ",", visual.offset_top, ") to (", visual.offset_right, ",", visual.offset_bottom, ")")
 
 
 ## _animate_die_entry_delayed(die: Dice, from_pos: Vector2, delay: float)
@@ -247,7 +270,8 @@ func _calculate_centered_positions(count: int) -> Array[Vector2]:
 		for i in range(rem):
 			rows[i] += 1
 	
-	print("[DiceHand] Layout: ", rows, " dice")
+	if _debug_enabled:
+		print("[DiceHand] Layout: ", rows, " dice")
 	
 	# Dynamically derive area from parent if available
 	var area_center: Vector2 = dice_area_center
@@ -398,7 +422,8 @@ func animate_all_dice_exit() -> void:
 		return
 	
 	_pending_exit_count = dice_list.size()
-	print("[DiceHand] Starting exit animation for", _pending_exit_count, "dice")
+	if _debug_enabled:
+		print("[DiceHand] Starting exit animation for", _pending_exit_count, "dice")
 	
 	for i in range(dice_list.size()):
 		var die = dice_list[i]
@@ -425,7 +450,8 @@ func _animate_die_exit_delayed(die: Dice, to_pos: Vector2, delay: float) -> void
 	if is_instance_valid(die) and not die.is_queued_for_deletion():
 		die.animate_exit(to_pos, exit_duration)
 	else:
-		print("[DiceHand] Skipping exit animation for freed die")
+		if _debug_enabled:
+			print("[DiceHand] Skipping exit animation for freed die")
 		_pending_exit_count -= 1
 
 
@@ -435,10 +461,12 @@ func _animate_die_exit_delayed(die: Dice, to_pos: Vector2, delay: float) -> void
 func _on_die_exit_complete(_die: Dice) -> void:
 	_pending_exit_count -= 1
 	if _pending_exit_count <= 0:
-		print("[DiceHand] All dice exit animations complete")
+		if _debug_enabled:
+			print("[DiceHand] All dice exit animations complete")
 		# Clear the dice after exit animation so they can be respawned
 		clear_dice()
-		print("[DiceHand] Cleared dice after exit animation")
+		if _debug_enabled:
+			print("[DiceHand] Cleared dice after exit animation")
 		emit_signal("all_dice_exited")
 
 
@@ -456,15 +484,17 @@ func roll_all() -> void:
 	# Increment roll number for audio pitch progression
 	current_roll_number += 1
 
-	print("\n=== Rolling All Dice (Roll #%d) ===" % current_roll_number)
-	print("[DiceHand] Current dice type:", current_dice_type.to_upper())
-	print("[DiceHand] Number of dice:", dice_list.size())
+	if _debug_enabled:
+		print("\n=== Rolling All Dice (Roll #%d) ===" % current_roll_number)
+		print("[DiceHand] Current dice type:", current_dice_type.to_upper())
+		print("[DiceHand] Number of dice:", dice_list.size())
 
 	# Phase 1: Anticipation tremble on all rollable dice simultaneously
 	var rollable_dice: Array[Dice] = []
 	for die in dice_list:
 		if die.excluded_from_normal_rolls:
-			print("[DiceHand] Die", die.name, "excluded from normal rolls (mod)")
+			if _debug_enabled:
+				print("[DiceHand] Die", die.name, "excluded from normal rolls (mod)")
 			continue
 		if die.can_roll():
 			rollable_dice.append(die)
@@ -483,7 +513,8 @@ func roll_all() -> void:
 			break
 		var die = dice_list[i]
 		if die.excluded_from_normal_rolls:
-			print("[DiceHand] Die", i + 1, "skipped (excluded from normal rolls)")
+			if _debug_enabled:
+				print("[DiceHand] Die", i + 1, "skipped (excluded from normal rolls)")
 			continue
 		if die.can_roll():
 			# Play per-die roll sound via AudioManager
@@ -492,14 +523,17 @@ func roll_all() -> void:
 				audio_mgr.play_dice_roll(i, current_roll_number)
 			die.roll()
 			rolled_count += 1
-			print("[DiceHand] Die", i + 1, "rolled:", die.value, "- now in state:", die.get_state_name())
+			if _debug_enabled:
+				print("[DiceHand] Die", i + 1, "rolled:", die.value, "- now in state:", die.get_state_name())
 			# Stagger delay between dice (skip delay after last die)
 			if rolled_count < rollable_dice.size():
 				await get_tree().create_timer(roll_stagger_delay * randf_range(0.8, 1.2)).timeout
 		else:
-			print("[DiceHand] Die", i + 1, "skipped (state:", die.get_state_name(), ")")
+			if _debug_enabled:
+				print("[DiceHand] Die", i + 1, "skipped (state:", die.get_state_name(), ")")
 
-	print("[DiceHand] Rolled", rolled_count, "out of", dice_list.size(), "dice")
+	if _debug_enabled:
+		print("[DiceHand] Rolled", rolled_count, "out of", dice_list.size(), "dice")
 	_update_results()
 	_update_good_roll_streak()
 	emit_signal("roll_complete")
@@ -542,7 +576,8 @@ func _update_good_roll_streak() -> void:
 			consecutive_good_rolls += 1
 		else:
 			consecutive_good_rolls = 0
-		print("[DiceHand] Good roll streak: %d (avg=%.1f)" % [consecutive_good_rolls, avg])
+		if _debug_enabled:
+			print("[DiceHand] Good roll streak: %d (avg=%.1f)" % [consecutive_good_rolls, avg])
 
 
 ## clear_dice()
@@ -628,7 +663,8 @@ func update_dice_count() -> void:
 			dice_list[i].relayout_to_home(new_positions[i], 0.3)
 
 func enable_all_dice() -> void:
-	print("[DiceHand] Enabling all dice (legacy method - state machine should handle this)")
+	if _debug_enabled:
+		print("[DiceHand] Enabling all dice (legacy method - state machine should handle this)")
 	# Note: With state machine, dice input is controlled by their state
 	# This function is kept for compatibility with debuffs, but should not override state machine
 	for die in get_children():
@@ -646,7 +682,8 @@ func enable_all_dice() -> void:
 ## Disables lock/unlock input without changing dice states.
 ## Dice remain scoreable in ROLLED/LOCKED states. Used by Lock Dice Debuff.
 func disable_locking_only() -> void:
-	print("[DiceHand] Disabling locking only (dice remain scoreable)")
+	if _debug_enabled:
+		print("[DiceHand] Disabling locking only (dice remain scoreable)")
 	for die in dice_list:
 		if not is_instance_valid(die):
 			continue
@@ -660,7 +697,8 @@ func disable_locking_only() -> void:
 ## Restores lock/unlock input after debuff expires.
 ## Re-enables input and lock shader for dice that are still scoreable.
 func restore_locking() -> void:
-	print("[DiceHand] Restoring locking ability")
+	if _debug_enabled:
+		print("[DiceHand] Restoring locking ability")
 	for die in dice_list:
 		if not is_instance_valid(die):
 			continue
@@ -672,7 +710,8 @@ func restore_locking() -> void:
 
 
 func disable_all_dice() -> void:
-	print("[DiceHand] Disabling all dice (legacy method)")
+	if _debug_enabled:
+		print("[DiceHand] Disabling all dice (legacy method)")
 	# Note: With state machine, this should call set_all_dice_disabled() instead
 	for die in get_children():
 		if not is_instance_valid(die):
@@ -689,13 +728,15 @@ func disable_all_dice() -> void:
 ## Dice excluded from normal rolls (e.g. HighRollerMod) keep a held ROLLED
 ## value; they are only recovered to ROLLABLE from other states.
 func set_all_dice_rollable() -> void:
-	print("[DiceHand] Setting all dice to ROLLABLE state")
+	if _debug_enabled:
+		print("[DiceHand] Setting all dice to ROLLABLE state")
 	for die in dice_list:
 		if not is_instance_valid(die):
 			continue
 		if die is Dice:
 			if die.excluded_from_normal_rolls and die.current_state == Dice.DiceState.ROLLED:
-				print("[DiceHand] Preserving excluded die's held value (state: ROLLED)")
+				if _debug_enabled:
+					print("[DiceHand] Preserving excluded die's held value (state: ROLLED)")
 				continue
 			die.make_rollable()
 
@@ -707,14 +748,16 @@ func set_all_dice_rollable() -> void:
 func reset_roll_count() -> void:
 	current_roll_number = 0
 	consecutive_good_rolls = 0
-	print("[DiceHand] Roll count and good roll streak reset")
+	if _debug_enabled:
+		print("[DiceHand] Roll count and good roll streak reset")
 
 
 ## set_all_dice_disabled()
 ##
 ## Sets all dice to DISABLED state after scoring.
 func set_all_dice_disabled() -> void:
-	print("[DiceHand] Setting all dice to DISABLED state")
+	if _debug_enabled:
+		print("[DiceHand] Setting all dice to DISABLED state")
 	for die in dice_list:
 		if not is_instance_valid(die):
 			continue
@@ -726,24 +769,30 @@ func set_all_dice_disabled() -> void:
 ## Sets ROLLED and DISABLED dice back to ROLLABLE for subsequent rolls, preserving LOCKED dice.
 ## Use this before each roll within a turn (not set_all_dice_rollable).
 func prepare_dice_for_roll() -> void:
-	print("[DiceHand] Preparing dice for roll - preserving locks")
+	if _debug_enabled:
+		print("[DiceHand] Preparing dice for roll - preserving locks")
 	for die in dice_list:
 		if not is_instance_valid(die):
 			continue
 		if die is Dice:
 			if die.excluded_from_normal_rolls:
-				print("[DiceHand] Preserving die excluded from normal rolls (state:", die.get_state_name(), ")")
+				if _debug_enabled:
+					print("[DiceHand] Preserving die excluded from normal rolls (state:", die.get_state_name(), ")")
 				continue
 			if die.current_state == Dice.DiceState.ROLLED:
 				die.make_rollable()
-				print("[DiceHand] Set die to rollable (was ROLLED)")
+				if _debug_enabled:
+					print("[DiceHand] Set die to rollable (was ROLLED)")
 			elif die.current_state == Dice.DiceState.DISABLED:
 				die.make_rollable()
-				print("[DiceHand] Set die to rollable (was DISABLED)")
+				if _debug_enabled:
+					print("[DiceHand] Set die to rollable (was DISABLED)")
 			elif die.current_state == Dice.DiceState.LOCKED:
-				print("[DiceHand] Preserving locked die")
+				if _debug_enabled:
+					print("[DiceHand] Preserving locked die")
 			else:
-				print("[DiceHand] Die already in state:", die.get_state_name())
+				if _debug_enabled:
+					print("[DiceHand] Die already in state:", die.get_state_name())
 
 ## can_any_dice_roll() -> bool
 ##
@@ -792,17 +841,20 @@ func lock_die(die: Dice) -> void:
 func roll_unlocked_dice() -> void:
 	var unlocked = get_unlocked_dice()
 	if unlocked.is_empty():
-		print("[DiceHand] No unlocked dice to roll")
+		if _debug_enabled:
+			print("[DiceHand] No unlocked dice to roll")
 		return
 		
-	print("\n=== Rolling Unlocked Dice ===")
-	print("[DiceHand] Current dice type:", current_dice_type.to_upper())
-	print("[DiceHand] Unlocked dice count:", unlocked.size())
+	if _debug_enabled:
+		print("\n=== Rolling Unlocked Dice ===")
+		print("[DiceHand] Current dice type:", current_dice_type.to_upper())
+		print("[DiceHand] Unlocked dice count:", unlocked.size())
 	
 	for i in range(unlocked.size()):
 		var die = unlocked[i]
 		die.roll()
-		print("[DiceHand] Unlocked die", i + 1, "rolled:", die.value)
+		if _debug_enabled:
+			print("[DiceHand] Unlocked die", i + 1, "rolled:", die.value)
 		await get_tree().create_timer(roll_delay).timeout
 	
 	await get_tree().create_timer(roll_duration).timeout
@@ -818,7 +870,8 @@ func get_unlocked_dice() -> Array[Dice]:
 
 # Replace both switch_to_d4() and switch_to_d6() with this single function
 func switch_dice_type(type: String) -> void:
-	print("\n=== Switching to", type.to_upper(), "Dice ===")
+	if _debug_enabled:
+		print("\n=== Switching to", type.to_upper(), "Dice ===")
 	
 	# Get the appropriate dice data based on type
 	var new_dice_data: DiceData
@@ -865,12 +918,15 @@ func switch_dice_type(type: String) -> void:
 		die.dice_data = new_dice_data
 		die.value = 1  # Reset to first face
 		die.update_visual()
-		print("[DiceHand] Updated die", i + 1, "to", type.to_upper())
+		if _debug_enabled:
+			print("[DiceHand] Updated die", i + 1, "to", type.to_upper())
 	
-	print("[DiceHand] Successfully switched to", type.to_upper(), "dice")
+	if _debug_enabled:
+		print("[DiceHand] Successfully switched to", type.to_upper(), "dice")
 
 func roll_dice() -> void:
-	print("▶ Rolling dice...")
+	if _debug_enabled:
+		print("▶ Rolling dice...")
 	emit_signal("roll_started")
 	
 
@@ -893,6 +949,7 @@ func get_color_counts() -> Dictionary:
 		"purple": 0,
 		"blue": 0,
 		"yellow": 0,
+		"orange": 0,
 		"none": 0
 	}
 	
@@ -911,6 +968,8 @@ func get_color_counts() -> Dictionary:
 				counts["blue"] += 1
 			DiceColorClass.Type.YELLOW:
 				counts["yellow"] += 1
+			DiceColorClass.Type.ORANGE:
+				counts["orange"] += 1
 			DiceColorClass.Type.NONE:
 				counts["none"] += 1
 	
@@ -920,7 +979,7 @@ func get_color_counts() -> Dictionary:
 ## @return bool true if 5+ same color bonus should apply
 func has_same_color_bonus() -> bool:
 	var counts = get_color_counts()
-	return counts["green"] >= 5 or counts["red"] >= 5 or counts["purple"] >= 5 or counts["blue"] >= 5 or counts["yellow"] >= 5
+	return counts["green"] >= 5 or counts["red"] >= 5 or counts["purple"] >= 5 or counts["blue"] >= 5 or counts["yellow"] >= 5 or counts["orange"] >= 5
 
 ## Get dice color effects for scoring
 ## @return Dictionary with color effects from DiceColorManager
@@ -939,6 +998,9 @@ func get_color_effects() -> Dictionary:
 			"rainbow_bonus": false,
 			"yellow_scored": false,
 			"yellow_count": 0,
+			"orange_scored": false,
+			"orange_count": 0,
+			"orange_rolls": 0,
 			"green_count": 0,
 			"red_count": 0,
 			"purple_count": 0,
@@ -966,14 +1028,16 @@ func debug_force_all_colors(color_type: DiceColorClass.Type) -> void:
 	for die in dice_list:
 		if is_instance_valid(die) and die is Dice:
 			die.force_color(color_type)
-	print("[DiceHand] DEBUG: Set all dice to ", DiceColorClass.get_color_name(color_type))
+	if _debug_enabled:
+		print("[DiceHand] DEBUG: Set all dice to ", DiceColorClass.get_color_name(color_type))
 
 ## Clear all dice colors (debug function)
 func debug_clear_all_colors() -> void:
 	for die in dice_list:
 		if is_instance_valid(die) and die is Dice:
 			die.clear_color()
-	print("[DiceHand] DEBUG: Cleared all dice colors")
+	if _debug_enabled:
+		print("[DiceHand] DEBUG: Cleared all dice colors")
 
 ## Get all dice in the hand
 ## @return Array[Dice] all dice currently in the hand
@@ -1138,4 +1202,5 @@ func load_state(state: Dictionary) -> void:
 	
 	emit_signal("dice_spawned")
 	_update_results()
-	print("[DiceHand] State loaded -", dice_list.size(), "dice restored")
+	if _debug_enabled:
+		print("[DiceHand] State loaded -", dice_list.size(), "dice restored")

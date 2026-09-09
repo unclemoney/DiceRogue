@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ColoredDiceData" load_steps=2 format=3 uid="uid://cdjpcyxdy106o"]
+
+[ext_resource type="Script" uid="uid://d01jd2eh5modj" path="res://Scripts/Core/colored_dice_data.gd" id="1_1a2b3c"]
+
+[resource]
+script = ExtResource("1_1a2b3c")
+id = "orange_dice"
+display_name = "Orange Dice"
+description = "Fiery dice that grant extra rolls next turn when they contribute to scoring."
+price = 175
+color_type = 6
+effect_description = "Grants +1 roll next turn per Orange die scored"
+rarity_description = "1 in 150 chance to appear on rolled dice"

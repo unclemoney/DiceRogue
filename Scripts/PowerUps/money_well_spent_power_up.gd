@@ -3,32 +3,37 @@ class_name MoneyWellSpentPowerUp
 
 ## MoneyWellSpentPowerUp
 ##
-## Grants +1 additive to all scores for every $25 spent.
-## Example: $175 spent = +7 to all scores.
+## Grants +1 additive to all scores for every $50 spent.
+## Example: $350 spent = +7 to all scores.
 
 # Reference to Statistics manager for tracking money spent
 var statistics_ref = null
-var last_money_spent: int = 0
+var tracked_money_spent: int = 0
 var MONEY_SPENT_THRESHOLD: int = 50
+
+## Enable verbose debug logging only in debug builds
+var _debug_enabled: bool = OS.is_debug_build()
 
 signal description_updated(power_up_id: String, new_description: String)
 
 func _ready() -> void:
 	add_to_group("power_ups")
-	print("[MoneyWellSpentPowerUp] Added to 'power_ups' group")
-	
+	if _debug_enabled:
+		print("[MoneyWellSpentPowerUp] Added to 'power_ups' group")
+
 	# Guard against missing ScoreModifierManager
 	if not _is_score_modifier_manager_available():
 		push_error("[MoneyWellSpentPowerUp] ScoreModifierManager not available")
 		return
-	
+
 	# Get the correct ScoreModifierManager reference
 	var manager = _get_score_modifier_manager()
-	
+
 	# Connect to ScoreModifierManager signals to update UI when total additive changes
 	if manager and not manager.is_connected("additive_changed", _on_additive_manager_changed):
 		manager.additive_changed.connect(_on_additive_manager_changed)
-		print("[MoneyWellSpentPowerUp] Connected to ScoreModifierManager signals")
+		if _debug_enabled:
+			print("[MoneyWellSpentPowerUp] Connected to ScoreModifierManager signals")
 
 func _is_score_modifier_manager_available() -> bool:
 	# ScoreModifierManager is a registered autoload — always accessible
@@ -43,129 +48,141 @@ func _get_additive_source_name() -> String:
 	return get_runtime_modifier_source_name("money_well_spent")
 
 func apply(_target) -> void:
-	print("=== Applying MoneyWellSpentPowerUp ===")
-	
+	if _debug_enabled:
+		print("=== Applying MoneyWellSpentPowerUp ===")
+
 	# Get reference to Statistics manager
 	statistics_ref = Statistics
 	if not statistics_ref:
 		push_error("[MoneyWellSpentPowerUp] Statistics manager not found")
 		return
-	
-	print("[MoneyWellSpentPowerUp] Statistics manager found:", statistics_ref)
-	
+
 	# Initialize with current money spent value
-	last_money_spent = statistics_ref.total_money_spent
-	print("[MoneyWellSpentPowerUp] Initial money spent:", last_money_spent)
-	
+	tracked_money_spent = statistics_ref.total_money_spent
+	if _debug_enabled:
+		print("[MoneyWellSpentPowerUp] Initial money spent:", tracked_money_spent)
+
 	# Connect to cleanup signal
 	if not is_connected("tree_exiting", _on_tree_exiting):
 		connect("tree_exiting", _on_tree_exiting)
-	
+
 	# Register initial additive with ScoreModifierManager
 	_update_additive_manager()
-	print("[MoneyWellSpentPowerUp] Initial additive registered:", get_current_additive())
-	
-	# Start checking for money spent updates
+	if _debug_enabled:
+		print("[MoneyWellSpentPowerUp] Initial additive registered:", get_current_additive())
+
+	# Start tracking money spent via the PlayerEconomy signal
 	_start_money_tracking()
 
 func _start_money_tracking() -> void:
-	# We'll use a timer to periodically check if total_money_spent has changed
-	# This is more reliable than trying to connect to individual purchase events
-	var timer = Timer.new()
-	timer.wait_time = 0.5  # Check every 500ms
-	timer.timeout.connect(_check_money_spent)
-	timer.autostart = true
-	add_child(timer)
-	print("[MoneyWellSpentPowerUp] Started money tracking timer")
+	# Connect to PlayerEconomy's money_changed signal; spending shows up as a negative change
+	if not PlayerEconomy.money_changed.is_connected(_on_money_changed):
+		PlayerEconomy.money_changed.connect(_on_money_changed)
+		if _debug_enabled:
+			print("[MoneyWellSpentPowerUp] Connected to PlayerEconomy money_changed signal")
 
-func _check_money_spent() -> void:
-	if not statistics_ref:
+func _stop_money_tracking() -> void:
+	if PlayerEconomy.money_changed.is_connected(_on_money_changed):
+		PlayerEconomy.money_changed.disconnect(_on_money_changed)
+		if _debug_enabled:
+			print("[MoneyWellSpentPowerUp] Disconnected from PlayerEconomy money_changed signal")
+
+func _on_money_changed(_new_amount: int, change: int) -> void:
+	# Only spending (negative change) counts toward the threshold
+	if change >= 0:
 		return
-	
-	var current_money_spent = statistics_ref.total_money_spent
-	if current_money_spent != last_money_spent:
-		print("[MoneyWellSpentPowerUp] Money spent changed from %d to %d" % [last_money_spent, current_money_spent])
-		last_money_spent = current_money_spent
-		
-		# Update additive
-		_update_additive_manager()
-		
-		# Update UI
-		emit_signal("description_updated", id, get_current_description())
-		
-		# Only update icons if we're still in the tree
-		if is_inside_tree():
-			_update_power_up_icons()
+
+	tracked_money_spent += -change
+	if _debug_enabled:
+		print("[MoneyWellSpentPowerUp] Money spent changed, total spent now:", tracked_money_spent)
+
+	# Update additive (grants +1 per MONEY_SPENT_THRESHOLD crossed)
+	_update_additive_manager()
+
+	# Update UI
+	emit_signal("description_updated", id, get_current_description())
+
+	# Only update icons if we're still in the tree
+	if is_inside_tree():
+		_update_power_up_icons()
 
 func get_current_additive() -> int:
-	if not statistics_ref:
-		return 0
-	
-	return statistics_ref.total_money_spent / MONEY_SPENT_THRESHOLD
+	return tracked_money_spent / MONEY_SPENT_THRESHOLD
 
 func _update_additive_manager() -> void:
 	if not _is_score_modifier_manager_available():
-		print("[MoneyWellSpentPowerUp] ScoreModifierManager not available, skipping update")
+		if _debug_enabled:
+			print("[MoneyWellSpentPowerUp] ScoreModifierManager not available, skipping update")
 		return
-	
+
 	var additive = get_current_additive()
 	var manager = _get_score_modifier_manager()
-	
+
 	if manager:
 		manager.register_additive(_get_additive_source_name(), additive)
-		print("[MoneyWellSpentPowerUp] ScoreModifierManager updated with additive:", additive)
+		if _debug_enabled:
+			print("[MoneyWellSpentPowerUp] ScoreModifierManager updated with additive:", additive)
 	else:
 		push_error("[MoneyWellSpentPowerUp] Could not access ScoreModifierManager")
 
 func _on_additive_manager_changed(total_additive: int) -> void:
-	print("[MoneyWellSpentPowerUp] ScoreModifierManager total additive changed to:", total_additive)
+	if _debug_enabled:
+		print("[MoneyWellSpentPowerUp] ScoreModifierManager total additive changed to:", total_additive)
 	emit_signal("description_updated", id, get_current_description())
-	
+
 	# Only update icons if we're still in the tree
 	if is_inside_tree():
 		_update_power_up_icons()
 
 func _on_tree_exiting() -> void:
-	print("[MoneyWellSpentPowerUp] Node is being destroyed, cleaning up")
-	
+	if _debug_enabled:
+		print("[MoneyWellSpentPowerUp] Node is being destroyed, cleaning up")
+
+	_stop_money_tracking()
+
 	# Unregister from ScoreModifierManager
 	if _is_score_modifier_manager_available():
 		var manager = _get_score_modifier_manager()
 		if manager:
 			manager.unregister_additive(_get_additive_source_name())
-			print("[MoneyWellSpentPowerUp] Additive unregistered from ScoreModifierManager")
+			if _debug_enabled:
+				print("[MoneyWellSpentPowerUp] Additive unregistered from ScoreModifierManager")
 
 func remove(_target) -> void:
-	print("=== Removing MoneyWellSpentPowerUp ===")
-	
+	if _debug_enabled:
+		print("=== Removing MoneyWellSpentPowerUp ===")
+
+	_stop_money_tracking()
+
 	# Unregister from ScoreModifierManager
 	if _is_score_modifier_manager_available():
 		var manager = _get_score_modifier_manager()
 		if manager:
 			manager.unregister_additive(_get_additive_source_name())
-			print("[MoneyWellSpentPowerUp] Additive unregistered from ScoreModifierManager")
-	
+			if _debug_enabled:
+				print("[MoneyWellSpentPowerUp] Additive unregistered from ScoreModifierManager")
+
 	statistics_ref = null
 
 func get_current_description() -> String:
 	var base_desc = "+1 to all scores per $50 spent"
-	
+
 	if not statistics_ref:
 		return base_desc
-	
-	var current_money_spent = statistics_ref.total_money_spent
+
 	var current_add = get_current_additive()
-	
-	var desc = "\nSpent: $%d | Bonus: +%d" % [current_money_spent, current_add]
-	
+
+	var desc = "\nSpent: $%d | Bonus: +%d" % [tracked_money_spent, current_add]
+
 	return base_desc + desc
 
 func _update_power_up_icons() -> void:
 	# Guard against calling when not in tree or tree is null
 	if not is_inside_tree() or not get_tree():
-		print("[MoneyWellSpentPowerUp] Node not in tree or tree is null, skipping icon update")
+		if _debug_enabled:
+			print("[MoneyWellSpentPowerUp] Node not in tree or tree is null, skipping icon update")
 		return
-	
+
 	# Find the PowerUpUI in the scene
 	var power_up_ui = get_tree().get_first_node_in_group("power_up_ui")
 	if power_up_ui:
@@ -174,11 +191,13 @@ func _update_power_up_icons() -> void:
 		if icon:
 			# Update its description
 			icon.update_hover_description()
-			
+
 			# If it's currently being hovered, make the label visible
 			if icon._is_hovering and icon.hover_label and icon.label_bg:
 				icon.label_bg.visible = true
-				
-			print("[MoneyWellSpentPowerUp] Updated icon description")
+
+			if _debug_enabled:
+				print("[MoneyWellSpentPowerUp] Updated icon description")
 	else:
-		print("[MoneyWellSpentPowerUp] PowerUpUI not found in scene")
+		if _debug_enabled:
+			print("[MoneyWellSpentPowerUp] PowerUpUI not found in scene")

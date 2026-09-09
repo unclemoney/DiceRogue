@@ -5,6 +5,7 @@ class_name GameController
 signal power_up_granted(id: String, power_up: PowerUp)
 signal power_up_revoked(id: String)
 signal consumable_used(id: String, consumable: Consumable)
+signal consumable_granted(consumable_id: String)
 signal debuff_blocked(debuff_id: String)  # Emitted when Ungrounded blocks a debuff
 signal debuff_applied(id: String, debuff: Debuff)
 ## Emitted after Mom's visit consequences are applied. Summary is a plain
@@ -22,6 +23,9 @@ var active_mods: Dictionary = {}  # id -> Mod
 var active_challenges: Dictionary = {}  # id -> Challenge
 var _suppress_power_up_revoked_ui: bool = false
 var challenge_score_modifier: float = 1.0  # Multiplier applied to challenge target scores (e.g., 0.8 for 20% reduction)
+
+## Enable verbose debug logging (auto-enabled in debug builds)
+var _debug_enabled: bool = OS.is_debug_build()
 
 # Consumable discount state
 var half_price_stacks: int = 0  # Each stack halves PowerUp prices multiplicatively
@@ -234,9 +238,17 @@ var _goal_mode_locked: bool = false  # Prevents changing goal mode mid-game
 var mall_map_popup: MallMapPopup = null
 
 
+## set_debug_enabled(enabled: bool)
+##
+## Toggles verbose debug logging for this script.
+func set_debug_enabled(enabled: bool) -> void:
+	_debug_enabled = enabled
+
+
 func _ready() -> void:
 	add_to_group("game_controller")
-	print("▶ GameController._ready()")
+	if _debug_enabled:
+		print("▶ GameController._ready()")
 	var debug_panel = preload("res://Scenes/UI/DebugPanel.tscn").instantiate()
 	add_child(debug_panel)
 	
@@ -251,7 +263,8 @@ func _ready() -> void:
 		progress_manager.items_unlocked_batch.connect(_on_items_unlocked)
 		# Tell ProgressManager to connect to game scene signals (scorecard, turn tracker, etc.)
 		progress_manager.connect_to_game_scene()
-		print("[GameController] Connected to ProgressManager unlock signals")
+		if _debug_enabled:
+			print("[GameController] Connected to ProgressManager unlock signals")
 	
 	# Reference the private index variable to avoid an 'unused variable' lint warning
 	# This value is reserved for future mod-application tracking.
@@ -274,12 +287,15 @@ func _ready() -> void:
 		game_button_ui.connect("next_round_pressed", _on_next_round_pressed)
 		if not game_button_ui.is_connected("dice_rolled", _on_game_button_dice_rolled):
 			game_button_ui.dice_rolled.connect(_on_game_button_dice_rolled)
-			print("[GameController] Connected to dice_rolled signal from GameButtonUI")
+			if _debug_enabled:
+				print("[GameController] Connected to dice_rolled signal from GameButtonUI")
 		if not game_button_ui.is_connected("roll_pressed", _on_roll_pressed):
 			game_button_ui.roll_pressed.connect(_on_roll_pressed)
-			print("[GameController] Connected to roll_pressed signal from GameButtonUI")
+			if _debug_enabled:
+				print("[GameController] Connected to roll_pressed signal from GameButtonUI")
 	if shop_ui:
-		print("[GameController] Setting up shop UI")
+		if _debug_enabled:
+			print("[GameController] Setting up shop UI")
 		shop_ui.hide()
 	if challenge_manager:
 		challenge_manager.challenge_completed.connect(_on_challenge_completed)
@@ -292,10 +308,12 @@ func _ready() -> void:
 	if consumable_ui:
 		if not consumable_ui.is_connected("consumable_used", _on_consumable_ui_used):
 			consumable_ui.consumable_used.connect(_on_consumable_ui_used)
-			print("[GameController] Connected to consumable_used signal from ConsumableUI via forwarding handler")
+			if _debug_enabled:
+				print("[GameController] Connected to consumable_used signal from ConsumableUI via forwarding handler")
 		if not consumable_ui.is_connected("consumable_sold", _on_consumable_sold):
 			consumable_ui.consumable_sold.connect(_on_consumable_sold)
-			print("[GameController] Connected to consumable_sold signal from ConsumableUI")
+			if _debug_enabled:
+				print("[GameController] Connected to consumable_sold signal from ConsumableUI")
 	if powerup_ui:
 		if not powerup_ui.is_connected("max_power_ups_reached", _on_max_power_ups_reached):
 			powerup_ui.connect("max_power_ups_reached", _on_max_power_ups_reached)
@@ -303,7 +321,8 @@ func _ready() -> void:
 	# Connect to our own power_up_revoked signal to update UI
 	if not is_connected("power_up_revoked", _on_power_up_revoked):
 		power_up_revoked.connect(_on_power_up_revoked)
-		print("[GameController] Connected power_up_revoked signal to UI handler")
+		if _debug_enabled:
+			print("[GameController] Connected power_up_revoked signal to UI handler")
 	
 	if challenge_ui:
 		if not challenge_ui.is_connected("challenge_selected", _on_challenge_selected):
@@ -340,11 +359,13 @@ func _ready() -> void:
 		chores_manager.task_selected.connect(_on_chore_task_selected)
 		if chore_ui and chore_ui.has_method("set_chores_manager"):
 			chore_ui.set_chores_manager(chores_manager)
-			print("[GameController] Connected ChoreUI to ChoresManager")
-		print("[GameController] Connected to ChoresManager.mom_triggered")
-		print("[GameController] Connected to ChoresManager.mom_checkin")
-		print("[GameController] Connected to ChoresManager.request_chore_selection")
-		print("[GameController] Connected to ChoresManager.task_selected")
+			if _debug_enabled:
+				print("[GameController] Connected ChoreUI to ChoresManager")
+		if _debug_enabled:
+			print("[GameController] Connected to ChoresManager.mom_triggered")
+			print("[GameController] Connected to ChoresManager.mom_checkin")
+			print("[GameController] Connected to ChoresManager.request_chore_selection")
+			print("[GameController] Connected to ChoresManager.task_selected")
 
 	# CastManager (Mom's World): scenes without a CastManager node get one
 	# created programmatically so every game scene has cast/story support
@@ -352,46 +373,57 @@ func _ready() -> void:
 		cast_manager = CastManager.new()
 		cast_manager.name = "CastManager"
 		add_child(cast_manager)
-		print("[GameController] CastManager created programmatically")
+		if _debug_enabled:
+			print("[GameController] CastManager created programmatically")
 
 	# Initialize SynergyManager
 	if is_instance_valid(synergy_manager):
 		synergy_manager.connect_to_game_controller(self)
-		print("[GameController] Connected SynergyManager to GameController")
+		if _debug_enabled:
+			print("[GameController] Connected SynergyManager to GameController")
 
 	# Initialize ChannelManager and related UI
 	if channel_manager:
 		channel_manager.channel_selected.connect(_on_channel_selected)
-		print("[GameController] Connected to ChannelManager.channel_selected")
+		channel_manager.channel_changed.connect(_on_channel_changed)
+		if _debug_enabled:
+			print("[GameController] Connected to ChannelManager.channel_selected")
 	if channel_manager_ui:
 		channel_manager_ui.set_channel_manager(channel_manager)
 		channel_manager_ui.start_pressed.connect(_on_channel_start_pressed)
-		print("[GameController] ChannelManagerUI connected to ChannelManager")
+		if _debug_enabled:
+			print("[GameController] ChannelManagerUI connected to ChannelManager")
 	if round_winner_panel:
 		round_winner_panel.set_channel_manager(channel_manager)
 		round_winner_panel.next_channel_pressed.connect(_on_next_channel_pressed)
-		print("[GameController] RoundWinnerPanel connected")
+		if _debug_enabled:
+			print("[GameController] RoundWinnerPanel connected")
 	if carry_over_panel:
 		carry_over_panel.carryover_confirmed.connect(_on_carryover_confirmed)
-		print("[GameController] CarryOverPanel connected")
+		if _debug_enabled:
+			print("[GameController] CarryOverPanel connected")
 
 	# Bind VCR tracker UI channel display
 	var _vcr_tracker = get_tree().get_first_node_in_group("turn_tracker_ui")
 	if is_instance_valid(_vcr_tracker):
 		if _vcr_tracker.has_method("bind_tracker") and is_instance_valid(turn_tracker):
 			_vcr_tracker.bind_tracker(turn_tracker)
-			print("[GameController] VCR tracker UI bound to TurnTracker")
+			if _debug_enabled:
+				print("[GameController] VCR tracker UI bound to TurnTracker")
 		if _vcr_tracker.has_method("bind_round_manager") and is_instance_valid(round_manager):
 			_vcr_tracker.bind_round_manager(round_manager)
-			print("[GameController] VCR tracker UI bound to RoundManager")
+			if _debug_enabled:
+				print("[GameController] VCR tracker UI bound to RoundManager")
 		if _vcr_tracker.has_method("bind_channel_manager") and is_instance_valid(channel_manager):
 			_vcr_tracker.bind_channel_manager(channel_manager)
-			print("[GameController] VCR tracker UI bound to ChannelManager")
+			if _debug_enabled:
+				print("[GameController] VCR tracker UI bound to ChannelManager")
 		_setup_mall_map_popup(_vcr_tracker)
 
 	if is_instance_valid(score_card_ui) and score_card_ui.has_method("bind_channel_manager") and is_instance_valid(channel_manager):
 		score_card_ui.bind_channel_manager(channel_manager)
-		print("[GameController] ScoreCardUI bound to ChannelManager")
+		if _debug_enabled:
+			print("[GameController] ScoreCardUI bound to ChannelManager")
 
 	# Register new consumables programmatically
 	if consumable_manager:
@@ -444,7 +476,8 @@ func _ready() -> void:
 		call_deferred("load_game_state", GameSaveManager.consume_pending_load())
 	else:
 		call_deferred("_on_game_start")
-	print("[GameController] Handler expects args:", _on_game_button_dice_rolled.get_argument_count())
+	if _debug_enabled:
+		print("[GameController] Handler expects args:", _on_game_button_dice_rolled.get_argument_count())
 
 
 ## _notification(what)
@@ -452,7 +485,8 @@ func _ready() -> void:
 ## Handles engine notifications. Auto-saves on window close request.
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
-		print("[GameController] Window close requested - auto-saving...")
+		if _debug_enabled:
+			print("[GameController] Window close requested - auto-saving...")
 		var state = get_save_state()
 		GameSaveManager.save_snapshot(state)
 		get_tree().quit()
@@ -495,7 +529,8 @@ func _on_game_start() -> void:
 	# Check if tutorial should auto-start for first-time players
 	var tutorial_manager = get_node_or_null("/root/TutorialManager")
 	if tutorial_manager and tutorial_manager.should_auto_start():
-		print("[GameController] First-time player detected - starting tutorial")
+		if _debug_enabled:
+			print("[GameController] First-time player detected - starting tutorial")
 		if round_manager:
 			round_manager.run_dice_type = "d6"  # Tutorial always uses the default set
 		# Delay tutorial start slightly to let UI settle
@@ -510,7 +545,8 @@ func _on_game_start() -> void:
 			_defer_chore_selection_until_round_start = true
 			chores_manager.reset_for_new_game()
 		channel_manager_ui.show_channel_selector()
-		print("[GameController] Showing channel selector - waiting for player to start")
+		if _debug_enabled:
+			print("[GameController] Showing channel selector - waiting for player to start")
 	elif round_manager:
 		# Fallback: start game immediately if no channel system
 		if chores_manager:
@@ -519,13 +555,23 @@ func _on_game_start() -> void:
 		round_manager.start_game()
 
 
+## _on_channel_changed(_new_channel: int) -> void
+##
+## Mall Zone (channel) transition hook. Wipes any orange dice temporary roll
+## bonus (pending and active) so it never carries across zones.
+func _on_channel_changed(_new_channel: int) -> void:
+	if turn_tracker:
+		turn_tracker.clear_temporary_rolls()
+
+
 ## _on_channel_selected(channel: int) -> void
 ##
 ## Called when player confirms their channel selection. Starts the game.
 ## Applies channel starting bonuses (money, powerups, consumables, level boosts)
 ## before RoundManager begins the first round.
 func _on_channel_selected(channel: int) -> void:
-	print("[GameController] Channel", channel, "selected, starting game...")
+	if _debug_enabled:
+		print("[GameController] Channel", channel, "selected, starting game...")
 	# New run: deal the 24 stores across the zones and reset the debuff pool
 	if channel_manager:
 		channel_manager.assign_stores_to_zones()
@@ -543,7 +589,8 @@ func _on_channel_selected(channel: int) -> void:
 	var stats = get_node_or_null("/root/Statistics")
 	if stats:
 		stats.start_new_zone()
-		print("[GameController] Zone statistics reset for new zone")
+		if _debug_enabled:
+			print("[GameController] Zone statistics reset for new zone")
 	if chores_manager:
 		_defer_chore_selection_until_round_start = true
 		chores_manager.reset_for_new_game()
@@ -568,17 +615,20 @@ func _apply_channel_starting_bonuses(channel: int) -> void:
 	
 	var bonus_data = channel_manager.get_channel_start_bonus(channel)
 	if bonus_data["bonus_money"] == 0 and bonus_data["bonus_powerup_count"] == 0 and bonus_data["bonus_consumable_count"] == 0 and bonus_data["bonus_level_boost_count"] == 0:
-		print("[GameController] No starting bonuses for channel %d" % channel)
+		if _debug_enabled:
+			print("[GameController] No starting bonuses for channel %d" % channel)
 		return
 	
-	print("[GameController] Applying starting bonuses for channel %d..." % channel)
+	if _debug_enabled:
+		print("[GameController] Applying starting bonuses for channel %d..." % channel)
 	
 	# Reset money to baseline, then add bonus
 	if PlayerEconomy:
 		PlayerEconomy.reset_to_starting_money()
 		if bonus_data["bonus_money"] > 0:
 			PlayerEconomy.add_money(bonus_data["bonus_money"])
-			print("[GameController] Bonus money granted: +$%d (total: $%d)" % [bonus_data["bonus_money"], PlayerEconomy.get_money()])
+			if _debug_enabled:
+				print("[GameController] Bonus money granted: +$%d (total: $%d)" % [bonus_data["bonus_money"], PlayerEconomy.get_money()])
 	
 	# Grant random unlocked powerups
 	if bonus_data["bonus_powerup_count"] > 0:
@@ -592,7 +642,8 @@ func _apply_channel_starting_bonuses(channel: int) -> void:
 	if bonus_data["bonus_level_boost_count"] > 0 and scorecard:
 		_grant_random_scorecard_boosts(bonus_data["bonus_level_boost_count"])
 	
-	print("[GameController] Starting bonuses applied for channel %d" % channel)
+	if _debug_enabled:
+		print("[GameController] Starting bonuses applied for channel %d" % channel)
 
 
 ## _grant_random_bonus_items(count: int, item_type: int) -> void
@@ -617,14 +668,17 @@ func _grant_random_bonus_items(count: int, item_type: int) -> void:
 			if def == null or def.is_available_for_dice_sides(sides):
 				usable_items.append(item_id)
 			else:
-				print("[GameController] Bonus grant filtering out %s: not available for d%d dice set" % [item_id, sides])
+				if _debug_enabled:
+					print("[GameController] Bonus grant filtering out %s: not available for d%d dice set" % [item_id, sides])
 		unlocked_items = usable_items
 	if unlocked_items.is_empty():
-		print("[GameController] No unlocked items of type %d available for bonus. Converting to money." % item_type)
+		if _debug_enabled:
+			print("[GameController] No unlocked items of type %d available for bonus. Converting to money." % item_type)
 		if PlayerEconomy:
 			var fallback_money = count * 100
 			PlayerEconomy.add_money(fallback_money)
-			print("[GameController] Fallback bonus money granted: +$%d" % fallback_money)
+			if _debug_enabled:
+				print("[GameController] Fallback bonus money granted: +$%d" % fallback_money)
 		return
 	
 	unlocked_items.shuffle()
@@ -639,7 +693,8 @@ func _grant_random_bonus_items(count: int, item_type: int) -> void:
 			granted_count += 1
 	
 	var type_name = "powerup" if item_type == UnlockableItem.ItemType.POWER_UP else "consumable"
-	print("[GameController] Granted %d bonus %s(s)" % [granted_count, type_name])
+	if _debug_enabled:
+		print("[GameController] Granted %d bonus %s(s)" % [granted_count, type_name])
 
 
 ## _grant_random_scorecard_boosts(count: int) -> void
@@ -664,7 +719,8 @@ func _grant_random_scorecard_boosts(count: int) -> void:
 		scorecard.upgrade_category(entry["section"], entry["category"])
 		boosted_count += 1
 	
-	print("[GameController] Granted %d scorecard level boost(s)" % boosted_count)
+	if _debug_enabled:
+		print("[GameController] Granted %d scorecard level boost(s)" % boosted_count)
 
 
 ## _apply_channel_background() -> void
@@ -678,14 +734,16 @@ func _apply_channel_background() -> void:
 	if config:
 		config.apply_background(background_swirl)
 		background_swirl.visible = true
-		print("[GameController] Applied background shader for channel %d: %s" % [channel_manager.current_channel, config.get_background_summary()])
+		if _debug_enabled:
+			print("[GameController] Applied background shader for channel %d: %s" % [channel_manager.current_channel, config.get_background_summary()])
 
 
 ## _on_channel_start_pressed(channel: int) -> void
 ##
 ## Called when player presses Start on channel selector UI.
 func _on_channel_start_pressed(channel: int) -> void:
-	print("[GameController] Channel start pressed for channel:", channel)
+	if _debug_enabled:
+		print("[GameController] Channel start pressed for channel:", channel)
 	# channel_selected signal will be emitted by ChannelManager.select_channel()
 
 
@@ -694,7 +752,8 @@ func _on_channel_start_pressed(channel: int) -> void:
 ## Called when player presses "Next Channel" on the RoundWinnerPanel.
 ## If items were unlocked, shows unlock panel first, then advances to next channel.
 func _on_next_channel_pressed() -> void:
-	print("[GameController] Next channel requested")
+	if _debug_enabled:
+		print("[GameController] Next channel requested")
 
 	# Mark current channel as completed and save progress (this may trigger unlocks)
 	if channel_manager:
@@ -704,17 +763,20 @@ func _on_next_channel_pressed() -> void:
 			# Also end game tracking with win condition
 			var final_score = scorecard.get_total_score() if scorecard else 0
 			progress_manager.end_game_tracking(final_score, true)
-			print("[GameController] Channel %d completed and progress saved" % channel_manager.current_channel)
+			if _debug_enabled:
+				print("[GameController] Channel %d completed and progress saved" % channel_manager.current_channel)
 
 	# Final zone cleared: the run is won — no next zone exists
 	if channel_manager and channel_manager.current_channel >= ChannelManager.MAX_CHANNEL:
-		print("[GameController] Final zone cleared - run victory!")
+		if _debug_enabled:
+			print("[GameController] Final zone cleared - run victory!")
 		_on_game_over()
 		return
 
 	# Check if we have pending unlocked items to show first
 	if _pending_unlocked_items.size() > 0 and unlocked_item_panel:
-		print("[GameController] Showing unlock panels after channel win for %d items" % _pending_unlocked_items.size())
+		if _debug_enabled:
+			print("[GameController] Showing unlock panels after channel win for %d items" % _pending_unlocked_items.size())
 		_show_unlocked_items_before_next_channel()
 		return
 	
@@ -730,28 +792,33 @@ func _on_next_channel_pressed() -> void:
 ## Valid types: "power_ups", "consumables", "colored_dice", "mods", "consoles",
 ##              "money", "scorecard_levels"
 func _restart_game_for_new_channel(carried_types: Array[String] = []) -> void:
-	print("[GameController] Restarting game for new channel... carry-overs: %s" % str(carried_types))
+	if _debug_enabled:
+		print("[GameController] Restarting game for new channel... carry-overs: %s" % str(carried_types))
 	
 	# Reset player money to starting amount (unless carried over)
 	if not carried_types.has("money"):
 		if PlayerEconomy:
 			PlayerEconomy.reset_to_starting_money()
-			print("[GameController] Money reset to starting amount")
+			if _debug_enabled:
+				print("[GameController] Money reset to starting amount")
 	else:
-		print("[GameController] Money CARRIED OVER")
+		if _debug_enabled:
+			print("[GameController] Money CARRIED OVER")
 	
 	# Clear all power-ups (unless carried over)
 	if not carried_types.has("power_ups"):
 		_clear_all_power_ups()
 		_reset_synergy_manager_state()
 	else:
-		print("[GameController] Power-ups CARRIED OVER")
+		if _debug_enabled:
+			print("[GameController] Power-ups CARRIED OVER")
 	
 	# Clear all consumables (unless carried over)
 	if not carried_types.has("consumables"):
 		_clear_all_consumables()
 	else:
-		print("[GameController] Consumables CARRIED OVER")
+		if _debug_enabled:
+			print("[GameController] Consumables CARRIED OVER")
 	
 	# Clear active challenges and debuffs (always reset)
 	_clear_active_challenges()
@@ -765,52 +832,62 @@ func _restart_game_for_new_channel(carried_types: Array[String] = []) -> void:
 	if not carried_types.has("consoles"):
 		_clear_gaming_console()
 	else:
-		print("[GameController] Gaming console CARRIED OVER")
+		if _debug_enabled:
+			print("[GameController] Gaming console CARRIED OVER")
 	
 	# Clear all mods from dice (unless carried over)
 	if not carried_types.has("mods"):
 		_clear_all_mods()
 	else:
-		print("[GameController] Mods CARRIED OVER")
+		if _debug_enabled:
+			print("[GameController] Mods CARRIED OVER")
 	
 	# Clear colored dice purchases (unless carried over)
 	if not carried_types.has("colored_dice"):
 		if DiceColorManager:
 			DiceColorManager.clear_purchased_colors()
-			print("[GameController] Colored dice purchases cleared")
+			if _debug_enabled:
+				print("[GameController] Colored dice purchases cleared")
 	else:
-		print("[GameController] Colored dice CARRIED OVER")
+		if _debug_enabled:
+			print("[GameController] Colored dice CARRIED OVER")
 	
 	# Reset the goof-off meter (ChoresManager) — always resets
 	if chores_manager:
 		_defer_chore_selection_until_round_start = true
 		chores_manager.reset_for_new_game()
-		print("[GameController] Goof-off meter reset")
+		if _debug_enabled:
+			print("[GameController] Goof-off meter reset")
 	
 	# Reset ScoreModifierManager — always resets
 	if ScoreModifierManager:
 		ScoreModifierManager.reset()
-		print("[GameController] ScoreModifierManager reset")
+		if _debug_enabled:
+			print("[GameController] ScoreModifierManager reset")
 	
 	# Reset scorecard (levels conditionally preserved)
 	if scorecard:
 		if carried_types.has("scorecard_levels"):
 			scorecard.reset_scores_preserve_levels()
-			print("[GameController] Scorecard scores reset, levels CARRIED OVER")
+			if _debug_enabled:
+				print("[GameController] Scorecard scores reset, levels CARRIED OVER")
 		else:
 			scorecard.reset_scores()
-			print("[GameController] Scorecard scores and levels reset for new channel")
+			if _debug_enabled:
+				print("[GameController] Scorecard scores and levels reset for new channel")
 	
 	# Reset game button UI state (first_roll_done flag, etc.)
 	if is_instance_valid(game_button_ui) and game_button_ui.has_method("reset_for_new_channel"):
 		game_button_ui.reset_for_new_channel()
-		print("[GameController] GameButtonUI reset")
+		if _debug_enabled:
+			print("[GameController] GameButtonUI reset")
 	
 	# Reset VCR turn tracker UI display to show blank/waiting state
 	var vcr_tracker = get_tree().get_first_node_in_group("turn_tracker_ui")
 	if is_instance_valid(vcr_tracker) and vcr_tracker.has_method("reset_for_new_channel"):
 		vcr_tracker.reset_for_new_channel()
-		print("[GameController] VCR turn tracker UI reset")
+		if _debug_enabled:
+			print("[GameController] VCR turn tracker UI reset")
 	
 	# Reset end of round stats shown flag and queue state
 	_end_of_round_stats_shown = false
@@ -828,53 +905,65 @@ func _restart_game_for_new_channel(carried_types: Array[String] = []) -> void:
 	
 	# Reset MAX_ROLLS back to default (in case Extra Rolls power-up was active)
 	if turn_tracker:
+		# Clear first so a lingering orange bonus can't subtract from the
+		# hard-set base on the next turn start
+		turn_tracker.clear_temporary_rolls()
 		turn_tracker.MAX_ROLLS = 3
 		turn_tracker.emit_signal("max_rolls_changed", 3)
-		print("[GameController] MAX_ROLLS reset to 3")
+		if _debug_enabled:
+			print("[GameController] MAX_ROLLS reset to 3")
 	
 	# Reset shop reroll cost and expansions back to default
 	if shop_ui:
 		shop_ui.reset_reroll_cost()
 		shop_ui.reset_shop_expansions()
-		print("[GameController] Shop reroll cost and expansions reset")
+		if _debug_enabled:
+			print("[GameController] Shop reroll cost and expansions reset")
 	
 	# Reset scorecard level labels in the UI only if scorecard levels are not being carried over, since they would be out of sync with the preserved levels otherwise
 	if score_card_ui and not carried_types.has("scorecard_levels"):
 		score_card_ui.reset_level_labels()
 		score_card_ui.prepare_for_scoring_animation()
-		print("[GameController] Scorecard level labels and score breakdown reset")
+		if _debug_enabled:
+			print("[GameController] Scorecard level labels and score breakdown reset")
 	
 	# Reset dice count back to default 5 (safety net after power-up cleanup)
 	if dice_hand:
 		dice_hand.dice_count = 5
 		dice_hand.update_dice_count()
-		print("[GameController] Dice count reset to 5 for new channel")
+		if _debug_enabled:
+			print("[GameController] Dice count reset to 5 for new channel")
 	
 	# Re-enable shop button for new game
 	if game_button_ui and game_button_ui.has_node("HBoxContainer/RightButtonArea/ShopButton"):
 		var shop_btn = game_button_ui.get_node("HBoxContainer/RightButtonArea/ShopButton")
 		if shop_btn:
 			shop_btn.disabled = false
-			print("[GameController] Shop button re-enabled for new channel")
+			if _debug_enabled:
+				print("[GameController] Shop button re-enabled for new channel")
 	
 	# Reset current round to 0 so we start at round 1
 	if round_manager:
 		round_manager.current_round = 0
-		print("[GameController] Round reset to 0 (will start at round 1)")
+		if _debug_enabled:
+			print("[GameController] Round reset to 0 (will start at round 1)")
 	
 	# Re-apply carried-over power-up effects that were wiped by the resets above
 	if carried_types.has("power_ups") and not active_power_ups.is_empty():
-		print("[GameController] Re-applying carried-over power-up effects...")
+		if _debug_enabled:
+			print("[GameController] Re-applying carried-over power-up effects...")
 		for pu_id in active_power_ups.keys():
 			var pu = active_power_ups[pu_id]
 			if pu and is_instance_valid(pu):
 				_activate_power_up(pu_id)
-				print("[GameController] Re-applied power-up: %s" % pu_id)
+				if _debug_enabled:
+					print("[GameController] Re-applied power-up: %s" % pu_id)
 	
 	# Start new game session
 	if round_manager:
 		round_manager.start_game()
-		print("[GameController] Game restarted for new channel")
+		if _debug_enabled:
+			print("[GameController] Game restarted for new channel")
 
 
 ## _clear_active_challenges() -> void
@@ -892,7 +981,8 @@ func _clear_active_challenges() -> void:
 	if is_instance_valid(challenge_ui) and challenge_ui.has_method("clear_all_challenges"):
 		challenge_ui.clear_all_challenges()
 	
-	print("[GameController] Cleared all active challenges")
+	if _debug_enabled:
+		print("[GameController] Cleared all active challenges")
 
 
 ## _clear_active_debuffs() -> void
@@ -922,7 +1012,8 @@ func _clear_active_debuffs() -> void:
 	if is_instance_valid(chore_ui) and chore_ui.has_method("clear_buff_icons"):
 		chore_ui.clear_buff_icons()
 	
-	print("[GameController] Cleared all active debuffs")
+	if _debug_enabled:
+		print("[GameController] Cleared all active debuffs")
 
 
 ## _clear_all_power_ups() -> void
@@ -947,7 +1038,8 @@ func _clear_all_power_ups() -> void:
 			if powerup_ui.has_method("remove_power_up"):
 				powerup_ui.remove_power_up(id)
 	
-	print("[GameController] Cleared all power-ups")
+	if _debug_enabled:
+		print("[GameController] Cleared all power-ups")
 
 
 func _reset_synergy_manager_state() -> void:
@@ -956,7 +1048,8 @@ func _reset_synergy_manager_state() -> void:
 		manager = get_tree().get_first_node_in_group("synergy_manager")
 	if manager and manager.has_method("reset"):
 		manager.reset()
-		print("[GameController] SynergyManager reset")
+		if _debug_enabled:
+			print("[GameController] SynergyManager reset")
 
 
 ## _clear_all_consumables() -> void
@@ -976,7 +1069,8 @@ func _clear_all_consumables() -> void:
 	if is_instance_valid(consumable_ui) and consumable_ui.has_method("clear_all_consumables"):
 		consumable_ui.clear_all_consumables()
 	
-	print("[GameController] Cleared all consumables")
+	if _debug_enabled:
+		print("[GameController] Cleared all consumables")
 
 
 ## _process(delta)
@@ -1025,16 +1119,19 @@ func spawn_starting_powerups() -> void:
 ##+ Notes:
 ##+ - Aborts if `powerup_ui` reports the maximum number of power-ups reached.
 func grant_power_up(id: String) -> void:
-	print("\n=== Granting Power-Up: ", id, " ===")
+	if _debug_enabled:
+		print("\n=== Granting Power-Up: ", id, " ===")
 	
 	# Check if we already own this power-up
 	if active_power_ups.has(id):
-		print("[GameController] PowerUp '", id, "' is already owned. Cannot grant duplicate.")
+		if _debug_enabled:
+			print("[GameController] PowerUp '", id, "' is already owned. Cannot grant duplicate.")
 		return
 	
 	# Check if we've reached the maximum number of power-ups
 	if is_instance_valid(powerup_ui) and powerup_ui.has_max_power_ups():
-		print("[GameController] Maximum number of power-ups reached. Cannot add more.")
+		if _debug_enabled:
+			print("[GameController] Maximum number of power-ups reached. Cannot add more.")
 		return
 	
 	# 1) Spawn logic via scene manager
@@ -1049,7 +1146,8 @@ func grant_power_up(id: String) -> void:
 	if def:
 		var icon = powerup_ui.add_power_up(def)
 		if icon:
-			print("[GameController] Connecting power-up signals for:", id)
+			if _debug_enabled:
+				print("[GameController] Connecting power-up signals for:", id)
 			# Connect the sell signal
 			if not powerup_ui.is_connected("power_up_sold", _on_power_up_sold):
 				powerup_ui.connect("power_up_sold", _on_power_up_sold)
@@ -1059,7 +1157,8 @@ func grant_power_up(id: String) -> void:
 	# Store the power-up reference
 	active_power_ups[id] = pu
 	emit_signal("power_up_granted", id, pu)
-	print("[GameController] Power-up granted and ready:", id)
+	if _debug_enabled:
+		print("[GameController] Power-up granted and ready:", id)
 	
 	# Automatically activate the power-up
 	_activate_power_up(id)
@@ -1103,11 +1202,13 @@ func _configure_power_up_runtime_identity(power_up: PowerUp, runtime_id: String)
 ## TheReplicatorPowerUp when it is sold after being charged.
 func grant_replica_power_up(original_id: String, replica_id_override: String = "") -> void:
 	var replica_id = replica_id_override if replica_id_override != "" else _build_replica_power_up_id(original_id)
-	print("\n=== Granting Replica Power-Up: ", replica_id, " ===")
+	if _debug_enabled:
+		print("\n=== Granting Replica Power-Up: ", replica_id, " ===")
 	
 	# Check max slots
 	if is_instance_valid(powerup_ui) and powerup_ui.has_max_power_ups():
-		print("[GameController] Maximum power-ups reached. Cannot add replica.")
+		if _debug_enabled:
+			print("[GameController] Maximum power-ups reached. Cannot add replica.")
 		return
 	
 	# Spawn logic scene via the original ID
@@ -1125,7 +1226,8 @@ func grant_replica_power_up(original_id: String, replica_id_override: String = "
 		replica_data.display_name = def.display_name + " (Replica)"
 		var icon = powerup_ui.add_power_up(replica_data)
 		if icon:
-			print("[GameController] Created UI for replica:", replica_id)
+			if _debug_enabled:
+				print("[GameController] Created UI for replica:", replica_id)
 			if not powerup_ui.is_connected("power_up_sold", _on_power_up_sold):
 				powerup_ui.connect("power_up_sold", _on_power_up_sold)
 		else:
@@ -1135,7 +1237,8 @@ func grant_replica_power_up(original_id: String, replica_id_override: String = "
 	active_power_ups[replica_id] = pu
 	emit_signal("power_up_granted", replica_id, pu)
 	_activate_power_up(replica_id)
-	print("[GameController] Replica power-up granted and activated:", replica_id)
+	if _debug_enabled:
+		print("[GameController] Replica power-up granted and activated:", replica_id)
 
 
 ## _activate_power_up(power_up_id)
@@ -1146,8 +1249,9 @@ func grant_replica_power_up(original_id: String, replica_id_override: String = "
 ##+ - PowerUp instances are expected to implement `apply(target)` and `remove(target)`.
 ##+ - For power-ups that emit runtime updates (randomizer, description changes), this function connects relevant signals.
 func _activate_power_up(power_up_id: String) -> void:
-	print("\n=== Power-up Auto-Activated ===")
-	print("[GameController] Activating power-up:", power_up_id)
+	if _debug_enabled:
+		print("\n=== Power-up Auto-Activated ===")
+		print("[GameController] Activating power-up:", power_up_id)
 	
 	var pu = active_power_ups.get(power_up_id)
 	if not pu:
@@ -1165,7 +1269,8 @@ func _activate_power_up(power_up_id: String) -> void:
 		
 		# Then connect
 		pu.description_updated.connect(_on_power_up_description_updated)
-		print("[GameController] Connected to description_updated signal")
+		if _debug_enabled:
+			print("[GameController] Connected to description_updated signal")
 	
 	# Connect to effect_updated signal for randomizer power-up
 	if match_id == "randomizer":
@@ -1173,7 +1278,8 @@ func _activate_power_up(power_up_id: String) -> void:
 			pu.effect_updated.disconnect(_on_randomizer_effect_updated)
 		
 		pu.effect_updated.connect(_on_randomizer_effect_updated)
-		print("[GameController] Connected to randomizer effect_updated signal")
+		if _debug_enabled:
+			print("[GameController] Connected to randomizer effect_updated signal")
 	
 	# Special handling for different power-ups
 	match match_id:
@@ -1186,19 +1292,22 @@ func _activate_power_up(power_up_id: String) -> void:
 		"upper_bonus_mult":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied UpperBonusMult to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied UpperBonusMult to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for UpperBonusMult power-up")
 		"chance520":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied Chance520 to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied Chance520 to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for Chance520 power-up")
 		"evens_no_odds":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied EvensNoOdds to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied EvensNoOdds to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for EvensNoOdds power-up")
 		"extra_dice":
@@ -1209,290 +1318,382 @@ func _activate_power_up(power_up_id: String) -> void:
 		"yahtzee_bonus_mult":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied YahtzeeBonusMult to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied YahtzeeBonusMult to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for YahtzeeBonusMult power-up")
 		"extra_rolls":
 			pu.apply(turn_tracker)
 		"consumable_cash":
 			pu.apply(self)
-			print("[GameController] Applied ConsumableCash power-up")
+			if _debug_enabled:
+				print("[GameController] Applied ConsumableCash power-up")
 		"bonus_money":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied BonusMoneyPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied BonusMoneyPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for BonusMoneyPowerUp")
 		"randomizer":
 			pu.apply(self)
-			print("[GameController] Applied Randomizer power-up")
+			if _debug_enabled:
+				print("[GameController] Applied Randomizer power-up")
 		"money_multiplier":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied MoneyMultiplierPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied MoneyMultiplierPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for MoneyMultiplierPowerUp")
 		"full_house_bonus":
 			pu.apply(self)
-			print("[GameController] Applied FullHousePowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied FullHousePowerUp")
 		"step_by_step":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied StepByStepPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied StepByStepPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for StepByStepPowerUp")
 		"perfect_strangers":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied PerfectStrangersPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied PerfectStrangersPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for PerfectStrangersPowerUp")
 		"green_monster":
 			pu.apply(self)
-			print("[GameController] Applied GreenMonsterPU")
+			if _debug_enabled:
+				print("[GameController] Applied GreenMonsterPU")
 		"red_power_ranger":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied RedPowerRangerPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied RedPowerRangerPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for RedPowerRangerPowerUp")
 		"pin_head":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied PinHeadPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied PinHeadPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for PinHeadPowerUp")
 		"money_well_spent":
 			pu.apply(self)
-			print("[GameController] Applied MoneyWellSpentPowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied MoneyWellSpentPowerUp")
 		"highlighted_score":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied HighlightedScorePowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied HighlightedScorePowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for HighlightedScorePowerUp")
 		"the_consumer_is_always_right":
 			pu.apply(self)
-			print("[GameController] Applied TheConsumerIsAlwaysRightPowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied TheConsumerIsAlwaysRightPowerUp")
 		"green_slime":
 			pu.apply(self)
-			print("[GameController] Applied GreenSlimePowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied GreenSlimePowerUp")
 		"red_slime":
 			pu.apply(self)
-			print("[GameController] Applied RedSlimePowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied RedSlimePowerUp")
 		"purple_slime":
 			pu.apply(self)
-			print("[GameController] Applied PurpleSlimePowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied PurpleSlimePowerUp")
 		"blue_slime":
 			pu.apply(self)
-			print("[GameController] Applied BlueSlimePowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied BlueSlimePowerUp")
 		"lower_ten":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied LowerTenPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied LowerTenPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for LowerTenPowerUp")
 		"different_straights":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied DifferentStraightsPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied DifferentStraightsPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for DifferentStraightsPowerUp")
 		"plus_thelast":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied PlusTheLastPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied PlusTheLastPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for PlusTheLastPowerUp")
 		"allowance":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied AllowancePowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied AllowancePowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for AllowancePowerUp")
 		"plus_a_dollar":
 			if dice_hand:
 				pu.apply(dice_hand)
-				print("[GameController] Applied PlusADollarPowerUp to dice_hand")
+				if _debug_enabled:
+					print("[GameController] Applied PlusADollarPowerUp to dice_hand")
 			else:
 				push_error("[GameController] No dice_hand available for PlusADollarPowerUp")
 		"sweet_sixteen":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied SweetSixteenPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied SweetSixteenPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for SweetSixteenPowerUp")
 		"ungrounded":
 			pu.apply(self)
-			print("[GameController] Applied UngroundedPowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied UngroundedPowerUp")
 		"shop_rerolls":
 			pu.apply(self)
-			print("[GameController] Applied ShopRerollsPowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied ShopRerollsPowerUp")
 		"tango_and_cash":
 			pu.apply(self)
-			print("[GameController] Applied TangoAndCashPowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied TangoAndCashPowerUp")
 		"even_higher":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied EvenHigherPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied EvenHigherPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for EvenHigherPowerUp")
 		"money_bags":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied MoneyBagsPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied MoneyBagsPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for MoneyBagsPowerUp")
 		"failed_money":
 			pu.apply(self)
-			print("[GameController] Applied FailedMoneyPowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied FailedMoneyPowerUp")
 		"dice_diversity":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied DiceDiversityPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied DiceDiversityPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for DiceDiversityPowerUp")
 		"lock_and_load":
 			if dice_hand:
 				pu.apply(dice_hand)
-				print("[GameController] Applied LockAndLoadPowerUp to dice_hand")
+				if _debug_enabled:
+					print("[GameController] Applied LockAndLoadPowerUp to dice_hand")
 			else:
 				push_error("[GameController] No dice_hand available for LockAndLoadPowerUp")
 		"chore_champion":
 			pu.apply(self)
-			print("[GameController] Applied ChoreChampionPowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied ChoreChampionPowerUp")
 		"roll_efficiency":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied RollEfficiencyPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied RollEfficiencyPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for RollEfficiencyPowerUp")
 		"pair_paradise":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied PairParadisePowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied PairParadisePowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for PairParadisePowerUp")
 		"extra_coupons":
 			pu.apply(self)  # Pass GameController so PowerUp can access both UIs
-			print("[GameController] Applied ExtraCouponsPowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied ExtraCouponsPowerUp")
 		"purple_payout":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied PurplePayoutPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied PurplePayoutPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for PurplePayoutPowerUp")
 		"mod_money":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied ModMoneyPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied ModMoneyPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for ModMoneyPowerUp")
 		"blue_safety_net":
 			pu.apply(self)
-			print("[GameController] Applied BlueSafetyNetPowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied BlueSafetyNetPowerUp")
 		"chore_sprint":
 			pu.apply(self)
-			print("[GameController] Applied ChoreSprintPowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied ChoreSprintPowerUp")
 		"straight_triplet_master":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied StraightTripletMasterPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied StraightTripletMasterPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for StraightTripletMasterPowerUp")
 		"modded_dice_mastery":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied ModdedDiceMasteryPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied ModdedDiceMasteryPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for ModdedDiceMasteryPowerUp")
 		"debuff_destroyer":
 			pu.apply(self)
-			print("[GameController] Applied DebuffDestroyerPowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied DebuffDestroyerPowerUp")
 		"challenge_easer":
 			pu.apply(self)
-			print("[GameController] Applied ChallengeEaserPowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied ChallengeEaserPowerUp")
 		"azure_perfection":
 			pu.apply(self)
-			print("[GameController] Applied AzurePerfectionPowerUp")
+			if _debug_enabled:
+				print("[GameController] Applied AzurePerfectionPowerUp")
 		"rainbow_surge":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied RainbowSurgePowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied RainbowSurgePowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for RainbowSurgePowerUp")
 		"the_replicator":
 			pu.apply(self)
-			print("[GameController] Applied TheReplicatorPowerUp with game_controller ref")
+			if _debug_enabled:
+				print("[GameController] Applied TheReplicatorPowerUp with game_controller ref")
 		"the_piggy_bank":
 			if dice_hand:
 				pu.apply(dice_hand)
-				print("[GameController] Applied ThePiggyBankPowerUp to dice_hand")
+				if _debug_enabled:
+					print("[GameController] Applied ThePiggyBankPowerUp to dice_hand")
 			else:
 				push_error("[GameController] No dice_hand available for ThePiggyBankPowerUp")
 		"random_card_level":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied RandomCardLevelPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied RandomCardLevelPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for RandomCardLevelPowerUp")
 		"yahtzeed_dice":
 			if dice_hand:
 				pu.apply(dice_hand)
-				print("[GameController] Applied YahtzeedDicePowerUp to dice_hand")
+				if _debug_enabled:
+					print("[GameController] Applied YahtzeedDicePowerUp to dice_hand")
 			else:
 				push_error("[GameController] No dice_hand available for YahtzeedDicePowerUp")
-		"consumable_collector":
-			if scorecard:
-				pu.apply(scorecard)
-				print("[GameController] Applied ConsumableCollectorPowerUp to scorecard")
-			else:
-				push_error("[GameController] No scorecard available for ConsumableCollectorPowerUp")
 		"daring_dice":
 			if dice_hand:
 				pu.apply(dice_hand)
-				print("[GameController] Applied DaringDicePowerUp to dice_hand")
+				if _debug_enabled:
+					print("[GameController] Applied DaringDicePowerUp to dice_hand")
 			else:
 				push_error("[GameController] No dice_hand available for DaringDicePowerUp")
 		"great_exchange":
 			pu.apply(self)
-			print("[GameController] Applied GreatExchangePowerUp to self")
+			if _debug_enabled:
+				print("[GameController] Applied GreatExchangePowerUp to self")
 		"extra_rainbow":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied ExtraRainbowPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied ExtraRainbowPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for ExtraRainbowPowerUp")
 		"melting_dice":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied MeltingDicePowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied MeltingDicePowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for MeltingDicePowerUp")
 		"hot_streak":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied HotStreakPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied HotStreakPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for HotStreakPowerUp")
 		"one_roll_wonder":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied OneRollWonderPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied OneRollWonderPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for OneRollWonderPowerUp")
 		"power_surge":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied PowerSurgePowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied PowerSurgePowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for PowerSurgePowerUp")
 		"snake_eyes":
 			if scorecard:
 				pu.apply(scorecard)
-				print("[GameController] Applied SnakeEyesPowerUp to scorecard")
+				if _debug_enabled:
+					print("[GameController] Applied SnakeEyesPowerUp to scorecard")
 			else:
 				push_error("[GameController] No scorecard available for SnakeEyesPowerUp")
+		"yellow_slime":
+			pu.apply(self)
+			if _debug_enabled:
+				print("[GameController] Applied YellowSlimePowerUp")
+		"extreme_couponing":
+			pu.apply(self)
+			if _debug_enabled:
+				print("[GameController] Applied ExtremeCouponingPowerUp")
+		"defiance":
+			pu.apply(self)
+			if _debug_enabled:
+				print("[GameController] Applied DefiancePowerUp")
+		"comeback_kid":
+			if scorecard:
+				pu.apply(scorecard)
+				if _debug_enabled:
+					print("[GameController] Applied ComebackKidPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for ComebackKidPowerUp")
+		"upper_crust":
+			if scorecard:
+				pu.apply(scorecard)
+				if _debug_enabled:
+					print("[GameController] Applied UpperCrustPowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for UpperCrustPowerUp")
+		"four_of_a_kind_yahtzee":
+			if scorecard:
+				pu.apply(scorecard)
+				if _debug_enabled:
+					print("[GameController] Applied FourOfAKindYahtzeePowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for FourOfAKindYahtzeePowerUp")
+		"two_pair_house":
+			if scorecard:
+				pu.apply(scorecard)
+				if _debug_enabled:
+					print("[GameController] Applied TwoPairHousePowerUp to scorecard")
+			else:
+				push_error("[GameController] No scorecard available for TwoPairHousePowerUp")
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
 
@@ -1501,7 +1702,8 @@ func _activate_power_up(power_up_id: String) -> void:
 ## Handles selling a power-up from the shop/UI. Gives a partial refund and removes the power-up
 ## from both runtime and UI. Performs an animated removal when the UI supports it.
 func _on_power_up_sold(power_up_id: String) -> void:
-	print("[GameController] Selling power-up:", power_up_id)
+	if _debug_enabled:
+		print("[GameController] Selling power-up:", power_up_id)
 
 	var pu = active_power_ups.get(power_up_id)
 	if not pu:
@@ -1513,7 +1715,8 @@ func _on_power_up_sold(power_up_id: String) -> void:
 	var def = pu_manager.get_def(lookup_id)
 	if def:
 		var refund = def.price / 2.0  # Half price
-		print("[GameController] Refunding", refund, "coins for power-up:", power_up_id)
+		if _debug_enabled:
+			print("[GameController] Refunding", refund, "coins for power-up:", power_up_id)
 		PlayerEconomy.add_money(refund)
 
 	# Animate the icon if it exists, then remove
@@ -1522,7 +1725,8 @@ func _on_power_up_sold(power_up_id: String) -> void:
 			_deactivate_power_up(power_up_id)
 			revoke_power_up(power_up_id)
 			powerup_ui.remove_power_up(power_up_id)
-			print("[GameController] Power-up removed from UI:", power_up_id)
+			if _debug_enabled:
+				print("[GameController] Power-up removed from UI:", power_up_id)
 		)
 	else:
 		_deactivate_power_up(power_up_id)
@@ -1537,11 +1741,13 @@ func _on_power_up_sold(power_up_id: String) -> void:
 func _on_power_up_revoked(power_up_id: String) -> void:
 	if _suppress_power_up_revoked_ui:
 		return
-	print("[GameController] PowerUp revoked, animating expiry:", power_up_id)
+	if _debug_enabled:
+		print("[GameController] PowerUp revoked, animating expiry:", power_up_id)
 	if powerup_ui:
 		powerup_ui.animate_power_up_expiry(power_up_id, func():
 			powerup_ui.remove_power_up(power_up_id)
-			print("[GameController] PowerUp removed from UI after expiry:", power_up_id)
+			if _debug_enabled:
+				print("[GameController] PowerUp removed from UI after expiry:", power_up_id)
 		)
 
 
@@ -1550,7 +1756,8 @@ func _on_power_up_revoked(power_up_id: String) -> void:
 ## Performs type-specific removal logic for an active power-up without freeing the instance.
 ## This is used for animated removals or temporary deactivation.
 func _deactivate_power_up(power_up_id: String) -> void:
-	print("[GameController] DEACTIVATING PowerUp:", power_up_id)
+	if _debug_enabled:
+		print("[GameController] DEACTIVATING PowerUp:", power_up_id)
 	var pu = active_power_ups.get(power_up_id)
 	if not pu:
 		push_error("[GameController] No PowerUp found for id:", power_up_id)
@@ -1566,187 +1773,272 @@ func _deactivate_power_up(power_up_id: String) -> void:
 		"extra_rolls":
 			pu.remove(turn_tracker)
 		"wild_dots":
-			print("[GameController] Removing wild_dots PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing wild_dots PowerUp")
 			pu.remove(dice_hand)
 		"foursome":
-			print("[GameController] Removing foursome PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing foursome PowerUp")
 			pu.remove(scorecard)
 		"upper_bonus_mult":
-			print("[GameController] Removing upper_bonus_mult PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing upper_bonus_mult PowerUp")
 			pu.remove(scorecard)
 		"bonus_money":
-			print("[GameController] Removing bonus_money PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing bonus_money PowerUp")
 			pu.remove(scorecard)
 		"consumable_cash":
-			print("[GameController] Removing consumable_cash PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing consumable_cash PowerUp")
 			pu.remove(self)
 		"randomizer":
-			print("[GameController] Removing randomizer PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing randomizer PowerUp")
 			pu.remove(self)
 		"money_multiplier":
-			print("[GameController] Removing money_multiplier PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing money_multiplier PowerUp")
 			pu.remove(scorecard)
 		"full_house_bonus":
-			print("[GameController] Removing full_house_bonus PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing full_house_bonus PowerUp")
 			pu.remove(self)
 		"step_by_step":
-			print("[GameController] Removing step_by_step PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing step_by_step PowerUp")
 			pu.remove(scorecard)
 		"perfect_strangers":
-			print("[GameController] Removing perfect_strangers PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing perfect_strangers PowerUp")
 			pu.remove(scorecard)
 		"green_monster":
-			print("[GameController] Removing green_monster PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing green_monster PowerUp")
 			pu.remove(self)
 		"red_power_ranger":
-			print("[GameController] Removing red_power_ranger PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing red_power_ranger PowerUp")
 			pu.remove(scorecard)
 		"pin_head":
-			print("[GameController] Removing pin_head PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing pin_head PowerUp")
 			pu.remove(scorecard)
 		"money_well_spent":
-			print("[GameController] Removing money_well_spent PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing money_well_spent PowerUp")
 			pu.remove(self)
 		"highlighted_score":
-			print("[GameController] Removing highlighted_score PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing highlighted_score PowerUp")
 			pu.remove(scorecard)
 		"the_consumer_is_always_right":
-			print("[GameController] Removing the_consumer_is_always_right PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing the_consumer_is_always_right PowerUp")
 			pu.remove(self)
 		"green_slime":
-			print("[GameController] Removing green_slime PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing green_slime PowerUp")
 			pu.remove(self)
 		"red_slime":
-			print("[GameController] Removing red_slime PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing red_slime PowerUp")
 			pu.remove(self)
 		"purple_slime":
-			print("[GameController] Removing purple_slime PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing purple_slime PowerUp")
 			pu.remove(self)
 		"blue_slime":
-			print("[GameController] Removing blue_slime PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing blue_slime PowerUp")
 			pu.remove(self)
 		"lower_ten":
-			print("[GameController] Removing lower_ten PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing lower_ten PowerUp")
 			pu.remove(scorecard)
 		"different_straights":
-			print("[GameController] Removing different_straights PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing different_straights PowerUp")
 			pu.remove(scorecard)
 		"plus_thelast":
-			print("[GameController] Removing plus_thelast PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing plus_thelast PowerUp")
 			pu.remove(scorecard)
 		"allowance":
-			print("[GameController] Removing allowance PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing allowance PowerUp")
 			pu.remove(scorecard)
 		"plus_a_dollar":
-			print("[GameController] Removing plus_a_dollar PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing plus_a_dollar PowerUp")
 			pu.remove(dice_hand)
 		"sweet_sixteen":
-			print("[GameController] Removing sweet_sixteen PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing sweet_sixteen PowerUp")
 			pu.remove(scorecard)
 		"ungrounded":
-			print("[GameController] Removing ungrounded PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing ungrounded PowerUp")
 			pu.remove(self)
 		"shop_rerolls":
-			print("[GameController] Removing shop_rerolls PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing shop_rerolls PowerUp")
 			pu.remove(self)
 		"tango_and_cash":
-			print("[GameController] Removing tango_and_cash PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing tango_and_cash PowerUp")
 			pu.remove(self)
 		"even_higher":
-			print("[GameController] Removing even_higher PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing even_higher PowerUp")
 			pu.remove(scorecard)
 		"money_bags":
-			print("[GameController] Removing money_bags PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing money_bags PowerUp")
 			pu.remove(scorecard)
 		"failed_money":
-			print("[GameController] Removing failed_money PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing failed_money PowerUp")
 			pu.remove(self)
 		"dice_diversity":
-			print("[GameController] Removing dice_diversity PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing dice_diversity PowerUp")
 			pu.remove(scorecard)
 		"lock_and_load":
-			print("[GameController] Removing lock_and_load PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing lock_and_load PowerUp")
 			pu.remove(dice_hand)
 		"chore_champion":
-			print("[GameController] Removing chore_champion PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing chore_champion PowerUp")
 			pu.remove(self)
 		"roll_efficiency":
-			print("[GameController] Removing roll_efficiency PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing roll_efficiency PowerUp")
 			pu.remove(scorecard)
 		"pair_paradise":
-			print("[GameController] Removing pair_paradise PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing pair_paradise PowerUp")
 			pu.remove(scorecard)
 		"extra_coupons":
-			print("[GameController] Removing extra_coupons PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing extra_coupons PowerUp")
 			pu.remove(self)  # Pass GameController so PowerUp can access both UIs
 		"purple_payout":
-			print("[GameController] Removing purple_payout PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing purple_payout PowerUp")
 			pu.remove(scorecard)
 		"mod_money":
-			print("[GameController] Removing mod_money PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing mod_money PowerUp")
 			pu.remove(scorecard)
 		"blue_safety_net":
-			print("[GameController] Removing blue_safety_net PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing blue_safety_net PowerUp")
 			pu.remove(self)
 		"chore_sprint":
-			print("[GameController] Removing chore_sprint PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing chore_sprint PowerUp")
 			pu.remove(self)
 		"straight_triplet_master":
-			print("[GameController] Removing straight_triplet_master PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing straight_triplet_master PowerUp")
 			pu.remove(scorecard)
 		"modded_dice_mastery":
-			print("[GameController] Removing modded_dice_mastery PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing modded_dice_mastery PowerUp")
 			pu.remove(scorecard)
 		"debuff_destroyer":
-			print("[GameController] Removing debuff_destroyer PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing debuff_destroyer PowerUp")
 			pu.remove(self)
 		"challenge_easer":
-			print("[GameController] Removing challenge_easer PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing challenge_easer PowerUp")
 			pu.remove(self)
 		"azure_perfection":
-			print("[GameController] Removing azure_perfection PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing azure_perfection PowerUp")
 			pu.remove(self)
 		"rainbow_surge":
-			print("[GameController] Removing rainbow_surge PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing rainbow_surge PowerUp")
 			pu.remove(scorecard)
 		"the_replicator":
-			print("[GameController] Removing the_replicator PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing the_replicator PowerUp")
 			pu.remove(self)
 		"the_piggy_bank":
-			print("[GameController] Removing the_piggy_bank PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing the_piggy_bank PowerUp")
 			pu.remove(dice_hand)
 		"random_card_level":
-			print("[GameController] Removing random_card_level PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing random_card_level PowerUp")
 			pu.remove(scorecard)
 		"yahtzeed_dice":
-			print("[GameController] Removing yahtzeed_dice PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing yahtzeed_dice PowerUp")
 			pu.remove(dice_hand)
-		"consumable_collector":
-			print("[GameController] Removing consumable_collector PowerUp")
-			pu.remove(scorecard)
 		"daring_dice":
-			print("[GameController] Removing daring_dice PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing daring_dice PowerUp")
 			pu.remove(dice_hand)
 		"great_exchange":
-			print("[GameController] Removing great_exchange PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing great_exchange PowerUp")
 			pu.remove(self)
 		"extra_rainbow":
-			print("[GameController] Removing extra_rainbow PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing extra_rainbow PowerUp")
 			pu.remove(scorecard)
 		"melting_dice":
-			print("[GameController] Removing melting_dice PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing melting_dice PowerUp")
 			pu.remove(scorecard)
 		"hot_streak":
-			print("[GameController] Removing hot_streak PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing hot_streak PowerUp")
 			pu.remove(scorecard)
 		"one_roll_wonder":
-			print("[GameController] Removing one_roll_wonder PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing one_roll_wonder PowerUp")
 			pu.remove(scorecard)
 		"power_surge":
-			print("[GameController] Removing power_surge PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing power_surge PowerUp")
 			pu.remove(scorecard)
 		"snake_eyes":
-			print("[GameController] Removing snake_eyes PowerUp")
+			if _debug_enabled:
+				print("[GameController] Removing snake_eyes PowerUp")
+			pu.remove(scorecard)
+		"yellow_slime":
+			if _debug_enabled:
+				print("[GameController] Removing yellow_slime PowerUp")
+			pu.remove(self)
+		"extreme_couponing":
+			if _debug_enabled:
+				print("[GameController] Removing extreme_couponing PowerUp")
+			pu.remove(self)
+		"defiance":
+			if _debug_enabled:
+				print("[GameController] Removing defiance PowerUp")
+			pu.remove(self)
+		"comeback_kid":
+			if _debug_enabled:
+				print("[GameController] Removing comeback_kid PowerUp")
+			pu.remove(scorecard)
+		"upper_crust":
+			if _debug_enabled:
+				print("[GameController] Removing upper_crust PowerUp")
+			pu.remove(scorecard)
+		"four_of_a_kind_yahtzee":
+			if _debug_enabled:
+				print("[GameController] Removing four_of_a_kind_yahtzee PowerUp")
+			pu.remove(scorecard)
+		"two_pair_house":
+			if _debug_enabled:
+				print("[GameController] Removing two_pair_house PowerUp")
 			pu.remove(scorecard)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
@@ -1870,8 +2162,6 @@ func revoke_power_up(power_up_id: String) -> void:
 				pu.remove(scorecard)
 			"yahtzeed_dice":
 				pu.remove(dice_hand)
-			"consumable_collector":
-				pu.remove(scorecard)
 			"daring_dice":
 				pu.remove(dice_hand)
 			"great_exchange":
@@ -1901,8 +2191,9 @@ func revoke_power_up(power_up_id: String) -> void:
 ##
 ## Callback when the player selects a power-up icon. Applies the chosen power-up to its target.
 func _on_power_up_selected(power_up_id: String) -> void:
-	print("\n=== Power-up Selected ===")
-	print("[GameController] Activating power-up:", power_up_id)
+	if _debug_enabled:
+		print("\n=== Power-up Selected ===")
+		print("[GameController] Activating power-up:", power_up_id)
 
 	var pu = active_power_ups.get(power_up_id)
 	if not pu:
@@ -1916,7 +2207,8 @@ func _on_power_up_selected(power_up_id: String) -> void:
 		"extra_rolls":
 			pu.apply(turn_tracker)
 		"foursome":
-			print("[GameController] Applying Foursome to scorecard:", scorecard)
+			if _debug_enabled:
+				print("[GameController] Applying Foursome to scorecard:", scorecard)
 			pu.apply(scorecard)
 		_:
 			push_error("[GameController] Unknown power-up type:", power_up_id)
@@ -1954,11 +2246,13 @@ func grant_consumable(id: String) -> void:
 	if active_consumables.has(id):
 		# Increment the count instead of creating a new instance
 		consumable_counts[id] = consumable_counts.get(id, 1) + 1
-		print("[GameController] Incremented consumable count for '%s' to %d" % [id, consumable_counts[id]])
+		if _debug_enabled:
+			print("[GameController] Incremented consumable count for '%s' to %d" % [id, consumable_counts[id]])
 		
 		# Update the UI to show the new count
 		if consumable_ui:
 			consumable_ui.update_consumable_count(id, consumable_counts[id])
+		emit_signal("consumable_granted", id)
 		return
 	
 	var consumable := consumable_manager.spawn_consumable(id, consumable_container) as Consumable
@@ -1987,7 +2281,10 @@ func grant_consumable(id: String) -> void:
 	# Spines only handle clicking/hovering for fan display
 	# Usability is handled when icons are fanned out via update_consumable_usability()
 
-	print("[GameController] Consumable granted with spine:", id)
+	if _debug_enabled:
+		print("[GameController] Consumable granted with spine:", id)
+	
+	emit_signal("consumable_granted", id)
 	
 	GameSaveManager.update_settled_snapshot()
 
@@ -2017,11 +2314,13 @@ func set_consumable_usability(consumable_id: String, can_use: bool) -> void:
 func _on_consumable_used(consumable_id: String) -> void:
 	# Guard: Only allow consumable use during active turns (prevents between-round usage)
 	if turn_tracker and not turn_tracker.is_active:
-		print("[GameController] Consumable '%s' blocked - turn is not active" % consumable_id)
+		if _debug_enabled:
+			print("[GameController] Consumable '%s' blocked - turn is not active" % consumable_id)
 		return
 	
 	var consumable = active_consumables.get(consumable_id)
-	print("\n=== Using Consumable: ", consumable_id, " ===")
+	if _debug_enabled:
+		print("\n=== Using Consumable: ", consumable_id, " ===")
 	if not consumable:
 		push_error("No Consumable found for id: %s" % consumable_id)
 		return
@@ -2030,7 +2329,8 @@ func _on_consumable_used(consumable_id: String) -> void:
 	var stats = get_node_or_null("/root/Statistics")
 	if stats:
 		stats.record_item_usage("consumable")
-		print("[GameController] Tracked consumable usage in statistics")
+		if _debug_enabled:
+			print("[GameController] Tracked consumable usage in statistics")
 	
 	# Helper function to handle consumable removal with count system
 	var remove_consumable_instance = func():
@@ -2040,14 +2340,16 @@ func _on_consumable_used(consumable_id: String) -> void:
 			consumable_counts[consumable_id] = current_count - 1
 			if consumable_ui:
 				consumable_ui.update_consumable_count(consumable_id, consumable_counts[consumable_id])
-			print("[GameController] Decremented %s count to %d" % [consumable_id, consumable_counts[consumable_id]])
+			if _debug_enabled:
+				print("[GameController] Decremented %s count to %d" % [consumable_id, consumable_counts[consumable_id]])
 		else:
 			# Remove entirely
 			active_consumables.erase(consumable_id)
 			consumable_counts.erase(consumable_id)
 			if consumable_ui:
 				consumable_ui.remove_consumable(consumable_id)
-			print("[GameController] Completely removed %s" % consumable_id)
+			if _debug_enabled:
+				print("[GameController] Completely removed %s" % consumable_id)
 
 	match consumable_id:
 		"score_reroll":
@@ -2189,6 +2491,30 @@ func _on_consumable_used(consumable_id: String) -> void:
 		"loaded_dice":
 			consumable.apply(self)
 			remove_consumable_instance.call()
+		"spite":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"antidote":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"immunity":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"scratch_ticket":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"paint_job":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"bonus_sprint":
+			consumable.apply(self)
+			remove_consumable_instance.call()
+		"mulligan":
+			if score_card_ui:
+				consumable.apply(self)
+				remove_consumable_instance.call()
+			else:
+				push_error("GameController: score_card_ui not found!")
 		_:
 			push_error("Unknown consumable type: %s" % consumable_id)
 	
@@ -2200,18 +2526,22 @@ func _on_consumable_used(consumable_id: String) -> void:
 ## Forwarding handler triggered by the UI when a consumable is used. Updates statistics first,
 ## then emits a GameController-level signal for PowerUps to listen, then invokes the internal consumable handler.
 func _on_consumable_ui_used(consumable_id: String) -> void:
-	print("[GameController] _on_consumable_ui_used called for:", consumable_id)
-	
-	# FIRST: Update statistics so PowerUps see the updated count
-	print("[GameController] About to call _on_consumable_used (which updates stats)")
+	if _debug_enabled:
+		print("[GameController] _on_consumable_ui_used called for:", consumable_id)
+
+		# FIRST: Update statistics so PowerUps see the updated count
+		print("[GameController] About to call _on_consumable_used (which updates stats)")
 	_on_consumable_used(consumable_id)
-	print("[GameController] _on_consumable_used completed")
+	if _debug_enabled:
+		print("[GameController] _on_consumable_used completed")
 	
 	# THEN: Forward consumable_used signal for PowerUps to listen (now with updated stats)
 	var consumable = active_consumables.get(consumable_id)
-	print("[GameController] About to emit consumable_used signal AFTER stats update")
+	if _debug_enabled:
+		print("[GameController] About to emit consumable_used signal AFTER stats update")
 	emit_signal("consumable_used", consumable_id, consumable)
-	print("[GameController] consumable_used signal emitted")
+	if _debug_enabled:
+		print("[GameController] consumable_used signal emitted")
 	
 	# Notify chores manager immediately so "use consumable" task is credited
 	if chores_manager:
@@ -2269,7 +2599,8 @@ func _on_score_manual_assigned(_section: int, _category: String, _score: int, _b
 	# Check if breakdown_info is empty - that indicates a true manual scoring action
 	if scoring_animation_controller and _score > 0 and _breakdown_info.is_empty():
 		var enhanced_breakdown_info = _create_manual_breakdown_info(_category)
-		print("[GameController] Created manual breakdown info: " + str(enhanced_breakdown_info))
+		if _debug_enabled:
+			print("[GameController] Created manual breakdown info: " + str(enhanced_breakdown_info))
 		scoring_animation_controller.start_scoring_animation(_score, _category, enhanced_breakdown_info)
 	
 	_handle_post_scoring_effects(_section, _category, _score, _breakdown_info)
@@ -2285,15 +2616,18 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 		insurance_policy_active = false
 		if _score == 0:
 			PlayerEconomy.add_money(75)
-			print("[GameController] Insurance Policy triggered - granted $75 for 0-score")
+			if _debug_enabled:
+				print("[GameController] Insurance Policy triggered - granted $75 for 0-score")
 		else:
-			print("[GameController] Insurance Policy consumed - score was not 0")
+			if _debug_enabled:
+				print("[GameController] Insurance Policy consumed - score was not 0")
 	
 	# Disable all dice after scoring
 	if dice_hand:
 		dice_hand.set_all_dice_disabled()
 		dice_hand.reset_roll_count()
-		print("[GameController] Disabled all dice and reset roll count after scoring")
+		if _debug_enabled:
+			print("[GameController] Disabled all dice and reset roll count after scoring")
 	
 	# Record turn data for lock constraint sliding window checks
 	var current_turn_num = turn_tracker.current_turn if turn_tracker else 0
@@ -2328,7 +2662,8 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 			if _active_lock_tracker.is_satisfied():
 				chores_manager.check_task_completion(context)
 			elif _active_lock_tracker.is_expired(current_turn_num):
-				print("[GameController] Lock constraint chore expired unsatisfied")
+				if _debug_enabled:
+					print("[GameController] Lock constraint chore expired unsatisfied")
 				_active_lock_tracker = null
 				chores_manager.expire_current_task("lock constraint failed")
 		else:
@@ -2342,7 +2677,8 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 			var score_modifier_manager = get_node_or_null("/root/ScoreModifierManager")
 			if score_modifier_manager and score_modifier_manager.has_method("unregister_multiplier"):
 				score_modifier_manager.unregister_multiplier("score_streak")
-				print("[GameController] Unregistered score_streak multiplier due to scratch")
+				if _debug_enabled:
+					print("[GameController] Unregistered score_streak multiplier due to scratch")
 		else:
 			# Update streak multiplier for next turn if streak is still active
 			var score_modifier_manager = get_node_or_null("/root/ScoreModifierManager")
@@ -2350,7 +2686,8 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 				# Update the multiplier value based on current streak state
 				score_modifier_manager.unregister_multiplier("score_streak")
 				score_modifier_manager.register_multiplier("score_streak", turn_tracker.score_streak_multiplier)
-				print("[GameController] Updated score_streak multiplier to %.1fx" % turn_tracker.score_streak_multiplier)
+				if _debug_enabled:
+					print("[GameController] Updated score_streak multiplier to %.1fx" % turn_tracker.score_streak_multiplier)
 	
 	# Track statistics for scoring
 	var stats = get_node_or_null("/root/Statistics")
@@ -2385,17 +2722,21 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 		# DEPRECATED: Logbook panel hidden — update_extra_info disabled
 		#if score_card_ui and score_card_ui.has_method("update_extra_info"):
 		#	score_card_ui.update_extra_info(color_description)
-		print("[GameController] Dice color effects (logbook deprecated):", color_description)
+		if _debug_enabled:
+			print("[GameController] Dice color effects (logbook deprecated):", color_description)
 
 	if scorecard.has_any_scores():
 		# Update score reroll usability through the new system
 		if consumable_ui and consumable_ui.has_consumable("score_reroll"):
 			consumable_ui.update_consumable_usability()
-			print("[GameController] Score reroll usability updated")
+			if _debug_enabled:
+				print("[GameController] Score reroll usability updated")
 		else:
-			print("[GameController] No score reroll consumable found")
+			if _debug_enabled:
+				print("[GameController] No score reroll consumable found")
 	else:
-		print("[GameController] No scores yet, reroll remains disabled")
+		if _debug_enabled:
+			print("[GameController] No scores yet, reroll remains disabled")
 
 	# Update dice animation intensity for next turn
 	_update_dice_animation_intensity()
@@ -2446,7 +2787,8 @@ func _create_manual_breakdown_info(category: String = "") -> Dictionary:
 		var category_level = scorecard.get_category_level_by_name(category)
 		breakdown_info["category_level"] = category_level
 		if category_level > 1:
-			print("[GameController] Manual breakdown: category '%s' at level %d" % [category, category_level])
+			if _debug_enabled:
+				print("[GameController] Manual breakdown: category '%s' at level %d" % [category, category_level])
 	else:
 		breakdown_info["category_level"] = 1
 	
@@ -2576,13 +2918,15 @@ func _get_used_dice_for_category_manual(category: String, dice_values: Array, _d
 ##
 ## Spawns and applies a debuff effect to the appropriate target. Also registers the debuff with UI.
 func apply_debuff(id: String, ignore_ungrounded: bool = false) -> void:
-	print("[GameController] Attempting to apply debuff:", id)
+	if _debug_enabled:
+		print("[GameController] Attempting to apply debuff:", id)
 
 	# Check if Ungrounded powerup is active - block all debuffs.
 	# Granted buffs (e.g. "rebellion") bypass this: they are rewards,
 	# not punishments, and must never be silently eaten.
 	if not ignore_ungrounded and is_power_up_active("ungrounded"):
-		print("[GameController] Debuff '%s' blocked by Ungrounded PowerUp" % id)
+		if _debug_enabled:
+			print("[GameController] Debuff '%s' blocked by Ungrounded PowerUp" % id)
 		emit_signal("debuff_blocked", id)
 		return
 
@@ -2593,7 +2937,8 @@ func apply_debuff(id: String, ignore_ungrounded: bool = false) -> void:
 
 	# Check if this debuff is already active
 	if active_debuffs.has(id) and active_debuffs[id] != null:
-		print("[GameController] Debuff already active:", id)
+		if _debug_enabled:
+			print("[GameController] Debuff already active:", id)
 		return
 
 	var debuff := debuff_manager.spawn_debuff(id, debuff_container) as Debuff
@@ -2621,7 +2966,8 @@ func apply_debuff(id: String, ignore_ungrounded: bool = false) -> void:
 		push_error("[GameController] Failed to create UI icon for debuff '%s'" % id)
 		return
 
-	print("[GameController] Debuff icon added to UI:", id)
+	if _debug_enabled:
+		print("[GameController] Debuff icon added to UI:", id)
 
 	# Apply the debuff effect
 	var debuff_started := false
@@ -2768,7 +3114,8 @@ func disable_debuff(id: String, clear_runtime_state_immediately: bool = false) -
 				active_debuffs.erase(id)
 				if is_instance_valid(debuff):
 					debuff.queue_free()
-				print("[GameController] Mom-granted buff removed from Chore UI:", id)
+				if _debug_enabled:
+					print("[GameController] Mom-granted buff removed from Chore UI:", id)
 			elif is_instance_valid(debuff_ui):
 				if clear_runtime_state_immediately:
 					active_debuffs.erase(id)
@@ -2782,7 +3129,8 @@ func disable_debuff(id: String, clear_runtime_state_immediately: bool = false) -
 						active_debuffs.erase(id)
 						if is_instance_valid(debuff):
 							debuff.queue_free()
-					print("[GameController] Debuff removed after animation:", id)
+					if _debug_enabled:
+						print("[GameController] Debuff removed after animation:", id)
 				)
 			else:
 				# No UI animation available, remove immediately
@@ -2791,9 +3139,11 @@ func disable_debuff(id: String, clear_runtime_state_immediately: bool = false) -
 				active_debuffs.erase(id)
 				if is_instance_valid(debuff):
 					debuff.queue_free()
-				print("[GameController] Debuff removed (no animation):", id)
+				if _debug_enabled:
+					print("[GameController] Debuff removed (no animation):", id)
 	else:
-		print("[GameController] No active debuff to disable with ID:", id)
+		if _debug_enabled:
+			print("[GameController] No active debuff to disable with ID:", id)
 
 
 
@@ -2857,7 +3207,8 @@ func remove_consumable(id: String) -> void:
 ## If no suitable die exists, the mod is queued in `pending_mods` and will be applied when dice spawn.
 ## Prevents granting more mods than available dice (5 dice = 5 mods max, 6 dice = 6 mods max).
 func grant_mod(id: String) -> void:
-	print("[GameController] Attempting to grant mod:", id)
+	if _debug_enabled:
+		print("[GameController] Attempting to grant mod:", id)
 
 	# Check if we have reached the dice count limit for mods
 	if dice_hand and dice_hand.dice_list.size() > 0:
@@ -2865,7 +3216,8 @@ func grant_mod(id: String) -> void:
 		var dice_count = dice_hand.dice_list.size()
 		
 		if current_mod_count >= dice_count:
-			print("[GameController] Cannot grant mod - limit reached! (%d mods applied to %d dice)" % [current_mod_count, dice_count])
+			if _debug_enabled:
+				print("[GameController] Cannot grant mod - limit reached! (%d mods applied to %d dice)" % [current_mod_count, dice_count])
 			return
 
 	# Get the mod definition
@@ -2883,19 +3235,23 @@ func grant_mod(id: String) -> void:
 	else:
 		mod_persistence_map[id] = 1
 
-	print("[GameController] Mod persistence map updated:", mod_persistence_map)
+	if _debug_enabled:
+		print("[GameController] Mod persistence map updated:", mod_persistence_map)
 
 	if dice_hand and dice_hand.dice_list.size() > 0:
 		if _apply_mod_to_available_die(id):
-			print("[GameController] Mod", id, "applied successfully")
+			if _debug_enabled:
+				print("[GameController] Mod", id, "applied successfully")
 		else:
 			# Couldn't find a suitable die, add to pending
-			print("[GameController] No suitable die found, adding to pending mods")
+			if _debug_enabled:
+				print("[GameController] No suitable die found, adding to pending mods")
 			if not pending_mods.has(id):
 				pending_mods.append(id)
 	else:
 		# No dice available, add to pending
-		print("[GameController] No dice available - adding to pending mods")
+		if _debug_enabled:
+			print("[GameController] No dice available - adding to pending mods")
 		if not pending_mods.has(id):
 			pending_mods.append(id)
 
@@ -2914,7 +3270,8 @@ func _apply_mod_to_available_die(mod_id: String) -> bool:
 			var mod = mod_manager.spawn_mod(mod_id, die)
 			if mod and active_mods.has(mod_id):
 				die.add_mod(active_mods[mod_id])
-				print("[GameController] Applied mod", mod_id, "to empty die at index", i)
+				if _debug_enabled:
+					print("[GameController] Applied mod", mod_id, "to empty die at index", i)
 				return true
 			elif mod:
 				push_error("[GameController] Spawned mod but no ModData found in active_mods for: " + mod_id)
@@ -2926,7 +3283,8 @@ func _apply_mod_to_available_die(mod_id: String) -> bool:
 			var mod = mod_manager.spawn_mod(mod_id, die)
 			if mod and active_mods.has(mod_id):
 				die.add_mod(active_mods[mod_id])
-				print("[GameController] Applied mod", mod_id, "to die at index", i)
+				if _debug_enabled:
+					print("[GameController] Applied mod", mod_id, "to die at index", i)
 				return true
 			elif mod:
 				push_error("[GameController] Spawned mod but no ModData found in active_mods for: " + mod_id)
@@ -2964,7 +3322,8 @@ func _get_expected_dice_count() -> int:
 ##
 ## Grants a colored dice type for the current run after ShopUI has already charged the player.
 func grant_colored_dice(id: String) -> void:
-	print("[GameController] Attempting to grant colored dice:", id)
+	if _debug_enabled:
+		print("[GameController] Attempting to grant colored dice:", id)
 	
 	# Get the colored dice data
 	var colored_dice_data = DiceColorManager.get_colored_dice_data(id)
@@ -2974,7 +3333,8 @@ func grant_colored_dice(id: String) -> void:
 	
 	# Purchase the colored dice type through DiceColorManager
 	if DiceColorManager.purchase_colored_dice(id):
-		print("[GameController] Successfully purchased %s for this game session" % colored_dice_data.display_name)
+		if _debug_enabled:
+			print("[GameController] Successfully purchased %s for this game session" % colored_dice_data.display_name)
 		
 		# Optional: Show a notification or effect
 		_show_colored_dice_purchase_notification(colored_dice_data)
@@ -2986,18 +3346,21 @@ func grant_colored_dice(id: String) -> void:
 ## Shows a notification when a colored dice type is purchased
 func _show_colored_dice_purchase_notification(data) -> void:
 	# This could be expanded to show visual effects or notifications
-	print("[GameController] 🎲 %s purchased! New dice will have a chance to be %s." % [data.display_name, data.get_color_name()])
+	if _debug_enabled:
+		print("[GameController] 🎲 %s purchased! New dice will have a chance to be %s." % [data.display_name, data.get_color_name()])
 
 
 ## grant_gaming_console(id)
 ##
 ## Purchases a gaming console and activates it. Only one console allowed at a time.
 func grant_gaming_console(id: String) -> void:
-	print("\n=== Granting Gaming Console: ", id, " ===")
+	if _debug_enabled:
+		print("\n=== Granting Gaming Console: ", id, " ===")
 	
 	# Only one console allowed at a time
 	if not active_gaming_console.is_empty():
-		print("[GameController] Already have a gaming console. Cannot purchase another.")
+		if _debug_enabled:
+			print("[GameController] Already have a gaming console. Cannot purchase another.")
 		return
 	
 	if not gaming_console_manager:
@@ -3019,7 +3382,8 @@ func grant_gaming_console(id: String) -> void:
 		return
 	
 	active_gaming_console[id] = console
-	print("[GameController] Gaming console granted: %s" % id)
+	if _debug_enabled:
+		print("[GameController] Gaming console granted: %s" % id)
 	
 	# Activate the console (connect it to its target)
 	_activate_gaming_console(id)
@@ -3042,26 +3406,32 @@ func _activate_gaming_console(id: String) -> void:
 	if not console:
 		return
 	
-	print("[GameController] Activating gaming console: %s" % id)
+	if _debug_enabled:
+		print("[GameController] Activating gaming console: %s" % id)
 	
 	match id:
 		"atari_console", "nes_console", "sega_saturn_console":
 			if dice_hand:
 				console.apply(dice_hand)
-				print("[GameController] Console %s applied to DiceHand" % id)
+				if _debug_enabled:
+					print("[GameController] Console %s applied to DiceHand" % id)
 		"snes_console", "sega_console":
 			if scorecard:
 				console.apply(scorecard)
-				print("[GameController] Console %s applied to Scorecard" % id)
+				if _debug_enabled:
+					print("[GameController] Console %s applied to Scorecard" % id)
 		"playstation_console":
 			console.apply(self)
-			print("[GameController] Console %s applied to GameController" % id)
+			if _debug_enabled:
+				print("[GameController] Console %s applied to GameController" % id)
 		"grounded":
 			console.apply(self)
-			print("[GameController] Console %s applied to DiceHand" % id)
+			if _debug_enabled:
+				print("[GameController] Console %s applied to DiceHand" % id)
 		"grounded_debuff":
 			console.apply(self)
-			print("[GameController] Console %s applied to DiceHand" % id)
+			if _debug_enabled:
+				print("[GameController] Console %s applied to DiceHand" % id)
 		_:
 			push_warning("[GameController] Unknown console type: %s" % id)
 
@@ -3085,7 +3455,8 @@ func _clear_gaming_console() -> void:
 	active_gaming_console.clear()
 	if gaming_console_ui and gaming_console_ui.has_method("hide_console"):
 		gaming_console_ui.hide_console()
-	print("[GameController] Gaming console cleared")
+	if _debug_enabled:
+		print("[GameController] Gaming console cleared")
 
 
 ## _clear_all_mods() -> void
@@ -3110,7 +3481,8 @@ func _clear_all_mods() -> void:
 	if mod_manager and mod_manager.has_method("clear_all"):
 		mod_manager.clear_all()
 	
-	print("[GameController] All mods cleared")
+	if _debug_enabled:
+		print("[GameController] All mods cleared")
 
 
 ## _reset_gaming_console_for_round()
@@ -3121,7 +3493,8 @@ func _reset_gaming_console_for_round() -> void:
 		var console = active_gaming_console[id] as GamingConsole
 		if is_instance_valid(console):
 			console.reset_for_new_round()
-			print("[GameController] Gaming console %s reset for new round" % id)
+			if _debug_enabled:
+				print("[GameController] Gaming console %s reset for new round" % id)
 	if gaming_console_ui and gaming_console_ui.has_method("reset_for_new_round"):
 		gaming_console_ui.reset_for_new_round()
 
@@ -3131,7 +3504,8 @@ func _reset_gaming_console_for_round() -> void:
 ## Called when a dice roll completes. All dice should now be in ROLLED state and ready for
 ## player interaction (locking or scoring). Applies any 'lock_dice' debuff effect if active.
 func _on_roll_completed() -> void:
-	print("[GameController] Roll completed - dice are now in ROLLED state")
+	if _debug_enabled:
+		print("[GameController] Roll completed - dice are now in ROLLED state")
 	
 	if is_debuff_active("lock_dice"):
 		var debuff = active_debuffs["lock_dice"]
@@ -3153,14 +3527,16 @@ func _on_roll_completed() -> void:
 ##
 ## Called when a new turn begins. Resets all dice to ROLLABLE state.
 func _on_turn_started() -> void:
-	print("[GameController] New turn started - resetting dice to ROLLABLE state")
+	if _debug_enabled:
+		print("[GameController] New turn started - resetting dice to ROLLABLE state")
 	if dice_hand:
 		dice_hand.set_all_dice_rollable()
 	# Reset per-turn lock tracking for constraint chores
 	_current_turn_max_locked = 0
 	# Expire half price stacks on new turn
 	if half_price_stacks > 0:
-		print("[GameController] Clearing half_price_stacks on turn start")
+		if _debug_enabled:
+			print("[GameController] Clearing half_price_stacks on turn start")
 		half_price_stacks = 0
 	
 	GameSaveManager.update_settled_snapshot()
@@ -3171,20 +3547,23 @@ func _on_turn_started() -> void:
 ## Called when ALL temporary effects of a type expire (legacy signal).
 ## For dice_bonus, this means all stacks have expired.
 func _on_temporary_effect_expired(effect_type: String) -> void:
-	print("[GameController] All temporary effects expired: %s" % effect_type)
+	if _debug_enabled:
+		print("[GameController] All temporary effects expired: %s" % effect_type)
 	match effect_type:
 		"dice_bonus":
 			# All dice bonus stacks have expired - reset to base 5
 			if dice_hand:
 				dice_hand.dice_count = 5
 				dice_hand.update_dice_count()
-				print("[GameController] Dice count reset to 5 (all dice surge stacks expired)")
+				if _debug_enabled:
+					print("[GameController] Dice count reset to 5 (all dice surge stacks expired)")
 		"score_streak":
 			# Unregister the streak multiplier
 			var score_modifier_manager = get_node_or_null("/root/ScoreModifierManager")
 			if score_modifier_manager and score_modifier_manager.has_method("unregister_multiplier"):
 				score_modifier_manager.unregister_multiplier("score_streak")
-				print("[GameController] Score streak multiplier unregistered")
+				if _debug_enabled:
+					print("[GameController] Score streak multiplier unregistered")
 
 
 ## _on_dice_stack_expired(stack_id, dice_removed)
@@ -3192,13 +3571,15 @@ func _on_temporary_effect_expired(effect_type: String) -> void:
 ## Called when a single dice bonus stack expires.
 ## Adjusts the dice count based on remaining bonus.
 func _on_dice_stack_expired(stack_id: int, dice_removed: int) -> void:
-	print("[GameController] Dice stack #%d expired, removing %d dice" % [stack_id, dice_removed])
+	if _debug_enabled:
+		print("[GameController] Dice stack #%d expired, removing %d dice" % [stack_id, dice_removed])
 	if is_instance_valid(dice_hand) and is_instance_valid(turn_tracker):
 		# Get the new total dice count from TurnTracker
 		var new_count = turn_tracker.get_total_dice_count()
 		dice_hand.dice_count = new_count
 		dice_hand.update_dice_count()
-		print("[GameController] Dice count adjusted to %d" % new_count)
+		if _debug_enabled:
+			print("[GameController] Dice count adjusted to %d" % new_count)
 
 
 ## _on_score_streak_changed(multiplier, turns_remaining)
@@ -3206,11 +3587,13 @@ func _on_dice_stack_expired(stack_id: int, dice_removed: int) -> void:
 ## Called when the score streak multiplier changes (each turn during a streak).
 ## Updates the ScoreModifierManager with the new multiplier value.
 func _on_score_streak_changed(multiplier: float, turns_remaining: int) -> void:
-	print("[GameController] Score streak updated: %.2fx multiplier, %d turns remaining" % [multiplier, turns_remaining])
+	if _debug_enabled:
+		print("[GameController] Score streak updated: %.2fx multiplier, %d turns remaining" % [multiplier, turns_remaining])
 	var score_modifier_manager = get_node_or_null("/root/ScoreModifierManager")
 	if score_modifier_manager and score_modifier_manager.has_method("register_multiplier"):
 		score_modifier_manager.register_multiplier("score_streak", multiplier)
-		print("[GameController] Updated score_streak multiplier to %.2fx" % multiplier)
+		if _debug_enabled:
+			print("[GameController] Updated score_streak multiplier to %.2fx" % multiplier)
 
 
 ## _on_scorecard_complete(final_score)
@@ -3221,13 +3604,15 @@ func _on_score_streak_changed(multiplier: float, turns_remaining: int) -> void:
 func _on_scorecard_complete(final_score: int) -> void:
 	if _game_ended:
 		return
-	print("[GameController] Scorecard complete — final score: %d" % final_score)
+	if _debug_enabled:
+		print("[GameController] Scorecard complete — final score: %d" % final_score)
 	
 	# Check for PlayStation continue
 	if active_gaming_console.has("playstation_console"):
 		var ps_console = active_gaming_console["playstation_console"]
 		if ps_console and ps_console.uses_remaining > 0 and not ps_console._continued_this_round:
-			print("[GameController] PlayStation active with %d uses — showing Continue? panel" % ps_console.uses_remaining)
+			if _debug_enabled:
+				print("[GameController] PlayStation active with %d uses — showing Continue? panel" % ps_console.uses_remaining)
 			_show_continue_panel(final_score)
 			return
 	
@@ -3240,11 +3625,13 @@ func _on_scorecard_complete(final_score: int) -> void:
 		var target_score = round_manager.get_current_challenge_target_score()
 		var current_score = scorecard.get_total_score() if scorecard else 0
 		if target_score > 0 and current_score >= target_score:
-			print("[GameController] Challenge target met after reroll: %d/%d — marking completed" % [current_score, target_score])
+			if _debug_enabled:
+				print("[GameController] Challenge target met after reroll: %d/%d — marking completed" % [current_score, target_score])
 			round_manager.is_challenge_completed = true
 	
 	if round_manager and round_manager.is_challenge_completed:
-		print("[GameController] Challenge completed — proceeding to end-of-round flow")
+		if _debug_enabled:
+			print("[GameController] Challenge completed — proceeding to end-of-round flow")
 		_on_shop_button_pressed()
 		return
 	
@@ -3384,7 +3771,8 @@ func _show_continue_panel(final_score: int) -> void:
 ## Player chose to use the PlayStation continue. Triggers the bonus rolls
 ## and score reroll, then dismisses the Continue? panel.
 func _on_use_continue_pressed() -> void:
-	print("[GameController] Player used Continue!")
+	if _debug_enabled:
+		print("[GameController] Player used Continue!")
 	
 	# Dismiss the continue panel
 	if _continue_panel and is_instance_valid(_continue_panel):
@@ -3426,7 +3814,8 @@ func _on_use_continue_pressed() -> void:
 ##
 ## Player chose to quit instead of using the continue. Proceeds to game over.
 func _on_continue_quit_pressed() -> void:
-	print("[GameController] Player declined Continue — going to Game Over")
+	if _debug_enabled:
+		print("[GameController] Player declined Continue — going to Game Over")
 	
 	# Dismiss the continue panel
 	if _continue_panel and is_instance_valid(_continue_panel):
@@ -3445,10 +3834,12 @@ func _on_continue_quit_pressed() -> void:
 func _on_game_over() -> void:
 	# Guard against double-firing (game_completed + turn_tracker game_over)
 	if _game_over_popup and is_instance_valid(_game_over_popup):
-		print("[GameController] Game over already shown — ignoring duplicate")
+		if _debug_enabled:
+			print("[GameController] Game over already shown — ignoring duplicate")
 		return
 	
-	print("[GameController] Game over triggered")
+	if _debug_enabled:
+		print("[GameController] Game over triggered")
 	
 	# Delete run save on game over
 	GameSaveManager.delete_current_save()
@@ -3461,7 +3852,8 @@ func _on_game_over() -> void:
 		var shop_btn = game_button_ui.get_node("HBoxContainer/RightButtonArea/ShopButton")
 		if shop_btn:
 			shop_btn.disabled = true
-			print("[GameController] Shop button disabled - game over")
+			if _debug_enabled:
+				print("[GameController] Shop button disabled - game over")
 	
 	# Get final score and challenge status
 	var final_score = scorecard.get_total_score() if scorecard else 0
@@ -3477,7 +3869,8 @@ func _on_game_over() -> void:
 	if progress_manager:
 		# Pass whether challenge was completed as the win condition
 		progress_manager.end_game_tracking(final_score, challenge_completed)
-		print("[GameController] Progress saved with score: %d, win: %s" % [final_score, challenge_completed])
+		if _debug_enabled:
+			print("[GameController] Progress saved with score: %d, win: %s" % [final_score, challenge_completed])
 	
 	# Store game over data for later use
 	var game_over_data = {
@@ -3488,7 +3881,8 @@ func _on_game_over() -> void:
 	
 	# Check if we have pending unlocked items to show first
 	if _pending_unlocked_items.size() > 0 and unlocked_item_panel:
-		print("[GameController] Showing unlock panels before game over for %d items" % _pending_unlocked_items.size())
+		if _debug_enabled:
+			print("[GameController] Showing unlock panels before game over for %d items" % _pending_unlocked_items.size())
 		_show_unlocked_items_before_game_over(game_over_data)
 		return
 	
@@ -3671,7 +4065,8 @@ func _show_game_over_popup(final_score: int, target_score: int, challenge_comple
 ##
 ## Handler for New Game button - restarts the entire game.
 func _on_new_game_pressed() -> void:
-	print("[GameController] New Game requested")
+	if _debug_enabled:
+		print("[GameController] New Game requested")
 	if _game_over_popup and is_instance_valid(_game_over_popup):
 		_game_over_popup.queue_free()
 		_game_over_popup = null
@@ -3686,7 +4081,8 @@ func _on_new_game_pressed() -> void:
 ##
 ## Handler for Continue button after completing challenge - opens shop for next round.
 func _on_continue_after_game_over() -> void:
-	print("[GameController] Continue after game over - opening shop")
+	if _debug_enabled:
+		print("[GameController] Continue after game over - opening shop")
 	# Ensure run save is deleted when continuing after game over
 	GameSaveManager.delete_current_save()
 	if _game_over_popup and is_instance_valid(_game_over_popup):
@@ -3699,7 +4095,8 @@ func _on_continue_after_game_over() -> void:
 ##
 ## Handler for Quit button - exits the game.
 func _on_quit_game_pressed() -> void:
-	print("[GameController] Quit Game requested")
+	if _debug_enabled:
+		print("[GameController] Quit Game requested")
 	get_tree().quit()
 
 ## _on_dice_spawned()
@@ -3708,7 +4105,8 @@ func _on_quit_game_pressed() -> void:
 ## processing any pending mods. Attempts to distribute mods across dice while respecting
 ## the per-mod persistence counts stored in `mod_persistence_map`.
 func _on_dice_spawned() -> void:
-	print("[GameController] mod_persistence_map:", mod_persistence_map)
+	if _debug_enabled:
+		print("[GameController] mod_persistence_map:", mod_persistence_map)
 	if not dice_hand:
 		return
 
@@ -3720,8 +4118,9 @@ func _on_dice_spawned() -> void:
 		if not die.is_connected("mod_sell_requested", _on_mod_sold):
 			die.mod_sell_requested.connect(_on_mod_sold)
 
-	print("[GameController] New dice spawned, checking for mods to apply")
-	print("[GameController] Mod persistence map:", mod_persistence_map)
+	if _debug_enabled:
+		print("[GameController] New dice spawned, checking for mods to apply")
+		print("[GameController] Mod persistence map:", mod_persistence_map)
 
 	# Track already applied mod types to prevent duplicates on a single die
 	var applied_mod_counts = {}
@@ -3737,8 +4136,9 @@ func _on_dice_spawned() -> void:
 		for i in range(count):
 			mods_to_process.append(mod_id)
 
-	print("[GameController] Total mods to process:", mods_to_process.size())
-	print("[GameController] Mods to process:", mods_to_process)
+	if _debug_enabled:
+		print("[GameController] Total mods to process:", mods_to_process.size())
+		print("[GameController] Mods to process:", mods_to_process)
 
 	# Loop through all dice in order
 	for die_index in range(dice_hand.dice_list.size()):
@@ -3746,7 +4146,8 @@ func _on_dice_spawned() -> void:
 
 		# Skip dice that already have mods
 		if die.active_mods.size() >= 1:
-			print("[GameController] Dice at index", die_index, "already has mods, skipping")
+			if _debug_enabled:
+				print("[GameController] Dice at index", die_index, "already has mods, skipping")
 			continue
 
 		# Try to apply any available mod that hasn't been applied yet
@@ -3763,7 +4164,8 @@ func _on_dice_spawned() -> void:
 
 			# Check if the mod still exists in active_mods (it may have been sold)
 			if not active_mods.has(mod_id):
-				print("[GameController] Mod", mod_id, "not found in active_mods (may have been sold), skipping")
+				if _debug_enabled:
+					print("[GameController] Mod", mod_id, "not found in active_mods (may have been sold), skipping")
 				continue
 
 			var def = active_mods[mod_id]
@@ -3773,8 +4175,9 @@ func _on_dice_spawned() -> void:
 					die.add_mod(def)
 					# Record that we've applied an instance of this mod
 					applied_mod_counts[mod_id] += 1
-					print("[GameController] Applied mod", mod_id, "to die at index", die_index, 
-						  "- count", applied_mod_counts[mod_id], "of", mod_persistence_map.get(mod_id, 1))
+					if _debug_enabled:
+						print("[GameController] Applied mod", mod_id, "to die at index", die_index, 
+							  "- count", applied_mod_counts[mod_id], "of", mod_persistence_map.get(mod_id, 1))
 
 					# Remove this mod from the processing list
 					mods_to_process.remove_at(i)
@@ -3786,7 +4189,8 @@ func _on_dice_spawned() -> void:
 
 	# Add any mods that couldn't be applied back to pending_mods
 	for mod_id in mods_to_process:
-		print("[GameController] Couldn't apply mod", mod_id, ", adding to pending_mods")
+		if _debug_enabled:
+			print("[GameController] Couldn't apply mod", mod_id, ", adding to pending_mods")
 		if not pending_mods.has(mod_id):
 			pending_mods.append(mod_id)
 
@@ -3794,7 +4198,8 @@ func _on_dice_spawned() -> void:
 ##
 ## Called when a die is locked. Tracks dice locking statistics.
 func _on_die_locked(die) -> void:
-	print("[GameController] Die locked:", die.value)
+	if _debug_enabled:
+		print("[GameController] Die locked:", die.value)
 	Statistics.track_dice_lock()
 	
 	# Notify tutorial manager of lock action
@@ -3815,7 +4220,8 @@ func _on_roll_pressed() -> void:
 	if _active_lock_tracker:
 		_active_lock_tracker.record_roll(turn_tracker.current_turn, locked_count)
 		if _active_lock_tracker.is_violated():
-			print("[GameController] Lock constraint violated: %d dice locked (max %d)" % [locked_count, _active_lock_tracker._max_locked_dice])
+			if _debug_enabled:
+				print("[GameController] Lock constraint violated: %d dice locked (max %d)" % [locked_count, _active_lock_tracker._max_locked_dice])
 
 ## _on_chore_task_selected(task)
 ##
@@ -3836,7 +4242,8 @@ func _on_chore_task_selected(task: ChoreData) -> void:
 		var min_score = task.target_value
 		var start_turn = turn_tracker.current_turn if turn_tracker else 1
 		_active_lock_tracker.setup(start_turn, turn_window, min_score, max_locked)
-		print("[GameController] Lock constraint tracker started: score %d+ over %d turns, max %d locks" % [min_score, turn_window, max_locked])
+		if _debug_enabled:
+			print("[GameController] Lock constraint tracker started: score %d+ over %d turns, max %d locks" % [min_score, turn_window, max_locked])
 	else:
 		_active_lock_tracker = null
 
@@ -3912,22 +4319,26 @@ func _on_shop_button_pressed() -> void:
 	if _is_processing_round_end:
 		# If the stats panel is currently waiting, treat the shop press as "continue".
 		if is_instance_valid(end_of_round_stats_panel) and end_of_round_stats_panel.visible:
-			print("[GameController] Shop button pressed while end-of-round stats panel is open - continuing to shop")
+			if _debug_enabled:
+				print("[GameController] Shop button pressed while end-of-round stats panel is open - continuing to shop")
 			_on_stats_panel_continue()
 		else:
-			print("[GameController] Shop button press ignored - round-end queue is processing (is_processing_round_end=true)")
+			if _debug_enabled:
+				print("[GameController] Shop button press ignored - round-end queue is processing (is_processing_round_end=true)")
 		return
 	
 	# Check if challenge was completed - start round-end sequence (only once)
 	if round_manager and round_manager.is_challenge_completed and not _end_of_round_stats_shown:
-		print("[GameController] Challenge completed - starting end of round sequence")
+		if _debug_enabled:
+			print("[GameController] Challenge completed - starting end of round sequence")
 		
 		# Save progress (this triggers unlock checks)
 		var progress_manager = get_node("/root/ProgressManager")
 		if progress_manager:
 			var current_score = scorecard.get_total_score() if scorecard else 0
 			progress_manager.end_game_tracking(current_score, true)
-			print("[GameController] Progress saved with score: %d" % current_score)
+			if _debug_enabled:
+				print("[GameController] Progress saved with score: %d" % current_score)
 		
 		_end_of_round_stats_shown = true
 		_round_end_queue = _build_round_end_queue()
@@ -3943,7 +4354,8 @@ func _on_shop_button_pressed() -> void:
 ## Shows the end of round statistics panel with bonus calculations.
 ## Queue guarantees no popup is open when this is called.
 func _show_end_of_round_stats() -> void:
-	print("[GameController] Showing end of round stats panel")
+	if _debug_enabled:
+		print("[GameController] Showing end of round stats panel")
 	
 	# Get current round data
 	var current_round_num = round_manager.get_current_round_number() if round_manager else 1
@@ -3997,7 +4409,8 @@ func _show_end_of_round_stats() -> void:
 ## Called when player clicks "Head to Shop" on the stats panel.
 ## Awards the calculated bonuses and advances the round-end queue to OPEN_SHOP.
 func _on_stats_panel_continue() -> void:
-	print("[GameController] Stats panel continue pressed - awarding bonuses")
+	if _debug_enabled:
+		print("[GameController] Stats panel continue pressed - awarding bonuses")
 	
 	# Award bonuses via PlayerEconomy
 	if end_of_round_stats_panel:
@@ -4008,7 +4421,8 @@ func _on_stats_panel_continue() -> void:
 		var power_up_bonus = end_of_round_stats_panel.get_power_up_bonus()
 		if docked_allowance_active:
 			# Docked Allowance grounding: withhold the entire end-of-round award.
-			print("[GameController] Docked Allowance active - withholding $%d end of round award" % total_bonus)
+			if _debug_enabled:
+				print("[GameController] Docked Allowance active - withholding $%d end of round award" % total_bonus)
 		else:
 			var consumed_buff_bonus = _consume_round_end_buff_bonuses()
 			if consumed_buff_bonus != buff_bonus:
@@ -4019,7 +4433,8 @@ func _on_stats_panel_continue() -> void:
 
 			if total_bonus > 0:
 				PlayerEconomy.add_money(total_bonus)
-				print("[GameController] Awarded end of round bonuses: $%d (empty: $%d, score: $%d, buffs: $%d, powerups: $%d)" % [total_bonus, empty_bonus, score_bonus, buff_bonus, power_up_bonus])
+				if _debug_enabled:
+					print("[GameController] Awarded end of round bonuses: $%d (empty: $%d, score: $%d, buffs: $%d, powerups: $%d)" % [total_bonus, empty_bonus, score_bonus, buff_bonus, power_up_bonus])
 
 				# Track in statistics
 				Statistics.total_money_earned += total_bonus
@@ -4082,7 +4497,8 @@ func _open_shop_ui() -> void:
 	
 	# Block shop if game has ended
 	if _game_ended:
-		print("[GameController] Shop blocked - game has ended")
+		if _debug_enabled:
+			print("[GameController] Shop blocked - game has ended")
 		return
 	
 	if not shop_ui.visible:
@@ -4169,33 +4585,39 @@ func _open_shop_ui() -> void:
 ## Applies a shop purchase after ShopUI has already validated and charged it.
 ## Returns true only when the requested item was actually granted.
 func process_shop_purchase(item_id: String, item_type: String) -> bool:
-	print("[GameController] Processing purchase:", item_id, "type:", item_type)
+	if _debug_enabled:
+		print("[GameController] Processing purchase:", item_id, "type:", item_type)
 	match item_type:
 		"power_up":
 			var already_owned := active_power_ups.has(item_id)
-			print("[GameController] Granting power-up:", item_id)
+			if _debug_enabled:
+				print("[GameController] Granting power-up:", item_id)
 			grant_power_up(item_id)
 			var purchase_granted: bool = active_power_ups.has(item_id) and not already_owned
 			# Consume all half price stacks after a PowerUp purchase
 			if purchase_granted and half_price_stacks > 0:
-				print("[GameController] Consuming half_price stacks after PowerUp purchase")
+				if _debug_enabled:
+					print("[GameController] Consuming half_price stacks after PowerUp purchase")
 				half_price_stacks = 0
 				_refresh_shop_prices()
 			return purchase_granted
 		"consumable":
 			var consumable_count_before: int = int(consumable_counts.get(item_id, 0))
-			print("[GameController] Granting consumable:", item_id)
+			if _debug_enabled:
+				print("[GameController] Granting consumable:", item_id)
 			grant_consumable(item_id)
 			var consumable_was_granted: bool = int(consumable_counts.get(item_id, 0)) > consumable_count_before
 			# Consume one loss leader stack after a consumable purchase
 			if consumable_was_granted and loss_leader_stacks > 0:
 				loss_leader_stacks -= 1
-				print("[GameController] Consumed loss_leader stack, remaining: %d" % loss_leader_stacks)
+				if _debug_enabled:
+					print("[GameController] Consumed loss_leader stack, remaining: %d" % loss_leader_stacks)
 				_refresh_shop_prices()
 			return consumable_was_granted
 		"mod":
 			var mod_count_before := int(mod_persistence_map.get(item_id, 0))
-			print("[GameController] Granting mod:", item_id)
+			if _debug_enabled:
+				print("[GameController] Granting mod:", item_id)
 			grant_mod(item_id)
 			return int(mod_persistence_map.get(item_id, 0)) > mod_count_before
 		"colored_dice":
@@ -4204,22 +4626,26 @@ func process_shop_purchase(item_id: String, item_type: String) -> bool:
 				push_error("[GameController] No ColoredDiceData found for: %s" % item_id)
 				return false
 			var color_count_before := DiceColorManager.get_color_purchase_count(colored_dice_data.color_type)
-			print("[GameController] Granting colored dice:", item_id)
+			if _debug_enabled:
+				print("[GameController] Granting colored dice:", item_id)
 			grant_colored_dice(item_id)
 			return DiceColorManager.get_color_purchase_count(colored_dice_data.color_type) > color_count_before
 		"gaming_console":
 			var had_console := not active_gaming_console.is_empty()
-			print("[GameController] Granting gaming console:", item_id)
+			if _debug_enabled:
+				print("[GameController] Granting gaming console:", item_id)
 			grant_gaming_console(item_id)
 			return not had_console and active_gaming_console.has(item_id)
 		"grounded":
 			var had_grounded := not active_debuffs.has("lock_dice")
-			print("[GameController] Granting grounded:", item_id)
+			if _debug_enabled:
+				print("[GameController] Granting grounded:", item_id)
 			apply_debuff("lock_dice")
 			return not had_grounded
 		"grounded_debuff":
 			var had_grounded := not active_debuffs.has("lock_dice")
-			print("[GameController] Granting grounded_debuff:", item_id)
+			if _debug_enabled:
+				print("[GameController] Granting grounded_debuff:", item_id)
 			apply_debuff("lock_dice")
 			return not had_grounded
 		_:
@@ -4280,7 +4706,8 @@ func _on_round_score_changed(total_score: int) -> void:
 	if round_manager.is_challenge_completed:
 		return
 	if _current_round_target > 0 and total_score >= _current_round_target:
-		print("[GameController] Round target met: %d/%d" % [total_score, _current_round_target])
+		if _debug_enabled:
+			print("[GameController] Round target met: %d/%d" % [total_score, _current_round_target])
 		challenge_manager.emit_signal("challenge_completed", _current_store_id())
 
 
@@ -4302,14 +4729,16 @@ func _compute_round_target(round_number: int) -> int:
 	var scaled_target: int = base_target
 	if channel_manager:
 		scaled_target = channel_manager.get_scaled_target_score(base_target)
-		print("[GameController] Target: %d -> %d (%.2fx channel scaling)" % [
-			base_target, scaled_target, channel_manager.get_difficulty_multiplier()
-		])
+		if _debug_enabled:
+			print("[GameController] Target: %d -> %d (%.2fx channel scaling)" % [
+				base_target, scaled_target, channel_manager.get_difficulty_multiplier()
+			])
 
 	# Apply target modifier (e.g., from ChallengeEaserPowerUp)
 	if challenge_score_modifier != 1.0:
 		var modified_target = int(scaled_target * challenge_score_modifier)
-		print("[GameController] Target modifier applied: %d -> %d (%.2fx)" % [scaled_target, modified_target, challenge_score_modifier])
+		if _debug_enabled:
+			print("[GameController] Target modifier applied: %d -> %d (%.2fx)" % [scaled_target, modified_target, challenge_score_modifier])
 		scaled_target = modified_target
 
 	return scaled_target
@@ -4331,7 +4760,8 @@ func _setup_round_target(round_number: int) -> void:
 	var store_name: String = ""
 	if channel_manager:
 		store_name = channel_manager.get_store_name(channel_manager.current_channel, round_number)
-	print("[GameController] Round %d store: '%s', target: %d" % [round_number, store_name, _current_round_target])
+	if _debug_enabled:
+		print("[GameController] Round %d store: '%s', target: %d" % [round_number, store_name, _current_round_target])
 
 	# Store reveal banner (reuses the old challenge reveal banner)
 	if challenge_ui and challenge_ui.has_method("show_store_reveal_banner"):
@@ -4364,7 +4794,8 @@ func _setup_round_target(round_number: int) -> void:
 ## Note: Reward money is no longer granted immediately - it's shown and granted in the
 ## end-of-round stats panel to provide better feedback to the player.
 func _on_challenge_completed(id: String) -> void:
-	print("[GameController] Round target met:", id)
+	if _debug_enabled:
+		print("[GameController] Round target met:", id)
 
 	# Store reward for end-of-round stats (don't grant immediately)
 	if not _challenge_reward_granted:
@@ -4375,7 +4806,8 @@ func _on_challenge_completed(id: String) -> void:
 			if round_config and round_config.reward_money_override > 0:
 				reward = round_config.reward_money_override
 		if reward > 0:
-			print("[GameController] Storing round reward for end-of-round: $%d" % reward)
+			if _debug_enabled:
+				print("[GameController] Storing round reward for end-of-round: $%d" % reward)
 			_challenge_reward_this_round = reward
 			_challenge_reward_granted = true  # Prevent double-granting
 
@@ -4438,7 +4870,8 @@ func _expire_completed_round_statuses() -> void:
 	if _mom_cosmetics_locked:
 		_mom_cosmetics_locked = false
 		DiceColorManager.set_colors_enabled(true)
-		print("[GameController] Mom's cosmetic lock expired - dice colors restored")
+		if _debug_enabled:
+			print("[GameController] Mom's cosmetic lock expired - dice colors restored")
 
 	GameSaveManager.update_settled_snapshot()
 
@@ -4450,7 +4883,8 @@ func _expire_completed_round_statuses() -> void:
 func _trigger_challenge_celebration() -> void:
 	# Only show celebration once per round
 	if _challenge_celebration_shown:
-		print("[GameController] Challenge celebration already shown this round, skipping")
+		if _debug_enabled:
+			print("[GameController] Challenge celebration already shown this round, skipping")
 		return
 	_challenge_celebration_shown = true
 	
@@ -4473,7 +4907,8 @@ func _trigger_challenge_celebration() -> void:
 		elif challenge_ui is Control:
 			celebration_position = (challenge_ui as Control).get_global_rect().get_center()
 	
-	print("[GameController] Triggering challenge celebration at: %s" % str(celebration_position))
+	if _debug_enabled:
+		print("[GameController] Triggering challenge celebration at: %s" % str(celebration_position))
 	_challenge_celebration.trigger_celebration(celebration_position, get_tree().current_scene)
 
 
@@ -4544,7 +4979,8 @@ func _show_round_transition_overlay(store_id: String) -> void:
 	_round_transition_overlay.enter_shop_pressed.connect(_on_transition_enter_shop, CONNECT_ONE_SHOT)
 
 	_round_transition_overlay.show_transition(data)
-	print("[GameController] Round transition overlay shown for round %d" % round_number)
+	if _debug_enabled:
+		print("[GameController] Round transition overlay shown for round %d" % round_number)
 
 
 ## _on_transition_keep_playing()
@@ -4552,7 +4988,8 @@ func _show_round_transition_overlay(store_id: String) -> void:
 ## Player chose to keep playing without entering the shop.
 ## Dismisses overlay; player can enter shop later via the shop button.
 func _on_transition_keep_playing() -> void:
-	print("[GameController] Player chose to keep playing")
+	if _debug_enabled:
+		print("[GameController] Player chose to keep playing")
 	if _round_transition_overlay and is_instance_valid(_round_transition_overlay):
 		_round_transition_overlay.queue_free()
 		_round_transition_overlay = null
@@ -4588,7 +5025,8 @@ func _on_transition_keep_playing() -> void:
 ## Player chose to enter the shop from the transition overlay.
 ## Dismisses overlay then triggers the round-end queue via _on_shop_button_pressed().
 func _on_transition_enter_shop() -> void:
-	print("[GameController] Player chose to enter shop from transition overlay")
+	if _debug_enabled:
+		print("[GameController] Player chose to enter shop from transition overlay")
 	if _round_transition_overlay and is_instance_valid(_round_transition_overlay):
 		_round_transition_overlay.queue_free()
 		_round_transition_overlay = null
@@ -4601,7 +5039,8 @@ func _on_transition_enter_shop() -> void:
 ## Signal hub handler for a failed round. RoundManager's own hub handler
 ## performs fail_round(); this handler only logs and snapshots.
 func _on_challenge_failed(id: String) -> void:
-	print("[GameController] Round failed:", id)
+	if _debug_enabled:
+		print("[GameController] Round failed:", id)
 	# Stamp the store icon FAILED in the ChallengeUI slot
 	if is_instance_valid(challenge_ui) and challenge_ui.has_method("notify_store_failed"):
 		challenge_ui.notify_store_failed()
@@ -4613,7 +5052,8 @@ func _on_challenge_failed(id: String) -> void:
 # Called when a player selects an icon in the ChallengeUI slot. With store
 # rounds the id is the store name; highlight the icon briefly.
 func _on_challenge_selected(id: String) -> void:
-	print("[GameController] Challenge selected:", id)
+	if _debug_enabled:
+		print("[GameController] Challenge selected:", id)
 
 	# Icon highlight belonged to the deprecated ChallengeIcon strip; the new
 	# progress panel has no per-challenge icons.
@@ -4630,7 +5070,8 @@ func _on_challenge_selected(id: String) -> void:
 
 # Add this method to handle the dice_rolled signal from GameButtonUI
 func _on_game_button_dice_rolled(dice_values: Array) -> void:
-	print("[GameController] Dice roll button pressed, values:", dice_values)
+	if _debug_enabled:
+		print("[GameController] Dice roll button pressed, values:", dice_values)
 	
 	# Notify tutorial manager of roll action
 	var tutorial_manager = get_node_or_null("/root/TutorialManager")
@@ -4672,7 +5113,8 @@ func _on_game_button_dice_rolled(dice_values: Array) -> void:
 
 # Add this new method to game_controller.gd
 func _update_power_ups_for_dice(dice_values: Array) -> void:
-	print("[GameController] Updating PowerUps for dice values:", dice_values)
+	if _debug_enabled:
+		print("[GameController] Updating PowerUps for dice values:", dice_values)
 	
 	# Update FoursomePowerUp if active
 	if active_power_ups.has("foursome"):
@@ -4686,7 +5128,8 @@ func _update_power_ups_for_dice(dice_values: Array) -> void:
 # Add these methods to handle the missing signal connections
 
 func _on_round_completed(round_number: int) -> void:
-	print("[GameController] Round", round_number, "completed successfully")
+	if _debug_enabled:
+		print("[GameController] Round", round_number, "completed successfully")
 
 	# Wipe ghost projections before the blinds wipe so stale dice state
 	# cannot repaint ghosts during or after the depopulate animation
@@ -4699,16 +5142,19 @@ func _on_round_completed(round_number: int) -> void:
 		var round_data = round_manager.get_current_round_data()
 		if round_data and round_data.has("reward_money") and round_data.reward_money > 0:
 			PlayerEconomy.add_money(round_data.reward_money)
-			print("[GameController] Awarded", round_data.reward_money, "coins for completing round", round_number)
+			if _debug_enabled:
+				print("[GameController] Awarded", round_data.reward_money, "coins for completing round", round_number)
 
 func _on_round_failed(round_number: int) -> void:
-	print("[GameController] Round", round_number, "failed")
+	if _debug_enabled:
+		print("[GameController] Round", round_number, "failed")
 	
 	# Handle round failure - maybe apply a penalty or give a smaller consolation reward
 	# You could also add UI feedback for the player here
 
 func _on_all_rounds_completed() -> void:
-	print("[GameController] All rounds completed! Game win condition reached.")
+	if _debug_enabled:
+		print("[GameController] All rounds completed! Game win condition reached.")
 
 	# Scorecard blinds wipe out on game completion; not awaited
 	if score_card_ui:
@@ -4723,7 +5169,8 @@ func _on_all_rounds_completed() -> void:
 		var shop_btn = game_button_ui.get_node("HBoxContainer/RightButtonArea/ShopButton")
 		if shop_btn:
 			shop_btn.disabled = true
-			print("[GameController] Shop button disabled - all rounds completed")
+			if _debug_enabled:
+				print("[GameController] Shop button disabled - all rounds completed")
 	
 	# Show the RoundWinnerPanel with stats
 	if round_winner_panel and round_manager:
@@ -4757,12 +5204,15 @@ func _on_all_rounds_completed() -> void:
 			winner_data["consumables_used"] = stats.current_zone_consumables_used
 		
 		round_winner_panel.show_winner_panel(winner_data)
-		print("[GameController] Showing RoundWinnerPanel for Channel", current_channel)
+		if _debug_enabled:
+			print("[GameController] Showing RoundWinnerPanel for Channel", current_channel)
 	else:
-		print("[GameController] No RoundWinnerPanel - game complete!")
+		if _debug_enabled:
+			print("[GameController] No RoundWinnerPanel - game complete!")
 
 func _on_consumable_sold(consumable_id: String) -> void:
-	print("[GameController] Selling consumable:", consumable_id)
+	if _debug_enabled:
+		print("[GameController] Selling consumable:", consumable_id)
 	
 	var consumable = active_consumables.get(consumable_id)
 	if not consumable:
@@ -4775,7 +5225,8 @@ func _on_consumable_sold(consumable_id: String) -> void:
 	var def = consumable_manager.get_def(consumable_id)
 	if def:
 		var refund = def.price / 2.0  # Half price
-		print("[GameController] Refunding", refund, "coins for consumable:", consumable_id)
+		if _debug_enabled:
+			print("[GameController] Refunding", refund, "coins for consumable:", consumable_id)
 		PlayerEconomy.add_money(refund)
 	
 	# Animate removal then clean up
@@ -4784,7 +5235,8 @@ func _on_consumable_sold(consumable_id: String) -> void:
 			consumable_ui.remove_consumable(consumable_id)
 			if is_instance_valid(consumable):
 				consumable.queue_free()
-			print("[GameController] Removed consumable from game data:", consumable_id)
+			if _debug_enabled:
+				print("[GameController] Removed consumable from game data:", consumable_id)
 		)
 	else:
 		if is_instance_valid(consumable):
@@ -4799,20 +5251,28 @@ func _cleanup_sold_consumable(consumable_id: String) -> void:
 		if consumable_to_remove:
 			consumable_to_remove.queue_free()
 		active_consumables.erase(consumable_id)
-		print("[GameController] Removed consumable from game data:", consumable_id)
+		if _debug_enabled:
+			print("[GameController] Removed consumable from game data:", consumable_id)
 
 ## _on_mod_sold(mod_id, dice)
 ##
 ## Handles selling a mod. Gives a partial refund (half price) and removes the mod
 ## from the dice, active_mods dictionary, and mod_persistence_map.
 func _on_mod_sold(mod_id: String, dice: Dice) -> void:
-	print("[GameController] MOD SELLING INITIATED:", mod_id, "from dice:", dice.name)
+	if _debug_enabled:
+		print("[GameController] MOD SELLING INITIATED:", mod_id, "from dice:", dice.name)
 	
 	# Get the mod definition for price calculation
 	var def: ModData = mod_manager.get_def(mod_id)
 	if def:
-		var refund = def.price / 2.0  # Half price
-		print("[GameController] Refunding", refund, "coins for mod:", mod_id)
+		# ModData.sell_price >= 0 overrides the legacy half-price refund (e.g. Cursed Six sells for $0)
+		var refund: int
+		if def.sell_price >= 0:
+			refund = def.sell_price
+		else:
+			refund = int(def.price / 2.0)
+		if _debug_enabled:
+			print("[GameController] Refunding", refund, "coins for mod:", mod_id)
 		PlayerEconomy.add_money(refund)
 	
 	# Remove the mod from the dice
@@ -4827,14 +5287,16 @@ func _on_mod_sold(mod_id: String, dice: Dice) -> void:
 		mod_persistence_map[mod_id] -= 1
 		if mod_persistence_map[mod_id] <= 0:
 			mod_persistence_map.erase(mod_id)
-		print("[GameController] Updated mod persistence map:", mod_persistence_map)
+		if _debug_enabled:
+			print("[GameController] Updated mod persistence map:", mod_persistence_map)
 
 ## remove_mod_no_refund(mod_id)
 ##
 ## Removes a mod with no refund. Used by Mom confiscation.
 ## Removes from the dice, active_mods dictionary, and mod_persistence_map.
 func remove_mod_no_refund(mod_id: String) -> void:
-	print("[GameController] Mom confiscated mod:", mod_id)
+	if _debug_enabled:
+		print("[GameController] Mom confiscated mod:", mod_id)
 
 	# Find and remove the mod from whichever die holds it
 	if dice_hand:
@@ -4860,7 +5322,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	
 	# Global right-click to unlock all locked dice
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
-		print("[GameController] Right-click detected in _unhandled_input - unlocking all dice")
+		if _debug_enabled:
+			print("[GameController] Right-click detected in _unhandled_input - unlocking all dice")
 		_unlock_all_locked_dice()
 		get_viewport().set_input_as_handled()
 		return
@@ -4877,21 +5340,26 @@ func _unhandled_input(event: InputEvent) -> void:
 ## Unlocks all locked dice in the dice hand.
 ## Called when player right-clicks anywhere on screen.
 func _unlock_all_locked_dice() -> void:
-	print("[GameController] _unlock_all_locked_dice called, dice_hand:", dice_hand)
+	if _debug_enabled:
+		print("[GameController] _unlock_all_locked_dice called, dice_hand:", dice_hand)
 	if not dice_hand:
-		print("[GameController] No dice_hand reference!")
+		if _debug_enabled:
+			print("[GameController] No dice_hand reference!")
 		return
 	
-	print("[GameController] dice_list size:", dice_hand.dice_list.size())
+	if _debug_enabled:
+		print("[GameController] dice_list size:", dice_hand.dice_list.size())
 	var unlocked_count := 0
 	for die in dice_hand.dice_list:
 		if die and die.current_state == Dice.DiceState.LOCKED:
-			print("[GameController] Unlocking die:", die)
+			if _debug_enabled:
+				print("[GameController] Unlocking die:", die)
 			die.unlock()
 			unlocked_count += 1
 	
 	if unlocked_count > 0:
-		print("[GameController] Unlocked %d dice via global right-click" % unlocked_count)
+		if _debug_enabled:
+			print("[GameController] Unlocked %d dice via global right-click" % unlocked_count)
 
 
 ## _toggle_pause_menu()
@@ -4915,29 +5383,35 @@ func _toggle_statistics_panel():
 	if statistics_panel:
 		statistics_panel.toggle_visibility()
 	else:
-		print("[GameController] ERROR: No StatisticsPanel reference found!")
+		if _debug_enabled:
+			print("[GameController] ERROR: No StatisticsPanel reference found!")
 		# Try to find it manually
 		var manual_panel = get_node_or_null("../StatisticsPanel")
 		if manual_panel:
-			print("[GameController] Found StatisticsPanel manually at ../StatisticsPanel")
+			if _debug_enabled:
+				print("[GameController] Found StatisticsPanel manually at ../StatisticsPanel")
 			statistics_panel = manual_panel
 			statistics_panel.toggle_visibility()
 		else:
-			print("[GameController] Could not find StatisticsPanel anywhere")
+			if _debug_enabled:
+				print("[GameController] Could not find StatisticsPanel anywhere")
 
 func _on_max_power_ups_reached() -> void:
-	print("[GameController] Maximum number of power-ups reached")
+	if _debug_enabled:
+		print("[GameController] Maximum number of power-ups reached")
 	
 	# Show feedback to the player that they can't add more power-ups
 	# For example, you could show a notification or play a sound
 
 func _on_round_started(round_number: int) -> void:
-	print("[GameController] Round", round_number, "started")
+	if _debug_enabled:
+		print("[GameController] Round", round_number, "started")
 	
 	# Lock goal mode after first round starts (prevent mid-game changes)
 	if not _goal_mode_locked:
 		_goal_mode_locked = true
-		print("[GameController] Goal mode locked: %s" % ("RoundConfig Goals" if use_round_config_goals else "Challenge Goals"))
+		if _debug_enabled:
+			print("[GameController] Goal mode locked: %s" % ("RoundConfig Goals" if use_round_config_goals else "Challenge Goals"))
 	
 	# Reset end of round stats flag and queue state for new round
 	_end_of_round_stats_shown = false
@@ -4966,12 +5440,14 @@ func _on_round_started(round_number: int) -> void:
 	# Update round-based scaling for scorecard and chores manager
 	if scorecard:
 		scorecard.update_round(round_number)
-		print("[GameController] Scorecard round updated to", round_number)
+		if _debug_enabled:
+			print("[GameController] Scorecard round updated to", round_number)
 	
 	if chores_manager:
 		chores_manager.update_round(round_number)
 		chores_manager.reset_round_tracking()  # Reset chores completed this round
-		print("[GameController] Chores manager round updated to", round_number)
+		if _debug_enabled:
+			print("[GameController] Chores manager round updated to", round_number)
 	
 	# Enable CRT for active gameplay
 	if crt_manager:
@@ -4990,7 +5466,8 @@ func _on_round_started(round_number: int) -> void:
 		score_card_ui.prepare_for_scoring_animation()
 		# Refresh UI to show updated scaling values
 		score_card_ui.update_all()
-		print("[GameController] Scorecard unlocked for new round")
+		if _debug_enabled:
+			print("[GameController] Scorecard unlocked for new round")
 	
 	update_three_more_rolls_usability()
 	update_double_existing_usability()
@@ -5008,7 +5485,8 @@ func _on_round_started(round_number: int) -> void:
 	# Reset shop for new round
 	if shop_ui:
 		shop_ui.reset_for_new_round()
-		print("[GameController] Shop reset for new round")
+		if _debug_enabled:
+			print("[GameController] Shop reset for new round")
 	
 	# Reset gaming console uses for new round
 	_reset_gaming_console_for_round()
@@ -5029,7 +5507,8 @@ func _on_round_started(round_number: int) -> void:
 ## Clears debuffs from previous round first (no persistence across rounds).
 func _apply_automatic_debuffs(round_number: int) -> void:
 	if not debuff_manager or not channel_manager:
-		print("[GameController] Cannot apply automatic debuffs - missing manager")
+		if _debug_enabled:
+			print("[GameController] Cannot apply automatic debuffs - missing manager")
 		return
 	
 	# Tear down previous round's automatic debuffs (no persistence across rounds).
@@ -5066,7 +5545,14 @@ func _apply_automatic_debuffs(round_number: int) -> void:
 				selected_ids = debuff_manager.select_debuffs_for_round(max_debuffs, difficulty_cap, false)
 	
 	var channel_number = channel_manager.current_channel
-	print("[GameController] Applying automatic debuffs for Channel %d Round %d: %s" % [channel_number, round_number, str(selected_ids)])
+	if _debug_enabled:
+		print("[GameController] Applying automatic debuffs for Channel %d Round %d: %s" % [channel_number, round_number, str(selected_ids)])
+	
+	# Immunity consumable: skip this round's automatic debuff assignment.
+	if debuff_manager.consume_immunity_next_round():
+		if _debug_enabled:
+			print("[GameController] Immunity active - skipping automatic debuffs this round")
+		selected_ids.clear()
 	
 	# Apply via apply_debuff() so each debuff gets its target, is started,
 	# registered with the UI, and emits debuff_applied.
@@ -5079,13 +5565,16 @@ func _apply_automatic_debuffs(round_number: int) -> void:
 		challenge_ui.set_store_debuffs(selected_ids)
 	
 	if selected_ids.size() > 0:
-		print("[GameController] Applied %d automatic debuffs" % selected_ids.size())
+		if _debug_enabled:
+			print("[GameController] Applied %d automatic debuffs" % selected_ids.size())
 	else:
-		print("[GameController] No automatic debuffs for this round")
+		if _debug_enabled:
+			print("[GameController] No automatic debuffs for this round")
 
 
 func _on_debuff_selected(id: String) -> void:
-	print("[GameController] Debuff selected:", id)
+	if _debug_enabled:
+		print("[GameController] Debuff selected:", id)
 	
 	var debuff = active_debuffs.get(id)
 	if debuff:
@@ -5098,7 +5587,8 @@ func _on_debuff_selected(id: String) -> void:
 			# Show a brief description or effect of the debuff
 			var def = debuff_manager.get_def(id)
 			if def:
-				print("[GameController] Debuff effect:", def.description)
+				if _debug_enabled:
+					print("[GameController] Debuff effect:", def.description)
 				
 			# Reset after a short delay
 			await get_tree().create_timer(0.5).timeout
@@ -5117,9 +5607,11 @@ func _on_debuff_selected(id: String) -> void:
 func update_three_more_rolls_usability(_rolls_left: int = 0) -> void:
 	if consumable_ui and consumable_ui.has_consumable("three_more_rolls"):
 		consumable_ui.update_consumable_usability()
-		print("[GameController] Three more rolls usability updated")
+		if _debug_enabled:
+			print("[GameController] Three more rolls usability updated")
 	else:
-		print("[GameController] No three more rolls consumable found")
+		if _debug_enabled:
+			print("[GameController] No three more rolls consumable found")
 
 # Add this function to game_controller.gd
 
@@ -5130,9 +5622,11 @@ func update_three_more_rolls_usability(_rolls_left: int = 0) -> void:
 func update_double_existing_usability(_section: int = 0, _category: String = "", _score: int = 0, _breakdown_info: Dictionary = {}) -> void:
 	if consumable_ui and consumable_ui.has_consumable("double_existing"):
 		consumable_ui.update_consumable_usability()
-		print("[GameController] Double existing usability updated")
+		if _debug_enabled:
+			print("[GameController] Double existing usability updated")
 	else:
-		print("[GameController] No double existing consumable found")
+		if _debug_enabled:
+			print("[GameController] No double existing consumable found")
 
 ## update_double_or_nothing_usability(_rolls_left)
 ##
@@ -5141,28 +5635,33 @@ func update_double_existing_usability(_section: int = 0, _category: String = "",
 func update_double_or_nothing_usability(_rolls_left: int = 0) -> void:
 	if consumable_ui and consumable_ui.has_consumable("double_or_nothing"):
 		consumable_ui.update_consumable_usability()
-		print("[GameController] Double or nothing usability updated")
+		if _debug_enabled:
+			print("[GameController] Double or nothing usability updated")
 	else:
-		print("[GameController] No double or nothing consumable found")
+		if _debug_enabled:
+			print("[GameController] No double or nothing consumable found")
 
 func _on_power_up_description_updated(power_up_id: String, new_description: String) -> void:
-	print("[GameController] Received description update for:", power_up_id)
-	print("[GameController] New description:", new_description)
+	if _debug_enabled:
+		print("[GameController] Received description update for:", power_up_id)
+		print("[GameController] New description:", new_description)
 	
 	if powerup_ui:
 		var icon = powerup_ui.get_power_up_icon(power_up_id)
 		if icon and icon.hover_label:
 			icon.hover_label.text = new_description
-			print("[GameController] Updated hover label text for power-up icon")
+			if _debug_enabled:
+				print("[GameController] Updated hover label text for power-up icon")
 
 func _on_randomizer_effect_updated(effect_type: String, value_text: String) -> void:
-	print("[GameController] Randomizer effect updated - Type:", effect_type, "Value:", value_text)
-	
-	# DEPRECATED: Logbook panel hidden — ExtraInfo calls disabled
-	#if score_card_ui:
-	#	var effect_description = "Random Effect: %s %s" % [effect_type.capitalize(), value_text]
-	#	score_card_ui.update_extra_info(effect_description)
-	print("[GameController] Randomizer effect (logbook deprecated):", effect_type, value_text)
+	if _debug_enabled:
+		print("[GameController] Randomizer effect updated - Type:", effect_type, "Value:", value_text)
+
+		# DEPRECATED: Logbook panel hidden — ExtraInfo calls disabled
+		#if score_card_ui:
+		#	var effect_description = "Random Effect: %s %s" % [effect_type.capitalize(), value_text]
+		#	score_card_ui.update_extra_info(effect_description)
+		print("[GameController] Randomizer effect (logbook deprecated):", effect_type, value_text)
 
 ## _on_items_unlocked(item_ids)
 ##
@@ -5170,14 +5669,16 @@ func _on_randomizer_effect_updated(effect_type: String, value_text: String) -> v
 ## Stores unlocked items for display in the unlock panel sequence.
 ## The actual display happens when the shop button is pressed (end of round).
 func _on_items_unlocked(item_ids: Array[String]) -> void:
-	print("[GameController] Items unlocked: %s" % [str(item_ids)])
+	if _debug_enabled:
+		print("[GameController] Items unlocked: %s" % [str(item_ids)])
 	
 	# Store for display later (when shop button is pressed)
 	for item_id in item_ids:
 		if item_id not in _pending_unlocked_items:
 			_pending_unlocked_items.append(item_id)
 	
-	print("[GameController] Pending unlocked items to display: %d" % _pending_unlocked_items.size())
+	if _debug_enabled:
+		print("[GameController] Pending unlocked items to display: %d" % _pending_unlocked_items.size())
 
 
 ## _show_unlocked_items_panel()
@@ -5186,7 +5687,8 @@ func _on_items_unlocked(item_ids: Array[String]) -> void:
 ## After all items are acknowledged, advances the round-end queue.
 func _show_unlocked_items_panel() -> void:
 	if not unlocked_item_panel:
-		print("[GameController] UnlockedItemPanel not available - skipping")
+		if _debug_enabled:
+			print("[GameController] UnlockedItemPanel not available - skipping")
 		_pending_unlocked_items.clear()
 		_process_round_end_queue()
 		return
@@ -5205,7 +5707,8 @@ func _show_unlocked_items_panel() -> void:
 ## Called when player has acknowledged all unlocked items.
 ## Advances the round-end queue if active; falls back for non-queue callers.
 func _on_all_unlocks_acknowledged() -> void:
-	print("[GameController] All unlocked items acknowledged")
+	if _debug_enabled:
+		print("[GameController] All unlocked items acknowledged")
 	
 	if _is_processing_round_end:
 		_process_round_end_queue()
@@ -5229,7 +5732,8 @@ func _show_unlocked_items_before_game_over(game_over_data: Dictionary) -> void:
 	_pending_game_over_data = game_over_data
 	
 	if not unlocked_item_panel:
-		print("[GameController] UnlockedItemPanel not available - showing game over directly")
+		if _debug_enabled:
+			print("[GameController] UnlockedItemPanel not available - showing game over directly")
 		_pending_unlocked_items.clear()
 		_show_game_over_popup(game_over_data["final_score"], game_over_data["target_score"], game_over_data["challenge_completed"])
 		return
@@ -5248,7 +5752,8 @@ func _show_unlocked_items_before_game_over(game_over_data: Dictionary) -> void:
 ## Called when player has acknowledged all unlocked items before game over.
 ## Now shows the game over popup.
 func _on_unlocks_acknowledged_then_game_over() -> void:
-	print("[GameController] All unlocked items acknowledged - showing game over")
+	if _debug_enabled:
+		print("[GameController] All unlocked items acknowledged - showing game over")
 	_show_game_over_popup(_pending_game_over_data["final_score"], _pending_game_over_data["target_score"], _pending_game_over_data["challenge_completed"])
 	_pending_game_over_data = {}
 
@@ -5258,7 +5763,8 @@ func _on_unlocks_acknowledged_then_game_over() -> void:
 ## Shows the unlock panel after channel win, before advancing to next channel.
 func _show_unlocked_items_before_next_channel() -> void:
 	if not unlocked_item_panel:
-		print("[GameController] UnlockedItemPanel not available - proceeding to next channel")
+		if _debug_enabled:
+			print("[GameController] UnlockedItemPanel not available - proceeding to next channel")
 		_pending_unlocked_items.clear()
 		_proceed_to_next_channel()
 		return
@@ -5277,7 +5783,8 @@ func _show_unlocked_items_before_next_channel() -> void:
 ## Called when player has acknowledged all unlocked items after channel win.
 ## Now shows the carry-over panel before proceeding.
 func _on_unlocks_acknowledged_then_next_channel() -> void:
-	print("[GameController] All unlocked items acknowledged - showing carry-over panel")
+	if _debug_enabled:
+		print("[GameController] All unlocked items acknowledged - showing carry-over panel")
 	_show_carry_over_panel()
 
 
@@ -5287,7 +5794,8 @@ func _on_unlocks_acknowledged_then_next_channel() -> void:
 ## If no CarryOverPanel node is available, proceeds directly.
 func _show_carry_over_panel() -> void:
 	if not carry_over_panel or not channel_manager:
-		print("[GameController] No carry-over panel or channel manager - proceeding directly")
+		if _debug_enabled:
+			print("[GameController] No carry-over panel or channel manager - proceeding directly")
 		_proceed_to_next_channel_with_carryovers([])
 		return
 	
@@ -5295,7 +5803,8 @@ func _show_carry_over_panel() -> void:
 	var count = channel_manager.get_allowed_carryover_count(next_channel)
 	var types = channel_manager.get_allowed_carryover_types(next_channel)
 	
-	print("[GameController] Showing carry-over panel for Channel %d: count=%d, types=%s" % [next_channel, count, str(types)])
+	if _debug_enabled:
+		print("[GameController] Showing carry-over panel for Channel %d: count=%d, types=%s" % [next_channel, count, str(types)])
 	carry_over_panel.show_panel(count, types, next_channel)
 
 
@@ -5304,7 +5813,8 @@ func _show_carry_over_panel() -> void:
 ## Handles the player's carry-over selections and proceeds to the next channel.
 ## Items NOT in selected_types will be reset.
 func _on_carryover_confirmed(selected_types: Array[String]) -> void:
-	print("[GameController] Carry-over confirmed: %s" % str(selected_types))
+	if _debug_enabled:
+		print("[GameController] Carry-over confirmed: %s" % str(selected_types))
 	_proceed_to_next_channel_with_carryovers(selected_types)
 
 
@@ -5315,7 +5825,8 @@ func _on_carryover_confirmed(selected_types: Array[String]) -> void:
 func _proceed_to_next_channel_with_carryovers(selected_types: Array[String]) -> void:
 	if channel_manager:
 		channel_manager.advance_to_next_channel()
-		print("[GameController] Advanced to Channel", channel_manager.current_channel)
+		if _debug_enabled:
+			print("[GameController] Advanced to Channel", channel_manager.current_channel)
 		# Mom's World: log the new zone (cast state persists across zones)
 		if cast_manager:
 			cast_manager.record_zone_visit(channel_manager.get_channel_config(channel_manager.current_channel), self)
@@ -5324,7 +5835,8 @@ func _proceed_to_next_channel_with_carryovers(selected_types: Array[String]) -> 
 	var stats = get_node_or_null("/root/Statistics")
 	if stats:
 		stats.start_new_zone()
-		print("[GameController] Zone statistics reset for new zone")
+		if _debug_enabled:
+			print("[GameController] Zone statistics reset for new zone")
 	
 	_apply_channel_background()
 	
@@ -5339,7 +5851,8 @@ func _proceed_to_next_channel_with_carryovers(selected_types: Array[String]) -> 
 func _proceed_to_next_channel() -> void:
 	if channel_manager:
 		channel_manager.advance_to_next_channel()
-		print("[GameController] Advanced to Channel", channel_manager.current_channel)
+		if _debug_enabled:
+			print("[GameController] Advanced to Channel", channel_manager.current_channel)
 		# Mom's World: log the new zone (cast state persists across zones)
 		if cast_manager:
 			cast_manager.record_zone_visit(channel_manager.get_channel_config(channel_manager.current_channel), self)
@@ -5387,7 +5900,8 @@ func _on_chore_selection_requested() -> void:
 		return
 
 	if _defer_chore_selection_until_round_start:
-		print("[GameController] Chore selection deferred - waiting for round intro")
+		if _debug_enabled:
+			print("[GameController] Chore selection deferred - waiting for round intro")
 		_pending_chore_selection = true
 		return
 	
@@ -5405,12 +5919,14 @@ func _resolve_chore_selection_request() -> void:
 	# If a challenge was just completed, skip chore selection entirely —
 	# a new chore will be requested at the next round start instead.
 	if round_manager and round_manager.is_challenge_completed:
-		print("[GameController] Chore selection skipped - challenge completed, new chore at next round start")
+		if _debug_enabled:
+			print("[GameController] Chore selection skipped - challenge completed, new chore at next round start")
 		return
 	
 	# If the whole game (channel) just completed, skip as well.
 	if scorecard and scorecard.is_game_complete():
-		print("[GameController] Chore selection skipped - game completed")
+		if _debug_enabled:
+			print("[GameController] Chore selection skipped - game completed")
 		return
 	
 	_show_chore_selection_popup()
@@ -5431,10 +5947,12 @@ func _show_chore_selection_popup() -> void:
 	
 	# Guard against double-show (request may also be re-queued at round start)
 	if _chore_selection_popup and is_instance_valid(_chore_selection_popup) and _chore_selection_popup.visible:
-		print("[GameController] Chore selection popup already visible - skipping")
+		if _debug_enabled:
+			print("[GameController] Chore selection popup already visible - skipping")
 		return
 	
-	print("[GameController] Showing chore selection popup")
+	if _debug_enabled:
+		print("[GameController] Showing chore selection popup")
 	_pending_chore_selection = false
 	
 	# Create popup if not already existing
@@ -5465,7 +5983,8 @@ func _show_chore_selection_popup() -> void:
 func _on_chore_popup_selection_made(is_hard: bool) -> void:
 	if chores_manager:
 		chores_manager.accept_chore_selection(is_hard)
-		print("[GameController] Chore selection forwarded: %s" % ("HARD" if is_hard else "EASY"))
+		if _debug_enabled:
+			print("[GameController] Chore selection forwarded: %s" % ("HARD" if is_hard else "EASY"))
 	# Queue advances via _on_chore_popup_dismissed() when popup fully closes
 
 
@@ -5474,7 +5993,8 @@ func _on_chore_popup_selection_made(is_hard: bool) -> void:
 ## Called after ChoreSelectionPopup has fully animated out and cleaned up.
 ## Advances the round-end queue if active, or cleans up the CanvasLayer wrapper.
 func _on_chore_popup_dismissed() -> void:
-	print("[GameController] Chore popup fully dismissed")
+	if _debug_enabled:
+		print("[GameController] Chore popup fully dismissed")
 	
 	# Clean up CanvasLayer wrapper
 	if _chore_selection_popup_layer and is_instance_valid(_chore_selection_popup_layer):
@@ -5495,7 +6015,8 @@ func _on_chore_popup_dismissed() -> void:
 ## Severity comes from Mom's mood + grudge + escalation; the dialog tree
 ## (visit_reward or visit_punishment) decides what actually happens.
 func _on_mom_triggered() -> void:
-	print("[GameController] Mom triggered (meter full)!")
+	if _debug_enabled:
+		print("[GameController] Mom triggered (meter full)!")
 
 	var severity := 1
 	var tree_id := "visit_punishment"
@@ -5511,8 +6032,9 @@ func _on_mom_triggered() -> void:
 		elif tree_id == "visit_punishment" and MomLogicHandlerScript.should_silent_treatment(severity):
 			# Silent treatment: rare replacement for low-severity visits
 			tree_id = "visit_silent_treatment"
-		print("[GameController] Mom mood: %d/10, severity: %d, tree: %s" % [
-			chores_manager.mom_mood, severity, tree_id])
+		if _debug_enabled:
+			print("[GameController] Mom mood: %d/10, severity: %d, tree: %s" % [
+				chores_manager.mom_mood, severity, tree_id])
 
 	await _run_mom_dialog_session(tree_id, severity, true)
 
@@ -5528,7 +6050,8 @@ func _on_mom_triggered() -> void:
 ## a stale flag and show a Mom dialog on the round-winning score (same
 ## stale-flag hazard as _on_chore_selection_requested).
 func _on_mom_checkin() -> void:
-	print("[GameController] Mom check-in!")
+	if _debug_enabled:
+		print("[GameController] Mom check-in!")
 	call_deferred("_resolve_mom_checkin")
 
 
@@ -5543,12 +6066,14 @@ func _resolve_mom_checkin() -> void:
 	# If a challenge was just completed, skip the check-in entirely.
 	# Mom never visits between rounds - the round simply gets no check-in.
 	if round_manager and round_manager.is_challenge_completed:
-		print("[GameController] Mom check-in skipped - challenge completed")
+		if _debug_enabled:
+			print("[GameController] Mom check-in skipped - challenge completed")
 		return
 
 	# If the whole game (channel) just completed, skip as well.
 	if scorecard and scorecard.is_game_complete():
-		print("[GameController] Mom check-in skipped - game completed")
+		if _debug_enabled:
+			print("[GameController] Mom check-in skipped - game completed")
 		return
 
 	var tree_id := "checkin_neutral"
@@ -5567,7 +6092,8 @@ func _resolve_mom_checkin() -> void:
 		else:
 			tree_id = MomLogicHandlerScript.get_checkin_tree_id(self, chores_manager.mom_mood)
 	severity = MomLogicHandlerScript.get_checkin_severity(tree_id)
-	print("[GameController] Check-in tree: %s (severity %d)" % [tree_id, severity])
+	if _debug_enabled:
+		print("[GameController] Check-in tree: %s (severity %d)" % [tree_id, severity])
 	await _run_mom_dialog_session(tree_id, severity, false, context)
 
 
@@ -5806,7 +6332,8 @@ func _check_lock_dice_chore() -> void:
 	
 	var locked_count = _count_locked_dice()
 	if locked_count > 0:
-		print("[GameController] [DEPRECATED] Checking legacy lock dice chore: %d dice locked" % locked_count)
+		if _debug_enabled:
+			print("[GameController] [DEPRECATED] Checking legacy lock dice chore: %d dice locked" % locked_count)
 		var context = {
 			"locked_count": locked_count,
 			"lock_constraint_tracker": _active_lock_tracker,
@@ -5821,7 +6348,8 @@ func _check_lock_dice_chore() -> void:
 ## after a temporary Mom cosmetic lock.
 ## Called at the shop transition and again at the start of a new round.
 func _clear_grounded_debuffs() -> void:
-	print("[GameController] Clearing grounded debuffs: %s" % [_grounded_debuffs])
+	if _debug_enabled:
+		print("[GameController] Clearing grounded debuffs: %s" % [_grounded_debuffs])
 	for debuff_id in _grounded_debuffs:
 		disable_debuff(debuff_id)
 	_grounded_debuffs.clear()
@@ -5834,12 +6362,14 @@ func _clear_grounded_debuffs() -> void:
 				if is_instance_valid(rebellion):
 					_last_completed_round_rebellion_stacks = maxi(int(rebellion.intensity), 1)
 			disable_debuff(buff_id)
-			print("[GameController] %s expired at round end" % buff_id)
+			if _debug_enabled:
+				print("[GameController] %s expired at round end" % buff_id)
 
 	if _mom_cosmetics_locked:
 		_mom_cosmetics_locked = false
 		DiceColorManager.set_colors_enabled(true)
-		print("[GameController] Mom's cosmetic lock expired - dice colors restored")
+		if _debug_enabled:
+			print("[GameController] Mom's cosmetic lock expired - dice colors restored")
 
 
 ## get_last_completed_round_rebellion_stacks() -> int
@@ -6106,7 +6636,8 @@ func get_save_state() -> Dictionary:
 ## Restores the entire game state from a saved dictionary.
 ## Called by _ready() when continuing a saved game.
 func load_game_state(save_data: Dictionary) -> void:
-	print("[GameController] Loading saved game state...")
+	if _debug_enabled:
+		print("[GameController] Loading saved game state...")
 	
 	# 1. Clear all existing runtime instances
 	_clear_all_power_ups()
@@ -6264,7 +6795,8 @@ func load_game_state(save_data: Dictionary) -> void:
 	# Update consumable usability
 	update_consumable_usability()
 	
-	print("[GameController] Saved game state loaded successfully!")
+	if _debug_enabled:
+		print("[GameController] Saved game state loaded successfully!")
 
 
 ## _clear_active_gaming_console()
@@ -6278,7 +6810,8 @@ func _clear_active_gaming_console() -> void:
 	active_gaming_console.clear()
 	if gaming_console_ui and gaming_console_ui.has_method("hide_console"):
 		gaming_console_ui.hide_console()
-	print("[GameController] Cleared gaming console")
+	if _debug_enabled:
+		print("[GameController] Cleared gaming console")
 
 
 ## _on_next_round_pressed() -> void
@@ -6287,7 +6820,8 @@ func _clear_active_gaming_console() -> void:
 ## (TV turn-on, New Round Panel, Scorecard entrance) before actually starting
 ## the round. Chore selection is shown after Turn 1 and challenge reveal.
 func _on_next_round_pressed() -> void:
-	print("[GameController] Next Round pressed - starting intro sequence")
+	if _debug_enabled:
+		print("[GameController] Next Round pressed - starting intro sequence")
 	
 	var current_round_num = round_manager.get_current_round_number() if round_manager else 1
 	var _roll_ui = get_tree().get_first_node_in_group("roll_button_ui")
@@ -6323,7 +6857,8 @@ func _continue_round_start() -> void:
 	var is_first_round = _pending_is_first_round
 	_pending_round_num = -1
 	
-	print("[GameController] Continuing round start for round %d" % round_num)
+	if _debug_enabled:
+		print("[GameController] Continuing round start for round %d" % round_num)
 	
 	# TV Turn On (triggered after Let's Play)
 	if crt_manager:
@@ -6372,7 +6907,8 @@ func _show_new_round_panel(round_num: int) -> void:
 ##
 ## Callback when the player clicks Let's Play on the New Round Panel.
 func _on_new_round_panel_dismissed() -> void:
-	print("[GameController] New Round Panel dismissed")
+	if _debug_enabled:
+		print("[GameController] New Round Panel dismissed")
 	_continue_round_start()
 
 
@@ -6402,7 +6938,7 @@ func _build_round_panel_data(round_num: int) -> Dictionary:
 	# saves lack the stored keys, so fall back to drawing fresh from the
 	# round config when they are absent.
 	_pending_round_debuff_ids.clear()
-	if debuff_manager:
+	if debuff_manager and not debuff_manager.has_immunity_next_round():
 		var preview_ids: Array[String] = []
 		var stored = _get_preselected_round_debuffs(round_num)
 		if not stored.is_empty():
@@ -6493,7 +7029,8 @@ func _setup_mall_map_popup(vcr_tracker) -> void:
 	if vcr_tracker.has_signal("mall_map_requested"):
 		if not vcr_tracker.mall_map_requested.is_connected(_on_mall_map_requested):
 			vcr_tracker.mall_map_requested.connect(_on_mall_map_requested)
-			print("[GameController] Mall map popup wired to VCR tracker")
+			if _debug_enabled:
+				print("[GameController] Mall map popup wired to VCR tracker")
 
 
 ## _on_mall_map_requested() -> void

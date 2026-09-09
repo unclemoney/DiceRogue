@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://6dsjdndlmdyu"]
+
+[ext_resource type="Texture2D" uid="uid://dg6pm7i6if501" path="res://Resources/Art/Consumables/Sunday_Coupon_Sheet_5x5_Generic.png" id="1_icon"]
+[ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
+[ext_resource type="PackedScene" uid="uid://b0766516chbum" path="res://Scenes/PowerUp/ExtremeCouponingPowerUp.tscn" id="2_scene"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_coupon"]
+atlas = ExtResource("1_icon")
+region = Rect2(48, 439, 387, 375)
+
+[resource]
+script = ExtResource("1_powerup_data")
+id = "extreme_couponing"
+display_name = "Extreme Couponing"
+description = "+5 score per consumable granted this run. Stacks all game!"
+icon = SubResource("AtlasTexture_coupon")
+scene = ExtResource("2_scene")
+price = 140
+rarity = "uncommon"
+rating = "PG"
+metadata/_custom_type_script = "uid://b4upm4dbvhukm"

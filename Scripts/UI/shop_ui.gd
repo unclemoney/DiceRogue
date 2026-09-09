@@ -40,6 +40,8 @@ const REROLL_SHADER_PATH := "res://Scripts/Shaders/shop_reroll_button_glass.gdsh
 var _managers_ready := 0
 const REQUIRED_MANAGERS := 3
 
+var _debug_enabled: bool = OS.is_debug_build()
+
 # Title animation
 const TITLE_FLOAT_AMOUNT := 8.0
 
@@ -101,11 +103,18 @@ const COLORED_DICE_TAB_NAME := "Colors"
 const GAMING_CONSOLE_TAB_NAME := "VIPCards"
 const SHOP_TAB_TITLES := ["POGS", "COUPONS", "MODS", "COLORS", "VIP CARDS", "LOCKED", "UNLOCKED"]
 
+## set_debug_enabled(enabled: bool)
+##
+## Toggles verbose debug logging for this script.
+func set_debug_enabled(enabled: bool) -> void:
+	_debug_enabled = enabled
+
 func _ready() -> void:
-	print("[ShopUI] Initializing...")
-	print("PowerUpManager path:", power_up_manager_path)
-	print("ConsumableManager path:", consumable_manager_path)
-	print("ModManager path:", mod_manager_path)
+	if _debug_enabled:
+		print("[ShopUI] Initializing...")
+		print("PowerUpManager path:", power_up_manager_path)
+		print("ConsumableManager path:", consumable_manager_path)
+		print("ModManager path:", mod_manager_path)
 	
 	# Set z_index so shop is above base UI but below fan-outs and pause menu
 	z_index = 100
@@ -134,10 +143,12 @@ func _ready() -> void:
 	_configure_mouse_input()
 
 	if not colored_dice_container:
-		print("[ShopUI] ColoredDiceContainer not found - creating programmatically")
+		if _debug_enabled:
+			print("[ShopUI] ColoredDiceContainer not found - creating programmatically")
 		_create_colors_tab()
 	if not gaming_console_container:
-		print("[ShopUI] VIPCardsContainer not found - creating programmatically")
+		if _debug_enabled:
+			print("[ShopUI] VIPCardsContainer not found - creating programmatically")
 		_create_vip_cards_tab()
 	if not power_up_manager:
 		push_error("[ShopUI] PowerUpManager not found at path:", power_up_manager_path)
@@ -236,10 +247,12 @@ func _start_title_animation() -> void:
 
 func _on_manager_ready() -> void:
 	_managers_ready += 1
-	print("[ShopUI] Manager ready. Waiting for", REQUIRED_MANAGERS - _managers_ready, "more")
+	if _debug_enabled:
+		print("[ShopUI] Manager ready. Waiting for", REQUIRED_MANAGERS - _managers_ready, "more")
 	
 	if _managers_ready == REQUIRED_MANAGERS:
-		print("[ShopUI] All managers ready - populating shop")
+		if _debug_enabled:
+			print("[ShopUI] All managers ready - populating shop")
 		_populate_shop_items()
 		populate_locked_items()
 		populate_unlocked_items()
@@ -249,9 +262,11 @@ func _on_manager_ready() -> void:
 ## Called when GamingConsoleManager finishes loading definitions.
 ## If the other managers are already ready, repopulate to include consoles.
 func _on_gaming_console_manager_ready() -> void:
-	print("[ShopUI] GamingConsoleManager ready")
+	if _debug_enabled:
+		print("[ShopUI] GamingConsoleManager ready")
 	if _managers_ready >= REQUIRED_MANAGERS:
-		print("[ShopUI] Other managers already ready - repopulating to include consoles")
+		if _debug_enabled:
+			print("[ShopUI] Other managers already ready - repopulating to include consoles")
 		_populate_shop_items()
 		populate_locked_items()
 		populate_unlocked_items()
@@ -260,14 +275,16 @@ func _on_gaming_console_manager_ready() -> void:
 ##
 ## Called when progress is updated (items unlocked/locked) to refresh shop display
 func _on_progress_changed() -> void:
-	print("[ShopUI] Progress changed - refreshing shop")
+	if _debug_enabled:
+		print("[ShopUI] Progress changed - refreshing shop")
 	if _managers_ready == REQUIRED_MANAGERS:
 		_populate_shop_items()
 		populate_locked_items()
 		populate_unlocked_items()
 
 func _populate_shop_items() -> void:
-	print("\n=== Populating Shop Items ===")
+	if _debug_enabled:
+		print("\n=== Populating Shop Items ===")
 	
 	# Clear existing containers
 	_clear_shop_containers()
@@ -322,8 +339,9 @@ func _filter_by_rep_tier(items: Array) -> Array:
 		else:
 			result.append(id)
 	if not hidden.is_empty():
-		print("[ShopUI] Rep tier %d (%s) hides %d POGs: %s" % [
-			max_rank, pm.get_rep_tier_name(), hidden.size(), hidden])
+		if _debug_enabled:
+			print("[ShopUI] Rep tier %d (%s) hides %d POGs: %s" % [
+				max_rank, pm.get_rep_tier_name(), hidden.size(), hidden])
 	return result
 
 
@@ -409,7 +427,8 @@ func _filter_by_dice_set(items: Array) -> Array:
 		if data and data.is_available_for_dice_sides(current_sides):
 			result.append(id)
 		elif data:
-			print("[ShopUI] Filtering out %s: not available for d%d dice set" % [id, current_sides])
+			if _debug_enabled:
+				print("[ShopUI] Filtering out %s: not available for d%d dice set" % [id, current_sides])
 	return result
 
 func _build_mod_pool() -> Array:
@@ -506,7 +525,8 @@ func _select_weighted_power_ups(power_up_ids: Array, count: int) -> Array:
 	var available_items = []
 	
 	# Build weighted array with debugging
-	print("\n[ShopUI] Building weighted power-up selection:")
+	if _debug_enabled:
+		print("\n[ShopUI] Building weighted power-up selection:")
 	for id in power_up_ids:
 		var data = power_up_manager.get_def(id)
 		if data and data is PowerUpData:
@@ -515,7 +535,8 @@ func _select_weighted_power_ups(power_up_ids: Array, count: int) -> Array:
 			if _is_mom_approved_mode() and PowerUpData.rating_rank(data.rating) == 0:
 				weight = roundi(weight * MOM_APPROVED_WEIGHT_MULT)
 			var rarity_char = PowerUpData.get_rarity_display_char(data.rarity)
-			print("  - %s (%s): %s%% chance" % [data.display_name, rarity_char, str(weight)])
+			if _debug_enabled:
+				print("  - %s (%s): %s%% chance" % [data.display_name, rarity_char, str(weight)])
 			
 			# Add this item multiple times based on its weight
 			for i in range(weight):
@@ -526,7 +547,8 @@ func _select_weighted_power_ups(power_up_ids: Array, count: int) -> Array:
 	var items_to_take = min(count, power_up_ids.size())  # Don't exceed available unique items
 	var selected_unique = {}
 	
-	print("[ShopUI] Selecting %d power-ups from weighted pool of %d entries" % [items_to_take, available_items.size()])
+	if _debug_enabled:
+		print("[ShopUI] Selecting %d power-ups from weighted pool of %d entries" % [items_to_take, available_items.size()])
 	
 	for i in range(available_items.size()):
 		if result.size() >= items_to_take:
@@ -540,9 +562,11 @@ func _select_weighted_power_ups(power_up_ids: Array, count: int) -> Array:
 			var data = power_up_manager.get_def(item_id)
 			if data:
 				var rarity_char = PowerUpData.get_rarity_display_char(data.rarity)
-				print("  ✓ Selected: %s (%s)" % [data.display_name, rarity_char])
+				if _debug_enabled:
+					print("  ✓ Selected: %s (%s)" % [data.display_name, rarity_char])
 	
-	print("[ShopUI] Final selection: %d power-ups" % result.size())
+		if _debug_enabled:
+			print("[ShopUI] Final selection: %d power-ups" % result.size())
 	return result
 
 # Helper function to clear all shop containers
@@ -727,7 +751,8 @@ func _refresh_page_after_purchase(item_type: String) -> void:
 
 # Add this function to reset purchased items for a new round
 func reset_for_new_round() -> void:
-	print("[ShopUI] Resetting shop for new round")
+	if _debug_enabled:
+		print("[ShopUI] Resetting shop for new round")
 	purchased_items = {
 		"power_up": [],
 		"consumable": [], 
@@ -746,27 +771,32 @@ func _add_shop_item(data: Resource, type: String) -> void:
 		
 	var item = ShopItemScene.instantiate()
 	container.add_child(item)
-	print("[ShopUI] Created shop item instance for:", data.id)
+	if _debug_enabled:
+		print("[ShopUI] Created shop item instance for:", data.id)
 	
 	# Connect the signal before setup
 	item.purchased.connect(
 		func(id: String, itype: String):
-			print("[ShopUI] Purchase signal received from item:", id)
+			if _debug_enabled:
+				print("[ShopUI] Purchase signal received from item:", id)
 			_on_item_purchase_requested(item, id, itype)
 	)
 	
 	item.setup(data, type)
-	print("[ShopUI] Added and connected item:", data.id, "type:", type)
+	if _debug_enabled:
+		print("[ShopUI] Added and connected item:", data.id, "type:", type)
 
 func _on_item_purchase_requested(source_item: ShopItem, item_id: String, item_type: String) -> void:
-	print("[ShopUI] Processing purchase:", item_id, "type:", item_type)
+	if _debug_enabled:
+		print("[ShopUI] Processing purchase:", item_id, "type:", item_type)
 	
 	# Check if it's a power-up and if we're already at max
 	if item_type == "power_up":
 		# Find PowerUpUI to check max status
 		var power_up_ui = _find_power_up_ui()
 		if power_up_ui and power_up_ui.has_max_power_ups():
-			print("[ShopUI] Maximum power-ups reached, purchase blocked")
+			if _debug_enabled:
+				print("[ShopUI] Maximum power-ups reached, purchase blocked")
 			# Could show a notification here
 			return
 	# Check if it's a consumable and if we're already at max
@@ -774,44 +804,53 @@ func _on_item_purchase_requested(source_item: ShopItem, item_id: String, item_ty
 		# Find ConsumableUI to check max status
 		var consumable_ui = _find_consumable_ui()
 		if consumable_ui and consumable_ui.has_max_consumables():
-			print("[ShopUI] Maximum consumables reached, purchase blocked")
+			if _debug_enabled:
+				print("[ShopUI] Maximum consumables reached, purchase blocked")
 			return
 	# Check if it's a mod and if we're already at dice limit
 	elif item_type == "mod":
 		# Find GameController to check mod vs dice count limit
 		var validation_controller = _find_game_controller()
 		if validation_controller and _has_reached_mod_limit(validation_controller):
-			print("[ShopUI] Mod limit reached (all dice have mods), purchase blocked")
+			if _debug_enabled:
+				print("[ShopUI] Mod limit reached (all dice have mods), purchase blocked")
 			return
 		else:
-			print("[ShopUI] Mod purchase allowed - limit not reached")
+			if _debug_enabled:
+				print("[ShopUI] Mod purchase allowed - limit not reached")
 	# Check if it's a colored dice purchase
 	elif item_type == "colored_dice":
 		# Get the colored dice data to determine color type
 		var colored_dice_data = DiceColorManager.get_colored_dice_data(item_id)
 		if not colored_dice_data:
-			print("[ShopUI] Invalid colored dice ID:", item_id)
+			if _debug_enabled:
+				print("[ShopUI] Invalid colored dice ID:", item_id)
 			return
 		
 		# Check if this color type is at max odds (1:1) - no more purchases allowed
 		if DiceColorManager.is_color_at_max_odds(colored_dice_data.color_type):
-			print("[ShopUI] Color type at MAX odds, cannot purchase more:", colored_dice_data.get_color_name())
+			if _debug_enabled:
+				print("[ShopUI] Color type at MAX odds, cannot purchase more:", colored_dice_data.get_color_name())
 			return
 		
-		print("[ShopUI] Colored dice purchase validation passed for:", colored_dice_data.get_color_name())
+		if _debug_enabled:
+			print("[ShopUI] Colored dice purchase validation passed for:", colored_dice_data.get_color_name())
 	# Check if it's a gaming console purchase
 	elif item_type == "gaming_console":
 		# Only one console allowed at a time — check if player already has one
 		var gc = _find_game_controller()
 		if gc and gc.has_method("has_gaming_console"):
 			if gc.has_gaming_console():
-				print("[ShopUI] Player already has a gaming console, purchase blocked")
+				if _debug_enabled:
+					print("[ShopUI] Player already has a gaming console, purchase blocked")
 				return
 	
-	print("[ShopUI] Purchase validation passed, proceeding with purchase")
+	if _debug_enabled:
+		print("[ShopUI] Purchase validation passed, proceeding with purchase")
 	var purchase_price := source_item.price if source_item else 0
 	if purchase_price > 0 and not PlayerEconomy.can_afford(purchase_price):
-		print("[ShopUI] Purchase no longer affordable:", item_id, "cost:", purchase_price)
+		if _debug_enabled:
+			print("[ShopUI] Purchase no longer affordable:", item_id, "cost:", purchase_price)
 		if source_item:
 			source_item.cancel_purchase_request()
 		return
@@ -828,7 +867,8 @@ func _on_item_purchase_requested(source_item: ShopItem, item_id: String, item_ty
 
 	var purchase_applied: bool = purchase_controller.process_shop_purchase(item_id, item_type)
 	if not purchase_applied:
-		print("[ShopUI] Purchase request failed during grant:", item_id, "type:", item_type)
+		if _debug_enabled:
+			print("[ShopUI] Purchase request failed during grant:", item_id, "type:", item_type)
 		if purchase_price > 0:
 			PlayerEconomy.add_money(purchase_price)
 		if source_item:
@@ -838,11 +878,13 @@ func _on_item_purchase_requested(source_item: ShopItem, item_id: String, item_ty
 	# Record that this item was purchased (for statistics)
 	if not purchased_items[item_type].has(item_id):
 		purchased_items[item_type].append(item_id)
-		print("[ShopUI] Added", item_id, "to purchased items list")
+		if _debug_enabled:
+			print("[ShopUI] Added", item_id, "to purchased items list")
 
 	# Grant the purchase immediately. The removal animation runs independently
 	# so a killed tween cannot block the grant (see _remove_shop_item).
-	print("[ShopUI] Emitting item_purchased signal for:", item_id, "type:", item_type)
+	if _debug_enabled:
+		print("[ShopUI] Emitting item_purchased signal for:", item_id, "type:", item_type)
 	emit_signal("item_purchased", item_id, item_type)
 	_remove_item_from_pool(item_id, item_type)
 	if OWNERSHIP_PANEL_TYPES.has(item_type):
@@ -850,7 +892,8 @@ func _on_item_purchase_requested(source_item: ShopItem, item_id: String, item_ty
 
 	# Remove the item from the shop after purchase.
 	# For colored dice: removed this turn, but available again next turn (not tracked in purchased_items for filtering)
-	print("[ShopUI] Removing shop item:", item_id, "type:", item_type)
+	if _debug_enabled:
+		print("[ShopUI] Removing shop item:", item_id, "type:", item_type)
 	_remove_shop_item(item_id, item_type)
 
 ## _remove_shop_item(item_id, item_type)
@@ -870,7 +913,8 @@ func _remove_shop_item(item_id: String, item_type: String) -> void:
 			_animate_purchase_out(child)
 			var refresh_timer := get_tree().create_timer(0.34)
 			refresh_timer.timeout.connect(func(): _refresh_page_after_purchase(item_type))
-			print("[ShopUI] Started removal for shop item:", item_id)
+			if _debug_enabled:
+				print("[ShopUI] Started removal for shop item:", item_id)
 			break
 
 ## _animate_purchase_out(item)
@@ -908,7 +952,8 @@ func _animate_purchase_out(item: ShopItem) -> void:
 	tween.finished.connect(func():
 		var target = weak_item.get_ref()
 		if is_instance_valid(target):
-			print("[ShopUI] Freed shop item:", captured_id)
+			if _debug_enabled:
+				print("[ShopUI] Freed shop item:", captured_id)
 			target.queue_free()
 	)
 
@@ -917,7 +962,8 @@ func _animate_purchase_out(item: ShopItem) -> void:
 	fallback_timer.timeout.connect(func():
 		var target = weak_item.get_ref()
 		if is_instance_valid(target):
-			print("[ShopUI] Fallback free for shop item:", captured_id)
+			if _debug_enabled:
+				print("[ShopUI] Fallback free for shop item:", captured_id)
 			target.queue_free()
 	)
 
@@ -989,7 +1035,8 @@ func _on_close_button_pressed() -> void:
 	var game_controller = _find_game_controller()
 	if game_controller and game_controller.clearance_rack_active:
 		game_controller.clearance_rack_active = false
-		print("[ShopUI] Clearance Rack expired on shop close")
+		if _debug_enabled:
+			print("[ShopUI] Clearance Rack expired on shop close")
 	
 	shop_closed.emit()
 	# Notify tutorial system about shop being closed
@@ -1001,7 +1048,8 @@ func _on_close_button_pressed() -> void:
 ## _setup_reroll_ui()
 ## Prepares the state dictionaries used by the footer reroll shells.
 func _setup_reroll_ui() -> void:
-	print("[ShopUI] Preparing reroll footer state")
+	if _debug_enabled:
+		print("[ShopUI] Preparing reroll footer state")
 	reroll_button = null
 	reroll_cost_label = null
 	_reroll_shells.clear()
@@ -1122,7 +1170,8 @@ func _animate_reroll_cost_bounce() -> void:
 func _on_reroll_button_pressed() -> void:
 	# Check cooldown
 	if reroll_cooldown > 0:
-		print("[ShopUI] Reroll on cooldown")
+		if _debug_enabled:
+			print("[ShopUI] Reroll on cooldown")
 		return
 	
 	# Check if Clearance Rack is active (free rerolls)
@@ -1131,22 +1180,26 @@ func _on_reroll_button_pressed() -> void:
 	
 	# Check if player can afford (skip if free reroll)
 	if not free_reroll and not PlayerEconomy.can_afford(reroll_cost):
-		print("[ShopUI] Cannot afford reroll - cost:", reroll_cost)
+		if _debug_enabled:
+			print("[ShopUI] Cannot afford reroll - cost:", reroll_cost)
 		return
 	
 	# Check current tab
 	var current_tab = tab_container.current_tab if tab_container else -1
 	if current_tab != 0 and current_tab != 1:
-		print("[ShopUI] Reroll not available on this tab")
+		if _debug_enabled:
+			print("[ShopUI] Reroll not available on this tab")
 		return
 	
 	# Deduct money (skip if free reroll)
 	var item_type = "power_up" if current_tab == 0 else "consumable"
 	if free_reroll:
-		print("[ShopUI] Free reroll (Clearance Rack) for %s items" % item_type)
+		if _debug_enabled:
+			print("[ShopUI] Free reroll (Clearance Rack) for %s items" % item_type)
 	else:
 		PlayerEconomy.remove_money(reroll_cost, "reroll_" + item_type)
-		print("[ShopUI] Rerolling %s items for $%d" % [item_type, reroll_cost])
+		if _debug_enabled:
+			print("[ShopUI] Rerolling %s items for $%d" % [item_type, reroll_cost])
 	
 	# Set cooldown
 	reroll_cooldown = REROLL_COOLDOWN_TIME
@@ -1166,7 +1219,8 @@ func _on_reroll_button_pressed() -> void:
 ## _reroll_power_ups()
 ## Clears and repopulates power-up items
 func _reroll_power_ups() -> void:
-	print("[ShopUI] Rerolling power-up items")
+	if _debug_enabled:
+		print("[ShopUI] Rerolling power-up items")
 	
 	var items := _get_shop_items(power_up_container)
 	var last_tween := _animate_items_out(items, Vector2.LEFT)
@@ -1188,7 +1242,8 @@ func _reroll_power_ups() -> void:
 ## _reroll_consumables()
 ## Clears and repopulates consumable items with fly-out / fly-in animation.
 func _reroll_consumables() -> void:
-	print("[ShopUI] Rerolling consumable items")
+	if _debug_enabled:
+		print("[ShopUI] Rerolling consumable items")
 	
 	var items := _get_shop_items(consumable_container)
 	var last_tween := _animate_items_out(items, Vector2.LEFT)
@@ -1253,7 +1308,8 @@ func _update_reroll_button_state() -> void:
 ## _on_tab_changed(tab_index: int)
 ## Called when the shop tab changes - shows/hides reroll button accordingly
 func _on_tab_changed(tab_index: int) -> void:
-	print("[ShopUI] Tab changed to index:", tab_index)
+	if _debug_enabled:
+		print("[ShopUI] Tab changed to index:", tab_index)
 	
 	# Play tab switch sound
 	var audio_mgr = get_node_or_null("/root/AudioManager")
@@ -1284,7 +1340,8 @@ func reset_reroll_cost() -> void:
 	reroll_cooldown = 0
 	_update_reroll_cost_display()
 	_update_reroll_button_state()
-	print("[ShopUI] Reroll cost reset to $%d" % reroll_cost)
+	if _debug_enabled:
+		print("[ShopUI] Reroll cost reset to $%d" % reroll_cost)
 
 
 ## reset_shop_expansions()
@@ -1295,14 +1352,16 @@ func reset_shop_expansions() -> void:
 	consumable_items = DEFAULT_SHOP_ITEMS
 	mod_items = DEFAULT_SHOP_ITEMS
 	colored_dice_items = DEFAULT_SHOP_ITEMS
-	print("[ShopUI] Shop expansions reset to default (2 items per section)")
+	if _debug_enabled:
+		print("[ShopUI] Shop expansions reset to default (2 items per section)")
 
 ## _setup_backdrop()
 ## Sets up the backdrop for click-to-close functionality
 func _setup_backdrop() -> void:
 	if backdrop:
 		backdrop.gui_input.connect(_on_backdrop_gui_input)
-		print("[ShopUI] Backdrop click-to-close connected")
+		if _debug_enabled:
+			print("[ShopUI] Backdrop click-to-close connected")
 
 ## _on_backdrop_gui_input(event: InputEvent)
 ## Handles clicks on the backdrop to close the shop
@@ -1310,7 +1369,8 @@ func _on_backdrop_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mouse_event = event as InputEventMouseButton
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
-			print("[ShopUI] Backdrop clicked - closing shop")
+			if _debug_enabled:
+				print("[ShopUI] Backdrop clicked - closing shop")
 			_on_close_button_pressed()
 
 ## _style_close_button()
@@ -1319,7 +1379,8 @@ func _style_close_button() -> void:
 	if not close_button:
 		return
 	
-	print("[ShopUI] Styling close button")
+	if _debug_enabled:
+		print("[ShopUI] Styling close button")
 	
 	# Set size to match tab height (40px)
 	close_button.custom_minimum_size = Vector2(20, 20)
@@ -1374,19 +1435,24 @@ func _style_close_button() -> void:
 func _get_container_for_type(type: String) -> Node:
 	match type:
 		"power_up": 
-			print("[ShopUI] Getting power-up container")
+			if _debug_enabled:
+				print("[ShopUI] Getting power-up container")
 			return power_up_container
 		"consumable": 
-			print("[ShopUI] Getting consumable container")
+			if _debug_enabled:
+				print("[ShopUI] Getting consumable container")
 			return consumable_container
 		"mod": 
-			print("[ShopUI] Getting mod container")
+			if _debug_enabled:
+				print("[ShopUI] Getting mod container")
 			return mod_container
 		"colored_dice":
-			print("[ShopUI] Getting colored dice container")
+			if _debug_enabled:
+				print("[ShopUI] Getting colored dice container")
 			return colored_dice_container
 		"gaming_console":
-			print("[ShopUI] Getting gaming console container")
+			if _debug_enabled:
+				print("[ShopUI] Getting gaming console container")
 			return gaming_console_container
 		_:
 			push_error("[ShopUI] Unknown item type:", type)
@@ -1456,12 +1522,14 @@ func increase_power_up_items(amount: int) -> void:
 	power_up_items = clampi(power_up_items + amount, DEFAULT_SHOP_ITEMS, MAX_POWER_UP_ITEMS)
 	var added_count := power_up_items - previous_count
 	if added_count <= 0:
-		print("[ShopUI] Power-up items already at cap:", MAX_POWER_UP_ITEMS)
+		if _debug_enabled:
+			print("[ShopUI] Power-up items already at cap:", MAX_POWER_UP_ITEMS)
 		if _managers_ready == REQUIRED_MANAGERS:
 			_render_current_page("power_up")
 			_update_footer_state("power_up")
 		return
-	print("[ShopUI] Increased power-up items by", added_count, "- new value:", power_up_items)
+	if _debug_enabled:
+		print("[ShopUI] Increased power-up items by", added_count, "- new value:", power_up_items)
 	if _managers_ready == REQUIRED_MANAGERS:
 		# Refresh the shop to show the expanded PowerUp pool and footer pagination.
 		_populate_shop_items()
@@ -1470,19 +1538,22 @@ func increase_power_up_items(amount: int) -> void:
 # Add method to increase consumable items (for future use)
 func increase_consumable_items(amount: int) -> void:
 	consumable_items += amount
-	print("[ShopUI] Increased consumable items by", amount, "- new value:", consumable_items)
+	if _debug_enabled:
+		print("[ShopUI] Increased consumable items by", amount, "- new value:", consumable_items)
 	_populate_shop_items()
 
 # Add method to increase mod items (for future use)  
 func increase_mod_items(amount: int) -> void:
 	mod_items += amount
-	print("[ShopUI] Increased mod items by", amount, "- new value:", mod_items)
+	if _debug_enabled:
+		print("[ShopUI] Increased mod items by", amount, "- new value:", mod_items)
 	_populate_shop_items()
 
 # Add method to increase colored dice items
 func increase_colored_dice_items(amount: int) -> void:
 	colored_dice_items += amount
-	print("[ShopUI] Increased colored dice items by", amount, "- new value:", colored_dice_items)
+	if _debug_enabled:
+		print("[ShopUI] Increased colored dice items by", amount, "- new value:", colored_dice_items)
 	_populate_shop_items()
 
 # Keep old method for backward compatibility but mark as deprecated
@@ -1492,17 +1563,20 @@ func increase_items_per_section(amount: int) -> void:
 	consumable_items = items_per_section
 	mod_items = items_per_section
 	colored_dice_items = items_per_section
-	print("[ShopUI] [DEPRECATED] Increased all section items by", amount)
+	if _debug_enabled:
+		print("[ShopUI] [DEPRECATED] Increased all section items by", amount)
 	_populate_shop_items()
 
 ## _style_tab_container()
 ## Applies VCR font and larger styling to the shop tabs
 func _style_tab_container() -> void:
 	if not tab_container:
-		print("[ShopUI] TabContainer not found, skipping styling")
+		if _debug_enabled:
+			print("[ShopUI] TabContainer not found, skipping styling")
 		return
 	
-	print("[ShopUI] Applying VCR font and styling to shop tabs")
+	if _debug_enabled:
+		print("[ShopUI] Applying VCR font and styling to shop tabs")
 	
 	# Load VCR font
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
@@ -1523,12 +1597,14 @@ func _style_tab_container() -> void:
 	# Apply better background styling
 	_style_shop_background()
 	
-	print("[ShopUI] Tab container styling applied")
+	if _debug_enabled:
+		print("[ShopUI] Tab container styling applied")
 
 ## _style_grid_containers()
 ## Improves the layout and centering of shop item grids
 func _style_grid_containers() -> void:
-	print("[ShopUI] Styling containers for better centered layout")
+	if _debug_enabled:
+		print("[ShopUI] Styling containers for better centered layout")
 	
 	# First try programmatic approach - replace grid containers with centered layout
 	_replace_grid_with_centered_layout()
@@ -1551,14 +1627,16 @@ func _style_grid_containers() -> void:
 			container.add_theme_constant_override("h_separation", 30)
 			container.add_theme_constant_override("v_separation", 25)
 			
-			print("[ShopUI] Styled grid container:", container.name)
+			if _debug_enabled:
+				print("[ShopUI] Styled grid container:", container.name)
 
 ## _replace_grid_with_centered_layout()
 ## Replaces GridContainers with centered VBox/HBox layout for better positioning
 ## Items will remain centered regardless of how many items are in the shop
 ## Also adds shelf background and reroll UI to PowerUps and Consumables tabs
 func _replace_grid_with_centered_layout() -> void:
-	print("[ShopUI] Attempting to improve container layout for centering")
+	if _debug_enabled:
+		print("[ShopUI] Attempting to improve container layout for centering")
 	
 	var tab_nodes = [
 		tab_container.get_node_or_null(POWER_UP_TAB_NAME),
@@ -1579,7 +1657,8 @@ func _replace_grid_with_centered_layout() -> void:
 		if not grid:
 			continue
 		
-		print("[ShopUI] Creating centered layout for tab:", tab_node.name)
+		if _debug_enabled:
+			print("[ShopUI] Creating centered layout for tab:", tab_node.name)
 		
 		# For PowerUps, Consumables, and Consoles tabs, add shelf background
 		var is_reroll_tab = tab_node.name == POWER_UP_TAB_NAME or tab_node.name == CONSUMABLE_TAB_NAME
@@ -1649,7 +1728,8 @@ func _replace_grid_with_centered_layout() -> void:
 		if OWNERSHIP_PANEL_TYPES.has(item_type):
 			_refresh_ownership_panel(item_type)
 		
-		print("[ShopUI] Created centered layout for:", tab_node.name)
+		if _debug_enabled:
+			print("[ShopUI] Created centered layout for:", tab_node.name)
 
 func _create_tab_content_layout(item_type: String, item_container: HBoxContainer) -> Control:
 	if OWNERSHIP_PANEL_TYPES.has(item_type):
@@ -1776,7 +1856,8 @@ func _sort_ownership_rows(rows: Array) -> void:
 ## _add_shelf_background_to_tab(tab_node)
 ## Adds the Blockbuster shelf background to a tab
 func _add_shelf_background_to_tab(tab_node: Control) -> void:
-	print("[ShopUI] Adding shelf background to tab:", tab_node.name)
+	if _debug_enabled:
+		print("[ShopUI] Adding shelf background to tab:", tab_node.name)
 	
 	# Create a TextureRect for the shelf background
 	var shelf_bg = TextureRect.new()
@@ -1797,14 +1878,17 @@ func _add_shelf_background_to_tab(tab_node: Control) -> void:
 		tab_node.add_child(shelf_bg)
 		tab_node.move_child(shelf_bg, 0)
 		
-		print("[ShopUI] Shelf background added to:", tab_node.name)
+		if _debug_enabled:
+			print("[ShopUI] Shelf background added to:", tab_node.name)
 	else:
-		print("[ShopUI] WARNING: Could not load shelf texture")
+		if _debug_enabled:
+			print("[ShopUI] WARNING: Could not load shelf texture")
 
 ## _add_footer_ui_to_tab(tab_node, item_type)
 ## Adds the bottom footer row with pagination arrows and reroll shell when applicable.
 func _add_footer_ui_to_tab(tab_node: Control, item_type: String) -> void:
-	print("[ShopUI] Adding footer UI to tab:", tab_node.name)
+	if _debug_enabled:
+		print("[ShopUI] Adding footer UI to tab:", tab_node.name)
 	var footer_container = MarginContainer.new()
 	footer_container.name = "Footer_" + tab_node.name
 	footer_container.anchor_left = 0.0
@@ -2010,7 +2094,8 @@ func _flash_reroll_shader(item_type: String, flash_strength: float) -> void:
 ## _style_shop_background()
 ## Applies an improved background to the shop UI
 func _style_shop_background() -> void:
-	print("[ShopUI] Applying improved shop background styling")
+	if _debug_enabled:
+		print("[ShopUI] Applying improved shop background styling")
 	
 	# Apply background styling to the main shop control
 	var style_box = StyleBoxFlat.new()
@@ -2056,16 +2141,19 @@ func _style_shop_background() -> void:
 		tab_style.corner_radius_bottom_left = 8
 		tab_container.add_theme_stylebox_override("panel", tab_style)
 	
-	print("[ShopUI] Shop background styling applied")
+	if _debug_enabled:
+		print("[ShopUI] Shop background styling applied")
 
 ## _style_shop_title()
 ## Styles the shop title with BRICK_SANS font (no BBCode or rainbow colors)
 func _style_shop_title() -> void:
 	if not shop_label:
-		print("[ShopUI] Shop label not found, skipping title styling")
+		if _debug_enabled:
+			print("[ShopUI] Shop label not found, skipping title styling")
 		return
 	
-	print("[ShopUI] Styling shop title")
+	if _debug_enabled:
+		print("[ShopUI] Styling shop title")
 	
 	# Configure basic properties
 	shop_label.bbcode_enabled = false  # No BBCode needed
@@ -2090,7 +2178,8 @@ func _style_shop_title() -> void:
 	# Set title text (includes the current mall zone name)
 	_update_shop_title_text()
 	
-	print("[ShopUI] Shop title styling applied")
+	if _debug_enabled:
+		print("[ShopUI] Shop title styling applied")
 
 ## _update_shop_title_text()
 ## Sets the shop title to "SHOP - <MALL ZONE>" using the ChannelManager
@@ -2123,7 +2212,8 @@ func _update_shop_title_text() -> void:
 ## _create_colors_tab()
 ## Creates the COLORS tab programmatically if it doesn't exist in the scene
 func _create_colors_tab() -> void:
-	print("[ShopUI] Creating COLORS tab programmatically")
+	if _debug_enabled:
+		print("[ShopUI] Creating COLORS tab programmatically")
 	
 	if not tab_container:
 		push_error("[ShopUI] TabContainer not found - cannot create COLORS tab")
@@ -2144,12 +2234,14 @@ func _create_colors_tab() -> void:
 	colored_dice_container = grid_container
 	_apply_shop_tab_titles()
 	
-	print("[ShopUI] COLORS tab created successfully")
+	if _debug_enabled:
+		print("[ShopUI] COLORS tab created successfully")
 
 ## _create_vip_cards_tab()
 ## Creates the VIP CARDS tab programmatically if it doesn't exist in the scene
 func _create_vip_cards_tab() -> void:
-	print("[ShopUI] Creating VIP CARDS tab programmatically")
+	if _debug_enabled:
+		print("[ShopUI] Creating VIP CARDS tab programmatically")
 	
 	if not tab_container:
 		push_error("[ShopUI] TabContainer not found - cannot create VIP CARDS tab")
@@ -2170,32 +2262,38 @@ func _create_vip_cards_tab() -> void:
 	gaming_console_container = grid_container
 	_apply_shop_tab_titles()
 	
-	print("[ShopUI] VIP CARDS tab created successfully")
+	if _debug_enabled:
+		print("[ShopUI] VIP CARDS tab created successfully")
 
 ## _configure_mouse_input()
 ## Configures mouse input filters to prevent background elements from blocking shop items
 func _configure_mouse_input() -> void:
-	print("[ShopUI] Configuring mouse input for background elements...")
+	if _debug_enabled:
+		print("[ShopUI] Configuring mouse input for background elements...")
 	
 	# Find and configure the background PanelContainer and TextureRect
 	var panel_container = get_node_or_null("PanelContainer")
 	if panel_container:
 		panel_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		print("[ShopUI] Set PanelContainer mouse filter to IGNORE")
+		if _debug_enabled:
+			print("[ShopUI] Set PanelContainer mouse filter to IGNORE")
 		
 		# Also set the TextureRect inside to ignore mouse
 		var texture_rect = panel_container.get_node_or_null("TextureRect")
 		if texture_rect:
 			texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			print("[ShopUI] Set TextureRect mouse filter to IGNORE")
+			if _debug_enabled:
+				print("[ShopUI] Set TextureRect mouse filter to IGNORE")
 	
 	# Ensure TabContainer allows mouse passthrough to children
 	var tab_cont = get_node_or_null("TabContainer")
 	if tab_cont:
 		tab_cont.mouse_filter = Control.MOUSE_FILTER_PASS
-		print("[ShopUI] Set TabContainer mouse filter to PASS")
+		if _debug_enabled:
+			print("[ShopUI] Set TabContainer mouse filter to PASS")
 	
-	print("[ShopUI] Mouse input configuration complete")
+	if _debug_enabled:
+		print("[ShopUI] Mouse input configuration complete")
 
 
 ## _update_rep_chip()
@@ -2240,7 +2338,8 @@ func _update_rep_chip() -> void:
 ## items live in the UNLOCKED tab (see populate_unlocked_items).
 func populate_locked_items() -> void:
 	if not locked_container:
-		print("[ShopUI] No locked container found")
+		if _debug_enabled:
+			print("[ShopUI] No locked container found")
 		return
 
 	_clear_item_container(locked_container)
@@ -2249,7 +2348,8 @@ func populate_locked_items() -> void:
 	# Rep tier (see _filter_by_rep_tier). Shown greyed with the Rep requirement.
 	_create_rep_locked_section()
 
-	print("[ShopUI] Locked items populated")
+	if _debug_enabled:
+		print("[ShopUI] Locked items populated")
 
 
 ## _create_rep_locked_section()
@@ -2325,14 +2425,17 @@ func _create_rep_locked_item_display(data: PowerUpData, rep_needed: int, tier_la
 ## flat dark "LOCKED" card (see _create_archive_item_display).
 func populate_unlocked_items() -> void:
 	if not unlocked_container:
-		print("[ShopUI] No unlocked container found")
+		if _debug_enabled:
+			print("[ShopUI] No unlocked container found")
 		return
 	_clear_item_container(unlocked_container)
 	var progress_manager = get_node("/root/ProgressManager")
 	if not progress_manager:
-		print("[ShopUI] ProgressManager not available")
+		if _debug_enabled:
+			print("[ShopUI] ProgressManager not available")
 		return
-	print("[ShopUI] Populating unlocked items...")
+	if _debug_enabled:
+		print("[ShopUI] Populating unlocked items...")
 	const UnlockableItemClass = preload("res://Scripts/Core/unlockable_item.gd")
 	var item_types = [
 		UnlockableItemClass.ItemType.POWER_UP,
@@ -2351,7 +2454,8 @@ func populate_unlocked_items() -> void:
 		var locked_items = progress_manager.get_locked_items(item_type)
 		for item in locked_items:
 			_create_archive_item_display(item, unlocked_container, true)
-	print("[ShopUI] Unlocked items populated")
+	if _debug_enabled:
+		print("[ShopUI] Unlocked items populated")
 
 func _create_unlocked_item_display(item) -> void:
 	_create_archive_item_display(item, unlocked_container, false)
@@ -2498,7 +2602,8 @@ func _filter_unlocked_items(items: Array, item_type: String) -> Array:
 	# Get the ProgressManager autoload
 	var progress_manager = get_node("/root/ProgressManager")
 	if not progress_manager:
-		print("[ShopUI] ProgressManager not available for filtering")
+		if _debug_enabled:
+			print("[ShopUI] ProgressManager not available for filtering")
 		return items
 	
 	var filtered_items: Array = []
@@ -2508,7 +2613,8 @@ func _filter_unlocked_items(items: Array, item_type: String) -> Array:
 		if progress_manager.is_item_unlocked(item_id):
 			filtered_items.append(item_id)
 		else:
-			print("[ShopUI] Filtering out locked %s: %s" % [item_type, item_id])
+			if _debug_enabled:
+				print("[ShopUI] Filtering out locked %s: %s" % [item_type, item_id])
 	
 	return filtered_items
 
@@ -2545,7 +2651,8 @@ func _on_unlocked_item_mouse_exited(shader_bg: ColorRect) -> void:
 func temporarily_minimize() -> void:
 	if visible:
 		visible = false
-		print("[ShopUI] Temporarily minimized for fan-out overlay")
+		if _debug_enabled:
+			print("[ShopUI] Temporarily minimized for fan-out overlay")
 
 
 ## restore_from_minimize()
@@ -2555,4 +2662,5 @@ func temporarily_minimize() -> void:
 func restore_from_minimize() -> void:
 	if not visible:
 		visible = true
-		print("[ShopUI] Restored from minimize")
+		if _debug_enabled:
+			print("[ShopUI] Restored from minimize")

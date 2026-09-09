@@ -58,13 +58,14 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | debuff_destroyer | Debuff Destroyer | ROLL_YAHTZEE | 2 | Removes random debuff when sold |
 | challenge_easer | Challenge Easer | COMPLETE_CHANNEL | 2 | All round targets reduced by 20% |
 | azure_perfection | Azure Perfection | CUMULATIVE_YAHTZEES | 3 | Blue dice always multiply |
-| rainbow_surge | Rainbow Surge | COMPLETE_CHANNEL | 2 | 2x multiplier when 4+ dice colors present |
-| lucky_streak | Lucky Streak | COMPLETE_CHANNEL | 1 | Increased chance of rolling pairs (NOT IMPLEMENTED) |
-| steady_progress | Steady Progress | COMPLETE_CHANNEL | 1 | +5 points to all lower section scores (NOT IMPLEMENTED) |
-| combo_king | Combo King | COMPLETE_CHANNEL | 2 | Bonus multiplier for consecutive scoring (NOT IMPLEMENTED) |
-| channel_champion | Channel Champion | COMPLETE_CHANNEL | 3 | Double points in favorite category (NOT IMPLEMENTED) |
-| grand_master | Grand Master | COMPLETE_CHANNEL | 3 | All scoring categories get +10% (NOT IMPLEMENTED) |
-| dice_lord | Dice Lord | COMPLETE_CHANNEL | 4 | Start each round with one guaranteed Yahtzee (NOT IMPLEMENTED) |
+| rainbow_surge | Rainbow Surge | COMPLETE_CHANNEL | 2 | 2x multiplier when 5 unique dice colors (of 6) are present |
+| yellow_slime | Yellow Slime | COLORED_DICE_BONUS | 1 | Doubles yellow dice probability (1/120 → 1/60); difficulty 6 |
+| extreme_couponing | Extreme Couponing | USE_CONSUMABLES | 10 | +5 additive per consumable granted this run |
+| defiance | Defiance | COMPLETE_GAME | 2 | +0.25x per active debuff (excludes mom-granted buffs) |
+| comeback_kid | Comeback Kid | COMPLETE_GAME | 2 | +5 score for each category sitting at 0 |
+| upper_crust | Upper Crust | SCORE_POINTS | 150 | Upper section scores get 1.5x |
+| two_pair_house | Two Pair House | SCORE_THRESHOLD_CATEGORY | 25 | Two pair counts as a Full House (unlock: score 25+ in full_house) |
+| four_of_a_kind_yahtzee | Four-Kind Yahtzee | SCORE_THRESHOLD_CATEGORY | 25 | Four-of-a-kind counts as a 25pt Yahtzee (unlock: score 25+ in four_of_a_kind) |
 
 ## Consumables
 
@@ -84,7 +85,7 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | visit_the_shop | Visit The Shop | COMPLETE_CHANNEL | 1 | Open the shop during active play |
 | add_max_power_up | Add Max Power Up | USE_CONSUMABLES | 7 | Increase PowerUp limit |
 | random_power_up_uncommon | Random Uncommon Power Up | USE_CONSUMABLES | 8 | Get random uncommon PowerUp |
-| green_envy | Green Envy | EARN_MONEY | 150 | Green dice effects |
+| green_envy | Raining Green | EARN_MONEY | 150 | Green dice effects |
 | go_broke_or_go_home | Go Broke Or Go Home | EARN_MONEY | 200 | All-in money strategy |
 | poor_house | Poor House | EARN_MONEY | 250 | Low money benefits |
 | free_chores | Free Chores | COMPLETE_GAME | 1 | Reduces goof-off meter by 30 points |
@@ -111,10 +112,14 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | yahtzee_upgrade | Yahtzee Upgrade | CUMULATIVE_YAHTZEES | 8 | Upgrade Yahtzee category level |
 | chance_upgrade | Chance Upgrade | SCORE_POINTS | 350 | Upgrade Chance category level |
 | all_categories_upgrade | Master Upgrade | COMPLETE_CHANNEL | 2 | Upgrade ALL categories by one level |
-| channel_bonus | Channel Bonus | COMPLETE_CHANNEL | 1 | Gain $50 per completed channel |
-| reroll_master | Reroll Master | COMPLETE_CHANNEL | 1 | Gain 2 extra rerolls this round |
 | lucky_seven | Lucky Seven | COMPLETE_CHANNEL | 2 | All dice become 1-7 range this round |
-| ultimate_reroll | Ultimate Reroll | COMPLETE_CHANNEL | 3 | Reroll all dice up to 5 times |
+| spite | Spite | USE_CONSUMABLES | 5 | Next scored category gets x(1.0 + 0.5 per active debuff) |
+| antidote | Antidote | COMPLETE_GAME | 1 | Cleanses your highest-intensity active debuff |
+| immunity | Immunity | COMPLETE_GAME | 1 | No debuffs are assigned next round |
+| mulligan | Mulligan | SCORE_POINTS | 150 | Reroll your worst placed score using current dice |
+| scratch_ticket | Scratch Ticket | SCORE_POINTS | 150 | If your last score was 0, your next score is doubled |
+| paint_job | Paint Job | COLORED_DICE_BONUS | 1 | All dice gain a random color for the next roll |
+| bonus_sprint | Bonus Sprint | SCORE_POINTS | 100 | Upper scores count double toward the 63 upper bonus |
 
 ## Mods
 
@@ -129,6 +134,8 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | high_roller | High Roller | LOCK_CONSTRAINT | 100 | Dice tend toward high values (unlock: score 100+ over 4 turns, no locks) |
 | channel_veteran | Channel Veteran | COMPLETE_CHANNEL | 1 | Start with +$25 per channel completed (NOT IMPLEMENTED) |
 | precision_roller | Precision Roller | COMPLETE_CHANNEL | 3 | First roll each turn is always 4+ (NOT IMPLEMENTED) |
+| painted_die | Painted Die | USE_CONSUMABLES | 4 | Die is permanently painted one color; always counts as that color |
+| cursed_six | Cursed Six | COMPLETE_CHANNEL | 1 | Always rolls a 6, costs $5 per roll, sells for $0 |
 
 ## Colored Dice Features
 
@@ -139,6 +146,7 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | purple_dice | Purple Dice | CUMULATIVE_YAHTZEES | 2 | Unlocks purple colored dice (score multiplier) |
 | blue_dice | Blue Dice | COMPLETE_CHANNEL | 1 | Unlocks blue colored dice (complex effects) |
 | yellow_dice | Yellow Dice | USE_CONSUMABLES | 8 | Unlocks yellow colored dice (grants consumables when scored) |
+| orange_dice | Orange Dice | USE_CONSUMABLES | 12 | Unlocks orange colored dice (grants +1 roll per Orange die scored) |
 
 ## Dice Sets (selected at game start in the Mall Zone Selection)
 
@@ -192,7 +200,7 @@ yellow-dice rewards):
 | WIN_WITHOUT_SCORING | Win without scoring in a category/section |
 | **LOCK_CONSTRAINT** | **Score X+ points over Y turns while locking no more than Z dice** |
 
-> **Note:** This document is partially stale. Several entries were corrected during the Lock Constraint refactor (May 2026). A full audit against `Scripts/Managers/progress_manager.gd` is recommended for complete accuracy.
+> **Note:** Phantom registrations (`grand_master`, `dice_lord`, `lucky_streak`, `steady_progress`, `combo_king`, `channel_champion`, `avoidance_ones/upper/lower`, `channel_bonus`, `reroll_master`, `ultimate_reroll`) were removed from `progress_manager.gd` and from this document; `lucky_seven` was kept (live code references it). Rows for the newest content wave (`yellow_slime`, `extreme_couponing`, `defiance`, `comeback_kid`, `upper_crust`, `two_pair_house`, `four_of_a_kind_yahtzee`, `spite`, `antidote`, `immunity`, `mulligan`, `scratch_ticket`, `paint_job`, `bonus_sprint`, `painted_die`, `cursed_six`) were added from design intent — verify them against `progress_manager.gd`, which did not yet contain these registrations at the time of writing. Older rows above were corrected during the Lock Constraint refactor (May 2026); a full audit is still recommended for complete accuracy.
 
 ## REP-Gated POG Tiers (run-scoped)
 
@@ -211,8 +219,3 @@ Rep economy (`Scripts/Core/game_controller.gd`): successful sass +6, deferred pu
 Pacing goal: Rep 60 (tier 4, NC-17 POGs) should be reachable by Zone 4. To support that, the Mom check-in window was tightened to rolls 2 through `6 + zone` (`ChoresManager.get_checkin_max()`) so check-ins don't get dropped by fast rounds.
 
 The visual meter stages (`REP_STAGE_THRESHOLDS = [0, 10, 30, 60]`): Teacher's Pet -> Attitude Problem -> Mall Rat -> Banned from the Mall.
-
-If you'd like, I can also:
-
--+- Save a CSV copy at `Docs/unlock_conditions.csv`.
--+- Add links from each item to its resource file (`Scripts/PowerUps/*.tres`, `Scripts/Consumable/*.tres`, `Scripts/Mods/*.tres`).

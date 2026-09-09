@@ -286,13 +286,14 @@ func _update_summary_rows() -> void:
 	summary_rows[&"sub_total"].set_score(sub_total)
 
 	var bonus_row: ScorecardRow = summary_rows[&"bonus"]
-	bonus_row.set_display_name("Bonus — %d / %d" % [mini(sub_total, threshold), threshold])
+	var bonus_progress: int = scorecard.get_upper_bonus_progress()
+	bonus_row.set_display_name("Bonus — %d / %d" % [mini(bonus_progress, threshold), threshold])
 	if scorecard.upper_bonus_awarded:
 		bonus_row.set_score(scorecard.get_scaled_upper_bonus_amount())
 	else:
 		bonus_row.set_score(null)
 	if _bonus_progress_fill and threshold > 0:
-		_bonus_progress_fill.anchor_right = clampf(float(sub_total) / float(threshold), 0.0, 1.0)
+		_bonus_progress_fill.anchor_right = clampf(float(bonus_progress) / float(threshold), 0.0, 1.0)
 	# The achievement fill tween + "+35" flash live in _on_upper_bonus_achieved.
 
 	summary_rows[&"upper_total"].set_score(scorecard.get_upper_section_final_total())
@@ -596,6 +597,34 @@ func activate_score_reroll() -> void:
 		row.interactive = has_score
 		if has_score and row.state == ScorecardRow.State.SCORED:
 			row.state = ScorecardRow.State.AVAILABLE
+
+
+## activate_score_reroll_for(category) -> bool
+##
+## Mulligan support: activates reroll mode and immediately rerolls the given
+## category with the current hand, without waiting for a row click.
+## Returns false (no state change) when the category is unknown or has no
+## existing score to reroll.
+func activate_score_reroll_for(category: String) -> bool:
+	if not scorecard:
+		return false
+	var section := Scorecard.Section.UPPER
+	if scorecard.lower_scores.has(category):
+		section = Scorecard.Section.LOWER
+	elif not scorecard.upper_scores.has(category):
+		push_error("[ScoreCardUI] activate_score_reroll_for: unknown category '%s'" % category)
+		return false
+	var has_score := false
+	if section == Scorecard.Section.UPPER:
+		has_score = scorecard.upper_scores[category] != null
+	else:
+		has_score = scorecard.lower_scores[category] != null
+	if not has_score:
+		print("[ScoreCardUI] activate_score_reroll_for: no score to reroll in '%s'" % category)
+		return false
+	activate_score_reroll()
+	handle_score_reroll(section, category)
+	return true
 
 
 ## activate_score_double()

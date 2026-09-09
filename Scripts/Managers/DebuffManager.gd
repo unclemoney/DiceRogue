@@ -182,6 +182,47 @@ func select_grounding_for_round(exclude_ids: Array = []) -> String:
 	return chosen.id
 
 
+## ============== IMMUNITY (Consumable) ==============
+##
+## The Immunity consumable sets immunity_next_round; the flag is consumed at
+## round-start debuff assignment so no automatic debuffs are applied for one
+## round. Consumption happens in GameController._apply_automatic_debuffs
+## (wiring hook), NOT in the selection helpers below - selections can be made
+## a round early when the New Round Panel preview is built, which would eat
+## the flag too soon.
+
+var immunity_next_round: bool = false
+
+
+## grant_immunity_next_round() -> void
+##
+## Sets the next-round immunity flag (called by the Immunity consumable).
+func grant_immunity_next_round() -> void:
+	immunity_next_round = true
+	if _verbose_mode:
+		print("[DebuffManager] Immunity granted - next round's debuffs will be skipped")
+
+
+## has_immunity_next_round() -> bool
+##
+## Returns true while next-round immunity is pending.
+func has_immunity_next_round() -> bool:
+	return immunity_next_round
+
+
+## consume_immunity_next_round() -> bool
+##
+## Returns true (and clears the flag) when immunity was pending. Called at
+## round-start debuff assignment time.
+func consume_immunity_next_round() -> bool:
+	if not immunity_next_round:
+		return false
+	immunity_next_round = false
+	if _verbose_mode:
+		print("[DebuffManager] Immunity consumed - debuff assignment skipped")
+	return true
+
+
 ## ============== PER-ZONE DRAW-ONCE POOL ==============
 ##
 ## Debuffs drawn for a zone are remembered so they cannot repeat within the

@@ -2,6 +2,7 @@ extends Node
 #class_name ScoreEvaluator
 
 var _evaluation_count := 0  # Add at top of class
+var _debug_enabled: bool = OS.is_debug_build()
 
 # Tracks the active dice type for dynamic upper section scoring
 # Set by Scorecard/RoundManager when dice type changes
@@ -334,12 +335,12 @@ func calculate_score_for_category(category: String, values: Array[int]) -> int:
 
 func generate_wildcard_combinations(wildcard_count: int, sides: int) -> Array:
 	var combinations := []
-	
+
 	# Base case
 	if wildcard_count == 0:
 		combinations.append([])
 		return combinations
-	
+
 	# For each wildcard, we only need to consider values that could make useful combinations
 	# Get the values of non-wildcard dice to inform our choices
 	var regular_values = []
@@ -361,17 +362,83 @@ func generate_wildcard_combinations(wildcard_count: int, sides: int) -> Array:
 		# If no regular values, use all sides
 		for i in range(1, sides + 1):
 			priority_values[i] = true
-	# Generate combinations using only priority values
-	var sub_combinations = generate_wildcard_combinations(wildcard_count - 1, sides)
-	for sub_combo in sub_combinations:
-		for value in priority_values:
-			var new_combo := []
-			new_combo.assign(sub_combo)
-			new_combo.append(value)
-			combinations.append(new_combo)
-	
-	print("Generated combinations:", combinations.size())
+
+	# Collect the wildcard dice in dice_refs order so candidate list w
+	# corresponds to wildcard index w in evaluate_with_wildcards.
+	var wildcard_dice: Array = []
+	for i in range(DiceResults.dice_refs.size()):
+		var die = DiceResults.dice_refs[i]
+		if is_instance_valid(die) and die.has_mod("wildcard"):
+			wildcard_dice.append(die)
+
+	# Build one candidate list per wildcard. A wildcard die whose mod exposes
+	# get_possible_values() (WildcardMod) may only substitute values from that
+	# list — it counts as any OTHER face, never the face it is showing.
+	var candidate_lists: Array = []
+	for w in range(wildcard_count):
+		var possible: Array = []
+		if w < wildcard_dice.size():
+			possible = _get_wildcard_possible_values(wildcard_dice[w])
+		var allowed: Array = []
+		if possible.is_empty():
+			# No restriction info (e.g. stub mods in tests): legacy behavior
+			for v in priority_values:
+				allowed.append(v)
+		else:
+			for v in priority_values:
+				if possible.has(v):
+					allowed.append(v)
+			# If no priority value is legal for this wildcard, fall back to the
+			# mod's own list so at least some combinations are generated.
+			if allowed.is_empty():
+				allowed = possible.duplicate()
+		candidate_lists.append(allowed)
+
+	combinations = _build_wildcard_combinations(candidate_lists, 0)
+
+	if _debug_enabled:
+		print("Generated combinations:", combinations.size())
 	return combinations
+
+
+## _build_wildcard_combinations(candidate_lists, index)
+##
+## Recursively builds the cartesian product of the per-wildcard candidate
+## lists. Combination position i draws from candidate_lists[i].
+func _build_wildcard_combinations(candidate_lists: Array, index: int) -> Array:
+	var combinations := []
+	if index >= candidate_lists.size():
+		combinations.append([])
+		return combinations
+	var sub_combinations := _build_wildcard_combinations(candidate_lists, index + 1)
+	for value in candidate_lists[index]:
+		for sub_combo in sub_combinations:
+			var new_combo := []
+			new_combo.append(value)
+			new_combo.append_array(sub_combo)
+			combinations.append(new_combo)
+	return combinations
+
+
+## _get_wildcard_possible_values(die) -> Array
+##
+## Returns the substitute values a wildcard die allows, from its mod's
+## get_possible_values() when available (WildcardMod restricts a wildcard to
+## every face EXCEPT the one currently shown). Returns an empty array when
+## the die or its mod exposes no restriction — callers treat empty as
+## "any face is allowed" (legacy behavior).
+func _get_wildcard_possible_values(die) -> Array:
+	if not is_instance_valid(die):
+		return []
+	# Read active_mods directly: get_mod() has a Mod return type, which raises
+	# a script error when a test stub stores a plain Node as the mod.
+	var active_mods = die.get("active_mods")
+	if not active_mods is Dictionary:
+		return []
+	var mod = active_mods.get("wildcard")
+	if mod and mod.has_method("get_possible_values"):
+		return mod.get_possible_values()
+	return []
 	
 
 # Helper functions
@@ -511,8 +578,19 @@ func is_yahtzee(values: Array[int]) -> bool:
 	
 	# Check if any value + wildcards reaches 5
 	for value in value_counts:
-		if value_counts[value] + wildcard_count >= 5:
-			print("[ScoreEvaluator] Valid yahtzee: ", value_counts[value], " dice showing ", value, " + ", wildcard_count, " wildcards")
+		# A wildcard die can only support a value it is allowed to substitute:
+		# WildcardMod exposes get_possible_values() = every face EXCEPT the one
+		# currently shown, so a wildcard showing 3 cannot join a set of 3s.
+		var supporting_wildcards := 0
+		for i in range(filtered_values.size()):
+			if i < DiceResults.dice_refs.size():
+				var die = DiceResults.dice_refs[i]
+				if is_instance_valid(die) and die.has_mod("wildcard"):
+					var possible = _get_wildcard_possible_values(die)
+					if possible.is_empty() or possible.has(value):
+						supporting_wildcards += 1
+		if value_counts[value] + supporting_wildcards >= 5:
+			print("[ScoreEvaluator] Valid yahtzee: ", value_counts[value], " dice showing ", value, " + ", supporting_wildcards, " wildcards")
 			return true
 	
 	print("[ScoreEvaluator] No yahtzee pattern found")

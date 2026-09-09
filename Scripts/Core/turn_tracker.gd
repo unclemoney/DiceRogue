@@ -18,6 +18,13 @@ var rolls_left := 3
 @export var max_turns: int = 13
 var is_active := false
 
+# Orange dice temporary roll bonus (session-scoped, never saved).
+# orange_rolls_pending: rolls queued by scoring orange dice; applied at the
+# next turn start (or round start). orange_rolls_active: the portion of
+# MAX_ROLLS contributed by orange dice for the current turn.
+var orange_rolls_pending: int = 0
+var orange_rolls_active: int = 0
+
 # Stacking dice bonus tracking (for multiple Dice Surge consumables)
 # Each stack is a Dictionary: { "id": int, "dice": int, "turns_remaining": int }
 var dice_bonus_stacks: Array[Dictionary] = []
@@ -59,6 +66,7 @@ func start_new_turn():
 		emit_signal("game_over")
 		return
 	current_turn += 1
+	_apply_orange_rolls_for_turn()
 	rolls_left = MAX_ROLLS
 	is_active = true  # Turn is now active
 	
@@ -190,7 +198,9 @@ func _show_turn_banner(turn_number: int) -> void:
 ## reset_game()
 ##
 ## Resets tracker to initial running state (turn 1, full rolls).
+## Clears any orange temporary roll bonus (fresh game).
 func reset_game():
+	clear_temporary_rolls()
 	current_turn = 1
 	rolls_left = MAX_ROLLS
 	emit_signal("turn_updated", current_turn)
@@ -204,6 +214,68 @@ func add_rolls(amount: int) -> void:
 	print("🎲 MAX_ROLLS increased to", MAX_ROLLS)
 	# Notify listeners that the maximum rolls-per-turn value changed
 	emit_signal("max_rolls_changed", MAX_ROLLS)
+
+## remove_rolls(amount)
+##
+## Decreases the maximum number of rolls allowed per turn.
+func remove_rolls(amount: int) -> void:
+	MAX_ROLLS -= amount
+	print("🎲 MAX_ROLLS decreased to", MAX_ROLLS)
+	# Notify listeners that the maximum rolls-per-turn value changed
+	emit_signal("max_rolls_changed", MAX_ROLLS)
+
+## add_temporary_rolls_next_turn(amount)
+##
+## Queues extra rolls granted by scoring orange dice. The bonus applies to
+## the NEXT turn only (next start_new_turn() or round-start reset()); MAX_ROLLS
+## is unchanged right now. Multiple scores before that turn accumulate.
+## The pending bonus carries across round boundaries but is wiped on a
+## Mall Zone (channel) transition via clear_temporary_rolls().
+func add_temporary_rolls_next_turn(amount: int) -> void:
+	orange_rolls_pending += amount
+	print("🎲 Orange dice queued +%d rolls for next turn (pending: %d)" % [amount, orange_rolls_pending])
+
+## clear_temporary_rolls()
+##
+## Wipes both the pending and active orange roll bonuses (Mall Zone transition,
+## new game). Restores MAX_ROLLS to its base value if a bonus is active.
+## Emits max_rolls_changed when MAX_ROLLS actually changes.
+func clear_temporary_rolls() -> void:
+	var changed := false
+	if orange_rolls_active > 0:
+		var removed = maxi(mini(orange_rolls_active, MAX_ROLLS - 1), 0)
+		MAX_ROLLS -= removed
+		orange_rolls_active = 0
+		changed = true
+	if orange_rolls_pending > 0:
+		orange_rolls_pending = 0
+		changed = true
+	if changed:
+		print("[TurnTracker] Cleared orange temporary rolls (MAX_ROLLS now %d)" % MAX_ROLLS)
+		emit_signal("max_rolls_changed", MAX_ROLLS)
+
+## _apply_orange_rolls_for_turn()
+##
+## Refreshes the orange dice roll bonus at the start of a turn (or round).
+## First removes last turn's active bonus (restoring base MAX_ROLLS), then
+## applies any pending bonus for this turn. Removal is clamped so effects
+## that override MAX_ROLLS absolutely (OneShotDebuff) can never push it
+## below 1. Emits max_rolls_changed when MAX_ROLLS actually changes.
+func _apply_orange_rolls_for_turn() -> void:
+	var changed := false
+	if orange_rolls_active > 0:
+		var removed = maxi(mini(orange_rolls_active, MAX_ROLLS - 1), 0)
+		MAX_ROLLS -= removed
+		orange_rolls_active = 0
+		changed = true
+	if orange_rolls_pending > 0:
+		orange_rolls_active = orange_rolls_pending
+		orange_rolls_pending = 0
+		MAX_ROLLS += orange_rolls_active
+		changed = true
+		print("[TurnTracker] Orange dice bonus: +%d rolls this turn (MAX_ROLLS: %d)" % [orange_rolls_active, MAX_ROLLS])
+	if changed:
+		emit_signal("max_rolls_changed", MAX_ROLLS)
 
 ## _on_turn_completed()
 ##
@@ -231,6 +303,9 @@ func _on_turn_completed() -> void:
 func reset() -> void:
 	print("[TurnTracker] Resetting turn tracker")
 	current_turn = 1
+	# Round boundary: pending orange rolls carry over and become active for
+	# Turn 1 of the new round; last round's active bonus expires here.
+	_apply_orange_rolls_for_turn()
 	rolls_left = MAX_ROLLS
 	is_active = true  # Turn 1 is active when round starts
 	# Reset temporary effects
@@ -346,11 +421,13 @@ func _end_score_streak() -> void:
 ## get_state() -> Dictionary
 ##
 ## Returns the current state for saving/persistence.
+## MAX_ROLLS is saved as its base value (active orange bonus stripped);
+## the orange pending/active bonus is session-scoped and never saved.
 func get_state() -> Dictionary:
 	return {
 		"current_turn": current_turn,
 		"rolls_left": rolls_left,
-		"MAX_ROLLS": MAX_ROLLS,
+		"MAX_ROLLS": MAX_ROLLS - orange_rolls_active,
 		"is_active": is_active,
 		"dice_bonus_stacks": dice_bonus_stacks.duplicate(true),
 		"_next_stack_id": _next_stack_id,
@@ -379,4 +456,8 @@ func load_state(state: Dictionary) -> void:
 	score_streak_turns_remaining = state.get("score_streak_turns_remaining", 0)
 	score_streak_multiplier = state.get("score_streak_multiplier", 1.0)
 	score_streak_current_turn = state.get("score_streak_current_turn", 0)
+	# Orange temporary roll bonus is session-scoped: never saved, always
+	# cleared on load (saved MAX_ROLLS is already the base value).
+	orange_rolls_pending = 0
+	orange_rolls_active = 0
 	print("[TurnTracker] State loaded")

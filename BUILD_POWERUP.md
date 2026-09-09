@@ -690,7 +690,6 @@ _add_default_power_up("grand_master", "Grand Master", "All scoring categories ge
 #### Rare ($275-$300)
 | ID | Name | Effect |
 |----|------|--------|
-| `consumable_collector` | Consumable Collector | +0.1× score multiplier for each consumable used during the game |
 | `random_card_level` | Random Card Level | 20% chance each turn to level up a random scorecard category |
 | `the_replicator` | The Replicator | After 1 turn, duplicates a random PowerUp you own (with dramatic VFX) |
 | `daring_dice` | Daring Dice | Remove 2 dice but gain permanent +50 score bonus per category |

@@ -35,7 +35,7 @@ func should_apply_multiplier(dice_values: Array) -> bool:
 	# Check if any of the dice show a 4
 	for value in dice_values:
 		if value == 4:
-			if randi_range(1,4) == 2:  # 25% chance
+			if GameRNG.randi_range(1,4) == 2:  # 25% chance
 				return true
 			else:
 				return false

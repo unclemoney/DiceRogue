@@ -6,13 +6,13 @@ class_name ExtraDicePowerUp
 func apply(target) -> void:
 	var hand: DiceHand = target as DiceHand
 	if hand:
-		hand.dice_count = 6
+		hand.dice_count += extra_dice
 	else:
 		push_error("[ExtraDice] Invalid target passed to apply()")
 
 func remove(target) -> void:
 	var hand: DiceHand = target as DiceHand
 	if hand:
-		hand.dice_count = 5 
+		hand.dice_count -= extra_dice
 	else:
 		push_error("[ExtraDice] Invalid target passed to remove()")

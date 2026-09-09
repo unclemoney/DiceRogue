@@ -11,7 +11,7 @@ region = Rect2(1600, 1211, 380, 367)
 [resource]
 script = ExtResource("1_vdnug")
 id = "three_more_rolls"
-display_name = "Extra Rolls"
+display_name = "Three More Rolls"
 description = "Adds 3 more dice rolls for the current turn only"
 icon = SubResource("AtlasTexture_h19")
 scene = ExtResource("2_bfh4v")

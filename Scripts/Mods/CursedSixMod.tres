@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ModData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Mods/ModData.gd" id="1_moddata"]
+[ext_resource type="Texture2D" path="res://Resources/Art/Dice/dieWhite_border6.png" id="1_icon"]
+[ext_resource type="PackedScene" path="res://Scenes/Mods/CursedSixMod.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_moddata")
+id = "cursed_six"
+display_name = "Cursed Six"
+description = "Always rolls a 6, but costs $5 per roll. Sells for $0."
+icon = ExtResource("1_icon")
+scene = ExtResource("2_scene")
+price = 25
+sell_price = 0
+metadata/_custom_type_script = "uid://47gl3by4wwht"
