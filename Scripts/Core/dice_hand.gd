@@ -132,7 +132,7 @@ func _update_area_from_parent() -> void:
 			# If dice already exist, recenter them
 			if not dice_list.is_empty():
 				_recenter_existing_dice()
-## Honors any active lock debuff by disabling input after spawn.
+## Honors any active lock debuff by reapplying its lock-toggle block after spawn.
 func spawn_dice() -> void:
 	if not default_dice_data:
 		push_error("[DiceHand] Cannot spawn dice - no default DiceData assigned!")
@@ -201,12 +201,10 @@ func spawn_dice() -> void:
 	# Re-emit child's die_locked as DiceHand-level die_locked signal
 	# (some power-ups listen on DiceHand for lock events)
 
-	# Only disable dice if lock debuff is active
-	var lock_debuff = get_tree().get_first_node_in_group("debuffs") as LockDiceDebuff
-	if lock_debuff and lock_debuff.is_active:
+	if _has_active_lock_dice_debuff():
 		if _debug_enabled:
-			print("[DiceHand] Found active lock debuff - disabling all dice input")
-		disable_all_dice()
+			print("[DiceHand] Found active lock debuff - disabling lock toggles on all dice")
+		disable_locking_only()
 	else:
 		if _debug_enabled:
 			print("[DiceHand] No active lock debuff - enabling all dice input")
@@ -662,6 +660,16 @@ func update_dice_count() -> void:
 		for i in range(dice_count):
 			dice_list[i].relayout_to_home(new_positions[i], 0.3)
 
+	if _has_active_lock_dice_debuff():
+		disable_locking_only()
+	else:
+		enable_all_dice()
+
+
+func _has_active_lock_dice_debuff() -> bool:
+	var lock_debuff = get_tree().get_first_node_in_group("debuffs") as LockDiceDebuff
+	return lock_debuff != null and lock_debuff.is_active
+
 func enable_all_dice() -> void:
 	if _debug_enabled:
 		print("[DiceHand] Enabling all dice (legacy method - state machine should handle this)")
@@ -671,6 +679,7 @@ func enable_all_dice() -> void:
 		if not is_instance_valid(die):
 			continue
 		if die is Dice:
+			die.set_debuff_locking_disabled(false)
 			# Only enable input if the dice is not in DISABLED state
 			if die.get_state() != Dice.DiceState.DISABLED:
 				die.set_dice_input_enabled(true)
@@ -688,14 +697,13 @@ func disable_locking_only() -> void:
 		if not is_instance_valid(die):
 			continue
 		if die is Dice:
+			die.set_debuff_locking_disabled(true)
 			die.set_lock_shader_enabled(false)
-			die.set_dice_input_enabled(false)
 
 
 ## restore_locking()
 ##
-## Restores lock/unlock input after debuff expires.
-## Re-enables input and lock shader for dice that are still scoreable.
+## Restores lock toggling after the debuff expires.
 func restore_locking() -> void:
 	if _debug_enabled:
 		print("[DiceHand] Restoring locking ability")
@@ -703,9 +711,7 @@ func restore_locking() -> void:
 		if not is_instance_valid(die):
 			continue
 		if die is Dice:
-			# Only restore input for dice that aren't disabled
-			if die.get_state() != Dice.DiceState.DISABLED:
-				die.set_dice_input_enabled(true)
+			die.set_debuff_locking_disabled(false)
 			die.set_lock_shader_enabled(true)
 
 

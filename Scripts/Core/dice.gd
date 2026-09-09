@@ -30,6 +30,7 @@ var _debuff_disabled_face_active := false
 ## When true, the built-in click lock/unlock toggle is skipped so mods can
 ## intercept clicks for their own behavior (e.g. HighRollerMod click-to-reroll).
 var locking_disabled: bool = false
+var _debuff_locking_disabled := false
 
 ## When true, the die is excluded from normal ROLL-button rolls
 ## (DiceHand.roll_all() and prepare_dice_for_roll() skip it).
@@ -179,7 +180,7 @@ func can_roll() -> bool:
 ##
 ## Returns true if the dice can be locked in its current state.
 func can_lock() -> bool:
-	return current_state == DiceState.ROLLED and _can_process_input
+	return current_state == DiceState.ROLLED and _can_process_input and not is_lock_toggle_disabled()
 
 ## can_score() -> bool
 ##
@@ -264,6 +265,22 @@ func set_dice_input_enabled(enabled: bool) -> void:
 func set_lock_shader_enabled(enabled: bool) -> void:
 	_lock_shader_enabled = enabled
 	_refresh_combined_shader_state()
+
+
+## set_debuff_locking_disabled(enabled)
+##
+## Tracks the lock-dice debuff separately from other systems that also block
+## the built-in lock toggle.
+func set_debuff_locking_disabled(enabled: bool) -> void:
+	_debuff_locking_disabled = enabled
+
+
+func is_debuff_locking_disabled() -> bool:
+	return _debuff_locking_disabled
+
+
+func is_lock_toggle_disabled() -> bool:
+	return locking_disabled or _debuff_locking_disabled
 
 func animate_roll():
 	_stop_idle_breathing()
@@ -400,8 +417,8 @@ func _input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
 		emit_signal("clicked")
 		
 		# Mods can disable the built-in lock toggle to intercept clicks themselves
-		if locking_disabled:
-			print("[Dice] Locking disabled by mod - skipping built-in lock toggle")
+		if is_lock_toggle_disabled():
+			print("[Dice] Locking toggle disabled - skipping built-in lock toggle")
 		elif current_state == DiceState.ROLLED:
 			print("[Dice] Attempting to lock dice")
 			lock()

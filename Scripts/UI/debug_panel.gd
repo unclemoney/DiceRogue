@@ -3751,7 +3751,7 @@ func _build_live_dice_state_report() -> String:
 			DiceColor.get_color_name(die.get_color()).to_lower(),
 			die.get_state_name(),
 			str(die.is_locked),
-			str(die.locking_disabled),
+			str(die.is_lock_toggle_disabled()),
 			str(die.excluded_from_normal_rolls),
 			str(die.is_debuff_disabled_face_enabled()),
 			_join_or_none(mod_ids)

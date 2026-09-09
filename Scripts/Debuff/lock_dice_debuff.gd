@@ -7,9 +7,10 @@ func _ready() -> void:
 	add_to_group("debuffs")
 	print("[LockDiceDebuff] Ready")
 
-func apply(target) -> void:
-	print("[LockDiceDebuff] Applying to target:", target.name if target else "null")
-	var dice_hand = target as DiceHand
+func apply(_target) -> void:
+	self.target = _target
+	print("[LockDiceDebuff] Applying to target:", _target.name if _target else "null")
+	var dice_hand = _target as DiceHand
 	if dice_hand:
 		is_active = true
 		print("[LockDiceDebuff] Disabling dice locking (dice remain scoreable)")
@@ -20,8 +21,7 @@ func apply(target) -> void:
 func _on_dice_added(node: Node) -> void:
 	if node is Dice:
 		print("[LockDiceDebuff] New die added - applying lock disable")
-		node.unlock()
-		node.set_dice_input_enabled(false)
+		node.set_debuff_locking_disabled(true)
 		node.set_lock_shader_enabled(false)
 
 func remove() -> void:
