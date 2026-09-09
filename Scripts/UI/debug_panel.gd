@@ -400,6 +400,10 @@ func _create_debug_tabs() -> void:
 			{"text": "Patterson Sighting (True)", "method": "_debug_cast_sighting_true"},
 			{"text": "Patterson Sighting (False)", "method": "_debug_cast_sighting_false"},
 			{"text": "Advance Next Arc Beat", "method": "_debug_cast_advance_beat"},
+			{"text": "Force Arc: Bird Feeder", "method": "_debug_cast_bird_feeder"},
+			{"text": "Force Arc: Squirrels", "method": "_debug_cast_squirrels"},
+			{"text": "Force Arc: Derek Room", "method": "_debug_cast_derek_room"},
+			{"text": "Force Arc: Debra Dish", "method": "_debug_cast_debra_dish"},
 			{"text": "Force Derek Twist", "method": "_debug_cast_derek_twist"},
 			{"text": "Force Dad Call", "method": "_debug_cast_dad_call"},
 			{"text": "Show Cast State", "method": "_debug_cast_show_state"},
@@ -4302,6 +4306,41 @@ func _debug_cast_advance_beat() -> void:
 		_debug_cast_force_claim({"tree_id": arc.beats[next_index].dialog_node_id, "context": {}})
 		return
 	log_debug("All story arcs already completed")
+
+
+func _debug_cast_force_next_beat(arc_id: String) -> void:
+	var cast_manager = _get_cast_manager()
+	if not cast_manager:
+		log_debug("ERROR: CastManager not available")
+		return
+	if not cast_manager._arcs.has(arc_id):
+		log_debug("ERROR: Unknown arc id: %s" % arc_id)
+		return
+	if arc_id in cast_manager.completed_arcs:
+		log_debug("Arc already completed: %s" % arc_id)
+		return
+	var arc: MomStoryArc = cast_manager._arcs[arc_id]
+	var next_index: int = cast_manager.arc_progress.get(arc_id, 0)
+	if next_index >= arc.beats.size():
+		log_debug("Arc has no remaining beats: %s" % arc_id)
+		return
+	_debug_cast_force_claim({"tree_id": arc.beats[next_index].dialog_node_id, "context": {}})
+
+
+func _debug_cast_bird_feeder() -> void:
+	_debug_cast_force_next_beat("bird_feeder_fever")
+
+
+func _debug_cast_squirrels() -> void:
+	_debug_cast_force_next_beat("squirrel_campaign")
+
+
+func _debug_cast_derek_room() -> void:
+	_debug_cast_force_next_beat("derek_room_disaster")
+
+
+func _debug_cast_debra_dish() -> void:
+	_debug_cast_force_next_beat("debra_casserole_dish")
 
 
 func _debug_cast_derek_twist() -> void:

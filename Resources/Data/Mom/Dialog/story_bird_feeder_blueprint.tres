@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "[color=green]That's the spirit.[/color] Respect the process, sweetie. Cardinals appreciate discipline."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_neutral"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "none"
+result_text = "Laugh now. When the cardinal shows up, you'll be begging for the good kitchen-window seat."
+result_expression = "neutral"
+
+[sub_resource type="Resource" id="out_sassy"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "mood_delta"
+mood_delta = 1
+result_text = "[color=orange]Mock the craft if you want.[/color] You're still refilling feeder number two if I ask."
+result_expression = "upset"
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "This seems serious."
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite")])
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "You made a bird spreadsheet?"
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral")])
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "You're getting hustled by pigeons."
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy")])
+
+[resource]
+script = ExtResource("1_node")
+id = "story_bird_feeder_blueprint"
+mom_text = "I bought three bird feeders, a scoop with measurements on it, and a seed mix your father called 'too premium for wildlife.' Your mother does not improvise with sunflower seed anymore."
+expression = "neutral"
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

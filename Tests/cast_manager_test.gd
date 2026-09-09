@@ -38,6 +38,7 @@ func _ready() -> void:
 	_test_false_chance_bands(cm)
 	_test_pending_report_delay(cm)
 	_test_arc_gating_and_completion(cm)
+	_test_reward_preview(cm)
 	_test_flag_nodes(cm)
 	_test_checkin_precedence(cm)
 	_test_save_load_roundtrip(cm)
@@ -186,6 +187,27 @@ func _test_arc_gating_and_completion(cm: CastManager) -> void:
 	# Restore the persisted Rep so later runs see the save as it was.
 	if rep_pinned:
 		progress_manager.adjust_rep(saved_rep - progress_manager.get_rep())
+
+
+func _test_reward_preview(cm: CastManager) -> void:
+	_check("new bird feeder arc loaded", cm.get_arc("bird_feeder_fever") != null)
+	_check("new squirrel arc loaded", cm.get_arc("squirrel_campaign") != null)
+	_check("new Derek sequel arc loaded", cm.get_arc("derek_room_disaster") != null)
+	_check("new Debra sequel arc loaded", cm.get_arc("debra_casserole_dish") != null)
+
+	cm.arc_progress["bird_feeder_fever"] = 2
+	var preview := cm.preview_session_rewards("story_bird_feeder_payoff")
+	_check("bird feeder preview exposes $25 and +1 REP",
+		int(preview.get("reward_money", 0)) == 25 and int(preview.get("reward_rep", 0)) == 1)
+
+	cm.arc_progress["derek_room_disaster"] = 2
+	preview = cm.preview_session_rewards("story_derek_room_cleanup")
+	_check("Derek cleanup preview exposes $30 and +2 REP",
+		int(preview.get("reward_money", 0)) == 30 and int(preview.get("reward_rep", 0)) == 2)
+
+	_check("normal check-in has no story reward preview", cm.preview_session_rewards("checkin_neutral").is_empty())
+	cm.arc_progress.erase("bird_feeder_fever")
+	cm.arc_progress.erase("derek_room_disaster")
 
 
 func _test_flag_nodes(cm: CastManager) -> void:

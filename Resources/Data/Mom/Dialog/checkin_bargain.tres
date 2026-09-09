@@ -45,7 +45,7 @@ mood_delta = 0
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=green]Ten?! ...Fine. Seven-fifty, and you dry too.[/color] Don't push your luck, negotiator."
+result_text = "[color=green]Ten?! ...Fine. Ten, and you dry too.[/color] Don't push your luck, negotiator."
 result_expression = "neutral"
 ends_visit = true
 

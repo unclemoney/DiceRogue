@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "[color=green]Exactly.[/color] You see the menace. Finally, somebody in this house does."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_neutral"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "none"
+result_text = "He has posture, confidence, and no respect for property lines. I dislike all three."
+result_expression = "neutral"
+
+[sub_resource type="Resource" id="out_sassy"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "mood_delta"
+mood_delta = 1
+result_text = "[color=orange]Do NOT take his side.[/color] That squirrel is a repeat offender."
+result_expression = "upset"
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "Chairman Nibbles is a strong name."
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite")])
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "He's just a squirrel, Mom."
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral")])
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "Maybe he does pay taxes."
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy")])
+
+[resource]
+script = ExtResource("1_node")
+id = "story_squirrel_first_sighting"
+mom_text = "One squirrel has been raiding my tomatoes and staring at me like he pays taxes here. I named him Chairman Nibbles."
+expression = "neutral"
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

@@ -83,7 +83,7 @@ outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResourc
 
 [sub_resource type="Resource" id="out_sassy_1"]
 script = ExtResource("3_out")
-weight = 6.0
+weight = 4.0
 effect = "apply_tier"
 magnitude = 2
 mood_delta = 1
@@ -96,7 +96,7 @@ ends_visit = true
 
 [sub_resource type="Resource" id="out_sassy_2"]
 script = ExtResource("3_out")
-weight = 3.0
+weight = 4.0
 effect = "mood_delta"
 magnitude = 0
 mood_delta = 2
@@ -109,7 +109,7 @@ ends_visit = true
 
 [sub_resource type="Resource" id="out_sassy_3"]
 script = ExtResource("3_out")
-weight = 1.0
+weight = 2.0
 effect = "storms_off"
 magnitude = 0
 mood_delta = 2

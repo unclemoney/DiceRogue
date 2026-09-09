@@ -267,7 +267,7 @@ func _find_due_beat(game_controller: Node, current_channel: int) -> Dictionary:
 
 
 ## _beat_conditions_pass(beat, game_controller, current_channel) -> bool
-func _beat_conditions_pass(beat: MomStoryBeat, game_controller: Node, current_channel: int) -> bool:
+func _beat_conditions_pass(beat: MomStoryBeat, _game_controller: Node, current_channel: int) -> bool:
 	if current_channel < beat.min_channel:
 		return false
 	var grudge := 0
@@ -460,6 +460,22 @@ func on_session_finished(root_node_id: String, visited_node_ids: Array = []) -> 
 		return
 
 
+## preview_session_rewards(root_node_id) -> Dictionary
+##
+## Returns the current beat's completion rewards without mutating arc state.
+## Used so Mom's final visible line can show the exact story reward before
+## the session fully closes.
+func preview_session_rewards(root_node_id: String) -> Dictionary:
+	var beat := _find_current_beat_by_root(root_node_id)
+	if beat == null:
+		return {}
+	return {
+		"reward_money": beat.reward_money,
+		"reward_mood": beat.reward_mood,
+		"reward_rep": beat.reward_rep,
+	}
+
+
 ## _pay_beat_rewards(beat)
 func _pay_beat_rewards(beat: MomStoryBeat) -> void:
 	if beat.reward_money != 0:
@@ -597,6 +613,22 @@ func _current_channel(game_controller: Node) -> int:
 		if channel_manager:
 			return int(channel_manager.get("current_channel"))
 	return 1
+
+
+func _find_current_beat_by_root(root_node_id: String) -> MomStoryBeat:
+	if root_node_id == "":
+		return null
+	for arc_id in _arcs.keys():
+		if arc_id in completed_arcs:
+			continue
+		var arc: MomStoryArc = _arcs[arc_id]
+		var next_index: int = arc_progress.get(arc_id, 0)
+		if next_index >= arc.beats.size():
+			continue
+		var beat: MomStoryBeat = arc.beats[next_index]
+		if beat and beat.dialog_node_id == root_node_id:
+			return beat
+	return null
 
 
 func _get_autoload(autoload_name: String) -> Node:

@@ -55,6 +55,7 @@ func _ready() -> void:
 	_test_apply_tier_semantics(gc)
 	_test_storms_off(gc)
 	_test_direct_effects(gc)
+	_test_dialog_amount_parity()
 	_test_weighted_drawing()
 	_test_checkin_tree_selection(gc)
 	_test_silent_treatment()
@@ -224,6 +225,21 @@ func _test_direct_effects(gc) -> void:
 	result = Handler.apply_outcome(gc, outcome, 4)
 	_check("remove_mod picks one mod", result.removed_mods.size() == 1)
 	_check("removed mod was active", result.removed_mods[0] in ["odd_only", "gold_six"])
+
+
+func _test_dialog_amount_parity() -> void:
+	var bargain: MomDialogNode = Handler.get_dialog_node("checkin_bargain")
+	_check("checkin_bargain node loaded", bargain != null)
+	if bargain == null or bargain.responses.size() < 2:
+		return
+	var polite_outcome: MomDialogOutcome = bargain.responses[0].outcomes[0]
+	_check("bargain deal outcome pays exact $25",
+		polite_outcome != null and polite_outcome.effect == "reward_money" and polite_outcome.magnitude == 25)
+	var haggle_outcome: MomDialogOutcome = bargain.responses[1].outcomes[0]
+	_check("make it ten outcome pays exact $10",
+		haggle_outcome != null and haggle_outcome.effect == "reward_money" and haggle_outcome.magnitude == 10)
+	_check("make it ten text no longer says seven-fifty",
+		haggle_outcome != null and not haggle_outcome.result_text.to_lower().contains("seven-fifty"))
 
 
 func _test_weighted_drawing() -> void:

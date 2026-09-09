@@ -222,9 +222,9 @@ var _round_transition_tv_off: bool = false  # True when TV is off between rounds
 var _round_status_cleanup_scheduled: bool = false
 var _last_completed_round_rebellion_stacks: int = 0
 const MOM_GRANTED_BUFF_IDS: Array[String] = ["rebellion", "teacher_pet"]
-const TEACHER_PET_TIER_1_CHANCE: float = 0.20
-const TEACHER_PET_TIER_2_CHANCE: float = 0.45
-const TEACHER_PET_TIER_3_CHANCE: float = 0.75
+const TEACHER_PET_TIER_1_CHANCE: float = 0.50
+const TEACHER_PET_TIER_2_CHANCE: float = 0.65
+const TEACHER_PET_TIER_3_CHANCE: float = 0.80
 var _new_round_panel: NewRoundPanel = null
 var _pending_round_num: int = -1
 var _pending_is_first_round: bool = false
@@ -6131,6 +6131,9 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 	var teacher_pet_candidate := false
 	var last_qualifying_mom_buff_id := ""
 	var visited_node_ids: Array = [root_node_id]  # CastManager flag nodes ("flag_*")
+	var story_reward_preview: Dictionary = {}
+	if cast_manager and cast_manager.has_method("preview_session_rewards"):
+		story_reward_preview = cast_manager.preview_session_rewards(root_node_id)
 
 	# Walk the tree until a terminal beat (guard against malformed loops)
 	var guard := 0
@@ -6172,18 +6175,20 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 			if followup != null:
 				visited_node_ids.append(followup.id)
 			if followup != null and followup.is_terminal():
-				_mom_dialog.show_node(_prepare_mom_node(followup, context))
+				_mom_dialog.show_node(_prepare_mom_terminal_node(followup, context, result, story_reward_preview))
 				node = null
 			else:
 				node = followup
 		else:
 			if outcome.result_text != "":
-				_mom_dialog.show_outcome_reply(outcome.result_text, outcome.result_expression)
+				_mom_dialog.show_outcome_reply(_append_mom_resolution_summary(outcome.result_text, result, story_reward_preview), outcome.result_expression)
+			elif _mom_summary_has_visible_payload(result, story_reward_preview):
+				_mom_dialog.show_outcome_reply(_build_mom_resolution_summary(result, story_reward_preview), outcome.result_expression)
 			node = null
 
 	# Terminal root node (no responses): just show it
 	if node != null and node.is_terminal():
-		_mom_dialog.show_node(_prepare_mom_node(node, context))
+		_mom_dialog.show_node(_prepare_mom_terminal_node(node, context, result, story_reward_preview))
 
 	# Animate confiscation of power-ups BEFORE closing dialog
 	if result.removed_power_ups.size() > 0 and powerup_ui:
@@ -6291,6 +6296,164 @@ func _prepare_mom_node(node: MomDialogNode, context: Dictionary) -> MomDialogNod
 	return shown
 
 
+## _prepare_mom_terminal_node(node, context, result) -> MomDialogNode
+##
+## Duplicates terminal Mom nodes when needed so the last visible dialog beat
+## can name the exact resolved reward/punishment payload.
+func _prepare_mom_terminal_node(node: MomDialogNode, context: Dictionary, result, story_reward_preview: Dictionary = {}) -> MomDialogNode:
+	var shown := _prepare_mom_node(node, context)
+	if shown == null:
+		return null
+	if not _mom_summary_has_visible_payload(result, story_reward_preview):
+		return shown
+	var duplicated: MomDialogNode = shown.duplicate()
+	duplicated.mom_text = _append_mom_resolution_summary(duplicated.mom_text, result, story_reward_preview)
+	return duplicated
+
+
+## _mom_result_has_visible_consequences(result) -> bool
+##
+## Returns true when the resolved Mom result includes a concrete reward or
+## punishment the player should see spelled out.
+func _mom_result_has_visible_consequences(result) -> bool:
+	if result == null:
+		return false
+	return result.fine_amount > 0 \
+		or result.reward_money > 0 \
+		or result.reward_consumable_id != "" \
+		or result.reward_powerup_id != "" \
+		or not result.removed_power_ups.is_empty() \
+		or not result.removed_mods.is_empty() \
+		or not result.applied_debuffs.is_empty() \
+		or result.cosmetics_locked
+
+
+func _mom_story_reward_has_visible_payload(story_reward_preview: Dictionary) -> bool:
+	if story_reward_preview.is_empty():
+		return false
+	return int(story_reward_preview.get("reward_money", 0)) > 0 \
+		or int(story_reward_preview.get("reward_rep", 0)) != 0
+
+
+func _mom_summary_has_visible_payload(result, story_reward_preview: Dictionary = {}) -> bool:
+	return _mom_result_has_visible_consequences(result) or _mom_story_reward_has_visible_payload(story_reward_preview)
+
+
+## _append_mom_resolution_summary(base_text, result, story_reward_preview) -> String
+##
+## Appends the actual resolved give/take block to an existing Mom line.
+func _append_mom_resolution_summary(base_text: String, result, story_reward_preview: Dictionary = {}) -> String:
+	var summary := _build_mom_resolution_summary(result, story_reward_preview)
+	if summary == "":
+		return base_text
+	if base_text.strip_edges() == "":
+		return summary
+	return "%s\n\n%s" % [base_text, summary]
+
+
+## _build_mom_resolution_summary(result, story_reward_preview) -> String
+##
+## Builds a BBCode-safe summary of the exact resolved Mom consequences and
+## any pending story-beat rewards.
+func _build_mom_resolution_summary(result, story_reward_preview: Dictionary = {}) -> String:
+	var lines: Array[String] = []
+	if result != null and result.fine_amount > 0:
+		lines.append("[color=red]Fine:[/color] $%d" % result.fine_amount)
+
+	if result != null and not result.removed_power_ups.is_empty():
+		lines.append("[color=red]Mom took:[/color] %s" % _join_mom_names(_get_mom_power_up_names(result.removed_power_ups)))
+
+	if result != null and not result.removed_mods.is_empty():
+		lines.append("[color=red]Mom removed:[/color] %s" % _join_mom_names(_get_mom_mod_names(result.removed_mods)))
+
+	if result != null and not result.applied_debuffs.is_empty():
+		lines.append("[color=red]Grounded with:[/color] %s" % _join_mom_names(_get_mom_debuff_names(result.applied_debuffs)))
+
+	if result != null and result.cosmetics_locked:
+		var lock_text := "Dice colors"
+		if result.cosmetics_lock_permanent:
+			lock_text += " permanently"
+		else:
+			lock_text += " for this round"
+		lines.append("[color=red]Mom locked:[/color] %s" % lock_text)
+
+	if result != null and result.reward_money > 0:
+		lines.append("[color=green]Allowance:[/color] $%d" % result.reward_money)
+
+	if result != null and result.reward_consumable_id != "":
+		lines.append("[color=green]Mom gave:[/color] %s" % _get_mom_consumable_display_name(result.reward_consumable_id))
+
+	if result != null and result.reward_powerup_id != "":
+		lines.append("[color=green]Mom gave:[/color] %s" % _get_mom_power_up_display_name(result.reward_powerup_id))
+
+	if _mom_story_reward_has_visible_payload(story_reward_preview):
+		var story_money := int(story_reward_preview.get("reward_money", 0))
+		var story_rep := int(story_reward_preview.get("reward_rep", 0))
+		if story_money > 0:
+			lines.append("[color=green]Story reward:[/color] $%d" % story_money)
+		if story_rep != 0:
+			lines.append("[color=green]REP:[/color] %+d" % story_rep)
+
+	return "\n".join(lines)
+
+
+func _get_mom_power_up_names(ids: Array) -> Array[String]:
+	var names: Array[String] = []
+	for item_id in ids:
+		names.append(_get_mom_power_up_display_name(str(item_id)))
+	return names
+
+
+func _get_mom_mod_names(ids: Array) -> Array[String]:
+	var names: Array[String] = []
+	for item_id in ids:
+		names.append(_get_mom_mod_display_name(str(item_id)))
+	return names
+
+
+func _get_mom_debuff_names(ids: Array) -> Array[String]:
+	var names: Array[String] = []
+	for item_id in ids:
+		names.append(_get_mom_debuff_display_name(str(item_id)))
+	return names
+
+
+func _join_mom_names(names: Array[String]) -> String:
+	return ", ".join(names)
+
+
+func _get_mom_power_up_display_name(power_up_id: String) -> String:
+	if pu_manager and pu_manager.has_method("get_def"):
+		var def: PowerUpData = pu_manager.get_def(power_up_id)
+		if def and not def.display_name.is_empty():
+			return def.display_name
+	return power_up_id
+
+
+func _get_mom_consumable_display_name(consumable_id: String) -> String:
+	if consumable_manager and consumable_manager.has_method("get_def"):
+		var def = consumable_manager.get_def(consumable_id)
+		if def and def.get("display_name") != null and str(def.display_name) != "":
+			return str(def.display_name)
+	return consumable_id
+
+
+func _get_mom_mod_display_name(mod_id: String) -> String:
+	if mod_manager and mod_manager.has_method("get_def"):
+		var def: ModData = mod_manager.get_def(mod_id)
+		if def and not def.display_name.is_empty():
+			return def.display_name
+	return mod_id
+
+
+func _get_mom_debuff_display_name(debuff_id: String) -> String:
+	if debuff_manager and debuff_manager.has_method("get_def"):
+		var def: DebuffData = debuff_manager.get_def(debuff_id)
+		if def and not def.display_name.is_empty():
+			return def.display_name
+	return debuff_id
+
+
 ## _end_mom_visit(is_meter_visit)
 ##
 ## Cleanup after a Mom visit. Meter visits reset the chore meter;
@@ -6383,11 +6546,12 @@ func get_last_completed_round_rebellion_stacks() -> int:
 # ─── Mom-granted buff systems ───
 
 ## Rep deltas per Mom dialog response (see PLAN: Sass Incentives).
-## Tuned for the 4-zone run: a steadily sassing player should reach
-## REP 60 (tier 4, NC-17 POGs) by Zone 4 (~18 check-ins) but not before Zone 2.
-const REP_SASS_SUCCESS: int = 6
-const REP_DEFER_SUCCESS: int = 5
-const REP_STORM_OFF: int = 7
+## Tuned so a sass-heavy run can realistically reach REP 60 (tier 4,
+## NC-17 POGs) by the end of Mall Zone 2 Round 6 without making Zone 1
+## an automatic capstone.
+const REP_SASS_SUCCESS: int = 8
+const REP_DEFER_SUCCESS: int = 7
+const REP_STORM_OFF: int = 9
 const REP_POLITE_PUNISHMENT: int = -2
 const REP_POLITE_CHECKIN: int = -1
 

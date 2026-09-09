@@ -28,6 +28,7 @@ var _failures: int = 0
 func _ready() -> void:
 	print("[TeacherPetSystemTest] Starting")
 
+	_test_activation_odds_floor()
 	_test_tier_behavior()
 	_test_live_tier_upgrade()
 	_test_granted_only_exclusion()
@@ -50,6 +51,15 @@ func _check(label: String, condition: bool) -> void:
 	else:
 		push_error("[TeacherPetSystemTest] FAILED: " + label)
 		_failures += 1
+
+
+func _test_activation_odds_floor() -> void:
+	_check("tier 1 activation chance >= 50%", GameControllerScript.TEACHER_PET_TIER_1_CHANCE >= 0.5)
+	_check("tier 2 activation chance >= 50%", GameControllerScript.TEACHER_PET_TIER_2_CHANCE >= 0.5)
+	_check("tier 3 activation chance >= 50%", GameControllerScript.TEACHER_PET_TIER_3_CHANCE >= 0.5)
+	_check("Teacher's Pet odds stay tier-ordered",
+		GameControllerScript.TEACHER_PET_TIER_1_CHANCE <= GameControllerScript.TEACHER_PET_TIER_2_CHANCE
+		and GameControllerScript.TEACHER_PET_TIER_2_CHANCE <= GameControllerScript.TEACHER_PET_TIER_3_CHANCE)
 
 
 func _reset_score_modifiers() -> void:

@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="MomStoryArc" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/story_arc.gd" id="1_arc"]
+[ext_resource type="Script" path="res://Scripts/Data/story_beat.gd" id="2_beat"]
+
+[sub_resource type="Resource" id="beat_0"]
+script = ExtResource("2_beat")
+beat_index = 0
+dialog_node_id = "story_debra_dish_missing"
+min_channel = 16
+requires_flag = "debra_backfired"
+sets_flag = "debra_dish_missing"
+
+[sub_resource type="Resource" id="beat_1"]
+script = ExtResource("2_beat")
+beat_index = 1
+dialog_node_id = "story_debra_dish_labels"
+min_channel = 18
+requires_flag = "debra_dish_missing"
+sets_flag = "debra_dish_labeled"
+
+[sub_resource type="Resource" id="beat_2"]
+script = ExtResource("2_beat")
+beat_index = 2
+dialog_node_id = "story_debra_dish_returned"
+min_channel = 20
+requires_flag = "debra_dish_labeled"
+reward_money = 25
+reward_mood = -1
+reward_rep = 1
+
+[resource]
+script = ExtResource("1_arc")
+id = "debra_casserole_dish"
+character_id = "debra"
+display_name = "The Missing Casserole Dish"
+priority = 6
+beats = Array[ExtResource("2_beat")]([SubResource("beat_0"), SubResource("beat_1"), SubResource("beat_2")])

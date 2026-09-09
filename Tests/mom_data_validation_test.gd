@@ -168,6 +168,13 @@ func _validate_cast(known_dialog_ids: Array[String]) -> void:
 	for node_id in known_dialog_ids:
 		if node_id.begins_with("flag_"):
 			settable_flags.append(node_id)
+	for path in arcs:
+		var preview_arc: MomStoryArc = arcs[path]
+		for beat in preview_arc.beats:
+			if beat == null or beat.sets_flag == "":
+				continue
+			if beat.sets_flag not in settable_flags:
+				settable_flags.append(beat.sets_flag)
 
 	var arc_ids: Array[String] = []
 	for path in arcs:
@@ -187,8 +194,6 @@ func _validate_cast(known_dialog_ids: Array[String]) -> void:
 			if beat.dialog_node_id not in known_dialog_ids:
 				push_error("[MomDataValidation] %s: beat node '%s' not in Dialog/" % [path, beat.dialog_node_id])
 				ok = false
-			if beat.sets_flag != "" and beat.sets_flag not in settable_flags:
-				settable_flags.append(beat.sets_flag)
 		for beat in arc.beats:
 			if beat == null or beat.requires_flag == "":
 				continue

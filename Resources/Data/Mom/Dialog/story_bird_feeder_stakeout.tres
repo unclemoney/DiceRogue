@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "[color=green]Exactly.[/color] Red as a fire truck and twice as dramatic. Good eyes, sweetie."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_neutral"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "none"
+result_text = "Maybe he's late. Maybe he's testing me. Birds know things."
+result_expression = "neutral"
+
+[sub_resource type="Resource" id="out_sassy"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "mood_delta"
+mood_delta = 1
+result_text = "[color=orange]If you say 'touch grass' while I am studying nature, I will lose my religion.[/color]"
+result_expression = "upset"
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "The cardinal will show."
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite")])
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "Maybe he switched yards."
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral")])
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "Mom. Go outside."
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy")])
+
+[resource]
+script = ExtResource("1_node")
+id = "story_bird_feeder_stakeout"
+mom_text = "I've been at the kitchen window forty minutes waiting for the cardinal. Your father thinks I'm running surveillance."
+expression = "neutral"
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

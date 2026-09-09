@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "[color=green]Good.[/color] Because if I find glitter in the hallway again, I'm invoicing both of you."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_neutral"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "none"
+result_text = "Team effort means team cleanup. I do not do joint custody of pizza crusts."
+result_expression = "neutral"
+
+[sub_resource type="Resource" id="out_sassy"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "apply_tier"
+magnitude = 1
+mood_delta = 1
+result_text = "[color=red]Looks fine to you?![/color] Then a small punishment will look fine too."
+result_expression = "upset"
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "Yeah, that's on both of us."
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite")])
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "It got away from us."
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral")])
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "Honestly? I've seen worse."
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy")])
+
+[resource]
+script = ExtResource("1_node")
+id = "story_derek_room_mess"
+mom_text = "I opened Derek's room and found glitter, pizza crusts, and one of YOUR dice in his sock drawer. Do not make me diagram this crime scene."
+expression = "upset"
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

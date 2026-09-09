@@ -91,7 +91,7 @@
 ## SYS:Debug — Debug & Testing Tools
 
 - [X] `P1-Major` Add a current dice state to the debug panel. 
-- [ ] `P1-Major`Something weird happens and 2 dice are disabled after a Mom check-in in Mall Zone 2.
+- [X] `P1-Major`Something weird happens and 2 dice are disabled after a Mom check-in in Mall Zone 2.
 
 ## Plan Prompts
 > Clear this section and use it for design documents, zone plans, and balance spreadsheets.

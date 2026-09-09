@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "mood_delta"
+mood_delta = -1
+result_text = "[color=green]Yes he did.[/color] Sat there like he paid rent. Today is a banner day."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_neutral"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "none"
+result_text = "I respect results, and these are results. Your father doubted the premium seed. He was wrong."
+result_expression = "happy"
+
+[sub_resource type="Resource" id="out_sassy"]
+script = ExtResource("3_out")
+weight = 1.0
+effect = "mood_delta"
+mood_delta = 1
+result_text = "[color=orange]Yes, even bird victories pay out.[/color] Don't act like your mother doesn't understand incentives."
+result_expression = "neutral"
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "He finally showed?"
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite")])
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "So the spreadsheet worked."
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral")])
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "You're paying me bird bonus money?"
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy")])
+
+[resource]
+script = ExtResource("1_node")
+id = "story_bird_feeder_payoff"
+mom_text = "[color=green]Cardinal confirmed.[/color] New seed mix worked, the feeder held, and that is worth a clean $25 victory allowance."
+expression = "happy"
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])
