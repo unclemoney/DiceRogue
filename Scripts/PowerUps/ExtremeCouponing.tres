@@ -11,7 +11,7 @@ region = Rect2(48, 439, 387, 375)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "extreme_couponing"
-display_name = "Extreme Couponing"
+display_name = "Couponer"
 description = "+5 score per consumable granted this run. Stacks all game!"
 icon = SubResource("AtlasTexture_coupon")
 scene = ExtResource("2_scene")

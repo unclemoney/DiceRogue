@@ -11,7 +11,7 @@ region = Rect2(609, 402, 188, 181)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "the_piggy_bank"
-display_name = "The Piggy Bank"
+display_name = "Piggy Bank"
 description = "Saves $3 per roll. Sell to cash out all savings!"
 icon = SubResource("AtlasTexture_5st3k")
 scene = ExtResource("2_scene")

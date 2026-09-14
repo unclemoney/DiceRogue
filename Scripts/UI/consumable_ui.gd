@@ -136,6 +136,7 @@ func _ready() -> void:
 	
 	# Build compact row
 	_create_compact_row()
+	call_deferred("_bind_no_consumables_allowed_signals")
 	
 	# Defer layout until container size is known
 	resized.connect(_on_resized)
@@ -143,6 +144,52 @@ func _ready() -> void:
 	
 	if _debug_enabled:
 		print("[ConsumableUI] New spine-based system initialized")
+
+
+func _bind_no_consumables_allowed_signals() -> void:
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if not game_controller:
+		return
+
+	if not game_controller.is_connected("debuff_applied", _on_game_controller_debuff_applied):
+		game_controller.debuff_applied.connect(_on_game_controller_debuff_applied)
+
+	if game_controller.is_debuff_active("no_consumables_allowed"):
+		var debuff: Debuff = game_controller.active_debuffs.get("no_consumables_allowed") as Debuff
+		_connect_no_consumables_allowed_debuff(debuff)
+
+
+func _connect_no_consumables_allowed_debuff(debuff: Debuff) -> void:
+	if not debuff:
+		return
+
+	if not debuff.is_connected("debuff_ended", _on_no_consumables_allowed_debuff_ended):
+		debuff.debuff_ended.connect(_on_no_consumables_allowed_debuff_ended)
+
+
+func _on_game_controller_debuff_applied(id: String, debuff: Debuff) -> void:
+	if id != "no_consumables_allowed":
+		return
+
+	_connect_no_consumables_allowed_debuff(debuff)
+	update_consumable_usability()
+
+
+func _on_no_consumables_allowed_debuff_ended() -> void:
+	update_consumable_usability()
+
+
+func _is_consumables_blocked() -> bool:
+	if get_meta("consumables_blocked", false):
+		return true
+
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller:
+		var debuff: Debuff = game_controller.active_debuffs.get("no_consumables_allowed") as Debuff
+		if debuff and debuff.is_active:
+			return true
+
+	return false
 
 
 func _on_resized() -> void:
@@ -664,6 +711,7 @@ func _create_fanned_icons() -> void:
 	var positions: Array[Vector2] = _calculate_fan_positions(count)
 	
 	var overlay = _get_fan_overlay()
+	var consumables_blocked: bool = _is_consumables_blocked()
 	
 	# Create and position icons
 	for i in range(count):
@@ -693,6 +741,10 @@ func _create_fanned_icons() -> void:
 		
 		# Store reference
 		_fanned_icons[consumable_id] = icon
+		if icon.has_method("set_blocked_by_debuff"):
+			icon.set_blocked_by_debuff(consumables_blocked)
+		if icon.has_method("set_useable"):
+			icon.set_useable(_can_use_consumable(data))
 		
 		# Position and animate icon
 		icon.position = _fan_center 
@@ -1002,6 +1054,8 @@ func update_consumable_usability() -> void:
 	# Only update usability when cards are fanned out
 	if _current_state != State.FANNED:
 		return
+
+	var consumables_blocked: bool = _is_consumables_blocked()
 	
 	# Apply usability logic to fanned icons
 	for consumable_id in _fanned_icons.keys():
@@ -1015,10 +1069,15 @@ func update_consumable_usability() -> void:
 		var is_useable: bool = _can_use_consumable(data)
 		
 		# Apply usability to icon (assuming ConsumableIcon has set_useable method)
+		if icon.has_method("set_blocked_by_debuff"):
+			icon.set_blocked_by_debuff(consumables_blocked)
 		if icon.has_method("set_useable"):
 			icon.set_useable(is_useable)
 
 func _can_use_consumable(data: ConsumableData) -> bool:
+	if _is_consumables_blocked():
+		return false
+
 	# Global check: All consumables require an active turn (prevents between-round usage)
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	if game_controller and game_controller.turn_tracker:

@@ -11,7 +11,7 @@ region = Rect2(38, 33, 179, 176)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "chore_sprint"
-display_name = "Chore Sprint"
+display_name = "Mall Dash"
 description = "Chores reduce goof-off meter by 30 instead of 20"
 icon = SubResource("AtlasTexture_veod5")
 scene = ExtResource("2_scene")

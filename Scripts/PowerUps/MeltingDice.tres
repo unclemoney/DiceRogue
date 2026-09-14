@@ -11,7 +11,7 @@ region = Rect2(425, 33, 175, 176)
 [resource]
 script = ExtResource("1_script")
 id = "melting_dice"
-display_name = "Melting Dice"
+display_name = "Soft Serve"
 description = "Starts +80 additive, melts by 8 each score"
 icon = SubResource("AtlasTexture_nt4ya")
 scene = ExtResource("2_scene")

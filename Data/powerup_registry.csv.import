@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://cod3fg3t65qtj"
+
+[deps]
+
+files=["res://Data/powerup_registry.current.translation", "res://Data/powerup_registry.suggested.translation", "res://Data/powerup_registry.rarity.translation", "res://Data/powerup_registry.rating.translation", "res://Data/powerup_registry.description.translation", "res://Data/powerup_registry.icon.translation", "res://Data/powerup_registry.status.translation"]
+
+source_file="res://Data/powerup_registry.csv"
+dest_files=["res://Data/powerup_registry.current.translation", "res://Data/powerup_registry.suggested.translation", "res://Data/powerup_registry.rarity.translation", "res://Data/powerup_registry.rating.translation", "res://Data/powerup_registry.description.translation", "res://Data/powerup_registry.icon.translation", "res://Data/powerup_registry.status.translation"]
+
+[params]
+
+compress=true
+delimiter=0

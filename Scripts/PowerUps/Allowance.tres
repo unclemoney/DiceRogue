@@ -11,7 +11,7 @@ region = Rect2(802, 221, 187, 181)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "allowance"
-display_name = "Allowance"
+display_name = "Snack Stipened"
 description = "Grants a bonus $100 when completeing a challenge."
 icon = SubResource("AtlasTexture_1uvao")
 scene = ExtResource("2_scene")

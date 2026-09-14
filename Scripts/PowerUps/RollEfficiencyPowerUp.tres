@@ -11,7 +11,7 @@ region = Rect2(230, 780, 181, 178)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "roll_efficiency"
-display_name = "Roll Efficiency"
+display_name = "Roll Counter"
 description = "+N to all scores (N = rolls used this turn)"
 icon = SubResource("AtlasTexture_sydvi")
 scene = ExtResource("2_scene")

@@ -1,0 +1,73 @@
+file,current_name,suggested_name,rarity,rating,description,icon_concept,status
+Chance520PowerUp.tres,520,,uncommon,PG,+5 to all scores for each Chance category scored with 20 or above,,pending
+FourOfAKindYahtzee.tres,Almost Guhtzee,,epic,R,Four-of-a-kind counts as a Yahtzee for 25 points (no Yahtzee bonus),,pending
+BlueSlime.tres,Azure Ooze,Paper Keeper,legendary,PG-13,Doubles the chance of rolling blue dice.,Trapper Keeper,pending
+AzurePerfectionPowerUp.tres,Blue Ribbon,,legendary,R,"Blue dice ALWAYS count as used - no penalties, only multipliers!",,pending
+ExtraDice.tres,Bonus Die,WFB,common,R,Grants one additional die,White Ford Bronco,pending
+UpperBonusMultPowerUp.tres,Bonus Mult,The Brick,rare,R,+1x for each Upper Section Bonus achieved.,Motorola Cell Phone,pending
+MoneyBagsPowerUp.tres,Ca$h,,epic,R,Score multiplier = ($Money / 100) + 1,,pending
+PerfectStrangers.tres,Chance Factor,EZ-Bake,rare,PG-13,"When scoring CHANCE, gain a random 1.1x-1.5x multiplier for that score",,pending
+RandomizerPowerUp.tres,Chaos Dice,,uncommon,PG-13,"Each turn applies a random score modifier: 80% chance for additive bonus (-20 to +50), 20% chance for multiplier.",,pending
+DebuffDestroyerPowerUp.tres,Cleanse,,epic,PG-13,Removes 1 random debuff upon selling,,pending
+ChoreChampionPowerUp.tres,Cleanup Captain,,common,G,Chores are 2x more effective,,pending
+ExtraRainbow.tres,Color Surge,Candy Ring,rare,PG-13,+10 per colored die scored,,pending
+BonusMoneyPowerUp.tres,Combo Meal,,uncommon,G,+$50 for each bonus achieved (Upper Section Bonus or Yahtzee Bonus),,pending
+ComebackKid.tres,Comeback Kid,,rare,PG-13,+5 score for each category sitting at 0,,pending
+ExtremeCouponing.tres,Couponer,Notebook,uncommon,PG,+5 score per consumable granted this run. Stacks all game!,Lisa Frank,pending
+RedSlime.tres,Crimson Tide,,uncommon,PG-13,Doubles the chance of rolling red dice,,pending
+ModMoneyPowerUp.tres,Custom Order,,common,G,Earn $8 per modded die when scoring ,,pending
+DaringDice.tres,Daring Dice,,rare,PG-13,Remove 2 dice but gain +50 additive,,pending
+LockAndLoadPowerUp.tres,Die Holder,ZooBooks,common,G,+$3 for each die locked,,pending
+DifferentStraights.tres,Different Straights,Slap Wrap,rare,PG-13,Straights can have one gap of 1,,pending
+PlusTheLast.tres,Echoes,,rare,NC-17,Adds last score to current score,,pending
+RandomCardLevel.tres,Elevator Up,,rare,PG-13,20% chance each turn to level up a random scorecard category,,pending
+GreenSlime.tres,Emrald Oooze,,common,G,Doubles the chance of rolling green dice,,pending
+EvenHigherPowerUp.tres,Escalator,Rcok Hard Candy,rare,PG-13,+1 additive per even die scored (cumulative),Makeup,pending
+ExtraCoupons.tres,Extra Coupons,,rare,R,Deprecated,,pending
+OneRollWonder.tres,First Strike,,rare,PG-13,Score on first roll = +40 additive,,pending
+ShopRerollsPowerUp.tres,Fixed Rate,,uncommon,PG,Shop rerolls always cost $25 - never increases unless sold,,pending
+MoneyWellSpentPowerUp.tres,Food Court Frenzy,,common,G,+1 to all scores per $50 spent (during the game),,pending
+FullHousePowerUp.tres,Full House Fortune,,common,PG,+$25 for each full house rolled (scaling with total rolled this game),,pending
+ChallengeEaserPowerUp.tres,Game Genie,,epic,PG-13,All challenge score targets reduced by 20%,,pending
+YellowSlime.tres,Golden Goop,Kuntry-Time ,legendary,PG-13,Doubles the chance of rolling yellow dice,,pending
+PurplePayoutPowerUp.tres,Grape Soda,,common,G,Each purple die grants $25 when scoring,,pending
+GreenMonster.tres,Green Greed,,uncommon,PG,+0.05x green money multiplier per green dice scored. Stacks throughout the game!,,pending
+YahtzeedDice.tres,Guhtzee Dice,,epic,R,Gain +1 die every time you roll a Guhtzee! (Excluding Bonus Guhtzee's),,pending
+MoneyMultiplierPowerUp.tres,Guhtzee Jackpot,,rare,PG,Immediately multiple your cash for every Guhtzee rolled (increases +.1 each Guhtzee),GE Alarm,pending
+YahtzeeBonusMultPowerUp.tres,Guhtzee Mult,,legendary,PG-13,Increases score multiplier by 1x for each Yahtzee Bonus achieved,,pending
+HotStreak.tres,Hot Streak,Diskman,uncommon,PG,+3 per consecutive turn scoring 15+,,pending
+FailedMoneyPowerUp.tres,Leftover Loot,Anxiety ,common,PG,+$50 for each failed hand at rounds end.,Aligator Teeth Game,pending
+EvensNoOddsPowerUp.tres,Louis Stevens,,common,G,"Even dice add +1, odd dice add -1 to all scores",,pending
+LowerTen.tres,Lower Lift,10 Spot,uncommon,PG-13,Lower section scores get +10 points,Daria,pending
+FoursomePowerUp.tres,Lucky 4,,epic,NC-17,"If a 4 is scored, there is a 1:4 chance to multiply your score by 4",,pending
+ChoreSprintPowerUp.tres,Mall Dash,Magic Mitt,uncommon,PG,Chores reduce goof-off meter by 30 instead of 20,,pending
+ModdedDiceMasteryPowerUp.tres,Mod Master,Stick Stickly,rare,PG,+10 points per modded die when scoring,,pending
+PairParadisePowerUp.tres,Pair Paradise,Boy Meets World,common,PG,"Pair bonuses: +3 (pair/3oak), +6 (2pair/4oak), +9 (FH/Yahtzee)",,pending
+ThePiggyBank.tres,Piggy Bank,,uncommon,G,Saves $3 per roll. Sell to cash out all savings!,,pending
+PinHeadPowerUp.tres,Pin Head,,epic,NC-17,"When scoring, picks a random dice value as multiplier",,pending
+PowerSurge.tres,Power Surge,,epic,R,+0.15x multiplier per owned PowerUp,,pending
+RainbowSurgePowerUp.tres,Rainbow Burst,Fruit Stripe,epic,R,2.0x score multiplier when 5 different dice colors are present!,,pending
+DefiancePowerUp.tres,Rebel Boost,486,epic,PG-13,+0.25x score multiplier for each active debuff,Intel Inside,pending
+RedPowerRanger.tres,Red Ranger,,uncommon,PG,Gain +1 additive score for each red dice scored. The additive is cumulative and applies to all future scores.,,pending
+ConsumableCashPowerUp.tres,Refill Rewards,,uncommon,G,+1 dollar per turn for every Consumable used.,,pending
+ExtraRolls.tres,Roll Again,Magic Eye,common,PG-13,Grants additional Rolls each turn,,pending
+RollEfficiencyPowerUp.tres,Roll Counter,,common,PG,+N to all scores (N = rolls used this turn),,pending
+DiceDiversityPowerUp.tres,Sampler Pack,Lunchable,common,G,+$5 for each unique dice value rolled upon scoring,,pending
+BlueSafetyNetPowerUp.tres,Security Blanket,,uncommon,PG,Blue dice penalties reduced by 50%.,,pending
+Allowance.tres,Snack Stipened,,common,G,Grants a bonus $100 when completeing a challenge.,,pending
+SnakeEyes.tres,Snake Eyes,,legendary,NC-17,Each 1 = +0.2x mult. All 1s = 3.0x!,,pending
+MeltingDice.tres,Soft Serve,,common,PG,"Starts +80 additive, melts by 8 each score",,pending
+HighlightedScorePowerUp.tres,Spotlight,,rare,PG-13,Highlights a random unscored category for 1.5x score,,pending
+StepByStepPowerUp.tres,Step by Step,,common,PG,All upper section scores get +6,,pending
+StraightTripletMasterPowerUp.tres,Straight Triplet,Rock Hard,rare,PG,"Score straights in Lg Straight, Sm Straight, AND Chance in 1 round for +$150 and +75pts",Hard Rock Logo,pending
+SweetSixteen.tres,Sweet Sixteen,,uncommon,PG-13,Grants $16 per turn. Score above 0 on turn 16 for a $256 bonus!,,pending
+TangoAndCashPowerUp.tres,Tango & Cash,T&Y,uncommon,PG-13,+$10 for every odd die scored (at round end),Beanie Baby,pending
+TheConsumerIsAlwaysRight.tres,The Consumer is Always Right,Zima,legendary,NC-17,Score multiplier increases by 0.25x for each consumable used this session,,pending
+TheReplicator.tres,The Replicator,,rare,PG-13,"After 1 turn, duplicates a random PowerUp you own",,pending
+PlusADollar.tres,Tip Jar,,common,G,Grants $1 after each dice roll,,pending
+GreatExchange.tres,Trading Places,,rare,R,"+2 dice, -1 roll per turn",,pending
+TwoPairHouse.tres,Two Pair House,Beeper Code,rare,PG-13,Two pair counts as a Full House (25 points),,pending
+Ungrounded.tres,Ungrounded,Saved by the bell,legendary,NC-17,Prevents all debuffs,,pending
+UpperCrust.tres,Upper Crust,,rare,PG-13,Upper section scores get x1.5,,pending
+PurpleSlime.tres,Violet Viscus,,rare,PG,Doubles the chance of rolling purple dice,,pending
+WildDotsPowerUp.tres,Wild Dots,,rare,NC-17,"For each locked dice of the same number, additional rolled dice have an increased odds of rolling the same number.",,pending

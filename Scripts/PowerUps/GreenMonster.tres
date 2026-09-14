@@ -11,7 +11,7 @@ region = Rect2(38, 407, 182, 177)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "green_monster"
-display_name = "Green Monster"
+display_name = "Green Greed"
 description = "+0.05x green money multiplier per green dice scored. Stacks throughout the game!"
 icon = SubResource("AtlasTexture_en2r5")
 scene = ExtResource("2_green_scene")

@@ -11,7 +11,7 @@ region = Rect2(217, 409, 184, 187)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "four_of_a_kind_yahtzee"
-display_name = "Four-Kind Yahtzee"
+display_name = "Almost Guhtzee"
 description = "Four-of-a-kind counts as a Yahtzee for 25 points (no Yahtzee bonus)"
 icon = SubResource("AtlasTexture_four_kind_yahtzee")
 scene = ExtResource("2_scene")

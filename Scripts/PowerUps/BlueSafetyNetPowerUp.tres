@@ -11,7 +11,7 @@ region = Rect2(419, 595, 183, 174)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "blue_safety_net"
-display_name = "Blue Safety Net"
+display_name = "Security Blanket"
 description = "Blue dice penalties reduced by 50%."
 icon = SubResource("AtlasTexture_xr11n")
 scene = ExtResource("2_scene")

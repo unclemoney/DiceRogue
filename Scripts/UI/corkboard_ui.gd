@@ -119,8 +119,56 @@ func _ready() -> void:
 		var round_data = round_manager.get_current_round_data()
 		if round_data:
 			_update_dice_label(round_data)
+
+	call_deferred("_bind_no_consumables_allowed_signals")
 	
 	print("[CorkboardUI] Initialization complete")
+
+
+func _bind_no_consumables_allowed_signals() -> void:
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if not game_controller:
+		return
+
+	if not game_controller.is_connected("debuff_applied", _on_game_controller_debuff_applied):
+		game_controller.debuff_applied.connect(_on_game_controller_debuff_applied)
+
+	if game_controller.is_debuff_active("no_consumables_allowed"):
+		var debuff: Debuff = game_controller.active_debuffs.get("no_consumables_allowed") as Debuff
+		_connect_no_consumables_allowed_debuff(debuff)
+
+
+func _connect_no_consumables_allowed_debuff(debuff: Debuff) -> void:
+	if not debuff:
+		return
+
+	if not debuff.is_connected("debuff_ended", _on_no_consumables_allowed_debuff_ended):
+		debuff.debuff_ended.connect(_on_no_consumables_allowed_debuff_ended)
+
+
+func _on_game_controller_debuff_applied(id: String, debuff: Debuff) -> void:
+	if id != "no_consumables_allowed":
+		return
+
+	_connect_no_consumables_allowed_debuff(debuff)
+	update_consumable_usability()
+
+
+func _on_no_consumables_allowed_debuff_ended() -> void:
+	update_consumable_usability()
+
+
+func _is_consumables_blocked() -> bool:
+	if get_meta("consumables_blocked", false):
+		return true
+
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller:
+		var debuff: Debuff = game_controller.active_debuffs.get("no_consumables_allowed") as Debuff
+		if debuff and debuff.is_active:
+			return true
+
+	return false
 
 
 func _load_default_scenes() -> void:
@@ -1216,6 +1264,7 @@ func _fan_out_consumables() -> void:
 	
 	# Create fanned consumable icons
 	var positions = _calculate_fan_positions(_consumable_data.size())
+	var consumables_blocked: bool = _is_consumables_blocked()
 	var i := 0
 	
 	for id in _consumable_data:
@@ -1228,6 +1277,10 @@ func _fan_out_consumables() -> void:
 			icon.z_index = 125 + i
 			icon.set_data(data)
 			_consumable_fanned_icons[id] = icon
+			if icon.has_method("set_blocked_by_debuff"):
+				icon.set_blocked_by_debuff(consumables_blocked)
+			if icon.has_method("set_useable"):
+				icon.set_useable(_can_use_consumable(data))
 			
 			icon.consumable_used.connect(func(cid): emit_signal("consumable_used", cid))
 			icon.consumable_sell_requested.connect(func(cid): emit_signal("consumable_sold", cid))
@@ -1248,6 +1301,8 @@ func update_consumable_usability() -> void:
 	# Only update when we have fanned icons
 	if _consumable_fanned_icons.is_empty():
 		return
+
+	var consumables_blocked: bool = _is_consumables_blocked()
 	
 	# Apply usability logic to fanned icons
 	for consumable_id in _consumable_fanned_icons.keys():
@@ -1261,13 +1316,15 @@ func update_consumable_usability() -> void:
 		var is_useable: bool = _can_use_consumable(data)
 		
 		# Apply usability to icon
+		if icon.has_method("set_blocked_by_debuff"):
+			icon.set_blocked_by_debuff(consumables_blocked)
 		if icon.has_method("set_useable"):
 			icon.set_useable(is_useable)
 
 
 func _can_use_consumable(data: ConsumableData) -> bool:
 	# Debuff check: If consumables are blocked by a debuff, always return false
-	if get_meta("consumables_blocked", false):
+	if _is_consumables_blocked():
 		return false
 
 	# Global check: All consumables require an active turn (prevents between-round usage)

@@ -11,7 +11,7 @@ region = Rect2(609, 216, 183, 180)
 [resource]
 script = ExtResource("1_ih5iy")
 id = "foursome"
-display_name = "Foursome"
+display_name = "Lucky 4"
 description = "If a 4 is scored, there is a 1:4 chance to multiply your score by 4"
 icon = SubResource("AtlasTexture_nexa7")
 scene = ExtResource("2_nexa7")

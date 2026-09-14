@@ -55,6 +55,7 @@ var _displacement := 0.0
 var _oscillator_velocity := 0.0
 var _default_position := Vector2.ZERO
 var _hover_card_tween: Tween
+var _blocked_by_debuff := false
 
 var is_useable := false  # Can the consumable be activated at all?
 var is_active := false   # Has the player clicked to activate it?
@@ -144,8 +145,7 @@ func _ready() -> void:
 	if use_button:
 		_use_button_visible = coupon_mode
 		use_button.visible = coupon_mode
-		use_button.text = "USE COUPON" if coupon_mode else "USE"
-		use_button.disabled = coupon_mode and not is_useable
+		_refresh_use_button_state()
 		if not use_button.is_connected("pressed", _on_use_button_pressed):
 			use_button.pressed.connect(_on_use_button_pressed)
 		if not use_button.is_connected("mouse_entered", _tfx.button_hover.bind(use_button)):
@@ -521,9 +521,8 @@ func _apply_data_to_ui() -> void:
 		coupon_description_label.text = data.description if data.description else "No description"
 	if coupon_flavor_label:
 		coupon_flavor_label.text = _get_coupon_flavor_text()
-	if use_button and coupon_mode:
-		use_button.text = "USE COUPON"
-		use_button.disabled = !is_useable
+	if use_button:
+		_refresh_use_button_state()
 	if sell_button and coupon_mode:
 		sell_button.text = "SELL"
 
@@ -668,9 +667,9 @@ func _reset_visual_state() -> void:
 	if sell_button:
 		sell_button.visible = coupon_mode or _sell_button_visible
 	if use_button:
+		_refresh_use_button_state()
 		if coupon_mode:
 			use_button.visible = true
-			use_button.disabled = !is_useable
 		else:
 			use_button.visible = _use_button_visible && is_useable
 	
@@ -692,8 +691,27 @@ func _set_shader_glow(value: float) -> void:
 	if _shader_material:
 		_shader_material.set_shader_parameter("glow_intensity", value)
 
+func _refresh_use_button_state() -> void:
+	if not use_button:
+		return
+
+	use_button.disabled = !is_useable
+	if _blocked_by_debuff:
+		use_button.text = "DEBUFFED"
+	elif coupon_mode:
+		use_button.text = "USE COUPON"
+	else:
+		use_button.text = "USE"
+
+
+func set_blocked_by_debuff(blocked_by_debuff: bool) -> void:
+	_blocked_by_debuff = blocked_by_debuff
+	if use_button and (_use_button_visible or coupon_mode):
+		_refresh_use_button_state()
+
+
 func set_useable(useable: bool) -> void:
-	print("[ConsumableIcon] set_useable =", useable)
+	print("[ConsumableIcon] set_useable =", useable, "blocked_by_debuff =", _blocked_by_debuff)
 	is_useable = useable
 	
 	# Update visual state based on usability
@@ -704,7 +722,7 @@ func set_useable(useable: bool) -> void:
 	
 	# Update use button state - keep visible but disable if not useable
 	if use_button and (_use_button_visible or coupon_mode):
-		use_button.disabled = !is_useable
+		_refresh_use_button_state()
 
 func play_destruction_effect() -> void:
 	print("[ConsumableIcon] play_destruction_effect called")
@@ -823,7 +841,9 @@ func _on_reroll_denied() -> void:
 		
 		# Choose message based on state
 		var message = ""
-		if not is_useable:
+		if _blocked_by_debuff:
+			message = "Consumable blocked by debuff!"
+		elif not is_useable:
 			message = "No scores to reroll!"
 		elif is_active:
 			message = "Already active!"

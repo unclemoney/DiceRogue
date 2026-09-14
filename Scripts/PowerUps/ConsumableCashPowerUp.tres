@@ -11,7 +11,7 @@ region = Rect2(33, 764, 189, 183)
 [resource]
 script = ExtResource("1_40cld")
 id = "consumable_cash"
-display_name = "Cash Flow"
+display_name = "Refill Rewards"
 description = "+1 dollar per turn for every Consumable used."
 icon = SubResource("AtlasTexture_4qowt")
 scene = ExtResource("2_awvan")

@@ -28,45 +28,25 @@
 
 ## SYS:Gameplay — Core Gameplay & Balance
 
-- [X] `P0-Critical` The Division debuff is not dividing scores. Missing signal.
-- [X] `P0-Critical` The Division debuff is not dividing scores when it's a different category.  Example: division works on 6s if there is a Blue 6, but if I score in the 1's category it multiplies.  This violates the Blue Dice Rules and the Division rule.
-- [X] `P0-Critical` Red Power Ranger not adding unless there is a red dice present.
-- [ ] `P0-Critical` Odds only mod rolled a 2. Can't reproduce at the moment.
-- [X] `P1-Major` Groundings occur in Mall Zone 2 at the start of every round. They should only trigger on Sass or Chore failures.
-- [X] `P1-Major` Add a Powerful Teachers Pet BUFF. Add extra money rewards.
-- [X] `P1-Major` Remove Debuffs and Buffs on challenge complete.
-- [X] `P1-Major` Window Shopping Debuff is useless. Redesign to Hail Satan
+- [X] `P0-Critical` Odds only mod rolled a 2. Can't reproduce at the moment. Still not reproduced after thurough testing.  Marked as completed for now.
 - [ ] `P1-Major` Best Hand calculated 426 for Chance. Player selected small straight and still got 426. Hand logic is wrong.
-- [X] `P1-Major` Cartridge Tilt ignores the locked dice part of the increase dice.
-- [ ] `P1-Major` Abstinance debuff needs to be checked. Verify it works as designed.
-- [X] `P1-Major` Upgrade 5's still showing in d4. d4 should not show 5's upgrades.
-- [X] `P1-Major` On a d4 Run, unlisted categories appear in best hand. Hide them.
-- [X] `P1-Major` d4 needs to replace 5's and Large Straight with Even, Odd, Full House, and Fours+. These need upgrade coupons. Only offer them during a d4 run.
-- [X] `P1-Major` No limit on available items to carry over. Enforce only the number limit.
-- [X] `P1-Major` Mods are blocking dice face. Dice faces are not readable.
-- [X] `P2-Minor` Red Power Ranger PowerUp adding an extra label to the top of the screen, this needs to be removed.
-- [X] `P2-Minor` Need an indicator for Synergies. Players cannot see when synergies trigger.
+- [X] `P1-Major` Abstinance debuff needs to be checked. Verify it works as designed.
 - [ ] `P2-Minor` Challenge or Debuff that makes powerups expire after 3 rounds?
-- [ ] `P2-Minor` Clarify MODS are only applied to one dice at a time
-- [ ] `P2-Minor`When All Dice have MODS make it MAX REACHED
-- [ ] `P2-Minor`Clarify Evens Only PowerUP
-- [ ] `P2-Minor`Better way to SELL Mods?
-- [ ] `P2-Minor`Free coupon didn’t register until next round, check on that, Once Coupon is USED it should be immediately availabe.
-- [ ] `P2-Minor`Make mods disabled obvious. During Disabled Mods Debuff, we should add a shader to the MOD icon
-- [ ] `P2-Minor`Upper bonus multiplier power up. Add a new PowerUp that will multiply Upper Section Bonus.
-- [ ] `P2-Minor`Bonus Yahtzee category? That’s gone.  We can add that to the YAHTZEE line.
-- [ ] `P2-Minor`Chore pressure is not enough, needs more balance? Or are we still increasing with more powerful powerups?
+- [ ] `P2-Minor` Clarify MODS are only applied to one dice at a time.
+- [ ] `P2-Minor` Clarify Evens Only PowerUP.
+- [ ] `P2-Minor` Better way to SELL Mods? This needs more detail and exploration.
+- [ ] `P2-Minor` Free coupon didn't register until next round. Check on that. Once coupon is USED it should be immediately available.
+- [ ] `P2-Minor` Make mods disabled obvious. During Disabled Mods Debuff, add a shader to the MOD icon.
+- [ ] `P2-Minor` Upper bonus multiplier power up. Add a new PowerUp that will multiply Upper Section Bonus.
+- [ ] `P2-Minor` Bonus Yahtzee category? That's gone. We can add that to the YAHTZEE line.
+- [ ] `P2-Minor` Chore pressure is not enough, needs more balance? Or are we still increasing with more powerful powerups?
   - Clarify: Which rounds feel wrong? Higher or lower scores? What is the target?
 - [ ] `NEEDS-DETAIL` Play PowerUp for double acting feature for one turn per round?
   - Clarify: Is this a new powerup idea or a change to an existing one? Which powerup?
 
 ## SYS:Chore — Chore System & Mom
 
-- [X] `P1-Major`Teacher's Pet BUFF did not apply the +100 dollars
-- [X] `P1-Major` Mom Dialog and reward should match. They currently do not align.
-- [X] `P1-Major` Chores should be filtered by the dice set being used. d4 runs should not show d6 chores.
-- [ ] `P1-Major` Chore Champion should also update rewards.
-- [X] `P2-Minor` Mom Panel bounce-in is too harsh. Soften the animation.
+- [ ] `P1-Major` Chore Champion should also update rewards. Review this.
 
 ## SYS:Shop — Shop & Economy
 
@@ -75,13 +55,9 @@
 ## SYS:UI — UI / UX & Animation
 
 - [ ] `P1-Major` Mall Map Fan Out still rough. Mall Zone 1 shows "coming up" instead of "completed". Mall Zone 2 shows correctly.
-- [ ] `P2-Minor` Challenge UI needs less alpha in the background.
 - [ ] `P2-Minor` Update Challenge Icons.
 - [ ] `P2-Minor` Shockwave animations can also be applied to buttons that need to be pressed or chosen.
 - [ ] `P2-Minor` Click on the Mall Zone upper left to bring up the mall map. Show coming challenges.
-- [X] `P2-Minor` Texture Progress Bars need to be reworked. Make them consistent across the game.
-- [X] `P2-Minor` Add commas for scores. Use e-notation for higher numbers.
-- [X] `P2-Minor` Mom Panel bounce-in is too harsh. Soften the animation.
 
 ## SYS:Save — Save, Load & State Management
 
@@ -90,22 +66,21 @@
 
 ## SYS:Debug — Debug & Testing Tools
 
-- [X] `P1-Major` Add a current dice state to the debug panel. 
-- [X] `P1-Major`Something weird happens and 2 dice are disabled after a Mom check-in in Mall Zone 2.
+&gt; All debug tasks completed. Add new ones here as needed.
 
 ## Plan Prompts
-> Clear this section and use it for design documents, zone plans, and balance spreadsheets.
-> 
-> Template:
-> - **Goal:**
-> - **Systems affected:**
-> - **Risks:**
-> - **Test plan:**
+&gt; Clear this section and use it for design documents, zone plans, and balance spreadsheets.
+&gt; 
+&gt; Template:
+&gt; - **Goal:**
+&gt; - **Systems affected:**
+&gt; - **Risks:**
+&gt; - **Test plan:**
 
 ---
 
 # Juicy Editor
-> Separate tool. Project 98% complete. No active tasks.
+&gt; Separate tool. Project 98% complete. No active tasks.
 
 ---
 
@@ -127,6 +102,25 @@
 - [X] The PowerUp add the last score is too powerful.
 - [X] Chores don't really progress fast enough, especially if you win the round in 1 shot.
 - [X] Chores progress with each roll by 1. Should non-approved powerups increase it by +xx each time?
+- [X] The Division debuff is not dividing scores. Missing signal.
+- [X] The Division debuff is not dividing scores when it's a different category. Example: division works on 6s if there is a Blue 6, but if I score in the 1's category it multiplies. This violates the Blue Dice Rules and the Division rule.
+- [X] Red Power Ranger not adding unless there is a red dice present.
+- [X] Groundings occur in Mall Zone 2 at the start of every round. They should only trigger on Sass or Chore failures.
+- [X] Add a Powerful Teachers Pet BUFF. Add extra money rewards.
+- [X] Remove Debuffs and Buffs on challenge complete.
+- [X] Window Shopping Debuff is useless. Redesign to Hail Satan.
+- [X] Cartridge Tilt ignores the locked dice part of the increase dice.
+- [X] Upgrade 5's still showing in d4. d4 should not show 5's upgrades.
+- [X] On a d4 Run, unlisted categories appear in best hand. Hide them.
+- [X] d4 needs to replace 5's and Large Straight with Even, Odd, Full House, and Fours+. These need upgrade coupons. Only offer them during a d4 run.
+- [X] No limit on available items to carry over. Enforce only the number limit.
+- [X] Mods are blocking dice face. Dice faces are not readable.
+- [X] Red Power Ranger PowerUp adding an extra label to the top of the screen, removed.
+- [X] Need an indicator for Synergies. Players cannot see when synergies trigger.
+- [X] When All Dice have MODS make it MAX REACHED.
+- [X] Teacher's Pet BUFF did not apply the +100 dollars.
+- [X] Mom Dialog and reward should match. They currently do not align.
+- [X] Chores should be filtered by the dice set being used. d4 runs should not show d6 chores.
 
 ## Testing — Completed
 - [X] Debug Panel doesn't have a way to test MODS.
@@ -174,6 +168,12 @@
 - [X] Upgrade Shop Item UI.
 - [X] +/- is hard to select, and the score needs to update after a selection is made — best hand etc.
 - [X] Console UI Upgrade — change over to VIP cards.
+- [X] Add a current dice state to the debug panel.
+- [X] Something weird happens and 2 dice are disabled after a Mom check-in in Mall Zone 2.
+- [X] Challenge UI needs less alpha in the background.
+- [X] Texture Progress Bars need to be reworked. Make them consistent across the game.
+- [X] Add commas for scores. Use e-notation for higher numbers.
+- [X] Mom Panel bounce-in is too harsh. Soften the animation.
 
 ## Features — Completed
 - [X] Synergy visual indicators — translucent background glow on compact PowerUp slots and halo ring on fan-out cards (rating color for matching sets, animated rainbow for Rainbow Bonus), fan-view synergy summary banner, and "SYNERGY!" popup on activation.
