@@ -35,7 +35,7 @@
 - [ ] `P2-Minor` Clarify MODS are only applied to one dice at a time.
 - [ ] `P2-Minor` Clarify Evens Only PowerUP.
 - [ ] `P2-Minor` Better way to SELL Mods? This needs more detail and exploration.
-- [ ] `P2-Minor` Free coupon didn't register until next round. Check on that. Once coupon is USED it should be immediately available.
+- [X] `P2-Minor` Free coupon didn't register until next round. Check on that. Once coupon is USED it should be immediately available. This works, but coupons only.  Marked as done.
 - [ ] `P2-Minor` Make mods disabled obvious. During Disabled Mods Debuff, add a shader to the MOD icon.
 - [ ] `P2-Minor` Upper bonus multiplier power up. Add a new PowerUp that will multiply Upper Section Bonus.
 - [ ] `P2-Minor` Bonus Yahtzee category? That's gone. We can add that to the YAHTZEE line.

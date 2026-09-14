@@ -40,7 +40,6 @@ const SUMMARY_DEFS := [
 	{"key": "sub_total", "display_name": "Sub Total", "section": "upper"},
 	{"key": "bonus", "display_name": "Bonus", "section": "upper"},
 	{"key": "upper_total", "display_name": "Total", "section": "upper"},
-	{"key": "yahtzee_bonus", "display_name": "Yahtzee Bonus", "section": "lower"},
 	{"key": "lower_total", "display_name": "Lower Total", "section": "lower"},
 ]
 
@@ -124,9 +123,8 @@ func _get_all_rows() -> Array:
 
 ## _get_visible_rows() -> Array
 ##
-## Visible rows in visual top-to-bottom order. Hidden rows (YahtzeeBonus
-## before its first bonus) are skipped so the blinds stagger stays tight
-## (plan risk #9).
+## Visible rows in visual top-to-bottom order. Hidden rows are skipped so
+## the blinds stagger stays tight (plan risk #9).
 func _get_visible_rows() -> Array:
 	var result: Array = []
 	for container in [upper_rows, upper_summary, lower_rows, lower_summary]:
@@ -162,7 +160,6 @@ func _instantiate_summary_rows() -> void:
 			lower_summary.add_child(row)
 		row.setup(def["key"], def["display_name"], true)
 		summary_rows[StringName(def["key"])] = row
-	summary_rows[&"yahtzee_bonus"].visible = false
 
 
 ## _setup_bonus_progress_fill()
@@ -264,6 +261,7 @@ func update_all() -> void:
 	for key in scorecard.lower_scores.keys():
 		_update_category_row(StringName(key), scorecard.lower_scores[key])
 	_update_summary_rows()
+	_sync_yahtzee_bonus_display()
 	_refresh_previews()
 
 
@@ -298,11 +296,25 @@ func _update_summary_rows() -> void:
 
 	summary_rows[&"upper_total"].set_score(scorecard.get_upper_section_final_total())
 
-	var yahtzee_row: ScorecardRow = summary_rows[&"yahtzee_bonus"]
-	yahtzee_row.visible = scorecard.yahtzee_bonuses > 0
-	yahtzee_row.set_score(scorecard.yahtzee_bonus_points)
-
 	summary_rows[&"lower_total"].set_score(scorecard.get_lower_section_total() + scorecard.yahtzee_bonus_points)
+
+
+## _sync_yahtzee_bonus_display()
+##
+## Keeps bonus Yahtzee points on the scored Yahtzee row instead of spawning
+## a deprecated summary row. Example: "50 +100 BONUS".
+func _sync_yahtzee_bonus_display() -> void:
+	var yahtzee_row: ScorecardRow = rows.get(&"yahtzee")
+	if yahtzee_row == null:
+		return
+	var yahtzee_score = scorecard.lower_scores.get("yahtzee")
+	if yahtzee_score == null:
+		return
+	if scorecard.yahtzee_bonus_points <= 0:
+		return
+	var base_text := NumberFormatter.format_score(int(yahtzee_score))
+	var bonus_text := NumberFormatter.format_score(scorecard.yahtzee_bonus_points)
+	yahtzee_row.score_label.text = "%s +%s BONUS" % [base_text, bonus_text]
 
 
 ## update_dice_set_category_labels()

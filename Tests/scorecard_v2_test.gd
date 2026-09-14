@@ -157,6 +157,24 @@ func _run_auto_checks() -> void:
 	fresh_ui.queue_free()
 	fresh_model.queue_free()
 
+	# 6g. Bonus Yahtzee UI stays on the Yahtzee row; no deprecated blank summary row
+	var bonus_ui: ScoreCardUI = preload("res://Scenes/UI/Scorecard/scorecard.tscn").instantiate()
+	add_child(bonus_ui)
+	var bonus_model := Scorecard.new()
+	add_child(bonus_model)
+	bonus_ui.bind_scorecard(bonus_model)
+	_auto_assert(not bonus_ui.summary_rows.has(&"yahtzee_bonus"), "deprecated yahtzee bonus summary row is absent")
+	bonus_model.set_score(Scorecard.Section.LOWER, "yahtzee", 50)
+	await get_tree().process_frame
+	var bonus_values: Array[int] = [5, 5, 5, 5, 5]
+	var bonus_row: ScorecardRow = bonus_ui.rows[&"yahtzee"]
+	_auto_assert(bonus_row.score_label.text == "50", "yahtzee row shows base score before bonus")
+	bonus_model.check_bonus_yahtzee(bonus_values, "full_house")
+	await get_tree().process_frame
+	_auto_assert(bonus_row.score_label.text == "50 +100 BONUS", "yahtzee row appends bonus text (got '%s')" % bonus_row.score_label.text)
+	bonus_ui.queue_free()
+	bonus_model.queue_free()
+
 	# 7. Blinds depopulate -> covered; populate -> revealed + interactive
 	score_card_ui.play_depopulate()
 	await get_tree().create_timer(1.2).timeout
