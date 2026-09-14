@@ -11,7 +11,7 @@ region = Rect2(235, 213, 173, 174)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "blue_slime"
-display_name = "Azure Ooze"
+display_name = "Paper Keeper"
 description = "Doubles the chance of rolling blue dice."
 icon = SubResource("AtlasTexture_lggqx")
 scene = ExtResource("2_scene")

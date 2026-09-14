@@ -11,7 +11,7 @@ region = Rect2(423, 408, 179, 177)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "shop_rerolls"
-display_name = "Fixed Rate"
+display_name = "Layaway"
 description = "Shop rerolls always cost $25 - never increases unless sold"
 icon = SubResource("AtlasTexture_dukjv")
 scene = ExtResource("2_scene")

@@ -11,7 +11,7 @@ region = Rect2(615, 789, 188, 190)
 [resource]
 script = ExtResource("1_40cld")
 id = "upper_bonus_mult"
-display_name = "Bonus Mult"
+display_name = "The Brick"
 description = "+1x for each Upper Section Bonus achieved."
 icon = SubResource("AtlasTexture_awvan")
 scene = ExtResource("2_awvan")

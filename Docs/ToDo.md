@@ -31,7 +31,7 @@
 - [X] `P0-Critical` Odds only mod rolled a 2. Can't reproduce at the moment. Still not reproduced after thurough testing.  Marked as completed for now.
 - [ ] `P1-Major` Best Hand calculated 426 for Chance. Player selected small straight and still got 426. Hand logic is wrong.
 - [X] `P1-Major` Abstinance debuff needs to be checked. Verify it works as designed.
-- [ ] `P2-Minor` Challenge or Debuff that makes powerups expire after 3 rounds?
+- [X] `P2-Minor` Challenge or Debuff that makes powerups expire after 3 rounds? This is no longer needed.
 - [ ] `P2-Minor` Clarify MODS are only applied to one dice at a time.
 - [ ] `P2-Minor` Clarify Evens Only PowerUP.
 - [ ] `P2-Minor` Better way to SELL Mods? This needs more detail and exploration.

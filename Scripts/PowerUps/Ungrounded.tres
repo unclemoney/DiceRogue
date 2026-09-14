@@ -11,7 +11,7 @@ region = Rect2(801, 400, 192, 180)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "ungrounded"
-display_name = "Ungrounded"
+display_name = "Saved! By The…?"
 description = "Prevents all debuffs"
 icon = SubResource("AtlasTexture_ufogn")
 scene = ExtResource("2_scene")

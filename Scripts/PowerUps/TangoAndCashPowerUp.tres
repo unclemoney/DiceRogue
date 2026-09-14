@@ -11,7 +11,7 @@ region = Rect2(809, 769, 179, 179)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "tango_and_cash"
-display_name = "Tango & Cash"
+display_name = "Oddball"
 description = "+$10 for every odd die scored (at round end)"
 icon = SubResource("AtlasTexture_da60f")
 scene = ExtResource("2_scene")

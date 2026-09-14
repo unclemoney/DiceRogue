@@ -11,7 +11,7 @@ region = Rect2(619, 398, 175, 176)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "defiance"
-display_name = "Rebel Boost"
+display_name = "x486"
 description = "+0.25x score multiplier for each active debuff"
 icon = SubResource("AtlasTexture_defiance")
 scene = ExtResource("2_scene")

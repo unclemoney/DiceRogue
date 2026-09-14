@@ -11,7 +11,7 @@ region = Rect2(612, 219, 182, 177)
 [resource]
 script = ExtResource("1_script")
 id = "hot_streak"
-display_name = "Hot Streak"
+display_name = "Portable CD Player"
 description = "+3 per consecutive turn scoring 15+"
 icon = SubResource("AtlasTexture_i50f0")
 scene = ExtResource("2_scene")

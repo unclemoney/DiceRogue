@@ -11,7 +11,7 @@ region = Rect2(39, 767, 177, 177)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "two_pair_house"
-display_name = "Two Pair House"
+display_name = "Beeper Code"
 description = "Two pair counts as a Full House (25 points)"
 icon = SubResource("AtlasTexture_two_pair_house")
 scene = ExtResource("2_scene")

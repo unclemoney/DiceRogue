@@ -11,7 +11,7 @@ region = Rect2(805, 33, 179, 175)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "failed_money"
-display_name = "Leftover Loot"
+display_name = "Anxiety "
 description = "+$50 for each failed hand at rounds end."
 icon = SubResource("AtlasTexture_xoisd")
 scene = ExtResource("2_scene")

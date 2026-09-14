@@ -11,7 +11,7 @@ region = Rect2(19, 409, 185, 186)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "rainbow_surge"
-display_name = "Rainbow Burst"
+display_name = "Rainbow Chew by the Foot"
 description = "2.0x score multiplier when 5 different dice colors are present!"
 icon = SubResource("AtlasTexture_58tnv")
 scene = ExtResource("2_scene")

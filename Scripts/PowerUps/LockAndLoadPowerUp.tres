@@ -11,7 +11,7 @@ region = Rect2(227, 583, 187, 181)
 [resource]
 script = ExtResource("1_powerup_data")
 id = "lock_and_load"
-display_name = "Die Holder"
+display_name = "Petting Zoobook"
 description = "+$3 for each die locked"
 icon = SubResource("AtlasTexture_d30rt")
 scene = ExtResource("2_scene")
