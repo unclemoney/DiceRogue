@@ -724,7 +724,7 @@ func _configure_mod_container() -> void:
 ## of it hangs outside the die bounds) so the rolled number stays visible.
 ## Multiple mod icons stack by shifting each subsequent icon up and left.
 func add_mod(mod_data: ModData) -> void:
-	if active_mods.has(mod_data.id):
+	if active_mods.has(mod_data.id) or _disabled_mods.has(mod_data.id):
 		print("[Dice] Mod already active:", mod_data.id)
 		return
 		
@@ -768,6 +768,13 @@ func add_mod(mod_data: ModData) -> void:
 			icon_index += 1
 	var stack_offset := Vector2(12.0, 12.0) * float(icon_index)
 	icon.position = container_size - icon_rect_size * 0.5 - stack_offset
+
+	if _mods_disabled_by_debuff:
+		icon.set_disabled_visual(true)
+		mod.remove()
+		_disabled_mods[mod_data.id] = mod
+		active_mods.erase(mod_data.id)
+		print("[Dice] Added mod remains disabled due to Disabled Mods debuff:", mod_data.id)
 	
 	# Juice: mod attachment effect
 	var tfx = get_node_or_null("/root/TweenFXHelper")
@@ -806,8 +813,19 @@ func get_mod(id: String) -> Mod:
 ## Stores the disabled mods for later re-enabling.
 ## Used by DisabledModsDebuff.
 var _disabled_mods: Dictionary = {}  # id -> Mod (stored for re-enabling)
+var _mods_disabled_by_debuff := false
+
+## _set_mod_icon_disabled_visuals(disabled)
+##
+## Keeps the visible mod icons in sync with the die's debuff-disabled state.
+func _set_mod_icon_disabled_visuals(disabled: bool) -> void:
+	for child in mod_container.get_children():
+		if child is ModIcon:
+			child.set_disabled_visual(disabled)
 
 func disable_all_mods() -> void:
+	_mods_disabled_by_debuff = true
+	_set_mod_icon_disabled_visuals(true)
 	if active_mods.is_empty():
 		return
 	
@@ -826,6 +844,8 @@ func disable_all_mods() -> void:
 ## Re-enables all previously disabled mods on this die.
 ## Calls apply() on each stored mod to restore functionality.
 func enable_all_mods() -> void:
+	_mods_disabled_by_debuff = false
+	_set_mod_icon_disabled_visuals(false)
 	if _disabled_mods.is_empty():
 		return
 	

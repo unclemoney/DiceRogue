@@ -1965,6 +1965,7 @@ Debuffs are negative effects that hinder the player's progress and add challenge
 - **Disabled Mods**: Disables all dice mods while active
   - All existing mod effects are suspended
   - New dice spawned while active also have mods disabled
+  - Disabled mod icons show a red crossed-out overlay while the debuff is active
   - Mods are restored when the debuff is removed
 - **Disabled Colors**: Disables all colored dice effects while active
   - Green, Red, Purple, and Blue dice provide no bonus

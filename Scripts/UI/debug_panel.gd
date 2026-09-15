@@ -25,6 +25,7 @@ const SCORECARD_UPGRADE_CONSUMABLE_IDS := [
 	"evens_upgrade", "odds_upgrade", "even_odd_full_house_upgrade",
 	"all_categories_upgrade"
 ]
+const TESTING_DEBUFF_LIST_EXCLUDED_IDS := ["rebellion", "teacher_pet"]
 
 @onready var background: ColorRect
 @onready var main_container: VBoxContainer
@@ -40,6 +41,7 @@ var consumable_id_input: LineEdit
 var powerup_selection_list: ItemList
 var consumable_selection_list: ItemList
 var challenge_selection_list: ItemList
+var debuff_selection_list: ItemList
 var mod_selection_list: ItemList
 var mod_die_spinbox: SpinBox
 var dice_state_report_text: TextEdit
@@ -289,26 +291,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Reset Call Counter", "method": "_debug_reset_call_counter"},
 		],
 		"Testing": [
-			{"text": "Apply The Division Debuff", "method": "_debug_apply_division_debuff"},
-			{"text": "Remove The Division Debuff", "method": "_debug_remove_division_debuff"},
 			{"text": "Pulse Costly Roll Debuff UI", "method": "_debug_pulse_costly_roll_debuff_ui"},
-			{"text": "Apply Half Additive Debuff", "method": "_debug_apply_half_additive_debuff"},
-			{"text": "Remove Half Additive Debuff", "method": "_debug_remove_half_additive_debuff"},
-			{"text": "Apply Too Greedy Debuff", "method": "_debug_apply_too_greedy_debuff"},
-			{"text": "Remove Too Greedy Debuff", "method": "_debug_remove_too_greedy_debuff"},
-			{"text": "Apply Murphy's Law", "method": "_debug_apply_murphys_law"},
-			{"text": "Remove Murphy's Law", "method": "_debug_remove_murphys_law"},
-			{"text": "Apply Abstinence", "method": "_debug_apply_abstinence"},
-			{"text": "Remove Abstinence", "method": "_debug_remove_abstinence"},
-			{"text": "Apply Liquidation Sale", "method": "_debug_apply_liquidation_sale"},
-			{"text": "Remove Liquidation Sale", "method": "_debug_remove_liquidation_sale"},
-			{"text": "Apply One Shot", "method": "_debug_apply_one_shot"},
-			{"text": "Remove One Shot", "method": "_debug_remove_one_shot"},
-			{"text": "Apply Hail Satan", "method": "_debug_apply_hail_satan"},
-			{"text": "Remove Hail Satan", "method": "_debug_remove_hail_satan"},
-			{"text": "Apply Docked Allowance", "method": "_debug_apply_docked_allowance"},
-			{"text": "Apply Coupons Revoked", "method": "_debug_apply_coupons_revoked"},
-			{"text": "Apply POGS Confiscated", "method": "_debug_apply_pogs_confiscated"},
 			{"text": "Cycle All Glyphs", "method": "_debug_cycle_all_debuff_glyphs"},
 			{"text": "Test Division vs Perfect Strangers", "method": "_debug_test_division_perfect_strangers"},
 			{"text": "Show Active Challenges", "method": "_debug_show_active_challenges"},
@@ -620,11 +603,18 @@ func _create_mods_tab(parent: VBoxContainer, button_definitions: Array) -> void:
 
 func _create_testing_tab(parent: VBoxContainer, button_definitions: Array) -> void:
 	var helper_label = Label.new()
-	helper_label.text = "Select a challenge from the list, then apply it. Other diagnostics stay below."
+	helper_label.text = "Select a challenge or debuff from the lists, then activate it. Groundings share the debuff list. Other diagnostics stay below."
 	helper_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.7, 1.0))
 	parent.add_child(helper_label)
 
-	challenge_selection_list = _create_selection_list_panel(parent, "Challenges", Callable(self, "_on_challenge_list_item_selected"), 180.0)
+	var lists_row = HBoxContainer.new()
+	lists_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lists_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	lists_row.add_theme_constant_override("separation", 12)
+	parent.add_child(lists_row)
+
+	challenge_selection_list = _create_selection_list_panel(lists_row, "Challenges", Callable(self, "_on_challenge_list_item_selected"), 180.0)
+	debuff_selection_list = _create_selection_list_panel(lists_row, "Debuffs", Callable(self, "_on_debuff_list_item_selected"), 180.0)
 	_ensure_debug_lists_populated()
 
 	var action_row = HBoxContainer.new()
@@ -636,6 +626,18 @@ func _create_testing_tab(parent: VBoxContainer, button_definitions: Array) -> vo
 	activate_button.custom_minimum_size = Vector2(220, 32)
 	activate_button.pressed.connect(_debug_activate_selected_challenge)
 	action_row.add_child(activate_button)
+
+	var apply_debuff_button = Button.new()
+	apply_debuff_button.text = "Apply Selected Debuff"
+	apply_debuff_button.custom_minimum_size = Vector2(210, 32)
+	apply_debuff_button.pressed.connect(_debug_apply_selected_debuff)
+	action_row.add_child(apply_debuff_button)
+
+	var remove_debuff_button = Button.new()
+	remove_debuff_button.text = "Remove Selected Debuff"
+	remove_debuff_button.custom_minimum_size = Vector2(220, 32)
+	remove_debuff_button.pressed.connect(_debug_remove_selected_debuff)
+	action_row.add_child(remove_debuff_button)
 
 	var separator = HSeparator.new()
 	separator.custom_minimum_size = Vector2(0, 10)
@@ -903,6 +905,8 @@ func _ensure_debug_lists_populated() -> void:
 		_populate_consumable_selection_list()
 	if challenge_selection_list and challenge_selection_list.get_item_count() == 0:
 		_populate_challenge_selection_list()
+	if debuff_selection_list and debuff_selection_list.get_item_count() == 0:
+		_populate_debuff_selection_list()
 	if mod_selection_list and mod_selection_list.get_item_count() == 0:
 		_populate_mod_selection_list()
 
@@ -926,6 +930,13 @@ func _get_challenge_manager():
 	if is_instance_valid(game_controller) and is_instance_valid(game_controller.challenge_manager):
 		return game_controller.challenge_manager
 	return get_tree().get_first_node_in_group("challenge_manager")
+
+
+func _get_debuff_manager():
+	_refresh_game_controller_reference()
+	if is_instance_valid(game_controller) and is_instance_valid(game_controller.debuff_manager):
+		return game_controller.debuff_manager
+	return get_tree().get_first_node_in_group("debuff_manager")
 
 
 func _get_chores_manager():
@@ -1062,6 +1073,36 @@ func _populate_challenge_selection_list() -> void:
 		challenge_selection_list.set_item_metadata(item_index, challenge_id)
 
 
+func _populate_debuff_selection_list() -> void:
+	if not debuff_selection_list:
+		return
+
+	debuff_selection_list.clear()
+	var debuff_manager = _get_debuff_manager()
+	if not debuff_manager:
+		return
+
+	var debuff_ids: Array[String] = []
+	for debuff_def in debuff_manager.debuff_defs:
+		if debuff_def == null:
+			continue
+		if TESTING_DEBUFF_LIST_EXCLUDED_IDS.has(debuff_def.id):
+			continue
+		debuff_ids.append(debuff_def.id)
+
+	debuff_ids.sort()
+	for debuff_id in debuff_ids:
+		var debuff_def = debuff_manager.get_def(debuff_id)
+		var display_name = debuff_id
+		if debuff_def and not debuff_def.display_name.is_empty():
+			display_name = debuff_def.display_name
+		if debuff_def and debuff_def.is_grounding:
+			display_name += " [Grounding]"
+		var item_index = debuff_selection_list.get_item_count()
+		debuff_selection_list.add_item("%s - %s" % [debuff_id, display_name])
+		debuff_selection_list.set_item_metadata(item_index, debuff_id)
+
+
 func _on_powerup_list_item_selected(index: int) -> void:
 	if not powerup_selection_list or not powerup_id_input:
 		return
@@ -1079,6 +1120,13 @@ func _on_challenge_list_item_selected(index: int) -> void:
 		return
 	var challenge_id = str(challenge_selection_list.get_item_metadata(index))
 	log_debug("Selected challenge: " + challenge_id)
+
+
+func _on_debuff_list_item_selected(index: int) -> void:
+	if not debuff_selection_list:
+		return
+	var debuff_id = str(debuff_selection_list.get_item_metadata(index))
+	log_debug("Selected debuff: " + debuff_id)
 
 
 func _get_mod_manager():
@@ -1302,6 +1350,71 @@ func _debug_activate_selected_challenge() -> void:
 		if challenge_def and not challenge_def.display_name.is_empty():
 			challenge_name = challenge_def.display_name
 	log_debug("Activated Challenge: %s (%s)" % [challenge_name, challenge_id])
+
+
+func _debug_apply_selected_debuff() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	if not debuff_selection_list:
+		log_debug("ERROR: Debuff list not available")
+		return
+
+	var selected_items = debuff_selection_list.get_selected_items()
+	if selected_items.size() == 0:
+		log_debug("ERROR: Select a debuff from the list first")
+		return
+
+	var debuff_id = str(debuff_selection_list.get_item_metadata(selected_items[0]))
+	if debuff_id.is_empty():
+		log_debug("ERROR: Selected debuff ID is invalid")
+		return
+	if game_controller.is_debuff_active(debuff_id):
+		log_debug("Debuff already active: " + debuff_id)
+		return
+
+	game_controller.apply_debuff(debuff_id)
+	var debuff_name = _get_debug_debuff_display_name(debuff_id)
+	if game_controller.is_debuff_active(debuff_id):
+		log_debug("Applied Debuff: %s (%s)" % [debuff_name, debuff_id])
+	else:
+		log_debug("Debuff was not applied: %s (%s)" % [debuff_name, debuff_id])
+
+
+func _debug_remove_selected_debuff() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	if not debuff_selection_list:
+		log_debug("ERROR: Debuff list not available")
+		return
+
+	var selected_items = debuff_selection_list.get_selected_items()
+	if selected_items.size() == 0:
+		log_debug("ERROR: Select a debuff from the list first")
+		return
+
+	var debuff_id = str(debuff_selection_list.get_item_metadata(selected_items[0]))
+	if debuff_id.is_empty():
+		log_debug("ERROR: Selected debuff ID is invalid")
+		return
+	if not game_controller.is_debuff_active(debuff_id):
+		log_debug("Debuff is not active: " + debuff_id)
+		return
+
+	game_controller.disable_debuff(debuff_id)
+	log_debug("Removed Debuff: %s (%s)" % [_get_debug_debuff_display_name(debuff_id), debuff_id])
+
+
+func _get_debug_debuff_display_name(debuff_id: String) -> String:
+	var debuff_manager = _get_debuff_manager()
+	if debuff_manager:
+		var debuff_def = debuff_manager.get_def(debuff_id)
+		if debuff_def and not debuff_def.display_name.is_empty():
+			return debuff_def.display_name
+	return debuff_id
 
 
 # Debug command implementations

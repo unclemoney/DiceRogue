@@ -1,6 +1,8 @@
 extends TextureRect
 class_name ModIcon
 
+const DISABLED_MOD_SHADER := preload("res://Scripts/Shaders/disabled_powerup_overlay.gdshader")
+
 signal mod_sell_requested(mod_id: String)
 
 @export var data: ModData
@@ -13,11 +15,16 @@ signal mod_sell_requested(mod_id: String)
 @onready var sell_button: Button
 
 var _sell_button_visible := false
+var _visual_disabled := false
+var _default_modicon_material: Material = null
+var _disabled_modicon_material: ShaderMaterial = null
 
 func _ready() -> void:
 	if not tooltip or not tooltip_bg or not modicon:
 		push_error("[ModIcon] Required nodes not found")
 		return
+
+	_default_modicon_material = modicon.material
 	
 	# Create sell button and add it to scene root to bypass UI layer blocking
 	sell_button = Button.new()
@@ -78,11 +85,30 @@ func _ready() -> void:
 	# PASS so the icon's tooltip/click handlers still work while unhandled
 	# clicks propagate through to the die's Area2D physics picking
 	mouse_filter = Control.MOUSE_FILTER_PASS
+	set_disabled_visual(_visual_disabled)
 	
 	print("[ModIcon] ModIcon mouse_filter set to PASS")
 	print("[ModIcon] ModIcon z_index:", z_index)
 	
 	print("[ModIcon] Setup complete for mod: ", data.id if data else "no data")
+
+## set_disabled_visual(disabled)
+##
+## Applies or removes the disabled overlay on the visible mod sprite.
+func set_disabled_visual(disabled: bool) -> void:
+	_visual_disabled = disabled
+	if not modicon or not is_instance_valid(modicon):
+		return
+
+	if disabled:
+		if _disabled_modicon_material == null:
+			_disabled_modicon_material = ShaderMaterial.new()
+			_disabled_modicon_material.shader = DISABLED_MOD_SHADER
+			_disabled_modicon_material.set_shader_parameter("disabled", true)
+		modicon.material = _disabled_modicon_material
+		return
+
+	modicon.material = _default_modicon_material
 
 func _on_mouse_entered() -> void:
 	if tooltip_bg and data:
