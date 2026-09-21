@@ -796,6 +796,16 @@ func calculate_score_internal(category: String, dice_values: Array, apply_money_
 	var breakdown = calculate_score_with_breakdown(category, dice_values, apply_money_effects)
 	return breakdown.final_score
 
+## debug_simulate_score(category, dice_values) -> Dictionary
+##
+## Debug/audit helper: runs the full scoring pipeline without money side
+## effects and returns the breakdown_info dictionary (base score, per-source
+## modifier lists, scratch decision, final score). Used by the Debug Panel
+## scoring viewer and by headless tests.
+func debug_simulate_score(category: String, dice_values: Array) -> Dictionary:
+	var breakdown = calculate_score_with_breakdown(category, dice_values, false)
+	return breakdown.get("breakdown_info", {})
+
 ## Calculate score with detailed breakdown information
 ## @param category: String scoring category 
 ## @param dice_values: Array dice values to score
@@ -962,6 +972,8 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 		"total_multiplier": total_multiplier_bonus,
 		"overall_effective_multiplier": score_components.overall_effective_multiplier,
 		"division_mode_active": score_components.division_mode_active,
+		"scratch_applied": score_components.scratch_applied,
+		"difficulty_mode": GameSettings.get_difficulty_mode_name() if GameSettings != null else "easy",
 		"score_after_additives": score_with_additive,
 		"score_after_colors": score_with_colors,
 		"final_score": final_score,
@@ -988,7 +1000,8 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 				breakdown_info.additive_sources.append({
 					"name": source,
 					"category": source_category,
-					"value": modifier_manager.get_additive(source) if modifier_manager.has_method("get_additive") else 0
+					"value": modifier_manager.get_additive(source) if modifier_manager.has_method("get_additive") else 0,
+					"voided": score_components.scratch_applied
 				})
 		
 		# Get multiplier sources
@@ -1005,7 +1018,8 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 					"raw_value": raw_source_value,
 					"display_mode": source_component.display_mode,
 					"display_operator": source_component.display_operator,
-					"display_value": source_component.display_value
+					"display_value": source_component.display_value,
+					"voided": score_components.scratch_applied
 				})
 	
 
@@ -1729,7 +1743,21 @@ func _create_multiplier_component(raw_factor: float, modifier_manager) -> Dictio
 ##
 ## Applies the full score pipeline using raw multiplier factors and the active
 ## division-mode policy from ScoreModifierManager.
+## HARD difficulty scratch rule: when GameSettings.is_hard_mode() and the
+## category's base score is 0, every additive and multiplier bonus is voided
+## and the final score is a scratch (0). EASY mode is byte-identical to the
+## legacy behavior.
 func _calculate_score_from_components(base_score: int, category_level: int, regular_additive: int, dice_color_additive: int, raw_regular_multiplier: float, raw_dice_color_multiplier: float, raw_blue_score_multiplier: float, modifier_manager) -> Dictionary:
+	# Scratch gate: decided on the base score only, before any modifiers.
+	var scratch_applied := false
+	if base_score == 0 and GameSettings != null and GameSettings.is_hard_mode():
+		scratch_applied = true
+		regular_additive = 0
+		dice_color_additive = 0
+		raw_regular_multiplier = 1.0
+		raw_dice_color_multiplier = 1.0
+		raw_blue_score_multiplier = 1.0
+
 	var category_component = _create_multiplier_component(float(category_level), modifier_manager)
 	var regular_component = _create_multiplier_component(raw_regular_multiplier, modifier_manager)
 	var dice_color_component = _create_multiplier_component(raw_dice_color_multiplier, modifier_manager)
@@ -1771,7 +1799,8 @@ func _calculate_score_from_components(base_score: int, category_level: int, regu
 		"blue_score_multiplier_display_operator": blue_component.display_operator,
 		"blue_score_multiplier_display_value": blue_component.display_value,
 		"overall_effective_multiplier": overall_effective_multiplier,
-		"division_mode_active": category_component.division_mode_active
+		"division_mode_active": category_component.division_mode_active,
+		"scratch_applied": scratch_applied
 	}
 
 ## _is_straight_with_gap(values, length)

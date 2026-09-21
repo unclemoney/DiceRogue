@@ -18,9 +18,16 @@ signal profile_changed(slot: int)
 signal video_settings_changed
 signal keybinding_changed(action: String, is_controller: bool)
 signal fx_settings_changed
+signal difficulty_mode_changed(mode: DifficultyMode)
 
 const SETTINGS_FILE_PATH := "user://settings.cfg"
 const PROFILE_NAME_MAX_LENGTH := 30
+
+## Difficulty mode for scoring rules. EASY keeps legacy behavior (PowerUp
+## bonuses apply even on a zero base score). HARD voids all additive and
+## multiplier bonuses when the category's base score is 0 (a "scratch").
+## Session-only by design: not persisted to settings.cfg, defaults to EASY.
+enum DifficultyMode { EASY, HARD }
 
 # Profile settings
 var active_profile_slot: int = 1
@@ -31,6 +38,9 @@ var music_volume: float = 0.6
 
 # Gameplay settings
 var scoring_animation_speed: float = 1.0  # Range: 0.5 to 2.0
+
+# Difficulty mode (session-only, not saved to settings.cfg)
+var difficulty_mode: DifficultyMode = DifficultyMode.EASY
 
 # Video settings
 var screen_resolution: Vector2i = Vector2i(1280, 720)
@@ -264,6 +274,41 @@ func set_fx_group(group: int, enabled: bool) -> void:
 		fx_helper.set_group_enabled(group, enabled)
 	save_settings()
 	fx_settings_changed.emit()
+
+
+## set_difficulty_mode(mode)
+##
+## Set the scoring difficulty mode. Takes effect on the next score event;
+## no retroactive score changes. Session-only — not persisted.
+func set_difficulty_mode(mode: DifficultyMode) -> void:
+	if difficulty_mode == mode:
+		return
+	difficulty_mode = mode
+	print("[GameSettings] Difficulty mode set to: %s" % get_difficulty_mode_name())
+	difficulty_mode_changed.emit(mode)
+
+
+## get_difficulty_mode() -> DifficultyMode
+##
+## Returns the current scoring difficulty mode.
+func get_difficulty_mode() -> DifficultyMode:
+	return difficulty_mode
+
+
+## is_hard_mode() -> bool
+##
+## Returns true when HARD scoring rules are active (zero base = scratch).
+func is_hard_mode() -> bool:
+	return difficulty_mode == DifficultyMode.HARD
+
+
+## get_difficulty_mode_name() -> String
+##
+## Returns "easy" or "hard" for breakdown info and debug display.
+func get_difficulty_mode_name() -> String:
+	if difficulty_mode == DifficultyMode.HARD:
+		return "hard"
+	return "easy"
 
 
 ## _apply_input_mappings()

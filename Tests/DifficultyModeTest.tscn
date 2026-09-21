@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dkghr13h0gx0y"]
+
+[ext_resource type="Script" uid="uid://clhjxtlqu4bor" path="res://Tests/difficulty_mode_test.gd" id="1_test"]
+
+[node name="DifficultyModeTest" type="Node"]
+script = ExtResource("1_test")

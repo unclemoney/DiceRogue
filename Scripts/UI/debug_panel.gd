@@ -46,6 +46,7 @@ var mod_selection_list: ItemList
 var mod_die_spinbox: SpinBox
 var dice_state_report_text: TextEdit
 var score_trace_report_text: TextEdit
+var difficulty_toggle: CheckButton
 
 var game_controller: GameController
 var is_visible_debug := false
@@ -607,6 +608,25 @@ func _create_testing_tab(parent: VBoxContainer, button_definitions: Array) -> vo
 	helper_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.7, 1.0))
 	parent.add_child(helper_label)
 
+	var difficulty_row = HBoxContainer.new()
+	difficulty_row.add_theme_constant_override("separation", 10)
+	parent.add_child(difficulty_row)
+
+	var difficulty_label = Label.new()
+	difficulty_label.text = "Difficulty Mode:"
+	difficulty_label.add_theme_color_override("font_color", Color.WHITE)
+	difficulty_row.add_child(difficulty_label)
+
+	difficulty_toggle = CheckButton.new()
+	difficulty_toggle.name = "DifficultyToggle"
+	difficulty_toggle.text = "HARD (zero base score = scratch, bonuses voided)"
+	if GameSettings != null:
+		difficulty_toggle.button_pressed = GameSettings.is_hard_mode()
+		if not GameSettings.difficulty_mode_changed.is_connected(_on_difficulty_mode_changed):
+			GameSettings.difficulty_mode_changed.connect(_on_difficulty_mode_changed)
+	difficulty_toggle.toggled.connect(_on_difficulty_toggle_toggled)
+	difficulty_row.add_child(difficulty_toggle)
+
 	var lists_row = HBoxContainer.new()
 	lists_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lists_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -647,6 +667,29 @@ func _create_testing_tab(parent: VBoxContainer, button_definitions: Array) -> vo
 	_add_debug_buttons(button_grid, button_definitions)
 
 
+## _on_difficulty_toggle_toggled(pressed)
+##
+## Testing-tab difficulty switch. HARD voids all PowerUp/dice-color bonuses
+## when a category's base score is 0; applies to the next score event only.
+func _on_difficulty_toggle_toggled(pressed: bool) -> void:
+	if GameSettings == null:
+		log_debug("GameSettings not available - cannot change difficulty mode")
+		return
+	var mode := GameSettings.DifficultyMode.HARD if pressed else GameSettings.DifficultyMode.EASY
+	GameSettings.set_difficulty_mode(mode)
+	log_debug("Difficulty mode set to %s (applies to next score event)" % GameSettings.get_difficulty_mode_name().to_upper())
+
+
+## _on_difficulty_mode_changed(mode)
+##
+## Keeps the Testing-tab toggle in sync when the mode changes elsewhere.
+func _on_difficulty_mode_changed(mode: GameSettings.DifficultyMode) -> void:
+	if difficulty_toggle and is_instance_valid(difficulty_toggle):
+		var is_hard := mode == GameSettings.DifficultyMode.HARD
+		if difficulty_toggle.button_pressed != is_hard:
+			difficulty_toggle.set_pressed_no_signal(is_hard)
+
+
 func _create_diagnostics_tab(parent: VBoxContainer) -> void:
 	var helper_label = Label.new()
 	helper_label.text = "Refresh the panels below to inspect live dice state and the most recent scoring snapshot."
@@ -674,6 +717,12 @@ func _create_diagnostics_tab(parent: VBoxContainer) -> void:
 	refresh_score_button.custom_minimum_size = Vector2(190, 32)
 	refresh_score_button.pressed.connect(_debug_refresh_score_trace_report)
 	action_row.add_child(refresh_score_button)
+
+	var audit_roll_button = Button.new()
+	audit_roll_button.text = "Audit Current Roll vs All Categories"
+	audit_roll_button.custom_minimum_size = Vector2(260, 32)
+	audit_roll_button.pressed.connect(_debug_audit_current_roll)
+	action_row.add_child(audit_roll_button)
 
 	var dice_label = Label.new()
 	dice_label.text = "Live Dice State"
@@ -842,12 +891,30 @@ func show_debug_panel() -> void:
 	_refresh_game_controller_reference()
 	_ensure_debug_lists_populated()
 	_refresh_diagnostics_reports(false)
+	_connect_score_trace_auto_refresh()
 	
 	# Bring to front in case other UI was added after debug panel
 	if get_parent():
 		get_parent().move_child(self, get_parent().get_child_count() - 1)
 	
 	log_debug("Debug panel opened")
+
+## _connect_score_trace_auto_refresh()
+##
+## Refreshes the score trace automatically whenever a hand is logged, so the
+## Diagnostics tab never goes stale while the panel is open.
+func _connect_score_trace_auto_refresh() -> void:
+	var statistics = _get_statistics_manager()
+	if not statistics or not statistics.has_signal("logbook_entry_added"):
+		return
+	var refresh_callable := Callable(self, "_on_logbook_entry_added")
+	if not statistics.logbook_entry_added.is_connected(refresh_callable):
+		statistics.logbook_entry_added.connect(refresh_callable)
+
+
+func _on_logbook_entry_added(_entry) -> void:
+	if is_visible_debug:
+		_debug_refresh_score_trace_report(false)
 
 func hide_debug_panel() -> void:
 	print("[DebugPanel] Hiding panel")
@@ -3790,6 +3857,67 @@ func _debug_refresh_score_trace_report(log_action: bool = true) -> void:
 		log_debug("Refreshed scored-hand trace report")
 
 
+## _debug_audit_current_roll()
+##
+## Simulates the current dice values against every category and renders the
+## generic modifier log (base, per-source additives/multipliers, scratch
+## decision, final) into the score trace panel. No money side effects.
+func _debug_audit_current_roll() -> void:
+	if score_trace_report_text:
+		_set_report_text(score_trace_report_text, _build_roll_audit_report())
+	log_debug("Audited current roll against all categories")
+
+
+func _build_roll_audit_report() -> String:
+	var scorecard = _get_scorecard_for_debug()
+	if not scorecard or not scorecard.has_method("debug_simulate_score"):
+		return "Scorecard not available (or missing debug_simulate_score)."
+
+	var dice_values: Array = []
+	if DiceResults != null and DiceResults.values.size() > 0:
+		dice_values = DiceResults.values.duplicate()
+	else:
+		var statistics = _get_statistics_manager()
+		if statistics and statistics.has_method("get_latest_log_entry"):
+			var latest_entry = statistics.get_latest_log_entry()
+			if latest_entry != null:
+				dice_values = latest_entry.dice_values.duplicate()
+	if dice_values.is_empty():
+		return "No dice values available. Roll the dice (or score a hand) first."
+
+	var lines: Array[String] = []
+	lines.append("ROLL AUDIT — dice=%s | difficulty=%s" % [
+		str(dice_values),
+		GameSettings.get_difficulty_mode_name().to_upper() if GameSettings != null else "EASY"
+	])
+	lines.append("(simulated per category; modifiers shown as currently registered)")
+
+	var categories: Array = []
+	categories.append_array(scorecard.upper_scores.keys())
+	categories.append_array(scorecard.lower_scores.keys())
+
+	for category in categories:
+		var info: Dictionary = scorecard.debug_simulate_score(category, dice_values)
+		if info.is_empty():
+			continue
+		var base := int(info.get("base_score", 0))
+		var final := int(info.get("final_score", 0))
+		var scratch := bool(info.get("scratch_applied", false))
+		var scratch_text := ""
+		if scratch:
+			scratch_text = " | SCRATCH"
+		lines.append("")
+		lines.append("%s: base=%d final=%d%s" % [str(info.get("category_display", category)), base, final, scratch_text])
+		var additive_text = _format_modifier_sources(info.get("additive_sources", []), false)
+		if additive_text != "none":
+			lines.append("  add: %s" % additive_text)
+		var multiplier_text = _format_modifier_sources(info.get("multiplier_sources", []), true)
+		if multiplier_text != "none":
+			lines.append("  mult: %s" % multiplier_text)
+
+	return "\n".join(lines)
+
+
 func _refresh_diagnostics_reports(log_action: bool = true) -> void:
 	var refreshed_sections: Array[String] = []
 	if dice_state_report_text:
@@ -3967,6 +4095,14 @@ func _build_score_trace_report() -> String:
 	lines.append("")
 	lines.append("Calculation:")
 	lines.append("  Base score: %d" % base_score)
+	var difficulty_mode_name := str(breakdown_info.get("difficulty_mode", "easy")).to_upper()
+	var scratch_applied := bool(breakdown_info.get("scratch_applied", false))
+	if scratch_applied:
+		lines.append("  Difficulty: %s | Scratch: APPLIED (base 0 -> all additives/multipliers voided)" % difficulty_mode_name)
+	elif difficulty_mode_name == "HARD":
+		lines.append("  Difficulty: HARD | Scratch: not triggered (base %d)" % base_score)
+	else:
+		lines.append("  Difficulty: EASY | Scratch: n/a")
 	if is_equal_approx(level_value, 1.0):
 		lines.append("  Category level: no change")
 	else:
@@ -4115,12 +4251,13 @@ func _format_modifier_sources(values: Variant, is_multiplier: bool) -> String:
 			continue
 		var source_dict: Dictionary = source_info
 		var source_name = str(source_dict.get("name", source_dict.get("source", "modifier")))
+		var voided_suffix := " [VOIDED]" if bool(source_dict.get("voided", false)) else ""
 		if is_multiplier:
 			var operator = str(source_dict.get("display_operator", "×"))
 			var display_value = float(source_dict.get("display_value", source_dict.get("raw_value", source_dict.get("value", 1.0))))
-			formatted_sources.append("%s %s%s" % [source_name, operator, _format_float_value(display_value)])
+			formatted_sources.append("%s %s%s%s" % [source_name, operator, _format_float_value(display_value), voided_suffix])
 		else:
-			formatted_sources.append("%s %s" % [source_name, _format_signed_int(int(source_dict.get("value", 0)))])
+			formatted_sources.append("%s %s%s" % [source_name, _format_signed_int(int(source_dict.get("value", 0))), voided_suffix])
 
 	if formatted_sources.is_empty():
 		return "none"

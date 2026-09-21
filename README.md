@@ -346,6 +346,15 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
 - **ScoreModifierManager** (autoload, file: `Scripts/Managers/MultiplierManager.gd`) - Handles all score bonuses and multipliers
 - **Autoscoring Priority**: When "Next Turn" button auto-selects scoring category, uses priority system to prefer more specific categories when scores are tied (e.g., Four of a Kind over Three of a Kind)
 
+#### Difficulty Mode (Easy/Hard scratch rule)
+- **State**: `GameSettings.difficulty_mode` (`DifficultyMode.EASY`/`HARD`, default EASY, session-only — not persisted to `settings.cfg`); setter `GameSettings.set_difficulty_mode()`, query `GameSettings.is_hard_mode()`, signal `difficulty_mode_changed`
+- **Rule**: EASY keeps legacy behavior (PowerUp bonuses apply even on a zero base score). HARD applies the scratch rule per score event — if the category's BASE score (before modifiers) is 0, ALL additive and multiplier bonuses (ScoreModifierManager sources AND dice-color red/purple/blue effects) are voided and the final score is 0. Green-dice money is economy, not score, and still pays. PowerUps that trigger on a non-zero score (Hot Streak, 520, Full House Fortune, Sweet Sixteen, Echoes) read the final score, so a scratch suppresses them automatically. Pattern-bend PowerUps (Two Pair House, Almost Guhtzee, Different Straights) run before the scratch check, so a rescued base (e.g. two pair → 25) is NOT scratched
+- **Implementation**: scratch gate in `Scorecard._calculate_score_from_components()` — the single chokepoint used by both manual and auto-scoring paths; takes effect on the next score event, no retroactive changes
+- **Toggle**: Debug Panel (F12) → Testing tab → "HARD (zero base score = scratch)" checkbox
+- **Audit tooling**: Debug Panel → Diagnostics tab → score trace shows difficulty/scratch decision and marks voided modifier sources `[VOIDED]`; "Audit Current Roll vs All Categories" simulates the current dice against every category via `Scorecard.debug_simulate_score()` (no money side effects)
+- **Note**: the Scratch Ticket consumable (`Scripts/Consumable/scratch_ticket_consumable.gd`) is unrelated — it keys off `last_base_score == 0` and predates this feature
+- **Test scene**: `Tests/DifficultyModeTest.tscn` — run with `-- --quit-after` (72 assertions: scratch, EASY parity, stacked modifiers, colored dice, bend rescue, preserved path, mid-run toggle, all trigger-on-nonzero PowerUps)
+
 #### Scorecard UI (row list)
 - **Scene/Script**: `Scenes/UI/Scorecard/scorecard.tscn` + `Scripts/UI/Scorecard/scorecard_ui.gd` (`class_name ScoreCardUI`) — flat row list replacing the old pill-button grid: `[level chip] [category name] ... [score]` per category, plus summary rows (Sub Total, Bonus progress, totals, Yahtzee Bonus)
 - **Components**: `Scenes/UI/Scorecard/level_chip.tscn` (upgrade-level chip), `Scenes/UI/Scorecard/scorecard_row.tscn` (`ScorecardRow` button row); shaders `Scripts/Shaders/row_highlight_pulse.gdshader` (power-up highlight wash) and `Scripts/Shaders/row_blinds.gdshader` (round-start/end stripe wipe)
