@@ -336,7 +336,7 @@ func _build_profile_section(parent: Control) -> void:
 	# Profile Panel — wraps the profile buttons
 	_profile_panel = PanelContainer.new()
 	_profile_panel.name = "ProfilePanel"
-	_profile_panel.custom_minimum_size = Vector2(600, 0)
+	_profile_panel.custom_minimum_size = Vector2(1280, 0)
 	var panel_style = StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.06, 0.08, 0.12, 0.0)
 	panel_style.border_color = Color(0.25, 0.35, 0.4, 0.0)
@@ -378,7 +378,7 @@ func _build_profile_section(parent: Control) -> void:
 ## Creates a profile selection button for the given slot.
 ## Styling is applied based on use_theme_styling bool.
 func _create_profile_button(slot: int):
-	var btn = GlassButtonFactoryRef.create_button("", Vector2(180, 60), _build_menu_palette(Color(0.4, 0.8, 0.4, 1.0)), 16, vcr_font)
+	var btn = GlassButtonFactoryRef.create_button("", Vector2(280, 60), _build_menu_palette(Color(0.4, 0.8, 0.4, 1.0)), 16, vcr_font)
 	btn.name = "ProfileButton%d" % slot
 	btn.set_uniform_padding(10, 8)
 	

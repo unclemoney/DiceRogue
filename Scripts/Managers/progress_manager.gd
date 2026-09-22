@@ -1302,7 +1302,7 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 50, 2)
 	_add_default_power_up("bonus_money", "Bonus Money", "Earn extra money per round", 
 		UnlockConditionClass.ConditionType.EARN_MONEY, 50, 2)
-	_add_default_power_up("lock_and_load", "Lock & Load", "+$3 for each die locked", 
+	_add_default_power_up("lock_and_load", "Lock & Load", "+$3 for each die locked at round end", 
 		UnlockConditionClass.ConditionType.LOCK_CONSTRAINT, 75, 2, {"turn_window": 3, "max_locked_dice": 2})
 	_add_default_power_up("dice_diversity", "Dice Diversity", "+$5 per unique dice value scored", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 25, 2, {"category": "chance"})

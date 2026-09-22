@@ -46,7 +46,7 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | roll_efficiency | Roll Efficiency | COMPLETE_GAME | 1 | +N to scores (N = rolls used) |
 | dice_diversity | Dice Diversity | SCORE_POINTS | 75 | +$5 per unique dice value scored |
 | chore_champion | Chore Champion | CHORE_COMPLETIONS | 5 | Chores are 2x more effective (cumulative) |
-| lock_and_load | Lock & Load | LOCK_CONSTRAINT | 75 | +$3 for each die locked (unlock: score 75+ over 3 turns, max 2 locks) |
+| lock_and_load | Lock & Load | LOCK_CONSTRAINT | 75 | +$3 for each die locked at round end (unlock: score 75+ over 3 turns, max 2 locks) |
 | pair_paradise | Pair Paradise | SCORE_POINTS | 100 | Pair bonuses based on pattern |
 | extra_coupons | Extra Coupons | CHORE_COMPLETIONS | 20 | Consumable slots are fixed at 4 (cumulative) |
 | purple_payout | Purple Payout | EARN_MONEY | 75 | Earn $3 per purple die when scoring |

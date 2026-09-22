@@ -30,6 +30,7 @@
 
 - [X] `P0-Critical` Odds only mod rolled a 2. Fixed with mod update.
 - [X] `P1-Major` Best Hand calculated 426 for Chance. Player selected small straight and still got 426. Hand logic is wrong. Fixed with update to scratch logic.
+- [ ] `P1-Major` Mom said you earned a punishment, but no debuff was added.  Let's check all mom interactions for consistency. This only happened in Mall Zone 1, but subsequent zones worked properly.
 - [X] `P1-Major` Abstinance debuff needs to be checked. Verify it works as designed.
 - [X] `P2-Minor` Challenge or Debuff that makes powerups expire after 3 rounds? This is no longer needed.
 - [ ] `P2-Minor` Clarify MODS are only applied to one dice at a time.
@@ -40,10 +41,10 @@
 - [ ] `P2-Minor` Upper bonus multiplier power up. Add a new PowerUp that will multiply Upper Section Bonus.
 - [X] `P2-Minor` Bonus Yahtzee category? That's gone. We can add that to the YAHTZEE line.
 - [ ] `P2-Minor` Chore pressure is not enough, needs more balance? Or are we still increasing with more powerful powerups?
+- [ ] `P2-Minor` +150 for Upper section bonus should only be allowed to USE after +63 is achieved.
 - [ ] `P2-Minor` Sweet Sixteen needs to be assessed and fixed or cut.
 - [ ] `P2-Minor` Which rounds feel wrong? Higher or lower scores? What is the target? Round 4 feels too hard.
-- [ ] `P2-Minor` Play PowerUp for double acting feature for one turn per round?
-  - Clarify: This will be turned into a new Console action in a refactor later.
+- [X] `P2-Minor` Play PowerUp for double acting feature for one turn per round? Sega Saturn was refactored to use this.
 
 ## SYS:Chore — Chore System & Mom
 
@@ -55,10 +56,11 @@
 
 ## SYS:UI — UI / UX & Animation
 
-- [ ] `P1-Major` Mall Map Fan Out still rough. Mall Zone 1 shows "coming up" instead of "completed". Mall Zone 2 shows correctly.
+- [ ] `P1-Major` Find all layers and overlays, sort priority and then implament a standard across the game.
+- [X] `P1-Major` Mall Map Fan Out still rough. Mall Zone 1 shows "coming up" instead of "completed". Mall Zone 2 shows correctly.
 - [ ] `P2-Minor` Update Challenge Icons.
 - [ ] `P2-Minor` Shockwave animations can also be applied to buttons that need to be pressed or chosen.
-- [ ] `P2-Minor` Click on the Mall Zone upper left to bring up the mall map. Show coming challenges.
+- [X] `P2-Minor` Click on the Mall Zone upper left to bring up the mall map. Show coming challenges.
 - [X] `P2-Minor` Update buttons to glass shader so they are uniform.
 
 ## SYS:Save — Save, Load & State Management
