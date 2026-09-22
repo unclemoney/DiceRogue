@@ -30,8 +30,6 @@ var _is_fanned: bool = false
 
 # Power Glove popup
 var _power_glove_popup: PanelContainer = null
-# Cartridge Tilt popup
-var _tilt_popup: PanelContainer = null
 
 var _blast_glow_active: bool = false
 var _nes_die_buttons: Array = []
@@ -165,7 +163,6 @@ func hide_console() -> void:
 	visible = false
 	_restore_fan_overlay_state()
 	_hide_power_glove_popup()
-	_hide_tilt_popup()
 	_clear_nes_die_buttons()
 	if _compact_spine:
 		_compact_spine.clear_console()
@@ -208,13 +205,14 @@ func _update_button_state() -> void:
 		status_text = "SELECT A DIE TO ADJUST"
 		status_color = READY_ACCENT
 		led_color = READY_ACCENT
-	elif _is_waiting_for_tilt_choice():
-		button_text = "CHOOSE..."
+	elif _is_saturn_armed():
+		button_text = "ARMED"
 		button_disabled = true
-		accent_color = PANEL_BORDER
-		status_text = "SHIFT ALL UNLOCKED DICE"
-		status_color = PANEL_BORDER.lightened(0.15)
-		led_color = PANEL_BORDER.lightened(0.08)
+		accent_color = READY_ACCENT
+		pulse = true
+		status_text = "NEXT SCORE DOUBLES POWERUPS"
+		status_color = READY_ACCENT
+		led_color = READY_ACCENT
 	elif _console_instance.is_passive():
 		button_disabled = true
 		accent_color = PASSIVE_ACCENT
@@ -253,7 +251,7 @@ func _update_button_state() -> void:
 			status_text = "ADJUST ONE DIE BY +/-1"
 			status_color = accent_color.lightened(0.15)
 		elif _console_instance is SegaSaturnConsole:
-			status_text = "SHIFT ALL UNLOCKED DICE"
+			status_text = "ARM NEXT SCORE POWERUPS"
 			status_color = accent_color.lightened(0.15)
 		elif _console_instance.can_activate():
 			status_text = "READY TO ACTIVATE"
@@ -296,9 +294,11 @@ func _is_waiting_for_die() -> bool:
 	return false
 
 
-func _is_waiting_for_tilt_choice() -> bool:
+func _is_saturn_armed() -> bool:
 	if _console_instance is SegaSaturnConsole:
-		return (_console_instance as SegaSaturnConsole).is_waiting_for_choice()
+		var saturn = _console_instance as SegaSaturnConsole
+		if saturn.game_controller_ref and saturn.game_controller_ref.has_method("is_sega_saturn_score_armed"):
+			return saturn.game_controller_ref.is_sega_saturn_score_armed()
 	return false
 
 
@@ -331,12 +331,6 @@ func _connect_console_signals(instance: GamingConsole) -> void:
 		if not instance.is_connected("die_adjustment_complete", _on_die_adjustment_complete):
 			instance.die_adjustment_complete.connect(_on_die_adjustment_complete)
 
-	if instance is SegaSaturnConsole:
-		if not instance.is_connected("awaiting_tilt_choice", _on_awaiting_tilt_choice):
-			instance.awaiting_tilt_choice.connect(_on_awaiting_tilt_choice)
-		if not instance.is_connected("tilt_complete", _on_tilt_complete):
-			instance.tilt_complete.connect(_on_tilt_complete)
-
 	if instance is SnesConsole:
 		if not instance.is_connected("blast_ready", _on_blast_ready):
 			instance.blast_ready.connect(_on_blast_ready)
@@ -358,12 +352,6 @@ func _disconnect_console_signals(instance: GamingConsole) -> void:
 			instance.blast_ready.disconnect(_on_blast_ready)
 		if instance.is_connected("blast_consumed", _on_blast_consumed):
 			instance.blast_consumed.disconnect(_on_blast_consumed)
-
-	if instance is SegaSaturnConsole:
-		if instance.is_connected("awaiting_tilt_choice", _on_awaiting_tilt_choice):
-			instance.awaiting_tilt_choice.disconnect(_on_awaiting_tilt_choice)
-		if instance.is_connected("tilt_complete", _on_tilt_complete):
-			instance.tilt_complete.disconnect(_on_tilt_complete)
 
 	if instance is NesConsole:
 		if instance.is_connected("awaiting_die_click", _on_awaiting_die_click):
@@ -547,48 +535,6 @@ func _hide_power_glove_popup() -> void:
 	_clear_nes_die_buttons()
 
 
-# ── Cartridge Tilt Popup ─────────────────────────────────
-
-func _on_awaiting_tilt_choice() -> void:
-	_update_button_state()
-	_show_tilt_popup()
-
-
-func _on_tilt_complete() -> void:
-	_hide_tilt_popup()
-	_update_button_state()
-
-
-func _show_tilt_popup() -> void:
-	if _tilt_popup:
-		_tilt_popup.queue_free()
-
-	_tilt_popup = PanelContainer.new()
-	_tilt_popup.z_index = 150
-
-	var style = _build_panel_style(PANEL_BORDER, PANEL_SURFACE)
-	style.content_margin_left = 8.0
-	style.content_margin_top = 8.0
-	style.content_margin_right = 8.0
-	style.content_margin_bottom = 8.0
-	_tilt_popup.add_theme_stylebox_override("panel", style)
-
-	var hbox = HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 8)
-	_tilt_popup.add_child(hbox)
-
-	var plus_btn = _create_console_action_button("+1 ALL", Vector2(70, 30), PANEL_ACCENT, 14, 8, 4)
-	plus_btn.pressed.connect(_on_tilt_choice.bind(1))
-	hbox.add_child(plus_btn)
-
-	var minus_btn = _create_console_action_button("-1 ALL", Vector2(70, 30), PANEL_BORDER, 14, 8, 4)
-	minus_btn.pressed.connect(_on_tilt_choice.bind(-1))
-	hbox.add_child(minus_btn)
-
-	_tilt_popup.position = global_position + Vector2(0, -50)
-	get_tree().root.add_child(_tilt_popup)
-
-
 func _create_console_action_button(label_text: String, button_size: Vector2, accent_color: Color, font_size: int, horizontal_padding: int, vertical_padding: int):
 	var palette = GlassButtonFactoryRef.build_palette(
 		accent_color.darkened(0.42),
@@ -650,17 +596,3 @@ func _apply_button_style(button: Button, accent_color: Color, font_size: int = 1
 	pressed.set_content_margin_all(4)
 	button.add_theme_stylebox_override("pressed", pressed)
 	button.add_theme_stylebox_override("focus", hover)
-
-
-func _on_tilt_choice(amount: int) -> void:
-	var saturn = _console_instance as SegaSaturnConsole
-	if saturn:
-		saturn.apply_tilt(amount)
-	_hide_tilt_popup()
-	_update_button_state()
-
-
-func _hide_tilt_popup() -> void:
-	if _tilt_popup and is_instance_valid(_tilt_popup):
-		_tilt_popup.queue_free()
-		_tilt_popup = null

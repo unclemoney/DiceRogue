@@ -411,7 +411,7 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - **NES / Power Glove**: After ACTIVATE, compact +1/-1 buttons spawn above each rolled/locked die; buttons clear on use or next roll. Dice value changes are synced to `DiceResults` so scoring reads updated values.
   - **SNES / Blast Processing**: ACTIVATE button glows yellow with "1.5x READY" text when the multiplier is primed; resets after consumption. Category counter tracks via `score_assigned` only (no double-counting on auto-scored categories).
   - **SEGA / Combo System**: Combo break detection uses the **base score** (before modifiers) so that Sega's own additive bonus cannot prevent zero-score resets. A pre-scoring hook (`about_to_score`) unregisters the combo additive **before** score calculation when the base score is 0, ensuring zero-base scores stay zero.
-  - **SEGA Saturn / Cartridge Tilt**: Shifts all rolled/locked dice by +1 or −1; syncs `DiceResults` after modification so scoring uses updated values.
+  - **SEGA Saturn / Double Action**: Once per round, ACTIVATE arms the next committed score that round. That score doubles score-related PowerUp additives, doubles raw PowerUp multipliers, and doubles score-time PowerUp money payouts. Bonus-event, turn, roll, and dice-color rewards are intentionally excluded.
   - **PlayStation / Continue?**: When the scorecard is completely filled, a **Continue? panel** appears if PlayStation is active. The player can choose to **Use Continue** (+3 bonus rolls + score reroll mode) or **Quit** (proceed to Game Over). The `game_completed` signal fires immediately when the last category is scored—no need to press Next Turn.
 
 ### Statistics & Analytics
@@ -1637,7 +1637,7 @@ Test scenes in `Tests/` folder allow isolated testing of components:
 - `PowerUpTest.tscn` - Power-up functionality
 - `MultiplierManagerTest.tscn` - Score modifier system
 - `TutorialTest.tscn` - Tutorial system with mock UI elements
-- `GamingConsoleTest.tscn` - All 6 gaming consoles (Atari, NES, SNES, Sega, PlayStation, Sega Saturn): spawn, apply, activate, reset, compact spine rendering, VIP fan-out card open/close, and console UI state sync
+- `GamingConsoleTest.tscn` - All 6 gaming consoles (Atari, NES, SNES, Sega, PlayStation, Sega Saturn): spawn, apply, activate, reset, compact spine rendering, VIP fan-out card open/close, console UI state sync, and Saturn score-doubling validation
 
 ## TweenFX Animation System
 
@@ -2049,11 +2049,12 @@ Gaming Consoles are a unique item class that provides powerful, specialized abil
   - Precise single-die manipulation for fine-tuning hands
   - Target: Dice Hand
 
-- **Sega Saturn — Cartridge Tilt** (Price: $300, 1 use/round)
-  - Choose **+1** or **-1** to shift **ALL** dice values at once
-  - Values clamp between 1 and each die's max sides
-  - Powerful for pushing an entire hand up or down by one
-  - Target: Dice Hand
+- **Sega Saturn — Double Action** (Price: $300, 1 use/round)
+  - ACTIVATE arms the **next committed score** in the current round
+  - Doubles **score-related PowerUp additives** on that score
+  - Doubles the **raw value** of score-related PowerUp multipliers on that score
+  - Doubles **score-time PowerUp money payouts** that resolve during that same score transaction
+  - Target: Game Controller / scoring transaction
 
 ### Passive Consoles (Automatic Effects)
 - **SNES — Blast Processing** (Price: $300, Passive)
@@ -2084,8 +2085,8 @@ Gaming Consoles are a unique item class that provides powerful, specialized abil
 - **VIP Spine HUD**: The owned console now appears as a horizontal VIP spine in the console panel with preview art, title, state LED, and an Activate button.
 - **Fan-Out Card View**: Clicking the spine body opens a full VIP card overlay with larger art, live description text, and a second Activate button.
 - **Dual Activation Surfaces**: Active consoles can be triggered from either the compact spine button or the expanded VIP card button.
-- **State Feedback**: The spine and full card mirror runtime states such as `READY`, `RESTORE`, `USED`, `PICK DIE`, `CHOOSE...`, and `1.5x READY`.
-- **Context Popups Stay Separate**: NES die-adjust buttons and Sega Saturn tilt choices still appear as dedicated gameplay popups instead of being embedded into the VIP card.
+- **State Feedback**: The spine and full card mirror runtime states such as `READY`, `RESTORE`, `USED`, `PICK DIE`, `ARMED`, and `1.5x READY`.
+- **Context Popups Stay Separate**: NES die-adjust buttons still appear as dedicated gameplay popups instead of being embedded into the VIP card.
 - **Placeholder VIP Art**: The default console resources currently point at `Resources/Art/Cards/card_1.png` through `card_6.png`; these are intended to be swapped with final artwork later.
 
 ### VIP Card Shader Themes

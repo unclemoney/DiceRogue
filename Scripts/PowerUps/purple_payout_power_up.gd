@@ -59,9 +59,13 @@ func _on_about_to_score(_section: Scorecard.Section, _category: String, _dice_va
 	
 	if purple_count > 0:
 		var money_earned = purple_count * MONEY_PER_PURPLE_DIE
-		PlayerEconomy.add_money(money_earned)
-		total_purple_money_earned += money_earned
-		print("[PurplePayoutPowerUp] Earned $%d from %d purple dice" % [money_earned, purple_count])
+		var awarded_amount = money_earned
+		if game_controller.has_method("award_score_time_power_up_money"):
+			awarded_amount = game_controller.award_score_time_power_up_money(money_earned, "purple_payout")
+		else:
+			PlayerEconomy.add_money(money_earned)
+		total_purple_money_earned += awarded_amount
+		print("[PurplePayoutPowerUp] Earned $%d from %d purple dice" % [awarded_amount, purple_count])
 		emit_signal("description_updated", id, get_current_description())
 		_update_power_up_icons()
 

@@ -1647,7 +1647,7 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 6)
 	_add_default_gaming_console("playstation_console", "PlayStation", "Continue?: Auto-grants one bonus turn when a challenge fails.",
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 8)
-	_add_default_gaming_console("sega_saturn_console", "Sega Saturn", "Cartridge Tilt: Once per round, shift ALL unlocked dice by +1 or -1 after rolling.",
+	_add_default_gaming_console("sega_saturn_console", "Sega Saturn", "Double Action: Once per round, arm the next score to double score-related PowerUp effects.",
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 2, 9)
 	
 	# ==========================================================================

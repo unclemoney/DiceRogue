@@ -1,107 +1,65 @@
 extends GamingConsole
 class_name SegaSaturnConsole
 
-## SegaSaturnConsole — Cartridge Tilt
+## SegaSaturnConsole — Double Action
 ##
-## After activating, a popup appears with "+1 ALL" and "-1 ALL" buttons.
-## Selecting one shifts ALL unlocked dice by that amount (clamped 1-6).
-## Locked dice are never modified. Uses per round: 1.
+## Once per round, activation arms the next committed score this round.
+## That next score doubles score-related PowerUp additives, multipliers,
+## and score-time money payouts.
 
-signal awaiting_tilt_choice
-signal tilt_complete
-
-var dice_hand_ref: DiceHand = null
-var _waiting_for_choice: bool = false
+var game_controller_ref = null
 
 
 func apply(target) -> void:
 	super.apply(target)
-	dice_hand_ref = target as DiceHand
-	if not dice_hand_ref:
-		push_error("[SegaSaturnConsole] Target is not a DiceHand")
+	game_controller_ref = target
+	if not game_controller_ref:
+		push_error("[SegaSaturnConsole] Target is not a GameController")
+		return
+	if not game_controller_ref.has_method("arm_sega_saturn_next_score"):
+		push_error("[SegaSaturnConsole] Target is missing Sega Saturn score hooks")
 		return
 	if not is_connected("tree_exiting", _on_tree_exiting):
 		connect("tree_exiting", _on_tree_exiting)
-	print("[SegaSaturnConsole] Applied — Cartridge Tilt ready")
+	print("[SegaSaturnConsole] Applied — Double Action ready")
 
 
 func remove(_target_node) -> void:
-	_waiting_for_choice = false
-	dice_hand_ref = null
+	if game_controller_ref and game_controller_ref.has_method("clear_sega_saturn_score_state"):
+		game_controller_ref.clear_sega_saturn_score_state()
+	game_controller_ref = null
 	super.remove(_target_node)
 
 
 func can_activate() -> bool:
 	if not is_active:
 		return false
-	if not dice_hand_ref:
-		return false
-	if _waiting_for_choice:
+	if not game_controller_ref:
 		return false
 	if uses_remaining <= 0:
 		return false
-	var dice_list = dice_hand_ref.get_all_dice()
-	for die in dice_list:
-		if die.get_state() == Dice.DiceState.ROLLED:
-			return true
-	return false
+	if game_controller_ref.has_method("is_sega_saturn_score_armed") and game_controller_ref.is_sega_saturn_score_armed():
+		return false
+	if game_controller_ref.has_method("is_sega_saturn_score_active") and game_controller_ref.is_sega_saturn_score_active():
+		return false
+	return not game_controller_ref.active_power_ups.is_empty()
 
 
 func activate() -> void:
 	if not can_activate():
 		return
-	_waiting_for_choice = true
-	emit_signal("awaiting_tilt_choice")
-	emit_signal("description_updated", get_power_description())
-	print("[SegaSaturnConsole] Waiting for +1/-1 choice...")
-
-
-## apply_tilt(amount)
-##
-## Called by the UI when the player selects +1 or -1.
-## Shifts all unlocked (ROLLED) dice by amount, clamped to valid range.
-## Locked dice are left untouched.
-func apply_tilt(amount: int) -> void:
-	if not _waiting_for_choice:
+	if not game_controller_ref.arm_sega_saturn_next_score():
 		return
-	if not dice_hand_ref:
-		return
-
-	var dice_list = dice_hand_ref.get_all_dice()
-	var adjusted_count = 0
-	for die in dice_list:
-		if die.get_state() == Dice.DiceState.ROLLED:
-			var new_value = clampi(die.value + amount, 1, die.dice_data.sides)
-			die.value = new_value
-			die.update_visual()
-			adjusted_count += 1
-
-	# Sync DiceResults cache so scoring sees the updated values
-	DiceResults.update_from_dice(dice_hand_ref.get_all_dice())
-
-	var direction = "+1" if amount > 0 else "-1"
-	print("[SegaSaturnConsole] Cartridge Tilt %s applied to %d dice" % [direction, adjusted_count])
-
-	_waiting_for_choice = false
 	uses_remaining -= 1
 	emit_signal("uses_changed", uses_remaining)
-	emit_signal("tilt_complete")
 	emit_signal("description_updated", get_power_description())
-	emit_signal("activated")
-
-
-func cancel_activation() -> void:
-	_waiting_for_choice = false
-	emit_signal("description_updated", get_power_description())
-
-
-func is_waiting_for_choice() -> bool:
-	return _waiting_for_choice
+	print("[SegaSaturnConsole] Armed for next committed score this round")
 
 
 func reset_for_new_round() -> void:
 	super.reset_for_new_round()
-	_waiting_for_choice = false
+	if game_controller_ref and game_controller_ref.has_method("clear_sega_saturn_score_state"):
+		game_controller_ref.clear_sega_saturn_score_state()
 	emit_signal("description_updated", get_power_description())
 
 
@@ -110,11 +68,17 @@ func is_passive() -> bool:
 
 
 func get_power_description() -> String:
-	if _waiting_for_choice:
-		return "Cartridge Tilt: Choose +1 ALL or -1 ALL to shift all dice!"
-	return "Cartridge Tilt: Shift all unlocked dice by +1 or -1. [%d use/round]" % uses_per_round
+	var held_count := 0
+	if game_controller_ref:
+		held_count = game_controller_ref.active_power_ups.size()
+		if game_controller_ref.has_method("is_sega_saturn_score_armed") and game_controller_ref.is_sega_saturn_score_armed():
+			return "Double Action: Next score doubles score-related PowerUps this round."
+	if held_count <= 0:
+		return "Double Action: Hold at least one PowerUp to arm the next score. [%d use/round]" % uses_per_round
+	return "Double Action: Arm the next score to double score-related PowerUps. [%d held, %d use/round]" % [held_count, uses_per_round]
 
 
 func _on_tree_exiting() -> void:
-	_waiting_for_choice = false
-	dice_hand_ref = null
+	if game_controller_ref and game_controller_ref.has_method("clear_sega_saturn_score_state"):
+		game_controller_ref.clear_sega_saturn_score_state()
+	game_controller_ref = null

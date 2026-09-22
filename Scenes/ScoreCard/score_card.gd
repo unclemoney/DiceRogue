@@ -835,72 +835,25 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 	
 	var total_additive = 0
 	var raw_total_multiplier = 1.0
-	var total_multiplier = 1.0
 	var active_powerup_sources: Array[String] = []
 	var active_consumable_sources: Array[String] = []
+	var additive_source_info: Array = []
+	var multiplier_source_info: Array = []
+	var saturn_adjusted_additive_sources: Array[String] = []
+	var saturn_adjusted_multiplier_sources: Array[String] = []
+	var sega_saturn_active := false
 	
 	if is_instance_valid(modifier_manager):
-		if modifier_manager.has_method("get_total_additive"):
-			total_additive = modifier_manager.get_total_additive()
-		if modifier_manager.has_method("get_raw_multiplier_total"):
-			raw_total_multiplier = modifier_manager.get_raw_multiplier_total()
-		total_multiplier = modifier_manager.get_total_multiplier()
-		if modifier_manager.has_method("get_active_sources"):
-			var sources = modifier_manager.get_active_sources()
-			#print("[SCORECARD DEBUG] active sources:", sources)
-			for source in sources:
-				if modifier_manager.has_method("get_multiplier"):
-					var _mult = modifier_manager.get_multiplier(source)
-					#print("[SCORECARD DEBUG] source '", source, "' multiplier:", _mult)
-		
-		# Get detailed source information for breakdown
-		var all_modifier_sources = {}
-		
-		# Get multiplier sources and their values
-		if modifier_manager.has_method("get_active_sources"):
-			var multiplier_sources = modifier_manager.get_active_sources()
-			for source in multiplier_sources:
-				var multiplier_value = modifier_manager.get_multiplier(source) if modifier_manager.has_method("get_multiplier") else 1.0
-				var multiplier_component = _create_multiplier_component(multiplier_value, modifier_manager)
-				var source_category = _categorize_modifier_source(source)
-				all_modifier_sources[source] = {
-					"type": "multiplier",
-					"value": multiplier_component.effective_factor,
-					"raw_value": multiplier_value,
-					"display_mode": multiplier_component.display_mode,
-					"display_operator": multiplier_component.display_operator,
-					"display_value": multiplier_component.display_value,
-					"category": source_category
-				}
-				
-				# Add to appropriate category lists
-				if all_modifier_sources[source].category == "powerup":
-					active_powerup_sources.append(source)
-				elif all_modifier_sources[source].category == "consumable":
-					active_consumable_sources.append(source)
-		
-		# Get additive sources and their values
-		if modifier_manager.has_method("get_active_additive_sources"):
-			var additive_sources = modifier_manager.get_active_additive_sources()
-			for source in additive_sources:
-				var additive_value = modifier_manager.get_additive(source) if modifier_manager.has_method("get_additive") else 0
-				var source_category = _categorize_modifier_source(source)
-				
-				# If source already exists (has both additive and multiplier), combine info
-				if source in all_modifier_sources:
-					all_modifier_sources[source]["additive_value"] = additive_value
-				else:
-					all_modifier_sources[source] = {
-						"type": "additive",
-						"value": additive_value,
-						"category": source_category
-					}
-				
-				# Add to appropriate category lists if not already there
-				if source_category == "powerup" and source not in active_powerup_sources:
-					active_powerup_sources.append(source)
-				elif source_category == "consumable" and source not in active_consumable_sources:
-					active_consumable_sources.append(source)
+		var modifier_totals = _collect_modifier_totals(modifier_manager)
+		total_additive = modifier_totals.get("total_additive", 0)
+		raw_total_multiplier = modifier_totals.get("raw_total_multiplier", 1.0)
+		sega_saturn_active = modifier_totals.get("sega_saturn_active", false)
+		active_powerup_sources.assign(modifier_totals.get("active_powerup_sources", []))
+		active_consumable_sources.assign(modifier_totals.get("active_consumable_sources", []))
+		additive_source_info = modifier_totals.get("additive_sources", [])
+		multiplier_source_info = modifier_totals.get("multiplier_sources", [])
+		saturn_adjusted_additive_sources.assign(modifier_totals.get("saturn_adjusted_additive_sources", []))
+		saturn_adjusted_multiplier_sources.assign(modifier_totals.get("saturn_adjusted_multiplier_sources", []))
 	else:
 		# Fallback warning if no manager found
 		push_warning("[Scorecard] No ScoreModifierManager found")
@@ -981,46 +934,23 @@ func calculate_score_with_breakdown(category: String, dice_values: Array, apply_
 		"active_powerups": active_powerup_sources.duplicate(),
 		"active_consumables": active_consumable_sources.duplicate(),
 		"dice_color_money": dice_color_money,
+		"sega_saturn_active": sega_saturn_active,
+		"saturn_adjusted_additive_sources": saturn_adjusted_additive_sources.duplicate(),
+		"saturn_adjusted_multiplier_sources": saturn_adjusted_multiplier_sources.duplicate(),
 		"has_modifiers": (not is_equal_approx(score_components.effective_category_level_factor, 1.0) or total_additive_bonus != 0 or not is_equal_approx(total_multiplier_bonus, 1.0) or not is_equal_approx(score_components.blue_score_multiplier, 1.0) or dice_color_money > 0),
 		# Add dice information for animation system
 		"used_dice_indices": used_dice_indices.duplicate(),
 		"dice_values": dice_values.duplicate(),
 		# Add specific source tracking for additives and multipliers
-		"additive_sources": [],
-		"multiplier_sources": []
+		"additive_sources": additive_source_info.duplicate(true),
+		"multiplier_sources": multiplier_source_info.duplicate(true)
 	}
-	
-	# Populate specific source information for accurate calculation summaries
-	if is_instance_valid(modifier_manager):
-		# Get additive sources
-		if modifier_manager.has_method("get_active_additive_sources"):
-			var additive_sources = modifier_manager.get_active_additive_sources()
-			for source in additive_sources:
-				var source_category = _categorize_modifier_source(source)
-				breakdown_info.additive_sources.append({
-					"name": source,
-					"category": source_category,
-					"value": modifier_manager.get_additive(source) if modifier_manager.has_method("get_additive") else 0,
-					"voided": score_components.scratch_applied
-				})
-		
-		# Get multiplier sources
-		if modifier_manager.has_method("get_active_sources"):
-			var multiplier_sources = modifier_manager.get_active_sources()
-			for source in multiplier_sources:
-				var source_category = _categorize_modifier_source(source)
-				var raw_source_value = modifier_manager.get_multiplier(source) if modifier_manager.has_method("get_multiplier") else 1.0
-				var source_component = _create_multiplier_component(raw_source_value, modifier_manager)
-				breakdown_info.multiplier_sources.append({
-					"name": source,
-					"category": source_category,
-					"value": source_component.effective_factor,
-					"raw_value": raw_source_value,
-					"display_mode": source_component.display_mode,
-					"display_operator": source_component.display_operator,
-					"display_value": source_component.display_value,
-					"voided": score_components.scratch_applied
-				})
+
+	for source_info in breakdown_info.additive_sources:
+		source_info["voided"] = score_components.scratch_applied
+
+	for source_info in breakdown_info.multiplier_sources:
+		source_info["voided"] = score_components.scratch_applied
 	
 
 	
@@ -1622,10 +1552,9 @@ func _calculate_score_with_preserved_effects(category: String, dice_values: Arra
 	var raw_total_multiplier = 1.0
 	
 	if is_instance_valid(modifier_manager):
-		if modifier_manager.has_method("get_total_additive"):
-			total_additive = modifier_manager.get_total_additive()
-		if modifier_manager.has_method("get_raw_multiplier_total"):
-			raw_total_multiplier = modifier_manager.get_raw_multiplier_total()
+		var modifier_totals = _collect_modifier_totals(modifier_manager)
+		total_additive = modifier_totals.get("total_additive", 0)
+		raw_total_multiplier = modifier_totals.get("raw_total_multiplier", 1.0)
 	else:
 		push_warning("[Scorecard] No ScoreModifierManager found")
 	
@@ -1737,6 +1666,104 @@ func _create_multiplier_component(raw_factor: float, modifier_manager) -> Dictio
 		"display_operator": display_operator,
 		"display_value": display_value,
 		"division_mode_active": division_mode_active
+	}
+
+
+func _is_sega_saturn_score_active() -> bool:
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if is_instance_valid(game_controller):
+		if game_controller.has_method("is_sega_saturn_score_active"):
+			return game_controller.is_sega_saturn_score_active()
+	return false
+
+
+func _collect_modifier_totals(modifier_manager) -> Dictionary:
+	var total_additive := 0
+	var raw_total_multiplier := 1.0
+	var active_powerup_sources: Array[String] = []
+	var active_consumable_sources: Array[String] = []
+	var additive_sources: Array = []
+	var multiplier_sources: Array = []
+	var saturn_adjusted_additive_sources: Array[String] = []
+	var saturn_adjusted_multiplier_sources: Array[String] = []
+	var sega_saturn_active := _is_sega_saturn_score_active()
+
+	if not is_instance_valid(modifier_manager):
+		return {
+			"total_additive": total_additive,
+			"raw_total_multiplier": raw_total_multiplier,
+			"active_powerup_sources": active_powerup_sources,
+			"active_consumable_sources": active_consumable_sources,
+			"additive_sources": additive_sources,
+			"multiplier_sources": multiplier_sources,
+			"saturn_adjusted_additive_sources": saturn_adjusted_additive_sources,
+			"saturn_adjusted_multiplier_sources": saturn_adjusted_multiplier_sources,
+			"sega_saturn_active": sega_saturn_active
+		}
+
+	if modifier_manager.has_method("get_active_additive_sources"):
+		var additive_source_names = modifier_manager.get_active_additive_sources()
+		for source in additive_source_names:
+			var source_category = _categorize_modifier_source(source)
+			var additive_value = modifier_manager.get_additive(source) if modifier_manager.has_method("get_additive") else 0
+			var adjusted_value = additive_value
+			var saturn_doubled = false
+			if sega_saturn_active and source_category == "powerup":
+				adjusted_value = additive_value * 2
+				saturn_doubled = true
+				saturn_adjusted_additive_sources.append(source)
+			total_additive += adjusted_value
+			additive_sources.append({
+				"name": source,
+				"category": source_category,
+				"value": adjusted_value,
+				"base_value": additive_value,
+				"saturn_doubled": saturn_doubled
+			})
+			if source_category == "powerup" and source not in active_powerup_sources:
+				active_powerup_sources.append(source)
+			elif source_category == "consumable" and source not in active_consumable_sources:
+				active_consumable_sources.append(source)
+
+	if modifier_manager.has_method("get_active_sources"):
+		var multiplier_source_names = modifier_manager.get_active_sources()
+		for source in multiplier_source_names:
+			var source_category = _categorize_modifier_source(source)
+			var raw_value = modifier_manager.get_multiplier(source) if modifier_manager.has_method("get_multiplier") else 1.0
+			var adjusted_raw_value = raw_value
+			var saturn_doubled = false
+			if sega_saturn_active and source_category == "powerup":
+				adjusted_raw_value = raw_value * 2.0
+				saturn_doubled = true
+				saturn_adjusted_multiplier_sources.append(source)
+			raw_total_multiplier *= adjusted_raw_value
+			var source_component = _create_multiplier_component(adjusted_raw_value, modifier_manager)
+			multiplier_sources.append({
+				"name": source,
+				"category": source_category,
+				"value": source_component.effective_factor,
+				"raw_value": adjusted_raw_value,
+				"base_raw_value": raw_value,
+				"display_mode": source_component.display_mode,
+				"display_operator": source_component.display_operator,
+				"display_value": source_component.display_value,
+				"saturn_doubled": saturn_doubled
+			})
+			if source_category == "powerup" and source not in active_powerup_sources:
+				active_powerup_sources.append(source)
+			elif source_category == "consumable" and source not in active_consumable_sources:
+				active_consumable_sources.append(source)
+
+	return {
+		"total_additive": total_additive,
+		"raw_total_multiplier": raw_total_multiplier,
+		"active_powerup_sources": active_powerup_sources,
+		"active_consumable_sources": active_consumable_sources,
+		"additive_sources": additive_sources,
+		"multiplier_sources": multiplier_sources,
+		"saturn_adjusted_additive_sources": saturn_adjusted_additive_sources,
+		"saturn_adjusted_multiplier_sources": saturn_adjusted_multiplier_sources,
+		"sega_saturn_active": sega_saturn_active
 	}
 
 ## _calculate_score_from_components(...)

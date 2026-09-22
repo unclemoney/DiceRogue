@@ -81,10 +81,14 @@ func _on_turn_updated(turn: int) -> void:
 
 func _on_score_assigned(_section, _category: String, score: int) -> void:
 	if _current_turn == BONUS_TURN and score > 0 and not _turn_16_bonus_awarded:
-		PlayerEconomy.add_money(TURN_16_BONUS)
-		total_earned += TURN_16_BONUS
+		var awarded_amount = TURN_16_BONUS
+		if game_controller_ref and game_controller_ref.has_method("award_score_time_power_up_money"):
+			awarded_amount = game_controller_ref.award_score_time_power_up_money(TURN_16_BONUS, "sweet_sixteen_turn_16_bonus")
+		else:
+			PlayerEconomy.add_money(TURN_16_BONUS)
+		total_earned += awarded_amount
 		_turn_16_bonus_awarded = true
-		print("[SweetSixteenPowerUp] TURN %d BONUS! Scored %d points. Granted $%d bonus! (total earned: $%d)" % [BONUS_TURN, score, TURN_16_BONUS, total_earned])
+		print("[SweetSixteenPowerUp] TURN %d BONUS! Scored %d points. Granted $%d bonus! (total earned: $%d)" % [BONUS_TURN, score, awarded_amount, total_earned])
 		
 		emit_signal("description_updated", id, get_current_description())
 		

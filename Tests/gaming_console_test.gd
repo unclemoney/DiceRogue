@@ -11,10 +11,64 @@ const ScoreCardScene := preload("res://Scenes/ScoreCard/score_card.tscn")
 const GamingConsoleManagerScene := preload("res://Scenes/Managers/gaming_console_manager.tscn")
 const GamingConsoleUIScene := preload("res://Scenes/UI/gaming_console_ui.tscn")
 
+
+class SaturnTestController:
+	extends Node
+
+	var active_power_ups: Dictionary = {}
+	var dice_hand: DiceHand = null
+	var score_card_ui = null
+	var _sega_saturn_score_armed: bool = false
+	var _sega_saturn_score_active: bool = false
+	var _sega_saturn_score_transaction_depth: int = 0
+
+	func _ready() -> void:
+		add_to_group("game_controller")
+
+	func arm_sega_saturn_next_score() -> bool:
+		if _sega_saturn_score_armed or _sega_saturn_score_active:
+			return false
+		_sega_saturn_score_armed = true
+		return true
+
+	func begin_sega_saturn_score_transaction() -> void:
+		if _sega_saturn_score_transaction_depth == 0:
+			_sega_saturn_score_active = _sega_saturn_score_armed
+		_sega_saturn_score_transaction_depth += 1
+
+	func end_sega_saturn_score_transaction(score_committed: bool = true) -> void:
+		if _sega_saturn_score_transaction_depth <= 0:
+			return
+		_sega_saturn_score_transaction_depth -= 1
+		if _sega_saturn_score_transaction_depth > 0:
+			return
+		if _sega_saturn_score_active and score_committed:
+			_sega_saturn_score_armed = false
+		_sega_saturn_score_active = false
+
+	func clear_sega_saturn_score_state() -> void:
+		_sega_saturn_score_armed = false
+		_sega_saturn_score_active = false
+		_sega_saturn_score_transaction_depth = 0
+
+	func is_sega_saturn_score_active() -> bool:
+		return _sega_saturn_score_active
+
+	func is_sega_saturn_score_armed() -> bool:
+		return _sega_saturn_score_armed
+
+	func award_score_time_power_up_money(amount: int, _source_name: String) -> int:
+		var resolved_amount = amount
+		if _sega_saturn_score_active and amount > 0:
+			resolved_amount = amount * 2
+		PlayerEconomy.add_money(resolved_amount)
+		return resolved_amount
+
 var dice_hand: DiceHand = null
 var scorecard: Scorecard = null
 var console_manager: GamingConsoleManager = null
 var console_ui: GamingConsoleUI = null
+var saturn_controller: SaturnTestController = null
 
 var output_label: RichTextLabel = null
 var test_results: Array[String] = []
@@ -91,7 +145,7 @@ func _build_ui() -> void:
 	_add_button(btn_hbox, "SNES (Blast Processing)", _test_snes)
 	_add_button(btn_hbox, "Sega (Combo System)", _test_sega)
 	_add_button(btn_hbox, "PlayStation (Continue?)", _test_playstation)
-	_add_button(btn_hbox, "Sega Saturn (Tilt)", _test_sega_saturn)
+	_add_button(btn_hbox, "Sega Saturn (Double Action)", _test_sega_saturn)
 	_add_button(btn_hbox, "Clear", _clear_output)
 
 	output_label = RichTextLabel.new()
@@ -128,6 +182,11 @@ func _setup_game_systems() -> void:
 	console_ui = GamingConsoleUIScene.instantiate() as GamingConsoleUI
 	console_ui.position = Vector2(20, 420)
 	add_child(console_ui)
+
+	# Minimal GameController-compatible node for Sega Saturn score tests.
+	saturn_controller = SaturnTestController.new()
+	saturn_controller.dice_hand = dice_hand
+	add_child(saturn_controller)
 
 	# Wait for manager definitions to load
 	if console_manager._defs_by_id.is_empty():
@@ -177,6 +236,21 @@ func _spawn_console(id: String, target) -> GamingConsole:
 func _cleanup_console(console: GamingConsole) -> void:
 	if console and is_instance_valid(console):
 		console.queue_free()
+
+
+func _reset_saturn_test_state() -> void:
+	if ScoreModifierManager and ScoreModifierManager.has_method("reset"):
+		ScoreModifierManager.reset()
+	if PlayerEconomy and PlayerEconomy.has_method("reset_to_starting_money"):
+		PlayerEconomy.reset_to_starting_money()
+	if saturn_controller:
+		saturn_controller.clear_sega_saturn_score_state()
+		saturn_controller.active_power_ups.clear()
+	if dice_hand:
+		for die in dice_hand.get_all_dice():
+			if die.active_mods is Dictionary:
+				die.active_mods.clear()
+	DiceResults.values.clear()
 
 
 func _assert_console_ui_rendered(test_prefix: String, expected_button_text: String, expected_disabled: bool, expect_fanned: bool = false) -> void:
@@ -630,14 +704,21 @@ func _test_playstation() -> void:
 	_log("[color=cyan]━━━ PlayStation tests complete ━━━[/color]")
 
 
-# ── Sega Saturn: Cartridge Tilt ──────────────────────────
+# ── Sega Saturn: Double Action ───────────────────────────
 
 
 func _test_sega_saturn() -> void:
 	_log("")
-	_log("[color=cyan]━━━ Sega Saturn — Cartridge Tilt ━━━[/color]")
+	_log("[color=cyan]━━━ Sega Saturn — Double Action ━━━[/color]")
+	_reset_saturn_test_state()
 
-	var console = _spawn_console("sega_saturn_console", dice_hand)
+	if saturn_controller == null:
+		_assert(false, "Saturn: test controller exists")
+		return
+
+	saturn_controller.active_power_ups["chance520"] = Node.new()
+
+	var console = _spawn_console("sega_saturn_console", saturn_controller)
 	_assert(console != null, "Saturn: spawn")
 	if not console:
 		return
@@ -647,17 +728,8 @@ func _test_sega_saturn() -> void:
 	_assert(saturn.is_active, "Saturn: is_active after apply")
 	_assert(saturn.uses_remaining == 1, "Saturn: uses_remaining", "expected 1, got %d" % saturn.uses_remaining)
 	_assert(not saturn.is_passive(), "Saturn: not passive")
-	_assert(saturn.dice_hand_ref == dice_hand, "Saturn: dice_hand_ref set")
-
-	# can_activate before rolling
-	_set_dice_pre_roll_state()
-	_assert(not saturn.can_activate(), "Saturn: can_activate false before roll")
-
-	# Roll dice
-	await _spawn_and_roll_dice()
-	var values_before = _get_dice_values()
-	_log("  Dice values before tilt: %s" % str(values_before))
-	_assert(saturn.can_activate(), "Saturn: can_activate true after roll")
+	_assert(saturn.game_controller_ref == saturn_controller, "Saturn: controller ref set")
+	_assert(saturn.can_activate(), "Saturn: can_activate with held powerups")
 
 	var def = console_manager.get_def("sega_saturn_console")
 	console_ui.show_console(def, saturn)
@@ -665,90 +737,96 @@ func _test_sega_saturn() -> void:
 	_assert_console_ui_rendered("Saturn", "ACTIVATE", false)
 	await _assert_console_ui_fan_cycle("Saturn")
 
-	# Activate → enters waiting for choice mode
+	# Activate -> armed state
 	console_ui._compact_spine._on_activate_button_pressed()
-	_assert(saturn._waiting_for_choice, "Saturn: waiting for choice after activate")
-	_assert(not saturn.can_activate(), "Saturn: can_activate false while waiting")
-	_assert_console_ui_rendered("Saturn waiting", "CHOOSE...", true)
+	_assert(saturn_controller.is_sega_saturn_score_armed(), "Saturn: armed after activate")
+	_assert(not saturn.can_activate(), "Saturn: cannot reactivate while armed")
+	_assert(saturn.uses_remaining == 0, "Saturn: uses_remaining 0 after activation")
+	_assert_console_ui_rendered("Saturn armed", "ARMED", true)
 
-	# Apply tilt +1
-	console_ui._on_tilt_choice(1)
-	var values_after_plus = _get_dice_values()
-	_log("  Dice values after +1 tilt: %s" % str(values_after_plus))
-	_assert(not saturn._waiting_for_choice, "Saturn: waiting cleared after tilt")
-	_assert(saturn.uses_remaining == 0, "Saturn: uses_remaining 0 after tilt")
-	_assert_console_ui_rendered("Saturn after use", "USED", true)
+	# Transaction without commit should keep Saturn armed.
+	saturn_controller.begin_sega_saturn_score_transaction()
+	saturn_controller.end_sega_saturn_score_transaction(false)
+	_assert(saturn_controller.is_sega_saturn_score_armed(), "Saturn: remains armed after uncommitted transaction")
 
-	# Verify +1 applied to all dice (clamped to max sides)
-	var all_shifted_up = true
-	for i in range(values_before.size()):
-		var max_val = dice_hand.get_all_dice()[i].dice_data.sides
-		var expected = clampi(values_before[i] + 1, 1, max_val)
-		if values_after_plus[i] != expected:
-			all_shifted_up = false
-			_log("  [color=red]Die %d: expected %d, got %d[/color]" % [i, expected, values_after_plus[i]])
-	_assert(all_shifted_up, "Saturn: +1 tilt correct on all dice")
+	# Additive doubling
+	ScoreModifierManager.register_additive("chance520", 20)
+	saturn_controller.begin_sega_saturn_score_transaction()
+	var additive_breakdown: Dictionary = scorecard.calculate_score_with_breakdown("full_house", [2, 2, 3, 3, 3], false)
+	saturn_controller.end_sega_saturn_score_transaction(true)
+	var additive_info: Dictionary = additive_breakdown.get("breakdown_info", {})
+	_assert(additive_breakdown.get("base_score", 0) == 25, "Saturn: additive case base score 25")
+	_assert(additive_breakdown.get("final_score", 0) == 65, "Saturn: additive case final score doubled to 65", str(additive_breakdown))
+	_assert(additive_info.get("regular_additive", 0) == 40, "Saturn: additive doubled from 20 to 40")
+	_assert(additive_info.get("saturn_adjusted_additive_sources", []).has("chance520"), "Saturn: additive source marked as Saturn-adjusted")
+	_assert(not saturn_controller.is_sega_saturn_score_armed(), "Saturn: consumed after committed score")
+	ScoreModifierManager.reset()
+	console_ui.refresh_button_state()
+	_assert_console_ui_rendered("Saturn after additive score", "USED", true)
 
-	# Reset and test -1
+	# Multiplier doubling uses the raw-value rule: 1.5x -> 3.0x.
 	saturn.reset_for_new_round()
 	_assert(saturn.uses_remaining == 1, "Saturn: uses restored after reset")
-	dice_hand.set_all_dice_rollable()
-	dice_hand.roll_all()
-	await get_tree().create_timer(0.6).timeout
-
-	var values_before2 = _get_dice_values()
-	_log("  Dice values before -1 tilt: %s" % str(values_before2))
+	saturn_controller.active_power_ups.clear()
+	saturn_controller.active_power_ups["money_bags"] = Node.new()
+	console_ui.refresh_button_state()
+	_assert(saturn.can_activate(), "Saturn: can_activate after reset with held multiplier powerup")
 	saturn.activate()
-	saturn.apply_tilt(-1)
-	var values_after_minus = _get_dice_values()
-	_log("  Dice values after -1 tilt: %s" % str(values_after_minus))
+	_assert(saturn_controller.is_sega_saturn_score_armed(), "Saturn: armed for multiplier case")
+	ScoreModifierManager.register_multiplier("money_bags", 1.5)
+	saturn_controller.begin_sega_saturn_score_transaction()
+	var multiplier_breakdown: Dictionary = scorecard.calculate_score_with_breakdown("chance", [1, 2, 3, 4, 6], false)
+	saturn_controller.end_sega_saturn_score_transaction(true)
+	var multiplier_info: Dictionary = multiplier_breakdown.get("breakdown_info", {})
+	_assert(multiplier_breakdown.get("final_score", 0) == 48, "Saturn: multiplier case final score 48", str(multiplier_breakdown))
+	_assert(is_equal_approx(float(multiplier_info.get("raw_regular_multiplier", 1.0)), 3.0), "Saturn: raw multiplier doubled from 1.5 to 3.0")
+	_assert(multiplier_info.get("saturn_adjusted_multiplier_sources", []).has("money_bags"), "Saturn: multiplier source marked as Saturn-adjusted")
+	ScoreModifierManager.reset()
 
-	var all_shifted_down = true
-	for i in range(values_before2.size()):
-		var max_val = dice_hand.get_all_dice()[i].dice_data.sides
-		var expected = clampi(values_before2[i] - 1, 1, max_val)
-		if values_after_minus[i] != expected:
-			all_shifted_down = false
-			_log("  [color=red]Die %d: expected %d, got %d[/color]" % [i, expected, values_after_minus[i]])
-	_assert(all_shifted_down, "Saturn: -1 tilt correct on all dice")
-
-	# Locked dice must be untouched by tilt
+	# Score-time money should double only during the active score transaction.
+	if dice_hand.get_all_dice().is_empty():
+		await _spawn_and_roll_dice()
+	var mod_money = ModMoneyPowerUp.new()
+	add_child(mod_money)
 	saturn.reset_for_new_round()
-	dice_hand.set_all_dice_rollable()
-	dice_hand.roll_all()
-	await get_tree().create_timer(0.6).timeout
-
-	var dice_list3 = dice_hand.get_all_dice()
-	var locked_indices = [0, 1]
-	for i in locked_indices:
-		dice_list3[i].lock()
-	var values_before3 = _get_dice_values()
-	_assert(saturn.can_activate(), "Saturn: can_activate true with some dice unlocked")
-
+	PlayerEconomy.reset_to_starting_money()
+	saturn_controller.active_power_ups.clear()
+	saturn_controller.active_power_ups["mod_money"] = mod_money
+	dice_hand.get_all_dice()[0].active_mods["unit_test_mod"] = true
 	saturn.activate()
-	saturn.apply_tilt(1)
-	var values_after_locked_tilt = _get_dice_values()
-	_log("  Dice values before tilt with locks: %s" % str(values_before3))
-	_log("  Dice values after +1 tilt with locks: %s" % str(values_after_locked_tilt))
+	var money_before_mod = PlayerEconomy.get_money()
+	saturn_controller.begin_sega_saturn_score_transaction()
+	mod_money._on_about_to_score(Scorecard.Section.UPPER, "ones", [])
+	saturn_controller.end_sega_saturn_score_transaction(true)
+	var mod_money_delta = PlayerEconomy.get_money() - money_before_mod
+	_assert(mod_money_delta == 16, "Saturn: pre-score money doubled from 8 to 16", str(mod_money_delta))
+	mod_money.queue_free()
+	for die in dice_hand.get_all_dice():
+		die.active_mods.clear()
 
-	var locked_respected = true
-	for i in range(values_before3.size()):
-		var max_val = dice_list3[i].dice_data.sides
-		var expected = values_before3[i]
-		if not i in locked_indices:
-			expected = clampi(values_before3[i] + 1, 1, max_val)
-		if values_after_locked_tilt[i] != expected:
-			locked_respected = false
-			_log("  [color=red]Die %d: expected %d, got %d[/color]" % [i, expected, values_after_locked_tilt[i]])
-	_assert(locked_respected, "Saturn: locked dice untouched, unlocked dice shifted")
+	var full_house_power = FullHousePowerUp.new()
+	add_child(full_house_power)
+	saturn.reset_for_new_round()
+	PlayerEconomy.reset_to_starting_money()
+	saturn_controller.active_power_ups.clear()
+	saturn_controller.active_power_ups["full_house_bonus"] = full_house_power
+	DiceResults.values = [2, 2, 3, 3, 3]
+	saturn.activate()
+	var money_before_full_house = PlayerEconomy.get_money()
+	saturn_controller.begin_sega_saturn_score_transaction()
+	full_house_power._on_score_assigned(Scorecard.Section.LOWER, "full_house", 25)
+	saturn_controller.end_sega_saturn_score_transaction(true)
+	var full_house_delta = PlayerEconomy.get_money() - money_before_full_house
+	_assert(full_house_delta == 14, "Saturn: post-score money doubled from 7 to 14", str(full_house_delta))
+	full_house_power.queue_free()
 
-	# can_activate is false when every die is locked
-	for die in dice_list3:
-		die.lock()
-	_assert(not saturn.can_activate(), "Saturn: can_activate false when all dice locked")
+	# Out-of-scope calls should not double after the score transaction ends.
+	var out_of_scope_money = saturn_controller.award_score_time_power_up_money(8, "control")
+	_assert(out_of_scope_money == 8, "Saturn: helper does not double outside active transaction")
 
 	console_ui.hide_console()
 	_assert(not console_ui.visible, "Saturn: UI hidden after hide_console")
 
+	_reset_saturn_test_state()
 	_cleanup_console(console)
 	_log("[color=cyan]━━━ Sega Saturn tests complete ━━━[/color]")

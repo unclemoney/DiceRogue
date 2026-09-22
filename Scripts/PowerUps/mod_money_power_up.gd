@@ -59,9 +59,13 @@ func _on_about_to_score(_section: Scorecard.Section, _category: String, _dice_va
 	
 	if modded_count > 0:
 		var money_earned = modded_count * MONEY_PER_MODDED_DIE
-		PlayerEconomy.add_money(money_earned)
-		total_mod_money_earned += money_earned
-		print("[ModMoneyPowerUp] Earned $%d from %d modded dice" % [money_earned, modded_count])
+		var awarded_amount = money_earned
+		if game_controller.has_method("award_score_time_power_up_money"):
+			awarded_amount = game_controller.award_score_time_power_up_money(money_earned, "mod_money")
+		else:
+			PlayerEconomy.add_money(money_earned)
+		total_mod_money_earned += awarded_amount
+		print("[ModMoneyPowerUp] Earned $%d from %d modded dice" % [awarded_amount, modded_count])
 		emit_signal("description_updated", id, get_current_description())
 		_update_power_up_icons()
 

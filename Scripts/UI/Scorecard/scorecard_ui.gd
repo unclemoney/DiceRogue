@@ -213,6 +213,24 @@ func _get_dice_hand() -> Node:
 	return null
 
 
+func _get_game_controller():
+	return get_tree().get_first_node_in_group("game_controller")
+
+
+func _begin_sega_saturn_score_transaction() -> void:
+	var game_controller = _get_game_controller()
+	if is_instance_valid(game_controller):
+		if game_controller.has_method("begin_sega_saturn_score_transaction"):
+			game_controller.begin_sega_saturn_score_transaction()
+
+
+func _end_sega_saturn_score_transaction(score_committed: bool = true) -> void:
+	var game_controller = _get_game_controller()
+	if is_instance_valid(game_controller):
+		if game_controller.has_method("end_sega_saturn_score_transaction"):
+			game_controller.end_sega_saturn_score_transaction(score_committed)
+
+
 func _on_roll_complete() -> void:
 	_has_roll_context = true
 	_refresh_previews()
@@ -457,6 +475,7 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 		return
 
 	var values: Array[int] = DiceResults.values
+	_begin_sega_saturn_score_transaction()
 
 	# Emit signal before scoring to allow PowerUps to prepare
 	about_to_score.emit(section, category, values)
@@ -472,9 +491,12 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 		score = scorecard.lower_scores[category]
 
 	if score == null:
+		_end_sega_saturn_score_transaction(false)
 		print("[ScoreCardUI] Invalid score calculation")
 		show_invalid_score_feedback(category)
 		return
+
+	_end_sega_saturn_score_transaction(true)
 
 	# Check for Yahtzee bonus
 	scorecard.check_bonus_yahtzee(values, category)
@@ -745,12 +767,6 @@ func _handle_double_score(section: Scorecard.Section, category: String) -> void:
 func handle_score_reroll(section: Scorecard.Section, category: String) -> void:
 	var values: Array[int] = DiceResults.values
 
-	# Emit signal before scoring to allow PowerUps to prepare
-	about_to_score.emit(section, category, values)
-
-	var score := scorecard.evaluate_category(category, values)
-	print("[ScoreCardUI] Reroll score calculated:", score)
-
 	# Verify the category has an existing score to reroll
 	var has_existing_score := false
 	match section:
@@ -764,11 +780,20 @@ func handle_score_reroll(section: Scorecard.Section, category: String) -> void:
 		show_invalid_score_feedback(category)
 		return
 
+	_begin_sega_saturn_score_transaction()
+
+	# Emit signal before scoring to allow PowerUps to prepare
+	about_to_score.emit(section, category, values)
+
+	var score := scorecard.evaluate_category(category, values)
+	print("[ScoreCardUI] Reroll score calculated:", score)
+
 	var reroll_snapshot = scorecard.create_direct_score_snapshot(section, category, score, values, "score_reroll", {
 		"active_consumables": ["score_reroll"],
 		"has_modifiers": true
 	})
 	scorecard.set_score(section, category, score, reroll_snapshot)
+	_end_sega_saturn_score_transaction(true)
 	update_all()
 
 	# Reset reroll state
@@ -787,9 +812,6 @@ func handle_any_score(section: Scorecard.Section, category: String) -> void:
 	var dice_values: Array[int] = DiceResults.values
 	print("[ScoreCardUI] AnyScore mode - scoring", category, "with dice:", dice_values)
 
-	# Emit signal before scoring to allow PowerUps to prepare
-	about_to_score.emit(section, category, dice_values)
-
 	# Verify the category is open (hasn't been scored yet)
 	var has_existing_score := false
 	match section:
@@ -803,12 +825,18 @@ func handle_any_score(section: Scorecard.Section, category: String) -> void:
 		show_invalid_score_feedback(category)
 		return
 
+	_begin_sega_saturn_score_transaction()
+
+	# Emit signal before scoring to allow PowerUps to prepare
+	about_to_score.emit(section, category, dice_values)
+
 	# Calculate the score using the highest-scoring interpretation of current dice
 	var best_score_result = _calculate_best_score_for_dice(dice_values)
 	var score := int(best_score_result.get("score", 0))
 	var source_category := str(best_score_result.get("category", ""))
 
 	if score < 0:
+		_end_sega_saturn_score_transaction(false)
 		print("[ScoreCardUI] Invalid AnyScore calculation")
 		show_invalid_score_feedback(category)
 		return
@@ -822,6 +850,7 @@ func handle_any_score(section: Scorecard.Section, category: String) -> void:
 		any_score_breakdown["any_score_source_display"] = scorecard.get_category_display_name(source_category)
 	var any_score_snapshot = scorecard.create_direct_score_snapshot(section, category, score, dice_values, "any_score", any_score_breakdown)
 	scorecard.set_score(section, category, score, any_score_snapshot)
+	_end_sega_saturn_score_transaction(true)
 
 	# Check for bonus Yahtzee (must be after scoring, before UI update)
 	scorecard.check_bonus_yahtzee(dice_values, category)
@@ -844,9 +873,6 @@ func handle_go_broke_score(section: Scorecard.Section, category: String) -> void
 	var dice_values: Array[int] = DiceResults.values
 	print("[ScoreCardUI] Go Broke mode - scoring", category, "with dice:", dice_values)
 
-	# Emit signal before scoring to allow PowerUps to prepare
-	about_to_score.emit(section, category, dice_values)
-
 	# Verify the category is open (hasn't been scored yet)
 	var has_existing_score: bool = scorecard.lower_scores[category] != null
 	if has_existing_score:
@@ -854,15 +880,23 @@ func handle_go_broke_score(section: Scorecard.Section, category: String) -> void
 		show_invalid_score_feedback(category)
 		return
 
+	_begin_sega_saturn_score_transaction()
+
+	# Emit signal before scoring to allow PowerUps to prepare
+	about_to_score.emit(section, category, dice_values)
+
 	# Use scorecard's on_category_selected to properly apply normal scoring rules
 	scorecard.on_category_selected(section, category)
 
 	var score = scorecard.lower_scores[category]
 
 	if score == null:
+		_end_sega_saturn_score_transaction(false)
 		print("[ScoreCardUI] Invalid Go Broke score calculation")
 		show_invalid_score_feedback(category)
 		return
+
+	_end_sega_saturn_score_transaction(true)
 
 	# Check for Yahtzee bonus
 	scorecard.check_bonus_yahtzee(dice_values)

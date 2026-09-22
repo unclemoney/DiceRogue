@@ -7,8 +7,8 @@
 [resource]
 script = ExtResource("1_data")
 id = "sega_saturn_console"
-display_name = "Cartridge Tilt"
-description = "Shift all unlocked dice by +1 or -1. 1 use per round."
+display_name = "Double Action"
+description = "Once per round, arm the next score to double score-related PowerUp effects."
 icon = ExtResource("3_vip")
 vip_card_art = ExtResource("3_vip")
 vip_card_shader_key = "downtown_video_rentals"

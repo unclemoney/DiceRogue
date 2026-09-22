@@ -66,9 +66,14 @@ func _on_score_assigned(_section: Scorecard.Section, _category: String, _score: 
 	var money_to_grant = unique_count * MONEY_PER_UNIQUE
 	
 	if money_to_grant > 0:
-		PlayerEconomy.add_money(money_to_grant)
-		total_money_granted += money_to_grant
-		print("[DiceDiversityPowerUp] Granted $%d for %d unique dice values" % [money_to_grant, unique_count])
+		var awarded_amount = money_to_grant
+		var game_controller = get_tree().get_first_node_in_group("game_controller")
+		if game_controller and game_controller.has_method("award_score_time_power_up_money"):
+			awarded_amount = game_controller.award_score_time_power_up_money(money_to_grant, "dice_diversity")
+		else:
+			PlayerEconomy.add_money(money_to_grant)
+		total_money_granted += awarded_amount
+		print("[DiceDiversityPowerUp] Granted $%d for %d unique dice values" % [awarded_amount, unique_count])
 		
 		# Update description
 		emit_signal("description_updated", id, get_current_description())

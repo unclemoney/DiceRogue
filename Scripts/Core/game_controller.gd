@@ -158,6 +158,9 @@ const BONUS_COLLECTOR_CONSUMABLE_DEF := preload("res://Scripts/Consumable/BonusC
 
 # Active gaming console (only one allowed at a time)
 var active_gaming_console: Dictionary = {}  # id -> GamingConsole (max 1 entry)
+var _sega_saturn_score_armed: bool = false
+var _sega_saturn_score_active: bool = false
+var _sega_saturn_score_transaction_depth: int = 0
 
 # Mom dialog popup (instantiated when needed)
 var _mom_dialog = null
@@ -3371,6 +3374,69 @@ func _show_colored_dice_purchase_notification(data) -> void:
 ## grant_gaming_console(id)
 ##
 ## Purchases a gaming console and activates it. Only one console allowed at a time.
+func arm_sega_saturn_next_score() -> bool:
+	if _sega_saturn_score_armed or _sega_saturn_score_active:
+		if _debug_enabled:
+			print("[GameController] Sega Saturn score effect already armed")
+		return false
+	_sega_saturn_score_armed = true
+	if _debug_enabled:
+		print("[GameController] Sega Saturn armed for next committed score")
+	return true
+
+
+func begin_sega_saturn_score_transaction() -> void:
+	if _sega_saturn_score_transaction_depth == 0:
+		_sega_saturn_score_active = _sega_saturn_score_armed
+	if _sega_saturn_score_active and _debug_enabled:
+		print("[GameController] Sega Saturn score transaction started")
+	_sega_saturn_score_transaction_depth += 1
+
+
+func end_sega_saturn_score_transaction(score_committed: bool = true) -> void:
+	if _sega_saturn_score_transaction_depth <= 0:
+		return
+
+	_sega_saturn_score_transaction_depth -= 1
+	if _sega_saturn_score_transaction_depth > 0:
+		return
+
+	if _sega_saturn_score_active and score_committed:
+		_sega_saturn_score_armed = false
+		if _debug_enabled:
+			print("[GameController] Sega Saturn consumed by committed score")
+	elif _sega_saturn_score_active and _debug_enabled:
+		print("[GameController] Sega Saturn transaction ended without score commit")
+
+	_sega_saturn_score_active = false
+
+
+func clear_sega_saturn_score_state() -> void:
+	_sega_saturn_score_armed = false
+	_sega_saturn_score_active = false
+	_sega_saturn_score_transaction_depth = 0
+	if _debug_enabled:
+		print("[GameController] Sega Saturn score state cleared")
+
+
+func is_sega_saturn_score_active() -> bool:
+	return _sega_saturn_score_active
+
+
+func is_sega_saturn_score_armed() -> bool:
+	return _sega_saturn_score_armed
+
+
+func award_score_time_power_up_money(amount: int, source_name: String) -> int:
+	var resolved_amount := amount
+	if _sega_saturn_score_active and amount > 0:
+		resolved_amount = amount * 2
+		if _debug_enabled:
+			print("[GameController] Sega Saturn doubled %s money payout from $%d to $%d" % [source_name, amount, resolved_amount])
+	PlayerEconomy.add_money(resolved_amount)
+	return resolved_amount
+
+
 func grant_gaming_console(id: String) -> void:
 	if _debug_enabled:
 		print("\n=== Granting Gaming Console: ", id, " ===")
@@ -3414,7 +3480,8 @@ func grant_gaming_console(id: String) -> void:
 ## _activate_gaming_console(id)
 ##
 ## Connects the gaming console to its appropriate target based on type.
-## - Atari, NES, Sega Saturn → DiceHand
+## - Atari, NES → DiceHand
+## - Sega Saturn, PlayStation → GameController
 ## - SNES, Sega Genesis → Scorecard
 ## - PlayStation → GameController (for round_manager/turn_tracker access)
 func _activate_gaming_console(id: String) -> void:
@@ -3428,20 +3495,20 @@ func _activate_gaming_console(id: String) -> void:
 		print("[GameController] Activating gaming console: %s" % id)
 	
 	match id:
-		"atari_console", "nes_console", "sega_saturn_console":
+		"atari_console", "nes_console":
 			if dice_hand:
 				console.apply(dice_hand)
 				if _debug_enabled:
 					print("[GameController] Console %s applied to DiceHand" % id)
+		"sega_saturn_console", "playstation_console":
+			console.apply(self)
+			if _debug_enabled:
+				print("[GameController] Console %s applied to GameController" % id)
 		"snes_console", "sega_console":
 			if scorecard:
 				console.apply(scorecard)
 				if _debug_enabled:
 					print("[GameController] Console %s applied to Scorecard" % id)
-		"playstation_console":
-			console.apply(self)
-			if _debug_enabled:
-				print("[GameController] Console %s applied to GameController" % id)
 		"grounded":
 			console.apply(self)
 			if _debug_enabled:

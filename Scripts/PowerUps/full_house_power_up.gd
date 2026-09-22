@@ -50,11 +50,14 @@ func _grant_full_house_money() -> void:
 	
 	# Calculate scaled money reward: $7 for each full house rolled this game
 	var money_reward = total_full_houses_earned * base_money_per_full_house
+	var awarded_amount = money_reward
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller and game_controller.has_method("award_score_time_power_up_money"):
+		awarded_amount = game_controller.award_score_time_power_up_money(money_reward, "full_house_bonus")
+	else:
+		PlayerEconomy.add_money(money_reward)
 	
-	# Add money to player's economy
-	PlayerEconomy.add_money(money_reward)
-	
-	print("[FullHousePowerUp] Full house #%d rolled! Granted $%d (total full houses this game: %d)" % [total_full_houses_earned, money_reward, total_full_houses_earned])
+	print("[FullHousePowerUp] Full house #%d rolled! Granted $%d (total full houses this game: %d)" % [total_full_houses_earned, awarded_amount, total_full_houses_earned])
 	
 	# Update the description to show current progress
 	emit_signal("description_updated", id, get_current_description())

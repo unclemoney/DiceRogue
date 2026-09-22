@@ -85,8 +85,13 @@ func _award_bonus() -> void:
 	total_bonuses_earned += 1
 	
 	# Grant money bonus
-	PlayerEconomy.add_money(BONUS_MONEY)
-	print("[StraightTripletMasterPowerUp] TRIPLET ACHIEVED! Awarded $%d" % BONUS_MONEY)
+	var awarded_amount = BONUS_MONEY
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller and game_controller.has_method("award_score_time_power_up_money"):
+		awarded_amount = game_controller.award_score_time_power_up_money(BONUS_MONEY, "straight_triplet_master")
+	else:
+		PlayerEconomy.add_money(BONUS_MONEY)
+	print("[StraightTripletMasterPowerUp] TRIPLET ACHIEVED! Awarded $%d" % awarded_amount)
 	
 	# Add one-time bonus points directly to the scorecard total
 	if scorecard_ref:
