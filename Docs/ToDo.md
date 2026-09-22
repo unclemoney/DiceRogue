@@ -59,6 +59,7 @@
 - [ ] `P2-Minor` Update Challenge Icons.
 - [ ] `P2-Minor` Shockwave animations can also be applied to buttons that need to be pressed or chosen.
 - [ ] `P2-Minor` Click on the Mall Zone upper left to bring up the mall map. Show coming challenges.
+- [X] `P2-Minor` Update buttons to glass shader so they are uniform.
 
 ## SYS:Save — Save, Load & State Management
 

@@ -73,11 +73,6 @@ static func get_intersection_shape() -> Dictionary:
 	return layout_data.get("intersection", {}).duplicate(true)
 
 
-static func get_wayfinding_blocks() -> Array[Dictionary]:
-	var layout_data := get_layout_data()
-	return layout_data.get("wayfinding_blocks", []).duplicate(true)
-
-
 static func get_zone_layouts() -> Array[Dictionary]:
 	var layout_data := get_layout_data()
 	return layout_data.get("zones", []).duplicate(true)
@@ -160,15 +155,6 @@ static func _build_layout() -> Dictionary:
 		_build_wing_zone(3, Rect2(west_bar_x, south_bar_y, bar_w, bar_h), true),
 		_build_wing_zone(4, Rect2(east_bar_x, south_bar_y, bar_w, bar_h), true),
 	]
-	# Wayfinding sign blocks sit on the horizontal corridor arms, in the free
-	# band between the north bars (bottom y=174) and south bars (top y=206):
-	# west arm carries zones 01/03, east arm carries zones 02/04.
-	var wayfinding_blocks: Array[Dictionary] = [
-		_wayfinding_block("01", Vector2(120, 190)),
-		_wayfinding_block("03", Vector2(220, 190)),
-		_wayfinding_block("02", Vector2(520, 190)),
-		_wayfinding_block("04", Vector2(630, 190)),
-	]
 
 	return {
 		"cross_point": cross_point,
@@ -176,7 +162,6 @@ static func _build_layout() -> Dictionary:
 		"corridors": corridors,
 		"corridor_width": MAIN_CORRIDOR_WIDTH,
 		"zones": zones,
-		"wayfinding_blocks": wayfinding_blocks,
 		"bounds": frame,
 	}
 
@@ -226,26 +211,6 @@ static func _build_wing_zone(channel: int, bar_rect: Rect2, stub_below: bool) ->
 		])
 
 	return _zone(channel, points, bar_rect.position + bar_rect.size * 0.5, bar_rect)
-
-
-## _wayfinding_block(label, center) -> Dictionary
-##
-## Builds one wayfinding sign: a small cream block centered on a corridor,
-## labeled with the zone number it points to. Schema matches what
-## MallMapRenderer.build_wayfinding_blocks consumes (points, label, label_pos).
-static func _wayfinding_block(label: String, center: Vector2) -> Dictionary:
-	var half := Vector2(32, 12)
-	var top_left := center - half
-	return {
-		"label": label,
-		"label_pos": center,
-		"points": PackedVector2Array([
-			top_left,
-			Vector2(top_left.x + half.x * 2.0, top_left.y),
-			center + half,
-			Vector2(top_left.x, top_left.y + half.y * 2.0),
-		]),
-	}
 
 
 static func _zone(channel: int, points: PackedVector2Array, label_pos: Vector2, bar_rect: Rect2 = Rect2()) -> Dictionary:

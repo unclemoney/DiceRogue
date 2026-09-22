@@ -14,6 +14,7 @@ var _channel_manager
 var _channel_manager_ui
 var _failed := false
 var _mall_map_layout_script = load("res://Scripts/Managers/mall_map_layout.gd")
+var _mall_map_renderer_script = load("res://Scripts/Managers/mall_map_renderer.gd")
 
 
 func _ready() -> void:
@@ -58,7 +59,14 @@ func _run_test() -> void:
 	_assert_true(not intersection.is_empty(), "Courtyard diamond should be generated")
 	_assert_true(cross_point.distance_to(frame_center) < 1.0, "Fixed layout courtyard should sit at the frame center")
 	_assert_true(layout_data.get("corridors", []).size() == 4, "Layout should have exactly 4 corridor arms")
-	_assert_true(layout_data.get("wayfinding_blocks", []).size() == 4, "Fixed layout should emit 4 wayfinding blocks")
+	_assert_true(layout_data.get("wayfinding_blocks", []).is_empty(), "Layout should no longer emit numbered wayfinding plaques")
+	var icon_total := 0
+	for channel in _channel_manager_ui._store_icons:
+		var zone_icons: Array = _channel_manager_ui._store_icons[channel]
+		_assert_true(zone_icons.size() == 6, "Zone %d should have exactly 6 store icons" % channel)
+		icon_total += zone_icons.size()
+	_assert_true(_channel_manager_ui._store_icons.size() == 4, "Selector should have icons for all 4 zones")
+	_assert_true(icon_total == 24, "Selector should build exactly 24 store icons (got %d)" % icon_total)
 	_assert_true(not _zones_overlap(layout_data.get("zones", [])), "Fixed zones should not overlap")
 	_assert_true(_zones_inside_frame(layout_data.get("zones", []), frame), "Fixed zones should stay inside the frame")
 	_assert_true(_zone_labels_inside_polygons(layout_data.get("zones", [])), "Zone labels should sit inside their polygons")
@@ -95,7 +103,48 @@ func _run_test() -> void:
 	_channel_manager_ui._show_zone_tooltip(1)
 	await get_tree().process_frame
 	_assert_true(_channel_manager_ui._tooltip_panel.visible, "Hover tooltip should still show for zones")
-	_assert_true(_channel_manager_ui._tooltip_label.text.contains(zone_one_store), "Zone tooltip should list the zone's stores")
+	_assert_true(_channel_manager_ui._tooltip_panel.get_text().contains(zone_one_store), "Zone tooltip should list the zone's stores")
+
+	# Store icon tooltip parity: same text the popup would show for the store.
+	var icon = _channel_manager_ui._store_icons[1][0]
+	var popup_text: String = _mall_map_renderer_script.build_store_tooltip_text(_channel_manager, null, null, 1, 0)
+	_channel_manager_ui._on_store_icon_hovered(icon)
+	await get_tree().create_timer(0.25).timeout  # tooltip shows after the 150ms rest delay
+	await get_tree().process_frame
+	_assert_true(_channel_manager_ui._tooltip_panel.visible, "Store icon hover should show the tooltip")
+	_assert_true(_channel_manager_ui._tooltip_panel.get_text() == popup_text, "Selector store tooltip should match the shared builder output")
+	_assert_true(popup_text.contains(zone_one_store), "Store tooltip should name the store")
+	_channel_manager_ui._hide_tooltip(false)
+
+	# Flicker guard: a quick pass (under the 150ms rest delay) shows nothing.
+	var quick_icon = _channel_manager_ui._store_icons[2][0]
+	var neighbor_icon = _channel_manager_ui._store_icons[2][1]
+	_channel_manager_ui._on_store_icon_hovered(quick_icon)
+	_channel_manager_ui._on_store_icon_unhovered(quick_icon)
+	await get_tree().create_timer(0.25).timeout
+	_assert_true(not _channel_manager_ui._tooltip_panel.visible, "Quick pass over an icon shows no tooltip")
+
+	# Neighbor swap: content swaps in place, the tooltip never hides.
+	_channel_manager_ui._on_store_icon_hovered(quick_icon)
+	await get_tree().create_timer(0.25).timeout
+	_assert_true(_channel_manager_ui._tooltip_panel.visible, "Tooltip shows after resting on an icon")
+	_channel_manager_ui._on_store_icon_hovered(neighbor_icon)
+	await get_tree().process_frame
+	_assert_true(_channel_manager_ui._tooltip_panel.visible, "Neighbor swap keeps the tooltip visible")
+	var neighbor_store: String = _channel_manager.get_store_name(2, 2)
+	_assert_true(_channel_manager_ui._tooltip_panel.get_text().contains(neighbor_store), "Neighbor swap replaces the tooltip content")
+
+	# Exit grace: the tooltip lingers ~100ms, then hides.
+	_channel_manager_ui._on_store_icon_unhovered(neighbor_icon)
+	await get_tree().process_frame
+	_assert_true(_channel_manager_ui._tooltip_panel.visible, "Tooltip lingers during the exit grace")
+	await get_tree().create_timer(0.3).timeout
+	_assert_true(not _channel_manager_ui._tooltip_panel.visible, "Tooltip hides after the exit grace")
+
+	# Directory must fit inside the shell (bottom border visible, no scroll).
+	var shell_rect: Rect2 = _channel_manager_ui.panel_container.get_global_rect()
+	var grid_rect: Rect2 = _channel_manager_ui._directory_grid.get_global_rect()
+	_assert_true(grid_rect.end.y <= shell_rect.end.y, "Store directory should fit inside the shell (grid bottom %.1f > shell bottom %.1f)" % [grid_rect.end.y, shell_rect.end.y])
 
 	_finish()
 

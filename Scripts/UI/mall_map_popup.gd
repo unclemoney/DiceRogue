@@ -4,22 +4,17 @@ class_name MallMapPopup
 ## MallMapPopup
 ##
 ## Modal in-game mall map, opened from the VCR tracker's Mall Zone label.
-## Renders the same directory board as the game-start selector (via
-## MallMapRenderer) and overlays six store markers per zone. The current
-## store pulses; hovering a marker shows that store's upcoming challenge
-## (name, scaled target, exact pre-selected debuffs for the current zone).
+## Renders the same lightbox directory board as the game-start selector (via
+## MallMapRenderer) with six pictogram plaques per zone. The current store
+## pulses; hovering a plaque shows that store's upcoming challenge (name,
+## scaled target, exact pre-selected debuffs for the current zone).
 
 const VCR_FONT: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
-const PANEL_THEME: Theme = preload("res://Resources/UI/powerup_hover_theme.tres")
 const MallMapLayoutScript = preload("res://Scripts/Managers/mall_map_layout.gd")
 const MallMapRendererScript = preload("res://Scripts/Managers/mall_map_renderer.gd")
-
-const MARKER_SIZE := Vector2(14, 14)
-const MARKER_ROW_OFFSET := 20.0  # markers sit this far above the bar's bottom edge
-const COLOR_COMPLETED := Color(0.35, 0.92, 0.48, 1.0)
-const COLOR_CURRENT := Color(1.0, 0.92, 0.40, 1.0)
-const COLOR_FAILED := Color(0.62, 0.34, 0.36, 1.0)
-const COLOR_UPCOMING := Color(0.86, 0.82, 0.70, 1.0)
+const MallStoreIconScript = preload("res://Scripts/Managers/mall_store_icon.gd")
+const MallStoreTooltipScript = preload("res://Scripts/UI/mall_store_tooltip.gd")
+const MallIconTooltipControllerScript = preload("res://Scripts/UI/mall_icon_tooltip_controller.gd")
 
 var channel_manager = null
 var round_manager = null
@@ -33,18 +28,14 @@ var _close_button: GlassActionButton
 var _map_view: SubViewportContainer
 var _map_viewport: SubViewport
 var _map_root: Node2D
-var _directory_grid: GridContainer
-var _tooltip_panel: PanelContainer
-var _tooltip_label: Label
+var _directory_grid: HBoxContainer
+var _tooltip: MallStoreTooltip
 
 var _zones_by_channel: Dictionary = {}
-var _store_markers: Dictionary = {}  # channel -> Array[Node2D] (marker Area2D roots)
-var _pulse_tween: Tween
-var _tooltip_show_tween: Tween
+var _store_markers: Dictionary = {}  # channel -> Array[MallStoreIcon]
+var _icon_tooltip: MallIconTooltipController
 var _original_pos := Vector2.ZERO
 var _closing := false
-
-@onready var _tfx := get_node_or_null("/root/TweenFXHelper")
 
 
 func _ready() -> void:
@@ -82,9 +73,7 @@ func close() -> void:
 	if _closing:
 		return
 	_closing = true
-	_hide_tooltip(false)
-	if _pulse_tween and _pulse_tween.is_valid():
-		_pulse_tween.kill()
+	_icon_tooltip.force_hide()
 	var tween := create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(panel, "position", _original_pos + Vector2(0, 300), 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
@@ -125,7 +114,9 @@ func _build_ui() -> void:
 	panel.name = "Panel"
 	panel.custom_minimum_size = Vector2(1000, 660)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	panel.theme = PANEL_THEME
+	# No panel theme: the shared powerup theme paints a Label font shadow that
+	# the selector (the visual reference) does not have. Every label here
+	# carries explicit font/color overrides.
 	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = Color(0.12, 0.10, 0.14, 0.98)
 	panel_style.border_color = Color(0.3, 0.25, 0.35)
@@ -199,15 +190,15 @@ func _build_ui() -> void:
 	var directory_separator := HSeparator.new()
 	vbox.add_child(directory_separator)
 
-	# Cream paper shell so the shared directory builder's dark-on-cream text
+	# Light lightbox shell so the shared directory builder's dark slate text
 	# reads the same as on the game-start selector.
 	var directory_shell := PanelContainer.new()
 	directory_shell.name = "DirectoryShell"
 	directory_shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	directory_shell.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var directory_style := StyleBoxFlat.new()
-	directory_style.bg_color = Color(0.96, 0.91, 0.80, 0.98)
-	directory_style.border_color = Color(0.74, 0.60, 0.40, 1.0)
+	directory_style.bg_color = Color(0.93, 0.94, 0.96, 0.98)
+	directory_style.border_color = Color(0.60, 0.63, 0.69, 1.0)
 	directory_style.set_border_width_all(2)
 	directory_style.set_corner_radius_all(10)
 	directory_shell.add_theme_stylebox_override("panel", directory_style)
@@ -229,46 +220,23 @@ func _build_ui() -> void:
 	directory_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	directory_title.add_theme_font_override("font", VCR_FONT)
 	directory_title.add_theme_font_size_override("font_size", 16)
-	directory_title.add_theme_color_override("font_color", Color(0.30, 0.22, 0.10))
+	directory_title.add_theme_color_override("font_color", Color(0.18, 0.20, 0.26))
 	directory_vbox.add_child(directory_title)
 
-	_directory_grid = GridContainer.new()
+	_directory_grid = HBoxContainer.new()
 	_directory_grid.name = "DirectoryGrid"
-	_directory_grid.columns = 4
 	_directory_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_directory_grid.add_theme_constant_override("h_separation", 6)
-	_directory_grid.add_theme_constant_override("v_separation", 2)
+	_directory_grid.add_theme_constant_override("separation", 6)
 	directory_vbox.add_child(_directory_grid)
 
-	_tooltip_panel = PanelContainer.new()
-	_tooltip_panel.name = "StoreTooltip"
-	_tooltip_panel.visible = false
-	_tooltip_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_tooltip_panel.z_index = 4000
-	_tooltip_panel.custom_minimum_size = Vector2(220, 0)
-	add_child(_tooltip_panel)
+	_tooltip = MallStoreTooltipScript.new()
+	_tooltip.name = "StoreTooltip"
+	add_child(_tooltip)
 
-	var tooltip_style := StyleBoxFlat.new()
-	tooltip_style.bg_color = Color(0.12, 0.10, 0.14, 0.98)
-	tooltip_style.border_color = Color(0.95, 0.86, 0.42, 1.0)
-	tooltip_style.set_border_width_all(3)
-	tooltip_style.set_corner_radius_all(14)
-	_tooltip_panel.add_theme_stylebox_override("panel", tooltip_style)
-
-	var tooltip_margin := MarginContainer.new()
-	tooltip_margin.add_theme_constant_override("margin_left", 12)
-	tooltip_margin.add_theme_constant_override("margin_right", 12)
-	tooltip_margin.add_theme_constant_override("margin_top", 10)
-	tooltip_margin.add_theme_constant_override("margin_bottom", 10)
-	_tooltip_panel.add_child(tooltip_margin)
-
-	_tooltip_label = Label.new()
-	_tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_tooltip_label.custom_minimum_size = Vector2(220, 0)
-	_tooltip_label.add_theme_font_override("font", VCR_FONT)
-	_tooltip_label.add_theme_font_size_override("font_size", 13)
-	_tooltip_label.add_theme_color_override("font_color", Color(0.96, 0.95, 0.88))
-	tooltip_margin.add_child(_tooltip_label)
+	_icon_tooltip = MallIconTooltipControllerScript.new()
+	_icon_tooltip.name = "IconTooltipController"
+	add_child(_icon_tooltip)
+	_icon_tooltip.setup(_tooltip, _get_icon_screen_rect, _icon_tooltip_text)
 
 
 func _position_to_viewport() -> void:
@@ -292,69 +260,61 @@ func _animate_entrance() -> void:
 
 ## _build_map_content() -> void
 ##
-## Rebuilds backdrop, corridors, zones and store markers from live state.
+## Rebuilds backdrop, corridor floor, zones, store icons, and directory from
+## live state.
 func _build_map_content() -> void:
 	for child in _map_root.get_children():
 		child.queue_free()
 	_zones_by_channel.clear()
 	_store_markers.clear()
-	if _pulse_tween and _pulse_tween.is_valid():
-		_pulse_tween.kill()
 
 	if channel_manager and channel_manager.zone_store_names.is_empty():
 		channel_manager.assign_stores_to_zones()
 
 	MallMapRendererScript.build_directory_backdrop(_map_root)
-	# Staged reveal: corridors and wayfinding start hidden and fade in, then
-	# the zones pop in staggered (mirrors the game-start selector entrance).
-	var corridor_lines := MallMapRendererScript.build_corridors(_map_root, 0.0)
-	var wayfinding_nodes := MallMapRendererScript.build_wayfinding_blocks(_map_root, 0.0)
+	# Staged reveal: corridor floor starts hidden and fades in, then the zones
+	# and store icons pop in staggered (mirrors the game-start selector).
+	var corridor_floors := MallMapRendererScript.build_corridors(_map_root, 0.0)
 
 	if channel_manager == null:
-		for corridor in corridor_lines:
+		for corridor in corridor_floors:
 			corridor.modulate.a = 1.0
-		for block in wayfinding_nodes:
-			block.modulate.a = 1.0
 		return
 
 	_zones_by_channel = MallMapRendererScript.build_zones(_map_root, channel_manager)
 
 	var current_channel: int = channel_manager.current_channel
-	var current_store_index := _get_current_store_index()
-	for layout in MallMapLayoutScript.get_zone_layouts():
-		var channel: int = int(layout.get("channel", 1))
-		if _zones_by_channel.has(channel):
-			_zones_by_channel[channel].set_selected(channel == current_channel, false)
-		_build_store_markers(channel, layout.get("bar_rect", Rect2()), current_channel, current_store_index)
+	for channel in _zones_by_channel:
+		_zones_by_channel[channel].set_selected(channel == current_channel, false)
+
+	_store_markers = MallMapRendererScript.build_store_icons(_map_root, channel_manager, _on_icon_hovered, _on_icon_unhovered)
+	for channel in _store_markers:
+		for icon in _store_markers[channel]:
+			icon.set_state(MallMapRendererScript.get_store_state(channel_manager, round_manager, channel, icon.store_index))
 
 	var zone_order: Array = []
 	for layout in MallMapLayoutScript.get_zone_layouts():
 		zone_order.append(int(layout.get("channel", 1)))
 	zone_order.sort()
-	MallMapRendererScript.build_store_directory(_directory_grid, channel_manager, zone_order)
+	# Width budget for the one-line font fit: panel min width minus the fixed
+	# chrome (panel border 8 + margins 32 + shell border 4 + shell margins 20).
+	MallMapRendererScript.build_store_directory(_directory_grid, channel_manager, zone_order, panel.custom_minimum_size.x - 64.0)
 
 	_update_header()
-	_play_staged_reveal(corridor_lines, wayfinding_nodes)
+	_play_staged_reveal(corridor_floors)
 
 
-## _play_staged_reveal(corridor_lines, wayfinding_nodes) -> void
+## _play_staged_reveal(corridor_floors) -> void
 ##
-## Replays the selector's staged entrance inside the popup: corridor trace,
-## wayfinding fade, staggered zone pop-in, then the store markers fade in.
-func _play_staged_reveal(corridor_lines: Array, wayfinding_nodes: Array) -> void:
+## Replays the selector's staged entrance inside the popup: corridor floor
+## fade, staggered zone pop-in, then the store icons fade in.
+func _play_staged_reveal(corridor_floors: Array) -> void:
 	var delay := 0.0
-	for corridor in corridor_lines:
+	for corridor in corridor_floors:
 		var tween := create_tween()
 		tween.tween_interval(delay)
 		tween.tween_property(corridor, "modulate:a", 1.0, 0.18)
 		delay += 0.06
-
-	var block_delay := 0.08
-	for block in wayfinding_nodes:
-		var block_tween := create_tween()
-		block_tween.tween_interval(block_delay)
-		block_tween.tween_property(block, "modulate:a", 1.0, 0.16)
-		block_delay += 0.04
 
 	var zone_delay := 0.12
 	var zone_channels := _zones_by_channel.keys()
@@ -363,13 +323,11 @@ func _play_staged_reveal(corridor_lines: Array, wayfinding_nodes: Array) -> void
 		_zones_by_channel[channel].play_reveal(zone_delay)
 		zone_delay += 0.03
 
-	var marker_delay := zone_delay + 0.08
+	var icon_delay := zone_delay + 0.08
 	for channel in _store_markers:
-		for marker in _store_markers[channel]:
-			marker.modulate.a = 0.0
-			var marker_tween := create_tween()
-			marker_tween.tween_interval(marker_delay)
-			marker_tween.tween_property(marker, "modulate:a", 1.0, 0.15)
+		for icon in _store_markers[channel]:
+			icon.play_reveal(icon_delay)
+			icon_delay += 0.015
 
 
 func _update_header() -> void:
@@ -382,271 +340,43 @@ func _update_header() -> void:
 	]
 
 
-## _get_current_store_index() -> int
+func _on_icon_hovered(icon: MallStoreIcon) -> void:
+	_icon_tooltip.on_icon_hovered(icon)
+
+
+func _on_icon_unhovered(icon: MallStoreIcon) -> void:
+	_icon_tooltip.on_icon_unhovered(icon)
+
+
+func _icon_tooltip_text(icon: MallStoreIcon) -> String:
+	return _build_store_tooltip_text(icon.channel, icon.store_index)
+
+
+## _show_store_tooltip(icon) -> void
 ##
-## 0-based store index within the current zone from RoundManager.current_round.
-func _get_current_store_index() -> int:
-	if round_manager == null:
-		return -1
-	return round_manager.current_round
-
-
-func _get_store_count() -> int:
-	return ChannelManager.STORES_PER_ZONE
-
-
-## _build_store_markers(channel, bar_rect, current_channel, current_store_index) -> void
-##
-## Places one marker per store evenly along the zone's bar rect.
-func _build_store_markers(channel: int, bar_rect: Rect2, current_channel: int, current_store_index: int) -> void:
-	if bar_rect.size.x <= 0.0:
+## Shows the hovered store's challenge summary next to its plaque.
+func _show_store_tooltip(icon: MallStoreIcon) -> void:
+	if _tooltip == null:
 		return
-	var markers: Array[Node2D] = []
-	var count := _get_store_count()
-	var inner := bar_rect.grow(-10.0)
-	for store_index in range(count):
-		var fraction := (float(store_index) + 0.5) / float(count)
-		var marker_pos := Vector2(
-			inner.position.x + inner.size.x * fraction,
-			bar_rect.end.y - MARKER_ROW_OFFSET
-		)
-		var state := _get_store_state(channel, store_index, current_channel, current_store_index)
-		var marker := _create_store_marker(channel, store_index, marker_pos, state)
-		_map_root.add_child(marker)
-		markers.append(marker)
-	_store_markers[channel] = markers
-
-
-## _get_store_state(channel, store_index, current_channel, current_store_index) -> String
-##
-## Resolves the marker state: completed/failed from round data, current from
-## the live round index, upcoming otherwise. Other zones stay neutral.
-func _get_store_state(channel: int, store_index: int, current_channel: int, current_store_index: int) -> String:
-	if channel != current_channel:
-		return "upcoming"
-	if round_manager == null:
-		return "upcoming"
-	if store_index == current_store_index:
-		return "current"
-	if store_index < round_manager.rounds_data.size():
-		var round_data: Dictionary = round_manager.rounds_data[store_index]
-		if round_data.get("completed", false):
-			return "completed"
-		if round_data.get("failed", false):
-			return "failed"
-	return "upcoming"
-
-
-func _create_store_marker(channel: int, store_index: int, marker_pos: Vector2, state: String) -> Area2D:
-	var marker := Area2D.new()
-	marker.name = "StoreMarker_z%d_s%d" % [channel, store_index]
-	marker.position = marker_pos
-	marker.input_pickable = true
-	marker.monitoring = false
-	marker.set_meta("channel", channel)
-	marker.set_meta("store_index", store_index)
-	marker.set_meta("state", state)
-	if state == "current":
-		marker.set_meta("is_current", true)
-
-	var shape := CollisionShape2D.new()
-	var rect := RectangleShape2D.new()
-	rect.size = MARKER_SIZE + Vector2(6, 6)  # generous hover area
-	shape.shape = rect
-	marker.add_child(shape)
-
-	var square := Polygon2D.new()
-	var half := MARKER_SIZE * 0.5
-	square.polygon = PackedVector2Array([
-		-half,
-		Vector2(half.x, -half.y),
-		half,
-		Vector2(-half.x, half.y),
-	])
-	square.color = _get_marker_color(state)
-	marker.add_child(square)
-
-	var outline := Line2D.new()
-	outline.width = 2.0
-	outline.default_color = Color(0.20, 0.16, 0.10, 1.0)
-	if state == "current":
-		outline.default_color = COLOR_CURRENT
-	outline.points = MallMapRendererScript.close_points(square.polygon)
-	marker.add_child(outline)
-
-	marker.mouse_entered.connect(_on_marker_hovered.bind(marker))
-	marker.mouse_exited.connect(_on_marker_unhovered.bind(marker))
-
-	if state == "current":
-		_start_marker_pulse(marker)
-	return marker
-
-
-func _get_marker_color(state: String) -> Color:
-	match state:
-		"completed":
-			return COLOR_COMPLETED
-		"current":
-			return COLOR_CURRENT
-		"failed":
-			return COLOR_FAILED
-	return COLOR_UPCOMING
-
-
-func _start_marker_pulse(marker: Area2D) -> void:
-	if _pulse_tween and _pulse_tween.is_valid():
-		_pulse_tween.kill()
-	var base_y := marker.position.y
-	_pulse_tween = create_tween()
-	_pulse_tween.set_loops()
-	_pulse_tween.tween_property(marker, "scale", Vector2(1.2, 1.2), 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_pulse_tween.parallel().tween_property(marker, "position:y", base_y - 2.0, 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_pulse_tween.chain().tween_property(marker, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_pulse_tween.parallel().tween_property(marker, "position:y", base_y, 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-
-
-func _on_marker_hovered(marker: Area2D) -> void:
-	_show_store_tooltip(marker)
-
-
-func _on_marker_unhovered(_marker: Area2D) -> void:
-	_hide_tooltip(true)
-
-
-## _show_store_tooltip(marker) -> void
-##
-## Shows the hovered store's challenge summary next to its marker.
-func _show_store_tooltip(marker: Area2D) -> void:
-	if _tooltip_panel == null:
-		return
-	var channel: int = marker.get_meta("channel")
-	var store_index: int = marker.get_meta("store_index")
-	_tooltip_label.text = _build_store_tooltip_text(channel, store_index)
-	_tooltip_panel.visible = true
-	_tooltip_panel.reset_size()
-	var rect := _get_marker_screen_rect(marker)
-	if _tfx:
-		_tfx.place_tooltip(_tooltip_panel, rect, SIDE_RIGHT, true)
-	else:
-		_tooltip_panel.global_position = rect.end + Vector2(12, -16)
-	_animate_tooltip_in()
-
-
-## _animate_tooltip_in() -> void
-##
-## Tweens the tooltip in with a fade and a slight upward slide. Called after
-## placement so the final position is the tween target.
-func _animate_tooltip_in() -> void:
-	if _tooltip_show_tween and _tooltip_show_tween.is_valid():
-		_tooltip_show_tween.kill()
-	var target_pos := _tooltip_panel.global_position
-	_tooltip_panel.global_position = target_pos + Vector2(0, 8)
-	_tooltip_panel.modulate.a = 0.0
-	_tooltip_show_tween = create_tween()
-	_tooltip_show_tween.set_parallel(true)
-	_tooltip_show_tween.tween_property(_tooltip_panel, "global_position", target_pos, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_tooltip_show_tween.tween_property(_tooltip_panel, "modulate:a", 1.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-
-
-func _get_marker_screen_rect(marker: Area2D) -> Rect2:
-	var view_rect := _map_view.get_global_rect()
-	var board_size: Vector2 = MallMapLayoutScript.get_map_view_size()
-	var board_scale := view_rect.size / board_size
-	var board_rect := Rect2(marker.position - MARKER_SIZE * 0.5, MARKER_SIZE)
-	return Rect2(view_rect.position + board_rect.position * board_scale, board_rect.size * board_scale)
-
-
-func _hide_tooltip(animate: bool) -> void:
-	if _tooltip_panel == null:
-		return
-	if _tooltip_show_tween and _tooltip_show_tween.is_valid():
-		_tooltip_show_tween.kill()
-	if animate and _tfx and _tooltip_panel.visible:
-		_tfx.tooltip_fade_out(_tooltip_panel, 0.08)
-	else:
-		_tooltip_panel.visible = false
+	var text := _build_store_tooltip_text(icon.channel, icon.store_index)
+	_tooltip.show_for(_get_icon_screen_rect(icon), text, SIDE_RIGHT)
 
 
 ## _build_store_tooltip_text(channel, store_index) -> String
 ##
-## Builds the tooltip text for one store. The current zone uses the live
-## rounds_data (exact pre-selected debuffs); other zones only have round
-## config info — their debuffs are drawn when the zone starts, so they show
-## as unknown here.
+## Thin delegate to the shared renderer builder (kept so existing tests and
+## shot scenes keep their entry point).
 func _build_store_tooltip_text(channel: int, store_index: int) -> String:
-	var text_lines: Array[String] = []
-	var store_number := store_index + 1
-	var store_name := "Store %d-%d" % [channel, store_number]
-	if channel_manager:
-		store_name = channel_manager.get_store_name(channel, store_number)
-	text_lines.append(store_name)
-
-	var is_current_zone: bool = channel_manager != null and channel == channel_manager.current_channel
-	if is_current_zone and round_manager and store_index < round_manager.rounds_data.size():
-		var round_data: Dictionary = round_manager.rounds_data[store_index]
-		# Target mirrors GameController._compute_round_target minus the
-		# transient challenge_score_modifier (powerup effect, not shown here).
-		var target := _compute_store_target(channel, store_number)
-		if target > 0:
-			text_lines.append("Target: %s" % NumberFormatter.format_int(target))
-		var debuff_ids: Array = round_data.get("debuff_ids", [])
-		for debuff_id in debuff_ids:
-			text_lines.append("Debuff: %s" % _get_debuff_display_name(str(debuff_id)))
-		text_lines.append("Status: %s" % _get_store_status_text(store_index))
-	else:
-		if channel_manager:
-			var round_config = channel_manager.get_round_config(channel, store_number)
-			if round_config and round_config.target_score_override > 0:
-				text_lines.append("Target: %s" % NumberFormatter.format_int(channel_manager.get_scaled_target_score(round_config.target_score_override, channel)))
-			if round_config and round_config.get("is_boss_round") == true:
-				text_lines.append("Boss Store")
-		text_lines.append("Debuffs: unknown until reached")
-		text_lines.append("Status: Upcoming")
-
-	return "\n".join(text_lines)
+	return MallMapRendererScript.build_store_tooltip_text(channel_manager, round_manager, debuff_manager, channel, store_index)
 
 
-## _compute_store_target(channel, store_number) -> int
-##
-## Scaled target for a store: override x channel multiplier (rebel premium
-## included via ChannelManager.get_scaled_target_score).
-func _compute_store_target(channel: int, store_number: int) -> int:
-	if channel_manager == null:
-		return 0
-	var round_config = channel_manager.get_round_config(channel, store_number)
-	if round_config == null:
-		return 0
-	var base: int = round_config.target_score_override
-	if base <= 0:
-		return 0
-	return channel_manager.get_scaled_target_score(base, channel)
-
-
-func _get_debuff_display_name(debuff_id: String) -> String:
-	if debuff_manager and debuff_manager.has_method("get_def"):
-		var def = debuff_manager.get_def(debuff_id)
-		if def and not def.display_name.is_empty():
-			return def.display_name
-	return debuff_id
-
-
-func _get_store_status_text(store_index: int) -> String:
-	if round_manager == null:
-		return "Upcoming"
-	var state := _get_store_state(
-		channel_manager.current_channel,
-		store_index,
-		channel_manager.current_channel,
-		_get_current_store_index()
-	)
-	match state:
-		"completed":
-			return "Completed"
-		"current":
-			return "YOU ARE HERE"
-		"failed":
-			return "Failed"
-	return "Upcoming"
+func _get_icon_screen_rect(icon: MallStoreIcon) -> Rect2:
+	var view_rect := _map_view.get_global_rect()
+	var board_size: Vector2 = MallMapLayoutScript.get_map_view_size()
+	var board_scale := view_rect.size / board_size
+	var plaque_size: Vector2 = MallStoreIconScript.PLAQUE_SIZE
+	var board_rect := Rect2(icon.position - plaque_size * 0.5, plaque_size)
+	return Rect2(view_rect.position + board_rect.position * board_scale, board_rect.size * board_scale)
 
 
 func _on_overlay_gui_input(event: InputEvent) -> void:

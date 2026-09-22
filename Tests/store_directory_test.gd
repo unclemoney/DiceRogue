@@ -74,7 +74,26 @@ func _run_tests() -> void:
 	add_child(empty_manager)
 	_check(empty_manager.get_store_name(2, 3) == "Store 2-3", "unassigned manager falls back")
 
-	# 5. Save/load round-trip (int zone keys survive serialization)
+	# 5b. Icon atlas coverage: every directory name maps to a unique cell in
+	# 0-23; the fallback cell 24 is mapped to no store name.
+	var used_cells := {}
+	var atlas_ok := true
+	for store_name in directory.store_names:
+		if not MallStoreIcons.STORE_ICONS.has(store_name):
+			atlas_ok = false
+			print("  missing icon mapping: '%s'" % store_name)
+			continue
+		var cell: int = MallStoreIcons.STORE_ICONS[store_name]
+		if cell < 0 or cell >= MallStoreIcons.FALLBACK_CELL or used_cells.has(cell):
+			atlas_ok = false
+			print("  bad/duplicate icon cell %d for '%s'" % [cell, store_name])
+		used_cells[cell] = true
+	_check(atlas_ok and used_cells.size() == 24, "all 24 stores map to unique atlas cells 0-23")
+	_check(not used_cells.has(MallStoreIcons.FALLBACK_CELL), "fallback cell %d is reserved (no store uses it)" % MallStoreIcons.FALLBACK_CELL)
+	_check(directory.store_names.has("Roasters Coffee"), "directory uses the corrected 'Roasters Coffee' spelling")
+	_check(not directory.store_names.has("Raosters Coffee"), "old 'Raosters' typo is gone")
+
+	# 6. Save/load round-trip (int zone keys survive serialization)
 	var state: Dictionary = manager.get_state()
 	var restored := ChannelManager.new()
 	add_child(restored)

@@ -12,6 +12,8 @@ signal start_pressed(channel: int)
 const VCR_FONT: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 const MallMapLayoutScript = preload("res://Scripts/Managers/mall_map_layout.gd")
 const MallMapRendererScript = preload("res://Scripts/Managers/mall_map_renderer.gd")
+const MallStoreTooltipScript = preload("res://Scripts/UI/mall_store_tooltip.gd")
+const MallIconTooltipControllerScript = preload("res://Scripts/UI/mall_icon_tooltip_controller.gd")
 const SHELL_VIEWPORT_MARGIN := Vector2(34, 26)
 const SHELL_MAX_SIZE := Vector2(1180, 680)
 const SHELL_MIN_SIZE := Vector2(980, 600)
@@ -53,7 +55,7 @@ var _map_root: Node2D
 var _map_hit_surface: Control
 var _directory_title: Label
 var _map_legend: VBoxContainer
-var _directory_grid: GridContainer
+var _directory_grid: HBoxContainer
 var _keyboard_hint_label: Label
 
 # Side panel
@@ -78,17 +80,17 @@ var _dice_lock_label: Label
 var _dice_set_index: int = 1  # d6 default
 
 # Tooltip
-var _tooltip_panel: PanelContainer
-var _tooltip_label: Label
-var _tooltip_show_tween: Tween
+var _tooltip_panel: MallStoreTooltip
+var _icon_tooltip: MallIconTooltipController
 
 # Runtime map state
 var _zones_by_channel: Dictionary = {}
 var _zone_order: Array[int] = []
 var _hovered_channel: int = -1
 var _selected_channel: int = -1
-var _corridor_lines: Array[Line2D] = []
-var _wayfinding_nodes: Array[Node2D] = []
+var _corridor_lines: Array[Polygon2D] = []
+var _store_icons: Dictionary = {}  # channel -> Array[MallStoreIcon]
+var _hovered_icon: MallStoreIcon = null
 
 @onready var _tfx := get_node_or_null("/root/TweenFXHelper")
 
@@ -140,6 +142,7 @@ func show_channel_selector() -> void:
 ## Hides the channel selection UI.
 func hide_channel_selector() -> void:
 	print("[ChannelManagerUI] Hiding channel selector")
+	_icon_tooltip.force_hide()
 	_hide_tooltip(false)
 	_animate_exit()
 
@@ -249,8 +252,8 @@ func _build_ui() -> void:
 	shell_hbox.add_child(_map_shell)
 
 	var map_style := StyleBoxFlat.new()
-	map_style.bg_color = Color(0.96, 0.91, 0.80, 0.98)
-	map_style.border_color = Color(0.74, 0.60, 0.40, 1.0)
+	map_style.bg_color = Color(0.93, 0.94, 0.96, 0.98)
+	map_style.border_color = Color(0.60, 0.63, 0.69, 1.0)
 	map_style.set_border_width_all(4)
 	map_style.set_corner_radius_all(18)
 	map_style.corner_detail = 8
@@ -278,7 +281,7 @@ func _build_ui() -> void:
 	_directory_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_directory_title.add_theme_font_override("font", VCR_FONT)
 	_directory_title.add_theme_font_size_override("font_size", 22)
-	_directory_title.add_theme_color_override("font_color", Color(0.28, 0.20, 0.10))
+	_directory_title.add_theme_color_override("font_color", Color(0.18, 0.20, 0.26))
 	map_vbox.add_child(_directory_title)
 
 	_map_view = SubViewportContainer.new()
@@ -332,13 +335,13 @@ func _build_ui() -> void:
 	directory_list_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	directory_list_title.add_theme_font_override("font", VCR_FONT)
 	directory_list_title.add_theme_font_size_override("font_size", 24)
-	directory_list_title.add_theme_color_override("font_color", Color(0.30, 0.22, 0.10))
+	directory_list_title.add_theme_color_override("font_color", Color(0.18, 0.20, 0.26))
 	directory_list_vbox.add_child(directory_list_title)
 
-	_directory_grid = GridContainer.new()
-	_directory_grid.columns = 4
-	_directory_grid.add_theme_constant_override("h_separation", 6)
-	_directory_grid.add_theme_constant_override("v_separation", 2)
+	_directory_grid = HBoxContainer.new()
+	_directory_grid.name = "DirectoryGrid"
+	_directory_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_directory_grid.add_theme_constant_override("separation", 6)
 	directory_list_vbox.add_child(_directory_grid)
 
 	var side_panel := PanelContainer.new()
@@ -522,35 +525,14 @@ func _build_ui() -> void:
 	start_button.pressed.connect(_on_start_pressed)
 	side_vbox.add_child(start_button)
 
-	_tooltip_panel = PanelContainer.new()
+	_tooltip_panel = MallStoreTooltipScript.new()
 	_tooltip_panel.name = "MallTooltip"
-	_tooltip_panel.visible = false
-	_tooltip_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_tooltip_panel.z_index = 4000
-	_tooltip_panel.custom_minimum_size = Vector2(220, 0)
 	add_child(_tooltip_panel)
 
-	var tooltip_style := StyleBoxFlat.new()
-	tooltip_style.bg_color = Color(0.12, 0.10, 0.14, 0.98)
-	tooltip_style.border_color = Color(0.95, 0.86, 0.42, 1.0)
-	tooltip_style.set_border_width_all(3)
-	tooltip_style.set_corner_radius_all(14)
-	_tooltip_panel.add_theme_stylebox_override("panel", tooltip_style)
-
-	var tooltip_margin := MarginContainer.new()
-	tooltip_margin.add_theme_constant_override("margin_left", 12)
-	tooltip_margin.add_theme_constant_override("margin_right", 12)
-	tooltip_margin.add_theme_constant_override("margin_top", 10)
-	tooltip_margin.add_theme_constant_override("margin_bottom", 10)
-	_tooltip_panel.add_child(tooltip_margin)
-
-	_tooltip_label = Label.new()
-	_tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_tooltip_label.custom_minimum_size = Vector2(220, 0)
-	_tooltip_label.add_theme_font_override("font", VCR_FONT)
-	_tooltip_label.add_theme_font_size_override("font_size", 13)
-	_tooltip_label.add_theme_color_override("font_color", Color(0.96, 0.95, 0.88))
-	tooltip_margin.add_child(_tooltip_label)
+	_icon_tooltip = MallIconTooltipControllerScript.new()
+	_icon_tooltip.name = "IconTooltipController"
+	add_child(_icon_tooltip)
+	_icon_tooltip.setup(_tooltip_panel, _get_icon_screen_rect, _selector_icon_tooltip_text)
 
 
 func _build_map_if_needed() -> void:
@@ -563,12 +545,12 @@ func _build_map_if_needed() -> void:
 	_zones_by_channel.clear()
 	_zone_order.clear()
 	_corridor_lines.clear()
-	_wayfinding_nodes.clear()
+	_store_icons.clear()
 
 	_build_directory_backdrop()
 	_build_corridors()
-	_build_wayfinding_blocks()
 	_build_zones()
+	_build_store_icons()
 	_build_directory_index()
 	_apply_progress_state(false)
 
@@ -581,8 +563,10 @@ func _build_corridors() -> void:
 	_corridor_lines.append_array(MallMapRendererScript.build_corridors(_map_root))
 
 
-func _build_wayfinding_blocks() -> void:
-	_wayfinding_nodes.append_array(MallMapRendererScript.build_wayfinding_blocks(_map_root))
+func _build_store_icons() -> void:
+	if channel_manager == null:
+		return
+	_store_icons = MallMapRendererScript.build_store_icons(_map_root, channel_manager, _on_store_icon_hovered, _on_store_icon_unhovered)
 
 
 func _build_zones() -> void:
@@ -605,7 +589,19 @@ func _build_zones() -> void:
 func _build_directory_index() -> void:
 	if channel_manager == null:
 		return
-	MallMapRendererScript.build_store_directory(_directory_grid, channel_manager, _zone_order)
+	MallMapRendererScript.build_store_directory(_directory_grid, channel_manager, _zone_order, _directory_available_width())
+
+
+## _directory_available_width() -> float
+##
+## Runtime width budget for the directory grid, derived from the shell's
+## current (runtime-set) width minus fixed chrome: shell border 8 + shell
+## margins 44 + hbox separation 16 + side panel 286 + map border 8 +
+## map padding 28 + directory margins 8.
+func _directory_available_width() -> float:
+	if panel_container == null:
+		return 0.0
+	return panel_container.size.x - 398.0
 
 
 func _build_legend() -> void:
@@ -721,30 +717,7 @@ func _show_dice_set_tooltip() -> void:
 			var item = progress_manager.get_unlockable_item(data.unlock_item_id)
 			if item:
 				text_lines.append("Unlock: %s" % item.get_unlock_description())
-	_tooltip_label.text = "\n".join(text_lines)
-	_tooltip_panel.visible = true
-	_tooltip_panel.reset_size()
-	if _tfx:
-		_tfx.place_tooltip(_tooltip_panel, _dice_display.get_global_rect(), SIDE_LEFT, true)
-	else:
-		_tooltip_panel.global_position = _dice_display.get_global_rect().position - Vector2(_tooltip_panel.size.x + 12, 0)
-	_animate_tooltip_in()
-
-
-## _animate_tooltip_in() -> void
-##
-## Tweens the tooltip in with a fade and a slight upward slide. Called after
-## placement so the final position is the tween target.
-func _animate_tooltip_in() -> void:
-	if _tooltip_show_tween and _tooltip_show_tween.is_valid():
-		_tooltip_show_tween.kill()
-	var target_pos := _tooltip_panel.global_position
-	_tooltip_panel.global_position = target_pos + Vector2(0, 8)
-	_tooltip_panel.modulate.a = 0.0
-	_tooltip_show_tween = create_tween()
-	_tooltip_show_tween.set_parallel(true)
-	_tooltip_show_tween.tween_property(_tooltip_panel, "global_position", target_pos, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_tooltip_show_tween.tween_property(_tooltip_panel, "modulate:a", 1.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_tooltip_panel.show_for(_dice_display.get_global_rect(), "\n".join(text_lines), SIDE_LEFT)
 
 
 ## _update_display() -> void
@@ -935,6 +908,41 @@ func _on_zone_unhovered(channel: int) -> void:
 	_hide_tooltip(true)
 
 
+## _on_store_icon_hovered(icon) -> void
+##
+## Routes store plaque hover through the shared timing controller (150ms rest
+## delay, 100ms exit grace, neighbor swap). Content comes from the shared
+## builder; with no live RoundManager the selector gets the "unknown until
+## reached" branch.
+func _on_store_icon_hovered(icon: MallStoreIcon) -> void:
+	_hovered_icon = icon
+	_icon_tooltip.on_icon_hovered(icon)
+
+
+func _on_store_icon_unhovered(icon: MallStoreIcon) -> void:
+	_hovered_icon = null
+	_icon_tooltip.on_icon_unhovered(icon)
+
+
+func _selector_icon_tooltip_text(icon: MallStoreIcon) -> String:
+	return MallMapRendererScript.build_store_tooltip_text(channel_manager, null, null, icon.channel, icon.store_index)
+
+
+func _get_icon_screen_rect(icon: MallStoreIcon) -> Rect2:
+	var view_rect := _map_view.get_global_rect()
+	var board_size: Vector2 = MallMapLayoutScript.get_map_view_size()
+	var scale_x := 1.0
+	var scale_y := 1.0
+	if board_size.x > 0.0:
+		scale_x = view_rect.size.x / board_size.x
+	if board_size.y > 0.0:
+		scale_y = view_rect.size.y / board_size.y
+	var plaque_size := MallStoreIcon.PLAQUE_SIZE
+	var rect_position := view_rect.position + Vector2((icon.position.x - plaque_size.x * 0.5) * scale_x, (icon.position.y - plaque_size.y * 0.5) * scale_y)
+	var rect_size := Vector2(plaque_size.x * scale_x, plaque_size.y * scale_y)
+	return Rect2(rect_position, rect_size)
+
+
 func _on_map_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		var motion := event as InputEventMouseMotion
@@ -950,6 +958,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _update_hover_from_point(board_point: Vector2) -> void:
+	if _hovered_icon != null:
+		# A store plaque owns the hover until its own mouse_exited fires;
+		# don't let the zone underneath steal or hide its tooltip.
+		return
 	var channel := _find_zone_at_point(board_point)
 	if channel == _hovered_channel:
 		return
@@ -995,14 +1007,7 @@ func _show_zone_tooltip(channel: int) -> void:
 	text_lines.append("Stores:")
 	for round_number in range(1, channel_manager.STORES_PER_ZONE + 1):
 		text_lines.append("%d. %s" % [round_number, channel_manager.get_store_name(channel, round_number)])
-	_tooltip_label.text = "\n".join(text_lines)
-	_tooltip_panel.visible = true
-	_tooltip_panel.reset_size()
-	if _tfx:
-		_tfx.place_tooltip(_tooltip_panel, _get_zone_screen_rect(zone), SIDE_RIGHT, true)
-	else:
-		_tooltip_panel.global_position = _get_zone_screen_rect(zone).end + Vector2(12, -16)
-	_animate_tooltip_in()
+	_tooltip_panel.show_for(_get_zone_screen_rect(zone), "\n".join(text_lines), SIDE_RIGHT)
 
 
 func _on_map_mouse_exited() -> void:
@@ -1010,28 +1015,14 @@ func _on_map_mouse_exited() -> void:
 		var zone = _zones_by_channel[_hovered_channel]
 		zone.set_hovered(false, true)
 	_hovered_channel = -1
+	_hovered_icon = null
 	_hide_tooltip(true)
 
 
 func _hide_tooltip(animate: bool) -> void:
 	if _tooltip_panel == null:
 		return
-	if _tooltip_show_tween and _tooltip_show_tween.is_valid():
-		_tooltip_show_tween.kill()
-	if not animate:
-		_tooltip_panel.visible = false
-		_tooltip_panel.modulate.a = 1.0
-		return
-	if _tfx:
-		var tween: Tween = _tfx.tooltip_fade_out(_tooltip_panel, 0.08)
-		if tween:
-			tween.finished.connect(func():
-				if is_instance_valid(_tooltip_panel):
-					_tooltip_panel.visible = false
-					_tooltip_panel.modulate.a = 1.0
-			)
-			return
-	_tooltip_panel.visible = false
+	_tooltip_panel.hide_tooltip(animate)
 
 
 func _apply_progress_state(animate: bool) -> void:
@@ -1071,8 +1062,9 @@ func _animate_entrance() -> void:
 
 	for corridor in _corridor_lines:
 		corridor.modulate.a = 0.0
-	for block in _wayfinding_nodes:
-		block.modulate.a = 0.0
+	for channel in _store_icons:
+		for icon in _store_icons[channel]:
+			icon.modulate.a = 0.0
 	for channel in _zone_order:
 		var zone = _zones_by_channel[channel]
 		zone.modulate.a = 0.0
@@ -1112,18 +1104,17 @@ func _animate_entrance() -> void:
 		tween.tween_property(corridor, "modulate:a", 1.0, 0.18)
 		delay += 0.06
 
-	var block_delay := 0.08
-	for block in _wayfinding_nodes:
-		var block_tween := create_tween()
-		block_tween.tween_interval(block_delay)
-		block_tween.tween_property(block, "modulate:a", 1.0, 0.16)
-		block_delay += 0.04
-
 	var zone_delay := 0.12
 	for channel in _zone_order:
 		var zone = _zones_by_channel[channel]
 		zone.play_reveal(zone_delay)
 		zone_delay += 0.03
+
+	var icon_delay := zone_delay + 0.08
+	for channel in _store_icons:
+		for icon in _store_icons[channel]:
+			icon.play_reveal(icon_delay)
+			icon_delay += 0.015
 
 
 ## _animate_exit() -> void
@@ -1166,6 +1157,7 @@ func _fit_shell_to_viewport() -> void:
 func _on_root_resized() -> void:
 	if visible:
 		_fit_shell_to_viewport()
+		MallMapRendererScript.set_directory_available_width(_directory_grid, _directory_available_width())
 
 
 func _get_safe_entrance_offset_y(panel_original_pos: Vector2) -> float:

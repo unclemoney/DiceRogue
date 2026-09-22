@@ -4,4 +4,4 @@
 
 [resource]
 script = ExtResource("1_sdd")
-store_names = Array[String](["Food Court", "Tilt! Arcade", "Walden Pond Books", "Hobby Haven", "Deb's Department Store", "Downtown Video Rentals", "Raosters Coffee", "BK Toyz", "Radio Hut Electronics", "Macies Department", "KY Jewelry", "Whiteside Cinema", "Reed's Music Emporium", "Four-Starr Sports Outlet", "The Intelligent Pet Store", "Bed Bath and Bodyworks", "Furniture Castle Liquidator", "Photo Hut", "Shears", "J-Mart", "Candy's Confection Store", "Comics-n-more", "Pay-less Shoes", "The Hot Topic"])
+store_names = Array[String](["Food Court", "Tilt! Arcade", "Walden Pond Books", "Hobby Haven", "Deb's Department Store", "Downtown Video Rentals", "Roasters Coffee", "BK Toyz", "Radio Hut Electronics", "Macies Department", "KY Jewelry", "Whiteside Cinema", "Reed's Music Emporium", "Four-Starr Sports Outlet", "The Intelligent Pet Store", "Bed Bath and Bodyworks", "Furniture Castle Liquidator", "Photo Hut", "Shears", "J-Mart", "Candy's Confection Store", "Comics-n-more", "Pay-less Shoes", "The Hot Topic"])

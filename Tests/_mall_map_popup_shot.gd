@@ -13,11 +13,22 @@ class StubChannelManager extends RefCounted:
 	const STORES_PER_ZONE := 6
 	var current_channel: int = 1
 	var zone_store_names: Dictionary = {}
+	var _names: Array[String] = []
+
+	func _init() -> void:
+		var directory: StoreDirectoryData = load("res://Resources/Data/Stores/store_directory.tres")
+		if directory:
+			_names = directory.store_names
 
 	func assign_stores_to_zones(_seed: int = 0) -> void:
 		pass
 
 	func get_store_name(zone: int, round_number: int) -> String:
+		# Deal the real directory in order so the shot exercises the real
+		# pictograms and the longest names.
+		var index := (zone - 1) * STORES_PER_ZONE + (round_number - 1)
+		if index >= 0 and index < _names.size():
+			return _names[index]
 		return "Stub Store %d-%d" % [zone, round_number]
 
 	func get_round_config(_channel: int = -1, _round_number: int = 1):
@@ -60,6 +71,8 @@ class StubDebuffDef extends RefCounted:
 
 
 func _ready() -> void:
+	get_window().mode = Window.MODE_WINDOWED
+	get_window().size = Vector2i(1280, 720)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	call_deferred("_run")
 
@@ -93,6 +106,11 @@ func _run() -> void:
 	popup.setup(channel_manager, round_manager, debuff_manager)
 	popup.open()
 	await get_tree().create_timer(1.2).timeout
+	print("[MallMapPopupShot] viewport=%s panel_rect=%s grid_bottom=%.1f" % [
+		str(get_viewport_rect().size),
+		str(popup.panel.get_global_rect()),
+		popup._directory_grid.get_global_rect().end.y,
+	])
 	await _shot("mall_map_popup.png")
 
 	# Second shot with the store tooltip visible on the current store.

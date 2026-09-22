@@ -19,6 +19,7 @@ const MallMapPopupScene := preload("res://Scenes/UI/MallMapPopup.tscn")
 ## get_scaled_target_score, get_selector_section_id + friends used by
 ## MallMapRenderer.build_zones.
 class StubChannelManager extends RefCounted:
+	const STORES_PER_ZONE := 6
 	var current_channel: int = 1
 	var zone_store_names: Dictionary = {}
 
@@ -172,6 +173,12 @@ func _run_tests() -> void:
 
 	var other_zone_text := _popup._build_store_tooltip_text(1, 0)
 	_assert(other_zone_text.contains("unknown until reached"), "other zones show debuffs as unknown")
+
+	print("--- Directory fit ---")
+	var panel_rect := _popup.panel.get_global_rect()
+	var grid_rect := _popup._directory_grid.get_global_rect()
+	_assert(grid_rect.end.y <= panel_rect.end.y + 0.5, "directory grid fits inside the panel (grid bottom %.1f, panel bottom %.1f)" % [grid_rect.end.y, panel_rect.end.y])
+	_assert(panel_rect.end.y <= get_viewport_rect().size.y, "panel bottom border visible at viewport height (panel bottom %.1f)" % panel_rect.end.y)
 
 	print("--- Close ---")
 	_popup.close()
