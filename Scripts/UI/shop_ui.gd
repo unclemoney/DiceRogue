@@ -23,7 +23,7 @@ signal shop_closed
 @onready var mod_manager: ModManager = get_node_or_null(mod_manager_path)
 @onready var gaming_console_manager: GamingConsoleManager = get_node_or_null(gaming_console_manager_path)
 @onready var shop_label: RichTextLabel = $MarginContainer/ShopLabel
-@onready var close_button: Button = $CloseButton
+@onready var close_button = $CloseButton
 @onready var backdrop: ColorRect = $Backdrop
 @onready var _tfx := get_node("/root/TweenFXHelper")
 
@@ -47,6 +47,7 @@ const TITLE_FLOAT_AMOUNT := 8.0
 
 const ShopItemScene := preload("res://Scenes/Shop/shop_item.tscn")
 const ShopOwnedItemsPanelClass := preload("res://Scripts/UI/shop_owned_items_panel.gd")
+const GlassButtonFactoryRef := preload("res://Scripts/UI/glass_button_factory.gd")
 const UnlockableItemScript := preload("res://Scripts/Core/unlockable_item.gd")
 const DEFAULT_SHOP_ITEMS: int = 2
 const MAX_POWER_UP_ITEMS: int = 6
@@ -331,17 +332,17 @@ func _filter_by_rep_tier(items: Array) -> Array:
 		return items
 	var max_rank: int = pm.get_rep_tier()
 	var result: Array = []
-	var hidden: Array = []
+	var hidden_items: Array = []
 	for id in items:
 		var data = power_up_manager.get_def(id)
 		if data and PowerUpData.rating_rank(data.rating) > max_rank:
-			hidden.append(id)
+			hidden_items.append(id)
 		else:
 			result.append(id)
-	if not hidden.is_empty():
+	if not hidden_items.is_empty():
 		if _debug_enabled:
 			print("[ShopUI] Rep tier %d (%s) hides %d POGs: %s" % [
-				max_rank, pm.get_rep_tier_name(), hidden.size(), hidden])
+				max_rank, pm.get_rep_tier_name(), hidden_items.size(), hidden_items])
 	return result
 
 
@@ -1113,8 +1114,8 @@ func _update_footer_state(item_type: String) -> void:
 	var controls: Dictionary = _footer_controls.get(item_type, {})
 	if controls.is_empty():
 		return
-	var left_button = controls.get("left_button") as Button
-	var right_button = controls.get("right_button") as Button
+	var left_button = controls.get("left_button")
+	var right_button = controls.get("right_button")
 	var show_arrows = _has_multiple_pages(item_type)
 	var page_index = _tab_page_indices.get(item_type, 0)
 	var is_transitioning = _page_transitioning.get(item_type, false)
@@ -1369,7 +1370,7 @@ func _on_backdrop_gui_input(event: InputEvent) -> void:
 			_on_close_button_pressed()
 
 ## _style_close_button()
-## Styles the close button to match tab container size
+## Replaces the legacy close button with a standard glass button.
 func _style_close_button() -> void:
 	if not close_button:
 		return
@@ -1377,55 +1378,15 @@ func _style_close_button() -> void:
 	if _debug_enabled:
 		print("[ShopUI] Styling close button")
 	
-	# Set size to match tab height (40px)
-	close_button.custom_minimum_size = Vector2(20, 20)
-	
-	# Load VCR font
-	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
-	if vcr_font:
-		close_button.add_theme_font_override("font", vcr_font)
-		close_button.add_theme_font_size_override("font_size", 14)
-	
-	# Style the button
-	var style_normal = StyleBoxFlat.new()
-	style_normal.bg_color = Color(0.5, 0.15, 0.15, 0.95)  # Dark red
-	style_normal.border_color = Color(1, 0.4, 0.4, 1)     # Red border
-	style_normal.set_border_width_all(2)
-	style_normal.corner_radius_top_left = 6
-	style_normal.corner_radius_top_right = 6
-	style_normal.corner_radius_bottom_right = 6
-	style_normal.corner_radius_bottom_left = 6
-	
-	var style_hover = StyleBoxFlat.new()
-	style_hover.bg_color = Color(0.6, 0.2, 0.2, 0.98)
-	style_hover.border_color = Color(1, 0.5, 0.5, 1)
-	style_hover.set_border_width_all(3)
-	style_hover.corner_radius_top_left = 6
-	style_hover.corner_radius_top_right = 6
-	style_hover.corner_radius_bottom_right = 6
-	style_hover.corner_radius_bottom_left = 6
-	
-	var style_pressed = StyleBoxFlat.new()
-	style_pressed.bg_color = Color(0.7, 0.25, 0.25, 1)
-	style_pressed.border_color = Color(1, 0.6, 0.6, 1)
-	style_pressed.set_border_width_all(2)
-	style_pressed.corner_radius_top_left = 6
-	style_pressed.corner_radius_top_right = 6
-	style_pressed.corner_radius_bottom_right = 6
-	style_pressed.corner_radius_bottom_left = 6
-	
-	close_button.add_theme_stylebox_override("normal", style_normal)
-	close_button.add_theme_stylebox_override("hover", style_hover)
-	close_button.add_theme_stylebox_override("pressed", style_pressed)
-	close_button.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-	close_button.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
-	close_button.add_theme_constant_override("outline_size", 1)
-	
-	# TweenFX hover/press feedback
-	close_button.mouse_entered.connect(_tfx.button_hover.bind(close_button))
-	close_button.mouse_exited.connect(_tfx.button_unhover.bind(close_button))
-	close_button.pressed.connect(_tfx.button_press.bind(close_button))
-	close_button.text = "X"
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as Font
+	if close_button is Button:
+		close_button = GlassButtonFactoryRef.replace_button(close_button, GlassButtonFactoryRef.palette_danger(), 14, vcr_font, "X")
+	if close_button and close_button.has_method("set_uniform_padding"):
+		close_button.custom_minimum_size = Vector2(40, 40)
+		close_button.set_uniform_padding(6, 6)
+		close_button.set_button_focus_mode(Control.FOCUS_NONE)
+		if not close_button.pressed.is_connected(_on_close_button_pressed):
+			close_button.pressed.connect(_on_close_button_pressed)
 
 func _get_container_for_type(type: String) -> Node:
 	match type:
@@ -1928,17 +1889,11 @@ func _add_footer_ui_to_tab(tab_node: Control, item_type: String) -> void:
 	}
 	_update_footer_state(item_type)
 
-func _create_footer_arrow_button(item_type: String, step: int, button_name: String, button_text: String) -> Button:
-	var button = Button.new()
+func _create_footer_arrow_button(item_type: String, step: int, button_name: String, button_text: String) -> Control:
+	var button = GlassButtonFactoryRef.create_button(button_text, Vector2(52, 52), GlassButtonFactoryRef.palette_warning(), 22)
 	button.name = button_name
-	button.text = button_text
-	button.custom_minimum_size = Vector2(52, 52)
-	button.focus_mode = Control.FOCUS_NONE
-	_apply_footer_arrow_button_styling(button)
+	button.set_uniform_padding(8, 6)
 	button.pressed.connect(_on_page_arrow_pressed.bind(item_type, step))
-	button.mouse_entered.connect(_tfx.button_hover.bind(button))
-	button.mouse_exited.connect(_tfx.button_unhover.bind(button))
-	button.pressed.connect(_tfx.button_press.bind(button))
 	return button
 
 func _create_reroll_center_control(item_type: String) -> Control:

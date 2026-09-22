@@ -1,6 +1,8 @@
 extends Control
 class_name KioskTile
 
+const GlassButtonFactoryRef = preload("res://Scripts/UI/glass_button_factory.gd")
+
 ## KioskTile.gd
 ## Mall-core kiosk tile for displaying a power-up in the fan-out view.
 ## Glossy chrome background, neon rarity glow, artwork, description,
@@ -58,14 +60,12 @@ var artwork: TextureRect
 var reflection_overlay: TextureRect
 var description_label: Label
 var description_panel: PanelContainer
-var sell_button: Button
+var sell_button
 var action_bar: HBoxContainer
 var sticker_badge: StickerBadge
 var glow_underlay: ColorRect
 var synergy_halo: ColorRect
 var synergy_halo_mode: int = PowerUpData.SynergyHaloMode.NONE
-
-@onready var _tfx := get_node_or_null("/root/TweenFXHelper")
 
 var _frame_shader_material: ShaderMaterial
 var _glass_shader_material: ShaderMaterial
@@ -77,11 +77,6 @@ var _hover_tween: Tween
 var _base_position := Vector2.ZERO
 var _resting_border_glow := 0.25
 var _shader_time := 0.0
-
-# Cached button style boxes for press depress tween.
-var _normal_button_style: StyleBoxFlat
-var _hover_button_style: StyleBoxFlat
-var _pressed_button_style: StyleBoxFlat
 
 # Artwork parallax state
 var _mouse_norm := Vector2(0.5, 0.5)
@@ -355,11 +350,11 @@ func _ensure_structure() -> void:
 
 	sell_button = action_bar.get_node_or_null("SellButton") as Button
 	if not sell_button:
-		sell_button = Button.new()
+		sell_button = GlassButtonFactoryRef.create_button("SELL\n$0", Vector2(124, 48), GlassButtonFactoryRef.palette_kiosk_sell(), 14, VCR_FONT)
 		sell_button.name = "SellButton"
-		sell_button.text = "SELL\n$0"
 		sell_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		sell_button.mouse_filter = Control.MOUSE_FILTER_PASS
+		sell_button.set_uniform_padding(12, 6)
 		action_bar.add_child(sell_button)
 	else:
 		sell_button.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -463,59 +458,14 @@ func _apply_static_style() -> void:
 	desc_style.content_margin_bottom = 8.0
 	description_panel.add_theme_stylebox_override("panel", desc_style)
 
-	# SELL button: glossy neon checkout-key styling
-	if VCR_FONT:
-		sell_button.add_theme_font_override("font", VCR_FONT)
-	sell_button.add_theme_font_size_override("font_size", 14)
-	sell_button.add_theme_color_override("font_color", Color(1.0, 1.0, 0.9, 1.0))
-	sell_button.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0, 1.0))
-	sell_button.add_theme_color_override("font_pressed_color", Color(0.95, 0.95, 0.8, 1.0))
-	sell_button.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
-	sell_button.add_theme_constant_override("outline_size", 1)
-
-	sell_button.custom_minimum_size = Vector2(124, 48)
+	# SELL button: migrate the tile action to the shared glass-button standard.
+	if sell_button is Button:
+		sell_button = GlassButtonFactoryRef.replace_button(sell_button, GlassButtonFactoryRef.palette_kiosk_sell(), 14, VCR_FONT, sell_button.text)
+	if sell_button and sell_button.has_method("set_uniform_padding"):
+		sell_button.custom_minimum_size = Vector2(124, 48)
+		sell_button.set_uniform_padding(12, 6)
+		sell_button.set_button_focus_mode(Control.FOCUS_NONE)
 	action_bar.alignment = BoxContainer.ALIGNMENT_CENTER
-
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color(0.85, 0.25, 0.55, 0.95)
-	normal.border_color = Color(1.0, 0.55, 0.75, 1.0)
-	normal.set_border_width_all(3)
-	normal.set_corner_radius_all(6)
-	normal.corner_detail = 6
-	normal.content_margin_left = 12.0
-	normal.content_margin_top = 6.0
-	normal.content_margin_right = 12.0
-	normal.content_margin_bottom = 6.0
-	_normal_button_style = normal
-
-	var hover := StyleBoxFlat.new()
-	hover.bg_color = Color(0.95, 0.35, 0.65, 0.98)
-	hover.border_color = Color(1.0, 0.75, 0.85, 1.0)
-	hover.set_border_width_all(3)
-	hover.set_corner_radius_all(6)
-	hover.corner_detail = 6
-	hover.content_margin_left = 12.0
-	hover.content_margin_top = 6.0
-	hover.content_margin_right = 12.0
-	hover.content_margin_bottom = 6.0
-	_hover_button_style = hover
-
-	var pressed := StyleBoxFlat.new()
-	pressed.bg_color = Color(0.65, 0.15, 0.4, 1.0)
-	pressed.border_color = Color(0.85, 0.45, 0.65, 1.0)
-	pressed.set_border_width_all(3)
-	pressed.set_corner_radius_all(6)
-	pressed.corner_detail = 6
-	pressed.content_margin_left = 12.0
-	pressed.content_margin_top = 8.0
-	pressed.content_margin_right = 12.0
-	pressed.content_margin_bottom = 4.0
-	_pressed_button_style = pressed
-
-	sell_button.add_theme_stylebox_override("normal", normal)
-	sell_button.add_theme_stylebox_override("hover", hover)
-	sell_button.add_theme_stylebox_override("pressed", pressed)
-	sell_button.add_theme_stylebox_override("disabled", pressed)
 
 func _apply_data() -> void:
 	if not data:
@@ -679,13 +629,6 @@ func _connect_signals() -> void:
 
 	if sell_button:
 		sell_button.pressed.connect(_on_sell_pressed)
-		sell_button.button_down.connect(_on_sell_button_down)
-		sell_button.button_up.connect(_on_sell_button_up)
-		# The tile root handles hover, but the button still needs hover audio.
-		if _tfx:
-			sell_button.mouse_entered.connect(func(): _tfx.button_hover(sell_button))
-			sell_button.mouse_exited.connect(func(): _tfx.button_unhover(sell_button))
-			sell_button.pressed.connect(func(): _tfx.button_press(sell_button))
 
 func _setup_shader() -> void:
 	var frame_size := TILE_SIZE + Vector2(FRAME_OVERFLOW * 2.0, FRAME_OVERFLOW * 2.0)
@@ -994,17 +937,10 @@ func _process(delta: float) -> void:
 	if _reflection_shader_material:
 		_reflection_shader_material.set_shader_parameter("time", _shader_time)
 
-func _on_sell_button_down() -> void:
-	if sell_button and _pressed_button_style:
-		sell_button.position.y += 2
-
-func _on_sell_button_up() -> void:
-	if sell_button and _normal_button_style:
-		sell_button.position.y -= 2
-
 func _on_sell_pressed() -> void:
 	if data:
-		emit_signal("sell_requested", data.id)
+		sell_requested.emit(data.id)
+
 
 func set_base_position(pos: Vector2) -> void:
 	_base_position = pos

@@ -7,6 +7,8 @@ class_name GamingConsoleUI
 ## Shows a compact horizontal VIP spine in the HUD and a single-card
 ## fan-out view in an overlay while preserving the existing gameplay API.
 
+const GlassButtonFactoryRef = preload("res://Scripts/UI/glass_button_factory.gd")
+
 signal activate_pressed
 signal console_removed
 
@@ -512,28 +514,12 @@ func _spawn_nes_die_buttons() -> void:
 			hbox.add_theme_constant_override("separation", 4)
 			panel.add_child(hbox)
 
-			var plus_btn = Button.new()
-			plus_btn.text = "+1"
-			plus_btn.add_theme_font_override("font", vcr_font)
-			plus_btn.custom_minimum_size = Vector2(28, 24)
-			_apply_button_style(plus_btn, PANEL_ACCENT, 10)
+			var plus_btn = _create_console_action_button("+1", Vector2(28, 24), PANEL_ACCENT, 10, 4, 3)
 			plus_btn.pressed.connect(_on_nes_die_adjust.bind(die, 1))
-			if _tfx:
-				plus_btn.mouse_entered.connect(_tfx.button_hover.bind(plus_btn))
-				plus_btn.mouse_exited.connect(_tfx.button_unhover.bind(plus_btn))
-				plus_btn.pressed.connect(_tfx.button_press.bind(plus_btn))
 			hbox.add_child(plus_btn)
 
-			var minus_btn = Button.new()
-			minus_btn.text = "-1"
-			minus_btn.add_theme_font_override("font", vcr_font)
-			minus_btn.custom_minimum_size = Vector2(28, 24)
-			_apply_button_style(minus_btn, PANEL_BORDER, 10)
+			var minus_btn = _create_console_action_button("-1", Vector2(28, 24), PANEL_BORDER, 10, 4, 3)
 			minus_btn.pressed.connect(_on_nes_die_adjust.bind(die, -1))
-			if _tfx:
-				minus_btn.mouse_entered.connect(_tfx.button_hover.bind(minus_btn))
-				minus_btn.mouse_exited.connect(_tfx.button_unhover.bind(minus_btn))
-				minus_btn.pressed.connect(_tfx.button_press.bind(minus_btn))
 			hbox.add_child(minus_btn)
 
 			panel.position = die.global_position + Vector2(-30, -55) #-20, -45
@@ -591,32 +577,33 @@ func _show_tilt_popup() -> void:
 	hbox.add_theme_constant_override("separation", 8)
 	_tilt_popup.add_child(hbox)
 
-	var plus_btn = Button.new()
-	plus_btn.text = "+1 ALL"
-	plus_btn.add_theme_font_override("font", vcr_font)
-	plus_btn.custom_minimum_size = Vector2(70, 30)
-	_apply_button_style(plus_btn, PANEL_ACCENT, 14)
+	var plus_btn = _create_console_action_button("+1 ALL", Vector2(70, 30), PANEL_ACCENT, 14, 8, 4)
 	plus_btn.pressed.connect(_on_tilt_choice.bind(1))
-	if _tfx:
-		plus_btn.mouse_entered.connect(_tfx.button_hover.bind(plus_btn))
-		plus_btn.mouse_exited.connect(_tfx.button_unhover.bind(plus_btn))
-		plus_btn.pressed.connect(_tfx.button_press.bind(plus_btn))
 	hbox.add_child(plus_btn)
 
-	var minus_btn = Button.new()
-	minus_btn.text = "-1 ALL"
-	minus_btn.add_theme_font_override("font", vcr_font)
-	minus_btn.custom_minimum_size = Vector2(70, 30)
-	_apply_button_style(minus_btn, PANEL_BORDER, 14)
+	var minus_btn = _create_console_action_button("-1 ALL", Vector2(70, 30), PANEL_BORDER, 14, 8, 4)
 	minus_btn.pressed.connect(_on_tilt_choice.bind(-1))
-	if _tfx:
-		minus_btn.mouse_entered.connect(_tfx.button_hover.bind(minus_btn))
-		minus_btn.mouse_exited.connect(_tfx.button_unhover.bind(minus_btn))
-		minus_btn.pressed.connect(_tfx.button_press.bind(minus_btn))
 	hbox.add_child(minus_btn)
 
 	_tilt_popup.position = global_position + Vector2(0, -50)
 	get_tree().root.add_child(_tilt_popup)
+
+
+func _create_console_action_button(label_text: String, button_size: Vector2, accent_color: Color, font_size: int, horizontal_padding: int, vertical_padding: int):
+	var palette = GlassButtonFactoryRef.build_palette(
+		accent_color.darkened(0.42),
+		accent_color.darkened(0.18),
+		accent_color,
+		accent_color.lightened(0.12),
+		PANEL_TEXT,
+		PANEL_TEXT,
+		PANEL_OUTLINE,
+		1
+	)
+	var button = GlassButtonFactoryRef.create_button(label_text, button_size, palette, font_size, vcr_font)
+	button.set_uniform_padding(horizontal_padding, vertical_padding)
+	button.set_button_focus_mode(Control.FOCUS_NONE)
+	return button
 
 
 func _build_panel_style(accent_color: Color, bg_color: Color) -> StyleBoxFlat:

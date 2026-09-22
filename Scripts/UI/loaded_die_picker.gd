@@ -1,6 +1,8 @@
 extends Control
 class_name LoadedDiePicker
 
+const GlassButtonFactoryRef = preload("res://Scripts/UI/glass_button_factory.gd")
+
 ## LoadedDiePicker
 ##
 ## Two-phase popup used by LoadedDiceConsumable:
@@ -238,37 +240,26 @@ func _build_value_panel(die: Dice) -> void:
 		var btn = _make_value_button(face)
 		grid.add_child(btn)
 
-	var back_btn = Button.new()
+	var back_btn = GlassButtonFactoryRef.create_button("Back", Vector2(120, 40), GlassButtonFactoryRef.palette_neutral(), 16)
 	back_btn.name = "BackButton"
-	back_btn.text = "Back"
-	back_btn.custom_minimum_size = Vector2(120, 40)
 	back_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_hook_button_fx(back_btn)
 	back_btn.pressed.connect(_on_back_pressed)
 	vbox.add_child(back_btn)
 
 
-func _make_value_button(face: int) -> Button:
-	var btn = Button.new()
+func _make_value_button(face: int) -> Control:
+	var btn = GlassButtonFactoryRef.create_button(str(face), Vector2(64, 64), GlassButtonFactoryRef.palette_positive(), 24)
 	btn.name = "Value%d" % face
-	btn.text = str(face)
-	btn.custom_minimum_size = Vector2(64, 64)
-	btn.add_theme_font_size_override("font_size", 24)
-	_hook_button_fx(btn)
+	btn.set_uniform_padding(10, 8)
 	btn.pressed.connect(_on_value_button_pressed.bind(face))
 	return btn
 
 
-## _hook_button_fx(btn: Button)
+## _hook_button_fx(_btn: Button)
 ##
 ## Connects TweenFXHelper hover/press juice when the autoload is available.
-func _hook_button_fx(btn: Button) -> void:
-	var tfx = get_node_or_null("/root/TweenFXHelper")
-	if not tfx:
-		return
-	btn.mouse_entered.connect(tfx.button_hover.bind(btn))
-	btn.mouse_exited.connect(tfx.button_unhover.bind(btn))
-	btn.pressed.connect(tfx.button_press.bind(btn))
+func _hook_button_fx(_btn: Button) -> void:
+	return
 
 
 func _on_value_button_pressed(value: int) -> void:

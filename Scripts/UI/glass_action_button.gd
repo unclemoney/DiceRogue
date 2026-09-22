@@ -9,6 +9,10 @@ const SELECTED_PULSE_STRENGTH := 0.35
 const SELECTED_HOVER_STRENGTH := 0.5
 const DEFAULT_FONT_COLOR := Color(0.968627, 0.941176, 1.0, 1.0)
 const DEFAULT_FONT_OUTLINE := Color(0.129412, 0.121569, 0.2, 1.0)
+const DEFAULT_MARGIN_LEFT := 14
+const DEFAULT_MARGIN_TOP := 8
+const DEFAULT_MARGIN_RIGHT := 14
+const DEFAULT_MARGIN_BOTTOM := 8
 
 var shader_rect: ColorRect
 var content_margin: MarginContainer
@@ -20,6 +24,10 @@ var _tfx: Node = null
 var _is_disabled: bool = false
 var _font_color: Color = DEFAULT_FONT_COLOR
 var _button_text: String = ""
+var _content_margin_left: int = DEFAULT_MARGIN_LEFT
+var _content_margin_top: int = DEFAULT_MARGIN_TOP
+var _content_margin_right: int = DEFAULT_MARGIN_RIGHT
+var _content_margin_bottom: int = DEFAULT_MARGIN_BOTTOM
 
 ## When true, the button acts as a toggle: presses emit `toggled` instead of
 ## `pressed` and the button holds a lit "selected" shader baseline while on.
@@ -86,6 +94,22 @@ func set_font_resource(font_resource: Font) -> void:
 		title_label.add_theme_font_override("font", font_resource)
 
 
+func set_content_padding(left: int, top: int, right: int, bottom: int) -> void:
+	_content_margin_left = left
+	_content_margin_top = top
+	_content_margin_right = right
+	_content_margin_bottom = bottom
+	if content_margin:
+		content_margin.add_theme_constant_override("margin_left", _content_margin_left)
+		content_margin.add_theme_constant_override("margin_top", _content_margin_top)
+		content_margin.add_theme_constant_override("margin_right", _content_margin_right)
+		content_margin.add_theme_constant_override("margin_bottom", _content_margin_bottom)
+
+
+func set_uniform_padding(horizontal: int, vertical: int) -> void:
+	set_content_padding(horizontal, vertical, horizontal, vertical)
+
+
 func set_palette(palette: Dictionary) -> void:
 	if shader_material == null:
 		return
@@ -126,6 +150,11 @@ func set_button_focus_mode(new_focus_mode: Control.FocusMode) -> void:
 
 func get_overlay_button() -> Button:
 	return overlay_button
+
+
+func grab_button_focus() -> void:
+	if overlay_button:
+		overlay_button.grab_focus()
 
 
 func clear_visual_state() -> void:
@@ -185,10 +214,10 @@ func _build_ui() -> void:
 	content_margin = MarginContainer.new()
 	content_margin.name = "ContentMargin"
 	content_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	content_margin.add_theme_constant_override("margin_left", 14)
-	content_margin.add_theme_constant_override("margin_top", 8)
-	content_margin.add_theme_constant_override("margin_right", 14)
-	content_margin.add_theme_constant_override("margin_bottom", 8)
+	content_margin.add_theme_constant_override("margin_left", _content_margin_left)
+	content_margin.add_theme_constant_override("margin_top", _content_margin_top)
+	content_margin.add_theme_constant_override("margin_right", _content_margin_right)
+	content_margin.add_theme_constant_override("margin_bottom", _content_margin_bottom)
 	add_child(content_margin)
 
 	var center = CenterContainer.new()

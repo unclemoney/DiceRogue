@@ -1,5 +1,7 @@
 extends Control
 
+const GlassButtonFactoryRef = preload("res://Scripts/UI/glass_button_factory.gd")
+
 ## SettingsMenu
 ##
 ## Multi-tab settings menu with Audio, Video, Gameplay, Keyboard, and Controller tabs.
@@ -16,7 +18,7 @@ var _tfx: Node = null
 
 # UI References
 var tab_container: TabContainer
-var close_button: Button
+var close_button
 var _main_panel: PanelContainer
 var _backdrop_fx_rect: ColorRect
 
@@ -29,7 +31,7 @@ var music_value_label: Label
 # Video tab
 var resolution_option: OptionButton
 var fullscreen_check: CheckButton
-var apply_video_button: Button
+var apply_video_button
 var resolution_warning_label: Label
 
 # Gameplay tab
@@ -38,16 +40,16 @@ var animation_speed_label: Label
 
 # Keyboard tab
 var keyboard_binding_container: VBoxContainer
-var keyboard_bindings: Dictionary = {}  # action -> Button
+var keyboard_bindings: Dictionary = {}  # action -> button control
 
 # Controller tab
 var controller_binding_container: VBoxContainer
-var controller_bindings: Dictionary = {}  # action -> Button
+var controller_bindings: Dictionary = {}  # action -> button control
 
 # Keybinding capture state
 var _capturing_action: String = ""
 var _capturing_is_controller: bool = false
-var _capture_button: Button = null
+var _capture_button = null
 var _is_loading_settings: bool = false
 
 # Resolution options
@@ -182,15 +184,8 @@ func _build_header() -> Control:
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 	
-	close_button = Button.new()
-	close_button.text = "X"
-	close_button.custom_minimum_size = Vector2(40, 40)
-	close_button.add_theme_font_override("font", vcr_font)
-	_apply_button_style(close_button, MENU_DANGER)
+	close_button = _create_glass_button("X", Vector2(40, 40), MENU_DANGER, 16, 6, 6)
 	close_button.pressed.connect(_on_close_pressed)
-	close_button.mouse_entered.connect(_tfx.button_hover.bind(close_button))
-	close_button.mouse_exited.connect(_tfx.button_unhover.bind(close_button))
-	close_button.pressed.connect(_tfx.button_press.bind(close_button))
 	header.add_child(close_button)
 	
 	return header
@@ -296,15 +291,8 @@ func _build_video_tab() -> void:
 	var apply_container = CenterContainer.new()
 	video_tab.add_child(apply_container)
 	
-	apply_video_button = Button.new()
-	apply_video_button.text = "APPLY"
-	apply_video_button.custom_minimum_size = Vector2(150, 45)
-	apply_video_button.add_theme_font_override("font", vcr_font)
-	_apply_button_style(apply_video_button, MENU_ACCENT, 20)
+	apply_video_button = _create_glass_button("APPLY", Vector2(150, 45), MENU_ACCENT, 20, 12, 8)
 	apply_video_button.pressed.connect(_on_apply_video_pressed)
-	apply_video_button.mouse_entered.connect(_tfx.button_hover.bind(apply_video_button))
-	apply_video_button.mouse_exited.connect(_tfx.button_unhover.bind(apply_video_button))
-	apply_video_button.pressed.connect(_tfx.button_press.bind(apply_video_button))
 	apply_container.add_child(apply_video_button)
 	
 	# Info label
@@ -371,15 +359,8 @@ func _build_keyboard_tab() -> void:
 	var reset_container = CenterContainer.new()
 	keyboard_tab.add_child(reset_container)
 	
-	var reset_btn = Button.new()
-	reset_btn.text = "Reset to Defaults"
-	reset_btn.custom_minimum_size = Vector2(180, 40)
-	reset_btn.add_theme_font_override("font", vcr_font)
-	_apply_button_style(reset_btn, MENU_BORDER)
+	var reset_btn = _create_glass_button("Reset to Defaults", Vector2(180, 40), MENU_BORDER, 16, 10, 6)
 	reset_btn.pressed.connect(_on_reset_keyboard_pressed)
-	reset_btn.mouse_entered.connect(_tfx.button_hover.bind(reset_btn))
-	reset_btn.mouse_exited.connect(_tfx.button_unhover.bind(reset_btn))
-	reset_btn.pressed.connect(_tfx.button_press.bind(reset_btn))
 	reset_container.add_child(reset_btn)
 
 
@@ -409,15 +390,8 @@ func _build_controller_tab() -> void:
 	var reset_container = CenterContainer.new()
 	controller_tab.add_child(reset_container)
 	
-	var reset_btn = Button.new()
-	reset_btn.text = "Reset to Defaults"
-	reset_btn.custom_minimum_size = Vector2(180, 40)
-	reset_btn.add_theme_font_override("font", vcr_font)
-	_apply_button_style(reset_btn, MENU_BORDER)
+	var reset_btn = _create_glass_button("Reset to Defaults", Vector2(180, 40), MENU_BORDER, 16, 10, 6)
 	reset_btn.pressed.connect(_on_reset_controller_pressed)
-	reset_btn.mouse_entered.connect(_tfx.button_hover.bind(reset_btn))
-	reset_btn.mouse_exited.connect(_tfx.button_unhover.bind(reset_btn))
-	reset_btn.pressed.connect(_tfx.button_press.bind(reset_btn))
 	reset_container.add_child(reset_btn)
 
 
@@ -575,14 +549,9 @@ func _build_keybinding_rows(container: VBoxContainer, is_controller: bool) -> vo
 		_style_label(action_label, 16)
 		row.add_child(action_label)
 		
-		var bind_btn = Button.new()
+		var bind_btn = _create_glass_button("---", Vector2(200, 35), MENU_BORDER, 14, 10, 5)
 		bind_btn.name = action
-		bind_btn.custom_minimum_size = Vector2(200, 35)
-		bind_btn.add_theme_font_override("font", vcr_font)
-		_apply_button_style(bind_btn, MENU_BORDER, 14)
 		bind_btn.pressed.connect(_on_keybind_button_pressed.bind(action, is_controller, bind_btn))
-		bind_btn.mouse_entered.connect(func(): _tfx.button_hover(bind_btn))
-		bind_btn.mouse_exited.connect(func(): _tfx.button_unhover(bind_btn))
 		row.add_child(bind_btn)
 		
 		# Store reference
@@ -722,6 +691,23 @@ func _apply_button_style(button: Button, accent_color: Color, font_size: int = 1
 	button.add_theme_stylebox_override("focus", hover)
 
 
+func _create_glass_button(label_text: String, button_size: Vector2, accent_color: Color, font_size: int, horizontal_padding: int, vertical_padding: int):
+	var palette = GlassButtonFactoryRef.build_palette(
+		accent_color.darkened(0.42),
+		accent_color.darkened(0.18),
+		accent_color,
+		accent_color.lightened(0.12),
+		MENU_TEXT,
+		MENU_TEXT,
+		MENU_OUTLINE,
+		1
+	)
+	var button = GlassButtonFactoryRef.create_button(label_text, button_size, palette, font_size, vcr_font)
+	button.set_uniform_padding(horizontal_padding, vertical_padding)
+	button.set_button_focus_mode(Control.FOCUS_NONE)
+	return button
+
+
 func _style_label(label: Label, font_size: int, font_color: Color = MENU_TEXT) -> void:
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", font_color)
@@ -776,7 +762,7 @@ func _update_all_keybind_buttons() -> void:
 ## _update_keybind_button_text(button, action, is_controller)
 ##
 ## Updates a keybind button's text to show the current binding.
-func _update_keybind_button_text(button: Button, action: String, is_controller: bool) -> void:
+func _update_keybind_button_text(button, action: String, is_controller: bool) -> void:
 	if not _game_settings:
 		button.text = "---"
 		return
@@ -907,7 +893,7 @@ func _on_apply_video_pressed() -> void:
 ## _on_keybind_button_pressed(action, is_controller, button)
 ##
 ## Handler for keybind button click - starts capture mode.
-func _on_keybind_button_pressed(action: String, is_controller: bool, button: Button) -> void:
+func _on_keybind_button_pressed(action: String, is_controller: bool, button) -> void:
 	_capturing_action = action
 	_capturing_is_controller = is_controller
 	_capture_button = button

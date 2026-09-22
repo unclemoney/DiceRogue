@@ -1,6 +1,8 @@
 extends Control
 class_name UnlockNotificationUI
 
+const GlassButtonFactoryRef = preload("res://Scripts/UI/glass_button_factory.gd")
+
 ## UnlockNotificationUI
 ##
 ## Displays a scrollable list of newly unlocked items with juicy animations.
@@ -35,7 +37,7 @@ var _title_label: Label
 var _count_label: Label
 var _scroll_container: ScrollContainer
 var _item_list: VBoxContainer
-var _ok_button: Button
+var _ok_button
 var _tooltip: PanelContainer
 var _tooltip_name: Label
 var _tooltip_type: Label
@@ -200,39 +202,11 @@ func _build_ui() -> void:
 	vbox.add_child(HSeparator.new())
 	
 	# OK button
-	_ok_button = Button.new()
+	_ok_button = GlassButtonFactoryRef.create_button("OK", Vector2(120, 36), GlassButtonFactoryRef.palette_positive(), 18, vcr_font)
 	_ok_button.name = "OKButton"
-	_ok_button.text = "OK"
-	_ok_button.custom_minimum_size = Vector2(120, 36)
 	_ok_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_ok_button.add_theme_font_size_override("font_size", 18)
-	_ok_button.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
-	_ok_button.add_theme_color_override("font_hover_color", Color(0.968627, 0.941176, 1.0, 1.0))
-	_ok_button.add_theme_color_override("font_pressed_color", Color(0.780392, 0.733333, 0.866667, 1.0))
-	_ok_button.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
-	_ok_button.add_theme_constant_override("outline_size", 1)
-	var ok_style = StyleBoxFlat.new()
-	ok_style.bg_color = Color(0.137255, 0.411765, 0.415686, 0.92)
-	ok_style.border_color = Color(0.47451, 0.886275, 0.890196, 1.0)
-	ok_style.set_border_width_all(2)
-	ok_style.set_corner_radius_all(10)
-	ok_style.set_content_margin_all(6)
-	_ok_button.add_theme_stylebox_override("normal", ok_style)
-	var ok_hover = ok_style.duplicate()
-	ok_hover.bg_color = Color(0.2, 0.56, 0.56, 0.96)
-	ok_hover.border_color = Color(0.6, 0.94, 0.96, 1.0)
-	_ok_button.add_theme_stylebox_override("hover", ok_hover)
-	var ok_pressed = ok_style.duplicate()
-	ok_pressed.bg_color = Color(0.101961, 0.298039, 0.301961, 0.96)
-	_ok_button.add_theme_stylebox_override("pressed", ok_pressed)
-	_ok_button.add_theme_stylebox_override("focus", ok_hover)
-	if vcr_font:
-		_ok_button.add_theme_font_override("font", vcr_font)
+	_ok_button.set_uniform_padding(10, 6)
 	_ok_button.pressed.connect(_on_ok_pressed)
-	if _tfx_helper:
-		_ok_button.mouse_entered.connect(func(): _tfx_helper.button_hover(_ok_button))
-		_ok_button.mouse_exited.connect(func(): _tfx_helper.button_unhover(_ok_button))
-		_ok_button.pressed.connect(func(): _tfx_helper.button_press(_ok_button))
 	vbox.add_child(_ok_button)
 	
 	# Floating tooltip (child of self, above scroll clip)

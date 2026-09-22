@@ -1,6 +1,8 @@
 # Scripts/UI/tutorial_dialog.gd
 extends Control
 
+const GlassButtonFactoryRef = preload("res://Scripts/UI/glass_button_factory.gd")
+
 ## TutorialDialog
 ##
 ## Displays Mom's tutorial messages with a typewriter effect.
@@ -8,7 +10,6 @@ extends Control
 
 signal next_clicked
 signal skip_confirmed
-signal dialog_dismissed  # May be used by external listeners
 
 # Constants
 const TYPEWRITER_SPEED: float = 0.02  # Seconds per character
@@ -34,8 +35,8 @@ var mom_sprite: TextureRect
 var title_label: Label
 var step_counter_label: Label
 var message_label: RichTextLabel
-var skip_button: Button
-var next_button: Button
+var skip_button
+var next_button
 var skip_confirm_dialog: ConfirmationDialog
 
 # State
@@ -186,15 +187,11 @@ func _build_ui() -> void:
 	# Skip button
 	skip_button = _create_button("Skip Tutorial", Color(0.5, 0.4, 0.4, 1.0), true)
 	skip_button.pressed.connect(_on_skip_pressed)
-	skip_button.mouse_entered.connect(func(): _tfx.button_hover(skip_button))
-	skip_button.mouse_exited.connect(func(): _tfx.button_unhover(skip_button))
 	button_row.add_child(skip_button)
 	
 	# Next button
 	next_button = _create_button("Next →", Color(0.3, 0.7, 0.4, 1.0), false)
 	next_button.pressed.connect(_on_next_pressed)
-	next_button.mouse_entered.connect(func(): _tfx.button_hover(next_button))
-	next_button.mouse_exited.connect(func(): _tfx.button_unhover(next_button))
 	button_row.add_child(next_button)
 	
 	# Skip confirmation dialog
@@ -204,33 +201,25 @@ func _build_ui() -> void:
 ## _create_button(text, color, small)
 ##
 ## Creates a styled button.
-func _create_button(text: String, color: Color, small: bool) -> Button:
-	var btn = Button.new()
-	btn.text = text
-	btn.custom_minimum_size = Vector2(100 if small else 120, 32)
-	btn.add_theme_font_override("font", vcr_font)
-	btn.add_theme_font_size_override("font_size", 14 if small else 16)
-	
-	var normal_style = StyleBoxFlat.new()
-	normal_style.bg_color = Color(0.15, 0.12, 0.2, 0.95)
-	normal_style.border_color = color * 0.7
-	normal_style.set_border_width_all(2)
-	normal_style.set_corner_radius_all(6)
-	btn.add_theme_stylebox_override("normal", normal_style)
-	btn.add_theme_color_override("font_color", color)
-	
-	var hover_style = normal_style.duplicate()
-	hover_style.bg_color = Color(0.2, 0.17, 0.28, 0.98)
-	hover_style.border_color = color
-	btn.add_theme_stylebox_override("hover", hover_style)
-	btn.add_theme_color_override("font_hover_color", color * 1.2)
-	
-	var pressed_style = normal_style.duplicate()
-	pressed_style.bg_color = color * 0.3
-	pressed_style.border_color = color * 1.2
-	btn.add_theme_stylebox_override("pressed", pressed_style)
-	
+func _create_button(text: String, color: Color, small: bool):
+	var button_size = Vector2(100 if small else 120, 32)
+	var font_size = 14 if small else 16
+	var btn = GlassButtonFactoryRef.create_button(text, button_size, _build_tutorial_palette(color), font_size, vcr_font)
+	btn.set_uniform_padding(10, 5)
 	return btn
+
+
+func _build_tutorial_palette(accent_color: Color) -> Dictionary:
+	return GlassButtonFactoryRef.build_palette(
+		accent_color.darkened(0.58),
+		accent_color.darkened(0.32),
+		accent_color,
+		accent_color.lightened(0.18),
+		Color(0.968627, 0.941176, 1.0, 1.0),
+		Color(0.968627, 0.941176, 1.0, 1.0),
+		Color(0.129412, 0.121569, 0.2, 1.0),
+		1
+	)
 
 
 ## _build_skip_confirm_dialog()

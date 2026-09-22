@@ -1,5 +1,7 @@
 extends Control
 
+const GlassButtonFactoryRef = preload("res://Scripts/UI/glass_button_factory.gd")
+
 ## PauseMenu
 ##
 ## Simple pause menu overlay with Resume and Main Menu options.
@@ -18,10 +20,10 @@ var powerup_hover_theme: Theme = null
 @export var use_theme_styling: bool = true
 
 # UI References
-var resume_button: Button
-var save_button: Button
-var main_menu_button: Button
-var settings_button: Button
+var resume_button
+var save_button
+var main_menu_button
+var settings_button
 var settings_menu: Control = null
 var _overlay: ColorRect
 var _panel: PanelContainer
@@ -37,9 +39,6 @@ const PANEL_CORNER_RADIUS := 12.0
 
 # Tutorial warning dialog
 var tutorial_warning_dialog: ConfirmationDialog = null
-
-@onready var _tfx := get_node("/root/TweenFXHelper")
-
 
 func _ready() -> void:
 	visible = false
@@ -152,13 +151,6 @@ func _build_ui() -> void:
 	main_menu_button.pressed.connect(_on_main_menu_pressed)
 	btn_container.add_child(main_menu_button)
 	
-	# Connect TweenFX hover/press effects to all buttons
-	var all_buttons = [resume_button, save_button, settings_button, main_menu_button]
-	for btn in all_buttons:
-		btn.mouse_entered.connect(func(): _tfx.button_hover(btn))
-		btn.mouse_exited.connect(func(): _tfx.button_unhover(btn))
-		btn.pressed.connect(func(): _tfx.button_press(btn))
-	
 	# Build tutorial warning dialog
 	_build_tutorial_warning_dialog()
 
@@ -166,40 +158,23 @@ func _build_ui() -> void:
 ## _create_button(text, accent_color)
 ##
 ## Creates a styled button matching the main menu navigation buttons.
-func _create_button(text: String, accent_color: Color) -> Button:
-	var btn = Button.new()
-	btn.text = text
-	btn.custom_minimum_size = Vector2(280, 48)
-	btn.add_theme_font_override("font", vcr_font)
-	btn.add_theme_font_size_override("font_size", 26)
-	
-	if use_theme_styling and powerup_hover_theme:
-		btn.theme = powerup_hover_theme
-	else:
-		# Normal style
-		var normal_style = StyleBoxFlat.new()
-		normal_style.bg_color = Color(0.12, 0.1, 0.15, 0.95)
-		normal_style.border_color = accent_color * 0.7
-		normal_style.set_border_width_all(3)
-		normal_style.set_corner_radius_all(10)
-		btn.add_theme_stylebox_override("normal", normal_style)
-		btn.add_theme_color_override("font_color", accent_color)
-		
-		# Hover style
-		var hover_style = normal_style.duplicate()
-		hover_style.bg_color = Color(0.18, 0.15, 0.22, 0.98)
-		hover_style.border_color = accent_color
-		btn.add_theme_stylebox_override("hover", hover_style)
-		btn.add_theme_color_override("font_hover_color", accent_color * 1.2)
-		
-		# Pressed style
-		var pressed_style = normal_style.duplicate()
-		pressed_style.bg_color = accent_color * 0.3
-		pressed_style.border_color = accent_color * 1.2
-		btn.add_theme_stylebox_override("pressed", pressed_style)
-		btn.add_theme_color_override("font_pressed_color", Color.WHITE)
-	
+func _create_button(text: String, accent_color: Color):
+	var btn = GlassButtonFactoryRef.create_button(text, Vector2(280, 48), _build_menu_palette(accent_color), 26, vcr_font)
+	btn.set_uniform_padding(14, 8)
 	return btn
+
+
+func _build_menu_palette(accent_color: Color) -> Dictionary:
+	return GlassButtonFactoryRef.build_palette(
+		accent_color.darkened(0.58),
+		accent_color.darkened(0.32),
+		accent_color,
+		accent_color.lightened(0.18),
+		Color(0.968627, 0.941176, 1.0, 1.0),
+		Color(0.968627, 0.941176, 1.0, 1.0),
+		Color(0.129412, 0.121569, 0.2, 1.0),
+		1
+	)
 
 
 ## show_menu()
@@ -211,7 +186,7 @@ func show_menu() -> void:
 	visible = true
 	_is_animating = true
 	_animate_in()
-	resume_button.grab_focus()
+	resume_button.grab_button_focus()
 	print("[PauseMenu] Pause menu opened")
 
 
@@ -271,7 +246,7 @@ func _on_settings_pressed() -> void:
 ## Handler for when settings menu is closed.
 func _on_settings_closed() -> void:
 	# Re-focus resume button
-	resume_button.grab_focus()
+	resume_button.grab_button_focus()
 
 
 ## _on_main_menu_pressed()

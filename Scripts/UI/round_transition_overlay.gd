@@ -1,6 +1,8 @@
 extends CanvasLayer
 class_name RoundTransitionOverlay
 
+const GlassButtonFactoryRef = preload("res://Scripts/UI/glass_button_factory.gd")
+
 ## RoundTransitionOverlay
 ##
 ## Full-screen cinematic overlay shown after a challenge is completed.
@@ -47,7 +49,6 @@ const BUTTON_GAP: float = 30.0
 const BUTTON_ROW_HEIGHT: float = 56.0
 
 const FONT_PATH := "res://Resources/Font/VCR_OSD_MONO_1.001.ttf"
-const BUTTON_THEME_PATH := "res://Resources/UI/action_button_theme.tres"
 
 # ── Shader Pool (randomly applied to banner backgrounds) ──────────────
 const PANEL_SHADER_PATHS: Array = [
@@ -75,8 +76,8 @@ var next_border: Panel
 var next_title: Label
 var next_detail: Label
 var button_container: HBoxContainer
-var keep_playing_button: Button
-var enter_shop_button: Button
+var keep_playing_button
+var enter_shop_button
 
 # ── State ─────────────────────────────────────────────────────────────
 var _is_showing: bool = false
@@ -151,27 +152,14 @@ func _build_ui() -> void:
 	button_container.alignment = BoxContainer.ALIGNMENT_CENTER
 	banner_container.add_child(button_container)
 
-	var btn_theme = load(BUTTON_THEME_PATH) as Theme
-
 	# Keep Playing button
-	keep_playing_button = Button.new()
+	keep_playing_button = GlassButtonFactoryRef.create_button("Keep Playing", Vector2(180, 52), GlassButtonFactoryRef.palette_neutral(), 18, _vcr_font)
 	keep_playing_button.name = "KeepPlayingButton"
-	keep_playing_button.text = "Keep Playing"
-	keep_playing_button.custom_minimum_size = Vector2(180, 52)
-	keep_playing_button.add_theme_font_size_override("font_size", 18)
-	if btn_theme:
-		keep_playing_button.theme = btn_theme
 	button_container.add_child(keep_playing_button)
 
 	# Enter Shop button (green-highlighted)
-	enter_shop_button = Button.new()
+	enter_shop_button = GlassButtonFactoryRef.create_button("Enter Shop", Vector2(180, 52), GlassButtonFactoryRef.palette_positive(), 18, _vcr_font)
 	enter_shop_button.name = "EnterShopButton"
-	enter_shop_button.text = "Enter Shop"
-	enter_shop_button.custom_minimum_size = Vector2(180, 52)
-	enter_shop_button.add_theme_font_size_override("font_size", 18)
-	if btn_theme:
-		enter_shop_button.theme = btn_theme
-	_apply_shop_button_highlight(enter_shop_button)
 	button_container.add_child(enter_shop_button)
 
 	# ── Connect button signals ────────────────────────────────────────
@@ -381,15 +369,7 @@ func _impact_punch(banner: Control, title_label: Label) -> void:
 ##
 ## Wires TweenFXHelper hover/press animations to buttons.
 func _connect_button_effects() -> void:
-	if not _tfx:
-		return
-
-	for btn in [keep_playing_button, enter_shop_button]:
-		if btn:
-			if not btn.mouse_entered.is_connected(_tfx.button_hover):
-				btn.mouse_entered.connect(_tfx.button_hover.bind(btn))
-			if not btn.mouse_exited.is_connected(_tfx.button_unhover):
-				btn.mouse_exited.connect(_tfx.button_unhover.bind(btn))
+	return
 
 
 ## _start_idle_animations()
@@ -455,8 +435,6 @@ func _stop_idle_animations() -> void:
 func _on_keep_playing_pressed() -> void:
 	if _is_dismissing:
 		return
-	if _tfx:
-		_tfx.button_press(keep_playing_button)
 	dismiss()
 	# Signal emitted after dismiss animation finishes
 	_pending_signal = "keep_playing"
@@ -465,8 +443,6 @@ func _on_keep_playing_pressed() -> void:
 func _on_enter_shop_pressed() -> void:
 	if _is_dismissing:
 		return
-	if _tfx:
-		_tfx.button_press(enter_shop_button)
 	dismiss()
 	_pending_signal = "enter_shop"
 

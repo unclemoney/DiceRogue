@@ -6,6 +6,7 @@ signal power_up_deselected(power_up_id: String)
 signal power_up_sell_requested(power_up_id: String)
 
 const KioskTileScene = preload("res://Scenes/PowerUp/kiosk_tile.tscn")
+const GlassButtonFactoryRef = preload("res://Scripts/UI/glass_button_factory.gd")
 
 @export var data: PowerUpData
 @export var use_kiosk_tile: bool = true
@@ -27,7 +28,7 @@ const KioskTileScene = preload("res://Scenes/PowerUp/kiosk_tile.tscn")
 var card_art: TextureRect
 var label_bg: PanelContainer
 var hover_label: Label
-var sell_button: Button
+var sell_button
 var card_frame: TextureRect
 var card_info: Control
 var card_title: RichTextLabel
@@ -53,7 +54,6 @@ var _hover_card_tween: Tween
 
 var _sell_mode_active := false
 var _sell_button_pressed := false
-@onready var _tfx := get_node("/root/TweenFXHelper")
 
 func _ready() -> void:
 	print("[PowerUpIcon] Initializing...")
@@ -156,6 +156,7 @@ func _setup_legacy_card() -> void:
 	# Convert angles to radians
 	angle_x_max = deg_to_rad(angle_x_max)
 	angle_y_max = deg_to_rad(angle_y_max)
+	_convert_sell_button_to_glass()
 
 	# Apply textures and text if we have data
 	_apply_data_to_ui()
@@ -168,7 +169,7 @@ func _setup_legacy_card() -> void:
 		_apply_hover_tooltip_style(label_bg)
 		_apply_hover_label_style(hover_label)
 		label_bg.theme = load("res://Resources/UI/powerup_hover_theme.tres")
-	if sell_button:
+	if sell_button and sell_button is Button:
 		_apply_action_button_style(sell_button)
 		sell_button.theme = load("res://Resources/UI/powerup_hover_theme.tres")
 
@@ -206,6 +207,19 @@ func _process(delta: float) -> void:
 	_update_shadow(delta)
 	_handle_mouse_following(delta)
 	_update_rotation(delta)
+
+
+func _convert_sell_button_to_glass() -> void:
+	if sell_button == null:
+		return
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as Font
+	if sell_button is Button:
+		sell_button = GlassButtonFactoryRef.replace_button(sell_button, GlassButtonFactoryRef.palette_item_action(), 12, vcr_font, "SELL")
+	if sell_button and sell_button.has_method("set_uniform_padding"):
+		sell_button.set_uniform_padding(8, 6)
+		sell_button.set_button_focus_mode(Control.FOCUS_NONE)
+		if not sell_button.pressed.is_connected(_on_sell_button_pressed):
+			sell_button.pressed.connect(_on_sell_button_pressed)
 
 func _update_shadow(_delta: float) -> void:
 	if not shadow:
@@ -293,19 +307,15 @@ func _create_card_structure() -> void:
 	card_info.theme = load("res://Resources/UI/powerup_hover_theme.tres")
 	
 	# Create SellButton
-	sell_button = Button.new()
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as Font
+	sell_button = GlassButtonFactoryRef.create_button("SELL", Vector2(60, 45), GlassButtonFactoryRef.palette_item_action(), 12, vcr_font)
 	sell_button.name = "SellButton"
-	sell_button.text = "SELL"
 	sell_button.visible = false
 	sell_button.z_index = 3
 	sell_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	sell_button.size = Vector2(60, 45)
-
-	# Apply button styling directly
-	_apply_action_button_style(sell_button)
+	sell_button.set_uniform_padding(8, 6)
 	_update_sell_button_text()
-	sell_button.pressed.connect(func(): _tfx.button_press(sell_button))
-	sell_button.theme = load("res://Resources/UI/powerup_hover_theme.tres")
 	add_child(sell_button)
 	
 	# Create LabelBg

@@ -2,6 +2,8 @@
 extends Control
 class_name ConsumableIcon
 
+const GlassButtonFactoryRef = preload("res://Scripts/UI/glass_button_factory.gd")
+
 signal consumable_used(consumable_id: String)
 signal consumable_sell_requested(consumable_id: String)
 
@@ -31,8 +33,8 @@ const COUPON_TITLE_MIN_FONT_SIZE: int = 18
 var card_art: TextureRect
 var label_bg: PanelContainer
 var hover_label: Label
-var sell_button: Button
-var use_button: Button
+var sell_button
+var use_button
 var card_frame: TextureRect
 var card_info: Control  # Can be VBoxContainer initially, then PanelContainer after styling
 var card_title: RichTextLabel
@@ -113,6 +115,7 @@ func _ready() -> void:
 		print("[ConsumableIcon] WARNING: DescriptionLabel node missing in coupon mode")
 	if coupon_mode and not coupon_flavor_label:
 		print("[ConsumableIcon] WARNING: FlavorLabel node missing in coupon mode")
+	_convert_action_buttons_to_glass()
 
 	# Setup card visuals
 	if coupon_mode:
@@ -136,24 +139,26 @@ func _ready() -> void:
 		sell_button.text = "SELL"
 		if not sell_button.is_connected("pressed", _on_sell_button_pressed):
 			sell_button.pressed.connect(_on_sell_button_pressed)
-		if not sell_button.is_connected("mouse_entered", _tfx.button_hover.bind(sell_button)):
-			sell_button.mouse_entered.connect(_tfx.button_hover.bind(sell_button))
-		if not sell_button.is_connected("mouse_exited", _tfx.button_unhover.bind(sell_button)):
-			sell_button.mouse_exited.connect(_tfx.button_unhover.bind(sell_button))
-		if not sell_button.is_connected("pressed", _tfx.button_press.bind(sell_button)):
-			sell_button.pressed.connect(_tfx.button_press.bind(sell_button))
+		if coupon_mode:
+			if not sell_button.is_connected("mouse_entered", _tfx.button_hover.bind(sell_button)):
+				sell_button.mouse_entered.connect(_tfx.button_hover.bind(sell_button))
+			if not sell_button.is_connected("mouse_exited", _tfx.button_unhover.bind(sell_button)):
+				sell_button.mouse_exited.connect(_tfx.button_unhover.bind(sell_button))
+			if not sell_button.is_connected("pressed", _tfx.button_press.bind(sell_button)):
+				sell_button.pressed.connect(_tfx.button_press.bind(sell_button))
 	if use_button:
 		_use_button_visible = coupon_mode
 		use_button.visible = coupon_mode
 		_refresh_use_button_state()
 		if not use_button.is_connected("pressed", _on_use_button_pressed):
 			use_button.pressed.connect(_on_use_button_pressed)
-		if not use_button.is_connected("mouse_entered", _tfx.button_hover.bind(use_button)):
-			use_button.mouse_entered.connect(_tfx.button_hover.bind(use_button))
-		if not use_button.is_connected("mouse_exited", _tfx.button_unhover.bind(use_button)):
-			use_button.mouse_exited.connect(_tfx.button_unhover.bind(use_button))
-		if not use_button.is_connected("pressed", _tfx.button_press.bind(use_button)):
-			use_button.pressed.connect(_tfx.button_press.bind(use_button))
+		if coupon_mode:
+			if not use_button.is_connected("mouse_entered", _tfx.button_hover.bind(use_button)):
+				use_button.mouse_entered.connect(_tfx.button_hover.bind(use_button))
+			if not use_button.is_connected("mouse_exited", _tfx.button_unhover.bind(use_button)):
+				use_button.mouse_exited.connect(_tfx.button_unhover.bind(use_button))
+			if not use_button.is_connected("pressed", _tfx.button_press.bind(use_button)):
+				use_button.pressed.connect(_tfx.button_press.bind(use_button))
 	if shadow:
 		shadow.modulate = Color(0.0, 0.0, 0.0, 0.5)
 		shadow.position = Vector2(5, 5)
@@ -165,10 +170,10 @@ func _ready() -> void:
 		_apply_hover_label_style(hover_label)
 	
 	# Apply direct styling to scene-based buttons if they exist
-	if sell_button:
+	if sell_button and sell_button is Button:
 		print("[ConsumableIcon] Applying direct styling to scene-based SELL button")
 		_apply_action_button_style(sell_button)
-	if use_button:
+	if use_button and use_button is Button:
 		print("[ConsumableIcon] Applying direct styling to scene-based USE button")
 		_apply_action_button_style(use_button)
 		
@@ -220,6 +225,22 @@ func _find_named_node(node_name: String) -> Node:
 	if direct_node:
 		return direct_node
 	return find_child(node_name, true, false)
+
+
+func _convert_action_buttons_to_glass() -> void:
+	if coupon_mode:
+		return
+	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as Font
+	if sell_button is Button:
+		sell_button = GlassButtonFactoryRef.replace_button(sell_button, GlassButtonFactoryRef.palette_item_action(), 11, vcr_font, "SELL")
+	if use_button is Button:
+		use_button = GlassButtonFactoryRef.replace_button(use_button, GlassButtonFactoryRef.palette_positive(), 11, vcr_font, "USE")
+	if sell_button and sell_button.has_method("set_uniform_padding"):
+		sell_button.set_uniform_padding(6, 4)
+		sell_button.set_button_focus_mode(Control.FOCUS_NONE)
+	if use_button and use_button.has_method("set_uniform_padding"):
+		use_button.set_uniform_padding(6, 4)
+		use_button.set_button_focus_mode(Control.FOCUS_NONE)
 
 func _update_default_position() -> void:
 	# Wait for one frame to ensure layout is complete
@@ -363,41 +384,27 @@ func _create_card_structure() -> void:
 	print("[DEBUG] card_info children: ", card_info.get_children())
 	
 	# Create SellButton
-	sell_button = Button.new()
+	sell_button = GlassButtonFactoryRef.create_button("SELL", Vector2(44, 31), GlassButtonFactoryRef.palette_item_action(), 11)
 	sell_button.name = "SellButton"
-	sell_button.text = "SELL"
 	sell_button.visible = false
 	sell_button.z_index = 3
 	sell_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	sell_button.size = Vector2(44, 31)
 	sell_button.position = Vector2(76, 0)  # Position at top right (120 - 44)
 	sell_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	sell_button.pressed.connect(_on_sell_button_pressed)
-	sell_button.mouse_entered.connect(func(): _tfx.button_hover(sell_button))
-	sell_button.mouse_exited.connect(func(): _tfx.button_unhover(sell_button))
-	sell_button.pressed.connect(func(): _tfx.button_press(sell_button))
-	#sell_button.theme = load("res://Resources/UI/powerup_hover_theme.tres")
+	sell_button.set_uniform_padding(6, 4)
 	add_child(sell_button)
 	
 	# Create UseButton
-	use_button = Button.new()
+	use_button = GlassButtonFactoryRef.create_button("USE", Vector2(44, 31), GlassButtonFactoryRef.palette_positive(), 11)
 	use_button.name = "UseButton"
-	use_button.text = "USE"
 	use_button.visible = false
 	use_button.z_index = 3
 	use_button.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	use_button.size = Vector2(44, 31)
 	use_button.position = Vector2(76, 41)  # Position at top left (120 - 44)
 	use_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	
-	# Apply button styling directly
-	_apply_action_button_style(use_button)
-	
-	use_button.pressed.connect(_on_use_button_pressed)
-	use_button.mouse_entered.connect(func(): _tfx.button_hover(use_button))
-	use_button.mouse_exited.connect(func(): _tfx.button_unhover(use_button))
-	use_button.pressed.connect(func(): _tfx.button_press(use_button))
-	use_button.theme = load("res://Resources/UI/powerup_hover_theme.tres")
+	use_button.set_uniform_padding(6, 4)
 	add_child(use_button)
 	
 	# Create LabelBg

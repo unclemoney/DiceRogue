@@ -1,5 +1,7 @@
 extends Control
 
+const GlassButtonFactoryRef = preload("res://Scripts/UI/glass_button_factory.gd")
+
 ## MainMenu
 ##
 ## The main menu screen for Guhtzee. Features an animated title,
@@ -33,13 +35,13 @@ var _title_letters: Array[TitleLetter] = []
 var _subtitle_letters: Array[TitleLetter] = []
 var playing_as_label: Label
 var profile_button_container: HBoxContainer
-var profile_buttons: Array[Button] = []
+var profile_buttons: Array = []
 var button_container: VBoxContainer
-var new_game_button: Button
-var continue_button: Button
-var settings_button: Button
-var tutorial_button: Button
-var quit_button: Button
+var new_game_button
+var continue_button
+var settings_button
+var tutorial_button
+var quit_button
 var _menu_panel: PanelContainer
 var _menu_animator: ContainerAnimator
 var _profile_panel: PanelContainer
@@ -375,48 +377,14 @@ func _build_profile_section(parent: Control) -> void:
 ##
 ## Creates a profile selection button for the given slot.
 ## Styling is applied based on use_theme_styling bool.
-func _create_profile_button(slot: int) -> Button:
-	var btn = Button.new()
+func _create_profile_button(slot: int):
+	var btn = GlassButtonFactoryRef.create_button("", Vector2(180, 60), _build_menu_palette(Color(0.4, 0.8, 0.4, 1.0)), 16, vcr_font)
 	btn.name = "ProfileButton%d" % slot
-	btn.custom_minimum_size = Vector2(180, 60)
-	btn.add_theme_font_override("font", vcr_font)
-	btn.add_theme_font_size_override("font_size", 16)
-	
-	# Apply styling based on toggle
-	if use_theme_styling and powerup_hover_theme:
-		# Use texture-based theme styling
-		btn.theme = powerup_hover_theme
-	else:
-		# Use programmatic styling (original)
-		var normal_style = StyleBoxFlat.new()
-		normal_style.bg_color = Color(0.15, 0.12, 0.18, 0.9)
-		normal_style.border_color = Color(0.4, 0.35, 0.45, 1.0)
-		normal_style.set_border_width_all(2)
-		normal_style.set_corner_radius_all(8)
-		normal_style.content_margin_left = 10
-		normal_style.content_margin_right = 10
-		normal_style.content_margin_top = 10
-		normal_style.content_margin_bottom = 10
-		btn.add_theme_stylebox_override("normal", normal_style)
-		
-		var hover_style = normal_style.duplicate()
-		hover_style.bg_color = Color(0.2, 0.15, 0.25, 0.95)
-		hover_style.border_color = Color(0.6, 0.5, 0.7, 1.0)
-		btn.add_theme_stylebox_override("hover", hover_style)
-		
-		var pressed_style = normal_style.duplicate()
-		pressed_style.bg_color = Color(0.25, 0.2, 0.3, 1.0)
-		pressed_style.border_color = Color(0.7, 0.6, 0.8, 1.0)
-		btn.add_theme_stylebox_override("pressed", pressed_style)
+	btn.set_uniform_padding(10, 8)
 	
 	# Connect signals
 	btn.pressed.connect(_on_profile_button_pressed.bind(slot))
-	btn.gui_input.connect(_on_profile_button_gui_input.bind(slot))
-	
-	# TweenFX hover/press effects
-	btn.mouse_entered.connect(func(): _tfx.button_hover(btn))
-	btn.mouse_exited.connect(func(): _tfx.button_unhover(btn))
-	btn.pressed.connect(func(): _tfx.button_press(btn))
+	btn.get_overlay_button().gui_input.connect(_on_profile_button_gui_input.bind(slot))
 	
 	return btn
 
@@ -485,13 +453,6 @@ func _build_navigation_section(parent: Control) -> void:
 	quit_button.pressed.connect(_on_quit_pressed)
 	button_container.add_child(quit_button)
 	
-	# Connect TweenFX hover/press effects to all nav buttons
-	var nav_buttons = [new_game_button, continue_button, settings_button, tutorial_button, quit_button]
-	for btn in nav_buttons:
-		btn.mouse_entered.connect(func(): _tfx.button_hover(btn))
-		btn.mouse_exited.connect(func(): _tfx.button_unhover(btn))
-		btn.pressed.connect(func(): _tfx.button_press(btn))
-	
 	# ContainerAnimator — staggered cascade entrance for nav buttons
 	_menu_animator = ContainerAnimator.new()
 	_menu_animator.name = "MenuAnimator"
@@ -507,42 +468,29 @@ func _build_navigation_section(parent: Control) -> void:
 ##
 ## Creates a navigation button with consistent styling.
 ## Styling is applied based on use_theme_styling bool.
-func _create_nav_button(text: String, accent_color: Color) -> Button:
-	var btn = Button.new()
-	btn.text = text
-	btn.custom_minimum_size = Vector2(280, 48)
-	btn.add_theme_font_override("font", vcr_font)
-	btn.add_theme_font_size_override("font_size", 26)
-	
-	# Apply styling based on toggle
-	if use_theme_styling and powerup_hover_theme:
-		# Use texture-based theme styling
-		btn.theme = powerup_hover_theme
-	else:
-		# Use programmatic styling (original)
-		# Normal style
-		var normal_style = StyleBoxFlat.new()
-		normal_style.bg_color = Color(0.12, 0.1, 0.15, 0.95)
-		normal_style.border_color = accent_color * 0.7
-		normal_style.set_border_width_all(3)
-		normal_style.set_corner_radius_all(10)
-		btn.add_theme_stylebox_override("normal", normal_style)
-		btn.add_theme_color_override("font_color", accent_color)
-		
-		# Hover style
-		var hover_style = normal_style.duplicate()
-		hover_style.bg_color = Color(0.18, 0.15, 0.22, 0.98)
-		hover_style.border_color = accent_color
-		btn.add_theme_stylebox_override("hover", hover_style)
-		btn.add_theme_color_override("font_hover_color", accent_color * 1.2)
-		
-		# Pressed style
-		var pressed_style = normal_style.duplicate()
-		pressed_style.bg_color = accent_color * 0.3
-		pressed_style.border_color = accent_color * 1.2
-		btn.add_theme_stylebox_override("pressed", pressed_style)
-		btn.add_theme_color_override("font_pressed_color", Color.WHITE)
-	
+func _create_nav_button(text: String, accent_color: Color):
+	var btn = GlassButtonFactoryRef.create_button(text, Vector2(280, 48), _build_menu_palette(accent_color), 26, vcr_font)
+	btn.set_uniform_padding(14, 8)
+	return btn
+
+
+func _build_menu_palette(accent_color: Color) -> Dictionary:
+	return GlassButtonFactoryRef.build_palette(
+		accent_color.darkened(0.58),
+		accent_color.darkened(0.32),
+		accent_color,
+		accent_color.lightened(0.18),
+		Color(0.968627, 0.941176, 1.0, 1.0),
+		Color(0.968627, 0.941176, 1.0, 1.0),
+		Color(0.129412, 0.121569, 0.2, 1.0),
+		1
+	)
+
+
+func _create_dialog_glass_button(label_text: String, palette: Dictionary, button_size: Vector2, font_size: int = 14):
+	var btn = GlassButtonFactoryRef.create_button(label_text, button_size, palette, font_size, vcr_font)
+	btn.set_uniform_padding(10, 6)
+	btn.set_button_focus_mode(Control.FOCUS_NONE)
 	return btn
 
 
@@ -583,23 +531,36 @@ func _build_rename_dialog() -> void:
 	# Add separator before delete button
 	var separator = HSeparator.new()
 	dialog_vbox.add_child(separator)
+
+	var button_row = HBoxContainer.new()
+	button_row.alignment = BoxContainer.ALIGNMENT_END
+	button_row.add_theme_constant_override("separation", 10)
+	dialog_vbox.add_child(button_row)
+
+	var cancel_btn = _create_dialog_glass_button("CANCEL", _build_menu_palette(Color(0.5, 0.5, 0.7, 1.0)), Vector2(110, 38), 14)
+	cancel_btn.pressed.connect(_on_rename_canceled)
+	button_row.add_child(cancel_btn)
+
+	var rename_btn = _create_dialog_glass_button("RENAME", _build_menu_palette(Color(0.3, 0.7, 0.4, 1.0)), Vector2(120, 38), 14)
+	rename_btn.pressed.connect(_on_rename_confirmed)
+	button_row.add_child(rename_btn)
 	
 	# Add delete profile button
-	var delete_btn = Button.new()
-	delete_btn.text = "DELETE PROFILE"
-	delete_btn.add_theme_font_override("font", vcr_font)
-	delete_btn.add_theme_font_size_override("font_size", 14)
-	delete_btn.add_theme_color_override("font_color", Color(0.9, 0.3, 0.3, 1.0))
-	delete_btn.add_theme_color_override("font_hover_color", Color(1.0, 0.4, 0.4, 1.0))
+	var delete_btn = _create_dialog_glass_button("DELETE PROFILE", _build_menu_palette(Color(0.9, 0.3, 0.3, 1.0)), Vector2(180, 38), 14)
 	delete_btn.pressed.connect(_on_delete_profile_button_pressed)
-	delete_btn.mouse_entered.connect(func(): _tfx.button_hover(delete_btn))
-	delete_btn.mouse_exited.connect(func(): _tfx.button_unhover(delete_btn))
 	dialog_vbox.add_child(delete_btn)
 	
 	# Add the VBox to the dialog's content area
 	rename_dialog.add_child(dialog_vbox)
+	var rename_ok = rename_dialog.get_ok_button()
+	if rename_ok:
+		rename_ok.visible = false
+		rename_ok.disabled = true
+	var rename_cancel = rename_dialog.get_cancel_button()
+	if rename_cancel:
+		rename_cancel.visible = false
+		rename_cancel.disabled = true
 	
-	rename_dialog.confirmed.connect(_on_rename_confirmed)
 	rename_dialog.canceled.connect(_on_rename_canceled)
 	
 	add_child(rename_dialog)
@@ -621,8 +582,30 @@ func _build_delete_dialog() -> void:
 	# Apply theme
 	if powerup_hover_theme:
 		delete_dialog.theme = powerup_hover_theme
+
+	var button_row = HBoxContainer.new()
+	button_row.alignment = BoxContainer.ALIGNMENT_END
+	button_row.add_theme_constant_override("separation", 10)
+
+	var cancel_btn = _create_dialog_glass_button("CANCEL", _build_menu_palette(Color(0.5, 0.5, 0.7, 1.0)), Vector2(110, 38), 14)
+	cancel_btn.pressed.connect(_on_delete_canceled)
+	button_row.add_child(cancel_btn)
+
+	var confirm_btn = _create_dialog_glass_button("YES, DELETE", _build_menu_palette(Color(0.9, 0.3, 0.3, 1.0)), Vector2(150, 38), 14)
+	confirm_btn.pressed.connect(_on_delete_confirmed)
+	button_row.add_child(confirm_btn)
+
+	delete_dialog.add_child(button_row)
+	var delete_ok = delete_dialog.get_ok_button()
+	if delete_ok:
+		delete_ok.visible = false
+		delete_ok.disabled = true
+	var delete_cancel = delete_dialog.get_cancel_button()
+	if delete_cancel:
+		delete_cancel.visible = false
+		delete_cancel.disabled = true
 	
-	delete_dialog.confirmed.connect(_on_delete_confirmed)
+	delete_dialog.canceled.connect(_on_delete_canceled)
 	
 	add_child(delete_dialog)
 
@@ -680,23 +663,11 @@ func _update_profile_buttons() -> void:
 ##
 ## Sets the visual state of a profile button as active or inactive.
 ## Only works with programmatic styling; theme-based styling ignores this.
-func _set_profile_button_active(button: Button, active: bool) -> void:
-	# Skip if using theme-based styling
-	if use_theme_styling:
+func _set_profile_button_active(button, active: bool) -> void:
+	if not button:
 		return
-	
-	var style = button.get_theme_stylebox("normal")
-	if not style:
-		return
-	
-	style = style.duplicate() as StyleBoxFlat
-	if active:
-		style.border_color = Color(0.4, 0.8, 0.4, 1.0)  # Green border for active
-		style.set_border_width_all(3)
-	else:
-		style.border_color = Color(0.4, 0.35, 0.45, 1.0)
-		style.set_border_width_all(2)
-	button.add_theme_stylebox_override("normal", style)
+	if button.has_method("set_toggled"):
+		button.set_toggled(active)
 
 
 ## _update_playing_as_label()
@@ -815,6 +786,7 @@ func _on_rename_confirmed() -> void:
 	_update_profile_buttons()
 	_update_playing_as_label()
 	profile_selected.emit(_renaming_slot)
+	rename_dialog.hide()
 
 
 ## _on_rename_canceled()
@@ -822,6 +794,8 @@ func _on_rename_confirmed() -> void:
 ## Handler for when rename dialog is canceled.
 func _on_rename_canceled() -> void:
 	_renaming_slot = 0
+	if rename_dialog:
+		rename_dialog.hide()
 
 
 ## _on_delete_profile_button_pressed()
@@ -864,6 +838,14 @@ func _on_delete_confirmed() -> void:
 	_update_profile_buttons()
 	_update_playing_as_label()
 	_deleting_slot = 0
+	if delete_dialog:
+		delete_dialog.hide()
+
+
+func _on_delete_canceled() -> void:
+	_deleting_slot = 0
+	if delete_dialog:
+		delete_dialog.hide()
 
 
 ## _erase_profile(slot)

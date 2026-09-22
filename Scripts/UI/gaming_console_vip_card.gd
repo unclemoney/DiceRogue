@@ -2,6 +2,7 @@ extends Control
 class_name GamingConsoleVIPCard
 
 const GamingConsoleCardFXRef = preload("res://Scripts/UI/gaming_console_card_fx.gd")
+const GlassButtonFactoryRef = preload("res://Scripts/UI/glass_button_factory.gd")
 
 signal activate_pressed
 
@@ -23,7 +24,7 @@ var _status_label: Label = null
 var _art_panel: PanelContainer = null
 var _artwork: TextureRect = null
 var _description_label: Label = null
-var _activate_button: Button = null
+var _activate_button = null
 var _close_hint_label: Label = null
 var _art_shader_material: ShaderMaterial = null
 var _shader_time: float = 0.0
@@ -70,7 +71,8 @@ func set_button_state(text: String, disabled: bool, accent_color: Color, pulse: 
 		return
 	_activate_button.text = text
 	_activate_button.disabled = disabled
-	_apply_button_style(_activate_button, accent_color, 13)
+	_activate_button.set_palette(_build_activate_palette(accent_color))
+	_activate_button.set_font_size(13)
 	if _tfx:
 		if pulse and not disabled:
 			_tfx.idle_pulse(_activate_button)
@@ -204,12 +206,9 @@ func _build_ui() -> void:
 	footer.add_theme_constant_override("separation", 8)
 	content.add_child(footer)
 
-	_activate_button = Button.new()
-	_activate_button.text = "ACTIVATE"
-	_activate_button.custom_minimum_size = Vector2(0.0, 42.0)
+	_activate_button = GlassButtonFactoryRef.create_button("ACTIVATE", Vector2(0.0, 42.0), _build_activate_palette(PANEL_ACCENT), 13, VCR_FONT)
 	_activate_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_activate_button.add_theme_font_override("font", VCR_FONT)
-	_apply_button_style(_activate_button, PANEL_ACCENT, 13)
+	_activate_button.set_uniform_padding(10, 6)
 	_activate_button.pressed.connect(_on_activate_button_pressed)
 	footer.add_child(_activate_button)
 
@@ -223,10 +222,19 @@ func _build_ui() -> void:
 	_close_hint_label.add_theme_constant_override("outline_size", 1)
 	footer.add_child(_close_hint_label)
 
-	if _tfx:
-		_activate_button.mouse_entered.connect(_tfx.button_hover.bind(_activate_button))
-		_activate_button.mouse_exited.connect(_tfx.button_unhover.bind(_activate_button))
-		_activate_button.pressed.connect(_tfx.button_press.bind(_activate_button))
+
+
+func _build_activate_palette(accent_color: Color) -> Dictionary:
+	return GlassButtonFactoryRef.build_palette(
+		accent_color.darkened(0.42),
+		accent_color.darkened(0.18),
+		accent_color,
+		accent_color.lightened(0.12),
+		PANEL_TEXT,
+		PANEL_TEXT,
+		PANEL_OUTLINE,
+		1
+	)
 
 
 func _apply_data() -> void:
