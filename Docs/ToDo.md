@@ -28,8 +28,8 @@
 
 ## SYS:Gameplay — Core Gameplay & Balance
 
-- [X] `P0-Critical` Odds only mod rolled a 2. Can't reproduce at the moment. Still not reproduced after thurough testing.  Marked as completed for now.
-- [ ] `P1-Major` Best Hand calculated 426 for Chance. Player selected small straight and still got 426. Hand logic is wrong.
+- [X] `P0-Critical` Odds only mod rolled a 2. Fixed with mod update.
+- [X] `P1-Major` Best Hand calculated 426 for Chance. Player selected small straight and still got 426. Hand logic is wrong. Fixed with update to scratch logic.
 - [X] `P1-Major` Abstinance debuff needs to be checked. Verify it works as designed.
 - [X] `P2-Minor` Challenge or Debuff that makes powerups expire after 3 rounds? This is no longer needed.
 - [ ] `P2-Minor` Clarify MODS are only applied to one dice at a time.
@@ -40,9 +40,10 @@
 - [ ] `P2-Minor` Upper bonus multiplier power up. Add a new PowerUp that will multiply Upper Section Bonus.
 - [X] `P2-Minor` Bonus Yahtzee category? That's gone. We can add that to the YAHTZEE line.
 - [ ] `P2-Minor` Chore pressure is not enough, needs more balance? Or are we still increasing with more powerful powerups?
-  - Clarify: Which rounds feel wrong? Higher or lower scores? What is the target?
-- [ ] `NEEDS-DETAIL` Play PowerUp for double acting feature for one turn per round?
-  - Clarify: Is this a new powerup idea or a change to an existing one? Which powerup?
+- [ ] `P2-Minor` Sweet Sixteen needs to be assessed and fixed or cut.
+- [ ] `P2-Minor` Which rounds feel wrong? Higher or lower scores? What is the target? Round 4 feels too hard.
+- [ ] `P2-Minor` Play PowerUp for double acting feature for one turn per round?
+  - Clarify: This will be turned into a new Console action in a refactor later.
 
 ## SYS:Chore — Chore System & Mom
 

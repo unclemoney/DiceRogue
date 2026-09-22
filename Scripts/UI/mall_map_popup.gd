@@ -29,16 +29,18 @@ var overlay: ColorRect
 var panel: PanelContainer
 var _title_label: Label
 var _zone_label: Label
-var _close_button: Button
+var _close_button: GlassActionButton
 var _map_view: SubViewportContainer
 var _map_viewport: SubViewport
 var _map_root: Node2D
+var _directory_grid: GridContainer
 var _tooltip_panel: PanelContainer
 var _tooltip_label: Label
 
 var _zones_by_channel: Dictionary = {}
 var _store_markers: Dictionary = {}  # channel -> Array[Node2D] (marker Area2D roots)
 var _pulse_tween: Tween
+var _tooltip_show_tween: Tween
 var _original_pos := Vector2.ZERO
 var _closing := false
 
@@ -130,6 +132,9 @@ func _build_ui() -> void:
 	panel_style.set_border_width_all(4)
 	panel_style.set_corner_radius_all(20)
 	panel_style.corner_detail = 8
+	panel_style.shadow_color = Color(0.0, 0.0, 0.0, 0.45)
+	panel_style.shadow_size = 12
+	panel_style.shadow_offset = Vector2(0, 6)
 	panel.add_theme_stylebox_override("panel", panel_style)
 	add_child(panel)
 
@@ -163,19 +168,16 @@ func _build_ui() -> void:
 	_zone_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	header.add_child(_zone_label)
 
-	_close_button = Button.new()
+	_close_button = GlassActionButton.new()
 	_close_button.name = "CloseButton"
-	_close_button.text = "CLOSE"
-	_close_button.custom_minimum_size = Vector2(110, 34)
-	_close_button.add_theme_font_override("font", VCR_FONT)
-	_close_button.add_theme_font_size_override("font_size", 14)
+	_close_button.configure("CLOSE", Vector2(110, 34), MallMapRendererScript.MALL_GLASS_PALETTE, 14, VCR_FONT)
 	_close_button.pressed.connect(close)
-	_connect_button_fx(_close_button)
 	header.add_child(_close_button)
 
 	_map_view = SubViewportContainer.new()
 	_map_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_map_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_map_view.size_flags_vertical = Control.SIZE_FILL
+	_map_view.custom_minimum_size = Vector2(0, MallMapLayoutScript.MAP_VIEW_HEIGHT)
 	_map_view.stretch = true
 	_map_view.mouse_filter = Control.MOUSE_FILTER_STOP
 	vbox.add_child(_map_view)
@@ -186,13 +188,57 @@ func _build_ui() -> void:
 	_map_viewport.transparent_bg = true
 	_map_viewport.handle_input_locally = true
 	_map_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	_map_viewport.size = MallMapLayoutScript.get_board_size()
+	_map_viewport.size = MallMapLayoutScript.get_map_view_size()
 	_map_viewport.physics_object_picking = true
 	_map_view.add_child(_map_viewport)
 
 	_map_root = Node2D.new()
 	_map_root.name = "MapRoot"
 	_map_viewport.add_child(_map_root)
+
+	var directory_separator := HSeparator.new()
+	vbox.add_child(directory_separator)
+
+	# Cream paper shell so the shared directory builder's dark-on-cream text
+	# reads the same as on the game-start selector.
+	var directory_shell := PanelContainer.new()
+	directory_shell.name = "DirectoryShell"
+	directory_shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	directory_shell.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var directory_style := StyleBoxFlat.new()
+	directory_style.bg_color = Color(0.96, 0.91, 0.80, 0.98)
+	directory_style.border_color = Color(0.74, 0.60, 0.40, 1.0)
+	directory_style.set_border_width_all(2)
+	directory_style.set_corner_radius_all(10)
+	directory_shell.add_theme_stylebox_override("panel", directory_style)
+	vbox.add_child(directory_shell)
+
+	var directory_margin := MarginContainer.new()
+	directory_margin.add_theme_constant_override("margin_left", 10)
+	directory_margin.add_theme_constant_override("margin_right", 10)
+	directory_margin.add_theme_constant_override("margin_top", 6)
+	directory_margin.add_theme_constant_override("margin_bottom", 8)
+	directory_shell.add_child(directory_margin)
+
+	var directory_vbox := VBoxContainer.new()
+	directory_vbox.add_theme_constant_override("separation", 2)
+	directory_margin.add_child(directory_vbox)
+
+	var directory_title := Label.new()
+	directory_title.text = "STORE DIRECTORY"
+	directory_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	directory_title.add_theme_font_override("font", VCR_FONT)
+	directory_title.add_theme_font_size_override("font_size", 16)
+	directory_title.add_theme_color_override("font_color", Color(0.30, 0.22, 0.10))
+	directory_vbox.add_child(directory_title)
+
+	_directory_grid = GridContainer.new()
+	_directory_grid.name = "DirectoryGrid"
+	_directory_grid.columns = 4
+	_directory_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_directory_grid.add_theme_constant_override("h_separation", 6)
+	_directory_grid.add_theme_constant_override("v_separation", 2)
+	directory_vbox.add_child(_directory_grid)
 
 	_tooltip_panel = PanelContainer.new()
 	_tooltip_panel.name = "StoreTooltip"
@@ -223,14 +269,6 @@ func _build_ui() -> void:
 	_tooltip_label.add_theme_font_size_override("font_size", 13)
 	_tooltip_label.add_theme_color_override("font_color", Color(0.96, 0.95, 0.88))
 	tooltip_margin.add_child(_tooltip_label)
-
-
-func _connect_button_fx(button: BaseButton) -> void:
-	if _tfx == null:
-		return
-	button.mouse_entered.connect(_tfx.button_hover.bind(button))
-	button.mouse_exited.connect(_tfx.button_unhover.bind(button))
-	button.pressed.connect(_tfx.button_press.bind(button))
 
 
 func _position_to_viewport() -> void:
@@ -267,11 +305,16 @@ func _build_map_content() -> void:
 		channel_manager.assign_stores_to_zones()
 
 	MallMapRendererScript.build_directory_backdrop(_map_root)
-	# The popup has no staged reveal: corridors and wayfinding show immediately.
-	MallMapRendererScript.build_corridors(_map_root, 1.0)
-	MallMapRendererScript.build_wayfinding_blocks(_map_root, 1.0)
+	# Staged reveal: corridors and wayfinding start hidden and fade in, then
+	# the zones pop in staggered (mirrors the game-start selector entrance).
+	var corridor_lines := MallMapRendererScript.build_corridors(_map_root, 0.0)
+	var wayfinding_nodes := MallMapRendererScript.build_wayfinding_blocks(_map_root, 0.0)
 
 	if channel_manager == null:
+		for corridor in corridor_lines:
+			corridor.modulate.a = 1.0
+		for block in wayfinding_nodes:
+			block.modulate.a = 1.0
 		return
 
 	_zones_by_channel = MallMapRendererScript.build_zones(_map_root, channel_manager)
@@ -284,7 +327,49 @@ func _build_map_content() -> void:
 			_zones_by_channel[channel].set_selected(channel == current_channel, false)
 		_build_store_markers(channel, layout.get("bar_rect", Rect2()), current_channel, current_store_index)
 
+	var zone_order: Array = []
+	for layout in MallMapLayoutScript.get_zone_layouts():
+		zone_order.append(int(layout.get("channel", 1)))
+	zone_order.sort()
+	MallMapRendererScript.build_store_directory(_directory_grid, channel_manager, zone_order)
+
 	_update_header()
+	_play_staged_reveal(corridor_lines, wayfinding_nodes)
+
+
+## _play_staged_reveal(corridor_lines, wayfinding_nodes) -> void
+##
+## Replays the selector's staged entrance inside the popup: corridor trace,
+## wayfinding fade, staggered zone pop-in, then the store markers fade in.
+func _play_staged_reveal(corridor_lines: Array, wayfinding_nodes: Array) -> void:
+	var delay := 0.0
+	for corridor in corridor_lines:
+		var tween := create_tween()
+		tween.tween_interval(delay)
+		tween.tween_property(corridor, "modulate:a", 1.0, 0.18)
+		delay += 0.06
+
+	var block_delay := 0.08
+	for block in wayfinding_nodes:
+		var block_tween := create_tween()
+		block_tween.tween_interval(block_delay)
+		block_tween.tween_property(block, "modulate:a", 1.0, 0.16)
+		block_delay += 0.04
+
+	var zone_delay := 0.12
+	var zone_channels := _zones_by_channel.keys()
+	zone_channels.sort()
+	for channel in zone_channels:
+		_zones_by_channel[channel].play_reveal(zone_delay)
+		zone_delay += 0.03
+
+	var marker_delay := zone_delay + 0.08
+	for channel in _store_markers:
+		for marker in _store_markers[channel]:
+			marker.modulate.a = 0.0
+			var marker_tween := create_tween()
+			marker_tween.tween_interval(marker_delay)
+			marker_tween.tween_property(marker, "modulate:a", 1.0, 0.15)
 
 
 func _update_header() -> void:
@@ -411,10 +496,13 @@ func _get_marker_color(state: String) -> Color:
 func _start_marker_pulse(marker: Area2D) -> void:
 	if _pulse_tween and _pulse_tween.is_valid():
 		_pulse_tween.kill()
+	var base_y := marker.position.y
 	_pulse_tween = create_tween()
 	_pulse_tween.set_loops()
-	_pulse_tween.tween_property(marker, "scale", Vector2(1.3, 1.3), 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_pulse_tween.tween_property(marker, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_pulse_tween.tween_property(marker, "scale", Vector2(1.2, 1.2), 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_pulse_tween.parallel().tween_property(marker, "position:y", base_y - 2.0, 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_pulse_tween.chain().tween_property(marker, "scale", Vector2.ONE, 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_pulse_tween.parallel().tween_property(marker, "position:y", base_y, 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
 func _on_marker_hovered(marker: Area2D) -> void:
@@ -441,11 +529,28 @@ func _show_store_tooltip(marker: Area2D) -> void:
 		_tfx.place_tooltip(_tooltip_panel, rect, SIDE_RIGHT, true)
 	else:
 		_tooltip_panel.global_position = rect.end + Vector2(12, -16)
+	_animate_tooltip_in()
+
+
+## _animate_tooltip_in() -> void
+##
+## Tweens the tooltip in with a fade and a slight upward slide. Called after
+## placement so the final position is the tween target.
+func _animate_tooltip_in() -> void:
+	if _tooltip_show_tween and _tooltip_show_tween.is_valid():
+		_tooltip_show_tween.kill()
+	var target_pos := _tooltip_panel.global_position
+	_tooltip_panel.global_position = target_pos + Vector2(0, 8)
+	_tooltip_panel.modulate.a = 0.0
+	_tooltip_show_tween = create_tween()
+	_tooltip_show_tween.set_parallel(true)
+	_tooltip_show_tween.tween_property(_tooltip_panel, "global_position", target_pos, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_tooltip_show_tween.tween_property(_tooltip_panel, "modulate:a", 1.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 func _get_marker_screen_rect(marker: Area2D) -> Rect2:
 	var view_rect := _map_view.get_global_rect()
-	var board_size: Vector2 = MallMapLayoutScript.get_board_size()
+	var board_size: Vector2 = MallMapLayoutScript.get_map_view_size()
 	var board_scale := view_rect.size / board_size
 	var board_rect := Rect2(marker.position - MARKER_SIZE * 0.5, MARKER_SIZE)
 	return Rect2(view_rect.position + board_rect.position * board_scale, board_rect.size * board_scale)
@@ -454,6 +559,8 @@ func _get_marker_screen_rect(marker: Area2D) -> Rect2:
 func _hide_tooltip(animate: bool) -> void:
 	if _tooltip_panel == null:
 		return
+	if _tooltip_show_tween and _tooltip_show_tween.is_valid():
+		_tooltip_show_tween.kill()
 	if animate and _tfx and _tooltip_panel.visible:
 		_tfx.tooltip_fade_out(_tooltip_panel, 0.08)
 	else:

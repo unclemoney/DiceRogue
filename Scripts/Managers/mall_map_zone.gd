@@ -21,6 +21,7 @@ var tooltip_flavor: String = ""
 var label_text: String = ""
 
 var _polygon: Polygon2D
+var _shadow: Polygon2D
 var _outline: Line2D
 var _collision: CollisionPolygon2D
 var _label: Label
@@ -65,6 +66,7 @@ func configure(zone_data: Dictionary, accent_color: Color) -> void:
 	_material.set_shader_parameter("accent_color", _accent_color)
 
 	var polygon_points: PackedVector2Array = zone_data.get("points", PackedVector2Array())
+	_shadow.polygon = polygon_points
 	_polygon.polygon = polygon_points
 	_polygon.uv = _build_uvs(polygon_points)
 	_collision.polygon = polygon_points
@@ -138,6 +140,12 @@ func play_reveal(delay: float) -> Tween:
 
 
 func _ensure_structure() -> void:
+	if _shadow == null:
+		_shadow = Polygon2D.new()
+		_shadow.name = "Shadow"
+		_shadow.color = Color(0.25, 0.18, 0.10, 0.30)
+		_shadow.position = Vector2(3, 4)
+		add_child(_shadow)
 	if _polygon == null:
 		_polygon = Polygon2D.new()
 		_polygon.name = "Fill"

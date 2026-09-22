@@ -58,7 +58,7 @@ func _run_test() -> void:
 	_assert_true(not intersection.is_empty(), "Courtyard diamond should be generated")
 	_assert_true(cross_point.distance_to(frame_center) < 1.0, "Fixed layout courtyard should sit at the frame center")
 	_assert_true(layout_data.get("corridors", []).size() == 4, "Layout should have exactly 4 corridor arms")
-	_assert_true(layout_data.get("wayfinding_blocks", []).is_empty(), "Fixed layout should not emit wayfinding blocks")
+	_assert_true(layout_data.get("wayfinding_blocks", []).size() == 4, "Fixed layout should emit 4 wayfinding blocks")
 	_assert_true(not _zones_overlap(layout_data.get("zones", [])), "Fixed zones should not overlap")
 	_assert_true(_zones_inside_frame(layout_data.get("zones", []), frame), "Fixed zones should stay inside the frame")
 	_assert_true(_zone_labels_inside_polygons(layout_data.get("zones", [])), "Zone labels should sit inside their polygons")

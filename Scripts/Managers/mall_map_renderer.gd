@@ -19,6 +19,20 @@ const SECTION_COLORS := {
 	"major_stores": Color(0.97, 0.46, 0.16, 1.0),
 }
 
+## Mall-core palette for GlassActionButton on the mall screens: dark warm
+## brown glass body, mall-gold accent, warm cream glow/rim/specular.
+const MALL_GLASS_PALETTE := {
+	"accent_color": Color(0.85, 0.62, 0.20, 1.0),
+	"glow_color": Color(0.98, 0.90, 0.66, 1.0),
+	"base_color": Color(0.16, 0.11, 0.08, 0.98),
+	"mid_color": Color(0.26, 0.18, 0.12, 0.98),
+	"rim_color": Color(0.98, 0.95, 0.86, 1.0),
+	"specular_color": Color(0.99, 0.97, 0.90, 1.0),
+	"font_color": Color(0.97, 0.93, 0.82, 1.0),
+	"font_outline_color": Color(0.10, 0.07, 0.05, 1.0),
+	"outline_size": 1,
+}
+
 
 ## get_section_color(section_id) -> Color
 ##
@@ -176,3 +190,71 @@ static func build_zones(map_root: Node2D, channel_manager, on_hovered: Callable 
 		zones[channel] = zone
 
 	return zones
+
+
+## build_store_directory(grid, channel_manager, zone_order) -> void
+##
+## Fills a GridContainer with the mall store directory: one entry per zone
+## (channel number + directory label + dealt store names), section-colored.
+## Shared by the game-start selector and the in-game MallMapPopup so both
+## screens render the identical directory. Text colors assume a cream
+## (mall-paper) background behind the grid.
+static func build_store_directory(grid: GridContainer, channel_manager, zone_order: Array) -> void:
+	if grid == null or channel_manager == null:
+		return
+	for child in grid.get_children():
+		child.queue_free()
+	for channel in zone_order:
+		var entry := HBoxContainer.new()
+		entry.custom_minimum_size = Vector2(118, 22)
+		entry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		entry.add_theme_constant_override("separation", 4)
+		grid.add_child(entry)
+
+		var number_label := Label.new()
+		number_label.text = channel_manager.get_channel_display_text(channel)
+		number_label.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		number_label.add_theme_font_override("font", VCR_FONT)
+		number_label.add_theme_font_size_override("font_size", 16)
+		number_label.add_theme_color_override("font_color", get_section_color(channel_manager.get_selector_section_id(channel)).darkened(0.45))
+		entry.add_child(number_label)
+
+		var text_vbox := VBoxContainer.new()
+		text_vbox.add_theme_constant_override("separation", 0)
+		text_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		entry.add_child(text_vbox)
+
+		var name_label := Label.new()
+		name_label.text = channel_manager.get_selector_directory_label(channel).to_upper()
+		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		name_label.custom_minimum_size = Vector2(88, 0)
+		name_label.add_theme_font_override("font", VCR_FONT)
+		name_label.add_theme_font_size_override("font_size", 16)
+		name_label.add_theme_color_override("font_color", Color(0.24, 0.18, 0.10))
+		text_vbox.add_child(name_label)
+
+		var store_names: Array[String] = []
+		for round_number in range(1, channel_manager.STORES_PER_ZONE + 1):
+			store_names.append(channel_manager.get_store_name(channel, round_number))
+
+		var store_line_index := 0
+		for store_name in store_names:
+			var store_line_label := Label.new()
+			store_line_label.text = store_name
+			store_line_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			store_line_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			store_line_label.add_theme_font_override("font", VCR_FONT)
+			store_line_label.add_theme_font_size_override("font_size", 14)
+
+			var channel_color: Color = get_section_color(channel_manager.get_selector_section_id(channel)).darkened(0.45)
+			var alternate_tint: float = 0.10 if store_line_index % 2 == 0 else -0.10
+			var varied_color: Color = Color(
+				clampf(channel_color.r + alternate_tint, 0.0, 1.0),
+				clampf(channel_color.g + alternate_tint, 0.0, 1.0),
+				clampf(channel_color.b + alternate_tint, 0.0, 1.0),
+				channel_color.a
+			)
+			store_line_label.add_theme_color_override("font_color", varied_color)
+			text_vbox.add_child(store_line_label)
+			store_line_index += 1

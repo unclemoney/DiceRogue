@@ -10,7 +10,6 @@ class_name ChannelManagerUI
 signal start_pressed(channel: int)
 
 const VCR_FONT: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
-const ACTION_THEME: Theme = preload("res://Resources/UI/action_button_theme.tres")
 const MallMapLayoutScript = preload("res://Scripts/Managers/mall_map_layout.gd")
 const MallMapRendererScript = preload("res://Scripts/Managers/mall_map_renderer.gd")
 const SHELL_VIEWPORT_MARGIN := Vector2(34, 26)
@@ -67,11 +66,11 @@ var difficulty_label: Label
 var bonus_label: Label
 var description_label: Label
 var section_chip: Label
-var start_button: Button
+var start_button: GlassActionButton
 
 # Dice set selector
-var _dice_prev_button: Button
-var _dice_next_button: Button
+var _dice_prev_button: GlassActionButton
+var _dice_next_button: GlassActionButton
 var _dice_display: PanelContainer
 var _dice_icon: TextureRect
 var _dice_name_label: Label
@@ -81,6 +80,7 @@ var _dice_set_index: int = 1  # d6 default
 # Tooltip
 var _tooltip_panel: PanelContainer
 var _tooltip_label: Label
+var _tooltip_show_tween: Tween
 
 # Runtime map state
 var _zones_by_channel: Dictionary = {}
@@ -224,6 +224,9 @@ func _build_ui() -> void:
 	shell_style.set_border_width_all(4)
 	shell_style.set_corner_radius_all(22)
 	shell_style.corner_detail = 10
+	shell_style.shadow_color = Color(0.0, 0.0, 0.0, 0.45)
+	shell_style.shadow_size = 12
+	shell_style.shadow_offset = Vector2(0, 6)
 	_shell_frame.add_theme_stylebox_override("panel", shell_style)
 
 	var shell_margin := MarginContainer.new()
@@ -251,6 +254,9 @@ func _build_ui() -> void:
 	map_style.set_border_width_all(4)
 	map_style.set_corner_radius_all(18)
 	map_style.corner_detail = 8
+	map_style.shadow_color = Color(0.0, 0.0, 0.0, 0.30)
+	map_style.shadow_size = 8
+	map_style.shadow_offset = Vector2(0, 4)
 	_map_shell.add_theme_stylebox_override("panel", map_style)
 
 	_map_padding = MarginContainer.new()
@@ -290,7 +296,7 @@ func _build_ui() -> void:
 	_map_viewport.transparent_bg = true
 	_map_viewport.handle_input_locally = true
 	_map_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	_map_viewport.size = Vector2(MallMapLayoutScript.get_board_size().x, 360)
+	_map_viewport.size = MallMapLayoutScript.get_map_view_size()
 	_map_viewport.physics_object_picking = true
 	_map_view.add_child(_map_viewport)
 
@@ -510,15 +516,10 @@ func _build_ui() -> void:
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	side_vbox.add_child(spacer)
 
-	start_button = Button.new()
+	start_button = GlassActionButton.new()
 	start_button.name = "StartButton"
-	start_button.theme = ACTION_THEME
-	start_button.text = "START"
-	start_button.custom_minimum_size = Vector2(210, 48)
-	start_button.add_theme_font_override("font", VCR_FONT)
-	start_button.add_theme_font_size_override("font_size", 22)
+	start_button.configure("START", Vector2(210, 48), MallMapRendererScript.MALL_GLASS_PALETTE, 22, VCR_FONT)
 	start_button.pressed.connect(_on_start_pressed)
-	_connect_button_fx(start_button)
 	side_vbox.add_child(start_button)
 
 	_tooltip_panel = PanelContainer.new()
@@ -600,66 +601,11 @@ func _build_zones() -> void:
 ##
 ## Lists every zone in the STORE DIRECTORY grid: channel number, directory
 ## label, and the zone's dealt store names (fallback labels before assignment).
+## Delegates to the shared renderer builder so the in-game popup matches.
 func _build_directory_index() -> void:
-	if _directory_grid == null or channel_manager == null:
+	if channel_manager == null:
 		return
-	for child in _directory_grid.get_children():
-		child.queue_free()
-	var row_index := 0
-	for channel in _zone_order:
-		var entry := HBoxContainer.new()
-		entry.custom_minimum_size = Vector2(118, 22)
-		entry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		entry.add_theme_constant_override("separation", 4)
-		_directory_grid.add_child(entry)
-
-		var number_label := Label.new()
-		number_label.text = channel_manager.get_channel_display_text(channel)
-		number_label.add_theme_font_override("font", VCR_FONT)
-		number_label.add_theme_font_size_override("font_size", 16)
-		number_label.add_theme_color_override("font_color", _get_section_color(channel_manager.get_selector_section_id(channel)))
-		entry.add_child(number_label)
-
-		var text_vbox := VBoxContainer.new()
-		text_vbox.add_theme_constant_override("separation", 0)
-		text_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		entry.add_child(text_vbox)
-
-		var name_label := Label.new()
-		name_label.text = channel_manager.get_selector_directory_label(channel).to_upper()
-		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		name_label.custom_minimum_size = Vector2(88, 0)
-		name_label.add_theme_font_override("font", VCR_FONT)
-		name_label.add_theme_font_size_override("font_size", 16)
-		name_label.add_theme_color_override("font_color", Color(0.24, 0.18, 0.10))
-		text_vbox.add_child(name_label)
-
-
-		var store_names: Array[String] = []
-		for round_number in range(1, channel_manager.STORES_PER_ZONE + 1):
-			store_names.append(channel_manager.get_store_name(channel, round_number))
-
-		var store_line_index := 0
-		for store_name in store_names:
-			var store_line_label := Label.new()
-			store_line_label.text = store_name
-			store_line_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			store_line_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			store_line_label.add_theme_font_override("font", VCR_FONT)
-			store_line_label.add_theme_font_size_override("font_size", 14)
-
-			var channel_color: Color = _get_section_color(channel_manager.get_selector_section_id(channel))
-			var alternate_tint: float = 0.10 if store_line_index % 2 == 0 else -0.10
-			var varied_color: Color = Color(
-				clampf(channel_color.r + alternate_tint, 0.0, 1.0),
-				clampf(channel_color.g + alternate_tint, 0.0, 1.0),
-				clampf(channel_color.b + alternate_tint, 0.0, 1.0),
-				channel_color.a
-			)
-			store_line_label.add_theme_color_override("font_color", varied_color)
-			text_vbox.add_child(store_line_label)
-			store_line_index += 1
+	MallMapRendererScript.build_store_directory(_directory_grid, channel_manager, _zone_order)
 
 
 func _build_legend() -> void:
@@ -683,23 +629,9 @@ func _build_legend() -> void:
 		row.add_child(label)
 
 
-func _connect_button_fx(button: BaseButton) -> void:
-	if _tfx == null:
-		return
-	button.mouse_entered.connect(_tfx.button_hover.bind(button))
-	button.mouse_exited.connect(_tfx.button_unhover.bind(button))
-	button.pressed.connect(_tfx.button_press.bind(button))
-
-
-func _create_dice_arrow_button(text: String) -> Button:
-	var button := Button.new()
-	button.theme = ACTION_THEME
-	button.text = text
-	button.custom_minimum_size = Vector2(36, 38)
-	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_font_override("font", VCR_FONT)
-	button.add_theme_font_size_override("font_size", 16)
-	_connect_button_fx(button)
+func _create_dice_arrow_button(text: String) -> GlassActionButton:
+	var button := GlassActionButton.new()
+	button.configure(text, Vector2(36, 38), MallMapRendererScript.MALL_GLASS_PALETTE, 16, VCR_FONT)
 	return button
 
 
@@ -796,6 +728,23 @@ func _show_dice_set_tooltip() -> void:
 		_tfx.place_tooltip(_tooltip_panel, _dice_display.get_global_rect(), SIDE_LEFT, true)
 	else:
 		_tooltip_panel.global_position = _dice_display.get_global_rect().position - Vector2(_tooltip_panel.size.x + 12, 0)
+	_animate_tooltip_in()
+
+
+## _animate_tooltip_in() -> void
+##
+## Tweens the tooltip in with a fade and a slight upward slide. Called after
+## placement so the final position is the tween target.
+func _animate_tooltip_in() -> void:
+	if _tooltip_show_tween and _tooltip_show_tween.is_valid():
+		_tooltip_show_tween.kill()
+	var target_pos := _tooltip_panel.global_position
+	_tooltip_panel.global_position = target_pos + Vector2(0, 8)
+	_tooltip_panel.modulate.a = 0.0
+	_tooltip_show_tween = create_tween()
+	_tooltip_show_tween.set_parallel(true)
+	_tooltip_show_tween.tween_property(_tooltip_panel, "global_position", target_pos, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_tooltip_show_tween.tween_property(_tooltip_panel, "modulate:a", 1.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 ## _update_display() -> void
@@ -934,24 +883,20 @@ func _update_start_button_state() -> void:
 	if is_locked:
 		start_button.text = "LOCKED"
 		start_button.disabled = true
-		start_button.modulate = Color(0.62, 0.62, 0.66)
 	else:
 		start_button.text = "START"
 		start_button.disabled = false
-		start_button.modulate = Color.WHITE
 
 
 ## _show_locked_feedback() -> void
 ##
 ## Shows visual feedback when player tries to start a locked channel.
+## The glass shader owns the disabled look; this adds the denied shake.
 func _show_locked_feedback() -> void:
 	if not start_button:
 		return
 	if _tfx:
 		_tfx.button_denied(start_button)
-	var tween := create_tween()
-	start_button.modulate = Color(1.0, 0.36, 0.36)
-	tween.tween_property(start_button, "modulate", Color(0.62, 0.62, 0.66), 0.18)
 
 
 ## _on_start_pressed() -> void
@@ -1057,6 +1002,7 @@ func _show_zone_tooltip(channel: int) -> void:
 		_tfx.place_tooltip(_tooltip_panel, _get_zone_screen_rect(zone), SIDE_RIGHT, true)
 	else:
 		_tooltip_panel.global_position = _get_zone_screen_rect(zone).end + Vector2(12, -16)
+	_animate_tooltip_in()
 
 
 func _on_map_mouse_exited() -> void:
@@ -1070,6 +1016,8 @@ func _on_map_mouse_exited() -> void:
 func _hide_tooltip(animate: bool) -> void:
 	if _tooltip_panel == null:
 		return
+	if _tooltip_show_tween and _tooltip_show_tween.is_valid():
+		_tooltip_show_tween.kill()
 	if not animate:
 		_tooltip_panel.visible = false
 		_tooltip_panel.modulate.a = 1.0

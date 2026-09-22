@@ -10,6 +10,7 @@ extends Control
 const MallMapPopupScene := preload("res://Scenes/UI/MallMapPopup.tscn")
 
 class StubChannelManager extends RefCounted:
+	const STORES_PER_ZONE := 6
 	var current_channel: int = 1
 	var zone_store_names: Dictionary = {}
 

@@ -526,6 +526,8 @@ The **Channel Manager** drives the resource-based Mall Zone progression system (
 
 **Features:**
 - **Mall Directory UI**: Shows the fixed mall map — 4 T-shaped zones around the center diamond courtyard, connected by 4 corridors, with zone numbers rendered inside each zone (`Scripts/Managers/mall_map_layout.gd`). Runs always start at Zone 1; there is no PREV/NEXT or click/keyboard zone selection. The dice-set carousel on the side panel remains for picking the run's dice set
+- **Mall Map Polish**: Wayfinding sign blocks (01–04) sit on the corridor arms of both mall screens (`MallMapLayout.wayfinding_blocks`, rendered by `MallMapRenderer.build_wayfinding_blocks`). Zones have drop shadows and shader-driven hover/select glow with scale tweens; both screens open with a staged reveal (corridor trace → wayfinding fade → staggered zone pop-in via `MallMapZone.play_reveal`). Tooltips tween in with a fade + slight slide and fade out via TweenFX. START, the dice-set arrows, and the popup's CLOSE are glass buttons per `Docs/GlassButtonShaderStandard.md` (shared `MallMapRenderer.MALL_GLASS_PALETTE` on `GlassActionButton`); START's locked state uses the shader's `disabled_factor`
+- **In-Game Mall Map**: `MallMapPopup` (opened from the VCR tracker's Mall Zone label) renders the same board cropped to the map frame, with the store directory grouped by zone below it via the shared `MallMapRenderer.build_store_directory`. The current store marker pulses gently (scale 1.0↔1.2 + ±2px bob)
 - **Store Assignment**: Each round is a store. At run start `ChannelManager.assign_stores_to_zones()` shuffles the 24-store directory (`Resources/Data/Stores/store_directory.tres`, `StoreDirectoryData`) and deals 6 stores per zone, seeded via `GameRNG`; the assignment is saved/loaded with the run
 - **Resource-Based Configuration**: Each Mall Zone is defined by a `.tres` file with manually tuned settings
 - **Unlock Pacing**: Higher Mall Zones require completing lower Mall Zones first
@@ -576,8 +578,10 @@ Debuff draws come from a **per-zone draw-once pool** (`DebuffManager._drawn_this
 - **ChannelManager** (`Scripts/Managers/channel_manager.gd`) - Core Mall Zone difficulty logic (`MAX_CHANNEL = 4`), loads configs, assigns stores
 - **StoreDirectoryData** (`Scripts/Core/store_directory_data.gd` + `Resources/Data/Stores/store_directory.tres`) - The 24 store names dealt across zones
 - **ChannelManagerUI** (`Scripts/Managers/channel_manager_ui.gd`) - Mall directory shell, side panel, tooltip, dice-set carousel, and runtime map integration
-- **MallMapLayout** (`Scripts/Managers/mall_map_layout.gd`) - Fixed mall geometry: 4 T-shaped zones around the center diamond courtyard with 4 corridors
+- **MallMapLayout** (`Scripts/Managers/mall_map_layout.gd`) - Fixed mall geometry: 4 T-shaped zones around the center diamond courtyard with 4 corridors and wayfinding sign blocks
+- **MallMapRenderer** (`Scripts/Managers/mall_map_renderer.gd`) - Shared board builders (backdrop, corridors, wayfinding, zones, store directory) and the mall glass-button palette
 - **MallMapZone** (`Scripts/Managers/mall_map_zone.gd`) - Runtime zone node for the selector
+- **MallMapPopup** (`Scripts/UI/mall_map_popup.gd`) - In-game mall map modal: board, store markers with challenge tooltips, store directory
 - **CarryOverPanel** (`Scripts/UI/carry_over_panel.gd`) - Carry-over selection UI between Mall Zones
 - **Channel Resources** (`Resources/Data/Channels/channel_01.tres` to `channel_04.tres`)
 - **ChannelDifficultyValidator** (`Scripts/Editor/ChannelDifficultyValidator.gd`) - Editor validation tool
