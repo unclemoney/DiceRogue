@@ -8,8 +8,9 @@
 script = ExtResource("1_h72km")
 id = "wildcard"
 display_name = "Wild Dice"
-description = "Allows the Dice to Count as Any Number"
+description = "Allows the Dice to Count as Any Number.   (One Mod per Dice)"
 icon = ExtResource("1_m1i2y")
 scene = ExtResource("2_be2vc")
 price = 300
+sell_price = -1
 metadata/_custom_type_script = "uid://47gl3by4wwht"

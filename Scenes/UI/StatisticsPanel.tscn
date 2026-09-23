@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://cjfs5x06jeo5v" path="res://Scripts/UI/statistics_panel.gd" id="1_5n3wj"]
 
 [node name="StatisticsPanel" type="Control"]
-z_index = 1000
+z_index = 100
 z_as_relative = false
 layout_mode = 3
 anchors_preset = 15

@@ -6,10 +6,9 @@ extends Node
 ## Add this script as an autoload or attach to your main scene.
 
 func _ready() -> void:
-	# Create debug panel if it doesn't exist
+	# Create debug panel (wrapped in its CanvasLayer) if it doesn't exist
 	if not DebugPanel.instance:
-		var debug_panel = preload("res://Scenes/UI/DebugPanel.tscn").instantiate()
-		get_tree().current_scene.add_child(debug_panel)
+		DebugPanel.get_or_create_instance()
 		print("[DebugHelper] Debug panel created and added to scene")
 	else:
 		print("[DebugHelper] Debug panel already exists")

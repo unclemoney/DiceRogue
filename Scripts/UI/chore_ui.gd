@@ -356,7 +356,7 @@ func _create_ui_structure() -> void:
 	details_panel.name = "DetailsPanel"
 	details_panel.visible = false
 	details_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	details_panel.z_index = 60
+	details_panel.z_index = RenderLayers.Z_SCORECARD_PARTICLES
 	details_panel.custom_minimum_size = DETAILS_PANEL_SIZE
 	_apply_panel_style()
 
@@ -1207,7 +1207,7 @@ func _create_background_overlay() -> void:
 	_background.color = Color(0, 0, 0, 0.75)
 	_background.mouse_filter = Control.MOUSE_FILTER_STOP
 	_background.visible = false
-	_background.z_index = 50
+	_background.z_index = RenderLayers.Z_LOCAL_STAMP
 	
 	# Add to scene tree at root level to cover everything
 	call_deferred("_add_background_to_scene")

@@ -8,8 +8,9 @@
 script = ExtResource("1_fqv68")
 id = "gold_six"
 display_name = "Gold Six"
-description = "Grants $6 for every 6 rolled"
+description = "Grants $6 for every 6 rolled.   (One Mod per Dice)"
 icon = ExtResource("1_irg0f")
 scene = ExtResource("2_7dipm")
 price = 75
+sell_price = -1
 metadata/_custom_type_script = "uid://47gl3by4wwht"

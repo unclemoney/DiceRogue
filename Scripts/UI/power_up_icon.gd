@@ -267,7 +267,7 @@ func _create_card_structure() -> void:
 	shadow.name = "Shadow"
 	shadow.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shadow.modulate = Color(0.0, 0.0, 0.0, 0.5)
-	shadow.z_index = -1
+	shadow.z_index = RenderLayers.Z_SHADOW
 	shadow.position = Vector2(5, 5)
 	add_child(shadow)
 	
@@ -281,14 +281,14 @@ func _create_card_structure() -> void:
 	# Create CardFrame
 	card_frame = TextureRect.new()
 	card_frame.name = "CardFrame"
-	card_frame.z_index = 1
+	card_frame.z_index = RenderLayers.Z_CARD_FRAME
 	card_frame.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(card_frame)
 	
 	# Create CardInfo
 	card_info = VBoxContainer.new()
 	card_info.name = "CardInfo"
-	card_info.z_index = 2
+	card_info.z_index = RenderLayers.Z_CARD_INFO
 	card_info.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	card_info.custom_minimum_size = Vector2(160, 20)
 	card_info.visible = false  # Start hidden, show on mouse enter
@@ -311,7 +311,7 @@ func _create_card_structure() -> void:
 	sell_button = GlassButtonFactoryRef.create_button("SELL", Vector2(60, 45), GlassButtonFactoryRef.palette_item_action(), 12, vcr_font)
 	sell_button.name = "SellButton"
 	sell_button.visible = false
-	sell_button.z_index = 3
+	sell_button.z_index = RenderLayers.Z_CARD_BUTTON
 	sell_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	sell_button.size = Vector2(60, 45)
 	sell_button.set_uniform_padding(8, 6)
@@ -322,7 +322,7 @@ func _create_card_structure() -> void:
 	label_bg = PanelContainer.new()
 	label_bg.name = "LabelBg"
 	label_bg.visible = false
-	label_bg.z_index = 3
+	label_bg.z_index = RenderLayers.Z_CARD_BUTTON
 	label_bg.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	label_bg.position.y = -75
 	label_bg.position.x = -40
@@ -349,7 +349,7 @@ func _create_card_structure() -> void:
 	# Create RarityIcon
 	rarity_icon = TextureRect.new()
 	rarity_icon.name = "RarityIcon"
-	rarity_icon.z_index = 4
+	rarity_icon.z_index = RenderLayers.Z_CARD_RARITY
 	rarity_icon.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	rarity_icon.size = Vector2(24, 24)
 	rarity_icon.position = Vector2(-24, -24)
@@ -556,7 +556,7 @@ func _start_mouse_following() -> void:
 	if _is_hovering:
 		# Raise the z-index when following to appear above other cards
 		var original_z_index = z_index
-		z_index = 100
+		z_index = RenderLayers.Z_MODAL
 		
 		# Restore z-index when done following
 		if _hover_card_tween and _hover_card_tween.is_valid():
@@ -1048,7 +1048,7 @@ func _apply_card_info_style() -> void:
 	if card_info:
 		# Remove any presets and use manual positioning for true centering
 		card_info.set_anchors_preset(Control.PRESET_TOP_LEFT)
-		card_info.z_index = 2
+		card_info.z_index = RenderLayers.Z_CARD_INFO
 		
 		# Calculate dynamic title width based on text length
 		var title_text = data.display_name if (data and data.display_name and data.display_name != "") else ("Unknown PowerUp" if data else "")
@@ -1094,7 +1094,7 @@ func _apply_card_info_style() -> void:
 		var new_card_info = PanelContainer.new()
 		new_card_info.name = "CardInfo"
 		new_card_info.set_anchors_preset(Control.PRESET_TOP_LEFT)
-		new_card_info.z_index = 2
+		new_card_info.z_index = RenderLayers.Z_CARD_INFO
 		new_card_info.visible = false  # Start hidden, show on mouse enter
 		
 		# Use same mathematical centering as applied above (reuse existing variables)

@@ -509,7 +509,7 @@ func show_stats(data: Dictionary) -> void:
 		global_position = Vector2.ZERO
 		size = viewport_rect.size
 		# Set z_index high to ensure it's on top
-		z_index = 100
+		z_index = RenderLayers.Z_MODAL
 	
 	# Show panel with entrance animation
 	visible = true

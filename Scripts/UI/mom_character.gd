@@ -402,7 +402,7 @@ func get_portrait_center() -> Vector2:
 func _create_ui_structure() -> void:
 	# Set to fill screen
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	z_index = 150  # Above corkboard/shop (100-135) but below pause menu (200)
+	z_index = RenderLayers.Z_ELEVATED  # Above Z_MODAL/fan band but below Z_BANNER
 	
 	# Background overlay (semi-transparent black)
 	background_overlay = ColorRect.new()

@@ -72,7 +72,6 @@ const TITLE_FONT_SIZE: int = 12
 
 # Hover tooltip tuning
 const TOOLTIP_HOVER_DELAY: float = 1.0
-const TOOLTIP_LAYER_INDEX: int = 128
 const TOOLTIP_SCENE: PackedScene = preload("res://Scenes/UI/tooltip.tscn")
 
 # Verbose terminal logging for hover tooltip diagnostics
@@ -251,13 +250,13 @@ func _build_ui() -> void:
 ## _ensure_tooltip_layer()
 ##
 ## Lazily creates the dedicated CanvasLayer that hosts hover tooltips.
-## layer = 128 keeps tooltips above every other UI layer.
+## RenderLayers.LAYER_TOOLTIP keeps tooltips above every other UI layer.
 func _ensure_tooltip_layer() -> void:
 	if _tooltip_layer and is_instance_valid(_tooltip_layer):
 		return
 	_tooltip_layer = CanvasLayer.new()
 	_tooltip_layer.name = "TooltipLayer"
-	_tooltip_layer.layer = TOOLTIP_LAYER_INDEX
+	_tooltip_layer.layer = RenderLayers.LAYER_TOOLTIP
 	add_child(_tooltip_layer)
 
 
@@ -313,7 +312,7 @@ func _add_container_hover_title(panel: PanelContainer, title_text: String, dynam
 			var vp := tooltip.get_viewport().get_visible_rect()
 			print("[GameUI:Tooltip] SHOW '%s' at %s size %s (viewport %s, inside=%s, layer=%d, z=%d)" % [
 				panel.name, tooltip.global_position, tooltip.size, vp.size,
-				vp.has_point(tooltip.global_position), TOOLTIP_LAYER_INDEX, tooltip.z_index])
+				vp.has_point(tooltip.global_position), RenderLayers.LAYER_TOOLTIP, tooltip.z_index])
 	)
 
 

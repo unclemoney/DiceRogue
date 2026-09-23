@@ -35,7 +35,7 @@ const PANEL_CORNER_RADIUS := 20.0
 func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	z_index = 100
+	z_index = RenderLayers.Z_MODAL
 
 
 ## show_popup(chores_manager)

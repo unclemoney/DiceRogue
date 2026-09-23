@@ -222,7 +222,7 @@ func _build_tooltip() -> void:
 	_tooltip.visible = false
 	_tooltip.custom_minimum_size = Vector2(220, 0)
 	_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_tooltip.z_index = 10
+	_tooltip.z_index = RenderLayers.Z_SPINE
 	
 	# Style the tooltip
 	var style = StyleBoxFlat.new()
@@ -321,7 +321,7 @@ func _show_panel() -> void:
 	_overlay.color = Color(0, 0, 0, 0.0)
 	
 	visible = true
-	z_index = 100
+	z_index = RenderLayers.Z_MODAL
 	
 	# Wait for layout pass then animate
 	await get_tree().process_frame

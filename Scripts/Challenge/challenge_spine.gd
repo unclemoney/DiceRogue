@@ -162,7 +162,7 @@ func _create_hover_tooltip() -> void:
 	_tooltip = PanelContainer.new()
 	_tooltip.name = "ChallengeTooltip"
 	_tooltip.visible = false
-	_tooltip.z_index = 100
+	_tooltip.z_index = RenderLayers.Z_FAN_TOOLTIP
 	_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	
 	# Style the tooltip

@@ -457,7 +457,7 @@ func _create_background() -> void:
 	_background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_background.mouse_filter = Control.MOUSE_FILTER_STOP
 	_background.visible = false  # Start hidden
-	_background.z_index = 5
+	_background.z_index = RenderLayers.Z_FAN_BG
 	add_child(_background)
 	
 	# Connect background click to fold cards back
@@ -634,7 +634,7 @@ func _get_fan_overlay() -> CanvasLayer:
 	if not overlay:
 		overlay = CanvasLayer.new()
 		overlay.name = "SpineFanOverlay"
-		overlay.layer = 10
+		overlay.layer = RenderLayers.LAYER_FAN_OVERLAY
 		root.add_child(overlay)
 	return overlay as CanvasLayer
 
@@ -708,7 +708,7 @@ func _create_fanned_icons() -> void:
 		
 		overlay.add_child(icon)
 		icon.set_data(data)
-		icon.z_index = 10 + i  # Ensure cards are above background
+		icon.z_index = RenderLayers.Z_FAN_CARD_BASE + i  # Ensure cards are above background
 		
 		# Hide CardInfo/Title for cleaner fanned view
 		var card_info: Control = icon.get_node_or_null("CardInfo")
@@ -1228,7 +1228,7 @@ func _create_overflow_label() -> void:
 	# Position above the fanned cards
 	_overflow_label.position = Vector2(_fan_center.x - 200, _fan_center.y - 180)
 	_overflow_label.custom_minimum_size = Vector2(400, 50)
-	_overflow_label.z_index = 25
+	_overflow_label.z_index = RenderLayers.Z_FAN_OVERFLOW
 	
 	# Style the label
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")

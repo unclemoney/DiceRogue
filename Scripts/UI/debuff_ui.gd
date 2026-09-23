@@ -191,7 +191,7 @@ func _fan_out_debuffs() -> void:
 		var card := DebuffDetailCard.new()
 		card.set_visual_config(_visual_config)
 		overlay.add_child(card)
-		card.z_index = 200 + i
+		card.z_index = RenderLayers.Z_FAN_CARD_BASE + i
 
 		var target_x := start_x + i * spacing
 		var target_y := center_y - card_size.y / 2.0
@@ -516,7 +516,7 @@ func _relayout_fanned_cards() -> void:
 		if not is_instance_valid(card):
 			continue
 		card.set_visual_config(_visual_config)
-		card.z_index = 200 + i
+		card.z_index = RenderLayers.Z_FAN_CARD_BASE + i
 		card.position = Vector2(start_x + i * spacing, center_y - card_size.y / 2.0)
 
 

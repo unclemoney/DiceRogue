@@ -252,8 +252,7 @@ func _ready() -> void:
 	add_to_group("game_controller")
 	if _debug_enabled:
 		print("▶ GameController._ready()")
-	var debug_panel = preload("res://Scenes/UI/DebugPanel.tscn").instantiate()
-	add_child(debug_panel)
+	var debug_panel = DebugPanel.get_or_create_instance(self)
 	
 	# Add unlock notification UI (replaces UnlockedItemPanel for unlock display)
 	var unlock_notification_ui = preload("res://Scenes/UI/UnlockNotificationUI.tscn").instantiate()
@@ -3742,14 +3741,14 @@ func _show_continue_panel(final_score: int) -> void:
 	overlay.name = "ContinueOverlay"
 	overlay.color = Color(0, 0, 0, 0.8)
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	overlay.z_index = 100
+	overlay.z_index = RenderLayers.Z_MODAL_DIM
 	
 	# Create popup panel
 	var popup = PanelContainer.new()
 	popup.name = "ContinuePopup"
 	popup.custom_minimum_size = Vector2(400, 280)
 	popup.set_anchors_preset(Control.PRESET_CENTER)
-	popup.z_index = 101
+	popup.z_index = RenderLayers.Z_MODAL_CONTENT
 	
 	# Style the popup with arcade-continue theme (blue/purple)
 	var style = StyleBoxFlat.new()
@@ -3997,7 +3996,7 @@ func _show_game_over_popup(final_score: int, target_score: int, challenge_comple
 		var crt_off = ColorRect.new()
 		crt_off.name = "CRTPowerOff"
 		crt_off.set_anchors_preset(Control.PRESET_FULL_RECT)
-		crt_off.z_index = 99
+		crt_off.z_index = RenderLayers.Z_MODAL_DIM
 		crt_off.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var off_mat = ShaderMaterial.new()
 		off_mat.shader = preload("res://Scripts/Shaders/tv_power_on.gdshader")
@@ -4021,14 +4020,14 @@ func _show_game_over_popup(final_score: int, target_score: int, challenge_comple
 	overlay.name = "GameOverOverlay"
 	overlay.color = Color(0, 0, 0, 0.0)
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	overlay.z_index = 100
+	overlay.z_index = RenderLayers.Z_MODAL_DIM
 	
 	# Create popup panel
 	var popup = PanelContainer.new()
 	popup.name = "GameOverPopup"
 	popup.custom_minimum_size = Vector2(400, 300)
 	popup.set_anchors_preset(Control.PRESET_CENTER)
-	popup.z_index = 101
+	popup.z_index = RenderLayers.Z_MODAL_CONTENT
 	
 	# Style the popup
 	var style = StyleBoxFlat.new()
@@ -5453,8 +5452,13 @@ func _unlock_all_locked_dice() -> void:
 func _toggle_pause_menu() -> void:
 	if not _pause_menu:
 		_pause_menu = PAUSE_MENU_SCENE.instantiate()
-		# Add to root so it's on top of everything
-		get_tree().root.add_child(_pause_menu)
+		# Wrap in a dedicated CanvasLayer so the pause menu renders above
+		# overlay popups like the chore selection panel (LAYER_CHORE_POPUP).
+		var pause_layer := CanvasLayer.new()
+		pause_layer.name = "PauseMenuLayer"
+		pause_layer.layer = RenderLayers.LAYER_PAUSE_MENU
+		get_tree().root.add_child(pause_layer)
+		pause_layer.add_child(_pause_menu)
 	
 	if _pause_menu.visible:
 		_pause_menu.hide_menu()
@@ -6020,8 +6024,9 @@ func _resolve_chore_selection_request() -> void:
 ## _show_chore_selection_popup()
 ##
 ## Creates (if needed) and displays the ChoreSelectionPopup overlay.
-## Wraps the popup in a CanvasLayer (layer 20) so it renders above
-## RoundTransitionOverlay (layer 10).
+## Wraps the popup in a CanvasLayer (LAYER_CHORE_POPUP = 20) so it renders
+## above RoundTransitionOverlay (LAYER_ROUND_TRANSITION = 12) but below the
+## pause menu (LAYER_PAUSE_MENU = 30) and debug panel (LAYER_DEBUG_PANEL = 40).
 func _show_chore_selection_popup() -> void:
 	if not chores_manager:
 		if _is_round_start_chore_gate_active:
@@ -6046,7 +6051,7 @@ func _show_chore_selection_popup() -> void:
 			_chore_selection_popup_layer.queue_free()
 		
 		_chore_selection_popup_layer = CanvasLayer.new()
-		_chore_selection_popup_layer.layer = 20
+		_chore_selection_popup_layer.layer = RenderLayers.LAYER_CHORE_POPUP
 		_chore_selection_popup_layer.name = "ChoreSelectionPopupLayer"
 		add_child(_chore_selection_popup_layer)
 		

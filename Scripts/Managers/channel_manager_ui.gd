@@ -98,7 +98,7 @@ var _hovered_icon: MallStoreIcon = null
 func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	z_index = 100
+	z_index = RenderLayers.Z_MODAL
 	set_process_unhandled_input(true)
 	_build_ui()
 	resized.connect(_on_root_resized)

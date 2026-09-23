@@ -336,7 +336,7 @@ func _test_loss_crt_off() -> void:
 	var crt_off = ColorRect.new()
 	crt_off.name = "TestCRTPowerOff"
 	crt_off.set_anchors_preset(Control.PRESET_FULL_RECT)
-	crt_off.z_index = 99
+	crt_off.z_index = RenderLayers.Z_MODAL_DIM
 	crt_off.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var off_mat = ShaderMaterial.new()
 	off_mat.shader = preload("res://Scripts/Shaders/tv_power_on.gdshader")
@@ -362,13 +362,13 @@ func _test_win_popup() -> void:
 	var overlay = ColorRect.new()
 	overlay.color = Color(0, 0, 0, 0.7)
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	overlay.z_index = 100
+	overlay.z_index = RenderLayers.Z_MODAL
 	add_child(overlay)
 
 	var popup = PanelContainer.new()
 	popup.custom_minimum_size = Vector2(400, 200)
 	popup.set_anchors_preset(Control.PRESET_CENTER)
-	popup.z_index = 101
+	popup.z_index = RenderLayers.Z_MODAL_CONTENT
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.15, 0.12, 0.1, 0.98)
 	style.border_color = Color(0.8, 0.6, 0.2, 1.0)

@@ -1262,7 +1262,7 @@ func _spawn_shockwave() -> void:
 	var shockwave = ColorRect.new()
 	shockwave.size = Vector2(ring_size, ring_size)
 	shockwave.position = -Vector2(ring_size / 2.0, ring_size / 2.0)
-	shockwave.z_index = 1  # Above die sprite so it's visible over DiceAreaBackground
+	shockwave.z_index = RenderLayers.Z_CARD_FRAME  # Above die sprite so it's visible over DiceAreaBackground
 	shockwave.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	shockwave.color = Color(1, 1, 1, 0)  # Transparent base—shader handles visuals
 	

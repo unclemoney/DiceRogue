@@ -15,7 +15,7 @@ var _is_transitioning: bool = false
 
 func _ready() -> void:
 	_canvas = CanvasLayer.new()
-	_canvas.layer = 999
+	_canvas.layer = RenderLayers.LAYER_SCENE_TRANSITION
 	_canvas.name = "TransitionCanvas"
 	add_child(_canvas)
 	
@@ -126,7 +126,7 @@ func _crossfade_out(duration: float) -> void:
 	snapshot.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	snapshot.texture = tex
 	snapshot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	snapshot.z_index = 500
+	snapshot.z_index = RenderLayers.Z_SCREEN_FX
 	_canvas.add_child(snapshot)
 	
 	# Brief hold so the old scene is fully visible before fading

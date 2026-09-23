@@ -61,7 +61,7 @@ func _play_dice_removed_effect() -> void:
 	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1.0))
 	label.add_theme_constant_override("outline_size", 4)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.z_index = 1001
+	label.z_index = RenderLayers.Z_POWERUP_FX
 	
 	var viewport_size = get_viewport().get_visible_rect().size
 	label.position = Vector2(viewport_size.x / 2 - 80, viewport_size.y * 0.4)
@@ -94,7 +94,7 @@ func _play_dice_removed_effect() -> void:
 	bonus_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1.0))
 	bonus_label.add_theme_constant_override("outline_size", 3)
 	bonus_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	bonus_label.z_index = 1001
+	bonus_label.z_index = RenderLayers.Z_POWERUP_FX
 	bonus_label.position = Vector2(viewport_size.x / 2 - 100, viewport_size.y * 0.4 + 40)
 	bonus_label.size = Vector2(200, 40)
 	get_tree().root.add_child(bonus_label)

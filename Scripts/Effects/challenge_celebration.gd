@@ -63,7 +63,7 @@ func _spawn_burst_delayed(center: Vector2, viewport: Node, delay: float, burst_i
 	
 	viewport.add_child(explosion)
 	explosion.global_position = burst_position
-	explosion.z_index = 100
+	explosion.z_index = RenderLayers.Z_MODAL
 	explosion.emitting = true
 	
 	_active_particles.append(explosion)

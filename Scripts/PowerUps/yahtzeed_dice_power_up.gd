@@ -72,7 +72,7 @@ func _play_dice_added_effect() -> void:
 	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1.0))
 	label.add_theme_constant_override("outline_size", 3)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.z_index = 1001
+	label.z_index = RenderLayers.Z_POWERUP_FX
 	
 	var viewport_size = get_viewport().get_visible_rect().size
 	label.position = Vector2(viewport_size.x / 2 - 80, viewport_size.y * 0.4)

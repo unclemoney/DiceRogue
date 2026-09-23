@@ -147,7 +147,7 @@ func use_roll():
 func _show_turn_banner(turn_number: int) -> void:
 	var banner = Label.new()
 	banner.text = "TURN %d" % turn_number
-	banner.z_index = 200
+	banner.z_index = RenderLayers.Z_BANNER
 	
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 	if vcr_font:

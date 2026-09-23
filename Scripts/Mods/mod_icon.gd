@@ -32,7 +32,7 @@ func _ready() -> void:
 	sell_button.name = "SellButton_" + str(get_instance_id())
 	sell_button.text = "SELL"
 	sell_button.visible = false  # Hidden by default
-	sell_button.z_index = 1000  # Very high z-index above all UI
+	sell_button.z_index = RenderLayers.Z_MOD_SELL  # Mod sell tier; stays below the debug band
 	sell_button.size = Vector2(44, 20)
 	sell_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	sell_button.clip_contents = false
@@ -71,8 +71,8 @@ func _ready() -> void:
 		# Standard tooltip, shown at the fixed offset on hover
 		_tooltip = TOOLTIP_SCENE.instantiate()
 		_tooltip.name = "Tooltip"
-		_tooltip.setup({"title": data.display_name})
 		add_child(_tooltip)
+		_tooltip.setup({"title": data.display_name})
 		
 		# Set control size to match icon
 		custom_minimum_size = icon_size

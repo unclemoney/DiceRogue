@@ -343,7 +343,7 @@ func _create_card_structure() -> void:
 	shadow.name = "Shadow"
 	shadow.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shadow.modulate = Color(0.0, 0.0, 0.0, 0.5)
-	shadow.z_index = -1
+	shadow.z_index = RenderLayers.Z_SHADOW
 	shadow.position = Vector2(5, 5)
 	add_child(shadow)
 	
@@ -357,14 +357,14 @@ func _create_card_structure() -> void:
 	# Create CardFrame
 	card_frame = TextureRect.new()
 	card_frame.name = "CardFrame"
-	card_frame.z_index = 1
+	card_frame.z_index = RenderLayers.Z_CARD_FRAME
 	card_frame.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(card_frame)
 	
 	# Create CardInfo
 	card_info = VBoxContainer.new()
 	card_info.name = "CardInfo"
-	card_info.z_index = 2
+	card_info.z_index = RenderLayers.Z_CARD_INFO
 	card_info.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	card_info.position = Vector2(-186, 100)
 	card_info.visible = false  # Start hidden, show on mouse enter
@@ -387,7 +387,7 @@ func _create_card_structure() -> void:
 	sell_button = GlassButtonFactoryRef.create_button("SELL", Vector2(44, 31), GlassButtonFactoryRef.palette_item_action(), 11)
 	sell_button.name = "SellButton"
 	sell_button.visible = false
-	sell_button.z_index = 3
+	sell_button.z_index = RenderLayers.Z_CARD_BUTTON
 	sell_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	sell_button.size = Vector2(44, 31)
 	sell_button.position = Vector2(76, 0)  # Position at top right (120 - 44)
@@ -399,7 +399,7 @@ func _create_card_structure() -> void:
 	use_button = GlassButtonFactoryRef.create_button("USE", Vector2(44, 31), GlassButtonFactoryRef.palette_positive(), 11)
 	use_button.name = "UseButton"
 	use_button.visible = false
-	use_button.z_index = 3
+	use_button.z_index = RenderLayers.Z_CARD_BUTTON
 	use_button.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	use_button.size = Vector2(44, 31)
 	use_button.position = Vector2(76, 41)  # Position at top left (120 - 44)
@@ -411,7 +411,7 @@ func _create_card_structure() -> void:
 	label_bg = PanelContainer.new()
 	label_bg.name = "LabelBg"
 	label_bg.visible = false
-	label_bg.z_index = 3
+	label_bg.z_index = RenderLayers.Z_CARD_BUTTON
 	label_bg.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	label_bg.position.y = -55  # Above the card
 	label_bg.position.x = -70  # Centered for 120px card with ~260px tooltip width
@@ -596,7 +596,7 @@ func _start_mouse_following() -> void:
 	if _is_hovering:
 		# Raise the z-index when following to appear above other cards
 		var original_z_index = z_index
-		z_index = 100
+		z_index = RenderLayers.Z_MODAL
 		
 		# Restore z-index when done following
 		if _hover_card_tween and _hover_card_tween.is_valid():
@@ -1219,7 +1219,7 @@ func _apply_card_info_style() -> void:
 	if card_info:
 		# Remove any presets and use manual positioning for true centering
 		card_info.set_anchors_preset(Control.PRESET_TOP_LEFT)
-		card_info.z_index = 2
+		card_info.z_index = RenderLayers.Z_CARD_INFO
 		
 		# Calculate dynamic title width based on text length
 		var title_text = data.display_name if (data and data.display_name and data.display_name != "") else (data.id if data else "")
@@ -1265,7 +1265,7 @@ func _apply_card_info_style() -> void:
 		var new_card_info = PanelContainer.new()
 		new_card_info.name = "CardInfo"
 		new_card_info.set_anchors_preset(Control.PRESET_TOP_LEFT)
-		new_card_info.z_index = 2
+		new_card_info.z_index = RenderLayers.Z_CARD_INFO
 		new_card_info.visible = false  # Start hidden, show on mouse enter
 		
 		# Use same mathematical centering as applied above (reuse existing variables)

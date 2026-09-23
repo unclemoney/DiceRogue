@@ -94,7 +94,7 @@ func _play_coin_animation() -> void:
 	coin.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0, 1.0))  # Gold
 	coin.add_theme_color_override("font_outline_color", Color(0.3, 0.2, 0.0, 1.0))
 	coin.add_theme_constant_override("outline_size", 3)
-	coin.z_index = 500
+	coin.z_index = RenderLayers.Z_SCREEN_FX
 	
 	# Position near left quadrant center (where PowerUp icons display)
 	var viewport_size = get_viewport().get_visible_rect().size
@@ -119,7 +119,7 @@ func _play_coin_animation() -> void:
 		particle.size = Vector2(3, 3)
 		particle.color = Color(1.0, 0.85, 0.0, 0.8)
 		particle.position = Vector2(start_x + randf_range(-10, 10), start_y)
-		particle.z_index = 499
+		particle.z_index = RenderLayers.Z_SCREEN_FX_LOW
 		get_tree().root.add_child(particle)
 		
 		var ptween = get_tree().create_tween()
@@ -151,7 +151,7 @@ func _play_payout_effect() -> void:
 	label.add_theme_color_override("font_outline_color", Color(0.4, 0.2, 0.0, 1.0))
 	label.add_theme_constant_override("outline_size", 4)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.z_index = 1001
+	label.z_index = RenderLayers.Z_POWERUP_FX
 	label.position = Vector2(center.x - 120, center.y - 40)
 	label.size = Vector2(240, 50)
 	get_tree().root.add_child(label)
@@ -170,7 +170,7 @@ func _play_payout_effect() -> void:
 		coin.size = Vector2(5, 5)
 		coin.color = Color(1.0, 0.85, 0.0, 1.0)
 		coin.position = Vector2(center.x + randf_range(-60, 60), center.y)
-		coin.z_index = 1000
+		coin.z_index = RenderLayers.Z_POWERUP_FX
 		get_tree().root.add_child(coin)
 		
 		var angle = randf_range(-PI, 0)

@@ -276,7 +276,7 @@ func _ensure_synergy_banner() -> void:
 		return
 	_synergy_banner = PanelContainer.new()
 	_synergy_banner.name = "SynergyBanner"
-	_synergy_banner.z_index = 200  # Above fanned cards and their sticker badges
+	_synergy_banner.z_index = RenderLayers.Z_BANNER  # Above fanned cards and their sticker badges
 	_synergy_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_synergy_banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	_synergy_banner.offset_left = -320.0
@@ -342,7 +342,7 @@ func _create_background() -> void:
 	_background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_background.mouse_filter = Control.MOUSE_FILTER_STOP
 	_background.visible = false
-	_background.z_index = 120  # Above shop UI but below fanned cards
+	_background.z_index = RenderLayers.Z_FAN_BG  # Above shop UI but below fanned cards
 	add_child(_background)
 	
 	# Connect background click to fold cards back
@@ -511,7 +511,7 @@ func _create_spine_tooltip() -> void:
 	_spine_tooltip = PanelContainer.new()
 	_spine_tooltip.name = "SpineTooltip"
 	_spine_tooltip.visible = false
-	_spine_tooltip.z_index = 140  # Above fanned icons
+	_spine_tooltip.z_index = RenderLayers.Z_FAN_TOOLTIP  # Above fanned icons
 	_spine_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Don't block clicks
 	
 	# Apply direct hover styling
@@ -689,7 +689,7 @@ func _get_fan_overlay() -> CanvasLayer:
 	if not overlay:
 		overlay = CanvasLayer.new()
 		overlay.name = "SpineFanOverlay"
-		overlay.layer = 10
+		overlay.layer = RenderLayers.LAYER_FAN_OVERLAY
 		root.add_child(overlay)
 	return overlay as CanvasLayer
 
@@ -775,7 +775,7 @@ func _create_fanned_icons() -> void:
 		
 		overlay.add_child(icon)
 		icon.set_data(data)
-		icon.z_index = 125 + i  # Ensure cards are above background and shop
+		icon.z_index = RenderLayers.Z_FAN_CARD_BASE + i  # Ensure cards are above background and shop
 		
 		# Hide CardInfo/Title for cleaner fanned view
 		var card_info: Control = icon.get_node_or_null("CardInfo")

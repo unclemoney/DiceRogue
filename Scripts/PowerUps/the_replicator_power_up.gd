@@ -116,7 +116,7 @@ func _play_replication_effect(_target_id: String) -> void:
 	
 	# Screen flash effect
 	var canvas_layer = CanvasLayer.new()
-	canvas_layer.layer = 100
+	canvas_layer.layer = RenderLayers.LAYER_SCREEN_FLASH
 	get_tree().root.add_child(canvas_layer)
 	
 	var flash = ColorRect.new()
@@ -152,7 +152,7 @@ func _spawn_replication_particles() -> void:
 		particle.size = Vector2(4, 4)
 		particle.color = Color(randf_range(0.3, 1.0), randf_range(0.6, 1.0), 1.0, 1.0)
 		particle.position = center
-		particle.z_index = 1000
+		particle.z_index = RenderLayers.Z_POWERUP_FX
 		get_tree().root.add_child(particle)
 		
 		var angle = randf() * TAU
@@ -179,7 +179,7 @@ func _spawn_floating_text(text: String) -> void:
 	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1.0))
 	label.add_theme_constant_override("outline_size", 4)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.z_index = 1001
+	label.z_index = RenderLayers.Z_POWERUP_FX
 	
 	var viewport_size = get_viewport().get_visible_rect().size
 	label.position = Vector2(viewport_size.x / 2 - 100, viewport_size.y / 2 - 50)

@@ -2272,16 +2272,24 @@ Resources/             # Art, audio, data
 ## Known Issues & Cleanup
 
 ### UI Z-Index Hierarchy
-The UI layering system uses z_index values to control rendering and input order:
+All draw-order values are centralized in **`Scripts/Core/render_layers.gd`** (`class_name RenderLayers`). Scripts must use the `RenderLayers.Z_*` / `RenderLayers.LAYER_*` constants; scene files hold matching literals. The tiers:
 
-| Layer | Z-Index | Elements |
-|-------|---------|----------|
-| Base Game Elements | 0 | Dice, ScoreCard, etc. |
-| Cork Board Spines | 10-19 | Challenge/Debuff spines (10), Consumable spines (15) |
-| Shop UI | 100 | Shop panel, tabs, items |
-| Fan-Out Backgrounds | 120-121 | PowerUpUI background (120), CorkboardUI background (121) |
-| Fanned Icons | 125-135 | PowerUpIcon, ConsumableIcon, DebuffIcon (125 + i) |
-| Tooltips | 140 | Spine and icon hover tooltips |
+| Tier | Value | Elements |
+|------|-------|----------|
+| Backgrounds | -10 / -1 | `Z_FAR_BACKGROUND` shop backdrop, `Z_SHADOW` card shadows/menu bg |
+| Card-local | 1-5 | `Z_CARD_FRAME/INFO/BUTTON/RARITY/HOVER_BG` inside card icons |
+| Spines & badges | 10 / 15 | `Z_SPINE` challenge/debuff spines, `Z_BADGE` consumable spine + kiosk sticker |
+| Local FX | 40 / 50 / 60 | `Z_LOCAL_FX` vignette, `Z_LOCAL_STAMP` FAILED stamp, `Z_SCORECARD_PARTICLES` |
+| Modals | 99-101 | `Z_MODAL_DIM` dim, `Z_MODAL` **all full-screen popups**, `Z_MODAL_CONTENT` popup content |
+| Fan-out | 120-145 | `Z_FAN_BG(ALT)` dims, `Z_FAN_CARD_BASE + i` cards (all fan systems), `Z_FAN_HOVER`, `Z_FAN_TOOLTIP`, `Z_FAN_OVERFLOW` |
+| Elevated | 150-181 | `Z_ELEVATED` mom/console panel, `Z_CONSOLE_FAN_BG`, `Z_CONSOLE_VIP` |
+| Banners | 200 / 300 | `Z_BANNER` pause menu, turn/challenge banners; `Z_SETTINGS` settings menu |
+| Screen FX | 499-600 | `Z_SCREEN_FX(_LOW)` flashes, `Z_POWERUP_FX` result labels (demoted from the old 1000 band) |
+| Mod sell | 700 | `Z_MOD_SELL` |
+| Tooltip | 2000 | `Z_TOOLTIP` (inside `LAYER_TOOLTIP` = 128) |
+| **Debug (reserved)** | **3000-3002** | `Z_DEBUG_ROOT/BG/CONTENT` — debug panel only, always on top (Godot caps z_index at 4096) |
+
+CanvasLayer layers are likewise registered: fan overlay 10, debuff glow 11, round transition 12, chore popup 20, pause menu 30, debug panel 40, tutorial 100/101, screen flash 110, tooltips 128, scene transition 999. The overlay ladder guarantees round transition < chore popup < pause menu < debug panel. In-game, the debug panel's **Z-Index Dump** command prints the live draw-order stack.
 
 **Shop Auto-Minimize:** When PowerUpUI or CorkboardUI fans out while the shop is open, the shop is temporarily minimized. When the fan-out folds back, the shop is automatically restored.
 

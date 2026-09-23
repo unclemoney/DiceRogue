@@ -1079,7 +1079,8 @@ func _spawn_power_up_highlight_particles(row: ScorecardRow) -> void:
 	particles.global_position = row.get_global_transform_with_canvas().origin + (row.size / 2.0)
 	particles.scale = Vector2(0.35, 0.35)
 	particles.modulate = Color(1.0, 0.882353, 0.623529, 1.0)
-	particles.z_index = 120
+	# Matches the ScorecardUpgrade/DowngradeParticles scene tier (was 120, now Z_SCORECARD_PARTICLES).
+	particles.z_index = RenderLayers.Z_SCORECARD_PARTICLES
 	if particles.has_method("restart"):
 		particles.restart()
 	else:

@@ -65,7 +65,7 @@ func _ready() -> void:
 	
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	z_index = 1000  # Ensure debug panel appears in front of all other UI
+	z_index = RenderLayers.Z_DEBUG_ROOT  # The 3000 band is reserved for debug
 	_create_debug_ui()
 	hide_debug_panel()
 	
@@ -93,17 +93,18 @@ static func get_or_create_instance(parent_node: Node = null) -> DebugPanel:
 		var debug_scene = preload("res://Scenes/UI/DebugPanel.tscn")
 		if debug_scene:
 			instance = debug_scene.instantiate()
-			if parent_node:
-				parent_node.add_child(instance)
-				# Move to front (highest index)
-				parent_node.move_child(instance, parent_node.get_child_count() - 1)
-			else:
+			# Wrap in a dedicated CanvasLayer so the debug panel renders above
+			# every gameplay overlay (chore popup, pause menu, round transition).
+			var layer := CanvasLayer.new()
+			layer.name = "DebugPanelLayer"
+			layer.layer = RenderLayers.LAYER_DEBUG_PANEL
+			var host: Node = parent_node
+			if host == null:
 				# Add to main scene root if no parent specified
-				var main_scene = Engine.get_main_loop().current_scene
-				if main_scene:
-					main_scene.add_child(instance)
-					# Move to front (highest index)
-					main_scene.move_child(instance, main_scene.get_child_count() - 1)
+				host = Engine.get_main_loop().current_scene
+			if host:
+				host.add_child(layer)
+				layer.add_child(instance)
 	return instance
 
 ## Static method to toggle debug panel from anywhere
@@ -124,7 +125,7 @@ func _create_debug_ui() -> void:
 	background.color = Color(0, 0, 0, 0.8)
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	background.mouse_filter = Control.MOUSE_FILTER_STOP
-	background.z_index = 1000  # Very high z-index to appear in front
+	background.z_index = RenderLayers.Z_DEBUG_ROOT  # Same as the panel root; 3000 band is reserved for debug
 	add_child(background)
 	
 	# Solid black panel background for readability
@@ -133,7 +134,7 @@ func _create_debug_ui() -> void:
 	panel_background.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	panel_background.position = Vector2(10, 10)  # Small offset from top-left corner
 	panel_background.custom_minimum_size = Vector2(620, 420)
-	panel_background.z_index = 1001  # Above the transparent background
+	panel_background.z_index = RenderLayers.Z_DEBUG_BG  # Above the transparent background
 	add_child(panel_background)
 	
 	# Main container
@@ -142,7 +143,7 @@ func _create_debug_ui() -> void:
 	main_container.position = Vector2(20, 20)  # Small offset from top-left corner
 	main_container.custom_minimum_size = Vector2(1200, 600)
 	main_container.add_theme_constant_override("separation", 8)
-	main_container.z_index = 1002  # Above the panel background
+	main_container.z_index = RenderLayers.Z_DEBUG_CONTENT  # Above the panel background
 	add_child(main_container)
 	
 	# Title
@@ -459,6 +460,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Highlight Containers", "method": "_debug_ui_highlight"},
 			{"text": "Reset UI Visibility", "method": "_debug_ui_reset_visibility"},
 			{"text": "Progress Bar Showcase", "method": "_debug_progress_bar_showcase"},
+			{"text": "Z-Index Dump", "method": "_debug_zindex_dump"},
 		],
 		"Round Transitions": [
 			{"text": "TV On", "method": "_debug_tv_on"},
@@ -5458,7 +5460,7 @@ func _debug_ui_layout_info() -> void:
 func _debug_progress_bar_showcase() -> void:
 	var overlay := PanelContainer.new()
 	overlay.name = "ProgressBarShowcase"
-	overlay.z_index = 200
+	overlay.z_index = RenderLayers.Z_BANNER
 	overlay.set_anchors_preset(Control.PRESET_CENTER)
 	overlay.custom_minimum_size = Vector2(560, 0)
 	overlay.position = -Vector2(280, 100)
@@ -5496,6 +5498,64 @@ func _debug_progress_bar_showcase() -> void:
 	if is_instance_valid(overlay):
 		overlay.queue_free()
 	log_debug("Progress bar showcase done")
+
+
+## _debug_zindex_dump()
+##
+## Live draw-order inspector: walks the whole scene tree and prints every
+## CanvasItem with z_index != 0 and every CanvasLayer, sorted by effective
+## draw order (canvas layer first, then effective z_index).
+func _debug_zindex_dump() -> void:
+	var entries: Array = []
+	_zindex_collect(get_tree().root, entries)
+	entries.sort_custom(func(a, b): return a[0] < b[0] if a[0] != b[0] else a[1] < b[1])
+	log_debug("=== Z-Index Dump: %d entries (layer, effective z) ===" % entries.size())
+	for entry in entries:
+		log_debug(entry[2])
+
+
+func _zindex_collect(node: Node, entries: Array) -> void:
+	if node is CanvasLayer:
+		entries.append([node.layer, -2147483648,
+			"layer=%4d | %s [CanvasLayer] <- %s" % [node.layer, node.name, _zindex_parent_chain(node)]])
+	elif node is CanvasItem and node.z_index != 0:
+		entries.append([_zindex_layer_of(node), _zindex_effective_z(node),
+			"layer=%4d z=%5d | %s [%s]%s <- %s" % [
+				_zindex_layer_of(node), _zindex_effective_z(node),
+				node.name, node.get_class(),
+				"" if node.is_z_relative() else " (absolute)",
+				_zindex_parent_chain(node)]])
+	for child in node.get_children():
+		_zindex_collect(child, entries)
+
+
+func _zindex_layer_of(item: CanvasItem) -> int:
+	var p := item.get_parent()
+	while p:
+		if p is CanvasLayer:
+			return p.layer
+		p = p.get_parent()
+	return 1
+
+
+func _zindex_effective_z(item: CanvasItem) -> int:
+	var z := item.z_index
+	var p := item.get_parent()
+	while item.is_z_relative() and p is CanvasItem:
+		z += p.z_index
+		if not p.is_z_relative():
+			break
+		p = p.get_parent()
+	return z
+
+
+func _zindex_parent_chain(node: Node) -> String:
+	var names: Array = []
+	var p := node.get_parent()
+	while p and p != get_tree().root:
+		names.push_front(p.name)
+		p = p.get_parent()
+	return "/".join(names)
 
 
 ## _debug_ui_toggle_borders()

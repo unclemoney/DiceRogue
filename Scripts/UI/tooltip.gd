@@ -50,7 +50,7 @@ var _last_title := ""
 func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	z_index = 4000
+	z_index = RenderLayers.Z_TOOLTIP
 	_background.material = _background.material.duplicate()
 	_border.material = _border.material.duplicate()
 	_sync_rect_size()
@@ -94,6 +94,10 @@ func _pin_content_width() -> void:
 ## All dynamic sections in SectionsExtra are freed first — add_section()
 ## calls must be re-issued after every setup().
 func setup(data: Dictionary) -> void:
+	# Callers may instantiate and setup() before add_child(); @onready lookups
+	# are null until the node enters the tree, so wait for ready first.
+	if not is_node_ready():
+		await ready
 	for child in _sections_extra.get_children():
 		child.free()
 	_pin_content_width()

@@ -8,8 +8,9 @@
 script = ExtResource("1_5pbsu")
 id = "odd_only"
 display_name = "Odd Only"
-description = "Only allows Odd Number dice to be rolled"
+description = "Only allows Odd Number dice to be rolled.   (One Mod per Dice)"
 icon = ExtResource("1_lrw8v")
 scene = ExtResource("2_depgn")
 price = 50
+sell_price = -1
 metadata/_custom_type_script = "uid://47gl3by4wwht"

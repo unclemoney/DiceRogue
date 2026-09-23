@@ -9,7 +9,6 @@ class_name FanOverlayHelper
 ## for reparenting background nodes and positioning them in screen space.
 
 const OVERLAY_NAME: String = "SpineFanOverlay"
-const OVERLAY_LAYER: int = 10
 
 
 ## get_overlay(root: Node) -> CanvasLayer
@@ -21,7 +20,7 @@ static func get_overlay(root: Node) -> CanvasLayer:
 	if not overlay:
 		overlay = CanvasLayer.new()
 		overlay.name = OVERLAY_NAME
-		overlay.layer = OVERLAY_LAYER
+		overlay.layer = RenderLayers.LAYER_FAN_OVERLAY
 		tree_root.add_child(overlay)
 	return overlay as CanvasLayer
 

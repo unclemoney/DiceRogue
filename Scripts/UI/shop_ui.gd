@@ -118,7 +118,7 @@ func _ready() -> void:
 		print("ModManager path:", mod_manager_path)
 	
 	# Set z_index so shop is above base UI but below fan-outs and pause menu
-	z_index = 100
+	z_index = RenderLayers.Z_MODAL
 
 	# Initialize purchased items tracking
 	purchased_items = {
@@ -1828,7 +1828,7 @@ func _add_shelf_background_to_tab(tab_node: Control) -> void:
 		shelf_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 		shelf_bg.modulate = Color(1, 1, 1, 0.3)  # Semi-transparent
 		shelf_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		shelf_bg.z_index = -1  # Behind items
+		shelf_bg.z_index = RenderLayers.Z_SHADOW  # Behind items
 		
 		# Add as first child so it's behind everything else
 		tab_node.add_child(shelf_bg)
@@ -2073,7 +2073,7 @@ func _style_shop_background() -> void:
 	if not bg_panel:
 		bg_panel = Panel.new()
 		bg_panel.name = "BackgroundPanel" 
-		bg_panel.z_index = -10  # Behind everything else
+		bg_panel.z_index = RenderLayers.Z_FAR_BACKGROUND  # Behind everything else
 		bg_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 		add_child(bg_panel)
 		move_child(bg_panel, 0)  # Move to back

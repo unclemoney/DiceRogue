@@ -105,7 +105,7 @@ func _input(event: InputEvent) -> void:
 ## Programmatically builds the settings menu UI.
 func _build_ui() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	z_index = 300
+	z_index = RenderLayers.Z_SETTINGS
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	
 	# Dark overlay background

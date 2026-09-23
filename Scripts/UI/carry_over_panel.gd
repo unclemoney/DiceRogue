@@ -126,7 +126,7 @@ func show_panel(allowed_count: int, allowed_types: Array[String], next_channel: 
 		anchor_bottom = 0.0
 		global_position = Vector2.ZERO
 		size = viewport_rect.size
-		z_index = 100
+		z_index = RenderLayers.Z_MODAL
 		
 		# Re-center the panel container explicitly using its real content-fit
 		# size — the panel grows past its 550px minimum when many rows exist,

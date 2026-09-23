@@ -278,7 +278,7 @@ func _execute_animation_sequence(score: int, category: String, breakdown_info: D
 		var flash = ColorRect.new()
 		flash.set_anchors_preset(Control.PRESET_FULL_RECT)
 		flash.color = Color.WHITE
-		flash.z_index = 500
+		flash.z_index = RenderLayers.Z_SCREEN_FX
 		flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		get_tree().root.add_child(flash)
 		var flash_tween = create_tween()
@@ -1163,7 +1163,7 @@ func _trigger_red_vignette_pulse(intensity: float) -> void:
 	vignette.name = "RedVignette"
 	vignette.color = Color(0.8, 0.1, 0.1, 0.0)
 	vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vignette.z_index = 100
+	vignette.z_index = RenderLayers.Z_MODAL
 	
 	# Cover full viewport
 	vignette.set_anchors_preset(Control.PRESET_FULL_RECT)

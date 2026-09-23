@@ -96,7 +96,6 @@ const BADGE_OFFSET_LEFT := -40.0
 const BADGE_OFFSET_TOP := -50.0
 const BADGE_OFFSET_RIGHT := 30.0
 const BADGE_OFFSET_BOTTOM := 20.0
-const BADGE_Z_INDEX := 15
 
 func _ready() -> void:
 	_ensure_structure()
@@ -206,7 +205,7 @@ func _ensure_structure() -> void:
 		hit_area.set_offsets_preset(Control.PRESET_FULL_RECT)
 		hit_area.color = Color(0.0, 0.0, 0.0, 0.0)
 		hit_area.mouse_filter = Control.MOUSE_FILTER_STOP
-		hit_area.z_index = 100
+		hit_area.z_index = RenderLayers.Z_SPINE
 		add_child(hit_area)
 		move_child(hit_area, 0)
 
@@ -373,7 +372,7 @@ func _ensure_structure() -> void:
 		sticker_badge.offset_top = BADGE_OFFSET_TOP
 		sticker_badge.offset_right = BADGE_OFFSET_RIGHT
 		sticker_badge.offset_bottom = BADGE_OFFSET_BOTTOM
-		sticker_badge.z_index = BADGE_Z_INDEX
+		sticker_badge.z_index = RenderLayers.Z_BADGE
 		sticker_badge.mouse_filter = Control.MOUSE_FILTER_PASS
 
 func _find_first_node(root: Node, node_name: String) -> Node:

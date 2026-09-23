@@ -188,8 +188,8 @@
 [ext_resource type="Resource" uid="uid://yxqimk675f0" path="res://Scripts/PowerUps/UpperCrust.tres" id="1105_upper_crust"]
 [ext_resource type="Resource" uid="uid://deopljtuykw36" path="res://Scripts/PowerUps/FourOfAKindYahtzee.tres" id="1106_four_of_a_kind_yahtzee"]
 [ext_resource type="Resource" uid="uid://dftypgn3hbq3u" path="res://Scripts/PowerUps/TwoPairHouse.tres" id="1107_two_pair_house"]
-[ext_resource type="Resource" path="res://Scripts/Mods/PaintedDieMod.tres" id="1108_painted_die"]
-[ext_resource type="Resource" path="res://Scripts/Mods/CursedSixMod.tres" id="1109_cursed_six"]
+[ext_resource type="Resource" uid="uid://xheca6xq4kh3" path="res://Scripts/Mods/PaintedDieMod.tres" id="1108_painted_die"]
+[ext_resource type="Resource" uid="uid://dssuxdkbw6lrb" path="res://Scripts/Mods/CursedSixMod.tres" id="1109_cursed_six"]
 [ext_resource type="Resource" uid="uid://c81wucnyq6nt3" path="res://Scripts/Consumable/SpiteConsumable.tres" id="1110_spite"]
 [ext_resource type="Resource" uid="uid://dua1qk14hfmqg" path="res://Scripts/Consumable/AntidoteConsumable.tres" id="1111_antidote"]
 [ext_resource type="Resource" uid="uid://brjsm1fgx5k0t" path="res://Scripts/Consumable/ImmunityConsumable.tres" id="1112_immunity"]
@@ -292,9 +292,10 @@ script = ExtResource("101_wcrst")
 
 [node name="GamingConsoleManager" parent="Managers" instance=ExtResource("1064_gaming_console_mgr")]
 
-[node name="DebugPanel" parent="." instance=ExtResource("69_6hkbr")]
-z_index = 10
-z_as_relative = false
+[node name="DebugPanelLayer" type="CanvasLayer" parent="."]
+layer = 40
+
+[node name="DebugPanel" parent="DebugPanelLayer" instance=ExtResource("69_6hkbr")]
 
 [node name="StatisticsPanel" parent="." instance=ExtResource("999_stats")]
 visible = false

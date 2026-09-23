@@ -40,7 +40,7 @@ func _on_debug_pressed() -> void:
 	print("[BlueDiceTest] Forcing all dice to blue...")
 	if DiceColorManager:
 		# Use the debug panel approach instead
-		var debug_panel = get_node_or_null("/root/GameController/DebugPanel")
+		var debug_panel = get_node_or_null("/root/GameController/DebugPanelLayer/DebugPanel")
 		if debug_panel and debug_panel.has_method("_debug_force_all_blue"):
 			debug_panel._debug_force_all_blue()
 			_add_result("✓ Forced all dice to blue via debug panel")

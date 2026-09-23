@@ -56,7 +56,7 @@ const FAN_CARD_MAX_HEIGHT_RATIO := 0.60
 
 func _ready() -> void:
 	_tfx = get_node_or_null("/root/TweenFXHelper")
-	z_index = 100
+	z_index = RenderLayers.Z_MODAL
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -111,14 +111,14 @@ func _build_ui() -> void:
 	_fan_background = FanOverlayHelperRef.create_background("GamingConsoleFanBackground")
 	_fan_background.color = Color(0.03, 0.02, 0.05, 0.92)
 	_fan_background.top_level = true
-	_fan_background.z_index = 180
+	_fan_background.z_index = RenderLayers.Z_CONSOLE_FAN_BG
 	_fan_background.gui_input.connect(_on_fan_background_input)
 	add_child(_fan_background)
 
 	_vip_card = GamingConsoleVIPCardScene.instantiate()
 	_vip_card.name = "GamingConsoleVIPCard"
 	_vip_card.top_level = true
-	_vip_card.z_index = 181
+	_vip_card.z_index = RenderLayers.Z_CONSOLE_VIP
 	_vip_card.visible = false
 	_vip_card.activate_pressed.connect(_on_activate_pressed)
 	add_child(_vip_card)
@@ -489,7 +489,7 @@ func _spawn_nes_die_buttons() -> void:
 		var state = die.get_state()
 		if state == Dice.DiceState.ROLLED or state == Dice.DiceState.LOCKED:
 			var panel = PanelContainer.new()
-			panel.z_index = 150
+			panel.z_index = RenderLayers.Z_ELEVATED
 
 			var style = _build_panel_style(PANEL_ACCENT, PANEL_SURFACE) # 4.0 margin
 			style.content_margin_left = 1.0

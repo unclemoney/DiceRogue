@@ -122,7 +122,7 @@ All new full-screen popup/panel overlays must follow the pattern established by 
 ### Root Node
 - Use `extends Control` (not `CanvasLayer`).
 - Set `mouse_filter = MOUSE_FILTER_STOP` to block input behind the panel.
-- Set a high `z_index` (e.g., 100) to render above gameplay.
+- Set `z_index = RenderLayers.Z_MODAL` (see `Scripts/Core/render_layers.gd` — the central draw-order registry; never use raw numeric z_index/layer literals in scripts).
 
 ### Overlay
 - Create a `ColorRect` child named `Overlay`.

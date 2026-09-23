@@ -87,7 +87,7 @@ func show_winner_panel(data: Dictionary) -> void:
 		var viewport_rect = viewport.get_visible_rect()
 		global_position = Vector2.ZERO
 		size = viewport_rect.size
-		z_index = 100
+		z_index = RenderLayers.Z_MODAL
 	
 	visible = true
 	_animate_entrance()

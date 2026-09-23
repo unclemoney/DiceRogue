@@ -230,7 +230,7 @@ func notify_store_failed() -> void:
 	var stamp := Label.new()
 	stamp.text = "FAILED"
 	stamp.set_anchors_preset(Control.PRESET_CENTER)
-	stamp.z_index = 50
+	stamp.z_index = RenderLayers.Z_LOCAL_STAMP
 	stamp.rotation_degrees = -15
 	stamp.add_theme_font_override("font", VCR_FONT)
 	stamp.add_theme_font_size_override("font_size", 28)
@@ -246,7 +246,7 @@ func notify_store_failed() -> void:
 	var vignette := ColorRect.new()
 	vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
 	vignette.color = Color(0.8, 0.1, 0.1, 0.0)
-	vignette.z_index = 40
+	vignette.z_index = RenderLayers.Z_LOCAL_FX
 	vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(vignette)
 	var vig_tween := create_tween()
@@ -291,7 +291,7 @@ func _show_reveal_banner(banner_text: String) -> void:
 	var banner = Label.new()
 	banner.text = banner_text
 	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	banner.z_index = 200
+	banner.z_index = RenderLayers.Z_BANNER
 
 	banner.add_theme_font_override("font", VCR_FONT)
 	banner.add_theme_font_size_override("font_size", 28)

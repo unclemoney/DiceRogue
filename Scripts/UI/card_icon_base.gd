@@ -64,7 +64,7 @@ func _create_card_structure() -> void:
 	shadow.name = "Shadow"
 	shadow.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shadow.modulate = Color(0.0, 0.0, 0.0, 0.5)
-	shadow.z_index = -1
+	shadow.z_index = RenderLayers.Z_SHADOW
 	shadow.position = Vector2(5, 5)
 	add_child(shadow)
 	
@@ -78,14 +78,14 @@ func _create_card_structure() -> void:
 	# Create CardFrame
 	card_frame = TextureRect.new()
 	card_frame.name = "CardFrame"
-	card_frame.z_index = 1
+	card_frame.z_index = RenderLayers.Z_CARD_FRAME
 	card_frame.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(card_frame)
 	
 	# Create CardInfo
 	card_info = VBoxContainer.new()
 	card_info.name = "CardInfo"
-	card_info.z_index = 2
+	card_info.z_index = RenderLayers.Z_CARD_INFO
 	card_info.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
 	add_child(card_info)
 	
@@ -101,7 +101,7 @@ func _create_card_structure() -> void:
 	sell_button.name = "SellButton"
 	sell_button.text = "SELL"
 	sell_button.visible = false
-	sell_button.z_index = 3
+	sell_button.z_index = RenderLayers.Z_CARD_BUTTON
 	sell_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	sell_button.size = Vector2(44, 31)
 	add_child(sell_button)

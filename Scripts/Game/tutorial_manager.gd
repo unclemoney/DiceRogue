@@ -518,7 +518,7 @@ func _ensure_ui_exists() -> void:
 	if not _tutorial_highlight or not is_instance_valid(_tutorial_highlight):
 		_tutorial_highlight = CanvasLayer.new()
 		_tutorial_highlight.name = "TutorialHighlight"
-		_tutorial_highlight.layer = 100
+		_tutorial_highlight.layer = RenderLayers.LAYER_TUTORIAL_HIGHLIGHT
 		_tutorial_highlight.set_script(TutorialHighlightScript)
 		game_root.add_child(_tutorial_highlight)
 		print("[TutorialManager] Created TutorialHighlight")
@@ -527,7 +527,7 @@ func _ensure_ui_exists() -> void:
 	if not _tutorial_dialog or not is_instance_valid(_tutorial_dialog):
 		var dialog_layer = CanvasLayer.new()
 		dialog_layer.name = "TutorialDialogLayer"
-		dialog_layer.layer = 101  # Above highlight layer
+		dialog_layer.layer = RenderLayers.LAYER_TUTORIAL_DIALOG  # Above highlight layer
 		game_root.add_child(dialog_layer)
 		
 		_tutorial_dialog = Control.new()

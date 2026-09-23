@@ -134,7 +134,7 @@ func _build_ui() -> void:
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	background.color = Color.WHITE  # Base color for shader
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Don't block clicks
-	background.z_index = -1  # Render behind dice and UI
+	background.z_index = RenderLayers.Z_SHADOW  # Render behind dice and UI
 	
 	# === SHADER SELECTION ===
 	# Uncomment one shader option below to change the main menu background

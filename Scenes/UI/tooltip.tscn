@@ -36,7 +36,7 @@ shader_parameter/rect_size = Vector2(260, 120)
 shader_parameter/corner_radius = 8.0
 
 [node name="Tooltip" type="PanelContainer"]
-z_index = 4000
+z_index = 2000
 custom_minimum_size = Vector2(260, 0)
 mouse_filter = 2
 theme_override_styles/panel = SubResource("panel_style")

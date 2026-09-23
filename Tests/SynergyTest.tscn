@@ -252,9 +252,10 @@ challenge_manager_path = NodePath("../ChallengeManager")
 dice_hand_path = NodePath("../DiceHand")
 scorecard_path = NodePath("../ScoreCard")
 
-[node name="DebugPanel" parent="." instance=ExtResource("69_6hkbr")]
-z_index = 10
-z_as_relative = false
+[node name="DebugPanelLayer" type="CanvasLayer" parent="."]
+layer = 40
+
+[node name="DebugPanel" parent="DebugPanelLayer" instance=ExtResource("69_6hkbr")]
 
 [node name="StatisticsPanel" parent="." instance=ExtResource("999_stats")]
 visible = false

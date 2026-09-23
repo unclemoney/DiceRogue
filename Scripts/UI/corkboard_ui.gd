@@ -192,7 +192,7 @@ func _create_background() -> void:
 	_background.color = Color(0, 0, 0, 0.5)
 	_background.mouse_filter = Control.MOUSE_FILTER_STOP
 	_background.visible = false
-	_background.z_index = 121  # Above shop UI (100) but below fanned icons (125+), separate from PowerUpUI bg (120)
+	_background.z_index = RenderLayers.Z_FAN_BG_ALT  # Above shop UI (100) but below fanned icons (125+), separate from PowerUpUI bg (120)
 	
 	add_child(_background)
 	_background.gui_input.connect(_on_background_clicked)
@@ -214,7 +214,7 @@ func _create_spine_tooltip() -> void:
 	_spine_tooltip = PanelContainer.new()
 	_spine_tooltip.name = "SpineTooltip"
 	_spine_tooltip.visible = false
-	_spine_tooltip.z_index = 140  # Above fanned icons but won't block due to MOUSE_FILTER_IGNORE
+	_spine_tooltip.z_index = RenderLayers.Z_FAN_TOOLTIP  # Above fanned icons but won't block due to MOUSE_FILTER_IGNORE
 	_spine_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Don't block clicks
 	_apply_hover_tooltip_style(_spine_tooltip)
 	
@@ -257,7 +257,7 @@ func _create_challenge_spine() -> void:
 	
 	_challenge_spine = challenge_spine_scene.instantiate()
 	_challenge_spine.position = _challenge_spine_pos
-	_challenge_spine.z_index = 10
+	_challenge_spine.z_index = RenderLayers.Z_SPINE
 	panel.add_child(_challenge_spine)
 	
 	# Set base position so hover animations work correctly
@@ -530,7 +530,7 @@ func _fan_out_challenges() -> void:
 	for i in range(all_notes.size()):
 		var note = all_notes[i]
 		add_child(note)
-		note.z_index = 125 + i
+		note.z_index = RenderLayers.Z_FAN_CARD_BASE + i
 		_challenge_fanned_icons[note.name] = note
 		_animate_card_fan_in(note, positions[i], i * 0.03)
 	
@@ -750,7 +750,7 @@ func _on_challenge_note_mouse_entered(note: Control) -> void:
 	note.set_meta("hover_tween", tween)
 	tween.tween_property(note, "position", base_pos + Vector2(0, -10), 0.1)
 	tween.tween_property(note, "scale", Vector2(1.1, 1.1), 0.1)
-	tween.tween_property(note, "z_index", 135, 0.0)  # Boost above other fanned cards
+	tween.tween_property(note, "z_index", RenderLayers.Z_FAN_HOVER, 0.0)  # Boost above other fanned cards
 
 
 func _on_challenge_note_mouse_exited(note: Control) -> void:
@@ -767,7 +767,7 @@ func _on_challenge_note_mouse_exited(note: Control) -> void:
 	note.set_meta("hover_tween", tween)
 	tween.tween_property(note, "position", base_pos, 0.1)
 	tween.tween_property(note, "scale", Vector2.ONE, 0.1)
-	tween.tween_property(note, "z_index", 125, 0.0)  # Return to standard fanned z
+	tween.tween_property(note, "z_index", RenderLayers.Z_FAN_CARD_BASE, 0.0)  # Return to standard fanned z
 
 
 func _on_challenge_note_gui_input(event: InputEvent, note: Control) -> void:
@@ -791,7 +791,7 @@ func _create_debuff_spine() -> void:
 	
 	_debuff_spine = debuff_spine_scene.instantiate()
 	_debuff_spine.position = _debuff_spine_pos
-	_debuff_spine.z_index = 10
+	_debuff_spine.z_index = RenderLayers.Z_SPINE
 	panel.add_child(_debuff_spine)
 	
 	# Set base position so hover animations work correctly
@@ -971,7 +971,7 @@ func _fan_out_debuffs() -> void:
 		if debuff_icon_scene:
 			var icon = debuff_icon_scene.instantiate()
 			add_child(icon)
-			icon.z_index = 125 + i
+			icon.z_index = RenderLayers.Z_FAN_CARD_BASE + i
 			icon.set_data(data)
 			_debuff_fanned_icons[id] = icon
 			
@@ -1014,7 +1014,7 @@ func add_consumable(data: ConsumableData) -> Node:
 	var spine_pos = Vector2(spine_x, _consumable_spine_start.y)
 	spine.position = spine_pos
 	spine.set_base_position(spine_pos)
-	spine.z_index = 15
+	spine.z_index = RenderLayers.Z_BADGE
 	
 	# Reset layout mode and anchors to prevent position issues
 	spine.set_anchors_preset(Control.PRESET_TOP_LEFT)
@@ -1274,7 +1274,7 @@ func _fan_out_consumables() -> void:
 		if consumable_icon_scene:
 			var icon = consumable_icon_scene.instantiate()
 			add_child(icon)
-			icon.z_index = 125 + i
+			icon.z_index = RenderLayers.Z_FAN_CARD_BASE + i
 			icon.set_data(data)
 			_consumable_fanned_icons[id] = icon
 			if icon.has_method("set_blocked_by_debuff"):
@@ -1464,7 +1464,7 @@ func _animate_card_fan_in(card: Control, target_pos: Vector2, delay: float) -> v
 	card.position = viewport_center
 	card.scale = Vector2(0.1, 0.1)
 	card.modulate.a = 0
-	card.z_index = 125  # Above background (120) and shop (100)
+	card.z_index = RenderLayers.Z_FAN_CARD_BASE  # Above background (120) and shop (100)
 	
 	# Store base position for hover animations
 	card.set_meta("base_position", target_pos)
@@ -1808,7 +1808,7 @@ func _create_overflow_label() -> void:
 	# Position above the fanned cards
 	_overflow_label.position = Vector2(_fan_center.x - 200, _fan_center.y - 180)
 	_overflow_label.custom_minimum_size = Vector2(400, 50)
-	_overflow_label.z_index = 145  # Above fanned icons
+	_overflow_label.z_index = RenderLayers.Z_FAN_OVERFLOW  # Above fanned icons
 	
 	# Style the label
 	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")

@@ -1226,7 +1226,7 @@ func _finalize() -> void:
 	# Ensure results panel is visible and on top
 	if bot_results_panel and is_instance_valid(bot_results_panel):
 		bot_results_panel.visible = true
-		bot_results_panel.z_index = 200
+		bot_results_panel.z_index = RenderLayers.Z_BANNER
 
 	# Save reports
 	var report_path = report_writer.write_report(statistics, config)

@@ -92,7 +92,7 @@ var _vcr_font: Font
 
 
 func _ready() -> void:
-	layer = 10
+	layer = RenderLayers.LAYER_ROUND_TRANSITION
 	visible = false
 	_vcr_font = load(FONT_PATH) as Font
 	_build_ui()
