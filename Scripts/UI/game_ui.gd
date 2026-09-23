@@ -226,7 +226,8 @@ func _build_ui() -> void:
 	roll_button_ui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	roll_button_ui.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	roll_button_container.add_child(roll_button_ui)
-	_add_container_hover_title(roll_button_container, "Roll Button")
+	# Don't Add a hover tooltip for the roll button; it's obvious what it does and the tooltip would be distracting.
+	#_add_container_hover_title(roll_button_container, "Roll Button")
 
 	# ── Right column (scorecard) ──
 	var right_col := _create_vbox("RightColumn", 1.0)

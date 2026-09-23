@@ -1,7 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://roll_button_ui_scene"]
+[gd_scene load_steps=3 format=3 uid="uid://dxthpbkt8vbvm"]
 
+[ext_resource type="Script" uid="uid://kfubkrxtx84u" path="res://Scripts/UI/roll_button_ui.gd" id="1_script"]
 [ext_resource type="Theme" uid="uid://yij15afv8bdr" path="res://Resources/UI/scorecard_theme.tres" id="1_theme"]
-[ext_resource type="Script" path="res://Scripts/UI/roll_button_ui.gd" id="1_script"]
 
 [node name="RollButtonUI" type="Control"]
 layout_mode = 3
@@ -34,7 +34,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(1, 1, 1, 1)
 
 [node name="ContentMargin" type="MarginContainer" parent="CenterContainer/RollButtonShell"]
 layout_mode = 1
@@ -53,8 +52,8 @@ theme_override_constants/margin_bottom = 18
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-alignment = 1
 theme_override_constants/separation = 2
+alignment = 1
 
 [node name="RollLabel" type="Label" parent="CenterContainer/RollButtonShell/ContentMargin/ContentVBox"]
 layout_mode = 2
@@ -73,6 +72,5 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-text = ""
 
 [connection signal="pressed" from="CenterContainer/RollButtonShell/RollButton" to="." method="_on_roll_button_pressed"]

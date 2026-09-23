@@ -33,8 +33,8 @@
 - [ ] `P1-Major` Mom said you earned a punishment, but no debuff was added.  Let's check all mom interactions for consistency. This only happened in Mall Zone 1, but subsequent zones worked properly.
 - [X] `P1-Major` Abstinance debuff needs to be checked. Verify it works as designed.
 - [X] `P2-Minor` Challenge or Debuff that makes powerups expire after 3 rounds? This is no longer needed.
-- [ ] `P2-Minor` Clarify MODS are only applied to one dice at a time.
-- [ ] `P2-Minor` Clarify Evens Only PowerUP.
+- [X] `P2-Minor` Clarify MODS are only applied to one dice at a time.
+- [X] `P2-Minor` Clarify Evens Only PowerUP.
 - [ ] `P2-Minor` Better way to SELL Mods? This needs more detail and exploration.
 - [X] `P2-Minor` Free coupon didn't register until next round. Check on that. Once coupon is USED it should be immediately available. This works, but coupons only.  Marked as done.
 - [X] `P2-Minor` Make mods disabled obvious. During Disabled Mods Debuff, add a shader to the MOD icon.
@@ -56,10 +56,10 @@
 
 ## SYS:UI — UI / UX & Animation
 
-- [ ] `P1-Major` Find all layers and overlays, sort priority and then implament a standard across the game.
+- [X] `P1-Major` Find all layers and overlays, sort priority and then implament a standard across the game.
 - [X] `P1-Major` Mall Map Fan Out still rough. Mall Zone 1 shows "coming up" instead of "completed". Mall Zone 2 shows correctly.
 - [ ] `P2-Minor` Update Challenge Icons.
-- [ ] `P2-Minor` Roll button ocassionally remains too large, always ensure it reverts to original size.
+- [X] `P2-Minor` Roll button ocassionally remains too large, always ensure it reverts to original size.
 - [ ] `P2-Minor` Shockwave animations can also be applied to buttons that need to be pressed or chosen.
 - [X] `P2-Minor` Click on the Mall Zone upper left to bring up the mall map. Show coming challenges.
 - [X] `P2-Minor` Update buttons to glass shader so they are uniform.

@@ -45,6 +45,11 @@ var _motion_strength: float = 0.0
 var _mouse_uv: Vector2 = Vector2(0.5, 0.5)
 var _last_mouse_local: Vector2 = Vector2.ZERO
 var _press_flash_tween: Tween
+const ROLL_REST_SCALE := Vector2.ONE
+const SCALE_SETTLE_DELAY: float = 0.6
+var _scale_idle_timer: float = 0.0
+var _scale_restore_tween: Tween
+var _round_start_tween: Tween
 
 ## Keyboard input cooldown to prevent multiple rapid presses
 var _input_cooldown: float = 0.0
@@ -213,10 +218,12 @@ func _setup_roll_button_visuals() -> void:
 
 func _on_roll_mouse_entered() -> void:
 	_is_hovered = true
+	_mark_scale_activity()
 
 
 func _on_roll_mouse_exited() -> void:
 	_is_hovered = false
+	_mark_scale_activity()
 
 
 func _refresh_roll_button_visual_state() -> void:
@@ -343,6 +350,7 @@ func disable_roll() -> void:
 	_is_hovered = false
 	_roll_in_progress = false
 	_refresh_roll_button_visual_state()
+	_mark_scale_activity()
 
 
 ## start_pulse() -> void
@@ -391,6 +399,10 @@ func _process(delta: float) -> void:
 		_button_action_cooldown -= delta
 		if _button_action_cooldown < 0.0:
 			_button_action_cooldown = 0.0
+	if _scale_idle_timer > 0.0:
+		_scale_idle_timer -= delta
+		if _scale_idle_timer <= 0.0:
+			_check_rest_scale()
 	_update_roll_button_visual_response(delta)
 
 
@@ -460,14 +472,17 @@ func _on_turn_started() -> void:
 func _activate_round_start(round_number: int) -> void:
 	enable_roll()
 	_start_roll_button_pulse()
+	_mark_scale_activity()
 
 	# Bounce animation on the roll button
 	if roll_button_shell and not roll_button.disabled:
 		roll_button_shell.pivot_offset = roll_button_shell.size / 2.0
-		var tween = create_tween()
-		tween.tween_property(roll_button_shell, "scale", Vector2(1.12, 0.9), 0.08)
-		tween.tween_property(roll_button_shell, "scale", Vector2(0.97, 1.04), 0.08)
-		tween.tween_property(roll_button_shell, "scale", Vector2.ONE, 0.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		if _round_start_tween and _round_start_tween.is_valid():
+			_round_start_tween.kill()
+		_round_start_tween = create_tween()
+		_round_start_tween.tween_property(roll_button_shell, "scale", Vector2(1.12, 0.9), 0.08)
+		_round_start_tween.tween_property(roll_button_shell, "scale", Vector2(0.97, 1.04), 0.08)
+		_round_start_tween.tween_property(roll_button_shell, "scale", Vector2.ONE, 0.1).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		_flash_roll_button_shader(0.45, Vector2(0.5, 0.5))
 
 	# Spawn dice and auto-roll at round start
@@ -495,6 +510,7 @@ func _start_roll_button_pulse() -> void:
 		return
 	_is_pulsing = true
 	_tfx.idle_pulse(roll_button_shell, 0.055)
+	_mark_scale_activity()
 	print("[RollButtonUI] Starting Roll button pulse animation")
 
 
@@ -503,7 +519,55 @@ func _stop_roll_button_pulse() -> void:
 		return
 	_is_pulsing = false
 	_tfx.stop_effect(roll_button_shell)
+	_mark_scale_activity()
 	print("[RollButtonUI] Stopped Roll button pulse animation")
+
+
+## _mark_scale_activity()
+##
+## Resets the scale watchdog idle timer after any scale-affecting effect.
+## Kills an in-flight rest-scale restore so it cannot fight the new effect.
+func _mark_scale_activity() -> void:
+	_scale_idle_timer = SCALE_SETTLE_DELAY
+	if _scale_restore_tween and _scale_restore_tween.is_valid():
+		_scale_restore_tween.kill()
+
+
+## _check_rest_scale()
+##
+## Watchdog: restores the shell to ROLL_REST_SCALE once effects have settled.
+## Skips while pulsing, while hovered with the button enabled (hover scale-up
+## is legitimate), or when the shell is already at rest scale.
+func _check_rest_scale() -> void:
+	if not is_instance_valid(roll_button_shell):
+		return
+	if _is_pulsing:
+		return
+	if roll_button and not roll_button.disabled and _is_hovered:
+		return
+	if roll_button_shell.scale.is_equal_approx(ROLL_REST_SCALE):
+		return
+	_restore_rest_scale()
+
+
+## _restore_rest_scale()
+##
+## Kills any lingering scale effects and tweens the shell back to rest state.
+## Side-effects: restores modulate to the state-appropriate target — white when
+## enabled, the disabled dim (alpha 0.88) when disabled — so a killed
+## negative_hit flash cannot leave the shell tinted or undim the disabled look.
+func _restore_rest_scale() -> void:
+	_tfx.stop_effect(roll_button_shell)
+	if _round_start_tween and _round_start_tween.is_valid():
+		_round_start_tween.kill()
+	roll_button_shell.pivot_offset = roll_button_shell.size / 2.0
+	_scale_restore_tween = create_tween()
+	_scale_restore_tween.tween_property(roll_button_shell, "scale", ROLL_REST_SCALE, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	var target_modulate := Color.WHITE
+	if roll_button and roll_button.disabled:
+		target_modulate = Color(1.0, 1.0, 1.0, 0.88)
+	if not roll_button_shell.modulate.is_equal_approx(target_modulate):
+		_scale_restore_tween.parallel().tween_property(roll_button_shell, "modulate", target_modulate, 0.15)
 
 
 func _on_roll_button_pressed() -> void:
@@ -518,6 +582,7 @@ func _on_roll_button_pressed() -> void:
 	roll_button.disabled = true
 	_is_hovered = false
 	_refresh_roll_button_visual_state()
+	_mark_scale_activity()
 	_flash_roll_button_shader(1.0, _get_roll_button_press_uv())
 	_stop_roll_button_pulse()
 
@@ -645,6 +710,7 @@ func _on_rolls_exhausted() -> void:
 				t.tween_property(die, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_ELASTIC)
 
 	_tfx.negative_hit(roll_button_shell)
+	_mark_scale_activity()
 
 	var toast = Label.new()
 	toast.text = "OUT OF ROLLS"
