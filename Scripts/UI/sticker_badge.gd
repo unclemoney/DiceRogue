@@ -6,8 +6,8 @@ class_name StickerBadge
 ## Builds layered paper, symbol, holo, frame, and tooltip visuals and exposes
 ## a public API for pointer-driven foil control.
 
-const VCR_FONT = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 const HOLO_SHADER = preload("res://Scripts/Shaders/sticker_holo.gdshader")
+const TOOLTIP_SCENE := preload("res://Scenes/UI/tooltip.tscn")
 
 const SYMBOL_TEXTURES := {
 	"G": preload("res://Resources/Art/UI/sticker_badge_thumb.png"),
@@ -21,9 +21,6 @@ const BADGE_SIZE: Vector2 = Vector2(70, 70)
 const DEFAULT_UV := Vector2(0.5, 0.5)
 const UV_LERP_SPEED := 12.0
 const UV_SETTLE_EPSILON := 0.0005
-const TOOLTIP_FADE_IN_DURATION := 0.12
-const TOOLTIP_FADE_OUT_DURATION := 0.10
-const TOOLTIP_MIN_SIZE := Vector2(156, 0)
 
 const HOLO_PROFILE_KEYS := [
 	"foil_intensity",
@@ -75,9 +72,7 @@ var _holo_layer: ColorRect
 var _symbol_layer: TextureRect
 var _holo_material: ShaderMaterial
 
-var _tooltip: PanelContainer
-var _tooltip_label: Label
-var _tooltip_tween: Tween
+var _tooltip: Tooltip
 
 var _target_uv := DEFAULT_UV
 var _current_uv := DEFAULT_UV
@@ -206,14 +201,16 @@ func set_rainbow_strength(value: float) -> void:
 func set_rating(new_rating: String) -> void:
 	rating = _normalize_rating(new_rating)
 	_apply_symbol_textures()
-	if _tooltip_label:
-		_tooltip_label.text = get_sticker_label(rating)
+	if _tooltip and is_instance_valid(_tooltip):
+		_tooltip.setup({"title": get_sticker_label(rating), "rarity": rarity})
 
 
 func set_rarity(new_rarity: String) -> void:
 	rarity = new_rarity.to_lower()
 	_apply_frame_style()
 	_apply_holo_rarity_tint()
+	if _tooltip and is_instance_valid(_tooltip):
+		_tooltip.setup({"title": get_sticker_label(rating), "rarity": rarity})
 
 
 func show_tooltip() -> void:
@@ -304,42 +301,11 @@ func _ensure_tooltip() -> void:
 	if _tooltip and is_instance_valid(_tooltip):
 		return
 
-	_tooltip = PanelContainer.new()
+	_tooltip = TOOLTIP_SCENE.instantiate()
 	_tooltip.name = "%sTooltip" % name
-	_tooltip.visible = false
 	_tooltip.top_level = true
-	_tooltip.z_index = 4000
-	_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.06, 0.12, 0.97)
-	style.border_color = get_rarity_frame_color(rarity)
-	style.set_border_width_all(3)
-	style.set_corner_radius_all(8)
-	style.corner_detail = 6
-	style.content_margin_left = 14.0
-	style.content_margin_top = 10.0
-	style.content_margin_right = 14.0
-	style.content_margin_bottom = 10.0
-	style.shadow_color = Color(0, 0, 0, 0.42)
-	style.shadow_size = 4
-	_tooltip.add_theme_stylebox_override("panel", style)
-
-	_tooltip_label = Label.new()
-	_tooltip_label.name = "TooltipLabel"
-	_tooltip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_tooltip_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_tooltip_label.custom_minimum_size = TOOLTIP_MIN_SIZE
-	_tooltip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_tooltip_label.text = get_sticker_label(rating)
-	if VCR_FONT:
-		_tooltip_label.add_theme_font_override("font", VCR_FONT)
-	_tooltip_label.add_theme_font_size_override("font_size", 13)
-	_tooltip_label.add_theme_color_override("font_color", Color(1.0, 0.98, 0.93, 1.0))
-	_tooltip_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
-	_tooltip_label.add_theme_constant_override("outline_size", 1)
-	_tooltip.add_child(_tooltip_label)
+	_tooltip.tint_border_by_rarity = true
+	_tooltip.setup({"title": get_sticker_label(rating), "rarity": rarity})
 
 	var overlay_parent := FanOverlayHelper.get_overlay(self) if get_tree() else null
 	if overlay_parent:
@@ -371,10 +337,6 @@ func _apply_frame_style() -> void:
 	style.shadow_size = 6
 	style.shadow_offset = Vector2(2, 4)
 	_frame.add_theme_stylebox_override("panel", style)
-	if _tooltip and is_instance_valid(_tooltip):
-		var tooltip_style := _tooltip.get_theme_stylebox("panel") as StyleBoxFlat
-		if tooltip_style:
-			tooltip_style.border_color = get_rarity_frame_color(rarity)
 
 
 func _apply_holo_profile(profile_overrides: Dictionary) -> void:
@@ -438,32 +400,17 @@ func _sync_hover_state() -> void:
 func _show_tooltip() -> void:
 	if not _tooltip or not is_instance_valid(_tooltip):
 		return
-	if _tooltip_label:
-		_tooltip_label.text = get_sticker_label(rating)
 	if not _tooltip.is_inside_tree():
 		return
-	if _tooltip_tween and _tooltip_tween.is_valid():
-		_tooltip_tween.kill()
-	_tooltip.visible = true
-	_tooltip.modulate.a = 0.0
+	_tooltip.setup({"title": get_sticker_label(rating), "rarity": rarity})
 	_update_tooltip_position()
-	_tooltip_tween = create_tween()
-	_tooltip_tween.tween_property(_tooltip, "modulate:a", 1.0, TOOLTIP_FADE_IN_DURATION)
+	_tooltip.show_at(_tooltip.global_position, get_global_rect())
 
 
 func _hide_tooltip() -> void:
 	if not _tooltip or not is_instance_valid(_tooltip):
 		return
-	if not _tooltip.visible:
-		return
-	if _tooltip_tween and _tooltip_tween.is_valid():
-		_tooltip_tween.kill()
-	_tooltip_tween = create_tween()
-	_tooltip_tween.tween_property(_tooltip, "modulate:a", 0.0, TOOLTIP_FADE_OUT_DURATION)
-	_tooltip_tween.tween_callback(func() -> void:
-		if _tooltip and is_instance_valid(_tooltip):
-			_tooltip.visible = false
-	)
+	_tooltip.hide()
 
 
 func _update_tooltip_position() -> void:

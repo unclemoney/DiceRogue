@@ -90,8 +90,7 @@ var _is_purchasing: bool = false
 var _is_being_removed: bool = false
 
 # Hover tooltip variables
-var hover_tooltip: PanelContainer
-var hover_tooltip_label: Label
+var hover_tooltip: Tooltip
 var is_hovered: bool = false
 var is_card_hovered: bool = false
 var is_button_hovered: bool = false
@@ -121,6 +120,12 @@ func _ready() -> void:
 		return
 	_rng.randomize()
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	# Purely-visual chrome must not swallow the card's hover: with the default
+	# STOP filter the title plate/label became the hover target, so the card's
+	# own mouse_entered never fired over the title (tooltip dead-zone).
+	title_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	price_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	rarity_badge.visible = false
 	rotation_degrees = 0.0
 	if not resized.is_connected(_on_shop_item_resized):
@@ -508,42 +513,19 @@ func _has_reached_mod_limit(game_controller: GameController) -> bool:
 	return game_controller.has_reached_mod_limit()
 
 ## _setup_hover_tooltip()
-## Creates and configures the hover tooltip for shop items.
-## Called during setup() and, if setup() has not run yet, in _ready() so
-## mark_for_removal() always has a valid hover_tooltip reference.
+## Creates the standard Tooltip for shop items. Called during setup() and, if
+## setup() has not run yet, in _ready() so mark_for_removal() always has a
+## valid hover_tooltip reference.
 func _setup_hover_tooltip() -> void:
-	var needs_create := not hover_tooltip or not is_instance_valid(hover_tooltip)
-	if needs_create:
-		hover_tooltip = PanelContainer.new()
+	if not hover_tooltip or not is_instance_valid(hover_tooltip):
+		hover_tooltip = load("res://Scenes/UI/tooltip.tscn").instantiate()
 		hover_tooltip.name = "HoverTooltip"
-		hover_tooltip.visible = false
-		hover_tooltip.z_index = 4000
-		hover_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	if not hover_tooltip_label or not is_instance_valid(hover_tooltip_label):
-		hover_tooltip_label = Label.new()
-		hover_tooltip_label.name = "HoverTooltipLabel"
-		hover_tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		hover_tooltip_label.custom_minimum_size = Vector2(220, 0)
-		hover_tooltip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-	hover_tooltip.theme = SHOP_ITEM_THEME
-	hover_tooltip.theme_type_variation = &"ShopTooltipPanel"
-	hover_tooltip_label.theme = SHOP_ITEM_THEME
-	hover_tooltip_label.theme_type_variation = &"ShopTooltipLabel"
-	hover_tooltip_label.text = _get_current_tooltip_text()
-
-	if hover_tooltip_label.get_parent() != hover_tooltip:
-		hover_tooltip.add_child(hover_tooltip_label)
-
-	if needs_create:
+		hover_tooltip.tint_border_by_rarity = true
 		var scene_root = get_tree().current_scene
 		if scene_root:
 			scene_root.add_child.call_deferred(hover_tooltip)
-			print("[ShopItem] Added tooltip to scene root (deferred)")
 		else:
 			get_parent().add_child.call_deferred(hover_tooltip)
-			print("[ShopItem] Added tooltip to direct parent (deferred)")
 
 	# Connect hover signals for the card itself
 	if not mouse_entered.is_connected(_on_mouse_entered):
@@ -558,8 +540,6 @@ func _setup_hover_tooltip() -> void:
 		if not buy_button.mouse_exited.is_connected(_on_button_mouse_exited):
 			buy_button.mouse_exited.connect(_on_button_mouse_exited)
 
-	print("[ShopItem] Tooltip created with direct styling")
-
 ## _on_mouse_entered()
 ## Shows the hover tooltip when mouse enters the shop item card.
 func _on_mouse_entered() -> void:
@@ -569,13 +549,8 @@ func _on_mouse_entered() -> void:
 	if not hover_tooltip or not item_data:
 		return
 
-	if hover_tooltip_label:
-		hover_tooltip_label.text = _get_current_tooltip_text()
-
 	is_card_hovered = true
-	is_hovered = true
-	hover_tooltip.visible = true
-	_update_tooltip_position()
+	_show_hover_tooltip()
 
 ## _on_mouse_exited()
 ## Hides the hover tooltip when mouse exits the shop item card
@@ -586,8 +561,7 @@ func _on_mouse_exited() -> void:
 	is_card_hovered = false
 	# Only hide if not hovering over the button either
 	if not is_button_hovered:
-		is_hovered = false
-		hover_tooltip.visible = false
+		_hide_hover_tooltip()
 
 ## _on_button_mouse_entered()
 ## Called when mouse enters the buy button - keeps tooltip visible
@@ -597,11 +571,7 @@ func _on_button_mouse_entered() -> void:
 	is_button_hovered = true
 	# Show tooltip if it exists
 	if hover_tooltip and item_data:
-		if hover_tooltip_label:
-			hover_tooltip_label.text = _get_current_tooltip_text()
-		is_hovered = true
-		hover_tooltip.visible = true
-		_update_tooltip_position()
+		_show_hover_tooltip()
 
 ## _on_button_mouse_exited()
 ## Called when mouse exits the buy button - hides tooltip if not on card
@@ -609,13 +579,55 @@ func _on_button_mouse_exited() -> void:
 	is_button_hovered = false
 	# Only hide if not hovering over the card either
 	if not is_card_hovered and hover_tooltip:
-		is_hovered = false
-		hover_tooltip.visible = false
+		_hide_hover_tooltip()
+
+## _show_hover_tooltip()
+## Refreshes the tooltip content and shows it (standard pop on first show,
+## plain reposition when already visible, e.g. card -> buy button moves).
+func _show_hover_tooltip() -> void:
+	_refresh_hover_tooltip_content()
+	is_hovered = true
+	var was_visible := hover_tooltip.visible
+	_update_tooltip_position()
+	if not was_visible:
+		# Anchor covers card + buy button so the exit guard keeps the tooltip
+		# alive while crossing between them (is_card/is_button_hovered logic
+		# above stays the primary show/hide path).
+		var anchor := get_global_rect()
+		if buy_button and is_instance_valid(buy_button):
+			anchor = anchor.merge(buy_button.get_global_rect())
+		hover_tooltip.show_at(hover_tooltip.global_position, anchor)
+
+## _hide_hover_tooltip()
+func _hide_hover_tooltip() -> void:
+	is_hovered = false
+	hover_tooltip.hide()
+
+## _refresh_hover_tooltip_content()
+## Fills the standard tooltip from item_data: title + description body;
+## power-ups add a Mom Approval flavor line and a rarity row (RarityColors
+## drives the row and, via tint_border_by_rarity, the border); colored dice
+## add Effect + purchase-info sections; any High Roller conflict warning
+## rides along as a final section.
+func _refresh_hover_tooltip_content() -> void:
+	var data := {"title": _base_title_text, "body": item_data.description}
+	if item_type == "power_up" and item_data is PowerUpData:
+		data["flavor"] = "Mom Approval: %s" % StickerBadge.get_sticker_label(item_data.rating)
+		data["rarity"] = item_data.rarity.to_lower()
+	hover_tooltip.setup(data)
+	if item_type == "colored_dice":
+		if item_data.effect_description and item_data.effect_description != "":
+			hover_tooltip.add_section(item_data.effect_description, "stat", "Effect")
+		# Pre-built by DiceColorManager; may contain multi-line purchase info.
+		hover_tooltip.add_section(DiceColorManager.get_color_shop_tooltip(item_data.color_type), "plain")
+	var conflict_warning := _get_conflict_warning_text()
+	if not conflict_warning.is_empty():
+		hover_tooltip.add_section(conflict_warning, "plain")
 
 ## _update_tooltip_position()
 ## Positions the tooltip relative to the shop item using the shared placement API.
 func _update_tooltip_position() -> void:
-	if not hover_tooltip or not hover_tooltip.visible:
+	if not hover_tooltip:
 		return
 	_tfx.place_tooltip(hover_tooltip, get_global_rect())
 
@@ -662,7 +674,7 @@ func mark_for_removal() -> void:
 	is_card_hovered = false
 	is_button_hovered = false
 	if hover_tooltip:
-		hover_tooltip.visible = false
+		hover_tooltip.hide()
 
 	# Block all input to this card and its children so the mouse cannot
 	# re-trigger hover or buy logic while it is being animated out.
@@ -837,31 +849,6 @@ func _update_colored_dice_display() -> void:
 		_set_title_text("%s x%d" % [_base_title_text, purchase_count])
 	else:
 		_set_title_text(_base_title_text)
-
-
-## _get_colored_dice_tooltip_text()
-## Builds enhanced tooltip text for colored dice showing purchase info
-func _get_colored_dice_tooltip_text() -> String:
-	if item_type != "colored_dice" or not item_data:
-		return item_data.description if item_data else ""
-	
-	var dice_color = item_data.color_type
-	var tooltip_lines = []
-	
-	# Base description
-	tooltip_lines.append(item_data.description)
-	tooltip_lines.append("")
-	
-	# Effect description
-	if item_data.effect_description and item_data.effect_description != "":
-		tooltip_lines.append("Effect: " + item_data.effect_description)
-	
-	tooltip_lines.append("")
-	
-	# Purchase info from DiceColorManager
-	tooltip_lines.append(DiceColorManager.get_color_shop_tooltip(dice_color))
-	
-	return "\n".join(tooltip_lines)
 
 
 func _on_shop_item_resized() -> void:
@@ -1096,22 +1083,6 @@ func _layout_badges() -> void:
 	_update_fx_rect_sizes()
 
 
-func _get_current_tooltip_text() -> String:
-	if not item_data:
-		return ""
-	var text: String
-	if item_type == "colored_dice":
-		text = _get_colored_dice_tooltip_text()
-	elif item_type == "power_up" and item_data is PowerUpData:
-		text = _get_power_up_tooltip_text()
-	else:
-		text = item_data.description
-	var conflict_warning := _get_conflict_warning_text()
-	if not conflict_warning.is_empty():
-		text += "\n\n" + conflict_warning
-	return text
-
-
 ## _get_conflict_warning_text() -> String
 ##
 ## Returns a warning string when buying this item conflicts with something
@@ -1197,18 +1168,6 @@ func _update_conflict_warning() -> void:
 		if _debug_enabled:
 			print("[ShopItem] Conflict warning shown for:", item_id)
 	_warning_badge.visible = true
-
-
-## _get_power_up_tooltip_text()
-## Builds the PowerUp tooltip: description, then a footer with the
-## Mom approval rating label and the rarity, in that order.
-func _get_power_up_tooltip_text() -> String:
-	var tooltip_lines: Array = []
-	tooltip_lines.append(item_data.description)
-	tooltip_lines.append("")
-	tooltip_lines.append("Mom Approval: " + StickerBadge.get_sticker_label(item_data.rating))
-	tooltip_lines.append("Rarity: " + item_data.rarity.capitalize())
-	return "\n".join(tooltip_lines)
 
 
 func _play_hang_swing() -> void:

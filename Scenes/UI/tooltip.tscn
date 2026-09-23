@@ -1,0 +1,133 @@
+[gd_scene load_steps=8 format=3 uid="uid://byy4n4fe35l2w"]
+
+[ext_resource type="Script" uid="uid://c2f8yxaqq5jm8" path="res://Scripts/UI/tooltip.gd" id="1"]
+[ext_resource type="Shader" uid="uid://cs8g4jy01fmop" path="res://Scripts/Shaders/tooltip_bg.gdshader" id="2"]
+[ext_resource type="Shader" uid="uid://ctgo8u7uki8rk" path="res://Scripts/Shaders/tooltip_border.gdshader" id="3"]
+[ext_resource type="FontFile" uid="uid://d30iuqvbxs6im" path="res://Resources/Font/VCR_OSD_MONO_1.001.ttf" id="4"]
+
+[sub_resource type="StyleBoxFlat" id="panel_style"]
+bg_color = Color(0.12, 0.1, 0.14, 0.98)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="ShaderMaterial" id="bg_mat"]
+shader = ExtResource("2")
+shader_parameter/base_color = Color(0.12, 0.1, 0.14, 0.98)
+shader_parameter/shimmer_strength = 0.06
+shader_parameter/shimmer_wavelength_px = 110.0
+shader_parameter/vignette_margin_px = 26.0
+shader_parameter/fade = 0.0
+shader_parameter/time_scale = 0.35
+shader_parameter/rect_size = Vector2(260, 120)
+shader_parameter/corner_radius = 8.0
+
+[sub_resource type="ShaderMaterial" id="border_mat"]
+shader = ExtResource("3")
+shader_parameter/border_color = Color(0.95, 0.86, 0.42, 1)
+shader_parameter/border_width = 3.0
+shader_parameter/trace = 0.0
+shader_parameter/glow_color = Color(1, 0.95, 0.7, 1)
+shader_parameter/glow_size = 6.0
+shader_parameter/trail = 0.12
+shader_parameter/fade = 0.0
+shader_parameter/rect_size = Vector2(260, 120)
+shader_parameter/corner_radius = 8.0
+
+[node name="Tooltip" type="PanelContainer"]
+z_index = 4000
+custom_minimum_size = Vector2(260, 0)
+mouse_filter = 2
+theme_override_styles/panel = SubResource("panel_style")
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+material = SubResource("bg_mat")
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Border" type="ColorRect" parent="."]
+material = SubResource("border_mat")
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="Sections" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="NameLabel" type="RichTextLabel" parent="Margin/Sections"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4")
+theme_override_fonts/italics_font = ExtResource("4")
+theme_override_fonts/bold_italics_font = ExtResource("4")
+theme_override_fonts/bold_font = ExtResource("4")
+theme_override_font_sizes/bold_italics_font_size = 14
+theme_override_font_sizes/italics_font_size = 14
+theme_override_font_sizes/normal_font_size = 14
+theme_override_font_sizes/bold_font_size = 14
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+
+[node name="BodyLabel" type="RichTextLabel" parent="Margin/Sections"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4")
+theme_override_fonts/italics_font = ExtResource("4")
+theme_override_fonts/bold_italics_font = ExtResource("4")
+theme_override_fonts/bold_font = ExtResource("4")
+theme_override_font_sizes/bold_italics_font_size = 13
+theme_override_font_sizes/italics_font_size = 13
+theme_override_font_sizes/normal_font_size = 13
+theme_override_font_sizes/bold_font_size = 13
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+
+[node name="FlavorLabel" type="RichTextLabel" parent="Margin/Sections"]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4")
+theme_override_fonts/italics_font = ExtResource("4")
+theme_override_fonts/bold_italics_font = ExtResource("4")
+theme_override_fonts/bold_font = ExtResource("4")
+theme_override_font_sizes/bold_italics_font_size = 12
+theme_override_font_sizes/italics_font_size = 12
+theme_override_font_sizes/normal_font_size = 12
+theme_override_font_sizes/bold_font_size = 12
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+
+[node name="RarityLabel" type="RichTextLabel" parent="Margin/Sections"]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/normal_font = ExtResource("4")
+theme_override_fonts/italics_font = ExtResource("4")
+theme_override_fonts/bold_italics_font = ExtResource("4")
+theme_override_fonts/bold_font = ExtResource("4")
+theme_override_font_sizes/bold_italics_font_size = 12
+theme_override_font_sizes/italics_font_size = 12
+theme_override_font_sizes/normal_font_size = 12
+theme_override_font_sizes/bold_font_size = 12
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+
+[node name="SectionsExtra" type="VBoxContainer" parent="Margin/Sections"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6

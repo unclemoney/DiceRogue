@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://h4ni6s3dboyn"]
 
-[ext_resource type="Script" path="res://Tests/_mall_selector_shot.gd" id="1_shot"]
+[ext_resource type="Script" uid="uid://c54fmfk3cptxk" path="res://Tests/_mall_selector_shot.gd" id="1_shot"]
 
 [node name="MallSelectorShot" type="Control"]
 layout_mode = 3

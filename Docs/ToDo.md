@@ -59,6 +59,7 @@
 - [ ] `P1-Major` Find all layers and overlays, sort priority and then implament a standard across the game.
 - [X] `P1-Major` Mall Map Fan Out still rough. Mall Zone 1 shows "coming up" instead of "completed". Mall Zone 2 shows correctly.
 - [ ] `P2-Minor` Update Challenge Icons.
+- [ ] `P2-Minor` Roll button ocassionally remains too large, always ensure it reverts to original size.
 - [ ] `P2-Minor` Shockwave animations can also be applied to buttons that need to be pressed or chosen.
 - [X] `P2-Minor` Click on the Mall Zone upper left to bring up the mall map. Show coming challenges.
 - [X] `P2-Minor` Update buttons to glass shader so they are uniform.

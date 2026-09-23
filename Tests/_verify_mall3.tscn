@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://by4346nehffay"]
+
+[ext_resource type="Script" path="res://Tests/_verify_mall3.gd" id="1"]
+
+[node name="VerifyMall3" type="Node"]
+script = ExtResource("1")

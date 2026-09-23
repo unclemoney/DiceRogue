@@ -2,6 +2,7 @@ extends TextureRect
 class_name ModIcon
 
 const DISABLED_MOD_SHADER := preload("res://Scripts/Shaders/disabled_powerup_overlay.gdshader")
+const TOOLTIP_SCENE := preload("res://Scenes/UI/tooltip.tscn")
 
 signal mod_sell_requested(mod_id: String)
 
@@ -9,10 +10,10 @@ signal mod_sell_requested(mod_id: String)
 @export var tooltip_offset := Vector2(-50, -80)
 @export var icon_size := Vector2(50, 60)  # Add size control (expanded for sell button)
 
-@onready var tooltip: Label = $TooltipBg/Tooltip
-@onready var tooltip_bg: PanelContainer = $TooltipBg
 @onready var modicon: Sprite2D = $Sprite2D
 @onready var sell_button: Button
+
+var _tooltip: Tooltip
 
 var _sell_button_visible := false
 var _visual_disabled := false
@@ -20,7 +21,7 @@ var _default_modicon_material: Material = null
 var _disabled_modicon_material: ShaderMaterial = null
 
 func _ready() -> void:
-	if not tooltip or not tooltip_bg or not modicon:
+	if not modicon:
 		push_error("[ModIcon] Required nodes not found")
 		return
 
@@ -67,13 +68,11 @@ func _ready() -> void:
 		# Clear the TextureRect texture since we're using Sprite2D
 		texture = null
 		
-		# Set up tooltip
-		tooltip.text = data.display_name
-		tooltip_bg.visible = false
-		
-		# Apply direct styling to tooltip
-		_apply_hover_tooltip_style(tooltip_bg)
-		_apply_hover_label_style(tooltip)
+		# Standard tooltip, shown at the fixed offset on hover
+		_tooltip = TOOLTIP_SCENE.instantiate()
+		_tooltip.name = "Tooltip"
+		_tooltip.setup({"title": data.display_name})
+		add_child(_tooltip)
 		
 		# Set control size to match icon
 		custom_minimum_size = icon_size
@@ -111,13 +110,12 @@ func set_disabled_visual(disabled: bool) -> void:
 	modicon.material = _default_modicon_material
 
 func _on_mouse_entered() -> void:
-	if tooltip_bg and data:
-		tooltip_bg.visible = true
-		tooltip_bg.global_position = get_global_mouse_position() + tooltip_offset
+	if _tooltip and data:
+		_tooltip.show_at(get_global_mouse_position() + tooltip_offset, get_global_rect())
 
 func _on_mouse_exited() -> void:
-	if tooltip_bg:
-		tooltip_bg.visible = false
+	if _tooltip:
+		_tooltip.hide()
 
 func _on_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
@@ -289,27 +287,3 @@ func _apply_action_button_style(button: Button) -> void:
 	button.add_theme_stylebox_override("pressed", style_pressed)
 	
 	print("[ModIcon] Direct button styling applied")
-
-## Helper functions for consistent styling
-func _apply_hover_tooltip_style(panel: PanelContainer) -> void:
-	print("[ModIcon] Applying direct hover tooltip style")
-	var style_box = StyleBoxFlat.new()
-	style_box.bg_color = Color(0.1, 0.1, 0.1, 0.95)  # Dark background
-	style_box.border_color = Color(1, 0.8, 0.2, 1)   # Golden border
-	style_box.set_border_width_all(4)                # 4px border
-	style_box.content_margin_left = 16
-	style_box.content_margin_right = 16
-	style_box.content_margin_top = 16
-	style_box.content_margin_bottom = 16
-	style_box.shadow_color = Color(0, 0, 0, 0.5)
-	style_box.shadow_size = 2
-	panel.add_theme_stylebox_override("panel", style_box)
-
-func _apply_hover_label_style(label: Label) -> void:
-	print("[ModIcon] Applying direct hover label style")
-	# Load and apply VCR font
-	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
-	if vcr_font:
-		label.add_theme_font_override("font", vcr_font)
-	label.add_theme_font_size_override("font_size", 18)
-	label.add_theme_color_override("font_color", Color(1, 1, 1, 1))  # White text

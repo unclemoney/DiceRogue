@@ -1,0 +1,57 @@
+[gd_scene load_steps=3 format=3 uid="uid://ypxt3gbksx6w"]
+
+[ext_resource type="Script" uid="uid://dkv31jtq7rrwj" path="res://Tests/tooltip_lab.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://byy4n4fe35l2w" path="res://Scenes/UI/tooltip.tscn" id="2"]
+
+[node name="TooltipLab" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Tooltip" parent="." instance=ExtResource("2")]
+visible = false
+layout_mode = 0
+offset_left = 480.0
+offset_top = 200.0
+offset_right = 480.0
+offset_bottom = 200.0
+tint_border_by_rarity = null
+
+[node name="Controls" type="HBoxContainer" parent="."]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -250.0
+offset_top = -56.0
+offset_right = 250.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="PrevButton" type="Button" parent="Controls"]
+layout_mode = 2
+text = "< Prev"
+
+[node name="NextButton" type="Button" parent="Controls"]
+layout_mode = 2
+text = "Next >"
+
+[node name="ReplayButton" type="Button" parent="Controls"]
+layout_mode = 2
+text = "Replay Show"
+
+[node name="FollowCursorCheck" type="CheckBox" parent="Controls"]
+layout_mode = 2
+text = "Follow Cursor"
+
+[node name="RarityTintCheck" type="CheckBox" parent="Controls"]
+layout_mode = 2
+text = "Rarity Border Tint"

@@ -311,7 +311,11 @@ func _build_ui() -> void:
 	_map_hit_surface.name = "MapHitSurface"
 	_map_hit_surface.position = Vector2.ZERO
 	_map_hit_surface.size = MallMapLayoutScript.get_board_size()
-	_map_hit_surface.mouse_filter = Control.MOUSE_FILTER_STOP
+	# PASS, not STOP: zone hover is polled from this surface's gui_input, but a
+	# STOP filter also swallowed every mouse event before physics picking, so
+	# the store plaques (Area2D) underneath never received mouse_entered and
+	# their tooltips were dead on this screen.
+	_map_hit_surface.mouse_filter = Control.MOUSE_FILTER_PASS
 	_map_hit_surface.gui_input.connect(_on_map_gui_input)
 	_map_hit_surface.mouse_exited.connect(_on_map_mouse_exited)
 	_map_viewport.add_child(_map_hit_surface)
@@ -695,29 +699,29 @@ func _on_dice_display_unhover() -> void:
 
 ## _show_dice_set_tooltip() -> void
 ##
-## Shows name, sides, scoring rules, and unlock status for the browsed set.
+## Shows name, sides, scoring rules, and unlock status for the browsed set,
+## sectioned for the standard Tooltip. Lock-state colors are semantic
+## (selected green / locked red), not rarity tiers.
 func _show_dice_set_tooltip() -> void:
 	if _tooltip_panel == null or _dice_display == null:
 		return
 	var data: DiceData = DICE_SETS[_dice_set_index]
-	var text_lines: Array[String] = []
-	text_lines.append("%s Dice Set  •  %d sides" % [data.display_name, data.sides])
-	if not data.description.is_empty():
-		text_lines.append("")
-		text_lines.append(data.description)
+	var tip := {
+		"title": "%s Dice Set  •  %d sides" % [data.display_name, data.sides],
+		"body": data.description,
+		"sections": [],
+	}
 	if _is_dice_set_unlocked(data):
 		if channel_manager and channel_manager.selected_dice_type == data.id:
-			text_lines.append("")
-			text_lines.append("SELECTED")
+			tip["sections"].append({"text": "[color=#8eff8e]SELECTED[/color]", "style": "plain"})
 	else:
-		text_lines.append("")
-		text_lines.append("LOCKED")
+		tip["sections"].append({"text": "[color=#ff5940]LOCKED[/color]", "style": "plain"})
 		var progress_manager = get_node_or_null("/root/ProgressManager")
 		if progress_manager:
 			var item = progress_manager.get_unlockable_item(data.unlock_item_id)
 			if item:
-				text_lines.append("Unlock: %s" % item.get_unlock_description())
-	_tooltip_panel.show_for(_dice_display.get_global_rect(), "\n".join(text_lines), SIDE_LEFT)
+				tip["sections"].append({"text": item.get_unlock_description(), "style": "stat", "label": "Unlock"})
+	_tooltip_panel.show_for(_dice_display.get_global_rect(), tip, SIDE_LEFT)
 
 
 ## _update_display() -> void
@@ -899,12 +903,33 @@ func _on_channel_changed(_new_channel: int) -> void:
 
 func _on_zone_hovered(channel: int) -> void:
 	_hovered_channel = channel
+	# Plaques sit next to zones and both are Area2D; when the cursor is really
+	# over a plaque its controller is claiming the tooltip.
+	if _is_plaque_under_mouse():
+		return
+	# The zone genuinely owns the hover: cancel any plaque tooltip/exit-grace
+	# and show immediately (moving plaque -> zone must not leave a dead gap).
+	_icon_tooltip.force_hide()
 	_show_zone_tooltip(channel)
+
+
+## _is_plaque_under_mouse() -> bool
+##
+## Screen-space hit test of the cursor against every store plaque.
+func _is_plaque_under_mouse() -> bool:
+	var mouse := get_global_mouse_position()
+	for channel in _store_icons:
+		for icon in _store_icons[channel]:
+			if _get_icon_screen_rect(icon).has_point(mouse):
+				return true
+	return false
 
 
 func _on_zone_unhovered(channel: int) -> void:
 	if _hovered_channel == channel:
 		_hovered_channel = -1
+	if _hovered_icon != null or _icon_tooltip.is_busy():
+		return
 	_hide_tooltip(true)
 
 
@@ -924,7 +949,7 @@ func _on_store_icon_unhovered(icon: MallStoreIcon) -> void:
 	_icon_tooltip.on_icon_unhovered(icon)
 
 
-func _selector_icon_tooltip_text(icon: MallStoreIcon) -> String:
+func _selector_icon_tooltip_text(icon: MallStoreIcon) -> Dictionary:
 	return MallMapRendererScript.build_store_tooltip_text(channel_manager, null, null, icon.channel, icon.store_index)
 
 
@@ -964,6 +989,10 @@ func _update_hover_from_point(board_point: Vector2) -> void:
 		return
 	var channel := _find_zone_at_point(board_point)
 	if channel == _hovered_channel:
+		# Self-heal: a zone-enter edge missed on fast movement (or swallowed
+		# while a plaque owned the tooltip) is re-shown on the next motion.
+		if channel > 0 and _zones_by_channel.has(channel) and not _is_plaque_at_point(board_point) and not _icon_tooltip.is_busy() and not _tooltip_panel.is_showing():
+			_show_zone_tooltip(channel)
 		return
 	if _hovered_channel > 0 and _zones_by_channel.has(_hovered_channel):
 		var old_zone = _zones_by_channel[_hovered_channel]
@@ -973,7 +1002,23 @@ func _update_hover_from_point(board_point: Vector2) -> void:
 	if _hovered_channel > 0 and _zones_by_channel.has(_hovered_channel):
 		var new_zone = _zones_by_channel[_hovered_channel]
 		new_zone.set_hovered(true, true)
-		_show_zone_tooltip(_hovered_channel)
+		# Plaques sit on top of zones; when the point is over a plaque its
+		# own controller is claiming the tooltip — don't flash the zone's.
+		if not _is_plaque_at_point(board_point):
+			_show_zone_tooltip(_hovered_channel)
+
+
+## _is_plaque_at_point(board_point) -> bool
+##
+## Board-space hit test against every store plaque (mirrors the rect the
+## plaque's collision shape covers).
+func _is_plaque_at_point(board_point: Vector2) -> bool:
+	var plaque_size := MallStoreIcon.PLAQUE_SIZE
+	for channel in _store_icons:
+		for icon in _store_icons[channel]:
+			if Rect2(icon.position - plaque_size * 0.5, plaque_size).has_point(board_point):
+				return true
+	return false
 
 
 func _find_zone_at_point(board_point: Vector2) -> int:
@@ -987,7 +1032,8 @@ func _find_zone_at_point(board_point: Vector2) -> int:
 ## _show_zone_tooltip(channel: int) -> void
 ##
 ## Shows the zone summary (name, section, difficulty, flavor) plus the zone's
-## dealt store list next to the hovered zone.
+## dealt store list next to the hovered zone, sectioned for the standard
+## Tooltip. The difficulty multiplier goes through TooltipFormat.mult.
 func _show_zone_tooltip(channel: int) -> void:
 	if _tooltip_panel == null or channel_manager == null:
 		return
@@ -995,19 +1041,18 @@ func _show_zone_tooltip(channel: int) -> void:
 	if zone == null:
 		return
 
-	var text_lines: Array[String] = []
-	text_lines.append("%s  %s" % [channel_manager.get_mall_zone_label(channel), channel_manager.get_selector_zone_name(channel)])
-	text_lines.append("Section: %s" % SECTION_LABELS.get(channel_manager.get_selector_section_id(channel), "DIRECTORY"))
-	text_lines.append("Difficulty: %s (%.2fx)" % [channel_manager.get_difficulty_description(channel), channel_manager.get_difficulty_multiplier(channel)])
-	var flavor: String = channel_manager.get_selector_tooltip_flavor(channel)
-	if not flavor.is_empty():
-		text_lines.append("")
-		text_lines.append(flavor)
-	text_lines.append("")
-	text_lines.append("Stores:")
+	var data := {
+		"title": "%s  %s" % [channel_manager.get_mall_zone_label(channel), channel_manager.get_selector_zone_name(channel)],
+		"flavor": channel_manager.get_selector_tooltip_flavor(channel),
+		"sections": [
+			{"text": SECTION_LABELS.get(channel_manager.get_selector_section_id(channel), "DIRECTORY"), "style": "stat", "label": "Section"},
+			{"text": "%s %s" % [channel_manager.get_difficulty_description(channel), TooltipFormat.mult(channel_manager.get_difficulty_multiplier(channel))], "style": "stat", "label": "Difficulty"},
+			{"text": "Stores:", "style": "plain"},
+		],
+	}
 	for round_number in range(1, channel_manager.STORES_PER_ZONE + 1):
-		text_lines.append("%d. %s" % [round_number, channel_manager.get_store_name(channel, round_number)])
-	_tooltip_panel.show_for(_get_zone_screen_rect(zone), "\n".join(text_lines), SIDE_RIGHT)
+		data["sections"].append({"text": "%d. %s" % [round_number, channel_manager.get_store_name(channel, round_number)], "style": "plain"})
+	_tooltip_panel.show_for(_get_zone_screen_rect(zone), data, SIDE_RIGHT)
 
 
 func _on_map_mouse_exited() -> void:
@@ -1016,7 +1061,9 @@ func _on_map_mouse_exited() -> void:
 		zone.set_hovered(false, true)
 	_hovered_channel = -1
 	_hovered_icon = null
-	_hide_tooltip(true)
+	# force_hide, not a bare wrapper hide: also cancels any pending controller
+	# show, which would otherwise pop a tooltip after the cursor left the map.
+	_icon_tooltip.force_hide()
 
 
 func _hide_tooltip(animate: bool) -> void:

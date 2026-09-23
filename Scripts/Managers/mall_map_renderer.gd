@@ -290,19 +290,21 @@ static func get_store_state(channel_manager, round_manager, channel: int, store_
 	return "upcoming"
 
 
-## build_store_tooltip_text(channel_manager, round_manager, debuff_manager, channel, store_index) -> String
+## build_store_tooltip_text(channel_manager, round_manager, debuff_manager, channel, store_index) -> Dictionary
 ##
-## Tooltip text for one store, shared by both mall screens. The current zone
-## uses live rounds_data (scaled target, exact pre-selected debuffs, status);
-## other zones — and the selector, which has no run state — show the round
-## config target and debuffs as unknown until reached.
-static func build_store_tooltip_text(channel_manager, round_manager, debuff_manager, channel: int, store_index: int) -> String:
-	var text_lines: Array[String] = []
+## Tooltip content for one store, shared by both mall screens, shaped for
+## MallStoreTooltip.show_for: {title, sections:[{text, style, label}]}.
+## The current zone uses live rounds_data (scaled target, exact pre-selected
+## debuffs, status); other zones — and the selector, which has no run state —
+## show the round config target and debuffs as unknown until reached.
+## Status colors are semantic (done/skipped/upcoming), NOT rarity tiers, so
+## they stay inline bbcode rather than going through Tooltip.RarityColors.
+static func build_store_tooltip_text(channel_manager, round_manager, debuff_manager, channel: int, store_index: int) -> Dictionary:
 	var store_number := store_index + 1
 	var store_name := "Store %d-%d" % [channel, store_number]
 	if channel_manager:
 		store_name = channel_manager.get_store_name(channel, store_number)
-	text_lines.append(store_name)
+	var tip := {"title": store_name, "sections": []}
 
 	var is_current_zone: bool = channel_manager != null and channel == channel_manager.current_channel
 	if is_current_zone and round_manager and store_index < round_manager.rounds_data.size():
@@ -311,22 +313,35 @@ static func build_store_tooltip_text(channel_manager, round_manager, debuff_mana
 		# transient challenge_score_modifier (powerup effect, not shown here).
 		var target := _compute_store_target(channel_manager, channel, store_number)
 		if target > 0:
-			text_lines.append("Target: %s" % NumberFormatter.format_int(target))
+			tip["sections"].append({"text": NumberFormatter.format_int(target), "style": "stat", "label": "Target"})
 		var debuff_ids: Array = round_data.get("debuff_ids", [])
 		for debuff_id in debuff_ids:
-			text_lines.append("Debuff: %s" % _get_debuff_display_name(debuff_manager, str(debuff_id)))
-		text_lines.append("Status: %s" % _get_store_status_text(channel_manager, round_manager, store_index))
+			tip["sections"].append({"text": _get_debuff_display_name(debuff_manager, str(debuff_id)), "style": "stat", "label": "Debuff"})
+		tip["sections"].append({"text": _colorize_store_status(_get_store_status_text(channel_manager, round_manager, store_index)), "style": "stat", "label": "Status"})
 	else:
 		if channel_manager:
 			var round_config = channel_manager.get_round_config(channel, store_number)
 			if round_config and round_config.target_score_override > 0:
-				text_lines.append("Target: %s" % NumberFormatter.format_int(channel_manager.get_scaled_target_score(round_config.target_score_override, channel)))
+				tip["sections"].append({"text": NumberFormatter.format_int(channel_manager.get_scaled_target_score(round_config.target_score_override, channel)), "style": "stat", "label": "Target"})
 			if round_config and round_config.get("is_boss_round") == true:
-				text_lines.append("Boss Store")
-		text_lines.append("Debuffs: unknown until reached")
-		text_lines.append("Status: Upcoming")
+				tip["sections"].append({"text": "Boss Store", "style": "plain"})
+		tip["sections"].append({"text": "Debuffs: unknown until reached", "style": "plain"})
+		tip["sections"].append({"text": "[color=gray]Upcoming[/color]", "style": "stat", "label": "Status"})
 
-	return "\n".join(text_lines)
+	return tip
+
+
+## _colorize_store_status(status) -> String
+##
+## Semantic status colors: completed green, failed red, anything else gray.
+static func _colorize_store_status(status: String) -> String:
+	match status.to_lower():
+		"completed":
+			return "[color=#8eff8e]Completed[/color]"
+		"failed":
+			return "[color=#ff5940]Failed[/color]"
+		_:
+			return "[color=gray]%s[/color]" % status.capitalize()
 
 
 ## _compute_store_target(channel_manager, channel, store_number) -> int
