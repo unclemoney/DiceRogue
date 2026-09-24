@@ -26,7 +26,7 @@ mood_delta = 0
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "Hm. Just keep it out of my sight."
+result_text = "Hm. Just keep it out of my sight, I don't want to see those gross things."
 result_expression = ""
 ends_visit = true
 
@@ -70,7 +70,7 @@ outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResourc
 
 [sub_resource type="Resource" id="out_sassy_1"]
 script = ExtResource("3_out")
-weight = 7.0
+weight = 6.0
 effect = "apply_tier"
 magnitude = 2
 mood_delta = 1
@@ -90,13 +90,13 @@ mood_delta = 2
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=red]Thin ice, little delinquent. THIN. ICE.[/color]"
+result_text = "[color=red]Thin ice, you little delinquent. THIN. ICE.[/color]"
 result_expression = "upset"
 ends_visit = true
 
 [sub_resource type="Resource" id="out_sassy_3"]
 script = ExtResource("3_out")
-weight = 1.0
+weight = 2.0
 effect = "storms_off"
 magnitude = 0
 mood_delta = 2
@@ -129,7 +129,7 @@ ends_visit = true
 [sub_resource type="Resource" id="out_backpedal_2"]
 script = ExtResource("3_out")
 weight = 4.0
-effect = "apply_tier"
+effect = "confiscate_powerups"
 magnitude = 1
 mood_delta = 0
 grudge_delta = 0
@@ -148,7 +148,7 @@ outcomes = Array[ExtResource("3_out")]([SubResource("out_backpedal_1"), SubResou
 [resource]
 script = ExtResource("1_node")
 id = "checkin_warning"
-mom_text = "[color=orange]I saw what you've been buying at that shop.[/color] You know you're not old enough for some of that."
+mom_text = "[color=orange]I saw what you've been buying at that store.[/color] You know you're not old enough for some of those."
 expression = "neutral"
 speaker_name = "Mom"
 speaker_tint = Color(1, 1, 1, 1)

@@ -7,7 +7,7 @@
 script = ExtResource("2_beat")
 beat_index = 0
 dialog_node_id = "story_debra_dish_missing"
-min_channel = 16
+min_channel = 2
 requires_flag = "debra_backfired"
 sets_flag = "debra_dish_missing"
 
@@ -15,7 +15,7 @@ sets_flag = "debra_dish_missing"
 script = ExtResource("2_beat")
 beat_index = 1
 dialog_node_id = "story_debra_dish_labels"
-min_channel = 18
+min_channel = 3
 requires_flag = "debra_dish_missing"
 sets_flag = "debra_dish_labeled"
 
@@ -23,7 +23,7 @@ sets_flag = "debra_dish_labeled"
 script = ExtResource("2_beat")
 beat_index = 2
 dialog_node_id = "story_debra_dish_returned"
-min_channel = 20
+min_channel = 4
 requires_flag = "debra_dish_labeled"
 reward_money = 25
 reward_mood = -1

@@ -1,6 +1,64 @@
-[gd_resource type="Resource" script_class="MomDialogNode" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=9 format=3 uid="uid://cjpg41qoe0j6t"]
 
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="1_31nlk"]
 [ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="2_12eat"]
+
+[sub_resource type="Resource" id="Resource_a45tq"]
+script = ExtResource("2_12eat")
+weight = 1.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = -1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "Maybe that's the point!"
+result_expression = ""
+ends_visit = true
+metadata/_custom_type_script = "uid://d0h8ia570dbbb"
+
+[sub_resource type="Resource" id="Resource_jiaxg"]
+script = ExtResource("1_31nlk")
+button_text = "Mom! Please don't, that's embarassing. "
+tone = "neutral"
+outcomes = Array[ExtResource("2_12eat")]([SubResource("Resource_a45tq")])
+metadata/_custom_type_script = "uid://dxwgr1c0fc1bj"
+
+[sub_resource type="Resource" id="Resource_31nlk"]
+script = ExtResource("2_12eat")
+weight = 5.0
+effect = "apply_tier"
+magnitude = 1
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "I will not have you speak to me that way."
+result_expression = "upset"
+ends_visit = true
+metadata/_custom_type_script = "uid://d0h8ia570dbbb"
+
+[sub_resource type="Resource" id="Resource_12eat"]
+script = ExtResource("2_12eat")
+weight = 2.0
+effect = "storms_off"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 1
+permanent = false
+followup_node_id = ""
+result_text = "I... I... I..."
+result_expression = "upset"
+ends_visit = true
+metadata/_custom_type_script = "uid://d0h8ia570dbbb"
+
+[sub_resource type="Resource" id="Resource_s8fyc"]
+script = ExtResource("1_31nlk")
+button_text = "Hell no!"
+tone = "sassy"
+outcomes = Array[ExtResource("2_12eat")]([SubResource("Resource_31nlk"), SubResource("Resource_12eat")])
+metadata/_custom_type_script = "uid://dxwgr1c0fc1bj"
 
 [resource]
 script = ExtResource("1_node")
@@ -9,4 +67,4 @@ mom_text = "[color=green]Ta-daaa![/color] Your fourth birthday. Spaghetti ALL ov
 expression = "happy"
 speaker_name = "Mom"
 speaker_tint = Color(1, 1, 1, 1)
-responses = Array[Resource]([])
+responses = Array[ExtResource("1_31nlk")]([SubResource("Resource_jiaxg"), SubResource("Resource_s8fyc")])

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://u7es612tnmbi"]
+
+[ext_resource type="Script" uid="uid://ce8t6564ldl3s" path="res://Tests/mom_suite_runner.gd" id="1_test"]
+
+[node name="MomSuiteRunner" type="Node"]
+script = ExtResource("1_test")

@@ -20,6 +20,9 @@ const TEXT_DISPLAY_SPEED: float = 0.03  # Seconds per character
 const PUNCTUATION_CHARS := ",.!?;:—"
 const PUNCTUATION_PAUSE_TICKS: int = 2
 const PANEL_BACKDROP_SHADER_PATH := "res://Scripts/Shaders/panel_backdrop.gdshader"
+## Typewriter tick WAV. UNKNOWN — needs owner input: no typewriter SFX ships
+## with the project yet. Drop a WAV at this path or repoint the constant.
+const TYPEWRITER_SOUND_PATH := "res://Resources/Audio/UI/TYPEWRITER_TICK_1.wav"
 ## Preloaded (not the class_name) so parsing doesn't depend on the editor's
 ## class cache being fresh.
 const MomPortraitAnimatorScript := preload("res://Scripts/UI/mom_portrait_animator.gd")
@@ -77,6 +80,7 @@ var _current_expression: MomExpression = MomExpression.NEUTRAL
 var _is_animating: bool = false
 var _full_dialog_text: String = ""
 var _char_timer: Timer
+var typewriter_sound_player: AudioStreamPlayer
 var _total_chars: int = 0
 var _punct_ticks: int = 0
 var title_label: Label
@@ -87,6 +91,7 @@ var current_node_id: String = ""
 func _ready() -> void:
 	_create_ui_structure()
 	_create_char_timer()
+	_create_typewriter_player()
 	visible = false
 	_connect_mood_signal()
 	var pm := get_node_or_null("/root/ProgressManager")
@@ -107,6 +112,20 @@ func _create_char_timer() -> void:
 	_char_timer.wait_time = TEXT_DISPLAY_SPEED
 	_char_timer.timeout.connect(_on_char_timer_timeout)
 	add_child(_char_timer)
+
+
+## _create_typewriter_player()
+##
+## Builds the AudioStreamPlayer for the typewriter tick. If the WAV is
+## missing the player stays wired but silent (path is a known UNKNOWN).
+func _create_typewriter_player() -> void:
+	typewriter_sound_player = AudioStreamPlayer.new()
+	typewriter_sound_player.name = "TypewriterSoundPlayer"
+	if ResourceLoader.exists(TYPEWRITER_SOUND_PATH):
+		typewriter_sound_player.stream = load(TYPEWRITER_SOUND_PATH)
+	else:
+		push_warning("[MomCharacter] Typewriter WAV missing: " + TYPEWRITER_SOUND_PATH)
+	add_child(typewriter_sound_player)
 
 
 ## _connect_mood_signal()
@@ -476,12 +495,18 @@ func _create_ui_structure() -> void:
 	title_label.add_theme_font_override("font", vcr_font)
 	title_label.add_theme_font_size_override("font_size", 20)
 	title_label.add_theme_color_override("font_color", Color(1, 0.8, 0.9))
+	# Trim with an ellipsis instead of letting a long speaker_name (cast
+	# phone beats) push the panel past PANEL_SIZE.
+	title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	dialog_container.add_child(title_label)
 	
 	# Dialog text (RichTextLabel with BBCode)
 	dialog_label = RichTextLabel.new()
 	dialog_label.name = "DialogLabel"
 	dialog_label.bbcode_enabled = true
+	# Count hidden characters toward layout so wrapped lines don't jump as
+	# the typewriter reveal uncovers them.
+	dialog_label.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
 	# No fit_content: long text scrolls inside the fixed panel instead of
 	# growing it.
 	dialog_label.fit_content = false
@@ -695,12 +720,27 @@ func _on_char_timer_timeout() -> void:
 	if dialog_label.visible_characters >= _total_chars:
 		_stop_typing()
 		return
+	_play_typewriter_tick()
 	# Pause briefly after sentence punctuation (speech keeps looping)
 	var revealed := dialog_label.get_parsed_text()
 	var idx := dialog_label.visible_characters - 1
 	if idx >= 0 and idx < revealed.length():
 		if revealed.substr(idx, 1) in PUNCTUATION_CHARS:
 			_punct_ticks = PUNCTUATION_PAUSE_TICKS
+
+
+## _play_typewriter_tick()
+##
+## Plays the typewriter tick for a tick that revealed at least one new
+## visible character (typing still in progress). Never fires for instant
+## text, skip, or completion — those paths don't reach this call.
+func _play_typewriter_tick() -> void:
+	if typewriter_sound_player == null or typewriter_sound_player.stream == null:
+		return
+	typewriter_sound_player.pitch_scale = randf_range(0.90, 1.10)
+	if typewriter_sound_player.playing:
+		typewriter_sound_player.stop()
+	typewriter_sound_player.play()
 
 
 ## _stop_typing()

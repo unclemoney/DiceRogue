@@ -7,7 +7,7 @@
 script = ExtResource("2_beat")
 beat_index = 0
 dialog_node_id = "story_derek_room_mess"
-min_channel = 15
+min_channel = 2
 requires_flag = "derek_covered"
 sets_flag = "derek_room_mess_found"
 
@@ -15,7 +15,7 @@ sets_flag = "derek_room_mess_found"
 script = ExtResource("2_beat")
 beat_index = 1
 dialog_node_id = "story_derek_room_blame"
-min_channel = 17
+min_channel = 3
 requires_flag = "derek_room_mess_found"
 sets_flag = "derek_room_blame_done"
 
@@ -23,7 +23,7 @@ sets_flag = "derek_room_blame_done"
 script = ExtResource("2_beat")
 beat_index = 2
 dialog_node_id = "story_derek_room_cleanup"
-min_channel = 19
+min_channel = 4
 requires_flag = "derek_room_blame_done"
 requires_chores_done = true
 reward_money = 30

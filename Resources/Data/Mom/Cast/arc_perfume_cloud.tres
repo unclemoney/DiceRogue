@@ -7,20 +7,20 @@
 script = ExtResource("2_beat")
 beat_index = 0
 dialog_node_id = "story_debra_opinions"
-min_channel = 10
+min_channel = 2
 
 [sub_resource type="Resource" id="beat_1"]
 script = ExtResource("2_beat")
 beat_index = 1
 dialog_node_id = "story_debra_counter"
-min_channel = 16
+min_channel = 3
 sets_flag = "debra_cornered"
 
 [sub_resource type="Resource" id="beat_2"]
 script = ExtResource("2_beat")
 beat_index = 2
 dialog_node_id = "story_debra_payoff"
-min_channel = 17
+min_channel = 4
 requires_flag = "debra_cornered"
 reward_money = 25
 reward_mood = -2
@@ -30,7 +30,7 @@ reward_rep = 2
 script = ExtResource("2_beat")
 beat_index = 3
 dialog_node_id = "story_debra_backfire"
-min_channel = 18
+min_channel = 4
 requires_flag = "debra_cornered"
 sets_flag = "debra_backfired"
 reward_money = 25

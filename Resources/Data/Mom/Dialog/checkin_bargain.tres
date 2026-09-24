@@ -13,7 +13,7 @@ mood_delta = -1
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=green]Pleasure doing business.[/color] Sparkling dishes, and here's your five... plus a little something for the attitude."
+result_text = "[color=green]Pleasure doing business.[/color] Sparkling dishes, and here's your five... plus a little something for the good attitude."
 result_expression = "happy"
 ends_visit = true
 
@@ -55,7 +55,7 @@ weight = 4.0
 effect = "mood_delta"
 magnitude = 0
 mood_delta = 1
-grudge_delta = 0
+grudge_delta = 1
 permanent = false
 followup_node_id = ""
 result_text = "[color=orange]Haggling? With your MOTHER?[/color] Offer withdrawn. Now they're free AND mandatory."
@@ -74,7 +74,7 @@ weight = 7.0
 effect = "mood_delta"
 magnitude = 0
 mood_delta = 2
-grudge_delta = 0
+grudge_delta = 1
 permanent = false
 followup_node_id = ""
 result_text = "[color=red]Your TIME?! Your time is worth exactly one roof and three meals a day, buster.[/color]"

@@ -34,22 +34,22 @@ const DEFAULT_REWARD_MAX: int = 150
 ## Bot response policy: tone -> relative weight (see pick_response_index).
 const BOT_TONE_WEIGHTS: Dictionary = {"polite": 6.0, "neutral": 3.0, "sassy": 1.0}
 
-const TIER_00 := preload("res://Resources/Data/Mom/Punishments/tier_00_reward.tres")
-const TIER_01 := preload("res://Resources/Data/Mom/Punishments/tier_01_disappointed.tres")
-const TIER_02 := preload("res://Resources/Data/Mom/Punishments/tier_02_grounded_lite.tres")
-const TIER_03 := preload("res://Resources/Data/Mom/Punishments/tier_03_confiscation.tres")
-const TIER_04 := preload("res://Resources/Data/Mom/Punishments/tier_04_no_fun.tres")
-const TIER_05 := preload("res://Resources/Data/Mom/Punishments/tier_05_furious.tres")
+const TIER_00 : MomPunishmentTier = preload("res://Resources/Data/Mom/Punishments/tier_00_reward.tres")
+const TIER_01 : MomPunishmentTier = preload("res://Resources/Data/Mom/Punishments/tier_01_disappointed.tres")
+const TIER_02 : MomPunishmentTier = preload("res://Resources/Data/Mom/Punishments/tier_02_grounded_lite.tres")
+const TIER_03 : MomPunishmentTier = preload("res://Resources/Data/Mom/Punishments/tier_03_confiscation.tres")
+const TIER_04 : MomPunishmentTier = preload("res://Resources/Data/Mom/Punishments/tier_04_no_fun.tres")
+const TIER_05 : MomPunishmentTier = preload("res://Resources/Data/Mom/Punishments/tier_05_furious.tres")
 
-const NODE_CHECKIN_NEUTRAL := preload("res://Resources/Data/Mom/Dialog/checkin_neutral.tres")
-const NODE_CHECKIN_SUSPICIOUS := preload("res://Resources/Data/Mom/Dialog/checkin_suspicious.tres")
-const NODE_SASS_STORM_OFF := preload("res://Resources/Data/Mom/Dialog/sass_storm_off.tres")
-const NODE_VISIT_PUNISHMENT := preload("res://Resources/Data/Mom/Dialog/visit_punishment.tres")
-const NODE_VISIT_REWARD := preload("res://Resources/Data/Mom/Dialog/visit_reward.tres")
-const NODE_VISIT_SILENT := preload("res://Resources/Data/Mom/Dialog/visit_silent_treatment.tres")
-const NODE_CHECKIN_CAUGHT := preload("res://Resources/Data/Mom/Dialog/checkin_caught_nc17.tres")
-const NODE_CHECKIN_WARNING := preload("res://Resources/Data/Mom/Dialog/checkin_warning.tres")
-const NODE_CHECKIN_COOL := preload("res://Resources/Data/Mom/Dialog/checkin_cool_mom.tres")
+const NODE_CHECKIN_NEUTRAL : MomDialogNode = preload("res://Resources/Data/Mom/Dialog/checkin_neutral.tres")
+const NODE_CHECKIN_SUSPICIOUS : MomDialogNode = preload("res://Resources/Data/Mom/Dialog/checkin_suspicious.tres")
+const NODE_SASS_STORM_OFF : MomDialogNode = preload("res://Resources/Data/Mom/Dialog/sass_storm_off.tres")
+const NODE_VISIT_PUNISHMENT : MomDialogNode = preload("res://Resources/Data/Mom/Dialog/visit_punishment.tres")
+const NODE_VISIT_REWARD : MomDialogNode = preload("res://Resources/Data/Mom/Dialog/visit_reward.tres")
+const NODE_VISIT_SILENT : MomDialogNode = preload("res://Resources/Data/Mom/Dialog/visit_silent_treatment.tres")
+const NODE_CHECKIN_CAUGHT : MomDialogNode = preload("res://Resources/Data/Mom/Dialog/checkin_caught_nc17.tres")
+const NODE_CHECKIN_WARNING : MomDialogNode = preload("res://Resources/Data/Mom/Dialog/checkin_warning.tres")
+const NODE_CHECKIN_COOL : MomDialogNode = preload("res://Resources/Data/Mom/Dialog/checkin_cool_mom.tres")
 
 ## Chance a severity 1-2 meter visit becomes a silent-treatment visit.
 const SILENT_TREATMENT_CHANCE: float = 0.10
@@ -377,7 +377,7 @@ static func pick_response_index(node: MomDialogNode) -> int:
 ##   is_sass: bool - true for sassy-tone responses; punished outcomes then
 ##     escalate with the player's Rep tier (SASS_REP_* consts)
 static func apply_outcome(game_controller: Node, outcome: MomDialogOutcome, severity: int, active_debuffs: Dictionary = {}, is_sass: bool = false) -> MomCheckResult:
-	var result := MomCheckResult.new()
+	var result : MomCheckResult = MomCheckResult.new()
 	if outcome == null:
 		return result
 
@@ -416,15 +416,15 @@ static func apply_outcome(game_controller: Node, outcome: MomDialogOutcome, seve
 				# Sass escalation: every SASS_REP_TIER_STEP Rep tiers add
 				# +1 punishment tier (clamped to the valid 0-5 range).
 				tier_id = mini(tier_id + ProgressManager.get_rep_tier() / SASS_REP_TIER_STEP, 5)
-			var tier := get_tier(tier_id)
+			var tier : MomPunishmentTier = get_tier(tier_id)
 			if tier:
 				result.tier_id = tier_id
-				var entry_result := build_result_from_entries(game_controller, draw_entries(tier), active_debuffs, is_sass)
+				var entry_result : MomCheckResult = build_result_from_entries(game_controller, draw_entries(tier), active_debuffs, is_sass)
 				_merge_result(result, entry_result)
 		_:
 			# Direct punishment/reward effect on the outcome itself
-			var pseudo_entry := _outcome_to_entry(outcome)
-			var entry_result := build_result_from_entries(game_controller, [pseudo_entry], active_debuffs, is_sass)
+			var pseudo_entry : Dictionary = _outcome_to_entry(outcome)
+			var entry_result : MomCheckResult = build_result_from_entries(game_controller, [pseudo_entry], active_debuffs, is_sass)
 			_merge_result(result, entry_result)
 
 	return result

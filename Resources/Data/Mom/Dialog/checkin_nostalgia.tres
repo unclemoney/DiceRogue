@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MomDialogNode" load_steps=15 format=3]
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=15 format=3 uid="uid://dkuevso2hb6fo"]
 
 [ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
 [ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
@@ -20,9 +20,9 @@ ends_visit = true
 [sub_resource type="Resource" id="out_polite_2"]
 script = ExtResource("3_out")
 weight = 3.0
-effect = "none"
+effect = "mood_delta"
 magnitude = 0
-mood_delta = 0
+mood_delta = -1
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
@@ -33,9 +33,9 @@ ends_visit = true
 [sub_resource type="Resource" id="out_polite_3"]
 script = ExtResource("3_out")
 weight = 1.0
-effect = "none"
+effect = "mood_delta"
 magnitude = 0
-mood_delta = 0
+mood_delta = -1
 grudge_delta = 0
 permanent = false
 followup_node_id = "checkin_nostalgia_photo"
@@ -83,7 +83,7 @@ outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResourc
 
 [sub_resource type="Resource" id="out_sassy_1"]
 script = ExtResource("3_out")
-weight = 7.0
+weight = 5.0
 effect = "mood_delta"
 magnitude = 0
 mood_delta = 2
@@ -109,7 +109,7 @@ ends_visit = true
 
 [sub_resource type="Resource" id="out_sassy_3"]
 script = ExtResource("3_out")
-weight = 1.0
+weight = 3.0
 effect = "grudge_delta"
 magnitude = 0
 mood_delta = 1

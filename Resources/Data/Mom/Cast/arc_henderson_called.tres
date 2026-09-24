@@ -13,14 +13,14 @@ min_channel = 3
 script = ExtResource("2_beat")
 beat_index = 1
 dialog_node_id = "story_henderson_dinner"
-min_channel = 7
+min_channel = 3
 sets_flag = "henderson_called"
 
 [sub_resource type="Resource" id="beat_2"]
 script = ExtResource("2_beat")
 beat_index = 2
 dialog_node_id = "story_henderson_payoff"
-min_channel = 11
+min_channel = 4
 requires_flag = "henderson_called"
 requires_chores_done = true
 reward_mood = -2
@@ -30,7 +30,7 @@ reward_rep = 2
 script = ExtResource("2_beat")
 beat_index = 3
 dialog_node_id = "story_henderson_evidence"
-min_channel = 13
+min_channel = 4
 requires_flag = "henderson_called"
 sets_flag = "henderson_evidence_seen"
 reward_mood = -1

@@ -7,14 +7,14 @@
 script = ExtResource("2_beat")
 beat_index = 0
 dialog_node_id = "story_squirrel_first_sighting"
-min_channel = 10
+min_channel = 2
 sets_flag = "squirrel_campaign_started"
 
 [sub_resource type="Resource" id="beat_1"]
 script = ExtResource("2_beat")
 beat_index = 1
 dialog_node_id = "story_squirrel_countermove"
-min_channel = 14
+min_channel = 3
 requires_flag = "squirrel_campaign_started"
 sets_flag = "squirrel_countermove_seen"
 
@@ -22,7 +22,7 @@ sets_flag = "squirrel_countermove_seen"
 script = ExtResource("2_beat")
 beat_index = 2
 dialog_node_id = "story_squirrel_payoff"
-min_channel = 18
+min_channel = 4
 requires_flag = "squirrel_countermove_seen"
 reward_money = 30
 reward_mood = -1
