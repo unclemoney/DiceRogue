@@ -1161,7 +1161,10 @@ func shake_noise(node: CanvasItem, duration: float = 0.5, intensity: float = 10.
 		var offset_y := noise.get_noise_2d(0.0, v * 1000.0) * current_intensity * 2.0
 		node.position = original_pos + Vector2(offset_x, offset_y)
 	, 0.0, 1.0, duration)
-	tween.tween_callback(func(): node.position = original_pos)
+	tween.tween_callback(func():
+		if is_instance_valid(node):
+			node.position = original_pos
+	)
 	TweenManager.track(node, Animations.SHAKE_NOISE, tween)
 	return tween
 
@@ -1292,7 +1295,10 @@ func hide_tooltip(node: Control) -> Tween:
 	tween.set_parallel(true)
 	tween.tween_property(node, "modulate:a", 0.0, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.tween_property(node, "scale", Vector2.ONE * 0.9, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tween.chain().tween_callback(func(): node.visible = false)
+	tween.chain().tween_callback(func():
+		if is_instance_valid(node):
+			node.visible = false
+	)
 	_tooltip_tween = tween
 	return tween
 

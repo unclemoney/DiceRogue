@@ -2449,7 +2449,28 @@ func _create_archive_item_display(item, target_container: Container, is_locked: 
 		var shader_bg = ColorRect.new()
 		shader_bg.color = Color.WHITE
 		shader_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var shader = load("res://Scripts/Shaders/marquee_lights.gdshader")
+		var shader = load("res://Scripts/Shaders/neon_grid.gdshader")
+		if shader:
+			var shader_mat = ShaderMaterial.new()
+			shader_mat.shader = shader
+			var base_a := Vector3(0.0, 0.25, 0.18)
+			var base_b := Vector3(0.15, 0.45, 0.34)
+			shader_mat.set_shader_parameter("color_A", base_a)
+			shader_mat.set_shader_parameter("color_B", base_b)
+			shader_bg.material = shader_mat
+			shader_bg.set_meta("base_color_a", base_a)
+			shader_bg.set_meta("base_color_b", base_b)
+		archive_panel.add_child(shader_bg)
+		shader_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		archive_panel.mouse_entered.connect(_on_unlocked_item_mouse_entered.bind(shader_bg))
+		archive_panel.mouse_exited.connect(_on_unlocked_item_mouse_exited.bind(shader_bg))
+	elif is_locked:
+		# Locked cards: flat, dark, desaturated panel — clearly readable and
+		# instantly distinguishable from the green "unlocked" marquee cards.
+		var shader_bg = ColorRect.new()
+		shader_bg.color = Color.WHITE
+		shader_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var shader = load("res://Scripts/Shaders/neon_raindrop.gdshader")
 		if shader:
 			var shader_mat = ShaderMaterial.new()
 			shader_mat.shader = shader
