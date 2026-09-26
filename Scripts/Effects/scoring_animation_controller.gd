@@ -165,12 +165,14 @@ func _find_required_nodes() -> void:
 	else:
 		print("[ScoringAnimationController] ScoreCardUI not found")
 
-## cancel_all_animations()
+## cancel_all_animations(immediate_reveal)
 ##
 ## Cancel all pending animations by setting a flag that callbacks check.
 ## Call this when dice are being cleared to prevent accessing freed objects.
 ## Also frees in-flight sparks and resets the sink to hidden.
-func cancel_all_animations() -> void:
+## immediate_reveal=false keeps the scorecard concealed (used by the
+## mid-animation restart path — the new event reveals at its own dump).
+func cancel_all_animations(immediate_reveal: bool = true) -> void:
 	print("[ScoringAnimationController] Cancelling all animations")
 
 	# Set flag to abort any pending timer callbacks
@@ -185,9 +187,36 @@ func cancel_all_animations() -> void:
 	if score_sink and is_instance_valid(score_sink):
 		score_sink.reset_sink()
 
+	if immediate_reveal:
+		_reveal_concealed_scores_immediately()
+
 	# Reset animation state
 	animation_in_progress = false
 	current_breakdown_info.clear()
+
+## _conceal_score_targets()
+##
+## Hold score displays at their pre-event values for the whole sequence.
+## ScoreCardUI self-conceals on the model signal; the force call is a
+## no-op then. Group members cover test-scene mock labels.
+func _conceal_score_targets() -> void:
+	if score_card_ui and is_instance_valid(score_card_ui) and score_card_ui.has_method("begin_scoring_concealment"):
+		score_card_ui.begin_scoring_concealment(true)
+	for node in get_tree().get_nodes_in_group("score_sink_drain_target"):
+		if node.has_method("begin_scoring_concealment"):
+			node.begin_scoring_concealment()
+
+## _reveal_concealed_scores_immediately()
+##
+## Cancel-path safety net: if the sequence dies before the drain, the
+## committed score must not stay hidden. Reveals without the count-up.
+func _reveal_concealed_scores_immediately() -> void:
+	if score_card_ui and is_instance_valid(score_card_ui) and score_card_ui.has_method("is_scoring_concealed"):
+		if score_card_ui.is_scoring_concealed():
+			score_card_ui.reveal_scoring_scores()
+	for node in get_tree().get_nodes_in_group("score_sink_drain_target"):
+		if node.has_method("is_scoring_concealed") and node.is_scoring_concealed():
+			node.reveal_scoring_scores()
 
 ## start_scoring_animation(score, category, breakdown_info)
 ##
@@ -197,7 +226,9 @@ func cancel_all_animations() -> void:
 func start_scoring_animation(score: int, category: String, breakdown_info: Dictionary = {}) -> void:
 	if animation_in_progress:
 		print("[ScoringAnimationController] Scoring event mid-animation — restarting sequence")
-		cancel_all_animations()
+		# Stay concealed: the interrupted event's reveal is cancelled; the new
+		# event reveals at its own dump.
+		cancel_all_animations(false)
 
 	animation_in_progress = true
 	animations_cancelled = false  # Reset cancellation flag for new animation
@@ -209,6 +240,11 @@ func start_scoring_animation(score: int, category: String, breakdown_info: Dicti
 	# Prepare ScoreCardUI for animation (no-op shim on the new scorecard, kept as a hook)
 	if score_card_ui:
 		score_card_ui.prepare_for_scoring_animation()
+
+	# Hold the scorecard at its pre-event values for the whole sequence;
+	# the drain phase reveals them. ScoreCardUI normally conceals itself on
+	# the model's score_assigned signal — this force call covers test rigs.
+	_conceal_score_targets()
 
 	# Calculate animation intensity and speed based on score
 	var intensity_scale = _calculate_intensity_scale(score)
@@ -731,12 +767,28 @@ func _play_jackpot_effects() -> void:
 
 ## _phase_drain(score, category, speed_scale)
 ##
-## The sink empties into the score labels: each label counts up from its
-## old value over COUNT_UP_T and punch-scales on landing. The sink flies to
-## the first label, fades, and hides completely.
+## The sink empties into the score labels: concealed scores reveal NOW (and
+## only now), each changed label counts up from its pre-event value over
+## COUNT_UP_T and punch-scales on landing. The sink flies to the first
+## label, fades, and hides completely.
 func _phase_drain(score: int, category: String, speed_scale: float) -> void:
 	var duration = COUNT_UP_T / speed_scale
-	var targets = _collect_drain_targets(score, category)
+	var targets: Array = []
+
+	# Real scorecard: reveal concealed scores, count up every changed row.
+	if score_card_ui and is_instance_valid(score_card_ui) and score_card_ui.has_method("reveal_scoring_scores"):
+		targets.append_array(score_card_ui.reveal_scoring_scores())
+	elif score_card_ui and is_instance_valid(score_card_ui):
+		# Legacy fallback for a scorecard without the conceal API.
+		targets.append_array(_collect_drain_targets(score, category))
+
+	# Test-scene mock labels (group hook).
+	for node in get_tree().get_nodes_in_group("score_sink_drain_target"):
+		if node.has_method("reveal_scoring_scores"):
+			node.reveal_scoring_scores()
+		if node is Label:
+			var from_value = int(node.text) if node.text.is_valid_int() else 0
+			targets.append({"label": node, "from": from_value, "to": from_value + score, "row": null})
 
 	var screen_size = get_viewport().get_visible_rect().size
 	var drain_target = Vector2(screen_size.x / 2.0, DRAIN_FALLBACK_Y)
@@ -770,10 +822,11 @@ func _phase_drain(score: int, category: String, speed_scale: float) -> void:
 
 ## _collect_drain_targets(score, category) -> Array
 ##
-## Duck-typed label discovery: the scored category row + its section total
-## row on the real ScoreCardUI, plus any plain Labels test scenes register
-## in the "score_sink_drain_target" group. Old values are reconstructed as
-## shown-minus-score because the model has already pushed final values.
+## Legacy fallback when the scorecard lacks the conceal/reveal API:
+## duck-typed label discovery off the scored category row + section total.
+## Old values are reconstructed as shown-minus-score because the model has
+## already pushed final values. Mock group labels are handled by
+## _phase_drain directly.
 func _collect_drain_targets(score: int, category: String) -> Array:
 	var targets: Array = []
 	if score_card_ui and is_instance_valid(score_card_ui):
@@ -799,11 +852,6 @@ func _collect_drain_targets(score: int, category: String) -> Array:
 				if summary_label is Label:
 					var shown = int(summary_label.text) if summary_label.text.is_valid_int() else score
 					targets.append({"label": summary_label, "from": maxi(shown - score, 0), "to": shown, "row": summary_row})
-
-	for node in get_tree().get_nodes_in_group("score_sink_drain_target"):
-		if node is Label:
-			var from_value = int(node.text) if node.text.is_valid_int() else 0
-			targets.append({"label": node, "from": from_value, "to": from_value + score, "row": null})
 	return targets
 
 ## _ensure_sink()

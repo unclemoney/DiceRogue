@@ -14,6 +14,7 @@ class_name SimpleScoringAnimationTest
 
 const FloatingNumber = preload("res://Scripts/Effects/floating_number.gd")
 const MockScoringRigScript = preload("res://Tests/mock_scoring_rig.gd")
+const MockScoreTotalScript = preload("res://Tests/mock_score_total.gd")
 
 # --- Scenario constants (edit these to tweak scenarios) ---
 # 1: Small score, no additives, no multipliers
@@ -199,7 +200,7 @@ func _create_total_label() -> void:
 	caption.offset_bottom = -70
 	add_child(caption)
 
-	total_label = Label.new()
+	total_label = MockScoreTotalScript.new()
 	total_label.text = "0"
 	total_label.add_theme_font_override("font", FloatingNumber.VCR_FONT)
 	total_label.add_theme_font_size_override("font_size", 36)
@@ -221,6 +222,11 @@ func _create_total_label() -> void:
 ## scoring animation pipeline.
 func _run_scenario(index: int) -> void:
 	print("[SimpleScoringAnimationTest] Running scenario %d" % index)
+	# Simulate the compute-time score render: the real scorecard shows the
+	# new total immediately. The controller's conceal step must hold it back
+	# until the sink dump — if concealment breaks, this spoils the score.
+	var scenario_scores = [0, SCN1_SCORE, SCN2_SCORE, SCN3_SCORE, SCN4_SCORE]
+	total_label.spoil_to(total_label.get_committed() + scenario_scores[index])
 	match index:
 		1:
 			rig.configure(SCN1_DICE, [], [])

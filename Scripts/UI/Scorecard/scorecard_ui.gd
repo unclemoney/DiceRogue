@@ -75,6 +75,13 @@ var _bonus_progress_fill: ColorRect = null
 var _bound_dice_hand: Node = null
 var _highlighted_key: StringName = &""  # category key holding the power-up highlight
 
+# --- Scoring concealment (score-sink dump) ---
+# While a scoring animation runs, score value writes are suppressed: rows
+# keep showing the pre-event values until the sink drains into the labels.
+var _scoring_concealed := false
+var _concealed_scores := {}    # StringName row key -> Variant shown before conceal
+var _last_rendered_scores := {}  # StringName row key -> Variant last pushed to a label
+
 # Legacy compat members: typed call sites (go_broke_or_go_home_consumable.gd,
 # game_controller.gd) access these directly. The button dicts map category
 # key -> ScorecardRow (a Button), so .disabled writes keep working.
@@ -287,7 +294,7 @@ func _update_category_row(key: StringName, value) -> void:
 	var row: ScorecardRow = rows.get(key)
 	if row == null:
 		return
-	row.set_score(value)
+	_render_row_score(key, row, value)
 	row.set_level(scorecard.get_category_level_by_name(String(key)))
 	if value != null:
 		if row.state != ScorecardRow.State.SCORED:
@@ -296,25 +303,38 @@ func _update_category_row(key: StringName, value) -> void:
 		row.reset_to_available()
 
 
+## _render_row_score(key, row, value)
+##
+## Single write point for score values on row labels. While a scoring
+## animation runs (concealed), the write is suppressed so the row keeps
+## showing the pre-event value until the sink dump reveals it.
+func _render_row_score(key: StringName, row: ScorecardRow, value) -> void:
+	if _scoring_concealed:
+		return
+	_last_rendered_scores[key] = value
+	row.set_score(value)
+
+
 func _update_summary_rows() -> void:
 	var sub_total: int = scorecard.get_upper_section_total()
 	var threshold: int = scorecard.get_scaled_upper_bonus_threshold()
-	summary_rows[&"sub_total"].set_score(sub_total)
+	_render_row_score(&"sub_total", summary_rows[&"sub_total"], sub_total)
 
 	var bonus_row: ScorecardRow = summary_rows[&"bonus"]
 	var bonus_progress: int = scorecard.get_upper_bonus_progress()
-	bonus_row.set_display_name("Bonus — %d / %d" % [mini(bonus_progress, threshold), threshold])
+	if not _scoring_concealed:
+		bonus_row.set_display_name("Bonus — %d / %d" % [mini(bonus_progress, threshold), threshold])
 	if scorecard.upper_bonus_awarded:
-		bonus_row.set_score(scorecard.get_scaled_upper_bonus_amount())
+		_render_row_score(&"bonus", bonus_row, scorecard.get_scaled_upper_bonus_amount())
 	else:
-		bonus_row.set_score(null)
-	if _bonus_progress_fill and threshold > 0:
+		_render_row_score(&"bonus", bonus_row, null)
+	if _bonus_progress_fill and threshold > 0 and not _scoring_concealed:
 		_bonus_progress_fill.anchor_right = clampf(float(bonus_progress) / float(threshold), 0.0, 1.0)
 	# The achievement fill tween + "+35" flash live in _on_upper_bonus_achieved.
 
-	summary_rows[&"upper_total"].set_score(scorecard.get_upper_section_final_total())
+	_render_row_score(&"upper_total", summary_rows[&"upper_total"], scorecard.get_upper_section_final_total())
 
-	summary_rows[&"lower_total"].set_score(scorecard.get_lower_section_total() + scorecard.yahtzee_bonus_points)
+	_render_row_score(&"lower_total", summary_rows[&"lower_total"], scorecard.get_lower_section_total() + scorecard.yahtzee_bonus_points)
 
 
 ## _sync_yahtzee_bonus_display()
@@ -322,6 +342,8 @@ func _update_summary_rows() -> void:
 ## Keeps bonus Yahtzee points on the scored Yahtzee row instead of spawning
 ## a deprecated summary row. Example: "50 +100 BONUS".
 func _sync_yahtzee_bonus_display() -> void:
+	if _scoring_concealed:
+		return
 	var yahtzee_row: ScorecardRow = rows.get(&"yahtzee")
 	if yahtzee_row == null:
 		return
@@ -943,11 +965,16 @@ func _on_score_assigned(_section: Scorecard.Section, category: String, score: in
 	# once per assignment, including auto-scores — the old UI's contract.
 	manual_score.emit()
 	clear_projections()
+	# Conceal BEFORE any score render when a sink animation will follow, so
+	# the new score never flashes on the scorecard at computation time.
+	if score > 0 and _scoring_animation_available():
+		begin_scoring_concealment()
 	var row: ScorecardRow = rows.get(StringName(category))
 	if row:
-		row.set_score(score)
-		# No dance under a covered row (blinds mid-wipe or pre-populate)
-		if row.is_revealed():
+		_render_row_score(StringName(category), row, score)
+		# No dance under a covered row (blinds mid-wipe or pre-populate), and
+		# no lock punch while concealed — the drain lands it instead.
+		if not _scoring_concealed and row.is_revealed():
 			row.play_score_lock()
 		row.set_state_scored()
 	update_all()
@@ -958,6 +985,84 @@ func _on_score_assigned(_section: Scorecard.Section, category: String, score: in
 
 func _on_score_changed(_total_score: int) -> void:
 	update_all()
+
+
+# --- Scoring concealment API (score-sink dump) ---------------------------
+
+
+## is_scoring_concealed() -> bool
+##
+## True while score values are held back for a running sink animation.
+func is_scoring_concealed() -> bool:
+	return _scoring_concealed
+
+
+## begin_scoring_concealment(force)
+##
+## Snapshots the currently displayed score values and suppresses all score
+## writes until reveal_scoring_scores(). Idempotent: a second scoring event
+## mid-animation keeps the ORIGINAL pre-event values (the interrupted
+## event's reveal is cancelled). Called by the UI itself on score_assigned
+## when an animation will run; the controller also calls it with
+## force=true to cover mock/test harnesses without a model signal.
+func begin_scoring_concealment(force: bool = false) -> void:
+	if _scoring_concealed:
+		return
+	if not force and not _scoring_animation_available():
+		return
+	_scoring_concealed = true
+	print("[ScoreCardUI] Scores concealed until sink dump")
+	_concealed_scores.clear()
+	for key in rows.keys():
+		_concealed_scores[key] = _last_rendered_scores.get(key, null)
+	for key in summary_rows.keys():
+		_concealed_scores[key] = _last_rendered_scores.get(key, null)
+
+
+## reveal_scoring_scores() -> Array
+##
+## The sink-dump moment: lifts concealment, re-renders the model state, and
+## returns count-up targets for every row whose displayed value changed:
+## [{row, label, from, to}]. Empty when nothing was concealed.
+func reveal_scoring_scores() -> Array:
+	if not _scoring_concealed:
+		return []
+	_scoring_concealed = false
+	print("[ScoreCardUI] Scores revealed at sink dump")
+	var before = _concealed_scores.duplicate()
+	_concealed_scores.clear()
+	update_all()
+	var targets: Array = []
+	for key in before.keys():
+		var row: ScorecardRow = rows.get(key, summary_rows.get(key))
+		if row == null:
+			continue
+		var new_value = _last_rendered_scores.get(key, null)
+		var old_value = before[key]
+		if new_value == null or new_value == old_value:
+			continue
+		var from_value = 0
+		if old_value != null:
+			from_value = int(old_value)
+		targets.append({
+			"row": row,
+			"label": row.score_label,
+			"from": from_value,
+			"to": int(new_value),
+		})
+	return targets
+
+
+## _scoring_animation_available() -> bool
+##
+## True when the game controller has a scoring animation controller that
+## will run the sink sequence for this score. Non-animated paths (debug
+## insta-score, save loads, missing controller) must render immediately.
+func _scoring_animation_available() -> bool:
+	var gc = get_tree().get_first_node_in_group("game_controller")
+	if gc == null:
+		return false
+	return gc.get("scoring_animation_controller") != null
 
 
 ## _on_score_auto_assigned(section, category, score, breakdown_info)

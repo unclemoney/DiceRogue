@@ -49,7 +49,7 @@ const ShopItemScene := preload("res://Scenes/Shop/shop_item.tscn")
 const ShopOwnedItemsPanelClass := preload("res://Scripts/UI/shop_owned_items_panel.gd")
 const GlassButtonFactoryRef := preload("res://Scripts/UI/glass_button_factory.gd")
 const UnlockableItemScript := preload("res://Scripts/Core/unlockable_item.gd")
-const DEFAULT_SHOP_ITEMS: int = 2
+const DEFAULT_SHOP_ITEMS: int = 3
 const MAX_POWER_UP_ITEMS: int = 6
 ## Mom-Approved mode (low Rep + happy Mom): G-rated POGs get weighted
 ## shelf presence and a price discount (discount applied in ShopItem).
@@ -79,8 +79,8 @@ const OWNERSHIP_PANEL_ACCENTS := {
 var items_per_section := DEFAULT_SHOP_ITEMS  # Number of items to display per section
 var power_up_items := DEFAULT_SHOP_ITEMS     # Specific count for power-ups
 var consumable_items := DEFAULT_SHOP_ITEMS   # Specific count for consumables
-var mod_items := DEFAULT_SHOP_ITEMS          # Specific count for mods
-var colored_dice_items := DEFAULT_SHOP_ITEMS # Specific count for colored dice
+var mod_items := DEFAULT_SHOP_ITEMS - 1          # Specific count for mods
+var colored_dice_items := DEFAULT_SHOP_ITEMS -1  # Specific count for colored dice
 
 var purchased_items := {}  # Track purchased items by type: {"power_up": [], "consumable": [], "mod": [], "colored_dice": []}
 var _rep_chip_label: Label = null  # Rep indicator chip in the POGS tab corner
