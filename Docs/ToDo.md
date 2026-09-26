@@ -58,6 +58,7 @@
 ## SYS:UI — UI / UX & Animation
 
 - [ ] `P1-Major` Initial container sizing of PowerUp container is vertically to tall, and needs to be kept consistent.  It changes after gameplay begins.
+- [ ] `P2-Minor` Update scoring animations to make a additive and multiplier popup, remove stale animations, and jackpot animations for non jackpot items.
 - [ ] `P2-Minor` Change upgrade scorecard sound.
 - [ ] `P2-Minor` Update Challenge Icons.
 - [ ] `P2-Minor` There is a stale shop tooltip that ocassinally is left on screen.  Investigating circumstances-- it's being frozen in an odd place, so it seems to happen in a tween process that is getting killed for some reason.

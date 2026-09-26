@@ -1,5 +1,21 @@
 # Enhanced Dynamic Scoring Animation System
 
+> **2026-09 refactor — Score Sink model.** The float-away numbers described
+> in the historical sections below were replaced by a central **ScoreSink**
+> (`Scripts/Effects/score_sink.gd`): every scoring number is now a
+> **ScoreSpark** (`Scripts/Effects/score_spark.gd`) that spawns at its source
+> (die, consumable spine, powerup spine) and spirals into a glass chip at
+> screen center showing the running score. Phases run in strict order: dice
+> values → dice subtotal beat → additives (consumables then powerups) →
+> multipliers (scorecard, colored dice, consumables, powerups) → final
+> blow-up (scale ×1.5 capped at 2.6, burst, screen shake) → the sink drains
+> into the score labels (count-up + landing punch) and hides. All constants
+> live in const blocks at the top of `score_sink.gd` and
+> `scoring_animation_controller.gd`. Manual test harness:
+> `Tests/SimpleScoringAnimationTest.tscn` (buttons or keys 1-4).
+> Sections below this notice describe the pre-refactor behavior and are kept
+> for reference; where they conflict with the sink model, the sink model wins.
+
 ## Overview
 A comprehensive animation system that provides satisfying visual feedback when players score in DiceRogue. The system creates bouncy, animated effects that scale with score magnitude and only animates elements that actually contribute to the score.
 
