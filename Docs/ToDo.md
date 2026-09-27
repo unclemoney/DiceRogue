@@ -34,8 +34,6 @@
 - [ ] `P2-Minor` Had color dice carry over?
 - [ ] `P2-Minor` Incorrect dice set consumables are still showing up-- no EO Full House should show up for d6.
 - [ ] `P2-Minor` Have some fanfare and notify the player when a buff is added.
-- [ ] `P2-Minor` Teachers pet buff did not add 100$ at the end of the round.
-- [ ] `P2-Minor` Mom: Make it 10 doesn't make any sense-- change to make it 50.
 - [ ] `P2-Minor` Better way to SELL Mods? This needs more detail and exploration.
 - [ ] `P2-Minor` Upper bonus multiplier power up. Add a new PowerUp that will multiply Upper Section Bonus.
 - [ ] `P2-Minor` Chore pressure is not enough, needs more balance? This will be addressed in the new difficulty system.
@@ -50,6 +48,9 @@
 ## SYS:Chore — Chore System & Mom
 
 - [ ] `P1-Major` Chore Champion should also update rewards. Review this.
+- [X] `P2-Minor` Teachers pet buff did not add 100$ at the end of the round.
+- [ ] `P2-Minor` Mom: Make it 10 doesn't make any sense-- change to make it 50.
+- [ ] `P2-Minor` Add additional first round check-ins.
 
 ## SYS:Shop — Shop & Economy
 
@@ -58,7 +59,7 @@
 ## SYS:UI — UI / UX & Animation
 
 - [ ] `P1-Major` Initial container sizing of PowerUp container is vertically to tall, and needs to be kept consistent.  It changes after gameplay begins.
-- [ ] `P2-Minor` Update scoring animations to make a additive and multiplier popup, remove stale animations, and jackpot animations for non jackpot items.
+- [X] `P2-Minor` Update scoring animations to make a additive and multiplier popup, remove stale animations, and jackpot animations for non jackpot items.
 - [ ] `P2-Minor` Change upgrade scorecard sound.
 - [ ] `P2-Minor` Update Challenge Icons.
 - [ ] `P2-Minor` There is a stale shop tooltip that ocassinally is left on screen.  Investigating circumstances-- it's being frozen in an odd place, so it seems to happen in a tween process that is getting killed for some reason.
