@@ -402,23 +402,39 @@ func _test_sweet_sixteen_trigger() -> void:
 
 	var power_up = SweetSixteenScene.instantiate()
 	add_child(power_up)
-	# NOTE: apply() needs GameController.turn_tracker, which does not exist
-	# headless, so the turn/score handlers are driven directly instead.
-	power_up._on_turn_updated(16)
-	_check("sweet sixteen: turn 16 grants $16", power_up.total_earned == 16)
+	# NOTE: apply() needs a GameController in the "game_controller" group, which
+	# does not exist headless, so refs are set directly and the round-end
+	# handler is driven manually. null game_controller_ref exercises the
+	# PlayerEconomy.add_money fallback grant path.
+	power_up.scorecard_ref = _scorecard
+	power_up.game_controller_ref = null
 
-	# Scratched (0) score on turn 16: no $256 bonus.
+	# Guard: forced game_completed with an incomplete scorecard pays nothing.
 	var money_before = PlayerEconomy.money
-	power_up._on_score_assigned(Scorecard.Section.LOWER, "ones", 0)
-	_check("sweet sixteen: scratched turn-16 score pays no bonus", PlayerEconomy.money == money_before)
-	_check("sweet sixteen: bonus not awarded after scratch", power_up._turn_16_bonus_awarded == false)
+	power_up._on_round_end_payout(0)
+	_check("sweet sixteen: incomplete scorecard pays nothing", PlayerEconomy.money == money_before)
+	_check("sweet sixteen: nothing earned on incomplete scorecard", power_up.total_earned == 0)
 
-	# Nonzero EASY score on turn 16: bonus lands.
-	GameSettings.set_difficulty_mode(GameSettings.DifficultyMode.EASY)
-	power_up._on_score_assigned(Scorecard.Section.LOWER, "ones", 25)
-	_check("sweet sixteen: EASY turn-16 score pays $256", PlayerEconomy.money == money_before + 256)
-	_check("sweet sixteen: bonus awarded", power_up._turn_16_bonus_awarded == true)
-	_check("sweet sixteen: total earned 16+256 = 272", power_up.total_earned == 272)
+	# 12 categories at 16+, one below: $5 x 12 = $60, no perfect-round bonus.
+	for category in _scorecard.upper_scores.keys():
+		_scorecard.set_score(Scorecard.Section.UPPER, category, 20)
+	for category in _scorecard.lower_scores.keys():
+		_scorecard.set_score(Scorecard.Section.LOWER, category, 15 if category == "chance" else 20)
+	money_before = PlayerEconomy.money
+	power_up._on_round_end_payout(_scorecard.get_total_score())
+	_check("sweet sixteen: 12 qualifying categories pay $60", PlayerEconomy.money == money_before + 60)
+	_check("sweet sixteen: total earned 60", power_up.total_earned == 60)
+
+	# All 13 at 16+: 13 x $5 = $65 plus the stacking $256 perfect-round bonus.
+	_scorecard.reset_scores()
+	for category in _scorecard.upper_scores.keys():
+		_scorecard.set_score(Scorecard.Section.UPPER, category, 16)
+	for category in _scorecard.lower_scores.keys():
+		_scorecard.set_score(Scorecard.Section.LOWER, category, 16)
+	money_before = PlayerEconomy.money
+	power_up._on_round_end_payout(_scorecard.get_total_score())
+	_check("sweet sixteen: perfect round pays 65 + 256 = $321", PlayerEconomy.money == money_before + 321)
+	_check("sweet sixteen: total earned 60 + 321 = 381", power_up.total_earned == 381)
 
 	_free_power_up(power_up)
 	_reset_fixture()

@@ -3,24 +3,23 @@ class_name SweetSixteenPowerUp
 
 ## SweetSixteenPowerUp
 ##
-## An uncommon PowerUp that grants $16 at the start of each turn.
-## When the player reaches turn 16 and scores above 0,
-## awards a one-time $256 bonus for that turn.
+## An uncommon PowerUp that pays out at the end of each round.
+## When the round ends (all 13 scorecard categories filled), grants $5 for
+## every category whose final stored score is 16 or higher.
+## If all 13 categories score 16+, also grants a stacking $256 bonus
+## (total $321 for a perfect round).
 ##
-## Connects to TurnTracker's turn_updated signal for per-turn money
-## and Scorecard's score_assigned signal for the turn-16 bonus check.
+## Connects to Scorecard's game_completed signal for the round-end payout.
 
-var turn_tracker_ref: Node = null
 var scorecard_ref: Node = null
 var game_controller_ref = null
 
-var _current_turn: int = 0
-var _turn_16_bonus_awarded: bool = false
 var total_earned: int = 0
 
-const MONEY_PER_TURN: int = 16
-const TURN_16_BONUS: int = 256
-const BONUS_TURN: int = 16
+const MONEY_PER_QUALIFYING_CATEGORY: int = 5
+const PERFECT_ROUND_BONUS: int = 256
+const QUALIFYING_SCORE: int = 16
+const TOTAL_CATEGORIES: int = 13
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -37,86 +36,81 @@ func apply(target) -> void:
 	
 	scorecard_ref = scorecard
 	
-	# Find GameController for turn_tracker access
+	# Find GameController for the award_score_time_power_up_money grant path
 	game_controller_ref = scorecard.get_tree().get_first_node_in_group("game_controller")
-	if game_controller_ref and game_controller_ref.turn_tracker:
-		turn_tracker_ref = game_controller_ref.turn_tracker
-		
-		if not turn_tracker_ref.is_connected("turn_updated", _on_turn_updated):
-			turn_tracker_ref.turn_updated.connect(_on_turn_updated)
-			print("[SweetSixteenPowerUp] Connected to turn_updated signal")
-		
-		# Capture current turn immediately in case we're mid-game
-		_current_turn = turn_tracker_ref.current_turn
-	else:
-		push_error("[SweetSixteenPowerUp] Could not find TurnTracker via GameController")
+	if not game_controller_ref:
+		push_error("[SweetSixteenPowerUp] Could not find GameController")
 		return
 	
-	# Connect to score_assigned for turn-16 bonus detection
-	if not scorecard_ref.is_connected("score_assigned", _on_score_assigned):
-		scorecard_ref.score_assigned.connect(_on_score_assigned)
-		print("[SweetSixteenPowerUp] Connected to score_assigned signal")
+	# Connect to game_completed for the end-of-round payout
+	if scorecard_ref.has_signal("game_completed"):
+		if not scorecard_ref.is_connected("game_completed", _on_round_end_payout):
+			scorecard_ref.game_completed.connect(_on_round_end_payout)
+			print("[SweetSixteenPowerUp] Connected to game_completed signal")
+	else:
+		push_error("[SweetSixteenPowerUp] Scorecard has no game_completed signal")
+		return
 	
 	if not is_connected("tree_exiting", _on_tree_exiting):
 		connect("tree_exiting", _on_tree_exiting)
 	
-	print("[SweetSixteenPowerUp] Applied successfully - will grant $%d per turn, $%d bonus on turn %d" % [MONEY_PER_TURN, TURN_16_BONUS, BONUS_TURN])
+	print("[SweetSixteenPowerUp] Applied successfully - will grant $%d per category scoring %d+ at round end, +$%d for all %d" % [MONEY_PER_QUALIFYING_CATEGORY, QUALIFYING_SCORE, PERFECT_ROUND_BONUS, TOTAL_CATEGORIES])
 
-func _on_turn_updated(turn: int) -> void:
-	_current_turn = turn
+func _on_round_end_payout(_final_score: int) -> void:
+	# TurnTracker can force-emit game_completed at max turns with categories
+	# still unfilled; only pay out on a genuinely completed scorecard.
+	if not scorecard_ref or not scorecard_ref.is_game_complete():
+		print("[SweetSixteenPowerUp] game_completed received but scorecard not complete - skipping payout")
+		return
 	
-	# Reset turn-16 bonus flag when a new round starts (turn resets to 1)
-	if turn == 1:
-		_turn_16_bonus_awarded = false
+	# Count categories whose final stored score qualifies
+	var qualifying: int = 0
+	for score in scorecard_ref.upper_scores.values():
+		if score != null and score >= QUALIFYING_SCORE:
+			qualifying += 1
+	for score in scorecard_ref.lower_scores.values():
+		if score != null and score >= QUALIFYING_SCORE:
+			qualifying += 1
 	
-	# Grant per-turn money
-	PlayerEconomy.add_money(MONEY_PER_TURN)
-	total_earned += MONEY_PER_TURN
-	print("[SweetSixteenPowerUp] Turn %d started! Granted $%d (total earned: $%d)" % [turn, MONEY_PER_TURN, total_earned])
+	# First grant: $5 per qualifying category
+	if qualifying > 0:
+		var category_payout: int = qualifying * MONEY_PER_QUALIFYING_CATEGORY
+		var awarded: int = _grant(category_payout, "sweet_sixteen")
+		total_earned += awarded
+		print("[SweetSixteenPowerUp] Round end: %d categories scored %d+. Granted $%d (total earned: $%d)" % [qualifying, QUALIFYING_SCORE, awarded, total_earned])
+	else:
+		print("[SweetSixteenPowerUp] Round end: no categories scored %d+ - no payout" % QUALIFYING_SCORE)
+	
+	# Then, if ALL categories qualify, the stacking perfect-round bonus
+	if qualifying == TOTAL_CATEGORIES:
+		var bonus_awarded: int = _grant(PERFECT_ROUND_BONUS, "sweet_sixteen_perfect_round")
+		total_earned += bonus_awarded
+		print("[SweetSixteenPowerUp] PERFECT ROUND! All %d categories scored %d+. Granted $%d bonus! (total earned: $%d)" % [TOTAL_CATEGORIES, QUALIFYING_SCORE, bonus_awarded, total_earned])
 	
 	emit_signal("description_updated", id, get_current_description())
 	
 	if is_inside_tree():
 		_update_power_up_icons()
 
-func _on_score_assigned(_section, _category: String, score: int) -> void:
-	if _current_turn == BONUS_TURN and score > 0 and not _turn_16_bonus_awarded:
-		var awarded_amount = TURN_16_BONUS
-		if game_controller_ref and game_controller_ref.has_method("award_score_time_power_up_money"):
-			awarded_amount = game_controller_ref.award_score_time_power_up_money(TURN_16_BONUS, "sweet_sixteen_turn_16_bonus")
-		else:
-			PlayerEconomy.add_money(TURN_16_BONUS)
-		total_earned += awarded_amount
-		_turn_16_bonus_awarded = true
-		print("[SweetSixteenPowerUp] TURN %d BONUS! Scored %d points. Granted $%d bonus! (total earned: $%d)" % [BONUS_TURN, score, awarded_amount, total_earned])
-		
-		emit_signal("description_updated", id, get_current_description())
-		
-		if is_inside_tree():
-			_update_power_up_icons()
+func _grant(amount: int, tag: String) -> int:
+	if game_controller_ref and is_instance_valid(game_controller_ref) and game_controller_ref.has_method("award_score_time_power_up_money"):
+		return game_controller_ref.award_score_time_power_up_money(amount, tag)
+	PlayerEconomy.add_money(amount)
+	return amount
 
 func remove(_target) -> void:
 	print("=== Removing SweetSixteenPowerUp ===")
 	
-	if turn_tracker_ref:
-		if turn_tracker_ref.is_connected("turn_updated", _on_turn_updated):
-			turn_tracker_ref.turn_updated.disconnect(_on_turn_updated)
-			print("[SweetSixteenPowerUp] Disconnected from turn_updated signal")
-	
 	if scorecard_ref:
-		if scorecard_ref.is_connected("score_assigned", _on_score_assigned):
-			scorecard_ref.score_assigned.disconnect(_on_score_assigned)
-			print("[SweetSixteenPowerUp] Disconnected from score_assigned signal")
+		if scorecard_ref.is_connected("game_completed", _on_round_end_payout):
+			scorecard_ref.game_completed.disconnect(_on_round_end_payout)
+			print("[SweetSixteenPowerUp] Disconnected from game_completed signal")
 	
-	turn_tracker_ref = null
 	scorecard_ref = null
 	game_controller_ref = null
 
 func get_current_description() -> String:
-	var base_desc = "Grants $%d per turn. Turn %d score bonus: $%d" % [MONEY_PER_TURN, BONUS_TURN, TURN_16_BONUS]
-	
-	if _turn_16_bonus_awarded:
-		base_desc += "\n✓ Turn %d bonus collected!" % BONUS_TURN
+	var base_desc = "End of round: $%d per category scoring %d+. All %d: +$%d." % [MONEY_PER_QUALIFYING_CATEGORY, QUALIFYING_SCORE, TOTAL_CATEGORIES, PERFECT_ROUND_BONUS]
 	
 	if total_earned > 0:
 		base_desc += "\nTotal earned: $%d" % total_earned
@@ -136,12 +130,8 @@ func _update_power_up_icons() -> void:
 				icon.label_bg.visible = true
 
 func _on_tree_exiting() -> void:
-	if turn_tracker_ref:
-		if turn_tracker_ref.is_connected("turn_updated", _on_turn_updated):
-			turn_tracker_ref.turn_updated.disconnect(_on_turn_updated)
-	
 	if scorecard_ref:
-		if scorecard_ref.is_connected("score_assigned", _on_score_assigned):
-			scorecard_ref.score_assigned.disconnect(_on_score_assigned)
+		if scorecard_ref.is_connected("game_completed", _on_round_end_payout):
+			scorecard_ref.game_completed.disconnect(_on_round_end_payout)
 	
 	print("[SweetSixteenPowerUp] Cleanup: Disconnected signals")

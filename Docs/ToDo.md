@@ -62,7 +62,7 @@
 - [X] `P2-Minor` Update scoring animations to make a additive and multiplier popup, remove stale animations, and jackpot animations for non jackpot items.
 - [ ] `P2-Minor` Change upgrade scorecard sound.
 - [ ] `P2-Minor` Update Challenge Icons.
-- [ ] `P2-Minor` There is a stale shop tooltip that ocassinally is left on screen.  Investigating circumstances-- it's being frozen in an odd place, so it seems to happen in a tween process that is getting killed for some reason.
+- [X] `P2-Minor` There is a stale shop tooltip that ocassinally is left on screen.  Investigating circumstances-- it's being frozen in an odd place, so it seems to happen in a tween process that is getting killed for some reason.
 
 
 ## SYS:Save — Save, Load & State Management
