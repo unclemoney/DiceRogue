@@ -4,9 +4,10 @@ class_name GoBrokeOrGoHomeConsumable
 ## GoBrokeOrGoHomeConsumable
 ##
 ## This consumable MUST be used at the beginning of a turn (after Next Turn, before first Roll).
-## The player must manually select a category from the LOWER section only.
+## The game randomly assigns ONE open (unscored) LOWER-section category as the
+## double-or-nothing target. Player does not choose.
 ## If the player scores > 0, their money is doubled.
-## If the player scores 0, they lose all their money.
+## If the player scores 0 — or ends the turn without scoring the target — they lose all their money.
 
 # Signals for consumable events
 signal go_broke_or_go_home_applied
@@ -20,6 +21,7 @@ var scorecard_ref: Scorecard = null
 var score_card_ui_ref: ScoreCardUI = null
 var has_scored: bool = false
 var original_money: int = 0
+var target_category: String = ""
 
 func _ready() -> void:
 	add_to_group("consumables")
@@ -54,6 +56,14 @@ func apply(target) -> void:
 	if not _has_open_lower_categories():
 		print("[GoBrokeOrGoHomeConsumable] No open lower section categories available")
 		return
+	
+	# Randomly pick one open lower category as the double-or-nothing target
+	var open_lower: Array = []
+	for category in scorecard_ref.lower_scores.keys():
+		if scorecard_ref.lower_scores[category] == null:
+			open_lower.append(category)
+	target_category = open_lower.pick_random()
+	print("[GoBrokeOrGoHomeConsumable] Target category: %s" % target_category)
 	
 	# Store the turn we're activated on and current money
 	turn_activated = turn_tracker.current_turn
@@ -93,9 +103,10 @@ func _has_open_lower_categories() -> bool:
 
 ## _activate_go_broke_mode()
 ##
-## Sets up the special UI state for GoBrokeOrGoHome mode - only lower section categories enabled
+## Sets up the special UI state for GoBrokeOrGoHome mode - only the randomly
+## assigned target category is enabled and highlighted; everything else is disabled
 func _activate_go_broke_mode() -> void:
-	print("[GoBrokeOrGoHomeConsumable] Activating Go Broke or Go Home mode - lower section only")
+	print("[GoBrokeOrGoHomeConsumable] Activating Go Broke or Go Home mode - target: %s" % target_category)
 	
 	# Disable all upper section buttons
 	for category in score_card_ui_ref.upper_section_buttons.keys():
@@ -103,19 +114,15 @@ func _activate_go_broke_mode() -> void:
 		button.disabled = true
 		button.modulate = Color(0.5, 0.5, 0.5)  # Gray out disabled buttons
 	
-	# Enable only open lower section buttons
+	# Enable only the randomly chosen target lower category
 	for category in score_card_ui_ref.lower_section_buttons.keys():
 		var button = score_card_ui_ref.lower_section_buttons[category]
-		var has_score = scorecard_ref.lower_scores[category] != null
-		
-		if has_score:
-			# Already scored - disable
-			button.disabled = true
-			button.modulate = Color(0.5, 0.5, 0.5)  # Gray out
-		else:
-			# Open category - enable with special highlighting
+		if category == target_category:
 			button.disabled = false
 			button.modulate = Color(1.5, 0.8, 0.8)  # Red highlight for high-risk mode
+		else:
+			button.disabled = true
+			button.modulate = Color(0.5, 0.5, 0.5)  # Gray out
 	
 	# Set the go broke mode flag (we'll add this to ScoreCardUI)
 	if score_card_ui_ref.has_method("set_go_broke_mode"):
@@ -152,6 +159,11 @@ func _on_score_assigned(section: int, category: String, score: int) -> void:
 		print("[GoBrokeOrGoHomeConsumable] Ignoring upper section score:", category)
 		return
 	
+	# Only the randomly assigned target category counts
+	if category != target_category:
+		print("[GoBrokeOrGoHomeConsumable] Ignoring non-target score:", category)
+		return
+	
 	print("[GoBrokeOrGoHomeConsumable] Lower section score assigned: %s = %d" % [category, score])
 	_handle_score_result(category, score)
 
@@ -162,6 +174,11 @@ func _on_score_auto_assigned(section: int, category: String, score: int, _breakd
 	# Only care about lower section scores
 	if section != Scorecard.Section.LOWER:
 		print("[GoBrokeOrGoHomeConsumable] Ignoring upper section auto-score:", category)
+		return
+	
+	# Only the randomly assigned target category counts
+	if category != target_category:
+		print("[GoBrokeOrGoHomeConsumable] Ignoring non-target auto-score:", category)
 		return
 	
 	print("[GoBrokeOrGoHomeConsumable] Lower section auto-score assigned: %s = %d" % [category, score])
@@ -181,7 +198,7 @@ func _handle_score_result(category: String, score: int) -> void:
 		var new_money = original_money * 2
 		if PlayerEconomy:
 			PlayerEconomy.money = new_money
-			PlayerEconomy.emit_signal("money_changed", new_money)
+			PlayerEconomy.money_changed.emit(new_money, new_money - original_money)
 		
 		print("[GoBrokeOrGoHomeConsumable] SUCCESS! Scored %d in %s - Money doubled from $%d to $%d" % [score, category, original_money, new_money])
 		emit_signal("money_doubled", original_money, new_money)
@@ -189,7 +206,7 @@ func _handle_score_result(category: String, score: int) -> void:
 		# Failure! Lose all money
 		if PlayerEconomy:
 			PlayerEconomy.money = 0
-			PlayerEconomy.emit_signal("money_changed", 0)
+			PlayerEconomy.money_changed.emit(0, -original_money)
 		
 		print("[GoBrokeOrGoHomeConsumable] FAILURE! Scored 0 in %s - Lost all money ($%d)" % [category, original_money])
 		emit_signal("money_lost", original_money)
@@ -201,11 +218,11 @@ func _on_turn_started() -> void:
 	if not is_active:
 		return
 	
-	# If a new turn has started and we haven't scored, deactivate
+	# If a new turn has started and we haven't scored the target, the bet is lost
 	var turn_tracker = game_controller_ref.turn_tracker if game_controller_ref else null
 	if turn_tracker and turn_tracker.current_turn != turn_activated:
-		print("[GoBrokeOrGoHomeConsumable] Turn changed without scoring, deactivating")
-		_deactivate()
+		print("[GoBrokeOrGoHomeConsumable] Turn changed without scoring target %s - going broke" % target_category)
+		_handle_score_result(target_category, 0)
 
 func _deactivate() -> void:
 	if not is_active:
@@ -230,6 +247,7 @@ func _deactivate() -> void:
 			turn_tracker.turn_started.disconnect(_on_turn_started)
 	
 	# Clear references
+	target_category = ""
 	game_controller_ref = null
 	scorecard_ref = null
 	score_card_ui_ref = null

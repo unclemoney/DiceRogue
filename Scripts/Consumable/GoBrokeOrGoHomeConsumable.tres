@@ -12,7 +12,7 @@ region = Rect2(1214, 1587, 382, 359)
 script = ExtResource("3_script")
 id = "go_broke_or_go_home"
 display_name = "Go Broke or Go Home"
-description = "Use before your first roll and choose lower section category. Score > 0: double money. Score = 0: lose all money"
+description = "Use before your first roll. A random open lower category is chosen for you. Score > 0 there: double your money. Score 0 or end the turn without scoring it: lose all your money"
 icon = SubResource("AtlasTexture_h23")
 scene = ExtResource("2_scene")
 price = 75

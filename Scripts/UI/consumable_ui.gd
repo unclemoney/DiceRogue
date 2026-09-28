@@ -1149,6 +1149,14 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 			else:
 				# No turn tracker available, assume unusable
 				return false
+		"go_broke_or_go_home":
+			# Go Broke or Go Home targets a random open LOWER section category,
+			# so it requires at least one open lower category
+			if game_controller and game_controller.scorecard:
+				for category in game_controller.scorecard.lower_scores.keys():
+					if game_controller.scorecard.lower_scores[category] == null:
+						return true
+			return false
 		"the_pawn_shop":
 			# The Pawn Shop requires at least one PowerUp to sell
 			if game_controller:

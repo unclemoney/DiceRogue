@@ -28,7 +28,8 @@
 
 ## SYS:Gameplay — Core Gameplay & Balance
 
-- [ ] `P1-Major` Consumable Go Broke or Go Home mechanics don't work well.  Selecting category scores, and so it's garunteed.  Let's randomly select a category for the player to score in.
+- [ ] `P1-Major` Consider a Consumable refactor where the consumable owns when it can be played-- any time, before round start, etc-- and, what dice set it can be played with.  This will fix several small refactor issues permanently.
+- [X] `P1-Major` Consumable Go Broke or Go Home mechanics don't work well.  Selecting category scores, and so it's garunteed.  Let's randomly select a category for the player to score in.
 - [X] `P1-Major` Build a difficulty scaling system so the player can select difficulty, and it will scale: rewards, challenges, and chore pressure, as well as number of items carried over rounds.
 - [ ] `P2-Minor` Spamming Roll allows the player to roll even after winning the round and before keep playing appears, this leaves a next turn in a useable state, even though we are between rounds.  If winning the round is triggered, disable Roll button, re-enable is continue playing is selected.
 - [ ] `P2-Minor` Had color dice carry over?
@@ -38,7 +39,7 @@
 - [ ] `P2-Minor` Upper bonus multiplier power up. Add a new PowerUp that will multiply Upper Section Bonus.
 - [X] `P2-Minor` Chore pressure is not enough, needs more balance? This will be addressed in the new difficulty system.
 - [ ] `P2-Minor` +150 for Upper section bonus should only be allowed to USE after +63 is achieved.
-- [ ] `P2-Minor` Sweet Sixteen needs to be assessed and fixed or cut.
+- [X] `P2-Minor` Sweet Sixteen needs to be assessed and fixed or cut.
 - [X] `P2-Minor` Which rounds feel wrong? Higher or lower scores? What is the target? Round 4 feels too hard.  This will be addressed in new difficulty system.
 
 ## Bugs
