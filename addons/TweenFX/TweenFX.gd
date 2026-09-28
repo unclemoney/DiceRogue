@@ -1235,10 +1235,53 @@ var follow_speed: float = 12.0
 ## remaining distance to the live follow position (mouse + 16,16). Tweak this
 ## one value to retune the entry feel for every tooltip in the game.
 var tooltip_follow_start_offset: Vector2 = Vector2(-100, 100)
+## Global feel knob: seconds a pointer must rest on a hover target before a
+## hover tooltip may show. Read live by the mall controller and shop cards —
+## tweak it in the debugger and both follow without a restart. Pre-show and
+## ADDITIONAL to tooltip_cooldown; explicit shows (lab Replay) stay immediate.
+var tooltip_hover_delay: float = 0.6
 var _tooltip_last_show_msec: int = -100000
 var _active_tooltip: Control = null
 var _active_anchor: Rect2 = Rect2()
-var _tooltip_tween: Tween = null
+## Per-node tween ownership: instance_id -> {node, tween, hide}. One tooltip's
+## lifecycle can never kill another's tween (the old single-slot _tooltip_tween
+## stranded tooltips mid-hide when a different tooltip showed).
+var _tooltip_tweens: Dictionary = {}
+
+
+## _tooltip_entry_for(node) -> Dictionary
+##
+## Returns the node's live tween entry ({node, tween, hide}) or {}. Stale
+## entries (freed node, reused instance id, dead tween) are erased lazily.
+func _tooltip_entry_for(node: Control) -> Dictionary:
+	var id := node.get_instance_id()
+	var entry: Dictionary = _tooltip_tweens.get(id, {})
+	if entry.is_empty():
+		return {}
+	if entry.get("node") != node or not is_instance_valid(entry.get("node")):
+		_tooltip_tweens.erase(id)
+		return {}
+	var tween: Tween = entry.get("tween")
+	if tween == null or not tween.is_valid():
+		_tooltip_tweens.erase(id)
+		return {}
+	return entry
+
+
+## _kill_tooltip_tween(node) -> void
+##
+## Kills ONLY this node's tween. A killed hide is finished on the spot
+## (visible=false, alpha 0): a hide must always end invisible, even when its
+## tween never reaches the chained callback.
+func _kill_tooltip_tween(node: Control) -> void:
+	var entry := _tooltip_entry_for(node)
+	if entry.is_empty():
+		return
+	entry["tween"].kill()
+	_tooltip_tweens.erase(node.get_instance_id())
+	if entry.get("hide", false):
+		node.modulate.a = 0.0
+		node.visible = false
 
 ## show_tooltip(node, anchor_rect) -> Tween
 ##
@@ -1256,8 +1299,7 @@ var _tooltip_tween: Tween = null
 ## positions after show wins for that frame. Kills any in-flight tooltip
 ## tween so the newest call always wins (replay-race fix).
 func show_tooltip(node: Control, anchor_rect: Rect2 = Rect2()) -> Tween:
-	if _tooltip_tween and _tooltip_tween.is_valid():
-		_tooltip_tween.kill()
+	_kill_tooltip_tween(node)
 	_active_tooltip = node
 	_active_anchor = anchor_rect
 	var now := Time.get_ticks_msec()
@@ -1277,7 +1319,7 @@ func show_tooltip(node: Control, anchor_rect: Rect2 = Rect2()) -> Tween:
 	tween.set_parallel(true)
 	tween.tween_property(node, "modulate:a", 1.0, 0.25)
 	tween.tween_property(node, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	_tooltip_tween = tween
+	_tooltip_tweens[node.get_instance_id()] = {"node": node, "tween": tween, "hide": false}
 	return tween
 
 ## hide_tooltip(node) -> Tween
@@ -1286,8 +1328,7 @@ func show_tooltip(node: Control, anchor_rect: Rect2 = Rect2()) -> Tween:
 ## via chained callback. Kills any in-flight tooltip tween first so a re-show
 ## during hide is never re-hidden by the stale callback (replay-race fix).
 func hide_tooltip(node: Control) -> Tween:
-	if _tooltip_tween and _tooltip_tween.is_valid():
-		_tooltip_tween.kill()
+	_kill_tooltip_tween(node)
 	if _active_tooltip == node:
 		_active_tooltip = null
 		_active_anchor = Rect2()
@@ -1299,7 +1340,7 @@ func hide_tooltip(node: Control) -> Tween:
 		if is_instance_valid(node):
 			node.visible = false
 	)
-	_tooltip_tween = tween
+	_tooltip_tweens[node.get_instance_id()] = {"node": node, "tween": tween, "hide": true}
 	return tween
 
 ## _process(delta)

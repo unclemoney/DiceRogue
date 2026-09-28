@@ -94,6 +94,7 @@ var hover_tooltip: Tooltip
 var is_hovered: bool = false
 var is_card_hovered: bool = false
 var is_button_hovered: bool = false
+var _hover_show_token: int = 0
 var _hover_tween: Tween
 var _time: float = 0.0
 var _debug_enabled: bool = OS.is_debug_build()
@@ -550,7 +551,7 @@ func _on_mouse_entered() -> void:
 		return
 
 	is_card_hovered = true
-	_show_hover_tooltip()
+	_queue_hover_tooltip()
 
 ## _on_mouse_exited()
 ## Hides the hover tooltip when mouse exits the shop item card
@@ -571,7 +572,7 @@ func _on_button_mouse_entered() -> void:
 	is_button_hovered = true
 	# Show tooltip if it exists
 	if hover_tooltip and item_data:
-		_show_hover_tooltip()
+		_queue_hover_tooltip()
 
 ## _on_button_mouse_exited()
 ## Called when mouse exits the buy button - hides tooltip if not on card
@@ -580,6 +581,38 @@ func _on_button_mouse_exited() -> void:
 	# Only hide if not hovering over the card either
 	if not is_card_hovered and hover_tooltip:
 		_hide_hover_tooltip()
+
+## _hover_delay() -> float
+##
+## The global pre-show hover delay (TweenFX.tooltip_hover_delay) so the
+## debugger knob retunes shop + mall without a restart. 0.3s fallback.
+## Reads the TweenFX autoload directly (TweenFXHelper is a different node
+## and does not carry the tooltip API).
+func _hover_delay() -> float:
+	var tfx := get_node_or_null("/root/TweenFX")
+	if tfx:
+		return tfx.tooltip_hover_delay
+	return 0.3
+
+## _queue_hover_tooltip()
+## Fresh hover-shows wait out the global hover delay; at fire time the
+## card/button cross-logic decides (hover moved on during the delay -> show
+## that state; nothing hovered -> show nothing). An already-visible tooltip
+## (card -> buy button crossing) refreshes immediately, no re-delay.
+func _queue_hover_tooltip() -> void:
+	_hover_show_token += 1
+	if hover_tooltip.visible:
+		_show_hover_tooltip()
+		return
+	var token := _hover_show_token
+	await get_tree().create_timer(_hover_delay()).timeout
+	if token != _hover_show_token:
+		return
+	if _is_being_removed or not item_data:
+		return
+	if not is_card_hovered and not is_button_hovered:
+		return
+	_show_hover_tooltip()
 
 ## _show_hover_tooltip()
 ## Refreshes the tooltip content and shows it (standard pop on first show,
@@ -601,6 +634,7 @@ func _show_hover_tooltip() -> void:
 ## _hide_hover_tooltip()
 func _hide_hover_tooltip() -> void:
 	is_hovered = false
+	_hover_show_token += 1  # cancel any hover-delayed pending show
 	hover_tooltip.hide()
 
 ## _refresh_hover_tooltip_content()

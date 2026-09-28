@@ -354,11 +354,14 @@ func _on_icon_unhovered(icon: MallStoreIcon) -> void:
 func _on_zone_hovered(channel: int) -> void:
 	_hovered_zone = channel
 	# Plaques sit next to zones and both are Area2D; when the cursor is really
-	# over a plaque its controller is claiming the tooltip.
-	if _is_plaque_under_mouse(channel):
+	# over a plaque — or a plaque show is already pending — the plaque's
+	# controller is claiming the tooltip. (has_pending also covers the
+	# boundary race where a zone enter arrives with a one-frame-stale cursor
+	# position: the plaque claim must not be cancelled.)
+	if _is_plaque_under_mouse(channel) or _icon_tooltip.has_pending():
 		return
-	# The zone genuinely owns the hover: cancel any plaque tooltip/exit-grace
-	# and show immediately (moving plaque -> zone must not leave a dead gap).
+	# The zone genuinely owns the hover: cancel any stale plaque tooltip or
+	# exit-grace and show immediately (moving plaque -> zone leaves no gap).
 	_icon_tooltip.force_hide()
 	_show_zone_tooltip(channel)
 

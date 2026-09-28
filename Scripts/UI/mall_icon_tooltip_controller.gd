@@ -5,12 +5,12 @@ class_name MallIconTooltipController
 ##
 ## Shared hover-timing logic for the mall store icons, used by both mall
 ## screens so they behave identically:
-## - Tooltip shows only after the pointer rests on an icon for 150ms.
+## - Tooltip shows only after the pointer rests on an icon for the global
+##   hover delay (TweenFX.tooltip_hover_delay, read live each hover).
 ## - On exit the tooltip stays for a 100ms grace period.
 ## - Moving directly to a neighboring icon swaps the content in place —
 ##   no hide/reshow flicker.
 
-const SHOW_DELAY := 0.15
 const EXIT_GRACE := 0.10
 
 var _tooltip: MallStoreTooltip
@@ -20,6 +20,19 @@ var _current_icon: MallStoreIcon = null
 var _pending_icon: MallStoreIcon = null
 var _show_token := 0
 var _hide_token := 0
+
+
+## _hover_delay() -> float
+##
+## The global pre-show hover delay (TweenFX.tooltip_hover_delay) so the
+## debugger knob retunes mall + shop without a restart. 0.3s fallback.
+## Reads the TweenFX autoload directly (TweenFXHelper is a different node
+## and does not carry the tooltip API).
+func _hover_delay() -> float:
+	var tfx := get_node_or_null("/root/TweenFX")
+	if tfx:
+		return tfx.tooltip_hover_delay
+	return 0.3
 
 
 ## setup(tooltip, rect_provider, text_provider) -> void
@@ -32,7 +45,7 @@ func setup(tooltip: MallStoreTooltip, rect_provider: Callable, text_provider: Ca
 	_text_provider = text_provider
 
 
-## has_pending() -> bool — a show is waiting out the 150ms rest delay.
+## has_pending() -> bool — a show is waiting out the hover rest delay.
 func has_pending() -> bool:
 	return _pending_icon != null
 
@@ -73,7 +86,7 @@ func on_icon_hovered(icon: MallStoreIcon) -> void:
 	_pending_icon = icon
 	_show_token += 1
 	var token := _show_token
-	await get_tree().create_timer(SHOW_DELAY).timeout
+	await get_tree().create_timer(_hover_delay()).timeout
 	if token != _show_token or _pending_icon != icon:
 		return
 	_pending_icon = null
