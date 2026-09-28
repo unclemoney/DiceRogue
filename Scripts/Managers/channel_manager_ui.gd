@@ -79,6 +79,25 @@ var _dice_name_label: Label
 var _dice_lock_label: Label
 var _dice_set_index: int = 1  # d6 default
 
+# Difficulty selector
+var _difficulty_buttons: Dictionary = {}  # ChannelManager.Difficulty -> GlassActionButton
+var _difficulty_summary_label: Label
+
+## Palette for the selected difficulty button — same gold mall glass, but the
+## base/mid lean into the accent so the active choice reads at a glance.
+const DIFFICULTY_SELECTED_PALETTE := {
+	"accent_color": Color(1.0, 0.80, 0.30, 1.0),
+	"glow_color": Color(1.0, 0.95, 0.70, 1.0),
+	"base_color": Color(0.45, 0.30, 0.10, 0.98),
+	"mid_color": Color(0.60, 0.42, 0.16, 0.98),
+	"rim_color": Color(1.0, 0.97, 0.88, 1.0),
+	"specular_color": Color(1.0, 0.98, 0.92, 1.0),
+	"font_color": Color(1.0, 0.97, 0.88, 1.0),
+	"font_outline_color": Color(0.12, 0.08, 0.04, 1.0),
+	"outline_size": 1,
+}
+const DIFFICULTY_UNSELECTED_ALPHA := 0.6
+
 # Tooltip
 var _tooltip_panel: MallStoreTooltip
 var _icon_tooltip: MallIconTooltipController
@@ -134,6 +153,7 @@ func show_channel_selector() -> void:
 		_sync_selection_from_manager(false)
 		_update_display()
 	_sync_dice_set_from_manager()
+	_sync_difficulty_from_manager()
 	_animate_entrance()
 
 
@@ -511,6 +531,43 @@ func _build_ui() -> void:
 
 	_update_dice_set_display()
 
+	var difficulty_title := Label.new()
+	difficulty_title.text = "DIFFICULTY"
+	difficulty_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	difficulty_title.add_theme_font_override("font", VCR_FONT)
+	difficulty_title.add_theme_font_size_override("font_size", 13)
+	difficulty_title.add_theme_color_override("font_color", Color(0.95, 0.90, 0.74))
+	side_vbox.add_child(difficulty_title)
+
+	var difficulty_hbox := HBoxContainer.new()
+	difficulty_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	difficulty_hbox.add_theme_constant_override("separation", 6)
+	side_vbox.add_child(difficulty_hbox)
+
+	var difficulty_names := {
+		ChannelManager.Difficulty.EASY: "EASY",
+		ChannelManager.Difficulty.MEDIUM: "MED",
+		ChannelManager.Difficulty.HARD: "HARD",
+	}
+	for difficulty in [ChannelManager.Difficulty.EASY, ChannelManager.Difficulty.MEDIUM, ChannelManager.Difficulty.HARD]:
+		var button := GlassActionButton.new()
+		button.name = "DifficultyButton_%s" % difficulty_names[difficulty]
+		button.toggle_mode = true
+		button.configure(difficulty_names[difficulty], Vector2(76, 34), MallMapRendererScript.MALL_GLASS_PALETTE, 14, VCR_FONT)
+		button.toggled.connect(_on_difficulty_button_toggled.bind(difficulty))
+		difficulty_hbox.add_child(button)
+		_difficulty_buttons[difficulty] = button
+
+	_difficulty_summary_label = Label.new()
+	_difficulty_summary_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_difficulty_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_difficulty_summary_label.add_theme_font_override("font", VCR_FONT)
+	_difficulty_summary_label.add_theme_font_size_override("font_size", 10)
+	_difficulty_summary_label.add_theme_color_override("font_color", Color(0.78, 0.78, 0.84))
+	side_vbox.add_child(_difficulty_summary_label)
+
+	_sync_difficulty_from_manager()
+
 	_keyboard_hint_label = Label.new()
 	_keyboard_hint_label.text = "ENTER START"
 	_keyboard_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -687,6 +744,68 @@ func _sync_dice_set_from_manager() -> void:
 			_dice_set_index = i
 			break
 	_update_dice_set_display()
+
+
+## _sync_difficulty_from_manager() -> void
+##
+## Presses the button matching ChannelManager.selected_difficulty and
+## refreshes the summary line. Defaults to Medium before a run starts.
+func _sync_difficulty_from_manager() -> void:
+	var selected: int = ChannelManager.Difficulty.MEDIUM
+	if channel_manager:
+		selected = channel_manager.selected_difficulty
+	for difficulty in _difficulty_buttons:
+		_difficulty_buttons[difficulty].set_toggled(difficulty == selected)
+	_update_difficulty_button_visuals(selected)
+	_update_difficulty_summary()
+
+
+## _update_difficulty_button_visuals(selected: int) -> void
+##
+## Recolors the difficulty row: the selected button gets the bright gold
+## palette at full alpha, unselected buttons keep the base palette dimmed.
+func _update_difficulty_button_visuals(selected: int) -> void:
+	for difficulty in _difficulty_buttons:
+		var button: GlassActionButton = _difficulty_buttons[difficulty]
+		if difficulty == selected:
+			button.set_palette(DIFFICULTY_SELECTED_PALETTE)
+			button.modulate.a = 1.0
+		else:
+			button.set_palette(MallMapRendererScript.MALL_GLASS_PALETTE)
+			button.modulate.a = DIFFICULTY_UNSELECTED_ALPHA
+
+
+## _on_difficulty_button_toggled(is_toggled: bool, difficulty: int) -> void
+##
+## Radio-group behavior for the difficulty row: a pressed button un-presses
+## the others and commits to ChannelManager. Re-pressing the active button
+## is reverted so one difficulty is always selected.
+func _on_difficulty_button_toggled(is_toggled: bool, difficulty: int) -> void:
+	var button: GlassActionButton = _difficulty_buttons[difficulty]
+	if not is_toggled:
+		if channel_manager and channel_manager.selected_difficulty == difficulty:
+			button.set_toggled(true)
+		return
+	for other in _difficulty_buttons:
+		if other != difficulty:
+			_difficulty_buttons[other].set_toggled(false)
+	if channel_manager:
+		channel_manager.set_selected_difficulty(difficulty as ChannelManager.Difficulty)
+	_update_difficulty_button_visuals(difficulty)
+	_update_difficulty_summary()
+
+
+## _update_difficulty_summary() -> void
+##
+## Shows the selected difficulty's active modifiers in one line.
+func _update_difficulty_summary() -> void:
+	if _difficulty_summary_label == null or channel_manager == null:
+		return
+	_difficulty_summary_label.text = "%.2fx TARGET  ·  %.2fx REWARDS  ·  METER %d" % [
+		channel_manager.get_run_challenge_multiplier(),
+		channel_manager.get_run_reward_multiplier(),
+		channel_manager.get_chore_meter_threshold(),
+	]
 
 
 func _on_dice_display_hover() -> void:

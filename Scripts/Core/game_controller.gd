@@ -4459,13 +4459,29 @@ func _show_end_of_round_stats() -> void:
 	var power_up_bonus = _get_round_end_power_up_bonus_preview()
 	var buff_bonus = _get_round_end_buff_bonus_preview()
 
+	# Run difficulty scaling on the money rewards (challenge reward, chore
+	# rewards, empty-category bonus, points-above bonus). Scaled per component
+	# so the stats panel rows always sum to the granted total. Buff and
+	# PowerUp bonuses are build payouts and stay unscaled.
+	var challenge_reward: int = _challenge_reward_this_round
+	if channel_manager and channel_manager.get_run_reward_multiplier() != 1.0:
+		var reward_mult: float = channel_manager.get_run_reward_multiplier()
+		challenge_reward = int(round(challenge_reward * reward_mult))
+		chore_reward_total = int(round(chore_reward_total * reward_mult))
+		empty_categories_bonus = int(round(empty_categories_bonus * reward_mult))
+		score_above_bonus = int(round(score_above_bonus * reward_mult))
+		if _debug_enabled:
+			print("[GameController] Run difficulty reward scaling (%.2fx): challenge $%d, chores $%d, empty $%d, above $%d" % [
+				reward_mult, challenge_reward, chore_reward_total, empty_categories_bonus, score_above_bonus
+			])
+
 	# Prepare data for the stats panel
 	var stats_data = {
 		"round_number": current_round_num,
 		"challenge_target": target_score,
 		"final_score": final_score,
 		"scorecard": scorecard,
-		"challenge_reward": _challenge_reward_this_round,
+		"challenge_reward": challenge_reward,
 		"chores_completed": chores_completed,
 		"chore_reward_total": chore_reward_total,
 		"empty_categories_bonus": empty_categories_bonus,
@@ -4817,6 +4833,14 @@ func _compute_round_target(round_number: int) -> int:
 			print("[GameController] Target: %d -> %d (%.2fx channel scaling)" % [
 				base_target, scaled_target, channel_manager.get_difficulty_multiplier()
 			])
+		# Run difficulty scaling (Easy 0.80x / Medium 1.0x / Hard 1.25x)
+		if channel_manager.get_run_challenge_multiplier() != 1.0:
+			var difficulty_scaled := int(round(scaled_target * channel_manager.get_run_challenge_multiplier()))
+			if _debug_enabled:
+				print("[GameController] Run difficulty target scaling: %d -> %d (%.2fx)" % [
+					scaled_target, difficulty_scaled, channel_manager.get_run_challenge_multiplier()
+				])
+			scaled_target = difficulty_scaled
 
 	# Apply target modifier (e.g., from ChallengeEaserPowerUp)
 	if challenge_score_modifier != 1.0:
@@ -5631,6 +5655,7 @@ func _apply_automatic_debuffs(round_number: int) -> void:
 			else:
 				var max_debuffs = round_config.max_debuffs if round_config.get("max_debuffs") != null else 0
 				var difficulty_cap = round_config.debuff_difficulty_cap if round_config.get("debuff_difficulty_cap") != null else 1
+				max_debuffs = maxi(0, max_debuffs + channel_manager.get_run_debuff_count_modifier())
 				selected_ids = debuff_manager.select_debuffs_for_round(max_debuffs, difficulty_cap, false)
 	
 	var channel_number = channel_manager.current_channel
@@ -5891,6 +5916,12 @@ func _show_carry_over_panel() -> void:
 	var next_channel = channel_manager.current_channel + 1
 	var count = channel_manager.get_allowed_carryover_count(next_channel)
 	var types = channel_manager.get_allowed_carryover_types(next_channel)
+
+	# Run difficulty adjustment: Easy +2 selections, Hard clamps to 0 (fresh
+	# start every zone). When the count collapses to 0 but the channel would
+	# normally allow carry-overs, keep the type list so the panel shows its
+	# "no carry-overs" branch.
+	count = maxi(0, count + channel_manager.get_carryover_count_adjustment())
 	
 	if _debug_enabled:
 		print("[GameController] Showing carry-over panel for Channel %d: count=%d, types=%s" % [next_channel, count, str(types)])
@@ -7211,6 +7242,7 @@ func _build_round_panel_data(round_num: int) -> Dictionary:
 					if not boss_id.is_empty():
 						auto_ids.append(boss_id)
 				else:
+					max_debuffs = maxi(0, max_debuffs + channel_manager.get_run_debuff_count_modifier())
 					auto_ids = debuff_manager.select_debuffs_for_round(max_debuffs, difficulty_cap, false, preview_ids)
 				for id in auto_ids:
 					if id not in preview_ids:

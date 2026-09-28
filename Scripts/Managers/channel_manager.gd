@@ -16,12 +16,43 @@ signal channel_changed(new_channel: int)
 signal channel_selected(channel: int)
 signal difficulty_multiplier_changed(multiplier: float)
 signal channel_locked(channel: int, required_completions: int)
+signal difficulty_selected(difficulty: int)
 
 const MIN_CHANNEL: int = 1
 const MAX_CHANNEL: int = 4
 const BALANCE_TUNING_PATH := "res://Resources/Data/Balance/balance_tuning.tres"
 const STORE_DIRECTORY_PATH := "res://Resources/Data/Stores/store_directory.tres"
 const STORES_PER_ZONE: int = 6
+
+## Per-run difficulty selection, chosen at the Mall Map under the dice set.
+## Scales rewards, challenge targets, chore pressure, and zone carry-overs.
+enum Difficulty { EASY, MEDIUM, HARD }
+
+const RUN_REWARD_MULTIPLIERS := {
+	Difficulty.EASY: 1.25,
+	Difficulty.MEDIUM: 1.0,
+	Difficulty.HARD: 0.75,
+}
+const RUN_CHALLENGE_MULTIPLIERS := {
+	Difficulty.EASY: 0.80,
+	Difficulty.MEDIUM: 1.0,
+	Difficulty.HARD: 1.25,
+}
+const RUN_DEBUFF_COUNT_MODIFIERS := {
+	Difficulty.EASY: -1,
+	Difficulty.MEDIUM: 0,
+	Difficulty.HARD: 1,
+}
+const CHORE_METER_THRESHOLDS := {
+	Difficulty.EASY: 125,
+	Difficulty.MEDIUM: 100,
+	Difficulty.HARD: 75,
+}
+const CARRYOVER_COUNT_ADJUSTMENTS := {
+	Difficulty.EASY: 2,
+	Difficulty.MEDIUM: 0,
+	Difficulty.HARD: -99,
+}
 
 ## Preloaded channel difficulty resources
 var channel_configs: Array[ChannelDifficultyData] = []
@@ -44,6 +75,10 @@ var current_channel: int = 1
 ## Applies to every round; reset to "d6" on new game.
 var selected_dice_type: String = "d6"
 
+## Difficulty chosen in the Mall Zone Selection for the current run.
+## Reset to MEDIUM on new game; old saves without the key default to MEDIUM.
+var selected_difficulty: Difficulty = Difficulty.MEDIUM
+
 
 ## set_selected_dice_type(type: String) -> void
 ##
@@ -57,6 +92,68 @@ func set_selected_dice_type(type: String) -> void:
 			return
 	selected_dice_type = type
 	print("[ChannelManager] Selected dice set: %s" % selected_dice_type)
+
+
+## set_selected_difficulty(difficulty: Difficulty) -> void
+##
+## Commits the run's difficulty. Selected at the Mall Map under the dice set;
+## applies to rewards, challenge targets, chore pressure, and carry-overs.
+func set_selected_difficulty(difficulty: Difficulty) -> void:
+	if selected_difficulty == difficulty:
+		return
+	selected_difficulty = difficulty
+	print("[ChannelManager] Selected difficulty: %s" % get_difficulty_display_name())
+	emit_signal("difficulty_selected", difficulty)
+
+
+## get_difficulty_display_name() -> String
+##
+## Returns the player-facing name of the selected difficulty.
+func get_difficulty_display_name() -> String:
+	match selected_difficulty:
+		Difficulty.EASY:
+			return "Easy"
+		Difficulty.HARD:
+			return "Hard"
+	return "Medium"
+
+
+## get_run_reward_multiplier() -> float
+##
+## Multiplier on end-of-round money rewards (challenge reward, chore rewards,
+## empty-category bonus, points-above bonus). Medium baseline = 1.0.
+func get_run_reward_multiplier() -> float:
+	return RUN_REWARD_MULTIPLIERS.get(selected_difficulty, 1.0)
+
+
+## get_run_challenge_multiplier() -> float
+##
+## Multiplier on round target scores. Medium baseline = 1.0.
+func get_run_challenge_multiplier() -> float:
+	return RUN_CHALLENGE_MULTIPLIERS.get(selected_difficulty, 1.0)
+
+
+## get_run_debuff_count_modifier() -> int
+##
+## Adjustment to each non-boss round's automatic debuff count (clamped >= 0
+## by callers). Easy draws one fewer, Hard draws one more.
+func get_run_debuff_count_modifier() -> int:
+	return RUN_DEBUFF_COUNT_MODIFIERS.get(selected_difficulty, 0)
+
+
+## get_chore_meter_threshold() -> int
+##
+## Goof-off meter fill threshold (rolls until Mom appears). Medium = 100.
+func get_chore_meter_threshold() -> int:
+	return CHORE_METER_THRESHOLDS.get(selected_difficulty, 100)
+
+
+## get_carryover_count_adjustment() -> int
+##
+## Adjustment to the next zone's allowed carry-over selections. Easy grants
+## +2; Hard uses -99 so clamping at 0 yields a fresh start every zone.
+func get_carryover_count_adjustment() -> int:
+	return CARRYOVER_COUNT_ADJUSTMENTS.get(selected_difficulty, 0)
 
 
 func _ready() -> void:
@@ -398,6 +495,7 @@ func select_channel() -> void:
 func reset() -> void:
 	current_channel = 1
 	selected_dice_type = "d6"
+	selected_difficulty = Difficulty.MEDIUM
 	print("[ChannelManager] Reset to Channel 1")
 	emit_signal("channel_changed", current_channel)
 	emit_signal("difficulty_multiplier_changed", get_difficulty_multiplier())
@@ -547,6 +645,7 @@ func validate_all_configs() -> Array[String]:
 func get_state() -> Dictionary:
 	return {
 		"current_channel": current_channel,
+		"selected_difficulty": selected_difficulty,
 		"zone_store_names": zone_store_names.duplicate(true),
 		"store_assignment_seed": store_assignment_seed
 	}
@@ -558,6 +657,9 @@ func get_state() -> Dictionary:
 func load_state(state: Dictionary) -> void:
 	var new_channel = state.get("current_channel", 1)
 	set_channel(new_channel)
+	# Old saves have no difficulty key; default to Medium (no migration).
+	# JSON round-trips numbers as floats, so coerce to int for the enum.
+	selected_difficulty = int(state.get("selected_difficulty", Difficulty.MEDIUM)) as Difficulty
 	store_assignment_seed = state.get("store_assignment_seed", 0)
 	# JSON round-trips turn int keys into strings; convert back.
 	zone_store_names.clear()

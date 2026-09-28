@@ -534,13 +534,19 @@ func reset_progress() -> void:
 
 ## get_scaled_max_progress()
 ##
-## Returns the max progress threshold. Flat value: always MAX_PROGRESS (100).
-## Round-based and channel-difficulty scaling were removed; the name is kept
-## for backwards compatibility with UI and manager call sites.
+## Returns the max progress threshold. Set by the run's selected difficulty
+## (Easy 125 / Medium 100 / Hard 75, via ChannelManager). Round-based and
+## channel-difficulty scaling were removed; the name is kept for backwards
+## compatibility with UI and manager call sites.
 ##
-## Returns: int - max progress threshold (always 100)
+## Returns: int - max progress threshold (default 100 when no ChannelManager)
 func get_scaled_max_progress() -> int:
-	return MAX_PROGRESS
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller:
+		var channel_manager = game_controller.get("channel_manager")
+		if channel_manager and channel_manager.has_method("get_chore_meter_threshold"):
+			return channel_manager.get_chore_meter_threshold()
+	return MAX_PROGRESS  # Fallback when no channel manager (e.g. tests)
 
 
 ## update_round(round_number)

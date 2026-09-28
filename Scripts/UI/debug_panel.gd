@@ -421,6 +421,10 @@ func _create_debug_tabs() -> void:
 			{"text": "Force Complete Tutorial", "method": "_debug_tutorial_force_complete"},
 		],
 		"Difficulty": [
+			{"text": "Set Run Difficulty: Easy", "method": "_debug_set_difficulty_easy"},
+			{"text": "Set Run Difficulty: Medium", "method": "_debug_set_difficulty_medium"},
+			{"text": "Set Run Difficulty: Hard", "method": "_debug_set_difficulty_hard"},
+			{"text": "Show Run Difficulty", "method": "_debug_show_run_difficulty"},
 			{"text": "Show Channel Info", "method": "_debug_difficulty_show_channel"},
 			{"text": "Show Round Config", "method": "_debug_difficulty_show_round"},
 			{"text": "Show Active Debuffs", "method": "_debug_difficulty_show_debuffs"},
@@ -2247,6 +2251,48 @@ func _debug_add_money() -> void:
 		log_debug("Money: %d -> %d (+100)" % [old_money, PlayerEconomy.money])
 	else:
 		log_debug("ERROR: PlayerEconomy not available")
+
+
+## _set_run_difficulty(difficulty: ChannelManager.Difficulty) -> void
+##
+## Shared helper for the run-difficulty debug buttons. Writes through
+## ChannelManager so all scaling getters follow immediately.
+func _set_run_difficulty(difficulty: ChannelManager.Difficulty) -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	var channel_manager = game_controller.get("channel_manager")
+	if not is_instance_valid(channel_manager):
+		log_debug("ERROR: ChannelManager not available")
+		return
+	channel_manager.set_selected_difficulty(difficulty)
+	_debug_show_run_difficulty()
+
+func _debug_set_difficulty_easy() -> void:
+	_set_run_difficulty(ChannelManager.Difficulty.EASY)
+
+func _debug_set_difficulty_medium() -> void:
+	_set_run_difficulty(ChannelManager.Difficulty.MEDIUM)
+
+func _debug_set_difficulty_hard() -> void:
+	_set_run_difficulty(ChannelManager.Difficulty.HARD)
+
+func _debug_show_run_difficulty() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	var channel_manager = game_controller.get("channel_manager")
+	if not is_instance_valid(channel_manager):
+		log_debug("ERROR: ChannelManager not available")
+		return
+	log_debug("Run difficulty: %s" % channel_manager.get_difficulty_display_name())
+	log_debug("  Target multiplier: %.2fx" % channel_manager.get_run_challenge_multiplier())
+	log_debug("  Reward multiplier: %.2fx" % channel_manager.get_run_reward_multiplier())
+	log_debug("  Debuff count modifier: %+d" % channel_manager.get_run_debuff_count_modifier())
+	log_debug("  Chore meter threshold: %d" % channel_manager.get_chore_meter_threshold())
+	log_debug("  Carryover adjustment: %+d" % channel_manager.get_carryover_count_adjustment())
 
 func _debug_add_dice() -> void:
 	_refresh_game_controller_reference()
