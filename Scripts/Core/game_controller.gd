@@ -4905,6 +4905,13 @@ func _on_challenge_completed(id: String) -> void:
 	if _debug_enabled:
 		print("[GameController] Round target met:", id)
 
+	# Lock the Roll button immediately so no roll can slip into the window
+	# before the round transition overlay appears.
+	var roll_button_ui_node = get_tree().get_first_node_in_group("roll_button_ui")
+	if roll_button_ui_node:
+		roll_button_ui_node.disable_roll()
+		roll_button_ui_node.stop_pulse()
+
 	# Store reward for end-of-round stats (don't grant immediately)
 	if not _challenge_reward_granted:
 		var reward: int = 0
@@ -5105,6 +5112,12 @@ func _on_transition_keep_playing() -> void:
 	# Start a new turn so the player can roll
 	if turn_tracker:
 		turn_tracker.start_new_turn()
+
+	# Re-enable Roll immediately — player explicitly chose to continue
+	var rb_ui = get_tree().get_first_node_in_group("roll_button_ui")
+	if rb_ui:
+		rb_ui.enable_roll()
+		rb_ui.start_pulse()
 	
 	# Re-enable game buttons for continued play
 	if game_button_ui:

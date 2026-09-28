@@ -247,6 +247,15 @@ func _build_ui() -> void:
 		var path_to_scorecard := game_buttons.get_path_to(scorecard)
 		game_buttons.score_card_ui_path = path_to_scorecard
 
+	# Pin the upper section to its gameplay height. The populated scorecard
+	# gives MiddleSection a min height that squeezes UpperSection below its
+	# stretch-ratio share; when the scorecard hides for the round intro the
+	# squeeze disappears and the PowerUp container visibly grows. Locking the
+	# height here keeps it identical from frame one through gameplay.
+	var upper_height : float = (SCREEN_HEIGHT - MARGIN * 2.0) - SEPARATION - middle.get_combined_minimum_size().y
+	upper.size_flags_vertical = Control.SIZE_FILL
+	upper.custom_minimum_size = Vector2(0.0, upper_height)
+
 
 ## _ensure_tooltip_layer()
 ##

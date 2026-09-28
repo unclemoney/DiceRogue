@@ -57,7 +57,7 @@ const INPUT_COOLDOWN_DURATION: float = 0.75
 
 ## General button action cooldown to prevent mouse spam
 var _button_action_cooldown: float = 0.0
-const BUTTON_ACTION_COOLDOWN: float = 0.35
+const BUTTON_ACTION_COOLDOWN: float = 0.30
 
 ## Prevents roll from being triggered while a roll animation is already in progress
 var _roll_in_progress: bool = false
@@ -573,6 +573,9 @@ func _restore_rest_scale() -> void:
 func _on_roll_button_pressed() -> void:
 	if _button_action_cooldown > 0.0 or _roll_in_progress:
 		return
+	if round_manager and round_manager.is_challenge_completed:
+		print("[RollButtonUI] Roll ignored — round already complete")
+		return
 	if not dice_hand:
 		push_error("[RollButtonUI] Roll pressed but dice_hand is null")
 		return
@@ -626,7 +629,8 @@ func _on_dice_roll_complete() -> void:
 		turn_tracker.use_roll()
 
 	_roll_in_progress = false
-	if turn_tracker and turn_tracker.rolls_left > 0:
+	if turn_tracker and turn_tracker.rolls_left > 0 \
+			and not (round_manager and round_manager.is_challenge_completed):
 		enable_roll()
 
 	var dice_values = dice_hand.get_current_dice_values()
