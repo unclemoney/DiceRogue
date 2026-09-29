@@ -1863,7 +1863,7 @@ Score Card Upgrade consumables permanently increase the level of specific scorin
 - **Odds Upgrade**: Upgrade the Odds category (+1 level)
 - **Even Odd Full House Upgrade**: Upgrade the Even Odd Full House category (+1 level)
 
-**Dice Set Gating:** The shop only offers upgrade consumables that match the run's dice set. The three d4-exclusive upgrades above require the d4 dice set (`required_dice_sides = 4`), while the Fives, Sixes, and Large Straight upgrades are hidden for d4 runs (`excluded_dice_sides = [4]`). Filtering is handled by `ShopUI._filter_by_dice_set()`.
+**Dice Set Gating:** The shop only offers upgrade consumables that match the run's dice set. The three d4-exclusive upgrades above require the d4 dice set (`allowed_dice_sets = [4]`), while the Fives, Sixes, and Large Straight upgrades are restricted to d6 runs (`allowed_dice_sets = [6]`). Filtering is handled by `ShopUI._filter_by_dice_set()`.
 
 **Example:**
 - Ones at Level 3: Roll three 1s → Base 3 × Level 3 = 9 points (before additives/multipliers)

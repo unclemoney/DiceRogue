@@ -162,8 +162,9 @@ Note: the d6 set is the default and is always available (no unlock item).
 ### Consumable gating by dice set
 
 Category-upgrade consumables are gated on the active dice set via
-`ConsumableData.required_dice_sides` / `excluded_dice_sides`
-(`is_available_for_dice_sides()`). The gating applies to the shop pool
+`ConsumableData.allowed_dice_sets` (empty = any set; set
+`exclude_listed_dice_sets` to invert the list into "all except these";
+`is_available_for_dice_sides()`). The gating applies to the shop pool
 (`ShopUI._filter_by_dice_set()`) and to every grant path
 (`ConsumableManager.get_available_consumables()`, channel-start bonus items,
 yellow-dice rewards):

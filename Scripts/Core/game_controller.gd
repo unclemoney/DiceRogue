@@ -13,6 +13,25 @@ signal debuff_applied(id: String, debuff: Debuff)
 ## log punishment events without touching MomLogicHandler internals.
 signal mom_consequences_applied(summary: Dictionary)
 #signal dice_rolled(dice_values: Array)
+## Emitted when the turn/roll/scoring phase changes; ConsumableUI re-evaluates
+## consumable usage windows on this signal.
+signal phase_changed(new_phase: GamePhase)
+
+## Coarse turn lifecycle phase used for consumable usage-window gating:
+## IDLE = turn active but no roll initiated yet (or between turns),
+## ROUND_ACTIVE = a roll has been initiated this turn,
+## AFTER_SCORE = a category was scored and the turn is resolved.
+enum GamePhase { IDLE, ROUND_ACTIVE, AFTER_SCORE }
+var current_phase: GamePhase = GamePhase.IDLE
+
+## set_game_phase(new_phase)
+##
+## Updates current_phase and emits phase_changed on transitions.
+func set_game_phase(new_phase: GamePhase) -> void:
+	if current_phase == new_phase:
+		return
+	current_phase = new_phase
+	phase_changed.emit(new_phase)
 
 # Active power-ups and consumables in the game dictionaries
 var active_power_ups: Dictionary = {}  # id -> PowerUp
@@ -449,7 +468,7 @@ func _ready() -> void:
 		consumable_manager.register_consumable_def(FULL_HOUSE_UPGRADE_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(SMALL_STRAIGHT_UPGRADE_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(LARGE_STRAIGHT_UPGRADE_CONSUMABLE_DEF)
-		# d4 dice set re-purposed category upgrades (shop-gated by required_dice_sides)
+		# d4 dice set re-purposed category upgrades (shop-gated by allowed_dice_sets)
 		consumable_manager.register_consumable_def(EVENS_UPGRADE_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(ODDS_UPGRADE_CONSUMABLE_DEF)
 		consumable_manager.register_consumable_def(EVEN_ODD_FULL_HOUSE_UPGRADE_CONSUMABLE_DEF)
@@ -901,6 +920,7 @@ func _restart_game_for_new_channel(carried_types: Array[String] = []) -> void:
 	
 	# Reset game ended flag for new game
 	_game_ended = false
+	set_game_phase(GamePhase.IDLE)
 	
 	# Unlock goal mode for new game
 	_goal_mode_locked = false
@@ -2613,6 +2633,8 @@ func _on_score_manual_assigned(_section: int, _category: String, _score: int, _b
 ## Sets all dice to DISABLED state to prevent further interaction until next turn.
 ## Resets roll count for audio pitch progression.
 func _handle_post_scoring_effects(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
+	# A category was scored: the turn is resolved (AFTER_SCORE usage window)
+	set_game_phase(GamePhase.AFTER_SCORE)
 	# Insurance Policy: if active and score is 0, grant consolation money
 	if insurance_policy_active:
 		insurance_policy_active = false
@@ -3613,6 +3635,7 @@ func _on_roll_completed() -> void:
 func _on_turn_started() -> void:
 	if _debug_enabled:
 		print("[GameController] New turn started - resetting dice to ROLLABLE state")
+	set_game_phase(GamePhase.IDLE)
 	if dice_hand:
 		dice_hand.set_all_dice_rollable()
 	# Reset per-turn lock tracking for constraint chores
@@ -4298,6 +4321,7 @@ func _on_die_locked(die) -> void:
 func _on_roll_pressed() -> void:
 	if not dice_hand or not turn_tracker:
 		return
+	set_game_phase(GamePhase.ROUND_ACTIVE)
 	var locked_count = _count_locked_dice()
 	_current_turn_max_locked = maxi(_current_turn_max_locked, locked_count)
 	
@@ -5532,6 +5556,7 @@ func _on_max_power_ups_reached() -> void:
 func _on_round_started(round_number: int) -> void:
 	if _debug_enabled:
 		print("[GameController] Round", round_number, "started")
+	set_game_phase(GamePhase.IDLE)
 	
 	# Lock goal mode after first round starts (prevent mid-game changes)
 	if not _goal_mode_locked:
@@ -7090,6 +7115,14 @@ func load_game_state(save_data: Dictionary) -> void:
 	if score_card_ui:
 		score_card_ui.update_all()
 	
+	# Recompute the usage-window phase from restored state. A mid-turn save
+	# with rolls but no score restores as IDLE (BEFORE_ROLL_INITIATED
+	# consumables briefly re-enable — accepted edge).
+	if turn_tracker and turn_tracker.is_active and scorecard and scorecard.has_any_scores():
+		set_game_phase(GamePhase.AFTER_SCORE)
+	else:
+		set_game_phase(GamePhase.IDLE)
+
 	# Update consumable usability
 	update_consumable_usability()
 	

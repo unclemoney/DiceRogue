@@ -36,8 +36,8 @@ func register_consumable_def(data: ConsumableData) -> void:
 ## get_available_consumables() -> Array[String]
 ##
 ## Returns registered consumable ids that are usable with the run's active
-## dice set. Defs with required_dice_sides only appear on matching sets and
-## defs listing the current set in excluded_dice_sides are hidden.
+## dice set. A def appears when its allowed_dice_sets is empty or contains
+## the current side count (see ConsumableData.is_available_for_dice_sides).
 func get_available_consumables() -> Array[String]:
 	print("[ConsumableManager] Getting available consumables")
 	var available: Array[String] = []

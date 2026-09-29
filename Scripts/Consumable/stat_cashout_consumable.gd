@@ -4,12 +4,12 @@ class_name StatCashoutConsumable
 ## StatCashoutConsumable
 ##
 ## Grants money based on historical stats:
-## - $10 per Yahtzee scored
-## - $5 per Full House scored
+## - $100 per Yahtzee scored
+## - $10 per Full House scored
 ## Reads from Statistics singleton (statistics_manager.gd).
 
-const YAHTZEE_PAYOUT := 10
-const FULL_HOUSE_PAYOUT := 5
+const YAHTZEE_PAYOUT := 100
+const FULL_HOUSE_PAYOUT := 10
 
 func _ready() -> void:
 	add_to_group("consumables")

@@ -416,11 +416,11 @@ func _dice_type_to_sides(dice_type: String) -> int:
 
 ## _filter_by_dice_set(items) -> Array
 ##
-## Gates consumables on the run's dice set: defs with required_dice_sides only
-## appear on matching sets (e.g. the d4-only Evens/Odds/Even Odd Full House
-## upgrades), and defs listing the current set in excluded_dice_sides are
-## hidden (e.g. Fives/Sixes/Large Straight upgrades on d4 runs, where those
-## scorecard categories are re-purposed).
+## Gates consumables on the run's dice set via ConsumableData.allowed_dice_sets:
+## an empty list means any set; otherwise the consumable only appears when the
+## run's side count is listed (e.g. the d4-only Evens/Odds/Even Odd Full House
+## upgrades use [4]; Fives/Sixes/Large Straight upgrades use [6] because those
+## scorecard categories are re-purposed on d4 runs).
 func _filter_by_dice_set(items: Array) -> Array:
 	var current_sides := _get_current_dice_sides()
 	var result: Array = []

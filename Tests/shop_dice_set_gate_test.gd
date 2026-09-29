@@ -3,7 +3,9 @@ class_name ShopDiceSetGateTest
 
 ## shop_dice_set_gate_test.gd
 ##
-## Verifies the shop's dice-set gating for consumables:
+## Verifies the shop's dice-set gating for consumables (ConsumableData
+## .allowed_dice_sets: empty = any set; otherwise the run's side count must
+## be listed):
 ## 1. On a d4 run the consumable pool can include evens_upgrade,
 ##    odds_upgrade and even_odd_full_house_upgrade, and excludes
 ##    fives_upgrade, sixes_upgrade and large_straight_upgrade.
@@ -121,12 +123,34 @@ func _run_tests() -> void:
 		_assert(d6_pool_ids.has(id), "d6 pool includes %s" % id)
 
 	print("--- ConsumableData gating flags ---")
-	_assert_equals(EVENS_UPGRADE_DEF.required_dice_sides, 4, "evens_upgrade requires d4")
-	_assert_equals(ODDS_UPGRADE_DEF.required_dice_sides, 4, "odds_upgrade requires d4")
-	_assert_equals(EVEN_ODD_FULL_HOUSE_UPGRADE_DEF.required_dice_sides, 4, "even_odd_full_house_upgrade requires d4")
-	_assert(FIVES_UPGRADE_DEF.excluded_dice_sides.has(4), "fives_upgrade excludes d4")
-	_assert(SIXES_UPGRADE_DEF.excluded_dice_sides.has(4), "sixes_upgrade excludes d4")
-	_assert(LARGE_STRAIGHT_UPGRADE_DEF.excluded_dice_sides.has(4), "large_straight_upgrade excludes d4")
+	_assert_equals(EVENS_UPGRADE_DEF.allowed_dice_sets, [4], "evens_upgrade allows d4 only")
+	_assert_equals(ODDS_UPGRADE_DEF.allowed_dice_sets, [4], "odds_upgrade allows d4 only")
+	_assert_equals(EVEN_ODD_FULL_HOUSE_UPGRADE_DEF.allowed_dice_sets, [4], "even_odd_full_house_upgrade allows d4 only")
+	_assert_equals(FIVES_UPGRADE_DEF.allowed_dice_sets, [6], "fives_upgrade allows d6 only")
+	_assert_equals(SIXES_UPGRADE_DEF.allowed_dice_sets, [6], "sixes_upgrade allows d6 only")
+	_assert_equals(LARGE_STRAIGHT_UPGRADE_DEF.allowed_dice_sets, [6], "large_straight_upgrade allows d6 only")
+
+	print("--- Ungated consumable (empty allowed_dice_sets = any set) ---")
+	var ungated_def := preload("res://Scripts/Consumable/MulliganConsumable.tres") as ConsumableData
+	_assert(ungated_def.allowed_dice_sets.is_empty(), "mulligan has empty allowed_dice_sets")
+	_assert(ungated_def.is_available_for_dice_sides(4), "mulligan available for d4")
+	_assert(ungated_def.is_available_for_dice_sides(6), "mulligan available for d6")
+
+	print("--- Exclusion mode (exclude_listed_dice_sets) ---")
+	var all_except_d4 := ConsumableData.new()
+	all_except_d4.allowed_dice_sets = [4]
+	all_except_d4.exclude_listed_dice_sets = true
+	_assert(not all_except_d4.is_available_for_dice_sides(4), "all-except-d4 excludes d4")
+	_assert(all_except_d4.is_available_for_dice_sides(6), "all-except-d4 includes d6")
+	var all_except_d6 := ConsumableData.new()
+	all_except_d6.allowed_dice_sets = [6]
+	all_except_d6.exclude_listed_dice_sets = true
+	_assert(not all_except_d6.is_available_for_dice_sides(6), "all-except-d6 excludes d6")
+	_assert(all_except_d6.is_available_for_dice_sides(4), "all-except-d6 includes d4")
+	var empty_excl := ConsumableData.new()
+	empty_excl.exclude_listed_dice_sets = true
+	_assert(empty_excl.is_available_for_dice_sides(4) and empty_excl.is_available_for_dice_sides(6),
+		"empty list + exclude mode is still any set")
 
 	print("--- ConsumableManager grant-path gating ---")
 	# Non-shop grants (yellow dice, bonus items, debug) route through

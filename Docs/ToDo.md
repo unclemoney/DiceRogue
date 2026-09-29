@@ -31,7 +31,7 @@
 - [ ] `P1-Major` Consider a Consumable refactor where the consumable owns when it can be played-- any time, before round start, etc-- and, what dice set it can be played with.  This will fix several small refactor issues permanently.
 - [X] `P1-Major` Consumable Go Broke or Go Home mechanics don't work well.  Selecting category scores, and so it's garunteed.  Let's randomly select a category for the player to score in.
 - [X] `P1-Major` Build a difficulty scaling system so the player can select difficulty, and it will scale: rewards, challenges, and chore pressure, as well as number of items carried over rounds.
-- [ ] `P2-Minor` Spamming Roll allows the player to roll even after winning the round and before keep playing appears, this leaves a next turn in a useable state, even though we are between rounds.  If winning the round is triggered, disable Roll button, re-enable is continue playing is selected.
+- [X] `P2-Minor` Spamming Roll allows the player to roll even after winning the round and before keep playing appears, this leaves a next turn in a useable state, even though we are between rounds.  If winning the round is triggered, disable Roll button, re-enable is continue playing is selected.
 - [ ] `P2-Minor` Had color dice carry over?
 - [ ] `P2-Minor` Incorrect dice set consumables are still showing up-- no EO Full House should show up for d6.
 - [ ] `P2-Minor` Have some fanfare and notify the player when a buff is added.
@@ -59,7 +59,7 @@
 
 ## SYS:UI — UI / UX & Animation
 
-- [ ] `P1-Major` Initial container sizing of PowerUp container is vertically to tall, and needs to be kept consistent.  It changes after gameplay begins.
+- [X] `P1-Major` Initial container sizing of PowerUp container is vertically to tall, and needs to be kept consistent.  It changes after gameplay begins.
 - [X] `P2-Minor` Update scoring animations to make a additive and multiplier popup, remove stale animations, and jackpot animations for non jackpot items.
 - [ ] `P2-Minor` Change upgrade scorecard sound.
 - [ ] `P2-Minor` Update Challenge Icons.

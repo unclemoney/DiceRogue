@@ -153,6 +153,9 @@ func _bind_no_consumables_allowed_signals() -> void:
 	if not game_controller.is_connected("debuff_applied", _on_game_controller_debuff_applied):
 		game_controller.debuff_applied.connect(_on_game_controller_debuff_applied)
 
+	if game_controller.has_signal("phase_changed") and not game_controller.is_connected("phase_changed", _on_game_phase_changed):
+		game_controller.phase_changed.connect(_on_game_phase_changed)
+
 	if game_controller.is_debuff_active("no_consumables_allowed"):
 		var debuff: Debuff = game_controller.active_debuffs.get("no_consumables_allowed") as Debuff
 		_connect_no_consumables_allowed_debuff(debuff)
@@ -175,6 +178,11 @@ func _on_game_controller_debuff_applied(id: String, debuff: Debuff) -> void:
 
 
 func _on_no_consumables_allowed_debuff_ended() -> void:
+	update_consumable_usability()
+
+
+func _on_game_phase_changed(_new_phase: int) -> void:
+	# Re-grey fanned cards when the turn/roll/scoring phase changes
 	update_consumable_usability()
 
 
@@ -1065,116 +1073,88 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 	if game_controller and game_controller.turn_tracker:
 		if not game_controller.turn_tracker.is_active:
 			return false
-	
-	# Check specific consumable requirements
-	match data.id:
-		"any_score":
-			# AnyScore requires dice values and at least one open category
-			var dice_values = DiceResults.values
-			if dice_values.is_empty():
-				return false
-			
-			# Check for open categories via game controller
-			if game_controller and game_controller.scorecard:
+
+	# Data-driven timing window (ConsumableData.UsageWindow vs GameController.current_phase)
+	if game_controller and not data.is_usable_in_phase(game_controller.current_phase):
+		return false
+
+	# Named extra conditions from the consumable's data (no per-id logic)
+	return _check_usage_conditions(data, game_controller)
+
+## _check_usage_conditions(data, game_controller) -> bool
+##
+## Generic dispatcher for ConsumableData.usage_conditions. Each named
+## condition maps to a game-state predicate; unknown names warn and pass
+## (fail-open, matching the legacy default-usable behavior).
+func _check_usage_conditions(data: ConsumableData, game_controller) -> bool:
+	for condition in data.usage_conditions:
+		match condition:
+			&"dice_rolled":
+				if DiceResults.values.is_empty():
+					return false
+			&"open_category", &"open_lower_category":
+				if not game_controller or not game_controller.scorecard:
+					return false
 				var scorecard = game_controller.scorecard
-				
-				# Check upper section for open categories
-				for category in scorecard.upper_scores.keys():
-					if scorecard.upper_scores[category] == null:
-						return true
-				
-				# Check lower section for open categories
-				for category in scorecard.lower_scores.keys():
-					if scorecard.lower_scores[category] == null:
-						return true
-				
-				# No open categories found
-				return false
-			else:
-				# No scorecard available
-				return false
-		"random_power_up_uncommon":
-			# Random PowerUp consumable requires available PowerUp slots
-			if game_controller and game_controller.powerup_ui:
-				return not game_controller.powerup_ui.has_max_power_ups()
-			else:
-				# No PowerUpUI available, assume unusable
-				return false
-		"green_envy":
-			# Raining Green requires dice to be rolled (to have values for scoring)
-			var dice_values = DiceResults.values
-			return not dice_values.is_empty()
-		"mulligan":
-			# Mulligan requires at least one placed score and dice currently rolled
-			var dice_values = DiceResults.values
-			if dice_values.is_empty():
-				return false
-			if game_controller and game_controller.scorecard:
-				return game_controller.scorecard.has_any_scores()
-			return false
-		"scratch_ticket":
-			# Scratch Ticket requires the last score to be a true zero (base score)
-			if game_controller and game_controller.scorecard:
-				if game_controller.scorecard.has_any_scores():
-					return game_controller.scorecard.last_base_score == 0
-			return false
-		"loaded_dice":
-			# Loaded Dice sets a die's value directly, so it requires rolled dice
-			var dice_values = DiceResults.values
-			return not dice_values.is_empty()
-		"paint_job":
-			# Paint Job recolors the current hand, meaningful only after a roll
-			var dice_values = DiceResults.values
-			return not dice_values.is_empty()
-		"spite", "antidote":
-			# Spite and Antidote require at least one active debuff
-			# (Mom-granted buffs like rebellion are rewards, not debuffs)
-			if game_controller:
+				var any_open := false
+				if condition != &"open_lower_category":
+					for category in scorecard.upper_scores.keys():
+						if scorecard.upper_scores[category] == null:
+							any_open = true
+							break
+				if not any_open:
+					for category in scorecard.lower_scores.keys():
+						if scorecard.lower_scores[category] == null:
+							any_open = true
+							break
+				if not any_open:
+					return false
+			&"has_placed_score":
+				if not game_controller or not game_controller.scorecard:
+					return false
+				if not game_controller.scorecard.has_any_scores():
+					return false
+			&"last_score_zero":
+				if not game_controller or not game_controller.scorecard:
+					return false
+				if not game_controller.scorecard.has_any_scores() or game_controller.scorecard.last_base_score != 0:
+					return false
+			&"has_active_debuff":
+				# Mom-granted buffs like rebellion are rewards, not debuffs
+				if not game_controller:
+					return false
+				var found := false
 				for debuff_id in game_controller.active_debuffs.keys():
 					if not debuff_id in DebuffManager.GRANTED_ONLY_IDS:
-						return true
-				return false
-			return false
-		"empty_shelves":
-			# Empty Shelves requires dice to be rolled (to have values for scoring)
-			var dice_values = DiceResults.values
-			return not dice_values.is_empty()
-		"double_or_nothing":
-			# Double or Nothing MUST be used at the beginning of the turn (after Next Turn auto-roll, before manual rolls)
-			if game_controller and game_controller.turn_tracker:
-				var turn_tracker = game_controller.turn_tracker
-				# Can be used when rolls_left >= MAX_ROLLS - 1 (after auto-roll but before manual rolls)
-				# and turn is active
-				return turn_tracker.is_active and turn_tracker.rolls_left >= turn_tracker.MAX_ROLLS - 1
-			else:
-				# No turn tracker available, assume unusable
-				return false
-		"go_broke_or_go_home":
-			# Go Broke or Go Home targets a random open LOWER section category,
-			# so it requires at least one open lower category
-			if game_controller and game_controller.scorecard:
-				for category in game_controller.scorecard.lower_scores.keys():
-					if game_controller.scorecard.lower_scores[category] == null:
-						return true
-			return false
-		"the_pawn_shop":
-			# The Pawn Shop requires at least one PowerUp to sell
-			if game_controller:
-				return not game_controller.active_power_ups.is_empty()
-			else:
-				# No game controller available, assume unusable
-				return false
-		"one_free_mod":
-			# One Free Mod requires an available dice slot for a mod
-			if game_controller:
+						found = true
+						break
+				if not found:
+					return false
+			&"powerup_slot_free":
+				if not game_controller or not game_controller.powerup_ui:
+					return false
+				if game_controller.powerup_ui.has_max_power_ups():
+					return false
+			&"has_powerups":
+				if not game_controller or game_controller.active_power_ups.is_empty():
+					return false
+			&"mod_slot_free":
+				if not game_controller:
+					return false
 				var current_mod_count = game_controller._get_total_active_mod_count()
 				var expected_dice_count = game_controller._get_expected_dice_count()
-				return current_mod_count < expected_dice_count
-			else:
-				return false
-		_:
-			# Default: all other consumables are useable when fanned
-			return true
+				if current_mod_count >= expected_dice_count:
+					return false
+			&"rolls_at_turn_start":
+				# Double or Nothing: beginning of the turn — at most one roll used
+				if not game_controller or not game_controller.turn_tracker:
+					return false
+				var turn_tracker = game_controller.turn_tracker
+				if turn_tracker.rolls_left < turn_tracker.MAX_ROLLS - 1:
+					return false
+			_:
+				push_warning("[ConsumableUI] Unknown usage_condition '%s' on %s — treating as pass" % [condition, data.id])
+	return true
 
 func _stop_idle_animations() -> void:
 	for tween in _idle_tweens:

@@ -94,10 +94,14 @@ price = 100
 - `price`: Cost in shop (default: 100)
 
 **Optional Fields (Dice Set Gating):**
-- `required_dice_sides`: Only offered when the run's dice set has exactly this many sides (0 = no requirement)
-- `excluded_dice_sides`: Array of side counts for which the consumable is hidden (e.g. `[4]` hides it for d4 runs)
+- `allowed_dice_sets`: Array of side counts for which the consumable is offered (empty = any dice set; e.g. `[4]` offers it only on d4 runs)
+- `exclude_listed_dice_sets`: When true, inverts `allowed_dice_sets` into an exclusion list — the consumable is offered on every set EXCEPT the listed ones (`[4]` = "all except d4", `[6]` = "all except d6")
 
-The shop filters inventory by dice set via `ShopUI._filter_by_dice_set()` using these two fields. Example: the d4 scorecard consumables (`EvensUpgradeConsumable.tres`, `OddsUpgradeConsumable.tres`, `EvenOddFullHouseUpgradeConsumable.tres`, all $75) set `required_dice_sides = 4`, while `FivesUpgradeConsumable.tres`, `SixesUpgradeConsumable.tres`, and `LargeStraightUpgradeConsumable.tres` set `excluded_dice_sides = [4]` because those categories don't exist on a d4 scorecard. Dice-set-gated consumables must also be registered in ProgressManager's defaults and ConsumableManager like any other consumable.
+The shop filters inventory by dice set via `ShopUI._filter_by_dice_set()` using this field. Example: the d4 scorecard consumables (`EvensUpgradeConsumable.tres`, `OddsUpgradeConsumable.tres`, `EvenOddFullHouseUpgradeConsumable.tres`, all $75) set `allowed_dice_sets = [4]`, while `FivesUpgradeConsumable.tres`, `SixesUpgradeConsumable.tres`, and `LargeStraightUpgradeConsumable.tres` set `allowed_dice_sets = [6]` because those categories don't exist on a d4 scorecard. Dice-set-gated consumables must also be registered in ProgressManager's defaults and ConsumableManager like any other consumable.
+
+**Optional Fields (Usage Window):**
+- `usage_window`: When the consumable may be used (`ANY_TIME` default, `BEFORE_ROLL_INITIATED`, `DURING_ACTIVE_ROUND`, `AFTER_SCORING`), evaluated against `GameController.current_phase`
+- `usage_conditions`: Array of named extra predicates evaluated by `ConsumableUI._check_usage_conditions()` (e.g. `"dice_rolled"`, `"open_lower_category"`, `"has_active_debuff"`)
 
 ### Step 4: Add Icon Asset
 Location: `Resources/Art/Powerups/[name]_icon.png`
