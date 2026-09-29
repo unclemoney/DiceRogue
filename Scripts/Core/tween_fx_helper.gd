@@ -253,6 +253,21 @@ func icon_remove(node: CanvasItem) -> Tween:
 	_center_pivot(node)
 	return TweenFX.vanish(node, 0.3)
 
+## fly_in_overshoot(node, from_position, duration)
+##
+## Position tween from an off-screen start point to the node's current
+## position with a BACK overshoot. Used by the Mom buff/debuff fanfare.
+## The caller owns spawn placement (from_position is in the node's parent
+## coordinate space); this only runs the flight.
+func fly_in_overshoot(node: CanvasItem, from_position: Vector2, duration: float = 0.35) -> Tween:
+	if not _valid(node) or not is_group_enabled(Group.ICONS):
+		return null
+	var target: Vector2 = node.position
+	node.position = from_position
+	var tween := node.create_tween()
+	tween.tween_property(node, "position", target, duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	return tween
+
 ## ─── SPINE EFFECTS ─────────────────────────────────────────────────
 
 ## spine_hover(node)
@@ -608,6 +623,25 @@ func staggered_pop_in(nodes: Array, delay_between: float = 0.08) -> Tween:
 			await get_tree().create_timer(delay_between).timeout
 		last_tween = TweenFX.pop_in(node, 0.3, 0.1)
 	return last_tween
+
+## container_hop(node, height, duration)
+##
+## Squash-and-stretch landing hop for a slot or container: quick squash,
+## inverse stretch, elastic settle, with a small vertical hop. Used when a
+## fanfare icon lands in a spine slot.
+func container_hop(node: CanvasItem, height: float = 8.0, duration: float = 0.15) -> Tween:
+	if not _valid(node) or not is_group_enabled(Group.CONTAINERS):
+		return null
+	_center_pivot(node)
+	var base_pos: Vector2 = node.position
+	var squash := node.create_tween()
+	squash.tween_property(node, "scale", Vector2(1.12, 0.88), duration * 0.34).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	squash.tween_property(node, "scale", Vector2(0.94, 1.08), duration * 0.33).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	squash.tween_property(node, "scale", Vector2.ONE, duration * 0.33).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	var hop := node.create_tween()
+	hop.tween_property(node, "position", base_pos + Vector2(0, -height), duration * 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	hop.tween_property(node, "position", base_pos, duration * 0.5).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	return squash
 
 
 ## ─── INTERNAL ──────────────────────────────────────────────────────

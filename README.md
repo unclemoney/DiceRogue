@@ -1700,6 +1700,30 @@ TweenFX addon (addons/TweenFX/) → TweenFXHelper autoload (Scripts/Core/) → G
 ### Documentation
 See [BUILD_TWEENFX.md](BUILD_TWEENFX.md) for full API reference, patterns, file change list, and integration guide.
 
+## Mom Juice Layer (Fanfare, Console Scores, Money Pull)
+
+Post-Mom-visit and console-scoring juice, orchestrated by the **MomJuiceCoordinator** autoload (`Scripts/Managers/mom_juice_coordinator.gd`). Visual layer only — it never touches outcomes, scoring math, or balance.
+
+### Buff/Debuff Arrival Fanfare
+After the Mom dialog closes and consequences land, every NEW buff/debuff/power-up icon gets a fly-in fanfare:
+- Icon spawns off-screen right (1.5x size, 10° rotation), overshoot-flies to its slot (`TRANS_BACK`, 0.35 s), then lands with a bounce-out scale punch, a tinted `ConsumableExplosion` burst (green = buff, red = debuff), an expanding ring, and a squash-and-stretch hop on the target slot. Debuffs also flash a red `-`.
+- Targets are found by diffing icon registries (PowerUpUI spines, ChoreUI buff icons, DebuffUI icons) before/after `MomLogicHandler.apply_consequences`, so any Mom-granted item is covered without enumerating outcomes.
+- The sequence waits for any running scoring animation (`ScoringAnimationController.animation_in_progress` / `animation_sequence_complete`).
+- Sounds: `POWERUP_APPLY_1.wav` (buff), `DENIED_1.wav` (debuff), quiet `JACKPOT_1.wav` landing beat.
+
+### Gaming Console Score Chips
+Console additive/multiplier scores join the scoring animation in `ScoringAnimationController._phase_consoles`, inserted after the dice phase (dice first, consoles second). Chips are labeled with the console display name (`SEGA +9`, `SNES ×1.5`), tinted console-teal, launch from the gaming console spine, and spiral into the same `ScoreSink` with a 0.10 s stagger. `GameController` tags console-owned `ScoreModifierManager` sources (`combo_system`, `blast_processing`, …) with `category: "console"` when assembling `breakdown_info`.
+
+### Mom Money Pull
+When Mom fines the player, the money display holds at its pre-fine value while N chips (`-1` each, 60 ms stagger) arc from the money label toward Mom's portrait (0.4 s flight, upward bow). Each arrival ticks the label down one unit with a small pulse and a pitched-down `COIN_1.wav`. `MoneyUI` exposes the conceal API (`begin_pull_concealment` / `tick_pull_display` / `end_pull_concealment`); `GameController` arms it before `apply_consequences` so the instant `money_changed` update is held. A `money_pull_max_chips` safety cap (default 40) batches units per chip on very large fines.
+
+### Tuning
+All timings/intensities live in `JuiceProfile` (`Scripts/Core/juice_profile.gd`, defaults in `Resources/Data/default_juice_profile.tres`) under the `Buff Fanfare`, `Console Scoring`, and `Money Pull` export groups.
+
+### Verification
+- Test scenes: `Tests/mom_fanfare_test.tscn` (auto-demo of all fanfare paths + queue gate), `Tests/mom_money_pull_test.tscn` (real MoneyUI, PASS/FAIL prints), `Tests/ScoringAnimationTest.tscn` (console sources in the breakdown).
+- Debug panel (F12) → Testing tab: `Test Buff Fanfare`, `Test Debuff Fanfare`, `Test Mom Money Pull ($10)`, `Test Console Score Chips`.
+
 ## Editor Tools
 
 ### Resource Viewer Plugin
@@ -2164,6 +2188,7 @@ For rapid testing and verification of new features, DiceRogue includes a compreh
 - **Debug State**: Save/load debug scenarios for quick testing
 - **Utilities**: Clear output, reset entire game state
 - **Juice / Title Preview**: Preview interactive title reactions for roll, score, power-up, consumable, debuff, challenge, and random burst paths without running full game flow
+- **Mom Juice**: `Test Buff Fanfare`, `Test Debuff Fanfare`, `Test Mom Money Pull ($10)`, and `Test Console Score Chips` exercise the post-Mom fanfare, money pull, and console score-chip animations in place
 
 ### Diagnostics Tab
 - **Live Dice State**: Lists every die with current value, color, mods, state, lock flags, exclusion flags, and the last scored-hand snapshot for quick drift detection

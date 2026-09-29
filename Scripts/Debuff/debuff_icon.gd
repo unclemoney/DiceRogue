@@ -264,4 +264,3 @@ func _get_tier_strength() -> float:
 	if not data:
 		return 0.0
 	return float(clamp(data.difficulty_rating, 0, 5)) / 5.0
-

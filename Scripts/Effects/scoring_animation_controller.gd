@@ -76,6 +76,7 @@ const SCORING_TEXT_MULTIPLIER: Color = Color(0.47451, 0.886275, 0.890196, 1.0)
 const SCORING_TEXT_NEGATIVE: Color = Color(1.0, 0.470588, 0.576471, 1.0)
 const SCORING_ACCENT_MAGENTA: Color = Color(0.713725, 0.301961, 0.478431, 1.0)
 const SCORING_ACCENT_TEAL: Color = Color(0.137255, 0.411765, 0.415686, 1.0)
+const SCORING_TEXT_CONSOLE: Color = Color(0.55, 0.95, 0.9, 1.0)
 
 # Import the FloatingNumber class (generic utility + standalone fallbacks)
 const FloatingNumberScript = preload("res://Scripts/Effects/floating_number.gd")
@@ -106,6 +107,7 @@ var _spark_tweens: Array = []
 ## Initialize the animation controller and set up audio player.
 func _ready() -> void:
 	print("[ScoringAnimationController] Initializing...")
+	add_to_group("scoring_animation_controller")
 
 	# Create audio player
 	audio_player = AudioStreamPlayer.new()
@@ -315,8 +317,8 @@ func _stagger(base: float, speed_scale: float) -> float:
 ## _execute_animation_sequence(score, category, breakdown_info, intensity_scale, speed_scale, token)
 ##
 ## Execute the complete sink sequence in strict phase order:
-## dice -> base beat -> category level -> additives -> multipliers ->
-## blow-up -> drain into score labels.
+## dice -> base beat -> console scores -> category level -> additives ->
+## multipliers -> blow-up -> drain into score labels.
 func _execute_animation_sequence(score: int, category: String, breakdown_info: Dictionary, intensity_scale: float, speed_scale: float, token: int) -> void:
 	# Reset scoring sequence for progressive pitch
 	var audio_mgr = get_node_or_null("/root/AudioManager")
@@ -342,6 +344,11 @@ func _execute_animation_sequence(score: int, category: String, breakdown_info: D
 	if score_sink:
 		score_sink.set_running_score(_running_score, true)
 	await _wait_seconds(BASE_BEAT, speed_scale)
+	if _is_aborted(token):
+		return
+
+	# Phase 2.4: gaming console scores (additives first, then multipliers)
+	await _phase_consoles(breakdown_info, speed_scale, token)
 	if _is_aborted(token):
 		return
 
@@ -651,6 +658,137 @@ func _await_spark(spark_tween: Tween, token: int) -> void:
 		if _is_aborted(token):
 			return
 		await get_tree().process_frame
+
+## _phase_consoles(breakdown_info, speed_scale, token)
+##
+## Gaming console scores join the sink sequence right after the dice phase:
+## console additives first, then console multipliers. Chips are labeled with
+## the console display name in the console teal scheme and fly from the
+## gaming console spine. Amounts arrive pre-computed in breakdown_info
+## (category == "console"); arrivals only move the sink's running display
+## score — the blow-up reconciles to the authoritative score as usual.
+func _phase_consoles(breakdown_info: Dictionary, speed_scale: float, token: int) -> void:
+	var console_adds: Array = []
+	var console_mults: Array = []
+	for source_info in breakdown_info.get("additive_sources", []):
+		if source_info.get("category", "") == "console":
+			console_adds.append(source_info)
+	for source_info in breakdown_info.get("multiplier_sources", []):
+		if source_info.get("category", "") == "console":
+			console_mults.append(source_info)
+	if console_adds.is_empty() and console_mults.is_empty():
+		return
+
+	var profile := _juice_profile()
+	var stagger = _stagger(profile.console_score_stagger, speed_scale)
+
+	for source_info in console_adds:
+		if _is_aborted(token):
+			return
+		var value = int(source_info.get("value", 0))
+		_bounce_console_spine(speed_scale)
+		var text = "%s %+d" % [_console_display_name(source_info), value]
+		print("[ScoringAnimationController] Console additive chip: %s" % text)
+		var spark_tween = _launch_spark(text, _console_origin(), profile.console_chip_font_scale, SCORING_TEXT_CONSOLE, SCORING_ACCENT_TEAL,
+			SPIRAL_T_ADD / speed_scale,
+			func():
+				_running_score += value
+				if score_sink and is_instance_valid(score_sink):
+					score_sink.set_running_score(_running_score, true)
+					score_sink.bounce_wobble(profile.console_wobble, value < 0)
+				_play_scoring_audio(abs(value))
+		)
+		if spark_tween:
+			await _await_spark(spark_tween, token)
+		if _is_aborted(token):
+			return
+		await get_tree().create_timer(stagger).timeout
+
+	for source_info in console_mults:
+		if _is_aborted(token):
+			return
+		var value = float(source_info.get("value", 1.0))
+		_bounce_console_spine(speed_scale)
+		var text = "%s ×%.1f" % [_console_display_name(source_info), value]
+		print("[ScoringAnimationController] Console multiplier chip: %s" % text)
+		var spark_tween = _launch_spark(text, _console_origin(), profile.console_chip_font_scale, SCORING_TEXT_MULTIPLIER, SCORING_ACCENT_TEAL,
+			SPIRAL_T_MULT / speed_scale,
+			func():
+				_running_score = int(round(_running_score * value))
+				if score_sink and is_instance_valid(score_sink):
+					score_sink.set_running_score(_running_score, true)
+					score_sink.bounce_wobble(profile.console_wobble, value < 1.0)
+				_play_scoring_audio(int(maxf(absf(value), 1.0) * 10))
+		)
+		if spark_tween:
+			await _await_spark(spark_tween, token)
+		if _is_aborted(token):
+			return
+		await get_tree().create_timer(stagger).timeout
+
+## _console_display_name(source_info) -> String
+##
+## Chip label prefix for a console source: the display name supplied by the
+## breakdown assembly, else a prettified modifier source name.
+func _console_display_name(source_info: Dictionary) -> String:
+	var display = str(source_info.get("display_name", ""))
+	if display == "":
+		display = str(source_info.get("name", "CONSOLE")).replace("_", " ")
+	return display.to_upper()
+
+## _console_origin() -> Vector2
+##
+## Screen-space center of the gaming console spine (chip launch point).
+func _console_origin() -> Vector2:
+	var fallback = _get_game_ui_container_center(&"console_container", get_viewport().get_visible_rect().size / 2.0)
+	var spine = _console_spine()
+	if spine and is_instance_valid(spine):
+		if spine is Control:
+			return (spine as Control).get_global_rect().get_center()
+		if spine is Node2D:
+			return (spine as Node2D).global_position
+	return fallback
+
+## _console_spine()
+##
+## The compact gaming console spine from GamingConsoleUI, duck-typed so test
+## scenes can register a mock in the same group.
+func _console_spine():
+	var console_ui = get_tree().get_first_node_in_group("gaming_console_ui")
+	if console_ui:
+		# Real GamingConsoleUI exposes _compact_spine as a script var;
+		# node-based mocks expose it as a child named "_compact_spine".
+		var spine = console_ui.get("_compact_spine")
+		if spine == null:
+			spine = console_ui.get_node_or_null("_compact_spine")
+		if spine != null:
+			return spine
+		if console_ui is Control:
+			return console_ui
+	return null
+
+## _bounce_console_spine(speed_scale)
+##
+## Bounce the console spine while its chip flies (same sine-bounce pattern
+## as consumable/powerup spines).
+func _bounce_console_spine(speed_scale: float) -> void:
+	var spine = _console_spine()
+	if not spine or not is_instance_valid(spine):
+		return
+	var bounce_duration = 0.6 / speed_scale
+	var original_position = spine.global_position
+	var bounce_tween = create_tween()
+	bounce_tween.tween_method(_bounce_spine_safe.bind(spine, original_position, CONSUMABLE_BOUNCE_HEIGHT), 0.0, 1.0, bounce_duration)
+
+## _juice_profile() -> JuiceProfile
+##
+## The shared juice tunables resource (via TweenFXHelper), with an inline
+## default as fallback so the animation never depends on load order.
+func _juice_profile() -> JuiceProfile:
+	var tfx = get_node_or_null("/root/TweenFXHelper")
+	if tfx and tfx.has_method("get_default_juice_profile"):
+		return tfx.get_default_juice_profile()
+	return JuiceProfile.new()
 
 ## _multiplier_wobble_intensity(index) -> float
 ##

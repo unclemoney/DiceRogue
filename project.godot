@@ -38,6 +38,7 @@ GameSaveManager="*res://Scripts/Managers/game_save_manager.gd"
 SceneTransitionManager="*res://Scripts/Core/scene_transition_manager.gd"
 FloatingTextManager="*res://Scripts/Effects/floating_text_manager.gd"
 HitstopController="*res://Scripts/Effects/hitstop_controller.gd"
+MomJuiceCoordinator="*res://Scripts/Managers/mom_juice_coordinator.gd"
 
 [display]
 

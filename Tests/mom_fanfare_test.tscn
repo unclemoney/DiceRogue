@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://bhctgci5vkjis"]
+
+[ext_resource type="Script" path="res://Tests/mom_fanfare_test.gd" id="1_fanfare"]
+
+[node name="MomFanfareTest" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_fanfare")

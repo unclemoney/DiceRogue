@@ -16,6 +16,7 @@ const DEBUG_MAX_DICE_COUNT := 16
 ## Preloaded (not the class_name) so parsing doesn't depend on the editor's
 ## class cache being fresh.
 const MomPortraitAnimatorScript := preload("res://Scripts/UI/mom_portrait_animator.gd")
+const MomLogicHandlerScript := preload("res://Scripts/Core/mom_logic_handler.gd")
 const SCORECARD_UPPER_CATEGORIES := ["ones", "twos", "threes", "fours", "fives", "sixes"]
 const SCORECARD_LOWER_CATEGORIES := ["three_of_a_kind", "four_of_a_kind", "full_house", "small_straight", "large_straight", "yahtzee", "chance"]
 const SCORECARD_UPGRADE_CONSUMABLE_IDS := [
@@ -302,6 +303,10 @@ func _create_debug_tabs() -> void:
 			{"text": "Test Mod Limit Block", "method": "_debug_test_mod_limit_block"},
 			{"text": "Seed Shop Ownership Panel", "method": "_debug_seed_shop_ownership_panel"},
 			{"text": "Test Shop Mod Purchase", "method": "_debug_test_shop_mod_purchase"},
+			{"text": "Test Buff Fanfare", "method": "_debug_test_buff_fanfare"},
+			{"text": "Test Debuff Fanfare", "method": "_debug_test_debuff_fanfare"},
+			{"text": "Test Mom Money Pull ($10)", "method": "_debug_test_money_pull"},
+			{"text": "Test Console Score Chips", "method": "_debug_test_console_chips"},
 		],
 		"Game State": [
 			{"text": "Show Score State", "method": "_debug_show_scores"},
@@ -1528,6 +1533,99 @@ func _debug_grant_consumable() -> void:
 			log_debug("No Consumables available to grant")
 	else:
 		log_debug("ConsumableManager not found or method missing")
+
+## _debug_test_buff_fanfare()
+##
+## Simulates a Mom power-up grant through the juice layer exactly the way
+## GameController does after a Mom visit: arm, grant, play. The fanfare icon
+## should fly in from off-screen right and land on the new power-up spine.
+func _debug_test_buff_fanfare() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	var coordinator = get_node_or_null("/root/MomJuiceCoordinator")
+	if coordinator == null:
+		log_debug("ERROR: MomJuiceCoordinator autoload not available")
+		return
+	var result = MomLogicHandlerScript.MomCheckResult.new()
+	coordinator.arm_money_pull(result)
+	_debug_grant_powerup()
+	coordinator.play_post_mom_sequence(result)
+	log_debug("Buff fanfare triggered (watch the power-up spine)")
+
+
+## _debug_test_debuff_fanfare()
+##
+## Simulates a Mom debuff application through the juice layer. Picks the
+## first non-active debuff so the arm/diff always sees a new icon.
+func _debug_test_debuff_fanfare() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	var coordinator = get_node_or_null("/root/MomJuiceCoordinator")
+	if coordinator == null:
+		log_debug("ERROR: MomJuiceCoordinator autoload not available")
+		return
+	var debuff_id := ""
+	for id in MomLogicHandlerScript.AVAILABLE_DEBUFFS:
+		if not game_controller.is_debuff_active(id):
+			debuff_id = id
+			break
+	if debuff_id == "":
+		log_debug("All debuffs already active — clear one first")
+		return
+	var result = MomLogicHandlerScript.MomCheckResult.new()
+	coordinator.arm_money_pull(result)
+	game_controller.enable_debuff(debuff_id)
+	coordinator.play_post_mom_sequence(result)
+	log_debug("Debuff fanfare triggered: " + debuff_id)
+
+
+## _debug_test_money_pull()
+##
+## Simulates a $10 Mom fine through the juice layer: the money label holds,
+## then 10 chips arc from the money display to the Mom portrait while the
+## label ticks down per chip.
+func _debug_test_money_pull() -> void:
+	var coordinator = get_node_or_null("/root/MomJuiceCoordinator")
+	if coordinator == null:
+		log_debug("ERROR: MomJuiceCoordinator autoload not available")
+		return
+	if not PlayerEconomy or not PlayerEconomy.can_afford(10):
+		log_debug("ERROR: Need at least $10 for the pull test")
+		return
+	var result = MomLogicHandlerScript.MomCheckResult.new()
+	result.fine_amount = 10
+	coordinator.arm_money_pull(result)
+	PlayerEconomy.remove_money(10, "mom_fine")
+	coordinator.play_post_mom_sequence(result)
+	log_debug("Money pull triggered: 10 chips player -> Mom")
+
+
+## _debug_test_console_chips()
+##
+## Fires a fabricated scoring event with console additive + multiplier
+## sources into the real scoring animation controller. Console chips should
+## fly after the dice phase, before consumable/powerup additives.
+func _debug_test_console_chips() -> void:
+	var sac = get_tree().get_first_node_in_group("scoring_animation_controller")
+	if sac == null:
+		log_debug("ERROR: ScoringAnimationController not found")
+		return
+	var breakdown = {
+		"base_score": 20,
+		"additive_sources": [
+			{"name": "combo_system", "value": 9, "category": "console", "display_name": "Sega"},
+		],
+		"multiplier_sources": [
+			{"name": "blast_processing", "value": 1.5, "category": "console", "display_name": "SNES"},
+		],
+	}
+	sac.start_scoring_animation(38, "debug_console", breakdown)
+	log_debug("Console chip test fired into the score sink")
+
 
 func _debug_grant_any_score() -> void:
 	if not game_controller:

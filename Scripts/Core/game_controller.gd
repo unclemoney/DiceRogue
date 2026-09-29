@@ -2842,27 +2842,40 @@ func _create_manual_breakdown_info(category: String = "") -> Dictionary:
 	# Get detailed breakdown from ScoreModifierManager for animation system
 	var score_modifier = get_node_or_null("/root/ScoreModifierManager")
 	if score_modifier:
+		# Console-owned modifier sources are tagged "console" so the scoring
+		# animation presents them as distinct console chips (visual only).
+		var console_sources := {}
+		for console in active_gaming_console.values():
+			if is_instance_valid(console):
+				var msn = console.get("modifier_source_name")
+				if msn != null and String(msn) != "":
+					console_sources[String(msn)] = str(console.get("console_name"))
+
 		# Create additive sources array
 		var additive_sources = []
 		var active_additive_names = score_modifier.get_active_additive_sources()
 		for source_name in active_additive_names:
 			var additive_value = score_modifier.get_additive(source_name)
+			var is_console: bool = console_sources.has(source_name)
 			additive_sources.append({
 				"name": source_name,
 				"value": additive_value,
-				"category": "powerup"  # Assume powerup for now
+				"category": "console" if is_console else "powerup",
+				"display_name": console_sources.get(source_name, "") if is_console else "",
 			})
 		breakdown_info["additive_sources"] = additive_sources
-		
+
 		# Create multiplier sources array
 		var multiplier_sources = []
 		var active_multiplier_names = score_modifier.get_active_sources()
 		for source_name in active_multiplier_names:
 			var multiplier_value = score_modifier.get_multiplier(source_name)
+			var is_console_mult: bool = console_sources.has(source_name)
 			multiplier_sources.append({
 				"name": source_name,
 				"value": multiplier_value,
-				"category": "powerup"  # Assume powerup for now
+				"category": "console" if is_console_mult else "powerup",
+				"display_name": console_sources.get(source_name, "") if is_console_mult else "",
 			})
 		breakdown_info["multiplier_sources"] = multiplier_sources
 	
@@ -6383,6 +6396,11 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 	# Wait for dialog to close
 	await _mom_dialog.dialog_closed
 
+	# Arm the Mom juice layer BEFORE consequences land: the money display
+	# conceals at its pre-fine value, and the icon snapshot lets the fanfare
+	# target only newly granted buffs/debuffs/power-ups.
+	MomJuiceCoordinator.arm_money_pull(result)
+
 	# Apply consequences after dialog closes
 	MomLogicHandlerScript.apply_consequences(self, result)
 
@@ -6397,6 +6415,11 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 		if sass_stacks > 0:
 			_grant_rebellion_buff(sass_stacks)
 			result.rebellion_granted = true
+
+	# Post-Mom juice sequence: money pull, then buff/debuff arrival fanfares.
+	# Fire-and-forget — the coordinator queues behind any running scoring
+	# animation and never touches outcomes.
+	MomJuiceCoordinator.play_post_mom_sequence(result)
 
 	# Notify listeners (bot harness, analytics) with a plain-data summary
 	mom_consequences_applied.emit({

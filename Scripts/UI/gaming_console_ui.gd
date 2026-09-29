@@ -56,6 +56,7 @@ const FAN_CARD_MAX_HEIGHT_RATIO := 0.60
 
 func _ready() -> void:
 	_tfx = get_node_or_null("/root/TweenFXHelper")
+	add_to_group("gaming_console_ui")
 	z_index = RenderLayers.Z_MODAL
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_PASS
