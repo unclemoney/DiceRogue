@@ -18,10 +18,10 @@ enum Type {
 const COLOR_CHANCES = {
 	Type.GREEN: 25,   # 1 in 25 chance
 	Type.RED: 50,     # 1 in 50 chance  
-	Type.PURPLE: 88,  # 1 in 88 chance
-	Type.BLUE: 100,   # 1 in 100 chance (very rare)
-	Type.YELLOW: 120,   # 1 in 120 chance (grants consumable when scored)
-	Type.ORANGE: 150   # 1 in 150 chance (grants +1 roll when scored)
+	Type.PURPLE: 128,  # 1 in 88 chance
+	Type.BLUE: 150,   # 1 in 150 chance (very rare)
+	Type.YELLOW: 88,   # 1 in 88 chance (grants consumable when scored)
+	Type.ORANGE: 100   # 1 in 100 chance (grants +1 roll when scored)
 }
 
 ## Color names for display

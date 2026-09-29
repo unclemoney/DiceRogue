@@ -10,4 +10,4 @@ description = "Lucky dice that conjure random consumables when they contribute t
 price = 100
 color_type = 5
 effect_description = "Grants a random consumable when scored (if space available)"
-rarity_description = "1 in 120 chance to appear on rolled dice"
+rarity_description = "1 in 88 chance to appear on rolled dice"

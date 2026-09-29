@@ -48,7 +48,7 @@
 
 - [ ] `P1-Major` Complete scoring animation before round end or chore panel is shown.
 - [ ] `P2-Minor` Scoring animation is showing the rounding down from multipliers.
-- [ ] `P2-Minor` Change upgrade scorecard sound.
+- [X] `P2-Minor` Change upgrade scorecard sound.
 - [ ] `P2-Minor` Update Challenge Icons.
 - [ ] `P2-Minor` Update game over screen.
 - [ ] `P2-Minor` Tooltips on Mall Map not showing up.
@@ -57,8 +57,8 @@
 
 ## SYS:Save — Save, Load & State Management
 
-- [ ] `NEEDS-DETAIL` Weird things going on with Continue or New Game. Not seen again. Need more info.
-  - Clarify: What screen? What error? What state was the game in?
+- [X] `P0-Critical` Weird things going on with Continue or New Game. Save game system was completely refactored to address these issues.
+- [ ] `P2-Minor` Continue testing newly refactored save game system.
 
 ## SYS:Debug — Debug & Testing Tools
 
