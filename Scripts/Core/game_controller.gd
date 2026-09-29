@@ -6952,6 +6952,7 @@ func get_save_state() -> Dictionary:
 		"cast_manager": cast_manager.get_state() if cast_manager else {},
 		"game_controller": {
 			"active_power_up_ids": active_power_ups.keys(),
+			"power_up_states": _get_power_up_states(),
 			"active_consumable_counts": consumable_counts.duplicate(),
 			"active_debuff_ids": active_debuffs.keys(),
 			"active_mod_ids": active_mods.keys(),
@@ -6975,6 +6976,23 @@ func get_save_state() -> Dictionary:
 			"_mom_cosmetics_locked": _mom_cosmetics_locked
 		}
 	}
+
+
+## _get_power_up_states() -> Dictionary
+##
+## Collects per-power-up running state (melt counters, totals, remaining
+## uses) from every active power-up for the run save. Power-ups whose
+## get_state() returns empty (the stateless base implementation) are omitted.
+func _get_power_up_states() -> Dictionary:
+	var states: Dictionary = {}
+	for pu_id in active_power_ups:
+		var pu = active_power_ups[pu_id]
+		if not is_instance_valid(pu):
+			continue
+		var state = pu.get_state()
+		if state is Dictionary and not state.is_empty():
+			states[pu_id] = state
+	return states
 
 
 ## load_game_state(save_data)
@@ -7003,6 +7021,8 @@ func load_game_state(save_data: Dictionary) -> void:
 	var channel_state = save_data.get("channel_manager", {})
 	if not channel_state.is_empty():
 		channel_manager.load_state(channel_state)
+		# Re-apply the channel background so the restored channel's shader shows
+		_apply_channel_background()
 	
 	var economy_state = save_data.get("player_economy", {})
 	if not economy_state.is_empty():
@@ -7047,6 +7067,12 @@ func load_game_state(save_data: Dictionary) -> void:
 	var turn_state = save_data.get("turn_tracker", {})
 	if not turn_state.is_empty() and turn_tracker:
 		turn_tracker.load_state(turn_state)
+
+	# Re-emit the UI refresh signals turn_tracker.load_state does not emit,
+	# so the turn display and roll button reflect the restored state
+	if turn_tracker:
+		turn_tracker.emit_signal("turn_updated", turn_tracker.current_turn)
+		turn_tracker.emit_signal("rolls_updated", turn_tracker.rolls_left)
 	
 	# 6. Restore Scorecard
 	var scorecard_state = save_data.get("scorecard", {})
@@ -7057,6 +7083,11 @@ func load_game_state(save_data: Dictionary) -> void:
 	var dice_hand_state = save_data.get("dice_hand", {})
 	if not dice_hand_state.is_empty() and dice_hand:
 		dice_hand.load_state(dice_hand_state)
+
+	# Re-engage scoring wiring for the in-progress round without resetting
+	# any restored state (no round_started emit, no tracker/scorecard reset)
+	if round_manager and round_manager.game_started:
+		round_manager.resume_round_from_load()
 	
 	# 8. Restore GameController-specific state
 	var gc_state = save_data.get("game_controller", {})
@@ -7089,12 +7120,22 @@ func load_game_state(save_data: Dictionary) -> void:
 				grant_replica_power_up(base_id, pu_id)
 			else:
 				grant_power_up(pu_id)
+
+	# Restore power-up running state (melt counters, totals, remaining uses).
+	# Runs after re-grant so apply() has wired each power-up up; load_state
+	# corrects any default-value registration apply() made.
+	var saved_pu_states: Dictionary = gc_state.get("power_up_states", {})
+	for pu_id in saved_pu_states:
+		if active_power_ups.has(pu_id):
+			var pu_state = saved_pu_states[pu_id]
+			if pu_state is Dictionary and not pu_state.is_empty():
+				active_power_ups[pu_id].load_state(pu_state)
 	
 	# Re-grant consumables
 	var saved_consumable_counts = gc_state.get("active_consumable_counts", {})
 	for cons_id in saved_consumable_counts.keys():
 		var count = saved_consumable_counts[cons_id]
-		for i in range(count):
+		for i in range(int(count)):
 			grant_consumable(cons_id)
 	
 	# Re-grant mods
@@ -7146,11 +7187,93 @@ func load_game_state(save_data: Dictionary) -> void:
 	else:
 		set_game_phase(GamePhase.IDLE)
 
+	# Mirrors _on_channel_selected's startup so no CRT overlay lingers on resume
+	if crt_manager:
+		crt_manager.snap_tv_off()
+
 	# Update consumable usability
 	update_consumable_usability()
-	
+
+	# Re-sync session-scoped UI state (button enables, round label) that live
+	# play derives from signals load_game_state deliberately does not emit
+	_restore_session_ui_state()
+
 	if _debug_enabled:
 		print("[GameController] Saved game state loaded successfully!")
+
+
+## _restore_session_ui_state() -> void
+##
+## Re-syncs session-only UI state after a save load. Live play derives roll /
+## Next Round / shop button states and the VCR round label from the
+## round_started / round_completed / dice signals, none of which are emitted
+## on the load path (GameController._on_round_started would wipe the restored
+## mid-round state). Without this, RollButtonUI.first_roll_done stays false,
+## so the next Next Round press is misread as "round 1 not started" and
+## start_round(1) wipes round progress.
+## Side-effects: sets RollButtonUI.first_roll_done, enables/disables the roll
+## button, syncs GameButtonUI buttons, refreshes the VCR round label.
+func _restore_session_ui_state() -> void:
+	if not round_manager or not round_manager.game_started:
+		return
+
+	var round_idx: int = round_manager.current_round
+	var round_done: bool = round_manager.is_challenge_completed
+	if round_idx >= 0 and round_idx < round_manager.rounds_data.size():
+		round_done = bool(round_manager.rounds_data[round_idx].get("completed", false))
+
+	# first_roll_done is true in a live session from the first roll onward.
+	# A roll has happened this run iff dice were rolled this round, any score
+	# is on the card, or any round is complete.
+	var any_round_completed := false
+	for rd in round_manager.rounds_data:
+		if rd.get("completed", false):
+			any_round_completed = true
+			break
+
+	var roll_ui = get_tree().get_first_node_in_group("roll_button_ui")
+	if roll_ui:
+		var rolled := false
+		if dice_hand and dice_hand.current_roll_number > 0:
+			rolled = true
+		elif scorecard and scorecard.has_any_scores():
+			rolled = true
+		elif any_round_completed:
+			rolled = true
+		roll_ui.first_roll_done = rolled
+
+		# Roll button: live play enables it via round_started / roll completion.
+		# Edge (accepted): a save taken after scoring early with rolls left
+		# resumes with roll enabled; is_active stays true through scoring.
+		if turn_tracker and turn_tracker.is_active and turn_tracker.rolls_left > 0 and not round_done:
+			roll_ui.enable_roll()
+		else:
+			roll_ui.disable_roll()
+
+	# Next Round / shop buttons: mimic the round signal matching the restored
+	# state. These handlers only touch buttons; GameController's own round
+	# handlers (which reset per-round state) are not involved.
+	if game_button_ui:
+		if round_done:
+			if game_button_ui.has_method("_on_round_completed"):
+				game_button_ui._on_round_completed(round_manager.get_current_round_number())
+		else:
+			if game_button_ui.has_method("_on_round_started"):
+				game_button_ui._on_round_started(round_manager.get_current_round_number())
+
+	# The VCR tracker binds in _ready (before the deferred load) and only
+	# refreshes its round label on round_started; re-binding re-pulls the
+	# restored round number through existing public API.
+	var vcr_tracker = get_tree().get_first_node_in_group("turn_tracker_ui")
+	if vcr_tracker and vcr_tracker.has_method("bind_round_manager"):
+		vcr_tracker.bind_round_manager(round_manager)
+
+	# The round intro hides the scorecard (score_card_ui.visible = false) and
+	# reveals it via animate_entrance(); neither runs on the load path, so the
+	# scorecard stays hidden after a Continue. Reveal it here, fire-and-forget
+	# (the populate tween plays while the player resumes).
+	if score_card_ui:
+		score_card_ui.animate_entrance()
 
 
 ## _clear_active_gaming_console()

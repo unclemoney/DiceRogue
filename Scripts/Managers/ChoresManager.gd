@@ -772,22 +772,23 @@ func _get_completed_chores_ids() -> Array[String]:
 ##
 ## Restores the chores state from a saved dictionary.
 func load_state(state: Dictionary) -> void:
-	current_progress = state.get("current_progress", 0)
-	chores_completed_this_round = state.get("chores_completed_this_round", 0)
-	chore_rewards_this_round = state.get("chore_rewards_this_round", 0)
-	tasks_completed = state.get("tasks_completed", 0)
-	is_mom_active = state.get("is_mom_active", false)
+	# JSON round-trips numbers as floats; coerce to int/bool for the typed vars.
+	current_progress = int(state.get("current_progress", 0))
+	chores_completed_this_round = int(state.get("chores_completed_this_round", 0))
+	chore_rewards_this_round = int(state.get("chore_rewards_this_round", 0))
+	tasks_completed = int(state.get("tasks_completed", 0))
+	is_mom_active = bool(state.get("is_mom_active", false))
 	var loaded_history = state.get("_task_history", [])
 	_task_history.assign(loaded_history)
-	pending_chore_selection = state.get("pending_chore_selection", false)
-	current_round_number = state.get("current_round_number", 1)
-	mom_mood = state.get("mom_mood", DEFAULT_MOOD)
-	grudge = state.get("grudge", 0)
-	defer_streak = state.get("defer_streak", 0)
-	low_mood_visits_this_run = state.get("low_mood_visits_this_run", 0)
-	_rolls_this_round = state.get("_rolls_this_round", 0)
-	_checkin_roll_target = state.get("_checkin_roll_target", -1)
-	_checkin_done_this_round = state.get("_checkin_done_this_round", false)
+	pending_chore_selection = bool(state.get("pending_chore_selection", false))
+	current_round_number = int(state.get("current_round_number", 1))
+	mom_mood = int(state.get("mom_mood", DEFAULT_MOOD))
+	grudge = int(state.get("grudge", 0))
+	defer_streak = int(state.get("defer_streak", 0))
+	low_mood_visits_this_run = int(state.get("low_mood_visits_this_run", 0))
+	_rolls_this_round = int(state.get("_rolls_this_round", 0))
+	_checkin_roll_target = int(state.get("_checkin_roll_target", -1))
+	_checkin_done_this_round = bool(state.get("_checkin_done_this_round", false))
 	# Older saves have no check-in target; schedule one so the system still works
 	if _checkin_roll_target < 0 and not _checkin_done_this_round:
 		_schedule_checkin()

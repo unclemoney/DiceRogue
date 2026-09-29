@@ -548,13 +548,21 @@ func get_state() -> Dictionary:
 ## Tolerant restore: every key defaults so older saves load cleanly.
 func load_state(state: Dictionary) -> void:
 	visited_zones.assign(state.get("visited_zones", []))
+	# JSON round-trips numbers as floats; coerce inner ints back.
 	visited_zone_channels = state.get("visited_zone_channels", {}).duplicate()
+	for zone in visited_zone_channels:
+		visited_zone_channels[zone] = int(visited_zone_channels[zone])
 	arc_progress = state.get("arc_progress", {}).duplicate()
+	for arc_id in arc_progress:
+		arc_progress[arc_id] = int(arc_progress[arc_id])
 	completed_arcs.assign(state.get("completed_arcs", []))
 	flags = state.get("flags", {}).duplicate()
 	patterson_pending.clear()
-	for report in state.get("patterson_pending", []):
-		patterson_pending.append(report.duplicate())
+	for saved_report in state.get("patterson_pending", []):
+		var report: Dictionary = saved_report.duplicate()
+		report["recorded_channel"] = int(report.get("recorded_channel", 0))
+		report["min_delay_zones"] = int(report.get("min_delay_zones", PATTERSON_REPORT_DELAY_ZONES))
+		patterson_pending.append(report)
 	patterson_sightings_this_run = int(state.get("patterson_sightings_this_run", 0))
 	last_sighting_channel = int(state.get("last_sighting_channel", 0))
 	sightings_in_current_zone = int(state.get("sightings_in_current_zone", 0))

@@ -84,6 +84,28 @@ func _update_power_up_icons() -> void:
 			if icon._is_hovering and icon.hover_label and icon.label_bg:
 				icon.label_bg.visible = true
 
+
+## get_state() -> Dictionary
+##
+## Saves the melted-down additive so a loaded run resumes at the correct
+## remaining bonus instead of the full +80.
+func get_state() -> Dictionary:
+	return {"current_additive": current_additive}
+
+
+## load_state(state)
+##
+## Restores the melted additive after re-grant. apply() has already
+## registered the default +80, so re-register (or unregister at 0) here.
+func load_state(state: Dictionary) -> void:
+	current_additive = int(state.get("current_additive", 80))
+	if current_additive > 0:
+		ScoreModifierManager.register_additive(modifier_source_name, current_additive)
+	elif ScoreModifierManager.has_additive(modifier_source_name):
+		ScoreModifierManager.unregister_additive(modifier_source_name)
+	emit_signal("description_updated", id, get_current_description())
+	_update_power_up_icons()
+
 func remove(target) -> void:
 	print("=== Removing MeltingDicePowerUp ===")
 	

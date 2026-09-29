@@ -399,16 +399,53 @@ func get_state() -> Dictionary:
 ##
 ## Restores the round manager state from a saved dictionary.
 func load_state(state: Dictionary) -> void:
-	current_round = state.get("current_round", 0)
-	is_challenge_completed = state.get("is_challenge_completed", false)
-	game_started = state.get("game_started", false)
-	max_rounds = state.get("max_rounds", 6)
+	# JSON round-trips numbers as floats; coerce to int/bool for the typed vars.
+	current_round = int(state.get("current_round", 0))
+	is_challenge_completed = bool(state.get("is_challenge_completed", false))
+	game_started = bool(state.get("game_started", false))
+	max_rounds = int(state.get("max_rounds", 6))
 	var loaded_rounds = state.get("rounds_data", [])
 	var sanitized_rounds: Array[Dictionary] = []
 	for loaded_round in loaded_rounds:
 		if loaded_round is Dictionary:
 			var round_data: Dictionary = loaded_round.duplicate(true)
 			round_data.erase("grounding_id")
+			if round_data.has("round_number"):
+				round_data["round_number"] = int(round_data["round_number"])
+			if round_data.has("target_score"):
+				round_data["target_score"] = int(round_data["target_score"])
 			sanitized_rounds.append(round_data)
 	rounds_data.assign(sanitized_rounds)
 	print("[RoundManager] State loaded - round:", current_round)
+
+
+## resume_round_from_load() -> void
+##
+## Re-engages scoring wiring for the in-progress round after a save load,
+## mirroring start_round()'s non-reset setup only. Resets nothing: the turn
+## tracker, scorecard scores/levels, dice color effects, and dice type were
+## already restored by the respective load_state calls, and no round signals
+## are emitted (they would trigger new-round bookkeeping).
+func resume_round_from_load() -> void:
+	if not game_started:
+		return
+
+	# Get dice type for the in-progress round
+	var dice_type: String = run_dice_type
+	if current_round >= 0 and current_round < rounds_data.size():
+		dice_type = rounds_data[current_round].get("dice_type", run_dice_type)
+	print("[RoundManager] Resuming round from load - dice type:", dice_type)
+
+	# Propagate dice sides to scoring systems for dynamic upper section
+	if dice_hand:
+		var dice_sides = dice_hand.default_dice_data.sides if dice_hand.default_dice_data else 6
+		if scorecard:
+			scorecard.set_dice_type(dice_sides)
+		ScoreEvaluatorSingleton.set_dice_sides(dice_sides)
+
+		# Update ScoreCardUI category labels for the active dice set
+		var score_card_ui = get_tree().get_first_node_in_group("scorecard_ui")
+		if is_instance_valid(score_card_ui) and score_card_ui.has_method("update_dice_set_category_labels"):
+			score_card_ui.update_dice_set_category_labels()
+
+		print("[RoundManager] Propagated dice sides (%d) to scorecard and evaluator" % dice_sides)

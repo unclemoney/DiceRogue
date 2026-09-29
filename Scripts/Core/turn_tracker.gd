@@ -442,20 +442,25 @@ func get_state() -> Dictionary:
 ##
 ## Loads state from a saved dictionary.
 func load_state(state: Dictionary) -> void:
-	current_turn = state.get("current_turn", 1)
-	rolls_left = state.get("rolls_left", MAX_ROLLS)
-	MAX_ROLLS = state.get("MAX_ROLLS", 3)
-	is_active = state.get("is_active", false)
+	# JSON round-trips numbers as floats; coerce to int/bool for the typed vars.
+	current_turn = int(state.get("current_turn", 1))
+	rolls_left = int(state.get("rolls_left", MAX_ROLLS))
+	MAX_ROLLS = int(state.get("MAX_ROLLS", 3))
+	is_active = bool(state.get("is_active", false))
 	# Load stacks array
 	dice_bonus_stacks.clear()
 	var saved_stacks = state.get("dice_bonus_stacks", [])
-	for stack in saved_stacks:
-		dice_bonus_stacks.append(stack.duplicate())
-	_next_stack_id = state.get("_next_stack_id", 0)
-	score_streak_active = state.get("score_streak_active", false)
-	score_streak_turns_remaining = state.get("score_streak_turns_remaining", 0)
-	score_streak_multiplier = state.get("score_streak_multiplier", 1.0)
-	score_streak_current_turn = state.get("score_streak_current_turn", 0)
+	for saved_stack in saved_stacks:
+		var stack: Dictionary = saved_stack.duplicate()
+		stack["id"] = int(stack.get("id", 0))
+		stack["dice"] = int(stack.get("dice", 0))
+		stack["turns_remaining"] = int(stack.get("turns_remaining", 0))
+		dice_bonus_stacks.append(stack)
+	_next_stack_id = int(state.get("_next_stack_id", 0))
+	score_streak_active = bool(state.get("score_streak_active", false))
+	score_streak_turns_remaining = int(state.get("score_streak_turns_remaining", 0))
+	score_streak_multiplier = float(state.get("score_streak_multiplier", 1.0))
+	score_streak_current_turn = int(state.get("score_streak_current_turn", 0))
 	# Orange temporary roll bonus is session-scoped: never saved, always
 	# cleared on load (saved MAX_ROLLS is already the base value).
 	orange_rolls_pending = 0

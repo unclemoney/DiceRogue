@@ -320,6 +320,8 @@ func _create_debug_tabs() -> void:
 		],
 		"Diagnostics": [],
 		"Utilities": [
+			{"text": "Save Now (Run Save)", "method": "_debug_save_now"},
+			{"text": "Quarantine Run Save", "method": "_debug_quarantine_save"},
 			{"text": "Save Debug State", "method": "_debug_save_state"},
 			{"text": "Load Debug State", "method": "_debug_load_state"},
 			{"text": "Reset Game", "method": "_debug_reset_game"},
@@ -2915,6 +2917,32 @@ func _debug_load_state() -> void:
 	
 	log_debug("Saved state data:\n" + "\n".join(loaded_info))
 	log_debug("(Full state restoration not implemented - this shows what was saved)")
+
+## _debug_save_now()
+##
+## F12 hook: writes the current settled run save to disk immediately via
+## GameSaveManager.save_snapshot() (atomic tmp + rename, run_save_version 2).
+func _debug_save_now() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	if not GameSaveManager:
+		log_debug("ERROR: GameSaveManager autoload not available")
+		return
+	GameSaveManager.save_snapshot(game_controller.get_save_state())
+	log_debug("Run save written for the active profile slot")
+
+## _debug_quarantine_save()
+##
+## F12 hook: quarantines the active profile slot's run save to a timestamped
+## .bak, exercising the corrupt-save path without corrupting anything.
+func _debug_quarantine_save() -> void:
+	if not GameSaveManager:
+		log_debug("ERROR: GameSaveManager autoload not available")
+		return
+	GameSaveManager.quarantine_current_save()
+	log_debug("Run save quarantined to .bak (if one existed)")
 
 func _debug_activate_perfect_strangers() -> void:
 	if not game_controller:

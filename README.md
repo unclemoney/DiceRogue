@@ -175,6 +175,17 @@ Full documentation with parameters, recipes, and technical deep-dives: See `ARCA
   - ProgressManager reads `active_profile_slot` from GameSettings on startup
   - If order is wrong, profile 2/3 unlocks won't work correctly
 
+### Run Save System (Mid-Run Continue)
+- **GameSaveManager** (autoload, `Scripts/Managers/game_save_manager.gd`) owns the mid-run save: `user://profile_{slot}_run.save` for the active profile slot
+- **Autosave at settled points**: `update_settled_snapshot()` captures `GameController.get_save_state()` and writes it after dice settle, turn starts, scoring, grants, and debuffs — the disk save is always the last-known-good state
+- **Atomic writes**: saves go to a `.tmp` file first, then rename over the live save; a crashed write can never leave a half-written save
+- **Quarantine**: corrupt JSON, non-Dictionary roots, or saves from a newer version are renamed to a timestamped `.bak` (never deleted), so a bad save costs the run but not the data
+- **Run save version 2**: v1 saves still load (missing keys fall back to per-key defaults); newer versions are refused and quarantined
+- **Int normalization**: `JSON.parse()` returns all numbers as floats, so every `load_state()` coerces semantically-integer values with `int()` before assigning to typed `int` vars
+- **Mid-turn resume**: Continue restores dice values/locks, rolls left, round target, scorecard levels, and channel background, then re-engages the round via `RoundManager.resume_round_from_load()` (no resets, no `round_started` emit) and re-emits `turn_updated`/`rolls_updated` so the roll button is live
+- F12 debug commands: **Save Now (Run Save)** forces an immediate snapshot; **Quarantine Run Save** exercises the `.bak` path
+- Test: `Tests/SaveSystemTest.tscn` (atomic write, corrupt quarantine, v1 compat, float→int fidelity, newer-version refusal)
+
 ### Item Unlock & Difficulty System
 - All ~100 unlockable items (PowerUps, Consumables, Mods, Colored Dice) have a **difficulty rating** (1-10)
 - Difficulty scales with item power: starter items at 1, ultimate items at 10

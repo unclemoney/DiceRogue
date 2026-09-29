@@ -1151,9 +1151,10 @@ func get_state() -> Dictionary:
 func load_state(state: Dictionary) -> void:
 	clear_dice()
 	
-	var saved_count = state.get("dice_count", 5)
+	# JSON round-trips numbers as floats; coerce to int for the typed vars.
+	var saved_count = int(state.get("dice_count", 5))
 	var saved_type = state.get("current_dice_type", "d6")
-	current_roll_number = state.get("current_roll_number", 0)
+	current_roll_number = int(state.get("current_roll_number", 0))
 	
 	switch_dice_type(saved_type)
 	dice_count = saved_count
@@ -1185,12 +1186,12 @@ func load_state(state: Dictionary) -> void:
 		# Restore saved state if available
 		if i < saved_dice.size():
 			var saved = saved_dice[i]
-			die.value = saved.get("value", 1)
-			die.color = saved.get("color", 0)
-			die.is_locked = saved.get("is_locked", false)
+			die.value = int(saved.get("value", 1))
+			die.color = int(saved.get("color", 0)) as DiceColorClass.Type
+			die.is_locked = bool(saved.get("is_locked", false))
 			
 			# Set state via state machine
-			var state_int = saved.get("state", 0)
+			var state_int: int = int(saved.get("state", 0))
 			if state_int == int(Dice.DiceState.ROLLABLE):
 				die.make_rollable()
 			elif state_int == int(Dice.DiceState.ROLLED):

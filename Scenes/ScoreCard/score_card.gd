@@ -2069,22 +2069,36 @@ func get_state() -> Dictionary:
 ##
 ## Restores the scorecard state from a saved dictionary.
 func load_state(state: Dictionary) -> void:
-	upper_scores = state.get("upper_scores", {"ones": null, "twos": null, "threes": null, "fours": null, "fives": null, "sixes": null})
-	lower_scores = state.get("lower_scores", {"three_of_a_kind": null, "four_of_a_kind": null, "full_house": null, "small_straight": null, "large_straight": null, "yahtzee": null, "chance": null})
-	upper_levels = state.get("upper_levels", {"ones": 1, "twos": 1, "threes": 1, "fours": 1, "fives": 1, "sixes": 1})
-	lower_levels = state.get("lower_levels", {"three_of_a_kind": 1, "four_of_a_kind": 1, "full_house": 1, "small_straight": 1, "large_straight": 1, "yahtzee": 1, "chance": 1})
-	upper_bonus = state.get("upper_bonus", 0)
-	upper_bonus_awarded = state.get("upper_bonus_awarded", false)
-	yahtzee_bonuses = state.get("yahtzee_bonuses", 0)
-	yahtzee_bonus_points = state.get("yahtzee_bonus_points", 0)
-	yahtzee_scored = state.get("yahtzee_scored", false)
-	current_round_number = state.get("current_round_number", 1)
-	current_dice_sides = state.get("current_dice_sides", 6)
-	sixth_slot_target = state.get("sixth_slot_target", 6)
-	sixth_slot_multiplier = state.get("sixth_slot_multiplier", 1)
-	allow_gap_straights = state.get("allow_gap_straights", false)
-	allow_four_kind_yahtzee = state.get("allow_four_kind_yahtzee", false)
-	allow_two_pair_full_house = state.get("allow_two_pair_full_house", false)
-	last_base_score = state.get("last_base_score", 0)
+	# JSON round-trips numbers as floats; coerce to int/bool for the typed vars.
+	upper_scores = _coerce_int_dict(state.get("upper_scores", {"ones": null, "twos": null, "threes": null, "fours": null, "fives": null, "sixes": null}))
+	lower_scores = _coerce_int_dict(state.get("lower_scores", {"three_of_a_kind": null, "four_of_a_kind": null, "full_house": null, "small_straight": null, "large_straight": null, "yahtzee": null, "chance": null}))
+	upper_levels = _coerce_int_dict(state.get("upper_levels", {"ones": 1, "twos": 1, "threes": 1, "fours": 1, "fives": 1, "sixes": 1}))
+	lower_levels = _coerce_int_dict(state.get("lower_levels", {"three_of_a_kind": 1, "four_of_a_kind": 1, "full_house": 1, "small_straight": 1, "large_straight": 1, "yahtzee": 1, "chance": 1}))
+	upper_bonus = int(state.get("upper_bonus", 0))
+	upper_bonus_awarded = bool(state.get("upper_bonus_awarded", false))
+	yahtzee_bonuses = int(state.get("yahtzee_bonuses", 0))
+	yahtzee_bonus_points = int(state.get("yahtzee_bonus_points", 0))
+	yahtzee_scored = bool(state.get("yahtzee_scored", false))
+	current_round_number = int(state.get("current_round_number", 1))
+	current_dice_sides = int(state.get("current_dice_sides", 6))
+	sixth_slot_target = int(state.get("sixth_slot_target", 6))
+	sixth_slot_multiplier = int(state.get("sixth_slot_multiplier", 1))
+	allow_gap_straights = bool(state.get("allow_gap_straights", false))
+	allow_four_kind_yahtzee = bool(state.get("allow_four_kind_yahtzee", false))
+	allow_two_pair_full_house = bool(state.get("allow_two_pair_full_house", false))
+	last_base_score = int(state.get("last_base_score", 0))
 	emit_signal("score_changed", get_total_score())
 	print("[Scorecard] State loaded")
+
+
+## _coerce_int_dict(d: Dictionary) -> Dictionary
+##
+## Returns a duplicate of the dictionary with every non-null value coerced
+## to int. Nulls are preserved (null means unscored on the scorecard).
+## Used by load_state because JSON round-trips numbers as floats.
+func _coerce_int_dict(d: Dictionary) -> Dictionary:
+	var result: Dictionary = d.duplicate()
+	for key in result:
+		if result[key] != null:
+			result[key] = int(result[key])
+	return result

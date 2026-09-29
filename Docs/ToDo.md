@@ -28,7 +28,8 @@
 
 ## SYS:Gameplay — Core Gameplay & Balance
 
-- [ ] `P2-Minor` Bonus Collector USE state needs to be checked.  After achieving upper bonus, it is disabled.
+- [ ] `P2-Minor` Refactor Magic Mitt PowerUp to affect the REP meter.
+- [X] `P2-Minor` Bonus Collector USE state needs to be checked.  After achieving upper bonus, it is disabled.
 - [ ] `P2-Minor` Had color dice carry over?
 - [ ] `P2-Minor` Have some fanfare and notify the player when a buff is added.
 - [ ] `P2-Minor` Better way to SELL Mods? This needs more detail and exploration.

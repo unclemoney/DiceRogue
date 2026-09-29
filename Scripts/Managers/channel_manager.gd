@@ -655,12 +655,12 @@ func get_state() -> Dictionary:
 ##
 ## Restores the channel state from a saved dictionary.
 func load_state(state: Dictionary) -> void:
-	var new_channel = state.get("current_channel", 1)
-	set_channel(new_channel)
+	# JSON round-trips numbers as floats; coerce to int for the typed param.
+	set_channel(int(state.get("current_channel", 1)))
 	# Old saves have no difficulty key; default to Medium (no migration).
 	# JSON round-trips numbers as floats, so coerce to int for the enum.
 	selected_difficulty = int(state.get("selected_difficulty", Difficulty.MEDIUM)) as Difficulty
-	store_assignment_seed = state.get("store_assignment_seed", 0)
+	store_assignment_seed = int(state.get("store_assignment_seed", 0))
 	# JSON round-trips turn int keys into strings; convert back.
 	zone_store_names.clear()
 	var saved_stores: Dictionary = state.get("zone_store_names", {})

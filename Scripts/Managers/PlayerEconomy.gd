@@ -101,6 +101,7 @@ func get_state() -> Dictionary:
 ##
 ## Restores the economy state from a saved dictionary.
 func load_state(state: Dictionary) -> void:
-	money = state.get("money", 100)
-	piggy_bank_savings = state.get("piggy_bank_savings", 0)
+	# JSON round-trips numbers as floats; coerce to int for the typed vars.
+	money = int(state.get("money", 100))
+	piggy_bank_savings = int(state.get("piggy_bank_savings", 0))
 	emit_signal("money_changed", money, 0)
