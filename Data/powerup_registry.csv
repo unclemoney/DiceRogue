@@ -9,7 +9,7 @@ MoneyBagsPowerUp.tres,Ca$h,,epic,R,Score multiplier = ($Money / 100) + 1,,pendin
 PerfectStrangers.tres,Chance Factor,EZ-Bake,rare,PG-13,"When scoring CHANCE, gain a random 1.1x-1.5x multiplier for that score",,pending
 RandomizerPowerUp.tres,Chaos Dice,,uncommon,PG-13,"Each turn applies a random score modifier: 80% chance for additive bonus (-20 to +50), 20% chance for multiplier.",,pending
 DebuffDestroyerPowerUp.tres,Cleanse,,epic,PG-13,Removes 1 random debuff upon selling,,pending
-ChoreChampionPowerUp.tres,Cleanup Captain,,common,G,Chores are 2x more effective,,pending
+ChoreChampionPowerUp.tres,Cleanup Captain,,common,G,Chores are 2x more effective and pay 2x money,,pending
 ExtraRainbow.tres,Color Surge,Candy Ring,rare,PG-13,+10 per colored die scored,,pending
 BonusMoneyPowerUp.tres,Combo Meal,,uncommon,G,+$50 for each bonus achieved (Upper Section Bonus or Yahtzee Bonus),,pending
 ComebackKid.tres,Comeback Kid,,rare,PG-13,+5 score for each category sitting at 0,,pending

@@ -38,8 +38,6 @@
 
 ## SYS:Chore — Chore System & Mom
 
-- [ ] `P1-Major` Chore Champion should also update rewards. Review this.
-- [ ] `P2-Minor` Mom: Make it 10 doesn't make any sense-- change to make it 50.
 - [ ] `P2-Minor` Add additional first round check-ins.  We essentially don't want repeat check-in's in the same game.  Are the story arcs actually working?
 
 ## SYS:Shop — Shop & Economy
@@ -195,6 +193,8 @@
 - [X] Mom Panel bounce-in is too harsh. Soften the animation.
 
 ## Features — Completed
+- [X] `P1-Major` Chore Champion should also update rewards.
+- [X] `P2-Minor` Mom: Make it 10 doesn't make any sense-- change to make it 50.
 - [X] `P2-Minor` Teachers pet buff did not add 100$ at the end of the round.
 - [X] Synergy visual indicators — translucent background glow on compact PowerUp slots and halo ring on fan-out cards (rating color for matching sets, animated rainbow for Rainbow Bonus), fan-view synergy summary banner, and "SYNERGY!" popup on activation.
 - [X] Update music so that if layers with drum solos and fills get followed by a crash layer automatically. Add a crash layer.

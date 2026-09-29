@@ -1316,7 +1316,7 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.ROLL_YAHTZEE, 1, 3)
 	_add_default_power_up("green_slime", "Green Slime", "Doubles green dice probability", 
 		UnlockConditionClass.ConditionType.EARN_MONEY, 75, 3)
-	_add_default_power_up("chore_champion", "Chore Champion", "Chores are 2x more effective", 
+	_add_default_power_up("chore_champion", "Chore Champion", "Chores are 2x more effective and pay 2x money", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 5, 3, {"cumulative": true})
 	_add_default_power_up("pair_paradise", "Pair Paradise", "Pair bonuses: +3/+6/+9 based on pattern", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 18, 3, {"category": "three_of_a_kind"})
