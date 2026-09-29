@@ -41,7 +41,7 @@ metadata/_custom_type_script = "uid://d0h8ia570dbbb"
 
 [sub_resource type="Resource" id="Resource_12eat"]
 script = ExtResource("2_12eat")
-weight = 2.0
+weight = 5.0
 effect = "storms_off"
 magnitude = 0
 mood_delta = 1
@@ -63,7 +63,7 @@ metadata/_custom_type_script = "uid://dxwgr1c0fc1bj"
 [resource]
 script = ExtResource("1_node")
 id = "checkin_nostalgia_photo"
-mom_text = "[color=green]Ta-daaa![/color] Your fourth birthday. Spaghetti ALL over your face, wearing the bowl as a hat. I'm getting copies made for Debra."
+mom_text = "[color=green]Ta-daaa![/color] Your fourth birthday. Spaghetti ALL over your face, wearing the bowl as a hat. I'm getting copies made for your aunt Debra."
 expression = "happy"
 speaker_name = "Mom"
 speaker_tint = Color(1, 1, 1, 1)

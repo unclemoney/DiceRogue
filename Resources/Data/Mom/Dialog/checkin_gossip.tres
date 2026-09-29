@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="MomDialogNode" load_steps=15 format=3]
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=14 format=3 uid="uid://0q5ola7efc43"]
 
 [ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
 [ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
@@ -33,8 +33,8 @@ ends_visit = true
 [sub_resource type="Resource" id="out_polite_3"]
 script = ExtResource("3_out")
 weight = 1.0
-effect = "none"
-magnitude = 0
+effect = "reward_powerup"
+magnitude = 1
 mood_delta = 0
 grudge_delta = 0
 permanent = false

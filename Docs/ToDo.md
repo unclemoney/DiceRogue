@@ -28,42 +28,32 @@
 
 ## SYS:Gameplay — Core Gameplay & Balance
 
-- [X] `P1-Major` Consider a Consumable refactor where the consumable owns when it can be played-- any time, before round start, etc-- and, what dice set it can be played with.  This will fix several small refactor issues permanently.
-- [X] `P1-Major` Consumable Go Broke or Go Home mechanics don't work well.  Selecting category scores, and so it's garunteed.  Let's randomly select a category for the player to score in.
-- [X] `P1-Major` Build a difficulty scaling system so the player can select difficulty, and it will scale: rewards, challenges, and chore pressure, as well as number of items carried over rounds.
-- [X] `P2-Minor` Spamming Roll allows the player to roll even after winning the round and before keep playing appears, this leaves a next turn in a useable state, even though we are between rounds.  If winning the round is triggered, disable Roll button, re-enable is continue playing is selected.
+- [ ] `P2-Minor` Bonus Collector USE state needs to be checked.  After achieving upper bonus, it is disabled.
 - [ ] `P2-Minor` Had color dice carry over?
-- [X] `P2-Minor` Incorrect dice set consumables are still showing up-- no EO Full House should show up for d6.
 - [ ] `P2-Minor` Have some fanfare and notify the player when a buff is added.
 - [ ] `P2-Minor` Better way to SELL Mods? This needs more detail and exploration.
 - [ ] `P2-Minor` Upper bonus multiplier power up. Add a new PowerUp that will multiply Upper Section Bonus.
-- [X] `P2-Minor` Chore pressure is not enough, needs more balance? This will be addressed in the new difficulty system.
-- [X] `P2-Minor` +150 for Upper section bonus should only be allowed to USE after +63 is achieved.
-- [X] `P2-Minor` Sweet Sixteen needs to be assessed and fixed or cut.
-- [X] `P2-Minor` Which rounds feel wrong? Higher or lower scores? What is the target? Round 4 feels too hard.  This will be addressed in new difficulty system.
 
 ## Bugs
-
-- [X] `P0-Critical`Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'. Stackframe TweenFX.gd: 1295 anonymous lambda
 
 ## SYS:Chore — Chore System & Mom
 
 - [ ] `P1-Major` Chore Champion should also update rewards. Review this.
-- [X] `P2-Minor` Teachers pet buff did not add 100$ at the end of the round.
 - [ ] `P2-Minor` Mom: Make it 10 doesn't make any sense-- change to make it 50.
 - [ ] `P2-Minor` Add additional first round check-ins.  We essentially don't want repeat check-in's in the same game.  Are the story arcs actually working?
 
 ## SYS:Shop — Shop & Economy
 
-- [X] `P2-Minor` Make lock item screens easier to read.
 
 ## SYS:UI — UI / UX & Animation
 
-- [X] `P1-Major` Initial container sizing of PowerUp container is vertically to tall, and needs to be kept consistent.  It changes after gameplay begins.
-- [X] `P2-Minor` Update scoring animations to make a additive and multiplier popup, remove stale animations, and jackpot animations for non jackpot items.
+- [ ] `P1-Major` Complete scoring animation before round end or chore panel is shown.
+- [ ] `P2-Minor` Scoring animation is showing the rounding down from multipliers.
 - [ ] `P2-Minor` Change upgrade scorecard sound.
 - [ ] `P2-Minor` Update Challenge Icons.
-- [X] `P2-Minor` There is a stale shop tooltip that ocassinally is left on screen.  Investigating circumstances-- it's being frozen in an odd place, so it seems to happen in a tween process that is getting killed for some reason.
+- [ ] `P2-Minor` Update game over screen.
+- [ ] `P2-Minor` Tooltips on Mall Map not showing up.
+- [ ] `P2-Minor` Mall Map tooltip not showing next up challenges.
 
 
 ## SYS:Save — Save, Load & State Management
@@ -94,6 +84,12 @@
 # Completed Archive
 
 ## Game Balance — Completed
+- [X] `P0-Critical`Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'. Stackframe TweenFX.gd: 1295 anonymous lambda
+- [X] `P2-Minor` Incorrect dice set consumables are still showing up-- no EO Full House should show up for d6.
+- [X] `P1-Major` Consider a Consumable refactor where the consumable owns when it can be played-- any time, before round start, etc-- and, what dice set it can be played with.  This will fix several small refactor issues permanently.
+- [X] `P1-Major` Consumable Go Broke or Go Home mechanics don't work well.  Selecting category scores, and so it's garunteed.  Let's randomly select a category for the player to score in.
+- [X] `P1-Major` Build a difficulty scaling system so the player can select difficulty, and it will scale: rewards, challenges, and chore pressure, as well as number of items carried over rounds.
+- [X] `P2-Minor` Spamming Roll allows the player to roll even after winning the round and before keep playing appears, this leaves a next turn in a useable state, even though we are between rounds.  If winning the round is triggered, disable Roll button, re-enable is continue playing is selected.
 - [X] `P0-Critical` Odds only mod rolled a 2. Fixed with mod update.
 - [X] `P1-Major` Best Hand calculated 426 for Chance. Player selected small straight and still got 426. Hand logic is wrong. Fixed with update to scratch logic.
 - [X] `P1-Major` Mom said you earned a punishment, but no debuff was added.  Let's check all mom interactions for consistency. This only happened in Mall Zone 1, but subsequent zones worked properly.
@@ -105,6 +101,7 @@
 - [X] `P2-Minor` Make mods disabled obvious. During Disabled Mods Debuff, add a shader to the MOD icon.
 - [X] `P2-Minor` Bonus Yahtzee category? That's gone. We can add that to the YAHTZEE line.
 - [X] `P2-Minor` Play PowerUp for double acting feature for one turn per round? Sega Saturn was refactored to use this.
+- [X] `P2-Minor` There is a stale shop tooltip that ocassinally is left on screen.  Investigating circumstances-- it's being frozen in an odd place, so it seems to happen in a tween process that is getting killed for some reason.
 - [X] G and PG Synergies are being activated in a strange way with 3g and 2pg. Shouldn't happen.
 - [X] More Mom interactions. Balance needed if a player only uses color dice. Rep not increasing enough.
 - [X] Mom Panels need to stay one consistent size.
@@ -139,6 +136,10 @@
 - [X] Teacher's Pet BUFF did not apply the +100 dollars.
 - [X] Mom Dialog and reward should match. They currently do not align.
 - [X] Chores should be filtered by the dice set being used. d4 runs should not show d6 chores.
+- [X] `P2-Minor` Chore pressure is not enough, needs more balance? This will be addressed in the new difficulty system.
+- [X] `P2-Minor` +150 for Upper section bonus should only be allowed to USE after +63 is achieved.
+- [X] `P2-Minor` Sweet Sixteen needs to be assessed and fixed or cut.
+- [X] `P2-Minor` Which rounds feel wrong? Higher or lower scores? What is the target? Round 4 feels too hard.  This will be addressed in new difficulty system.
 
 ## Testing — Completed
 - [X] Debug Panel doesn't have a way to test MODS.
@@ -194,6 +195,7 @@
 - [X] Mom Panel bounce-in is too harsh. Soften the animation.
 
 ## Features — Completed
+- [X] `P2-Minor` Teachers pet buff did not add 100$ at the end of the round.
 - [X] Synergy visual indicators — translucent background glow on compact PowerUp slots and halo ring on fan-out cards (rating color for matching sets, animated rainbow for Rainbow Bonus), fan-view synergy summary banner, and "SYNERGY!" popup on activation.
 - [X] Update music so that if layers with drum solos and fills get followed by a crash layer automatically. Add a crash layer.
 - [X] New round needs to visually show what the debuffs are going to be.
@@ -242,12 +244,15 @@
 
 ## UI/UX - Completed
 
+- [X] `P1-Major` Initial container sizing of PowerUp container is vertically to tall, and needs to be kept consistent.  It changes after gameplay begins.
+- [X] `P2-Minor` Update scoring animations to make a additive and multiplier popup, remove stale animations, and jackpot animations for non jackpot items.
 - [X] `P1-Major` Find all layers and overlays, sort priority and then implament a standard across the game.
 - [X] `P1-Major` Mall Map Fan Out still rough. Mall Zone 1 shows "coming up" instead of "completed". Mall Zone 2 shows correctly.
 - [X] `P2-Minor` Roll button ocassionally remains too large, always ensure it reverts to original size.
 - [X] `P2-Minor` Shockwave animations can also be applied to buttons that need to be pressed or chosen.
 - [X] `P2-Minor` Click on the Mall Zone upper left to bring up the mall map. Show coming challenges.
 - [X] `P2-Minor` Update buttons to glass shader so they are uniform.
+- [X] `P2-Minor` Make lock item screens easier to read.
 
 ## Bugs — Completed
 - [X] Disabled 2's should add a red shader to the 2's dice face.

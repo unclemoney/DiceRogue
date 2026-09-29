@@ -1,6 +1,29 @@
-[gd_resource type="Resource" script_class="MomDialogNode" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=6 format=3 uid="uid://byuxb4otkxs0j"]
 
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="1_ajfpb"]
 [ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="2_5ti6e"]
+
+[sub_resource type="Resource" id="Resource_ey4hs"]
+script = ExtResource("2_5ti6e")
+weight = 9.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = -1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = ""
+result_expression = ""
+ends_visit = true
+metadata/_custom_type_script = "uid://d0h8ia570dbbb"
+
+[sub_resource type="Resource" id="Resource_bak74"]
+script = ExtResource("1_ajfpb")
+button_text = "Good job, mom."
+tone = "neutral"
+outcomes = Array[ExtResource("2_5ti6e")]([SubResource("Resource_ey4hs")])
+metadata/_custom_type_script = "uid://dxwgr1c0fc1bj"
 
 [resource]
 script = ExtResource("1_node")
@@ -9,4 +32,4 @@ mom_text = "Debra walked past the bake sale in that perfume cloud of hers. Three
 expression = "happy"
 speaker_name = "Mom"
 speaker_tint = Color(1, 1, 1, 1)
-responses = Array[Resource]([])
+responses = Array[ExtResource("1_ajfpb")]([SubResource("Resource_bak74")])

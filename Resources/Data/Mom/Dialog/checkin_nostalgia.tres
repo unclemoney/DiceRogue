@@ -6,7 +6,7 @@
 
 [sub_resource type="Resource" id="out_polite_1"]
 script = ExtResource("3_out")
-weight = 6.0
+weight = 5.0
 effect = "mood_delta"
 magnitude = 0
 mood_delta = -1
@@ -32,8 +32,8 @@ ends_visit = true
 
 [sub_resource type="Resource" id="out_polite_3"]
 script = ExtResource("3_out")
-weight = 1.0
-effect = "mood_delta"
+weight = 2.0
+effect = "reward_powerup"
 magnitude = 0
 mood_delta = -1
 grudge_delta = 0

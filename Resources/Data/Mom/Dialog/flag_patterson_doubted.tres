@@ -1,9 +1,13 @@
-[gd_resource type="Resource" script_class="MomDialogNode" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=3 format=3 uid="uid://c6f4j47xks7ig"]
 
 [ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="1_w4b1o"]
 
 [resource]
 script = ExtResource("1_node")
 id = "flag_patterson_doubted"
 mom_text = "...Hmm. Maybe she got it wrong this time. Don't look so smug."
 expression = "neutral"
+speaker_name = "Mom"
+speaker_tint = Color(1, 1, 1, 1)
+responses = Array[ExtResource("1_w4b1o")]([])

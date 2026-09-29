@@ -8,7 +8,7 @@
 script = ExtResource("1_40cld")
 id = "chance520"
 display_name = "520"
-description = "+5 to all scores for each Chance category scored with 20 or above"
+description = "Add +5 to a cumulative total for each Chance category scored with 20 or above."
 icon = ExtResource("1_7lvum")
 scene = ExtResource("2_awvan")
 price = 100
