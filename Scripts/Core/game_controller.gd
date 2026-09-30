@@ -5707,6 +5707,7 @@ func _apply_automatic_debuffs(round_number: int) -> void:
 				var max_debuffs = round_config.max_debuffs if round_config.get("max_debuffs") != null else 0
 				var difficulty_cap = round_config.debuff_difficulty_cap if round_config.get("debuff_difficulty_cap") != null else 1
 				max_debuffs = maxi(0, max_debuffs + channel_manager.get_run_debuff_count_modifier())
+				difficulty_cap = mini(difficulty_cap, channel_manager.get_run_debuff_difficulty_gate())
 				selected_ids = debuff_manager.select_debuffs_for_round(max_debuffs, difficulty_cap, false)
 	
 	var channel_number = channel_manager.current_channel
@@ -7435,6 +7436,7 @@ func _build_round_panel_data(round_num: int) -> Dictionary:
 						auto_ids.append(boss_id)
 				else:
 					max_debuffs = maxi(0, max_debuffs + channel_manager.get_run_debuff_count_modifier())
+					difficulty_cap = mini(difficulty_cap, channel_manager.get_run_debuff_difficulty_gate())
 					auto_ids = debuff_manager.select_debuffs_for_round(max_debuffs, difficulty_cap, false, preview_ids)
 				for id in auto_ids:
 					if id not in preview_ids:

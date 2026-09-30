@@ -17,5 +17,6 @@ icon = SubResource("AtlasTexture_c09")
 scene = ExtResource("2_scene")
 price = 75
 allowed_dice_sets = Array[int]([])
+exclude_listed_dice_sets = false
 usage_window = 0
 usage_conditions = Array[StringName]([])

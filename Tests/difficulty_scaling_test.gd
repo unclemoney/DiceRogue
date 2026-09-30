@@ -16,12 +16,15 @@ func _ready() -> void:
 	ok = _check("default debuff modifier 0", cm.get_run_debuff_count_modifier() == 0) and ok
 	ok = _check("default chore threshold 100", cm.get_chore_meter_threshold() == 100) and ok
 	ok = _check("default carryover adjustment 0", cm.get_carryover_count_adjustment() == 0) and ok
+	ok = _check("default debuff gate 4", cm.get_run_debuff_difficulty_gate() == 4) and ok
 
 	# Easy
 	cm.set_selected_difficulty(ChannelManager.Difficulty.EASY)
 	ok = _check("easy reward mult 1.25", cm.get_run_reward_multiplier() == 1.25) and ok
 	ok = _check("easy challenge mult 0.8", cm.get_run_challenge_multiplier() == 0.80) and ok
 	ok = _check("easy debuff modifier -1", cm.get_run_debuff_count_modifier() == -1) and ok
+	ok = _check("easy debuff gate 3", cm.get_run_debuff_difficulty_gate() == 3) and ok
+	ok = _check("easy gate clamps cap, never raises", mini(2, cm.get_run_debuff_difficulty_gate()) == 2) and ok
 	ok = _check("easy chore threshold 125", cm.get_chore_meter_threshold() == 125) and ok
 	ok = _check("easy carryover adjustment +2", cm.get_carryover_count_adjustment() == 2) and ok
 	ok = _check("easy display name", cm.get_difficulty_display_name() == "Easy") and ok
@@ -31,6 +34,8 @@ func _ready() -> void:
 	ok = _check("hard reward mult 0.75", cm.get_run_reward_multiplier() == 0.75) and ok
 	ok = _check("hard challenge mult 1.25", cm.get_run_challenge_multiplier() == 1.25) and ok
 	ok = _check("hard debuff modifier +1", cm.get_run_debuff_count_modifier() == 1) and ok
+	ok = _check("hard debuff gate 5", cm.get_run_debuff_difficulty_gate() == 5) and ok
+	ok = _check("hard gate does not raise configured cap", mini(4, cm.get_run_debuff_difficulty_gate()) == 4) and ok
 	ok = _check("hard chore threshold 75", cm.get_chore_meter_threshold() == 75) and ok
 	ok = _check("hard carryover adjustment clamps to 0", maxi(0, 3 + cm.get_carryover_count_adjustment()) == 0) and ok
 

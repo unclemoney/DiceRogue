@@ -34,6 +34,7 @@ Scaling values (all in `Scripts/Managers/channel_manager.gd`):
 | End-of-round reward money multiplier | 1.25x | 1.00x | 0.75x |
 | Round target score multiplier | 0.80x | 1.00x | 1.25x |
 | Automatic debuff count modifier per round | -1 | +0 | +1 |
+| Debuff difficulty rating gate (ceiling) | 3 | 4 | 5 |
 | Goof-off meter threshold (rolls to trigger Mom) | 125 | 100 | 75 |
 | Zone-transition carry-over selections | +2 | channel config | 0 (fresh start) |
 
@@ -41,7 +42,7 @@ Wiring points:
 
 - **Rewards**: `GameController._show_end_of_round_stats()` scales the challenge reward, chore rewards, empty-category bonus, and points-above bonus per component before packing the stats panel data. Buff/PowerUp bonus rows are unscaled.
 - **Challenge targets**: `GameController._compute_round_target()` multiplies the channel-scaled target by `get_run_challenge_multiplier()`.
-- **Debuff count**: `RoundManager._preselect_round_debuffs()` and `GameController._apply_automatic_debuffs()` / `_build_round_panel_data()` add `get_run_debuff_count_modifier()` to `max_debuffs` (clamped >= 0; boss rounds exempt).
+- **Debuff count**: `RoundManager._preselect_round_debuffs()` and `GameController._apply_automatic_debuffs()` / `_build_round_panel_data()` add `get_run_debuff_count_modifier()` to `max_debuffs` (clamped >= 0; boss rounds exempt) and clamp `debuff_difficulty_cap` with `mini(cap, get_run_debuff_difficulty_gate())`. The gate is a ceiling only — it never raises a round's configured cap. Boss rounds keep their configured `boss_debuff_level`.
 - **Chore pressure**: `ChoresManager.get_scaled_max_progress()` returns `ChannelManager.get_chore_meter_threshold()`.
 - **Carry-overs**: `GameController._show_carry_over_panel()` adds `get_carryover_count_adjustment()` to the next zone's allowed selections (clamped >= 0).
 

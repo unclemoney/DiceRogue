@@ -43,6 +43,14 @@ const RUN_DEBUFF_COUNT_MODIFIERS := {
 	Difficulty.MEDIUM: 0,
 	Difficulty.HARD: 1,
 }
+## Ceiling on the debuff difficulty rating that automatic round draws may
+## select. Applied with mini() against each round's configured cap, so it can
+## only lower the cap, never raise it. Boss rounds are exempt.
+const RUN_DEBUFF_DIFFICULTY_GATES := {
+	Difficulty.EASY: 3,
+	Difficulty.MEDIUM: 4,
+	Difficulty.HARD: 5,
+}
 const CHORE_METER_THRESHOLDS := {
 	Difficulty.EASY: 125,
 	Difficulty.MEDIUM: 100,
@@ -139,6 +147,15 @@ func get_run_challenge_multiplier() -> float:
 ## by callers). Easy draws one fewer, Hard draws one more.
 func get_run_debuff_count_modifier() -> int:
 	return RUN_DEBUFF_COUNT_MODIFIERS.get(selected_difficulty, 0)
+
+
+## get_run_debuff_difficulty_gate() -> int
+##
+## Ceiling on the debuff difficulty rating for automatic round draws
+## (Easy 3 / Medium 4 / Hard 5). Callers apply mini() with the round's
+## configured cap; boss rounds are exempt.
+func get_run_debuff_difficulty_gate() -> int:
+	return RUN_DEBUFF_DIFFICULTY_GATES.get(selected_difficulty, 4)
 
 
 ## get_chore_meter_threshold() -> int

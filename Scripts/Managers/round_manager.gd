@@ -158,6 +158,7 @@ func _preselect_round_debuffs(round_config: RoundDifficultyConfig) -> Dictionary
 		var difficulty_cap = round_config.debuff_difficulty_cap if round_config.get("debuff_difficulty_cap") != null else 1
 		if is_instance_valid(channel_manager) and channel_manager.has_method("get_run_debuff_count_modifier"):
 			max_debuffs = maxi(0, max_debuffs + channel_manager.get_run_debuff_count_modifier())
+			difficulty_cap = mini(difficulty_cap, channel_manager.get_run_debuff_difficulty_gate())
 		result["debuff_ids"] = debuff_manager.select_debuffs_for_round(max_debuffs, difficulty_cap, false, used_ids)
 
 	return result

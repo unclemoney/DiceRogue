@@ -2391,6 +2391,7 @@ func _debug_show_run_difficulty() -> void:
 	log_debug("  Target multiplier: %.2fx" % channel_manager.get_run_challenge_multiplier())
 	log_debug("  Reward multiplier: %.2fx" % channel_manager.get_run_reward_multiplier())
 	log_debug("  Debuff count modifier: %+d" % channel_manager.get_run_debuff_count_modifier())
+	log_debug("  Debuff difficulty gate: %d" % channel_manager.get_run_debuff_difficulty_gate())
 	log_debug("  Chore meter threshold: %d" % channel_manager.get_chore_meter_threshold())
 	log_debug("  Carryover adjustment: %+d" % channel_manager.get_carryover_count_adjustment())
 
