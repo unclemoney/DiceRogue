@@ -395,7 +395,7 @@ func _build_ui() -> void:
 	side_margin.add_child(side_vbox)
 
 	var title_label := Label.new()
-	title_label.text = "SELECT STORE"
+	title_label.text = "HERRITAGE MALL"
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.add_theme_font_override("font", VCR_FONT)
 	title_label.add_theme_font_size_override("font_size", 20)
@@ -406,7 +406,7 @@ func _build_ui() -> void:
 	section_chip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	section_chip.add_theme_font_override("font", VCR_FONT)
 	section_chip.add_theme_font_size_override("font_size", 11)
-	side_vbox.add_child(section_chip)
+	#side_vbox.add_child(section_chip)
 
 	zone_name_label = Label.new()
 	zone_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -439,20 +439,20 @@ func _build_ui() -> void:
 	completion_label = Label.new()
 	completion_label.add_theme_font_override("font", VCR_FONT)
 	completion_label.add_theme_font_size_override("font_size", 12)
-	status_row.add_child(completion_label)
+	#status_row.add_child(completion_label)
 
 	multiplier_label = Label.new()
 	multiplier_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	multiplier_label.add_theme_font_override("font", VCR_FONT)
 	multiplier_label.add_theme_font_size_override("font_size", 18)
 	multiplier_label.add_theme_color_override("font_color", Color(0.70, 0.94, 0.78))
-	side_vbox.add_child(multiplier_label)
+	#side_vbox.add_child(multiplier_label)
 
 	difficulty_label = Label.new()
 	difficulty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	difficulty_label.add_theme_font_override("font", VCR_FONT)
 	difficulty_label.add_theme_font_size_override("font_size", 15)
-	side_vbox.add_child(difficulty_label)
+	#side_vbox.add_child(difficulty_label)
 
 	description_label = Label.new()
 	description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -467,7 +467,7 @@ func _build_ui() -> void:
 	bonus_label.add_theme_font_override("font", VCR_FONT)
 	bonus_label.add_theme_font_size_override("font_size", 12)
 	bonus_label.add_theme_color_override("font_color", Color(1.0, 0.84, 0.36))
-	side_vbox.add_child(bonus_label)
+	#side_vbox.add_child(bonus_label)
 
 	var dice_title := Label.new()
 	dice_title.text = "DICE SET"
@@ -531,6 +531,10 @@ func _build_ui() -> void:
 
 	_update_dice_set_display()
 
+	var spacer_hbox := HBoxContainer.new()
+	shell_hbox.add_theme_constant_override("separation", 26)
+	shell_margin.add_child(spacer_hbox)
+
 	var difficulty_title := Label.new()
 	difficulty_title.text = "DIFFICULTY"
 	difficulty_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -564,12 +568,12 @@ func _build_ui() -> void:
 	_difficulty_summary_label.add_theme_font_override("font", VCR_FONT)
 	_difficulty_summary_label.add_theme_font_size_override("font_size", 10)
 	_difficulty_summary_label.add_theme_color_override("font_color", Color(0.78, 0.78, 0.84))
-	side_vbox.add_child(_difficulty_summary_label)
+	#side_vbox.add_child(_difficulty_summary_label)
 
 	_sync_difficulty_from_manager()
 
 	_keyboard_hint_label = Label.new()
-	_keyboard_hint_label.text = "ENTER START"
+	_keyboard_hint_label.text = "CHOOSE YOUR DIFFICULTY AND DICE SET"
 	_keyboard_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_keyboard_hint_label.add_theme_font_override("font", VCR_FONT)
 	_keyboard_hint_label.add_theme_font_size_override("font_size", 11)
