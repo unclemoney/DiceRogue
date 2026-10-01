@@ -1,0 +1,123 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=14 format=3 uid="uid://b4hyt7w2n6qrf"]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite_1"]
+script = ExtResource("3_out")
+weight = 5.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = -1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=green]SEE?[/color] No arguments, no loopholes. Your father could take notes. FROM YOU."
+result_expression = "happy"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_polite_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "reward_money"
+magnitude = 30
+mood_delta = -1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=green]Such maturity deserves funding.[/color] Here's a little allowance bump. Spend it on non-dice things. Kidding. Mostly."
+result_expression = "happy"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "Fair enough. House rules."
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource("out_polite_2")])
+
+[sub_resource type="Resource" id="out_neutral_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "none"
+magnitude = 0
+mood_delta = 0
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "Clause two, subsection A. I anticipated you. Mom's been closing loopholes since before you could hold a d6."
+result_expression = "neutral"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_neutral_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=orange]LOOKING for loopholes already?[/color] The rule is five minutes old and you're lawyering it."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "Does rolling under the table count?"
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
+
+[sub_resource type="Resource" id="out_sassy_1"]
+script = ExtResource("3_out")
+weight = 5.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = 2
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=red]I CAN AND I WILL.[/color] Probability is now a privilege, young man, and privileges get REVOKED."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_sassy_2"]
+script = ExtResource("3_out")
+weight = 2.0
+effect = "grudge_delta"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 1
+permanent = false
+followup_node_id = ""
+result_text = "[color=orange]Keep talking.[/color] Clause three just became 'no dice in the HOUSE.' One more word."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_sassy_3"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "...That's honestly a great slogan. It's going on the rule poster. [color=orange]Right above 'Mom regulates probability.'[/color]"
+result_expression = "neutral"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "You can't regulate probability."
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2"), SubResource("out_sassy_3")])
+
+[resource]
+script = ExtResource("1_node")
+id = "checkin_new_rule"
+mom_text = "Family meeting of one! Effective immediately: NO dice at the dinner table. Also no rolling under the table, no 'just checking' the dice, and no dice-adjacent commentary during meatloaf."
+expression = "neutral"
+speaker_name = "Mom"
+speaker_tint = Color(1, 1, 1, 1)
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

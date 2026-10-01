@@ -65,6 +65,11 @@ const CHECKIN_FLAVOR_POOL: Dictionary = {
 	"checkin_gossip": 2.0,
 	"checkin_bargain": 2.0,
 	"checkin_zone_flavor": 1.0,
+	"checkin_casserole": 2.0,
+	"checkin_chore_inspection": 2.0,
+	"checkin_embarrassing_story": 2.0,
+	"checkin_fake_emergency": 2.0,
+	"checkin_new_rule": 2.0,
 }
 
 static var _tiers: Dictionary = {}  # tier_id -> MomPunishmentTier

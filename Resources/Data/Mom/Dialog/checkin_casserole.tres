@@ -1,0 +1,123 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=14 format=3 uid="uid://b6ad3drqokb57"]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite_1"]
+script = ExtResource("3_out")
+weight = 5.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = -1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=green]See?! HONESTY.[/color] Your father said 'interesting' and he's on dish duty for a week. You're my favorite today."
+result_expression = "happy"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_polite_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "reward_money"
+magnitude = 25
+mood_delta = -1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=green]That's my brave little taste-tester.[/color] Here's a little something - hazard pay for dinner."
+result_expression = "happy"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "Smells amazing, Mom!"
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource("out_polite_2")])
+
+[sub_resource type="Resource" id="out_neutral_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "none"
+magnitude = 0
+mood_delta = 0
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "If I told you, it wouldn't be a surprise. Eat first, ask questions never - that's the casserole covenant."
+result_expression = "neutral"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_neutral_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=orange]Suspicion? At MY table?[/color] It's tuna, pears, and your dwindling credibility."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "What's... in it?"
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
+
+[sub_resource type="Resource" id="out_sassy_1"]
+script = ExtResource("3_out")
+weight = 5.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = 2
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=red]WAR CRIMES?! It's CASSEROLE.[/color] Nine months, kiddo. NINE. MONTHS."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_sassy_2"]
+script = ExtResource("3_out")
+weight = 2.0
+effect = "grudge_delta"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 1
+permanent = false
+followup_node_id = ""
+result_text = "[color=orange]Noted.[/color] Your portion just became 'mostly pears.' Enjoy, diplomat."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_sassy_3"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "Ha! Okay, that one got a laugh. But you're still eating it, [color=orange]comedian.[/color]"
+result_expression = "neutral"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "That violates the Geneva Convention."
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2"), SubResource("out_sassy_3")])
+
+[resource]
+script = ExtResource("1_node")
+id = "checkin_casserole"
+mom_text = "Sweetie, sit. Mom tried a new recipe - tuna casserole surprise. The surprise is pears. I want your HONEST opinion. Completely honest. No consequences either way."
+expression = "happy"
+speaker_name = "Mom"
+speaker_tint = Color(1, 1, 1, 1)
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

@@ -1,0 +1,123 @@
+[gd_resource type="Resource" script_class="MomDialogNode" load_steps=14 format=3 uid="uid://e72q2nr51021"]
+
+[ext_resource type="Script" uid="uid://fb034uin8iio" path="res://Scripts/Data/mom_dialog_node.gd" id="1_node"]
+[ext_resource type="Script" uid="uid://dxwgr1c0fc1bj" path="res://Scripts/Data/mom_dialog_response.gd" id="2_resp"]
+[ext_resource type="Script" uid="uid://d0h8ia570dbbb" path="res://Scripts/Data/mom_dialog_outcome.gd" id="3_out"]
+
+[sub_resource type="Resource" id="out_polite_1"]
+script = ExtResource("3_out")
+weight = 5.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = -1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=green]My hero![/color] See, THIS is why I keep you around. The jar stands no chance."
+result_expression = "happy"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_polite_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "none"
+magnitude = 0
+mood_delta = -1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "Pop! There it goes. Your father would've made me wait till dinner. [color=green]You're the strong one.[/color]"
+result_expression = "happy"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_polite"]
+script = ExtResource("2_resp")
+button_text = "You scared me! Here, let me."
+tone = "polite"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource("out_polite_2")])
+
+[sub_resource type="Resource" id="out_neutral_1"]
+script = ExtResource("3_out")
+weight = 6.0
+effect = "none"
+magnitude = 0
+mood_delta = 0
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "And you made excellent time! Very impressive cardio. For the record, the emergency was real TO ME."
+result_expression = "neutral"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_neutral_2"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=orange]A JAR, he says.[/color] Pickles are the backbone of a sandwich. Show some respect."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_neutral"]
+script = ExtResource("2_resp")
+button_text = "A jar. I sprinted home for a jar."
+tone = "neutral"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_neutral_1"), SubResource("out_neutral_2")])
+
+[sub_resource type="Resource" id="out_sassy_1"]
+script = ExtResource("3_out")
+weight = 5.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = 2
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "[color=red]NINE-ONE-ONE?![/color] 'Officer, my mother needed pickles.' They'd arrest YOU for wasting resources."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_sassy_2"]
+script = ExtResource("3_out")
+weight = 2.0
+effect = "grudge_delta"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 1
+permanent = false
+followup_node_id = ""
+result_text = "[color=orange]Cute.[/color] Remember this energy next time you 'urgently' need twenty bucks."
+result_expression = "upset"
+ends_visit = true
+
+[sub_resource type="Resource" id="out_sassy_3"]
+script = ExtResource("3_out")
+weight = 3.0
+effect = "mood_delta"
+magnitude = 0
+mood_delta = 1
+grudge_delta = 0
+permanent = false
+followup_node_id = ""
+result_text = "Ha! Fair. In my defense, the lid was fused by dark magic. [color=orange]Your services are appreciated, smart aleck.[/color]"
+result_expression = "neutral"
+ends_visit = true
+
+[sub_resource type="Resource" id="resp_sassy"]
+script = ExtResource("2_resp")
+button_text = "Next time I'm calling 911 on you."
+tone = "sassy"
+outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2"), SubResource("out_sassy_3")])
+
+[resource]
+script = ExtResource("1_node")
+id = "checkin_fake_emergency"
+mom_text = "THANK GOODNESS you're home! You got my text - 'COME HOME NOW, EMERGENCY' - and you actually came! Hold this pickle jar. Mom's hands are simply no match for it."
+expression = "neutral"
+speaker_name = "Mom"
+speaker_tint = Color(1, 1, 1, 1)
+responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

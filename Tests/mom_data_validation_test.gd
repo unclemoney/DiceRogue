@@ -33,6 +33,8 @@ const ROUTER_ROOTS: Array[String] = [
 	"checkin_neutral", "checkin_nostalgia", "checkin_gossip", "checkin_bargain",
 	"checkin_zone_flavor", "checkin_cool_mom", "checkin_warning",
 	"checkin_caught_nc17",
+	"checkin_casserole", "checkin_chore_inspection", "checkin_embarrassing_story",
+	"checkin_fake_emergency", "checkin_new_rule",
 ]
 
 ## Roots claimed in code by CastManager / GameController (not by arcs).
