@@ -919,6 +919,7 @@ func _restart_game_for_new_channel(carried_types: Array[String] = []) -> void:
 	
 	# Reset end of round stats shown flag and queue state
 	_end_of_round_stats_shown = false
+	_pending_round_end_start = false
 	_is_processing_round_end = false
 	_round_end_queue.clear()
 	# NOTE: Do NOT reset _pending_chore_selection here — it was just set by
@@ -4508,6 +4509,9 @@ func _start_round_end_sequence() -> void:
 			print("[GameController] Progress saved with score: %d" % current_score)
 
 	_end_of_round_stats_shown = true
+	# The round is complete: no chore selection at round end. Clear any
+	# pending request so the queue never contains a CHORE_SELECTION step.
+	_pending_chore_selection = false
 	_round_end_queue = _build_round_end_queue()
 	_process_round_end_queue()
 
@@ -4532,6 +4536,14 @@ func _on_scoring_animation_sequence_complete() -> void:
 	# re-check activity and re-arm (flags stay set) if one is still running.
 	if _is_scoring_animation_active():
 		return
+
+	# Round won on this score: no chore selection — the round-end flow owns
+	# what comes next. A pending chore request is discarded, not deferred.
+	if round_manager and round_manager.is_challenge_completed:
+		if _pending_chore_selection:
+			_pending_chore_selection = false
+			if _debug_enabled:
+				print("[GameController] Chore selection discarded - round completed")
 
 	if _pending_round_end_start:
 		_pending_round_end_start = false
@@ -5154,6 +5166,16 @@ func _queue_round_transition_overlay(challenge_id: String) -> void:
 	var timer = get_tree().create_timer(1.6)
 	await timer.timeout
 
+	# Never show the end-of-round panel over a running scoring animation;
+	# wait for the sink sequence to finish (or be cancelled) first
+	while _is_scoring_animation_active():
+		await get_tree().process_frame
+
+	# The player may have advanced to the next round (Next Round cancels the
+	# animation) while waiting — _on_round_started clears _round_transition_shown
+	if not _round_transition_shown:
+		return
+
 	# Show the round transition overlay
 	_show_round_transition_overlay(challenge_id)
 	# Chore popup is handled by the round-end queue AFTER overlay dismisses
@@ -5656,6 +5678,7 @@ func _on_round_started(round_number: int) -> void:
 	
 	# Reset end of round stats flag and queue state for new round
 	_end_of_round_stats_shown = false
+	_pending_round_end_start = false
 	_is_processing_round_end = false
 	_round_end_queue.clear()
 	# NOTE: Do NOT reset _pending_chore_selection here — it is cleared only
@@ -6178,12 +6201,14 @@ func _resolve_chore_selection_request() -> void:
 	if round_manager and round_manager.is_challenge_completed:
 		if _debug_enabled:
 			print("[GameController] Chore selection skipped - challenge completed, new chore at next round start")
+		_pending_chore_selection = false
 		return
 	
 	# If the whole game (channel) just completed, skip as well.
 	if scorecard and scorecard.is_game_complete():
 		if _debug_enabled:
 			print("[GameController] Chore selection skipped - game completed")
+		_pending_chore_selection = false
 		return
 	
 	_show_chore_selection_popup()

@@ -82,10 +82,15 @@ flowchart TD
 
 ### Panel Gating & Rolling Penalty
 
-- Chore Selection and the End Of Round Stats panel never overlap the scoring
-  sink animation: requests that arrive mid-sequence are coalesced into one
-  pending action and released when `animation_sequence_complete` fires.
-  Interrupted (restarted) sequences never emit a stale completion.
+- The scoring sink animation always finishes first: the round transition
+  overlay, Chore Selection, and the End Of Round Stats panel never overlap
+  it. Requests that arrive mid-sequence are coalesced into one pending
+  action and released when the sequence completes. Interrupted (restarted)
+  sequences never emit a stale completion.
+- Round completed ⇒ no chore selection: a pending chore request is discarded
+  when the round is won, and the round-end queue never contains a chore
+  step. Flow: animation finished → round not won → chore selection (if
+  needed); round won → round-end flow (overlay → stats → shop).
 - The Rolling Penalty debuff (`roll_score_minus_one`) registers the raw roll
   count as a negative additive with `ScoreModifierManager`, so it applies
   before multipliers (`max(0, …)` clamp after the additive stage), appears
