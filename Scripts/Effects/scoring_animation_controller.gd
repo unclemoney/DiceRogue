@@ -98,6 +98,11 @@ var animations_cancelled: bool = false
 
 # Sink-sequence state
 var _running_score: int = 0
+## Float truth behind the integer display. Arrivals update this with the
+## exact pipeline operations (float math); the sink shows int(...) of it,
+## which is floor/truncation for nonnegative values — so no milestone ever
+## displays a rounded-up value the final blow-up would have to reduce.
+var _running_score_float: float = 0.0
 var _sequence_token: int = 0
 var _active_sparks: Array = []
 var _spark_tweens: Array = []
@@ -252,8 +257,14 @@ func start_scoring_animation(score: int, category: String, breakdown_info: Dicti
 	var intensity_scale = _calculate_intensity_scale(score)
 	var speed_scale = _calculate_speed_scale(score)
 
-	# Start animation sequence
-	await _execute_animation_sequence(score, category, breakdown_info, intensity_scale, speed_scale, _sequence_token)
+	# Start animation sequence (capture the token — a restart increments it)
+	var token := _sequence_token
+	await _execute_animation_sequence(score, category, breakdown_info, intensity_scale, speed_scale, token)
+
+	# A superseded/cancelled sequence must not clear the flag or emit a stale
+	# completion — the newer sequence owns both (panel gating depends on this).
+	if _is_aborted(token):
+		return
 
 	animation_in_progress = false
 	animation_sequence_complete.emit()
@@ -316,9 +327,12 @@ func _stagger(base: float, speed_scale: float) -> float:
 
 ## _execute_animation_sequence(score, category, breakdown_info, intensity_scale, speed_scale, token)
 ##
-## Execute the complete sink sequence in strict phase order:
-## dice -> base beat -> console scores -> category level -> additives ->
-## multipliers -> blow-up -> drain into score labels.
+## Execute the complete sink sequence in strict phase order, mirroring the
+## authoritative score pipeline:
+## dice -> base beat -> category level -> additive stage (consumables ->
+## powerups -> consoles -> debuff penalties) -> clamp at zero -> multiplier
+## chain (regular -> dice color -> blue; source chips are display-only) ->
+## consistency check -> blow-up -> drain into score labels.
 func _execute_animation_sequence(score: int, category: String, breakdown_info: Dictionary, intensity_scale: float, speed_scale: float, token: int) -> void:
 	# Reset scoring sequence for progressive pitch
 	var audio_mgr = get_node_or_null("/root/AudioManager")
@@ -330,6 +344,7 @@ func _execute_animation_sequence(score: int, category: String, breakdown_info: D
 		score_sink.reset_sink()
 		score_sink.show_sink()
 	_running_score = 0
+	_running_score_float = 0.0
 
 	# Phase 1: dice bounce + per-die value sparks spiral into the sink
 	await _phase_dice(intensity_scale, speed_scale, token)
@@ -340,6 +355,7 @@ func _execute_animation_sequence(score: int, category: String, breakdown_info: D
 	var dice_subtotal = int(breakdown_info.get("base_score", -1))
 	if dice_subtotal < 0:
 		dice_subtotal = _dice_subtotal_fallback(breakdown_info)
+	_running_score_float = float(dice_subtotal)
 	_running_score = dice_subtotal
 	if score_sink:
 		score_sink.set_running_score(_running_score, true)
@@ -347,30 +363,43 @@ func _execute_animation_sequence(score: int, category: String, breakdown_info: D
 	if _is_aborted(token):
 		return
 
-	# Phase 2.4: gaming console scores (additives first, then multipliers)
-	await _phase_consoles(breakdown_info, speed_scale, token)
-	if _is_aborted(token):
-		return
-
-	# Phase 2.5: category-level factor (multiplicative, shown before additives
-	# as in the previous controller)
+	# Phase 3: category-level factor (multiplicative, before additives as in
+	# the pipeline: base × level -> additive stage -> multiplier chain)
 	var category_level_factor = float(breakdown_info.get("effective_category_level_factor", breakdown_info.get("category_level", 1)))
 	if not is_equal_approx(category_level_factor, 1.0):
 		await _animate_category_level_factor(breakdown_info, speed_scale, token)
 		if _is_aborted(token):
 			return
 
-	# Phase 3: additives — consumables first, then powerups (negatives included)
+	# Phase 4: additive stage — consumables, then powerups, then consoles
+	# (negatives included)
 	await _phase_additives(breakdown_info, intensity_scale, speed_scale, token)
 	if _is_aborted(token):
 		return
 
-	# Phase 4: multipliers — scorecard, colored dice, consumables, powerups
+	# Phase 4b: debuff penalties — last additive arrivals, immediately before
+	# the multiplier phase (e.g. "-N ROLLING PENALTY")
+	await _phase_debuff_penalties(breakdown_info, speed_scale, token)
+	if _is_aborted(token):
+		return
+
+	# Additive stage ends: the pipeline clamps the score at zero here, once.
+	_running_score_float = maxf(0.0, _running_score_float)
+	_running_score = int(_running_score_float)
+	if score_sink and is_instance_valid(score_sink):
+		score_sink.set_running_score(_running_score, true)
+
+	# Phase 5: multipliers — effective regular, dice color, blue drive the
+	# score; per-source chips (consumables/powerups/consoles) are display-only
 	await _phase_multipliers(breakdown_info, speed_scale, token)
 	if _is_aborted(token):
 		return
 
-	# Phase 5: final blow-up — reconcile to the authoritative score
+	# Phase 6: consistency check — the last displayed milestone must equal the
+	# authoritative score (warn-only tripwire; the blow-up is authoritative)
+	_verify_sink_consistency(score)
+
+	# Phase 7: final blow-up — reconcile to the authoritative score
 	_phase_blowup(score, category, intensity_scale)
 	if score_sink:
 		await _wait_seconds(score_sink.get_blowup_duration(), speed_scale)
@@ -472,7 +501,8 @@ func _animate_single_die(die, die_index: int, intensity_scale: float, speed_scal
 	_launch_spark("+" + str(die_value), die_center, 1.0, SCORING_TEXT_LIGHT, SCORING_ACCENT_MAGENTA,
 		SPIRAL_T_DICE / speed_scale,
 		func():
-			_running_score += die_value
+			_running_score_float += die_value
+			_running_score = int(_running_score_float)
 			if score_sink and is_instance_valid(score_sink):
 				score_sink.set_running_score(_running_score, true)
 				score_sink.bounce_wobble(WOBBLE_DICE)
@@ -485,9 +515,12 @@ func _animate_single_die(die, die_index: int, intensity_scale: float, speed_scal
 
 ## _phase_additives(breakdown_info, intensity_scale, speed_scale, token)
 ##
-## Consumable additives first, then powerup additives. Each "+X" spirals in
-## from its spine; arrival grows the running score with WOBBLE_ADDITIVE.
-## Negative sources arrive as red sparks that shrink the score.
+## Additive stage: consumable additives first, then powerup additives, then
+## gaming console additives (console chips keep their teal styling and fly
+## from the console spine). Arrivals update the float running score; the sink
+## displays int(...) (floor for nonnegatives). Negative sources arrive as red
+## sparks that shrink the score. Debuff-category sources are NOT handled here
+## — see _phase_debuff_penalties, which runs at the tail of this stage.
 func _phase_additives(breakdown_info: Dictionary, intensity_scale: float, speed_scale: float, token: int) -> void:
 	var additive_sources = breakdown_info.get("additive_sources", [])
 	if additive_sources.is_empty():
@@ -498,10 +531,13 @@ func _phase_additives(breakdown_info: Dictionary, intensity_scale: float, speed_
 
 	var consumable_adds: Array = []
 	var powerup_adds: Array = []
+	var console_adds: Array = []
 	for source_info in additive_sources:
 		var source_name = source_info.get("name", "")
 		var category = source_info.get("category", "")
-		if category == "consumable" or source_name in active_consumables:
+		if category == "console":
+			console_adds.append(source_info)
+		elif category == "consumable" or source_name in active_consumables:
 			consumable_adds.append(source_info)
 		elif category == "powerup" or source_name in active_powerups:
 			powerup_adds.append(source_info)
@@ -509,7 +545,9 @@ func _phase_additives(breakdown_info: Dictionary, intensity_scale: float, speed_
 	var ordered: Array = []
 	ordered.append_array(consumable_adds)
 	ordered.append_array(powerup_adds)
+	ordered.append_array(console_adds)
 
+	var profile := _juice_profile()
 	var stagger = _stagger(ADD_STAGGER, speed_scale)
 	for source_info in ordered:
 		if _is_aborted(token):
@@ -517,23 +555,39 @@ func _phase_additives(breakdown_info: Dictionary, intensity_scale: float, speed_
 		var source_name = source_info.get("name", "")
 		var value = int(source_info.get("value", 0))
 		var is_consumable = source_info in consumable_adds
+		var is_console = source_info in console_adds
 
-		var origin = _additive_origin(source_name, is_consumable)
-		_bounce_source_spine(source_name, is_consumable, intensity_scale, speed_scale)
+		var origin: Vector2
+		var text: String
+		var text_color: Color
+		var accent_color: Color = SCORING_ACCENT_MAGENTA
+		var font_scale: float
+		var wobble: float = WOBBLE_ADDITIVE
+		if is_console:
+			origin = _console_origin()
+			_bounce_console_spine(speed_scale)
+			text = "%s %+d" % [_console_display_name(source_info), value]
+			text_color = SCORING_TEXT_CONSOLE
+			accent_color = SCORING_ACCENT_TEAL
+			font_scale = profile.console_chip_font_scale
+			wobble = profile.console_wobble
+		else:
+			origin = _additive_origin(source_name, is_consumable)
+			_bounce_source_spine(source_name, is_consumable, intensity_scale, speed_scale)
+			text_color = SCORING_TEXT_POSITIVE if is_consumable else SCORING_TEXT_ADDITIVE
+			font_scale = 1.2 if is_consumable else 1.5
+			if value < 0:
+				text_color = SCORING_TEXT_NEGATIVE
+			text = "+" + str(value) if value >= 0 else str(value)
 
-		var text_color = SCORING_TEXT_POSITIVE if is_consumable else SCORING_TEXT_ADDITIVE
-		var font_scale = 1.2 if is_consumable else 1.5
-		if value < 0:
-			text_color = SCORING_TEXT_NEGATIVE
-		var text = "+" + str(value) if value >= 0 else str(value)
-
-		var spark_tween = _launch_spark(text, origin, font_scale, text_color, SCORING_ACCENT_MAGENTA,
+		var spark_tween = _launch_spark(text, origin, font_scale, text_color, accent_color,
 			SPIRAL_T_ADD / speed_scale,
 			func():
-				_running_score += value
+				_running_score_float += value
+				_running_score = int(_running_score_float)
 				if score_sink and is_instance_valid(score_sink):
 					score_sink.set_running_score(_running_score, true)
-					score_sink.bounce_wobble(WOBBLE_ADDITIVE, value < 0)
+					score_sink.bounce_wobble(wobble, value < 0)
 				_play_scoring_audio(abs(value))
 		)
 		if spark_tween:
@@ -544,13 +598,16 @@ func _phase_additives(breakdown_info: Dictionary, intensity_scale: float, speed_
 
 ## _phase_multipliers(breakdown_info, speed_scale, token)
 ##
-## Strict order: scorecard multiplier, colored-dice multipliers (purple
-## then blue), consumable multipliers, powerup multipliers. Each "xY"
-## spirals in; arrival multiplies the running score and wobbles with
-## strictly increasing intensity (MULT_WOBBLE_RAMP, then +0.4, cap 3.0).
-## Divisor multipliers (<1) render red "÷Y" and shrink the score.
+## Score-driving chips, in pipeline order: effective regular multiplier
+## (scorecard), dice-color multiplier (purple), blue multiplier. Arrivals
+## multiply the float running score; the sink displays int(...) (floor for
+## nonnegatives). Wobble intensity ramps strictly (MULT_WOBBLE_RAMP, then
+## +0.4, cap 3.0). Divisor multipliers (<1) render red "÷Y".
+## Per-source chips (consumables, powerups, consoles from multiplier_sources)
+## are DISPLAY-ONLY: the pipeline already multiplies their values into the
+## effective regular multiplier, so applying them here would double-count.
 func _phase_multipliers(breakdown_info: Dictionary, speed_scale: float, token: int) -> void:
-	var chain: Array = []  # {value: float, origin: Vector2, display_info: Dictionary}
+	var chain: Array = []  # {value: float, origin: Vector2, display_info: Dictionary, applies: bool, is_console: bool}
 
 	var scorecard_mult = float(breakdown_info.get("effective_regular_multiplier", breakdown_info.get("regular_multiplier", 1.0)))
 	if not is_equal_approx(scorecard_mult, 1.0):
@@ -562,6 +619,8 @@ func _phase_multipliers(breakdown_info: Dictionary, speed_scale: float, token: i
 				"display_operator": breakdown_info.get("regular_multiplier_display_operator", ""),
 				"display_value": breakdown_info.get("regular_multiplier_display_value", scorecard_mult),
 			},
+			"applies": true,
+			"is_console": false,
 		})
 
 	var purple_mult = float(breakdown_info.get("effective_dice_color_multiplier", breakdown_info.get("dice_color_multiplier", 1.0)))
@@ -574,6 +633,8 @@ func _phase_multipliers(breakdown_info: Dictionary, speed_scale: float, token: i
 				"display_operator": breakdown_info.get("dice_color_multiplier_display_operator", ""),
 				"display_value": breakdown_info.get("dice_color_multiplier_display_value", purple_mult),
 			},
+			"applies": true,
+			"is_console": false,
 		})
 
 	var blue_mult = float(breakdown_info.get("effective_blue_score_multiplier", breakdown_info.get("blue_score_multiplier", 1.0)))
@@ -586,36 +647,31 @@ func _phase_multipliers(breakdown_info: Dictionary, speed_scale: float, token: i
 				"display_operator": breakdown_info.get("blue_score_multiplier_display_operator", ""),
 				"display_value": breakdown_info.get("blue_score_multiplier_display_value", blue_mult),
 			},
+			"applies": true,
+			"is_console": false,
 		})
 
-	# Source-list multipliers: consumables first, then powerups. Entries whose
-	# category is scorecard/colored_dice are already covered by the effective
-	# keys above and are skipped to avoid double-counting the visuals.
-	var active_powerups = breakdown_info.get("active_powerups", [])
+	# Source-list multiplier chips: visual only (already inside the effective
+	# regular multiplier). Scorecard/colored-dice categories are covered by
+	# the driving chips above and skipped to avoid duplicate visuals.
 	var multiplier_sources = breakdown_info.get("multiplier_sources", [])
-	var consumable_mults: Array = []
-	var powerup_mults: Array = []
 	for source_info in multiplier_sources:
 		var source_name = source_info.get("name", "")
 		var category = source_info.get("category", "")
 		if category == "scorecard" or category == "colored_dice":
 			continue
-		if category == "consumable":
-			consumable_mults.append(source_info)
-		elif category == "powerup" or source_name in active_powerups:
-			powerup_mults.append(source_info)
-
-	for source_info in consumable_mults:
+		var is_console: bool = category == "console"
+		var origin: Vector2
+		if is_console:
+			origin = _console_origin()
+		else:
+			origin = _additive_origin(source_name, category == "consumable")
 		chain.append({
 			"value": float(source_info.get("value", 1.0)),
-			"origin": _additive_origin(source_info.get("name", ""), true),
+			"origin": origin,
 			"display_info": source_info,
-		})
-	for source_info in powerup_mults:
-		chain.append({
-			"value": float(source_info.get("value", 1.0)),
-			"origin": _additive_origin(source_info.get("name", ""), false),
-			"display_info": source_info,
+			"applies": false,
+			"is_console": is_console,
 		})
 
 	var stagger = _stagger(MULT_STAGGER, speed_scale)
@@ -624,20 +680,34 @@ func _phase_multipliers(breakdown_info: Dictionary, speed_scale: float, token: i
 		if _is_aborted(token):
 			return
 		var value = float(entry["value"])
+		var applies: bool = entry["applies"]
+		var is_console: bool = entry["is_console"]
 		var display = _resolve_multiplier_display(value, entry["display_info"])
 		var is_divide = display["mode"] == "divide"
 		var intensity = _multiplier_wobble_intensity(index)
 
-		var text = "%s%.1f" % [display["operator"], display["value"]]
-		var text_color = SCORING_TEXT_NEGATIVE if is_divide else SCORING_TEXT_MULTIPLIER
-		var accent = SCORING_ACCENT_MAGENTA if is_divide else SCORING_ACCENT_TEAL
+		var text: String
+		var text_color: Color
+		var accent: Color
+		if is_console:
+			_bounce_console_spine(speed_scale)
+			text = "%s ×%.1f" % [_console_display_name(entry["display_info"]), value]
+			text_color = SCORING_TEXT_MULTIPLIER
+			accent = SCORING_ACCENT_TEAL
+		else:
+			text = "%s%.1f" % [display["operator"], display["value"]]
+			text_color = SCORING_TEXT_NEGATIVE if is_divide else SCORING_TEXT_MULTIPLIER
+			accent = SCORING_ACCENT_MAGENTA if is_divide else SCORING_ACCENT_TEAL
 
 		var spark_tween = _launch_spark(text, entry["origin"], 1.5, text_color, accent,
 			SPIRAL_T_MULT / speed_scale,
 			func():
-				_running_score = int(round(_running_score * value))
+				if applies:
+					_running_score_float *= value
+					_running_score = int(_running_score_float)
+					if score_sink and is_instance_valid(score_sink):
+						score_sink.set_running_score(_running_score, true)
 				if score_sink and is_instance_valid(score_sink):
-					score_sink.set_running_score(_running_score, true)
 					score_sink.bounce_wobble(intensity, is_divide)
 				_play_scoring_audio(int(maxf(absf(display["value"]), 1.0) * 10))
 		)
@@ -659,43 +729,43 @@ func _await_spark(spark_tween: Tween, token: int) -> void:
 			return
 		await get_tree().process_frame
 
-## _phase_consoles(breakdown_info, speed_scale, token)
+## _phase_debuff_penalties(breakdown_info, speed_scale, token)
 ##
-## Gaming console scores join the sink sequence right after the dice phase:
-## console additives first, then console multipliers. Chips are labeled with
-## the console display name in the console teal scheme and fly from the
-## gaming console spine. Amounts arrive pre-computed in breakdown_info
-## (category == "console"); arrivals only move the sink's running display
-## score — the blow-up reconciles to the authoritative score as usual.
-func _phase_consoles(breakdown_info: Dictionary, speed_scale: float, token: int) -> void:
-	var console_adds: Array = []
-	var console_mults: Array = []
+## Tail of the additive stage, immediately before the multiplier phase:
+## debuff-category additive sources (e.g. Rolling Penalty) arrive as red
+## negative chips launched from the Debuff UI position. Arrivals subtract
+## their actual integer contribution from the float running score.
+func _phase_debuff_penalties(breakdown_info: Dictionary, speed_scale: float, token: int) -> void:
+	var debuff_adds: Array = []
 	for source_info in breakdown_info.get("additive_sources", []):
-		if source_info.get("category", "") == "console":
-			console_adds.append(source_info)
-	for source_info in breakdown_info.get("multiplier_sources", []):
-		if source_info.get("category", "") == "console":
-			console_mults.append(source_info)
-	if console_adds.is_empty() and console_mults.is_empty():
+		if source_info.get("category", "") == "debuff" and int(source_info.get("value", 0)) != 0:
+			debuff_adds.append(source_info)
+	if debuff_adds.is_empty():
 		return
 
-	var profile := _juice_profile()
-	var stagger = _stagger(profile.console_score_stagger, speed_scale)
-
-	for source_info in console_adds:
+	var stagger = _stagger(ADD_STAGGER, speed_scale)
+	for source_info in debuff_adds:
 		if _is_aborted(token):
 			return
+		var source_name = str(source_info.get("name", ""))
 		var value = int(source_info.get("value", 0))
-		_bounce_console_spine(speed_scale)
-		var text = "%s %+d" % [_console_display_name(source_info), value]
-		print("[ScoringAnimationController] Console additive chip: %s" % text)
-		var spark_tween = _launch_spark(text, _console_origin(), profile.console_chip_font_scale, SCORING_TEXT_CONSOLE, SCORING_ACCENT_TEAL,
+
+		var chip_label: String
+		if source_name == "roll_score_minus_one":
+			chip_label = "ROLLING PENALTY"
+		else:
+			chip_label = source_name.replace("_", " ").to_upper()
+		var text = "-%d %s" % [abs(value), chip_label]
+		print("[ScoringAnimationController] Debuff penalty chip: %s" % text)
+
+		var spark_tween = _launch_spark(text, _debuff_origin(), 1.2, SCORING_TEXT_NEGATIVE, SCORING_ACCENT_MAGENTA,
 			SPIRAL_T_ADD / speed_scale,
 			func():
-				_running_score += value
+				_running_score_float += value
+				_running_score = int(_running_score_float)
 				if score_sink and is_instance_valid(score_sink):
 					score_sink.set_running_score(_running_score, true)
-					score_sink.bounce_wobble(profile.console_wobble, value < 0)
+					score_sink.bounce_wobble(WOBBLE_ADDITIVE, true)
 				_play_scoring_audio(abs(value))
 		)
 		if spark_tween:
@@ -704,27 +774,38 @@ func _phase_consoles(breakdown_info: Dictionary, speed_scale: float, token: int)
 			return
 		await get_tree().create_timer(stagger).timeout
 
-	for source_info in console_mults:
-		if _is_aborted(token):
-			return
-		var value = float(source_info.get("value", 1.0))
-		_bounce_console_spine(speed_scale)
-		var text = "%s ×%.1f" % [_console_display_name(source_info), value]
-		print("[ScoringAnimationController] Console multiplier chip: %s" % text)
-		var spark_tween = _launch_spark(text, _console_origin(), profile.console_chip_font_scale, SCORING_TEXT_MULTIPLIER, SCORING_ACCENT_TEAL,
-			SPIRAL_T_MULT / speed_scale,
-			func():
-				_running_score = int(round(_running_score * value))
-				if score_sink and is_instance_valid(score_sink):
-					score_sink.set_running_score(_running_score, true)
-					score_sink.bounce_wobble(profile.console_wobble, value < 1.0)
-				_play_scoring_audio(int(maxf(absf(value), 1.0) * 10))
-		)
-		if spark_tween:
-			await _await_spark(spark_tween, token)
-		if _is_aborted(token):
-			return
-		await get_tree().create_timer(stagger).timeout
+## _debuff_origin() -> Vector2
+##
+## Screen-space launch point for debuff penalty chips: the DebuffUI spine
+## position when available, else the debuff container center.
+func _debuff_origin() -> Vector2:
+	var source_position = _get_game_ui_container_center(&"debuff_container", get_viewport().get_visible_rect().size / 2.0)
+	var debuff_ui_nodes = get_tree().get_nodes_in_group("debuff_ui")
+	if debuff_ui_nodes.size() > 0:
+		var debuff_ui = debuff_ui_nodes[0]
+		if debuff_ui.has_method("get_debuff_spine_position"):
+			source_position = debuff_ui.get_debuff_spine_position()
+		elif debuff_ui is Control:
+			source_position = (debuff_ui as Control).get_global_rect().get_center()
+	return source_position
+
+## _verify_sink_consistency(score)
+##
+## Warn-only tripwire before the blow-up: the float running score replays the
+## authoritative pipeline (base × level → additive stage, clamped →
+## × regular × dice color × blue), so int(...) of it must equal the final
+## score. A mismatch means a breakdown path (e.g. a breakdown without color
+## data) cannot reproduce the pipeline exactly.
+func _verify_sink_consistency(score: int) -> void:
+	var sink_target := int(_running_score_float)
+	if sink_target != score:
+		push_warning("[ScoringAnimationController] Sink consistency: last milestone %d != authoritative score %d (blow-up reconciles)" % [sink_target, score])
+
+## get_running_display_score() -> int
+##
+## The integer score currently shown by the sink sequence (test hook).
+func get_running_display_score() -> int:
+	return _running_score
 
 ## _console_display_name(source_info) -> String
 ##
@@ -825,7 +906,8 @@ func _animate_category_level_factor(breakdown_info: Dictionary, speed_scale: flo
 	var spark_tween = _launch_spark(text, level_position, 1.8, text_color, SCORING_ACCENT_MAGENTA,
 		SPIRAL_T_MULT / speed_scale,
 		func():
-			_running_score = int(round(_running_score * effective_category_level))
+			_running_score_float *= effective_category_level
+			_running_score = int(_running_score_float)
 			if score_sink and is_instance_valid(score_sink):
 				score_sink.set_running_score(_running_score, true)
 				score_sink.bounce_wobble(WOBBLE_ADDITIVE, is_divide)
@@ -1395,7 +1477,8 @@ func animate_negative_contribution(value: int, source_position: Vector2, source_
 		_launch_spark(str(value), source_position, 1.2 + (intensity * 0.3), SCORING_TEXT_NEGATIVE, SCORING_ACCENT_MAGENTA,
 			SPIRAL_T_ADD,
 			func():
-				_running_score -= penalty
+				_running_score_float -= penalty
+				_running_score = int(_running_score_float)
 				if score_sink and is_instance_valid(score_sink):
 					score_sink.set_running_score(_running_score, true)
 					score_sink.bounce_wobble(WOBBLE_ADDITIVE, true)

@@ -80,6 +80,26 @@ flowchart TD
     T --> U[Player shops / Next Round]
 ```
 
+### Panel Gating & Rolling Penalty
+
+- Chore Selection and the End Of Round Stats panel never overlap the scoring
+  sink animation: requests that arrive mid-sequence are coalesced into one
+  pending action and released when `animation_sequence_complete` fires.
+  Interrupted (restarted) sequences never emit a stale completion.
+- The Rolling Penalty debuff (`roll_score_minus_one`) registers the raw roll
+  count as a negative additive with `ScoreModifierManager`, so it applies
+  before multipliers (`max(0, …)` clamp after the additive stage), appears
+  in the scoring animation as a red `-N ROLLING PENALTY` chip immediately
+  before the multiplier phase, and shows a live `Current Penalty: N` line in
+  the debuff fan-out detail card.
+- The sink displays floor/truncated integer milestones (`int(...)` of the
+  float running score), so the displayed score never exceeds the
+  authoritative final score, and the final blow-up equals the last displayed
+  milestone (a warn-only consistency check guards this).
+- Debug Panel → Diagnostics includes a Debuff Diagnostics report (id, name,
+  active state, intensity, registered additive; raw count and registration
+  state for Rolling Penalty).
+
 ## Main Menu & Settings
 
 ### Main Menu

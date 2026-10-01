@@ -179,6 +179,12 @@ func _layout_labels() -> void:
 func get_sink_center() -> Vector2:
 	return global_position
 
+## get_displayed_score() -> int
+##
+## The integer score currently shown on the chip (test/consistency hook).
+func get_displayed_score() -> int:
+	return running_score
+
 ## get_blowup_duration() -> float
 ##
 ## Out + hold time so the controller can await the full climax.

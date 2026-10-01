@@ -10,7 +10,8 @@ class_name SimpleScoringAnimationTest
 ##
 ## Run with F6 / Run Current Scene — no other setup needed.
 ## Headless hooks: `-- --auto-scenario N` fires scenario N after startup,
-## `-- --auto-quit SECONDS` quits automatically.
+## `-- --auto-quit SECONDS` quits automatically,
+## `-- --auto-verify` asserts sink/final consistency (exit code reflects it).
 
 const FloatingNumber = preload("res://Scripts/Effects/floating_number.gd")
 const MockScoringRigScript = preload("res://Tests/mock_scoring_rig.gd")
@@ -23,18 +24,24 @@ const SCN1_DICE: Array[int] = [3, 5]            # dice total 8
 const SCN2_DICE: Array[int] = [4, 3, 5]         # dice total 12
 const SCN2_ADD_CONSUMABLE: int = 4
 const SCN2_ADD_POWERUP: int = 6                 # final 22
-# 3: Full chain: additives, then scorecard / colored-dice / consumable /
-#    powerup multipliers
+# 3: Full chain: additives, then scorecard / colored-dice multipliers, with
+#    consumable / powerup multiplier chips flying in display-only (their
+#    values are folded into the effective regular multiplier, as the real
+#    pipeline does)
 const SCN3_DICE: Array[int] = [5, 4, 5]         # dice total 14
 const SCN3_ADD_CONSUMABLE: int = 5
 const SCN3_ADD_POWERUP: int = 7                 # subtotal 26
-const SCN3_MULT_SCORECARD: float = 1.5
-const SCN3_MULT_COLORED: float = 2.0
+const SCN3_MULT_SCORECARD: float = 2.8125       # 1.5 x 1.25 x 1.5 (aggregate of the source mults)
+const SCN3_MULT_COLORED: float = 2.0            # final int(26*5.625) = 146
 const SCN3_MULT_CONSUMABLE: float = 1.25
-const SCN3_MULT_POWERUP: float = 1.5            # final round(26*5.625) = 146
+const SCN3_MULT_POWERUP: float = 1.5
 # 4: Extreme score 50+ to hit the epic tier (blow-up shake + jackpot path)
 const SCN4_DICE: Array[int] = [6, 6, 6, 6, 6]   # dice total 30
 const SCN4_ADD_POWERUP: int = 30                # final 60
+# 5: Rolling Penalty debuff chip + decimal multiplier (floor display)
+const SCN5_DICE: Array[int] = [4, 4, 3]         # dice total 11
+const SCN5_PENALTY: int = 2                     # -2 -> 9, x1.5 -> 13.5 -> int = 13
+const SCN5_MULT_SCORECARD: float = 1.5
 
 const SCN2_CONSUMABLE_ID: String = "test_tonic"
 const SCN2_POWERUP_ID: String = "test_battery"
@@ -48,6 +55,7 @@ const SCN1_SCORE: int = 8
 const SCN2_SCORE: int = 22
 const SCN3_SCORE: int = 146
 const SCN4_SCORE: int = 60
+const SCN5_SCORE: int = 13
 
 @onready var test_label: Label
 @onready var floating_test_button: Button
@@ -62,6 +70,13 @@ var rig: MockScoringRig
 var total_label: Label
 var scenario_buttons: Array[Button] = []
 
+# `-- --auto-verify` state: after each sequence, assert the blow-up equals
+# the last milestone and the sink never displayed above the final score
+var _verify_enabled: bool = false
+var _verify_expected: int = -1
+var _verify_max_seen: int = 0
+var _verify_failures: int = 0
+
 func _ready() -> void:
 	print("[SimpleScoringAnimationTest] Initializing...")
 
@@ -74,6 +89,7 @@ func _ready() -> void:
 	scoring_controller = ScoringAnimationController.new()
 	scoring_controller.name = "ScoringAnimationController"
 	add_child(scoring_controller)
+	scoring_controller.animation_sequence_complete.connect(_on_sequence_complete_verify)
 
 	# Create test UI
 	_create_test_ui()
@@ -133,8 +149,8 @@ func _create_scenario_panel() -> void:
 	panel.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
 	panel.offset_left = -230
 	panel.offset_right = -20
-	panel.offset_top = -160
-	panel.offset_bottom = 160
+	panel.offset_top = -190
+	panel.offset_bottom = 190
 
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.12, 0.10, 0.14, 0.98)
@@ -161,6 +177,7 @@ func _create_scenario_panel() -> void:
 		"2: Additives (%d)" % SCN2_SCORE,
 		"3: Full Chain (%d)" % SCN3_SCORE,
 		"4: Epic (%d)" % SCN4_SCORE,
+		"5: Rolling Penalty (%d)" % SCN5_SCORE,
 	]
 	for i in range(labels.size()):
 		var button = Button.new()
@@ -225,7 +242,10 @@ func _run_scenario(index: int) -> void:
 	# Simulate the compute-time score render: the real scorecard shows the
 	# new total immediately. The controller's conceal step must hold it back
 	# until the sink dump — if concealment breaks, this spoils the score.
-	var scenario_scores = [0, SCN1_SCORE, SCN2_SCORE, SCN3_SCORE, SCN4_SCORE]
+	var scenario_scores = [0, SCN1_SCORE, SCN2_SCORE, SCN3_SCORE, SCN4_SCORE, SCN5_SCORE]
+	if _verify_enabled:
+		_verify_expected = scenario_scores[index]
+		_verify_max_seen = 0
 	total_label.spoil_to(total_label.get_committed() + scenario_scores[index])
 	match index:
 		1:
@@ -267,6 +287,13 @@ func _run_scenario(index: int) -> void:
 				[],
 				{"active_powerups": [SCN4_POWERUP_ID]})
 			scoring_controller.start_scoring_animation(SCN4_SCORE, "yahtzee", breakdown)
+		5:
+			rig.configure(SCN5_DICE, [], [])
+			var breakdown = _build_breakdown(SCN5_DICE,
+				[{"name": "roll_score_minus_one", "category": "debuff", "value": -SCN5_PENALTY}],
+				[],
+				{"effective_regular_multiplier": SCN5_MULT_SCORECARD})
+			scoring_controller.start_scoring_animation(SCN5_SCORE, "test_rolling_penalty", breakdown)
 
 ## _build_breakdown(dice_values, additive_sources, multiplier_sources, extras) -> Dictionary
 ##
@@ -305,6 +332,49 @@ func _unhandled_input(event: InputEvent) -> void:
 				_run_scenario(3)
 			KEY_4:
 				_run_scenario(4)
+			KEY_5:
+				_run_scenario(5)
+
+func _process(_delta: float) -> void:
+	if _verify_enabled and scoring_controller and scoring_controller.animation_in_progress:
+		_verify_max_seen = maxi(_verify_max_seen, scoring_controller.get_running_display_score())
+
+
+## _on_sequence_complete_verify()
+##
+## `--auto-verify` hook: the blow-up target must equal the last displayed
+## milestone, and no milestone may exceed the authoritative final score.
+func _on_sequence_complete_verify() -> void:
+	if not _verify_enabled or _verify_expected < 0:
+		return
+	var final_display := scoring_controller.get_running_display_score()
+	if final_display != _verify_expected:
+		_verify_failures += 1
+		push_error("[SimpleScoringAnimationTest] VERIFY FAIL: final=%d expected=%d" % [final_display, _verify_expected])
+	elif _verify_max_seen > _verify_expected and not _breakdown_has_shrinkage(scoring_controller.current_breakdown_info):
+		# A peak above the final score is only legal when a genuine negative
+		# additive or divisor brings it back down — never from floor rounding.
+		_verify_failures += 1
+		push_error("[SimpleScoringAnimationTest] VERIFY FAIL: max_seen=%d exceeds final=%d with no shrinkage source" % [_verify_max_seen, _verify_expected])
+	else:
+		print("[SimpleScoringAnimationTest] VERIFY PASS: final=%d max_seen=%d" % [final_display, _verify_max_seen])
+	_verify_expected = -1
+
+
+## _breakdown_has_shrinkage(breakdown_info) -> bool
+##
+## True when the pipeline contains a negative additive or a divisor/sub-1
+## multiplier, i.e. any legitimate reason the running score decreases.
+func _breakdown_has_shrinkage(breakdown_info: Dictionary) -> bool:
+	for source_info in breakdown_info.get("additive_sources", []):
+		if int(source_info.get("value", 0)) < 0:
+			return true
+	for key in ["effective_regular_multiplier", "effective_dice_color_multiplier", "effective_blue_score_multiplier"]:
+		var factor := float(breakdown_info.get(key, 1.0))
+		if factor > 0.0 and factor < 1.0:
+			return true
+	return false
+
 
 ## _autopilot()
 ##
@@ -315,6 +385,9 @@ func _unhandled_input(event: InputEvent) -> void:
 ## Tests/_layout_shots/ for visual verification.
 func _autopilot() -> void:
 	var args = OS.get_cmdline_user_args()
+	# `-- --auto-verify` asserts sink/final consistency after each sequence
+	if args.has("--auto-verify"):
+		_verify_enabled = true
 	var scenario_index = args.find("--auto-scenario")
 	if scenario_index >= 0 and scenario_index + 1 < args.size():
 		var scenario = int(args[scenario_index + 1])
@@ -345,15 +418,19 @@ func _autopilot() -> void:
 				{"name": SCN2_POWERUP_ID, "category": "powerup", "value": -3},
 			],
 			[{"name": "test_divisor", "category": "powerup", "value": 0.5}],
-			{"active_consumables": [SCN2_CONSUMABLE_ID], "active_powerups": [SCN2_POWERUP_ID, "test_divisor"]})
-		# 12 + 4 - 3 = 13, then ÷2 → 7 (rounded)
-		scoring_controller.start_scoring_animation(7, "test_negative", breakdown)
+			{"active_consumables": [SCN2_CONSUMABLE_ID], "active_powerups": [SCN2_POWERUP_ID, "test_divisor"],
+				"effective_regular_multiplier": 0.5})  # divisor folded into the aggregate, as the real pipeline does
+		# 12 + 4 - 3 = 13, then ÷2 → int(6.5) = 6 (floor)
+		if _verify_enabled:
+			_verify_expected = 6
+			_verify_max_seen = 0
+		scoring_controller.start_scoring_animation(6, "test_negative", breakdown)
 	var quit_index = args.find("--auto-quit")
 	if quit_index >= 0 and quit_index + 1 < args.size():
 		var seconds = float(args[quit_index + 1])
 		await get_tree().create_timer(seconds).timeout
 		print("[SimpleScoringAnimationTest] Auto-quit after %.1fs" % seconds)
-		get_tree().quit()
+		get_tree().quit(1 if _verify_failures > 0 else 0)
 
 ## _auto_shots()
 ##

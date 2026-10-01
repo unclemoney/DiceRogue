@@ -4,15 +4,26 @@
 > in the historical sections below were replaced by a central **ScoreSink**
 > (`Scripts/Effects/score_sink.gd`): every scoring number is now a
 > **ScoreSpark** (`Scripts/Effects/score_spark.gd`) that spawns at its source
-> (die, consumable spine, powerup spine) and spirals into a glass chip at
-> screen center showing the running score. Phases run in strict order: dice
-> values → dice subtotal beat → additives (consumables then powerups) →
-> multipliers (scorecard, colored dice, consumables, powerups) → final
-> blow-up (scale ×1.5 capped at 2.6, burst, screen shake) → the sink drains
-> into the score labels (count-up + landing punch) and hides. All constants
-> live in const blocks at the top of `score_sink.gd` and
+> (die, consumable spine, powerup spine, debuff container) and spirals into
+> a glass chip at screen center showing the running score.
+>
+> **2026-10 update — pipeline-aligned order and floor display.** Phases run
+> in strict order matching the authoritative score pipeline: dice values →
+> dice subtotal beat → category level → additive stage (consumables →
+> powerups → consoles → debuff penalties, e.g. a red `-N ROLLING PENALTY`
+> chip from the Debuff UI) → clamp at zero → multiplier chain (the effective
+> regular / dice-color / blue factors drive the score; per-source multiplier
+> chips are display-only because the pipeline already folds them into the
+> regular multiplier) → consistency check → final blow-up (scale ×1.5 capped
+> at 2.6, burst, screen shake) → the sink drains into the score labels
+> (count-up + landing punch) and hides. The sink tracks a float running
+> score and displays `int(...)` (floor for nonnegatives) at every milestone,
+> so no displayed value is ever rounded up above the authoritative final
+> score; the blow-up target equals the last displayed milestone by
+> construction, with a warn-only consistency check as tripwire. All
+> constants live in const blocks at the top of `score_sink.gd` and
 > `scoring_animation_controller.gd`. Manual test harness:
-> `Tests/SimpleScoringAnimationTest.tscn` (buttons or keys 1-4).
+> `Tests/SimpleScoringAnimationTest.tscn` (buttons or keys 1-5).
 > Sections below this notice describe the pre-refactor behavior and are kept
 > for reference; where they conflict with the sink model, the sink model wins.
 

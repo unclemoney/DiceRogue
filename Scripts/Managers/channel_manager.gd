@@ -28,17 +28,17 @@ const STORES_PER_ZONE: int = 6
 ## Scales rewards, challenge targets, chore pressure, and zone carry-overs.
 enum Difficulty { EASY, MEDIUM, HARD }
 
-const RUN_REWARD_MULTIPLIERS := {
-	Difficulty.EASY: 1.25,
+const RUN_REWARD_MULTIPLIERS : Dictionary = {
+	Difficulty.EASY: 1.5,
 	Difficulty.MEDIUM: 1.0,
 	Difficulty.HARD: 0.75,
 }
-const RUN_CHALLENGE_MULTIPLIERS := {
-	Difficulty.EASY: 0.80,
+const RUN_CHALLENGE_MULTIPLIERS : Dictionary = {
+	Difficulty.EASY: 0.75,
 	Difficulty.MEDIUM: 1.0,
-	Difficulty.HARD: 1.25,
+	Difficulty.HARD: 2.0,
 }
-const RUN_DEBUFF_COUNT_MODIFIERS := {
+const RUN_DEBUFF_COUNT_MODIFIERS : Dictionary = {
 	Difficulty.EASY: -1,
 	Difficulty.MEDIUM: 0,
 	Difficulty.HARD: 1,
@@ -46,20 +46,20 @@ const RUN_DEBUFF_COUNT_MODIFIERS := {
 ## Ceiling on the debuff difficulty rating that automatic round draws may
 ## select. Applied with mini() against each round's configured cap, so it can
 ## only lower the cap, never raise it. Boss rounds are exempt.
-const RUN_DEBUFF_DIFFICULTY_GATES := {
+const RUN_DEBUFF_DIFFICULTY_GATES : Dictionary = {
 	Difficulty.EASY: 3,
 	Difficulty.MEDIUM: 4,
 	Difficulty.HARD: 5,
 }
-const CHORE_METER_THRESHOLDS := {
+const CHORE_METER_THRESHOLDS : Dictionary = {
 	Difficulty.EASY: 125,
 	Difficulty.MEDIUM: 100,
 	Difficulty.HARD: 75,
 }
-const CARRYOVER_COUNT_ADJUSTMENTS := {
-	Difficulty.EASY: 2,
+const CARRYOVER_COUNT_ADJUSTMENTS : Dictionary = {
+	Difficulty.EASY: 3,
 	Difficulty.MEDIUM: 0,
-	Difficulty.HARD: -99,
+	Difficulty.HARD: -1,
 }
 
 ## Preloaded channel difficulty resources

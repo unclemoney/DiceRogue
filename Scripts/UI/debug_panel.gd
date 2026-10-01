@@ -47,6 +47,7 @@ var mod_selection_list: ItemList
 var mod_die_spinbox: SpinBox
 var dice_state_report_text: TextEdit
 var score_trace_report_text: TextEdit
+var debuff_report_text: TextEdit
 var difficulty_toggle: CheckButton
 
 var game_controller: GameController
@@ -705,7 +706,7 @@ func _on_difficulty_mode_changed(mode: GameSettings.DifficultyMode) -> void:
 
 func _create_diagnostics_tab(parent: VBoxContainer) -> void:
 	var helper_label = Label.new()
-	helper_label.text = "Refresh the panels below to inspect live dice state and the most recent scoring snapshot."
+	helper_label.text = "Refresh the panels below to inspect live dice state, the most recent scoring snapshot, and debuff diagnostics."
 	helper_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.7, 1.0))
 	parent.add_child(helper_label)
 
@@ -731,6 +732,12 @@ func _create_diagnostics_tab(parent: VBoxContainer) -> void:
 	refresh_score_button.pressed.connect(_debug_refresh_score_trace_report)
 	action_row.add_child(refresh_score_button)
 
+	var refresh_debuff_button = Button.new()
+	refresh_debuff_button.text = "Refresh Debuff State"
+	refresh_debuff_button.custom_minimum_size = Vector2(200, 32)
+	refresh_debuff_button.pressed.connect(_debug_refresh_debuff_report)
+	action_row.add_child(refresh_debuff_button)
+
 	var audit_roll_button = Button.new()
 	audit_roll_button.text = "Audit Current Roll vs All Categories"
 	audit_roll_button.custom_minimum_size = Vector2(260, 32)
@@ -750,6 +757,13 @@ func _create_diagnostics_tab(parent: VBoxContainer) -> void:
 	parent.add_child(score_label)
 
 	score_trace_report_text = _create_report_text_edit(parent, Vector2(1040, 240), "Scored-hand trace will appear here once a hand is scored...")
+
+	var debuff_label = Label.new()
+	debuff_label.text = "Debuff Diagnostics"
+	debuff_label.add_theme_color_override("font_color", Color.WHITE)
+	parent.add_child(debuff_label)
+
+	debuff_report_text = _create_report_text_edit(parent, Vector2(1040, 160), "Debuff state will appear here...")
 
 
 func _create_report_text_edit(parent: VBoxContainer, minimum_size: Vector2, placeholder: String) -> TextEdit:
@@ -4032,6 +4046,73 @@ func _debug_refresh_score_trace_report(log_action: bool = true) -> void:
 		log_debug("Refreshed scored-hand trace report")
 
 
+func _debug_refresh_debuff_report(log_action: bool = true) -> void:
+	if debuff_report_text:
+		_set_report_text(debuff_report_text, _build_debuff_diagnostics_report())
+	if log_action:
+		log_debug("Refreshed debuff diagnostics report")
+
+
+## _build_debuff_diagnostics_report() -> String
+##
+## Reports every active debuff: id, display name, active state, intensity,
+## and its registered additive value in ScoreModifierManager when exposed.
+## roll_score_minus_one additionally reports its raw roll count, its
+## get_current_penalty() result, and its negative-additive registration.
+func _build_debuff_diagnostics_report() -> String:
+	if not game_controller:
+		return "GameController not available."
+
+	var lines: Array[String] = ["=== DEBUFF DIAGNOSTICS ==="]
+	if game_controller.active_debuffs.is_empty():
+		lines.append("No active debuffs.")
+		return "\n".join(lines)
+
+	var modifier_manager = get_node_or_null("/root/ScoreModifierManager")
+	for debuff_id in game_controller.active_debuffs.keys():
+		var debuff = game_controller.active_debuffs[debuff_id]
+		var display_name: String = debuff_id
+		if game_controller.debuff_manager and game_controller.debuff_manager.has_method("get_def"):
+			var def = game_controller.debuff_manager.get_def(debuff_id)
+			if def and def.display_name != "":
+				display_name = def.display_name
+
+		var active_state := false
+		var intensity := 0.0
+		if is_instance_valid(debuff):
+			active_state = bool(debuff.get("is_active"))
+			intensity = float(debuff.get("intensity", 0.0))
+
+		lines.append("")
+		lines.append("%s (id=%s)" % [display_name, debuff_id])
+		lines.append("  active: %s | intensity: %.2f" % [str(active_state), intensity])
+		if modifier_manager and modifier_manager.has_method("has_additive") and modifier_manager.has_additive(debuff_id):
+			lines.append("  registered additive: %d" % modifier_manager.get_additive(debuff_id))
+		else:
+			lines.append("  registered additive: none")
+
+		if debuff_id == "roll_score_minus_one":
+			var roll_count := -1
+			var penalty := -1
+			if is_instance_valid(debuff):
+				roll_count = int(debuff.get("roll_count"))
+				if debuff.has_method("get_current_penalty"):
+					penalty = debuff.get_current_penalty()
+			var penalty_registered := false
+			var penalty_value := 0
+			if modifier_manager and modifier_manager.has_method("has_additive"):
+				penalty_registered = modifier_manager.has_additive("roll_score_minus_one")
+				if penalty_registered:
+					penalty_value = modifier_manager.get_additive("roll_score_minus_one")
+			lines.append("  raw roll count: %d" % roll_count)
+			lines.append("  get_current_penalty(): %d" % penalty)
+			lines.append("  negative additive registered: %s" % str(penalty_registered))
+			if penalty_registered:
+				lines.append("  registered additive value: %d" % penalty_value)
+
+	return "\n".join(lines)
+
+
 ## _debug_audit_current_roll()
 ##
 ## Simulates the current dice values against every category and renders the
@@ -4101,6 +4182,9 @@ func _refresh_diagnostics_reports(log_action: bool = true) -> void:
 	if score_trace_report_text:
 		_set_report_text(score_trace_report_text, _build_score_trace_report())
 		refreshed_sections.append("score trace")
+	if debuff_report_text:
+		_set_report_text(debuff_report_text, _build_debuff_diagnostics_report())
+		refreshed_sections.append("debuff diagnostics")
 	if log_action and not refreshed_sections.is_empty():
 		log_debug("Refreshed diagnostics: " + ", ".join(refreshed_sections))
 

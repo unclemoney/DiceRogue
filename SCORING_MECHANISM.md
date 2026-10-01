@@ -25,25 +25,38 @@ base_score = ScoreEvaluator.calculate_score_for_category(category, dice_values)
 - No modifiers applied yet
 - Example: Small straight = 30 points
 
-### 4. Additive Phase
+### 4. Category Level Phase
+```gdscript
+score_after_level = base_score * effective_category_level_factor
+```
+- Upgraded scorecard categories multiply the base score before additives
+- Level 1 (the default) is a no-op (×1)
+
+### 5. Additive Phase
 ```gdscript
 total_additives = regular_additives + dice_color_additives
-score_after_additives = base_score + total_additives
+score_after_additives = max(0, score_after_level + total_additives)
 ```
 - **Regular Additives**: From PowerUps via ScoreModifierManager
 - **Dice Color Additives**: Red dice add their face value
+- **Rolling Penalty**: the `roll_score_minus_one` debuff registers the raw
+  roll count as a negative additive (`-N`) with ScoreModifierManager, so it
+  applies here — before multipliers — and appears in the scorecard breakdown
+  as a `debuff` source
 - Applied before multipliers
+- The score is clamped to zero once, after the additive stage
 
-### 5. Multiplicative Phase
+### 6. Multiplicative Phase
 ```gdscript
 total_multiplier = regular_multipliers * dice_color_multipliers
-final_score = ceil(score_after_additives * total_multiplier)
+final_score = int(score_after_additives * total_multiplier * blue_score_multiplier)
 ```
 - **Regular Multipliers**: From PowerUps (PinHead, etc.) via ScoreModifierManager
 - **Dice Color Multipliers**: Purple and Blue dice contribute multiplicative score factors
 - **Division Mode**: If active, every non-zero multiplicative score factor is inverted. Bonuses become divisors, and existing divisors become multipliers.
+- `int(...)` truncates the nonnegative float result (floor semantics)
 
-### 6. Money Effects Phase
+### 7. Money Effects Phase
 ```gdscript
 if apply_money_effects:
     PlayerEconomy.add_money(green_dice_bonus)
@@ -51,16 +64,19 @@ if apply_money_effects:
 - **Green Dice**: Add money equal to face value
 - Only applied during actual scoring, not previews
 
-### 7. Score Assignment Phase
+### 8. Score Assignment Phase
 ```gdscript
 scorecard.set_score(section, category, final_score)
 ```
 - Updates scorecard data structure with FINAL calculated score
 - **NO further multiplication** - score is already fully calculated
+- The legacy `score_modifiers` hook in `set_score()` is deprecated and empty:
+  no current debuff or power-up registers there (Rolling Penalty moved to
+  ScoreModifierManager as a pre-multiplier negative additive)
 - Triggers UI updates
 - Emits `score_assigned` signal for statistics
 
-### 8. Post-Scoring Cleanup
+### 9. Post-Scoring Cleanup
 - PowerUps unregister temporary multipliers
 - Debuffs clean up temporary effects
 - UI updates to reflect new scores
@@ -82,8 +98,9 @@ Turn ends or auto-trigger
 └── scorecard.auto_score_best()
     ├── Find best category
     ├── Emit about_to_score signal (through ScoreCardUI)
-    ├── Defer to next frame: _complete_auto_scoring()
-    └── Follow standard scoring flow
+    ├── Set score immediately via _calculate_score_with_preserved_effects()
+    └── Defer signal emission: _complete_auto_scoring_finalization()
+        emits score_auto_assigned with the captured breakdown
 ```
 
 ### Path 3: Consumable Scoring
@@ -128,7 +145,7 @@ Dice Values: [1,2,3,4,5]
 PinHead picks: 3
 Additives: 0
 Multipliers: 3.0 (from PinHead)
-Final Score: ceil(30 * 3.0) = 90
+Final Score: int(30 * 3.0) = 90
 ```
 
 ### Example 2: Chance + Dice Colors + PowerUp
@@ -138,7 +155,7 @@ Dice: [5(red), 4, 3, 6(purple), 2]
 Red Additive: +5
 Purple Multiplier: ×6
 PowerUp Multiplier: ×2
-Calculation: ceil((25 + 5) × 6 × 2) = ceil(360) = 360
+Calculation: int((25 + 5) × 6 × 2) = int(360) = 360
 ```
 
 ### Example 3: With Division Debuff
@@ -146,7 +163,7 @@ Calculation: ceil((25 + 5) × 6 × 2) = ceil(360) = 360
 Base Score: 30
 Raw score factor: ×4
 Division mode active: 4 becomes ÷4 = ×0.25
-Final Score: ceil(30 × 0.25) = 8
+Final Score: int(30 × 0.25) = 7
 ```
 
 ## Debugging Requirements

@@ -286,7 +286,9 @@ func set_score(section: int, category: String, score: int, score_snapshot: Dicti
 	print("[Scorecard] Setting", category, "to", score)
 	print("[Scorecard] Current total before change:", get_total_score())
 	
-	# Apply legacy score modifiers if any exist (for backward compatibility)
+	# Apply legacy score modifiers if any exist (for backward compatibility).
+	# NOTE: no current debuff or power-up registers here — Rolling Penalty
+	# moved to ScoreModifierManager as a pre-multiplier negative additive.
 	var final_score = score
 	for modifier in score_modifiers:
 		if not is_instance_valid(modifier):
@@ -1492,6 +1494,8 @@ func _categorize_modifier_source(source_name: String) -> String:
 		return "powerup"
 	elif normalized_name.contains("consumable"):
 		return "consumable"
+	elif normalized_name.contains("debuff"):
+		return "debuff"
 	elif normalized_name.contains("mod"):
 		return "mod"
 	else:
@@ -1524,7 +1528,15 @@ func _categorize_modifier_source(source_name: String) -> String:
 		
 		if normalized_name in consumable_sources:
 			return "consumable"
-		
+
+		# Known Debuff source names that don't contain "debuff"
+		var debuff_sources = [
+			"roll_score_minus_one"
+		]
+
+		if normalized_name in debuff_sources:
+			return "debuff"
+
 		return "other"
 
 ## _calculate_score_with_preserved_effects()
@@ -1770,6 +1782,8 @@ func _collect_modifier_totals(modifier_manager) -> Dictionary:
 ##
 ## Applies the full score pipeline using raw multiplier factors and the active
 ## division-mode policy from ScoreModifierManager.
+## Order: base × category level → additive stage (clamped at zero) →
+## × regular × dice-color → × blue → int(...) floor/truncation.
 ## HARD difficulty scratch rule: when GameSettings.is_hard_mode() and the
 ## category's base score is 0, every additive and multiplier bonus is voided
 ## and the final score is a scratch (0). EASY mode is byte-identical to the
@@ -1792,9 +1806,13 @@ func _calculate_score_from_components(base_score: int, category_level: int, regu
 
 	var total_additive_bonus = regular_additive + dice_color_additive
 	var score_after_level = float(base_score) * category_component.effective_factor
-	var score_after_additives = score_after_level + total_additive_bonus
+	# Clamp once after the additive stage: negative additives (e.g. Rolling
+	# Penalty) can pull the score below zero, but multipliers never amplify a
+	# negative intermediate.
+	var score_after_additives = maxf(0.0, score_after_level + total_additive_bonus)
 	var total_multiplier_bonus = regular_component.effective_factor * dice_color_component.effective_factor
 	var score_after_colors = score_after_additives * total_multiplier_bonus
+	# Authoritative conversion: floor/truncation of the nonnegative float.
 	var final_score = int(score_after_colors * blue_component.effective_factor)
 	var overall_effective_multiplier = category_component.effective_factor * regular_component.effective_factor * dice_color_component.effective_factor * blue_component.effective_factor
 

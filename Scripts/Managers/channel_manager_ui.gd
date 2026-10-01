@@ -533,7 +533,7 @@ func _build_ui() -> void:
 
 	var spacer_hbox := HBoxContainer.new()
 	shell_hbox.add_theme_constant_override("separation", 26)
-	shell_margin.add_child(spacer_hbox)
+	#shell_margin.add_child(spacer_hbox)
 
 	var difficulty_title := Label.new()
 	difficulty_title.text = "DIFFICULTY"

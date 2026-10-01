@@ -23,6 +23,7 @@ var _icons: Dictionary = {}             # id -> DebuffIcon
 var _sorted_debuff_ids: Array[String] = []
 var _plus_chip: Control = null
 var _detail_cards: Dictionary = {}      # id -> DebuffDetailCard
+var _debuff_instances: Dictionary = {}  # id -> runtime Debuff instance (for live detail-card status)
 
 # Fixed slots
 var _slot_cells: Array[PanelContainer] = []
@@ -199,6 +200,7 @@ func _fan_out_debuffs() -> void:
 
 		card.setup(icon.data)
 		card.set_active_visual(icon.is_active)
+		card.setup_runtime(_debuff_instances.get(id))
 
 		# Staggered drop-in animation
 		card.position = target_pos - Vector2(0, _visual_config.detail_entry_offset_y)
@@ -360,6 +362,8 @@ func add_debuff(data: DebuffData, debuff_instance: Debuff = null) -> DebuffIcon:
 
 	_icons[data.id] = icon
 	_sorted_debuff_ids.append(data.id)
+	if debuff_instance:
+		_debuff_instances[data.id] = debuff_instance
 	_attach_icon_when_ready(data.id)
 
 	# Juice: debuff acquisition effect
@@ -442,6 +446,7 @@ func remove_debuff(id: String) -> void:
 
 	_icons.erase(id)
 	_sorted_debuff_ids.erase(id)
+	_debuff_instances.erase(id)
 	print("[DebuffUI] Removed debuff icon:", id)
 
 	if _current_state == State.FANNED_OUT:
@@ -466,6 +471,7 @@ func clear_all_debuffs() -> void:
 			icon.queue_free()
 	_icons.clear()
 	_sorted_debuff_ids.clear()
+	_debuff_instances.clear()
 	for card in _detail_cards.values():
 		if is_instance_valid(card):
 			(card as DebuffDetailCard).queue_free()

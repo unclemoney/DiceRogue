@@ -225,6 +225,7 @@ var pending_mods: Array[String] = []
 var mod_persistence_map: Dictionary = {}  # mod_id -> int tracking how many instances of each mod should persist
 var _shop_tween: Tween
 var _end_of_round_stats_shown: bool = false  # Track if round-end sequence ran this round
+var _pending_round_end_start: bool = false  # Coalesced round-end request waiting for the scoring animation to finish
 
 # Round-end event queue — processes UI panels sequentially to prevent overlapping
 enum RoundEndStep { CHORE_SELECTION, UNLOCK_NOTIFICATIONS, END_OF_ROUND_STATS, OPEN_SHOP }
@@ -351,6 +352,12 @@ func _ready() -> void:
 	if debuff_ui:
 		if not debuff_ui.is_connected("debuff_selected", _on_debuff_selected):
 			debuff_ui.debuff_selected.connect(_on_debuff_selected)
+
+	# Scoring animation completion drives panel gating (chore selection and
+	# the round-end sequence wait for the sink to finish)
+	if scoring_animation_controller:
+		if not scoring_animation_controller.is_connected("animation_sequence_complete", _on_scoring_animation_sequence_complete):
+			scoring_animation_controller.animation_sequence_complete.connect(_on_scoring_animation_sequence_complete)
 	
 	if turn_tracker:
 		turn_tracker.rolls_updated.connect(update_three_more_rolls_usability)
@@ -2620,9 +2627,17 @@ func _on_score_manual_assigned(_section: int, _category: String, _score: int, _b
 	# (Auto-scoring internally calls manual scoring, but we only want animation from auto path)
 	# Check if breakdown_info is empty - that indicates a true manual scoring action
 	if scoring_animation_controller and _score > 0 and _breakdown_info.is_empty():
-		var enhanced_breakdown_info = _create_manual_breakdown_info(_category)
+		# Prefer the authoritative breakdown captured in the scored-hand
+		# snapshot: it carries effective multipliers and categorized sources
+		# (including debuff additives) that the rebuilt manual breakdown lacks.
+		var enhanced_breakdown_info: Dictionary = {}
+		var snapshot: Dictionary = scorecard.get_last_scored_hand_snapshot()
+		if snapshot.get("category", "") == _category:
+			enhanced_breakdown_info = snapshot.get("breakdown_info", {})
+		if enhanced_breakdown_info.is_empty():
+			enhanced_breakdown_info = _create_manual_breakdown_info(_category)
 		if _debug_enabled:
-			print("[GameController] Created manual breakdown info: " + str(enhanced_breakdown_info))
+			print("[GameController] Manual scoring breakdown info: " + str(enhanced_breakdown_info))
 		scoring_animation_controller.start_scoring_animation(_score, _category, enhanced_breakdown_info)
 	
 	_handle_post_scoring_effects(_section, _category, _score, _breakdown_info)
@@ -2857,11 +2872,20 @@ func _create_manual_breakdown_info(category: String = "") -> Dictionary:
 		for source_name in active_additive_names:
 			var additive_value = score_modifier.get_additive(source_name)
 			var is_console: bool = console_sources.has(source_name)
+			var source_category := "powerup"
+			var display_name := ""
+			if is_console:
+				source_category = "console"
+				display_name = console_sources.get(source_name, "")
+			elif source_name == "roll_score_minus_one" or source_name.contains("debuff"):
+				source_category = "debuff"
+				if source_name == "roll_score_minus_one":
+					display_name = "Rolling Penalty"
 			additive_sources.append({
 				"name": source_name,
 				"value": additive_value,
-				"category": "console" if is_console else "powerup",
-				"display_name": console_sources.get(source_name, "") if is_console else "",
+				"category": source_category,
+				"display_name": display_name,
 			})
 		breakdown_info["additive_sources"] = additive_sources
 
@@ -4450,24 +4474,77 @@ func _on_shop_button_pressed() -> void:
 	
 	# Check if challenge was completed - start round-end sequence (only once)
 	if round_manager and round_manager.is_challenge_completed and not _end_of_round_stats_shown:
-		if _debug_enabled:
-			print("[GameController] Challenge completed - starting end of round sequence")
-		
-		# Save progress (this triggers unlock checks)
-		var progress_manager = get_node("/root/ProgressManager")
-		if progress_manager:
-			var current_score = scorecard.get_total_score() if scorecard else 0
-			progress_manager.end_game_tracking(current_score, true)
-			if _debug_enabled:
-				print("[GameController] Progress saved with score: %d" % current_score)
-		
-		_end_of_round_stats_shown = true
-		_round_end_queue = _build_round_end_queue()
-		_process_round_end_queue()
+		# Gate on the scoring animation: coalesce to one pending round-end
+		# action and wait for the sink sequence to finish. Never cancel the
+		# animation to show the panel.
+		if _is_scoring_animation_active():
+			if not _pending_round_end_start:
+				_pending_round_end_start = true
+				if _debug_enabled:
+					print("[GameController] Scoring animation active - round-end sequence queued until it completes")
+			return
+		_start_round_end_sequence()
 		return
-	
+
 	# If no stats panel or challenge not completed or already shown, open shop directly
 	_open_shop_ui()
+
+
+## _start_round_end_sequence() -> void
+##
+## Starts the round-end event queue (chore selection, unlocks, stats, shop).
+## Called from _on_shop_button_pressed, or deferred until the active scoring
+## animation completes when the shop button was pressed mid-animation.
+func _start_round_end_sequence() -> void:
+	if _debug_enabled:
+		print("[GameController] Challenge completed - starting end of round sequence")
+
+	# Save progress (this triggers unlock checks)
+	var progress_manager = get_node("/root/ProgressManager")
+	if progress_manager:
+		var current_score = scorecard.get_total_score() if scorecard else 0
+		progress_manager.end_game_tracking(current_score, true)
+		if _debug_enabled:
+			print("[GameController] Progress saved with score: %d" % current_score)
+
+	_end_of_round_stats_shown = true
+	_round_end_queue = _build_round_end_queue()
+	_process_round_end_queue()
+
+
+## _is_scoring_animation_active() -> bool
+##
+## True while a scoring sink sequence is running. Missing controller (test
+## scenes) reads as inactive so callers run immediately.
+func _is_scoring_animation_active() -> bool:
+	return scoring_animation_controller != null and scoring_animation_controller.animation_in_progress
+
+
+## _on_scoring_animation_sequence_complete() -> void
+##
+## Releases panel actions queued while the scoring animation was running.
+## Round-end wins over chore selection: its queue contains the
+## CHORE_SELECTION step, so a pending chore popup rides the existing queue
+## order instead of showing twice.
+func _on_scoring_animation_sequence_complete() -> void:
+	# Safety: an interrupted sequence must not release queued actions. The
+	# controller only emits this for a genuinely completed sequence, but
+	# re-check activity and re-arm (flags stay set) if one is still running.
+	if _is_scoring_animation_active():
+		return
+
+	if _pending_round_end_start:
+		_pending_round_end_start = false
+		if _debug_enabled:
+			print("[GameController] Scoring animation finished - starting queued round-end sequence")
+		_start_round_end_sequence()
+		return
+
+	if _pending_chore_selection and not _defer_chore_selection_until_round_start:
+		if _debug_enabled:
+			print("[GameController] Scoring animation finished - resolving queued chore selection")
+		# Deferred resolution re-checks round/game completion before showing.
+		call_deferred("_resolve_chore_selection_request")
 
 
 ## _show_end_of_round_stats()
@@ -6076,7 +6153,15 @@ func _on_chore_selection_requested() -> void:
 			print("[GameController] Chore selection deferred - waiting for round intro")
 		_pending_chore_selection = true
 		return
-	
+
+	# Gate on the scoring animation: keep one coalesced pending request and
+	# show the popup only after the sink sequence completes.
+	if _is_scoring_animation_active():
+		if not _pending_chore_selection and _debug_enabled:
+			print("[GameController] Scoring animation active - chore selection queued until it completes")
+		_pending_chore_selection = true
+		return
+
 	call_deferred("_resolve_chore_selection_request")
 
 

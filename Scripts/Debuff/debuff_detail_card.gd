@@ -7,7 +7,7 @@ class_name DebuffDetailCard
 ## Built entirely in code — no .tscn dependency.
 ##
 ## Layout (top → bottom inside a styled PanelContainer):
-##   Icon · Name · separator · Difficulty stars · Description
+##   Icon · Name · separator · Difficulty stars · Description · Current Penalty (dynamic, optional)
 ##
 ## Public API:
 ##   setup(data) — call once after add_child
@@ -22,12 +22,14 @@ const CARD_GLOW_SHADER: Shader = preload("res://Scripts/Shaders/debuff_card_glow
 const PLACEHOLDER_TEXTURE: Texture2D = preload("res://Resources/Art/UI/white_pixel.png")
 
 var _data: DebuffData
+var _runtime_debuff = null  # Live Debuff instance (optional) for dynamic status lines
 var _panel: PanelContainer
 var _glow_rect: ColorRect
 var _icon_rect: TextureRect
 var _name_label: Label
 var _diff_label: Label
 var _desc_label: Label
+var _penalty_label: Label
 var _separator: HSeparator
 var _content_vbox: VBoxContainer
 var _card_glow_material: ShaderMaterial
@@ -159,6 +161,20 @@ func _build_ui() -> void:
 	_desc_label.add_theme_color_override("font_color", Color(0.90, 0.84, 0.78, 1.0))
 	_content_vbox.add_child(_desc_label)
 
+	# Dynamic penalty line (hidden unless the runtime debuff exposes
+	# get_current_penalty(), e.g. Rolling Penalty)
+	_penalty_label = Label.new()
+	_penalty_label.name = "PenaltyLabel"
+	_penalty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_penalty_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if vcr_font:
+		_penalty_label.add_theme_font_override("font", vcr_font)
+	_penalty_label.add_theme_font_size_override("font_size", 11)
+	# Shared penalty red/pink (matches the scoring system's negative styling)
+	_penalty_label.add_theme_color_override("font_color", Color(1.0, 0.470588, 0.576471, 1.0))
+	_penalty_label.visible = false
+	_content_vbox.add_child(_penalty_label)
+
 
 func set_visual_config(visual_config) -> void:
 	if visual_config == null:
@@ -229,8 +245,43 @@ func setup(data: DebuffData) -> void:
 	_apply_visual_state()
 
 
+## setup_runtime(runtime_debuff)
+##
+## Attaches the live Debuff instance so the card can show dynamic status
+## lines (currently the Rolling Penalty count). Debuffs that do not expose
+## get_current_penalty() show no extra line. Connects penalty_changed for
+## live updates while the fan-out is open.
+func setup_runtime(runtime_debuff) -> void:
+	_runtime_debuff = runtime_debuff
+	if _runtime_debuff and is_instance_valid(_runtime_debuff) and _runtime_debuff.has_signal("penalty_changed"):
+		var callback := Callable(self, "_on_penalty_changed")
+		if not _runtime_debuff.is_connected("penalty_changed", callback):
+			_runtime_debuff.penalty_changed.connect(callback)
+	_refresh_penalty_line()
+
+
+## _refresh_penalty_line()
+##
+## Shows "Current Penalty: %d" only when a live, active debuff exposes
+## get_current_penalty(); hides the line otherwise.
+func _refresh_penalty_line() -> void:
+	if not _penalty_label:
+		return
+	var debuff = _runtime_debuff
+	if debuff and is_instance_valid(debuff) and debuff.get("is_active") and debuff.has_method("get_current_penalty"):
+		_penalty_label.text = "Current Penalty: %d" % debuff.get_current_penalty()
+		_penalty_label.visible = true
+	else:
+		_penalty_label.visible = false
+
+
+func _on_penalty_changed(_new_penalty: int) -> void:
+	_refresh_penalty_line()
+
+
 func set_active_visual(active: bool) -> void:
 	_active_strength = _visual_config.detail_active_glow if active else _visual_config.detail_inactive_glow
+	_refresh_penalty_line()
 	_apply_visual_state()
 
 
