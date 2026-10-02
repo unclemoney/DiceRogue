@@ -25,9 +25,12 @@ enum ConditionType {
 	SCORE_THRESHOLD_CATEGORY,  # Score X+ points in a specific category (uses additional_params.category)
 	CHORE_COMPLETIONS,     # Complete X chores (single game or cumulative, uses additional_params.cumulative)
 	WIN_WITHOUT_SCORING,   # Win a game without scoring in a specific category or section
-	LOCK_CONSTRAINT        # Score X+ points over Y turns while locking no more than Z dice (uses additional_params)
+	LOCK_CONSTRAINT,       # Score X+ points over Y turns while locking no more than Z dice (uses additional_params)
 	                       # Uses additional_params.category (e.g. "ones") or additional_params.section ("upper" or "lower")
 	                       # Scoring 0 counts as scoring - category must be left completely blank
+	CUMULATIVE_STRAIGHTS,  # Roll X straights across all games (optional additional_params.straight_type: "small_straight"/"large_straight")
+	CUMULATIVE_COLOR_BONUSES,  # Trigger X same-color bonuses across all games (cumulative)
+	CUMULATIVE_CONSUMABLES  # Use X consumables across all games (cumulative)
 }
 
 ## Category score threshold baselines - calculated as face_value * ~3-4 for upper,
@@ -181,6 +184,26 @@ func is_satisfied(game_stats: Dictionary, progress_data: Dictionary) -> bool:
 					return true
 			return false
 			
+		ConditionType.CUMULATIVE_STRAIGHTS:
+			var straight_type = additional_params.get("straight_type", "")
+			var straight_count: int
+			match straight_type:
+				"small_straight":
+					straight_count = progress_data.get("total_small_straights", 0)
+				"large_straight":
+					straight_count = progress_data.get("total_large_straights", 0)
+				_:
+					straight_count = progress_data.get("total_straights", 0)
+			return straight_count >= target_value
+
+		ConditionType.CUMULATIVE_COLOR_BONUSES:
+			var total_bonuses = progress_data.get("total_color_bonuses", 0)
+			return total_bonuses >= target_value
+
+		ConditionType.CUMULATIVE_CONSUMABLES:
+			var total_consumables = progress_data.get("total_consumables_used", 0)
+			return total_consumables >= target_value
+
 		_:
 			push_error("[UnlockCondition] Unknown condition type: %s" % condition_type)
 			return false
@@ -274,5 +297,24 @@ func get_formatted_description() -> String:
 				return "Score %d+ points over %d turns without locking dice" % [target_value, turn_window]
 			else:
 				return "Score %d+ points over %d turns while locking no more than %d dice" % [target_value, turn_window, max_locked]
+		ConditionType.CUMULATIVE_STRAIGHTS:
+			var straight_type = additional_params.get("straight_type", "")
+			var straight_label := "straights"
+			if straight_type != "":
+				straight_label = straight_type.replace("_", " ") + "s"
+			if target_value == 1:
+				return "Roll 1 %s (total across all games)" % straight_label.trim_suffix("s")
+			else:
+				return "Roll %d %s (total across all games)" % [target_value, straight_label]
+		ConditionType.CUMULATIVE_COLOR_BONUSES:
+			if target_value == 1:
+				return "Trigger 1 same-color bonus (total across all games)"
+			else:
+				return "Trigger %d same-color bonuses (total across all games)" % target_value
+		ConditionType.CUMULATIVE_CONSUMABLES:
+			if target_value == 1:
+				return "Use 1 consumable (total across all games)"
+			else:
+				return "Use %d consumables (total across all games)" % target_value
 		_:
 			return description if description else "Unknown condition"

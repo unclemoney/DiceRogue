@@ -81,6 +81,8 @@ var cumulative_stats: Dictionary = {
 	"total_consumables_used": 0,
 	"total_yahtzees": 0,
 	"total_straights": 0,
+	"total_small_straights": 0,
+	"total_large_straights": 0,
 	"total_color_bonuses": 0,
 	"highest_channel_completed": 0,
 	"total_chores_completed": 0,
@@ -236,6 +238,8 @@ func _create_default_profile(slot: int) -> void:
 			"total_consumables_used": 0,
 			"total_yahtzees": 0,
 			"total_straights": 0,
+			"total_small_straights": 0,
+			"total_large_straights": 0,
 			"total_color_bonuses": 0,
 			"highest_channel_completed": 0,
 			"total_chores_completed": 0,
@@ -354,10 +358,13 @@ func load_profile(slot: int) -> bool:
 	# Load cumulative stats
 	if save_data.has("cumulative_stats"):
 		cumulative_stats = save_data["cumulative_stats"]
-		if not cumulative_stats.has("highest_channel_completed"):
-			cumulative_stats["highest_channel_completed"] = 0
-		if not cumulative_stats.has("rep"):
-			cumulative_stats["rep"] = 0
+		# Backfill any keys added after this save was written (e.g. per-type
+		# straight counters) so old profiles stay compatible without a
+		# save-version bump.
+		var defaults := _get_default_cumulative_stats()
+		for key in defaults.keys():
+			if not cumulative_stats.has(key):
+				cumulative_stats[key] = defaults[key]
 	else:
 		# IMPORTANT: Reset to defaults if not in save file
 		cumulative_stats = _get_default_cumulative_stats()
@@ -427,6 +434,8 @@ func _get_default_cumulative_stats() -> Dictionary:
 		"total_consumables_used": 0,
 		"total_yahtzees": 0,
 		"total_straights": 0,
+		"total_small_straights": 0,
+		"total_large_straights": 0,
 		"total_color_bonuses": 0,
 		"highest_channel_completed": 0,
 		"total_chores_completed": 0,
@@ -717,6 +726,9 @@ func end_game_tracking(final_score: int, did_win: bool = false) -> void:
 	cumulative_stats["total_consumables_used"] += current_game_stats["consumables_used"]
 	cumulative_stats["total_yahtzees"] += current_game_stats["yahtzees_rolled"]
 	cumulative_stats["total_straights"] += current_game_stats["straights_rolled"]
+	var combos: Dictionary = current_game_stats.get("combinations_rolled", {})
+	cumulative_stats["total_small_straights"] += combos.get("small_straight", 0)
+	cumulative_stats["total_large_straights"] += combos.get("large_straight", 0)
 	cumulative_stats["total_color_bonuses"] += current_game_stats["same_color_bonuses"]
 	cumulative_stats["total_chores_completed"] += current_game_stats["chores_completed"]
 	cumulative_stats["total_chores_completed_easy"] += current_game_stats.get("chores_completed_easy", 0)
@@ -1108,6 +1120,22 @@ func get_condition_progress(item_id: String) -> Dictionary:
 			else:
 				result["current"] = 0  # Per-game chores
 		
+		UnlockConditionClass.ConditionType.CUMULATIVE_STRAIGHTS:
+			var straight_type = condition.additional_params.get("straight_type", "")
+			match straight_type:
+				"small_straight":
+					result["current"] = cumulative_stats.get("total_small_straights", 0)
+				"large_straight":
+					result["current"] = cumulative_stats.get("total_large_straights", 0)
+				_:
+					result["current"] = cumulative_stats.get("total_straights", 0)
+
+		UnlockConditionClass.ConditionType.CUMULATIVE_COLOR_BONUSES:
+			result["current"] = cumulative_stats.get("total_color_bonuses", 0)
+
+		UnlockConditionClass.ConditionType.CUMULATIVE_CONSUMABLES:
+			result["current"] = cumulative_stats.get("total_consumables_used", 0)
+
 		_:
 			result["current"] = 0
 	
@@ -1352,14 +1380,14 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.ROLL_STRAIGHT, 3, 5)
 	_add_default_power_up("purple_slime", "Purple Slime", "Doubles purple dice probability", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 2, 5)
-	_add_default_power_up("different_straights", "Different Straights", "Straights can have one gap of 1", 
-		UnlockConditionClass.ConditionType.ROLL_STRAIGHT, 4, 5)
+	_add_default_power_up("different_straights", "Different Straights", "Straights can have one gap of 1",
+		UnlockConditionClass.ConditionType.CUMULATIVE_STRAIGHTS, 15, 5)
 	_add_default_power_up("mod_money", "Mod Money", "Earn $8 per modded die when scoring", 
 		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 6, 5)
 	_add_default_power_up("even_higher", "Even Higher", "+1 additive per even die scored (cumulative)", 
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 20, 5, {"category": "fives"})
-	_add_default_power_up("extra_rainbow", "Extra Rainbow", "+10 per colored die scored", 
-		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 5)
+	_add_default_power_up("extra_rainbow", "Extra Rainbow", "+10 per colored die scored",
+		UnlockConditionClass.ConditionType.CUMULATIVE_COLOR_BONUSES, 10, 5)
 	_add_default_power_up("one_roll_wonder", "One-Roll Wonder", "Score on first roll = +40 additive", 
 		UnlockConditionClass.ConditionType.WIN_GAMES, 5, 5)
 	_add_default_power_up("sweet_sixteen", "Sweet Sixteen", "Grants $16 per turn. Turn 16 score bonus: $256",
@@ -1372,14 +1400,14 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.SCORE_THRESHOLD_CATEGORY, 45, 6, {"category": "large_straight"})
 	_add_default_power_up("yahtzee_bonus_mult", "Yahtzee Mult", "Multiplies Yahtzee bonuses", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 3, 6)
-	_add_default_power_up("perfect_strangers", "Perfect Strangers", "Bonus for diverse dice", 
-		UnlockConditionClass.ConditionType.ROLL_STRAIGHT, 5, 6)
+	_add_default_power_up("perfect_strangers", "Perfect Strangers", "Bonus for diverse dice",
+		UnlockConditionClass.ConditionType.CUMULATIVE_STRAIGHTS, 25, 6)
 	_add_default_power_up("randomizer", "Chaos Dice", "Random bonus effects", 
 		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 8, 6)
 	_add_default_power_up("plus_thelast", "Plus The Last", "Adds last score to current score", 
 		UnlockConditionClass.ConditionType.SCORE_POINTS, 250, 6)
-	_add_default_power_up("straight_triplet_master", "Straight Triplet Master", "Score large straight in 3 categories for $150 + 75 bonus", 
-		UnlockConditionClass.ConditionType.ROLL_STRAIGHT, 5, 6)
+	_add_default_power_up("straight_triplet_master", "Straight Triplet Master", "Score large straight in 3 categories for $150 + 75 bonus",
+		UnlockConditionClass.ConditionType.CUMULATIVE_STRAIGHTS, 20, 6, {"straight_type": "large_straight"})
 	_add_default_power_up("modded_dice_mastery", "Modded Dice Mastery", "+10 per modded die when scoring", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 15, 6, {"cumulative": true})
 	_add_default_power_up("blue_safety_net", "Blue Safety Net", "Halves blue dice penalties", 
@@ -1425,7 +1453,7 @@ func _create_default_unlockable_items() -> void:
 	_add_default_power_up("the_piggy_bank", "The Piggy Bank", "Saves $3 per roll. Sell to cash out!", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 6, 4, {"cumulative": true})
 	_add_default_power_up("daring_dice", "Daring Dice", "Remove 2 dice but gain +50 score bonus",
-		UnlockConditionClass.ConditionType.ROLL_STRAIGHT, 4, 5)
+		UnlockConditionClass.ConditionType.CUMULATIVE_STRAIGHTS, 12, 5)
 	_add_default_power_up("random_card_level", "Random Card Level", "20% chance each turn to level up a category",
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 4, 6)
 	_add_default_power_up("the_replicator", "The Replicator", "Duplicates a random PowerUp you own after 1 turn", 
@@ -1601,8 +1629,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 3, 6)
 	_add_default_mod("five_by_one", "Five by One", "All dice show 1 or 5", 
 		UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 8, 8)
-	_add_default_mod("three_but_three", "Three But Three", "Dice avoid rolling 3s", 
-		UnlockConditionClass.ConditionType.ROLL_STRAIGHT, 5, 5)
+	_add_default_mod("three_but_three", "Three But Three", "Dice avoid rolling 3s",
+		UnlockConditionClass.ConditionType.CUMULATIVE_STRAIGHTS, 15, 5)
 	_add_default_mod("wildcard", "Wild Card", "Random special effects on each roll", 
 		UnlockConditionClass.ConditionType.CHORE_COMPLETIONS, 30, 7, {"cumulative": true})
 	_add_default_mod("high_roller", "High Roller", "Dice tend toward high values", 
@@ -1630,8 +1658,8 @@ func _create_default_unlockable_items() -> void:
 		UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 1, 6)
 	_add_default_colored_dice("yellow_dice", "Yellow Dice", "Unlocks yellow colored dice (grants consumables when scored)", 
 		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 8, 5)
-	_add_default_colored_dice("orange_dice", "Orange Dice", "Unlocks orange colored dice (grants +1 roll next turn per Orange die scored)", 
-		UnlockConditionClass.ConditionType.USE_CONSUMABLES, 12, 6)
+	_add_default_colored_dice("orange_dice", "Orange Dice", "Unlocks orange colored dice (grants +1 roll next turn per Orange die scored)",
+		UnlockConditionClass.ConditionType.CUMULATIVE_CONSUMABLES, 25, 6)
 	
 	# ==========================================================================
 	# ALL GAMING CONSOLES - Unlocked by completing specific channels

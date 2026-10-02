@@ -13,7 +13,7 @@ mood_delta = -1
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=green]A good sport![/color] See, Derek? He GETS it. Comedy is about timing and tub toys."
+result_text = "[color=green]A good sport![/color] See, Derek? He GETS it. Comedy is about timing."
 result_expression = "happy"
 ends_visit = true
 
@@ -26,13 +26,13 @@ mood_delta = -1
 grudge_delta = 0
 permanent = false
 followup_node_id = ""
-result_text = "[color=green]You're a treasure.[/color] Here - fifty bucks, and I DESTROY the photo. ...The small one. The canvas stays."
+result_text = "[color=green]You're a treasure.[/color] Here - fifty bucks."
 result_expression = "happy"
 ends_visit = true
 
 [sub_resource type="Resource" id="resp_polite"]
 script = ExtResource("2_resp")
-button_text = "Classic. Tell the bath part too."
+button_text = "Classic. Tell the part where I lost my pants too."
 tone = "polite"
 outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource("out_polite_2")])
 
@@ -109,14 +109,14 @@ ends_visit = true
 
 [sub_resource type="Resource" id="resp_sassy"]
 script = ExtResource("2_resp")
-button_text = "Want me to tell book club about the perm?"
+button_text = "Want me to tell book club about the perm gone wrong?"
 tone = "sassy"
 outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource("out_sassy_2"), SubResource("out_sassy_3")])
 
 [resource]
 script = ExtResource("1_node")
 id = "checkin_embarrassing_story"
-mom_text = "Oh honey, your friend Derek simply MUST hear about the time you called your kindergarten teacher 'Mommy.' In front of the WHOLE class. On picture day."
+mom_text = "Oh honey, your cousin Derek simply MUST hear about the time you called your kindergarten teacher 'Mommy.' In front of the WHOLE class. On picture day."
 expression = "happy"
 speaker_name = "Mom"
 speaker_tint = Color(1, 1, 1, 1)

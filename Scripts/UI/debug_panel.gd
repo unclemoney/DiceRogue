@@ -5554,17 +5554,8 @@ func _debug_reset_progress() -> void:
 		log_debug("ERROR: ProgressManager not found")
 		return
 	
-	# Reset cumulative stats
-	progress_manager.cumulative_stats = {
-		"games_completed": 0,
-		"games_won": 0,
-		"total_score": 0,
-		"total_money_earned": 0,
-		"total_consumables_used": 0,
-		"total_yahtzees": 0,
-		"total_straights": 0,
-		"total_color_bonuses": 0
-	}
+	# Reset cumulative stats (use the manager's defaults so new stat keys are included)
+	progress_manager.cumulative_stats = progress_manager._get_default_cumulative_stats()
 	
 	# Lock all items
 	_debug_lock_all_items()

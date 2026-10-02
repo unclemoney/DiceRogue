@@ -116,7 +116,7 @@ outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy_1"), SubResource(
 [resource]
 script = ExtResource("1_node")
 id = "checkin_fake_emergency"
-mom_text = "THANK GOODNESS you're home! You got my text - 'COME HOME NOW, EMERGENCY' - and you actually came! Hold this pickle jar. Mom's hands are simply no match for it."
+mom_text = "THANK GOODNESS you're home! You understood my beeper message - 'COME HOME NOW, EMERGENCY' - and you actually came! Hold this pickle jar. Mom's hands are simply no match for it."
 expression = "neutral"
 speaker_name = "Mom"
 speaker_tint = Color(1, 1, 1, 1)

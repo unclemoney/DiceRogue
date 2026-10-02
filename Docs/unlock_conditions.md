@@ -22,8 +22,8 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | money_well_spent | Money Well Spent | EARN_MONEY | 200 | Convert money to score |
 | highlighted_score | Highlighted Score | SCORE_POINTS | 250 | Bonus for highlighted categories |
 | yahtzee_bonus_mult | Yahtzee Bonus Multiplier | ROLL_YAHTZEE | 2 | Multiplies Yahtzee bonuses |
-| pin_head | Pin Head | ROLL_STRAIGHT | 2 | Bonus for specific dice patterns |
-| perfect_strangers | Perfect Strangers | ROLL_STRAIGHT | 3 | Bonus for diverse dice |
+| pin_head | Pin Head | ROLL_STRAIGHT | 3 | Bonus for specific dice patterns |
+| perfect_strangers | Perfect Strangers | CUMULATIVE_STRAIGHTS | 25 | Bonus for diverse dice |
 | randomizer | Randomizer | USE_CONSUMABLES | 5 | Random bonus effects |
 | wild_dots | Wild Dots | CUMULATIVE_YAHTZEES | 5 | Special die face effects |
 | the_consumer_is_always_right | The Consumer Is Always Right | USE_CONSUMABLES | 10 | Consumable synergies |
@@ -34,7 +34,7 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | purple_slime | Purple Slime | ROLL_YAHTZEE | 1 | Doubles purple dice probability |
 | blue_slime | Blue Slime | CUMULATIVE_YAHTZEES | 10 | Doubles blue dice probability |
 | lower_ten | Lower Ten | SCORE_POINTS | 150 | Lower section scores get +10 points |
-| different_straights | Different Straights | ROLL_STRAIGHT | 2 | Straights can have one gap of 1 |
+| different_straights | Different Straights | CUMULATIVE_STRAIGHTS | 15 | Straights can have one gap of 1 |
 | plus_thelast | Plus The Last | SCORE_POINTS | 250 | Adds last score to current score |
 | allowance | Allowance | COMPLETE_GAME | 1 | Grants $100 when the round target is met |
 | ungrounded | Ungrounded | CUMULATIVE_YAHTZEES | 15 | Prevents all debuffs |
@@ -53,7 +53,9 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | mod_money | Mod Money | COMPLETE_GAME | 2 | Earn $8 per modded die when scoring |
 | blue_safety_net | Blue Safety Net | EARN_MONEY | 150 | Halves blue dice penalties |
 | chore_sprint | Chore Sprint | CHORE_COMPLETIONS | 8 | Chore completions reduce goof-off by extra 10 (EASY) / 25 (HARD) (cumulative) |
-| straight_triplet_master | Straight Triplet Master | ROLL_STRAIGHT | 3 | Score large straight in 3 categories |
+| straight_triplet_master | Straight Triplet Master | CUMULATIVE_STRAIGHTS | 20 | Score large straight in 3 categories (unlock: 20 cumulative large straights) |
+| daring_dice | Daring Dice | CUMULATIVE_STRAIGHTS | 12 | Remove 2 dice but gain +50 score bonus |
+| extra_rainbow | Extra Rainbow | CUMULATIVE_COLOR_BONUSES | 10 | +10 per colored die scored |
 | modded_dice_mastery | Modded Dice Mastery | USE_CONSUMABLES | 4 | +10 per modded die when scoring |
 | debuff_destroyer | Debuff Destroyer | ROLL_YAHTZEE | 2 | Removes random debuff when sold |
 | challenge_easer | Challenge Easer | COMPLETE_CHANNEL | 2 | All round targets reduced by 20% |
@@ -129,7 +131,7 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | odd_only | Odd Only | SCORE_POINTS | 200 | Forces die to only roll odd numbers |
 | gold_six | Gold Six | ROLL_YAHTZEE | 2 | Sixes count as wilds |
 | five_by_one | Five by One | CUMULATIVE_YAHTZEES | 12 | All dice show 1 or 5 |
-| three_but_three | Three But Three | ROLL_STRAIGHT | 4 | Dice avoid rolling 3s |
+| three_but_three | Three But Three | CUMULATIVE_STRAIGHTS | 15 | Dice avoid rolling 3s |
 | wild_card | Wild Card | USE_CONSUMABLES | 10 | Random special effects on each roll |
 | high_roller | High Roller | LOCK_CONSTRAINT | 100 | Dice tend toward high values (unlock: score 100+ over 4 turns, no locks) |
 | channel_veteran | Channel Veteran | COMPLETE_CHANNEL | 1 | Start with +$25 per channel completed (NOT IMPLEMENTED) |
@@ -146,7 +148,7 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | purple_dice | Purple Dice | CUMULATIVE_YAHTZEES | 2 | Unlocks purple colored dice (score multiplier) |
 | blue_dice | Blue Dice | COMPLETE_CHANNEL | 1 | Unlocks blue colored dice (complex effects) |
 | yellow_dice | Yellow Dice | USE_CONSUMABLES | 8 | Unlocks yellow colored dice (grants consumables when scored) |
-| orange_dice | Orange Dice | USE_CONSUMABLES | 12 | Unlocks orange colored dice (grants +1 roll per Orange die scored) |
+| orange_dice | Orange Dice | CUMULATIVE_CONSUMABLES | 25 | Unlocks orange colored dice (grants +1 roll per Orange die scored) |
 
 ## Dice Sets (selected at game start in the Mall Zone Selection)
 
@@ -185,7 +187,7 @@ yellow-dice rewards):
 | ROLL_YAHTZEE | Roll X Yahtzees |
 | COMPLETE_GAME | Complete X games |
 | SCORE_CATEGORY | Score in a specific category |
-| ROLL_STRAIGHT | Roll X straights |
+| ROLL_STRAIGHT | Roll X straights in a single game (max ~3 scorable per round, so targets are capped at 3; larger goals use CUMULATIVE_STRAIGHTS) |
 | USE_CONSUMABLES | Use X consumables in one game |
 | EARN_MONEY | Earn $X in a single game |
 | COLORED_DICE_BONUS | Trigger X same-color bonuses |
@@ -200,6 +202,9 @@ yellow-dice rewards):
 | CHORE_COMPLETIONS | Complete X chores (single game or cumulative) |
 | WIN_WITHOUT_SCORING | Win without scoring in a category/section |
 | **LOCK_CONSTRAINT** | **Score X+ points over Y turns while locking no more than Z dice** |
+| **CUMULATIVE_STRAIGHTS** | **Roll X straights across all games (optional `straight_type` param: `small_straight` / `large_straight`)** |
+| **CUMULATIVE_COLOR_BONUSES** | **Trigger X same-color bonuses across all games** |
+| **CUMULATIVE_CONSUMABLES** | **Use X consumables across all games** |
 
 > **Note:** Phantom registrations (`grand_master`, `dice_lord`, `lucky_streak`, `steady_progress`, `combo_king`, `channel_champion`, `avoidance_ones/upper/lower`, `channel_bonus`, `reroll_master`, `ultimate_reroll`) were removed from `progress_manager.gd` and from this document; `lucky_seven` was kept (live code references it). Rows for the newest content wave (`yellow_slime`, `extreme_couponing`, `defiance`, `comeback_kid`, `upper_crust`, `two_pair_house`, `four_of_a_kind_yahtzee`, `spite`, `antidote`, `immunity`, `mulligan`, `scratch_ticket`, `paint_job`, `bonus_sprint`, `painted_die`, `cursed_six`) were added from design intent — verify them against `progress_manager.gd`, which did not yet contain these registrations at the time of writing. Older rows above were corrected during the Lock Constraint refactor (May 2026); a full audit is still recommended for complete accuracy.
 
