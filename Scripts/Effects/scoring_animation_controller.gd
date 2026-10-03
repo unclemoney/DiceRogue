@@ -463,9 +463,11 @@ func _animate_single_die(die, die_index: int, intensity_scale: float, speed_scal
 	var tfx = get_node_or_null("/root/TweenFXHelper")
 	if tfx and die:
 		tfx.spotlight_enter(die, Color(1.5, 1.5, 1.2, 1.0))
+		var die_ref: WeakRef = weakref(die)
 		get_tree().create_timer(0.4).timeout.connect(func():
-			if is_instance_valid(die):
-				tfx.spotlight_exit(die)
+			var live_die = die_ref.get_ref()
+			if live_die:
+				tfx.spotlight_exit(live_die)
 		)
 
 	var die_value = int(die.value)
@@ -753,6 +755,10 @@ func _phase_debuff_penalties(breakdown_info: Dictionary, speed_scale: float, tok
 		var chip_label: String
 		if source_name == "roll_score_minus_one":
 			chip_label = "ROLLING PENALTY"
+		elif source_name == "half_additive_penalty":
+			chip_label = "HALVED ADDITIVES"
+		elif source_name == "greed_penalty":
+			chip_label = "GREED PENALTY"
 		else:
 			chip_label = source_name.replace("_", " ").to_upper()
 		var text = "-%d %s" % [abs(value), chip_label]

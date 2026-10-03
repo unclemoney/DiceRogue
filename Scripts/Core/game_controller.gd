@@ -2878,7 +2878,7 @@ func _create_manual_breakdown_info(category: String = "") -> Dictionary:
 			if is_console:
 				source_category = "console"
 				display_name = console_sources.get(source_name, "")
-			elif source_name == "roll_score_minus_one" or source_name.contains("debuff"):
+			elif source_name == "roll_score_minus_one" or source_name.contains("debuff") or source_name == "half_additive_penalty" or source_name == "greed_penalty":
 				source_category = "debuff"
 				if source_name == "roll_score_minus_one":
 					display_name = "Rolling Penalty"

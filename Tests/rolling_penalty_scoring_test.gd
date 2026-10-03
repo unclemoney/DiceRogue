@@ -27,6 +27,7 @@ func _ready() -> void:
 	add_child(_scorecard)
 
 	_test_penalty_in_breakdown_as_debuff()
+	_test_debuff_penalty_sources_categorized()
 	_test_penalty_applies_before_multipliers()
 	_test_additive_stage_clamps_at_zero()
 	_test_decimal_multiplier_floors()
@@ -68,6 +69,25 @@ func _test_penalty_in_breakdown_as_debuff() -> void:
 			_assert(int(source_info.get("value", 0)) == -2, "penalty source value is -2")
 	_assert(found, "additive_sources contains roll_score_minus_one")
 	_assert(int(info.get("final_score", -1)) == 8, "final score 10 - 2 = 8")
+
+
+## Case 1b: half_additive and greed penalties also categorize as debuff sources,
+## so the scoring animation replays them (category "other" was silently dropped).
+func _test_debuff_penalty_sources_categorized() -> void:
+	print("[RollingPenaltyScoringTest] Case 1b: debuff penalty sources categorized as debuff")
+	ScoreModifierManager.reset()
+	ScoreModifierManager.register_additive("half_additive_penalty", -5)
+	ScoreModifierManager.register_additive("greed_penalty", -3)
+
+	var info: Dictionary = _scorecard.debug_simulate_score("chance", [2, 2, 2, 2, 2])
+	var seen := {}
+	for source_info in info.get("additive_sources", []):
+		var source_name: String = source_info.get("name", "")
+		if source_name == "half_additive_penalty" or source_name == "greed_penalty":
+			seen[source_name] = source_info.get("category", "")
+	_assert(seen.get("half_additive_penalty", "") == "debuff", "half_additive_penalty categorized as 'debuff'")
+	_assert(seen.get("greed_penalty", "") == "debuff", "greed_penalty categorized as 'debuff'")
+	_assert(int(info.get("final_score", -1)) == 2, "final score 10 - 5 - 3 = 2")
 
 
 ## Case 2: penalty applies BEFORE multipliers (not after).

@@ -334,9 +334,13 @@ func _animate_spawn_fanfare() -> void:
 	flash_tween.tween_callback(func():
 		for die in dice_list:
 			if is_instance_valid(die) and die.dice_material:
+				var die_ref: WeakRef = weakref(die)
 				var fade = get_tree().create_tween()
 				fade.tween_method(
-					func(v): die.dice_material.set_shader_parameter("flash_strength", v),
+					func(v):
+						var live_die = die_ref.get_ref()
+						if live_die and live_die.dice_material:
+							live_die.dice_material.set_shader_parameter("flash_strength", v),
 					1.0, 0.0, 0.15
 				)
 	)

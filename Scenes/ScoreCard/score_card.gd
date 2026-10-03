@@ -1531,7 +1531,7 @@ func _categorize_modifier_source(source_name: String) -> String:
 
 		# Known Debuff source names that don't contain "debuff"
 		var debuff_sources = [
-			"roll_score_minus_one"
+			"roll_score_minus_one", "half_additive_penalty", "greed_penalty"
 		]
 
 		if normalized_name in debuff_sources:
