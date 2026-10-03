@@ -544,6 +544,12 @@ func _on_game_start() -> void:
 	# Delete any existing run save for fresh start
 	GameSaveManager.delete_current_save()
 
+	# Reset run-scoped dice color state. DiceColorManager is an autoload and
+	# survives scene reloads/transitions, so purchased colors, chance modifiers,
+	# and blue-dice PowerUp flags would otherwise leak into the fresh run.
+	if DiceColorManager:
+		DiceColorManager.reset_for_new_game()
+
 	# Reset run-scoped Rebellion Rep for the new game (saved-run loads go
 	# through load_game_state() instead and keep their Rep)
 	var progress_manager = get_node_or_null("/root/ProgressManager")

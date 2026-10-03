@@ -661,6 +661,23 @@ func clear_purchased_colors() -> void:
 	_reset_purchased_colors()
 	print("[DiceColorManager] Cleared all purchased colors")
 
+## reset_for_new_game()
+##
+## Resets ALL run-scoped dice color state for a fresh game. This autoload
+## survives scene reloads, so _ready() (app launch) is not enough — every
+## fresh-start path must call this or stale purchases/modifiers leak into
+## the next run.
+##
+## Side-effects: clears purchased_colors, color_chance_modifiers, and the
+## blue dice PowerUp modifiers. Does NOT touch colors_enabled (a user setting)
+## or colored_dice_data (static resources).
+func reset_for_new_game() -> void:
+	_reset_purchased_colors()
+	clear_all_color_chance_modifiers()
+	blue_always_used = false
+	blue_penalty_reduction_factor = 1.0
+	print("[DiceColorManager] Full reset for new game")
+
 ## Register a color chance modifier (PowerUp system)
 ## @param color_type: DiceColor.Type to modify
 ## @param modifier: float multiplier for the chance denominator (0.5 = half denominator = double chance)

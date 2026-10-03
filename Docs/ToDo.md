@@ -34,7 +34,7 @@
 - [X] `P2-Minor` Have some fanfare and notify the player when a buff is added.
 - [ ] `P2-Minor` Better way to SELL Mods? This needs more detail and exploration.
 - [X] `P2-Minor` Upper bonus multiplier power up. Add a new PowerUp that will multiply Upper Section Bonus.
-- [ ] `P2-Minor` Balance the Division debuff, far too powerfull.  Perhaps randomly select one set of multipliers-- powerup OR scorecard to be divisors.
+- [X] `P2-Minor` Balance the Division debuff, far too powerfull.  Perhaps randomly select one set of multipliers-- powerup OR scorecard to be divisors.
 
 ## Bugs
 
