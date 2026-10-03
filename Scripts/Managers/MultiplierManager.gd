@@ -24,6 +24,14 @@ var _debug_enabled: bool = true
 ## Division mode flag - when true, multipliers become dividers
 var _division_mode: bool = false
 
+## Level division mode flag (Torn Scorecard) - when true, scorecard category
+## level factors divide instead of multiply. Consulted by the Scorecard.
+var _level_division_mode: bool = false
+
+## PowerUp division mode flag (Ripped POGs) - when true, only PowerUp-registered
+## multiplier sources divide; dice-color multipliers are unaffected.
+var _powerup_division_mode: bool = false
+
 ## _ready()
 ##
 ## Lifecycle: add this node to helpful groups and print initialization when debugging.
@@ -289,6 +297,58 @@ func set_division_mode(enabled: bool) -> void:
 func is_division_mode() -> bool:
 	return _division_mode
 
+## set_level_division_mode(enabled)
+##
+## Enables or disables level division mode (Torn Scorecard debuff). When enabled,
+## scorecard category level factors divide instead of multiply. The Scorecard
+## consults this flag at the level step of its scoring pipeline.
+func set_level_division_mode(enabled: bool) -> void:
+	var old_mode = _level_division_mode
+	_level_division_mode = enabled
+
+	if _debug_enabled:
+		if enabled:
+			print("[ScoreModifierManager] Level division mode ENABLED - scorecard levels now divide scores")
+		else:
+			print("[ScoreModifierManager] Level division mode DISABLED - scorecard levels work normally")
+
+	# Emit signal if the mode actually changed
+	if old_mode != enabled:
+		var new_total = get_total_multiplier()
+		emit_signal("multiplier_changed", new_total)
+
+## is_level_division_mode() -> bool
+##
+## Returns true if level division mode (Torn Scorecard) is currently active.
+func is_level_division_mode() -> bool:
+	return _level_division_mode
+
+## set_powerup_division_mode(enabled)
+##
+## Enables or disables PowerUp division mode (Ripped POGs debuff). When enabled,
+## only PowerUp-registered multiplier sources divide; dice-color multipliers
+## are unaffected. Applied per-source by the Scorecard's modifier collection.
+func set_powerup_division_mode(enabled: bool) -> void:
+	var old_mode = _powerup_division_mode
+	_powerup_division_mode = enabled
+
+	if _debug_enabled:
+		if enabled:
+			print("[ScoreModifierManager] PowerUp division mode ENABLED - PowerUp multipliers now divide scores")
+		else:
+			print("[ScoreModifierManager] PowerUp division mode DISABLED - PowerUp multipliers work normally")
+
+	# Emit signal if the mode actually changed
+	if old_mode != enabled:
+		var new_total = get_total_multiplier()
+		emit_signal("multiplier_changed", new_total)
+
+## is_powerup_division_mode() -> bool
+##
+## Returns true if PowerUp division mode (Ripped POGs) is currently active.
+func is_powerup_division_mode() -> bool:
+	return _powerup_division_mode
+
 ## get_raw_multiplier_total() -> float
 ##
 ## Returns the raw product of all multipliers WITHOUT applying division mode.
@@ -405,7 +465,9 @@ func get_state() -> Dictionary:
 	return {
 		"multipliers": _active_multipliers.duplicate(),
 		"additives": _active_additives.duplicate(),
-		"division_mode": _division_mode
+		"division_mode": _division_mode,
+		"level_division_mode": _level_division_mode,
+		"powerup_division_mode": _powerup_division_mode
 	}
 
 
@@ -416,5 +478,7 @@ func load_state(state: Dictionary) -> void:
 	_active_multipliers = state.get("multipliers", {})
 	_active_additives = state.get("additives", {})
 	_division_mode = state.get("division_mode", false)
+	_level_division_mode = state.get("level_division_mode", false)
+	_powerup_division_mode = state.get("powerup_division_mode", false)
 	emit_signal("multiplier_changed", get_total_multiplier())
 	emit_signal("additive_changed", get_total_additive())

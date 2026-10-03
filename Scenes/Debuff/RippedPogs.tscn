@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Debuff/ripped_pogs_debuff.gd" id="1_bequk"]
+
+[node name="RippedPogsDebuff" type="Node"]
+script = ExtResource("1_bequk")

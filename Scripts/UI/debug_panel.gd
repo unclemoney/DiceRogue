@@ -49,6 +49,7 @@ var dice_state_report_text: TextEdit
 var score_trace_report_text: TextEdit
 var debuff_report_text: TextEdit
 var difficulty_toggle: CheckButton
+var division_flags_label: Label
 
 var game_controller: GameController
 var is_visible_debug := false
@@ -298,6 +299,8 @@ func _create_debug_tabs() -> void:
 			{"text": "Pulse Costly Roll Debuff UI", "method": "_debug_pulse_costly_roll_debuff_ui"},
 			{"text": "Cycle All Glyphs", "method": "_debug_cycle_all_debuff_glyphs"},
 			{"text": "Test Division vs Perfect Strangers", "method": "_debug_test_division_perfect_strangers"},
+			{"text": "Test Torn Scorecard Debuff", "method": "_debug_test_torn_scorecard_debuff"},
+			{"text": "Test Ripped POGs Debuff", "method": "_debug_test_ripped_pogs_debuff"},
 			{"text": "Show Active Challenges", "method": "_debug_show_active_challenges"},
 			{"text": "Show Mod/Dice Count", "method": "_debug_show_mod_dice_count"},
 			{"text": "Fill All Dice w/ Mods", "method": "_debug_fill_dice_with_mods"},
@@ -641,6 +644,12 @@ func _create_testing_tab(parent: VBoxContainer, button_definitions: Array) -> vo
 	difficulty_toggle.toggled.connect(_on_difficulty_toggle_toggled)
 	difficulty_row.add_child(difficulty_toggle)
 
+	division_flags_label = Label.new()
+	division_flags_label.name = "DivisionFlagsLabel"
+	division_flags_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.9, 1.0))
+	difficulty_row.add_child(division_flags_label)
+	_refresh_division_flags_label()
+
 	var lists_row = HBoxContainer.new()
 	lists_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lists_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -702,6 +711,28 @@ func _on_difficulty_mode_changed(mode: GameSettings.DifficultyMode) -> void:
 		var is_hard := mode == GameSettings.DifficultyMode.HARD
 		if difficulty_toggle.button_pressed != is_hard:
 			difficulty_toggle.set_pressed_no_signal(is_hard)
+	_refresh_division_flags_label()
+
+
+## _refresh_division_flags_label()
+##
+## Updates the division-flags readout next to the difficulty toggle with the
+## current ScoreModifierManager division states (The Division / Torn
+## Scorecard / Ripped POGs).
+func _refresh_division_flags_label() -> void:
+	if not division_flags_label or not is_instance_valid(division_flags_label):
+		return
+	if not ScoreModifierManager:
+		division_flags_label.text = "Divide flags: n/a"
+		return
+	var div := ScoreModifierManager.is_division_mode() if ScoreModifierManager.has_method("is_division_mode") else false
+	var lvl := ScoreModifierManager.is_level_division_mode() if ScoreModifierManager.has_method("is_level_division_mode") else false
+	var pu := ScoreModifierManager.is_powerup_division_mode() if ScoreModifierManager.has_method("is_powerup_division_mode") else false
+	division_flags_label.text = "Divide: all=%s levels=%s powerups=%s" % [
+		"ON" if div else "off",
+		"ON" if lvl else "off",
+		"ON" if pu else "off"
+	]
 
 
 func _create_diagnostics_tab(parent: VBoxContainer) -> void:
@@ -3000,6 +3031,8 @@ func _debug_apply_division_debuff() -> void:
 		var total_modifier = ScoreModifierManager.get_total_multiplier()
 		log_debug("Current total modifier after applying The Division: " + str(total_modifier) + "x")
 
+	_refresh_division_flags_label()
+
 func _debug_remove_division_debuff() -> void:
 	if not game_controller:
 		log_debug("ERROR: GameController not available")
@@ -3016,6 +3049,8 @@ func _debug_remove_division_debuff() -> void:
 	if ScoreModifierManager:
 		var total_modifier = ScoreModifierManager.get_total_multiplier()
 		log_debug("Current total modifier after removing The Division: " + str(total_modifier) + "x")
+
+	_refresh_division_flags_label()
 
 func _debug_test_division_perfect_strangers() -> void:
 	if not game_controller:
@@ -3057,6 +3092,44 @@ func _debug_test_division_perfect_strangers() -> void:
 		log_debug("EFFECT: Score is now DIVIDED by the original multiplier instead of multiplied!")
 	
 	log_debug("Test complete! Use 'Remove The Division Debuff' to restore normal behavior.")
+
+func _debug_test_torn_scorecard_debuff() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+
+	if game_controller.is_debuff_active("torn_scorecard"):
+		game_controller.disable_debuff("torn_scorecard")
+		log_debug("Removed Torn Scorecard debuff - scorecard levels multiply normally again")
+	else:
+		game_controller.apply_debuff("torn_scorecard")
+		log_debug("Applied Torn Scorecard debuff - scorecard levels now DIVIDE instead of multiply!")
+
+	# Show current state
+	if ScoreModifierManager and ScoreModifierManager.has_method("is_level_division_mode"):
+		log_debug("Level division mode: " + str(ScoreModifierManager.is_level_division_mode()))
+		log_debug("Example: a level 3 category now scores base / 3 instead of base x 3 (level 1 unaffected)")
+
+	_refresh_division_flags_label()
+
+func _debug_test_ripped_pogs_debuff() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+
+	if game_controller.is_debuff_active("ripped_pogs"):
+		game_controller.disable_debuff("ripped_pogs")
+		log_debug("Removed Ripped POGs debuff - PowerUp multipliers multiply normally again")
+	else:
+		game_controller.apply_debuff("ripped_pogs")
+		log_debug("Applied Ripped POGs debuff - PowerUp multipliers now DIVIDE instead of multiply!")
+
+	# Show current state
+	if ScoreModifierManager and ScoreModifierManager.has_method("is_powerup_division_mode"):
+		log_debug("PowerUp division mode: " + str(ScoreModifierManager.is_powerup_division_mode()))
+		log_debug("Example: a x2.0 PowerUp multiplier now divides the score by 2 (dice colors still multiply)")
+
+	_refresh_division_flags_label()
 
 func _debug_multiplier_system() -> void:
 	log_debug("\n=== MULTIPLIER SYSTEM DEBUG ===")

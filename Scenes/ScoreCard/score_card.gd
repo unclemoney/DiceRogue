@@ -1645,10 +1645,13 @@ func _capture_color_effects_for_score(category: String, dice_values: Array, appl
 		"used_dice_indices": used_dice_indices
 	}
 
-## _create_multiplier_component(raw_factor, modifier_manager)
+## _create_multiplier_component(raw_factor, modifier_manager, force_divide)
 ##
 ## Builds raw/effective/display metadata for a multiplicative score factor.
-func _create_multiplier_component(raw_factor: float, modifier_manager) -> Dictionary:
+## `force_divide` inverts this one factor (used by Torn Scorecard for the
+## category level step) but is ignored while global division mode is active —
+## The Division supersedes it, so the two never double-flip.
+func _create_multiplier_component(raw_factor: float, modifier_manager, force_divide: bool = false) -> Dictionary:
 	var effective_factor = raw_factor
 	var division_mode_active = false
 
@@ -1657,6 +1660,9 @@ func _create_multiplier_component(raw_factor: float, modifier_manager) -> Dictio
 			division_mode_active = modifier_manager.is_division_mode()
 		if modifier_manager.has_method("get_effective_multiplier_factor"):
 			effective_factor = modifier_manager.get_effective_multiplier_factor(raw_factor)
+
+	if force_divide and not division_mode_active and not is_zero_approx(raw_factor):
+		effective_factor = 1.0 / raw_factor
 
 	var display_mode = "multiply"
 	var display_operator = "×"
@@ -1737,6 +1743,12 @@ func _collect_modifier_totals(modifier_manager) -> Dictionary:
 			elif source_category == "consumable" and source not in active_consumable_sources:
 				active_consumable_sources.append(source)
 
+	# Ripped POGs: when PowerUp division mode is on (and global division is off),
+	# PowerUp-sourced multipliers are inverted per-source in the loop below.
+	var pu_div := false
+	if modifier_manager.has_method("is_powerup_division_mode") and modifier_manager.has_method("is_division_mode"):
+		pu_div = modifier_manager.is_powerup_division_mode() and not modifier_manager.is_division_mode()
+
 	if modifier_manager.has_method("get_active_sources"):
 		var multiplier_source_names = modifier_manager.get_active_sources()
 		for source in multiplier_source_names:
@@ -1748,6 +1760,9 @@ func _collect_modifier_totals(modifier_manager) -> Dictionary:
 				adjusted_raw_value = raw_value * 2.0
 				saturn_doubled = true
 				saturn_adjusted_multiplier_sources.append(source)
+			if pu_div and source_category == "powerup" and not is_zero_approx(adjusted_raw_value):
+				# Ripped POGs: PowerUp-sourced multipliers divide instead of multiply.
+				adjusted_raw_value = 1.0 / adjusted_raw_value
 			raw_total_multiplier *= adjusted_raw_value
 			var source_component = _create_multiplier_component(adjusted_raw_value, modifier_manager)
 			multiplier_sources.append({
@@ -1799,7 +1814,11 @@ func _calculate_score_from_components(base_score: int, category_level: int, regu
 		raw_dice_color_multiplier = 1.0
 		raw_blue_score_multiplier = 1.0
 
-	var category_component = _create_multiplier_component(float(category_level), modifier_manager)
+	var lvl_div := false
+	if is_instance_valid(modifier_manager) and modifier_manager.has_method("is_level_division_mode"):
+		lvl_div = modifier_manager.is_level_division_mode()
+
+	var category_component = _create_multiplier_component(float(category_level), modifier_manager, lvl_div)
 	var regular_component = _create_multiplier_component(raw_regular_multiplier, modifier_manager)
 	var dice_color_component = _create_multiplier_component(raw_dice_color_multiplier, modifier_manager)
 	var blue_component = _create_multiplier_component(raw_blue_score_multiplier, modifier_manager)

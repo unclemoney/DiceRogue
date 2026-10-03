@@ -3050,6 +3050,14 @@ func apply_debuff(id: String, ignore_ungrounded: bool = false) -> void:
 			debuff.target = self  
 			debuff.start()
 			debuff_started = true
+		"torn_scorecard":
+			debuff.target = self
+			debuff.start()
+			debuff_started = true
+		"ripped_pogs":
+			debuff.target = self
+			debuff.start()
+			debuff_started = true
 		"the_division":
 			debuff.target = self  
 			debuff.start()

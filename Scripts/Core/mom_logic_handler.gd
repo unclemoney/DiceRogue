@@ -18,7 +18,7 @@ class_name MomLogicHandler
 ## branches here. Lighter tiers are temporary (round-scoped debuffs,
 ## cosmetic locks); harsher tiers are permanent (confiscation, mod removal).
 
-const AVAILABLE_DEBUFFS: Array[String] = ["lock_dice", "costly_roll", "disabled_twos", "roll_score_minus_one", "the_division"]
+const AVAILABLE_DEBUFFS: Array[String] = ["lock_dice", "costly_roll", "disabled_twos", "roll_score_minus_one", "the_division", "torn_scorecard", "ripped_pogs"]
 
 ## Sass-failure escalation (Rebellion): punished SASSY responses scale with
 ## the player's persistent Rep tier (0-4). Every SASS_REP_TIER_STEP Rep
@@ -723,15 +723,27 @@ static func apply_consequences(game_controller: Node, result: MomCheckResult) ->
 ##
 ## Returns a random debuff ID that is not currently active. Returns ""
 ## only when the pool itself is empty (never, with the current list).
+## "the_division" is HARD-only: it is skipped in EASY mode (challenges can
+## still force-apply it, bypassing this pool).
 static func _get_random_non_active_debuff(active_debuffs: Dictionary, already_applied: Array) -> String:
+	var hard_mode := GameSettings != null and GameSettings.is_hard_mode()
 	var available: Array[String] = []
 	for debuff_id in AVAILABLE_DEBUFFS:
+		if debuff_id == "the_division" and not hard_mode:
+			continue
 		if not active_debuffs.has(debuff_id) and debuff_id not in already_applied:
 			available.append(debuff_id)
 
 	if available.is_empty():
 		# All debuffs already active, pick a random one anyway (will stack or do nothing)
-		return AVAILABLE_DEBUFFS[GameRNG.random_index(AVAILABLE_DEBUFFS)]
+		var fallback: Array[String] = []
+		for debuff_id in AVAILABLE_DEBUFFS:
+			if debuff_id == "the_division" and not hard_mode:
+				continue
+			fallback.append(debuff_id)
+		if fallback.is_empty():
+			return ""
+		return fallback[GameRNG.random_index(fallback)]
 
 	return available[GameRNG.random_index(available)]
 

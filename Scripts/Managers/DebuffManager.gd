@@ -16,6 +16,21 @@ var _verbose_mode: bool = false
 ## never be rolled by the automatic round selection.
 const GRANTED_ONLY_IDS: Array[String] = ["rebellion", "teacher_pet"]
 
+## Debuffs that are only rolled by the automatic selection in HARD difficulty
+## mode. Challenges can still force-apply them in EASY (they bypass the pool).
+const HARD_ONLY_IDS: Array[String] = ["the_division"]
+
+
+## _is_pool_eligible(def) -> bool
+##
+## Returns false when the debuff is HARD-only and HARD mode is not active.
+## Evaluated at draw time only; already-applied debuffs are unaffected.
+func _is_pool_eligible(def: DebuffData) -> bool:
+	if def.id in HARD_ONLY_IDS:
+		if GameSettings == null or not GameSettings.is_hard_mode():
+			return false
+	return true
+
 
 func _ready() -> void:
 	print("[DebuffManager] Loading definitions...")
@@ -132,7 +147,7 @@ func get_debuffs_by_difficulty(max_difficulty: int) -> Array[DebuffData]:
 	var result: Array[DebuffData] = []
 	for id in _defs_by_id:
 		var def = _defs_by_id[id] as DebuffData
-		if def and def.difficulty_rating <= max_difficulty and def.id not in GRANTED_ONLY_IDS and not def.is_grounding:
+		if def and def.difficulty_rating <= max_difficulty and def.id not in GRANTED_ONLY_IDS and not def.is_grounding and _is_pool_eligible(def):
 			result.append(def)
 	if _verbose_mode:
 		print("[DebuffManager] Found %d debuffs with difficulty <= %d" % [result.size(), max_difficulty])
@@ -269,6 +284,8 @@ func select_boss_debuff(exact_level: int, exclude_ids: Array = []) -> String:
 	for id in _defs_by_id:
 		var def = _defs_by_id[id] as DebuffData
 		if not def or def.is_grounding or def.id in GRANTED_ONLY_IDS:
+			continue
+		if not _is_pool_eligible(def):
 			continue
 		if def.difficulty_rating != exact_level:
 			continue

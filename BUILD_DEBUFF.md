@@ -291,7 +291,9 @@ At run start, `RoundManager._initialize_rounds_data()` pre-selects the debuffs f
 | Debuff | ID | Rating |
 |--------|----|--------|
 | Too Greedy | `too_greedy` | 5 |
-| The Division | `the_division` | 5 |
+| The Division | `the_division` | 5 (HARD mode only — excluded from the random pool in EASY; challenges can still force-apply it) |
+| Torn Scorecard | `torn_scorecard` | 4 |
+| Ripped POGs | `ripped_pogs` | 4 |
 | Murphy's Law | `rotating_disabled_powerup` | 4 |
 | Reduced Levels | `reduced_levels` | 4 |
 | Disabled Colors | `disabled_colors` | 4 |
