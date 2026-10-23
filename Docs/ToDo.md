@@ -36,49 +36,29 @@
 
 ## SYS:Gameplay — Core Gameplay & Balance
 
-- [X] `P1-Major` Starting a new game after a loss did not clear colored dice purchased from previous game. 
 - [ ] `P2-Minor` Refactor Magic Mitt PowerUp to affect the REP meter.
-- [X] `P2-Minor` Bonus Collector USE state needs to be checked.  After achieving upper bonus, it is disabled.
-- [X] `P2-Minor` Have some fanfare and notify the player when a buff is added.
 - [ ] `P2-Minor` Most mods are just not attractive enough, we need to balance them more.
-- [X] `P2-Minor` Upper bonus multiplier power up. Add a new PowerUp that will multiply Upper Section Bonus.
-- [X] `P2-Minor` Balance the Division debuff, far too powerfull.  Perhaps randomly select one set of multipliers-- powerup OR scorecard to be divisors.
 - [ ] `P2-Minor` Remove the ability to use consumables unless in the main game loop.
 
 ## Bugs
 
 - [ ] `P1-Major` Wild Dice mod not correctly applying to all dice, especially when calculating a Yahtzee.
-- [X] `P1-Major` Rolling Pentalty needs to be shown for what it is in the scoring animation process, also show on the fan out scene the total deduction, and in the debug panel.
 
 ## SYS:Chore — Chore System & Mom
 
-- [X] `P2-Minor` Add additional first round check-ins.  We essentially don't want repeat check-in's in the same game.  Are the story arcs actually working?
-- [X] `P1-Major` Teacher's Pet system does not add money as expected and Tiers should scale better.  Money should be the key driver.
-- [X] `P2-Minor` Balance the Teacher's Pet levels, it's too easy to just agree with mom and earn the mega rewards.  Adding a gate for the number of chores completed would be an easy way to prevent the tiers from getting to high too fast.
 
 ## SYS:Shop — Shop & Economy
 
 
 ## SYS:UI — UI / UX & Animation
 
-- [ ] `P1-Major` Update Tutorial to cover all of the new updates and additions.
-- [X] `P1-Major` Complete scoring animation before round end or chore panel is shown.
-- [X] `P2-Minor` Scoring animation is showing the rounding down from multipliers.
-- [X] `P2-Minor` Change upgrade scorecard sound.
-- [X] `P2-Minor` Titles for powerup cards and consumables need to be a fixed size and not change, and fit in the area.
-- [X] `P2-Minor` Adjust the position of the FanFare fly in, the resting location is off to the side, but should be centered.
-- [X] `P2-Minor` Fix the Red Ranger Powerup label, we no longer need the extra text showing the current power up level.
 - [ ] `P2-Minor` Update Challenge Icons.
 - [ ] `P2-Minor` Update game over screen.
 - [ ] `P2-Minor` Tooltips on Mall Map not showing up.
 - [ ] `P2-Minor` Mall Map tooltip not showing next up challenges.
-- [X] `P2-Minor` In the Shop Change Locked to REP
-- [X] `P2-Minor` Update how the Shop is displayed.
-
 
 ## SYS:Save — Save, Load & State Management
 
-- [X] `P0-Critical` Weird things going on with Continue or New Game. Save game system was completely refactored to address these issues.
 - [ ] `P2-Minor` Continue testing newly refactored save game system.
 
 ## SYS:Debug — Debug & Testing Tools
@@ -160,6 +140,10 @@
 - [X] `P2-Minor` +150 for Upper section bonus should only be allowed to USE after +63 is achieved.
 - [X] `P2-Minor` Sweet Sixteen needs to be assessed and fixed or cut.
 - [X] `P2-Minor` Which rounds feel wrong? Higher or lower scores? What is the target? Round 4 feels too hard.  This will be addressed in new difficulty system.
+- [X] `P2-Minor` Bonus Collector USE state needs to be checked.  After achieving upper bonus, it is disabled.
+- [X] `P1-Major` Teacher's Pet system does not add money as expected and Tiers should scale better.  Money should be the key driver.
+- [X] `P2-Minor` Balance the Teacher's Pet levels, it's too easy to just agree with mom and earn the mega rewards.  Adding a gate for the number of chores completed would be an easy way to prevent the tiers from getting to high too fast.
+- [X] `P2-Minor` Balance the Division debuff, far too powerfull.  Perhaps randomly select one set of multipliers-- powerup OR scorecard to be divisors.
 
 ## Testing — Completed
 - [X] Debug Panel doesn't have a way to test MODS.
@@ -263,6 +247,9 @@
 - [X] A cork board with post it notes.
 - [X] Have Chores change randomly after XX rolls, give a notification of a change visually.
 - [X] If you haven't done enough chores when mom shows up, she will be mad and take something away.
+- [X] `P2-Minor` Have some fanfare and notify the player when a buff is added.
+- [X] `P2-Minor` Upper bonus multiplier power up. Add a new PowerUp that will multiply Upper Section Bonus.
+- [X] `P2-Minor` Add additional first round check-ins.  We essentially don't want repeat check-in's in the same game.  Are the story arcs actually working?
 
 ## UI/UX - Completed
 
@@ -273,8 +260,16 @@
 - [X] `P2-Minor` Roll button ocassionally remains too large, always ensure it reverts to original size.
 - [X] `P2-Minor` Shockwave animations can also be applied to buttons that need to be pressed or chosen.
 - [X] `P2-Minor` Click on the Mall Zone upper left to bring up the mall map. Show coming challenges.
-- [X] `P2-Minor` Update buttons to glass shader so they are uniform.
+- [X] `P2-Minor` Update buttons to use the Reroll shader and logic, but different colors.
 - [X] `P2-Minor` Make lock item screens easier to read.
+- [X] `P1-Major` Complete scoring animation before round end or chore panel is shown.
+- [X] `P2-Minor` Scoring animation is showing the rounding down from multipliers.
+- [X] `P2-Minor` Change upgrade scorecard sound.
+- [X] `P2-Minor` Titles for powerup cards and consumables need to be a fixed size and not change, and fit in the area.
+- [X] `P2-Minor` Adjust the position of the FanFare fly in, the resting location is off to the side, but should be centered.
+- [X] `P2-Minor` Fix the Red Ranger Powerup label, we no longer need the extra text showing the current power up level.
+- [X] `P2-Minor` In the Shop Change Locked to REP
+- [X] `P2-Minor` Update how the Shop is displayed.
 
 ## Bugs — Completed
 - [X] Disabled 2's should add a red shader to the 2's dice face.
@@ -299,7 +294,7 @@
 - [X] 4,2,1,3,5 with 2 mods gold 6, and color dice didn't manually score a lg straight, gave me 2 points for red dice, but not lg straight.
 - [X] New game on new channel doesn't unregister all powerups properly, extra dice still appearing. Need to also change turn and rounds to --, maybe have channel displayed on the TV.
 - [X] Need to make sure that the colored dice is actually being scored, green dice that shouldn't count are being scored especially in the upper section.
-- [X] Red dice is being triggered twice.
+- [X] Red dice is triggered twice.
 - [X] One Extra Dice Consumable does not grant extra dice, once dice surge is fixed, this should be fixed next.
 - [X] Dice Surge not revoking the extra dice after XX turns.
 - [X] Invalid access to property or key 'roll_cost' on a base object of type 'Node (CostlyRollDebuff)'.
@@ -308,7 +303,7 @@
 - [X] Scorecard levels are reset for the next channel, but the labels haven't been reset.
 - [X] Shop expansions should reset to its original number when new channel starts a new game.
 - [X] The profile name seemed to randomly duplicate from player one to player two.
-- [X] Auto score doesn't always put in the displayed category, usually because of an upgrades or other mults, how to handle this?
+- [X] Auto score doesn't always put in the displayed category, usually because of a upgrades or other mults, how to handle this?
 - [X] Shop UI and Coupon Z order needs to be fixed.
 - [X] Reset reroll cost after the next round.
 - [X] Limit the number of coupons to 3 at a time, have the label update.
@@ -318,7 +313,7 @@
 - [X] The unlockeditemspanel takes a long time to popup, seems to be working better.
 - [X] Money Multiplier PU isn't responding as expected, validate in new PowerUpValidationTest.
 - [X] Purchase Colored Dice needs to be fixed: purchase to activate the colored dice, and once active leave active for the entire game, and then reset when a new game begins.
-- [X] Going to next channel needs to reset all of the stats, money, powerups, and consumables.
+- [X] Going to next channel needs to reset all the stats, money, powerups, and consumables.
 - [X] Have the Game Over immediately appear when roll we arrive at roll 0, don't allow to press next turn. Disable that button.
 - [X] When selecting Next Round, we also want to display the End of Round Stats Panel.
 - [X] New Round needs to also reset the scorecard levels.
@@ -333,6 +328,9 @@
 - [X] If Roll is disabled, we should not flash it.
 - [X] Invalid call. Nonexistent function 'has_node' in base 'SceneTree'. Trigger_mom_check.
 - [X] After Going to Next Round, the Scorecard was still locked, but pressing next turn unlocked it after the first hand, make sure Next Round unlocks the scorecard for manual scoring.
+- [X] `P1-Major` Starting a new game after a loss did not clear colored dice purchased from previous game.
+- [X] `P1-Major` Rolling Pentalty needs to be shown for what it is in the scoring animation process, also show on the fan out scene the total deduction, and in the debug panel.
+- [X] `P0-Critical` Weird things going on with Continue or New Game. Save game system was completely refactored to address these issues.
 
 ## Refactor — Completed
 - [X] Have the background react to the channel number, increase velocity and change color.
