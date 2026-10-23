@@ -2,9 +2,11 @@ extends Control
 
 ## rep_pacing_test.gd
 ##
-## Pins the REP pacing envelope for the new rebel-mode target: a steadily
-## sassing player must be able to reach REP 60 (tier 4, NC-17 POGs) by the
-## end of Mall Zone 2 Round 6 (~12 check-ins) but not trivially during Zone 1.
+## Pins the REP pacing envelope for the rebel-mode target on the HARD ladder:
+## a steadily sassing player must be able to reach REP 60 (tier 4, NC-17 POGs)
+## by the end of Mall Zone 2 Round 6 (~12 check-ins) but not trivially during
+## Zone 1. Tier thresholds scale with run difficulty; the envelope here targets
+## HARD (the slowest ladder) — EASY/MEDIUM reach tier 4 sooner by design.
 
 const Handler := preload("res://Scripts/Core/mom_logic_handler.gd")
 
@@ -38,21 +40,26 @@ func _run_tests() -> void:
 	_check(GameController.REP_POLITE_PUNISHMENT < 0, "REP_POLITE_PUNISHMENT negative")
 	_check(GameController.REP_POLITE_CHECKIN < 0, "REP_POLITE_CHECKIN negative")
 
-	# 2. Tier 4 threshold is 60
-	_check(ProgressManager.REP_TIER_THRESHOLDS[4] == 60, "REP tier 4 threshold is 60")
+	# 2. Per-difficulty tier threshold tables
+	_check(ProgressManager.REP_TIER_THRESHOLDS_EASY == [0, 0, 5, 15, 30],
+		"REP tier thresholds EASY == [0, 0, 5, 15, 30]")
+	_check(ProgressManager.REP_TIER_THRESHOLDS_MEDIUM == [0, 0, 10, 25, 50],
+		"REP tier thresholds MEDIUM == [0, 0, 10, 25, 50]")
+	_check(ProgressManager.REP_TIER_THRESHOLDS_HARD == [0, 10, 20, 40, 60],
+		"REP tier thresholds HARD == [0, 10, 20, 40, 60]")
 
-	# 3. Reachable by the end of Mall Zone 2 Round 6: even the weakest
-	#    positive sass gain over 12 check-ins must clear 60.
+	# 3. Reachable by the end of Mall Zone 2 Round 6 on HARD: even the weakest
+	#    positive sass gain over 12 check-ins must clear the HARD tier-4 gate (60).
 	var min_gain: int = mini(GameController.REP_SASS_SUCCESS, mini(GameController.REP_DEFER_SUCCESS, GameController.REP_STORM_OFF))
 	_check(12 * min_gain >= 60, "weakest sass gain x 12 check-ins >= 60 (got %d)" % (12 * min_gain))
 
-	# 4. Not trivial in Zone 1: even the strongest gain over 6 check-ins
-	#    (rounds 1-6) must stay below 60.
+	# 4. Not trivial in Zone 1 on HARD: even the strongest gain over 6 check-ins
+	#    (rounds 1-6) must stay below the HARD tier-4 gate (60).
 	var max_gain: int = maxi(GameController.REP_SASS_SUCCESS, maxi(GameController.REP_DEFER_SUCCESS, GameController.REP_STORM_OFF))
 	_check(6 * max_gain < 60, "strongest sass gain x 6 check-ins < 60 (got %d)" % (6 * max_gain))
 
 	# 5. Realistic mixed sass trajectory: ~70% of 12 check-ins landing the
-	#    base sass gain should clear 60.
+	#    base sass gain should clear the HARD tier-4 gate (60).
 	var mid_gain: int = GameController.REP_SASS_SUCCESS
 	var realistic: int = int(12 * 0.7) * mid_gain
 	_check(realistic >= 60, "70%% x 12 check-ins at sass gain >= 60 (got %d)" % realistic)

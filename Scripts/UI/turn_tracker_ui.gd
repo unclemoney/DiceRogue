@@ -71,7 +71,7 @@ func update_additive_display(additive: int) -> void:
 	
 	if additive > 0:
 		additive_label.text = "Red Ranger: +%s" % NumberFormatter.format_int(additive)
-		additive_label.visible = true
+		additive_label.visible = false # keep hidden
 	else:
 		additive_label.visible = false
 

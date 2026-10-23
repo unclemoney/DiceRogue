@@ -131,7 +131,8 @@ func _update_notification_ui() -> void:
 		# Create a simple notification label if no existing UI
 		var game_ui = get_tree().get_first_node_in_group("game_ui")
 		if game_ui:
-			_create_additive_notification(game_ui)
+			pass # stops the red power ranger additive notification from being created multiple times
+			#_create_additive_notification(game_ui)
 
 func _create_additive_notification(parent_node: Node) -> void:
 	# Find or create a notification label for the additive score
@@ -150,7 +151,7 @@ func _create_additive_notification(parent_node: Node) -> void:
 	
 	if current_additive > 0:
 		additive_label.text = "Red Ranger: +%d" % current_additive
-		additive_label.visible = true
+		additive_label.visible = false # keep hidden
 	else:
 		additive_label.visible = false
 

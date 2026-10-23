@@ -374,7 +374,7 @@ func _apply_mom_approved_discount(current_price: int, type_str: String) -> int:
 	if not pm or not pm.has_method("get_rep"):
 		return current_price
 	# Low Rep means below the PG-13 threshold (index 2; G/PG share tier index 0/1 at 0 Rep).
-	if pm.get_rep() >= pm.REP_TIER_THRESHOLDS[2]:
+	if pm.get_rep() >= pm.get_rep_threshold_for_tier(2):
 		return current_price
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	var chores_manager = game_controller.get("chores_manager") if game_controller else null

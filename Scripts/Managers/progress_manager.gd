@@ -47,18 +47,32 @@ signal rep_changed(new_rep: int)  # Emitted when the Rebellion Rep stat changes
 ## Rebellion Rep: run-scoped stat (0-100) earned by sassing Mom.
 ## Resets to 0 when a new game starts (see reset_rep()); kept across mall
 ## zone changes within a run.
-## Tier thresholds gate which POG rating bands appear in the kiosk:
-##   tier 0 (Rep 0+):   G          ("Mom-Approved")
-##   tier 1 (Rep 0+):   + PG       ("Questionable")
-##   tier 2 (Rep 15+):  + PG-13    ("Parental Guidance")
-##   tier 3 (Rep 35+):  + R        ("Grounded")
-##   tier 4 (Rep 60+):  + NC-17    ("Banned")
+## Tier thresholds gate which POG rating bands appear in the kiosk. They scale
+## with the run difficulty chosen at the Mall Map (ChannelManager.Difficulty):
+##   EASY:   [0, 0, 5, 15, 30]
+##   MEDIUM: [0, 0, 10, 25, 50]
+##   HARD:   [0, 10, 20, 40, 60]
+## The tiers themselves are:
+##   tier 0: G      ("Mom-Approved")
+##   tier 1: + PG    ("Questionable")
+##   tier 2: + PG-13 ("Parental Guidance")
+##   tier 3: + R     ("Grounded")
+##   tier 4: + NC-17 ("Banned")
 const MAX_REP: int = 100
-## G and PG are both available at 0 Rep; get_rep_tier() resolves Rep 0 to tier 1.
-const REP_TIER_THRESHOLDS: Array[int] = [0, 0, 15, 35, 60]
+## G and PG are both available at 0 Rep on EASY/MEDIUM; get_rep_tier() resolves
+## Rep 0 to tier 1 there. On HARD tier 1 costs 10 Rep.
+const REP_TIER_THRESHOLDS_EASY: Array[int] = [0, 0, 5, 15, 30]
+const REP_TIER_THRESHOLDS_MEDIUM: Array[int] = [0, 0, 10, 25, 50]
+const REP_TIER_THRESHOLDS_HARD: Array[int] = [0, 10, 20, 40, 60]
+const REP_TIER_THRESHOLDS_BY_DIFFICULTY: Dictionary = {
+	ChannelManager.Difficulty.EASY: REP_TIER_THRESHOLDS_EASY,
+	ChannelManager.Difficulty.MEDIUM: REP_TIER_THRESHOLDS_MEDIUM,
+	ChannelManager.Difficulty.HARD: REP_TIER_THRESHOLDS_HARD,
+}
 const REP_TIER_NAMES: Array[String] = ["Mom-Approved", "Questionable", "Parental Guidance", "Grounded", "Banned"]
 ## Visual stage thresholds (4 stages) for the rebel-mode UI. The final stage
-## aligns with the tier 4 (NC-17) gate at 60.
+## aligns with the HARD tier 4 (NC-17) gate at 60; easier difficulties reach
+## tier 4 before the final visual stage.
 const REP_STAGE_THRESHOLDS: Array[int] = [0, 10, 30, 60]
 const REP_STAGE_NAMES: Array[String] = ["Teacher's Pet", "Attitude Problem", "Mall Rat", "Banned from the Mall"]
 
@@ -898,15 +912,28 @@ func get_rep() -> int:
 	return int(cumulative_stats.get("rep", 0))
 
 
+## get_rep_tier_thresholds() -> Array[int]
+##
+## Returns the Rep tier thresholds for the current run difficulty
+## (ChannelManager.selected_difficulty). Falls back to MEDIUM when no
+## ChannelManager is reachable (e.g. outside a run).
+func get_rep_tier_thresholds() -> Array[int]:
+	var game_controller = get_tree().get_first_node_in_group("game_controller") if get_tree() else null
+	var channel_manager = game_controller.get("channel_manager") if game_controller else null
+	var difficulty: int = channel_manager.selected_difficulty if channel_manager else ChannelManager.Difficulty.MEDIUM
+	return REP_TIER_THRESHOLDS_BY_DIFFICULTY.get(difficulty, REP_TIER_THRESHOLDS_MEDIUM)
+
+
 ## get_rep_tier() -> int
 ##
 ## Returns the highest unlocked POG rating tier (0=G .. 4=NC-17).
 ## The kiosk only stocks ratings with rating_rank <= this tier.
 func get_rep_tier() -> int:
 	var rep := get_rep()
+	var thresholds := get_rep_tier_thresholds()
 	var tier := 0
-	for i in range(REP_TIER_THRESHOLDS.size()):
-		if rep >= REP_TIER_THRESHOLDS[i]:
+	for i in range(thresholds.size()):
+		if rep >= thresholds[i]:
 			tier = i
 	return tier
 
@@ -920,9 +947,11 @@ func get_rep_tier_name() -> String:
 
 ## get_rep_threshold_for_tier(tier: int) -> int
 ##
-## Returns the Rep required to unlock the given POG tier (for lock labels).
+## Returns the Rep required to unlock the given POG tier (for lock labels),
+## under the current run difficulty.
 func get_rep_threshold_for_tier(tier: int) -> int:
-	return REP_TIER_THRESHOLDS[clampi(tier, 0, REP_TIER_THRESHOLDS.size() - 1)]
+	var thresholds := get_rep_tier_thresholds()
+	return thresholds[clampi(tier, 0, thresholds.size() - 1)]
 
 
 ## get_rep_stage() -> int

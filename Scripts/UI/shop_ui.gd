@@ -94,6 +94,8 @@ var _reroll_shader_materials := {}
 var _reroll_title_labels := {}
 var _reroll_price_labels := {}
 var _ownership_panels := {}
+var _open_tweens: Array[Tween] = []
+var _open_rest_positions := {}
 
 const PAGE_SIZE := 3
 const PAGED_ITEM_TYPES := ["power_up", "consumable", "mod", "colored_dice", "gaming_console"]
@@ -103,7 +105,7 @@ const CONSUMABLE_TAB_NAME := "Coupons"
 const MOD_TAB_NAME := "Mods"
 const COLORED_DICE_TAB_NAME := "Colors"
 const GAMING_CONSOLE_TAB_NAME := "VIPCards"
-const SHOP_TAB_TITLES := ["POGS", "COUPONS", "MODS", "COLORS", "VIP CARDS", "LOCKED", "UNLOCKED"]
+const SHOP_TAB_TITLES := ["POGS", "COUPONS", "MODS", "COLORS", "VIP CARDS", "REP TIER", "UNDISCOVERED"]
 
 ## set_debug_enabled(enabled: bool)
 ##
@@ -211,21 +213,50 @@ func _on_visibility_changed() -> void:
 
 ## _animate_shop_open()
 ##
-## Plays drop-in entrance animation for the shop panel, backdrop, label and close button.
+## Unified bouncy entrance: the backdrop fades while the panel, title and
+## close button drop in together with a BACK-overshoot — one motion, no
+## serial delays. The title's looping idle float is stopped first so it
+## cannot fight the position tween, and restarted once the entrance lands.
 func _animate_shop_open() -> void:
+	# Kill any in-flight entrance tweens so rapid re-opens can't stack.
+	for tween in _open_tweens:
+		if tween and tween.is_valid():
+			tween.kill()
+	_open_tweens.clear()
+
 	if backdrop:
 		backdrop.modulate.a = 0.0
-		var tween = create_tween()
-		tween.tween_property(backdrop, "modulate:a", 0.75, 0.2)
-	
-	if tab_container:
-		TweenFX.fly_in(tab_container, Vector2.DOWN, 150.0, 0.4)
-	
+		var backdrop_tween := create_tween()
+		backdrop_tween.tween_property(backdrop, "modulate:a", 0.75, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_open_tweens.append(backdrop_tween)
+
+	_drop_in_node(tab_container, 160.0, 0.45)
+	_drop_in_node(close_button, 50.0, 0.35)
+
 	if shop_label:
-		TweenFX.fly_in(shop_label, Vector2.DOWN, 80.0, 0.35, 0.15)
-	
-	if close_button:
-		TweenFX.fly_in(close_button, Vector2.DOWN, 60.0, 0.3, 0.25)
+		_tfx.stop_effect(shop_label)  # stop idle float: it animates position too
+		var label_tween := _drop_in_node(shop_label, 60.0, 0.4)
+		if label_tween:
+			label_tween.finished.connect(_start_title_animation)
+
+## _drop_in_node(node, height, duration) -> Tween
+##
+## Drops a node into place from `height` px above with a bouncy overshoot,
+## fading in as it lands. The rest position is captured on first use so
+## repeat opens always land on the same spot.
+func _drop_in_node(node: Control, height: float, duration: float) -> Tween:
+	if not node:
+		return null
+	if not _open_rest_positions.has(node):
+		_open_rest_positions[node] = node.position
+	var rest_pos: Vector2 = _open_rest_positions[node]
+	node.position = rest_pos - Vector2(0, height)
+	node.modulate.a = 0.0
+	var tween := create_tween()
+	tween.tween_property(node, "position", rest_pos, duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(node, "modulate:a", 1.0, duration * 0.65)
+	_open_tweens.append(tween)
+	return tween
 
 func _exit_tree() -> void:
 	if shop_label:
@@ -326,7 +357,7 @@ func _build_power_up_pool() -> Array:
 ##
 ## Gates POG rating bands behind the persistent Rep stat: only ratings with
 ## rating_rank <= ProgressManager.get_rep_tier() may appear in the kiosk.
-## Above-tier items surface in the LOCKED tab via _create_rep_locked_section().
+## Above-tier items surface in the REP TIER tab via _create_rep_locked_section().
 func _filter_by_rep_tier(items: Array) -> Array:
 	var pm = get_node_or_null("/root/ProgressManager")
 	if not pm or not pm.has_method("get_rep_tier"):
@@ -356,7 +387,7 @@ func _is_mom_approved_mode() -> bool:
 	if not pm or not pm.has_method("get_rep"):
 		return false
 	# Low Rep means below the PG-13 threshold (index 2; G/PG share tier index 0/1 at 0 Rep).
-	if pm.get_rep() >= pm.REP_TIER_THRESHOLDS[2]:
+	if pm.get_rep() >= pm.get_rep_threshold_for_tier(2):
 		return false
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	var chores_manager = game_controller.get("chores_manager") if game_controller else null
@@ -438,7 +469,7 @@ func _build_mod_pool() -> Array:
 	var mods = mod_manager._defs_by_id.keys()
 	var filtered_mods = _filter_out_purchased_items(mods, "mod")
 	filtered_mods = _filter_unlocked_items(filtered_mods, "mod")
-	var selected_mods = _select_random_items(filtered_mods, mod_items)
+	var selected_mods = _select_random_items(filtered_mods, mini(mod_items, LIMITED_SHOP_ITEMS))
 	for id in selected_mods:
 		var data = mod_manager.get_def(id)
 		if data:
@@ -455,7 +486,7 @@ func _build_colored_dice_pool() -> Array:
 		colored_dice_ids.append(data.id)
 	var filtered_colored_dice = _filter_out_max_odds_colored_dice(colored_dice_ids)
 	filtered_colored_dice = _filter_unlocked_items(filtered_colored_dice, "colored_dice")
-	var selected_colored_dice = _select_random_items(filtered_colored_dice, colored_dice_items)
+	var selected_colored_dice = _select_random_items(filtered_colored_dice, mini(colored_dice_items, LIMITED_SHOP_ITEMS))
 	for id in selected_colored_dice:
 		var data = DiceColorManager.get_colored_dice_data(id)
 		if data:
@@ -609,7 +640,14 @@ func _reset_page_indices() -> void:
 		_tab_page_indices[item_type] = 0
 
 func _set_tab_item_pool(item_type: String, items: Array) -> void:
-	_tab_item_pools[item_type] = items.duplicate()
+	var pool: Array = items.duplicate()
+	# Hard display cap: MODS and COLORS tabs never show more than 2 items,
+	# regardless of how the pool was built.
+	if OWNERSHIP_PANEL_TYPES.has(item_type) and pool.size() > LIMITED_SHOP_ITEMS:
+		if _debug_enabled:
+			print("[ShopUI] Truncating %s pool from %d to %d items" % [item_type, pool.size(), LIMITED_SHOP_ITEMS])
+		pool = pool.slice(0, LIMITED_SHOP_ITEMS)
+	_tab_item_pools[item_type] = pool
 	_tab_page_indices[item_type] = clampi(_tab_page_indices.get(item_type, 0), 0, _get_max_page_index(item_type))
 
 func _get_tab_item_pool(item_type: String) -> Array:
@@ -1347,10 +1385,10 @@ func reset_shop_expansions() -> void:
 	items_per_section = DEFAULT_SHOP_ITEMS
 	power_up_items = DEFAULT_SHOP_ITEMS
 	consumable_items = DEFAULT_SHOP_ITEMS
-	mod_items = DEFAULT_SHOP_ITEMS
-	colored_dice_items = DEFAULT_SHOP_ITEMS
+	mod_items = LIMITED_SHOP_ITEMS
+	colored_dice_items = LIMITED_SHOP_ITEMS
 	if _debug_enabled:
-		print("[ShopUI] Shop expansions reset to default (2 items per section)")
+		print("[ShopUI] Shop expansions reset to default (3 items per section, 2 for mods/colors)")
 
 ## _setup_backdrop()
 ## Sets up the backdrop for click-to-close functionality
@@ -1499,16 +1537,18 @@ func increase_consumable_items(amount: int) -> void:
 		print("[ShopUI] Increased consumable items by", amount, "- new value:", consumable_items)
 	_populate_shop_items()
 
-# Add method to increase mod items (for future use)  
+# Add method to increase mod items (for future use)
+# Mods are hard-capped at LIMITED_SHOP_ITEMS (2)
 func increase_mod_items(amount: int) -> void:
-	mod_items += amount
+	mod_items = mini(mod_items + amount, LIMITED_SHOP_ITEMS)
 	if _debug_enabled:
 		print("[ShopUI] Increased mod items by", amount, "- new value:", mod_items)
 	_populate_shop_items()
 
 # Add method to increase colored dice items
+# Colored dice are hard-capped at LIMITED_SHOP_ITEMS (2)
 func increase_colored_dice_items(amount: int) -> void:
-	colored_dice_items += amount
+	colored_dice_items = mini(colored_dice_items + amount, LIMITED_SHOP_ITEMS)
 	if _debug_enabled:
 		print("[ShopUI] Increased colored dice items by", amount, "- new value:", colored_dice_items)
 	_populate_shop_items()
@@ -1518,8 +1558,9 @@ func increase_items_per_section(amount: int) -> void:
 	items_per_section += amount
 	power_up_items = clampi(items_per_section, DEFAULT_SHOP_ITEMS, MAX_POWER_UP_ITEMS)
 	consumable_items = items_per_section
-	mod_items = items_per_section
-	colored_dice_items = items_per_section
+	# Mods and colored dice are hard-capped at LIMITED_SHOP_ITEMS (2)
+	mod_items = LIMITED_SHOP_ITEMS
+	colored_dice_items = LIMITED_SHOP_ITEMS
 	if _debug_enabled:
 		print("[ShopUI] [DEPRECATED] Increased all section items by", amount)
 	_populate_shop_items()
@@ -2276,17 +2317,17 @@ func _update_rep_chip() -> void:
 	#	pm.get_rep(), pm.MAX_REP, pm.get_rep_stage_name(), pm.get_rep_tier_name()]
 	var text : String = "REP %d" % [
 		pm.get_rep()]
-	if tier < pm.REP_TIER_THRESHOLDS.size() - 1:
+	if tier < pm.REP_TIER_NAMES.size() - 1:
 		text += "  (next: %s @ %d)" % [
-			pm.REP_TIER_NAMES[tier + 1], pm.REP_TIER_THRESHOLDS[tier + 1]]
+			pm.REP_TIER_NAMES[tier + 1], pm.get_rep_threshold_for_tier(tier + 1)]
 	_rep_chip_label.text = text
 	_rep_chip_label.add_theme_color_override("font_color", REP_STAGE_COLORS[clampi(stage, 0, REP_STAGE_COLORS.size() - 1)])
 
 
 ## populate_locked_items()
 ##
-## Populates the LOCKED tab with REP-locked POGs only. Progression-locked
-## items live in the UNLOCKED tab (see populate_unlocked_items).
+## Populates the REP TIER tab with REP-locked POGs only. Progression-locked
+## items live in the UNDISCOVERED tab (see populate_unlocked_items).
 func populate_locked_items() -> void:
 	if not locked_container:
 		if _debug_enabled:
@@ -2305,7 +2346,7 @@ func populate_locked_items() -> void:
 
 ## _create_rep_locked_section()
 ##
-## Adds greyed POG cards to the LOCKED tab for items that are unlocked in
+## Adds greyed POG cards to the REP TIER tab for items that are unlocked in
 ## ProgressManager but gated behind a higher Rep tier.
 func _create_rep_locked_section() -> void:
 	var pm = get_node_or_null("/root/ProgressManager")
@@ -2371,7 +2412,7 @@ func _create_rep_locked_item_display(data: PowerUpData, rep_needed: int, tier_la
 
 ## populate_unlocked_items()
 ##
-## Populates the UNLOCKED tab with all progression-tracked items: unlocked
+## Populates the UNDISCOVERED tab with all progression-tracked items: unlocked
 ## ones get the green "unlocked" marquee shader, progression-locked ones a
 ## flat dark "LOCKED" card (see _create_archive_item_display).
 func populate_unlocked_items() -> void:

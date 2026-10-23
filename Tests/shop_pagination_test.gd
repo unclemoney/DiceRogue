@@ -118,10 +118,10 @@ func _run_tests() -> void:
 		for i in range(tab_container.get_tab_count()):
 			titles.append(tab_container.get_tab_title(i))
 		print("Tabs: %s" % str(titles))
-		if "UNLOCKED" in titles:
-			print("✓ Unlocked tab present")
+		if "UNDISCOVERED" in titles:
+			print("✓ Undiscovered tab present")
 		else:
-			print("✗ Unlocked tab missing")
+			print("✗ Undiscovered tab missing")
 	print("=== Pagination Test Complete ===")
 	test_completed = true
 	await get_tree().create_timer(0.5).timeout

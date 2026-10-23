@@ -32,9 +32,10 @@
 - [ ] `P2-Minor` Refactor Magic Mitt PowerUp to affect the REP meter.
 - [X] `P2-Minor` Bonus Collector USE state needs to be checked.  After achieving upper bonus, it is disabled.
 - [X] `P2-Minor` Have some fanfare and notify the player when a buff is added.
-- [ ] `P2-Minor` Better way to SELL Mods? This needs more detail and exploration.
+- [ ] `P2-Minor` Most mods are just not attractive enough, we need to balance them more.
 - [X] `P2-Minor` Upper bonus multiplier power up. Add a new PowerUp that will multiply Upper Section Bonus.
 - [X] `P2-Minor` Balance the Division debuff, far too powerfull.  Perhaps randomly select one set of multipliers-- powerup OR scorecard to be divisors.
+- [ ] `P2-Minor` Remove the ability to use consumables unless in the main game loop.
 
 ## Bugs
 
@@ -57,12 +58,14 @@
 - [X] `P2-Minor` Scoring animation is showing the rounding down from multipliers.
 - [X] `P2-Minor` Change upgrade scorecard sound.
 - [X] `P2-Minor` Titles for powerup cards and consumables need to be a fixed size and not change, and fit in the area.
-- [ ] `P2-Minor` Adjust the position of the FanFare fly in, the resting location is off to the side, but should be centered.
-- [ ] `P2-Minor` Fix the Red Ranger Powerup label, we no longer need the extra text showing the current power up level.
+- [X] `P2-Minor` Adjust the position of the FanFare fly in, the resting location is off to the side, but should be centered.
+- [X] `P2-Minor` Fix the Red Ranger Powerup label, we no longer need the extra text showing the current power up level.
 - [ ] `P2-Minor` Update Challenge Icons.
 - [ ] `P2-Minor` Update game over screen.
 - [ ] `P2-Minor` Tooltips on Mall Map not showing up.
 - [ ] `P2-Minor` Mall Map tooltip not showing next up challenges.
+- [ ] `P2-Minor` In the Shop Change Locked to REP
+- [ ] `P2-Minor` Update how the Shop is displayed.
 
 
 ## SYS:Save — Save, Load & State Management
