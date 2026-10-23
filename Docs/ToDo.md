@@ -1,5 +1,13 @@
 # Dice Rogue — Development Todo
 
+## Milestones
+- [ ] Core Gameplay loop
+- [ ] Game Balance
+- [ ] Artwork
+- [ ] Steam Store Page
+- [ ] Marketing
+- [ ] Release
+
 ## How to Write a Task
 - One task = one action. Split big items.
 - Start with a priority tag.

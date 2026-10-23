@@ -111,7 +111,7 @@
 [ext_resource type="Resource" uid="uid://cchev87fimc0x" path="res://Scripts/Consumable/InsurancePolicyConsumable.tres" id="155_um873"]
 [ext_resource type="Resource" uid="uid://rvgbkpkdiwvi" path="res://Scripts/Consumable/ClearanceRackConsumable.tres" id="156_4u56d"]
 [ext_resource type="Resource" uid="uid://e6etk1spiv8y" path="res://Scripts/Consumable/LoadedDiceConsumable.tres" id="157_j87a4"]
-[ext_resource type="Resource" path="res://Scripts/Debuff/HailSatanDebuff.tres" id="159_hail_satan"]
+[ext_resource type="Resource" uid="uid://crqmjaokygx0e" path="res://Scripts/Debuff/HailSatanDebuff.tres" id="159_hail_satan"]
 [ext_resource type="Resource" uid="uid://p4hinanex7u6" path="res://Scripts/Debuff/DockedAllowanceDebuff.tres" id="160_docked_allowance"]
 [ext_resource type="Resource" uid="uid://b1w73tqfdvvnc" path="res://Scripts/Debuff/CouponsRevokedDebuff.tres" id="161_coupons_revoked"]
 [ext_resource type="Resource" uid="uid://c1ic68lmvm2i5" path="res://Scripts/Debuff/PogsConfiscatedDebuff.tres" id="162_pogs_confiscated"]

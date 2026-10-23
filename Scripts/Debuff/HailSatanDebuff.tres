@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="DebuffData" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="DebuffData" load_steps=3 format=3 uid="uid://crqmjaokygx0e"]
 
 [ext_resource type="Script" uid="uid://uiuqwtxbh7m0" path="res://Scripts/Debuff/DebuffData.gd" id="1_oh0j2"]
 [ext_resource type="PackedScene" path="res://Scenes/Debuff/HailSatanDebuff.tscn" id="2_hsltn"]
@@ -6,12 +6,12 @@
 [resource]
 script = ExtResource("1_oh0j2")
 id = "hail_satan"
-display_name = "Hail Satan"
+display_name = "Satanic Panic"
 description = "Roll 3 sixes and the turn ends instantly: a 0 is scored in a random category."
 scene = ExtResource("2_hsltn")
 glyph_id = 15
 glow_color = Color(0.9, 0.1, 0.1, 1)
-glyph_scale = 1.0
+glyph_scale = 0.9
 line_thickness = 0.1
 rim_thickness = 0.03
 bloom_softness = 0.18
