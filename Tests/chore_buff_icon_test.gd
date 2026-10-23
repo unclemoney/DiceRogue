@@ -109,6 +109,6 @@ func _test_teacher_pet_label_and_summary(ui) -> void:
 	_check("Teacher's Pet fan-out label shows tier",
 		ui._buff_detail_labels.has("teacher_pet") and ui._buff_detail_labels["teacher_pet"].text == "Teacher's Pet  Tier 5")
 	_check("Teacher's Pet uses live effect summary",
-		ui._get_buff_effect_summary("teacher_pet") == "+25 additive per hand, x1.50 score")
+		ui._get_buff_effect_summary("teacher_pet") == "+25 additive per hand\n+$50 at round end")
 	ui.remove_buff_icon("teacher_pet")
 	buff.queue_free()

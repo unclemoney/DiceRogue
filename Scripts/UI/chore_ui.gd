@@ -52,6 +52,7 @@ var _buff_icons: Dictionary = {}         # id -> DebuffIcon (compact chip)
 var _buff_instances: Dictionary = {}     # id -> Debuff (live buff instance)
 var _buff_detail_icons: Dictionary = {}  # id -> DebuffIcon (fan-out chip)
 var _buff_detail_labels: Dictionary = {} # id -> Label (fan-out name/stacks)
+var _buff_detail_descs: Dictionary = {}  # id -> Label (fan-out effect lines)
 var _buff_chip_config = null             # DebuffVisualConfig for compact chips
 var _buff_detail_config = null           # DebuffVisualConfig for fan-out chips
 
@@ -724,12 +725,15 @@ func _update_details_with_progress() -> void:
 	_style_badge(_easy_badge_panel, "EASY", easy_count, CHORE_SAFE)
 	_style_badge(_hard_badge_panel, "HARD", hard_count, CHORE_DANGER)
 
-	# Keep the fan-out buff labels in sync with live stack counts
+	# Keep the fan-out buff labels in sync with live stack counts and effects
 	for id in _buff_detail_labels.keys():
 		var lbl = _buff_detail_labels[id] as Label
 		var icon = _buff_icons.get(id) as DebuffIcon
 		if is_instance_valid(lbl) and is_instance_valid(icon) and icon.data:
 			lbl.text = "%s  %s" % [icon.data.display_name, _get_buff_display_suffix(id)]
+		var desc = _buff_detail_descs.get(id) as Label
+		if is_instance_valid(desc):
+			desc.text = _get_buff_effect_summary(id)
 
 
 ## _make_badge() -> PanelContainer
@@ -935,9 +939,15 @@ func _get_buff_display_suffix(id: String) -> String:
 
 ## _get_buff_effect_summary(id) -> String
 ##
-## Returns a one-line effect summary for the details panel and fan-out row.
+## Returns the effect text for the fan-out row: one line per buff attribute
+## (additive, multiplier, money) when the instance exposes
+## get_buff_effect_lines(), otherwise its single-line summary.
 func _get_buff_effect_summary(id: String) -> String:
 	var inst = _buff_instances.get(id)
+	if is_instance_valid(inst) and inst.has_method("get_buff_effect_lines"):
+		var lines: Array = inst.call("get_buff_effect_lines")
+		if not lines.is_empty():
+			return "\n".join(lines)
 	if is_instance_valid(inst) and inst.has_method("get_buff_effect_summary"):
 		return str(inst.call("get_buff_effect_summary"))
 	var icon = _buff_icons.get(id) as DebuffIcon
@@ -957,6 +967,7 @@ func _rebuild_buff_detail_row() -> void:
 		child.queue_free()
 	_buff_detail_icons.clear()
 	_buff_detail_labels.clear()
+	_buff_detail_descs.clear()
 	buff_detail_row.visible = not _buff_icons.is_empty()
 	for id in _buff_icons.keys():
 		var source = _buff_icons[id] as DebuffIcon
@@ -1002,6 +1013,7 @@ func _rebuild_buff_detail_row() -> void:
 		desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		desc.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		text_vbox.add_child(desc)
+		_buff_detail_descs[id] = desc
 
 
 ## _update_buff_slot_state()

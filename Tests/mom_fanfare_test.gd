@@ -211,11 +211,11 @@ func _simulate_mom_grant(kind: String, ids: Array) -> void:
 
 
 func _make_slot(kind: String, id: String, index: int) -> Panel:
-	var slot := Panel.new()
+	var slot : Panel = Panel.new()
 	slot.name = "Slot_%s" % id
 	slot.size = Vector2(64, 64)
 	slot.custom_minimum_size = Vector2(64, 64)
-	var y := 200.0 + index * 80.0
+	var y : float = 200.0 + index * 80.0
 	match kind:
 		"powerup":
 			slot.position = Vector2(1000, y)
@@ -223,7 +223,7 @@ func _make_slot(kind: String, id: String, index: int) -> Panel:
 			slot.position = Vector2(900, y)
 		"debuff":
 			slot.position = Vector2(800, y)
-	var label := Label.new()
+	var label : Label = Label.new()
 	label.text = id.substr(0, 4).to_upper()
 	label.set_anchors_preset(Control.PRESET_CENTER)
 	slot.add_child(label)

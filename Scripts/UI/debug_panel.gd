@@ -4990,7 +4990,8 @@ func _debug_teacher_pet_grant(tier: int) -> void:
 ## _debug_teacher_pet_by_mood()
 ##
 ## Grants Teacher's Pet at the tier mapped from Mom's current mood
-## (tier = 11 - mood), bypassing the once-per-session activation roll.
+## (tier = 11 - mood, capped by the run's goof-off points total),
+## bypassing the once-per-session activation roll.
 func _debug_teacher_pet_by_mood() -> void:
 	_refresh_game_controller_reference()
 	if not is_instance_valid(game_controller):
@@ -5001,8 +5002,10 @@ func _debug_teacher_pet_by_mood() -> void:
 		log_debug("ERROR: ChoresManager not available")
 		return
 	var mood := int(chores_manager.get("mom_mood"))
+	var points := int(chores_manager.get("goof_off_points_total"))
+	var cap := game_controller._get_teacher_pet_tier_cap()
 	var tier := game_controller._get_teacher_pet_tier_for_mood(mood)
-	log_debug("Mom mood %d -> Teacher's Pet Tier %d" % [mood, tier])
+	log_debug("Mom mood %d, goof-off points %d (cap T%d) -> Teacher's Pet Tier %d" % [mood, points, cap, tier])
 	_debug_teacher_pet_grant(tier)
 
 

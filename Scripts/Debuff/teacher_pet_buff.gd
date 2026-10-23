@@ -8,19 +8,19 @@ class_name TeacherPetBuff
 ## `intensity`. Ten tiers map directly to Mom's mood (tier = 11 - mood,
 ## so mood 10 = maddest grants Tier 1 and mood 1 = happiest grants
 ## Tier 10). Effects stack as they unlock:
-##   - Tiers 1-4:  additive score per hand only (+5 to +20)
-##   - Tiers 5-7:  additive plus a score multiplier (x1.5 to x2.0)
-##   - Tiers 8-10: additive, multiplier, and a round-end allowance
-##                 ($50 to $200), peaking at +50 / x3.0 / $200 on Tier 10
+##   - Tiers 1-3:  additive score per hand only (+5 to +15)
+##   - Tiers 4-6:  additive plus a round-end allowance ($25 to $75)
+##   - Tiers 7-10: additive, allowance, and a score multiplier
+##                 (x1.5 to x3.0), peaking at +50 / x3.0 / $200 on Tier 10
 
 const SOURCE_NAME: String = "teacher_pet"
 const MAX_TIER: int = 10
 
 ## Per-tier additive score per hand (index 0 unused; tiers 1-10).
 const TIER_ADDITIVES: Array[int] = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
-## Per-tier score multiplier (1.0 = none; tiers 5+ only).
+## Per-tier score multiplier (1.0 = none; tiers 7+ only).
 const TIER_MULTIPLIERS: Array[float] = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.5, 1.75, 2.0, 3.0]
-## Per-tier round-end allowance payout (tiers 8+ only).
+## Per-tier round-end allowance payout (tiers 4+ only).
 const TIER_ALLOWANCES: Array[int] = [0, 0, 0, 0, 25, 50, 75, 100, 150, 175, 200]
 
 var _game_controller: GameController = null
@@ -99,11 +99,11 @@ func get_buff_display_suffix() -> String:
 	return "Tier %d" % get_tier()
 
 
-## get_buff_effect_summary() -> String
+## get_buff_effect_lines() -> Array[String]
 ##
-## Returns a one-line summary of the currently active Teacher's Pet
-## bonuses, composed from whichever effects the tier has unlocked.
-func get_buff_effect_summary() -> String:
+## Returns each active Teacher's Pet bonus as its own line (additive,
+## multiplier, allowance), so UI fan-outs can show every attribute.
+func get_buff_effect_lines() -> Array[String]:
 	var tier := get_tier()
 	var parts: Array[String] = []
 	var additive := get_tier_additive(tier)
@@ -115,6 +115,15 @@ func get_buff_effect_summary() -> String:
 	var allowance := get_tier_allowance(tier)
 	if allowance > 0:
 		parts.append("+$%d at round end" % allowance)
+	return parts
+
+
+## get_buff_effect_summary() -> String
+##
+## Returns a one-line summary of the currently active Teacher's Pet
+## bonuses, composed from whichever effects the tier has unlocked.
+func get_buff_effect_summary() -> String:
+	var parts := get_buff_effect_lines()
 	if parts.is_empty():
 		return "No bonus"
 	return ", ".join(parts)
@@ -123,7 +132,7 @@ func get_buff_effect_summary() -> String:
 ## get_pending_round_end_bonus() -> int
 ##
 ## Exposes the round-end preview/consume contract expected by
-## GameController. Only tiers with an allowance (8+) pay out money.
+## GameController. Only tiers with an allowance (4+) pay out money.
 func get_pending_round_end_bonus() -> int:
 	if _round_end_bonus_consumed:
 		return 0

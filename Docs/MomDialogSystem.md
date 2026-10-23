@@ -635,14 +635,24 @@ Successful sass builds Rebellion stacks for the round. Rebellion is granted afte
 
 ## 12.3 Teacher's Pet
 
-Non-sassy positive responses can qualify when the pre-dialog mood is low enough:
+Non-sassy positive responses can qualify at any pre-dialog mood. The mood maps to a tier (`tier = 11 - mood`), and the run's goof-off points total (the running sum of meter reduction from completed chores) caps how high the tier can go:
 
-| Pre-dialog mood | Teacher's Pet tier | Activation chance |
+| Pre-dialog mood | Base tier | Activation chance |
 |---:|---:|---:|
-| 1–2 | 3 | 80% |
-| 3 | 2 | 65% |
-| 4 | 1 | 50% |
-| 5+ | Ineligible | — |
+| 10 (maddest) | 1 | 50% |
+| 9 | 2 | 55% |
+| 8 | 3 | 60% |
+| 7 | 4 | 65% |
+| 6 | 5 | 70% |
+| 5 | 6 | 75% |
+| 4 | 7 | 80% |
+| 3 | 8 | 85% |
+| 2 | 9 | 90% |
+| 1 (happiest) | 10 | 100% |
+
+Goof-off points cap: 0–49 points allows up to Tier 5; each further 50 points unlocks one more tier (50–99 → 6, 100–149 → 7, …, 250+ → 10). The granted tier is `min(mood tier, cap)`.
+
+Tier effects stack as they unlock: additive score per hand from +5 (T1) to +50 (T10), a round-end allowance from Tier 4 ($25 up to $200 at T10), and a score multiplier from Tier 7 (x1.5 up to x3.0 at T10).
 
 A qualifying response must:
 

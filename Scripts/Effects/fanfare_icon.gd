@@ -148,11 +148,11 @@ func setup_debuff(debuff_data: DebuffData, tint: Color) -> void:
 
 
 func _build_shell(border_tint: Color) -> void:
-	var shell := PanelContainer.new()
+	var shell : PanelContainer = PanelContainer.new()
 	shell.name = "Shell"
 	shell.set_anchors_preset(Control.PRESET_FULL_RECT)
 	shell.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var style := StyleBoxFlat.new()
+	var style : StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = CHIP_FILL
 	style.border_color = border_tint
 	style.set_border_width_all(3)
@@ -171,7 +171,7 @@ func _build_shell(border_tint: Color) -> void:
 ## target_position is in the parent (scene-root) coordinate space.
 func play_flight(target_position: Vector2, profile: JuiceProfile) -> void:
 	var viewport_width: float = get_viewport().get_visible_rect().size.x
-	var start_position := Vector2(viewport_width + profile.fanfare_spawn_offset_x, target_position.y)
+	var start_position : Vector2 = Vector2(viewport_width + profile.fanfare_spawn_offset_x, target_position.y)
 
 	rotation_degrees = profile.fanfare_spawn_rotation_deg
 	scale = Vector2.ONE * profile.fanfare_spawn_scale
@@ -187,7 +187,7 @@ func play_flight(target_position: Vector2, profile: JuiceProfile) -> void:
 		flight = create_tween()
 		flight.tween_property(self, "position", target_position, profile.fanfare_fly_time).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
-	var rot := create_tween()
+	var rot : Tween = create_tween()
 	rot.tween_property(self, "rotation_degrees", -4.0, profile.fanfare_fly_time * 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	rot.tween_property(self, "rotation_degrees", 0.0, profile.fanfare_fly_time * 0.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
@@ -203,13 +203,13 @@ func play_flight(target_position: Vector2, profile: JuiceProfile) -> void:
 func _land(profile: JuiceProfile) -> void:
 	landed.emit()
 
-	var punch := create_tween()
+	var punch : Tween = create_tween()
 	punch.tween_property(self, "scale", Vector2.ONE, profile.fanfare_land_punch_time).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 
 	_spawn_explosion()
 	_spawn_ring()
 	if _is_debuff and _minus_flash:
-		var flash := create_tween()
+		var flash : Tween = create_tween()
 		flash.tween_property(_minus_flash, "modulate:a", 1.0, MINUS_FLASH_TIME * 0.4)
 		flash.tween_property(_minus_flash, "modulate:a", 0.0, MINUS_FLASH_TIME * 0.6)
 

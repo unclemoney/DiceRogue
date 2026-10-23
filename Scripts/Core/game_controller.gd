@@ -6907,9 +6907,22 @@ func _is_teacher_pet_positive_response(response: MomDialogResponse, outcome_resu
 ##
 ## Maps Mom's pre-dialog mood snapshot (1 = happiest, 10 = maddest) to a
 ## Teacher's Pet tier: tier = 11 - mood, so the maddest mood grants Tier 1
-## and the happiest grants Tier 10. Every mood is eligible.
+## and the happiest grants Tier 10. Every mood is eligible. The result is
+## capped by the run's goof-off points total (ChoresManager): 0-49 points
+## caps at Tier 5, each further 50 points raises the cap by one tier.
 func _get_teacher_pet_tier_for_mood(mom_mood: int) -> int:
-	return clampi(11 - mom_mood, 1, TeacherPetBuff.MAX_TIER)
+	var tier := clampi(11 - mom_mood, 1, TeacherPetBuff.MAX_TIER)
+	return mini(tier, _get_teacher_pet_tier_cap())
+
+
+## _get_teacher_pet_tier_cap() -> int
+##
+## Returns the goof-off-points tier ceiling from ChoresManager, or no cap
+## when the manager is unavailable (tests, minimal harnesses).
+func _get_teacher_pet_tier_cap() -> int:
+	if is_instance_valid(chores_manager) and chores_manager.has_method("get_teacher_pet_tier_cap"):
+		return chores_manager.get_teacher_pet_tier_cap()
+	return TeacherPetBuff.MAX_TIER
 
 
 ## _get_teacher_pet_activation_chance(tier) -> float

@@ -38,22 +38,27 @@
 
 ## Bugs
 
+- [ ] `P1-Major` Wild Dice mod not correctly applying to all dice, especially when calculating a Yahtzee.
 - [X] `P1-Major` Rolling Pentalty needs to be shown for what it is in the scoring animation process, also show on the fan out scene the total deduction, and in the debug panel.
 
 ## SYS:Chore — Chore System & Mom
 
 - [X] `P2-Minor` Add additional first round check-ins.  We essentially don't want repeat check-in's in the same game.  Are the story arcs actually working?
-- [ ] `P1-Major` Teacher's Pet system does not add money as expected and Tiers should scale better.  Money should be the key driver.
+- [X] `P1-Major` Teacher's Pet system does not add money as expected and Tiers should scale better.  Money should be the key driver.
+- [ ] `P2-Minor` Balance the Teacher's Pet levels, it's too easy to just agree with mom and earn the mega rewards.  Adding a gate for the number of chores completed would be an easy way to prevent the tiers from getting to high too fast.
 
 ## SYS:Shop — Shop & Economy
 
 
 ## SYS:UI — UI / UX & Animation
 
+- [ ] `P1-Major` Update Tutorial to cover all of the new updates and additions.
 - [X] `P1-Major` Complete scoring animation before round end or chore panel is shown.
 - [X] `P2-Minor` Scoring animation is showing the rounding down from multipliers.
 - [X] `P2-Minor` Change upgrade scorecard sound.
 - [X] `P2-Minor` Titles for powerup cards and consumables need to be a fixed size and not change, and fit in the area.
+- [ ] `P2-Minor` Adjust the position of the FanFare fly in, the resting location is off to the side, but should be centered.
+- [ ] `P2-Minor` Fix the Red Ranger Powerup label, we no longer need the extra text showing the current power up level.
 - [ ] `P2-Minor` Update Challenge Icons.
 - [ ] `P2-Minor` Update game over screen.
 - [ ] `P2-Minor` Tooltips on Mall Map not showing up.

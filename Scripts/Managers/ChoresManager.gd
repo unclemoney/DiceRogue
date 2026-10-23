@@ -62,6 +62,11 @@ var defer_streak: int = 0
 # Escalation: repeat low-mood visits within a run unlock harsher tiers
 var low_mood_visits_this_run: int = 0
 
+# Run-scoped running total of goof-off meter reduction earned from completed
+# chores. Gates how high the Teacher's Pet tier can go (see
+# get_teacher_pet_tier_cap()).
+var goof_off_points_total: int = 0
+
 # Random check-in: exactly one non-punishment Mom visit per round, at a
 # random roll. Base target range 2-10; the current mall zone number is
 # added to the max (zone 4 -> 2-14), so later zones see fewer check-ins.
@@ -190,12 +195,22 @@ func complete_current_task() -> void:
 	# Reduce progress using dynamic difficulty-based reduction
 	var reduction = completed_task.get_progress_reduction()
 	current_progress = maxi(current_progress - reduction, 0)
+	goof_off_points_total += reduction
 	progress_changed.emit(current_progress)
-	print("[ChoresManager] Progress reduced by %d to: %d" % [reduction, current_progress])
+	print("[ChoresManager] Progress reduced by %d to: %d (goof-off points total: %d)" % [reduction, current_progress, goof_off_points_total])
 	_clear_current_task()
 	
 	# Queue chore selection popup instead of auto-selecting
 	_queue_chore_selection()
+
+## get_teacher_pet_tier_cap() -> int
+##
+## Returns the highest Teacher's Pet tier the run's goof-off points unlock:
+## 0-49 points -> tier 5, 50-99 -> tier 6, 100-149 -> tier 7, and so on,
+## up to tier 10 at 250+.
+func get_teacher_pet_tier_cap() -> int:
+	return mini(5 + int(goof_off_points_total / 50), 10)
+
 
 ## adjust_mood(delta)
 ##
@@ -273,6 +288,7 @@ func reset_for_new_game() -> void:
 	grudge = 0
 	defer_streak = 0
 	low_mood_visits_this_run = 0
+	goof_off_points_total = 0
 	_rolls_this_round = 0
 	_checkin_done_this_round = false
 	_schedule_checkin()
@@ -750,6 +766,7 @@ func get_state() -> Dictionary:
 		"grudge": grudge,
 		"defer_streak": defer_streak,
 		"low_mood_visits_this_run": low_mood_visits_this_run,
+		"goof_off_points_total": goof_off_points_total,
 		"_rolls_this_round": _rolls_this_round,
 		"_checkin_roll_target": _checkin_roll_target,
 		"_checkin_done_this_round": _checkin_done_this_round,
@@ -786,6 +803,7 @@ func load_state(state: Dictionary) -> void:
 	grudge = int(state.get("grudge", 0))
 	defer_streak = int(state.get("defer_streak", 0))
 	low_mood_visits_this_run = int(state.get("low_mood_visits_this_run", 0))
+	goof_off_points_total = int(state.get("goof_off_points_total", 0))
 	_rolls_this_round = int(state.get("_rolls_this_round", 0))
 	_checkin_roll_target = int(state.get("_checkin_roll_target", -1))
 	_checkin_done_this_round = bool(state.get("_checkin_done_this_round", false))
