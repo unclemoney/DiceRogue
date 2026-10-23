@@ -45,7 +45,7 @@
 
 - [X] `P2-Minor` Add additional first round check-ins.  We essentially don't want repeat check-in's in the same game.  Are the story arcs actually working?
 - [X] `P1-Major` Teacher's Pet system does not add money as expected and Tiers should scale better.  Money should be the key driver.
-- [ ] `P2-Minor` Balance the Teacher's Pet levels, it's too easy to just agree with mom and earn the mega rewards.  Adding a gate for the number of chores completed would be an easy way to prevent the tiers from getting to high too fast.
+- [X] `P2-Minor` Balance the Teacher's Pet levels, it's too easy to just agree with mom and earn the mega rewards.  Adding a gate for the number of chores completed would be an easy way to prevent the tiers from getting to high too fast.
 
 ## SYS:Shop — Shop & Economy
 

@@ -241,7 +241,7 @@ func _spawn_fanfare(entry: Dictionary, target: Control, profile: JuiceProfile) -
 		_play_landing_sfx(profile)
 	)
 	_play_fly_sfx(is_debuff)
-	icon.play_flight(target.get_global_rect().get_center()*.95, profile)
+	icon.play_flight(target.get_global_rect().get_center(), profile)
 
 
 func _play_fly_sfx(is_debuff: bool) -> void:

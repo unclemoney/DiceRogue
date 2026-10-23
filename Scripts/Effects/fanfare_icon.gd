@@ -168,10 +168,12 @@ func _build_shell(border_tint: Color) -> void:
 ##
 ## Full flight chain: spawn off-screen right at the slot's height, overshoot
 ## fly-in with a settling rotation wobble, then the landing sequence.
-## target_position is in the parent (scene-root) coordinate space.
+## target_position is the desired CENTER of the icon, in the parent
+## (scene-root) coordinate space.
 func play_flight(target_position: Vector2, profile: JuiceProfile) -> void:
+	var land_position := target_position - size * 0.5
 	var viewport_width: float = get_viewport().get_visible_rect().size.x
-	var start_position : Vector2 = Vector2(viewport_width + profile.fanfare_spawn_offset_x, target_position.y)
+	var start_position : Vector2 = Vector2(viewport_width + profile.fanfare_spawn_offset_x, land_position.y)
 
 	rotation_degrees = profile.fanfare_spawn_rotation_deg
 	scale = Vector2.ONE * profile.fanfare_spawn_scale
@@ -180,12 +182,12 @@ func play_flight(target_position: Vector2, profile: JuiceProfile) -> void:
 	var flight: Tween = null
 	var tfx = get_node_or_null("/root/TweenFXHelper")
 	if tfx:
-		position = target_position
+		position = land_position
 		flight = tfx.fly_in_overshoot(self, start_position, profile.fanfare_fly_time)
 	if flight == null:
 		position = start_position
 		flight = create_tween()
-		flight.tween_property(self, "position", target_position, profile.fanfare_fly_time).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		flight.tween_property(self, "position", land_position, profile.fanfare_fly_time).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 	var rot : Tween = create_tween()
 	rot.tween_property(self, "rotation_degrees", -4.0, profile.fanfare_fly_time * 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
