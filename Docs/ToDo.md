@@ -289,7 +289,7 @@
 - [X] Retrigger celebration happens after XX turns playing in free mode, also not seen again, need more info.
 - [X] Not sure if scorecard levels reset, it appears they did when they shouldn't — it might just be the label. Seems to be just the labels, upgrades are acting properly.
 - [X] Did the colored dice maintain across the next round when preserved — seems to not be working.
-- [X] Costly Roll debug not showing up in the groundings.
+- [X] Costly Reroll debug not showing up in the groundings.
 - [X] Update powerup positions, and their size so we can fit all the powerups on the shelf.
 - [X] Atari label should change to indicate it's different states or being reset across rounds.
 - [X] Chore: use any consumable item did to work when an item was used.
