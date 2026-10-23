@@ -52,6 +52,7 @@
 
 ## SYS:UI — UI / UX & Animation
 
+- [ ] `P1-Major` Update Tutorial for new UI.
 - [ ] `P2-Minor` Update Challenge Icons.
 - [ ] `P2-Minor` Update game over screen.
 - [ ] `P2-Minor` Tooltips on Mall Map not showing up.
