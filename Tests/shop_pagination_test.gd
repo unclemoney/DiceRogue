@@ -122,6 +122,21 @@ func _run_tests() -> void:
 			print("✓ Undiscovered tab present")
 		else:
 			print("✗ Undiscovered tab missing")
+	print("--- Animated close ---")
+	var close_finished := [false]
+	shop_ui.shop_close_finished.connect(func(): close_finished[0] = true)
+	var close_tween: Tween = shop_ui.play_close_animation()
+	if close_tween:
+		await close_tween.finished
+	await get_tree().process_frame
+	print("Shop hidden after close: %s" % str(not shop_ui.visible))
+	print("shop_close_finished emitted: %s" % str(close_finished[0]))
+	shop_ui.show()
+	await get_tree().create_timer(0.7).timeout
+	print("Shop visible after reopen: %s" % str(shop_ui.visible))
+	var tab_cont = shop_ui.get_node_or_null("TabContainer")
+	if tab_cont:
+		print("TabContainer alpha after reopen: %.2f" % tab_cont.modulate.a)
 	print("=== Pagination Test Complete ===")
 	test_completed = true
 	await get_tree().create_timer(0.5).timeout

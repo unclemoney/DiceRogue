@@ -64,8 +64,8 @@
 - [ ] `P2-Minor` Update game over screen.
 - [ ] `P2-Minor` Tooltips on Mall Map not showing up.
 - [ ] `P2-Minor` Mall Map tooltip not showing next up challenges.
-- [ ] `P2-Minor` In the Shop Change Locked to REP
-- [ ] `P2-Minor` Update how the Shop is displayed.
+- [X] `P2-Minor` In the Shop Change Locked to REP
+- [X] `P2-Minor` Update how the Shop is displayed.
 
 
 ## SYS:Save — Save, Load & State Management

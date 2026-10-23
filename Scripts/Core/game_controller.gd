@@ -4730,7 +4730,9 @@ func _consume_round_end_buff_bonuses() -> int:
 
 ## _open_shop_ui()
 ##
-## Opens the shop UI with animated tween. Disables CRT effect while shop is visible.
+## Opens/closes the shop UI. ShopUI plays its own entrance animation
+## (_animate_shop_open) when shown; closing shrinks the panel away here.
+## Disables CRT effect while shop is visible.
 func _open_shop_ui() -> void:
 	if not shop_ui:
 		return
@@ -4767,57 +4769,38 @@ func _open_shop_ui() -> void:
 		if crt_manager:
 			crt_manager.disable_crt()
 
-		# Cancel any existing tween
+		# Cancel any existing tween (e.g. a close-shrink still in flight)
 		if _shop_tween and _shop_tween.is_valid():
 			_shop_tween.kill()
 
-		# 1. Show label immediately
+		# Snap the root back to neutral, then let ShopUI own the entrance:
+		# _animate_shop_open() fires on visibility_changed. A root scale/alpha
+		# tween here fought that animation (the old sequence collapsed the shop
+		# to 0.001 scale for 0.55s before snapping open).
+		shop_ui.scale = Vector2.ONE
+		shop_ui.modulate.a = 1.0
 		shop_ui.show()
-		shop_ui.visible = true
-		shop_ui.modulate.a = 0.0
-		shop_ui.scale = Vector2(0.1, 0.1)
-
-		# 2. Create new tween
-		_shop_tween = get_tree().create_tween()
-
-		# 3. Fade in (faster)
-		_shop_tween.tween_property(
-			shop_ui, "modulate:a", 1.0, 0.1
-		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-
-		# 4. Bounce scale (faster)
-		_shop_tween.tween_property(
-			shop_ui, "scale", Vector2(0.001, 0.001), 0.55
-		).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-
-		# 5. Settle scale (faster)
-		_shop_tween.tween_property(
-			shop_ui, "scale", Vector2.ONE, 0.05
-		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	else:
-		shop_ui.scale = Vector2(1.0, 1.0)
 		# Cancel any existing tween
 		if _shop_tween and _shop_tween.is_valid():
 			_shop_tween.kill()
-		# 2. Create new tween
-		_shop_tween = get_tree().create_tween()
+		shop_ui.scale = Vector2(1.0, 1.0)
+		shop_ui.modulate.a = 1.0
 
-		# 3. Fade in (faster)
-		_shop_tween.tween_property(
-			shop_ui, "modulate:a", 1.0, 0.1
-		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		# ShopUI owns the mirrored close animation and hides itself when it
+		# lands; CRT comes back once the shop has fully left the screen.
+		if not shop_ui.shop_close_finished.is_connected(_on_shop_close_finished):
+			shop_ui.shop_close_finished.connect(_on_shop_close_finished)
+		shop_ui.play_close_animation()
 
-		# 4. Bounce scale (faster)
-		_shop_tween.tween_property(
-			shop_ui, "scale", Vector2(0.001, 0.001), 0.55
-		).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
-		await _shop_tween.finished
-		shop_ui.hide()
-
-		# Re-enable CRT when closing shop only if not between rounds
-		if crt_manager and not _round_transition_tv_off:
-			crt_manager.enable_crt()
+## _on_shop_close_finished()
+##
+## Called when ShopUI's animated close has finished and the shop is hidden.
+func _on_shop_close_finished() -> void:
+	# Re-enable CRT when closing shop only if not between rounds
+	if crt_manager and not _round_transition_tv_off:
+		crt_manager.enable_crt()
 
 
 ## process_shop_purchase(item_id, item_type) -> bool

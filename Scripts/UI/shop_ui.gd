@@ -4,6 +4,8 @@ class_name ShopUI
 signal item_purchased(item_id: String, item_type: String)
 signal shop_button_opened  # May be used by external listeners
 signal shop_closed
+## Emitted when the animated close has finished and the shop is hidden.
+signal shop_close_finished
 
 @export var power_up_manager_path: NodePath
 @export var consumable_manager_path: NodePath
@@ -94,8 +96,8 @@ var _reroll_shader_materials := {}
 var _reroll_title_labels := {}
 var _reroll_price_labels := {}
 var _ownership_panels := {}
-var _open_tweens: Array[Tween] = []
-var _open_rest_positions := {}
+var _transition_tweens: Array[Tween] = []  # open/close entrance/exit tweens
+var _rest_positions := {}                  # captured layout positions for drop-in/out
 
 const PAGE_SIZE := 3
 const PAGED_ITEM_TYPES := ["power_up", "consumable", "mod", "colored_dice", "gaming_console"]
@@ -218,17 +220,20 @@ func _on_visibility_changed() -> void:
 ## serial delays. The title's looping idle float is stopped first so it
 ## cannot fight the position tween, and restarted once the entrance lands.
 func _animate_shop_open() -> void:
-	# Kill any in-flight entrance tweens so rapid re-opens can't stack.
-	for tween in _open_tweens:
+	# Kill any in-flight open/close tweens so rapid toggles can't stack.
+	for tween in _transition_tweens:
 		if tween and tween.is_valid():
 			tween.kill()
-	_open_tweens.clear()
+	_transition_tweens.clear()
+
+	# Restore input (a close sets it to IGNORE while the exit plays).
+	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	if backdrop:
 		backdrop.modulate.a = 0.0
 		var backdrop_tween := create_tween()
 		backdrop_tween.tween_property(backdrop, "modulate:a", 0.75, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		_open_tweens.append(backdrop_tween)
+		_transition_tweens.append(backdrop_tween)
 
 	_drop_in_node(tab_container, 160.0, 0.45)
 	_drop_in_node(close_button, 50.0, 0.35)
@@ -247,16 +252,72 @@ func _animate_shop_open() -> void:
 func _drop_in_node(node: Control, height: float, duration: float) -> Tween:
 	if not node:
 		return null
-	if not _open_rest_positions.has(node):
-		_open_rest_positions[node] = node.position
-	var rest_pos: Vector2 = _open_rest_positions[node]
+	if not _rest_positions.has(node):
+		_rest_positions[node] = node.position
+	var rest_pos: Vector2 = _rest_positions[node]
 	node.position = rest_pos - Vector2(0, height)
 	node.modulate.a = 0.0
 	var tween := create_tween()
 	tween.tween_property(node, "position", rest_pos, duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween.parallel().tween_property(node, "modulate:a", 1.0, duration * 0.65)
-	_open_tweens.append(tween)
+	_transition_tweens.append(tween)
 	return tween
+
+## play_close_animation() -> Tween
+##
+## Mirrored, bouncy exit for _animate_shop_open(): title, close button and
+## panel rise off together with a BACK wind-up while the backdrop fades.
+## Hides the shop and emits shop_close_finished when the panel tween lands.
+## Returns that tween for callers to await; returns null (after an instant
+## hide) when the panel is missing.
+func play_close_animation() -> Tween:
+	# Kill any in-flight open/close tweens so a fast close can't stack.
+	for tween in _transition_tweens:
+		if tween and tween.is_valid():
+			tween.kill()
+	_transition_tweens.clear()
+
+	# Block clicks on shop items while the exit plays.
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if shop_label:
+		_tfx.stop_effect(shop_label)
+
+	if backdrop:
+		var backdrop_tween := create_tween()
+		backdrop_tween.tween_property(backdrop, "modulate:a", 0.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		_transition_tweens.append(backdrop_tween)
+
+	_drop_out_node(shop_label, 60.0, 0.3)
+	_drop_out_node(close_button, 50.0, 0.25)
+	var panel_tween := _drop_out_node(tab_container, 160.0, 0.35)
+
+	if panel_tween:
+		panel_tween.finished.connect(_on_close_animation_finished)
+	else:
+		_on_close_animation_finished()
+	return panel_tween
+
+## _drop_out_node(node, height, duration) -> Tween
+##
+## Reverse of _drop_in_node: rises `height` px with a BACK wind-up while
+## fading out. Starts from the captured rest position so the exit is correct
+## even when an entrance was interrupted mid-flight.
+func _drop_out_node(node: Control, height: float, duration: float) -> Tween:
+	if not node:
+		return null
+	if not _rest_positions.has(node):
+		_rest_positions[node] = node.position
+	var rest_pos: Vector2 = _rest_positions[node]
+	node.position = rest_pos
+	var tween := create_tween()
+	tween.tween_property(node, "position", rest_pos - Vector2(0, height), duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	tween.parallel().tween_property(node, "modulate:a", 0.0, duration * 0.7)
+	_transition_tweens.append(tween)
+	return tween
+
+func _on_close_animation_finished() -> void:
+	hide()
+	shop_close_finished.emit()
 
 func _exit_tree() -> void:
 	if shop_label:
@@ -1078,7 +1139,7 @@ func _on_close_button_pressed() -> void:
 	var tutorial_manager = get_node_or_null("/root/TutorialManager")
 	if tutorial_manager and tutorial_manager.is_active:
 		tutorial_manager.action_completed("close_shop")
-	hide()
+	play_close_animation()  # hides the shop when the exit tween lands
 
 ## _setup_reroll_ui()
 ## Prepares the state dictionaries used by the footer reroll shells.
