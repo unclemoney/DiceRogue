@@ -28,7 +28,7 @@
 
 ## SYS:Gameplay — Core Gameplay & Balance
 
-- [ ] `P1-Major` Starting a new game after a loss did not clear colored dice purchased from previous game. 
+- [X] `P1-Major` Starting a new game after a loss did not clear colored dice purchased from previous game. 
 - [ ] `P2-Minor` Refactor Magic Mitt PowerUp to affect the REP meter.
 - [X] `P2-Minor` Bonus Collector USE state needs to be checked.  After achieving upper bonus, it is disabled.
 - [X] `P2-Minor` Have some fanfare and notify the player when a buff is added.
@@ -43,6 +43,7 @@
 ## SYS:Chore — Chore System & Mom
 
 - [X] `P2-Minor` Add additional first round check-ins.  We essentially don't want repeat check-in's in the same game.  Are the story arcs actually working?
+- [ ] `P1-Major` Teacher's Pet system does not add money as expected and Tiers should scale better.  Money should be the key driver.
 
 ## SYS:Shop — Shop & Economy
 
@@ -52,7 +53,7 @@
 - [X] `P1-Major` Complete scoring animation before round end or chore panel is shown.
 - [X] `P2-Minor` Scoring animation is showing the rounding down from multipliers.
 - [X] `P2-Minor` Change upgrade scorecard sound.
-- [ ] `P2-Minor` Titles for powerup cards and consumables need to be a fixed size and not change, and fit in the area.
+- [X] `P2-Minor` Titles for powerup cards and consumables need to be a fixed size and not change, and fit in the area.
 - [ ] `P2-Minor` Update Challenge Icons.
 - [ ] `P2-Minor` Update game over screen.
 - [ ] `P2-Minor` Tooltips on Mall Map not showing up.

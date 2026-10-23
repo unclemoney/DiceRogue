@@ -103,12 +103,12 @@ func _test_clear_buff_icons(ui) -> void:
 func _test_teacher_pet_label_and_summary(ui) -> void:
 	var buff := TeacherPetBuffScript.new()
 	add_child(buff)
-	buff.set_intensity(3.0)
+	buff.set_intensity(5.0)
 	var icon = ui.add_buff_icon(TEACHER_PET_DATA, buff)
 	_check("Teacher's Pet chip added", icon != null and ui._buff_icons.has("teacher_pet"))
 	_check("Teacher's Pet fan-out label shows tier",
-		ui._buff_detail_labels.has("teacher_pet") and ui._buff_detail_labels["teacher_pet"].text == "Teacher's Pet  Tier 3")
+		ui._buff_detail_labels.has("teacher_pet") and ui._buff_detail_labels["teacher_pet"].text == "Teacher's Pet  Tier 5")
 	_check("Teacher's Pet uses live effect summary",
-		ui._get_buff_effect_summary("teacher_pet") == "x2.00 score per hand")
+		ui._get_buff_effect_summary("teacher_pet") == "+25 additive per hand, x1.50 score")
 	ui.remove_buff_icon("teacher_pet")
 	buff.queue_free()

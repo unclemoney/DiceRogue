@@ -7,7 +7,7 @@
 script = ExtResource("1_data")
 id = "teacher_pet"
 display_name = "Teacher's Pet"
-description = "Positive interaction while Mom is happy may grant one tier until round end: Tier 1 +$100 at round end, Tier 2 +25 additive score/hand, Tier 3 x2.0 score/hand."
+description = "A positive interaction with Mom may grant a tier until round end, scaled to her mood (maddest = Tier 1, happiest = Tier 10): additive score per hand from +5 to +50, a score multiplier from Tier 5 up to x3.0, and a round-end allowance from Tier 8 up to $100."
 scene = ExtResource("2_scene")
 glyph_id = 5
 glow_color = Color(1, 0.843137, 0.329412, 1)

@@ -5,20 +5,23 @@ class_name TeacherPetBuff
 ##
 ## A positive Mom-granted buff that rides the Debuff pipeline like
 ## Rebellion. It is round-scoped and stores its active tier on
-## `intensity`:
-##   - Tier 1: +$100 at round end
-##   - Tier 2: +25 additive score per hand
-##   - Tier 3: x2.0 score multiplier per hand
+## `intensity`. Ten tiers map directly to Mom's mood (tier = 11 - mood,
+## so mood 10 = maddest grants Tier 1 and mood 1 = happiest grants
+## Tier 10). Effects stack as they unlock:
+##   - Tiers 1-4:  additive score per hand only (+5 to +20)
+##   - Tiers 5-7:  additive plus a score multiplier (x1.5 to x2.0)
+##   - Tiers 8-10: additive, multiplier, and a round-end allowance
+##                 ($50 to $200), peaking at +50 / x3.0 / $200 on Tier 10
 
 const SOURCE_NAME: String = "teacher_pet"
-const MAX_TIER: int = 3
-const TIER_ALLOWANCE: int = 1
-const TIER_ADDITIVE: int = 2
-const TIER_MULTIPLIER: int = 3
+const MAX_TIER: int = 10
 
-const ROUND_END_ALLOWANCE: int = 100
-const HAND_ADDITIVE: int = 25
-const HAND_MULTIPLIER: float = 2.0
+## Per-tier additive score per hand (index 0 unused; tiers 1-10).
+const TIER_ADDITIVES: Array[int] = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+## Per-tier score multiplier (1.0 = none; tiers 5+ only).
+const TIER_MULTIPLIERS: Array[float] = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.5, 1.75, 2.0, 3.0]
+## Per-tier round-end allowance payout (tiers 8+ only).
+const TIER_ALLOWANCES: Array[int] = [0, 0, 0, 0, 25, 50, 75, 100, 150, 175, 200]
 
 var _game_controller: GameController = null
 var _round_end_bonus_consumed: bool = false
@@ -50,11 +53,11 @@ func remove() -> void:
 
 ## set_intensity(value)
 ##
-## Clamps Teacher's Pet to the supported tier range (1-3) and refreshes
+## Clamps Teacher's Pet to the supported tier range (1-10) and refreshes
 ## its active effect if already live.
 func set_intensity(value: float) -> void:
 	super.set_intensity(value)
-	intensity = float(clampi(roundi(intensity), TIER_ALLOWANCE, MAX_TIER))
+	intensity = float(clampi(roundi(intensity), 1, MAX_TIER))
 	_round_end_bonus_consumed = false
 	if is_active:
 		_sync_effects()
@@ -65,7 +68,28 @@ func set_intensity(value: float) -> void:
 ##
 ## Returns the active Teacher's Pet tier from intensity.
 func get_tier() -> int:
-	return clampi(int(roundi(intensity)), TIER_ALLOWANCE, MAX_TIER)
+	return clampi(int(roundi(intensity)), 1, MAX_TIER)
+
+
+## get_tier_additive(tier) -> int
+##
+## Returns the additive score per hand granted by the given tier.
+static func get_tier_additive(tier: int) -> int:
+	return TIER_ADDITIVES[clampi(tier, 1, MAX_TIER)]
+
+
+## get_tier_multiplier(tier) -> float
+##
+## Returns the score multiplier granted by the given tier (1.0 = none).
+static func get_tier_multiplier(tier: int) -> float:
+	return TIER_MULTIPLIERS[clampi(tier, 1, MAX_TIER)]
+
+
+## get_tier_allowance(tier) -> int
+##
+## Returns the round-end allowance payout granted by the given tier.
+static func get_tier_allowance(tier: int) -> int:
+	return TIER_ALLOWANCES[clampi(tier, 1, MAX_TIER)]
 
 
 ## get_buff_display_suffix() -> String
@@ -77,26 +101,33 @@ func get_buff_display_suffix() -> String:
 
 ## get_buff_effect_summary() -> String
 ##
-## Returns a one-line summary of the currently active Teacher's Pet bonus.
+## Returns a one-line summary of the currently active Teacher's Pet
+## bonuses, composed from whichever effects the tier has unlocked.
 func get_buff_effect_summary() -> String:
-	match get_tier():
-		TIER_ALLOWANCE:
-			return "+$%d at round end" % ROUND_END_ALLOWANCE
-		TIER_ADDITIVE:
-			return "+%d additive score per hand" % HAND_ADDITIVE
-		TIER_MULTIPLIER:
-			return "x%.2f score per hand" % HAND_MULTIPLIER
-	return "No bonus"
+	var tier := get_tier()
+	var parts: Array[String] = []
+	var additive := get_tier_additive(tier)
+	if additive > 0:
+		parts.append("+%d additive per hand" % additive)
+	var multiplier := get_tier_multiplier(tier)
+	if multiplier > 1.0:
+		parts.append("x%.2f score" % multiplier)
+	var allowance := get_tier_allowance(tier)
+	if allowance > 0:
+		parts.append("+$%d at round end" % allowance)
+	if parts.is_empty():
+		return "No bonus"
+	return ", ".join(parts)
 
 
 ## get_pending_round_end_bonus() -> int
 ##
 ## Exposes the round-end preview/consume contract expected by
-## GameController. Only tier 1 pays out money at round end.
+## GameController. Only tiers with an allowance (8+) pay out money.
 func get_pending_round_end_bonus() -> int:
-	if get_tier() == TIER_ALLOWANCE and not _round_end_bonus_consumed:
-		return ROUND_END_ALLOWANCE
-	return 0
+	if _round_end_bonus_consumed:
+		return 0
+	return get_tier_allowance(get_tier())
 
 
 ## consume_pending_round_end_bonus() -> int
@@ -115,13 +146,13 @@ func _sync_effects() -> void:
 	if smm == null:
 		return
 
-	match get_tier():
-		TIER_ADDITIVE:
-			if smm.has_method("register_additive"):
-				smm.register_additive(SOURCE_NAME, HAND_ADDITIVE)
-		TIER_MULTIPLIER:
-			if smm.has_method("register_multiplier"):
-				smm.register_multiplier(SOURCE_NAME, HAND_MULTIPLIER)
+	var tier := get_tier()
+	var additive := get_tier_additive(tier)
+	if additive > 0 and smm.has_method("register_additive"):
+		smm.register_additive(SOURCE_NAME, additive)
+	var multiplier := get_tier_multiplier(tier)
+	if multiplier > 1.0 and smm.has_method("register_multiplier"):
+		smm.register_multiplier(SOURCE_NAME, multiplier)
 
 
 func _unregister_effects() -> void:

@@ -245,9 +245,9 @@ var _round_transition_tv_off: bool = false  # True when TV is off between rounds
 var _round_status_cleanup_scheduled: bool = false
 var _last_completed_round_rebellion_stacks: int = 0
 const MOM_GRANTED_BUFF_IDS: Array[String] = ["rebellion", "teacher_pet"]
-const TEACHER_PET_TIER_1_CHANCE: float = 0.50
-const TEACHER_PET_TIER_2_CHANCE: float = 0.65
-const TEACHER_PET_TIER_3_CHANCE: float = 0.80
+## Once-per-session Teacher's Pet activation odds per tier (index 0 unused;
+## tiers 1-10 scale 50% -> 100%, happier Mom = more likely to reward).
+const TEACHER_PET_TIER_CHANCES: Array[float] = [0.0, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 1.0]
 var _new_round_panel: NewRoundPanel = null
 var _pending_round_num: int = -1
 var _pending_is_first_round: bool = false
@@ -6905,30 +6905,20 @@ func _is_teacher_pet_positive_response(response: MomDialogResponse, outcome_resu
 
 ## _get_teacher_pet_tier_for_mood(mom_mood) -> int
 ##
-## Maps Mom's pre-dialog mood snapshot (1 = happiest) to the approved
-## Teacher's Pet tier bands. Returns 0 when the session is ineligible.
+## Maps Mom's pre-dialog mood snapshot (1 = happiest, 10 = maddest) to a
+## Teacher's Pet tier: tier = 11 - mood, so the maddest mood grants Tier 1
+## and the happiest grants Tier 10. Every mood is eligible.
 func _get_teacher_pet_tier_for_mood(mom_mood: int) -> int:
-	if mom_mood <= 2:
-		return 3
-	if mom_mood == 3:
-		return 2
-	if mom_mood == 4:
-		return 1
-	return 0
+	return clampi(11 - mom_mood, 1, TeacherPetBuff.MAX_TIER)
 
 
 ## _get_teacher_pet_activation_chance(tier) -> float
 ##
 ## Returns the activation odds for the given Teacher's Pet tier.
 func _get_teacher_pet_activation_chance(tier: int) -> float:
-	match tier:
-		1:
-			return TEACHER_PET_TIER_1_CHANCE
-		2:
-			return TEACHER_PET_TIER_2_CHANCE
-		3:
-			return TEACHER_PET_TIER_3_CHANCE
-	return 0.0
+	if tier <= 0 or tier >= TEACHER_PET_TIER_CHANCES.size():
+		return 0.0
+	return TEACHER_PET_TIER_CHANCES[tier]
 
 
 ## _roll_teacher_pet_activation(tier) -> bool

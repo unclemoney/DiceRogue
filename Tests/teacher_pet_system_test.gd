@@ -3,7 +3,8 @@ extends Node
 ## teacher_pet_system_test.gd
 ##
 ## Exercises the Teacher's Pet systems:
-##   1. Tier 1/2/3 behavior and modifier registration.
+##   1. Tier 1-10 behavior and modifier registration (additive at all tiers,
+##      multiplier from tier 5, round-end allowance from tier 8).
 ##   2. Tier upgrades and live round-end bonus preview changes.
 ##   3. DebuffManager exclusion from automatic selection.
 ##   4. GameController cross-buff replacement and same-buff upgrade rules.
@@ -54,12 +55,14 @@ func _check(label: String, condition: bool) -> void:
 
 
 func _test_activation_odds_floor() -> void:
-	_check("tier 1 activation chance >= 50%", GameControllerScript.TEACHER_PET_TIER_1_CHANCE >= 0.5)
-	_check("tier 2 activation chance >= 50%", GameControllerScript.TEACHER_PET_TIER_2_CHANCE >= 0.5)
-	_check("tier 3 activation chance >= 50%", GameControllerScript.TEACHER_PET_TIER_3_CHANCE >= 0.5)
-	_check("Teacher's Pet odds stay tier-ordered",
-		GameControllerScript.TEACHER_PET_TIER_1_CHANCE <= GameControllerScript.TEACHER_PET_TIER_2_CHANCE
-		and GameControllerScript.TEACHER_PET_TIER_2_CHANCE <= GameControllerScript.TEACHER_PET_TIER_3_CHANCE)
+	_check("tier chance table covers tiers 1-10", GameControllerScript.TEACHER_PET_TIER_CHANCES.size() == 11)
+	_check("tier 1 activation chance >= 50%", GameControllerScript.TEACHER_PET_TIER_CHANCES[1] >= 0.5)
+	_check("tier 10 activation chance is 100%", GameControllerScript.TEACHER_PET_TIER_CHANCES[10] >= 1.0)
+	var ordered := true
+	for tier in range(1, 10):
+		if GameControllerScript.TEACHER_PET_TIER_CHANCES[tier] > GameControllerScript.TEACHER_PET_TIER_CHANCES[tier + 1]:
+			ordered = false
+	_check("Teacher's Pet odds stay tier-ordered", ordered)
 
 
 func _reset_score_modifiers() -> void:
@@ -103,25 +106,33 @@ func _test_tier_behavior() -> void:
 
 	_reset_score_modifiers()
 	var tier_1 = _make_teacher_pet_buff(1)
-	_check("tier 1 has no additive", smm.get_total_additive() == 0)
+	_check("tier 1 registers +5 additive", smm.get_total_additive() == 5)
 	_check("tier 1 has neutral multiplier", is_equal_approx(smm.get_total_multiplier(), 1.0))
-	_check("tier 1 previews $100 round-end bonus", tier_1.get_pending_round_end_bonus() == 100)
-	_check("tier 1 consume returns $100", tier_1.consume_pending_round_end_bonus() == 100)
-	_check("tier 1 preview clears after consume", tier_1.get_pending_round_end_bonus() == 0)
+	_check("tier 1 has no round-end bonus", tier_1.get_pending_round_end_bonus() == 0)
 	_dispose_teacher_pet_buff(tier_1)
 
 	_reset_score_modifiers()
-	var tier_2 = _make_teacher_pet_buff(2)
-	_check("tier 2 registers +25 additive", smm.get_total_additive() == 25)
-	_check("tier 2 keeps neutral multiplier", is_equal_approx(smm.get_total_multiplier(), 1.0))
-	_check("tier 2 has no round-end bonus", tier_2.get_pending_round_end_bonus() == 0)
-	_dispose_teacher_pet_buff(tier_2)
+	var tier_5 = _make_teacher_pet_buff(5)
+	_check("tier 5 registers +25 additive", smm.get_total_additive() == 25)
+	_check("tier 5 registers x1.5 multiplier", is_equal_approx(smm.get_total_multiplier(), 1.5))
+	_check("tier 5 has no round-end bonus", tier_5.get_pending_round_end_bonus() == 0)
+	_dispose_teacher_pet_buff(tier_5)
 
 	_reset_score_modifiers()
-	var tier_3 = _make_teacher_pet_buff(3)
-	_check("tier 3 has no additive", smm.get_total_additive() == 0)
-	_check("tier 3 registers x2 multiplier", is_equal_approx(smm.get_total_multiplier(), 2.0))
-	_dispose_teacher_pet_buff(tier_3)
+	var tier_8 = _make_teacher_pet_buff(8)
+	_check("tier 8 registers +40 additive", smm.get_total_additive() == 40)
+	_check("tier 8 registers x2.25 multiplier", is_equal_approx(smm.get_total_multiplier(), 2.25))
+	_check("tier 8 previews $50 round-end bonus", tier_8.get_pending_round_end_bonus() == 50)
+	_dispose_teacher_pet_buff(tier_8)
+
+	_reset_score_modifiers()
+	var tier_10 = _make_teacher_pet_buff(10)
+	_check("tier 10 registers +50 additive", smm.get_total_additive() == 50)
+	_check("tier 10 registers x3 multiplier", is_equal_approx(smm.get_total_multiplier(), 3.0))
+	_check("tier 10 previews $100 round-end bonus", tier_10.get_pending_round_end_bonus() == 100)
+	_check("tier 10 consume returns $100", tier_10.consume_pending_round_end_bonus() == 100)
+	_check("tier 10 preview clears after consume", tier_10.get_pending_round_end_bonus() == 0)
+	_dispose_teacher_pet_buff(tier_10)
 	_reset_score_modifiers()
 
 
@@ -132,13 +143,20 @@ func _test_live_tier_upgrade() -> void:
 
 	_reset_score_modifiers()
 	var buff = _make_teacher_pet_buff(1)
-	_check("live tier 1 starts with round-end preview", buff.get_pending_round_end_bonus() == 100)
-	buff.set_intensity(2.0)
-	_check("upgrade to tier 2 removes round-end preview", buff.get_pending_round_end_bonus() == 0)
-	_check("upgrade to tier 2 registers additive", smm.get_total_additive() == 25)
-	buff.set_intensity(3.0)
-	_check("upgrade to tier 3 clears additive", smm.get_total_additive() == 0)
-	_check("upgrade to tier 3 registers multiplier", is_equal_approx(smm.get_total_multiplier(), 2.0))
+	_check("live tier 1 starts with +5 additive", smm.get_total_additive() == 5)
+	_check("live tier 1 has no round-end preview", buff.get_pending_round_end_bonus() == 0)
+	buff.set_intensity(5.0)
+	_check("upgrade to tier 5 raises additive to +25", smm.get_total_additive() == 25)
+	_check("upgrade to tier 5 registers x1.5 multiplier", is_equal_approx(smm.get_total_multiplier(), 1.5))
+	_check("upgrade to tier 5 still has no round-end preview", buff.get_pending_round_end_bonus() == 0)
+	buff.set_intensity(8.0)
+	_check("upgrade to tier 8 raises additive to +40", smm.get_total_additive() == 40)
+	_check("upgrade to tier 8 raises multiplier to x2.25", is_equal_approx(smm.get_total_multiplier(), 2.25))
+	_check("upgrade to tier 8 adds $50 round-end preview", buff.get_pending_round_end_bonus() == 50)
+	buff.set_intensity(10.0)
+	_check("upgrade to tier 10 raises additive to +50", smm.get_total_additive() == 50)
+	_check("upgrade to tier 10 raises multiplier to x3", is_equal_approx(smm.get_total_multiplier(), 3.0))
+	_check("upgrade to tier 10 raises round-end preview to $100", buff.get_pending_round_end_bonus() == 100)
 	_dispose_teacher_pet_buff(buff)
 	_reset_score_modifiers()
 
@@ -219,22 +237,22 @@ func _test_game_controller_replacement_and_upgrade() -> void:
 	_check("grant rebellion keeps Teacher's Pet inactive", not gc.is_debuff_active("teacher_pet"))
 	_check("rebellion granted at 2 stacks", int(gc.active_debuffs["rebellion"].intensity) == 2)
 
-	gc._grant_teacher_pet_buff(3)
+	gc._grant_teacher_pet_buff(7)
 	_check("Teacher's Pet replaces Rebellion", gc.is_debuff_active("teacher_pet") and not gc.is_debuff_active("rebellion"))
-	_check("Teacher's Pet tier 3 active", int(gc.active_debuffs["teacher_pet"].intensity) == 3)
+	_check("Teacher's Pet tier 7 active", int(gc.active_debuffs["teacher_pet"].intensity) == 7)
 	var smm = get_node_or_null("/root/ScoreModifierManager")
-	_check("Teacher's Pet tier 3 registers x2 multiplier", smm != null and is_equal_approx(smm.get_total_multiplier(), 2.0))
+	_check("Teacher's Pet tier 7 registers x2 multiplier", smm != null and is_equal_approx(smm.get_total_multiplier(), 2.0))
 
 	gc._grant_rebellion_buff(1)
 	_check("Rebellion replaces Teacher's Pet", gc.is_debuff_active("rebellion") and not gc.is_debuff_active("teacher_pet"))
 	_check("Rebellion replacement restores x1.15", smm != null and is_equal_approx(smm.get_total_multiplier(), 1.15))
 
-	gc._grant_teacher_pet_buff(1)
-	gc._grant_teacher_pet_buff(2)
-	gc._grant_teacher_pet_buff(1)
-	_check("Teacher's Pet keeps highest granted tier", gc.is_debuff_active("teacher_pet") and int(gc.active_debuffs["teacher_pet"].intensity) == 2)
-	_check("Teacher's Pet tier 2 registers +25 additive", smm != null and smm.get_total_additive() == 25)
-	_check("Teacher's Pet tier 2 keeps multiplier neutral", smm != null and is_equal_approx(smm.get_total_multiplier(), 1.0))
+	gc._grant_teacher_pet_buff(4)
+	gc._grant_teacher_pet_buff(7)
+	gc._grant_teacher_pet_buff(4)
+	_check("Teacher's Pet keeps highest granted tier", gc.is_debuff_active("teacher_pet") and int(gc.active_debuffs["teacher_pet"].intensity) == 7)
+	_check("Teacher's Pet tier 7 registers +35 additive", smm != null and smm.get_total_additive() == 35)
+	_check("Teacher's Pet tier 7 registers x2 multiplier", smm != null and is_equal_approx(smm.get_total_multiplier(), 2.0))
 
 	await _cleanup_harness(gc, harness)
 
@@ -249,12 +267,12 @@ func _test_completed_round_cleanup_preserves_teacher_pet_payout() -> void:
 
 	gc._clear_active_debuffs()
 	_reset_score_modifiers()
-	gc._grant_teacher_pet_buff(1)
-	_check("Teacher's Pet tier 1 preview exists before cleanup", gc._get_round_end_buff_bonus_preview() == 100)
+	gc._grant_teacher_pet_buff(8)
+	_check("Teacher's Pet tier 8 preview exists before cleanup", gc._get_round_end_buff_bonus_preview() == 50)
 
 	gc._expire_completed_round_statuses()
 	_check("completed-round cleanup keeps Teacher's Pet active", gc.is_debuff_active("teacher_pet"))
-	_check("completed-round cleanup preserves Teacher's Pet preview", gc._get_round_end_buff_bonus_preview() == 100)
+	_check("completed-round cleanup preserves Teacher's Pet preview", gc._get_round_end_buff_bonus_preview() == 50)
 
 	gc._clear_grounded_debuffs()
 	_check("shop transition clears Teacher's Pet after payout window", not gc.is_debuff_active("teacher_pet"))
@@ -273,29 +291,30 @@ func _test_save_load_restore() -> void:
 
 	gc._clear_active_debuffs()
 	_reset_score_modifiers()
-	gc._grant_teacher_pet_buff(2)
-	var tier_2_save = gc.get_save_state().get("game_controller", {})
-	_check("save state captures Teacher's Pet tier 2", tier_2_save.get("granted_buff_intensities", {}).get("teacher_pet", 0) == 2)
+	gc._grant_teacher_pet_buff(5)
+	var tier_5_save = gc.get_save_state().get("game_controller", {})
+	_check("save state captures Teacher's Pet tier 5", tier_5_save.get("granted_buff_intensities", {}).get("teacher_pet", 0) == 5)
 	gc._clear_active_debuffs()
 	_reset_score_modifiers()
 	gc.apply_debuff("teacher_pet", true)
-	gc._restore_mom_granted_buff_intensities(tier_2_save)
+	gc._restore_mom_granted_buff_intensities(tier_5_save)
 	var smm = get_node_or_null("/root/ScoreModifierManager")
 	_check("load restores Teacher's Pet active", gc.is_debuff_active("teacher_pet"))
-	_check("load restores Teacher's Pet tier 2", gc.is_debuff_active("teacher_pet") and int(gc.active_debuffs["teacher_pet"].intensity) == 2)
+	_check("load restores Teacher's Pet tier 5", gc.is_debuff_active("teacher_pet") and int(gc.active_debuffs["teacher_pet"].intensity) == 5)
 	_check("load restores Teacher's Pet additive", smm != null and smm.get_total_additive() == 25)
-	_check("load keeps tier 2 round-end preview at 0", gc._get_round_end_buff_bonus_preview() == 0)
+	_check("load restores Teacher's Pet multiplier", smm != null and is_equal_approx(smm.get_total_multiplier(), 1.5))
+	_check("load keeps tier 5 round-end preview at 0", gc._get_round_end_buff_bonus_preview() == 0)
 
 	gc._clear_active_debuffs()
 	_reset_score_modifiers()
-	gc._grant_teacher_pet_buff(1)
-	var tier_1_save = gc.get_save_state().get("game_controller", {})
-	_check("save state captures Teacher's Pet tier 1", tier_1_save.get("granted_buff_intensities", {}).get("teacher_pet", 0) == 1)
+	gc._grant_teacher_pet_buff(8)
+	var tier_8_save = gc.get_save_state().get("game_controller", {})
+	_check("save state captures Teacher's Pet tier 8", tier_8_save.get("granted_buff_intensities", {}).get("teacher_pet", 0) == 8)
 	gc._clear_active_debuffs()
 	_reset_score_modifiers()
 	gc.apply_debuff("teacher_pet", true)
-	gc._restore_mom_granted_buff_intensities(tier_1_save)
-	_check("load restores Teacher's Pet tier 1", gc.is_debuff_active("teacher_pet") and int(gc.active_debuffs["teacher_pet"].intensity) == 1)
-	_check("load restores tier 1 round-end preview", gc._get_round_end_buff_bonus_preview() == 100)
+	gc._restore_mom_granted_buff_intensities(tier_8_save)
+	_check("load restores Teacher's Pet tier 8", gc.is_debuff_active("teacher_pet") and int(gc.active_debuffs["teacher_pet"].intensity) == 8)
+	_check("load restores tier 8 round-end preview", gc._get_round_end_buff_bonus_preview() == 50)
 
 	await _cleanup_harness(gc, harness)

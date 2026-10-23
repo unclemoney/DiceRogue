@@ -376,9 +376,10 @@ func _create_debug_tabs() -> void:
 			{"text": "Set Rep 60 (NC-17)", "method": "_debug_rep_set_60"},
 			{"text": "Show Rep State", "method": "_debug_rep_show"},
 			{"text": "Grant Rebellion Buff", "method": "_debug_rebellion_grant"},
+			{"text": "Teacher's Pet: By Mood", "method": "_debug_teacher_pet_by_mood"},
 			{"text": "Grant Teacher's Pet T1", "method": "_debug_teacher_pet_tier_1"},
-			{"text": "Grant Teacher's Pet T2", "method": "_debug_teacher_pet_tier_2"},
-			{"text": "Grant Teacher's Pet T3", "method": "_debug_teacher_pet_tier_3"},
+			{"text": "Grant Teacher's Pet T5", "method": "_debug_teacher_pet_tier_5"},
+			{"text": "Grant Teacher's Pet T10", "method": "_debug_teacher_pet_tier_10"},
 			{"text": "Clear Rebellion Buff", "method": "_debug_rebellion_clear"},
 			{"text": "Clear Active Mom Buff", "method": "_debug_clear_active_mom_buff"},
 			{"text": "Select New Task", "method": "_debug_chores_new_task"},
@@ -4153,8 +4154,10 @@ func _build_debuff_diagnostics_report() -> String:
 		var active_state := false
 		var intensity := 0.0
 		if is_instance_valid(debuff):
-			active_state = bool(debuff.get("is_active"))
-			intensity = float(debuff.get("intensity", 0.0))
+			if "is_active" in debuff:
+				active_state = bool(debuff.get("is_active"))
+			if "intensity" in debuff:
+				intensity = float(debuff.get("intensity"))
 
 		lines.append("")
 		lines.append("%s (id=%s)" % [display_name, debuff_id])
@@ -4967,31 +4970,52 @@ func _debug_rebellion_grant() -> void:
 	log_debug("Rebellion buff granted (check Chore UI buff icon row)")
 
 
+## _debug_teacher_pet_grant(tier)
+##
+## Grants Teacher's Pet at the given tier and logs its live effect summary.
+func _debug_teacher_pet_grant(tier: int) -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	game_controller._grant_teacher_pet_buff(tier)
+	var summary := ""
+	if game_controller.active_debuffs.has("teacher_pet"):
+		var buff = game_controller.active_debuffs["teacher_pet"]
+		if is_instance_valid(buff) and buff.has_method("get_buff_effect_summary"):
+			summary = buff.get_buff_effect_summary()
+	log_debug("Teacher's Pet granted at Tier %d (%s)" % [tier, summary])
+
+
+## _debug_teacher_pet_by_mood()
+##
+## Grants Teacher's Pet at the tier mapped from Mom's current mood
+## (tier = 11 - mood), bypassing the once-per-session activation roll.
+func _debug_teacher_pet_by_mood() -> void:
+	_refresh_game_controller_reference()
+	if not is_instance_valid(game_controller):
+		log_debug("ERROR: GameController not available")
+		return
+	var chores_manager = _get_chores_manager()
+	if not chores_manager:
+		log_debug("ERROR: ChoresManager not available")
+		return
+	var mood := int(chores_manager.get("mom_mood"))
+	var tier := game_controller._get_teacher_pet_tier_for_mood(mood)
+	log_debug("Mom mood %d -> Teacher's Pet Tier %d" % [mood, tier])
+	_debug_teacher_pet_grant(tier)
+
+
 func _debug_teacher_pet_tier_1() -> void:
-	_refresh_game_controller_reference()
-	if not is_instance_valid(game_controller):
-		log_debug("ERROR: GameController not available")
-		return
-	game_controller._grant_teacher_pet_buff(1)
-	log_debug("Teacher's Pet granted at Tier 1 (+$100 round end)")
+	_debug_teacher_pet_grant(1)
 
 
-func _debug_teacher_pet_tier_2() -> void:
-	_refresh_game_controller_reference()
-	if not is_instance_valid(game_controller):
-		log_debug("ERROR: GameController not available")
-		return
-	game_controller._grant_teacher_pet_buff(2)
-	log_debug("Teacher's Pet granted at Tier 2 (+25 additive/hand)")
+func _debug_teacher_pet_tier_5() -> void:
+	_debug_teacher_pet_grant(5)
 
 
-func _debug_teacher_pet_tier_3() -> void:
-	_refresh_game_controller_reference()
-	if not is_instance_valid(game_controller):
-		log_debug("ERROR: GameController not available")
-		return
-	game_controller._grant_teacher_pet_buff(3)
-	log_debug("Teacher's Pet granted at Tier 3 (x2.0 score/hand)")
+func _debug_teacher_pet_tier_10() -> void:
+	_debug_teacher_pet_grant(10)
 
 
 ## _debug_rebellion_clear()
