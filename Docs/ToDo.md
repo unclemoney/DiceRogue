@@ -1,12 +1,22 @@
 # Dice Rogue — Development Todo
 
 ## Milestones
-- [ ] Core Gameplay loop
-- [ ] Game Balance
-- [ ] Artwork
-- [ ] Steam Store Page
-- [ ] Marketing
-- [ ] Release
+&gt; Target release: **Q4 2027 (Oct–Dec)**. As of 2026-10-23, ~62 weeks remain.
+&gt; A milestone is done when its exit criteria are met — not when tasks are merely closed. Dates only slip forward.
+
+- [ ] **M1 — Core Gameplay Loop** — target 2027-06 (≈33 wks out)
+  - Exit criteria: all dice sets playable start-to-finish with no open P1; save/continue soak-tested; tutorial covers every system in the game.
+  - Feeds from: Bugs (Wild Dice P1), SYS:Gameplay (Magic Mitt, mods balance, consumables main-loop), SYS:Save (save testing).
+- [ ] **M2 — Game Balance** — target 2027-09 (≈46 wks out)
+  - Exit criteria: difficulty curve tuned on Easy/Medium/Hard; balance_watchlist.md empty; mods are desirable picks, not filler.
+- [ ] **M3 — Artwork & UI Polish** — target 2027-09 (parallel with M2)
+  - Exit criteria: Challenge Icons, game over screen, Mall Map tooltips done; open P2 count = 0.
+- [ ] **M4 — Steam Store Page** — target 2027-10 (launch window open)
+  - Exit criteria: page live with capsule art, screenshots, trailer; store page up ≥6 weeks before release.
+- [ ] **M5 — Marketing / Wishlist Push** — target 2027-10 → 2027-11
+  - Exit criteria: sustained wishlist growth; demo or festival build if pursued.
+- [ ] **M6 — Release** — target 2027-12
+  - Exit criteria: release candidate cut ≥4 weeks before launch; zero open P0/P1 at RC.
 
 ## How to Write a Task
 - One task = one action. Split big items.
