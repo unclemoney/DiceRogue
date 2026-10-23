@@ -53,6 +53,7 @@
 ## Bugs
 
 - [ ] `P1-Major` Wild Dice mod not correctly applying to all dice, especially when calculating a Yahtzee.
+- [ ] `P1-Major` After using Dice Surge and it expired, the dice were displayed but not rolled. Same issue with the next round after completing Zone 1.  We need to make sure dice aren't displayed unless rolled.
 
 ## SYS:Chore — Chore System & Mom
 
