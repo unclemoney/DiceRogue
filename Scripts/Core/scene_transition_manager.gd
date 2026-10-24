@@ -13,6 +13,11 @@ var _overlay: ColorRect
 var _canvas: CanvasLayer
 var _is_transitioning: bool = false
 
+
+func is_transitioning() -> bool:
+	return _is_transitioning
+
+
 func _ready() -> void:
 	_canvas = CanvasLayer.new()
 	_canvas.layer = RenderLayers.LAYER_SCENE_TRANSITION

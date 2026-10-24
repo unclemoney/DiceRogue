@@ -126,6 +126,10 @@ func _test_dialog_and_animator() -> void:
 	# Let the reveal finish: chars * speed + punctuation slack
 	await get_tree().create_timer(LONG_TEXT.length() * 0.03 + 2.0).timeout
 	_check("reveal complete", dialog.dialog_label.visible_characters == -1)
+	for index in range(30):
+		if portrait.animation == &"idle":
+			break
+		await get_tree().create_timer(0.1).timeout
 	_check("idle after reveal", portrait.animation == &"idle")
 
 	# ─── Reaction interrupts speech, resumes after ───

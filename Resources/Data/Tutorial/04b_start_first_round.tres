@@ -5,19 +5,13 @@
 [resource]
 script = ExtResource("1")
 id = "start_first_round"
-part = 1
-total_parts = 1
-title = "Starting the Game"
-message = "Before you can roll, you need to start a new round!
-
-Click the [color=#FFD952]NEXT ROUND[/color] button to begin your first round of GUHTZEE!"
+title = "Open the First Store"
+message = "Click [color=#FFD952]NEXT ROUND[/color], then use the round panel's [color=#FFD952]Let's Play[/color] button. The store deals your dice and makes the opening roll."
 mom_expression = "happy"
-highlight_node_path = "GameButtonUI/HBoxContainer/NextRoundButton"
+highlight_node_path = "GameUI/MarginContainer/MainVBox/MiddleSection/LeftColumn/GameButtonContainer/ContentVBox/GameButtonUI/HBoxContainer/RightButtonArea/NextRoundButton"
 show_click_indicator = true
 required_action = "click_next_round"
-completion_signal = ""
-next_step_id = "roll_button"
-pause_game = false
-delay_before = 0.5
-category = "basics"
-dialog_position = "top"
+next_step_id = "chore_select"
+category = "game_loop"
+dialog_position = "right"
+show_backdrop = false

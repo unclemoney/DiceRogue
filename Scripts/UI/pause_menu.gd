@@ -183,6 +183,8 @@ func _build_menu_palette(accent_color: Color) -> Dictionary:
 ## Plays bouncy drop-in entrance animation.
 func show_menu() -> void:
 	get_tree().paused = true
+	var tutorial_manager = get_node_or_null("/root/TutorialManager")
+	save_button.disabled = tutorial_manager and tutorial_manager.is_tutorial_session_active
 	visible = true
 	_is_animating = true
 	_animate_in()
@@ -353,7 +355,9 @@ func _build_tutorial_warning_dialog() -> void:
 func _on_tutorial_warning_confirmed() -> void:
 	if visible:
 		await hide_menu()
-	await _return_to_main_menu()
+	var tutorial_manager = get_node_or_null("/root/TutorialManager")
+	if tutorial_manager:
+		tutorial_manager.exit_tutorial()
 
 
 ## _return_to_main_menu()

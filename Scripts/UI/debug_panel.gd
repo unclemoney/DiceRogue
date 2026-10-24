@@ -422,14 +422,14 @@ func _create_debug_tabs() -> void:
 		],
 		"Tutorial": [
 			{"text": "Start Tutorial", "method": "_debug_tutorial_start"},
-			{"text": "Skip Tutorial", "method": "_debug_tutorial_skip"},
+			{"text": "Exit Tutorial", "method": "_debug_tutorial_skip"},
 			{"text": "Next Step", "method": "_debug_tutorial_next_step"},
 			{"text": "Previous Step", "method": "_debug_tutorial_prev_step"},
 			{"text": "Next Part", "method": "_debug_tutorial_next_part"},
 			{"text": "Reset Tutorial Progress", "method": "_debug_tutorial_reset"},
 			{"text": "Show Tutorial State", "method": "_debug_tutorial_show_state"},
 			{"text": "Show All Steps", "method": "_debug_tutorial_list_steps"},
-			{"text": "Jump to Step (Console)", "method": "_debug_tutorial_jump_prompt"},
+			{"text": "Jump to Mom Check-In", "method": "_debug_tutorial_jump_prompt"},
 			{"text": "Force Complete Tutorial", "method": "_debug_tutorial_force_complete"},
 		],
 		"Difficulty": [
@@ -6235,3 +6235,79 @@ func _get_interactive_game_title() -> Node:
 # ============================================================================
 # Score Card Upgrade Debug Functions
 # ============================================================================
+
+
+
+# ============================================================================
+# Tutorial Debug Functions
+# ============================================================================
+
+func _tutorial_debug_manager() -> Node:
+	var manager = get_node_or_null("/root/TutorialManager")
+	if not manager:
+		log_debug("ERROR: TutorialManager not found")
+	return manager
+
+
+func _debug_tutorial_start() -> void:
+	var manager = _tutorial_debug_manager()
+	if manager:
+		manager.start_tutorial()
+
+
+func _debug_tutorial_skip() -> void:
+	var manager = _tutorial_debug_manager()
+	if manager:
+		manager.exit_tutorial()
+
+
+func _debug_tutorial_next_step() -> void:
+	var manager = _tutorial_debug_manager()
+	if manager and manager.current_step:
+		manager._mark_step_completed(manager.current_step_id)
+		if manager.current_step.next_step_id == "":
+			manager.complete_tutorial()
+		else:
+			manager._navigate_to(manager.current_step.next_step_id)
+
+
+func _debug_tutorial_prev_step() -> void:
+	var manager = _tutorial_debug_manager()
+	if manager:
+		manager.previous_step()
+
+
+func _debug_tutorial_next_part() -> void:
+	_debug_tutorial_next_step()
+
+
+func _debug_tutorial_reset() -> void:
+	var manager = _tutorial_debug_manager()
+	if manager:
+		manager.reset_tutorial()
+		log_debug("Tutorial progress reset")
+
+
+func _debug_tutorial_show_state() -> void:
+	var manager = _tutorial_debug_manager()
+	if manager:
+		log_debug("Tutorial active=%s session=%s step=%s part=%d completed=%d" % [manager.is_active, manager.is_tutorial_session_active, manager.current_step_id, manager.current_part, manager.completed_step_ids.size()])
+
+
+func _debug_tutorial_list_steps() -> void:
+	var manager = _tutorial_debug_manager()
+	if manager:
+		for step_id in manager.step_order:
+			log_debug(step_id)
+
+
+func _debug_tutorial_jump_prompt() -> void:
+	var manager = _tutorial_debug_manager()
+	if manager:
+		manager.jump_to_step("checkin_roll")
+
+
+func _debug_tutorial_force_complete() -> void:
+	var manager = _tutorial_debug_manager()
+	if manager:
+		manager.complete_tutorial()

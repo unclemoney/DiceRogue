@@ -1251,74 +1251,37 @@ Clicking the Goof-Off Meter displays a centered status panel organized into BBCo
 An interactive, action-gated tutorial system that teaches new players the game mechanics with Mom's friendly guidance.
 
 **Features:**
-- **Auto-Start**: Automatically triggers for first-time players (tutorial_completed = false)
-- **Manual Access**: "Play Tutorial" / "Replay Tutorial" button in main menu
-- **Multi-Part Steps**: Complex topics split into digestible parts (e.g., "Scoring 1/3")
-- **Action Gating**: Tutorial won't proceed until player performs the required action
-- **UI Highlighting**: Golden pulsing border around target UI elements
-- **Mom's Dialog**: Typewriter-animated messages with Skip/Next buttons
-- **Skip Warning**: Confirmation dialog when leaving mid-tutorial
-
-**Tutorial Flow:**
-1. **Introduction**: Welcome message from Mom
-2. **Rolling Dice**: How to roll and what the dice tray shows
-3. **Locking Dice**: Click dice to lock them between rolls
-4. **Scoring System (3 parts)**: Categories, bonuses, and strategy
-5. **Score Card Navigation**: How to scroll and select categories
-6. **Confirming Scores**: Committing dice to a category
-7. **Turn Flow**: Rolls per turn, advancing turns
-8. **Round Flow**: Turns per round, shop access
-9. **Shop**: Buying items between rounds
-10. **Chores System (2 parts)**: Progress bar and Mom's visits
-11. **Power-Ups**: Effects and synergies
-12. **Synergies (2 parts)**: Rating bonuses and combinations
-13. **Completion**: Tutorial finished, flag saved
+- **Auto-Start / Replay**: Starts for first-time players and can be replayed from Main Menu without deleting an existing Continue save.
+- **Interactive Guided Run**: Real rolling, locking, scoring, turn/round controls, shop purchases, Coupon use, chore choices, and Mom responses.
+- **Current Systems**: Covers POGS, Coupons, Mods, colored dice, rating synergies, chores, Mom check-ins, Teacher's Pet, Rebellion, punishments, REP tiers, and permanent progression.
+- **Navigation**: Centered Back, Exit, and Next/Finish buttons. Back reviews completed instructions without repeating gameplay rewards.
+- **Safe Exit**: Exit returns to Main Menu, leaves the tutorial incomplete, and suppresses tutorial run-save writes.
+- **Animated Mom**: `MomPortraitAnimator` speech, idle, blink, and expression states follow the typewriter reveal.
+- **Live Highlights**: Stable Control paths plus semantic targets for dynamic shop items, Coupons, chore cards, and Mom responses. The dialog hides during centered modal interactions.
 
 **Tutorial Step Resources:**
 - **Location**: `Resources/Data/Tutorial/*.tres`
-- **Format**: TutorialStep resources with step ID, parts, messages, actions
-
-**Key Properties (TutorialStep):**
-- `id`: Unique step identifier (e.g., "roll_dice", "scoring_1")
-- `part` / `total_parts`: For multi-part steps
-- `title`: Header text in dialog
-- `message`: Mom's tutorial message (supports BBCode)
-- `mom_expression`: "neutral", "happy", or "upset"
-- `highlight_node_path`: NodePath to UI element to highlight
-- `required_action`: Action player must perform (e.g., "roll_dice", "lock_die")
-- `next_step_id`: ID of next step (empty for final step)
-
-**Action Types:**
-- `roll_dice`: Player rolls the dice
-- `lock_die`: Player locks any die
-- `select_category`: Player selects a score category
-- `confirm_score`: Player confirms a score
-- `next_turn`: Player clicks Next Turn button
-- `next_round`: Player clicks Next Round button
-- `open_shop`: Player opens the shop
-- `continue`: No action required, just click Next
+- `id`, `title`, `message`, `mom_expression`, and `next_step_id` define the linked lesson chain.
+- `required_action` and optional `action_payload` validate committed gameplay events.
+- `highlight_node_path` targets stable UI; `semantic_target` resolves dynamic UI through the gameplay director.
+- `dialog_position="hidden"` keeps Mom and chore modals unobstructed.
 
 **Implementation Files:**
-- **TutorialStep**: `Scripts/Core/tutorial_step.gd` - Step resource class
-- **TutorialManager**: `Scripts/Game/tutorial_manager.gd` - Autoload orchestrator
-- **TutorialHighlight**: `Scripts/UI/tutorial_highlight.gd` - UI highlighting
-- **TutorialDialog**: `Scripts/UI/tutorial_dialog.gd` - Mom's dialog component
+- `Scripts/Core/tutorial_step.gd` - Step resource schema
+- `Scripts/Game/tutorial_manager.gd` - Navigation, session flags, and Exit lifecycle
+- `Scripts/Game/tutorial_gameplay.gd` - Deterministic fixtures, dynamic targets, and committed events
+- `Scripts/UI/tutorial_dialog.gd` - Animated portrait, typewriter, and navigation controls
+- `Scripts/UI/tutorial_highlight.gd` - Highlight and backdrop rendering
 
-**ProgressManager Integration:**
-- `tutorial_completed`: Boolean saved per profile
-- `tutorial_in_progress`: Boolean for skip warning tracking
+**Debug Commands (Tutorial Tab):** Start, Exit, Next/Previous Step, Next Part, Reset Progress, Show State, List Steps, Jump to Mom Check-In, and Force Complete.
 
-**Debug Commands (Tutorial Tab):**
-- Start Tutorial: Begin from first step
-- Skip Tutorial: Exit tutorial mode
-- Next/Previous Step: Navigate steps manually
-- Next Part: Advance multi-part steps
-- Reset Progress: Clear completion flag for re-testing
-- Show State: Display current tutorial status
-- List Steps: Show all loaded tutorial steps
-- Force Complete: Mark as completed without running
+**Tests:**
+- `Tests/TutorialTest.tscn` - Navigation, payload validation, revisit, and reset checks
+- `Tests/TutorialSaveTest.tscn` - Low-level tutorial save-write suppression
+- `Tests/TutorialLiveTest.tscn` - Real-scene startup, static paths, portrait, and Exit
+- `Tests/TutorialFlowTest.tscn` - Full interactive shop/chore/Mom flow and Finish
 
-**Test Scene**: `Tests/TutorialTest.tscn` - Isolated tutorial testing with mock UI
+Run the first three with Godot's `--headless --path .` options and append `-- --quit-after`. For the longer flow test, use `--quit-after 20000` before the scene argument and append `-- --tutorial-test`.
 
 ### Challenge Celebration System
 When a round's target score is met, celebratory GPU particle effects are displayed:

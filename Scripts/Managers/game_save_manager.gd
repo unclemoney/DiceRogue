@@ -44,6 +44,9 @@ func has_save_for_profile(slot: int) -> bool:
 ## Parameters:
 ##   data: Dictionary - the full game state snapshot to persist
 func save_snapshot(data: Dictionary) -> void:
+	var tutorial_manager = get_node_or_null("/root/TutorialManager")
+	if tutorial_manager and tutorial_manager.is_tutorial_session_active:
+		return
 	var slot = _get_current_profile_slot()
 	if slot < 0:
 		push_error("[GameSaveManager] Save aborted: no valid profile slot")

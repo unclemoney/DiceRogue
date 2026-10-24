@@ -8,21 +8,19 @@ id = "tutorial_complete"
 part = 1
 total_parts = 1
 title = "You're Ready!"
-message = "That's everything you need to know! 🎉
-
-Now go out there and become the ultimate GUHTZEE champion! Remember, Mom's always watching... 
-
-[color=#FFD952]Good luck, sweetie![/color]"
+message = "You rolled, scored, shopped, used a Coupon, finished a chore.  Now, let's cover some advanced things."
 mom_expression = "happy"
 highlight_node_path = ""
+semantic_target = ""
+action_payload = {}
 show_click_indicator = false
 required_action = "click_continue"
 completion_signal = ""
 next_step_id = ""
-pause_game = true
+pause_game = false
 delay_before = 0.0
 category = "basics"
-dialog_position = "auto"
+dialog_position = "center"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
 show_backdrop = true

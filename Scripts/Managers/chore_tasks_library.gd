@@ -50,17 +50,17 @@ static func get_all_tasks(dice_sides: int = 6) -> Array:
 	
 	# Upper Section - Basic scoring tasks (EASY)
 	tasks.append(_create_task("score_ones", "Score Ones", "Score in the Ones category",
-		TASK_SCORE_UPPER, "ones", 0, 0, 0, 5, 5))
+		TASK_SCORE_UPPER, "ones", 0, 0, 0, 1, 5))
 	tasks.append(_create_task("score_twos", "Score Twos", "Score in the Twos category",
-		TASK_SCORE_UPPER, "twos", 0, 0, 0, 5, 5))
+		TASK_SCORE_UPPER, "twos", 0, 0, 0, 2, 5))
 	tasks.append(_create_task("score_threes", "Score Threes", "Score in the Threes category",
-		TASK_SCORE_UPPER, "threes", 0, 0, 0, 5, 5))
+		TASK_SCORE_UPPER, "threes", 0, 0, 0, 3, 5))
 	tasks.append(_create_task("score_fours", "Score Fours", "Score in the Fours category",
-		TASK_SCORE_UPPER, "fours", 0, 0, 0, 5, 5))
+		TASK_SCORE_UPPER, "fours", 0, 0, 0, 4, 5))
 	tasks.append(_create_task("score_fives", "Score Fives", "Score in the Fives category",
 		TASK_SCORE_UPPER, "fives", 0, 0, 0, 5, 5))
 	tasks.append(_create_task("score_sixes", "Score Sixes", "Score in the Sixes category",
-		TASK_SCORE_UPPER, "sixes", 0, 0, 0, 5, 5))
+		TASK_SCORE_UPPER, "sixes", 0, 0, 0, 6, 5))
 	
 	# Upper Section - Generic (EASY)
 	tasks.append(_create_task("score_any_upper", "Upper Score", "Score in any upper section category",
@@ -118,19 +118,29 @@ static func get_all_tasks(dice_sides: int = 6) -> Array:
 	
 	# Three of a Kind with specific values (HARD)
 	tasks.append(_create_task("three_kind_sixes", "Triple Sixes", "Score Three of a Kind with 6s",
-		TASK_SCORE_SPECIFIC, "three_of_a_kind", 6, 3, 1, 30, 60))
+		TASK_SCORE_SPECIFIC, "three_of_a_kind", 6, 3, 1, 25, 60))
 	tasks.append(_create_task("three_kind_fives", "Triple Fives", "Score Three of a Kind with 5s",
 		TASK_SCORE_SPECIFIC, "three_of_a_kind", 5, 3, 1, 30, 60))
+	tasks.append(_create_task("three_kind_threes", "Triple Threes", "Score Three of a Kind with 3s",
+		TASK_SCORE_SPECIFIC, "three_of_a_kind", 3, 3, 1, 45, 60))
+	tasks.append(_create_task("three_kind_twos", "Triple Twos", "Score Three of a Kind with 2s",
+		TASK_SCORE_SPECIFIC, "three_of_a_kind", 2, 3, 1, 40, 60))
 	tasks.append(_create_task("three_kind_ones", "Triple Ones", "Score Three of a Kind with 1s",
-		TASK_SCORE_SPECIFIC, "three_of_a_kind", 1, 3, 1, 30, 60))
+		TASK_SCORE_SPECIFIC, "three_of_a_kind", 1, 3, 1, 45, 60))
 	
 	# Four of a Kind with specific values (HARD)
 	tasks.append(_create_task("four_kind_sixes", "Quad Sixes", "Score Four of a Kind with 6s",
-		TASK_SCORE_SPECIFIC, "four_of_a_kind", 6, 4, 1, 35, 95))
+		TASK_SCORE_SPECIFIC, "four_of_a_kind", 6, 4, 1, 30, 95))
 	tasks.append(_create_task("four_kind_fives", "Quad Fives", "Score Four of a Kind with 5s",
 		TASK_SCORE_SPECIFIC, "four_of_a_kind", 5, 4, 1, 35, 95))
+	tasks.append(_create_task("four_kind_fours", "Quad Fours", "Score Four of a Kind with 4s",
+		TASK_SCORE_SPECIFIC, "four_of_a_kind", 4, 4, 1, 50, 95))
+	tasks.append(_create_task("four_kind_threes", "Quad Threes", "Score Four of a Kind with 3s",
+		TASK_SCORE_SPECIFIC, "four_of_a_kind", 3, 4, 1, 55, 95))
+	tasks.append(_create_task("four_kind_twos", "Quad Twos", "Score Four of a Kind with 2s",
+		TASK_SCORE_SPECIFIC, "four_of_a_kind", 2, 4, 1, 60, 95))
 	tasks.append(_create_task("four_kind_ones", "Quad Ones", "Score Four of a Kind with 1s",
-		TASK_SCORE_SPECIFIC, "four_of_a_kind", 1, 4, 1, 35, 95))
+		TASK_SCORE_SPECIFIC, "four_of_a_kind", 1, 4, 1, 65, 95))
 	
 	# Utility tasks (EASY)
 	tasks.append(_create_task("use_consumable", "Use Item", "Use any consumable item",

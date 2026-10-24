@@ -423,6 +423,8 @@ func _find_channel_manager():
 
 
 func _on_buy_button_pressed() -> void:
+	if TutorialManager.is_tutorial_active() and not TutorialManager.is_payload_action_allowed("purchase_item", {"item_id": item_id, "item_type": item_type}):
+		return
 	# Prevent double clicks / re-entry while a purchase is in flight.
 	if _is_purchasing:
 		return

@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3 uid="uid://50otnh3c38rm"]
+
+[ext_resource type="Script" uid="uid://bmgqgbtghhtk1" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "goof_off_meter"
+part = 1
+total_parts = 1
+title = "The Other Kind of Visit"
+message = "Every roll adds base progress plus your POG-rating pressure. Chores reduce it. When the meter fills, I'll appear and have a chat about your work ethic, but don't push my buttons..."
+mom_expression = "upset"
+highlight_node_path = "GameUI/MarginContainer/MainVBox/MiddleSection/LeftColumn/ChoreMeterContainer/ContentVBox/ChoreUI"
+semantic_target = ""
+action_payload = {}
+show_click_indicator = false
+required_action = "click_continue"
+completion_signal = ""
+next_step_id = "punishment_roll"
+pause_game = false
+delay_before = 0.0
+category = "chores"
+dialog_position = "right"
+highlight_size = Vector2(0, 0)
+highlight_offset = Vector2(0, 0)
+show_backdrop = false
+powerup_to_grant = ""
+consumable_to_grant = ""

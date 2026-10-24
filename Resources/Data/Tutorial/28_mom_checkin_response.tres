@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "mom_checkin_response"
+title = "Answer Mom"
+message = "Responses have polite, neutral, or sassy tones and weighted outcomes. Choose any response. In this safe example, polite or neutral can earn Teacher's Pet; successful sass earns Rebellion and REP."
+mom_expression = "neutral"
+semantic_target = "mom_response:0"
+required_action = "mom_response"
+action_payload = {"is_meter_visit": false}
+next_step_id = "mom_buff_results"
+category = "mom"
+dialog_position = "hidden"
+delay_before = 1.0
+show_backdrop = false

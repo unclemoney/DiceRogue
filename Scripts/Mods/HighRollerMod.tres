@@ -11,6 +11,6 @@ display_name = "High Roller"
 description = "Cannot lock. Holds its value; click to reroll for increasing Fibonacci costs.   (One Mod per Dice)"
 icon = ExtResource("1_wild")
 scene = ExtResource("2_scene")
-price = 150
+price = 25
 sell_price = -1
 metadata/_custom_type_script = "uid://47gl3by4wwht"

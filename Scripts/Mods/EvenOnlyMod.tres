@@ -11,6 +11,6 @@ display_name = "Evens Only"
 description = "Only Roll Even Number Dice.  (One Mod per Dice)"
 icon = ExtResource("1_2c6pi")
 scene = ExtResource("2_tq8fe")
-price = 50
+price = 25
 sell_price = -1
 metadata/_custom_type_script = "uid://47gl3by4wwht"

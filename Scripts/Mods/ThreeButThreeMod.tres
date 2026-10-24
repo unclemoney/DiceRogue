@@ -8,7 +8,7 @@
 script = ExtResource("1_moddata")
 id = "three_but_three"
 display_name = "Three But Three"
-description = "Always Roll 3, Earn $3 Per Roll.   (One Mod per Dice)"
+description = "Always Roll 3, Earn $33 Per Roll.   (One Mod per Dice)"
 icon = ExtResource("1_border3")
 scene = ExtResource("2_scene")
 price = 50

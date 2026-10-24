@@ -6,23 +6,23 @@
 script = ExtResource("1")
 id = "synergy_intro"
 part = 1
-total_parts = 2
-title = "Synergy System"
-message = "Now for the fun part - [color=#FFD952]SYNERGY[/color]!
-
-Collect colored dice from the shop. When you have [color=#FFD952]5 dice of the same color[/color], you get a [color=#88FF88]+50 additive bonus[/color]! Power-Ups also have synergies based on their movie ratings!"
+total_parts = 1
+title = "Choose the Next Chore"
+message = "Completing a chore reduces the meter by its listed amount, improves my mood, and adds its payout to round-end rewards. Choose either replacement chore now."
 mom_expression = "happy"
 highlight_node_path = ""
+semantic_target = "chore_option:easy"
+action_payload = {}
 show_click_indicator = false
-required_action = "click_continue"
+required_action = "select_chore"
 completion_signal = ""
-next_step_id = "synergy_rainbow"
+next_step_id = "chore_results"
 pause_game = false
-delay_before = 0.0
-category = "synergy"
-dialog_position = "auto"
+delay_before = 0.5
+category = "chores"
+dialog_position = "top"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
-show_backdrop = true
+show_backdrop = false
 powerup_to_grant = ""
 consumable_to_grant = ""

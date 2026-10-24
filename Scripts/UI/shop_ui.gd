@@ -88,6 +88,7 @@ var colored_dice_items := LIMITED_SHOP_ITEMS # Specific count for colored dice
 var purchased_items := {}  # Track purchased items by type: {"power_up": [], "consumable": [], "mod": [], "colored_dice": []}
 var _rep_chip_label: Label = null  # Rep indicator chip in the POGS tab corner
 var _tab_item_pools := {}
+var tutorial_stock_override := false
 var _tab_page_indices := {}
 var _footer_controls := {}
 var _page_transitioning := {}
@@ -383,6 +384,12 @@ func _populate_shop_items() -> void:
 	# Clear existing containers
 	_clear_shop_containers()
 	_reset_page_indices()
+	if tutorial_stock_override:
+		for item_type in PAGED_ITEM_TYPES:
+			_render_current_page(item_type)
+		_refresh_all_ownership_panels()
+		_update_rep_chip()
+		return
 
 	_set_tab_item_pool("power_up", _build_power_up_pool())
 	_set_tab_item_pool("consumable", _build_consumable_pool())
@@ -1127,6 +1134,8 @@ func _has_reached_mod_limit(game_controller) -> bool:
 	return game_controller.has_reached_mod_limit()
 
 func _on_close_button_pressed() -> void:
+	if TutorialManager.is_tutorial_active() and not TutorialManager.is_action_allowed("close_shop"):
+		return
 	# Reset Clearance Rack on shop close
 	var game_controller = _find_game_controller()
 	if game_controller and game_controller.clearance_rack_active:

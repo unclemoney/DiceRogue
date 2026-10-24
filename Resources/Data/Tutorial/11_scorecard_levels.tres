@@ -5,14 +5,14 @@
 [resource]
 script = ExtResource("1")
 id = "scorecard_levels"
-part = 2
-total_parts = 2
-title = "The Score Card"
-message = "Each category has a [color=#FFD952]level[/color] shown by stars. Higher levels = bigger multipliers!
-
-You can upgrade categories in the shop. A level 2 category scores [color=#FFD952]2x[/color] the base points!"
+part = 1
+total_parts = 1
+title = "Category Levels"
+message = "The numeric [color=#FFD952]level chip[/color] multiplies a category's base score. Coupons and other debuffs can raise or lower levels."
 mom_expression = "happy"
-highlight_node_path = "ScoreCardUI"
+highlight_node_path = "GameUI/MarginContainer/MainVBox/MiddleSection/RightColumn/ScorecardContainer/ScoreCardUI/MarginContainer/VBoxContainer/UpperRows"
+semantic_target = ""
+action_payload = {}
 show_click_indicator = false
 required_action = "click_continue"
 completion_signal = ""
@@ -20,7 +20,9 @@ next_step_id = "scoring_system_1"
 pause_game = false
 delay_before = 0.0
 category = "scoring"
-dialog_position = "auto"
-highlight_size = Vector2(50, 300)
-highlight_offset = Vector2(20, 140)
+dialog_position = "left"
+highlight_size = Vector2(0, 0)
+highlight_offset = Vector2(0, 0)
 show_backdrop = false
+powerup_to_grant = ""
+consumable_to_grant = ""

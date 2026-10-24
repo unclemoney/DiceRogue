@@ -5,22 +5,28 @@
 [resource]
 script = ExtResource("1")
 id = "chores_mood"
-part = 2
-total_parts = 2
-title = "Chores & Mom's Mood"
-message = "Mom's mood goes from [color=#88FF88]10 (happy)[/color] to [color=#FF6666]1 (furious)[/color].
+part = 1
+total_parts = 1
+title = "Redeem Quick Cash"
+message = "Click the Quick Cash spine in the Coupon list, then press [color=#FFD952]USE COUPON[/color] on its card. Coupons require an active turn and each has its own timing rules.
 
-Using risky NC-17 items, getting caught goofing off, or failing challenges makes her mood drop. Keep her happy!"
-mom_expression = "neutral"
+This use also completes your Use Item chore."
+mom_expression = "happy"
 highlight_node_path = ""
-show_click_indicator = false
-required_action = "click_continue"
+semantic_target = "coupon:quick_cash"
+action_payload = {
+"item_id": "quick_cash"
+}
+show_click_indicator = true
+required_action = "use_consumable"
 completion_signal = ""
 next_step_id = "synergy_intro"
 pause_game = false
-delay_before = 0.0
-category = "chores"
-dialog_position = "auto"
+delay_before = 0.5
+category = "coupons"
+dialog_position = "top"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
-show_backdrop = true
+show_backdrop = false
+powerup_to_grant = ""
+consumable_to_grant = ""

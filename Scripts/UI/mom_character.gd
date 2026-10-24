@@ -358,6 +358,8 @@ func _build_response_buttons(responses: Array) -> void:
 		response_buttons.append(button)
 
 func _on_response_pressed(index: int) -> void:
+	if TutorialManager.is_tutorial_active() and not TutorialManager.is_action_allowed("mom_response"):
+		return
 	# Prevent double-picks while the outcome resolves
 	for button in response_buttons:
 		if is_instance_valid(button):

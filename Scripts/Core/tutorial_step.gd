@@ -34,6 +34,12 @@ class_name TutorialStep
 ## Example: "GameButtonUI/RollButton" or "ScoreCardUI"
 @export var highlight_node_path: String = ""
 
+## Stable gameplay-owned identifier for dynamic UI targets.
+@export var semantic_target: String = ""
+
+## Expected signal payload values for action completion.
+@export var action_payload: Dictionary = {}
+
 ## Whether to show the "↓ CLICK HERE ↓" indicator above the highlighted element.
 @export var show_click_indicator: bool = false
 
@@ -41,9 +47,9 @@ class_name TutorialStep
 ## Valid values: "none", "click_roll", "click_shop", "click_next_turn", 
 ## "click_next_round", "click_scorecard", "lock_die", "use_consumable",
 ## "purchase_item", "close_shop", "click_continue"
-@export_enum("none", "click_roll", "click_shop", "click_next_turn", 
+@export_enum("none", "click_roll", "click_shop", "click_next_turn",
 	"click_next_round", "click_scorecard", "lock_die", "use_consumable",
-	"purchase_item", "close_shop", "click_continue") var required_action: String = "click_continue"
+	"purchase_item", "close_shop", "select_chore", "complete_chore", "mom_response", "click_continue") var required_action: String = "click_continue"
 
 ## Signal to listen for to mark step complete (alternative to required_action).
 ## Format: "object_path:signal_name" e.g., "GameButtonUI:dice_rolled"
@@ -68,9 +74,9 @@ class_name TutorialStep
 
 ## Dialog position hint for this step.
 ## Controls where the tutorial dialog appears to avoid covering important UI.
-## Valid values: "auto", "top", "bottom", "left", "right", "center"
+## Valid values: "auto", "top", "bottom", "left", "right", "center", "hidden"
 ## "auto" tries to position opposite to the highlighted element.
-@export_enum("auto", "top", "bottom", "left", "right", "center") var dialog_position: String = "auto"
+@export_enum("auto", "top", "bottom", "left", "right", "center", "hidden") var dialog_position: String = "auto"
 
 ## Manual highlight size override (in pixels).
 ## Leave at (0, 0) to use automatic size detection.

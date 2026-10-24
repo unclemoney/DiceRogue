@@ -101,7 +101,7 @@ Note: no live scoped `TextureButton` surfaces were found in the current player-f
 | Settings | Header `X` close button | `Scenes/UI/SettingsMenu.tscn`, `Scripts/UI/settings_menu.gd` | `Button` | Inline magenta-accent `StyleBoxFlat` menu button via `_apply_button_style()` | Non-standard/outlier | Clear candidate if the settings overlay should align to the glass standard. |
 | Settings | `APPLY`, reset buttons, keybind capture buttons | `Scenes/UI/SettingsMenu.tscn`, `Scripts/UI/settings_menu.gd` | `Button` | Inline menu-family `StyleBoxFlat` buttons with VCR font | Non-standard/outlier | Forms a consistent settings-only family, but not the glass standard. |
 | Settings | Resolution selector, fullscreen toggle, FX toggles | `Scenes/UI/SettingsMenu.tscn`, `Scripts/UI/settings_menu.gd` | `OptionButton`, `CheckButton` | Semantic form controls styled with the same inline menu family | Native exception | These are semantic controls. They should be judged on theme alignment, not forced into a literal glass CTA wrapper. |
-| Tutorial | `Skip Tutorial`, `Next ->` | `Scripts/UI/tutorial_dialog.gd` | `Button` | Inline purple tutorial dialog `StyleBoxFlat` buttons | Non-standard/outlier | Separate one-off family. Candidate for migration if tutorials should match the rest of the front-end/gameplay language. |
+| Tutorial | `Back`, `Exit`, `Next ->` / `Finish!` | `Scripts/UI/tutorial_dialog.gd` | `GlassActionButton` via `GlassButtonFactory` | Centered glass-button row with tutorial accent palettes | Standard-compliant | Exit confirms a return to Main Menu; Back reviews the previous step without replaying grants. |
 
 ## Standard-Compliant Surfaces
 

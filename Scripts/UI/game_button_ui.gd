@@ -462,6 +462,8 @@ func _get_shop_ui() -> Node:
 
 
 func _on_next_turn_button_pressed() -> void:
+	if TutorialManager.is_tutorial_active() and not TutorialManager.is_action_allowed("click_next_turn"):
+		return
 	if _button_action_cooldown > 0.0:
 		return
 	_button_action_cooldown = BUTTON_ACTION_COOLDOWN
@@ -610,6 +612,8 @@ func _on_challenge_completed(challenge_id: String) -> void:
 
 
 func _on_next_round_button_pressed() -> void:
+	if TutorialManager.is_tutorial_active() and not TutorialManager.is_action_allowed("click_next_round"):
+		return
 	if _button_action_cooldown > 0.0:
 		return
 	_button_action_cooldown = BUTTON_ACTION_COOLDOWN
@@ -622,9 +626,6 @@ func _on_next_round_button_pressed() -> void:
 	if next_round_button:
 		_set_button_disabled(next_round_button, true)
 	print("[GameButtonUI] Next Round button pressed")
-	var tutorial_manager = get_node_or_null("/root/TutorialManager")
-	if tutorial_manager and tutorial_manager.is_tutorial_active():
-		tutorial_manager.action_completed("click_next_round")
 	if round_manager:
 		print("[GameButtonUI] Current round:", round_manager.get_current_round_number())
 	if scoring_animation_controller:

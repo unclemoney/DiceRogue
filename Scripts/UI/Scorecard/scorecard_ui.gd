@@ -536,6 +536,8 @@ func on_category_selected(section: Scorecard.Section, category: String) -> void:
 
 
 func _on_row_pressed(row_key: String) -> void:
+	if TutorialManager.is_tutorial_active() and not TutorialManager.is_action_allowed("click_scorecard"):
+		return
 	var key := StringName(row_key)
 	var section: Scorecard.Section = _row_sections.get(key, Scorecard.Section.UPPER)
 	on_category_selected(section, row_key)

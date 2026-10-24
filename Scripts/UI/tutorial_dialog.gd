@@ -1,618 +1,327 @@
-# Scripts/UI/tutorial_dialog.gd
 extends Control
 
 const GlassButtonFactoryRef = preload("res://Scripts/UI/glass_button_factory.gd")
-
-## TutorialDialog
-##
-## Displays Mom's tutorial messages with a typewriter effect.
-## Includes Skip and Next buttons, step counter, and mom's expression sprite.
-
-signal next_clicked
-signal skip_confirmed
-
-# Constants
-const TYPEWRITER_SPEED: float = 0.02  # Seconds per character
-const GOLDEN_COLOR := Color(1.0, 0.85, 0.32, 1.0)
-const DARK_PURPLE_BG := Color(0.08, 0.05, 0.15, 0.95)
-const TRANSITION_DURATION: float = 0.4  # Duration of show/hide animations
-const BOUNCE_OVERSHOOT: float = 1.1  # Overshoot for bounce effect
+const MomPortraitAnimatorScript = preload("res://Scripts/UI/mom_portrait_animator.gd")
 const BACKDROP_SHADER_PATH := "res://Scripts/Shaders/panel_backdrop.gdshader"
+const TYPEWRITER_SPEED := 0.02
+const TRANSITION_DURATION := 0.25
+const GOLDEN_COLOR := Color(1.0, 0.85, 0.32, 1.0)
+const DARK_PURPLE_BG := Color(0.08, 0.05, 0.15, 0.97)
 const PANEL_CORNER_RADIUS := 12.0
 
-# Fonts
+signal next_clicked
+signal back_clicked
+signal exit_confirmed
+
 var vcr_font: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
-
-# Mom textures
-var mom_neutral_texture: Texture2D
-var mom_happy_texture: Texture2D
-var mom_upset_texture: Texture2D
-
-# UI Components
 var dialog_panel: PanelContainer
 var backdrop_fx_rect: ColorRect
-var mom_sprite: TextureRect
+var portrait: MomPortraitAnimator
 var title_label: Label
 var step_counter_label: Label
 var message_label: RichTextLabel
-var skip_button
+var back_button
+var exit_button
 var next_button
-var skip_confirm_dialog: ConfirmationDialog
+var exit_confirm_dialog: ConfirmationDialog
 
-# State
-var _current_step = null  # TutorialStep
+var _current_step = null
 var _typewriter_tween: Tween
 var _transition_tween: Tween
-var _full_message_text: String = ""
-var _typing_complete: bool = false
+var _full_message_text := ""
+var _typing_complete := false
+var _can_advance := true
+var _panel_home := Vector2.ZERO
 var _tfx: Node = null
 
 
 func _ready() -> void:
-	# Ensure dialog works when game is paused
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	print("[TutorialDialog] _ready() called")
 	_tfx = get_node_or_null("/root/TweenFXHelper")
-	_load_textures()
 	_build_ui()
-	hide_dialog()
-	print("[TutorialDialog] _ready() complete, dialog_panel exists: %s" % (dialog_panel != null))
+	hide()
 
 
-## _load_textures()
-##
-## Loads Mom's expression textures.
-func _load_textures() -> void:
-	mom_neutral_texture = load("res://Resources/Art/Characters/Mom/mom_neutral.png")
-	mom_happy_texture = load("res://Resources/Art/Characters/Mom/mom_happy.png")
-	mom_upset_texture = load("res://Resources/Art/Characters/Mom/mom_upset.png")
-
-
-## _build_ui()
-##
-## Creates the dialog UI programmatically.
 func _build_ui() -> void:
-	# Set to fill screen for positioning
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	
-	# Main dialog panel - positioned at bottom center
 	dialog_panel = PanelContainer.new()
 	dialog_panel.name = "DialogPanel"
 	dialog_panel.process_mode = Node.PROCESS_MODE_ALWAYS
 	dialog_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	dialog_panel.custom_minimum_size = Vector2(600, 180)
-	dialog_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	dialog_panel.offset_top = -200
-	dialog_panel.offset_bottom = -20
-	dialog_panel.offset_left = -310
-	dialog_panel.offset_right = 310
-	
-	# Panel style
-	var panel_style = StyleBoxFlat.new()
+	dialog_panel.custom_minimum_size = Vector2(700, 210)
+	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = DARK_PURPLE_BG
 	panel_style.border_color = GOLDEN_COLOR
 	panel_style.set_border_width_all(3)
-	panel_style.set_corner_radius_all(12)
-	panel_style.content_margin_left = 15
-	panel_style.content_margin_right = 15
-	panel_style.content_margin_top = 12
-	panel_style.content_margin_bottom = 12
+	panel_style.set_corner_radius_all(int(PANEL_CORNER_RADIUS))
+	panel_style.content_margin_left = 16
+	panel_style.content_margin_right = 16
+	panel_style.content_margin_top = 14
+	panel_style.content_margin_bottom = 14
 	dialog_panel.add_theme_stylebox_override("panel", panel_style)
 	add_child(dialog_panel)
-	
-	# Shader backdrop behind all panel content (gradient, vignette, grain, sheen)
-	backdrop_fx_rect = _create_backdrop_fx_rect()
-	dialog_panel.resized.connect(_update_backdrop_fx_size)
-	
-	# Main horizontal container
-	var main_hbox = HBoxContainer.new()
-	main_hbox.name = "MainHBox"
-	main_hbox.add_theme_constant_override("separation", 15)
+	_create_backdrop_fx_rect()
+
+	var main_hbox := HBoxContainer.new()
+	main_hbox.add_theme_constant_override("separation", 16)
 	dialog_panel.add_child(main_hbox)
-	
-	# Mom sprite container
-	var sprite_container = VBoxContainer.new()
-	sprite_container.name = "SpriteContainer"
-	sprite_container.custom_minimum_size = Vector2(80, 0)
-	main_hbox.add_child(sprite_container)
-	
-	# Mom sprite
-	mom_sprite = TextureRect.new()
-	mom_sprite.name = "MomSprite"
-	mom_sprite.custom_minimum_size = Vector2(64, 64)
-	mom_sprite.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-	mom_sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	if mom_happy_texture:
-		mom_sprite.texture = mom_happy_texture
-	sprite_container.add_child(mom_sprite)
-	
-	# Spacer to push sprite to top
-	var sprite_spacer = Control.new()
-	sprite_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	sprite_container.add_child(sprite_spacer)
-	
-	# Content container (title, message, buttons)
-	var content_vbox = VBoxContainer.new()
-	content_vbox.name = "ContentVBox"
-	content_vbox.add_theme_constant_override("separation", 8)
-	content_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	main_hbox.add_child(content_vbox)
-	
-	# Title row (title + step counter)
-	var title_row = HBoxContainer.new()
-	title_row.name = "TitleRow"
-	content_vbox.add_child(title_row)
-	
-	# Title label
+	var portrait_frame := PanelContainer.new()
+	portrait_frame.custom_minimum_size = Vector2(112, 112)
+	portrait_frame.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	main_hbox.add_child(portrait_frame)
+	portrait = MomPortraitAnimatorScript.new()
+	portrait.name = "Portrait"
+	portrait.position = Vector2(56, 92)
+	portrait.scale = Vector2.ONE * 0.85
+	portrait_frame.add_child(portrait)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 8)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_hbox.add_child(content)
+	var title_row := HBoxContainer.new()
+	content.add_child(title_row)
 	title_label = Label.new()
-	title_label.name = "TitleLabel"
-	title_label.text = "MOM'S TIPS"
 	title_label.add_theme_font_override("font", vcr_font)
-	title_label.add_theme_font_size_override("font_size", 24)
+	title_label.add_theme_font_size_override("font_size", 22)
 	title_label.add_theme_color_override("font_color", GOLDEN_COLOR)
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_row.add_child(title_label)
-	
-	# Step counter label
 	step_counter_label = Label.new()
-	step_counter_label.name = "StepCounterLabel"
-	step_counter_label.text = ""
 	step_counter_label.add_theme_font_override("font", vcr_font)
-	step_counter_label.add_theme_font_size_override("font_size", 14)
-	step_counter_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.75, 1.0))
+	step_counter_label.add_theme_font_size_override("font_size", 13)
 	title_row.add_child(step_counter_label)
-	
-	# Message label (RichTextLabel for BBCode support)
+
 	message_label = RichTextLabel.new()
-	message_label.name = "MessageLabel"
 	message_label.bbcode_enabled = true
-	message_label.fit_content = true
-	message_label.custom_minimum_size = Vector2(0, 60)
+	message_label.fit_content = false
+	message_label.custom_minimum_size = Vector2(0, 92)
 	message_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	message_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	message_label.add_theme_font_override("normal_font", vcr_font)
-	message_label.add_theme_font_size_override("normal_font_size", 14)
-	message_label.add_theme_color_override("default_color", Color(0.9, 0.9, 0.95, 1.0))
-	message_label.scroll_active = false
-	content_vbox.add_child(message_label)
-	
-	# Button row
-	var button_row = HBoxContainer.new()
+	message_label.add_theme_font_size_override("normal_font_size", 15)
+	message_label.add_theme_color_override("default_color", Color(0.9, 0.9, 0.95))
+	message_label.scroll_active = true
+	message_label.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
+	content.add_child(message_label)
+
+	var button_row := HBoxContainer.new()
 	button_row.name = "ButtonRow"
-	button_row.add_theme_constant_override("separation", 15)
-	button_row.alignment = BoxContainer.ALIGNMENT_END
-	content_vbox.add_child(button_row)
-	
-	# Skip button
-	skip_button = _create_button("Skip Tutorial", Color(0.5, 0.4, 0.4, 1.0), true)
-	skip_button.pressed.connect(_on_skip_pressed)
-	button_row.add_child(skip_button)
-	
-	# Next button
-	next_button = _create_button("Next →", Color(0.3, 0.7, 0.4, 1.0), false)
+	button_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	button_row.add_theme_constant_override("separation", 18)
+	content.add_child(button_row)
+	back_button = _create_button("← Back", Color(0.4, 0.5, 0.75), 112)
+	back_button.pressed.connect(func(): back_clicked.emit())
+	button_row.add_child(back_button)
+	exit_button = _create_button("Exit", Color(0.65, 0.35, 0.35), 100)
+	exit_button.pressed.connect(func(): exit_confirm_dialog.popup_centered())
+	button_row.add_child(exit_button)
+	next_button = _create_button("Next →", Color(0.3, 0.7, 0.4), 124)
 	next_button.pressed.connect(_on_next_pressed)
 	button_row.add_child(next_button)
-	
-	# Skip confirmation dialog
-	_build_skip_confirm_dialog()
+
+	exit_confirm_dialog = ConfirmationDialog.new()
+	exit_confirm_dialog.title = "Exit Tutorial?"
+	exit_confirm_dialog.dialog_text = "Return to the main menu?\n\nThe tutorial stays incomplete and will restart next time."
+	exit_confirm_dialog.ok_button_text = "Exit to Main Menu"
+	exit_confirm_dialog.cancel_button_text = "Keep Learning"
+	exit_confirm_dialog.process_mode = Node.PROCESS_MODE_ALWAYS
+	exit_confirm_dialog.confirmed.connect(func(): exit_confirmed.emit())
+	add_child(exit_confirm_dialog)
 
 
-## _create_button(text, color, small)
-##
-## Creates a styled button.
-func _create_button(text: String, color: Color, small: bool):
-	var button_size = Vector2(100 if small else 120, 32)
-	var font_size = 14 if small else 16
-	var btn = GlassButtonFactoryRef.create_button(text, button_size, _build_tutorial_palette(color), font_size, vcr_font)
-	btn.set_uniform_padding(10, 5)
-	return btn
+func _create_button(text: String, color: Color, width: float):
+	var button = GlassButtonFactoryRef.create_button(text, Vector2(width, 34), _palette(color), 14, vcr_font)
+	button.set_uniform_padding(8, 4)
+	return button
 
 
-func _build_tutorial_palette(accent_color: Color) -> Dictionary:
-	return GlassButtonFactoryRef.build_palette(
-		accent_color.darkened(0.58),
-		accent_color.darkened(0.32),
-		accent_color,
-		accent_color.lightened(0.18),
-		Color(0.968627, 0.941176, 1.0, 1.0),
-		Color(0.968627, 0.941176, 1.0, 1.0),
-		Color(0.129412, 0.121569, 0.2, 1.0),
-		1
-	)
+func _palette(accent: Color) -> Dictionary:
+	return GlassButtonFactoryRef.build_palette(accent.darkened(0.58), accent.darkened(0.32), accent, accent.lightened(0.18), Color(0.97, 0.94, 1.0), Color(0.97, 0.94, 1.0), Color(0.13, 0.12, 0.2), 1)
 
 
-## _build_skip_confirm_dialog()
-##
-## Creates the skip confirmation dialog.
-func _build_skip_confirm_dialog() -> void:
-	skip_confirm_dialog = ConfirmationDialog.new()
-	skip_confirm_dialog.name = "SkipConfirmDialog"
-	skip_confirm_dialog.title = "Skip Tutorial?"
-	skip_confirm_dialog.dialog_text = "Are you sure you want to skip the tutorial?\n\nYou can replay it later from the main menu."
-	skip_confirm_dialog.ok_button_text = "Skip"
-	skip_confirm_dialog.cancel_button_text = "Continue Tutorial"
-	skip_confirm_dialog.confirmed.connect(_on_skip_confirmed)
-	add_child(skip_confirm_dialog)
+func set_navigation_state(can_go_back: bool, can_advance: bool) -> void:
+	_can_advance = can_advance
+	if back_button:
+		back_button.disabled = not can_go_back
+	if next_button:
+		next_button.disabled = not can_advance
 
 
-## show_step(step)
-##
-## Shows a tutorial step with typewriter animation.
 func show_step(step) -> void:
-	print("[TutorialDialog] show_step called for: %s" % step.id)
-	
-	if not dialog_panel:
-		push_error("[TutorialDialog] dialog_panel is null! UI not built yet.")
-		return
-	
 	_current_step = step
+	_kill_typewriter()
 	_typing_complete = false
-	
-	# Update title
-	if step.title != "":
-		title_label.text = step.title
-	else:
-		title_label.text = "MOM'S TIPS"
-	
-	# Update step counter
-	var step_label_text = step.get_step_label()
-	if step_label_text != "":
-		step_counter_label.text = step_label_text
-		step_counter_label.show()
-	else:
-		step_counter_label.hide()
-	
-	# Update expression
-	_set_expression(step.mom_expression)
-	
-	# Start typewriter effect
+	title_label.text = step.title if step.title != "" else "MOM'S TIPS"
+	step_counter_label.text = step.get_step_label()
+	step_counter_label.visible = step_counter_label.text != ""
+	next_button.text = "Finish!" if step.is_final_step() else "Next →"
 	_full_message_text = step.message
-	message_label.text = ""
-	_start_typewriter()
-	
-	# Update button text for final step
-	if step.is_final_step():
-		next_button.text = "Finish!"
-	else:
-		next_button.text = "Next →"
-	
-	# Disable Next button when step requires a specific action (not click_continue)
-	# This forces the player to perform the action to proceed
-	var requires_action = step.required_action != "click_continue" and step.required_action != "none"
-	next_button.disabled = requires_action
-	if requires_action:
-		print("[TutorialDialog] Next button disabled - requires action: %s" % step.required_action)
-	
-	# Position dialog based on step hint
-	_position_dialog(step)
-	
-	# Play intro animation
-	_play_intro_animation()
-
-
-## hide_dialog()
-##
-## Hides the tutorial dialog with exit animation.
-func hide_dialog() -> void:
-	if _typewriter_tween and _typewriter_tween.is_valid():
-		_typewriter_tween.kill()
-	
-	_play_exit_animation()
-
-
-## _play_intro_animation()
-##
-## Animates the dialog panel in with a bouncy scale effect.
-func _play_intro_animation() -> void:
-	if not dialog_panel:
-		return
-	
-	# Kill any existing transition tween
-	if _transition_tween and _transition_tween.is_valid():
-		_transition_tween.kill()
-	
-	# Set initial state - scale to 0 and invisible
-	dialog_panel.scale = Vector2.ZERO
-	dialog_panel.modulate.a = 0.0
-	
-	# Show the dialog
+	message_label.text = _full_message_text
+	portrait.set_expression_hint(step.mom_expression)
+	portrait.set_paused(false)
 	show()
-	dialog_panel.show()
-	
-	# Create bounce-in animation
-	_transition_tween = create_tween()
-	_transition_tween.set_parallel(true)
-	_transition_tween.set_trans(Tween.TRANS_BACK)
-	_transition_tween.set_ease(Tween.EASE_OUT)
-	
-	# Animate scale from 0 to 1 with overshoot
-	_transition_tween.tween_property(dialog_panel, "scale", Vector2.ONE, TRANSITION_DURATION)
-	# Fade in opacity
-	_transition_tween.tween_property(dialog_panel, "modulate:a", 1.0, TRANSITION_DURATION * 0.5)
-	
-	print("[TutorialDialog] Playing intro animation")
-
-
-## _play_exit_animation()
-##
-## Animates the dialog panel out with a shrink effect.
-func _play_exit_animation() -> void:
-	if not dialog_panel:
+	if step.dialog_position == "hidden":
+		_stop_portrait()
+		dialog_panel.hide()
 		return
-	
-	# Kill any existing transition tween
+	_position_dialog(step)
+	_play_intro()
+	_start_typewriter()
+
+
+func hide_dialog() -> void:
+	_kill_typewriter()
+	_stop_portrait()
+	if not dialog_panel or not dialog_panel.visible:
+		hide()
+		return
 	if _transition_tween and _transition_tween.is_valid():
 		_transition_tween.kill()
-	
-	# Create shrink-out animation
 	_transition_tween = create_tween()
-	_transition_tween.set_parallel(true)
-	_transition_tween.set_trans(Tween.TRANS_BACK)
-	_transition_tween.set_ease(Tween.EASE_IN)
-	
-	# Animate scale from 1 to 0
-	_transition_tween.tween_property(dialog_panel, "scale", Vector2.ZERO, TRANSITION_DURATION)
-	# Fade out opacity
-	_transition_tween.tween_property(dialog_panel, "modulate:a", 0.0, TRANSITION_DURATION * 0.5)
-	
-	# Hide after animation completes
-	_transition_tween.finished.connect(func():
-		if dialog_panel:
-			dialog_panel.hide()
-	)
-	
-	print("[TutorialDialog] Playing exit animation")
+	_transition_tween.tween_property(dialog_panel, "position", _panel_home + Vector2(0, 24), TRANSITION_DURATION)
+	_transition_tween.parallel().tween_property(dialog_panel, "modulate:a", 0.0, TRANSITION_DURATION)
+	_transition_tween.finished.connect(func(): dialog_panel.hide())
 
 
-## _position_dialog(step)
-##
-## Positions the dialog based on the step's dialog_position hint.
-## "auto" tries to position opposite to the highlighted element to avoid overlap.
+func _play_intro() -> void:
+	if _transition_tween and _transition_tween.is_valid():
+		_transition_tween.kill()
+	dialog_panel.show()
+	dialog_panel.modulate.a = 0.0
+	dialog_panel.position = _panel_home + Vector2(0, 24)
+	_transition_tween = create_tween()
+	_transition_tween.tween_property(dialog_panel, "position", _panel_home, TRANSITION_DURATION)
+	_transition_tween.parallel().tween_property(dialog_panel, "modulate:a", 1.0, TRANSITION_DURATION)
+
+
 func _position_dialog(step) -> void:
-	if not dialog_panel:
-		return
-	
-	var screen_size = get_viewport_rect().size
-	var _dialog_size = dialog_panel.custom_minimum_size
-	var margin := 20.0
-	
-	# Get position hint (defaults to "auto" if property doesn't exist)
-	var position_hint := "auto"
-	if step.has_method("get") and "dialog_position" in step:
-		position_hint = step.dialog_position
-	elif "dialog_position" in step:
-		position_hint = step.dialog_position
-	
-	# For "auto", determine best position based on highlight
+	var viewport_size := get_viewport_rect().size
+	var panel_size := Vector2(minf(700.0, viewport_size.x - 32.0), 210.0)
+	dialog_panel.custom_minimum_size.x = panel_size.x
+	var position_hint: String = step.dialog_position
 	if position_hint == "auto":
-		position_hint = _determine_auto_position(step, screen_size)
-	
-	# Apply the position
+		position_hint = _auto_position(step, viewport_size)
+	var margin := 16.0
 	match position_hint:
 		"top":
-			# Position at top center
-			dialog_panel.set_anchors_preset(Control.PRESET_CENTER_TOP)
-			dialog_panel.offset_top = margin
-			dialog_panel.offset_bottom = margin + 180
-			dialog_panel.offset_left = -310
-			dialog_panel.offset_right = 310
-		"bottom":
-			# Position at bottom center (default)
-			dialog_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-			dialog_panel.offset_top = -200
-			dialog_panel.offset_bottom = -margin
-			dialog_panel.offset_left = -310
-			dialog_panel.offset_right = 310
+			_panel_home = Vector2((viewport_size.x - panel_size.x) * 0.5, margin)
 		"left":
-			# Position at left center
-			dialog_panel.set_anchors_preset(Control.PRESET_CENTER_LEFT)
-			dialog_panel.offset_left = margin
-			dialog_panel.offset_right = margin + 620
-			dialog_panel.offset_top = -90
-			dialog_panel.offset_bottom = 90
+			_panel_home = Vector2(margin, (viewport_size.y - panel_size.y) * 0.5)
 		"right":
-			# Position at right center
-			dialog_panel.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
-			dialog_panel.offset_left = -620 - margin
-			dialog_panel.offset_right = -margin
-			dialog_panel.offset_top = -90
-			dialog_panel.offset_bottom = 90
+			_panel_home = Vector2(viewport_size.x - panel_size.x - margin, (viewport_size.y - panel_size.y) * 0.5)
 		"center":
-			# Position at center
-			dialog_panel.set_anchors_preset(Control.PRESET_CENTER)
-			dialog_panel.offset_left = -310
-			dialog_panel.offset_right = 310
-			dialog_panel.offset_top = -90
-			dialog_panel.offset_bottom = 90
+			_panel_home = (viewport_size - panel_size) * 0.5
 		_:
-			# Default to bottom
-			dialog_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-			dialog_panel.offset_top = -200
-			dialog_panel.offset_bottom = -margin
-			dialog_panel.offset_left = -310
-			dialog_panel.offset_right = 310
-	
-	print("[TutorialDialog] Positioned at: %s" % position_hint)
+			_panel_home = Vector2((viewport_size.x - panel_size.x) * 0.5, viewport_size.y - panel_size.y - margin)
+	dialog_panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	dialog_panel.position = _panel_home
+	dialog_panel.size = panel_size
 
 
-## _determine_auto_position(step, screen_size)
-##
-## Automatically determines the best dialog position based on the highlight location.
-func _determine_auto_position(step, screen_size: Vector2) -> String:
-	# If no highlight path, default to top (out of the way of VCR buttons)
-	if step.highlight_node_path == "":
+func _auto_position(step, viewport_size: Vector2) -> String:
+	var target: CanvasItem = null
+	var manager = get_node_or_null("/root/TutorialManager")
+	if step.semantic_target != "" and manager and manager._gameplay:
+		target = manager._gameplay.resolve_target(step.semantic_target)
+	elif step.highlight_node_path != "":
+		var root_node = _get_game_root()
+		if root_node:
+			target = root_node.get_node_or_null(step.highlight_node_path)
+	if not target:
 		return "top"
-	
-	# Try to find the highlighted node to determine its position
-	var game_root = _get_game_root()
-	if not game_root:
-		return "top"
-	
-	var highlight_target = game_root.get_node_or_null(step.highlight_node_path)
-	if not highlight_target:
-		return "top"
-	
-	# Get the highlight position
-	var highlight_rect: Rect2
-	if highlight_target is Control:
-		highlight_rect = (highlight_target as Control).get_global_rect()
-	elif highlight_target is Node2D:
-		var pos = (highlight_target as Node2D).global_position
-		highlight_rect = Rect2(pos - Vector2(100, 50), Vector2(200, 100))
-	else:
-		return "top"
-	
-	var highlight_center = highlight_rect.get_center()
-	
-	# If highlight is in bottom half of screen, show dialog at top
-	if highlight_center.y > screen_size.y * 0.5:
-		return "top"
-	# If highlight is in top half, show at bottom
-	else:
-		return "bottom"
+	var center := Vector2.ZERO
+	if target is Control:
+		center = target.get_global_rect().get_center()
+	elif target is Node2D:
+		center = target.global_position
+	if center.x > viewport_size.x * 0.72:
+		return "left"
+	if center.x < viewport_size.x * 0.28:
+		return "right"
+	return "top" if center.y > viewport_size.y * 0.5 else "bottom"
 
 
-## _get_game_root() -> Node
-##
-## Gets the game scene root for finding highlighted nodes.
 func _get_game_root() -> Node:
-	var game_controllers = get_tree().get_nodes_in_group("game_controller")
-	if game_controllers.size() > 0:
-		return game_controllers[0].get_parent()
+	var controllers := get_tree().get_nodes_in_group("game_controller")
+	if not controllers.is_empty():
+		return controllers[0].get_parent()
 	return get_tree().current_scene
 
 
-## _set_expression(expression_name)
-##
-## Sets Mom's expression sprite.
-func _set_expression(expression_name: String) -> void:
-	match expression_name.to_lower():
-		"happy":
-			if mom_happy_texture:
-				mom_sprite.texture = mom_happy_texture
-		"upset":
-			if mom_upset_texture:
-				mom_sprite.texture = mom_upset_texture
-		_:  # "neutral" or default
-			if mom_neutral_texture:
-				mom_sprite.texture = mom_neutral_texture
-
-
-## _start_typewriter()
-##
-## Starts the typewriter text reveal effect.
 func _start_typewriter() -> void:
-	if _typewriter_tween and _typewriter_tween.is_valid():
-		_typewriter_tween.kill()
-	
-	# Calculate total duration based on text length
-	var char_count = _strip_bbcode(_full_message_text).length()
-	var duration = char_count * TYPEWRITER_SPEED
-	
-	# Use visible_ratio for typewriter effect
-	message_label.text = _full_message_text
+	if _full_message_text.is_empty():
+		_complete_typing()
+		return
 	message_label.visible_ratio = 0.0
-	
+	portrait.start_talking()
+	var duration: float = _strip_bbcode(_full_message_text).length() * TYPEWRITER_SPEED
 	_typewriter_tween = create_tween()
 	_typewriter_tween.tween_property(message_label, "visible_ratio", 1.0, duration)
-	_typewriter_tween.finished.connect(_on_typewriter_complete)
+	_typewriter_tween.finished.connect(_complete_typing)
 
 
-## _strip_bbcode(text)
-##
-## Removes BBCode tags from text for character counting.
+func _complete_typing() -> void:
+	message_label.visible_ratio = 1.0
+	_typing_complete = true
+	if portrait:
+		portrait.stop_talking()
+
+
+func _stop_portrait() -> void:
+	if portrait:
+		portrait.stop_talking()
+		portrait.set_paused(true)
+
+
+func _kill_typewriter() -> void:
+	if _typewriter_tween and _typewriter_tween.is_valid():
+		_typewriter_tween.kill()
+
+
 func _strip_bbcode(text: String) -> String:
-	var regex = RegEx.new()
+	var regex := RegEx.new()
 	regex.compile("\\[.*?\\]")
 	return regex.sub(text, "", true)
 
 
-## _on_typewriter_complete()
-##
-## Called when typewriter animation finishes.
-func _on_typewriter_complete() -> void:
-	_typing_complete = true
-
-
-## _on_skip_pressed()
-##
-## Called when Skip button is pressed.
-func _on_skip_pressed() -> void:
-	skip_confirm_dialog.popup_centered()
-
-
-## _on_skip_confirmed()
-##
-## Called when skip is confirmed in the dialog.
-func _on_skip_confirmed() -> void:
-	skip_confirmed.emit()
-
-
-## _on_next_pressed()
-##
-## Called when Next button is pressed.
 func _on_next_pressed() -> void:
-	# If still typing, complete immediately
-	if not _typing_complete:
-		if _typewriter_tween and _typewriter_tween.is_valid():
-			_typewriter_tween.kill()
-		message_label.visible_ratio = 1.0
-		_typing_complete = true
+	if not dialog_panel.visible:
 		return
-	
-	# Otherwise, advance to next step
-	next_clicked.emit()
+	if not _typing_complete:
+		_kill_typewriter()
+		_complete_typing()
+		return
+	if _can_advance:
+		next_clicked.emit()
 
 
-## _input(event)
-##
-## Handle keyboard input for dialog.
 func _input(event: InputEvent) -> void:
 	if not dialog_panel or not dialog_panel.visible:
 		return
-	
-	# Space or Enter to advance (when dialog is visible)
-	if event is InputEventKey and event.pressed:
+	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_SPACE or event.keycode == KEY_ENTER:
 			_on_next_pressed()
 			get_viewport().set_input_as_handled()
 
 
-
-## _create_backdrop_fx_rect() -> ColorRect
-##
-## Builds a full-rect ColorRect with the panel backdrop shader and inserts it
-## as the panel's first child so content draws on top.
-func _create_backdrop_fx_rect() -> ColorRect:
-	var fx_rect := ColorRect.new()
-	fx_rect.name = "BackdropFxRect"
-	fx_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	fx_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	fx_rect.color = Color.WHITE
+func _create_backdrop_fx_rect() -> void:
+	backdrop_fx_rect = ColorRect.new()
+	backdrop_fx_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	backdrop_fx_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var shader := load(BACKDROP_SHADER_PATH) as Shader
 	if shader:
-		var fx_material := ShaderMaterial.new()
-		fx_material.shader = shader
-		fx_material.set_shader_parameter("corner_radius", PANEL_CORNER_RADIUS)
-		fx_rect.material = fx_material
-	else:
-		push_error("[TutorialDialog] Failed to load shader: " + BACKDROP_SHADER_PATH)
-	dialog_panel.add_child(fx_rect)
-	dialog_panel.move_child(fx_rect, 0)
-	backdrop_fx_rect = fx_rect
-	_update_backdrop_fx_size()
-	return fx_rect
+		var material := ShaderMaterial.new()
+		material.shader = shader
+		material.set_shader_parameter("corner_radius", PANEL_CORNER_RADIUS)
+		backdrop_fx_rect.material = material
+	dialog_panel.add_child(backdrop_fx_rect)
+	dialog_panel.move_child(backdrop_fx_rect, 0)
+	dialog_panel.resized.connect(_update_backdrop_size)
+	_update_backdrop_size()
 
 
-## _update_backdrop_fx_size()
-##
-## Pushes the panel's current size into the backdrop shader so its rounded
-## mask tracks layout. Connected to the panel's resized signal.
-func _update_backdrop_fx_size() -> void:
-	if backdrop_fx_rect == null or backdrop_fx_rect.material == null or dialog_panel == null:
-		return
-	var panel_size := dialog_panel.size
-	if panel_size.x <= 0.0 or panel_size.y <= 0.0:
-		panel_size = dialog_panel.custom_minimum_size
-	(backdrop_fx_rect.material as ShaderMaterial).set_shader_parameter("rect_size", panel_size)
+func _update_backdrop_size() -> void:
+	if backdrop_fx_rect and backdrop_fx_rect.material and dialog_panel:
+		(backdrop_fx_rect.material as ShaderMaterial).set_shader_parameter("rect_size", dialog_panel.size)

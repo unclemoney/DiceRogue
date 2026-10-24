@@ -8,19 +8,21 @@ id = "intro"
 part = 1
 total_parts = 1
 title = "Welcome to GUHTZEE!"
-message = "Hey sweetie! [color=#FFD952]Mom here![/color] I'm so excited you're learning to play!
+message = "Hey sweetie! Mom here. I'll walk you through a GUHTZEE!-- the dice, shops, chores, POGS, Coupons, and yes... my check-ins.
 
-This tutorial will teach you everything you need to know. Let's have some fun!"
+Use [color=#FFD952]Next[/color] to continue, [color=#FFD952]Back[/color] to review, or [color=#FFD952]Exit[/color] to return to the main menu."
 mom_expression = "happy"
 highlight_node_path = ""
+semantic_target = ""
+action_payload = {}
 show_click_indicator = false
 required_action = "click_continue"
 completion_signal = ""
 next_step_id = "yahtzee_basics_1"
-pause_game = true
+pause_game = false
 delay_before = 0.0
 category = "basics"
-dialog_position = "auto"
+dialog_position = "center"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
 show_backdrop = true

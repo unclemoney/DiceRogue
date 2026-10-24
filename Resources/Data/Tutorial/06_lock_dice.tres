@@ -1,26 +1,17 @@
-[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3 uid="uid://chuu747jobayf"]
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
 
-[ext_resource type="Script" uid="uid://bmgqgbtghhtk1" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
 
 [resource]
 script = ExtResource("1")
 id = "lock_dice"
-part = 1
-total_parts = 1
-title = "Locking Dice"
-message = "Great roll! Now, see a die you want to keep?
-
-[color=#FFD952]Click on it[/color] to lock it in place. Locked dice won't roll next time. Try locking at least one die!"
+title = "Keep the Good Dice"
+message = "Click a die to [color=#FFD952]lock[/color] it. Locked dice keep their value on later rolls; click again to unlock. Lock one die now."
 mom_expression = "happy"
-highlight_node_path = "DiceHand"
+highlight_node_path = "GameUI/MarginContainer/MainVBox/MiddleSection/CenterColumn/DiceAreaContainer"
 show_click_indicator = true
 required_action = "lock_die"
-completion_signal = ""
-next_step_id = "next_turn_button"
-pause_game = false
-delay_before = 0.5
-category = "basics"
+next_step_id = "roll_again"
+category = "game_loop"
 dialog_position = "top"
-highlight_size = Vector2(500, 100)
-highlight_offset = Vector2(850, 525)
 show_backdrop = false

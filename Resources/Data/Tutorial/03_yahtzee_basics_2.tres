@@ -1,22 +1,28 @@
-[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3 uid="uid://ckne11fm5t1sg"]
 
-[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+[ext_resource type="Script" uid="uid://bmgqgbtghhtk1" path="res://Scripts/Core/tutorial_step.gd" id="1"]
 
 [resource]
 script = ExtResource("1")
 id = "yahtzee_basics_2"
-part = 2
-total_parts = 3
-title = "Yahtzee Basics"
-message = "Each turn, you get [color=#FFD952]3 rolls[/color] to make the best hand you can.
-
-After each roll, you can [color=#FFD952]lock dice[/color] you want to keep - just click on them! Then roll the remaining dice."
+part = 1
+total_parts = 1
+title = "Turns, Rolls, and Rounds"
+message = "The display tracks your [color=#FFD952]turn, rolls, and store-round[/color]. You normally get three rolls per turn. Roll, lock the dice you want to keep, then score one open category.  You can click on the Mall Zone to see the map, the next store, and the upcoming challenges."
 mom_expression = "neutral"
-highlight_node_path = ""
+highlight_node_path = "GameUI/MarginContainer/MainVBox/UpperSection/TurnInfoContainer/ContentVBox/VCRTurnTrackerUI"
+semantic_target = ""
+action_payload = {}
 show_click_indicator = false
 required_action = "click_continue"
 completion_signal = ""
 next_step_id = "yahtzee_basics_3"
-pause_game = true
+pause_game = false
 delay_before = 0.0
 category = "basics"
+dialog_position = "bottom"
+highlight_size = Vector2(0, 0)
+highlight_offset = Vector2(0, 0)
+show_backdrop = false
+powerup_to_grant = ""
+consumable_to_grant = ""

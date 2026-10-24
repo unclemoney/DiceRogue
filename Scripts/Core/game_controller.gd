@@ -12,6 +12,7 @@ signal debuff_applied(id: String, debuff: Debuff)
 ## Dictionary (see _run_mom_dialog_session) so measurement tools (bot) can
 ## log punishment events without touching MomLogicHandler internals.
 signal mom_consequences_applied(summary: Dictionary)
+signal mom_visit_finished(summary: Dictionary)
 #signal dice_rolled(dice_values: Array)
 ## Emitted when the turn/roll/scoring phase changes; ConsumableUI re-evaluates
 ## consumable usage windows on this signal.
@@ -65,40 +66,41 @@ const MomLogicHandlerScript := preload("res://Scripts/Core/mom_logic_handler.gd"
 const ChallengeCelebrationScript := preload("res://Scripts/Effects/challenge_celebration.gd")
 const RoundTransitionOverlayScript := preload("res://Scripts/UI/round_transition_overlay.gd")
 const LockConstraintTrackerScript := preload("res://Scripts/Core/lock_constraint_tracker.gd")
-const RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF := preload("res://Scripts/Consumable/RandomPowerUpUncommonConsumable.tres")
-const GREEN_ENVY_CONSUMABLE_DEF := preload("res://Scripts/Consumable/GreenEnvyConsumable.tres")
-const POOR_HOUSE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/PoorHouseConsumable.tres")
-const EMPTY_SHELVES_CONSUMABLE_DEF := preload("res://Scripts/Consumable/EmptyShelvesConsumable.tres")
-const THE_RARITIES_CONSUMABLE_DEF := preload("res://Scripts/Consumable/TheRaritiesConsumable.tres")
-const THE_PAWN_SHOP_CONSUMABLE_DEF := preload("res://Scripts/Consumable/ThePawnShopConsumable.tres")
-const ONE_EXTRA_DICE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/OneExtraDiceConsumable.tres")
-const GO_BROKE_OR_GO_HOME_CONSUMABLE_DEF := preload("res://Scripts/Consumable/GoBrokeOrGoHomeConsumable.tres")
+# Load consumable resources at instance time to avoid controller/data/script preload cycles.
+var RANDOM_POWER_UP_UNCOMMON_CONSUMABLE_DEF = load("res://Scripts/Consumable/RandomPowerUpUncommonConsumable.tres")
+var GREEN_ENVY_CONSUMABLE_DEF = load("res://Scripts/Consumable/GreenEnvyConsumable.tres")
+var POOR_HOUSE_CONSUMABLE_DEF = load("res://Scripts/Consumable/PoorHouseConsumable.tres")
+var EMPTY_SHELVES_CONSUMABLE_DEF = load("res://Scripts/Consumable/EmptyShelvesConsumable.tres")
+var THE_RARITIES_CONSUMABLE_DEF = load("res://Scripts/Consumable/TheRaritiesConsumable.tres")
+var THE_PAWN_SHOP_CONSUMABLE_DEF = load("res://Scripts/Consumable/ThePawnShopConsumable.tres")
+var ONE_EXTRA_DICE_CONSUMABLE_DEF = load("res://Scripts/Consumable/OneExtraDiceConsumable.tres")
+var GO_BROKE_OR_GO_HOME_CONSUMABLE_DEF = load("res://Scripts/Consumable/GoBrokeOrGoHomeConsumable.tres")
 # Score card upgrade consumables
-const ONES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/OnesUpgradeConsumable.tres")
-const TWOS_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/TwosUpgradeConsumable.tres")
-const THREES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/ThreesUpgradeConsumable.tres")
-const FOURS_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/FoursUpgradeConsumable.tres")
-const FIVES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/FivesUpgradeConsumable.tres")
-const SIXES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/SixesUpgradeConsumable.tres")
-const THREE_OF_A_KIND_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/ThreeOfAKindUpgradeConsumable.tres")
-const FOUR_OF_A_KIND_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/FourOfAKindUpgradeConsumable.tres")
-const FULL_HOUSE_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/FullHouseUpgradeConsumable.tres")
-const SMALL_STRAIGHT_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/SmallStraightUpgradeConsumable.tres")
-const LARGE_STRAIGHT_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/LargeStraightUpgradeConsumable.tres")
-const EVENS_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/EvensUpgradeConsumable.tres")
-const ODDS_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/OddsUpgradeConsumable.tres")
-const EVEN_ODD_FULL_HOUSE_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/EvenOddFullHouseUpgradeConsumable.tres")
-const YAHTZEE_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/YahtzeeUpgradeConsumable.tres")
-const CHANCE_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/ChanceUpgradeConsumable.tres")
-const ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/AllCategoriesUpgradeConsumable.tres")
+var ONES_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/OnesUpgradeConsumable.tres")
+var TWOS_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/TwosUpgradeConsumable.tres")
+var THREES_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/ThreesUpgradeConsumable.tres")
+var FOURS_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/FoursUpgradeConsumable.tres")
+var FIVES_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/FivesUpgradeConsumable.tres")
+var SIXES_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/SixesUpgradeConsumable.tres")
+var THREE_OF_A_KIND_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/ThreeOfAKindUpgradeConsumable.tres")
+var FOUR_OF_A_KIND_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/FourOfAKindUpgradeConsumable.tres")
+var FULL_HOUSE_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/FullHouseUpgradeConsumable.tres")
+var SMALL_STRAIGHT_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/SmallStraightUpgradeConsumable.tres")
+var LARGE_STRAIGHT_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/LargeStraightUpgradeConsumable.tres")
+var EVENS_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/EvensUpgradeConsumable.tres")
+var ODDS_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/OddsUpgradeConsumable.tres")
+var EVEN_ODD_FULL_HOUSE_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/EvenOddFullHouseUpgradeConsumable.tres")
+var YAHTZEE_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/YahtzeeUpgradeConsumable.tres")
+var CHANCE_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/ChanceUpgradeConsumable.tres")
+var ALL_CATEGORIES_UPGRADE_CONSUMABLE_DEF = load("res://Scripts/Consumable/AllCategoriesUpgradeConsumable.tres")
 # New consumables - dice, stats, upgrades, streaks
-const DICE_SURGE_CONSUMABLE_DEF := preload("res://Scripts/Consumable/DiceSurgeConsumable.tres")
-const STAT_CASHOUT_CONSUMABLE_DEF := preload("res://Scripts/Consumable/StatCashoutConsumable.tres")
-const UPPER_SECTION_BOOST_CONSUMABLE_DEF := preload("res://Scripts/Consumable/UpperSectionBoostConsumable.tres")
-const LOWER_SECTION_BOOST_CONSUMABLE_DEF := preload("res://Scripts/Consumable/LowerSectionBoostConsumable.tres")
-const SCORE_STREAK_CONSUMABLE_DEF := preload("res://Scripts/Consumable/ScoreStreakConsumable.tres")
-const SCORE_AMPLIFIER_CONSUMABLE_DEF := preload("res://Scripts/Consumable/ScoreAmplifierConsumable.tres")
-const BONUS_COLLECTOR_CONSUMABLE_DEF := preload("res://Scripts/Consumable/BonusCollectorConsumable.tres")
+var DICE_SURGE_CONSUMABLE_DEF = load("res://Scripts/Consumable/DiceSurgeConsumable.tres")
+var STAT_CASHOUT_CONSUMABLE_DEF = load("res://Scripts/Consumable/StatCashoutConsumable.tres")
+var UPPER_SECTION_BOOST_CONSUMABLE_DEF = load("res://Scripts/Consumable/UpperSectionBoostConsumable.tres")
+var LOWER_SECTION_BOOST_CONSUMABLE_DEF = load("res://Scripts/Consumable/LowerSectionBoostConsumable.tres")
+var SCORE_STREAK_CONSUMABLE_DEF = load("res://Scripts/Consumable/ScoreStreakConsumable.tres")
+var SCORE_AMPLIFIER_CONSUMABLE_DEF = load("res://Scripts/Consumable/ScoreAmplifierConsumable.tres")
+var BONUS_COLLECTOR_CONSUMABLE_DEF = load("res://Scripts/Consumable/BonusCollectorConsumable.tres")
 
 # Centralized, explicit NodePaths (tweak in Inspector if scene changes)
 @export var dice_hand_path: NodePath            = ^"../GameUI/MarginContainer/MainVBox/MiddleSection/CenterColumn/DiceAreaContainer/DiceHand"
@@ -541,8 +543,11 @@ func _on_game_start() -> void:
 	# Initialize deterministic RNG for this run
 	GameRNG.initialize()
 	
-	# Delete any existing run save for fresh start
-	GameSaveManager.delete_current_save()
+	# Tutorial sessions never overwrite or delete an existing Continue run.
+	var tutorial_manager = get_node_or_null("/root/TutorialManager")
+	var is_tutorial_start: bool = tutorial_manager and tutorial_manager.should_auto_start()
+	if not is_tutorial_start:
+		GameSaveManager.delete_current_save()
 
 	# Reset run-scoped dice color state. DiceColorManager is an autoload and
 	# survives scene reloads/transitions, so purchased colors, chance modifiers,
@@ -560,17 +565,14 @@ func _on_game_start() -> void:
 	if shop_ui:
 		shop_ui.reset_reroll_cost()
 	
-	# Check if tutorial should auto-start for first-time players
-	var tutorial_manager = get_node_or_null("/root/TutorialManager")
-	if tutorial_manager and tutorial_manager.should_auto_start():
-		if _debug_enabled:
-			print("[GameController] First-time player detected - starting tutorial")
-		if round_manager:
-			round_manager.run_dice_type = "d6"  # Tutorial always uses the default set
-		# Delay tutorial start slightly to let UI settle
+	if is_tutorial_start:
+		tutorial_manager.is_tutorial_session_active = true
+		if channel_manager:
+			channel_manager.reset()
+		_restart_game_for_new_channel([])
 		await get_tree().create_timer(0.5).timeout
 		tutorial_manager.start_tutorial()
-		return  # Don't show channel selector during tutorial
+		return
 	
 	# Show channel selector UI at game start
 	if channel_manager_ui and channel_manager:
@@ -2559,9 +2561,13 @@ func _on_consumable_used(consumable_id: String) -> void:
 
 ## _on_consumable_ui_used(consumable_id)
 ##
-## Forwarding handler triggered by the UI when a consumable is used. Updates statistics first,
-## then emits a GameController-level signal for PowerUps to listen, then invokes the internal consumable handler.
+## Forwarding handler triggered by the UI when a consumable is used. Applies the effect,
+## then emits the committed signal and checks chore completion. Rejected uses emit nothing.
 func _on_consumable_ui_used(consumable_id: String) -> void:
+	if turn_tracker and not turn_tracker.is_active:
+		return
+	if not active_consumables.has(consumable_id):
+		return
 	if _debug_enabled:
 		print("[GameController] _on_consumable_ui_used called for:", consumable_id)
 
@@ -4472,6 +4478,8 @@ func _finish_round_end_and_open_shop() -> void:
 func _on_shop_button_pressed() -> void:
 	# Notify tutorial manager of shop action
 	var tutorial_manager = get_node_or_null("/root/TutorialManager")
+	if tutorial_manager and tutorial_manager.is_tutorial_active() and not tutorial_manager.is_action_allowed("click_shop"):
+		return
 	if tutorial_manager and tutorial_manager.is_tutorial_active():
 		tutorial_manager.action_completed("click_shop")
 	
@@ -5753,7 +5761,7 @@ func _on_round_started(round_number: int) -> void:
 	_reset_gaming_console_for_round()
 
 	if _is_round_start_chore_gate_active:
-		if challenge_ui and challenge_ui.has_method("wait_for_reveal"):
+		if challenge_ui and challenge_ui.has_method("wait_for_reveal") and not TutorialManager.is_tutorial_session_active:
 			await challenge_ui.wait_for_reveal()
 		if chores_manager and chores_manager.pending_chore_selection:
 			_show_chore_selection_popup()
@@ -6530,7 +6538,7 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 	MomJuiceCoordinator.play_post_mom_sequence(result)
 
 	# Notify listeners (bot harness, analytics) with a plain-data summary
-	mom_consequences_applied.emit({
+	var summary := {
 		"tier_id": result.tier_id,
 		"is_meter_visit": is_meter_visit,
 		"removed_power_ups": result.removed_power_ups.duplicate(),
@@ -6550,7 +6558,8 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 		"winning_mom_buff_id": last_qualifying_mom_buff_id,
 		"deferred": result.deferred,
 		"rep_tier_after": ProgressManager.get_rep_tier() if ProgressManager else 0,
-	})
+	}
+	mom_consequences_applied.emit(summary)
 
 	# Track grounded debuffs for removal at round end
 	for debuff_id in result.applied_debuffs:
@@ -6566,6 +6575,7 @@ func _run_mom_dialog_session(root_node_id: String, severity: int, is_meter_visit
 		cast_manager.on_session_finished(root_node_id, visited_node_ids)
 
 	_end_mom_visit(is_meter_visit)
+	mom_visit_finished.emit(summary)
 
 
 ## _prepare_mom_node(node, context) -> MomDialogNode

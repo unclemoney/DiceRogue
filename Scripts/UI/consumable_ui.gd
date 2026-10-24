@@ -994,6 +994,8 @@ func _start_idle_animations() -> void:
 		_idle_tweens.append(icon_tween)
 
 func _on_consumable_used(consumable_id: String) -> void:
+	if TutorialManager.is_tutorial_active() and not TutorialManager.is_payload_action_allowed("use_consumable", {"item_id": consumable_id}):
+		return
 	if _debug_enabled:
 		print("[ConsumableUI] Consumable used:", consumable_id)
 	

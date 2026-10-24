@@ -503,6 +503,8 @@ func _on_mouse_exited():
 		_start_idle_breathing()
 
 func toggle_lock():
+	if TutorialManager.is_tutorial_active() and not TutorialManager.is_action_allowed("lock_die"):
+		return
 	if current_state == DiceState.ROLLED:
 		lock()
 	elif current_state == DiceState.LOCKED:

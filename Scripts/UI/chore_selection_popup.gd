@@ -418,6 +418,11 @@ func _create_task_card(task, is_hard: bool) -> Control:
 ##
 ## Handles the player's chore selection.
 func _on_task_selected(is_hard: bool) -> void:
+	var pending: Dictionary = _chores_manager.get_pending_tasks()
+	var task = pending["hard"] if is_hard else pending["easy"]
+	var chore_id: String = task.id if task else ""
+	if TutorialManager.is_tutorial_active() and not TutorialManager.is_payload_action_allowed("select_chore", {"chore_id": chore_id}):
+		return
 	print("[ChoreSelectionPopup] Player selected: %s" % ("HARD" if is_hard else "EASY"))
 	chore_selected.emit(is_hard)
 	_animate_out()

@@ -571,6 +571,8 @@ func _restore_rest_scale() -> void:
 
 
 func _on_roll_button_pressed() -> void:
+	if TutorialManager.is_tutorial_active() and not TutorialManager.is_action_allowed("click_roll"):
+		return
 	if _button_action_cooldown > 0.0 or _roll_in_progress:
 		return
 	if round_manager and round_manager.is_challenge_completed:

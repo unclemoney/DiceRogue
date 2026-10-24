@@ -17,24 +17,35 @@ signal tutorial_part_advanced(step)
 signal tutorial_step_completed(step)
 signal tutorial_completed
 signal tutorial_skipped
+signal tutorial_exited
 signal tutorial_reset
 
 # Tutorial state
 var is_active: bool = false
+var is_tutorial_session_active: bool = false
 var is_paused: bool = false
-var current_step = null  # TutorialStep
-var current_step_id: String = ""  # ID of current step for easy access
-var current_part: int = 1  # Current part of multi-part steps
-var all_steps: Dictionary = {}  # step_id -> TutorialStep
-var step_order: Array[String] = []  # Ordered list of step IDs for navigation
+var current_step = null
+var current_step_id: String = ""
+var current_part: int = 1
+var all_steps: Dictionary = {}
+var step_order: Array[String] = []
+var completed_step_ids: Dictionary = {}
+var granted_step_ids: Dictionary = {}
+var last_mom_summary: Dictionary = {}
 
 # Tutorial completion tracking (synced with ProgressManager)
 var tutorial_completed_flag: bool = false
 var tutorial_in_progress_flag: bool = false
 
+var _navigation_generation: int = 0
+var _is_transitioning: bool = false
+var _is_exiting: bool = false
+var _had_save_at_start: bool = false
+var _gameplay: Node = null
+
 # Keyboard shortcut blocking
 var _blocked_actions: Array[String] = [
-	"roll", "next_turn", "shop", "next_round", "menu",
+	"roll", "next_turn", "shop", "next_round",
 	"lock_dice_1", "lock_dice_2", "lock_dice_3", "lock_dice_4", "lock_dice_5",
 	"lock_dice_6", "lock_dice_7", "lock_dice_8", "lock_dice_9", "lock_dice_10",
 	"lock_dice_11", "lock_dice_12", "lock_dice_13", "lock_dice_14", "lock_dice_15", "lock_dice_16"
@@ -51,6 +62,7 @@ var _tutorial_highlight: CanvasLayer = null
 const TUTORIAL_STEP_DIR := "res://Resources/Data/Tutorial/"
 const TutorialDialogScript := preload("res://Scripts/UI/tutorial_dialog.gd")
 const TutorialHighlightScript := preload("res://Scripts/UI/tutorial_highlight.gd")
+const TUTORIAL_GAMEPLAY_PATH := "res://Scripts/Game/tutorial_gameplay.gd"
 
 
 func _ready() -> void:
@@ -182,21 +194,26 @@ func _sync_to_profile() -> void:
 ## Starts the tutorial from the beginning.
 ## Creates UI components if needed and shows the first step.
 func start_tutorial() -> void:
-	if all_steps.is_empty():
-		push_error("[TutorialManager] Cannot start tutorial - no steps loaded")
+	if all_steps.is_empty() or is_active or step_order.is_empty():
 		return
-	
-	print("[TutorialManager] Starting tutorial")
+	_navigation_generation += 1
+	var generation := _navigation_generation
+	_had_save_at_start = GameSaveManager.has_save_for_profile(GameSettings.active_profile_slot)
+	is_tutorial_session_active = true
 	is_active = true
+	_is_exiting = false
+	tutorial_completed_flag = false
 	tutorial_in_progress_flag = true
+	completed_step_ids.clear()
+	granted_step_ids.clear()
+	last_mom_summary.clear()
 	_sync_to_profile()
-	
 	await _ensure_ui_exists()
-	
-	# Start from the first step
-	if step_order.size() > 0:
-		_show_step(step_order[0])
-	
+	if generation != _navigation_generation or not is_active:
+		return
+	if _gameplay and _gameplay.has_method("begin_session"):
+		_gameplay.begin_session()
+	_show_step(step_order[0])
 	tutorial_started.emit()
 
 
@@ -218,16 +235,44 @@ func resume_tutorial() -> void:
 ##
 ## Skips the remainder of the tutorial and marks it complete.
 func skip_tutorial() -> void:
-	print("[TutorialManager] Tutorial skipped by player")
-	_cleanup_current_step()
-	
+	exit_tutorial()
+
+
+func exit_tutorial() -> void:
+	_finish_session(false)
+
+
+func _finish_session(completed: bool) -> void:
+	if _is_exiting or not is_tutorial_session_active:
+		return
+	_is_exiting = true
+	_navigation_generation += 1
 	is_active = false
+	_is_transitioning = false
+	tutorial_completed_flag = completed
 	tutorial_in_progress_flag = false
-	tutorial_completed_flag = true
+	_cleanup_current_step()
+	_cleanup_ui()
+	current_step = null
+	current_step_id = ""
+	current_part = 1
+	get_tree().paused = false
 	_sync_to_profile()
-	
-	_hide_ui()
-	tutorial_skipped.emit()
+	var pause_layer = get_tree().root.get_node_or_null("PauseMenuLayer")
+	if pause_layer:
+		pause_layer.queue_free()
+	if completed:
+		tutorial_completed.emit()
+	else:
+		tutorial_exited.emit()
+	while SceneTransitionManager.is_transitioning():
+		await get_tree().process_frame
+	var main_menu_scene = preload("res://Scenes/UI/MainMenu.tscn")
+	await SceneTransitionManager.transition_to_scene_packed(main_menu_scene)
+	if not _had_save_at_start:
+		GameSaveManager.delete_current_save()
+	is_tutorial_session_active = false
+	_is_exiting = false
 
 
 ## reset_tutorial()
@@ -235,17 +280,22 @@ func skip_tutorial() -> void:
 ## Resets the tutorial to allow replaying from the beginning.
 ## Does not automatically start - call start_tutorial() after.
 func reset_tutorial() -> void:
-	print("[TutorialManager] Tutorial reset")
-	_cleanup_current_step()
-	
+	_navigation_generation += 1
 	is_active = false
+	is_tutorial_session_active = false
+	_is_transitioning = false
+	_is_exiting = false
 	tutorial_in_progress_flag = false
 	tutorial_completed_flag = false
+	_cleanup_current_step()
+	_cleanup_ui()
 	current_step = null
-	current_step_id = ""  # Keep current_step_id in sync
+	current_step_id = ""
+	current_part = 1
+	completed_step_ids.clear()
+	granted_step_ids.clear()
+	get_tree().paused = false
 	_sync_to_profile()
-	
-	_hide_ui()
 	tutorial_reset.emit()
 
 
@@ -253,21 +303,7 @@ func reset_tutorial() -> void:
 ##
 ## Marks the tutorial as complete and cleans up.
 func complete_tutorial() -> void:
-	print("[TutorialManager] Tutorial completed")
-	_cleanup_current_step()
-	
-	is_active = false
-	tutorial_in_progress_flag = false
-	tutorial_completed_flag = true
-	_sync_to_profile()
-	
-	_hide_ui()
-	tutorial_completed.emit()
-	
-	# Return to main menu after a short delay
-	await get_tree().create_timer(1.0).timeout
-	var main_menu_scene = preload("res://Scenes/UI/MainMenu.tscn")
-	await SceneTransitionManager.transition_to_scene_packed(main_menu_scene)
+	_finish_session(true)
 
 
 ## advance_step()
@@ -275,25 +311,59 @@ func complete_tutorial() -> void:
 ## Advances to the next step or completes if at the end.
 ## For multi-part steps, advances to next part first.
 func advance_step() -> void:
-	if not is_active or current_step == null:
+	if not _can_navigate() or current_step == null:
 		return
-	
-	var completed_step = current_step
-	tutorial_step_completed.emit(completed_step)
-	
-	if completed_step.next_step_id == "":
-		# This was the final step
+	if current_step.required_action != "click_continue" and not completed_step_ids.has(current_step_id):
+		return
+	_mark_step_completed(current_step_id)
+	if current_step.next_step_id == "":
 		complete_tutorial()
 	else:
-		# Hide current dialog with exit animation
-		if _tutorial_dialog:
-			_tutorial_dialog.hide_dialog()
-		
-		# Wait for exit animation to complete before showing next step
-		await get_tree().create_timer(0.45).timeout
-		
-		# Move to next step
-		_show_step(completed_step.next_step_id)
+		_navigate_to(current_step.next_step_id)
+
+
+func previous_step() -> void:
+	if not _can_navigate() or not can_go_back():
+		return
+	var index := step_order.find(current_step_id)
+	if index > 0:
+		_navigate_to(step_order[index - 1])
+
+
+func can_go_back() -> bool:
+	if step_order.find(current_step_id) <= 0:
+		return false
+	if _gameplay and _gameplay.has_method("can_go_back"):
+		return _gameplay.can_go_back()
+	return true
+
+
+func _can_navigate() -> bool:
+	return is_active and not _is_transitioning and not _is_exiting
+
+
+func _navigate_to(step_id: String) -> void:
+	if not _can_navigate() or not all_steps.has(step_id):
+		return
+	_is_transitioning = true
+	_navigation_generation += 1
+	var generation := _navigation_generation
+	if _tutorial_dialog:
+		_tutorial_dialog.hide_dialog()
+	await get_tree().create_timer(0.25).timeout
+	if generation != _navigation_generation or not is_active:
+		return
+	_is_transitioning = false
+	_show_step(step_id)
+
+
+func _mark_step_completed(step_id: String) -> void:
+	if completed_step_ids.has(step_id):
+		return
+	completed_step_ids[step_id] = true
+	var step = all_steps.get(step_id)
+	if step:
+		tutorial_step_completed.emit(step)
 
 
 ## is_tutorial_active() -> bool
@@ -319,25 +389,22 @@ func should_auto_start() -> bool:
 ##
 ## @param action: The action identifier (e.g., "click_roll", "lock_die")
 func is_action_allowed(action: String) -> bool:
+	if not is_active or current_step == null:
+		return true
+	if _gameplay and _gameplay.has_method("is_action_allowed"):
+		return _gameplay.is_action_allowed(action)
+	return current_step.required_action == action
+
+
+func is_payload_action_allowed(action: String, payload: Dictionary) -> bool:
 	if not is_active:
 		return true
-	
-	if current_step == null:
-		return true
-	
-	# If no required action, allow the "click_continue" via Next button only
-	if current_step.required_action == "none":
+	if not is_action_allowed(action):
 		return false
-	
-	# Allow the specific required action
-	if current_step.required_action == action:
-		return true
-	
-	# Always allow click_continue if that's the requirement
-	if current_step.required_action == "click_continue":
-		return action == "click_continue"
-	
-	return false
+	for key in current_step.action_payload:
+		if payload.get(key) != current_step.action_payload[key]:
+			return false
+	return true
 
 
 ## action_completed(action: String)
@@ -346,13 +413,19 @@ func is_action_allowed(action: String) -> bool:
 ## advances the tutorial step.
 ##
 ## @param action: The action that was completed
-func action_completed(action: String) -> void:
-	if not is_active or current_step == null:
+func action_completed(action: String, payload: Dictionary = {}) -> void:
+	if not _can_navigate() or current_step == null:
 		return
-	
-	if current_step.required_action == action:
-		print("[TutorialManager] Action completed: %s" % action)
-		advance_step()
+	if current_step.required_action != action:
+		return
+	for key in current_step.action_payload:
+		if payload.get(key) != current_step.action_payload[key]:
+			return
+	_mark_step_completed(current_step_id)
+	if current_step.next_step_id == "":
+		complete_tutorial()
+	else:
+		_navigate_to(current_step.next_step_id)
 
 
 ## get_current_step() -> TutorialStep
@@ -396,10 +469,9 @@ func jump_to_step(step_id: String) -> void:
 		return
 	
 	if not is_active:
-		is_active = true
-		await _ensure_ui_exists()
-	
-	_show_step(step_id)
+		await start_tutorial()
+	if is_active:
+		_show_step(step_id)
 
 
 # ===== INPUT HANDLING =====
@@ -423,63 +495,43 @@ func _input(event: InputEvent) -> void:
 ##
 ## Shows a specific tutorial step.
 func _show_step(step_id: String) -> void:
-	if not all_steps.has(step_id):
-		push_error("[TutorialManager] Step not found: %s" % step_id)
+	if not is_active or not all_steps.has(step_id):
 		return
-	
+	_navigation_generation += 1
+	var generation := _navigation_generation
 	_cleanup_current_step()
-	
 	current_step = all_steps[step_id]
-	current_step_id = current_step.id  # Keep current_step_id in sync
-	print("[TutorialManager] Showing step: %s - %s" % [current_step.id, current_step.title])
-	
-	# Validate paths
+	current_step_id = current_step.id
+	current_part = current_step.part
 	var game_root = _get_game_root()
-	if game_root:
+	if game_root and _get_game_controller():
 		current_step.validate_paths(game_root)
-	
-	# Grant items if specified (PowerUp and/or Consumable)
-	_grant_step_items(current_step)
-	
-	# Handle delay
+	if not granted_step_ids.has(step_id):
+		_grant_step_items(current_step)
+		granted_step_ids[step_id] = true
+	if _gameplay and _gameplay.has_method("prepare_step"):
+		_gameplay.prepare_step(current_step)
 	if current_step.delay_before > 0:
 		await get_tree().create_timer(current_step.delay_before).timeout
-	
-	# Handle game pause
+		if generation != _navigation_generation or not is_active or current_step_id != step_id:
+			return
 	if current_step.pause_game:
 		get_tree().paused = true
 		is_paused = true
-	
-	# Get show_backdrop setting (default to true)
-	var show_backdrop := true
-	if "show_backdrop" in current_step:
-		show_backdrop = current_step.show_backdrop
-	
-	# Show highlight (if specified)
-	if current_step.highlight_node_path != "" and game_root:
-		var highlight_target = game_root.get_node_or_null(current_step.highlight_node_path)
-		if highlight_target and _tutorial_highlight:
-			# Get manual overrides from step (use defaults if properties don't exist)
-			var manual_size := Vector2.ZERO
-			var manual_offset := Vector2.ZERO
-			if "highlight_size" in current_step:
-				manual_size = current_step.highlight_size
-			if "highlight_offset" in current_step:
-				manual_offset = current_step.highlight_offset
-			_tutorial_highlight.show_highlight(highlight_target, current_step.show_click_indicator, manual_size, manual_offset, show_backdrop)
-	else:
-		# No highlight specified, but we still need to control the backdrop
-		if _tutorial_highlight:
-			_tutorial_highlight.set_backdrop_visible(show_backdrop)
-	
-	# Connect to completion signal if specified
+	var highlight_target: CanvasItem = null
+	if current_step.semantic_target != "" and _gameplay:
+		highlight_target = _gameplay.resolve_target(current_step.semantic_target)
+	elif current_step.highlight_node_path != "" and game_root:
+		highlight_target = game_root.get_node_or_null(current_step.highlight_node_path)
+	if highlight_target and _tutorial_highlight:
+		_tutorial_highlight.show_highlight(highlight_target, current_step.show_click_indicator, current_step.highlight_size, current_step.highlight_offset, current_step.show_backdrop)
+	elif _tutorial_highlight:
+		_tutorial_highlight.set_backdrop_visible(current_step.show_backdrop)
 	if current_step.completion_signal != "":
 		_connect_completion_signal(current_step.completion_signal)
-	
-	# Show dialog
 	if _tutorial_dialog:
 		_tutorial_dialog.show_step(current_step)
-	
+		_tutorial_dialog.set_navigation_state(can_go_back(), current_step.required_action == "click_continue" or completed_step_ids.has(step_id))
 	tutorial_step_started.emit(current_step)
 
 
@@ -513,6 +565,11 @@ func _ensure_ui_exists() -> void:
 		return
 	
 	print("[TutorialManager] Creating UI, game_root: %s" % game_root.name)
+	if not _gameplay or not is_instance_valid(_gameplay):
+		_gameplay = Node.new()
+		_gameplay.set_script(load(TUTORIAL_GAMEPLAY_PATH))
+		_gameplay.name = "TutorialGameplay"
+		add_child(_gameplay)
 	
 	# Create highlight layer
 	if not _tutorial_highlight or not is_instance_valid(_tutorial_highlight):
@@ -545,9 +602,10 @@ func _ensure_ui_exists() -> void:
 		if _tutorial_dialog.has_signal("next_clicked"):
 			_tutorial_dialog.next_clicked.connect(_on_dialog_next)
 			print("[TutorialManager] Connected next_clicked signal")
-		if _tutorial_dialog.has_signal("skip_confirmed"):
-			_tutorial_dialog.skip_confirmed.connect(_on_dialog_skip)
-			print("[TutorialManager] Connected skip_confirmed signal")
+		if _tutorial_dialog.has_signal("back_clicked"):
+			_tutorial_dialog.back_clicked.connect(previous_step)
+		if _tutorial_dialog.has_signal("exit_confirmed"):
+			_tutorial_dialog.exit_confirmed.connect(exit_tutorial)
 
 
 ## _hide_ui()
@@ -564,6 +622,9 @@ func _hide_ui() -> void:
 ##
 ## Destroys tutorial UI components.
 func _cleanup_ui() -> void:
+	if _gameplay and is_instance_valid(_gameplay):
+		_gameplay.queue_free()
+		_gameplay = null
 	if _tutorial_highlight and is_instance_valid(_tutorial_highlight):
 		_tutorial_highlight.queue_free()
 		_tutorial_highlight = null
@@ -642,8 +703,8 @@ func _on_completion_signal(_arg1 = null, _arg2 = null, _arg3 = null) -> void:
 ##
 ## Called when the Next button is clicked in the dialog.
 func _on_dialog_next() -> void:
-	if current_step and current_step.required_action == "click_continue":
-		action_completed("click_continue")
+	if current_step and (current_step.required_action == "click_continue" or completed_step_ids.has(current_step_id)):
+		advance_step()
 
 
 ## _on_dialog_skip()
@@ -660,7 +721,7 @@ func _on_dialog_skip() -> void:
 ##
 ## @param step: The TutorialStep resource being shown
 func _grant_step_items(step) -> void:
-	if not step:
+	if not step or (step.powerup_to_grant == "" and step.consumable_to_grant == ""):
 		return
 	
 	var game_controller = _get_game_controller()
