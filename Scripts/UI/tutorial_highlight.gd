@@ -27,6 +27,7 @@ var target_node: CanvasItem = null  # Can be Control or Node2D
 # Manual overrides
 var _manual_size: Vector2 = Vector2.ZERO
 var _manual_offset: Vector2 = Vector2.ZERO
+var _indicator_offset: Vector2 = Vector2.ZERO
 
 # Animation
 var _update_position: bool = false
@@ -96,7 +97,8 @@ func _build_ui() -> void:
 ## @param manual_size: Manual size override (Vector2.ZERO for auto)
 ## @param manual_offset: Manual position offset
 ## @param show_backdrop: Whether to show the dimming backdrop
-func show_highlight(target: CanvasItem, show_indicator: bool = false, manual_size: Vector2 = Vector2.ZERO, manual_offset: Vector2 = Vector2.ZERO, show_backdrop: bool = true) -> void:
+## @param indicator_offset: Additional offset for only the click indicator
+func show_highlight(target: CanvasItem, show_indicator: bool = false, manual_size: Vector2 = Vector2.ZERO, manual_offset: Vector2 = Vector2.ZERO, show_backdrop: bool = true, indicator_offset: Vector2 = Vector2.ZERO) -> void:
 	if not target or not is_instance_valid(target):
 		push_error("[TutorialHighlight] Invalid target node")
 		hide_highlight()
@@ -105,6 +107,7 @@ func show_highlight(target: CanvasItem, show_indicator: bool = false, manual_siz
 	target_node = target
 	_manual_size = manual_size
 	_manual_offset = manual_offset
+	_indicator_offset = indicator_offset
 	_update_position = true
 	
 	# Show components
@@ -200,7 +203,7 @@ func _update_highlight_position() -> void:
 		click_indicator.position = Vector2(
 			highlight_rect.position.x + (highlight_rect.size.x - indicator_width) / 2,
 			highlight_rect.position.y - click_indicator.size.y - 10
-		)
+		) + _indicator_offset
 	
 	# Update backdrop shader/mask to create cutout effect
 	# For simplicity, we use a semi-transparent backdrop without cutout

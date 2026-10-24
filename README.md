@@ -1264,7 +1264,10 @@ An interactive, action-gated tutorial system that teaches new players the game m
 - `id`, `title`, `message`, `mom_expression`, and `next_step_id` define the linked lesson chain.
 - `required_action` and optional `action_payload` validate committed gameplay events.
 - `highlight_node_path` targets stable UI; `semantic_target` resolves dynamic UI through the gameplay director.
+- `highlight_size` / `highlight_offset` adjust the box; `indicator_offset` independently moves the CLICK HERE label.
 - `dialog_position="hidden"` keeps Mom and chore modals unobstructed.
+
+**Reordering or adding steps:** `next_step_id` controls the sequence; filename prefixes are organizational only. Keep each `id` stable, update the preceding resource's `next_step_id`, and point the moved resource to its new successor. The chain must start at `intro`, end with one empty `next_step_id`, and include every resource exactly once without cycles. Dynamic targets such as `shop_tab:coupons`, `shop_tab:mods`, and `shop_tab:colors` use `required_action="shop_tab_changed"` with `action_payload={"tab_index": N}`. Run `Tests/TutorialTest.tscn` to validate reachability after editing.
 
 **Implementation Files:**
 - `Scripts/Core/tutorial_step.gd` - Step resource schema

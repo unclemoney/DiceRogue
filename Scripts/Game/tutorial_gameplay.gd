@@ -7,6 +7,7 @@ var _game: Node
 var _shop: Node
 var _chores: Node
 var _connected := false
+var _tab_targets: Dictionary = {}
 
 
 func _ready() -> void:
@@ -21,7 +22,7 @@ func _process(_delta: float) -> void:
 		return
 	var target := resolve_target(target_id)
 	if target and target != _manager._tutorial_highlight.target_node:
-		_manager._tutorial_highlight.show_highlight(target, _manager.current_step.show_click_indicator, Vector2.ZERO, Vector2.ZERO, _manager.current_step.show_backdrop)
+		_manager._tutorial_highlight.show_highlight(target, _manager.current_step.show_click_indicator, _manager.current_step.highlight_size, _manager.current_step.highlight_offset, _manager.current_step.show_backdrop, _manager.current_step.indicator_offset)
 
 
 func begin_session() -> void:
@@ -47,6 +48,7 @@ func _connect_events() -> void:
 		_shop.item_purchased.connect(_on_item_purchased)
 		_shop.shop_button_opened.connect(func(): _complete("click_shop"))
 		_shop.shop_close_finished.connect(func(): _complete("close_shop"))
+		_shop.tab_container.tab_changed.connect(_on_shop_tab_changed)
 	if _chores:
 		_chores.task_selected.connect(_on_task_selected)
 		_chores.task_completed.connect(_on_task_completed)
@@ -137,6 +139,11 @@ func resolve_target(target_id: String) -> CanvasItem:
 		return _find_shop_item(target_id.trim_prefix("shop_item:"))
 	if target_id == "shop:close":
 		return _shop.close_button if _shop else null
+	if target_id.begins_with("shop_tab:"):
+		var tab_name := target_id.trim_prefix("shop_tab:")
+		var tab_indices := {"pogs": 0, "coupons": 1, "mods": 2, "colors": 3}
+		if tab_indices.has(tab_name):
+			return _resolve_shop_tab(tab_indices[tab_name])
 	if target_id == "chore_option:easy":
 		if _game._chore_selection_popup:
 			return _game._chore_selection_popup.find_child("EasyCard", true, false)
@@ -153,6 +160,21 @@ func resolve_target(target_id: String) -> CanvasItem:
 			return icon.use_button
 		return _game.consumable_ui.get_consumable_spine(coupon_id)
 	return null
+
+
+func _resolve_shop_tab(tab_index: int) -> Control:
+	if not _tab_targets.has(tab_index) or not is_instance_valid(_tab_targets[tab_index]):
+		var target := Control.new()
+		target.name = "TutorialTabTarget%d" % tab_index
+		target.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_shop.add_child(target)
+		_tab_targets[tab_index] = target
+	var tab_bar: TabBar = _shop.tab_container.get_tab_bar()
+	var tab_rect := tab_bar.get_tab_rect(tab_index)
+	var target: Control = _tab_targets[tab_index]
+	target.global_position = tab_bar.global_position + tab_rect.position
+	target.size = tab_rect.size
+	return target
 
 
 func _find_shop_item(item_id: String) -> CanvasItem:
@@ -174,6 +196,10 @@ func _find_item_recursive(node: Node, item_id: String) -> CanvasItem:
 func _complete(action: String, payload: Dictionary = {}) -> void:
 	if _manager:
 		_manager.action_completed(action, payload)
+
+
+func _on_shop_tab_changed(tab_index: int) -> void:
+	_complete("shop_tab_changed", {"tab_index": tab_index})
 
 
 func _on_item_purchased(item_id: String, item_type: String) -> void:

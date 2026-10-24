@@ -47,8 +47,8 @@
 ## SYS:Gameplay — Core Gameplay & Balance
 
 - [ ] `P2-Minor` Refactor Magic Mitt PowerUp to affect the REP meter.
-- [ ] `P2-Minor` Most mods are just not attractive enough, we need to balance them more.
-- [ ] `P2-Minor` Remove the ability to use consumables unless in the main game loop.
+- [X] `P2-Minor` Most mods are just not attractive enough, we need to balance them more.
+- [X] `P2-Minor` Remove the ability to use consumables unless in the main game loop.
 
 ## Bugs
 
@@ -63,11 +63,12 @@
 
 ## SYS:UI — UI / UX & Animation
 
-- [ ] `P1-Major` Update Tutorial for new UI.
+- [X] `P1-Major` Update Tutorial for new UI.
 - [ ] `P2-Minor` Update Challenge Icons.
 - [ ] `P2-Minor` Update game over screen.
 - [ ] `P2-Minor` Tooltips on Mall Map not showing up.
 - [ ] `P2-Minor` Mall Map tooltip not showing next up challenges.
+- [ ] `P2-Minor` Update tutorial order and click positions
 
 ## SYS:Save — Save, Load & State Management
 

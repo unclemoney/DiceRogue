@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "mods_tab"
+title = "Open the Mod Shelf"
+message = "Click the [color=#FFD952]MODS[/color] tab. Mods attach to your dice and persist across rounds."
+mom_expression = "neutral"
+semantic_target = "shop_tab:mods"
+action_payload = {"tab_index": 2}
+show_click_indicator = true
+required_action = "shop_tab_changed"
+next_step_id = "challenges_intro"
+category = "mods"
+dialog_position = "bottom"
+show_backdrop = false

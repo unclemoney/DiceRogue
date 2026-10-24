@@ -49,7 +49,7 @@ class_name TutorialStep
 ## "purchase_item", "close_shop", "click_continue"
 @export_enum("none", "click_roll", "click_shop", "click_next_turn",
 	"click_next_round", "click_scorecard", "lock_die", "use_consumable",
-	"purchase_item", "close_shop", "select_chore", "complete_chore", "mom_response", "click_continue") var required_action: String = "click_continue"
+	"purchase_item", "close_shop", "select_chore", "complete_chore", "mom_response", "shop_tab_changed", "click_continue") var required_action: String = "click_continue"
 
 ## Signal to listen for to mark step complete (alternative to required_action).
 ## Format: "object_path:signal_name" e.g., "GameButtonUI:dice_rolled"
@@ -87,6 +87,9 @@ class_name TutorialStep
 ## Applied to the highlight position for fine-tuning alignment.
 ## Useful when the highlight needs to be slightly adjusted from the node's position.
 @export var highlight_offset: Vector2 = Vector2.ZERO
+
+## Additional offset for only the "CLICK HERE" label, independent of the box.
+@export var indicator_offset: Vector2 = Vector2.ZERO
 
 ## Whether to show the semi-transparent backdrop that dims the screen.
 ## Set to false for steps where you want the full scene visible without dimming.

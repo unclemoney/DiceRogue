@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "coupons_tab"
+title = "Open the Coupon Shelf"
+message = "Click the [color=#FFD952]COUPONS[/color] tab. Coupons are single-use items with their own timing rules and four inventory slots."
+mom_expression = "happy"
+semantic_target = "shop_tab:coupons"
+action_payload = {"tab_index": 1}
+show_click_indicator = true
+required_action = "shop_tab_changed"
+next_step_id = "consumables_intro"
+category = "coupons"
+dialog_position = "bottom"
+show_backdrop = false

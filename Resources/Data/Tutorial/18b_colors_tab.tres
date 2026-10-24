@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "colors_tab"
+title = "Open the Color Shelf"
+message = "Click the [color=#FFD952]COLORS[/color] tab. Buying a color lets it appear on rolled dice; it does not add another die."
+mom_expression = "happy"
+semantic_target = "shop_tab:colors"
+action_payload = {"tab_index": 3}
+show_click_indicator = true
+required_action = "shop_tab_changed"
+next_step_id = "debuffs_intro"
+category = "colors"
+dialog_position = "bottom"
+show_backdrop = false

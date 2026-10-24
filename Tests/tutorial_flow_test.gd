@@ -74,9 +74,12 @@ func _run() -> void:
 	await get_tree().create_timer(0.8).timeout
 	_check("Shop opens on POG purchase", TutorialManager.current_step_id == "buy_pog")
 	await _buy("step_by_step", "powerups_intro", 0)
-	await _next_to("consumables_intro")
-	await _buy("quick_cash", "challenges_intro", 1)
-	await _buy("painted_die", "debuffs_intro", 2)
+	await _next_to("coupons_tab")
+	await _tab_to(1, "consumables_intro")
+	await _buy("quick_cash", "mods_tab", 1)
+	await _tab_to(2, "challenges_intro")
+	await _buy("painted_die", "colors_tab", 2)
+	await _tab_to(3, "debuffs_intro")
 	await _buy("green_dice", "chores_intro", 3)
 	_game.shop_ui._on_close_button_pressed()
 	await get_tree().create_timer(0.8).timeout
@@ -155,6 +158,15 @@ func _roll_to(step_id: String) -> void:
 		await get_tree().create_timer(0.1).timeout
 	roll_ui._on_roll_button_pressed()
 	await _wait_for_step(step_id)
+
+
+func _tab_to(tab_index: int, next_id: String) -> void:
+	var tab_name := "coupons" if tab_index == 1 else "mods" if tab_index == 2 else "colors"
+	var target = TutorialManager._gameplay.resolve_target("shop_tab:" + tab_name)
+	_check("Semantic tab target exists: " + tab_name, target != null and target.size.x > 0.0)
+	_game.shop_ui.tab_container.current_tab = tab_index
+	await get_tree().create_timer(0.4).timeout
+	_check("Tab selection advances: " + tab_name, TutorialManager.current_step_id == next_id)
 
 
 func _buy(item_id: String, next_id: String, tab: int) -> void:

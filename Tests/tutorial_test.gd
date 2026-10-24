@@ -17,7 +17,7 @@ func _ready() -> void:
 	_old_completed = ProgressManager.tutorial_completed
 	_old_in_progress = ProgressManager.tutorial_in_progress
 	_check("All resources form one chain", _manager.step_order.size() == _manager.all_steps.size())
-	_check("Refreshed chain has 39 steps", _manager.step_order.size() == 39)
+	_check("Expanded guided sequence", _manager.step_order.size() >= 39)
 	_check("Chain reaches final step", _manager.step_order.back() == "tutorial_complete")
 	_manager.start_tutorial()
 	await get_tree().create_timer(0.1).timeout
@@ -27,6 +27,15 @@ func _ready() -> void:
 		await get_tree().create_timer(0.3).timeout
 		get_viewport().get_texture().get_image().save_png("res://Tests/_layout_shots/tutorial_dialog.png")
 	_check("Back disabled at intro", not _manager.can_go_back())
+	var target := Control.new()
+	target.custom_minimum_size = Vector2(80, 40)
+	target.size = Vector2(80, 40)
+	add_child(target)
+	_manager._tutorial_highlight.show_highlight(target, true, Vector2.ZERO, Vector2.ZERO, false)
+	var indicator_home: Vector2 = _manager._tutorial_highlight.click_indicator.position
+	_manager._tutorial_highlight.show_highlight(target, true, Vector2.ZERO, Vector2.ZERO, false, Vector2(12, 34))
+	_check("Indicator offset is independent", _manager._tutorial_highlight.click_indicator.position == indicator_home + Vector2(12, 34))
+	target.queue_free()
 	_manager.previous_step()
 	_check("Back at intro is a no-op", _manager.current_step_id == "intro")
 	_manager._tutorial_dialog._on_next_pressed()

@@ -524,7 +524,7 @@ func _show_step(step_id: String) -> void:
 	elif current_step.highlight_node_path != "" and game_root:
 		highlight_target = game_root.get_node_or_null(current_step.highlight_node_path)
 	if highlight_target and _tutorial_highlight:
-		_tutorial_highlight.show_highlight(highlight_target, current_step.show_click_indicator, current_step.highlight_size, current_step.highlight_offset, current_step.show_backdrop)
+		_tutorial_highlight.show_highlight(highlight_target, current_step.show_click_indicator, current_step.highlight_size, current_step.highlight_offset, current_step.show_backdrop, current_step.indicator_offset)
 	elif _tutorial_highlight:
 		_tutorial_highlight.set_backdrop_visible(current_step.show_backdrop)
 	if current_step.completion_signal != "":
