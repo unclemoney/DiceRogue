@@ -649,6 +649,11 @@ func get_checkin_max() -> int:
 func _check_checkin_trigger() -> void:
 	if _checkin_done_this_round:
 		return
+	if is_tutorial_gating_mom_visit("checkin_roll"):
+		# Tutorial: consume this round's organic check-in. The scripted
+		# check-in step re-arms it in prepare_step.
+		_checkin_done_this_round = true
+		return
 	if _checkin_roll_target < 0:
 		return
 	if _rolls_this_round < _checkin_roll_target:
@@ -658,6 +663,19 @@ func _check_checkin_trigger() -> void:
 	_checkin_done_this_round = true
 	print("[ChoresManager] Mom check-in triggered at roll %d" % _rolls_this_round)
 	mom_checkin.emit()
+
+
+## is_tutorial_gating_mom_visit(allowed_step_id)
+##
+## During the interactive tutorial, Mom visits may only fire on their
+## scripted steps (meter visit on "punishment_roll", random check-in on
+## "checkin_roll"). Any other time the trigger is swallowed so an
+## unscripted visit can't block the lesson chain.
+func is_tutorial_gating_mom_visit(allowed_step_id: String) -> bool:
+	var tutorial_manager = get_node_or_null("/root/TutorialManager")
+	return tutorial_manager != null \
+		and tutorial_manager.is_tutorial_active() \
+		and tutorial_manager.current_step_id != allowed_step_id
 
 
 ## add_grudge(amount)
@@ -725,7 +743,14 @@ func register_low_mood_visit() -> void:
 func _trigger_mom() -> void:
 	if is_mom_active:
 		return
-	
+
+	if is_tutorial_gating_mom_visit("punishment_roll"):
+		# Tutorial: hold the meter just below the cap until the scripted
+		# punishment visit; an organic meter visit would block the lesson chain.
+		current_progress = maxi(get_scaled_max_progress() - 1, 0)
+		progress_changed.emit(current_progress)
+		return
+
 	is_mom_active = true
 	print("[ChoresManager] Mom triggered! Progress at 100!")
 	

@@ -1,9 +1,9 @@
 [gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3 uid="uid://ckne11fm5t1sg"]
 
-[ext_resource type="Script" uid="uid://bmgqgbtghhtk1" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+[ext_resource type="Script" uid="uid://bmgqgbtghhtk1" path="res://Scripts/Core/tutorial_step.gd" id="1_5d005"]
 
 [resource]
-script = ExtResource("1")
+script = ExtResource("1_5d005")
 id = "yahtzee_basics_2"
 part = 1
 total_parts = 1
@@ -23,6 +23,7 @@ category = "basics"
 dialog_position = "bottom"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
+indicator_offset = Vector2(0, 0)
 show_backdrop = false
 powerup_to_grant = ""
 consumable_to_grant = ""

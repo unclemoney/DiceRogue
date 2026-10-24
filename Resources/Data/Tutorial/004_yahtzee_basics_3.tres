@@ -9,7 +9,7 @@ title = "The Scorecard"
 message = "Your scorecard has [color=#FFD952]13 categories[/color]: Ones through Sixes above, and combinations below. Each category scores once per round.\n\nThe current objective is the store's target score, not a separate challenge."
 mom_expression = "neutral"
 highlight_node_path = "GameUI/MarginContainer/MainVBox/MiddleSection/RightColumn/ScorecardContainer/ScoreCardUI"
-next_step_id = "start_first_round"
+next_step_id = "shop_overview"
 category = "basics"
 dialog_position = "left"
 show_backdrop = false

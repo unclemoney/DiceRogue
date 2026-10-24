@@ -8,7 +8,7 @@ id = "start_first_round"
 part = 1
 total_parts = 1
 title = "Start Your First Round"
-message = "Click [color=#FFD952]NEXT ROUND[/color], then use the round panel's [color=#FFD952]Let's Play[/color] button. The store deals your dice and makes the opening roll."
+message = "Click [color=#FFD952]NEXT ROUND[/color], then use the round panel's [color=#FFD952]Let's Play[/color] button. "
 mom_expression = "happy"
 highlight_node_path = "GameUI/MarginContainer/MainVBox/MiddleSection/LeftColumn/GameButtonContainer/ContentVBox/GameButtonUI/HBoxContainer/RightButtonArea/NextRoundButton"
 semantic_target = ""
@@ -23,7 +23,7 @@ category = "game_loop"
 dialog_position = "right"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
-indicator_offset = Vector2(0, 0)
+indicator_offset = Vector2(0, 200)
 show_backdrop = false
 powerup_to_grant = ""
 consumable_to_grant = ""

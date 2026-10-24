@@ -40,7 +40,22 @@ func _run() -> void:
 	if not _game:
 		_finish()
 		return
-	await _next_to("start_first_round")
+	await _next_to("shop_overview")
+	_check("Shop button enabled for kiosk lesson", not _game.game_button_ui.shop_button.disabled)
+	_game.game_button_ui._on_shop_button_pressed()
+	await get_tree().create_timer(0.8).timeout
+	_check("Shop opens on POG purchase", TutorialManager.current_step_id == "buy_pog")
+	await _buy("step_by_step", "powerups_intro", 0)
+	await _next_to("coupons_tab")
+	await _tab_to(1, "consumables_intro")
+	await _buy("quick_cash", "mods_tab", 1)
+	await _tab_to(2, "challenges_intro")
+	await _buy("painted_die", "colors_tab", 2)
+	await _tab_to(3, "debuffs_intro")
+	await _buy("green_dice", "chores_intro", 3)
+	_game.shop_ui._on_close_button_pressed()
+	await get_tree().create_timer(0.8).timeout
+	_check("Shop close reaches next round lesson", TutorialManager.current_step_id == "start_first_round")
 	_game.game_button_ui._on_next_round_button_pressed()
 	await get_tree().create_timer(0.6).timeout
 	_check("Round panel opens", _game._new_round_panel != null)
@@ -56,34 +71,7 @@ func _run() -> void:
 		return
 	_game._chore_selection_popup._on_task_selected(false)
 	await get_tree().create_timer(0.7).timeout
-	_check("Chore selection advances", TutorialManager.current_step_id == "roll_button")
-	await _roll_to("lock_dice")
-	_game.dice_hand.dice_list[0].toggle_lock()
-	await get_tree().create_timer(0.4).timeout
-	_check("Real lock advances", TutorialManager.current_step_id == "roll_again")
-	await _roll_to("scorecard_intro")
-	await _next_to("score_action")
-	_game.score_card_ui._on_row_pressed("ones")
-	await get_tree().create_timer(0.7).timeout
-	_check("Real scoring advances", TutorialManager.current_step_id == "next_turn_button")
-	_game.game_button_ui._on_next_turn_button_pressed()
-	await get_tree().create_timer(0.7).timeout
-	_check("Next turn reaches shop lesson", TutorialManager.current_step_id == "shop_overview")
-	_check("Shop button enabled for kiosk lesson", not _game.game_button_ui.shop_button.disabled)
-	_game.game_button_ui._on_shop_button_pressed()
-	await get_tree().create_timer(0.8).timeout
-	_check("Shop opens on POG purchase", TutorialManager.current_step_id == "buy_pog")
-	await _buy("step_by_step", "powerups_intro", 0)
-	await _next_to("coupons_tab")
-	await _tab_to(1, "consumables_intro")
-	await _buy("quick_cash", "mods_tab", 1)
-	await _tab_to(2, "challenges_intro")
-	await _buy("painted_die", "colors_tab", 2)
-	await _tab_to(3, "debuffs_intro")
-	await _buy("green_dice", "chores_intro", 3)
-	_game.shop_ui._on_close_button_pressed()
-	await get_tree().create_timer(0.8).timeout
-	_check("Shop close reaches coupon use", TutorialManager.current_step_id == "chores_mood")
+	_check("Chore selection advances", TutorialManager.current_step_id == "chores_mood")
 	_game.consumable_ui._on_spine_clicked("quick_cash")
 	await get_tree().create_timer(0.7).timeout
 	_game.consumable_ui._on_consumable_used("quick_cash")
@@ -94,17 +82,20 @@ func _run() -> void:
 		_game._chore_selection_popup._on_task_selected(false)
 	await get_tree().create_timer(0.7).timeout
 	_check("Replacement chore advances", TutorialManager.current_step_id == "chore_results")
-	await _next_to("synergy_rainbow")
-	await _roll_to("next_round_button")
-	await _next_to("checkin_roll")
-	await _roll_to("mom_checkin_response")
-	await get_tree().create_timer(0.6).timeout
-	_check("Check-in creates Mom dialog", _game._mom_dialog != null and _game._mom_dialog.visible)
-	_game._mom_dialog._on_response_pressed(0)
-	await get_tree().create_timer(0.8).timeout
-	if _game._mom_dialog.visible:
-		_game._mom_dialog._on_close_pressed()
-	await _wait_for_step("mom_buff_results")
+	await _next_to("roll_button")
+	await _roll_to("lock_dice")
+	_game.dice_hand.dice_list[0].toggle_lock()
+	await get_tree().create_timer(0.4).timeout
+	_check("Real lock advances", TutorialManager.current_step_id == "roll_again")
+	await _roll_to("synergy_rainbow")
+	await _roll_to("scorecard_intro")
+	await _next_to("score_action")
+	_game.score_card_ui._on_row_pressed("ones")
+	await get_tree().create_timer(0.7).timeout
+	_check("Real scoring advances", TutorialManager.current_step_id == "next_turn_button")
+	_game.game_button_ui._on_next_turn_button_pressed()
+	await get_tree().create_timer(0.7).timeout
+	_check("Next turn reaches Goof-Off Meter lesson", TutorialManager.current_step_id == "goof_off_meter")
 	await _next_to("punishment_roll")
 	await _roll_to("mom_punishment_response")
 	await get_tree().create_timer(0.6).timeout
@@ -114,6 +105,16 @@ func _run() -> void:
 		_game._mom_dialog._on_close_pressed()
 	await _wait_for_step("punishment_results")
 	_check("Punishment was meter visit", TutorialManager.last_mom_summary.get("is_meter_visit", false))
+	await _next_to("checkin_roll")
+	await _roll_to("mom_checkin_response")
+	await get_tree().create_timer(0.6).timeout
+	_check("Check-in creates Mom dialog", _game._mom_dialog != null and _game._mom_dialog.visible)
+	_game._mom_dialog._on_response_pressed(0)
+	await get_tree().create_timer(0.8).timeout
+	if _game._mom_dialog.visible:
+		_game._mom_dialog._on_close_pressed()
+	await _wait_for_step("mom_buff_results")
+	await _next_to("next_round_button")
 	await _next_to("tutorial_complete")
 	TutorialManager._tutorial_dialog._on_next_pressed()
 	TutorialManager._on_dialog_next()

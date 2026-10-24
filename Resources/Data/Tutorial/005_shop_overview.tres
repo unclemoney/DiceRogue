@@ -1,13 +1,13 @@
 [gd_resource type="Resource" script_class="TutorialStep" load_steps=2 format=3 uid="uid://45n8l53ybbu6"]
 
-[ext_resource type="Script" uid="uid://bmgqgbtghhtk1" path="res://Scripts/Core/tutorial_step.gd" id="1"]
+[ext_resource type="Script" uid="uid://bmgqgbtghhtk1" path="res://Scripts/Core/tutorial_step.gd" id="1_3v1jo"]
 
 [resource]
-script = ExtResource("1")
+script = ExtResource("1_3v1jo")
 id = "shop_overview"
 part = 1
 total_parts = 1
-title = "Visit the Kiosk"
+title = "Visit the Shop"
 message = "Click [color=#FFD952]SHOP[/color]. The kiosk sells POGS, Coupons, Mods, Colors, and VIP Cards.
 
 The SHOP is generally only open between rounds."
@@ -25,6 +25,7 @@ category = "shop"
 dialog_position = "right"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
+indicator_offset = Vector2(0, 0)
 show_backdrop = false
 powerup_to_grant = ""
 consumable_to_grant = ""
