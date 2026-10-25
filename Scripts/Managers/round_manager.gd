@@ -368,6 +368,9 @@ func calculate_score_above_target_bonus(final_score: int, target_score: int) -> 
 ##
 ## Returns the target score for the current round.
 func get_current_challenge_target_score() -> int:
+	var tutorial_manager = get_node_or_null("/root/TutorialManager")
+	if tutorial_manager and tutorial_manager.is_tutorial_active():
+		return 6666
 	if current_round >= 0 and current_round < rounds_data.size():
 		return rounds_data[current_round].get("target_score", 0)
 	return 0

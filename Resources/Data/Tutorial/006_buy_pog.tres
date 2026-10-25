@@ -26,6 +26,7 @@ category = "pogs"
 dialog_position = "bottom"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
+indicator_offset = Vector2(0, 0)
 show_backdrop = false
 powerup_to_grant = ""
 consumable_to_grant = ""

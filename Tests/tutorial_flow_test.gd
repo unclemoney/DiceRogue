@@ -78,17 +78,22 @@ func _run() -> void:
 	await get_tree().create_timer(0.8).timeout
 	_check("Real Coupon use advances", TutorialManager.current_step_id == "synergy_intro")
 	_check("Coupon completes Use Item chore", _game.chores_manager.tasks_completed >= 1)
+	_check("Replacement removes easy option", _game.chores_manager.get_pending_tasks().easy == null)
+	_check("Replacement is Yahtzee of Ones", _game.chores_manager.get_pending_tasks().hard.id == "yahtzee_ones")
 	if _game._chore_selection_popup:
 		_game._chore_selection_popup._on_task_selected(false)
+		_check("Easy replacement is rejected", TutorialManager.current_step_id == "synergy_intro")
+		_game._chore_selection_popup._on_task_selected(true)
 	await get_tree().create_timer(0.7).timeout
 	_check("Replacement chore advances", TutorialManager.current_step_id == "chore_results")
+	_check("Hard replacement becomes active", _game.chores_manager.current_task.id == "yahtzee_ones")
 	await _next_to("roll_button")
 	await _roll_to("lock_dice")
 	_game.dice_hand.dice_list[0].toggle_lock()
 	await get_tree().create_timer(0.4).timeout
 	_check("Real lock advances", TutorialManager.current_step_id == "roll_again")
 	await _roll_to("synergy_rainbow")
-	await _roll_to("scorecard_intro")
+	await _roll_to("yahtzee_basics_3")
 	await _next_to("score_action")
 	_game.score_card_ui._on_row_pressed("ones")
 	await get_tree().create_timer(0.7).timeout

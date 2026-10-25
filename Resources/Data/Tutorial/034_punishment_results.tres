@@ -12,7 +12,7 @@ message = "Punishments can take restricted POGS, apply a debuff, or fine you. Th
 
 Temporary debuffs and color locks clear at round end. Confiscated items, though, do not. If a fine is unaffordable, I'll substitutes a debuff."
 mom_expression = "upset"
-highlight_node_path = "GameUI/MarginContainer/MainVBox/MiddleSection/LeftColumn/DebuffContainer/ContentVBox/DebuffUI"
+highlight_node_path = ""
 semantic_target = ""
 action_payload = {}
 show_click_indicator = false
@@ -22,9 +22,10 @@ next_step_id = "rep_intro"
 pause_game = false
 delay_before = 0.0
 category = "mom"
-dialog_position = "right"
+dialog_position = "center"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
+indicator_offset = Vector2(0, 0)
 show_backdrop = false
 powerup_to_grant = ""
 consumable_to_grant = ""

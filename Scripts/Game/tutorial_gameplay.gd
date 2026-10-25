@@ -107,6 +107,9 @@ func prepare_step(step) -> void:
 			_chores._checkin_done_this_round = true
 		"mom_punishment_response":
 			_set_punishment_choices()
+		"synergy_intro":
+			_chores._pending_easy_task = null
+			_chores._pending_hard_task = ChoreTasksLibraryScript.get_task_by_id("yahtzee_ones", 6)
 
 
 func _set_punishment_choices() -> void:
@@ -147,6 +150,9 @@ func resolve_target(target_id: String) -> CanvasItem:
 	if target_id == "chore_option:easy":
 		if _game._chore_selection_popup:
 			return _game._chore_selection_popup.find_child("EasyCard", true, false)
+	if target_id == "chore_option:hard":
+		if _game._chore_selection_popup:
+			return _game._chore_selection_popup.find_child("HardCard", true, false)
 	if target_id.begins_with("mom_response:"):
 		if _game._mom_dialog:
 			var index := target_id.trim_prefix("mom_response:").to_int()

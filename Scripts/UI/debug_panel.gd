@@ -246,6 +246,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Evens Only: All Dice", "method": "_debug_apply_even_only_all_dice"},
 			{"text": "Show Active Mods", "method": "_debug_mod_show_active"},
 			{"text": "Show High Roller State", "method": "_debug_mod_show_high_roller_state"},
+			{"text": "Trigger Only 1s (1% Effect)", "method": "_debug_trigger_only_ones"},
 			{"text": "Show Mod/Dice Count", "method": "_debug_show_mod_dice_count"},
 		],
 		"Score Card Upgrades": [
@@ -1406,6 +1407,24 @@ func _debug_apply_mod_to_all_dice(mod_id: String) -> void:
 			die.add_mod(mod_def)
 			applied += 1
 	log_debug("Applied mod '%s' to %d dice" % [mod_id, applied])
+
+
+## _debug_trigger_only_ones()
+##
+## Triggers the equipped Only 1s effect directly, bypassing its probability roll.
+func _debug_trigger_only_ones() -> void:
+	_refresh_game_controller_reference()
+	if not game_controller or not game_controller.dice_hand:
+		log_debug("ERROR: DiceHand not available")
+		return
+	for i in range(game_controller.dice_hand.dice_list.size()):
+		var die = game_controller.dice_hand.dice_list[i]
+		var mod = die.get_mod("only_ones")
+		if mod and mod.has_method("_on_trigger"):
+			mod._on_trigger()
+			log_debug("Triggered Only 1s effect on die #%d" % [i + 1])
+			return
+	log_debug("ERROR: Only 1s is not applied to any die")
 
 
 func _debug_mod_show_active() -> void:

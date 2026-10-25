@@ -10,12 +10,12 @@ total_parts = 1
 title = "A Random Check-In"
 message = "I'll be checking in every once in awhile, and be good, if I catch you with contraband, I'll be sure to confiscate it..
 
-Roll the dice again, and I'll check in on you."
+Roll the dice again, and I'll check in on you again."
 mom_expression = "neutral"
-highlight_node_path = "GameUI/MarginContainer/MainVBox/MiddleSection/CenterColumn/RollButtonContainer/RollButtonUI"
+highlight_node_path = ""
 semantic_target = ""
 action_payload = {}
-show_click_indicator = true
+show_click_indicator = false
 required_action = "click_roll"
 completion_signal = ""
 next_step_id = "mom_checkin_response"
@@ -25,6 +25,7 @@ category = "mom"
 dialog_position = "top"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
+indicator_offset = Vector2(0, 0)
 show_backdrop = false
 powerup_to_grant = ""
 consumable_to_grant = ""

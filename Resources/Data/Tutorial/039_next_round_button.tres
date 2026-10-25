@@ -12,7 +12,7 @@ message = "POG synergies are separate from dice colors. Every complete set of [c
 
 More restricted ratings also bring more pressure to do your chores."
 mom_expression = "happy"
-highlight_node_path = "GameUI/MarginContainer/MainVBox/UpperSection/PowerUpContainer/ContentVBox/PowerUpUI"
+highlight_node_path = ""
 semantic_target = ""
 action_payload = {}
 show_click_indicator = false
@@ -25,6 +25,7 @@ category = "pogs"
 dialog_position = "bottom"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
+indicator_offset = Vector2(0, 0)
 show_backdrop = false
 powerup_to_grant = ""
 consumable_to_grant = ""

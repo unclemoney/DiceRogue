@@ -8,9 +8,11 @@ id = "punishment_roll"
 part = 1
 total_parts = 1
 title = "Fill the Meter"
-message = "Because if you do... there will be punishments.  Just you see."
+message = "Because if you do... there will be punishments.  Just you see.
+
+Go ahead and Roll the dice again and find out."
 mom_expression = "upset"
-highlight_node_path = "GameUI/MarginContainer/MainVBox/MiddleSection/CenterColumn/RollButtonContainer/RollButtonUI"
+highlight_node_path = ""
 semantic_target = ""
 action_payload = {}
 show_click_indicator = true
@@ -23,6 +25,7 @@ category = "mom"
 dialog_position = "top"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
+indicator_offset = Vector2(0, 0)
 show_backdrop = false
 powerup_to_grant = ""
 consumable_to_grant = ""

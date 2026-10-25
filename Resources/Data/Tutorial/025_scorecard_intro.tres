@@ -12,7 +12,7 @@ message = "Open rows preview what your current hand would score. Upper rows add 
 
 A used row cannot be scored again this round."
 mom_expression = "neutral"
-highlight_node_path = "GameUI/MarginContainer/MainVBox/MiddleSection/RightColumn/ScorecardContainer/ScoreCardUI"
+highlight_node_path = ""
 semantic_target = ""
 action_payload = {}
 show_click_indicator = false
@@ -25,6 +25,7 @@ category = "scoring"
 dialog_position = "left"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
+indicator_offset = Vector2(0, 0)
 show_backdrop = false
 powerup_to_grant = ""
 consumable_to_grant = ""

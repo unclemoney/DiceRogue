@@ -8,9 +8,7 @@ id = "mom_buff_results"
 part = 1
 total_parts = 1
 title = "Teacher's Pet or Rebellion"
-message = "Responses have weighted outcomes. Choose any response. In this safe example, polite or neutral can earn Teacher's Pet; successful sass earns Rebellion and REP.
-
-The different buffs rely on your respnonse, my mood, and a bit of luck:
+message = "Responses might have different outcomes: 
 
 [color=#88FF88]Teacher's Pet[/color] can be a powerfull buff adding points, multipliers or money.
 
@@ -29,6 +27,7 @@ category = "mom"
 dialog_position = "bottom"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
+indicator_offset = Vector2(0, 0)
 show_backdrop = true
 powerup_to_grant = ""
 consumable_to_grant = ""

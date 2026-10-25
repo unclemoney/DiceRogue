@@ -8,7 +8,9 @@ id = "tutorial_complete"
 part = 1
 total_parts = 1
 title = "You're Ready!"
-message = "You rolled, scored, shopped, used a Coupon, finished a chore.  Now, let's cover some advanced things."
+message = "You rolled, scored, shopped; you've got the basics covered.  I think you might be ready to head out on your own.
+
+There are other suprises for you to discover on the way.  Have fun, and behave."
 mom_expression = "happy"
 highlight_node_path = ""
 semantic_target = ""
@@ -23,6 +25,7 @@ category = "basics"
 dialog_position = "center"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
+indicator_offset = Vector2(0, 0)
 show_backdrop = true
 powerup_to_grant = ""
 consumable_to_grant = ""

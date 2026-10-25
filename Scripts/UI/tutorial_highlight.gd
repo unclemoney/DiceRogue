@@ -119,12 +119,13 @@ func show_highlight(target: CanvasItem, show_indicator: bool = false, manual_siz
 	
 	if show_indicator:
 		click_indicator.show()
-		_start_bounce_animation()
 	else:
 		click_indicator.hide()
 	
 	# Update position immediately
 	_update_highlight_position()
+	if show_indicator:
+		_start_bounce_animation()
 	
 	# Start pulse animation
 	_start_pulse_animation()

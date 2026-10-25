@@ -12,19 +12,20 @@ message = "Roll once more and inspect the dice. The Painted Die mod adds a rando
 
 Five dice of one color double that color's effect. Five or more distinct colors boost Green, Red, Purple, and Blue effects by 50 percent."
 mom_expression = "happy"
-highlight_node_path = "GameUI/MarginContainer/MainVBox/MiddleSection/CenterColumn/DiceAreaContainer"
+highlight_node_path = ""
 semantic_target = ""
 action_payload = {}
 show_click_indicator = true
 required_action = "click_roll"
 completion_signal = ""
-next_step_id = "scorecard_intro"
+next_step_id = "yahtzee_basics_3"
 pause_game = false
 delay_before = 0.0
 category = "colors"
 dialog_position = "top"
 highlight_size = Vector2(0, 0)
 highlight_offset = Vector2(0, 0)
+indicator_offset = Vector2(0, 0)
 show_backdrop = false
 powerup_to_grant = ""
 consumable_to_grant = ""

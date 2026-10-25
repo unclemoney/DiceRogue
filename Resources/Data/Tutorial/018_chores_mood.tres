@@ -8,7 +8,7 @@ id = "chores_mood"
 part = 1
 total_parts = 1
 title = "Redeem Quick Cash"
-message = "Click the Quick Cash spine in the Coupon list, then press [color=#FFD952]USE COUPON[/color] on its card. Coupons require an active turn and each has its own timing rules.
+message = "Click the Quick Cash icon in the Coupon list, then press [color=#FFD952]USE COUPON[/color] on its card. Coupons require an active turn and each has its own timing rules.
 
 This use also completes your Use Item chore."
 mom_expression = "happy"
@@ -25,8 +25,9 @@ pause_game = false
 delay_before = 0.5
 category = "coupons"
 dialog_position = "top"
-highlight_size = Vector2(0, 0)
+highlight_size = Vector2(160, 20)
 highlight_offset = Vector2(0, 0)
+indicator_offset = Vector2(0, 0)
 show_backdrop = false
 powerup_to_grant = ""
 consumable_to_grant = ""

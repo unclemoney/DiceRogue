@@ -491,6 +491,14 @@ func _input(event: InputEvent) -> void:
 
 # ===== PRIVATE METHODS =====
 
+func _limit_mom_checkin_choices() -> void:
+	var game_controller = _get_game_controller()
+	if not game_controller or not game_controller._mom_dialog:
+		return
+	for index in range(game_controller._mom_dialog.response_buttons.size()):
+		game_controller._mom_dialog.response_buttons[index].disabled = index != 0
+
+
 ## _show_step(step_id)
 ##
 ## Shows a specific tutorial step.
@@ -511,6 +519,8 @@ func _show_step(step_id: String) -> void:
 		granted_step_ids[step_id] = true
 	if _gameplay and _gameplay.has_method("prepare_step"):
 		_gameplay.prepare_step(current_step)
+	if current_step.id == "mom_checkin_response":
+		_limit_mom_checkin_choices()
 	if current_step.delay_before > 0:
 		await get_tree().create_timer(current_step.delay_before).timeout
 		if generation != _navigation_generation or not is_active or current_step_id != step_id:
