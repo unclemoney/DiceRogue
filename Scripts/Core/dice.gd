@@ -84,6 +84,9 @@ signal die_locked(die: Dice)
 @onready var color_hover_label: Label = $ColorLabelBg/ColorHoverLabel
 @onready var _tfx := get_node("/root/TweenFXHelper")
 const ModIconScene := preload("res://Scenes/Mods/ModIcon.tscn")
+const ModSelectionOutlineScript := preload("res://Scripts/Core/mod_selection_outline.gd")
+const MOD_ICON_OUTLINE_SIZE := Vector2(28.0, 28.0)
+const MOD_OUTLINE_PADDING := 3.0
 
 var _is_hovering := false
 
@@ -284,6 +287,14 @@ func is_lock_toggle_disabled() -> bool:
 
 func animate_roll():
 	_stop_idle_breathing()
+	if _entry_tween and _entry_tween.is_valid():
+		_entry_tween.kill()
+	if _exit_tween and _exit_tween.is_valid():
+		_exit_tween.kill()
+	position = home_position
+	scale = Vector2.ONE
+	modulate = Color.WHITE
+	rotation_degrees = 0.0
 	if TweenFX.is_playing(self, TweenFX.Animations.UPGRADE):
 		scale = Vector2.ONE
 		modulate = Color.WHITE
@@ -719,11 +730,71 @@ func _configure_mod_container() -> void:
 	mod_container.clip_contents = false
 	mod_container.mouse_filter = Control.MOUSE_FILTER_PASS
 
+	var outline = mod_container.get_node_or_null("ModSelectionOutline")
+	if outline == null:
+		outline = ModSelectionOutlineScript.new()
+		outline.name = "ModSelectionOutline"
+		mod_container.add_child(outline)
+	_update_mod_outline()
+
+
+func _update_mod_outline() -> void:
+	var outline = mod_container.get_node_or_null("ModSelectionOutline")
+	if outline == null:
+		return
+
+	var icon: ModIcon = null
+	for child in mod_container.get_children():
+		if child is ModIcon and not child.is_queued_for_deletion():
+			icon = child
+			break
+	if icon == null:
+		outline.visible = false
+		return
+
+	var bounds := _get_die_bounds_size()
+	var icon_rect_size: Vector2 = icon.size if icon.size != Vector2.ZERO else icon.icon_size
+	var icon_visual_center := icon.position + icon_rect_size * 0.5
+	var icon_visual_top_left := icon_visual_center - MOD_ICON_OUTLINE_SIZE * 0.5
+	var icon_left := icon_visual_top_left.x - MOD_OUTLINE_PADDING
+	var icon_top := icon_visual_top_left.y - MOD_OUTLINE_PADDING
+	var icon_right := icon_visual_top_left.x + MOD_ICON_OUTLINE_SIZE.x + MOD_OUTLINE_PADDING
+	var icon_bottom := icon_visual_top_left.y + MOD_ICON_OUTLINE_SIZE.y + MOD_OUTLINE_PADDING
+	var die_left := -MOD_OUTLINE_PADDING
+	var die_top := -MOD_OUTLINE_PADDING
+	var die_right := bounds.x + MOD_OUTLINE_PADDING
+	var die_bottom := bounds.y + MOD_OUTLINE_PADDING
+
+	outline.set_outline_points(PackedVector2Array([
+		Vector2(icon_left, icon_top),
+		Vector2(icon_right, icon_top),
+		Vector2(icon_right, die_top),
+		Vector2(die_right, die_top),
+		Vector2(die_right, die_bottom),
+		Vector2(die_left, die_bottom),
+		Vector2(die_left, icon_bottom),
+		Vector2(icon_left, icon_bottom),
+		Vector2(icon_left, icon_top),
+	]))
+	outline.visible = true
+
+
+func reset_mods_for_roll() -> void:
+	for mod in active_mods.values():
+		if not is_instance_valid(mod):
+			continue
+		if mod.has_method("reset_for_roll"):
+			mod.reset_for_roll()
+		else:
+			mod.remove()
+			mod.apply(self)
+
+
 ## add_mod(mod_data: ModData)
 ##
 ## Instantiates the mod, applies it to this die, and adds a ModIcon to the
-## ModContainer. The icon straddles the bottom-right die corner (roughly half
-## of it hangs outside the die bounds) so the rolled number stays visible.
+## ModContainer. The icon straddles the top-left die corner so the rolled
+## number and the row below stay visible.
 ## Multiple mod icons stack by shifting each subsequent icon up and left.
 func add_mod(mod_data: ModData) -> void:
 	if active_mods.has(mod_data.id) or _disabled_mods.has(mod_data.id):
@@ -759,17 +830,15 @@ func add_mod(mod_data: ModData) -> void:
 	_configure_mod_container()
 	mod_container.add_child(icon)
 	
-	# Straddle the bottom-right die corner: roughly half the icon hangs outside
-	# the die bounds so the rolled number stays visible (overlap ~25% of icon area)
-	var container_size := mod_container.size if mod_container.size != Vector2.ZERO else _get_die_bounds_size()
+	# Straddle the top-left die corner while retaining the full click target.
 	var icon_rect_size: Vector2 = icon.size if icon.size != Vector2.ZERO else icon.icon_size
-	# Stack multiple mod icons by shifting each subsequent one up and left
 	var icon_index := 0
 	for child in mod_container.get_children():
 		if child is ModIcon and child != icon:
 			icon_index += 1
 	var stack_offset := Vector2(12.0, 12.0) * float(icon_index)
-	icon.position = container_size - icon_rect_size * 0.5 - stack_offset
+	icon.position = -icon_rect_size * 0.5 - stack_offset
+	_update_mod_outline()
 
 	if _mods_disabled_by_debuff:
 		icon.set_disabled_visual(true)
@@ -791,17 +860,21 @@ func add_mod(mod_data: ModData) -> void:
 		audio_mgr.play_powerup_apply_sound()
 
 func remove_mod(id: String) -> void:
-	if active_mods.has(id):
-		var mod = active_mods[id]
-		mod.remove()
-		mod.queue_free()
-		active_mods.erase(id)
-		
-		# Remove associated icon
-		for icon in mod_container.get_children():
-			if icon is ModIcon and icon.data.id == id:
-				icon.queue_free()
-				break
+	var mod = active_mods.get(id, _disabled_mods.get(id))
+	if mod == null:
+		return
+
+	mod.remove()
+	mod.queue_free()
+	active_mods.erase(id)
+	_disabled_mods.erase(id)
+
+	for icon in mod_container.get_children():
+		if icon is ModIcon and icon.data.id == id:
+			icon.queue_free()
+			break
+
+	_update_mod_outline()
 
 func has_mod(id: String) -> bool:
 	return active_mods.has(id)

@@ -1814,6 +1814,8 @@ func _create_tab_content_layout(item_type: String, item_container: HBoxContainer
 		ownership_panel.size_flags_stretch_ratio = 1.0
 		ownership_panel.custom_minimum_size = Vector2(246, 0)
 		content_row.add_child(ownership_panel)
+		if item_type == "mod" and not ownership_panel.mod_sell_requested.is_connected(_on_inventory_mod_sell_requested):
+			ownership_panel.mod_sell_requested.connect(_on_inventory_mod_sell_requested)
 		_ownership_panels[item_type] = ownership_panel
 
 		var right_content := CenterContainer.new()
@@ -1875,14 +1877,74 @@ func _build_mod_ownership_rows() -> Array:
 		var mod_def = mod_manager.get_def(item_id)
 		var item = progress_manager.get_unlockable_item(item_id)
 		var display_name = mod_def.display_name if mod_def else (item.display_name if item else item_id)
+		var sell_price := 0
+		if mod_def:
+			sell_price = mod_def.sell_price if mod_def.sell_price >= 0 else int(mod_def.price / 2.0)
 		rows.append({
 			"item_id": item_id,
 			"display_name": display_name,
 			"count": int(mod_counts.get(item_id, 0)),
+			"sell_price": sell_price,
 		})
 
 	_sort_ownership_rows(rows)
 	return rows
+
+
+func _on_inventory_mod_sell_requested(mod_id: String, source_button: Control) -> void:
+	var game_controller = _find_game_controller()
+	if not game_controller or int(game_controller.mod_persistence_map.get(mod_id, 0)) <= 0:
+		return
+
+	var burst_position := get_global_rect().get_center()
+	if is_instance_valid(source_button):
+		burst_position = source_button.get_global_rect().get_center()
+
+	var sold_die: Dice = null
+	if game_controller.dice_hand:
+		for die in game_controller.dice_hand.dice_list:
+			if is_instance_valid(die) and (die.has_mod(mod_id) or die._disabled_mods.has(mod_id)):
+				sold_die = die
+				break
+
+	if sold_die:
+		game_controller._on_mod_sold(mod_id, sold_die)
+	else:
+		var mod_def: ModData = mod_manager.get_def(mod_id)
+		if mod_def:
+			var refund := mod_def.sell_price if mod_def.sell_price >= 0 else int(mod_def.price / 2.0)
+			PlayerEconomy.add_money(refund)
+		game_controller.remove_mod_no_refund(mod_id)
+		game_controller.pending_mods.erase(mod_id)
+
+	_spawn_mod_sale_burst(burst_position)
+	_refresh_ownership_panel("mod")
+	GameSaveManager.update_settled_snapshot()
+
+
+func _spawn_mod_sale_burst(burst_global_position: Vector2) -> void:
+	var particles := GPUParticles2D.new()
+	particles.name = "ModSaleBurst"
+	particles.amount = 14
+	particles.lifetime = 0.45
+	particles.one_shot = true
+	particles.explosiveness = 1.0
+	particles.z_index = RenderLayers.Z_MODAL_CONTENT
+
+	var process_material := ParticleProcessMaterial.new()
+	process_material.spread = 180.0
+	process_material.initial_velocity_min = 35.0
+	process_material.initial_velocity_max = 85.0
+	process_material.gravity = Vector3(0.0, 80.0, 0.0)
+	process_material.scale_min = 2.0
+	process_material.scale_max = 4.0
+	process_material.color = Color(1.0, 0.55, 0.85, 1.0)
+	particles.process_material = process_material
+
+	get_tree().current_scene.add_child(particles)
+	particles.global_position = burst_global_position
+	particles.emitting = true
+	particles.finished.connect(particles.queue_free)
 
 
 func _build_colored_dice_ownership_rows() -> Array:

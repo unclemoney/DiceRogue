@@ -328,8 +328,11 @@ func calculate_score_for_category(category: String, values: Array[int]) -> int:
 		push_error("[ScoreEvaluator] Excessive evaluations (", _evaluation_count, ") - possible infinite loop in category: ", category)
 		return 0
 	
-	# First evaluate with wildcards to get all possible scores
-	var all_scores = evaluate_with_wildcards(values)
+	# Keep the hand as rolled, then let legal wildcard substitutions improve it.
+	var all_scores = evaluate_normal(values)
+	var wildcard_scores = evaluate_with_wildcards(values)
+	for wildcard_category in wildcard_scores:
+		all_scores[wildcard_category] = maxi(all_scores.get(wildcard_category, 0), wildcard_scores[wildcard_category])
 	var score = all_scores.get(category, 0)
 	return score
 
@@ -553,6 +556,10 @@ func is_yahtzee(values: Array[int]) -> bool:
 		print("[ScoreEvaluator] Not enough valid dice for yahtzee after filtering:", filtered_values.size())
 		return false
 	
+	# The hand as rolled can qualify before any wildcard substitution.
+	if get_n_of_a_kind(filtered_values, 5) > 0:
+		return true
+
 	# Count wildcards separately
 	var wildcard_count := 0
 	var value_counts := {}

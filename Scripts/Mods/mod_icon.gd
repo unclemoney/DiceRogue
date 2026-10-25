@@ -3,6 +3,7 @@ class_name ModIcon
 
 const DISABLED_MOD_SHADER := preload("res://Scripts/Shaders/disabled_powerup_overlay.gdshader")
 const TOOLTIP_SCENE := preload("res://Scenes/UI/tooltip.tscn")
+const GLASS_BUTTON_FACTORY := preload("res://Scripts/UI/glass_button_factory.gd")
 
 signal mod_sell_requested(mod_id: String)
 
@@ -11,7 +12,7 @@ signal mod_sell_requested(mod_id: String)
 @export var icon_size := Vector2(50, 60)  # Add size control (expanded for sell button)
 
 @onready var modicon: Sprite2D = $Sprite2D
-@onready var sell_button: Button
+@onready var sell_button
 
 var _tooltip: Tooltip
 
@@ -27,18 +28,20 @@ func _ready() -> void:
 
 	_default_modicon_material = modicon.material
 	
-	# Create sell button and add it to scene root to bypass UI layer blocking
-	sell_button = Button.new()
+	# Create the current-standard sell button at scene root to bypass UI blocking.
+	sell_button = GLASS_BUTTON_FACTORY.create_button(
+		"SELL",
+		Vector2(44, 20),
+		GLASS_BUTTON_FACTORY.palette_kiosk_sell(),
+		8
+	)
+	sell_button.set_uniform_padding(2, 2)
 	sell_button.name = "SellButton_" + str(get_instance_id())
-	sell_button.text = "SELL"
-	sell_button.visible = false  # Hidden by default
-	sell_button.z_index = RenderLayers.Z_MOD_SELL  # Mod sell tier; stays below the debug band
+	sell_button.visible = false
+	sell_button.z_index = RenderLayers.Z_MOD_SELL
 	sell_button.size = Vector2(44, 20)
 	sell_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	sell_button.clip_contents = false
-	
-	# Apply button styling directly
-	_apply_action_button_style(sell_button)
 	
 	# Connect the signal with debugging
 	if not sell_button.pressed.is_connected(_on_sell_button_pressed):
@@ -61,9 +64,7 @@ func _ready() -> void:
 		# Set up the Sprite2D
 		modicon.texture = data.icon
 		modicon.scale = Vector2(28, 28) / data.icon.get_size()  # Keep icon at 28x28
-		# Anchor the sprite to the bottom-right of the icon rect so it hangs
-		# off the die corner instead of covering the rolled number
-		modicon.position = icon_size - Vector2(14, 14)
+		modicon.position = icon_size * 0.5
 		
 		# Clear the TextureRect texture since we're using Sprite2D
 		texture = null
@@ -217,73 +218,3 @@ func check_outside_click(event_position: Vector2) -> bool:
 		return true
 	
 	return false
-
-## _apply_action_button_style(button)
-## Applies the action button styling directly to a button
-func _apply_action_button_style(button: Button) -> void:
-	# Load VCR font
-	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as FontFile
-	if vcr_font:
-		button.add_theme_font_override("font", vcr_font)
-		button.add_theme_font_size_override("font_size", 12)
-		button.add_theme_color_override("font_color", Color(1, 0.98, 0.9, 1))
-		button.add_theme_color_override("font_hover_color", Color(1, 1, 0.95, 1))
-		button.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 1))
-		button.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
-		button.add_theme_constant_override("outline_size", 1)
-	
-	# Create style boxes for different states
-	var style_normal = StyleBoxFlat.new()
-	style_normal.bg_color = Color(0.15, 0.12, 0.2, 0.95)
-	style_normal.border_width_left = 3
-	style_normal.border_width_top = 3
-	style_normal.border_width_right = 3
-	style_normal.border_width_bottom = 3
-	style_normal.border_color = Color(1, 0.8, 0.2, 1)
-	style_normal.corner_radius_top_left = 4
-	style_normal.corner_radius_top_right = 4
-	style_normal.corner_radius_bottom_right = 4
-	style_normal.corner_radius_bottom_left = 4
-	style_normal.content_margin_left = 8.0
-	style_normal.content_margin_top = 6.0
-	style_normal.content_margin_right = 8.0
-	style_normal.content_margin_bottom = 6.0
-	
-	var style_hover = StyleBoxFlat.new()
-	style_hover.bg_color = Color(0.2, 0.18, 0.25, 0.98)
-	style_hover.border_width_left = 3
-	style_hover.border_width_top = 3
-	style_hover.border_width_right = 3
-	style_hover.border_width_bottom = 3
-	style_hover.border_color = Color(1, 0.9, 0.3, 1)
-	style_hover.corner_radius_top_left = 4
-	style_hover.corner_radius_top_right = 4
-	style_hover.corner_radius_bottom_right = 4
-	style_hover.corner_radius_bottom_left = 4
-	style_hover.content_margin_left = 8.0
-	style_hover.content_margin_top = 6.0
-	style_hover.content_margin_right = 8.0
-	style_hover.content_margin_bottom = 6.0
-	
-	var style_pressed = StyleBoxFlat.new()
-	style_pressed.bg_color = Color(0.25, 0.22, 0.3, 1)
-	style_pressed.border_width_left = 3
-	style_pressed.border_width_top = 3
-	style_pressed.border_width_right = 3
-	style_pressed.border_width_bottom = 3
-	style_pressed.border_color = Color(1, 1, 0.4, 1)
-	style_pressed.corner_radius_top_left = 4
-	style_pressed.corner_radius_top_right = 4
-	style_pressed.corner_radius_bottom_right = 4
-	style_pressed.corner_radius_bottom_left = 4
-	style_pressed.content_margin_left = 8.0
-	style_pressed.content_margin_top = 6.0
-	style_pressed.content_margin_right = 8.0
-	style_pressed.content_margin_bottom = 6.0
-	
-	# Apply styles to button
-	button.add_theme_stylebox_override("normal", style_normal)
-	button.add_theme_stylebox_override("hover", style_hover)
-	button.add_theme_stylebox_override("pressed", style_pressed)
-	
-	print("[ModIcon] Direct button styling applied")

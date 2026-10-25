@@ -20,27 +20,51 @@ func _ready() -> void:
 
 ## apply(dice_target)
 ##
-## Picks a random non-NONE color via GameRNG and forces it onto the die.
+## Picks from progression-unlocked colors and forces one onto the die. If none
+## are unlocked, the mod remains attached without changing the die's color.
 func apply(dice_target) -> void:
 	var dice = dice_target as Dice
 	if dice:
 		if _debug_enabled:
 			print("[PaintedDieMod] Applied to die:", dice.name)
 		_attached_die = dice
-		target = dice_target  # Store in base class target variable
+		target = dice_target
 
-		painted_color = GameRNG.random_choice(DiceColor.get_all_colors())
-		dice.force_color(painted_color)
+		if painted_color == DiceColor.Type.NONE:
+			var unlocked_colors = _get_unlocked_paint_colors()
+			if not unlocked_colors.is_empty():
+				painted_color = GameRNG.random_choice(unlocked_colors)
+		if painted_color != DiceColor.Type.NONE:
+			dice.force_color(painted_color)
 		if _debug_enabled:
 			print("[PaintedDieMod] Painted die:", DiceColor.get_color_name(painted_color))
 
-		# Dice.roll() re-assigns a random color each roll; re-assert ours after
 		if not _attached_die.rolled.is_connected(_on_die_rolled):
 			_attached_die.rolled.connect(_on_die_rolled)
 
 		emit_signal("mod_applied")
 	else:
 		push_error("[PaintedDieMod] Invalid target passed to apply()")
+
+
+func _get_unlocked_paint_colors(progress_manager_override: Node = null) -> Array[DiceColor.Type]:
+	var unlocked_colors: Array[DiceColor.Type] = []
+	var progress_manager := progress_manager_override
+	if progress_manager == null:
+		progress_manager = get_node_or_null("/root/ProgressManager")
+	if progress_manager == null:
+		return unlocked_colors
+
+	for color_type in DiceColor.get_all_colors():
+		var unlock_id := DiceColor.get_color_name(color_type).to_lower() + "_dice"
+		if progress_manager.is_item_unlocked(unlock_id):
+			unlocked_colors.append(color_type)
+	return unlocked_colors
+
+
+func reset_for_roll() -> void:
+	if _attached_die and painted_color != DiceColor.Type.NONE:
+		_attached_die.force_color(painted_color)
 
 ## remove()
 ##

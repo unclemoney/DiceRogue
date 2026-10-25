@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cs8c0x5vki6pp"]
+
+[ext_resource type="Script" uid="uid://bgko6s782ulg" path="res://Tests/ModSystemRefactorTest.gd" id="1_test"]
+
+[node name="ModSystemRefactorTest" type="Node"]
+script = ExtResource("1_test")

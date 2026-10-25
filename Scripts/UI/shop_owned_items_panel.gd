@@ -4,6 +4,9 @@ class_name ShopOwnedItemsPanel
 const ACTION_THEME := preload("res://Resources/UI/action_button_theme_no_panel.tres")
 const VCR_FONT := preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 const BRICK_FONT := preload("res://Resources/Font/BRICK_SANS.ttf")
+const GLASS_BUTTON_FACTORY := preload("res://Scripts/UI/glass_button_factory.gd")
+
+signal mod_sell_requested(mod_id: String, source_button: Control)
 
 const DEFAULT_ACCENT := Color(0.93, 0.76, 0.24, 1.0)
 const DEFAULT_EMPTY_TEXT := "NO UNLOCKED STOCK"
@@ -173,7 +176,7 @@ func _build_row(row: Dictionary) -> Control:
 	var row_shell := PanelContainer.new()
 	row_shell.theme = ACTION_THEME
 	row_shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row_shell.custom_minimum_size = Vector2(0, 58 if String(row.get("detail", "")) != "" else 42)
+	row_shell.custom_minimum_size = Vector2(0, 64 if row.has("sell_price") else (58 if String(row.get("detail", "")) != "" else 42))
 
 	var count: int = max(0, int(row.get("count", 0)))
 	var muted: bool = count <= 0
@@ -224,6 +227,17 @@ func _build_row(row: Dictionary) -> Control:
 		count_label.add_theme_font_size_override("font_size", 14)
 	count_label.add_theme_color_override("font_color", _accent_color if not muted else Color(0.62, 0.66, 0.74, 0.78))
 	top_row.add_child(count_label)
+
+	if row.has("sell_price"):
+		var sell_button = GLASS_BUTTON_FACTORY.create_button(
+			"SELL $%d" % int(row.get("sell_price", 0)),
+			Vector2(88, 36),
+			GLASS_BUTTON_FACTORY.palette_kiosk_sell(),
+			11
+		)
+		sell_button.disabled = muted
+		sell_button.pressed.connect(func(): mod_sell_requested.emit(String(row.get("item_id", "")), sell_button))
+		top_row.add_child(sell_button)
 
 	var detail_text = String(row.get("detail", ""))
 	if detail_text != "":

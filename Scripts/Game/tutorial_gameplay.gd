@@ -203,6 +203,8 @@ func _on_shop_tab_changed(tab_index: int) -> void:
 
 
 func _on_item_purchased(item_id: String, item_type: String) -> void:
+	if item_id == "painted_die" and item_type == "mod" and _game.dice_hand.dice_list.is_empty():
+		_game.dice_hand.spawn_dice()
 	_complete("purchase_item", {"item_id": item_id, "item_type": item_type})
 
 

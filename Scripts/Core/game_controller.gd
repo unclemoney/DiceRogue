@@ -4283,6 +4283,9 @@ func _on_dice_spawned() -> void:
 		if not die.is_connected("mod_sell_requested", _on_mod_sold):
 			die.mod_sell_requested.connect(_on_mod_sold)
 
+	if game_button_ui and not game_button_ui.roll_pressed.is_connected(_reset_mods_for_roll):
+		game_button_ui.roll_pressed.connect(_reset_mods_for_roll)
+
 	if _debug_enabled:
 		print("[GameController] New dice spawned, checking for mods to apply")
 		print("[GameController] Mod persistence map:", mod_persistence_map)
@@ -4358,6 +4361,14 @@ func _on_dice_spawned() -> void:
 			print("[GameController] Couldn't apply mod", mod_id, ", adding to pending_mods")
 		if not pending_mods.has(mod_id):
 			pending_mods.append(mod_id)
+
+func _reset_mods_for_roll() -> void:
+	if not dice_hand:
+		return
+	for die in dice_hand.dice_list:
+		if is_instance_valid(die):
+			die.reset_mods_for_roll()
+
 
 ## _on_die_locked(die)
 ##
@@ -5537,11 +5548,19 @@ func _on_mod_sold(mod_id: String, dice: Dice) -> void:
 			print("[GameController] Refunding", refund, "coins for mod:", mod_id)
 		PlayerEconomy.add_money(refund)
 	
+	var sale_position := dice.global_position
+	for icon in dice.mod_container.get_children():
+		if icon is ModIcon and icon.data.id == mod_id:
+			sale_position = icon.get_global_rect().get_center()
+			break
+
 	# Remove the mod from the dice
 	dice.remove_mod(mod_id)
+	if shop_ui and shop_ui.has_method("_spawn_mod_sale_burst"):
+		shop_ui._spawn_mod_sale_burst(sale_position)
 	
 	# Remove from active mods
-	if active_mods.has(mod_id):
+	if active_mods.has(mod_id) and int(mod_persistence_map.get(mod_id, 0)) <= 1:
 		active_mods.erase(mod_id)
 	
 	# Decrease the persistence count or remove completely
@@ -5567,7 +5586,7 @@ func remove_mod_no_refund(mod_id: String) -> void:
 				die.remove_mod(mod_id)
 				break
 
-	if active_mods.has(mod_id):
+	if active_mods.has(mod_id) and int(mod_persistence_map.get(mod_id, 0)) <= 1:
 		active_mods.erase(mod_id)
 
 	if mod_persistence_map.has(mod_id):
