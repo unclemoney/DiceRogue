@@ -44,6 +44,7 @@ func spawn_mod(id: String, target: Node) -> Mod:
 		return null
 		
 	mod.id = id
+	mod.description = def.description
 	return mod
 
 func get_def(id: String) -> ModData:

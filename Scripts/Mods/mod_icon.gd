@@ -73,7 +73,7 @@ func _ready() -> void:
 		_tooltip = TOOLTIP_SCENE.instantiate()
 		_tooltip.name = "Tooltip"
 		add_child(_tooltip)
-		_tooltip.setup({"title": data.display_name})
+		_tooltip.setup({"title": data.display_name, "description": data.description})
 		
 		# Set control size to match icon
 		custom_minimum_size = icon_size

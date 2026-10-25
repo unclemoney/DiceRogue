@@ -26,8 +26,8 @@ func _on_roll_complete() -> void:
 		
 	print("[DisabledTwosDebuff] Checking for twos in roll")
 	for die in dice_hand.dice_list:
-		# Apply visual effect to twos
-		if die.value == 2:
+		# Safety 2's exempts only the die carrying the mod.
+		if die.value == 2 and not die.has_mod("safety_twos"):
 			print("[DisabledTwosDebuff] Found a two - applying visual effect")
 			_apply_disabled_visual(die)
 		else:

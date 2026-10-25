@@ -2,6 +2,7 @@ extends Node
 class_name Mod
 
 @export var id: String
+@export var description: String = ""
 var target: Node
 
 signal mod_applied

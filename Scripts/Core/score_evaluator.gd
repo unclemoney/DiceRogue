@@ -90,6 +90,18 @@ func evaluate_with_wildcards(dice_values: Array[int]) -> Dictionary:
 	return best_scores
 
 
+## is_disabled_value_for_die(value, die, debuff_id) -> bool
+##
+## Returns whether a value is disabled for one specific die.
+## Wildcard and Safety 2's dice retain their own 2s during disabled_twos.
+func is_disabled_value_for_die(value: int, die: Dice, debuff_id: String) -> bool:
+	if debuff_id != "disabled_twos" or value != 2:
+		return false
+	if not is_instance_valid(die):
+		return true
+	return not die.has_mod("wildcard") and not die.has_mod("safety_twos")
+
+
 func filter_disabled_values(values: Array[int]) -> Array[int]:
 	var filtered: Array[int] = []
 	
@@ -108,13 +120,10 @@ func filter_disabled_values(values: Array[int]) -> Array[int]:
 					break
 				parent = parent.get_parent()
 	
-	#print("[ScoreEvaluator] Game controller reference:", game_controller)
-	
 	# Check if the disabled_twos debuff is active
 	var disabled_twos_active = false
 	if game_controller != null:
 		disabled_twos_active = game_controller.is_debuff_active("disabled_twos")
-		#print("[ScoreEvaluator] Disabled twos active:", disabled_twos_active)
 	
 	# If we can't find game_controller, check if DiceResults has any dice showing 2s with a red shader
 	if game_controller == null:
@@ -129,20 +138,16 @@ func filter_disabled_values(values: Array[int]) -> Array[int]:
 	
 	for i in range(values.size()):
 		var value = values[i]
-		
-		# Skip value 2 if debuff is active
-		if disabled_twos_active and value == 2:
+		if disabled_twos_active:
 			var die = DiceResults.dice_refs[i] if i < DiceResults.dice_refs.size() else null
-			# Only include value 2 if it comes from a die with wildcard mod
-			if is_instance_valid(die) and die.has_mod("wildcard"):
-				filtered.append(value)
-				print("[ScoreEvaluator] Including wildcard value 2")
-			else:
+			if is_disabled_value_for_die(value, die, "disabled_twos"):
 				print("[ScoreEvaluator] Filtering out value 2")
-				# Don't add this value
 				continue
-		else:
-			filtered.append(value)
+			if value == 2 and is_instance_valid(die) and die.has_mod("safety_twos"):
+				print("[ScoreEvaluator] Including Safety 2's value 2")
+			elif value == 2 and is_instance_valid(die) and die.has_mod("wildcard"):
+				print("[ScoreEvaluator] Including wildcard value 2")
+		filtered.append(value)
 	
 	if disabled_twos_active:
 		print("[ScoreEvaluator] Original values:", values)
