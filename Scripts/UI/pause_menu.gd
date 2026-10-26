@@ -31,7 +31,7 @@ var _backdrop_fx_rect: ColorRect
 var _is_animating: bool = false
 
 # Scene reference
-const MAIN_MENU_SCENE := preload("res://Scenes/UI/MainMenu.tscn")
+const MAIN_MENU_SCENE_PATH := "res://Scenes/UI/MainMenu.tscn"
 const SETTINGS_MENU_SCENE := preload("res://Scenes/UI/SettingsMenu.tscn")
 
 const BACKDROP_SHADER_PATH := "res://Scripts/Shaders/panel_backdrop.gdshader"
@@ -382,7 +382,9 @@ func _return_to_main_menu() -> void:
 	get_tree().paused = false
 	
 	# Change to main menu scene with transition
-	await SceneTransitionManager.transition_to_scene_packed(MAIN_MENU_SCENE)
+	while SceneTransitionManager.is_transitioning():
+		await get_tree().process_frame
+	await SceneTransitionManager.transition_to_scene(MAIN_MENU_SCENE_PATH)
 
 
 

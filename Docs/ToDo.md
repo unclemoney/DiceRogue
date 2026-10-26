@@ -52,7 +52,7 @@
 
 ## Bugs
 
-- [ ] `P1-Major` Not returning to main menu from pause screen.
+- [X] `P1-Major` Not returning to main menu from pause screen.
 - [X] `P1-Major` Wild Dice mod not correctly applying to all dice, especially when calculating a Yahtzee, three of a kind or four of a kind. Or is it when multiple are applied?  Painted mod dissapears in tutorial.
 - [ ] `P1-Major` After using Dice Surge and it expired, the dice were displayed but not rolled. Same issue with the next round after completing Zone 1.  We need to make sure dice aren't displayed unless rolled.
 
@@ -69,7 +69,7 @@
 - [ ] `P2-Minor` Update game over screen.
 - [ ] `P2-Minor` Tooltips on Mall Map not showing up.
 - [ ] `P2-Minor` Mall Map tooltip not showing next up challenges.
-- [ ] `P2-Minor` Update tutorial order and click positions
+- [x] `P2-Minor` Update tutorial order and click positions
 
 ## SYS:Save — Save, Load & State Management
 
