@@ -66,7 +66,7 @@
 
 - [X] `P1-Major` Update Tutorial for new UI.
 - [ ] `P2-Minor` Update Challenge Icons.
-- [ ] `P2-Minor` Update game over screen.
+- [X] `P2-Minor` Update game over screen, use corrected UI, but also add a mom taunt that is unique.  I told you I was the champ.
 - [ ] `P2-Minor` Tooltips on Mall Map not showing up.
 - [ ] `P2-Minor` Mall Map tooltip not showing next up challenges.
 - [x] `P2-Minor` Update tutorial order and click positions

@@ -4096,134 +4096,32 @@ func _show_game_over_popup(final_score: int, target_score: int, challenge_comple
 		if audio_mgr_win and audio_mgr_win.has_method("play_victory_sound"):
 			audio_mgr_win.play_victory_sound()
 	
-	# Create dark overlay
-	var overlay = ColorRect.new()
-	overlay.name = "GameOverOverlay"
-	overlay.color = Color(0, 0, 0, 0.0)
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	overlay.z_index = RenderLayers.Z_MODAL_DIM
+	var game_over_panel := preload("res://Scripts/UI/game_over_panel.gd").new()
+	game_over_panel.name = "GameOverPanel"
+	add_child(game_over_panel)
+	_game_over_popup = game_over_panel
+	game_over_panel.new_game_pressed.connect(_on_new_game_pressed)
+	game_over_panel.continue_pressed.connect(_on_continue_after_game_over)
+	game_over_panel.quit_pressed.connect(_on_quit_game_pressed)
+	game_over_panel.show_game_over({
+		"final_score": final_score,
+		"target_score": target_score,
+		"challenge_completed": challenge_completed
+	})
 	
-	# Create popup panel
-	var popup = PanelContainer.new()
-	popup.name = "GameOverPopup"
-	popup.custom_minimum_size = Vector2(400, 300)
-	popup.set_anchors_preset(Control.PRESET_CENTER)
-	popup.z_index = RenderLayers.Z_MODAL_CONTENT
+
 	
-	# Style the popup
-	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.15, 0.12, 0.1, 0.98)
-	style.border_color = Color(0.8, 0.6, 0.2, 1.0) if challenge_completed else Color(0.6, 0.2, 0.2, 1.0)
-	style.set_border_width_all(4)
-	style.set_corner_radius_all(12)
-	style.set_content_margin_all(20)
-	style.shadow_color = Color(0, 0, 0, 0.6)
-	style.shadow_size = 8
-	popup.add_theme_stylebox_override("panel", style)
+
 	
-	# Create content container
-	var vbox = VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 15)
-	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+
 	
-	# Title label
-	var title_label = RichTextLabel.new()
-	title_label.bbcode_enabled = true
-	title_label.fit_content = true
-	title_label.scroll_active = false
-	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	if challenge_completed:
-		title_label.text = "[center][color=gold][shake rate=10 level=5]CHALLENGE COMPLETE![/shake][/color][/center]"
-	else:
-		title_label.text = "[center][color=red][wave amp=30 freq=3]GAME OVER[/wave][/color][/center]"
-	title_label.add_theme_font_size_override("normal_font_size", 32)
-	vbox.add_child(title_label)
+
 	
-	# Score display (will be animated)
-	var score_label = Label.new()
-	score_label.name = "FinalScoreLabel"
-	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	score_label.text = "Final Score: 0"
-	score_label.add_theme_font_size_override("font_size", 24)
-	score_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-	vbox.add_child(score_label)
+
 	
-	# Goal status
-	var goal_label = Label.new()
-	goal_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	if target_score > 0:
-		goal_label.text = "Goal: %d pts" % target_score
-		if challenge_completed:
-			goal_label.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4, 1))
-		else:
-			goal_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4, 1))
-	else:
-		goal_label.text = ""
-	goal_label.add_theme_font_size_override("font_size", 18)
-	vbox.add_child(goal_label)
+
 	
-	# Spacer
-	var spacer = Control.new()
-	spacer.custom_minimum_size = Vector2(0, 20)
-	vbox.add_child(spacer)
-	
-	# Button container
-	var button_container = HBoxContainer.new()
-	button_container.add_theme_constant_override("separation", 20)
-	button_container.alignment = BoxContainer.ALIGNMENT_CENTER
-	
-	# New Game button
-	var new_game_button = Button.new()
-	new_game_button.text = "New Game"
-	new_game_button.custom_minimum_size = Vector2(120, 40)
-	new_game_button.pressed.connect(_on_new_game_pressed)
-	button_container.add_child(new_game_button)
-	
-	# Continue button (only if challenge completed)
-	if challenge_completed:
-		var continue_button = Button.new()
-		continue_button.text = "Continue"
-		continue_button.custom_minimum_size = Vector2(120, 40)
-		continue_button.pressed.connect(_on_continue_after_game_over)
-		button_container.add_child(continue_button)
-	
-	# Quit button
-	var quit_button = Button.new()
-	quit_button.text = "Quit"
-	quit_button.custom_minimum_size = Vector2(120, 40)
-	quit_button.pressed.connect(_on_quit_game_pressed)
-	button_container.add_child(quit_button)
-	
-	vbox.add_child(button_container)
-	popup.add_child(vbox)
-	
-	# Add to tree
-	overlay.add_child(popup)
-	add_child(overlay)
-	_game_over_popup = overlay
-	
-	# Center popup after adding to tree
-	await get_tree().process_frame
-	var viewport_size = get_tree().root.get_viewport().get_visible_rect().size
-	popup.position = (viewport_size - popup.size) / 2.0
-	
-	# Slow fade in overlay
-	var fade_tween = create_tween()
-	fade_tween.tween_property(overlay, "color:a", 0.7, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	
-	# Animate popup in
-	popup.scale = Vector2(0.5, 0.5)
-	popup.modulate.a = 0
-	var tween = create_tween().set_parallel()
-	tween.tween_property(popup, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(popup, "modulate:a", 1.0, 0.2)
-	
-	# Juice: count up final score
-	await tween.finished
-	var count_tween = create_tween()
-	count_tween.tween_method(func(v: float):
-		score_label.text = "Final Score: %d" % int(v)
-	, 0.0, float(final_score), 1.0).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
 
 
 ## _on_new_game_pressed()
