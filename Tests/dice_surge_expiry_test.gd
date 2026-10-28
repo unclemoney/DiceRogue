@@ -305,9 +305,23 @@ func _run_layout_repro_test() -> bool:
 	await get_tree().process_frame
 	await _reset_and_spawn_layout_repro_hand()
 
+	var unrolled_hidden := true
+	for die in dice_hand.dice_list:
+		if die.visible:
+			unrolled_hidden = false
+	if not unrolled_hidden:
+		_log_message("[color=red]Unrolled spawn: default-face dice were visible[/color]")
+
 	dice_hand.roll_all()
 	await dice_hand.roll_complete
 	await get_tree().create_timer(0.45).timeout
+
+	var rolled_visible := true
+	for die in dice_hand.dice_list:
+		if not die.visible:
+			rolled_visible = false
+	if not rolled_visible:
+		_log_message("[color=red]Rolled hand: dice remained hidden[/color]")
 
 	var first_pass = await _add_surge_and_verify_layout(2, 3, 7, "After first Dice Surge")
 	var second_pass = await _add_surge_and_verify_layout(2, 3, 9, "After stacked Dice Surge")
@@ -316,7 +330,7 @@ func _run_layout_repro_test() -> bool:
 	await get_tree().create_timer(0.45).timeout
 	var expiry_pass = _verify_layout_state(5, "After forced expiry")
 
-	var passed = first_pass and second_pass and expiry_pass
+	var passed = unrolled_hidden and rolled_visible and first_pass and second_pass and expiry_pass
 	if passed:
 		_log_message("[color=green]✓ PASS: Mid-turn Dice Surge layout stayed stable[/color]")
 	else:

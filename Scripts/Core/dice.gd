@@ -347,6 +347,7 @@ func animate_roll():
 	_roll_tween.tween_callback(_start_idle_breathing)
 
 func update_visual():
+	visible = current_state != DiceState.ROLLABLE
 	if not dice_data:
 		push_error("[Dice] Cannot update visual - no DiceData assigned!")
 		return

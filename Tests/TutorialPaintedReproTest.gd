@@ -59,7 +59,7 @@ func _run() -> void:
 			visible_count += 1
 		if is_instance_valid(die) and die.has_mod("painted_die"):
 			mod_count += 1
-	_check(visible_count == 5, "every die remains visible after tutorial purchase")
+	_check(visible_count == 0, "unrolled dice stay hidden after tutorial purchase")
 	_check(mod_count == 1, "one painted mod remains attached after step advance")
 
 	TutorialManager.current_step = TutorialManager.all_steps.get("start_first_round")
@@ -72,6 +72,7 @@ func _run() -> void:
 		await get_tree().process_frame
 	for die in controller.dice_hand.dice_list:
 		print("[TutorialPaintedReproTest] post-roll ", die.name, " scale=", die.scale, " state=", die.get_state_name())
+		_check(die.visible, "die becomes visible after tutorial roll: " + String(die.name))
 		_check(die.scale.x > 0.5 and die.scale.y > 0.5, "die scale survives tutorial roll: " + String(die.name))
 
 	for die in controller.dice_hand.dice_list:
@@ -85,6 +86,23 @@ func _run() -> void:
 			controller._on_mod_sold("painted_die", die)
 			break
 	_check(is_instance_valid(find_child("ModSaleBurst", true, false)), "gameplay mod sale emits fanfare burst")
+
+	var no_carryovers: Array[String] = []
+	controller._proceed_to_next_channel_with_carryovers(no_carryovers)
+	roll_ui.roll_button.disabled = false
+	roll_ui._roll_in_progress = false
+	roll_ui._activate_round_start(1)
+	for i in range(3):
+		await get_tree().process_frame
+	_check(controller.channel_manager.current_channel == 2, "zone 2 transition starts")
+	_check(not controller.dice_hand.dice_list.is_empty(), "zone 2 dice hand spawned")
+	for die in controller.dice_hand.dice_list:
+		_check(not die.visible, "zone 2 unrolled die stays hidden: " + String(die.name))
+	for i in range(120):
+		await get_tree().process_frame
+	for die in controller.dice_hand.dice_list:
+		_check(die.visible, "zone 2 die appears after auto-roll: " + String(die.name))
+
 	_finish(game, old_session, old_active, old_progress)
 
 
