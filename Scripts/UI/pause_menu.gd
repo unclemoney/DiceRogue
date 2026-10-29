@@ -341,7 +341,7 @@ func _build_tutorial_warning_dialog() -> void:
 	tutorial_warning_dialog = ConfirmationDialog.new()
 	tutorial_warning_dialog.name = "TutorialWarningDialog"
 	tutorial_warning_dialog.title = "Leave Tutorial?"
-	tutorial_warning_dialog.dialog_text = "You're in the middle of the tutorial!\n\nIf you leave now, the tutorial will be marked as incomplete and will restart next time you play.\n\nAre you sure you want to leave?"
+	tutorial_warning_dialog.dialog_text = "You're in the middle of the tutorial!\n\nIf you leave now, the tutorial will be marked as incomplete. You can replay it any time from the main menu.\n\nAre you sure you want to leave?"
 	tutorial_warning_dialog.ok_button_text = "Leave Anyway"
 	tutorial_warning_dialog.cancel_button_text = "Continue Tutorial"
 	tutorial_warning_dialog.confirmed.connect(_on_tutorial_warning_confirmed)

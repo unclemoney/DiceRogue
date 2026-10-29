@@ -1,19 +1,15 @@
-[gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://dcw7vi0wy7xnr"]
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://dcw7vi0wy7xnr"]
 
-[ext_resource type="Texture2D" uid="uid://c0y4n53xm2pgx" path="res://Resources/Art/Powerups/grounded_pog_grid_5x5.png" id="1_lwg50"]
+[ext_resource type="Texture2D" uid="uid://dp1pebpmw8kgm" path="res://Resources/Art/POGS/MONEY_BAGS.png" id="1_lwg50"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" uid="uid://dcv7vi0wy7xnq" path="res://Scenes/PowerUp/MoneyBagsPowerUp.tscn" id="2_scene"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_goljt"]
-atlas = ExtResource("1_lwg50")
-region = Rect2(615, 599, 186, 188)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "money_bags"
 display_name = "Ca$h"
 description = "Score multiplier = ($Money / 100) + 1"
-icon = SubResource("AtlasTexture_goljt")
+icon = ExtResource("1_lwg50")
 scene = ExtResource("2_scene")
 price = 450
 rarity = "epic"

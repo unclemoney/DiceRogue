@@ -238,6 +238,11 @@ func skip_tutorial() -> void:
 	exit_tutorial()
 
 
+## exit_tutorial()
+##
+## Exits the tutorial without completing it. The tutorial stays marked
+## in-progress so should_auto_start() returns false and New Game does not
+## auto-start it again; the player can relaunch it from the main menu.
 func exit_tutorial() -> void:
 	_finish_session(false)
 
@@ -250,7 +255,9 @@ func _finish_session(completed: bool) -> void:
 	is_active = false
 	_is_transitioning = false
 	tutorial_completed_flag = completed
-	tutorial_in_progress_flag = false
+	# An incomplete exit keeps the in-progress marker so the profile is not
+	# mistaken for a fresh one (which would re-trigger tutorial auto-start).
+	tutorial_in_progress_flag = not completed
 	_cleanup_current_step()
 	_cleanup_ui()
 	current_step = null

@@ -1,19 +1,15 @@
-[gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://c7wgex0fr0g65"]
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://c7wgex0fr0g65"]
 
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_40cld"]
-[ext_resource type="Texture2D" uid="uid://c0y4n53xm2pgx" path="res://Resources/Art/Powerups/grounded_pog_grid_5x5.png" id="1_gl0oq"]
+[ext_resource type="Texture2D" uid="uid://cuhh7sdjfkto0" path="res://Resources/Art/POGS/UPPER_BONUS_MULT.png" id="1_gl0oq"]
 [ext_resource type="PackedScene" uid="uid://biouf8a6agekd" path="res://Scenes/PowerUp/UpperBonusMultPowerUp.tscn" id="2_awvan"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_awvan"]
-atlas = ExtResource("1_gl0oq")
-region = Rect2(615, 789, 188, 190)
 
 [resource]
 script = ExtResource("1_40cld")
 id = "upper_bonus_mult"
 display_name = "The Brick"
 description = "+1x for each Upper Section Bonus achieved."
-icon = SubResource("AtlasTexture_awvan")
+icon = ExtResource("1_gl0oq")
 scene = ExtResource("2_awvan")
 price = 225
 rarity = "rare"

@@ -47,7 +47,8 @@ func _run() -> void:
 	await get_tree().create_timer(2.0).timeout
 	_check("Exit reaches Main Menu", get_tree().current_scene.name == "MainMenu")
 	_check("Exit clears tutorial activity", not TutorialManager.is_active and not TutorialManager.is_tutorial_session_active)
-	_check("Exit leaves tutorial incomplete", not TutorialManager.tutorial_completed_flag and not TutorialManager.tutorial_in_progress_flag)
+	_check("Exit leaves tutorial incomplete", not TutorialManager.tutorial_completed_flag and TutorialManager.tutorial_in_progress_flag)
+	_check("Exit disables tutorial auto-start", not TutorialManager.should_auto_start())
 	_check("Exit does not create a run save", _had_run or not FileAccess.file_exists(_run_path))
 	if _had_run:
 		_check("Existing run save survives", FileAccess.get_file_as_bytes(_run_path) == _run_bytes)

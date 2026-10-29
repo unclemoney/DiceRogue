@@ -47,6 +47,7 @@
 ## SYS:Gameplay — Core Gameplay & Balance
 
 - [ ] `P2-Minor` Refactor Magic Mitt PowerUp to affect the REP meter.
+- [ ] 'P2-Minor' Extra Dice doesn't Roll immediately, but should.
 - [X] `P2-Minor` Most mods are just not attractive enough, we need to balance them more.
 - [X] `P2-Minor` Remove the ability to use consumables unless in the main game loop.
 
@@ -54,11 +55,11 @@
 
 - [X] `P1-Major` Not returning to main menu from pause screen.
 - [X] `P1-Major` Wild Dice mod not correctly applying to all dice, especially when calculating a Yahtzee, three of a kind or four of a kind. Or is it when multiple are applied?  Painted mod dissapears in tutorial.
-- [ ] `P1-Major` After using Dice Surge and it expired, the dice were displayed but not rolled. Same issue with the next round after completing Zone 1.  We need to make sure dice aren't displayed unless rolled.
+- [x] `P1-Major` After using Dice Surge and it expired, the dice were displayed but not rolled. Same issue with the next round after completing Zone 1.  We need to make sure dice aren't displayed unless rolled. ✅ 2026-10-28
 
 ## SYS:Chore — Chore System & Mom
 
-
+- [ ] 'P1-Major' If you exit the tutorial before finishing, and then try to start a new game it forces you to the tutorial.  It should start a new game.
 ## SYS:Shop — Shop & Economy
 
 
