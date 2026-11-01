@@ -36,7 +36,7 @@
 ### System
 - `SYS:Gameplay` — Scoring, dice, challenges, debuffs, buffs, synergies, mods.
 - `SYS:Chore` — Goof-off meter, mom, grounding, sass, chore progression.
-- `SYS:Shop` — Purchases, economy, coupons, pogs, consumables, powerups, colored dice.
+- [ ] `SYS:Shop` — Purchases, economy, coupons, pogs, consumables, powerups, colored dice.
 - `SYS:UI` — Panels, animations, tooltips, fonts, buttons, hover states, icons.
 - `SYS:Audio` — Music layers, sound effects, loops.
 - `SYS:Save` — New game, continue, profiles, resets, game over, cross-round state.
@@ -59,16 +59,17 @@
 
 ## SYS:Chore — Chore System & Mom
 
-- [ ] 'P1-Major' If you exit the tutorial before finishing, and then try to start a new game it forces you to the tutorial.  It should start a new game.
+- [x] 'P1-Major' If you exit the tutorial before finishing, and then try to start a new game it forces you to the tutorial.  It should start a new game. ✅ 2026-10-29
 ## SYS:Shop — Shop & Economy
 
+- [ ] `P2-Minor` Update POG shop item: tighten borders, keep them connected, add a paralaxx effect to the POG?  Add a test scene to determine. 
 
 ## SYS:UI — UI / UX & Animation
 
 - [X] `P1-Major` Update Tutorial for new UI.
 - [ ] `P2-Minor` Update Challenge Icons.
 - [X] `P2-Minor` Update game over screen, use corrected UI, but also add a mom taunt that is unique.  I told you I was the champ.
-- [ ] `P2-Minor` Tooltips on Mall Map not showing up.
+- [ ] `P2-Minor` Tooltips on Mall Map not showing up.  We'll update these to click instead of hover.
 - [ ] `P2-Minor` Mall Map tooltip not showing next up challenges.
 - [x] `P2-Minor` Update tutorial order and click positions
 
