@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://bdt6dfxs8yie5"
+path="res://.godot/imported/interp.glsl-49d2e7bf6bef99da6f68f21de0ae9dac.res"
+
+[deps]
+
+source_file="res://addons/foilsmith/depth/interp.glsl"
+dest_files=["res://.godot/imported/interp.glsl-49d2e7bf6bef99da6f68f21de0ae9dac.res"]
+
+[params]
+

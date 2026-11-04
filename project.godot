@@ -51,7 +51,7 @@ mouse_cursor/custom_image="uid://bout2l1c1wwv"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/TweenFX/plugin.cfg", "res://addons/gdai-mcp-plugin-godot/plugin.cfg", "res://addons/resource_viewer/plugin.cfg")
+enabled=PackedStringArray("res://addons/TweenFX/plugin.cfg", "res://addons/foilsmith/plugin.cfg", "res://addons/gdai-mcp-plugin-godot/plugin.cfg", "res://addons/resource_viewer/plugin.cfg")
 
 [file_customization]
 

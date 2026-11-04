@@ -1,0 +1,3 @@
+depth_anything_v2_small.bin: the weights of Depth Anything V2 Small (Apache-2.0),
+https://huggingface.co/depth-anything/Depth-Anything-V2-Small-hf, converted to float16 by
+tools/export_depth_model.py in https://github.com/Tryptophan/foilsmith.

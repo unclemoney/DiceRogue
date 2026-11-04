@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://bu5xkegjuai6x"
+path="res://.godot/imported/deconv.glsl-ba3d057d3db9d20f7d31a1a8c1643093.res"
+
+[deps]
+
+source_file="res://addons/foilsmith/depth/deconv.glsl"
+dest_files=["res://.godot/imported/deconv.glsl-ba3d057d3db9d20f7d31a1a8c1643093.res"]
+
+[params]
+

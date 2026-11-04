@@ -1,0 +1,11 @@
+{
+  "style": "full-art",
+  "width": 630,
+  "height": 880,
+  "pixel_art": false,
+  "pixel_scale": 1,
+  "native_size": [630, 880],
+  "hue_steps": 0,
+  "border_px": [0.0, 0.0, 0.0, 0.0],
+  "art_window": [0.0000, 0.0000, 1.0000, 1.0000]
+}

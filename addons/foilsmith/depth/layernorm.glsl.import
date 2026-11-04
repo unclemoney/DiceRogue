@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://bocx48y0i7yac"
+path="res://.godot/imported/layernorm.glsl-7189b48787df836fa0dd5d85e5fac0c2.res"
+
+[deps]
+
+source_file="res://addons/foilsmith/depth/layernorm.glsl"
+dest_files=["res://.godot/imported/layernorm.glsl-7189b48787df836fa0dd5d85e5fac0c2.res"]
+
+[params]
+

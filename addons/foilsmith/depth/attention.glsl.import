@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://dexxmrd7gwaaa"
+path="res://.godot/imported/attention.glsl-114700ca41743986e5d9d0d22cb8eb2d.res"
+
+[deps]
+
+source_file="res://addons/foilsmith/depth/attention.glsl"
+dest_files=["res://.godot/imported/attention.glsl-114700ca41743986e5d9d0d22cb8eb2d.res"]
+
+[params]
+

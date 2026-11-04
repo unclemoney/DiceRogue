@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://cm037537oq65c"
+path="res://.godot/imported/matmul.glsl-c3ee714612094d3e06562874eb7e33cd.res"
+
+[deps]
+
+source_file="res://addons/foilsmith/depth/matmul.glsl"
+dest_files=["res://.godot/imported/matmul.glsl-c3ee714612094d3e06562874eb7e33cd.res"]
+
+[params]
+

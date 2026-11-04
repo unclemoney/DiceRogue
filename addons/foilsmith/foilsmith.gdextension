@@ -1,0 +1,11 @@
+[configuration]
+
+entry_symbol = "gdext_rust_init"
+compatibility_minimum = 4.4
+reloadable = true
+
+[libraries]
+
+linux.x86_64 = "res://addons/foilsmith/bin/libfoilsmith_godot.linux.x86_64.so"
+windows.x86_64 = "res://addons/foilsmith/bin/foilsmith_godot.windows.x86_64.dll"
+macos = "res://addons/foilsmith/bin/libfoilsmith_godot.macos.universal.dylib"
