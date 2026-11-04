@@ -14,6 +14,7 @@ id = "evens_no_odds"
 display_name = "Louis T. Evens"
 description = "Even dice add +1, odd dice add -1 to all scores"
 icon = SubResource("AtlasTexture_30fkh")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/evens_no_odds.json"
 scene = ExtResource("2_awvan")
 price = 50
 rarity = "common"

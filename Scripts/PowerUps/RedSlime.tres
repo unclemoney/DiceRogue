@@ -10,6 +10,7 @@ id = "red_slime"
 display_name = "Danger Runs Deep"
 description = "Doubles the chance of rolling red dice"
 icon = ExtResource("1_4m2pv")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/red_slime.json"
 scene = ExtResource("2_scene")
 price = 75
 rarity = "uncommon"

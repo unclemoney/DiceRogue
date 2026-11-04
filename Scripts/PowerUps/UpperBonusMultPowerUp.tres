@@ -10,6 +10,7 @@ id = "upper_bonus_mult"
 display_name = "The Brick"
 description = "+1x for each Upper Section Bonus achieved."
 icon = ExtResource("1_gl0oq")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/upper_bonus_mult.json"
 scene = ExtResource("2_awvan")
 price = 225
 rarity = "rare"

@@ -94,6 +94,15 @@ func set_synergy_halo(mode: int, color: Color = Color.WHITE) -> void:
 	if _kiosk_tile:
 		_kiosk_tile.set_synergy_halo(mode, color)
 
+
+## cycle_foil_debug_layer() -> int
+## Cycles the active Foilsmith map view. Returns -1 in legacy card mode.
+func cycle_foil_debug_layer() -> int:
+	if _kiosk_tile:
+		return _kiosk_tile.cycle_foil_debug_layer()
+	return -1
+
+
 func _setup_legacy_card() -> void:
 	# If we have no children, create the full card structure
 	if get_child_count() == 0:

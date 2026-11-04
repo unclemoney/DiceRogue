@@ -10,6 +10,7 @@ id = "extreme_couponing"
 display_name = "New Notebook"
 description = "+5 score per consumable granted this run. Stacks all game!"
 icon = ExtResource("1_q3fce")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/extreme_couponing.json"
 scene = ExtResource("2_scene")
 price = 140
 rarity = "uncommon"

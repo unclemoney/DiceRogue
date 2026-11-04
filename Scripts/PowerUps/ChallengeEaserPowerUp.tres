@@ -14,6 +14,7 @@ id = "challenge_easer"
 display_name = "Game Wizard"
 description = "All challenge score targets reduced by 20%"
 icon = SubResource("AtlasTexture_rs3vq")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/challenge_easer.json"
 scene = ExtResource("2_scene")
 price = 450
 rarity = "epic"

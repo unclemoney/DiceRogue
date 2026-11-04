@@ -14,6 +14,7 @@ id = "chore_sprint"
 display_name = "Magic Mitt"
 description = "Chores reduce goof-off meter by 30 instead of 20"
 icon = SubResource("AtlasTexture_veod5")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/chore_sprint.json"
 scene = ExtResource("2_scene")
 price = 150
 rarity = "uncommon"

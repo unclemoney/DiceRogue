@@ -10,6 +10,7 @@ id = "azure_perfection"
 display_name = "Blue Raspberry"
 description = "Blue dice ALWAYS count as used - no penalties, only multipliers!"
 icon = ExtResource("1_ftng8")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/azure_perfection.json"
 scene = ExtResource("2_scene")
 price = 600
 rarity = "legendary"

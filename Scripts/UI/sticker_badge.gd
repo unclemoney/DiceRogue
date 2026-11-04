@@ -17,7 +17,7 @@ const SYMBOL_TEXTURES := {
 	"NC-17": preload("res://Resources/Art/UI/sticker_badge_no.png"),
 }
 
-const BADGE_SIZE: Vector2 = Vector2(70, 70)
+const BADGE_SIZE: Vector2 = Vector2(42, 42)
 const DEFAULT_UV := Vector2(0.5, 0.5)
 const UV_LERP_SPEED := 12.0
 const UV_SETTLE_EPSILON := 0.0005
@@ -88,7 +88,7 @@ func _ready() -> void:
 	if size.x <= 0.0 or size.y <= 0.0:
 		size = BADGE_SIZE
 	_ensure_structure()
-	_ensure_tooltip()
+	_ensure_tooltip.call_deferred()
 	_apply_data()
 	_apply_holo_profile(DEFAULT_HOLO_PROFILE)
 	_apply_holo_uv()
@@ -208,7 +208,7 @@ func set_rating(new_rating: String) -> void:
 func set_rarity(new_rarity: String) -> void:
 	rarity = new_rarity.to_lower()
 	_apply_frame_style()
-	_apply_holo_rarity_tint()
+	_apply_holo_neutral_tint()
 	if _tooltip and is_instance_valid(_tooltip):
 		_tooltip.setup({"title": get_sticker_label(rating), "rarity": rarity})
 
@@ -264,7 +264,7 @@ func _ensure_structure() -> void:
 	_apply_symbol_textures()
 
 	_apply_frame_style()
-	_apply_holo_rarity_tint()
+	_apply_holo_neutral_tint()
 
 
 func _ensure_texture_layer(node_name: String) -> TextureRect:
@@ -329,13 +329,13 @@ func _apply_frame_style() -> void:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.28, 0.29, 0.32, 0.96)
 	style.draw_center = true
-	style.border_color = get_rarity_frame_color(rarity)
-	style.set_border_width_all(4)
-	style.set_corner_radius_all(12)
+	style.border_color = Color(0.82, 0.84, 0.88, 1.0)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(8)
 	style.corner_detail = 6
 	style.shadow_color = Color(0, 0, 0, 0.36)
-	style.shadow_size = 6
-	style.shadow_offset = Vector2(2, 4)
+	style.shadow_size = 3
+	style.shadow_offset = Vector2(1, 2)
 	_frame.add_theme_stylebox_override("panel", style)
 
 
@@ -348,13 +348,13 @@ func _apply_holo_profile(profile_overrides: Dictionary) -> void:
 	for parameter_name in HOLO_PROFILE_KEYS:
 		if _holo_profile.has(parameter_name):
 			_holo_material.set_shader_parameter(parameter_name, float(_holo_profile[parameter_name]))
-	_apply_holo_rarity_tint()
+	_apply_holo_neutral_tint()
 	_apply_holo_uv()
 
 
-func _apply_holo_rarity_tint() -> void:
+func _apply_holo_neutral_tint() -> void:
 	if _holo_material:
-		_holo_material.set_shader_parameter("accent_tint", get_rarity_frame_color(rarity))
+		_holo_material.set_shader_parameter("accent_tint", Color(0.82, 0.84, 0.88, 1.0))
 
 
 func _apply_holo_uv() -> void:

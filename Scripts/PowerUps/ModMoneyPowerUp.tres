@@ -14,6 +14,7 @@ id = "mod_money"
 display_name = "Made to Order"
 description = "Earn $8 per modded die when scoring "
 icon = SubResource("AtlasTexture_tp8uj")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/mod_money.json"
 scene = ExtResource("2_scene")
 price = 75
 rarity = "common"

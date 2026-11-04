@@ -14,6 +14,7 @@ id = "blue_safety_net"
 display_name = "Security Blanket"
 description = "Blue dice penalties reduced by 50%."
 icon = SubResource("AtlasTexture_xr11n")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/blue_safety_net.json"
 scene = ExtResource("2_scene")
 price = 125
 rarity = "uncommon"

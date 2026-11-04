@@ -14,6 +14,7 @@ id = "rainbow_surge"
 display_name = "Rainbow Chew by the Foot"
 description = "2.0x score multiplier when 5 different dice colors are present!"
 icon = SubResource("AtlasTexture_58tnv")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/rainbow_surge.json"
 scene = ExtResource("2_scene")
 price = 650
 rarity = "epic"

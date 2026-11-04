@@ -1204,6 +1204,14 @@ func grant_power_up(id: String) -> void:
 	GameSaveManager.update_settled_snapshot()
 
 
+## debug_cycle_powerup_foil_layer() -> int
+## Opens the PowerUp fan and cycles its Foilsmith render layer for debugging.
+func debug_cycle_powerup_foil_layer() -> int:
+	if not is_instance_valid(powerup_ui):
+		return -1
+	return await powerup_ui.cycle_foil_debug_layer()
+
+
 func _get_power_up_base_id(power_up_id: String) -> String:
 	var replica_index := power_up_id.find("_replica")
 	if replica_index == -1:

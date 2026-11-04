@@ -10,6 +10,7 @@ id = "perfect_strangers"
 display_name = "EZ-Break"
 description = "When scoring CHANCE, gain a random 1.1x-1.5x multiplier for that score"
 icon = ExtResource("1_81gqp")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/perfect_strangers.json"
 scene = ExtResource("2_perfect_strangers_scene")
 price = 150
 rarity = "rare"

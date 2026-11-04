@@ -14,6 +14,7 @@ id = "consumable_cash"
 display_name = "Refill"
 description = "+1 dollar per turn for every Consumable used."
 icon = SubResource("AtlasTexture_4qowt")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/consumable_cash.json"
 scene = ExtResource("2_awvan")
 price = 25
 rarity = "uncommon"

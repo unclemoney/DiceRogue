@@ -14,6 +14,7 @@ id = "comeback_kid"
 display_name = "Comeback Kid"
 description = "+5 score for each category sitting at 0"
 icon = SubResource("AtlasTexture_comeback_kid")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/comeback_kid.json"
 scene = ExtResource("2_scene")
 price = 150
 rarity = "rare"

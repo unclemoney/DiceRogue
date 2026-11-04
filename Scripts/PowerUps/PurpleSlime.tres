@@ -14,6 +14,7 @@ id = "purple_slime"
 display_name = "Violet Viscus"
 description = "Doubles the chance of rolling purple dice"
 icon = SubResource("AtlasTexture_cfivb")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/purple_slime.json"
 scene = ExtResource("2_scene")
 price = 150
 rarity = "rare"

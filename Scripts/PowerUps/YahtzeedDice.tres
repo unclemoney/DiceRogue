@@ -14,6 +14,7 @@ id = "yahtzeed_dice"
 display_name = "Guhtzee Dice"
 description = "Gain +1 die every time you roll a Guhtzee! (Excluding Bonus Guhtzee's)"
 icon = SubResource("AtlasTexture_n0788")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/yahtzeed_dice.json"
 scene = ExtResource("2_scene")
 price = 450
 rarity = "epic"

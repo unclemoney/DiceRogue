@@ -10,6 +10,7 @@ id = "bonus_money"
 display_name = "Combo #1"
 description = "+$50 for each bonus achieved (Upper Section Bonus or Yahtzee Bonus)"
 icon = ExtResource("1_2kg4w")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/bonus_money.json"
 scene = ExtResource("2_bonus_money_scene")
 price = 50
 rarity = "uncommon"

@@ -14,6 +14,7 @@ id = "straight_triplet_master"
 display_name = "Rock Candy"
 description = "Score straights in Lg Straight, Sm Straight, AND Chance in 1 round for +$150 and +75pts"
 icon = SubResource("AtlasTexture_wy10o")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/straight_triplet_master.json"
 scene = ExtResource("2_scene")
 price = 275
 rarity = "rare"

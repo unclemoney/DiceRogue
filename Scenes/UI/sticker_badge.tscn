@@ -3,10 +3,10 @@
 [ext_resource type="Script" uid="uid://biitkwbpg3hdr" path="res://Scripts/UI/sticker_badge.gd" id="1_sticker"]
 
 [node name="StickerBadge" type="Control"]
-custom_minimum_size = Vector2(70, 70)
+custom_minimum_size = Vector2(42, 42)
 layout_mode = 3
 anchors_preset = 0
-offset_right = 70.0
-offset_bottom = 70.0
+offset_right = 42.0
+offset_bottom = 42.0
 mouse_filter = 1
 script = ExtResource("1_sticker")

@@ -14,6 +14,7 @@ id = "sweet_sixteen"
 display_name = "Sweet Sixteen"
 description = "Grants $16 per turn. Score above 0 on turn 16 for a $256 bonus!"
 icon = SubResource("AtlasTexture_2hlso")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/sweet_sixteen.json"
 scene = ExtResource("2_scene")
 price = 150
 rarity = "uncommon"

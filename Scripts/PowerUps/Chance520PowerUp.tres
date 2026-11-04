@@ -10,6 +10,7 @@ id = "chance520"
 display_name = "520"
 description = "Add +5 to a cumulative total for each Chance category scored with 20 or above."
 icon = ExtResource("1_7lvum")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/chance520.json"
 scene = ExtResource("2_awvan")
 price = 100
 rarity = "uncommon"

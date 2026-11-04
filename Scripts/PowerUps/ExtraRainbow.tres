@@ -10,6 +10,7 @@ id = "extra_rainbow"
 display_name = "Candy Ring"
 description = "+10 per colored die scored"
 icon = ExtResource("1_snh7d")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/extra_rainbow.json"
 scene = ExtResource("2_scene")
 price = 300
 rarity = "rare"

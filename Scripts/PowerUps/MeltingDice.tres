@@ -14,6 +14,7 @@ id = "melting_dice"
 display_name = "Soft Serve"
 description = "Starts +80 additive, melts by 8 each score"
 icon = SubResource("AtlasTexture_nt4ya")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/melting_dice.json"
 scene = ExtResource("2_scene")
 price = 50
 rarity = "common"

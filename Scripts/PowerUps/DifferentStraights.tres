@@ -14,6 +14,7 @@ id = "different_straights"
 display_name = "Slap Wrist"
 description = "Straights can have one gap of 1"
 icon = SubResource("AtlasTexture_7tnh4")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/different_straights.json"
 scene = ExtResource("2_scene")
 price = 300
 rarity = "rare"

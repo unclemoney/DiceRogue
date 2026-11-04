@@ -34,6 +34,11 @@ func _run_tests() -> void:
 		print("  ✓ Tile halo node exists and starts hidden")
 	else:
 		_fail_test("Tile halo should exist and start hidden")
+	var initial_mat := tile.synergy_halo.material as ShaderMaterial
+	if initial_mat and float(initial_mat.get_shader_parameter("circle_radius")) > 0.0:
+		print("  ✓ Tile halo uses circular POG geometry")
+	else:
+		_fail_test("Tile halo should expose a positive circle_radius")
 	tile.set_synergy_halo(PowerUpData.SynergyHaloMode.SET, PowerUpData.get_rating_color("R"))
 	var tile_mat := tile.synergy_halo.material as ShaderMaterial
 	var expected := PowerUpData.get_rating_color("R")

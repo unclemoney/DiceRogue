@@ -10,6 +10,7 @@ id = "randomizer"
 display_name = "Mixtape"
 description = "Each turn applies a random score modifier: 80% chance for additive bonus (-20 to +50), 20% chance for multiplier."
 icon = ExtResource("1_a34wq")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/randomizer.json"
 scene = ExtResource("2_nexa7")
 price = 175
 rarity = "uncommon"

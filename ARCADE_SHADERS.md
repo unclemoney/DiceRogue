@@ -1096,9 +1096,9 @@ background.material = shader_mat
 
 ### 23. Synergy Halo (`synergy_halo.gdshader`)
 
-Additive rounded-rect SDF effect used to mark active PowerUp rating synergies. Two shapes: ring mode (`fill_mode = 0`) draws a bright rim + outer glow for card borders; fill mode (`fill_mode = 1`) draws a soft translucent background fill that sits behind icons (compact slot backgrounds). Two color modes: flat rating color (matching-set synergy, 5+ PowerUps of one rating) and an animated hue-cycling rainbow (Rainbow Bonus, one of each rating).
+Additive circular SDF ring around fanned PowerUp POG artwork. A bright rim and outer glow use the rating color for a matching-set synergy (5+ PowerUps of one rating), or an animated perimeter hue cycle for Rainbow Bonus (one of each rating). Compact PowerUp slots continue to use StyleBoxFlat tints instead of this shader.
 
-Driven by the built-in `TIME` — no per-frame script updates needed.
+Driven by the built-in `TIME` — no per-frame script updates needed for animation.
 
 #### Parameters
 
@@ -1106,14 +1106,12 @@ Driven by the built-in `TIME` — no per-frame script updates needed.
 |-----------|------|-------|---------|-------------|
 | `glow_color` | Color | - | Orange | Effect color (SET mode rating color) |
 | `glow_intensity` | Float | 0.0 - 2.0 | 0.9 | Master brightness |
-| `corner_radius` | Float | 0.0 - 64.0 | 16.0 | Corner radius (px) |
-| `spread` | Float | 0.0 - 64.0 | 10.0 | Outer glow falloff (px, ring mode) |
+| `circle_radius` | Float | 0.0 - 256.0 | 88.0 | Ring radius in local pixels |
+| `spread` | Float | 0.0 - 64.0 | 10.0 | Outer glow falloff (px) |
 | `pulse_strength` | Float | 0.0 - 1.0 | 0.6 | Breathing pulse amount |
 | `rainbow_mode` | Float | 0.0 - 1.0 | 0.0 | 1.0 = hue-cycling rainbow |
 | `rainbow_speed` | Float | 0.0 - 2.0 | 0.35 | Hue cycle speed |
-| `fill_mode` | Float | 0.0 - 1.0 | 0.0 | 1.0 = translucent background fill instead of ring |
-| `fill_strength` | Float | 0.0 - 1.0 | 0.35 | Fill opacity (fill mode) |
-| `rect_size` | Vector2 | - | (88, 96) | Pixel size of the effect rect |
+| `rect_size` | Vector2 | - | (200, 200) | Pixel size of the effect rect |
 
 #### Usage Example
 ```gdscript

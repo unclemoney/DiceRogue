@@ -28,6 +28,7 @@ enum Rating {
 @export var display_name: String
 @export var description: String
 @export var icon: Texture2D
+@export_file("*.json") var foilsmith_card_json: String = ""
 @export var scene: PackedScene  # your logic scene, e.g. ExtraDicePowerUp.tscn
 @export var price: int = 100
 @export var rarity: String = "common"  # common, uncommon, rare, epic, legendary

@@ -14,6 +14,7 @@ id = "debuff_destroyer"
 display_name = "Dry Cleaner"
 description = "Removes 1 random debuff upon selling"
 icon = SubResource("AtlasTexture_ct6np")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/debuff_destroyer.json"
 scene = ExtResource("2_scene")
 price = 400
 rarity = "epic"

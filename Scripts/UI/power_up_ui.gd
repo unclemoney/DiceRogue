@@ -626,11 +626,25 @@ func add_power_up(data: PowerUpData) -> Node:
 	return spine
 
 func _position_spines() -> void:
+	if _current_state == State.FANNED:
+		for spine in _spines.values():
+			if spine and is_instance_valid(spine):
+				spine.visible = false
+				spine.modulate.a = 0.0
+				spine.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		return
 	if _slot_contents.is_empty():
 		return
 	# Sizes are zero until the container chain sorts; wait it out instead of
 	# centering against stale geometry (a single call_deferred was not enough)
 	if not await _await_slot_layout():
+		return
+	if _current_state == State.FANNED:
+		for spine in _spines.values():
+			if spine and is_instance_valid(spine):
+				spine.visible = false
+				spine.modulate.a = 0.0
+				spine.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		return
 
 	var ordered_ids: Array[String] = _get_ordered_power_up_ids()
@@ -794,8 +808,8 @@ func _create_fanned_icons() -> void:
 		# (Connections die with the tile when icons are freed in _clear_fanned_icons.)
 		var kiosk_tile: Control = icon.get_node_or_null("KioskTile")
 		if kiosk_tile:
-			kiosk_tile.mouse_entered.connect(_on_fan_icon_hovered.bind(power_up_id))
-			kiosk_tile.mouse_exited.connect(_on_fan_icon_unhovered.bind(power_up_id))
+			kiosk_tile.connect("description_hovered", _on_fan_icon_hovered.bind(power_up_id))
+			kiosk_tile.connect("description_unhovered", _on_fan_icon_unhovered.bind(power_up_id))
 		
 		# Store reference
 		_fanned_icons[power_up_id] = icon
@@ -820,9 +834,8 @@ func _create_fanned_icons() -> void:
 	await get_tree().create_timer(max_delay).timeout
 	_start_idle_animations()
 
-# KioskTile root stays 200x300, but the chrome bezel is drawn 12px outside
-# each edge, giving a visual footprint of 224x324. Add extra spacing so
-# fanned tiles do not overlap.
+# KioskTile root stays 200x300. Circular glows and the rim sticker draw outside
+# the art stage, so retain the 224x324 spacing envelope around each fanned tile.
 const FAN_CARD_WIDTH: float = 224.0
 const FAN_CARD_HEIGHT: float = 324.0
 const FAN_CARD_SPACING: float = 112.0
@@ -1405,6 +1418,23 @@ func get_power_up_icon(id: String) -> PowerUpIcon:
 	if _current_state == State.FANNED and _fanned_icons.has(id):
 		return _fanned_icons[id]
 	return null
+
+
+## cycle_foil_debug_layer() -> int
+## Opens the fan when needed and cycles every visible POG through Foilsmith's
+## shaded, foil, depth, pop-out, and normal-map views.
+func cycle_foil_debug_layer() -> int:
+	if _power_up_data.is_empty():
+		return -1
+	if _current_state == State.SPINES:
+		_open_fan_view()
+	await get_tree().create_timer(0.25).timeout
+	var layer := -1
+	for icon in _fanned_icons.values():
+		if icon and is_instance_valid(icon):
+			layer = icon.cycle_foil_debug_layer()
+	return layer
+
 
 func animate_power_up_removal(power_up_id: String, on_finished: Callable) -> void:
 	# Find target node to animate — prefer the VISIBLE representation

@@ -14,6 +14,7 @@ id = "extra_rolls"
 display_name = "Eye Strain"
 description = "Grants additional Rolls each turn"
 icon = SubResource("AtlasTexture_jvwcb")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/extra_rolls.json"
 scene = ExtResource("2_jvwcb")
 price = 150
 rarity = "common"

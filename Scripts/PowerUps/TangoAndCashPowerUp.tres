@@ -14,6 +14,7 @@ id = "tango_and_cash"
 display_name = "Oddball"
 description = "+$10 for every odd die scored (at round end)"
 icon = SubResource("AtlasTexture_da60f")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/tango_and_cash.json"
 scene = ExtResource("2_scene")
 price = 150
 rarity = "uncommon"

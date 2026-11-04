@@ -14,6 +14,7 @@ id = "two_pair_house"
 display_name = "Beeper Code"
 description = "Two pair counts as a Full House (25 points)"
 icon = SubResource("AtlasTexture_two_pair_house")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/two_pair_house.json"
 scene = ExtResource("2_scene")
 price = 300
 rarity = "rare"

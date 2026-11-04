@@ -216,6 +216,7 @@ func _create_debug_tabs() -> void:
 		],
 		"Items": [
 			{"text": "Grant Random PowerUp", "method": "_debug_grant_powerup"},
+			{"text": "Cycle PowerUp Foil Layer", "method": "_debug_cycle_powerup_foil_layer"},
 			{"text": "Grant Random Consumable", "method": "_debug_grant_consumable"},
 			{"text": "Grant Random Mod", "method": "_debug_grant_mod"},
 			{"text": "Grant Yellow Slime", "method": "_debug_grant_yellow_slime"},
@@ -1583,6 +1584,19 @@ func _debug_grant_powerup() -> void:
 			log_debug("No unowned PowerUps available to grant")
 	else:
 		log_debug("PowerUpManager not found or method missing")
+
+
+func _debug_cycle_powerup_foil_layer() -> void:
+	if not game_controller:
+		log_debug("ERROR: GameController not available")
+		return
+	var layer: int = await game_controller.debug_cycle_powerup_foil_layer()
+	if layer < 0:
+		log_debug("No PowerUps available for Foilsmith layer preview")
+		return
+	var names := ["Shaded", "Foil", "Depth", "Pop-out", "Normals"]
+	log_debug("PowerUp Foilsmith layer: " + names[layer])
+
 
 func _debug_grant_consumable() -> void:
 	if not game_controller:

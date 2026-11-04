@@ -14,6 +14,7 @@ id = "power_surge"
 display_name = "Power Surge"
 description = "+0.15x multiplier per owned PowerUp"
 icon = SubResource("AtlasTexture_krxbg")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/power_surge.json"
 scene = ExtResource("2_scene")
 price = 400
 rarity = "epic"

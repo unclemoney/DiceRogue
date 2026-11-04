@@ -315,7 +315,7 @@ All major UI popups use TweenFX-based bouncy entrance/exit animations for juicy 
 | **PowerUp Sell** | Jelly wobble → spin + shrink → fly toward money counter | — | Targets `MoneyLabel` global position |
 | **PowerUp Expiry** | Alarm flash highlight → fidget wild spin → fly to random screen edge + vanish | — | Orange alarm color |
 | **Mom Confiscation** | Auto-fan cards → red alarm flash on condemned → fidget + fly-to-Mom + vanish (staggered) | Folds cards back | Stagger: 0.2s (≤3 items) or 0.1s (>3) |
-| **PowerUp Kiosk Tile** | Four-pass mall-core tile with reflective chrome bezel, dedicated interior glass shader, additive rarity glow, artwork-backed reflection overlay, floating sticker badge, and always-visible SELL button | Hover lift + synced glow/specular/reflection parallax, click selection, fan-out slide/scale | 200×300 root; 224×324 visual footprint with bezel; 4-per-row fan-out |
+| **PowerUp POG Tile** | Background-free Foilsmith POG with circular rarity glow, rim rating sticker, and always-visible SELL button | Pointer tilt + depth/HOLO response, hover lift/glow, click selection, fan-out slide/scale | 200×300 root; 224×324 spacing envelope; 4-per-row fan-out |
 | **Consumable Sell** | Jelly wobble → spin + shrink → fly toward money counter | — | Same pattern as PowerUp sell |
 | **Consumable Use** | Fidget wild spin → fly to random edge → `ConsumableExplosion` at exit | — | Explosion effect at exit point |
 
@@ -441,26 +441,18 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - **Trade-off & Color PowerUps**:
     - **The Great Exchange** (Rare/$350): +2 dice, -1 roll per turn — more dice but fewer re-roll chances
     - **Extra Rainbow** (Rare/$300): +10 additive score per colored die scored — rewards color dice strategy
-- **PowerUp UI — Kiosk Tiles** (`Scripts/UI/kiosk_tile.gd`, `Scenes/PowerUp/kiosk_tile.tscn`)
-  - Mall-core glossy tile presentation for the fan-out PowerUp view
-  - 200×300 tile root; 10–14 px chrome bezel drawn outside the root via `ChromeFrame` (`Scripts/Shaders/kiosk_tile.gdshader`)
-  - Chrome shader features bevel simulation, glossy plastic panel, fake diagonal blue/pink environment reflection, rarity neon rim glow, and animated sheen
-  - Additive glow underlay (`GlowUnderlay` + `Scripts/Shaders/kiosk_tile_glow.gdshader`) fades from resting 0.15 through hover 0.7 to selected 1.5
-  - Artwork reflection generated in-shader (`Scripts/Shaders/kiosk_tile_reflection.gdshader`) with flipped icon UVs, fade-out mask, and CRT scanlines
-  - Hover parallax: artwork shifts 1–2 px opposite cursor; reflection shifts with cursor
-  - Parental Approval sticker badge (`Scripts/UI/sticker_badge.gd`) maps rating to mall-core labels:
-    - G → "Mom-Approved", PG → "Questionable", PG-13 → "Parental Guidance", R → "Grounded", NC-17 → "Banned"
-  - 70×70 floating sticker badge sits above the chrome frame and title band with a randomized -4° to +4° rotation, strong drop shadow, and a hover/selection pulse
-  - Badge composition is layered: a framed sticker body, symbol texture, and a full-surface reactive holo foil (`Scripts/Shaders/sticker_holo.gdshader`)
-  - Holo foil is mouse-reactive rather than TIME-driven: pointer motion updates a silver/pearl baseline foil with smooth UV lerp, while idle badges remain visually stable
-  - Badge hover shows a non-blocking tooltip above the sticker with the full rating label; tile click ownership stays on `KioskTile`, which forwards pointer state into the badge
-  - Synergy visuals are exposed through badge API methods instead of being hardwired into `SynergyManager`: `reset_holo_profile()`, `apply_matching_set_profile()`, `apply_rainbow_profile()`, `set_holo_profile(profile)`, and `set_holo_parameter(name, value)`
-  - Future UI integration should subscribe to `SynergyManager` from the host UI layer and map `synergy_activated`, `synergy_deactivated`, `synergies_updated`, `get_rating_counts()`, or `get_active_synergies()` onto the badge API rather than letting the manager manipulate materials directly
-  - Neon yellow VCR title band spans the full tile width; font auto-shrinks from 20 px down to 12 px before truncating with ellipsis (hard cap 24 characters)
-  - Always-visible glossy SELL button with hover brighten/scale and press depress effect
-  - Hover lift/scale, selection glow/rotation, and fan-out transforms remain additive
+- **PowerUp UI — POG Tiles** (`Scripts/UI/kiosk_tile.gd`, `Scenes/PowerUp/kiosk_tile.tscn`)
+  - Background-free 200×300 fan-out tile: transparent title, large circular POG, and always-visible glass SELL button; rules text remains in the rich hover tooltip
+  - Foilsmith supplies baked depth, FX, and normal maps plus pointer-driven HOLO tilt/parallax; card flipping and card-frame components are disabled
+  - Every valid PowerUp has a 64×64 native pixel grid on Foilsmith's 640×640 baked canvas in `Resources/Art/Powerups/Foilsmith/`; `PowerUpData.foilsmith_card_json` points to its card JSON, and unbaked items fall back to their original icon
+  - Circular rarity glow (`Scripts/Shaders/pog_rarity_glow.gdshader`) surrounds the POG, with stronger hover/selected states; active synergy adds a separate outer circular ring
+  - Parental Approval sticker (`Scripts/UI/sticker_badge.gd`) is a neutral 42×42 badge on the POG's upper-right rim: G → "Mom-Approved", PG → "Questionable", PG-13 → "Parental Guidance", R → "Grounded", NC-17 → "Banned"
+  - Badge keeps its five icons, pointer-reactive foil, non-blocking rating tooltip, and holo profile APIs; rarity color belongs to the POG ring rather than the badge
+  - Neon yellow VCR titles auto-shrink from 20 px to 12 px before ellipsis; hover lift/scale, selection glow/rotation, and fan-out transforms remain additive
   - `PowerUpIcon` (`Scripts/UI/power_up_icon.gd`) wraps `KioskTile` and keeps a `use_kiosk_tile` toggle for legacy fallback
-  - Focused validation scene: `Tests/KioskTileTest.tscn` with `1` = default foil, `2` = matching-set foil preview, `3` = rainbow foil preview
+  - Rebuild assets with `godot --path . --script res://Scripts/Editor/run_powerup_foilsmith_bake.gd -- --quit-after-bake`, or run `Scripts/Editor/bake_powerup_foilsmith.gd` from the Script editor. The CLI runner uses synchronous depth estimation and reuses saved depth maps on later bakes. After a CLI bake, run `godot --headless --path . --import`; the baker writes the required lossless/alpha/normal-map import settings.
+  - Focused validation: `Tests/KioskTileTest.tscn` (`1`/`2`/`3` badge profiles, `4` Foilsmith map layer, `5` plain-art fallback) and automated `Tests/PowerUpFoilsmithTest.tscn`
+  - Live debug: Items → **Cycle PowerUp Foil Layer** opens the fan and cycles shaded, foil, depth, pop-out, and normal-map views
 - **Consumables** (`Scripts/Consumable/`) - Single-use strategic items
   - **Lucky Upgrade** ($25): Randomly upgrades one unscored scorecard category by 1 level
   - **Half Price** ($25): Halves PowerUp prices in the shop. Stacks multiplicatively. Expires on first PowerUp purchase or new turn.
@@ -1473,8 +1465,8 @@ The **Synergy System** rewards players for collecting PowerUps with matching rat
 
 **Synergy Visual Indicators:**
 - Active synergies glow via `Scripts/Shaders/synergy_halo.gdshader`
-- **Matching set active**: compact slots glow with a translucent rating-color background and border (slot stylebox tint — the icon is never touched), and fanned cards get a halo ring in the rating color
-- **Rainbow active**: compact slots pulse through a hue-cycled background/border tint, and fanned cards get an animated rainbow ring; overrides per-rating set visuals
+- **Matching set active**: compact slots glow with a translucent rating-color background and border (slot stylebox tint — the icon is never touched), and fanned POGs get a circular outer halo ring in the rating color
+- **Rainbow active**: compact slots pulse through a hue-cycled background/border tint, and fanned POGs get an animated circular rainbow ring; overrides per-rating set visuals
 - Halos appear only while the synergy bonus is actually active (no partial-progress visuals)
 - The overflow slot glows if any hidden PowerUp participates
 - The fan-out view shows a top banner summarizing active synergies (e.g. `SYNERGY: PG-13 SET +50 • RAINBOW x5`)

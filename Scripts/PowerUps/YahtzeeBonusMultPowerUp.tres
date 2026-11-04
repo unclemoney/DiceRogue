@@ -14,6 +14,7 @@ id = "yahtzee_bonus_mult"
 display_name = "Tilt"
 description = "Increases score multiplier by 1x for each Yahtzee Bonus achieved"
 icon = SubResource("AtlasTexture_g1e50")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/yahtzee_bonus_mult.json"
 scene = ExtResource("2_awvan")
 price = 200
 rarity = "legendary"

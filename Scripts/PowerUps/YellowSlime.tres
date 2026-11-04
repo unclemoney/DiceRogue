@@ -14,6 +14,7 @@ id = "yellow_slime"
 display_name = "Pink Lemonade"
 description = "Doubles the chance of rolling yellow dice"
 icon = SubResource("AtlasTexture_yellow")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/yellow_slime.json"
 scene = ExtResource("2_scene")
 price = 300
 rarity = "legendary"

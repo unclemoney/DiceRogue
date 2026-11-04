@@ -14,6 +14,7 @@ id = "highlighted_score"
 display_name = "Spotlight"
 description = "Highlights a random unscored category for 1.5x score"
 icon = SubResource("AtlasTexture_60mov")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/highlighted_score.json"
 scene = ExtResource("2_highlighted_score_scene")
 price = 150
 rarity = "rare"

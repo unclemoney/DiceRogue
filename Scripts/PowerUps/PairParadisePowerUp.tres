@@ -14,6 +14,7 @@ id = "pair_paradise"
 display_name = "Teen Romance"
 description = "Pair bonuses: +3 (pair/3oak), +6 (2pair/4oak), +9 (FH/Yahtzee)"
 icon = SubResource("AtlasTexture_nk2h3")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/pair_paradise.json"
 scene = ExtResource("2_scene")
 price = 75
 rarity = "common"

@@ -14,6 +14,7 @@ id = "step_by_step"
 display_name = "Step by Step"
 description = "All upper section scores get +6"
 icon = SubResource("AtlasTexture_m2q1u")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/step_by_step.json"
 scene = ExtResource("2_step_scene")
 price = 25
 rarity = "common"

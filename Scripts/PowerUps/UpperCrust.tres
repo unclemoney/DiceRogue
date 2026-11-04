@@ -14,6 +14,7 @@ id = "upper_crust"
 display_name = "Upper Crust"
 description = "Upper section scores get x1.5"
 icon = SubResource("AtlasTexture_upper_crust")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/upper_crust.json"
 scene = ExtResource("2_scene")
 price = 250
 rarity = "rare"

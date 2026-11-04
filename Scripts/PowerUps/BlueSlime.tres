@@ -10,6 +10,7 @@ id = "blue_slime"
 display_name = "Paper Keeper"
 description = "Doubles the chance of rolling blue dice."
 icon = ExtResource("1_d7sc0")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/blue_slime.json"
 scene = ExtResource("2_scene")
 price = 250
 rarity = "legendary"

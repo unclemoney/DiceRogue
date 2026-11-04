@@ -14,6 +14,7 @@ id = "money_multiplier"
 display_name = "Guhtzee Jackpot"
 description = "Immediately multiple your cash for every Guhtzee rolled (increases +.1 each Guhtzee)"
 icon = SubResource("AtlasTexture_3qrdk")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/money_multiplier.json"
 scene = ExtResource("2_money_multiplier_scene")
 price = 100
 rarity = "rare"

@@ -14,6 +14,7 @@ id = "the_replicator"
 display_name = "The Replicator"
 description = "After 1 turn, duplicates a random PowerUp you own"
 icon = SubResource("AtlasTexture_10r5u")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/the_replicator.json"
 scene = ExtResource("2_scene")
 price = 300
 rarity = "rare"

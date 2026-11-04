@@ -14,6 +14,7 @@ id = "wild_dots"
 display_name = "Wild Dots"
 description = "For each locked dice of the same number, additional rolled dice have an increased odds of rolling the same number."
 icon = SubResource("AtlasTexture_21ucm")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/wild_dots.json"
 scene = ExtResource("2_scene")
 price = 250
 rarity = "rare"

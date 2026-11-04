@@ -14,6 +14,7 @@ id = "one_roll_wonder"
 display_name = "First Strike"
 description = "Score on first roll = +40 additive"
 icon = SubResource("AtlasTexture_wwmsy")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/one_roll_wonder.json"
 scene = ExtResource("2_scene")
 price = 250
 rarity = "rare"

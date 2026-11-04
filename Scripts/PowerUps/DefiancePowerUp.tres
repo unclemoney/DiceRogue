@@ -14,6 +14,7 @@ id = "defiance"
 display_name = "x486"
 description = "+0.25x score multiplier for each active debuff"
 icon = SubResource("AtlasTexture_defiance")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/defiance.json"
 scene = ExtResource("2_scene")
 price = 400
 rarity = "epic"

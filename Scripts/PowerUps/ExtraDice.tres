@@ -10,6 +10,7 @@ id = "extra_dice"
 display_name = "Low Speed Chase"
 description = "Grants one additional die"
 icon = ExtResource("1_o2lnj")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/extra_dice.json"
 scene = ExtResource("2_o2lnj")
 price = 150
 rarity = "common"

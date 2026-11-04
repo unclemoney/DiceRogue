@@ -1,0 +1,25 @@
+{
+  "style": "full-art",
+  "width": 640.0,
+  "height": 640.0,
+  "pixel_art": true,
+  "pixel_scale": 1.0,
+  "native_size": [
+    64,
+    64
+  ],
+  "hue_steps": 6,
+  "border_px": [
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "art_window": [
+    0.0,
+    0.0,
+    1.0,
+    1.0
+  ],
+  "finish": "holo"
+}

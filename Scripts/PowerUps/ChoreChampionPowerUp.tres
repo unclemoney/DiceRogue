@@ -10,6 +10,7 @@ id = "chore_champion"
 display_name = "Chore Chart"
 description = "Chores are 2x more effective and pay 2x money"
 icon = ExtResource("1_n2p4w")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/chore_champion.json"
 scene = ExtResource("2_scene")
 price = 50
 rarity = "common"

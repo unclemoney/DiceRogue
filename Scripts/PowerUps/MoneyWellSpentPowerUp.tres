@@ -14,6 +14,7 @@ id = "money_well_spent"
 display_name = "Food Court Frenzy"
 description = "+1 to all scores per $50 spent (during the game)"
 icon = SubResource("AtlasTexture_y5rvh")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/money_well_spent.json"
 scene = ExtResource("2_money_well_spent_scene")
 price = 75
 rarity = "common"

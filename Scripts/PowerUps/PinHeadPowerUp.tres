@@ -14,6 +14,7 @@ id = "pin_head"
 display_name = "Pin Head"
 description = "When scoring, picks a random dice value as multiplier"
 icon = SubResource("AtlasTexture_gti4a")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/pin_head.json"
 scene = ExtResource("2_pin_head_scene")
 price = 275
 rarity = "epic"

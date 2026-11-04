@@ -14,6 +14,7 @@ id = "extra_coupons"
 display_name = "Extra Coupons"
 description = "Deprecated"
 icon = SubResource("AtlasTexture_f782b")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/extra_coupons.json"
 scene = ExtResource("3_scene")
 price = 250
 rarity = "rare"

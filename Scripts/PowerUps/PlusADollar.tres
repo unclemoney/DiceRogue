@@ -14,6 +14,7 @@ id = "plus_a_dollar"
 display_name = "Tip Jar"
 description = "Grants $1 after each dice roll"
 icon = SubResource("AtlasTexture_anvmc")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/plus_a_dollar.json"
 scene = ExtResource("2_scene")
 price = 50
 rarity = "common"

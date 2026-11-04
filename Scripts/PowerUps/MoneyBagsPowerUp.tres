@@ -10,6 +10,7 @@ id = "money_bags"
 display_name = "Ca$h"
 description = "Score multiplier = ($Money / 100) + 1"
 icon = ExtResource("1_lwg50")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/money_bags.json"
 scene = ExtResource("2_scene")
 price = 450
 rarity = "epic"

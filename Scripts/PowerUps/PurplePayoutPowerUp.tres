@@ -14,6 +14,7 @@ id = "purple_payout"
 display_name = "Purple Stuff"
 description = "Each purple die grants $25 when scoring"
 icon = SubResource("AtlasTexture_5xqbk")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/purple_payout.json"
 scene = ExtResource("2_scene")
 price = 50
 rarity = "common"

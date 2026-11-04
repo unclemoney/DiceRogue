@@ -14,6 +14,7 @@ id = "lock_and_load"
 display_name = "Petting Zoobook"
 description = "+$3 for each die locked at round end"
 icon = SubResource("AtlasTexture_d30rt")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/lock_and_load.json"
 scene = ExtResource("2_scene")
 price = 75
 rarity = "common"

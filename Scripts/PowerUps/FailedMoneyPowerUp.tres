@@ -14,6 +14,7 @@ id = "failed_money"
 display_name = "Anxiety "
 description = "+$50 for each failed hand at rounds end."
 icon = SubResource("AtlasTexture_xoisd")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/failed_money.json"
 scene = ExtResource("2_scene")
 price = 75
 rarity = "common"

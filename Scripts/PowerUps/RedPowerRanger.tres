@@ -14,6 +14,7 @@ id = "red_power_ranger"
 display_name = "Rad Red"
 description = "Gain +1 additive score for each red dice scored. The additive is cumulative and applies to all future scores."
 icon = SubResource("AtlasTexture_mumju")
+foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/red_power_ranger.json"
 scene = ExtResource("2_scene")
 price = 75
 rarity = "uncommon"
