@@ -503,6 +503,36 @@ func _build_fx_tab() -> void:
 	_style_label(title_tooltip_desc, 12, MENU_TEXT_SOFT)
 	title_tooltip_row.add_child(title_tooltip_desc)
 
+	var powerup_description_row = HBoxContainer.new()
+	powerup_description_row.add_theme_constant_override("separation", 15)
+	toggle_container.add_child(powerup_description_row)
+
+	var powerup_description_label = Label.new()
+	powerup_description_label.text = "PowerUp Descriptions:"
+	powerup_description_label.custom_minimum_size = Vector2(180, 0)
+	powerup_description_label.add_theme_font_override("font", vcr_font)
+	_style_label(powerup_description_label, 16)
+	powerup_description_row.add_child(powerup_description_label)
+
+	var powerup_description_toggle = CheckButton.new()
+	powerup_description_toggle.name = "PowerUpStaticDescriptionsToggle"
+	powerup_description_toggle.button_pressed = GameSettings.power_up_static_descriptions
+	powerup_description_toggle.add_theme_font_override("font", vcr_font)
+	_apply_button_style(powerup_description_toggle, MENU_ACCENT)
+	powerup_description_toggle.toggled.connect(func(enabled: bool):
+		GameSettings.power_up_static_descriptions = enabled
+		GameSettings.save_settings()
+	)
+	powerup_description_toggle.mouse_entered.connect(func(): _tfx.button_hover(powerup_description_toggle))
+	powerup_description_toggle.mouse_exited.connect(func(): _tfx.button_unhover(powerup_description_toggle))
+	powerup_description_row.add_child(powerup_description_toggle)
+
+	var powerup_description_desc = Label.new()
+	powerup_description_desc.text = "ON: always show inline text; OFF: show hover tooltips"
+	powerup_description_desc.add_theme_font_override("font", vcr_font)
+	_style_label(powerup_description_desc, 12, MENU_TEXT_SOFT)
+	powerup_description_row.add_child(powerup_description_desc)
+
 	# Info label
 	var info_label = Label.new()
 	info_label.text = "FX changes apply immediately and are saved."

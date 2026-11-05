@@ -38,7 +38,12 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 8
 
-[node name="TitleLabel" type="Label" parent="InnerMargin/ContentVBox"]
+[node name="TitlePill" type="PanelContainer" parent="InnerMargin/ContentVBox"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="TitleLabel" type="Label" parent="InnerMargin/ContentVBox/TitlePill"]
 custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
 mouse_filter = 2
@@ -49,7 +54,7 @@ clip_text = true
 text_overrun_behavior = 3
 
 [node name="ArtStage" type="Control" parent="InnerMargin/ContentVBox"]
-custom_minimum_size = Vector2(0, 150)
+custom_minimum_size = Vector2(0, 72)
 layout_mode = 2
 mouse_filter = 2
 size_flags_horizontal = 3
@@ -75,10 +80,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -14.0
-offset_top = -14.0
-offset_right = 14.0
-offset_bottom = 14.0
+offset_left = -28.0
+offset_top = -28.0
+offset_right = 28.0
+offset_bottom = 28.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -114,6 +119,24 @@ layout_mode = 0
 offset_right = 42.0
 offset_bottom = 42.0
 mouse_filter = 1
+
+[node name="DescriptionPanel" type="PanelContainer" parent="InnerMargin/ContentVBox"]
+visible = false
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="DescriptionLabel" type="Label" parent="InnerMargin/ContentVBox/DescriptionPanel"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+mouse_filter = 2
+theme_override_fonts/font = ExtResource("3_font")
+horizontal_alignment = 1
+vertical_alignment = 1
+clip_text = true
+text_overrun_behavior = 3
+autowrap_mode = 2
+max_lines_visible = 3
 
 [node name="ActionBar" type="HBoxContainer" parent="InnerMargin/ContentVBox"]
 custom_minimum_size = Vector2(0, 52)

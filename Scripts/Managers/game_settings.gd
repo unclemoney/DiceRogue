@@ -58,6 +58,7 @@ var fx_group_enabled: Dictionary = {}
 
 # UI settings
 var container_title_tooltips_enabled: bool = true
+var power_up_static_descriptions: bool = false
 
 # Default keyboard bindings - supports up to 16 dice locks
 const DEFAULT_KEYBINDINGS := {
@@ -173,6 +174,7 @@ func load_settings() -> void:
 
 	# Load UI settings
 	container_title_tooltips_enabled = config.get_value("ui", "container_title_tooltips_enabled", true)
+	power_up_static_descriptions = config.get_value("ui", "power_up_static_descriptions", false)
 
 	# Apply loaded settings
 	_apply_audio_settings()
@@ -219,6 +221,7 @@ func save_settings() -> void:
 
 	# Save UI settings
 	config.set_value("ui", "container_title_tooltips_enabled", container_title_tooltips_enabled)
+	config.set_value("ui", "power_up_static_descriptions", power_up_static_descriptions)
 
 	var err = config.save(SETTINGS_FILE_PATH)
 	if err != OK:

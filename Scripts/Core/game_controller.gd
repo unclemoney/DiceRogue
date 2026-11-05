@@ -5843,11 +5843,9 @@ func _on_power_up_description_updated(power_up_id: String, new_description: Stri
 		print("[GameController] New description:", new_description)
 	
 	if powerup_ui:
-		var icon = powerup_ui.get_power_up_icon(power_up_id)
-		if icon and icon.hover_label:
-			icon.hover_label.text = new_description
-			if _debug_enabled:
-				print("[GameController] Updated hover label text for power-up icon")
+		powerup_ui.update_power_up_description(power_up_id, new_description)
+		if _debug_enabled:
+			print("[GameController] Updated PowerUp description display")
 
 func _on_randomizer_effect_updated(effect_type: String, value_text: String) -> void:
 	if _debug_enabled:

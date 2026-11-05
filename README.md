@@ -315,7 +315,7 @@ All major UI popups use TweenFX-based bouncy entrance/exit animations for juicy 
 | **PowerUp Sell** | Jelly wobble → spin + shrink → fly toward money counter | — | Targets `MoneyLabel` global position |
 | **PowerUp Expiry** | Alarm flash highlight → fidget wild spin → fly to random screen edge + vanish | — | Orange alarm color |
 | **Mom Confiscation** | Auto-fan cards → red alarm flash on condemned → fidget + fly-to-Mom + vanish (staggered) | Folds cards back | Stagger: 0.2s (≤3 items) or 0.1s (>3) |
-| **PowerUp POG Tile** | Background-free Foilsmith POG with circular rarity glow, rim rating sticker, and always-visible SELL button | Pointer tilt + depth/HOLO response, hover lift/glow, click selection, fan-out slide/scale | 200×300 root; 224×324 spacing envelope; 4-per-row fan-out |
+| **PowerUp POG Tile** | Background-free Foilsmith POG with title pill, filled circular rarity glow, rim-contact rating sticker, and always-visible SELL button | Pointer tilt + depth/HOLO response, hover lift/glow, click selection, fan-out slide/scale | 200×300 root in hover/static modes; 224×324 spacing envelope; 4-per-row fan-out |
 | **Consumable Sell** | Jelly wobble → spin + shrink → fly toward money counter | — | Same pattern as PowerUp sell |
 | **Consumable Use** | Fidget wild spin → fly to random edge → `ConsumableExplosion` at exit | — | Explosion effect at exit point |
 
@@ -442,17 +442,18 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
     - **The Great Exchange** (Rare/$350): +2 dice, -1 roll per turn — more dice but fewer re-roll chances
     - **Extra Rainbow** (Rare/$300): +10 additive score per colored die scored — rewards color dice strategy
 - **PowerUp UI — POG Tiles** (`Scripts/UI/kiosk_tile.gd`, `Scenes/PowerUp/kiosk_tile.tscn`)
-  - Background-free 200×300 fan-out tile: transparent title, large circular POG, and always-visible glass SELL button; rules text remains in the rich hover tooltip
+  - Background-free 200×300 fan-out tile: translucent title pill, large circular POG, and always-visible glass SELL button
+  - Settings → FX → **Always Show PowerUp Descriptions** selects live hover tooltips (off, default) or three-line inline descriptions on a translucent panel (on). Inline mode preserves the tile footprint by shrinking the artwork stage and Mom badge; the setting persists in `user://settings.cfg`
   - Foilsmith supplies baked depth, FX, and normal maps plus pointer-driven HOLO tilt/parallax; card flipping and card-frame components are disabled
   - Every valid PowerUp has a 64×64 native pixel grid on Foilsmith's 640×640 baked canvas in `Resources/Art/Powerups/Foilsmith/`; `PowerUpData.foilsmith_card_json` points to its card JSON, and unbaked items fall back to their original icon
-  - Circular rarity glow (`Scripts/Shaders/pog_rarity_glow.gdshader`) surrounds the POG, with stronger hover/selected states; active synergy adds a separate outer circular ring
-  - Parental Approval sticker (`Scripts/UI/sticker_badge.gd`) is a neutral 42×42 badge on the POG's upper-right rim: G → "Mom-Approved", PG → "Questionable", PG-13 → "Parental Guidance", R → "Grounded", NC-17 → "Banned"
+  - Circular rarity glow (`Scripts/Shaders/pog_rarity_glow.gdshader`) uses 75% of the POG radius and a 28 px outer falloff to cover tilt gaps; tune `KioskTile.RARITY_GLOW_RADIUS_SCALE` and `KioskTile.RARITY_GLOW_OVERFLOW`. Active synergy adds a separate outer circular ring
+  - Parental Approval sticker (`Scripts/UI/sticker_badge.gd`) is a neutral 42×42 badge whose lower-left corner touches the POG's upper-right rim: G → "Mom-Approved", PG → "Questionable", PG-13 → "Parental Guidance", R → "Grounded", NC-17 → "Banned"
   - Badge keeps its five icons, pointer-reactive foil, non-blocking rating tooltip, and holo profile APIs; rarity color belongs to the POG ring rather than the badge
   - Neon yellow VCR titles auto-shrink from 20 px to 12 px before ellipsis; hover lift/scale, selection glow/rotation, and fan-out transforms remain additive
-  - `PowerUpIcon` (`Scripts/UI/power_up_icon.gd`) wraps `KioskTile` and keeps a `use_kiosk_tile` toggle for legacy fallback
+  - `PowerUpIcon` (`Scripts/UI/power_up_icon.gd`) wraps `KioskTile` and keeps a `use_kiosk_tile` toggle for legacy fallback. `PowerUpUI` owns tooltip hover identity, uses the shared `Tooltip` scene for the same animated/rarity styling as the Mom badge, and routes `description_updated` values to visible hover or inline text
   - Rebuild assets with `godot --path . --script res://Scripts/Editor/run_powerup_foilsmith_bake.gd -- --quit-after-bake`, or run `Scripts/Editor/bake_powerup_foilsmith.gd` from the Script editor. The CLI runner uses synchronous depth estimation and reuses saved depth maps on later bakes. After a CLI bake, run `godot --headless --path . --import`; the baker writes the required lossless/alpha/normal-map import settings.
-  - Focused validation: `Tests/KioskTileTest.tscn` (`1`/`2`/`3` badge profiles, `4` Foilsmith map layer, `5` plain-art fallback) and automated `Tests/PowerUpFoilsmithTest.tscn`
-  - Live debug: Items → **Cycle PowerUp Foil Layer** opens the fan and cycles shaded, foil, depth, pop-out, and normal-map views
+  - Focused validation: `Tests/KioskTileTest.tscn` (`1`/`2`/`3` badge profiles, `4` Foilsmith map layer, `5` plain-art fallback, `6` static descriptions), automated `Tests/PowerUpFoilsmithTest.tscn`, and `Tests/PogFanVisualTest.tscn` for real GUI hover, both description modes, live updates, and tilt captures
+  - Live debug: Items → **Cycle PowerUp Foil Layer** cycles map views; **Toggle PowerUp Description Mode** switches and saves hover/static display
 - **Consumables** (`Scripts/Consumable/`) - Single-use strategic items
   - **Lucky Upgrade** ($25): Randomly upgrades one unscored scorecard category by 1 level
   - **Half Price** ($25): Halves PowerUp prices in the shop. Stacks multiplicatively. Expires on first PowerUp purchase or new turn.

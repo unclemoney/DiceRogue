@@ -22,6 +22,7 @@ const COMPACT_TEXT: Color = Color(0.968627, 0.941176, 1.0, 1.0)
 const COMPACT_OUTLINE: Color = Color(0.129412, 0.121569, 0.2, 0.0)
 const OVERFLOW_TEXT: String = "+MORE"
 const VCR_FONT = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+const TOOLTIP_SCENE = preload("res://Scenes/UI/tooltip.tscn")
 
 @export var power_up_icon_scene: PackedScene
 @export var power_up_spine_scene: PackedScene
@@ -54,8 +55,9 @@ var _overflow_label: Label
 # Animation and background
 var _background: ColorRect
 var _idle_tweens: Array[Tween] = []  # Track individual idle animation tweens
-var _spine_tooltip: PanelContainer
-var _spine_tooltip_label: Label
+var _spine_tooltip: Tooltip
+var _hovered_fan_power_up_id: String = ""
+var _fan_tooltip_generation: int = 0
 
 # Shop auto-minimize state
 var _shop_ui: Control = null
@@ -120,11 +122,25 @@ func _ready() -> void:
 	
 	# Defer layout until container size is known
 	resized.connect(_on_resized)
+	if not GameSettings.settings_saved.is_connected(_apply_description_mode):
+		GameSettings.settings_saved.connect(_apply_description_mode)
 	call_deferred("_adapt_layout")
 	call_deferred("_initial_layout")
 	call_deferred("_connect_synergy_manager")
 	
 	print("[PowerUpUI] New spine-based system initialized")
+
+
+func _apply_description_mode() -> void:
+	var static_descriptions: bool = GameSettings.power_up_static_descriptions
+	if static_descriptions:
+		_clear_fan_tooltip()
+	for icon in _fanned_icons.values():
+		if not icon or not is_instance_valid(icon):
+			continue
+		icon.set_static_descriptions_enabled(static_descriptions)
+		var power_up_id: String = icon.data.id
+		icon.set_description_text(_get_live_description(power_up_id, icon.data))
 
 
 func _on_resized() -> void:
@@ -172,6 +188,8 @@ func _exit_tree() -> void:
 		if tween and tween.is_valid():
 			tween.kill()
 	_idle_tweens.clear()
+	if GameSettings.settings_saved.is_connected(_apply_description_mode):
+		GameSettings.settings_saved.disconnect(_apply_description_mode)
 	if _synergy_manager and is_instance_valid(_synergy_manager):
 		if _synergy_manager.synergies_updated.is_connected(_update_synergy_halos):
 			_synergy_manager.synergies_updated.disconnect(_update_synergy_halos)
@@ -507,31 +525,11 @@ func _assign_spine_to_slot(spine: PowerUpSpine, slot_index: int, show_spine: boo
 		spine.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 func _create_spine_tooltip() -> void:
-	# Create tooltip for spine hover - shows detailed PowerUp info
-	_spine_tooltip = PanelContainer.new()
+	_spine_tooltip = TOOLTIP_SCENE.instantiate() as Tooltip
 	_spine_tooltip.name = "SpineTooltip"
-	_spine_tooltip.visible = false
-	_spine_tooltip.z_index = RenderLayers.Z_FAN_TOOLTIP  # Above fanned icons
-	_spine_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Don't block clicks
-	
-	# Apply direct hover styling
-	_apply_hover_tooltip_style(_spine_tooltip)
-	
-	# Create a VBoxContainer to hold multiple power-up entries
-	var vbox = VBoxContainer.new()
-	vbox.name = "TooltipContent"
-	vbox.add_theme_constant_override("separation", 8)
-	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_spine_tooltip.add_child(vbox)
-	
-	# Keep _spine_tooltip_label for backwards compat but we won't use it for display
-	_spine_tooltip_label = Label.new()
-	_spine_tooltip_label.name = "SpineTooltipLabel"
-	_spine_tooltip_label.visible = false  # Hidden - we use the VBox now
-	_spine_tooltip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(_spine_tooltip_label)
-	
-	# Add tooltip to shared overlay so it isn't clipped by containers
+	_spine_tooltip.top_level = true
+	_spine_tooltip.tint_border_by_rarity = true
+	_spine_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var overlay: CanvasLayer = FanOverlayHelper.get_overlay(self)
 	overlay.add_child(_spine_tooltip)
 
@@ -789,6 +787,8 @@ func _create_fanned_icons() -> void:
 		
 		overlay.add_child(icon)
 		icon.set_data(data)
+		icon.set_static_descriptions_enabled(GameSettings.power_up_static_descriptions)
+		icon.set_description_text(_get_live_description(power_up_id, data))
 		icon.z_index = RenderLayers.Z_FAN_CARD_BASE + i  # Ensure cards are above background and shop
 		
 		# Hide CardInfo/Title for cleaner fanned view
@@ -808,8 +808,8 @@ func _create_fanned_icons() -> void:
 		# (Connections die with the tile when icons are freed in _clear_fanned_icons.)
 		var kiosk_tile: Control = icon.get_node_or_null("KioskTile")
 		if kiosk_tile:
-			kiosk_tile.connect("description_hovered", _on_fan_icon_hovered.bind(power_up_id))
-			kiosk_tile.connect("description_unhovered", _on_fan_icon_unhovered.bind(power_up_id))
+			kiosk_tile.connect("description_hovered", _on_fan_icon_hovered)
+			kiosk_tile.connect("description_unhovered", _on_fan_icon_unhovered)
 		
 		# Store reference
 		_fanned_icons[power_up_id] = icon
@@ -904,6 +904,7 @@ func _fold_back_cards() -> void:
 	print("[PowerUpUI] Folding back cards")
 	_is_animating = true
 	_current_state = State.SPINES
+	_clear_fan_tooltip()
 	
 	# Play fan in sound
 	var audio_mgr = get_node_or_null("/root/AudioManager")
@@ -972,6 +973,7 @@ func _clear_fanned_icons() -> void:
 		if icon:
 			icon.queue_free()
 	_fanned_icons.clear()
+	_clear_fan_tooltip()
 	
 	if _synergy_banner and is_instance_valid(_synergy_banner):
 		_synergy_banner.visible = false
@@ -1038,57 +1040,68 @@ func _stop_idle_animations() -> void:
 	_idle_tweens.clear()
 
 func _on_spine_hovered(power_up_id: String, mouse_pos: Vector2) -> void:
-	if _current_state != State.SPINES:
+	if _current_state != State.SPINES or GameSettings.power_up_static_descriptions:
 		return
-	
 	_build_detailed_spine_tooltip(power_up_id)
-	
-	# Position and show tooltip
-	await get_tree().process_frame  # Wait for tooltip to calculate its size
-	_spine_tooltip.position = mouse_pos + Vector2(-50, -_spine_tooltip.size.y * 2)
-	
-	# Keep tooltip on screen
-	var viewport_size = get_viewport_rect().size
-	if _spine_tooltip.position.x + _spine_tooltip.size.x > viewport_size.x:
-		_spine_tooltip.position.x = viewport_size.x - _spine_tooltip.size.x - 10
-	if _spine_tooltip.position.y < 0:
-		_spine_tooltip.position.y = mouse_pos.y + 20
-	
-	_spine_tooltip.visible = true
+	var tooltip_height := _spine_tooltip.get_combined_minimum_size().y
+	_spine_tooltip.show_at(mouse_pos + Vector2(-50.0, -tooltip_height - 16.0))
+
 
 func _on_spine_unhovered(_power_up_id: String) -> void:
-	_spine_tooltip.visible = false
+	_spine_tooltip.cancel_pending_show()
+	_spine_tooltip.hide()
 
 
 func _on_fan_icon_hovered(power_up_id: String) -> void:
-	if _current_state != State.FANNED:
+	if _current_state != State.FANNED or GameSettings.power_up_static_descriptions:
 		return
 	if not _fanned_icons.has(power_up_id):
 		return
-	
+	_hovered_fan_power_up_id = power_up_id
+	_fan_tooltip_generation += 1
+	var generation := _fan_tooltip_generation
 	_build_detailed_spine_tooltip(power_up_id)
+	_spine_tooltip.reset_size()
 	
-	# Position tooltip beside the hovered tile
-	await get_tree().process_frame  # Wait for tooltip to calculate its size
+	await get_tree().process_frame
+	if generation != _fan_tooltip_generation or _hovered_fan_power_up_id != power_up_id:
+		return
+	if _current_state != State.FANNED or GameSettings.power_up_static_descriptions:
+		return
+	if not _fanned_icons.has(power_up_id):
+		return
 	var icon: PowerUpIcon = _fanned_icons[power_up_id]
 	if not is_instance_valid(icon):
 		return
 	var tile_rect: Rect2 = icon.get_global_rect()
-	var pos: Vector2 = Vector2(tile_rect.position.x + tile_rect.size.x + 12, tile_rect.position.y)
-	
-	# Keep tooltip on screen
-	var viewport_size = get_viewport_rect().size
-	if pos.x + _spine_tooltip.size.x > viewport_size.x:
-		pos.x = tile_rect.position.x - _spine_tooltip.size.x - 12
-	if pos.y + _spine_tooltip.size.y > viewport_size.y:
-		pos.y = viewport_size.y - _spine_tooltip.size.y - 10
-	if pos.y < 0:
-		pos.y = 10
-	_spine_tooltip.position = pos
-	_spine_tooltip.visible = true
+	var tooltip_size := _spine_tooltip.get_combined_minimum_size()
+	var pos := Vector2(tile_rect.position.x + tile_rect.size.x + 12.0, tile_rect.position.y)
+	if pos.x + tooltip_size.x > get_viewport_rect().size.x:
+		pos.x = tile_rect.position.x - tooltip_size.x - 12.0
+	_spine_tooltip.show_at(pos, tile_rect)
 
-func _on_fan_icon_unhovered(_power_up_id: String) -> void:
-	_spine_tooltip.visible = false
+
+func _on_fan_icon_unhovered(power_up_id: String) -> void:
+	if _hovered_fan_power_up_id != power_up_id:
+		return
+	_clear_fan_tooltip()
+
+
+func _clear_fan_tooltip() -> void:
+	_hovered_fan_power_up_id = ""
+	_fan_tooltip_generation += 1
+	if _spine_tooltip:
+		_spine_tooltip.cancel_pending_show()
+		if _spine_tooltip.visible:
+			_spine_tooltip.hide()
+
+
+func update_power_up_description(power_up_id: String, new_description: String) -> void:
+	var icon := get_power_up_icon(power_up_id)
+	if icon:
+		icon.set_description_text(new_description)
+	if _current_state == State.FANNED and _hovered_fan_power_up_id == power_up_id:
+		_build_detailed_spine_tooltip(power_up_id, new_description)
 
 
 ## _get_live_description(power_up_id, data)
@@ -1105,140 +1118,22 @@ func _get_live_description(power_up_id: String, data: PowerUpData) -> String:
 	return data.description
 
 
-## _build_detailed_spine_tooltip(power_up_id)
+## _build_detailed_spine_tooltip(power_up_id, description_override)
 ##
-## Builds a rich tooltip for one hovered PowerUp.
-## Clears and rebuilds the tooltip VBox content each time.
-func _build_detailed_spine_tooltip(power_up_id: String = "") -> void:
-	var vbox = _spine_tooltip.get_node_or_null("TooltipContent")
-	if not vbox:
+## Uses the shared Mom-badge tooltip with live PowerUp rules and rarity styling.
+func _build_detailed_spine_tooltip(power_up_id: String = "", description_override: String = "") -> void:
+	if not _spine_tooltip or not _power_up_data.has(power_up_id):
 		return
-	
-	# Clear existing entries (keep the hidden label)
-	for child in vbox.get_children():
-		if child != _spine_tooltip_label:
-			child.queue_free()
-	
-	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
-	var visible_ids: Array[String] = []
-	if power_up_id != "" and _power_up_data.has(power_up_id):
-		visible_ids.append(power_up_id)
-	else:
-		visible_ids = _get_ordered_power_up_ids()
-	
-	# Title header
-	var header = Label.new()
-	header.text = "POWER-UP"
-	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if vcr_font:
-		header.add_theme_font_override("font", vcr_font)
-	header.add_theme_font_size_override("font_size", 16)
-	header.add_theme_color_override("font_color", Color(1, 0.8, 0.2, 1))  # Gold
-	vbox.add_child(header)
-	
-	# Separator
-	var sep = HSeparator.new()
-	sep.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	sep.add_theme_constant_override("separation", 4)
-	vbox.add_child(sep)
-	
-	if visible_ids.is_empty():
-		var empty_label = Label.new()
-		empty_label.text = "No power-ups owned"
-		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		empty_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		if vcr_font:
-			empty_label.add_theme_font_override("font", vcr_font)
-		empty_label.add_theme_font_size_override("font_size", 12)
-		empty_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6, 1))
-		vbox.add_child(empty_label)
-		return
-	
-	for i in range(visible_ids.size()):
-		var id = visible_ids[i]
-		var data: PowerUpData = _power_up_data[id]
-		if not data:
-			continue
-		
-		# Entry container for this power-up
-		var entry = VBoxContainer.new()
-		entry.name = "Entry_" + id
-		entry.add_theme_constant_override("separation", 2)
-		entry.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		
-		# Title row: rarity indicator + name
-		var title_row = HBoxContainer.new()
-		title_row.add_theme_constant_override("separation", 6)
-		title_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		
-		# Rarity dot/indicator
-		var rarity_label = Label.new()
-		var rarity_char = PowerUpData.get_rarity_display_char(data.rarity)
-		rarity_label.text = "[" + rarity_char + "]"
-		rarity_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		if vcr_font:
-			rarity_label.add_theme_font_override("font", vcr_font)
-		rarity_label.add_theme_font_size_override("font_size", 12)
-		rarity_label.add_theme_color_override("font_color", _get_tooltip_rarity_color(data.rarity))
-		title_row.add_child(rarity_label)
-		
-		# PowerUp name
-		var name_label = Label.new()
-		name_label.text = data.display_name
-		name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		if vcr_font:
-			name_label.add_theme_font_override("font", vcr_font)
-		name_label.add_theme_font_size_override("font_size", 13)
-		name_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-		title_row.add_child(name_label)
-		
-		entry.add_child(title_row)
-		
-		# Description (live values when the PowerUp is active in-game)
-		var desc_label = Label.new()
-		desc_label.text = _get_live_description(id, data)
-		desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		desc_label.custom_minimum_size = Vector2(250, 0)
-		desc_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		if vcr_font:
-			desc_label.add_theme_font_override("font", vcr_font)
-		desc_label.add_theme_font_size_override("font_size", 11)
-		desc_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8, 0.9))
-		entry.add_child(desc_label)
-		
-		# Rating
-		var rating_label = Label.new()
-		rating_label.text = "Rated: " + PowerUpData.get_rating_display_char(data.rating)
-		rating_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		if vcr_font:
-			rating_label.add_theme_font_override("font", vcr_font)
-		rating_label.add_theme_font_size_override("font_size", 10)
-		rating_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7, 0.8))
-		entry.add_child(rating_label)
-		
-		vbox.add_child(entry)
-		
-		# Add separator between entries (not after last)
-		if i < visible_ids.size() - 1:
-			var entry_sep = HSeparator.new()
-			entry_sep.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			entry_sep.add_theme_constant_override("separation", 2)
-			entry_sep.modulate = Color(1, 1, 1, 0.3)
-			vbox.add_child(entry_sep)
-
-
-## _get_tooltip_rarity_color(rarity_string)
-##
-## Returns the display color for a given rarity string.
-func _get_tooltip_rarity_color(rarity_string: String) -> Color:
-	match rarity_string.to_lower():
-		"common": return Color.GRAY
-		"uncommon": return Color.GREEN
-		"rare": return Color(0.3, 0.5, 1.0)  # Brighter blue for readability
-		"epic": return Color(0.7, 0.3, 1.0)  # Brighter purple for readability
-		"legendary": return Color.ORANGE
-		_: return Color.WHITE
+	var data: PowerUpData = _power_up_data[power_up_id]
+	var description := description_override
+	if description.is_empty():
+		description = _get_live_description(power_up_id, data)
+	_spine_tooltip.setup({
+		"title": data.display_name,
+		"body": description,
+		"rarity": data.rarity,
+	})
+	_spine_tooltip.add_section("Rated: " + PowerUpData.get_rating_display_char(data.rating), "plain")
 
 	
 func _on_power_up_sell_requested(power_up_id: String) -> void:
@@ -1314,6 +1209,7 @@ func _cleanup_empty_state() -> void:
 			if icon and is_instance_valid(icon):
 				icon.queue_free()
 		_fanned_icons.clear()
+		_clear_fan_tooltip()
 		
 		# Hide background immediately
 		_background.visible = false
@@ -1394,6 +1290,7 @@ func clear_all() -> void:
 		if icon:
 			icon.queue_free()
 	_fanned_icons.clear()
+	_clear_fan_tooltip()
 	
 	# Clear data
 	_power_up_data.clear()
@@ -1671,34 +1568,3 @@ func _gui_input(event: InputEvent) -> void:
 			if not _power_up_data.is_empty():
 				_open_fan_view()
 				get_viewport().set_input_as_handled()
-
-## _apply_hover_tooltip_style(panel)
-## Applies the hover tooltip styling directly to a PanelContainer
-func _apply_hover_tooltip_style(panel: PanelContainer) -> void:
-	var style_box = StyleBoxFlat.new()
-	style_box.bg_color = Color(0.247059, 0.219608, 0.345098, 0.98)
-	style_box.border_color = Color(0.713725, 0.301961, 0.478431, 1.0)
-	style_box.set_border_width_all(3)
-	style_box.set_corner_radius_all(14)
-	style_box.corner_detail = 8
-	style_box.content_margin_left = 14.0
-	style_box.content_margin_top = 12.0
-	style_box.content_margin_right = 14.0
-	style_box.content_margin_bottom = 12.0
-	style_box.shadow_color = Color(0.070588, 0.062745, 0.101961, 0.45)
-	style_box.shadow_size = 4
-	
-	panel.add_theme_stylebox_override("panel", style_box)
-	print("[PowerUpUI] Hover tooltip styling applied")
-
-## _apply_hover_label_style(label)
-## Applies the hover label font styling directly to a Label
-func _apply_hover_label_style(label: Label) -> void:
-	var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as FontFile
-	if vcr_font:
-		label.add_theme_font_override("font", vcr_font)
-		label.add_theme_font_size_override("font_size", 14)
-		label.add_theme_color_override("font_color", Color(0.968627, 0.941176, 1.0, 1.0))
-		label.add_theme_color_override("font_outline_color", Color(0.129412, 0.121569, 0.2, 1.0))
-		label.add_theme_constant_override("outline_size", 1)
-	print("[PowerUpUI] Hover label styling applied")

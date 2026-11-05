@@ -1,8 +1,8 @@
 extends Control
 class_name KioskTile
 
-## Background-free PowerUp tile: title, circular Foilsmith POG, rating sticker,
-## and an always-visible sell action. Descriptions remain in PowerUpUI's tooltip.
+## Background-free PowerUp tile: pill title, circular Foilsmith POG, rating sticker,
+## and an always-visible sell action. Descriptions use hover or inline display.
 
 signal sell_requested(power_up_id: String)
 signal tile_clicked(power_up_id: String)
@@ -22,7 +22,8 @@ const TITLE_FONT_SIZE_MIN := 12
 const TITLE_SAFE_MAX_CHARS := 24
 const ACTION_BAR_MIN_HEIGHT := 52.0
 const FOIL_CARD_SCALE := 0.96
-const RARITY_GLOW_OVERFLOW := 14.0
+const RARITY_GLOW_RADIUS_SCALE := 0.75
+const RARITY_GLOW_OVERFLOW := 75.0
 const SYNERGY_HALO_OVERFLOW := 22.0
 const SYNERGY_RADIUS_EXTRA := 7.0
 
@@ -32,10 +33,13 @@ const SYNERGY_RADIUS_EXTRA := 7.0
 @export var glow_hover: float = 0.9
 @export var glow_selected: float = 1.5
 
+var title_pill: PanelContainer
 var title_label: Label
 var art_stage: Control
 var artwork: TextureRect
 var foilsmith_card: FoilsmithCard
+var description_panel: PanelContainer
+var description_label: Label
 var sell_button
 var sticker_badge: StickerBadge
 var rarity_glow: ColorRect
@@ -46,6 +50,9 @@ var _rarity_glow_material: ShaderMaterial
 var _synergy_halo_material: ShaderMaterial
 var _is_hovering := false
 var _is_selected := false
+var _static_descriptions_enabled := false
+var _description_text := ""
+var _badge_scale := 1.0
 var _hover_tween: Tween
 var _base_position := Vector2.ZERO
 var _resting_glow := 0.25
@@ -73,14 +80,17 @@ func _ensure_structure() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	custom_minimum_size = TILE_SIZE
 	size = TILE_SIZE
-	title_label = get_node_or_null("InnerMargin/ContentVBox/TitleLabel") as Label
+	title_pill = get_node_or_null("InnerMargin/ContentVBox/TitlePill") as PanelContainer
+	title_label = get_node_or_null("InnerMargin/ContentVBox/TitlePill/TitleLabel") as Label
 	art_stage = get_node_or_null("InnerMargin/ContentVBox/ArtStage") as Control
 	artwork = get_node_or_null("InnerMargin/ContentVBox/ArtStage/Artwork") as TextureRect
 	foilsmith_card = get_node_or_null("InnerMargin/ContentVBox/ArtStage/FoilsmithCard") as FoilsmithCard
+	description_panel = get_node_or_null("InnerMargin/ContentVBox/DescriptionPanel") as PanelContainer
+	description_label = get_node_or_null("InnerMargin/ContentVBox/DescriptionPanel/DescriptionLabel") as Label
+	sell_button = get_node_or_null("InnerMargin/ContentVBox/ActionBar/SellButton")
 	rarity_glow = get_node_or_null("InnerMargin/ContentVBox/ArtStage/RarityGlow") as ColorRect
 	synergy_halo = get_node_or_null("InnerMargin/ContentVBox/ArtStage/SynergyHalo") as ColorRect
 	sticker_badge = get_node_or_null("InnerMargin/ContentVBox/ArtStage/StickerBadge") as StickerBadge
-	sell_button = get_node_or_null("InnerMargin/ContentVBox/ActionBar/SellButton")
 	if art_stage:
 		art_stage.clip_contents = false
 	if foilsmith_card:
@@ -95,6 +105,13 @@ func _ensure_structure() -> void:
 
 
 func _apply_static_style() -> void:
+	var title_style := StyleBoxFlat.new()
+	title_style.bg_color = Color(0.10, 0.08, 0.14, 0.68)
+	title_style.set_corner_radius_all(17)
+	title_style.corner_detail = 8
+	title_style.content_margin_left = 12.0
+	title_style.content_margin_right = 12.0
+	title_pill.add_theme_stylebox_override("panel", title_style)
 	if VCR_FONT:
 		title_label.add_theme_font_override("font", VCR_FONT)
 	title_label.add_theme_font_size_override("font_size", TITLE_FONT_SIZE_DEFAULT)
@@ -107,6 +124,27 @@ func _apply_static_style() -> void:
 	title_label.custom_minimum_size = Vector2(0.0, TITLE_BAR_MIN_HEIGHT)
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var description_style := StyleBoxFlat.new()
+	description_style.bg_color = Color(0.10, 0.08, 0.14, 0.72)
+	description_style.set_corner_radius_all(12)
+	description_style.corner_detail = 8
+	description_style.content_margin_left = 8.0
+	description_style.content_margin_right = 8.0
+	description_style.content_margin_top = 4.0
+	description_style.content_margin_bottom = 4.0
+	description_panel.add_theme_stylebox_override("panel", description_style)
+	description_panel.visible = _static_descriptions_enabled
+	if VCR_FONT:
+		description_label.add_theme_font_override("font", VCR_FONT)
+	description_label.add_theme_font_size_override("font_size", 11)
+	description_label.add_theme_color_override("font_color", Color(0.90, 0.88, 0.94, 1.0))
+	description_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 1.0))
+	description_label.add_theme_constant_override("outline_size", 1)
+	description_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	description_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	description_label.max_lines_visible = 3
 	if sell_button is Button:
 		sell_button = GlassButtonFactoryRef.replace_button(
 			sell_button,
@@ -127,6 +165,8 @@ func _setup_shaders() -> void:
 	_rarity_glow_material.set_shader_parameter("glow_intensity", _resting_glow)
 	_rarity_glow_material.set_shader_parameter("glow_color", _get_rarity_neon_color())
 	_rarity_glow_material.set_shader_parameter("spread", RARITY_GLOW_OVERFLOW)
+	_rarity_glow_material.set_shader_parameter("inner_spread", 26.0)
+	_rarity_glow_material.set_shader_parameter("inner_strength", 0.30)
 	rarity_glow.material = _rarity_glow_material
 	rarity_glow.color = Color.WHITE
 	rarity_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -171,6 +211,7 @@ func _apply_data() -> void:
 	if sell_button:
 		sell_button.text = "SELL\n$%d" % int(data.price / 2.0)
 	artwork.texture = data.icon
+	set_description_text(data.description)
 	_apply_foilsmith_data()
 	_update_neon_color()
 
@@ -238,19 +279,43 @@ func _update_art_geometry() -> void:
 	if not art_stage or not _rarity_glow_material or not _synergy_halo_material:
 		return
 	var radius := minf(art_stage.size.x, art_stage.size.y) * FOIL_CARD_SCALE * 0.5
+	rarity_glow.offset_left = -RARITY_GLOW_OVERFLOW
+	rarity_glow.offset_top = -RARITY_GLOW_OVERFLOW
+	rarity_glow.offset_right = RARITY_GLOW_OVERFLOW
+	rarity_glow.offset_bottom = RARITY_GLOW_OVERFLOW
 	_rarity_glow_material.set_shader_parameter("rect_size", rarity_glow.size)
-	_rarity_glow_material.set_shader_parameter("circle_radius", radius)
+	_rarity_glow_material.set_shader_parameter("circle_radius", radius * RARITY_GLOW_RADIUS_SCALE)
 	_synergy_halo_material.set_shader_parameter("rect_size", synergy_halo.size)
 	_synergy_halo_material.set_shader_parameter("circle_radius", radius + SYNERGY_RADIUS_EXTRA)
 	if sticker_badge:
-		var rim_center := art_stage.size * 0.5 + Vector2(radius * 0.68, -radius * 0.68)
-		sticker_badge.position = rim_center - sticker_badge.size * 0.5
+		var rim_contact := art_stage.size * 0.5 + Vector2(radius, -radius) / sqrt(2.0)
+		var badge_size := sticker_badge.size * sticker_badge.scale
+		sticker_badge.position = rim_contact - Vector2(0.0, badge_size.y)
 
 
 func set_data(new_data: PowerUpData) -> void:
 	data = new_data
 	if is_inside_tree():
 		_apply_data()
+
+
+func set_description_text(new_description: String) -> void:
+	_description_text = new_description
+	if description_label:
+		description_label.text = _description_text
+
+
+func set_static_descriptions_enabled(enabled: bool) -> void:
+	_static_descriptions_enabled = enabled
+	_badge_scale = 0.78 if enabled else 1.0
+	if sticker_badge:
+		sticker_badge.scale = Vector2.ONE * _badge_scale
+	if not description_panel:
+		return
+	description_panel.visible = enabled
+	if enabled and data:
+		description_unhovered.emit(data.id)
+	call_deferred("_update_art_geometry")
 
 
 func set_selected(selected: bool) -> void:
@@ -316,9 +381,10 @@ func _animate_visual_state(duration: float, pulse_badge: bool = false) -> void:
 	_hover_tween.tween_method(_set_glow_intensity, current_glow, target_glow, duration)
 	_hover_tween.tween_method(_set_glow_pulse, current_pulse, target_pulse, duration)
 	if pulse_badge and sticker_badge:
-		sticker_badge.scale = Vector2.ONE
-		_hover_tween.tween_property(sticker_badge, "scale", Vector2.ONE * 1.08, minf(duration, 0.12)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		_hover_tween.chain().tween_property(sticker_badge, "scale", Vector2.ONE, 0.1)
+		var badge_base := Vector2.ONE * _badge_scale
+		sticker_badge.scale = badge_base
+		_hover_tween.tween_property(sticker_badge, "scale", badge_base * 1.08, minf(duration, 0.12)).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_hover_tween.chain().tween_property(sticker_badge, "scale", badge_base, 0.1)
 
 
 func _get_shader_float(shader_material: ShaderMaterial, parameter: String, fallback: float) -> float:
@@ -335,8 +401,9 @@ func _on_mouse_entered() -> void:
 	_animate_visual_state(0.18, true)
 	if sticker_badge:
 		sticker_badge.set_pointer_global_position(get_global_mouse_position())
-		if not sticker_badge.get_global_rect().has_point(get_global_mouse_position()) and data:
-			description_hovered.emit(data.id)
+	var over_badge := sticker_badge and sticker_badge.get_global_rect().has_point(get_global_mouse_position())
+	if not over_badge and not _static_descriptions_enabled and data:
+		description_hovered.emit(data.id)
 
 
 func _on_mouse_exited() -> void:
@@ -354,7 +421,7 @@ func _on_badge_mouse_entered() -> void:
 
 
 func _on_badge_mouse_exited() -> void:
-	if _is_hovering and data:
+	if _is_hovering and not _static_descriptions_enabled and data:
 		description_hovered.emit(data.id)
 
 

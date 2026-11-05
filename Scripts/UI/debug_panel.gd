@@ -217,6 +217,7 @@ func _create_debug_tabs() -> void:
 		"Items": [
 			{"text": "Grant Random PowerUp", "method": "_debug_grant_powerup"},
 			{"text": "Cycle PowerUp Foil Layer", "method": "_debug_cycle_powerup_foil_layer"},
+			{"text": "Toggle PowerUp Description Mode", "method": "_debug_toggle_powerup_description_mode"},
 			{"text": "Grant Random Consumable", "method": "_debug_grant_consumable"},
 			{"text": "Grant Random Mod", "method": "_debug_grant_mod"},
 			{"text": "Grant Yellow Slime", "method": "_debug_grant_yellow_slime"},
@@ -1596,6 +1597,13 @@ func _debug_cycle_powerup_foil_layer() -> void:
 		return
 	var names := ["Shaded", "Foil", "Depth", "Pop-out", "Normals"]
 	log_debug("PowerUp Foilsmith layer: " + names[layer])
+
+
+func _debug_toggle_powerup_description_mode() -> void:
+	GameSettings.power_up_static_descriptions = not GameSettings.power_up_static_descriptions
+	GameSettings.save_settings()
+	var mode := "STATIC INLINE" if GameSettings.power_up_static_descriptions else "HOVER TOOLTIP"
+	log_debug("PowerUp description mode: " + mode)
 
 
 func _debug_grant_consumable() -> void:

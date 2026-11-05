@@ -57,6 +57,39 @@ func _test_tile_runtime() -> void:
 	tile.set_data(SAMPLE_DATA)
 	await get_tree().process_frame
 	await get_tree().process_frame
+	_check(tile.title_pill != null, "Title has a pill container")
+	if tile.title_pill:
+		var title_style := tile.title_pill.get_theme_stylebox("panel") as StyleBoxFlat
+		_check(title_style != null and title_style.bg_color.a < 1.0, "Title pill is translucent")
+		_check(title_style != null and title_style.corner_radius_top_left >= 16, "Title pill has rounded ends")
+	_check(not tile.description_panel.visible, "Hover mode hides inline descriptions")
+	_check(tile.rarity_glow.material.get_shader_parameter("inner_spread") >= 26.0, "Rarity glow fills inward across the tilt gap")
+	var resting_art_height := tile.art_stage.size.y
+	tile.set_static_descriptions_enabled(true)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(tile.description_panel.visible, "Static mode shows inline descriptions")
+	var description_style := tile.description_panel.get_theme_stylebox("panel") as StyleBoxFlat
+	_check(description_style != null and description_style.bg_color.a < 1.0, "Static description has a translucent background")
+	_check(tile.sticker_badge.scale.x < 1.0, "Static mode shrinks the Mom badge")
+	_check(tile.description_label.text == SAMPLE_DATA.description, "Inline description initializes from PowerUp data")
+	_check(tile.description_label.max_lines_visible == 3, "Inline descriptions are capped at three lines")
+	_check(tile.description_label.size.y >= 44.0, "Inline description fills its panel content height")
+	_check(tile.art_stage.size.y < resting_art_height, "Static mode reserves space by shrinking the art stage")
+	_check(tile.size == Vector2(200, 300), "Static mode preserves the 200x300 tile footprint")
+	var radius := minf(tile.art_stage.size.x, tile.art_stage.size.y) * KioskTile.FOIL_CARD_SCALE * 0.5
+	var glow_radius: float = tile.rarity_glow.material.get_shader_parameter("circle_radius")
+	_check(absf(glow_radius - radius * KioskTile.RARITY_GLOW_RADIUS_SCALE) < 0.1, "Rarity ring uses its reduced radius scale")
+	var rim_contact: Vector2 = tile.sticker_badge.position + Vector2(0.0, tile.sticker_badge.size.y * tile.sticker_badge.scale.y)
+	_check(absf(rim_contact.distance_to(tile.art_stage.size * 0.5) - radius) < 0.1, "Scaled badge lower-left corner touches the upper-right POG rim")
+	tile.set_description_text("Current bonus: +72")
+	_check(tile.description_label.text == "Current bonus: +72", "Inline descriptions accept live updates")
+	tile.set_static_descriptions_enabled(false)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(not tile.description_panel.visible, "Hover mode hides the inline description again")
+	_check(tile.sticker_badge.scale == Vector2.ONE, "Hover mode restores the Mom badge size")
+	_check(tile.art_stage.size.y == resting_art_height, "Hover mode restores the full art stage")
 	_check(tile.foilsmith_card.visible, "Baked Foilsmith card is visible")
 	_check(not tile.artwork.visible, "Fallback art is hidden behind a valid bake")
 	_check(not tile.foilsmith_card.click_to_flip, "POG click does not flip")

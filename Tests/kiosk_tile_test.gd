@@ -21,7 +21,7 @@ func _ready() -> void:
 
 
 func _show_controls() -> void:
-	_log_label.text = "Hover POGs/badges; click tile or SELL. 1-3 badge foil; 4 Foilsmith map; 5 fallback art."
+	_log_label.text = "Hover POGs/badges; click tile or SELL. 1-3 badge foil; 4 Foilsmith map; 5 fallback; 6 descriptions."
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -39,6 +39,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_cycle_foil_layers()
 		KEY_5:
 			_toggle_fallback()
+		KEY_6:
+			_toggle_descriptions()
 		_:
 			return
 	get_viewport().set_input_as_handled()
@@ -147,3 +149,12 @@ func _toggle_fallback() -> void:
 		data.foilsmith_card_json = "" if _fallback_active else str(data.get_meta("original_foilsmith_card_json"))
 		tile.set_data(data)
 	_log_label.text = "Fallback art: %s" % _fallback_active
+
+
+func _toggle_descriptions() -> void:
+	GameSettings.power_up_static_descriptions = not GameSettings.power_up_static_descriptions
+	for icon in _icons:
+		var tile := icon.get_node_or_null("KioskTile") as KioskTile
+		if tile:
+			tile.set_static_descriptions_enabled(GameSettings.power_up_static_descriptions)
+	_log_label.text = "Static descriptions: %s" % GameSettings.power_up_static_descriptions

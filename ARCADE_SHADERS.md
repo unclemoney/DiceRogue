@@ -1127,6 +1127,26 @@ kiosk_tile.set_synergy_halo(PowerUpData.SynergyHaloMode.NONE)
 
 ---
 
+### 24. POG Rarity Glow (`pog_rarity_glow.gdshader`)
+
+Additive circular rarity ring behind fanned PowerUp artwork. `KioskTile.RARITY_GLOW_RADIUS_SCALE` sets the ring to 75% of the artwork radius, while `KioskTile.RARITY_GLOW_OVERFLOW` sets both the 28 px outer falloff and the effect rect's overflow. The shader also retains a 26 px inner falloff whose strength is independent of the resting halo intensity.
+
+#### Parameters
+
+| Parameter | Type | Range | Default | Description |
+|-----------|------|-------|---------|-------------|
+| `glow_color` | Color | - | Pink | Rarity color |
+| `glow_intensity` | Float | 0.0 - 2.0 | 0.25 | Outer halo/rim brightness; hover/selection raise it |
+| `circle_radius` | Float | 0.0 - 256.0 | 80.0 | Ring radius in local pixels |
+| `spread` | Float | 0.0 - 64.0 | 16.0 | Outer glow falloff (px) |
+| `inner_spread` | Float | 0.0 - 64.0 | 26.0 | Inward fill beneath tilted artwork (px) |
+| `inner_strength` | Float | 0.0 - 1.0 | 0.30 | Inner-fill alpha, independent of halo intensity |
+| `pulse_strength` | Float | 0.0 - 1.0 | 0.0 | Selection pulse amount |
+| `time` | Float | - | 0.0 | KioskTile-driven pulse clock |
+| `rect_size` | Vector2 | - | (200, 200) | Pixel size of the effect rect |
+
+---
+
 ## Color Palette Reference
 
 ### Standard 3-Color System (Background Shaders)

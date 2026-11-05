@@ -95,6 +95,18 @@ func set_synergy_halo(mode: int, color: Color = Color.WHITE) -> void:
 		_kiosk_tile.set_synergy_halo(mode, color)
 
 
+func set_static_descriptions_enabled(enabled: bool) -> void:
+	if _kiosk_tile:
+		_kiosk_tile.set_static_descriptions_enabled(enabled)
+
+
+func set_description_text(new_description: String) -> void:
+	if _kiosk_tile:
+		_kiosk_tile.set_description_text(new_description)
+	elif hover_label:
+		hover_label.text = new_description
+
+
 ## cycle_foil_debug_layer() -> int
 ## Cycles the active Foilsmith map view. Returns -1 in legacy card mode.
 func cycle_foil_debug_layer() -> int:
