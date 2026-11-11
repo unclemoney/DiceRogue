@@ -37,8 +37,9 @@ func _parse_cmdline_args() -> void:
 
 func _autorun_layout_repro_test() -> void:
 	var layout_passed = await _run_layout_repro_test()
+	var reroll_passed = await _run_reroll_visual_test()
 	var reset_passed = await _run_round_reset_expiry_test()
-	var passed = layout_passed and reset_passed
+	var passed = layout_passed and reroll_passed and reset_passed
 	if _quit_after_run:
 		get_tree().quit(0 if passed else 1)
 
@@ -486,3 +487,58 @@ func _count_missing_dice_data() -> int:
 		if is_instance_valid(die) and die.dice_data == null:
 			missing_data += 1
 	return missing_data
+
+
+func _run_reroll_visual_test() -> bool:
+	_log_message("--- Running Reroll Visual Regression ---")
+	if dice_hand.dice_list.size() != 5:
+		_log_message("[color=red]Reroll setup requires five rolled dice[/color]")
+		return false
+
+	var locked_die = dice_hand.dice_list[0]
+	locked_die.lock()
+	await get_tree().create_timer(0.35).timeout
+	var locked_value = locked_die.value
+	var locked_face = locked_die.sprite.texture
+	var locked_position = locked_die.position
+	var locked_scale = locked_die.scale
+
+	dice_hand.prepare_dice_for_roll()
+	var previously_rolled_visible := true
+	for die in dice_hand.dice_list:
+		if not die.visible or not die.has_ever_rolled:
+			previously_rolled_visible = false
+
+	var roll_number = dice_hand.current_roll_number
+	dice_hand.roll_all()
+	dice_hand.roll_all()
+	await dice_hand.roll_complete
+	await get_tree().create_timer(0.1).timeout
+
+	var locked_static = locked_die.current_state == Dice.DiceState.LOCKED
+	locked_static = locked_static and locked_die.value == locked_value
+	locked_static = locked_static and locked_die.sprite.texture == locked_face
+	locked_static = locked_static and locked_die.position.is_equal_approx(locked_position)
+	locked_static = locked_static and locked_die.scale.is_equal_approx(locked_scale)
+	locked_static = locked_static and not locked_die._is_breathing
+	var single_roll_sequence = dice_hand.current_roll_number == roll_number + 1
+
+	await get_tree().create_timer(0.45).timeout
+	var final_faces_restored := true
+	for die in dice_hand.dice_list:
+		if not die.visible or die.sprite.texture != die.dice_data.textures[die.value - 1]:
+			final_faces_restored = false
+
+	dice_hand.switch_dice_type("d4")
+	var type_switch_safe := true
+	for die in dice_hand.dice_list:
+		if not die.visible or not die.has_ever_rolled or die.sprite.texture != die.dice_data.textures[0]:
+			type_switch_safe = false
+	dice_hand.switch_dice_type("d6")
+
+	var passed = previously_rolled_visible and locked_static and single_roll_sequence and final_faces_restored and type_switch_safe
+	if passed:
+		_log_message("[color=green]✓ PASS: Reroll visibility, animation, locking, and type switching[/color]")
+	else:
+		_log_message("[color=red]✗ FAIL: visible=%s locked_static=%s single_sequence=%s final_faces=%s type_switch=%s[/color]" % [previously_rolled_visible, locked_static, single_roll_sequence, final_faces_restored, type_switch_safe])
+	return passed

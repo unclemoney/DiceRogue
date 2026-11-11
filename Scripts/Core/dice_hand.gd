@@ -52,6 +52,7 @@ var _debug_enabled: bool = OS.is_debug_build()
 
 # Roll tracking for audio pitch progression (resets after scoring)
 var current_roll_number: int = 0
+var _is_roll_in_progress: bool = false
 
 # Juice: consecutive good rolls tracking for streak escalation
 var consecutive_good_rolls: int = 0
@@ -480,8 +481,9 @@ func _on_die_exit_complete(_die: Dice) -> void:
 ## Plays per-die roll sounds via AudioManager with pitch progression.
 ## Emits `roll_complete` when finished.
 func roll_all() -> void:
-	if dice_list.size() == 0:
+	if dice_list.size() == 0 or _is_roll_in_progress:
 		return
+	_is_roll_in_progress = true
 
 	# Increment roll number for audio pitch progression
 	current_roll_number += 1
@@ -538,6 +540,7 @@ func roll_all() -> void:
 		print("[DiceHand] Rolled", rolled_count, "out of", dice_list.size(), "dice")
 	_update_results()
 	_update_good_roll_streak()
+	_is_roll_in_progress = false
 	emit_signal("roll_complete")
 	
 	# Play dice land sound after a short delay for visual sync
@@ -1137,6 +1140,7 @@ func get_state() -> Dictionary:
 			"color": int(die.color),
 			"is_locked": die.is_locked,
 			"state": int(die.current_state),
+			"has_ever_rolled": die.has_ever_rolled,
 			"mods": mod_ids
 		})
 	return {
@@ -1196,6 +1200,7 @@ func load_state(state: Dictionary) -> void:
 			
 			# Set state via state machine
 			var state_int: int = int(saved.get("state", 0))
+			die.has_ever_rolled = bool(saved.get("has_ever_rolled", state_int != int(Dice.DiceState.ROLLABLE)))
 			if state_int == int(Dice.DiceState.ROLLABLE):
 				die.make_rollable()
 			elif state_int == int(Dice.DiceState.ROLLED):

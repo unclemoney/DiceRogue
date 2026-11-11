@@ -38,6 +38,7 @@ var excluded_from_normal_rolls: bool = false
 
 # State machine properties
 var current_state: DiceState = DiceState.ROLLABLE
+var has_ever_rolled: bool = false
 var _previous_state: DiceState = DiceState.ROLLABLE
 
 @export var dice_data: DiceData
@@ -163,6 +164,7 @@ func set_state(new_state: DiceState) -> void:
 		DiceState.LOCKED:
 			_can_process_input = true
 			is_locked = true
+			_stop_idle_breathing()
 		DiceState.DISABLED:
 			_can_process_input = false
 			is_locked = false
@@ -236,6 +238,7 @@ func roll() -> void:
 	_assign_random_color()
 	#print("[Dice] Rolling", dice_data.display_name, "- got:", value, "color:", DiceColorClass.get_color_name(color))
 	
+	has_ever_rolled = true
 	# Transition to ROLLED state
 	set_state(DiceState.ROLLED)
 	
@@ -314,10 +317,12 @@ func animate_roll():
 	var time_scale = rand_mult / maxf(spd_mult, 0.5)
 	
 	_roll_tween = get_tree().create_tween()
+	_roll_tween.tween_callback(_cycle_roll_face)
 	
 	# Phase A: Anticipation squash
 	_roll_tween.tween_property(self, "scale", Vector2(1.15, 0.85), 0.06 * time_scale)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_roll_tween.parallel().tween_callback(_cycle_roll_face).set_delay(0.03 * time_scale)
 	
 	# Phase B: Launch stretch + hop up + slight rotation
 	_roll_tween.tween_property(self, "scale", Vector2(0.85, 1.25), 0.08 * time_scale)\
@@ -326,6 +331,9 @@ func animate_roll():
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_roll_tween.parallel().tween_property(self, "rotation_degrees", rand_rotation, 0.08 * time_scale)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_roll_tween.parallel().tween_callback(_cycle_roll_face).set_delay(0.02 * time_scale)
+	_roll_tween.parallel().tween_callback(_cycle_roll_face).set_delay(0.05 * time_scale)
+	_roll_tween.tween_callback(update_visual)
 	
 	# Phase C: Impact squash + land
 	_roll_tween.tween_property(self, "scale", Vector2(1.2, 0.8), 0.06 * time_scale)\
@@ -346,8 +354,13 @@ func animate_roll():
 	# Start idle breathing after roll animation completes
 	_roll_tween.tween_callback(_start_idle_breathing)
 
+func _cycle_roll_face() -> void:
+	if not dice_data or dice_data.textures.is_empty():
+		return
+	sprite.texture = dice_data.textures[randi_range(0, dice_data.textures.size() - 1)]
+
 func update_visual():
-	visible = current_state != DiceState.ROLLABLE
+	visible = has_ever_rolled
 	if not dice_data:
 		push_error("[Dice] Cannot update visual - no DiceData assigned!")
 		return
@@ -511,7 +524,7 @@ func _on_mouse_exited():
 		color_label_bg.visible = false
 	
 	# Resume idle breathing if in appropriate state
-	if current_state in [DiceState.ROLLED, DiceState.LOCKED]:
+	if current_state == DiceState.ROLLED:
 		_start_idle_breathing()
 
 func toggle_lock():
@@ -701,7 +714,7 @@ func _get_die_bounds_size() -> Vector2:
 ## Moves the die to a new home position without letting idle breathing pull it
 ## back toward an outdated row while the layout is changing.
 func relayout_to_home(new_home_position: Vector2, duration: float = 0.3) -> void:
-	var should_resume_breathing = _is_breathing and current_state in [DiceState.ROLLED, DiceState.LOCKED]
+	var should_resume_breathing = _is_breathing and current_state == DiceState.ROLLED
 	_stop_idle_breathing()
 	home_position = new_home_position
 	_breathing_base_pos = new_home_position
@@ -1294,11 +1307,6 @@ func _process(_delta: float) -> void:
 	var bob_amount = 2.0 * idle_mult
 	var scale_amount = 0.02 * idle_mult
 	
-	# Locked dice breathe at half intensity
-	if current_state == DiceState.LOCKED:
-		bob_amount = 1.0
-		scale_amount = 0.01
-	
 	position.y = _breathing_base_pos.y + breath * bob_amount
 	scale = Vector2(1.0 + breath * scale_amount, 1.0 - breath * scale_amount * 0.5)
 
@@ -1307,7 +1315,7 @@ func _process(_delta: float) -> void:
 ##
 ## Starts the idle breathing animation. Called after roll settles.
 func _start_idle_breathing() -> void:
-	if current_state not in [DiceState.ROLLED, DiceState.LOCKED]:
+	if current_state != DiceState.ROLLED:
 		return
 	_is_breathing = true
 	_breathing_base_pos = home_position

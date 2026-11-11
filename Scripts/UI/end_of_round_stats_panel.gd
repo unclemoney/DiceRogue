@@ -482,7 +482,7 @@ func show_stats(data: Dictionary) -> void:
 	challenge_reward_label.text = "Challenge Reward:"
 	chore_reward_label.text = "Chore Rewards (%s chores):" % NumberFormatter.format_int(chores_completed_count)
 	empty_categories_label.text = "Empty Categories (%s × $%s):" % [NumberFormatter.format_int(empty_category_count), NumberFormatter.format_int(EMPTY_CATEGORY_BONUS)]
-	score_above_label.text = "Points Above Target (%s pts, max $100):" % NumberFormatter.format_int(points_above_target)
+	score_above_label.text = "Points Above Target (%s pts, max 100):" % NumberFormatter.format_int(points_above_target)
 	buff_bonus_label.text = "Bonuses from Buffs:"
 	power_up_bonus_label.text = "Bonuses from PowerUps:"
 	if total_text_label:

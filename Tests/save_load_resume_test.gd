@@ -260,6 +260,24 @@ func _test_mid_round_resume() -> void:
 			_check("saved dice values restored", values_ok)
 			_check("locked die restored locked", dice_hand.dice_list[2].is_locked == true)
 			_check("unlocked dice restored unlocked", dice_hand.dice_list[0].is_locked == false and dice_hand.dice_list[4].is_locked == false)
+			var rolled_visible := true
+			var rolled_flags := true
+			for die in dice_hand.dice_list:
+				rolled_visible = rolled_visible and die.visible
+				rolled_flags = rolled_flags and die.has_ever_rolled
+			_check("legacy rolled save infers visibility", rolled_visible and rolled_flags)
+			_check("locked die remains scoreable", dice_hand.dice_list[2].can_score())
+
+		var unrolled_state: Dictionary = dice_hand.get_state()
+		for saved_die in unrolled_state["dice"]:
+			saved_die["state"] = int(Dice.DiceState.ROLLABLE)
+			saved_die["is_locked"] = false
+			saved_die["has_ever_rolled"] = false
+		dice_hand.load_state(unrolled_state)
+		var unrolled_hidden := true
+		for die in dice_hand.dice_list:
+			unrolled_hidden = unrolled_hidden and not die.visible and not die.has_ever_rolled
+		_check("unrolled save restores hidden dice", unrolled_hidden)
 
 	# Scorecard reveal on resume: the round intro hides ScoreCardUI and reveals
 	# it via animate_entrance(); _restore_session_ui_state() re-runs that reveal

@@ -47,12 +47,24 @@
 ## SYS:Gameplay — Core Gameplay & Balance
 
 - [ ] `P2-Minor` Refactor Magic Mitt PowerUp to affect the REP meter.
-- [ ] 'P2-Minor' Extra Dice doesn't Roll immediately, but should.
+- [ ] `P2-Minor` Extra Dice doesn't Roll immediately, but should.
 - [X] `P2-Minor` Most mods are just not attractive enough, we need to balance them more.
 - [X] `P2-Minor` Remove the ability to use consumables unless in the main game loop.
 
 ## Bugs
 
+- [ ] `P2-Minor` POGS tool tip goes off the right edge of the screen if too close, needs to check from screen edges.
+- [ ] `P2-Minor` Loss Leader Consumable did not fire correctly, next consumable item after use was not free.
+- [ ] `P2-Minor` Autoscore reccomends 3 of a kind, perhaps it should reccomend 4 of a kind if it's available, because that's where it will score.
+- [X] `P2-Minor` Half Price should be useable between rounds.
+- [ ] `P2-Minor` Shop Expansion should be useable between rounds.
+- [X] `P2-Minor` Clearance rack should be useable between rounds.
+- [X] `P2-Minor` Immunity Consumable should be active at all times. Or only between rounds.
+- [ ] `P2-Minor` Piggy Bank sell value should be 0.
+- [ ] `P2-Minor` One Free Mod should be available at any time during play.
+- [X] `P2-Minor` Clearance Rack Consumable should be available any time.
+- [ ] `P2-Minor` Go Broke or Go Home should not count powerups in the scoring.  Must score in the base category!
+- [ ] `P2-Minor` Dice Rolls have dice dissapear and then reappear, this was a fix for a previous bug and the dice are awaiting a completion, but this visually looks clunky.  Keep the dice visible.
 - [X] `P1-Major` Not returning to main menu from pause screen.
 - [X] `P1-Major` Wild Dice mod not correctly applying to all dice, especially when calculating a Yahtzee, three of a kind or four of a kind. Or is it when multiple are applied?  Painted mod dissapears in tutorial.
 - [x] `P1-Major` After using Dice Surge and it expired, the dice were displayed but not rolled. Same issue with the next round after completing Zone 1.  We need to make sure dice aren't displayed unless rolled. ✅ 2026-10-28
@@ -61,11 +73,14 @@
 
 - [x] 'P1-Major' If you exit the tutorial before finishing, and then try to start a new game it forces you to the tutorial.  It should start a new game. ✅ 2026-10-29
 ## SYS:Shop — Shop & Economy
-
-- [ ] `P2-Minor` Update POG shop item: tighten borders, keep them connected, add a paralaxx effect to the POG?  Add a test scene to determine. 
+- [ ] `P2-Minor` Full House Fortune should pay out bigger.
+- [ ] `P2-Minor` Piggy Bank should be more than $3 per roll, the idea is a way to preserve money if you 
+- [x] `P2-Minor` Update POG shop item: tighten borders, keep them connected, add a paralaxx effect to the POG?  Add a test scene to determine. ✅ 2026-11-06
 
 ## SYS:UI — UI / UX & Animation
 
+- [ ] `P2-Minor` Mom Check-in needs to tween the screen fadeout slower, right now it's very abrupt.
+- [ ] `P2-Minor` Fix all title sizing issues with Powerups in the shop and Consumable fan outs.
 - [X] `P1-Major` Update Tutorial for new UI.
 - [ ] `P2-Minor` Update Challenge Icons.
 - [X] `P2-Minor` Update game over screen, use corrected UI, but also add a mom taunt that is unique.  I told you I was the champ.
@@ -75,6 +90,7 @@
 
 ## SYS:Save — Save, Load & State Management
 
+- [ ] `P1-Major` Completed a round, immediately left the game without saving.  Returned to the game, clicked SHOP, however, it displayed the end of round stats panel and gave rewards from the previous round.  Was able to repeat this for an infinite money glitch.
 - [ ] `P2-Minor` Continue testing newly refactored save game system.
 
 ## SYS:Debug — Debug & Testing Tools

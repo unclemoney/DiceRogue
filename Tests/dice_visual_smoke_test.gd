@@ -83,6 +83,7 @@ func _run_smoke_test() -> void:
 		die.position = home_position
 		die.reset_visual_for_spawn()
 		die.value = spec["value"]
+		die.has_ever_rolled = true
 		die.set_state(Dice.DiceState.ROLLED)
 		die.force_color(spec["color"])
 

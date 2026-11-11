@@ -4,15 +4,15 @@ class_name FullHousePowerUp
 ## FullHousePowerUp
 ##
 ## Grants increasing money for every full house rolled throughout the game.
-## Base reward: $7 per full house
-## Scaling: Adds $7 for each additional full house rolled (e.g., 1st = $7, 2nd = $14, etc.)
+## Base reward: $25 per full house
+## Scaling: Adds $25 for each additional full house rolled (e.g., 1st = $25, 2nd = $50, etc.)
 ##
 ## This PowerUp connects to the Scorecard to detect full house patterns in dice
 ## regardless of which category the player scores them in.
 
 # Track full houses for this session
 var total_full_houses_earned: int = 0
-var base_money_per_full_house: int = 7
+var base_money_per_full_house: int = 25
 
 var scorecard_ref: Scorecard = null
 
