@@ -12,6 +12,7 @@ class_name MallStoreIcon
 
 signal icon_hovered(icon: MallStoreIcon)
 signal icon_unhovered(icon: MallStoreIcon)
+signal icon_clicked(icon: MallStoreIcon, event: InputEventMouseButton)
 
 const MallStoreIconsScript = preload("res://Scripts/Managers/mall_store_icons.gd")
 
@@ -202,6 +203,7 @@ func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> voi
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
 			get_viewport().set_input_as_handled()
 			_play_press()
+			emit_signal("icon_clicked", self, mouse_event)
 
 
 func _play_press() -> void:

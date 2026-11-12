@@ -6,16 +6,14 @@ class_name MallMapPopup
 ## Modal in-game mall map, opened from the VCR tracker's Mall Zone label.
 ## Renders the same lightbox directory board as the game-start selector (via
 ## MallMapRenderer) with six pictogram plaques per zone. The current store
-## pulses; hovering a plaque shows that store's upcoming challenge (name,
-## scaled target, exact pre-selected debuffs for the current zone).
+## pulses; clicking a plaque opens its pinned tooltip.
 
 const VCR_FONT: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
 const MallMapLayoutScript = preload("res://Scripts/Managers/mall_map_layout.gd")
 const MallMapRendererScript = preload("res://Scripts/Managers/mall_map_renderer.gd")
 const MallStoreIconScript = preload("res://Scripts/Managers/mall_store_icon.gd")
 const MallStoreTooltipScript = preload("res://Scripts/UI/mall_store_tooltip.gd")
-const MallIconTooltipControllerScript = preload("res://Scripts/UI/mall_icon_tooltip_controller.gd")
-const ChannelManagerUIScript = preload("res://Scripts/Managers/channel_manager_ui.gd")
+const MallMapTooltipControllerScript = preload("res://Scripts/UI/mall_map_tooltip_controller.gd")
 
 var channel_manager = null
 var round_manager = null
@@ -34,8 +32,7 @@ var _tooltip: MallStoreTooltip
 
 var _zones_by_channel: Dictionary = {}
 var _store_markers: Dictionary = {}  # channel -> Array[MallStoreIcon]
-var _icon_tooltip: MallIconTooltipController
-var _hovered_zone := -1
+var _map_tooltip: MallMapTooltipController
 var _original_pos := Vector2.ZERO
 var _closing := false
 
@@ -46,6 +43,7 @@ func _ready() -> void:
 	z_index = RenderLayers.Z_MODAL
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	_build_ui()
+	resized.connect(_on_root_resized)
 
 
 ## setup(p_channel_manager, p_round_manager, p_debuff_manager) -> void
@@ -62,6 +60,7 @@ func setup(p_channel_manager, p_round_manager, p_debuff_manager) -> void:
 ## Rebuilds the map from current run state and animates the panel in.
 func open() -> void:
 	_closing = false
+	_map_tooltip.force_hide()
 	_build_map_content()
 	_position_to_viewport()
 	visible = true
@@ -75,7 +74,7 @@ func close() -> void:
 	if _closing:
 		return
 	_closing = true
-	_icon_tooltip.force_hide()
+	_map_tooltip.force_hide()
 	var tween := create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(panel, "position", _original_pos + Vector2(0, 300), 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
@@ -88,12 +87,22 @@ func _on_close_finished() -> void:
 	panel.modulate.a = 1.0
 
 
+func _input(event: InputEvent) -> void:
+	if visible and _map_tooltip.handle_screen_click(event):
+		get_viewport().set_input_as_handled()
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible:
 		return
 	if event.is_action_pressed("ui_cancel"):
 		close()
 		get_viewport().set_input_as_handled()
+
+
+func _on_root_resized() -> void:
+	if _map_tooltip:
+		_map_tooltip.force_hide()
 
 
 ## _build_ui() -> void
@@ -235,10 +244,10 @@ func _build_ui() -> void:
 	_tooltip.name = "StoreTooltip"
 	add_child(_tooltip)
 
-	_icon_tooltip = MallIconTooltipControllerScript.new()
-	_icon_tooltip.name = "IconTooltipController"
-	add_child(_icon_tooltip)
-	_icon_tooltip.setup(_tooltip, _get_icon_screen_rect, _icon_tooltip_text)
+	_map_tooltip = MallMapTooltipControllerScript.new()
+	_map_tooltip.name = "MapTooltipController"
+	add_child(_map_tooltip)
+	_map_tooltip.setup(_tooltip)
 
 
 func _position_to_viewport() -> void:
@@ -265,11 +274,11 @@ func _animate_entrance() -> void:
 ## Rebuilds backdrop, corridor floor, zones, store icons, and directory from
 ## live state.
 func _build_map_content() -> void:
+	_map_tooltip.force_hide()
 	for child in _map_root.get_children():
 		child.queue_free()
 	_zones_by_channel.clear()
 	_store_markers.clear()
-	_hovered_zone = -1
 
 	if channel_manager and channel_manager.zone_store_names.is_empty():
 		channel_manager.assign_stores_to_zones()
@@ -284,13 +293,13 @@ func _build_map_content() -> void:
 			corridor.modulate.a = 1.0
 		return
 
-	_zones_by_channel = MallMapRendererScript.build_zones(_map_root, channel_manager, _on_zone_hovered, _on_zone_unhovered)
+	_zones_by_channel = MallMapRendererScript.build_zones(_map_root, channel_manager)
 
 	var current_channel: int = channel_manager.current_channel
 	for channel in _zones_by_channel:
 		_zones_by_channel[channel].set_selected(channel == current_channel, false)
 
-	_store_markers = MallMapRendererScript.build_store_icons(_map_root, channel_manager, _on_icon_hovered, _on_icon_unhovered)
+	_store_markers = MallMapRendererScript.build_store_icons(_map_root, channel_manager, Callable(), Callable(), _on_icon_clicked)
 	for channel in _store_markers:
 		for icon in _store_markers[channel]:
 			icon.set_state(MallMapRendererScript.get_store_state(channel_manager, round_manager, channel, icon.store_index))
@@ -343,103 +352,17 @@ func _update_header() -> void:
 	]
 
 
-func _on_icon_hovered(icon: MallStoreIcon) -> void:
-	_icon_tooltip.on_icon_hovered(icon)
-
-
-func _on_icon_unhovered(icon: MallStoreIcon) -> void:
-	_icon_tooltip.on_icon_unhovered(icon)
-
-
-func _on_zone_hovered(channel: int) -> void:
-	_hovered_zone = channel
-	# Plaques sit next to zones and both are Area2D; when the cursor is really
-	# over a plaque — or a plaque show is already pending — the plaque's
-	# controller is claiming the tooltip. (has_pending also covers the
-	# boundary race where a zone enter arrives with a one-frame-stale cursor
-	# position: the plaque claim must not be cancelled.)
-	if _is_plaque_under_mouse(channel) or _icon_tooltip.has_pending():
-		return
-	# The zone genuinely owns the hover: cancel any stale plaque tooltip or
-	# exit-grace and show immediately (moving plaque -> zone leaves no gap).
-	_icon_tooltip.force_hide()
-	_show_zone_tooltip(channel)
-
-
-func _on_zone_unhovered(channel: int) -> void:
-	if _hovered_zone == channel:
-		_hovered_zone = -1
-	if _icon_tooltip.is_busy():
-		return
-	_tooltip.hide_tooltip(true)
-
-
-## _is_plaque_under_mouse(channel) -> bool
-##
-## Plaques sit on top of zones and both are Area2D, so a zone's mouse_entered
-## also fires when the cursor is really over one of its plaques; the plaque's
-## controller is claiming the tooltip in that case.
-func _is_plaque_under_mouse(channel: int) -> bool:
-	var mouse := get_global_mouse_position()
-	for icon in _store_markers.get(channel, []):
-		if _get_icon_screen_rect(icon).has_point(mouse):
-			return true
-	return false
-
-
-## _show_zone_tooltip(channel) -> void
-##
-## Zone wayfinding summary (name, section, difficulty, flavor, dealt store
-## list) — same content shape as the game-start selector.
-func _show_zone_tooltip(channel: int) -> void:
-	if _tooltip == null or channel_manager == null:
-		return
-	var zone = _zones_by_channel.get(channel)
-	if zone == null:
-		return
-
-	var data := {
-		"title": "%s  %s" % [channel_manager.get_mall_zone_label(channel), channel_manager.get_selector_zone_name(channel)],
-		"flavor": channel_manager.get_selector_tooltip_flavor(channel),
-		"sections": [
-			{"text": ChannelManagerUIScript.SECTION_LABELS.get(channel_manager.get_selector_section_id(channel), "DIRECTORY"), "style": "stat", "label": "Section"},
-			{"text": "%s %s" % [channel_manager.get_difficulty_description(channel), TooltipFormat.mult(channel_manager.get_difficulty_multiplier(channel))], "style": "stat", "label": "Difficulty"},
-			{"text": "Stores:", "style": "plain"},
-		],
-	}
-	for round_number in range(1, channel_manager.STORES_PER_ZONE + 1):
-		data["sections"].append({"text": "%d. %s" % [round_number, channel_manager.get_store_name(channel, round_number)], "style": "plain"})
-	_tooltip.show_for(_get_zone_screen_rect(zone), data, SIDE_RIGHT)
-
-
-## _get_zone_screen_rect(zone) -> Rect2
-##
-## The zone's board-space bounds converted to screen space (same transform
-## as _get_icon_screen_rect) — doubles as the stale-guard anchor.
-func _get_zone_screen_rect(zone) -> Rect2:
-	var board_rect: Rect2 = zone.get_anchor_rect()
-	var view_rect := _map_view.get_global_rect()
-	var board_size: Vector2 = MallMapLayoutScript.get_board_size()
-	var board_scale := Vector2.ONE
-	if board_size.x > 0.0:
-		board_scale.x = view_rect.size.x / board_size.x
-	if board_size.y > 0.0:
-		board_scale.y = view_rect.size.y / board_size.y
-	return Rect2(view_rect.position + board_rect.position * board_scale, board_rect.size * board_scale)
-
-
-func _icon_tooltip_text(icon: MallStoreIcon) -> Dictionary:
-	return _build_store_tooltip_text(icon.channel, icon.store_index)
+func _on_icon_clicked(icon: MallStoreIcon, _event: InputEventMouseButton) -> void:
+	_show_store_tooltip(icon)
 
 
 ## _show_store_tooltip(icon) -> void
 ##
-## Shows the hovered store's challenge summary next to its plaque.
+## Requests the clicked store's challenge summary next to its plaque.
 func _show_store_tooltip(icon: MallStoreIcon) -> void:
-	if _tooltip == null:
-		return
 	var text := _build_store_tooltip_text(icon.channel, icon.store_index)
-	_tooltip.show_for(_get_icon_screen_rect(icon), text, SIDE_RIGHT)
+	var key := StringName("store:%d:%d" % [icon.channel, icon.store_index])
+	_map_tooltip.on_item_clicked(key, _get_icon_screen_rect(icon), text)
 
 
 ## _build_store_tooltip_text(channel, store_index) -> Dictionary

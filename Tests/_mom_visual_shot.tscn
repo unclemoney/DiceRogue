@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://dcya4iaa8dxsv"]
 
-[ext_resource type="Script" path="res://Tests/_mom_visual_shot.gd" id="1"]
+[ext_resource type="Script" uid="uid://r4v0sub1quj2" path="res://Tests/_mom_visual_shot.gd" id="1"]
 
 [node name="MomVisualShot" type="Node"]
 script = ExtResource("1")

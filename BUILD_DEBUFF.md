@@ -282,9 +282,9 @@ Debuffs are drawn per round from the `RoundDifficultyConfig` of the active chann
 
 ### Per-Round Pre-Selection
 
-At run start, `RoundManager._initialize_rounds_data()` pre-selects the debuffs for every round and stores them on each round's data dict as `debuff_ids` (Array). Draws go through `DebuffManager` using the round's `RoundDifficultyConfig`, so the per-zone draw-once pool and boss rules are fully decided before Round 1 begins. `RoundManager` exposes the selection source via the `debuff_manager_path` export.
+At each zone entry, `RoundManager.start_game()` calls `_initialize_rounds_data()` once to pre-select the debuffs for every store in that zone and store them on each round's data dict as `debuff_ids` (Array). `_ready()` does not draw. Draws go through `DebuffManager` using the round's `RoundDifficultyConfig`, so the per-zone draw-once pool and boss rules are fully decided before Round 1 begins. `RoundManager` exposes the selection source via the `debuff_manager_path` export.
 
-`GameController._build_round_panel_data()` consumes these stored ids when building the round panel (store list, targets, debuff previews). For old saves that predate pre-selection, it falls back to a fresh draw. Test scene: `Tests/RoundPreselectTest.tscn`.
+`GameController._build_round_panel_data()` and `_apply_automatic_debuffs()` consume these stored ids without drawing again. An empty stored array is authoritative and means the round has no automatic debuffs. For old saves that predate pre-selection, `RoundManager.load_state()` backfills all missing ids in one load-time zone pass. Test scene: `Tests/RoundPreselectTest.tscn`.
 
 ## Difficulty Ratings (1-5, retuned)
 

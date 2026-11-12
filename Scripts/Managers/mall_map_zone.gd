@@ -8,7 +8,6 @@ class_name MallMapZone
 
 signal zone_hovered(channel: int)
 signal zone_unhovered(channel: int)
-signal zone_pressed(channel: int)
 
 const ZONE_SHADER := preload("res://Scripts/Shaders/mall_zone.gdshader")
 const VCR_FONT := preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
@@ -17,7 +16,6 @@ var channel: int = 1
 var zone_name: String = ""
 var directory_label: String = ""
 var section_id: String = "specialty"
-var tooltip_flavor: String = ""
 var label_text: String = ""
 
 var _polygon: Polygon2D
@@ -44,8 +42,6 @@ func _ready() -> void:
 		mouse_entered.connect(_on_mouse_entered)
 	if not mouse_exited.is_connected(_on_mouse_exited):
 		mouse_exited.connect(_on_mouse_exited)
-	if not input_event.is_connected(_on_input_event):
-		input_event.connect(_on_input_event)
 	_refresh_visuals(false)
 
 
@@ -58,7 +54,6 @@ func configure(zone_data: Dictionary, accent_color: Color) -> void:
 	zone_name = zone_data.get("zone_name", "")
 	directory_label = zone_data.get("directory_label", "")
 	section_id = zone_data.get("section_id", "specialty")
-	tooltip_flavor = zone_data.get("tooltip_flavor", "")
 	label_text = zone_data.get("label_text", "")
 	_accent_color = accent_color
 	_base_color = _build_base_color(accent_color)
@@ -95,22 +90,6 @@ func set_completed(value: bool, animate: bool = true) -> void:
 func set_selected(value: bool, animate: bool = true) -> void:
 	_selected = value
 	_refresh_visuals(animate)
-
-
-func get_anchor_rect() -> Rect2:
-	var points := _polygon.polygon
-	if points.is_empty():
-		return Rect2(global_position, Vector2.ZERO)
-
-	var min_point := to_global(points[0])
-	var max_point := min_point
-	for point in points:
-		var global_point := to_global(point)
-		min_point.x = minf(min_point.x, global_point.x)
-		min_point.y = minf(min_point.y, global_point.y)
-		max_point.x = maxf(max_point.x, global_point.x)
-		max_point.y = maxf(max_point.y, global_point.y)
-	return Rect2(min_point, max_point - min_point)
 
 
 func get_directory_text() -> String:
@@ -285,14 +264,6 @@ func _on_mouse_entered() -> void:
 func _on_mouse_exited() -> void:
 	set_hovered(false, true)
 	emit_signal("zone_unhovered", channel)
-
-
-func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> void:
-	if event is InputEventMouseButton:
-		var mouse_event := event as InputEventMouseButton
-		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
-			get_viewport().set_input_as_handled()
-			emit_signal("zone_pressed", channel)
 
 
 func _build_base_color(accent_color: Color) -> Color:

@@ -36,7 +36,7 @@
 ### System
 - `SYS:Gameplay` — Scoring, dice, challenges, debuffs, buffs, synergies, mods.
 - `SYS:Chore` — Goof-off meter, mom, grounding, sass, chore progression.
-- [ ] `SYS:Shop` — Purchases, economy, coupons, pogs, consumables, powerups, colored dice.
+- `SYS:Shop` — Purchases, economy, coupons, pogs, consumables, powerups, colored dice.
 - `SYS:UI` — Panels, animations, tooltips, fonts, buttons, hover states, icons.
 - `SYS:Audio` — Music layers, sound effects, loops.
 - `SYS:Save` — New game, continue, profiles, resets, game over, cross-round state.
@@ -64,7 +64,7 @@
 - [ ] `P2-Minor` One Free Mod should be available at any time during play.
 - [X] `P2-Minor` Clearance Rack Consumable should be available any time.
 - [ ] `P2-Minor` Go Broke or Go Home should not count powerups in the scoring.  Must score in the base category!
-- [ ] `P2-Minor` Dice Rolls have dice dissapear and then reappear, this was a fix for a previous bug and the dice are awaiting a completion, but this visually looks clunky.  Keep the dice visible.
+- [X] `P2-Minor` Dice Rolls have dice dissapear and then reappear, this was a fix for a previous bug and the dice are awaiting a completion, but this visually looks clunky.  Keep the dice visible.
 - [X] `P1-Major` Not returning to main menu from pause screen.
 - [X] `P1-Major` Wild Dice mod not correctly applying to all dice, especially when calculating a Yahtzee, three of a kind or four of a kind. Or is it when multiple are applied?  Painted mod dissapears in tutorial.
 - [x] `P1-Major` After using Dice Surge and it expired, the dice were displayed but not rolled. Same issue with the next round after completing Zone 1.  We need to make sure dice aren't displayed unless rolled. ✅ 2026-10-28
@@ -73,19 +73,19 @@
 
 - [x] 'P1-Major' If you exit the tutorial before finishing, and then try to start a new game it forces you to the tutorial.  It should start a new game. ✅ 2026-10-29
 ## SYS:Shop — Shop & Economy
-- [ ] `P2-Minor` Full House Fortune should pay out bigger.
-- [ ] `P2-Minor` Piggy Bank should be more than $3 per roll, the idea is a way to preserve money if you 
+- [X] `P2-Minor` Full House Fortune should pay out bigger.
+- [X] `P2-Minor` Piggy Bank should be more than $3 per roll, the idea is a way to preserve money if you 
 - [x] `P2-Minor` Update POG shop item: tighten borders, keep them connected, add a paralaxx effect to the POG?  Add a test scene to determine. ✅ 2026-11-06
 
 ## SYS:UI — UI / UX & Animation
 
-- [ ] `P2-Minor` Mom Check-in needs to tween the screen fadeout slower, right now it's very abrupt.
-- [ ] `P2-Minor` Fix all title sizing issues with Powerups in the shop and Consumable fan outs.
+- [X] `P2-Minor` Mom Check-in needs to tween the screen fadeout slower, right now it's very abrupt.
+- [X] `P2-Minor` Fix all title sizing issues with Powerups in the shop and Consumable fan outs.
 - [X] `P1-Major` Update Tutorial for new UI.
 - [ ] `P2-Minor` Update Challenge Icons.
 - [X] `P2-Minor` Update game over screen, use corrected UI, but also add a mom taunt that is unique.  I told you I was the champ.
-- [ ] `P2-Minor` Tooltips on Mall Map not showing up.  We'll update these to click instead of hover.
-- [ ] `P2-Minor` Mall Map tooltip not showing next up challenges.
+- [X] `P2-Minor` Tooltips on Mall Map not showing up.  We'll update these to click instead of hover.
+- [X] `P2-Minor` Mall Map tooltip not showing next up challenges.
 - [x] `P2-Minor` Update tutorial order and click positions
 
 ## SYS:Save — Save, Load & State Management

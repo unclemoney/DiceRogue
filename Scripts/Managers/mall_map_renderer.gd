@@ -24,6 +24,14 @@ const SECTION_COLORS := {
 	"major_stores": Color(0.97, 0.46, 0.16, 1.0),
 }
 
+const SECTION_LABELS := {
+	"eatery": "EATERY",
+	"entertainment": "ENTERTAINMENT",
+	"lifestyle": "LIFESTYLE",
+	"specialty": "SPECIALTY",
+	"major_stores": "DEPARTMENT STORES",
+}
+
 ## Mall-core palette for GlassActionButton on the mall screens: dark warm
 ## brown glass body, mall-gold accent, warm cream glow/rim/specular.
 const MALL_GLASS_PALETTE := {
@@ -174,7 +182,6 @@ static func build_zones(map_root: Node2D, channel_manager, on_hovered: Callable 
 			"zone_name": channel_manager.get_selector_zone_name(channel),
 			"directory_label": channel_manager.get_selector_directory_label(channel),
 			"section_id": channel_manager.get_selector_section_id(channel),
-			"tooltip_flavor": channel_manager.get_selector_tooltip_flavor(channel),
 			"points": layout.get("points", PackedVector2Array()),
 			"label_pos": layout.get("label_pos", Vector2.ZERO),
 		}
@@ -189,13 +196,13 @@ static func build_zones(map_root: Node2D, channel_manager, on_hovered: Callable 
 	return zones
 
 
-## build_store_icons(map_root, channel_manager, on_hovered, on_unhovered) -> Dictionary
+## build_store_icons(map_root, channel_manager, on_hovered, on_unhovered, on_clicked) -> Dictionary
 ##
 ## Builds the 24 wayfinding icons — six pictogram plaques per zone, evenly
 ## spaced along the zone's bar rect — and returns channel -> Array of
 ## MallStoreIcon. Shared by the selector and the in-game popup so both
-## screens carry the identical icons. Hover callbacks are optional.
-static func build_store_icons(map_root: Node2D, channel_manager, on_hovered: Callable = Callable(), on_unhovered: Callable = Callable()) -> Dictionary:
+## screens carry the identical icons. Hover/click callbacks are optional.
+static func build_store_icons(map_root: Node2D, channel_manager, on_hovered: Callable = Callable(), on_unhovered: Callable = Callable(), on_clicked: Callable = Callable()) -> Dictionary:
 	var icons: Dictionary = {}
 	if channel_manager == null:
 		return icons
@@ -224,6 +231,8 @@ static func build_store_icons(map_root: Node2D, channel_manager, on_hovered: Cal
 				icon.icon_hovered.connect(on_hovered)
 			if on_unhovered.is_valid():
 				icon.icon_unhovered.connect(on_unhovered)
+			if on_clicked.is_valid():
+				icon.icon_clicked.connect(on_clicked)
 			map_root.add_child(icon)
 			zone_icons.append(icon)
 		icons[channel] = zone_icons
@@ -308,27 +317,41 @@ static func build_store_tooltip_text(channel_manager, round_manager, debuff_mana
 
 	var is_current_zone: bool = channel_manager != null and channel == channel_manager.current_channel
 	if is_current_zone and round_manager and store_index < round_manager.rounds_data.size():
-		var round_data: Dictionary = round_manager.rounds_data[store_index]
-		# Target mirrors GameController._compute_round_target minus the
-		# transient challenge_score_modifier (powerup effect, not shown here).
-		var target := _compute_store_target(channel_manager, channel, store_number)
-		if target > 0:
-			tip["sections"].append({"text": NumberFormatter.format_int(target), "style": "stat", "label": "Target"})
-		var debuff_ids: Array = round_data.get("debuff_ids", [])
-		for debuff_id in debuff_ids:
-			tip["sections"].append({"text": _get_debuff_display_name(debuff_manager, str(debuff_id)), "style": "stat", "label": "Debuff"})
+		var details := _get_current_store_details(channel_manager, round_manager, debuff_manager, channel, store_index)
+		if details["target"] > 0:
+			tip["sections"].append({"text": NumberFormatter.format_int(details["target"]), "style": "stat", "label": "Challenge"})
+		for debuff_name in details["debuff_names"]:
+			tip["sections"].append({"text": debuff_name, "style": "stat", "label": "Debuff"})
 		tip["sections"].append({"text": _colorize_store_status(_get_store_status_text(channel_manager, round_manager, store_index)), "style": "stat", "label": "Status"})
 	else:
 		if channel_manager:
 			var round_config = channel_manager.get_round_config(channel, store_number)
 			if round_config and round_config.target_score_override > 0:
-				tip["sections"].append({"text": NumberFormatter.format_int(channel_manager.get_scaled_target_score(round_config.target_score_override, channel)), "style": "stat", "label": "Target"})
+				tip["sections"].append({"text": NumberFormatter.format_int(channel_manager.get_scaled_target_score(round_config.target_score_override, channel)), "style": "stat", "label": "Challenge"})
 			if round_config and round_config.get("is_boss_round") == true:
 				tip["sections"].append({"text": "Boss Store", "style": "plain"})
 		tip["sections"].append({"text": "Debuffs: unknown until reached", "style": "plain"})
 		tip["sections"].append({"text": "[color=gray]Upcoming[/color]", "style": "stat", "label": "Status"})
 
 	return tip
+
+
+## _get_current_store_details(channel_manager, round_manager, debuff_manager, channel, store_index) -> Dictionary
+##
+## Returns the shared scaled target and resolved debuff display names for one
+## store in the live zone. Missing round/config data produces zero/empty values.
+static func _get_current_store_details(channel_manager, round_manager, debuff_manager, channel: int, store_index: int) -> Dictionary:
+	var details := {"target": 0, "debuff_names": []}
+	if channel_manager == null or round_manager == null:
+		return details
+	if store_index < 0 or store_index >= round_manager.rounds_data.size():
+		return details
+	details["target"] = _compute_store_target(channel_manager, channel, store_index + 1)
+	var round_data: Dictionary = round_manager.rounds_data[store_index]
+	var debuff_ids: Array = round_data.get("debuff_ids", [])
+	for debuff_id in debuff_ids:
+		details["debuff_names"].append(_get_debuff_display_name(debuff_manager, str(debuff_id)))
+	return details
 
 
 ## _colorize_store_status(status) -> String

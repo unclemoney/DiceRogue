@@ -100,51 +100,56 @@ func _run_test() -> void:
 	await get_tree().process_frame
 	_assert_true(_channel_manager.current_channel == 2, "Arrow keys should no longer move the selection")
 
-	_channel_manager_ui._show_zone_tooltip(1)
-	await get_tree().process_frame
-	_assert_true(_channel_manager_ui._tooltip_panel.visible, "Hover tooltip should still show for zones")
-	_assert_true(_channel_manager_ui._tooltip_panel.get_text().contains(zone_one_store), "Zone tooltip should list the zone's stores")
+	var left_click := InputEventMouseButton.new()
+	left_click.button_index = MOUSE_BUTTON_LEFT
+	left_click.pressed = true
+	_assert_true(not _channel_manager_ui._zones_by_channel[1].has_signal("zone_clicked"), "Zones should not expose a click tooltip signal")
+	_assert_true(not _channel_manager_ui._map_tooltip.is_open(), "No zone tooltip should be open")
 
-	# Store icon tooltip parity: same text the popup would show for the store.
+	# Store icon click parity: same content the popup's shared builder returns.
 	var icon = _channel_manager_ui._store_icons[1][0]
-	var popup_text: String = _mall_map_renderer_script.build_store_tooltip_text(_channel_manager, null, null, 1, 0)
-	_channel_manager_ui._on_store_icon_hovered(icon)
-	await get_tree().create_timer(0.25).timeout  # tooltip shows after the 150ms rest delay
-	await get_tree().process_frame
-	_assert_true(_channel_manager_ui._tooltip_panel.visible, "Store icon hover should show the tooltip")
-	_assert_true(_channel_manager_ui._tooltip_panel.get_text() == popup_text, "Selector store tooltip should match the shared builder output")
-	_assert_true(popup_text.contains(zone_one_store), "Store tooltip should name the store")
-	_channel_manager_ui._hide_tooltip(false)
+	var popup_data: Dictionary = _mall_map_renderer_script.build_store_tooltip_text(_channel_manager, null, null, 1, 0)
+	icon._on_input_event(get_viewport(), left_click, 0)
+	await get_tree().create_timer(0.3).timeout
+	_assert_true(_channel_manager_ui._map_tooltip.is_open(), "Plaque Area2D input should show the store tooltip")
+	_assert_true(_channel_manager_ui._tooltip_panel._last_data == popup_data, "Selector store tooltip should match the shared builder output")
+	_assert_true(_channel_manager_ui._tooltip_panel.get_text().contains(zone_one_store), "Store tooltip should name the store")
+	_channel_manager_ui._on_store_icon_clicked(icon, left_click)
+	_assert_true(not _channel_manager_ui._map_tooltip.is_open(), "Clicking the same store should toggle its tooltip closed")
 
-	# Flicker guard: a quick pass (under the 150ms rest delay) shows nothing.
+	# Hover remains visual-only; no rest delay or quick-pass tooltip exists.
 	var quick_icon = _channel_manager_ui._store_icons[2][0]
 	var neighbor_icon = _channel_manager_ui._store_icons[2][1]
 	_channel_manager_ui._on_store_icon_hovered(quick_icon)
 	_channel_manager_ui._on_store_icon_unhovered(quick_icon)
 	await get_tree().create_timer(0.25).timeout
-	_assert_true(not _channel_manager_ui._tooltip_panel.visible, "Quick pass over an icon shows no tooltip")
+	_assert_true(not _channel_manager_ui._map_tooltip.is_open(), "Hovering a store never opens a tooltip")
 
-	# Neighbor swap: content swaps in place, the tooltip never hides.
-	_channel_manager_ui._on_store_icon_hovered(quick_icon)
-	await get_tree().create_timer(0.25).timeout
-	_assert_true(_channel_manager_ui._tooltip_panel.visible, "Tooltip shows after resting on an icon")
-	_channel_manager_ui._on_store_icon_hovered(neighbor_icon)
-	await get_tree().process_frame
-	_assert_true(_channel_manager_ui._tooltip_panel.visible, "Neighbor swap keeps the tooltip visible")
+	_channel_manager_ui._on_store_icon_clicked(quick_icon, left_click)
+	_channel_manager_ui._on_store_icon_clicked(neighbor_icon, left_click)
+	_assert_true(not _channel_manager_ui._map_tooltip.is_open(), "Other store click should close first, not neighbor-swap")
+	_channel_manager_ui._on_store_icon_clicked(neighbor_icon, left_click)
 	var neighbor_store: String = _channel_manager.get_store_name(2, 2)
-	_assert_true(_channel_manager_ui._tooltip_panel.get_text().contains(neighbor_store), "Neighbor swap replaces the tooltip content")
+	_assert_true(_channel_manager_ui._tooltip_panel.get_text().contains(neighbor_store), "Second click should open the other store")
+	_channel_manager_ui._input(left_click)
+	_assert_true(not _channel_manager_ui._map_tooltip.is_open(), "Any screen click should dismiss the store tooltip")
 
-	# Exit grace: the tooltip lingers ~100ms, then hides.
-	_channel_manager_ui._on_store_icon_unhovered(neighbor_icon)
-	await get_tree().process_frame
-	_assert_true(_channel_manager_ui._tooltip_panel.visible, "Tooltip lingers during the exit grace")
-	await get_tree().create_timer(0.3).timeout
-	_assert_true(not _channel_manager_ui._tooltip_panel.visible, "Tooltip hides after the exit grace")
+	# The separate dice-set tooltip stays hover-driven and outside click state.
+	_channel_manager_ui._show_dice_set_tooltip()
+	_assert_true(not _channel_manager_ui._map_tooltip.is_open(), "Dice-set hover tooltip is not a map click tooltip")
+	_assert_true(_channel_manager_ui._tooltip_panel.get_text().contains("sides"), "Dice-set hover tooltip still shows its content")
+	_channel_manager_ui._on_dice_display_unhover()
 
 	# Directory must fit inside the shell (bottom border visible, no scroll).
 	var shell_rect: Rect2 = _channel_manager_ui.panel_container.get_global_rect()
 	var grid_rect: Rect2 = _channel_manager_ui._directory_grid.get_global_rect()
 	_assert_true(grid_rect.end.y <= shell_rect.end.y, "Store directory should fit inside the shell (grid bottom %.1f > shell bottom %.1f)" % [grid_rect.end.y, shell_rect.end.y])
+
+	_channel_manager_ui._on_store_icon_clicked(icon, left_click)
+	_channel_manager_ui.hide_channel_selector()
+	_assert_true(not _channel_manager_ui._map_tooltip.is_open(), "Hiding the selector force-hides an open map tooltip")
+	await get_tree().create_timer(1.0).timeout
+	_assert_true(not _channel_manager_ui.visible, "Selector exit animation completes after tooltip cleanup")
 
 	_finish()
 

@@ -56,9 +56,9 @@ func set_run_dice_type(type: String) -> void:
 
 ## _ready()
 ##
-## Lifecycle method: verifies required node references, connects to the
-## ChallengeManager signal hub, and initializes internal rounds data.
-## Does not auto-start the first round.
+## Lifecycle method: verifies required node references and connects to the
+## ChallengeManager signal hub. Does not draw debuffs or auto-start a round;
+## start_game() initializes the full zone at zone entry.
 
 func _ready() -> void:
 	add_to_group("round_manager")
@@ -87,8 +87,6 @@ func _ready() -> void:
 		challenge_manager.challenge_completed.connect(_on_challenge_completed)
 		challenge_manager.challenge_failed.connect(_on_challenge_failed)
 
-	# Initialize rounds data
-	_initialize_rounds_data()
 	# Do NOT start the first round automatically
 
 ## _initialize_rounds_data()
@@ -401,7 +399,9 @@ func get_state() -> Dictionary:
 
 ## load_state(state)
 ##
-## Restores the round manager state from a saved dictionary.
+## Restores the round manager state from a saved dictionary. Stored empty
+## debuff arrays are authoritative. Legacy rounds missing the key are backfilled
+## together in one load-time zone pass, never during panel display/round start.
 func load_state(state: Dictionary) -> void:
 	# JSON round-trips numbers as floats; coerce to int/bool for the typed vars.
 	current_round = int(state.get("current_round", 0))
@@ -410,6 +410,7 @@ func load_state(state: Dictionary) -> void:
 	max_rounds = int(state.get("max_rounds", 6))
 	var loaded_rounds = state.get("rounds_data", [])
 	var sanitized_rounds: Array[Dictionary] = []
+	var needs_debuff_backfill := false
 	for loaded_round in loaded_rounds:
 		if loaded_round is Dictionary:
 			var round_data: Dictionary = loaded_round.duplicate(true)
@@ -418,9 +419,32 @@ func load_state(state: Dictionary) -> void:
 				round_data["round_number"] = int(round_data["round_number"])
 			if round_data.has("target_score"):
 				round_data["target_score"] = int(round_data["target_score"])
+			if not round_data.has("debuff_ids"):
+				needs_debuff_backfill = true
 			sanitized_rounds.append(round_data)
 	rounds_data.assign(sanitized_rounds)
+	if needs_debuff_backfill:
+		_backfill_missing_round_debuffs()
 	print("[RoundManager] State loaded - round:", current_round)
+
+
+## _backfill_missing_round_debuffs() -> void
+##
+## One-time legacy save migration. Existing selections, including empty arrays,
+## remain untouched; every missing round is resolved in this single zone pass.
+func _backfill_missing_round_debuffs() -> void:
+	for i in range(rounds_data.size()):
+		var round_data: Dictionary = rounds_data[i]
+		if round_data.has("debuff_ids"):
+			continue
+		var debuff_ids: Array[String] = []
+		if is_instance_valid(channel_manager):
+			var zone: int = channel_manager.current_channel
+			var round_number := int(round_data.get("round_number", i + 1))
+			var round_config = channel_manager.get_round_config(zone, round_number)
+			if round_config:
+				debuff_ids = _preselect_round_debuffs(round_config)["debuff_ids"]
+		round_data["debuff_ids"] = debuff_ids
 
 
 ## resume_round_from_load() -> void

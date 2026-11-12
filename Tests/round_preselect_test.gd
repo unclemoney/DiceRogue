@@ -31,6 +31,26 @@ class StubChannelManager extends RefCounted:
 		return null
 
 
+class CountingDebuffManager extends DebuffManager:
+	var round_draw_calls := 0
+	var boss_draw_calls := 0
+
+	func select_debuffs_for_round(max_count: int, difficulty_cap: int, allow_duplicates: bool = false, exclude_ids: Array = []) -> Array[String]:
+		round_draw_calls += 1
+		return super(max_count, difficulty_cap, allow_duplicates, exclude_ids)
+
+	func select_boss_debuff(exact_level: int, exclude_ids: Array = []) -> String:
+		boss_draw_calls += 1
+		return super(exact_level, exclude_ids)
+
+
+class StubGameController extends GameController:
+	var applied_ids: Array[String] = []
+
+	func apply_debuff(id: String, _ignore_ungrounded: bool = false) -> void:
+		applied_ids.append(id)
+
+
 func _ready() -> void:
 	print("\n=== ROUND PRESELECT TEST ===")
 	await get_tree().process_frame
@@ -48,7 +68,7 @@ func _check(condition: bool, label: String) -> void:
 
 
 func _make_debuff_manager() -> DebuffManager:
-	var manager := DebuffManager.new()
+	var manager := CountingDebuffManager.new()
 	var defs: Array[DebuffData] = [
 		load("res://Scripts/Debuff/DockedAllowanceDebuff.tres"),
 		load("res://Scripts/Debuff/CouponsRevokedDebuff.tres"),
@@ -127,12 +147,16 @@ func _run_tests() -> void:
 	for i in range(6):
 		_check(not rm.rounds_data[i].has("grounding_id"), "round %d has no grounding_id key" % (i + 1))
 
-	# 4. Pool state survives a state round-trip (save/load keys preserved)
+	# 4. Pool state survives a state round-trip (save/load keys preserved).
 	var state: Dictionary = rm.get_state()
+	var counting := manager as CountingDebuffManager
+	var calls_before_load := counting.round_draw_calls + counting.boss_draw_calls
 	var rm2 := _make_round_manager(_make_channel(), manager)
 	rm2.load_state(state)
 	_check(rm2.rounds_data.size() == 6, "loaded rounds_data has 6 rounds")
 	_check(rm2.rounds_data[5]["debuff_ids"] == boss_data["debuff_ids"], "boss debuff ids survive save/load")
+	_check(rm2.rounds_data[2]["debuff_ids"].is_empty(), "valid empty selection survives save/load")
+	_check(counting.round_draw_calls + counting.boss_draw_calls == calls_before_load, "valid save/load makes no new draws")
 	_check(not rm2.rounds_data[0].has("grounding_id"), "load_state scrubs legacy grounding_id data")
 	rm2.free()
 
@@ -144,6 +168,40 @@ func _run_tests() -> void:
 	_check(rm3.rounds_data[0]["debuff_ids"].is_empty(), "manager-less round has empty debuff_ids")
 	_check(not rm3.rounds_data[0].has("grounding_id"), "manager-less round has no grounding_id key")
 	rm3.free()
+
+	# 6. Panel preview and round application consume zone-entry data only.
+	var gc := StubGameController.new()
+	gc.round_manager = rm
+	gc.channel_manager = rm.channel_manager
+	gc.debuff_manager = manager
+	var calls_before_consumers := counting.round_draw_calls + counting.boss_draw_calls
+	var empty_panel := gc._build_round_panel_data(3)
+	gc._apply_automatic_debuffs(3)
+	_check(empty_panel["debuffs"].is_empty(), "empty preselected round has an empty panel preview")
+	_check(gc.applied_ids.is_empty(), "empty preselected round applies no debuffs")
+	_check(counting.round_draw_calls + counting.boss_draw_calls == calls_before_consumers, "empty panel/round start do not reroll")
+	gc._build_round_panel_data(1)
+	gc._apply_automatic_debuffs(1)
+	_check(gc.applied_ids == rm.rounds_data[0]["debuff_ids"], "round start applies exactly the stored ids")
+	_check(counting.round_draw_calls + counting.boss_draw_calls == calls_before_consumers, "panel and application make zero selection calls")
+	gc.free()
+
+	# 7. Legacy missing keys backfill together during load, not at round start.
+	var legacy_state := state.duplicate(true)
+	for legacy_round in legacy_state["rounds_data"]:
+		legacy_round.erase("debuff_ids")
+	var legacy_manager := _make_debuff_manager() as CountingDebuffManager
+	var rm4 := _make_round_manager(_make_channel(), legacy_manager)
+	rm4.load_state(legacy_state)
+	var legacy_keys_present := true
+	for legacy_round in rm4.rounds_data:
+		if not legacy_round.has("debuff_ids"):
+			legacy_keys_present = false
+	_check(legacy_keys_present, "legacy load gives every round a debuff_ids key")
+	_check(legacy_manager.round_draw_calls + legacy_manager.boss_draw_calls == 6, "legacy load backfills the zone in one pass")
+	_check(rm4.rounds_data[5]["debuff_ids"] == ["too_greedy"], "legacy boss round gets its configured boss debuff")
+	rm4.free()
+	legacy_manager.queue_free()
 
 	rm.free()
 	manager.queue_free()

@@ -3,7 +3,7 @@ class_name ThePiggyBankPowerUp
 
 ## ThePiggyBankPowerUp
 ##
-## Uncommon PowerUp that accumulates $3 per roll (including rerolls).
+## Uncommon PowerUp that accumulates $7 per roll (including rerolls).
 ## When sold, the player receives the accumulated savings as a bonus
 ## on top of the normal half-price sell refund.
 ## Shows an animated coin effect each time money is banked.
@@ -17,7 +17,7 @@ class_name ThePiggyBankPowerUp
 var dice_hand_ref: Node = null
 var accumulated_savings: int = 0
 var game_controller_ref = null
-const SAVINGS_PER_ROLL: int = 3
+const SAVINGS_PER_ROLL: int = 7
 
 signal description_updated(power_up_id: String, new_description: String)
 

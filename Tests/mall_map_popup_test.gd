@@ -29,8 +29,16 @@ class StubChannelManager extends RefCounted:
 	func get_store_name(zone: int, round_number: int) -> String:
 		return "Stub Store %d-%d" % [zone, round_number]
 
-	func get_round_config(_channel: int = -1, _round_number: int = 1):
-		return null
+	func get_round_config(_channel: int = -1, round_number: int = 1):
+		var config := RoundDifficultyConfig.new()
+		config.target_score_override = round_number * 100
+		return config
+
+	func get_difficulty_description(_channel: int = -1) -> String:
+		return "Standard"
+
+	func get_difficulty_multiplier(_channel: int = -1) -> float:
+		return 1.0
 
 	func get_mall_zone_label(channel: int = -1) -> String:
 		return "Mall Zone %02d" % channel
@@ -92,7 +100,7 @@ func _ready() -> void:
 func _run_test() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
-	_run_tests()
+	await _run_tests()
 	await get_tree().create_timer(0.6).timeout
 	_assert(not _popup.visible, "popup hidden after close()")
 	_finish()
@@ -162,17 +170,47 @@ func _run_tests() -> void:
 	_assert_equals(str(_popup._store_markers[2][1].get_meta("state")), "upcoming", "zone 2 store 2 is upcoming (failed=false, not current)")
 	_assert_equals(str(_popup._store_markers[1][0].get_meta("state")), "upcoming", "other zone markers stay neutral")
 
-	print("--- Tooltip ---")
-	var current_store_tooltip := _popup._build_store_tooltip_text(2, 2)
-	_assert(current_store_tooltip.contains("Stub Store 2-3"), "tooltip contains store name")
-	_assert(current_store_tooltip.contains("Hail Satan"), "tooltip contains pre-selected debuff display name")
-	_assert(current_store_tooltip.contains("YOU ARE HERE"), "tooltip marks current store")
+	print("--- Tooltip content ---")
+	var current_store_data: Dictionary = _popup._build_store_tooltip_text(2, 2)
+	var current_store_text := _data_text(current_store_data)
+	_assert(current_store_text.contains("Stub Store 2-3"), "tooltip contains store name")
+	_assert(current_store_text.contains("Challenge: 300"), "tooltip contains scaled Challenge target")
+	_assert(current_store_text.contains("Hail Satan"), "tooltip contains pre-selected debuff display name")
+	_assert(current_store_text.contains("You Are Here"), "tooltip marks current store")
 
-	var upcoming_text := _popup._build_store_tooltip_text(2, 1)
+	var upcoming_text := _data_text(_popup._build_store_tooltip_text(2, 1))
 	_assert(not upcoming_text.contains("Grounding:"), "tooltip no longer shows a grounding line")
-
-	var other_zone_text := _popup._build_store_tooltip_text(1, 0)
+	var other_zone_text := _data_text(_popup._build_store_tooltip_text(1, 0))
 	_assert(other_zone_text.contains("unknown until reached"), "other zones show debuffs as unknown")
+
+	print("--- Click interactions ---")
+	_popup._show_store_tooltip(current_marker)
+	_assert(_popup._map_tooltip.is_open(), "plaque click opens immediately")
+	_assert(_popup._map_tooltip.current_item() == &"store:2:2", "clicked plaque owns the tooltip")
+	await get_tree().create_timer(0.4).timeout
+	_assert(_popup._tooltip.is_showing(), "clicked plaque tooltip becomes visible")
+	var pinned_position: Vector2 = _popup._tooltip._tip.global_position
+	await get_tree().create_timer(0.2).timeout
+	_assert(_popup._tooltip._tip.global_position == pinned_position, "pinned tooltip does not follow the mouse")
+
+	_popup._show_store_tooltip(current_marker)
+	_assert(not _popup._map_tooltip.is_open(), "same plaque click toggles closed")
+	var first_marker = _popup._store_markers[2][0]
+	var second_marker = _popup._store_markers[2][1]
+	_popup._show_store_tooltip(first_marker)
+	_popup._show_store_tooltip(second_marker)
+	_assert(not _popup._map_tooltip.is_open(), "other plaque click is close-first, not neighbor-swap")
+	_popup._show_store_tooltip(second_marker)
+	_assert(_popup._map_tooltip.current_item() == &"store:2:1", "second click opens the other plaque")
+	var left_click := InputEventMouseButton.new()
+	left_click.button_index = MOUSE_BUTTON_LEFT
+	left_click.pressed = true
+	_popup._input(left_click)
+	_assert(not _popup._map_tooltip.is_open(), "screen click dismisses the open tooltip")
+	_assert(_popup.visible, "dismissal click does not close the popup")
+
+	_assert(not _popup._zones_by_channel[2].has_signal("zone_clicked"), "zones expose no click tooltip signal")
+	_assert(not _popup._map_tooltip.is_open(), "store dismissal leaves no zone tooltip open")
 
 	print("--- Directory fit ---")
 	var panel_rect := _popup.panel.get_global_rect()
@@ -180,8 +218,26 @@ func _run_tests() -> void:
 	_assert(grid_rect.end.y <= panel_rect.end.y + 0.5, "directory grid fits inside the panel (grid bottom %.1f, panel bottom %.1f)" % [grid_rect.end.y, panel_rect.end.y])
 	_assert(panel_rect.end.y <= get_viewport_rect().size.y, "panel bottom border visible at viewport height (panel bottom %.1f)" % panel_rect.end.y)
 
-	print("--- Close ---")
+	print("--- Overlay and close ---")
+	_popup._on_overlay_gui_input(left_click)
+	await get_tree().create_timer(0.6).timeout
+	_assert(not _popup.visible, "overlay click with no tooltip closes popup")
+	_popup.open()
+	await get_tree().process_frame
+	current_marker = _popup._store_markers[2][2]
+	_popup._show_store_tooltip(current_marker)
 	_popup.close()
+	_assert(not _popup._map_tooltip.is_open(), "close force-hides an open tooltip")
+
+
+func _data_text(data: Dictionary) -> String:
+	var lines: Array[String] = [str(data.get("title", ""))]
+	for section in data.get("sections", []):
+		var text: String = section.get("text", "")
+		if section.get("label", "") != "":
+			text = "%s: %s" % [section["label"], text]
+		lines.append(text)
+	return "\n".join(lines)
 
 
 func _assert(condition: bool, message: String) -> void:

@@ -1236,13 +1236,13 @@ var follow_speed: float = 12.0
 ## one value to retune the entry feel for every tooltip in the game.
 var tooltip_follow_start_offset: Vector2 = Vector2(-100, 100)
 ## Global feel knob: seconds a pointer must rest on a hover target before a
-## hover tooltip may show. Read live by the mall controller and shop cards —
-## tweak it in the debugger and both follow without a restart. Pre-show and
-## ADDITIONAL to tooltip_cooldown; explicit shows (lab Replay) stay immediate.
+## hover tooltip may show. Read live by shop cards; pre-show and ADDITIONAL
+## to tooltip_cooldown. Explicit shows (lab Replay) stay immediate.
 var tooltip_hover_delay: float = 0.6
 var _tooltip_last_show_msec: int = -100000
 var _active_tooltip: Control = null
 var _active_anchor: Rect2 = Rect2()
+var _active_follow_mouse: bool = true
 ## Per-node tween ownership: instance_id -> {node, tween, hide}. One tooltip's
 ## lifecycle can never kill another's tween (the old single-slot _tooltip_tween
 ## stranded tooltips mid-hide when a different tooltip showed).
@@ -1283,35 +1283,34 @@ func _kill_tooltip_tween(node: Control) -> void:
 		node.modulate.a = 0.0
 		node.visible = false
 
-## show_tooltip(node, anchor_rect) -> Tween
+## show_tooltip(node, anchor_rect, follow_mouse) -> Tween
 ##
 ## Pop (scale 0.45 -> 1.0, TRANS_BACK) + fade in, pivot at node center.
 ## Returns null when the shared cooldown blocks the call — consumers MUST
 ## handle null (no animation runs; the node is left untouched).
 ## anchor_rect: optional hover area used by the stale-tooltip exit guard in
 ## _process (auto-hide once the cursor leaves anchor + 24px grace).
-## Side-effects: sets _active_tooltip/_active_anchor for cursor-follow and
-## the exit guard — done BEFORE the cooldown check so a cooldown-snapped
-## show (caller snaps the node visible itself) still follows and still gets
-## the guard. On an animated show the node is repositioned to
-## mouse + tooltip_follow_start_offset before the tween starts, so the
-## follow lerp never starts from 0,0 or across the screen; a caller that
-## positions after show wins for that frame. Kills any in-flight tooltip
+## follow_mouse=false preserves the caller's placement and disables both
+## cursor-follow and the hover-exit guard for a click-pinned tooltip.
+## Side-effects: sets active tooltip state BEFORE the cooldown check so a
+## cooldown-snapped show gets the same behavior. Kills any in-flight tooltip
 ## tween so the newest call always wins (replay-race fix).
-func show_tooltip(node: Control, anchor_rect: Rect2 = Rect2()) -> Tween:
+func show_tooltip(node: Control, anchor_rect: Rect2 = Rect2(), follow_mouse: bool = true) -> Tween:
 	_kill_tooltip_tween(node)
 	_active_tooltip = node
 	_active_anchor = anchor_rect
+	_active_follow_mouse = follow_mouse
 	var now := Time.get_ticks_msec()
 	if float(now - _tooltip_last_show_msec) / 1000.0 < tooltip_cooldown:
 		return null
 	_tooltip_last_show_msec = now
 	node.visible = true
-	var vp := node.get_viewport().get_visible_rect().size
-	var start := node.get_global_mouse_position() + tooltip_follow_start_offset
-	start.x = clampf(start.x, 0.0, maxf(0.0, vp.x - node.size.x))
-	start.y = clampf(start.y, 0.0, maxf(0.0, vp.y - node.size.y))
-	node.global_position = start
+	if follow_mouse:
+		var vp := node.get_viewport().get_visible_rect().size
+		var start := node.get_global_mouse_position() + tooltip_follow_start_offset
+		start.x = clampf(start.x, 0.0, maxf(0.0, vp.x - node.size.x))
+		start.y = clampf(start.y, 0.0, maxf(0.0, vp.y - node.size.y))
+		node.global_position = start
 	node.pivot_offset = node.size / 2.0
 	node.modulate.a = 0.0
 	node.scale = Vector2.ONE * 0.45
@@ -1332,6 +1331,7 @@ func hide_tooltip(node: Control) -> Tween:
 	if _active_tooltip == node:
 		_active_tooltip = null
 		_active_anchor = Rect2()
+		_active_follow_mouse = true
 	var tween := node.get_tree().create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(node, "modulate:a", 0.0, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
@@ -1345,15 +1345,10 @@ func hide_tooltip(node: Control) -> Tween:
 
 ## _process(delta)
 ##
-## Side-effects: when follow_cursor is on, lerps the active tooltip toward the
-## cursor at follow_speed per second. Also runs the stale-tooltip exit guard:
-## hover-exit signals can be missed on fast mouse movement, so when the
-## active tooltip was shown with an anchor rect and the cursor leaves
-## anchor.grow(24), the tooltip is hidden once. The 24px grace keeps the
-## tooltip alive while the cursor crosses the gap to the (MOUSE_FILTER_IGNORE)
-## tooltip body. No-op when follow_cursor is off.
+## Side-effects: for a mouse-following tooltip, runs the anchor stale-exit
+## guard and lerps toward the cursor. Click-pinned tooltips skip both.
 func _process(delta: float) -> void:
-	if follow_cursor:
+	if follow_cursor and _active_follow_mouse:
 		if is_instance_valid(_active_tooltip) and _active_tooltip.visible:
 			var mouse := _active_tooltip.get_global_mouse_position()
 			if _active_anchor.has_area() and not _active_anchor.grow(24.0).has_point(mouse):

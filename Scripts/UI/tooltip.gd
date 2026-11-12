@@ -30,6 +30,7 @@ var _fade_tween: Tween = null
 var _setup_gen := 0
 var _show_gen := 0
 var _last_title := ""
+var _max_rows := MAX_ROWS
 
 @onready var _background: ColorRect = $Background
 @onready var _border: ColorRect = $Border
@@ -88,8 +89,8 @@ func _pin_content_width() -> void:
 
 ## setup(data)
 ##
-## Sets all four sections from data keys: title, body, flavor, rarity.
-## Empty sections are hidden. Border color follows rarity ONLY when
+## Sets sections from data keys: title, body, flavor, rarity, and optional
+## max_rows. Empty sections are hidden. Border color follows rarity ONLY when
 ## tint_border_by_rarity is on and rarity is non-empty; otherwise tan/gold.
 ## All dynamic sections in SectionsExtra are freed first — add_section()
 ## calls must be re-issued after every setup().
@@ -100,6 +101,7 @@ func setup(data: Dictionary) -> void:
 		await ready
 	for child in _sections_extra.get_children():
 		child.free()
+	_max_rows = maxi(1, int(data.get("max_rows", MAX_ROWS)))
 	_pin_content_width()
 
 	var title: String = data.get("title", "")
@@ -194,20 +196,19 @@ func _await_layout_settled() -> void:
 ## _enforce_row_cap(title, gen) — async, deferred
 ##
 ## Designer-facing guard: after layout settles, if the total rendered rows
-## across all visible sections exceed MAX_ROWS, trailing lines are dropped
-## until it fits, an ellipsis is appended, and push_warning fires ONCE per
-## setup/section batch. Truncation order: the LAST SectionsExtra section
-## first, then body, then earlier sections last-to-first. Name/flavor/rarity
-## are never touched. The gen token makes stale checks from superseded
-## setup()/add_section() calls no-ops. Row counting waits for layout settle —
-## counting pre-settle would see the bogus 1px-width wrap (hundreds of
-## phantom rows) and wrongly truncate content that actually fits.
+## across all visible sections exceed this content's max_rows, trailing lines
+## are dropped until it fits, an ellipsis is appended, and push_warning fires
+## ONCE per setup/section batch. Truncation order: the LAST SectionsExtra
+## section first, then body, then earlier sections last-to-first.
+## Name/flavor/rarity are never touched. The gen token makes stale checks from
+## superseded setup()/add_section() calls no-ops. Row counting waits for layout
+## settle so phantom pre-layout wraps do not truncate valid content.
 func _enforce_row_cap(title: String, gen: int) -> void:
 	await _await_layout_settled()
 	if gen != _setup_gen:
 		return
 	var total := _count_rows()
-	if total <= MAX_ROWS:
+	if total <= _max_rows:
 		return
 	var original := total
 	var sections := _sections_extra.get_children()
@@ -220,7 +221,7 @@ func _enforce_row_cap(title: String, gen: int) -> void:
 	var ellipsis_target: RichTextLabel = _body_label
 	for label in order:
 		var min_lines := 1 if label == _body_label else 0
-		while total > MAX_ROWS and label.get_line_count() > min_lines and label.text != "":
+		while total > _max_rows and label.get_line_count() > min_lines and label.text != "":
 			_drop_trailing_line(label)
 			ellipsis_target = label
 			await get_tree().process_frame
@@ -229,10 +230,10 @@ func _enforce_row_cap(title: String, gen: int) -> void:
 			total = _count_rows()
 		if label != _body_label and label.text.strip_edges() == "":
 			label.visible = false
-		if total <= MAX_ROWS:
+		if total <= _max_rows:
 			break
 	ellipsis_target.text = ellipsis_target.text + " [color=gray]…[/color]"
-	push_warning("Tooltip '%s' exceeds 15 rows (%d) — content truncated. Shorten the source text." % [title, original])
+	push_warning("Tooltip '%s' exceeds %d rows (%d) — content truncated. Shorten the source text." % [title, _max_rows, original])
 
 
 ## _drop_trailing_line(label)
@@ -266,18 +267,15 @@ func _count_rows() -> int:
 	return total
 
 
-## show_at(global_pos, anchor_rect)
+## show_at(global_pos, anchor_rect, follow_mouse)
 ##
-## anchor_rect: optional hover area, forwarded to TweenFX.show_tooltip for
-## the stale-tooltip exit guard (auto-hide once the cursor leaves the anchor
-## + 24px grace — covers mouse_exited missed on fast mouse movement).
-## Deferred until layout settles (_await_layout_settled): fit_content labels
-## report bogus heights (each word wrapped at width ~1px, observed size
-## 260x5564) until the container assigns the real content width, and
-## reset_size() called before that bakes the huge height permanently
-## (first-show bug). The tooltip stays invisible during the wait (first
-## show), so no wrong-size frame is ever rendered; the show tween starts only
-## after correct positioning.
+## anchor_rect: optional hover area for the stale-tooltip exit guard.
+## follow_mouse=false keeps the supplied placement and disables cursor-follow
+## and that guard. Deferred until layout settles (_await_layout_settled):
+## fit_content labels report bogus heights until the container assigns the
+## real content width, and reset_size() before that bakes the huge height
+## permanently (first-show bug). The tooltip stays invisible during the wait,
+## so no wrong-size frame is ever rendered.
 ## Clamps to the viewport, positions, then runs the show sequence:
 ## TweenFX.show_tooltip (pop+fade), shader fade 0->1 on both materials
 ## (0.25s), border trace 0->1 (0.6s, linear). If the TweenFX cooldown blocks
@@ -285,7 +283,7 @@ func _count_rows() -> int:
 ## animating — it is never left invisible by a blocked call.
 ## The gen token makes a pending show a no-op when hide() or a newer
 ## show_at() supersedes it during the wait.
-func show_at(global_pos: Vector2, anchor_rect: Rect2 = Rect2()) -> void:
+func show_at(global_pos: Vector2, anchor_rect: Rect2 = Rect2(), follow_mouse: bool = true) -> void:
 	_show_gen += 1
 	var gen : int = _show_gen
 	await _await_layout_settled()
@@ -302,7 +300,7 @@ func show_at(global_pos: Vector2, anchor_rect: Rect2 = Rect2()) -> void:
 	if _fade_tween and _fade_tween.is_valid():
 		_fade_tween.kill()
 
-	var show_tween: Tween = TweenFX.show_tooltip(self, anchor_rect)
+	var show_tween: Tween = TweenFX.show_tooltip(self, anchor_rect, follow_mouse)
 	if show_tween == null:
 		visible = true
 		modulate.a = 1.0

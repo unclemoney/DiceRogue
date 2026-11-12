@@ -630,7 +630,7 @@ func _animate_in() -> void:
 	# Fade in background overlay
 	background_overlay.modulate.a = 0
 	var bg_tween = create_tween()
-	bg_tween.tween_property(background_overlay, "modulate:a", 1.0, 0.3)
+	bg_tween.tween_property(background_overlay, "modulate:a", 1.0, 1.3)
 	
 	# Reset panel to home offsets in case of a previous _animate_out
 	dialog_panel.offset_left = -PANEL_SIZE.x / 2.0
@@ -650,10 +650,10 @@ func _animate_in() -> void:
 	dialog_panel.modulate.a = 0.0
 	
 	var panel_tween: Tween = create_tween()
-	panel_tween.tween_property(dialog_panel, "offset_top", target_top, 0.75).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
-	panel_tween.parallel().tween_property(dialog_panel, "offset_bottom", target_bottom, 0.75).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
-	panel_tween.parallel().tween_property(dialog_panel, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-	panel_tween.parallel().tween_property(dialog_panel, "modulate:a", 1.0, 0.2)
+	panel_tween.tween_property(dialog_panel, "offset_top", target_top, 1.25).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	panel_tween.parallel().tween_property(dialog_panel, "offset_bottom", target_bottom, 1.25).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	panel_tween.parallel().tween_property(dialog_panel, "scale", Vector2.ONE, 0.7).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	panel_tween.parallel().tween_property(dialog_panel, "modulate:a", 1.0, 0.8)
 	await panel_tween.finished
 	
 	# Jelly settle wobble on landing

@@ -210,9 +210,6 @@ var _challenge_celebration = null
 var _chore_selection_popup = null
 var _pending_chore_selection: bool = false  # True when chore selection is waiting to be shown
 var _defer_chore_selection_until_round_start: bool = false
-# Automatic debuffs pre-selected when the New Round Panel is built, so the
-# panel preview matches exactly what is applied when the round starts.
-var _pending_round_debuff_ids: Array[String] = []
 var _current_round_target: int = 0  # Scaled target score for the current store round
 var _is_round_start_chore_gate_active: bool = false
 
@@ -1036,7 +1033,6 @@ func _clear_active_debuffs() -> void:
 			debuff.queue_free()
 	active_debuffs.clear()
 	_grounded_debuffs.clear()
-	_pending_round_debuff_ids.clear()
 	_round_status_cleanup_scheduled = false
 	_last_completed_round_rebellion_stacks = 0
 	
@@ -5696,9 +5692,8 @@ func _on_round_started(round_number: int) -> void:
 
 ## _apply_automatic_debuffs(round_number: int) -> void
 ##
-## Applies automatic debuffs for the round based on channel configuration.
-## Called after challenge is revealed so player knows what they're facing.
-## Clears debuffs from previous round first (no persistence across rounds).
+## Applies the debuffs preselected for this store at zone entry. Called after
+## the challenge reveal. Clears previous-round debuffs first and never draws.
 func _apply_automatic_debuffs(round_number: int) -> void:
 	if not debuff_manager or not channel_manager:
 		if _debug_enabled:
@@ -5720,25 +5715,10 @@ func _apply_automatic_debuffs(round_number: int) -> void:
 			active_debuffs.erase(prev_id)
 	debuff_manager.clear_active_debuffs()
 	
-	# Use debuffs pre-selected when the New Round Panel was built so the panel
-	# preview matches what is actually applied; otherwise select fresh now.
 	var selected_ids: Array[String] = []
-	if _pending_round_debuff_ids.size() > 0:
-		selected_ids = _pending_round_debuff_ids.duplicate()
-		_pending_round_debuff_ids.clear()
-	else:
-		var round_config = channel_manager.get_round_config(channel_manager.current_channel, round_number)
-		if round_config:
-			if round_config.get("is_boss_round") == true:
-				var boss_id = debuff_manager.select_boss_debuff(round_config.boss_debuff_level)
-				if not boss_id.is_empty():
-					selected_ids.append(boss_id)
-			else:
-				var max_debuffs = round_config.max_debuffs if round_config.get("max_debuffs") != null else 0
-				var difficulty_cap = round_config.debuff_difficulty_cap if round_config.get("debuff_difficulty_cap") != null else 1
-				max_debuffs = maxi(0, max_debuffs + channel_manager.get_run_debuff_count_modifier())
-				difficulty_cap = mini(difficulty_cap, channel_manager.get_run_debuff_difficulty_gate())
-				selected_ids = debuff_manager.select_debuffs_for_round(max_debuffs, difficulty_cap, false)
+	var stored := _get_preselected_round_debuffs(round_number)
+	if stored.has("debuff_ids"):
+		selected_ids.assign(stored["debuff_ids"])
 	
 	var channel_number = channel_manager.current_channel
 	if _debug_enabled:
@@ -7452,39 +7432,13 @@ func _build_round_panel_data(round_num: int) -> Dictionary:
 		data["challenge_name"] = channel_manager.get_store_name(channel_manager.current_channel, round_num)
 		data["challenge_desc"] = ""
 
-	# Debuff preview: show what the upcoming round will actually apply. The
-	# selection was made when the zone's rounds were generated
-	# (RoundManager.rounds_data) and is committed at round start
-	# (_apply_automatic_debuffs) so the panel always matches reality. Old
-	# saves lack the stored keys, so fall back to drawing fresh from the
-	# round config when they are absent.
-	_pending_round_debuff_ids.clear()
+	# The zone-entry selection in RoundManager.rounds_data is authoritative.
+	# An empty stored array means no debuffs; this preview never draws fresh.
 	if debuff_manager and not debuff_manager.has_immunity_next_round():
 		var preview_ids: Array[String] = []
 		var stored = _get_preselected_round_debuffs(round_num)
-		if not stored.is_empty():
-			for id in stored["debuff_ids"]:
-				preview_ids.append(id)
-				_pending_round_debuff_ids.append(id)
-		elif channel_manager:
-			var round_config = channel_manager.get_round_config(channel_manager.current_channel, round_num)
-			if round_config:
-				var max_debuffs = round_config.max_debuffs if round_config.get("max_debuffs") != null else 0
-				var difficulty_cap = round_config.debuff_difficulty_cap if round_config.get("debuff_difficulty_cap") != null else 1
-				var auto_ids: Array[String] = []
-				if round_config.get("is_boss_round") == true:
-					# Boss round: exactly one debuff of the configured level
-					var boss_id = debuff_manager.select_boss_debuff(round_config.boss_debuff_level, preview_ids)
-					if not boss_id.is_empty():
-						auto_ids.append(boss_id)
-				else:
-					max_debuffs = maxi(0, max_debuffs + channel_manager.get_run_debuff_count_modifier())
-					difficulty_cap = mini(difficulty_cap, channel_manager.get_run_debuff_difficulty_gate())
-					auto_ids = debuff_manager.select_debuffs_for_round(max_debuffs, difficulty_cap, false, preview_ids)
-				for id in auto_ids:
-					if id not in preview_ids:
-						preview_ids.append(id)
-						_pending_round_debuff_ids.append(id)
+		if stored.has("debuff_ids"):
+			preview_ids.assign(stored["debuff_ids"])
 		for debuff_id in preview_ids:
 			var debuff_def = _find_debuff_def(debuff_id)
 			if debuff_def:
@@ -7519,10 +7473,9 @@ func _find_debuff_def(debuff_id: String) -> DebuffData:
 
 ## _get_preselected_round_debuffs(round_num) -> Dictionary
 ##
-## Returns the debuffs pre-selected for the round when the zone's rounds
-## were generated (RoundManager.rounds_data, index = round_num - 1).
-## Returns an empty Dictionary when the stored keys are absent (old saves)
-## or out of bounds, so callers fall back to drawing fresh.
+## Returns the debuffs pre-selected when the zone was entered
+## (RoundManager.rounds_data, index = round_num - 1). Returns an empty
+## Dictionary only for unavailable/out-of-bounds data; callers never redraw.
 func _get_preselected_round_debuffs(round_num: int) -> Dictionary:
 	if not round_manager:
 		return {}

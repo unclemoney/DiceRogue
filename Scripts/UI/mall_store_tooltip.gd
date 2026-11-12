@@ -42,11 +42,12 @@ func get_text() -> String:
 	return "\n".join(lines)
 
 
-## show_for(anchor_rect, data, side) -> void
+## show_for(anchor_rect, data, side, follow_mouse) -> void
 ##
 ## Fills the standard Tooltip from data (setup + one add_section per entry
 ## in data["sections"]) and shows it next to the anchor rect (screen space).
-func show_for(anchor_rect: Rect2, data: Dictionary, side: Side = SIDE_RIGHT) -> void:
+## follow_mouse=false pins mall map tooltips to that anchor until dismissed.
+func show_for(anchor_rect: Rect2, data: Dictionary, side: Side = SIDE_RIGHT, follow_mouse: bool = true) -> void:
 	_last_data = data
 	_tip.setup(data)
 	for section in data.get("sections", []):
@@ -56,7 +57,7 @@ func show_for(anchor_rect: Rect2, data: Dictionary, side: Side = SIDE_RIGHT) -> 
 		_tfx.place_tooltip(_tip, anchor_rect, side, false)
 	else:
 		_tip.global_position = anchor_rect.end + Vector2(12, -16)
-	_tip.show_at(_tip.global_position, anchor_rect)
+	_tip.show_at(_tip.global_position, anchor_rect, follow_mouse)
 
 
 ## is_showing() -> bool
