@@ -79,21 +79,4 @@ func apply(target) -> void:
 		# Verify dice were actually added before attempting to roll
 		await dice_hand.get_tree().create_timer(0.5).timeout
 		if dice_hand.dice_list.size() > old_dice_count:
-			_roll_new_dice(dice_hand, old_dice_count)
-
-## Rolls only the newly added dice (those after the old count)
-func _roll_new_dice(dice_hand: DiceHand, start_index: int) -> void:
-	var current_size = dice_hand.dice_list.size()
-	# Validate bounds to prevent out-of-range errors
-	if start_index >= current_size:
-		print("[DiceSurgeConsumable] No new dice to roll (start_index %d >= size %d)" % [start_index, current_size])
-		return
-	
-	print("[DiceSurgeConsumable] Rolling %d new dice (indices %d to %d)" % [current_size - start_index, start_index, current_size - 1])
-	for i in range(start_index, current_size):
-		if i < dice_hand.dice_list.size():  # Double-check bounds
-			var die = dice_hand.dice_list[i]
-			if die is Dice:
-				die.roll()
-				await dice_hand.get_tree().create_timer(0.1).timeout
-	print("[DiceSurgeConsumable] New dice rolled")
+			await dice_hand.roll_new_dice(old_dice_count)

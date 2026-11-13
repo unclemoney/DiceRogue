@@ -53,7 +53,8 @@
 
 ## Bugs
 
-- [ ] `P2-Minor` Shop Expansion useable at any time
+- [ ] `P2-Minor` Dice Surge should be available during an active round, but is not, unless dice are rolled, this is a poor definition of active round.
+- [X] `P2-Minor` Shop Expansion useable at any time
 - [ ] `P2-Minor` If a scoring multiplier doesn't contribute to the actual score, it shouldn't trigger in the scoring animations.
 - [ ] `P2-Minor` Using Dice Surge, showed 5x 2s but manually scoring a Yahtzee failed-- diagnostics only shows 5 dice, so dice were not properly "rolled" on use.
 - [ ] `P2-Minor` POGS tool tip goes off the right edge of the screen if too close, needs to check from screen edges.

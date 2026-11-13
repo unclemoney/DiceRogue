@@ -550,6 +550,22 @@ func roll_all() -> void:
 		if is_instance_valid(self):
 			audio_mgr.play_dice_land_sound()
 
+## roll_new_dice(start_index)
+##
+## Rolls appended dice without changing existing dice, then publishes the full
+## hand and emits the same completion signal used by normal rolls.
+func roll_new_dice(start_index: int) -> void:
+	if start_index < 0 or start_index >= dice_list.size():
+		return
+	for i in range(start_index, dice_list.size()):
+		var die = dice_list[i]
+		if is_instance_valid(die) and die.can_roll():
+			die.roll()
+			await get_tree().create_timer(roll_delay).timeout
+	_update_results()
+	emit_signal("roll_complete")
+
+
 func _on_child_die_locked(die: Dice) -> void:
 	emit_signal("die_locked", die)
 

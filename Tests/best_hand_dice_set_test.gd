@@ -9,6 +9,7 @@ class_name BestHandDiceSetTest
 ##    "Fives"/"Sixes"/"Large Straight").
 ## 2. Switching the dice set restores the correct row labels.
 ## 3. Ghost previews qualify rows the current dice actually score in.
+## 4. Equal-score hands use combination size, then face value, as tie-breaks.
 ##
 ## The old Best Hand panel this test originally targeted was removed in the
 ## scorecard row-list refactor; per-row ghost previews replaced it.
@@ -74,6 +75,28 @@ func _run_tests() -> void:
 	score_card_ui.update_best_hand_preview(DiceResults.values)
 	var yahtzee_row: ScorecardRow = score_card_ui.rows[&"yahtzee"]
 	_assert(yahtzee_row._has_ghost, "d6 ghost shown on Yahtzee row for [5,5,5,5,5]")
+
+	print("--- equal-score hardness ties ---")
+	DiceResults.set_values([4, 4, 4, 4, 2])
+	score_card_ui.update_best_hand_preview(DiceResults.values)
+	var three_row: ScorecardRow = score_card_ui.rows[&"three_of_a_kind"]
+	var four_row: ScorecardRow = score_card_ui.rows[&"four_of_a_kind"]
+	var chance_row: ScorecardRow = score_card_ui.rows[&"chance"]
+	_assert(scorecard.preview_base_score("three_of_a_kind", DiceResults.values) == scorecard.preview_base_score("four_of_a_kind", DiceResults.values), "3oK and 4oK fixture has equal base scores")
+	_assert(four_row._is_best, "4oK wins an equal-score tie against 3oK")
+	_assert(not three_row._is_best and not chance_row._is_best, "3oK and patternless Chance do not retain the best-row tie")
+	var any_score_best := score_card_ui._calculate_best_score_for_dice(DiceResults.values)
+	_assert_equals(any_score_best.get("category", ""), "four_of_a_kind", "AnyScore selector uses the same 4oK tie-break")
+	scorecard.auto_score_best(DiceResults.values)
+	_assert_equals(scorecard.lower_scores["four_of_a_kind"], 18, "auto-score commits 4oK for an equal-score roll")
+	_assert_equals(scorecard.lower_scores["three_of_a_kind"], null, "auto-score leaves 3oK open")
+	_assert(not scorecard.is_harder_hand("four_of_a_kind", "four_of_a_kind", DiceResults.values), "complete hardness tie retains the incumbent")
+
+	_set_dice_set(4)
+	var parity_values: Array[int] = [1, 1, 2, 2]
+	_assert(scorecard.is_harder_hand("fives", "sixes", parity_values), "equal-size Evens combination wins with higher-valued dice")
+	_assert(not scorecard.is_harder_hand("sixes", "fives", parity_values), "lower-valued equal-size combination loses")
+	_set_dice_set(6)
 
 	print("--- d20 sixth slot ---")
 	_set_dice_set(20)

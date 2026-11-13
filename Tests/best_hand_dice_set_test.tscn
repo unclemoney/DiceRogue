@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Tests/best_hand_dice_set_test.gd" id="1_best_hand"]
+
+[node name="BestHandDiceSetTest" type="Control"]
+script = ExtResource("1_best_hand")

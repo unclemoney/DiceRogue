@@ -3,8 +3,8 @@ class_name OneExtraDiceConsumable
 
 ## OneExtraDiceConsumable
 ##
-## When used, adds +1 extra dice to the dice hand for the next turn only.
-## The extra dice is automatically removed when any score is assigned (auto or manual).
+## When used, adds +1 extra die to the current dice hand and rolls it immediately.
+## The extra die is automatically removed when any score is assigned (auto or manual).
 ## Similar to ExtraDicePowerUp but temporary and only lasts for 1 turn.
 
 signal extra_dice_added
@@ -58,6 +58,13 @@ func apply(target) -> void:
 	
 	is_active = true
 	emit_signal("extra_dice_added")
+
+	var old_dice_count = dice_hand_ref.dice_list.size()
+	dice_hand_ref.update_dice_count()
+	if old_dice_count == 0:
+		await dice_hand_ref.roll_all()
+	else:
+		await dice_hand_ref.roll_new_dice(old_dice_count)
 	
 	print("[OneExtraDiceConsumable] Applied successfully - extra dice will be removed after next score")
 

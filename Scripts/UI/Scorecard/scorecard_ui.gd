@@ -398,17 +398,20 @@ func _refresh_previews() -> void:
 		return
 	var values: Array[int] = DiceResults.values
 	var best_row: ScorecardRow = null
+	var best_category := ""
 	var best_value := 0
 	for key in rows.keys():
 		var row: ScorecardRow = rows[key]
 		if row.state == ScorecardRow.State.SCORED:
 			continue
-		if scorecard.qualifies_for_preview(String(key), values):
-			var base := scorecard.preview_base_score(String(key), values)
-			var projected := base * scorecard.get_category_level_by_name(String(key))
+		var category := String(key)
+		if scorecard.qualifies_for_preview(category, values):
+			var base := scorecard.preview_base_score(category, values)
+			var projected := base * scorecard.get_category_level_by_name(category)
 			row.set_ghost(projected)
-			if projected > best_value:
+			if projected > best_value or (projected == best_value and scorecard.is_harder_hand(category, best_category, values)):
 				best_value = projected
+				best_category = category
 				best_row = row
 		else:
 			row.clear_ghost()
@@ -601,7 +604,7 @@ func auto_score_best_hand() -> void:
 	for category in scorecard.upper_scores.keys():
 		if scorecard.upper_scores[category] == null and scorecard.is_category_available_for_dice_set(category):
 			var score := scorecard.evaluate_category(category, values)
-			if score > best_score:
+			if score > best_score or (score == best_score and scorecard.is_harder_hand(category, best_category, values)):
 				best_score = score
 				best_section = Scorecard.Section.UPPER
 				best_category = category
@@ -610,7 +613,7 @@ func auto_score_best_hand() -> void:
 	for category in lower_order:
 		if scorecard.lower_scores[category] == null and scorecard.is_category_available_for_dice_set(category):
 			var score := scorecard.evaluate_category(category, values)
-			if score > best_score:
+			if score > best_score or (score == best_score and scorecard.is_harder_hand(category, best_category, values)):
 				best_score = score
 				best_section = Scorecard.Section.LOWER
 				best_category = category
@@ -949,7 +952,7 @@ func _calculate_best_score_for_dice(dice_values: Array[int]) -> Dictionary:
 
 	for category in all_categories:
 		var category_score := scorecard.evaluate_category(category, dice_values)
-		if category_score > best_score:
+		if category_score > best_score or (category_score == best_score and not best_category.is_empty() and scorecard.is_harder_hand(category, best_category, dice_values)):
 			best_score = category_score
 			best_category = category
 

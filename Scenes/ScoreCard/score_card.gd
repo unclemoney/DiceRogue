@@ -446,7 +446,6 @@ func auto_score_best(values: Array[int]) -> void:
 	var best_score := -1
 	var best_section
 	var best_category := ""
-	var best_priority := -1
 	
 	# Check upper section first
 	for category in upper_scores.keys():
@@ -454,11 +453,10 @@ func auto_score_best(values: Array[int]) -> void:
 			# Pass the actual dice values to evaluate_category
 			var score = evaluate_category(category, values)
 			print("[Scorecard] Evaluating upper category:", category, "score:", score)
-			if score > best_score:
+			if score > best_score or (score == best_score and is_harder_hand(category, best_category, values)):
 				best_score = score
 				best_section = Section.UPPER
 				best_category = category
-				best_priority = _get_category_priority(category)
 	
 	# Check lower section next
 	for category in lower_scores.keys():
@@ -466,16 +464,10 @@ func auto_score_best(values: Array[int]) -> void:
 			# Pass the actual dice values to evaluate_category
 			var score = evaluate_category(category, values)
 			print("[Scorecard] Evaluating lower category:", category, "score:", score)
-			var priority = _get_category_priority(category)
-			
-			# Choose this category if:
-			# 1. Score is higher, OR
-			# 2. Score is equal but priority is higher (more specific category)
-			if score > best_score or (score == best_score and priority > best_priority):
+			if score > best_score or (score == best_score and is_harder_hand(category, best_category, values)):
 				best_score = score
 				best_section = Section.LOWER
 				best_category = category
-				best_priority = priority
 	
 	if best_category != "":
 		print("[Scorecard] Auto-scoring category:", best_category, "with score:", best_score)
@@ -1978,9 +1970,143 @@ func evaluate_category(category: String, values: Array[int]) -> int:
 	# Use our color-aware calculate_score method but DON'T apply money effects during evaluation (for previews)
 	return calculate_score_internal(category, values, false)
 
+
+## is_harder_hand(candidate_category, current_category, values) -> bool
+##
+## Resolves equal-score candidates by scoring-combination size, then face sum.
+## Returns false for a complete tie so callers retain their current selection.
+func is_harder_hand(candidate_category: String, current_category: String, values: Array[int]) -> bool:
+	if current_category.is_empty():
+		return true
+	var candidate := get_scoring_combination_values(candidate_category, values)
+	var current := get_scoring_combination_values(current_category, values)
+	if candidate.size() != current.size():
+		return candidate.size() > current.size()
+	return _sum_int_values(candidate) > _sum_int_values(current)
+
+
+## get_scoring_combination_values(category, values) -> Array[int]
+##
+## Returns the dice forming a category's scoring combination without scoring
+## or modifying game state. Empty means the rolled values do not form it.
+func get_scoring_combination_values(category: String, values: Array[int]) -> Array[int]:
+	var combination: Array[int] = []
+	var target := 0
+	match category:
+		"ones": target = 1
+		"twos": target = 2
+		"threes": target = 3
+		"fours": target = 4
+		"fives", "sixes":
+			if current_dice_sides == 4:
+				for value in values:
+					if category == "fives" and value % 2 == 0:
+						combination.append(value)
+					elif category == "sixes" and value % 2 != 0:
+						combination.append(value)
+				return combination
+			target = 5 if category == "fives" else sixth_slot_target
+		"three_of_a_kind":
+			return _get_n_of_a_kind_combination(values, 3)
+		"four_of_a_kind":
+			return _get_n_of_a_kind_combination(values, 4)
+		"full_house":
+			combination = _get_full_house_combination(values)
+			if combination.is_empty() and allow_two_pair_full_house:
+				combination = _get_two_pair_combination(values)
+			return combination
+		"small_straight":
+			return _get_straight_combination(values, 4, allow_gap_straights)
+		"large_straight":
+			if current_dice_sides == 4:
+				if ScoreEvaluatorSingleton.is_even_odd_full_house(values):
+					combination.assign(values)
+				return combination
+			return _get_straight_combination(values, 5, allow_gap_straights)
+		"yahtzee":
+			combination = _get_n_of_a_kind_combination(values, 5)
+			if combination.is_empty() and allow_four_kind_yahtzee:
+				combination = _get_n_of_a_kind_combination(values, 4)
+			return combination
+		"chance":
+			return combination
+	if target > 0:
+		for value in values:
+			if value == target:
+				combination.append(value)
+	return combination
+
+
+func _get_n_of_a_kind_combination(values: Array[int], required: int) -> Array[int]:
+	var counts := {}
+	for value in values:
+		counts[value] = counts.get(value, 0) + 1
+	var matching_value := 0
+	for value in counts.keys():
+		if int(counts[value]) >= required:
+			matching_value = maxi(matching_value, int(value))
+	var combination: Array[int] = []
+	if matching_value > 0:
+		for i in range(required):
+			combination.append(matching_value)
+	return combination
+
+
+func _get_full_house_combination(values: Array[int]) -> Array[int]:
+	var counts := {}
+	for value in values:
+		counts[value] = counts.get(value, 0) + 1
+	var best: Array[int] = []
+	for triple_value in counts.keys():
+		if int(counts[triple_value]) < 3:
+			continue
+		for pair_value in counts.keys():
+			if pair_value == triple_value or int(counts[pair_value]) < 2:
+				continue
+			var candidate: Array[int] = []
+			for i in range(3):
+				candidate.append(int(triple_value))
+			for i in range(2):
+				candidate.append(int(pair_value))
+			if _sum_int_values(candidate) > _sum_int_values(best):
+				best = candidate
+	return best
+
+
+func _get_two_pair_combination(values: Array[int]) -> Array[int]:
+	var counts := {}
+	var pair_values: Array[int] = []
+	for value in values:
+		counts[value] = counts.get(value, 0) + 1
+	for value in counts.keys():
+		if int(counts[value]) >= 2:
+			pair_values.append(int(value))
+	var combination: Array[int] = []
+	if pair_values.size() < 2:
+		return combination
+	pair_values.sort()
+	for index in range(pair_values.size() - 2, pair_values.size()):
+		combination.append(pair_values[index])
+		combination.append(pair_values[index])
+	return combination
+
+
+func _get_straight_combination(values: Array[int], length: int, allow_gap: bool) -> Array[int]:
+	var unique := ScoreEvaluatorSingleton.get_unique(values)
+	unique.sort()
+	var best: Array[int] = []
+	for i in range(unique.size() - length + 1):
+		var candidate := unique.slice(i, i + length)
+		var span: int = candidate[length - 1] - candidate[0]
+		if span == length - 1 or (allow_gap and span == length):
+			if _sum_int_values(candidate) > _sum_int_values(best):
+				best = candidate
+	return best
+
+
 ## _get_category_priority(category)
 ##
-## Returns priority value for autoscoring when scores are tied.
+## Returns the legacy category priority used by bot scoring.
 ## Higher priority = more specific/valuable category.
 func _get_category_priority(category: String) -> int:
 	# Priority order for lower section (higher number = higher priority)
