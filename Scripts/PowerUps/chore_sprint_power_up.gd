@@ -3,16 +3,14 @@ class_name ChoreSprintPowerUp
 
 ## ChoreSprintPowerUp
 ##
-## Uncommon PowerUp that adds a bonus reduction to the goof-off meter on chore completion.
-## EASY chores get an extra -10, HARD chores get an extra -25.
-## Stacks with ChoreChampion (which doubles): Sprint applies first, then Champion doubles.
+## Uncommon PowerUp that converts 50% of a completed chore's goof-off points
+## into Rebellion Rep, rounded down. Tracks actual Rep gained after clamping.
 ## Price: $150, Rarity: Uncommon
 
-const EASY_BONUS_REDUCTION: int = 10  # Extra reduction for EASY chores
-const HARD_BONUS_REDUCTION: int = 25  # Extra reduction for HARD chores
+const REP_CONVERSION_RATE: float = 0.5
 
 var chores_manager_ref: Node = null
-var total_bonus_reductions: int = 0
+var total_rep_gained: int = 0
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -57,20 +55,22 @@ func remove(_target) -> void:
 	chores_manager_ref = null
 
 func _on_task_completed(task) -> void:
-	# Apply difficulty-based bonus reduction to goof-off meter
-	var bonus = EASY_BONUS_REDUCTION
-	if task and task.difficulty == ChoreData.Difficulty.HARD:
-		bonus = HARD_BONUS_REDUCTION
-	if chores_manager_ref:
-		chores_manager_ref.current_progress = maxi(0, chores_manager_ref.current_progress - bonus)
-		chores_manager_ref.progress_changed.emit(chores_manager_ref.current_progress)
-		total_bonus_reductions += bonus
-		print("[ChoreSprintPowerUp] Applied extra -%d to goof-off meter (total bonus: %d)" % [bonus, total_bonus_reductions])
-		emit_signal("description_updated", id, get_current_description())
-		_update_power_up_icons()
+	if task == null:
+		return
+	var chore_points: int = task.get_progress_reduction()
+	var rep_gain: int = floori(chore_points * REP_CONVERSION_RATE)
+	if rep_gain <= 0:
+		return
+	var old_rep: int = ProgressManager.get_rep()
+	ProgressManager.adjust_rep(rep_gain)
+	var actual_rep_gain: int = ProgressManager.get_rep() - old_rep
+	total_rep_gained += actual_rep_gain
+	print("[ChoreSprintPowerUp] Gained %d Rep from %d chore points (total: %d)" % [actual_rep_gain, chore_points, total_rep_gained])
+	emit_signal("description_updated", id, get_current_description())
+	_update_power_up_icons()
 
 func get_current_description() -> String:
-	return "Chores reduce goof-off meter by an extra %d (EASY) or %d (HARD).\nTotal bonus reduction: %d" % [EASY_BONUS_REDUCTION, HARD_BONUS_REDUCTION, total_bonus_reductions]
+	return "Completed chores grant 50%% of their goof-off points as Rep (rounded down).\nTotal Rep gained: %d" % total_rep_gained
 
 func _update_power_up_icons() -> void:
 	if not is_inside_tree() or not get_tree():
