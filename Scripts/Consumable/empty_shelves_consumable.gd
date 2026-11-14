@@ -9,6 +9,10 @@ class_name EmptyShelvesConsumable
 
 signal empty_shelves_applied(multiplier: int)
 
+const MULTIPLIER_ID := "empty_shelves_multiplier"
+
+var _scorecard_ref: Scorecard = null
+
 func _ready() -> void:
 	add_to_group("consumables")
 	print("[EmptyShelvesConsumable] Ready")
@@ -35,16 +39,16 @@ func apply(target) -> void:
 			push_error("[EmptyShelvesConsumable] ScoreModifierManager not found")
 			return
 	
-	# Register the multiplier for this turn
-	var multiplier_id = "empty_shelves_multiplier"
-	score_modifier_manager.register_multiplier(multiplier_id, empty_slots)
+	_disarm()
+	score_modifier_manager.register_multiplier(MULTIPLIER_ID, empty_slots)
 	
 	print("[EmptyShelvesConsumable] Applied %dx multiplier for next score (%d empty slots)" % [empty_slots, empty_slots])
 	
-	# Connect to the scorecard to remove the multiplier after first score
+	# Both manual and automatic scoring emit this before round completion.
 	if game_controller.scorecard:
-		if not game_controller.scorecard.is_connected("score_auto_assigned", _on_score_assigned):
-			game_controller.scorecard.score_auto_assigned.connect(_on_score_assigned)
+		_scorecard_ref = game_controller.scorecard
+		if not _scorecard_ref.is_connected("score_assigned", _on_score_assigned):
+			_scorecard_ref.score_assigned.connect(_on_score_assigned)
 	
 	# Emit signal for feedback
 	emit_signal("empty_shelves_applied", empty_slots)
@@ -59,31 +63,30 @@ func apply(target) -> void:
 				"description": "Empty Shelves: %dx multiplier from %d empty slots" % [empty_slots, empty_slots]
 			})
 
-## _on_score_assigned(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {})
+## _on_score_assigned(_section: int, _category: String, _score: int)
 ##
-## Callback triggered when a score is assigned. Removes the one-time multiplier
-## after it has been applied to ensure it only affects one score.
-func _on_score_assigned(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
+## Removes the one-time multiplier immediately after any score is assigned.
+func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 	print("[EmptyShelvesConsumable] Score assigned - removing one-time multiplier")
-	
-	# Get ScoreModifierManager and remove our multiplier
+	_disarm()
+
+
+func _disarm() -> void:
 	var score_modifier_manager = ScoreModifierManager
 	if not score_modifier_manager:
 		score_modifier_manager = get_tree().get_first_node_in_group("score_modifier_manager")
 	
-	if score_modifier_manager:
-		var multiplier_id = "empty_shelves_multiplier"
-		if score_modifier_manager.has_method("has_multiplier") and score_modifier_manager.has_multiplier(multiplier_id):
-			score_modifier_manager.unregister_multiplier(multiplier_id)
-			print("[EmptyShelvesConsumable] One-time multiplier removed")
-		else:
-			print("[EmptyShelvesConsumable] Multiplier already removed or not found")
+	if score_modifier_manager and score_modifier_manager.has_multiplier(MULTIPLIER_ID):
+		score_modifier_manager.unregister_multiplier(MULTIPLIER_ID)
 	
-	# Disconnect from further score events since this is a one-time effect
-	var scorecard = get_tree().get_first_node_in_group("scorecard")
-	if scorecard and scorecard.is_connected("score_auto_assigned", _on_score_assigned):
-		scorecard.score_auto_assigned.disconnect(_on_score_assigned)
-		print("[EmptyShelvesConsumable] Disconnected from scorecard signals")
+	if is_instance_valid(_scorecard_ref):
+		if _scorecard_ref.is_connected("score_assigned", _on_score_assigned):
+			_scorecard_ref.score_assigned.disconnect(_on_score_assigned)
+	_scorecard_ref = null
+
+
+func _exit_tree() -> void:
+	_disarm()
 
 ## _count_empty_powerup_slots(game_controller: GameController) -> int
 ##

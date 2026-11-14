@@ -2665,14 +2665,24 @@ func _on_score_manual_assigned(_section: int, _category: String, _score: int, _b
 	
 	_handle_post_scoring_effects(_section, _category, _score, _breakdown_info)
 
+## _clear_empty_shelves_multiplier()
+##
+## Removes only the Empty Shelves one-shot modifier at lifecycle boundaries.
+func _clear_empty_shelves_multiplier() -> void:
+	var score_modifier_manager = get_node_or_null("/root/ScoreModifierManager")
+	if score_modifier_manager and score_modifier_manager.has_multiplier("empty_shelves_multiplier"):
+		score_modifier_manager.unregister_multiplier("empty_shelves_multiplier")
+
+
 ## _handle_post_scoring_effects(_section, _category, _score, _breakdown_info)
 ##
 ## Common post-scoring logic shared between auto and manual scoring.
 ## Sets all dice to DISABLED state to prevent further interaction until next turn.
-## Resets roll count for audio pitch progression.
+## Resets roll count for audio pitch progression and expires Empty Shelves.
 func _handle_post_scoring_effects(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
 	# A category was scored: the turn is resolved (AFTER_SCORE usage window)
 	set_game_phase(GamePhase.AFTER_SCORE)
+	_clear_empty_shelves_multiplier()
 	# Insurance Policy: if active and score is 0, grant consolation money
 	if insurance_policy_active:
 		insurance_policy_active = false
@@ -5317,6 +5327,7 @@ func _update_power_ups_for_dice(dice_values: Array) -> void:
 func _on_round_completed(round_number: int) -> void:
 	if _debug_enabled:
 		print("[GameController] Round", round_number, "completed successfully")
+	_clear_empty_shelves_multiplier()
 
 	# Wipe ghost projections before the blinds wipe so stale dice state
 	# cannot repaint ghosts during or after the depopulate animation
@@ -5335,6 +5346,7 @@ func _on_round_completed(round_number: int) -> void:
 func _on_round_failed(round_number: int) -> void:
 	if _debug_enabled:
 		print("[GameController] Round", round_number, "failed")
+	_clear_empty_shelves_multiplier()
 	
 	# Handle round failure - maybe apply a penalty or give a smaller consolation reward
 	# You could also add UI feedback for the player here
@@ -5607,6 +5619,7 @@ func _on_round_started(round_number: int) -> void:
 	if _debug_enabled:
 		print("[GameController] Round", round_number, "started")
 	set_game_phase(GamePhase.IDLE)
+	_clear_empty_shelves_multiplier()
 	
 	# Lock goal mode after first round starts (prevent mid-game changes)
 	if not _goal_mode_locked:

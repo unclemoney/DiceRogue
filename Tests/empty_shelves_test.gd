@@ -2,8 +2,11 @@ extends Control
 
 ## empty_shelves_test.gd
 ##
-## Manual test for verifying Empty Shelves consumable multiplier behavior.
-## Tests that the multiplier is properly unregistered after first score assignment.
+## Exercises the real Empty Shelves consumable through manual scoring,
+## auto-scoring, and GameController lifecycle boundaries.
+## Run headless with `-- --auto-test` to quit with a test result code.
+
+const UNRELATED_SOURCE := "empty_shelves_test_unrelated"
 
 @onready var status_label: Label = $VBoxContainer/StatusLabel
 @onready var multiplier_label: Label = $VBoxContainer/MultiplierLabel
@@ -11,155 +14,252 @@ extends Control
 @onready var apply_button: Button = $VBoxContainer/ApplyButton
 @onready var assign_score_button: Button = $VBoxContainer/AssignScoreButton
 @onready var check_button: Button = $VBoxContainer/CheckMultiplierButton
+@onready var run_tests_button: Button = $VBoxContainer/RunTestsButton
 @onready var log_label: RichTextLabel = $VBoxContainer/LogLabel
 
-var mock_scorecard: MockScorecard
+var game_controller: BareGameController
+var scorecard: Scorecard
+var powerup_ui: BarePowerUpUI
+var empty_shelves: EmptyShelvesConsumable
 var scores_assigned: int = 0
-var empty_slots_count: int = 5  # Simulate 5 empty power-up slots
+var _fail_count: int = 0
+var _test_completed: bool = false
+var _auto_cleanup_before_round: bool = false
+
+
+class BareGameController extends GameController:
+	func _ready() -> void:
+		pass
+
+	func _setup_round_target(_round_number: int) -> void:
+		pass
+
+
+class BarePowerUpUI extends PowerUpUI:
+	func _ready() -> void:
+		pass
+
 
 func _ready() -> void:
-	_log("Test scene ready")
-	
-	# Connect buttons
 	apply_button.pressed.connect(_on_apply_pressed)
 	assign_score_button.pressed.connect(_on_assign_score_pressed)
 	check_button.pressed.connect(_on_check_multiplier_pressed)
-	
-	# Create mock scorecard
-	mock_scorecard = MockScorecard.new()
-	add_child(mock_scorecard)
-	mock_scorecard.add_to_group("scorecard")
-	_log("Mock scorecard created")
-	
-	# Ensure ScoreModifierManager is available
-	if ScoreModifierManager:
-		_log("ScoreModifierManager found")
-		ScoreModifierManager.reset()
-		_log("ScoreModifierManager reset")
-	else:
-		_log("[color=red]ERROR: ScoreModifierManager not found![/color]")
-		status_label.text = "Status: ERROR - ScoreModifierManager missing"
-		return
-	
-	status_label.text = "Status: Ready - Press Apply to test"
+	run_tests_button.pressed.connect(_on_run_tests_pressed)
+	_setup_real_consumable()
 	_update_multiplier_display()
+	call_deferred("_run_tests_and_report")
+
+
+func _setup_real_consumable() -> void:
+	ScoreModifierManager.reset()
+	game_controller = BareGameController.new()
+	add_child(game_controller)
+	scorecard = Scorecard.new()
+	add_child(scorecard)
+	powerup_ui = BarePowerUpUI.new()
+	add_child(powerup_ui)
+	powerup_ui.max_power_ups = 5
+	empty_shelves = EmptyShelvesConsumable.new()
+	add_child(empty_shelves)
+	game_controller.scorecard = scorecard
+	game_controller.powerup_ui = powerup_ui
+
+
+func _run_tests_and_report() -> void:
+	run_tests_button.disabled = true
+	await _run_regression_tests()
+	_test_completed = true
+	run_tests_button.disabled = false
+	_update_multiplier_display()
+	if _fail_count == 0:
+		status_label.text = "Status: PASS - manual controls are ready"
+	else:
+		status_label.text = "Status: FAIL - %d check(s) failed" % _fail_count
+	if "--auto-test" in OS.get_cmdline_user_args() or DisplayServer.get_name() == "headless":
+		_quit_with_result.call_deferred()
+
+
+func _quit_with_result() -> void:
+	get_tree().quit(0 if _fail_count == 0 else 1)
+
+
+func _run_regression_tests() -> void:
+	_log("\n=== RUNNING REAL EMPTY SHELVES REGRESSION TESTS ===")
+	_test_no_empty_slots()
+	_test_manual_score_cleanup()
+	await _test_auto_score_cleanup()
+	_test_post_score_fail_safe()
+	_test_round_boundaries()
+	await _test_exit_tree_cleanup()
+	ScoreModifierManager.reset()
+	scorecard.reset_scores()
+	_log("=== TESTS COMPLETE: %s ===" % ("PASS" if _fail_count == 0 else "FAIL"))
+
+
+func _test_no_empty_slots() -> void:
+	_log("\n--- No empty slots ---")
+	powerup_ui._power_up_data.clear()
+	for index in range(powerup_ui.max_power_ups):
+		powerup_ui._power_up_data["test_powerup_%d" % index] = null
+	empty_shelves.apply(game_controller)
+	_assert(not ScoreModifierManager.has_multiplier(EmptyShelvesConsumable.MULTIPLIER_ID),
+		"No multiplier is registered without empty PowerUp slots")
+	powerup_ui._power_up_data.clear()
+
+
+func _test_manual_score_cleanup() -> void:
+	_log("\n--- Immediate manual score cleanup ---")
+	empty_shelves.apply(game_controller)
+	_assert(ScoreModifierManager.get_multiplier(EmptyShelvesConsumable.MULTIPLIER_ID) == 5.0,
+		"Five empty slots register a 5x multiplier")
+	var modified_score: int = scorecard.calculate_score("ones", [1, 1, 2, 3, 4])
+	_assert(modified_score == 10, "The real scoring calculation receives the 5x multiplier")
+	scorecard.set_score(Scorecard.Section.UPPER, "ones", modified_score)
+	_assert(not ScoreModifierManager.has_multiplier(EmptyShelvesConsumable.MULTIPLIER_ID),
+		"score_assigned removes the multiplier immediately")
+	_assert(not scorecard.is_connected("score_assigned", empty_shelves._on_score_assigned),
+		"Manual cleanup disconnects the score callback")
+	var second_score: int = scorecard.calculate_score("twos", [2, 2, 1, 3, 4])
+	_assert(second_score == 4, "The second score is unaffected")
+	scorecard.set_score(Scorecard.Section.UPPER, "twos", second_score)
+	_assert(not ScoreModifierManager.has_multiplier(EmptyShelvesConsumable.MULTIPLIER_ID),
+		"The multiplier stays removed after a second score")
+	scorecard.reset_scores()
+
+
+func _test_auto_score_cleanup() -> void:
+	_log("\n--- Auto-score cleanup before round completion ---")
+	_auto_cleanup_before_round = false
+	empty_shelves.apply(game_controller)
+	scorecard.score_changed.connect(_on_auto_round_score_changed)
+	scorecard.auto_score_best([1, 1, 1, 2, 3])
+	_assert(_auto_cleanup_before_round,
+		"The multiplier is gone when score_changed starts round completion")
+	_assert(not ScoreModifierManager.has_multiplier(EmptyShelvesConsumable.MULTIPLIER_ID),
+		"Auto-score cleanup does not wait for deferred finalization")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_assert(not ScoreModifierManager.has_multiplier(EmptyShelvesConsumable.MULTIPLIER_ID),
+		"Deferred auto-score finalization cannot restore the multiplier")
+	scorecard.score_changed.disconnect(_on_auto_round_score_changed)
+	scorecard.reset_scores()
+
+
+func _on_auto_round_score_changed(_total_score: int) -> void:
+	_auto_cleanup_before_round = not ScoreModifierManager.has_multiplier(EmptyShelvesConsumable.MULTIPLIER_ID)
+	game_controller._on_round_completed(1)
+
+
+func _test_post_score_fail_safe() -> void:
+	_log("\n--- Shared post-score GameController fail-safe ---")
+	ScoreModifierManager.register_multiplier(EmptyShelvesConsumable.MULTIPLIER_ID, 5.0)
+	ScoreModifierManager.register_multiplier(UNRELATED_SOURCE, 3.0)
+	game_controller._handle_post_scoring_effects(Scorecard.Section.UPPER, "ones", 10, {})
+	_assert(not ScoreModifierManager.has_multiplier(EmptyShelvesConsumable.MULTIPLIER_ID),
+		"The shared post-score path removes Empty Shelves")
+	_assert(ScoreModifierManager.has_multiplier(UNRELATED_SOURCE),
+		"The post-score fail-safe preserves unrelated modifiers")
+
+
+func _test_round_boundaries() -> void:
+	_log("\n--- Round lifecycle fail-safes ---")
+	_assert_round_boundary("completed")
+	_assert_round_boundary("failed")
+	_assert_round_boundary("started")
+	if ScoreModifierManager.has_multiplier(UNRELATED_SOURCE):
+		ScoreModifierManager.unregister_multiplier(UNRELATED_SOURCE)
+
+
+func _assert_round_boundary(boundary: String) -> void:
+	empty_shelves.apply(game_controller)
+	if not ScoreModifierManager.has_multiplier(UNRELATED_SOURCE):
+		ScoreModifierManager.register_multiplier(UNRELATED_SOURCE, 3.0)
+	match boundary:
+		"completed":
+			game_controller._on_round_completed(1)
+		"failed":
+			game_controller._on_round_failed(1)
+		"started":
+			game_controller._on_round_started(1)
+	_assert(not ScoreModifierManager.has_multiplier(EmptyShelvesConsumable.MULTIPLIER_ID),
+		"Round %s removes Empty Shelves" % boundary)
+	_assert(ScoreModifierManager.has_multiplier(UNRELATED_SOURCE),
+		"Round %s preserves unrelated modifiers" % boundary)
+
+
+func _test_exit_tree_cleanup() -> void:
+	_log("\n--- Freeing an armed consumable ---")
+	empty_shelves.apply(game_controller)
+	empty_shelves.queue_free()
+	await get_tree().process_frame
+	_assert(not ScoreModifierManager.has_multiplier(EmptyShelvesConsumable.MULTIPLIER_ID),
+		"Freeing an armed Empty Shelves instance removes its multiplier")
+	empty_shelves = EmptyShelvesConsumable.new()
+	add_child(empty_shelves)
 
 
 func _on_apply_pressed() -> void:
-	_log("\n[color=yellow]=== APPLYING EMPTY SHELVES MULTIPLIER ===[/color]")
-	
-	# Directly simulate what EmptyShelvesConsumable.apply() does
-	var multiplier_id = "empty_shelves_multiplier"
-	
-	# Check if already registered
-	if ScoreModifierManager.has_multiplier(multiplier_id):
-		_log("[color=orange]Multiplier already registered, removing first...[/color]")
-		ScoreModifierManager.unregister_multiplier(multiplier_id)
-	
-	# Register the multiplier (simulating empty_slots_count empty slots)
-	ScoreModifierManager.register_multiplier(multiplier_id, empty_slots_count)
-	_log("Registered multiplier '%s' with value %d" % [multiplier_id, empty_slots_count])
-	
-	# Connect to scorecard signal (simulating the consumable's behavior)
-	if not mock_scorecard.is_connected("score_auto_assigned", _on_score_assigned_test):
-		mock_scorecard.score_auto_assigned.connect(_on_score_assigned_test)
-		_log("Connected to score_auto_assigned signal")
-	
-	await get_tree().process_frame
+	if not _test_completed:
+		return
+	powerup_ui._power_up_data.clear()
+	empty_shelves.apply(game_controller)
+	_log("Applied the real Empty Shelves consumable")
 	_update_multiplier_display()
-	
-	status_label.text = "Status: Multiplier applied - Now assign a score"
-
-
-## Simulates EmptyShelvesConsumable._on_score_assigned behavior
-func _on_score_assigned_test(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
-	_log("[color=magenta]>>> _on_score_assigned_test callback triggered <<<[/color]")
-	
-	var multiplier_id = "empty_shelves_multiplier"
-	
-	# This is what EmptyShelvesConsumable does:
-	if ScoreModifierManager.has_multiplier(multiplier_id):
-		ScoreModifierManager.unregister_multiplier(multiplier_id)
-		_log("Unregistered multiplier '%s'" % multiplier_id)
-	else:
-		_log("[color=orange]Multiplier '%s' already removed or not found[/color]" % multiplier_id)
-	
-	# Disconnect from signal
-	if mock_scorecard.is_connected("score_auto_assigned", _on_score_assigned_test):
-		mock_scorecard.score_auto_assigned.disconnect(_on_score_assigned_test)
-		_log("Disconnected from score_auto_assigned signal")
 
 
 func _on_assign_score_pressed() -> void:
+	if not _test_completed:
+		return
+	var category := ""
+	for candidate in scorecard.upper_scores.keys():
+		if scorecard.upper_scores[candidate] == null:
+			category = candidate
+			break
+	if category.is_empty():
+		scorecard.reset_scores()
+		category = "ones"
+	var dice_values: Array = [1, 1, 2, 3, 4]
+	var score: int = scorecard.calculate_score(category, dice_values)
+	scorecard.set_score(Scorecard.Section.UPPER, category, score)
 	scores_assigned += 1
-	_log("\n[color=cyan]=== ASSIGNING SCORE #%d ===[/color]" % scores_assigned)
-	
-	# Check connection status before emitting
-	var is_connected = mock_scorecard.is_connected("score_auto_assigned", _on_score_assigned_test)
-	_log("Signal connected before emit: %s" % str(is_connected))
-	
-	# Emit the signal that Empty Shelves listens to
-	_log("Emitting score_auto_assigned signal...")
-	mock_scorecard.emit_signal("score_auto_assigned", 0, "test_category", 100, {})
-	
-	await get_tree().process_frame
-	await get_tree().process_frame  # Extra frame for signal processing
-	
-	_update_multiplier_display()
 	scores_label.text = "Scores assigned: %d" % scores_assigned
-	
-	# Check if multiplier is still registered
-	var has_mult = ScoreModifierManager.has_multiplier("empty_shelves_multiplier")
-	if scores_assigned == 1:
-		if has_mult:
-			_log("[color=red]BUG CONFIRMED: Multiplier still registered after 1st score![/color]")
-			status_label.text = "Status: BUG - Multiplier persists after 1st score!"
-		else:
-			_log("[color=green]SUCCESS: Multiplier correctly removed after 1st score[/color]")
-			status_label.text = "Status: SUCCESS - Multiplier removed correctly"
-	else:
-		if has_mult:
-			_log("[color=red]BUG: Multiplier re-registered or persisting after %d scores![/color]" % scores_assigned)
-		else:
-			_log("Multiplier remains unregistered (correct behavior)")
+	_log("Assigned a real score to %s: %d" % [category, score])
+	_update_multiplier_display()
 
 
 func _on_check_multiplier_pressed() -> void:
-	_log("\n[color=white]=== CHECKING MULTIPLIER STATUS ===[/color]")
 	_update_multiplier_display()
-	
-	if ScoreModifierManager.has_multiplier("empty_shelves_multiplier"):
-		var mult_value = ScoreModifierManager.get_total_multiplier()
-		_log("Multiplier IS registered, total multiplier: %d" % mult_value)
-	else:
-		_log("Multiplier is NOT registered")
-	
-	# Check all registered multipliers
-	_log("All registered multipliers: %s" % str(ScoreModifierManager.get_active_multiplier_sources()))
+	_log("Active multiplier sources: %s" % str(ScoreModifierManager.get_active_sources()))
+
+
+func _on_run_tests_pressed() -> void:
+	if not _test_completed:
+		return
+	_fail_count = 0
+	scores_assigned = 0
+	scores_label.text = "Scores assigned: 0"
+	await _run_tests_and_report()
 
 
 func _update_multiplier_display() -> void:
-	if ScoreModifierManager.has_multiplier("empty_shelves_multiplier"):
-		var value = ScoreModifierManager.get_multiplier("empty_shelves_multiplier")
-		multiplier_label.text = "Multiplier registered: YES (value: %d)" % value
+	if ScoreModifierManager.has_multiplier(EmptyShelvesConsumable.MULTIPLIER_ID):
+		var value: float = ScoreModifierManager.get_multiplier(EmptyShelvesConsumable.MULTIPLIER_ID)
+		multiplier_label.text = "Multiplier registered: YES (value: %.1f)" % value
 		multiplier_label.add_theme_color_override("font_color", Color.GREEN)
 	else:
 		multiplier_label.text = "Multiplier registered: NO"
 		multiplier_label.add_theme_color_override("font_color", Color.GRAY)
 
 
+func _assert(condition: bool, message: String) -> void:
+	if condition:
+		_log("PASS: %s" % message)
+	else:
+		_fail_count += 1
+		_log("[color=red]FAIL: %s[/color]" % message)
+		push_error("[EmptyShelvesTest] %s" % message)
+
+
 func _log(message: String) -> void:
-	var timestamp = "[%s] " % Time.get_time_string_from_system()
-	log_label.append_text("\n" + timestamp + message)
-	print("[EmptyShelvesTest] " + message.replace("[color=", "").replace("[/color]", "").replace("[b]", "").replace("[/b]", ""))
-
-
-## Mock Scorecard class for testing signal behavior
-class MockScorecard:
-	extends Node
-	
-	signal score_auto_assigned(section: int, category: String, score: int, breakdown_info: Dictionary)
-	signal score_assigned(section: int, category: String, score: int)
-	
-	func _init():
-		pass
+	log_label.append_text("\n" + message)
+	print("[EmptyShelvesTest] " + message.replace("[color=red]", "").replace("[/color]", ""))

@@ -27,7 +27,7 @@ grow_vertical = 2
 
 [node name="TitleLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
-text = "Empty Shelves Consumable Test"
+text = "Empty Shelves Real Lifecycle Test"
 horizontal_alignment = 1
 
 [node name="StatusLabel" type="Label" parent="VBoxContainer"]
@@ -54,11 +54,15 @@ text = "Apply Empty Shelves"
 
 [node name="AssignScoreButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
-text = "Assign Score (Simulate)"
+text = "Assign Real Score"
 
 [node name="CheckMultiplierButton" type="Button" parent="VBoxContainer"]
 layout_mode = 2
 text = "Check Multiplier Status"
+
+[node name="RunTestsButton" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+text = "Run Regression Tests"
 
 [node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
 layout_mode = 2
