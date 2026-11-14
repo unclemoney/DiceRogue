@@ -12,6 +12,7 @@ const ScoringAnimationController = preload("res://Scripts/Effects/scoring_animat
 @onready var test_score: int = 15
 
 var scoring_controller: ScoringAnimationController
+var _fail_count: int = 0
 
 func _ready() -> void:
 	print("[ScoringAnimationTest] Initializing test scene...")
@@ -33,6 +34,44 @@ func _ready() -> void:
 	await get_tree().create_timer(1.5).timeout
 	print("[ScoringAnimationTest] AUTO: triggering scoring animation with console sources")
 	_on_test_button_pressed()
+	await scoring_controller.animation_sequence_complete
+	await _test_multiplier_filters()
+	print("[ScoringAnimationTest] %s" % ("PASS" if _fail_count == 0 else "FAIL"))
+	get_tree().quit(0 if _fail_count == 0 else 1)
+
+func _test_multiplier_filters() -> void:
+	scoring_controller._running_score_float = 10.0
+	var neutral := {
+		"multiplier_sources": [
+			{"name": "neutral_test", "value": 1.0, "category": "consumable"},
+		],
+	}
+	await scoring_controller._phase_multipliers(neutral, 100.0, scoring_controller._sequence_token)
+	_assert(scoring_controller._active_sparks.is_empty(), "neutral multipliers do not animate")
+	_assert(is_equal_approx(scoring_controller._running_score_float, 10.0), "neutral multipliers leave score unchanged")
+
+	var reduction := {
+		"effective_regular_multiplier": 0.5,
+		"multiplier_sources": [
+			{"name": "reduction_test", "value": 0.5, "category": "consumable"},
+		],
+	}
+	await scoring_controller._phase_multipliers(reduction, 100.0, scoring_controller._sequence_token)
+	_assert(is_equal_approx(scoring_controller._running_score_float, 5.0), "divisor multipliers still reduce the score")
+
+	scoring_controller._running_score_float = 0.0
+	await scoring_controller._phase_multipliers(reduction, 100.0, scoring_controller._sequence_token)
+	_assert(scoring_controller._active_sparks.is_empty(), "zero-score multipliers do not animate")
+	_assert(is_zero_approx(scoring_controller._running_score_float), "zero-score multipliers leave zero unchanged")
+
+
+func _assert(condition: bool, message: String) -> void:
+	if condition:
+		print("[ScoringAnimationTest] OK: " + message)
+	else:
+		_fail_count += 1
+		push_error("[ScoringAnimationTest] FAILED: " + message)
+
 
 func _create_test_ui() -> void:
 	# Create main container

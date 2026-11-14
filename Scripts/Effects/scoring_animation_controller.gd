@@ -609,6 +609,8 @@ func _phase_additives(breakdown_info: Dictionary, intensity_scale: float, speed_
 ## are DISPLAY-ONLY: the pipeline already multiplies their values into the
 ## effective regular multiplier, so applying them here would double-count.
 func _phase_multipliers(breakdown_info: Dictionary, speed_scale: float, token: int) -> void:
+	if is_zero_approx(_running_score_float):
+		return
 	var chain: Array = []  # {value: float, origin: Vector2, display_info: Dictionary, applies: bool, is_console: bool}
 
 	var scorecard_mult = float(breakdown_info.get("effective_regular_multiplier", breakdown_info.get("regular_multiplier", 1.0)))
@@ -661,6 +663,8 @@ func _phase_multipliers(breakdown_info: Dictionary, speed_scale: float, token: i
 		var source_name = source_info.get("name", "")
 		var category = source_info.get("category", "")
 		if category == "scorecard" or category == "colored_dice":
+			continue
+		if is_equal_approx(float(source_info.get("value", 1.0)), 1.0):
 			continue
 		var is_console: bool = category == "console"
 		var origin: Vector2

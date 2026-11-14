@@ -34,6 +34,7 @@ var _progress_bar: ProgressBar
 var _meta_label: Label
 var _bg_panel: Panel
 var _bg_style: StyleBoxFlat
+var _chip_tex: TextureRect
 
 var is_active := false
 var _current_tween: Tween
@@ -61,15 +62,13 @@ func _build_ui() -> void:
 	add_child(_bg_panel)
 
 	# Try to load chip art — falls back gracefully if not present
-	var chip_tex := TextureRect.new()
-	chip_tex.name = "ChipArt"
-	chip_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
-	chip_tex.stretch_mode = TextureRect.STRETCH_SCALE
-	chip_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var chip_texture = load("res://Resources/Art/UI/challenge_chip.png")
-	if chip_texture:
-		chip_tex.texture = chip_texture
-	add_child(chip_tex)
+	_chip_tex = TextureRect.new()
+	_chip_tex.name = "ChipArt"
+	_chip_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_chip_tex.stretch_mode = TextureRect.STRETCH_SCALE
+	_chip_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_chip_tex.texture = load("res://Resources/Art/Powerups/cassette_tape.png")
+	add_child(_chip_tex)
 
 	var vbox := VBoxContainer.new()
 	vbox.name = "VBox"
@@ -137,6 +136,9 @@ func _build_ui() -> void:
 func _apply_data_to_ui() -> void:
 	if not data:
 		return
+
+	if _chip_tex:
+		_chip_tex.texture = data.icon if data.icon else load("res://Resources/Art/Powerups/cassette_tape.png")
 
 	if _name_label:
 		_name_label.text = data.display_name if data.display_name else data.id

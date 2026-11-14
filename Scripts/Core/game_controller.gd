@@ -224,6 +224,9 @@ var pending_mods: Array[String] = []
 var mod_persistence_map: Dictionary = {}  # mod_id -> int tracking how many instances of each mod should persist
 var _shop_tween: Tween
 var _end_of_round_stats_shown: bool = false  # Track if round-end sequence ran this round
+var _round_end_rewards_granted: bool = false
+var _stats_continue_in_progress: bool = false
+var _mom_checkin_history: Array[String] = []
 var _pending_round_end_start: bool = false  # Coalesced round-end request waiting for the scoring animation to finish
 
 # Round-end event queue — processes UI panels sequentially to prevent overlapping
@@ -614,6 +617,7 @@ func _on_channel_selected(channel: int) -> void:
 	_apply_channel_starting_bonuses(channel)
 	# Mom's World: a new playthrough begins - reset cast state and log the
 	# first zone (Patterson sightings reference zones visited this run)
+	_mom_checkin_history.clear()
 	if cast_manager:
 		cast_manager.reset_for_new_game()
 		if channel_manager:
@@ -924,6 +928,8 @@ func _restart_game_for_new_channel(carried_types: Array[String] = []) -> void:
 	
 	# Reset end of round stats shown flag and queue state
 	_end_of_round_stats_shown = false
+	_round_end_rewards_granted = false
+	_stats_continue_in_progress = false
 	_pending_round_end_start = false
 	_is_processing_round_end = false
 	_round_end_queue.clear()
@@ -1756,7 +1762,7 @@ func _on_power_up_sold(power_up_id: String) -> void:
 	var lookup_id = _get_power_up_base_id(power_up_id)
 	var def = pu_manager.get_def(lookup_id)
 	if def:
-		var refund = def.price / 2.0  # Half price
+		var refund = 0.0 if lookup_id == "the_piggy_bank" else def.price / 2.0
 		if _debug_enabled:
 			print("[GameController] Refunding", refund, "coins for power-up:", power_up_id)
 		PlayerEconomy.add_money(refund)
@@ -4553,6 +4559,8 @@ func _show_end_of_round_stats() -> void:
 		"docked_allowance": docked_allowance_active
 	}
 	
+	_settle_round_end_rewards(stats_data)
+
 	# Connect to panel's continue signal (one-shot)
 	if not end_of_round_stats_panel.is_connected("continue_to_shop_pressed", _on_stats_panel_continue):
 		end_of_round_stats_panel.continue_to_shop_pressed.connect(_on_stats_panel_continue, CONNECT_ONE_SHOT)
@@ -4565,51 +4573,55 @@ func _show_end_of_round_stats() -> void:
 	end_of_round_stats_panel.show_stats(stats_data)
 
 
+## _settle_round_end_rewards(stats_data)
+##
+## Grants and saves the displayed round-end rewards exactly once.
+func _settle_round_end_rewards(stats_data: Dictionary) -> void:
+	if _round_end_rewards_granted:
+		return
+	_round_end_rewards_granted = true
+
+	if docked_allowance_active:
+		if _debug_enabled:
+			print("[GameController] Docked Allowance active - withholding end of round award")
+	else:
+		var buff_bonus: int = int(stats_data.get("buff_bonus", 0))
+		var power_up_bonus: int = int(stats_data.get("power_up_bonus", 0))
+		var consumed_buff_bonus = _consume_round_end_buff_bonuses()
+		if consumed_buff_bonus != buff_bonus:
+			push_warning("[GameController] Round-end buff bonus preview mismatch. Preview=$%d Consumed=$%d" % [buff_bonus, consumed_buff_bonus])
+		var consumed_power_up_bonus = _consume_round_end_power_up_bonuses()
+		if consumed_power_up_bonus != power_up_bonus:
+			push_warning("[GameController] Round-end PowerUp bonus preview mismatch. Preview=$%d Consumed=$%d" % [power_up_bonus, consumed_power_up_bonus])
+
+		var total_bonus: int = 0
+		for key in ["challenge_reward", "chore_reward_total", "empty_categories_bonus", "score_above_bonus", "buff_bonus", "power_up_bonus"]:
+			total_bonus += int(stats_data.get(key, 0))
+		if total_bonus > 0:
+			PlayerEconomy.add_money(total_bonus)
+			Statistics.total_money_earned += total_bonus
+			if _debug_enabled:
+				print("[GameController] Awarded end of round bonuses: $%d" % total_bonus)
+
+	if round_manager:
+		round_manager.complete_round()
+	GameSaveManager.update_settled_snapshot()
+
+
 ## _on_stats_panel_continue()
 ##
-## Called when player clicks "Head to Shop" on the stats panel.
-## Awards the calculated bonuses and advances the round-end queue to OPEN_SHOP.
+## Advances an already-settled round to the shop without replaying rewards.
 func _on_stats_panel_continue() -> void:
-	if _debug_enabled:
-		print("[GameController] Stats panel continue pressed - awarding bonuses")
-	
-	# Award bonuses via PlayerEconomy
-	if end_of_round_stats_panel:
-		var total_bonus = end_of_round_stats_panel.get_total_bonus()
-		var empty_bonus = end_of_round_stats_panel.get_empty_categories_bonus()
-		var score_bonus = end_of_round_stats_panel.get_score_above_bonus()
-		var buff_bonus = end_of_round_stats_panel.get_buff_bonus()
-		var power_up_bonus = end_of_round_stats_panel.get_power_up_bonus()
-		if docked_allowance_active:
-			# Docked Allowance grounding: withhold the entire end-of-round award.
-			if _debug_enabled:
-				print("[GameController] Docked Allowance active - withholding $%d end of round award" % total_bonus)
-		else:
-			var consumed_buff_bonus = _consume_round_end_buff_bonuses()
-			if consumed_buff_bonus != buff_bonus:
-				push_warning("[GameController] Round-end buff bonus preview mismatch. Preview=$%d Consumed=$%d" % [buff_bonus, consumed_buff_bonus])
-			var consumed_power_up_bonus = _consume_round_end_power_up_bonuses()
-			if consumed_power_up_bonus != power_up_bonus:
-				push_warning("[GameController] Round-end PowerUp bonus preview mismatch. Preview=$%d Consumed=$%d" % [power_up_bonus, consumed_power_up_bonus])
-
-			if total_bonus > 0:
-				PlayerEconomy.add_money(total_bonus)
-				if _debug_enabled:
-					print("[GameController] Awarded end of round bonuses: $%d (empty: $%d, score: $%d, buffs: $%d, powerups: $%d)" % [total_bonus, empty_bonus, score_bonus, buff_bonus, power_up_bonus])
-
-				# Track in statistics
-				Statistics.total_money_earned += total_bonus
+	if _stats_continue_in_progress:
+		return
+	_stats_continue_in_progress = true
 	
 	# Turn off TV before opening shop
 	_round_transition_tv_off = true
 	if crt_manager:
 		await crt_manager.turn_off_tv()
 	
-	# Complete the round
-	if round_manager:
-		round_manager.complete_round()
-	
-	# Advance queue to OPEN_SHOP step
+	_stats_continue_in_progress = false
 	_process_round_end_queue()
 
 
@@ -5604,6 +5616,8 @@ func _on_round_started(round_number: int) -> void:
 	
 	# Reset end of round stats flag and queue state for new round
 	_end_of_round_stats_shown = false
+	_round_end_rewards_granted = false
+	_stats_continue_in_progress = false
 	_pending_round_end_start = false
 	_is_processing_round_end = false
 	_round_end_queue.clear()
@@ -6281,7 +6295,9 @@ func _resolve_mom_checkin() -> void:
 		if cast_manager and cast_manager.consume_flag("force_cool_mom"):
 			tree_id = "checkin_cool_mom"
 		else:
-			tree_id = MomLogicHandlerScript.get_checkin_tree_id(self, chores_manager.mom_mood)
+			tree_id = MomLogicHandlerScript.get_checkin_tree_id(self, chores_manager.mom_mood, _mom_checkin_history)
+	if MomLogicHandlerScript.CHECKIN_FLAVOR_POOL.has(tree_id) and not _mom_checkin_history.has(tree_id):
+		_mom_checkin_history.append(tree_id)
 	severity = MomLogicHandlerScript.get_checkin_severity(tree_id)
 	if _debug_enabled:
 		print("[GameController] Check-in tree: %s (severity %d)" % [tree_id, severity])
@@ -6992,12 +7008,15 @@ func get_save_state() -> Dictionary:
 			"_game_ended": _game_ended,
 			"use_round_config_goals": use_round_config_goals,
 			"_goal_mode_locked": _goal_mode_locked,
+			"_end_of_round_stats_shown": _end_of_round_stats_shown,
+			"_round_end_rewards_granted": _round_end_rewards_granted,
 			"_challenge_reward_this_round": _challenge_reward_this_round,
 			"_challenge_reward_granted": _challenge_reward_granted,
 			"_grounded_debuffs": _grounded_debuffs.duplicate(),
 			"granted_buff_intensities": _get_mom_granted_buff_intensities(),
 			"rebellion_stacks": int(active_debuffs["rebellion"].intensity) if active_debuffs.has("rebellion") else 1,
-			"_mom_cosmetics_locked": _mom_cosmetics_locked
+			"_mom_cosmetics_locked": _mom_cosmetics_locked,
+			"_mom_checkin_history": _mom_checkin_history.duplicate()
 		}
 	}
 
@@ -7126,11 +7145,16 @@ func load_game_state(save_data: Dictionary) -> void:
 	_game_ended = gc_state.get("_game_ended", false)
 	use_round_config_goals = gc_state.get("use_round_config_goals", true)
 	_goal_mode_locked = gc_state.get("_goal_mode_locked", false)
+	_end_of_round_stats_shown = bool(gc_state.get("_end_of_round_stats_shown", false))
+	_round_end_rewards_granted = bool(gc_state.get("_round_end_rewards_granted", false))
+	_stats_continue_in_progress = false
 	_challenge_reward_this_round = gc_state.get("_challenge_reward_this_round", 0)
 	_challenge_reward_granted = gc_state.get("_challenge_reward_granted", false)
 	var loaded_grounded = gc_state.get("_grounded_debuffs", [])
 	_grounded_debuffs.assign(loaded_grounded)
 	_mom_cosmetics_locked = gc_state.get("_mom_cosmetics_locked", false)
+	var loaded_checkin_history = gc_state.get("_mom_checkin_history", [])
+	_mom_checkin_history.assign(loaded_checkin_history)
 	if _mom_cosmetics_locked:
 		# Re-apply a temporary Mom cosmetic lock saved mid-round
 		DiceColorManager.set_colors_enabled(false)
@@ -7221,6 +7245,10 @@ func load_game_state(save_data: Dictionary) -> void:
 	# Re-sync session-scoped UI state (button enables, round label) that live
 	# play derives from signals load_game_state deliberately does not emit
 	_restore_session_ui_state()
+	if _round_end_rewards_granted and round_manager and round_manager.is_challenge_completed:
+		_round_end_queue.clear()
+		_is_processing_round_end = false
+		call_deferred("_finish_round_end_and_open_shop")
 
 	if _debug_enabled:
 		print("[GameController] Saved game state loaded successfully!")

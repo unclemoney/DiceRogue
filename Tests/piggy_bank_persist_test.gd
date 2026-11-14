@@ -26,6 +26,24 @@ class FakeDiceHand extends Node:
 	signal roll_complete
 
 
+class FakePowerUpManager extends PowerUpManager:
+	var definition: PowerUpData
+
+	func get_def(_id: String) -> PowerUpData:
+		return definition
+
+
+class SaleGameController extends GameController:
+	func _ready() -> void:
+		pass
+
+	func _deactivate_power_up(_power_up_id: String) -> void:
+		pass
+
+	func revoke_power_up(_power_up_id: String) -> void:
+		pass
+
+
 func _ready() -> void:
 	print("[PiggyBankPersistTest] Starting")
 	_saved_savings = PlayerEconomy.piggy_bank_savings
@@ -34,6 +52,7 @@ func _ready() -> void:
 	_test_apply_restores_savings()
 	_test_roll_write_back()
 	_test_sale_zeroes_savings()
+	_test_base_sale_refund_is_zero()
 	_test_state_round_trip()
 
 	# Restore autoload state
@@ -114,6 +133,20 @@ func _test_sale_zeroes_savings() -> void:
 
 	piggy.queue_free()
 	hand.queue_free()
+
+
+func _test_base_sale_refund_is_zero() -> void:
+	var definition := PowerUpData.new()
+	definition.id = "the_piggy_bank"
+	definition.price = 125
+	var manager := FakePowerUpManager.new()
+	manager.definition = definition
+	var controller := SaleGameController.new()
+	controller.pu_manager = manager
+	controller.active_power_ups["the_piggy_bank"] = Node.new()
+	var money_before: int = PlayerEconomy.money
+	controller._on_power_up_sold("the_piggy_bank")
+	_check("Piggy Bank ordinary sale refund is $0", PlayerEconomy.money == money_before)
 
 
 func _test_state_round_trip() -> void:

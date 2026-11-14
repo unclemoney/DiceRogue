@@ -217,6 +217,8 @@ func _run_tests() -> void:
 	var grid_rect := _popup._directory_grid.get_global_rect()
 	_assert(grid_rect.end.y <= panel_rect.end.y + 0.5, "directory grid fits inside the panel (grid bottom %.1f, panel bottom %.1f)" % [grid_rect.end.y, panel_rect.end.y])
 	_assert(panel_rect.end.y <= get_viewport_rect().size.y, "panel bottom border visible at viewport height (panel bottom %.1f)" % panel_rect.end.y)
+	_assert(panel_rect.position.x >= 16.0 and panel_rect.end.x <= get_viewport_rect().size.x - 16.0, "panel fits current viewport width with safe margins")
+	_assert(panel_rect.position.y >= 16.0 and panel_rect.end.y <= get_viewport_rect().size.y - 16.0, "panel fits current viewport height with safe margins")
 
 	print("--- Overlay and close ---")
 	_popup._on_overlay_gui_input(left_click)

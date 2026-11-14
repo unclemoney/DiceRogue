@@ -9,6 +9,8 @@ class_name MallMapPopup
 ## pulses; clicking a plaque opens its pinned tooltip.
 
 const VCR_FONT: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+const DESIGN_PANEL_SIZE := Vector2(1000, 660)
+const VIEWPORT_SAFE_MARGIN := 16.0
 const MallMapLayoutScript = preload("res://Scripts/Managers/mall_map_layout.gd")
 const MallMapRendererScript = preload("res://Scripts/Managers/mall_map_renderer.gd")
 const MallStoreIconScript = preload("res://Scripts/Managers/mall_store_icon.gd")
@@ -61,8 +63,8 @@ func setup(p_channel_manager, p_round_manager, p_debuff_manager) -> void:
 func open() -> void:
 	_closing = false
 	_map_tooltip.force_hide()
-	_build_map_content()
 	_position_to_viewport()
+	_build_map_content()
 	visible = true
 	_animate_entrance()
 
@@ -103,6 +105,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _on_root_resized() -> void:
 	if _map_tooltip:
 		_map_tooltip.force_hide()
+	_position_to_viewport()
+	_refresh_store_directory()
 
 
 ## _build_ui() -> void
@@ -123,7 +127,7 @@ func _build_ui() -> void:
 
 	panel = PanelContainer.new()
 	panel.name = "Panel"
-	panel.custom_minimum_size = Vector2(1000, 660)
+	panel.custom_minimum_size = DESIGN_PANEL_SIZE
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	# No panel theme: the shared powerup theme paints a Label font shadow that
 	# the selector (the visual reference) does not have. Every label here
@@ -255,9 +259,12 @@ func _position_to_viewport() -> void:
 	if viewport == null:
 		return
 	var viewport_size := viewport.get_visible_rect().size
-	_original_pos = (viewport_size - panel.custom_minimum_size) * 0.5
+	var available_size := viewport_size - Vector2.ONE * VIEWPORT_SAFE_MARGIN * 2.0
+	var panel_size := Vector2(minf(DESIGN_PANEL_SIZE.x, available_size.x), minf(DESIGN_PANEL_SIZE.y, available_size.y))
+	panel.custom_minimum_size = panel_size
+	_original_pos = (viewport_size - panel_size) * 0.5
 	panel.position = _original_pos
-	panel.size = panel.custom_minimum_size
+	panel.size = panel_size
 
 
 func _animate_entrance() -> void:
@@ -304,13 +311,7 @@ func _build_map_content() -> void:
 		for icon in _store_markers[channel]:
 			icon.set_state(MallMapRendererScript.get_store_state(channel_manager, round_manager, channel, icon.store_index))
 
-	var zone_order: Array = []
-	for layout in MallMapLayoutScript.get_zone_layouts():
-		zone_order.append(int(layout.get("channel", 1)))
-	zone_order.sort()
-	# Width budget for the one-line font fit: panel min width minus the fixed
-	# chrome (panel border 8 + margins 32 + shell border 4 + shell margins 20).
-	MallMapRendererScript.build_store_directory(_directory_grid, channel_manager, zone_order, panel.custom_minimum_size.x - 64.0)
+	_refresh_store_directory()
 
 	_update_header()
 	_play_staged_reveal(corridor_floors)
@@ -320,6 +321,19 @@ func _build_map_content() -> void:
 ##
 ## Replays the selector's staged entrance inside the popup: corridor floor
 ## fade, staggered zone pop-in, then the store icons fade in.
+func _refresh_store_directory() -> void:
+	if not _directory_grid or channel_manager == null:
+		return
+	for child in _directory_grid.get_children():
+		_directory_grid.remove_child(child)
+		child.queue_free()
+	var zone_order: Array = []
+	for layout in MallMapLayoutScript.get_zone_layouts():
+		zone_order.append(int(layout.get("channel", 1)))
+	zone_order.sort()
+	MallMapRendererScript.build_store_directory(_directory_grid, channel_manager, zone_order, panel.custom_minimum_size.x - 64.0)
+
+
 func _play_staged_reveal(corridor_floors: Array) -> void:
 	var delay := 0.0
 	for corridor in corridor_floors:

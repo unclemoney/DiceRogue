@@ -49,6 +49,8 @@ func _ready() -> void:
 	_piggy_start = PlayerEconomy.piggy_bank_savings
 
 	await _test_mid_round_resume()
+	await _test_end_round_reward_resume()
+	await _test_new_game_and_game_over_reset()
 
 	await _teardown()
 	_finish()
@@ -187,6 +189,94 @@ func _fabricate_mid_round_3_state() -> Dictionary:
 			"power_up_states": {"melting_dice": {"current_additive": 24.0}}
 		}
 	}
+
+
+func _test_end_round_reward_resume() -> void:
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	if game_controller == null:
+		_check("end-round setup has a game controller", false)
+		return
+
+	game_controller.round_manager.is_challenge_completed = true
+	game_controller._mom_checkin_history.append("checkin_neutral")
+	game_controller._challenge_reward_this_round = 100
+	var money_before_rewards: int = PlayerEconomy.money
+	game_controller._show_end_of_round_stats()
+	await get_tree().process_frame
+	var rewarded_money: int = PlayerEconomy.money
+	_check("round-end rewards granted before SHOP", rewarded_money > money_before_rewards)
+	_check("round-end settlement marked granted", game_controller._round_end_rewards_granted)
+	_check("round-end settlement saved immediately", FileAccess.file_exists(_save_path))
+	_check("stats panel shown once after settlement", game_controller.end_of_round_stats_panel.visible)
+
+	for continue_index in range(2):
+		_game_scene.queue_free()
+		_game_scene = null
+		await get_tree().process_frame
+		await get_tree().process_frame
+		_check("settled save loads for Continue %d" % (continue_index + 1), GameSaveManager.load_save_for_profile(_slot))
+		_game_scene = GAME_SCENE.instantiate()
+		add_child(_game_scene)
+		for frame_index in range(8):
+			await get_tree().process_frame
+
+		game_controller = get_tree().get_first_node_in_group("game_controller")
+		_check("Continue %d has a game controller" % (continue_index + 1), game_controller != null)
+		if game_controller == null:
+			return
+		_check("Continue %d does not replay rewards" % (continue_index + 1), PlayerEconomy.money == rewarded_money)
+		_check("Continue %d preserves Mom check-in history" % (continue_index + 1), game_controller._mom_checkin_history.has("checkin_neutral"))
+		_check("Continue %d restores SHOP" % (continue_index + 1), game_controller.shop_ui.visible)
+		_check("Continue %d does not duplicate stats panel" % (continue_index + 1), not game_controller.end_of_round_stats_panel.visible)
+		if continue_index == 0:
+			var purchased: bool = game_controller.process_shop_purchase("loss_leader", "consumable")
+			_check("post-shop purchase applied", purchased)
+			_check("post-shop purchase saved once", int(game_controller.consumable_counts.get("loss_leader", 0)) == 1)
+		else:
+			_check("post-shop purchase survives second Continue", int(game_controller.consumable_counts.get("loss_leader", 0)) == 1)
+		game_controller._on_shop_button_pressed()
+		_check("SHOP click after Continue %d keeps money unchanged" % (continue_index + 1), PlayerEconomy.money == rewarded_money)
+
+
+func _test_new_game_and_game_over_reset() -> void:
+	var tutorial_completed_before: bool = TutorialManager.tutorial_completed_flag
+	var tutorial_in_progress_before: bool = TutorialManager.tutorial_in_progress_flag
+	var tutorial_active_before: bool = TutorialManager.is_active
+	var tutorial_session_before: bool = TutorialManager.is_tutorial_session_active
+	TutorialManager.tutorial_completed_flag = true
+	TutorialManager.tutorial_in_progress_flag = false
+	TutorialManager.is_active = false
+	TutorialManager.is_tutorial_session_active = false
+
+	_game_scene.queue_free()
+	_game_scene = null
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_game_scene = GAME_SCENE.instantiate()
+	add_child(_game_scene)
+	for frame_index in range(8):
+		await get_tree().process_frame
+	var game_controller = get_tree().get_first_node_in_group("game_controller")
+	_check("new game deletes the previous run save", not FileAccess.file_exists(_save_path))
+	_check("new game starts with ungranted round rewards", game_controller != null and not game_controller._round_end_rewards_granted)
+	_check("new game does not restore SHOP", game_controller != null and not game_controller.shop_ui.visible)
+
+	if game_controller:
+		GameSaveManager.save_snapshot(game_controller.get_save_state())
+		_check("game-over setup has a run save", FileAccess.file_exists(_save_path))
+		game_controller._on_game_over()
+		_check("game over deletes the run save", not FileAccess.file_exists(_save_path))
+		_check("game over marks the run ended", game_controller._game_ended)
+		var carried_types: Array[String] = []
+		game_controller._restart_game_for_new_channel(carried_types)
+		_check("new game after game over clears ended flag", not game_controller._game_ended)
+		_check("new game after game over clears rewards", not game_controller._round_end_rewards_granted)
+		_check("new game after game over does not reopen SHOP", not game_controller.shop_ui.visible)
+
+	TutorialManager.tutorial_completed_flag = tutorial_completed_before
+	TutorialManager.tutorial_in_progress_flag = tutorial_in_progress_before
+	TutorialManager.is_active = tutorial_active_before
+	TutorialManager.is_tutorial_session_active = tutorial_session_before
 
 
 func _test_mid_round_resume() -> void:

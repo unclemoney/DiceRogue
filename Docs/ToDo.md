@@ -56,16 +56,16 @@
 - [ ] `P2-Minor` Dice Surge should be available during an active round, but is not, unless dice are rolled, this is a poor definition of active round.
 - [X] `P2-Minor` Shop Expansion useable at any time
 - [ ] `P2-Minor` If a scoring multiplier doesn't contribute to the actual score, it shouldn't trigger in the scoring animations.
-- [ ] `P2-Minor` Using Dice Surge, showed 5x 2s but manually scoring a Yahtzee failed-- diagnostics only shows 5 dice, so dice were not properly "rolled" on use.
+- [X] `P2-Minor` Using Dice Surge, showed 5x 2s but manually scoring a Yahtzee failed-- diagnostics only shows 5 dice, so dice were not properly "rolled" on use.
 - [ ] `P2-Minor` POGS tool tip goes off the right edge of the screen if too close, needs to check from screen edges.
 - [ ] `P2-Minor` Loss Leader Consumable did not fire correctly, next consumable item after use was not free.
-- [ ] `P2-Minor` Autoscore reccomends 3 of a kind, perhaps it should reccomend 4 of a kind if it's available, because that's where it will score.
+- [X] `P2-Minor` Autoscore reccomends 3 of a kind, perhaps it should reccomend 4 of a kind if it's available, because that's where it will score.
 - [X] `P2-Minor` Half Price should be useable between rounds.
 - [ ] `P2-Minor` Shop Expansion should be useable between rounds.
 - [X] `P2-Minor` Clearance rack should be useable between rounds.
 - [X] `P2-Minor` Immunity Consumable should be active at all times. Or only between rounds.
 - [ ] `P2-Minor` Piggy Bank sell value should be 0.
-- [ ] `P2-Minor` One Free Mod should be available at any time during play.
+- [X] `P2-Minor` One Free Mod should be available at any time during play.
 - [X] `P2-Minor` Clearance Rack Consumable should be available any time.
 - [ ] `P2-Minor` Go Broke or Go Home should not count powerups in the scoring.  Must score in the base category!
 - [X] `P2-Minor` Dice Rolls have dice dissapear and then reappear, this was a fix for a previous bug and the dice are awaiting a completion, but this visually looks clunky.  Keep the dice visible.

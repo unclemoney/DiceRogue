@@ -4,8 +4,8 @@ class_name ThePiggyBankPowerUp
 ## ThePiggyBankPowerUp
 ##
 ## Uncommon PowerUp that accumulates $7 per roll (including rerolls).
-## When sold, the player receives the accumulated savings as a bonus
-## on top of the normal half-price sell refund.
+## When sold, the player receives only the accumulated savings.
+## The ordinary PowerUp sale refund is $0.
 ## Shows an animated coin effect each time money is banked.
 ## Savings persist across mall zone changes via
 ## `PlayerEconomy.piggy_bank_savings` — re-buying the Piggy Bank in a new
@@ -65,8 +65,8 @@ func _on_roll_complete() -> void:
 func _on_power_up_sold(sold_id: String) -> void:
 	## _on_power_up_sold()
 	##
-	## When this PowerUp is sold, pays out all accumulated savings
-	## as bonus money on top of the normal sell refund. No confirmation dialog.
+	## When this PowerUp is sold, pays out all accumulated savings.
+	## The ordinary sale refund is $0. No confirmation dialog.
 	if sold_id != "the_piggy_bank":
 		return
 	

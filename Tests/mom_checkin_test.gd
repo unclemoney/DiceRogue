@@ -14,6 +14,7 @@ extends Node
 ## Exit code 0 = all checks passed, 1 = at least one failure.
 
 const ChoresManagerScript := preload("res://Scripts/Managers/ChoresManager.gd")
+const MomLogicHandlerScript := preload("res://Scripts/Core/mom_logic_handler.gd")
 
 var _failures: int = 0
 var _checkin_count: int = 0
@@ -31,6 +32,7 @@ func _ready() -> void:
 	_test_checkin_deferred_while_mom_active(cm)
 	_test_grudge(cm)
 	_test_save_load_roundtrip(cm)
+	_test_flavor_no_repeat()
 
 	if _failures == 0:
 		print("[MomCheckinTest] PASS - all checks passed")
@@ -119,6 +121,17 @@ func _test_grudge(cm) -> void:
 	cm.register_low_mood_visit()
 	cm.register_low_mood_visit()
 	_check("low-mood visit counter increments", cm.low_mood_visits_this_run == 2)
+
+
+func _test_flavor_no_repeat() -> void:
+	var used: Array[String] = []
+	for draw_index in range(MomLogicHandlerScript.CHECKIN_FLAVOR_POOL.size()):
+		var tree_id: String = MomLogicHandlerScript._pick_flavor_checkin(used)
+		_check("flavor draw %d does not repeat" % (draw_index + 1), not used.has(tree_id))
+		_check("flavor draw %d is valid" % (draw_index + 1), MomLogicHandlerScript.CHECKIN_FLAVOR_POOL.has(tree_id))
+		used.append(tree_id)
+	var exhausted_draw: String = MomLogicHandlerScript._pick_flavor_checkin(used)
+	_check("exhausted pool allows a fresh cycle", MomLogicHandlerScript.CHECKIN_FLAVOR_POOL.has(exhausted_draw))
 
 
 func _test_save_load_roundtrip(cm) -> void:

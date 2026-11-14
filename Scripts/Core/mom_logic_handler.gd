@@ -172,14 +172,14 @@ static func should_silent_treatment(severity: int) -> bool:
 	return GameRNG.randf() < SILENT_TREATMENT_CHANCE
 
 
-## get_checkin_tree_id(game_controller, mom_mood) -> String
+## get_checkin_tree_id(game_controller, mom_mood, excluded_flavor_ids) -> String
 ##
 ## Picks the root dialog node for a random check-in:
 ##   - NC-17 item in inventory -> caught red-handed (confiscation visit)
 ##   - R or PG-13 item in inventory -> warning
 ##   - mood <= 3 with a lucky roll -> rare "cool mom" event
 ##   - otherwise -> weighted pick from CHECKIN_FLAVOR_POOL
-static func get_checkin_tree_id(game_controller: Node, mom_mood: int) -> String:
+static func get_checkin_tree_id(game_controller: Node, mom_mood: int, excluded_flavor_ids: Array = []) -> String:
 	var ratings := scan_inventory_ratings(game_controller)
 	if ratings["nc17"] > 0:
 		return "checkin_caught_nc17"
@@ -187,26 +187,31 @@ static func get_checkin_tree_id(game_controller: Node, mom_mood: int) -> String:
 		return "checkin_warning"
 	if mom_mood <= 3 and GameRNG.randf() < COOL_MOM_CHANCE:
 		return "checkin_cool_mom"
-	return _pick_flavor_checkin()
+	return _pick_flavor_checkin(excluded_flavor_ids)
 
 
-## _pick_flavor_checkin() -> String
+## _pick_flavor_checkin(excluded_flavor_ids) -> String
 ##
-## Weighted random pick over CHECKIN_FLAVOR_POOL. Unknown ids (missing
-## data) are skipped; falls back to "checkin_neutral".
-static func _pick_flavor_checkin() -> String:
+## Draws without replacement until the valid flavor pool is exhausted.
+static func _pick_flavor_checkin(excluded_flavor_ids: Array = []) -> String:
 	_ensure_data_loaded()
-	var total := 0.0
+	var available: Dictionary = {}
 	for node_id in CHECKIN_FLAVOR_POOL:
-		if _nodes.has(node_id):
-			total += CHECKIN_FLAVOR_POOL[node_id]
+		if _nodes.has(node_id) and not excluded_flavor_ids.has(node_id):
+			available[node_id] = CHECKIN_FLAVOR_POOL[node_id]
+	if available.is_empty():
+		for node_id in CHECKIN_FLAVOR_POOL:
+			if _nodes.has(node_id):
+				available[node_id] = CHECKIN_FLAVOR_POOL[node_id]
+
+	var total := 0.0
+	for weight in available.values():
+		total += float(weight)
 	if total <= 0.0:
 		return "checkin_neutral"
 	var roll := GameRNG.randf() * total
-	for node_id in CHECKIN_FLAVOR_POOL:
-		if not _nodes.has(node_id):
-			continue
-		roll -= CHECKIN_FLAVOR_POOL[node_id]
+	for node_id in available:
+		roll -= float(available[node_id])
 		if roll <= 0.0:
 			return node_id
 	return "checkin_neutral"

@@ -894,7 +894,7 @@ func handle_any_score(section: Scorecard.Section, category: String) -> void:
 
 ## handle_go_broke_score(section, category)
 ##
-## Go Broke or Go Home mode: normal scoring rules, lower section only,
+## Go Broke or Go Home mode: raw category scoring, lower section only,
 ## allowed even if the turn was already scored.
 func handle_go_broke_score(section: Scorecard.Section, category: String) -> void:
 	var dice_values: Array[int] = DiceResults.values
@@ -909,13 +909,9 @@ func handle_go_broke_score(section: Scorecard.Section, category: String) -> void
 
 	_begin_sega_saturn_score_transaction()
 
-	# Emit signal before scoring to allow PowerUps to prepare
-	about_to_score.emit(section, category, dice_values)
-
-	# Use scorecard's on_category_selected to properly apply normal scoring rules
-	scorecard.on_category_selected(section, category)
-
-	var score = scorecard.lower_scores[category]
+	var score: int = ScoreEvaluatorSingleton.evaluate_raw_category(category, dice_values)
+	scorecard.last_base_score = score
+	scorecard.set_score(section, category, score)
 
 	if score == null:
 		_end_sega_saturn_score_transaction(false)
@@ -924,9 +920,6 @@ func handle_go_broke_score(section: Scorecard.Section, category: String) -> void
 		return
 
 	_end_sega_saturn_score_transaction(true)
-
-	# Check for Yahtzee bonus
-	scorecard.check_bonus_yahtzee(dice_values)
 
 	# turn_scored before update_all so _refresh_previews clears all ghosts.
 	turn_scored = true

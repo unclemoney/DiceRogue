@@ -326,6 +326,15 @@ func calculate_yahtzee_score(values: Array[int]) -> int:
 func calculate_chance_score(values: Array[int]) -> int:
 	return get_sum(values)
 
+## evaluate_raw_category(category, values) -> int
+##
+## Scores the rolled category without wildcard substitutions or score modifiers.
+func evaluate_raw_category(category: String, values: Array[int]) -> int:
+	if category == "yahtzee":
+		return 50 if get_n_of_a_kind(values, 5) > 0 else 0
+	return int(evaluate_normal(values).get(category, 0))
+
+
 func calculate_score_for_category(category: String, values: Array[int]) -> int:
 	# Increment and check for runaway evaluations
 	_evaluation_count += 1

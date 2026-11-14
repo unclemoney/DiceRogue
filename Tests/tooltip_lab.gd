@@ -24,6 +24,30 @@ func _ready() -> void:
 	_follow_check.toggled.connect(_on_follow_toggled)
 	_tint_check.toggled.connect(_on_tint_toggled)
 	_show_current()
+	if "--auto-test" in OS.get_cmdline_user_args():
+		call_deferred("_run_bounds_test")
+
+
+func _run_bounds_test() -> void:
+	var failures: int = 0
+	TweenFX.follow_cursor = false
+	get_window().size = Vector2i(1280, 720)
+	await get_tree().create_timer(1.0).timeout
+	print("[TooltipLab] viewport=%s" % str(get_viewport_rect().size))
+	var targets: Array[Vector2] = [Vector2(-100, -100), Vector2(2000, -100), Vector2(-100, 900), Vector2(2000, 900)]
+	for target in targets:
+		await _tooltip.show_at(target, Rect2(), false)
+		await get_tree().create_timer(0.5).timeout
+		var viewport_size := get_viewport_rect().size
+		var rect := _tooltip.get_global_rect()
+		var inside: bool = rect.position.x >= 16.0 and rect.position.y >= 16.0 and rect.end.x <= viewport_size.x - 16.0 and rect.end.y <= viewport_size.y - 16.0
+		if not inside:
+			failures += 1
+			push_error("[TooltipLab] Tooltip outside safe margins: %s" % str(rect))
+		else:
+			print("[TooltipLab] OK: safe rectangle %s" % str(rect))
+	print("[TooltipLab] %s" % ("PASS" if failures == 0 else "FAIL"))
+	get_tree().quit(0 if failures == 0 else 1)
 
 
 func _build_entries() -> void:

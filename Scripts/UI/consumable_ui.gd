@@ -1070,9 +1070,12 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 	if _is_consumables_blocked():
 		return false
 
-	# Global check: All consumables require an active turn (prevents between-round usage)
+	# Most consumables require an active turn. Shop Expansion also works between rounds.
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
-	if game_controller and game_controller.turn_tracker:
+	if data.id == "power_up_shop_num":
+		if not game_controller or not game_controller.round_manager or not game_controller.round_manager.game_started or game_controller._game_ended:
+			return false
+	elif game_controller and game_controller.turn_tracker:
 		if not game_controller.turn_tracker.is_active:
 			return false
 
