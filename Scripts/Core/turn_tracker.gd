@@ -323,10 +323,7 @@ func reset() -> void:
 		emit_signal("dice_bonus_changed", 0)
 		emit_signal("temporary_effect_expired", "dice_bonus")
 	_next_stack_id = 0
-	score_streak_active = false
-	score_streak_turns_remaining = 0
-	score_streak_multiplier = 1.0
-	score_streak_current_turn = 0
+	_end_score_streak()
 	emit_signal("turn_updated", current_turn)
 	emit_signal("rolls_updated", rolls_left)
 	emit_signal("turn_started")

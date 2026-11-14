@@ -31,6 +31,7 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[GoBrokeOrGoHomeConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	# Store references
@@ -40,21 +41,25 @@ func apply(target) -> void:
 	
 	if not scorecard_ref:
 		push_error("[GoBrokeOrGoHomeConsumable] No scorecard found in game controller")
+		apply_succeeded = false
 		return
 	
 	if not score_card_ui_ref:
 		push_error("[GoBrokeOrGoHomeConsumable] No ScoreCardUI found in game controller")
+		apply_succeeded = false
 		return
 	
 	# Get current turn number
 	var turn_tracker = game_controller.turn_tracker
 	if not turn_tracker:
 		push_error("[GoBrokeOrGoHomeConsumable] No turn tracker found")
+		apply_succeeded = false
 		return
 	
 	# Check if there are any open lower section categories
 	if not _has_open_lower_categories():
 		print("[GoBrokeOrGoHomeConsumable] No open lower section categories available")
+		apply_succeeded = false
 		return
 	
 	# Randomly pick one open lower category as the double-or-nothing target

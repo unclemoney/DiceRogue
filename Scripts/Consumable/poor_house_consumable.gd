@@ -15,6 +15,7 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[PoorHouseConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	# Store reference to game controller
@@ -24,25 +25,30 @@ func apply(target) -> void:
 	var player_economy = get_node("/root/PlayerEconomy")
 	if not player_economy:
 		push_error("[PoorHouseConsumable] PlayerEconomy autoload not found")
+		apply_succeeded = false
 		return
 	
-	var current_money = player_economy.get_money() * 0.5 # Transfer 50% of current money as bonus score
+	var money_before = player_economy.get_money()
+	var current_money = money_before * 0.5 # Transfer 50% of current money as bonus score
 	if current_money <= 0:
 		print("[PoorHouseConsumable] Player has no money to transfer")
+		apply_succeeded = false
 		return
 	
 	# Transfer all money to the ScoreModifierManager as an additive bonus
 	var score_modifier_manager = ScoreModifierManager
-	if not score_modifier_manager:
-		push_error("[PoorHouseConsumable] ScoreModifierManager autoload not found")
+	if not score_modifier_manager or not game_controller.scorecard:
+		push_error("[PoorHouseConsumable] ScoreModifierManager or scorecard not found")
+		apply_succeeded = false
 		return
 	
-	# Register the money as a one-time additive bonus
+	# Each inventory use re-arms the shared runtime instance.
+	bonus_applied = false
 	score_modifier_manager.register_additive("poor_house_bonus", current_money)
 	
 	# Remove all money from the player
 	player_economy.money = 0
-	player_economy.emit_signal("money_changed", 0)
+	player_economy.money_changed.emit(0, -money_before)
 	
 	# Connect to the scorecard to remove the bonus after first score
 	if game_controller.scorecard:

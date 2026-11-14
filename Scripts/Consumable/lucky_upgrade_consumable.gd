@@ -16,11 +16,13 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[LuckyUpgradeConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 
 	var scorecard = game_controller.scorecard
 	if not scorecard:
 		push_error("[LuckyUpgradeConsumable] No scorecard found")
+		apply_succeeded = false
 		return
 
 	# Collect all unscored categories from both sections
@@ -42,6 +44,7 @@ func apply(target) -> void:
 
 	if available_categories.is_empty():
 		print("[LuckyUpgradeConsumable] No unscored categories available to upgrade")
+		apply_succeeded = false
 		return
 
 	# Randomly select one category

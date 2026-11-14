@@ -21,11 +21,13 @@ func apply(target) -> void:
 	var game_controller = target
 	if not game_controller:
 		push_error("[ImmunityConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 
 	var debuff_manager = game_controller.get("debuff_manager")
 	if not debuff_manager or not debuff_manager.has_method("grant_immunity_next_round"):
 		push_error("[ImmunityConsumable] No DebuffManager with immunity support found")
+		apply_succeeded = false
 		return
 
 	debuff_manager.grant_immunity_next_round()

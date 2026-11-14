@@ -17,11 +17,13 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[UpperSectionBoostConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	var scorecard = game_controller.scorecard
 	if not scorecard:
 		push_error("[UpperSectionBoostConsumable] No scorecard found")
+		apply_succeeded = false
 		return
 	
 	print("[UpperSectionBoostConsumable] Upgrading all upper section categories...")

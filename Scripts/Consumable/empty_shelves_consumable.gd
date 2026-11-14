@@ -21,6 +21,7 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[EmptyShelvesConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	# Count empty powerup slots
@@ -28,6 +29,7 @@ func apply(target) -> void:
 	
 	if empty_slots <= 0:
 		print("[EmptyShelvesConsumable] No empty powerup slots - no multiplier applied")
+		apply_succeeded = false
 		return
 	
 	# Get ScoreModifierManager to register a one-time multiplier
@@ -37,7 +39,8 @@ func apply(target) -> void:
 		score_modifier_manager = get_tree().get_first_node_in_group("score_modifier_manager")
 		if not score_modifier_manager:
 			push_error("[EmptyShelvesConsumable] ScoreModifierManager not found")
-			return
+			apply_succeeded = false
+		return
 	
 	_disarm()
 	score_modifier_manager.register_multiplier(MULTIPLIER_ID, empty_slots)

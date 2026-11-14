@@ -9,6 +9,7 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[HalfPriceConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	# Stack half price - each stack halves PowerUp prices multiplicatively

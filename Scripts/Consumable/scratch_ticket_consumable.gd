@@ -37,6 +37,7 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[ScratchTicketConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 
 	var scorecard: Scorecard = game_controller.scorecard
@@ -44,6 +45,7 @@ func apply(target) -> void:
 		if _debug_enabled:
 			print("[ScratchTicketConsumable] Denied - last score was not a true zero")
 		emit_signal("scratch_ticket_denied", "last_score_not_zero")
+		apply_succeeded = false
 		return
 
 	arm(scorecard)

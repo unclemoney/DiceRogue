@@ -15,11 +15,13 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[OneFreeModConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	# Verify mod manager exists
 	if not game_controller.mod_manager:
 		push_error("[OneFreeModConsumable] ModManager not found")
+		apply_succeeded = false
 		return
 	
 	# Double-check mod limit (should be validated by _can_use_consumable, but be safe)
@@ -28,12 +30,14 @@ func apply(target) -> void:
 	
 	if current_mod_count >= expected_dice_count:
 		push_error("[OneFreeModConsumable] Cannot grant mod - mod limit reached (%d/%d)" % [current_mod_count, expected_dice_count])
+		apply_succeeded = false
 		return
 	
 	# Get random mod ID and grant it
 	var random_mod_id = game_controller.mod_manager.get_random_mod_id()
 	if not random_mod_id:
 		push_error("[OneFreeModConsumable] No mods available to grant")
+		apply_succeeded = false
 		return
 	
 	game_controller.grant_mod(random_mod_id)

@@ -11,11 +11,13 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[PowerUpShopNumConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 		
 	var shop_ui = game_controller.shop_ui
 	if not shop_ui:
 		push_error("[PowerUpShopNumConsumable] No ShopUI found")
+		apply_succeeded = false
 		return
 		
 	# Increase the number of power-ups displayed in shop by 1

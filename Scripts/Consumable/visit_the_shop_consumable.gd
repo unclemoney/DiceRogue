@@ -14,6 +14,7 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[VisitTheShopConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	print("[VisitTheShopConsumable] Opening shop mid-round")
@@ -34,4 +35,5 @@ func apply(target) -> void:
 		game_controller._open_shop_ui()
 		print("[VisitTheShopConsumable] Shop opened successfully")
 	else:
+		apply_succeeded = false
 		push_error("[VisitTheShopConsumable] No shop_ui found in game_controller")

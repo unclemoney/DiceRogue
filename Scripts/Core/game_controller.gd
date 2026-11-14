@@ -38,6 +38,8 @@ func set_game_phase(new_phase: GamePhase) -> void:
 var active_power_ups: Dictionary = {}  # id -> PowerUp
 var active_consumables: Dictionary = {}  # id -> Consumable
 var consumable_counts: Dictionary = {}  # id -> int (count of instances)
+var _score_reroll_instance: ScoreRerollConsumable = null
+var _double_existing_instance: DoubleExistingConsumable = null
 var active_debuffs: Dictionary = {}  # id -> Debuff
 var active_mods: Dictionary = {}  # id -> Mod
 var active_challenges: Dictionary = {}  # id -> Challenge
@@ -2359,29 +2361,26 @@ func set_consumable_usability(consumable_id: String, can_use: bool) -> void:
 ##
 ## Handles the actual effect of a consumable when the player uses it. Applies the consumable's
 ## effect, updates relevant UI events, and decrements/removes the consumable when consumed.
-func _on_consumable_used(consumable_id: String) -> void:
+## Returns false when the consumable rejects the apply and must remain in inventory.
+func _on_consumable_used(consumable_id: String) -> bool:
 	# Guard: Only allow consumable use during active turns (prevents between-round usage)
 	if turn_tracker and not turn_tracker.is_active:
 		if _debug_enabled:
 			print("[GameController] Consumable '%s' blocked - turn is not active" % consumable_id)
-		return
+		return false
 	
 	var consumable = active_consumables.get(consumable_id)
 	if _debug_enabled:
 		print("\n=== Using Consumable: ", consumable_id, " ===")
 	if not consumable:
 		push_error("No Consumable found for id: %s" % consumable_id)
-		return
-	
-	# Track consumable usage in statistics
-	var stats = get_node_or_null("/root/Statistics")
-	if stats:
-		stats.record_item_usage("consumable")
-		if _debug_enabled:
-			print("[GameController] Tracked consumable usage in statistics")
+		return false
+	consumable.apply_succeeded = true
 	
 	# Helper function to handle consumable removal with count system
 	var remove_consumable_instance = func():
+		if not consumable.apply_succeeded:
+			return
 		var current_count = consumable_counts.get(consumable_id, 1)
 		if current_count > 1:
 			# Decrement count
@@ -2403,19 +2402,25 @@ func _on_consumable_used(consumable_id: String) -> void:
 		"score_reroll":
 			if score_card_ui:
 				consumable.apply(self)
-				score_card_ui.activate_score_reroll()
+				if consumable.apply_succeeded:
+					_score_reroll_instance = consumable as ScoreRerollConsumable
+					score_card_ui.activate_score_reroll()
+					if not score_card_ui.is_connected("score_rerolled", _on_score_rerolled):
+						score_card_ui.connect("score_rerolled", _on_score_rerolled)
 				remove_consumable_instance.call()
-				if not score_card_ui.is_connected("score_rerolled", _on_score_rerolled):
-					score_card_ui.connect("score_rerolled", _on_score_rerolled)
 			else:
+				consumable.apply_succeeded = false
 				push_error("GameController: score_card_ui not found!")
 		"double_existing":
 			if score_card_ui:
 				consumable.apply(self)
+				if consumable.apply_succeeded:
+					_double_existing_instance = consumable as DoubleExistingConsumable
+					if not score_card_ui.is_connected("score_doubled", _on_score_doubled):
+						score_card_ui.connect("score_doubled", _on_score_doubled)
 				remove_consumable_instance.call()
-				if not score_card_ui.is_connected("score_doubled", _on_score_doubled):
-					score_card_ui.connect("score_doubled", _on_score_doubled)
 			else:
+				consumable.apply_succeeded = false
 				push_error("GameController: score_card_ui not found!")
 		"add_max_power_up":
 			consumable.apply(self)
@@ -2435,11 +2440,11 @@ func _on_consumable_used(consumable_id: String) -> void:
 				# Note: AnyScore consumable handles its own completion via hand_scored signal
 				remove_consumable_instance.call()
 			else:
+				consumable.apply_succeeded = false
 				push_error("GameController: score_card_ui not found!")
 		"random_power_up_uncommon":
 			consumable.apply(self)
 			remove_consumable_instance.call()
-			active_consumables.erase(consumable_id)
 		"green_envy":
 			consumable.apply(self)
 			remove_consumable_instance.call()
@@ -2469,29 +2474,29 @@ func _on_consumable_used(consumable_id: String) -> void:
 		"three_of_a_kind_upgrade", "four_of_a_kind_upgrade", "full_house_upgrade", \
 		"small_straight_upgrade", "large_straight_upgrade", "yahtzee_upgrade", "chance_upgrade", \
 		"evens_upgrade", "odds_upgrade", "even_odd_full_house_upgrade":
-			if score_card_ui:
-				score_card_ui.enable_upgrade_juice(1)
 			consumable.apply(self)
+			if consumable.apply_succeeded and score_card_ui:
+				score_card_ui.enable_upgrade_juice(1)
 			remove_consumable_instance.call()
 		"all_categories_upgrade":
-			if score_card_ui:
-				score_card_ui.enable_upgrade_juice(13)
 			consumable.apply(self)
+			if consumable.apply_succeeded and score_card_ui:
+				score_card_ui.enable_upgrade_juice(13)
 			remove_consumable_instance.call()
 		"upper_section_boost":
-			if score_card_ui:
-				score_card_ui.enable_upgrade_juice(6)
 			consumable.apply(self)
+			if consumable.apply_succeeded and score_card_ui:
+				score_card_ui.enable_upgrade_juice(6)
 			remove_consumable_instance.call()
 		"lower_section_boost":
-			if score_card_ui:
-				score_card_ui.enable_upgrade_juice(7)
 			consumable.apply(self)
+			if consumable.apply_succeeded and score_card_ui:
+				score_card_ui.enable_upgrade_juice(7)
 			remove_consumable_instance.call()
 		"lucky_upgrade":
-			if score_card_ui:
-				score_card_ui.enable_upgrade_juice(1)
 			consumable.apply(self)
+			if consumable.apply_succeeded and score_card_ui:
+				score_card_ui.enable_upgrade_juice(1)
 			remove_consumable_instance.call()
 		# Chore-related consumables
 		"free_chores":
@@ -2562,11 +2567,24 @@ func _on_consumable_used(consumable_id: String) -> void:
 				consumable.apply(self)
 				remove_consumable_instance.call()
 			else:
+				consumable.apply_succeeded = false
 				push_error("GameController: score_card_ui not found!")
 		_:
+			consumable.apply_succeeded = false
 			push_error("Unknown consumable type: %s" % consumable_id)
 	
+	if not consumable.apply_succeeded:
+		if _debug_enabled:
+			print("[GameController] Consumable '%s' rejected apply; inventory unchanged" % consumable_id)
+		return false
+
+	var stats = get_node_or_null("/root/Statistics")
+	if stats:
+		stats.record_item_usage("consumable")
+		if _debug_enabled:
+			print("[GameController] Tracked consumable usage in statistics")
 	GameSaveManager.update_settled_snapshot()
+	return true
 
 
 ## _on_consumable_ui_used(consumable_id)
@@ -2583,7 +2601,8 @@ func _on_consumable_ui_used(consumable_id: String) -> void:
 
 		# FIRST: Update statistics so PowerUps see the updated count
 		print("[GameController] About to call _on_consumable_used (which updates stats)")
-	_on_consumable_used(consumable_id)
+	if not _on_consumable_used(consumable_id):
+		return
 	if _debug_enabled:
 		print("[GameController] _on_consumable_used completed")
 	
@@ -2602,24 +2621,22 @@ func _on_consumable_ui_used(consumable_id: String) -> void:
 
 ## _on_score_rerolled(_section, _category, _score)
 ##
-## Callback for when the score reroll flow completes in the ScoreCard UI. Completes the
-## consumable's reroll lifecycle and removes it from active consumables.
+## Callback for when the score reroll flow completes in the ScoreCard UI.
+## Completes the retained consumable's lifecycle after inventory removal.
 func _on_score_rerolled(_section: Scorecard.Section, _category: String, _score: int) -> void:
-	var reroll = get_active_consumable("score_reroll") as ScoreRerollConsumable
-	if reroll:
-		reroll.complete_reroll()
-		remove_consumable("score_reroll")
+	if is_instance_valid(_score_reroll_instance):
+		_score_reroll_instance.complete_reroll()
+	_score_reroll_instance = null
 
 
 ## _on_score_doubled(_section, _category, _new_score)
 ##
-## Callback when a score has been doubled via the ScoreCard UI. Signals completion for the
-## `double_existing` consumable and removes it.
+## Callback when a score has been doubled via the ScoreCard UI.
+## Completes the retained `double_existing` consumable after inventory removal.
 func _on_score_doubled(_section: Scorecard.Section, _category: String, _new_score: int) -> void:
-	var double_consumable = get_active_consumable("double_existing") as DoubleExistingConsumable
-	if double_consumable:
-		double_consumable.complete_double()
-		remove_consumable("double_existing")
+	if is_instance_valid(_double_existing_instance):
+		_double_existing_instance.complete_double()
+	_double_existing_instance = null
 
 
 ## _on_score_auto_assigned(_section, _category, _score, _breakdown_info)
@@ -3775,7 +3792,14 @@ func _on_score_streak_changed(multiplier: float, turns_remaining: int) -> void:
 	if _debug_enabled:
 		print("[GameController] Score streak updated: %.2fx multiplier, %d turns remaining" % [multiplier, turns_remaining])
 	var score_modifier_manager = get_node_or_null("/root/ScoreModifierManager")
-	if score_modifier_manager and score_modifier_manager.has_method("register_multiplier"):
+	if not score_modifier_manager:
+		return
+	if turns_remaining <= 0:
+		if score_modifier_manager.has_multiplier("score_streak"):
+			score_modifier_manager.unregister_multiplier("score_streak")
+		if _debug_enabled:
+			print("[GameController] Removed expired score_streak multiplier")
+	elif score_modifier_manager.has_method("register_multiplier"):
 		score_modifier_manager.register_multiplier("score_streak", multiplier)
 		if _debug_enabled:
 			print("[GameController] Updated score_streak multiplier to %.2fx" % multiplier)

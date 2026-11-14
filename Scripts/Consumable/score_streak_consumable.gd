@@ -20,11 +20,13 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[ScoreStreakConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	var turn_tracker = game_controller.turn_tracker
 	if not turn_tracker:
 		push_error("[ScoreStreakConsumable] No TurnTracker found")
+		apply_succeeded = false
 		return
 	
 	# Start the score streak

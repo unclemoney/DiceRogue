@@ -1355,8 +1355,8 @@ func _bot_use_consumables() -> void:
 
 		if consumable_id in AUTO_USE_CONSUMABLES:
 			logger.log_info("Using consumable: %s" % consumable_id)
-			game_controller._on_consumable_used(consumable_id)
-			statistics.record_consumable_used(consumable_id)
+			if game_controller._on_consumable_used(consumable_id):
+				statistics.record_consumable_used(consumable_id)
 			await get_tree().create_timer(0.15).timeout
 			if _run_generation != gen:
 				return

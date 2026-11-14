@@ -14,16 +14,19 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[AddMaxPowerUp] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 		
 	var power_up_ui = game_controller.powerup_ui
 	if not power_up_ui:
 		push_error("[AddMaxPowerUp] No PowerUpUI found")
+		apply_succeeded = false
 		return
 		
 	# Check if we've reached the absolute maximum
 	if power_up_ui.max_power_ups >= ABSOLUTE_MAX_SLOTS:
 		print("[AddMaxPowerUp] Already at maximum power-up capacity")
+		apply_succeeded = false
 		return
 		
 	# Increase the maximum by 1

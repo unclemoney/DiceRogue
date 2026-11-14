@@ -39,16 +39,19 @@ func apply(target) -> void:
 	var game_controller = target
 	if not game_controller or not ("active_debuffs" in game_controller):
 		push_error("[SpiteConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 
 	scorecard_ref = game_controller.get("scorecard")
 	if not scorecard_ref:
 		push_error("[SpiteConsumable] No scorecard found on target")
+		apply_succeeded = false
 		return
 
 	var debuff_count := _count_active_debuffs(game_controller)
 	if debuff_count <= 0:
 		print("[SpiteConsumable] No active debuffs - Spite fizzles")
+		apply_succeeded = false
 		return
 
 	game_controller_ref = game_controller

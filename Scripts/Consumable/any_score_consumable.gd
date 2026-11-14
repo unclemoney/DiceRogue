@@ -6,7 +6,6 @@ signal any_score_completed
 signal any_score_denied
 
 var is_active := false
-var has_been_used := false
 
 func _ready() -> void:
 	add_to_group("consumables")
@@ -20,11 +19,7 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[AnyScoreConsumable] Invalid target passed to apply()")
-		return
-		
-	if has_been_used:
-		print("[AnyScoreConsumable] Consumable has already been used")
-		emit_signal("any_score_denied")
+		apply_succeeded = false
 		return
 		
 	# Check if we have dice values to score
@@ -32,6 +27,7 @@ func apply(target) -> void:
 	if dice_values.is_empty():
 		print("[AnyScoreConsumable] No dice values available to score")
 		emit_signal("any_score_denied")
+		apply_succeeded = false
 		return
 		
 	# Check if there are any open categories to score in
@@ -39,11 +35,13 @@ func apply(target) -> void:
 	if not scorecard:
 		print("[AnyScoreConsumable] No scorecard available")
 		emit_signal("any_score_denied")
+		apply_succeeded = false
 		return
 		
 	if not _has_open_categories(scorecard):
 		print("[AnyScoreConsumable] No open categories available to score")
 		emit_signal("any_score_denied")
+		apply_succeeded = false
 		return
 		
 	# Activate the special scoring mode
@@ -79,6 +77,7 @@ func _activate_any_score_mode(game_controller: GameController) -> void:
 		if not score_card_ui.is_connected("hand_scored", _on_any_score_used):
 			score_card_ui.hand_scored.connect(_on_any_score_used)
 	else:
+		apply_succeeded = false
 		push_error("[AnyScoreConsumable] No ScoreCardUI found")
 
 ## _on_any_score_used()
@@ -94,7 +93,6 @@ func _on_any_score_used() -> void:
 func complete_any_score() -> void:
 	print("[AnyScoreConsumable] Completing AnyScore")
 	is_active = false
-	has_been_used = true
 	
 	# Ensure the UI mode is properly deactivated
 	var game_controller = get_tree().get_first_node_in_group("game_controller")

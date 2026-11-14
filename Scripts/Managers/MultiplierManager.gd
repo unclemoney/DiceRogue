@@ -13,10 +13,14 @@ signal multiplier_unregistered(source_name: String)
 signal additive_changed(total_additive: int)
 signal additive_registered(source_name: String, additive: int)
 signal additive_unregistered(source_name: String)
+signal additive_multiplier_changed(total_multiplier: float)
+signal additive_multiplier_registered(source_name: String, multiplier: float)
+signal additive_multiplier_unregistered(source_name: String)
 
 ## Internal state: maps of source_name -> value for active modifiers
 var _active_multipliers: Dictionary = {}
 var _active_additives: Dictionary = {}
+var _active_additive_multipliers: Dictionary = {}
 
 ## Enable verbose debug logging for development
 var _debug_enabled: bool = true
@@ -127,6 +131,44 @@ func get_active_additive_sources() -> Array[String]:
 ## Returns the number of active additive sources.
 func get_additive_count() -> int:
 	return _active_additives.size()
+
+## register_additive_multiplier(source_name, multiplier)
+##
+## Multiplies additive bonuses without changing the score's regular multiplier.
+func register_additive_multiplier(source_name: String, multiplier: float) -> void:
+	_active_additive_multipliers[source_name] = multiplier
+	emit_signal("additive_multiplier_registered", source_name, multiplier)
+	emit_signal("additive_multiplier_changed", get_total_additive_multiplier())
+
+
+func unregister_additive_multiplier(source_name: String) -> void:
+	if not _active_additive_multipliers.has(source_name):
+		return
+	_active_additive_multipliers.erase(source_name)
+	emit_signal("additive_multiplier_unregistered", source_name)
+	emit_signal("additive_multiplier_changed", get_total_additive_multiplier())
+
+
+func has_additive_multiplier(source_name: String) -> bool:
+	return _active_additive_multipliers.has(source_name)
+
+
+func get_additive_multiplier(source_name: String) -> float:
+	return _active_additive_multipliers.get(source_name, 1.0)
+
+
+func get_total_additive_multiplier() -> float:
+	var total := 1.0
+	for multiplier in _active_additive_multipliers.values():
+		total *= multiplier
+	return total
+
+
+func get_active_additive_multiplier_sources() -> Array[String]:
+	var sources: Array[String] = []
+	sources.assign(_active_additive_multipliers.keys())
+	return sources
+
 
 ## register_multiplier(source_name, multiplier)
 ##
@@ -254,12 +296,14 @@ func reset() -> void:
 	var _old_add_total = get_total_additive()
 	_active_multipliers.clear()
 	_active_additives.clear()
+	_active_additive_multipliers.clear()
 
 	if _debug_enabled:
 		print("[ScoreModifierManager] All modifiers cleared, totals reset")
 
 	emit_signal("multiplier_changed", 1.0)
 	emit_signal("additive_changed", 0)
+	emit_signal("additive_multiplier_changed", 1.0)
 
 
 ## set_debug_enabled(enabled)
@@ -465,6 +509,7 @@ func get_state() -> Dictionary:
 	return {
 		"multipliers": _active_multipliers.duplicate(),
 		"additives": _active_additives.duplicate(),
+		"additive_multipliers": _active_additive_multipliers.duplicate(),
 		"division_mode": _division_mode,
 		"level_division_mode": _level_division_mode,
 		"powerup_division_mode": _powerup_division_mode
@@ -477,8 +522,10 @@ func get_state() -> Dictionary:
 func load_state(state: Dictionary) -> void:
 	_active_multipliers = state.get("multipliers", {})
 	_active_additives = state.get("additives", {})
+	_active_additive_multipliers = state.get("additive_multipliers", {})
 	_division_mode = state.get("division_mode", false)
 	_level_division_mode = state.get("level_division_mode", false)
 	_powerup_division_mode = state.get("powerup_division_mode", false)
 	emit_signal("multiplier_changed", get_total_multiplier())
 	emit_signal("additive_changed", get_total_additive())
+	emit_signal("additive_multiplier_changed", get_total_additive_multiplier())

@@ -9,6 +9,7 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[InsurancePolicyConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	# Activate insurance - if next score is 0, grant $75 consolation

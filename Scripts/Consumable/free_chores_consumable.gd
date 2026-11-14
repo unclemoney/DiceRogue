@@ -17,15 +17,21 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[FreeChoresConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	# Find ChoresManager via group
 	var chores_manager = get_tree().get_first_node_in_group("chores_manager")
 	if not chores_manager:
 		push_error("[FreeChoresConsumable] ChoresManager not found in group 'chores_manager'")
+		apply_succeeded = false
 		return
 	
 	var old_progress = chores_manager.current_progress
+	if old_progress <= 0:
+		apply_succeeded = false
+		print("[FreeChoresConsumable] Goof-off meter is already empty")
+		return
 	chores_manager.current_progress = maxi(chores_manager.current_progress - PROGRESS_REDUCTION, 0)
 	chores_manager.progress_changed.emit(chores_manager.current_progress)
 	

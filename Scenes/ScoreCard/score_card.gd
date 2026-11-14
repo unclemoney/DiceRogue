@@ -1268,11 +1268,14 @@ func _build_modifier_effects_from_breakdown(breakdown_info: Dictionary) -> Array
 			var display_value := float(source_info.get("display_value", source_info.get("raw_value", 1.0)))
 			if is_equal_approx(display_value, 1.0):
 				continue
+			var description := "%s%.2f from %s" % [display_operator, display_value, _format_modifier_source_name(source_name)]
+			if str(source_info.get("effect_scope", "")) == "additives":
+				description = "%s%.2f additives from %s" % [display_operator, display_value, _format_modifier_source_name(source_name)]
 			modifier_effects.append({
 				"type": "multiplier",
 				"value": float(source_info.get("value", 1.0)),
 				"source": source_name,
-				"description": "%s%.2f from %s" % [display_operator, display_value, _format_modifier_source_name(source_name)],
+				"description": description,
 				"short_description": "%s%.2f" % [display_operator, display_value]
 			})
 	else:
@@ -1697,6 +1700,7 @@ func _collect_modifier_totals(modifier_manager) -> Dictionary:
 	var saturn_adjusted_additive_sources: Array[String] = []
 	var saturn_adjusted_multiplier_sources: Array[String] = []
 	var sega_saturn_active := _is_sega_saturn_score_active()
+	var additive_multiplier := 1.0
 
 	if not is_instance_valid(modifier_manager):
 		return {
@@ -1711,6 +1715,9 @@ func _collect_modifier_totals(modifier_manager) -> Dictionary:
 			"sega_saturn_active": sega_saturn_active
 		}
 
+	if modifier_manager.has_method("get_total_additive_multiplier"):
+		additive_multiplier = modifier_manager.get_total_additive_multiplier()
+
 	if modifier_manager.has_method("get_active_additive_sources"):
 		var additive_source_names = modifier_manager.get_active_additive_sources()
 		for source in additive_source_names:
@@ -1722,12 +1729,14 @@ func _collect_modifier_totals(modifier_manager) -> Dictionary:
 				adjusted_value = additive_value * 2
 				saturn_doubled = true
 				saturn_adjusted_additive_sources.append(source)
+			adjusted_value = int(round(adjusted_value * additive_multiplier))
 			total_additive += adjusted_value
 			additive_sources.append({
 				"name": source,
 				"category": source_category,
 				"value": adjusted_value,
 				"base_value": additive_value,
+				"additive_multiplier": additive_multiplier,
 				"saturn_doubled": saturn_doubled
 			})
 			if source_category == "powerup" and source not in active_powerup_sources:
@@ -1767,6 +1776,27 @@ func _collect_modifier_totals(modifier_manager) -> Dictionary:
 				"display_operator": source_component.display_operator,
 				"display_value": source_component.display_value,
 				"saturn_doubled": saturn_doubled
+			})
+			if source_category == "powerup" and source not in active_powerup_sources:
+				active_powerup_sources.append(source)
+			elif source_category == "consumable" and source not in active_consumable_sources:
+				active_consumable_sources.append(source)
+
+	if modifier_manager.has_method("get_active_additive_multiplier_sources"):
+		for source in modifier_manager.get_active_additive_multiplier_sources():
+			var source_category = _categorize_modifier_source(source)
+			var source_value: float = modifier_manager.get_additive_multiplier(source)
+			multiplier_sources.append({
+				"name": source,
+				"category": source_category,
+				"value": source_value,
+				"raw_value": source_value,
+				"base_raw_value": source_value,
+				"display_mode": "multiply",
+				"display_operator": "×",
+				"display_value": source_value,
+				"effect_scope": "additives",
+				"saturn_doubled": false
 			})
 			if source_category == "powerup" and source not in active_powerup_sources:
 				active_powerup_sources.append(source)

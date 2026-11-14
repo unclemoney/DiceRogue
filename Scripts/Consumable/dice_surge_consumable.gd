@@ -20,16 +20,19 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[DiceSurgeConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	var turn_tracker = game_controller.turn_tracker
 	if not turn_tracker:
 		push_error("[DiceSurgeConsumable] No TurnTracker found")
+		apply_succeeded = false
 		return
 	
 	var dice_hand = game_controller.dice_hand
 	if not dice_hand:
 		push_error("[DiceSurgeConsumable] No DiceHand found")
+		apply_succeeded = false
 		return
 	
 	# Check current dice count and calculate how many we can actually add
@@ -39,6 +42,7 @@ func apply(target) -> void:
 	
 	if dice_to_add <= 0:
 		print("[DiceSurgeConsumable] Already at max dice (%d), cannot add more" % MAX_DICE)
+		apply_succeeded = false
 		return
 	
 	# Set temporary dice bonus in TurnTracker

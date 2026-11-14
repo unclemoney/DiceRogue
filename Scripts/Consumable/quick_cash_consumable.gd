@@ -9,6 +9,7 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[QuickCashConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 		
 	var total_power_up_value := calculate_total_power_up_value(game_controller)
@@ -21,8 +22,10 @@ func apply(target) -> void:
 			player_economy.add_money(cash_amount)
 			print("[QuickCashConsumable] Granted %d dollars (20%% of %d total PowerUp value)" % [cash_amount, total_power_up_value])
 		else:
+			apply_succeeded = false
 			push_error("[QuickCashConsumable] PlayerEconomy autoload not found")
 	else:
+		apply_succeeded = false
 		print("[QuickCashConsumable] No PowerUps owned, granted 0 dollars")
 
 func calculate_total_power_up_value(game_controller: GameController) -> int:

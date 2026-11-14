@@ -32,16 +32,19 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[LoadedDiceConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 
 	if not game_controller.dice_hand:
 		push_error("[LoadedDiceConsumable] No dice_hand found on game_controller")
+		apply_succeeded = false
 		return
 
 	var dice = game_controller.dice_hand.dice_list
 	if dice.is_empty():
 		if _debug_enabled:
 			print("[LoadedDiceConsumable] No dice available to modify")
+		apply_succeeded = false
 		return
 
 	# Deferred so the ConsumableUI fan finishes rebuilding before we fold it

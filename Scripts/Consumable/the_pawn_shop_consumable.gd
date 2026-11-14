@@ -9,16 +9,19 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[ThePawnShopConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	var pu_manager = game_controller.pu_manager
 	if not pu_manager:
 		push_error("[ThePawnShopConsumable] No PowerUpManager found")
+		apply_succeeded = false
 		return
 	
 	# Check if player has any PowerUps to sell
 	if game_controller.active_power_ups.is_empty():
 		print("[ThePawnShopConsumable] No PowerUps to sell")
+		apply_succeeded = false
 		return
 	
 	print("[ThePawnShopConsumable] Selling all PowerUps...")
@@ -41,6 +44,11 @@ func apply(target) -> void:
 		else:
 			push_error("[ThePawnShopConsumable] No definition found for PowerUp: %s" % power_up_id)
 	
+	if total_pawn_value <= 0:
+		apply_succeeded = false
+		print("[ThePawnShopConsumable] No sellable PowerUps found")
+		return
+
 	# Grant money through PlayerEconomy
 	if total_pawn_value > 0:
 		var player_economy = get_node("/root/PlayerEconomy")
@@ -49,6 +57,7 @@ func apply(target) -> void:
 			print("[ThePawnShopConsumable] Granted $%d total from selling %d PowerUps" % [total_pawn_value, powerups_to_remove.size()])
 			print("[ThePawnShopConsumable] Sale breakdown: %s" % ", ".join(sale_breakdown))
 		else:
+			apply_succeeded = false
 			push_error("[ThePawnShopConsumable] PlayerEconomy autoload not found")
 			return
 	

@@ -9,11 +9,13 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[TheRaritiesConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	var pu_manager = game_controller.pu_manager
 	if not pu_manager:
 		push_error("[TheRaritiesConsumable] No PowerUpManager found")
+		apply_succeeded = false
 		return
 	
 	# Count powerups by rarity and calculate payment
@@ -67,8 +69,10 @@ func apply(target) -> void:
 			player_economy.add_money(total_payment)
 			print("[TheRaritiesConsumable] Granted $%d total (%s)" % [total_payment, ", ".join(payment_breakdown)])
 		else:
+			apply_succeeded = false
 			push_error("[TheRaritiesConsumable] PlayerEconomy autoload not found")
 	else:
+		apply_succeeded = false
 		print("[TheRaritiesConsumable] No powerups owned, granted $0")
 	
 	print("[TheRaritiesConsumable] Applied successfully")

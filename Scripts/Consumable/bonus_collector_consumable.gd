@@ -17,11 +17,13 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[BonusCollectorConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	var scorecard = game_controller.scorecard
 	if not scorecard:
 		push_error("[BonusCollectorConsumable] No scorecard found")
+		apply_succeeded = false
 		return
 	
 	# Get the upper section total
@@ -36,8 +38,8 @@ func apply(target) -> void:
 			player_economy.add_money(BONUS_AMOUNT)
 			print("[BonusCollectorConsumable] Granted $%d bonus!" % BONUS_AMOUNT)
 		else:
+			apply_succeeded = false
 			push_error("[BonusCollectorConsumable] PlayerEconomy autoload not found")
 	else:
-		# Not eligible - show feedback
+		apply_succeeded = false
 		print("[BonusCollectorConsumable] Upper section not eligible (current: %d/%d)" % [upper_total, UPPER_BONUS_THRESHOLD])
-		# The consumable is still consumed but has no effect

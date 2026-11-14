@@ -19,18 +19,21 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[StatCashoutConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	# Get Statistics singleton
 	var statistics = get_node_or_null("/root/Statistics")
 	if not statistics:
 		push_error("[StatCashoutConsumable] Statistics autoload not found")
+		apply_succeeded = false
 		return
 	
 	# Get PlayerEconomy for money
 	var player_economy = get_node_or_null("/root/PlayerEconomy")
 	if not player_economy:
 		push_error("[StatCashoutConsumable] PlayerEconomy autoload not found")
+		apply_succeeded = false
 		return
 	
 	# Calculate payout from stats
@@ -47,4 +50,5 @@ func apply(target) -> void:
 		player_economy.add_money(total_payout)
 		print("[StatCashoutConsumable] Granted $%d total" % total_payout)
 	else:
+		apply_succeeded = false
 		print("[StatCashoutConsumable] No qualifying stats, granted $0")

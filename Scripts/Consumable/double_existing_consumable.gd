@@ -6,7 +6,6 @@ signal double_completed
 signal double_denied
 
 var is_active := false
-var has_been_used := false
 
 func _ready() -> void:
 	add_to_group("consumables")
@@ -16,11 +15,7 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[DoubleExisting] Invalid target passed to apply()")
-		return
-		
-	if has_been_used:
-		print("[DoubleExisting] Consumable has already been used")
-		emit_signal("double_denied")
+		apply_succeeded = false
 		return
 		
 	# Check if there are any scores to double
@@ -28,6 +23,7 @@ func apply(target) -> void:
 	if not scorecard or not scorecard.has_any_scores():
 		print("[DoubleExisting] No scores available to double")
 		emit_signal("double_denied")
+		apply_succeeded = false
 		return
 		
 	is_active = true
@@ -41,9 +37,9 @@ func apply(target) -> void:
 	else:
 		push_error("[DoubleExisting] No ScoreCardUI found")
 		is_active = false
+		apply_succeeded = false
 
 func complete_double() -> void:
 	print("[DoubleExisting] Completing double")
 	is_active = false
-	has_been_used = true
 	emit_signal("double_completed")

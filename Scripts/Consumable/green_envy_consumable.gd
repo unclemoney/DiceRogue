@@ -3,6 +3,8 @@ class_name GreenEnvyConsumable
 
 # Track the registered modifier name for cleanup
 var modifier_source_name: String = "green_envy_consumable"
+var _game_controller_ref: GameController = null
+var _scorecard_ref: Scorecard = null
 
 func _ready() -> void:
 	add_to_group("consumables")
@@ -12,6 +14,7 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[GreenEnvyConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	print("[GreenEnvyConsumable] Applying green dice 10x multiplier for this turn")
@@ -20,12 +23,20 @@ func apply(target) -> void:
 	var multiplier_manager = ScoreModifierManager
 	if not multiplier_manager:
 		push_error("[GreenEnvyConsumable] ScoreModifierManager not found as autoload")
+		apply_succeeded = false
 		return
 	
+	if not game_controller.scorecard:
+		push_error("[GreenEnvyConsumable] No scorecard found")
+		apply_succeeded = false
+		return
+	_game_controller_ref = game_controller
+	_scorecard_ref = game_controller.scorecard
+
 	# Connect to scoring events to apply the green dice bonus
-	if not game_controller.scorecard.is_connected("score_auto_assigned", _on_score_assigned):
-		game_controller.scorecard.score_auto_assigned.connect(_on_score_assigned)
-		print("[GreenEnvyConsumable] Connected to score_auto_assigned signal")
+	if not game_controller.scorecard.is_connected("score_assigned", _on_score_assigned):
+		game_controller.scorecard.score_assigned.connect(_on_score_assigned)
+		print("[GreenEnvyConsumable] Connected to score_assigned signal")
 	
 	print("[GreenEnvyConsumable] Applied successfully - waiting for scoring event")
 
@@ -33,27 +44,31 @@ func apply(target) -> void:
 ##
 ## Called when a score is assigned. Checks for green dice in current dice hand
 ## and applies 10x multiplier to green dice money earned this turn.
-func _on_score_assigned(_section: int, _category: String, _score: int, _breakdown_info: Dictionary = {}) -> void:
+func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 	print("[GreenEnvyConsumable] Score assigned - checking for green dice effects")
 	
-	var game_controller = get_node_or_null("/root/GameController")
+	var game_controller = _game_controller_ref
 	if not game_controller:
-		# Try to find GameController in the scene tree
+		game_controller = get_node_or_null("/root/GameController")
+	if not game_controller:
 		game_controller = get_tree().get_first_node_in_group("game_controller")
 	
 	if not game_controller:
 		push_error("[GreenEnvyConsumable] Could not find GameController")
+		_cleanup_and_disconnect(null)
 		return
 	
 	# Get the dice color manager to check current dice
 	var dice_color_manager = DiceColorManager
 	if not dice_color_manager:
 		push_error("[GreenEnvyConsumable] DiceColorManager not found as autoload")
+		_cleanup_and_disconnect(game_controller)
 		return
 	
 	# Get current dice from the dice hand
 	if not game_controller.dice_hand:
 		push_error("[GreenEnvyConsumable] No dice hand found")
+		_cleanup_and_disconnect(game_controller)
 		return
 	
 	var current_dice = game_controller.dice_hand.get_all_dice()
@@ -89,9 +104,17 @@ func _on_score_assigned(_section: int, _category: String, _score: int, _breakdow
 ##
 ## Disconnects from signals and cleans up the consumable effect
 func _cleanup_and_disconnect(game_controller: GameController) -> void:
+	var scorecard = _scorecard_ref
 	if game_controller and game_controller.scorecard:
-		if game_controller.scorecard.is_connected("score_auto_assigned", _on_score_assigned):
-			game_controller.scorecard.score_auto_assigned.disconnect(_on_score_assigned)
-			print("[GreenEnvyConsumable] Disconnected from score_auto_assigned signal")
-	
+		scorecard = game_controller.scorecard
+	if is_instance_valid(scorecard):
+		if scorecard.is_connected("score_assigned", _on_score_assigned):
+			scorecard.score_assigned.disconnect(_on_score_assigned)
+			print("[GreenEnvyConsumable] Disconnected from score_assigned signal")
+	_scorecard_ref = null
+	_game_controller_ref = null
 	print("[GreenEnvyConsumable] Effect completed and cleaned up")
+
+
+func _exit_tree() -> void:
+	_cleanup_and_disconnect(null)

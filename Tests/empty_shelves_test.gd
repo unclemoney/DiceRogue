@@ -41,6 +41,7 @@ class BarePowerUpUI extends PowerUpUI:
 
 
 func _ready() -> void:
+	MusicManager.stop_music()
 	apply_button.pressed.connect(_on_apply_pressed)
 	assign_score_button.pressed.connect(_on_assign_score_pressed)
 	check_button.pressed.connect(_on_check_multiplier_pressed)

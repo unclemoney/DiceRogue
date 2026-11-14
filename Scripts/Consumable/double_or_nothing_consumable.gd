@@ -27,6 +27,7 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[DoubleOrNothingConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	# Store references
@@ -34,12 +35,14 @@ func apply(target) -> void:
 	scorecard_ref = game_controller.scorecard
 	if not scorecard_ref:
 		push_error("[DoubleOrNothingConsumable] No scorecard found in game controller")
+		apply_succeeded = false
 		return
 	
 	# Get current turn number
 	var turn_tracker = game_controller.turn_tracker
 	if not turn_tracker:
 		push_error("[DoubleOrNothingConsumable] No turn tracker found")
+		apply_succeeded = false
 		return
 	
 	# Store the turn we're activated on
@@ -60,10 +63,10 @@ func apply(target) -> void:
 		RollStats.yahtzee_rolled.connect(_on_yahtzee_rolled)
 		print("[DoubleOrNothingConsumable] Connected to yahtzee_rolled signal")
 	
-	# Connect to score_changed signal to monitor scoring
-	if not scorecard_ref.is_connected("score_changed", _on_score_changed):
-		scorecard_ref.score_changed.connect(_on_score_changed)
-		print("[DoubleOrNothingConsumable] Connected to score_changed signal")
+	# Connect to score_assigned signal to monitor scoring
+	if not scorecard_ref.is_connected("score_assigned", _on_score_assigned):
+		scorecard_ref.score_assigned.connect(_on_score_assigned)
+		print("[DoubleOrNothingConsumable] Connected to score_assigned signal")
 	
 	# Connect to turn_started signal to detect if we're no longer on the active turn
 	if not turn_tracker.is_connected("turn_started", _on_turn_started):
@@ -86,7 +89,7 @@ func _on_yahtzee_rolled() -> void:
 	# Register the 2x multiplier for yahtzee scoring
 	ScoreModifierManager.register_multiplier("double_or_nothing_yahtzee", 2.0)
 
-func _on_score_changed(_section: int, category: String, score: int) -> void:
+func _on_score_assigned(_section: int, category: String, score: int) -> void:
 	if not is_active:
 		return
 	
@@ -113,6 +116,9 @@ func _on_score_changed(_section: int, category: String, score: int) -> void:
 		
 		# Deactivate after scoring (whether 0 or not)
 		_deactivate()
+	else:
+		print("[DoubleOrNothingConsumable] Yahtzee rolled but not scored - deactivating")
+		_deactivate()
 
 func _on_turn_started() -> void:
 	if not is_active:
@@ -133,8 +139,8 @@ func _deactivate() -> void:
 	is_active = false
 	
 	# Disconnect from signals
-	if scorecard_ref and scorecard_ref.is_connected("score_changed", _on_score_changed):
-		scorecard_ref.score_changed.disconnect(_on_score_changed)
+	if scorecard_ref and scorecard_ref.is_connected("score_assigned", _on_score_assigned):
+		scorecard_ref.score_assigned.disconnect(_on_score_assigned)
 	
 	if game_controller_ref and game_controller_ref.turn_tracker:
 		var turn_tracker = game_controller_ref.turn_tracker
@@ -150,3 +156,7 @@ func _deactivate() -> void:
 	# Disconnect from RollStats if connected
 	if RollStats and RollStats.is_connected("yahtzee_rolled", _on_yahtzee_rolled):
 		RollStats.yahtzee_rolled.disconnect(_on_yahtzee_rolled)
+
+
+func _exit_tree() -> void:
+	_deactivate()

@@ -15,7 +15,6 @@ class_name MulliganConsumable
 signal mulligan_activated(category: String)
 signal mulligan_denied(reason: String)
 
-var has_been_used: bool = false
 var _debug_enabled: bool = OS.is_debug_build()
 
 
@@ -34,18 +33,14 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[MulliganConsumable] Invalid target passed to apply()")
-		return
-
-	if has_been_used:
-		if _debug_enabled:
-			print("[MulliganConsumable] Already used")
-		emit_signal("mulligan_denied", "already_used")
+		apply_succeeded = false
 		return
 
 	var scorecard: Scorecard = game_controller.scorecard
 	if not scorecard:
 		push_error("[MulliganConsumable] No scorecard found in game controller")
 		emit_signal("mulligan_denied", "no_scorecard")
+		apply_succeeded = false
 		return
 
 	var worst := find_worst_placed_score(scorecard.upper_scores, scorecard.lower_scores)
@@ -53,6 +48,7 @@ func apply(target) -> void:
 		if _debug_enabled:
 			print("[MulliganConsumable] Denied - no placed scores")
 		emit_signal("mulligan_denied", "no_scores")
+		apply_succeeded = false
 		return
 
 	# The reroll re-evaluates the current hand, so dice must be rolled
@@ -60,12 +56,14 @@ func apply(target) -> void:
 		if _debug_enabled:
 			print("[MulliganConsumable] Denied - no dice rolled")
 		emit_signal("mulligan_denied", "no_dice")
+		apply_succeeded = false
 		return
 
 	var score_card_ui = game_controller.score_card_ui
 	if not score_card_ui or not score_card_ui.has_method("activate_score_reroll_for"):
 		push_error("[MulliganConsumable] ScoreCardUI missing activate_score_reroll_for()")
 		emit_signal("mulligan_denied", "no_ui")
+		apply_succeeded = false
 		return
 
 	var category: String = worst["category"]
@@ -73,9 +71,9 @@ func apply(target) -> void:
 		print("[MulliganConsumable] Rerolling worst score: %s (was %d)" % [category, worst["score"]])
 	var started: bool = score_card_ui.activate_score_reroll_for(category)
 	if started:
-		has_been_used = true
 		emit_signal("mulligan_activated", category)
 	else:
+		apply_succeeded = false
 		emit_signal("mulligan_denied", "reroll_failed")
 
 

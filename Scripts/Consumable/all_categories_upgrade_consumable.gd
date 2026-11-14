@@ -9,11 +9,13 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[AllCategoriesUpgradeConsumable] Invalid target")
+		apply_succeeded = false
 		return
 	
 	var scorecard = game_controller.scorecard
 	if not scorecard:
 		push_error("[AllCategoriesUpgradeConsumable] No scorecard found")
+		apply_succeeded = false
 		return
 	
 	# Upgrade all upper section categories

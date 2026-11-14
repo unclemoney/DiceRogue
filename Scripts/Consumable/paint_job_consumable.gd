@@ -37,16 +37,19 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[PaintJobConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 
 	if not game_controller.dice_hand:
 		push_error("[PaintJobConsumable] No dice_hand found on game_controller")
+		apply_succeeded = false
 		return
 
 	var dice = game_controller.dice_hand.dice_list
 	if dice.is_empty():
 		if _debug_enabled:
 			print("[PaintJobConsumable] No dice available to paint")
+		apply_succeeded = false
 		return
 
 	paint_dice(dice)
@@ -55,15 +58,18 @@ func apply(target) -> void:
 
 ## paint_dice(dice_list: Array)
 ##
-## Stores each die's current color, then forces a random color on it.
+## Stores each die's original color on first application, then forces a random
+## color. Repeated applications preserve those original colors until restoration.
 func paint_dice(dice_list: Array) -> void:
-	_saved_colors.clear()
+	if not is_active:
+		_saved_colors.clear()
 	for die in dice_list:
 		if not die is Dice:
 			continue
 		if not is_instance_valid(die):
 			continue
-		_saved_colors[die] = die.color
+		if not _saved_colors.has(die):
+			_saved_colors[die] = die.color
 		var new_color = GameRNG.random_choice(DiceColor.get_all_colors())
 		die.force_color(new_color)
 	is_active = not _saved_colors.is_empty()

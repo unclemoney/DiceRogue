@@ -25,9 +25,11 @@ func apply(target) -> void:
 	var game_controller = target
 	if not game_controller or not ("active_debuffs" in game_controller):
 		push_error("[AntidoteConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	if not game_controller.has_method("disable_debuff"):
 		push_error("[AntidoteConsumable] Target has no disable_debuff method")
+		apply_succeeded = false
 		return
 
 	var best_id := ""
@@ -44,6 +46,7 @@ func apply(target) -> void:
 
 	if best_id == "":
 		print("[AntidoteConsumable] No active debuffs to cleanse - Antidote fizzles")
+		apply_succeeded = false
 		return
 
 	print("[AntidoteConsumable] Cleansing '%s' (intensity %.2f)" % [best_id, best_intensity])

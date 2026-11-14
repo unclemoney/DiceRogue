@@ -9,11 +9,13 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[RandomPowerUpUncommonConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	var pu_manager = game_controller.pu_manager
 	if not pu_manager:
 		push_error("[RandomPowerUpUncommonConsumable] No PowerUpManager found")
+		apply_succeeded = false
 		return
 	
 	# Get all uncommon power-ups
@@ -31,6 +33,7 @@ func apply(target) -> void:
 	
 	if unowned_uncommon_power_ups.is_empty():
 		print("[RandomPowerUpUncommonConsumable] No unowned uncommon power-ups available")
+		apply_succeeded = false
 		return
 	
 	# Select a random unowned uncommon power-up

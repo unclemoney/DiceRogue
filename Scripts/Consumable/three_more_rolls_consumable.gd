@@ -12,11 +12,13 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[ThreeMoreRollsConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 		
 	var turn_tracker = game_controller.turn_tracker
 	if not turn_tracker:
 		push_error("[ThreeMoreRollsConsumable] No TurnTracker found")
+		apply_succeeded = false
 		return
 		
 	# Add 3 more rolls for the current turn

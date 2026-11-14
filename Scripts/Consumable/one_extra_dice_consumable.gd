@@ -23,10 +23,12 @@ func apply(target) -> void:
 	var game_controller = target as GameController
 	if not game_controller:
 		push_error("[OneExtraDiceConsumable] Invalid target passed to apply()")
+		apply_succeeded = false
 		return
 	
 	if is_active:
 		print("[OneExtraDiceConsumable] Already active - ignoring duplicate application")
+		apply_succeeded = false
 		return
 	
 	# Store references
@@ -36,10 +38,12 @@ func apply(target) -> void:
 	
 	if not dice_hand_ref:
 		push_error("[OneExtraDiceConsumable] No dice hand found")
+		apply_succeeded = false
 		return
 	
 	if not scorecard_ref:
 		push_error("[OneExtraDiceConsumable] No scorecard found")
+		apply_succeeded = false
 		return
 	
 	# Apply the extra dice effect (adds +1 die relative to the current count)
