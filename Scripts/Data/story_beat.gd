@@ -40,7 +40,7 @@ class_name MomStoryBeat
 ## Completion rewards (applied by CastManager when the session ends).
 ## reward_mood is a raw ChoresManager.adjust_mood delta: positive makes
 ## Mom ANGRIER - use negative values for happy endings.
-@export var reward_money: int = 0
+@export var reward_money: float = 0.0
 @export var reward_mood: int = 0
 @export var reward_rep: int = 0
 

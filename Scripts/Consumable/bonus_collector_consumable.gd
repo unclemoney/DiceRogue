@@ -3,10 +3,10 @@ class_name BonusCollectorConsumable
 
 ## BonusCollectorConsumable
 ##
-## Grants $150 instantly if the upper section total is >= 63 (bonus threshold).
+## Grants $1.50 instantly if the upper section total is >= 63 (bonus threshold).
 ## If not eligible, shows feedback message but does nothing.
 
-const BONUS_AMOUNT := 150
+const BONUS_AMOUNT := 1.5
 const UPPER_BONUS_THRESHOLD := 63
 
 func _ready() -> void:
@@ -36,7 +36,7 @@ func apply(target) -> void:
 		var player_economy = get_node_or_null("/root/PlayerEconomy")
 		if player_economy:
 			player_economy.add_money(BONUS_AMOUNT)
-			print("[BonusCollectorConsumable] Granted $%d bonus!" % BONUS_AMOUNT)
+			print("[BonusCollectorConsumable] Granted $%.2f bonus!" % BONUS_AMOUNT)
 		else:
 			apply_succeeded = false
 			push_error("[BonusCollectorConsumable] PlayerEconomy autoload not found")

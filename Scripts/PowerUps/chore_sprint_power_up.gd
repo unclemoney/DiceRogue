@@ -5,7 +5,7 @@ class_name ChoreSprintPowerUp
 ##
 ## Uncommon PowerUp that converts 50% of a completed chore's goof-off points
 ## into Rebellion Rep, rounded down. Tracks actual Rep gained after clamping.
-## Price: $150, Rarity: Uncommon
+## Price: $1.50, Rarity: Uncommon
 
 const REP_CONVERSION_RATE: float = 0.5
 

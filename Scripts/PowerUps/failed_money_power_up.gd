@@ -3,16 +3,16 @@ class_name FailedMoneyPowerUp
 
 ## FailedMoneyPowerUp
 ##
-## Grants $50 for each failed hand (0 score category) at the end of each round.
-## Example: 4 failed hands = $200 at round end.
+## Grants $0.50 for each failed hand (0 score category) at the end of each round.
+## Example: 4 failed hands = $2.00 at round end.
 ## Common rarity, PG rating.
 
 # Reference to round manager
 var round_manager_ref: Node = null
-var total_money_granted: int = 0
+var total_money_granted: float = 0.0
 var _last_consumed_round_number: int = 0
 
-const MONEY_PER_FAILED_HAND: int = 50
+const MONEY_PER_FAILED_HAND: float = 0.5
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -50,30 +50,30 @@ func apply(target) -> void:
 
 func get_current_description() -> String:
 	var current_failed = Statistics.failed_hands_this_round
-	var base_desc = "+$%d for each failed hand (at round end)" % MONEY_PER_FAILED_HAND
+	var base_desc = "+$%.2f for each failed hand (at round end)" % MONEY_PER_FAILED_HAND
 	
 	var progress_desc = "\nFailed hands this round: %d" % current_failed
 	if total_money_granted > 0:
-		progress_desc += " | Total earned: $%d" % total_money_granted
+		progress_desc += " | Total earned: $%.2f" % total_money_granted
 	
 	return base_desc + progress_desc
 
 
-func get_pending_round_end_bonus() -> int:
+func get_pending_round_end_bonus() -> float:
 	var round_number = _get_current_round_number()
 	if round_number < 1 or round_number == _last_consumed_round_number:
 		return 0
 	return Statistics.failed_hands_this_round * MONEY_PER_FAILED_HAND
 
 
-func consume_pending_round_end_bonus() -> int:
+func consume_pending_round_end_bonus() -> float:
 	var money_to_grant = get_pending_round_end_bonus()
 	if money_to_grant <= 0:
 		return 0
 
 	_last_consumed_round_number = _get_current_round_number()
 	total_money_granted += money_to_grant
-	print("[FailedMoneyPowerUp] Consumed $%d for %d failed hands this round" % [money_to_grant, Statistics.failed_hands_this_round])
+	print("[FailedMoneyPowerUp] Consumed $%.2f for %d failed hands this round" % [money_to_grant, Statistics.failed_hands_this_round])
 	emit_signal("description_updated", id, get_current_description())
 	if is_inside_tree():
 		_update_power_up_icons()

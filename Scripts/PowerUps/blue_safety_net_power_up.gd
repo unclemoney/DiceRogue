@@ -6,7 +6,7 @@ class_name BlueSafetyNetPowerUp
 ## Uncommon PowerUp that reduces blue dice penalties by 50%.
 ## When a blue die is NOT used in scoring, the division penalty is halved.
 ## Uses DiceColorManager's blue_penalty_reduction_factor property.
-## Price: $125, Rarity: Uncommon
+## Price: $1.25, Rarity: Uncommon
 
 const PENALTY_REDUCTION: float = 0.5  # 50% reduction
 

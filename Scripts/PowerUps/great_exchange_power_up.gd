@@ -7,7 +7,7 @@ class_name GreatExchangePowerUp
 ## Example: 5 dice → 7 dice, 3 rolls → 2 rolls.
 ## Consumables that grant extra rolls still work normally.
 ## When sold, 2 dice are removed and 1 roll is restored.
-## Price: $350, Rarity: Rare, Rating: R
+## Price: $3.50, Rarity: Rare, Rating: R
 
 const EXTRA_DICE: int = 2
 const ROLLS_REMOVED: int = 1

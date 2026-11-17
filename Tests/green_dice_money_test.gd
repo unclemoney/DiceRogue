@@ -41,9 +41,9 @@ func _on_test_pressed() -> void:
 		_show_result("Current player money: $" + str(current_money))
 		
 		# Test adding money directly
-		PlayerEconomy.add_money(5)
+		PlayerEconomy.add_money(0.05)
 		var new_money = PlayerEconomy.money
-		_show_result("After adding $5: $" + str(new_money))
+		_show_result("After adding $0.05: $" + str(new_money))
 	else:
 		_show_result("✗ PlayerEconomy not available")
 

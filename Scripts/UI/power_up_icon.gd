@@ -1158,7 +1158,7 @@ func _update_sell_button_text() -> void:
 	if not sell_button:
 		return
 	if data:
-		var sell_value = int(data.price / 2.0)
-		sell_button.text = "SELL\n$%d" % sell_value
+		var sell_value = data.price / 2.0
+		sell_button.text = "SELL\n$%.2f" % sell_value
 	else:
-		sell_button.text = "SELL\n$0"
+		sell_button.text = "SELL\n$0.00"

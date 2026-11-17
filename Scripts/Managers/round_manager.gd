@@ -328,14 +328,14 @@ func _on_challenge_failed(_id: String) -> void:
 	fail_round()
 
 
-## calculate_empty_category_bonus(scorecard_ref: Scorecard) -> int
+## calculate_empty_category_bonus(scorecard_ref: Scorecard) -> float
 ##
 ## Calculates the bonus for unscored categories on the scorecard.
-## Awards $5 per empty (null) category in both upper and lower sections.
+## Awards $0.05 per empty (null) category in both upper and lower sections.
 ## @param scorecard_ref: Reference to the Scorecard node
 ## @return: Total bonus amount for empty categories
-func calculate_empty_category_bonus(scorecard_ref) -> int:
-	const EMPTY_CATEGORY_BONUS: int = 5
+func calculate_empty_category_bonus(scorecard_ref) -> float:
+	const EMPTY_CATEGORY_BONUS: float = 0.05
 	var empty_count: int = 0
 
 	# Count upper section empty categories
@@ -357,16 +357,16 @@ func calculate_empty_category_bonus(scorecard_ref) -> int:
 	return bonus
 
 
-## calculate_score_above_target_bonus(final_score: int, target_score: int) -> int
+## calculate_score_above_target_bonus(final_score: int, target_score: int) -> float
 ##
 ## Calculates the bonus for scoring above the round target.
-## Awards $1 per point above the target score, capped at $100.
+## Awards $0.01 per point above the target score, capped at $1.00.
 ## @param final_score: The player's final score for the round
 ## @param target_score: The round's target score to beat
 ## @return: Total bonus amount for points above target
-func calculate_score_above_target_bonus(final_score: int, target_score: int) -> int:
-	const POINTS_ABOVE_BONUS: int = 1
-	const MAX_POINTS_ABOVE_BONUS: int = 100
+func calculate_score_above_target_bonus(final_score: int, target_score: int) -> float:
+	const POINTS_ABOVE_BONUS: float = 0.01
+	const MAX_POINTS_ABOVE_BONUS: float = 1.0
 	var points_above = max(0, final_score - target_score)
 	var bonus = min(MAX_POINTS_ABOVE_BONUS, points_above * POINTS_ABOVE_BONUS)
 	print("[RoundManager] Final score:", final_score, "Target:", target_score, "Points above:", points_above, "Bonus:", bonus)

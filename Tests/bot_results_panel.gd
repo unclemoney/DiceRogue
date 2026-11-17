@@ -88,8 +88,8 @@ func _on_runs_completed() -> void:
 
 	# Economy
 	text += "\n[b]Economy:[/b]\n"
-	text += "  Money Earned: $%d | Spent: $%d\n" % [agg.total_money_earned, agg.total_money_spent]
-	text += "  Challenge Rewards: $%d | Round Bonuses: $%d\n" % [agg.total_challenge_rewards, agg.total_end_of_round_bonuses]
+	text += "  Money Earned: $%.2f | Spent: $%.2f\n" % [agg.total_money_earned, agg.total_money_spent]
+	text += "  Challenge Rewards: $%.2f | Round Bonuses: $%.2f\n" % [agg.total_challenge_rewards, agg.total_end_of_round_bonuses]
 
 	# Items
 	text += "\n[b]Items:[/b]\n"

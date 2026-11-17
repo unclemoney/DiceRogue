@@ -26,7 +26,7 @@ dialog_node_id = "story_derek_room_cleanup"
 min_channel = 4
 requires_flag = "derek_room_blame_done"
 requires_chores_done = true
-reward_money = 30
+reward_money = 0.30
 reward_mood = -2
 reward_rep = 2
 

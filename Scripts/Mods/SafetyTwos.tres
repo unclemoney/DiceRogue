@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ModData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="ModData" load_steps=4 format=3 uid="uid://ddr5bm2axdhyl"]
 
-[ext_resource type="Texture2D" path="res://Resources/Art/Dice/dieWhite_border2.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://y765st2hpl6j" path="res://Resources/Art/Dice/dieWhite_border2.png" id="1_icon"]
 [ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="1_moddata"]
 [ext_resource type="PackedScene" path="res://Scenes/Mods/SafetyTwos.tscn" id="2_scene"]
 
@@ -11,5 +11,6 @@ display_name = "Safety 2's"
 description = "This die ignores the disabled 2's debuff."
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
-price = 150
+price = 1.5
+sell_price = -1.0
 metadata/_custom_type_script = "uid://47gl3by4wwht"

@@ -56,7 +56,7 @@ const CATEGORY_SCORE_THRESHOLDS := {
 @export var display_name: String = ""
 @export var description: String = ""
 @export var condition_type: ConditionType = ConditionType.SCORE_POINTS
-@export var target_value: int = 0
+@export var target_value: float = 0.0
 @export var additional_params: Dictionary = {}
 
 ## Check if this condition is satisfied by the given game statistics
@@ -238,7 +238,7 @@ func get_formatted_description() -> String:
 			else:
 				return "Use %d consumables in one game" % target_value
 		ConditionType.EARN_MONEY:
-			return "Earn $%d in a single game" % target_value
+			return "Earn $%.2f in a single game" % target_value
 		ConditionType.COLORED_DICE_BONUS:
 			if target_value == 1:
 				return "Trigger a 5+ same color bonus"

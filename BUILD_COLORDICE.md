@@ -13,7 +13,7 @@ The Dice Color System adds strategic depth to DiceRogue by giving dice special p
 ### Green Dice
 - **Color**: Green
 - **Effect**: Provides money bonus equal to the die value
-- **Example**: Green die showing 4 = +$4 money bonus
+- **Example**: Green die showing 4 = +$0.04 money bonus
 - **Probability**: Standard colored die probability
 
 ### Red Dice  
@@ -210,7 +210,7 @@ Create test scenes for:
   - Only triggers if there is available consumable slot space
   - If slots are full, no consumable is granted (no error)
 - **Probability**: 1:60 (moderate rarity, between Red 1:50 and Purple 1:88)
-- **Base Cost**: $85 (exponential scaling with purchases)
+- **Base Cost**: $0.85 (exponential scaling with purchases)
 
 ### Yellow Dice Examples
 
@@ -241,7 +241,7 @@ When all 5 different dice colors are present in a single roll (Green, Red, Purpl
 
 ### Rainbow Bonus Example
 - Roll: 3(Green), 4(Red), 2(Purple), 5(Blue), 6(Yellow)
-- Green money: $3 → $4 (×1.5 rounded)
+- Green money: $0.03 → $0.04 (×1.5 rounded)
 - Red additive: +4 → +6 (×1.5 rounded)
 - Purple multiplier: ×2 → ×3.0 (×1.5)
 - Blue multiplier: ×5 → ×7.5 (×1.5)
@@ -258,11 +258,11 @@ When all 5 different dice colors are present in a single roll (Green, Red, Purpl
 ### Odds Progression Example (Green Dice)
 | Purchases | Odds | Cost |
 |---|---|---|
-| 0 | N/A (not purchased) | $50 |
-| 1 | 1:25 | $100 |
-| 2 | 1:13 | $200 |
-| 3 | 1:7 | $400 |
-| 4 | 1:4 | $800 |
+| 0 | N/A (not purchased) | $0.50 |
+| 1 | 1:25 | $1.00 |
+| 2 | 1:13 | $2.00 |
+| 3 | 1:7 | $4.00 |
+| 4 | 1:4 | $8.00 |
 | 5 | 1:2 (MAX) | Cannot purchase |
 
 ## Same Color Bonus

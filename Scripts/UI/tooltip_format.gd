@@ -9,9 +9,9 @@ extends RefCounted
 
 ## money(n) -> String
 ##
-## Gold-colored whole dollars: "$%d". No decimals, no k-abbreviation.
-static func money(n: int) -> String:
-	return "[color=#ffd75e]$%d[/color]" % n
+## Gold-colored dollars with two decimal places and no k-abbreviation.
+static func money(n: float) -> String:
+	return "[color=#ffd75e]%s[/color]" % NumberFormatter.format_money(n)
 
 
 ## add(n) -> String

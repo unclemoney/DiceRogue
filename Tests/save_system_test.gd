@@ -2,8 +2,8 @@ extends Node
 
 ## save_system_test.gd
 ##
-## Exercises the save-system overhaul (run_save_version 2):
-##   1. Atomic write: save_snapshot leaves no .tmp and writes version 2.
+## Exercises the save-system overhaul (run_save_version 3):
+##   1. Atomic write: save_snapshot leaves no .tmp and writes version 3.
 ##   2. Corrupt quarantine: garbage bytes -> load fails, timestamped .bak appears.
 ##   3. v1 compatibility: a version 1 save loads with per-key defaults.
 ##   4. Int fidelity: float JSON numbers coerce into typed int vars on load.
@@ -21,8 +21,8 @@ var _slot: int = -1
 var _save_path: String = ""
 var _had_save: bool = false
 var _backup: PackedByteArray = PackedByteArray()
-var _money_start: int = 0
-var _piggy_start: int = 0
+var _money_start: float = 0.0
+var _piggy_start: float = 0.0
 var _test_nodes: Array[Node] = []
 
 
@@ -43,7 +43,7 @@ func _ready() -> void:
 
 	_test_atomic_write()
 	_test_corrupt_quarantine()
-	_test_v1_compatibility()
+	_test_legacy_money_scale_rejected()
 	_test_int_fidelity()
 	_test_newer_version_quarantine()
 
@@ -150,7 +150,7 @@ func _test_atomic_write() -> void:
 	_check("run save root is a Dictionary", data is Dictionary)
 	if data is Dictionary:
 		var meta = data.get("meta", {})
-		_check("meta.run_save_version == 2", int(meta.get("run_save_version", 0)) == 2)
+		_check("meta.run_save_version == 3", int(meta.get("run_save_version", 0)) == 3)
 		_check("meta.profile_slot matches active slot", int(meta.get("profile_slot", -1)) == _slot)
 		var state = data.get("state", {})
 		_check("state round-trips the snapshot", state.get("marker", "") == "save_system_test")
@@ -171,7 +171,7 @@ func _test_corrupt_quarantine() -> void:
 	_remove_quarantine_baks(new_baks)
 
 
-func _test_v1_compatibility() -> void:
+func _test_legacy_money_scale_rejected() -> void:
 	var v1_save = {
 		"meta": {
 			"run_save_version": 1,
@@ -179,25 +179,22 @@ func _test_v1_compatibility() -> void:
 			"timestamp": "2025-01-01T00:00:00"
 		},
 		"state": {
-			"player_economy": {"money": 250.0, "piggy_bank_savings": 75.0}
+			"player_economy": {"money": 2.5, "piggy_bank_savings": 0.75}
 		}
 	}
 	_write_save_file(JSON.stringify(v1_save))
 	var loaded = GameSaveManager.load_save_for_profile(_slot)
-	_check("v1 save: load returns true", loaded)
-	_check("v1 save: pending load buffered", GameSaveManager.has_pending_load())
-	var state = GameSaveManager.consume_pending_load()
-	_check("v1 save: consume returns the state dict", not state.is_empty())
-	var economy = state.get("player_economy", {})
-	_check("v1 save: money survives the round-trip", float(economy.get("money", 0.0)) == 250.0)
+	_check("legacy money-scale save: load returns false", not loaded)
+	_check("legacy money-scale save: no pending load buffered", not GameSaveManager.has_pending_load())
+	_check("legacy money-scale save: original file left untouched", FileAccess.file_exists(_save_path))
 
 
 func _test_int_fidelity() -> void:
 	# Every number below is a float, exactly as JSON.parse() produces.
 
-	PlayerEconomy.load_state({"money": 250.0, "piggy_bank_savings": 75.0})
-	_check("economy money is int 250", typeof(PlayerEconomy.money) == TYPE_INT and PlayerEconomy.money == 250)
-	_check("economy piggy bank is int 75", typeof(PlayerEconomy.piggy_bank_savings) == TYPE_INT and PlayerEconomy.piggy_bank_savings == 75)
+	PlayerEconomy.load_state({"money": 2.5, "piggy_bank_savings": 0.75})
+	_check("economy money is int 250", typeof(PlayerEconomy.money) == TYPE_FLOAT and PlayerEconomy.money == 2.5)
+	_check("economy piggy bank is int 75", typeof(PlayerEconomy.piggy_bank_savings) == TYPE_FLOAT and PlayerEconomy.piggy_bank_savings == 0.75)
 
 	var turn_tracker := TurnTracker.new()
 	add_child(turn_tracker)
@@ -281,7 +278,7 @@ func _test_int_fidelity() -> void:
 	chores_manager.load_state({
 		"current_progress": 40.0,
 		"chores_completed_this_round": 2.0,
-		"chore_rewards_this_round": 15.0,
+		"chore_rewards_this_round": 0.15,
 		"tasks_completed": 7.0,
 		"is_mom_active": false,
 		"_task_history": [],

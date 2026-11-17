@@ -6,7 +6,7 @@ class_name YahtzeedDicePowerUp
 ## Epic PowerUp that grants +1 die each time the player rolls a Yahtzee.
 ## Extra dice are permanent for the game duration (until PowerUp is removed).
 ## Capped at 16 total dice maximum.
-## Price: $450, Rarity: Epic, Rating: R
+## Price: $4.50, Rarity: Epic, Rating: R
 ##
 ## Connects to RollStats.yahtzee_rolled signal.
 

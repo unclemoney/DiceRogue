@@ -9,7 +9,7 @@ class_name AllPowerUpsSoldDebuff
 ## The remove() method is a no-op since the effect cannot be undone.
 
 var game_controller: Node
-var total_refund: int = 0
+var total_refund: float = 0.0
 var powerups_sold: int = 0
 
 ## apply(_target)
@@ -43,9 +43,9 @@ func apply(_target) -> void:
 
 		# Calculate refund (half price)
 		var def = game_controller.pu_manager.get_def(power_up_id)
-		var refund: int = 0
+		var refund: float = 0.0
 		if def:
-			refund = int(def.price / 2.0)
+			refund = floorf(def.price * 50.0) / 100.0
 			total_refund += refund
 
 		# Deactivate, revoke, and remove from UI
@@ -55,13 +55,13 @@ func apply(_target) -> void:
 			game_controller.powerup_ui.remove_power_up(power_up_id)
 
 		powerups_sold += 1
-		print("[AllPowerUpsSold] Sold '%s' for %d coins" % [power_up_id, refund])
+		print("[AllPowerUpsSold] Sold '%s' for %.2f coins" % [power_up_id, refund])
 
 	# Award the total refund
 	if total_refund > 0:
 		PlayerEconomy.add_money(total_refund)
 
-	print("[AllPowerUpsSold] Sold %d powerups for %d total coins" % [powerups_sold, total_refund])
+	print("[AllPowerUpsSold] Sold %d powerups for %.2f total coins" % [powerups_sold, total_refund])
 
 ## remove()
 ##

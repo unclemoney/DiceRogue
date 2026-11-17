@@ -55,8 +55,8 @@ func _on_task_selected(task) -> void:  # ChoreData - duck typed
 	_log("Task selected: %s" % task.display_name)
 
 func _on_task_completed(task) -> void:  # ChoreData - duck typed
-	_log("[color=green]Task completed: %s (reward: $%d)[/color]" % [task.display_name, task.reward_value])
-	_log("  Round rewards so far: $%d (%d chores)" % [chores_manager.get_chore_rewards_this_round(), chores_manager.get_chores_completed_this_round()])
+	_log("[color=green]Task completed: %s (reward: $%.2f)[/color]" % [task.display_name, task.reward_value])
+	_log("  Round rewards so far: $%.2f (%d chores)" % [chores_manager.get_chore_rewards_this_round(), chores_manager.get_chores_completed_this_round()])
 
 func _on_mom_triggered() -> void:
 	_log("[color=red]MOM TRIGGERED![/color]")
@@ -107,7 +107,7 @@ func _on_show_rewards_pressed() -> void:
 	var tasks = ChoreTasksLibraryScript.get_all_tasks()
 	for task in tasks:
 		var diff_str = "HARD" if task.difficulty == 1 else "EASY"
-		_log("  %s | $%d | %s | %s" % [task.id, task.reward_value, diff_str, task.display_name])
+		_log("  %s | $%.2f | %s | %s" % [task.id, task.reward_value, diff_str, task.display_name])
 	_log("Total: %d chores" % tasks.size())
 
 func _on_test_rewards_pressed() -> void:
@@ -115,13 +115,13 @@ func _on_test_rewards_pressed() -> void:
 	chores_manager.reset_for_new_game()
 	var tasks = ChoreTasksLibraryScript.get_all_tasks()
 	var expected_total: int = 0
-	# Complete a mix of $5, $15, $35, $65, and $100 chores
+	# Complete a mix of $0.05, $0.15, $0.35, $0.65, and $1.00 chores
 	var test_tasks = [
-		_find_task_by_id(tasks, "score_ones"),       # $5
-		_find_task_by_id(tasks, "score_any_upper"),  # $15
-		_find_task_by_id(tasks, "score_full_house"), # $35
-		_find_task_by_id(tasks, "roll_yahtzee"),     # $65
-		_find_task_by_id(tasks, "yahtzee_sixes")     # $100
+		_find_task_by_id(tasks, "score_ones"),       # $0.05
+		_find_task_by_id(tasks, "score_any_upper"),  # $0.15
+		_find_task_by_id(tasks, "score_full_house"), # $0.35
+		_find_task_by_id(tasks, "roll_yahtzee"),     # $0.65
+		_find_task_by_id(tasks, "yahtzee_sixes")     # $1.00
 	]
 	for task in test_tasks:
 		if task:
@@ -130,12 +130,12 @@ func _on_test_rewards_pressed() -> void:
 			expected_total += task.reward_value
 	var actual_total = chores_manager.get_chore_rewards_this_round()
 	var passed = expected_total == actual_total
-	_log("Expected: $%d | Actual: $%d | %s" % [expected_total, actual_total, "[color=green]PASS[/color]" if passed else "[color=red]FAIL[/color]"])
+	_log("Expected: $%.2f | Actual: $%.2f | %s" % [expected_total, actual_total, "[color=green]PASS[/color]" if passed else "[color=red]FAIL[/color]"])
 	# Test reset
 	chores_manager.reset_round_tracking()
 	var after_reset = chores_manager.get_chore_rewards_this_round()
 	var reset_passed = after_reset == 0
-	_log("After reset: $%d | %s" % [after_reset, "[color=green]PASS[/color]" if reset_passed else "[color=red]FAIL[/color]"])
+	_log("After reset: $%.2f | %s" % [after_reset, "[color=green]PASS[/color]" if reset_passed else "[color=red]FAIL[/color]"])
 
 func _find_task_by_id(tasks: Array, id: String):
 	for task in tasks:

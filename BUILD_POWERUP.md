@@ -292,7 +292,7 @@ func _test_[functionality]() -> void:
 
 **Duplicate PowerUp Triggers:**
 1. Grant the PowerUp and a replica (or grant the same PowerUp twice if allowed).
-2. Trigger the effect (e.g., complete challenge for `allowance`) and verify both instances activate (e.g., $200 for two Allowance PowerUps).
+2. Trigger the effect (e.g., complete challenge for `allowance`) and verify both instances activate (e.g., $2.00 for two Allowance PowerUps).
 
 **Target Verification:**
 1. Temporarily add `print("apply target:", target.get_class())` in `apply()` to confirm the correct target type.
@@ -369,7 +369,7 @@ Verification
 The BonusMoneyPowerUp demonstrates a complete implementation:
 
 **Features:**
-- Grants $50 for each bonus achieved (Upper Section Bonus or Yahtzee Bonus)
+- Grants $0.50 for each bonus achieved (Upper Section Bonus or Yahtzee Bonus)
 - Connects to scorecard signals (`upper_bonus_achieved`, `yahtzee_bonus_achieved`)
 - Updates description dynamically to show progress
 - Properly manages PlayerEconomy integration
@@ -650,31 +650,31 @@ _add_default_power_up("grand_master", "Grand Master", "All scoring categories ge
 
 ## New Wave PowerUps (10 total)
 
-### Common ($50-$75)
+### Common ($0.50-$0.75)
 | ID | Name | Effect |
 |----|------|--------|
-| `purple_payout` | Purple Payout | Earn $3 per when scoring |
-| `mod_money` | Mod Money | Earn $8 per modded die when scoring |
+| `purple_payout` | Purple Payout | Earn $0.03 per when scoring |
+| `mod_money` | Mod Money | Earn $0.08 per modded die when scoring |
 
-### Uncommon ($125-$150)
+### Uncommon ($1.25-$1.50)
 | ID | Name | Effect |
 |----|------|--------|
 | `blue_safety_net` | Blue Safety Net | Halves blue dice penalties (divide factor reduced) |
 | `chore_sprint` | Chore Sprint | Chore completions reduce goof-off by extra 10 (EASY) / 25 (HARD) |
 
-### Rare ($275-$300)
+### Rare ($2.75-$3.00)
 | ID | Name | Effect |
 |----|------|--------|
-| `straight_triplet_master` | Straight Triplet Master | Score large straight in 3 categories (large_straight, small_straight, chance) in 1 round → $150 + 75 bonus pts |
+| `straight_triplet_master` | Straight Triplet Master | Score large straight in 3 categories (large_straight, small_straight, chance) in 1 round → $1.50 + 75 bonus pts |
 | `modded_dice_mastery` | Modded Dice Mastery | +10 additive per modded die when scoring |
 
-### Epic ($400-$450)
+### Epic ($4.00-$4.50)
 | ID | Name | Effect |
 |----|------|--------|
 | `debuff_destroyer` | Debuff Destroyer | Removes a random active debuff when this powerup is sold |
 | `challenge_easer` | Challenge Easer | All challenge target scores reduced by 20% |
 
-### Legendary ($600-$650)
+### Legendary ($6.00-$6.50)
 | ID | Name | Effect |
 |----|------|--------|
 | `azure_perfection` | Azure Perfection | Blue dice always multiply (never divide) |
@@ -682,19 +682,19 @@ _add_default_power_up("grand_master", "Grand Master", "All scoring categories ge
 
 ### Risk & Reward Wave
 
-#### Uncommon ($125)
+#### Uncommon ($1.25)
 | ID | Name | Effect |
 |----|------|--------|
-| `the_piggy_bank` | The Piggy Bank | Saves $3 per roll; sell to cash out all savings with animated coin effects |
+| `the_piggy_bank` | The Piggy Bank | Saves $0.03 per roll; sell to cash out all savings with animated coin effects |
 
-#### Rare ($275-$300)
+#### Rare ($2.75-$3.00)
 | ID | Name | Effect |
 |----|------|--------|
 | `random_card_level` | Random Card Level | 20% chance each turn to level up a random scorecard category |
 | `the_replicator` | The Replicator | After 1 turn, duplicates a random PowerUp you own (with dramatic VFX) |
 | `daring_dice` | Daring Dice | Remove 2 dice but gain permanent +50 score bonus per category |
 
-#### Epic ($450)
+#### Epic ($4.50)
 | ID | Name | Effect |
 |----|------|--------|
 | `yahtzeed_dice` | Yahtzeed Dice | Gain +1 die every time you roll a Yahtzee (max 16 dice) |
@@ -703,27 +703,27 @@ _add_default_power_up("grand_master", "Grand Master", "All scoring categories ge
 
 Streak/momentum powerups that reward consistency, risk-taking, and synergy.
 
-#### Common ($50)
+#### Common ($0.50)
 | ID | Name | Effect |
 |----|------|--------|
 | `melting_dice` | Melting Dice | Starts at +80 additive bonus; decays by 8 each time you score (min 0). Front-loaded value that rewards early purchases. |
 
-#### Uncommon ($125)
+#### Uncommon ($1.25)
 | ID | Name | Effect |
 |----|------|--------|
 | `hot_streak` | Hot Streak | +3 additive per consecutive turn scoring 15+. Resets to 0 on any turn scoring below 15. Rewards consistency. |
 
-#### Rare ($250)
+#### Rare ($2.50)
 | ID | Name | Effect |
 |----|------|--------|
 | `one_roll_wonder` | One Roll Wonder | +40 additive bonus when you score on your first roll (0 rerolls used). Rewards bold play. |
 
-#### Epic ($400)
+#### Epic ($4.00)
 | ID | Name | Effect |
 |----|------|--------|
 | `power_surge` | Power Surge | +0.15× multiplier per owned PowerUp when scoring. Scales with your collection size. |
 
-#### Legendary ($600)
+#### Legendary ($6.00)
 | ID | Name | Effect |
 |----|------|--------|
 | `snake_eyes` | Snake Eyes | Each die showing 1 grants +0.2× multiplier. All dice showing 1 = flat 3.0× multiplier. High risk, massive reward. |

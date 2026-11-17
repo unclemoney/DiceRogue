@@ -72,7 +72,7 @@ const HIGH_ROLLER_CONFLICT_POWER_UP_NAMES := {
 
 var item_id: String
 var item_type: String
-var price: int
+var price: float
 var item_data: Resource  # Store the data resource for tooltip access
 var color_type: DiceColor.Type = DiceColor.Type.NONE  # Track color type for colored dice
 var _base_title_text: String = ""
@@ -308,14 +308,14 @@ func _update_button_state(_new_amount := 0, _change := 0) -> void:
 		#print("[ShopItem] Buy button state updated - disabled:", buy_button.disabled)
 
 
-## _apply_price_multiplier(base_price, type_str) -> int
+## _apply_price_multiplier(base_price, type_str) -> float
 ##
 ## Applies the channel difficulty shop price multiplier to the base price.
 ## Uses different multipliers for colored dice vs other shop items.
 ## @param base_price: The original item price
 ## @param type_str: The type of item ("colored_dice", "power_up", "consumable", "mod")
-## @return int: The modified price (rounded to nearest integer)
-func _apply_price_multiplier(base_price: int, type_str: String) -> int:
+## @return float: The modified price rounded to cents
+func _apply_price_multiplier(base_price: float, type_str: String) -> float:
 	var channel_manager = _find_channel_manager()
 	if not channel_manager:
 		return base_price
@@ -330,23 +330,23 @@ func _apply_price_multiplier(base_price: int, type_str: String) -> int:
 		if channel_manager.has_method("get_shop_price_multiplier"):
 			multiplier = channel_manager.get_shop_price_multiplier()
 	
-	return int(round(base_price * multiplier))
+	return snappedf(base_price * multiplier, 0.01)
 
 
-## _apply_consumable_discounts(current_price, type_str) -> int
+## _apply_consumable_discounts(current_price, type_str) -> float
 ##
 ## Applies active consumable-based discounts (Half Price for power_ups, Loss Leader for consumables).
 ## Called during setup() and refresh_price().
-func _apply_consumable_discounts(current_price: int, type_str: String) -> int:
+func _apply_consumable_discounts(current_price: float, type_str: String) -> float:
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	if not game_controller:
 		return current_price
 	
 	if type_str == "power_up" and game_controller.half_price_stacks > 0:
 		var multiplier = game_controller.get_half_price_multiplier()
-		current_price = int(round(current_price * multiplier))
-		if current_price < 1:
-			current_price = 1
+		current_price = snappedf(current_price * multiplier, 0.01)
+		if current_price < 0.01:
+			current_price = 0.01
 	elif type_str == "consumable" and game_controller.loss_leader_stacks > 0:
 		current_price = 0
 	
@@ -357,12 +357,12 @@ func _apply_consumable_discounts(current_price: int, type_str: String) -> int:
 const MOM_APPROVED_DISCOUNT: float = 0.10
 
 
-## _apply_mom_approved_discount(current_price, type_str) -> int
+## _apply_mom_approved_discount(current_price, type_str) -> float
 ##
 ## Compliance-path perk: when the player has low Rep and Mom is happy,
 ## G-rated (Mom-Approved) POGs are discounted at the kiosk.
 ## Called during setup() and refresh_price().
-func _apply_mom_approved_discount(current_price: int, type_str: String) -> int:
+func _apply_mom_approved_discount(current_price: float, type_str: String) -> float:
 	if type_str != "power_up" or not (item_data is PowerUpData):
 		return current_price
 	if PowerUpData.rating_rank(item_data.rating) != 0:
@@ -376,7 +376,7 @@ func _apply_mom_approved_discount(current_price: int, type_str: String) -> int:
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	var chores_manager = game_controller.get("chores_manager") if game_controller else null
 	if chores_manager and int(chores_manager.get("mom_mood")) <= 3:
-		return maxi(1, int(round(current_price * (1.0 - MOM_APPROVED_DISCOUNT))))
+		return maxf(0.01, snappedf(current_price * (1.0 - MOM_APPROVED_DISCOUNT), 0.01))
 	return current_price
 
 
@@ -1010,7 +1010,7 @@ func _apply_rarity_badge_palette(rarity_key: String) -> void:
 				fx_material.set_shader_parameter("sheen_speed", 0.8)
 
 
-func _update_price_badge_from_price(current_price: int) -> void:
+func _update_price_badge_from_price(current_price: float) -> void:
 	if current_price == 0:
 		_set_price_badge_text("FREE", "free")
 	else:

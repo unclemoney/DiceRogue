@@ -82,7 +82,7 @@ func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 	var green_money = color_effects.get("green_money", 0)
 	var green_count = color_effects.get("green_count", 0)
 	
-	print("[GreenEnvyConsumable] Found %d green dice worth $%d" % [green_count, green_money])
+	print("[GreenEnvyConsumable] Found %d green dice worth $%.2f" % [green_count, green_money])
 	
 	if green_count > 0 and green_money > 0:
 		# Apply 10x multiplier to green dice money (9x additional since base is already counted)
@@ -91,7 +91,7 @@ func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 		var player_economy = get_node("/root/PlayerEconomy")
 		if player_economy:
 			player_economy.add_money(bonus_money)
-			print("[GreenEnvyConsumable] Applied 10x multiplier: +$%d bonus (total green effect: $%d)" % [bonus_money, green_money * 10])
+			print("[GreenEnvyConsumable] Applied 10x multiplier: +$%.2f bonus (total green effect: $%.2f)" % [bonus_money, green_money * 10])
 		else:
 			push_error("[GreenEnvyConsumable] PlayerEconomy autoload not found")
 	else:

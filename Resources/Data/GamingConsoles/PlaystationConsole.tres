@@ -13,4 +13,4 @@ icon = ExtResource("3_vip")
 vip_card_art = ExtResource("3_vip")
 vip_card_shader_key = "j_mart"
 scene = ExtResource("2_scene")
-price = 300
+price = 3.0

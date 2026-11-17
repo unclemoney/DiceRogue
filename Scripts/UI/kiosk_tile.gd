@@ -203,7 +203,7 @@ func _apply_data() -> void:
 		sticker_badge.set_rarity(data.rarity)
 		sticker_badge.rotation = 0.0
 	if sell_button:
-		sell_button.text = "SELL\n$%d" % int(data.price / 2.0)
+		sell_button.text = "SELL\n$%.2f" % (data.price / 2.0)
 	artwork.texture = data.icon
 	set_description_text(data.description)
 	_apply_foilsmith_data()

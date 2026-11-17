@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ModData" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="ModData" load_steps=4 format=3 uid="uid://bid6xsx4goqas"]
 
-[ext_resource type="Texture2D" path="res://Resources/Art/Dice/dieWhite_border1.png" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://5dlc611eol58" path="res://Resources/Art/Dice/dieWhite_border1.png" id="1_icon"]
 [ext_resource type="Script" uid="uid://47gl3by4wwht" path="res://Scripts/Mods/ModData.gd" id="1_moddata"]
 [ext_resource type="PackedScene" path="res://Scenes/Mods/OnlyOnes.tscn" id="2_scene"]
 
@@ -11,5 +11,6 @@ display_name = "Only 1s"
 description = "Always roll 1, with a 1% chance to fill the target gap and end the round."
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
-price = 200
+price = 2.0
+sell_price = -1.0
 metadata/_custom_type_script = "uid://47gl3by4wwht"

@@ -14,7 +14,7 @@ min_rep = 0
 requires_flag = ""
 requires_chores_done = false
 sets_flag = ""
-reward_money = 0
+reward_money = 0.00
 reward_mood = 0
 reward_rep = 0
 
@@ -29,7 +29,7 @@ min_rep = 0
 requires_flag = ""
 requires_chores_done = false
 sets_flag = "dad_written_down"
-reward_money = 0
+reward_money = 0.00
 reward_mood = 0
 reward_rep = 0
 
@@ -44,7 +44,7 @@ min_rep = 0
 requires_flag = "dad_written_down"
 requires_chores_done = false
 sets_flag = ""
-reward_money = 0
+reward_money = 0.00
 reward_mood = -1
 reward_rep = 2
 
@@ -59,7 +59,7 @@ min_rep = 0
 requires_flag = "dad_written_down"
 requires_chores_done = false
 sets_flag = "dad_list_found"
-reward_money = 0
+reward_money = 0.00
 reward_mood = 0
 reward_rep = 2
 
@@ -74,7 +74,7 @@ min_rep = 0
 requires_flag = "dad_list_found"
 requires_chores_done = false
 sets_flag = ""
-reward_money = 0
+reward_money = 0.00
 reward_mood = -1
 reward_rep = 1
 

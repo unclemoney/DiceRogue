@@ -6,7 +6,7 @@ class_name HotStreakPowerUp
 ## Gains +3 additive per consecutive turn scoring above a threshold.
 ## Threshold starts at 15 and grows via Fibonacci progression after 5 turns.
 ## Resets to 0 on any turn scoring below the current threshold.
-## Uncommon rarity, $125 price.
+## Uncommon rarity, $1.25 price.
 
 # References
 var scorecard_ref: Scorecard = null

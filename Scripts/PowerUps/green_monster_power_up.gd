@@ -5,7 +5,7 @@ class_name GreenMonsterPU
 ##
 ## For every green dice scored in the game, adds a +0.05 multiplier to green money.
 ## Example: 5 green dice scored = 1.25x multiplier
-## Green dice value of 4 would normally give +$4, with this PowerUp gives +$5 (rounded)
+## Green dice value of 4 would normally give +$0.04, with this PowerUp gives +$0.05 (rounded)
 
 # Reference to scorecard to listen for scoring events
 var scorecard_ref: Node = null
@@ -133,15 +133,15 @@ func _count_green_dice_from_array(dice_array: Array) -> int:
 
 	return green_count
 
-func _calculate_green_money_from_array(dice_array: Array) -> int:
-	var green_money = 0
+func _calculate_green_money_from_array(dice_array: Array) -> float:
+	var green_money = 0.0
 	const DiceColorClass = preload("res://Scripts/Core/dice_color.gd")
 
 	for dice in dice_array:
 		if dice and dice.has_method("get_color") and dice.has_method("get_value"):
 			var dice_color = dice.get_color()
 			if dice_color == DiceColorClass.Type.GREEN:
-				green_money += dice.value
+				green_money += dice.value / 100.0
 
 	return green_money
 

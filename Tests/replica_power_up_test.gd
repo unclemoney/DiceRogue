@@ -38,7 +38,7 @@ func _test_money_well_spent_replica_stack() -> void:
 	controller._configure_power_up_runtime_identity(original, "money_well_spent")
 	controller._configure_power_up_runtime_identity(replica, "money_well_spent_replica_test")
 	var previous_money_spent = Statistics.total_money_spent
-	Statistics.total_money_spent = 100
+	Statistics.total_money_spent = 1.0
 	original.apply(null)
 	replica.apply(null)
 	var additive_sources = ScoreModifierManager.get_active_additive_sources()

@@ -8,11 +8,11 @@
 script = ExtResource("1_powerup_data")
 id = "bonus_money"
 display_name = "Combo #1"
-description = "+$50 for each bonus achieved (Upper Section Bonus or Yahtzee Bonus)"
+description = "+$0.50 for each bonus achieved (Upper Section Bonus or Yahtzee Bonus)"
 icon = ExtResource("1_2kg4w")
 foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/bonus_money.json"
 scene = ExtResource("2_bonus_money_scene")
-price = 50
+price = 0.5
 rarity = "uncommon"
 rating = "G"
 metadata/_custom_type_script = "uid://b4upm4dbvhukm"

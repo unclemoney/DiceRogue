@@ -5,8 +5,8 @@ class_name GreedIsntGoodChallenge
 ##
 ## A difficulty 4 challenge that applies the too_greedy debuff.
 ## Players must reach 450 points while their money penalizes their score.
-## The more money you have (above $50), the harder scoring becomes.
-## Reward: $250 on completion.
+## The more money you have (above $0.50), the harder scoring becomes.
+## Reward: $2.50 on completion.
 
 var _scorecard: Scorecard = null
 var _game_controller: GameController = null

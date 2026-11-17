@@ -29,8 +29,8 @@ var _slot: int = -1
 var _save_path: String = ""
 var _had_save: bool = false
 var _backup: PackedByteArray = PackedByteArray()
-var _money_start: int = 0
-var _piggy_start: int = 0
+var _money_start: float = 0.0
+var _piggy_start: float = 0.0
 var _game_scene: Node = null
 
 
@@ -156,7 +156,7 @@ func _fabricate_mid_round_3_state() -> Dictionary:
 			"score_streak_current_turn": 0
 		},
 		"player_economy": {
-			"money": 250,
+			"money": 2.5,
 			"piggy_bank_savings": 0
 		},
 		"scorecard": {
@@ -199,11 +199,11 @@ func _test_end_round_reward_resume() -> void:
 
 	game_controller.round_manager.is_challenge_completed = true
 	game_controller._mom_checkin_history.append("checkin_neutral")
-	game_controller._challenge_reward_this_round = 100
-	var money_before_rewards: int = PlayerEconomy.money
+	game_controller._challenge_reward_this_round = 1.0
+	var money_before_rewards: float = PlayerEconomy.money
 	game_controller._show_end_of_round_stats()
 	await get_tree().process_frame
-	var rewarded_money: int = PlayerEconomy.money
+	var rewarded_money: float = PlayerEconomy.money
 	_check("round-end rewards granted before SHOP", rewarded_money > money_before_rewards)
 	_check("round-end settlement marked granted", game_controller._round_end_rewards_granted)
 	_check("round-end settlement saved immediately", FileAccess.file_exists(_save_path))
@@ -314,7 +314,7 @@ func _test_mid_round_resume() -> void:
 		else:
 			_check("rounds_data restored with 6 entries", false)
 
-	_check("money is int 250 after load", typeof(PlayerEconomy.money) == TYPE_INT and PlayerEconomy.money == 250)
+	_check("money is int 250 after load", typeof(PlayerEconomy.money) == TYPE_FLOAT and PlayerEconomy.money == 2.5)
 
 	var turn_tracker = game_controller.get("turn_tracker")
 	_check("turn tracker present", turn_tracker != null)

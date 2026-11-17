@@ -6,7 +6,7 @@ class_name AzurePerfectionPowerUp
 ## Legendary PowerUp that makes blue dice ALWAYS count as "used" in scoring.
 ## This completely eliminates the blue dice penalty (division effect).
 ## Blue dice will always multiply the score instead of dividing it.
-## Price: $600, Rarity: Legendary
+## Price: $6.00, Rarity: Legendary
 
 var dice_color_manager_ref = null
 

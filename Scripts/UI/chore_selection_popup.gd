@@ -366,7 +366,7 @@ func _create_task_card(task, is_hard: bool) -> Control:
 	# Reward amount
 	var reward = task.reward_value if task else 0
 	var reward_label = Label.new()
-	reward_label.text = "Reward: $" + NumberFormatter.format_int(reward)
+	reward_label.text = "Reward: " + NumberFormatter.format_money(reward)
 	reward_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	reward_label.add_theme_font_size_override("font_size", 13)
 	reward_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))

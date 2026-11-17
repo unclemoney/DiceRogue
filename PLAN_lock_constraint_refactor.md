@@ -173,12 +173,12 @@ Add new `LOCK_CONSTRAINT` tasks (using `additional_params`):
 
 | ID | Name | Description | Difficulty | Reward | turn_window | max_locked_dice | min_score |
 |---|---|---|---:|---|---|---|---:|
-| `soft_touch` | Soft Touch | Score 50 points over 3 turns locking no more than 1 die | EASY | $5 | 3 | 1 | 50 |
-| `steady_hand` | Steady Hand | Score 75 points over 3 turns without locking any dice | EASY | $10 | 3 | 0 | 75 |
-| `controlled_risk` | Controlled Risk | Score 100 points over 4 turns locking no more than 2 dice | EASY | $15 | 4 | 2 | 100 |
-| `iron_discipline` | Iron Discipline | Score 150 points over 5 turns locking no more than 1 die | HARD | $35 | 5 | 1 | 150 |
-| `free_agent` | Free Agent | Score 200 points over 6 turns without locking any dice | HARD | $65 | 6 | 0 | 200 |
-| `lockdown_artist` | Lockdown Artist | Score 120 points over 3 turns locking at least 2 dice per turn | HARD | $50 | 3 | -1 | 120 |
+| `soft_touch` | Soft Touch | Score 50 points over 3 turns locking no more than 1 die | EASY | $0.05 | 3 | 1 | 50 |
+| `steady_hand` | Steady Hand | Score 75 points over 3 turns without locking any dice | EASY | $0.10 | 3 | 0 | 75 |
+| `controlled_risk` | Controlled Risk | Score 100 points over 4 turns locking no more than 2 dice | EASY | $0.15 | 4 | 2 | 100 |
+| `iron_discipline` | Iron Discipline | Score 150 points over 5 turns locking no more than 1 die | HARD | $0.35 | 5 | 1 | 150 |
+| `free_agent` | Free Agent | Score 200 points over 6 turns without locking any dice | HARD | $0.65 | 6 | 0 | 200 |
+| `lockdown_artist` | Lockdown Artist | Score 120 points over 3 turns locking at least 2 dice per turn | HARD | $0.50 | 3 | -1 | 120 |
 
 *Note: `lockdown_artist` uses the creative `min_locked_dice` extension.*
 

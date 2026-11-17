@@ -4,8 +4,8 @@ class_name MoneyBagsPowerUp
 ## MoneyBagsPowerUp
 ##
 ## Uses the player's current money to calculate a score multiplier.
-## Multiplier = (current_money / 100) + 1.0
-## Example: $550 = 1.55x multiplier, Full House (25) becomes 39 points.
+## Multiplier = (current_money / 1.0) + 1.0
+## Example: $2.50 = 3.50x multiplier, Full House (25) becomes 87 points.
 ## Epic rarity, R rating.
 
 # References
@@ -56,11 +56,11 @@ func apply(target) -> void:
 func _on_about_to_score(_section: Scorecard.Section, _category: String, _dice_values: Array[int]) -> void:
 	# Calculate multiplier based on current money
 	var current_money = PlayerEconomy.get_money()
-	current_multiplier = (float(current_money) / 100.0) + 1.0
+	current_multiplier = (float(current_money) / 1.0) + 1.0
 	
 	# Register the multiplier
 	ScoreModifierManager.register_multiplier("money_bags", current_multiplier)
-	print("[MoneyBagsPowerUp] Registered multiplier: %.2fx (based on $%d)" % [current_multiplier, current_money])
+	print("[MoneyBagsPowerUp] Registered multiplier: %.2fx (based on $%.2f)" % [current_multiplier, current_money])
 
 func _on_score_assigned(_section: Scorecard.Section, _category: String, _score: int) -> void:
 	# Unregister the multiplier after scoring completes
@@ -73,7 +73,7 @@ func _on_score_assigned(_section: Scorecard.Section, _category: String, _score: 
 
 func _update_multiplier_display() -> void:
 	var current_money = PlayerEconomy.get_money()
-	current_multiplier = (float(current_money) / 100.0) + 1.0
+	current_multiplier = (float(current_money) / 1.0) + 1.0
 	
 	emit_signal("description_updated", id, get_current_description())
 	
@@ -82,10 +82,10 @@ func _update_multiplier_display() -> void:
 
 func get_current_description() -> String:
 	var current_money = PlayerEconomy.get_money()
-	var mult = (float(current_money) / 100.0) + 1.0
+	var mult = (float(current_money) / 1.0) + 1.0
 	
-	var base_desc = "Score multiplier = ($Money / 100) + 1"
-	var progress_desc = "\nCurrent: $%d → %.2fx multiplier" % [current_money, mult]
+	var base_desc = "Score multiplier = ($Money / 1) + 1"
+	var progress_desc = "\nCurrent: $%.2f → %.2fx multiplier" % [current_money, mult]
 	
 	return base_desc + progress_desc
 

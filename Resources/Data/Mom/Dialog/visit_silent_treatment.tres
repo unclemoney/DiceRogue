@@ -8,7 +8,7 @@
 script = ExtResource("3_out")
 weight = 9.0
 effect = "mood_delta"
-magnitude = 0
+magnitude = 0.0
 mood_delta = 1
 grudge_delta = 0
 permanent = false
@@ -21,7 +21,7 @@ ends_visit = true
 script = ExtResource("3_out")
 weight = 1.0
 effect = "mood_delta"
-magnitude = 0
+magnitude = 0.0
 mood_delta = -1
 grudge_delta = 0
 permanent = false

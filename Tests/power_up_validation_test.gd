@@ -117,7 +117,7 @@ func _on_power_up_selected(index: int) -> void:
 		details.append(def.description)
 		details.append("")
 		details.append("[color=cyan]Rarity:[/color] %s" % def.rarity.capitalize())
-		details.append("[color=green]Price:[/color] $%d" % def.price)
+		details.append("[color=green]Price:[/color] $%.2f" % def.price)
 		details.append("")
 		if def.scene:
 			details.append("[color=lime]Scene: ✓ Loaded[/color]")
@@ -341,7 +341,7 @@ func _test_single_power_up(def: PowerUpData) -> void:
 	
 	_log_info("ID: %s" % def.id)
 	_log_info("Description: %s" % def.description)
-	_log_info("Price: $%d" % def.price)
+	_log_info("Price: $%.2f" % def.price)
 	_log_info("Rarity: %s" % def.rarity)
 	_log_info("")
 	

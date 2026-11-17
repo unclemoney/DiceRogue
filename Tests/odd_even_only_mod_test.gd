@@ -126,7 +126,7 @@ func _run_automated_tests() -> void:
 	_fail_count = 0
 
 	# Ensure funds (some mods interact with PlayerEconomy)
-	PlayerEconomy.add_money(1000)
+	PlayerEconomy.add_money(10.0)
 
 	_check("OddOnlyMod.tres loaded", _odd_mod_data != null)
 	_check("EvenOnlyMod.tres loaded", _even_mod_data != null)

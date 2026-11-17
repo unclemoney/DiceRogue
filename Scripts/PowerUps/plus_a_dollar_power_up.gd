@@ -3,12 +3,12 @@ class_name PlusADollarPowerUp
 
 ## PlusADollarPowerUp
 ##
-## A common PowerUp that grants $1 after each dice roll.
+## A common PowerUp that grants $0.01 after each dice roll.
 ## Connects to the DiceHand's roll_complete signal.
 
 var dice_hand_ref: Node = null
-var total_earned: int = 0
-const MONEY_PER_ROLL: int = 1
+var total_earned: float = 0.0
+const MONEY_PER_ROLL: float = 0.01
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -32,12 +32,12 @@ func apply(target) -> void:
 	if not is_connected("tree_exiting", _on_tree_exiting):
 		connect("tree_exiting", _on_tree_exiting)
 	
-	print("[PlusADollarPowerUp] Applied successfully - will grant $%d per roll" % MONEY_PER_ROLL)
+	print("[PlusADollarPowerUp] Applied successfully - will grant $%.2f per roll" % MONEY_PER_ROLL)
 
 func _on_roll_complete() -> void:
 	PlayerEconomy.add_money(MONEY_PER_ROLL)
 	total_earned += MONEY_PER_ROLL
-	print("[PlusADollarPowerUp] Roll complete! Granted $%d (total earned: $%d)" % [MONEY_PER_ROLL, total_earned])
+	print("[PlusADollarPowerUp] Roll complete! Granted $%.2f (total earned: $%.2f)" % [MONEY_PER_ROLL, total_earned])
 	
 	emit_signal("description_updated", id, get_current_description())
 	
@@ -56,9 +56,9 @@ func remove(_target) -> void:
 
 func get_current_description() -> String:
 	if total_earned > 0:
-		return "Grants $%d per roll\nTotal earned: $%d" % [MONEY_PER_ROLL, total_earned]
+		return "Grants $%.2f per roll\nTotal earned: $%.2f" % [MONEY_PER_ROLL, total_earned]
 	else:
-		return "Grants $%d per roll" % MONEY_PER_ROLL
+		return "Grants $%.2f per roll" % MONEY_PER_ROLL
 
 func _update_power_up_icons() -> void:
 	if not is_inside_tree() or not get_tree():

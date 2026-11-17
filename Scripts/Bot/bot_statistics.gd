@@ -191,7 +191,7 @@ func record_upper_bonus() -> void:
 
 
 ## record_purchase(item_id, item_type, price)
-func record_purchase(item_id: String, item_type: String, price: int) -> void:
+func record_purchase(item_id: String, item_type: String, price: float) -> void:
 	_current_run.items_purchased.append({
 		"id": item_id,
 		"type": item_type,
@@ -210,19 +210,19 @@ func record_purchase(item_id: String, item_type: String, price: int) -> void:
 
 
 ## record_money_earned(amount)
-func record_money_earned(amount: int) -> void:
+func record_money_earned(amount: float) -> void:
 	_current_run.money_earned += amount
 	_current_run.total_money_earned += amount
 
 
 ## record_challenge_reward(amount)
-func record_challenge_reward(amount: int) -> void:
+func record_challenge_reward(amount: float) -> void:
 	_current_run.challenge_rewards_earned += amount
 	_current_run.total_money_earned += amount
 
 
 ## record_end_of_round_bonus(amount)
-func record_end_of_round_bonus(amount: int) -> void:
+func record_end_of_round_bonus(amount: float) -> void:
 	_current_run.end_of_round_bonuses += amount
 	_current_run.total_money_earned += amount
 
@@ -356,9 +356,9 @@ func get_aggregate() -> Dictionary:
 	var total_consumables_sold := 0
 	var total_mods_purchased := 0
 	var total_color_dice_purchased := 0
-	var total_money_earned := 0
-	var total_money_spent := 0
-	var total_challenge_rewards := 0
+	var total_money_earned := 0.0
+	var total_money_spent := 0.0
+	var total_challenge_rewards := 0.0
 	var total_end_of_round_bonuses := 0
 	var total_shop_rerolls := 0
 	var overall_highest_channel := 0

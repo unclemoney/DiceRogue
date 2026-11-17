@@ -37,7 +37,7 @@ func apply(dice_target) -> void:
 		print("[YourModName] Applied to die:", dice.name)
 		_attached_die = dice
 		target = dice_target  # Store in base class target variable
-		
+
 		# Connect to the dice signals you need
 		_attached_die.rolled.connect(_on_die_roll_completed)
 		emit_signal("mod_applied")
@@ -61,10 +61,10 @@ func _on_die_roll_completed(value: int) -> void:
 	# Implement your mod's behavior here
 	# Example: Force a specific value
 	# _attached_die.value = 3
-	
+
 	# Example: Grant money to player
 	# PlayerEconomy.add_money(10)
-	
+
 	print("[YourModName] Effect applied")
 ```
 
@@ -227,14 +227,14 @@ func remove() -> void:
 		if _attached_die.rolled.is_connected(_on_die_roll_completed):
 			_attached_die.rolled.disconnect(_on_die_roll_completed)
 		_attached_die = null
-	
+
 	# Clean up score modifiers
 	if ScoreModifierManager.has_additive("your_mod_id"):
 		ScoreModifierManager.unregister_additive("your_mod_id")
-	
+
 	# Reset any persistent state
 	roll_count = 0
-	
+
 	emit_signal("mod_removed")
 ```
 
@@ -264,7 +264,7 @@ Mods can be made purchasable in the shop by setting an appropriate `price` in th
 
 ## Example: ThreeButThreeMod
 
-Here's a complete example of a mod that forces dice to always roll 3 and grants $3 per roll:
+Here's a complete example of a mod that forces dice to always roll 3 and grants $0.03 per roll:
 
 **Script** (`Scripts/Mods/three_but_three_mod.gd`):
 ```gdscript
@@ -297,7 +297,7 @@ func remove() -> void:
 
 func _on_die_roll_completed(value: int) -> void:
 	_attached_die.value = 3
-	print("[ThreeButThreeMod] Forced roll to 3 and granting $3")
+	print("[ThreeButThreeMod] Forced roll to 3 and granting $0.03")
 	PlayerEconomy.add_money(3)
 ```
 
@@ -307,7 +307,7 @@ func _on_die_roll_completed(value: int) -> void:
 script = ExtResource("1_moddata")
 id = "three_but_three"
 display_name = "Three But Three"
-description = "Always Roll 3, Earn $3 Per Roll"
+description = "Always Roll 3, Earn $0.03 Per Roll"
 icon = ExtResource("1_border3")  # dieWhite_border3.png
 scene = ExtResource("2_scene")
 price = 150
@@ -353,7 +353,7 @@ All Mods in DiceRogue are locked by default and must be unlocked through gamepla
 In `_create_default_unlockable_items()`, add your Mod using `_add_default_mod()`:
 
 ```gdscript
-_add_default_mod("your_mod_id", "Display Name", "Description text", 
+_add_default_mod("your_mod_id", "Display Name", "Description text",
     UnlockConditionClass.ConditionType.CONDITION_TYPE, target_value)
 ```
 
@@ -372,15 +372,15 @@ _add_default_mod("your_mod_id", "Display Name", "Description text",
 
 ```gdscript
 # Basic mod - unlock with score achievement
-_add_default_mod("even_only", "Even Only", "Forces die to only roll even numbers", 
+_add_default_mod("even_only", "Even Only", "Forces die to only roll even numbers",
     UnlockConditionClass.ConditionType.SCORE_POINTS, 200)
 
 # Advanced mod - unlock with cumulative yahtzees
-_add_default_mod("five_by_one", "Five by One", "All dice show 1 or 5", 
+_add_default_mod("five_by_one", "Five by One", "All dice show 1 or 5",
     UnlockConditionClass.ConditionType.CUMULATIVE_YAHTZEES, 12)
 
 # Channel-based mod - unlock by completing channel 5
-_add_default_mod("channel_veteran", "Channel Veteran", "Start with +$25 per channel completed", 
+_add_default_mod("channel_veteran", "Channel Veteran", "Start with +$0.25 per channel completed",
     UnlockConditionClass.ConditionType.COMPLETE_CHANNEL, 5)
 ```
 

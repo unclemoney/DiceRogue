@@ -31,7 +31,7 @@ func _run_green_dice_money_test() -> void:
 	results.append("\n1. PlayerEconomy Availability:")
 	if PlayerEconomy:
 		var initial_money = PlayerEconomy.money
-		results.append("✓ PlayerEconomy available - Initial money: $%d" % initial_money)
+		results.append("✓ PlayerEconomy available - Initial money: $%.2f" % initial_money)
 	else:
 		results.append("✗ PlayerEconomy not available")
 		test_passed = false
@@ -56,31 +56,31 @@ func _run_green_dice_money_test() -> void:
 		results.append("Mock dice values: [1, 2, 3, 4, 5] (all Green)")
 		results.append("Color effects returned: %s" % str(color_effects))
 		
-		var base_green_money = 1 + 2 + 3 + 4 + 5  # Sum of all dice values
+		var base_green_money = (1 + 2 + 3 + 4 + 5) / 100.0  # Sum of all dice values
 		var expected_green_money = base_green_money * 2  # Same color bonus (5 green dice doubles the effect)
 		var actual_green_money = color_effects.get("green_money", 0)
 		
-		if actual_green_money == expected_green_money:
-			results.append("✓ Green money calculation correct: $%d (base: $%d, doubled by same color bonus)" % [actual_green_money, base_green_money])
+		if is_equal_approx(actual_green_money, expected_green_money):
+			results.append("✓ Green money calculation correct: $%.2f (base: $%.2f, doubled by same color bonus)" % [actual_green_money, base_green_money])
 		else:
-			results.append("✗ Green money calculation incorrect: Expected $%d, got $%d" % [expected_green_money, actual_green_money])
+			results.append("✗ Green money calculation incorrect: Expected $%.2f, got $%.2f" % [expected_green_money, actual_green_money])
 			test_passed = false
 	
 	# Test 4: Test PlayerEconomy money addition
 	results.append("\n4. PlayerEconomy Money Addition Test:")
 	if PlayerEconomy:
 		var money_before = PlayerEconomy.money
-		var test_amount = 10
+		var test_amount = 0.1
 		
 		PlayerEconomy.add_money(test_amount)
 		
 		var money_after = PlayerEconomy.money
 		var actual_increase = money_after - money_before
 		
-		if actual_increase == test_amount:
-			results.append("✓ PlayerEconomy.add_money() works: $%d -> $%d (+$%d)" % [money_before, money_after, actual_increase])
+		if is_equal_approx(actual_increase, test_amount):
+			results.append("✓ PlayerEconomy.add_money() works: $%.2f -> $%.2f (+$%.2f)" % [money_before, money_after, actual_increase])
 		else:
-			results.append("✗ PlayerEconomy.add_money() failed: Expected +$%d, actual +$%d" % [test_amount, actual_increase])
+			results.append("✗ PlayerEconomy.add_money() failed: Expected +$%.2f, actual +$%.2f" % [test_amount, actual_increase])
 			test_passed = false
 	
 	# Test 5: Full integration test with realistic dice values (no same color bonus)
@@ -95,28 +95,28 @@ func _run_green_dice_money_test() -> void:
 		var green_money = color_effects.get("green_money", 0)
 		
 		results.append("Test scenario: 3 Green dice with values [2, 2, 2] (no same color bonus)")
-		results.append("Calculated green_money: $%d" % green_money)
+		results.append("Calculated green_money: $%.2f" % green_money)
 		
 		# Expected: 2+2+2 = 6 (no doubling since less than 5 dice)
-		var expected_green_money_simple = 6
-		if green_money == expected_green_money_simple:
-			results.append("✓ Simple green money calculation correct: $%d" % green_money)
+		var expected_green_money_simple = 0.06
+		if is_equal_approx(green_money, expected_green_money_simple):
+			results.append("✓ Simple green money calculation correct: $%.2f" % green_money)
 		else:
-			results.append("✗ Simple green money calculation incorrect: Expected $%d, got $%d" % [expected_green_money_simple, green_money])
+			results.append("✗ Simple green money calculation incorrect: Expected $%.2f, got $%.2f" % [expected_green_money_simple, green_money])
 			test_passed = false
 		
 		# Apply the money using the same logic as scorecard
 		if green_money > 0:
 			PlayerEconomy.add_money(green_money)
-			results.append("Applied green money bonus: +$%d" % green_money)
+			results.append("Applied green money bonus: +$%.2f" % green_money)
 		
 		var money_after_integration = PlayerEconomy.money
 		var actual_integration_increase = money_after_integration - money_before_integration
 		
-		if actual_integration_increase == green_money:
-			results.append("✓ Full integration test passed: Money increased by $%d" % actual_integration_increase)
+		if is_equal_approx(actual_integration_increase, green_money):
+			results.append("✓ Full integration test passed: Money increased by $%.2f" % actual_integration_increase)
 		else:
-			results.append("✗ Full integration test failed: Expected +$%d, actual +$%d" % [green_money, actual_integration_increase])
+			results.append("✗ Full integration test failed: Expected +$%.2f, actual +$%.2f" % [green_money, actual_integration_increase])
 			test_passed = false
 	
 	# Cleanup mock dice
@@ -141,23 +141,11 @@ func _run_green_dice_money_test() -> void:
 ## Create mock dice with green colors and specified values
 func _create_mock_green_dice(values: Array) -> Array:
 	var mock_dice = []
-	
-	# Load the actual Dice scene to create real dice instances
-	var dice_scene = preload("res://Scenes/Dice/Dice.tscn")
-	
 	for value in values:
-		# Create a real Dice instance
-		var mock_die = dice_scene.instantiate()
-		
-		# Set up the dice properties
+		var mock_die := Dice.new()
 		mock_die.value = value
-		mock_die.color = preload("res://Scripts/Core/dice_color.gd").Type.GREEN
-		
-		# Add to tree temporarily so methods work
-		add_child(mock_die)
-		
+		mock_die.color = DiceColor.Type.GREEN
 		mock_dice.append(mock_die)
-	
 	return mock_dice
 
 func _show_result(text: String) -> void:

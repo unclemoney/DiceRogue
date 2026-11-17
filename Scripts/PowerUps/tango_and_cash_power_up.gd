@@ -3,16 +3,16 @@ class_name TangoAndCashPowerUp
 
 ## TangoAndCashPowerUp
 ##
-## Grants $10 for every odd die scored during each round.
+## Grants $0.10 for every odd die scored during each round.
 ## Money is awarded at the end of each round.
 ## Uncommon rarity, PG-13 rating.
 
 # Reference to round manager
 var round_manager_ref: Node = null
-var total_money_granted: int = 0
+var total_money_granted: float = 0.0
 var _last_consumed_round_number: int = 0
 
-const MONEY_PER_ODD_DIE: int = 10
+const MONEY_PER_ODD_DIE: float = 0.1
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -49,31 +49,31 @@ func apply(target) -> void:
 	print("[TangoAndCashPowerUp] Ready to contribute to the round-end PowerUp bonus payout")
 
 func get_current_description() -> String:
-	var base_desc = "+$%d for every odd die scored (at round end)" % MONEY_PER_ODD_DIE
+	var base_desc = "+$%.2f for every odd die scored (at round end)" % MONEY_PER_ODD_DIE
 	base_desc += "\nOdd dice this round: %d" % Statistics.odd_dice_scored_this_round
 	
 	if total_money_granted > 0:
-		var progress_desc = "\nTotal earned: $%d" % total_money_granted
+		var progress_desc = "\nTotal earned: $%.2f" % total_money_granted
 		return base_desc + progress_desc
 	
 	return base_desc
 
 
-func get_pending_round_end_bonus() -> int:
+func get_pending_round_end_bonus() -> float:
 	var round_number = _get_current_round_number()
 	if round_number < 1 or round_number == _last_consumed_round_number:
 		return 0
 	return Statistics.odd_dice_scored_this_round * MONEY_PER_ODD_DIE
 
 
-func consume_pending_round_end_bonus() -> int:
+func consume_pending_round_end_bonus() -> float:
 	var money_to_grant = get_pending_round_end_bonus()
 	if money_to_grant <= 0:
 		return 0
 
 	_last_consumed_round_number = _get_current_round_number()
 	total_money_granted += money_to_grant
-	print("[TangoAndCashPowerUp] Consumed $%d for %d odd dice scored this round" % [money_to_grant, Statistics.odd_dice_scored_this_round])
+	print("[TangoAndCashPowerUp] Consumed $%.2f for %d odd dice scored this round" % [money_to_grant, Statistics.odd_dice_scored_this_round])
 	emit_signal("description_updated", id, get_current_description())
 	if is_inside_tree():
 		_update_power_up_icons()

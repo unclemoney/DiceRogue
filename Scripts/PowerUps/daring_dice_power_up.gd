@@ -7,7 +7,7 @@ class_name DaringDicePowerUp
 ## but grants a permanent +50 score bonus (additive) via ScoreModifierManager.
 ## Always removes exactly 2 dice regardless of current count.
 ## Shows "-2 DICE" in red text on activation (no warning dialog).
-## Price: $300, Rarity: Rare, Rating: PG-13
+## Price: $3.00, Rarity: Rare, Rating: PG-13
 ##
 ## Risk/reward: Fewer dice means harder combos, but +50 per score is huge.
 

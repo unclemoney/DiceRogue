@@ -175,7 +175,7 @@ Each colored die shows:
 - Triggered when 5 or more dice of the same color are scored
 - Applies 2x multiplier to ALL bonuses of that color type
 - Examples:
-  - 5 green dice (values 2,3,4,5,6): Money = (2+3+4+5+6) × 2 = $40
+  - 5 green dice (values 2,3,4,5,6): Money = (2+3+4+5+6) × 2 = $0.40
   - 5 red dice (values 1,1,1,1,1): Additive = (1+1+1+1+1) × 2 = +10
   - 5 purple dice (values 2,2,2,2,2): Multiplier = (2×2×2×2×2) × 2 = ×64
 

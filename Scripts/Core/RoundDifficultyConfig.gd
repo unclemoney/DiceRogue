@@ -41,7 +41,7 @@ class_name RoundDifficultyConfig
 ## Optional reward money override for this round
 ## 0 = use ChallengeData.reward_money as fallback
 ## > 0 = use this value as the challenge reward for the round
-@export var reward_money_override: int = 0
+@export var reward_money_override: float = 0.0
 
 ## Multipliers for end-of-round bonus calculations
 ## Keys: "empty_category", "points_above", "chore_completion"
@@ -99,6 +99,6 @@ func get_summary() -> String:
 		summary += ", Goof-off: %d" % goof_off_threshold_override
 
 	if reward_money_override > 0:
-		summary += ", Reward: $%d" % reward_money_override
+		summary += ", Reward: $%.2f" % reward_money_override
 
 	return summary

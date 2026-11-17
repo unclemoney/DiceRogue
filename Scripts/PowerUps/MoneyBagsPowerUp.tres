@@ -8,11 +8,11 @@
 script = ExtResource("1_powerup_data")
 id = "money_bags"
 display_name = "Ca$h"
-description = "Score multiplier = ($Money / 100) + 1"
+description = "Score multiplier = ($Money / 1) + 1"
 icon = ExtResource("1_lwg50")
 foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/money_bags.json"
 scene = ExtResource("2_scene")
-price = 450
+price = 4.5
 rarity = "epic"
 rating = "R"
 metadata/_custom_type_script = "uid://b4upm4dbvhukm"

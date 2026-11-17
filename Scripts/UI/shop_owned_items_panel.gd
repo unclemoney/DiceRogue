@@ -230,7 +230,7 @@ func _build_row(row: Dictionary) -> Control:
 
 	if row.has("sell_price"):
 		var sell_button = GLASS_BUTTON_FACTORY.create_button(
-			"SELL $%d" % int(row.get("sell_price", 0)),
+			"SELL $%.2f" % float(row.get("sell_price", 0.0)),
 			Vector2(88, 36),
 			GLASS_BUTTON_FACTORY.palette_kiosk_sell(),
 			11

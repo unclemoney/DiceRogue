@@ -38,15 +38,15 @@ Chores now pay variable rewards based on actual in-game difficulty:
 
 | Tier | Reward | Description |
 |------|--------|-------------|
-| Very Easy | $5 | Trivial tasks — score upper 1-3, use item, scratch, lock 3 dice |
-| Easy | $15 | Common tasks — score upper 4-6, any upper/lower, 3-kind, chance |
-| Medium | $35 | Moderate tasks — 4-kind, full house, straights, lock 4 dice, specific full houses |
-| Hard | $65 | Difficult tasks — any yahtzee, specific 4-kind, lock all 5 dice |
-| Very Hard | $100 | Extreme tasks — specific value yahtzees (all 1s, all 2s, etc.) |
+| Very Easy | $0.05 | Trivial tasks — score upper 1-3, use item, scratch, lock 3 dice |
+| Easy | $0.15 | Common tasks — score upper 4-6, any upper/lower, 3-kind, chance |
+| Medium | $0.35 | Moderate tasks — 4-kind, full house, straights, lock 4 dice, specific full houses |
+| Hard | $0.65 | Difficult tasks — any yahtzee, specific 4-kind, lock all 5 dice |
+| Very Hard | $1.00 | Extreme tasks — specific value yahtzees (all 1s, all 2s, etc.) |
 
 ---
 
-## Very Easy Tasks ($5, Meter -5)
+## Very Easy Tasks ($0.05, Meter -5)
 
 ### Upper Section Scoring
 | ID | Name | Description |
@@ -64,7 +64,7 @@ Chores now pay variable rewards based on actual in-game difficulty:
 
 ---
 
-## Easy Tasks ($15, Meter -5 to -10)
+## Easy Tasks ($0.15, Meter -5 to -10)
 
 ### Upper Section Scoring
 | ID | Name | Description |
@@ -84,7 +84,7 @@ Chores now pay variable rewards based on actual in-game difficulty:
 
 ---
 
-## Medium Tasks ($35, Meter -5 to -30)
+## Medium Tasks ($0.35, Meter -5 to -30)
 
 ### Lower Section (Specific)
 | ID | Name | Description |
@@ -117,7 +117,7 @@ Chores now pay variable rewards based on actual in-game difficulty:
 
 ---
 
-## Hard Tasks ($65, Meter -20 to -50)
+## Hard Tasks ($0.65, Meter -20 to -50)
 
 ### Yahtzee Tasks
 | ID | Name | Description |
@@ -138,7 +138,7 @@ Chores now pay variable rewards based on actual in-game difficulty:
 
 ---
 
-## Very Hard Tasks ($100, Meter -60)
+## Very Hard Tasks ($1.00, Meter -60)
 
 ### Specific Yahtzee Tasks
 | ID | Name | Description |
@@ -162,7 +162,7 @@ Chores now pay variable rewards based on actual in-game difficulty:
 
 ## End-of-Round Rewards
 
-At the end of each round, the player receives the sum of all chore rewards completed during that round. There is no longer a flat $50 per chore — easy chores pay as little as $5, while extreme chores like a specific Yahtzee pay $100.
+At the end of each round, the player receives the sum of all chore rewards completed during that round. There is no longer a flat $0.50 per chore — easy chores pay as little as $0.05, while extreme chores like a specific Yahtzee pay $1.00.
 
 ## Expiration
 

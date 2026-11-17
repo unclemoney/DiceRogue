@@ -8,9 +8,9 @@
 script = ExtResource("1_moddata")
 id = "cursed_six"
 display_name = "Cursed Six"
-description = "Always rolls a 6, but costs $5 per roll. Sells for $0.  (One Mod per Dice)"
+description = "Always rolls a 6, but costs $0.05 per roll. Sells for $0.00.  (One Mod per Dice)"
 icon = ExtResource("1_icon")
 scene = ExtResource("2_scene")
-price = 25
+price = 0.25
 sell_price = 0
 metadata/_custom_type_script = "uid://47gl3by4wwht"

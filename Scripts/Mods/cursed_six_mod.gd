@@ -4,10 +4,10 @@ class_name CursedSixMod
 ## CursedSixMod
 ##
 ## The die always rolls a 6 (clamped to the highest face on smaller dice,
-## e.g. 4 on a d4), but the player is CHARGED $5 for every roll.
-## Sellable, but sells for $0 (see sell_price on the ModData resource).
+## e.g. 4 on a d4), but the player is CHARGED $0.05 for every roll.
+## Sellable, but sells for $0.00 (see sell_price on the ModData resource).
 
-const ROLL_COST: int = 5
+const ROLL_COST: float = 0.05
 
 var _attached_die: Dice = null
 var _debug_enabled: bool = OS.is_debug_build()
@@ -20,7 +20,7 @@ func _ready() -> void:
 ## apply(dice_target)
 ##
 ## Applies the Cursed Six mod to a dice. Forces the die to always roll a 6
-## and charges the player $5 for every roll.
+## and charges the player $0.05 for every roll.
 func apply(dice_target) -> void:
 	var dice = dice_target as Dice
 	if dice:
@@ -48,7 +48,7 @@ func remove() -> void:
 ##
 ## Callback when the attached die completes a roll. Forces the value to 6
 ## (clamped to the highest face on smaller dice, e.g. 4 on a d4, so the value
-## never exceeds the available faces) and charges the player $5. The charge
+## never exceeds the available faces) and charges the player $0.05. The charge
 ## is mandatory — it applies even when the player cannot afford it.
 func _on_die_roll_completed(_value: int) -> void:
 	# Force the die to show 6, clamped to the die's actual side count
@@ -58,7 +58,7 @@ func _on_die_roll_completed(_value: int) -> void:
 	_attached_die.value = forced_value
 	_attached_die.update_visual()
 
-	# Charge $5 per roll
+	# Charge $0.05 per roll
 	PlayerEconomy.remove_money(ROLL_COST, "mod")
 	if _debug_enabled:
-		print("[CursedSixMod] Forced roll to %d and charged $%d" % [forced_value, ROLL_COST])
+		print("[CursedSixMod] Forced roll to %d and charged $%.2f" % [forced_value, ROLL_COST])

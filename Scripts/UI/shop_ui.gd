@@ -32,10 +32,10 @@ signal shop_close_finished
 # Reroll system
 var reroll_button: Button
 var reroll_cost_label: Label
-var reroll_cost: int = 25
+var reroll_cost: float = 0.25
 var reroll_cooldown: float = 0.0
-const REROLL_BASE_COST: int = 25
-const REROLL_COST_INCREMENT: int = 5
+const REROLL_BASE_COST: float = 0.25
+const REROLL_COST_INCREMENT: float = 0.05
 const REROLL_COOLDOWN_TIME: float = 0.5
 const REROLL_SHADER_PATH := "res://Scripts/Shaders/shop_reroll_button_glass.gdshader"
 
@@ -968,7 +968,7 @@ func _on_item_purchase_requested(source_item: ShopItem, item_id: String, item_ty
 	
 	if _debug_enabled:
 		print("[ShopUI] Purchase validation passed, proceeding with purchase")
-	var purchase_price := source_item.price if source_item else 0
+	var purchase_price: float = source_item.price if source_item else 0.0
 	if purchase_price > 0 and not PlayerEconomy.can_afford(purchase_price):
 		if _debug_enabled:
 			print("[ShopUI] Purchase no longer affordable:", item_id, "cost:", purchase_price)
@@ -1263,7 +1263,7 @@ func _update_reroll_cost_display() -> void:
 				price_label.text = "FREE"
 				price_label.modulate = Color(0.92, 1.0, 0.64, 1.0)
 			else:
-				price_label.text = "$%s" % NumberFormatter.format_int(reroll_cost)
+				price_label.text = NumberFormatter.format_money(reroll_cost)
 				price_label.modulate = Color(0.56, 1.0, 0.7, 1.0)
 
 ## _animate_reroll_cost_bounce()
@@ -1317,7 +1317,7 @@ func _on_reroll_button_pressed() -> void:
 	else:
 		PlayerEconomy.remove_money(reroll_cost, "reroll_" + item_type)
 		if _debug_enabled:
-			print("[ShopUI] Rerolling %s items for $%d" % [item_type, reroll_cost])
+			print("[ShopUI] Rerolling %s items for $%.2f" % [item_type, reroll_cost])
 	
 	# Set cooldown
 	reroll_cooldown = REROLL_COOLDOWN_TIME
@@ -1459,7 +1459,7 @@ func reset_reroll_cost() -> void:
 	_update_reroll_cost_display()
 	_update_reroll_button_state()
 	if _debug_enabled:
-		print("[ShopUI] Reroll cost reset to $%d" % reroll_cost)
+		print("[ShopUI] Reroll cost reset to $%.2f" % reroll_cost)
 
 
 ## reset_shop_expansions()
@@ -1583,7 +1583,7 @@ func _animate_items_out(items: Array[ShopItem], direction: Vector2 = Vector2.LEF
 		last_tween = TweenFX.fly_out(item, direction, 80.0, 0.3, delay)
 	return last_tween
 
-func _on_money_changed(_new_amount: int, _change: int = 0) -> void:
+func _on_money_changed(_new_amount: float, _change: float = 0.0) -> void:
 	# Update all shop item buttons in all containers
 	for container in [power_up_container, consumable_container, mod_container, colored_dice_container, gaming_console_container]:
 		if container:
@@ -1890,9 +1890,9 @@ func _build_mod_ownership_rows() -> Array:
 		var mod_def = mod_manager.get_def(item_id)
 		var item = progress_manager.get_unlockable_item(item_id)
 		var display_name = mod_def.display_name if mod_def else (item.display_name if item else item_id)
-		var sell_price := 0
+		var sell_price := 0.0
 		if mod_def:
-			sell_price = mod_def.sell_price if mod_def.sell_price >= 0 else int(mod_def.price / 2.0)
+			sell_price = mod_def.sell_price if mod_def.sell_price >= 0 else floorf(mod_def.price * 50.0) / 100.0
 		rows.append({
 			"item_id": item_id,
 			"display_name": display_name,
@@ -1925,7 +1925,7 @@ func _on_inventory_mod_sell_requested(mod_id: String, source_button: Control) ->
 	else:
 		var mod_def: ModData = mod_manager.get_def(mod_id)
 		if mod_def:
-			var refund := mod_def.sell_price if mod_def.sell_price >= 0 else int(mod_def.price / 2.0)
+			var refund := mod_def.sell_price if mod_def.sell_price >= 0 else floorf(mod_def.price * 50.0) / 100.0
 			PlayerEconomy.add_money(refund)
 		game_controller.remove_mod_no_refund(mod_id)
 		game_controller.pending_mods.erase(mod_id)
@@ -2146,7 +2146,7 @@ func _create_reroll_center_control(item_type: String) -> Control:
 	
 	var price_label = Label.new()
 	price_label.name = "RerollPrice"
-	price_label.text = "$%s" % NumberFormatter.format_int(reroll_cost)
+	price_label.text = NumberFormatter.format_money(reroll_cost)
 	price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	price_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	price_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL

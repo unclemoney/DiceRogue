@@ -21,7 +21,7 @@ const WHITE_PIXEL: Texture2D = preload("res://Resources/Art/UI/white_pixel.png")
 
 class MockMomResult extends RefCounted:
 	var removed_power_ups: Array = []
-	var fine_amount: int = 0
+	var fine_amount: float = 0.0
 
 
 class MockPowerUpDef extends RefCounted:

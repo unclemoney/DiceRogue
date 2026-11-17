@@ -6,7 +6,7 @@ class_name RollEfficiencyPowerUp
 ## Adds +N additive bonus to all scores, where N = number of rolls used this turn.
 ## Registers additive before scoring based on (MAX_ROLLS - rolls_left + 1).
 ## If you used 1 roll, you get +1. If you used all 3, you get +3.
-## Common rarity, $25 price.
+## Common rarity, $0.25 price.
 
 # References
 var scorecard_ref: Scorecard = null

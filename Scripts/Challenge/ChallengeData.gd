@@ -8,6 +8,6 @@ class_name ChallengeData
 @export var scene: PackedScene
 @export var debuff_ids: Array[String] = []
 @export var target_score: int = 0
-@export var reward_money: int = 0
+@export var reward_money: float = 0.0
 @export var dice_type: String = "d6"
 @export_range(0, 5) var difficulty: int = 0  ## Challenge difficulty tier (0=easiest, 5=hardest)

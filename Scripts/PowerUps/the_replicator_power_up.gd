@@ -7,7 +7,7 @@ class_name TheReplicatorPowerUp
 ## a random PowerUp from the player's inventory. The replica becomes
 ## a fully independent PowerUp managed by GameController.
 ## Excludes itself from the duplication pool.
-## Price: $300, Rarity: Rare, Rating: PG-13
+## Price: $3.00, Rarity: Rare, Rating: PG-13
 ##
 ## Flow:
 ## 1. Purchased and applied

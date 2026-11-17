@@ -53,7 +53,7 @@ var _debug_enabled: bool = OS.is_debug_build()
 var half_price_stacks: int = 0  # Each stack halves PowerUp prices multiplicatively
 var loss_leader_stacks: int = 0  # Each stack makes one consumable purchase free
 var docked_allowance_active: bool = false  # Docked Allowance grounding: withhold end-of-round award
-var insurance_policy_active: bool = false  # If true, next 0-score grants $75
+var insurance_policy_active: bool = false  # If true, next 0-score grants $0.75
 var clearance_rack_active: bool = false  # If true, shop rerolls are free this visit
 
 const DEBUFF_MANAGER_SCRIPT := preload("res://Scripts/Managers/DebuffManager.gd")
@@ -238,7 +238,7 @@ var _is_processing_round_end: bool = false
 
 # CanvasLayer wrapper for chore popup (renders above RoundTransitionOverlay)
 var _chore_selection_popup_layer: CanvasLayer = null
-var _challenge_reward_this_round: int = 0  # Track challenge reward for end-of-round stats
+var _challenge_reward_this_round: float = 0.0  # Track challenge reward for end-of-round stats
 var _challenge_reward_granted: bool = false  # Prevent double-granting challenge reward
 var _chores_reward_granted: bool = false  # Prevent double-granting chores reward
 var _game_ended: bool = false  # Track if game has ended (won or lost) - blocks shop access
@@ -644,7 +644,7 @@ func _on_channel_selected(channel: int) -> void:
 ## _apply_channel_starting_bonuses(channel: int) -> void
 ##
 ## Grants starting bonuses based on the selected channel.
-## Resets money to baseline $100, then adds bonus money.
+## Resets money to baseline $1.00, then adds bonus money.
 ## Grants random unlocked powerups and consumables.
 ## Randomly boosts one scorecard category per level boost.
 ## @param channel: The channel number the player selected
@@ -667,7 +667,7 @@ func _apply_channel_starting_bonuses(channel: int) -> void:
 		if bonus_data["bonus_money"] > 0:
 			PlayerEconomy.add_money(bonus_data["bonus_money"])
 			if _debug_enabled:
-				print("[GameController] Bonus money granted: +$%d (total: $%d)" % [bonus_data["bonus_money"], PlayerEconomy.get_money()])
+				print("[GameController] Bonus money granted: +$%.2f (total: $%.2f)" % [bonus_data["bonus_money"], PlayerEconomy.get_money()])
 	
 	# Grant random unlocked powerups
 	if bonus_data["bonus_powerup_count"] > 0:
@@ -714,10 +714,10 @@ func _grant_random_bonus_items(count: int, item_type: int) -> void:
 		if _debug_enabled:
 			print("[GameController] No unlocked items of type %d available for bonus. Converting to money." % item_type)
 		if PlayerEconomy:
-			var fallback_money = count * 100
+			var fallback_money = count * 1.0
 			PlayerEconomy.add_money(fallback_money)
 			if _debug_enabled:
-				print("[GameController] Fallback bonus money granted: +$%d" % fallback_money)
+				print("[GameController] Fallback bonus money granted: +$%.2f" % fallback_money)
 		return
 	
 	unlocked_items.shuffle()
@@ -2704,9 +2704,9 @@ func _handle_post_scoring_effects(_section: int, _category: String, _score: int,
 	if insurance_policy_active:
 		insurance_policy_active = false
 		if _score == 0:
-			PlayerEconomy.add_money(75)
+			PlayerEconomy.add_money(0.75)
 			if _debug_enabled:
-				print("[GameController] Insurance Policy triggered - granted $75 for 0-score")
+				print("[GameController] Insurance Policy triggered - granted $0.75 for 0-score")
 		else:
 			if _debug_enabled:
 				print("[GameController] Insurance Policy consumed - score was not 0")
@@ -3284,7 +3284,7 @@ func is_power_up_active(power_up_id: String) -> bool:
 ## Returns the total chore-progress bonus contributed by all owned PowerUps.
 ## Each PowerUp adds its rating bonus: G = 0, PG = 0, PG-13 = 1, R = 2, NC-17 = 3.
 func get_powerup_rating_progress_bonus() -> int:
-	var total_bonus: int = 0
+	var total_bonus: float = 0.0
 	for power_up_id in active_power_ups.keys():
 		var def = pu_manager.get_def(power_up_id)
 		if def != null:
@@ -3543,12 +3543,12 @@ func is_sega_saturn_score_armed() -> bool:
 	return _sega_saturn_score_armed
 
 
-func award_score_time_power_up_money(amount: int, source_name: String) -> int:
+func award_score_time_power_up_money(amount: float, source_name: String) -> float:
 	var resolved_amount := amount
 	if _sega_saturn_score_active and amount > 0:
 		resolved_amount = amount * 2
 		if _debug_enabled:
-			print("[GameController] Sega Saturn doubled %s money payout from $%d to $%d" % [source_name, amount, resolved_amount])
+			print("[GameController] Sega Saturn doubled %s money payout from $%.2f to $%.2f" % [source_name, amount, resolved_amount])
 	PlayerEconomy.add_money(resolved_amount)
 	return resolved_amount
 
@@ -4564,15 +4564,15 @@ func _show_end_of_round_stats() -> void:
 	# rewards, empty-category bonus, points-above bonus). Scaled per component
 	# so the stats panel rows always sum to the granted total. Buff and
 	# PowerUp bonuses are build payouts and stay unscaled.
-	var challenge_reward: int = _challenge_reward_this_round
+	var challenge_reward: float = _challenge_reward_this_round
 	if channel_manager and channel_manager.get_run_reward_multiplier() != 1.0:
 		var reward_mult: float = channel_manager.get_run_reward_multiplier()
-		challenge_reward = int(round(challenge_reward * reward_mult))
-		chore_reward_total = int(round(chore_reward_total * reward_mult))
-		empty_categories_bonus = int(round(empty_categories_bonus * reward_mult))
-		score_above_bonus = int(round(score_above_bonus * reward_mult))
+		challenge_reward = snappedf(challenge_reward * reward_mult, 0.01)
+		chore_reward_total = snappedf(chore_reward_total * reward_mult, 0.01)
+		empty_categories_bonus = snappedf(empty_categories_bonus * reward_mult, 0.01)
+		score_above_bonus = snappedf(score_above_bonus * reward_mult, 0.01)
 		if _debug_enabled:
-			print("[GameController] Run difficulty reward scaling (%.2fx): challenge $%d, chores $%d, empty $%d, above $%d" % [
+			print("[GameController] Run difficulty reward scaling (%.2fx): challenge $%.2f, chores $%.2f, empty $%.2f, above $%.2f" % [
 				reward_mult, challenge_reward, chore_reward_total, empty_categories_bonus, score_above_bonus
 			])
 
@@ -4619,23 +4619,23 @@ func _settle_round_end_rewards(stats_data: Dictionary) -> void:
 		if _debug_enabled:
 			print("[GameController] Docked Allowance active - withholding end of round award")
 	else:
-		var buff_bonus: int = int(stats_data.get("buff_bonus", 0))
-		var power_up_bonus: int = int(stats_data.get("power_up_bonus", 0))
+		var buff_bonus: float = float(stats_data.get("buff_bonus", 0.0))
+		var power_up_bonus: float = float(stats_data.get("power_up_bonus", 0.0))
 		var consumed_buff_bonus = _consume_round_end_buff_bonuses()
 		if consumed_buff_bonus != buff_bonus:
-			push_warning("[GameController] Round-end buff bonus preview mismatch. Preview=$%d Consumed=$%d" % [buff_bonus, consumed_buff_bonus])
+			push_warning("[GameController] Round-end buff bonus preview mismatch. Preview=$%.2f Consumed=$%.2f" % [buff_bonus, consumed_buff_bonus])
 		var consumed_power_up_bonus = _consume_round_end_power_up_bonuses()
 		if consumed_power_up_bonus != power_up_bonus:
-			push_warning("[GameController] Round-end PowerUp bonus preview mismatch. Preview=$%d Consumed=$%d" % [power_up_bonus, consumed_power_up_bonus])
+			push_warning("[GameController] Round-end PowerUp bonus preview mismatch. Preview=$%.2f Consumed=$%.2f" % [power_up_bonus, consumed_power_up_bonus])
 
-		var total_bonus: int = 0
+		var total_bonus: float = 0.0
 		for key in ["challenge_reward", "chore_reward_total", "empty_categories_bonus", "score_above_bonus", "buff_bonus", "power_up_bonus"]:
-			total_bonus += int(stats_data.get(key, 0))
+			total_bonus += float(stats_data.get(key, 0.0))
 		if total_bonus > 0:
 			PlayerEconomy.add_money(total_bonus)
 			Statistics.total_money_earned += total_bonus
 			if _debug_enabled:
-				print("[GameController] Awarded end of round bonuses: $%d" % total_bonus)
+				print("[GameController] Awarded end of round bonuses: $%.2f" % total_bonus)
 
 	if round_manager:
 		round_manager.complete_round()
@@ -4659,39 +4659,39 @@ func _on_stats_panel_continue() -> void:
 	_process_round_end_queue()
 
 
-func _get_round_end_power_up_bonus_preview() -> int:
-	var total_bonus := 0
+func _get_round_end_power_up_bonus_preview() -> float:
+	var total_bonus := 0.0
 	for power_up_id in active_power_ups.keys():
 		var powerup_node = active_power_ups[power_up_id]
 		if is_instance_valid(powerup_node) and powerup_node.has_method("get_pending_round_end_bonus"):
-			total_bonus += int(powerup_node.call("get_pending_round_end_bonus"))
+			total_bonus += float(powerup_node.call("get_pending_round_end_bonus"))
 	return total_bonus
 
 
-func _get_round_end_buff_bonus_preview() -> int:
-	var total_bonus := 0
+func _get_round_end_buff_bonus_preview() -> float:
+	var total_bonus := 0.0
 	for buff_id in MOM_GRANTED_BUFF_IDS:
 		var buff_node = active_debuffs.get(buff_id)
 		if is_instance_valid(buff_node) and buff_node.has_method("get_pending_round_end_bonus"):
-			total_bonus += int(buff_node.call("get_pending_round_end_bonus"))
+			total_bonus += float(buff_node.call("get_pending_round_end_bonus"))
 	return total_bonus
 
 
-func _consume_round_end_power_up_bonuses() -> int:
-	var total_bonus := 0
+func _consume_round_end_power_up_bonuses() -> float:
+	var total_bonus := 0.0
 	for power_up_id in active_power_ups.keys():
 		var powerup_node = active_power_ups[power_up_id]
 		if is_instance_valid(powerup_node) and powerup_node.has_method("consume_pending_round_end_bonus"):
-			total_bonus += int(powerup_node.call("consume_pending_round_end_bonus"))
+			total_bonus += float(powerup_node.call("consume_pending_round_end_bonus"))
 	return total_bonus
 
 
-func _consume_round_end_buff_bonuses() -> int:
-	var total_bonus := 0
+func _consume_round_end_buff_bonuses() -> float:
+	var total_bonus := 0.0
 	for buff_id in MOM_GRANTED_BUFF_IDS:
 		var buff_node = active_debuffs.get(buff_id)
 		if is_instance_valid(buff_node) and buff_node.has_method("consume_pending_round_end_bonus"):
-			total_bonus += int(buff_node.call("consume_pending_round_end_bonus"))
+			total_bonus += float(buff_node.call("consume_pending_round_end_bonus"))
 	return total_bonus
 
 
@@ -4968,7 +4968,7 @@ func _setup_round_target(round_number: int) -> void:
 	# ChallengeUI slot: store icon with progress bar toward the round target.
 	# Stars show the zone number (5 on boss rounds).
 	if challenge_ui and challenge_ui.has_method("show_store"):
-		var store_reward: int = 0
+		var store_reward: float = 0.0
 		var store_difficulty: int = 0
 		if channel_manager:
 			var rc = channel_manager.get_round_config(channel_manager.current_channel, round_number)
@@ -5004,7 +5004,7 @@ func _on_challenge_completed(id: String) -> void:
 
 	# Store reward for end-of-round stats (don't grant immediately)
 	if not _challenge_reward_granted:
-		var reward: int = 0
+		var reward: float = 0.0
 		if channel_manager and round_manager:
 			var round_number = round_manager.get_current_round_number()
 			var round_config = channel_manager.get_round_config(channel_manager.current_channel, round_number)
@@ -5012,7 +5012,7 @@ func _on_challenge_completed(id: String) -> void:
 				reward = round_config.reward_money_override
 		if reward > 0:
 			if _debug_enabled:
-				print("[GameController] Storing round reward for end-of-round: $%d" % reward)
+				print("[GameController] Storing round reward for end-of-round: $%.2f" % reward)
 			_challenge_reward_this_round = reward
 			_challenge_reward_granted = true  # Prevent double-granting
 
@@ -5488,12 +5488,12 @@ func _on_mod_sold(mod_id: String, dice: Dice) -> void:
 	# Get the mod definition for price calculation
 	var def: ModData = mod_manager.get_def(mod_id)
 	if def:
-		# ModData.sell_price >= 0 overrides the legacy half-price refund (e.g. Cursed Six sells for $0)
-		var refund: int
+		# ModData.sell_price >= 0 overrides the legacy half-price refund (e.g. Cursed Six sells for $0.00)
+		var refund: float
 		if def.sell_price >= 0:
 			refund = def.sell_price
 		else:
-			refund = int(def.price / 2.0)
+			refund = floorf(def.price * 50.0) / 100.0
 		if _debug_enabled:
 			print("[GameController] Refunding", refund, "coins for mod:", mod_id)
 		PlayerEconomy.add_money(refund)
@@ -6587,7 +6587,7 @@ func _mom_result_has_visible_consequences(result) -> bool:
 func _mom_story_reward_has_visible_payload(story_reward_preview: Dictionary) -> bool:
 	if story_reward_preview.is_empty():
 		return false
-	return int(story_reward_preview.get("reward_money", 0)) > 0 \
+	return float(story_reward_preview.get("reward_money", 0.0)) > 0.0 \
 		or int(story_reward_preview.get("reward_rep", 0)) != 0
 
 
@@ -6614,7 +6614,7 @@ func _append_mom_resolution_summary(base_text: String, result, story_reward_prev
 func _build_mom_resolution_summary(result, story_reward_preview: Dictionary = {}) -> String:
 	var lines: Array[String] = []
 	if result != null and result.fine_amount > 0:
-		lines.append("[color=red]Fine:[/color] $%d" % result.fine_amount)
+		lines.append("[color=red]Fine:[/color] $%.2f" % result.fine_amount)
 
 	if result != null and not result.removed_power_ups.is_empty():
 		lines.append("[color=red]Mom took:[/color] %s" % _join_mom_names(_get_mom_power_up_names(result.removed_power_ups)))
@@ -6634,7 +6634,7 @@ func _build_mom_resolution_summary(result, story_reward_preview: Dictionary = {}
 		lines.append("[color=red]Mom locked:[/color] %s" % lock_text)
 
 	if result != null and result.reward_money > 0:
-		lines.append("[color=green]Allowance:[/color] $%d" % result.reward_money)
+		lines.append("[color=green]Allowance:[/color] $%.2f" % result.reward_money)
 
 	if result != null and result.reward_consumable_id != "":
 		lines.append("[color=green]Mom gave:[/color] %s" % _get_mom_consumable_display_name(result.reward_consumable_id))
@@ -6643,10 +6643,10 @@ func _build_mom_resolution_summary(result, story_reward_preview: Dictionary = {}
 		lines.append("[color=green]Mom gave:[/color] %s" % _get_mom_power_up_display_name(result.reward_powerup_id))
 
 	if _mom_story_reward_has_visible_payload(story_reward_preview):
-		var story_money := int(story_reward_preview.get("reward_money", 0))
+		var story_money := float(story_reward_preview.get("reward_money", 0.0))
 		var story_rep := int(story_reward_preview.get("reward_rep", 0))
 		if story_money > 0:
-			lines.append("[color=green]Story reward:[/color] $%d" % story_money)
+			lines.append("[color=green]Story reward:[/color] $%.2f" % story_money)
 		if story_rep != 0:
 			lines.append("[color=green]REP:[/color] %+d" % story_rep)
 

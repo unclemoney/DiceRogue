@@ -5,7 +5,7 @@ class_name PowerSurgePowerUp
 ##
 ## Grants +0.15x multiplier per owned PowerUp at the time of scoring.
 ## Checks active_power_ups count each time about_to_score fires.
-## Epic rarity, $400 price.
+## Epic rarity, $4.00 price.
 
 # References
 var scorecard_ref: Scorecard = null

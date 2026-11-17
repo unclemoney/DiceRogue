@@ -24,7 +24,7 @@ beat_index = 2
 dialog_node_id = "story_squirrel_payoff"
 min_channel = 4
 requires_flag = "squirrel_countermove_seen"
-reward_money = 30
+reward_money = 0.30
 reward_mood = -1
 reward_rep = 1
 

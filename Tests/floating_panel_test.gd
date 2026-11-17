@@ -21,7 +21,7 @@ var test_cases: Array = [
 	["-15", 1.2, Color.RED],
 	["+5", 0.8, Color.GREEN],
 	["x1.5", 1.5, Color.CYAN],
-	["$12", 1.0, Color.GREEN],
+	["$0.12", 1.0, Color.GREEN],
 	["42", 2.0, Color.GOLD],
 ]
 

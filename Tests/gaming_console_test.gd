@@ -15,6 +15,8 @@ const GamingConsoleUIScene := preload("res://Scenes/UI/gaming_console_ui.tscn")
 class SaturnTestController:
 	extends Node
 
+	signal consumable_used
+
 	var active_power_ups: Dictionary = {}
 	var dice_hand: DiceHand = null
 	var score_card_ui = null
@@ -57,7 +59,7 @@ class SaturnTestController:
 	func is_sega_saturn_score_armed() -> bool:
 		return _sega_saturn_score_armed
 
-	func award_score_time_power_up_money(amount: int, _source_name: String) -> int:
+	func award_score_time_power_up_money(amount: float, _source_name: String) -> float:
 		var resolved_amount = amount
 		if _sega_saturn_score_active and amount > 0:
 			resolved_amount = amount * 2
@@ -799,7 +801,7 @@ func _test_sega_saturn() -> void:
 	mod_money._on_about_to_score(Scorecard.Section.UPPER, "ones", [])
 	saturn_controller.end_sega_saturn_score_transaction(true)
 	var mod_money_delta = PlayerEconomy.get_money() - money_before_mod
-	_assert(mod_money_delta == 16, "Saturn: pre-score money doubled from 8 to 16", str(mod_money_delta))
+	_assert(is_equal_approx(mod_money_delta, 0.16), "Saturn: pre-score money doubled from 0.08 to 0.16", str(mod_money_delta))
 	mod_money.queue_free()
 	for die in dice_hand.get_all_dice():
 		die.active_mods.clear()
@@ -817,12 +819,12 @@ func _test_sega_saturn() -> void:
 	full_house_power._on_score_assigned(Scorecard.Section.LOWER, "full_house", 25)
 	saturn_controller.end_sega_saturn_score_transaction(true)
 	var full_house_delta = PlayerEconomy.get_money() - money_before_full_house
-	_assert(full_house_delta == 14, "Saturn: post-score money doubled from 7 to 14", str(full_house_delta))
+	_assert(is_equal_approx(full_house_delta, 0.5), "Saturn: post-score money doubled from 0.25 to 0.50", str(full_house_delta))
 	full_house_power.queue_free()
 
 	# Out-of-scope calls should not double after the score transaction ends.
-	var out_of_scope_money = saturn_controller.award_score_time_power_up_money(8, "control")
-	_assert(out_of_scope_money == 8, "Saturn: helper does not double outside active transaction")
+	var out_of_scope_money = saturn_controller.award_score_time_power_up_money(0.08, "control")
+	_assert(out_of_scope_money == 0.08, "Saturn: helper does not double outside active transaction")
 
 	console_ui.hide_console()
 	_assert(not console_ui.visible, "Saturn: UI hidden after hide_console")

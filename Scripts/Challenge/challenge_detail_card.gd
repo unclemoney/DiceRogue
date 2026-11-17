@@ -275,7 +275,7 @@ func _populate() -> void:
 
 	var reward_lbl := vbox.get_node_or_null("RewardLabel") as Label
 	if reward_lbl:
-		reward_lbl.text = "Reward: $%s" % NumberFormatter.format_score(_data.reward_money)
+		reward_lbl.text = "Reward: %s" % NumberFormatter.format_money(_data.reward_money)
 
 	var debuff_flow := vbox.get_node_or_null("DebuffFlow") as HFlowContainer
 	if debuff_flow:

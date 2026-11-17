@@ -322,7 +322,7 @@ The three groundings:
 
 | Grounding | ID | Effect |
 |-----------|----|--------|
-| Docked Allowance | `docked_allowance` | End-of-round award withheld; the stats panel shows "ALLOWANCE DOCKED:" with a $0 total |
+| Docked Allowance | `docked_allowance` | End-of-round award withheld; the stats panel shows "ALLOWANCE DOCKED:" with a $0.00 total |
 | Coupons Revoked | `coupons_revoked` | Removes all held coupons (consumables) at round start |
 | POGS Confiscated | `pogs_confiscated` | Revokes N random power-ups; N scales with REP tier (tiers 0-1 → 1, 2-3 → 2, 4 → 3) |
 

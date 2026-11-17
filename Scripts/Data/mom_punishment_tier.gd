@@ -19,7 +19,7 @@ class_name MomPunishmentTier
 ##       "remove_mod":         {"count": int}
 ##       "lock_cosmetics":     {}  (colors locked; `permanent` sets duration)
 ##       "mood_delta":         {"delta": int}  (positive = angrier)
-##       "reward_money":       {"min": int, "max": int}
+##       "reward_money":       {"min": float, "max": float}
 ##       "reward_consumable":  {"pool": Array[String]}  (consumable ids)
 ##       "reward_powerup":     {"pool": Array[String]}  (safe power-up ids)
 ##   permanent: bool   - false = lasts until round end (lighter tiers),

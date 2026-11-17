@@ -3,10 +3,10 @@ class_name DiceDiversityPowerUp
 
 ## DiceDiversityPowerUp
 ##
-## Grants $5 for each unique dice value scored during a turn.
+## Grants $0.05 for each unique dice value scored during a turn.
 ## Money is awarded at the end of each turn based on unique values (1-6) used.
 ## Encourages varied dice combinations rather than all-same patterns.
-## Common rarity, $50 price.
+## Common rarity, $0.50 price.
 
 # Reference to scorecard and turn tracker
 var scorecard_ref: Scorecard = null
@@ -14,9 +14,9 @@ var turn_tracker_ref: TurnTracker = null
 
 # Track unique dice values scored this turn
 var unique_values_this_turn: Dictionary = {}  # value -> true
-var total_money_granted: int = 0
+var total_money_granted: float = 0.0
 
-const MONEY_PER_UNIQUE: int = 5
+const MONEY_PER_UNIQUE: float = 0.05
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -73,7 +73,7 @@ func _on_score_assigned(_section: Scorecard.Section, _category: String, _score: 
 		else:
 			PlayerEconomy.add_money(money_to_grant)
 		total_money_granted += awarded_amount
-		print("[DiceDiversityPowerUp] Granted $%d for %d unique dice values" % [awarded_amount, unique_count])
+		print("[DiceDiversityPowerUp] Granted $%.2f for %d unique dice values" % [awarded_amount, unique_count])
 		
 		# Update description
 		emit_signal("description_updated", id, get_current_description())
@@ -87,7 +87,7 @@ func _on_turn_started() -> void:
 	print("[DiceDiversityPowerUp] Reset unique values tracking for new turn")
 
 func get_current_description() -> String:
-	var base_desc = "+$%d for each unique dice value scored" % MONEY_PER_UNIQUE
+	var base_desc = "+$%.2f for each unique dice value scored" % MONEY_PER_UNIQUE
 	
 	var current_unique = unique_values_this_turn.size()
 	if current_unique > 0:
@@ -95,7 +95,7 @@ func get_current_description() -> String:
 		base_desc += "\nThis turn: %d unique (%s)" % [current_unique, values_str]
 	
 	if total_money_granted > 0:
-		base_desc += "\nTotal earned: $%d" % total_money_granted
+		base_desc += "\nTotal earned: $%.2f" % total_money_granted
 	
 	return base_desc
 

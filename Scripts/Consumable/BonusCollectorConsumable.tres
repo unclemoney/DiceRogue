@@ -12,10 +12,10 @@ region = Rect2(48, 1205, 387, 370)
 script = ExtResource("1_script")
 id = "bonus_collector"
 display_name = "Bonus Collector"
-description = "Grants $150 instantly if upper section total >= 63"
+description = "Grants $1.50 instantly if upper section total >= 63"
 icon = SubResource("AtlasTexture_c15")
 scene = ExtResource("2_scene")
-price = 75
+price = 0.75
 allowed_dice_sets = Array[int]([])
 exclude_listed_dice_sets = false
 usage_window = 2

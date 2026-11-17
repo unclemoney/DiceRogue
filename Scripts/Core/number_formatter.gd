@@ -47,9 +47,12 @@ func format_int(value: int) -> String:
 
 ## format_money(value)
 ##
-## Returns "$" + `format_int(value)`.
-func format_money(value: int) -> String:
-	return "$" + format_int(value)
+## Returns a dollar value rounded and displayed to two decimal places.
+func format_money(value: float) -> String:
+	var rounded := snappedf(value, 0.01)
+	if rounded < 0.0:
+		return "-$%.2f" % absf(rounded)
+	return "$%.2f" % rounded
 
 
 ## format_score(value)

@@ -87,13 +87,13 @@ func _free_stub(stub: Harness.StubGameController) -> void:
 func _check_fine_affordable() -> void:
 	var snap := Harness.snapshot_autoloads()
 	var stub := _new_stub()
-	PlayerEconomy.money = 500
-	var outcome := Harness.make_outcome("fine", 100)
+	PlayerEconomy.money = 5.0
+	var outcome := Harness.make_outcome("fine", 1.0)
 	var result := Handler.apply_outcome(stub, outcome, 2)
-	_reporter.check("fine: result.fine_amount == 100", result.fine_amount == 100)
+	_reporter.check("fine: result.fine_amount == 1.00", result.fine_amount == 1.0)
 	_reporter.check("fine: mom_is_upset set", result.mom_is_upset)
 	Handler.apply_consequences(stub, result)
-	_reporter.check("fine: money 500 -> 400", PlayerEconomy.money == 400)
+	_reporter.check("fine: money 5.00 -> 4.00", PlayerEconomy.money == 4.0)
 	Harness.restore_autoloads(snap)
 	_free_stub(stub)
 
@@ -102,7 +102,7 @@ func _check_fine_unaffordable_substitutes_debuff() -> void:
 	var snap := Harness.snapshot_autoloads()
 	var stub := _new_stub()
 	PlayerEconomy.money = 0
-	var outcome := Harness.make_outcome("fine", 100)
+	var outcome := Harness.make_outcome("fine", 1.0)
 	var result := Handler.apply_outcome(stub, outcome, 2)
 	_reporter.check("fine unaffordable: fine_amount == 0", result.fine_amount == 0)
 	_reporter.check("fine unaffordable: one debuff substituted", result.applied_debuffs.size() == 1)
@@ -247,18 +247,18 @@ func _check_lock_cosmetics_permanent() -> void:
 func _check_reward_money() -> void:
 	var snap := Harness.snapshot_autoloads()
 	var stub := _new_stub()
-	PlayerEconomy.money = 100
+	PlayerEconomy.money = 1.0
 	var random_outcome := Harness.make_outcome("reward_money", 0)
 	var random_result := Handler.apply_outcome(stub, random_outcome, 0)
-	_reporter.check("reward_money default in [50, 150] (got %d)" % random_result.reward_money,
-		random_result.reward_money >= 50 and random_result.reward_money <= 150)
+	_reporter.check("reward_money default in [0.50, 1.50] (got %.2f)" % random_result.reward_money,
+		random_result.reward_money >= 0.5 and random_result.reward_money <= 1.5)
 	Handler.apply_consequences(stub, random_result)
 	_reporter.check("reward_money default: money increased by exactly the grant",
-		PlayerEconomy.money == 100 + random_result.reward_money)
+		PlayerEconomy.money == 1.0 + random_result.reward_money)
 
-	var exact_outcome := Harness.make_outcome("reward_money", 200)
+	var exact_outcome := Harness.make_outcome("reward_money", 2.0)
 	var exact_result := Handler.apply_outcome(stub, exact_outcome, 0)
-	_reporter.check("reward_money magnitude 200 -> exactly 200", exact_result.reward_money == 200)
+	_reporter.check("reward_money magnitude 2.00 -> exactly 2.00", exact_result.reward_money == 2.0)
 	Harness.restore_autoloads(snap)
 	_free_stub(stub)
 
@@ -301,8 +301,8 @@ func _check_reward_powerup_pool_exhausted() -> void:
 	var outcome := Harness.make_outcome("reward_powerup")
 	var result := Handler.apply_outcome(stub, outcome, 0)
 	_reporter.check("reward_powerup exhausted: no power-up id", result.reward_powerup_id == "")
-	_reporter.check("reward_powerup exhausted: money fallback in [75, 125] (got %d)" % result.reward_money,
-		result.reward_money >= 75 and result.reward_money <= 125)
+	_reporter.check("reward_powerup exhausted: money fallback in [0.75, 1.25] (got %.2f)" % result.reward_money,
+		result.reward_money >= 0.75 and result.reward_money <= 1.25)
 	Harness.restore_autoloads(snap)
 	_free_stub(stub)
 
@@ -310,7 +310,7 @@ func _check_reward_powerup_pool_exhausted() -> void:
 func _check_storms_off() -> void:
 	var snap := Harness.snapshot_autoloads()
 	var stub := _new_stub()
-	PlayerEconomy.money = 100
+	PlayerEconomy.money = 1.0
 	var outcome := Harness.make_outcome("storms_off", 0, 1.0, {"mood_delta": 1, "grudge_delta": 1})
 	var result := Handler.apply_outcome(stub, outcome, 3)
 	_reporter.check("storms_off: flag set", result.storms_off)
@@ -345,7 +345,7 @@ func _check_defer_punishment() -> void:
 func _check_defer_streak_reset_on_tier() -> void:
 	var snap := Harness.snapshot_autoloads()
 	var stub := _new_stub()
-	PlayerEconomy.money = 1000
+	PlayerEconomy.money = 10.0
 	stub.chores_manager.defer_streak = 2
 	var outcome := Harness.make_outcome("apply_tier", 1)
 	var result := Handler.apply_outcome(stub, outcome, 1)
@@ -397,7 +397,7 @@ func _check_mood_and_grudge_deltas() -> void:
 func _check_apply_tier_magnitudes() -> void:
 	var snap := Harness.snapshot_autoloads()
 	var stub := _new_stub()
-	PlayerEconomy.money = 1000
+	PlayerEconomy.money = 10.0
 	var severity := 2
 	var zero := Handler.apply_outcome(stub, Harness.make_outcome("apply_tier", 0), severity)
 	_reporter.check("apply_tier magnitude 0 resolves computed severity (2)", zero.tier_id == 2)
@@ -414,7 +414,7 @@ func _check_apply_tier_magnitudes() -> void:
 func _check_sass_escalation() -> void:
 	var snap := Harness.snapshot_autoloads()
 	var stub := _new_stub()
-	PlayerEconomy.money = 1000
+	PlayerEconomy.money = 10.0
 
 	# Rep tier 3 (rep >= 35): tier escalates by 3 / 2 = +1.
 	ProgressManager.cumulative_stats["rep"] = 35

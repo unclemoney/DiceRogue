@@ -191,7 +191,7 @@ func _simulate_color_effects(dice_values: Array, dice_colors: Array, test_name: 
 	var effects = DiceColorManager.calculate_color_effects(dice_values, dice_colors)
 	
 	_log_result("Results:")
-	_log_result("  Green (money): $%d" % effects.get("green_money", 0))
+	_log_result("  Green (money): $%.2f" % effects.get("green_money", 0))
 	_log_result("  Red (additive): +%d" % effects.get("red_additive", 0))
 	_log_result("  Purple (multiplier): x%.1f" % effects.get("purple_multiplier", 1.0))
 	_log_result("  Yellow (scored): %s" % str(effects.get("yellow_scored", false)))
@@ -265,23 +265,23 @@ func _validate_color_test(test_name: String, effects: Dictionary, _dice_values: 
 	
 	match test_name:
 		"green_single":
-			# First die (value 3) is green, should give $3
-			if effects.get("green_money", 0) != 3:
+			# First die (value 3) is green, should give $0.03
+			if effects.get("green_money", 0.0) != 0.03:
 				passed = false
-				issues.append("Expected green_money=3, got %d" % effects.get("green_money", 0))
+				issues.append("Expected green_money=0.03, got %.2f" % effects.get("green_money", 0))
 		
 		"green_multiple":
-			# Values 2, 4, 6 are green = $12
-			if effects.get("green_money", 0) != 12:
+			# Values 2, 4, 6 are green = $0.12
+			if effects.get("green_money", 0.0) != 0.12:
 				passed = false
-				issues.append("Expected green_money=12, got %d" % effects.get("green_money", 0))
+				issues.append("Expected green_money=0.12, got %.2f" % effects.get("green_money", 0))
 		
 		"green_all":
-			# All green, values 1+2+3+4+5 = $15, doubled for same color = $30
-			var expected = 30
+			# All green, values 1+2+3+4+5 = $0.15, doubled for same color = $0.30
+			var expected = 0.3
 			if effects.get("green_money", 0) != expected:
 				passed = false
-				issues.append("Expected green_money=%d (same color bonus), got %d" % [expected, effects.get("green_money", 0)])
+				issues.append("Expected green_money=%.2f (same color bonus), got %.2f" % [expected, effects.get("green_money", 0)])
 		
 		"red_single":
 			# Second die (value 4) is red, should add 4

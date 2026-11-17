@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="MomPunishmentTier" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MomPunishmentTier" load_steps=2 format=3 uid="uid://dgxgls4fykemc"]
 
-[ext_resource type="Script" path="res://Scripts/Data/mom_punishment_tier.gd" id="1_tier"]
+[ext_resource type="Script" uid="uid://cw14l2j3s4vs1" path="res://Scripts/Data/mom_punishment_tier.gd" id="1_tier"]
 
 [resource]
 script = ExtResource("1_tier")
@@ -8,4 +8,24 @@ tier_id = 1
 display_name = "Disappointed"
 min_severity = 1
 picks = 1
-entries = Array[Dictionary]([{"effect": "fine", "weight": 3.0, "params": {"min": 50, "max": 50}, "permanent": false}, {"effect": "none", "weight": 2.0, "params": {}, "permanent": false}, {"effect": "mood_delta", "weight": 1.0, "params": {"delta": 1}, "permanent": false}])
+entries = Array[Dictionary]([{
+"effect": "fine",
+"params": {
+"max": 0.5,
+"min": 0.5
+},
+"permanent": false,
+"weight": 3.0
+}, {
+"effect": "none",
+"params": {},
+"permanent": false,
+"weight": 2.0
+}, {
+"effect": "mood_delta",
+"params": {
+"delta": 1
+},
+"permanent": false,
+"weight": 1.0
+}])

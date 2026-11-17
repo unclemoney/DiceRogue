@@ -18,13 +18,13 @@ const COLOR_SYNERGY := Color(1.0, 0.5, 0.0, 1.0)
 ##
 ## Spawns a "+$X" or "-$X" floating popup starting at the node's global position.
 ## The popup floats upward and fades out automatically.
-func show_currency_popup(source_node: Node, amount: int, is_positive: bool = true) -> void:
+func show_currency_popup(source_node: Node, amount: float, is_positive: bool = true) -> void:
 	if not source_node or not is_instance_valid(source_node):
 		return
 	
-	var text := "+$" + NumberFormatter.format_int(amount) if is_positive else "-$" + NumberFormatter.format_int(amount)
+	var text := "+" + NumberFormatter.format_money(amount) if is_positive else "-" + NumberFormatter.format_money(amount)
 	var color := COLOR_MONEY_POSITIVE if is_positive else COLOR_MONEY_NEGATIVE
-	var font_scale := 1.0 + minf(amount / 100.0, 1.5)
+	var font_scale := 1.0 + minf(amount, 1.5)
 	
 	_show_popup_at_node(source_node, text, color, font_scale)
 

@@ -149,4 +149,4 @@ alignment = 1
 custom_minimum_size = Vector2(124, 48)
 layout_mode = 2
 size_flags_horizontal = 4
-text = "SELL\n$0"
+text = "SELL\n$0.00"

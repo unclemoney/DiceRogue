@@ -1425,7 +1425,7 @@ func _show_colored_dice_effect(die: Dice, die_center: Vector2, speed_scale: floa
 	# Determine effect text and color based on die color
 	match die.color:
 		DiceColor.Type.GREEN:
-			effect_text = "$" + str(die.value)  # Green dice give money
+			effect_text = NumberFormatter.format_money(die.value / 100.0)  # Green dice give money
 			effect_color = SCORING_TEXT_POSITIVE
 		DiceColor.Type.RED:
 			effect_text = "+" + str(die.value)  # Red dice give additive bonus

@@ -27,7 +27,7 @@ func apply(target) -> void:
 	print("[ThePawnShopConsumable] Selling all PowerUps...")
 	
 	# Calculate total pawn value and collect PowerUps to remove
-	var total_pawn_value := 0
+	var total_pawn_value := 0.0
 	var powerups_to_remove := []
 	var sale_breakdown := []
 	
@@ -36,11 +36,11 @@ func apply(target) -> void:
 		var def: PowerUpData = pu_manager.get_def(power_up_id)
 		if def:
 			var purchase_price = def.price
-			var pawn_value = int(purchase_price * 1.25)  # 1.25x the purchase value
+			var pawn_value = floorf(purchase_price * 125.0) / 100.0  # 1.25x the purchase value
 			total_pawn_value += pawn_value
 			powerups_to_remove.append(power_up_id)
-			sale_breakdown.append("%s: $%d → $%d" % [def.display_name, purchase_price, pawn_value])
-			print("[ThePawnShopConsumable] Selling %s: $%d → $%d" % [power_up_id, purchase_price, pawn_value])
+			sale_breakdown.append("%s: $%.2f → $%.2f" % [def.display_name, purchase_price, pawn_value])
+			print("[ThePawnShopConsumable] Selling %s: $%.2f → $%.2f" % [power_up_id, purchase_price, pawn_value])
 		else:
 			push_error("[ThePawnShopConsumable] No definition found for PowerUp: %s" % power_up_id)
 	
@@ -54,7 +54,7 @@ func apply(target) -> void:
 		var player_economy = get_node("/root/PlayerEconomy")
 		if player_economy:
 			player_economy.add_money(total_pawn_value)
-			print("[ThePawnShopConsumable] Granted $%d total from selling %d PowerUps" % [total_pawn_value, powerups_to_remove.size()])
+			print("[ThePawnShopConsumable] Granted $%.2f total from selling %d PowerUps" % [total_pawn_value, powerups_to_remove.size()])
 			print("[ThePawnShopConsumable] Sale breakdown: %s" % ", ".join(sale_breakdown))
 		else:
 			apply_succeeded = false
@@ -68,4 +68,4 @@ func apply(target) -> void:
 		game_controller.revoke_power_up(power_up_id)
 		print("[ThePawnShopConsumable] After removal - Active PowerUps count: %d" % game_controller.active_power_ups.size())
 	
-	print("[ThePawnShopConsumable] Applied successfully - sold %d PowerUps for $%d total" % [powerups_to_remove.size(), total_pawn_value])
+	print("[ThePawnShopConsumable] Applied successfully - sold %d PowerUps for $%.2f total" % [powerups_to_remove.size(), total_pawn_value])

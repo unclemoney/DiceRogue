@@ -10,7 +10,7 @@ func _ready() -> void:
 ## apply(dice_target)
 ##
 ## Applies the Three But Three mod to a dice. This mod forces the die to always roll a 3
-## and grants the player $33 for every roll.
+## and grants the player $0.33 for every roll.
 func apply(dice_target) -> void:
 	var dice = dice_target as Dice
 	if dice:
@@ -35,11 +35,11 @@ func remove() -> void:
 
 ## _on_die_roll_completed(value)
 ##
-## Callback when the attached die completes a roll. Forces the value to 3 and grants $3 to the player.
+## Callback when the attached die completes a roll. Forces the value to 3 and grants $0.03 to the player.
 func _on_die_roll_completed(value: int) -> void:
 	# Force the die to show 3
 	_attached_die.value = 3
-	print("[ThreeButThreeMod] Forced roll to 3 and granting $3")
+	print("[ThreeButThreeMod] Forced roll to 3 and granting $0.03")
 	
-	# Grant $33 to the player using PlayerEconomy
-	PlayerEconomy.add_money(33)
+	# Grant $0.33 to the player using PlayerEconomy
+	PlayerEconomy.add_money(0.33)

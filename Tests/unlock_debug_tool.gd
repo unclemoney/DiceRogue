@@ -140,9 +140,9 @@ func _build_event_panel(parent: Control) -> void:
 	var money_hbox = HBoxContainer.new()
 	money_hbox.add_theme_constant_override("separation", 5)
 	vbox.add_child(money_hbox)
-	_add_trigger_button(money_hbox, "+$10", _on_add_money.bind(10))
-	_add_trigger_button(money_hbox, "+$50", _on_add_money.bind(50))
-	_add_trigger_button(money_hbox, "+$100", _on_add_money.bind(100))
+	_add_trigger_button(money_hbox, "+$0.10", _on_add_money.bind(0.1))
+	_add_trigger_button(money_hbox, "+$0.50", _on_add_money.bind(0.5))
+	_add_trigger_button(money_hbox, "+$1.00", _on_add_money.bind(1.0))
 	
 	# Score triggers
 	_add_section_label(vbox, "Score:")
@@ -515,7 +515,7 @@ func _update_stats_display() -> void:
 	
 	var text = ""
 	text += "-- This Game --\n"
-	text += "Money: $%d\n" % game_stats.get("money_earned", 0)
+	text += "Money: $%.2f\n" % game_stats.get("money_earned", 0)
 	text += "Max Score: %d\n" % game_stats.get("max_category_score", 0)
 	text += "Yahtzees: %d\n" % game_stats.get("yahtzees_rolled", 0)
 	text += "Straights: %d\n" % game_stats.get("straights_rolled", 0)
@@ -523,7 +523,7 @@ func _update_stats_display() -> void:
 	text += "Color Bonuses: %d\n" % game_stats.get("same_color_bonuses", 0)
 	text += "Tracking: %s\n" % ("YES" if progress_manager.is_tracking_game else "NO")
 	text += "\n-- Cumulative --\n"
-	text += "Total $: %d\n" % cumulative.get("total_money_earned", 0)
+	text += "Total $: %.2f\n" % cumulative.get("total_money_earned", 0)
 	text += "Games Done: %d\n" % cumulative.get("games_completed", 0)
 	text += "Games Won: %d\n" % cumulative.get("games_won", 0)
 	text += "Best Channel: %d" % cumulative.get("highest_channel_completed", 0)
@@ -552,11 +552,11 @@ func _log(message: String) -> void:
 # Event Trigger Handlers
 # =====================
 
-func _on_add_money(amount: int) -> void:
+func _on_add_money(amount: float) -> void:
 	if not progress_manager.is_tracking_game:
 		progress_manager.start_game_tracking()
 	progress_manager.track_money_earned(amount)
-	_log("Added $%d (total: $%d)" % [amount, progress_manager.current_game_stats.get("money_earned", 0)])
+	_log("Added $%.2f (total: $%.2f)" % [amount, progress_manager.current_game_stats.get("money_earned", 0)])
 	_update_stats_display()
 	_check_and_report_progress()
 

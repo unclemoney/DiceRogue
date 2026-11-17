@@ -5,7 +5,7 @@ class_name MeltingDicePowerUp
 ##
 ## Starts with +80 additive bonus. Each time the player scores, the bonus
 ## decreases by 8 (minimum 0). Encourages strategic scoring early on.
-## Common rarity, $50 price.
+## Common rarity, $0.50 price.
 
 # References
 var scorecard_ref: Scorecard = null

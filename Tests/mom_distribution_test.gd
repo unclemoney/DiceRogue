@@ -159,7 +159,7 @@ func _check_degenerate_cases() -> void:
 	# All-zero outcome weights -> index 0, no crash.
 	var zero_response := Harness.make_response("neutral", [
 		Harness.make_outcome("none", 0, 0.0),
-		Harness.make_outcome("fine", 50, 0.0),
+		Harness.make_outcome("fine", 0.5, 0.0),
 	])
 	GameRNG.initialize(_derived_seed("degenerate"))
 	var drawn := Handler.resolve_response(zero_response)

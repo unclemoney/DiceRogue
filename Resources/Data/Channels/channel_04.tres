@@ -14,7 +14,7 @@ target_score_override = 2000
 grounding_chance = 0.0
 is_boss_round = false
 boss_debuff_level = 5
-reward_money_override = 200
+reward_money_override = 2.00
 bonus_multipliers = {
 "chore_completion": 2.5,
 "empty_category": 2.5,
@@ -31,7 +31,7 @@ target_score_override = 4000
 grounding_chance = 0.0
 is_boss_round = false
 boss_debuff_level = 5
-reward_money_override = 200
+reward_money_override = 2.00
 bonus_multipliers = {
 "chore_completion": 3.0,
 "empty_category": 3.0,
@@ -48,7 +48,7 @@ target_score_override = 6000
 grounding_chance = 0.0
 is_boss_round = false
 boss_debuff_level = 5
-reward_money_override = 200
+reward_money_override = 2.00
 bonus_multipliers = {
 "chore_completion": 3.5,
 "empty_category": 3.5,
@@ -65,7 +65,7 @@ target_score_override = 10000
 grounding_chance = 0.0
 is_boss_round = false
 boss_debuff_level = 5
-reward_money_override = 200
+reward_money_override = 2.00
 bonus_multipliers = {
 "chore_completion": 4.0,
 "empty_category": 4.0,
@@ -82,7 +82,7 @@ target_score_override = 16000
 grounding_chance = 0.0
 is_boss_round = false
 boss_debuff_level = 5
-reward_money_override = 200
+reward_money_override = 2.00
 bonus_multipliers = {
 "chore_completion": 4.5,
 "empty_category": 4.5,
@@ -99,7 +99,7 @@ target_score_override = 26000
 grounding_chance = 0.0
 is_boss_round = true
 boss_debuff_level = 5
-reward_money_override = 0
+reward_money_override = 0.00
 bonus_multipliers = {
 "chore_completion": 5.0,
 "empty_category": 5.0,

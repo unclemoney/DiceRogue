@@ -8,4 +8,4 @@ class_name GamingConsoleData
 @export var vip_card_art: Texture2D
 @export var vip_card_shader_key: String = ""
 @export var scene: PackedScene
-@export var price: int = 300
+@export var price: float = 3.0

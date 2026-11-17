@@ -8,7 +8,7 @@
 script = ExtResource("3_out")
 weight = 7.0
 effect = "reward_money"
-magnitude = 25
+magnitude = 0.25
 mood_delta = -1
 grudge_delta = 0
 permanent = false
@@ -40,7 +40,7 @@ outcomes = Array[ExtResource("3_out")]([SubResource("out_polite_1"), SubResource
 script = ExtResource("3_out")
 weight = 6.0
 effect = "reward_money"
-magnitude = 50
+magnitude = 0.50
 mood_delta = 0
 grudge_delta = 0
 permanent = false

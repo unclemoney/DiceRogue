@@ -3,7 +3,7 @@ class_name AllowancePowerUp
 
 ## AllowancePowerUp
 ##
-## A common PowerUp that adds $100 to the round-end PowerUp bonus payout
+## A common PowerUp that adds $1.00 to the round-end PowerUp bonus payout
 ## when a challenge is completed.
 ## Connects to the ChallengeManager's challenge_completed signal.
 
@@ -11,11 +11,11 @@ class_name AllowancePowerUp
 var challenge_manager_ref: Node = null
 
 # Track total money earned
-var total_earned: int = 0
-var pending_round_end_bonus: int = 0
+var total_earned: float = 0.0
+var pending_round_end_bonus: float = 0.0
 
 # Money granted per challenge completion
-const MONEY_AMOUNT: int = 100
+const MONEY_AMOUNT: float = 1.0
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -27,7 +27,7 @@ func _on_challenge_completed(_challenge_id: String) -> void:
 	# Queue the reward for the end-of-round stats payout instead of granting it immediately.
 	pending_round_end_bonus += MONEY_AMOUNT
 	
-	print("[AllowancePowerUp] Challenge completed! Queued $%d for round-end payout (pending: $%d)" % [MONEY_AMOUNT, pending_round_end_bonus])
+	print("[AllowancePowerUp] Challenge completed! Queued $%.2f for round-end payout (pending: $%.2f)" % [MONEY_AMOUNT, pending_round_end_bonus])
 	
 	# Update description
 	emit_signal("description_updated", id, get_current_description())
@@ -58,7 +58,7 @@ func apply(target) -> void:
 	if not is_connected("tree_exiting", _on_tree_exiting):
 		connect("tree_exiting", _on_tree_exiting)
 	
-	print("[AllowancePowerUp] Applied successfully - will add $%d to the round-end PowerUp bonus when a challenge completes" % MONEY_AMOUNT)
+	print("[AllowancePowerUp] Applied successfully - will add $%.2f to the round-end PowerUp bonus when a challenge completes" % MONEY_AMOUNT)
 
 func remove(_target) -> void:
 	print("=== Removing AllowancePowerUp ===")
@@ -71,26 +71,26 @@ func remove(_target) -> void:
 	challenge_manager_ref = null
 
 func get_current_description() -> String:
-	var lines: Array[String] = ["Adds $%d to round-end PowerUp bonuses when a challenge completes" % MONEY_AMOUNT]
+	var lines: Array[String] = ["Adds $%.2f to round-end PowerUp bonuses when a challenge completes" % MONEY_AMOUNT]
 	if pending_round_end_bonus > 0:
-		lines.append("Pending this round: $%d" % pending_round_end_bonus)
+		lines.append("Pending this round: $%.2f" % pending_round_end_bonus)
 	if total_earned > 0:
-		lines.append("Total earned: $%d" % total_earned)
+		lines.append("Total earned: $%.2f" % total_earned)
 	return "\n".join(lines)
 
 
-func get_pending_round_end_bonus() -> int:
+func get_pending_round_end_bonus() -> float:
 	return pending_round_end_bonus
 
 
-func consume_pending_round_end_bonus() -> int:
+func consume_pending_round_end_bonus() -> float:
 	if pending_round_end_bonus <= 0:
 		return 0
 
 	var granted_amount = pending_round_end_bonus
 	pending_round_end_bonus = 0
 	total_earned += granted_amount
-	print("[AllowancePowerUp] Consumed pending round-end bonus: $%d (total earned: $%d)" % [granted_amount, total_earned])
+	print("[AllowancePowerUp] Consumed pending round-end bonus: $%.2f (total earned: $%.2f)" % [granted_amount, total_earned])
 	emit_signal("description_updated", id, get_current_description())
 	if is_inside_tree():
 		_update_power_up_icons()

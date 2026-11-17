@@ -5,7 +5,7 @@ class_name ToughAdditionChallenge
 ##
 ## A difficulty 3 challenge that applies the half_additive debuff.
 ## Players must reach 350 points while all additive bonuses are halved.
-## Reward: $200 on completion.
+## Reward: $2.00 on completion.
 
 var _scorecard: Scorecard = null
 var _game_controller: GameController = null

@@ -8,7 +8,7 @@ const DiceColorClass = preload("res://Scripts/Core/dice_color.gd")
 const ColoredDiceDataClass = preload("res://Scripts/Core/colored_dice_data.gd")
 
 signal colors_enabled_changed(enabled: bool)
-signal color_effects_calculated(green_money: int, red_additive: int, purple_multiplier: float, same_color_bonus: bool, rainbow_bonus: bool)
+signal color_effects_calculated(green_money: float, red_additive: int, purple_multiplier: float, same_color_bonus: bool, rainbow_bonus: bool)
 
 var colors_enabled: bool = true
 
@@ -47,7 +47,7 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = [], app
 	var blue_count := 0
 	var yellow_count := 0
 	var orange_count := 0
-	var green_money := 0
+	var green_money := 0.0
 	var red_additive := 0
 	var purple_multiplier := 1.0
 	var blue_score_multiplier := 1.0
@@ -68,7 +68,7 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = [], app
 				green_count += 1
 				var is_used = used_dice_array.size() == 0 or i in used_dice_array
 				if is_used:
-					green_money += dice_value
+					green_money += dice_value / 100.0
 			DiceColorClass.Type.RED:
 				red_count += 1
 				var is_used = used_dice_array.size() == 0 or i in used_dice_array
@@ -146,7 +146,7 @@ func calculate_color_effects(dice_array: Array, used_dice_array: Array = [], app
 	if unique_color_count >= 5:
 		rainbow_bonus = true
 		# Rainbow bonus: +50% to all color effects
-		green_money = int(green_money * 1.5)
+		green_money = floorf(green_money * 150.0) / 100.0
 		red_additive = int(red_additive * 1.5)
 		purple_multiplier *= 1.5
 		blue_score_multiplier *= 1.5	
@@ -393,7 +393,7 @@ func get_current_effects_description(dice_array: Array, used_dice_array: Array =
 	
 	# Add green money effect
 	if effects.green_money > 0:
-		descriptions.append("Green Dice Money: +$%d" % effects.green_money)
+		descriptions.append("Green Dice Money: +$%.2f" % effects.green_money)
 	
 	# Add red additive effect  
 	if effects.red_additive > 0:
@@ -530,22 +530,22 @@ func get_color_purchase_count(color_type: DiceColorClass.Type) -> int:
 ## Base cost comes from the ColoredDiceData resource's price field.
 ## Applies channel difficulty multiplier if ChannelManager is available.
 ## @param color_type: DiceColor.Type to get cost for
-## @return int: Current cost in dollars
-func get_current_color_cost(color_type: DiceColorClass.Type) -> int:
-	var base_cost := 0
+## @return float: Current cost in dollars
+func get_current_color_cost(color_type: DiceColorClass.Type) -> float:
+	var base_cost := 0.0
 	for data in colored_dice_data.values():
 		if data and data.get("color_type") == color_type:
 			base_cost = data.price
 			break
 	if base_cost <= 0:
-		push_error("[DiceColorManager] No ColoredDiceData price found for color_type %s, defaulting to $50" % color_type)
-		base_cost = 50
+		push_error("[DiceColorManager] No ColoredDiceData price found for color_type %s, defaulting to $0.50" % color_type)
+		base_cost = 0.5
 	var purchase_count = purchased_colors.get(color_type, 0)
-	var exponential_cost = base_cost * int(pow(2, purchase_count))
+	var exponential_cost = base_cost * pow(2, purchase_count)
 	
 	# Apply channel difficulty multiplier
 	var multiplier = _get_colored_dice_cost_multiplier()
-	return int(round(exponential_cost * multiplier))
+	return snappedf(exponential_cost * multiplier, 0.01)
 
 
 ## _get_colored_dice_cost_multiplier() -> float
@@ -628,7 +628,7 @@ func get_color_shop_tooltip(color_type: DiceColorClass.Type) -> String:
 	else:
 		tooltip += "Current Odds: 1/%d\n" % current_odds
 		var next_odds = max(2, int(ceil(current_odds / 2.0)))
-		tooltip += "Next: $%d (1/%d odds)" % [current_cost, next_odds]
+		tooltip += "Next: $%.2f (1/%d odds)" % [current_cost, next_odds]
 	
 	return tooltip
 

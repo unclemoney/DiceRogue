@@ -192,7 +192,7 @@ Full documentation with parameters, recipes, and technical deep-dives: See `ARCA
 ### Profile System
 - **ProgressManager** handles 3 save slots (`user://profile_1.save` to `profile_3.save`)
 - Legacy save migration: Old `user://save.json` auto-migrates to slot 1
-- **Save Version 2**: Current format tracks chore completions, category scores, and difficulty stats
+- **Save Version 3**: Current format tracks chore completions, category scores, difficulty stats, and dollar-scale money; legacy money-scale saves are rejected without modification pending an owner migration decision
   - Old v1 profiles are auto-detected on load, user is notified, then deleted and recreated
 - **Save Incompatibility (Mall Zone refactor)**: Saves from before the 4-zone/store refactor are incompatible (channel data changed, round data shape changed, challenges removed) — there is no migration; old run saves are discarded
 - Profile names limited to 30 characters
@@ -206,7 +206,7 @@ Full documentation with parameters, recipes, and technical deep-dives: See `ARCA
 - **Autosave at settled points**: `update_settled_snapshot()` captures `GameController.get_save_state()` and writes it after dice settle, turn starts, scoring, grants, and debuffs — the disk save is always the last-known-good state
 - **Atomic writes**: saves go to a `.tmp` file first, then rename over the live save; a crashed write can never leave a half-written save
 - **Quarantine**: corrupt JSON, non-Dictionary roots, or saves from a newer version are renamed to a timestamped `.bak` (never deleted), so a bad save costs the run but not the data
-- **Run save version 2**: v1 saves still load (missing keys fall back to per-key defaults); newer versions are refused and quarantined
+- **Run save version 3**: legacy money-scale saves are rejected without modification; newer versions are refused and quarantined
 - **Int normalization**: `JSON.parse()` returns all numbers as floats, so every `load_state()` coerces semantically-integer values with `int()` before assigning to typed `int` vars
 - **Mid-turn resume**: Continue restores dice values/locks, rolls left, round target, scorecard levels, and channel background, then re-engages the round via `RoundManager.resume_round_from_load()` (no resets, no `round_started` emit) and re-emits `turn_updated`/`rolls_updated` so the roll button is live
 - F12 debug commands: **Save Now (Run Save)** forces an immediate snapshot; **Quarantine Run Save** exercises the `.bak` path
@@ -262,7 +262,7 @@ Full documentation with parameters, recipes, and technical deep-dives: See `ARCA
 
 ### Game Flow
 - **GameController** (`Scripts/Core/game_controller.gd`) - Central coordination
-- **RoundManager** (`Scripts/Managers/round_manager.gd`) - Round progression  
+- **RoundManager** (`Scripts/Managers/round_manager.gd`) - Round progression
 - **TurnTracker** (`Scripts/Core/turn_tracker.gd`) - Roll counting and turn logic
 
 ### Dice System
@@ -348,7 +348,7 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
 
 **Color Types:**
 - **Green Dice**: Award money bonuses equal to dice value when scored
-- **Red Dice**: Add bonus points equal to dice value to final score  
+- **Red Dice**: Add bonus points equal to dice value to final score
 - **Purple Dice**: Multiply final score by dice value
 - **Blue Dice**: Conditional multiplier/divisor - multiply score by dice value if used in scoring, divide if not used (very rare)
 - **Yellow Dice**: Grant a random consumable (coupon) when scored (if space available)
@@ -363,12 +363,12 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
 - **Orange**: 1 in 150 chance per roll (~0.67%) - Rarest color
 
 **Shop Prices (base cost, doubles per purchase):**
-- Green: $50, Red: $75, Purple: $125, Blue: $150, Yellow: $100, Orange: $175
+- Green: $0.50, Red: $0.75, Purple: $1.25, Blue: $1.50, Yellow: $1.00, Orange: $1.75
 
 **Blue Dice Special Mechanics:**
 - **Used in Scoring**: If the blue die contributes to the category score, multiply final score by the die value
 - **Not Used in Scoring**: If the blue die doesn't contribute to the category score, divide final score by the die value
-- **Examples**: 
+- **Examples**:
   - Roll 4,4,4,4,5(blue) → Score in Fours → Blue 5 not used → 16÷5=3 points
   - Roll 1,2,3,4,5(blue) → Score Large Straight → Blue die used → 40×(blue value)=120+ points
 
@@ -379,10 +379,10 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
 - **Toggle System**: Colors can be disabled globally (useful for challenges/debuffs)
 
 **Examples:**
-- Full House (3×2s, 2×5s) with one green 5: Base score 25 + $5 money
-- Full House with one red 5: Base score becomes (25 + 5) = 30 points  
+- Full House (3×2s, 2×5s) with one green 5: Base score 25 + $0.05 money
+- Full House with one red 5: Base score becomes (25 + 5) = 30 points
 - Full House with one purple 5: Base score becomes 25 × 5 = 125 points
-- Five green dice (values 2,2,2,3,3): Money bonus = (2+2+2+3+3) × 2 = $24 (doubled)
+- Five green dice (values 2,2,2,3,3): Money bonus = (2+2+2+3+3) × 2 = $0.24 (doubled)
 
 ### NumberFormatter
 - **Location**: `Scripts/Core/number_formatter.gd` (autoload)
@@ -394,7 +394,7 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - **Scientific Notation**: `1.0e8`, `1.5e9`
 - **API**:
   - `NumberFormatter.format_int(value: int)` — general integer formatting
-  - `NumberFormatter.format_money(value: int)` — prepends `$`
+  - `NumberFormatter.format_money(value: float)` — prepends `$` and displays two decimal places
   - `NumberFormatter.format_score(value: int)` — alias for `format_int`
   - `NumberFormatter.format_with_commas(value: int)` — commas only, no large-number fallback
 - **Toggle mode at runtime**: `NumberFormatter.format_mode = NumberFormatter.FormatMode.METRIC_SUFFIXES` or `SCIENTIFIC_NOTATION`
@@ -428,19 +428,19 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
 ### Economy & Items
 - **PlayerEconomy** (autoload) - Money and shop transactions
 - **PowerUps** (`Scripts/PowerUps/`) - Permanent scoring bonuses
-  - **FullHousePowerUp**: Grants $7 × (total full houses rolled) for each new full house
+  - **FullHousePowerUp**: Grants $0.07 × (total full houses rolled) for each new full house
   - **Highlighted Score**: Marks one open scorecard category with a pulsing teal wash; scoring that category grants a 1.5× multiplier and triggers a burst celebration before the highlight moves.
   - **New Wave PowerUps** (10 total): Purple Payout, Mod Money, Blue Safety Net, Chore Sprint, Straight Triplet Master, Modded Dice Mastery, Debuff Destroyer, Challenge Easer, Azure Perfection, Rainbow Surge
     - Themes: dice color synergies, mod-powerup synergies, straight combos, economy/chores, debuff management, round-target easing
   - **Risk & Reward PowerUps** (6 total):
-    - **The Replicator** (Rare/$300): After 1 turn, duplicates a random PowerUp you own — with dramatic visual/audio effects and a fully independent replica instance that keeps its own runtime id/modifier source
-    - **The Piggy Bank** (Uncommon/$125): Saves $3 per roll; sell to cash out accumulated savings with animated coin effects. Savings persist across mall zone changes via `PlayerEconomy.piggy_bank_savings` — re-buying the Piggy Bank in a new zone restores the stored amount; selling pays out and clears it; starting a new game resets it
-    - **Random Card Level** (Rare/$300): 20% chance each turn to level up a random scorecard category
-    - **Yahtzeed Dice** (Epic/$450): Gain +1 die every time you roll a Yahtzee (max 16 dice)
-    - **Daring Dice** (Rare/$300): Remove 2 dice but gain permanent +50 score bonus per category
+    - **The Replicator** (Rare/$3.00): After 1 turn, duplicates a random PowerUp you own — with dramatic visual/audio effects and a fully independent replica instance that keeps its own runtime id/modifier source
+    - **The Piggy Bank** (Uncommon/$1.25): Saves $0.03 per roll; sell to cash out accumulated savings with animated coin effects. Savings persist across mall zone changes via `PlayerEconomy.piggy_bank_savings` — re-buying the Piggy Bank in a new zone restores the stored amount; selling pays out and clears it; starting a new game resets it
+    - **Random Card Level** (Rare/$3.00): 20% chance each turn to level up a random scorecard category
+    - **Yahtzeed Dice** (Epic/$4.50): Gain +1 die every time you roll a Yahtzee (max 16 dice)
+    - **Daring Dice** (Rare/$3.00): Remove 2 dice but gain permanent +50 score bonus per category
   - **Trade-off & Color PowerUps**:
-    - **The Great Exchange** (Rare/$350): +2 dice, -1 roll per turn — more dice but fewer re-roll chances
-    - **Extra Rainbow** (Rare/$300): +10 additive score per colored die scored — rewards color dice strategy
+    - **The Great Exchange** (Rare/$3.50): +2 dice, -1 roll per turn — more dice but fewer re-roll chances
+    - **Extra Rainbow** (Rare/$3.00): +10 additive score per colored die scored — rewards color dice strategy
 - **PowerUp UI — POG Tiles** (`Scripts/UI/kiosk_tile.gd`, `Scenes/PowerUp/kiosk_tile.tscn`)
   - Background-free 200×300 fan-out tile: translucent title pill, large circular POG, and always-visible glass SELL button
   - Settings → FX → **Always Show PowerUp Descriptions** selects live hover tooltips (off, default) or three-line inline descriptions on a translucent panel (on). Inline mode preserves the tile footprint by shrinking the artwork stage and Mom badge; the setting persists in `user://settings.cfg`
@@ -455,12 +455,12 @@ The **Dice Color System** adds strategic depth through randomly colored dice tha
   - Focused validation: `Tests/KioskTileTest.tscn` (`1`/`2`/`3` badge profiles, `4` Foilsmith map layer, `5` plain-art fallback, `6` static descriptions), automated `Tests/PowerUpFoilsmithTest.tscn`, and `Tests/PogFanVisualTest.tscn` for real GUI hover, both description modes, live updates, and tilt captures
   - Live debug: Items → **Cycle PowerUp Foil Layer** cycles map views; **Toggle PowerUp Description Mode** switches and saves hover/static display
 - **Consumables** (`Scripts/Consumable/`) - Single-use strategic items
-  - **Lucky Upgrade** ($25): Randomly upgrades one unscored scorecard category by 1 level
-  - **Half Price** ($25): Halves PowerUp prices in the shop. Stacks multiplicatively. Expires on first PowerUp purchase or new turn.
-  - **Loss Leader** ($25): Next consumable purchase is free. Stacks — each use grants one additional free purchase. Persists across turns.
-  - **Insurance Policy** ($25): If your next score is 0, receive $75 as consolation. Consumed after any scoring action.
-  - **Clearance Rack** ($25): All shop rerolls are free until you close the shop.
-  - **Loaded Dice** ($75): Pick one die and set it to an exact value.
+  - **Lucky Upgrade** ($0.25): Randomly upgrades one unscored scorecard category by 1 level
+  - **Half Price** ($0.25): Halves PowerUp prices in the shop. Stacks multiplicatively. Expires on first PowerUp purchase or new turn.
+  - **Loss Leader** ($0.25): Next consumable purchase is free. Stacks — each use grants one additional free purchase. Persists across turns.
+  - **Insurance Policy** ($0.25): If your next score is 0, receive $0.75 as consolation. Consumed after any scoring action.
+  - **Clearance Rack** ($0.25): All shop rerolls are free until you close the shop.
+  - **Loaded Dice** ($0.75): Pick one die and set it to an exact value.
 - **Mods** (`Scripts/Mods/`) - Dice behavior modifiers
 - **Gaming Consoles** (`Scripts/GamingConsole/`) - Unique console abilities (one active at a time)
   - **Shop Layout**: Consoles now use the same single-row, 3-cards-per-page shop layout as the other purchasable tabs; footer arrows appear when more than 3 consoles are available, and purchased consoles disappear from the current shop pool while the one-console ownership limit remains in force
@@ -704,7 +704,7 @@ The **Statistics Manager** tracks comprehensive game metrics and player behavior
 
 **Features:**
 - **Real-time Tracking**: Monitors all player actions including dice rolls, scoring, purchases, and item usage
-- **Categorized Metrics**: Core game stats, economic data, dice behavior, hand completions, and session metrics  
+- **Categorized Metrics**: Core game stats, economic data, dice behavior, hand completions, and session metrics
 - **Visual Dashboard**: Press **F10** to toggle statistics panel with tabbed interface
 - **Milestone Detection**: Automatic recognition and celebration of achievement thresholds
 - **Future Integration**: Designed for statistic-based power-ups, achievements, and dynamic difficulty
@@ -746,14 +746,14 @@ The **Logbook System** provides detailed tracking and debugging of all hand scor
 **Usage Examples:**
 ```gdscript
 # Basic logging (automatically called during scoring)
-Statistics.log_hand_scored(dice_values, dice_colors, dice_mods, 
-    "three_of_a_kind", "lower", consumables, powerups, 
+Statistics.log_hand_scored(dice_values, dice_colors, dice_mods,
+    "three_of_a_kind", "lower", consumables, powerups,
     base_score, effects, final_score)
 
 # Retrieve recent entries for display
 var recent_logs = Statistics.get_recent_log_entries(3)
 
-# Get formatted text for ExtraInfo display  
+# Get formatted text for ExtraInfo display
 var display_text = Statistics.get_formatted_recent_logs()
 
 # Export session logs for analysis
@@ -860,7 +860,7 @@ The **Progress Tracking System** enables persistent player progression across mu
 | `SCORE_CATEGORY` | Score in a specific category | Score in Full House |
 | `ROLL_STRAIGHT` | Roll X straights in a single game | Roll 3 straights |
 | `USE_CONSUMABLES` | Use X consumables in one game | Use 5 consumables |
-| `EARN_MONEY` | Earn X dollars in a single game | Earn $200 in one game |
+| `EARN_MONEY` | Earn X dollars in a single game | Earn $2.00 in one game |
 | `COLORED_DICE_BONUS` | Trigger X same color bonuses | Trigger 3 color bonuses |
 | `SCORE_UPPER_BONUS` | Achieve upper section bonus | Get 63+ upper points |
 | `WIN_GAMES` | Win X games (cumulative) | Win 10 total games |
@@ -953,25 +953,25 @@ After beating the round target and clicking the Shop button, an End of Round Sta
 - "Head to Shop" button to proceed after viewing stats
 
 **End of Round Bonuses:**
-- **Empty Category Bonus**: $10 for each unscored category on the scorecard
+- **Empty Category Bonus**: $0.10 for each unscored category on the scorecard
   - Rewards efficient play and early target completion
-  - Max possible: 13 categories × $10 = $130 (if completed without scoring anything)
-- **Points Above Target Bonus**: $1 for each point above the round target score
+  - Max possible: 13 categories × $0.10 = $1.30 (if completed without scoring anything)
+- **Points Above Target Bonus**: $0.01 for each point above the round target score
   - Rewards exceeding the round target
-  - Example: Round target 100, final score 130 = $30 bonus
+  - Example: Round target 100, final score 130 = $0.30 bonus
 
 **Bonus Calculation Example:**
 - Round 1, target: 100 points
 - Player finishes with score: 130 points
 - Empty categories: 3 (didn't need to fill them)
-- Empty category bonus: 3 × $25 = $75
-- Points above target bonus: 30 × $1 = $30
-- **Total round bonus: $105**
+- Empty category bonus: 3 × $0.25 = $0.75
+- Points above target bonus: 30 × $0.01 = $0.30
+- **Total round bonus: $1.05**
 
 **Implementation:**
 - `EndOfRoundStatsPanel` (`Scripts/UI/end_of_round_stats_panel.gd`) - Panel UI and animation; stops money sounds and cancels remaining animations when dismissed early
-- `RoundManager.calculate_empty_category_bonus()` - Counts null categories × $10
-- `RoundManager.calculate_score_above_target_bonus()` - (score - target) × $1
+- `RoundManager.calculate_empty_category_bonus()` - Counts null categories × $0.10
+- `RoundManager.calculate_score_above_target_bonus()` - (score - target) × $0.01
 - Bonuses awarded via `PlayerEconomy.add_money()` when "Head to Shop" is clicked
 
 **End-of-Round Button Behavior:**
@@ -1096,7 +1096,7 @@ Unresolved anger carries forward. If Mom storms off (or an outcome adds grudge),
 **Rebellion Systems (Sass Incentives):**
 Sass is the high-variance path; compliance is the safe path. Three interlocking systems make rebellion a real strategy:
 - **Rebellion Buff**: A *successful* sass (sassy response that draws no tangible punishment: storms off, defer, or a pure flavor outcome) grants the round-scoped **Rebellion** buff — +15% score and +1 roll per turn per stack, up to 3 stacks (one per successful sass in the visit). Cleared at round end when the shop opens. Implemented as a positive effect riding the Debuff pipeline (`Scripts/Debuff/rebellion_buff.gd`); its icon chip lives in the Chore UI buff row (compact meter + fan-out details panel), not the Debuff UI.
-- **Teacher's Pet Buff**: A non-sassy positive interaction during a Mom session can instead grant the round-scoped **Teacher's Pet** buff, evaluated once per session from Mom's *pre-dialog* mood. It does not coexist with Rebellion; whichever qualifying response wins last in dialog order decides the active Mom-granted buff, and later grants in the round replace the earlier buff. Ten tiers map to Mom's full mood range (`tier = 11 - mood`): the maddest mood (10) grants Tier 1 and the happiest (1) grants Tier 10, with activation odds scaling 50% (T1) to 100% (T10). The tier is further capped by the run's **goof-off points** — the running total of meter reduction from completed chores: 0-49 points allows up to Tier 5, and each further 50 points unlocks one more tier (250+ uncaps Tier 10). Effects stack as they unlock — additive score per hand from `+5` (T1) to `+50` (T10), a round-end allowance from Tier 4 (`$25` up to `$200` at T10), and a score multiplier from Tier 7 (`x1.5` up to `x3.0` at T10). Regrants keep the highest Teacher's Pet tier already earned that round. Implemented in `Scripts/Debuff/teacher_pet_buff.gd` and shown in the same Chore UI buff row as Rebellion; the fan-out lists every active attribute (additive, multiplier, allowance) on its own line.
+- **Teacher's Pet Buff**: A non-sassy positive interaction during a Mom session can instead grant the round-scoped **Teacher's Pet** buff, evaluated once per session from Mom's *pre-dialog* mood. It does not coexist with Rebellion; whichever qualifying response wins last in dialog order decides the active Mom-granted buff, and later grants in the round replace the earlier buff. Ten tiers map to Mom's full mood range (`tier = 11 - mood`): the maddest mood (10) grants Tier 1 and the happiest (1) grants Tier 10, with activation odds scaling 50% (T1) to 100% (T10). The tier is further capped by the run's **goof-off points** — the running total of meter reduction from completed chores: 0-49 points allows up to Tier 5, and each further 50 points unlocks one more tier (250+ uncaps Tier 10). Effects stack as they unlock — additive score per hand from `+5` (T1) to `+50` (T10), a round-end allowance from Tier 4 (`$0.25` up to `$2.00` at T10), and a score multiplier from Tier 7 (`x1.5` up to `x3.0` at T10). Regrants keep the highest Teacher's Pet tier already earned that round. Implemented in `Scripts/Debuff/teacher_pet_buff.gd` and shown in the same Chore UI buff row as Rebellion; the fan-out lists every active attribute (additive, multiplier, allowance) on its own line.
 - **Punishment Delay**: The "Not now, Mom." response (punishment visits) can defer the pending punishment to a later visit. Counterweight: each defer adds +1 grudge and raises the **defer streak** (max 3, run-scoped, saved), which compounds onto the severity of the *eventual* resolution — and grudge can convert future reward visits into punishment visits. The streak resets when a punishment tier is actually applied.
 - **Rep Stat**: A persistent meta stat (0-100, saved in the profile) that grows with successful sass (+8, defer +7, storm off +9) and shrinks with bootlicking compliance (polite on punishment visits -2, polite on check-ins -1). Rep gates kiosk inventory by POG tier, with thresholds scaled by the run difficulty chosen at the Mall Map (`REP_TIER_THRESHOLDS_BY_DIFFICULTY` in `Scripts/Managers/progress_manager.gd`): EASY `[0, 0, 5, 15, 30]`, MEDIUM `[0, 0, 10, 25, 50]`, HARD `[0, 10, 20, 40, 60]` — the five entries gate G, PG, PG-13 ("Parental Guidance"), R ("Grounded"), and NC-17 ("Banned"). Pacing is tuned so the HARD tier 4 gate (Rep 60, NC-17 POGs) is reachable by the end of Mall Zone 2 Round 6 for a sass-heavy run; the common neutral check-in was retuned so the target is based on real expected gains, not only best-case storm-off chains. Below the tier-2 threshold (5/10/20 Rep by difficulty) with a happy Mom (mood ≤ 3), the Mom-Approved (G) pool gets 1.5x shelf weight and a 10% discount instead — two playstyles, two item pools. Rep-gated items appear greyed in the shop's LOCKED tab with their Rep requirement.
 - **Sass Escalation**: Sassy responses that draw a punishment scale with Rep — every 2 Rep tiers adds +1 punishment tier (clamped at tier 5), and at Rep tier 3+ debuff punishments apply +1 extra debuff.
@@ -1129,13 +1129,13 @@ A recurring cast lives inside Mom's check-in dialogues. They never speak directl
 1. **The Patterson File** — nosy intro → false-accusation escalation → the absurd casserole report and a truce (sightings halve, never false again) → post-truce, Patterson becomes Mom's reluctant informant.
 2. **The Golden Child** — Derek comparisons → grudge-scaled resentment → Derek caught at Video Rentals, then one silent, warm check-in (forces a cool-mom visit next) → Derek quietly covers for you once; the rivalry softens.
 3. **Dad's Long Week** — traffic commiseration → the good pen → "I haven't told your father… yet." → Mom finds Dad's list of your excuses → the cover-up choice (help destroy it or let it play out).
-4. **The Perfume Cloud** — Debra's opinions → the perfume-counter ambush → Mom tells her off ($25 gift card, "I'm keeping half") → Debra's revenge gossip backfires at the neighborhood watch meeting.
+4. **The Perfume Cloud** — Debra's opinions → the perfume-counter ambush → Mom tells her off ($0.25 gift card, "I'm keeping half") → Debra's revenge gossip backfires at the neighborhood watch meeting.
 5. **Mrs. Henderson Has Called** — homework warning → the dinner phone call → "creative with your time" (needs chores done = homework done; pays a consumable) → Henderson phones back with "photographic evidence"; Mom humors him while mouthing the truth to you.
-6. **Mom's Secret Past** — regional finals 1987 → champion's tips (free consumable) → Mom takes the cabinet high score (Rep-gated, pays $75) → the trophy comes out of the closet, with a rematch offer.
-7. **Bird Feeder Fever** — Mom goes all-in on premium seed and a cardinal spreadsheet → kitchen-window stakeout mode → the cardinal finally lands and she pays out a $25 victory allowance.
-8. **The Squirrel Campaign** — Chairman Nibbles raids the yard → he outsmarts the fancy baffle → Mom wins with decoy peanuts and celebrates with a $30 shop stipend.
-9. **Derek's Room Disaster** — a shared mess turns Derek's room into a biohazard → the blame game reaches the air vent → real cleanup earns $30 and a temporary peace treaty.
-10. **The Missing Casserole Dish** — Debra escalates a missing-dish panic into neighborhood paperwork → Patterson counter-labels the ladle → the peace offering comes back as a $25 payout to you.
+6. **Mom's Secret Past** — regional finals 1987 → champion's tips (free consumable) → Mom takes the cabinet high score (Rep-gated, pays $0.75) → the trophy comes out of the closet, with a rematch offer.
+7. **Bird Feeder Fever** — Mom goes all-in on premium seed and a cardinal spreadsheet → kitchen-window stakeout mode → the cardinal finally lands and she pays out a $0.25 victory allowance.
+8. **The Squirrel Campaign** — Chairman Nibbles raids the yard → he outsmarts the fancy baffle → Mom wins with decoy peanuts and celebrates with a $0.30 shop stipend.
+9. **Derek's Room Disaster** — a shared mess turns Derek's room into a biohazard → the blame game reaches the air vent → real cleanup earns $0.30 and a temporary peace treaty.
+10. **The Missing Casserole Dish** — Debra escalates a missing-dish panic into neighborhood paperwork → Patterson counter-labels the ladle → the peace offering comes back as a $0.25 payout to you.
 
 **Dad mechanics**: at severity ≥ 4 with grudge ≥ 2, a meter visit has a 20% chance to become a Dad call (once per playthrough) — Mom relays Dad's verdict off-screen and the punishment lands one tier worse. Counterpoint: if grudge climbs to 2+ and later returns to 0, the next check-in becomes the Dad cover beat ("I didn't tell him. You owe me.") — big mood/Rep gain, no punishment.
 
@@ -1158,12 +1158,12 @@ A recurring cast lives inside Mom's check-in dialogues. They never speak directl
 Each visit that resolves at severity 3+ increments a run counter that adds to later visits' severity — repeat low-mood visits unlock harsher tiers.
 
 **Punishment Tiers (data-driven, `Resources/Data/Mom/Punishments/*.tres`):**
-- **Tier 0 - Proud Mom**: Rewards — money ($50-150), consumable, or safe power-up
-- **Tier 1 - Disappointed** (mood 4-6): Small fine ($50), scolding, or mood warning
-- **Tier 2 - Grounded Lite** (mood 7): Fine ($100-150), 1 debuff, or R-rated confiscation
-- **Tier 3 - Confiscation** (mood 8): R + NC-17 confiscation with stacking grounded debuffs, debuff, or fine ($150)
+- **Tier 0 - Proud Mom**: Rewards — money ($0.50-150), consumable, or safe power-up
+- **Tier 1 - Disappointed** (mood 4-6): Small fine ($0.50), scolding, or mood warning
+- **Tier 2 - Grounded Lite** (mood 7): Fine ($1.00-150), 1 debuff, or R-rated confiscation
+- **Tier 3 - Confiscation** (mood 8): R + NC-17 confiscation with stacking grounded debuffs, debuff, or fine ($1.50)
 - **Tier 4 - No Fun** (mood 9): Locks dice colors for the round, removes a mod permanently, or 2 debuffs
-- **Tier 5 - Furious** (mood 10): NC-17 sweep + stacking debuffs, fine ($200-300), or 2 mods removed
+- **Tier 5 - Furious** (mood 10): NC-17 sweep + stacking debuffs, fine ($2.00-300), or 2 mods removed
 - Lighter tiers are temporary (round-scoped debuffs, cosmetic locks); harsher tiers are permanent (confiscation, mod removal)
 
 **Mom Consequences:**
@@ -1199,7 +1199,7 @@ Each visit that resolves at severity 3+ increments a run counter that adds to la
 - Rep +10 / Rep -10 / Show Rep State: Adjust and inspect the persistent Rep stat
 - Set Rep 0 (G) / 25 (PG-13) / 50 (R) / 75 (NC-17): Jump Rep to an exact POG tier threshold
 - Grant Rebellion Buff: Apply the sass-reward buff directly (icon appears in the Chore UI buff row)
-- Teacher's Pet: By Mood / T1 / T5 / T10: Apply the positive-interaction buff directly for validation — by Mom's current mood (tier = 11 - mood, capped by the run's goof-off points) or at a preset tier (effects stack from additive-only at T1 up to `+50` additive + `x3.0` multiplier + `$200` round-end allowance at T10)
+- Teacher's Pet: By Mood / T1 / T5 / T10: Apply the positive-interaction buff directly for validation — by Mom's current mood (tier = 11 - mood, capped by the run's goof-off points) or at a preset tier (effects stack from additive-only at T1 up to `+50` additive + `x3.0` multiplier + `$2.00` round-end allowance at T10)
 - Clear Rebellion Buff: Remove the active Rebellion buff and its Chore UI icon
 - Clear Active Mom Buff: Remove whichever Mom-granted buff is currently active in the Chore UI row
 - Select New Task: Force new random task selection
@@ -1209,7 +1209,7 @@ Each visit that resolves at severity 3+ increments a run counter that adds to la
 - Test Mom Dialog: Preview Mom's expressions and dialog
 
 **Debug Commands (Economy Tab):**
-- Piggy Bank: Set $0 / $100 / $500: Set the persisted `PlayerEconomy.piggy_bank_savings` restored on the next Piggy Bank purchase
+- Piggy Bank: Set $0.00 / $1.00 / $5.00: Set the persisted `PlayerEconomy.piggy_bank_savings` restored on the next Piggy Bank purchase
 - Piggy Bank: Show Savings: Log the persisted Piggy Bank savings and wallet balance
 
 **Implementation Files:**
@@ -1532,7 +1532,7 @@ var total_matching = synergy_manager.get_total_matching_bonus()
   - Mod rows show current-run ownership counts sourced from `GameController.mod_persistence_map`
   - Color rows show current-run ownership counts plus live odds (`1/X`) sourced from `DiceColorManager`
 - **Reroll Footer**: PowerUp and Consumable tabs use a shader-backed reroll shell with the live cost embedded inside the button and pagination arrows flanking it
-  - Base cost: $25, increases by $5 per reroll
+  - Base cost: $0.25, increases by $0.05 per reroll
   - 750ms cooldown between rerolls
   - Cost resets when starting a new game
   - Disabled when no items available or cannot afford
@@ -1573,7 +1573,7 @@ SELL and USE buttons throughout the game feature consistent themed styling:
 - **Direct Style Application**: Custom StyleBoxFlat creation for reliable programmatic theming
 - **Thick Golden Borders**: 3px borders with distinct colors for each state (normal/hover/pressed)
 - **VCR Font Consistency**: Retro gaming font with outline effects
-- **Multiple Visual States**: 
+- **Multiple Visual States**:
   - Normal: Dark background with golden border (1, 0.8, 0.2, 1)
   - Hover: Lighter background with brighter border (1, 0.9, 0.3, 1)
   - Pressed: Brightest background with yellow border (1, 1, 0.4, 1)
@@ -1718,7 +1718,7 @@ All timings/intensities live in `JuiceProfile` (`Scripts/Core/juice_profile.gd`,
 
 ### Verification
 - Test scenes: `Tests/mom_fanfare_test.tscn` (auto-demo of all fanfare paths + queue gate), `Tests/mom_money_pull_test.tscn` (real MoneyUI, PASS/FAIL prints), `Tests/ScoringAnimationTest.tscn` (console sources in the breakdown).
-- Debug panel (F12) → Testing tab: `Test Buff Fanfare`, `Test Debuff Fanfare`, `Test Mom Money Pull ($10)`, `Test Console Score Chips`.
+- Debug panel (F12) → Testing tab: `Test Buff Fanfare`, `Test Debuff Fanfare`, `Test Mom Money Pull ($0.10)`, `Test Console Score Chips`.
 
 ## Editor Tools
 
@@ -1761,7 +1761,7 @@ A read-only editor tool for viewing all game resources in one centralized interf
 3. Add activation code to `GameController`
 4. Create data entry in `PowerUpManager`
 
-### Adding New Consumables  
+### Adding New Consumables
 1. Create script in `Scripts/Consumable/` extending base consumable
 2. Implement `can_use()` and `use()` methods
 3. Add data entry in `ConsumableManager`
@@ -1777,24 +1777,24 @@ A read-only editor tool for viewing all game resources in one centralized interf
 
 Latest content wave additions and system changes:
 
-- **Orange Dice**: New 7th dice color. Grants +1 roll per Orange die scored for the NEXT turn only (no permanent stacking); pending rolls carry across rounds but reset on a Mall Zone change. Rarest color (1 in 150 per roll); sells for $175. See the Dice Color System section.
+- **Orange Dice**: New 7th dice color. Grants +1 roll per Orange die scored for the NEXT turn only (no permanent stacking); pending rolls carry across rounds but reset on a Mall Zone change. Rarest color (1 in 150 per roll); sells for $1.75. See the Dice Color System section.
 - **Rainbow rule change**: The Rainbow color bonus now triggers at 5 unique colors of the 6 available (previously stricter); when active, all color effects are boosted by 50%.
-- **Yellow Slime** (PowerUp, $300): Doubles yellow dice probability. Shares the unified `slime_power_up.gd` script with the green/red/blue/purple slimes.
-- **Extreme Couponing** (PowerUp, $140): +5 score per consumable granted this run. Listens to the GameController's `consumable_granted` signal.
-- **Defiance** (PowerUp, $400): +0.25x multiplier per active debuff.
-- **Comeback Kid** (PowerUp, $150): +5 score for each category sitting at 0.
-- **Upper Crust** (PowerUp, $250): Upper section scores get x1.5.
-- **Four-Kind Yahtzee** (PowerUp, $450): Four-of-a-kind counts as a Yahtzee for 25 points.
-- **Two Pair House** (PowerUp, $300): Two pair counts as a Full House (25 points).
-- **Spite** (Consumable, $50): Next score gets +0.5x per active debuff.
-- **Antidote** (Consumable, $40): Cleanse your highest-intensity debuff.
-- **Immunity** (Consumable, $50): No debuffs next round. Sets `DebuffManager.immunity_next_round`, which skips the automatic debuff assignment and the New Round Panel debuff preview for that round.
-- **Mulligan** (Consumable, $25): Reroll your worst placed score.
-- **Scratch Ticket** (Consumable, $50): If your last score was 0, your next score is doubled.
-- **Paint Job** (Consumable, $60): All dice gain a random color for the next roll, then revert.
-- **Bonus Sprint** (Consumable, $65): Upper scores count double toward the upper bonus this round.
-- **Painted Die** (Mod, $100): This die always counts as a random color.
-- **Cursed Six** (Mod, $25): Always rolls 6, but costs $5 per roll. Sells for $0 via the new `ModData.sell_price` override (-1 keeps the legacy half-price refund).
+- **Yellow Slime** (PowerUp, $3.00): Doubles yellow dice probability. Shares the unified `slime_power_up.gd` script with the green/red/blue/purple slimes.
+- **Extreme Couponing** (PowerUp, $1.40): +5 score per consumable granted this run. Listens to the GameController's `consumable_granted` signal.
+- **Defiance** (PowerUp, $4.00): +0.25x multiplier per active debuff.
+- **Comeback Kid** (PowerUp, $1.50): +5 score for each category sitting at 0.
+- **Upper Crust** (PowerUp, $2.50): Upper section scores get x1.5.
+- **Four-Kind Yahtzee** (PowerUp, $4.50): Four-of-a-kind counts as a Yahtzee for 25 points.
+- **Two Pair House** (PowerUp, $3.00): Two pair counts as a Full House (25 points).
+- **Spite** (Consumable, $0.50): Next score gets +0.5x per active debuff.
+- **Antidote** (Consumable, $0.40): Cleanse your highest-intensity debuff.
+- **Immunity** (Consumable, $0.50): No debuffs next round. Sets `DebuffManager.immunity_next_round`, which skips the automatic debuff assignment and the New Round Panel debuff preview for that round.
+- **Mulligan** (Consumable, $0.25): Reroll your worst placed score.
+- **Scratch Ticket** (Consumable, $0.50): If your last score was 0, your next score is doubled.
+- **Paint Job** (Consumable, $0.60): All dice gain a random color for the next roll, then revert.
+- **Bonus Sprint** (Consumable, $0.65): Upper scores count double toward the upper bonus this round.
+- **Painted Die** (Mod, $1.00): This die always counts as a random color.
+- **Cursed Six** (Mod, $0.25): Always rolls 6, but costs $0.05 per roll. Sells for $0.00 via the new `ModData.sell_price` override (-1 keeps the legacy half-price refund).
 - **High Roller conflict warning**: Shop cards now show a red "!" badge (and a tooltip warning) when buying the High Roller mod while owning lock-scaling PowerUps (Lock And Load / Wild Dots), or vice versa — High Roller dice cannot be locked.
 - **Loaded Dice upgrade**: Now lets you pick one die and set it to an exact value instead of randomizing a random die.
 - **WildCardMod semantics fix**: The unlock registry now uses the shop id `wildcard` (it previously registered `wild_card`, so the mod could never be unlocked through progression).
@@ -1809,26 +1809,26 @@ Latest content wave additions and system changes:
 - **Chance520PowerUp**: +520 points when scoring Chance category
 - **RedPowerRangerPowerUp**: Gain +additive score for each red dice scored (cumulative across all hands)
 - **PinHeadPowerUp**: When scoring, picks a random dice value as multiplier (e.g., score 30 with random dice 3 = 90 points)
-- **HighlightedScorePowerUp**: Highlights one random unscored category with golden border; highlighted category gets 1.5x multiplier when scored (Rare, $300)
-- **YellowSlimePowerUp**: Doubles yellow dice probability ($300)
-- **ExtremeCouponingPowerUp**: +5 score per consumable granted this run ($140)
-- **DefiancePowerUp**: +0.25x multiplier per active debuff ($400)
-- **ComebackKidPowerUp**: +5 score for each category sitting at 0 ($150)
-- **UpperCrustPowerUp**: Upper section scores get x1.5 ($250)
-- **FourOfAKindYahtzeePowerUp**: Four-of-a-kind counts as a Yahtzee for 25 points ($450)
-- **TwoPairHousePowerUp**: Two pair counts as a Full House (25 points) ($300)
+- **HighlightedScorePowerUp**: Highlights one random unscored category with golden border; highlighted category gets 1.5x multiplier when scored (Rare, $3.00)
+- **YellowSlimePowerUp**: Doubles yellow dice probability ($3.00)
+- **ExtremeCouponingPowerUp**: +5 score per consumable granted this run ($1.40)
+- **DefiancePowerUp**: +0.25x multiplier per active debuff ($4.00)
+- **ComebackKidPowerUp**: +5 score for each category sitting at 0 ($1.50)
+- **UpperCrustPowerUp**: Upper section scores get x1.5 ($2.50)
+- **FourOfAKindYahtzeePowerUp**: Four-of-a-kind counts as a Yahtzee for 25 points ($4.50)
+- **TwoPairHousePowerUp**: Two pair counts as a Full House (25 points) ($3.00)
 
 ### Economy PowerUps
-- **BonusMoneyPowerUp**: +$50 for each bonus achieved (Upper Section or Yahtzee bonuses)
-- **ConsumableCashPowerUp**: +$25 for each consumable used
+- **BonusMoneyPowerUp**: +$0.50 for each bonus achieved (Upper Section or Yahtzee bonuses)
+- **ConsumableCashPowerUp**: +$0.25 for each consumable used
 - **MoneyMultiplierPowerUp**: +0.1x money multiplier per Yahtzee rolled (NEW)
-- **TheConsumerIsAlwaysRightPowerUp**: +0.25x score multiplier per consumable used (Epic, $400)
+- **TheConsumerIsAlwaysRightPowerUp**: +0.25x score multiplier per consumable used (Epic, $4.00)
   - Multiplier persists even if PowerUp is sold, based on permanent usage statistics
   - Example: After using 3 consumables, all scores are multiplied by 1.75x
   - Synergizes excellently with consumable-heavy strategies
 
 ### Inventory PowerUps
-- **ExtraCouponsPowerUp**: Consumable slots are fixed at 4 (Rare, $250, R-rated)
+- **ExtraCouponsPowerUp**: Consumable slots are fixed at 4 (Rare, $2.50, R-rated)
   - No longer increases consumable slots; kept for backward compatibility with existing saves
   - When sold or removed, no overflow handling occurs since the cap is fixed
 
@@ -1840,7 +1840,7 @@ All PowerUps have content ratings that interact with the Mom system:
 - Ratings are displayed in PowerUp hover tooltips (e.g., "[R] PowerUp Name")
 - See "Chores & Mom System" section for full details
 
-### Dice Modifiers  
+### Dice Modifiers
 - **ExtraDicePowerUp**: Adds 6th die to hand (enables lock dice debuff)
 - **ExtraRollsPowerUp**: +2 extra rolls per turn
 - **EvensNoOddsPowerUp**: Rerolls odd dice automatically
@@ -1859,7 +1859,7 @@ Score Card Upgrade consumables permanently increase the level of specific scorin
 
 **Calculation Order:** `(base_score × category_level) + additives × multipliers`
 
-**Upper Section Upgrades** (Price: $150 each)
+**Upper Section Upgrades** (Price: $1.50 each)
 - **Ones Upgrade**: Upgrade the Ones category (+1 level)
 - **Twos Upgrade**: Upgrade the Twos category (+1 level)
 - **Threes Upgrade**: Upgrade the Threes category (+1 level)
@@ -1867,7 +1867,7 @@ Score Card Upgrade consumables permanently increase the level of specific scorin
 - **Fives Upgrade**: Upgrade the Fives category (+1 level)
 - **Sixes Upgrade**: Upgrade the Sixes category (+1 level)
 
-**Lower Section Upgrades** (Price: $200 each)
+**Lower Section Upgrades** (Price: $2.00 each)
 - **Three of a Kind Upgrade**: Upgrade the Three of a Kind category (+1 level)
 - **Four of a Kind Upgrade**: Upgrade the Four of a Kind category (+1 level)
 - **Full House Upgrade**: Upgrade the Full House category (+1 level)
@@ -1875,10 +1875,10 @@ Score Card Upgrade consumables permanently increase the level of specific scorin
 - **Large Straight Upgrade**: Upgrade the Large Straight category (+1 level)
 - **Yahtzee Upgrade**: Upgrade the Yahtzee category (+1 level)
 
-**Master Upgrade** (Price: $500)
+**Master Upgrade** (Price: $5.00)
 - **All Categories Upgrade**: Upgrades ALL 12 scoring categories by one level at once
 
-**d4-Exclusive Upgrades** (Price: $75 each)
+**d4-Exclusive Upgrades** (Price: $0.75 each)
 - **Evens Upgrade**: Upgrade the Evens category (+1 level)
 - **Odds Upgrade**: Upgrade the Odds category (+1 level)
 - **Even Odd Full House Upgrade**: Upgrade the Even Odd Full House category (+1 level)
@@ -1903,34 +1903,34 @@ Score Card Upgrade consumables permanently increase the level of specific scorin
 ### Scoring Aids
 - **AnyScore**: Score current dice in any open category, ignoring normal requirements
 - **ScoreReroll**: Reroll all dice, then auto-score best category
-- **Mulligan**: Reroll your worst placed score (Price: $25)
-- **Scratch Ticket**: If your last score was 0, your next score is doubled (Price: $50)
-- **Spite**: Next score gets +0.5x per active debuff (Price: $50)
-- **Antidote**: Cleanse your highest-intensity debuff (Price: $40)
-- **Immunity**: No debuffs next round (Price: $50)
-- **Paint Job**: All dice gain a random color for the next roll, then revert (Price: $60)
-- **Bonus Sprint**: Upper scores count double toward the upper bonus this round (Price: $65)
-- **One Extra Dice**: Add +1 dice to the next hand only, removed after scoring (Price: $50)
+- **Mulligan**: Reroll your worst placed score (Price: $0.25)
+- **Scratch Ticket**: If your last score was 0, your next score is doubled (Price: $0.50)
+- **Spite**: Next score gets +0.5x per active debuff (Price: $0.50)
+- **Antidote**: Cleanse your highest-intensity debuff (Price: $0.40)
+- **Immunity**: No debuffs next round (Price: $0.50)
+- **Paint Job**: All dice gain a random color for the next roll, then revert (Price: $0.60)
+- **Bonus Sprint**: Upper scores count double toward the upper bonus this round (Price: $0.65)
+- **One Extra Dice**: Add +1 dice to the next hand only, removed after scoring (Price: $0.50)
   - Temporarily increases dice count from 5 to 6 for the next turn
   - Extra dice is automatically removed when any score is assigned (manual or auto)
   - Similar to Extra Dice PowerUp but temporary and single-use
   - Useful for difficult hands that need one more dice for a good score
 
 ### Economy
-- **Raining Green**: 10x multiplier for all green dice money scored this turn (Price: $50)
-- **Poor House**: Transfer all your money to add bonus points to the next scored hand (Price: $100)
+- **Raining Green**: 10x multiplier for all green dice money scored this turn (Price: $0.50)
+- **Poor House**: Transfer all your money to add bonus points to the next scored hand (Price: $1.00)
 
 ### Strategic Multipliers
-- **Empty Shelves**: Multiply next score by the number of empty PowerUp slots (Price: $150)
+- **Empty Shelves**: Multiply next score by the number of empty PowerUp slots (Price: $1.50)
   - Can only be used when dice are rolled and ready to be scored
   - Example: With 4 empty PowerUp slots, a Full House worth 25 points becomes 100 points
   - Synergizes well with minimal PowerUp builds for maximum multiplier effect
-- **Double or Nothing**: High-risk, high-reward consumable (Price: $150)
+- **Double or Nothing**: High-risk, high-reward consumable (Price: $1.50)
   - Use after pressing Next Turn (after auto-roll) but before manual rolling
   - If a Yahtzee is rolled during that turn, the Yahtzee score is doubled (50 → 100 points)
   - If no Yahtzee is rolled, the next score placed becomes 0
   - Strategic timing is crucial - use only when confident in rolling a Yahtzee
-- **Go Broke or Go Home**: Ultimate high-risk economic gamble (Price: $200)
+- **Go Broke or Go Home**: Ultimate high-risk economic gamble (Price: $2.00)
   - Use after pressing Next Turn, then manually select a lower section category only
   - If you score greater than 0, your money is doubled
   - If you score 0, you lose all your money
@@ -1941,18 +1941,18 @@ Score Card Upgrade consumables permanently increase the level of specific scorin
 - **Random Uncommon Power-Up**: Grants a random uncommon rarity power-up
 
 ### PowerUp Economy
-- **The Rarities**: Pays cash based on owned PowerUps by rarity (Price: $100)
-  - Common: $20 each
-  - Uncommon: $25 each  
-  - Rare: $50 each
-  - Epic: $75 each
-  - Legendary: $150 each
+- **The Rarities**: Pays cash based on owned PowerUps by rarity (Price: $1.00)
+  - Common: $0.20 each
+  - Uncommon: $0.25 each
+  - Rare: $0.50 each
+  - Epic: $0.75 each
+  - Legendary: $1.50 each
   - Can be used at any time to convert PowerUp collection into immediate cash
   - Useful for funding expensive purchases or when needing quick money
 
-- **The Pawn Shop**: Sells ALL owned PowerUps for 1.25x their purchase price (Price: $150)
+- **The Pawn Shop**: Sells ALL owned PowerUps for 1.25x their purchase price (Price: $1.50)
   - **WARNING**: This permanently removes ALL PowerUps from your collection
-  - Example: A $300 PowerUp becomes $375 cash
+  - Example: A $3.00 PowerUp becomes $3.75 cash
   - Only usable when you own at least one PowerUp
   - High-risk, high-reward strategy for major cash influx
   - Use when you need significant money for expensive purchases
@@ -1965,7 +1965,7 @@ Score Card Upgrade consumables permanently increase the level of specific scorin
 - Random PowerUps provide strategic risk/reward decisions
 
 ### Shop & Inventory
-- **Visit The Shop**: Opens the shop UI mid-round without ending your turn (Price: $125)
+- **Visit The Shop**: Opens the shop UI mid-round without ending your turn (Price: $1.25)
   - Can be used at any time during active play (before or after rolling)
   - Does not consume a roll or end your turn
   - Allows buying consumables, PowerUps, or Mods without waiting for round end
@@ -1979,14 +1979,14 @@ Mods are special attachments that can be applied to individual dice to change th
 ### Dice Value Modifiers
 - **EvenOnlyMod**: Forces die to only roll even values; the valid parity list is built from the die's side count (e.g. 2,4 for d4; 2,4,6 for d6; 2,4,6,8,10,12 for d12)
 - **OddOnlyMod**: Forces die to only roll odd values; valid parity list is built from the die's side count (e.g. 1,3 for d4; 1,3,5 for d6)
-- **ThreeButThreeMod**: Always rolls 3 and grants $3 per roll
-- **FiveByOneMod**: Always rolls 1 (clamped to the die's valid range) but grants $5 per roll
+- **ThreeButThreeMod**: Always rolls 3 and grants $0.03 per roll
+- **FiveByOneMod**: Always rolls 1 (clamped to the die's valid range) but grants $0.05 per roll
 
 ### Special Behaviors
 - **GoldSixMod**: When rolling a 6, grants additional money based on game state
 - **WildCardMod**: Provides random special effects on each roll. Registered in the unlock system under its shop id `wildcard` (previously mismatched as `wild_card`, which made it impossible to unlock)
-- **PaintedDieMod**: This die always counts as a random color (Price: $100)
-- **CursedSixMod**: Always rolls 6, but costs $5 per roll (Price: $25). Sells for $0 — its `ModData.sell_price` override bypasses the default half-price refund
+- **PaintedDieMod**: This die always counts as a random color (Price: $1.00)
+- **CursedSixMod**: Always rolls 6, but costs $0.05 per roll (Price: $0.25). Sells for $0.00 — its `ModData.sell_price` override bypasses the default half-price refund
 - **HighRollerMod**: Cannot be locked; click to reroll for increasing Fibonacci costs (0,1,1,2,3,5,8...)
   - Prevents the die from being locked/unlocked
   - Click the die to perform a manual reroll
@@ -2018,7 +2018,7 @@ Debuffs are negative effects that hinder the player's progress and add challenge
   - Affects the category being scored, not all categories at once
 
 ### Economy Debuffs
-- **Costly Roll**: Charges $10 per dice roll
+- **Costly Roll**: Charges $0.10 per dice roll
 
 ### System Debuffs
 - **Faster Chores**: Chore meter increases 3 points per roll instead of 1
@@ -2064,7 +2064,7 @@ Debuffs are negative effects that hinder the player's progress and add challenge
 ### Groundings
 Groundings are Mom-themed punishments drawn from a **separate pool** from debuffs (`DebuffData.is_grounding = true`), sharing the debuff UI slots. They are not scheduled by rounds and do not appear in the New Round panel or Mall Map tooltips.
 
-- **Docked Allowance** (`docked_allowance`): The end-of-round award is withheld; the stats panel shows "ALLOWANCE DOCKED:" with a $0 total
+- **Docked Allowance** (`docked_allowance`): The end-of-round award is withheld; the stats panel shows "ALLOWANCE DOCKED:" with a $0.00 total
 - **Coupons Revoked** (`coupons_revoked`): Removes all held coupons (consumables) at round start
 - **POGS Confiscated** (`pogs_confiscated`): Revokes N random power-ups, where N scales with REP tier (tiers 0-1 → 1, 2-3 → 2, 4 → 3)
 
@@ -2082,20 +2082,20 @@ See `BUILD_DEBUFF.md` for the full debuff/grounding creation recipe.
 Gaming Consoles are a unique item class that provides powerful, specialized abilities alongside PowerUps and Consumables. The player can own **one console at a time**, and each console offers a distinct play style. Consoles are purchased from a dedicated **Consoles** tab in the Shop and persist until the player changes channels or purchases a different console.
 
 ### Active Consoles (Click to Activate)
-- **Atari — Save State** (Price: $300, 2 uses/round)
+- **Atari — Save State** (Price: $3.00, 2 uses/round)
   - Toggle between **Save** and **Load** modes
   - **Save**: Stores all current dice values as a snapshot
   - **Load**: Restores dice to the saved snapshot and syncs the DiceResults cache for accurate scoring
   - Great for preserving a strong hand before a risky reroll
   - Target: Dice Hand
 
-- **NES — Power Glove** (Price: $300, 3 uses/round)
+- **NES — Power Glove** (Price: $3.00, 3 uses/round)
   - Click on any individual die, then choose **+1** or **-1** to nudge its value
   - Values clamp between 1 and the die's max sides
   - Precise single-die manipulation for fine-tuning hands
   - Target: Dice Hand
 
-- **Sega Saturn — Double Action** (Price: $300, 1 use/round)
+- **Sega Saturn — Double Action** (Price: $3.00, 1 use/round)
   - ACTIVATE arms the **next committed score** in the current round
   - Doubles **score-related PowerUp additives** on that score
   - Doubles the **raw value** of score-related PowerUp multipliers on that score
@@ -2103,19 +2103,19 @@ Gaming Consoles are a unique item class that provides powerful, specialized abil
   - Target: Game Controller / scoring transaction
 
 ### Passive Consoles (Automatic Effects)
-- **SNES — Blast Processing** (Price: $300, Passive)
+- **SNES — Blast Processing** (Price: $3.00, Passive)
   - Every **3rd category scored** receives a **1.5× score multiplier**
   - Tracks scoring count internally; resets on new game
   - Visual feedback: console icon flashes + VCR text notification
   - Target: Scorecard
 
-- **Sega Genesis — Combo System** (Price: $300, Passive)
+- **Sega Genesis — Combo System** (Price: $3.00, Passive)
   - Builds a **running combo counter** that increments with each score
-  - Grants a **combo × $3 additive bonus** to every scored category
+  - Grants a **combo × $0.03 additive bonus** to every scored category
   - Combo resets if a round is failed
   - Target: Scorecard
 
-- **PlayStation — Continue?** (Price: $300, Passive)
+- **PlayStation — Continue?** (Price: $3.00, Passive)
   - Triggers immediately when the **last scorecard category is filled**
   - Shows an arcade-style **Continue?** panel with two choices:
     - **Use Continue**: Grants **+3 bonus rolls** and activates **score reroll** mode
@@ -2175,7 +2175,7 @@ For rapid testing and verification of new features, DiceRogue includes a compreh
 ### Available Debug Commands
 - **Items**: Grant random PowerUps/Consumables/Mods, show all active items, clear all
 - **Mods**: Apply/remove any mod on a specific die (mod list + die selector), clear all mods, show active mods, inspect High Roller cost state
-- **Economy**: Add money ($100/$1000), reset to default  
+- **Economy**: Add money ($1.00/$10.00), reset to default
 - **Dice Control**: Force specific values (all 6s, 1s, Yahtzee)
 - **Game Flow**: Add extra rolls, force end turn, skip to shop
 - **Debuff Visuals**: `Pulse Costly Roll Debuff UI` applies the debuff if needed and fires the compact + fan-out neon pulse path
@@ -2184,7 +2184,7 @@ For rapid testing and verification of new features, DiceRogue includes a compreh
 - **Debug State**: Save/load debug scenarios for quick testing
 - **Utilities**: Clear output, reset entire game state
 - **Juice / Title Preview**: Preview interactive title reactions for roll, score, power-up, consumable, debuff, challenge, and random burst paths without running full game flow
-- **Mom Juice**: `Test Buff Fanfare`, `Test Debuff Fanfare`, `Test Mom Money Pull ($10)`, and `Test Console Score Chips` exercise the post-Mom fanfare, money pull, and console score-chip animations in place
+- **Mom Juice**: `Test Buff Fanfare`, `Test Debuff Fanfare`, `Test Mom Money Pull ($0.10)`, and `Test Console Score Chips` exercise the post-Mom fanfare, money pull, and console score-chip animations in place
 
 ### Diagnostics Tab
 - **Live Dice State**: Lists every die with current value, color, mods, state, lock flags, exclusion flags, and the last scored-hand snapshot for quick drift detection
@@ -2207,7 +2207,7 @@ To add new debug functionality:
 
 ### Available Debug Commands
 - **Items**: Grant random PowerUps/Consumables/Mods, show all active items, clear all
-- **Economy**: Add money ($100/$1000), reset to default
+- **Economy**: Add money ($1.00/$10.00), reset to default
 - **Dice Control**: Force specific values (all 6s, 1s, Yahtzee)
 - **Dice Colors**: Toggle color system, force all dice to specific colors (Green/Red/Purple/Blue), show effects
 - **Game Flow**: Add extra rolls, force end turn, skip to shop
@@ -2261,7 +2261,7 @@ This debug system allows for rapid iteration and verification without rebuilding
 ### When Adding New Features
 **Always add debug commands for new features!** This includes:
 - New power-ups → Add grant/test commands
-- New game mechanics → Add state inspection and trigger commands  
+- New game mechanics → Add state inspection and trigger commands
 - New UI systems → Add show/hide and state commands
 - New scoring rules → Add test calculation commands
 - New managers/systems → Add debug state display
@@ -2297,7 +2297,7 @@ This prevents the need for complex manual testing setups and keeps development v
 ```
 Scripts/
 ├── Core/              # Game mechanics
-├── Managers/          # System coordinators  
+├── Managers/          # System coordinators
 ├── PowerUps/          # Permanent bonuses
 ├── Consumable/        # Single-use items
 ├── Mods/              # Dice modifiers
@@ -2371,7 +2371,7 @@ An automated bot player that runs full game sessions for stress-testing and bala
 - **Auto-dismiss UI panels**: Chore Selection Popup and You Win panel are automatically dismissed so they don't block the bot
 - **Item unlock management**: Bot profile defaults to `unlock_all_items: true`, which unlocks everything in ProgressManager at run start so the shop is fully stocked
 - **Results panel fix**: All overlay panels (winner panel, chore popup, shop) are dismissed before showing the final results panel at z_index 200
-- **End-of-round bonus awards**: Bot calculates and awards the round reward, chore reward (×$50), empty categories bonus (×$10), and score-above-target bonus (×$1) — matching the stats panel logic the player sees
+- **End-of-round bonus awards**: Bot calculates and awards the round reward, chore reward (×$0.50), empty categories bonus (×$0.10), and score-above-target bonus (×$0.01) — matching the stats panel logic the player sees
 - **Full game reset between runs**: Properly frees power-ups, consumables, and debuffs via game_controller methods; resets ScoreModifierManager, MAX_ROLLS, shop reroll cost/expansions, and round_manager
 - **Expanded statistics**: Tracks highest channel reached, power-ups/consumables/mods/color dice purchased, consumables used vs sold, total money earned/spent, round rewards, end-of-round bonuses
 - **Smart shop rerolling**: Rerolls the shop when no powerup outranks the bot's worst owned powerup and the reroll cost is ≤10% of current money (configurable max rerolls per shop visit)

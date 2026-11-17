@@ -16,6 +16,6 @@ description = "For each locked dice of the same number, additional rolled dice h
 icon = SubResource("AtlasTexture_21ucm")
 foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/wild_dots.json"
 scene = ExtResource("2_scene")
-price = 250
+price = 2.5
 rarity = "rare"
 rating = "NC-17"

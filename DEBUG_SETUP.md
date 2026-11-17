@@ -80,7 +80,7 @@ The debug panel is organized into logical tabs for better usability:
 
 ### **Economy Tab**
 Financial testing and economy manipulation:
-- Add Money ($100 or $1000)
+- Add Money ($1.00 or $10.00)
 - Reset Money to default
 
 ### **Items Tab** 

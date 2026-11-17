@@ -6,10 +6,10 @@ class_name ChoreChampionPowerUp
 ## Doubles the effectiveness of chore completion for reducing goof-off meter.
 ## When a chore is completed, applies an additional reduction equal to the
 ## chore's own per-task reduction (EASY: 5-15, HARD: 20-60) for 2x total.
-## Also doubles the chore's money reward (a $5 chore pays $10) by crediting
+## Also doubles the chore's money reward (a $0.05 chore pays $0.10) by crediting
 ## an additional 1x reward to ChoresManager's round total.
 ## Uses a multiplier approach to avoid conflicts with ChoresManager's internal logic.
-## Common rarity, $50 price.
+## Common rarity, $0.50 price.
 
 # Reference to chores manager
 var chores_manager_ref: Node = null
@@ -21,7 +21,7 @@ const EFFECTIVENESS_MULTIPLIER: float = 2.0
 var total_bonus_reductions: int = 0
 
 # Track bonus reward money credited
-var total_bonus_rewards: int = 0
+var total_bonus_rewards: float = 0.0
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -85,11 +85,11 @@ func _on_task_completed(task) -> void:
 	# reward_value to chore_rewards_this_round before emitting task_completed,
 	# so we add the additional 1.0x on top for 2x total.
 	var base_reward = task.reward_value if task else 0
-	var bonus_reward = int(base_reward * (EFFECTIVENESS_MULTIPLIER - 1.0))
+	var bonus_reward = floorf(base_reward * (EFFECTIVENESS_MULTIPLIER - 1.0) * 100.0) / 100.0
 	if bonus_reward > 0:
 		chores_manager_ref.chore_rewards_this_round += bonus_reward
 		total_bonus_rewards += bonus_reward
-		print("[ChoreChampionPowerUp] Applied bonus reward of $%d (total now: $%d)" % [bonus_reward, total_bonus_rewards])
+		print("[ChoreChampionPowerUp] Applied bonus reward of $%.2f (total now: $%.2f)" % [bonus_reward, total_bonus_rewards])
 	
 	if bonus_reduction > 0 or bonus_reward > 0:
 		# Update description
@@ -112,7 +112,7 @@ func get_current_description() -> String:
 		base_desc += "\nBonus reduction applied: %d total" % total_bonus_reductions
 	
 	if total_bonus_rewards > 0:
-		base_desc += "\nBonus money earned: $%d total" % total_bonus_rewards
+		base_desc += "\nBonus money earned: $%.2f total" % total_bonus_rewards
 	
 	return base_desc
 

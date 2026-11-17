@@ -3,7 +3,7 @@ class_name BonusMoneyPowerUp
 
 ## BonusMoneyPowerUp
 ##
-## Grants $50 for every bonus achieved in the game:
+## Grants $0.50 for every bonus achieved in the game:
 ## - Upper Section Bonus (when upper section total >= 63)
 ## - Yahtzee Bonus (50-point Yahtzee + 100-point bonus Yahtzees)
 ##
@@ -13,7 +13,7 @@ class_name BonusMoneyPowerUp
 # Reference to the scorecard to listen for bonus achievements
 var scorecard_ref: Scorecard = null
 var total_bonuses_earned: int = 0
-var money_per_bonus: int = 50
+var money_per_bonus: float = 0.5
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -60,11 +60,11 @@ func _grant_bonus_money() -> void:
 		_update_power_up_icons()
 
 func get_current_description() -> String:
-	var base_desc = "+$50 for each bonus achieved"
+	var base_desc = "+$0.50 for each bonus achieved"
 	
 	if total_bonuses_earned > 0:
 		var total_money = total_bonuses_earned * money_per_bonus
-		var progress_desc = "\nBonuses earned: %d ($%d total)" % [total_bonuses_earned, total_money]
+		var progress_desc = "\nBonuses earned: %d ($%.2f total)" % [total_bonuses_earned, total_money]
 		return base_desc + progress_desc
 	
 	return base_desc

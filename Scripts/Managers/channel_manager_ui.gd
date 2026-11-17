@@ -948,7 +948,7 @@ func _update_bonus_preview() -> void:
 	var bonus_data = channel_manager.get_channel_start_bonus(current_channel)
 	var parts: Array[String] = []
 	if bonus_data["bonus_money"] > 0:
-		parts.append("+$%d" % bonus_data["bonus_money"])
+		parts.append("+$%.2f" % bonus_data["bonus_money"])
 	if bonus_data["bonus_powerup_count"] > 0:
 		parts.append("%d PowerUp" % bonus_data["bonus_powerup_count"])
 	if bonus_data["bonus_consumable_count"] > 0:

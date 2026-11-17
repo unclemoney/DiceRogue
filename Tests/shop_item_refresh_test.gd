@@ -31,7 +31,7 @@ func _configure_scene_text() -> void:
 
 func _prepare_test_state() -> void:
 	if PlayerEconomy:
-		PlayerEconomy.money = 9999
+		PlayerEconomy.money = 99.99
 		PlayerEconomy.emit_signal("money_changed", PlayerEconomy.money, 0)
 	if DiceColorManager and DiceColorManager.has_method("clear_purchased_colors"):
 		DiceColorManager.clear_purchased_colors()
@@ -43,7 +43,7 @@ func _populate_items() -> void:
 
 	var samples: Array[Dictionary] = [
 		{"data": _make_power_up("shop_refresh_long", "A Much Longer Power Name That Must Shrink Cleanly", "A long-name stress case for the hanging card title fitter.", "legendary", 420), "type": "power_up"},
-		{"data": _make_power_up("shop_refresh_bonus", "Bonus Money", "Shorter power-up sample for the simpler rarity chip.", "uncommon", 145), "type": "power_up"},
+		{"data": _make_power_up("shop_refresh_bonus", "Bonus Money", "Shorter power-up sample for the simpler rarity chip.", "uncommon", 1.45), "type": "power_up"},
 		{"data": _make_consumable(), "type": "consumable"},
 		{"data": _make_mod(), "type": "mod"},
 		{"data": _make_colored_dice(), "type": "colored_dice"},
@@ -67,7 +67,7 @@ func _spawn_shop_item(data: Resource, type: String) -> void:
 	shop_item.purchased.connect(_on_item_purchased)
 
 
-func _make_power_up(sample_id: String, display_name: String, description: String, rarity: String, price: int) -> PowerUpData:
+func _make_power_up(sample_id: String, display_name: String, description: String, rarity: String, price: float) -> PowerUpData:
 	var data := POWERUP_TEMPLATE.duplicate(true) as PowerUpData
 	if not data:
 		data = PowerUpData.new()
@@ -91,7 +91,7 @@ func _make_consumable() -> ConsumableData:
 	data.id = "shop_refresh_consumable"
 	data.display_name = "Loss Leader"
 	data.description = "Consumable sample to verify that the rarity chip stays hidden while the price badge remains visible."
-	data.price = 55
+	data.price = 0.55
 	if not data.icon:
 		data.icon = FALLBACK_ICON
 	return data
@@ -105,7 +105,7 @@ func _make_mod() -> ModData:
 	data.id = "shop_refresh_mod"
 	data.display_name = "Wild Card"
 	data.description = "Mod sample for compact copy and button spacing inside the new hanging panel."
-	data.price = 80
+	data.price = 0.8
 	if not data.icon:
 		data.icon = FALLBACK_ICON
 	return data
@@ -118,7 +118,7 @@ func _make_colored_dice() -> ColoredDiceData:
 	data.display_name = "Blue Dice"
 	data.description = "Colored dice sample for dynamic pricing, tooltip state, and badge layout."
 	data.effect_description = "Used blue dice multiply score; unused blue dice divide it."
-	data.price = 150
+	data.price = 1.5
 	data.color_type = DiceColor.Type.BLUE
 	if not data.icon:
 		data.icon = FALLBACK_ICON
@@ -130,7 +130,7 @@ func _make_gaming_console() -> GamingConsoleData:
 	data.id = "shop_refresh_console"
 	data.display_name = "Pocket Console"
 	data.description = "Console sample to verify the non-power-up card state without a rarity chip."
-	data.price = 300
+	data.price = 3.0
 	data.icon = FALLBACK_ICON
 	return data
 

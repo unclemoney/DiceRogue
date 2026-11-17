@@ -29,7 +29,7 @@ Status: APPROVED (grilling complete). Phases 0–4 execute in order, each with i
 - Scoring pipeline: `ceil((base + additives) × multipliers)` — multiplicative; late-channel variance is wide, justifying the non-flat margin curve.
 - Bot harness: `mom_policy` supports all needed arms; reports are JSON; `reset_between_runs=false` carries progression. `channel_min/max` currently picks a *random* channel in range per run — a sequential climb mode (play current channel, advance on win) must be verified/added in Phase 0.
 - Content pool: ~146 unlockables (75 PowerUps, 52 consumables −1 duplicate, 9 mods, 5 dice colors, 6 consoles). 80% by ch15 = ~117 items. ~36 items (25%) are channel-gated (deterministic); ~110 stat-gated items have flat thresholds that score/money inflation will fire earlier than intended.
-- Punishment table today: confiscation unbounded (all R+NC-17 PowerUps, permanent, +1 debuff per NC-17), tier 5 draws 2 entries, fines flat $50–$300.
+- Punishment table today: confiscation unbounded (all R+NC-17 PowerUps, permanent, +1 debuff per NC-17), tier 5 draws 2 entries, fines flat $0.50–$3.00.
 - Rebellion buff (`Scripts/Debuff/rebellion_buff.gd`): ×(1+0.15·stacks) score, max ×1.45, +1/+2 bonus rolls/turn, round-scoped.
 - Rep is run-scoped, resets each game (`progress_manager.gd:819`) — hence per-round premium application, not game-start.
 

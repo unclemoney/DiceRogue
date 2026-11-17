@@ -9,7 +9,7 @@ class_name ColoredDiceData
 @export var id: String = ""
 @export var display_name: String = ""
 @export var description: String = ""
-@export var price: int = 50
+@export var price: float = 0.5
 @export var color_type: DiceColor.Type = DiceColor.Type.NONE
 @export var icon: Texture2D
 @export var effect_description: String = ""

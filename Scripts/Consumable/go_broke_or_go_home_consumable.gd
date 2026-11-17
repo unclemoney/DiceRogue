@@ -11,8 +11,8 @@ class_name GoBrokeOrGoHomeConsumable
 
 # Signals for consumable events
 signal go_broke_or_go_home_applied
-signal money_doubled(original_amount: int, new_amount: int)
-signal money_lost(lost_amount: int)
+signal money_doubled(original_amount: float, new_amount: float)
+signal money_lost(lost_amount: float)
 
 var is_active: bool = false
 var turn_activated: int = -1
@@ -20,7 +20,7 @@ var game_controller_ref: GameController = null
 var scorecard_ref: Scorecard = null
 var score_card_ui_ref: ScoreCardUI = null
 var has_scored: bool = false
-var original_money: int = 0
+var original_money: float = 0.0
 var target_category: String = ""
 
 func _ready() -> void:
@@ -76,7 +76,7 @@ func apply(target) -> void:
 	is_active = true
 	has_scored = false
 	
-	print("[GoBrokeOrGoHomeConsumable] Applied for turn %d with $%d at stake" % [turn_activated, original_money])
+	print("[GoBrokeOrGoHomeConsumable] Applied for turn %d with $%.2f at stake" % [turn_activated, original_money])
 	
 	# Activate the special lower-section-only scoring mode
 	_activate_go_broke_mode()
@@ -205,7 +205,7 @@ func _handle_score_result(category: String, score: int) -> void:
 			PlayerEconomy.money = new_money
 			PlayerEconomy.money_changed.emit(new_money, new_money - original_money)
 		
-		print("[GoBrokeOrGoHomeConsumable] SUCCESS! Scored %d in %s - Money doubled from $%d to $%d" % [score, category, original_money, new_money])
+		print("[GoBrokeOrGoHomeConsumable] SUCCESS! Scored %d in %s - Money doubled from $%.2f to $%.2f" % [score, category, original_money, new_money])
 		emit_signal("money_doubled", original_money, new_money)
 	else:
 		# Failure! Lose all money
@@ -213,7 +213,7 @@ func _handle_score_result(category: String, score: int) -> void:
 			PlayerEconomy.money = 0
 			PlayerEconomy.money_changed.emit(0, -original_money)
 		
-		print("[GoBrokeOrGoHomeConsumable] FAILURE! Scored 0 in %s - Lost all money ($%d)" % [category, original_money])
+		print("[GoBrokeOrGoHomeConsumable] FAILURE! Scored 0 in %s - Lost all money ($%.2f)" % [category, original_money])
 		emit_signal("money_lost", original_money)
 	
 	# Deactivate after scoring

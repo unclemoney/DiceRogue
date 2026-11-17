@@ -5,17 +5,17 @@ class_name CostlyRollDebuff
 ##
 ## Charges the player money each time they roll the dice.
 ## Intensity scaling: roll_cost is multiplied by intensity.
-## At intensity 1.0: $10 per roll. At intensity 2.0: $20 per roll.
+## At intensity 1.0: $0.10 per roll. At intensity 2.0: $0.20 per roll.
 
-@export var base_roll_cost: int = 10  ## Base cost before intensity scaling
+@export var base_roll_cost: float = 0.1  ## Base cost before intensity scaling
 
 var dice_hand: DiceHand
-var _effective_roll_cost: int = 10  ## Actual cost after intensity scaling
+var _effective_roll_cost: float = 0.1  ## Actual cost after intensity scaling
 
 
 func apply(new_target) -> void:
 	# Calculate effective cost based on intensity
-	_effective_roll_cost = int(round(base_roll_cost * intensity))
+	_effective_roll_cost = snappedf(base_roll_cost * intensity, 0.01)
 	print("[CostlyRollDebuff] Applied - Base cost:", base_roll_cost, "Intensity:", intensity, "Effective cost:", _effective_roll_cost)
 	
 	# Store the target
@@ -60,7 +60,7 @@ func _on_roll_complete() -> void:
 	# Display a notification about the cost
 	var notification_system = get_tree().get_first_node_in_group("notification_system")
 	if notification_system:
-		notification_system.show_notification("-$%d Roll Fee" % _effective_roll_cost)
+		notification_system.show_notification("-$%.2f Roll Fee" % _effective_roll_cost)
 	
 	# Apply the cost
 	PlayerEconomy.remove_money(_effective_roll_cost, "debuff")

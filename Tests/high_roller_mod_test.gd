@@ -127,7 +127,7 @@ func _run_automated_tests() -> void:
 	_fail_count = 0
 
 	# Ensure funds for paid rerolls
-	PlayerEconomy.add_money(1000)
+	PlayerEconomy.add_money(10.0)
 
 	# Setup: apply mod and perform an initial roll so dice are ROLLED
 	_apply_mod_to_first_die()
@@ -171,7 +171,7 @@ func _run_automated_tests() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	# First reroll was free (fib[0] = 0), second costs fib[1] = 1
-	_check("Second reroll charged $1", PlayerEconomy.money == money_before - 1)
+	_check("Second reroll charged $0.01", PlayerEconomy.money == money_before - 0.01)
 
 	# --- Test 4: unmodded dice still lock/unlock on click ---
 	print("[Test 4] Unmodded die lock toggle unaffected")

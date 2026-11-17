@@ -92,7 +92,7 @@ func _test_colored_dice_data() -> void:
 	
 	for data in available_data:
 		if data and data.has_method("get_color_name"):
-			_log_test("✅ %s - $%d - %s" % [data.display_name, data.price, data.get_color_name()])
+			_log_test("✅ %s - $%.2f - %s" % [data.display_name, data.price, data.get_color_name()])
 		else:
 			_log_test("❌ Invalid data found")
 

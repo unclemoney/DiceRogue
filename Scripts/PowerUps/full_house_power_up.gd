@@ -4,15 +4,15 @@ class_name FullHousePowerUp
 ## FullHousePowerUp
 ##
 ## Grants increasing money for every full house rolled throughout the game.
-## Base reward: $25 per full house
-## Scaling: Adds $25 for each additional full house rolled (e.g., 1st = $25, 2nd = $50, etc.)
+## Base reward: $0.25 per full house
+## Scaling: Adds $0.25 for each additional full house rolled (e.g., 1st = $0.25, 2nd = $0.50, etc.)
 ##
 ## This PowerUp connects to the Scorecard to detect full house patterns in dice
 ## regardless of which category the player scores them in.
 
 # Track full houses for this session
 var total_full_houses_earned: int = 0
-var base_money_per_full_house: int = 25
+var base_money_per_full_house: float = 0.25
 
 var scorecard_ref: Scorecard = null
 
@@ -48,7 +48,7 @@ func _on_score_assigned(_section: Scorecard.Section, _category: String, score: i
 func _grant_full_house_money() -> void:
 	total_full_houses_earned += 1
 	
-	# Calculate scaled money reward: $7 for each full house rolled this game
+	# Calculate scaled money reward: $0.07 for each full house rolled this game
 	var money_reward = total_full_houses_earned * base_money_per_full_house
 	var awarded_amount = money_reward
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
@@ -57,7 +57,7 @@ func _grant_full_house_money() -> void:
 	else:
 		PlayerEconomy.add_money(money_reward)
 	
-	print("[FullHousePowerUp] Full house #%d rolled! Granted $%d (total full houses this game: %d)" % [total_full_houses_earned, awarded_amount, total_full_houses_earned])
+	print("[FullHousePowerUp] Full house #%d rolled! Granted $%.2f (total full houses this game: %d)" % [total_full_houses_earned, awarded_amount, total_full_houses_earned])
 	
 	# Update the description to show current progress
 	emit_signal("description_updated", id, get_current_description())
@@ -67,11 +67,11 @@ func _grant_full_house_money() -> void:
 		_update_power_up_icons()
 
 func get_current_description() -> String:
-	var base_desc = "+$7 for each full house (scaling with total rolled)"
+	var base_desc = "+$0.07 for each full house (scaling with total rolled)"
 	
 	if total_full_houses_earned > 0:
 		var next_reward = (total_full_houses_earned + 1) * base_money_per_full_house
-		var progress_desc = "\nFull houses rolled: %d (next: $%d)" % [total_full_houses_earned, next_reward]
+		var progress_desc = "\nFull houses rolled: %d (next: $%.2f)" % [total_full_houses_earned, next_reward]
 		return base_desc + progress_desc
 	
 	return base_desc

@@ -3,10 +3,10 @@ class_name LockAndLoadPowerUp
 
 ## LockAndLoadPowerUp
 ##
-## Grants $3 for each die locked during a turn.
+## Grants $0.03 for each die locked during a turn.
 ## Money is added to the round-end PowerUp bonus based on locks performed.
 ## Encourages strategic locking behavior.
-## Common rarity, $75 price.
+## Common rarity, $0.75 price.
 
 # Reference to dice hand and turn tracker
 var dice_hand_ref: DiceHand = null
@@ -14,10 +14,10 @@ var turn_tracker_ref: TurnTracker = null
 
 # Track locks this turn and queue them for round-end payout
 var locks_this_turn: int = 0
-var total_money_granted: int = 0
-var pending_round_end_bonus: int = 0
+var total_money_granted: float = 0.0
+var pending_round_end_bonus: float = 0.0
 
-const MONEY_PER_LOCK: int = 3
+const MONEY_PER_LOCK: float = 0.03
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -69,7 +69,7 @@ func _on_turn_started() -> void:
 	if locks_this_turn > 0:
 		var money_to_grant = locks_this_turn * MONEY_PER_LOCK
 		pending_round_end_bonus += money_to_grant
-		print("[LockAndLoadPowerUp] Turn ended - queued $%d for round-end payout (%d locks, $%d pending)" % [money_to_grant, locks_this_turn, pending_round_end_bonus])
+		print("[LockAndLoadPowerUp] Turn ended - queued $%.2f for round-end payout (%d locks, $%.2f pending)" % [money_to_grant, locks_this_turn, pending_round_end_bonus])
 	
 	# Reset tracking for the new turn
 	locks_this_turn = 0
@@ -81,27 +81,27 @@ func _on_turn_started() -> void:
 		_update_power_up_icons()
 
 func get_current_description() -> String:
-	var lines: Array[String] = ["+$%d for each die locked (added to round-end PowerUp bonus)" % MONEY_PER_LOCK]
+	var lines: Array[String] = ["+$%.2f for each die locked (added to round-end PowerUp bonus)" % MONEY_PER_LOCK]
 	var current_turn_bonus = locks_this_turn * MONEY_PER_LOCK
 	var total_pending = pending_round_end_bonus + current_turn_bonus
 
 	if locks_this_turn > 0:
-		lines.append("Locks this turn: %d ($%d queued)" % [locks_this_turn, current_turn_bonus])
+		lines.append("Locks this turn: %d ($%.2f queued)" % [locks_this_turn, current_turn_bonus])
 
 	if total_pending > 0:
-		lines.append("Pending this round: $%d" % total_pending)
+		lines.append("Pending this round: $%.2f" % total_pending)
 
 	if total_money_granted > 0:
-		lines.append("Total earned: $%d" % total_money_granted)
+		lines.append("Total earned: $%.2f" % total_money_granted)
 
 	return "\n".join(lines)
 
 
-func get_pending_round_end_bonus() -> int:
+func get_pending_round_end_bonus() -> float:
 	return pending_round_end_bonus + (locks_this_turn * MONEY_PER_LOCK)
 
 
-func consume_pending_round_end_bonus() -> int:
+func consume_pending_round_end_bonus() -> float:
 	var granted_amount = get_pending_round_end_bonus()
 	if granted_amount <= 0:
 		return 0
@@ -109,7 +109,7 @@ func consume_pending_round_end_bonus() -> int:
 	pending_round_end_bonus = 0
 	locks_this_turn = 0
 	total_money_granted += granted_amount
-	print("[LockAndLoadPowerUp] Consumed pending round-end bonus: $%d (total earned: $%d)" % [granted_amount, total_money_granted])
+	print("[LockAndLoadPowerUp] Consumed pending round-end bonus: $%.2f (total earned: $%.2f)" % [granted_amount, total_money_granted])
 	emit_signal("description_updated", id, get_current_description())
 	if is_inside_tree():
 		_update_power_up_icons()

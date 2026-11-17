@@ -626,8 +626,8 @@ func get_channel_start_bonus(channel: int = -1) -> Dictionary:
 		}
 	
 	# Linear progression formulas
-	# Channel 2: $150, Channel 3: $300 + 1 PU, Channel 4: $450 + 1 PU + 1 Cons, etc.
-	var bonus_money: int = (channel - 1) * 150
+	# Channel 2: $1.50, Channel 3: $3.00 + 1 PU, Channel 4: $4.50 + 1 PU + 1 Cons, etc.
+	var bonus_money: float = (channel - 1) * 1.5
 	var bonus_powerups: int = int((channel - 1) / 2.0)
 	var bonus_consumables: int = maxi(0, int((channel - 2) / 2.0))
 	var bonus_level_boosts: int = maxi(0, int((channel - 3) / 2.0))

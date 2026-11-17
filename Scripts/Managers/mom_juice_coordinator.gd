@@ -34,7 +34,7 @@ func arm_money_pull(result) -> void:
 	_armed_debuff_ids = _current_debuff_ids()
 	_armed_powerup_ids = _current_powerup_ids()
 	_armed = true
-	if int(result.fine_amount) > 0:
+	if result.fine_amount > 0.0:
 		var money_ui = _money_ui()
 		if money_ui and money_ui.has_method("begin_pull_concealment"):
 			money_ui.begin_pull_concealment()
@@ -58,8 +58,8 @@ func play_post_mom_sequence(result) -> void:
 	if result.removed_power_ups.size() > 0 and profile.mom_sequence_powerup_settle > 0.0:
 		await get_tree().create_timer(profile.mom_sequence_powerup_settle).timeout
 
-	if int(result.fine_amount) > 0:
-		await _play_money_pull(int(result.fine_amount), profile)
+	if result.fine_amount > 0.0:
+		await _play_money_pull(result.fine_amount, profile)
 
 	await _play_fanfares(profile)
 	_armed = false
@@ -86,16 +86,17 @@ func _await_scoring_idle() -> void:
 ## Streams individual "-step" chips from the money display toward the Mom
 ## portrait (money is pulled player -> Mom). The money counter ticks down
 ## per chip arrival, not all at once.
-func _play_money_pull(amount: int, profile: JuiceProfile) -> void:
+func _play_money_pull(amount: float, profile: JuiceProfile) -> void:
 	var money_ui = _money_ui()
 	var from := _money_label_center(money_ui)
 	var to := _mom_anchor(profile)
 
-	var chip_count := amount
+	var amount_cents := maxi(0, roundi(amount * 100.0))
+	var chip_count := amount_cents
 	var step := 1
-	if profile.money_pull_max_chips > 0 and amount > profile.money_pull_max_chips:
+	if profile.money_pull_max_chips > 0 and amount_cents > profile.money_pull_max_chips:
 		chip_count = profile.money_pull_max_chips
-		step = int(ceil(float(amount) / float(chip_count)))
+		step = int(ceil(float(amount_cents) / float(chip_count)))
 
 	for i in range(chip_count):
 		_fly_money_chip(i, from, to, step, profile)
@@ -113,7 +114,7 @@ func _fly_money_chip(index: int, from: Vector2, to: Vector2, step: int, profile:
 		return
 	var chip := MoneyChipScript.new()
 	parent.add_child(chip)
-	chip.setup("-%d" % step)
+	chip.setup("-" + NumberFormatter.format_money(step / 100.0))
 	chip.global_position = from
 
 	var tween := create_tween()
@@ -133,7 +134,7 @@ func _arc_chip(progress: float, chip: Control, from: Vector2, to: Vector2, arc_h
 func _on_money_chip_arrived(chip: Control, to: Vector2, step: int, index: int, profile: JuiceProfile) -> void:
 	var money_ui = _money_ui()
 	if money_ui and money_ui.has_method("tick_pull_display"):
-		money_ui.tick_pull_display(-step)
+		money_ui.tick_pull_display(-step / 100.0)
 	_flash_at(to, profile.money_pull_flash_time)
 	_play_coin_sfx(index, profile)
 	if is_instance_valid(chip):

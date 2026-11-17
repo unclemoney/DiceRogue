@@ -28,7 +28,7 @@ const SCORING_PITCH_INCREMENT: float = 0.08  # Pitch increase per scoring step
 const MONEY_BASE_PITCH_MIN: float = 0.8
 const MONEY_BASE_PITCH_MAX: float = 1.2
 const MONEY_MAX_PITCH: float = 1.5
-const MONEY_PITCH_SCALE: float = 0.005  # Per dollar earned
+const MONEY_PITCH_SCALE: float = 0.5  # Per dollar earned
 
 # Button click audio configuration
 const BUTTON_PITCH_MIN: float = 0.95
@@ -58,7 +58,7 @@ const TAB_SWITCH_PITCH_MAX: float = 1.25
 # Money tick audio configuration
 const MONEY_TICK_PITCH_MIN: float = 1.0
 const MONEY_TICK_PITCH_MAX: float = 1.3
-const MONEY_TICK_MAX_AMOUNT: int = 25
+const MONEY_TICK_MAX_AMOUNT: float = 0.25
 const MONEY_DEBOUNCE_MS: int = 250
 
 # Denied audio configuration
@@ -661,11 +661,11 @@ func reset_scoring_sequence() -> void:
 	#print("[AudioManager] Scoring sequence reset")
 
 
-## play_money_sound(amount: int)
+## play_money_sound(amount: float)
 ##
 ## Play money/cash sound with pitch based on amount earned.
 ## Pitch = random(0.8-1.2) + amount * 0.005 (capped at 1.5)
-func play_money_sound(amount: int) -> void:
+func play_money_sound(amount: float) -> void:
 	if not money_sound:
 		return
 	
@@ -685,7 +685,7 @@ func play_money_sound(amount: int) -> void:
 	money_player.volume_db = master_volume_db
 	
 	money_player.play()
-	print("[AudioManager] Money sound - amount:$%d pitch:%.2f" % [amount, final_pitch])
+	print("[AudioManager] Money sound - amount:$%.2f pitch:%.2f" % [amount, final_pitch])
 
 
 ## reset_roll_count()
@@ -869,11 +869,11 @@ func play_dice_lock() -> void:
 	dice_click_player.play()
 
 
-## _on_money_changed(new_amount: int, change: int)
+## _on_money_changed(new_amount: float, change: float)
 ##
 ## Connected to PlayerEconomy.money_changed. Plays a quick tick for small
 ## mid-round earnings, but debounces when explicit money sounds were recently triggered.
-func _on_money_changed(_new_amount: int, change: int) -> void:
+func _on_money_changed(_new_amount: float, change: float) -> void:
 	if change <= 0:
 		return
 	if change > MONEY_TICK_MAX_AMOUNT:
@@ -883,10 +883,10 @@ func _on_money_changed(_new_amount: int, change: int) -> void:
 	play_money_tick(change)
 
 
-## play_money_tick(amount: int)
+## play_money_tick(amount: float)
 ##
 ## Plays a brief cash tick for small mid-round money earnings.
-func play_money_tick(amount: int) -> void:
+func play_money_tick(amount: float) -> void:
 	if not money_tick_sound:
 		return
 	

@@ -99,7 +99,7 @@ func _test_yellow_slime_data() -> void:
 		return
 	_check("yellow_slime id", data.id == "yellow_slime")
 	_check("yellow_slime display_name", data.display_name == "Yellow Slime")
-	_check("yellow_slime price 300", data.price == 300)
+	_check("yellow_slime price 300", data.price == 3.0)
 	_check("yellow_slime rarity legendary", data.rarity == "legendary")
 	_check("yellow_slime scene set", data.scene != null)
 

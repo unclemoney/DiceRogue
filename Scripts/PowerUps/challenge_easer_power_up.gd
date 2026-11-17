@@ -6,7 +6,7 @@ class_name ChallengeEaserPowerUp
 ## Epic PowerUp that reduces all challenge score requirements by 20%.
 ## Makes completing challenges easier by lowering the target score.
 ## Sets GameController.challenge_score_modifier to 0.8.
-## Price: $450, Rarity: Epic
+## Price: $4.50, Rarity: Epic
 
 const REDUCTION_PERCENT: float = 0.20  # 20% reduction
 

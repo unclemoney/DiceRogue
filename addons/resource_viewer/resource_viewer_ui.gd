@@ -266,10 +266,10 @@ func _get_display_text(resource: Resource, type: String) -> String:
 	var price_str = ""
 	if type in ["power_up", "consumable", "mod", "colored_dice"]:
 		if "price" in resource:
-			price_str = "$%d" % resource.price
+			price_str = "$%.2f" % resource.price
 	elif type == "challenge":
 		if "reward_money" in resource:
-			price_str = "$%d" % resource.reward_money
+			price_str = "$%.2f" % resource.reward_money
 	
 	# Add rarity for power-ups
 	if type == "power_up" and resource.get("rarity"):

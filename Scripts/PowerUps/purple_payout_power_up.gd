@@ -3,15 +3,15 @@ class_name PurplePayoutPowerUp
 
 ## PurplePayoutPowerUp
 ##
-## Common PowerUp that grants $3 for each purple die rolled when scoring.
+## Common PowerUp that grants $0.03 for each purple die rolled when scoring.
 ## Encourages players to invest in purple dice for passive income.
-## Price: $50, Rarity: Common
+## Price: $0.50, Rarity: Common
 
-const MONEY_PER_PURPLE_DIE: int = 25
+const MONEY_PER_PURPLE_DIE: float = 0.25
 
 var scorecard_ref: Scorecard = null
 var score_card_ui_ref = null
-var total_purple_money_earned: int = 0
+var total_purple_money_earned: float = 0.0
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -65,12 +65,12 @@ func _on_about_to_score(_section: Scorecard.Section, _category: String, _dice_va
 		else:
 			PlayerEconomy.add_money(money_earned)
 		total_purple_money_earned += awarded_amount
-		print("[PurplePayoutPowerUp] Earned $%d from %d purple dice" % [awarded_amount, purple_count])
+		print("[PurplePayoutPowerUp] Earned $%.2f from %d purple dice" % [awarded_amount, purple_count])
 		emit_signal("description_updated", id, get_current_description())
 		_update_power_up_icons()
 
 func get_current_description() -> String:
-	return "Each purple die grants $%d when scoring.\nTotal earned: $%d" % [MONEY_PER_PURPLE_DIE, total_purple_money_earned]
+	return "Each purple die grants $%.2f when scoring.\nTotal earned: $%.2f" % [MONEY_PER_PURPLE_DIE, total_purple_money_earned]
 
 func _update_power_up_icons() -> void:
 	if not is_inside_tree() or not get_tree():

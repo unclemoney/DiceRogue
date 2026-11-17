@@ -5,7 +5,7 @@ class_name OneRollWonderPowerUp
 ##
 ## If the player scores on their first roll (0 rerolls used), grants +40 additive.
 ## Uses the conditional about_to_score pattern — registers before scoring, unregisters after.
-## Rare rarity, $250 price.
+## Rare rarity, $2.50 price.
 
 # References
 var scorecard_ref: Scorecard = null

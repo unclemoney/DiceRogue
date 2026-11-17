@@ -3,13 +3,13 @@ class_name MoneyWellSpentPowerUp
 
 ## MoneyWellSpentPowerUp
 ##
-## Grants +1 additive to all scores for every $50 spent.
-## Example: $350 spent = +7 to all scores.
+## Grants +1 additive to all scores for every $0.50 spent.
+## Example: $3.50 spent = +7 to all scores.
 
 # Reference to Statistics manager for tracking money spent
 var statistics_ref = null
-var tracked_money_spent: int = 0
-var MONEY_SPENT_THRESHOLD: int = 50
+var tracked_money_spent: float = 0.0
+var MONEY_SPENT_THRESHOLD: float = 0.5
 
 ## Enable verbose debug logging only in debug builds
 var _debug_enabled: bool = OS.is_debug_build()
@@ -87,7 +87,7 @@ func _stop_money_tracking() -> void:
 		if _debug_enabled:
 			print("[MoneyWellSpentPowerUp] Disconnected from PlayerEconomy money_changed signal")
 
-func _on_money_changed(_new_amount: int, change: int) -> void:
+func _on_money_changed(_new_amount: float, change: float) -> void:
 	# Only spending (negative change) counts toward the threshold
 	if change >= 0:
 		return
@@ -107,7 +107,7 @@ func _on_money_changed(_new_amount: int, change: int) -> void:
 		_update_power_up_icons()
 
 func get_current_additive() -> int:
-	return tracked_money_spent / MONEY_SPENT_THRESHOLD
+	return floori(tracked_money_spent / MONEY_SPENT_THRESHOLD)
 
 func _update_additive_manager() -> void:
 	if not _is_score_modifier_manager_available():
@@ -165,14 +165,14 @@ func remove(_target) -> void:
 	statistics_ref = null
 
 func get_current_description() -> String:
-	var base_desc = "+1 to all scores per $50 spent"
+	var base_desc = "+1 to all scores per $0.50 spent"
 
 	if not statistics_ref:
 		return base_desc
 
 	var current_add = get_current_additive()
 
-	var desc = "\nSpent: $%d | Bonus: +%d" % [tracked_money_spent, current_add]
+	var desc = "\nSpent: $%.2f | Bonus: +%d" % [tracked_money_spent, current_add]
 
 	return base_desc + desc
 

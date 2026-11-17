@@ -809,10 +809,10 @@ func _handle_post_round() -> void:
 ## via the stats panel. The bot bypasses the stats panel UI entirely.
 ## Bonuses: challenge reward + chore reward + empty categories + score above target.
 func _bot_award_round_bonuses() -> void:
-	var challenge_reward: int = 0
-	var chore_reward: int = 0
-	var empty_bonus: int = 0
-	var score_above: int = 0
+	var challenge_reward: float = 0.0
+	var chore_reward: float = 0.0
+	var empty_bonus: float = 0.0
+	var score_above: float = 0.0
 
 	# Challenge reward — stored in game_controller when challenge_completed fires
 	if is_instance_valid(game_controller):
@@ -822,23 +822,23 @@ func _bot_award_round_bonuses() -> void:
 	if is_instance_valid(chores_manager) and chores_manager.has_method("get_chore_rewards_this_round"):
 		chore_reward = chores_manager.get_chore_rewards_this_round()
 
-	# Empty categories bonus — count unscored categories × $10
+	# Empty categories bonus — count unscored categories × $0.10
 	if is_instance_valid(score_card):
 		var empty_count := _count_empty_scorecard_categories()
-		empty_bonus = empty_count * 10  # EMPTY_CATEGORY_BONUS
+		empty_bonus = empty_count * 0.1  # EMPTY_CATEGORY_BONUS
 
-	# Score above target bonus — points above challenge target × $1
+	# Score above target bonus — points above challenge target × $0.01
 	if is_instance_valid(round_manager) and is_instance_valid(score_card):
 		var target: int = round_manager.get_current_challenge_target_score()
 		var final_score: int = score_card.get_total_score()
 		var above: int = max(0, final_score - target)
-		score_above = above * 1  # POINTS_ABOVE_TARGET_BONUS
+		score_above = above * 0.01  # POINTS_ABOVE_TARGET_BONUS
 
-	var total_bonus: int = challenge_reward + chore_reward + empty_bonus + score_above
+	var total_bonus: float = challenge_reward + chore_reward + empty_bonus + score_above
 
 	if total_bonus > 0:
 		PlayerEconomy.add_money(total_bonus)
-		logger.log_info("Awarded round bonuses: $%d (challenge: $%d, chores: $%d, empty: $%d, score: $%d)" % [total_bonus, challenge_reward, chore_reward, empty_bonus, score_above])
+		logger.log_info("Awarded round bonuses: $%.2f (challenge: $%.2f, chores: $%.2f, empty: $%.2f, score: $%.2f)" % [total_bonus, challenge_reward, chore_reward, empty_bonus, score_above])
 		statistics.record_end_of_round_bonus(total_bonus)
 		if challenge_reward > 0:
 			statistics.record_challenge_reward(challenge_reward)
@@ -878,7 +878,7 @@ func _bot_shop_phase() -> void:
 		logger.log_info("No money — skipping shop")
 		return
 
-	logger.log_info("Shop phase — money: $%d" % money)
+	logger.log_info("Shop phase — money: $%.2f" % money)
 
 	# Estimate budget pressure for remaining rounds
 	_budget_pressure = "low"
@@ -905,14 +905,14 @@ func _bot_shop_phase() -> void:
 	var max_rerolls: int = config.max_rerolls_per_shop if config else 5
 	var owned_power_ups: Dictionary = game_controller.active_power_ups if is_instance_valid(game_controller) else {}
 	while to_buy.is_empty() and reroll_count < max_rerolls:
-		var current_money: int = PlayerEconomy.get_money() if PlayerEconomy else 0
-		var current_reroll_cost: int = shop_ui.reroll_cost if "reroll_cost" in shop_ui else 25
+		var current_money: float = PlayerEconomy.get_money() if PlayerEconomy else 0.0
+		var current_reroll_cost: float = shop_ui.reroll_cost if "reroll_cost" in shop_ui else 0.25
 		if not strategy.should_reroll_shop(shop_items, owned_power_ups, current_money, current_reroll_cost):
 			break
 		# Ensure we're on the PowerUps tab (tab 0) for reroll
 		if "tab_container" in shop_ui and shop_ui.tab_container:
 			shop_ui.tab_container.current_tab = 0
-		logger.log_info("Rerolling shop (cost: $%d, money: $%d)" % [current_reroll_cost, current_money])
+		logger.log_info("Rerolling shop (cost: $%.2f, money: $%.2f)" % [current_reroll_cost, current_money])
 		shop_ui._on_reroll_button_pressed()
 		statistics.record_shop_reroll()
 		reroll_count += 1
@@ -935,7 +935,7 @@ func _bot_shop_phase() -> void:
 					if rarity_val <= 1:
 						logger.log_info("Skipping low-rarity %s (budget pressure: %s)" % [item.item_id, _budget_pressure])
 						continue
-		logger.log_info("Buying: %s (%s) for $%d" % [item.item_id, item.item_type, item.price])
+		logger.log_info("Buying: %s (%s) for $%.2f" % [item.item_id, item.item_type, item.price])
 		item._on_buy_button_pressed()
 		statistics.record_purchase(item.item_id, item.item_type, item.price)
 		await get_tree().create_timer(0.1).timeout
@@ -1461,7 +1461,7 @@ func _bot_buy_mod_or_color_dice() -> void:
 		return
 
 	var pick = combined[GameRNG.random_index(combined)]
-	logger.log_info("Buying %s: %s for $%d" % [pick.item_type, pick.item_id, pick.price])
+	logger.log_info("Buying %s: %s for $%.2f" % [pick.item_type, pick.item_id, pick.price])
 	pick._on_buy_button_pressed()
 	statistics.record_purchase(pick.item_id, pick.item_type, pick.price)
 	await get_tree().create_timer(0.1).timeout
@@ -1576,6 +1576,6 @@ func _on_item_unlocked(item_id: String, item_type: String) -> void:
 func _on_mom_consequences(summary: Dictionary) -> void:
 	var round_num := round_manager.get_current_round_number() if is_instance_valid(round_manager) else 0
 	statistics.record_mom_event(summary, current_channel, round_num)
-	logger.log_info("Mom consequences: tier %d, removed PUs: %s, debuffs: %s, fine: $%d" % [
+	logger.log_info("Mom consequences: tier %d, removed PUs: %s, debuffs: %s, fine: $%.2f" % [
 		summary.get("tier_id", -1), str(summary.get("removed_power_ups", [])),
 		str(summary.get("applied_debuffs", [])), summary.get("fine_amount", 0)])

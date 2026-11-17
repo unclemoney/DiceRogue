@@ -139,7 +139,7 @@ func _load_powerup_data() -> Array[Dictionary]:
 				items.append({
 					"id": res.id,
 					"display_name": res.display_name if res.display_name else res.id,
-					"price": res.price if res.get("price") else 100,
+					"price": res.price if res.get("price") else 1.0,
 					"rarity": res.rarity if res.get("rarity") else "common",
 					"item_type": "power_up",
 				})
@@ -170,7 +170,7 @@ func _load_consumable_data() -> Array[Dictionary]:
 				items.append({
 					"id": res.id,
 					"display_name": res.display_name if res.display_name else res.id,
-					"price": res.price if res.get("price") else 50,
+					"price": res.price if res.get("price") else 0.5,
 					"rarity": "common",  # ConsumableData has no rarity field
 					"item_type": "consumable",
 				})
@@ -225,7 +225,7 @@ func _save_report() -> void:
 			var dpp_str := "N/A"
 			if item.dollars_per_point > 0:
 				dpp_str = "$%.1f/pt" % item.dollars_per_point
-			file.store_line("  [%s] %s %s | %s | $%d | +%.1f pts | +$%.0f econ | %s | %s" % [
+			file.store_line("  [%s] %s %s | %s | $%.2f | +%.1f pts | +$%.2f econ | %s | %s" % [
 				tier, type_tag, item.get("display_name", item.item_id),
 				item.get("rarity", "???").capitalize(),
 				item.price, item.score_delta, item.money_delta,

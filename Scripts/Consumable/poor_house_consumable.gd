@@ -29,7 +29,7 @@ func apply(target) -> void:
 		return
 	
 	var money_before = player_economy.get_money()
-	var current_money = money_before * 0.5 # Transfer 50% of current money as bonus score
+	var current_money = int(money_before * 50.0) # Preserve 50% of legacy money as bonus score
 	if current_money <= 0:
 		print("[PoorHouseConsumable] Player has no money to transfer")
 		apply_succeeded = false
@@ -58,7 +58,7 @@ func apply(target) -> void:
 	# Emit our custom signal
 	emit_signal("money_transferred_to_score", current_money)
 	
-	print("[PoorHouseConsumable] Transferred $%d from player to next scored hand" % current_money)
+	print("[PoorHouseConsumable] Transferred $%.2f from player to next scored hand" % money_before)
 
 func _on_score_assigned(_section: int, _category: String, _score: int) -> void:
 	# Only process once

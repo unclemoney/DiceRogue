@@ -128,14 +128,14 @@ func _test_score_streak_reset() -> void:
 func _test_poor_house_rearm() -> void:
 	var consumable := PoorHouseConsumable.new()
 	add_child(consumable)
-	PlayerEconomy.money = 100
+	PlayerEconomy.money = 1.0
 	consumable.apply(game_controller)
 	_assert(ScoreModifierManager.get_additive("poor_house_bonus") == 50,
 		"Poor House registers its first additive bonus")
 	scorecard.set_score(Scorecard.Section.UPPER, "ones", 10)
 	_assert(not ScoreModifierManager.has_additive("poor_house_bonus"),
 		"Poor House cleans up its first score")
-	PlayerEconomy.money = 100
+	PlayerEconomy.money = 1.0
 	consumable.apply_succeeded = true
 	consumable.apply(game_controller)
 	_assert(ScoreModifierManager.get_additive("poor_house_bonus") == 50,

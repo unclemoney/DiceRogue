@@ -7,7 +7,7 @@ class_name ExtraRainbowPowerUp
 ## Colored dice include: Green, Red, Purple, Blue, Yellow (any non-NONE color).
 ## Example: 2 green dice scored = +20 additive, 5 colored dice scored = +50 additive.
 ## Uses ScoreModifierManager for logbook visibility.
-## Price: $300, Rarity: Rare, Rating: PG-13
+## Price: $3.00, Rarity: Rare, Rating: PG-13
 
 const BONUS_PER_COLOR: int = 10
 

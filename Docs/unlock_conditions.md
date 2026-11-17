@@ -36,21 +36,21 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | lower_ten | Lower Ten | SCORE_POINTS | 150 | Lower section scores get +10 points |
 | different_straights | Different Straights | CUMULATIVE_STRAIGHTS | 15 | Straights can have one gap of 1 |
 | plus_thelast | Plus The Last | SCORE_POINTS | 250 | Adds last score to current score |
-| allowance | Allowance | COMPLETE_GAME | 1 | Grants $100 when the round target is met |
+| allowance | Allowance | COMPLETE_GAME | 1 | Grants $1.00 when the round target is met |
 | ungrounded | Ungrounded | CUMULATIVE_YAHTZEES | 15 | Prevents all debuffs |
-| shop_rerolls | Shop Rerolls | EARN_MONEY | 75 | Shop rerolls always cost $25 |
-| tango_and_cash | Tango & Cash | CHORE_COMPLETIONS | 3 | +$10 for every odd die scored |
+| shop_rerolls | Shop Rerolls | EARN_MONEY | 75 | Shop rerolls always cost $0.25 |
+| tango_and_cash | Tango & Cash | CHORE_COMPLETIONS | 3 | +$0.10 for every odd die scored |
 | even_higher | Even Higher | EARN_MONEY | 200 | +1 additive per even die scored |
 | money_bags | Money Bags | CUMULATIVE_YAHTZEES | 3 | Score multiplier based on current money |
-| failed_money | Failed Money | COMPLETE_GAME | 2 | +$25 for each failed hand at round end |
+| failed_money | Failed Money | COMPLETE_GAME | 2 | +$0.25 for each failed hand at round end |
 | roll_efficiency | Roll Efficiency | COMPLETE_GAME | 1 | +N to scores (N = rolls used) |
-| dice_diversity | Dice Diversity | SCORE_POINTS | 75 | +$5 per unique dice value scored |
+| dice_diversity | Dice Diversity | SCORE_POINTS | 75 | +$0.05 per unique dice value scored |
 | chore_champion | Chore Champion | CHORE_COMPLETIONS | 5 | Chores are 2x more effective (cumulative) |
-| lock_and_load | Lock & Load | LOCK_CONSTRAINT | 75 | +$3 for each die locked at round end (unlock: score 75+ over 3 turns, max 2 locks) |
+| lock_and_load | Lock & Load | LOCK_CONSTRAINT | 75 | +$0.03 for each die locked at round end (unlock: score 75+ over 3 turns, max 2 locks) |
 | pair_paradise | Pair Paradise | SCORE_POINTS | 100 | Pair bonuses based on pattern |
 | extra_coupons | Extra Coupons | CHORE_COMPLETIONS | 20 | Consumable slots are fixed at 4 (cumulative) |
-| purple_payout | Purple Payout | EARN_MONEY | 75 | Earn $3 per purple die when scoring |
-| mod_money | Mod Money | COMPLETE_GAME | 2 | Earn $8 per modded die when scoring |
+| purple_payout | Purple Payout | EARN_MONEY | 75 | Earn $0.03 per purple die when scoring |
+| mod_money | Mod Money | COMPLETE_GAME | 2 | Earn $0.08 per modded die when scoring |
 | blue_safety_net | Blue Safety Net | EARN_MONEY | 150 | Halves blue dice penalties |
 | chore_sprint | Chore Sprint | CHORE_COMPLETIONS | 8 | Chore completions reduce goof-off by extra 10 (EASY) / 25 (HARD) (cumulative) |
 | straight_triplet_master | Straight Triplet Master | CUMULATIVE_STRAIGHTS | 20 | Score large straight in 3 categories (unlock: 20 cumulative large straights) |
@@ -94,12 +94,12 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | all_chores | All Chores | COMPLETE_GAME | 3 | Clears goof-off meter completely |
 | one_free_mod | One Free Mod | USE_CONSUMABLES | 5 | Grants 1 free random dice mod |
 | dice_surge | Dice Surge | COMPLETE_CHANNEL | 1 | Grants +2 temporary dice for 3 turns |
-| stat_cashout | Stat Cashout | CUMULATIVE_YAHTZEES | 3 | Earn $10/yahtzee and $5/full house this run |
+| stat_cashout | Stat Cashout | CUMULATIVE_YAHTZEES | 3 | Earn $0.10/yahtzee and $0.05/full house this run |
 | upper_section_boost | Upper Section Boost | COMPLETE_CHANNEL | 1 | Upgrades all 6 upper categories by one level |
 | lower_section_boost | Lower Section Boost | COMPLETE_CHANNEL | 1 | Upgrades all 7 lower categories by one level |
 | score_streak | Score Streak | SCORE_POINTS | 500 | Score multiplier grows over 3 turns |
 | score_amplifier | Score Amplifier | SCORE_POINTS | 400 | Doubles your next category score |
-| bonus_collector | Bonus Collector | EARN_MONEY | 500 | Grants $35 if upper bonus achieved |
+| bonus_collector | Bonus Collector | EARN_MONEY | 500 | Grants $0.35 if upper bonus achieved |
 | ones_upgrade | Ones Upgrade | SCORE_POINTS | 50 | Upgrade Ones category level |
 | twos_upgrade | Twos Upgrade | SCORE_POINTS | 75 | Upgrade Twos category level |
 | threes_upgrade | Threes Upgrade | SCORE_POINTS | 100 | Upgrade Threes category level |
@@ -134,10 +134,10 @@ This file lists every PowerUp, Consumable, Mod, and Colored Dice feature registe
 | three_but_three | Three But Three | CUMULATIVE_STRAIGHTS | 15 | Dice avoid rolling 3s |
 | wild_card | Wild Card | USE_CONSUMABLES | 10 | Random special effects on each roll |
 | high_roller | High Roller | LOCK_CONSTRAINT | 100 | Dice tend toward high values (unlock: score 100+ over 4 turns, no locks) |
-| channel_veteran | Channel Veteran | COMPLETE_CHANNEL | 1 | Start with +$25 per channel completed (NOT IMPLEMENTED) |
+| channel_veteran | Channel Veteran | COMPLETE_CHANNEL | 1 | Start with +$0.25 per channel completed (NOT IMPLEMENTED) |
 | precision_roller | Precision Roller | COMPLETE_CHANNEL | 3 | First roll each turn is always 4+ (NOT IMPLEMENTED) |
 | painted_die | Painted Die | USE_CONSUMABLES | 4 | Die is permanently painted one color; always counts as that color |
-| cursed_six | Cursed Six | COMPLETE_CHANNEL | 1 | Always rolls a 6, costs $5 per roll, sells for $0 |
+| cursed_six | Cursed Six | COMPLETE_CHANNEL | 1 | Always rolls a 6, costs $0.05 per roll, sells for $0.00 |
 
 ## Colored Dice Features
 

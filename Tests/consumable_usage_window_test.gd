@@ -186,7 +186,7 @@ func _test_live_usability_gates() -> void:
 	add_child(shop_item)
 	_assert(shop_item._apply_consumable_discounts(75, "consumable") == 0, "Loss Leader makes the next consumable free immediately")
 	game_controller.loss_leader_stacks = 0
-	_assert(shop_item._apply_consumable_discounts(75, "consumable") == 75, "Consumable price recovers after Loss Leader is consumed")
+	_assert(shop_item._apply_consumable_discounts(0.75, "consumable") == 0.75, "Consumable price recovers after Loss Leader is consumed")
 	shop_item.free()
 
 	consumable_ui.free()

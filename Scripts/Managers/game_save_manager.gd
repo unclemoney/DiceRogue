@@ -7,11 +7,12 @@ extends Node
 ## and handles all file I/O for run saves.
 ##
 ## Save path: user://profile_{slot}_run.save
-## Format: JSON with run_save_version = 2
+## Format: JSON with run_save_version = 3
 ## Writes are atomic (tmp + rename). Corrupt or newer-version saves are
-## quarantined to a timestamped .bak instead of deleted.
+## quarantined to a timestamped .bak instead of deleted. Version 2 and older
+## use the legacy money scale and are rejected without modifying the file.
 
-const RUN_SAVE_VERSION: int = 2
+const RUN_SAVE_VERSION: int = 3
 
 var _pending_load_data: Dictionary = {}
 
@@ -84,8 +85,8 @@ func save_snapshot(data: Dictionary) -> void:
 ## Reads the run save for the specified profile slot into _pending_load_data.
 ## Returns true on success, false if the file is missing or corrupt.
 ## Corrupt or newer-version files are quarantined to a timestamped .bak,
-## never deleted. Saves older than RUN_SAVE_VERSION load with defaults for
-## missing keys.
+## never deleted. Saves older than RUN_SAVE_VERSION use legacy money units and
+## are rejected without modification until migration is decided.
 ##
 ## Parameters:
 ##   slot: int - profile slot to load
@@ -121,6 +122,9 @@ func load_save_for_profile(slot: int) -> bool:
 	var meta = save_dict.get("meta", {})
 	var version = int(meta.get("run_save_version", 0))
 
+	if version < RUN_SAVE_VERSION:
+		push_error("[GameSaveManager] Legacy money-scale save rejected; migration needs owner input. File left untouched: " + path)
+		return false
 	if version > RUN_SAVE_VERSION:
 		push_error("[GameSaveManager] Save version %d is newer than supported %d" % [version, RUN_SAVE_VERSION])
 		_quarantine_save(slot, path)

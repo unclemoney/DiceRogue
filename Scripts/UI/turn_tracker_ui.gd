@@ -49,7 +49,7 @@ func _update_money_display() -> void:
 	if money_label:
 		money_label.text = NumberFormatter.format_money(PlayerEconomy.money)
 
-func _on_money_changed(new_amount: int, change: int = 0) -> void:
+func _on_money_changed(new_amount: float, change: float = 0.0) -> void:
 	_update_money_display()
 	if money_label and change != 0:
 		var tfx = get_node_or_null("/root/TweenFXHelper")

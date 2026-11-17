@@ -4,12 +4,12 @@ class_name StatCashoutConsumable
 ## StatCashoutConsumable
 ##
 ## Grants money based on historical stats:
-## - $100 per Yahtzee scored
-## - $10 per Full House scored
+## - $1.00 per Yahtzee scored
+## - $0.10 per Full House scored
 ## Reads from Statistics singleton (statistics_manager.gd).
 
-const YAHTZEE_PAYOUT := 100
-const FULL_HOUSE_PAYOUT := 10
+const YAHTZEE_PAYOUT := 1.0
+const FULL_HOUSE_PAYOUT := 0.1
 
 func _ready() -> void:
 	add_to_group("consumables")
@@ -44,11 +44,11 @@ func apply(target) -> void:
 	var full_house_payout := full_house_count * FULL_HOUSE_PAYOUT
 	var total_payout := yahtzee_payout + full_house_payout
 	
-	print("[StatCashoutConsumable] Stats: %d yahtzees ($%d), %d full houses ($%d)" % [yahtzee_count, yahtzee_payout, full_house_count, full_house_payout])
+	print("[StatCashoutConsumable] Stats: %d yahtzees ($%.2f), %d full houses ($%.2f)" % [yahtzee_count, yahtzee_payout, full_house_count, full_house_payout])
 	
 	if total_payout > 0:
 		player_economy.add_money(total_payout)
-		print("[StatCashoutConsumable] Granted $%d total" % total_payout)
+		print("[StatCashoutConsumable] Granted $%.2f total" % total_payout)
 	else:
 		apply_succeeded = false
-		print("[StatCashoutConsumable] No qualifying stats, granted $0")
+		print("[StatCashoutConsumable] No qualifying stats, granted $0.00")

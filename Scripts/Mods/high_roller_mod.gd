@@ -2,7 +2,7 @@ extends Mod
 class_name HighRollerMod
 
 var _attached_die: Dice = null
-var _fibonacci_sequence: Array[int] = [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610]
+var _fibonacci_sequence: Array[float] = [0.0, 0.01, 0.01, 0.02, 0.03, 0.05, 0.08, 0.13, 0.21, 0.34, 0.55, 0.89, 1.44, 2.33, 3.77, 6.10]
 var _current_cost_index: int = 0
 var _game_button_ui: Node = null
 
@@ -153,16 +153,16 @@ func _handle_manual_reroll() -> void:
 	
 	# Check if player can afford the reroll
 	if not PlayerEconomy.can_afford(current_cost):
-		print("[HighRollerMod] Player cannot afford reroll cost of $%d" % current_cost)
+		print("[HighRollerMod] Player cannot afford reroll cost of $%.2f" % current_cost)
 		_attached_die.shake_denied()  # Visual feedback for denied action
 		return
 	
 	# Charge the player for the reroll
 	if current_cost > 0:
 		PlayerEconomy.remove_money(current_cost, "mod")
-		print("[HighRollerMod] Charged player $%d for manual reroll" % current_cost)
+		print("[HighRollerMod] Charged player $%.2f for manual reroll" % current_cost)
 	else:
-		print("[HighRollerMod] Free reroll (cost: $0)")
+		print("[HighRollerMod] Free reroll (cost: $0.00)")
 	
 	# Perform the reroll. Dice.roll() only works from the ROLLABLE state, so
 	# force the state first (the die is usually ROLLED after the initial roll).
@@ -192,7 +192,7 @@ func _on_normal_dice_rolled(_dice_values: Array) -> void:
 ## _get_current_cost() -> int
 ##
 ## Returns the current cost based on the Fibonacci sequence.
-func _get_current_cost() -> int:
+func _get_current_cost() -> float:
 	if _current_cost_index >= _fibonacci_sequence.size():
 		# If we exceed our precomputed sequence, extend it
 		_extend_fibonacci_sequence()
@@ -205,7 +205,7 @@ func _get_current_cost() -> int:
 func _increment_cost() -> void:
 	_current_cost_index += 1
 	var new_cost = _get_current_cost()
-	print("[HighRollerMod] Cost incremented to $%d (index: %d)" % [new_cost, _current_cost_index])
+	print("[HighRollerMod] Cost incremented to $%.2f (index: %d)" % [new_cost, _current_cost_index])
 
 ## _extend_fibonacci_sequence()
 ##
@@ -232,4 +232,4 @@ func get_current_cost_display() -> String:
 		_extend_fibonacci_sequence()
 	var next_cost = _fibonacci_sequence[next_index]
 	
-	return "Current: $%d, Next: $%d" % [current, next_cost]
+	return "Current: $%.2f, Next: $%.2f" % [current, next_cost]

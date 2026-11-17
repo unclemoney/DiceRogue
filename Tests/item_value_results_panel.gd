@@ -76,11 +76,11 @@ func display_results(results: Array[Dictionary], baseline_avg: float) -> void:
 				dpp_str = "$%.1f/pt" % item.dollars_per_point
 
 			text += "  [color=%s][b]%s[/b][/color] %s %s" % [color, tier, type_tag, name_str]
-			text += " | %s | $%d" % [rarity_str.capitalize(), item.price]
+			text += " | %s | $%.2f" % [rarity_str.capitalize(), item.price]
 			text += " | +%.1f pts" % item.score_delta
 
 			if item.money_delta > 0:
-				text += " | +$%.0f econ" % item.money_delta
+				text += " | +$%.2f econ" % item.money_delta
 
 			text += " | %s" % dpp_str
 			text += " | [i]%s[/i]\n" % item.get("effect_desc", "")

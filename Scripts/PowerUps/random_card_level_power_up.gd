@@ -6,7 +6,7 @@ class_name RandomCardLevelPowerUp
 ## Rare PowerUp with a 20% chance each turn to upgrade a random
 ## scorecard category's level (from both upper and lower sections).
 ## Uses scorecard.upgrade_category() to apply the level boost.
-## Price: $300, Rarity: Rare, Rating: PG-13
+## Price: $3.00, Rarity: Rare, Rating: PG-13
 ##
 ## Side-effects: Modifies scorecard category levels permanently.
 

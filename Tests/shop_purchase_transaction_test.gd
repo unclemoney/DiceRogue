@@ -37,7 +37,7 @@ func _test_colored_dice_grant_after_charge() -> void:
 		print("✗ Missing green_dice test data")
 		return
 
-	PlayerEconomy.money = max(0, color_data.price - 1)
+	PlayerEconomy.money = maxf(0.0, color_data.price - 0.01)
 	var before_count = DiceColorManager.get_color_purchase_count(color_data.color_type)
 	var granted: bool = _game_controller.process_shop_purchase("green_dice", "colored_dice")
 	var after_count = DiceColorManager.get_color_purchase_count(color_data.color_type)

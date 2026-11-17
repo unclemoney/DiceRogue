@@ -38,12 +38,12 @@ class_name MomDialogOutcome
 	"rep_delta") var effect: String = "none"
 
 ## Effect-specific magnitude. Meaning depends on `effect`:
-##   "fine"/"reward_money": exact dollar amount (0 = random $50-150)
+##   "fine"/"reward_money": exact dollar amount (0 = random $0.50-1.50)
 ##   "debuff"/"remove_mod": count (0 = 1)
 ##   "apply_tier":          >= 1 exact tier_id, 0 = computed severity,
 ##                          -1 = computed severity + 1
 ##   "rep_delta":           rep change (signed)
-@export var magnitude: int = 0
+@export var magnitude: float = 0.0
 
 ## Mood shift applied to Mom (positive = angrier, negative = happier).
 @export var mood_delta: int = 0

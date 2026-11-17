@@ -6,7 +6,7 @@ class_name LuckyUpgradeConsumable
 ## Randomly selects an unscored scorecard category and upgrades it by 1 level.
 ## Cannot upgrade categories that have already been scored.
 ## If all categories are scored, the consumable has no effect.
-## Price: $25
+## Price: $0.25
 
 func _ready() -> void:
 	add_to_group("consumables")

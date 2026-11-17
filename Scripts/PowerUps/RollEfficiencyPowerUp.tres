@@ -16,7 +16,7 @@ description = "+N to all scores (N = rolls used this turn)"
 icon = SubResource("AtlasTexture_sydvi")
 foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/roll_efficiency.json"
 scene = ExtResource("2_scene")
-price = 25
+price = 0.25
 rarity = "common"
 rating = "PG"
 metadata/_custom_type_script = "uid://b4upm4dbvhukm"

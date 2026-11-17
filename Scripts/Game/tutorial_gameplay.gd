@@ -37,7 +37,7 @@ func begin_session() -> void:
 	_prepare_stock()
 	_prepare_initial_chore()
 	if PlayerEconomy:
-		PlayerEconomy.add_money(500)
+		PlayerEconomy.add_money(5.0)
 
 
 func _connect_events() -> void:

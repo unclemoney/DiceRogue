@@ -5,9 +5,9 @@ class_name MoneyMultiplierPowerUp
 ##
 ## Increases a money multiplier by 0.1 for each yahtzee rolled, then multiplies
 ## the player's current money by that multiplier.
-## Example: Starting at $500 with 1.0 multiplier, after 1 yahtzee:
+## Example: Starting at $5.00 with 1.0 multiplier, after 1 yahtzee:
 ## - Multiplier becomes 1.1
-## - Money becomes $500 * 1.1 = $550
+## - Money becomes $5.00 * 1.1 = $5.50
 
 # PowerUp-specific variables
 var money_multiplier: float = 1.0
@@ -88,17 +88,17 @@ func _process_yahtzee_multiplier() -> void:
 	
 	# Calculate the additional money from the multiplier increase
 	var multiplier_increase = money_multiplier - old_multiplier
-	var additional_money = int(current_money * multiplier_increase)
+	var additional_money = floorf(current_money * multiplier_increase * 100.0) / 100.0
 	
 	print("[MoneyMultiplierPowerUp] Yahtzee #%d detected!" % yahtzees_tracked)
 	print("[MoneyMultiplierPowerUp] Multiplier: %dx -> %dx" % [int(old_multiplier), int(money_multiplier)])
-	print("[MoneyMultiplierPowerUp] Current money: $%d" % current_money)
-	print("[MoneyMultiplierPowerUp] Additional money from multiplier: $%d" % additional_money)
+	print("[MoneyMultiplierPowerUp] Current money: $%.2f" % current_money)
+	print("[MoneyMultiplierPowerUp] Additional money from multiplier: $%.2f" % additional_money)
 	
 	# Add the additional money
 	if additional_money > 0:
 		PlayerEconomy.add_money(additional_money)
-		print("[MoneyMultiplierPowerUp] Added $%d to player economy" % additional_money)
+		print("[MoneyMultiplierPowerUp] Added $%.2f to player economy" % additional_money)
 	
 	# Update the description to show current progress
 	emit_signal("description_updated", id, get_current_description())

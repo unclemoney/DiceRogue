@@ -26,7 +26,7 @@ func _ready() -> void:
 	_check(ui._challenges.has("Food Court"), "store id registered in _challenges")
 	_check(icon.data.display_name == "Food Court", "icon title is the store name")
 	_check(icon.data.target_score == 150, "icon target score set")
-	_check(icon.data.reward_money == 25, "icon reward set")
+	_check(icon.data.reward_money == 0.25, "icon reward set")
 	_check(icon.data.difficulty == 1, "icon difficulty set")
 
 	# progress updates the icon bar

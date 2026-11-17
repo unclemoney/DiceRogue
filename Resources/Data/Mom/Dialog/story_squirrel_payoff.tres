@@ -48,6 +48,6 @@ outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy")])
 [resource]
 script = ExtResource("1_node")
 id = "story_squirrel_payoff"
-mom_text = "[color=green]Victory.[/color] He took the decoy peanuts, left the feeder alone, and that maneuver just earned you a clean $30 shop stipend."
+mom_text = "[color=green]Victory.[/color] He took the decoy peanuts, left the feeder alone, and that maneuver just earned you a clean $0.30 shop stipend."
 expression = "happy"
 responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

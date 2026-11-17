@@ -37,7 +37,7 @@ func _configure_scene_text() -> void:
 
 func _prepare_test_state() -> void:
 	if PlayerEconomy:
-		PlayerEconomy.money = 9999
+		PlayerEconomy.money = 99.99
 		PlayerEconomy.emit_signal("money_changed", PlayerEconomy.money, 0)
 	if DiceColorManager and DiceColorManager.has_method("clear_purchased_colors"):
 		DiceColorManager.clear_purchased_colors()
@@ -50,7 +50,7 @@ func _populate_items() -> void:
 
 	var samples: Array[Dictionary] = [
 		{"data": _make_power_up("visual_common", "Chore Skip", "Common sample with a G rating.", "common", "G", 60), "type": "power_up"},
-		{"data": _make_power_up("visual_uncommon", "Bonus Money", "Uncommon sample with a PG rating.", "uncommon", "PG", 145), "type": "power_up"},
+		{"data": _make_power_up("visual_uncommon", "Bonus Money", "Uncommon sample with a PG rating.", "uncommon", "PG", 1.45), "type": "power_up"},
 		{"data": _make_power_up("visual_rare", "Lucky Streak", "Rare sample with a PG-13 rating.", "rare", "PG-13", 240), "type": "power_up"},
 		{"data": _make_power_up("visual_epic", "Dice Whisperer", "Epic sample with an R rating.", "epic", "R", 380), "type": "power_up"},
 		{"data": _make_power_up("visual_legendary", "Midnight Marathon", "Legendary sample with an NC-17 rating.", "legendary", "NC-17", 420), "type": "power_up"},
@@ -116,7 +116,7 @@ func _run_assertions() -> void:
 			push_error("[ShopItemVisualTest] FAIL: " + failure)
 
 
-func _make_power_up(sample_id: String, display_name: String, description: String, rarity: String, rating: String, price: int) -> PowerUpData:
+func _make_power_up(sample_id: String, display_name: String, description: String, rarity: String, rating: String, price: float) -> PowerUpData:
 	var data := POWERUP_TEMPLATE.duplicate(true) as PowerUpData
 	if not data:
 		data = PowerUpData.new()
@@ -140,7 +140,7 @@ func _make_consumable() -> ConsumableData:
 	data.id = "visual_consumable"
 	data.display_name = "Loss Leader"
 	data.description = "Consumable sample: no rarity badge, amber price tag."
-	data.price = 55
+	data.price = 0.55
 	if not data.icon:
 		data.icon = FALLBACK_ICON
 	return data
@@ -154,7 +154,7 @@ func _make_mod() -> ModData:
 	data.id = "visual_mod"
 	data.display_name = "Wild Card"
 	data.description = "Mod sample: no rarity badge, amber price tag."
-	data.price = 80
+	data.price = 0.8
 	if not data.icon:
 		data.icon = FALLBACK_ICON
 	return data
@@ -167,7 +167,7 @@ func _make_colored_dice() -> ColoredDiceData:
 	data.display_name = "Yellow Dice"
 	data.description = "Colored dice sample for dynamic pricing on the new price tag."
 	data.effect_description = "Scored yellow dice grant consumables."
-	data.price = 100
+	data.price = 1.0
 	data.color_type = DiceColor.Type.YELLOW
 	if not data.icon:
 		data.icon = FALLBACK_ICON

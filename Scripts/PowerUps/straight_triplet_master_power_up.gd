@@ -7,11 +7,11 @@ class_name StraightTripletMasterPowerUp
 ## - 1 in the Large Straight category
 ## - 1 in the Small Straight category (scored as a large straight)
 ## - 1 in the Chance category (scored as a large straight)
-## When all 3 are achieved in a single round, grants +$150 and +75 bonus points.
+## When all 3 are achieved in a single round, grants +$1.50 and +75 bonus points.
 ## Resets each round if not completed.
-## Price: $275, Rarity: Rare
+## Price: $2.75, Rarity: Rare
 
-const BONUS_MONEY: int = 333
+const BONUS_MONEY: float = 3.33
 const BONUS_POINTS: int = 333
 
 var scorecard_ref: Scorecard = null
@@ -91,7 +91,7 @@ func _award_bonus() -> void:
 		awarded_amount = game_controller.award_score_time_power_up_money(BONUS_MONEY, "straight_triplet_master")
 	else:
 		PlayerEconomy.add_money(BONUS_MONEY)
-	print("[StraightTripletMasterPowerUp] TRIPLET ACHIEVED! Awarded $%d" % awarded_amount)
+	print("[StraightTripletMasterPowerUp] TRIPLET ACHIEVED! Awarded $%.2f" % awarded_amount)
 	
 	# Add one-time bonus points directly to the scorecard total
 	if scorecard_ref:
@@ -107,9 +107,9 @@ func get_current_description() -> String:
 	var status_chance = "[color=green]YES[/color]" if large_straight_in_chance else "[color=red]NO[/color]"
 	
 	if bonus_awarded:
-		return "TRIPLET MASTER ACHIEVED!\n+$%d and +%d bonus points!\nTimes achieved: %d" % [BONUS_MONEY, BONUS_POINTS, total_bonuses_earned]
+		return "TRIPLET MASTER ACHIEVED!\n+$%.2f and +%d bonus points!\nTimes achieved: %d" % [BONUS_MONEY, BONUS_POINTS, total_bonuses_earned]
 	
-	return "Score straights in all 3 categories in 1 round:\nLg Straight: %s | Sm Straight: %s | Chance: %s\nReward: +$%d and +%d pts" % [status_large, status_small, status_chance, BONUS_MONEY, BONUS_POINTS]
+	return "Score straights in all 3 categories in 1 round:\nLg Straight: %s | Sm Straight: %s | Chance: %s\nReward: +$%.2f and +%d pts" % [status_large, status_small, status_chance, BONUS_MONEY, BONUS_POINTS]
 
 func _update_power_up_icons() -> void:
 	if not is_inside_tree() or not get_tree():

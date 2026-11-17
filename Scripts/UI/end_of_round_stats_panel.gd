@@ -8,19 +8,19 @@ const GlassActionButtonClass = preload("res://Scripts/UI/glass_action_button.gd"
 ## Displays end-of-round statistics with animated bonus reveals.
 ## Shows after clicking Shop button but before the Shop opens.
 ## Awards bonuses for challenge completion, chores completed,
-## empty scorecard categories ($5 each), and points above challenge target ($1 per point).
+## empty scorecard categories ($0.05 each), and points above challenge target ($0.01 per point).
 
 signal continue_to_shop_pressed
 signal panel_closed
 
 # Constants for bonus calculations
-const EMPTY_CATEGORY_BONUS: int = 5
-const POINTS_ABOVE_TARGET_BONUS: int = 1
+const EMPTY_CATEGORY_BONUS: float = 0.05
+const POINTS_ABOVE_TARGET_BONUS: float = 0.01
 
 # Animation settings
 const COUNTER_ANIMATION_DURATION: float = 1.5
 const REVEAL_DELAY: float = 0.3
-const CELEBRATION_THRESHOLD: int = 100  # Bonus amount to trigger celebration
+const CELEBRATION_THRESHOLD: float = 1.0  # Bonus amount to trigger celebration
 
 const BACKDROP_SHADER_PATH := "res://Scripts/Shaders/panel_backdrop.gdshader"
 const PANEL_CORNER_RADIUS := 20.0
@@ -57,16 +57,16 @@ var empty_category_count: int = 0
 var points_above_target: int = 0
 
 # Challenge and chore rewards
-var challenge_reward_amount: int = 0
+var challenge_reward_amount: float = 0.0
 var chores_completed_count: int = 0
-var chore_reward_amount: int = 0
+var chore_reward_amount: float = 0.0
 
 # Calculated bonuses
-var empty_categories_bonus: int = 0
-var score_above_bonus: int = 0
-var buff_bonus_amount: int = 0
-var power_up_bonus_amount: int = 0
-var total_bonus: int = 0
+var empty_categories_bonus: float = 0.0
+var score_above_bonus: float = 0.0
+var buff_bonus_amount: float = 0.0
+var power_up_bonus_amount: float = 0.0
+var total_bonus: float = 0.0
 
 # Animation state
 var _animation_tween: Tween
@@ -250,7 +250,7 @@ func _build_ui() -> void:
 	
 	challenge_reward_value_label = Label.new()
 	challenge_reward_value_label.name = "ChallengeRewardValueLabel"
-	challenge_reward_value_label.text = "$0"
+	challenge_reward_value_label.text = "$0.00"
 	challenge_reward_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	challenge_reward_value_label.add_theme_font_size_override("font_size", 18)
 	challenge_reward_value_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
@@ -263,14 +263,14 @@ func _build_ui() -> void:
 	
 	chore_reward_label = Label.new()
 	chore_reward_label.name = "ChoreRewardLabel"
-	chore_reward_label.text = "Chores Completed (0 × $50):"
+	chore_reward_label.text = "Chores Completed (0 × $0.50):"
 	chore_reward_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	chore_reward_label.add_theme_font_size_override("font_size", 18)
 	chore_hbox.add_child(chore_reward_label)
 	
 	chore_reward_value_label = Label.new()
 	chore_reward_value_label.name = "ChoreRewardValueLabel"
-	chore_reward_value_label.text = "$0"
+	chore_reward_value_label.text = "$0.00"
 	chore_reward_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	chore_reward_value_label.add_theme_font_size_override("font_size", 18)
 	chore_reward_value_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
@@ -283,14 +283,14 @@ func _build_ui() -> void:
 	
 	empty_categories_label = Label.new()
 	empty_categories_label.name = "EmptyCategoriesLabel"
-	empty_categories_label.text = "Empty Categories (3 × $25):"
+	empty_categories_label.text = "Empty Categories (3 × $0.25):"
 	empty_categories_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	empty_categories_label.add_theme_font_size_override("font_size", 18)
 	empty_hbox.add_child(empty_categories_label)
 	
 	empty_categories_bonus_label = Label.new()
 	empty_categories_bonus_label.name = "EmptyCategoriesBonusLabel"
-	empty_categories_bonus_label.text = "$0"
+	empty_categories_bonus_label.text = "$0.00"
 	empty_categories_bonus_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	empty_categories_bonus_label.add_theme_font_size_override("font_size", 18)
 	empty_categories_bonus_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
@@ -303,14 +303,14 @@ func _build_ui() -> void:
 	
 	score_above_label = Label.new()
 	score_above_label.name = "ScoreAboveLabel"
-	score_above_label.text = "Points Above Target (30 × $1):"
+	score_above_label.text = "Points Above Target (30 × $0.01):"
 	score_above_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	score_above_label.add_theme_font_size_override("font_size", 18)
 	score_hbox.add_child(score_above_label)
 	
 	score_above_bonus_label = Label.new()
 	score_above_bonus_label.name = "ScoreAboveBonusLabel"
-	score_above_bonus_label.text = "$0"
+	score_above_bonus_label.text = "$0.00"
 	score_above_bonus_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	score_above_bonus_label.add_theme_font_size_override("font_size", 18)
 	score_above_bonus_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
@@ -330,7 +330,7 @@ func _build_ui() -> void:
 
 	buff_bonus_value_label = Label.new()
 	buff_bonus_value_label.name = "BuffBonusValueLabel"
-	buff_bonus_value_label.text = "$0"
+	buff_bonus_value_label.text = "$0.00"
 	buff_bonus_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	buff_bonus_value_label.add_theme_font_size_override("font_size", 18)
 	buff_bonus_value_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
@@ -350,7 +350,7 @@ func _build_ui() -> void:
 
 	power_up_bonus_value_label = Label.new()
 	power_up_bonus_value_label.name = "PowerUpBonusValueLabel"
-	power_up_bonus_value_label.text = "$0"
+	power_up_bonus_value_label.text = "$0.00"
 	power_up_bonus_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	power_up_bonus_value_label.add_theme_font_size_override("font_size", 18)
 	power_up_bonus_value_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
@@ -374,7 +374,7 @@ func _build_ui() -> void:
 	
 	total_bonus_label = Label.new()
 	total_bonus_label.name = "TotalBonusLabel"
-	total_bonus_label.text = "$0"
+	total_bonus_label.text = "$0.00"
 	total_bonus_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	total_bonus_label.add_theme_font_size_override("font_size", 26)
 	total_bonus_label.add_theme_color_override("font_color", Color(0.47451, 0.886275, 0.890196, 1.0))
@@ -464,7 +464,7 @@ func show_stats(data: Dictionary) -> void:
 	# Docked Allowance grounding: the whole award is withheld.
 	var allowance_docked: bool = data.get("docked_allowance", false)
 	if allowance_docked:
-		print("[EndOfRoundStatsPanel] Allowance docked - withholding $%d" % total_bonus)
+		print("[EndOfRoundStatsPanel] Allowance docked - withholding $%.2f" % total_bonus)
 		total_bonus = 0
 	
 	print("[EndOfRoundStatsPanel] Challenge reward:", challenge_reward_amount)
@@ -481,7 +481,7 @@ func show_stats(data: Dictionary) -> void:
 	final_score_label.text = NumberFormatter.format_score(final_score)
 	challenge_reward_label.text = "Challenge Reward:"
 	chore_reward_label.text = "Chore Rewards (%s chores):" % NumberFormatter.format_int(chores_completed_count)
-	empty_categories_label.text = "Empty Categories (%s × $%s):" % [NumberFormatter.format_int(empty_category_count), NumberFormatter.format_int(EMPTY_CATEGORY_BONUS)]
+	empty_categories_label.text = "Empty Categories (%s × $%s):" % [NumberFormatter.format_int(empty_category_count), NumberFormatter.format_money(EMPTY_CATEGORY_BONUS)]
 	score_above_label.text = "Points Above Target (%s pts, max 100):" % NumberFormatter.format_int(points_above_target)
 	buff_bonus_label.text = "Bonuses from Buffs:"
 	power_up_bonus_label.text = "Bonuses from PowerUps:"
@@ -494,13 +494,13 @@ func show_stats(data: Dictionary) -> void:
 			total_text_label.remove_theme_color_override("font_color")
 	
 	# Reset bonus labels for animation
-	challenge_reward_value_label.text = "$0"
-	chore_reward_value_label.text = "$0"
-	empty_categories_bonus_label.text = "$0"
-	score_above_bonus_label.text = "$0"
-	buff_bonus_value_label.text = "$0"
-	power_up_bonus_value_label.text = "$0"
-	total_bonus_label.text = "$0"
+	challenge_reward_value_label.text = "$0.00"
+	chore_reward_value_label.text = "$0.00"
+	empty_categories_bonus_label.text = "$0.00"
+	score_above_bonus_label.text = "$0.00"
+	buff_bonus_value_label.text = "$0.00"
+	power_up_bonus_value_label.text = "$0.00"
+	total_bonus_label.text = "$0.00"
 	
 	# Position and size this control to fill the viewport
 	var viewport = get_viewport()
@@ -648,9 +648,9 @@ func _animate_bonuses() -> void:
 ##
 ## Animates a label counting up from 0 to the target value.
 ## Plays money sound via AudioManager for non-zero values.
-func _animate_counter(label: Label, target_value: int, duration: float) -> void:
+func _animate_counter(label: Label, target_value: float, duration: float) -> void:
 	if target_value == 0:
-		label.text = "$0"
+		label.text = "$0.00"
 		return
 	
 	# Play money sound for non-zero values via AudioManager
@@ -674,8 +674,8 @@ func _animate_counter(label: Label, target_value: int, duration: float) -> void:
 	
 	tween.parallel().tween_method(
 		func(val: float):
-			current_value.value = int(val)
-			label.text = "$" + NumberFormatter.format_int(current_value.value),
+			current_value.value = val
+			label.text = NumberFormatter.format_money(current_value.value),
 		0.0,
 		float(target_value),
 		duration
@@ -698,9 +698,9 @@ func _animate_counter(label: Label, target_value: int, duration: float) -> void:
 ## _animate_counter_with_zero_effect(label: Label, target_value: int, duration: float)
 ##
 ## Animates a label counting up from 0 to the target value.
-## If target is 0, shows red "$0" with a bounce/shake animation.
+## If target is 0, shows red "$0.00" with a bounce/shake animation.
 ## Plays money sound via AudioManager for non-zero values.
-func _animate_counter_with_zero_effect(label: Label, target_value: int, duration: float) -> void:
+func _animate_counter_with_zero_effect(label: Label, target_value: float, duration: float) -> void:
 	# Play money sound for non-zero values via AudioManager
 	if target_value > 0:
 		var audio_mgr = get_node_or_null("/root/AudioManager")
@@ -709,7 +709,7 @@ func _animate_counter_with_zero_effect(label: Label, target_value: int, duration
 	
 	if target_value == 0:
 		# Set text red and play bounce animation for zero values
-		label.text = "$0"
+		label.text = "$0.00"
 		label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))  # Red color
 		
 		# Bounce/shake animation for zero
@@ -802,53 +802,53 @@ func _hide_panel() -> void:
 	panel_closed.emit()
 
 
-## get_total_bonus() -> int
+## get_total_bonus() -> float
 ##
 ## Returns the calculated total bonus for this round.
 ## Includes challenge reward, chore reward, empty categories bonus, and score above target bonus.
-func get_total_bonus() -> int:
+func get_total_bonus() -> float:
 	return total_bonus
 
 
-## get_challenge_reward() -> int
+## get_challenge_reward() -> float
 ##
 ## Returns the challenge reward amount.
-func get_challenge_reward() -> int:
+func get_challenge_reward() -> float:
 	return challenge_reward_amount
 
 
-## get_chore_reward() -> int
+## get_chore_reward() -> float
 ##
 ## Returns the chore reward amount.
-func get_chore_reward() -> int:
+func get_chore_reward() -> float:
 	return chore_reward_amount
 
 
-## get_empty_categories_bonus() -> int
+## get_empty_categories_bonus() -> float
 ##
 ## Returns the empty categories bonus amount.
-func get_empty_categories_bonus() -> int:
+func get_empty_categories_bonus() -> float:
 	return empty_categories_bonus
 
 
-## get_score_above_bonus() -> int
+## get_score_above_bonus() -> float
 ##
 ## Returns the points-above-target bonus amount.
-func get_score_above_bonus() -> int:
+func get_score_above_bonus() -> float:
 	return score_above_bonus
 
 
-## get_power_up_bonus() -> int
+## get_power_up_bonus() -> float
 ##
 ## Returns the aggregated round-end PowerUp bonus amount.
-func get_power_up_bonus() -> int:
+func get_power_up_bonus() -> float:
 	return power_up_bonus_amount
 
 
-## get_buff_bonus() -> int
+## get_buff_bonus() -> float
 ##
 ## Returns the aggregated round-end buff bonus amount.
-func get_buff_bonus() -> int:
+func get_buff_bonus() -> float:
 	return buff_bonus_amount
 
 

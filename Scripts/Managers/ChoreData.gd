@@ -36,7 +36,7 @@ const HARD_MAX_REDUCTION: int = 60
 @export var task_type: TaskType = TaskType.SCORE_UPPER
 @export var difficulty: Difficulty = Difficulty.EASY
 @export var progress_reduction: int = 10  # Per-chore meter reduction, within the difficulty range
-@export var reward_value: int = 50  # Money rewarded when completed
+@export var reward_value: float = 0.5  # Money rewarded when completed
 
 ## get_progress_reduction()
 ##

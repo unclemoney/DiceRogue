@@ -28,7 +28,7 @@ func _test_poor_house_autoscore_bug() -> void:
 	
 	# Give player some money
 	var player_economy = get_node("/root/PlayerEconomy")
-	player_economy.money = 500
+	player_economy.money = 5.0
 	
 	# Grant Poor House consumable
 	game_controller.grant_consumable("poor_house")

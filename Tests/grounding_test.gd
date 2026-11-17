@@ -158,9 +158,9 @@ func _run_tests() -> void:
 	if panel_scene:
 		var panel = panel_scene.instantiate()
 		add_child(panel)
-		panel.show_stats({"challenge_reward": 100, "docked_allowance": false})
-		_check(panel.get_total_bonus() == 100, "panel total is 100 without grounding")
-		panel.show_stats({"challenge_reward": 100, "docked_allowance": true})
+		panel.show_stats({"challenge_reward": 1.0, "docked_allowance": false})
+		_check(panel.get_total_bonus() == 1.0, "panel total is 100 without grounding")
+		panel.show_stats({"challenge_reward": 1.0, "docked_allowance": true})
 		_check(panel.get_total_bonus() == 0, "panel total is 0 when allowance docked")
 		_check(panel.total_text_label.text == "ALLOWANCE DOCKED:", "panel shows ALLOWANCE DOCKED label")
 		panel.queue_free()

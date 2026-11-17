@@ -18,19 +18,19 @@ Sources: `Scripts/PowerUps/*.tres`, `Scripts/Consumable/*.tres`,
 ### Parity
 - EvenOnly / OddOnly mods force a die's parity every roll.
 - `feeds →` **EvensNoOdds** (even +1 / odd -1 additive), **Even Higher** (+1
-  cumulative additive per even die scored), **Tango & Cash** (+$10 per odd die
+  cumulative additive per even die scored), **Tango & Cash** (+$0.10 per odd die
   scored at round end).
 - `fed by ←` nothing upstream; parity mods are the root of the channel.
 
 ### FixedFace
-- Three But Three (always 3s, +$3/roll) and Five By One (always 5, +1/roll)
+- Three But Three (always 3s, +$0.03/roll) and Five By One (always 5, +1/roll)
   fix a die to one face.
 - `feeds →` **Yahtzeed Dice** (+1 die per Yahtzee), **Yahtzee Mult** (+1x per
   Yahtzee Bonus), and the upper section (Threes/Fives fill on demand, feeding
   the 63-point upper bonus).
 
 ### Sixes
-- Gold Six ($6 per 6 rolled) + Wild Dots (locked dice raise odds of matching
+- Gold Six ($0.06 per 6 rolled) + Wild Dots (locked dice raise odds of matching
   faces) push the board toward sixes.
 - `feeds →` **Snake Eyes**… indirectly — see anti-synergies. Sixes stacking is
   the payoff itself via the Sixes category and Yahtzee attempts.
@@ -39,7 +39,7 @@ Sources: `Scripts/PowerUps/*.tres`, `Scripts/Consumable/*.tres`,
 
 ### Mods
 - Any mod on any die.
-- `feeds →` **Mod Money** ($8 per modded die scored), **Modded Dice Mastery**
+- `feeds →` **Mod Money** ($0.08 per modded die scored), **Modded Dice Mastery**
   (+10 per modded die scored).
 - `fed by ←` **One Free Mod** (consumable: grants 1 free random mod).
 
@@ -53,7 +53,7 @@ Sources: `Scripts/PowerUps/*.tres`, `Scripts/Consumable/*.tres`,
 ### Consumable
 - Every consumable use.
 - `feeds →` **The Consumer Is Always Right** (+0.25x per consumable used this
-  session), **Cash Flow** (+$1 per turn per consumable used).
+  session), **Cash Flow** (+$0.01 per turn per consumable used).
 - `fed by ←` **Yellow dice** — scoring yellow dice grant consumables, so a
   yellow investment is a self-refueling consumable engine.
 
@@ -69,34 +69,34 @@ Sources: `Scripts/PowerUps/*.tres`, `Scripts/Consumable/*.tres`,
 - **The Pawn Shop** (sell ALL PowerUps at 1.25x) → leaves every PowerUp slot
   empty → **Empty Shelves** (next score × empty PowerUp slots) spikes hardest
   right after a Pawn Shop fire sale.
-- **The Piggy Bank** ($3 saved per roll, sell to cash out) is the slow-burn
+- **The Piggy Bank** ($0.03 saved per roll, sell to cash out) is the slow-burn
   half of the same "sell for value" fantasy.
 
 ---
 
 ## New Content in the Web
 
-### Orange Dice (colored dice, $175 base, 1-in-150 roll chance)
+### Orange Dice (colored dice, $1.75 base, 1-in-150 roll chance)
 Scoring orange dice grants +1 roll per orange die scored (doubled to +2 each
 on a 5+ orange same-color bonus). Rolls are the game's core tempo resource:
 more rolls → more scoring chances → higher expected score per turn.
 - `feeds →` roll-hungry builds: **Roll Efficiency** (+N where N = rolls used),
   **Lock & Load** (more rolls = more lock cycles), **Wild Dots** (more chances
-  to land the matching face), **The Piggy Bank** ($3 per roll fills faster),
+  to land the matching face), **The Piggy Bank** ($0.03 per roll fills faster),
   **One-Roll Wonder** stays a fork — extra rolls devalue first-roll scoring.
 - `fed by ←` **Extra Rolls**, **Three More Rolls**, **The Great Exchange**
   (+2 dice, -1 roll — orange dice buy the lost roll back and then some).
 - Note: with orange in the pool there are 6 dice colors; **Rainbow Surge** now
   means 5 unique of 6.
 
-### Yellow Slime (PowerUp, $300 legendary)
+### Yellow Slime (PowerUp, $3.00 legendary)
 Yellow base chance is 1-in-120; Yellow Slime doubles it to 1-in-60.
 - `feeds →` the yellow engine: more yellow dice → more granted consumables →
   **Extreme Couponing**, **The Consumer Is Always Right**, **Cash Flow**.
 - `fed by ←` yellow dice unlock (USE_CONSUMABLES 8) and any consumable-slot
   capacity (**Extra Coupons** fixes slots at 4).
 
-### Extreme Couponing (PowerUp, $140 uncommon)
+### Extreme Couponing (PowerUp, $1.40 uncommon)
 +5 additive per consumable *granted* this run — grants, not uses, so it stacks
 even on consumables you hold or sell.
 - `feeds →` raw additive floor for any build willing to run yellow dice.
@@ -104,7 +104,7 @@ even on consumables you hold or sell.
   **Yellow Slime** (1/60), **Extra Coupons** (more slots = more grants held),
   **Random Uncommon Power-Up** and other granting consumables.
 
-### Defiance (PowerUp, $400 epic)
+### Defiance (PowerUp, $4.00 epic)
 +0.25x score multiplier per active debuff. Mom-granted buffs (rebellion,
 teacher_pet) ride the debuff pipeline but are **excluded** — Defiance only
 pays for real debuffs.
@@ -114,20 +114,20 @@ pays for real debuffs.
   both before scoring) and **Antidote** (cleanse after the value is banked).
 - Hard fork vs **Immunity** — see anti-synergies.
 
-### Spite (Consumable, $50)
+### Spite (Consumable, $0.50)
 Next scored category gets ×(1.0 + 0.5 per active debuff). Requires at least
 one active debuff; fizzles otherwise.
 - `feeds →` one huge scored category mid-debuff-storm.
 - `fed by ←` active debuffs; same pipeline as Defiance. Sequence: let debuffs
   accumulate → Spite + Defiance score → Antidote the worst one.
 
-### Antidote (Consumable, $40)
+### Antidote (Consumable, $0.40)
 Cleanses the highest-intensity active debuff.
 - `feeds →` tempo: the exit ramp after Defiance/Spite value is extracted, so
   the debuff doesn't keep taxing future scores.
 - `fed by ←` debuff-heavy rounds; dead draw in clean rounds.
 
-### Immunity (Consumable, $50)
+### Immunity (Consumable, $0.50)
 No debuffs are assigned next round.
 - `feeds →` safety for fragile builds (Lock & Load windows, Cursed Six
   economy protection from Hail Satan).
@@ -135,7 +135,7 @@ No debuffs are assigned next round.
   deliberate fork: you are either a debuff-farming build or a
   debuff-avoiding build, not both.
 
-### Mulligan (Consumable, $25)
+### Mulligan (Consumable, $0.25)
 Reroll your worst placed score using your current dice.
 - `feeds →` scorecard repair; converts a forced 0 into a second chance.
 - `fed by ←` the zero-score archetype: **Scratch Ticket** (0-score → next
@@ -143,24 +143,24 @@ Reroll your worst placed score using your current dice.
   decides *when* to cash the zero out; Scratch Ticket and Comeback Kid pay
   you for having suffered it.
 
-### Comeback Kid (PowerUp, $150 rare)
+### Comeback Kid (PowerUp, $1.50 rare)
 +5 score for each category sitting at 0.
 - `feeds →` additive floor that grows as the scorecard fills with scars.
 - `fed by ←` zero scores — accidental or deliberate. Natural partner of
   **Scratch Ticket** and **Mulligan**.
 
-### Upper Crust (PowerUp, $250 rare) + Bonus Sprint (Consumable, $65)
+### Upper Crust (PowerUp, $2.50 rare) + Bonus Sprint (Consumable, $0.65)
 Upper Crust: upper section scores ×1.5. Bonus Sprint: this round, upper
 section scores count double toward the 63-point upper bonus threshold.
 - `feeds →` the upper-section archetype: **Step By Step** (+6 upper),
-  **Bonus Mult** (+1x per upper bonus achieved), **Bonus Collector** ($150 if
+  **Bonus Mult** (+1x per upper bonus achieved), **Bonus Collector** ($1.50 if
   upper total ≥ 63), **Upper Section Boost** (all 6 upper categories +1
   level).
 - `fed by ←` fixed-face mods (Three But Three, Five By One) that fill
   Threes/Fives on demand. The archetype now rivals LowerTen builds
   (**Lower Ten**, **Lower Section Boost**) as a section-focusing path.
 
-### Four-Kind Yahtzee (PowerUp, $450 epic) + Two Pair House (PowerUp, $300 rare)
+### Four-Kind Yahtzee (PowerUp, $4.50 epic) + Two Pair House (PowerUp, $3.00 rare)
 Four-Kind Yahtzee: four-of-a-kind scores as a 25-point Yahtzee (no Yahtzee
 bonus). Two Pair House: two pair scores as a 25-point Full House. Both are
 category-score-only by design.
@@ -168,7 +168,7 @@ category-score-only by design.
 - `fed by ←` fixed-face mods (Three But Three, Five By One) and parity mods
   (EvenOnly/OddOnly) — bending the dice pool makes bent categories reliable.
 
-### Painted Die (Mod, $100)
+### Painted Die (Mod, $1.00)
 This die is permanently painted a random color; it always counts as that
 color.
 - `feeds →` color PowerUps (a guaranteed colored die every roll), rainbow
@@ -177,16 +177,16 @@ color.
 - `fed by ←` slime investments (paint into your doubled color) and
   **Paint Job** for splash-color turns.
 
-### Cursed Six (Mod, $25)
-Always rolls a 6, but costs $5 per roll. Sells for $0.
-- `feeds →` the sixes archetype: **Gold Six** ($6 per 6 — nets +$1/roll on
+### Cursed Six (Mod, $0.25)
+Always rolls a 6, but costs $0.05 per roll. Sells for $0.00.
+- `feeds →` the sixes archetype: **Gold Six** ($0.06 per 6 — nets +$0.01/roll on
   this die alone), Sixes category, Yahtzee attempts with **Wild Dots**.
 - `fed by ←` Gold Six and money engines (Tango & Cash, Plus A Dollar) that
-  subsidize the $5/roll upkeep.
+  subsidize the $0.05/roll upkeep.
 - **Hail Satan** anti-synergy: a guaranteed 6 every roll means every third
   roll risks the instant-0 punishment — see anti-synergies.
 
-### Loaded Dice (Consumable, $75)
+### Loaded Dice (Consumable, $0.75)
 Pick one die and set it to an exact value (1 to its side count).
 - `feeds →` precision category filling; completes straights, forces the fifth
   of a Yahtzee.
@@ -194,7 +194,7 @@ Pick one die and set it to an exact value (1 to its side count).
   Wild Dots pushes the remaining dice to match it. Also feeds fixed-face
   channels (set the face your mods can't produce).
 
-### Paint Job (Consumable, $60)
+### Paint Job (Consumable, $0.60)
 All dice gain a random color for the next roll, then revert.
 - `feeds →` **Rainbow Surge** (one-roll rainbow fishing), **Extra Rainbow**
   (+10 per colored die scored), any slime-invested color lucky enough to land.
@@ -209,25 +209,25 @@ All dice gain a random color for the next roll, then revert.
 |---|---|---|
 | Lock & Load ↔ High Roller | **Hard conflict.** High Roller dice cannot be locked; Lock & Load pays per locked die and its unlock constraint caps locks. | Now surfaced as a warning in the shop. |
 | Immunity ↔ Defiance / Spite | **Deliberate fork.** Immunity skips a round of debuffs, zeroing Defiance's multiplier and making Spite unusable. | Documented as intended design: pick a side per run. |
-| Cursed Six ↔ Hail Satan | **Dangerous.** A guaranteed 6 per roll accelerates Hail Satan's "3 sixes = instant 0" trigger. | The $5/roll upkeep already taxes the channel; the debuff makes it a liability in Hail Satan rounds. |
+| Cursed Six ↔ Hail Satan | **Dangerous.** A guaranteed 6 per roll accelerates Hail Satan's "3 sixes = instant 0" trigger. | The $0.05/roll upkeep already taxes the channel; the debuff makes it a liability in Hail Satan rounds. |
 | Scratch Ticket ↔ Comeback Kid | **Soft tension.** Scratch Ticket wants you to *leave* the zero and double the next score; Mulligan/Comeback Kid pressure you to *fix* or *farm* zeros. Deliberately bricking a category for +5/zero can cost more than it pays. | Watch whether zero-farming becomes a dominant line. |
 | Orange dice ↔ One-Roll Wonder | **Soft tension.** Extra rolls raise the expected value of later rolls, diluting the first-roll bonus fantasy. | Acceptable; both stay pickable. |
-| Immunity / Ungrounded ↔ Antidote | Dead draw. No debuffs = nothing to cleanse. | Minor; Antidote is cheap ($40). |
+| Immunity / Ungrounded ↔ Antidote | Dead draw. No debuffs = nothing to cleanse. | Minor; Antidote is cheap ($0.40). |
 
 ---
 
 ## Proposed Synergy-Creating Tweaks
 
 1. **Piggy Bank ↔ Orange dice** — count orange-granted rolls toward Piggy
-   Bank's $3/roll savings (verify: if they already do, document it; if not,
+   Bank's $0.03/roll savings (verify: if they already do, document it; if not,
    include them). *Why:* welds the new roll economy to the PawnShop channel,
    giving orange builds a cash-out fantasy.
 2. **Painted Die** — let the player pick the color in the shop (or reroll the
-   color for $25) instead of pure random. *Why:* agency converts it from a
+   color for $0.25) instead of pure random. *Why:* agency converts it from a
    lottery ticket into the anchor piece of a chosen color channel, feeding
    slimes, color PowerUps, and Rainbow Surge on purpose.
-3. **Cursed Six ↔ Gold Six** — make Gold Six's $6 payout exempt from Cursed
-   Six's $5/roll upkeep on the cursed die itself. *Why:* turns a net +$1/roll
+3. **Cursed Six ↔ Gold Six** — make Gold Six's $0.06 payout exempt from Cursed
+   Six's $0.05/roll upkeep on the cursed die itself. *Why:* turns a net +$0.01/roll
    treadmill into a real combo worth building around, without touching the
    Hail Satan risk that prices it.
 4. **Debuff Destroyer ↔ Defiance** — when Debuff Destroyer's sell-effect
@@ -235,7 +235,7 @@ All dice gain a random color for the next roll, then revert.
    *Why:* right now cleansing always hurts a Defiance build; a one-score
    memory turns "sell to cleanse" from anti-synergy into a tempo decision
    like Antidote.
-5. **Insurance Policy ↔ Scratch Ticket** — if Insurance Policy pays its $75
+5. **Insurance Policy ↔ Scratch Ticket** — if Insurance Policy pays its $0.75
    consolation while Scratch Ticket is armed, also add +10 additive to the
    doubled score. *Why:* the two zero-payoff consumables currently compete
    for the same event; a small bridge makes the zero-score archetype feel

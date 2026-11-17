@@ -226,7 +226,7 @@ static func snapshot_autoloads() -> Dictionary:
 
 ## restore_autoloads(snapshot)
 static func restore_autoloads(snapshot: Dictionary) -> void:
-	PlayerEconomy.money = int(snapshot["money"])
+	PlayerEconomy.money = float(snapshot["money"])
 	DiceColorManager.colors_enabled = bool(snapshot["colors_enabled"])
 	DiceColorManager.purchased_colors = (snapshot["purchased_colors"] as Dictionary).duplicate()
 	if bool(snapshot["rep_had_key"]):

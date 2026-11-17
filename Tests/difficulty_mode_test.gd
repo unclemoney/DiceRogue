@@ -24,7 +24,7 @@ const SweetSixteenScene := preload("res://Scenes/PowerUp/SweetSixteen.tscn")
 var _failures: int = 0
 var _scorecard: Scorecard
 var _dice_hand: FakeDiceHand
-var _money_start: int = 0
+var _money_start: float = 0.0
 
 
 class FakeDiceHand extends Node:
@@ -367,7 +367,7 @@ func _test_full_house_fortune_trigger() -> void:
 
 	GameSettings.set_difficulty_mode(GameSettings.DifficultyMode.EASY)
 	_scorecard.set_score(Scorecard.Section.LOWER, "full_house", 25)
-	_check("full house fortune: EASY full house pays $7", PlayerEconomy.money == money_before + 7)
+	_check("full house fortune: EASY full house pays $0.25", is_equal_approx(PlayerEconomy.money, money_before + 0.25))
 	_check("full house fortune: EASY full house counted", power_up.total_full_houses_earned == 1)
 
 	_free_power_up(power_up)
@@ -415,17 +415,17 @@ func _test_sweet_sixteen_trigger() -> void:
 	_check("sweet sixteen: incomplete scorecard pays nothing", PlayerEconomy.money == money_before)
 	_check("sweet sixteen: nothing earned on incomplete scorecard", power_up.total_earned == 0)
 
-	# 12 categories at 16+, one below: $5 x 12 = $60, no perfect-round bonus.
+	# 12 categories at 16+, one below: $0.05 x 12 = $0.60, no perfect-round bonus.
 	for category in _scorecard.upper_scores.keys():
 		_scorecard.set_score(Scorecard.Section.UPPER, category, 20)
 	for category in _scorecard.lower_scores.keys():
 		_scorecard.set_score(Scorecard.Section.LOWER, category, 15 if category == "chance" else 20)
 	money_before = PlayerEconomy.money
 	power_up._on_round_end_payout(_scorecard.get_total_score())
-	_check("sweet sixteen: 12 qualifying categories pay $60", PlayerEconomy.money == money_before + 60)
-	_check("sweet sixteen: total earned 60", power_up.total_earned == 60)
+	_check("sweet sixteen: 12 qualifying categories pay $0.60", is_equal_approx(PlayerEconomy.money, money_before + 0.6))
+	_check("sweet sixteen: total earned 0.60", is_equal_approx(power_up.total_earned, 0.6))
 
-	# All 13 at 16+: 13 x $5 = $65 plus the stacking $256 perfect-round bonus.
+	# All 13 at 16+: 13 x $0.05 = $0.65 plus the stacking $2.56 perfect-round bonus.
 	_scorecard.reset_scores()
 	for category in _scorecard.upper_scores.keys():
 		_scorecard.set_score(Scorecard.Section.UPPER, category, 16)
@@ -433,8 +433,8 @@ func _test_sweet_sixteen_trigger() -> void:
 		_scorecard.set_score(Scorecard.Section.LOWER, category, 16)
 	money_before = PlayerEconomy.money
 	power_up._on_round_end_payout(_scorecard.get_total_score())
-	_check("sweet sixteen: perfect round pays 65 + 256 = $321", PlayerEconomy.money == money_before + 321)
-	_check("sweet sixteen: total earned 60 + 321 = 381", power_up.total_earned == 381)
+	_check("sweet sixteen: perfect round pays 65 + 256 = $3.21", is_equal_approx(PlayerEconomy.money, money_before + 3.21))
+	_check("sweet sixteen: total earned 0.60 + 3.21 = 3.81", is_equal_approx(power_up.total_earned, 3.81))
 
 	_free_power_up(power_up)
 	_reset_fixture()

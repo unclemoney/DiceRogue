@@ -3,15 +3,15 @@ class_name ModMoneyPowerUp
 
 ## ModMoneyPowerUp
 ##
-## Common PowerUp that grants $8 for each die with a mod when scoring.
+## Common PowerUp that grants $0.08 for each die with a mod when scoring.
 ## Synergizes with mods to provide passive economy boost.
-## Price: $75, Rarity: Common
+## Price: $0.75, Rarity: Common
 
-const MONEY_PER_MODDED_DIE: int = 8
+const MONEY_PER_MODDED_DIE: float = 0.08
 
 var scorecard_ref: Scorecard = null
 var score_card_ui_ref = null
-var total_mod_money_earned: int = 0
+var total_mod_money_earned: float = 0.0
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -65,12 +65,12 @@ func _on_about_to_score(_section: Scorecard.Section, _category: String, _dice_va
 		else:
 			PlayerEconomy.add_money(money_earned)
 		total_mod_money_earned += awarded_amount
-		print("[ModMoneyPowerUp] Earned $%d from %d modded dice" % [awarded_amount, modded_count])
+		print("[ModMoneyPowerUp] Earned $%.2f from %d modded dice" % [awarded_amount, modded_count])
 		emit_signal("description_updated", id, get_current_description())
 		_update_power_up_icons()
 
 func get_current_description() -> String:
-	return "Earn $%d per modded die when scoring.\nTotal earned: $%d" % [MONEY_PER_MODDED_DIE, total_mod_money_earned]
+	return "Earn $%.2f per modded die when scoring.\nTotal earned: $%.2f" % [MONEY_PER_MODDED_DIE, total_mod_money_earned]
 
 func _update_power_up_icons() -> void:
 	if not is_inside_tree() or not get_tree():

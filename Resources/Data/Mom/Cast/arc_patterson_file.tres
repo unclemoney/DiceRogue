@@ -24,7 +24,7 @@ dialog_node_id = "story_patterson_payoff"
 min_channel = 4
 requires_flag = "flag_patterson_doubted"
 sets_flag = "patterson_truce"
-reward_money = 40
+reward_money = 0.40
 reward_mood = -2
 reward_rep = 4
 

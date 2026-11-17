@@ -16,7 +16,7 @@ description = "Each 1 = +0.2x mult. All 1s = 3.0x!"
 icon = SubResource("AtlasTexture_6cxax")
 foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/snake_eyes.json"
 scene = ExtResource("2_scene")
-price = 600
+price = 6.0
 rarity = "legendary"
 rating = "NC-17"
 metadata/_custom_type_script = "uid://b4upm4dbvhukm"

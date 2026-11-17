@@ -77,7 +77,7 @@ func _check(label: String, condition: bool) -> void:
 		_failures += 1
 
 
-func _make_outcome(effect: String, magnitude: int = 0) -> MomDialogOutcome:
+func _make_outcome(effect: String, magnitude: float = 0.0) -> MomDialogOutcome:
 	var outcome := MomDialogOutcome.new()
 	outcome.effect = effect
 	outcome.magnitude = magnitude
@@ -202,15 +202,15 @@ func _test_storms_off(gc) -> void:
 
 
 func _test_direct_effects(gc) -> void:
-	# Fine with exact magnitude (PlayerEconomy starts with $100)
-	var outcome := _make_outcome("fine", 75)
+	# Fine with exact magnitude (PlayerEconomy starts with $1.00)
+	var outcome := _make_outcome("fine", 0.75)
 	var result = Handler.apply_outcome(gc, outcome, 2)
-	_check("fine of exactly $75", result.fine_amount == 75)
+	_check("fine of exactly $0.75", result.fine_amount == 0.75)
 
-	# reward_money magnitude 0 uses default $50-150 range
+	# reward_money magnitude 0 uses default $0.50-1.50 range
 	outcome = _make_outcome("reward_money", 0)
 	result = Handler.apply_outcome(gc, outcome, 0)
-	_check("default reward in $50-150", result.reward_money >= 50 and result.reward_money <= 150)
+	_check("default reward in $0.50-1.50", result.reward_money >= 0.5 and result.reward_money <= 1.5)
 
 	# mood_delta outcome only carries the field delta
 	outcome = _make_outcome("mood_delta")
@@ -233,11 +233,11 @@ func _test_dialog_amount_parity() -> void:
 	if bargain == null or bargain.responses.size() < 2:
 		return
 	var polite_outcome: MomDialogOutcome = bargain.responses[0].outcomes[0]
-	_check("bargain deal outcome pays exact $25",
-		polite_outcome != null and polite_outcome.effect == "reward_money" and polite_outcome.magnitude == 25)
+	_check("bargain deal outcome pays exact $0.25",
+		polite_outcome != null and polite_outcome.effect == "reward_money" and polite_outcome.magnitude == 0.25)
 	var haggle_outcome: MomDialogOutcome = bargain.responses[1].outcomes[0]
-	_check("make it ten outcome pays exact $10",
-		haggle_outcome != null and haggle_outcome.effect == "reward_money" and haggle_outcome.magnitude == 10)
+	_check("make it ten outcome pays exact $0.50",
+		haggle_outcome != null and haggle_outcome.effect == "reward_money" and haggle_outcome.magnitude == 0.5)
 	_check("make it ten text no longer says seven-fifty",
 		haggle_outcome != null and not haggle_outcome.result_text.to_lower().contains("seven-fifty"))
 

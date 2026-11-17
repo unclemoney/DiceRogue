@@ -18,7 +18,7 @@ const PIGGY_SCENE: PackedScene = preload("res://Scenes/PowerUp/ThePiggyBankPower
 
 var _failures: int = 0
 var _saved_savings: int = 0
-var _saved_money: int = 0
+var _saved_money: float = 0.0
 
 
 ## Minimal DiceHand stand-in exposing the roll_complete signal.
@@ -89,12 +89,12 @@ func _test_apply_restores_savings() -> void:
 
 	PlayerEconomy.piggy_bank_savings = 0
 	var fresh = _make_piggy(hand)
-	_check("fresh run restores $0", fresh.accumulated_savings == 0)
+	_check("fresh run restores $0.00", fresh.accumulated_savings == 0)
 	fresh.queue_free()
 
-	PlayerEconomy.piggy_bank_savings = 42
+	PlayerEconomy.piggy_bank_savings = 0.42
 	var restored = _make_piggy(hand)
-	_check("apply() restores persisted $42", restored.accumulated_savings == 42)
+	_check("apply() restores persisted $0.42", restored.accumulated_savings == 0.42)
 	restored.queue_free()
 	hand.queue_free()
 
@@ -103,13 +103,13 @@ func _test_roll_write_back() -> void:
 	var hand := FakeDiceHand.new()
 	add_child(hand)
 
-	PlayerEconomy.piggy_bank_savings = 42
+	PlayerEconomy.piggy_bank_savings = 0.42
 	var piggy = _make_piggy(hand)
 	hand.roll_complete.emit()
-	_check("roll adds $3 to savings", piggy.accumulated_savings == 45)
-	_check("roll writes $45 back to PlayerEconomy", PlayerEconomy.piggy_bank_savings == 45)
+	_check("roll adds $0.07 to savings", piggy.accumulated_savings == 0.49)
+	_check("roll writes $0.49 back to PlayerEconomy", PlayerEconomy.piggy_bank_savings == 0.49)
 	hand.roll_complete.emit()
-	_check("second roll writes $48 back", PlayerEconomy.piggy_bank_savings == 48)
+	_check("second roll writes $0.56 back", PlayerEconomy.piggy_bank_savings == 0.56)
 
 	piggy.queue_free()
 	hand.queue_free()
@@ -119,16 +119,16 @@ func _test_sale_zeroes_savings() -> void:
 	var hand := FakeDiceHand.new()
 	add_child(hand)
 
-	PlayerEconomy.piggy_bank_savings = 48
-	var money_before: int = PlayerEconomy.money
+	PlayerEconomy.piggy_bank_savings = 0.56
+	var money_before: float = PlayerEconomy.money
 	var piggy = _make_piggy(hand)
 
 	piggy._on_power_up_sold("other_powerup")
 	_check("selling another PowerUp pays nothing", PlayerEconomy.money == money_before)
-	_check("selling another PowerUp keeps savings", PlayerEconomy.piggy_bank_savings == 48)
+	_check("selling another PowerUp keeps savings", PlayerEconomy.piggy_bank_savings == 0.56)
 
 	piggy._on_power_up_sold("the_piggy_bank")
-	_check("sale pays out the $48 savings", PlayerEconomy.money == money_before + 48)
+	_check("sale pays out the $0.56 savings", PlayerEconomy.money == money_before + 0.56)
 	_check("sale zeroes the persisted savings", PlayerEconomy.piggy_bank_savings == 0)
 
 	piggy.queue_free()
@@ -138,26 +138,26 @@ func _test_sale_zeroes_savings() -> void:
 func _test_base_sale_refund_is_zero() -> void:
 	var definition := PowerUpData.new()
 	definition.id = "the_piggy_bank"
-	definition.price = 125
+	definition.price = 1.25
 	var manager := FakePowerUpManager.new()
 	manager.definition = definition
 	var controller := SaleGameController.new()
 	controller.pu_manager = manager
 	controller.active_power_ups["the_piggy_bank"] = Node.new()
-	var money_before: int = PlayerEconomy.money
+	var money_before: float = PlayerEconomy.money
 	controller._on_power_up_sold("the_piggy_bank")
-	_check("Piggy Bank ordinary sale refund is $0", PlayerEconomy.money == money_before)
+	_check("Piggy Bank ordinary sale refund is $0.00", PlayerEconomy.money == money_before)
 
 
 func _test_state_round_trip() -> void:
-	PlayerEconomy.piggy_bank_savings = 77
+	PlayerEconomy.piggy_bank_savings = 0.77
 	var state: Dictionary = PlayerEconomy.get_state()
 	_check("get_state() includes piggy_bank_savings", state.has("piggy_bank_savings"))
-	_check("get_state() saves $77", int(state.get("piggy_bank_savings", -1)) == 77)
+	_check("get_state() saves $0.77", float(state.get("piggy_bank_savings", -1.0)) == 0.77)
 
 	PlayerEconomy.piggy_bank_savings = 0
 	PlayerEconomy.load_state(state)
-	_check("load_state() restores $77", PlayerEconomy.piggy_bank_savings == 77)
+	_check("load_state() restores $0.77", PlayerEconomy.piggy_bank_savings == 0.77)
 
 	PlayerEconomy.load_state({})
-	_check("load_state() defaults missing savings to $0", PlayerEconomy.piggy_bank_savings == 0)
+	_check("load_state() defaults missing savings to $0.00", PlayerEconomy.piggy_bank_savings == 0)

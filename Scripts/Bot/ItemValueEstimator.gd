@@ -45,7 +45,7 @@ enum EffectType {
 ##   EXTRA_DICE: int extra dice count
 ##   EXTRA_ROLLS: int extra rolls per turn
 ##   CATEGORY_UPGRADE: float level boost multiplier
-##   ECONOMY_FLAT: int money per game
+##   ECONOMY_FLAT: float money per game
 ##   ECONOMY_SCALING: float money multiplier
 ##   UTILITY: estimated int point value per game
 var KNOWN_EFFECTS: Dictionary = {
@@ -58,8 +58,8 @@ var KNOWN_EFFECTS: Dictionary = {
 	"extra_dice": {"type": EffectType.EXTRA_DICE, "value": 1, "desc": "+1 die"},
 	"wild_dots": {"type": EffectType.UTILITY, "value": 20, "desc": "Wild die face"},
 	"extra_rolls": {"type": EffectType.EXTRA_ROLLS, "value": 1, "desc": "+1 roll per turn"},
-	"consumable_cash": {"type": EffectType.ECONOMY_FLAT, "value": 50, "desc": "$50 when consumable used"},
-	"bonus_money": {"type": EffectType.ECONOMY_FLAT, "value": 75, "desc": "Bonus end-of-round money"},
+	"consumable_cash": {"type": EffectType.ECONOMY_FLAT, "value": 0.50, "desc": "$0.50 when consumable used"},
+	"bonus_money": {"type": EffectType.ECONOMY_FLAT, "value": 0.75, "desc": "Bonus end-of-round money"},
 	"money_multiplier": {"type": EffectType.ECONOMY_SCALING, "value": 1.25, "desc": "1.25x money earned"},
 	"full_house_bonus": {"type": EffectType.SCORE_ADDITIVE, "value": 10, "desc": "+10 on full house"},
 	"step_by_step": {"type": EffectType.CATEGORY_UPGRADE, "value": 1.5, "desc": "Straight category bonus"},
@@ -69,7 +69,7 @@ var KNOWN_EFFECTS: Dictionary = {
 	"pin_head": {"type": EffectType.SCORE_ADDITIVE, "value": 5, "desc": "Pin bonus per ones"},
 	"money_well_spent": {"type": EffectType.ECONOMY_SCALING, "value": 1.1, "desc": "Money from purchases"},
 	"highlighted_score": {"type": EffectType.SCORE_ADDITIVE, "value": 12, "desc": "Highlighted category bonus"},
-	"the_consumer_is_always_right": {"type": EffectType.ECONOMY_FLAT, "value": 40, "desc": "Economy from consumable use"},
+	"the_consumer_is_always_right": {"type": EffectType.ECONOMY_FLAT, "value": 0.40, "desc": "Economy from consumable use"},
 	"green_slime": {"type": EffectType.SCORE_ADDITIVE, "value": 6, "desc": "Green additive"},
 	"red_slime": {"type": EffectType.SCORE_ADDITIVE, "value": 6, "desc": "Red additive"},
 	"purple_slime": {"type": EffectType.SCORE_MULTIPLIER, "value": 1.15, "desc": "Purple multiplier"},
@@ -77,23 +77,23 @@ var KNOWN_EFFECTS: Dictionary = {
 	"lower_ten": {"type": EffectType.SCORE_ADDITIVE, "value": 10, "desc": "+10 to lower section"},
 	"different_straights": {"type": EffectType.SCORE_ADDITIVE, "value": 15, "desc": "Bonus for straights"},
 	"plus_thelast": {"type": EffectType.SCORE_ADDITIVE, "value": 8, "desc": "Bonus from previous category"},
-	"allowance": {"type": EffectType.ECONOMY_FLAT, "value": 600, "desc": "$100 per challenge (×6 rounds)"},
+	"allowance": {"type": EffectType.ECONOMY_FLAT, "value": 6.00, "desc": "$1.00 per challenge (×6 rounds)"},
 	"ungrounded": {"type": EffectType.UTILITY, "value": 15, "desc": "Goof-off immunity"},
 	"shop_rerolls": {"type": EffectType.UTILITY, "value": 10, "desc": "Free shop rerolls"},
-	"tango_and_cash": {"type": EffectType.ECONOMY_FLAT, "value": 100, "desc": "Bonus money mechanic"},
+	"tango_and_cash": {"type": EffectType.ECONOMY_FLAT, "value": 1.00, "desc": "Bonus money mechanic"},
 	"even_higher": {"type": EffectType.SCORE_ADDITIVE, "value": 10, "desc": "Even upper section bonus"},
-	"money_bags": {"type": EffectType.ECONOMY_FLAT, "value": 200, "desc": "Score-based money bonus"},
-	"failed_money": {"type": EffectType.ECONOMY_FLAT, "value": 50, "desc": "Money on round fail"},
+	"money_bags": {"type": EffectType.ECONOMY_FLAT, "value": 2.00, "desc": "Score-based money bonus"},
+	"failed_money": {"type": EffectType.ECONOMY_FLAT, "value": 0.50, "desc": "Money on round fail"},
 	"dice_diversity": {"type": EffectType.SCORE_ADDITIVE, "value": 8, "desc": "Unique face bonus"},
 	"lock_and_load": {"type": EffectType.UTILITY, "value": 15, "desc": "Lock dice bonus"},
-	"chore_champion": {"type": EffectType.ECONOMY_FLAT, "value": 150, "desc": "Extra chore money"},
+	"chore_champion": {"type": EffectType.ECONOMY_FLAT, "value": 1.50, "desc": "Extra chore money"},
 	"roll_efficiency": {"type": EffectType.SCORE_ADDITIVE, "value": 10, "desc": "Bonus for fewer rolls used"},
 	"pair_paradise": {"type": EffectType.SCORE_ADDITIVE, "value": 12, "desc": "Bonus for pairs"},
 	"extra_coupons": {"type": EffectType.UTILITY, "value": 25, "desc": "Extra consumable/powerup slots"},
 	"purple_payout": {"type": EffectType.SCORE_MULTIPLIER, "value": 1.15, "desc": "Purple die payout mult"},
-	"mod_money": {"type": EffectType.ECONOMY_FLAT, "value": 100, "desc": "Money from mods"},
+	"mod_money": {"type": EffectType.ECONOMY_FLAT, "value": 1.00, "desc": "Money from mods"},
 	"blue_safety_net": {"type": EffectType.UTILITY, "value": 30, "desc": "Blue die protection"},
-	"chore_sprint": {"type": EffectType.ECONOMY_FLAT, "value": 200, "desc": "Extra chore rewards"},
+	"chore_sprint": {"type": EffectType.ECONOMY_FLAT, "value": 2.00, "desc": "Extra chore rewards"},
 	"straight_triplet_master": {"type": EffectType.SCORE_ADDITIVE, "value": 15, "desc": "Straight+3oak combo bonus"},
 	"modded_dice_mastery": {"type": EffectType.SCORE_ADDITIVE, "value": 10, "desc": "Modded dice scoring bonus"},
 	"debuff_destroyer": {"type": EffectType.UTILITY, "value": 20, "desc": "Negates debuffs"},
@@ -101,7 +101,7 @@ var KNOWN_EFFECTS: Dictionary = {
 	"azure_perfection": {"type": EffectType.SCORE_MULTIPLIER, "value": 1.2, "desc": "Blue die perfection mult"},
 	"rainbow_surge": {"type": EffectType.SCORE_MULTIPLIER, "value": 1.15, "desc": "Multi-color bonus"},
 	"the_replicator": {"type": EffectType.UTILITY, "value": 40, "desc": "Duplicates a powerup"},
-	"the_piggy_bank": {"type": EffectType.ECONOMY_FLAT, "value": 300, "desc": "Saves money over time"},
+	"the_piggy_bank": {"type": EffectType.ECONOMY_FLAT, "value": 3.00, "desc": "Saves money over time"},
 	"random_card_level": {"type": EffectType.CATEGORY_UPGRADE, "value": 1.5, "desc": "Random category level up"},
 	"yahtzeed_dice": {"type": EffectType.UTILITY, "value": 15, "desc": "Yahtzee die lock bonus"},
 	"daring_dice": {"type": EffectType.SCORE_ADDITIVE, "value": 10, "desc": "Risk/reward dice bonus"},
@@ -287,7 +287,7 @@ func estimate_item_value(item_id: String, item_data: Dictionary, num_simulations
 	var effect: Dictionary = KNOWN_EFFECTS.get(item_id, {})
 	var effect_type: int = effect.get("type", EffectType.UNKNOWN)
 	var effect_value: float = effect.get("value", 0.0)
-	var price: int = item_data.get("price", 100)
+	var price: float = item_data.get("price", 1.0)
 	var rarity: String = item_data.get("rarity", "common")
 
 	# Run baseline simulation
@@ -325,7 +325,7 @@ func estimate_item_value(item_id: String, item_data: Dictionary, num_simulations
 
 		EffectType.ECONOMY_SCALING:
 			# Estimate based on average money earned per game (~200)
-			money_delta = 200.0 * (effect_value - 1.0)
+			money_delta = 2.0 * (effect_value - 1.0)
 
 		EffectType.UTILITY:
 			# Use the estimated point value directly
@@ -351,8 +351,8 @@ func estimate_item_value(item_id: String, item_data: Dictionary, num_simulations
 			score_delta = 10.0 * rarity_mult
 
 	# Calculate total value (score + money converted to approximate points)
-	# Rough conversion: $1 ≈ 0.1 points of value
-	var money_as_points: float = money_delta * 0.1
+	# Rough conversion: $0.01 ≈ 0.1 points of value
+	var money_as_points: float = money_delta * 10.0
 	var total_value: float = score_delta + money_as_points
 
 	# Cost efficiency: $/point
@@ -379,12 +379,12 @@ func estimate_item_value(item_id: String, item_data: Dictionary, num_simulations
 
 
 ## Calculate a tier rating (S/A/B/C/D/F) based on value, price, and rarity.
-func _calculate_tier(total_value: float, price: int, rarity: String) -> String:
+func _calculate_tier(total_value: float, price: float, rarity: String) -> String:
 	if total_value <= 0:
 		return "F"
 
 	# Value efficiency = value per dollar spent
-	var efficiency: float = total_value / float(max(price, 1))
+	var efficiency: float = total_value / maxf(price * 100.0, 1.0)
 
 	# Adjust for rarity expectation (higher rarity should provide more value)
 	var rarity_expectation := _rarity_value_multiplier(rarity)

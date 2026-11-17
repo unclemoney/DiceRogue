@@ -142,7 +142,7 @@ func choose_dice_to_lock(_scorecard: Scorecard, dice_list: Array, values: Array[
 ##
 ## Returns a priority score for a shop item. Higher = buy first.
 ## Considers rarity, price, and affordability.
-func evaluate_shop_item(item_data: Resource, money: int, price: int) -> float:
+func evaluate_shop_item(item_data: Resource, money: float, price: float) -> float:
 	if price > money:
 		return -1.0
 
@@ -155,7 +155,7 @@ func evaluate_shop_item(item_data: Resource, money: int, price: int) -> float:
 
 	# Value ratio: prefer cheaper items of same rarity
 	if price > 0:
-		score += (1.0 / price) * 50.0
+		score += (1.0 / (price * 100.0)) * 50.0
 
 	return score
 
@@ -165,7 +165,7 @@ func evaluate_shop_item(item_data: Resource, money: int, price: int) -> float:
 ## Given available shop items and current money, returns items to buy
 ## in priority order. Each entry is the ShopItem node reference.
 ## Strategy: buy highest rarity items first, then by value.
-func choose_shop_purchases(shop_items: Array, money: int) -> Array:
+func choose_shop_purchases(shop_items: Array, money: float) -> Array:
 	var scored_items := []
 	for item in shop_items:
 		if not item or not item.item_data:
@@ -329,12 +329,12 @@ func _shop_has_upgrade(shop_items: Array, active_power_ups: Dictionary) -> bool:
 ##   1. No shop power-up has higher rarity than lowest owned
 ##   2. Reroll cost < 10% of current money
 ##   3. Bot has enough money to afford the reroll
-func should_reroll_shop(shop_items: Array, active_power_ups: Dictionary, money: int, reroll_cost: int) -> bool:
+func should_reroll_shop(shop_items: Array, active_power_ups: Dictionary, money: float, reroll_cost: float) -> bool:
 	# If there's already something worth buying, don't reroll
 	if _shop_has_upgrade(shop_items, active_power_ups):
 		return false
 	# Check cost threshold: reroll must cost less than 10% of total money
-	if reroll_cost >= int(money * 0.1):
+	if reroll_cost >= floorf(money * 10.0) / 100.0:
 		return false
 	# Must be able to afford the reroll
 	if reroll_cost > money:
@@ -351,7 +351,7 @@ func estimate_channel_economy(channel_config: Resource, channel_manager: Node) -
 	const VANILLA_BASELINE_SCORE := 210
 
 	var total_target := 0
-	var total_reward := 0
+	var total_reward := 0.0
 
 	for round_num in range(1, 7):
 		var round_config = channel_config.get_round_config(round_num) if channel_config.has_method("get_round_config") else null
@@ -365,7 +365,7 @@ func estimate_channel_economy(channel_config: Resource, channel_manager: Node) -
 		elif channel_config.get("base_reward_money"):
 			total_reward += channel_config.base_reward_money
 
-	var surplus: int = total_reward - total_target
+	var surplus: float = total_reward * 100.0 - float(total_target)
 	var difficulty_rating := "moderate"
 	if surplus > 200:
 		difficulty_rating = "easy"
@@ -388,11 +388,11 @@ func estimate_channel_economy(channel_config: Resource, channel_manager: Node) -
 ## Returns: { remaining_target, remaining_reward, projected_income, points_gap,
 ##            dollars_per_point_needed, budget_pressure }
 ## budget_pressure: "low" | "medium" | "high" | "critical"
-func estimate_remaining_budget(channel_config: Resource, channel_manager: Node, current_round: int, current_money: int) -> Dictionary:
+func estimate_remaining_budget(channel_config: Resource, channel_manager: Node, current_round: int, current_money: float) -> Dictionary:
 	const VANILLA_BASELINE_SCORE := 210
 
 	var remaining_target := 0
-	var remaining_reward := 0
+	var remaining_reward := 0.0
 
 	for round_num in range(current_round, 7):
 		var round_config = channel_config.get_round_config(round_num) if channel_config.has_method("get_round_config") else null
@@ -408,11 +408,11 @@ func estimate_remaining_budget(channel_config: Resource, channel_manager: Node, 
 
 	# Projected income: current money + remaining rewards + estimated score bonuses
 	var rounds_left: int = 6 - current_round + 1
-	var estimated_score_bonus: int = rounds_left * 10  # rough: ~10 pts above target avg
-	var projected_income: int = current_money + remaining_reward + estimated_score_bonus
+	var estimated_score_bonus: float = rounds_left * 0.1  # rough: ~10 pts above target avg
+	var projected_income: float = current_money + remaining_reward + estimated_score_bonus
 
 	# Points gap: how short we expect to be
-	var points_gap: int = remaining_target - projected_income
+	var points_gap: float = remaining_target - projected_income * 100.0
 	var dollars_per_point_needed: float = 0.0
 	if remaining_target > 0:
 		dollars_per_point_needed = float(current_money) / float(remaining_target)

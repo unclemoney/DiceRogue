@@ -9,9 +9,9 @@ class_name TeacherPetBuff
 ## so mood 10 = maddest grants Tier 1 and mood 1 = happiest grants
 ## Tier 10). Effects stack as they unlock:
 ##   - Tiers 1-3:  additive score per hand only (+5 to +15)
-##   - Tiers 4-6:  additive plus a round-end allowance ($25 to $75)
+##   - Tiers 4-6:  additive plus a round-end allowance ($0.25 to $0.75)
 ##   - Tiers 7-10: additive, allowance, and a score multiplier
-##                 (x1.5 to x3.0), peaking at +50 / x3.0 / $200 on Tier 10
+##                 (x1.5 to x3.0), peaking at +50 / x3.0 / $2.00 on Tier 10
 
 const SOURCE_NAME: String = "teacher_pet"
 const MAX_TIER: int = 10
@@ -21,7 +21,7 @@ const TIER_ADDITIVES: Array[int] = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
 ## Per-tier score multiplier (1.0 = none; tiers 7+ only).
 const TIER_MULTIPLIERS: Array[float] = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.5, 1.75, 2.0, 3.0]
 ## Per-tier round-end allowance payout (tiers 4+ only).
-const TIER_ALLOWANCES: Array[int] = [0, 0, 0, 0, 25, 50, 75, 100, 150, 175, 200]
+const TIER_ALLOWANCES: Array[float] = [0.0, 0.0, 0.0, 0.0, 0.25, 0.5, 0.75, 1.0, 1.5, 1.75, 2.0]
 
 var _game_controller: GameController = null
 var _round_end_bonus_consumed: bool = false
@@ -88,7 +88,7 @@ static func get_tier_multiplier(tier: int) -> float:
 ## get_tier_allowance(tier) -> int
 ##
 ## Returns the round-end allowance payout granted by the given tier.
-static func get_tier_allowance(tier: int) -> int:
+static func get_tier_allowance(tier: int) -> float:
 	return TIER_ALLOWANCES[clampi(tier, 1, MAX_TIER)]
 
 
@@ -114,7 +114,7 @@ func get_buff_effect_lines() -> Array[String]:
 		parts.append("x%.2f score" % multiplier)
 	var allowance := get_tier_allowance(tier)
 	if allowance > 0:
-		parts.append("+$%d at round end" % allowance)
+		parts.append("+$%.2f at round end" % allowance)
 	return parts
 
 
@@ -133,7 +133,7 @@ func get_buff_effect_summary() -> String:
 ##
 ## Exposes the round-end preview/consume contract expected by
 ## GameController. Only tiers with an allowance (4+) pay out money.
-func get_pending_round_end_bonus() -> int:
+func get_pending_round_end_bonus() -> float:
 	if _round_end_bonus_consumed:
 		return 0
 	return get_tier_allowance(get_tier())
@@ -142,7 +142,7 @@ func get_pending_round_end_bonus() -> int:
 ## consume_pending_round_end_bonus() -> int
 ##
 ## Returns the current round-end Teacher's Pet payout.
-func consume_pending_round_end_bonus() -> int:
+func consume_pending_round_end_bonus() -> float:
 	var amount := get_pending_round_end_bonus()
 	if amount > 0:
 		_round_end_bonus_consumed = true

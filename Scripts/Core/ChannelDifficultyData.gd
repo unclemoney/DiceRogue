@@ -49,7 +49,7 @@ class_name ChannelDifficultyData
 ## 1.0 = base target, 2.0 = double target, etc.
 @export var goal_score_multiplier: float = 1.0
 
-## Multiplier applied to yahtzee bonus points ($100 base)
+## Multiplier applied to yahtzee bonus points (100-point base)
 ## Higher channels reward skilled play more
 @export var yahtzee_bonus_multiplier: float = 1.0
 
@@ -63,7 +63,7 @@ class_name ChannelDifficultyData
 ## Applied before exponential scaling from purchases
 @export var colored_dice_cost_multiplier: float = 1.0
 
-## Multiplier for shop reroll base cost ($25 base)
+## Multiplier for shop reroll base cost ($0.25 base)
 @export var reroll_base_cost_multiplier: float = 1.0
 
 ## ============== GOOF-OFF METER ==============

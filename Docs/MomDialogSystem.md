@@ -391,7 +391,7 @@ When a real punishment tier `>= 1` is applied, the defer streak resets.
 
 | Effect | Weight | Params | Permanent |
 |---|---:|---|---:|
-| `reward_money` | 2 | `$50–150` | No |
+| `reward_money` | 2 | `$0.50–150` | No |
 | `reward_consumable` | 2 | `random_power_up_uncommon`, `green_envy`, `the_rarities` | No |
 | `reward_powerup` | 1 | `extra_rolls`, `bonus_money`, `full_house_bonus` | No |
 
@@ -399,7 +399,7 @@ When a real punishment tier `>= 1` is applied, the defer streak resets.
 
 | Effect | Weight | Params | Permanent |
 |---|---:|---|---:|
-| `fine` | 3 | `$50` | No |
+| `fine` | 3 | `$0.50` | No |
 | `none` | 2 | — | No |
 | `mood_delta` | 1 | `+1` mood | No |
 
@@ -407,7 +407,7 @@ When a real punishment tier `>= 1` is applied, the defer streak resets.
 
 | Effect | Weight | Params | Permanent |
 |---|---:|---|---:|
-| `fine` | 3 | `$100–150` | No |
+| `fine` | 3 | `$1.00–150` | No |
 | `debuff` | 3 | 1 debuff | No |
 | `confiscate_powerups` | 2 | max rating `R` | Yes |
 
@@ -417,7 +417,7 @@ When a real punishment tier `>= 1` is applied, the defer streak resets.
 |---|---:|---|---:|
 | `confiscate_powerups` | 3 | max rating `NC-17`, stack debuffs | Yes |
 | `debuff` | 2 | 1 debuff | No |
-| `fine` | 2 | `$150` | No |
+| `fine` | 2 | `$1.50` | No |
 
 ### Tier 4 — No Fun
 
@@ -432,7 +432,7 @@ When a real punishment tier `>= 1` is applied, the defer streak resets.
 | Effect | Weight | Params | Permanent |
 |---|---:|---|---:|
 | `confiscate_powerups` | 3 | max rating `NC-17`, stack debuffs | Yes |
-| `fine` | 2 | `$200–300` | No |
+| `fine` | 2 | `$2.00–300` | No |
 | `remove_mod` | 1 | 2 mods | Yes |
 
 ### Tier draw behavior
@@ -485,18 +485,18 @@ These can be used directly on an outcome.
 
 | Effect | Magnitude | Generated params |
 |---|---:|---|
-| `fine` | Exact amount | `{"min": amount, "max": amount}`. If magnitude is 0, current code uses `$50`. |
+| `fine` | Exact amount | `{"min": amount, "max": amount}`. If magnitude is 0, current code uses `$0.50`. |
 | `debuff` | Count | `{"count": max(magnitude, 1)}` |
 | `remove_mod` | Count | `{"count": max(magnitude, 1)}` |
 | `confiscate_powerups` | Ignored | `{"max_rating": "NC-17", "stack_debuffs": true}` |
-| `reward_money` | Exact amount | If 0, random `$50–150` |
+| `reward_money` | Exact amount | If 0, random `$0.50–150` |
 | `reward_consumable` | Ignored | Empty pool; falls back to tier-0 consumable pool |
 | `reward_powerup` | Ignored | Empty pool; falls back to tier-0 power-up pool |
 | `lock_cosmetics` | Ignored | Locks colors; `permanent` controls duration |
 | `mood_delta` | Ignored | Uses `mood_delta` field |
 | `none` | Ignored | No direct consequence |
 
-Note: `MomDialogOutcome`'s inline comment says a zero-magnitude direct fine falls back to random `$50–150`. The current implementation uses an exact `$50` fine. Treat `$50` as the actual behavior until the code changes.
+Note: `MomDialogOutcome`'s inline comment says a zero-magnitude direct fine falls back to random `$0.50–150`. The current implementation uses an exact `$0.50` fine. Treat `$0.50` as the actual behavior until the code changes.
 
 ## 10.3 Tier entry effects
 
@@ -549,7 +549,7 @@ The money is removed later by `apply_consequences()`.
 
 ## 10.7 Rewards
 
-Reward power-ups prefer pool entries the player does not already own. If every candidate is owned, the reward becomes `$75–125` instead.
+Reward power-ups prefer pool entries the player does not already own. If every candidate is owned, the reward becomes `$0.75–125` instead.
 
 Direct `reward_consumable` and `reward_powerup` outcomes use empty pools and intentionally fall back to tier 0's pools. Do not reorder tier 0 entries; the handler indexes entries `1` and `2`, and the validation test pins that layout.
 
@@ -652,7 +652,7 @@ Non-sassy positive responses can qualify at any pre-dialog mood. The mood maps t
 
 Goof-off points cap: 0–49 points allows up to Tier 5; each further 50 points unlocks one more tier (50–99 → 6, 100–149 → 7, …, 250+ → 10). The granted tier is `min(mood tier, cap)`.
 
-Tier effects stack as they unlock: additive score per hand from +5 (T1) to +50 (T10), a round-end allowance from Tier 4 ($25 up to $200 at T10), and a score multiplier from Tier 7 (x1.5 up to x3.0 at T10).
+Tier effects stack as they unlock: additive score per hand from +5 (T1) to +50 (T10), a round-end allowance from Tier 4 ($0.25 up to $2.00 at T10), and a score multiplier from Tier 7 (x1.5 up to x3.0 at T10).
 
 A qualifying response must:
 

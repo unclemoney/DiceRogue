@@ -20,7 +20,7 @@ const MoneyUIScript = preload("res://Scripts/UI/money_ui.gd")
 
 class MockMomResult extends RefCounted:
 	var removed_power_ups: Array = []
-	var fine_amount: int = 0
+	var fine_amount: float = 0.0
 
 
 class MockMomDialog extends Control:
@@ -46,7 +46,7 @@ func _ready() -> void:
 	print("[MomMoneyPullTest] Initializing test scene...")
 	_build_mocks()
 	_build_buttons()
-	print("[MomMoneyPullTest] Ready. Starting money: $%d" % PlayerEconomy.get_money())
+	print("[MomMoneyPullTest] Ready. Starting money: $%.2f" % PlayerEconomy.get_money())
 	if AUTO_DEMO:
 		_run_auto_demo()
 
@@ -57,13 +57,14 @@ func _run_auto_demo() -> void:
 	_on_add_money()
 	_on_add_money()
 	await get_tree().create_timer(1.0).timeout
-	print("[MomMoneyPullTest] AUTO-DEMO: fine $5")
+	print("[MomMoneyPullTest] AUTO-DEMO: fine $0.05")
 	_on_fine_5()
 	await get_tree().create_timer(4.0).timeout
-	print("[MomMoneyPullTest] AUTO-DEMO: fine $12")
+	print("[MomMoneyPullTest] AUTO-DEMO: fine $0.12")
 	_on_fine_12()
 	await get_tree().create_timer(5.0).timeout
 	print("[MomMoneyPullTest] AUTO-DEMO: complete")
+	get_tree().quit()
 
 
 func _build_mocks() -> void:
@@ -102,9 +103,9 @@ func _build_buttons() -> void:
 	var vbox := VBoxContainer.new()
 	vbox.position = Vector2(20, 20)
 	add_child(vbox)
-	_add_button(vbox, "Add $20", _on_add_money)
-	_add_button(vbox, "Mom fine $5", _on_fine_5)
-	_add_button(vbox, "Mom fine $12", _on_fine_12)
+	_add_button(vbox, "Add $0.20", _on_add_money)
+	_add_button(vbox, "Mom fine $0.05", _on_fine_5)
+	_add_button(vbox, "Mom fine $0.12", _on_fine_12)
 
 
 func _add_button(parent: Control, text: String, handler: Callable) -> void:
@@ -114,15 +115,15 @@ func _add_button(parent: Control, text: String, handler: Callable) -> void:
 	parent.add_child(button)
 
 
-func _simulate_fine(amount: int) -> void:
+func _simulate_fine(amount: float) -> void:
 	if not PlayerEconomy.can_afford(amount):
-		_log.text = "Cannot afford $%d — add money first" % amount
+		_log.text = "Cannot afford $%.2f — add money first" % amount
 		return
 	var result := MockMomResult.new()
 	result.fine_amount = amount
 
 	var before := PlayerEconomy.get_money()
-	print("[MomMoneyPullTest] Fine $%d (balance $%d). Label must hold at $%d until chips land." % [amount, before, before])
+	print("[MomMoneyPullTest] Fine $%.2f (balance $%.2f). Label must hold at $%.2f until chips land." % [amount, before, before])
 
 	MomJuiceCoordinator.arm_money_pull(result)
 	# Consequences (what MomLogicHandler.apply_consequences does):
@@ -132,11 +133,12 @@ func _simulate_fine(amount: int) -> void:
 	var expected := PlayerEconomy.get_money()
 	# Verify after the full sequence should have finished.
 	var profile: JuiceProfile = TweenFXHelper.get_default_juice_profile()
-	var chip_count: int = mini(amount, profile.money_pull_max_chips) if profile.money_pull_max_chips > 0 else amount
+	var amount_cents := roundi(amount * 100.0)
+	var chip_count: int = mini(amount_cents, profile.money_pull_max_chips) if profile.money_pull_max_chips > 0 else amount_cents
 	var total_time: float = chip_count * profile.money_pull_stagger + profile.money_pull_flight_time + 0.5
 	get_tree().create_timer(total_time).timeout.connect(func():
 		var shown: String = _money_ui.get_node("MarginContainer/CenterContainer/VBoxContainer/MoneyLabel").text
-		var expected_text := "$%d" % expected
+		var expected_text := NumberFormatter.format_money(expected)
 		if shown == expected_text:
 			print("[MomMoneyPullTest] PASS: final label %s == economy %s (%d chips)" % [shown, expected_text, chip_count])
 			_log.text = "PASS: %s after %d chips" % [shown, chip_count]
@@ -147,12 +149,12 @@ func _simulate_fine(amount: int) -> void:
 
 
 func _on_add_money() -> void:
-	PlayerEconomy.add_money(20)
+	PlayerEconomy.add_money(0.2)
 
 
 func _on_fine_5() -> void:
-	_simulate_fine(5)
+	_simulate_fine(0.05)
 
 
 func _on_fine_12() -> void:
-	_simulate_fine(12)
+	_simulate_fine(0.12)

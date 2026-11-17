@@ -12,6 +12,6 @@ func apply(target) -> void:
 		apply_succeeded = false
 		return
 	
-	# Activate insurance - if next score is 0, grant $75 consolation
+	# Activate insurance - if next score is 0, grant $0.75 consolation
 	game_controller.insurance_policy_active = true
-	print("[InsurancePolicyConsumable] Insurance Policy activated. Next 0-score grants $75.")
+	print("[InsurancePolicyConsumable] Insurance Policy activated. Next 0-score grants $0.75.")

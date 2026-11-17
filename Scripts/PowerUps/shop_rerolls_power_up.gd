@@ -3,15 +3,15 @@ class_name ShopRerollsPowerUp
 
 ## ShopRerollsPowerUp
 ##
-## Locks shop reroll costs at $25 - they never increase no matter how many times
+## Locks shop reroll costs at $0.25 - they never increase no matter how many times
 ## the player rerolls. Affects both PowerUp and Consumable shop tabs.
 ## Uncommon rarity, PG rating.
 
 # Reference to the shop UI
 var shop_ui_ref: ShopUI = null
-var original_reroll_cost: int = 25
+var original_reroll_cost: float = 0.25
 
-const LOCKED_REROLL_COST: int = 25
+const LOCKED_REROLL_COST: float = 0.25
 
 func _ready() -> void:
 	add_to_group("power_ups")
@@ -61,7 +61,7 @@ func apply(target) -> void:
 	if not is_connected("tree_exiting", _on_tree_exiting):
 		connect("tree_exiting", _on_tree_exiting)
 	
-	print("[ShopRerollsPowerUp] Reroll cost locked at $%d" % LOCKED_REROLL_COST)
+	print("[ShopRerollsPowerUp] Reroll cost locked at $%.2f" % LOCKED_REROLL_COST)
 
 func _on_shop_visibility_changed() -> void:
 	# Ensure cost stays locked when shop is shown/hidden
@@ -94,7 +94,7 @@ func remove(target) -> void:
 		# Reset to base cost
 		shop_ui.reroll_cost = shop_ui.REROLL_BASE_COST
 		shop_ui._update_reroll_cost_display()
-		print("[ShopRerollsPowerUp] Reroll cost restored to base $%d" % shop_ui.REROLL_BASE_COST)
+		print("[ShopRerollsPowerUp] Reroll cost restored to base $%.2f" % shop_ui.REROLL_BASE_COST)
 	
 	shop_ui_ref = null
 

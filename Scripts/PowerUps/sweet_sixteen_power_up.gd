@@ -4,20 +4,20 @@ class_name SweetSixteenPowerUp
 ## SweetSixteenPowerUp
 ##
 ## An uncommon PowerUp that pays out at the end of each round.
-## When the round ends (all 13 scorecard categories filled), grants $5 for
+## When the round ends (all 13 scorecard categories filled), grants $0.05 for
 ## every category whose final stored score is 16 or higher.
-## If all 13 categories score 16+, also grants a stacking $256 bonus
-## (total $321 for a perfect round).
+## If all 13 categories score 16+, also grants a stacking $2.56 bonus
+## (total $3.21 for a perfect round).
 ##
 ## Connects to Scorecard's game_completed signal for the round-end payout.
 
 var scorecard_ref: Node = null
 var game_controller_ref = null
 
-var total_earned: int = 0
+var total_earned: float = 0.0
 
-const MONEY_PER_QUALIFYING_CATEGORY: int = 5
-const PERFECT_ROUND_BONUS: int = 256
+const MONEY_PER_QUALIFYING_CATEGORY: float = 0.05
+const PERFECT_ROUND_BONUS: float = 2.56
 const QUALIFYING_SCORE: int = 16
 const TOTAL_CATEGORIES: int = 13
 
@@ -54,7 +54,7 @@ func apply(target) -> void:
 	if not is_connected("tree_exiting", _on_tree_exiting):
 		connect("tree_exiting", _on_tree_exiting)
 	
-	print("[SweetSixteenPowerUp] Applied successfully - will grant $%d per category scoring %d+ at round end, +$%d for all %d" % [MONEY_PER_QUALIFYING_CATEGORY, QUALIFYING_SCORE, PERFECT_ROUND_BONUS, TOTAL_CATEGORIES])
+	print("[SweetSixteenPowerUp] Applied successfully - will grant $%.2f per category scoring %d+ at round end, +$%.2f for all %d" % [MONEY_PER_QUALIFYING_CATEGORY, QUALIFYING_SCORE, PERFECT_ROUND_BONUS, TOTAL_CATEGORIES])
 
 func _on_round_end_payout(_final_score: int) -> void:
 	# TurnTracker can force-emit game_completed at max turns with categories
@@ -72,27 +72,27 @@ func _on_round_end_payout(_final_score: int) -> void:
 		if score != null and score >= QUALIFYING_SCORE:
 			qualifying += 1
 	
-	# First grant: $5 per qualifying category
+	# First grant: $0.05 per qualifying category
 	if qualifying > 0:
-		var category_payout: int = qualifying * MONEY_PER_QUALIFYING_CATEGORY
-		var awarded: int = _grant(category_payout, "sweet_sixteen")
+		var category_payout: float = qualifying * MONEY_PER_QUALIFYING_CATEGORY
+		var awarded: float = _grant(category_payout, "sweet_sixteen")
 		total_earned += awarded
-		print("[SweetSixteenPowerUp] Round end: %d categories scored %d+. Granted $%d (total earned: $%d)" % [qualifying, QUALIFYING_SCORE, awarded, total_earned])
+		print("[SweetSixteenPowerUp] Round end: %d categories scored %d+. Granted $%.2f (total earned: $%.2f)" % [qualifying, QUALIFYING_SCORE, awarded, total_earned])
 	else:
 		print("[SweetSixteenPowerUp] Round end: no categories scored %d+ - no payout" % QUALIFYING_SCORE)
 	
 	# Then, if ALL categories qualify, the stacking perfect-round bonus
 	if qualifying == TOTAL_CATEGORIES:
-		var bonus_awarded: int = _grant(PERFECT_ROUND_BONUS, "sweet_sixteen_perfect_round")
+		var bonus_awarded: float = _grant(PERFECT_ROUND_BONUS, "sweet_sixteen_perfect_round")
 		total_earned += bonus_awarded
-		print("[SweetSixteenPowerUp] PERFECT ROUND! All %d categories scored %d+. Granted $%d bonus! (total earned: $%d)" % [TOTAL_CATEGORIES, QUALIFYING_SCORE, bonus_awarded, total_earned])
+		print("[SweetSixteenPowerUp] PERFECT ROUND! All %d categories scored %d+. Granted $%.2f bonus! (total earned: $%.2f)" % [TOTAL_CATEGORIES, QUALIFYING_SCORE, bonus_awarded, total_earned])
 	
 	emit_signal("description_updated", id, get_current_description())
 	
 	if is_inside_tree():
 		_update_power_up_icons()
 
-func _grant(amount: int, tag: String) -> int:
+func _grant(amount: float, tag: String) -> float:
 	if game_controller_ref and is_instance_valid(game_controller_ref) and game_controller_ref.has_method("award_score_time_power_up_money"):
 		return game_controller_ref.award_score_time_power_up_money(amount, tag)
 	PlayerEconomy.add_money(amount)
@@ -110,10 +110,10 @@ func remove(_target) -> void:
 	game_controller_ref = null
 
 func get_current_description() -> String:
-	var base_desc = "End of round: $%d per category scoring %d+. All %d: +$%d." % [MONEY_PER_QUALIFYING_CATEGORY, QUALIFYING_SCORE, TOTAL_CATEGORIES, PERFECT_ROUND_BONUS]
+	var base_desc = "End of round: $%.2f per category scoring %d+. All %d: +$%.2f." % [MONEY_PER_QUALIFYING_CATEGORY, QUALIFYING_SCORE, TOTAL_CATEGORIES, PERFECT_ROUND_BONUS]
 	
 	if total_earned > 0:
-		base_desc += "\nTotal earned: $%d" % total_earned
+		base_desc += "\nTotal earned: $%.2f" % total_earned
 	
 	return base_desc
 

@@ -24,7 +24,7 @@ signal request_chore_selection  # Emitted when player needs to choose next chore
 
 const MAX_PROGRESS: int = 100
 const PROGRESS_PER_ROLL: int = 1
-var chore_rewards_this_round: int = 0  # Cumulative reward from chores completed this round
+var chore_rewards_this_round: float = 0.0  # Cumulative reward from chores completed this round
 
 # Mom's mood system: 1 = very happy, 5 = neutral, 10 = extremely angry
 const MIN_MOOD: int = 1
@@ -321,12 +321,12 @@ func get_chores_completed_this_round() -> int:
 	return chores_completed_this_round
 
 
-## get_chore_rewards_this_round() -> int
+## get_chore_rewards_this_round() -> float
 ##
 ## Returns the total reward value of chores completed in the current round.
 ##
-## Returns: int - total reward money earned from chores this round
-func get_chore_rewards_this_round() -> int:
+## Returns: float - total reward money earned from chores this round
+func get_chore_rewards_this_round() -> float:
 	return chore_rewards_this_round
 
 
@@ -817,7 +817,7 @@ func load_state(state: Dictionary) -> void:
 	# JSON round-trips numbers as floats; coerce to int/bool for the typed vars.
 	current_progress = int(state.get("current_progress", 0))
 	chores_completed_this_round = int(state.get("chores_completed_this_round", 0))
-	chore_rewards_this_round = int(state.get("chore_rewards_this_round", 0))
+	chore_rewards_this_round = float(state.get("chore_rewards_this_round", 0.0))
 	tasks_completed = int(state.get("tasks_completed", 0))
 	is_mom_active = bool(state.get("is_mom_active", false))
 	var loaded_history = state.get("_task_history", [])

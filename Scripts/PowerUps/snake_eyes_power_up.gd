@@ -5,7 +5,7 @@ class_name SnakeEyesPowerUp
 ##
 ## Each die showing 1 grants +0.2x multiplier. If ALL dice show 1 (true snake eyes),
 ## grants a flat 3.0x multiplier instead. High risk, high reward.
-## Legendary rarity, $600 price.
+## Legendary rarity, $6.00 price.
 
 # References
 var scorecard_ref: Scorecard = null

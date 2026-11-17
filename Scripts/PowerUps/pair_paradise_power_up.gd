@@ -8,7 +8,7 @@ class_name PairParadisePowerUp
 ## - +6 for two pair or four-of-a-kind
 ## - +9 for full house or five-of-a-kind (Yahtzee)
 ## Analyzes dice value frequencies to detect patterns.
-## Common rarity, $75 price.
+## Common rarity, $0.75 price.
 
 # References
 var scorecard_ref: Scorecard = null

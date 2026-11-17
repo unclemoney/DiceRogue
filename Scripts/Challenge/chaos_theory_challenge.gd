@@ -5,7 +5,7 @@ class_name ChaosTheoryChallenge
 ##
 ## The ultimate difficulty 5 endgame challenge combining three brutal debuffs:
 ## - the_division: Multiplier powerups divide instead of multiply
-## - too_greedy: Money above $50 penalizes your score
+## - too_greedy: Money above $0.50 penalizes your score
 ## - reduced_levels: All scorecard categories downgraded by 1 level
 ## The hardest challenge in the game with the highest target score.
 

@@ -6,7 +6,7 @@ class_name RainbowSurgePowerUp
 ## Legendary PowerUp that multiplies final score by 2.0x when 4+ different colored
 ## dice are present in a roll (Green, Red, Purple, Blue).
 ## Encourages color diversity in dice collection.
-## Price: $650, Rarity: Legendary
+## Price: $6.50, Rarity: Legendary
 
 const COLOR_THRESHOLD: int = 4  # Need 4 different colors
 const SCORE_MULTIPLIER: float = 2.0

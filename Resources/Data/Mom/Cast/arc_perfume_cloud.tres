@@ -22,7 +22,7 @@ beat_index = 2
 dialog_node_id = "story_debra_payoff"
 min_channel = 4
 requires_flag = "debra_cornered"
-reward_money = 25
+reward_money = 0.25
 reward_mood = -2
 reward_rep = 2
 
@@ -33,7 +33,7 @@ dialog_node_id = "story_debra_backfire"
 min_channel = 4
 requires_flag = "debra_cornered"
 sets_flag = "debra_backfired"
-reward_money = 25
+reward_money = 0.25
 reward_rep = 2
 
 [resource]

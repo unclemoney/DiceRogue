@@ -206,12 +206,12 @@ func _create_debug_tabs() -> void:
 	# Define button categories for tabs
 	var tab_definitions = {
 		"Economy": [
-			{"text": "Add $100", "method": "_debug_add_money"},
-			{"text": "Add $1000", "method": "_debug_add_big_money"},
+			{"text": "Add $1.00", "method": "_debug_add_money"},
+			{"text": "Add $10.00", "method": "_debug_add_big_money"},
 			{"text": "Reset Money", "method": "_debug_reset_money"},
-			{"text": "Piggy Bank: Set $0", "method": "_debug_piggy_set_0"},
-			{"text": "Piggy Bank: Set $100", "method": "_debug_piggy_set_100"},
-			{"text": "Piggy Bank: Set $500", "method": "_debug_piggy_set_500"},
+			{"text": "Piggy Bank: Set $0.00", "method": "_debug_piggy_set_0"},
+			{"text": "Piggy Bank: Set $1.00", "method": "_debug_piggy_set_100"},
+			{"text": "Piggy Bank: Set $5.00", "method": "_debug_piggy_set_500"},
 			{"text": "Piggy Bank: Show Savings", "method": "_debug_piggy_show"},
 		],
 		"Items": [
@@ -312,7 +312,7 @@ func _create_debug_tabs() -> void:
 			{"text": "Test Shop Mod Purchase", "method": "_debug_test_shop_mod_purchase"},
 			{"text": "Test Buff Fanfare", "method": "_debug_test_buff_fanfare"},
 			{"text": "Test Debuff Fanfare", "method": "_debug_test_debuff_fanfare"},
-			{"text": "Test Mom Money Pull ($10)", "method": "_debug_test_money_pull"},
+			{"text": "Test Mom Money Pull ($0.10)", "method": "_debug_test_money_pull"},
 			{"text": "Test Console Score Chips", "method": "_debug_test_console_chips"},
 		],
 		"Game State": [
@@ -1674,7 +1674,7 @@ func _debug_test_debuff_fanfare() -> void:
 
 ## _debug_test_money_pull()
 ##
-## Simulates a $10 Mom fine through the juice layer: the money label holds,
+## Simulates a $0.10 Mom fine through the juice layer: the money label holds,
 ## then 10 chips arc from the money display to the Mom portrait while the
 ## label ticks down per chip.
 func _debug_test_money_pull() -> void:
@@ -1682,13 +1682,13 @@ func _debug_test_money_pull() -> void:
 	if coordinator == null:
 		log_debug("ERROR: MomJuiceCoordinator autoload not available")
 		return
-	if not PlayerEconomy or not PlayerEconomy.can_afford(10):
-		log_debug("ERROR: Need at least $10 for the pull test")
+	if not PlayerEconomy or not PlayerEconomy.can_afford(0.1):
+		log_debug("ERROR: Need at least $0.10 for the pull test")
 		return
 	var result = MomLogicHandlerScript.MomCheckResult.new()
-	result.fine_amount = 10
+	result.fine_amount = 0.1
 	coordinator.arm_money_pull(result)
-	PlayerEconomy.remove_money(10, "mom_fine")
+	PlayerEconomy.remove_money(0.1, "mom_fine")
 	coordinator.play_post_mom_sequence(result)
 	log_debug("Money pull triggered: 10 chips player -> Mom")
 
@@ -2067,7 +2067,7 @@ func _debug_grant_plus_thelast() -> void:
 	else:
 		log_debug("GameController missing grant_power_up method")
 
-## Grant the Allowance powerup (common) - $100 on game completion
+## Grant the Allowance powerup (common) - $1.00 on game completion
 func _debug_grant_allowance() -> void:
 	if not game_controller:
 		log_debug("No GameController found")
@@ -2293,7 +2293,7 @@ func _debug_grant_painted_die() -> void:
 	else:
 		log_debug("GameController missing grant_mod method")
 
-## Grant the Cursed Six mod - always rolls 6, costs $5 per roll
+## Grant the Cursed Six mod - always rolls 6, costs $0.05 per roll
 func _debug_grant_cursed_six() -> void:
 	if not game_controller:
 		log_debug("No GameController found")
@@ -2434,8 +2434,8 @@ func _debug_test_scorecard_upgrade_juice() -> void:
 func _debug_add_money() -> void:
 	if PlayerEconomy:
 		var old_money = PlayerEconomy.money
-		PlayerEconomy.add_money(100)
-		log_debug("Money: %d -> %d (+100)" % [old_money, PlayerEconomy.money])
+		PlayerEconomy.add_money(1.0)
+		log_debug("Money: %.2f -> %.2f (+1.00)" % [old_money, PlayerEconomy.money])
 	else:
 		log_debug("ERROR: PlayerEconomy not available")
 
@@ -2528,7 +2528,7 @@ func _debug_show_scores() -> void:
 	
 	# PlayerEconomy state
 	if PlayerEconomy:
-		state_info.append("Money: $%d" % PlayerEconomy.money)
+		state_info.append("Money: $%.2f" % PlayerEconomy.money)
 	
 	# Active items count
 	if game_controller:
@@ -2581,16 +2581,16 @@ func _debug_grant_mod() -> void:
 func _debug_add_big_money() -> void:
 	if PlayerEconomy:
 		var old_money = PlayerEconomy.money
-		PlayerEconomy.add_money(1000)
-		log_debug("Money: %d -> %d (+1000)" % [old_money, PlayerEconomy.money])
+		PlayerEconomy.add_money(10.0)
+		log_debug("Money: %.2f -> %.2f (+10.00)" % [old_money, PlayerEconomy.money])
 	else:
 		log_debug("ERROR: PlayerEconomy not available")
 
 func _debug_reset_money() -> void:
 	if PlayerEconomy:
 		var old_money = PlayerEconomy.money
-		PlayerEconomy.money = 500  # Default starting money
-		log_debug("Money reset: %d -> 500" % old_money)
+		PlayerEconomy.money = 5.0  # Debug reset balance
+		log_debug("Money reset: %.2f -> 5.00" % old_money)
 	else:
 		log_debug("ERROR: PlayerEconomy not available")
 
@@ -3009,7 +3009,7 @@ func _debug_load_state() -> void:
 ## _debug_save_now()
 ##
 ## F12 hook: writes the current settled run save to disk immediately via
-## GameSaveManager.save_snapshot() (atomic tmp + rename, run_save_version 2).
+## GameSaveManager.save_snapshot() (atomic tmp + rename, run_save_version 3).
 func _debug_save_now() -> void:
 	_refresh_game_controller_reference()
 	if not is_instance_valid(game_controller):
@@ -3450,7 +3450,7 @@ func _debug_seed_shop_ownership_panel() -> void:
 		log_debug("ERROR: ModManager not available")
 		return
 
-	PlayerEconomy.add_money(2500)
+	PlayerEconomy.add_money(25.0)
 	DiceColorManager.clear_purchased_colors()
 
 	var unlocked_mods := 0
@@ -3604,7 +3604,7 @@ func _debug_apply_too_greedy_debuff() -> void:
 	game_controller.apply_debuff("too_greedy")
 	var current_money = PlayerEconomy.get_money()
 	log_debug("✓ Too Greedy debuff applied!")
-	log_debug("Effect: Money over $50 penalizes score (current: $%d, penalty: -%d)" % [current_money, roundi(float(current_money) / 100.0) if current_money > 50 else 0])
+	log_debug("Effect: Money over $0.50 penalizes score (current: $%.2f, penalty: -%d)" % [current_money, roundi(float(current_money)) if current_money > 0.5 else 0])
 
 ## _debug_remove_too_greedy_debuff()
 ##
@@ -3844,7 +3844,7 @@ func _debug_activate_tough_addition_challenge() -> void:
 	game_controller.activate_challenge(challenge_id)
 	log_debug("✓ Tough Addition Challenge activated!")
 	log_debug("Target: 350 points with Half Additive debuff active")
-	log_debug("Difficulty: 3 | Reward: $200")
+	log_debug("Difficulty: 3 | Reward: $2.00")
 
 ## _debug_activate_greed_isnt_good_challenge()
 ##
@@ -3865,7 +3865,7 @@ func _debug_activate_greed_isnt_good_challenge() -> void:
 	game_controller.activate_challenge(challenge_id)
 	log_debug("✓ Greed Isn't Good Challenge activated!")
 	log_debug("Target: 450 points with Too Greedy debuff active")
-	log_debug("Difficulty: 4 | Reward: $250")
+	log_debug("Difficulty: 4 | Reward: $2.50")
 
 ## _debug_activate_wildcard_run_challenge()
 ##
@@ -3886,7 +3886,7 @@ func _debug_activate_wildcard_run_challenge() -> void:
 	game_controller.activate_challenge(challenge_id)
 	log_debug("✓ Wildcard Run Challenge activated!")
 	log_debug("Target: 350 points - random debuff at round 3")
-	log_debug("Difficulty: 3 | Reward: $200")
+	log_debug("Difficulty: 3 | Reward: $2.00")
 
 ## _debug_activate_triple_threat_challenge()
 ##
@@ -3907,7 +3907,7 @@ func _debug_activate_triple_threat_challenge() -> void:
 	game_controller.activate_challenge(challenge_id)
 	log_debug("✓ Triple Threat Challenge activated!")
 	log_debug("Target: 450 points with 3 debuffs: lock_dice, disabled_twos, faster_chores")
-	log_debug("Difficulty: 4 | Reward: $275")
+	log_debug("Difficulty: 4 | Reward: $2.75")
 
 ## _debug_activate_perfect_execution_challenge()
 ##
@@ -3928,7 +3928,7 @@ func _debug_activate_perfect_execution_challenge() -> void:
 	game_controller.activate_challenge(challenge_id)
 	log_debug("✓ Perfect Execution Challenge activated!")
 	log_debug("Target: 550 points with 3 debuffs: half_additive, disabled_mods, roll_score_minus_one")
-	log_debug("Difficulty: 5 | Reward: $350")
+	log_debug("Difficulty: 5 | Reward: $3.50")
 
 ## _debug_activate_chaos_theory_challenge()
 ##
@@ -3949,7 +3949,7 @@ func _debug_activate_chaos_theory_challenge() -> void:
 	game_controller.activate_challenge(challenge_id)
 	log_debug("✓ Chaos Theory Challenge activated!")
 	log_debug("Target: 600 points with 3 brutal debuffs: the_division, too_greedy, reduced_levels")
-	log_debug("Difficulty: 5 | Reward: $400 | ULTIMATE CHALLENGE")
+	log_debug("Difficulty: 5 | Reward: $4.00 | ULTIMATE CHALLENGE")
 
 ## _debug_show_active_challenges() -> void:
 ## Shows all currently active challenges and their status
@@ -4328,8 +4328,8 @@ func _build_live_dice_state_report() -> String:
 
 	if dice_hand.has_method("get_color_effects"):
 		var color_effects = dice_hand.get_color_effects()
-		lines.append("Color preview: green=$%d | red=%s | purple=%s | blue=%s | yellow_scored=%s | orange_rolls=%d | same_color=%s | rainbow=%s" % [
-			int(color_effects.get("green_money", 0)),
+		lines.append("Color preview: green=$%.2f | red=%s | purple=%s | blue=%s | yellow_scored=%s | orange_rolls=%d | same_color=%s | rainbow=%s" % [
+			float(color_effects.get("green_money", 0.0)),
 			_format_signed_int(int(color_effects.get("red_additive", 0))),
 			_format_float_value(float(color_effects.get("purple_multiplier", 1.0))),
 			_format_float_value(float(color_effects.get("blue_score_multiplier", 1.0))),
@@ -4492,7 +4492,7 @@ func _build_score_trace_report() -> String:
 	lines.append("  Purple multiplier: %s%s" % [purple_multiplier_operator, _format_float_value(purple_multiplier_value)])
 	lines.append("  Blue factor: %s%s" % [blue_multiplier_operator, _format_float_value(blue_multiplier_value)])
 	lines.append("  Final score: %d" % latest_entry.final_score)
-	lines.append("  Green money side effect: +$%d" % int(breakdown_info.get("dice_color_money", 0)))
+	lines.append("  Green money side effect: +$%.2f" % float(breakdown_info.get("dice_color_money", 0.0)))
 	if breakdown_info.has("any_score_source_display"):
 		lines.append("  AnyScore best-category source: %s" % str(breakdown_info.get("any_score_source_display", breakdown_info.get("any_score_source_category", ""))))
 	lines.append("  Applied powerups: %s" % _join_or_none(latest_entry.powerups_applied))
@@ -4700,13 +4700,13 @@ func _debug_test_color_scoring():
 	
 	# Set test colors: 2 green (money), 2 red (additive), 1 purple (multiplier)
 	var DiceColorType = preload("res://Scripts/Core/dice_color.gd").Type
-	dice_list[0].force_color(DiceColorType.GREEN)   # Die value 2 = $2
-	dice_list[1].force_color(DiceColorType.GREEN)   # Die value 3 = $3 (total $5)
+	dice_list[0].force_color(DiceColorType.GREEN)   # Die value 2 = $0.02
+	dice_list[1].force_color(DiceColorType.GREEN)   # Die value 3 = $0.03 (total $0.05)
 	dice_list[2].force_color(DiceColorType.RED)     # Die value 4 = +4 additive
 	dice_list[3].force_color(DiceColorType.RED)     # Die value 5 = +5 additive (total +9)
 	dice_list[4].force_color(DiceColorType.PURPLE)  # Die value 6 = x6 multiplier
 	
-	log_debug("Set test colors: 2 Green ($5), 2 Red (+9), 1 Purple (x6)")
+	log_debug("Set test colors: 2 Green ($0.05), 2 Red (+9), 1 Purple (x6)")
 	
 	# Test the color effects calculation
 	var color_effects = dice_hand.get_color_effects()
@@ -5166,24 +5166,24 @@ func _debug_piggy_set_0() -> void:
 
 
 func _debug_piggy_set_100() -> void:
-	_debug_set_piggy_savings(100)
+	_debug_set_piggy_savings(1.0)
 
 
 func _debug_piggy_set_500() -> void:
-	_debug_set_piggy_savings(500)
+	_debug_set_piggy_savings(5.0)
 
 
 ## _debug_set_piggy_savings(amount)
 ##
 ## Sets the persisted Piggy Bank savings; a future Piggy Bank purchase
 ## restores this amount via ThePiggyBankPowerUp.apply().
-func _debug_set_piggy_savings(amount: int) -> void:
+func _debug_set_piggy_savings(amount: float) -> void:
 	var pe = get_node_or_null("/root/PlayerEconomy")
 	if not pe:
 		log_debug("ERROR: PlayerEconomy not available")
 		return
 	pe.piggy_bank_savings = amount
-	log_debug("Piggy Bank savings set to $%d (restored on next Piggy Bank purchase)" % pe.piggy_bank_savings)
+	log_debug("Piggy Bank savings set to $%.2f (restored on next Piggy Bank purchase)" % pe.piggy_bank_savings)
 
 
 ## _debug_piggy_show()
@@ -5194,7 +5194,7 @@ func _debug_piggy_show() -> void:
 	if not pe:
 		log_debug("ERROR: PlayerEconomy not available")
 		return
-	log_debug("Piggy Bank savings: $%d | Wallet: $%d" % [pe.piggy_bank_savings, pe.money])
+	log_debug("Piggy Bank savings: $%.2f | Wallet: $%.2f" % [pe.piggy_bank_savings, pe.money])
 
 
 func _debug_chores_new_task() -> void:
@@ -5234,7 +5234,7 @@ func _debug_chores_show_state() -> void:
 		"Mom Mood: %d/10 (%s)" % [chores_manager.mom_mood, chores_manager.get_mood_description()],
 		"Tasks Completed This Cycle: %d" % chores_manager.tasks_completed,
 		"Completed Chores This Round: %d" % chores_manager.get_chores_completed_this_round(),
-		"Chore Rewards This Round: $%d" % chores_manager.get_chore_rewards_this_round(),
+		"Chore Rewards This Round: $%.2f" % chores_manager.get_chore_rewards_this_round(),
 		"Pending Selection: %s" % str(chores_manager.pending_chore_selection),
 		"Pending EASY Task: %s" % easy_name,
 		"Pending HARD Task: %s" % hard_name,
@@ -5250,7 +5250,7 @@ func _debug_chores_show_ratings() -> void:
 	var tasks = ChoreTasksLibrary.get_all_tasks(sides)
 	var lines: Array[String] = ["=== CHORE REWARD VALUES (d%d) ===" % sides]
 	for task in tasks:
-		lines.append("%s (%s) -> $%d" % [task.display_name, task.id, task.reward_value])
+		lines.append("%s (%s) -> $%.2f" % [task.display_name, task.id, task.reward_value])
 	log_debug("\n".join(lines))
 
 
@@ -5265,8 +5265,8 @@ func _debug_chores_list_rewards() -> void:
 		lines.append("No chores completed yet")
 	else:
 		for chore in chores_manager.completed_chores:
-			lines.append("%s -> $%d" % [chore.display_name, chore.reward_value])
-	lines.append("Round Total: $%d" % chores_manager.get_chore_rewards_this_round())
+			lines.append("%s -> $%.2f" % [chore.display_name, chore.reward_value])
+	lines.append("Round Total: $%.2f" % chores_manager.get_chore_rewards_this_round())
 	log_debug("\n".join(lines))
 
 

@@ -48,6 +48,6 @@ outcomes = Array[ExtResource("3_out")]([SubResource("out_sassy")])
 [resource]
 script = ExtResource("1_node")
 id = "story_debra_dish_returned"
-mom_text = "[color=green]Dish recovered.[/color] Henderson had it, Debra apologized, and the apology came with a clean $25 peace offering. I'm passing it to you."
+mom_text = "[color=green]Dish recovered.[/color] Henderson had it, Debra apologized, and the apology came with a clean $0.25 peace offering. I'm passing it to you."
 expression = "happy"
 responses = Array[ExtResource("2_resp")]([SubResource("resp_polite"), SubResource("resp_neutral"), SubResource("resp_sassy")])

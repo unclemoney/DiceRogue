@@ -28,11 +28,11 @@ func apply(target) -> void:
 	}
 	
 	var payment_rates = {
-		"common": 20,
-		"uncommon": 25,
-		"rare": 50,
-		"epic": 75,
-		"legendary": 150
+		"common": 0.2,
+		"uncommon": 0.25,
+		"rare": 0.5,
+		"epic": 0.75,
+		"legendary": 1.5
 	}
 	
 	print("[TheRaritiesConsumable] Counting active powerups...")
@@ -51,7 +51,7 @@ func apply(target) -> void:
 			push_error("[TheRaritiesConsumable] No definition found for PowerUp: %s" % power_up_id)
 	
 	# Calculate total payment
-	var total_payment := 0
+	var total_payment := 0.0
 	var payment_breakdown := []
 	
 	for rarity in rarity_counts.keys():
@@ -59,20 +59,20 @@ func apply(target) -> void:
 		if count > 0:
 			var rarity_payment = count * payment_rates[rarity]
 			total_payment += rarity_payment
-			payment_breakdown.append("%d %s ($%d each = $%d)" % [count, rarity, payment_rates[rarity], rarity_payment])
-			print("[TheRaritiesConsumable] %d %s powerups: $%d" % [count, rarity, rarity_payment])
+			payment_breakdown.append("%d %s ($%.2f each = $%.2f)" % [count, rarity, payment_rates[rarity], rarity_payment])
+			print("[TheRaritiesConsumable] %d %s powerups: $%.2f" % [count, rarity, rarity_payment])
 	
 	# Grant money through PlayerEconomy
 	if total_payment > 0:
 		var player_economy = get_node("/root/PlayerEconomy")
 		if player_economy:
 			player_economy.add_money(total_payment)
-			print("[TheRaritiesConsumable] Granted $%d total (%s)" % [total_payment, ", ".join(payment_breakdown)])
+			print("[TheRaritiesConsumable] Granted $%.2f total (%s)" % [total_payment, ", ".join(payment_breakdown)])
 		else:
 			apply_succeeded = false
 			push_error("[TheRaritiesConsumable] PlayerEconomy autoload not found")
 	else:
 		apply_succeeded = false
-		print("[TheRaritiesConsumable] No powerups owned, granted $0")
+		print("[TheRaritiesConsumable] No powerups owned, granted $0.00")
 	
 	print("[TheRaritiesConsumable] Applied successfully")

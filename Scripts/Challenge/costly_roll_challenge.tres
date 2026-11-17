@@ -8,12 +8,12 @@
 script = ExtResource("1_fod7w")
 id = "costly_roll"
 display_name = "Pretty Penny"
-description = "Lose $10 Every Roll"
+description = "Lose $0.10 Every Roll"
 icon = ExtResource("1_o2btw")
 scene = ExtResource("2_5l5e5")
 debuff_ids = Array[String](["costly_roll"])
 target_score = 250
-reward_money = 150
+reward_money = 1.5
 dice_type = "d6"
 difficulty = 2
 metadata/_custom_type_script = "uid://f8jnl4x2x0gr"

@@ -12,8 +12,8 @@ var _money_tween: Tween
 # Mom money-pull concealment: while active, money_changed only updates the
 # pending target — the label ticks down per chip via tick_pull_display().
 var _pull_concealed: bool = false
-var _pending_amount: int = 0
-var _displayed_amount: int = 0
+var _pending_amount: float = 0
+var _displayed_amount: float = 0
 
 const SURFACE_TEXT := Color(0.968627, 0.941176, 1.0, 1.0)
 const POSITIVE_FLASH := Color(0.137255, 0.411765, 0.415686, 1.0)
@@ -61,7 +61,7 @@ func _create_ui() -> void:
 
 	_money_label = Label.new()
 	_money_label.name = "MoneyLabel"
-	_money_label.text = "$0"
+	_money_label.text = "$0.00"
 	_money_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_money_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_money_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -77,7 +77,7 @@ func _create_ui() -> void:
 	vbox.add_child(_money_label)
 
 
-func _on_money_changed(new_amount: int, change: int = 0) -> void:
+func _on_money_changed(new_amount: float, change: float = 0) -> void:
 	_pending_amount = new_amount
 	if _pull_concealed:
 		# Mom money pull in progress: hold the label; the coordinator ticks
@@ -106,7 +106,7 @@ func begin_pull_concealment() -> void:
 ##
 ## Moves the concealed label by one chip's worth (delta is negative during a
 ## pull) with a small pulse, so the count ticks down in sync with arrivals.
-func tick_pull_display(delta: int) -> void:
+func tick_pull_display(delta: float) -> void:
 	if not _pull_concealed:
 		return
 	_displayed_amount += delta
@@ -137,11 +137,13 @@ func get_label_center() -> Vector2:
 	return get_global_rect().get_center()
 
 
-func _update_money_display(amount: int) -> void:
-	_money_label.text = "$%d" % amount
+func _update_money_display(amount: float) -> void:
+	_money_label.text = NumberFormatter.format_money(amount)
 
 
-func _animate_money_change(change: int) -> void:
+func _animate_money_change(change: float) -> void:
+	if is_zero_approx(change):
+		return
 	if _money_tween and _money_tween.is_valid():
 		_money_tween.kill()
 	_money_tween = create_tween()

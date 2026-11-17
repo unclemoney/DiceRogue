@@ -161,7 +161,7 @@ func _punch_total() -> void:
 ##
 ## Sets the zone name and round target, resets progress. difficulty is kept
 ## for API compatibility (star rating is deprecated and gone).
-func show_store(store_name: String, target_score: int, _reward_money: int, _difficulty: int = 0) -> void:
+func show_store(store_name: String, target_score: int, _reward_money: float, _difficulty: int = 0) -> void:
 	_store_id = store_name
 	_store_target = maxi(target_score, 1)
 	_store_score = 0

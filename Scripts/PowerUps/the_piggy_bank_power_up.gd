@@ -3,21 +3,21 @@ class_name ThePiggyBankPowerUp
 
 ## ThePiggyBankPowerUp
 ##
-## Uncommon PowerUp that accumulates $7 per roll (including rerolls).
+## Uncommon PowerUp that accumulates $0.07 per roll (including rerolls).
 ## When sold, the player receives only the accumulated savings.
-## The ordinary PowerUp sale refund is $0.
+## The ordinary PowerUp sale refund is $0.00.
 ## Shows an animated coin effect each time money is banked.
 ## Savings persist across mall zone changes via
 ## `PlayerEconomy.piggy_bank_savings` — re-buying the Piggy Bank in a new
 ## zone restores the stored amount. Selling pays out and clears them.
-## Price: $125, Rarity: Uncommon, Rating: E
+## Price: $1.25, Rarity: Uncommon, Rating: E
 ##
 ## Visual: Animated coin particle flies upward each roll to show saving.
 
 var dice_hand_ref: Node = null
-var accumulated_savings: int = 0
+var accumulated_savings: float = 0.0
 var game_controller_ref = null
-const SAVINGS_PER_ROLL: int = 7
+const SAVINGS_PER_ROLL: float = 0.07
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -55,7 +55,7 @@ func apply(target) -> void:
 func _on_roll_complete() -> void:
 	accumulated_savings += SAVINGS_PER_ROLL
 	PlayerEconomy.piggy_bank_savings = accumulated_savings
-	print("[ThePiggyBankPowerUp] Saved $%d this roll. Total savings: $%d" % [SAVINGS_PER_ROLL, accumulated_savings])
+	print("[ThePiggyBankPowerUp] Saved $%.2f this roll. Total savings: $%.2f" % [SAVINGS_PER_ROLL, accumulated_savings])
 	
 	_play_coin_animation()
 	
@@ -66,12 +66,12 @@ func _on_power_up_sold(sold_id: String) -> void:
 	## _on_power_up_sold()
 	##
 	## When this PowerUp is sold, pays out all accumulated savings.
-	## The ordinary sale refund is $0. No confirmation dialog.
+	## The ordinary sale refund is $0.00. No confirmation dialog.
 	if sold_id != "the_piggy_bank":
 		return
 	
 	if accumulated_savings > 0:
-		print("[ThePiggyBankPowerUp] SOLD! Paying out $%d in savings!" % accumulated_savings)
+		print("[ThePiggyBankPowerUp] SOLD! Paying out $%.2f in savings!" % accumulated_savings)
 		PlayerEconomy.add_money(accumulated_savings)
 		PlayerEconomy.piggy_bank_savings = 0
 		
@@ -89,7 +89,7 @@ func _play_coin_animation() -> void:
 		return
 	
 	var coin = Label.new()
-	coin.text = "+$%d" % SAVINGS_PER_ROLL
+	coin.text = "+$%.2f" % SAVINGS_PER_ROLL
 	coin.add_theme_font_size_override("font_size", 16)
 	coin.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0, 1.0))  # Gold
 	coin.add_theme_color_override("font_outline_color", Color(0.3, 0.2, 0.0, 1.0))
@@ -145,7 +145,7 @@ func _play_payout_effect() -> void:
 	
 	# Big payout text
 	var label = Label.new()
-	label.text = "+$%d PAYOUT!" % accumulated_savings
+	label.text = "+$%.2f PAYOUT!" % accumulated_savings
 	label.add_theme_font_size_override("font_size", 28)
 	label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.2, 1.0))
 	label.add_theme_color_override("font_outline_color", Color(0.4, 0.2, 0.0, 1.0))
@@ -186,7 +186,7 @@ func _play_payout_effect() -> void:
 		)
 
 func get_current_description() -> String:
-	return "Gains $%d per roll.\nCurrent savings: $%d\nSell to cash out!" % [SAVINGS_PER_ROLL, accumulated_savings]
+	return "Gains $%.2f per roll.\nCurrent savings: $%.2f\nSell to cash out!" % [SAVINGS_PER_ROLL, accumulated_savings]
 
 func _update_power_up_icons() -> void:
 	if not is_inside_tree() or not get_tree():

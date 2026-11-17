@@ -6,7 +6,7 @@ class_name ModdedDiceMasteryPowerUp
 ## Rare PowerUp that grants +10 additive bonus when dice with mods are used in scoring.
 ## Synergizes with the mod system - the more modded dice you have, the more valuable
 ## this becomes. Registers conditionally only when modded dice are present.
-## Price: $300, Rarity: Rare
+## Price: $3.00, Rarity: Rare
 
 const BONUS_PER_MODDED_DIE: int = 10
 

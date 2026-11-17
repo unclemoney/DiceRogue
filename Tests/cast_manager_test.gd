@@ -197,13 +197,13 @@ func _test_reward_preview(cm: CastManager) -> void:
 
 	cm.arc_progress["bird_feeder_fever"] = 2
 	var preview := cm.preview_session_rewards("story_bird_feeder_payoff")
-	_check("bird feeder preview exposes $25 and +1 REP",
-		int(preview.get("reward_money", 0)) == 25 and int(preview.get("reward_rep", 0)) == 1)
+	_check("bird feeder preview exposes $0.25 and +1 REP",
+		float(preview.get("reward_money", 0.0)) == 0.25 and int(preview.get("reward_rep", 0)) == 1)
 
 	cm.arc_progress["derek_room_disaster"] = 2
 	preview = cm.preview_session_rewards("story_derek_room_cleanup")
-	_check("Derek cleanup preview exposes $30 and +2 REP",
-		int(preview.get("reward_money", 0)) == 30 and int(preview.get("reward_rep", 0)) == 2)
+	_check("Derek cleanup preview exposes $0.30 and +2 REP",
+		float(preview.get("reward_money", 0.0)) == 0.3 and int(preview.get("reward_rep", 0)) == 2)
 
 	_check("normal check-in has no story reward preview", cm.preview_session_rewards("checkin_neutral").is_empty())
 	cm.arc_progress.erase("bird_feeder_fever")

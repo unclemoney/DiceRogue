@@ -6,7 +6,7 @@ class_name DebuffDestroyerPowerUp
 ## Epic PowerUp that removes one random active debuff when SOLD.
 ## This is a strategic tool - buy it and sell it to cleanse a debuff.
 ## The sell action triggers the debuff removal immediately.
-## Price: $400, Rarity: Epic
+## Price: $4.00, Rarity: Epic
 
 var game_controller_ref = null
 

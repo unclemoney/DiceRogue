@@ -81,9 +81,9 @@
 - [x] 'P1-Major' If you exit the tutorial before finishing, and then try to start a new game it forces you to the tutorial.  It should start a new game. ✅ 2026-10-29
 ## SYS:Shop — Shop & Economy
 - [X] `P2-Minor` Full House Fortune should pay out bigger.
-- [X] `P2-Minor` Piggy Bank should be more than $3 per roll, the idea is a way to preserve money if you 
+- [X] `P2-Minor` Piggy Bank should be more than $0.03 per roll, the idea is a way to preserve money if you
 - [X] `P2-Minor` Update POG shop item: tighten borders, keep them connected, add a paralaxx effect to the POG?  Add a test scene to determine. ✅ 2026-11-06
-- [X] `P2-Minor` Mom Check-ins get repetative "I see what you've been buying", that one was repeated several times 
+- [X] `P2-Minor` Mom Check-ins get repetative "I see what you've been buying", that one was repeated several times
 
 ## SYS:UI — UI / UX & Animation
 
@@ -113,7 +113,7 @@
 
 ## Plan Prompts
 &gt; Clear this section and use it for design documents, zone plans, and balance spreadsheets.
-&gt; 
+&gt;
 &gt; Template:
 &gt; - **Goal:**
 &gt; - **Systems affected:**
@@ -158,7 +158,7 @@
 - [X] Chore max level needs consistency.
 - [X] Next Round Info Panel doesn't need to display the active chore.
 - [X] Challenges for the next round and debuffs not lining up with what is actually displayed.
-- [X] End of round Money — Empty Categories should only give $5 for each empty.
+- [X] End of round Money — Empty Categories should only give $0.05 for each empty.
 - [X] PowerUp Shop Items need to show mom approval levels.
 - [X] The PowerUp add the last score is too powerful.
 - [X] Chores don't really progress fast enough, especially if you win the round in 1 shot.
@@ -381,7 +381,7 @@
 ## Refactor — Completed
 - [X] Have the background react to the channel number, increase velocity and change color.
 - [X] Initial selection of Channel will allow the selection of all and up to the latest completed Channel numbers, adding a starting channel will add bonus starting money.
-- [X] Chore difficulty will provide different cash rewards, Easy $10, Hard $50, etc.
+- [X] Chore difficulty will provide different cash rewards, Easy $0.10, Hard $0.50, etc.
 - [X] Coupons need to not have the two letter tag above them.
 - [X] Fanning out scenes should readjust spine positions when one is sold to recenter everything, be more reactive to the scene, and do we want to change the icon size — test for 9, currently capped at 7.
 - [X] Do we want to change the challenge reward to scale up, have it set with the challenge manager.

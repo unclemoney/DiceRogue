@@ -162,7 +162,7 @@ func _create_economic_tab():
 	_add_stat_label(economic_tab, "Spent on Power-ups", NumberFormatter.format_money(stats_node.money_spent_on_powerups))
 	_add_stat_label(economic_tab, "Spent on Consumables", NumberFormatter.format_money(stats_node.money_spent_on_consumables))
 	_add_stat_label(economic_tab, "Spent on Mods", NumberFormatter.format_money(stats_node.money_spent_on_mods))
-	_add_stat_label(economic_tab, "Money per Turn", "%.2f" % stats_node.get_money_efficiency())
+	_add_stat_label(economic_tab, "Money per Turn", NumberFormatter.format_money(stats_node.get_money_efficiency()))
 
 ## _create_dice_tab()
 ## 

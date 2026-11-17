@@ -10,9 +10,9 @@ class_name ChannelStartBonusTest
 
 const EXPECTED_BONUSES = {
 	1: {"bonus_money": 0, "bonus_powerup_count": 0, "bonus_consumable_count": 0, "bonus_level_boost_count": 0},
-	2: {"bonus_money": 150, "bonus_powerup_count": 0, "bonus_consumable_count": 0, "bonus_level_boost_count": 0},
-	3: {"bonus_money": 300, "bonus_powerup_count": 1, "bonus_consumable_count": 0, "bonus_level_boost_count": 0},
-	4: {"bonus_money": 450, "bonus_powerup_count": 1, "bonus_consumable_count": 1, "bonus_level_boost_count": 0}
+	2: {"bonus_money": 1.5, "bonus_powerup_count": 0, "bonus_consumable_count": 0, "bonus_level_boost_count": 0},
+	3: {"bonus_money": 3.0, "bonus_powerup_count": 1, "bonus_consumable_count": 0, "bonus_level_boost_count": 0},
+	4: {"bonus_money": 4.5, "bonus_powerup_count": 1, "bonus_consumable_count": 1, "bonus_level_boost_count": 0}
 }
 
 var _test_results: Array[String] = []
@@ -87,11 +87,11 @@ func _test_bonus_application() -> void:
 	game_controller._apply_channel_starting_bonuses(3)
 	
 	if PlayerEconomy:
-		var expected_money = 100 + 300
+		var expected_money = 1.0 + 3.0
 		if PlayerEconomy.money == expected_money:
-			_pass("Channel 3 bonus money applied correctly ($%d)" % expected_money)
+			_pass("Channel 3 bonus money applied correctly ($%.2f)" % expected_money)
 		else:
-			_fail("Channel 3 bonus money mismatch: expected $%d, got $%d" % [expected_money, PlayerEconomy.money])
+			_fail("Channel 3 bonus money mismatch: expected $%.2f, got $%.2f" % [expected_money, PlayerEconomy.money])
 		
 		# Reset for next test
 		PlayerEconomy.money = original_money

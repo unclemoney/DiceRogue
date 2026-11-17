@@ -3,7 +3,7 @@ class_name ConsumableCashPowerUp
 
 # Track total consumables used in the game for bonus calculation
 var consumables_used_count: int = 0
-var base_income_per_turn: int = 1
+var base_income_per_turn: float = 0.01
 
 signal description_updated(power_up_id: String, new_description: String)
 
@@ -49,7 +49,7 @@ func remove(target) -> void:
 	print("[ConsumableCashPowerUp] Disconnected from all signals")
 
 func get_current_description() -> String:
-	var desc = "Grants %d dollars per turn (%d base + %d bonus from %d consumables used)" % [
+	var desc = "Grants %.2f dollars per turn (%.2f base + %.2f bonus from %d consumables used)" % [
 		get_total_income(),
 		base_income_per_turn,
 		consumables_used_count,
@@ -69,11 +69,11 @@ func _on_turn_started() -> void:
 	var player_economy = PlayerEconomy
 	if player_economy:
 		player_economy.add_money(income)
-		print("[ConsumableCashPowerUp] Granted %d dollars for turn (base: %d + bonus: %d)" % [
+		print("[ConsumableCashPowerUp] Granted %.2f dollars for turn (base: %.2f + bonus: %.2f)" % [
 			income, base_income_per_turn, consumables_used_count
 		])
 	else:
 		push_error("[ConsumableCashPowerUp] PlayerEconomy autoload not found")
 
-func get_total_income() -> int:
+func get_total_income() -> float:
 	return base_income_per_turn + consumables_used_count

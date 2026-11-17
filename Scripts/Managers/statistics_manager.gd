@@ -19,11 +19,11 @@ var hands_completed: int = 0
 var failed_hands: int = 0
 
 # Economic Metrics
-var total_money_earned: int = 0
-var total_money_spent: int = 0
-var money_spent_on_powerups: int = 0
-var money_spent_on_consumables: int = 0
-var money_spent_on_mods: int = 0
+var total_money_earned: float = 0.0
+var total_money_spent: float = 0.0
+var money_spent_on_powerups: float = 0.0
+var money_spent_on_consumables: float = 0.0
+var money_spent_on_mods: float = 0.0
 # Note: current_money is now retrieved from PlayerEconomy, not stored here
 
 # Dice Metrics
@@ -75,10 +75,10 @@ var current_streak: int = 0
 
 # Round-specific tracking (resets each round)
 var current_round_points: int = 0
-var current_round_money_earned: int = 0
-var current_round_bonus_money: int = 0
-var current_round_empty_category_bonus: int = 0
-var current_round_score_above_bonus: int = 0
+var current_round_money_earned: float = 0.0
+var current_round_bonus_money: float = 0.0
+var current_round_empty_category_bonus: float = 0.0
+var current_round_score_above_bonus: float = 0.0
 var rounds_completed: int = 0
 var failed_hands_this_round: int = 0
 
@@ -302,13 +302,13 @@ func complete_round(final_score: int, empty_bonus: int, score_bonus: int):
 	current_round_score_above_bonus = score_bonus
 	current_round_bonus_money = empty_bonus + score_bonus
 	rounds_completed += 1
-	print("[Statistics] Round %d complete - Points: %d, Empty bonus: $%d, Score bonus: $%d" % [rounds_completed, final_score, empty_bonus, score_bonus])
+	print("[Statistics] Round %d complete - Points: %d, Empty bonus: $%.2f, Score bonus: $%.2f" % [rounds_completed, final_score, empty_bonus, score_bonus])
 
 
-## add_round_money_earned(amount: int)
+## add_round_money_earned(amount: float)
 ##
 ## Add to round-specific money earned tracking.
-func add_round_money_earned(amount: int):
+func add_round_money_earned(amount: float):
 	current_round_money_earned += amount
 	total_money_earned += amount
 
@@ -327,16 +327,16 @@ func get_current_round_stats() -> Dictionary:
 	}
 
 
-## add_money_earned(amount: int)
+## add_money_earned(amount: float)
 ## 
 ## Add to the total money earned (tracking only, money is managed by PlayerEconomy).
-func add_money_earned(amount: int):
+func add_money_earned(amount: float):
 	total_money_earned += amount
 
-## spend_money(amount: int, category: String = "")
+## spend_money(amount: float, category: String = "")
 ## 
 ## Record money spent, optionally by category (tracking only, money is managed by PlayerEconomy).
-func spend_money(amount: int, category: String = ""):
+func spend_money(amount: float, category: String = ""):
 	total_money_spent += amount
 	
 	match category.to_lower():
@@ -440,10 +440,10 @@ func check_snake_eyes(dice_values: Array):
 		snake_eyes_count += 1
 		milestone_reached.emit("snake_eyes", snake_eyes_count)
 
-## get_current_money() -> int
+## get_current_money() -> float
 ## 
 ## Get current player money from PlayerEconomy.
-func get_current_money() -> int:
+func get_current_money() -> float:
 	var economy = get_node_or_null("/root/PlayerEconomy")
 	if economy:
 		return economy.money

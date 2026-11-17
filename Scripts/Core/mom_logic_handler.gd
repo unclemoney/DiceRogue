@@ -28,8 +28,8 @@ const SASS_REP_TIER_STEP: int = 2
 const SASS_REP_EXTRA_DEBUFF_MIN_TIER: int = 3
 
 ## Default dollar range when a reward_money outcome/effect has no amount.
-const DEFAULT_REWARD_MIN: int = 50
-const DEFAULT_REWARD_MAX: int = 150
+const DEFAULT_REWARD_MIN: float = 0.5
+const DEFAULT_REWARD_MAX: float = 1.5
 
 ## Bot response policy: tone -> relative weight (see pick_response_index).
 const BOT_TONE_WEIGHTS: Dictionary = {"polite": 6.0, "neutral": 3.0, "sassy": 1.0}
@@ -82,8 +82,8 @@ class MomCheckResult:
 	var removed_power_ups: Array[String] = []
 	var removed_mods: Array[String] = []
 	var applied_debuffs: Array[String] = []
-	var fine_amount: int = 0
-	var reward_money: int = 0
+	var fine_amount: float = 0.0
+	var reward_money: float = 0.0
 	var reward_consumable_id: String = ""
 	var reward_powerup_id: String = ""
 	var cosmetics_locked: bool = false
@@ -415,9 +415,9 @@ static func apply_outcome(game_controller: Node, outcome: MomDialogOutcome, seve
 			pass  # Field deltas already recorded above
 		"rep_delta":
 			# Story-beat Rep shift (applied via ProgressManager downstream)
-			result.rep_delta += outcome.magnitude
+			result.rep_delta += int(outcome.magnitude)
 		"apply_tier":
-			var tier_id := outcome.magnitude
+			var tier_id := int(outcome.magnitude)
 			if tier_id == 0:
 				tier_id = severity
 			elif tier_id == -1:
@@ -450,9 +450,9 @@ static func _outcome_to_entry(outcome: MomDialogOutcome) -> Dictionary:
 			var amount := outcome.magnitude if outcome.magnitude > 0 else DEFAULT_REWARD_MIN
 			params = {"min": amount, "max": amount}
 		"debuff":
-			params = {"count": maxi(outcome.magnitude, 1)}
+			params = {"count": maxi(int(outcome.magnitude), 1)}
 		"remove_mod":
-			params = {"count": maxi(outcome.magnitude, 1)}
+			params = {"count": maxi(int(outcome.magnitude), 1)}
 		"confiscate_powerups":
 			params = {"max_rating": "NC-17", "stack_debuffs": true}
 		"reward_money":
@@ -490,7 +490,7 @@ static func _resolve_entry(game_controller: Node, entry: Dictionary, active_debu
 		"none":
 			pass
 		"fine":
-			_resolve_fine(int(params.get("min", 0)), int(params.get("max", 0)), active_debuffs, result)
+			_resolve_fine(float(params.get("min", 0.0)), float(params.get("max", 0.0)), active_debuffs, result)
 		"debuff":
 			var count := int(params.get("count", 1))
 			if is_sass and ProgressManager.get_rep_tier() >= SASS_REP_EXTRA_DEBUFF_MIN_TIER:
@@ -511,9 +511,9 @@ static func _resolve_entry(game_controller: Node, entry: Dictionary, active_debu
 		"mood_delta":
 			result.mood_delta += int(params.get("delta", 0))
 		"reward_money":
-			var low := int(params.get("min", DEFAULT_REWARD_MIN))
-			var high := int(params.get("max", DEFAULT_REWARD_MAX))
-			result.reward_money += GameRNG.randi_range(mini(low, high), maxi(low, high))
+			var low := float(params.get("min", DEFAULT_REWARD_MIN))
+			var high := float(params.get("max", DEFAULT_REWARD_MAX))
+			result.reward_money += _random_money_range(low, high)
 		"reward_consumable":
 			var pool: Array = params.get("pool", [])
 			if pool.is_empty():
@@ -524,12 +524,21 @@ static func _resolve_entry(game_controller: Node, entry: Dictionary, active_debu
 			_resolve_powerup_reward(game_controller, params, result)
 
 
+## _random_money_range(min_amount, max_amount) -> float
+##
+## Samples an inclusive cent value, matching the legacy integer distribution.
+static func _random_money_range(min_amount: float, max_amount: float) -> float:
+	var low := roundi(min_amount * 100.0)
+	var high := roundi(max_amount * 100.0)
+	return GameRNG.randi_range(mini(low, high), maxi(low, high)) / 100.0
+
+
 ## _resolve_fine(min_amount, max_amount, active_debuffs, result)
 ##
 ## Fines the player; substitutes a debuff when they cannot pay
 ## (legacy behavior from the no-chores fine).
-static func _resolve_fine(min_amount: int, max_amount: int, active_debuffs: Dictionary, result: MomCheckResult) -> void:
-	var amount := GameRNG.randi_range(min_amount, max_amount)
+static func _resolve_fine(min_amount: float, max_amount: float, active_debuffs: Dictionary, result: MomCheckResult) -> void:
+	var amount := _random_money_range(min_amount, max_amount)
 	var economy = _get_autoload("PlayerEconomy")
 	var can_pay := false
 	if economy and economy.has_method("can_afford"):
@@ -619,7 +628,7 @@ static func _resolve_powerup_reward(game_controller: Node, params: Dictionary, r
 		if not active_power_ups.has(id):
 			candidates.append(id)
 	if candidates.is_empty():
-		result.reward_money += GameRNG.randi_range(75, 125)
+		result.reward_money += _random_money_range(0.75, 1.25)
 	else:
 		result.reward_powerup_id = candidates[GameRNG.random_index(candidates)]
 
@@ -672,7 +681,7 @@ static func apply_consequences(game_controller: Node, result: MomCheckResult) ->
 		var economy = _get_autoload("PlayerEconomy")
 		if economy and economy.has_method("remove_money"):
 			economy.remove_money(result.fine_amount, "mom_fine")
-			print("[MomLogicHandler] Fined player $%d" % result.fine_amount)
+			print("[MomLogicHandler] Fined player $%.2f" % result.fine_amount)
 
 	# Apply debuffs
 	for debuff_id in result.applied_debuffs:
@@ -696,7 +705,7 @@ static func apply_consequences(game_controller: Node, result: MomCheckResult) ->
 	var economy = _get_autoload("PlayerEconomy")
 	if result.reward_money > 0 and economy and economy.has_method("add_money"):
 		economy.add_money(result.reward_money)
-		print("[MomLogicHandler] Mom gave allowance: $%d" % result.reward_money)
+		print("[MomLogicHandler] Mom gave allowance: $%.2f" % result.reward_money)
 	if result.reward_consumable_id != "" and game_controller.has_method("grant_consumable"):
 		game_controller.grant_consumable(result.reward_consumable_id)
 		print("[MomLogicHandler] Mom gave consumable: %s" % result.reward_consumable_id)

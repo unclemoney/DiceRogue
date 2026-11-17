@@ -43,7 +43,7 @@ func _build_visual_fixture() -> void:
 		"item_id": "five_by_one",
 		"display_name": "Five By One",
 		"count": 2,
-		"sell_price": 25,
+		"sell_price": 0.25,
 	}])
 
 
@@ -232,7 +232,7 @@ func _test_duplicate_mod_sales() -> void:
 	controller.active_mods[definition.id] = definition
 	controller.mod_persistence_map[definition.id] = 2
 	var money_before := PlayerEconomy.get_money()
-	var refund := definition.sell_price if definition.sell_price >= 0 else int(definition.price / 2.0)
+	var refund := definition.sell_price if definition.sell_price >= 0 else floorf(definition.price * 50.0) / 100.0
 
 	var first_die := _make_die()
 	first_die.add_mod(definition)

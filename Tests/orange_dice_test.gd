@@ -5,7 +5,7 @@ extends Node
 ## Validates the Orange dice color (6th dice color):
 ##   1. Enum value, display name, display color, and get_all_colors() inclusion
 ##   2. COLOR_CHANCES entry (1 in 150)
-##   3. OrangeDice.tres data load and $175 base cost via get_current_color_cost()
+##   3. OrangeDice.tres data load and $1.75 base cost via get_current_color_cost()
 ##   4. Rainbow bonus triggers with exactly 5 unique colors (with and without Orange)
 ##   5. Same-color doubling for 5+ Orange dice (doubles the roll grant)
 ##   6. Orange roll-grant appears in the effects dict (orange_rolls)
@@ -96,13 +96,13 @@ func _test_orange_data_and_cost() -> void:
 	if data:
 		_check("orange_dice display_name", data.display_name == "Orange Dice")
 		_check("orange_dice color_type is ORANGE (6)", data.color_type == DiceColorClass.Type.ORANGE)
-		_check("orange_dice price is $175", data.price == 175)
+		_check("orange_dice price is $1.75", data.price == 1.75)
 		_check("orange_dice is_valid()", data.is_valid())
 
 	# Reset purchases so the base cost check is deterministic
 	DiceColorManager._reset_purchased_colors()
 	_check("purchased_colors tracks ORANGE", DiceColorManager.purchased_colors.has(DiceColorClass.Type.ORANGE))
-	_check("base color cost is $175", DiceColorManager.get_current_color_cost(DiceColorClass.Type.ORANGE) == 175)
+	_check("base color cost is $1.75", DiceColorManager.get_current_color_cost(DiceColorClass.Type.ORANGE) == 1.75)
 	_check("base color chance is 1 in 150", DiceColorManager.get_current_color_chance(DiceColorClass.Type.ORANGE) == 150)
 
 

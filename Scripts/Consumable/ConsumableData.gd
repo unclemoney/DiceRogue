@@ -10,7 +10,7 @@ enum UsageWindow { ANY_TIME, BEFORE_ROLL_INITIATED, DURING_ACTIVE_ROUND, AFTER_S
 @export var description: String
 @export var icon: Texture2D
 @export var scene: PackedScene
-@export var price: int = 100
+@export var price: float = 1.0
 ## Dice side counts this consumable may appear for in the shop and grant
 ## pools (e.g. [4] for the d4-only Evens/Odds upgrades, [6] for the d6-only
 ## Fives/Sixes/Large Straight upgrades). Empty = any dice set.

@@ -201,17 +201,17 @@ func _test_dice_mods() -> void:
 	_check("color cleared to NONE on remove", painted_die.color == DiceColorClass.Type.NONE)
 
 	print("-- Cursed Six mod --")
-	_check("cursed_six buy price is $25", cursed_six_data.price == 25)
-	_check("cursed_six sell price is $0", cursed_six_data.sell_price == 0)
+	_check("cursed_six buy price is $0.25", cursed_six_data.price == 0.25)
+	_check("cursed_six sell price is $0.00", cursed_six_data.sell_price == 0)
 
 	var cursed_die: Dice = hand.dice_list[1]
-	PlayerEconomy.money = 100
+	PlayerEconomy.money = 1.0
 	cursed_die.add_mod(cursed_six_data)
 	_check("cursed_six mod applied", cursed_die.has_mod("cursed_six"))
 
 	cursed_die.roll()
 	_check("cursed die always rolls 6", cursed_die.value == 6)
-	_check("roll charged $5", PlayerEconomy.money == 95)
+	_check("roll charged $0.05", is_equal_approx(PlayerEconomy.money, 0.95))
 
 	# Fixed face clamps to the highest face on smaller dice (d4 -> 4).
 	var d4_data := DiceData.new()
@@ -220,15 +220,15 @@ func _test_dice_mods() -> void:
 	cursed_die.make_rollable()
 	cursed_die.roll()
 	_check("d4 clamps forced face to 4", cursed_die.value == 4)
-	_check("d4 roll still charged $5", PlayerEconomy.money == 90)
+	_check("d4 roll still charged $0.05", is_equal_approx(PlayerEconomy.money, 0.9))
 
 	# The charge is mandatory even when the player cannot afford it.
-	PlayerEconomy.money = 2
+	PlayerEconomy.money = 0.02
 	cursed_die.make_rollable()
 	cursed_die.roll()
-	_check("charge applies even when broke", PlayerEconomy.money == -3)
+	_check("charge applies even when broke", is_equal_approx(PlayerEconomy.money, -0.03))
 
-	PlayerEconomy.money = 100
+	PlayerEconomy.money = 1.0
 	cursed_die.remove_mod("cursed_six")
 	_check("cursed_six mod removed", not cursed_die.has_mod("cursed_six"))
 
