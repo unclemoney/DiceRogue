@@ -16,10 +16,7 @@ const SYNERGY_HALO_SHADER = preload("res://Scripts/Shaders/synergy_halo.gdshader
 
 const TILE_SIZE := Vector2(200, 300)
 const TITLE_BAR_MIN_HEIGHT := 34.0
-const TITLE_HORIZONTAL_PADDING := 4.0
-const TITLE_FONT_SIZE_DEFAULT := 20
-const TITLE_FONT_SIZE_MIN := 12
-const TITLE_SAFE_MAX_CHARS := 24
+const TITLE_FONT_SIZE := 12
 const ACTION_BAR_MIN_HEIGHT := 52.0
 const FOIL_CARD_SCALE := 0.96
 const RARITY_GLOW_RADIUS_SCALE := 0.75
@@ -114,13 +111,13 @@ func _apply_static_style() -> void:
 	title_pill.add_theme_stylebox_override("panel", title_style)
 	if VCR_FONT:
 		title_label.add_theme_font_override("font", VCR_FONT)
-	title_label.add_theme_font_size_override("font_size", TITLE_FONT_SIZE_DEFAULT)
+	title_label.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 	title_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.25, 1.0))
 	title_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 1.0))
 	title_label.add_theme_constant_override("outline_size", 2)
 	title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	title_label.clip_text = true
-	title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	title_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	title_label.custom_minimum_size = Vector2(0.0, TITLE_BAR_MIN_HEIGHT)
 	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -200,10 +197,7 @@ func _apply_data() -> void:
 	if not data:
 		return
 	var raw_name := data.display_name if data.display_name else "UNKNOWN"
-	if raw_name.length() > TITLE_SAFE_MAX_CHARS:
-		raw_name = raw_name.substr(0, TITLE_SAFE_MAX_CHARS - 1) + "…"
 	title_label.text = raw_name.to_upper()
-	call_deferred("_fit_title")
 	if sticker_badge:
 		sticker_badge.set_rating(data.rating)
 		sticker_badge.set_rarity(data.rarity)
@@ -239,24 +233,6 @@ func _apply_foilsmith_data() -> void:
 	foilsmith_card.visible = foilsmith_card.art != null
 	artwork.visible = not foilsmith_card.visible
 
-
-func _fit_title() -> void:
-	if not title_label:
-		return
-	title_label.add_theme_font_size_override("font_size", TITLE_FONT_SIZE_DEFAULT)
-	await get_tree().process_frame
-	var safe_width := title_label.size.x - TITLE_HORIZONTAL_PADDING * 2.0
-	for font_size in range(TITLE_FONT_SIZE_DEFAULT, TITLE_FONT_SIZE_MIN - 1, -1):
-		title_label.add_theme_font_size_override("font_size", font_size)
-		await get_tree().process_frame
-		var text_width := title_label.get_theme_font("font").get_string_size(
-			title_label.text,
-			title_label.horizontal_alignment,
-			-1,
-			font_size
-		).x
-		if text_width <= safe_width:
-			break
 
 
 func _get_rarity_neon_color() -> Color:

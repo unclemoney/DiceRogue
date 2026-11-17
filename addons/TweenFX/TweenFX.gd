@@ -1227,6 +1227,8 @@ func interval(node: CanvasItem, delay: float) -> Tween:
 ## Standardized tooltip animation. show_tooltip() / hide_tooltip() are the ONLY
 ## sanctioned way to animate tooltips. One shared cooldown gates hover-spam.
 
+const TooltipPlacementScript = preload("res://Scripts/UI/tooltip_placement.gd")
+
 var tooltip_cooldown: float = 0.15
 var follow_cursor: bool = true
 var follow_speed: float = 12.0
@@ -1285,7 +1287,7 @@ func _kill_tooltip_tween(node: Control) -> void:
 
 ## show_tooltip(node, anchor_rect, follow_mouse) -> Tween
 ##
-## Pop (scale 0.45 -> 1.0, TRANS_BACK) + fade in, pivot at node center.
+## Pop (scale 0.45 -> 1.0, TRANS_QUAD) + fade in from the clamped top-left.
 ## Returns null when the shared cooldown blocks the call — consumers MUST
 ## handle null (no animation runs; the node is left untouched).
 ## anchor_rect: optional hover area used by the stale-tooltip exit guard in
@@ -1306,18 +1308,16 @@ func show_tooltip(node: Control, anchor_rect: Rect2 = Rect2(), follow_mouse: boo
 	_tooltip_last_show_msec = now
 	node.visible = true
 	if follow_mouse:
-		var vp := node.get_viewport().get_visible_rect().size
-		var start := node.get_global_mouse_position() + tooltip_follow_start_offset
-		start.x = clampf(start.x, 0.0, maxf(0.0, vp.x - node.size.x))
-		start.y = clampf(start.y, 0.0, maxf(0.0, vp.y - node.size.y))
-		node.global_position = start
-	node.pivot_offset = node.size / 2.0
+		var mouse := node.get_global_mouse_position()
+		var start := mouse + tooltip_follow_start_offset
+		node.global_position = TooltipPlacementScript.resolve(node, start, anchor_rect, mouse)
+	node.pivot_offset = Vector2.ZERO
 	node.modulate.a = 0.0
 	node.scale = Vector2.ONE * 0.45
 	var tween := node.get_tree().create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(node, "modulate:a", 1.0, 0.25)
-	tween.tween_property(node, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(node, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_tooltip_tweens[node.get_instance_id()] = {"node": node, "tween": tween, "hide": false}
 	return tween
 
@@ -1361,7 +1361,8 @@ func _process(delta: float) -> void:
 					tip.cancel_pending_show()
 				hide_tooltip(tip)
 				return
-			var target := mouse + Vector2(56, -20)
-			_active_tooltip.global_position = _active_tooltip.global_position.lerp(target, delta * follow_speed)
+			var target := TooltipPlacementScript.resolve(_active_tooltip, mouse + Vector2(56, -20), _active_anchor, mouse)
+			var next_position := _active_tooltip.global_position.lerp(target, delta * follow_speed)
+			_active_tooltip.global_position = TooltipPlacementScript.resolve(_active_tooltip, next_position, _active_anchor, mouse)
 
 #endregion

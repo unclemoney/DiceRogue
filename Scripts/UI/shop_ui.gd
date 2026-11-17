@@ -58,7 +58,7 @@ const MAX_POWER_UP_ITEMS: int = 6
 ## shelf presence and a price discount (discount applied in ShopItem).
 const MOM_APPROVED_WEIGHT_MULT: float = 1.5
 const MOM_APPROVED_DISCOUNT: float = 0.10
-## Rebel-mode stage colors for the Rep chip (Teacher's Pet -> Banned).
+## Rebel-mode stage colors for the Rep meter (Teacher's Pet -> Banned).
 const REP_STAGE_COLORS: Array[Color] = [
 	Color(0.47, 0.89, 0.89),  # teal
 	Color(1.0, 0.73, 0.49),   # amber
@@ -86,7 +86,10 @@ var mod_items := LIMITED_SHOP_ITEMS          # Specific count for mods
 var colored_dice_items := LIMITED_SHOP_ITEMS # Specific count for colored dice
 
 var purchased_items := {}  # Track purchased items by type: {"power_up": [], "consumable": [], "mod": [], "colored_dice": []}
-var _rep_chip_label: Label = null  # Rep indicator chip in the POGS tab corner
+var _rep_meter_row: HBoxContainer = null
+var _rep_meter: GameProgressBar = null
+var _rep_value_label: Label = null
+var _rep_stage_label: Label = null
 var _tab_item_pools := {}
 var tutorial_stock_override := false
 var _tab_page_indices := {}
@@ -204,6 +207,9 @@ func _ready() -> void:
 			progress_manager.item_locked.connect(func(_item_id: String, _item_type: String): _on_progress_changed())
 		if progress_manager.has_signal("progress_saved"):
 			progress_manager.progress_saved.connect(_on_progress_changed)
+		if progress_manager.has_signal("rep_changed"):
+			progress_manager.rep_changed.connect(_on_rep_changed)
+		_update_rep_chip()
 	# Connect visibility for open animation
 	visibility_changed.connect(_on_visibility_changed)
 	hide()
@@ -212,6 +218,7 @@ func _on_visibility_changed() -> void:
 	if visible:
 		shop_button_opened.emit()
 		_update_shop_title_text()
+		_update_rep_chip()
 		_animate_shop_open()
 
 ## _animate_shop_open()
@@ -323,6 +330,12 @@ func _on_close_animation_finished() -> void:
 func _exit_tree() -> void:
 	if shop_label:
 		_tfx.stop_effect(shop_label)
+	var progress_manager = get_node_or_null("/root/ProgressManager")
+	if progress_manager and progress_manager.has_signal("rep_changed") and progress_manager.rep_changed.is_connected(_on_rep_changed):
+		progress_manager.rep_changed.disconnect(_on_rep_changed)
+
+func _on_rep_changed(_new_rep: int) -> void:
+	_update_rep_chip()
 
 func _process(delta: float) -> void:
 	# Handle reroll cooldown
@@ -2422,38 +2435,60 @@ func _configure_mouse_input() -> void:
 
 ## _update_rep_chip()
 ##
-## Creates/refreshes the Rep indicator chip in the corner of the POGS tab:
-## current Rep, rebel stage, highest unlocked POG tier, and the next unlock.
+## Creates/refreshes the compact HUD-style Rep meter in the POGS tab corner.
 func _update_rep_chip() -> void:
 	var pm = get_node_or_null("/root/ProgressManager")
 	var pogs_tab = get_node_or_null("TabContainer/Pogs")
 	if not pm or not pm.has_method("get_rep") or not pogs_tab:
 		return
-	if _rep_chip_label == null:
-		_rep_chip_label = Label.new()
-		_rep_chip_label.name = "RepChip"
-		_rep_chip_label.add_theme_font_override("font", load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf"))
-		_rep_chip_label.add_theme_font_size_override("font_size", 14)
-		_rep_chip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		_rep_chip_label.anchor_left = 1.0
-		_rep_chip_label.anchor_right = 1.0
-		_rep_chip_label.offset_left = -560.0
-		_rep_chip_label.offset_right = -12.0
-		_rep_chip_label.offset_top = 6.0
-		_rep_chip_label.offset_bottom = 28.0
-		_rep_chip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		pogs_tab.add_child(_rep_chip_label)
-	var tier: int = pm.get_rep_tier()
+	if _rep_meter_row == null:
+		var vcr_font = load("res://Resources/Font/VCR_OSD_MONO_1.001.ttf") as Font
+		_rep_meter_row = HBoxContainer.new()
+		_rep_meter_row.name = "RepMeterRow"
+		_rep_meter_row.anchor_left = 1.0
+		_rep_meter_row.anchor_right = 1.0
+		_rep_meter_row.offset_left = -520.0
+		_rep_meter_row.offset_right = -12.0
+		_rep_meter_row.offset_top = 6.0
+		_rep_meter_row.offset_bottom = 34.0
+		_rep_meter_row.add_theme_constant_override("separation", 8)
+		_rep_meter_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pogs_tab.add_child(_rep_meter_row)
+
+		_rep_value_label = Label.new()
+		_rep_value_label.name = "RepValue"
+		_rep_value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_rep_value_label.add_theme_font_override("font", vcr_font)
+		_rep_value_label.add_theme_font_size_override("font_size", 12)
+		_rep_value_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_rep_meter_row.add_child(_rep_value_label)
+
+		_rep_meter = GameProgressBar.new()
+		_rep_meter.name = "RepMeter"
+		_rep_meter.min_value = 0
+		_rep_meter.max_value = pm.MAX_REP
+		_rep_meter.fill_color = Color(0.95, 0.78, 0.3, 1.0)
+		_rep_meter.custom_minimum_size = Vector2(180, 16)
+		_rep_meter.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		_rep_meter.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_rep_meter_row.add_child(_rep_meter)
+
+		_rep_stage_label = Label.new()
+		_rep_stage_label.name = "RepStage"
+		_rep_stage_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_rep_stage_label.add_theme_font_override("font", vcr_font)
+		_rep_stage_label.add_theme_font_size_override("font_size", 10)
+		_rep_stage_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_rep_meter_row.add_child(_rep_stage_label)
+
 	var stage: int = pm.get_rep_stage()
-	#var text : String = "REP %d/%d · %s  |  POGs up to: %s" % [
-	#	pm.get_rep(), pm.MAX_REP, pm.get_rep_stage_name(), pm.get_rep_tier_name()]
-	var text : String = "REP %d" % [
-		pm.get_rep()]
-	if tier < pm.REP_TIER_NAMES.size() - 1:
-		text += "  (next: %s @ %d)" % [
-			pm.REP_TIER_NAMES[tier + 1], pm.get_rep_threshold_for_tier(tier + 1)]
-	_rep_chip_label.text = text
-	_rep_chip_label.add_theme_color_override("font_color", REP_STAGE_COLORS[clampi(stage, 0, REP_STAGE_COLORS.size() - 1)])
+	var color: Color = REP_STAGE_COLORS[clampi(stage, 0, REP_STAGE_COLORS.size() - 1)]
+	_rep_meter.value = pm.get_rep()
+	_rep_meter.tint_progress = color
+	_rep_value_label.text = "REP %d/%d" % [pm.get_rep(), pm.MAX_REP]
+	_rep_value_label.add_theme_color_override("font_color", color)
+	_rep_stage_label.text = pm.get_rep_stage_name().to_upper()
+	_rep_stage_label.add_theme_color_override("font_color", color)
 
 
 ## populate_locked_items()

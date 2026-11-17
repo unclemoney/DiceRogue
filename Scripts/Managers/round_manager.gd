@@ -19,6 +19,7 @@ signal round_started(round_number: int)
 signal round_completed(round_number: int)
 signal all_rounds_completed
 signal round_failed(round_number: int)
+signal round_active_changed(active: bool)
 
 @export var max_rounds: int = 6
 @export var dice_configs: Array[String] = ["d6", "d6", "d6", "d4", "d6", "d6"]  # Keep as fallback
@@ -42,6 +43,12 @@ var current_round: int = 0
 var is_challenge_completed: bool = false
 var rounds_data: Array[Dictionary] = []
 var game_started: bool = false
+var is_round_active: bool = false:
+	set(value):
+		if is_round_active == value:
+			return
+		is_round_active = value
+		round_active_changed.emit(value)
 ## Dice set used for every round of the current run, chosen in the Mall Zone
 ## Selection. Set by GameController.
 var run_dice_type: String = "d6"
@@ -170,6 +177,7 @@ func start_game() -> void:
 	print("[RoundManager] Game starting. Initializing rounds for selected channel...")
 	current_round = 0
 	is_challenge_completed = false
+	is_round_active = false
 	game_started = true
 
 	# IMPORTANT: Regenerate rounds data NOW that channel is selected
@@ -243,6 +251,7 @@ func start_round(round_number: int) -> void:
 		DiceColorManager.clear_color_effects()
 		print("[RoundManager] Dice color effects cleared for round", round_number)
 
+	is_round_active = true
 	emit_signal("round_started", round_number)
 
 ## complete_round()
@@ -257,6 +266,7 @@ func complete_round() -> void:
 	if current_round < rounds_data.size():
 		rounds_data[current_round].completed = true
 
+	is_round_active = false
 	emit_signal("round_completed", round_number)
 
 	# Check if this was the last round
@@ -278,6 +288,7 @@ func fail_round() -> void:
 	if current_round < rounds_data.size():
 		rounds_data[current_round].failed = true
 
+	is_round_active = false
 	emit_signal("round_failed", round_number)
 
 ## get_current_round_number()
@@ -392,6 +403,7 @@ func get_state() -> Dictionary:
 		"current_round": current_round,
 		"is_challenge_completed": is_challenge_completed,
 		"game_started": game_started,
+		"is_round_active": is_round_active,
 		"max_rounds": max_rounds,
 		"rounds_data": rounds_data.duplicate(true)
 	}
@@ -425,6 +437,11 @@ func load_state(state: Dictionary) -> void:
 	rounds_data.assign(sanitized_rounds)
 	if needs_debuff_backfill:
 		_backfill_missing_round_debuffs()
+	var restored_active := bool(state.get("is_round_active", false))
+	if not state.has("is_round_active") and game_started and current_round >= 0 and current_round < rounds_data.size():
+		var active_round_data := rounds_data[current_round]
+		restored_active = not bool(active_round_data.get("completed", false)) and not bool(active_round_data.get("failed", false))
+	is_round_active = restored_active
 	print("[RoundManager] State loaded - round:", current_round)
 
 

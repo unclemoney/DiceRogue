@@ -12,6 +12,7 @@ extends Control
 
 var shop_ui: ShopUI
 var test_completed := false
+var _fail_count := 0
 
 func _ready() -> void:
 	print("=== Shop Pagination Test ===")
@@ -122,6 +123,9 @@ func _run_tests() -> void:
 			print("✓ Undiscovered tab present")
 		else:
 			print("✗ Undiscovered tab missing")
+	await _test_fixed_shop_titles()
+	await _test_smooth_archive_scroll()
+	await _test_live_rep_meter()
 	print("--- Animated close ---")
 	var close_finished := [false]
 	shop_ui.shop_close_finished.connect(func(): close_finished[0] = true)
@@ -140,7 +144,103 @@ func _run_tests() -> void:
 	print("=== Pagination Test Complete ===")
 	test_completed = true
 	await get_tree().create_timer(0.5).timeout
-	get_tree().quit()
+	get_tree().quit(0 if _fail_count == 0 else 1)
+
+
+func _test_fixed_shop_titles() -> void:
+	var items := shop_ui._get_shop_items(shop_ui.power_up_container)
+	_check(not items.is_empty(), "Shop title test has a power-up card")
+	if items.is_empty():
+		return
+	var item := items[0] as ShopItem
+	_check(item.name_label.get_theme_font_size("font_size") == 12, "Shop power-up title starts at 12 px")
+	item._on_shop_item_resized()
+	item._set_title_text("A Much Longer Purchased Power-Up Title")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(item.name_label.get_theme_font_size("font_size") == 12, "Purchase/resize path cannot enlarge the shop title")
+	_check(item.name_label.text_overrun_behavior == TextServer.OVERRUN_NO_TRIMMING, "Shop title clips without ellipsis")
+
+
+func _test_smooth_archive_scroll() -> void:
+	shop_ui.tab_container.current_tab = 6
+	for i in range(24):
+		var filler := Control.new()
+		filler.custom_minimum_size = Vector2(100, 180)
+		shop_ui.unlocked_container.add_child(filler)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var scroll := shop_ui.get_node_or_null("TabContainer/Unlocked/ScrollContainer") as SmoothScrollContainer
+	_check(scroll != null, "Undiscovered uses SmoothScrollContainer")
+	if not scroll:
+		return
+	var bar := scroll.get_v_scroll_bar()
+	_check(scroll._max_scroll() > bar.page, "Archive test has a scrollable page")
+	scroll._set_target_scroll(minf(scroll._max_scroll(), bar.page))
+	_check(scroll.scroll_vertical == 0, "Full-page scroll does not jump on input")
+	await get_tree().create_timer(0.08).timeout
+	_check(scroll.scroll_vertical > 0 and scroll.scroll_vertical < int(bar.page), "Scroll eases through an intermediate position")
+	scroll._set_target_scroll(minf(scroll._max_scroll(), bar.page * 2.0))
+	await get_tree().create_timer(0.4).timeout
+	_check(absi(scroll.scroll_vertical - int(scroll._target_scroll)) <= 1, "Interrupted scroll reaches its retargeted position")
+
+	scroll._set_target_scroll(0.0)
+	await get_tree().create_timer(0.4).timeout
+	var wheel := InputEventMouseButton.new()
+	wheel.button_index = MOUSE_BUTTON_WHEEL_DOWN
+	wheel.pressed = true
+	scroll._gui_input(wheel)
+	var first_target := scroll._target_scroll
+	await get_tree().create_timer(0.05).timeout
+	scroll._gui_input(wheel)
+	_check(scroll._target_scroll > first_target, "Rapid wheel ticks accumulate without snapping")
+	await get_tree().create_timer(0.4).timeout
+	_check(absi(scroll.scroll_vertical - int(scroll._target_scroll)) <= 1, "Wheel scroll settles at its target")
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.global_position = scroll.get_global_rect().get_center()
+	scroll._gui_input(press)
+	var drag_start := scroll._target_scroll
+	var motion := InputEventMouseMotion.new()
+	motion.global_position = press.global_position - Vector2(0, 40)
+	scroll._gui_input(motion)
+	_check(scroll._target_scroll > drag_start, "Drag input retargets the smooth scroll")
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	scroll._input(release)
+	await get_tree().create_timer(0.4).timeout
+	_check(absi(scroll.scroll_vertical - int(scroll._target_scroll)) <= 1, "Drag scroll settles at its target")
+
+
+func _test_live_rep_meter() -> void:
+	_check(shop_ui._rep_meter != null and shop_ui._rep_value_label != null, "POGS tab has a meter and numeric REP label")
+	if not shop_ui._rep_meter:
+		return
+	var old_rep := ProgressManager.get_rep()
+	ProgressManager.cumulative_stats["rep"] = 30
+	ProgressManager.rep_changed.emit(30)
+	_check(is_equal_approx(shop_ui._rep_meter.value, 30.0), "REP meter updates from rep_changed")
+	_check(shop_ui._rep_value_label.text == "REP 30/100", "REP numeric label updates live")
+	_check(shop_ui._rep_meter.tint_progress == ShopUI.REP_STAGE_COLORS[2], "REP meter uses the HUD stage color")
+	shop_ui.tab_container.current_tab = 0
+	get_window().size = Vector2i(1280, 720)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if DisplayServer.get_name() != "headless":
+		get_viewport().get_texture().get_image().save_png("res://Tests/_layout_shots/ui_polish_shop.png")
+	ProgressManager.cumulative_stats["rep"] = old_rep
+	ProgressManager.rep_changed.emit(old_rep)
+
+
+func _check(condition: bool, message: String) -> void:
+	if condition:
+		print("✓ " + message)
+	else:
+		_fail_count += 1
+		push_error("[ShopPaginationTest] FAIL: " + message)
+
 
 func _input(event):
 	if test_completed and event.is_action_pressed("ui_accept"):

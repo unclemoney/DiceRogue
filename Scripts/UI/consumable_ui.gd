@@ -156,6 +156,10 @@ func _bind_no_consumables_allowed_signals() -> void:
 	if game_controller.has_signal("phase_changed") and not game_controller.is_connected("phase_changed", _on_game_phase_changed):
 		game_controller.phase_changed.connect(_on_game_phase_changed)
 
+	var round_manager = game_controller.round_manager
+	if round_manager and round_manager.has_signal("round_active_changed") and not round_manager.is_connected("round_active_changed", _on_round_active_changed):
+		round_manager.round_active_changed.connect(_on_round_active_changed)
+
 	if game_controller.is_debuff_active("no_consumables_allowed"):
 		var debuff: Debuff = game_controller.active_debuffs.get("no_consumables_allowed") as Debuff
 		_connect_no_consumables_allowed_debuff(debuff)
@@ -183,6 +187,10 @@ func _on_no_consumables_allowed_debuff_ended() -> void:
 
 func _on_game_phase_changed(_new_phase: int) -> void:
 	# Re-grey fanned cards when the turn/roll/scoring phase changes
+	update_consumable_usability()
+
+
+func _on_round_active_changed(_active: bool) -> void:
 	update_consumable_usability()
 
 
@@ -1070,18 +1078,23 @@ func _can_use_consumable(data: ConsumableData) -> bool:
 	if _is_consumables_blocked():
 		return false
 
-	# Most consumables require an active turn. Shop Expansion also works between rounds.
+	# ANY_TIME non-dice consumables work between rounds once a run has started.
+	# Other non-dice items use the round lifecycle; dice items keep turn/phase gates.
 	var game_controller = get_tree().get_first_node_in_group("game_controller")
 	if data.id == "power_up_shop_num":
 		if not game_controller or not game_controller.round_manager or not game_controller.round_manager.game_started or game_controller._game_ended:
 			return false
-	elif game_controller and game_controller.turn_tracker:
-		if not game_controller.turn_tracker.is_active:
+	elif data.requires_dice_roll:
+		if game_controller and game_controller.turn_tracker:
+			if not game_controller.turn_tracker.is_active:
+				return false
+		if game_controller and not data.is_usable_in_phase(game_controller.current_phase):
 			return false
-
-	# Data-driven timing window (ConsumableData.UsageWindow vs GameController.current_phase)
-	if game_controller and not data.is_usable_in_phase(game_controller.current_phase):
-		return false
+	else:
+		if not game_controller or not game_controller.round_manager or not game_controller.round_manager.game_started or game_controller._game_ended:
+			return false
+		if data.usage_window != ConsumableData.UsageWindow.ANY_TIME and not game_controller.round_manager.is_round_active:
+			return false
 
 	# Named extra conditions from the consumable's data (no per-id logic)
 	return _check_usage_conditions(data, game_controller)

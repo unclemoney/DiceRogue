@@ -22,6 +22,9 @@ enum UsageWindow { ANY_TIME, BEFORE_ROLL_INITIATED, DURING_ACTIVE_ROUND, AFTER_S
 ## When this consumable may be used. ANY_TIME (default) keeps un-migrated
 ## resources usable whenever a turn is active.
 @export var usage_window: UsageWindow = UsageWindow.ANY_TIME
+## True when the effect reads dice or resolves through a roll/score. False
+## resources use RoundManager.is_round_active instead of the roll-phase gate.
+@export var requires_dice_roll: bool = true
 ## Named extra conditions, evaluated by ConsumableUI's generic dispatcher
 ## (_check_usage_conditions). Recognized keys:
 ## "dice_rolled", "open_category", "open_lower_category", "has_placed_score",

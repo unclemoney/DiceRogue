@@ -11,6 +11,8 @@ func _ready() -> void:
 	add_child(test_label)
 	
 	_create_test_consumable()
+	if "--auto-test" in OS.get_cmdline_user_args():
+		call_deferred("_run_title_test")
 
 func _create_test_consumable() -> void:
 	# Load test consumable data
@@ -25,3 +27,24 @@ func _create_test_consumable() -> void:
 	else:
 		print("[ConsumableHoverTest] Failed to load consumable data")
 		test_label.text = "ERROR: Failed to load consumable data"
+
+
+func _run_title_test() -> void:
+	await get_tree().process_frame
+	var icon := get_child(get_child_count() - 1) as ConsumableIcon
+	var failures := 0
+	if not icon or not icon.coupon_title_label:
+		failures += 1
+	else:
+		var label := icon.coupon_title_label
+		if label.get_theme_font_size("font_size") != 12 or not label.clip_text or label.autowrap_mode != TextServer.AUTOWRAP_OFF or label.text_overrun_behavior != TextServer.OVERRUN_NO_TRIMMING:
+			failures += 1
+		if not is_equal_approx(label.custom_minimum_size.y, 34.0):
+			failures += 1
+	print("[ConsumableHoverTest] Fixed title: %s" % ("PASS" if failures == 0 else "FAIL"))
+	get_window().size = Vector2i(1280, 720)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if DisplayServer.get_name() != "headless":
+		get_viewport().get_texture().get_image().save_png("res://Tests/_layout_shots/ui_polish_consumable.png")
+	get_tree().quit(0 if failures == 0 else 1)

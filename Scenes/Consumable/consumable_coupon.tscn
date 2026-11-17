@@ -84,14 +84,16 @@ mouse_filter = 2
 theme_override_constants/separation = 8
 
 [node name="TitleLabel" type="Label" parent="ContentRoot/ContentZone/ContentHBox/TextBlock"]
+custom_minimum_size = Vector2(190, 34)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"CouponTitle"
 theme_override_fonts/font = ExtResource("4_g7ife")
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 12
 text = "COUPON"
 horizontal_alignment = 1
 clip_text = true
+text_overrun_behavior = 0
 
 [node name="DescriptionLabel" type="Label" parent="ContentRoot/ContentZone/ContentHBox/TextBlock"]
 layout_mode = 2

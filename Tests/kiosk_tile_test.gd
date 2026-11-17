@@ -14,10 +14,14 @@ var _fallback_active := false
 
 
 func _ready() -> void:
+	if "--auto-test" in OS.get_cmdline_user_args():
+		size = Vector2(1280, 720)
 	_create_log_label()
 	_create_sample_icons()
 	_apply_badge_profile_to_all(_profile_mode)
 	_show_controls()
+	if "--auto-test" in OS.get_cmdline_user_args():
+		call_deferred("_run_title_test")
 
 
 func _show_controls() -> void:
@@ -83,7 +87,7 @@ func _create_sample_icons() -> void:
 				data.description = "A longer description verifies that the external tooltip owns all rules text."
 			3:
 				data.display_name = "Extremely Long Powerup Name That Should Truncate"
-				data.description = "Long names must shrink or truncate without colliding with the POG or SELL button."
+				data.description = "Long names clip at the fixed title label without resizing or colliding with the POG."
 			4:
 				data.display_name = "MaxedOutPowerupNameLengthTestForTruncationBehavior"
 				data.description = "Legendary rarity and NC-17 rating remain independent visual signals."
@@ -158,3 +162,23 @@ func _toggle_descriptions() -> void:
 		if tile:
 			tile.set_static_descriptions_enabled(GameSettings.power_up_static_descriptions)
 	_log_label.text = "Static descriptions: %s" % GameSettings.power_up_static_descriptions
+
+
+func _run_title_test() -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var failures := 0
+	for icon in _icons:
+		var tile := icon.get_node_or_null("KioskTile") as KioskTile
+		var label := tile.title_label
+		if label.get_theme_font_size("font_size") != 12 or not label.clip_text or label.autowrap_mode != TextServer.AUTOWRAP_OFF or label.text_overrun_behavior != TextServer.OVERRUN_NO_TRIMMING:
+			failures += 1
+		if label.text != tile.data.display_name.to_upper():
+			failures += 1
+	print("[KioskTileTest] Fixed titles: %s" % ("PASS" if failures == 0 else "FAIL"))
+	get_window().size = Vector2i(1280, 720)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if DisplayServer.get_name() != "headless":
+		get_viewport().get_texture().get_image().save_png("res://Tests/_layout_shots/ui_polish_kiosk.png")
+	get_tree().quit(0 if failures == 0 else 1)

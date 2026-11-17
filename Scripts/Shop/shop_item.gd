@@ -37,9 +37,7 @@ const SHOP_BUY_BUTTON_PALETTE := {
 	"outline_size": 0
 }
 const HANG_PIVOT_Y := 32.0
-const TITLE_FONT_SIZE_DEFAULT := 24
-const TITLE_FONT_SIZE_MIN := 16
-const TITLE_HORIZONTAL_PADDING := 8.0
+const TITLE_FONT_SIZE := 12
 # Consumable coupon title overlay: the coupon artwork has a blank band across
 # its top (measured from the sprite sheets, ~20% of the coupon height). The
 # display name is drawn there at one fixed size — no auto-shrink.
@@ -293,7 +291,6 @@ func setup(data: Resource, type: String) -> void:
 	_update_button_state()
 	if not PlayerEconomy.is_connected("money_changed", _update_button_state):
 		PlayerEconomy.money_changed.connect(_update_button_state)
-	call_deferred("_fit_title")
 	call_deferred("_layout_badges")
 	#print("[ShopItem] Connected to PlayerEconomy.money_changed, Instance ID:", PlayerEconomy.get_instance_id())
 	#print("[ShopItem] Setup complete for:", data.id)
@@ -794,7 +791,9 @@ func _apply_shop_item_fonts() -> void:
 	if name_label:
 		name_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		name_label.clip_text = true
-		name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		name_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+		name_label.add_theme_font_override("font", VCR_FONT)
+		name_label.add_theme_font_size_override("font_size", TITLE_FONT_SIZE)
 		name_label.custom_minimum_size = Vector2(0, 32)
 	if price_label:
 		price_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -891,7 +890,6 @@ func _on_shop_item_resized() -> void:
 	_update_hang_pivot()
 	_layout_badges()
 	_update_fx_rect_sizes()
-	call_deferred("_fit_title")
 
 
 func _update_hang_pivot() -> void:
@@ -907,7 +905,6 @@ func _set_title_text(title_text: String) -> void:
 	if name_label.text == title_text:
 		return
 	name_label.text = title_text
-	call_deferred("_fit_title")
 
 
 ## _setup_coupon_title()
@@ -943,42 +940,6 @@ func _setup_coupon_title() -> void:
 	coupon_title.text = _base_title_text
 	icon.add_child(coupon_title)
 
-
-func _fit_title() -> void:
-	if item_type == "consumable":
-		# Fixed-size coupon overlay title; nothing to auto-fit.
-		return
-	if not name_label or not is_inside_tree():
-		return
-	var scene_tree := get_tree()
-	if scene_tree == null:
-		return
-	name_label.add_theme_font_size_override("font_size", TITLE_FONT_SIZE_DEFAULT)
-	await scene_tree.process_frame
-	if not is_inside_tree() or get_tree() == null or not is_instance_valid(name_label):
-		return
-	var safe_width := title_plate.size.x - TITLE_HORIZONTAL_PADDING
-	if safe_width <= 0.0:
-		var card_width := size.x
-		if card_width <= 0.0:
-			card_width = custom_minimum_size.x
-		safe_width = card_width - 48.0
-	var title_font: Font = name_label.get_theme_font("font")
-	if not title_font:
-		title_font = VCR_FONT
-	for font_size in range(TITLE_FONT_SIZE_DEFAULT, TITLE_FONT_SIZE_MIN - 1, -1):
-		name_label.add_theme_font_size_override("font_size", font_size)
-		await scene_tree.process_frame
-		if not is_inside_tree() or get_tree() == null or not is_instance_valid(name_label):
-			return
-		var measured_width := title_font.get_string_size(
-			name_label.text,
-			name_label.horizontal_alignment,
-			-1,
-			font_size
-		).x
-		if measured_width <= safe_width:
-			break
 
 
 func _update_rarity_badge() -> void:

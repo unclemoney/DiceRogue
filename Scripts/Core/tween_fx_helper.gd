@@ -5,6 +5,8 @@
 # Each effect belongs to a named group that can be toggled on/off at runtime.
 extends Node
 
+const TooltipPlacementScript = preload("res://Scripts/UI/tooltip_placement.gd")
+
 ## ─── FX GROUP SYSTEM ───────────────────────────────────────────────
 
 ## FX group identifiers. Every wrapper method checks its group before firing.
@@ -766,9 +768,8 @@ func place_tooltip(tooltip: Control, anchor_rect: Rect2, prefer_side: int = SIDE
 		_:
 			pos = Vector2(anchor_rect.position.x + anchor_rect.size.x + MARGIN, anchor_rect.position.y)
 
-	# Clamp to viewport bounds
-	pos.x = clampf(pos.x, MARGIN, viewport_size.x - tooltip_size.x - MARGIN)
-	pos.y = clampf(pos.y, MARGIN, viewport_size.y - tooltip_size.y - MARGIN)
+	# Clamp to viewport bounds and keep an edge-clamped tip off its trigger.
+	pos = TooltipPlacementScript.resolve(tooltip, pos, anchor_rect, tooltip.get_global_mouse_position())
 
 	tooltip.global_position = pos
 

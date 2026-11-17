@@ -9,6 +9,7 @@ class_name Tooltip
 ## tweened via TweenFX.tween_shader_param.
 
 const VCR_FONT: Font = preload("res://Resources/Font/VCR_OSD_MONO_1.001.ttf")
+const TooltipPlacementScript = preload("res://Scripts/UI/tooltip_placement.gd")
 
 const RarityColors := {
 	"common": Color.WHITE,
@@ -22,7 +23,7 @@ const DEFAULT_BORDER_COLOR := Color(0.95, 0.86, 0.42, 1.0)
 
 ## Hard cap on total rendered rows across all visible sections.
 const MAX_ROWS := 15
-const VIEWPORT_SAFE_MARGIN := 16.0
+const VIEWPORT_SAFE_MARGIN := 8.0
 
 @export var tint_border_by_rarity: bool = false
 
@@ -291,10 +292,7 @@ func show_at(global_pos: Vector2, anchor_rect: Rect2 = Rect2(), follow_mouse: bo
 	if gen != _show_gen:
 		return
 	reset_size()
-	var vp : Vector2 = get_viewport_rect().size
-	global_pos.x = clampf(global_pos.x, VIEWPORT_SAFE_MARGIN, maxf(VIEWPORT_SAFE_MARGIN, vp.x - size.x - VIEWPORT_SAFE_MARGIN))
-	global_pos.y = clampf(global_pos.y, VIEWPORT_SAFE_MARGIN, maxf(VIEWPORT_SAFE_MARGIN, vp.y - size.y - VIEWPORT_SAFE_MARGIN))
-	global_position = global_pos
+	global_position = TooltipPlacementScript.resolve(self, global_pos, anchor_rect, get_global_mouse_position())
 
 	if _trace_tween and _trace_tween.is_valid():
 		_trace_tween.kill()

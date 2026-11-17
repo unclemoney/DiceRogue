@@ -46,6 +46,7 @@
 
 ## SYS:Gameplay — Core Gameplay & Balance
 
+- [ ] `P2-Minor` Refactor all dollar multiples by 100, so chore earnings are no longer 100, but 1.00 and everything subsequent.  Audit the whole game.
 - [X] `P2-Minor` Refactor Magic Mitt PowerUp to affect the REP meter.
 - [X] `P2-Minor` Extra Dice doesn't Roll immediately, but should.
 - [X] `P2-Minor` Most mods are just not attractive enough, we need to balance them more.
@@ -53,6 +54,8 @@
 
 ## Bugs
 
+- [ ] `P2-Minor` Certain Consumables the should be available during active rounds, are only available after next turn is started.  Items like Upgrage Chance do not depend on the begining of a dice roll, and should be available anytime when a round is active.  This might need to be a new state.
+- [ ] `P2-Minor` After unlocking new items at the end of the round, there is a long delay loading these, we need a visual representation of loading so there is no awkward pause.
 - [X] `P2-Minor` Dice Surge should be available during an active round, but is not, unless dice are rolled, this is a poor definition of active round.
 - [X] `P2-Minor` Shop Expansion useable at any time
 - [X] `P2-Minor` If a scoring multiplier doesn't contribute to the actual score, it shouldn't trigger in the scoring animations.
@@ -84,6 +87,11 @@
 
 ## SYS:UI — UI / UX & Animation
 
+- [ ] `P2-Minor` Titles in the Consumables Fan Out are too large, take up too much space and change size when another consumable is used.  This goes for PowerUps as well, and in the shop.  We need a uniform size for titles, and uniform character length to avoid this, and prevent size changing.
+- [X] `P2-Minor` PowerUp Icons have a background and border that need to be set to transparent.  These are redundant.
+- [ ] `P2-Minor` Add a tweeen scrolling effect on the Undiscovered tab in the shop, with a nice smooth effect.
+- [ ] `P2-Minor` The current REP meter in the POGS shop is too simple and needs an upgrade, it should also be visible in the REP tab.
+- [ ] `P2-Minor` All tooltips need a edge of screen safety so that they don't go off of the edge of the screen.
 - [X] `P2-Minor` Mall Map in game has a width that is too wide for the screen.
 - [X] `P2-Minor` Mom Check-in needs to tween the screen fadeout slower, right now it's very abrupt.
 - [X] `P2-Minor` Fix all title sizing issues with Powerups in the shop and Consumable fan outs.

@@ -40,7 +40,7 @@ class BareGameController extends GameController:
 
 func _ready() -> void:
 	print("=== Consumable Usage Window Test ===")
-	_run_tests()
+	_run_tests.call_deferred()
 	_test_completed = true
 	if "--auto-test" in OS.get_cmdline_user_args():
 		_quit_with_result()
@@ -77,6 +77,7 @@ func _run_tests() -> void:
 	_assert(fresh.is_available_for_dice_sides(4), "fresh data available for d4")
 	_assert(fresh.is_available_for_dice_sides(6), "fresh data available for d6")
 	_assert(fresh.is_usable_in_phase(GameController.GamePhase.IDLE), "fresh data usable in IDLE")
+	_assert(fresh.requires_dice_roll, "unmigrated resources retain dice-dependent gating")
 
 	print("--- Migrated anchor resources ---")
 	var go_broke := preload("res://Scripts/Consumable/GoBrokeOrGoHomeConsumable.tres") as ConsumableData
@@ -87,11 +88,15 @@ func _run_tests() -> void:
 	var visit_shop := preload("res://Scripts/Consumable/VisitTheShopConsumable.tres") as ConsumableData
 	_assert_equals(visit_shop.usage_window, ConsumableData.UsageWindow.AFTER_SCORING,
 		"visit_the_shop is AFTER_SCORING")
+	_assert(not visit_shop.requires_dice_roll, "visit_the_shop uses the round-active gate")
+	var chance := preload("res://Scripts/Consumable/ChanceUpgradeConsumable.tres") as ConsumableData
+	_assert(not chance.requires_dice_roll, "Upgrade Chance is non-dice-dependent")
 	var mulligan := preload("res://Scripts/Consumable/MulliganConsumable.tres") as ConsumableData
 	_assert_equals(mulligan.usage_window, ConsumableData.UsageWindow.DURING_ACTIVE_ROUND,
 		"mulligan is DURING_ACTIVE_ROUND")
 	_assert(mulligan.usage_conditions.has(&"dice_rolled") and mulligan.usage_conditions.has(&"has_placed_score"),
 		"mulligan keeps dice_rolled + has_placed_score conditions")
+	_assert(mulligan.requires_dice_roll, "Mulligan retains dice-dependent gating")
 	_test_live_usability_gates()
 	_test_go_broke_raw_scoring()
 	_test_challenge_icon_assets()
@@ -120,19 +125,56 @@ func _test_live_usability_gates() -> void:
 	expansion.id = "power_up_shop_num"
 	expansion.usage_window = ConsumableData.UsageWindow.ANY_TIME
 	_assert(consumable_ui._can_use_consumable(expansion), "Shop Expansion works between rounds")
+	var clearance := preload("res://Scripts/Consumable/ClearanceRackConsumable.tres") as ConsumableData
+	_assert_equals(clearance.usage_window, ConsumableData.UsageWindow.ANY_TIME, "Clearance Rack is ANY_TIME")
+	_assert(consumable_ui._can_use_consumable(clearance), "Clearance Rack works between rounds")
 	game_controller._game_ended = true
 	_assert(not consumable_ui._can_use_consumable(expansion), "Shop Expansion is blocked after game over")
+	_assert(not consumable_ui._can_use_consumable(clearance), "Clearance Rack is blocked after game over")
 	game_controller._game_ended = false
 
 	var surge := ConsumableData.new()
 	surge.id = "dice_surge"
 	surge.usage_window = ConsumableData.UsageWindow.ANY_TIME
-	_assert(not consumable_ui._can_use_consumable(surge), "Dice Surge is blocked between rounds")
-	turn_tracker.is_active = true
+	surge.requires_dice_roll = false
+	_assert(consumable_ui._can_use_consumable(surge), "ANY_TIME Dice Surge works between rounds")
+	round_manager.is_round_active = true
 	game_controller.current_phase = GameController.GamePhase.IDLE
-	_assert(consumable_ui._can_use_consumable(surge), "Dice Surge works before first roll")
+	_assert(consumable_ui._can_use_consumable(surge), "Dice Surge works before first roll without an active-turn gate")
 	game_controller.current_phase = GameController.GamePhase.ROUND_ACTIVE
 	_assert(consumable_ui._can_use_consumable(surge), "Dice Surge works after first roll")
+	game_controller.current_phase = GameController.GamePhase.AFTER_SCORE
+	_assert(consumable_ui._can_use_consumable(surge), "Non-dice consumables remain usable after scoring")
+
+	var chance := preload("res://Scripts/Consumable/ChanceUpgradeConsumable.tres") as ConsumableData
+	game_controller.current_phase = GameController.GamePhase.IDLE
+	_assert(consumable_ui._can_use_consumable(chance), "Upgrade Chance works in IDLE before next-turn/roll gating")
+	var used_ids: Array[String] = []
+	var icon := preload("res://Scenes/Consumable/consumable_coupon.tscn").instantiate() as ConsumableIcon
+	add_child(icon)
+	icon.set_data(chance)
+	icon.set_useable(consumable_ui._can_use_consumable(chance))
+	icon.consumable_used.connect(func(id: String): used_ids.append(id))
+	icon._on_use_button_pressed()
+	_assert(used_ids.has("chance_upgrade"), "Upgrade Chance fires through the normal consumable UI signal")
+
+	var loaded_dice := preload("res://Scripts/Consumable/LoadedDiceConsumable.tres") as ConsumableData
+	DiceResults.reset()
+	turn_tracker.is_active = true
+	game_controller.current_phase = GameController.GamePhase.IDLE
+	_assert(not consumable_ui._can_use_consumable(loaded_dice), "Loaded Dice stays gated before the roll phase")
+	game_controller.current_phase = GameController.GamePhase.ROUND_ACTIVE
+	_assert(not consumable_ui._can_use_consumable(loaded_dice), "Loaded Dice still requires rolled dice")
+	DiceResults.set_values([1, 2, 3, 4, 5])
+	_assert(consumable_ui._can_use_consumable(loaded_dice), "Loaded Dice passes its existing dice gate")
+	round_manager.is_round_active = false
+	_assert(not consumable_ui._can_use_consumable(chance), "Non-dice consumables close when the round ends")
+	var saved_state := round_manager.get_state()
+	saved_state["is_round_active"] = true
+	round_manager.load_state(saved_state)
+	_assert(round_manager.is_round_active, "Round-active state survives save/load")
+	round_manager.is_round_active = false
+	DiceResults.reset()
 
 	var loss_leader := LossLeaderConsumable.new()
 	add_child(loss_leader)

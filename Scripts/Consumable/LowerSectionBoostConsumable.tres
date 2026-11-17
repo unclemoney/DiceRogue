@@ -19,5 +19,6 @@ price = 450
 allowed_dice_sets = Array[int]([])
 exclude_listed_dice_sets = false
 usage_window = 2
+requires_dice_roll = false
 usage_conditions = Array[StringName]([])
 metadata/_custom_type_script = "uid://wx2i3vixf1m5"

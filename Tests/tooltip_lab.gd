@@ -40,13 +40,32 @@ func _run_bounds_test() -> void:
 		await get_tree().create_timer(0.5).timeout
 		var viewport_size := get_viewport_rect().size
 		var rect := _tooltip.get_global_rect()
-		var inside: bool = rect.position.x >= 16.0 and rect.position.y >= 16.0 and rect.end.x <= viewport_size.x - 16.0 and rect.end.y <= viewport_size.y - 16.0
+		var inside: bool = rect.position.x >= 8.0 and rect.position.y >= 8.0 and rect.end.x <= viewport_size.x - 8.0 and rect.end.y <= viewport_size.y - 8.0
 		if not inside:
 			failures += 1
 			push_error("[TooltipLab] Tooltip outside safe margins: %s" % str(rect))
 		else:
 			print("[TooltipLab] OK: safe rectangle %s" % str(rect))
+	var anchors: Array[Rect2] = [
+		Rect2(Vector2(0, 0), Vector2(50, 50)),
+		Rect2(Vector2(1230, 0), Vector2(50, 50)),
+		Rect2(Vector2(0, 670), Vector2(50, 50)),
+		Rect2(Vector2(1230, 670), Vector2(50, 50)),
+	]
+	for anchor in anchors:
+		await _tooltip.show_at(anchor.get_center(), anchor, false)
+		await get_tree().create_timer(0.1).timeout
+		var rect := _tooltip.get_global_rect()
+		var viewport_size := get_viewport_rect().size
+		var inside: bool = rect.position.x >= 8.0 and rect.position.y >= 8.0 and rect.end.x <= viewport_size.x - 8.0 and rect.end.y <= viewport_size.y - 8.0
+		if not inside or rect.intersects(anchor):
+			failures += 1
+			push_error("[TooltipLab] Anchor-safe placement failed: rect=%s anchor=%s" % [str(rect), str(anchor)])
+		else:
+			print("[TooltipLab] OK: anchor-safe rectangle %s" % str(rect))
 	print("[TooltipLab] %s" % ("PASS" if failures == 0 else "FAIL"))
+	if DisplayServer.get_name() != "headless":
+		get_viewport().get_texture().get_image().save_png("res://Tests/_layout_shots/ui_polish_tooltip.png")
 	get_tree().quit(0 if failures == 0 else 1)
 
 
