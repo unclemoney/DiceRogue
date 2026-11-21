@@ -46,7 +46,7 @@
 
 ## SYS:Gameplay — Core Gameplay & Balance
 
-- [ ] `P2-Minor` Refactor all dollar multiples by 100, so chore earnings are no longer 100, but 1.00 and everything subsequent.  Audit the whole game.
+- [x] `P2-Minor` Refactor all dollar multiples by 100, so chore earnings are no longer 100, but 1.00 and everything subsequent.  Audit the whole game. ✅ 2026-11-20
 - [X] `P2-Minor` Refactor Magic Mitt PowerUp to affect the REP meter.
 - [X] `P2-Minor` Extra Dice doesn't Roll immediately, but should.
 - [X] `P2-Minor` Most mods are just not attractive enough, we need to balance them more.

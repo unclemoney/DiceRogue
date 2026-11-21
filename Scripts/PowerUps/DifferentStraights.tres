@@ -1,19 +1,15 @@
-[gd_resource type="Resource" script_class="PowerUpData" load_steps=5 format=3 uid="uid://cfbxrx43vnu8j"]
+[gd_resource type="Resource" script_class="PowerUpData" load_steps=4 format=3 uid="uid://cfbxrx43vnu8j"]
 
-[ext_resource type="Texture2D" uid="uid://dqct3k5i3x45l" path="res://Resources/Art/Powerups/questionable_pog_grid_5x5.png" id="1_bm2gu"]
+[ext_resource type="Texture2D" uid="uid://cq7x4psq5ig1w" path="res://Resources/Art/POGS/DIFFERENT_STRAIGHTS.png" id="1_bm2gu"]
 [ext_resource type="Script" uid="uid://b4upm4dbvhukm" path="res://Scripts/PowerUps/PowerUpData.gd" id="1_powerup_data"]
 [ext_resource type="PackedScene" path="res://Scenes/PowerUp/DifferentStraights.tscn" id="2_scene"]
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_7tnh4"]
-atlas = ExtResource("1_bm2gu")
-region = Rect2(425, 214, 176, 173)
 
 [resource]
 script = ExtResource("1_powerup_data")
 id = "different_straights"
 display_name = "Slap Wrist"
 description = "Straights can have one gap of 1"
-icon = SubResource("AtlasTexture_7tnh4")
+icon = ExtResource("1_bm2gu")
 foilsmith_card_json = "res://Resources/Art/Powerups/Foilsmith/different_straights.json"
 scene = ExtResource("2_scene")
 price = 3.0
